@@ -26,12 +26,13 @@ Each adapter exclusively owns the children of one empty React-provided container
 
 | Path | Responsibility |
 |---|---|
-| `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host plus near-bottom scroll scheduling. It does not create message shells or action toolbars. |
+| `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host. It does not create message shells, action toolbars, or control transcript scrolling. |
 | `src/ui/chat/rendering/messageRendererMarkdown.ts` | Obsidian Markdown rendering, mention badges, file-link processing, code wrappers, math, and owner-window-aware Mermaid controls. |
 | `src/ui/chat/rendering/ToolCallRenderer.ts`, `toolCallExpandedDispatcher.ts`, `toolCall*Expanded.ts` | Rich tool-body adapter registry used inside React-owned tool slots. |
 | `src/ui/chat/rendering/WriteEditRenderer.ts`, `DiffRenderer.ts` | Content-only write/edit diff renderer, context hunks, and bounded new-file rendering. The surrounding generic tool shell owns the sole header/collapse boundary. |
 | `src/ui/chat/rendering/SubagentRenderer.ts`, `AsyncSubagentRenderer.ts`, `subagentRendererShared.ts` | Stored nested subagent body adapters with stale-render protection. Runtime managers must never call them. |
 | `src/app/ui/createSubagentContentAdapter.ts` | App-owned React message-content bridge that mounts and incrementally updates stored subagent adapters. |
+| `src/app/ui/createStreamingMarkdownContentAdapter.ts` | App-owned stable Markdown bridge with rendered sealed segments, an escaped live tail, rewrite rebuilding, and terminal fidelity rendering. |
 | `src/ui/chat/rendering/InlineAskUserQuestion.ts`, `inlineAskUserQuestion*.ts` | Interactive ask-user adapter where native input/keyboard behavior remains imperative. |
 | `src/ui/chat/rendering/collapsible.ts`, `ToolStepGroupRenderer.ts` | Shared internals used only inside rich adapter-owned containers. |
 
@@ -67,6 +68,6 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Async Markdown can finish out of order. Subagent rendering uses generation tokens to discard stale completions; preserve that guard when rerendering prompt or result sections.
 - Background subagents lazily render expanded content and can become `orphaned` when a session ends. Do not collapse `pending`, `running`, `error`, and `orphaned` into a simple completed flag.
 - Thinking presentation and timing belong to the package React message view; no imperative thinking renderer or timer is permitted here.
-- Markdown rendering is destructive (`el.empty()`) and asynchronous. It also post-processes links, code blocks, math, and Mermaid, so bypassing it changes behavior and can leak observers or stale output.
+- Full Markdown rendering is destructive (`el.empty()`) and asynchronous. During streaming, render only sealed safe segments and keep the live tail as text; terminal state must perform one complete fidelity render. Give every segment its own `Component` scope and unload it with the virtual row so links, code, math, Mermaid observers, timers, and postprocessors cannot outlive the row.
 - `DiffRenderer` intentionally shows only changed hunks with context and caps all-insert new-file previews. Do not turn it into an unbounded full-file renderer.
 - Ask-user rendering has both passive stored-result display and active keyboard-driven interaction. Keep answer extraction compatible with structured `toolUseResult` and text fallback results.

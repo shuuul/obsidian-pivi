@@ -91,7 +91,7 @@ export function wireTabInputEvents(tab: TabData, settings: ChatSettingsPort): vo
     dom.contentEl.removeEventListener("focusin", focusHandler),
   );
 
-  const SCROLL_THRESHOLD = 20;
+  const SCROLL_THRESHOLD = 80;
   const RE_ENABLE_DELAY = 150;
   let reEnableTimeout: number | null = null;
 

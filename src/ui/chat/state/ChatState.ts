@@ -1,6 +1,7 @@
 import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 import {
+  ChatProjectionStore,
   type ChatUiSnapshot,
   type ChatUiSnapshotKey,
   ChatUiStore,
@@ -45,14 +46,25 @@ function createInitialState(): ChatStateData {
 
 export class ChatState {
   private state: ChatStateData;
+  private readonly messagesById = new Map<string, ChatMessage>();
+  private readonly ownerMessageBySubagentId = new Map<string, string>();
+  private readonly ownerMessageByAgentId = new Map<string, string>();
+  private readonly ownerMessageByToolId = new Map<string, string>();
+  private readonly ownerKeysByMessageId = new Map<string, {
+    subagentIds: Set<string>;
+    agentIds: Set<string>;
+    toolIds: Set<string>;
+  }>();
   private _callbacks: ChatStateCallbacks;
   private currentThinkingContent = '';
   readonly uiStore: ChatUiStore;
+  readonly projectionStore: ChatProjectionStore;
 
   constructor(callbacks: ChatStateCallbacks = {}) {
     this.state = createInitialState();
     this._callbacks = callbacks;
     this.uiStore = new ChatUiStore(createInitialChatUiSnapshot());
+    this.projectionStore = new ChatProjectionStore();
     this.uiStore.subscribe((changedKeys) => {
       this.notifyCallbacks(this.uiStore.getSnapshot(), changedKeys);
     });
@@ -91,17 +103,21 @@ export class ChatState {
 
   set messages(value: ChatMessage[]) {
     this.state.messages = value;
-    this.uiStore.update({ messages: value });
+    this.rebuildMessageIndexes(value);
+    this.projectionStore.replaceAll(value);
   }
 
   addMessage(msg: ChatMessage): void {
     this.state.messages.push(msg);
-    this.uiStore.update({ messages: this.state.messages });
+    this.messagesById.set(msg.id, msg);
+    this.indexMessageOwners(msg);
+    this.projectionStore.upsertNow(msg);
   }
 
   clearMessages(): void {
     this.state.messages = [];
-    this.uiStore.update({ messages: [] });
+    this.rebuildMessageIndexes([]);
+    this.projectionStore.replaceAll([]);
   }
 
   truncateAt(messageId: string): number {
@@ -109,21 +125,30 @@ export class ChatState {
     if (idx === -1) return 0;
     const removed = this.state.messages.length - idx;
     this.state.messages = this.state.messages.slice(0, idx);
-    this.uiStore.update({ messages: this.state.messages });
+    this.rebuildMessageIndexes(this.state.messages);
+    this.projectionStore.replaceAll(this.state.messages);
     return removed;
   }
 
-  /** Publish legacy in-place message mutations to the immutable React snapshot. */
-  notifyMessagesChanged(): void {
-    this.uiStore.update({
-      messages: this.state.messages,
-      currentThinkingContent: this.currentThinkingContent,
-    });
+  /** Queue one mutated durable message for frame-coalesced React publication. */
+  notifyMessageChanged(message: ChatMessage): void {
+    this.messagesById.set(message.id, message);
+    this.indexMessageOwners(message);
+    this.projectionStore.queueUpsert(message);
+    this.uiStore.update({ currentThinkingContent: this.currentThinkingContent });
+  }
+
+  flushProjection(): void {
+    this.projectionStore.flush();
+  }
+
+  prependPreviousProjectionPage(): boolean {
+    return this.projectionStore.prependPreviousPage();
   }
 
   /** Apply the pure stream projector to both durable state and the React snapshot. */
   projectStreamChunk(message: ChatMessage, chunk: StreamChunk): ChatMessage {
-    const durableMessage = this.state.messages.find(existing => existing.id === message.id) ?? message;
+    const durableMessage = this.messagesById.get(message.id) ?? message;
     const projection = {
       ...createChatStreamSnapshot(durableMessage),
       currentTextContent: this.state.currentTextContent,
@@ -136,10 +161,63 @@ export class ChatState {
 
     Object.assign(durableMessage, reduced.message);
     this.state.messages = [...this.state.messages];
+    this.messagesById.set(durableMessage.id, durableMessage);
     this.state.currentTextContent = reduced.currentTextContent;
     this.currentThinkingContent = reduced.currentThinkingContent;
     this.state.usage = reduced.usage;
     return durableMessage;
+  }
+
+  findOwnerMessage(input: {
+    subagentId?: string | null;
+    agentId?: string | null;
+    toolId?: string | null;
+  }): ChatMessage | null {
+    const messageId = (input.subagentId ? this.ownerMessageBySubagentId.get(input.subagentId) : null)
+      ?? (input.agentId ? this.ownerMessageByAgentId.get(input.agentId) : null)
+      ?? (input.toolId ? this.ownerMessageByToolId.get(input.toolId) : null);
+    return messageId ? this.messagesById.get(messageId) ?? null : null;
+  }
+
+  private rebuildMessageIndexes(messages: readonly ChatMessage[]): void {
+    this.messagesById.clear();
+    this.ownerMessageBySubagentId.clear();
+    this.ownerMessageByAgentId.clear();
+    this.ownerMessageByToolId.clear();
+    this.ownerKeysByMessageId.clear();
+    for (const message of messages) {
+      this.messagesById.set(message.id, message);
+      this.indexMessageOwners(message);
+    }
+  }
+
+  private indexMessageOwners(message: ChatMessage): void {
+    const previous = this.ownerKeysByMessageId.get(message.id);
+    if (previous) {
+      for (const id of previous.subagentIds) this.ownerMessageBySubagentId.delete(id);
+      for (const id of previous.agentIds) this.ownerMessageByAgentId.delete(id);
+      for (const id of previous.toolIds) this.ownerMessageByToolId.delete(id);
+    }
+    const keys = {
+      subagentIds: new Set<string>(),
+      agentIds: new Set<string>(),
+      toolIds: new Set<string>(),
+    };
+    for (const block of message.contentBlocks ?? []) {
+      if (block.type === 'subagent') keys.subagentIds.add(block.subagentId);
+      if (block.type === 'tool_use') keys.toolIds.add(block.toolId);
+    }
+    for (const toolCall of message.toolCalls ?? []) {
+      keys.toolIds.add(toolCall.id);
+      if (toolCall.subagent) {
+        keys.subagentIds.add(toolCall.subagent.id);
+        if (toolCall.subagent.agentId) keys.agentIds.add(toolCall.subagent.agentId);
+      }
+    }
+    for (const id of keys.subagentIds) this.ownerMessageBySubagentId.set(id, message.id);
+    for (const id of keys.agentIds) this.ownerMessageByAgentId.set(id, message.id);
+    for (const id of keys.toolIds) this.ownerMessageByToolId.set(id, message.id);
+    this.ownerKeysByMessageId.set(message.id, keys);
   }
 
   // ============================================

@@ -9,6 +9,7 @@ import type { MessageContentAdapter, MessageContentAdapters } from './types';
 export interface AssistantContentViewProps {
   readonly message: ChatMessage;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly isStreaming?: boolean;
 }
 
 export interface MessageContentSlotProps<Value> {
@@ -27,13 +28,34 @@ export function MessageContentSlot<Value>({
   className,
 }: MessageContentSlotProps<Value>) {
   const slotRef = useRef<HTMLDivElement>(null);
+  const latestValueRef = useRef(value);
+  const mountedValueRef = useRef<Value | null>(null);
+  latestValueRef.current = value;
 
   useEffect(() => {
     const container = slotRef.current;
     if (!container) return;
     const ownerWindow = container.ownerDocument.defaultView;
     if (!ownerWindow) return;
-    return adapter.mount(container, value, {
+    const initialValue = latestValueRef.current;
+    mountedValueRef.current = initialValue;
+    const dispose = adapter.mount(container, initialValue, {
+      generation,
+      ownerDocument: container.ownerDocument,
+      ownerWindow,
+    });
+    return () => {
+      mountedValueRef.current = null;
+      dispose?.();
+    };
+  }, [adapter, generation]);
+
+  useEffect(() => {
+    const container = slotRef.current;
+    const ownerWindow = container?.ownerDocument.defaultView;
+    if (!container || !ownerWindow || mountedValueRef.current === value) return;
+    mountedValueRef.current = value;
+    adapter.update?.(container, value, {
       generation,
       ownerDocument: container.ownerDocument,
       ownerWindow,
@@ -68,19 +90,21 @@ function TextBlockView({
   block,
   index,
   contentAdapters,
+  isStreaming,
 }: {
   readonly message: ChatMessage;
   readonly block: Extract<ContentBlock, { type: 'text' }>;
   readonly index: number;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly isStreaming: boolean;
 }) {
   if (!block.content.trim()) return null;
-  const generation = `${message.id}:text:${index}:${block.content}`;
+  const generation = `${message.id}:text:${index}`;
   if (contentAdapters?.markdown) {
     return (
       <MessageContentSlot
         adapter={contentAdapters.markdown}
-        value={block.content}
+        value={{ blockId: generation, content: block.content, phase: isStreaming ? 'streaming' : 'terminal' }}
         generation={generation}
         className="pivi-text-block"
       />
@@ -93,10 +117,12 @@ function ThinkingBlockView({
   block,
   contentAdapters,
   generation,
+  isStreaming,
 }: {
   readonly block: Extract<ContentBlock, { type: 'thinking' }>;
   readonly contentAdapters?: MessageContentAdapters;
   readonly generation: string;
+  readonly isStreaming: boolean;
 }) {
   const t = useT();
   if (!block.content.trim()) return null;
@@ -109,7 +135,7 @@ function ThinkingBlockView({
         </span>
       </summary>
       {contentAdapters?.markdown
-        ? <MessageContentSlot adapter={contentAdapters.markdown} className="pivi-thinking-content" generation={generation} value={block.content} />
+        ? <MessageContentSlot adapter={contentAdapters.markdown} className="pivi-thinking-content" generation={generation} value={{ blockId: generation, content: block.content, phase: isStreaming ? 'streaming' : 'terminal' }} />
         : <div className="pivi-thinking-content">{block.content}</div>}
     </details>
   );
@@ -184,7 +210,7 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
 }
 
 /** Ordered assistant block presentation. contentBlocks are authoritative; toolCalls are resolved by id only. */
-export function AssistantContentView({ message, contentAdapters }: AssistantContentViewProps) {
+export function AssistantContentView({ message, contentAdapters, isStreaming = false }: AssistantContentViewProps) {
   const t = useT();
   const blocks = message.contentBlocks;
   const renderedToolIds = new Set<string>();
@@ -197,10 +223,10 @@ export function AssistantContentView({ message, contentAdapters }: AssistantCont
       const key = `${message.id}:${index}:${block.type}`;
       switch (block.type) {
         case 'text':
-          content.push(<TextBlockView key={key} message={message} block={block} index={index} contentAdapters={contentAdapters} />);
+          content.push(<TextBlockView key={key} message={message} block={block} index={index} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
           break;
         case 'thinking':
-          content.push(<ThinkingBlockView key={key} block={block} contentAdapters={contentAdapters} generation={`${message.id}:thinking:${index}:${block.content}`} />);
+          content.push(<ThinkingBlockView key={key} block={block} contentAdapters={contentAdapters} generation={`${message.id}:thinking:${index}`} isStreaming={isStreaming} />);
           break;
         case 'tool_use': {
           const toolCall = toolForBlock(message, block.toolId);
@@ -239,7 +265,7 @@ export function AssistantContentView({ message, contentAdapters }: AssistantCont
       }
     }
   } else if (message.content) {
-    content.push(<TextBlockView key={`${message.id}:legacy-text`} message={message} block={{ type: 'text', content: message.content }} index={0} contentAdapters={contentAdapters} />);
+    content.push(<TextBlockView key={`${message.id}:legacy-text`} message={message} block={{ type: 'text', content: message.content }} index={0} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
   }
 
   for (const toolCall of message.toolCalls ?? []) {

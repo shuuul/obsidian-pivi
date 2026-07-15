@@ -1,5 +1,31 @@
 // Mock for Obsidian API
 
+export class Component {
+  private children = new Set<Component>();
+  private cleanups: Array<() => void> = [];
+
+  addChild(child: Component): Component {
+    this.children.add(child);
+    return child;
+  }
+
+  removeChild(child: Component): Component {
+    this.children.delete(child);
+    child.unload();
+    return child;
+  }
+
+  register(cleanup: () => void): void {
+    this.cleanups.push(cleanup);
+  }
+
+  unload(): void {
+    for (const child of this.children) child.unload();
+    this.children.clear();
+    for (const cleanup of this.cleanups.splice(0)) cleanup();
+  }
+}
+
 export class Plugin {
   app: any;
   manifest: any;

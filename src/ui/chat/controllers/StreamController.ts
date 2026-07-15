@@ -5,7 +5,6 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { StreamScrollScheduler } from '@/ui/chat/stream/streamScrollScheduling';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
 import {
   hideThinkingIndicator as hideStreamThinkingIndicator,
@@ -45,22 +44,16 @@ export interface StreamControllerDeps {
 export class StreamController {
   private deps: StreamControllerDeps;
   private readonly usagePresenter: UsagePresenter;
-  private readonly scrollScheduler: StreamScrollScheduler;
   private readonly subagentCoordinator: StreamSubagentCoordinator;
 
   constructor(deps: StreamControllerDeps) {
     this.deps = deps;
-    this.scrollScheduler = new StreamScrollScheduler({
-      settings: deps.settings,
-      state: deps.state,
-      getMessagesEl: deps.getMessagesEl,
-    });
     this.subagentCoordinator = new StreamSubagentCoordinator({
       state: deps.state,
       subagentManager: deps.subagentManager,
       getAgentService: deps.getAgentService,
       showThinkingIndicator: () => this.showThinkingIndicator(),
-      scrollToBottom: () => this.scrollToBottom(),
+      scrollToBottom: () => {},
     });
     this.usagePresenter = new UsagePresenter({
       settings: deps.settings,
@@ -159,36 +152,15 @@ export class StreamController {
         break;
     }
 
-    this.deps.state.notifyMessagesChanged();
-    this.scrollToBottom();
+    this.deps.state.notifyMessageChanged(msg);
   }
 
   private findBackgroundSubagentMessage(chunk: StreamChunk): ChatMessage | null {
     const subagentId = 'subagentId' in chunk && typeof chunk.subagentId === 'string'
       ? chunk.subagentId
       : null;
-    const assistantMessages = this.deps.state.messages.filter((message) => message.role === 'assistant');
-    if (subagentId) {
-      const owner = assistantMessages.find((message) => (
-        message.contentBlocks?.some((block) => block.type === 'subagent' && block.subagentId === subagentId)
-        || message.toolCalls?.some((toolCall) => (
-          toolCall.id === subagentId || toolCall.subagent?.id === subagentId
-        ))
-      ));
-      if (owner) {
-        return owner;
-      }
-    }
     const agentId = chunk.type === 'async_subagent_result' ? chunk.agentId : null;
-    if (agentId) {
-      const owner = assistantMessages.find((message) => (
-        message.toolCalls?.some((toolCall) => toolCall.subagent?.agentId === agentId)
-      ));
-      if (owner) {
-        return owner;
-      }
-    }
-    return null;
+    return this.deps.state.findOwnerMessage({ subagentId, agentId });
   }
 
   private handleThinkingChunk(): void {
@@ -322,13 +294,9 @@ export class StreamController {
     this.hideThinkingIndicator();
   }
 
-  private scrollToBottom(): void {
-    this.scrollScheduler.scrollToBottom();
-  }
-
   resetStreamingState(): void {
     const { state } = this.deps;
-    this.scrollScheduler.cancelPendingScroll();
+    state.flushProjection();
     this.hideThinkingIndicator();
     state.currentTextContent = '';
     this.subagentCoordinator.resetStreamingState();
@@ -337,7 +305,7 @@ export class StreamController {
   }
 
   dispose(): void {
-    this.scrollScheduler.cancelPendingScroll();
+    this.deps.state.flushProjection();
     this.subagentCoordinator.dispose();
   }
 }

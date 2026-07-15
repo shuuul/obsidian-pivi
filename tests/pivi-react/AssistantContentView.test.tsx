@@ -9,7 +9,11 @@ import {
   isAssistantToolOnlyMessage,
   messageHasVisibleAssistantContent,
 } from '../../packages/pivi-react/src/chat/messages/AssistantContentView';
-import type { MessageContentAdapter, MessageContentAdapters } from '../../packages/pivi-react/src/chat/messages/types';
+import type {
+  MessageContentAdapter,
+  MessageContentAdapters,
+  StreamingMarkdownValue,
+} from '../../packages/pivi-react/src/chat/messages/types';
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 
 function renderAssistant(message: ChatMessage, contentAdapters?: MessageContentAdapters) {
@@ -101,12 +105,17 @@ describe('AssistantContentView', () => {
   it('mounts each markdown block in its own empty React slot and cleans up stale generations', () => {
     const mounts: string[] = [];
     const cleanups: string[] = [];
-    const markdown: MessageContentAdapter<string> = {
+    const updates: string[] = [];
+    const markdown: MessageContentAdapter<StreamingMarkdownValue> = {
       mount(container, value, context) {
         expect(container.childElementCount).toBe(0);
-        mounts.push(`${value}:${context.generation}`);
-        container.textContent = `rendered:${value}`;
+        mounts.push(`${value.content}:${context.generation}`);
+        container.textContent = `rendered:${value.content}`;
         return () => cleanups.push(context.generation);
+      },
+      update(container, value) {
+        updates.push(value.content);
+        container.textContent = `rendered:${value.content}`;
       },
     };
     const first = assistantMessage({ contentBlocks: [{ type: 'text', content: 'one' }, { type: 'text', content: 'two' }] });
@@ -120,8 +129,9 @@ describe('AssistantContentView', () => {
       </I18nProvider>,
     ));
 
-    expect(cleanups).toEqual(expect.arrayContaining(['assistant-1:text:0:one', 'assistant-1:text:1:two']));
-    expect(mounts).toContain('three:assistant-1:text:0:three');
+    expect(cleanups).toContain('assistant-1:text:1');
+    expect(mounts).toContain('one:assistant-1:text:0');
+    expect(updates).toContain('three');
   });
 
   it('uses the pending ask-user adapter but renders completed results as readable React fallback', () => {

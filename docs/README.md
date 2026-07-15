@@ -18,6 +18,7 @@ For a first contribution, follow the getting-started and architecture documents 
 | [08 — Presentation, settings, and inline edit](08-presentation-settings-and-inline-edit.md) | Changing React surfaces, styling, localization, or inline edit |
 | [09 — Development, debugging, and validation](09-development-debugging-and-validation.md) | Testing, debugging, building, and validating a contribution |
 | [10 — Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md) | Reviewing current technical priorities, publishing, or maintaining docs |
+| [11 — Chat UI evolution](11-chat-ui-evolution.md) | Planning long-session architecture, Agent activity, context memory, and the future visual language |
 
 ## Overall architecture
 
@@ -81,4 +82,4 @@ flowchart LR
 - Nested `AGENTS.md` files define package or feature ownership, allowed dependencies, cleanup rules, and local verification targets.
 - Code, tests, package manifests, and persisted schemas remain authoritative when a document is wrong. Fix the document in the same change.
 
-Every numbered page links back here. The final roadmap, release, and maintenance document contains the documentation freshness checklist.
+Every numbered page links back here. The roadmap, release, and maintenance document contains the documentation freshness checklist.

@@ -28,7 +28,20 @@ export interface MessagePresentationActions {
   copy: (message: ChatMessage) => void | Promise<void>;
   fork: (messageId: string) => void | Promise<void>;
   redo: (messageId: string) => void | Promise<void>;
-  scrollToRecentUser: () => void;
+  scrollToRecentUser: (messageId: string) => void;
+}
+
+export interface MessageViewportHandle {
+  scrollToStart: (behavior?: 'auto' | 'smooth' | 'instant') => void;
+  scrollToEnd: (behavior?: 'auto' | 'smooth' | 'instant') => void;
+  scrollToMessage: (
+    messageId: string,
+    align?: 'start' | 'center' | 'end' | 'auto',
+    behavior?: 'auto' | 'smooth' | 'instant',
+  ) => void;
+  scrollToRecentUser: (messageId: string) => void;
+  scrollToUser: (direction: 'prev' | 'next') => void;
+  isAtEnd: (threshold?: number) => boolean;
 }
 
 export interface MessageContentAdapterContext {
@@ -37,12 +50,18 @@ export interface MessageContentAdapterContext {
   readonly ownerWindow: Window;
 }
 
+export interface StreamingMarkdownValue {
+  readonly blockId: string;
+  readonly content: string;
+  readonly phase: 'streaming' | 'terminal';
+}
+
 /**
  * Imperative presentation islands that cannot yet be expressed as React.
  * Each adapter exclusively owns the children of its supplied empty slot.
  */
 export interface MessageContentAdapters {
-  readonly markdown?: MessageContentAdapter<string>;
+  readonly markdown?: MessageContentAdapter<StreamingMarkdownValue>;
   readonly askUser?: MessageContentAdapter<ToolCallInfo>;
   readonly subagent?: MessageContentAdapter<SubagentInfo>;
   readonly userContent?: MessageContentAdapter<ChatMessage>;

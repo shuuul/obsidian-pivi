@@ -4,6 +4,7 @@ import { createI18n } from '@pivi/pivi-react';
 import { ActiveChatUiBridge, mountChatView } from '@pivi/pivi-react/mount';
 import {
   ChatTabsStore,
+  ChatProjectionStore,
   ChatUiStore,
   type ChatTabActions,
   type ChatTabsSnapshot,
@@ -118,6 +119,7 @@ function createPortalTargets(ownerDocument: Document = document) {
     navigation,
     composer,
     messages,
+    messagesViewport: messages,
     remove: () => {
       welcome.remove();
       queue.remove();
@@ -387,6 +389,7 @@ describe('React ChatShell tabs', () => {
   it('projects active chat state into dedicated welcome, queue, usage, todo, and navigation portals', async () => {
     const bridge = new ActiveChatUiBridge();
     const uiStore = new ChatUiStore();
+    const projectionStore = new ChatProjectionStore();
     const targets = createPortalTargets();
     const surfaceActions = {
       editQueuedTurn: jest.fn(),
@@ -409,7 +412,7 @@ describe('React ChatShell tabs', () => {
       removeExternalPath: jest.fn(),
       addExternalContext: jest.fn(),
     };
-    bridge.setActive(uiStore, targets, composerActions);
+    bridge.setActive(uiStore, projectionStore, targets, composerActions);
     const mounted = await mountShell({
       activeChat: bridge,
       position: 'header',
@@ -418,9 +421,9 @@ describe('React ChatShell tabs', () => {
 
     act(() => uiStore.update({ welcomeGreeting: 'Welcome back' }));
     expect(targets.welcome).toHaveTextContent('Welcome back');
-    act(() => uiStore.update({
-      messages: [{ content: 'Hello', id: 'message-1', role: 'user', timestamp: 1 }],
-    }));
+    act(() => projectionStore.replaceAll([
+      { content: 'Hello', id: 'message-1', role: 'user', timestamp: 1 },
+    ]));
     expect(targets.welcome).toBeEmptyDOMElement();
     expect(targets.messages).toHaveTextContent('Hello');
 
@@ -575,9 +578,11 @@ describe('React ChatShell tabs', () => {
     const bridge = new ActiveChatUiBridge();
     const firstStore = new ChatUiStore();
     const secondStore = new ChatUiStore();
+    const firstProjection = new ChatProjectionStore();
+    const secondProjection = new ChatProjectionStore();
     const firstTargets = createPortalTargets();
     const secondTargets = createPortalTargets();
-    bridge.setActive(firstStore, firstTargets);
+    bridge.setActive(firstStore, firstProjection, firstTargets);
     const mounted = await mountShell({ activeChat: bridge, position: 'header' });
 
     act(() => firstStore.update({ welcomeGreeting: 'First tab' }));
@@ -592,7 +597,7 @@ describe('React ChatShell tabs', () => {
     }));
     expect(firstTargets.welcome).toHaveTextContent('First tab');
 
-    act(() => bridge.setActive(secondStore, secondTargets));
+    act(() => bridge.setActive(secondStore, secondProjection, secondTargets));
     expect(firstTargets.welcome).toBeEmptyDOMElement();
     expect(firstTargets.queue).toBeEmptyDOMElement();
     act(() => secondStore.update({
@@ -619,6 +624,7 @@ describe('React ChatShell tabs', () => {
   it('delegates React composer actions through the active tab bridge', async () => {
     const bridge = new ActiveChatUiBridge();
     const uiStore = new ChatUiStore();
+    const projectionStore = new ChatProjectionStore();
     const targets = createPortalTargets();
     const composerActions = {
       send: jest.fn(),
@@ -662,7 +668,7 @@ describe('React ChatShell tabs', () => {
           availableSelectedCount: 1,
         },
       });
-      bridge.setActive(uiStore, targets, composerActions);
+      bridge.setActive(uiStore, projectionStore, targets, composerActions);
     });
     const mounted = await mountShell({ activeChat: bridge, position: 'header' });
     await act(async () => {});

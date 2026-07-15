@@ -1,4 +1,10 @@
-import type { MessageContentAdapters, MessagePresentationActions } from '../chat/messages/types';
+import type {
+  MessageContentAdapters,
+  MessagePresentationActions,
+  MessageViewportHandle,
+} from '../chat/messages/types';
+import type {
+  ChatProjectionStore} from '../store';
 import {
   type ChatUiSnapshot,
   type ChatUiSnapshotKey,
@@ -13,6 +19,7 @@ export interface ChatTabPortalTargets {
   readonly todo: HTMLElement | null;
   readonly navigation: HTMLElement | null;
   readonly messages: HTMLElement | null;
+  readonly messagesViewport: HTMLElement | null;
   readonly composer?: HTMLElement | null;
 }
 
@@ -33,6 +40,7 @@ export interface ComposerChromeActions {
 export interface MessagePresentationRuntime {
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly setViewportHandle?: (handle: MessageViewportHandle | null) => void;
 }
 /**
  * Runtime-only selector for the active tab's immutable UI snapshot and React-owned portal slots.
@@ -40,6 +48,7 @@ export interface MessagePresentationRuntime {
  */
 export class ActiveChatUiBridge {
   private activeStore: ChatUiStore | null = null;
+  private activeProjectionStore: ChatProjectionStore | null = null;
   private activeStoreUnsubscribe: (() => void) | null = null;
   private targets: ChatTabPortalTargets | null = null;
   private actions: ComposerChromeActions | null = null;
@@ -48,6 +57,7 @@ export class ActiveChatUiBridge {
   private readonly listeners = new Set<ChatUiStoreListener>();
 
   readonly getSnapshot = (): ChatUiSnapshot => this.activeStore?.getSnapshot() ?? this.emptySnapshot;
+  readonly getProjectionStore = (): ChatProjectionStore | null => this.activeProjectionStore;
 
   readonly getPortalTargets = (): ChatTabPortalTargets | null => this.targets;
   readonly getComposerActions = (): ComposerChromeActions | null => this.actions;
@@ -60,12 +70,14 @@ export class ActiveChatUiBridge {
 
   setActive(
     store: ChatUiStore | null,
+    projectionStore: ChatProjectionStore | null,
     targets: ChatTabPortalTargets | null,
     actions: ComposerChromeActions | null = null,
     messagePresentation: MessagePresentationRuntime | null = null,
   ): void {
     if (
       this.activeStore === store
+      && this.activeProjectionStore === projectionStore
       && this.targets === targets
       && this.actions === actions
       && this.messagePresentation === messagePresentation
@@ -73,6 +85,7 @@ export class ActiveChatUiBridge {
     this.activeStoreUnsubscribe?.();
     this.activeStoreUnsubscribe = null;
     this.activeStore = store;
+    this.activeProjectionStore = projectionStore;
     this.targets = targets;
     this.actions = actions;
     this.messagePresentation = messagePresentation;
@@ -86,6 +99,7 @@ export class ActiveChatUiBridge {
     this.activeStoreUnsubscribe?.();
     this.activeStoreUnsubscribe = null;
     this.activeStore = null;
+    this.activeProjectionStore = null;
     this.targets = null;
     this.actions = null;
     this.messagePresentation = null;

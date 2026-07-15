@@ -12,10 +12,10 @@ describe('ChatState', () => {
     expect(state.isStreaming).toBe(false);
     expect(state.currentOpenSessionId).toBeNull();
     expect(state.uiStore.getSnapshot()).toMatchObject({
-      messages: [],
       isStreaming: false,
       currentOpenSessionId: null,
     });
+    expect(state.projectionStore.getOrderSnapshot()).toEqual([]);
   });
 
   it('publishes a cloneable UI snapshot without runtime presentation state', () => {
@@ -24,6 +24,68 @@ describe('ChatState', () => {
   });
 
   describe('messages', () => {
+    it('routes subagent, agent, and tool ownership through maintained indexes', () => {
+      const state = new ChatState();
+      const owner: ChatMessage = {
+        id: 'assistant-owner',
+        role: 'assistant',
+        content: '',
+        timestamp: 1,
+        contentBlocks: [{ type: 'subagent', subagentId: 'subagent-1' }],
+        toolCalls: [{
+          id: 'tool-1',
+          name: 'Task',
+          input: {},
+          status: 'running',
+          subagent: {
+            id: 'subagent-1',
+            agentId: 'agent-1',
+            description: 'Research',
+            isExpanded: false,
+            status: 'running',
+            toolCalls: [],
+          },
+        }],
+      };
+      state.addMessage(owner);
+
+      expect(state.findOwnerMessage({ subagentId: 'subagent-1' })).toBe(owner);
+      expect(state.findOwnerMessage({ agentId: 'agent-1' })).toBe(owner);
+      expect(state.findOwnerMessage({ toolId: 'tool-1' })).toBe(owner);
+      state.clearMessages();
+      expect(state.findOwnerMessage({ agentId: 'agent-1' })).toBeNull();
+    });
+
+    it('indexes 20 background agent owners independently', () => {
+      const state = new ChatState();
+      for (let index = 0; index < 20; index += 1) {
+        state.addMessage({
+          id: `assistant-${index}`,
+          role: 'assistant',
+          content: '',
+          timestamp: index,
+          toolCalls: [{
+            id: `tool-${index}`,
+            name: 'spawn_agent',
+            input: {},
+            status: 'running',
+            subagent: {
+              id: `subagent-${index}`,
+              agentId: `agent-${index}`,
+              description: `Agent ${index}`,
+              isExpanded: false,
+              status: 'running',
+              toolCalls: [],
+            },
+          }],
+        });
+      }
+
+      expect(state.findOwnerMessage({ agentId: 'agent-0' })?.id).toBe('assistant-0');
+      expect(state.findOwnerMessage({ agentId: 'agent-19' })?.id).toBe('assistant-19');
+    });
+
+
     it('addMessage appends messages and publishes the UI snapshot', () => {
       const state = new ChatState();
 
@@ -31,7 +93,7 @@ describe('ChatState', () => {
       state.addMessage(userMessage('2'));
 
       expect(state.messages).toHaveLength(2);
-      expect(state.uiStore.getSnapshot().messages).toHaveLength(2);
+      expect(state.projectionStore.getOrderSnapshot()).toHaveLength(2);
     });
 
     it('clearMessages removes all messages', () => {
@@ -41,7 +103,7 @@ describe('ChatState', () => {
       state.clearMessages();
 
       expect(state.messages).toEqual([]);
-      expect(state.uiStore.getSnapshot().messages).toEqual([]);
+      expect(state.projectionStore.getOrderSnapshot()).toEqual([]);
     });
 
     it('truncateAt removes messages from id onward', () => {
@@ -84,14 +146,15 @@ describe('ChatState', () => {
       };
       state.messages = [message];
       const listener = jest.fn();
-      state.uiStore.subscribe(listener);
+      state.projectionStore.subscribeMessage(message.id, listener);
 
       state.projectStreamChunk(message, { type: 'text', content: 'hello' });
       expect(listener).not.toHaveBeenCalled();
-      state.notifyMessagesChanged();
+      state.notifyMessageChanged(message);
+      state.flushProjection();
 
       expect(listener).toHaveBeenCalledTimes(1);
-      expect(state.uiStore.getSnapshot().messages[0]?.content).toBe('hello');
+      expect(state.projectionStore.getMessageSnapshot(message.id)?.content).toBe('hello');
     });
 
     it('isStreaming setter invokes onStreamingStateChanged', () => {

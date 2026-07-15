@@ -13,9 +13,11 @@ import {
   buildCompactionSummary,
   COMPACTION_SYSTEM_PROMPT,
   DEFAULT_COMPACTION_CONTEXT_WINDOW,
+  estimateActiveContextTokens,
   estimateAgentMessagesTokens,
   estimateTextTokens,
   getCompactionThresholdTokens as computeCompactionThresholdTokens,
+  PiContextTokenIndex,
   selectCompactionCutPoint,
   shouldAutoCompact,
 } from './session/piContextCompaction';
@@ -37,6 +39,23 @@ export interface PiChatCompactionDeps {
   getAuxiliaryModel: () => string | null;
   onLeafIdChanged: (leafId: string | null) => void;
   onAssistantMessageId: (entryId: string) => void;
+}
+
+const contextTokenIndexes = new WeakMap<SessionTreeStore, PiContextTokenIndex>();
+
+function getContextTokenIndex(sessionTree: SessionTreeStore): PiContextTokenIndex {
+  let index = contextTokenIndexes.get(sessionTree);
+  if (!index) {
+    index = new PiContextTokenIndex();
+    contextTokenIndexes.set(sessionTree, index);
+  }
+  return index;
+}
+
+function estimateSessionEntriesTokens(sessionTree: SessionTreeStore): number {
+  const entries = sessionTree.getLinearLlmContextEntries();
+  const index = getContextTokenIndex(sessionTree);
+  return estimateActiveContextTokens(entries, index);
 }
 
 export function shouldAutoCompactSession(
@@ -68,7 +87,7 @@ export function estimateStoredConversationTokens(deps: PiChatCompactionDeps): nu
   if (!deps.sessionTree) {
     return 0;
   }
-  return estimateAgentMessagesTokens(deps.sessionTree.loadAgentMessages());
+  return estimateSessionEntriesTokens(deps.sessionTree);
 }
 
 export function estimateProjectedTurnTokens(
@@ -76,7 +95,7 @@ export function estimateProjectedTurnTokens(
   turn: PreparedChatTurn,
 ): number {
   const sessionTokens = deps.sessionTree
-    ? estimateAgentMessagesTokens(deps.sessionTree.loadAgentMessages())
+    ? estimateSessionEntriesTokens(deps.sessionTree)
     : estimateAgentMessagesTokens(deps.agent?.state.messages ?? []);
   return sessionTokens + estimateTextTokens(turn.prompt);
 }
@@ -88,6 +107,7 @@ export function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {
   return selectCompactionCutPoint(
     deps.sessionTree.getLinearLlmContextEntries(),
     deps.plugin.settings.autoCompactKeepRecentTokens,
+    getContextTokenIndex(deps.sessionTree),
   ) !== null;
 }
 
@@ -152,6 +172,7 @@ export async function compactCurrentSession(
   const cutPoint = selectCompactionCutPoint(
     entries,
     deps.plugin.settings.autoCompactKeepRecentTokens,
+    getContextTokenIndex(deps.sessionTree),
   );
   if (!cutPoint) {
     return false;

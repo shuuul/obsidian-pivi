@@ -1,6 +1,8 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { MessageViewportHandle } from '@pivi/pivi-react';
 import type { MessagePresentationRuntime } from '@pivi/pivi-react/mount';
 
+import { createStreamingMarkdownContentAdapter } from '@/app/ui/createStreamingMarkdownContentAdapter';
 import { createSubagentContentAdapter } from '@/app/ui/createSubagentContentAdapter';
 import { findRedoContext } from '@/ui/chat/branchContext';
 import {
@@ -43,8 +45,15 @@ export async function copyMessage(tab: TabData, message: ChatMessage): Promise<v
 
 export function createMessagePresentation(
   tab: TabData,
-  scrollActiveUserMessage: (direction: 'prev' | 'next') => void,
+  publishViewportHandle: (handle: MessageViewportHandle | null) => void,
 ): MessagePresentationRuntime {
+  const renderer = tab.renderer;
+  if (!renderer) throw new Error('Message presentation requires an initialized renderer');
+  let viewportHandle: MessageViewportHandle | null = null;
+  const markdownAdapter = createStreamingMarkdownContentAdapter(
+    renderer.component,
+    (target, markdown, options) => renderer.renderContent(target, markdown, options),
+  );
   return {
     actions: {
       canCopy: message => getMessageCopyContent(message).length > 0,
@@ -59,16 +68,14 @@ export function createMessagePresentation(
       copy: message => copyMessage(tab, message),
       fork: messageId => tab.renderer?.forkCallback?.(messageId),
       redo: messageId => tab.renderer?.redoCallback?.(messageId),
-      scrollToRecentUser: () => scrollActiveUserMessage('prev'),
+      scrollToRecentUser: messageId => viewportHandle?.scrollToRecentUser(messageId),
+    },
+    setViewportHandle: handle => {
+      viewportHandle = handle;
+      publishViewportHandle(handle);
     },
     contentAdapters: {
-      markdown: {
-        mount: (container, markdown, context) => mountMessageContentAdapter(
-          container,
-          context.generation,
-          target => tab.renderer?.renderContent(target, markdown),
-        ),
-      },
+      markdown: markdownAdapter,
       userContent: {
         mount: (container, message, context) => {
           const text = message.displayContent ?? message.content;

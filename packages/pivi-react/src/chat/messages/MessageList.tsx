@@ -1,37 +1,228 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import {
+  observeElementRect,
+  type Rect,
+  useVirtualizer,
+  type Virtualizer,
+} from '@tanstack/react-virtual';
+import { useCallback, useLayoutEffect, useMemo } from 'react';
 
+import type { ChatProjectionStore, ChatUiSnapshot } from '../../store';
+import { useChatProjectionMessage, useChatProjectionOrder } from '../../store';
 import { MessageView } from './MessageView';
-import type { MessageContentAdapters, MessagePresentationActions } from './types';
+import type {
+  MessageContentAdapters,
+  MessagePresentationActions,
+  MessageViewportHandle,
+} from './types';
+
+const THINKING_ITEM_KEY = 'pivi:streaming-thinking';
+const MESSAGE_ESTIMATED_HEIGHT = 120;
+const MESSAGE_OVERSCAN = 6;
+const SCROLL_END_THRESHOLD = 80;
 
 export interface MessageListProps {
-  readonly messages: readonly ChatMessage[];
+  readonly store: ChatProjectionStore;
+  readonly scrollElement: HTMLElement;
   readonly isStreaming: boolean;
+  readonly autoScrollEnabled: boolean;
+  readonly thinkingIndicator: ChatUiSnapshot['thinkingIndicator'];
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly onViewportHandle?: (handle: MessageViewportHandle | null) => void;
 }
 
-function findStreamingTurnStart(messages: readonly ChatMessage[]): number {
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index];
+function findStreamingTurnStart(
+  store: ChatProjectionStore,
+  messageIds: readonly string[],
+): number {
+  for (let index = messageIds.length - 1; index >= 0; index -= 1) {
+    const message = store.getMessageSnapshot(messageIds[index] ?? '');
     if (message?.role === 'user' && !message.isRebuiltContext) return index;
   }
-  return messages.length;
+  return messageIds.length;
 }
 
-/** Snapshot-driven presentation list. Content-block order remains delegated to AssistantContentView. */
-export function MessageList({ actions, contentAdapters, isStreaming, messages }: MessageListProps) {
-  const streamingTurnStart = isStreaming ? findStreamingTurnStart(messages) : messages.length;
+function StreamingThinkingRow({
+  indicator,
+}: {
+  indicator: ChatUiSnapshot['thinkingIndicator'];
+}) {
+  if (!indicator) return null;
   return (
-    <div className="pivi-message-list">
-      {messages.map((message, index) => (
-        <MessageView
-          actions={actions}
-          contentAdapters={contentAdapters}
-          hideActions={index >= streamingTurnStart}
-          key={message.id}
-          message={message}
-        />
-      ))}
+    <div className={`${indicator.className} pivi-response-meta`}>
+      <span>{indicator.text}</span>
+      <span className="pivi-thinking-hint">{indicator.elapsedLabel}</span>
+    </div>
+  );
+}
+
+function ProjectedMessageRow({
+  actions,
+  contentAdapters,
+  hideActions,
+  isStreaming,
+  messageId,
+  store,
+}: {
+  readonly actions: MessagePresentationActions;
+  readonly contentAdapters?: MessageContentAdapters;
+  readonly hideActions: boolean;
+  readonly isStreaming: boolean;
+  readonly messageId: string;
+  readonly store: ChatProjectionStore;
+}) {
+  const message = useChatProjectionMessage(store, messageId);
+  if (!message) return null;
+  return (
+    <MessageView
+      actions={actions}
+      contentAdapters={contentAdapters}
+      hideActions={hideActions}
+      isStreaming={isStreaming}
+      message={message as ChatMessage}
+    />
+  );
+}
+
+/** Virtualized, entity-subscribed transcript. */
+export function MessageList({
+  actions,
+  autoScrollEnabled,
+  contentAdapters,
+  isStreaming,
+  onViewportHandle,
+  scrollElement,
+  store,
+  thinkingIndicator,
+}: MessageListProps) {
+  const messageIds = useChatProjectionOrder(store);
+  const hasThinking = thinkingIndicator !== null;
+  const count = messageIds.length + (hasThinking ? 1 : 0);
+  const streamingTurnStart = useMemo(
+    () => isStreaming ? findStreamingTurnStart(store, messageIds) : messageIds.length,
+    [isStreaming, messageIds, store],
+  );
+  const getItemKey = useCallback((index: number) => (
+    index < messageIds.length ? messageIds[index] ?? index : THINKING_ITEM_KEY
+  ), [messageIds]);
+  const observeViewportRect = useCallback((
+    instance: Virtualizer<HTMLElement, Element>,
+    callback: (rect: Rect) => void,
+  ) => observeElementRect(
+    instance,
+    rect => callback({
+      width: rect.width || Math.max(1, scrollElement.clientWidth),
+      height: rect.height || Math.max(600, scrollElement.clientHeight),
+    }),
+  ), [scrollElement]);
+
+  const virtualizer = useVirtualizer({
+    anchorTo: 'end',
+    count,
+    directDomUpdates: false,
+    estimateSize: () => MESSAGE_ESTIMATED_HEIGHT,
+    followOnAppend: autoScrollEnabled ? 'auto' : false,
+    getItemKey,
+    getScrollElement: () => scrollElement,
+    initialRect: {
+      width: Math.max(1, scrollElement.clientWidth),
+      height: Math.max(600, scrollElement.clientHeight),
+    },
+    onChange: (instance, sync) => {
+      if (
+        sync
+        && instance.scrollDirection === 'backward'
+        && (instance.scrollOffset ?? 0) <= SCROLL_END_THRESHOLD
+      ) {
+        store.prependPreviousPage();
+      }
+    },
+    overscan: MESSAGE_OVERSCAN,
+    observeElementRect: observeViewportRect,
+    scrollEndThreshold: SCROLL_END_THRESHOLD,
+  });
+
+  useLayoutEffect(() => {
+    store.setOwnerWindow(scrollElement.ownerDocument.defaultView);
+    virtualizer.scrollToEnd({ behavior: 'instant' });
+    return () => store.setOwnerWindow(null);
+  }, [scrollElement, store, virtualizer]);
+
+  useLayoutEffect(() => {
+    const findMessageIndex = (messageId: string): number => messageIds.indexOf(messageId);
+    const findUserIndex = (start: number, direction: 'prev' | 'next'): number => {
+      const step = direction === 'prev' ? -1 : 1;
+      for (let index = start; index >= 0 && index < messageIds.length; index += step) {
+        const candidate = store.getMessageSnapshot(messageIds[index] ?? '');
+        if (candidate?.role === 'user' && !candidate.isRebuiltContext) return index;
+      }
+      return -1;
+    };
+    const handle: MessageViewportHandle = {
+      isAtEnd: threshold => virtualizer.isAtEnd(threshold),
+      scrollToEnd: behavior => virtualizer.scrollToEnd({ behavior }),
+      scrollToMessage: (messageId, align = 'start', behavior = 'smooth') => {
+        const index = findMessageIndex(messageId);
+        if (index >= 0) virtualizer.scrollToIndex(index, { align, behavior });
+      },
+      scrollToRecentUser: (messageId) => {
+        const index = findMessageIndex(messageId);
+        const target = findUserIndex(index - 1, 'prev');
+        if (target >= 0) virtualizer.scrollToIndex(target, { align: 'start', behavior: 'smooth' });
+      },
+      scrollToStart: behavior => virtualizer.scrollToIndex(0, { align: 'start', behavior }),
+      scrollToUser: (direction) => {
+        const range = virtualizer.range;
+        const start = direction === 'prev'
+          ? (range?.startIndex ?? messageIds.length) - 1
+          : (range?.endIndex ?? -1) + 1;
+        const target = findUserIndex(start, direction);
+        if (target >= 0) virtualizer.scrollToIndex(target, { align: 'start', behavior: 'smooth' });
+      },
+    };
+    onViewportHandle?.(handle);
+    return () => onViewportHandle?.(null);
+  }, [messageIds, onViewportHandle, store, virtualizer]);
+
+  if (count === 0) return <div className="pivi-message-list" />;
+
+  return (
+    <div
+      className="pivi-message-list pivi-message-list-virtual"
+      style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}
+    >
+      {virtualizer.getVirtualItems().map((virtualItem) => {
+        const messageId = messageIds[virtualItem.index];
+        return (
+          <div
+            className="pivi-message-virtual-row"
+            data-index={virtualItem.index}
+            key={virtualItem.key}
+            ref={virtualizer.measureElement}
+            style={{
+              left: 0,
+              position: 'absolute',
+              top: 0,
+              transform: `translateY(${virtualItem.start}px)`,
+              width: '100%',
+            }}
+          >
+            {messageId
+              ? (
+                <ProjectedMessageRow
+                  actions={actions}
+                  contentAdapters={contentAdapters}
+                  hideActions={virtualItem.index >= streamingTurnStart}
+                  isStreaming={isStreaming && virtualItem.index >= streamingTurnStart}
+                  messageId={messageId}
+                  store={store}
+                />
+              )
+              : <StreamingThinkingRow indicator={thinkingIndicator} />}
+          </div>
+        );
+      })}
     </div>
   );
 }

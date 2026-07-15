@@ -1,4 +1,5 @@
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { MessageViewportHandle } from '@pivi/pivi-react';
 import {
   ActiveChatUiBridge,
   type ChatSurfaceActions,
@@ -79,6 +80,7 @@ export function createImperativeChatAdapter(
   let inputTabBarPortalEl: HTMLElement | null = null;
   let tabContentEl: HTMLElement | null = null;
   let pendingTabBarUpdate: ScheduledAnimationFrame | null = null;
+  const messageViewports = new Map<TabId, MessageViewportHandle>();
   const chatHost: PiviChatHost = { app: plugin.app };
 
   const getChatTabsSnapshot = (): ChatTabsSnapshot => ({
@@ -121,40 +123,24 @@ export function createImperativeChatAdapter(
   };
 
   const scrollActiveMessages = (position: 'top' | 'bottom'): void => {
-    const messages = tabManager?.getActiveTab()?.dom.messagesEl;
-    if (!messages) return;
-    messages.scrollTo({ top: position === 'top' ? 0 : messages.scrollHeight, behavior: 'smooth' });
+    const tab = tabManager?.getActiveTab();
+    if (!tab) return;
+    const viewport = messageViewports.get(tab.id);
+    if (position === 'top') viewport?.scrollToStart('smooth');
+    else viewport?.scrollToEnd('smooth');
   };
 
   const scrollActiveUserMessage = (direction: 'prev' | 'next'): void => {
-    const messages = tabManager?.getActiveTab()?.dom.messagesEl;
-    if (!messages) return;
-    const userMessages = Array.from(messages.querySelectorAll<HTMLElement>('.pivi-message-user'));
-    const threshold = 30;
-    if (direction === 'prev') {
-      for (let index = userMessages.length - 1; index >= 0; index--) {
-        const message = userMessages[index];
-        if (message && message.offsetTop < messages.scrollTop - threshold) {
-          messages.scrollTo({ top: message.offsetTop - 10, behavior: 'smooth' });
-          return;
-        }
-      }
-      scrollActiveMessages('top');
-      return;
-    }
-    for (const message of userMessages) {
-      if (message.offsetTop > messages.scrollTop + threshold) {
-        messages.scrollTo({ top: message.offsetTop - 10, behavior: 'smooth' });
-        return;
-      }
-    }
-    scrollActiveMessages('bottom');
+    const tab = tabManager?.getActiveTab();
+    if (!tab) return;
+    messageViewports.get(tab.id)?.scrollToUser(direction);
   };
 
   const syncActiveChatSurface = (tabId?: TabId | null): void => {
     const tab = tabId ? tabManager?.getTab(tabId) : tabManager?.getActiveTab();
     activeChatBridge?.setActive(
       tab?.state.uiStore ?? null,
+      tab?.state.projectionStore ?? null,
       tab
         ? {
             welcome: tab.dom.welcomePortalEl,
@@ -162,11 +148,15 @@ export function createImperativeChatAdapter(
             todo: tab.dom.todoPortalEl,
             navigation: tab.dom.navigationPortalEl,
             messages: tab.dom.messagesPortalEl,
+            messagesViewport: tab.dom.messagesEl,
             composer: tab.dom.composerPortalEl,
           }
         : null,
       tab?.ui.composerActions ?? null,
-      tab ? createMessagePresentation(tab, scrollActiveUserMessage) : null,
+      tab ? createMessagePresentation(tab, (handle) => {
+        if (handle) messageViewports.set(tab.id, handle);
+        else messageViewports.delete(tab.id);
+      }) : null,
     );
   };
 
@@ -336,6 +326,7 @@ export function createImperativeChatAdapter(
         mountedPorts = null;
         activeChatBridge?.dispose();
         activeChatBridge = null;
+        messageViewports.clear();
 
         tabContentEl = null;
         chatTabsStore = null;

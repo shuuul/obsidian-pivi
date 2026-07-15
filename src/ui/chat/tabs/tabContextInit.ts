@@ -28,7 +28,6 @@ export function initializeContextManagers(
         tab.controllers.browserSelectionController?.updateContextRowVisibility();
         tab.controllers.canvasSelectionController?.updateContextRowVisibility();
         autoResizeTextarea(dom.richInput.el);
-        tab.renderer?.scrollToBottomIfNeeded();
       },
       getExternalContexts: () =>
         tab.ui.externalContextSelector?.getExternalContexts() || [],
@@ -52,7 +51,6 @@ export function initializeContextManagers(
         tab.controllers.browserSelectionController?.updateContextRowVisibility();
         tab.controllers.canvasSelectionController?.updateContextRowVisibility();
         autoResizeTextarea(dom.richInput.el);
-        tab.renderer?.scrollToBottomIfNeeded();
       },
     },
     dom.contextRowEl,

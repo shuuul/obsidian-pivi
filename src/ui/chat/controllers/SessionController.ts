@@ -77,6 +77,7 @@ export class SessionController {
     try {
       this.deps.dismissPendingInlinePrompts?.();
       this.deps.resetStreamingState();
+      state.flushProjection();
 
       if (force && state.isStreaming) {
         state.cancelRequested = true;
@@ -141,6 +142,7 @@ export class SessionController {
     const { settings, sessions, state } = this.deps;
     const settingsSnapshot = settings.getSettingsSnapshot();
     this.deps.resetStreamingState();
+    state.flushProjection();
 
     const openSessionId = state.currentOpenSessionId;
     const openSession = openSessionId ? await sessions.getOpenSession(openSessionId) : null;
@@ -203,6 +205,7 @@ export class SessionController {
     try {
       this.deps.dismissPendingInlinePrompts?.();
       this.deps.resetStreamingState();
+      state.flushProjection();
       await this.save();
 
       subagentManager.orphanAllActive();
@@ -238,6 +241,7 @@ export class SessionController {
    */
   async save(updateLastResponse = false): Promise<void> {
     const { sessions, state } = this.deps;
+    state.flushProjection();
 
     // Entry point with no messages - nothing to save
     if (!state.currentOpenSessionId && state.messages.length === 0) {

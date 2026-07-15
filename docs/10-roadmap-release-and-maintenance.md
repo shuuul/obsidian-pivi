@@ -22,6 +22,7 @@ This page records verified technical work and release/documentation routes. It i
 
 ### Later
 
+- Evolve long-session paging, Agent-run projection, context checkpoints, and the Narrative / Activity / Memory visual language according to [Chat UI evolution](11-chat-ui-evolution.md), promoting only measured and accepted slices into Now or Next.
 - Re-measure bundle composition before changing provider dependencies; keep Google provider/auth code bundled unless a tested replacement shim exists.
 - Split large modules only when the affected behavior is next changed and the extracted boundary has domain meaning.
 - Keep `PiChatService`, `ChatPorts`, React presentation ports, and host ports narrow as capabilities evolve.

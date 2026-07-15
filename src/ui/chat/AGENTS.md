@@ -50,7 +50,7 @@ flowchart TD
 4. Loading history produces a `bound_cold` tab associated with `openSessionId` and `sessionFile`; runtime work remains lazy.
 5. The first send calls `initializeTabService()`. This is the only UI location that calls `ports.runtime.createChatService()`. It passively syncs the session and moves the tab to `bound_active`; `query()` starts actual work.
 6. `InputController` delegates turn capture to composer helpers, streams `PiChatService.query()` chunks through `StreamController`, finalizes the turn, saves session projection, and processes any queued turn.
-7. `StreamController` serially reduces chunks into durable `ChatMessage` state and performs non-DOM service effects. Streaming is snapshot-only: React renders every live/stored message from `ChatUiSnapshot.messages`; only explicit Markdown/tool/diff/ask-user/subagent slots invoke imperative adapters.
+7. `StreamController` serially reduces chunks into durable `ChatMessage` state and performs non-DOM service effects. Durable state changes immediately; `ChatProjectionStore` coalesces React publication by animation frame and preserves recent-first projection pages. `ChatUiStore` no longer contains messages. Only explicit Markdown/tool/diff/ask-user/subagent slots invoke imperative adapters.
 8. `PiviViewHost.onClose()` first asks the semantic view handle to persist tab state, then disposes the imperative adapter and React root. Adapter disposal calls `TabManager.destroy()` to clean tabs, subscriptions, controllers, services, and DOM listeners; persistence is a host-lifecycle operation, not an implicit side effect of adapter disposal.
 
 ## Subdirectory map
@@ -174,7 +174,7 @@ Do not move retry/hydrate logic into core `SubagentManager` without that boundar
 - **Chunk ordering is semantic.** Text, thinking, tools, compact boundaries, and subagents must be finalized in arrival order or stored history will render differently from the live turn.
 - **Streaming tool input is incremental.** Empty or partial repeated `tool_use` chunks are normal.
 - **Provider message boundaries can replace the assistant placeholder.** Route them through `InputProviderBoundaryHandler` before ordinary stream rendering.
-- **Background subagent chunks may outlive the foreground turn.** Correlate by task/agent/tool IDs, persist terminal state when appropriate, and orphan unresolved work during session reset.
+- **Background subagent chunks may outlive the foreground turn.** Correlate by task/agent/tool IDs through the maintained `ChatState` reverse indexes, persist terminal state when appropriate, and orphan unresolved work during session reset. Never scan assistant history for late-event ownership.
 - **Cancellation is cooperative.** Set `cancelRequested`, invalidate stream generation when resetting, restore queued composer content, and call `PiChatService.cancel()`.
 - **Async Markdown can finish late.** Use render-generation or element-identity checks and never let stale work overwrite a newer block.
 - **Auto-scroll is user-sensitive.** Scrolling away disables it; only re-enable near the bottom after the existing delay.

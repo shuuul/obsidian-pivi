@@ -101,7 +101,6 @@ export function handleRegularToolResult(
   applyAskUserResolvedAnswers(existingToolCall, chunk, normalizedContent);
   applyToolResultDiff(chunk, existingToolCall, isBlocked);
   notifyModifiedFiles(deps, chunk, existingToolCall, isBlocked);
-  deps.state.notifyMessagesChanged();
   deps.showThinkingIndicator();
 }
 

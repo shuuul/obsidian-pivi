@@ -1,4 +1,3 @@
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { memo, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -11,7 +10,6 @@ import { useActiveChatUiSlice } from '../useActiveChatUiSlice';
 import { EMPTY_MESSAGE_ACTIONS, EMPTY_SURFACE_ACTIONS } from './constants';
 import { NavigationSurface } from './NavigationSurface';
 import { QueueIndicator } from './QueueIndicator';
-import { StreamingThinkingIndicator } from './StreamingThinkingIndicator';
 import { TodoSurface } from './TodoSurface';
 import { WelcomeSurface } from './WelcomeSurface';
 
@@ -20,8 +18,7 @@ const QUEUE_SLICE_KEYS = ['queuedTurn'] as const;
 const TODO_SLICE_KEYS = ['currentTodoVisualizationModel'] as const;
 const NAVIGATION_SLICE_KEYS = ['autoScrollEnabled', 'navigationVisible'] as const;
 const COMPOSER_SLICE_KEYS = ['composer', 'externalContext', 'usage', 'isStreaming'] as const;
-const MESSAGES_SLICE_KEYS = ['messages', 'isStreaming'] as const;
-const THINKING_SLICE_KEYS = ['thinkingIndicator'] as const;
+const MESSAGES_SLICE_KEYS = ['isStreaming', 'autoScrollEnabled', 'thinkingIndicator'] as const;
 
 function usePortalTargets(activeChat: ActiveChatUiBridge) {
   return useSyncExternalStore(
@@ -47,11 +44,20 @@ function useMessagePresentation(activeChat: ActiveChatUiBridge) {
   );
 }
 
-function useHasMessages(activeChat: ActiveChatUiBridge): boolean {
+function useProjectionStore(activeChat: ActiveChatUiBridge) {
   return useSyncExternalStore(
     activeChat.subscribe,
-    () => activeChat.getSnapshot().messages.length > 0,
-    () => activeChat.getSnapshot().messages.length > 0,
+    activeChat.getProjectionStore,
+    activeChat.getProjectionStore,
+  );
+}
+
+function useHasMessages(activeChat: ActiveChatUiBridge): boolean {
+  const projectionStore = useProjectionStore(activeChat);
+  return useSyncExternalStore(
+    projectionStore?.subscribeOrder ?? (() => () => {}),
+    () => (projectionStore?.getOrderSnapshot().length ?? 0) > 0,
+    () => (projectionStore?.getOrderSnapshot().length ?? 0) > 0,
   );
 }
 
@@ -148,31 +154,22 @@ const MessagesPortal = memo(function MessagesPortal({
   const snapshot = useActiveChatUiSlice(activeChat, MESSAGES_SLICE_KEYS);
   const targets = usePortalTargets(activeChat);
   const messagePresentation = useMessagePresentation(activeChat);
-  if (!targets?.messages) return null;
+  const projectionStore = useProjectionStore(activeChat);
+  if (!targets?.messages || !targets.messagesViewport || !projectionStore) return null;
   const actions: MessagePresentationActions = messagePresentation?.actions ?? EMPTY_MESSAGE_ACTIONS;
   return createPortal(
     <>
       <MessageList
         actions={actions}
+        autoScrollEnabled={snapshot.autoScrollEnabled}
         contentAdapters={messagePresentation?.contentAdapters}
         isStreaming={snapshot.isStreaming}
-        messages={snapshot.messages as unknown as readonly ChatMessage[]}
+        onViewportHandle={messagePresentation?.setViewportHandle}
+        scrollElement={targets.messagesViewport}
+        store={projectionStore}
+        thinkingIndicator={snapshot.thinkingIndicator}
       />
     </>,
-    targets.messages,
-  );
-});
-
-const ThinkingPortal = memo(function ThinkingPortal({
-  activeChat,
-}: {
-  activeChat: ActiveChatUiBridge;
-}) {
-  const snapshot = useActiveChatUiSlice(activeChat, THINKING_SLICE_KEYS);
-  const targets = usePortalTargets(activeChat);
-  if (!targets?.messages) return null;
-  return createPortal(
-    <StreamingThinkingIndicator indicator={snapshot.thinkingIndicator} />,
     targets.messages,
   );
 });
@@ -194,7 +191,6 @@ export const ConnectedActiveTabSurfaces = memo(function ConnectedActiveTabSurfac
       <NavigationPortal activeChat={activeChat} surfaceActions={shell.surfaceActions} />
       <ComposerPortal activeChat={activeChat} />
       <MessagesPortal activeChat={activeChat} />
-      <ThinkingPortal activeChat={activeChat} />
     </>
   );
 });

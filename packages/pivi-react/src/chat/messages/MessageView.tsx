@@ -151,10 +151,11 @@ export interface MessageViewProps {
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
   readonly hideActions?: boolean;
+  readonly isStreaming?: boolean;
 }
 
 /** The sole React owner of a visible message shell and its action toolbar. */
-export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, message }: MessageViewProps) {
+export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, isStreaming = false, message }: MessageViewProps) {
   const t = useT();
   if (message.isRebuiltContext) return null;
 
@@ -196,7 +197,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
           ? <UserContent contentAdapters={contentAdapters} message={message} />
           : (
             <>
-              <AssistantContentView contentAdapters={contentAdapters} message={message} />
+              <AssistantContentView contentAdapters={contentAdapters} isStreaming={isStreaming} message={message} />
               {message.isInterrupt ? <InterruptIndicator /> : null}
             </>
           )}
@@ -211,7 +212,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
               <button
                 aria-label={t('chat.messageActions.scrollToRecentUserAriaLabel')}
                 className="pivi-message-action-btn pivi-message-scroll-user-btn"
-                onClick={actions.scrollToRecentUser}
+                onClick={() => actions.scrollToRecentUser(message.id)}
                 type="button"
               >
                 <PlatformIcon name="user" />

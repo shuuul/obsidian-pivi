@@ -25,4 +25,6 @@ export type {
   MessageContentAdapterContext,
   MessageContentAdapters,
   MessagePresentationActions,
+  MessageViewportHandle,
+  StreamingMarkdownValue,
 } from './types';

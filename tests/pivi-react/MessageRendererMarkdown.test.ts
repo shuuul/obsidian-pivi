@@ -1,4 +1,4 @@
-import { MarkdownRenderer } from 'obsidian';
+import { Component, MarkdownRenderer } from 'obsidian';
 
 import {
   type MessageRendererMarkdownHost,
@@ -12,7 +12,7 @@ function createHost(): MessageRendererMarkdownHost {
         getActiveFile: () => null,
       },
     },
-    component: {},
+    component: new Component(),
     plugin: {},
     ports: {},
   } as unknown as MessageRendererMarkdownHost;

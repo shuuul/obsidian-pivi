@@ -70,7 +70,11 @@ The stable parent tool-call ID is the UI key; background jobs also have an agent
 
 Child `text`, `tool_use`, and `tool_result` events become subagent stream chunks. Terminal background events become `async_subagent_result`. Active-turn events enter the current query queue only when the spawn ID was registered for that turn. Older or post-turn events use the runtime listener and are routed back to the owning assistant message, preventing contamination of a later turn.
 
+Chat state maintains reverse indexes from subagent, runtime-agent, and tool IDs to the owning message. Creation, hydration, mutation, truncation, session switching, and clearing rebuild or update those indexes. Background and late events therefore resolve their owner directly rather than scanning assistant history.
+
 React owns message ordering and an empty content-adapter slot. The app bridge updates the mounted imperative subagent renderer incrementally rather than remounting it on every chunk. Stored and live subagents converge on the same pure `ChatMessage` representation.
+
+Streaming Markdown uses one stable adapter mount per content block. Completed safe prefixes are sealed only at neutral blank-line boundaries and rendered once through Obsidian; the unsealed tail is appended as escaped plain text. Fenced code, display math, HTML blocks, lists, tables, blockquotes, and callouts remain in the tail until a safe boundary. Rewrites rebuild that block, while terminal state replaces the temporary segments with one complete Obsidian fidelity render. Every rendered segment owns an independent Obsidian `Component` scope so virtual-row unmount removes postprocessors, observers, and timers.
 
 ## Lifecycle and failure semantics
 

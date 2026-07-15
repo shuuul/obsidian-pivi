@@ -52,7 +52,6 @@ export function wireComposerChrome(
       tab.controllers.browserSelectionController?.updateContextRowVisibility();
       tab.controllers.canvasSelectionController?.updateContextRowVisibility();
       autoResizeTextarea(dom.richInput.el);
-      tab.renderer?.scrollToBottomIfNeeded();
     },
   });
 

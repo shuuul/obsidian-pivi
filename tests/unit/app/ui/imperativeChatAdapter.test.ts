@@ -1,11 +1,12 @@
 import {
   ChatUiStore,
+  ChatProjectionStore,
   createInitialChatUiSnapshot,
   type ChatTabSnapshotItem,
 } from '@pivi/pivi-react/store';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { Editor, MarkdownView } from 'obsidian';
+import { Component, type Editor, type MarkdownView } from 'obsidian';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import { createImperativeChatAdapter } from '@/app/ui/imperativeChatAdapter';
@@ -38,6 +39,7 @@ type TestTab = {
   state: {
     isStreaming: boolean;
     uiStore?: ChatUiStore;
+    projectionStore?: ChatProjectionStore;
     messages?: ChatMessage[];
     autoScrollEnabled?: boolean;
   };
@@ -69,7 +71,12 @@ type TestTab = {
     messagesBottomControlsEl: HTMLElement;
     messagesEl: HTMLElement;
   };
-  renderer?: null;
+  renderer?: {
+    component: Component;
+    renderContent: jest.Mock<Promise<void>, [HTMLElement, string, unknown?]>;
+    forkCallback?: jest.Mock<Promise<void>, [string]>;
+    redoCallback?: jest.Mock<Promise<void>, [string]>;
+  } | null;
 };
 
 type TestManager = {
@@ -148,6 +155,7 @@ function createPresentationTab(uiStore: ChatUiStore): TestTab {
     state: {
       isStreaming: false,
       messages: [],
+      projectionStore: new ChatProjectionStore(),
       uiStore,
     },
     dom: {
@@ -160,7 +168,10 @@ function createPresentationTab(uiStore: ChatUiStore): TestTab {
       messagesBottomControlsEl: createPortalElement(),
       messagesEl: createPortalElement(),
     },
-    renderer: null,
+    renderer: {
+      component: new Component(),
+      renderContent: jest.fn(async (_target: HTMLElement, _markdown: string) => undefined),
+    },
   });
 }
 
@@ -294,6 +305,7 @@ describe('imperative chat semantic view handle', () => {
       todo: activeTab.dom?.todoPortalEl,
       navigation: activeTab.dom?.navigationPortalEl,
       messages: activeTab.dom?.messagesPortalEl,
+      messagesViewport: activeTab.dom?.messagesEl,
       composer: activeTab.dom?.composerPortalEl,
     });
 

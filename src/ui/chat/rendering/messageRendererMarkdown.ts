@@ -196,7 +196,7 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
   getActiveWindow(container).requestAnimationFrame(applyScale);
 }
 
-export function enhanceMermaidDiagrams(el: HTMLElement): void {
+export function enhanceMermaidDiagrams(el: HTMLElement): () => void {
   const enhanceAll = () => {
     el.querySelectorAll<HTMLElement>('.mermaid, .block-language-mermaid').forEach(enhanceMermaidDiagram);
   };
@@ -204,20 +204,25 @@ export function enhanceMermaidDiagrams(el: HTMLElement): void {
   enhanceAll();
 
   const win = getActiveWindow(el) as MermaidWindow;
-  if (typeof win.MutationObserver === 'undefined') return;
+  if (typeof win.MutationObserver === 'undefined') return () => undefined;
 
   mermaidObservers.get(el)?.disconnect();
   const MutationObserverCtor = win.MutationObserver;
   const observer = new MutationObserverCtor(() => enhanceAll());
   mermaidObservers.set(el, observer);
   observer.observe(el, { childList: true, subtree: true });
-  win.setTimeout(() => {
+  const timeout = win.setTimeout(() => {
     enhanceAll();
     observer.disconnect();
     if (mermaidObservers.get(el) === observer) {
       mermaidObservers.delete(el);
     }
   }, 5000);
+  return () => {
+    win.clearTimeout(timeout);
+    observer.disconnect();
+    if (mermaidObservers.get(el) === observer) mermaidObservers.delete(el);
+  };
 }
 
 export async function renderUserMessageText(
@@ -257,7 +262,7 @@ export async function renderMarkdownContent(
       renderMarkdown,
       el,
       options?.sourcePath ?? getMarkdownRenderSourcePath(host),
-      host.component,
+      options?.component ?? host.component,
     );
 
     el.querySelectorAll<HTMLElement>('ul.contains-task-list').forEach((list) => {
@@ -267,7 +272,8 @@ export async function renderMarkdownContent(
       item.classList.add('pivi-markdown-task-item');
     });
 
-    enhanceMermaidDiagrams(el);
+    const component = options?.component ?? host.component;
+    component.register(enhanceMermaidDiagrams(el));
 
     el.querySelectorAll('pre').forEach((pre) => {
       // Obsidian keeps YAML frontmatter in a hidden pre as a metadata source.

@@ -193,7 +193,7 @@ export class InputTurnPipeline {
         ...(assistantMsg.contentBlocks ?? []),
         { type: 'text', content },
       ];
-      state.notifyMessagesChanged();
+      state.notifyMessageChanged(assistantMsg);
     } finally {
       await this.finalizeOutgoingTurn({
         streamGeneration,
@@ -333,19 +333,18 @@ export class InputTurnPipeline {
         ...(options.finalAssistantMsg.contentBlocks ?? []),
         { type: 'text', content: interruption },
       ];
-      state.notifyMessagesChanged();
+      state.notifyMessageChanged(options.finalAssistantMsg);
     }
     streamController.hideThinkingIndicator();
     state.isStreaming = false;
     state.cancelRequested = false;
-    state.notifyMessagesChanged();
-
     captureResponseDurationFooter({
       message: options.finalAssistantMsg,
       responseStartTime: state.responseStartTime,
       didCancelThisTurn,
     });
-    state.notifyMessagesChanged();
+    state.notifyMessageChanged(options.finalAssistantMsg);
+    state.flushProjection();
 
     this.host.deps.getSubagentManager().resetStreamingState();
 

@@ -1,4 +1,4 @@
-import type { ChatIconSvg, ChatMessage, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ChatIconSvg, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import type { TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 import { useSyncExternalStore } from 'react';
 
@@ -25,7 +25,6 @@ export interface ThinkingIndicatorSnapshot {
 }
 
 export interface ChatUiSnapshotData {
-  messages: ChatMessage[];
   isStreaming: boolean;
   cancelRequested: boolean;
   streamGeneration: number;
@@ -123,38 +122,6 @@ function cloneSerializable<T>(value: T): T {
   return cloneSerializableValue(value) as T;
 }
 
-function serializableValuesEqual(left: unknown, right: unknown): boolean {
-  if (left === right) return true;
-  if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
-    return false;
-  }
-  if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
-    return left.every((value, index) => serializableValuesEqual(value, right[index]));
-  }
-  const leftEntries = Object.entries(left);
-  const rightEntries = Object.entries(right);
-  if (leftEntries.length !== rightEntries.length) return false;
-  return leftEntries.every(([key, value]) => (
-    Object.prototype.hasOwnProperty.call(right, key)
-    && serializableValuesEqual(value, (right as Record<string, unknown>)[key])
-  ));
-}
-
-function cloneMessagesWithStructuralSharing(
-  messages: ChatMessage[],
-  previousMessages: readonly DeepReadonly<ChatMessage>[],
-): ChatMessage[] {
-  const previousById = new Map(previousMessages.map(message => [message.id, message]));
-  return messages.map((message) => {
-    const cloned = cloneSerializable(message);
-    const previous = previousById.get(message.id);
-    return previous && serializableValuesEqual(cloned, previous)
-      ? previous as ChatMessage
-      : cloned;
-  });
-}
-
 function deepFreeze<T>(value: T): DeepReadonly<T> {
   if (value === null || typeof value !== 'object' || Object.isFrozen(value)) {
     return value as DeepReadonly<T>;
@@ -173,7 +140,6 @@ function freezeSnapshot(data: ChatUiSnapshotData): ChatUiSnapshot {
 
 export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
   return {
-    messages: [],
     isStreaming: false,
     cancelRequested: false,
     streamGeneration: 0,
@@ -234,17 +200,10 @@ export class ChatUiStore {
     const changedKeys = new Set(Object.keys(patch) as ChatUiSnapshotKey[]);
     if (changedKeys.size === 0) return;
 
-    const patchWithoutMessages = { ...patch };
-    let sharedMessages: ChatMessage[] | undefined;
-    if (patch.messages) {
-      sharedMessages = cloneMessagesWithStructuralSharing(patch.messages, this.snapshot.messages);
-      delete patchWithoutMessages.messages;
-    }
-    const clonedPatch = deepFreeze(cloneSerializable(patchWithoutMessages));
+    const clonedPatch = deepFreeze(cloneSerializable(patch));
     this.snapshot = freezeSnapshot({
       ...(this.snapshot as ChatUiSnapshotData),
       ...(clonedPatch as ChatUiSnapshotPatch),
-      ...(sharedMessages ? { messages: sharedMessages } : {}),
     });
     for (const listener of this.listeners) {
       listener(changedKeys);

@@ -76,6 +76,12 @@ The React switcher groups open tabs before archived tabs, supports title editing
 
 Switching a bound tab saves the current session, dismisses inline prompts, invalidates queued/stream state, orphans active subagent presentation, resets transient state, synchronizes the runtime if present, hydrates messages/usage/todo/current-note projections, and resets session-only external roots to current pinned roots.
 
+### Long-session projection
+
+Session hydration still reads and maps the complete JSONL file into durable `OpenSessionState`; the current workspace file-store contract does not support range reads. React receives a separate `ChatProjectionStore` view: it initially publishes the latest 100 messages and prepends older in-memory pages in groups of 100 when the virtual viewport reaches the top. Stable message IDs allow the virtualizer to preserve the visible anchor across a prepend. This reduces mounted/projected UI work, but does not reduce JSONL disk read or parse cost.
+
+Saving, switching, truncating, forking, and disposing synchronously flush pending projection events first. Durable `ChatMessage[]`, session identity, and the JSONL wire format remain unchanged.
+
 Restore creates tabs inactive, isolates individual failures, and activates the persisted target only after construction finishes. This avoids accidentally warming the first restored tab. If every entry fails, Pivi creates a blank tab.
 
 Closing an active tab selects the visually adjacent open tab or creates a blank tab before destruction, avoiding an empty-shell flash. A fork whose new tab cannot be created deletes the newly created session; cleanup failures are logged without hiding the original error.

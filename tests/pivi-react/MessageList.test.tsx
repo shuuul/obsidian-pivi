@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { createI18n, I18nProvider, MessageList } from '@pivi/pivi-react';
+import { ChatProjectionStore } from '@pivi/pivi-react/store';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
@@ -23,6 +24,35 @@ const messages: ChatMessage[] = [
   },
 ];
 
+const scrollElement = document.createElement('div');
+Object.defineProperties(scrollElement, {
+  clientHeight: { configurable: true, value: 600 },
+  clientWidth: { configurable: true, value: 480 },
+});
+
+function TestMessageList({
+  actions,
+  isStreaming,
+  messages: currentMessages,
+}: {
+  actions: Parameters<typeof MessageList>[0]['actions'];
+  isStreaming: boolean;
+  messages: ChatMessage[];
+}) {
+  const store = new ChatProjectionStore();
+  store.replaceAll(currentMessages);
+  return (
+    <MessageList
+      actions={actions}
+      autoScrollEnabled
+      isStreaming={isStreaming}
+      scrollElement={scrollElement}
+      store={store}
+      thinkingIndicator={null}
+    />
+  );
+}
+
 function renderList(overrides: Partial<Parameters<typeof MessageList>[0]['actions']> = {}) {
   const actions = {
     canCopy: jest.fn(() => true),
@@ -36,13 +66,40 @@ function renderList(overrides: Partial<Parameters<typeof MessageList>[0]['action
   };
   render(withTestPresentationPlatform(
     <I18nProvider i18n={createI18n()}>
-      <MessageList actions={actions} isStreaming={false} messages={messages} />
+      <TestMessageList actions={actions} isStreaming={false} messages={messages} />
     </I18nProvider>,
   ));
   return actions;
 }
 
 describe('MessageList', () => {
+  it('keeps a 5K transcript mounted row count bounded by the viewport and overscan', () => {
+    const longTranscript: ChatMessage[] = Array.from({ length: 5_000 }, (_, index) => ({
+      id: `message-${index}`,
+      role: index % 2 === 0 ? 'user' : 'assistant',
+      content: `Message ${index}`,
+      timestamp: index,
+    }));
+    const actions = {
+      canCopy: jest.fn(() => false),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+    const rendered = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <TestMessageList actions={actions} isStreaming={false} messages={longTranscript} />
+      </I18nProvider>,
+    ));
+
+    const mountedRows = rendered.container.querySelectorAll('.pivi-message-virtual-row').length;
+    expect(mountedRows).toBeGreaterThan(0);
+    expect(mountedRows).toBeLessThanOrEqual(20);
+  });
+
   it('renders snapshot messages and delegates only eligible actions', () => {
     const actions = renderList();
 
@@ -92,7 +149,7 @@ describe('MessageList', () => {
     };
     const rendered = render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <MessageList actions={actions} isStreaming messages={currentMessages} />
+        <TestMessageList actions={actions} isStreaming messages={currentMessages} />
       </I18nProvider>,
     ));
 
@@ -103,7 +160,7 @@ describe('MessageList', () => {
 
     rendered.rerender(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <MessageList actions={actions} isStreaming={false} messages={currentMessages} />
+        <TestMessageList actions={actions} isStreaming={false} messages={currentMessages} />
       </I18nProvider>,
     ));
 
@@ -130,7 +187,7 @@ describe('MessageList', () => {
     };
     render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <MessageList actions={actions} isStreaming={false} messages={[rebuilt]} />
+        <TestMessageList actions={actions} isStreaming={false} messages={[rebuilt]} />
       </I18nProvider>,
     ));
 
@@ -158,7 +215,7 @@ describe('MessageList', () => {
     };
     render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <MessageList actions={actions} isStreaming={false} messages={[message]} />
+        <TestMessageList actions={actions} isStreaming={false} messages={[message]} />
       </I18nProvider>,
     ));
 
@@ -228,7 +285,7 @@ describe('MessageList', () => {
 
     const { container } = render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <MessageList
+        <TestMessageList
           actions={actions}
           isStreaming={false}
           messages={[emptyAssistant, interruptOnly, interruptWithContent, toolOnly, liveCancelAlreadyInContent]}

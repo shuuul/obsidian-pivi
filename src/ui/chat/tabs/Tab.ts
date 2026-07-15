@@ -193,7 +193,6 @@ export function initializeTabUI(
   dom.eventCleanups.push(wireMessageViewport({
     messagesEl: dom.messagesEl,
     messagesPortalEl: dom.messagesPortalEl,
-    settings: ports.settings,
     state,
   }));
 
@@ -249,6 +248,8 @@ export function destroyTab(tab: TabData): Promise<void> {
 
   tab.services.subagentManager.orphanAllActive();
   tab.services.subagentManager.clear();
+  tab.state.flushProjection();
+  tab.state.projectionStore.dispose();
 
   for (const cleanup of tab.dom.eventCleanups) {
     cleanup();

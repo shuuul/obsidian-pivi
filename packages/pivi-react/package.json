@@ -12,10 +12,11 @@
     "./store": "./src/store/index.ts"
   },
   "dependencies": {
-    "@pivi/pivi-agent-core": "*",
     "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.6",
-    "@lobehub/icons-static-svg": "^1.91.0"
+    "@lobehub/icons-static-svg": "^1.91.0",
+    "@pivi/pivi-agent-core": "*",
+    "@tanstack/react-virtual": "^3.14.6"
   },
   "peerDependencies": {
     "react": "^18.3.1",

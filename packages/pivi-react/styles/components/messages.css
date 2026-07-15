@@ -43,6 +43,25 @@
   gap: 0;
 }
 
+.pivi-react-messages-slot,
+.pivi-message-list {
+  width: 100%;
+}
+
+.pivi-message-virtual-row {
+  display: flex;
+  flex-direction: column;
+  padding-block-end: var(--pivi-spacing-sm);
+}
+
+.pivi-message-virtual-row > .pivi-message {
+  flex: 0 0 auto;
+}
+
+.pivi-streaming-markdown-tail {
+  white-space: pre-wrap;
+}
+
 .pivi-messages>:not(.pivi-hidden)+:not(.pivi-hidden) {
   margin-block-start: var(--pivi-spacing-sm);
 }

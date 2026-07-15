@@ -113,7 +113,7 @@ describe('beginOutgoingTurn', () => {
     expect(state.welcomeGreeting).toBeNull();
     expect(state.uiStore.getSnapshot().welcomeGreeting).toBeNull();
     expect(state.messages).toEqual([result.userMsg]);
-    expect(state.uiStore.getSnapshot().messages).toEqual([result.userMsg]);
+    expect(state.projectionStore.getMessageSnapshot(result.userMsg.id)).toEqual(result.userMsg);
     expect(result.userMsg).toMatchObject({
       id: 'user-1',
       role: 'user',

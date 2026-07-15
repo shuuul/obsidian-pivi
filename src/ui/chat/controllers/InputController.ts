@@ -15,7 +15,6 @@ import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { ComposerInlinePrompts } from '@/ui/chat/composer/ComposerInlinePrompts';
-import { getActiveWindow } from '@/ui/shared/dom';
 
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
@@ -197,16 +196,6 @@ export class InputController {
   }
 
   syncScrollToBottomAfterRenderUpdates(): void {
-    const { settings, state } = this.controllerDeps;
-    if (!settings.getSettingsSnapshot().enableAutoScroll) return;
-    if (!state.autoScrollEnabled) return;
-
-    getActiveWindow(this.controllerDeps.getMessagesEl()).requestAnimationFrame(() => {
-      if (!this.controllerDeps.settings.getSettingsSnapshot().enableAutoScroll) return;
-      if (!this.controllerDeps.state.autoScrollEnabled) return;
-
-      const messagesEl = this.controllerDeps.getMessagesEl();
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    });
+    this.controllerDeps.state.flushProjection();
   }
 }
