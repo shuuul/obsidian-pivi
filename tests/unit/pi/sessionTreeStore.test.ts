@@ -131,6 +131,91 @@ describe('SessionTreeStore', () => {
     fs.rmSync(root, { recursive: true, force: true });
   });
 
+  it('rejects stale UI save, redo, fork, and compaction before mutation', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-live-mutations-'));
+    const sessionFile = path.join(root, 'session.jsonl');
+    const header = {
+      type: 'session',
+      version: 3,
+      id: 'session-1',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      cwd: root,
+    };
+    fs.writeFileSync(sessionFile, `${JSON.stringify(header)}\n`);
+    const manager = {
+      appendCompaction: jest.fn(() => 'compaction-1'),
+      appendCustomEntry: jest.fn(() => 'ui-1'),
+      createBranchedSession: jest.fn(() => path.join(root, 'fork.jsonl')),
+      fileEntries: [header],
+      getSessionFile: () => sessionFile,
+      isPersisted: () => true,
+      _buildIndex: jest.fn(),
+      _rewriteFile: jest.fn(),
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(sessionFile);
+    const before = fs.readFileSync(sessionFile);
+    fs.appendFileSync(sessionFile, `${JSON.stringify({
+      type: 'custom',
+      customType: 'external',
+      id: 'external-1',
+      parentId: null,
+      timestamp: '2026-01-01T00:00:01.000Z',
+    })}\n`);
+    const externallyChanged = fs.readFileSync(sessionFile);
+
+    expect(() => store.appendMessageUi({ targetEntryId: 'user-1', durationSeconds: 1 }))
+      .toThrow(SessionIndexStaleError);
+    expect(() => store.truncateAfter(null)).toThrow(SessionIndexStaleError);
+    expect(() => store.forkToNewFile('user-1')).toThrow(SessionIndexStaleError);
+    expect(() => store.appendCompaction('summary', 'user-1', 10))
+      .toThrow(SessionIndexStaleError);
+
+    expect(manager.appendCustomEntry).not.toHaveBeenCalled();
+    expect(manager._buildIndex).not.toHaveBeenCalled();
+    expect(manager._rewriteFile).not.toHaveBeenCalled();
+    expect(manager.createBranchedSession).not.toHaveBeenCalled();
+    expect(manager.appendCompaction).not.toHaveBeenCalled();
+    expect(fs.readFileSync(sessionFile)).toEqual(externallyChanged);
+    expect(externallyChanged).not.toEqual(before);
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  it('uses the held live fingerprint before the production fork path', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-live-fork-'));
+    const sessionFile = path.join(root, 'session.jsonl');
+    fs.writeFileSync(sessionFile, `${JSON.stringify({
+      type: 'session',
+      version: 3,
+      id: 'session-1',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      cwd: root,
+    })}\n`);
+    const manager = {
+      createBranchedSession: jest.fn(() => path.join(root, 'fork.jsonl')),
+      getSessionFile: () => sessionFile,
+      isPersisted: () => true,
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(sessionFile);
+    (store as unknown as { registerLive(): void }).registerLive();
+    fs.appendFileSync(sessionFile, '{"external":true}\n');
+
+    expect(() => SessionTreeStore.forkFile(root, 'session.jsonl', 'user-1'))
+      .toThrow(SessionIndexStaleError);
+    expect(manager.createBranchedSession).not.toHaveBeenCalled();
+    expect(fs.existsSync(path.join(root, 'fork.jsonl'))).toBe(false);
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
   it('ignores invalid leafId when opening a session', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
     const defaultLeaf = store.getLeafId();
@@ -392,6 +477,26 @@ describe('SessionTreeStore', () => {
       },
       { role: 'user', content: 'recent request' },
       { role: 'assistant', content: 'recent answer' },
+    ]);
+  });
+
+  it('keeps trailing compaction in LLM context but outside the visible UI prefix', () => {
+    const store = SessionTreeStore.inMemory('/test/trailing-compaction-boundary');
+    const userId = store.appendUserMessage('request');
+    store.syncAgentMessages([
+      { role: 'user', content: 'request', timestamp: 1 },
+      { role: 'assistant', content: 'answer', timestamp: 2 },
+    ] as never[]);
+    store.appendCompaction('Summary', userId, 100);
+
+    expect(store.getLinearVisiblePrefix().map((entry) => entry.type)).toEqual([
+      'message',
+      'message',
+    ]);
+    expect(store.getLinearLlmContextEntries().map((entry) => entry.type)).toEqual([
+      'message',
+      'message',
+      'compaction',
     ]);
   });
 });

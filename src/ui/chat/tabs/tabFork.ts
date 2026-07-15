@@ -121,7 +121,8 @@ export async function handleForkRequest(
     forkAtEntryId: forkEntryId,
     resumeAt: getResumeEntryId(msgs, messageIdx, forkEntryId),
     sourceTitle: source.sourceTitle,
-    forkAtUserMessage: countUserMessagesForForkTitle(msgs.slice(0, messageIdx + 1)),
+    forkAtUserMessage: (state.olderUserMessageCount ?? 0)
+      + countUserMessagesForForkTitle(msgs.slice(0, messageIdx + 1)),
     currentNote: source.currentNote,
   });
 }
@@ -174,7 +175,9 @@ export async function handleForkAll(
     forkAtEntryId: lastUserEntryId,
     resumeAt: lastAssistantUuid,
     sourceTitle: source.sourceTitle,
-    forkAtUserMessage: countUserMessagesForForkTitle(msgs) + 1,
+    forkAtUserMessage: (state.olderUserMessageCount ?? 0)
+      + countUserMessagesForForkTitle(msgs)
+      + 1,
     currentNote: source.currentNote,
   });
 }

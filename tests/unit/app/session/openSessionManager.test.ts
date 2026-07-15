@@ -1,4 +1,8 @@
-import type { SessionRef, SessionStore } from '@pivi/pivi-agent-core/session';
+import {
+  type SessionRef,
+  SessionIndexStaleError,
+  type SessionStore,
+} from '@pivi/pivi-agent-core/session';
 import type { ChatMessage, OpenSessionState, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { OpenSessionManager } from '@pivi/pivi-agent-core/session/openSessionManager';
 
@@ -46,12 +50,16 @@ function createStore(): SessionStore & {
     openRecent: jest.fn(async () => ({
       messages: [hydratedMessage],
       hasOlder: true,
-      totalMessageCount: 3,
+      totalMessageCount: 5_000,
+      olderMessageCount: 4_999,
+      olderUserMessageCount: 2_500,
     })),
     readOlder: jest.fn(async () => ({
       messages: [hydratedMessage],
       hasOlder: false,
-      totalMessageCount: 3,
+      totalMessageCount: 5_000,
+      olderMessageCount: 0,
+      olderUserMessageCount: 0,
     })),
     getUsage: jest.fn(async () => null),
     appendUserTurn: jest.fn(),
@@ -88,15 +96,15 @@ describe('OpenSessionManager linear hydration', () => {
       getVaultPath: () => '/vault',
       getStore: () => store,
     });
-    manager.replaceAll([createOpenSession()]);
+    manager.replaceAll([createOpenSession({ messagePreview: 'durable first request' })]);
 
     await expect(manager.openRecent('conv-1', 100)).resolves.toMatchObject({
       hasOlder: true,
-      totalMessageCount: 3,
+      totalMessageCount: 5_000,
     });
     await expect(manager.readOlder('conv-1', 'm1', 100)).resolves.toMatchObject({
       hasOlder: false,
-      totalMessageCount: 3,
+      totalMessageCount: 5_000,
     });
 
     const ref = {
@@ -108,6 +116,18 @@ describe('OpenSessionManager linear hydration', () => {
     expect(store.readOlder).toHaveBeenCalledWith(ref, 'm1', 100);
     expect(store.open).not.toHaveBeenCalled();
     expect(store.getMessages).not.toHaveBeenCalled();
+    expect(manager.getSync('conv-1')).toEqual(expect.objectContaining({
+      messages: [hydratedMessage],
+      hasOlderMessages: false,
+      totalMessageCount: 5_000,
+      olderMessageCount: 0,
+      olderUserMessageCount: 0,
+      messagePreview: 'durable first request',
+    }));
+    expect(manager.list()[0]).toEqual(expect.objectContaining({
+      messageCount: 5_000,
+      preview: 'durable first request',
+    }));
   });
 
   it('returns null for a range request without an open durable session', async () => {
@@ -294,6 +314,7 @@ describe('OpenSessionManager linear hydration', () => {
       updatedAt: 42,
       leafCount: 1,
       messagePreview: 'hello',
+      messageCount: 12,
     }]);
     const manager = new OpenSessionManager({
       getVaultPath: () => '/vault',
@@ -310,6 +331,10 @@ describe('OpenSessionManager linear hydration', () => {
       titleSource: 'custom',
       sessionFile: '.pivi/sessions/existing.jsonl',
       sessionId: 'sdk-existing',
+      hasOlderMessages: true,
+      totalMessageCount: 12,
+      olderMessageCount: 12,
+      messagePreview: 'hello',
     }));
     expect(store.writeSessionMeta).not.toHaveBeenCalled();
     expect(store.writeUiContext).not.toHaveBeenCalled();
@@ -336,7 +361,11 @@ describe('OpenSessionManager linear hydration', () => {
       getVaultPath: () => '/vault',
       getStore: () => store,
     });
-    manager.replaceAll([createOpenSession()]);
+    manager.replaceAll([createOpenSession({
+      hasOlderMessages: true,
+      totalMessageCount: 101,
+      olderUserMessageCount: 50,
+    })]);
 
     await manager.update('conv-1', {
       messages: [{
@@ -386,5 +415,70 @@ describe('OpenSessionManager linear hydration', () => {
         })],
       })],
     );
+    expect(store.getMessages).not.toHaveBeenCalled();
+    expect(store.appendUserTurn).not.toHaveBeenCalled();
+    expect(store.appendAgentTurn).not.toHaveBeenCalled();
+    expect(manager.getSync('conv-1')).toEqual(expect.objectContaining({
+      hasOlderMessages: true,
+      totalMessageCount: 101,
+      olderUserMessageCount: 50,
+    }));
+  });
+
+  it('propagates a stale partial save without committing in-memory updates', async () => {
+    const store = createStore();
+    const stale = new SessionIndexStaleError(
+      'Session changed before save',
+      '.pivi/sessions/test.jsonl',
+    );
+    store.open.mockRejectedValue(stale);
+    const original = createOpenSession({
+      messages: [hydratedMessage],
+      totalMessageCount: 101,
+      olderUserMessageCount: 50,
+    });
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([original]);
+
+    await expect(manager.update('conv-1', {
+      messages: [{ ...hydratedMessage, displayContent: 'changed' }],
+      totalMessageCount: 102,
+    })).rejects.toBe(stale);
+
+    expect(manager.getSync('conv-1')).toBe(original);
+    expect(original.messages).toEqual([hydratedMessage]);
+    expect(original.totalMessageCount).toBe(101);
+    expect(store.appendMessageUiPatches).not.toHaveBeenCalled();
+  });
+
+  it('propagates a stale UI overlay append without committing the partial page', async () => {
+    const store = createStore();
+    const stale = new SessionIndexStaleError(
+      'Session changed before UI overlay append',
+      '.pivi/sessions/test.jsonl',
+    );
+    store.appendMessageUiPatches.mockRejectedValue(stale);
+    const original = createOpenSession({
+      messages: [hydratedMessage],
+      totalMessageCount: 101,
+      olderMessageCount: 100,
+      olderUserMessageCount: 50,
+    });
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([original]);
+
+    await expect(manager.update('conv-1', {
+      messages: [{ ...hydratedMessage, displayContent: 'changed', userMessageId: 'u1' }],
+    })).rejects.toBe(stale);
+
+    expect(original.messages).toEqual([hydratedMessage]);
+    expect(original.totalMessageCount).toBe(101);
+    expect(original.olderMessageCount).toBe(100);
   });
 });

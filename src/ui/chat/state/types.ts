@@ -40,6 +40,11 @@ export interface StoredSelection {
 export interface ChatStateData {
   // Message state
   messages: ChatMessage[];
+  hasOlderMessages: boolean;
+  totalMessageCount: number;
+  olderMessageCount: number;
+  /** Number of durable user messages before the first loaded message. */
+  olderUserMessageCount: number;
 
   // Streaming control
   isStreaming: boolean;

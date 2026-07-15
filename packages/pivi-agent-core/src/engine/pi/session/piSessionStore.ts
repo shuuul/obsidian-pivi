@@ -324,6 +324,10 @@ export class PiSessionStore implements SessionStore {
         }
         leafCount = 1;
         messagePreview = firstUserMessagePreview(linearEntries);
+        const messageCount = entriesToChatMessages(
+          linearEntries,
+          collectMessageUiMap(store.getEntries()),
+        ).length;
         summaries.push({
           sessionFile,
           sessionId: info.id,
@@ -332,6 +336,7 @@ export class PiSessionStore implements SessionStore {
           updatedAt,
           leafCount,
           messagePreview,
+          messageCount,
         });
         continue;
       } catch {
@@ -399,6 +404,8 @@ export class PiSessionStore implements SessionStore {
       messages: this.applyMessageReadOverlays(result.messages, ref.sessionFile),
       hasOlder: result.hasOlder,
       totalMessageCount: result.totalMessageCount,
+      olderMessageCount: result.olderMessageCount,
+      olderUserMessageCount: result.olderUserMessageCount,
     };
   }
 
@@ -417,6 +424,8 @@ export class PiSessionStore implements SessionStore {
       messages: this.applyMessageReadOverlays(result.messages, ref.sessionFile),
       hasOlder: result.hasOlder,
       totalMessageCount: result.totalMessageCount,
+      olderMessageCount: result.olderMessageCount,
+      olderUserMessageCount: result.olderUserMessageCount,
     };
   }
 

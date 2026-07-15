@@ -90,8 +90,12 @@ export function createTrackingSessionStore(
     create: async () => ref,
     open: async () => ref,
     getMessages: async () => [] as ChatMessage[],
-    openRecent: async () => ({ messages: [], hasOlder: false, totalMessageCount: 0 }),
-    readOlder: async () => ({ messages: [], hasOlder: false, totalMessageCount: 0 }),
+    openRecent: async () => ({
+      messages: [], hasOlder: false, totalMessageCount: 0, olderMessageCount: 0, olderUserMessageCount: 0,
+    }),
+    readOlder: async () => ({
+      messages: [], hasOlder: false, totalMessageCount: 0, olderMessageCount: 0, olderUserMessageCount: 0,
+    }),
     appendUserTurn: async () => ref,
     appendAgentTurn: async () => ref,
     fork: async () => ref,

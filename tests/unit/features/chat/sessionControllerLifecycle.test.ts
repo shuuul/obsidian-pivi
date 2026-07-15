@@ -193,6 +193,36 @@ describe('SessionController.loadActive', () => {
     expect(externalContextSelector.resetForSession).toHaveBeenCalledWith(['/settings/pin']);
     expect(callbacks.onSessionLoaded).toHaveBeenCalled();
   });
+
+  it('round-trips partial hydration metadata through save', async () => {
+    const { controller, state, sessions } = createFixture({
+      hasOlderMessages: true,
+      totalMessageCount: 5_000,
+      olderMessageCount: 4_900,
+      olderUserMessageCount: 2_450,
+      messagePreview: 'durable first request',
+    });
+    state.currentOpenSessionId = 'conv-1';
+
+    await controller.loadActive();
+
+    expect(state.hasOlderMessages).toBe(true);
+    expect(state.totalMessageCount).toBe(5_000);
+    expect(state.olderMessageCount).toBe(4_900);
+    expect(state.olderUserMessageCount).toBe(2_450);
+
+    state.hasPendingSessionSave = true;
+    await controller.save();
+
+    expect(sessions.updateSession).toHaveBeenCalledWith('conv-1', expect.objectContaining({
+      messages: [MSG],
+      hasOlderMessages: true,
+      totalMessageCount: 5_000,
+      olderMessageCount: 4_900,
+      olderUserMessageCount: 2_450,
+    }));
+    expect(state.hasPendingSessionSave).toBe(false);
+  });
 });
 
 describe('SessionController.switchTo', () => {
@@ -306,6 +336,19 @@ describe('SessionController.save', () => {
       }),
     );
     expect(state.hasPendingSessionSave).toBe(false);
+  });
+
+  it('keeps pending save set when durable persistence fails', async () => {
+    const { controller, state, sessions } = createFixture();
+    const failure = new Error('stale session');
+    jest.mocked(sessions.updateSession).mockRejectedValueOnce(failure);
+    state.currentOpenSessionId = 'conv-1';
+    state.messages = [MSG];
+    state.hasPendingSessionSave = true;
+
+    await expect(controller.save()).rejects.toBe(failure);
+
+    expect(state.hasPendingSessionSave).toBe(true);
   });
 });
 

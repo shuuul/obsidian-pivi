@@ -23,6 +23,10 @@ import type {
 function createInitialState(): ChatStateData {
   return {
     messages: [],
+    hasOlderMessages: false,
+    totalMessageCount: 0,
+    olderMessageCount: 0,
+    olderUserMessageCount: 0,
     isStreaming: false,
     cancelRequested: false,
     streamGeneration: 0,
@@ -104,21 +108,63 @@ export class ChatState {
 
   set messages(value: ChatMessage[]) {
     this.state.messages = value;
+    this.state.totalMessageCount = this.state.olderMessageCount + value.length;
+    this.state.hasOlderMessages = this.state.olderMessageCount > 0;
     this.rebuildMessageIndexes(value);
     this.projectionStore.replaceAll(value);
   }
 
   addMessage(msg: ChatMessage): void {
+    const isNew = !this.messagesById.has(msg.id);
     this.state.messages.push(msg);
     this.messagesById.set(msg.id, msg);
     this.indexMessageOwners(msg);
     this.projectionStore.upsertNow(msg);
+    if (isNew) {
+      this.state.totalMessageCount += 1;
+    }
   }
 
   clearMessages(): void {
     this.state.messages = [];
+    this.state.hasOlderMessages = false;
+    this.state.totalMessageCount = 0;
+    this.state.olderMessageCount = 0;
+    this.state.olderUserMessageCount = 0;
     this.rebuildMessageIndexes([]);
     this.projectionStore.replaceAll([]);
+  }
+
+  get olderUserMessageCount(): number {
+    return this.state.olderUserMessageCount;
+  }
+
+  get hasOlderMessages(): boolean {
+    return this.state.hasOlderMessages;
+  }
+
+  set hasOlderMessages(value: boolean) {
+    this.state.hasOlderMessages = value;
+  }
+
+  get totalMessageCount(): number {
+    return this.state.totalMessageCount;
+  }
+
+  set totalMessageCount(value: number) {
+    this.state.totalMessageCount = value;
+  }
+
+  get olderMessageCount(): number {
+    return this.state.olderMessageCount;
+  }
+
+  set olderMessageCount(value: number) {
+    this.state.olderMessageCount = value;
+  }
+
+  set olderUserMessageCount(value: number) {
+    this.state.olderUserMessageCount = value;
   }
 
   truncateAt(messageId: string): number {
@@ -126,6 +172,7 @@ export class ChatState {
     if (idx === -1) return 0;
     const removed = this.state.messages.length - idx;
     this.state.messages = this.state.messages.slice(0, idx);
+    this.state.totalMessageCount = this.state.olderMessageCount + this.state.messages.length;
     this.rebuildMessageIndexes(this.state.messages);
     this.projectionStore.replaceAll(this.state.messages);
     return removed;

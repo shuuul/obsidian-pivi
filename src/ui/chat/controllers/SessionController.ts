@@ -271,6 +271,10 @@ export class SessionController {
     const updates: Partial<OpenSessionState> = {
       ...sessionUpdates,
       messages: state.messages,
+      hasOlderMessages: state.hasOlderMessages,
+      totalMessageCount: state.totalMessageCount,
+      olderMessageCount: state.olderMessageCount,
+      olderUserMessageCount: state.olderUserMessageCount,
       currentNote: currentNote,
       usage: state.usage ?? undefined,
       // Per-turn MCP toolbar selection removed; settings enable/disable owns availability.
@@ -298,6 +302,10 @@ export class SessionController {
 
     state.currentOpenSessionId = openSession.id;
     state.messages = [...openSession.messages];
+    state.hasOlderMessages = openSession.hasOlderMessages ?? false;
+    state.totalMessageCount = openSession.totalMessageCount ?? openSession.messages.length;
+    state.olderMessageCount = openSession.olderMessageCount ?? 0;
+    state.olderUserMessageCount = openSession.olderUserMessageCount ?? 0;
     state.usage = openSession.usage ?? null;
     state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
     state.hasPendingSessionSave = false;

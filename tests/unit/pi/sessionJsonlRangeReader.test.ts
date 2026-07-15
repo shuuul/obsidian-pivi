@@ -6,7 +6,13 @@ import {
   openRecentSessionJsonlMessages,
   readOlderSessionJsonlMessages,
 } from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlRangeReader';
-import { SessionRangeCursorError } from '@pivi/pivi-agent-core/session';
+import {
+  invalidateSessionJsonlIndex,
+} from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
+import {
+  SessionIndexStaleError,
+  SessionRangeCursorError,
+} from '@pivi/pivi-agent-core/session';
 
 function jsonl(value: unknown): string {
   return `${JSON.stringify(value)}\n`;
@@ -70,8 +76,32 @@ describe('sessionJsonlRangeReader', () => {
     expect(page.messages.at(-1)?.id).toBe('message-4999');
     expect(page.hasOlder).toBe(true);
     expect(page.totalMessageCount).toBe(5_000);
+    expect(page.olderUserMessageCount).toBe(2_450);
     expect(page.stats.entryCount).toBe(100);
     expect(page.stats.byteCount).toBeLessThan(fs.statSync(sessionFile).size / 20);
+  });
+
+  it('includes the preceding user when a bounded page would start on an assistant', () => {
+    fs.writeFileSync(sessionFile, [
+      jsonl({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root }),
+      jsonl(message('user-1', 'user', 'one', null)),
+      jsonl(message('assistant-1', 'assistant', 'two', 'user-1')),
+      jsonl(message('user-2', 'user', 'three', 'assistant-1')),
+      jsonl(message('assistant-2', 'assistant', 'four', 'user-2')),
+      jsonl(message('user-3', 'user', 'five', 'assistant-2')),
+      jsonl(message('assistant-3', 'assistant', 'six', 'user-3')),
+    ].join(''));
+
+    const page = openRecentSessionJsonlMessages(sessionFile, 3);
+
+    expect(page.messages.map((entry) => entry.id)).toEqual([
+      'user-2',
+      'assistant-2',
+      'user-3',
+      'assistant-3',
+    ]);
+    expect(page.olderUserMessageCount).toBe(1);
+    expect(page.hasOlder).toBe(true);
   });
 
   it('keeps assistant segments, tool results, and later UI overlays in one page group', () => {
@@ -96,14 +126,17 @@ describe('sessionJsonlRangeReader', () => {
     const page = openRecentSessionJsonlMessages(sessionFile, 1);
 
     expect(page.totalMessageCount).toBe(2);
-    expect(page.messages).toEqual([expect.objectContaining({
-      id: 'assistant-1',
-      content: 'finished',
-      assistantMessageId: 'assistant-2',
-      durationSeconds: 3,
-      toolCalls: [expect.objectContaining({ id: 'tool-1', result: 'done', status: 'completed' })],
-    })]);
-    expect(page.stats.entryCount).toBe(4);
+    expect(page.messages).toEqual([
+      expect.objectContaining({ id: 'user-1' }),
+      expect.objectContaining({
+        id: 'assistant-1',
+        content: 'finished',
+        assistantMessageId: 'assistant-2',
+        durationSeconds: 3,
+        toolCalls: [expect.objectContaining({ id: 'tool-1', result: 'done', status: 'completed' })],
+      }),
+    ]);
+    expect(page.stats.entryCount).toBe(5);
   });
 
   it('pages older messages by the first projected message id', () => {
@@ -120,6 +153,7 @@ describe('sessionJsonlRangeReader', () => {
     expect(page.messages.map((entry) => entry.id)).toEqual(['user-1', 'assistant-1']);
     expect(page.hasOlder).toBe(false);
     expect(page.totalMessageCount).toBe(4);
+    expect(page.olderUserMessageCount).toBe(0);
   });
 
   it('folds adjacent duplicate pending users using later display overlays', () => {
@@ -162,5 +196,69 @@ describe('sessionJsonlRangeReader', () => {
 
     expect(() => readOlderSessionJsonlMessages(sessionFile, 'missing', 10))
       .toThrow(SessionRangeCursorError);
+  });
+
+  it('rejects stale indexed offsets before returning a partial page', () => {
+    fs.writeFileSync(sessionFile, [
+      jsonl({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root }),
+      jsonl(message('user-1', 'user', 'one', null)),
+      jsonl(message('assistant-1', 'assistant', 'two', 'user-1')),
+    ].join(''));
+    openRecentSessionJsonlMessages(sessionFile, 1);
+    const changed = fs.readFileSync(sessionFile, 'utf8').replace('"two"', '"six"');
+    fs.writeFileSync(sessionFile, changed);
+
+    expect(() => openRecentSessionJsonlMessages(sessionFile, 1))
+      .toThrow(SessionIndexStaleError);
+
+    invalidateSessionJsonlIndex(sessionFile);
+    expect(openRecentSessionJsonlMessages(sessionFile, 1).messages.at(-1)?.content).toBe('six');
+  });
+
+  it('rebuilds bounded pages after truncate and for a forked prefix', () => {
+    const header = jsonl({
+      type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root,
+    });
+    const entries = [
+      jsonl(message('user-1', 'user', 'one', null)),
+      jsonl(message('assistant-1', 'assistant', 'two', 'user-1')),
+      jsonl(message('user-2', 'user', 'three', 'assistant-1')),
+      jsonl(message('assistant-2', 'assistant', 'four', 'user-2')),
+    ];
+    fs.writeFileSync(sessionFile, [header, ...entries].join(''));
+    expect(openRecentSessionJsonlMessages(sessionFile, 2).totalMessageCount).toBe(4);
+
+    fs.writeFileSync(sessionFile, [header, ...entries.slice(0, 2)].join(''));
+    invalidateSessionJsonlIndex(sessionFile);
+    expect(openRecentSessionJsonlMessages(sessionFile, 10).messages.map(({ id }) => id))
+      .toEqual(['user-1', 'assistant-1']);
+
+    const forkFile = path.join(root, 'fork.jsonl');
+    fs.writeFileSync(forkFile, [header, ...entries.slice(0, 2)].join(''));
+    expect(openRecentSessionJsonlMessages(forkFile, 10).messages.map(({ id }) => id))
+      .toEqual(['user-1', 'assistant-1']);
+  });
+
+  it('keeps a trailing compaction out of UI pages while preserving visible history', () => {
+    fs.writeFileSync(sessionFile, [
+      jsonl({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root }),
+      jsonl(message('user-1', 'user', 'one', null)),
+      jsonl(message('assistant-1', 'assistant', 'two', 'user-1')),
+      jsonl({
+        type: 'compaction',
+        id: 'compaction-1',
+        parentId: 'assistant-1',
+        timestamp: '2026-01-01T00:00:03.000Z',
+        summary: 'Earlier context',
+        firstKeptEntryId: 'user-1',
+        tokensBefore: 10,
+      }),
+    ].join(''));
+
+    const page = openRecentSessionJsonlMessages(sessionFile, 1);
+
+    expect(page.messages.map(({ id }) => id)).toEqual(['user-1', 'assistant-1']);
+    expect(page.totalMessageCount).toBe(2);
+    expect(page.stats.entryCount).toBe(2);
   });
 });

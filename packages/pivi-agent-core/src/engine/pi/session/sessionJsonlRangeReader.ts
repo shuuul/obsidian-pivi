@@ -69,8 +69,19 @@ function projectionGroups(index: SessionJsonlIndex): ProjectionGroup[] {
   const groups: ProjectionGroup[] = [];
   const userHashes = userTextHashes(index);
   let assistant: ProjectionGroup | null = null;
+  let lastVisibleIndex = -1;
+  for (let entryIndex = index.entries.length - 1; entryIndex >= 0; entryIndex--) {
+    const line = index.entries[entryIndex];
+    if (line?.entryType === 'message' && (line.role === 'user' || line.role === 'assistant')) {
+      lastVisibleIndex = entryIndex;
+      break;
+    }
+  }
+  const visibleEntries = lastVisibleIndex >= 0
+    ? index.entries.slice(0, lastVisibleIndex + 1)
+    : index.entries;
 
-  for (const line of index.entries) {
+  for (const line of visibleEntries) {
     if (line.entryType === 'compaction') {
       groups.push({
         id: line.id,
@@ -163,7 +174,12 @@ function pageFromGroups(
   limit: number,
 ): SessionJsonlMessagePageResult {
   validateSessionJsonlIndexSource(index);
-  const selected = groups.slice(start, start + limit);
+  const safeStart = start > 0
+    && groups[start]?.kind === 'assistant'
+    && groups[start - 1]?.kind === 'user'
+    ? start - 1
+    : start;
+  const selected = groups.slice(safeStart, start + limit);
   const { messages, stats } = readGroups(index, selected);
   if (messages.length !== selected.length) {
     throw new SessionIndexCorruptError(
@@ -173,8 +189,13 @@ function pageFromGroups(
   }
   return {
     messages,
-    hasOlder: start > 0,
+    hasOlder: safeStart > 0,
     totalMessageCount: groups.length,
+    olderMessageCount: safeStart,
+    olderUserMessageCount: groups
+      .slice(0, safeStart)
+      .filter((group) => group.kind === 'user')
+      .length,
     stats,
   };
 }

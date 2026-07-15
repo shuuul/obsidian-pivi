@@ -99,11 +99,15 @@ describe('UI port adapters', () => {
       messages: [],
       hasOlder: true,
       totalMessageCount: 150,
+      olderMessageCount: 50,
+      olderUserMessageCount: 25,
     }));
     const readOlderSessionMessages = jest.fn(async () => ({
       messages: [],
       hasOlder: false,
       totalMessageCount: 150,
+      olderMessageCount: 0,
+      olderUserMessageCount: 0,
     }));
     const uiFacades = createUiFacades();
     const getModelOptions = jest.fn(() => [{ value: 'model-a', label: 'Model A' }]);

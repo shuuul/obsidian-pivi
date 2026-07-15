@@ -105,6 +105,16 @@ export interface OpenSessionState {
   /** Opaque agent-runtime state bag (session tracking, fork metadata, etc.). */
   agentState?: Record<string, unknown>;
   messages: ChatMessage[];
+  /** Whether the in-memory UI projection omits older durable messages. */
+  hasOlderMessages?: boolean;
+  /** Durable projected-message count, including messages not loaded in memory. */
+  totalMessageCount?: number;
+  /** Durable projected-message count before the first loaded message. */
+  olderMessageCount?: number;
+  /** Durable user-message count before the first loaded message. */
+  olderUserMessageCount?: number;
+  /** Durable first-user preview, independent of the currently loaded page. */
+  messagePreview?: string;
   currentNote?: string;
   /** Session-specific external context paths (directories with full access). Resets on new session. */
   externalContextPaths?: string[];

@@ -44,8 +44,8 @@ describe('PiSessionStore range reads', () => {
 
     try {
       await expect(store.openRecent(ref, 2)).resolves.toMatchObject({
-        messages: [{ id: 'assistant-1' }, { id: 'user-2' }],
-        hasOlder: true,
+        messages: [{ id: 'user-1' }, { id: 'assistant-1' }, { id: 'user-2' }],
+        hasOlder: false,
         totalMessageCount: 3,
       });
       await expect(store.readOlder(ref, 'assistant-1', 2)).resolves.toMatchObject({

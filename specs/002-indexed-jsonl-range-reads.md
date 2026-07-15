@@ -56,6 +56,7 @@ Not in scope:
 | 2026-07-15 | Store the optimization as append-only `<session>.jsonl.pivi-index` JSONL sidecars with UTF-8 byte offsets, line hashes, chained checkpoints, and bounded source fingerprints | Normal appends update without O(n) sidecar rewrites; nanosecond stat identity plus head/tail hashes detect source replacement, per-line hashes detect offset mismatch, and the line checksum chain detects sidecar edits; atomic full rebuild always starts from JSONL | WS-02, WS-03, WS-04, WS-06 |
 | 2026-07-16 | Validate every cached live session source before mutation and reject stale writes; never repair a mismatch silently after append | A stale Pi manager can otherwise append an obsolete parent chain before index refresh notices external replacement. Preflight protects the authoritative file, postflight requires the exact appended entry IDs, and either failure evicts the live cache and raises a typed error | WS-02, WS-04 |
 | 2026-07-16 | Page by final projected message groups and use each group's first visible message id as the cursor; keep `getMessages()` as the full runtime/LLM path | JSONL rows do not map one-to-one to UI messages: assistant segments and tool results merge, later UI overlays decorate earlier entries, and adjacent duplicate pending users collapse. The range index records only the hashes/targets needed to reproduce those boundaries without reading all message bodies | WS-03, WS-04, WS-05 |
+| 2026-07-16 | Range pages mirror `getLinearVisiblePrefix()`, while trailing compaction remains LLM-only; required session writes propagate typed index failures before committing in-memory state | Partial and full UI hydration must return the same visible messages. A trailing compaction changes model context but is not a UI message today. Save, redo, fork, and compaction must reject held-source mismatches instead of reporting success or forking replacement bytes | WS-04, WS-05 |
 
 ## Workstreams
 
@@ -66,7 +67,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | Write-path investigation and decision: can `SessionTreeStore` append without `_rewriteFile()` while preserving Pi header/entry semantics? Documented decision + prototype test | Codex | Done | None | Test proving JSONL produced by the new path is byte-compatible with Pi `SessionManager.open()` |
 | WS-02 | Index format + lifecycle (build, incremental update on append, invalidate on truncate/fork/external change, rebuild) in `engine/pi/session/` | Codex | Done | WS-01 | New unit suite under `tests/unit/pi/` covering all lifecycle transitions |
 | WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Codex | Done | WS-02 | Typecheck + port contract tests |
-| WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Unassigned | Pending | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
+| WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Codex | Done | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
 | WS-05 | UI paging hookup: `prependPreviousPage()` requests older ranges via ports; keep TanStack prepend anchoring stable | Unassigned | Pending | WS-03 | `tests/pivi-react/MessageList.test.tsx` prepend cases + manual scroll test in Obsidian |
 | WS-06 | Migration interplay: external-context migration runs once per file, recorded so lazy opens skip full reads | Unassigned | Pending | WS-02 | Migration idempotence tests remain green |
 | WS-07 | Before/after measurements with spec 001 harness (cold open, older-page load, append cost on 5K fixture) | Unassigned | Pending | WS-05, spec 001 | Recorded traces in Progress and handoff |
@@ -146,6 +147,17 @@ Guidance for low-context agents:
 - Remaining: WS-04 through WS-07. WS-05 will consume the new port and owns partial UI hydration; WS-06 will remove the remaining full external-context migration read from the range path.
 - Blockers: none.
 - Next action: exercise redo, fork, compaction, and save invariants with a partially hydrated UI projection in WS-04 before changing the React paging path.
+
+### 2026-07-16 — WS-04 partial-hydration correctness — Codex
+
+- Changed: range grouping now stops at the last visible user/assistant entry, matching full `getMessages()` UI semantics; trailing compaction remains available through `getLinearLlmContextEntries()` for the runtime. A page that would start on an assistant includes its preceding user so redo retains the turn request and a possibly page-external parent checkpoint.
+- Changed: page metadata now carries total/older message counts plus older user count. `OpenSessionState`, `OpenSessionManager`, `SessionController`, and `ChatState` retain those values across restore/save/truncate; history uses the durable total and first-message preview, and fork titles add the page-external user ordinal.
+- Changed: the production fork path reuses a held live store before opening a fresh manager, so external replacement is checked against the original fingerprint. Required metadata/UI-overlay writes now propagate failures and commit in-memory updates only after persistence succeeds.
+- Evidence: stale-source tests cover UI overlay save, redo truncate, cached production fork, direct fork, and compaction before their mutation spies fire; failed partial saves retain the original in-memory page and pending-save state. Range/full boundary tests distinguish visible history from trailing LLM compaction, and redo/fork tests cover page-external counts/checkpoints.
+- Verification: `npm run typecheck`; `npm run lint`; `npm run check:boundaries`; 9 focused suites / 118 tests.
+- Remaining: WS-05 through WS-07.
+- Blockers: none.
+- Next action: feed `ChatProjectionStore` prepend from `ChatSessionPort.readOlder()` and switch UI hydration to the bounded recent page.
 
 ## Completion summary
 

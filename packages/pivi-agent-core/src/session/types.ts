@@ -93,6 +93,10 @@ export interface SessionMessagePage {
   messages: ChatMessage[];
   hasOlder: boolean;
   totalMessageCount: number;
+  /** Number of durable projected messages before the first message in this page. */
+  olderMessageCount: number;
+  /** Number of durable user messages before the first message in this page. */
+  olderUserMessageCount: number;
 }
 
 export interface LeafSummary {
@@ -114,6 +118,7 @@ export interface StoreSessionInfo {
   updatedAt: number;
   leafCount: number;
   messagePreview: string;
+  messageCount?: number;
 }
 
 export interface SessionUiContext {

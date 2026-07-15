@@ -293,6 +293,10 @@ export class SessionTreeStore {
   }
 
   static forkFile(vaultPath: string, sessionFile: string, atEntryId: string): string | null {
+    const cached = SessionTreeStore.liveByKey.get(cacheKey(vaultPath, sessionFile));
+    if (cached) {
+      return cached.forkToNewFile(atEntryId);
+    }
     if (vaultPath.startsWith('/test/') || process.env.NODE_ENV === 'test') {
       const source = SessionTreeStore.open(vaultPath, sessionFile);
       return source.forkToNewFile(atEntryId);

@@ -2,6 +2,7 @@ import { Notice } from 'obsidian';
 
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { findRedoContext, findRewindContext } from '@/ui/chat/branchContext';
+import { ChatState } from '@/ui/chat/state/ChatState';
 import { handleForkAll, handleForkRequest } from '@/ui/chat/tabs/tabFork';
 import { handleRedoRequest, resolveRedoTurnContext } from '@/ui/chat/tabs/tabRedo';
 import type { TabData } from '@/ui/chat/tabs/types';
@@ -124,6 +125,22 @@ describe('tab fork guards', () => {
       sourceTitle: 'Source',
       forkAtUserMessage: 1,
       currentNote: 'note.md',
+    }));
+  });
+
+  it('keeps the durable user ordinal when older messages are not hydrated', async () => {
+    const messages: ChatMessage[] = [
+      { id: 'u51', role: 'user', content: 'visible', timestamp: 1, userMessageId: 'uuid-u51' },
+      { id: 'a51', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'uuid-a51' },
+    ];
+    const tab = makeTab(messages);
+    Object.assign(tab.state, { olderUserMessageCount: 50 });
+    const callback = jest.fn(async () => {});
+
+    await handleForkRequest(tab, makePorts().sessions, 'a51', callback);
+
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({
+      forkAtUserMessage: 51,
     }));
   });
 
@@ -335,6 +352,42 @@ describe('redo handling', () => {
         enabledMcpServers: new Set(['server']),
       }),
     });
+  });
+
+  it('keeps page-outside counts when redoing the first hydrated turn', async () => {
+    const messages: ChatMessage[] = [
+      {
+        id: 'u2451',
+        role: 'user',
+        content: 'redo visible turn',
+        timestamp: 1,
+        parentEntryId: 'entry-a2450',
+        userMessageId: 'entry-u2451',
+      },
+      { id: 'a2451', role: 'assistant', content: 'target', timestamp: 2, assistantMessageId: 'entry-a2451' },
+      { id: 'u2452', role: 'user', content: 'later', timestamp: 3, parentEntryId: 'entry-a2451', userMessageId: 'entry-u2452' },
+      { id: 'a2452', role: 'assistant', content: 'later answer', timestamp: 4, assistantMessageId: 'entry-a2452' },
+    ];
+    const service = {
+      rewind: jest.fn(async () => ({ canRewind: true, leafId: 'entry-a2450' })),
+    };
+    const tab = makeRedoTab(messages, service);
+    const state = new ChatState();
+    state.olderMessageCount = 4_900;
+    state.olderUserMessageCount = 2_450;
+    state.messages = messages;
+    state.totalMessageCount = 4_904;
+    state.hasOlderMessages = true;
+    tab.state = state;
+
+    await handleRedoRequest(tab, makePlugin(), makePorts(), 'a2451');
+
+    expect(service.rewind).toHaveBeenCalledWith('entry-a2450');
+    expect(state.messages).toEqual([]);
+    expect(state.hasOlderMessages).toBe(true);
+    expect(state.totalMessageCount).toBe(4_900);
+    expect(state.olderMessageCount).toBe(4_900);
+    expect(state.olderUserMessageCount).toBe(2_450);
   });
 
   it('does not rewind a middle turn when the destructive redo confirmation is cancelled', async () => {

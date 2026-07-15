@@ -1,8 +1,5 @@
 import type { ChatMessage, OpenSessionState, SessionSummary, ToolCallInfo } from '../foundation';
-import { PluginLogger } from '../foundation/pluginLogger';
 import type { MessageUiPatch, SessionMessagePage, SessionStore } from './types';
-
-const logger = new PluginLogger('OpenSessionManager');
 
 export interface OpenSessionManagerDeps {
   getVaultPath(): string | null;
@@ -114,6 +111,11 @@ export class OpenSessionManager {
       leafId: null,
       leafCount: 1,
       messages: [],
+      hasOlderMessages: (summary.messageCount ?? 0) > 0,
+      totalMessageCount: summary.messageCount ?? 0,
+      olderMessageCount: summary.messageCount ?? 0,
+      olderUserMessageCount: 0,
+      messagePreview: summary.messagePreview,
       titleSource: summary.titleSource,
     }));
   }
@@ -143,25 +145,21 @@ export class OpenSessionManager {
     if (!openSession.sessionFile) {
       return;
     }
-    try {
-      const store = this.deps.getStore();
-      const ref = await store.open(openSession.sessionFile);
-      await store.writeSessionMeta(ref, {
-        title: openSession.title,
-        titleSource: openSession.titleSource,
-        lastResponseAt: openSession.lastResponseAt,
-        createdAt: openSession.createdAt,
-      });
-      openSession.leafId = null;
-      await store.writeUiContext(ref, {
-        currentNote: openSession.currentNote,
-        externalContextPaths: openSession.externalContextPaths,
-        enabledMcpServers: openSession.enabledMcpServers,
-      });
-      openSession.leafCount = 1;
-    } catch (error) {
-      logger.error('Failed to persist session metadata', error);
-    }
+    const store = this.deps.getStore();
+    const ref = await store.open(openSession.sessionFile);
+    await store.writeSessionMeta(ref, {
+      title: openSession.title,
+      titleSource: openSession.titleSource,
+      lastResponseAt: openSession.lastResponseAt,
+      createdAt: openSession.createdAt,
+    });
+    await store.writeUiContext(ref, {
+      currentNote: openSession.currentNote,
+      externalContextPaths: openSession.externalContextPaths,
+      enabledMcpServers: openSession.enabledMcpServers,
+    });
+    openSession.leafId = null;
+    openSession.leafCount = 1;
   }
 
   private async persistMessageUiPatches(openSession: OpenSessionState): Promise<void> {
@@ -182,11 +180,7 @@ export class OpenSessionManager {
     if (patches.length === 0) {
       return;
     }
-    try {
-      await store.appendMessageUiPatches(ref, patches);
-    } catch (error) {
-      logger.warn('failed to persist message UI overlays', error);
-    }
+    await store.appendMessageUiPatches(ref, patches);
   }
 
   async hydrate(openSession: OpenSessionState): Promise<void> {
@@ -202,6 +196,11 @@ export class OpenSessionManager {
 
     const opened = await store.open(ref.sessionFile);
     openSession.messages = await store.getMessages(opened);
+    openSession.hasOlderMessages = false;
+    openSession.totalMessageCount = openSession.messages.length;
+    openSession.olderMessageCount = 0;
+    openSession.olderUserMessageCount = 0;
+    openSession.messagePreview = this.getPreview(openSession);
     openSession.usage = await store.getUsage?.(opened) ?? openSession.usage;
     openSession.sessionId = opened.sessionId;
     openSession.leafId = null;
@@ -233,6 +232,8 @@ export class OpenSessionManager {
     let titleSource: OpenSessionState['titleSource'] = 'timestamp';
     let createdAt = Date.now();
     let updatedAt = createdAt;
+    let messageCount = 0;
+    let messagePreview = 'New session';
 
     if (!sessionFile) {
       const ref = await this.deps.getStore().create(vaultPath);
@@ -262,6 +263,8 @@ export class OpenSessionManager {
           createdAt = match.updatedAt;
           updatedAt = match.updatedAt;
           sessionId = sessionId ?? match.sessionId;
+          messageCount = match.messageCount ?? 0;
+          messagePreview = match.messagePreview;
         }
       } catch {
         // Fall back to in-memory defaults; still avoid overwriting disk meta below.
@@ -279,6 +282,11 @@ export class OpenSessionManager {
       leafId: null,
       leafCount: 1,
       messages: [],
+      hasOlderMessages: messageCount > 0,
+      totalMessageCount: messageCount,
+      olderMessageCount: messageCount,
+      olderUserMessageCount: 0,
+      messagePreview,
       titleSource,
     };
 
@@ -329,21 +337,29 @@ export class OpenSessionManager {
     const openSession = this.getSync(id);
     if (!openSession) return;
 
-    openSession.title = title.trim() || this.generateDefaultTitle();
-    openSession.titleSource = titleSource ?? openSession.titleSource;
-    openSession.updatedAt = Date.now();
-    await this.persistSessionSummary(openSession);
+    const next = {
+      ...openSession,
+      title: title.trim() || this.generateDefaultTitle(),
+      titleSource: titleSource ?? openSession.titleSource,
+      updatedAt: Date.now(),
+    };
+    await this.persistSessionSummary(next);
+    Object.assign(openSession, next);
   }
 
   async update(id: string, updates: Partial<OpenSessionState>): Promise<void> {
     const openSession = this.getSync(id);
     if (!openSession) return;
 
-    Object.assign(openSession, updates, { updatedAt: Date.now() });
-    await this.persistSessionSummary(openSession);
-    if (updates.messages) {
-      await this.persistMessageUiPatches(openSession);
+    const next = { ...openSession, ...updates, updatedAt: Date.now() };
+    if (updates.messages && (next.olderMessageCount ?? 0) === 0) {
+      next.messagePreview = this.getPreview(next);
     }
+    await this.persistSessionSummary(next);
+    if (updates.messages) {
+      await this.persistMessageUiPatches(next);
+    }
+    Object.assign(openSession, next);
 
     for (const msg of openSession.messages) {
       if (msg.images) {
@@ -369,7 +385,12 @@ export class OpenSessionManager {
     }
     const store = this.deps.getStore();
     const ref = store.sessionRefFromOpenSession(openSession);
-    return ref ? store.openRecent(ref, limit) : null;
+    if (!ref) {
+      return null;
+    }
+    const page = await store.openRecent(ref, limit);
+    this.applyMessagePage(openSession, page);
+    return page;
   }
 
   async readOlder(
@@ -383,7 +404,32 @@ export class OpenSessionManager {
     }
     const store = this.deps.getStore();
     const ref = store.sessionRefFromOpenSession(openSession);
-    return ref ? store.readOlder(ref, beforeEntryId, limit) : null;
+    if (!ref) {
+      return null;
+    }
+    const page = await store.readOlder(ref, beforeEntryId, limit);
+    openSession.messages = [
+      ...page.messages,
+      ...openSession.messages.filter((message) => (
+        !page.messages.some((older) => older.id === message.id)
+      )),
+    ];
+    openSession.hasOlderMessages = page.hasOlder;
+    openSession.totalMessageCount = page.totalMessageCount;
+    openSession.olderMessageCount = page.olderMessageCount;
+    openSession.olderUserMessageCount = page.olderUserMessageCount;
+    return page;
+  }
+
+  private applyMessagePage(
+    openSession: OpenSessionState,
+    page: SessionMessagePage,
+  ): void {
+    openSession.messages = page.messages;
+    openSession.hasOlderMessages = page.hasOlder;
+    openSession.totalMessageCount = page.totalMessageCount;
+    openSession.olderMessageCount = page.olderMessageCount;
+    openSession.olderUserMessageCount = page.olderUserMessageCount;
   }
 
   getSync(id: string): OpenSessionState | null {
@@ -391,7 +437,9 @@ export class OpenSessionManager {
   }
 
   findEmpty(): OpenSessionState | null {
-    return this.sessions.find((candidate) => candidate.messages.length === 0) || null;
+    return this.sessions.find((candidate) => (
+      (candidate.totalMessageCount ?? candidate.messages.length) === 0
+    )) || null;
   }
 
   list(): SessionSummary[] {
@@ -401,8 +449,8 @@ export class OpenSessionManager {
       createdAt: openSession.createdAt,
       updatedAt: openSession.updatedAt,
       lastResponseAt: openSession.lastResponseAt,
-      messageCount: openSession.messages.length,
-      preview: this.getPreview(openSession),
+      messageCount: openSession.totalMessageCount ?? openSession.messages.length,
+      preview: openSession.messagePreview ?? this.getPreview(openSession),
       titleSource: openSession.titleSource,
       sessionFile: openSession.sessionFile,
       leafCount: 1,
