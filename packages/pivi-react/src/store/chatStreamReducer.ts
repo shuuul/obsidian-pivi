@@ -176,6 +176,8 @@ export function reduceChatStreamSnapshot(
       if (lastBlock?.type === 'context_compacted') return state;
       const block = {
         type: 'context_compacted' as const,
+        ...(chunk.checkpoint ? { checkpoint: chunk.checkpoint } : {}),
+        ...(chunk.summary ? { summary: chunk.summary } : {}),
         ...(typeof chunk.tokensBefore === 'number' ? { tokensBefore: chunk.tokensBefore } : {}),
         ...(typeof chunk.tokensAfter === 'number' ? { tokensAfter: chunk.tokensAfter } : {}),
       };

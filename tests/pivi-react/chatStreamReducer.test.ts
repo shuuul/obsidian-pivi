@@ -52,6 +52,35 @@ describe('reduceChatStreamSnapshot', () => {
     expect(state).toBe(compactedOnce);
   });
 
+  it('preserves live checkpoint presentation on the compaction block', () => {
+    const state = reduceChatStreamSnapshot(createChatStreamSnapshot(assistantMessage()), {
+      type: 'context_compacted',
+      summary: 'Compatibility summary',
+      checkpoint: {
+        artifacts: [],
+        constraints: [],
+        continuationSummary: 'Continue the live turn.',
+        decisions: ['Keep the live path'],
+        goal: null,
+        nextSteps: ['Render it'],
+        openWork: [],
+        source: {
+          firstEntryId: 'first',
+          firstKeptEntryId: 'kept',
+          lastEntryId: 'last',
+        },
+        tokenEstimate: 42,
+        unresolvedQuestions: [],
+      },
+    });
+
+    expect(state.message.contentBlocks).toEqual([expect.objectContaining({
+      type: 'context_compacted',
+      summary: 'Compatibility summary',
+      checkpoint: expect.objectContaining({ continuationSummary: 'Continue the live turn.' }),
+    })]);
+  });
+
   it('merges repeated tool_use chunks and projects output and terminal results', () => {
     let state = createChatStreamSnapshot(assistantMessage());
     state = reduceChatStreamSnapshot(state, {

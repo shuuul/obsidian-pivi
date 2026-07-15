@@ -609,6 +609,37 @@ describe('ChatProjectionStore', () => {
     expect(store.getMessageStructureSnapshot(initial.id)).not.toBe(structure);
   });
 
+  it('publishes checkpoint content changes even when token estimates stay equal', () => {
+    const store = new ChatProjectionStore();
+    const initial = {
+      id: 'checkpoint-1',
+      role: 'assistant' as const,
+      content: '',
+      timestamp: 1,
+      contentBlocks: [{
+        type: 'context_compacted' as const,
+        summary: 'First summary',
+        tokensAfter: 100,
+        tokensBefore: 1_000,
+      }],
+    };
+    store.replaceAll([initial]);
+    const listener = jest.fn();
+    store.subscribeMessageStructure(initial.id, listener);
+
+    store.upsertNow({
+      ...initial,
+      contentBlocks: [{
+        type: 'context_compacted',
+        summary: 'Updated summary',
+        tokensAfter: 100,
+        tokensBefore: 1_000,
+      }],
+    });
+
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it('publishes inactive surfaces on the slower owner-realm cadence', () => {
     const realm = createProjectionRealm();
     const store = new ChatProjectionStore();

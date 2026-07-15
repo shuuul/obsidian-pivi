@@ -25,8 +25,8 @@ Outcome: a conservative, clearly-estimated context envelope that drives compacti
 - [x] A core envelope calculator implements `usable input = context window - reserved output - compaction reserve - safety margin` with conservative model-independent defaults, and decomposes estimated categories (system, recent conversation, selected context, tool and Agent results, checkpoints, reserved output, compaction reserve, safety margin). Provider-reported totals override estimates when present. Verified by unit tests with fixed fixtures.
 - [x] `shouldAutoCompact` consumes the envelope so compaction triggers before the provider limit with the reserved headroom; existing compaction trigger tests updated, no regression in trigger behavior for sessions that previously compacted.
 - [x] The usage ring opens an expanded inspector (popover within the composer chrome realm, not a transcript card) listing the categories with `~` approximation markers on estimated values and exact marks only for provider-authoritative numbers. Small and readable; not a tokenizer debugger (docs/11 constraint). Verified by jsdom tests and manual review.
-- [ ] The spec 006 Memory chip expands to show: checkpoint continuation summary, ledger (decisions/artifacts/open work/next steps), source entry bounds, and token estimate, inside the measured virtual row without a fake assistant message or nested scroll container. Verified by jsdom test + manual check.
-- [ ] All new copy is localized in all 10 catalogs with sentence case; the approximation marker convention is documented.
+- [x] The spec 006 Memory chip expands to show: checkpoint continuation summary, ledger (decisions/artifacts/open work/next steps), source entry bounds, and token estimate, inside the measured virtual row without a fake assistant message or nested scroll container. Verified by jsdom test + manual check.
+- [x] All new copy is localized in all 10 catalogs with sentence case; the approximation marker convention is documented.
 - [x] Estimated versus authoritative labeling is testable: given provider usage present, the inspector displays it as authoritative; absent, everything estimated is marked.
 
 ## Scope and non-goals
@@ -63,7 +63,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | Core envelope calculator + category decomposition + conservative defaults, provider-usage override | Codex | Done | None | 5 deterministic envelope cases; type/lint green |
 | WS-02 | Wire `shouldAutoCompact` to the envelope; headroom regression tests | Codex | Done | WS-01 | Compaction trigger suites green + new headroom cases |
 | WS-03 | Context Inspector popover on `UsageMeter` (categories, `~` markers, authoritative override display) + CSS + i18n | Codex | Done | WS-01 | jsdom tests; `check-i18n-dead-keys`; manual review |
-| WS-04 | Checkpoint expansion in the Memory chip (summary, ledger, source bounds, estimate) + legacy-entry fallback | Codex | Pending | Spec 005 WS-01/03, spec 006 WS-05 | jsdom tests + manual compaction/resume check |
+| WS-04 | Checkpoint expansion in the Memory chip (summary, ledger, source bounds, estimate) + legacy-entry fallback | Codex | Done | Spec 005 WS-01/03, spec 006 WS-05 | jsdom tests + manual compaction/resume check |
 | WS-05 | A11y + i18n completeness pass (keyboard open/close, aria labeling, 10 locales, sentence case) | Codex | Pending | WS-03, WS-04 | Lint sentence-case 0 warnings; placeholder-parity test |
 
 Guidance for low-context agents:
@@ -128,6 +128,15 @@ Guidance for low-context agents:
 - Evidence: 61 focused tests passed across envelope projection, compaction, runtime streaming, and React ChatShell. The React suite verifies authoritative/estimated display, the owner-realm listener boundary, Escape dismissal, and focus restoration. Typecheck, lint, and CSS build pass; all 10 locale catalogs contain the new keys.
 - Remaining: WS-04 checkpoint disclosure and WS-05 final accessibility/i18n review.
 - Next action: carry normalized checkpoint presentation through live chunks and restored session mapping into the measured Memory row.
+
+### 2026-07-16 — WS-04 checkpoint disclosure — Codex
+
+- Changed: added a foundation-owned `CheckpointPresentation` and normalized valid spec 005 checkpoint data into it in the Pi engine. Both live compaction results and restored JSONL entries now carry the same summary/checkpoint data; malformed or absent details fall back to the persisted summary only.
+- Changed: the Memory chip becomes a native disclosure only when details exist. The interactive chip is a sibling of the semantic separator, and the expanded measured row shows continuation, goal, constraints, decisions, artifacts, open work, unresolved questions, next steps, source bounds, and approximation-marked checkpoint tokens without a nested scroll container.
+- Problem recorded and fixed: the projection-store structural equality previously compared only compaction token values, which could suppress updated checkpoint content at unchanged token counts. Summary and checkpoint presentation now participate in structural comparison.
+- Evidence: 103 focused tests passed across live compaction, restored mapping, stream reduction, projection equality, Memory rendering, and paging. Structured and legacy disclosures, live/reload parity, separator semantics, and no-scroll presentation have explicit fixtures. Typecheck, lint, CSS build, 10-catalog dead-key scan, and spec validation pass.
+- Remaining: WS-05 final accessibility/i18n review and full repository verification.
+- Next action: run the final locale placeholder/sentence-case, keyboard/focus, reduced-motion, build/reload, and full-suite checks; then archive spec 007.
 
 ### 2026-07-15 — Spec creation — coordinator
 

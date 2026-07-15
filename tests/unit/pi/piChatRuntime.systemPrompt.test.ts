@@ -813,6 +813,29 @@ describe('PiChatRuntime system prompt', () => {
         // Drain the stream so each turn is persisted before compacting.
       }
     }
+    mockAuxRunner.query.mockResolvedValueOnce(`## Continuation summary
+Continue from the compacted session.
+
+## Goal
+Finish checkpoint presentation.
+
+## Constraints
+- Keep estimates explicit.
+
+## Decisions
+- Use the Memory boundary.
+
+## Artifacts
+- Spec :: specs/007.md
+
+## Open work
+- Verify the live path.
+
+## Unresolved questions
+None
+
+## Next steps
+- Run focused tests.`);
 
     const chunks = [];
     for await (const chunk of runtime.query(runtime.prepareTurn({ text: '/compact preserve decisions' }))) {
@@ -837,13 +860,18 @@ describe('PiChatRuntime system prompt', () => {
     ));
     expectDefined(manualCompaction);
     expect(manualCompaction.tokensAfter).toBeLessThan(manualCompaction.tokensBefore ?? 0);
+    expect(manualCompaction.summary).toContain('The earlier session history was compacted.');
+    expect(manualCompaction.checkpoint).toMatchObject({
+      continuationSummary: 'Continue from the compacted session.',
+      tokenEstimate: expect.any(Number),
+    });
     expect(mockAgentInstances[0].state.messages).toEqual(expect.arrayContaining([
       expect.objectContaining({
         role: 'user',
         content: expect.arrayContaining([
           expect.objectContaining({
             type: 'text',
-            text: expect.stringContaining('Compacted session summary.'),
+            text: expect.stringContaining('Continue from the compacted session.'),
           }),
         ]),
       }),

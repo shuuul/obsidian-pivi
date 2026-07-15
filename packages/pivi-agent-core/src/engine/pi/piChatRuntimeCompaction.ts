@@ -2,6 +2,7 @@ import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
 
 import {
   calculateContextEnvelope,
+  type CheckpointPresentation,
   type UsageInfo,
 } from '../../foundation';
 import type { StreamChunkQueue } from '../../runtime/streamChunkQueue';
@@ -28,6 +29,7 @@ import {
   renderCheckpoint,
   selectCompactionCutPoint,
   shouldAutoCompact,
+  toCheckpointPresentation,
 } from './session/piContextCompaction';
 import type { SessionTreeStore } from './session/sessionTreeStore';
 import type { SubagentConcurrencyLimiter } from './subagentConcurrencyLimiter';
@@ -38,6 +40,8 @@ export interface PiChatCompactionState {
 }
 
 export interface PiChatCompactionResult {
+  checkpoint?: CheckpointPresentation;
+  summary: string;
   tokensAfter: number;
   tokensBefore: number;
 }
@@ -281,6 +285,8 @@ export async function compactCurrentSession(
         deps.agent.state.messages = deps.sessionTree.loadAgentMessages();
       }
       return {
+        ...(checkpoint ? { checkpoint: toCheckpointPresentation(checkpoint) } : {}),
+        summary,
         tokensAfter: estimateSessionEntriesTokens(deps.sessionTree),
         tokensBefore: cutPoint.tokensBefore,
       };

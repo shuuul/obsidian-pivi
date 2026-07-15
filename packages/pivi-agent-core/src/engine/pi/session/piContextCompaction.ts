@@ -2,6 +2,7 @@ import type { AgentMessage } from '@earendil-works/pi-agent-core';
 
 import {
   calculateContextEnvelope,
+  type CheckpointPresentation,
   type UsageInfo,
 } from '../../../foundation';
 import {
@@ -210,6 +211,23 @@ function estimateContextEntryTokens(entry: PiContextCompactionEntry): number {
 
 export function estimateAgentMessagesTokens(messages: AgentMessage[]): number {
   return messages.reduce((total, message) => total + estimateAgentMessageTokens(message), 0);
+}
+
+export function toCheckpointPresentation(
+  checkpoint: Checkpoint,
+): CheckpointPresentation {
+  return {
+    artifacts: checkpoint.artifacts.map((artifact) => ({ ...artifact })),
+    constraints: [...checkpoint.constraints],
+    continuationSummary: checkpoint.continuationSummary,
+    decisions: [...checkpoint.decisions],
+    goal: checkpoint.goal,
+    nextSteps: [...checkpoint.nextSteps],
+    openWork: [...checkpoint.openWork],
+    source: { ...checkpoint.source },
+    tokenEstimate: checkpoint.tokenEstimates.checkpoint,
+    unresolvedQuestions: [...checkpoint.unresolvedQuestions],
+  };
 }
 
 export interface PiContextCategoryEstimates {

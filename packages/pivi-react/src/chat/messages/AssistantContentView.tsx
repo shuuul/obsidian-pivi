@@ -199,7 +199,9 @@ function ContextCompactedView({ block }: {
 }) {
   return (
     <MemoryBoundary
+      checkpoint={block.checkpoint}
       kind="compaction"
+      summary={block.summary}
       tokensAfter={block.tokensAfter}
       tokensBefore={block.tokensBefore}
     />

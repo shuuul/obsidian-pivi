@@ -217,6 +217,8 @@ function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessag
         case 'context_compacted':
           return {
             type: block.type,
+            checkpoint: block.checkpoint,
+            summary: block.summary,
             tokensAfter: block.tokensAfter,
             tokensBefore: block.tokensBefore,
           };

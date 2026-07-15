@@ -385,17 +385,18 @@
 }
 
 /* Memory boundaries */
-.pivi-memory-boundary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.pivi-memory-root {
+  position: relative;
+  display: grid;
+  justify-items: center;
   margin: 12px 0;
 }
 
-.pivi-memory-boundary::before,
-.pivi-memory-boundary::after {
-  content: '';
-  flex: 1;
+.pivi-memory-boundary {
+  position: absolute;
+  top: 12px;
+  right: 0;
+  left: 0;
   height: 1px;
   background: var(--pivi-host-border);
 }
@@ -411,9 +412,81 @@
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-text-xs);
   white-space: nowrap;
+  z-index: 1;
+}
+
+.pivi-memory-chip-button {
+  font: inherit;
+  border: 0;
+  cursor: pointer;
+}
+
+.pivi-memory-chip-button:hover {
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-memory-chip-button:focus-visible {
+  outline: var(--pivi-focus-ring);
+  outline-offset: 2px;
 }
 
 .pivi-memory-chip-transition {
   font-family: var(--pivi-font-monospace);
   color: var(--pivi-host-text-faint);
+}
+
+.pivi-checkpoint-panel {
+  justify-self: stretch;
+  margin-top: var(--pivi-spacing-sm);
+  padding: var(--pivi-spacing-sm) var(--pivi-spacing-md);
+  color: var(--pivi-host-text-normal);
+  background: var(--pivi-host-background-secondary);
+  border-left: 2px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-xs);
+  font-size: var(--pivi-text-sm);
+}
+
+.pivi-checkpoint-summary {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pivi-checkpoint-details,
+.pivi-checkpoint-meta {
+  display: grid;
+  gap: var(--pivi-spacing-sm);
+  margin-top: var(--pivi-spacing-sm);
+}
+
+.pivi-checkpoint-section h4,
+.pivi-checkpoint-section ul {
+  margin: 0;
+}
+
+.pivi-checkpoint-section h4,
+.pivi-checkpoint-meta dt {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-text-xs);
+  font-weight: 600;
+}
+
+.pivi-checkpoint-section ul {
+  padding-left: 1.25em;
+}
+
+.pivi-checkpoint-meta {
+  margin-bottom: 0;
+}
+
+.pivi-checkpoint-meta > div {
+  display: grid;
+  grid-template-columns: minmax(90px, auto) minmax(0, 1fr);
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-checkpoint-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--pivi-font-monospace);
+  font-size: var(--pivi-text-xs);
 }

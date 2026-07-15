@@ -97,6 +97,57 @@ describe('AssistantContentView', () => {
     expect(container.querySelector('.pivi-memory-chip-transition')).toBeNull();
   });
 
+  it('expands structured checkpoint details without nesting the separator', () => {
+    const { container, getByRole } = renderAssistant(assistantMessage({
+      contentBlocks: [{
+        type: 'context_compacted',
+        checkpoint: {
+          artifacts: [{ label: 'Spec', vaultPath: 'specs/007.md' }],
+          constraints: ['Keep values estimated'],
+          continuationSummary: 'Continue the context inspector work.',
+          decisions: ['Use the existing ring'],
+          goal: 'Finish checkpoint presentation',
+          nextSteps: ['Run focused tests'],
+          openWork: ['Wire restored sessions'],
+          source: {
+            firstEntryId: 'entry-1',
+            firstKeptEntryId: 'entry-8',
+            lastEntryId: 'entry-7',
+          },
+          tokenEstimate: 1_250,
+          unresolvedQuestions: ['Verify row measurement'],
+        },
+        summary: 'Stored compatibility summary.',
+      }],
+    }));
+
+    const trigger = getByRole('button', { name: 'View checkpoint' });
+    expect(getByRole('separator')).not.toContainElement(trigger);
+    fireEvent.click(trigger);
+    const panel = getByRole('region', { name: 'Checkpoint details' });
+    expect(panel).toHaveTextContent('Continue the context inspector work.');
+    expect(panel).toHaveTextContent('Use the existing ring');
+    expect(panel).toHaveTextContent('Spec — specs/007.md');
+    expect(panel).toHaveTextContent('entry-1 → entry-7; keep entry-8');
+    expect(panel).toHaveTextContent('~1K');
+    expect(container.querySelector('.pivi-checkpoint-panel')).not.toHaveStyle({ overflow: 'auto' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('expands only the persisted summary for a legacy checkpoint', () => {
+    const { getByRole, queryByText } = renderAssistant(assistantMessage({
+      contentBlocks: [{
+        type: 'context_compacted',
+        summary: 'Legacy persisted summary only.',
+      }],
+    }));
+
+    fireEvent.click(getByRole('button', { name: 'View checkpoint' }));
+    expect(getByRole('region', { name: 'Checkpoint details' }))
+      .toHaveTextContent('Legacy persisted summary only.');
+    expect(queryByText('Decisions')).toBeNull();
+  });
+
   it('merges Write and edit tool uses into contiguous step groups', () => {
     const { container, getByRole } = renderAssistant(assistantMessage({
       contentBlocks: [

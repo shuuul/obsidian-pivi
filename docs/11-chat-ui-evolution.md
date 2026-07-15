@@ -380,9 +380,9 @@ Memory uses a low-contrast divider/chip treatment rather than user or assistant 
 Earlier context compacted   ~86K → ~9K   View checkpoint
 ```
 
-Estimated values use an approximation marker. The boundary remains visible but subordinate to narrative. Expanding it may show the checkpoint summary, ledger, source range, and context estimate without inserting a fake assistant message.
+Estimated values use an approximation marker. The boundary remains visible but subordinate to narrative. Its implemented disclosure shows the checkpoint continuation summary, ledger, source range, and context estimate inside the measured row without inserting a fake assistant message or nested scroll container. Legacy entries expand only their persisted summary; malformed details are never guessed into structured fields.
 
-The implemented foundation carries additive `tokensBefore` / `tokensAfter` estimates on live compaction chunks and Memory content blocks. Reopened JSONL sessions derive the post-compaction estimate from the active branch at that compaction entry; a legacy UI block without both values displays only the localized boundary label. Older-history paging uses the same Memory divider/chip family and remains a virtual transcript row rather than message chrome.
+The implemented foundation carries additive `tokensBefore` / `tokensAfter` estimates plus an optional normalized checkpoint presentation on live compaction chunks and Memory content blocks. Reopened JSONL sessions derive the post-compaction estimate from the active branch at that compaction entry and parse the same checkpoint schema into the host-neutral presentation model; a legacy UI block without both values displays only the localized boundary label. Older-history paging uses the same Memory divider/chip family and remains a virtual transcript row rather than message chrome.
 
 ### Context Inspector
 

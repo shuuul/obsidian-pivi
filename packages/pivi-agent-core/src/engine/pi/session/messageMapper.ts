@@ -7,6 +7,7 @@ import type {
 } from '@earendil-works/pi-coding-agent';
 
 import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType, ToolCallInfo, ToolUseResult } from '../../../foundation';
+import { parsePiviCompactionDetails } from '../../../session/continuationSchemas';
 import {
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
@@ -23,7 +24,10 @@ import {
   TOOL_ASK_USER_QUESTION,
   TOOL_SKILL,
 } from '../../../tools';
-import { estimateActiveContextTokens } from './piContextCompaction';
+import {
+  estimateActiveContextTokens,
+  toCheckpointPresentation,
+} from './piContextCompaction';
 import {
   extractAgentTextContent,
   normalizeVisibleUserText,
@@ -329,6 +333,9 @@ export function entriesToChatMessages(
     if (!entry) continue;
     if (entry.type === 'compaction') {
       const timestamp = Date.parse(entry.timestamp) || Date.now();
+      const details = parsePiviCompactionDetails(
+        (entry as unknown as { details?: unknown }).details,
+      );
       const message: ChatMessage = {
         id: entry.id,
         role: 'assistant',
@@ -336,6 +343,8 @@ export function entriesToChatMessages(
         timestamp,
         contentBlocks: [{
           type: 'context_compacted',
+          ...(details ? { checkpoint: toCheckpointPresentation(details.piviCheckpoint) } : {}),
+          summary: entry.summary,
           tokensAfter: estimateActiveContextTokens(branch.slice(0, entryIndex + 1)),
           tokensBefore: entry.tokensBefore,
         }],

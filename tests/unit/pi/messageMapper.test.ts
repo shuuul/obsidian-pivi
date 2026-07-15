@@ -334,6 +334,25 @@ describe('MessageMapper', () => {
         summary: 'Earlier context summary.',
         firstKeptEntryId: 'a1',
         tokensBefore: 1234,
+        details: {
+          piviCheckpoint: {
+            schemaVersion: 1,
+            continuationSummary: 'Continue from here.',
+            goal: 'Finish mapping',
+            constraints: ['No guessing'],
+            decisions: ['Normalize in core'],
+            artifacts: [{ label: 'Spec', vaultPath: 'specs/007.md' }],
+            openWork: ['Add UI'],
+            unresolvedQuestions: [],
+            nextSteps: ['Run tests'],
+            source: {
+              firstEntryId: 'a0',
+              lastEntryId: 'a0',
+              firstKeptEntryId: 'a1',
+            },
+            tokenEstimates: { contextBefore: 1234, checkpoint: 80 },
+          },
+        },
       },
       {
         type: 'message',
@@ -352,6 +371,11 @@ describe('MessageMapper', () => {
       content: '',
       contentBlocks: [{
         type: 'context_compacted',
+        checkpoint: expect.objectContaining({
+          continuationSummary: 'Continue from here.',
+          tokenEstimate: 80,
+        }),
+        summary: 'Earlier context summary.',
         tokensAfter: expect.any(Number),
         tokensBefore: 1234,
       }],
