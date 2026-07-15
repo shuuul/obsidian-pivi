@@ -1,7 +1,7 @@
 ---
 id: "001"
 title: "Chat performance observability harness and budgets"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-15
 coordinator: "Codex"
@@ -173,4 +173,10 @@ Step-by-step guidance for WS-01 (for the implementing agent):
 
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Delivered a development-only, real-Obsidian chat performance system: an injected recorder seam and concrete trace exporter, fixed Pi-compatible session fixtures, deterministic 100KB streaming and isolated 10-tab switching workloads, a corrected ResizeObserver cadence, a named baseline matrix across main/pop-out windows, numerical regression budgets, and deterministic Jest gates. Production builds tree-shake every recorder command and workload marker.
+
+The main deviation from the original plan is intentional: session switching no longer reuses or rewrites durable user tab bindings. It creates ten in-memory tabs, suspends both tab persistence paths, restores the original active tab, and removes the synthetic tabs. Automatic heap evidence uses Chromium `performance.memory`; full retained-object heap snapshots remain a manual DevTools step because browser JavaScript exposes no portable snapshot API.
+
+Final verification passed on 2026-07-15: `npm run typecheck`; `npm run lint`; `npm run check:boundaries`; `npm run test:coverage -- --runInBand` (229 suites / 1,691 tests; 66.79% statements, 55.70% branches, 63.23% functions, 68.23% lines); `npm run build`; `npm run check:bundle-size` (2,978,644-byte production bundle); production negative grep; deployed-bundle checksum; real Obsidian reload with `No errors captured.` The final isolated workload left `.pivi/tab-manager-state.json` byte-identical and removed every synthetic tab.
+
+Durable conclusions are synchronized into `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, `src/app/AGENTS.md`, `packages/pivi-react/AGENTS.md`, `tests/AGENTS.md`, and `scripts/AGENTS.md`. Raw trace evidence remains vault-local under `.pivi/perf-traces/` as documented; it is not repository or product state.
