@@ -57,6 +57,7 @@ type TestTab = {
     };
     openSessionController?: {
       createNew: jest.Mock<Promise<void>, [{ force: true }?]>;
+      loadOlderMessages?: jest.Mock<Promise<boolean>, []>;
     };
   };
   ui: {
@@ -437,6 +438,88 @@ describe('imperative chat semantic view handle', () => {
     await harness.handle.maintenance.persistState();
     expect(harness.persistTabStateImmediate).toHaveBeenCalledTimes(1);
     expect([...tabs.keys()]).toEqual(['original']);
+  });
+
+  it('isolates indexed cold-open and paging from tab persistence', async () => {
+    let now = 0;
+    const ownerWindow = {
+      cancelAnimationFrame: jest.fn(),
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        now += 16;
+        callback(now);
+        return now;
+      },
+      setTimeout: (callback: TimerHandler) => {
+        if (typeof callback === 'function') callback();
+        return 1;
+      },
+    } as unknown as Window;
+    const harness = createHarness({ ownerWindow });
+    const original = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+    original.id = 'original';
+    original.dom!.messagesEl = {
+      ownerDocument: { defaultView: ownerWindow },
+    } as unknown as HTMLElement;
+    const tabs = new Map<string, TestTab>([[original.id, original]]);
+    let activeTabId = original.id;
+    const afterColdOpen = jest.fn(async () => undefined);
+    const afterOlderPage = jest.fn(async () => undefined);
+
+    await harness.mount();
+    harness.manager.getActiveTab.mockImplementation(() => tabs.get(activeTabId) ?? null);
+    harness.manager.getActiveTabId.mockImplementation(() => activeTabId);
+    harness.manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
+    harness.manager.createTab.mockImplementation(async (_openSessionId, tabId, options) => {
+      expect(options).toMatchObject({
+        sessionFile: '.pivi/sessions/perf-002-5k-messages.jsonl',
+      });
+      const messages = Array.from({ length: 100 }, (_, index) => ({
+        id: `recent-${index}`,
+        role: index % 2 === 0 ? 'user' as const : 'assistant' as const,
+        content: `Recent ${index}`,
+        timestamp: index,
+      }));
+      const tab = createTab({
+        id: tabId!,
+        openSessionId: 'perf-session',
+        sessionFile: '.pivi/sessions/perf-002-5k-messages.jsonl',
+        state: { isStreaming: false, messages },
+        controllers: {
+          openSessionController: {
+            createNew: jest.fn(async () => undefined),
+            loadOlderMessages: jest.fn(async () => {
+              messages.unshift(...Array.from({ length: 100 }, (_, index) => ({
+                id: `older-${index}`,
+                role: index % 2 === 0 ? 'user' as const : 'assistant' as const,
+                content: `Older ${index}`,
+                timestamp: index,
+              })));
+              return true;
+            }),
+          },
+        },
+      });
+      tabs.set(tab.id, tab);
+      activeTabId = tab.id;
+      return tab;
+    });
+    harness.manager.switchToTab.mockImplementation(async (tabId: string) => {
+      activeTabId = tabId;
+    });
+    harness.manager.closeTab.mockImplementation(async (tabId: string) => tabs.delete(tabId));
+
+    await expect(harness.handle.development?.runIndexedSessionPagingWorkload({
+      afterColdOpen,
+      afterOlderPage,
+    })).resolves.toEqual({ initialMessages: 100, messagesAfterPrepend: 200 });
+
+    expect(afterColdOpen).toHaveBeenCalledTimes(1);
+    expect(afterOlderPage).toHaveBeenCalledTimes(1);
+    expect(activeTabId).toBe('original');
+    expect([...tabs.keys()]).toEqual(['original']);
+    expect(harness.persistTabState).not.toHaveBeenCalled();
+    expect(harness.persistTabStateImmediate).not.toHaveBeenCalled();
   });
 
   it('constructs TabManager with an app-only runtime host', async () => {

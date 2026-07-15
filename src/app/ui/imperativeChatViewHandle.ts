@@ -28,6 +28,8 @@ export interface ImperativeChatViewHandleDeps {
 const DEVELOPMENT_MARKDOWN_BYTES = 100 * 1024;
 const DEVELOPMENT_MARKDOWN_CHUNK_BYTES = 1_600;
 const DEVELOPMENT_MARKDOWN_SETTLE_MS = 750;
+const DEVELOPMENT_PAGING_FIXTURE = '.pivi/sessions/perf-002-5k-messages.jsonl';
+const DEVELOPMENT_PAGING_SETTLE_MS = 750;
 const DEVELOPMENT_SWITCHING_MESSAGE_COUNT = 100;
 const DEVELOPMENT_SWITCHING_PASSES = 2;
 const DEVELOPMENT_SWITCHING_TAB_COUNT = 10;
@@ -56,6 +58,52 @@ function createDevelopmentMarkdown(): string {
 
 function nextAnimationFrame(ownerWindow: Window): Promise<void> {
   return new Promise(resolve => ownerWindow.requestAnimationFrame(() => resolve()));
+}
+
+async function settleDevelopmentRender(ownerWindow: Window, durationMs: number): Promise<void> {
+  await nextAnimationFrame(ownerWindow);
+  await nextAnimationFrame(ownerWindow);
+  await new Promise(resolve => ownerWindow.setTimeout(resolve, durationMs));
+}
+
+async function runDevelopmentIndexedSessionPaging(
+  manager: TabManager,
+  ownerWindow: Window,
+  hooks: Parameters<PiviChatDevelopmentCommands['runIndexedSessionPagingWorkload']>[0],
+): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['runIndexedSessionPagingWorkload']>>> {
+  const originalTabId = manager.getActiveTabId();
+  if (!originalTabId) {
+    throw new Error('An active chat tab is required for the indexed paging workload.');
+  }
+
+  const tabId = `pivi-development-indexed-paging-${Date.now()}`;
+  try {
+    const tab = await manager.createTab(undefined, tabId, {
+      sessionFile: DEVELOPMENT_PAGING_FIXTURE,
+    });
+    if (!tab || tab.id !== tabId) {
+      throw new Error('Failed to create the isolated indexed paging tab.');
+    }
+    await settleDevelopmentRender(ownerWindow, DEVELOPMENT_PAGING_SETTLE_MS);
+    const initialMessages = tab.state.messages.length;
+    await hooks.afterColdOpen();
+
+    const loaded = await tab.controllers.openSessionController?.loadOlderMessages();
+    if (!loaded) {
+      throw new Error('The indexed paging fixture did not prepend an older page.');
+    }
+    await settleDevelopmentRender(ownerWindow, DEVELOPMENT_PAGING_SETTLE_MS);
+    const messagesAfterPrepend = tab.state.messages.length;
+    await hooks.afterOlderPage();
+    return { initialMessages, messagesAfterPrepend };
+  } finally {
+    if (manager.getTab(originalTabId)) {
+      await manager.switchToTab(originalTabId);
+    }
+    if (manager.getTab(tabId)) {
+      await manager.closeTab(tabId, true);
+    }
+  }
 }
 
 function createDevelopmentTabMessages(tabIndex: number): ChatMessage[] {
@@ -396,6 +444,17 @@ export function createImperativeChatViewHandle(
     },
     ...(process.env.NODE_ENV !== 'production' ? {
       development: {
+        async runIndexedSessionPagingWorkload(hooks) {
+          const manager = getTabManager();
+          const activeTab = manager?.getActiveTab();
+          const ownerWindow = activeTab?.dom.messagesEl.ownerDocument.defaultView;
+          if (!manager || !ownerWindow) {
+            throw new Error('A mounted active chat is required for the indexed paging workload.');
+          }
+          return runWithoutTabPersistence(
+            () => runDevelopmentIndexedSessionPaging(manager, ownerWindow, hooks),
+          );
+        },
         async run100KbMarkdownStream() {
           const activeTab = getTabManager()?.getActiveTab();
           const state = activeTab?.state;

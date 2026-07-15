@@ -23,6 +23,7 @@ function createPlugin() {
     start: jest.fn(),
     sampleHeap: jest.fn(),
     stopAndExport: jest.fn(async () => '.pivi/perf-traces/trace.json'),
+    dispose: jest.fn(),
   };
   return {
     commands,
@@ -118,6 +119,7 @@ describe('chat command registration', () => {
     expect(commands.map(command => command.id)).toEqual(expect.arrayContaining([
       'debug-start-chat-performance-trace',
       'debug-sample-chat-performance-heap',
+      'debug-run-indexed-session-paging-workload',
       'debug-run-100kb-markdown-stream',
       'debug-run-tab-switching-workload',
       'debug-stop-chat-performance-trace',
@@ -136,6 +138,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
+          runIndexedSessionPagingWorkload: jest.fn(),
           run100KbMarkdownStream,
           runTabSwitchingWorkload: jest.fn(),
         },
@@ -162,6 +165,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
+          runIndexedSessionPagingWorkload: jest.fn(),
           run100KbMarkdownStream: jest.fn(),
           runTabSwitchingWorkload,
         },
@@ -174,6 +178,52 @@ describe('chat command registration', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(runTabSwitchingWorkload).toHaveBeenCalledTimes(1);
+  });
+
+  it('exports isolated cold-open and older-page traces in one paging workload', async () => {
+    const runIndexedSessionPagingWorkload = jest.fn(async (hooks: {
+      afterColdOpen(): Promise<void>;
+      afterOlderPage(): Promise<void>;
+    }) => {
+      await hooks.afterColdOpen();
+      await hooks.afterOlderPage();
+      return { initialMessages: 100, messagesAfterPrepend: 200 };
+    });
+    jest.mocked(findPiviView).mockReturnValue({
+      leaf: {} as never,
+      getChatHandle: () => ({
+        commands: {} as PiviChatViewCommands,
+        maintenance: {} as never,
+        development: {
+          runIndexedSessionPagingWorkload,
+          run100KbMarkdownStream: jest.fn(),
+          runTabSwitchingWorkload: jest.fn(),
+        },
+      }),
+    });
+    const { commands, perfController, plugin } = createPlugin();
+    perfController.enabled = false;
+    perfController.stopAndExport
+      .mockResolvedValueOnce('.pivi/perf-traces/cold.json')
+      .mockResolvedValueOnce('.pivi/perf-traces/older.json');
+    registerPiviCommands(plugin as never);
+
+    commands.find(command => command.id === 'debug-run-indexed-session-paging-workload')
+      ?.callback?.();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(runIndexedSessionPagingWorkload).toHaveBeenCalledTimes(1);
+    expect(perfController.start).toHaveBeenNthCalledWith(
+      1,
+      'indexed-cold-open-5k-main-isolated',
+      expect.anything(),
+    );
+    expect(perfController.start).toHaveBeenNthCalledWith(
+      2,
+      'indexed-older-page-5k-main-isolated',
+      expect.anything(),
+    );
+    expect(perfController.stopAndExport).toHaveBeenCalledTimes(2);
   });
 
   it('starts a CLI-safe trace from the optional vault scenario file', async () => {
