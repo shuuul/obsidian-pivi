@@ -20,7 +20,7 @@ flowchart LR
   Subagent --> Slot
 ```
 
-Each adapter exclusively owns the children of one empty React-provided container. Mount returns deterministic cleanup; stateful adapters may also receive explicit update calls. An adapter does not own the container, message order, stream lifecycle, or durable state.
+Each adapter exclusively owns the children of one empty React-provided container. Mount returns deterministic cleanup; projected Markdown, tool, and stored-subagent slots keep that mount for a stable entity generation and send reconciled snapshots through explicit update calls. An adapter does not own the container, message order, stream lifecycle, or durable state.
 
 ## Key files
 
@@ -43,6 +43,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Treat `ChatMessage`, `ContentBlock`, `ToolCallInfo`, `ToolDiffData`, `SubagentInfo`, and todo display models as upstream contracts. Normalize or parse only display-specific variants; do not recreate runtime policy.
 - Render from durable message state. Stored subagent renderers are owner-realm adapters only; runtime managers and stream coordination must not create, retain, or update their DOM state.
 - A mounted stored subagent must be updated through `updateStoredSubagent`; rebuilding it for every stream chunk discards expansion state and multiplies Markdown/tool rendering. Running text is retained in state and rendered as Markdown only when the subagent reaches a terminal result.
+- A mounted rich tool body must receive tool-entity changes through its adapter `update` path. Do not remount it for status/input/result patches; remount only when React supplies a new stable tool generation.
 - Extend tool bodies through `toolCallExpandedDispatcher.ts`; block classification, grouping, ordering, labels, and shell state belong to `@pivi/pivi-react`.
 - Completed Markdown Read results use the injected Obsidian Markdown renderer with the resolved vault path as `sourcePath`; generic/external reads render Markdown only for explicit Markdown paths. Preserve the existing bounded line previews.
 - Markdown Structure/Outline keeps JSON as its tool protocol but renders a YAML-style heading list in the UI. Malformed protocol results fall back to bounded raw lines.

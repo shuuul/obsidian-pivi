@@ -68,7 +68,7 @@ The index is an optimization over JSONL, not a second durable source of truth. A
 
 ### Block, tool, and Agent subscriptions
 
-`ChatProjectionStore` already exposes message, block, tool, and Agent-run entities. React should progressively adopt the narrower subscriptions where profiling justifies them:
+`ChatProjectionStore` exposes reconciled message-structure, block, tool, and Agent-run entities. The virtualized transcript uses the narrow subscriptions for its hottest interiors:
 
 ```text
 MessageRow        message shell and ordering metadata
@@ -78,6 +78,8 @@ AgentActivity     one Agent run ID
 ```
 
 A block update may remeasure its virtual row, but it should not rerender sibling blocks, tools, other messages, or unrelated Agent runs. The durable `ChatMessage` remains the persistence format; normalized entities are a UI read model.
+
+Whole-message upserts remain the ingestion boundary until the sequenced event-plane work. The store reconciles keyed entities, preserves unchanged snapshot identities, publishes only changed entities, and notifies removals. Projected rows subscribe to stable structure metadata; copy actions resolve the current full message only when invoked. Markdown, tool, and stored-subagent adapters mount once for a stable entity generation and receive subsequent snapshots through `update`.
 
 ### Sequenced UI event protocol
 
@@ -195,6 +197,19 @@ Environment: Obsidian 1.13.2, Pivi 0.9.0 at `0356645c`, Darwin 25.5 arm64 on App
 | One append on 5K | Former path rewrote the complete JSONL after Pi's append | 12.933 ms rewrite median versus 0.242 ms indexed-append median (53.457×) across five 20-append trials | `pivi-session-append-benchmark-v1`, commit `0356645c`; benchmark uses fresh temporary copies and emulates the exact removed `_rewriteFile()` step |
 
 The cold-open comparable event-to-paint value improved by 16.2%. The controlled start-to-paint number is retained as the reproducible boundary for future storage comparisons rather than being compared to the older operator-dwell trace duration.
+
+#### 2026-07-16 granular-subscription result
+
+Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64. The deterministic React tests are the authoritative isolation evidence because the trace schema records projection commits and host Markdown renders, not sibling component renders. Spec 003 intentionally retains whole-message ingestion, and its 100KB fixture contains one changing Markdown block, so neither the 67 projection commits nor the 65 affected-block renders should fall in this step.
+
+| Window | Result | Evidence |
+|---|---|---|
+| Main | 67 projection commits; 65 synthetic-block Markdown renders / 450.8 ms; max 2 workload rows / 3,463 DOM nodes; 1 workload long task, 256 ms; max 18.7 ms event-to-paint | `2026-07-15T20-11-05-930Z-spec-003-granular-main.json` |
+| Pop-out | 67 projection commits; 65 synthetic-block Markdown renders / 431.3 ms; max 2 workload rows / 3,463 DOM nodes; 1 workload long task, 261 ms; max 69.8 ms event-to-paint | `2026-07-15T20-12-38-380Z-spec-003-granular-popout.json` |
+
+Both traces stayed inside the 100KB workload ceilings and identified only their expected owner window. Workload row/long-task bounds select the interval from the first synthetic-message commit through the final synthetic-block render. Restoring the prior active 5K transcript afterward raised the whole-trace row maxima to 25 in main and 20 in the pop-out, added one cleanup long task per trace, and produced 41/30 unrelated Markdown renders. Isolated-workload render counts therefore select the canonical `pivi-development-markdown-stream-assistant` block ID. These bounds distinguish workload events from cleanup and are not evidence of fewer renders inside the changing block.
+
+Deterministic tests separately prove that a text/thinking delta does not invoke a sibling Markdown adapter, a tool status patch does not rerender or remount sibling tool bodies, an Agent-run patch updates only its stored-subagent island, same-shape assistant content does not rerun row action predicates, and ResizeObserver growth remeasures only the owning virtual row.
 
 #### Regression budgets
 

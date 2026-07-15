@@ -22,12 +22,12 @@ coordinator: "Codex"
 
 Outcome: streaming text, tool status, and subagent status updates re-render only the affected entity's component and remeasure only its virtual row.
 
-- [ ] `TextBlockView` (or a thin wrapper) subscribes through `useChatProjectionBlock` for its own block ID; a streaming delta does not re-render sibling blocks or tool views. Verified by a deterministic Jest render-count test modeled on `AssistantContentView.test.tsx` mount-count assertions.
-- [ ] `ToolCallView` subscribes through `useChatProjectionTool`; a tool status flip re-renders only that tool shell. Same verification style.
-- [ ] The subagent slot subscribes through `useChatProjectionAgentRun`; subagent status/description updates do not re-render the owning message row. The imperative `SubagentRenderer`/`AsyncSubagentRenderer` adapters keep receiving updates via their existing `update` path.
-- [ ] The message row keeps subscribing only to shell/ordering metadata (docs/11 `MessageRow` role); block additions/removals still re-render the row.
-- [ ] Row remeasure still happens when a subscribed block grows (TanStack `measureElement` reruns), verified by a test and manual streaming in Obsidian (no overlap/clipping, anchored follow keeps working).
-- [ ] Spec 001 traces show reduced commits/rerenders per streamed token on the 100KB-Markdown and 5K-message scenarios (before/after recorded).
+- [x] `TextBlockView` (or a thin wrapper) subscribes through `useChatProjectionBlock` for its own block ID; a streaming delta does not re-render sibling blocks or tool views. Verified by a deterministic Jest render-count test modeled on `AssistantContentView.test.tsx` mount-count assertions.
+- [x] `ToolCallView` subscribes through `useChatProjectionTool`; a tool status flip re-renders only that tool shell. Same verification style.
+- [x] The subagent slot subscribes through `useChatProjectionAgentRun`; subagent status/description updates do not re-render the owning message row. The imperative `SubagentRenderer`/`AsyncSubagentRenderer` adapters keep receiving updates via their existing `update` path.
+- [x] The message row keeps subscribing only to shell/ordering metadata (docs/11 `MessageRow` role); block additions/removals still re-render the row.
+- [x] Row remeasure still happens when a subscribed block grows (TanStack `measureElement` reruns), verified by a test and manual streaming in Obsidian (no overlap/clipping, anchored follow keeps working).
+- [x] Deterministic render-count tests prove that a block, tool, or Agent-run update does not rerender sibling entities or the owning row shell. Spec 001 main-window and pop-out traces prove the unchanged 100KB workload stays within its projection, Markdown, virtualization, long-task, and paint budgets. The trace recorder does not expose React component commits, and this spec intentionally keeps whole-message ingestion, so trace commit counts are not used as the isolation proof.
 
 ## Scope and non-goals
 
@@ -51,6 +51,7 @@ Not in scope:
 | 2026-07-15 | Adopt entity subscriptions only where profiling justifies (text blocks, tools, agent runs), not for every leaf | docs/11 explicitly scopes to "hottest message interiors"; avoids subscription-count explosion | WS-01..WS-03 |
 | 2026-07-15 | Keep whole-message `queueUpsert` as the ingestion API in this spec | Store-side diffing already yields entity granularity; changing ingestion belongs to spec 004 | All |
 | 2026-07-16 | Add entity reconciliation as a prerequisite correctness gate | The activation audit disproved the original assumption that whole-message upserts already preserved unchanged entity identities; removals also need to notify active subscribers | WS-00..WS-04 |
+| 2026-07-16 | Use deterministic component tests as the optimization proof and Spec 001 traces as non-regression evidence | The recorder measures projection commits and actual host Markdown renders, not React sibling renders. Whole-message ingestion remains in scope for spec 004, and the one-block 100KB workload must still render its affected block on every chunk, so lower trace counts would be an invalid success condition for this spec | WS-05..WS-06 |
 
 ## Workstreams
 
@@ -63,8 +64,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
 | WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Done | WS-00 | Extended jsdom test + projection store tests |
 | WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Done | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
-| WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | In progress | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
-| WS-06 | Before/after traces with spec 001 harness | Codex | Pending | WS-01..WS-05, spec 001 | Recorded traces in Progress and handoff |
+| WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | Done | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
+| WS-06 | Deterministic isolation evidence plus Spec 001 main/pop-out non-regression traces | Codex | Done | WS-01..WS-05, spec 001 | Render-count tests and recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
 
@@ -176,6 +177,15 @@ Guidance for low-context agents:
 - Remaining: record the live validation results, restore the production artifact, and complete WS-05/WS-06.
 - Blockers: none.
 - Next action: commit the build fix, then finish trace comparison and production restoration.
+
+### 2026-07-16 — WS-05/WS-06 live validation and acceptance correction — Codex
+
+- Changed: completed the main-window and pop-out synthetic 100KB workload through disposable, session-free tabs; verified row growth/anchoring without overlap or clipping; restored the production artifact; and corrected WS-06 so deterministic component render counts prove subscription isolation while Spec 001 traces prove runtime non-regression.
+- Evidence: `2026-07-15T20-11-05-930Z-spec-003-granular-main.json` recorded 67 projection commits, 65 synthetic-block Markdown renders / 450.8 ms, max 2 workload rows / 3,463 DOM nodes, one workload long task (256 ms), and max 18.7 ms event-to-paint. `2026-07-15T20-12-38-380Z-spec-003-granular-popout.json` recorded the same 67/65 cadence, 431.3 ms synthetic Markdown time, max 2 workload rows / 3,463 DOM nodes, one workload long task (261 ms), and max 69.8 ms event-to-paint. Workload bounds select the interval from the first synthetic-message commit through the final synthetic-block render; cleanup restoration raised the whole-trace maxima to 25/20 rows and added one long task in each trace. Both identify only their expected owner window. Live DOM inspection found no overlap, scroll-away remained 240 px from the end, synthetic markers and the temporary pop-out were removed, and `obsidian dev:errors` was clean after production restoration.
+- Problem recorded: the original criterion required reduced trace commits/renders, but the recorder has no React component-commit signal. This spec deliberately retains whole-message ingestion, so projection commits remain 67; the single affected Markdown block also correctly renders 65 times. Restoration of the pre-existing active transcript added 41 unrelated Markdown renders in main and 30 in pop-out, so workload render evidence is filtered by the canonical synthetic block ID rather than misreported as a scenario regression.
+- Remaining: synchronize durable guidance, run the full repository gate, record the completion summary, and archive the spec.
+- Blockers: none after adopting the corrected evidence boundary.
+- Next action: update docs/11 and the owning `AGENTS.md` contracts, then run the full completion gate.
 
 ## Completion summary
 
