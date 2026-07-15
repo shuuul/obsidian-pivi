@@ -206,7 +206,17 @@ function createHarness(options: HarnessOptions = {}) {
   const loadPersistedTabState = jest.fn(async () => options.persistedState ?? null);
   const persistTabState = jest.fn();
   const plugin = {
-    app: { workspace: {} },
+    app: {
+      vault: {
+        adapter: {
+          exists: jest.fn(async (path: string) => path.endsWith('.jsonl')),
+          read: jest.fn(async () => '{"type":"session","id":"fixture"}\n'),
+          remove: jest.fn(async () => undefined),
+          write: jest.fn(async () => undefined),
+        },
+      },
+      workspace: {},
+    },
     settings: { tabBarPosition: 'header' },
     getUiFacades: jest.fn(),
     getAllViews: jest.fn(),
@@ -472,7 +482,7 @@ describe('imperative chat semantic view handle', () => {
     harness.manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
     harness.manager.createTab.mockImplementation(async (_openSessionId, tabId, options) => {
       expect(options).toMatchObject({
-        sessionFile: '.pivi/sessions/perf-002-5k-messages.jsonl',
+        sessionFile: expect.stringMatching(/^\.pivi\/sessions\/perf-isolated-\d+\.jsonl$/),
       });
       const messages = Array.from({ length: 100 }, (_, index) => ({
         id: `recent-${index}`,
@@ -502,7 +512,7 @@ describe('imperative chat semantic view handle', () => {
       const tab = createTab({
         id: tabId!,
         openSessionId: 'perf-session',
-        sessionFile: '.pivi/sessions/perf-002-5k-messages.jsonl',
+        sessionFile: options?.sessionFile as string,
         state: { isStreaming: false, messages },
         controllers: {
           openSessionController: {
@@ -541,6 +551,8 @@ describe('imperative chat semantic view handle', () => {
     expect([...tabs.keys()]).toEqual(['original']);
     expect(harness.persistTabState).not.toHaveBeenCalled();
     expect(harness.persistTabStateImmediate).not.toHaveBeenCalled();
+    expect(harness.plugin.app.vault.adapter.write).toHaveBeenCalledTimes(1);
+    expect(harness.plugin.app.vault.adapter.remove).toHaveBeenCalledTimes(1);
   });
 
   it('constructs TabManager with an app-only runtime host', async () => {

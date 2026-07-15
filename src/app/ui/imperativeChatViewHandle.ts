@@ -80,9 +80,40 @@ async function waitForDevelopmentMessageCount(
   }
 }
 
+async function createDevelopmentPagingFixture(
+  plugin: PiviChatCompositionHost,
+  runId: number,
+): Promise<string> {
+  const adapter = plugin.app.vault.adapter;
+  const source = await adapter.read(DEVELOPMENT_PAGING_FIXTURE);
+  const lineEnd = source.indexOf('\n');
+  if (lineEnd < 0) {
+    throw new Error('The indexed paging fixture has no JSONL entries.');
+  }
+  const header = JSON.parse(source.slice(0, lineEnd)) as Record<string, unknown>;
+  if (header.type !== 'session') {
+    throw new Error('The indexed paging fixture has no session header.');
+  }
+  header.id = `pivi-development-indexed-paging-${runId}`;
+  const sessionFile = `.pivi/sessions/perf-isolated-${runId}.jsonl`;
+  await adapter.write(sessionFile, `${JSON.stringify(header)}${source.slice(lineEnd)}`);
+  return sessionFile;
+}
+
+async function removeDevelopmentPagingFixture(
+  plugin: PiviChatCompositionHost,
+  sessionFile: string,
+): Promise<void> {
+  const adapter = plugin.app.vault.adapter;
+  const indexFile = `${sessionFile}.pivi-index`;
+  if (await adapter.exists(indexFile)) await adapter.remove(indexFile);
+  if (await adapter.exists(sessionFile)) await adapter.remove(sessionFile);
+}
+
 async function runDevelopmentIndexedSessionPaging(
   manager: TabManager,
   ownerWindow: Window,
+  plugin: PiviChatCompositionHost,
   hooks: Parameters<PiviChatDevelopmentCommands['runIndexedSessionPagingWorkload']>[0],
 ): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['runIndexedSessionPagingWorkload']>>> {
   const originalTabId = manager.getActiveTabId();
@@ -90,10 +121,12 @@ async function runDevelopmentIndexedSessionPaging(
     throw new Error('An active chat tab is required for the indexed paging workload.');
   }
 
-  const tabId = `pivi-development-indexed-paging-${Date.now()}`;
+  const runId = Date.now();
+  const tabId = `pivi-development-indexed-paging-${runId}`;
+  const sessionFile = await createDevelopmentPagingFixture(plugin, runId);
   try {
     const tab = await manager.createTab(undefined, tabId, {
-      sessionFile: DEVELOPMENT_PAGING_FIXTURE,
+      sessionFile,
     });
     if (!tab || tab.id !== tabId) {
       throw new Error('Failed to create the isolated indexed paging tab.');
@@ -115,11 +148,15 @@ async function runDevelopmentIndexedSessionPaging(
     await hooks.afterOlderPage();
     return { initialMessages, messagesAfterPrepend };
   } finally {
-    if (manager.getTab(originalTabId)) {
-      await manager.switchToTab(originalTabId);
-    }
-    if (manager.getTab(tabId)) {
-      await manager.closeTab(tabId, true);
+    try {
+      if (manager.getTab(originalTabId)) {
+        await manager.switchToTab(originalTabId);
+      }
+      if (manager.getTab(tabId)) {
+        await manager.closeTab(tabId, true);
+      }
+    } finally {
+      await removeDevelopmentPagingFixture(plugin, sessionFile);
     }
   }
 }
@@ -470,7 +507,7 @@ export function createImperativeChatViewHandle(
             throw new Error('A mounted active chat is required for the indexed paging workload.');
           }
           return runWithoutTabPersistence(
-            () => runDevelopmentIndexedSessionPaging(manager, ownerWindow, hooks),
+            () => runDevelopmentIndexedSessionPaging(manager, ownerWindow, plugin, hooks),
           );
         },
         async run100KbMarkdownStream() {
