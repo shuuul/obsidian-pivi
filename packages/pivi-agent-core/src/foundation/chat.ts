@@ -182,6 +182,28 @@ export type StreamChunk =
  * Cache token fields are optional — only providers with prompt caching populate them.
  * Feature code should use `contextTokens` for display, not recompute from the cache breakdown.
  */
+export interface ContextEnvelopeValue {
+  source: 'estimated' | 'authoritative';
+  tokens: number;
+}
+
+export interface ContextEnvelope {
+  checkpoints: ContextEnvelopeValue;
+  compactionReserve: ContextEnvelopeValue;
+  contextWindow: ContextEnvelopeValue;
+  recentConversation: ContextEnvelopeValue;
+  reservedOutput: ContextEnvelopeValue;
+  safetyMargin: ContextEnvelopeValue;
+  selectedContext: ContextEnvelopeValue;
+  system: ContextEnvelopeValue;
+  toolAndAgentResults: ContextEnvelopeValue;
+  total: ContextEnvelopeValue;
+  /** Conservative trigger after both the configured ratio and reserved headroom. */
+  compactionTriggerTokens: number;
+  /** Input capacity remaining after output, compaction, and safety reserves. */
+  usableInputTokens: number;
+}
+
 export interface UsageInfo {
   model?: string;
   inputTokens: number;
@@ -196,5 +218,8 @@ export interface UsageInfo {
   /** True when `contextWindow` came from provider runtime data instead of a local heuristic. */
   contextWindowIsAuthoritative?: boolean;
   contextTokens: number;
+  /** True only when the provider reported `contextTokens`; false/absent means estimated. */
+  contextTokensIsAuthoritative?: boolean;
+  contextEnvelope?: ContextEnvelope;
   percentage: number;
 }

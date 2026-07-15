@@ -51,6 +51,8 @@ Not in scope:
 |---|---|---|---|
 | 2026-07-15 | Envelope categories follow the context assembler's real composition, collapsed to the docs/11 display list | docs/11: "Exact categories may follow the context assembler, but the display should stay small" | WS-01, WS-03 |
 | 2026-07-15 | Inspector opens from the existing ring; no second context indicator is added anywhere | docs/11 prohibits competing context indicators | WS-03 |
+| 2026-07-16 | Reserve defaults cap at 16K output / 12K compaction / 8K safety for large windows, scaling down to 25% / 10% / 5% for smaller windows | Matches the docs/11 conservative 200K example without making 32K windows unusable; no provider tokenizer or settings knobs are introduced | WS-01, WS-02 |
+| 2026-07-16 | Only the provider-reported total may be authoritative; every category split and reserve remains explicitly estimated | Provider usage exposes one aggregate total and cannot truthfully make locally decomposed categories exact | WS-01, WS-03 |
 
 ## Workstreams
 
@@ -58,7 +60,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Core envelope calculator + category decomposition + conservative defaults, provider-usage override | Codex | In progress | None | New unit suite with fixture sessions; deterministic numbers |
+| WS-01 | Core envelope calculator + category decomposition + conservative defaults, provider-usage override | Codex | Done | None | 5 deterministic envelope cases; type/lint green |
 | WS-02 | Wire `shouldAutoCompact` to the envelope; headroom regression tests | Codex | Pending | WS-01 | Compaction trigger suites green + new headroom cases |
 | WS-03 | Context Inspector popover on `UsageMeter` (categories, `~` markers, authoritative override display) + CSS + i18n | Codex | Pending | WS-01 | jsdom tests; `check-i18n-dead-keys`; manual review |
 | WS-04 | Checkpoint expansion in the Memory chip (summary, ledger, source bounds, estimate) + legacy-entry fallback | Codex | Pending | Spec 005 WS-01/03, spec 006 WS-05 | jsdom tests + manual compaction/resume check |
@@ -94,6 +96,14 @@ Guidance for low-context agents:
 - Verification: `npm run check:specs` before activation commit.
 - Remaining: WS-01 through WS-05.
 - Next action: audit the real prompt/context composition and define the smallest host-neutral envelope contract that both compaction policy and React can consume.
+
+### 2026-07-16 — WS-01 conservative envelope contract — Codex
+
+- Changed: added a host-neutral `ContextEnvelope` model and pure calculator covering system, recent conversation, selected context, tool/Agent results, checkpoints, reserved output, compaction reserve, safety margin, usable input, and the conservative trigger. Added optional envelope/authoritative-total facts to `UsageInfo` without changing existing consumers.
+- Evidence: a 200K window yields the documented 16K/12K/8K reserves and 164K usable input; a 32K window scales reserves to 8K/3.2K/1.6K instead of producing negative capacity. A provider total replaces only the aggregate and leaves category sources estimated.
+- Verification: `npm run test -- --runInBand tests/unit/pivi-agent-core/contextEnvelope.test.ts` (5 tests); `npm run typecheck`; `npm run lint`.
+- Remaining: WS-02 through WS-05.
+- Next action: route the envelope trigger into automatic/preflight compaction without weakening any existing trigger.
 
 ### 2026-07-15 — Spec creation — coordinator
 
