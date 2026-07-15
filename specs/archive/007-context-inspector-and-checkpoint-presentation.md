@@ -1,7 +1,7 @@
 ---
 id: "007"
 title: "Conservative context envelope, Context Inspector, and checkpoint presentation"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-16
 coordinator: "Codex"
@@ -64,7 +64,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Wire `shouldAutoCompact` to the envelope; headroom regression tests | Codex | Done | WS-01 | Compaction trigger suites green + new headroom cases |
 | WS-03 | Context Inspector popover on `UsageMeter` (categories, `~` markers, authoritative override display) + CSS + i18n | Codex | Done | WS-01 | jsdom tests; `check-i18n-dead-keys`; manual review |
 | WS-04 | Checkpoint expansion in the Memory chip (summary, ledger, source bounds, estimate) + legacy-entry fallback | Codex | Done | Spec 005 WS-01/03, spec 006 WS-05 | jsdom tests + manual compaction/resume check |
-| WS-05 | A11y + i18n completeness pass (keyboard open/close, aria labeling, 10 locales, sentence case) | Codex | Pending | WS-03, WS-04 | Lint sentence-case 0 warnings; placeholder-parity test |
+| WS-05 | A11y + i18n completeness pass (keyboard open/close, aria labeling, 10 locales, sentence case) | Codex | Done | WS-03, WS-04 | Lint sentence-case 0 warnings; placeholder-parity test |
 
 Guidance for low-context agents:
 
@@ -145,6 +145,18 @@ Guidance for low-context agents:
 - Remaining: full coverage, production build/bundle-size check, safe Obsidian reload/error scan, completion summary, and archive.
 - Next action: run the full repository verification matrix without creating or mutating user tabs.
 
+### 2026-07-16 — WS-05 full coverage — Codex
+
+- Evidence: `npm run test:coverage -- --runInBand` passed 239 suites / 1,837 tests. Global coverage is 68.66% statements, 58.04% branches, 65.51% functions, and 70.12% lines.
+- Problem recorded: the coverage run's trailing bundle check observed a test/coverage `main.js` above the 5 MB release limit. This is not accepted as a production result; the next check rebuilds production serially and reruns `check:bundle-size` against that artifact before completion.
+- Remaining: production build/bundle-size result, reload/error scan, archive.
+
+### 2026-07-16 — WS-05 production verification — Codex
+
+- Evidence: the serial production build completed and deployed the configured plugin artifacts. The production `main.js` is 3,054,026 bytes (2.91 MB), leaving 2,188,854 bytes (2.09 MB) below the 5 MB cap; this resolves the coverage-artifact warning recorded above.
+- Evidence: `obsidian reload && obsidian dev:errors` completed with `No errors captured.` No tabs were created, closed, switched, or otherwise mutated, and no system-backup path was accessed.
+- Result: all acceptance criteria and workstreams are complete; durable behavior is synchronized to `docs/11-chat-ui-evolution.md`, the Pi engine `AGENTS.md`, and `packages/pivi-react/AGENTS.md`.
+
 ### 2026-07-15 — Spec creation — coordinator
 
 - Changed: spec drafted from repository exploration (no code changes).
@@ -155,4 +167,10 @@ Guidance for low-context agents:
 
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Delivered a conservative host-neutral context envelope with explicit authority semantics, reserved output/compaction/safety headroom, and pressure based on the larger of provider and current local estimates. Automatic and preflight compaction use the same trigger. Runtime usage exposes decomposed categories through the existing `UsageInfo` seam, model changes recalculate the envelope, and the existing ring opens an owner-realm Context Inspector with approximation markers.
+
+Delivered checkpoint presentation through both live compaction chunks and restored JSONL mapping. The Memory chip expands inside its measured virtual row to show structured continuation and ledger data, source bounds, and estimated tokens; legacy data falls back only to its persisted summary. The interactive disclosure remains outside the semantic separator and introduces no nested scrolling.
+
+No scope expansion was required. Problems found during implementation were fixed and recorded: heuristic windows falsely appearing authoritative, stale provider snapshots lowering pressure, omitted system/tool-schema projection, live tool-result timing, stale model envelopes, projection equality ignoring checkpoint content, and a coverage-artifact bundle warning. No provider tokenizer, settings knobs, compatibility schema changes, new primary scroll container, user-tab mutation, or Time Machine access was introduced.
+
+Final verification: 239 suites / 1,837 tests passed under coverage; global coverage is 68.66% statements, 58.04% branches, 65.51% functions, and 70.12% lines. Typecheck, zero-warning lint, architecture/spec checks, CSS build, all-catalog key/placeholder parity, i18n dead-key scan, production build, bundle-size check, Obsidian reload, and error scan passed. Production `main.js` is 3,054,026 bytes with 2,188,854 bytes of headroom.
