@@ -401,9 +401,9 @@ Only running work uses continuous motion. Respect `prefers-reduced-motion`. `ari
 
 ## Recommended sequence
 
-1. Add real-app performance traces and budgets before the next optimization wave.
-2. Design indexed JSONL range reads and partial durable hydration.
-3. Move the hottest message interiors to block/tool/Agent subscriptions.
+1. **Completed:** add real-app performance traces and budgets before the next optimization wave.
+2. **Completed:** design indexed JSONL range reads and partial durable hydration.
+3. **Completed:** move the hottest message interiors to block/tool/Agent subscriptions.
 4. Stabilize sequenced UI event ownership and visibility-aware cadence.
 5. Define hierarchical checkpoint and structured Agent-report schemas with compatibility tests.
 6. Prototype Narrative / Activity / Memory components without changing persistence.

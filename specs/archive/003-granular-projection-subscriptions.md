@@ -1,7 +1,7 @@
 ---
 id: "003"
 title: "Granular block, tool, and Agent-run subscriptions in message interiors"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-16
 coordinator: "Codex"
@@ -187,6 +187,20 @@ Guidance for low-context agents:
 - Blockers: none after adopting the corrected evidence boundary.
 - Next action: update docs/11 and the owning `AGENTS.md` contracts, then run the full completion gate.
 
+### 2026-07-16 — Completion gate and archive — Codex
+
+- Changed: synchronized the adopted structure/entity subscription contracts into durable guidance, completed the repository and production-runtime gates, and archived spec 003.
+- Evidence: `npm run test:coverage -- --runInBand` passed 232 suites / 1,753 tests with global statements/branches/functions/lines at 67.69%/56.76%/64.59%/69.14%; `npm run typecheck`, `npm run lint`, and `npm run check:boundaries` passed. `npm run build` deployed the production bundle; `npm run check:bundle-size` reported 3,006,322 bytes (2.87 MB, 2.13 MB below the cap); source and deployed artifacts matched; production debug markers were absent. Reloading Pivi produced no captured Obsidian errors, no synthetic message markers remained, and the temporary performance scenario file was absent. `npm run check:specs` passed after archival.
+- Remaining: none for spec 003.
+- Blockers: none.
+- Next action: activate spec 004 and execute its workstreams.
+
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Spec 003 moved virtualized message rows from whole-message React subscriptions to stable message-structure subscriptions and moved hot interiors onto reconciled block, tool, and Agent-run entities. Keyed reconciliation preserves unchanged identities, publishes changed/removal keys only, and keeps imperative Markdown, rich-tool, and stored-subagent adapters mounted across in-place updates. Copy resolves the latest full message at invocation time, and ResizeObserver-driven growth still remeasures only the owning row.
+
+Two evidence-boundary deviations were recorded rather than hidden. First, the activation audit found that the store did not yet reconcile entities, so WS-00 added that correctness prerequisite. Second, the original trace-reduction criterion could not measure sibling React renders and conflicted with the intentionally unchanged whole-message ingestion cadence. The adopted criterion uses deterministic component render-count tests as direct isolation proof and main/pop-out Spec 001 traces as runtime non-regression evidence; it makes no unsupported speedup claim.
+
+Verification covered entity identity/removal behavior, sibling block/tool/Agent isolation, row-shell isolation, latest-message actions, adapter update-without-remount behavior, virtual-row remeasurement, the full 232-suite coverage run, type/lint/boundary checks, production build and bundle budget, deployed artifact identity, development-marker absence, main/pop-out synthetic runtime traces, production reload, cleanup, and zero captured Obsidian errors.
+
+Durable conclusions were synchronized into `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, `packages/pivi-react/AGENTS.md`, and `src/ui/chat/rendering/AGENTS.md`. Synthetic workload safety remains documented in `src/app/AGENTS.md` from its implementation commit.
