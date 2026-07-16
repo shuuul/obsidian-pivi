@@ -288,6 +288,14 @@ Also run the renamed 20-subagent development workload in disposable main/pop-out
 - Blockers: none.
 - Next action: user visual confirmation.
 
+### 2026-07-16 — Codex coordinator — WS-06 user acceptance and archival
+
+- Changed: recorded explicit user visual acceptance of the restored individual subagent presentation, marked the final success criterion complete, closed WS-06, filled the completion summary, and archived this spec.
+- Evidence: the user confirmed acceptance in chat on 2026-07-16 after live Obsidian review of the restored individual-card presentation (including subsequent disclosure sticky-stack and height polish that kept the same individual-card architecture).
+- Remaining: none.
+- Blockers: none.
+- Next action: keep archived specs as historical evidence; treat handbook/`AGENTS.md` as the durable product contract.
+
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, user visual acceptance, and durable documentation updated.
+Every subagent now uses one individual transcript card on the projected `ToolCallView` → imperative adapter path. Agent Group, the first-class `AgentRun` projection, Active Work Shelf, and composer Agent activity surfaces were removed end to end. Validated `pivi-agent-report` fences stay internal protocol for parent context and recovery, while transcript results strip protocol JSON. Running-only header light-bar and profile-icon motion stop immediately on terminal states, with reduced-motion support. Virtualization, indexed paging, entity subscriptions, and the renamed 20-subagent workload remain. Later disclosure polish (nested sticky stack, fixed-height outer scroll chaining, two-thirds subagent viewport cap) kept the individual-card contract. Focused and full automated gates, production build/reload, and live Obsidian checks passed during WS-06/WS-07; the user explicitly accepted the restored presentation on 2026-07-16. Durable docs and nearest `AGENTS.md` files already describe the individual-card product; archived specs 005–009 remain historical records only.
