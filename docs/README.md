@@ -71,8 +71,8 @@ flowchart LR
   Prompt -- "queries" --> Service["PiChatService"]
   Service -- "runs" --> Engine["PiChatRuntime"]
   Engine -- "streams chunks" --> Stream["StreamController"]
-  Stream -- "publishes snapshots" --> Store["ChatUiStore"]
-  Store -- "renders chrome and messages" --> React["ChatShell"]
+  Stream -- "updates state" --> Store["ChatUiStore + ChatProjectionStore"]
+  Store -- "renders chrome and virtualized messages" --> React["ChatShell"]
   Engine -- "appends JSONL" --> Session[(".pivi/sessions/")]
 ```
 

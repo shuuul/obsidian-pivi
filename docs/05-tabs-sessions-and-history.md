@@ -51,7 +51,7 @@ stateDiagram-v2
 
 Tab layout is stored in `.pivi/tab-manager-state.json`. `data.json.tabManagerState` is read only for legacy migration and removed after successful migration.
 
-The layout stores `tabId`, optional `sessionFile`, blank-tab `draftModel` and `draftTitle`, `isArchived`, `needsAttention`, and `activeTabId`. It does not store messages, runtime state, `openSessionId`, bound-session titles, DOM/controllers, or absolute external paths. Current writes omit `leafId`; validation accepts the legacy shape only for forward migration.
+The layout stores `tabId`, optional `sessionFile`, blank-tab `draftModel` and `draftTitle`, `isArchived`, `needsAttention`, and `activeTabId`. It does not store messages, runtime state, `openSessionId`, bound-session titles, DOM/controllers, or absolute external paths. Current writes omit `leafId`; readers accept it only for legacy compatibility, and restore ignores it.
 
 Session titles and messages belong to JSONL. A blank `draftTitle` moves into session metadata when the tab first binds.
 
@@ -84,17 +84,17 @@ Session identity, history summaries, usage, and UI context are also read through
 
 Compaction entries keep Pi's readable `summary`, `firstKeptEntryId`, and `tokensBefore` fields. When the compaction model returns the required section set, Pivi also stores a version-1 checkpoint under `details.piviCheckpoint`: continuation summary, goal/constraints, durable decisions, vault-relative artifacts, open work/questions, next steps, source bounds, and estimates. A later checkpoint carries forward the durable decision/artifact ledger and renders the merged state back into the plain summary, so old Pi consumers and old sessions remain valid. Missing, unknown, malformed, or device-absolute structured data uses the summary-only path.
 
-Saving, switching, truncating, forking, and disposing synchronously flush pending projection events first. Durable `ChatMessage[]`, session identity, and the JSONL wire format remain unchanged.
+Saving, switching, truncating, and disposing synchronously flush pending projection events first. Durable `ChatMessage[]`, session identity, and the JSONL wire format remain unchanged.
 
 Restore creates tabs inactive, isolates individual failures, and activates the persisted target only after construction finishes. This avoids accidentally warming the first restored tab. If every entry fails, Pivi creates a blank tab.
 
-Closing an active tab selects the visually adjacent open tab or creates a blank tab before destruction, avoiding an empty-shell flash. A fork whose new tab cannot be created deletes the newly created session; cleanup failures are logged without hiding the original error.
+Closing an active tab selects the visually adjacent open tab or creates a blank tab before destruction, avoiding an empty-shell flash. If creating the new tab for a fork throws, Pivi deletes the newly created session; cleanup failures are logged without hiding the original error.
 
 Late stream chunks are guarded by generation and session ownership. Runtime state is never treated as the durable source of truth.
 
 ## Layout persistence triggers
 
-Tab creation, switching, close/archive, attention/streaming changes, and session binding changes schedule a debounced layout snapshot. View close cancels the debounce and persists immediately before disposal. Plugin unload collects immediate snapshots from every mounted view before workspace shutdown.
+Tab creation, switching, close/archive, attention/streaming changes, and session binding changes schedule a debounced layout snapshot. View close cancels the debounce and persists immediately before disposal. Plugin unload starts immediate snapshot persistence for every mounted view while workspace disposal proceeds.
 
 Multiple views share the same layout file, so callers must use the provided semantic persistence path rather than inventing view-local storage.
 

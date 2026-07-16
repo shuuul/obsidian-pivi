@@ -29,6 +29,8 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [011-complete-lazy-tool-disclosures.md](archive/011-complete-lazy-tool-disclosures.md) | 2026-07-16 | Complete snapshot-backed lazy tool/subagent bodies, viewport-capped disclosures with one scroll owner (later: tools/steps one third, subagents two thirds), and stable disclosure headers through virtual-row growth. |
 | [012-split-subscription-model-identities.md](archive/012-split-subscription-model-identities.md) | 2026-07-17 | Independent OAuth-only Grok/Claude plan model namespaces, safe eager migration, and compact local-provider optional API-key layout. |
 | [013-grok-build-subscription-provider.md](archive/013-grok-build-subscription-provider.md) | 2026-07-17 | Dedicated Grok Build subscription inference/catalog with Composer 2.5, independent from xAI API-key models. |
+| [014-obsidian-review-hardening.md](archive/014-obsidian-review-hardening.md) | 2026-07-17 | Public owner-realm DOM/settings APIs with default-off CLI, lazy stdio MCP, explicit JSON paste import, and reduced Vault enumeration. |
+| [015-repository-markdown-refresh.md](archive/015-repository-markdown-refresh.md) | 2026-07-17 | Repository-wide Markdown audit aligned commands, paths, ownership, terminology, quality gates, and historical-document boundaries. |
 
 ## Numbering and files
 

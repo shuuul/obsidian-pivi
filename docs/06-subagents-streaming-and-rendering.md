@@ -31,14 +31,20 @@ sequenceDiagram
   participant R as PiChatRuntime
   participant U as Chat UI
   P->>T: label, message, mode
-  T->>L: acquire admission
-  L-->>T: lease or FIFO wait
-  T->>C: construct isolated agent
-  C-->>R: text/tool/result events
-  R-->>U: correlated subagent chunks
-  C-->>T: completed or error
-  T->>L: release lease
-  T-->>P: result and concurrency metadata
+  alt run_in_background=true
+    T->>L: acquire admission
+    L-->>T: lease or FIFO wait
+    T->>C: construct isolated background agent
+    C-->>R: text/tool/result events
+    R-->>U: correlated subagent chunks
+    C-->>T: completed or error
+    T->>L: release lease
+    T-->>P: result and concurrency metadata
+  else run_in_background=false
+    T->>C: run blocking auxiliary query
+    C-->>T: terminal text/report
+    T-->>P: result
+  end
   P-->>P: synthesize parent answer
 ```
 
@@ -50,7 +56,7 @@ One `SubagentConcurrencyLimiter` belongs to the plugin workspace and is injected
 
 Increasing capacity immediately drains eligible waiters. Decreasing it does not kill running workers; new admission waits until active leases fall below the new limit. Completed-job retention is fixed independently of concurrency.
 
-The tool result includes the final status/report and concurrency metadata such as the configured maximum, queue position, whether the request queued, and running counts at request/start time.
+A background tool result includes the final status/report and concurrency metadata such as the configured maximum, queue position, whether the request queued, and running counts at request/start time. A blocking result contains its terminal text or compact structured report without background admission metadata.
 
 The child is asked to end with one fenced version-1 `pivi-agent-report` JSON block. Only `objective` and `outcome` are required; summary, findings, decisions, vault-relative artifacts, and open questions are optional. The runtime corrects the reported outcome from the actual completion state. A valid report becomes compact parent-model text, while the complete terminal output remains in tool details for the visible trace. Missing, malformed, unknown-version, or unsafe-path reports leave the terminal text behavior unchanged.
 
@@ -61,7 +67,7 @@ flowchart LR
   Child["Child agent events"] -- "adapt" --> Runtime["PiChatRuntime"]
   Runtime -- "active-turn chunks" --> Stream["StreamController"]
   Runtime -- "late-turn listener" --> Stream
-  Stream -- "correlates IDs" --> Lifecycle["streamSubagentLifecycle"]
+  Stream -- "correlates IDs" --> Lifecycle["StreamSubagentCoordinator<br/>streamSubagentLifecycle.ts"]
   Lifecycle -- "updates records" --> Manager["SubagentManager"]
   Manager -- "writes pure state" --> Message["ChatMessage content block"]
   Message -- "snapshot" --> React["React message shell"]
@@ -70,7 +76,7 @@ flowchart LR
 
 The stable parent tool-call ID is the UI key; background jobs also have an agent ID. `SubagentManager` maps those identities, nested child tools, partial text, results, and lifecycle state. It is a presentation record layer, not a second executor.
 
-Child `text`, `tool_use`, and `tool_result` events become subagent stream chunks. Terminal background events become `async_subagent_result`. Active-turn events enter the current query queue only when the spawn ID was registered for that turn. Older or post-turn events use the runtime listener and are routed back to the owning assistant message, preventing contamination of a later turn.
+Background child `text`, `tool_use`, and `tool_result` events become subagent stream chunks. Terminal background events become `async_subagent_result`. Active-turn events enter the current query queue only when the spawn ID was registered for that turn. Older or post-turn events use the runtime listener and are routed back to the owning assistant message, preventing contamination of a later turn. A blocking child returns only its terminal result through the parent `spawn_agent` tool call.
 
 Chat state maintains reverse indexes from subagent, runtime-agent, and tool IDs to the owning message. Creation, hydration, mutation, truncation, session switching, and clearing rebuild or update those indexes. Background and late events therefore resolve their owner directly rather than scanning assistant history.
 
@@ -84,7 +90,7 @@ Streaming Markdown uses one stable adapter mount per content block. Completed sa
 
 ## Lifecycle and failure semantics
 
-Presentation states include pending, running, completed, error, and orphaned, with synchronous/background mode tracked separately.
+Stored asynchronous lifecycle states are pending, running, completed, error, and orphaned. The shared presentation vocabulary is queued, running, waiting, completed, failed, cancelled, and orphaned; synchronous/background mode is tracked separately.
 
 - Aborting a queued worker removes it from FIFO without consuming a slot.
 - Aborting a running worker aborts the child, records cancellation/error, and releases its lease.

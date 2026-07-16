@@ -40,8 +40,9 @@ npm run test -- -t "test name"
 | Tabs and restore | `tests/unit/features/chat/tabManagerLifecycle.test.ts`, `sessionControllerLifecycle.test.ts`, `sessionSwitch.test.ts` |
 | External context privacy | `tests/unit/features/chat/tabExternalContext.test.ts`, `tests/unit/app/deviceLocalExternalContextStore.test.ts`, Pi session-store tests |
 | Subagents | `tests/unit/pi/tools/createSubagentTool.test.ts`, `piBackgroundSubagentJobs.test.ts`, `subagentConcurrencyLimiter.test.ts` |
-| React chat/settings | `tests/pivi-react/ChatShell.test.tsx`, `AssistantContentView.test.tsx`, `activityPresentation.test.ts`, `chatProjectionStore.test.tsx`, `SettingsUi.test.tsx` |
-| Tools and MCP | Relevant suites under `tests/unit/engine/tools/`, `tests/unit/pi/tools/`, and `tests/unit/pi/mcp/` |
+| React chat/settings | `tests/pivi-react/ChatShell.test.tsx`, `AssistantContentView.test.tsx`, `activityPresentation.test.ts`, `chatUiStore.test.tsx`, `SettingsUi.test.tsx`, `PiviSettingTabHost.test.ts` |
+| Owner-realm DOM | `tests/pivi-react/OwnerRealmDom.test.ts`, `DefaultVaultSkillsPrompt.test.ts`, `tests/unit/app/ui/createStreamingMarkdownContentAdapter.test.ts` |
+| Tools and MCP | Relevant suites under `tests/unit/engine/tools/`, `tests/unit/pi/tools/`, `tests/unit/pi/mcp/`, plus `tests/unit/pi/piMcpBridge.test.ts` and `tests/pivi-react/McpToolsSection.test.tsx` |
 | Inline edit | `tests/unit/pi/runtime/queryBackedInlineEditService.test.ts` and `tests/pivi-react/InlineEdit.test.tsx` |
 
 Use `rg --files tests | rg <feature>` to locate the current exact filename; test names move as ownership is refined.
@@ -69,7 +70,7 @@ Useful symptom routes:
 | A stream updates the wrong tab/turn | stream generation, active-turn ownership, late chunk listener |
 | Tab restores without messages/title | layout `sessionFile`, open-session hydration, JSONL metadata |
 | Subagent card stalls | limiter/job state, ID correlation, terminal hydration retries |
-| MCP slash entry is stale | settings save/reload invalidation, bridge prefetch, catalog refresh |
+| MCP slash entry is stale | settings save/reload invalidation, remote-only prefetch, lazy stdio connection, catalog refresh |
 | UI works in main window only | owner document/window lookup and global timer/listener use |
 
 Prefer the shared `PluginLogger` to console output. Preserve the original failure signal and log only enough structured context to diagnose ownership or lifecycle divergence.
@@ -105,4 +106,4 @@ CI runs the same categories on pull requests and pushes to `main`. Do not explai
 
 ## Documentation-only changes
 
-For pure Markdown changes, run structural link/reference checks plus `npm run lint` and `npm run check:boundaries`. A production build and Obsidian reload are unnecessary unless documentation generation or shipped artifacts changed.
+For pure Markdown changes, verify relative links and referenced paths/commands against the tree, run `git diff --check`, then run `npm run lint` and `npm run check:boundaries`. A production build and Obsidian reload are unnecessary unless documentation generation or shipped artifacts changed.

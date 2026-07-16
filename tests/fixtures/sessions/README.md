@@ -38,15 +38,17 @@ Generation provenance:
   The recipe rejects the repository, temporary worktree, and home paths if they
   appear in the output.
 
-Reproduce the exact bytes from the local immutable tag and current installed
-dependencies:
+Reproduce the exact bytes from the local immutable tag only when this checkout's
+installed Pi packages match the three 0.80.6 tag locks:
 
 ```bash
 node scripts/generate-pivi-070-session-fixture.mjs /tmp/tag-generated-pivi-0.7.0-v3.jsonl
 ```
 
-The generator verifies the tag commit, the three locked Pi dependency versions,
-and the frozen SHA before writing its requested output. The HEAD compatibility
-test then opens a temporary copy through `PiSessionStore` and
+The normal current dependency install may be newer and will intentionally fail
+this provenance guard; use a disposable checkout/install when regeneration is
+actually required. The generator verifies the tag commit, the tag lock and
+installed versions, and the frozen SHA before writing its requested output. The
+HEAD compatibility test then opens a temporary copy through `PiSessionStore` and
 `OpenSessionManager`, proving device-local-path migration, semantic restoration,
 sidecar marking, and idempotent reopen behavior.

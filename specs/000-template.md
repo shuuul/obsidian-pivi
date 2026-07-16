@@ -45,7 +45,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 ## Verification
 
-List exact commands, fixtures, manual scenarios, and acceptance evidence. Keep performance and correctness claims tied to reproducible conditions.
+List exact commands, fixtures, manual scenarios, and acceptance evidence. Keep performance and correctness claims tied to reproducible conditions. Include `npm run check:specs` before closeout.
 
 ## Documentation sync
 
@@ -68,4 +68,4 @@ Append entries rather than rewriting another agent's record.
 
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated. The coordinator then sets `status: Completed`, updates the date, moves the unchanged filename to `archive/`, and moves its index entry in the same change.

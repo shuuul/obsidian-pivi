@@ -4,7 +4,7 @@
 
 This document records the accepted direction after the first virtualized Chat UI performance pass. It is an architectural and product-design guide, not a release commitment. Concrete implementation work should still be split into measured, independently reviewable changes.
 
-The current visual design remains the baseline until the Activity and Memory layers are implemented deliberately. Performance work must not gradually introduce one-off cards, status colors, nested scroll containers beyond the bounded disclosure scrollport, or competing context indicators.
+The implemented Narrative, Activity, and Memory layers are the current baseline. Performance work must not gradually introduce one-off cards, status colors, nested scroll containers beyond the bounded disclosure scrollport, or competing context indicators.
 
 ## Goals
 
@@ -51,7 +51,7 @@ The session UI path now performs true recent-first hydration. Cold open reads in
 
 Turn completion persists the produced assistant/tool sequence once, after the provider prompt resolves. A failed append is surfaced as a turn error instead of being logged while the UI appears successfully complete. On reopen, the indexed page joins each persisted `message_ui.turnRequest` to its user entry so current-note and attached-file badges, tool activity, and the final assistant response restore as one transcript turn.
 
-Session writes now use Pi 0.80.6's typed append methods after a single eager header bootstrap. Prior JSONL bytes therefore remain stable during normal message, Pivi metadata, UI context, and compaction appends. Full rewrites are reserved for non-append mutations such as redo truncation and upstream format migration; those operations are index-invalidation boundaries.
+Session writes use the [installed Pi dependency](../package.json)'s typed append methods after a single eager header bootstrap. Prior JSONL bytes therefore remain stable during normal message, Pivi metadata, UI context, and compaction appends. Full rewrites are reserved for non-append mutations such as redo truncation and upstream format migration; those operations are index-invalidation boundaries.
 
 Each indexed session uses a rebuildable `<session>.jsonl.pivi-index` JSONL sidecar. It stores UTF-8 byte offsets, projection-relevant metadata such as `message_ui.targetEntryId`, and per-line SHA-256 values, plus append checkpoints containing file identity, modification time, size, bounded head/tail hashes, one-time migration state, and a checksum chain over every index line. Normal session appends extend both files; rewrite boundaries delete the sidecar so the next indexed read rebuilds it atomically from the authoritative session JSONL. Read-only consumers discard a stale/corrupt optimization and rebuild before returning data. Every cached live mutation instead validates its held source fingerprint before touching Pi state, and append postflight requires the exact expected entry IDs; held-write mismatches remain typed failures and are never hidden by a post-write automatic rebuild. Filesystem change time is neither recorded nor compared because sync/provenance metadata updates can change it without changing JSONL bytes; size, device, inode, mtime, and bounded byte hashes remain the mutation guard.
 
@@ -156,7 +156,7 @@ The development build exposes explicit trace lifecycle commands. Traces use sche
 2. Start the development build, run `obsidian dev:debug on`, clear captured console output, reload Pivi, and confirm `obsidian dev:errors` is clean.
 3. Put one stable scenario name in `.pivi/perf-scenario.txt`. Run `Pivi: Debug: start chat performance trace`, perform exactly one scenario, optionally run the manual heap-sample command after the workload, then run `Pivi: Debug: stop and export chat performance trace`.
 4. Record Obsidian and Pivi versions, the Pivi commit/worktree, window type, fixture shape, workload repetitions, trace filename, and any manual timing boundary. Do not compare full trace duration when it includes CLI or operator dwell; use event-to-commit/paint, render, row, DOM, long-task, heap, and anchor events for numerical comparisons.
-5. After development-only runs, restore and deploy the production bundle with `npm run build`, reload Pivi, verify the debug command IDs/markers are absent from `main.js`, and confirm `obsidian dev:errors` is clean.
+5. After development-only runs, restore and deploy the production bundle with `npm run build`, run `obsidian plugin:reload id=pivi`, verify the debug command IDs/markers are absent from `main.js`, and confirm `obsidian dev:errors` is clean.
 
 The fixed scenario shapes are:
 
