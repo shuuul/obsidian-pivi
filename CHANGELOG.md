@@ -1,5 +1,79 @@
 # Changelog
 
+## [0.10.0](https://github.com/shuuul/obsidian-pivi/compare/0.9.0...0.10.0) (2026-07-16)
+
+
+### Features
+
+* **activity:** add shared activity rows ([6d80461](https://github.com/shuuul/obsidian-pivi/commit/6d8046189c0c6812f1ab5016e9074a8fdc830293))
+* **activity:** add shared lifecycle statuses ([2582444](https://github.com/shuuul/obsidian-pivi/commit/2582444d24790268bcf65f68b794d4e84bc97052))
+* **activity:** localize status presentation ([41dd15f](https://github.com/shuuul/obsidian-pivi/commit/41dd15ffe4db4d77f1c3fe2903bf948b4818fe26))
+* **agents:** add active work shelf ([c63134e](https://github.com/shuuul/obsidian-pivi/commit/c63134e2311dc9523757a1fe89c2eaadfff1e9e1))
+* **agents:** add run timeline inspector ([a590fa6](https://github.com/shuuul/obsidian-pivi/commit/a590fa6e33f9bb7b6aa67eecde0113ffaaa49d89))
+* **agents:** add stable AgentRun projection ([624a2ea](https://github.com/shuuul/obsidian-pivi/commit/624a2eaa6cf9f0d30ca6ea94efc0b15d924f2181))
+* **agents:** group related Agent runs ([625cc94](https://github.com/shuuul/obsidian-pivi/commit/625cc94593c9e5ef7c6654f123faac941e233df0))
+* **agents:** promote structured conclusions ([4f28758](https://github.com/shuuul/obsidian-pivi/commit/4f287581546fa87dafec2a0bb60e0febbb45759b))
+* **chat:** add nested disclosure sticky stack for subagent tool cards ([e72dc90](https://github.com/shuuul/obsidian-pivi/commit/e72dc906624093e219e3d799172b57c9c858172c))
+* **chat:** expose session range pages ([15d6b70](https://github.com/shuuul/obsidian-pivi/commit/15d6b70f74acaf4bea23e6517211d959d021776a))
+* **chat:** sequence projection events ([0a03770](https://github.com/shuuul/obsidian-pivi/commit/0a0377009b328669c7dcbac4a1c544321b0cf376))
+* **commands:** add expandable command cards ([a29943d](https://github.com/shuuul/obsidian-pivi/commit/a29943d126f4fbf32bdf568cbd57c2811190f231))
+* **context:** add conservative envelope model ([c905f74](https://github.com/shuuul/obsidian-pivi/commit/c905f74381e52c8dd9cc78fa81a15a4db995c9cc))
+* **context:** add context inspector ([4cd0527](https://github.com/shuuul/obsidian-pivi/commit/4cd05271dd5395f47689f946e3ab79365cfbb68c))
+* **context:** apply envelope compaction headroom ([e3cffbc](https://github.com/shuuul/obsidian-pivi/commit/e3cffbc7fc725ad5870dcb9411431c09f38ff5dd))
+* **memory:** expand checkpoint details ([45cea11](https://github.com/shuuul/obsidian-pivi/commit/45cea116a26f67e23abbd733a305c3365deed69e))
+* **memory:** show compaction and history boundaries ([032a9f3](https://github.com/shuuul/obsidian-pivi/commit/032a9f349c70aef60ce549bf09daa1a7ef03af8b))
+* **perf:** add chat instrumentation seams ([bf4d50b](https://github.com/shuuul/obsidian-pivi/commit/bf4d50b918072cd82e0a556c1834941aec621448))
+* **perf:** add deterministic Markdown stream driver ([d948a74](https://github.com/shuuul/obsidian-pivi/commit/d948a74ab704a69e045a91f8a3af7245103bc188))
+* **perf:** add development chat trace recorder ([b356927](https://github.com/shuuul/obsidian-pivi/commit/b35692714303a4518ce363d544cd6961888b2a03))
+* **perf:** isolate tab switching workload ([0674879](https://github.com/shuuul/obsidian-pivi/commit/0674879818164004e0e0c54aed287840fbb134f7))
+* **session:** add append-safe JSONL index ([58da99f](https://github.com/shuuul/obsidian-pivi/commit/58da99f27fe47bf720a8397658f1f348f3511855))
+* **session:** add continuation schemas ([81e04c7](https://github.com/shuuul/obsidian-pivi/commit/81e04c7ada855ebae76f15863f1dce5a7f7306c2))
+* **session:** add indexed message range reads ([78897cc](https://github.com/shuuul/obsidian-pivi/commit/78897cca1bd7e70e9143a12902928051a7100080))
+* **session:** hydrate chat history by indexed pages ([0fd67bd](https://github.com/shuuul/obsidian-pivi/commit/0fd67bdd48fd131b3dae3deb1ea173bfb0c4384b))
+* **session:** persist compaction checkpoints ([d991e8c](https://github.com/shuuul/obsidian-pivi/commit/d991e8c58dddcb01294806218de1d182f3ae3de6))
+* **settings:** add sortable provider fallback ([443bdd9](https://github.com/shuuul/obsidian-pivi/commit/443bdd96f87889b38cf85bb6d042611adf6faab0))
+* **settings:** redesign layout system and unify tools page ([ef24060](https://github.com/shuuul/obsidian-pivi/commit/ef24060cb7d36f9030b213e28ebf5ffe90d9f399))
+* **settings:** refine command and collection workflows ([a79a66b](https://github.com/shuuul/obsidian-pivi/commit/a79a66bc530f5a29c96bb8a8b02e722c9692e871))
+* **settings:** streamline command and MCP workflows ([9436ef7](https://github.com/shuuul/obsidian-pivi/commit/9436ef758ceb21cddccb2bf3e6663c7c2fd64d1e))
+* **skills:** support featured bundle updates ([64446ed](https://github.com/shuuul/obsidian-pivi/commit/64446edb8bfa32076717a6fea2a0f966fa3e049e))
+* **subagents:** consume structured reports ([2c48a0d](https://github.com/shuuul/obsidian-pivi/commit/2c48a0d0e2b3e898cebbd8ba1dd60bddbced8520))
+
+
+### Bug Fixes
+
+* **activity:** constrain status motion ([2971f1f](https://github.com/shuuul/obsidian-pivi/commit/2971f1f3f44b3393cbad476a7955c090d5eed433))
+* **build:** bound node import postprocessing ([530bf10](https://github.com/shuuul/obsidian-pivi/commit/530bf104aa5af44abde892086d55bcc9d12f3715))
+* **chat:** defer virtual row resize measurements ([e6c535c](https://github.com/shuuul/obsidian-pivi/commit/e6c535cdcc428c660955daeeec829c6a0545b833))
+* **chat:** drop disclosure shrink chain and double subagent height ([514a8e3](https://github.com/shuuul/obsidian-pivi/commit/514a8e31501885924c0ebe458a9bd6e97e37d45c))
+* **chat:** harden projection event boundaries ([18e8378](https://github.com/shuuul/obsidian-pivi/commit/18e83782b018ff315e5035d399ff835ce8281138))
+* **chat:** report complete context usage ([54029b4](https://github.com/shuuul/obsidian-pivi/commit/54029b4b870d957e7ab375e267b79b595ccbe6bb))
+* **chat:** restore session and subagent presentation ([fbfad95](https://github.com/shuuul/obsidian-pivi/commit/fbfad9515295a2fb4f2494cd32b4a2aedb797c7d))
+* **chat:** show MCP server tool names ([74209a8](https://github.com/shuuul/obsidian-pivi/commit/74209a8a52bf4749bb6607071b9a1c82ee0d9b2e))
+* **context:** honor reduced motion ([716c0cc](https://github.com/shuuul/obsidian-pivi/commit/716c0cc0383cf31772036901ba26e67a5edbffe3))
+* **context:** preserve context authority semantics ([a45472e](https://github.com/shuuul/obsidian-pivi/commit/a45472e84517c0b606f1bb82bd8e465d0697b5d2))
+* **perf:** drive indexed paging through scroll ([8326945](https://github.com/shuuul/obsidian-pivi/commit/8326945afa183722019b23da505b764e1f243ecf))
+* **perf:** isolate Agent-run trace boundary ([8b56684](https://github.com/shuuul/obsidian-pivi/commit/8b56684f4a136b61ef6067304ed9ac3877c0b0c2))
+* **perf:** isolate indexed paging fixture writes ([0356645](https://github.com/shuuul/obsidian-pivi/commit/0356645c3af71d00c33cf52bf6da2ca8f7a84574))
+* **perf:** isolate markdown workload tab ([f84c42d](https://github.com/shuuul/obsidian-pivi/commit/f84c42d927c5d1a6f219bd08abc2b6a2567c43b2))
+* **session:** preserve partial hydration semantics ([2b79aba](https://github.com/shuuul/obsidian-pivi/commit/2b79aba623fc53bebcf5fc2475a9edf930c25105))
+* **session:** run external context migration once ([b1732bb](https://github.com/shuuul/obsidian-pivi/commit/b1732bbb3f0baf6a3cf64e663cffb6f11dcad59f))
+* **settings:** align collection add controls ([9c5ead1](https://github.com/shuuul/obsidian-pivi/commit/9c5ead1f3567841eaa0438299fb313955184d742))
+* **settings:** refresh locale and normalize selectors ([87382bb](https://github.com/shuuul/obsidian-pivi/commit/87382bbcd55610f30705ade5c9e9e6c8950ac1d2))
+* **settings:** route feedback through Obsidian notices ([4322677](https://github.com/shuuul/obsidian-pivi/commit/43226778f5e2dd918435e4dd00206ea34ea2a12f))
+
+
+### Performance Improvements
+
+* **chat:** isolate projection agent runs ([619c077](https://github.com/shuuul/obsidian-pivi/commit/619c077db2c136efd3b9aef6183e95d38b95f841))
+* **chat:** narrow projection row subscriptions ([97615b3](https://github.com/shuuul/obsidian-pivi/commit/97615b357a27f0b2dea15a8e3d3201d8c2c53cec))
+* **chat:** reconcile projection entities ([2b03c7a](https://github.com/shuuul/obsidian-pivi/commit/2b03c7a6157060a4dea259714057d64eb50bd450))
+* **chat:** subscribe to projection blocks ([f4ddb40](https://github.com/shuuul/obsidian-pivi/commit/f4ddb404a6599d3b1d9dc5fa8a7771c16fccc9b5))
+* **chat:** subscribe to projection tools ([edb8628](https://github.com/shuuul/obsidian-pivi/commit/edb86286b6bc55f98dcc52dee5ba34f2cb30b801))
+* **chat:** throttle hidden projections ([d9a42f2](https://github.com/shuuul/obsidian-pivi/commit/d9a42f2ffae4f43c1b4b493569c9b1cf46629eab))
+* **chat:** virtualize transcripts and optimize streaming ([638b2be](https://github.com/shuuul/obsidian-pivi/commit/638b2be5f764268f6875020d3b1b66fcf7e46182))
+* **session:** add isolated indexed paging benchmark ([b730b7f](https://github.com/shuuul/obsidian-pivi/commit/b730b7f34c1ff386955479025347d0774b0897bd))
+* **session:** preserve JSONL bytes on append ([fd6d8af](https://github.com/shuuul/obsidian-pivi/commit/fd6d8afe898e2e476257e4b952cf40fcf746dc14))
+
 ## [0.9.0](https://github.com/shuuul/obsidian-pivi/compare/0.8.0...0.9.0) (2026-07-14)
 
 
