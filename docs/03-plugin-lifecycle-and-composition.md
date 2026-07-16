@@ -59,7 +59,7 @@ flowchart LR
 
 The adapter restores `.pivi/tab-manager-state.json` or creates a blank tab. Each tab owns controllers, state, imperative input/context adapters, subscriptions, timers, optional runtime, and cleanup callbacks. React owns the shell and portals the active tab's input and adapter slots into the presentation tree.
 
-Settings mount independently through `PiviSettingTabHost` and `SettingsRoot`. The service graph does not contain a settings renderer.
+Settings mount independently through `PiviSettingTabHost` and `SettingsRoot`. On Obsidian 1.13 or newer, the host exposes one localized custom setting definition so settings search can index the React page; `display()` remains the Obsidian 1.12 fallback. Both routes share the same generation guard and disposal path. The service graph does not contain a settings renderer.
 
 ## Runtime creation and refresh
 
@@ -68,7 +68,7 @@ Blank and cold tabs do not create `PiChatService`. `src/ui/chat/tabs/tabRuntime.
 Settings saves use explicit refresh paths:
 
 - tool, MCP, skill, prompt, and model changes refresh the affected registries or open runtimes;
-- MCP save/reload invalidates slash catalogs and warms enabled tools;
+- MCP save/reload invalidates slash catalogs and warms enabled remote tool inventories without starting stdio servers;
 - external-root pinning is broadcast to all open views and tabs;
 - environment changes restart affected runtimes through semantic maintenance operations;
 - tab-bar position republishes snapshots and moves the portal without reloading the plugin.

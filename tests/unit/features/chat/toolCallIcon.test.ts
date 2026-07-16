@@ -6,7 +6,9 @@ import { appendToolIcon } from '@/ui/chat/rendering/toolCallIcon';
 class FakeElement {
   readonly children: FakeElement[] = [];
   readonly ownerDocument = {
-    createElementNS: (_namespace: string, tagName: string): FakeElement => new FakeElement(tagName),
+    win: {
+      createSvg: (tagName: string): FakeElement => new FakeElement(tagName),
+    },
   };
   textContent = '';
 

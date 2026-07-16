@@ -1,4 +1,6 @@
 import {
+  type DefaultVaultSkillsContext,
+  ensureDefaultVaultSkills,
   shouldSeedDefaultVaultSkills,
   shouldUpgradeDefaultVaultSkills,
 } from '@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills';
@@ -50,5 +52,35 @@ describe('shouldUpgradeDefaultVaultSkills', () => {
     expect(
       shouldUpgradeDefaultVaultSkills({ defaultVaultSkillsSeeded: true }, 'new'),
     ).toBe(true);
+  });
+});
+
+describe('ensureDefaultVaultSkills', () => {
+  it('delegates the install prompt to the host and persists dismissal', async () => {
+    let actions: Parameters<NonNullable<DefaultVaultSkillsContext['showDefaultVaultSkillsInstallPrompt']>>[0] | undefined;
+    const hide = jest.fn();
+    const saveSettings = jest.fn(async () => undefined);
+    const settings: DefaultVaultSkillsContext['settings'] = {};
+    const context = {
+      app: { vault: { adapter: { basePath: '/tmp/pivi-missing-skills-test' } } },
+      settings,
+      saveSettings,
+      refreshVaultSkills: jest.fn(async () => undefined),
+      showDefaultVaultSkillsInstallPrompt: jest.fn((nextActions) => {
+        actions = nextActions;
+        return { hide };
+      }),
+      httpClient: { fetch: jest.fn() },
+      processRunner: { run: jest.fn() },
+    } as unknown as DefaultVaultSkillsContext;
+
+    await ensureDefaultVaultSkills(context);
+    expect(context.showDefaultVaultSkillsInstallPrompt).toHaveBeenCalledTimes(1);
+    actions?.onDismiss();
+    await Promise.resolve();
+
+    expect(hide).toHaveBeenCalledTimes(1);
+    expect(settings.defaultVaultSkillsPromptDismissed).toBe(true);
+    expect(saveSettings).toHaveBeenCalledTimes(1);
   });
 });

@@ -39,6 +39,8 @@ Namespaces: `common.*`, `commands.*`, `settings.*`, `chat.*`, `tools.*`, `inline
 
 Context-badge tooltip and accessibility templates live under `chat.contextBadges.*`. Keep technical identifiers as interpolation values rather than translating or embedding them in catalog strings.
 
+Obsidian 1.13 settings-search aliases are derived synchronously from localized setting names and section headings in `../settings/searchMetadata.ts`. When adding or renaming searchable settings, update that inventory with an existing `TranslationKey`; locale changes refresh the host index through app composition.
+
 ## Verification
 
 Run `npm run test -- tests/pivi-react/i18n.test.tsx`, `npm run check:i18n-dead-keys`, `npm run typecheck`, and `npm run lint` after catalog or translator changes. Placeholder parity should be covered alongside key-tree parity.

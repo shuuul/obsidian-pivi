@@ -100,7 +100,7 @@ function appendSealedSegment(
   phase: StreamingMarkdownValue['phase'],
 ): void {
   if (!markdown) return;
-  const segment = state.root.ownerDocument.createElement('div');
+  const segment = state.root.ownerDocument.win.createDiv();
   segment.className = 'pivi-streaming-markdown-segment';
   state.sealedRoot.appendChild(segment);
   const scope = new Component();
@@ -186,11 +186,11 @@ export function createStreamingMarkdownContentAdapter(
   const mounted = new WeakMap<HTMLElement, MountedStreamingMarkdown>();
   return {
     mount(container, value) {
-      const root = container.ownerDocument.createElement('div');
+      const root = container.ownerDocument.win.createDiv();
       root.className = 'pivi-streaming-markdown';
-      const sealedRoot = container.ownerDocument.createElement('div');
+      const sealedRoot = container.ownerDocument.win.createDiv();
       sealedRoot.className = 'pivi-streaming-markdown-sealed';
-      const tail = container.ownerDocument.createElement('div');
+      const tail = container.ownerDocument.win.createDiv();
       tail.className = 'pivi-streaming-markdown-tail';
       root.append(sealedRoot, tail);
       container.replaceChildren(root);

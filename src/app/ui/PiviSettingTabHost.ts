@@ -1,8 +1,9 @@
 import {
+  getSettingsSearchAliases,
   type MountedSurface,
   mountSettings,
 } from "@pivi/pivi-react/mount";
-import type { App } from "obsidian";
+import type { App, SettingDefinitionItem } from "obsidian";
 import { Notice, PluginSettingTab } from "obsidian";
 
 import type {
@@ -13,6 +14,11 @@ import { appI18n, type Locale, setLocale, t } from "@/app/i18n";
 import { createSettingsUiPorts } from "@/app/ui/createUiPorts";
 import { obsidianPresentationPlatform } from "@/app/ui/obsidianPresentationPlatform";
 import { getActiveWindow } from "@/ui/shared/dom";
+
+function refreshSettingDefinitions(tab: object): void {
+  const update: unknown = (tab as { update?: unknown }).update;
+  if (typeof update === 'function') update.call(tab);
+}
 
 export class PiviSettingTabHost extends PluginSettingTab {
   plugin: PiviPluginHost;
@@ -28,13 +34,28 @@ export class PiviSettingTabHost extends PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
     this.getWorkspace = getWorkspace;
+    setLocale(this.plugin.settings.locale as Locale);
+    plugin.register(appI18n.subscribe(() => {
+      refreshSettingDefinitions(this);
+    }));
+  }
+
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [{
+      name: this.plugin.manifest.name,
+      desc: this.plugin.manifest.description,
+      aliases: getSettingsSearchAliases(appI18n),
+      render: (setting) => {
+        setting.settingEl.empty();
+        setting.settingEl.addClass('pivi-settings-definition-host');
+        return this.mountReactSettingsSurface(setting.settingEl);
+      },
+    }];
   }
 
   display(): void {
     this.containerEl.empty();
-    const generation = ++this.mountGeneration;
-    setLocale(this.plugin.settings.locale as Locale);
-    void this.mountReactSettings(generation);
+    this.mountReactSettingsSurface(this.containerEl);
   }
 
   hide(): void {
@@ -45,9 +66,25 @@ export class PiviSettingTabHost extends PluginSettingTab {
     this.containerEl.empty();
   }
 
-  private async mountReactSettings(generation: number): Promise<void> {
-    const ownerDocument = this.containerEl.ownerDocument;
-    const ownerWindow = getActiveWindow(this.containerEl);
+  private mountReactSettingsSurface(container: HTMLElement): () => void {
+    const generation = ++this.mountGeneration;
+    void this.mountReactSettings(container, generation);
+    return () => {
+      if (generation !== this.mountGeneration) return;
+      this.mountGeneration++;
+      const mounted = this.mountedSurface;
+      this.mountedSurface = null;
+      if (mounted) void mounted.dispose();
+      container.empty();
+    };
+  }
+
+  private async mountReactSettings(
+    container: HTMLElement,
+    generation: number,
+  ): Promise<void> {
+    const ownerDocument = container.ownerDocument;
+    const ownerWindow = getActiveWindow(container);
 
     const previous = this.mountedSurface;
     this.mountedSurface = null;
@@ -57,7 +94,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
       const workspace = await this.getWorkspace();
       if (generation !== this.mountGeneration) return;
       const mounted = await mountSettings({
-        container: this.containerEl,
+        container,
         ownerDocument,
         ownerWindow,
         portalContainer: ownerDocument.body,

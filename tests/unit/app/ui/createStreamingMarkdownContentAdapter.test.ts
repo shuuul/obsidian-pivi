@@ -7,6 +7,9 @@ import {
   createStreamingMarkdownContentAdapter,
   findStreamingMarkdownSealOffset,
 } from '@/app/ui/createStreamingMarkdownContentAdapter';
+import { installObsidianDomHelpers } from '../../../setupObsidianUi';
+
+installObsidianDomHelpers(window);
 
 async function flushRenderQueue(): Promise<void> {
   await Promise.resolve();

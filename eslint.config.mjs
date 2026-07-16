@@ -34,6 +34,7 @@ const piviObsidianRuleOverrides = {
   "obsidianmd/prefer-file-manager-trash-file": "error",
   "obsidianmd/prefer-get-language": "error",
   "obsidianmd/prefer-instanceof": "error",
+  "obsidianmd/prefer-create-el": "error",
   "obsidianmd/prefer-window-timers": "error",
   "obsidianmd/regex-lookbehind": "error",
   "obsidianmd/sample-names": "error",
@@ -46,8 +47,7 @@ const piviObsidianRuleOverrides = {
     },
   ],
   "obsidianmd/vault/iterate": "error",
-  // This custom multi-tab renderer has no declarative equivalent; duplicating it would not index its dynamic controls.
-  "obsidianmd/settings-tab/prefer-setting-definitions": "off",
+  "obsidianmd/settings-tab/prefer-setting-definitions": "error",
 };
 
 const piPackageBoundaryRule = [
@@ -158,13 +158,6 @@ export default defineConfig([
       ],
       "simple-import-sort/imports": "error",
       "simple-import-sort/exports": "error",
-    },
-  },
-  {
-    files: ["src/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
-    rules: {
-      // These paths intentionally create standard DOM nodes from ownerDocument; the Obsidian extension type is not available there.
-      "obsidianmd/prefer-create-el": "off",
     },
   },
   {

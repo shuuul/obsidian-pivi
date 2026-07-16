@@ -135,6 +135,7 @@ type McpSectionState = {
   auth: Record<string, McpAuthStatus | null>;
   toolsByServer: Record<string, readonly McpTool[]>;
   deleteCandidate: ManagedMcpServer | null;
+  importDraft: string | null;
   addOpen: boolean;
   expandedServers: ReadonlySet<string>;
 };
@@ -149,6 +150,7 @@ type McpSectionAction =
   | { type: 'set_tools'; name: string; tools: readonly McpTool[] }
   | { type: 'reset_tools'; servers: readonly ManagedMcpServer[] }
   | { type: 'set_delete_candidate'; server: ManagedMcpServer | null }
+  | { type: 'set_import_draft'; draft: string | null }
   | { type: 'toggle_add_open' }
   | { type: 'set_add_open'; open: boolean }
   | { type: 'toggle_expanded'; name: string }
@@ -163,6 +165,7 @@ const initialMcpSectionState: McpSectionState = {
   auth: {},
   toolsByServer: {},
   deleteCandidate: null,
+  importDraft: null,
   addOpen: false,
   expandedServers: new Set(),
 };
@@ -190,6 +193,8 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
       };
     case 'set_delete_candidate':
       return { ...state, deleteCandidate: action.server };
+    case 'set_import_draft':
+      return { ...state, importDraft: action.draft };
     case 'toggle_add_open':
       return { ...state, addOpen: !state.addOpen };
     case 'set_add_open':
@@ -288,15 +293,16 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     dispatch({ type: 'set_editor', editor: null });
   }, [commit, state.servers, t]);
 
-  const importClipboard = useCallback(async () => {
+  const importJson = useCallback(async (text: string) => {
     dispatch({ type: 'set_busy', busy: 'import' });
     dispatch({ type: 'set_error', error: '' });
     try {
-      const parsed = tryParseClipboardConfig(await navigator.clipboard.readText());
+      const parsed = tryParseClipboardConfig(text);
       if (!parsed?.servers.length) throw new Error(t('settings.mcp.noValidConfig'));
       if (parsed.needsName || parsed.servers.length === 1) {
         const first = parsed.servers[0];
         if (first) {
+          dispatch({ type: 'set_import_draft', draft: null });
           dispatch({
             type: 'set_editor',
             editor: {
@@ -322,8 +328,9 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
         }));
       if (!added.length) throw new Error(t('settings.mcp.importedNone'));
       await commit([...state.servers, ...added]);
+      dispatch({ type: 'set_import_draft', draft: null });
     } catch (cause) {
-      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.clipboardReadFailed')) });
+      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.importFailed')) });
     } finally {
       dispatch({ type: 'set_busy', busy: null });
     }
@@ -367,7 +374,7 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     dispatch,
     commit,
     save,
-    importClipboard,
+    importJson,
     connect,
     logout,
   };

@@ -135,7 +135,15 @@ function makeApp(
       },
     },
     metadataCache: {
-      getFirstLinkpathDest: (link: string) => (byPath.has(`${link}.md`) ? { path: `${link}.md` } : null),
+      getFirstLinkpathDest: (link: string) => {
+        const direct = byPath.has(link) ? link : null;
+        const markdown = byPath.has(`${link}.md`) ? `${link}.md` : null;
+        const basename = [...byPath.keys()].find((candidate) => (
+          candidate.split('/').pop() === link
+        ));
+        const resolved = direct ?? markdown ?? basename;
+        return resolved ? makeFile(resolved) : null;
+      },
       getFileCache: (file: { path: string }) => {
         const meta = byPath.get(file.path);
         if (!meta) {
@@ -225,6 +233,26 @@ describe('ObsidianVaultApi', () => {
       path: 'bases/projects.base',
       views: [{ name: 'Table', type: 'table', columns: ['file', 'status'] }],
     });
+
+    await expect(api.getBaseViews('projects')).resolves.toEqual({
+      path: 'bases/projects.base',
+      views: [{ name: 'Table', type: 'table', columns: ['file', 'status'] }],
+    });
+  });
+
+  it('resolves a base file without enumerating the vault', async () => {
+    const app = makeApp([
+      { path: 'bases/projects.base', content: 'views: []' },
+      { path: 'notes/a.md', content: 'x' },
+    ]);
+    const getFiles = jest.spyOn(app.vault, 'getFiles');
+    const api = new ObsidianVaultApi(app as never);
+
+    await expect(api.getBaseViews('projects')).resolves.toEqual({
+      path: 'bases/projects.base',
+      views: [],
+    });
+    expect(getFiles).not.toHaveBeenCalled();
   });
 
   it('indexes tags and returns verbose tag file details', () => {
@@ -255,6 +283,24 @@ describe('ObsidianVaultApi', () => {
       deadends: [],
       unresolved: [{ source: 'source.md', target: 'Missing', count: 2 }],
     });
+  });
+
+  it('returns unresolved links without enumerating vault files', () => {
+    const app = makeApp([
+      { path: 'target.md', content: '' },
+      { path: 'other.md', content: '' },
+    ]);
+    const getFiles = jest.spyOn(app.vault, 'getFiles');
+    const getMarkdownFiles = jest.spyOn(app.vault, 'getMarkdownFiles');
+    const api = new ObsidianVaultApi(app as never);
+
+    expect(api.getGraphAnalysis(['unresolved'])).toEqual({
+      orphans: [],
+      deadends: [],
+      unresolved: [{ source: 'source.md', target: 'Missing', count: 2 }],
+    });
+    expect(getFiles).not.toHaveBeenCalled();
+    expect(getMarkdownFiles).not.toHaveBeenCalled();
   });
 
   it('searchNotes lists files when query is * with path scope', async () => {

@@ -81,8 +81,8 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 | `obsidian_delete` | Move files or folders to trash |
 | `obsidian_move` | Rename or move files, update links |
 | `obsidian_mkdir` | Create a vault folder |
-| `obsidian_history` | List, read, and restore file-history snapshots |
-| `obsidian_tasks` | List or toggle Markdown task status |
+| `obsidian_history` | List, read, and restore file-history snapshots (requires the official Obsidian CLI) |
+| `obsidian_tasks` | List or update Markdown task status (requires the official Obsidian CLI) |
 | `obsidian_open` | Open a file in the Obsidian workspace |
 | `obsidian_read_external` | Read files outside the vault (off by default) |
 | `obsidian_list_external` | List external directories (off by default) |
@@ -125,6 +125,9 @@ Add the current editor selection or a custom Pivi command to an installed [Note 
 ### ⚙️ Obsidian CLI integration
 Optional integration with the official Obsidian CLI powers history, tasks, daily notes, Base queries, command execution, JavaScript evaluation, and Note Toolbar command-item setup. The binary path and timeout are configurable in settings; individual command/eval capabilities remain separately gated.
 
+> [!NOTE]
+> Upgrade note: installations that never saved an Obsidian CLI preference now treat the integration as disabled. Re-enable it in Pivi settings to restore CLI-backed history, tasks, daily-note, Base-query, command, and evaluation features.
+
 ---
 
 ## Installation
@@ -158,13 +161,14 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **API keys** | Required for hosted AI providers. Stored via Obsidian `secretStorage` (Electron `safeStorage`), not in plugin JSON or `.pivi/mcp.json`. |
 | **Network use** | Prompts, vault context, attachments, tool results, and MCP results may be sent to the selected model provider. |
 | **Image generation** | Available only with `openai-codex` credentials. Prompts go to ChatGPT / Codex backend. Images saved as vault attachments. |
-| **MCP** | User-provided servers. Remote HTTP/SSE servers receive requests when enabled or mentioned. Stdio servers run local commands you configure. |
+| **MCP** | User-provided servers. Enabled remote HTTP/SSE servers may receive inventory requests during startup/settings refresh. Stdio commands run only after explicit **Connect / refresh tools** or the agent's first search/list/call. |
 | **Skills** | Listing, installing, or updating remote skills uses `npx skills` / `skills.sh`. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
 | **External file access** | Disabled by default. Allowed absolute roots come from this device's vault-local overlay or folders attached for the current turn; they are not synced through `.pivi/settings.json` or session JSONL. |
 | **Bash access** | Disabled by default. Allowlisted one-line commands only; rejects shell control syntax. |
 | **Obsidian CLI** | Disabled by default. When enabled, Pivi starts the configured official Obsidian CLI for the specific CLI-backed tools listed above. |
 | **Vault index** | File mentions, search, graph, tags, and properties enumerate vault metadata and file paths locally; Pivi does not send an index to its author. |
-| **Clipboard** | Read only after clicking **Import from clipboard** in MCP settings; writes occur only after explicit copy actions. |
+| **System environment** | Read only at desktop integration boundaries for configured provider credentials, MCP authentication/stdio variables, the official CLI, and Skills tooling. Pivi does not transmit machine identity to its author. |
+| **Clipboard** | MCP import accepts JSON pasted into an editor and never invokes the clipboard-read API. Writes occur only after explicit copy actions. |
 | **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
 | **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |
 | **File recovery** | Edits use Obsidian APIs, deletes go to trash, `obsidian_history` can list/read/restore file-history snapshots. |

@@ -69,6 +69,7 @@ import {
   getEnvironmentVariablesForScope as getEnvironmentVariablesForSettingsScope,
 } from "@/app/settings/environmentVariables";
 import { measureStartupPhase } from "@/app/startupPerformance";
+import { showDefaultVaultSkillsInstallPrompt } from "@/app/ui/defaultVaultSkillsPrompt";
 import { findAllPiviViews } from "@/app/viewAccess";
 import { createPiUiFacades } from "@/app/workspace/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
@@ -126,6 +127,8 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   notify(message: string | DocumentFragment, timeout?: number): Notice {
     return new Notice(message, timeout);
   }
+
+  showDefaultVaultSkillsInstallPrompt = showDefaultVaultSkillsInstallPrompt;
 
   async openStyleSettings(): Promise<boolean> {
     return openStyleSettingsOrMarketplace(this.app);

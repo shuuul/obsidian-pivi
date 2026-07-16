@@ -21,7 +21,8 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 ## Public API
 
-- `ObsidianVaultApi`, `ExternalFileApi`, file/storage adapters, settings persistence, CLI transport, `nodeFetch`, `obsidianHttpClient`, auth/legacy-auth adapters, `systemProcessRunner`, the external opener, and vault/path utilities through explicit `@pivi/obsidian-host/<leaf>` subpaths. Domain service and file-store/HTTP/process/opener contracts are defined by their owning `@pivi/pivi-agent-core` modules.
+- The package root barrel exports `ObsidianVaultApi`, `ExternalFileApi`, file/storage adapters, settings persistence, CLI transport, `nodeFetch`, `obsidianHttpClient`, auth/legacy-auth adapters, `systemProcessRunner`, the external opener, and vault/path utilities. `package.json` also exposes curated `@pivi/obsidian-host/<leaf>` subpaths for cross-package consumers. Domain service and file-store/HTTP/process/opener contracts are defined by their owning `@pivi/pivi-agent-core` modules.
+- Base-file view lookup resolves the requested path directly; unresolved-link-only graph analysis reads `MetadataCache` without enumerating vault files. Search, tag, orphan/deadend graph, Base listing, and other inventory operations still enumerate on explicit request.
 - `styles/pivi-theme.css` maps Obsidian theme variables into the `--pivi-host-*` contract; the root CSS build prepends it as a direct input, and it contains no React component rules.
 
 ## See also

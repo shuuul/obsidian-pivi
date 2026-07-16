@@ -69,7 +69,7 @@ export interface ObsidianToolsSettings {
 const TOOL_OBSIDIAN_BASH_NAME = "obsidian_bash";
 
 export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
-  cliEnabled: true,
+  cliEnabled: false,
   cliPath: null,
   cliTimeoutMs: 30_000,
   disabledTools: [],

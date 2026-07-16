@@ -13,6 +13,7 @@ import type {
   AppMcpToolProvider,
   AppMcpToolSummary,
 } from "@pivi/pivi-agent-core/mcp/ports";
+import { getMcpServerUrl } from "@pivi/pivi-agent-core/mcp/types";
 import type { ProcessRunner } from "@pivi/pivi-agent-core/ports";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/vaultSkillsService";
@@ -65,9 +66,11 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
     await this.pool.dispose();
   }
 
-  /** Warm slash/settings tool lists for every settings-enabled server. */
+  /** Warm slash/settings tool lists for enabled remote servers without spawning local processes. */
   async prefetchEnabledServers(): Promise<void> {
-    const servers = this.mcpServerManager.getServers().filter((server) => server.enabled);
+    const servers = this.mcpServerManager
+      .getServers()
+      .filter((server) => server.enabled && getMcpServerUrl(server.config));
     await Promise.all(servers.map((server) => this.listTools(server.name)));
   }
 

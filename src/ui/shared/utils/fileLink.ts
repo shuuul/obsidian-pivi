@@ -193,7 +193,7 @@ function createWikilink(
   linkTarget: string,
   displayText: string
 ): HTMLElement {
-  const link = ownerDocument.createElement('a');
+  const link = ownerDocument.win.createEl('a');
   link.className = 'pivi-file-link internal-link';
   link.textContent = displayText;
   link.setAttribute('data-href', linkTarget);
@@ -437,7 +437,7 @@ function collectTextNodesWithLinks(container: HTMLElement): Text[] {
 }
 
 function buildFragmentWithLinks(ownerDocument: Document, text: string, matches: WikilinkMatch[]): DocumentFragment {
-  const fragment = ownerDocument.createDocumentFragment();
+  const fragment = ownerDocument.win.createFragment();
   let currentIndex = text.length;
 
   for (const { index, fullMatch, linkTarget, displayText } of matches) {

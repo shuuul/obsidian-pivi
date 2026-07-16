@@ -31,7 +31,7 @@ export function createContextBadgeElement(
   const vm = createContextBadgeViewModel(token, t);
   const doc = getActiveDocument(options.root);
   const isInline = options.inline === true;
-  const el = isInline ? doc.createElement('span') : doc.createElement('button');
+  const el = isInline ? doc.win.createSpan() : doc.win.createEl('button');
 
   el.addClass('pivi-context-badge');
   el.addClass(`pivi-context-badge--${vm.tone}`);
@@ -52,18 +52,18 @@ export function createContextBadgeElement(
   if (vm.tooltip) el.setAttribute('title', vm.tooltip);
   if (vm.ariaLabel) el.setAttribute('aria-label', vm.ariaLabel);
 
-  const iconEl = doc.createElement('span');
+  const iconEl = doc.win.createSpan();
   iconEl.className = 'pivi-context-badge-icon';
   renderIcon(iconEl, vm.icon);
   el.appendChild(iconEl);
 
-  const labelEl = doc.createElement('span');
+  const labelEl = doc.win.createSpan();
   labelEl.className = 'pivi-context-badge-label';
   labelEl.textContent = vm.label;
   el.appendChild(labelEl);
 
   if (options.onRemove && vm.removable) {
-    const removeEl = doc.createElement('span');
+    const removeEl = doc.win.createSpan();
     removeEl.className = 'pivi-context-badge-remove';
     removeEl.contentEditable = 'false';
     removeEl.setAttribute('role', 'button');

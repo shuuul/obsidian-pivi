@@ -3,6 +3,10 @@ import {
   DEFAULT_PI_PROVIDER_IDS,
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
 } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+import {
+  getObsidianToolsSettingsFromBag,
+  resolveObsidianToolsSettings,
+} from '@pivi/pivi-agent-core/foundation/settings';
 import { isValidModelKey } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
 import {
   getPiAgentSettings,
@@ -37,6 +41,17 @@ describe('isValidModelKey', () => {
     { key: '', valid: false },
   ])('treats $key as valid=$valid', ({ key, valid }) => {
     expect(isValidModelKey(key)).toBe(valid);
+  });
+});
+
+describe('Obsidian tool settings', () => {
+  it('keeps the official CLI disabled when settings are missing', () => {
+    expect(getObsidianToolsSettingsFromBag({}).cliEnabled).toBe(false);
+    expect(resolveObsidianToolsSettings(undefined).cliEnabled).toBe(false);
+  });
+
+  it('preserves an explicitly enabled official CLI setting', () => {
+    expect(resolveObsidianToolsSettings({ cliEnabled: true } as never).cliEnabled).toBe(true);
   });
 });
 

@@ -71,7 +71,69 @@ describe('React MCP settings', () => {
     fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'local' } }); fireEvent.change(screen.getByLabelText('Command'), { target: { value: 'npx mcp-server' } }); fireEvent.click(screen.getByRole('button', { name: 'Add' })); await act(async () => undefined); expect(getServers()).toHaveLength(1);
     fireEvent.click(screen.getByText('local', { selector: '.pivi-mcp-name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument(); const inlineEditor = document.querySelector('.pivi-mcp-inline-editor'); expect(inlineEditor).toContainElement(screen.getByRole('button', { name: 'Connect / refresh tools' })); expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'renamed' } }); fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' })); await act(async () => undefined); expect(getServers()[0]?.name).toBe('renamed'); expect(mcp.connect).toHaveBeenCalledWith(expect.objectContaining({ name: 'renamed' }));
     fireEvent.click(screen.getByRole('button', { name: 'Remove' })); expect(getServers()).toHaveLength(1); fireEvent.click(screen.getByRole('button', { name: 'Delete' })); await act(async () => undefined); expect(getServers()).toHaveLength(0);
-    Object.assign(navigator, { clipboard: { readText: jest.fn(async () => '{"mcpServers":{"imported":{"command":"node","args":["server.js"]}}}') } }); fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' })); fireEvent.click(screen.getByText('Import from clipboard')); await act(async () => undefined); expect(screen.getByPlaceholderText('my-mcp-server')).toHaveValue('imported'); fireEvent.click(screen.getByRole('button', { name: 'Add' })); await act(async () => undefined); expect(getServers()[0]?.name).toBe('imported'); expect(mcp.save).toHaveBeenCalled();
+    const readText = jest.fn(async () => '{"mcpServers":{"unwanted":{"command":"node"}}}');
+    Object.assign(navigator, { clipboard: { readText } });
+    fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
+    fireEvent.click(screen.getByText('Import JSON'));
+    const importDialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
+    fireEvent.change(within(importDialog).getByLabelText('MCP configuration JSON'), {
+      target: { value: '{"mcpServers":{"imported":{"command":"node","args":["server.js"]}}}' },
+    });
+    fireEvent.click(within(importDialog).getByRole('button', { name: 'Import' }));
+    await act(async () => undefined);
+    expect(readText).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText('my-mcp-server')).toHaveValue('imported');
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    await act(async () => undefined);
+    expect(getServers()[0]?.name).toBe('imported');
+    expect(mcp.save).toHaveBeenCalled();
+  });
+
+  it('validates, cancels, and de-duplicates explicit JSON imports', async () => {
+    const existing: ManagedMcpServer = {
+      name: 'existing',
+      config: { command: 'node', args: ['existing.js'] },
+      enabled: true,
+      contextSaving: true,
+    };
+    const { ports, mcp, getServers } = makePorts([existing]);
+    await openMcp(ports);
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
+    fireEvent.click(screen.getByText('Import JSON'));
+    let dialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
+    fireEvent.change(within(dialog).getByLabelText('MCP configuration JSON'), {
+      target: { value: 'not json' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Import' }));
+    await act(async () => undefined);
+    expect(screen.getByRole('alert')).toHaveTextContent('No valid MCP configuration found in pasted JSON');
+    expect(mcp.save).not.toHaveBeenCalled();
+
+    fireEvent.change(within(dialog).getByLabelText('MCP configuration JSON'), {
+      target: {
+        value: '{"mcpServers":{"existing":{"command":"node"},"added":{"type":"http","url":"https://example.test/mcp"}}}',
+      },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Import' }));
+    await act(async () => undefined);
+    expect(getServers().map((server) => server.name)).toEqual(['existing', 'added']);
+    expect(screen.queryByRole('dialog', { name: 'Import MCP configuration' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
+    fireEvent.click(screen.getByText('Import JSON'));
+    dialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
+    const textarea = within(dialog).getByLabelText('MCP configuration JSON');
+    expect(textarea).toHaveFocus();
+    fireEvent.keyDown(textarea, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: 'Import MCP configuration' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
+    fireEvent.click(screen.getByText('Import JSON'));
+    dialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'Import MCP configuration' })).not.toBeInTheDocument();
+    expect(getServers().map((server) => server.name)).toEqual(['existing', 'added']);
   });
   it('preserves HTTP auth and header editor fields', async () => {
     const { ports, getServers } = makePorts(); await openMcp(ports);

@@ -70,7 +70,7 @@ export class InlineEditModal {
         pos: isInbetween ? this.positions.from : this.editorView.state.doc.lineAt(this.positions.from).from,
         block: !isInbetween,
         options: {
-          container: this.editorView.dom,
+          createContainer: () => this.editorView!.dom.ownerDocument.win.createDiv(),
           ownerDocument: this.editorView.dom.ownerDocument,
           ownerWindow: this.editorView.dom.ownerDocument.defaultView ?? window,
           modelOverride: this.modelOverride,

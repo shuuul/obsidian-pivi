@@ -192,16 +192,19 @@ export class ObsidianVaultApi {
     if (file?.trim()) {
       const query = file.trim();
       const normalized = normalizePathForVault(query, this.vaultPath());
-      const basename = query.endsWith('.base') ? query.slice(0, -'.base'.length) : query;
-      return this.app.vault.getFiles().find((candidate) => (
-        candidate.extension === 'base'
-        && (
-          candidate.path === query
-          || candidate.path === normalized
-          || candidate.name === query
-          || candidate.basename === basename
-        )
-      )) ?? null;
+      const directPaths = normalized
+        ? new Set([normalized, normalized.endsWith('.base') ? normalized : `${normalized}.base`])
+        : new Set<string>();
+      for (const candidate of directPaths) {
+        const resolved = this.asFile(this.app.vault.getAbstractFileByPath(candidate));
+        if (resolved?.extension === 'base') {
+          return resolved;
+        }
+      }
+
+      const linkpath = query.endsWith('.base') ? query : `${query}.base`;
+      const linked = this.app.metadataCache.getFirstLinkpathDest(linkpath, '');
+      return linked?.extension === 'base' ? linked : null;
     }
 
     return null;
@@ -675,22 +678,24 @@ export class ObsidianVaultApi {
       }
     }
 
-    const allFiles = includeNonMarkdown ? this.app.vault.getFiles() : this.app.vault.getMarkdownFiles();
+    if (actions.includes('orphans') || actions.includes('deadends')) {
+      const allFiles = includeNonMarkdown ? this.app.vault.getFiles() : this.app.vault.getMarkdownFiles();
 
-    if (actions.includes('orphans')) {
-      result.orphans = allFiles
-        .map((file) => file.path)
-        .filter((path) => !linkedDestinations.has(path))
-        .sort((a, b) => a.localeCompare(b))
-        .slice(0, limit);
-    }
+      if (actions.includes('orphans')) {
+        result.orphans = allFiles
+          .map((file) => file.path)
+          .filter((path) => !linkedDestinations.has(path))
+          .sort((a, b) => a.localeCompare(b))
+          .slice(0, limit);
+      }
 
-    if (actions.includes('deadends')) {
-      result.deadends = allFiles
-        .filter((file) => (this.app.metadataCache.getFileCache(file)?.links?.length ?? 0) === 0)
-        .map((file) => file.path)
-        .sort((a, b) => a.localeCompare(b))
-        .slice(0, limit);
+      if (actions.includes('deadends')) {
+        result.deadends = allFiles
+          .filter((file) => (this.app.metadataCache.getFileCache(file)?.links?.length ?? 0) === 0)
+          .map((file) => file.path)
+          .sort((a, b) => a.localeCompare(b))
+          .slice(0, limit);
+      }
     }
 
     if (actions.includes('unresolved')) {

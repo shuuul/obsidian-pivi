@@ -9,6 +9,8 @@ import type { InlineEditPort } from '@pivi/pivi-react/ports';
 import { I18nProvider } from '@pivi/pivi-react';
 import type { InlineEditResult, InlineEditService } from '@pivi/pivi-agent-core/runtime/auxTypes';
 
+import { installObsidianDomHelpers } from '../setupObsidianUi';
+
 function createService(results: InlineEditResult[]): InlineEditService {
   return {
     cancel: jest.fn(),
@@ -90,18 +92,26 @@ describe('InlineEditView', () => {
     act(() => first.dispose());
   });
   it('unmounts the React widget when CodeMirror removes its decoration', () => {
-    const parent = document.createElement('div');
-    document.body.appendChild(parent);
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const ownerDocument = iframe.contentDocument!;
+    const ownerWindow = iframe.contentWindow!;
+    installObsidianDomHelpers(ownerWindow);
+    const parent = ownerDocument.createElement('div');
+    ownerDocument.body.appendChild(parent);
     const view = new EditorView({ parent, state: EditorState.create({ extensions: [inlineEditWidgetField] }) });
+    const createContainer = jest.fn(() => ownerWindow.createDiv());
     const options = {
-      container: document.createElement('div'), ownerDocument: document, ownerWindow: window, i18n: createI18n(),
+      createContainer, ownerDocument, ownerWindow, i18n: createI18n(),
       port: {} as InlineEditPort, context: { mode: 'selection' as const, selectedText: 'old' },
       notePath: 'note.md', service: createService([]), accept: jest.fn(), reject: jest.fn(),
     };
     act(() => view.dispatch({ effects: showInlineEditWidget.of({ pos: 0, block: false, options }) }));
-    expect(parent.querySelector('.pivi-inline-react-root')).not.toBeNull();
+    expect(createContainer).toHaveBeenCalledTimes(1);
+    expect(parent.querySelector('.pivi-inline-react-root')?.ownerDocument).toBe(ownerDocument);
     act(() => view.dispatch({ effects: hideInlineEditWidget.of(null) }));
     expect(parent.querySelector('.pivi-inline-react-root')).toBeNull();
     view.destroy();
+    iframe.remove();
   });
 });

@@ -6,7 +6,7 @@ import type { McpOAuthService } from './oauth/mcpOAuthService';
 import { PiMcpConnectionPool } from './piMcpConnectionPool';
 import type { McpProcessEnv, McpTransportFetch } from './ports';
 import type { McpTool } from './types';
-import type { ManagedMcpServer, McpServerConfig } from './types';
+import { getMcpServerUrl, type ManagedMcpServer, type McpServerConfig } from './types';
 
 const logger = new PluginLogger('PiMcpBridge');
 
@@ -80,9 +80,11 @@ export class PiMcpBridge {
     await this.pool.dispose();
   }
 
-  /** Warm tool caches for every settings-enabled server (non-throwing). */
+  /** Warm enabled remote tool caches without spawning local stdio processes. */
   async prefetchEnabledTools(): Promise<void> {
-    const enabled = this.mcpManager.getServers().filter((server) => server.enabled);
+    const enabled = this.mcpManager
+      .getServers()
+      .filter((server) => server.enabled && getMcpServerUrl(server.config));
     await Promise.all(enabled.map((server) => this.listCachedTools(server.name)));
   }
 

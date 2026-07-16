@@ -38,7 +38,7 @@ export function createInlineMentionBadge(
   root?: HTMLElement,
 ): HTMLSpanElement {
   if (part.kind === 'plain') {
-    return getActiveDocument(root).createElement('span');
+    return getActiveDocument(root).win.createSpan();
   }
 
   const token = mentionPartToContextBadgeToken(part);

@@ -1,3 +1,4 @@
+export { getSettingsSearchAliases } from '../settings/searchMetadata';
 export {
   ActiveChatUiBridge,
   type ChatTabPortalTargets,

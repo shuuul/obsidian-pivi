@@ -10,7 +10,7 @@ React components under `packages/pivi-react/src/chat/messages/` own message shel
 
 ```mermaid
 flowchart LR
-  State["ChatUiSnapshot messages"] --> React["React MessageList"]
+  State["ChatProjectionStore entities"] --> React["React MessageList"]
   React --> Slot["Empty adapter slot"]
   Slot --> Markdown["Obsidian Markdown adapter"]
   Slot --> Tool["Rich tool/diff adapter"]
@@ -29,7 +29,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 | `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host. It does not create message shells, action toolbars, or control transcript scrolling. |
 | `src/ui/chat/rendering/messageRendererMarkdown.ts` | Obsidian Markdown rendering, first-turn auto-note badge restoration, input-derived mention badges, file-link processing, code wrappers, math, and owner-window-aware Mermaid controls. Expanded `attachedFilePaths` are runtime context and must never be enumerated as UI badges. |
 | `src/ui/chat/rendering/ToolCallRenderer.ts`, `toolCallExpandedDispatcher.ts`, `toolCall*Expanded.ts` | Rich tool-body adapter registry used inside React-owned tool slots. |
-| `src/ui/chat/rendering/WriteEditRenderer.ts`, `DiffRenderer.ts` | Content-only write/edit diff renderer, context hunks, and bounded new-file rendering. The surrounding generic tool shell owns the sole header/collapse boundary. |
+| `src/ui/chat/rendering/WriteEditRenderer.ts`, `DiffRenderer.ts` | Content-only write/edit renderer for the complete upstream diff-line snapshot. The surrounding generic tool shell owns the sole header/collapse boundary and viewport bound. |
 | `src/ui/chat/rendering/SubagentRenderer.ts`, `AsyncSubagentRenderer.ts`, `subagentRendererShared.ts` | Stored nested subagent body adapters with stale-render protection. `createSubagentShell()` in `subagentRendererShared.ts` builds the shared `pivi-subagent-list pivi-subagent-card` header/content shell for sync and async renderers. Runtime managers must never call them. |
 | `src/app/ui/createSubagentContentAdapter.ts` | App-owned React message-content bridge that mounts and incrementally updates stored subagent adapters. |
 | `src/app/ui/createStreamingMarkdownContentAdapter.ts` | App-owned stable Markdown bridge with rendered sealed segments, an escaped live tail, rewrite rebuilding, and terminal fidelity rendering. |
@@ -67,7 +67,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Tool semantics are single-sourced in `@pivi/pivi-agent-core/tools/toolPresentation`: add or rename a tool there once for kind, icon, translation keys, visibility/grouping, and summary. `toolPresentationI18n.ts` only translates title/step tokens and composes ARIA text; `obsidianToolResultPresentation.ts` only decides whether structured Obsidian results use the compact imperative body. Expanded-body capability remains in the dispatcher.
 - Obsidian tool display names are keyed by canonical constants from `@pivi/pivi-agent-core/tools/obsidianToolNames`; unknown tools intentionally fall back to their raw names.
 - `contentBlocks` order is authoritative, but historical/provider data can leave tool calls unreferenced. Preserve orphan rendering and ID deduplication.
-- Streaming tool input is reduced into `ChatUiSnapshot` before rendering. React content blocks own order and status; imperative renderers must not retain stream-specific DOM maps or create duplicate tool rows.
+- Streaming tool input is reduced into durable `ChatMessage` entities and dispatched through `ChatProjectionStore` before rendering. React content blocks own order and status; imperative renderers must not retain stream-specific DOM maps or create duplicate tool rows.
 - Async Markdown can finish out of order. Subagent rendering uses generation tokens to discard stale completions; preserve that guard when rerendering prompt or result sections.
 - Background subagents lazily render expanded content and can become `orphaned` when a session ends. Do not collapse `pending`, `running`, `error`, and `orphaned` into a simple completed flag.
 - Thinking presentation and timing belong to the package React message view; no imperative thinking renderer or timer is permitted here.

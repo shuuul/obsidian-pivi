@@ -101,9 +101,9 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
   container.classList.add('pivi-rendered-mermaid');
 
   const doc = getActiveDocument(container);
-  const scroll = doc.createElement('div');
+  const scroll = doc.win.createDiv();
   scroll.className = 'pivi-mermaid-scroll';
-  const zoomSurface = doc.createElement('div');
+  const zoomSurface = doc.win.createDiv();
   zoomSurface.className = 'pivi-mermaid-zoom-surface';
 
   const parent = container.parentElement;
@@ -115,7 +115,7 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
   scroll.appendChild(zoomSurface);
   zoomSurface.appendChild(container);
 
-  const controls = doc.createElement('div');
+  const controls = doc.win.createDiv();
   controls.className = 'pivi-mermaid-controls';
   scroll.appendChild(controls);
 
@@ -147,7 +147,7 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
   };
 
   const makeButton = (label: string, ariaLabel: string, onClick: () => void, icon?: string): HTMLButtonElement => {
-    const button = doc.createElement('button');
+    const button = doc.win.createEl('button');
     button.type = 'button';
     button.className = 'pivi-mermaid-control-btn';
     if (icon) {
@@ -239,12 +239,12 @@ export async function renderUserMessageText(
 ): Promise<void> {
   const autoAttachedNotePath = turnRequest?.currentNotePath;
   const textTarget = autoAttachedNotePath
-    ? el.ownerDocument.createElement('div')
+    ? el.ownerDocument.win.createDiv()
     : el;
 
   if (autoAttachedNotePath) {
     el.empty();
-    const badges = el.ownerDocument.createElement('div');
+    const badges = el.ownerDocument.win.createDiv();
     badges.className = 'pivi-user-context-badges';
     badges.appendChild(createContextBadgeElement(
       { kind: 'file', token: `[[${autoAttachedNotePath}]]`, path: autoAttachedNotePath },
@@ -308,7 +308,7 @@ export async function renderMarkdownContent(
       if (pre.parentElement?.classList.contains('pivi-code-wrapper')) return;
 
       const doc = getActiveDocument(pre);
-      const wrapper = doc.createElement('div');
+      const wrapper = doc.win.createDiv();
       wrapper.className = 'pivi-code-wrapper';
       pre.parentElement?.insertBefore(wrapper, pre);
       wrapper.appendChild(pre);
@@ -319,7 +319,7 @@ export async function renderMarkdownContent(
         if (match?.[1]) {
           const language = match[1];
           wrapper.classList.add('pivi-code-wrapper--language');
-          const label = doc.createElement('span');
+          const label = doc.win.createSpan();
           label.className = 'pivi-code-lang-label';
           label.textContent = language;
           wrapper.appendChild(label);

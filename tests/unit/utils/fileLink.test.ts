@@ -382,6 +382,11 @@ describe('fileLink utils', () => {
     }
 
     class MockDocument {
+      readonly win = {
+        createEl: (tagName: string): MockElement => this.createElement(tagName),
+        createFragment: (): MockDocumentFragment => this.createDocumentFragment(),
+      };
+
       createElement(tagName: string): MockElement {
         return new MockElement(this, tagName);
       }

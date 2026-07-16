@@ -240,7 +240,7 @@ export function createImperativeChatAdapter(
 
   return {
     prepareShell(ownerDocument) {
-      inputTabBarPortalEl = ownerDocument.createElement('div');
+      inputTabBarPortalEl = ownerDocument.win.createDiv();
       chatTabsStore = new ChatTabsStore(getChatTabsSnapshot());
       activeChatBridge = new ActiveChatUiBridge();
       return {

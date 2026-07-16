@@ -30,17 +30,19 @@ React renders message ordering, roles, headers, collapsible shells, status, and 
 - uncontrolled rich input and context chips;
 - CodeMirror inline-edit widget hosting.
 
-Adapters must mount, update, and dispose idempotently. Asynchronous rendering uses a generation check so an old completion cannot replace a newer slot. Resolve `window` and `document` from the owning element so pop-out windows work.
+Adapters must mount, update, and dispose idempotently. Asynchronous rendering uses a generation check so an old completion cannot replace a newer slot. Resolve `window` and `document` from the owning element so pop-out windows work. App-owned imperative DOM uses the owning realm's Obsidian `createEl` helpers; product code must not construct nodes through global or raw `document.createElement*` calls.
 
 ### Virtual transcript and projection boundary
 
 `ChatUiStore` carries chrome, composer, usage, and stream status only. `ChatProjectionStore` owns the immutable message read model, stable order, per-message subscriptions, derived active top-level background runs, recent-first publication, and animation-frame coalescing. Runtime state is updated immediately; only React publication is delayed, and terminal/session lifecycle boundaries flush synchronously.
 
-Every non-empty transcript uses `@tanstack/react-virtual`. Rows use stable message IDs, dynamic measurement, end anchoring, six-row overscan, and an 80px end threshold. The thinking indicator is the measured final item. A non-serializable `MessageViewportHandle` exposes semantic start/end/message/user navigation to app wiring; no app controller queries message DOM nodes. The scroll viewport is passed explicitly through portal targets, including pop-out owner realms. The current visual styling, Subagent cards, and usage ring are unchanged.
+Every non-empty transcript uses `@tanstack/react-virtual`. Rows use stable message IDs, dynamic measurement, end anchoring, six-row overscan, and an 80px end threshold. The thinking indicator is the measured final item. A non-serializable `MessageViewportHandle` exposes semantic start/end/message/user navigation to app wiring; no app controller queries message DOM nodes. The scroll viewport is passed explicitly through portal targets, including pop-out owner realms. Subagent cards and the usage ring remain presentation-owned surfaces over this projection boundary.
 
 ## Settings data flow
 
 `SettingsRoot` consumes package-owned `SettingsPorts` implemented by `src/app/ui/createUiPorts.ts` and focused settings-port modules. React does not import app settings types or engine facades.
+
+`PiviSettingTabHost` supports both Obsidian settings generations. Obsidian 1.13 renders the existing React surface through one custom `getSettingDefinitions()` item whose localized aliases come synchronously from `@pivi/pivi-react`; locale changes call `update()` so the settings search index is rebuilt. Obsidian 1.12 continues through `display()`. Both paths share one generation-guarded mount and cleanup implementation.
 
 ```mermaid
 flowchart LR
@@ -89,7 +91,7 @@ Respect reduced motion, keyboard focus, semantic roles, and owner-window timers.
 
 Inline edit is an auxiliary query, not a chat session. The Obsidian editor command captures the selected CodeMirror range, mounts the React-owned widget through the app-side editor bridge, and calls an injected `AuxQueryRunner`.
 
-The flow has one active controller. Starting another edit rejects or cleans the previous controller. Accept applies the chosen replacement through the editor; reject restores/cleans decorations without adding a durable session or conversation history. IME and editor ownership rules must be preserved.
+The flow has one active controller. Starting another edit rejects or cleans the previous controller. Accept applies the chosen replacement through the editor; reject restores/cleans decorations without adding a durable session or conversation history. IME and editor ownership rules must be preserved. The app-side CodeMirror bridge injects `createContainer()` into widget options so the host creates the detached React root with Obsidian helpers in the editor's owner realm; mount options receive the resulting container separately.
 
 ```mermaid
 flowchart LR
@@ -104,9 +106,10 @@ flowchart LR
 ## Change checklist
 
 - Keep React inputs serializable and host-neutral.
-- Keep imperative DOM ownership explicit and isolated.
+- Keep imperative DOM ownership explicit and isolated; create nodes with owner-realm Obsidian helpers.
 - Implement presentation ports only in `src/app/ui`.
 - Update every locale for user-visible text.
 - Validate manifest ordering and zero `!important` for CSS.
 - Test keyboard, accessibility, reduced motion, and pop-out owner realm for interactive changes.
+- Keep the 1.13 setting definition and the 1.12 `display()` fallback on the shared mount/dispose path.
 - Keep inline edit on `AuxQueryRunner`; do not create a chat session for it.

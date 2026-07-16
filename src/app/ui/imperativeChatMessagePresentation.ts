@@ -23,7 +23,7 @@ function mountMessageContentAdapter(
   render: (target: HTMLElement) => Promise<void> | void,
 ): (() => void) {
   const token = `${generation}:${++messageAdapterGeneration}`;
-  const staging = container.ownerDocument.createElement('div');
+  const staging = container.ownerDocument.win.createDiv();
   container.dataset.piviRenderGeneration = token;
   let disposed = false;
   void Promise.resolve(render(staging)).then(() => {

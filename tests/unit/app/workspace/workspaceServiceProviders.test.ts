@@ -38,6 +38,15 @@ function createServer(name = 'github'): ManagedMcpServer {
   };
 }
 
+function createStdioServer(name = 'local'): ManagedMcpServer {
+  return {
+    name,
+    config: { type: 'stdio', command: 'node', args: ['server.js'] },
+    enabled: true,
+    contextSaving: true,
+  };
+}
+
 function createProvider(servers: ManagedMcpServer[]): PiMcpToolProvider {
   const manager = {
     getServers: () => servers,
@@ -78,6 +87,20 @@ describe('PiMcpToolProvider', () => {
 
     expect(provider.getCachedTools('github')).toEqual([{ name: 'search', description: 'Search files' }]);
     expect(listTools).not.toHaveBeenCalled();
+  });
+
+  it('prefetches enabled remote servers without spawning stdio servers', async () => {
+    listTools.mockResolvedValue([]);
+    const provider = createProvider([
+      createServer('remote'),
+      createStdioServer(),
+      { ...createServer('disabled'), enabled: false },
+    ]);
+
+    await provider.prefetchEnabledServers();
+
+    expect(listTools).toHaveBeenCalledTimes(1);
+    expect(listTools).toHaveBeenCalledWith(expect.objectContaining({ name: 'remote' }));
   });
 
   it('does not let an older request overwrite an explicitly imported inventory', async () => {

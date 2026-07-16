@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`src/ui/chat/` owns chat **runtime orchestration** and **explicit imperative adapters** under the React shell: session binding, turn composition, stream projection into `ChatUiStore`, and Markdown/tool/diff/ask-user/subagent bodies mounted into empty React slots. Obsidian view lifecycle lives in `src/app/ui/PiviViewHost.ts`; `ImperativeChatAdapter` owns aggregate mount/lifecycle and semantic translation; React shell/tabs/status/composer chrome/messages live in `@pivi/pivi-react`.
+`src/ui/chat/` owns chat **runtime orchestration** and **explicit imperative adapters** under the React shell: session binding, turn composition, chrome projection into `ChatUiStore`, message projection into `ChatProjectionStore`, and Markdown/tool/diff/ask-user/subagent bodies mounted into empty React slots. Obsidian view lifecycle lives in `src/app/ui/PiviViewHost.ts`; the `imperativeChat*.ts` adapter family owns aggregate mount/lifecycle and semantic translation; React shell/tabs/status/composer chrome/messages live in `@pivi/pivi-react`.
 
 This layer consumes injected host and runtime contracts; it does not construct the Pi engine, own durable session storage, implement tools, or own migrated product chrome.
 
@@ -19,7 +19,7 @@ flowchart TD
   Tabs --> Composer["composer/<br/>turn capture and queueing"]
   Tabs --> Toolbar["toolbar/<br/>DOM-free runtime models → snapshots"]
   Tabs --> UI["ui/<br/>RichChatInput + context-chip adapters"]
-  Tabs --> State["state/<br/>per-tab transient state + ChatUiStore"]
+  Tabs --> State["state/<br/>per-tab transient state + UI/projection stores"]
   Tabs --> Services["services/<br/>subagent presentation records"]
 
   Controllers --> Composer
@@ -45,7 +45,7 @@ flowchart TD
 ### Lifecycle and data flow
 
 1. `PiviViewHost.onOpen()` creates core-owned `ChatPorts` via `createChatUiPorts`, prepares the React shell through `createImperativeChatAdapter`, and mounts one React shell via `mountChatView`. An app-owned adapter closure captures the ports and passes them directly to `TabManager`; the React mount contract never receives them, and `ChatShell` consumes snapshots/actions only.
-2. `ImperativeChatAdapter.mount` constructs `TabManager` with the same `ChatPorts`, loads persisted tab bindings or creates a blank tab, and primes eligible runtime state. `TabManager` creates each `TabData`, initializes its controller/UI/state graph plus the uncontrolled rich-input and empty portal slots (`tabDom`), and activates only the selected tab; blank and cold tabs still create no chat service. Live chrome/messages reach React through `ActiveChatUiBridge` + immutable `ChatUiStore` snapshots; `scheduleTabsSnapshotPublish` keeps the tab strip store in sync. Ports supply catalogs/factories/model behavior/projected settings (`catalog` / `models` / `settings` / `runtime` / `sessions`), not live UI state or facade objects. There is no composer `McpServerSelector`, no `navRowEl`, and no DOM-mutating stream path.
+2. `ImperativeChatAdapter.mount` constructs `TabManager` with the same `ChatPorts`, loads persisted tab bindings or creates a blank tab, and primes eligible runtime state. `TabManager` creates each `TabData`, initializes its controller/UI/state graph plus the uncontrolled rich-input and empty portal slots (`tabDom`), and activates only the selected tab; blank and cold tabs still create no chat service. Live chrome and message entities reach React through `ActiveChatUiBridge` plus immutable `ChatUiStore` and `ChatProjectionStore` snapshots; `scheduleTabsSnapshotPublish` keeps the separate tab strip store in sync. Ports supply catalogs/factories/model behavior/projected settings (`catalog` / `models` / `settings` / `runtime` / `sessions`), not live UI state or facade objects. There is no composer `McpServerSelector`, no `navRowEl`, and no DOM-mutating stream path.
 3. A new tab begins as `blank`: it has draft UI settings but no durable open-session binding and no chat service.
 4. Loading history produces a `bound_cold` tab associated with `openSessionId` and `sessionFile`; runtime work remains lazy.
 5. The first send calls `initializeTabService()`. This is the only UI location that calls `ports.runtime.createChatService()`. It passively syncs the session and moves the tab to `bound_active`; `query()` starts actual work.
@@ -60,7 +60,7 @@ flowchart TD
 | `src/ui/chat/tabs/` | Per-tab construction, activation, archive/close behavior, persisted restoration, session opening, lazy runtime creation, fork/redo, portal slot scaffolding, and wiring of controllers/context. | — |
 | `src/ui/chat/controllers/` | Stateful coordinators for input, session projection, stream dispatch, selections, keyboard navigation, provider boundaries, title generation, and welcome quote background. | — |
 | `src/ui/chat/composer/` | Provider-neutral turn request construction, outgoing-turn setup/finalization, one-turn queueing/restoration, inline prompts, response duration, and pure ordered-Markdown-list continuation edits. | — |
-| `src/ui/chat/stream/` | Chunk-to-state snapshot projection for text, thinking, tools, usage, todos, subagents, scrolling, and vault-change notifications. No message DOM; React consumes `ChatUiStore`. | — |
+| `src/ui/chat/stream/` | Chunk-to-state projection for text, thinking, tools, usage, todos, subagents, scrolling, and vault-change notifications. No message DOM; React consumes chrome state from `ChatUiStore` and message entities from `ChatProjectionStore`. | — |
 | `src/ui/chat/rendering/` | Imperative adapter slots for Obsidian Markdown, rich tool bodies, diffs, ask-user prompts, write/edit blocks, and stored nested subagents inside React message shells. | `src/ui/chat/rendering/AGENTS.md` |
 | `src/ui/chat/toolbar/` | DOM-free external-context runtime model plus toolbar callback types; React owns presentation. MCP availability is settings-owned (no composer toolbar picker). | — |
 | `src/ui/chat/ui/` | Imperative adapters for uncontrolled rich input, file/image/inline context chips, and textarea sizing. `src/ui/chat/ui/file-context/` has its own `AGENTS.md`. | `src/ui/chat/ui/file-context/AGENTS.md` |
@@ -73,7 +73,8 @@ flowchart TD
 | File | Role |
 |---|---|
 | `src/app/ui/PiviViewHost.ts` | Thin app-owned Obsidian view lifecycle; mounts/disposes React shell, persists tab state, and coordinates vault/workspace events. |
-| `src/app/ui/imperativeChatAdapter.ts` | Sole aggregate boundary: mounts `TabManager`, implements semantic `PiviChatViewHandle` operations, hosts message adapters, and bridges the tabs store. |
+| `src/app/ui/imperativeChatAdapter.ts` | Aggregate orchestrator: mounts `TabManager`, delegates semantic handle/message presentation to sibling adapters, and bridges the tabs store. |
+| `src/app/ui/imperativeChatViewHandle.ts` | Constructs the semantic `PiviChatViewHandle` commands and maintenance operations. |
 | `src/app/ui/createSubagentContentAdapter.ts` | App-owned React `MessageContentAdapter` bridge for stored subagent mount/update; preserves the mounted adapter across incremental stream changes. |
 | `packages/pivi-react/src/mount/ChatShell.tsx` | React-owned header, logo, tabs, welcome/quote adapter slot, queue, composer toolbar (including input usage meter), todo status, navigation, auto-scroll status, and owner-realm interactions. Consumes snapshots/actions, not application runtime ports. |
 | `packages/pivi-react/src/mount/activeChatUiBridge.ts` | Runtime-only active-tab selector connecting immutable stores and React-exclusive portal elements without placing DOM in snapshots. |
@@ -92,7 +93,7 @@ flowchart TD
 | `src/ui/chat/composer/ComposerSubmission.ts` | Builds visible text plus a provider-neutral `ChatTurnRequest` from files, selections, images, inline context, MCP, and external paths. |
 | `src/ui/chat/composer/ComposerTurnLifecycle.ts` | Captures turn state and creates user/assistant message placeholders before streaming. |
 | `src/ui/chat/stream/StreamEventReducer.ts` | Canonical merge/register/status operations for streamed tool calls. |
-| `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host and message scrolling. |
+| `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host; React owns message shells and transcript scrolling. |
 | `src/ui/chat/state/ChatState.ts` | Mutable transient state plus immutable React snapshot publication; runtime state contains no message DOM. |
 | `src/ui/chat/services/SubagentManager.ts` | Correlates task, child-tool, agent-output, and asynchronous completion events into pure subagent records. |
 | `src/ui/chat/stream/streamSubagentLifecycle.ts` | UI stream coordinator for subagent tool_use/result/retry/hydrate. Depends on `ChatState`, scroll/thinking callbacks, and `window.setTimeout` — keep in `src/ui/chat/stream/`. Do not sink into core `SubagentManager` / engine jobs without first extracting a host-neutral pure reducer; engine already owns concurrency (`subagentConcurrencyLimiter`) and background jobs (`piBackgroundSubagentJobs`). |
@@ -146,7 +147,7 @@ flowchart TD
 - Preserve IME composition guards in `RichChatInput`; rebuilding mention badges during composition breaks CJK input.
 - The composer sends Markdown as plain text rather than rendering a WYSIWYG preview. On an ordered-list item, unmodified Enter (or Shift+Enter) continues the next numeric marker before the normal send shortcut runs; Enter on an empty marker exits the list. The live shortcut setting is checked from the composer owner-window capture phase because Obsidian's keymap may stop propagation before the contenteditable target; handle it only while that exact composer owns focus. When required, Command+Enter or Ctrl+Enter sends and plain Enter edits; when disabled, plain Enter sends. Alt/Shift combinations and IME composition never send.
 - Model changes on blank tabs update draft state. Bound-tab model/mode/reasoning changes update that tab's runtime settings and capability gating.
-- External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. Absolute roots and per-turn paths are overlaid from Obsidian's device-local cache and must never be written into synced settings or JSONL. MCP enable/disable lives in Settings; slash catalog + MCP tool lists are prefetched at tab/view open and refreshed after MCP settings save.
+- External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. Absolute roots and per-turn paths are overlaid from Obsidian's device-local cache and must never be written into synced settings or JSONL. MCP enable/disable lives in Settings; tab/view warmup and settings saves prefetch enabled remote servers only. Stdio tool discovery stays lazy until explicit settings diagnostics or the agent's first MCP search/list/call.
 - Allowed imperative composer surfaces: uncontrolled `RichChatInput`, file/image/inline context chips, and cursor-relative mention/slash dropdowns. React owns toolbar chrome and never reconciles those adapter children. Do not reintroduce `McpServerSelector` or other composer MCP pickers.
 - Composer chrome never displays active subagents. Running and completed work remains attached only to its individual transcript card; inactive-tab completion continues to use the existing tab attention state.
 - Tool/subagent disclosures share the React `MessageList` viewport contract: expanded content is lazy and complete for the stored snapshot, each top-level tool/steps wrapper is capped at one third of its owner messages viewport while an expanded subagent uses two thirds, nested bodies reuse that scroll owner, and the optional adapter callback begins a temporary virtual-row header anchor before size changes. The wrapper's direct title is layout-fixed at the card top and does not stick to the transcript; nested titles inside the body scrollport use sticky positioning with measured offsets. Inside a subagent, the steps title sticks at `top: 0` in the content scrollport and tool titles stick below it at the measured steps height. Reaching the internal scroll end never mutates disclosure state or card height; continued scrolling chains to the transcript so the fixed-height card moves upward as a whole.

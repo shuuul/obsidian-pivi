@@ -201,8 +201,10 @@ function createHarness(options: HarnessOptions = {}) {
     remove: jest.fn(),
   } as unknown as HTMLElement;
   const ownerDocument = {
-    createElement: jest.fn(() => inputPortalContainer),
     defaultView: options.ownerWindow ?? null,
+    win: {
+      createDiv: jest.fn(() => inputPortalContainer),
+    },
   } as unknown as Document;
   const loadPersistedTabState = jest.fn(async () => options.persistedState ?? null);
   const persistTabState = jest.fn();

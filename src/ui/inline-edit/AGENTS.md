@@ -22,19 +22,20 @@ flowchart LR
 - The command chooses selection mode for nonblank selections; otherwise it builds cursor context.
 - `InlineEditModal` owns replacement of the single active inline-edit adapter, `MarkdownView` teardown, absolute CM offsets, selection highlighting, CM-to-`Editor` coordinate mapping, and the accept/reject result promise.
 - `@pivi/pivi-react` owns the reducer/controller, React input/reply/spinner/diff/actions, IME-safe keyboard handling, and React mount/dispose. It composes the core-owned `QueryBackedInlineEditService` through the injected port.
-- `WidgetType.destroy()` disposes the React mount. No legacy visible input or diff WidgetType may be added here.
+- `WidgetType.destroy()` disposes the React mount. Widget options receive an app-owned `createContainer()` that uses the editor owner realm's Obsidian DOM helpers; the React package receives the resulting element only when mounting. No legacy visible input or diff WidgetType may be added here.
 
 ## Key files
 
 | File | Role |
 |---|---|
 | `src/ui/inline-edit/ui/InlineEditModal.ts` | App-only CM/Obsidian adapter |
-| `packages/pivi-react/src/inline-edit/` | React UI, controller/reducer, CM decoration container, deterministic mount/dispose |
+| `packages/pivi-react/src/inline-edit/codeMirror.ts` | CM state effects, owner-realm container widget, and deterministic React mount disposal |
+| `packages/pivi-react/src/inline-edit/` | React UI, controller/reducer, and mount/dispose contracts |
 
 ## Constraints
 
 - Keep runtime access behind `InlineEditPort`; package code must not import app modules, `@/`, `engine/pi`, or Obsidian host implementations.
-- The app command registration injects `createInlineEditPort(plugin)` into `InlineEditModal`; the adapter passes that port, the shared translator, and the CM widget's owner document/window into the React mount.
+- The app command registration injects `createInlineEditPort(plugin)` into `InlineEditModal`; the adapter passes that port, the shared translator, the CM widget's owner document/window, and its owner-realm container factory into the React mount.
 - Preserve absolute CM offsets until accept, then translate them to zero-based `{ line, ch }` for `Editor.replaceRange`.
 - Selection mode is a block widget plus `SelectionHighlight`; in-between cursor mode is an inline widget. Reject restores the original selection highlight.
 - The auxiliary model follows the active tab's auxiliary model, then its draft model, then the runner default.
@@ -44,5 +45,5 @@ flowchart LR
 ## Verification
 
 - Cover React state transitions (generate, clarification, diff, accept, reject, error, cancel) in `tests/pivi-react/InlineEdit.test.tsx`.
-- Cover CM decoration removal so `WidgetType.destroy()` unmounts the owner-realm React root.
+- Cover CM decoration removal so `WidgetType.destroy()` unmounts the owner-realm React root, including a popout owner document.
 - Run the focused Jest test, focused lint, and source typecheck after changing this boundary.

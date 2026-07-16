@@ -1,21 +1,25 @@
 import { StateEffect, StateField } from '@codemirror/state';
-import { Decoration, type DecorationSet,EditorView, WidgetType } from '@codemirror/view';
+import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 
 import type { InlineEditMountOptions, MountedInlineEdit } from './mount';
 import { mountInlineEdit } from './mount';
 
+export type InlineEditWidgetOptions = Omit<InlineEditMountOptions, 'container'> & {
+  createContainer(): HTMLElement;
+};
+
 export const showInlineEditWidget = StateEffect.define<{
   pos: number;
   block: boolean;
-  options: InlineEditMountOptions;
+  options: InlineEditWidgetOptions;
 }>();
 export const hideInlineEditWidget = StateEffect.define<null>();
 
 class ReactInlineEditWidget extends WidgetType {
   private mounted: MountedInlineEdit | null = null;
-  constructor(private readonly options: InlineEditMountOptions) { super(); }
+  constructor(private readonly options: InlineEditWidgetOptions) { super(); }
   toDOM(): HTMLElement {
-    const container = this.options.ownerDocument.createElement('div');
+    const container = this.options.createContainer();
     container.className = 'pivi-inline-react-root';
     this.mounted = mountInlineEdit({ ...this.options, container });
     return container;

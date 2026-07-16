@@ -7,6 +7,10 @@ describe('settings navigation styles', () => {
     'utf8',
   );
 
+  it('resets the Obsidian 1.13 definition row before mounting the settings page', () => {
+    expect(styles).toMatch(/:root \.pivi-settings-definition-host\.pivi-settings-definition-host\s*{[^}]*display:\s*block;[^}]*padding:\s*0;[^}]*border-top:\s*0;/s);
+  });
+
   it('keeps primary tabs on one native horizontally scrollable row', () => {
     expect(styles).toMatch(/\.pivi-settings-tabs\s*{[^}]*overflow-x:\s*auto;/s);
     expect(styles).toMatch(/\.pivi-settings-tab\s*{[^}]*flex:\s*0 0 auto;[^}]*white-space:\s*nowrap;/s);

@@ -1,4 +1,4 @@
-*This file extends the package [AGENTS.md](../../AGENTS.md) and root [AGENTS.md](../../../../AGENTS.md). Follow root guidance first, then package rules, then these local rules.*
+*This file extends the package [AGENTS.md](../../../AGENTS.md) and root [AGENTS.md](../../../../../AGENTS.md). Follow root guidance first, then package rules, then these local rules.*
 
 ## Purpose
 

@@ -16,7 +16,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
     dispatch,
     commit,
     save,
-    importClipboard,
+    importJson,
     connect,
     logout,
   } = useMcpSectionState(mcp, feedback);
@@ -29,6 +29,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
     auth,
     toolsByServer,
     deleteCandidate,
+    importDraft,
     addOpen,
     expandedServers,
   } = state;
@@ -91,9 +92,9 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="globe" /></span>
               <span>{t('settings.mcp.typeHttp')}</span>
             </div>
-            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); void importClipboard(); }}>
+            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_import_draft', draft: '' }); }}>
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="clipboard-paste" /></span>
-              <span>{t('settings.mcp.importClipboard')}</span>
+              <span>{t('settings.mcp.importJson')}</span>
             </div>
           </div>
         </div>
@@ -106,6 +107,55 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
           onCancel={() => dispatch({ type: 'set_editor', editor: null })}
           onSave={(server) => save(server)}
         />
+      ) : null}
+      {importDraft !== null ? (
+        <div
+          className="pivi-modal-layer"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('settings.mcp.importJsonTitle')}
+          onKeyDown={(event) => {
+            if (event.key !== 'Escape') return;
+            event.preventDefault();
+            event.stopPropagation();
+            dispatch({ type: 'set_import_draft', draft: null });
+          }}
+        >
+          <div
+            className="pivi-modal-backdrop"
+            onClick={() => dispatch({ type: 'set_import_draft', draft: null })}
+          />
+          <div className="pivi-modal">
+            <div className="pivi-modal__title">{t('settings.mcp.importJsonTitle')}</div>
+            <p>{t('settings.mcp.importJsonDescription')}</p>
+            <label>
+              <span>{t('settings.mcp.importJsonField')}</span>
+              <textarea
+                autoFocus
+                className="pivi-settings-control pivi-settings-control--fill"
+                rows={10}
+                value={importDraft}
+                placeholder={t('settings.mcp.importJsonPlaceholder')}
+                onChange={(event) => dispatch({ type: 'set_import_draft', draft: event.target.value })}
+              />
+            </label>
+            <div className="pivi-modal__actions">
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'set_import_draft', draft: null })}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={busy === 'import' || !importDraft.trim()}
+                onClick={() => { void importJson(importDraft); }}
+              >
+                {t('settings.mcp.importAction')}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
       {deleteCandidate ? (
         <div role="dialog" aria-modal="true" aria-label={t('settings.mcp.deleteConfirm', { name: deleteCandidate.name })}>

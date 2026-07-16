@@ -1,5 +1,12 @@
 /* ── Settings tab navigation ── */
 
+/* Match Obsidian 1.13's definition-row specificity without coupling to host class names. */
+:root .pivi-settings-definition-host.pivi-settings-definition-host {
+  display: block;
+  padding: 0;
+  border-top: 0;
+}
+
 .pivi-settings {
   --pivi-settings-gutter: 12px;
   --pivi-settings-control-width: 280px;

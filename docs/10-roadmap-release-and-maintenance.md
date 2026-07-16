@@ -2,7 +2,7 @@
 
 [Back to the developer handbook](README.md)
 
-This page records verified technical work and release/documentation routes. It is not a product promise. Items come from current code, tests, and the root quality review; speculative features, dates, and commitments do not belong here.
+This page records verified technical work and release/documentation routes. It is not a product promise. Items come from current code, tests, and the root quality gates; speculative features, dates, and commitments do not belong here.
 
 Keep roadmap entries at the priority/outcome level. When an item becomes long-running or needs multiple agents, link it to a tracked [spec](../specs/README.md) for detailed decisions, workstreams, handoffs, and acceptance evidence instead of expanding the roadmap into an execution log.
 
@@ -16,7 +16,11 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 ### Next
 
 - Add direct focused coverage for `ExternalContextSelector` validation: duplicates, parent/child overlap, unavailable roots, pinning, and removal.
-- Expand settings hotkey/port-wiring and imperative mention-controller interaction coverage.
+- Expand settings hotkey and port-wiring interaction coverage.
+- Decide whether direct sends should capture ambient editor selections like queued turns; today only queued turns capture them automatically, while direct sends require explicit inline context.
+- Harden session/lifecycle edges: delete a newly forked session when tab creation returns `null`, and coordinate unload snapshot persistence with workspace disposal.
+- Pass the file-indicator root into current-note context badge creation and add a pop-out owner-realm regression test.
+- Update bundle-analysis and bundle-size script messages to reference the durable quality gates instead of the removed quality snapshot.
 - Add keyboard access to archived-tab reveal; the current switcher reveals archived rows through downward wheel progress.
 - Continue focused accessibility and owner-realm tests for model/thinking selectors, context indicators, and pop-out interaction.
 
@@ -26,7 +30,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 - Re-measure bundle composition before changing provider dependencies; keep Google provider/auth code bundled unless a tested replacement shim exists.
 - Split large modules only when the affected behavior is next changed and the extracted boundary has domain meaning.
 - Keep `PiChatService`, `ChatPorts`, React presentation ports, and host ports narrow as capabilities evolve.
-- Periodically reconcile the root quality snapshot and this roadmap, moving completed items out rather than retaining stale history.
+- Periodically reconcile the root quality gates and this roadmap, moving completed items out rather than retaining stale history.
 
 ## 2026-07-16 release-candidate evidence
 
@@ -42,7 +46,7 @@ This matrix distinguishes reproducible repository evidence from live host checks
 | Hover Editor | Environment-limited | The community plugin is not installed in the configured vault. Pivi's owner-realm and view-lifecycle tests remain green, but the named third-party live integration still requires a vault with Hover Editor installed. |
 | MCP OAuth | Environment-limited | The configured vault has no MCP servers or OAuth flow to authorize. Vault/store/service/UI OAuth success and unhappy-path tests pass, but a live redirect/login round trip still requires a configured test server and credentials. |
 
-The same validation run passed 246 suites / 1,898 tests, typecheck, lint, architecture/spec/boundary and i18n dead-key checks, production build, bundle analysis, and the bundle-size gate. The latest production artifact is 3,049,008 bytes; the concrete development recorder had zero production metafile contribution.
+At the time of this 2026-07-16 evidence capture, the same validation run passed 246 suites / 1,898 tests, typecheck, lint, architecture/spec/boundary and i18n dead-key checks, production build, bundle analysis, and the bundle-size gate. The production artifact produced by that run was 3,049,008 bytes; the concrete development recorder had zero production metafile contribution. These values are a dated release-candidate record, not current repository totals.
 
 ## Standard release route
 
@@ -51,6 +55,7 @@ Pivi uses Conventional Commits and Release Please:
 1. Merge conventional changes to `main`.
 2. Let `.github/workflows/release-please.yaml` open or update the release PR.
 3. Review generated version and `CHANGELOG.md` changes and the Obsidian metadata synchronized by `node scripts/sync-version.js`.
+   For the next release, ensure the generated notes call out that an absent Obsidian CLI preference now defaults to disabled and that users can re-enable it in Pivi settings.
 4. Merge the release PR.
 5. Release Please creates the GitHub Release; the artifact job builds, attests, and uploads `main.js`, `manifest.json`, and `styles.css`.
 
@@ -89,7 +94,7 @@ Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI e
 | Root `README.md` | User-facing product overview, installation, capability summary, and links |
 | `docs/` | New-developer architecture, technology choices, end-to-end flows, development/release routes, and roadmap |
 | `specs/` | Long-running execution decisions, workstreams, handoffs, verification evidence, and completion records |
-| Root `AGENTS.md` | Repo-wide commands, cross-cutting constraints, commit discipline, release invariants, and current quality snapshot |
+| Root `AGENTS.md` | Repo-wide commands, cross-cutting constraints, commit discipline, release invariants, and durable quality gates |
 | Nested `AGENTS.md` | Package/feature ownership, local seams, gotchas, and focused verification |
 | Code/tests/schemas | Executable source of truth |
 

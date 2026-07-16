@@ -8,7 +8,7 @@ Unit and integration tests for Pivi run in Node via Jest 30. Use the npm scripts
 
 ```mermaid
 flowchart TD
-  Runner["npm run test<br/>scripts/run-jest.js"] -- "loads config" --> Jest["jest.config.js<br/>projects: unit + integration + pivi-react"]
+  Runner["npm run test<br/>scripts/run-jest.js"] -- "loads config" --> Jest["jest.config.js<br/>projects: unit + pivi-react"]
   Jest -- "Node unit project" --> Window["setupWindow.ts<br/>window + RAF shims"]
   Jest -- "pivi-react project" --> React["jsdom + Testing Library<br/>setupObsidianUi.ts"]
   Jest -- "moduleNameMapper" --> Mocks["__mocks__/<br/>Obsidian + Pi packages"]
@@ -37,13 +37,13 @@ npm run test -- tests/unit/pi/piMcpBridge.test.ts
 npm run test -- --runInBand tests/unit/pi/piMcpBridge.test.ts
 
 # By test name
-npm run test -- -t "merges toolbar-enabled servers"
+npm run test -- -t "prefetches enabled remote servers but leaves stdio lazy"
 ```
 
 ## Layout
 
 - `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist.
-- `setupObsidianUi.ts` — installs Testing Library DOM matchers for the jsdom React project.
+- `setupObsidianUi.ts` — installs Testing Library DOM matchers, Obsidian DOM helpers, and active owner-realm globals for the jsdom React project.
 - `pivi-react/` — React/TSX behavior tests running in the dedicated jsdom project, including Activity presentation, individual subagent slots, projection identity, composer, and settings suites.
 - `pivi-react/` also hosts owner-DOM tests for the uncontrolled rich composer and imperative mention dropdown when real selection, keyboard, and Obsidian DOM-helper behavior matters.
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.

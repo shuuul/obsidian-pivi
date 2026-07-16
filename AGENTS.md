@@ -257,7 +257,7 @@ All development flows should be managed using the following standard `npm` scrip
 # Install exact dependencies
 npm ci
 
-# Start esbuild and build:css in watch mode
+# Build CSS once, then start esbuild in watch mode
 npm run dev
 
 # Concatenate and validate CSS import graph
@@ -448,7 +448,7 @@ Release Please is responsible for deciding the next version, updating package/re
 
 ### Obsidian Plugin API reference
 
-Pivi-native agent tools (`packages/obsidian-tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when the public API cannot satisfy the call (currently history/task operations and optional `command` / `eval`).
+Pivi-native agent tools (`packages/obsidian-tools/`) prefer the **in-process Obsidian Plugin API**. The official CLI is used only where the public API cannot satisfy the operation: history, tasks, daily notes, Base queries, and the separately gated `command` / `eval` tools.
 
 | Resource | URL |
 |----------|-----|

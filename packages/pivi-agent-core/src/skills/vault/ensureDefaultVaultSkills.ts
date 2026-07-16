@@ -2,7 +2,6 @@ import { PluginLogger } from '../../foundation/pluginLogger';
 import type { PiviSettings } from '../../foundation/settings';
 import type { HttpClient, ProcessRunner } from '../../ports';
 import {
-  DEFAULT_VAULT_SKILLS_REPO_URL,
   DEFAULT_VAULT_SKILLS_SLUG,
 } from './defaultVaultSkills';
 import { fetchDefaultVaultSkillsRemoteSha } from './fetchDefaultVaultSkillsRemoteSha';
@@ -21,6 +20,11 @@ interface VaultSkillsNotice {
   hide(): void;
 }
 
+export interface DefaultVaultSkillsPromptActions {
+  onInstall: () => void;
+  onDismiss: () => void;
+}
+
 export interface DefaultVaultSkillsContext {
   app: VaultPathApp;
   settings: Pick<
@@ -31,7 +35,10 @@ export interface DefaultVaultSkillsContext {
   >;
   saveSettings(): Promise<void>;
   refreshVaultSkills: VaultSkillsChangeNotifier['refreshVaultSkills'];
-  notify?(message: string | DocumentFragment, timeout?: number): VaultSkillsNotice | null;
+  notify?(message: string, timeout?: number): VaultSkillsNotice | null;
+  showDefaultVaultSkillsInstallPrompt?: (
+    actions: DefaultVaultSkillsPromptActions,
+  ) => VaultSkillsNotice | null;
   httpClient: HttpClient;
   processRunner: ProcessRunner;
 }
@@ -71,57 +78,6 @@ export function shouldUpgradeDefaultVaultSkills(
 }
 
 let defaultSkillsPromptVisible = false;
-
-function getDefaultSkillsPromptDocument(): Document | null {
-  if (typeof activeDocument !== 'undefined') {
-    return activeDocument;
-  }
-  if (typeof window !== 'undefined' && window.document) {
-    return window.document;
-  }
-  return null;
-}
-
-function createDefaultSkillsPromptFragment(
-  onInstall: () => void,
-  onDismiss: () => void,
-): DocumentFragment | null {
-  const ownerDocument = getDefaultSkillsPromptDocument();
-  if (!ownerDocument) {
-    return null;
-  }
-  const fragment = ownerDocument.createDocumentFragment();
-  const container = ownerDocument.createElement('div');
-  container.className = 'pivi-default-skills-notice';
-
-  const message = ownerDocument.createElement('p');
-  message.textContent = 'Pivi can install the default Obsidian skills bundle for this vault. This will access GitHub/skills.sh, run npx skills, and write files under .pivi/skills/.';
-  container.appendChild(message);
-
-  const link = ownerDocument.createElement('a');
-  link.href = DEFAULT_VAULT_SKILLS_REPO_URL;
-  link.textContent = DEFAULT_VAULT_SKILLS_SLUG;
-  container.appendChild(link);
-
-  const actions = ownerDocument.createElement('div');
-  actions.className = 'pivi-default-skills-notice-actions';
-
-  const installButton = ownerDocument.createElement('button');
-  installButton.type = 'button';
-  installButton.textContent = 'Install default skills';
-  installButton.addEventListener('click', onInstall);
-  actions.appendChild(installButton);
-
-  const dismissButton = ownerDocument.createElement('button');
-  dismissButton.type = 'button';
-  dismissButton.textContent = 'Not now';
-  dismissButton.addEventListener('click', onDismiss);
-  actions.appendChild(dismissButton);
-
-  container.appendChild(actions);
-  fragment.appendChild(container);
-  return fragment;
-}
 
 async function rememberDefaultSkillsPromptDismissed(plugin: DefaultVaultSkillsContext): Promise<void> {
   plugin.settings.defaultVaultSkillsPromptDismissed = true;
@@ -163,7 +119,8 @@ export async function installDefaultVaultSkills(plugin: DefaultVaultSkillsContex
 }
 
 function showDefaultVaultSkillsInstallPrompt(plugin: DefaultVaultSkillsContext): void {
-  if (defaultSkillsPromptVisible) {
+  const showPrompt = plugin.showDefaultVaultSkillsInstallPrompt;
+  if (defaultSkillsPromptVisible || !showPrompt) {
     return;
   }
   defaultSkillsPromptVisible = true;
@@ -174,28 +131,24 @@ function showDefaultVaultSkillsInstallPrompt(plugin: DefaultVaultSkillsContext):
     notice?.hide();
     notice = null;
   };
-  const fragment = createDefaultSkillsPromptFragment(
-    () => {
+  notice = showPrompt({
+    onInstall() {
       closeNotice();
       void installDefaultVaultSkills(plugin).catch(() => {
         // installDefaultVaultSkills already surfaces the failure to the user.
       });
     },
-    () => {
+    onDismiss() {
       closeNotice();
       void rememberDefaultSkillsPromptDismissed(plugin).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         logger.error('Failed to save default skills prompt dismissal', message);
       });
     },
-  );
-
-  if (!fragment) {
+  });
+  if (!notice) {
     defaultSkillsPromptVisible = false;
-    return;
   }
-
-  notice = plugin.notify?.(fragment, 0) ?? null;
 }
 
 /**
