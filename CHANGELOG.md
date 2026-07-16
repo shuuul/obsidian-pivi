@@ -14,6 +14,8 @@
 
 * **obsidian:** address community review feedback ([1cc9d31](https://github.com/shuuul/obsidian-pivi/commit/1cc9d319652efa16804137ff82718e6dc2eb1a14))
 
+**Upgrade note:** Installations that never saved an Obsidian CLI preference now keep the integration disabled. Re-enable it in Pivi settings to restore CLI-backed history, tasks, daily-note, Base-query, command, and evaluation features.
+
 ## [0.10.0](https://github.com/shuuul/obsidian-pivi/compare/0.9.0...0.10.0) (2026-07-16)
 
 
