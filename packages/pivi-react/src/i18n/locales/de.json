@@ -541,6 +541,16 @@
         "disconnected": "xAI getrennt.",
         "loginFailed": "xAI-Anmeldung fehlgeschlagen: {message}"
       },
+      "anthropic": {
+        "name": "Claude Pro/Max-Abo",
+        "desc": "Mit Claude Pro oder Max im Browser anmelden. Nutzt denselben {secureStorageName}-Credential-Slot wie ein manuelles OAuth-Token.",
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen",
+        "connected": "Anthropic OAuth verbunden.",
+        "disconnected": "Anthropic OAuth getrennt.",
+        "loginFailed": "Anthropic-Anmeldung fehlgeschlagen: {message}"
+      },
       "addSectionLocal": "Lokal",
       "addSectionCustom": "Benutzerdefinierte API",
       "addSectionCloud": "Cloud",

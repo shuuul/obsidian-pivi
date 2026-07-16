@@ -8,10 +8,12 @@ const PI_AI_CREDENTIAL_KIND = 'credential';
 
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
 export const XAI_PROVIDER_ID = 'xai';
+export const ANTHROPIC_PROVIDER_ID = 'anthropic';
 
 export const INTERACTIVE_OAUTH_PROVIDER_IDS = [
   CODEX_OAUTH_PROVIDER_ID,
   XAI_PROVIDER_ID,
+  ANTHROPIC_PROVIDER_ID,
 ] as const;
 
 export type InteractiveOAuthProviderId = (typeof INTERACTIVE_OAUTH_PROVIDER_IDS)[number];

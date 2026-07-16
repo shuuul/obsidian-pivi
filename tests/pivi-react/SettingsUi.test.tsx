@@ -19,7 +19,7 @@ const snapshot: SettingsUiSnapshotData = {
 function createModelsPort() {
   return {
     codexProviderId: 'openai-codex',
-    interactiveOAuthProviderIds: ['openai-codex', 'xai'],
+    interactiveOAuthProviderIds: ['openai-codex', 'xai', 'anthropic'],
     bootstrap: () => ({ minimumHostVersion: '1.11.4', secureStorageAvailable: true }),
     getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
     saveSettings: async () => undefined,
@@ -516,6 +516,32 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
     expect(loginProviderOAuth).toHaveBeenCalledWith('xai', expect.any(Function));
+  });
+  it('renders Anthropic credentials and OAuth connect controls together', async () => {
+    const loginProviderOAuth = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      loginProviderOAuth,
+      getSettings: () => ({
+        addedProviders: ['anthropic'],
+        disabledProviders: [],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getProviderDisplayName: (id: string) => (id === 'anthropic' ? 'Anthropic' : id),
+      getProviderEnvInfo: () => ({ apiKeyVar: 'ANTHROPIC_API_KEY', oauthVar: 'ANTHROPIC_OAUTH_TOKEN' }),
+    });
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    fireEvent.click(screen.getByText('Anthropic'));
+    expect(container.querySelector('.pivi-cred-row')).not.toBeNull();
+    expect(screen.getByText('Claude Pro/Max subscription')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    await act(async () => undefined);
+    expect(loginProviderOAuth).toHaveBeenCalledWith('anthropic', expect.any(Function));
   });
   it('fetches custom provider models and saves checklist changes', async () => {
     const fetchCustomProviderModels = jest.fn(async () => ({ count: 1 }));

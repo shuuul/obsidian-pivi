@@ -541,6 +541,16 @@
         "disconnected": "xAI отключён.",
         "loginFailed": "Ошибка входа xAI: {message}"
       },
+      "anthropic": {
+        "name": "Подписка Claude Pro/Max",
+        "desc": "Войдите с подпиской Claude Pro или Max в браузере. Использует тот же слот учётных данных в {secureStorageName}, что и ручной OAuth-токен.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "OAuth Anthropic подключён.",
+        "disconnected": "OAuth Anthropic отключён.",
+        "loginFailed": "Ошибка входа Anthropic: {message}"
+      },
       "addSectionLocal": "Локальные",
       "addSectionCustom": "Пользовательский API",
       "addSectionCloud": "Облако",

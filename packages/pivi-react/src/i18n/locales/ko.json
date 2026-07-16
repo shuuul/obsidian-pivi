@@ -541,6 +541,16 @@
         "disconnected": "xAI 연결이 해제되었습니다.",
         "loginFailed": "xAI 로그인 실패: {message}"
       },
+      "anthropic": {
+        "name": "Claude Pro/Max 구독",
+        "desc": "브라우저에서 Claude Pro 또는 Max 구독으로 로그인합니다. 수동 OAuth 토큰과 동일한 {secureStorageName} 자격 증명 슬롯을 사용합니다.",
+        "connect": "연결",
+        "reconnect": "다시 연결",
+        "disconnect": "연결 해제",
+        "connected": "Anthropic OAuth가 연결되었습니다.",
+        "disconnected": "Anthropic OAuth 연결이 해제되었습니다.",
+        "loginFailed": "Anthropic 로그인 실패: {message}"
+      },
       "addSectionLocal": "로컬",
       "addSectionCustom": "사용자 지정 API",
       "addSectionCloud": "클라우드",

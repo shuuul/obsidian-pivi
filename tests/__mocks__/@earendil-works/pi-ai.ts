@@ -138,7 +138,11 @@ function mockProvider(id: string): any {
           ? {
               login: async (interaction: any) => mockXaiOAuthLogin(interaction),
             }
-          : undefined,
+          : id === 'anthropic'
+            ? {
+                login: async (interaction: any) => mockOAuthLogin(interaction, 'https://claude.ai/oauth/authorize?client_id=test'),
+              }
+            : undefined,
     },
     getModels: () => getModels(id),
   };

@@ -541,6 +541,16 @@
         "disconnected": "xAI desconectado.",
         "loginFailed": "Error de inicio de sesión de xAI: {message}"
       },
+      "anthropic": {
+        "name": "Suscripción Claude Pro/Max",
+        "desc": "Inicia sesión con tu suscripción Claude Pro o Max en el navegador. Usa el mismo espacio de credenciales en {secureStorageName} que un token OAuth manual.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "OAuth de Anthropic conectado.",
+        "disconnected": "OAuth de Anthropic desconectado.",
+        "loginFailed": "Error de inicio de sesión de Anthropic: {message}"
+      },
       "addSectionLocal": "Local",
       "addSectionCustom": "API personalizada",
       "addSectionCloud": "Nube",

@@ -541,6 +541,16 @@
         "disconnected": "xAI 已中斷連線。",
         "loginFailed": "xAI 登入失敗：{message}"
       },
+      "anthropic": {
+        "name": "Claude Pro/Max 訂閱",
+        "desc": "在瀏覽器中使用 Claude Pro 或 Max 訂閱登入。與手動 OAuth 權杖共用同一{secureStorageName}憑證槽位。",
+        "connect": "連線",
+        "reconnect": "重新連線",
+        "disconnect": "中斷連線",
+        "connected": "Anthropic OAuth 已連線。",
+        "disconnected": "Anthropic OAuth 已中斷連線。",
+        "loginFailed": "Anthropic 登入失敗：{message}"
+      },
       "addSectionLocal": "本機",
       "addSectionCustom": "自訂 API",
       "addSectionCloud": "雲端",

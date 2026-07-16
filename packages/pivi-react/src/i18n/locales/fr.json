@@ -541,6 +541,16 @@
         "disconnected": "xAI déconnecté.",
         "loginFailed": "Échec de la connexion xAI : {message}"
       },
+      "anthropic": {
+        "name": "Abonnement Claude Pro/Max",
+        "desc": "Connectez-vous avec votre abonnement Claude Pro ou Max dans le navigateur. Utilise le même emplacement de credential {secureStorageName} qu'un jeton OAuth manuel.",
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "connected": "OAuth Anthropic connecté.",
+        "disconnected": "OAuth Anthropic déconnecté.",
+        "loginFailed": "Échec de la connexion Anthropic : {message}"
+      },
       "addSectionLocal": "Local",
       "addSectionCustom": "API personnalisée",
       "addSectionCloud": "Cloud",

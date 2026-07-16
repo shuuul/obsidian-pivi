@@ -7,6 +7,7 @@ import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/providerL
 import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import {
+  ANTHROPIC_PROVIDER_ID,
   CODEX_OAUTH_PROVIDER_ID,
   XAI_PROVIDER_ID,
 } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
@@ -135,6 +136,23 @@ describe('ProviderOAuthService', () => {
       refresh: 'mock-xai-refresh',
     });
     expect(oauthHost.openAuthUrl).toHaveBeenCalledWith('https://x.ai/device');
+  });
+
+  it('logs in through Anthropic browser OAuth and stores credentials', async () => {
+    const app = createMockApp({ vaultBasePath: tempDir });
+    const store = new ObsidianCredentialStore(app.secretStorage);
+    configurePiAiModels({ credentials: store });
+    const oauthHost = createMockOAuthFlowHost();
+    const service = new ProviderOAuthService(store, oauthHost);
+
+    await service.loginProviderOAuth(ANTHROPIC_PROVIDER_ID);
+
+    expect(store.readSync(ANTHROPIC_PROVIDER_ID)).toMatchObject({
+      type: 'oauth',
+      access: 'mock-access',
+      refresh: 'mock-refresh',
+    });
+    expect(oauthHost.openAuthUrl).toHaveBeenCalledWith('https://claude.ai/oauth/authorize?client_id=test');
   });
 
   it('treats the injected legacy auth path as optional', () => {

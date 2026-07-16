@@ -546,6 +546,16 @@
         "disconnected": "xAI 已断开。",
         "loginFailed": "xAI 登录失败：{message}"
       },
+      "anthropic": {
+        "name": "Claude Pro/Max 订阅",
+        "desc": "在浏览器中使用 Claude Pro 或 Max 订阅登录。与手动 OAuth 令牌共用同一{secureStorageName}凭据槽位。",
+        "connect": "连接",
+        "reconnect": "重新连接",
+        "disconnect": "断开连接",
+        "connected": "Anthropic OAuth 已连接。",
+        "disconnected": "Anthropic OAuth 已断开。",
+        "loginFailed": "Anthropic 登录失败：{message}"
+      },
       "addSectionLocal": "本地",
       "addSectionCustom": "自定义 API",
       "addSectionCloud": "云服务",

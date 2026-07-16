@@ -559,6 +559,16 @@
         "disconnected": "xAI disconnected.",
         "loginFailed": "xAI login failed: {message}"
       },
+      "anthropic": {
+        "name": "Claude Pro/Max subscription",
+        "desc": "Sign in with your Claude Pro or Max subscription in the browser. This writes the same {secureStorageName} credential slot as a manual OAuth token.",
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect",
+        "connected": "Anthropic OAuth connected.",
+        "disconnected": "Anthropic OAuth disconnected.",
+        "loginFailed": "Anthropic login failed: {message}"
+      },
       "authHeadingOptional": "Authentication (optional)",
       "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in {secureStorageName} as {secretId} when set.",
       "apiKeyOptionalPlaceholder": "Optional API key..."

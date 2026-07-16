@@ -541,6 +541,16 @@
         "disconnected": "xAI を切断しました。",
         "loginFailed": "xAI ログインに失敗：{message}"
       },
+      "anthropic": {
+        "name": "Claude Pro/Max サブスクリプション",
+        "desc": "ブラウザで Claude Pro または Max サブスクリプションにサインインします。手動 OAuth トークンと同じ {secureStorageName} の資格情報スロットを使用します。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "Anthropic OAuth に接続しました。",
+        "disconnected": "Anthropic OAuth を切断しました。",
+        "loginFailed": "Anthropic ログインに失敗：{message}"
+      },
       "addSectionLocal": "ローカル",
       "addSectionCustom": "カスタム API",
       "addSectionCloud": "クラウド",

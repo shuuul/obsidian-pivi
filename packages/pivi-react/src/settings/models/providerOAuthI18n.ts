@@ -22,9 +22,21 @@ export const XAI_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.xai.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
+export const ANTHROPIC_OAUTH_SETTINGS_KEYS = {
+  name: 'settings.modelsTab.anthropic.name',
+  desc: 'settings.modelsTab.anthropic.desc',
+  connect: 'settings.modelsTab.anthropic.connect',
+  reconnect: 'settings.modelsTab.anthropic.reconnect',
+  disconnect: 'settings.modelsTab.anthropic.disconnect',
+  connected: 'settings.modelsTab.anthropic.connected',
+  disconnected: 'settings.modelsTab.anthropic.disconnected',
+  loginFailed: 'settings.modelsTab.anthropic.loginFailed',
+} as const satisfies Record<string, TranslationKey>;
+
 const PROVIDER_OAUTH_SETTINGS_KEYS = {
   'openai-codex': CODEX_OAUTH_SETTINGS_KEYS,
   xai: XAI_OAUTH_SETTINGS_KEYS,
+  anthropic: ANTHROPIC_OAUTH_SETTINGS_KEYS,
 } as const;
 
 export function getProviderOAuthSettingsKeys(providerId: string) {
