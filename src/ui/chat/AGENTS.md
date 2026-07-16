@@ -83,7 +83,7 @@ flowchart TD
 | `src/ui/chat/tabs/tabRuntime.ts` | Sole UI factory call for `PiChatService`; session sync, subscriptions, lazy activation, and failed/closing initialization cleanup. |
 | `src/ui/chat/tabs/tabExternalContext.ts` | Synchronizes runtime sessions with effective external roots; runtime restarts preserve current tab choices while session changes reset them to pinned device-local defaults. |
 | `src/ui/chat/tabs/tabMessageViewport.ts` | Popout-safe message viewport wiring; observes both the scroll viewport and React message portal so asynchronous layout growth preserves opted-in auto-scroll and navigation state. |
-| `src/ui/chat/tabs/tabToolbarInit.ts` | `wireComposerChrome()` adapts model/mode/reasoning, external-context, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. Model changes refresh the usage context window immediately after settings persistence and again after model metadata preparation. No MCP toolbar picker. |
+| `src/ui/chat/tabs/tabToolbarInit.ts` | `wireComposerChrome()` adapts model/mode/reasoning, external-context, the projected default-off Active Work Shelf flag, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. Model changes refresh the usage context window immediately after settings persistence and again after model metadata preparation. No MCP toolbar picker. |
 | `src/ui/chat/tabs/tabFork.ts` | Resolves durable entry IDs and requests a new session fork through `ChatPorts.sessions`. |
 | `src/ui/chat/controllers/InputController.ts` | Public per-tab input coordinator; delegates turn pipeline, queue restoration, provider boundaries, cancellation, and inline questions. |
 | `src/ui/chat/controllers/inputTurnPipeline.ts` | Executes the send/query/finalize sequence and guards against stale stream generations. |
@@ -148,6 +148,7 @@ flowchart TD
 - Model changes on blank tabs update draft state. Bound-tab model/mode/reasoning changes update that tab's runtime settings and capability gating.
 - External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. Absolute roots and per-turn paths are overlaid from Obsidian's device-local cache and must never be written into synced settings or JSONL. MCP enable/disable lives in Settings; slash catalog + MCP tool lists are prefetched at tab/view open and refreshed after MCP settings save.
 - Allowed imperative composer surfaces: uncontrolled `RichChatInput`, file/image/inline context chips, and cursor-relative mention/slash dropdowns. React owns toolbar chrome and never reconciles those adapter children. Do not reintroduce `McpServerSelector` or other composer MCP pickers.
+- The optional Active Work Shelf is React chrome over derived `ChatProjectionStore` rows. It must include active top-level background work from inactive tabs, preserve the transcript as canonical, and navigate by tab/message identity through app-owned semantics plus `MessageViewportHandle`; do not query message DOM or persist shelf items.
 - All user-visible labels, notices, placeholders, status text, and accessibility text must use the shared translator from `@/app/i18n`.
 
 ### Ownership and cleanup

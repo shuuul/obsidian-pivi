@@ -153,6 +153,7 @@ export interface SubagentRuntimeSettings {
   enabled: boolean;
   maxConcurrentSubagents: number;
   allowBackground: boolean;
+  showActiveWorkShelf: boolean;
 }
 
 function normalizeHiddenCommandName(value: string): string {
@@ -289,6 +290,7 @@ export const DEFAULT_SUBAGENT_RUNTIME_SETTINGS: Readonly<SubagentRuntimeSettings
   enabled: true,
   maxConcurrentSubagents: 3,
   allowBackground: true,
+  showActiveWorkShelf: false,
 });
 
 export function isWebProviderId(value: unknown): value is WebProviderId {
@@ -370,7 +372,8 @@ function isOptionalSubagentRuntimeSettings(
   return (
     typeof value.enabled === 'boolean' &&
     typeof value.maxConcurrentSubagents === 'number' &&
-    typeof value.allowBackground === 'boolean'
+    typeof value.allowBackground === 'boolean' &&
+    typeof value.showActiveWorkShelf === 'boolean'
   );
 }
 
@@ -386,6 +389,9 @@ export function resolveSubagentRuntimeSettings(
     allowBackground: typeof raw?.allowBackground === 'boolean'
       ? raw.allowBackground
       : defaults.allowBackground,
+    showActiveWorkShelf: typeof raw?.showActiveWorkShelf === 'boolean'
+      ? raw.showActiveWorkShelf
+      : defaults.showActiveWorkShelf,
   };
 }
 

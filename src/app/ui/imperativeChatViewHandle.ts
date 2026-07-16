@@ -458,6 +458,9 @@ export function createImperativeChatViewHandle(
           if (service.syncSystemPrompt) await service.syncSystemPrompt();
           else await service.ensureReady({ force: true });
         });
+        for (const tab of getTabManager()?.getAllTabs() ?? []) {
+          tab.ui.composerActions?.refresh();
+        }
       },
       async reloadMcpServers() {
         await getTabManager()?.broadcastToAllTabs(service => service.reloadMcpServers());

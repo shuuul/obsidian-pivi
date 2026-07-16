@@ -76,6 +76,7 @@ export function createFakeChatPorts(
         environmentVariables: '',
         externalReadDirectories: [],
         hiddenSlashCommands: [],
+        showActiveWorkShelf: false,
         modelCatalog: {
           addedProviders: [],
           disabledProviders: [],

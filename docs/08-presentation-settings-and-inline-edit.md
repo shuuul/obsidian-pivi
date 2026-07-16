@@ -34,7 +34,7 @@ Adapters must mount, update, and dispose idempotently. Asynchronous rendering us
 
 ### Virtual transcript and projection boundary
 
-`ChatUiStore` carries chrome, composer, usage, and stream status only. `ChatProjectionStore` owns the immutable message read model, stable order, per-message subscriptions, recent-first publication, and animation-frame coalescing. Runtime state is updated immediately; only React publication is delayed, and terminal/session lifecycle boundaries flush synchronously.
+`ChatUiStore` carries chrome, composer, usage, and stream status only. `ChatProjectionStore` owns the immutable message read model, stable order, per-message subscriptions, derived active top-level background runs, recent-first publication, and animation-frame coalescing. Runtime state is updated immediately; only React publication is delayed, and terminal/session lifecycle boundaries flush synchronously.
 
 Every non-empty transcript uses `@tanstack/react-virtual`. Rows use stable message IDs, dynamic measurement, end anchoring, six-row overscan, and an 80px end threshold. The thinking indicator is the measured final item. A non-serializable `MessageViewportHandle` exposes semantic start/end/message/user navigation to app wiring; no app controller queries message DOM nodes. The scroll viewport is passed explicitly through portal targets, including pop-out owner realms. The current visual styling, Subagent cards, and usage ring are unchanged.
 
@@ -62,6 +62,8 @@ Settings use the correct store for each data class:
 Save actions return structured feedback. App wiring converts transient results to Obsidian Notices while React retains only actionable errors beside their controls.
 
 Hot refresh is capability-specific. Tool changes refresh registries/prompts; MCP changes invalidate catalogs and reload bridges; provider/model changes update catalog/readiness and open tabs; tab-bar placement republishes presentation state; external-root changes broadcast device-local state.
+
+Subagent settings also include the default-off Active Work Shelf toggle. It persists with synchronized subagent configuration and refreshes open composer snapshots after save. The shelf itself is not stored: `ActiveChatUiBridge` derives active background rows across the mounted view's tab projections and app wiring resolves shelf selection through semantic tab switching plus `MessageViewportHandle` navigation.
 
 ## Localization
 

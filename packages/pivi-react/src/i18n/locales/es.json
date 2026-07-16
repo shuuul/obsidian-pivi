@@ -151,6 +151,8 @@
       "decisions": "Decisiones",
       "artifacts": "Artefactos",
       "openQuestions": "Preguntas abiertas",
+      "activeWork": "Trabajo activo",
+      "goToAgentRun": "Ir a {agent} en la transcripción",
       "expand": "Haz clic para expandir",
       "collapse": "Haz clic para contraer",
       "prompt": "Instrucción",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "Permitir subagentes en segundo plano",
         "desc": "Permite llamadas spawn_agent con run_in_background=true. Los resultados completados rellenan la tarjeta del subagente."
+      },
+      "activeWorkShelf": {
+        "name": "Mostrar trabajo activo",
+        "desc": "Muestra agentes en segundo plano en cola y en ejecución cerca del cuadro de redacción. La transcripción sigue siendo la fuente de verdad."
       },
       "maxConcurrent": {
         "name": "Máx. de subagentes simultáneos",

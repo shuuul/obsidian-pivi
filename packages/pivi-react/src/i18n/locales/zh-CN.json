@@ -151,6 +151,8 @@
       "decisions": "决策",
       "artifacts": "产物",
       "openQuestions": "待解决问题",
+      "activeWork": "进行中工作",
+      "goToAgentRun": "前往对话记录中的 {agent}",
       "expand": "点击展开",
       "collapse": "点击折叠",
       "prompt": "提示词",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "允许后台子智能体",
         "desc": "允许 run_in_background=true 的 spawn_agent 调用。完成后结果会回填到子智能体卡片。"
+      },
+      "activeWorkShelf": {
+        "name": "显示进行中工作架",
+        "desc": "在输入框附近显示排队中和运行中的后台代理。对话记录仍是唯一事实来源。"
       },
       "maxConcurrent": {
         "name": "最大并发子智能体数",

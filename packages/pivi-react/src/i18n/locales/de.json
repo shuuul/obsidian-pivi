@@ -151,6 +151,8 @@
       "decisions": "Entscheidungen",
       "artifacts": "Artefakte",
       "openQuestions": "Offene Fragen",
+      "activeWork": "Aktive Arbeit",
+      "goToAgentRun": "Zu {agent} im Transkript wechseln",
       "expand": "Zum Erweitern klicken",
       "collapse": "Zum Einklappen klicken",
       "prompt": "Prompt",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "Hintergrund-Subagenten erlauben",
         "desc": "Erlaubt spawn_agent-Aufrufe mit run_in_background=true. Abgeschlossene Ergebnisse erscheinen in der Subagent-Karte."
+      },
+      "activeWorkShelf": {
+        "name": "Aktive Arbeitsleiste anzeigen",
+        "desc": "Zeigt wartende und laufende Hintergrund-Agenten nahe dem Eingabefeld. Das Transkript bleibt die maßgebliche Quelle."
       },
       "maxConcurrent": {
         "name": "Max. gleichzeitige Subagenten",

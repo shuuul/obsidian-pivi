@@ -21,6 +21,7 @@ export {
   ChatProjectionStore,
   deriveAgentRunEntities,
   getChatProjectionBlockId,
+  useActiveChatProjectionAgentRuns,
   useChatProjectionAgentRun,
   useChatProjectionAgentRuns,
   useChatProjectionBlock,

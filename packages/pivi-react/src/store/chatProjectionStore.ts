@@ -320,6 +320,7 @@ function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessag
  */
 export class ChatProjectionStore {
   private order: readonly string[] = Object.freeze([]);
+  private activeAgentRuns: readonly DeepReadonly<ChatAgentRunEntity>[] = Object.freeze([]);
   private readonly messages = new Map<string, ProjectionMessage>();
   private readonly messageStructures = new Map<string, ProjectionMessage>();
   private readonly blocks = new Map<string, DeepReadonly<ChatBlockEntity>>();
@@ -338,6 +339,7 @@ export class ChatProjectionStore {
   private readonly lastSequenceByOwner = new Map<string, number>();
   private readonly terminalRuns = new Set<string>();
   private readonly orderListeners = new Set<ProjectionListener>();
+  private readonly activeAgentRunListeners = new Set<ProjectionListener>();
   private readonly messageListeners = new Map<string, Set<ProjectionListener>>();
   private readonly messageStructureListeners = new Map<string, Set<ProjectionListener>>();
   private readonly blockListeners = new Map<string, Set<ProjectionListener>>();
@@ -350,6 +352,9 @@ export class ChatProjectionStore {
   ) {}
 
   readonly getOrderSnapshot = (): readonly string[] => this.order;
+  readonly getActiveAgentRunsSnapshot = (): readonly DeepReadonly<ChatAgentRunEntity>[] => (
+    this.activeAgentRuns
+  );
 
   getMessageSnapshot = (messageId: string): ProjectionMessage | null => (
     this.messages.get(messageId) ?? null
@@ -374,6 +379,11 @@ export class ChatProjectionStore {
   subscribeOrder = (listener: ProjectionListener): (() => void) => {
     this.orderListeners.add(listener);
     return () => this.orderListeners.delete(listener);
+  };
+
+  subscribeActiveAgentRuns = (listener: ProjectionListener): (() => void) => {
+    this.activeAgentRunListeners.add(listener);
+    return () => this.activeAgentRunListeners.delete(listener);
   };
 
   subscribeMessage(messageId: string, listener: ProjectionListener): () => void {
@@ -588,6 +598,7 @@ export class ChatProjectionStore {
       changedIds.add(message.id);
     }
     this.order = Object.freeze(projected.map(message => message.id));
+    this.refreshActiveAgentRuns();
     this.notifyOrder();
     for (const id of changedIds) this.notifyMessage(id);
     if (recorderEnabled) {
@@ -612,6 +623,7 @@ export class ChatProjectionStore {
       ...prepended.map(message => message.id),
       ...this.order,
     ]);
+    this.refreshActiveAgentRuns();
     this.notifyOrder();
     return true;
   }
@@ -640,6 +652,7 @@ export class ChatProjectionStore {
       ...prepended.map(message => message.id),
       ...this.order,
     ]);
+    this.refreshActiveAgentRuns();
     this.notifyOrder();
     return true;
   }
@@ -664,6 +677,7 @@ export class ChatProjectionStore {
       this.order = Object.freeze([...this.order, snapshot.id]);
       this.notifyOrder();
     }
+    this.refreshActiveAgentRuns();
   }
 
   private queueUpsert(message: ChatMessage): void {
@@ -698,6 +712,7 @@ export class ChatProjectionStore {
       }
     }
     this.order = Object.freeze(messageIds.filter(id => this.messages.has(id)));
+    this.refreshActiveAgentRuns();
     this.notifyOrder();
     if (recorderEnabled) this.recordCommit('truncate', this.order, startedAt);
   }
@@ -708,6 +723,7 @@ export class ChatProjectionStore {
     this.ownerWindow?.document?.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.pendingMessages.clear();
     this.orderListeners.clear();
+    this.activeAgentRunListeners.clear();
     this.messageListeners.clear();
     this.messageStructureListeners.clear();
     this.blockListeners.clear();
@@ -718,6 +734,7 @@ export class ChatProjectionStore {
     this.blocks.clear();
     this.tools.clear();
     this.agentRuns.clear();
+    this.activeAgentRuns = Object.freeze([]);
     this.entityKeysByMessageId.clear();
     this.activeOwnerByScope.clear();
     this.lastSequenceByOwner.clear();
@@ -812,6 +829,29 @@ export class ChatProjectionStore {
 
   private notifyOrder(): void {
     for (const listener of this.orderListeners) listener();
+  }
+
+  private refreshActiveAgentRuns(): void {
+    const next = this.order.flatMap((messageId) => {
+      const keys = this.entityKeysByMessageId.get(messageId);
+      if (!keys) return [];
+      return keys.agentIds.flatMap((runId) => {
+        const run = this.agentRuns.get(runId);
+        if (!run
+          || run.parentRunId !== null
+          || run.mode !== 'async'
+          || (run.status !== 'queued' && run.status !== 'running' && run.status !== 'waiting')) {
+          return [];
+        }
+        return [run];
+      });
+    });
+    if (next.length === this.activeAgentRuns.length
+      && next.every((run, index) => run === this.activeAgentRuns[index])) {
+      return;
+    }
+    this.activeAgentRuns = Object.freeze(next);
+    for (const listener of this.activeAgentRunListeners) listener();
   }
 
   private notifyMessage(messageId: string): void {
@@ -919,6 +959,14 @@ export class ChatProjectionStore {
 
 export function useChatProjectionOrder(store: ChatProjectionStore): readonly string[] {
   return useSyncExternalStore(store.subscribeOrder, store.getOrderSnapshot, store.getOrderSnapshot);
+}
+
+export function useActiveChatProjectionAgentRuns(store: ChatProjectionStore) {
+  return useSyncExternalStore(
+    store.subscribeActiveAgentRuns,
+    store.getActiveAgentRunsSnapshot,
+    store.getActiveAgentRunsSnapshot,
+  );
 }
 
 export function useChatProjectionMessageStructure(

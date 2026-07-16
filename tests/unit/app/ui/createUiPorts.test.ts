@@ -263,7 +263,7 @@ describe('UI port adapters', () => {
         ...DEFAULT_PIVI_SETTINGS,
         agentSettings: {
           ...DEFAULT_PIVI_SETTINGS.agentSettings,
-          subagents: { allowBackground: true, enabled: true, maxConcurrentSubagents: 3 },
+          subagents: { allowBackground: true, enabled: true, maxConcurrentSubagents: 3, showActiveWorkShelf: false },
         },
       } as PiviSettings,
       saveSettings,
@@ -282,9 +282,10 @@ describe('UI port adapters', () => {
     };
     const ports = createSettingsUiPorts(host, workspace as never);
 
-    await ports.actions.saveSubagents({ maxConcurrentSubagents: 8 });
+    await ports.actions.saveSubagents({ maxConcurrentSubagents: 8, showActiveWorkShelf: true });
 
     expect(host.settings.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
+    expect(host.settings.agentSettings.subagents?.showActiveWorkShelf).toBe(true);
     expect(saveSettings).toHaveBeenCalledTimes(1);
     expect(refreshFirst).toHaveBeenCalledTimes(1);
     expect(refreshSecond).toHaveBeenCalledTimes(1);

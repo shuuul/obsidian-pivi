@@ -765,6 +765,52 @@ describe('imperative chat semantic view handle', () => {
     expect(activeChanges).toHaveBeenCalledWith(new Set(['isStreaming']));
   });
 
+  it('aggregates background work across tabs and navigates through the owner viewport', async () => {
+    const { adapter, manager, mount, ownerDocument } = createHarness();
+    const activeTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+    const backgroundTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+    backgroundTab.id = 'tab-background';
+    backgroundTab.state.projectionStore?.replaceAll([{
+      id: 'assistant-owner',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [{
+        id: 'spawn-1', name: 'spawn_agent', input: {}, status: 'running',
+        subagent: {
+          id: 'run-1', description: 'Background audit', isExpanded: false,
+          mode: 'async', status: 'running', asyncStatus: 'running', toolCalls: [],
+        },
+      }],
+    }]);
+    manager.getActiveTab.mockReturnValue(activeTab);
+    manager.getAllTabs.mockReturnValue([activeTab, backgroundTab]);
+    manager.getTab.mockImplementation(tabId => (
+      tabId === activeTab.id ? activeTab : tabId === backgroundTab.id ? backgroundTab : null
+    ));
+    const shell = adapter.prepareShell(ownerDocument);
+    await mount();
+
+    expect(shell.activeChat.getActiveWorkShelfSnapshot().map(item => [item.tabId, item.run.runId]))
+      .toEqual([['tab-background', 'run-1']]);
+    const navigate = shell.activeChat.getActiveWorkShelfNavigate();
+    await navigate?.('tab-background', 'assistant-owner');
+    expect(manager.switchToTab).toHaveBeenCalledWith('tab-background');
+
+    const callbacks = jest.mocked(TabManager).mock.calls[0]?.[3] as TabManagerCallbacks;
+    callbacks.onTabWillSwitch?.(activeTab.id, backgroundTab.id);
+    const scrollToMessage = jest.fn();
+    shell.activeChat.getMessagePresentation()?.setViewportHandle?.({
+      isAtEnd: () => false,
+      scrollToEnd: () => undefined,
+      scrollToMessage,
+      scrollToRecentUser: () => undefined,
+      scrollToStart: () => undefined,
+      scrollToUser: () => undefined,
+    });
+    expect(scrollToMessage).toHaveBeenCalledWith('assistant-owner', 'center', 'smooth');
+  });
+
   it('moves and republishes the tab bar when its setting changes', async () => {
     const harness = createHarness();
     const activeTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));

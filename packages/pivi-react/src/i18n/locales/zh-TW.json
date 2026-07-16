@@ -151,6 +151,8 @@
       "decisions": "決策",
       "artifacts": "產出",
       "openQuestions": "待解問題",
+      "activeWork": "進行中工作",
+      "goToAgentRun": "前往對話記錄中的 {agent}",
       "expand": "點擊展開",
       "collapse": "點擊收合",
       "prompt": "提示詞",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "允許背景子代理",
         "desc": "允許 run_in_background=true 的 spawn_agent 呼叫。完成後結果會回填到子代理卡片。"
+      },
+      "activeWorkShelf": {
+        "name": "顯示進行中工作架",
+        "desc": "在輸入框附近顯示排隊中和執行中的背景代理。對話記錄仍是唯一事實來源。"
       },
       "maxConcurrent": {
         "name": "最大同時子代理數",

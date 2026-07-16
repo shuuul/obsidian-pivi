@@ -13,7 +13,7 @@ const snapshot: SettingsUiSnapshotData = {
     requireCommandOrControlEnterToSend: false,
     keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
   },
-  subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
+  subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2, showActiveWorkShelf: false },
 };
 
 function createModelsPort() {
@@ -148,10 +148,14 @@ describe('React settings foundation', () => {
 
   it('switches tabs and persists a changed setting', async () => {
     const saveGeneral = jest.fn(async () => undefined);
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
+    const saveSubagents = jest.fn(async () => undefined);
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral, saveSubagents })} /></I18nProvider>));
     expect(screen.getByText('Language')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'Subagents' }));
     expect(screen.getByText('Enable spawn_agent')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show active work shelf' }));
+    await act(async () => undefined);
+    expect(saveSubagents).toHaveBeenCalledWith({ showActiveWorkShelf: true });
     fireEvent.click(screen.getByRole('tab', { name: 'General' }));
     const autoScroll = screen.getByRole('checkbox', { name: 'Auto-scroll during streaming' });
     fireEvent.click(autoScroll!);

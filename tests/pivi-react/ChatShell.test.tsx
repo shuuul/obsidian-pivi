@@ -733,6 +733,7 @@ describe('React ChatShell tabs', () => {
       uiStore.update({
         composer: {
           canSend: true,
+          showActiveWorkShelf: false,
           model: 'model-a',
           modelOptions: [
             { label: 'Model A', providerLogoSlug: 'anthropic', value: 'model-a' },
@@ -838,6 +839,64 @@ describe('React ChatShell tabs', () => {
     act(() => uiStore.update({ isStreaming: true }));
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Stop response' }));
     expect(composerActions.stop).toHaveBeenCalledTimes(1);
+
+    await act(async () => mounted.mounted.dispose());
+    bridge.dispose();
+    targets.remove();
+  });
+
+  it('keeps the active work shelf off by default and navigates to projected owners when enabled', async () => {
+    const bridge = new ActiveChatUiBridge();
+    const uiStore = new ChatUiStore();
+    const activeProjectionStore = new ChatProjectionStore();
+    const projectionStore = new ChatProjectionStore();
+    const targets = createPortalTargets();
+    const navigateToMessage = jest.fn();
+    const composerActions = {
+      send: jest.fn(), stop: jest.fn(), setModel: jest.fn(), setMode: jest.fn(),
+      setThinkingBudget: jest.fn(), setThinkingLevel: jest.fn(),
+      toggleExternalPath: jest.fn(), toggleExternalPinned: jest.fn(),
+      removeExternalPath: jest.fn(), addExternalContext: jest.fn(),
+    };
+    const message = (status: 'running' | 'completed') => ({
+      id: 'assistant-owner',
+      role: 'assistant' as const,
+      content: '',
+      timestamp: 1,
+      toolCalls: [{
+        id: 'spawn-1', name: 'spawn_agent', input: {}, status,
+        subagent: {
+          id: 'run-1', writerName: 'Austen', description: 'Audit sources', isExpanded: false,
+          mode: 'async' as const, status, asyncStatus: status,
+          toolCalls: status === 'running'
+            ? [{ id: 'read-1', name: 'read', input: {}, status: 'running' as const }]
+            : [],
+        },
+      }],
+    });
+    projectionStore.replaceAll([message('running')]);
+    act(() => {
+      bridge.setActive(uiStore, activeProjectionStore, targets, composerActions);
+      bridge.setActiveWorkShelfSources(
+        [{ tabId: 'background-tab', store: projectionStore }],
+        navigateToMessage,
+      );
+    });
+    const mounted = await mountShell({ activeChat: bridge, position: 'header' });
+    await act(async () => {});
+
+    expect(targets.composer.querySelector('.pivi-active-work-shelf')).toBeNull();
+    act(() => uiStore.update({
+      composer: { ...uiStore.getSnapshot().composer, showActiveWorkShelf: true },
+    }));
+    const shelf = within(targets.composer).getByRole('region', { name: 'Active work' });
+    expect(shelf).toHaveTextContent('AustenreadRunning');
+    expect(shelf.querySelector('.pivi-active-work-items')).not.toHaveStyle({ overflow: 'auto' });
+    fireEvent.click(within(shelf).getByRole('button', { name: 'Go to Austen in the transcript' }));
+    expect(navigateToMessage).toHaveBeenCalledWith('background-tab', 'assistant-owner');
+
+    act(() => projectionStore.upsertNow(message('completed')));
+    expect(targets.composer.querySelector('.pivi-active-work-shelf')).toBeNull();
 
     await act(async () => mounted.mounted.dispose());
     bridge.dispose();

@@ -151,6 +151,8 @@
       "decisions": "Décisions",
       "artifacts": "Artefacts",
       "openQuestions": "Questions ouvertes",
+      "activeWork": "Travail actif",
+      "goToAgentRun": "Accéder à {agent} dans la transcription",
       "expand": "Cliquer pour développer",
       "collapse": "Cliquer pour réduire",
       "prompt": "Instruction",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "Autoriser les sous-agents en arrière-plan",
         "desc": "Autorise les appels spawn_agent avec run_in_background=true. Les résultats complétés réhydratent la carte du sous-agent."
+      },
+      "activeWorkShelf": {
+        "name": "Afficher le travail actif",
+        "desc": "Affiche les agents en arrière-plan en attente et en cours près de la zone de rédaction. La transcription reste la source de référence."
       },
       "maxConcurrent": {
         "name": "Sous-agents simultanés max.",

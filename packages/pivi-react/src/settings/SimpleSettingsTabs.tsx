@@ -371,6 +371,9 @@ export function SubagentsSettingsTab({
       <SettingRow name={t('settings.subagents.allowBackground.name')} description={t('settings.subagents.allowBackground.desc')}>
         <Toggle checked={subagents.allowBackground} label={t('settings.subagents.allowBackground.name')} onChange={(allowBackground) => save({ allowBackground })} />
       </SettingRow>
+      <SettingRow name={t('settings.subagents.activeWorkShelf.name')} description={t('settings.subagents.activeWorkShelf.desc')}>
+        <Toggle checked={subagents.showActiveWorkShelf} label={t('settings.subagents.activeWorkShelf.name')} onChange={(showActiveWorkShelf) => save({ showActiveWorkShelf })} />
+      </SettingRow>
       <SettingRow name={t('settings.subagents.maxConcurrent.name')} description={t('settings.subagents.maxConcurrent.desc')}>
         <Select
           label={t('settings.subagents.maxConcurrent.name')}

@@ -160,6 +160,7 @@ export function wireComposerChrome(
     tab.state.uiStore.update({
       composer: {
         canSend: dom.richInput.value.trim().length > 0,
+        showActiveWorkShelf: settings.showActiveWorkShelf,
         model: settings.model,
         modelOptions: uiConfig.getModelOptions(settings).map(option => ({ ...option })),
         mode: mode?.value ?? null,

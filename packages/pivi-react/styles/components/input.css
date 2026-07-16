@@ -140,6 +140,68 @@
 }
 
 /* Input toolbar */
+.pivi-active-work-shelf {
+  margin: 4px 6px 2px;
+  padding: 6px 8px;
+  border-radius: var(--pivi-radius-md);
+  background: var(--pivi-surface-subtle);
+}
+
+.pivi-active-work-shelf > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+  color: var(--pivi-host-text-faint);
+  font-family: var(--pivi-host-font-interface);
+  font-size: var(--pivi-text-xs);
+  font-weight: 500;
+}
+
+.pivi-active-work-items {
+  display: grid;
+  gap: 2px;
+}
+
+.pivi-container .pivi-active-work-item {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 3px 2px;
+  border: 0;
+  border-radius: var(--pivi-radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.pivi-active-work-item .pivi-activity-row {
+  flex: 1;
+}
+
+.pivi-active-work-navigate {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: var(--pivi-host-text-faint);
+  --icon-size: 14px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-active-work-item:hover {
+    background: rgba(var(--pivi-host-mono-rgb-100), 0.04);
+  }
+}
+
 .pivi-input-toolbar {
   display: flex;
   align-items: center;

@@ -27,7 +27,7 @@ Outcome: Agent runs are a first-class projection with stable identity and relati
 - [ ] The durable session keeps the complete visible trace (objective/prompt, tool activity, recovery-relevant partial output, terminal output, timing/usage, cancellation/failure/orphan state); no field currently persisted is dropped. Verified by session-compat fixtures.
 - [x] Related Agent runs in one message render as an Agent Group with a summary line (counts by status) that expands to individual Activity rows (spec 006 primitive). Verified by jsdom tests.
 - [x] Expanding one run shows a linear timeline (indentation + connectors) of its steps inside the measured virtual row, or in an inspector surface; no independently scrolling card inside the transcript. Verified by test asserting no nested scroll container and manual check.
-- [ ] An optional Active Work Shelf near the composer mirrors running/background runs; selecting an item navigates to the transcript owner or opens the same inspector; shelf state never becomes canonical. Toggle default and persistence decided by Decision. Verified by jsdom tests + manual background-run walkthrough.
+- [x] An optional Active Work Shelf near the composer mirrors running/background runs; selecting an item navigates to the transcript owner or opens the same inspector; shelf state never becomes canonical. Toggle default and persistence decided by Decision. Verified by jsdom tests + manual background-run walkthrough.
 - [x] When a validated structured report (spec 005) exists, the run's terminal presentation promotes the conclusion into Narrative per docs/11 (terminal Subagent conclusions promoted into the answer); otherwise today's text rendering stands.
 - [ ] Every existing lifecycle regression suite stays green: queued/running abort, dynamic capacity, late events, orphaning, hydrate retry cancellation/rejection, session switching, pop-out owner realms, virtual scroll anchoring.
 
@@ -64,7 +64,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Agent Group summary + expansion to Activity rows | Codex | Done | WS-01, spec 006 WS-03 | jsdom tests over direct and projected Agent runs |
 | WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Done | WS-02 | jsdom test asserting ordered depths, disclosure semantics, and no nested scroll |
 | WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Done | WS-01, spec 005 WS-04 | Projection and renderer tests over direct, fenced, invalid, and text fixtures |
-| WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Codex | Pending | WS-01 | jsdom tests; manual background-run walkthrough incl. tab switch and pop-out |
+| WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Codex | Done | WS-01 | projection/settings/jsdom/app-adapter tests incl. inactive-tab owner navigation |
 | WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | Pending | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
 
 Guidance for low-context agents:
@@ -130,6 +130,16 @@ Guidance for low-context agents:
 - Evidence: 44 focused projection/renderer tests pass. They cover persisted structured details, fenced-text recovery, invalid-report rejection, Narrative fields, safe vault-relative artifact display, and plain-text fallback. Typecheck and zero-warning lint pass.
 - Remaining: WS-05, WS-06, durable session-compat acceptance, and final synthetic manual/performance verification.
 - Next action: add the default-off persisted Active Work Shelf using projection state only, with navigation back to the owning transcript message.
+
+### 2026-07-16 — WS-05 Active Work Shelf — Codex
+
+- Decision implemented: `subagents.showActiveWorkShelf` is synchronized vault configuration and defaults to `false`. Settings exposes the localized toggle in all ten catalogs; open views refresh their composer snapshots after the setting is saved.
+- Changed: every tab projection publishes a stable, non-canonical list of active top-level background runs (`queued`, `running`, or `waiting`). `ActiveChatUiBridge` derives one shelf snapshot across all tabs in its mounted view, so switching away from a background task does not hide it. Completed/cancelled/failed/orphaned runs leave the shelf while the existing inactive-tab attention flag remains authoritative for completion attention.
+- Navigation: selecting a shelf row switches to its owner tab when necessary, then centers the owning transcript message through `MessageViewportHandle`. If the new virtual viewport has not mounted yet, the adapter holds one transient pending navigation and fulfills it as soon as that viewport handle publishes; no DOM query, timer, or persisted shelf state is used.
+- Problem recorded and corrected: the first local implementation subscribed only to the active projection. That passed a same-tab test but contradicted the spec's tab-switch walkthrough and persistent-visibility intent, so it was replaced before commit with the cross-tab derived bridge. A requested lightweight seam-review agent was unavailable due model capacity; local source inspection and focused tests supplied the evidence instead.
+- Evidence: 91 focused settings/projection/React tests plus 70 focused bridge/app-adapter tests pass. Coverage includes default-off migration, toggle persistence, active-only filtering, stable snapshot identity, inactive-tab shelf visibility, completion removal, no nested shelf scroll, tab switching, deferred viewport navigation, typecheck, lint, CSS, i18n, and architecture checks.
+- Remaining: WS-06 lifecycle/session compatibility sweep, synthetic 20-Agent performance traces, full coverage/build/reload, and spec archival.
+- Next action: run the named lifecycle suites and session-compat fixtures, then the isolated spec 001 20-Agent harness without touching user tabs.
 
 ### 2026-07-15 — Spec creation — coordinator
 

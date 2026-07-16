@@ -151,6 +151,8 @@
       "decisions": "결정 사항",
       "artifacts": "산출물",
       "openQuestions": "열린 질문",
+      "activeWork": "활성 작업",
+      "goToAgentRun": "대화 기록의 {agent}(으)로 이동",
       "expand": "클릭하여 펼치기",
       "collapse": "클릭하여 접기",
       "prompt": "프롬프트",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "백그라운드 서브에이전트 허용",
         "desc": "run_in_background=true인 spawn_agent 호출을 허용합니다. 완료 결과는 서브에이전트 카드에 반영됩니다."
+      },
+      "activeWorkShelf": {
+        "name": "활성 작업 선반 표시",
+        "desc": "대기 중이거나 실행 중인 백그라운드 에이전트를 작성기 근처에 표시합니다. 대화 기록이 계속 기준 데이터입니다."
       },
       "maxConcurrent": {
         "name": "동시 서브에이전트 최대 수",

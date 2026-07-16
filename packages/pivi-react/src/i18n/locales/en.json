@@ -151,6 +151,8 @@
       "decisions": "Decisions",
       "artifacts": "Artifacts",
       "openQuestions": "Open questions",
+      "activeWork": "Active work",
+      "goToAgentRun": "Go to {agent} in the transcript",
       "expand": "Click to expand",
       "collapse": "Click to collapse",
       "prompt": "Prompt",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "Allow background subagents",
         "desc": "Allow spawn_agent calls with run_in_background=true. Completed results hydrate back into the subagent card."
+      },
+      "activeWorkShelf": {
+        "name": "Show active work shelf",
+        "desc": "Show queued and running background agents near the composer. The transcript remains the source of truth."
       },
       "maxConcurrent": {
         "name": "Max simultaneous subagents",

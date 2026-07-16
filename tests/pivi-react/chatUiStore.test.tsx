@@ -699,6 +699,56 @@ describe('ChatProjectionStore', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('projects only active top-level background runs for the work shelf', () => {
+    const store = new ChatProjectionStore();
+    const message = (parentStatus: 'running' | 'completed'): ChatMessage => ({
+      id: 'assistant-shelf',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [{
+        id: 'spawn-parent', name: 'spawn_agent', input: {}, status: parentStatus,
+        subagent: {
+          id: 'run-parent', description: 'Parent background run', isExpanded: false,
+          mode: 'async', status: parentStatus, asyncStatus: parentStatus,
+          toolCalls: [{
+            id: 'spawn-child', name: 'spawn_agent', input: {}, status: 'running',
+            subagent: {
+              id: 'run-child', description: 'Nested background run', isExpanded: false,
+              mode: 'async', status: 'running', asyncStatus: 'running', toolCalls: [],
+            },
+          }],
+        },
+      }, {
+        id: 'spawn-queued', name: 'spawn_agent', input: {}, status: 'running',
+        subagent: {
+          id: 'run-queued', description: 'Queued background run', isExpanded: false,
+          activityStatus: 'queued', mode: 'async', status: 'running', asyncStatus: 'pending', toolCalls: [],
+        },
+      }, {
+        id: 'spawn-sync', name: 'spawn_agent', input: {}, status: 'running',
+        subagent: {
+          id: 'run-sync', description: 'Blocking run', isExpanded: false,
+          mode: 'sync', status: 'running', toolCalls: [],
+        },
+      }],
+    });
+    store.replaceAll([message('running')]);
+
+    expect(store.getActiveAgentRunsSnapshot().map(run => run.runId))
+      .toEqual(['run-parent', 'run-queued']);
+    const snapshot = store.getActiveAgentRunsSnapshot();
+    const listener = jest.fn();
+    store.subscribeActiveAgentRuns(listener);
+    store.upsertNow(message('running'));
+    expect(store.getActiveAgentRunsSnapshot()).toBe(snapshot);
+    expect(listener).not.toHaveBeenCalled();
+
+    store.upsertNow(message('completed'));
+    expect(store.getActiveAgentRunsSnapshot().map(run => run.runId)).toEqual(['run-queued']);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it('preserves message structure snapshots across content deltas and publishes shape changes', () => {
     const store = new ChatProjectionStore();
     const initial = {

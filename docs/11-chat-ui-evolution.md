@@ -370,6 +370,8 @@ The implemented foundation uses one seven-state lifecycle vocabulary for tool an
 
 An optional Active Work Shelf may appear near the composer when background work needs persistent visibility. It mirrors running state only; the canonical trace remains attached to its transcript owner. Selecting shelf activity navigates to the owner or opens the same inspector.
 
+The shelf now ships behind the synchronized `subagents.showActiveWorkShelf` setting, default off. Each tab projection exposes only active top-level background runs, and the mounted view bridge derives one immutable shelf across its tabs. Switching tabs therefore preserves visibility without copying run state into a second authority. Selecting an item switches to the owner tab if needed and centers the owning message through the virtual viewport handle; completion removes the item while the existing tab attention state continues to signal background completion.
+
 ### Memory layer
 
 Memory represents model-context boundaries, not messages:

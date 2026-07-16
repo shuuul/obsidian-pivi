@@ -148,7 +148,7 @@ describe('React surface mounts', () => {
                 requireCommandOrControlEnterToSend: false,
                 keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
               },
-              subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
+              subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2, showActiveWorkShelf: false },
             }),
           },
           actions: {},

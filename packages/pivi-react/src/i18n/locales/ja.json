@@ -151,6 +151,8 @@
       "decisions": "決定事項",
       "artifacts": "成果物",
       "openQuestions": "未解決の質問",
+      "activeWork": "進行中の作業",
+      "goToAgentRun": "トランスクリプト内の {agent} へ移動",
       "expand": "クリックして展開",
       "collapse": "クリックして折りたたむ",
       "prompt": "指示",
@@ -404,6 +406,10 @@
       "allowBackground": {
         "name": "バックグラウンドサブエージェントを許可",
         "desc": "run_in_background=true の spawn_agent 呼び出しを許可します。完了結果はサブエージェントカードに反映されます。"
+      },
+      "activeWorkShelf": {
+        "name": "進行中の作業棚を表示",
+        "desc": "待機中および実行中のバックグラウンドエージェントをコンポーザー付近に表示します。正本は引き続きトランスクリプトです。"
       },
       "maxConcurrent": {
         "name": "同時サブエージェントの上限",

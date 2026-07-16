@@ -84,6 +84,7 @@ export function createImperativeChatAdapter(
   let inputTabBarPortalEl: HTMLElement | null = null;
   let tabContentEl: HTMLElement | null = null;
   let pendingTabBarUpdate: ScheduledAnimationFrame | null = null;
+  let pendingWorkNavigation: { tabId: TabId; messageId: string } | null = null;
   let tabPersistenceSuspensions = 0;
   const messageViewports = new Map<TabId, MessageViewportHandle>();
   const chatHost: PiviChatHost = { app: plugin.app };
@@ -152,6 +153,30 @@ export function createImperativeChatAdapter(
     messageViewports.get(tab.id)?.scrollToUser(direction);
   };
 
+  const navigateToWorkShelfOwner = async (tabId: string, messageId: string): Promise<void> => {
+    const manager = tabManager;
+    if (!manager?.getTab(tabId)) return;
+    if (manager.getActiveTab()?.id !== tabId) {
+      await manager.switchToTab(tabId);
+    }
+    const viewport = messageViewports.get(tabId);
+    if (viewport) {
+      viewport.scrollToMessage(messageId, 'center', 'smooth');
+      return;
+    }
+    pendingWorkNavigation = { tabId, messageId };
+  };
+
+  const syncActiveWorkShelf = (): void => {
+    activeChatBridge?.setActiveWorkShelfSources(
+      (tabManager?.getAllTabs() ?? []).map(tab => ({
+        tabId: tab.id,
+        store: tab.state.projectionStore,
+      })),
+      navigateToWorkShelfOwner,
+    );
+  };
+
   const syncActiveChatSurface = (tabId?: TabId | null): void => {
     const tab = tabId ? tabManager?.getTab(tabId) : tabManager?.getActiveTab();
     activeChatBridge?.setActive(
@@ -170,8 +195,15 @@ export function createImperativeChatAdapter(
         : null,
       tab?.ui.composerActions ?? null,
       tab ? createMessagePresentation(tab, (handle) => {
-        if (handle) messageViewports.set(tab.id, handle);
-        else messageViewports.delete(tab.id);
+        if (handle) {
+          messageViewports.set(tab.id, handle);
+          if (pendingWorkNavigation?.tabId === tab.id) {
+            handle.scrollToMessage(pendingWorkNavigation.messageId, 'center', 'smooth');
+            pendingWorkNavigation = null;
+          }
+        } else {
+          messageViewports.delete(tab.id);
+        }
       }) : null,
     );
   };
@@ -220,6 +252,7 @@ export function createImperativeChatAdapter(
     scheduleTabsSnapshotPublish();
     syncInputTabBarPortal();
     syncActiveChatSurface();
+    syncActiveWorkShelf();
     persistCurrentTabState();
   };
 
@@ -329,6 +362,7 @@ export function createImperativeChatAdapter(
       }
       syncInputTabBarPortal();
       syncActiveChatSurface();
+      syncActiveWorkShelf();
       publishTabSnapshot();
       tabManager.prefetchSlashCommandCaches();
     },
@@ -347,6 +381,7 @@ export function createImperativeChatAdapter(
         activeChatBridge?.dispose();
         activeChatBridge = null;
         messageViewports.clear();
+        pendingWorkNavigation = null;
 
         tabContentEl = null;
         chatTabsStore = null;
