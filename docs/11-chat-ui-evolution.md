@@ -223,6 +223,16 @@ Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64. The same disposable
 
 Both traces identify only the expected owner window and finish with a complete terminal projection. The development harness restored the prior active tab, removed the synthetic tab and disposable pop-out, and left no synthetic DOM markers. A failed CLI-routing attempt was discarded because its trace identified `main` instead of `pop-out`; the accepted pop-out run addresses the floating leaf directly.
 
+#### 2026-07-16 first-class Agent-run result
+
+Environment: Obsidian 1.13.2, Pivi 0.9.0 at `8b56684`, Darwin 25.5 arm64. The isolated 20-Agent command ran three times in the main window against the fixed fixture. Each run stopped its trace before restoring the original tab, then removed the disposable tab, temporary JSONL, and index while tab persistence remained suspended.
+
+| Scenario | Pre-spec-008 baseline | Spec-008 median | Evidence |
+|---|---|---|---|
+| 20 Agent runs | 1 projection commit; max 2 rows / 758 DOM nodes; 4 Markdown renders; 1 long task | 1 projection commit; max 2 rows / 73 DOM nodes; 2 Markdown renders / 1.6 ms; 1 long task, longest 467 ms | `2026-07-16T04-36-47-327Z`, `04-38-00-858Z`, `04-38-38-523Z` isolated Agent-run traces |
+
+Every run stayed inside the 20-Agent regression ceiling. `.pivi/tab-manager-state.json` retained the same SHA-256 before and after the three runs, no temporary session remained, and the deployed production bundle was restored with the development command absent and `obsidian dev:errors` clean. The discarded `04-30-51-653Z` trace is retained as diagnostic evidence: it stopped after cleanup and therefore mixed the original transcript's 25 rows / 34 Markdown renders into the workload boundary; the pre-cleanup hook corrected that harness error.
+
 #### Regression budgets
 
 Use the same fixed scenario, window type, hardware, and development build for before/after comparisons. Run each real-Obsidian scenario three times and compare the median of each recorded maximum/count against these ceilings; scroll-anchor drift and persistence integrity must pass on every run. Deterministic Jest gates fail immediately.
@@ -242,6 +252,7 @@ The deterministic subset is enforced in Jest:
 - a 5K session initially projects exactly the latest 100 messages and prepends 100-message pages;
 - the 5K jsdom viewport mounts at most 20 message rows;
 - the deterministic 102,400-byte / 64-chunk stream completes in at most 67 projection commits, including setup and restoration;
+- the isolated 20-Agent workload verifies all runs before cleanup, exports through the pre-cleanup hook, restores the original tab, removes its temporary session/index, and suppresses both persistence paths;
 - the isolated switch workload creates exactly 10 in-memory tabs, performs 20 switches, removes them all, and suppresses both debounced and immediate persistence.
 
 These are regression ceilings, not performance claims. A later optimization must retain the raw trace, report the same scenario shape, and show before/after evidence rather than merely staying under budget.

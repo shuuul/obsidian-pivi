@@ -24,12 +24,12 @@ coordinator: "Codex"
 Outcome: Agent runs are a first-class projection with stable identity and relationships, grouped and inspectable presentation, and an optional composer-adjacent shelf, while the durable JSONL trace and all existing lifecycle guarantees are preserved.
 
 - [x] An `AgentRun` projection entity exists with stable ownership (`runId`, `parentRunId`, owning message/tool references), status (using the spec 006 shared vocabulary), current activity, tool references, timing, usage, and terminal result reference. It is derived from existing durable data; JSONL remains the source of truth. Verified by projection unit tests including nested (parent/child) runs.
-- [ ] The durable session keeps the complete visible trace (objective/prompt, tool activity, recovery-relevant partial output, terminal output, timing/usage, cancellation/failure/orphan state); no field currently persisted is dropped. Verified by session-compat fixtures.
+- [x] The durable session keeps the complete visible trace (objective/prompt, tool activity, recovery-relevant partial output, terminal output, timing/usage, cancellation/failure/orphan state); no field currently persisted is dropped. Verified by session-compat fixtures.
 - [x] Related Agent runs in one message render as an Agent Group with a summary line (counts by status) that expands to individual Activity rows (spec 006 primitive). Verified by jsdom tests.
 - [x] Expanding one run shows a linear timeline (indentation + connectors) of its steps inside the measured virtual row, or in an inspector surface; no independently scrolling card inside the transcript. Verified by test asserting no nested scroll container and manual check.
 - [x] An optional Active Work Shelf near the composer mirrors running/background runs; selecting an item navigates to the transcript owner or opens the same inspector; shelf state never becomes canonical. Toggle default and persistence decided by Decision. Verified by jsdom tests + manual background-run walkthrough.
 - [x] When a validated structured report (spec 005) exists, the run's terminal presentation promotes the conclusion into Narrative per docs/11 (terminal Subagent conclusions promoted into the answer); otherwise today's text rendering stands.
-- [ ] Every existing lifecycle regression suite stays green: queued/running abort, dynamic capacity, late events, orphaning, hydrate retry cancellation/rejection, session switching, pop-out owner realms, virtual scroll anchoring.
+- [x] Every existing lifecycle regression suite stays green: queued/running abort, dynamic capacity, late events, orphaning, hydrate retry cancellation/rejection, session switching, pop-out owner realms, virtual scroll anchoring.
 
 ## Scope and non-goals
 
@@ -147,7 +147,9 @@ Guidance for low-context agents:
 - Extended the spec 001 development harness with a 20-Agent workload that copies the fixed fixture to a unique temporary session, opens it in a disposable persistence-suspended tab, verifies all 20 runs, restores the original tab, and removes the temporary tab/JSONL/index. The command owns trace start/export so no user tab or durable binding is reused.
 - Evidence so far: the consolidated lifecycle, compatibility, projection, owner-realm, virtual-scroll, fixture, command, and cleanup matrix passes in 20 suites / 222 tests. Source/test typecheck, zero-warning lint, architecture, package-readme, i18n, and spec checks pass. The 20-Agent after trace and full coverage/build gates remain pending.
 - Problem recorded: the first isolated after trace (`2026-07-16T04-30-51-653Z-agent-runs-20-main-isolated.json`) stopped after restoring the original tab. Its 25-row / 34-Markdown maxima included cleanup rendering and exceeded the scenario's ≤5-row / ≤6-render budget even though the 534-node maximum stayed inside the DOM ceiling. The harness now exposes a pre-cleanup hook so the command stops and exports while the isolated fixture is still active; cleanup remains unconditional in `finally`.
-- Next action: validate and commit the corrected trace boundary, deploy a development build, capture the isolated 20-Agent trace, then restore the production bundle.
+- Accepted evidence: three corrected traces (`04-36-47-327Z`, `04-38-00-858Z`, `04-38-38-523Z`) each recorded 1 projection commit, 2 mounted rows, 73 DOM nodes, 2 Markdown renders, and 1 long task. Median Markdown duration was 1.6 ms and median longest task was 467 ms. Every run stayed inside the 20-Agent budget; tab-state SHA-256 was unchanged, no temporary session remained, the production bundle was restored without the development marker, and `obsidian dev:errors` was clean.
+- Remaining: full coverage, final bundle-size/build gates, documentation audit, and archival.
+- Next action: run the complete repository verification matrix and record the final evidence.
 
 ### 2026-07-15 — Spec creation — coordinator
 
