@@ -54,13 +54,6 @@ export function getItemViewUrlRecord(view: ItemView): Record<string, unknown> {
   return view as unknown as Record<string, unknown>;
 }
 
-/** Resolves InputEvent from a specific owner window for pop-out-safe DOM events. */
-export function getOwnerWindowInputEventConstructor(
-  ownerWindow: Window,
-): typeof InputEvent | undefined {
-  return (ownerWindow as unknown as { InputEvent?: typeof InputEvent }).InputEvent;
-}
-
 /** Resolves Event from a specific owner window for pop-out-safe DOM events. */
 export function getOwnerWindowEventConstructor(ownerWindow: Window): typeof Event {
   return (ownerWindow as unknown as { Event: typeof Event }).Event;

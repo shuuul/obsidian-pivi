@@ -17,7 +17,7 @@ import type { TabData } from '@/ui/chat/tabs/types';
 let messageAdapterGeneration = 0;
 const logger = new PluginLogger('ImperativeChatMessagePresentation');
 
-export function mountMessageContentAdapter(
+function mountMessageContentAdapter(
   container: HTMLElement,
   generation: string,
   render: (target: HTMLElement) => Promise<void> | void,
@@ -39,7 +39,7 @@ export function mountMessageContentAdapter(
   };
 }
 
-export async function copyMessage(tab: TabData, message: ChatMessage): Promise<void> {
+async function copyMessage(tab: TabData, message: ChatMessage): Promise<void> {
   const content = getMessageCopyContent(message);
   const clipboard = tab.dom.messagesEl.ownerDocument.defaultView?.navigator.clipboard;
   if (clipboard?.writeText) await clipboard.writeText(content);

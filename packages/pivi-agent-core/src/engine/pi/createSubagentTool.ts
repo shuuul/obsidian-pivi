@@ -1,6 +1,7 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 
 import {
+  AGENT_REPORT_BLOCK_LANGUAGE,
   type AgentReport,
   type AgentReportOutcome,
   extractAgentReportFromText,
@@ -111,7 +112,7 @@ export function createSubagentTool(
         description ? `Task: ${description}` : '',
         'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent keeps each spawn_agent call isolated to avoid context cross-contamination.',
         'Reply in the same language as the task prompt/instructions you received.',
-        'Return a concise final answer, then end with exactly one fenced pivi-agent-report JSON block.',
+        `Return a concise final answer, then end with exactly one fenced ${AGENT_REPORT_BLOCK_LANGUAGE} JSON block.`,
         'The JSON object must use schemaVersion 1, objective, outcome (completed, failed, cancelled, or orphaned), and may include summary, findings, decisions, artifacts, and openQuestions. Artifacts use {"label":"...","vaultPath":"vault/relative/path"}; never include an absolute device path.',
       ]
         .filter(Boolean)

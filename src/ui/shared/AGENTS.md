@@ -28,7 +28,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 - `src/ui/shared/components/`: generic selectable dropdown; slash command/skill/built-in-tool/MCP catalog with fuzzy matching and stale-request guards; and a lazily installed CodeMirror 6 selection highlight.
 - `src/ui/shared/modals/`: promise-based confirmation helpers. Custom slash-command create/edit presentation is React-owned under `packages/pivi-react/src/settings/CommandsTab.tsx`.
 - `src/ui/shared/dom.ts`: popout-safe document/window lookup. Resolve globals from the owning element whenever possible.
-- `src/ui/shared/utils/`: focused helpers for Obsidian links, editor access, external-context paths and folder picking, MCP/check/chat icons, animation frames, and inline-edit text. `obsidianPrivateApi.ts` is the single review point for Obsidian/CodeMirror/browser private-property casts (`containerEl`, CSS Highlight, owner-window `Event`/`InputEvent`, Editor `.cm`). Provider logos are React-owned under `packages/pivi-react/src/icons/`. Pure streaming-math escaping lives in core foundation.
+- `src/ui/shared/utils/`: focused helpers for Obsidian links, editor access, external-context paths and folder picking, MCP/check/chat icons, animation frames, and inline-edit text. `obsidianPrivateApi.ts` is the single review point for Obsidian/CodeMirror/browser private-property casts (`containerEl`, CSS Highlight, owner-window `Event`, Editor `.cm`). Provider logos are React-owned under `packages/pivi-react/src/icons/`. Pure streaming-math escaping lives in core foundation.
 
 ## Mention and command flow
 

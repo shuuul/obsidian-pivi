@@ -1,10 +1,12 @@
 import type { PiSubagentQueryRunner } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
 import { createSubagentTool } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
-import { formatAgentReportBlock } from '@pivi/pivi-agent-core/session/continuationSchemas';
+import { AGENT_REPORT_BLOCK_LANGUAGE } from '@pivi/pivi-agent-core/session/continuationSchemas';
+
+import { createAgentReportBlock } from '../../../helpers/agentReport';
 
 const CONTEXT_BATCH_PROMPT = 'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent keeps each spawn_agent call isolated to avoid context cross-contamination.';
 const RESPONSE_LANGUAGE_PROMPT = 'Reply in the same language as the task prompt/instructions you received.';
-const REPORT_PROMPT = 'Return a concise final answer, then end with exactly one fenced pivi-agent-report JSON block.';
+const REPORT_PROMPT = `Return a concise final answer, then end with exactly one fenced ${AGENT_REPORT_BLOCK_LANGUAGE} JSON block.`;
 const REPORT_SCHEMA_PROMPT = 'The JSON object must use schemaVersion 1, objective, outcome (completed, failed, cancelled, or orphaned), and may include summary, findings, decisions, artifacts, and openQuestions. Artifacts use {"label":"...","vaultPath":"vault/relative/path"}; never include an absolute device path.';
 const LAUNCH = {
   agentId: 'subagent-1',
@@ -65,7 +67,7 @@ describe('createSubagentTool', () => {
       summary: 'Found the relevant notes.',
       findings: ['One finding'],
     };
-    const terminal = `Narrative detail.\n${formatAgentReportBlock(report)}`;
+    const terminal = `Narrative detail.\n${createAgentReportBlock(report)}`;
     const { runner } = createRunner(async () => terminal);
     const tool = createSubagentTool(runner);
 
@@ -150,7 +152,7 @@ describe('createSubagentTool', () => {
       outcome: 'completed' as const,
       decisions: ['Use the first card'],
     };
-    const terminal = `Full terminal narrative.\n${formatAgentReportBlock(report)}`;
+    const terminal = `Full terminal narrative.\n${createAgentReportBlock(report)}`;
     const runner: PiSubagentQueryRunner = {
       query: jest.fn(),
       spawn: jest.fn(async () => LAUNCH),

@@ -285,10 +285,6 @@ export function extractAgentReportFromText(text: string): AgentReport | null {
   return report;
 }
 
-export function formatAgentReportBlock(report: AgentReport): string {
-  return `\`\`\`${AGENT_REPORT_BLOCK_LANGUAGE}\n${JSON.stringify(report, null, 2)}\n\`\`\``;
-}
-
 function formatReportList(label: string, values: readonly string[] | undefined): string[] {
   return values && values.length > 0
     ? [label, ...values.map((value) => `- ${value}`)]

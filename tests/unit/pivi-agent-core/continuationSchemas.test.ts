@@ -1,12 +1,14 @@
 import {
+  AGENT_REPORT_BLOCK_LANGUAGE,
   extractAgentReportFromText,
-  formatAgentReportBlock,
   mergeCheckpoints,
   parseAgentReport,
   parseCheckpoint,
   type AgentReport,
   type Checkpoint,
 } from '@pivi/pivi-agent-core/session/continuationSchemas';
+
+import { createAgentReportBlock } from '../../helpers/agentReport';
 
 function checkpoint(overrides: Partial<Checkpoint> = {}): Checkpoint {
   return {
@@ -102,10 +104,10 @@ describe('continuation schemas', () => {
     };
     const terminal = [
       'Narrative remains available.',
-      '```pivi-agent-report',
+      `\`\`\`${AGENT_REPORT_BLOCK_LANGUAGE}`,
       '{invalid json}',
       '```',
-      formatAgentReportBlock(report),
+      createAgentReportBlock(report),
     ].join('\n');
     expect(extractAgentReportFromText(terminal)).toEqual(report);
     expect(extractAgentReportFromText('plain terminal result')).toBeNull();

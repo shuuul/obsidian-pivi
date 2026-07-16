@@ -715,5 +715,3 @@ export class ChatState {
   }
 
 }
-
-export { createInitialState };

@@ -2,7 +2,7 @@ import {
   extractAgentReportFromSubagentJsonl,
   extractFinalResultFromSubagentJsonl,
 } from '@pivi/pivi-agent-core/session/subagentJsonl';
-import { formatAgentReportBlock } from '@pivi/pivi-agent-core/session/continuationSchemas';
+import { createAgentReportBlock } from '../../helpers/agentReport';
 
 describe('subagent JSONL compatibility', () => {
   it('extracts a structured report from the latest assistant text', () => {
@@ -12,7 +12,7 @@ describe('subagent JSONL compatibility', () => {
       outcome: 'completed' as const,
       summary: 'Done',
     };
-    const text = `Narrative.\n${formatAgentReportBlock(report)}`;
+    const text = `Narrative.\n${createAgentReportBlock(report)}`;
     const content = [
       '{malformed',
       JSON.stringify({ result: 'older result' }),

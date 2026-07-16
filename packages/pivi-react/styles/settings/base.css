@@ -205,10 +205,6 @@ textarea.pivi-settings-control {
   gap: 0;
 }
 
-.pivi-tools-settings-section {
-  min-width: 0;
-}
-
 .pivi-settings-section {
   margin-block-start: var(--pivi-settings-section-gap);
 }
