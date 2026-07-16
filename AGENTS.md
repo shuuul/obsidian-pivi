@@ -1,6 +1,6 @@
 # Pivi Developer Guide
 
-Welcome to the **Pivi** developer reference guide. This document is the **operational** entry point for build, test, lint, release, project glossary, quality review, and repo-wide seam rules.
+Welcome to the **Pivi** developer reference guide. This document is the **operational** entry point for build, test, lint, release, project glossary, quality gates, and repo-wide seam rules.
 
 ---
 
@@ -16,7 +16,7 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 | Long-running specs | `specs/README.md`, `specs/NNN-*.md` | Multi-agent work breakdown, decisions, handoffs, verification, and completion tracking |
 | Repo operations | `AGENTS.md` | Build/test/release/spec workflow changes |
 | Package contracts | `packages/*/AGENTS.md`, `packages/pivi-agent-core/src/engine/pi/AGENTS.md` | Package entrypoints, dependency boundaries, or gotchas change |
-| Feature maps | `src/ui/AGENTS.md`, `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md`, `src/app/AGENTS.md`, `packages/pivi-react/AGENTS.md`, `packages/pivi-react/src/i18n/AGENTS.md`, `packages/pivi-react/styles/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md` | Local UI/runtime flow or seam rules change |
+| Feature maps | `src/ui/AGENTS.md`, `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md`, `src/app/AGENTS.md`, `packages/pivi-react/AGENTS.md`, `packages/pivi-react/src/i18n/AGENTS.md`, `packages/pivi-react/styles/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md`, `src/ui/chat/ui/file-context/state/AGENTS.md`, `src/ui/chat/ui/file-context/view/AGENTS.md` | Local UI/runtime flow or seam rules change |
 | Glossary/overview | `AGENTS.md` | Project identity or canonical terminology changes |
 | Releases | GitHub Releases / generated `CHANGELOG.md` | User-visible release history |
 
@@ -55,20 +55,16 @@ Related guidance:
 
 This repo does not track repo-local agent skills. Keep developer narrative in `docs/` and operational project guidance in this file and package/local `AGENTS.md` files; runtime vault skills live under each vault's `.pivi/skills/` directory.
 
-| Skill | When to load |
-|-------|----------------|
-| (future) `pivi-*` | Pi-only runtime/workspace simplification, vault MCP |
-
 **Vault default bundle** (end users, not this repo): first vault load may prompt to install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/`, but installation/updating must happen only after explicit user confirmation.
 
-If a future repo-local skill is needed, add it intentionally with a matching lockfile entry and update this section in the same change.
+Do not add speculative skill placeholders. If a repo-local skill becomes necessary, add the implementation and matching lockfile entry intentionally, then update this section in the same change.
 
 Nested `AGENTS.md` files under `src/`, `tests/`, `packages/`, and `packages/pivi-agent-core/src/engine/pi/` are directory/package maps (`init-deep` or hand-maintained); treat root `AGENTS.md` as authoritative for cross-cutting rules. The hierarchy is:
 
-- **Root** `AGENTS.md` — repo-wide build, test, release, seam rules, glossary, quality snapshot.
+- **Root** `AGENTS.md` — repo-wide build, test, release, seam rules, glossary, and quality gates.
 - **Package** `packages/*/AGENTS.md` — package purpose, entrypoints, boundaries, verification. `packages/pivi-agent-core/src/engine/pi/AGENTS.md` covers the Pi engine adapter boundary.
 - **App** `src/app/AGENTS.md` — composition shell, host contracts, workspace services.
-- **UI** `src/ui/AGENTS.md` → `src/ui/chat/AGENTS.md` → `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md` — app-side runtime and imperative adapter maps.
+- **UI** `src/ui/AGENTS.md` → `src/ui/chat/AGENTS.md` → `src/ui/chat/rendering/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md` → `state/AGENTS.md` / `view/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md` — app-side runtime and imperative adapter maps.
 - **React UI** `packages/pivi-react/AGENTS.md` — presentation boundary, locale catalogs, styles, and React ownership rules.
 - **i18n** `packages/pivi-react/src/i18n/AGENTS.md` — translator API, locale catalogs, translation commit policy.
 - **Styles** `packages/pivi-react/styles/AGENTS.md` — CSS architecture, manifest order, build flow, conventions.
@@ -85,15 +81,16 @@ Nested `AGENTS.md` files under `src/`, `tests/`, `packages/`, and `packages/pivi
 
 ### Architecture Status
 - **React presentation boundary**: `@pivi/pivi-react` follows the Pivi product and owns chat, settings, and inline-edit presentation independently of a note-host SDK. `src/app` owns Obsidian lifecycle shells, the injected `PresentationPlatform` (localized host/workspace/secure-storage terminology, icons, and tooltips), host tool/integration/featured-skill descriptors, and concrete feature-port adapters (`createChatUiPorts` / `createSettingsUiPorts`). React ports use host-neutral `workspace` / `secureStorage` names, and React-owned DOM/CSS use only `pivi-*` classes plus `--pivi-host-*` theme tokens. Application-facing `ChatPorts` are owned by `@pivi/pivi-agent-core/runtime/chatPorts` and are captured by the app-owned imperative adapter closure; `mountChatView` never imports, receives, or forwards them, while `ChatShell` consumes snapshots/actions. Live chrome flows through immutable `ChatUiStore` snapshots, while virtualized messages use `ChatProjectionStore` structure subscriptions for row shells and reconciled block/tool subscriptions for hot interiors; each subagent remains the nested snapshot on its stable tool entity. Unchanged entity identities are preserved across whole-message upserts. `ChatState` emits one sequenced in-memory projection event plane, while the store rejects ownership/order anomalies and publishes active visible work by owner-window animation frame or hidden/inactive work by a 250 ms owner-realm timer. `ActiveChatUiBridge` selects both stores plus explicit portal/viewport targets and marks projection surface activity. Product UI may reach React only through the exact `store`, `inline-edit`, and `context-badges` presentation subpaths; mention parsing, slash matching, streaming-math transforms, and usage projection live in core domain subpaths. React snapshots stay free of DOM/runtime objects; Obsidian Markdown, CodeMirror, uncontrolled contenteditable, rich tool bodies, and stored nested subagents remain explicit imperative adapters mounted into isolated empty containers and updated in place for a stable entity generation.
+- **Settings search compatibility**: `PiviSettingTabHost` exposes localized declarative setting metadata for Obsidian 1.13 settings search while retaining `display()` for the 1.12 minimum. Both routes share the same React mount, generation guard, and disposal logic; locale changes refresh the declarative index.
 - **Registration-first lifecycle**: plugin load reads required settings and registers views/commands/settings before workspace I/O. A single-flight, retryable workspace readiness promise starts from a visible surface or `onLayoutReady`; fully initialized services are injected into mounts. Unload invalidates in-flight initialization and disposes instance-owned MCP OAuth, provider, bridge, and connection-pool resources, including connections that complete during shutdown.
 - **Pi-only Architecture**: `src/main.ts` is the Obsidian plugin composition root; `src/app/` owns lifecycle, service graph, commands, views, and workspace services; `src/ui/chat/` owns chat runtime orchestration and imperative adapters, while `src/ui/inline-edit/` owns the app-side CodeMirror bridge. Chat runtime/session/model/catalog/settings capabilities arrive only through core-owned application `ChatPorts`; its `PiviChatHost` contains only the Obsidian `app`. Wide settings, facades, view enumeration, and tab-state persistence stay on composition-only `PiviChatCompositionHost`. App code controls a mounted chat view through semantic `PiviChatViewHandle.commands` / `.maintenance` operations and must not inspect `TabManager`, `TabData`, controller, UI, or DOM aggregates; `ImperativeChatAdapter` is the sole owner allowed to translate those semantic operations onto the internal graph. App composition reaches the concrete Pi engine through `@pivi/pivi-agent-core/engine/pi`; React settings consume React-owned `SettingsPorts` implemented by app wiring, while product orchestration reaches Pi through injected `ChatPorts`, `PiChatService` / `AuxQueryRunner`, and other non-engine `@pivi/*` APIs.
 - **Pivi Agent Core Package**: `@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for reusable agent foundations. It exposes package namespaces (`foundation`, `tools`, `session`, `mcp`, `skills`, `context`, `prompt`, `runtime`, `engine`, `auth`, `plugins`, `ports`, and `workspace`) plus the Pi engine implementation under `engine/pi`; concrete host/tool wiring stays in app and adapter packages.
 - **Pi Engine**: Located in `packages/pivi-agent-core/src/engine/pi/`, the Pi engine owns in-process `Agent` construction, pi-ai model/provider setup, Pi chat runtime, settings/auth facades over canonical ports, tool adapters, JSONL compatibility, and auxiliary query runners.
-- **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. Settings enable/disable owns availability; the system prompt auto-lists enabled servers/tools. Optional `/server` slash tokens remain composer emphasis (`/server` → `/server MCP` in the API prompt). Tools are prefetched on plugin startup and MCP settings save.
+- **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. Settings enable/disable owns availability; the system prompt auto-lists enabled servers/tools. Optional `/server` slash tokens remain composer emphasis (`/server` → `/server MCP` in the API prompt). Startup/settings prefetch warms enabled remote servers only; stdio remains lazy until explicit settings diagnostics or the agent's first search/list/call.
 - **External read tools**: `obsidian_read_external` and `obsidian_list_external` read/list files by absolute path outside the vault using `@pivi/obsidian-host/externalFileApi`. They require `allowExternalRead` plus at least one allowed external directory from the device-local settings overlay or the current turn's external context folders; host-side realpath containment prevents reads outside those roots. Absolute paths never enter synced `.pivi/settings.json` or session JSONL; Obsidian's public vault-scoped local-storage API supplies the per-device cache and historical UI overlay.
 - **Optional Bash tool**: `obsidian_bash` is disabled by default and controlled by the Bash tool toggle (`allowBash`) plus `bashAllowlist`. It accepts one allowlisted single-line command only and rejects shell control syntax before invoking `@pivi/obsidian-host/systemProcessRunner`.
 - **UI-package i18n/styles**: Locale runtime and JSON live in `packages/pivi-react/src/i18n/`; app-owned imperative adapters share the translator through `@/app/i18n`, while React roots receive the same instance through `I18nProvider`. CSS source and its ordered manifest live in `packages/pivi-react/styles/` and still build to the root `styles.css` release artifact via `npm run build:css`.
-- **CLI, Web Search, Model, and Subagent Settings**: Pivi settings support official CLI integration settings (`cliEnabled`, `cliPath`, `cliTimeoutMs` for tools like tasks and history), an ordered Web provider queue (`webSearchTools.providerOrder` / `disabledProviders`) shared by WebSearch and WebFetch across Brave, Tavily, Exa, and AnySearch, a sortable model-provider queue whose `addedProviders` order also controls composer model groups, and Subagents limits/toggles (`subagents.enabled`, `subagents.maxConcurrentSubagents`, `subagents.allowBackground`). Provider failures fall through in user order; Exa public MCP and direct HTTP remain fixed terminal fallbacks for search and fetch respectively. The background subagent limit is plugin-wide across tabs: admission reserves a slot atomically before async agent construction, overflow waits FIFO, and completed-job retention is independent of concurrency. Composer chrome never mirrors active subagent state.
+- **CLI, Web Search, Model, and Subagent Settings**: Pivi settings support default-off official CLI integration settings (`cliEnabled`, `cliPath`, `cliTimeoutMs` for tools like tasks and history), an ordered Web provider queue (`webSearchTools.providerOrder` / `disabledProviders`) shared by WebSearch and WebFetch across Brave, Tavily, Exa, and AnySearch, a sortable model-provider queue whose `addedProviders` order also controls composer model groups, and Subagents limits/toggles (`subagents.enabled`, `subagents.maxConcurrentSubagents`, `subagents.allowBackground`). Provider failures fall through in user order; Exa public MCP and direct HTTP remain fixed terminal fallbacks for search and fetch respectively. The background subagent limit is plugin-wide across tabs: admission reserves a slot atomically before async agent construction, overflow waits FIFO, and completed-job retention is independent of concurrency. Composer chrome never mirrors active subagent state.
 
 ### Repo terminology glossary
 
@@ -103,11 +100,11 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 
 | Term | Meaning | Use in code/docs | Avoid / legacy wording |
 |---|---|---|---|
-| **PiChatService** | Narrow UI/app-facing contract for the one Pi chat lifecycle: prepare turns, stream, sync session, rewind, cleanup. | UI and app service typing; only contract product UI may depend on for chat. | Generic `PiChatService` as a new abstraction. |
+| **PiChatService** | Narrow UI/app-facing contract for the one Pi chat lifecycle: prepare turns, stream, sync session, rewind, cleanup. | UI and app service typing; only contract product UI may depend on for chat. | Generic `ChatService` names or direct Pi runtime dependencies. |
 | **PiChatRuntime** | Concrete `PiChatService` implementation backed by an in-process Pi `Agent`. Constructed only in app composition (`createChatService`). | Runtime implementation, app factories, and engine tests. | Importing `PiChatRuntime` from `src/ui/**`. |
 | **Pi engine subpath** | `@pivi/pivi-agent-core/engine/pi`, the owner of low-level Pi SDK imports, Pi prompts consumption, event adaptation, auth/model helpers, auxiliary queries, tool adaptation, and Obsidian-safe Pi SDK shims. | Package boundary docs and imports. | Scattering raw `@earendil-works/*` imports into UI/tools/host packages. |
 | **Pivi ToolSpec** | Minimal tool protocol type owned by `@pivi/pivi-agent-core/tools`; concrete implementations return `ToolSpec` values before runtime adaptation. | Tool protocol, Obsidian tools, runtime registry. | Raw Pi `AgentTool` outside `@pivi/pivi-agent-core/engine/pi`. |
-| **ObsidianHost** | Host aggregate in `@pivi/obsidian-host` for the vault API, vault/home file stores, shared/secret storage, and vault identity. | Obsidian-facing package boundaries. | Treating workspace/editor UI capabilities as part of this aggregate, or importing Obsidian APIs in platform-neutral packages. |
+| **Obsidian host package** | `@pivi/obsidian-host`, the adapter package for vault APIs, file stores, settings persistence, shared/secret storage, host context, paths, and renderer compatibility. | Obsidian-facing package boundaries and concrete host adapters. | Inventing a monolithic `ObsidianHost` aggregate, treating workspace/editor UI as host context, or importing Obsidian APIs in platform-neutral packages. |
 | **Obsidian tool package** | `@pivi/obsidian-tools`, the concrete implementation package for Obsidian-backed Pivi tools. | Tool execution docs and imports. | Putting Obsidian tool execution in `@pivi/pivi-agent-core/tools` or UI renderers. |
 | **Auxiliary query** | Short Pi run for title generation, refine, or inline edit, without a full chat session lifecycle. | Inline edit, title generation, refine flows. | Calling it a session or chat turn unless it persists into session history. |
 | **Runtime state** | In-memory Pi `Agent` / `PiChatRuntime` state for an active tab. Rebuildable from session data. | Runtime sync and hydration. | Treating runtime state as the source of truth. |
@@ -289,9 +286,11 @@ npm run build
 
 # Generate metafile.json for bundle inspection
 npm run analyze:bundle
+```
 
 `build/` owns shared esbuild options, externals, runtime compatibility shims, dynamic `node:` import postprocessing, and Obsidian artifact deployment. Production and bundle analysis must both use `createBuildOptions`; change output rewrite regexes only with a matching fixture and regression test.
 
+```bash
 # Sync package version into manifest.json, versions.json, and the README badge
 node scripts/sync-version.js
 ```
@@ -308,7 +307,7 @@ npm run test -- tests/unit/pi/piMcpBridge.test.ts
 npm run test -- --runInBand tests/unit/pi/piMcpBridge.test.ts
 
 # By test name
-npm run test -- -t "merges toolbar-enabled servers"
+npm run test -- -t "prefetches enabled remote servers but leaves stdio lazy"
 
 # By directory/path fragment
 npm run test -- tests/unit/utils
@@ -319,7 +318,7 @@ npm run test -- tests/unit/utils
 Unless the user opts out, after completing an implementation in this repo the agent should deploy to the configured vault and reload Obsidian:
 
 ```bash
-npm run build && obsidian reload
+npm run build && obsidian plugin:reload id=pivi
 ```
 
 Requires `.env.local` with `OBSIDIAN_VAULT` (see manual integration testing below). Optional sanity check: `obsidian dev:errors` (expect `No errors captured.`).
@@ -363,16 +362,16 @@ Run the production build command. The `copy-to-obsidian` esbuild plugin will aut
 npm run build
 ```
 
-#### Step C: Reload Obsidian vault
-Force Obsidian to scan the plugins directory and detect your newly copied/updated community plugin:
-```bash
-obsidian reload
-```
-
-#### Step D: Enable the plugin
-Turn on `pivi` using the CLI:
+#### Step C: Enable the plugin on first install
+Enable `pivi` after the first deployment; this step is not needed for subsequent builds:
 ```bash
 obsidian plugin:enable id=pivi
+```
+
+#### Step D: Reload the plugin
+Reload only `pivi` after subsequent builds so the rest of the vault remains undisturbed:
+```bash
+obsidian plugin:reload id=pivi
 ```
 
 #### Step E: Trigger active commands
@@ -390,59 +389,17 @@ obsidian dev:errors
 
 ---
 
-## 📈 Quality review snapshot
+## 📈 Quality gates and current risks
 
-**Current snapshot:** 2026-07-16. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand`; bundle metrics are refreshed separately by `npm run analyze:bundle`. Global coverage = `src/**` + `packages/*/src/**` (see `jest.config.js` `collectCoverageFrom` / thresholds). Re-run both commands before treating these metrics as release-authoritative after later source changes.
+Keep this section durable. Do not record point-in-time test counts, coverage percentages, bundle byte counts, dated audits, or completed action ledgers here; derive current values from the repository checks and keep historical release evidence in the numbered handbook or archived specs.
 
-### Current metrics
-
-| Metric | Current value |
-|--------|---------------|
-| Test files (`tests/**/*.{test.ts,test.tsx}`) | 246 (234 `.test.ts` + 12 `.test.tsx`); latest full run: 246 suites / 1,898 tests |
-| Coverage — statements / lines (global) | 68.96% / 70.42% (thresholds 61% / 62%) |
-| Coverage — functions / branches (global) | 66.04% / 58.35% (thresholds 58% / 51%) |
-| Coverage — lines (app `src/**` only) | 53.47% (still the weaker surface) |
-| Source files (`src/**/*.ts`) | 202 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
-| CSS `!important` in all build inputs | 0; `build-css.mjs` enforces zero tolerance across the host theme and React styles |
-| ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
-| Silent swallowed async catches (heuristic scan) | ~11 empty/comment-only `.catch` bodies; more comment-only `try/catch` cleanup paths elsewhere |
-| `main.js` bundle size | 3,049,008 bytes on disk after the 2026-07-16 production build |
-| Chat performance regression gates | Real-Obsidian baseline and three-run ceilings are recorded in `docs/11-chat-ui-evolution.md`; Jest locks 100-message pages, ≤20 mounted rows in the fixed 5K viewport, ≤67 commits for the 100KB stream, persistence-free 10-tab switching, and isolated 20-subagent fixture restoration/cleanup |
-
-### Current high-value issues
-1. **Coverage still uneven.** Global lines are 70.42%, but app `src/**` is 53.47%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, navigation-mapping debounce, subagent hydrate retry cancellation/rejection, Activity presentation, individual subagent projection updates, and composer shelf absence now have focused regression tests. Priority gaps remain settings hotkeys/port wiring and the imperative mention controller's wider interaction surface. Do not treat the global percentage as complete chat UI coverage.
-2. ~~Large controller/UI classes (2026-07-03 wave)~~ **Resolved** for the original nine files. **2026-07-13 follow-up:** `TabManager.ts` (~786→604 via `tabManager*.ts` helpers), `createUiPorts.ts` (~607→548), `main.ts` (~516→438). Split further only when next touched.
-3. **`PiChatService` narrowness** remains a standing boundary: keep injected factories; never import `PiChatRuntime` from `src/ui/**` (currently holding). Optional capability methods on `PiChatService` stay intentional where used (`syncThinkingLevel`, `getAuxiliaryModel`, subagent loaders). Dead `tabRuntime` `onReadyStateChange(() => {})` subscription removed (2026-07-13).
-4. ~~Silent cleanup catches and inconsistent Pivi logging~~ **Addressed** (2026-07-14): high-divergence fire-and-forget paths report through the shared `PluginLogger`; intentional best-effort warmups/cleanup remain comment-only.
-5. **`main.js` is now ~2.91 MiB.** The verified artifact is 270,257 bytes (-8.14%) below the earlier 3,319,265-byte baseline. React 18 avoids React 19's unused dynamic script-resource paths, and MCP validation uses the no-codegen provider instead of bundling AJV. **`@google/genai` audit (2026-07-14):** fresh `metafile.json` `bytesInOutput` attributes 284,402 bytes to `@google/genai` and 110,686 bytes to `google-auth-library` (395,088 bytes combined), reached at runtime through `piAiModels.ts` → `googleProvider`; keep both bundled unless a replacement provider shim is introduced.
-6. **The 0.7.0 → HEAD release-candidate matrix has two environment-dependent live rows left.** A deterministic fixture generated by the immutable `0.7.0` tag writer now closes the repository provenance gap without claiming captured user-vault bytes. Live 2026-07-16 checks passed for main/pop-out multi-view ownership, plugin and vault reload, full app quit/relaunch, inline-edit mount/disposal, and the isolated 20-subagent stored workload; deterministic tests explicitly cover the non-interactive 98% near-limit context indicator and its hover label. Hover Editor is not installed in the configured vault, and no MCP OAuth server is configured, so those two live integration rows remain scoped limitations while their automated contracts stay green. See `docs/10-roadmap-release-and-maintenance.md` for the evidence matrix.
-7. ~~Release-review correctness follow-ups~~ **Resolved** (2026-07-14): locale placeholder parity is enforced across catalogs; every JSONL `message_ui` append strips `externalContextPaths`; the Pi shim version is checked against the installed `0.80.6` dependency; malformed startup sessions are isolated; and pre-prompt persistence now fails loudly before the model runs.
-8. ~~Owner-realm and CSS cleanup~~ **Resolved** (2026-07-14): message scrolling schedules through the element's active window, product animations use the `pivi-*` prefix, and the two unused glow animations were removed.
-9. ~~CSS `!important` exceptions~~ **Removed** (2026-07-14): host-theme and React CSS inputs are all zero-tolerance and enforced during `build:css`.
-10. Sentence-case lint is clean (0 warnings); keep new settings/UI copy compliant.
-11. **i18n dead-key gate** is enforced by `scripts/check-i18n-dead-keys.mjs` (also in `npm run check:boundaries`). Remove unused keys from every locale when deleting UI; do not leave orphan catalog entries.
-
-### Prioritized quality actions
-
-| Priority | Action | Target / status |
-|----------|--------|-----------------|
-| P0 | Keep `npm run typecheck && npm run lint && npm run test:coverage && npm run build` green before releases. | Release readiness |
-| P0 | Treat new `any`, `console`, complexity, and max-lines warnings as review blockers unless justified. | Review discipline |
-| P0 | Update this section or the relevant owning `AGENTS.md` when a major quality item is resolved or deliberately deferred. | Avoid stale audit state |
-| P0 | Validate the external-context session migration against authentic 0.7.0 writer output; keep captured-user-vault provenance distinct. | **Done** (2026-07-16) — the immutable `0.7.0` tag writer generated the checked fixture from deterministic synthetic inputs; HEAD integration tests verify migration, restore, privacy-safe device overlay, and byte-idempotent reopen. The fixture is explicitly not captured user data. |
-| P0 | Stress reload, vault close/reload, and app quit while multi-view persistence and workspace disposal run. | **Done** (2026-07-16) — three live views across two owner realms survived plugin reload, vault reload, and full app quit/relaunch with zero captured errors; temporary leaves were removed afterward. |
-| P0 | Verify external absolute paths cannot reach any JSONL append path; add a regression test around the Pi `message_ui` snapshot. | **Done** (2026-07-14) — sanitizer is enforced in `SessionTreeStore.appendMessageUi` and runtime/store tests cover direct writes |
-| P0 | Fix locale placeholder parity and add a test that compares interpolation names, not only catalog key paths. | **Done** (2026-07-14) |
-| P1 | Add regression tests for view activation, native directory picking, queued subagent abort/dynamic capacity, and low-covered imperative controller paths. | **Partial** — requested seams plus slash controller covered; mention controller remains thin |
-| P1 | Finish tab/session lifecycle coverage. | **Done** (2026-07-13) — `sessionControllerLifecycle.test.ts` covers createNew/loadActive/switchTo/save/initializeWelcome; prior TabManager/tabFork/tabRuntime suites remain |
-| P1 | Expand MCP OAuth unhappy-path tests. | **Done** (2026-07-13) — vault/store/service unhappy paths + Settings `McpTab` auth/logout failure alerts (`authFailed` vs `saveReloadFailed`) |
-| P1 | Narrow no-op / optional runtime callbacks. | **Partial** — removed dead `tabRuntime` `onReadyStateChange(() => {})`; optional `PiChatService` capability methods intentionally retained (used) |
-| P1 | Expand stored-history renderer smoke tests. | **Done** (2026-07-13) — `writeEditRenderer.test.ts` + `toolCallAskUserExpanded.test.ts`; React shells + subagent stored render already covered |
-| P2 | Extract small, behavior-named helpers only when touching that flow. | **Done** (2026-07-13) — `TabManager` / `createUiPorts` / `main` reduced; further splits opportunistic |
-| P2 | Add comments/logging for remaining silent cleanup catches. | **Done** (2026-07-13) — high-divergence paths warn/error; intentional warmups stay comment-only |
-| — | ~~Move remaining UI `engine/pi` facades behind app ports~~ **Resolved**: `getUiFacades()` wraps chat UI config, settings projection, model catalog, credential migration. | `piUiFacades`, architecture boundary |
-| — | ~~Sentence-case lint~~ **Resolved** (2026-07-03). `!important` retained intentionally in `tabs.css` + `inline-edit.css` (20 decls). | `packages/pivi-react/styles/**`, settings UI |
-| — | ~~Split max-lines files and reduce complexity~~ **Resolved** (2026-07-03 + 2026-07-13 follow-up). | `src/ui/chat/**`, `src/app/ui/**`, `src/main.ts` |
+- **Release readiness:** keep `npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build && npm run check:bundle-size` green. Configuration files and CI are the source of truth for thresholds.
+- **Review discipline:** treat new `any`, direct production `console` calls, complexity, and max-lines warnings as review blockers unless the owning code documents a concrete reason.
+- **Coverage risk:** app-layer imperative settings and mention interactions remain broader than their focused regression coverage. Add behavior-level tests when changing settings hotkey/port wiring or the mention controller; do not infer surface completeness from global coverage alone.
+- **Chat performance:** keep deterministic Jest invariants and the real-Obsidian measurement protocol aligned with `docs/11-chat-ui-evolution.md`; do not publish timing, memory, or bundle claims without a fresh measurement.
+- **Release evidence:** keep migration provenance and environment-dependent live verification in `docs/10-roadmap-release-and-maintenance.md`, not in this operational guide.
+- **CSS and UI copy:** `build-css.mjs` enforces zero `!important` across build inputs; Obsidian sentence-case lint and `scripts/check-i18n-dead-keys.mjs` must remain green.
+- **Service boundary:** preserve the narrow injected `PiChatService`; never import `PiChatRuntime` from `src/ui/**`.
 
 ---
 
@@ -453,7 +410,7 @@ obsidian dev:errors
 3. **UI over service contracts**: `src/ui/**` may use `PiChatService` / `AuxQueryRunner` from `@pivi/pivi-agent-core/runtime`, injected core-owned `ChatPorts`, and the `app`-only `PiviChatHost`. Chat runtime/session/model/catalog/settings behavior must use `ChatPorts`; `PiviChatCompositionHost` and `PiviSettingsHost` stay in app composition. UI must not import `@pivi/pivi-agent-core/engine/pi/**`, `src/app/workspace/**`, `@/app/ui/**`, or `@pivi/obsidian-host/**` (use `@/app/hostPlatform` instead), and must never call `getPiWorkspace()`, `getUiFacades()`, `saveSettings()`, or `getAllViews()`.
 4. **One-way app → UI composition**: `src/app/workspace/**` must not import `@/ui/**`. Host contracts must not import concrete `PiviViewHost`, app workspace implementation modules, or `engine/pi` types. Composition root (`serviceGraph`, registrations, `src/app/ui`) may import UI modules to mount React roots and wire adapters. Do not inject a settings renderer into the service graph—settings mount only via `PiviSettingTabHost` + `SettingsPorts`.
 5. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
-6. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
+6. **Centralized production logging**: Do not call `console.log`, `console.warn`, or `console.error` directly outside the shared logger/bootstrap boundary. Route actionable warnings and errors through `PluginLogger`; keep intentional best-effort cleanup explicit without dumping user data.
 7. **Pi Dependency Boundary**: `packages/pivi-agent-core/src/engine/pi/` is the Pi SDK boundary. UI, tools, host, MCP, and skills packages depend on Pivi-owned contracts, not raw Pi SDK packages.
 8. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build && npm run check:bundle-size`. Husky pre-commit runs `typecheck` + `lint` + `check:architecture`. CI runs the combined boundary checks before tests and enforces the bundle-size ceiling after the production build.
 9. **Document decisions**: Keep architecture rationale and end-to-end flows in the relevant numbered `docs/` page. Keep enforceable boundaries, local invariants, gotchas, and verification notes in the nearest owning `AGENTS.md`; prefer package-local guidance over growing root guidance.
