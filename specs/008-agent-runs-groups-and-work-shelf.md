@@ -65,7 +65,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Done | WS-02 | jsdom test asserting ordered depths, disclosure semantics, and no nested scroll |
 | WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Done | WS-01, spec 005 WS-04 | Projection and renderer tests over direct, fenced, invalid, and text fixtures |
 | WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Codex | Done | WS-01 | projection/settings/jsdom/app-adapter tests incl. inactive-tab owner navigation |
-| WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | In progress | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
+| WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | Done | WS-01..WS-05 | Full coverage + three corrected real-Obsidian traces |
 
 Guidance for low-context agents:
 
@@ -151,6 +151,14 @@ Guidance for low-context agents:
 - Remaining: full coverage, final bundle-size/build gates, documentation audit, and archival.
 - Next action: run the complete repository verification matrix and record the final evidence.
 
+### 2026-07-16 — WS-06 final verification — Codex
+
+- Full verification passed: `npm run test:coverage -- --runInBand` completed 239 suites / 1,847 tests with 68.93% statements, 58.31% branches, 66.02% functions, and 70.39% lines. `npm run typecheck`, zero-warning `npm run lint`, and `npm run check:boundaries` also passed.
+- Production evidence: `npm run build` deployed the production artifacts; `npm run check:bundle-size` measured `main.js` at 3,071,792 bytes (2.93 MB), leaving 2,171,088 bytes (2.07 MB) below Obsidian's 5 MB cap. `obsidian plugin:reload id=pivi` and `obsidian dev:errors` passed with no captured errors.
+- Interaction substitution: the user approved isolated synthetic tabs instead of reusing the original tabs. Deterministic lifecycle, projection, cross-tab shelf, deferred navigation, session compatibility, owner-realm, and virtual-scroll tests cover the manual matrix; the real Obsidian 20-Agent workload used a disposable tab/session and restored the original tab state byte-for-byte.
+- Documentation audit: durable conclusions are synchronized into `docs/06-subagents-streaming-and-rendering.md`, `docs/08-presentation-settings-and-inline-edit.md`, `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, and the owning core/React/app/chat/rendering guidance. No remaining code or documentation criterion is open.
+- Next action: mark the spec completed, move it to `specs/archive/`, and update the index.
+
 ### 2026-07-15 — Spec creation — coordinator
 
 - Changed: spec drafted from repository exploration (no code changes).
@@ -161,4 +169,8 @@ Guidance for low-context agents:
 
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Delivered a stable derived `AgentRun` read model over the existing durable session trace; React-owned Agent Groups with canonical Activity summaries; accessible in-row timelines with nested depth, objective/prompt, tools, and terminal text; validated Narrative conclusions with plain-text fallback; and a synchronized, default-off Active Work Shelf derived across tabs with semantic owner navigation. JSONL remains authoritative and no second run registry or persisted shelf was introduced.
+
+The implementation intentionally keeps single rich Agent runs on the imperative adapter while grouping consecutive sibling runs in React. The shelf stayed default off after interaction testing and uses a mounted-view cross-tab derivation rather than only the active projection. The requested live walkthrough was replaced, with user approval, by isolated deterministic tabs and a disposable real-Obsidian 20-Agent fixture so no original tab or durable binding was manipulated. A first performance trace incorrectly included original-tab cleanup; the issue and discarded trace are recorded, the harness now stops through a pre-cleanup hook, and three corrected traces satisfy every budget with unchanged tab-state bytes and no residual temporary session.
+
+Final verification on 2026-07-16 passed: 239 Jest suites / 1,847 tests; 68.93% statements, 58.31% branches, 66.02% functions, 70.39% lines; source/test typecheck; zero-warning lint; architecture/package-readme/i18n/spec checks; production CSS/bundle build; 3,071,792-byte `main.js` with 2,171,088 bytes of limit headroom; production plugin reload; and clean Obsidian error capture. Durable behavior, boundaries, settings, terminology, performance protocol/results, and maintenance rules are synchronized into the numbered handbook and layered `AGENTS.md` files listed above.
