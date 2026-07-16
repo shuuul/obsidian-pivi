@@ -531,6 +531,16 @@
         "disconnected": "OpenAI Codex отключён.",
         "loginFailed": "Ошибка входа Codex: {message}"
       },
+      "xai": {
+        "name": "Подписка xAI Grok",
+        "desc": "Войдите с подпиской xAI/Grok. Учётные данные сохраняются в {secureStorageName}.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "xAI подключён.",
+        "disconnected": "xAI отключён.",
+        "loginFailed": "Ошибка входа xAI: {message}"
+      },
       "addSectionLocal": "Локальные",
       "addSectionCustom": "Пользовательский API",
       "addSectionCloud": "Облако",

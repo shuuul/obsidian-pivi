@@ -24,6 +24,7 @@ const MOCK_PROVIDER_IDS = [
   'opencode',
   'opencode-go',
   'openrouter',
+  'xai',
   'xiaomi',
   'xiaomi-token-plan-cn',
   'zai',
@@ -100,6 +101,30 @@ function getMockProviderEnvVar(provider: string): string {
   return map[provider] ?? `${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`;
 }
 
+function mockOAuthLogin(interaction: any, url: string) {
+  interaction.notify({ type: 'auth_url', url });
+  return {
+    type: 'oauth',
+    access: 'mock-access',
+    refresh: 'mock-refresh',
+    expires: Date.now() + 3600_000,
+  };
+}
+
+function mockXaiOAuthLogin(interaction: any) {
+  interaction.notify({
+    type: 'device_code',
+    userCode: 'ABCD-1234',
+    verificationUri: 'https://x.ai/device',
+  });
+  return {
+    type: 'oauth',
+    access: 'mock-xai-access',
+    refresh: 'mock-xai-refresh',
+    expires: Date.now() + 3600_000,
+  };
+}
+
 function mockProvider(id: string): any {
   return {
     id,
@@ -107,20 +132,13 @@ function mockProvider(id: string): any {
     auth: {
       oauth: id === 'openai-codex'
         ? {
-            login: async (interaction: any) => {
-              interaction.notify({
-                type: 'auth_url',
-                url: 'https://auth.openai.com/oauth/authorize',
-              });
-              return {
-                type: 'oauth',
-                access: 'mock-access',
-                refresh: 'mock-refresh',
-                expires: Date.now() + 3600_000,
-              };
-            },
+            login: async (interaction: any) => mockOAuthLogin(interaction, 'https://auth.openai.com/oauth/authorize'),
           }
-        : undefined,
+        : id === 'xai'
+          ? {
+              login: async (interaction: any) => mockXaiOAuthLogin(interaction),
+            }
+          : undefined,
     },
     getModels: () => getModels(id),
   };
@@ -248,6 +266,7 @@ export const openaiCodexProvider = () => mockProvider('openai-codex');
 export const opencodeProvider = () => mockProvider('opencode');
 export const opencodeGoProvider = () => mockProvider('opencode-go');
 export const openrouterProvider = () => mockProvider('openrouter');
+export const xaiProvider = () => mockProvider('xai');
 export const xiaomiProvider = () => mockProvider('xiaomi');
 export const xiaomiTokenPlanCnProvider = () => mockProvider('xiaomi-token-plan-cn');
 export const zaiProvider = () => mockProvider('zai');

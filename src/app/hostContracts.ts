@@ -150,6 +150,9 @@ export interface PiviProviderOAuth {
   hasCodexAuth(): boolean;
   loginCodex(onProgress?: (message: string) => void): Promise<void>;
   logoutCodex(): void;
+  hasProviderOAuth(providerId: string): boolean;
+  loginProviderOAuth(providerId: string, onProgress?: (message: string) => void): Promise<void>;
+  logoutProviderOAuth(providerId: string): void;
 }
 
 export interface PiviWebSearchCredentialStore {

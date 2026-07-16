@@ -83,11 +83,11 @@ describe('deriveProviderReadinessStatus (pivi-agent-core/auth)', () => {
     expect(status.kind).toBe('unavailable');
   });
 
-  it('treats codex as ready when codexConnected is true without a stored credential', () => {
+  it('treats codex as ready when interactive OAuth is connected without a stored credential', () => {
     const status = deriveProviderReadinessStatus({
       providerId: CODEX_OAUTH_PROVIDER_ID,
       piSettings: basePiSettings,
-      codexConnected: true,
+      interactiveOAuthConnected: true,
       modelCount: 1,
     });
 

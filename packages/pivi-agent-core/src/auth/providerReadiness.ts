@@ -1,6 +1,6 @@
 import { parseEnvironmentVariables } from '../foundation/settingsEnv';
 import type { ProviderCredential } from './piProviderCredentials';
-import { CODEX_OAUTH_PROVIDER_ID } from './piProviderCredentials';
+import { isInteractiveOAuthProvider } from './piProviderCredentials';
 import { getProviderEnvVarNames } from './providerEnvVars';
 import { isProviderDisabled } from './providerSecretStorage';
 
@@ -24,7 +24,7 @@ export interface DeriveProviderReadinessOptions {
     environmentVariables: string;
   };
   credential?: ProviderCredential;
-  codexConnected?: boolean;
+  interactiveOAuthConnected?: boolean;
   modelCount?: number;
   now?: number;
   /** Keyless local/custom providers can be ready without a stored credential. */
@@ -51,7 +51,7 @@ export function deriveProviderReadinessStatus(
     providerId,
     piSettings,
     credential,
-    codexConnected,
+    interactiveOAuthConnected,
     modelCount,
     now = Date.now(),
     allowKeyless = false,
@@ -81,8 +81,8 @@ export function deriveProviderReadinessStatus(
     };
   }
 
-  const hasCredential = providerId === CODEX_OAUTH_PROVIDER_ID
-    ? !!codexConnected || !!credential
+  const hasCredential = isInteractiveOAuthProvider(providerId)
+    ? !!interactiveOAuthConnected || !!credential || hasEnvironmentCredential(providerId, piSettings.environmentVariables)
     : !!credential
       || hasEnvironmentCredential(providerId, piSettings.environmentVariables);
 

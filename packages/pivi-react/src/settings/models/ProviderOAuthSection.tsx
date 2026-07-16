@@ -4,29 +4,38 @@ import { useT } from '../../i18n';
 import { useHostTerminology } from '../../platform';
 import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import { SettingRow } from '../controls';
+import { getProviderOAuthSettingsKeys } from './providerOAuthI18n';
 
-export interface CodexSectionProps {
+export interface ProviderOAuthSectionProps {
   readonly models: SettingsModelsPort;
   readonly feedback: SettingsFeedbackPort;
+  readonly providerId: string;
   readonly connected: boolean;
   readonly onChanged: () => void;
 }
 
-/** OpenAI Codex subscription connect/disconnect controls. */
-export function CodexSection({ models, feedback, connected, onChanged }: CodexSectionProps) {
+/** Interactive OAuth connect/disconnect controls for a built-in provider. */
+export function ProviderOAuthSection({
+  models,
+  feedback,
+  providerId,
+  connected,
+  onChanged,
+}: ProviderOAuthSectionProps) {
   const t = useT();
   const { secureStorageName } = useHostTerminology();
   const [pending, setPending] = useState(false);
+  const keys = getProviderOAuthSettingsKeys(providerId);
 
   const connect = async (): Promise<void> => {
     setPending(true);
     try {
-      await models.loginCodex(message => feedback.notify(message));
-      feedback.notify(t('settings.modelsTab.codex.connected'));
+      await models.loginProviderOAuth(providerId, message => feedback.notify(message));
+      feedback.notify(t(keys.connected));
       onChanged();
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : t('common.error');
-      feedback.notify(t('settings.modelsTab.codex.loginFailed', { message }));
+      feedback.notify(t(keys.loginFailed, { message }));
     } finally {
       setPending(false);
     }
@@ -34,8 +43,8 @@ export function CodexSection({ models, feedback, connected, onChanged }: CodexSe
 
   const disconnect = (): void => {
     try {
-      models.logoutCodex();
-      feedback.notify(t('settings.modelsTab.codex.disconnected'));
+      models.logoutProviderOAuth(providerId);
+      feedback.notify(t(keys.disconnected));
       onChanged();
     } catch (cause) {
       feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
@@ -43,13 +52,13 @@ export function CodexSection({ models, feedback, connected, onChanged }: CodexSe
   };
 
   return (
-    <div className="pivi-codex-setting pivi-setting-stack">
-      <SettingRow name={t('settings.modelsTab.codex.name')} description={t('settings.modelsTab.codex.desc', { secureStorageName })}>
+    <div className="pivi-provider-oauth-setting pivi-setting-stack">
+      <SettingRow name={t(keys.name)} description={t(keys.desc, { secureStorageName })}>
         <button type="button" disabled={pending} onClick={() => { void connect(); }}>
-          {connected ? t('settings.modelsTab.codex.reconnect') : t('settings.modelsTab.codex.connect')}
+          {connected ? t(keys.reconnect) : t(keys.connect)}
         </button>
         <button type="button" disabled={pending || !connected} onClick={disconnect}>
-          {t('settings.modelsTab.codex.disconnect')}
+          {t(keys.disconnect)}
         </button>
       </SettingRow>
     </div>

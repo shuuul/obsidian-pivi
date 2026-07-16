@@ -1,6 +1,7 @@
 import {
   CODEX_OAUTH_PROVIDER_ID,
   credentialToApiKey,
+  isInteractiveOAuthProvider,
   isOAuthCredential,
 } from '../../auth/piProviderCredentials';
 import { PluginLogger } from '../../foundation/pluginLogger';
@@ -22,13 +23,23 @@ export function normalizeCodexBrowserAuthUrl(url: string): string {
   return new URL(url).toString();
 }
 
-/** Provider OAuth. v1: OpenAI Codex only; SecretStorage is authoritative. */
+/** Interactive provider OAuth backed by pi-ai login/logout and SecretStorage. */
 export class ProviderOAuthService {
   constructor(
     private readonly credentialStore: ObsidianCredentialStore | null,
     private readonly oauthHost: OAuthFlowHost,
     private readonly legacyAuthStore: ProviderLegacyAuthStore | null = null,
   ) {}
+
+  hasProviderOAuth(providerId: string): boolean {
+    if (providerId === CODEX_OAUTH_PROVIDER_ID) {
+      return this.hasCodexAuth();
+    }
+    if (!isInteractiveOAuthProvider(providerId)) {
+      return false;
+    }
+    return isOAuthCredential(this.credentialStore?.readSync(providerId));
+  }
 
   /** Whether Codex OAuth credentials exist in SecretStorage or legacy vault auth.json. */
   hasCodexAuth(): boolean {
@@ -82,30 +93,50 @@ export class ProviderOAuthService {
     return undefined;
   }
 
-  /** Start OpenAI Codex OAuth through the injected host OAuth flow. */
-  async loginCodex(onProgress?: (message: string) => void): Promise<void> {
+  async loginProviderOAuth(providerId: string, onProgress?: (message: string) => void): Promise<void> {
+    if (!isInteractiveOAuthProvider(providerId)) {
+      throw new Error(`Provider ${providerId} does not support interactive OAuth.`);
+    }
     if (!this.credentialStore) {
       throw new Error('Obsidian SecretStorage is unavailable for provider OAuth.');
     }
 
     await piAiModels.login(
-      CODEX_OAUTH_PROVIDER_ID,
+      providerId,
       'oauth',
       createPiAuthInteraction({
         oauthHost: this.oauthHost,
         onProgress,
-        normalizeAuthUrl: normalizeCodexBrowserAuthUrl,
+        normalizeAuthUrl: providerId === CODEX_OAUTH_PROVIDER_ID
+          ? normalizeCodexBrowserAuthUrl
+          : undefined,
       }),
     );
-    this.clearLegacyCodexCredential();
+    if (providerId === CODEX_OAUTH_PROVIDER_ID) {
+      this.clearLegacyCodexCredential();
+    }
+  }
+
+  logoutProviderOAuth(providerId: string): void {
+    if (!isInteractiveOAuthProvider(providerId)) {
+      return;
+    }
+    void piAiModels.logout(providerId).catch((error: unknown) => {
+      logger.warn(`failed to logout ${providerId} OAuth through pi-ai`, error);
+    });
+    void this.credentialStore?.delete(providerId);
+    if (providerId === CODEX_OAUTH_PROVIDER_ID) {
+      this.clearLegacyCodexCredential();
+    }
+  }
+
+  /** Start OpenAI Codex OAuth through the injected host OAuth flow. */
+  async loginCodex(onProgress?: (message: string) => void): Promise<void> {
+    await this.loginProviderOAuth(CODEX_OAUTH_PROVIDER_ID, onProgress);
   }
 
   logoutCodex(): void {
-    void piAiModels.logout(CODEX_OAUTH_PROVIDER_ID).catch((error: unknown) => {
-      logger.warn('failed to logout Codex OAuth through pi-ai', error);
-    });
-    void this.credentialStore?.delete(CODEX_OAUTH_PROVIDER_ID);
-    this.clearLegacyCodexCredential();
+    this.logoutProviderOAuth(CODEX_OAUTH_PROVIDER_ID);
   }
 
 

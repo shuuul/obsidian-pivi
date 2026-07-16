@@ -19,6 +19,7 @@ const snapshot: SettingsUiSnapshotData = {
 function createModelsPort() {
   return {
     codexProviderId: 'openai-codex',
+    interactiveOAuthProviderIds: ['openai-codex', 'xai'],
     bootstrap: () => ({ minimumHostVersion: '1.11.4', secureStorageAvailable: true }),
     getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
     saveSettings: async () => undefined,
@@ -34,6 +35,9 @@ function createModelsPort() {
     hasCodexAuth: () => false,
     loginCodex: async () => undefined,
     logoutCodex: () => undefined,
+    hasProviderOAuth: () => false,
+    loginProviderOAuth: async () => undefined,
+    logoutProviderOAuth: () => undefined,
     listAddableBuiltinProviders: () => [{ id: 'anthropic', name: 'anthropic', logoSlug: null }],
     listAddableLocalKinds: () => [],
     listCustomKinds: () => [],
@@ -451,12 +455,12 @@ describe('React settings foundation', () => {
   it('calls provider credential and Codex OAuth ports from an expanded card', async () => {
     const setApiKey = jest.fn(async () => undefined);
     const clearCredential = jest.fn(async () => undefined);
-    const loginCodex = jest.fn(async () => undefined);
+    const loginProviderOAuth = jest.fn(async () => undefined);
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       setApiKey,
       clearCredential,
-      loginCodex,
+      loginProviderOAuth,
       getSettings: () => ({ addedProviders: ['openai', 'openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
       getCredentialKind: (id: string) => (id === 'openai' ? 'api_key' : null),
     });
@@ -472,23 +476,46 @@ describe('React settings foundation', () => {
     expect(setApiKey).toHaveBeenCalledWith('openai', 'secret');
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(clearCredential).toHaveBeenCalledWith('openai');
-    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Connect' }).at(-1)!);
     await act(async () => undefined);
-    expect(loginCodex).toHaveBeenCalled();
+    expect(loginProviderOAuth).toHaveBeenCalledWith('openai-codex', expect.any(Function));
   });
   it('keeps Codex actions below the sign-in guidance', () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
-      hasCodexAuth: () => true,
+      hasProviderOAuth: () => true,
       getSettings: () => ({ addedProviders: ['openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
 
-    const codexSetting = container.querySelector<HTMLElement>('.pivi-codex-setting');
+    const codexSetting = container.querySelector<HTMLElement>('.pivi-provider-oauth-setting');
     expect(codexSetting).not.toBeNull();
     expect(within(codexSetting!).getByText('Sign in with your ChatGPT/Codex subscription. Credentials are stored in secure storage.')).toBeInTheDocument();
     expect(within(codexSetting!).queryByText(/auth\.json/)).toBeNull();
     expect(within(codexSetting!).getByRole('button', { name: 'Reconnect' })).toBeInTheDocument();
+  });
+  it('calls xAI OAuth connect from an expanded provider card', async () => {
+    const loginProviderOAuth = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      loginProviderOAuth,
+      getSettings: () => ({
+        addedProviders: ['xai'],
+        disabledProviders: [],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getProviderDisplayName: (id: string) => (id === 'xai' ? 'xAI' : id),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    fireEvent.click(screen.getByText('xAI'));
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    await act(async () => undefined);
+    expect(loginProviderOAuth).toHaveBeenCalledWith('xai', expect.any(Function));
   });
   it('fetches custom provider models and saves checklist changes', async () => {
     const fetchCustomProviderModels = jest.fn(async () => ({ count: 1 }));

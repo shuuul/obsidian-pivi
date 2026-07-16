@@ -60,6 +60,7 @@ describe('piAiCompat shim', () => {
       'opencode',
       'opencode-go',
       'openrouter',
+      'xai',
       'xiaomi',
       'xiaomi-token-plan-cn',
       'zai',

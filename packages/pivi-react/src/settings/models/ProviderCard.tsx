@@ -6,10 +6,10 @@ import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { ProviderReorderHandleProps } from '../providers/useProviderReorder';
-import { CodexSection } from './CodexSection';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
 import { ProviderCredentials } from './ProviderCredentials';
+import { ProviderOAuthSection } from './ProviderOAuthSection';
 import { STATUS_DESC_KEYS, STATUS_LABEL_KEYS } from './statusLabels';
 
 export interface ProviderCardProps {
@@ -61,6 +61,7 @@ export function ProviderCard({
   const logoSlug = models.getProviderLogoSlug(providerId);
   const readiness = models.getReadiness(providerId);
   const allowKeyless = !!custom && custom.apiKeyRequired === false;
+  const isInteractiveOAuth = models.interactiveOAuthProviderIds.includes(providerId);
   const isCodex = providerId === models.codexProviderId;
 
   const stop = (event: MouseEvent): void => {
@@ -123,7 +124,7 @@ export function ProviderCard({
     }
   };
 
-  const codexConnected = isCodex && models.hasCodexAuth();
+  const oauthConnected = isInteractiveOAuth && models.hasProviderOAuth(providerId);
   const style = dragging
     ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
     : undefined;
@@ -174,8 +175,13 @@ export function ProviderCard({
             <CustomProviderPanel models={models} feedback={feedback} config={custom} onChanged={onChanged} onError={onError} />
             <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
           </>
-        ) : isCodex ? (
-          <CodexSection models={models} feedback={feedback} connected={codexConnected} onChanged={onChanged} />
+        ) : isInteractiveOAuth ? (
+          <>
+            {!isCodex ? (
+              <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
+            ) : null}
+            <ProviderOAuthSection models={models} feedback={feedback} providerId={providerId} connected={oauthConnected} onChanged={onChanged} />
+          </>
         ) : (
           <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
         )}

@@ -1,4 +1,4 @@
-import { CODEX_OAUTH_PROVIDER_ID, getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { CODEX_OAUTH_PROVIDER_ID, getPiAiCredentialSecretId, INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { isBuiltinPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
@@ -36,6 +36,7 @@ export function createSettingsModelsPort(
 ): SettingsModelsPort {
   return {
     codexProviderId: CODEX_OAUTH_PROVIDER_ID,
+    interactiveOAuthProviderIds: INTERACTIVE_OAUTH_PROVIDER_IDS,
     bootstrap() {
       const secretStorage = host.app.secretStorage;
       const secureStorageAvailable = isSecretStorageAvailable(secretStorage);
@@ -102,14 +103,14 @@ export function createSettingsModelsPort(
       const piSettings = getPiAgentSettings(host.settings);
       const custom = piSettings.customProviders.find(provider => provider.id === providerId);
       const allowKeyless = !!custom && custom.apiKeyRequired === false;
-      const codexConnected = providerId === CODEX_OAUTH_PROVIDER_ID
-        ? (workspace.providerOAuth?.hasCodexAuth() ?? false)
+      const interactiveOAuthConnected = INTERACTIVE_OAUTH_PROVIDER_IDS.includes(providerId as typeof INTERACTIVE_OAUTH_PROVIDER_IDS[number])
+        ? (workspace.providerOAuth?.hasProviderOAuth(providerId) ?? false)
         : false;
       return deriveProviderReadinessStatus({
         providerId,
         piSettings,
         credential: workspace.credentialStore?.readSync(providerId),
-        codexConnected,
+        interactiveOAuthConnected,
         modelCount: uiFacades.listModelsForProvider(providerId).length,
         allowKeyless,
       }).kind;
@@ -158,17 +159,32 @@ export function createSettingsModelsPort(
     async clearCredential(providerId) {
       await workspace.credentialStore?.delete(providerId);
     },
-    hasCodexAuth: () => workspace.providerOAuth?.hasCodexAuth() ?? false,
+    hasCodexAuth: () => workspace.providerOAuth?.hasProviderOAuth(CODEX_OAUTH_PROVIDER_ID) ?? false,
     async loginCodex(onProgress) {
       const providerOAuth = workspace.providerOAuth;
       if (!providerOAuth) throw new Error('Provider OAuth is unavailable.');
-      await providerOAuth.loginCodex(onProgress);
+      await providerOAuth.loginProviderOAuth(CODEX_OAUTH_PROVIDER_ID, onProgress);
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.invalidateSlashCatalog();
       }
     },
     logoutCodex() {
-      workspace.providerOAuth?.logoutCodex();
+      workspace.providerOAuth?.logoutProviderOAuth(CODEX_OAUTH_PROVIDER_ID);
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.invalidateSlashCatalog();
+      }
+    },
+    hasProviderOAuth: providerId => workspace.providerOAuth?.hasProviderOAuth(providerId) ?? false,
+    async loginProviderOAuth(providerId, onProgress) {
+      const providerOAuth = workspace.providerOAuth;
+      if (!providerOAuth) throw new Error('Provider OAuth is unavailable.');
+      await providerOAuth.loginProviderOAuth(providerId, onProgress);
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.invalidateSlashCatalog();
+      }
+    },
+    logoutProviderOAuth(providerId) {
+      workspace.providerOAuth?.logoutProviderOAuth(providerId);
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.invalidateSlashCatalog();
       }

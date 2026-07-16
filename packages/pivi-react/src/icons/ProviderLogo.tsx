@@ -12,6 +12,7 @@ import openaiSvg from '@lobehub/icons-static-svg/icons/openai.svg';
 import opencodeSvg from '@lobehub/icons-static-svg/icons/opencode.svg';
 import openrouterSvg from '@lobehub/icons-static-svg/icons/openrouter.svg';
 import tavilySvg from '@lobehub/icons-static-svg/icons/tavily.svg';
+import xaiSvg from '@lobehub/icons-static-svg/icons/xai.svg';
 import xiaomiMiMoSvg from '@lobehub/icons-static-svg/icons/xiaomimimo.svg';
 import zaiSvg from '@lobehub/icons-static-svg/icons/zai.svg';
 import { type CSSProperties, useEffect, useRef } from 'react';
@@ -42,6 +43,7 @@ export const PROVIDER_LOGOS: Readonly<Record<string, string>> = {
   opencode: svgToDataUri(opencodeSvg),
   openrouter: svgToDataUri(openrouterSvg),
   tavily: svgToDataUri(tavilySvg),
+  xai: svgToDataUri(xaiSvg),
   xiaomimimo: svgToDataUri(xiaomiMiMoSvg),
   zai: svgToDataUri(zaiSvg),
 };

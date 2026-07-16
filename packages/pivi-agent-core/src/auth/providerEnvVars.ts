@@ -29,6 +29,9 @@ export function getProviderEnvVarNames(providerId: string): ProviderEnvVarNames 
   if (providerId === 'opencode-go') {
     return { apiKeyVar: 'OPENCODE_API_KEY' };
   }
+  if (providerId === 'xai') {
+    return { apiKeyVar: 'XAI_API_KEY' };
+  }
 
   const prefix = providerId.replace(/-/g, '_').toUpperCase();
   return { apiKeyVar: `${prefix}_API_KEY` };

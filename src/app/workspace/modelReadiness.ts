@@ -1,4 +1,4 @@
-import { CODEX_OAUTH_PROVIDER_ID } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
 import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 import type { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
@@ -36,8 +36,8 @@ export function derivePiModelReadinessStatus(
   }
 
   const piSettings = getPiAgentSettings(settings);
-  const codexConnected = providerId === CODEX_OAUTH_PROVIDER_ID
-    ? context.providerOAuth.hasCodexAuth()
+  const interactiveOAuthConnected = (INTERACTIVE_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId)
+    ? context.providerOAuth.hasProviderOAuth(providerId)
     : false;
 
   const custom = piSettings.customProviders.find((provider) => provider.id === providerId);
@@ -47,7 +47,7 @@ export function derivePiModelReadinessStatus(
     providerId,
     piSettings,
     credential: context.credentialStore?.readSync(providerId),
-    codexConnected,
+    interactiveOAuthConnected,
     modelCount: PI_AI_MODELS_CACHE.has(model) ? 1 : 0,
     allowKeyless,
   });

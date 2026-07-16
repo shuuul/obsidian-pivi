@@ -17,6 +17,7 @@ import { openaiCodexProvider } from '@earendil-works/pi-ai/providers/openai-code
 import { opencodeProvider } from '@earendil-works/pi-ai/providers/opencode';
 import { opencodeGoProvider } from '@earendil-works/pi-ai/providers/opencode-go';
 import { openrouterProvider } from '@earendil-works/pi-ai/providers/openrouter';
+import { xaiProvider } from '@earendil-works/pi-ai/providers/xai';
 import { xiaomiProvider } from '@earendil-works/pi-ai/providers/xiaomi';
 import { xiaomiTokenPlanCnProvider } from '@earendil-works/pi-ai/providers/xiaomi-token-plan-cn';
 import { zaiProvider } from '@earendil-works/pi-ai/providers/zai';
@@ -66,6 +67,7 @@ function installSupportedProviders(models: MutableModels): void {
   models.setProvider(opencodeProvider());
   models.setProvider(opencodeGoProvider());
   models.setProvider(openrouterProvider());
+  models.setProvider(xaiProvider());
   models.setProvider(xiaomiProvider());
   models.setProvider(xiaomiTokenPlanCnProvider());
   models.setProvider(zaiProvider());

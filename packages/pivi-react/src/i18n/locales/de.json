@@ -531,6 +531,16 @@
         "disconnected": "OpenAI Codex getrennt.",
         "loginFailed": "Codex-Anmeldung fehlgeschlagen: {message}"
       },
+      "xai": {
+        "name": "xAI-Grok-Abo",
+        "desc": "Mit xAI/Grok-Abo anmelden. Anmeldedaten im {secureStorageName}.",
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen",
+        "connected": "xAI verbunden.",
+        "disconnected": "xAI getrennt.",
+        "loginFailed": "xAI-Anmeldung fehlgeschlagen: {message}"
+      },
       "addSectionLocal": "Lokal",
       "addSectionCustom": "Benutzerdefinierte API",
       "addSectionCloud": "Cloud",

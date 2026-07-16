@@ -549,6 +549,16 @@
         "disconnected": "OpenAI Codex disconnected.",
         "loginFailed": "Codex login failed: {message}"
       },
+      "xai": {
+        "name": "xAI Grok subscription",
+        "desc": "Sign in with your xAI/Grok subscription. Credentials are stored in {secureStorageName}.",
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect",
+        "connected": "xAI connected.",
+        "disconnected": "xAI disconnected.",
+        "loginFailed": "xAI login failed: {message}"
+      },
       "authHeadingOptional": "Authentication (optional)",
       "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in {secureStorageName} as {secretId} when set.",
       "apiKeyOptionalPlaceholder": "Optional API key..."

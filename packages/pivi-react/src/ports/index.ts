@@ -65,6 +65,8 @@ export interface SettingsWebProviderSnapshot {
 export interface SettingsModelsPort {
   /** Provider id for the OpenAI Codex OAuth provider. */
   readonly codexProviderId: string;
+  /** Built-in providers that expose interactive OAuth in settings. */
+  readonly interactiveOAuthProviderIds: readonly string[];
   /** Run stored-credential migration once and report secure-storage availability. */
   bootstrap(): ModelsBootstrapInfo;
   getSettings(): PiAgentSettingsView;
@@ -81,6 +83,9 @@ export interface SettingsModelsPort {
   hasCodexAuth(): boolean;
   loginCodex(onProgress?: (message: string) => void): Promise<void>;
   logoutCodex(): void;
+  hasProviderOAuth(providerId: string): boolean;
+  loginProviderOAuth(providerId: string, onProgress?: (message: string) => void): Promise<void>;
+  logoutProviderOAuth(providerId: string): void;
   listAddableBuiltinProviders(): readonly ModelsAddableProvider[];
   listAddableLocalKinds(): readonly ModelsAddableKind[];
   listCustomKinds(): readonly ModelsAddableKind[];

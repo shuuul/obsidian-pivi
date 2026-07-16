@@ -536,6 +536,16 @@
         "disconnected": "OpenAI Codex 已断开。",
         "loginFailed": "Codex 登录失败：{message}"
       },
+      "xai": {
+        "name": "xAI Grok 订阅",
+        "desc": "使用你的 xAI/Grok 订阅登录。凭据保存在{secureStorageName}中。",
+        "connect": "连接",
+        "reconnect": "重新连接",
+        "disconnect": "断开连接",
+        "connected": "xAI 已连接。",
+        "disconnected": "xAI 已断开。",
+        "loginFailed": "xAI 登录失败：{message}"
+      },
       "addSectionLocal": "本地",
       "addSectionCustom": "自定义 API",
       "addSectionCloud": "云服务",

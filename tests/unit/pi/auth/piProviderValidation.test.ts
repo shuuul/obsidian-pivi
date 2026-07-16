@@ -23,6 +23,7 @@ describe('pi provider validation', () => {
       'opencode',
       'opencode-go',
       'openrouter',
+      'xai',
       'xiaomi',
       'xiaomi-token-plan-cn',
       'zai',

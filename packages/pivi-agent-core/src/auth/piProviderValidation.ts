@@ -12,6 +12,7 @@ export const SUPPORTED_PI_PROVIDER_IDS = [
   'opencode',
   'opencode-go',
   'openrouter',
+  'xai',
   'xiaomi',
   'xiaomi-token-plan-cn',
   'zai',

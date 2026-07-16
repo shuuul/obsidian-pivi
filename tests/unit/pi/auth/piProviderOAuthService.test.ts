@@ -8,6 +8,9 @@ import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels'
 import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import {
   CODEX_OAUTH_PROVIDER_ID,
+  XAI_PROVIDER_ID,
+} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import {
   normalizeCodexBrowserAuthUrl,
   ProviderOAuthService,
 } from '@pivi/pivi-agent-core/engine/pi/piProviderOAuthService';
@@ -115,6 +118,23 @@ describe('ProviderOAuthService', () => {
     expect(oauthHost.openAuthUrl).toHaveBeenCalledWith(
       normalizeCodexBrowserAuthUrl('https://auth.openai.com/oauth/authorize'),
     );
+  });
+
+  it('logs in through xAI device-code OAuth and stores credentials', async () => {
+    const app = createMockApp({ vaultBasePath: tempDir });
+    const store = new ObsidianCredentialStore(app.secretStorage);
+    configurePiAiModels({ credentials: store });
+    const oauthHost = createMockOAuthFlowHost();
+    const service = new ProviderOAuthService(store, oauthHost);
+
+    await service.loginProviderOAuth(XAI_PROVIDER_ID);
+
+    expect(store.readSync(XAI_PROVIDER_ID)).toMatchObject({
+      type: 'oauth',
+      access: 'mock-xai-access',
+      refresh: 'mock-xai-refresh',
+    });
+    expect(oauthHost.openAuthUrl).toHaveBeenCalledWith('https://x.ai/device');
   });
 
   it('treats the injected legacy auth path as optional', () => {

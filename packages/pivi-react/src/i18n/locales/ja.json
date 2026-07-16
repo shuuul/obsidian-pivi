@@ -531,6 +531,16 @@
         "disconnected": "OpenAI Codex を切断しました。",
         "loginFailed": "Codex ログインに失敗：{message}"
       },
+      "xai": {
+        "name": "xAI Grok サブスクリプション",
+        "desc": "xAI/Grok サブスクリプションでサインインします。資格情報は {secureStorageName} に保存されます。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "xAI に接続しました。",
+        "disconnected": "xAI を切断しました。",
+        "loginFailed": "xAI ログインに失敗：{message}"
+      },
       "addSectionLocal": "ローカル",
       "addSectionCustom": "カスタム API",
       "addSectionCloud": "クラウド",

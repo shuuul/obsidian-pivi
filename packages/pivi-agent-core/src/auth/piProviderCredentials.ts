@@ -7,6 +7,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 const PI_AI_CREDENTIAL_KIND = 'credential';
 
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
+export const XAI_PROVIDER_ID = 'xai';
+
+export const INTERACTIVE_OAUTH_PROVIDER_IDS = [
+  CODEX_OAUTH_PROVIDER_ID,
+  XAI_PROVIDER_ID,
+] as const;
+
+export type InteractiveOAuthProviderId = (typeof INTERACTIVE_OAUTH_PROVIDER_IDS)[number];
+
+export function isInteractiveOAuthProvider(providerId: string): providerId is InteractiveOAuthProviderId {
+  return (INTERACTIVE_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId);
+}
 
 export interface ApiKeyProviderCredential {
   type: 'api_key';

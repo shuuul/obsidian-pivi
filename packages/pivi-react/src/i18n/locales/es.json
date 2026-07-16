@@ -531,6 +531,16 @@
         "disconnected": "OpenAI Codex desconectado.",
         "loginFailed": "Error de inicio de sesión de Codex: {message}"
       },
+      "xai": {
+        "name": "Suscripción xAI Grok",
+        "desc": "Inicia sesión con tu suscripción de xAI/Grok. Las credenciales se guardan en el {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "xAI conectado.",
+        "disconnected": "xAI desconectado.",
+        "loginFailed": "Error de inicio de sesión de xAI: {message}"
+      },
       "addSectionLocal": "Local",
       "addSectionCustom": "API personalizada",
       "addSectionCloud": "Nube",
