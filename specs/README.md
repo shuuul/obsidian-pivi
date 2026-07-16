@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [008-agent-runs-groups-and-work-shelf.md](008-agent-runs-groups-and-work-shelf.md) | Active | First-class AgentRun projection, Agent Groups, timeline/inspector, and the optional default-off Active Work Shelf. |
 
 ## Archived specs
 
@@ -23,6 +22,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [005-checkpoint-and-agent-report-schemas.md](archive/005-checkpoint-and-agent-report-schemas.md) | 2026-07-16 | Additive versioned checkpoints and compact structured Agent reports with terminal-text fallback and old-session compatibility. |
 | [006-activity-and-memory-visual-language.md](archive/006-activity-and-memory-visual-language.md) | 2026-07-16 | Canonical localized Activity rows and statuses, truthful elapsed timing, and approximation-marked Memory boundaries for compaction and older history. |
 | [007-context-inspector-and-checkpoint-presentation.md](archive/007-context-inspector-and-checkpoint-presentation.md) | 2026-07-16 | Conservative context envelope and compaction headroom, an estimate-labeled owner-realm Context Inspector, and expandable structured or legacy checkpoint Memory boundaries. |
+| [008-agent-runs-groups-and-work-shelf.md](archive/008-agent-runs-groups-and-work-shelf.md) | 2026-07-16 | Stable AgentRun projections, grouped Activity/timeline presentation, structured Narrative conclusions, and a default-off cross-tab Active Work Shelf. |
 
 ## Numbering and files
 

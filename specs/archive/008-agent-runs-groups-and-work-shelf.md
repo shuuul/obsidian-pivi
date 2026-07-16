@@ -1,7 +1,7 @@
 ---
 id: "008"
 title: "First-class Agent runs, Agent Groups, timeline, and Active Work Shelf"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-16
 coordinator: "Codex"
