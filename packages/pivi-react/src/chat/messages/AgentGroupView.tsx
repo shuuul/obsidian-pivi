@@ -158,7 +158,7 @@ function AgentRunRow({ run }: { readonly run: PresentedRun }) {
               ))}
             </ol>
           ) : null}
-          {run.terminalResult?.text ? (
+          {!run.report && run.terminalResult?.text ? (
             <div className="pivi-agent-run-result">
               <span className="pivi-agent-run-result-label">{t('chat.activity.result')}</span>
               <p>{run.terminalResult.text}</p>
@@ -170,9 +170,53 @@ function AgentRunRow({ run }: { readonly run: PresentedRun }) {
   );
 }
 
+function AgentConclusion({ run }: { readonly run: PresentedRun }) {
+  const t = useT();
+  const report = run.report;
+  if (!report || run.status === 'queued' || run.status === 'running' || run.status === 'waiting') {
+    return null;
+  }
+  const name = run.writerName ?? t('chat.activity.subagentTask');
+  const lists = [
+    [t('chat.activity.findings'), report.findings],
+    [t('chat.activity.decisions'), report.decisions],
+    [t('chat.activity.openQuestions'), report.openQuestions],
+  ] as const;
+
+  return (
+    <section aria-label={t('chat.activity.agentConclusion', { agent: name })} className="pivi-agent-conclusion">
+      <header>
+        <h4>{t('chat.activity.agentConclusion', { agent: name })}</h4>
+        <span>{statusLabel(report.outcome, t)}</span>
+      </header>
+      <p>{report.summary ?? report.objective}</p>
+      {lists.map(([label, values]) => values && values.length > 0 ? (
+        <div className="pivi-agent-conclusion-list" key={label}>
+          <h5>{label}</h5>
+          <ul>{values.map(value => <li key={value}>{value}</li>)}</ul>
+        </div>
+      ) : null)}
+      {report.artifacts && report.artifacts.length > 0 ? (
+        <div className="pivi-agent-conclusion-list">
+          <h5>{t('chat.activity.artifacts')}</h5>
+          <ul>{report.artifacts.map(artifact => (
+            <li key={`${artifact.label}:${artifact.vaultPath ?? ''}`}>
+              {artifact.label}{artifact.vaultPath ? ` — ${artifact.vaultPath}` : ''}
+            </li>
+          ))}</ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function AgentGroupPresentation({ runs }: { readonly runs: readonly PresentedRun[] }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
+  const conclusionRuns = runs.filter(run => run.report
+    && run.status !== 'queued'
+    && run.status !== 'running'
+    && run.status !== 'waiting');
   const counts = new Map<ActivityStatus, number>();
   for (const run of runs) counts.set(run.status, (counts.get(run.status) ?? 0) + 1);
   const summary = [...counts.entries()]
@@ -205,6 +249,11 @@ function AgentGroupPresentation({ runs }: { readonly runs: readonly PresentedRun
       {expanded ? (
         <div className="pivi-agent-group-runs">
           {runs.map(run => <AgentRunRow key={run.runId} run={run} />)}
+        </div>
+      ) : null}
+      {conclusionRuns.length > 0 ? (
+        <div className="pivi-agent-group-conclusions">
+          {conclusionRuns.map(run => <AgentConclusion key={run.runId} run={run} />)}
         </div>
       ) : null}
     </div>

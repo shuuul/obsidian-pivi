@@ -327,6 +327,8 @@ Narrative is the primary reading surface:
 
 Narrative remains quiet and document-like. It uses the host UI/body fonts, current message rhythm, and Obsidian Markdown fidelity. Tools and execution logs must not compete with the answer for visual weight.
 
+For grouped Agent runs, a terminal validated version-1 report now promotes its conclusion after the Activity group as a quiet Narrative section. The section presents the summary (or objective), outcome, findings, decisions, safe artifact references, and open questions. Validation reuses the session schema for persisted details and fenced terminal recovery. Invalid or absent reports do not create Narrative chrome and retain the complete terminal text in the run inspector.
+
 ### Activity layer
 
 Activity represents work in progress or inspectable execution:

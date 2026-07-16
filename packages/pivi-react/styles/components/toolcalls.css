@@ -257,6 +257,63 @@
   margin-top: 3px;
 }
 
+.pivi-agent-group-conclusions {
+  display: grid;
+  gap: 12px;
+  margin: 10px 0 14px;
+}
+
+.pivi-agent-conclusion {
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--pivi-host-text-accent);
+}
+
+.pivi-agent-conclusion header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.pivi-agent-conclusion h4,
+.pivi-agent-conclusion h5,
+.pivi-agent-conclusion p,
+.pivi-agent-conclusion ul {
+  margin: 0;
+}
+
+.pivi-agent-conclusion h4 {
+  color: var(--pivi-host-text-normal);
+  font-family: var(--pivi-host-font-interface);
+  font-size: var(--pivi-text-base);
+  font-weight: 600;
+}
+
+.pivi-agent-conclusion header span,
+.pivi-agent-conclusion h5 {
+  color: var(--pivi-host-text-faint);
+  font-family: var(--pivi-host-font-interface);
+  font-size: var(--pivi-text-xs);
+  font-weight: 500;
+}
+
+.pivi-agent-conclusion p,
+.pivi-agent-conclusion li {
+  color: var(--pivi-host-text-normal);
+  font-family: var(--pivi-host-font-text);
+  font-size: var(--pivi-text-base);
+  line-height: 1.5;
+}
+
+.pivi-agent-conclusion-list {
+  margin-top: 7px;
+}
+
+.pivi-agent-conclusion ul {
+  padding-inline-start: 18px;
+}
+
 .pivi-activity-name,
 .pivi-activity-summary,
 .pivi-activity-status-label,

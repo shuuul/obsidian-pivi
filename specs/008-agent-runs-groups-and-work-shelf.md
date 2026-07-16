@@ -28,7 +28,7 @@ Outcome: Agent runs are a first-class projection with stable identity and relati
 - [x] Related Agent runs in one message render as an Agent Group with a summary line (counts by status) that expands to individual Activity rows (spec 006 primitive). Verified by jsdom tests.
 - [x] Expanding one run shows a linear timeline (indentation + connectors) of its steps inside the measured virtual row, or in an inspector surface; no independently scrolling card inside the transcript. Verified by test asserting no nested scroll container and manual check.
 - [ ] An optional Active Work Shelf near the composer mirrors running/background runs; selecting an item navigates to the transcript owner or opens the same inspector; shelf state never becomes canonical. Toggle default and persistence decided by Decision. Verified by jsdom tests + manual background-run walkthrough.
-- [ ] When a validated structured report (spec 005) exists, the run's terminal presentation promotes the conclusion into Narrative per docs/11 (terminal Subagent conclusions promoted into the answer); otherwise today's text rendering stands.
+- [x] When a validated structured report (spec 005) exists, the run's terminal presentation promotes the conclusion into Narrative per docs/11 (terminal Subagent conclusions promoted into the answer); otherwise today's text rendering stands.
 - [ ] Every existing lifecycle regression suite stays green: queued/running abort, dynamic capacity, late events, orphaning, hydrate retry cancellation/rejection, session switching, pop-out owner realms, virtual scroll anchoring.
 
 ## Scope and non-goals
@@ -63,7 +63,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | `AgentRun` projection entity + derivation from tool-call subagent state, parent/child links, timing/usage | Codex | Done | Spec 004 WS-02 (run metadata), spec 006 WS-01 (status vocabulary) | Projection unit tests incl. nested runs and reload hydration |
 | WS-02 | Agent Group summary + expansion to Activity rows | Codex | Done | WS-01, spec 006 WS-03 | jsdom tests over direct and projected Agent runs |
 | WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Done | WS-02 | jsdom test asserting ordered depths, disclosure semantics, and no nested scroll |
-| WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Pending | WS-01, spec 005 WS-04 | Renderer tests over report and text fixtures |
+| WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Done | WS-01, spec 005 WS-04 | Projection and renderer tests over direct, fenced, invalid, and text fixtures |
 | WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Codex | Pending | WS-01 | jsdom tests; manual background-run walkthrough incl. tab switch and pop-out |
 | WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | Pending | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
 
@@ -121,6 +121,15 @@ Guidance for low-context agents:
 - Evidence: focused jsdom coverage verifies disclosure/region labels, objective/prompt/result preservation, exact `0, 0, 1` nested step depths, and absence of a nested scroll style. The 16-test assistant renderer suite, typecheck, and zero-warning lint pass.
 - Remaining: WS-04 through WS-06, plus final synthetic manual interaction/performance validation.
 - Next action: normalize validated structured Agent reports into the projection and promote their conclusion into the Narrative layer while retaining plain-text fallback.
+
+### 2026-07-16 — WS-04 structured Narrative conclusion — Codex
+
+- Changed: `ChatAgentRunEntity` now carries an already validated report projection. Derivation prefers the persisted `toolUseResult.agent_report` and can recover the last valid fenced report from complete terminal text; both paths reuse the strict spec 005 parser, including safe artifact-path validation.
+- Presentation: terminal validated reports render as quiet document-like Agent conclusions after the Activity group, with summary/objective, outcome, findings, decisions, artifacts, and open questions. The raw structured block is not duplicated inside the timeline. Absent or invalid reports continue to show the complete plain terminal result in the in-row inspector.
+- Problem recorded and fixed during review: an unconditional empty conclusions container would have added vertical whitespace to every report-less group; it is now mounted only when at least one terminal validated report exists.
+- Evidence: 44 focused projection/renderer tests pass. They cover persisted structured details, fenced-text recovery, invalid-report rejection, Narrative fields, safe vault-relative artifact display, and plain-text fallback. Typecheck and zero-warning lint pass.
+- Remaining: WS-05, WS-06, durable session-compat acceptance, and final synthetic manual/performance verification.
+- Next action: add the default-off persisted Active Work Shelf using projection state only, with navigation back to the owning transcript message.
 
 ### 2026-07-15 — Spec creation — coordinator
 

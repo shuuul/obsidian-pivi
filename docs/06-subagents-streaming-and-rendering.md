@@ -99,6 +99,8 @@ When a background result completes, Pivi also repairs the restored parent tool r
 
 `message_ui` validates any persisted `agent_report` again and removes invalid structured payloads without discarding unrelated legacy tool details. The legacy/external subagent JSONL reader can extract a valid report from its final text result, but live Pi background jobs remain in-memory and do not create a second event log.
 
+The Agent-run projection applies the same strict parser when preparing terminal presentation. A persisted structured report is preferred, with the last valid fenced terminal report as recovery input. Valid reports become React-owned Narrative conclusions after their Agent Group; invalid or missing reports leave the plain terminal result in the in-row inspector. This changes presentation only—the complete terminal trace and session overlay remain authoritative and unmodified.
+
 ## Change checklist
 
 - Keep execution in the Pi engine and presentation correlation in UI services/stream code.

@@ -583,6 +583,14 @@ describe('ChatProjectionStore', () => {
         input: {},
         status: 'running',
         startedAt: 10,
+        toolUseResult: {
+          agent_report: {
+            schemaVersion: 1,
+            objective: 'Coordinate research',
+            outcome: 'completed',
+            summary: 'Coordination complete.',
+          },
+        },
         subagent: {
           id: 'run-parent',
           agentId: 'runtime-parent',
@@ -608,7 +616,7 @@ describe('ChatProjectionStore', () => {
               completedAt: 30,
               description: 'Verify sources',
               isExpanded: false,
-              result: 'Verified.',
+              result: 'Verified.\n```pivi-agent-report\n{"schemaVersion":1,"objective":"Verify sources","outcome":"completed","summary":"Sources verified."}\n```',
               status: 'completed',
               toolCalls: [],
               usage: { inputTokens: 120, outputTokens: 20 },
@@ -628,17 +636,29 @@ describe('ChatProjectionStore', () => {
       owningToolId: 'spawn-parent',
       parentRunId: null,
       runId: 'run-parent',
+      report: {
+        objective: 'Coordinate research',
+        outcome: 'completed',
+        schemaVersion: 1,
+        summary: 'Coordination complete.',
+      },
       status: 'running',
       toolIds: ['read-active', 'spawn-child'],
     });
     expect(store.getAgentRunSnapshot('run-child')).toMatchObject({
       agentId: 'runtime-child',
       parentRunId: 'run-parent',
+      report: {
+        objective: 'Verify sources',
+        outcome: 'completed',
+        schemaVersion: 1,
+        summary: 'Sources verified.',
+      },
       runId: 'run-child',
       status: 'completed',
-      terminalResult: { text: 'Verified.' },
       usage: { inputTokens: 120, outputTokens: 20 },
     });
+    expect(store.getAgentRunSnapshot('run-child')?.terminalResult?.text).toContain('Verified.');
     expect(store.getAgentRunSnapshot('runtime-parent')).toBeNull();
   });
 

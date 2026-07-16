@@ -350,6 +350,18 @@ describe('AssistantContentView', () => {
       toolCalls: [
         {
           id: 'spawn-1', name: 'spawn_agent', input: {}, status: 'completed',
+          toolUseResult: {
+            agent_report: {
+              schemaVersion: 1,
+              objective: 'Scan project links',
+              outcome: 'completed',
+              summary: 'All linked sources are valid.',
+              findings: ['Three sources resolved'],
+              decisions: ['Keep relative links'],
+              artifacts: [{ label: 'Link audit', vaultPath: 'reports/links.md' }],
+              openQuestions: ['Should redirects be pinned?'],
+            },
+          },
           subagent: {
             id: 'spawn-1', writerName: 'Austen', description: 'Scan links', isExpanded: false,
             mode: 'async', prompt: 'Find every linked source.', result: 'All links checked.',
@@ -370,9 +382,11 @@ describe('AssistantContentView', () => {
         },
         {
           id: 'spawn-2', name: 'spawn_agent', input: {}, status: 'completed',
+          toolUseResult: { agent_report: { schemaVersion: 1, outcome: 'completed' } },
           subagent: {
             id: 'spawn-2', writerName: 'Borges', description: 'Review sources', isExpanded: false,
-            mode: 'async', status: 'completed', asyncStatus: 'completed', toolCalls: [],
+            mode: 'async', result: 'Plain fallback result.',
+            status: 'completed', asyncStatus: 'completed', toolCalls: [],
           },
         },
         {
@@ -398,15 +412,24 @@ describe('AssistantContentView', () => {
     expect(container.querySelector('.pivi-agent-group-runs')).not.toHaveStyle({ overflow: 'auto' });
     expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('AustenScan linksCompleted');
     expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('CuriereadRunning');
+    const conclusion = getByRole('region', { name: 'Austen conclusion' });
+    expect(conclusion).toHaveTextContent('All linked sources are valid.');
+    expect(conclusion).toHaveTextContent('FindingsThree sources resolved');
+    expect(conclusion).toHaveTextContent('ArtifactsLink audit — reports/links.md');
+    expect(container.querySelectorAll('.pivi-agent-conclusion')).toHaveLength(1);
 
     fireEvent.click(getByRole('button', { name: 'Austen: Scan links' }));
     const timeline = getByRole('region', { name: 'Austen timeline' });
     expect(timeline).toHaveTextContent('ObjectiveScan links');
     expect(timeline).toHaveTextContent('PromptFind every linked source.');
-    expect(timeline).toHaveTextContent('ResultAll links checked.');
+    expect(timeline).not.toHaveTextContent('All links checked.');
     expect([...timeline.querySelectorAll('.pivi-agent-run-step')].map(step => step.getAttribute('data-depth')))
       .toEqual(['0', '0', '1']);
     expect(timeline.querySelector('.pivi-agent-run-timeline')).not.toHaveStyle({ overflow: 'auto' });
+
+    fireEvent.click(getByRole('button', { name: 'Borges: Review sources' }));
+    expect(getByRole('region', { name: 'Borges timeline' }))
+      .toHaveTextContent('ResultPlain fallback result.');
   });
 
   it('updates an Agent Group summary from stable projected run entities', () => {

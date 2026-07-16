@@ -10,6 +10,11 @@ import {
   resolveToolActivityStatus,
 } from '@pivi/pivi-agent-core/foundation';
 import {
+  type AgentReport,
+  extractAgentReportFromText,
+  parseAgentReport,
+} from '@pivi/pivi-agent-core/session/continuationSchemas';
+import {
   isToolPresentationGroupable,
   shouldPresentToolCall,
 } from '@pivi/pivi-agent-core/tools/toolPresentation';
@@ -136,6 +141,7 @@ export interface ChatAgentRunEntity extends AgentRun {
   readonly id: string;
   readonly messageId: string;
   readonly agent: SubagentInfo;
+  readonly report: AgentReport | null;
 }
 
 export function deriveAgentRunEntities(
@@ -152,6 +158,8 @@ export function deriveAgentRunEntities(
     return status === 'queued' || status === 'running' || status === 'waiting';
   });
   const runId = subagent.id;
+  const report = parseAgentReport(tool.toolUseResult?.agent_report)
+    ?? (subagent.result ? extractAgentReportFromText(subagent.result) : null);
   const entity: ChatAgentRunEntity = {
     id: runId,
     messageId,
@@ -161,6 +169,7 @@ export function deriveAgentRunEntities(
     owningToolId: tool.id,
     ...(subagent.agentId ? { agentId: subagent.agentId } : {}),
     agent: subagent,
+    report,
     childRunIds,
     ...(currentTool ? {
       currentActivity: {
