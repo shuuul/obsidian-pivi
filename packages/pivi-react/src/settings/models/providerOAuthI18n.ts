@@ -11,32 +11,38 @@ export const CODEX_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.codex.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
-export const XAI_OAUTH_SETTINGS_KEYS = {
-  name: 'settings.modelsTab.xai.name',
-  desc: 'settings.modelsTab.xai.desc',
-  connect: 'settings.modelsTab.xai.connect',
-  reconnect: 'settings.modelsTab.xai.reconnect',
-  disconnect: 'settings.modelsTab.xai.disconnect',
-  connected: 'settings.modelsTab.xai.connected',
-  disconnected: 'settings.modelsTab.xai.disconnected',
-  loginFailed: 'settings.modelsTab.xai.loginFailed',
+export const GROK_BUILD_OAUTH_SETTINGS_KEYS = {
+  name: 'settings.modelsTab.grokBuild.name',
+  desc: 'settings.modelsTab.grokBuild.desc',
+  connect: 'settings.modelsTab.grokBuild.connect',
+  reconnect: 'settings.modelsTab.grokBuild.reconnect',
+  disconnect: 'settings.modelsTab.grokBuild.disconnect',
+  connected: 'settings.modelsTab.grokBuild.connected',
+  disconnected: 'settings.modelsTab.grokBuild.disconnected',
+  loginFailed: 'settings.modelsTab.grokBuild.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
-export const ANTHROPIC_OAUTH_SETTINGS_KEYS = {
-  name: 'settings.modelsTab.anthropic.name',
-  desc: 'settings.modelsTab.anthropic.desc',
-  connect: 'settings.modelsTab.anthropic.connect',
-  reconnect: 'settings.modelsTab.anthropic.reconnect',
-  disconnect: 'settings.modelsTab.anthropic.disconnect',
-  connected: 'settings.modelsTab.anthropic.connected',
-  disconnected: 'settings.modelsTab.anthropic.disconnected',
-  loginFailed: 'settings.modelsTab.anthropic.loginFailed',
+export const CLAUDE_OAUTH_SETTINGS_KEYS = {
+  name: 'settings.modelsTab.claude.name',
+  desc: 'settings.modelsTab.claude.desc',
+  connect: 'settings.modelsTab.claude.connect',
+  reconnect: 'settings.modelsTab.claude.reconnect',
+  disconnect: 'settings.modelsTab.claude.disconnect',
+  connected: 'settings.modelsTab.claude.connected',
+  disconnected: 'settings.modelsTab.claude.disconnected',
+  loginFailed: 'settings.modelsTab.claude.loginFailed',
+} as const satisfies Record<string, TranslationKey>;
+
+export const OAUTH_COMMON_SETTINGS_KEYS = {
+  cancel: 'settings.modelsTab.oauthCommon.cancel',
+  deviceCode: 'settings.modelsTab.oauthCommon.deviceCode',
+  cancelled: 'settings.modelsTab.oauthCommon.cancelled',
 } as const satisfies Record<string, TranslationKey>;
 
 const PROVIDER_OAUTH_SETTINGS_KEYS = {
   'openai-codex': CODEX_OAUTH_SETTINGS_KEYS,
-  xai: XAI_OAUTH_SETTINGS_KEYS,
-  anthropic: ANTHROPIC_OAUTH_SETTINGS_KEYS,
+  'grok-build': GROK_BUILD_OAUTH_SETTINGS_KEYS,
+  claude: CLAUDE_OAUTH_SETTINGS_KEYS,
 } as const;
 
 export function getProviderOAuthSettingsKeys(providerId: string) {

@@ -470,12 +470,25 @@
     },
     "webSearch": {
       "intro": "제공자를 드래그해 우선순위를 정하세요. 사용 불가, 속도 제한 또는 할당량 소진 시 WebSearch와 WebFetch가 자동으로 대체합니다.",
-      "capability": { "search": "검색", "fetch": "가져오기" },
-      "status": { "configured": "구성됨", "anonymous": "익명", "missingKey": "키 없음", "disabled": "비활성화" },
+      "capability": {
+        "search": "검색",
+        "fetch": "가져오기"
+      },
+      "status": {
+        "configured": "구성됨",
+        "anonymous": "익명",
+        "missingKey": "키 없음",
+        "disabled": "비활성화"
+      },
       "providerKeyRequired": "{provider}에는 API 키가 필요하며 키가 없으면 건너뜁니다.",
       "providerKeyOptional": "{provider}는 낮은 한도로 익명 액세스를 지원하며 API 키로 할당량을 늘릴 수 있습니다.",
       "fixedFallbacks": "최종 대체: WebSearch는 Exa 공개 MCP, WebFetch는 직접 HTTP를 사용합니다.",
-      "reorder": { "handle": "{provider} 순서 변경, 현재 위치 {position}", "position": "{provider}를 전체 {total}개 중 {position}번째로 이동했습니다.", "saved": "제공자 순서를 저장했습니다.", "cancelled": "순서 변경을 취소했습니다." },
+      "reorder": {
+        "handle": "{provider} 순서 변경, 현재 위치 {position}",
+        "position": "{provider}를 전체 {total}개 중 {position}번째로 이동했습니다.",
+        "saved": "제공자 순서를 저장했습니다.",
+        "cancelled": "순서 변경을 취소했습니다."
+      },
       "apiKeyName": "{provider} API 키",
       "apiKeyPlaceholder": "API 키 입력…",
       "apiKeySavedPlaceholder": "{secureStorageName}에 저장됨",
@@ -486,6 +499,7 @@
       "secureStorageRequired": "제공자 API 키에는 {secureStorageName}을 지원하는 {hostName} {version} 이상이 필요합니다. 자격 증명을 안전하게 저장하려면 {hostName}을 업그레이드하세요.",
       "authHeading": "인증 및 자격 증명",
       "apiKey": "API 키",
+      "apiKeyOptional": "API 키(선택 사항)",
       "apiKeyDesc": "{secureStorageName}에 {secretId}로 저장.",
       "apiKeyPlaceholder": "API 키 입력…",
       "apiKeySavedPlaceholder": "{secureStorageName}에 저장됨",
@@ -497,6 +511,7 @@
       "candidateModels": "후보 모델 풀",
       "noModels": "아직 모델이 없습니다. 엔드포인트에서 모델을 가져온 뒤 여기서 사용하세요.",
       "addProvider": "+ 제공자 추가",
+      "addProviderAdded": "추가됨",
       "removedProvider": "{name} 제공자를 제거했습니다.",
       "removeConfirmTitle": "{name} 제공자를 제거할까요?",
       "removeConfirmDescription": "제공자와 모델 선택을 제거합니다. 저장된 자격 증명은 기본적으로 유지됩니다.",
@@ -522,7 +537,7 @@
         "unavailable": "이 제공자의 로컬 pi-ai 모델 메타데이터가 아직 없습니다."
       },
       "codex": {
-        "name": "OpenAI Codex 구독",
+        "name": "OpenAI Codex",
         "desc": "ChatGPT/Codex 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
         "connect": "연결",
         "reconnect": "다시 연결",
@@ -531,29 +546,10 @@
         "disconnected": "OpenAI Codex 연결이 해제되었습니다.",
         "loginFailed": "Codex 로그인 실패: {message}"
       },
-      "xai": {
-        "name": "xAI Grok 구독",
-        "desc": "xAI/Grok 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
-        "connect": "연결",
-        "reconnect": "다시 연결",
-        "disconnect": "연결 해제",
-        "connected": "xAI가 연결되었습니다.",
-        "disconnected": "xAI 연결이 해제되었습니다.",
-        "loginFailed": "xAI 로그인 실패: {message}"
-      },
-      "anthropic": {
-        "name": "Claude Pro/Max 구독",
-        "desc": "브라우저에서 Claude Pro 또는 Max 구독으로 로그인합니다. 수동 OAuth 토큰과 동일한 {secureStorageName} 자격 증명 슬롯을 사용합니다.",
-        "connect": "연결",
-        "reconnect": "다시 연결",
-        "disconnect": "연결 해제",
-        "connected": "Anthropic OAuth가 연결되었습니다.",
-        "disconnected": "Anthropic OAuth 연결이 해제되었습니다.",
-        "loginFailed": "Anthropic 로그인 실패: {message}"
-      },
       "addSectionLocal": "로컬",
       "addSectionCustom": "사용자 지정 API",
-      "addSectionCloud": "클라우드",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "엔드포인트",
       "displayName": "표시 이름",
       "displayNameDesc": "공급자 목록과 모델 선택기 그룹에 표시됩니다.",
@@ -566,7 +562,32 @@
       "fetchModelsFailed": "{name}: 모델 가져오기 실패: {message}",
       "authHeadingOptional": "인증(선택 사항)",
       "apiKeyOptionalDesc": "선택 사항입니다. 인증이 필요 없는 로컬 서버는 비워 두세요. 설정 시 {secureStorageName}에 {secretId}로 저장됩니다.",
-      "apiKeyOptionalPlaceholder": "선택적 API 키…"
+      "apiKeyOptionalPlaceholder": "선택적 API 키…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "xAI 계정으로 Grok Build에 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
+        "connect": "연결",
+        "reconnect": "다시 연결",
+        "disconnect": "연결 해제",
+        "connected": "Grok Build가 연결되었습니다.",
+        "disconnected": "Grok Build 연결이 해제되었습니다.",
+        "loginFailed": "Grok Build 로그인 실패: {message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "브라우저에서 Claude Pro 또는 Max 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
+        "connect": "연결",
+        "reconnect": "다시 연결",
+        "disconnect": "연결 해제",
+        "connected": "Claude가 연결되었습니다.",
+        "disconnected": "Claude 연결이 해제되었습니다.",
+        "loginFailed": "Claude 로그인 실패: {message}"
+      },
+      "oauthCommon": {
+        "cancel": "취소",
+        "deviceCode": "기기 코드",
+        "cancelled": "로그인이 취소되었습니다."
+      }
     },
     "skills": {
       "intro": "에이전트 스킬은 .pivi/skills/에 있으며 다음 턴에 로드됩니다(skill 도구 + 시스템 프롬프트). 아래 작업을 선택한 후에만 설치/업데이트합니다.",

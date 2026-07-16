@@ -1,3 +1,4 @@
+import type { ProviderOAuthProgress } from '@pivi/pivi-agent-core/auth/providerOAuthProgress';
 import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 import type { AppModelReadinessStatusKind } from '@pivi/pivi-agent-core/foundation/modelReadiness';
@@ -22,6 +23,8 @@ import type {
   SettingsSubagentsSnapshot,
   SettingsUiSnapshotData,
 } from '../settings/types';
+
+export type { ProviderOAuthProgress } from '@pivi/pivi-agent-core/auth/providerOAuthProgress';
 
 /** Stored credential kind for a provider, or null when none is present. */
 export type ModelsCredentialKind = 'api_key' | 'oauth';
@@ -65,7 +68,7 @@ export interface SettingsWebProviderSnapshot {
 export interface SettingsModelsPort {
   /** Provider id for the OpenAI Codex OAuth provider. */
   readonly codexProviderId: string;
-  /** Built-in providers that expose interactive OAuth in settings. */
+  /** Account/subscription providers that expose interactive OAuth in settings. */
   readonly interactiveOAuthProviderIds: readonly string[];
   /** Run stored-credential migration once and report secure-storage availability. */
   bootstrap(): ModelsBootstrapInfo;
@@ -80,12 +83,10 @@ export interface SettingsModelsPort {
   setApiKey(providerId: string, key: string): Promise<void>;
   setOauthToken(providerId: string, token: string): Promise<void>;
   clearCredential(providerId: string): Promise<void>;
-  hasCodexAuth(): boolean;
-  loginCodex(onProgress?: (message: string) => void): Promise<void>;
-  logoutCodex(): void;
   hasProviderOAuth(providerId: string): boolean;
-  loginProviderOAuth(providerId: string, onProgress?: (message: string) => void): Promise<void>;
-  logoutProviderOAuth(providerId: string): void;
+  loginProviderOAuth(providerId: string, onProgress?: (progress: ProviderOAuthProgress) => void): Promise<void>;
+  cancelProviderOAuthLogin(providerId: string): void;
+  logoutProviderOAuth(providerId: string): Promise<void>;
   listAddableBuiltinProviders(): readonly ModelsAddableProvider[];
   listAddableLocalKinds(): readonly ModelsAddableKind[];
   listCustomKinds(): readonly ModelsAddableKind[];

@@ -802,6 +802,17 @@ textarea.pivi-settings-control {
   color: var(--pivi-host-text-normal);
 }
 
+.pivi-provider-add-option.is-added {
+  cursor: default;
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-provider-add-option-state {
+  margin-left: auto;
+  font-size: var(--pivi-host-font-ui-smaller);
+  color: var(--pivi-host-text-faint);
+}
+
 .pivi-custom-provider-actions {
   display: flex;
   gap: var(--pivi-spacing-sm);
@@ -812,7 +823,7 @@ textarea.pivi-settings-control {
   cursor: pointer;
 }
 
-.pivi-provider-add-option:hover {
+.pivi-provider-add-option:not(.is-added):hover {
   background: var(--pivi-host-background-hover);
 }
 
@@ -1101,6 +1112,45 @@ textarea.pivi-settings-control {
 .pivi-skills-remote-setting .pivi-setting-row__control > input,
 .pivi-cred-row .pivi-setting-row__control > input {
   flex: 1 1 240px;
+}
+
+.pivi-provider-oauth-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+  width: 100%;
+}
+
+.pivi-provider-oauth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-provider-oauth-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+  margin-inline-start: auto;
+  padding: 4px 10px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-surface-raised);
+}
+
+.pivi-provider-oauth-code__label {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-provider-oauth-code__value {
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  letter-spacing: 0.04em;
 }
 
 /* Auth Toggle */

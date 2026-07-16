@@ -2,7 +2,10 @@
  * Plugin settings load/reconcile path extracted from the Obsidian Plugin shell.
  */
 import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
-import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
+import {
+  migratePiProviderCredentialsToKeychain,
+  migrateSplitSubscriptionOAuthCredentials,
+} from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
 import type { OpenSessionState, PiviSettings } from "@pivi/pivi-agent-core/foundation";
 import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
@@ -59,7 +62,7 @@ export async function loadPluginSettings(
 
   const didReconcileModelSelections =
     PiSettingsCoordinator.reconcileTitleGenerationModelSelection(settings);
-  await migrateProviderSecretsToKeychain(ctx);
+  const didMigrateProviderSecrets = migrateProviderSecretsToKeychain(ctx);
 
   const vaultPath = getVaultPath(ctx.app);
   if (vaultPath) {
@@ -85,7 +88,7 @@ export async function loadPluginSettings(
 
   PiSettingsCoordinator.projectActivePiState(settings);
 
-  if (changed || didReconcileModelSelections) {
+  if (changed || didReconcileModelSelections || didMigrateProviderSecrets) {
     await ctx.saveSettings();
   }
 
@@ -99,28 +102,98 @@ export async function loadPluginSettings(
   });
 }
 
-async function migrateProviderSecretsToKeychain(
+export function migrateProviderSecretsToKeychain(
   ctx: PluginSettingsLoadContext,
-): Promise<void> {
+): boolean {
   if (!isSecretStorageAvailable(ctx.app.secretStorage)) {
-    return;
+    return false;
   }
 
   const settings = ctx.getSettings();
   const settingsBag = settings as unknown as Record<string, unknown>;
   const piSettings = getPiAgentSettings(settingsBag);
-  const synced = migratePiProviderCredentialsToKeychain(
+  // Split canonical OAuth first so a backing-provider API key from the
+  // environment can migrate without overwriting the plan credential.
+  const preSplit = migrateSplitSubscriptionOAuthCredentials(
     ctx.app.secretStorage,
     piSettings.addedProviders,
+  );
+  const synced = migratePiProviderCredentialsToKeychain(
+    ctx.app.secretStorage,
+    preSplit.addedProviders,
     piSettings.environmentVariables,
   );
-  if (!synced.changed) {
-    return;
+  // Legacy credential formats become canonical in the generic pass, so run
+  // the idempotent split once more to catch a migrated legacy OAuth value.
+  const postSplit = migrateSplitSubscriptionOAuthCredentials(
+    ctx.app.secretStorage,
+    synced.addedProviders,
+  );
+  const migratedPiProviderIds = [
+    ...new Set([
+      ...preSplit.migratedPiProviderIds,
+      ...postSplit.migratedPiProviderIds,
+    ]),
+  ];
+
+  const providerRewrites = new Map<string, string>();
+  const ambiguousProviderSplits = new Set<string>();
+  if (migratedPiProviderIds.includes('xai')) {
+    providerRewrites.set('xai', 'grok-build');
+    if (piSettings.addedProviders.includes('xai') && piSettings.addedProviders.includes('grok-build')) {
+      ambiguousProviderSplits.add('xai');
+    }
+  }
+  if (migratedPiProviderIds.includes('anthropic')) {
+    providerRewrites.set('anthropic', 'claude');
+    if (piSettings.addedProviders.includes('anthropic') && piSettings.addedProviders.includes('claude')) {
+      ambiguousProviderSplits.add('anthropic');
+    }
   }
 
-  updatePiAgentSettings(settingsBag, {
-    addedProviders: synced.addedProviders,
-    environmentVariables: synced.environmentVariables,
+  const toSubscriptionModelKey = (modelKey: string): string => {
+    const slashIndex = modelKey.indexOf('/');
+    if (slashIndex < 1) {
+      return modelKey;
+    }
+    const providerId = modelKey.substring(0, slashIndex);
+    const nextProviderId = providerRewrites.get(providerId);
+    if (providerId === 'xai' && nextProviderId === 'grok-build') {
+      return 'grok-build/grok-composer-2.5-fast';
+    }
+    return nextProviderId
+      ? `${nextProviderId}${modelKey.substring(slashIndex)}`
+      : modelKey;
+  };
+  const rewriteModelKey = (modelKey: string): string => {
+    const providerId = modelKey.substring(0, modelKey.indexOf('/'));
+    return ambiguousProviderSplits.has(providerId)
+      ? modelKey
+      : toSubscriptionModelKey(modelKey);
+  };
+
+  const visibleModels = piSettings.visibleModels.map(rewriteModelKey);
+  for (const modelKey of piSettings.visibleModels) {
+    const providerId = modelKey.substring(0, modelKey.indexOf('/'));
+    if (ambiguousProviderSplits.has(providerId)) {
+      visibleModels.push(toSubscriptionModelKey(modelKey));
+    }
+  }
+
+  const nextDisabledProviders = piSettings.disabledProviders.flatMap((providerId) => {
+    const replacement = providerRewrites.get(providerId);
+    return replacement && !ambiguousProviderSplits.has(providerId)
+      ? [replacement]
+      : [providerId];
   });
-  await ctx.saveSettings();
+
+  updatePiAgentSettings(settingsBag, {
+    addedProviders: postSplit.addedProviders,
+    disabledProviders: [...new Set(nextDisabledProviders)],
+    environmentVariables: synced.environmentVariables,
+    visibleModels: [...new Set(visibleModels)],
+  });
+  settings.model = rewriteModelKey(settings.model);
+  settings.titleGenerationModel = rewriteModelKey(settings.titleGenerationModel);
+  return preSplit.changed || synced.changed || postSplit.changed;
 }

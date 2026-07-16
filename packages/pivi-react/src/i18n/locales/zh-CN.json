@@ -470,8 +470,16 @@
     },
     "webSearch": {
       "intro": "拖动提供商调整优先级。当提供商不可用、被限流或额度耗尽时，WebSearch 和 WebFetch 会自动回退。",
-      "capability": { "search": "搜索", "fetch": "抓取" },
-      "status": { "configured": "已配置", "anonymous": "匿名", "missingKey": "缺少密钥", "disabled": "已禁用" },
+      "capability": {
+        "search": "搜索",
+        "fetch": "抓取"
+      },
+      "status": {
+        "configured": "已配置",
+        "anonymous": "匿名",
+        "missingKey": "缺少密钥",
+        "disabled": "已禁用"
+      },
       "providerKeyRequired": "{provider} 需要 API 密钥；未配置密钥时会跳过。",
       "providerKeyOptional": "{provider} 支持额度较低的匿名访问；配置 API 密钥可提高可用额度。",
       "fixedFallbacks": "最终兜底：WebSearch 使用 Exa 公共 MCP；WebFetch 使用直接 HTTP。它们始终在排序的提供商之后运行。",
@@ -491,6 +499,7 @@
       "secureStorageRequired": "提供商 API 密钥需要支持{secureStorageName}的 {hostName} {version} 或更高版本。请升级 {hostName}。",
       "authHeading": "认证与凭据",
       "apiKey": "API 密钥",
+      "apiKeyOptional": "API 密钥（可选）",
       "apiKeyDesc": "以 {secretId} 保存在{secureStorageName}中。",
       "apiKeyPlaceholder": "输入 API 密钥…",
       "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
@@ -502,6 +511,7 @@
       "candidateModels": "候选模型池",
       "noModels": "尚未加载模型。请从端点获取模型，然后在此启用。",
       "addProvider": "+ 添加提供商",
+      "addProviderAdded": "已添加",
       "removedProvider": "已移除 {name} 提供商。",
       "removeConfirmTitle": "移除 {name} 提供商？",
       "removeConfirmDescription": "这会移除该提供商及其模型选择。默认保留已存储的凭据。",
@@ -527,7 +537,7 @@
         "unavailable": "此提供商尚无本地 pi-ai 模型元数据。"
       },
       "codex": {
-        "name": "OpenAI Codex 订阅",
+        "name": "OpenAI Codex",
         "desc": "使用你的 ChatGPT/Codex 订阅登录。凭据保存在{secureStorageName}中。",
         "connect": "连接",
         "reconnect": "重新连接",
@@ -536,29 +546,10 @@
         "disconnected": "OpenAI Codex 已断开。",
         "loginFailed": "Codex 登录失败：{message}"
       },
-      "xai": {
-        "name": "xAI Grok 订阅",
-        "desc": "使用你的 xAI/Grok 订阅登录。凭据保存在{secureStorageName}中。",
-        "connect": "连接",
-        "reconnect": "重新连接",
-        "disconnect": "断开连接",
-        "connected": "xAI 已连接。",
-        "disconnected": "xAI 已断开。",
-        "loginFailed": "xAI 登录失败：{message}"
-      },
-      "anthropic": {
-        "name": "Claude Pro/Max 订阅",
-        "desc": "在浏览器中使用 Claude Pro 或 Max 订阅登录。与手动 OAuth 令牌共用同一{secureStorageName}凭据槽位。",
-        "connect": "连接",
-        "reconnect": "重新连接",
-        "disconnect": "断开连接",
-        "connected": "Anthropic OAuth 已连接。",
-        "disconnected": "Anthropic OAuth 已断开。",
-        "loginFailed": "Anthropic 登录失败：{message}"
-      },
       "addSectionLocal": "本地",
       "addSectionCustom": "自定义 API",
-      "addSectionCloud": "云服务",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "端点",
       "displayName": "显示名称",
       "displayNameDesc": "显示在提供商列表与模型选择分组中。",
@@ -571,7 +562,32 @@
       "fetchModelsFailed": "{name}：获取模型失败：{message}",
       "authHeadingOptional": "认证（可选）",
       "apiKeyOptionalDesc": "可选。本地服务器无需鉴权时可留空。若填写，将以 {secretId} 保存在{secureStorageName}中。",
-      "apiKeyOptionalPlaceholder": "可选 API 密钥…"
+      "apiKeyOptionalPlaceholder": "可选 API 密钥…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "使用你的 xAI 账户登录 Grok Build。凭据保存在{secureStorageName}中。",
+        "connect": "连接",
+        "reconnect": "重新连接",
+        "disconnect": "断开连接",
+        "connected": "Grok Build 已连接。",
+        "disconnected": "Grok Build 已断开。",
+        "loginFailed": "Grok Build 登录失败：{message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "在浏览器中使用 Claude Pro 或 Max 订阅登录。凭据保存在 {secureStorageName}。",
+        "connect": "连接",
+        "reconnect": "重新连接",
+        "disconnect": "断开连接",
+        "connected": "Claude 已连接。",
+        "disconnected": "Claude 已断开。",
+        "loginFailed": "Claude 登录失败：{message}"
+      },
+      "oauthCommon": {
+        "cancel": "取消",
+        "deviceCode": "验证码",
+        "cancelled": "已取消登录。"
+      }
     },
     "skills": {
       "intro": "智能体技能位于 .pivi/skills/，并在下一回合加载（skill 工具 + 系统提示）。仅在你选择下方操作后，Pivi 才会安装或更新技能。",

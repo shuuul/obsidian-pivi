@@ -4,13 +4,18 @@ import * as path from 'path';
 
 import type { OAuthFlowHost, ProviderLegacyAuthData, ProviderLegacyAuthStore } from '@pivi/pivi-agent-core/ports';
 import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/providerLegacyAuthStore';
-import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+import {
+  isProviderOAuthLoginCancelled,
+} from '@pivi/pivi-agent-core/auth/providerOAuthProgress';
 import {
   ANTHROPIC_PROVIDER_ID,
+  CLAUDE_PROVIDER_ID,
   CODEX_OAUTH_PROVIDER_ID,
+  GROK_BUILD_PROVIDER_ID,
   XAI_PROVIDER_ID,
 } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import {
   normalizeCodexBrowserAuthUrl,
   ProviderOAuthService,
@@ -109,7 +114,7 @@ describe('ProviderOAuthService', () => {
     const oauthHost = createMockOAuthFlowHost();
     const service = new ProviderOAuthService(store, oauthHost);
 
-    await service.loginCodex();
+    await service.loginProviderOAuth(CODEX_OAUTH_PROVIDER_ID);
 
     expect(store.readSync(CODEX_OAUTH_PROVIDER_ID)).toMatchObject({
       type: 'oauth',
@@ -121,38 +126,104 @@ describe('ProviderOAuthService', () => {
     );
   });
 
-  it('logs in through xAI device-code OAuth and stores credentials', async () => {
+  it('logs in through xAI device-code OAuth and stores credentials in the subscription slot', async () => {
     const app = createMockApp({ vaultBasePath: tempDir });
     const store = new ObsidianCredentialStore(app.secretStorage);
     configurePiAiModels({ credentials: store });
     const oauthHost = createMockOAuthFlowHost();
     const service = new ProviderOAuthService(store, oauthHost);
 
-    await service.loginProviderOAuth(XAI_PROVIDER_ID);
+    await service.loginProviderOAuth(GROK_BUILD_PROVIDER_ID);
 
-    expect(store.readSync(XAI_PROVIDER_ID)).toMatchObject({
+    expect(store.readSync(GROK_BUILD_PROVIDER_ID)).toMatchObject({
       type: 'oauth',
       access: 'mock-xai-access',
       refresh: 'mock-xai-refresh',
     });
-    expect(oauthHost.openAuthUrl).toHaveBeenCalledWith('https://x.ai/device');
+    expect(store.readSync(XAI_PROVIDER_ID)).toBeUndefined();
+    expect(oauthHost.openAuthUrl).toHaveBeenCalledWith('https://x.ai/device?user_code=ABCD-1234');
   });
 
-  it('logs in through Anthropic browser OAuth and stores credentials', async () => {
+  it('logs in through Anthropic browser OAuth and stores credentials in the subscription slot', async () => {
     const app = createMockApp({ vaultBasePath: tempDir });
     const store = new ObsidianCredentialStore(app.secretStorage);
     configurePiAiModels({ credentials: store });
     const oauthHost = createMockOAuthFlowHost();
     const service = new ProviderOAuthService(store, oauthHost);
 
-    await service.loginProviderOAuth(ANTHROPIC_PROVIDER_ID);
+    await service.loginProviderOAuth(CLAUDE_PROVIDER_ID);
 
-    expect(store.readSync(ANTHROPIC_PROVIDER_ID)).toMatchObject({
+    expect(store.readSync(CLAUDE_PROVIDER_ID)).toMatchObject({
       type: 'oauth',
       access: 'mock-access',
       refresh: 'mock-refresh',
     });
+    expect(store.readSync(ANTHROPIC_PROVIDER_ID)).toBeUndefined();
     expect(oauthHost.openAuthUrl).toHaveBeenCalledWith('https://claude.ai/oauth/authorize?client_id=test');
+  });
+
+  it('logs out a subscription without deleting the backing provider API key', async () => {
+    const app = createMockApp({ vaultBasePath: tempDir });
+    const store = new ObsidianCredentialStore(app.secretStorage);
+    store.writeSync(XAI_PROVIDER_ID, { type: 'api_key', key: 'xai-api-key' });
+    store.writeSync(GROK_BUILD_PROVIDER_ID, {
+      type: 'oauth',
+      access: 'subscription-access',
+      refresh: 'subscription-refresh',
+      expires: Date.now() + 3600_000,
+    });
+    configurePiAiModels({ credentials: store });
+    const service = new ProviderOAuthService(store, createMockOAuthFlowHost());
+
+    await service.logoutProviderOAuth(GROK_BUILD_PROVIDER_ID);
+
+    expect(store.readSync(GROK_BUILD_PROVIDER_ID)).toBeUndefined();
+    expect(store.readSync(XAI_PROVIDER_ID)).toEqual({ type: 'api_key', key: 'xai-api-key' });
+  });
+
+  it('cancels an in-flight provider OAuth login', async () => {
+    const app = createMockApp({ vaultBasePath: tempDir });
+    const store = new ObsidianCredentialStore(app.secretStorage);
+    configurePiAiModels({ credentials: store });
+    const oauthHost = createMockOAuthFlowHost();
+    const service = new ProviderOAuthService(store, oauthHost);
+
+    const progress: Array<{ kind: string; userCode?: string }> = [];
+    const loginPromise = service.loginProviderOAuth(
+      GROK_BUILD_PROVIDER_ID,
+      event => progress.push(event),
+    ).catch((error: unknown) => error);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    service.cancelProviderOAuthLogin(GROK_BUILD_PROVIDER_ID);
+    const result = await loginPromise;
+    expect(isProviderOAuthLoginCancelled(result)).toBe(true);
+    expect(progress).toContainEqual({
+      kind: 'device_code',
+      userCode: 'ABCD-1234',
+      verificationUri: 'https://x.ai/device?user_code=ABCD-1234',
+    });
+    expect(store.readSync(GROK_BUILD_PROVIDER_ID)).toBeUndefined();
+  });
+
+  it('cancels all in-flight provider OAuth logins on disposal', async () => {
+    const app = createMockApp({ vaultBasePath: tempDir });
+    const store = new ObsidianCredentialStore(app.secretStorage);
+    configurePiAiModels({ credentials: store });
+    const service = new ProviderOAuthService(store, createMockOAuthFlowHost());
+
+    const grokLogin = service.loginProviderOAuth(GROK_BUILD_PROVIDER_ID)
+      .catch((error: unknown) => error);
+    const claudeLogin = service.loginProviderOAuth(CLAUDE_PROVIDER_ID)
+      .catch((error: unknown) => error);
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    service.dispose();
+
+    const [grokResult, claudeResult] = await Promise.all([grokLogin, claudeLogin]);
+    expect(isProviderOAuthLoginCancelled(grokResult)).toBe(true);
+    expect(isProviderOAuthLoginCancelled(claudeResult)).toBe(true);
+    expect(store.readSync(GROK_BUILD_PROVIDER_ID)).toBeUndefined();
+    expect(store.readSync(CLAUDE_PROVIDER_ID)).toBeUndefined();
   });
 
   it('treats the injected legacy auth path as optional', () => {

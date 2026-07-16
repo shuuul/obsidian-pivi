@@ -6,11 +6,15 @@ import type {
 } from '@earendil-works/pi-ai';
 
 import {
+  ANTHROPIC_PROVIDER_ID,
+  CLAUDE_PROVIDER_ID,
   credentialToApiKey,
   getPiAiCredentialSecretId,
+  GROK_BUILD_PROVIDER_ID,
   isOAuthCredential,
   parseProviderCredential,
   serializeProviderCredential,
+  XAI_PROVIDER_ID,
 } from '../../auth/piProviderCredentials';
 import { isSupportedPiProviderId } from '../../auth/piProviderValidation';
 import { getProviderEnvVarNames, type ProviderEnvVarNames } from '../../auth/providerEnvVars';
@@ -185,6 +189,54 @@ export function migratePiProviderCredentialsToKeychain(
       : environmentVariables,
     changed: credentialsChanged || environmentChanged,
   };
+}
+
+const SUBSCRIPTION_OAUTH_MIGRATION_PAIRS = [
+  { piProviderId: XAI_PROVIDER_ID, subscriptionProviderId: GROK_BUILD_PROVIDER_ID },
+  { piProviderId: ANTHROPIC_PROVIDER_ID, subscriptionProviderId: CLAUDE_PROVIDER_ID },
+] as const;
+
+/** Move legacy OAuth credentials off API-provider slots into plan-provider slots. */
+export function migrateSplitSubscriptionOAuthCredentials(
+  secretStorage: SyncSecretStore,
+  addedProviders: readonly string[],
+): { addedProviders: string[]; migratedPiProviderIds: string[]; changed: boolean } {
+  let changed = false;
+  let nextAdded = [...addedProviders];
+  const migratedPiProviderIds: string[] = [];
+
+  for (const { piProviderId, subscriptionProviderId } of SUBSCRIPTION_OAUTH_MIGRATION_PAIRS) {
+    const mainCredential = parseProviderCredential(
+      secretStorage.getSecret(getPiAiCredentialSecretId(piProviderId)),
+    );
+    const existingSubscriptionCredential = parseProviderCredential(
+      secretStorage.getSecret(getPiAiCredentialSecretId(subscriptionProviderId)),
+    );
+    const hadLegacyOAuth = isOAuthCredential(mainCredential);
+    if (hadLegacyOAuth) {
+      if (!existingSubscriptionCredential) {
+        secretStorage.setSecret(
+          getPiAiCredentialSecretId(subscriptionProviderId),
+          serializeProviderCredential(mainCredential),
+        );
+      }
+      secretStorage.setSecret(getPiAiCredentialSecretId(piProviderId), '');
+      changed = true;
+    }
+
+    const subscriptionCredential = parseProviderCredential(
+      secretStorage.getSecret(getPiAiCredentialSecretId(subscriptionProviderId)),
+    );
+    if (hadLegacyOAuth && isOAuthCredential(subscriptionCredential)) {
+      migratedPiProviderIds.push(piProviderId);
+    }
+    if (isOAuthCredential(subscriptionCredential) && !nextAdded.includes(subscriptionProviderId)) {
+      nextAdded = [...nextAdded, subscriptionProviderId];
+      changed = true;
+    }
+  }
+
+  return { addedProviders: nextAdded, migratedPiProviderIds, changed };
 }
 
 export class ObsidianCredentialStore implements CredentialStore {

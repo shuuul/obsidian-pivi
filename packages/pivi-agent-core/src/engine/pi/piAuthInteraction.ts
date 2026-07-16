@@ -1,5 +1,9 @@
 import type { AuthInteraction, AuthPrompt } from '@earendil-works/pi-ai';
 
+import {
+  PROVIDER_OAUTH_LOGIN_CANCELLED,
+  type ProviderOAuthProgress,
+} from '../../auth/providerOAuthProgress';
 import { PluginLogger } from '../../foundation/pluginLogger';
 import type { OAuthFlowHost } from '../../ports';
 
@@ -9,18 +13,25 @@ export const OPENAI_CODEX_BROWSER_LOGIN_METHOD = 'browser';
 
 export interface CreatePiAuthInteractionOptions {
   oauthHost: OAuthFlowHost;
-  onProgress?: (message: string) => void;
+  onProgress?: (progress: ProviderOAuthProgress) => void;
   signal?: AbortSignal;
   /** When set, auth_url opens through Codex-safe URL normalization. */
   normalizeAuthUrl?: (url: string) => string;
 }
 
-function notifyProgress(
+function emitProgress(
+  onProgress: ((progress: ProviderOAuthProgress) => void) | undefined,
+  progress: ProviderOAuthProgress,
+): void {
+  onProgress?.(progress);
+}
+
+function notifyMessage(
   oauthHost: OAuthFlowHost,
-  onProgress: ((message: string) => void) | undefined,
+  onProgress: ((progress: ProviderOAuthProgress) => void) | undefined,
   message: string,
 ): void {
-  onProgress?.(message);
+  emitProgress(onProgress, { kind: 'message', message });
   oauthHost.notify?.(message);
 }
 
@@ -35,21 +46,30 @@ function openAuthUrl(
 }
 
 function toAbortError(reason: unknown): Error {
-  return reason instanceof Error ? reason : new Error('Login cancelled');
+  return reason instanceof Error ? reason : new Error(PROVIDER_OAUTH_LOGIN_CANCELLED);
 }
 
-function waitForManualCodeAbort(signal: AbortSignal | undefined): Promise<string> {
+function waitForManualCodeAbort(...signals: Array<AbortSignal | undefined>): Promise<string> {
   return new Promise((_, reject) => {
-    if (!signal) {
+    const activeSignals = signals.filter((candidate): candidate is AbortSignal => !!candidate);
+    const cleanup = (): void => {
+      for (const activeSignal of activeSignals) {
+        activeSignal.removeEventListener('abort', onAbort);
+      }
+    };
+    const onAbort = (event: Event): void => {
+      cleanup();
+      const abortedSignal = event.currentTarget as AbortSignal;
+      reject(toAbortError(abortedSignal.reason));
+    };
+    const alreadyAborted = activeSignals.find(activeSignal => activeSignal.aborted);
+    if (alreadyAborted) {
+      reject(toAbortError(alreadyAborted.reason));
       return;
     }
-    if (signal.aborted) {
-      reject(toAbortError(signal.reason));
-      return;
+    for (const activeSignal of activeSignals) {
+      activeSignal.addEventListener('abort', onAbort, { once: true });
     }
-    signal.addEventListener('abort', () => {
-      reject(toAbortError(signal.reason));
-    }, { once: true });
   });
 }
 
@@ -62,26 +82,30 @@ export function createPiAuthInteraction(options: CreatePiAuthInteractionOptions)
     notify(event) {
       switch (event.type) {
         case 'auth_url': {
-          notifyProgress(oauthHost, onProgress, 'Opening browser for sign-in…');
+          notifyMessage(oauthHost, onProgress, 'Opening browser for sign-in…');
           const url = normalizeAuthUrl ? normalizeAuthUrl(event.url) : event.url;
           openAuthUrl(oauthHost, url, 'auth_url');
           if (event.instructions) {
-            notifyProgress(oauthHost, onProgress, event.instructions);
+            notifyMessage(oauthHost, onProgress, event.instructions);
           }
           break;
         }
         case 'device_code': {
-          notifyProgress(
-            oauthHost,
-            onProgress,
-            `Open ${event.verificationUri} and enter code ${event.userCode}.`,
-          );
-          openAuthUrl(oauthHost, event.verificationUri, 'device_code');
+          if (event.userCode) {
+            emitProgress(onProgress, {
+              kind: 'device_code',
+              userCode: event.userCode,
+              verificationUri: event.verificationUri,
+            });
+          }
+          if (event.verificationUri) {
+            openAuthUrl(oauthHost, event.verificationUri, 'device_code');
+          }
           break;
         }
         case 'progress':
         case 'info':
-          notifyProgress(oauthHost, onProgress, event.message);
+          notifyMessage(oauthHost, onProgress, event.message);
           break;
         default:
           break;
@@ -92,11 +116,11 @@ export function createPiAuthInteraction(options: CreatePiAuthInteractionOptions)
         return OPENAI_CODEX_BROWSER_LOGIN_METHOD;
       }
       if (prompt.type === 'manual_code') {
-        notifyProgress(oauthHost, onProgress, prompt.message);
-        return waitForManualCodeAbort(prompt.signal ?? signal);
+        notifyMessage(oauthHost, onProgress, prompt.message);
+        return waitForManualCodeAbort(prompt.signal, signal);
       }
       if (prompt.type === 'text' || prompt.type === 'secret') {
-        notifyProgress(oauthHost, onProgress, prompt.message);
+        notifyMessage(oauthHost, onProgress, prompt.message);
         return Promise.reject(
           new Error('Interactive OAuth login did not complete in the browser. Ensure the localhost callback is reachable, then try again.'),
         );

@@ -1,9 +1,13 @@
-import type { CustomProviderConfig } from '@pivi/pivi-agent-core/foundation/customProviders';
+import {
+  type CustomProviderConfig,
+  isLocalCustomProviderKind,
+} from '@pivi/pivi-agent-core/foundation/customProviders';
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import { SettingRow, SettingsSectionHeading } from '../controls';
+import { ProviderApiKeyField } from './ProviderCredentials';
 
 export interface CustomProviderPanelProps {
   readonly models: SettingsModelsPort;
@@ -68,6 +72,16 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
           }}
         />
       </SettingRow>
+      {isLocalCustomProviderKind(config.kind) ? (
+        <ProviderApiKeyField
+          models={models}
+          providerId={config.id}
+          allowKeyless
+          showOptionalLabel
+          onChanged={onChanged}
+          onError={onError}
+        />
+      ) : null}
       <div className="pivi-custom-provider-actions">
         <button
           className="pivi-provider-fetch-models-btn"

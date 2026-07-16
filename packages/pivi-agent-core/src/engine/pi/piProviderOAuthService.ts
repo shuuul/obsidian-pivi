@@ -4,6 +4,7 @@ import {
   isInteractiveOAuthProvider,
   isOAuthCredential,
 } from '../../auth/piProviderCredentials';
+import type { ProviderOAuthProgress } from '../../auth/providerOAuthProgress';
 import { PluginLogger } from '../../foundation/pluginLogger';
 import type { OAuthFlowHost, ProviderLegacyAuthStore } from '../../ports';
 import { piAiModels } from './piAiModels';
@@ -25,6 +26,8 @@ export function normalizeCodexBrowserAuthUrl(url: string): string {
 
 /** Interactive provider OAuth backed by pi-ai login/logout and SecretStorage. */
 export class ProviderOAuthService {
+  private readonly activeLogins = new Map<string, AbortController>();
+
   constructor(
     private readonly credentialStore: ObsidianCredentialStore | null,
     private readonly oauthHost: OAuthFlowHost,
@@ -93,7 +96,10 @@ export class ProviderOAuthService {
     return undefined;
   }
 
-  async loginProviderOAuth(providerId: string, onProgress?: (message: string) => void): Promise<void> {
+  async loginProviderOAuth(
+    providerId: string,
+    onProgress?: (progress: ProviderOAuthProgress) => void,
+  ): Promise<void> {
     if (!isInteractiveOAuthProvider(providerId)) {
       throw new Error(`Provider ${providerId} does not support interactive OAuth.`);
     }
@@ -101,44 +107,67 @@ export class ProviderOAuthService {
       throw new Error('Obsidian SecretStorage is unavailable for provider OAuth.');
     }
 
-    await piAiModels.login(
-      providerId,
-      'oauth',
-      createPiAuthInteraction({
-        oauthHost: this.oauthHost,
-        onProgress,
-        normalizeAuthUrl: providerId === CODEX_OAUTH_PROVIDER_ID
-          ? normalizeCodexBrowserAuthUrl
-          : undefined,
-      }),
-    );
-    if (providerId === CODEX_OAUTH_PROVIDER_ID) {
-      this.clearLegacyCodexCredential();
+    this.cancelProviderOAuthLogin(providerId);
+    const controller = new AbortController();
+    this.activeLogins.set(providerId, controller);
+    onProgress?.({ kind: 'cleared' });
+
+    try {
+      await piAiModels.login(
+        providerId,
+        'oauth',
+        createPiAuthInteraction({
+          oauthHost: this.oauthHost,
+          onProgress,
+          signal: controller.signal,
+          normalizeAuthUrl: providerId === CODEX_OAUTH_PROVIDER_ID
+            ? normalizeCodexBrowserAuthUrl
+            : undefined,
+        }),
+      );
+      if (providerId === CODEX_OAUTH_PROVIDER_ID) {
+        this.clearLegacyCodexCredential();
+      }
+    } finally {
+      if (this.activeLogins.get(providerId) === controller) {
+        this.activeLogins.delete(providerId);
+      }
+      onProgress?.({ kind: 'cleared' });
     }
   }
 
-  logoutProviderOAuth(providerId: string): void {
+  /** Abort an in-flight interactive OAuth login so the user can start over. */
+  cancelProviderOAuthLogin(providerId: string): void {
+    const controller = this.activeLogins.get(providerId);
+    if (!controller) {
+      return;
+    }
+    controller.abort();
+    this.activeLogins.delete(providerId);
+  }
+
+  /** Abort all interactive OAuth work owned by this service instance. */
+  dispose(): void {
+    for (const controller of this.activeLogins.values()) {
+      controller.abort();
+    }
+    this.activeLogins.clear();
+  }
+
+  async logoutProviderOAuth(providerId: string): Promise<void> {
     if (!isInteractiveOAuthProvider(providerId)) {
       return;
     }
-    void piAiModels.logout(providerId).catch((error: unknown) => {
+    try {
+      await piAiModels.logout(providerId);
+    } catch (error) {
       logger.warn(`failed to logout ${providerId} OAuth through pi-ai`, error);
-    });
-    void this.credentialStore?.delete(providerId);
+      throw error;
+    }
     if (providerId === CODEX_OAUTH_PROVIDER_ID) {
       this.clearLegacyCodexCredential();
     }
   }
-
-  /** Start OpenAI Codex OAuth through the injected host OAuth flow. */
-  async loginCodex(onProgress?: (message: string) => void): Promise<void> {
-    await this.loginProviderOAuth(CODEX_OAUTH_PROVIDER_ID, onProgress);
-  }
-
-  logoutCodex(): void {
-    this.logoutProviderOAuth(CODEX_OAUTH_PROVIDER_ID);
-  }
-
 
   private readLegacyCodexCredential() {
     const data = this.legacyAuthStore?.read();

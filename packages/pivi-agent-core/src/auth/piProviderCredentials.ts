@@ -9,14 +9,28 @@ const PI_AI_CREDENTIAL_KIND = 'credential';
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
 export const XAI_PROVIDER_ID = 'xai';
 export const ANTHROPIC_PROVIDER_ID = 'anthropic';
+export const GROK_BUILD_PROVIDER_ID = 'grok-build';
+export const CLAUDE_PROVIDER_ID = 'claude';
+
+export const SUBSCRIPTION_OAUTH_PROVIDER_IDS = [
+  GROK_BUILD_PROVIDER_ID,
+  CLAUDE_PROVIDER_ID,
+] as const;
+
+export type SubscriptionOAuthProviderId = (typeof SUBSCRIPTION_OAUTH_PROVIDER_IDS)[number];
 
 export const INTERACTIVE_OAUTH_PROVIDER_IDS = [
   CODEX_OAUTH_PROVIDER_ID,
-  XAI_PROVIDER_ID,
-  ANTHROPIC_PROVIDER_ID,
+  ...SUBSCRIPTION_OAUTH_PROVIDER_IDS,
 ] as const;
 
 export type InteractiveOAuthProviderId = (typeof INTERACTIVE_OAUTH_PROVIDER_IDS)[number];
+
+export function isSubscriptionOAuthProviderId(
+  providerId: string,
+): providerId is SubscriptionOAuthProviderId {
+  return (SUBSCRIPTION_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId);
+}
 
 export function isInteractiveOAuthProvider(providerId: string): providerId is InteractiveOAuthProviderId {
   return (INTERACTIVE_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId);

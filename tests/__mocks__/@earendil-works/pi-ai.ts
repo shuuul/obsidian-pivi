@@ -101,28 +101,53 @@ function getMockProviderEnvVar(provider: string): string {
   return map[provider] ?? `${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`;
 }
 
+function delayedOAuthResult(interaction: { signal?: AbortSignal }, result: object, delayMs = 50): Promise<object> {
+  return new Promise((resolve, reject) => {
+    const { signal } = interaction;
+    const rejectAbort = () => {
+      const reason = signal?.reason;
+      reject(reason instanceof Error ? reason : new Error('Login cancelled'));
+    };
+    if (signal?.aborted) {
+      rejectAbort();
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (signal?.aborted) {
+        rejectAbort();
+        return;
+      }
+      resolve(result);
+    }, delayMs);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer);
+      rejectAbort();
+    }, { once: true });
+  });
+}
+
 function mockOAuthLogin(interaction: any, url: string) {
   interaction.notify({ type: 'auth_url', url });
-  return {
+  return delayedOAuthResult(interaction, {
     type: 'oauth',
     access: 'mock-access',
     refresh: 'mock-refresh',
     expires: Date.now() + 3600_000,
-  };
+  });
 }
 
 function mockXaiOAuthLogin(interaction: any) {
   interaction.notify({
     type: 'device_code',
     userCode: 'ABCD-1234',
-    verificationUri: 'https://x.ai/device',
+    verificationUri: 'https://x.ai/device?user_code=ABCD-1234',
   });
-  return {
+  return delayedOAuthResult(interaction, {
     type: 'oauth',
     access: 'mock-xai-access',
     refresh: 'mock-xai-refresh',
     expires: Date.now() + 3600_000,
-  };
+  });
 }
 
 function mockProvider(id: string): any {
@@ -130,6 +155,7 @@ function mockProvider(id: string): any {
     id,
     name: id,
     auth: {
+      apiKey: {},
       oauth: id === 'openai-codex'
         ? {
             login: async (interaction: any) => mockOAuthLogin(interaction, 'https://auth.openai.com/oauth/authorize'),

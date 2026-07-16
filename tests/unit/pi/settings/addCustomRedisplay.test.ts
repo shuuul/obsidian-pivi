@@ -1,4 +1,4 @@
-import { isBuiltinPiProviderId } from '@pivi/pivi-agent-core/auth/piProviderValidation';
+import { isKnownPiProviderId } from '@pivi/pivi-agent-core/auth/piProviderValidation';
 import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { createDefaultCustomProviderConfig } from '@pivi/pivi-agent-core/foundation/customProviders';
@@ -23,9 +23,9 @@ describe('add ollama then redisplay normalize', () => {
     expect(view.customProviders.map((p) => p.id)).toEqual(['ollama']);
 
     // redisplay migration-like update
-    const customIds = new Set(view.customProviders.map((p) => p.id));
+    const customIds = view.customProviders.map((p) => p.id);
     const supportedAddedProviders = view.addedProviders.filter(
-      (id) => isBuiltinPiProviderId(id) || customIds.has(id),
+      (id) => isKnownPiProviderId(id, customIds),
     );
     view = updatePiAgentSettings(settings, {
       addedProviders: supportedAddedProviders,

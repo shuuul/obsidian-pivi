@@ -35,11 +35,6 @@ function createUiFacades(): PiviUiFacades {
     listModelsForProvider: () => [],
     syncCustomProviders: () => {},
     fetchCustomProviderModels: async () => ({ count: 0 }),
-    migrateProviderCredentialsToKeychain: (_storage, addedProviders, environmentVariables) => ({
-      addedProviders: [...addedProviders],
-      environmentVariables,
-      changed: false,
-    }),
   };
 }
 

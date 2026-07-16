@@ -1,5 +1,10 @@
-import { CODEX_OAUTH_PROVIDER_ID, getPiAiCredentialSecretId, INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { isBuiltinPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
+import {
+  CODEX_OAUTH_PROVIDER_ID,
+  getPiAiCredentialSecretId,
+  INTERACTIVE_OAUTH_PROVIDER_IDS,
+  SUBSCRIPTION_OAUTH_PROVIDER_IDS,
+} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
 import { isSecretStorageAvailable, MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
@@ -40,32 +45,6 @@ export function createSettingsModelsPort(
     bootstrap() {
       const secretStorage = host.app.secretStorage;
       const secureStorageAvailable = isSecretStorageAvailable(secretStorage);
-      const piSettings = getPiAgentSettings(host.settings);
-      if (secureStorageAvailable) {
-        const customIds = new Set(piSettings.customProviders.map(provider => provider.id));
-        const synced = uiFacades.migrateProviderCredentialsToKeychain(
-          secretStorage,
-          piSettings.addedProviders,
-          piSettings.environmentVariables,
-        );
-        const supportedAddedProviders = [
-          ...new Set([
-            ...synced.addedProviders.filter(id => isBuiltinPiProviderId(id) || customIds.has(id)),
-            ...piSettings.addedProviders.filter(id => customIds.has(id)),
-          ]),
-        ];
-        const changed = synced.changed
-          || supportedAddedProviders.length !== piSettings.addedProviders.length
-          || supportedAddedProviders.some((id, index) => id !== piSettings.addedProviders[index])
-          || synced.environmentVariables !== piSettings.environmentVariables;
-        if (changed) {
-          updatePiAgentSettings(host.settings, {
-            addedProviders: supportedAddedProviders,
-            environmentVariables: synced.environmentVariables,
-          });
-          void host.saveSettings();
-        }
-      }
       uiFacades.syncCustomProviders(host.settings);
       return {
         minimumHostVersion: MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
@@ -103,7 +82,8 @@ export function createSettingsModelsPort(
       const piSettings = getPiAgentSettings(host.settings);
       const custom = piSettings.customProviders.find(provider => provider.id === providerId);
       const allowKeyless = !!custom && custom.apiKeyRequired === false;
-      const interactiveOAuthConnected = INTERACTIVE_OAUTH_PROVIDER_IDS.includes(providerId as typeof INTERACTIVE_OAUTH_PROVIDER_IDS[number])
+      const isSubscriptionShell = (SUBSCRIPTION_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId);
+      const interactiveOAuthConnected = isSubscriptionShell || providerId === CODEX_OAUTH_PROVIDER_ID
         ? (workspace.providerOAuth?.hasProviderOAuth(providerId) ?? false)
         : false;
       return deriveProviderReadinessStatus({
@@ -159,21 +139,6 @@ export function createSettingsModelsPort(
     async clearCredential(providerId) {
       await workspace.credentialStore?.delete(providerId);
     },
-    hasCodexAuth: () => workspace.providerOAuth?.hasProviderOAuth(CODEX_OAUTH_PROVIDER_ID) ?? false,
-    async loginCodex(onProgress) {
-      const providerOAuth = workspace.providerOAuth;
-      if (!providerOAuth) throw new Error('Provider OAuth is unavailable.');
-      await providerOAuth.loginProviderOAuth(CODEX_OAUTH_PROVIDER_ID, onProgress);
-      for (const view of host.getAllViews()) {
-        view.getChatHandle()?.maintenance.invalidateSlashCatalog();
-      }
-    },
-    logoutCodex() {
-      workspace.providerOAuth?.logoutProviderOAuth(CODEX_OAUTH_PROVIDER_ID);
-      for (const view of host.getAllViews()) {
-        view.getChatHandle()?.maintenance.invalidateSlashCatalog();
-      }
-    },
     hasProviderOAuth: providerId => workspace.providerOAuth?.hasProviderOAuth(providerId) ?? false,
     async loginProviderOAuth(providerId, onProgress) {
       const providerOAuth = workspace.providerOAuth;
@@ -183,18 +148,25 @@ export function createSettingsModelsPort(
         view.getChatHandle()?.maintenance.invalidateSlashCatalog();
       }
     },
-    logoutProviderOAuth(providerId) {
-      workspace.providerOAuth?.logoutProviderOAuth(providerId);
+    cancelProviderOAuthLogin(providerId) {
+      workspace.providerOAuth?.cancelProviderOAuthLogin(providerId);
+    },
+    async logoutProviderOAuth(providerId) {
+      await workspace.providerOAuth?.logoutProviderOAuth(providerId);
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.invalidateSlashCatalog();
       }
     },
     listAddableBuiltinProviders() {
       const added = new Set(getPiAgentSettings(host.settings).addedProviders);
-      return [...SUPPORTED_PI_PROVIDER_IDS]
+      const builtins = [...SUPPORTED_PI_PROVIDER_IDS]
         .sort()
         .filter(id => !added.has(id))
         .map(id => ({ id, name: getProviderDisplayName(id), logoSlug: getProviderLogoSlug(id) }));
+      const subscriptions = [...SUBSCRIPTION_OAUTH_PROVIDER_IDS]
+        .filter(id => !added.has(id))
+        .map(id => ({ id, name: getProviderDisplayName(id), logoSlug: getProviderLogoSlug(id) }));
+      return [...builtins, ...subscriptions];
     },
     listAddableLocalKinds() {
       const added = new Set(getPiAgentSettings(host.settings).addedProviders);

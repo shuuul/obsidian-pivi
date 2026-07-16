@@ -6,6 +6,7 @@ import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type { ProviderCredential } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
+import type { ProviderOAuthProgress } from "@pivi/pivi-agent-core/auth/providerOAuthProgress";
 import type { PiviSettings } from "@pivi/pivi-agent-core/foundation";
 import type { ChatUIConfig, ChatUIOption } from "@pivi/pivi-agent-core/foundation/chatUi";
 import type {
@@ -21,7 +22,7 @@ import type {
   AppMcpToolProvider,
 } from "@pivi/pivi-agent-core/mcp/ports";
 import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
-import type { HttpClient, ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
+import type { HttpClient, ProcessRunner } from "@pivi/pivi-agent-core/ports";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
@@ -148,11 +149,13 @@ export interface PiviProviderCredentialStore {
 
 export interface PiviProviderOAuth {
   hasCodexAuth(): boolean;
-  loginCodex(onProgress?: (message: string) => void): Promise<void>;
-  logoutCodex(): void;
   hasProviderOAuth(providerId: string): boolean;
-  loginProviderOAuth(providerId: string, onProgress?: (message: string) => void): Promise<void>;
-  logoutProviderOAuth(providerId: string): void;
+  loginProviderOAuth(
+    providerId: string,
+    onProgress?: (progress: ProviderOAuthProgress) => void,
+  ): Promise<void>;
+  cancelProviderOAuthLogin(providerId: string): void;
+  logoutProviderOAuth(providerId: string): Promise<void>;
 }
 
 export interface PiviWebSearchCredentialStore {
@@ -186,16 +189,6 @@ export interface PiviUiFacades {
     settings: Record<string, unknown>,
   ): Promise<{ count: number }>;
 
-  /** Move legacy env/file provider secrets into Obsidian keychain. */
-  migrateProviderCredentialsToKeychain(
-    secretStorage: SyncSecretStore,
-    addedProviders: readonly string[],
-    environmentVariables: string,
-  ): {
-    addedProviders: string[];
-    environmentVariables: string;
-    changed: boolean;
-  };
 }
 
 /** Workspace services exposed to chat/settings UI by the Obsidian plugin shell. */

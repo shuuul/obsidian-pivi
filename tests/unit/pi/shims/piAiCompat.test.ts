@@ -65,6 +65,8 @@ describe('piAiCompat shim', () => {
       'xiaomi-token-plan-cn',
       'zai',
       'zai-coding-cn',
+      'claude',
+      'grok-build',
     ]);
     expect(getModels('deepseek')).toEqual([
       expect.objectContaining({ provider: 'deepseek', id: 'mock-model' }),

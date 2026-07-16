@@ -470,12 +470,25 @@
     },
     "webSearch": {
       "intro": "Arraste os provedores para definir a prioridade. WebSearch e WebFetch mudam automaticamente quando um provedor está indisponível, limitado ou sem quota.",
-      "capability": { "search": "Pesquisa", "fetch": "Obtenção" },
-      "status": { "configured": "Configurado", "anonymous": "Anônimo", "missingKey": "Chave ausente", "disabled": "Desativado" },
+      "capability": {
+        "search": "Pesquisa",
+        "fetch": "Obtenção"
+      },
+      "status": {
+        "configured": "Configurado",
+        "anonymous": "Anônimo",
+        "missingKey": "Chave ausente",
+        "disabled": "Desativado"
+      },
       "providerKeyRequired": "{provider} exige uma chave API e é ignorado sem uma chave configurada.",
       "providerKeyOptional": "{provider} permite acesso anônimo com limites menores; uma chave API aumenta a quota.",
       "fixedFallbacks": "Fallbacks finais: WebSearch usa o MCP público da Exa; WebFetch usa HTTP direto.",
-      "reorder": { "handle": "Reordenar {provider}, posição atual {position}", "position": "{provider} movido para a posição {position} de {total}.", "saved": "Ordem dos provedores salva.", "cancelled": "Reordenação cancelada." },
+      "reorder": {
+        "handle": "Reordenar {provider}, posição atual {position}",
+        "position": "{provider} movido para a posição {position} de {total}.",
+        "saved": "Ordem dos provedores salva.",
+        "cancelled": "Reordenação cancelada."
+      },
       "apiKeyName": "Chave API de {provider}",
       "apiKeyPlaceholder": "Introduce la chave API…",
       "apiKeySavedPlaceholder": "Guardada en o {secureStorageName}",
@@ -486,6 +499,7 @@
       "secureStorageRequired": "As chaves de API dos provedores exigem {hostName} {version} ou superior com {secureStorageName}. Atualize {hostName} para armazenar credenciais com segurança.",
       "authHeading": "Autenticación e credenciales",
       "apiKey": "Chave API",
+      "apiKeyOptional": "Chave API (opcional)",
       "apiKeyDesc": "Guardada en o {secureStorageName} como {secretId}.",
       "apiKeyPlaceholder": "Introduce la chave API…",
       "apiKeySavedPlaceholder": "Guardada en o {secureStorageName}",
@@ -497,6 +511,7 @@
       "candidateModels": "Grupo de modelos candidatos",
       "noModels": "Nenhum modelo carregado ainda. Busque modelos no endpoint e ative-os aqui.",
       "addProvider": "+ Adicionar provedor",
+      "addProviderAdded": "Adicionado",
       "removedProvider": "Provedor {name} eliminado.",
       "removeConfirmTitle": "Remover o provedor {name}?",
       "removeConfirmDescription": "Isto remove o provedor e suas seleções de modelos. A credencial armazenada é mantida por padrão.",
@@ -522,7 +537,7 @@
         "unavailable": "Aún no hay metadatos de modelo pi-ai locales para este provedor."
       },
       "codex": {
-        "name": "Suscripción OpenAI Codex",
+        "name": "OpenAI Codex",
         "desc": "Inicia sessão com tu suscripción de ChatGPT/Codex. Las credenciales se guardan en o {secureStorageName}.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
@@ -531,29 +546,10 @@
         "disconnected": "OpenAI Codex desconectado.",
         "loginFailed": "Erro de inicio de sessão de Codex: {message}"
       },
-      "xai": {
-        "name": "Assinatura xAI Grok",
-        "desc": "Inicia sessão com a tua assinatura xAI/Grok. As credenciais são guardadas no {secureStorageName}.",
-        "connect": "Conectar",
-        "reconnect": "Reconectar",
-        "disconnect": "Desconectar",
-        "connected": "xAI conectado.",
-        "disconnected": "xAI desconectado.",
-        "loginFailed": "Erro de inicio de sessão de xAI: {message}"
-      },
-      "anthropic": {
-        "name": "Assinatura Claude Pro/Max",
-        "desc": "Inicia sessão com a tua assinatura Claude Pro ou Max no navegador. Usa o mesmo slot de credenciais em {secureStorageName} que um token OAuth manual.",
-        "connect": "Conectar",
-        "reconnect": "Reconectar",
-        "disconnect": "Desconectar",
-        "connected": "OAuth Anthropic conectado.",
-        "disconnected": "OAuth Anthropic desconectado.",
-        "loginFailed": "Erro de inicio de sessão de Anthropic: {message}"
-      },
       "addSectionLocal": "Local",
       "addSectionCustom": "API personalizada",
-      "addSectionCloud": "Nuvem",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "Endpoint",
       "displayName": "Nome de exibição",
       "displayNameDesc": "Mostrado na lista de provedores e no agrupamento do seletor de modelos.",
@@ -566,7 +562,32 @@
       "fetchModelsFailed": "{name}: falha ao buscar modelos: {message}",
       "authHeadingOptional": "Autenticação (opcional)",
       "apiKeyOptionalDesc": "Opcional. Deixe vazio para servidores locais sem autenticação. Se definido, é guardado no {secureStorageName} como {secretId}.",
-      "apiKeyOptionalPlaceholder": "Chave API opcional…"
+      "apiKeyOptionalPlaceholder": "Chave API opcional…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "Inicia sessão no Grok Build com a tua conta xAI. As credenciais são guardadas no {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "Grok Build conectado.",
+        "disconnected": "Grok Build desconectado.",
+        "loginFailed": "Erro de inicio de sessão do Grok Build: {message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "Entre com sua assinatura Claude Pro ou Max no navegador. As credenciais ficam em {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "Claude conectado.",
+        "disconnected": "Claude desconectado.",
+        "loginFailed": "Erro de inicio de sessão do Claude: {message}"
+      },
+      "oauthCommon": {
+        "cancel": "Cancelar",
+        "deviceCode": "Código do dispositivo",
+        "cancelled": "Início de sessão cancelado."
+      }
     },
     "skills": {
       "intro": "Las habilidades do agente están en .pivi/skills/ e se cargan en o siguiente turno (herramienta skill + prompt do sistema). Pivi solo instala o actualiza tras uma acción de abajo.",

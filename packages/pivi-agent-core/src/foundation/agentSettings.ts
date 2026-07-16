@@ -1,5 +1,4 @@
 import {
-  isBuiltinPiProviderId,
   isKnownPiProviderId,
   isSupportedPiModelKey,
 } from '../auth/piProviderValidation';
@@ -104,9 +103,9 @@ export function updatePiAgentSettings(
     next.customProviders = normalizeCustomProviders(updates.customProviders);
   }
   if (updates.addedProviders !== undefined) {
-    const customIds = new Set(next.customProviders.map((provider) => provider.id));
+    const customIds = next.customProviders.map((provider) => provider.id);
     next.addedProviders = updates.addedProviders.filter(
-      (id) => isBuiltinPiProviderId(id) || customIds.has(id),
+      (id) => isKnownPiProviderId(id, customIds),
     );
     next.customProviders = next.customProviders.filter((provider) =>
       next.addedProviders.includes(provider.id),

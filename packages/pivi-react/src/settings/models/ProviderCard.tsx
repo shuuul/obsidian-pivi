@@ -1,3 +1,4 @@
+import { isLocalCustomProviderKind } from '@pivi/pivi-agent-core/foundation/customProviders';
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
 import { type CSSProperties, Fragment, type MouseEvent, useState } from 'react';
 
@@ -61,8 +62,10 @@ export function ProviderCard({
   const logoSlug = models.getProviderLogoSlug(providerId);
   const readiness = models.getReadiness(providerId);
   const allowKeyless = !!custom && custom.apiKeyRequired === false;
+  const isLocalProvider = !!custom && isLocalCustomProviderKind(custom.kind);
   const isInteractiveOAuth = models.interactiveOAuthProviderIds.includes(providerId);
   const isCodex = providerId === models.codexProviderId;
+  const isAccountOAuth = isInteractiveOAuth && !isCodex;
 
   const stop = (event: MouseEvent): void => {
     event.preventDefault();
@@ -173,19 +176,27 @@ export function ProviderCard({
         {custom ? (
           <>
             <CustomProviderPanel models={models} feedback={feedback} config={custom} onChanged={onChanged} onError={onError} />
-            <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
-          </>
-        ) : isInteractiveOAuth ? (
-          <>
-            {!isCodex ? (
+            {!isLocalProvider ? (
               <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
             ) : null}
+            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+          </>
+        ) : isCodex ? (
+          <>
             <ProviderOAuthSection models={models} feedback={feedback} providerId={providerId} connected={oauthConnected} onChanged={onChanged} />
+            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+          </>
+        ) : isAccountOAuth ? (
+          <>
+            <ProviderOAuthSection models={models} feedback={feedback} providerId={providerId} connected={oauthConnected} onChanged={onChanged} />
+            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
           </>
         ) : (
-          <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
+          <>
+            <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
+            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+          </>
         )}
-        <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
         <button
           className="pivi-provider-test-btn"
           type="button"

@@ -2,6 +2,8 @@ export * from './buildPiToolRegistryCore';
 export * from './codexImageGenerator';
 export * from './createSkillTool';
 export * from './createSubagentTool';
+export * from './deviceVerificationUri';
+export * from './grokBuildProvider';
 export * from './installPiCustomProviders';
 export * from './piAgentEventAdapter';
 export * from './piAiModels';

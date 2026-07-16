@@ -491,6 +491,7 @@
       "secureStorageRequired": "Provider API keys require {hostName} {version} or newer with {secureStorageName}. Upgrade {hostName} to store credentials securely.",
       "authHeading": "Authentication & credentials",
       "apiKey": "API key",
+      "apiKeyOptional": "API key (optional)",
       "apiKeyDesc": "Saved in {secureStorageName} as {secretId}.",
       "apiKeyPlaceholder": "Enter API key...",
       "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
@@ -502,9 +503,11 @@
       "candidateModels": "Candidate models pool",
       "noModels": "No models loaded yet. Fetch models from the endpoint, then enable them here.",
       "addProvider": "+ Add provider",
+      "addProviderAdded": "Added",
       "addSectionLocal": "Local",
       "addSectionCustom": "Custom API",
-      "addSectionCloud": "Cloud",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "Endpoint",
       "displayName": "Display name",
       "displayNameDesc": "Shown in the provider list and model picker grouping.",
@@ -540,7 +543,7 @@
         "unavailable": "No local pi-ai model metadata is available for this provider yet."
       },
       "codex": {
-        "name": "OpenAI Codex subscription",
+        "name": "OpenAI Codex",
         "desc": "Sign in with your ChatGPT/Codex subscription. Credentials are stored in {secureStorageName}.",
         "connect": "Connect",
         "reconnect": "Reconnect",
@@ -549,25 +552,30 @@
         "disconnected": "OpenAI Codex disconnected.",
         "loginFailed": "Codex login failed: {message}"
       },
-      "xai": {
-        "name": "xAI Grok subscription",
-        "desc": "Sign in with your xAI/Grok subscription. Credentials are stored in {secureStorageName}.",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "Sign in to Grok Build with your xAI account. Credentials are stored in {secureStorageName}.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
-        "connected": "xAI connected.",
-        "disconnected": "xAI disconnected.",
-        "loginFailed": "xAI login failed: {message}"
+        "connected": "Grok Build connected.",
+        "disconnected": "Grok Build disconnected.",
+        "loginFailed": "Grok Build login failed: {message}"
       },
-      "anthropic": {
-        "name": "Claude Pro/Max subscription",
-        "desc": "Sign in with your Claude Pro or Max subscription in the browser. This writes the same {secureStorageName} credential slot as a manual OAuth token.",
+      "claude": {
+        "name": "Claude",
+        "desc": "Sign in with your Claude Pro or Max subscription in the browser. Credentials are stored in {secureStorageName}.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
-        "connected": "Anthropic OAuth connected.",
-        "disconnected": "Anthropic OAuth disconnected.",
-        "loginFailed": "Anthropic login failed: {message}"
+        "connected": "Claude connected.",
+        "disconnected": "Claude disconnected.",
+        "loginFailed": "Claude login failed: {message}"
+      },
+      "oauthCommon": {
+        "cancel": "Cancel",
+        "deviceCode": "Device code",
+        "cancelled": "Sign-in cancelled."
       },
       "authHeadingOptional": "Authentication (optional)",
       "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in {secureStorageName} as {secretId} when set.",

@@ -20,6 +20,7 @@ import {
   type ObsidianCredentialStore,
 } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
+import { registerBundledPiOAuthFlows } from "@pivi/pivi-agent-core/engine/pi/registerBundledPiOAuthFlows";
 import { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
 import {
   type AppModelReadinessProvider,
@@ -115,6 +116,7 @@ export async function createPiWorkspaceServices(
     host.app.secretStorage,
   );
   migrateLegacyWebSearchCredentials(webSearchCredentialStore, credentialStore);
+  registerBundledPiOAuthFlows(nodeFetch);
   configurePiAiModels({
     credentials: credentialStore ?? undefined,
     authContext: new ObsidianAuthContext({
@@ -196,6 +198,7 @@ export async function createPiWorkspaceServices(
     slashCommandCatalog,
     dispose: async () => {
       subagentConcurrencyLimiter.dispose();
+      providerOAuth.dispose();
       await Promise.all([
         mcpToolProvider.dispose(),
         mcpDiagnostics.dispose(),

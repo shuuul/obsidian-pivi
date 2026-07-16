@@ -470,12 +470,25 @@
     },
     "webSearch": {
       "intro": "Faites glisser les fournisseurs pour définir leur priorité. WebSearch et WebFetch basculent automatiquement en cas d’indisponibilité, de limite ou de quota épuisé.",
-      "capability": { "search": "Recherche", "fetch": "Récupération" },
-      "status": { "configured": "Configuré", "anonymous": "Anonyme", "missingKey": "Clé manquante", "disabled": "Désactivé" },
+      "capability": {
+        "search": "Recherche",
+        "fetch": "Récupération"
+      },
+      "status": {
+        "configured": "Configuré",
+        "anonymous": "Anonyme",
+        "missingKey": "Clé manquante",
+        "disabled": "Désactivé"
+      },
       "providerKeyRequired": "{provider} nécessite une clé API et est ignoré sans clé configurée.",
       "providerKeyOptional": "{provider} autorise l’accès anonyme avec des limites réduites ; une clé API augmente le quota.",
       "fixedFallbacks": "Replis finaux : WebSearch utilise le MCP public Exa ; WebFetch utilise HTTP direct.",
-      "reorder": { "handle": "Réordonner {provider}, position actuelle {position}", "position": "{provider} déplacé en position {position} sur {total}.", "saved": "Ordre des fournisseurs enregistré.", "cancelled": "Réorganisation annulée." },
+      "reorder": {
+        "handle": "Réordonner {provider}, position actuelle {position}",
+        "position": "{provider} déplacé en position {position} sur {total}.",
+        "saved": "Ordre des fournisseurs enregistré.",
+        "cancelled": "Réorganisation annulée."
+      },
       "apiKeyName": "Clé API {provider}",
       "apiKeyPlaceholder": "Saisir la clé API…",
       "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
@@ -486,6 +499,7 @@
       "secureStorageRequired": "Les clés API des fournisseurs nécessitent {hostName} {version} ou plus récent avec {secureStorageName}. Mettez à jour {hostName} pour stocker les identifiants en toute sécurité.",
       "authHeading": "Authentification et identifiants",
       "apiKey": "Clé API",
+      "apiKeyOptional": "Clé API (facultative)",
       "apiKeyDesc": "Enregistrée dans le {secureStorageName} sous {secretId}.",
       "apiKeyPlaceholder": "Saisir la clé API…",
       "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
@@ -497,6 +511,7 @@
       "candidateModels": "Pool de modèles candidats",
       "noModels": "Aucun modèle chargé. Récupérez les modèles depuis le point de terminaison, puis activez-les ici.",
       "addProvider": "+ Ajouter un fournisseur",
+      "addProviderAdded": "Ajouté",
       "removedProvider": "Fournisseur {name} retiré.",
       "removeConfirmTitle": "Supprimer le fournisseur {name} ?",
       "removeConfirmDescription": "Cela supprime le fournisseur et ses sélections de modèles. Les identifiants enregistrés sont conservés par défaut.",
@@ -522,7 +537,7 @@
         "unavailable": "Aucune métadonnée de modèle pi-ai locale pour ce fournisseur pour l’instant."
       },
       "codex": {
-        "name": "Abonnement OpenAI Codex",
+        "name": "OpenAI Codex",
         "desc": "Connectez-vous avec votre abonnement ChatGPT/Codex. Identifiants dans le {secureStorageName}.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
@@ -531,29 +546,10 @@
         "disconnected": "OpenAI Codex déconnecté.",
         "loginFailed": "Échec de la connexion Codex : {message}"
       },
-      "xai": {
-        "name": "Abonnement xAI Grok",
-        "desc": "Connectez-vous avec votre abonnement xAI/Grok. Les identifiants sont stockés dans {secureStorageName}.",
-        "connect": "Connecter",
-        "reconnect": "Reconnecter",
-        "disconnect": "Déconnecter",
-        "connected": "xAI connecté.",
-        "disconnected": "xAI déconnecté.",
-        "loginFailed": "Échec de la connexion xAI : {message}"
-      },
-      "anthropic": {
-        "name": "Abonnement Claude Pro/Max",
-        "desc": "Connectez-vous avec votre abonnement Claude Pro ou Max dans le navigateur. Utilise le même emplacement de credential {secureStorageName} qu'un jeton OAuth manuel.",
-        "connect": "Connecter",
-        "reconnect": "Reconnecter",
-        "disconnect": "Déconnecter",
-        "connected": "OAuth Anthropic connecté.",
-        "disconnected": "OAuth Anthropic déconnecté.",
-        "loginFailed": "Échec de la connexion Anthropic : {message}"
-      },
       "addSectionLocal": "Local",
       "addSectionCustom": "API personnalisée",
-      "addSectionCloud": "Cloud",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "Point de terminaison",
       "displayName": "Nom affiché",
       "displayNameDesc": "Affiché dans la liste des fournisseurs et le regroupement du sélecteur de modèles.",
@@ -566,7 +562,32 @@
       "fetchModelsFailed": "{name} : échec de la récupération des modèles : {message}",
       "authHeadingOptional": "Authentification (facultative)",
       "apiKeyOptionalDesc": "Facultatif. Laissez vide pour les serveurs locaux sans authentification. Si renseignée, enregistrée dans le {secureStorageName} sous {secretId}.",
-      "apiKeyOptionalPlaceholder": "Clé API facultative…"
+      "apiKeyOptionalPlaceholder": "Clé API facultative…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "Connectez-vous à Grok Build avec votre compte xAI. Les identifiants sont stockés dans {secureStorageName}.",
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "connected": "Grok Build connecté.",
+        "disconnected": "Grok Build déconnecté.",
+        "loginFailed": "Échec de la connexion Grok Build : {message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "Connectez-vous avec votre abonnement Claude Pro ou Max dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "connected": "Claude connecté.",
+        "disconnected": "Claude déconnecté.",
+        "loginFailed": "Échec de la connexion Claude : {message}"
+      },
+      "oauthCommon": {
+        "cancel": "Annuler",
+        "deviceCode": "Code d'appareil",
+        "cancelled": "Connexion annulée."
+      }
     },
     "skills": {
       "intro": "Les compétences d’agent sont dans .pivi/skills/ et se chargent au tour suivant (outil skill + prompt système). Pivi n’installe ou ne met à jour qu’après une action ci-dessous.",

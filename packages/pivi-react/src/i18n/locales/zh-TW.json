@@ -470,12 +470,25 @@
     },
     "webSearch": {
       "intro": "拖曳提供者以調整優先順序。當提供者無法使用、受到限流或額度用盡時，WebSearch 和 WebFetch 會自動回退。",
-      "capability": { "search": "搜尋", "fetch": "擷取" },
-      "status": { "configured": "已設定", "anonymous": "匿名", "missingKey": "缺少金鑰", "disabled": "已停用" },
+      "capability": {
+        "search": "搜尋",
+        "fetch": "擷取"
+      },
+      "status": {
+        "configured": "已設定",
+        "anonymous": "匿名",
+        "missingKey": "缺少金鑰",
+        "disabled": "已停用"
+      },
       "providerKeyRequired": "{provider} 需要 API 金鑰；未設定金鑰時會略過。",
       "providerKeyOptional": "{provider} 支援額度較低的匿名存取；設定 API 金鑰可提高可用額度。",
       "fixedFallbacks": "最終回退：WebSearch 使用 Exa 公用 MCP；WebFetch 使用直接 HTTP。它們始終在排序的提供者之後執行。",
-      "reorder": { "handle": "調整 {provider} 的順序，目前位置 {position}", "position": "已將 {provider} 移至第 {position} 位，共 {total} 位。", "saved": "提供者順序已儲存。", "cancelled": "已取消調整提供者順序。" },
+      "reorder": {
+        "handle": "調整 {provider} 的順序，目前位置 {position}",
+        "position": "已將 {provider} 移至第 {position} 位，共 {total} 位。",
+        "saved": "提供者順序已儲存。",
+        "cancelled": "已取消調整提供者順序。"
+      },
       "apiKeyName": "{provider} API 金鑰",
       "apiKeyPlaceholder": "輸入 API 金鑰…",
       "apiKeySavedPlaceholder": "已儲存在{secureStorageName}",
@@ -486,6 +499,7 @@
       "secureStorageRequired": "提供者 API 金鑰需要支援{secureStorageName}的 {hostName} {version} 或更高版本。請升級 {hostName}。",
       "authHeading": "驗證與憑證",
       "apiKey": "API 金鑰",
+      "apiKeyOptional": "API 金鑰（選填）",
       "apiKeyDesc": "以 {secretId} 儲存在{secureStorageName}中。",
       "apiKeyPlaceholder": "輸入 API 金鑰…",
       "apiKeySavedPlaceholder": "已儲存在{secureStorageName}",
@@ -497,6 +511,7 @@
       "candidateModels": "候選模型池",
       "noModels": "尚未載入模型。請從端點取得模型，然後在此啟用。",
       "addProvider": "+ 新增提供者",
+      "addProviderAdded": "已新增",
       "removedProvider": "已移除 {name} 提供者。",
       "removeConfirmTitle": "移除 {name} 提供者？",
       "removeConfirmDescription": "這會移除該提供者及其模型選擇。預設保留已儲存的憑證。",
@@ -522,7 +537,7 @@
         "unavailable": "此提供者尚無本機 pi-ai 模型中繼資料。"
       },
       "codex": {
-        "name": "OpenAI Codex 訂閱",
+        "name": "OpenAI Codex",
         "desc": "使用你的 ChatGPT/Codex 訂閱登入。憑證儲存在{secureStorageName}中。",
         "connect": "連線",
         "reconnect": "重新連線",
@@ -531,29 +546,10 @@
         "disconnected": "OpenAI Codex 已中斷連線。",
         "loginFailed": "Codex 登入失敗：{message}"
       },
-      "xai": {
-        "name": "xAI Grok 訂閱",
-        "desc": "使用你的 xAI/Grok 訂閱登入。憑證儲存在{secureStorageName}中。",
-        "connect": "連線",
-        "reconnect": "重新連線",
-        "disconnect": "中斷連線",
-        "connected": "xAI 已連線。",
-        "disconnected": "xAI 已中斷連線。",
-        "loginFailed": "xAI 登入失敗：{message}"
-      },
-      "anthropic": {
-        "name": "Claude Pro/Max 訂閱",
-        "desc": "在瀏覽器中使用 Claude Pro 或 Max 訂閱登入。與手動 OAuth 權杖共用同一{secureStorageName}憑證槽位。",
-        "connect": "連線",
-        "reconnect": "重新連線",
-        "disconnect": "中斷連線",
-        "connected": "Anthropic OAuth 已連線。",
-        "disconnected": "Anthropic OAuth 已中斷連線。",
-        "loginFailed": "Anthropic 登入失敗：{message}"
-      },
       "addSectionLocal": "本機",
       "addSectionCustom": "自訂 API",
-      "addSectionCloud": "雲端",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "端點",
       "displayName": "顯示名稱",
       "displayNameDesc": "顯示於提供者清單與模型選擇分組。",
@@ -566,7 +562,32 @@
       "fetchModelsFailed": "{name}：取得模型失敗：{message}",
       "authHeadingOptional": "驗證（選用）",
       "apiKeyOptionalDesc": "選用。本地伺服器不需驗證時可留空。若填寫，會以 {secretId} 儲存在{secureStorageName}中。",
-      "apiKeyOptionalPlaceholder": "選用 API 金鑰…"
+      "apiKeyOptionalPlaceholder": "選用 API 金鑰…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "使用你的 xAI 帳戶登入 Grok Build。憑證儲存在{secureStorageName}中。",
+        "connect": "連線",
+        "reconnect": "重新連線",
+        "disconnect": "中斷連線",
+        "connected": "Grok Build 已連線。",
+        "disconnected": "Grok Build 已中斷連線。",
+        "loginFailed": "Grok Build 登入失敗：{message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "在瀏覽器中使用 Claude Pro 或 Max 訂閱登入。憑證儲存在 {secureStorageName}。",
+        "connect": "連線",
+        "reconnect": "重新連線",
+        "disconnect": "中斷連線",
+        "connected": "Claude 已連線。",
+        "disconnected": "Claude 已中斷連線。",
+        "loginFailed": "Claude 登入失敗：{message}"
+      },
+      "oauthCommon": {
+        "cancel": "取消",
+        "deviceCode": "驗證碼",
+        "cancelled": "已取消登入。"
+      }
     },
     "skills": {
       "intro": "代理技能位於 .pivi/skills/，並在下一回合載入（skill 工具 + 系統提示）。僅在你選擇下方操作後，Pivi 才會安裝或更新技能。",

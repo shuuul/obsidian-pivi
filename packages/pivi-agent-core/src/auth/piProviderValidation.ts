@@ -1,3 +1,5 @@
+import { isSubscriptionOAuthProviderId } from './piProviderCredentials';
+
 export const SUPPORTED_PI_PROVIDER_IDS = [
   'anthropic',
   'deepseek',
@@ -35,6 +37,9 @@ export function isKnownPiProviderId(
   customProviderIds?: readonly string[],
 ): boolean {
   if (isBuiltinPiProviderId(providerId)) {
+    return true;
+  }
+  if (isSubscriptionOAuthProviderId(providerId)) {
     return true;
   }
   return customProviderIds?.includes(providerId) ?? false;

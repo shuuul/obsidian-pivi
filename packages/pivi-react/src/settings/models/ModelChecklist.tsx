@@ -12,7 +12,12 @@ export interface ModelChecklistProps {
 }
 
 /** Candidate-model checkbox grid for one provider card body. */
-export function ModelChecklist({ catalog, providerId, settings, onToggleModel }: ModelChecklistProps) {
+export function ModelChecklist({
+  catalog,
+  providerId,
+  settings,
+  onToggleModel,
+}: ModelChecklistProps) {
   const t = useT();
   const providerModels = catalog.listModelsForProvider(providerId);
   return (
@@ -23,7 +28,7 @@ export function ModelChecklist({ catalog, providerId, settings, onToggleModel }:
           <div className="pivi-no-models-message">{t('settings.modelsTab.noModels')}</div>
         ) : (
           providerModels.map(model => {
-            const inputId = `checkbox-${model.value.replace(/\//g, '-')}`;
+            const inputId = `checkbox-${providerId}-${model.value}`.replace(/[^a-zA-Z0-9_-]/g, '-');
             const checked = settings.visibleModels.includes(model.value);
             return (
               <div className="pivi-model-checkbox-wrapper" key={model.value}>

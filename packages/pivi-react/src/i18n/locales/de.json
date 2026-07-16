@@ -470,12 +470,25 @@
     },
     "webSearch": {
       "intro": "Ziehen Sie Anbieter in die gewünschte Priorität. WebSearch und WebFetch wechseln bei Ausfall, Ratenlimit oder erschöpftem Kontingent automatisch weiter.",
-      "capability": { "search": "Suche", "fetch": "Abruf" },
-      "status": { "configured": "Konfiguriert", "anonymous": "Anonym", "missingKey": "Schlüssel fehlt", "disabled": "Deaktiviert" },
+      "capability": {
+        "search": "Suche",
+        "fetch": "Abruf"
+      },
+      "status": {
+        "configured": "Konfiguriert",
+        "anonymous": "Anonym",
+        "missingKey": "Schlüssel fehlt",
+        "disabled": "Deaktiviert"
+      },
       "providerKeyRequired": "{provider} benötigt einen API-Schlüssel und wird ohne Schlüssel übersprungen.",
       "providerKeyOptional": "{provider} erlaubt anonymen Zugriff mit niedrigeren Limits; ein API-Schlüssel erhöht das Kontingent.",
       "fixedFallbacks": "Letzte Fallbacks: WebSearch nutzt Exa Public MCP; WebFetch nutzt direktes HTTP.",
-      "reorder": { "handle": "{provider} neu anordnen, aktuelle Position {position}", "position": "{provider} auf Position {position} von {total} verschoben.", "saved": "Anbieterreihenfolge gespeichert.", "cancelled": "Neuordnung abgebrochen." },
+      "reorder": {
+        "handle": "{provider} neu anordnen, aktuelle Position {position}",
+        "position": "{provider} auf Position {position} von {total} verschoben.",
+        "saved": "Anbieterreihenfolge gespeichert.",
+        "cancelled": "Neuordnung abgebrochen."
+      },
       "apiKeyName": "{provider}-API-Schlüssel",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
       "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
@@ -486,6 +499,7 @@
       "secureStorageRequired": "Anbieter-API-Schlüssel erfordern {hostName} {version} oder neuer mit {secureStorageName}. Aktualisieren Sie {hostName}, um Anmeldedaten sicher zu speichern.",
       "authHeading": "Authentifizierung & Anmeldedaten",
       "apiKey": "API-Schlüssel",
+      "apiKeyOptional": "API-Schlüssel (optional)",
       "apiKeyDesc": "Im {secureStorageName} als {secretId} gespeichert.",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
       "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
@@ -497,6 +511,7 @@
       "candidateModels": "Kandidatenmodell-Pool",
       "noModels": "Noch keine Modelle geladen. Modelle vom Endpunkt abrufen und hier aktivieren.",
       "addProvider": "+ Anbieter hinzufügen",
+      "addProviderAdded": "Hinzugefügt",
       "removedProvider": "Anbieter {name} entfernt.",
       "removeConfirmTitle": "Anbieter {name} entfernen?",
       "removeConfirmDescription": "Dadurch werden der Anbieter und seine Modellauswahl entfernt. Die gespeicherten Zugangsdaten bleiben standardmäßig erhalten.",
@@ -522,7 +537,7 @@
         "unavailable": "Noch keine lokalen pi-ai-Modellmetadaten für diesen Anbieter."
       },
       "codex": {
-        "name": "OpenAI-Codex-Abo",
+        "name": "OpenAI Codex",
         "desc": "Mit ChatGPT/Codex-Abo anmelden. Anmeldedaten im {secureStorageName}.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
@@ -531,29 +546,10 @@
         "disconnected": "OpenAI Codex getrennt.",
         "loginFailed": "Codex-Anmeldung fehlgeschlagen: {message}"
       },
-      "xai": {
-        "name": "xAI-Grok-Abo",
-        "desc": "Mit xAI/Grok-Abo anmelden. Anmeldedaten im {secureStorageName}.",
-        "connect": "Verbinden",
-        "reconnect": "Erneut verbinden",
-        "disconnect": "Trennen",
-        "connected": "xAI verbunden.",
-        "disconnected": "xAI getrennt.",
-        "loginFailed": "xAI-Anmeldung fehlgeschlagen: {message}"
-      },
-      "anthropic": {
-        "name": "Claude Pro/Max-Abo",
-        "desc": "Mit Claude Pro oder Max im Browser anmelden. Nutzt denselben {secureStorageName}-Credential-Slot wie ein manuelles OAuth-Token.",
-        "connect": "Verbinden",
-        "reconnect": "Erneut verbinden",
-        "disconnect": "Trennen",
-        "connected": "Anthropic OAuth verbunden.",
-        "disconnected": "Anthropic OAuth getrennt.",
-        "loginFailed": "Anthropic-Anmeldung fehlgeschlagen: {message}"
-      },
       "addSectionLocal": "Lokal",
       "addSectionCustom": "Benutzerdefinierte API",
-      "addSectionCloud": "Cloud",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "Endpunkt",
       "displayName": "Anzeigename",
       "displayNameDesc": "Wird in der Anbieterliste und Modellgruppen angezeigt.",
@@ -566,7 +562,32 @@
       "fetchModelsFailed": "{name}: Modelle konnten nicht geladen werden: {message}",
       "authHeadingOptional": "Authentifizierung (optional)",
       "apiKeyOptionalDesc": "Optional. Leer lassen für lokale Server ohne Auth. Bei Angabe im {secureStorageName} als {secretId} gespeichert.",
-      "apiKeyOptionalPlaceholder": "Optionaler API-Schlüssel…"
+      "apiKeyOptionalPlaceholder": "Optionaler API-Schlüssel…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "Mit dem xAI-Konto bei Grok Build anmelden. Anmeldedaten im {secureStorageName}.",
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen",
+        "connected": "Grok Build verbunden.",
+        "disconnected": "Grok Build getrennt.",
+        "loginFailed": "Grok-Build-Anmeldung fehlgeschlagen: {message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "Mit Claude Pro oder Max im Browser anmelden. Anmeldedaten im {secureStorageName}.",
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen",
+        "connected": "Claude verbunden.",
+        "disconnected": "Claude getrennt.",
+        "loginFailed": "Claude-Anmeldung fehlgeschlagen: {message}"
+      },
+      "oauthCommon": {
+        "cancel": "Abbrechen",
+        "deviceCode": "Gerätecode",
+        "cancelled": "Anmeldung abgebrochen."
+      }
     },
     "skills": {
       "intro": "Agenten-Skills liegen in .pivi/skills/ und werden im nächsten Turn geladen (Skill-Tool + Systemprompt). Pivi installiert oder aktualisiert Skills nur nach Aktion unten.",

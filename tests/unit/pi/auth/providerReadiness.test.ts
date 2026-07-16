@@ -94,6 +94,38 @@ describe('deriveProviderReadinessStatus (pivi-agent-core/auth)', () => {
     expect(status.kind).toBe('ready');
   });
 
+  it('treats subscription plan providers as ready when interactive OAuth is connected', () => {
+    const status = deriveProviderReadinessStatus({
+      providerId: 'grok-build',
+      piSettings: basePiSettings,
+      interactiveOAuthConnected: true,
+      modelCount: 1,
+    });
+
+    expect(status.kind).toBe('ready');
+  });
+
+  it('does not accept an API key as subscription plan authentication', () => {
+    const status = deriveProviderReadinessStatus({
+      providerId: 'grok-build',
+      piSettings: basePiSettings,
+      credential: { type: 'api_key', key: 'wrong-auth-kind' },
+      modelCount: 1,
+    });
+
+    expect(status.kind).toBe('missing-credential');
+  });
+
+  it('keeps xai API-key readiness separate from subscription OAuth', () => {
+    const status = deriveProviderReadinessStatus({
+      providerId: 'xai',
+      piSettings: basePiSettings,
+      modelCount: 1,
+    });
+
+    expect(status.kind).toBe('missing-credential');
+  });
+
   it('treats keyless local providers as ready without a stored credential', () => {
     const status = deriveProviderReadinessStatus({
       providerId: 'lmstudio',

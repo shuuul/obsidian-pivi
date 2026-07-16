@@ -2,7 +2,6 @@ import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/insta
 import { syncCustomPiProviders } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
 import { getPiAiModelsForProvider } from "@pivi/pivi-agent-core/engine/pi/piModelRegistry";
-import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
 import { updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
 import {
@@ -50,17 +49,6 @@ export function createPiUiFacades(
       updatePiAgentSettings(settings, { customProviders });
       syncCustomPiProviders(customProviders);
       return { count: result.models.length };
-    },
-    migrateProviderCredentialsToKeychain(
-      secretStorage,
-      addedProviders,
-      environmentVariables,
-    ) {
-      return migratePiProviderCredentialsToKeychain(
-        secretStorage,
-        addedProviders,
-        environmentVariables,
-      );
     },
   };
 }

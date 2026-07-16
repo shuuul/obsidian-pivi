@@ -95,15 +95,6 @@ export function createMockPiUiFacades(
     listModelsForProvider: () => [],
     syncCustomProviders: () => {},
     fetchCustomProviderModels: async () => ({ count: 0 }),
-    migrateProviderCredentialsToKeychain: (
-      _secretStorage,
-      addedProviders,
-      environmentVariables,
-    ) => ({
-      addedProviders: [...addedProviders],
-      environmentVariables,
-      changed: false,
-    }),
     ...rest,
   };
 }

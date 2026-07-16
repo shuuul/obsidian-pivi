@@ -470,12 +470,25 @@
     },
     "webSearch": {
       "intro": "Перетаскивайте провайдеров, чтобы задать приоритет. WebSearch и WebFetch автоматически переходят дальше при недоступности, ограничении скорости или исчерпании квоты.",
-      "capability": { "search": "Поиск", "fetch": "Загрузка" },
-      "status": { "configured": "Настроен", "anonymous": "Анонимно", "missingKey": "Нет ключа", "disabled": "Отключён" },
+      "capability": {
+        "search": "Поиск",
+        "fetch": "Загрузка"
+      },
+      "status": {
+        "configured": "Настроен",
+        "anonymous": "Анонимно",
+        "missingKey": "Нет ключа",
+        "disabled": "Отключён"
+      },
       "providerKeyRequired": "{provider} требует API-ключ и пропускается, если ключ не настроен.",
       "providerKeyOptional": "{provider} поддерживает анонимный доступ с меньшими лимитами; API-ключ увеличивает квоту.",
       "fixedFallbacks": "Финальные варианты: WebSearch использует публичный MCP Exa; WebFetch использует прямой HTTP.",
-      "reorder": { "handle": "Изменить порядок {provider}, текущая позиция {position}", "position": "{provider} перемещён на позицию {position} из {total}.", "saved": "Порядок провайдеров сохранён.", "cancelled": "Изменение порядка отменено." },
+      "reorder": {
+        "handle": "Изменить порядок {provider}, текущая позиция {position}",
+        "position": "{provider} перемещён на позицию {position} из {total}.",
+        "saved": "Порядок провайдеров сохранён.",
+        "cancelled": "Изменение порядка отменено."
+      },
       "apiKeyName": "API-ключ {provider}",
       "apiKeyPlaceholder": "Введите API-ключ…",
       "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
@@ -486,6 +499,7 @@
       "secureStorageRequired": "API-ключи провайдеров требуют {hostName} {version} или новее с {secureStorageName}. Обновите {hostName} для безопасного хранения учётных данных.",
       "authHeading": "Аутентификация и учётные данные",
       "apiKey": "API-ключ",
+      "apiKeyOptional": "API-ключ (необязательно)",
       "apiKeyDesc": "Сохранён в {secureStorageName} как {secretId}.",
       "apiKeyPlaceholder": "Введите API-ключ…",
       "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
@@ -497,6 +511,7 @@
       "candidateModels": "Пул кандидатных моделей",
       "noModels": "Модели ещё не загружены. Получите список с эндпоинта и включите их здесь.",
       "addProvider": "+ Добавить провайдера",
+      "addProviderAdded": "Добавлено",
       "removedProvider": "Провайдер {name} удалён.",
       "removeConfirmTitle": "Удалить провайдера {name}?",
       "removeConfirmDescription": "Провайдер и выбранные для него модели будут удалены. Сохранённые учётные данные по умолчанию останутся.",
@@ -522,7 +537,7 @@
         "unavailable": "Локальных метаданных моделей pi-ai для этого провайдера пока нет."
       },
       "codex": {
-        "name": "Подписка OpenAI Codex",
+        "name": "OpenAI Codex",
         "desc": "Войдите с подпиской ChatGPT/Codex. Учётные данные в {secureStorageName}.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
@@ -531,29 +546,10 @@
         "disconnected": "OpenAI Codex отключён.",
         "loginFailed": "Ошибка входа Codex: {message}"
       },
-      "xai": {
-        "name": "Подписка xAI Grok",
-        "desc": "Войдите с подпиской xAI/Grok. Учётные данные сохраняются в {secureStorageName}.",
-        "connect": "Подключить",
-        "reconnect": "Переподключить",
-        "disconnect": "Отключить",
-        "connected": "xAI подключён.",
-        "disconnected": "xAI отключён.",
-        "loginFailed": "Ошибка входа xAI: {message}"
-      },
-      "anthropic": {
-        "name": "Подписка Claude Pro/Max",
-        "desc": "Войдите с подпиской Claude Pro или Max в браузере. Использует тот же слот учётных данных в {secureStorageName}, что и ручной OAuth-токен.",
-        "connect": "Подключить",
-        "reconnect": "Переподключить",
-        "disconnect": "Отключить",
-        "connected": "OAuth Anthropic подключён.",
-        "disconnected": "OAuth Anthropic отключён.",
-        "loginFailed": "Ошибка входа Anthropic: {message}"
-      },
       "addSectionLocal": "Локальные",
       "addSectionCustom": "Пользовательский API",
-      "addSectionCloud": "Облако",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "Эндпоинт",
       "displayName": "Отображаемое имя",
       "displayNameDesc": "Показывается в списке провайдеров и группировке выбора модели.",
@@ -566,7 +562,32 @@
       "fetchModelsFailed": "{name}: не удалось загрузить модели: {message}",
       "authHeadingOptional": "Аутентификация (необязательно)",
       "apiKeyOptionalDesc": "Необязательно. Оставьте пустым для локальных серверов без авторизации. При указании сохраняется в {secureStorageName} как {secretId}.",
-      "apiKeyOptionalPlaceholder": "Необязательный API-ключ…"
+      "apiKeyOptionalPlaceholder": "Необязательный API-ключ…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "Войдите в Grok Build с учётной записью xAI. Учётные данные сохраняются в {secureStorageName}.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "Grok Build подключён.",
+        "disconnected": "Grok Build отключён.",
+        "loginFailed": "Ошибка входа Grok Build: {message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "Войдите через подписку Claude Pro или Max в браузере. Учётные данные сохраняются в {secureStorageName}.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "Claude подключён.",
+        "disconnected": "Claude отключён.",
+        "loginFailed": "Ошибка входа Claude: {message}"
+      },
+      "oauthCommon": {
+        "cancel": "Отмена",
+        "deviceCode": "Код устройства",
+        "cancelled": "Вход отменён."
+      }
     },
     "skills": {
       "intro": "Навыки агента в .pivi/skills/ загружаются в следующем ходе (инструмент skill + системный промпт). Установка/обновление только после действия ниже.",

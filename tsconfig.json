@@ -31,6 +31,9 @@
       "@pivi/pivi-react/*": [
         "./packages/pivi-react/src/*"
       ],
+      "@earendil-works/pi-ai/dist/*": [
+        "./node_modules/@earendil-works/pi-ai/dist/*"
+      ],
     },
     "target": "ES2022",
     "lib": [

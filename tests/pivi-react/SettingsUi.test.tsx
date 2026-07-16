@@ -19,7 +19,7 @@ const snapshot: SettingsUiSnapshotData = {
 function createModelsPort() {
   return {
     codexProviderId: 'openai-codex',
-    interactiveOAuthProviderIds: ['openai-codex', 'xai', 'anthropic'],
+    interactiveOAuthProviderIds: ['openai-codex', 'grok-build', 'claude'],
     bootstrap: () => ({ minimumHostVersion: '1.11.4', secureStorageAvailable: true }),
     getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
     saveSettings: async () => undefined,
@@ -32,12 +32,10 @@ function createModelsPort() {
     setApiKey: async () => undefined,
     setOauthToken: async () => undefined,
     clearCredential: async () => undefined,
-    hasCodexAuth: () => false,
-    loginCodex: async () => undefined,
-    logoutCodex: () => undefined,
     hasProviderOAuth: () => false,
     loginProviderOAuth: async () => undefined,
-    logoutProviderOAuth: () => undefined,
+    cancelProviderOAuthLogin: () => undefined,
+    logoutProviderOAuth: async () => undefined,
     listAddableBuiltinProviders: () => [{ id: 'anthropic', name: 'anthropic', logoSlug: null }],
     listAddableLocalKinds: () => [],
     listCustomKinds: () => [],
@@ -394,6 +392,35 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalledWith({ visibleModels: ['openai/gpt'] });
   });
+  it('orders Local, OAuth, API, and Custom API groups and keeps added OAuth providers visible', () => {
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({ addedProviders: ['openai-codex', 'grok-build'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+      listAddableBuiltinProviders: () => [
+        { id: 'anthropic', name: 'Anthropic', logoSlug: null },
+        { id: 'claude', name: 'Claude', logoSlug: null },
+      ],
+      listAddableLocalKinds: () => [{ kind: 'ollama', name: 'Ollama', logoSlug: null }],
+      listCustomKinds: () => [{ kind: 'openai-compatible', name: 'OpenAI-compatible', logoSlug: null }],
+      getProviderDisplayName: (id: string) => ({
+        'openai-codex': 'OpenAI Codex',
+        'grok-build': 'Grok Build',
+        claude: 'Claude',
+      }[id] ?? id),
+    });
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add provider' }));
+
+    const sections = [...container.querySelectorAll('.pivi-provider-add-section')]
+      .map(element => element.textContent);
+    expect(sections).toEqual(['Local', 'OAuth', 'API', 'Custom API']);
+    expect(screen.getByText('OAuth').parentElement).toHaveTextContent('OpenAI Codex');
+    expect(screen.getByText('OAuth').parentElement).toHaveTextContent('Grok Build');
+    expect(screen.getByText('OAuth').parentElement).toHaveTextContent('Claude');
+    expect(screen.getAllByText('Added')).toHaveLength(2);
+    expect(screen.getByText('API').nextElementSibling).toHaveTextContent('Anthropic');
+  });
   it('reorders model providers with the keyboard while retaining provider icons', async () => {
     const modelSettings = {
       addedProviders: ['openai', 'anthropic'],
@@ -494,13 +521,13 @@ describe('React settings foundation', () => {
     expect(within(codexSetting!).queryByText(/auth\.json/)).toBeNull();
     expect(within(codexSetting!).getByRole('button', { name: 'Reconnect' })).toBeInTheDocument();
   });
-  it('calls xAI OAuth connect from an expanded provider card', async () => {
+  it('calls Grok Build OAuth connect from an expanded provider card', async () => {
     const loginProviderOAuth = jest.fn(async () => undefined);
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       loginProviderOAuth,
       getSettings: () => ({
-        addedProviders: ['xai'],
+        addedProviders: ['grok-build'],
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
@@ -509,15 +536,41 @@ describe('React settings foundation', () => {
         environmentVariables: '',
         selectedMode: '',
       }),
-      getProviderDisplayName: (id: string) => (id === 'xai' ? 'xAI' : id),
+      getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
-    fireEvent.click(screen.getByText('xAI'));
+    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-provider-title' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
-    expect(loginProviderOAuth).toHaveBeenCalledWith('xai', expect.any(Function));
+    expect(loginProviderOAuth).toHaveBeenCalledWith('grok-build', expect.any(Function));
   });
-  it('renders Anthropic credentials and OAuth connect controls together', async () => {
+  it('lists Grok Build models under the Grok Build provider identity', () => {
+    const listModelsForProvider = jest.fn((providerId: string) => (
+      providerId === 'grok-build'
+        ? [{ value: 'grok-build/grok-composer-2.5-fast', label: 'Composer 2.5 Fast', description: 'Standard model' }]
+        : []
+    ));
+    const ports = createPorts();
+    Object.assign(ports.catalog, { listModelsForProvider });
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: ['grok-build'],
+        disabledProviders: [],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-provider-title' }));
+    expect(listModelsForProvider).toHaveBeenCalledWith('grok-build');
+    expect(screen.getByText('Composer 2.5 Fast')).toBeInTheDocument();
+  });
+  it('renders Anthropic API key controls without manual OAuth token UI', async () => {
     const loginProviderOAuth = jest.fn(async () => undefined);
     const ports = createPorts();
     Object.assign(ports.complex.models, {
@@ -538,10 +591,97 @@ describe('React settings foundation', () => {
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
     fireEvent.click(screen.getByText('Anthropic'));
     expect(container.querySelector('.pivi-cred-row')).not.toBeNull();
-    expect(screen.getByText('Claude Pro/Max subscription')).toBeInTheDocument();
+    expect(screen.queryByText('OAuth token')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Connect' })).toBeNull();
+  });
+  it('renders Claude OAuth connect on the Claude provider card', async () => {
+    const loginProviderOAuth = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      loginProviderOAuth,
+      getSettings: () => ({
+        addedProviders: ['claude'],
+        disabledProviders: [],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getProviderDisplayName: (id: string) => (id === 'claude' ? 'Claude' : id),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    fireEvent.click(screen.getByText('Claude', { selector: '.pivi-provider-title' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
-    expect(loginProviderOAuth).toHaveBeenCalledWith('anthropic', expect.any(Function));
+    expect(loginProviderOAuth).toHaveBeenCalledWith('claude', expect.any(Function));
+  });
+  it('lists Claude models under the Claude provider identity', () => {
+    const listModelsForProvider = jest.fn((providerId: string) => (
+      providerId === 'claude'
+        ? [{ value: 'claude/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', description: 'Standard model' }]
+        : []
+    ));
+    const ports = createPorts();
+    Object.assign(ports.catalog, { listModelsForProvider });
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: ['claude'],
+        disabledProviders: [],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getProviderDisplayName: (id: string) => (id === 'claude' ? 'Claude' : id),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    fireEvent.click(screen.getByText('Claude', { selector: '.pivi-provider-title' }));
+    expect(listModelsForProvider).toHaveBeenCalledWith('claude');
+    expect(screen.getByText('Claude Sonnet 4.6')).toBeInTheDocument();
+  });
+  it('shows the device code and cancel control during xAI OAuth login', async () => {
+    let progressHandler: ((progress: { kind: string; userCode?: string }) => void) | undefined;
+    let resolveLogin!: () => void;
+    const cancelProviderOAuthLogin = jest.fn();
+    const loginProviderOAuth = jest.fn((_providerId, onProgress) => new Promise<void>((resolve) => {
+      progressHandler = onProgress;
+      resolveLogin = resolve;
+    }));
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      loginProviderOAuth,
+      cancelProviderOAuthLogin,
+      getSettings: () => ({
+        addedProviders: ['grok-build'],
+        disabledProviders: [],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    await act(async () => {
+      progressHandler?.({ kind: 'device_code', userCode: 'WXYZ-9876' });
+    });
+    expect(screen.getByText('WXYZ-9876')).toBeInTheDocument();
+    expect(screen.getByText('Device code')).toBeInTheDocument();
+    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+    expect(cancelButton).toBeEnabled();
+    fireEvent.click(cancelButton);
+    expect(cancelProviderOAuthLogin).toHaveBeenCalledWith('grok-build');
+    await act(async () => {
+      resolveLogin();
+    });
   });
   it('fetches custom provider models and saves checklist changes', async () => {
     const fetchCustomProviderModels = jest.fn(async () => ({ count: 1 }));
@@ -562,6 +702,37 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByLabelText('GPT'));
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalled();
+  });
+  it('places optional local API key directly below Base URL without an authentication section', () => {
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: ['ollama'],
+        disabledProviders: [],
+        customProviders: [{
+          id: 'ollama',
+          kind: 'ollama',
+          name: 'Ollama',
+          baseUrl: 'http://127.0.0.1:11434',
+          api: 'openai-completions',
+          apiKeyRequired: false,
+          models: [],
+        }],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    fireEvent.click(screen.getByText('Ollama'));
+    const card = screen.getByText('Ollama').closest('details');
+    expect(card).not.toBeNull();
+    const baseUrl = within(card!).getByText('Base URL');
+    const apiKey = within(card!).getByText('API key (optional)');
+    expect(baseUrl.compareDocumentPosition(apiKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(card!).queryByText('Authentication (optional)')).toBeNull();
   });
   it('confirms provider removal and keeps credentials by default', async () => {
     const removeProvider = jest.fn(async () => undefined);

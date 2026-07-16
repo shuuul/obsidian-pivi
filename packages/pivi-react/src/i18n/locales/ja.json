@@ -470,12 +470,25 @@
     },
     "webSearch": {
       "intro": "プロバイダーをドラッグして優先順位を変更します。利用不可、レート制限、クォータ超過時は WebSearch と WebFetch が自動的にフォールバックします。",
-      "capability": { "search": "検索", "fetch": "取得" },
-      "status": { "configured": "設定済み", "anonymous": "匿名", "missingKey": "キーなし", "disabled": "無効" },
+      "capability": {
+        "search": "検索",
+        "fetch": "取得"
+      },
+      "status": {
+        "configured": "設定済み",
+        "anonymous": "匿名",
+        "missingKey": "キーなし",
+        "disabled": "無効"
+      },
       "providerKeyRequired": "{provider} には API キーが必要です。未設定の場合はスキップされます。",
       "providerKeyOptional": "{provider} は低い制限で匿名アクセスできます。API キーで利用可能なクォータが増えます。",
       "fixedFallbacks": "最終フォールバック：WebSearch は Exa 公開 MCP、WebFetch は直接 HTTP を使用します。",
-      "reorder": { "handle": "{provider} を並べ替え、現在の位置 {position}", "position": "{provider} を {total} 件中 {position} 番目に移動しました。", "saved": "プロバイダー順を保存しました。", "cancelled": "並べ替えをキャンセルしました。" },
+      "reorder": {
+        "handle": "{provider} を並べ替え、現在の位置 {position}",
+        "position": "{provider} を {total} 件中 {position} 番目に移動しました。",
+        "saved": "プロバイダー順を保存しました。",
+        "cancelled": "並べ替えをキャンセルしました。"
+      },
       "apiKeyName": "{provider} API キー",
       "apiKeyPlaceholder": "API キーを入力…",
       "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
@@ -486,6 +499,7 @@
       "secureStorageRequired": "プロバイダー API キーには {secureStorageName} を備えた {hostName} {version} 以上が必要です。{hostName} をアップグレードしてください。",
       "authHeading": "認証と資格情報",
       "apiKey": "API キー",
+      "apiKeyOptional": "API キー（任意）",
       "apiKeyDesc": "{secureStorageName} に {secretId} として保存。",
       "apiKeyPlaceholder": "API キーを入力…",
       "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
@@ -497,6 +511,7 @@
       "candidateModels": "候補モデルプール",
       "noModels": "モデルがまだありません。エンドポイントから取得してここで有効にしてください。",
       "addProvider": "+ プロバイダーを追加",
+      "addProviderAdded": "追加済み",
       "removedProvider": "{name} プロバイダーを削除しました。",
       "removeConfirmTitle": "{name} プロバイダーを削除しますか？",
       "removeConfirmDescription": "プロバイダーとモデルの選択を削除します。保存済みの認証情報はデフォルトで保持されます。",
@@ -522,7 +537,7 @@
         "unavailable": "このプロバイダーのローカル pi-ai モデルメタデータはまだありません。"
       },
       "codex": {
-        "name": "OpenAI Codex サブスクリプション",
+        "name": "OpenAI Codex",
         "desc": "ChatGPT/Codex サブスクリプションでサインインします。資格情報は {secureStorageName} に保存されます。",
         "connect": "接続",
         "reconnect": "再接続",
@@ -531,29 +546,10 @@
         "disconnected": "OpenAI Codex を切断しました。",
         "loginFailed": "Codex ログインに失敗：{message}"
       },
-      "xai": {
-        "name": "xAI Grok サブスクリプション",
-        "desc": "xAI/Grok サブスクリプションでサインインします。資格情報は {secureStorageName} に保存されます。",
-        "connect": "接続",
-        "reconnect": "再接続",
-        "disconnect": "切断",
-        "connected": "xAI に接続しました。",
-        "disconnected": "xAI を切断しました。",
-        "loginFailed": "xAI ログインに失敗：{message}"
-      },
-      "anthropic": {
-        "name": "Claude Pro/Max サブスクリプション",
-        "desc": "ブラウザで Claude Pro または Max サブスクリプションにサインインします。手動 OAuth トークンと同じ {secureStorageName} の資格情報スロットを使用します。",
-        "connect": "接続",
-        "reconnect": "再接続",
-        "disconnect": "切断",
-        "connected": "Anthropic OAuth に接続しました。",
-        "disconnected": "Anthropic OAuth を切断しました。",
-        "loginFailed": "Anthropic ログインに失敗：{message}"
-      },
       "addSectionLocal": "ローカル",
       "addSectionCustom": "カスタム API",
-      "addSectionCloud": "クラウド",
+      "addSectionOAuth": "OAuth",
+      "addSectionApi": "API",
       "endpointHeading": "エンドポイント",
       "displayName": "表示名",
       "displayNameDesc": "プロバイダー一覧とモデル選択のグループ表示に使われます。",
@@ -566,7 +562,32 @@
       "fetchModelsFailed": "{name}: モデルの取得に失敗しました: {message}",
       "authHeadingOptional": "認証（任意）",
       "apiKeyOptionalDesc": "任意。認証不要なローカルサーバーでは空のままにできます。設定した場合は {secureStorageName} に {secretId} として保存されます。",
-      "apiKeyOptionalPlaceholder": "任意の API キー…"
+      "apiKeyOptionalPlaceholder": "任意の API キー…",
+      "grokBuild": {
+        "name": "Grok Build",
+        "desc": "xAI アカウントで Grok Build にサインインします。資格情報は {secureStorageName} に保存されます。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "Grok Build に接続しました。",
+        "disconnected": "Grok Build を切断しました。",
+        "loginFailed": "Grok Build ログインに失敗：{message}"
+      },
+      "claude": {
+        "name": "Claude",
+        "desc": "ブラウザで Claude Pro または Max サブスクリプションにサインインします。認証情報は {secureStorageName} に保存されます。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "Claude に接続しました。",
+        "disconnected": "Claude を切断しました。",
+        "loginFailed": "Claude ログインに失敗：{message}"
+      },
+      "oauthCommon": {
+        "cancel": "キャンセル",
+        "deviceCode": "デバイスコード",
+        "cancelled": "サインインをキャンセルしました。"
+      }
     },
     "skills": {
       "intro": "エージェントスキルは .pivi/skills/ にあり、次のターンで読み込まれます（skill ツール + システムプロンプト）。下の操作を選んだ後のみインストール/更新します。",

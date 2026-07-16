@@ -23,14 +23,22 @@ import { xiaomiTokenPlanCnProvider } from '@earendil-works/pi-ai/providers/xiaom
 import { zaiProvider } from '@earendil-works/pi-ai/providers/zai';
 import { zaiCodingCnProvider } from '@earendil-works/pi-ai/providers/zai-coding-cn';
 
+import {
+  CLAUDE_PROVIDER_ID,
+} from '../../auth/piProviderCredentials';
 import type { CustomProviderConfig } from '../../foundation/customProviders';
 import { PluginLogger } from '../../foundation/pluginLogger';
+import { createGrokBuildProvider } from './grokBuildProvider';
 import {
   buildCustomPiProvider,
   type CustomProviderHttpGet,
   installCustomProviders,
 } from './installPiCustomProviders';
 import { cachePiAiRegistryModels } from './piModelRegistry';
+import {
+  createApiKeyOnlyProvider,
+  createSubscriptionOAuthProvider,
+} from './splitProviderAuth';
 
 const logger = new PluginLogger('PiAiModels');
 
@@ -54,7 +62,14 @@ const customProviderRuntime = {
 };
 
 function installSupportedProviders(models: MutableModels): void {
-  models.setProvider(anthropicProvider());
+  const anthropic = anthropicProvider();
+  const xai = xaiProvider();
+  models.setProvider(createApiKeyOnlyProvider(anthropic));
+  models.setProvider(createSubscriptionOAuthProvider(
+    anthropic,
+    CLAUDE_PROVIDER_ID,
+    'Claude',
+  ));
   models.setProvider(deepseekProvider());
   models.setProvider(googleProvider());
   models.setProvider(kimiCodingProvider());
@@ -67,7 +82,8 @@ function installSupportedProviders(models: MutableModels): void {
   models.setProvider(opencodeProvider());
   models.setProvider(opencodeGoProvider());
   models.setProvider(openrouterProvider());
-  models.setProvider(xaiProvider());
+  models.setProvider(createApiKeyOnlyProvider(xai));
+  models.setProvider(createGrokBuildProvider(xai));
   models.setProvider(xiaomiProvider());
   models.setProvider(xiaomiTokenPlanCnProvider());
   models.setProvider(zaiProvider());

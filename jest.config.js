@@ -12,11 +12,15 @@ const baseConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@test/(.*)$': '<rootDir>/tests/$1',
+    '^@pivi/pivi-agent-core/engine/pi/registerBundledPiOAuthFlows$':
+      '<rootDir>/tests/__mocks__/registerPiviBundledOAuthFlowLoaders.ts',
     '^@pivi/([^/]+)$': '<rootDir>/packages/$1/src/index.ts',
     '^@pivi/([^/]+)/(.*)$': '<rootDir>/packages/$1/src/$2',
     '^obsidian$': '<rootDir>/tests/__mocks__/obsidian.ts',
     '^@earendil-works/pi-agent-core$': '<rootDir>/tests/__mocks__/@earendil-works/pi-agent-core.ts',
+    '^@earendil-works/pi-ai/dist/(.*)$': '<rootDir>/node_modules/@earendil-works/pi-ai/dist/$1',
     '^@earendil-works/pi-ai$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
+    '^@earendil-works/pi-ai/bun-oauth$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-bun-oauth.ts',
     '^@earendil-works/pi-ai/providers/all$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-ai/providers/.*$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',

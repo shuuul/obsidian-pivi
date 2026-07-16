@@ -1,6 +1,10 @@
 import { parseEnvironmentVariables } from '../foundation/settingsEnv';
 import type { ProviderCredential } from './piProviderCredentials';
-import { isInteractiveOAuthProvider } from './piProviderCredentials';
+import {
+  isInteractiveOAuthProvider,
+  isOAuthCredential,
+  isSubscriptionOAuthProviderId,
+} from './piProviderCredentials';
 import { getProviderEnvVarNames } from './providerEnvVars';
 import { isProviderDisabled } from './providerSecretStorage';
 
@@ -81,10 +85,11 @@ export function deriveProviderReadinessStatus(
     };
   }
 
-  const hasCredential = isInteractiveOAuthProvider(providerId)
-    ? !!interactiveOAuthConnected || !!credential || hasEnvironmentCredential(providerId, piSettings.environmentVariables)
-    : !!credential
-      || hasEnvironmentCredential(providerId, piSettings.environmentVariables);
+  const hasCredential = isSubscriptionOAuthProviderId(providerId)
+    ? !!interactiveOAuthConnected || isOAuthCredential(credential)
+    : isInteractiveOAuthProvider(providerId)
+      ? !!interactiveOAuthConnected || !!credential || hasEnvironmentCredential(providerId, piSettings.environmentVariables)
+      : !!credential || hasEnvironmentCredential(providerId, piSettings.environmentVariables);
 
   if (!hasCredential && !allowKeyless) {
     return {

@@ -167,6 +167,20 @@ describe('updatePiAgentSettings', () => {
     expect(returned.visibleModels).toEqual(['deepseek/chat']);
     expect(returned.addedProviders).toEqual(['deepseek']);
   });
+
+  it('keeps subscription OAuth plan providers in addedProviders', () => {
+    const settings: Record<string, unknown> = {};
+    const returned = updatePiAgentSettings(settings, {
+      addedProviders: ['xai', 'grok-build'],
+      disabledProviders: [],
+      environmentVariables: '',
+      selectedMode: 'default',
+      visibleModels: [DEFAULT_MODEL_KEY],
+    });
+
+    expect(returned.addedProviders).toEqual(['xai', 'grok-build']);
+    expect(getPiAgentSettings(settings).addedProviders).toEqual(['xai', 'grok-build']);
+  });
 });
 
 describe('normalizePiAgentSettingsRecord', () => {

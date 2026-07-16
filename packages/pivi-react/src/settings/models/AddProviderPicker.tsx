@@ -10,12 +10,20 @@ export interface AddProviderPickerProps {
   readonly onError: (message: string) => void;
 }
 
-/** Dropdown that adds built-in cloud providers or custom/local provider kinds. */
+/** Dropdown that separates account subscriptions from API-key and custom providers. */
 export function AddProviderPicker({ models, onProviderAdded, onError }: AddProviderPickerProps) {
   const t = useT();
   const localKinds = models.listAddableLocalKinds();
   const customKinds = models.listCustomKinds();
   const builtins = models.listAddableBuiltinProviders();
+  const addedProviderIds = new Set(models.getSettings().addedProviders);
+  const interactiveOAuthProviderIds = new Set(models.interactiveOAuthProviderIds);
+  const apiProviders = builtins.filter(provider => !interactiveOAuthProviderIds.has(provider.id));
+  const oauthProviders = models.interactiveOAuthProviderIds.map(id => ({
+    id,
+    name: models.getProviderDisplayName(id),
+    logoSlug: models.getProviderLogoSlug(id),
+  }));
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -60,12 +68,16 @@ export function AddProviderPicker({ models, onProviderAdded, onError }: AddProvi
 
   const renderProviderOption = (option: ModelsAddableProvider) => (
     <div
-      className="pivi-provider-add-option"
+      aria-disabled={addedProviderIds.has(option.id)}
+      className={`pivi-provider-add-option${addedProviderIds.has(option.id) ? ' is-added' : ''}`}
       key={option.id}
-      onClick={() => addBuiltin(option.id)}
+      onClick={addedProviderIds.has(option.id) ? undefined : () => addBuiltin(option.id)}
     >
       {option.logoSlug ? <ProviderLogo slug={option.logoSlug} size={16} className="pivi-provider-add-option-logo" /> : null}
       <span>{option.name}</span>
+      {addedProviderIds.has(option.id) ? (
+        <span className="pivi-provider-add-option-state">{t('settings.modelsTab.addProviderAdded')}</span>
+      ) : null}
     </div>
   );
 
@@ -86,14 +98,20 @@ export function AddProviderPicker({ models, onProviderAdded, onError }: AddProvi
               {localKinds.map(renderKindOption)}
             </>
           ) : null}
-          <div className="pivi-provider-add-section">{t('settings.modelsTab.addSectionCustom')}</div>
-          {customKinds.map(renderKindOption)}
-          {builtins.length > 0 ? (
+          {oauthProviders.length > 0 ? (
             <>
-              <div className="pivi-provider-add-section">{t('settings.modelsTab.addSectionCloud')}</div>
-              {builtins.map(renderProviderOption)}
+              <div className="pivi-provider-add-section">{t('settings.modelsTab.addSectionOAuth')}</div>
+              {oauthProviders.map(renderProviderOption)}
             </>
           ) : null}
+          {apiProviders.length > 0 ? (
+            <>
+              <div className="pivi-provider-add-section">{t('settings.modelsTab.addSectionApi')}</div>
+              {apiProviders.map(renderProviderOption)}
+            </>
+          ) : null}
+          <div className="pivi-provider-add-section">{t('settings.modelsTab.addSectionCustom')}</div>
+          {customKinds.map(renderKindOption)}
         </div>
       </div>
     </div>
