@@ -401,9 +401,10 @@ export function buildCustomPiProvider(
     headers: config.headers,
     auth: baseUrl ? buildCustomProviderAuth(config) : buildKeylessAuth(config.name),
     models,
-    refreshModels: httpGet
-      ? async () => {
-          const apiKey = options?.getApiKey?.();
+    fetchModels: httpGet
+      ? async (context) => {
+          const apiKey = options?.getApiKey?.()
+            ?? (context.credential?.type === 'api_key' ? context.credential.key : undefined);
           const fetched = await fetchCustomProviderModels(config, httpGet, { apiKey });
           // Mutate config so callers that hold the same object see the list.
           config.models = fetched.models;

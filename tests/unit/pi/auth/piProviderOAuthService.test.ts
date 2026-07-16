@@ -4,6 +4,7 @@ import * as path from 'path';
 
 import type { OAuthFlowHost, ProviderLegacyAuthData, ProviderLegacyAuthStore } from '@pivi/pivi-agent-core/ports';
 import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/providerLegacyAuthStore';
+import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import {
   CODEX_OAUTH_PROVIDER_ID,
@@ -27,6 +28,7 @@ describe('ProviderOAuthService', () => {
 
   afterEach(() => {
     fs.rmSync(tempDir, { recursive: true, force: true });
+    configurePiAiModels({});
   });
 
   it('migrates legacy Codex auth.json credentials into SecretStorage', () => {
@@ -99,6 +101,7 @@ describe('ProviderOAuthService', () => {
   it('logs in through the direct Codex OAuth provider and stores credentials', async () => {
     const app = createMockApp({ vaultBasePath: tempDir });
     const store = new ObsidianCredentialStore(app.secretStorage);
+    configurePiAiModels({ credentials: store });
     const oauthHost = createMockOAuthFlowHost();
     const service = new ProviderOAuthService(store, oauthHost);
 

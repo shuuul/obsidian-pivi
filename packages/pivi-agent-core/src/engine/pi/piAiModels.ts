@@ -1,16 +1,9 @@
 import {
   type AuthContext,
-  type AuthLoginCallbacks,
   createModels,
   type CredentialStore,
   type MutableModels,
-  type OAuthCredential,
-  type Provider,
 } from '@earendil-works/pi-ai';
-import {
-  OPENAI_CODEX_BROWSER_LOGIN_METHOD,
-  openaiCodexOAuthProvider,
-} from '@earendil-works/pi-ai/oauth';
 import { anthropicProvider } from '@earendil-works/pi-ai/providers/anthropic';
 import { deepseekProvider } from '@earendil-works/pi-ai/providers/deepseek';
 import { googleProvider } from '@earendil-works/pi-ai/providers/google';
@@ -32,6 +25,7 @@ import { zaiCodingCnProvider } from '@earendil-works/pi-ai/providers/zai-coding-
 import type { CustomProviderConfig } from '../../foundation/customProviders';
 import { PluginLogger } from '../../foundation/pluginLogger';
 import {
+  buildCustomPiProvider,
   type CustomProviderHttpGet,
   installCustomProviders,
 } from './installPiCustomProviders';
@@ -44,6 +38,7 @@ export let piAiModels: MutableModels = createModels();
 
 const customProviderRuntime = {
   installedProviderIds: [] as string[],
+  installedConfigs: new Map<string, CustomProviderConfig>(),
   httpGet: undefined as CustomProviderHttpGet | undefined,
   getApiKey: undefined as ((providerId: string) => string | undefined) | undefined,
   reset(options?: {
@@ -51,45 +46,11 @@ const customProviderRuntime = {
     getApiKey?: (providerId: string) => string | undefined;
   }): void {
     this.installedProviderIds = [];
+    this.installedConfigs = new Map();
     this.httpGet = options?.httpGet;
     this.getApiKey = options?.getApiKey;
   },
 };
-
-function createOpenAICodexProvider(): Provider {
-  const provider = openaiCodexProvider();
-  return {
-    ...provider,
-    auth: {
-      ...provider.auth,
-      oauth: {
-        name: 'OpenAI (ChatGPT Plus/Pro)',
-        async login(callbacks: AuthLoginCallbacks): Promise<OAuthCredential> {
-          const credential = await openaiCodexOAuthProvider.login({
-            onAuth: (info) => callbacks.notify({ type: 'auth_url', url: info.url, instructions: info.instructions }),
-            onDeviceCode: (info) => callbacks.notify({ type: 'device_code', ...info }),
-            onProgress: (message) => callbacks.notify({ type: 'progress', message }),
-            onPrompt: (prompt) => callbacks.prompt({ type: 'text', message: prompt.message, placeholder: prompt.placeholder }),
-            onManualCodeInput: () => callbacks.prompt({
-              type: 'manual_code',
-              message: 'Complete login in your browser, or paste the authorization code / redirect URL here:',
-              signal: callbacks.signal,
-            }),
-            onSelect: () => Promise.resolve(OPENAI_CODEX_BROWSER_LOGIN_METHOD),
-            signal: callbacks.signal,
-          });
-          return { ...credential, type: 'oauth' };
-        },
-        async refresh(credential: OAuthCredential): Promise<OAuthCredential> {
-          return { ...(await openaiCodexOAuthProvider.refreshToken(credential)), type: 'oauth' };
-        },
-        toAuth(credential: OAuthCredential) {
-          return Promise.resolve({ apiKey: openaiCodexOAuthProvider.getApiKey(credential) });
-        },
-      },
-    },
-  };
-}
 
 function installSupportedProviders(models: MutableModels): void {
   models.setProvider(anthropicProvider());
@@ -101,7 +62,7 @@ function installSupportedProviders(models: MutableModels): void {
   models.setProvider(moonshotaiProvider());
   models.setProvider(moonshotaiCnProvider());
   models.setProvider(openaiProvider());
-  models.setProvider(createOpenAICodexProvider());
+  models.setProvider(openaiCodexProvider());
   models.setProvider(opencodeProvider());
   models.setProvider(opencodeGoProvider());
   models.setProvider(openrouterProvider());
@@ -143,6 +104,7 @@ export function syncCustomPiProviders(
     previousCustomIds: customProviderRuntime.installedProviderIds,
   });
   customProviderRuntime.installedProviderIds = customProviders.map((provider) => provider.id);
+  customProviderRuntime.installedConfigs = new Map(customProviders.map((config) => [config.id, config]));
   try {
     cachePiAiRegistryModels(piAiModels);
   } catch (err) {
@@ -160,7 +122,27 @@ export async function refreshCustomPiProviderModels(providerId: string): Promise
   if (!provider?.refreshModels) {
     return false;
   }
-  await provider.refreshModels();
+  const store = {
+    read: async () => undefined,
+    write: async () => {},
+    delete: async () => {},
+  };
+  await provider.refreshModels({
+    store,
+    allowNetwork: true,
+    force: true,
+  });
+  const config = customProviderRuntime.installedConfigs.get(providerId);
+  if (config && customProviderRuntime.httpGet) {
+    piAiModels.setProvider(
+      buildCustomPiProvider(config, {
+        httpGet: customProviderRuntime.httpGet,
+        getApiKey: customProviderRuntime.getApiKey
+          ? () => customProviderRuntime.getApiKey?.(providerId)
+          : undefined,
+      }),
+    );
+  }
   cachePiAiRegistryModels(piAiModels);
   return true;
 }

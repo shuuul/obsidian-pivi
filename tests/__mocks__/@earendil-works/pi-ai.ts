@@ -100,8 +100,38 @@ function getMockProviderEnvVar(provider: string): string {
   return map[provider] ?? `${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`;
 }
 
+function mockProvider(id: string): any {
+  return {
+    id,
+    name: id,
+    auth: {
+      oauth: id === 'openai-codex'
+        ? {
+            login: async (interaction: any) => {
+              interaction.notify({
+                type: 'auth_url',
+                url: 'https://auth.openai.com/oauth/authorize',
+              });
+              return {
+                type: 'oauth',
+                access: 'mock-access',
+                refresh: 'mock-refresh',
+                expires: Date.now() + 3600_000,
+              };
+            },
+          }
+        : undefined,
+    },
+    getModels: () => getModels(id),
+  };
+}
+
 export function createModels(options?: any): any {
   const providers = new Map<string, any>();
+  for (const id of MOCK_PROVIDER_IDS) {
+    providers.set(id, mockProvider(id));
+  }
+
   return {
     setProvider: (provider: any) => providers.set(provider.id, provider),
     deleteProvider: (id: string) => providers.delete(id),
@@ -124,6 +154,19 @@ export function createModels(options?: any): any {
       const value = await options?.authContext?.env?.(envVar) ?? process.env[envVar];
       return value ? { auth: { apiKey: value }, source: envVar } : undefined;
     },
+    login: async (providerId: string, type: string, interaction: any) => {
+      const provider = providers.get(providerId);
+      const method = type === 'oauth' ? provider?.auth?.oauth : provider?.auth?.apiKey;
+      if (!method?.login) {
+        throw new Error(`${providerId} does not support ${type} login`);
+      }
+      const credential = await method.login(interaction);
+      await options?.credentials?.modify?.(providerId, async () => credential);
+      return credential;
+    },
+    logout: async (providerId: string) => {
+      await options?.credentials?.delete?.(providerId);
+    },
     stream: streamSimple,
     streamSimple,
     complete: () => Promise.resolve(mockAssistantMessage),
@@ -132,17 +175,41 @@ export function createModels(options?: any): any {
 }
 
 export function createProvider(input: any): any {
-  let models = [...(input.models ?? [])];
+  const baselineModels = [...(input.models ?? [])];
+  let dynamicModels: any[] = [];
+  const currentModels = () => {
+    const merged = [...baselineModels];
+    for (const model of dynamicModels) {
+      const index = merged.findIndex((entry: any) => entry.id === model.id);
+      if (index >= 0) {
+        merged[index] = model;
+      } else {
+        merged.push(model);
+      }
+    }
+    return merged;
+  };
+  const fetchModels = input.fetchModels ?? input.refreshModels;
   return {
     id: input.id,
     name: input.name ?? input.id,
     baseUrl: input.baseUrl,
     headers: input.headers,
     auth: input.auth,
-    getModels: () => models,
-    refreshModels: input.refreshModels
-      ? async () => {
-          models = [...(await input.refreshModels())];
+    getModels: () => currentModels(),
+    refreshModels: fetchModels
+      ? async (context?: any) => {
+          if (context?.allowNetwork === false || context?.signal?.aborted) {
+            return;
+          }
+          const refreshed = [...(await fetchModels(context ?? {}))];
+          dynamicModels = refreshed;
+          const fetchedIds = new Set(refreshed.map((model: any) => model.id));
+          for (let index = baselineModels.length - 1; index >= 0; index -= 1) {
+            if (!fetchedIds.has(baselineModels[index].id)) {
+              baselineModels.splice(index, 1);
+            }
+          }
         }
       : undefined,
     stream: streamSimple,
@@ -165,26 +232,6 @@ export function envApiKeyAuth(name: string, envVars: readonly string[]): any {
       }
       return undefined;
     },
-  };
-}
-
-function mockProvider(id: string): any {
-  return {
-    id,
-    name: id,
-    auth: {
-      oauth: id === 'openai-codex'
-        ? {
-            login: () => Promise.resolve({
-              type: 'oauth',
-              access: 'mock-access',
-              refresh: 'mock-refresh',
-              expires: Date.now() + 3600_000,
-            }),
-          }
-        : undefined,
-    },
-    getModels: () => getModels(id),
   };
 }
 

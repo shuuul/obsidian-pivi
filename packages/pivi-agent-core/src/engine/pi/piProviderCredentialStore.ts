@@ -1,6 +1,7 @@
 import type {
   AuthContext,
   Credential,
+  CredentialInfo,
   CredentialStore,
 } from '@earendil-works/pi-ai';
 
@@ -199,6 +200,24 @@ export class ObsidianCredentialStore implements CredentialStore {
 
   read(providerId: string): Promise<Credential | undefined> {
     return Promise.resolve(this.readSync(providerId));
+  }
+
+  async list(): Promise<readonly CredentialInfo[]> {
+    const secretIds = this.secretStorage.listSecrets(`${PIVI_PROVIDER_SECRET_PREFIX}-`);
+    const infos: CredentialInfo[] = [];
+    for (const secretId of secretIds) {
+      const match = new RegExp(`^${PIVI_PROVIDER_SECRET_PREFIX}-(.+)-credential$`).exec(secretId);
+      if (!match?.[1]) {
+        continue;
+      }
+      const providerId = match[1];
+      const credential = parseProviderCredential(this.secretStorage.getSecret(secretId));
+      if (!credential || (credential.type !== 'api_key' && credential.type !== 'oauth')) {
+        continue;
+      }
+      infos.push({ providerId, type: credential.type });
+    }
+    return infos;
   }
 
   modify(

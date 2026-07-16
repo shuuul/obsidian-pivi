@@ -1,9 +1,3 @@
-import type { OAuthCredential } from '@earendil-works/pi-ai';
-import {
-  OPENAI_CODEX_BROWSER_LOGIN_METHOD,
-  openaiCodexOAuthProvider,
-} from '@earendil-works/pi-ai/oauth';
-
 import {
   CODEX_OAUTH_PROVIDER_ID,
   credentialToApiKey,
@@ -12,6 +6,7 @@ import {
 import { PluginLogger } from '../../foundation/pluginLogger';
 import type { OAuthFlowHost, ProviderLegacyAuthStore } from '../../ports';
 import { piAiModels } from './piAiModels';
+import { createPiAuthInteraction } from './piAuthInteraction';
 import type { ObsidianCredentialStore } from './piProviderCredentialStore';
 
 const logger = new PluginLogger('ProviderOAuthService');
@@ -93,46 +88,28 @@ export class ProviderOAuthService {
       throw new Error('Obsidian SecretStorage is unavailable for provider OAuth.');
     }
 
-    const notify = (message: string): void => {
-      onProgress?.(message);
-      this.oauthHost.notify?.(message);
-    };
-
-    const oauthCredentials = await openaiCodexOAuthProvider.login({
-      onAuth: (info) => {
-        notify('Opening browser for OpenAI Codex sign-in…');
-        void this.oauthHost.openAuthUrl(normalizeCodexBrowserAuthUrl(info.url)).catch((error: unknown) => {
-          logger.warn('failed to open Codex OAuth URL', error);
-        });
-      },
-      onDeviceCode: (info) => {
-        notify(`Open ${info.verificationUri} and enter code ${info.userCode}.`);
-        void this.oauthHost.openAuthUrl(info.verificationUri).catch((error: unknown) => {
-          logger.warn('failed to open Codex device-code URL', error);
-        });
-      },
-      onProgress,
-      onPrompt: (prompt) => {
-        onProgress?.(prompt.message ?? 'Complete sign-in in the browser.');
-        return Promise.reject(
-          new Error('Codex login did not complete in the browser. Ensure the localhost callback is reachable, then try again.'),
-        );
-      },
-      onSelect: () => Promise.resolve(OPENAI_CODEX_BROWSER_LOGIN_METHOD),
-    });
-    const credential: OAuthCredential = { ...oauthCredentials, type: 'oauth' };
-
-    await this.credentialStore.modify(CODEX_OAUTH_PROVIDER_ID, () => Promise.resolve(credential));
+    await piAiModels.login(
+      CODEX_OAUTH_PROVIDER_ID,
+      'oauth',
+      createPiAuthInteraction({
+        oauthHost: this.oauthHost,
+        onProgress,
+        normalizeAuthUrl: normalizeCodexBrowserAuthUrl,
+      }),
+    );
     this.clearLegacyCodexCredential();
   }
 
   logoutCodex(): void {
+    void piAiModels.logout(CODEX_OAUTH_PROVIDER_ID).catch((error: unknown) => {
+      logger.warn('failed to logout Codex OAuth through pi-ai', error);
+    });
     void this.credentialStore?.delete(CODEX_OAUTH_PROVIDER_ID);
     this.clearLegacyCodexCredential();
   }
 
 
-  private readLegacyCodexCredential(): OAuthCredential | undefined {
+  private readLegacyCodexCredential() {
     const data = this.legacyAuthStore?.read();
     if (!data) {
       return undefined;
@@ -145,7 +122,7 @@ export class ProviderOAuthService {
     ) {
       return undefined;
     }
-    return { type: 'oauth', access: cred.access, refresh: cred.refresh, expires: cred.expires };
+    return { type: 'oauth' as const, access: cred.access, refresh: cred.refresh, expires: cred.expires };
   }
 
   private clearLegacyCodexCredential(): void {
