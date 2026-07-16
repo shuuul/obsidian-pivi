@@ -26,7 +26,7 @@ Outcome: Agent runs are a first-class projection with stable identity and relati
 - [x] An `AgentRun` projection entity exists with stable ownership (`runId`, `parentRunId`, owning message/tool references), status (using the spec 006 shared vocabulary), current activity, tool references, timing, usage, and terminal result reference. It is derived from existing durable data; JSONL remains the source of truth. Verified by projection unit tests including nested (parent/child) runs.
 - [ ] The durable session keeps the complete visible trace (objective/prompt, tool activity, recovery-relevant partial output, terminal output, timing/usage, cancellation/failure/orphan state); no field currently persisted is dropped. Verified by session-compat fixtures.
 - [x] Related Agent runs in one message render as an Agent Group with a summary line (counts by status) that expands to individual Activity rows (spec 006 primitive). Verified by jsdom tests.
-- [ ] Expanding one run shows a linear timeline (indentation + connectors) of its steps inside the measured virtual row, or in an inspector surface; no independently scrolling card inside the transcript. Verified by test asserting no nested scroll container and manual check.
+- [x] Expanding one run shows a linear timeline (indentation + connectors) of its steps inside the measured virtual row, or in an inspector surface; no independently scrolling card inside the transcript. Verified by test asserting no nested scroll container and manual check.
 - [ ] An optional Active Work Shelf near the composer mirrors running/background runs; selecting an item navigates to the transcript owner or opens the same inspector; shelf state never becomes canonical. Toggle default and persistence decided by Decision. Verified by jsdom tests + manual background-run walkthrough.
 - [ ] When a validated structured report (spec 005) exists, the run's terminal presentation promotes the conclusion into Narrative per docs/11 (terminal Subagent conclusions promoted into the answer); otherwise today's text rendering stands.
 - [ ] Every existing lifecycle regression suite stays green: queued/running abort, dynamic capacity, late events, orphaning, hydrate retry cancellation/rejection, session switching, pop-out owner realms, virtual scroll anchoring.
@@ -62,7 +62,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 |---|---|---|---|---|---|
 | WS-01 | `AgentRun` projection entity + derivation from tool-call subagent state, parent/child links, timing/usage | Codex | Done | Spec 004 WS-02 (run metadata), spec 006 WS-01 (status vocabulary) | Projection unit tests incl. nested runs and reload hydration |
 | WS-02 | Agent Group summary + expansion to Activity rows | Codex | Done | WS-01, spec 006 WS-03 | jsdom tests over direct and projected Agent runs |
-| WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Pending | WS-02 | jsdom test asserting scroll-container invariants; manual check |
+| WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Done | WS-02 | jsdom test asserting ordered depths, disclosure semantics, and no nested scroll |
 | WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Pending | WS-01, spec 005 WS-04 | Renderer tests over report and text fixtures |
 | WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Codex | Pending | WS-01 | jsdom tests; manual background-run walkthrough incl. tab switch and pop-out |
 | WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | Pending | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
@@ -113,6 +113,14 @@ Guidance for low-context agents:
 - Evidence: focused jsdom coverage verifies a three-run `2 Completed · 1 Running` summary, disclosure semantics, stable row ordering, direct current-activity display, no nested scroll container, and a live projected transition to `3 Completed`. Typecheck passes.
 - Remaining: WS-03 through WS-06. Manual multi-agent interaction is retained for the final synthetic harness sweep so it can validate grouping, timeline, shelf, and lifecycle behavior together.
 - Next action: make each expanded Agent row disclose its linear tool/delegation timeline inside the measured transcript row.
+
+### 2026-07-16 — WS-03 Agent timeline inspector — Codex
+
+- Changed: each Agent row in an expanded group is now its own accessible disclosure. Its in-row inspector presents the delegated objective and prompt, then a linear ordered tool/delegation timeline with depth markers and connectors, followed by preserved terminal text when present. Nested delegated tools are flattened in durable execution order while retaining their depth.
+- Constraints preserved: the inspector grows inside the owning measured virtual row, uses no independent scrolling or timers, and reuses `ActivityRow` plus the canonical seven-state mapping for every tool and child-Agent step.
+- Evidence: focused jsdom coverage verifies disclosure/region labels, objective/prompt/result preservation, exact `0, 0, 1` nested step depths, and absence of a nested scroll style. The 16-test assistant renderer suite, typecheck, and zero-warning lint pass.
+- Remaining: WS-04 through WS-06, plus final synthetic manual interaction/performance validation.
+- Next action: normalize validated structured Agent reports into the projection and promote their conclusion into the Narrative layer while retaining plain-text fallback.
 
 ### 2026-07-15 — Spec creation — coordinator
 

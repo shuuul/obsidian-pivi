@@ -1,9 +1,10 @@
 import {
   type ActivityStatus,
-  type AgentRun,
+  resolveSubagentActivityStatus,
+  resolveToolActivityStatus,
   type ToolCallInfo,
 } from '@pivi/pivi-agent-core/foundation';
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
@@ -14,10 +15,18 @@ import {
   useChatProjectionAgentRuns,
 } from '../../store';
 import { ActivityRow } from './ActivityRow';
+import { getToolDisplayName, getToolSummary, shouldRenderToolCall } from './toolPresentation';
 
-type PresentedRun = Pick<AgentRun,
-  'completedAt' | 'currentActivity' | 'description' | 'runId' | 'startedAt' | 'status' | 'writerName'
->;
+type PresentedRun = ChatAgentRunEntity;
+
+interface AgentTimelineStep {
+  readonly depth: number;
+  readonly id: string;
+  readonly name: string;
+  readonly status: ActivityStatus;
+  readonly summary?: string;
+  readonly type: 'agent' | 'tool';
+}
 
 export type AgentGroupViewProps = {
   readonly messageId: string;
@@ -57,6 +66,110 @@ function aggregateStatus(runs: readonly PresentedRun[]): ActivityStatus {
   return 'completed';
 }
 
+function deriveTimelineSteps(
+  toolCalls: readonly ToolCallInfo[],
+  t: ReturnType<typeof useT>,
+  depth = 0,
+): AgentTimelineStep[] {
+  return toolCalls.flatMap((toolCall) => {
+    if (!shouldRenderToolCall(toolCall)) return [];
+    const subagent = toolCall.subagent;
+    const step: AgentTimelineStep = subagent ? {
+      depth,
+      id: toolCall.id,
+      name: subagent.writerName ?? t('chat.activity.subagentTask'),
+      status: resolveSubagentActivityStatus(subagent),
+      summary: subagent.description,
+      type: 'agent',
+    } : {
+      depth,
+      id: toolCall.id,
+      name: getToolDisplayName(toolCall, t),
+      status: resolveToolActivityStatus(toolCall),
+      summary: getToolSummary(toolCall).summary,
+      type: 'tool',
+    };
+    return [
+      step,
+      ...(subagent ? deriveTimelineSteps(subagent.toolCalls, t, depth + 1) : []),
+    ];
+  });
+}
+
+function AgentRunRow({ run }: { readonly run: PresentedRun }) {
+  const t = useT();
+  const [expanded, setExpanded] = useState(false);
+  const name = run.writerName ?? t('chat.activity.subagentTask');
+  const summary = run.currentActivity?.toolName ?? run.description;
+  const timelineLabel = t('chat.activity.agentRunTimeline', { agent: name });
+  const steps = deriveTimelineSteps(run.agent.toolCalls, t);
+
+  return (
+    <div className={`pivi-agent-run-row${expanded ? ' expanded' : ''}`} data-agent-run-id={run.runId}>
+      <button
+        aria-expanded={expanded}
+        aria-label={`${name}: ${summary}`}
+        className="pivi-agent-run-header"
+        onClick={() => setExpanded(value => !value)}
+        type="button"
+      >
+        <ActivityRow
+          completedAt={run.completedAt}
+          icon={<PlatformIcon name="bot" />}
+          name={name}
+          startedAt={run.startedAt}
+          status={run.status}
+          summary={summary}
+        />
+        <span aria-hidden="true" className={`pivi-collapsible-chevron${expanded ? '' : ' is-collapsed'}`}>
+          <PlatformIcon name="chevron-down" />
+        </span>
+      </button>
+      {expanded ? (
+        <div aria-label={timelineLabel} className="pivi-agent-run-inspector" role="region">
+          <dl className="pivi-agent-run-brief">
+            <div>
+              <dt>{t('chat.activity.objective')}</dt>
+              <dd>{run.description}</dd>
+            </div>
+            {run.prompt ? (
+              <div>
+                <dt>{t('chat.activity.prompt')}</dt>
+                <dd>{run.prompt}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {steps.length > 0 ? (
+            <ol aria-label={t('chat.activity.timeline')} className="pivi-agent-run-timeline">
+              {steps.map(step => (
+                <li
+                  className={`pivi-agent-run-step pivi-agent-run-step--${step.type}`}
+                  data-depth={step.depth}
+                  key={step.id}
+                  style={{ '--pivi-agent-run-depth': step.depth } as CSSProperties}
+                >
+                  <ActivityRow
+                    icon={<PlatformIcon name={step.type === 'agent' ? 'bot' : 'wrench'} />}
+                    name={step.name}
+                    status={step.status}
+                    summary={step.summary}
+                  />
+                </li>
+              ))}
+            </ol>
+          ) : null}
+          {run.terminalResult?.text ? (
+            <div className="pivi-agent-run-result">
+              <span className="pivi-agent-run-result-label">{t('chat.activity.result')}</span>
+              <p>{run.terminalResult.text}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function AgentGroupPresentation({ runs }: { readonly runs: readonly PresentedRun[] }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
@@ -91,18 +204,7 @@ function AgentGroupPresentation({ runs }: { readonly runs: readonly PresentedRun
       </button>
       {expanded ? (
         <div className="pivi-agent-group-runs">
-          {runs.map(run => (
-            <div className="pivi-agent-run-row" data-agent-run-id={run.runId} key={run.runId}>
-              <ActivityRow
-                completedAt={run.completedAt}
-                icon={<PlatformIcon name="bot" />}
-                name={run.writerName ?? t('chat.activity.subagentTask')}
-                startedAt={run.startedAt}
-                status={run.status}
-                summary={run.currentActivity?.toolName ?? run.description}
-              />
-            </div>
-          ))}
+          {runs.map(run => <AgentRunRow key={run.runId} run={run} />)}
         </div>
       ) : null}
     </div>

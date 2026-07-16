@@ -352,7 +352,20 @@ describe('AssistantContentView', () => {
           id: 'spawn-1', name: 'spawn_agent', input: {}, status: 'completed',
           subagent: {
             id: 'spawn-1', writerName: 'Austen', description: 'Scan links', isExpanded: false,
-            mode: 'async', status: 'completed', asyncStatus: 'completed', toolCalls: [],
+            mode: 'async', prompt: 'Find every linked source.', result: 'All links checked.',
+            status: 'completed', asyncStatus: 'completed',
+            toolCalls: [
+              { id: 'read-1', name: 'read', input: { path: 'notes.md' }, status: 'completed' },
+              {
+                id: 'spawn-child', name: 'spawn_agent', input: {}, status: 'completed',
+                subagent: {
+                  id: 'spawn-child', writerName: 'Darwin', description: 'Check one source',
+                  isExpanded: false, status: 'completed', toolCalls: [
+                    { id: 'edit-child', name: 'edit', input: { file_path: 'source.md' }, status: 'completed' },
+                  ],
+                },
+              },
+            ],
           },
         },
         {
@@ -385,6 +398,15 @@ describe('AssistantContentView', () => {
     expect(container.querySelector('.pivi-agent-group-runs')).not.toHaveStyle({ overflow: 'auto' });
     expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('AustenScan linksCompleted');
     expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('CuriereadRunning');
+
+    fireEvent.click(getByRole('button', { name: 'Austen: Scan links' }));
+    const timeline = getByRole('region', { name: 'Austen timeline' });
+    expect(timeline).toHaveTextContent('ObjectiveScan links');
+    expect(timeline).toHaveTextContent('PromptFind every linked source.');
+    expect(timeline).toHaveTextContent('ResultAll links checked.');
+    expect([...timeline.querySelectorAll('.pivi-agent-run-step')].map(step => step.getAttribute('data-depth')))
+      .toEqual(['0', '0', '1']);
+    expect(timeline.querySelector('.pivi-agent-run-timeline')).not.toHaveStyle({ overflow: 'auto' });
   });
 
   it('updates an Agent Group summary from stable projected run entities', () => {

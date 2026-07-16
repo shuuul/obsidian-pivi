@@ -360,6 +360,8 @@ Researcher
   Produce report
 ```
 
+Each expanded Agent row now provides this timeline as an accessible in-row inspector. It preserves the objective and prompt, orders direct tools and nested delegated work from the durable trace, indents child work with connectors, and shows terminal text after the activity sequence. The inspector has no timer or independent overflow surface; virtual-row measurement and the transcript remain responsible for growth and scrolling.
+
 The transcript remains the only primary scroll container. Expanded Activity content should grow within its measured virtual row or open in an inspector; it should not create an independently scrolling card inside the transcript.
 
 The implemented foundation uses one seven-state lifecycle vocabulary for tool and Agent rows, localized icon/text/color status treatment, owner-window elapsed timing, and frozen terminal durations. React owns the live ticker; imperative Agent adapters recompute elapsed text only on lifecycle updates so DOM-only legacy mounts cannot leak timers. The running status arc is the only continuous Activity-row motion.
