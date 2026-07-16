@@ -1,7 +1,7 @@
 ---
 id: "010"
 title: "Restore individual subagent presentation"
-status: Active
+status: Completed
 created: 2026-07-16
 updated: 2026-07-16
 coordinator: "Codex"
@@ -45,7 +45,7 @@ Outcome: one consistent individual subagent card is the only subagent transcript
 - [x] Running → completed/failed/cancelled/orphaned transitions do not require remounting the card, do not lose expansion state, and leave no animation class, pseudo-element selector match, interval, timeout, or animation-frame loop behind. Stored terminal sessions mount directly in the static state.
 - [x] `prefers-reduced-motion: reduce` disables both the light-bar and icon animation while preserving status labels, icon visibility, and all state transitions. Main-window and pop-out owner realms behave identically.
 - [x] Virtualized transcripts, indexed paging, stable message/tool entity identities, stable imperative subagent adapter mounts, per-entity subscriptions, dynamic row measurement, append/prepend anchoring, and sequenced visibility cadence retain the specs 001–004 correctness and performance budgets. The 20-subagent development workload remains as a presentation-neutral virtualization regression scenario, renamed away from `AgentRun` terminology if its existing name becomes inaccurate.
-- [ ] Before completion, the user reviews live Obsidian screenshots/walkthroughs for the required matrix and explicitly accepts the restored presentation. Synthetic fixtures may support automation but cannot substitute for this visual acceptance.
+- [x] Before completion, the user reviews live Obsidian screenshots/walkthroughs for the required matrix and explicitly accepts the restored presentation. Synthetic fixtures may support automation but cannot substitute for this visual acceptance.
 
 ## Scope and non-goals
 
@@ -127,7 +127,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-03 | Remove Active Work Shelf end to end, including persisted setting and cross-tab wiring | active-work-removal | Done | None | Settings/bridge/composer tests; zero shelf source/i18n/CSS/docs references |
 | WS-04 | Add one report-to-visible-result boundary and remove raw protocol/`JSON.stringify` fallbacks | Codex coordinator | Done | WS-02 | Parser/renderer/session-restore tests for valid, invalid, absent, blocking, background reports |
 | WS-05 | Restore running-only light bar and profile-icon motion, terminal stillness, reduced motion, and owner-realm behavior | subagent-motion | Done | WS-01, WS-02 | DOM/class/CSS tests plus live main/pop-out lifecycle walkthrough |
-| WS-06 | Rename/retain the 20-subagent performance workload, synchronize docs/guides, run full gates, deploy/reload, and obtain user visual acceptance | Codex coordinator | In progress | WS-02, WS-03, WS-04, WS-05 | Full verification matrix, performance traces, screenshots, explicit user approval |
+| WS-06 | Rename/retain the 20-subagent performance workload, synchronize docs/guides, run full gates, deploy/reload, and obtain user visual acceptance | Codex coordinator | Done | WS-02, WS-03, WS-04, WS-05 | Full verification matrix, performance traces, screenshots, explicit user approval |
 | WS-07 | Restore complete turn persistence and historical request badges after plugin reload | Codex coordinator | Done | None | Live-vault JSONL audit; runtime persistence failure test; indexed reopen test; historical badge DOM test |
 
 ## Verification
