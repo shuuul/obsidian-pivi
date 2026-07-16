@@ -44,13 +44,13 @@ npm run test -- -t "merges toolbar-enabled servers"
 
 - `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist.
 - `setupObsidianUi.ts` — installs Testing Library DOM matchers for the jsdom React project.
-- `pivi-react/` — React/TSX behavior tests running in the dedicated jsdom project.
+- `pivi-react/` — React/TSX behavior tests running in the dedicated jsdom project, including dedicated Activity presentation, Agent-run projection, and Active Work Shelf suites.
 - `pivi-react/` also hosts owner-DOM tests for the uncontrolled rich composer and imperative mention dropdown when real selection, keyboard, and Obsidian DOM-helper behavior matters.
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.
 - `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
 - `helpers/` — fake `PiChatService`, mock `App`, plugin, and settings builders.
 - `integration/` — integration tests included in the Node `unit` Jest project and using the shared mocks/setup.
-- `fixtures/sessions/` — immutable synthetic Pi JSONL contract samples. Copy them to a temporary directory before open/migration tests; never mutate them in place or describe the legacy-v1 shape as captured 0.7.0 user data.
+- `fixtures/sessions/` — immutable Pi JSONL compatibility inputs. Hand-authored legacy/checkpoint shapes remain explicitly synthetic; `tag-generated-pivi-0.7.0-v3.jsonl` is reproducible output from the immutable 0.7.0 `PiSessionStore` writer over synthetic non-sensitive content, not a captured user vault. Copy every fixture to a temporary directory before open/migration tests and never mutate it in place or relabel the synthetic legacy-v1 shape as 0.7.0 data.
 - `unit/app/` — app service/session/settings persistence tests.
 - `unit/architecture/` — dependency boundary and architecture guard tests.
 - `unit/engine/` — host-neutral engine/runtime tests.
