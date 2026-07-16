@@ -13,8 +13,13 @@ export function createSubagentContentAdapter(
 ): MessageContentAdapter<SubagentInfo> {
   const mounted = new WeakMap<HTMLElement, SubagentState>();
   return {
-    mount(container, subagent) {
-      const state = mountStoredSubagent(container, subagent, renderContent);
+    mount(container, subagent, context) {
+      const state = mountStoredSubagent(
+        container,
+        subagent,
+        renderContent,
+        context.beginDisclosureResize,
+      );
       mounted.set(container, state);
       return () => {
         mounted.delete(container);

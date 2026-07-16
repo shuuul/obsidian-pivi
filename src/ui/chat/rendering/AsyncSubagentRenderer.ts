@@ -38,6 +38,7 @@ export interface AsyncSubagentState {
   contentRendered: boolean;
   contentDirty: boolean;
   renderContent?: SubagentRenderContentFn;
+  beginDisclosureResize?: (header: HTMLElement) => void;
   info: SubagentInfo;
 }
 
@@ -114,6 +115,7 @@ function renderAsyncContentLikeSync(
   subagent: SubagentInfo,
   displayStatus: 'running' | 'completed' | 'error' | 'orphaned',
   renderContent?: SubagentRenderContentFn,
+  beginDisclosureResize?: (header: HTMLElement) => void,
 ): void {
   const generation = nextMarkdownRenderGeneration(contentEl);
   contentEl.empty();
@@ -136,6 +138,7 @@ function renderAsyncContentLikeSync(
           ),
         }
       : {};
+    renderOptions.beginDisclosureResize = beginDisclosureResize;
     renderStoredToolRuns(toolsContainerEl, toolCalls, renderOptions);
   }
 
@@ -174,7 +177,13 @@ function renderAsyncContentLikeSync(
 }
 
 function renderAsyncContentFromState(state: AsyncSubagentState): void {
-  renderAsyncContentLikeSync(state.contentEl, state.info, state.contentStatus, state.renderContent);
+  renderAsyncContentLikeSync(
+    state.contentEl,
+    state.info,
+    state.contentStatus,
+    state.renderContent,
+    state.beginDisclosureResize,
+  );
   state.contentRendered = true;
   state.contentDirty = false;
 }
@@ -230,11 +239,13 @@ export function createAsyncSubagentBlock(
     contentRendered: false,
     contentDirty: true,
     renderContent: options.renderContent,
+    beginDisclosureResize: options.beginDisclosureResize,
     info,
   };
 
   setupCollapsible(shell.wrapperEl, shell.headerEl, shell.contentEl, info, {
     initiallyExpanded: info.isExpanded,
+    onBeforeToggle: () => options.beginDisclosureResize?.(shell.headerEl),
     onToggle: (expanded) => {
       if (!expanded) return;
       if (!state.contentRendered || state.contentDirty) {
@@ -311,6 +322,7 @@ export function renderStoredAsyncSubagent(
   parentEl: HTMLElement,
   subagent: SubagentInfo,
   renderContent?: SubagentRenderContentFn,
+  beginDisclosureResize?: (header: HTMLElement) => void,
 ): HTMLElement {
   const displayStatus = getSubagentDisplayStatus(subagent);
   const shell = createAsyncSubagentShell(parentEl, {
@@ -342,11 +354,13 @@ export function renderStoredAsyncSubagent(
     contentRendered: false,
     contentDirty: true,
     renderContent,
+    beginDisclosureResize,
     info: { ...subagent, isExpanded: false },
   };
 
   setupCollapsible(shell.wrapperEl, shell.headerEl, shell.contentEl, renderState.info, {
     initiallyExpanded: renderState.info.isExpanded,
+    onBeforeToggle: () => beginDisclosureResize?.(shell.headerEl),
     onToggle: (expanded) => {
       if (!expanded) return;
       if (!renderState.contentRendered || renderState.contentDirty) {

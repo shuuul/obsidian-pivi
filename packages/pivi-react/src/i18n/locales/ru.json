@@ -156,7 +156,6 @@
       "writing": "Пишет…",
       "statusDone": "ГОТОВО",
       "noChanges": "Без изменений",
-      "moreLines": "… ещё {count} строк",
       "tasksUpdated": "Задачи обновлены",
       "steps": "{count} шаг(ов)",
       "sessionCompacted": "Сеанс сжат",

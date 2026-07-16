@@ -156,7 +156,6 @@
       "writing": "書き込み中…",
       "statusDone": "完了",
       "noChanges": "変更なし",
-      "moreLines": "… あと {count} 行",
       "tasksUpdated": "タスクを更新しました",
       "steps": "{count} ステップ",
       "sessionCompacted": "セッションを圧縮しました",

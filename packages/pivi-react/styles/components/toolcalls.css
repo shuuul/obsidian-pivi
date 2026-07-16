@@ -3,6 +3,15 @@
   margin: 2px 0;
 }
 
+.pivi-tool-step-group.expanded,
+.pivi-tool-call.expanded {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: var(--pivi-expanded-content-max-height, min(320px, 33vh));
+  overflow: hidden;
+}
+
 /*
  * React renders tool headers as buttons, while the imperative subagent adapter
  * renders equivalent div[role=button] headers. Keep one layout contract for
@@ -37,6 +46,88 @@
   gap: 5px;
   padding: 2px 0;
   min-width: 0;
+}
+
+.pivi-tool-step-group.expanded > .pivi-tool-step-group-header {
+  flex: 0 0 auto;
+  z-index: 7;
+  background: var(--pivi-host-background-primary);
+}
+
+.pivi-tool-call.expanded:not(.pivi-tool-call-in-step-group) > .pivi-tool-header {
+  flex: 0 0 auto;
+  z-index: 5;
+  background: var(--pivi-host-background-primary);
+}
+
+.pivi-tool-step-group.expanded > .pivi-tool-step-group-steps,
+.pivi-tool-call.expanded > .pivi-tool-content {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.pivi-disclosure-chain-active {
+  position: relative;
+  z-index: 1;
+  transform: translateY(var(--pivi-disclosure-chain-shift, 0));
+  clip-path: inset(0 0 var(--pivi-disclosure-chain-clip-bottom, 0) 0);
+}
+
+.pivi-subagent-content .pivi-tool-step-group.expanded,
+.pivi-subagent-content .pivi-tool-call.expanded,
+.pivi-tool-step-group-steps .pivi-tool-call.expanded {
+  display: block;
+  max-height: none;
+  overflow: visible;
+}
+
+.pivi-subagent-content .pivi-tool-call.expanded > .pivi-tool-content,
+.pivi-tool-step-group-steps .pivi-tool-call.expanded > .pivi-tool-content {
+  overflow: visible;
+  scrollbar-gutter: auto;
+}
+
+.pivi-subagent-content .pivi-tool-step-group.expanded > .pivi-tool-step-group-steps {
+  overflow: visible;
+  scrollbar-gutter: auto;
+}
+
+.pivi-subagent-content .pivi-tool-step-group.expanded > .pivi-tool-step-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 7;
+  background: var(--pivi-host-background-primary);
+}
+
+.pivi-tool-step-group.expanded
+  > .pivi-tool-step-group-steps
+  > .pivi-tool-step-item
+  > .pivi-tool-call.expanded
+  > .pivi-tool-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--pivi-host-background-primary);
+}
+
+.pivi-subagent-content .pivi-tool-step-group.expanded
+  > .pivi-tool-step-group-steps
+  > .pivi-tool-step-item
+  > .pivi-tool-call.expanded
+  > .pivi-tool-header {
+  position: sticky;
+  top: var(--pivi-tool-step-group-sticky-top, 18px);
+  z-index: 5;
+  background: var(--pivi-host-background-primary);
+}
+
+.pivi-subagent-content .pivi-tool-call.expanded:not(.pivi-tool-call-in-step-group) > .pivi-tool-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--pivi-host-background-primary);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -82,11 +173,13 @@
 }
 
 .pivi-tool-step-group-steps {
-  padding: 2px 0 4px 8px;
+  box-sizing: border-box;
+  padding-block: 0 4px;
+  padding-inline: 8px 0;
 }
 
 .pivi-tool-step-item {
-  margin: 2px 0;
+  margin-block: 0;
 }
 
 .pivi-tool-call-in-step-group {
@@ -306,6 +399,7 @@
 
 /* Tool call content - border style (like thinking block) */
 .pivi-tool-content {
+  box-sizing: border-box;
   padding: 2px 0;
   padding-inline-start: var(--pivi-spacing-md);
   margin-inline-start: 13px;
@@ -313,6 +407,7 @@
   margin-inline-end: var(--pivi-spacing-sm);
   margin-block-end: 6px;
 }
+
 /* Tool content variants that render inline widgets instead of bordered results */
 .pivi-tool-content-todo,
 .pivi-tool-content-ask {
@@ -327,6 +422,13 @@
   font-size: var(--pivi-text-sm);
   line-height: 1.4;
   overflow-x: auto;
+}
+
+.pivi-tool-raw-text {
+  margin: 0;
+  color: var(--pivi-host-text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .pivi-tool-line {
@@ -367,15 +469,6 @@
 /* Hover highlight for file search results */
 .pivi-tool-line.hoverable:hover {
   background: var(--pivi-host-background-hover);
-}
-
-/* Truncation indicator: "... N more lines" */
-.pivi-tool-truncated {
-  color: var(--pivi-host-text-faint);
-  font-style: italic;
-  padding: 4px 0;
-  font-family: var(--pivi-host-font-monospace);
-  font-size: var(--pivi-text-sm);
 }
 
 /* ToolSearch expanded: icon + tool name rows */

@@ -156,7 +156,6 @@
       "writing": "Writing…",
       "statusDone": "DONE",
       "noChanges": "No changes",
-      "moreLines": "… {count} more lines",
       "tasksUpdated": "Tasks updated",
       "steps": "{count} steps",
       "sessionCompacted": "Session compacted",

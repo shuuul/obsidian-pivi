@@ -43,9 +43,9 @@ export interface SubagentState {
   labelEl: HTMLElement;
   summaryEl: HTMLElement;
   statusEl: HTMLElement;
-  promptSectionEl: HTMLElement;
-  promptBodyEl: HTMLElement;
-  toolsContainerEl: HTMLElement;
+  promptSectionEl: HTMLElement | null;
+  promptBodyEl: HTMLElement | null;
+  toolsContainerEl: HTMLElement | null;
   resultSectionEl: HTMLElement | null;
   resultBodyEl: HTMLElement | null;
   toolElements: Map<string, HTMLElement>;
@@ -54,14 +54,21 @@ export interface SubagentState {
   info: SubagentInfo;
   sourceToolCalls: readonly ToolCallInfo[];
   renderedResult: string | null;
+  contentRendered: boolean;
+  contentDirty: boolean;
+  beginDisclosureResize?: (header: HTMLElement) => void;
 }
 
 function getToolRenderOptions(state: SubagentState): ToolContentRenderOptions {
-  if (!state.renderContent) return {};
   return {
-    renderMarkdown: (container, markdown, sourcePath) => (
-      state.renderContent?.(container, markdown, { sourcePath }) ?? Promise.resolve()
-    ),
+    beginDisclosureResize: state.beginDisclosureResize,
+    ...(state.renderContent
+      ? {
+          renderMarkdown: (container: HTMLElement, markdown: string, sourcePath: string) => (
+            state.renderContent?.(container, markdown, { sourcePath }) ?? Promise.resolve()
+          ),
+        }
+      : {}),
   };
 }
 
@@ -104,6 +111,47 @@ function ensureResultSection(state: SubagentState) {
   return section;
 }
 
+function renderSyncContentFromState(state: SubagentState): void {
+  state.contentEl.empty();
+  state.toolElements.clear();
+  state.toolStepGroup = null;
+  state.resultSectionEl = null;
+  state.resultBodyEl = null;
+  state.renderedResult = null;
+
+  const promptSection = createSection(
+    state.contentEl,
+    t('chat.activity.prompt'),
+    'pivi-subagent-prompt-body',
+  );
+  promptSection.wrapperEl.addClass('pivi-subagent-section-prompt');
+  state.promptSectionEl = promptSection.wrapperEl;
+  state.promptBodyEl = promptSection.bodyEl;
+  setPromptText(
+    promptSection.bodyEl,
+    state.info.prompt || '',
+    state.renderContent,
+    state.contentEl,
+  );
+
+  state.toolsContainerEl = state.contentEl.createDiv({ cls: 'pivi-subagent-tools' });
+  for (const toolCall of state.info.toolCalls) {
+    mountSubagentToolCall(state, toolCall);
+  }
+
+  if (state.info.status === 'completed' || state.info.status === 'error') {
+    const fallback = state.info.status === 'error'
+      ? t('chat.activity.error')
+      : t('chat.activity.done');
+    const finalText = getVisibleSubagentResult(state.info.result, fallback);
+    setSubagentResultText(state, finalText);
+    state.renderedResult = finalText;
+  }
+
+  state.contentRendered = true;
+  state.contentDirty = false;
+}
+
 export function setSubagentResultText(state: SubagentState, text: string): void {
   const section = ensureResultSection(state);
   section.bodyEl.empty();
@@ -128,25 +176,20 @@ function hydrateSyncSubagentStateFromStored(state: SubagentState, subagent: Suba
 
   state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
 
-  for (const originalToolCall of subagent.toolCalls) {
-    const toolCall: ToolCallInfo = {
-      ...originalToolCall,
-      input: { ...originalToolCall.input },
-    };
-    addSubagentToolCall(state, toolCall);
-    if (toolCall.status !== 'running' || toolCall.result) {
-      updateSubagentToolResult(state, toolCall.id, toolCall);
-    }
-  }
+  state.info.toolCalls = subagent.toolCalls.map(originalToolCall => ({
+    ...originalToolCall,
+    input: { ...originalToolCall.input },
+  }));
   state.sourceToolCalls = subagent.toolCalls;
 
   if (subagent.status === 'completed' || subagent.status === 'error') {
-    const fallback = subagent.status === 'error' ? 'ERROR' : 'DONE';
-    finalizeSubagentBlock(state, subagent.result || fallback, subagent.status === 'error');
-  } else {
-    updateSyncWrapperStatus(state);
-    updateSyncHeaderAria(state);
+    state.info.completedAt = subagent.completedAt;
+    state.wrapperEl.addClass(subagent.status === 'error' ? 'error' : 'done');
   }
+  updateSyncWrapperStatus(state);
+  updateSyncHeaderAria(state);
+  state.contentDirty = true;
+  if (state.info.isExpanded) renderSyncContentFromState(state);
 }
 
 export function createSubagentBlock(
@@ -186,19 +229,6 @@ export function createSubagentBlock(
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
 
-  const promptSection = createSection(contentEl, t('chat.activity.prompt'), 'pivi-subagent-prompt-body');
-  promptSection.wrapperEl.addClass('pivi-subagent-section-prompt');
-  setPromptText(promptSection.bodyEl, prompt, options.renderContent, contentEl);
-
-  const toolsContainerEl = contentEl.createDiv({ cls: 'pivi-subagent-tools' });
-
-  setupCollapsible(wrapperEl, headerEl, contentEl, info, {
-    initiallyExpanded: info.isExpanded,
-    onToggle: (expanded) => {
-      if (expanded) scrollSubagentContentToBottom(contentEl);
-    },
-  });
-
   const state: SubagentState = {
     wrapperEl,
     contentEl,
@@ -206,9 +236,9 @@ export function createSubagentBlock(
     labelEl,
     summaryEl,
     statusEl,
-    promptSectionEl: promptSection.wrapperEl,
-    promptBodyEl: promptSection.bodyEl,
-    toolsContainerEl,
+    promptSectionEl: null,
+    promptBodyEl: null,
+    toolsContainerEl: null,
     resultSectionEl: null,
     resultBodyEl: null,
     toolElements: new Map<string, HTMLElement>(),
@@ -217,7 +247,23 @@ export function createSubagentBlock(
     info,
     sourceToolCalls: [],
     renderedResult: null,
+    contentRendered: false,
+    contentDirty: true,
+    beginDisclosureResize: options.beginDisclosureResize,
   };
+
+  setupCollapsible(wrapperEl, headerEl, contentEl, info, {
+    initiallyExpanded: info.isExpanded,
+    onBeforeToggle: () => options.beginDisclosureResize?.(headerEl),
+    onToggle: (expanded) => {
+      if (!expanded) return;
+      if (!state.contentRendered || state.contentDirty) {
+        renderSyncContentFromState(state);
+      }
+      scrollSubagentContentToBottom(contentEl);
+    },
+  });
+  if (info.isExpanded) renderSyncContentFromState(state);
 
   updateSyncHeaderAria(state);
   return state;
@@ -243,6 +289,12 @@ export function addSubagentToolCall(
 
     state.info.toolCalls[existingIndex] = mergedToolCall;
 
+    if (!state.info.isExpanded) {
+      state.contentDirty = true;
+      updateSyncHeaderAria(state);
+      return;
+    }
+
     const existingElement = state.toolElements.get(toolCall.id);
     if (existingElement) {
       if (!tryUpdateToolInStepGroup(toolCall.id, mergedToolCall, state.toolElements)) {
@@ -257,6 +309,11 @@ export function addSubagentToolCall(
   }
 
   state.info.toolCalls.push(toolCall);
+  if (!state.info.isExpanded) {
+    state.contentDirty = true;
+    updateSyncHeaderAria(state);
+    return;
+  }
   mountSubagentToolCall(state, toolCall);
 
   updateSyncHeaderAria(state);
@@ -264,6 +321,7 @@ export function addSubagentToolCall(
 
 function mountSubagentToolCall(state: SubagentState, toolCall: ToolCallInfo): void {
   if (!shouldPresentToolCall(toolCall.name, toolCall.input)) return;
+  if (!state.toolsContainerEl) return;
 
   const groupable = isToolPresentationGroupable(
     toolCall.name,
@@ -304,6 +362,11 @@ export function updateSubagentToolResult(
     state.info.toolCalls[idx] = toolCall;
   }
 
+  if (!state.info.isExpanded) {
+    state.contentDirty = true;
+    return;
+  }
+
   const toolElement = state.toolElements.get(toolId);
   if (!toolElement) {
     mountSubagentToolCall(state, toolCall);
@@ -339,9 +402,12 @@ export function finalizeSubagentBlock(
     result,
     isError ? t('chat.activity.error') : t('chat.activity.done'),
   );
-  if (state.renderedResult !== finalText) {
+  if (state.info.isExpanded && state.renderedResult !== finalText) {
     setSubagentResultText(state, finalText);
     state.renderedResult = finalText;
+    state.contentDirty = false;
+  } else if (!state.info.isExpanded) {
+    state.contentDirty = true;
   }
 
   updateSyncHeaderAria(state);
@@ -365,7 +431,11 @@ export function updateStoredSubagent(state: SubagentState, subagent: SubagentInf
 
   if (metadataChanged) {
     state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
-    setPromptText(state.promptBodyEl, subagent.prompt || '', state.renderContent, state.contentEl);
+    if (state.info.isExpanded && state.promptBodyEl) {
+      setPromptText(state.promptBodyEl, subagent.prompt || '', state.renderContent, state.contentEl);
+    } else {
+      state.contentDirty = true;
+    }
     updateSyncHeaderAria(state);
   }
 
@@ -400,6 +470,7 @@ export function mountStoredSubagent(
   parentEl: HTMLElement,
   subagent: SubagentInfo,
   renderContent?: SubagentRenderContentFn,
+  beginDisclosureResize?: (header: HTMLElement) => void,
 ): SubagentState {
   const state = createSubagentBlock(parentEl, subagent.id, {
     description: subagent.description,
@@ -408,6 +479,7 @@ export function mountStoredSubagent(
     initiallyExpanded: subagent.isExpanded,
     renderContent,
     writerName: subagent.writerName,
+    beginDisclosureResize,
   });
 
   hydrateSyncSubagentStateFromStored(state, subagent);
@@ -418,6 +490,12 @@ export function renderStoredSubagent(
   parentEl: HTMLElement,
   subagent: SubagentInfo,
   renderContent?: SubagentRenderContentFn,
+  beginDisclosureResize?: (header: HTMLElement) => void,
 ): HTMLElement {
-  return mountStoredSubagent(parentEl, subagent, renderContent).wrapperEl;
+  return mountStoredSubagent(
+    parentEl,
+    subagent,
+    renderContent,
+    beginDisclosureResize,
+  ).wrapperEl;
 }

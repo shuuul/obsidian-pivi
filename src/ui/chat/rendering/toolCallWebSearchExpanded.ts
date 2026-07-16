@@ -15,7 +15,7 @@ export function renderFileSearchExpanded(container: HTMLElement, result: string)
     container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noMatches') });
     return;
   }
-  renderLinesExpanded(container, result, 15, true);
+  renderLinesExpanded(container, result, true);
 }
 
 export function isPlaceholderWebSearchResult(result: string | undefined): boolean {
@@ -84,14 +84,8 @@ export function renderWebSearchActionExpanded(container: HTMLElement, input: Rec
       });
 
       const alternateQueries = data.queries.filter(query => query !== primaryQuery);
-      for (const query of alternateQueries.slice(0, 4)) {
+      for (const query of alternateQueries) {
         linesEl.createDiv({ cls: 'pivi-tool-line', text: `Alt query: ${query}` });
-      }
-      if (alternateQueries.length > 4) {
-        linesEl.createDiv({
-          cls: 'pivi-tool-truncated',
-          text: `... ${alternateQueries.length - 4} more queries`,
-        });
       }
       return true;
     }
@@ -112,7 +106,7 @@ export function renderWebSearchExpanded(
 
     if (parsed.summary) {
       const summaryEl = container.createDiv({ cls: 'pivi-tool-web-summary' });
-      summaryEl.setText(parsed.summary.length > 800 ? parsed.summary.slice(0, 800) + '...' : parsed.summary);
+      summaryEl.setText(parsed.summary);
     }
     return;
   }
@@ -126,13 +120,13 @@ export function renderWebSearchExpanded(
 
   if (shouldRenderAction && renderWebSearchActionExpanded(container, input)) {
     if (result && !isPlaceholderWebSearchResult(result)) {
-      renderLinesExpanded(container, result, 12);
+      renderLinesExpanded(container, result);
     }
     return;
   }
 
   if (result) {
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
     return;
   }
 
@@ -143,17 +137,7 @@ export function renderWebSearchExpanded(
   container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noResult') });
 }
 export function renderWebFetchExpanded(container: HTMLElement, result: string): void {
-  const maxChars = 500;
   const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
   const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap' });
-
-  if (result.length > maxChars) {
-    lineEl.setText(result.slice(0, maxChars));
-    linesEl.createDiv({
-      cls: 'pivi-tool-truncated',
-      text: `... ${result.length - maxChars} more characters`,
-    });
-  } else {
-    lineEl.setText(result);
-  }
+  lineEl.setText(result);
 }

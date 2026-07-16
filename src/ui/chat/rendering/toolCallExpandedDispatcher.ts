@@ -46,10 +46,10 @@ const TOOL_EXPANDED_RENDERERS: Partial<Record<string, ExpandedRenderer>> = {
     renderBashContent(container, input, result);
   },
   [TOOL_WRITE_STDIN]: (container, _input, result) => {
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
   },
   [TOOL_READ]: (container, _input, result) => {
-    renderLinesExpanded(container, result, 15);
+    renderLinesExpanded(container, result);
   },
   [TOOL_GLOB]: (container, _input, result) => {
     renderFileSearchExpanded(container, result);
@@ -107,5 +107,5 @@ export function renderExpandedContent(
     return;
   }
 
-  renderLinesExpanded(container, resolvedResult, 12);
+  renderLinesExpanded(container, resolvedResult);
 }

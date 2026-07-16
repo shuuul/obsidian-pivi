@@ -33,5 +33,5 @@ export function renderSkillExpanded(
     return;
   }
 
-  renderLinesExpanded(container, result, 12);
+  renderLinesExpanded(container, result);
 }

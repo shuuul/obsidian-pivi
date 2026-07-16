@@ -15,7 +15,7 @@ export function renderApplyPatchExpanded(
   const parsedDiffs = getApplyPatchFileDiffs(input);
 
   if (result && /verification failed|^[Ee]rror:/.test(result.trim())) {
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
   }
 
   if (parsedDiffs.length > 0) {
@@ -39,7 +39,7 @@ export function renderApplyPatchExpanded(
   }
 
   if (patchText) {
-    renderLinesExpanded(container, patchText, 80);
+    renderLinesExpanded(container, patchText);
     return;
   }
 
@@ -56,7 +56,7 @@ export function renderApplyPatchExpanded(
       }
       return;
     }
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
     return;
   }
 

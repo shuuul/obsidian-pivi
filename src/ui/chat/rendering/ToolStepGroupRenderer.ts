@@ -118,6 +118,7 @@ export function createToolStepGroup(
   let state: ToolStepGroupState | null = null;
   setupCollapsible(groupEl, headerEl, stepsEl, collapsibleState, {
     initiallyExpanded: false,
+    onBeforeToggle: () => renderOptions.beginDisclosureResize?.(headerEl),
     onToggle: () => {
       if (state) syncGroupHeader(state, getOrderedToolCalls(state));
     },

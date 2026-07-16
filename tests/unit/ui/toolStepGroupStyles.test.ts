@@ -48,12 +48,58 @@ describe('tool step group styles', () => {
     expect(styles).toContain('.pivi-subagent-tools .pivi-tool-step-group-steps:not(.pivi-hidden)');
     expect(styles).not.toMatch(/\.pivi-subagent-tools \.pivi-tool-step-group-steps\s*\{[^}]*display:\s*flex;/);
     expect(styles).toMatch(/\.pivi-subagent-tools \.pivi-tool-step-group-steps:not\(\.pivi-hidden\)\s*\{[^}]*gap:\s*0;/s);
-    expect(styles).toMatch(/\.pivi-subagent-tools \.pivi-tool-step-group-steps:not\(\.pivi-hidden\)\s*\{[^}]*padding:\s*2px 0 4px 8px;/s);
+    expect(styles).toMatch(/\.pivi-subagent-tools \.pivi-tool-step-group-steps:not\(\.pivi-hidden\)\s*\{[^}]*padding-block:\s*0 4px;/s);
     expect(styles).not.toMatch(/\.pivi-subagent-tools>\.pivi-tool-step-group\s*\{[^}]*(?:border|background|padding):/s);
     expect(styles).not.toMatch(/\.pivi-subagent-tools \.pivi-tool-call-in-step-group\s*\{[^}]*(?:border|background):/s);
     expect(styles).toMatch(/\.pivi-subagent-tools \.pivi-tool-call-in-step-group\s*\{[^}]*margin:\s*0;/s);
     expect(styles).toContain('@container pivi-subagent-content (max-width: 320px)');
     expect(styles).toContain('@container pivi-subagent-content (max-width: 240px)');
+  });
+
+  it('caps each top-level disclosure while its body owns the only scrollbar', () => {
+    const styles = readFileSync(
+      join(process.cwd(), 'packages/pivi-react/styles/components/toolcalls.css'),
+      'utf8',
+    );
+
+    expect(styles).toMatch(/\.pivi-tool-step-group\.expanded,[\s\S]*?\.pivi-tool-call\.expanded\s*\{[^}]*max-height:\s*var\(--pivi-expanded-content-max-height/s);
+    expect(styles).toMatch(/\.pivi-tool-step-group\.expanded,[\s\S]*?\.pivi-tool-call\.expanded\s*\{[^}]*display:\s*flex;/s);
+    expect(styles).toMatch(/\.pivi-tool-step-group\.expanded,[\s\S]*?\.pivi-tool-call\.expanded\s*\{[^}]*overflow:\s*hidden;/s);
+    expect(styles).toMatch(/\.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-steps,[\s\S]*?\.pivi-tool-call\.expanded > \.pivi-tool-content\s*\{[^}]*overflow-y:\s*auto;/s);
+    expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-step-group\.expanded,[\s\S]*?\.pivi-tool-step-group-steps \.pivi-tool-call\.expanded\s*\{[^}]*max-height:\s*none;/s);
+    expect(styles).toMatch(/\.pivi-tool-step-group-steps \.pivi-tool-call\.expanded > \.pivi-tool-content\s*\{[^}]*overflow:\s*visible;/s);
+  });
+
+  it('keeps top-level card headers layout-fixed and nests sticky titles inside the body scrollport', () => {
+    const styles = readFileSync(
+      join(process.cwd(), 'packages/pivi-react/styles/components/toolcalls.css'),
+      'utf8',
+    );
+
+    expect(styles).toMatch(/\.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-header\s*\{[^}]*flex:\s*0 0 auto;/s);
+    expect(styles).not.toMatch(/(?:^|[\n\r])\s*\.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-header\s*\{[^}]*position:\s*sticky;/s);
+    expect(styles).toMatch(/\.pivi-tool-call\.expanded:not\(\.pivi-tool-call-in-step-group\) > \.pivi-tool-header\s*\{[^}]*flex:\s*0 0 auto;/s);
+    expect(styles).not.toMatch(/(?:^|[\n\r])\s*\.pivi-tool-call\.expanded:not\(\.pivi-tool-call-in-step-group\) > \.pivi-tool-header\s*\{[^}]*position:\s*sticky;/s);
+    expect(styles).toMatch(/\.pivi-tool-step-group-steps\s*\{[^}]*padding-block:\s*0 4px;/s);
+    expect(styles).toMatch(/\.pivi-tool-step-item\s*\{[^}]*margin-block:\s*0;/s);
+    expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-header\s*\{[^}]*position:\s*sticky;/s);
+    expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-header\s*\{[^}]*top:\s*0;/s);
+    expect(styles).toMatch(/\.pivi-tool-step-group\.expanded[\s\S]*?> \.pivi-tool-call\.expanded[\s\S]*?> \.pivi-tool-header\s*\{[^}]*top:\s*0;/s);
+    expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-step-group\.expanded[\s\S]*?> \.pivi-tool-call\.expanded[\s\S]*?> \.pivi-tool-header\s*\{[^}]*top:\s*var\(--pivi-tool-step-group-sticky-top, 18px\);/s);
+    expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-call\.expanded:not\(\.pivi-tool-call-in-step-group\) > \.pivi-tool-header\s*\{[^}]*top:\s*0;/s);
+    expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-steps\s*\{[^}]*overflow:\s*visible;/s);
+  });
+
+  it('pins and clips an ended disclosure body without a height transition', () => {
+    const styles = readFileSync(
+      join(process.cwd(), 'packages/pivi-react/styles/components/toolcalls.css'),
+      'utf8',
+    );
+
+    expect(styles).toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*transform:\s*translateY\(var\(--pivi-disclosure-chain-shift, 0\)\);/s);
+    expect(styles).toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*clip-path:\s*inset\(0 0 var\(--pivi-disclosure-chain-clip-bottom, 0\) 0\);/s);
+    expect(styles).not.toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*overflow:\s*hidden;/s);
+    expect(styles).not.toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*transition:/s);
   });
 
   it('restores subagent motion only for the canonical running lifecycle class', () => {

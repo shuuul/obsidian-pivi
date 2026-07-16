@@ -39,6 +39,7 @@ export interface CreateSubagentBlockOptions {
   initiallyExpanded?: boolean;
   renderContent?: SubagentRenderContentFn;
   writerName?: string;
+  beginDisclosureResize?: (header: HTMLElement) => void;
 }
 
 export type SubagentDisplayStatus = ActivityStatus;

@@ -156,7 +156,6 @@
       "writing": "쓰는 중…",
       "statusDone": "완료",
       "noChanges": "변경 없음",
-      "moreLines": "… {count}줄 더",
       "tasksUpdated": "작업이 업데이트됨",
       "steps": "{count}단계",
       "sessionCompacted": "세션이 압축됨",

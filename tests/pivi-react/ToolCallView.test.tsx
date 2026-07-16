@@ -27,6 +27,7 @@ import {
   ToolStepGroupView,
 } from '@pivi/pivi-react';
 
+import { DisclosureAnchorProvider } from '../../packages/pivi-react/src/chat/messages/disclosureAnchorContext';
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 
 function toolCall(id: string, name: string, status: ToolCallInfo['status'], input: Record<string, unknown> = {}, result?: string): ToolCallInfo {
@@ -68,6 +69,45 @@ describe('ToolCallView', () => {
     expect(screen.queryByText('workspace')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Bash: pwd' }));
     expect(screen.getByText('workspace')).toBeInTheDocument();
+  });
+
+  it('renders long fallback text with one body node after expansion', () => {
+    const result = Array.from({ length: 10_000 }, (_, index) => `line-${index}`).join('\n');
+    const tool = toolCall('bash-long', TOOL_BASH, 'completed', { command: 'generate' }, result);
+    const view = renderTool(<ToolCallView toolCall={tool} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Bash: generate' }));
+
+    const body = view.container.querySelector('.pivi-tool-raw-text');
+    expect(body).toHaveTextContent('line-0');
+    expect(body).toHaveTextContent('line-9999');
+    expect(body?.childElementCount).toBe(0);
+  });
+
+  it('begins one shared header-anchor transaction before mounting expanded content', () => {
+    const beginDisclosureResize = jest.fn();
+    const mountedCallbacks: unknown[] = [];
+    const tool = toolCall('anchored', TOOL_BASH, 'completed', { command: 'pwd' }, 'workspace');
+    renderTool(
+      <DisclosureAnchorProvider beginDisclosureResize={beginDisclosureResize}>
+        <ToolCallView
+          contentAdapters={{
+            tool: {
+              mount(_container, _toolCall, context) {
+                mountedCallbacks.push(context.beginDisclosureResize);
+              },
+            },
+          }}
+          toolCall={tool}
+        />
+      </DisclosureAnchorProvider>,
+    );
+    const header = screen.getByRole('button', { name: 'Bash: pwd' });
+
+    fireEvent.click(header);
+
+    expect(beginDisclosureResize).toHaveBeenCalledWith(header);
+    expect(mountedCallbacks).toEqual([beginDisclosureResize]);
   });
 
   it('keeps repeated tool inputs as distinct, ordered rows with raw tool names', () => {

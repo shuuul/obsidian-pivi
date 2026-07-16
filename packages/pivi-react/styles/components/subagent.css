@@ -6,6 +6,14 @@
   overflow: hidden;
 }
 
+.pivi-subagent-list.expanded {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: var(--pivi-expanded-content-max-height, min(320px, 33vh));
+  overflow: hidden;
+}
+
 .pivi-text-block+.pivi-subagent-list {
   margin-top: var(--pivi-spacing-sm);
 }
@@ -56,6 +64,12 @@
   cursor: pointer;
   overflow: hidden;
   line-height: 1.2;
+}
+
+.pivi-subagent-list.expanded > .pivi-subagent-header {
+  flex: 0 0 auto;
+  z-index: 9;
+  background: var(--pivi-host-background-primary);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -147,11 +161,20 @@
 
 .pivi-subagent-content {
   container: pivi-subagent-content / inline-size;
-  padding: 6px 10px 8px;
+  box-sizing: border-box;
+  min-height: 0;
+  padding-block: 0 8px;
+  padding-inline: 10px;
   margin: 0;
-  max-height: min(560px, 58vh);
-  overflow: auto;
-  resize: vertical;
+}
+
+.pivi-subagent-content > :first-child {
+  margin-block-start: 6px;
+}
+
+.pivi-subagent-list.expanded > .pivi-subagent-content {
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-gutter: stable;
 }
 
@@ -233,7 +256,8 @@
   flex-direction: column;
   gap: 0;
   min-width: 0;
-  padding: 2px 0 4px 8px;
+  padding-block: 0 4px;
+  padding-inline: 8px 0;
 }
 
 .pivi-subagent-tools .pivi-tool-step-item {

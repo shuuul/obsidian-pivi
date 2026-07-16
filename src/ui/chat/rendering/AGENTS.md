@@ -46,8 +46,8 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Every subagent uses the same individual card path regardless of sibling count. Visible terminal results must strip fenced `pivi-agent-report` protocol blocks without mutating the durable result. Animate the profile icon and bottom light bar only in the canonical `running` state; queued, waiting, and terminal states are static.
 - A mounted rich tool body must receive tool-entity changes through its adapter `update` path. Do not remount it for status/input/result patches; remount only when React supplies a new stable tool generation.
 - Extend tool bodies through `toolCallExpandedDispatcher.ts`; block classification, grouping, ordering, labels, and shell state belong to `@pivi/pivi-react`.
-- Completed Markdown Read results use the injected Obsidian Markdown renderer with the resolved vault path as `sourcePath`; generic/external reads render Markdown only for explicit Markdown paths. Preserve the existing bounded line previews.
-- Markdown Structure/Outline keeps JSON as its tool protocol but renders a YAML-style heading list in the UI. Malformed protocol results fall back to bounded raw lines.
+- Completed Markdown Read results use the injected Obsidian Markdown renderer with the resolved vault path as `sourcePath`; generic/external reads render Markdown only for explicit Markdown paths. Render the complete snapshot result only after expansion.
+- Markdown Structure/Outline keeps JSON as its tool protocol but renders a YAML-style heading list in the UI. Malformed protocol results fall back to complete lazy raw text.
 - Write/edit adapters render content only. Diff stats live in the generic tool header, and no adapter may create a nested write/edit header or collapsible shell.
 - Write/edit, stored nested subagents, and ask-user interaction remain isolated adapters; never route ordinary React-renderable content through them.
 - Use `setupCollapsible()` rather than ad hoc toggles. It owns keyboard activation, `aria-expanded`, chevrons, `.expanded`, and `.pivi-hidden`.
@@ -57,7 +57,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Normalize host-rendered task-list, code-copy, and Mermaid nodes onto stable `.pivi-*` presentation classes before package CSS consumes them. Host classes may be queried inside this adapter, but must not become selectors in `packages/pivi-react/styles/`.
 - For element-bound document/window work, including animation-frame scheduling for scrolling, use `getActiveDocument()` and `getActiveWindow()` so pop-out windows remain functional.
 - Preserve accessibility roles, labels, status text, keyboard controls, and decorative `aria-hidden` attributes when changing headers or icons.
-- Bound large output. Reuse line caps, compact summaries, diff hunking, and collapsed bodies instead of mounting unlimited result text.
+- Bound large output through compact collapsed summaries, first-open lazy construction, one-third-height scroll owners, and constant-node raw text. Expanded presentation must not discard available lines, fields, paths, tasks, queries, Markdown, or diff context; preserve only truncation already imposed by the source/tool contract.
 - Imperative nested-subagent step groups mirror the React header contract: count plus unique translated tool names in first-use order, followed by the shared slash-separated per-status counts, with input/result details confined to expanded rows.
 - Imperative Agent headers mirror the React `pivi-activity-*` layout and canonical status mapping while retaining their own DOM ownership. They may recompute elapsed text on lifecycle updates but must not start a recurring timer from legacy render helpers that return only bare DOM.
 
@@ -72,5 +72,5 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Background subagents lazily render expanded content and can become `orphaned` when a session ends. Do not collapse `pending`, `running`, `error`, and `orphaned` into a simple completed flag.
 - Thinking presentation and timing belong to the package React message view; no imperative thinking renderer or timer is permitted here.
 - Full Markdown rendering is destructive (`el.empty()`) and asynchronous. During streaming, render only sealed safe segments and keep the live tail as text; terminal state must perform one complete fidelity render. Give every segment its own `Component` scope and unload it with the virtual row so links, code, math, Mermaid observers, timers, and postprocessors cannot outlive the row.
-- `DiffRenderer` intentionally shows only changed hunks with context and caps all-insert new-file previews. Do not turn it into an unbounded full-file renderer.
+- `DiffRenderer` renders the complete available diff only after its owning disclosure opens. Keep diff coloring and statistics, but do not insert presentation-only hunk or new-file omissions; the top-level disclosure scroll owner supplies the visual bound.
 - Ask-user rendering has both passive stored-result display and active keyboard-driven interaction. Keep answer extraction compatible with structured `toolUseResult` and text fallback results.

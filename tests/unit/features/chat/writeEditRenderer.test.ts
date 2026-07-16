@@ -85,6 +85,33 @@ describe('renderWriteEditContent', () => {
     expect(container.textContent).toContain('new line');
   });
 
+  it('renders every available diff line without UI-authored omissions', () => {
+    const container = new FakeElement();
+    const diffLines = [
+      { type: 'insert' as const, text: 'first line' },
+      ...Array.from({ length: 30 }, (_, index) => ({
+        type: 'insert' as const,
+        text: `middle ${index}`,
+      })),
+      { type: 'insert' as const, text: 'last line' },
+    ];
+
+    renderWriteEditContent(
+      container as unknown as HTMLElement,
+      toolCall({
+        diffData: {
+          filePath: 'new.md',
+          diffLines,
+          stats: { added: diffLines.length, removed: 0 },
+        },
+      }),
+    );
+
+    expect(container.findByClass('pivi-write-edit-diff')?.textContent).toContain('first line');
+    expect(container.findByClass('pivi-write-edit-diff')?.textContent).toContain('last line');
+    expect(container.findByClass('pivi-diff-separator')).toBeUndefined();
+  });
+
   it.each([
     ['error', 'Permission denied'],
     ['blocked', 'User rejected edit'],

@@ -17,7 +17,7 @@ export function renderToolSearchExpanded(container: HTMLElement, result: string)
   }
 
   if (toolNames.length === 0) {
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
     return;
   }
 
@@ -43,7 +43,7 @@ export function renderAgentLifecycleExpanded(container: HTMLElement, result: str
       return;
     } catch { /* fall through to plain text */ }
   }
-  renderLinesExpanded(container, result, 20);
+  renderLinesExpanded(container, result);
 }
 export function renderBashContent(
   container: HTMLElement,
@@ -59,7 +59,7 @@ export function renderBashContent(
   if (initialText) {
     contentFallback(container, initialText);
   } else if (result) {
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
   } else {
     container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noResult') });
   }

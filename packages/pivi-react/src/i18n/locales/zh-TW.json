@@ -156,7 +156,6 @@
       "writing": "寫入中…",
       "statusDone": "完成",
       "noChanges": "無變更",
-      "moreLines": "… 還有 {count} 行",
       "tasksUpdated": "任務已更新",
       "steps": "{count} 個步驟",
       "sessionCompacted": "工作階段已壓縮",

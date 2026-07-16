@@ -21,6 +21,7 @@ import {
   useChatProjectionTools,
 } from '../../store';
 import { ActivityRow, ActivityStatusCountSummary } from './ActivityRow';
+import { useBeginDisclosureResize } from './disclosureAnchorContext';
 import {
   aggregateToolStatus,
   getToolDisplayName,
@@ -71,6 +72,7 @@ function ImperativeToolSlot({ adapter, toolCall }: {
   readonly adapter: MessageContentAdapter<ToolCallInfo>;
   readonly toolCall: ToolCallInfo;
 }) {
+  const beginDisclosureResize = useBeginDisclosureResize();
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedValueRef = useRef<ToolCallInfo | null>(null);
   const latestValueRef = useRef(toolCall);
@@ -84,6 +86,7 @@ function ImperativeToolSlot({ adapter, toolCall }: {
     const initialValue = latestValueRef.current;
     mountedValueRef.current = initialValue;
     const dispose = adapter.mount(container, initialValue, {
+      beginDisclosureResize,
       generation: initialValue.id,
       ownerDocument: container.ownerDocument,
       ownerWindow,
@@ -92,7 +95,7 @@ function ImperativeToolSlot({ adapter, toolCall }: {
       mountedValueRef.current = null;
       dispose?.();
     };
-  }, [adapter, toolCall.id]);
+  }, [adapter, beginDisclosureResize, toolCall.id]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -100,11 +103,12 @@ function ImperativeToolSlot({ adapter, toolCall }: {
     if (!container || !ownerWindow || mountedValueRef.current === toolCall) return;
     mountedValueRef.current = toolCall;
     adapter.update?.(container, toolCall, {
+      beginDisclosureResize,
       generation: toolCall.id,
       ownerDocument: container.ownerDocument,
       ownerWindow,
     });
-  }, [adapter, toolCall]);
+  }, [adapter, beginDisclosureResize, toolCall]);
 
   return <div ref={containerRef} className="pivi-tool-content-adapter" />;
 }
@@ -116,6 +120,7 @@ function ImperativeSubagentSlot({
   readonly adapter: MessageContentAdapter<NonNullable<ToolCallInfo['subagent']>>;
   readonly subagent: NonNullable<ToolCallInfo['subagent']>;
 }) {
+  const beginDisclosureResize = useBeginDisclosureResize();
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedValueRef = useRef<typeof subagent | null>(null);
   const latestValueRef = useRef(subagent);
@@ -127,6 +132,7 @@ function ImperativeSubagentSlot({
     const initialValue = latestValueRef.current;
     mountedValueRef.current = initialValue;
     const dispose = adapter.mount(container, initialValue, {
+      beginDisclosureResize,
       generation: initialValue.id,
       ownerDocument: container.ownerDocument,
       ownerWindow,
@@ -135,7 +141,7 @@ function ImperativeSubagentSlot({
       mountedValueRef.current = null;
       dispose?.();
     };
-  }, [adapter, subagent.id]);
+  }, [adapter, beginDisclosureResize, subagent.id]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -143,11 +149,12 @@ function ImperativeSubagentSlot({
     if (!container || !ownerWindow || mountedValueRef.current === subagent) return;
     mountedValueRef.current = subagent;
     adapter.update?.(container, subagent, {
+      beginDisclosureResize,
       generation: subagent.id,
       ownerDocument: container.ownerDocument,
       ownerWindow,
     });
-  }, [adapter, subagent]);
+  }, [adapter, beginDisclosureResize, subagent]);
   return <div className="pivi-subagent-content-adapter" ref={containerRef} />;
 }
 
@@ -166,13 +173,7 @@ function GenericToolContent({ toolCall }: { readonly toolCall: ToolCallInfo }) {
     return <div className="pivi-tool-result-row"><span className="pivi-tool-result-text">{t('chat.stream.writing')}</span></div>;
   }
   if (!toolCall.result) return null;
-  return (
-    <div className="pivi-tool-lines">
-      {toolCall.result.split('\n').map((line, index) => (
-        <div className="pivi-tool-line" key={`${index}:${line}`}>{line}</div>
-      ))}
-    </div>
-  );
+  return <pre className="pivi-tool-lines pivi-tool-raw-text">{toolCall.result}</pre>;
 }
 
 function ToolContent({ toolCall, contentAdapters }: {
@@ -198,6 +199,7 @@ function ToolCallPresentation({ toolCall, contentAdapters, compact = false }: {
   readonly compact?: boolean;
 }) {
   const t = useT();
+  const beginDisclosureResize = useBeginDisclosureResize();
   const [expanded, setExpanded] = useState(false);
   if (toolCall.subagent && contentAdapters?.subagent) {
     return <ImperativeSubagentSlot adapter={contentAdapters.subagent} subagent={toolCall.subagent} />;
@@ -235,7 +237,10 @@ function ToolCallPresentation({ toolCall, contentAdapters, compact = false }: {
         className="pivi-tool-header"
         aria-expanded={expanded}
         aria-label={summary.summary ? `${toolName}: ${summary.summary}` : toolName}
-        onClick={() => setExpanded(value => !value)}
+        onClick={(event) => {
+          beginDisclosureResize(event.currentTarget);
+          setExpanded(value => !value);
+        }}
       >
         <ActivityRow
           completedAt={toolCall.completedAt}
@@ -283,6 +288,7 @@ function ToolStepGroupPresentation({ toolCalls, contentAdapters, projectionStore
   readonly projectionStore?: ChatProjectionStore;
 }) {
   const t = useT();
+  const beginDisclosureResize = useBeginDisclosureResize();
   const [expanded, setExpanded] = useState(false);
   const status = aggregateToolStatus(toolCalls);
   const toolNames = [...new Set(toolCalls.map(toolCall => getToolDisplayName(toolCall, t)))];
@@ -299,7 +305,10 @@ function ToolStepGroupPresentation({ toolCalls, contentAdapters, projectionStore
         className="pivi-tool-step-group-header"
         aria-expanded={expanded}
         aria-label={ariaLabel}
-        onClick={() => setExpanded(value => !value)}
+        onClick={(event) => {
+          beginDisclosureResize(event.currentTarget);
+          setExpanded(value => !value);
+        }}
       >
         <span className="pivi-tool-step-group-count">{countLabel}</span>
         <span className="pivi-tool-step-group-summary" aria-hidden="true">{toolNamesLabel}</span>

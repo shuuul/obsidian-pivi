@@ -8,8 +8,6 @@ import {
 import { getToolPresentationDescriptor } from '@pivi/pivi-agent-core/tools/toolPresentation';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
-import { t } from '@/app/i18n';
-
 import { setupCollapsible } from './collapsible';
 import { renderDiffStats } from './DiffRenderer';
 import {
@@ -49,6 +47,54 @@ interface ToolElementStructure {
 
 export interface ToolContentRenderOptions {
   renderMarkdown?: (container: HTMLElement, markdown: string, sourcePath: string) => Promise<void>;
+  beginDisclosureResize?: (header: HTMLElement) => void;
+}
+
+interface StoredToolRenderState {
+  content: HTMLElement;
+  isExpanded: boolean;
+  isRendered: boolean;
+  isDirty: boolean;
+  latestToolCall: ToolCallInfo;
+  options: ToolContentRenderOptions;
+}
+
+const storedToolRenderStates = new WeakMap<HTMLElement, StoredToolRenderState>();
+
+function renderStoredToolBody(state: StoredToolRenderState): void {
+  state.content.empty();
+  void renderToolContent(state.content, state.latestToolCall, undefined, state.options);
+  state.isRendered = true;
+  state.isDirty = false;
+}
+
+function shouldRenderStoredBody(state: StoredToolRenderState | undefined): boolean {
+  return state?.isExpanded ?? true;
+}
+
+function markStoredBodyRendered(state: StoredToolRenderState | undefined): void {
+  if (!state) return;
+  state.isRendered = true;
+  state.isDirty = false;
+}
+
+function renderSourceTruncationMetadata(
+  content: HTMLElement,
+  details: Record<string, unknown> | undefined,
+): void {
+  if (details?.truncated !== true) return;
+  const fields = ['totalLines', 'totalChars', 'characters', 'bytes'] as const;
+  const metadata = ['truncated: true'];
+  for (const field of fields) {
+    const value = details[field];
+    if (typeof value === 'number' || typeof value === 'string') {
+      metadata.push(`${field}: ${value}`);
+    }
+  }
+  content.createDiv({
+    cls: 'pivi-tool-source-truncation',
+    text: metadata.join(' · '),
+  });
 }
 
 function createToolElementStructure(
@@ -124,16 +170,10 @@ export function renderToolContent(
         previewEl,
         markdownPreview.markdown,
         markdownPreview.sourcePath,
-      ).then(() => {
-        if (markdownPreview.omittedLines > 0 && previewEl.parentElement === content) {
-          content.createDiv({
-            cls: 'pivi-tool-truncated',
-            text: t('chat.stream.moreLines', { count: markdownPreview.omittedLines }),
-          });
-        }
-      });
+      );
     }
     renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input, toolCall.toolUseResult);
+    renderSourceTruncationMetadata(content, toolCall.toolUseResult);
   }
 }
 
@@ -182,14 +222,22 @@ export function updateToolCallElement(
   toolCall: ToolCallInfo,
   options: ToolContentRenderOptions = {},
 ): void {
+  const storedState = storedToolRenderStates.get(toolEl);
+  if (storedState) {
+    storedState.latestToolCall = toolCall;
+    storedState.options = options;
+    storedState.isDirty = true;
+  }
+
   if (toolCall.name === TOOL_TODO_WRITE) {
     const statusEl = toolEl.querySelector('.pivi-tool-status') as HTMLElement;
     if (statusEl) {
       setTodoWriteStatus(statusEl, toolCall.input);
     }
     const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
-    if (content) {
+    if (content && shouldRenderStoredBody(storedState)) {
       renderTodoWriteResult(content, toolCall.input);
+      markStoredBodyRendered(storedState);
     }
     const nameEl = toolEl.querySelector('.pivi-tool-name') as HTMLElement;
     if (nameEl) {
@@ -216,19 +264,21 @@ export function updateToolCallElement(
 
   if (toolCall.name === TOOL_ASK_USER_QUESTION) {
     const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
-    if (content) {
+    if (content && shouldRenderStoredBody(storedState)) {
       content.addClass('pivi-tool-content-ask');
       if (!renderAskUserQuestionResult(content, toolCall)) {
         renderAskUserQuestionFallback(content, toolCall);
       }
+      markStoredBodyRendered(storedState);
     }
     return;
   }
 
   const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
-  if (content) {
+  if (content && shouldRenderStoredBody(storedState)) {
     content.empty();
     void renderToolContent(content, toolCall, undefined, options);
+    markStoredBodyRendered(storedState);
   }
 
   syncObsidianToolHeader(toolEl, toolCall);
@@ -277,13 +327,28 @@ export function renderStoredToolCall(
     setGenericToolHeaderRight(statusEl, toolCall);
   }
 
-  void renderToolContent(content, toolCall, undefined, options);
-
   const state = { isExpanded: false };
+  const renderState: StoredToolRenderState = {
+    content,
+    isExpanded: false,
+    isRendered: false,
+    isDirty: true,
+    latestToolCall: toolCall,
+    options,
+  };
+  storedToolRenderStates.set(toolEl, renderState);
   const todoStatusEl = toolCall.name === TOOL_TODO_WRITE ? statusEl : null;
+  const todoToggleHandler = createTodoToggleHandler(currentTaskEl, todoStatusEl);
   setupCollapsible(toolEl, header, content, state, {
     initiallyExpanded: false,
-    onToggle: createTodoToggleHandler(currentTaskEl, todoStatusEl),
+    onBeforeToggle: () => options.beginDisclosureResize?.(header),
+    onToggle: (expanded) => {
+      renderState.isExpanded = expanded;
+      todoToggleHandler(expanded);
+      if (expanded && (!renderState.isRendered || renderState.isDirty)) {
+        renderStoredToolBody(renderState);
+      }
+    },
     baseAriaLabel: getToolLabel(toolCall.name, toolCall.input, toolCall.result)
   });
 

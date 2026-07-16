@@ -20,6 +20,8 @@ export interface MessageContentAdapter<Value> {
   ): void;
 }
 
+export type BeginDisclosureResize = (header: HTMLElement) => void;
+
 /** Runtime callbacks deliberately kept outside the serializable chat snapshot. */
 export interface MessagePresentationActions {
   canCopy: (message: ChatMessage) => boolean;
@@ -45,6 +47,7 @@ export interface MessageViewportHandle {
 }
 
 export interface MessageContentAdapterContext {
+  readonly beginDisclosureResize?: BeginDisclosureResize;
   readonly generation: string;
   readonly ownerDocument: Document;
   readonly ownerWindow: Window;

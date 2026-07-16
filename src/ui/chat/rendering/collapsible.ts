@@ -13,6 +13,8 @@ export interface CollapsibleOptions {
   onToggle?: (isExpanded: boolean) => void;
   /** Base label for aria-label (will append "click to expand/collapse") */
   baseAriaLabel?: string;
+  /** Begin a viewport-anchor transaction before the disclosure changes size. */
+  onBeforeToggle?: (header: HTMLElement) => void;
 }
 
 function prepareCollapsibleHeader(headerEl: HTMLElement): void {
@@ -90,7 +92,12 @@ export function setupCollapsible(
   state: CollapsibleState,
   options: CollapsibleOptions = {}
 ): void {
-  const { initiallyExpanded = false, onToggle, baseAriaLabel } = options;
+  const {
+    initiallyExpanded = false,
+    onBeforeToggle,
+    onToggle,
+    baseAriaLabel,
+  } = options;
 
   wrapperEl.addClass('pivi-collapsible');
   prepareCollapsibleHeader(headerEl);
@@ -110,6 +117,7 @@ export function setupCollapsible(
 
   // Toggle handler
   const toggleExpand = () => {
+    onBeforeToggle?.(headerEl);
     syncCollapsibleState(
       wrapperEl,
       headerEl,

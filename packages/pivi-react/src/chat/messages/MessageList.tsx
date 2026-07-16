@@ -9,9 +9,15 @@ import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 import type { ChatProjectionStore, ChatUiSnapshot } from '../../store';
 import { useChatProjectionMessageStructure, useChatProjectionOrder } from '../../store';
+import { DisclosureAnchorProvider } from './disclosureAnchorContext';
+import {
+  createDisclosureViewportController,
+  type DisclosureViewportController,
+} from './disclosureViewport';
 import { MemoryBoundary } from './MemoryBoundary';
 import { MessageView } from './MessageView';
 import type {
+  BeginDisclosureResize,
   MessageContentAdapters,
   MessagePresentationActions,
   MessageViewportHandle,
@@ -107,6 +113,7 @@ export function MessageList({
   const pendingAnchorRef = useRef<{ id: string; top: number } | null>(null);
   const pendingAnchorFrameRef = useRef<number | null>(null);
   const previousPageRequestRef = useRef<Promise<boolean> | null>(null);
+  const disclosureViewportRef = useRef<DisclosureViewportController | null>(null);
   const messageIds = useChatProjectionOrder(store);
   const hasThinking = thinkingIndicator !== null;
   const boundaryCount = hasOlderMessages ? 1 : 0;
@@ -184,6 +191,21 @@ export function MessageList({
     useAnimationFrameWithResizeObserver: true,
   });
   const virtualItems = virtualizer.getVirtualItems();
+
+  useLayoutEffect(() => {
+    const controller = createDisclosureViewportController(scrollElement);
+    disclosureViewportRef.current = controller;
+    return () => {
+      if (disclosureViewportRef.current === controller) {
+        disclosureViewportRef.current = null;
+      }
+      controller.dispose();
+    };
+  }, [scrollElement]);
+
+  const beginDisclosureResize = useCallback<BeginDisclosureResize>((header) => {
+    disclosureViewportRef.current?.beginDisclosureResize(header);
+  }, []);
 
   useLayoutEffect(() => {
     store.setOwnerWindow(scrollElement.ownerDocument.defaultView);
@@ -266,15 +288,22 @@ export function MessageList({
     }
   }, [scrollElement]);
 
-  if (count === 0) return <div className="pivi-message-list" ref={listRef} />;
+  if (count === 0) {
+    return (
+      <DisclosureAnchorProvider beginDisclosureResize={beginDisclosureResize}>
+        <div className="pivi-message-list" ref={listRef} />
+      </DisclosureAnchorProvider>
+    );
+  }
 
   return (
-    <div
-      className="pivi-message-list pivi-message-list-virtual"
-      ref={listRef}
-      style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}
-    >
-      {virtualItems.map((virtualItem) => {
+    <DisclosureAnchorProvider beginDisclosureResize={beginDisclosureResize}>
+      <div
+        className="pivi-message-list pivi-message-list-virtual"
+        ref={listRef}
+        style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}
+      >
+        {virtualItems.map((virtualItem) => {
         const isHistoryBoundary = hasOlderMessages && virtualItem.index === 0;
         const messageIndex = virtualItem.index - boundaryCount;
         const messageId = messageIds[messageIndex];
@@ -310,7 +339,8 @@ export function MessageList({
               : <StreamingThinkingRow indicator={thinkingIndicator} />}
           </div>
         );
-      })}
-    </div>
+        })}
+      </div>
+    </DisclosureAnchorProvider>
   );
 }

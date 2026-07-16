@@ -42,7 +42,7 @@ This matrix distinguishes reproducible repository evidence from live host checks
 | Hover Editor | Environment-limited | The community plugin is not installed in the configured vault. Pivi's owner-realm and view-lifecycle tests remain green, but the named third-party live integration still requires a vault with Hover Editor installed. |
 | MCP OAuth | Environment-limited | The configured vault has no MCP servers or OAuth flow to authorize. Vault/store/service/UI OAuth success and unhappy-path tests pass, but a live redirect/login round trip still requires a configured test server and credentials. |
 
-The same validation run passed 245 suites / 1,881 tests, typecheck, lint, architecture/spec/boundary and i18n dead-key checks, production build, bundle analysis, and the bundle-size gate. The latest production artifact is 3,046,112 bytes; the concrete development recorder had zero production metafile contribution.
+The same validation run passed 246 suites / 1,898 tests, typecheck, lint, architecture/spec/boundary and i18n dead-key checks, production build, bundle analysis, and the bundle-size gate. The latest production artifact is 3,049,008 bytes; the concrete development recorder had zero production metafile contribution.
 
 ## Standard release route
 

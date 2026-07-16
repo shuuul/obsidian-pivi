@@ -21,6 +21,7 @@ export {
   shouldRenderToolCall,
 } from './toolPresentation';
 export type {
+  BeginDisclosureResize,
   MessageContentAdapter,
   MessageContentAdapterContext,
   MessageContentAdapters,

@@ -37,7 +37,6 @@ export function inputString(input: Record<string, unknown>, key: string): string
 export function renderKeyValueLines(
   container: HTMLElement,
   rows: Array<[string, unknown]>,
-  maxRows = 12,
 ): void {
   const visibleRows = rows.filter(([, value]) => value !== undefined && value !== null && value !== '');
   if (visibleRows.length === 0) {
@@ -46,40 +45,20 @@ export function renderKeyValueLines(
   }
 
   const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
-  const truncated = visibleRows.length > maxRows;
-  const displayRows = truncated ? visibleRows.slice(0, maxRows) : visibleRows;
-  for (const [label, value] of displayRows) {
+  for (const [label, value] of visibleRows) {
     linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap', text: `${label}: ${formatToolDisplayValue(value)}` });
-  }
-  if (truncated) {
-    linesEl.createDiv({ cls: 'pivi-tool-truncated', text: `... ${visibleRows.length - maxRows} more fields` });
   }
 }
 
 export function renderLinesExpanded(
   container: HTMLElement,
   result: string,
-  maxLines: number,
   hoverable = false
 ): void {
-  const lines = result.split(/\r?\n/);
-  const truncated = lines.length > maxLines;
-  const displayLines = truncated ? lines.slice(0, maxLines) : lines;
-
   const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
-  for (const line of displayLines) {
-    const stripped = line.replace(/^\s*\d+→/, '');
-    const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line' });
-    if (hoverable) lineEl.addClass('hoverable');
-    lineEl.setText(stripped || ' ');
-  }
-
-  if (truncated) {
-    linesEl.createDiv({
-      cls: 'pivi-tool-truncated',
-      text: `... ${lines.length - maxLines} more lines`,
-    });
-  }
+  const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap' });
+  if (hoverable) lineEl.addClass('hoverable');
+  lineEl.setText(result.replace(/^\s*\d+→/gm, '') || ' ');
 }
 
 export interface VaultPathLine {
@@ -91,22 +70,12 @@ export interface VaultPathLine {
 export function renderVaultPathLines(
   container: HTMLElement,
   paths: VaultPathLine[],
-  maxLines: number,
 ): void {
-  const truncated = paths.length > maxLines;
-  const displayPaths = truncated ? paths.slice(0, maxLines) : paths;
   const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
 
-  for (const pathLine of displayPaths) {
+  for (const pathLine of paths) {
     const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-path hoverable' });
     appendVaultPath(lineEl, pathLine.path, pathLine.displayPath ?? pathLine.path, pathLine.clickable);
-  }
-
-  if (truncated) {
-    linesEl.createDiv({
-      cls: 'pivi-tool-truncated',
-      text: `... ${paths.length - maxLines} more paths`,
-    });
   }
 }
 

@@ -156,7 +156,6 @@
       "writing": "Escribiendo…",
       "statusDone": "LISTO",
       "noChanges": "Sin cambios",
-      "moreLines": "… {count} líneas más",
       "tasksUpdated": "Tareas actualizadas",
       "steps": "{count} paso(s)",
       "sessionCompacted": "Sessão compactada",

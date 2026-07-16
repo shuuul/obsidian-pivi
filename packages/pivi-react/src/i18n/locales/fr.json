@@ -156,7 +156,6 @@
       "writing": "Écriture…",
       "statusDone": "TERMINÉ",
       "noChanges": "Aucun changement",
-      "moreLines": "… {count} lignes de plus",
       "tasksUpdated": "Tâches mises à jour",
       "steps": "{count} étape(s)",
       "sessionCompacted": "Session compactée",

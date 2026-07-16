@@ -156,7 +156,6 @@
       "writing": "Schreibt…",
       "statusDone": "FERTIG",
       "noChanges": "Keine Änderungen",
-      "moreLines": "… {count} weitere Zeilen",
       "tasksUpdated": "Aufgaben aktualisiert",
       "steps": "{count} Schritt(e)",
       "sessionCompacted": "Sitzung komprimiert",

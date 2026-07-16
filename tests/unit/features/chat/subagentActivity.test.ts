@@ -766,6 +766,10 @@ describe('subagent activity rendering', () => {
       '```',
     ].join('\n'), false);
 
+    expect((state.wrapperEl as unknown as FakeElement)
+      .findByClass('pivi-subagent-result-output')).toBeNull();
+    (state.headerEl as unknown as FakeElement).click();
+
     const result = (state.wrapperEl as unknown as FakeElement)
       .findByClass('pivi-subagent-result-output')?.textContent;
     expect(result).toBe('The repository is clean.');
@@ -805,10 +809,12 @@ describe('subagent activity rendering', () => {
       'task-sync-tools',
       { description: 'Scan repo', prompt: 'Scan the repository' },
     );
-    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
-
     addSubagentToolCall(state, createPlainToolCall('read-a', 'a.md'));
     addSubagentToolCall(state, createPlainToolCall('read-b', 'b.md'));
+
+    expect(state.toolsContainerEl).toBeNull();
+    (state.headerEl as unknown as FakeElement).click();
+    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
 
     const groups = toolsContainer.findAllByClass('pivi-tool-step-group');
     expect(groups).toHaveLength(1);
@@ -831,7 +837,6 @@ describe('subagent activity rendering', () => {
       'task-sync-mixed-tools',
       { description: 'Inspect mixed tools', prompt: 'Inspect tool presentation' },
     );
-    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
     const nestedSubagent = {
       ...createRunningAsyncSubagent(),
       id: 'nested-agent',
@@ -858,6 +863,10 @@ describe('subagent activity rendering', () => {
       createPlainToolCall('read-d', 'd.md'),
     ].forEach((toolCall) => addSubagentToolCall(state, toolCall));
 
+    expect(state.toolsContainerEl).toBeNull();
+    (state.headerEl as unknown as FakeElement).click();
+    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
+
     expectDirectToolRunKinds(toolsContainer, [
       'group',
       'single',
@@ -882,18 +891,19 @@ describe('subagent activity rendering', () => {
       'task-sync-stdin-update',
       { description: 'Drive terminal input', prompt: 'Send input when available' },
     );
-    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
-
     addSubagentToolCall(
       state,
       createToolCall('stdin', 'write_stdin', { session_id: 1, chars: '' }, { status: 'running' }),
     );
-    expect(toolsContainer.findAllByClass('pivi-tool-call')).toHaveLength(0);
+    expect(state.toolsContainerEl).toBeNull();
 
     addSubagentToolCall(
       state,
       createToolCall('stdin', 'write_stdin', { session_id: 1, chars: 'continue\n' }),
     );
+
+    (state.headerEl as unknown as FakeElement).click();
+    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
 
     expectDirectToolRunKinds(toolsContainer, ['group']);
     expect(toolsContainer.findAllByClass('pivi-tool-call')).toHaveLength(1);
@@ -1002,6 +1012,32 @@ describe('subagent activity rendering', () => {
   });
 });
 describe('mounted stored subagent updates', () => {
+  it('keeps collapsed content unmounted and expands the latest snapshot', () => {
+    const parent = new FakeElement();
+    const initial: SubagentInfo = {
+      id: 'spawn-lazy',
+      description: 'Scan notes',
+      prompt: 'Old prompt',
+      status: 'running',
+      isExpanded: false,
+      toolCalls: [],
+    };
+    const state = mountStoredSubagent(parent as unknown as HTMLElement, initial);
+
+    expect(state.contentEl.children).toHaveLength(0);
+    updateStoredSubagent(state, {
+      ...initial,
+      prompt: 'Latest prompt',
+      toolCalls: [createPlainToolCall('latest-read', 'latest.md')],
+    });
+    expect(state.contentEl.children).toHaveLength(0);
+
+    state.headerEl.click();
+    expect(state.promptBodyEl?.textContent).toContain('Latest prompt');
+    expect(state.toolsContainerEl?.textContent).toContain('Read');
+    expect(state.contentEl.textContent).not.toContain('Old prompt');
+  });
+
   it('updates a mounted stored subagent without rebuilding or collapsing it', () => {
     const parent = new FakeElement();
     const toolCalls: ToolCallInfo[] = [];

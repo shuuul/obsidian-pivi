@@ -42,7 +42,7 @@ import { getToolName, getToolSummary } from './toolPresentationI18n';
 export function renderObsidianSearchExpanded(container: HTMLElement, result: string): void {
   const hits = parseObsidianSearchHits(result);
   if (hits.length === 0) {
-    renderLinesExpanded(container, result, 12);
+    renderLinesExpanded(container, result);
     return;
   }
   renderVaultPathLines(
@@ -52,7 +52,6 @@ export function renderObsidianSearchExpanded(container: HTMLElement, result: str
       displayPath: hit.line ? `${hit.path}:${hit.line}` : hit.path,
       clickable: true,
     })),
-    15,
   );
 }
 
@@ -101,7 +100,7 @@ export function renderObsidianListExpanded(
 ): void {
   const entries = parseObsidianListResult(result);
   if (!entries) {
-    renderLinesExpanded(container, result, 12);
+    renderLinesExpanded(container, result);
     return;
   }
 
@@ -120,7 +119,6 @@ export function renderObsidianListExpanded(
         : entry.path,
       clickable: !options.external && entry.kind === 'file',
     })),
-    20,
   );
 }
 export function renderObsidianReadExpanded(
@@ -135,7 +133,7 @@ export function renderObsidianReadExpanded(
     const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-path hoverable' });
     appendVaultPath(lineEl, target, target, !options.external && target.endsWith('.md'));
   }
-  renderLinesExpanded(container, result, 30);
+  renderLinesExpanded(container, result);
 }
 
 interface MarkdownStructureHeading {
@@ -224,7 +222,7 @@ export function renderObsidianMarkdownStructureExpanded(
 ): void {
   const structure = parseMarkdownStructureResult(result);
   if (!structure) {
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
     return;
   }
 
@@ -264,16 +262,16 @@ export function renderObsidianWriteExpanded(container: HTMLElement, result: stri
     ['mode', mode],
     ['path', target],
     ['result', result],
-  ], 4);
+  ]);
   if (content) {
-    renderLinesExpanded(container, content, 20);
+    renderLinesExpanded(container, content);
   }
 }
 
 export function renderObsidianNoteInfoExpanded(container: HTMLElement, result: string): void {
   const info = parseJsonRecord(result);
   if (!info) {
-    renderLinesExpanded(container, result, 20);
+    renderLinesExpanded(container, result);
     return;
   }
 
@@ -288,7 +286,7 @@ export function renderObsidianNoteInfoExpanded(container: HTMLElement, result: s
     ['tags', Array.isArray(info.tags) ? info.tags.join(', ') : info.tags],
     ['links', Array.isArray(info.links) ? info.links.length : undefined],
     ['frontmatter', frontmatter.join(', ')],
-  ], 10);
+  ]);
 }
 
 export function getPathFromUnknown(value: unknown): string {
@@ -307,26 +305,26 @@ export function renderObsidianLinksExpanded(container: HTMLElement, result: stri
   if (Array.isArray(parsed)) {
     const paths = parsed.map(getPathFromUnknown).filter(Boolean);
     if (paths.length > 0) {
-      renderVaultPathLines(container, paths.map(path => ({ path, clickable: path.endsWith('.md') })), 20);
+      renderVaultPathLines(container, paths.map(path => ({ path, clickable: path.endsWith('.md') })));
       return;
     }
   } else if (parsed) {
     const candidates = Object.values(parsed).flatMap(toUnknownList);
     const paths = candidates.map(getPathFromUnknown).filter(Boolean);
     if (paths.length > 0) {
-      renderVaultPathLines(container, paths.map(path => ({ path, clickable: path.endsWith('.md') })), 20);
+      renderVaultPathLines(container, paths.map(path => ({ path, clickable: path.endsWith('.md') })));
       return;
     }
-    renderKeyValueLines(container, Object.entries(parsed), 12);
+    renderKeyValueLines(container, Object.entries(parsed));
     return;
   }
-  renderLinesExpanded(container, result, 20);
+  renderLinesExpanded(container, result);
 }
 
 export function renderObsidianPropertiesExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const parsed = parseJsonRecord(result);
   if (parsed) {
-    renderKeyValueLines(container, Object.entries(parsed), 20);
+    renderKeyValueLines(container, Object.entries(parsed));
     return;
   }
 
@@ -335,7 +333,7 @@ export function renderObsidianPropertiesExpanded(container: HTMLElement, result:
     ['property', inputString(input, 'name')],
     ['path', inputString(input, 'path') || inputString(input, 'file')],
     ['result', result],
-  ], 6);
+  ]);
 }
 
 export function renderObsidianTasksExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
@@ -343,16 +341,13 @@ export function renderObsidianTasksExpanded(container: HTMLElement, result: stri
   const tasks = parseJsonArray(result);
   if (tasks && tasks.length > 0) {
     const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
-    for (const task of tasks.slice(0, 20)) {
+    for (const task of tasks) {
       const record = task && typeof task === 'object' && !Array.isArray(task) ? task as Record<string, unknown> : null;
       const path = record ? stringField(record, 'path') : '';
       const line = record ? stringField(record, 'line') : '';
       const text = record ? stringField(record, 'text') || stringField(record, 'task') || formatToolDisplayValue(record) : formatToolDisplayValue(task);
       const prefix = path ? `${path}${line ? `:${line}` : ''}` : action || 'task';
       linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap', text: `${prefix} — ${text}` });
-    }
-    if (tasks.length > 20) {
-      linesEl.createDiv({ cls: 'pivi-tool-truncated', text: `... ${tasks.length - 20} more tasks` });
     }
     return;
   }
@@ -361,7 +356,7 @@ export function renderObsidianTasksExpanded(container: HTMLElement, result: stri
     ['action', action],
     ['target', inputString(input, 'ref') || inputString(input, 'path') || inputString(input, 'file')],
     ['result', result],
-  ], 6);
+  ]);
 }
 
 export function renderObsidianPathActionExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
@@ -371,13 +366,13 @@ export function renderObsidianPathActionExpanded(container: HTMLElement, result:
     ['path', target],
     ['newPath', newPath],
     ['result', result],
-  ], 6);
+  ]);
 }
 
 export function renderObsidianAttachmentExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const parsed = parseJsonRecord(result);
   if (parsed) {
-    renderKeyValueLines(container, Object.entries(parsed), 12);
+    renderKeyValueLines(container, Object.entries(parsed));
     return;
   }
   renderKeyValueLines(container, [
@@ -385,7 +380,7 @@ export function renderObsidianAttachmentExpanded(container: HTMLElement, result:
     ['filename', inputString(input, 'filename')],
     ['sourcePath', inputString(input, 'sourcePath')],
     ['result', result],
-  ], 8);
+  ]);
 }
 
 export function renderObsidianGenerateImageExpanded(
@@ -405,7 +400,7 @@ export function renderObsidianGenerateImageExpanded(
     ['markdown', typeof details?.markdown === 'string' ? details.markdown : undefined],
     ['model', typeof details?.model === 'string' ? details.model : undefined],
     ['result', result],
-  ], 8);
+  ]);
 }
 
 export function renderObsidianExpandedContent(
@@ -463,7 +458,7 @@ export function renderObsidianExpandedContent(
       renderObsidianSearchExpanded(container, result);
       break;
     default:
-      renderLinesExpanded(container, result, 12);
+      renderLinesExpanded(container, result);
       break;
   }
 }

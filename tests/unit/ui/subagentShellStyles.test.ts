@@ -39,4 +39,26 @@ describe('subagent shell styles', () => {
     expect(styles).not.toMatch(/\.pivi-subagent-activity-item:not\(\.expanded\)\s*\{[^}]*border-radius:/s);
     expect(styles).not.toMatch(/\.pivi-subagent-activity-item\.expanded\s*\{[^}]*border-radius:/s);
   });
+
+  it('caps the shell while its body owns the only scrollbar', () => {
+    expect(styles).toMatch(/\.pivi-subagent-list\.expanded\s*\{[^}]*max-height:\s*var\(--pivi-expanded-content-max-height/s);
+    expect(styles).toMatch(/\.pivi-subagent-list\.expanded\s*\{[^}]*display:\s*flex;/s);
+    expect(styles).not.toMatch(/\.pivi-subagent-content\s*\{[^}]*max-height:/s);
+    expect(styles).toMatch(/\.pivi-subagent-list\.expanded > \.pivi-subagent-content\s*\{[^}]*overflow-y:\s*auto;/s);
+    expect(styles).not.toMatch(/\.pivi-subagent-content\s*\{[^}]*resize:/s);
+    expect(styles).not.toContain('58vh');
+  });
+
+  it('publishes zero top padding on the subagent scroll body for a gapless sticky stack', () => {
+    expect(styles).toMatch(/\.pivi-subagent-content\s*\{[^}]*padding-block:\s*0 8px;/s);
+    expect(styles).not.toContain('--pivi-subagent-content-padding-top');
+    expect(styles).toMatch(/\.pivi-subagent-content > :first-child\s*\{[^}]*margin-block-start:\s*6px;/s);
+  });
+
+  it('keeps the subagent header layout-fixed at the card top', () => {
+    expect(styles).toMatch(/\.pivi-subagent-list\.expanded\s*\{[^}]*overflow:\s*hidden;/s);
+    expect(styles).toMatch(/\.pivi-subagent-list\.expanded > \.pivi-subagent-header\s*\{[^}]*flex:\s*0 0 auto;/s);
+    expect(styles).not.toMatch(/\.pivi-subagent-list\.expanded > \.pivi-subagent-header\s*\{[^}]*position:\s*sticky;/s);
+    expect(styles).toMatch(/\.pivi-subagent-list\.expanded > \.pivi-subagent-header\s*\{[^}]*z-index:\s*9;/s);
+  });
 });
