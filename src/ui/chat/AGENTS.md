@@ -83,7 +83,7 @@ flowchart TD
 | `src/ui/chat/tabs/tabRuntime.ts` | Sole UI factory call for `PiChatService`; session sync, subscriptions, lazy activation, and failed/closing initialization cleanup. |
 | `src/ui/chat/tabs/tabExternalContext.ts` | Synchronizes runtime sessions with effective external roots; runtime restarts preserve current tab choices while session changes reset them to pinned device-local defaults. |
 | `src/ui/chat/tabs/tabMessageViewport.ts` | Popout-safe message viewport wiring; observes both the scroll viewport and React message portal so asynchronous layout growth preserves opted-in auto-scroll and navigation state. |
-| `src/ui/chat/tabs/tabToolbarInit.ts` | `wireComposerChrome()` adapts model/mode/reasoning, external-context, the projected default-off Active Work Shelf flag, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. Model changes refresh the usage context window immediately after settings persistence and again after model metadata preparation. No MCP toolbar picker. |
+| `src/ui/chat/tabs/tabToolbarInit.ts` | `wireComposerChrome()` adapts model/mode/reasoning, external-context, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. Model changes refresh the usage context window immediately after settings persistence and again after model metadata preparation. No MCP toolbar picker or subagent activity shelf. |
 | `src/ui/chat/tabs/tabFork.ts` | Resolves durable entry IDs and requests a new session fork through `ChatPorts.sessions`. |
 | `src/ui/chat/controllers/InputController.ts` | Public per-tab input coordinator; delegates turn pipeline, queue restoration, provider boundaries, cancellation, and inline questions. |
 | `src/ui/chat/controllers/inputTurnPipeline.ts` | Executes the send/query/finalize sequence and guards against stale stream generations. |
@@ -144,11 +144,11 @@ flowchart TD
 - Queued submissions are snapshots of turn content/context; external-context permissions refresh from current UI when the queued turn executes. MCP availability comes from settings-enabled servers (no per-turn toolbar pick).
 - Only one queued turn is maintained; additional submissions merge through the core queue helpers.
 - Preserve IME composition guards in `RichChatInput`; rebuilding mention badges during composition breaks CJK input.
-- The composer sends Markdown as plain text rather than rendering a WYSIWYG preview. On an ordered-list item, unmodified Enter (or Shift+Enter) continues the next numeric marker before the normal send shortcut runs; Enter on an empty marker exits the list, while modifier-based send shortcuts keep their configured meaning.
+- The composer sends Markdown as plain text rather than rendering a WYSIWYG preview. On an ordered-list item, unmodified Enter (or Shift+Enter) continues the next numeric marker before the normal send shortcut runs; Enter on an empty marker exits the list. The live shortcut setting is checked from the composer owner-window capture phase because Obsidian's keymap may stop propagation before the contenteditable target; handle it only while that exact composer owns focus. When required, Command+Enter or Ctrl+Enter sends and plain Enter edits; when disabled, plain Enter sends. Alt/Shift combinations and IME composition never send.
 - Model changes on blank tabs update draft state. Bound-tab model/mode/reasoning changes update that tab's runtime settings and capability gating.
 - External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. Absolute roots and per-turn paths are overlaid from Obsidian's device-local cache and must never be written into synced settings or JSONL. MCP enable/disable lives in Settings; slash catalog + MCP tool lists are prefetched at tab/view open and refreshed after MCP settings save.
 - Allowed imperative composer surfaces: uncontrolled `RichChatInput`, file/image/inline context chips, and cursor-relative mention/slash dropdowns. React owns toolbar chrome and never reconciles those adapter children. Do not reintroduce `McpServerSelector` or other composer MCP pickers.
-- The optional Active Work Shelf is React chrome over derived `ChatProjectionStore` rows. It must include active top-level background work from inactive tabs, preserve the transcript as canonical, and navigate by tab/message identity through app-owned semantics plus `MessageViewportHandle`; do not query message DOM or persist shelf items.
+- Composer chrome never displays active subagents. Running and completed work remains attached only to its individual transcript card; inactive-tab completion continues to use the existing tab attention state.
 - Activity renderers consume the React store subpath's canonical status/icon/accessibility/elapsed presentation model. Imperative adapters still own Obsidian DOM/icon mounting and owner-realm scheduling, but must not define a second lifecycle switch or elapsed formatter.
 - All user-visible labels, notices, placeholders, status text, and accessibility text must use the shared translator from `@/app/i18n`.
 
@@ -165,6 +165,7 @@ flowchart TD
 `StreamSubagentCoordinator` (`stream/streamSubagentLifecycle.ts`) deliberately stays in product UI rather than `@pivi/pivi-agent-core`:
 
 - It mutates live `ChatMessage` tool calls, content blocks, and thinking-indicator side effects while chunks arrive.
+- A foreground subagent terminal event clears the bottom thinking indicator and its owner-window timers. Background subagent terminal events update their projection without hiding an unrelated foreground indicator.
 - Async hydration retries call back into injected `PiChatService` loaders. The coordinator owns retry timers and a lifecycle generation; reset/dispose cancels pending timers and invalidates in-flight loader results before they can mutate the next session or a closed tab.
 - `SubagentManager` remains the pure record layer (task buffering, nested tool correlation, terminal status). Keep new persistence rules there, but keep stream-order-sensitive projection and retry timing in the coordinator unless a future review extracts a host-neutral state machine with no UI or `PiChatService` dependencies.
 
@@ -182,5 +183,5 @@ Do not move retry/hydrate logic into core `SubagentManager` without that boundar
 - **Cancellation is cooperative.** Set `cancelRequested`, invalidate stream generation when resetting, restore queued composer content, and call `PiChatService.cancel()`.
 - **Async Markdown can finish late.** Use render-generation or element-identity checks and never let stale work overwrite a newer block.
 - **Auto-scroll is user-sensitive.** Scrolling away disables it; only re-enable near the bottom after the existing delay.
-- **Current-note attachment is session-aware.** It is automatically attached before a session starts but should not be resent every turn.
+- **File cards are turn-scoped.** A new session may auto-attach the current note to its first user turn only. After a user send or queued-send snapshot, clear the auto-attach and explicit-file sets; later turns include only files the user adds for that turn. Loading a session that already has messages must not recreate a current-note composer card.
 - **Forking while streaming is unsafe.** Fork only from stable messages with durable entry IDs.

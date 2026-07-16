@@ -16,6 +16,12 @@ export interface ActivityStatusPresentation {
   readonly label: string;
 }
 
+export interface ActivityStatusCountPresentation extends ActivityStatusPresentation {
+  readonly count: number;
+  readonly countLabel: string;
+  readonly status: ActivityStatus;
+}
+
 interface ActivityStatusDescriptor {
   readonly descriptionKey?: TranslationKey;
   readonly icon: ActivityStatusIcon;
@@ -54,6 +60,16 @@ const ACTIVITY_STATUS_DESCRIPTORS = {
   },
 } satisfies Readonly<Record<ActivityStatus, ActivityStatusDescriptor>>;
 
+const ACTIVITY_STATUS_COUNT_ORDER: readonly ActivityStatus[] = [
+  'completed',
+  'failed',
+  'running',
+  'waiting',
+  'queued',
+  'cancelled',
+  'orphaned',
+];
+
 export function getActivityStatusPresentation(
   status: ActivityStatus,
   t: TFunction,
@@ -67,6 +83,27 @@ export function getActivityStatusPresentation(
     icon: descriptor.icon,
     label,
   };
+}
+
+export function getActivityStatusCountPresentations(
+  statuses: readonly ActivityStatus[],
+  t: TFunction,
+): readonly ActivityStatusCountPresentation[] {
+  const counts = new Map<ActivityStatus, number>();
+  for (const status of statuses) {
+    counts.set(status, (counts.get(status) ?? 0) + 1);
+  }
+  return ACTIVITY_STATUS_COUNT_ORDER.flatMap((status) => {
+    const count = counts.get(status) ?? 0;
+    if (count === 0) return [];
+    const presentation = getActivityStatusPresentation(status, t);
+    return [{
+      ...presentation,
+      count,
+      countLabel: t('chat.status.count', { count, status: presentation.label }),
+      status,
+    }];
+  });
 }
 
 export function formatActivityElapsed(milliseconds: number): string {

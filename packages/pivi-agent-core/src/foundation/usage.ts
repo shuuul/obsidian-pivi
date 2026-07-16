@@ -41,10 +41,11 @@ function cappedReserve(
   contextWindow: number,
   windowRatio: number,
 ): number {
+  const maximumReserve = Math.min(defaultTokens, Math.floor(contextWindow * windowRatio));
   if (typeof explicit === 'number' && Number.isFinite(explicit)) {
-    return normalizeTokens(explicit);
+    return Math.min(normalizeTokens(explicit), maximumReserve);
   }
-  return Math.min(defaultTokens, Math.floor(contextWindow * windowRatio));
+  return maximumReserve;
 }
 
 /**

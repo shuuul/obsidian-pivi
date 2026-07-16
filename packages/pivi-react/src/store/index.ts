@@ -4,10 +4,9 @@ export type {
 } from './activityPresentation';
 export {
   formatActivityElapsed,
+  getActivityStatusCountPresentations,
   getActivityStatusPresentation,
 } from './activityPresentation';
-export type { ChatAgentRunEntity } from './agentRunProjection';
-export { deriveAgentRunEntities } from './agentRunProjection';
 export type {
   ChatPerfProjectionCommitReason,
   ChatPerfProjectionEventKind,
@@ -29,9 +28,6 @@ export {
   CHAT_PROJECTION_PAGE_SIZE,
   ChatProjectionStore,
   getChatProjectionBlockId,
-  useActiveChatProjectionAgentRuns,
-  useChatProjectionAgentRun,
-  useChatProjectionAgentRuns,
   useChatProjectionBlock,
   useChatProjectionMessageStructure,
   useChatProjectionOrder,

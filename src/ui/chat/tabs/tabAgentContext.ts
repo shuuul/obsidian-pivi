@@ -5,7 +5,6 @@ import type {
   ChatSettingsSnapshot,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/queryBackedTitleGenerationService';
-import { Platform } from "obsidian";
 
 import { createFileContextMcpProvider } from "./tabCatalogAdapters";
 import type { TabAgentContext, TabData } from "./types";
@@ -29,7 +28,7 @@ export function shouldSendMessageFromEnterKey(
   e: KeyboardEvent,
   settings: Pick<ChatSettingsSnapshot, "requireCommandOrControlEnterToSend">,
 ): boolean {
-  if (e.key !== "Enter" || e.shiftKey || e.isComposing) {
+  if (e.key !== "Enter" || e.shiftKey || e.altKey || e.isComposing) {
     return false;
   }
 
@@ -37,11 +36,7 @@ export function shouldSendMessageFromEnterKey(
     return true;
   }
 
-  if (Platform.isMacOS) {
-    return e.metaKey === true && !e.ctrlKey && !e.altKey;
-  }
-
-  return e.ctrlKey === true && !e.metaKey && !e.altKey;
+  return e.metaKey === true || e.ctrlKey === true;
 }
 
 export async function updateTabAgentSettings(

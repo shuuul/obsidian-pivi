@@ -4,6 +4,13 @@
   word-break: break-word;
 }
 
+.pivi-user-context-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pivi-spacing-xs);
+  margin-bottom: var(--pivi-spacing-xs);
+}
+
 .pivi-context-badge {
   display: inline-flex;
   align-items: center;

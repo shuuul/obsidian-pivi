@@ -63,7 +63,9 @@ Save actions return structured feedback. App wiring converts transient results t
 
 Hot refresh is capability-specific. Tool changes refresh registries/prompts; MCP changes invalidate catalogs and reload bridges; provider/model changes update catalog/readiness and open tabs; tab-bar placement republishes presentation state; external-root changes broadcast device-local state.
 
-Subagent settings also include the default-off Active Work Shelf toggle. It persists with synchronized subagent configuration and refreshes open composer snapshots after save. The shelf itself is not stored: `ActiveChatUiBridge` derives active background rows across the mounted view's tab projections and app wiring resolves shelf selection through semantic tab switching plus `MessageViewportHandle` navigation.
+General settings expose the current compaction threshold as a percentage beside its range control. The send-shortcut toggle is read from the composer owner's window at keydown time so the shortcut still runs when the host keymap stops propagation above the input. It applies only while that composer's contenteditable owns focus: when enabled, plain Enter inserts a newline and either Command+Enter or Ctrl+Enter sends; when disabled, plain Enter sends. Shift/Alt combinations and IME composition remain editing input rather than send actions.
+
+Subagent settings control execution and concurrency only. Composer chrome does not display active subagents; each delegated task remains visible on its own transcript card.
 
 ## Localization
 

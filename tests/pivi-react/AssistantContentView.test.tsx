@@ -340,100 +340,16 @@ describe('AssistantContentView', () => {
     }))).toBe(false);
   });
 
-  it('collapses consecutive Agent runs into one status summary and expands shared activity rows', () => {
+  it('renders consecutive subagents as independent imperative adapter slots', () => {
+    const mounted: string[] = [];
+    const subagent: NonNullable<MessageContentAdapters['subagent']> = {
+      mount(container, value) {
+        mounted.push(value.id);
+        container.dataset.subagentId = value.id;
+        container.textContent = value.description;
+      },
+    };
     const message = assistantMessage({
-      contentBlocks: [
-        { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
-        { type: 'subagent', subagentId: 'spawn-2', mode: 'async' },
-        { type: 'subagent', subagentId: 'spawn-3', mode: 'async' },
-      ],
-      toolCalls: [
-        {
-          id: 'spawn-1', name: 'spawn_agent', input: {}, status: 'completed',
-          toolUseResult: {
-            agent_report: {
-              schemaVersion: 1,
-              objective: 'Scan project links',
-              outcome: 'completed',
-              summary: 'All linked sources are valid.',
-              findings: ['Three sources resolved'],
-              decisions: ['Keep relative links'],
-              artifacts: [{ label: 'Link audit', vaultPath: 'reports/links.md' }],
-              openQuestions: ['Should redirects be pinned?'],
-            },
-          },
-          subagent: {
-            id: 'spawn-1', writerName: 'Austen', description: 'Scan links', isExpanded: false,
-            mode: 'async', prompt: 'Find every linked source.', result: 'All links checked.',
-            status: 'completed', asyncStatus: 'completed',
-            toolCalls: [
-              { id: 'read-1', name: 'read', input: { path: 'notes.md' }, status: 'completed' },
-              {
-                id: 'spawn-child', name: 'spawn_agent', input: {}, status: 'completed',
-                subagent: {
-                  id: 'spawn-child', writerName: 'Darwin', description: 'Check one source',
-                  isExpanded: false, status: 'completed', toolCalls: [
-                    { id: 'edit-child', name: 'edit', input: { file_path: 'source.md' }, status: 'completed' },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        {
-          id: 'spawn-2', name: 'spawn_agent', input: {}, status: 'completed',
-          toolUseResult: { agent_report: { schemaVersion: 1, outcome: 'completed' } },
-          subagent: {
-            id: 'spawn-2', writerName: 'Borges', description: 'Review sources', isExpanded: false,
-            mode: 'async', result: 'Plain fallback result.',
-            status: 'completed', asyncStatus: 'completed', toolCalls: [],
-          },
-        },
-        {
-          id: 'spawn-3', name: 'spawn_agent', input: {}, status: 'running',
-          subagent: {
-            id: 'spawn-3', writerName: 'Curie', description: 'Check citations', isExpanded: false,
-            mode: 'async', status: 'running', asyncStatus: 'running',
-            toolCalls: [{ id: 'read-3', name: 'read', input: {}, status: 'running' }],
-          },
-        },
-      ],
-    });
-    const { container, getByRole } = renderAssistant(message);
-
-    const trigger = getByRole('button', { name: '3 agents: 2 Completed · 1 Running' });
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-    expect(container.querySelectorAll('.pivi-agent-run-row')).toHaveLength(0);
-    fireEvent.click(trigger);
-
-    expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    expect([...container.querySelectorAll('.pivi-agent-run-row')].map(row => row.getAttribute('data-agent-run-id')))
-      .toEqual(['spawn-1', 'spawn-2', 'spawn-3']);
-    expect(container.querySelector('.pivi-agent-group-runs')).not.toHaveStyle({ overflow: 'auto' });
-    expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('AustenScan linksCompleted');
-    expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('CuriereadRunning');
-    const conclusion = getByRole('region', { name: 'Austen conclusion' });
-    expect(conclusion).toHaveTextContent('All linked sources are valid.');
-    expect(conclusion).toHaveTextContent('FindingsThree sources resolved');
-    expect(conclusion).toHaveTextContent('ArtifactsLink audit — reports/links.md');
-    expect(container.querySelectorAll('.pivi-agent-conclusion')).toHaveLength(1);
-
-    fireEvent.click(getByRole('button', { name: 'Austen: Scan links' }));
-    const timeline = getByRole('region', { name: 'Austen timeline' });
-    expect(timeline).toHaveTextContent('ObjectiveScan links');
-    expect(timeline).toHaveTextContent('PromptFind every linked source.');
-    expect(timeline).not.toHaveTextContent('All links checked.');
-    expect([...timeline.querySelectorAll('.pivi-agent-run-step')].map(step => step.getAttribute('data-depth')))
-      .toEqual(['0', '0', '1']);
-    expect(timeline.querySelector('.pivi-agent-run-timeline')).not.toHaveStyle({ overflow: 'auto' });
-
-    fireEvent.click(getByRole('button', { name: 'Borges: Review sources' }));
-    expect(getByRole('region', { name: 'Borges timeline' }))
-      .toHaveTextContent('ResultPlain fallback result.');
-  });
-
-  it('updates an Agent Group summary from stable projected run entities', () => {
-    const createMessage = (thirdStatus: 'running' | 'completed'): ChatMessage => assistantMessage({
       contentBlocks: [
         { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
         { type: 'subagent', subagentId: 'spawn-2', mode: 'async' },
@@ -443,32 +359,79 @@ describe('AssistantContentView', () => {
         id,
         name: 'spawn_agent',
         input: {},
-        status: index === 2 ? thirdStatus : 'completed',
+        status: index === 2 ? 'running' : 'completed',
         subagent: {
           id,
           description: `Agent ${index + 1}`,
           isExpanded: false,
           mode: 'async',
-          status: index === 2 ? thirdStatus : 'completed',
-          asyncStatus: index === 2 ? thirdStatus : 'completed',
+          status: index === 2 ? 'running' : 'completed',
+          asyncStatus: index === 2 ? 'running' : 'completed',
+          toolCalls: [],
+        },
+      })),
+    });
+    const { container } = renderAssistant(message, { subagent });
+
+    expect(mounted).toEqual(['spawn-1', 'spawn-2', 'spawn-3']);
+    expect([...container.querySelectorAll('.pivi-subagent-content-adapter')]
+      .map(element => (element as HTMLElement).dataset.subagentId))
+      .toEqual(['spawn-1', 'spawn-2', 'spawn-3']);
+    expect(container.querySelector('.pivi-agent-group')).toBeNull();
+    expect(container.querySelector('.pivi-agent-conclusion')).toBeNull();
+  });
+
+  it('updates only the changed projected subagent slot without remounting siblings', () => {
+    const mounts: string[] = [];
+    const updates: string[] = [];
+    const subagent: NonNullable<MessageContentAdapters['subagent']> = {
+      mount(container, value) {
+        mounts.push(value.id);
+        container.textContent = value.description;
+      },
+      update(container, value) {
+        updates.push(value.id);
+        container.textContent = value.description;
+      },
+    };
+    const createMessage = (secondDescription: string): ChatMessage => assistantMessage({
+      contentBlocks: [
+        { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
+        { type: 'subagent', subagentId: 'spawn-2', mode: 'async' },
+      ],
+      toolCalls: ['spawn-1', 'spawn-2'].map((id, index) => ({
+        id,
+        name: 'spawn_agent',
+        input: {},
+        status: 'running',
+        subagent: {
+          id,
+          description: index === 1 ? secondDescription : 'Unchanged',
+          isExpanded: false,
+          mode: 'async',
+          status: 'running',
+          asyncStatus: 'running',
           toolCalls: [],
         },
       })),
     });
     const store = new ChatProjectionStore();
-    const initial = createMessage('running');
+    const initial = createMessage('Before');
     store.replaceAll([initial]);
     const projected = store.getMessageSnapshot(initial.id);
     if (!projected) throw new Error('Expected projected assistant message');
     const view = render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <AssistantContentView message={projected as ChatMessage} projectionStore={store} />
+        <AssistantContentView contentAdapters={{ subagent }} message={projected as ChatMessage} projectionStore={store} />
       </I18nProvider>,
     ));
 
-    expect(view.getByRole('button', { name: '3 agents: 2 Completed · 1 Running' })).toBeInTheDocument();
-    act(() => store.upsertNow(createMessage('completed')));
-    expect(view.getByRole('button', { name: '3 agents: 3 Completed' })).toBeInTheDocument();
+    expect(mounts).toEqual(['spawn-1', 'spawn-2']);
+    act(() => store.upsertNow(createMessage('After')));
+    expect(mounts).toEqual(['spawn-1', 'spawn-2']);
+    expect(updates).toEqual(['spawn-2']);
+    expect(view.container.querySelectorAll('.pivi-subagent-content-adapter')).toHaveLength(2);
+    expect(view.container).toHaveTextContent('UnchangedAfter');
   });
 
   it('renders a subagent activity directly without a spawn-agent tool shell', () => {

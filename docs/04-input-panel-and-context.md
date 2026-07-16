@@ -32,7 +32,7 @@ React owns model, thinking, mode, external-context, send/stop, and usage present
 | Thinking | Model capabilities and projected `thinkingLevel` or `thinkingBudget` | Selector action → settings commit → runtime sync | Stored through settings projection, not as a separate tab binding |
 | Mode/reasoning | Model catalog and projected settings | Selector action → settings commit | Settings-owned; capability-gated by the active model |
 | Usage | Active message/runtime usage plus model context metadata | Stream/model refresh → `ChatUiStore` | Rebuildable UI projection |
-| Current note/files | `FileContextState` and host workspace events | File chips, mentions, or first-turn current-note capture | Vault-relative context enters the turn/session; current note is auto-sent once per session |
+| Current note/files | `FileContextState` and host workspace events | File chips, mentions, or first-turn current-note capture | Vault-relative context enters that turn; current note is auto-sent on the first turn only, while later file cards must be added explicitly per turn |
 | Images | `ImageContextManager` | Paste/drag/attach → send or queue snapshot | Turn attachment content; composer copy is cleared after capture |
 | Inline context | Structured badges in `RichChatInput` | Badge extraction at send time | Structured turn context; badge token is removed from runtime prompt text |
 | Editor/browser/canvas selection | Tab controllers and host selection state | Active-tab polling/events → structured context | Captured into the outgoing turn; stale host selections are cleared |
@@ -45,7 +45,9 @@ Model changes apply provider defaults, persist the projected settings, refresh c
 
 The context indicator is a row of tab-owned adapters rather than one React component. It can include current-note/file chips, image previews, editor selection, browser selection, and canvas selection. `contextRowVisibility.ts` shows the row only when one of those adapters has content.
 
-File and folder mentions are resolved at send time. Folder mentions expand to the eligible paths used by prompt construction. Inline contexts are structured tokens embedded in the input. Editor selections preserve source positions and touched lines; browser and canvas controllers capture their host-specific structured context.
+File cards are consumed when a user submission—or a queued user submission—snapshots its request. A new session may show one automatically attached current-note card before the first turn; after that send, the card is cleared and is not restored for an already-started session. Explicit file cards are likewise per-turn and never leak into the next prompt. Programmatic redo/replay uses its captured request without clearing an unrelated composer draft.
+
+File and folder mentions are resolved at send time. Folder mentions expand to the eligible paths used by prompt construction, but visible user-message history continues to render the single folder token from `displayContent` rather than enumerating those expanded files. The only request metadata supplemented as a historical badge is the first-turn auto-attached current note; every other visible file/folder badge comes from what the user entered. Inline contexts are structured tokens embedded in the input. Editor selections preserve source positions and touched lines; browser and canvas controllers capture their host-specific structured context.
 
 IME composition is a correctness boundary. Key handling and badge rebuilding must not mutate the contenteditable tree while `isComposing` is true; synchronization happens after composition ends.
 

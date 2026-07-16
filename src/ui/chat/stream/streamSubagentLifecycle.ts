@@ -29,6 +29,7 @@ export interface StreamSubagentCoordinatorDeps {
   subagentManager: SubagentManager;
   getAgentService?: () => PiChatService | null;
   showThinkingIndicator: () => void;
+  hideThinkingIndicator: () => void;
   scrollToBottom: () => void;
 }
 
@@ -315,7 +316,7 @@ export class StreamSubagentCoordinator {
       this.applySubagentToTaskToolCall(taskToolCall, finalized);
     }
 
-    this.deps.showThinkingIndicator();
+    this.deps.hideThinkingIndicator();
   }
 
   handleAgentOutputToolUse(
@@ -382,7 +383,7 @@ export class StreamSubagentCoordinator {
 
     await this.hydrateAsyncSubagentToolCalls(handled);
     if (handled) {
-      this.showThinkingIndicator(options);
+      this.hideThinkingIndicator(options);
     }
   }
 
@@ -391,6 +392,13 @@ export class StreamSubagentCoordinator {
       return;
     }
     this.deps.showThinkingIndicator();
+  }
+
+  private hideThinkingIndicator(options: SubagentStreamUpdateOptions): void {
+    if (options.showThinkingIndicator === false) {
+      return;
+    }
+    this.deps.hideThinkingIndicator();
   }
 
   resetStreamingState(): void {

@@ -138,7 +138,9 @@ export function beginOutgoingTurn(
     inlineContextManager?.clearAfterSend();
   }
 
-  fileContextManager?.markCurrentNoteSent();
+  if (options.shouldUseInput) {
+    fileContextManager?.clearAfterSend();
+  }
 
   const userMsg: ChatMessage = {
     id: deps.generateId(),

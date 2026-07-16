@@ -99,11 +99,18 @@ describe('shouldSendMessageFromEnterKey', () => {
     )).toBe(true);
   });
 
-  it('ignores Shift+Enter', () => {
+  it.each([
+    ['plain Enter', { key: 'Enter' }, false],
+    ['Command+Enter', { key: 'Enter', metaKey: true }, true],
+    ['Ctrl+Enter', { key: 'Enter', ctrlKey: true }, true],
+    ['Shift+Enter', { key: 'Enter', shiftKey: true }, false],
+    ['Alt+Enter', { key: 'Enter', altKey: true }, false],
+    ['composing Enter', { key: 'Enter', isComposing: true }, false],
+  ] as const)('%s when modifier send is required', (_label, event, expected) => {
     expect(shouldSendMessageFromEnterKey(
-      keyEvent({ key: 'Enter', shiftKey: true }),
-      { requireCommandOrControlEnterToSend: false },
-    )).toBe(false);
+      keyEvent(event),
+      { requireCommandOrControlEnterToSend: true },
+    )).toBe(expected);
   });
 });
 

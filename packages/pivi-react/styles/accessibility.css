@@ -53,8 +53,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pivi-thinking,
-  .pivi-subagent-progress-bar,
   .pivi-working-icon-arc,
+  .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
+  .pivi-subagent-running-icon .pivi-subagent-icon-motion,
+  .pivi-subagent-running-icon--rocking-chair svg,
+  .pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal,
+  .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape,
+  .pivi-subagent-header::after,
   .pivi-welcome-quote-char.pivi-quote-char-visible,
   .pivi-tab-switcher-menu {
     animation: none;

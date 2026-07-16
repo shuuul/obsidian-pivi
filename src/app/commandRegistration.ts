@@ -203,14 +203,14 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
   });
 
   plugin.addCommand({
-    id: 'debug-run-20-agent-runs-workload',
-    name: 'Debug: run isolated 20 agent-run workload',
+    id: 'debug-run-20-subagents-workload',
+    name: 'Debug: run isolated 20-subagent workload',
     callback: () => {
       const controller = plugin.getChatPerfController();
       const development = findPiviView(plugin.app)?.getChatHandle()?.development;
       const ownerWindow = getActiveWindow();
       if (controller.enabled) {
-        new Notice('Stop the active chat performance trace before running 20 agent runs.');
+        new Notice('Stop the active chat performance trace before running 20 subagents.');
         return;
       }
       if (!development) {
@@ -218,15 +218,15 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
         return;
       }
 
-      controller.start('agent-runs-20-main-isolated', ownerWindow);
+      controller.start('subagents-20-main-isolated', ownerWindow);
       let tracePath = '';
-      void development.run20AgentRunsWorkload({
+      void development.run20SubagentsWorkload({
         async afterRender() {
           tracePath = await controller.stopAndExport(ownerWindow);
         },
-      }).then(({ agentRuns, messages }) => {
+      }).then(({ subagents, messages }) => {
         const path = tracePath;
-        new Notice(`20 Agent-run trace exported (${agentRuns} runs / ${messages} messages): ${path}`);
+        new Notice(`20-subagent trace exported (${subagents} subagents / ${messages} messages): ${path}`);
       }).catch((error: unknown) => {
         controller.dispose();
         new Notice(error instanceof Error ? error.message : String(error));

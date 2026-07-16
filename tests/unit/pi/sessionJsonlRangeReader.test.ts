@@ -139,6 +139,31 @@ describe('sessionJsonlRangeReader', () => {
     expect(page.stats.entryCount).toBe(5);
   });
 
+  it('keeps a trailing tool result in the final assistant group', () => {
+    fs.writeFileSync(sessionFile, [
+      jsonl({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root }),
+      jsonl(message('user-1', 'user', 'hello', null)),
+      jsonl(message('assistant-1', 'assistant', '', 'user-1', {
+        content: [{ type: 'toolCall', id: 'tool-1', name: 'read', arguments: {} }],
+      })),
+      jsonl(message('tool-result-1', 'toolResult', 'done', 'assistant-1', { toolCallId: 'tool-1' })),
+    ].join(''));
+
+    const page = openRecentSessionJsonlMessages(sessionFile, 1);
+
+    expect(page.messages).toEqual([
+      expect.objectContaining({ id: 'user-1' }),
+      expect.objectContaining({
+        id: 'assistant-1',
+        toolCalls: [expect.objectContaining({
+          id: 'tool-1',
+          result: 'done',
+          status: 'completed',
+        })],
+      }),
+    ]);
+  });
+
   it('pages older messages by the first projected message id', () => {
     fs.writeFileSync(sessionFile, [
       jsonl({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root }),

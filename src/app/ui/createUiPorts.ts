@@ -158,7 +158,6 @@ export function createChatUiPorts(
       environmentVariables: getRuntimeEnvironmentText(projected),
       externalReadDirectories: [...tools.externalReadDirectories],
       hiddenSlashCommands: [...projected.hiddenSlashCommands],
-      showActiveWorkShelf: getSubagentRuntimeSettingsFromBag(projected).showActiveWorkShelf,
       modelCatalog: {
         addedProviders: [...modelCatalog.addedProviders],
         disabledProviders: [...modelCatalog.disabledProviders],
@@ -298,7 +297,6 @@ export function createSettingsUiPorts(
         enabled: subagents.enabled,
         allowBackground: subagents.allowBackground,
         maxConcurrentSubagents: normalizeMaxConcurrentSubagents(subagents.maxConcurrentSubagents),
-        showActiveWorkShelf: subagents.showActiveWorkShelf,
       },
     };
   };

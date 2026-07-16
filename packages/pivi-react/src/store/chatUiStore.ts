@@ -73,7 +73,6 @@ export interface ComposerOptionSnapshot {
 
 export interface ComposerChromeSnapshot {
   readonly canSend: boolean;
-  readonly showActiveWorkShelf: boolean;
   readonly model: string;
   readonly modelOptions: readonly ComposerOptionSnapshot[];
   readonly mode: string | null;
@@ -163,7 +162,6 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
     navigationVisible: false,
     composer: {
       canSend: false,
-      showActiveWorkShelf: false,
       model: '',
       modelOptions: [],
       mode: null,

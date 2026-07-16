@@ -2,11 +2,14 @@ import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundatio
 import {
   createAsyncSubagentBlock,
   finalizeAsyncSubagent,
+  markAsyncSubagentOrphaned,
   renderStoredAsyncSubagent,
+  updateAsyncSubagentRunning,
 } from '@/ui/chat/rendering/AsyncSubagentRenderer';
 import {
   addSubagentToolCall,
   createSubagentBlock,
+  finalizeSubagentBlock,
   mountStoredSubagent,
   renderStoredSubagent,
   updateStoredSubagent,
@@ -301,13 +304,14 @@ function expectSubagentHeaderShell(
   expected: { agentName: string; taskDescription: string; statusText: string },
 ): void {
   const headerEl = wrapperEl.findByClass('pivi-subagent-header');
-  expect(headerEl?.children.slice(0, 5).map(child => child.className)).toEqual([
+  expect(headerEl?.children.slice(0, 4).map(child => child.className)).toEqual([
     expect.stringContaining('pivi-subagent-icon'),
     expect.stringContaining('pivi-subagent-label'),
     expect.stringContaining('pivi-subagent-step-summary'),
-    expect.stringContaining('pivi-activity-elapsed'),
     expect.stringContaining('pivi-subagent-status'),
   ]);
+  expect(wrapperEl.findByClass('pivi-activity-elapsed')).toBeNull();
+  expect(headerEl?.hasClass('pivi-activity-row')).toBe(false);
 
   const labelEl = wrapperEl.findByClass('pivi-subagent-label');
   expect(labelEl?.text).toBe(expected.agentName);
@@ -317,26 +321,21 @@ function expectSubagentHeaderShell(
   expect(wrapperEl.findByClass('pivi-subagent-step-summary')?.text).toBe(expected.taskDescription);
 
   const statusEl = wrapperEl.findByClass('pivi-subagent-status');
-  expect(statusEl?.findByClass('pivi-activity-status-label')?.text).toBe(expected.statusText);
+  expect(statusEl?.text).toBe(expected.statusText);
   expect(statusEl?.getAttribute('aria-live')).toBe('polite');
+  expect(statusEl?.hasClass('pivi-activity-status')).toBe(false);
 
   const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
-  if (expected.statusText === 'Running' || expected.statusText === 'Queued') {
+  if (expected.statusText === 'Running') {
     expect(iconEl?.hasClass('pivi-working-icon')).toBe(true);
     expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
     expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(false);
-    expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).toBeNull();
-  } else if (expected.statusText === 'Completed') {
+  } else {
     expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(true);
     expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
-    expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).toBeNull();
     expect(iconEl?.hasClass('pivi-working-icon')).toBe(false);
-  } else {
-    expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).not.toBeNull();
-    expect(iconEl?.hasClass('pivi-working-icon')).toBe(false);
-    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
-    expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(false);
   }
+  expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).toBeNull();
 }
 
 
@@ -585,7 +584,7 @@ describe('subagent activity rendering', () => {
     expect(iconEl?.hasClass(`pivi-subagent-running-icon--${iconName}`)).toBe(true);
   });
 
-  it('clears animated subagent icon classes when falling back to the status dot', () => {
+  it('keeps the assigned profile icon but clears its motion on failure', () => {
     const iconEl = new FakeElement({ cls: 'pivi-subagent-icon' });
     applySubagentHeaderIcon(iconEl as unknown as HTMLElement, {
       ...createRunningAsyncSubagent(),
@@ -606,8 +605,9 @@ describe('subagent activity rendering', () => {
     expect(iconEl.hasClass('pivi-working-icon')).toBe(false);
     expect(iconEl.hasClass('pivi-subagent-running-icon')).toBe(false);
     expect(iconEl.hasClass('pivi-subagent-running-icon--waves')).toBe(false);
-    expect(iconEl.hasClass('pivi-subagent-completed-icon')).toBe(false);
-    expect(iconEl.findByClass('pivi-subagent-indicator-dot')).not.toBeNull();
+    expect(iconEl.hasClass('pivi-subagent-completed-icon')).toBe(true);
+    expect(iconEl.hasClass('pivi-subagent-profile-icon--waves')).toBe(true);
+    expect(iconEl.findByClass('pivi-subagent-indicator-dot')).toBeNull();
   });
 
   it('renders a collapsible chevron on the subagent header when collapsed', () => {
@@ -644,7 +644,7 @@ describe('subagent activity rendering', () => {
     expect(wrapperEl.findByClass('pivi-subagent-status')?.hasClass('status-completed')).toBe(true);
   });
 
-  it('does not treat async progress DOM as the header working state', () => {
+  it('does not emit the hidden legacy async progress DOM', () => {
     const parentEl = new FakeElement();
     const state = createAsyncSubagentBlock(
       parentEl as unknown as HTMLElement,
@@ -654,12 +654,148 @@ describe('subagent activity rendering', () => {
     );
     const wrapperEl = state.wrapperEl as unknown as FakeElement;
 
-    expect(wrapperEl.findByClass('pivi-subagent-progress')).not.toBeNull();
+    expect(wrapperEl.findByClass('pivi-subagent-progress')).toBeNull();
     expectSubagentHeaderShell(wrapperEl, {
       agentName: 'Austen',
       taskDescription: 'Review architecture',
       statusText: 'Queued',
     });
+  });
+
+  it('moves a live async subagent from static queued to animated running to static completed', () => {
+    const parentEl = new FakeElement();
+    const state = createAsyncSubagentBlock(
+      parentEl as unknown as HTMLElement,
+      'task-async-lifecycle',
+      { description: 'Review lifecycle', prompt: 'Go' },
+      { writerName: 'Woolf' },
+    );
+    const wrapperEl = state.wrapperEl as unknown as FakeElement;
+    const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
+
+    expect(wrapperEl.hasClass('queued')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
+
+    updateAsyncSubagentRunning(state, 'agent-1');
+    expect(wrapperEl.hasClass('queued')).toBe(false);
+    expect(wrapperEl.hasClass('running')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
+
+    finalizeAsyncSubagent(state, 'Done', false);
+    expect(wrapperEl.hasClass('running')).toBe(false);
+    expect(wrapperEl.hasClass('queued')).toBe(false);
+    expect(wrapperEl.hasClass('waiting')).toBe(false);
+    expect(wrapperEl.hasClass('completed')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
+    expect(iconEl?.hasClass('pivi-subagent-profile-icon--waves')).toBe(true);
+  });
+
+  it('clears running motion on every live terminal path', () => {
+    const cases = [
+      {
+        finish: (state: ReturnType<typeof createAsyncSubagentBlock>) => (
+          finalizeAsyncSubagent(state, 'Failed', true)
+        ),
+        status: 'failed',
+      },
+      {
+        finish: (state: ReturnType<typeof createAsyncSubagentBlock>) => (
+          markAsyncSubagentOrphaned(state)
+        ),
+        status: 'orphaned',
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      const parentEl = new FakeElement();
+      const state = createAsyncSubagentBlock(
+        parentEl as unknown as HTMLElement,
+        `task-${testCase.status}`,
+        { description: 'Review lifecycle', prompt: 'Go' },
+        { writerName: 'Woolf' },
+      );
+      updateAsyncSubagentRunning(state, `agent-${testCase.status}`);
+      testCase.finish(state);
+
+      const wrapperEl = state.wrapperEl as unknown as FakeElement;
+      const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
+      expect(wrapperEl.hasClass('running')).toBe(false);
+      expect(wrapperEl.hasClass('queued')).toBe(false);
+      expect(wrapperEl.hasClass('waiting')).toBe(false);
+      expect(wrapperEl.hasClass(testCase.status)).toBe(true);
+      expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
+      expect(iconEl?.hasClass('pivi-subagent-profile-icon--waves')).toBe(true);
+    }
+  });
+
+  it('clears the canonical sync running class on completion', () => {
+    const parentEl = new FakeElement();
+    const state = createSubagentBlock(
+      parentEl as unknown as HTMLElement,
+      'task-sync-lifecycle',
+      { description: 'Review lifecycle', prompt: 'Go' },
+      { writerName: 'Woolf' },
+    );
+    const wrapperEl = state.wrapperEl as unknown as FakeElement;
+    const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
+    expect(wrapperEl.hasClass('running')).toBe(true);
+    expect(wrapperEl.hasClass('is-running')).toBe(false);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
+
+    finalizeSubagentBlock(state, 'Done', false);
+    expect(wrapperEl.hasClass('running')).toBe(false);
+    expect(wrapperEl.hasClass('completed')).toBe(true);
+    expect(wrapperEl.hasClass('is-running')).toBe(false);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
+    expect(iconEl?.hasClass('pivi-subagent-profile-icon--waves')).toBe(true);
+  });
+
+  it('hides agent report protocol blocks from live sync results', () => {
+    const parentEl = new FakeElement();
+    const state = createSubagentBlock(
+      parentEl as unknown as HTMLElement,
+      'task-sync-report',
+      { description: 'Report findings', prompt: 'Inspect the repository' },
+    );
+
+    finalizeSubagentBlock(state, [
+      'The repository is clean.',
+      '',
+      '```pivi-agent-report',
+      '{"version":1,"objective":"Inspect","outcome":"completed"}',
+      '```',
+    ].join('\n'), false);
+
+    const result = (state.wrapperEl as unknown as FakeElement)
+      .findByClass('pivi-subagent-result-output')?.textContent;
+    expect(result).toBe('The repository is clean.');
+    expect(result).not.toContain('pivi-agent-report');
+    expect(result).not.toContain('"version"');
+  });
+
+  it('hides agent report protocol blocks from restored async results', () => {
+    const parentEl = new FakeElement();
+    const wrapperEl = renderStoredAsyncSubagent(
+      parentEl as unknown as HTMLElement,
+      {
+        ...createRunningAsyncSubagent(),
+        status: 'completed',
+        asyncStatus: 'completed',
+        result: [
+          'Review finished.',
+          '',
+          '```pivi-agent-report',
+          '{"version":1,"objective":"Review","outcome":"completed"}',
+          '```',
+        ].join('\n'),
+      },
+    ) as unknown as FakeElement;
+
+    (wrapperEl.findByClass('pivi-subagent-header') as FakeElement).click();
+    const result = wrapperEl.findByClass('pivi-subagent-result-output')?.textContent;
+    expect(result).toBe('Review finished.');
+    expect(result).not.toContain('pivi-agent-report');
+    expect(result).not.toContain('"version"');
   });
 
   it('aggregates sync subagent tool_use steps into one tool step group', () => {

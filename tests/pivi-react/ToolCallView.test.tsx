@@ -307,6 +307,7 @@ describe('ToolCallView', () => {
     const second = toolCall('bash-2', TOOL_BASH, 'completed', { command: 'ls' }, 'second');
     renderTool(<ToolStepGroupView toolCalls={[first, second]} />);
     expect(document.querySelector('.pivi-tool-step-group-summary')?.textContent).toBeTruthy();
+    expect(document.querySelector('.pivi-tool-step-group-status')).toHaveTextContent('2 Completed');
     const groupChevron = document.querySelector('.pivi-tool-step-group-header .pivi-collapsible-chevron');
     expect(groupChevron).toHaveClass('is-collapsed');
     fireEvent.click(screen.getByRole('button', { name: /2 steps/ }));
@@ -373,7 +374,7 @@ describe('ToolCallView', () => {
     expect(document.querySelector('[data-tool-id="bash-2"] .pivi-tool-status')).toHaveClass('status-running');
   });
 
-  it('updates projected group aggregate status when any member changes', () => {
+  it('updates projected group status counts when any member changes', () => {
     const first = toolCall('bash-1', TOOL_BASH, 'completed', { command: 'pwd' });
     const second = toolCall('bash-2', TOOL_BASH, 'running', { command: 'ls' });
     const store = new ChatProjectionStore();
@@ -398,7 +399,10 @@ describe('ToolCallView', () => {
         toolIds={[first.id, second.id]}
       />,
     );
-    expect(document.querySelector('.pivi-tool-step-group-status .pivi-tool-status')).toHaveClass('status-running');
+    const initialStatus = document.querySelector('.pivi-tool-step-group-status');
+    expect(initialStatus).toHaveTextContent('1 Completed/1 Running');
+    expect(initialStatus?.querySelector('.status-completed')).not.toBeNull();
+    expect(initialStatus?.querySelector('.status-running')).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /2 steps/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Bash: pwd' }));
     fireEvent.click(screen.getByRole('button', { name: 'Bash: ls' }));
@@ -412,8 +416,24 @@ describe('ToolCallView', () => {
       toolCalls: [first, { ...second, status: 'completed' }],
     }));
 
-    expect(document.querySelector('.pivi-tool-step-group-status .pivi-tool-status')).toHaveClass('status-completed');
+    const completedStatus = document.querySelector('.pivi-tool-step-group-status');
+    expect(completedStatus).toHaveTextContent('2 Completed');
+    expect(completedStatus?.querySelectorAll('.pivi-tool-status')).toHaveLength(1);
+    expect(completedStatus?.querySelector('.status-completed')).not.toBeNull();
     expect(renders).toEqual(['bash-2:completed']);
+  });
+
+  it('shows completed and failed step counts separately', () => {
+    const completed = toolCall('bash-1', TOOL_BASH, 'completed', { command: 'pwd' });
+    const failed = toolCall('bash-2', TOOL_BASH, 'error', { command: 'false' });
+
+    renderTool(<ToolStepGroupView toolCalls={[completed, failed]} />);
+
+    const status = document.querySelector('.pivi-tool-step-group-status');
+    expect(status).toHaveTextContent('1 Completed/1 Failed');
+    expect(status).toHaveAttribute('aria-label', '1 Completed / 1 Failed');
+    expect(status?.querySelector('.status-completed')).not.toBeNull();
+    expect(status?.querySelector('.status-failed')).not.toBeNull();
   });
 
   it('updates an imperative projected tool adapter without remounting it', () => {

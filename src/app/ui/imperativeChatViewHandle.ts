@@ -28,8 +28,8 @@ export interface ImperativeChatViewHandleDeps {
 const DEVELOPMENT_MARKDOWN_BYTES = 100 * 1024;
 const DEVELOPMENT_MARKDOWN_CHUNK_BYTES = 1_600;
 const DEVELOPMENT_MARKDOWN_SETTLE_MS = 750;
-const DEVELOPMENT_AGENT_RUNS_FIXTURE = '.pivi/sessions/perf-004-20-agent-runs.jsonl';
-const DEVELOPMENT_AGENT_RUNS_SETTLE_MS = 750;
+const DEVELOPMENT_SUBAGENTS_FIXTURE = '.pivi/sessions/perf-004-20-subagents.jsonl';
+const DEVELOPMENT_SUBAGENTS_SETTLE_MS = 750;
 const DEVELOPMENT_PAGING_FIXTURE = '.pivi/sessions/perf-002-5k-messages.jsonl';
 const DEVELOPMENT_PAGING_SETTLE_MS = 750;
 const DEVELOPMENT_SWITCHING_MESSAGE_COUNT = 100;
@@ -119,38 +119,38 @@ async function removeDevelopmentSessionFixture(
   if (await adapter.exists(sessionFile)) await adapter.remove(sessionFile);
 }
 
-async function runDevelopment20AgentRuns(
+async function runDevelopment20Subagents(
   manager: TabManager,
   ownerWindow: Window,
   plugin: PiviChatCompositionHost,
-  hooks: Parameters<PiviChatDevelopmentCommands['run20AgentRunsWorkload']>[0],
-): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['run20AgentRunsWorkload']>>> {
+  hooks: Parameters<PiviChatDevelopmentCommands['run20SubagentsWorkload']>[0],
+): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['run20SubagentsWorkload']>>> {
   const originalTabId = manager.getActiveTabId();
   if (!originalTabId) {
-    throw new Error('An active chat tab is required for the 20 Agent-run workload.');
+    throw new Error('An active chat tab is required for the 20-subagent workload.');
   }
 
   const runId = Date.now();
-  const tabId = `pivi-development-agent-runs-${runId}`;
+  const tabId = `pivi-development-subagents-${runId}`;
   const sessionFile = await createDevelopmentSessionFixture(
     plugin,
     runId,
-    DEVELOPMENT_AGENT_RUNS_FIXTURE,
-    'agent-runs',
+    DEVELOPMENT_SUBAGENTS_FIXTURE,
+    'subagents',
   );
   try {
     const tab = await manager.createTab(undefined, tabId, { sessionFile });
     if (!tab || tab.id !== tabId) {
-      throw new Error('Failed to create the isolated 20 Agent-run tab.');
+      throw new Error('Failed to create the isolated 20-subagent tab.');
     }
-    await settleDevelopmentRender(ownerWindow, DEVELOPMENT_AGENT_RUNS_SETTLE_MS);
-    const agentRuns = tab.state.messages.reduce((count, message) => (
+    await settleDevelopmentRender(ownerWindow, DEVELOPMENT_SUBAGENTS_SETTLE_MS);
+    const subagents = tab.state.messages.reduce((count, message) => (
       count + (message.toolCalls?.filter(toolCall => toolCall.subagent).length ?? 0)
     ), 0);
-    if (agentRuns !== 20) {
-      throw new Error(`Expected 20 Agent runs, received ${agentRuns}.`);
+    if (subagents !== 20) {
+      throw new Error(`Expected 20 subagents, received ${subagents}.`);
     }
-    const result = { agentRuns, messages: tab.state.messages.length };
+    const result = { subagents, messages: tab.state.messages.length };
     await hooks.afterRender(result);
     return result;
   } finally {
@@ -586,15 +586,15 @@ export function createImperativeChatViewHandle(
     },
     ...(process.env.NODE_ENV !== 'production' ? {
       development: {
-        async run20AgentRunsWorkload(hooks) {
+        async run20SubagentsWorkload(hooks) {
           const manager = getTabManager();
           const activeTab = manager?.getActiveTab();
           const ownerWindow = activeTab?.dom.messagesEl.ownerDocument.defaultView;
           if (!manager || !ownerWindow) {
-            throw new Error('A mounted active chat is required for the 20 Agent-run workload.');
+            throw new Error('A mounted active chat is required for the 20-subagent workload.');
           }
           return runWithoutTabPersistence(
-            () => runDevelopment20AgentRuns(manager, ownerWindow, plugin, hooks),
+            () => runDevelopment20Subagents(manager, ownerWindow, plugin, hooks),
           );
         },
         async runIndexedSessionPagingWorkload(hooks) {

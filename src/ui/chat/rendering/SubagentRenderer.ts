@@ -6,10 +6,6 @@ import {
 
 import { t } from '@/app/i18n';
 
-import {
-  type ActivityElapsedController,
-  createActivityElapsedController,
-} from './activityElapsed';
 import { setupCollapsible } from './collapsible';
 import {
   applySubagentHeaderIcon,
@@ -18,6 +14,8 @@ import {
   extractTaskDescription,
   extractTaskPrompt,
   formatSubagentAgentName,
+  getSubagentDisplayStatus,
+  getVisibleSubagentResult,
   renderSubagentMarkdownWithFallback,
   scrollSubagentContentToBottom,
   setPromptText,
@@ -44,7 +42,6 @@ export interface SubagentState {
   headerEl: HTMLElement;
   labelEl: HTMLElement;
   summaryEl: HTMLElement;
-  elapsed: ActivityElapsedController;
   statusEl: HTMLElement;
   promptSectionEl: HTMLElement;
   promptBodyEl: HTMLElement;
@@ -78,6 +75,23 @@ function updateSyncHeaderAria(state: SubagentState): void {
   });
 }
 
+function updateSyncWrapperStatus(state: SubagentState): void {
+  const lifecycleClasses = [
+    'is-running',
+    'queued',
+    'running',
+    'waiting',
+    'completed',
+    'failed',
+    'cancelled',
+    'orphaned',
+    'done',
+    'error',
+  ];
+  lifecycleClasses.forEach(className => state.wrapperEl.removeClass(className));
+  state.wrapperEl.addClass(getSubagentDisplayStatus(state.info));
+}
+
 function ensureResultSection(state: SubagentState) {
   if (state.resultSectionEl && state.resultBodyEl) {
     return { wrapperEl: state.resultSectionEl, bodyEl: state.resultBodyEl };
@@ -109,6 +123,7 @@ function hydrateSyncSubagentStateFromStored(state: SubagentState, subagent: Suba
   state.info.prompt = subagent.prompt;
   state.info.mode = subagent.mode;
   state.info.status = subagent.status;
+  state.info.activityStatus = subagent.activityStatus;
   state.info.result = subagent.result;
 
   state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
@@ -129,6 +144,7 @@ function hydrateSyncSubagentStateFromStored(state: SubagentState, subagent: Suba
     const fallback = subagent.status === 'error' ? 'ERROR' : 'DONE';
     finalizeSubagentBlock(state, subagent.result || fallback, subagent.status === 'error');
   } else {
+    updateSyncWrapperStatus(state);
     updateSyncHeaderAria(state);
   }
 }
@@ -152,25 +168,21 @@ export function createSubagentBlock(
     isExpanded: options.initiallyExpanded ?? false,
   };
 
-  const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-list pivi-subagent-activity-item is-running' });
+  const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-list pivi-subagent-activity-item running' });
   wrapperEl.dataset.subagentId = taskToolId;
 
-  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header pivi-activity-row' });
+  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });
 
-  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon pivi-activity-icon' });
+  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
   applySubagentHeaderIcon(iconEl, info);
 
-  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label pivi-activity-name' });
+  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
   labelEl.setText(formatSubagentAgentName(taskToolId, info.writerName));
 
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary pivi-activity-summary' });
+  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
 
-  const elapsedEl = headerEl.createDiv({ cls: 'pivi-activity-elapsed pivi-hidden' });
-  elapsedEl.setAttribute('aria-hidden', 'true');
-  const elapsed = createActivityElapsedController(elapsedEl, info);
-
-  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status pivi-activity-status status-running' });
+  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status status-running' });
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
 
@@ -193,7 +205,6 @@ export function createSubagentBlock(
     headerEl,
     labelEl,
     summaryEl,
-    elapsed,
     statusEl,
     promptSectionEl: promptSection.wrapperEl,
     promptBodyEl: promptSection.bodyEl,
@@ -309,8 +320,10 @@ export function finalizeSubagentBlock(
   isError: boolean
 ): void {
   state.info.status = isError ? 'error' : 'completed';
+  state.info.activityStatus = isError ? 'failed' : 'completed';
   state.info.result = result;
   state.info.completedAt ??= Date.now();
+  updateSyncWrapperStatus(state);
 
   state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
 
@@ -322,14 +335,16 @@ export function finalizeSubagentBlock(
     state.wrapperEl.addClass('error');
   }
 
-  const finalText = result?.trim() ? result : (isError ? t('chat.activity.error') : t('chat.activity.done'));
+  const finalText = getVisibleSubagentResult(
+    result,
+    isError ? t('chat.activity.error') : t('chat.activity.done'),
+  );
   if (state.renderedResult !== finalText) {
     setSubagentResultText(state, finalText);
     state.renderedResult = finalText;
   }
 
   updateSyncHeaderAria(state);
-  state.elapsed.update(state.info);
 }
 
 /** Update a mounted stored subagent without rebuilding its DOM or losing expansion state. */
@@ -337,8 +352,6 @@ export function updateStoredSubagent(state: SubagentState, subagent: SubagentInf
   const metadataChanged = state.info.description !== subagent.description
     || state.info.writerName !== subagent.writerName
     || state.info.prompt !== subagent.prompt;
-  const previousStatus = state.info.status;
-
   state.info.description = subagent.description;
   state.info.writerName = subagent.writerName;
   state.info.prompt = subagent.prompt;
@@ -349,7 +362,6 @@ export function updateStoredSubagent(state: SubagentState, subagent: SubagentInf
   state.info.result = subagent.result;
   state.info.startedAt = subagent.startedAt;
   state.info.completedAt = subagent.completedAt;
-  state.elapsed.update(state.info);
 
   if (metadataChanged) {
     state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
@@ -378,7 +390,8 @@ export function updateStoredSubagent(state: SubagentState, subagent: SubagentInf
   if (subagent.status === 'completed' || subagent.status === 'error') {
     const fallback = subagent.status === 'error' ? 'ERROR' : 'DONE';
     finalizeSubagentBlock(state, subagent.result || fallback, subagent.status === 'error');
-  } else if (previousStatus !== subagent.status) {
+  } else {
+    updateSyncWrapperStatus(state);
     updateSyncHeaderAria(state);
   }
 }

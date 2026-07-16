@@ -9,7 +9,7 @@ The current visual design remains the baseline until the Activity and Memory lay
 ## Goals
 
 - Keep transcript cost bounded as durable sessions grow.
-- Let one text block, tool, or Agent run update without invalidating an entire message row.
+- Let one text block, tool, or subagent card update without invalidating an entire message row.
 - Preserve a complete UI execution trace while giving the parent model compact, structured results.
 - Make delegated work and context compaction understandable without turning the transcript into a debugger console.
 - Establish one visual language for narrative, active work, and memory boundaries.
@@ -49,9 +49,11 @@ flowchart TB
 
 The session UI path now performs true recent-first hydration. Cold open reads indexed identity, summary, usage, UI context, and the latest 100 projected messages; reaching the top requests an older page by stable message ID. The Pi runtime continues to assemble complete model context from authoritative JSONL, so UI paging never truncates provider context.
 
+Turn completion persists the produced assistant/tool sequence once, after the provider prompt resolves. A failed append is surfaced as a turn error instead of being logged while the UI appears successfully complete. On reopen, the indexed page joins each persisted `message_ui.turnRequest` to its user entry so current-note and attached-file badges, tool activity, and the final assistant response restore as one transcript turn.
+
 Session writes now use Pi 0.80.6's typed append methods after a single eager header bootstrap. Prior JSONL bytes therefore remain stable during normal message, Pivi metadata, UI context, and compaction appends. Full rewrites are reserved for non-append mutations such as redo truncation and upstream format migration; those operations are index-invalidation boundaries.
 
-Each indexed session uses a rebuildable `<session>.jsonl.pivi-index` JSONL sidecar. It stores UTF-8 byte offsets, projection-relevant metadata such as `message_ui.targetEntryId`, and per-line SHA-256 values, plus append checkpoints containing file identity, nanosecond timestamps, size, bounded head/tail hashes, one-time migration state, and a checksum chain over every index line. Normal session appends extend both files; rewrite boundaries delete the sidecar so the next indexed read rebuilds it atomically from the authoritative session JSONL. Read-only consumers discard a stale/corrupt optimization and rebuild before returning data. Every cached live mutation instead validates its held source fingerprint before touching Pi state, and append postflight requires the exact expected entry IDs; held-write mismatches remain typed failures and are never hidden by a post-write automatic rebuild.
+Each indexed session uses a rebuildable `<session>.jsonl.pivi-index` JSONL sidecar. It stores UTF-8 byte offsets, projection-relevant metadata such as `message_ui.targetEntryId`, and per-line SHA-256 values, plus append checkpoints containing file identity, modification time, size, bounded head/tail hashes, one-time migration state, and a checksum chain over every index line. Normal session appends extend both files; rewrite boundaries delete the sidecar so the next indexed read rebuilds it atomically from the authoritative session JSONL. Read-only consumers discard a stale/corrupt optimization and rebuild before returning data. Every cached live mutation instead validates its held source fingerprint before touching Pi state, and append postflight requires the exact expected entry IDs; held-write mismatches remain typed failures and are never hidden by a post-write automatic rebuild. Filesystem change time is neither recorded nor compared because sync/provenance metadata updates can change it without changing JSONL bytes; size, device, inode, mtime, and bounded byte hashes remain the mutation guard.
 
 The external-context privacy migration uses the sidecar's one-time marker. A completed marker skips session-body reads on startup and lazy open. A stale/corrupt pre-existing sidecar is discarded as an optimization before the authoritative JSONL is inspected. A legacy marker validates the held source after reading, writes device-local paths before rewriting JSONL, invalidates offsets before the rewrite, and rebuilds the marker from the sanitized authoritative file. Concurrent opens share one migration attempt; source changes during migration plus cache-write, JSONL-write, and rebuild failures remain explicit.
 
@@ -68,16 +70,16 @@ The index is an optimization over JSONL, not a second durable source of truth. A
 
 ### Block, tool, and Agent subscriptions
 
-`ChatProjectionStore` exposes reconciled message-structure, block, tool, and Agent-run entities. The virtualized transcript uses the narrow subscriptions for its hottest interiors:
+`ChatProjectionStore` exposes reconciled message-structure, block, and tool entities. Subagent state remains nested on the stable tool entity. The virtualized transcript uses the narrow subscriptions for its hottest interiors:
 
 ```text
 MessageRow        message shell and ordering metadata
 TextBlock         one block ID
 ToolView          one tool ID
-AgentActivity     one Agent run ID
+SubagentCard      one spawn-tool ID
 ```
 
-A block update may remeasure its virtual row, but it should not rerender sibling blocks, tools, other messages, or unrelated Agent runs. The durable `ChatMessage` remains the persistence format; normalized entities are a UI read model.
+A block update may remeasure its virtual row, but it should not rerender sibling blocks, tools, other messages, or unrelated subagent cards. The durable `ChatMessage` remains the persistence format; normalized entities are a UI read model.
 
 One sequenced in-memory event plane now wraps whole-message publication. The store reconciles keyed entities, preserves unchanged snapshot identities, publishes only changed entities, and notifies removals. Projected rows subscribe to stable structure metadata; copy actions resolve the current full message only when invoked. Markdown, tool, and stored-subagent adapters mount once for a stable entity generation and receive subsequent snapshots through `update`.
 
@@ -142,7 +144,7 @@ Deterministic tests continue to enforce commit and mount invariants. Real Obsidi
 - cold session-open and older-page load latency;
 - main-window and pop-out behavior.
 
-Use fixed scenarios for 1K/5K messages, 100KB Markdown, 20 Agent runs, scrolling away from the end, late background events, repeated prepend, and session switching. Record environment, Obsidian/Pivi version, window type, and scenario shape with every numerical result. Performance claims require before/after measurements.
+Use fixed scenarios for 1K/5K messages, 100KB Markdown, 20 subagents, scrolling away from the end, late background events, repeated prepend, and session switching. Record environment, Obsidian/Pivi version, window type, and scenario shape with every numerical result. Performance claims require before/after measurements.
 
 #### Real-Obsidian measurement protocol
 
@@ -162,7 +164,7 @@ The fixed scenario shapes are:
 | Older-page load | From the 5K fixture's latest 100-message projection, scroll backward once to prepend exactly one 100-message page. |
 | Repeated prepend | Repeat that prepend three times in the same 5K tab. |
 | 100KB Markdown stream | Run the development command that creates a disposable unbound tab, streams exactly 102,400 bytes in 64 animation-frame chunks, performs the terminal fidelity render, then restores the original tab and removes the synthetic tab without persisting either transition. |
-| 20 Agent runs | Run the isolated development command. It copies the generated 20-run fixture to a unique temporary session, cold-opens it in a disposable tab, verifies exactly 20 restored runs, stops/exports before cleanup, then restores the original tab and deletes the temporary JSONL/index while tab persistence is suspended. |
+| 20 subagents | Run the isolated development command. It copies the generated 20-subagent fixture to a unique temporary session, cold-opens it in a disposable tab, verifies exactly 20 restored subagents, stops/exports before cleanup, then restores the original tab and deletes the temporary JSONL/index while tab persistence is suspended. |
 | Scroll-away / late background | Scroll the 1K transcript away from the end, then run the deterministic stream while auto-follow remains disabled. |
 | Session switching | Run the isolated development command: ten in-memory tabs, 100 messages each, two passes / 20 switches. The command suspends tab persistence, restores the original active tab, and removes every synthetic tab. |
 | Indexed 5K cold open + older page | Run the isolated indexed-session paging command. It copies the fixed 5K fixture to a unique temporary session id, records cold open, scrolls the real virtual viewport backward to fetch one 100-message page, restores the original tab, and deletes the temporary JSONL/index while tab persistence is suspended. |
@@ -178,7 +180,7 @@ Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64 on Apple M2 Pro, Nod
 | 1K cold open | Main | 1 projection commit; 1,035 ms event-to-paint; max 25 rows / 541 DOM nodes; 48 Markdown renders; 4 long tasks | `2026-07-15T09-57-59-856Z-cold-open-1k-main.json` |
 | 5K cold open | Main | 1 projection commit; 98 ms event-to-paint; max 25 rows / 541 DOM nodes; 48 Markdown renders; 2 long tasks | `2026-07-15T09-58-03-787Z-cold-open-5k-main.json` |
 | 5K cold open | Pop-out | 1 projection commit; 91 ms event-to-paint; max 20 rows / 441 DOM nodes; 29 Markdown renders; 2 long tasks | `2026-07-15T14-20-23-474Z-cold-open-5k-popout.json` |
-| 20 Agent runs | Main | 1 projection commit; max 2 virtual message rows / 758 DOM nodes; 4 Markdown renders; 1 long task | `2026-07-15T14-20-45-235Z-cold-open-20-agent-runs-main.json` |
+| 20 subagents | Main | 1 projection commit; max 2 virtual message rows / 758 DOM nodes; 4 Markdown renders; 1 long task | `2026-07-15T14-20-45-235Z-cold-open-20-agent-runs-main.json` |
 | One older page | Main | Max 31 rows / 700 DOM nodes; 46 Markdown renders; 0 px anchor drift; no long task | `2026-07-15T14-20-49-378Z-older-page-load-5k-main.json` |
 | Three prepends | Main | Max 31 rows / 704 DOM nodes; 153 Markdown renders; 0 px anchor drift; no long task | `2026-07-15T14-20-55-878Z-repeated-prepend-5k-main.json` |
 | Scroll-away / late update | Main | 68 projection commits; max 19 rows / 1,435 DOM nodes; 56 Markdown renders; 1 long task | `2026-07-15T14-21-23-015Z-scroll-away-late-background-main.json` |
@@ -210,7 +212,7 @@ Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64. The deterministic R
 
 Both traces stayed inside the 100KB workload ceilings and identified only their expected owner window. Workload row/long-task bounds select the interval from the first synthetic-message commit through the final synthetic-block render. Restoring the prior active 5K transcript afterward raised the whole-trace row maxima to 25 in main and 20 in the pop-out, added one cleanup long task per trace, and produced 41/30 unrelated Markdown renders. Isolated-workload render counts therefore select the canonical `pivi-development-markdown-stream-assistant` block ID. These bounds distinguish workload events from cleanup and are not evidence of fewer renders inside the changing block.
 
-Deterministic tests separately prove that a text/thinking delta does not invoke a sibling Markdown adapter, a tool status patch does not rerender or remount sibling tool bodies, an Agent-run patch updates only its stored-subagent island, same-shape assistant content does not rerun row action predicates, and ResizeObserver growth remeasures only the owning virtual row.
+Deterministic tests separately prove that a text/thinking delta does not invoke a sibling Markdown adapter, a tool status or nested-subagent patch updates only its stored-subagent island without remounting sibling tool bodies, same-shape assistant content does not rerun row action predicates, and ResizeObserver growth remeasures only the owning virtual row.
 
 #### 2026-07-16 hidden-cadence result
 
@@ -223,15 +225,15 @@ Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64. The same disposable
 
 Both traces identify only the expected owner window and finish with a complete terminal projection. The development harness restored the prior active tab, removed the synthetic tab and disposable pop-out, and left no synthetic DOM markers. A failed CLI-routing attempt was discarded because its trace identified `main` instead of `pop-out`; the accepted pop-out run addresses the floating leaf directly.
 
-#### 2026-07-16 first-class Agent-run result
+#### 2026-07-16 isolated subagent result
 
-Environment: Obsidian 1.13.2, Pivi 0.9.0 at `8b56684`, Darwin 25.5 arm64. The isolated 20-Agent command ran three times in the main window against the fixed fixture. Each run stopped its trace before restoring the original tab, then removed the disposable tab, temporary JSONL, and index while tab persistence remained suspended.
+Environment: Obsidian 1.13.2, Pivi 0.9.0 at `8b56684`, Darwin 25.5 arm64. The isolated 20-subagent command ran three times in the main window against the fixed fixture. Each run stopped its trace before restoring the original tab, then removed the disposable tab, temporary JSONL, and index while tab persistence remained suspended.
 
 | Scenario | Pre-spec-008 baseline | Spec-008 median | Evidence |
 |---|---|---|---|
-| 20 Agent runs | 1 projection commit; max 2 rows / 758 DOM nodes; 4 Markdown renders; 1 long task | 1 projection commit; max 2 rows / 73 DOM nodes; 2 Markdown renders / 1.6 ms; 1 long task, longest 467 ms | `2026-07-16T04-36-47-327Z`, `04-38-00-858Z`, `04-38-38-523Z` isolated Agent-run traces |
+| 20 subagents | 1 projection commit; max 2 rows / 758 DOM nodes; 4 Markdown renders; 1 long task | 1 projection commit; max 2 rows / 73 DOM nodes; 2 Markdown renders / 1.6 ms; 1 long task, longest 467 ms | `2026-07-16T04-36-47-327Z`, `04-38-00-858Z`, `04-38-38-523Z` isolated traces |
 
-Every run stayed inside the 20-Agent regression ceiling. `.pivi/tab-manager-state.json` retained the same SHA-256 before and after the three runs, no temporary session remained, and the deployed production bundle was restored with the development command absent and `obsidian dev:errors` clean. The discarded `04-30-51-653Z` trace is retained as diagnostic evidence: it stopped after cleanup and therefore mixed the original transcript's 25 rows / 34 Markdown renders into the workload boundary; the pre-cleanup hook corrected that harness error.
+Every run stayed inside the 20-subagent regression ceiling. `.pivi/tab-manager-state.json` retained the same SHA-256 before and after the three runs, no temporary session remained, and the deployed production bundle was restored with the development command absent and `obsidian dev:errors` clean. The discarded `04-30-51-653Z` trace is retained as diagnostic evidence: it stopped after cleanup and therefore mixed the original transcript's 25 rows / 34 Markdown renders into the workload boundary; the pre-cleanup hook corrected that harness error.
 
 #### Regression budgets
 
@@ -240,7 +242,7 @@ Use the same fixed scenario, window type, hardware, and development build for be
 | Scenario | Real-Obsidian ceiling |
 |---|---|
 | 1K / 5K cold open, including pop-out | Event-to-paint ≤ 1,200 ms; ≤ 30 mounted rows; ≤ 1,000 DOM nodes; ≤ 5 long tasks; longest task ≤ 750 ms. |
-| 20 Agent runs | ≤ 5 mounted rows; ≤ 1,000 DOM nodes; ≤ 6 Markdown renders; ≤ 3 long tasks. |
+| 20 subagents | ≤ 5 mounted rows; ≤ 1,000 DOM nodes; ≤ 6 Markdown renders; ≤ 3 long tasks. |
 | One page / three prepends | ≤ 35 mounted rows; ≤ 800 DOM nodes; absolute anchor drift ≤ 1 px on every prepend; ≤ 1 long task. |
 | Scroll-away / late update | ≤ 70 projection commits; ≤ 25 mounted rows; ≤ 1,600 DOM nodes; ≤ 3 long tasks; auto-follow must remain disabled. |
 | 100KB Markdown stream | ≤ 70 projection commits and ≤ 70 commits/second; ≤ 5 mounted rows; ≤ 4,000 DOM nodes; ≤ 70 Markdown renders; ≤ 3 long tasks; longest task ≤ 300 ms. |
@@ -252,16 +254,16 @@ The deterministic subset is enforced in Jest:
 - a 5K session initially projects exactly the latest 100 messages and prepends 100-message pages;
 - the 5K jsdom viewport mounts at most 20 message rows;
 - the deterministic 102,400-byte / 64-chunk stream completes in at most 67 projection commits, including setup and restoration;
-- the isolated 20-Agent workload verifies all runs before cleanup, exports through the pre-cleanup hook, restores the original tab, removes its temporary session/index, and suppresses both persistence paths;
+- the isolated 20-subagent workload verifies all subagents before cleanup, exports through the pre-cleanup hook, restores the original tab, removes its temporary session/index, and suppresses both persistence paths;
 - the isolated switch workload creates exactly 10 in-memory tabs, performs 20 switches, removes them all, and suppresses both debounced and immediate persistence.
 
 These are regression ceilings, not performance claims. A later optimization must retain the raw trace, report the same scenario shape, and show before/after evidence rather than merely staying under budget.
 
 ## Agent execution model
 
-### First-class Agent runs
+### Individual subagent cards
 
-Subagent execution now has an independent derived `AgentRun` projection rather than remaining meaningful only as fields nested inside one tool call. Its stable `runId` is the persisted spawn-tool ID; a later runtime `agentId` is metadata and never changes projection identity. The read model recursively carries owning message/tool references, parent/child relationships, canonical status, current activity, direct tool references, timing, optional persisted usage, and terminal result references. JSONL and the existing message UI overlay remain authoritative; projection replacement rebuilds the same graph after reload.
+Subagent execution stays nested on its persisted spawn-tool entity. One or many sibling subagents use the same projected `ToolCallView` and the same imperative card adapter; there is no sibling-count branch or second execution graph. A later runtime `agentId` remains correlation metadata and never changes UI identity. JSONL and the existing message UI overlay remain authoritative after reload.
 
 The durable session must continue to retain the complete visible trace:
 
@@ -338,32 +340,24 @@ Narrative is the primary reading surface:
 
 Narrative remains quiet and document-like. It uses the host UI/body fonts, current message rhythm, and Obsidian Markdown fidelity. Tools and execution logs must not compete with the answer for visual weight.
 
-For grouped Agent runs, a terminal validated version-1 report now promotes its conclusion after the Activity group as a quiet Narrative section. The section presents the summary (or objective), outcome, findings, decisions, safe artifact references, and open questions. Validation reuses the session schema for persisted details and fenced terminal recovery. Invalid or absent reports do not create Narrative chrome and retain the complete terminal text in the run inspector.
+Subagent conclusions stay inside their individual cards. Fenced `pivi-agent-report` data is reserved for parent recovery and is stripped from visible results; it does not create separate Narrative chrome or expose protocol JSON.
 
 ### Activity layer
 
 Activity represents work in progress or inspectable execution:
 
 - tools;
-- Agent runs;
+- individual subagents;
 - nested delegated work;
 - queue, waiting, cancellation, failure, and orphan state.
 
-The collapsed primitive is an Activity row/capsule, not a full nested card:
+The collapsed primitive is one individual subagent header:
 
 ```text
 ◉ Researcher   Searching sources                         0:18
 ```
 
-Multiple related Agent runs form an Agent Group:
-
-```text
-3 agents   2 complete   1 running
-```
-
-Consecutive top-level runs owned by one assistant message now use this grouped presentation. The collapsed line aggregates localized counts from the shared seven-state Activity vocabulary; expansion preserves stable run order and reveals one shared Activity row per run. A single run keeps its richer dedicated presentation. The group grows with the owning virtual message row and never introduces another scroll container.
-
-Expansion reveals a linear timeline using indentation and connectors:
+Expansion reveals the card's prompt, nested tools, and terminal result in durable order:
 
 ```text
 Researcher
@@ -373,15 +367,11 @@ Researcher
   Produce report
 ```
 
-Each expanded Agent row now provides this timeline as an accessible in-row inspector. It preserves the objective and prompt, orders direct tools and nested delegated work from the durable trace, indents child work with connectors, and shows terminal text after the activity sequence. The inspector has no timer or independent overflow surface; virtual-row measurement and the transcript remain responsible for growth and scrolling.
+Each expanded card preserves its prompt, direct tools, nested delegated work, and visible terminal text. The card has no independent overflow surface; virtual-row measurement and the transcript remain responsible for growth and scrolling.
 
 The transcript remains the only primary scroll container. Expanded Activity content should grow within its measured virtual row or open in an inspector; it should not create an independently scrolling card inside the transcript.
 
-The implemented foundation uses one seven-state lifecycle vocabulary for tool and Agent rows, localized icon/text/color status treatment, owner-window elapsed timing, and frozen terminal durations. React owns the live ticker; imperative Agent adapters recompute elapsed text only on lifecycle updates so DOM-only legacy mounts cannot leak timers. The running status arc is the only continuous Activity-row motion.
-
-An optional Active Work Shelf may appear near the composer when background work needs persistent visibility. It mirrors running state only; the canonical trace remains attached to its transcript owner. Selecting shelf activity navigates to the owner or opens the same inspector.
-
-The shelf now ships behind the synchronized `subagents.showActiveWorkShelf` setting, default off. Each tab projection exposes only active top-level background runs, and the mounted view bridge derives one immutable shelf across its tabs. Switching tabs therefore preserves visibility without copying run state into a second authority. Selecting an item switches to the owner tab if needed and centers the owning message through the virtual viewport handle; completion removes the item while the existing tab attention state continues to signal background completion.
+The implemented foundation uses one seven-state lifecycle vocabulary with localized status text. While a subagent is running, its profile icon and bottom light bar move; queued/waiting states and every terminal state are static. Completion keeps the same profile icon, stops its motion, and removes the flowing bar. Composer chrome never mirrors active subagents.
 
 ### Memory layer
 
@@ -403,26 +393,15 @@ Estimated values use an approximation marker. The boundary remains visible but s
 
 The implemented foundation carries additive `tokensBefore` / `tokensAfter` estimates plus an optional normalized checkpoint presentation on live compaction chunks and Memory content blocks. Reopened JSONL sessions derive the post-compaction estimate from the active branch at that compaction entry and parse the same checkpoint schema into the host-neutral presentation model; a legacy UI block without both values displays only the localized boundary label. Older-history paging uses the same Memory divider/chip family and remains a virtual transcript row rather than message chrome.
 
-### Context Inspector
+### Context usage indicator
 
-The existing usage ring remains the compact entry point. Its implemented owner-realm inspector shows the current total and estimated categories:
-
-```text
-System                         ~8K
-Recent conversation           ~31K
-Selected context              ~19K
-Tool and Agent results         ~8K
-Checkpoints                    ~6K
-Reserved output                16K
-Compaction reserve             12K
-Safety margin                   8K
-```
-
-The engine derives the categories from the active system prompt, tool schemas, recent session entries, selected turn context, tool results, and the latest checkpoint. Values carry `~` unless provider usage supplies the authoritative aggregate total. Changing models recalculates the window and reserves instead of retaining the previous model's envelope. The display stays small and explanatory rather than emulating a tokenizer debugger.
+The usage ring is a compact, non-interactive status indicator. Hover shows one host-owned white tooltip in the form `18K / 128K (14%)`; the ring has no second pseudo-element label, hover shadow, click action, or inspector popup. Changing models recalculates the displayed limit. An unknown context length remains explicit as a warning instead of inventing a capacity.
 
 ### Status semantics
 
 Status must be communicated by icon, text, and color together:
+
+Step groups preserve those semantics while summarizing every present outcome as a count at the far right, for example `3 Completed / 1 Failed`; a mixed group must not show only one aggregate status.
 
 | State | Base visual behavior |
 |---|---|
@@ -444,8 +423,8 @@ Only running work uses continuous motion. Respect `prefers-reduced-motion`. `ari
 4. **Completed:** stabilize sequenced UI event ownership and visibility-aware cadence.
 5. **Completed:** define hierarchical checkpoint and structured Agent-report schemas with compatibility tests.
 6. **Completed:** prototype Narrative / Activity / Memory components with additive optional lifecycle/timing/context facts and old-session compatibility.
-7. **Completed:** add Checkpoint presentation and the estimate-based Context Inspector.
-8. **Completed:** introduce Agent Group, timeline/inspector, and optional Active Work Shelf after interaction testing.
+7. **Completed:** add Checkpoint presentation and the compact context usage indicator. The detailed Context Inspector was subsequently removed in favor of hover-only usage text.
+8. **Superseded by spec 010:** grouped execution and composer activity were removed; individual virtualized subagent cards are the accepted presentation.
 9. Evaluate a bounded Markdown segment cache only if traces justify it.
 
 Each stage must preserve queued/running abort, late events, orphaning, hydrate retry, session switching, pop-out owner realms, virtual scroll anchoring, Obsidian Markdown cleanup, and the existing JSONL compatibility tests.

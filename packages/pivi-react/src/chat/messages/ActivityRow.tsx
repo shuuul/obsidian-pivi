@@ -1,12 +1,13 @@
 import type { ActivityStatus } from '@pivi/pivi-agent-core/foundation';
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n/I18nProvider';
 import { PlatformIcon } from '../../icons';
 import {
   type ActivityStatusIcon,
   formatActivityElapsed,
+  getActivityStatusCountPresentations,
   getActivityStatusPresentation,
 } from '../../store/activityPresentation';
 
@@ -39,6 +40,30 @@ export function ActivityStatusBadge({ status }: { readonly status: ActivityStatu
     >
       <StatusIcon icon={presentation.icon} />
       <span className="pivi-activity-status-label">{presentation.label}</span>
+    </span>
+  );
+}
+
+export function ActivityStatusCountSummary({ statuses }: { readonly statuses: readonly ActivityStatus[] }) {
+  const t = useT();
+  const items = getActivityStatusCountPresentations(statuses, t);
+  const accessibleLabel = items.map(item => item.countLabel).join(' / ');
+  return (
+    <span
+      aria-label={accessibleLabel}
+      aria-atomic="true"
+      aria-live="polite"
+      className="pivi-tool-step-group-status"
+    >
+      {items.map((item, index) => (
+        <Fragment key={item.status}>
+          {index > 0 ? <span aria-hidden="true" className="pivi-tool-step-group-status-separator">/</span> : null}
+          <span aria-hidden="true" className={`pivi-activity-status pivi-tool-status status-${item.status}`}>
+            <StatusIcon icon={item.icon} />
+            <span className="pivi-activity-status-label">{item.countLabel}</span>
+          </span>
+        </Fragment>
+      ))}
     </span>
   );
 }

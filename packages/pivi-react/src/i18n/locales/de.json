@@ -117,21 +117,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
-      "unknownContextLength": "Die Kontextlänge des aktuellen Modells konnte nicht ermittelt werden.",
-      "inspectorTitle": "Kontextinspektor",
-      "closeInspector": "Kontextinspektor schließen",
-      "total": "Aktuelle Summe",
-      "system": "System und Werkzeuge",
-      "recentConversation": "Letzte Unterhaltung",
-      "selectedContext": "Ausgewählter Kontext",
-      "toolAndAgentResults": "Werkzeug- und Agent-Ergebnisse",
-      "checkpoints": "Prüfpunkte",
-      "usableInput": "Nutzbare Eingabe",
-      "compactionTrigger": "Kompaktierungsschwelle",
-      "reservedOutput": "Reservierte Ausgabe",
-      "compactionReserve": "Kompaktierungsreserve",
-      "safetyMargin": "Sicherheitsmarge",
-      "estimateNote": "~ kennzeichnet eine konservative Schätzung."
+      "unknownContextLength": "Die Kontextlänge des aktuellen Modells konnte nicht ermittelt werden."
     },
     "todos": {
       "progress": "Aufgaben {completed}/{total}",
@@ -141,18 +127,6 @@
     "activity": {
       "backgroundTask": "Hintergrundaufgabe",
       "subagentTask": "Unteragentenaufgabe",
-      "agentGroupCount": "{count} Agenten",
-      "agentGroupStatusCount": "{count} {status}",
-      "agentRunTimeline": "Zeitleiste für {agent}",
-      "objective": "Ziel",
-      "timeline": "Aktivitätszeitleiste",
-      "agentConclusion": "Fazit von {agent}",
-      "findings": "Erkenntnisse",
-      "decisions": "Entscheidungen",
-      "artifacts": "Artefakte",
-      "openQuestions": "Offene Fragen",
-      "activeWork": "Aktive Arbeit",
-      "goToAgentRun": "Zu {agent} im Transkript wechseln",
       "expand": "Zum Erweitern klicken",
       "collapse": "Zum Einklappen klicken",
       "prompt": "Prompt",
@@ -163,6 +137,7 @@
       "error": "Fehler"
     },
     "status": {
+      "count": "{count} {status}",
       "queued": "In Warteschlange",
       "running": "Läuft",
       "waiting": "Wartet",
@@ -355,7 +330,7 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Command/Ctrl+Enter zum Senden erfordern",
-      "desc": "Wenn aktiviert, fügt Enter einen Zeilenumbruch ein. Command+Enter sendet unter macOS; Ctrl+Enter unter Windows und Linux."
+      "desc": "Wenn aktiviert, fügt Enter einen Zeilenumbruch ein. Command+Enter oder Ctrl+Enter sendet."
     },
     "inlineEditHotkey": {
       "name": "Inline-Bearbeitung"
@@ -406,10 +381,6 @@
       "allowBackground": {
         "name": "Hintergrund-Subagenten erlauben",
         "desc": "Erlaubt spawn_agent-Aufrufe mit run_in_background=true. Abgeschlossene Ergebnisse erscheinen in der Subagent-Karte."
-      },
-      "activeWorkShelf": {
-        "name": "Aktive Arbeitsleiste anzeigen",
-        "desc": "Zeigt wartende und laufende Hintergrund-Agenten nahe dem Eingabefeld. Das Transkript bleibt die maßgebliche Quelle."
       },
       "maxConcurrent": {
         "name": "Max. gleichzeitige Subagenten",

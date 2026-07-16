@@ -40,7 +40,7 @@ npm run test -- -t "test name"
 | Tabs and restore | `tests/unit/features/chat/tabManagerLifecycle.test.ts`, `sessionControllerLifecycle.test.ts`, `sessionSwitch.test.ts` |
 | External context privacy | `tests/unit/features/chat/tabExternalContext.test.ts`, `tests/unit/app/deviceLocalExternalContextStore.test.ts`, Pi session-store tests |
 | Subagents | `tests/unit/pi/tools/createSubagentTool.test.ts`, `piBackgroundSubagentJobs.test.ts`, `subagentConcurrencyLimiter.test.ts` |
-| React chat/settings | `tests/pivi-react/ChatShell.test.tsx`, `ActiveWorkShelf.test.tsx`, `activityPresentation.test.ts`, `agentRunProjection.test.ts`, `SettingsUi.test.tsx` |
+| React chat/settings | `tests/pivi-react/ChatShell.test.tsx`, `AssistantContentView.test.tsx`, `activityPresentation.test.ts`, `chatProjectionStore.test.tsx`, `SettingsUi.test.tsx` |
 | Tools and MCP | Relevant suites under `tests/unit/engine/tools/`, `tests/unit/pi/tools/`, and `tests/unit/pi/mcp/` |
 | Inline edit | `tests/unit/pi/runtime/queryBackedInlineEditService.test.ts` and `tests/pivi-react/InlineEdit.test.tsx` |
 

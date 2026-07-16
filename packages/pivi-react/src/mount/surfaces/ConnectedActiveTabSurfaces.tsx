@@ -44,22 +44,6 @@ function useMessagePresentation(activeChat: ActiveChatUiBridge) {
   );
 }
 
-function useActiveWorkShelf(activeChat: ActiveChatUiBridge) {
-  return useSyncExternalStore(
-    activeChat.subscribe,
-    activeChat.getActiveWorkShelfSnapshot,
-    activeChat.getActiveWorkShelfSnapshot,
-  );
-}
-
-function useActiveWorkShelfNavigate(activeChat: ActiveChatUiBridge) {
-  return useSyncExternalStore(
-    activeChat.subscribe,
-    activeChat.getActiveWorkShelfNavigate,
-    activeChat.getActiveWorkShelfNavigate,
-  );
-}
-
 function useProjectionStore(activeChat: ActiveChatUiBridge) {
   return useSyncExternalStore(
     activeChat.subscribe,
@@ -155,15 +139,11 @@ const ComposerPortal = memo(function ComposerPortal({
   const snapshot = useActiveChatUiSlice(activeChat, COMPOSER_SLICE_KEYS);
   const targets = usePortalTargets(activeChat);
   const composerActions = useComposerActions(activeChat);
-  const activeWorkItems = useActiveWorkShelf(activeChat);
-  const navigateToWork = useActiveWorkShelfNavigate(activeChat);
   if (!targets?.composer) return null;
   return createPortal(
     <ComposerChrome
       actions={composerActions}
-      activeWorkItems={activeWorkItems}
       key={targets.composer.dataset.tabId}
-      onNavigateToWork={navigateToWork ? (tabId, messageId) => void navigateToWork(tabId, messageId) : undefined}
       snapshot={snapshot}
     />,
     targets.composer,

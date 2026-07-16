@@ -1,5 +1,4 @@
 import {
-  type ActivityStatus,
   resolveToolActivityStatus,
   type ToolCallInfo,
 } from '@pivi/pivi-agent-core/foundation';
@@ -10,7 +9,7 @@ import {
 
 import { t } from '@/app/i18n';
 
-import { renderActivityStatusContents } from './activityStatusPresentation';
+import { renderActivityStatusCountSummary } from './activityStatusPresentation';
 import { setupCollapsible } from './collapsible';
 import {
   renderStoredToolCall,
@@ -44,17 +43,6 @@ function requireGroupable(toolCall: ToolCallInfo): void {
   }
 }
 
-function aggregateGroupStatus(toolCalls: ToolCallInfo[]): ActivityStatus {
-  const statuses = toolCalls.map(resolveToolActivityStatus);
-  if (statuses.includes('running')) return 'running';
-  if (statuses.includes('waiting')) return 'waiting';
-  if (statuses.includes('queued')) return 'queued';
-  if (statuses.includes('failed')) return 'failed';
-  if (statuses.includes('cancelled')) return 'cancelled';
-  if (statuses.includes('orphaned')) return 'orphaned';
-  return 'completed';
-}
-
 function getUniqueToolNames(toolCalls: ToolCallInfo[]): string[] {
   return [...new Set(toolCalls.map(toolCall => (
     getToolName(toolCall.name, toolCall.input, toolCall.result)
@@ -78,12 +66,10 @@ function syncGroupHeader(state: ToolStepGroupState, toolCalls: ToolCallInfo[]): 
   state.countEl.setText(t('chat.stream.steps', { count }));
   state.summaryEl.setText(getUniqueToolNames(toolCalls).join(', '));
   state.summaryEl.setAttribute('aria-hidden', 'true');
-  const status = aggregateGroupStatus(toolCalls);
-  state.statusEl.empty();
-  state.statusEl.removeAttribute('aria-hidden');
-  state.statusEl.removeClass('status-queued', 'status-running', 'status-waiting', 'status-completed', 'status-failed', 'status-cancelled', 'status-orphaned');
-  state.statusEl.addClass(`status-${status}`);
-  renderActivityStatusContents(state.statusEl, status);
+  renderActivityStatusCountSummary(
+    state.statusEl,
+    toolCalls.map(resolveToolActivityStatus),
+  );
   const expanded = state.collapsibleState.isExpanded;
   const action = expanded ? t('chat.activity.collapse') : t('chat.activity.expand');
   state.headerEl.setAttribute('aria-label', `${buildGroupAriaLabel(toolCalls)} - ${action}`);
@@ -124,7 +110,7 @@ export function createToolStepGroup(
 
   const countEl = headerEl.createSpan({ cls: 'pivi-tool-step-group-count' });
   const summaryEl = headerEl.createSpan({ cls: 'pivi-tool-step-group-summary' });
-  const statusEl = headerEl.createSpan({ cls: 'pivi-tool-step-group-status pivi-tool-status' });
+  const statusEl = headerEl.createSpan({ cls: 'pivi-tool-step-group-status' });
 
   const stepsEl = groupEl.createDiv({ cls: 'pivi-tool-step-group-steps pivi-hidden' });
 

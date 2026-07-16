@@ -7,35 +7,6 @@
   gap: var(--pivi-spacing-xs);
 }
 
-/* Custom tooltip */
-.pivi-context-meter-gauge::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 6px;
-  padding: 4px 8px;
-  font-size: var(--pivi-text-xs);
-  color: var(--pivi-host-text-normal);
-  background: var(--pivi-host-background-secondary);
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-xs);
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), visibility var(--pivi-duration-fast) var(--pivi-ease-out);
-  pointer-events: none;
-  z-index: 100;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .pivi-context-meter-gauge:hover::after {
-    opacity: 1;
-    visibility: visible;
-  }
-}
-
 .pivi-context-meter-gauge {
   position: relative;
   display: flex;
@@ -47,13 +18,8 @@
   color: inherit;
   background: transparent;
   border: 0;
-  cursor: pointer;
-}
-
-.pivi-context-meter-gauge:focus-visible,
-.pivi-context-inspector-close:focus-visible {
-  outline: 2px solid var(--pivi-host-interactive-accent);
-  outline-offset: 2px;
+  box-shadow: none;
+  cursor: default;
 }
 
 .pivi-context-meter-gauge svg {
@@ -87,69 +53,4 @@
   fill: #E57373;
   font-size: 10px;
   font-weight: 700;
-}
-
-.pivi-context-inspector {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + var(--pivi-spacing-sm));
-  z-index: 120;
-  width: min(300px, calc(100vw - 32px));
-  padding: var(--pivi-spacing-sm);
-  color: var(--pivi-host-text-normal);
-  background: var(--pivi-host-background-primary);
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-sm);
-  box-shadow: var(--pivi-shadow-popover-up-md);
-}
-
-.pivi-context-inspector-header,
-.pivi-context-inspector-value {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--pivi-spacing-md);
-}
-
-.pivi-context-inspector-header {
-  margin-bottom: var(--pivi-spacing-xs);
-  font-size: var(--pivi-text-sm);
-  font-weight: 600;
-}
-
-.pivi-context-inspector-close {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  color: var(--pivi-host-text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: var(--pivi-radius-xs);
-  cursor: pointer;
-}
-
-.pivi-context-inspector-values {
-  display: grid;
-  gap: 2px;
-  margin: 0;
-}
-
-.pivi-context-inspector-value {
-  min-height: 22px;
-  font-size: var(--pivi-text-xs);
-}
-
-.pivi-context-inspector-value dt {
-  color: var(--pivi-host-text-muted);
-}
-
-.pivi-context-inspector-value dd {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.pivi-context-inspector-note {
-  margin: var(--pivi-spacing-xs) 0 0;
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-text-xs);
 }

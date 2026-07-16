@@ -20,6 +20,13 @@ function createDeps(options: {
 } = {}) {
   const state = options.state ?? new ChatState();
   const attachedImages = options.attachedImages ?? [];
+  const fileContextManager = {
+    getCurrentNotePath: () => 'current.md',
+    shouldSendCurrentNote: () => true,
+    collectContextFilePathsForTurn: () => ['linked.md'],
+    transformContextMentions: (text: string) => text.replace('@note', 'note.md'),
+    clearAfterSend: jest.fn(),
+  };
   return {
     state,
     inputEl: { value: options.inputValue ?? 'draft' },
@@ -39,12 +46,8 @@ function createDeps(options: {
     canvasSelectionController: {
       getContext: jest.fn(() => ({ path: 'board.canvas', selectedText: 'node' })),
     },
-    getFileContextManager: jest.fn(() => ({
-      getCurrentNotePath: () => 'current.md',
-      shouldSendCurrentNote: () => true,
-      collectContextFilePathsForTurn: () => ['linked.md'],
-      transformContextMentions: (text: string) => text.replace('@note', 'note.md'),
-    })),
+    getFileContextManager: jest.fn(() => fileContextManager),
+    fileContextManager,
     getExternalContextSelector: jest.fn(() => ({
       getExternalContexts: () => ['https://external.example'],
       addExternalContext: jest.fn(),
@@ -107,6 +110,7 @@ describe('queueTurnWhileStreaming', () => {
     expect(deps.resetInputHeight).toHaveBeenCalled();
     expect(deps.imageContextManager.clearImages).toHaveBeenCalled();
     expect(deps.inlineContextManager.clearAfterSend).toHaveBeenCalled();
+    expect(deps.fileContextManager.clearAfterSend).toHaveBeenCalled();
     expect(deps.updateQueueIndicator).toHaveBeenCalled();
 
     const programmaticDeps = createDeps({ inputValue: 'keep me' });
@@ -118,6 +122,7 @@ describe('queueTurnWhileStreaming', () => {
 
     expect(programmaticDeps.inputEl.value).toBe('keep me');
     expect(programmaticDeps.resetInputHeight).not.toHaveBeenCalled();
+    expect(programmaticDeps.fileContextManager.clearAfterSend).not.toHaveBeenCalled();
     expect(programmaticDeps.imageContextManager.clearImages).not.toHaveBeenCalled();
     expect(programmaticDeps.inlineContextManager.clearAfterSend).not.toHaveBeenCalled();
     expect(programmaticDeps.updateQueueIndicator).toHaveBeenCalled();

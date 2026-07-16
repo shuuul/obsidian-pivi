@@ -1,8 +1,7 @@
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
 import type { ChatUiSnapshot } from '../../store';
-import type { ActiveWorkShelfItem, ComposerChromeActions } from '../activeChatUiBridge';
-import { ActiveWorkShelf } from './ActiveWorkShelf';
+import type { ComposerChromeActions } from '../activeChatUiBridge';
 import {
   ExternalContextControl,
   ModelSelector,
@@ -14,23 +13,15 @@ import { UsageMeter } from './UsageMeter';
 export function ComposerChrome({
   snapshot,
   actions,
-  activeWorkItems = [],
-  onNavigateToWork,
 }: {
   snapshot: ChatUiSnapshot;
   actions: ComposerChromeActions | null;
-  activeWorkItems?: readonly ActiveWorkShelfItem[];
-  onNavigateToWork?: (tabId: string, messageId: string) => void;
 }) {
   const t = useT();
   if (!actions) return null;
   const { composer } = snapshot;
   return (
-    <>
-      {composer.showActiveWorkShelf && onNavigateToWork ? (
-        <ActiveWorkShelf items={activeWorkItems} onNavigate={onNavigateToWork} />
-      ) : null}
-      <div className="pivi-input-toolbar">
+    <div className="pivi-input-toolbar">
       <ModelSelector onChange={actions.setModel} options={composer.modelOptions} value={composer.model} />
       <ThinkingSelector
         adaptive={composer.adaptiveReasoning}
@@ -70,7 +61,6 @@ export function ComposerChrome({
           </button>
         </div>
       </div>
-      </div>
-    </>
+    </div>
   );
 }

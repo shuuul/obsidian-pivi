@@ -81,6 +81,7 @@ export function queueTurnWhileStreaming(
     deps.resetInputHeight();
     imageContextManager?.clearImages();
     inlineContextManager?.clearAfterSend();
+    deps.getFileContextManager()?.clearAfterSend();
   }
 
   deps.updateQueueIndicator();

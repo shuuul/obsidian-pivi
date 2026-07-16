@@ -43,7 +43,6 @@ describe("PiviSettingsStorage", () => {
       allowBackground: true,
       enabled: true,
       maxConcurrentSubagents: 3,
-      showActiveWorkShelf: false,
     });
     expect(JSON.parse(adapter.writes.at(-1) ?? "{}").agentSettings.subagents).toEqual(
       settings.agentSettings.subagents,
@@ -61,14 +60,12 @@ describe("PiviSettingsStorage", () => {
       allowBackground: true,
       enabled: true,
       maxConcurrentSubagents: 8,
-      showActiveWorkShelf: true,
     };
 
     await storage.save(settings);
     const reloaded = await storage.load();
 
     expect(reloaded.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
-    expect(reloaded.agentSettings.subagents?.showActiveWorkShelf).toBe(true);
   });
 
   it('migrates legacy web provider preferences to the ordered provider queue', async () => {

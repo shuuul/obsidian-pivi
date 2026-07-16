@@ -117,21 +117,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
-      "unknownContextLength": "Impossible de déterminer la longueur de contexte du modèle actuel.",
-      "inspectorTitle": "Inspecteur de contexte",
-      "closeInspector": "Fermer l’inspecteur de contexte",
-      "total": "Total actuel",
-      "system": "Système et outils",
-      "recentConversation": "Conversation récente",
-      "selectedContext": "Contexte sélectionné",
-      "toolAndAgentResults": "Résultats des outils et Agent",
-      "checkpoints": "Points de contrôle",
-      "usableInput": "Entrée utilisable",
-      "compactionTrigger": "Seuil de compactage",
-      "reservedOutput": "Sortie réservée",
-      "compactionReserve": "Réserve de compactage",
-      "safetyMargin": "Marge de sécurité",
-      "estimateNote": "~ indique une estimation prudente."
+      "unknownContextLength": "Impossible de déterminer la longueur de contexte du modèle actuel."
     },
     "todos": {
       "progress": "Tâches {completed}/{total}",
@@ -141,18 +127,6 @@
     "activity": {
       "backgroundTask": "Tâche en arrière-plan",
       "subagentTask": "Tâche du sous-agent",
-      "agentGroupCount": "{count} agents",
-      "agentGroupStatusCount": "{count} {status}",
-      "agentRunTimeline": "Chronologie de {agent}",
-      "objective": "Objectif",
-      "timeline": "Chronologie de l’activité",
-      "agentConclusion": "Conclusion de {agent}",
-      "findings": "Constats",
-      "decisions": "Décisions",
-      "artifacts": "Artefacts",
-      "openQuestions": "Questions ouvertes",
-      "activeWork": "Travail actif",
-      "goToAgentRun": "Accéder à {agent} dans la transcription",
       "expand": "Cliquer pour développer",
       "collapse": "Cliquer pour réduire",
       "prompt": "Instruction",
@@ -163,6 +137,7 @@
       "error": "Erreur"
     },
     "status": {
+      "count": "{count} {status}",
       "queued": "En file",
       "running": "En cours",
       "waiting": "En attente",
@@ -355,7 +330,7 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Exiger Command/Ctrl+Entrée pour envoyer",
-      "desc": "Si activé, Entrée insère une nouvelle ligne. Command+Entrée envoie sur macOS ; Ctrl+Entrée sur Windows et Linux."
+      "desc": "Si activé, Entrée insère une nouvelle ligne. Command+Entrée ou Ctrl+Entrée envoie."
     },
     "inlineEditHotkey": {
       "name": "Édition en ligne"
@@ -406,10 +381,6 @@
       "allowBackground": {
         "name": "Autoriser les sous-agents en arrière-plan",
         "desc": "Autorise les appels spawn_agent avec run_in_background=true. Les résultats complétés réhydratent la carte du sous-agent."
-      },
-      "activeWorkShelf": {
-        "name": "Afficher le travail actif",
-        "desc": "Affiche les agents en arrière-plan en attente et en cours près de la zone de rédaction. La transcription reste la source de référence."
       },
       "maxConcurrent": {
         "name": "Sous-agents simultanés max.",

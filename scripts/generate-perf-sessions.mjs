@@ -156,11 +156,11 @@ function createMarkdownFixture(vaultPath) {
   return fixture;
 }
 
-function createAgentRunsFixture(vaultPath) {
+function createSubagentsFixture(vaultPath) {
   const fixture = new SessionFixture(
-    'perf-fixture-20-agent-runs',
+    'perf-fixture-20-subagents',
     vaultPath,
-    'Perf fixture · 20 Agent runs',
+    'Perf fixture · 20 subagents',
   );
   fixture.appendUser('agents-user', 'Run twenty deterministic delegated tasks.');
   const toolCalls = Array.from({ length: 20 }, (_, index) => {
@@ -219,7 +219,7 @@ function createAgentRunsFixture(vaultPath) {
       },
     })),
   });
-  fixture.appendAssistant('agents-conclusion', 'All twenty fixture Agent runs completed.');
+  fixture.appendAssistant('agents-conclusion', 'All twenty fixture subagents completed.');
   return fixture;
 }
 
@@ -237,7 +237,7 @@ export function generatePerfSessions(vaultPathInput) {
     ['perf-001-1k-messages.jsonl', createTranscriptFixture(vaultPath, 1_000)],
     ['perf-002-5k-messages.jsonl', createTranscriptFixture(vaultPath, 5_000)],
     ['perf-003-100kb-markdown.jsonl', createMarkdownFixture(vaultPath)],
-    ['perf-004-20-agent-runs.jsonl', createAgentRunsFixture(vaultPath)],
+    ['perf-004-20-subagents.jsonl', createSubagentsFixture(vaultPath)],
   ];
   for (const [fileName, fixture] of fixtures) {
     writeFileSync(join(sessionsDirectory, fileName), fixture.serialize(), 'utf8');

@@ -690,7 +690,7 @@ describe('imperative chat semantic view handle', () => {
     expect(harness.plugin.app.vault.adapter.remove).toHaveBeenCalledTimes(1);
   });
 
-  it('isolates the 20 Agent-run trace from user tabs and persistence', async () => {
+  it('isolates the 20-subagent trace from user tabs and persistence', async () => {
     let now = 0;
     const ownerWindow = {
       performance: { now: () => now },
@@ -720,7 +720,7 @@ describe('imperative chat semantic view handle', () => {
     harness.manager.createTab.mockImplementation(async (_openSessionId, tabId, options) => {
       expect(options).toMatchObject({
         sessionFile: expect.stringMatching(
-          /^\.pivi\/sessions\/perf-isolated-agent-runs-\d+\.jsonl$/,
+          /^\.pivi\/sessions\/perf-isolated-subagents-\d+\.jsonl$/,
         ),
       });
       const toolCalls = Array.from({ length: 20 }, (_, index) => ({
@@ -762,13 +762,13 @@ describe('imperative chat semantic view handle', () => {
     harness.manager.closeTab.mockImplementation(async (tabId: string) => tabs.delete(tabId));
 
     const afterRender = jest.fn(async () => {
-      expect(activeTabId).toMatch(/^pivi-development-agent-runs-/);
+      expect(activeTabId).toMatch(/^pivi-development-subagents-/);
       expect(tabs.size).toBe(2);
     });
-    await expect(harness.handle.development?.run20AgentRunsWorkload({ afterRender }))
-      .resolves.toEqual({ agentRuns: 20, messages: 1 });
+    await expect(harness.handle.development?.run20SubagentsWorkload({ afterRender }))
+      .resolves.toEqual({ subagents: 20, messages: 1 });
 
-    expect(afterRender).toHaveBeenCalledWith({ agentRuns: 20, messages: 1 });
+    expect(afterRender).toHaveBeenCalledWith({ subagents: 20, messages: 1 });
     expect(activeTabId).toBe('original');
     expect([...tabs.keys()]).toEqual(['original']);
     expect(harness.persistTabState).not.toHaveBeenCalled();
@@ -852,52 +852,6 @@ describe('imperative chat semantic view handle', () => {
     uiStore.update({ isStreaming: true });
     expect(shell.activeChat.getSnapshot().isStreaming).toBe(true);
     expect(activeChanges).toHaveBeenCalledWith(new Set(['isStreaming']));
-  });
-
-  it('aggregates background work across tabs and navigates through the owner viewport', async () => {
-    const { adapter, manager, mount, ownerDocument } = createHarness();
-    const activeTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
-    const backgroundTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
-    backgroundTab.id = 'tab-background';
-    backgroundTab.state.projectionStore?.replaceAll([{
-      id: 'assistant-owner',
-      role: 'assistant',
-      content: '',
-      timestamp: 1,
-      toolCalls: [{
-        id: 'spawn-1', name: 'spawn_agent', input: {}, status: 'running',
-        subagent: {
-          id: 'run-1', description: 'Background audit', isExpanded: false,
-          mode: 'async', status: 'running', asyncStatus: 'running', toolCalls: [],
-        },
-      }],
-    }]);
-    manager.getActiveTab.mockReturnValue(activeTab);
-    manager.getAllTabs.mockReturnValue([activeTab, backgroundTab]);
-    manager.getTab.mockImplementation(tabId => (
-      tabId === activeTab.id ? activeTab : tabId === backgroundTab.id ? backgroundTab : null
-    ));
-    const shell = adapter.prepareShell(ownerDocument);
-    await mount();
-
-    expect(shell.activeChat.getActiveWorkShelfSnapshot().map(item => [item.tabId, item.run.runId]))
-      .toEqual([['tab-background', 'run-1']]);
-    const navigate = shell.activeChat.getActiveWorkShelfNavigate();
-    await navigate?.('tab-background', 'assistant-owner');
-    expect(manager.switchToTab).toHaveBeenCalledWith('tab-background');
-
-    const callbacks = jest.mocked(TabManager).mock.calls[0]?.[3] as TabManagerCallbacks;
-    callbacks.onTabWillSwitch?.(activeTab.id, backgroundTab.id);
-    const scrollToMessage = jest.fn();
-    shell.activeChat.getMessagePresentation()?.setViewportHandle?.({
-      isAtEnd: () => false,
-      scrollToEnd: () => undefined,
-      scrollToMessage,
-      scrollToRecentUser: () => undefined,
-      scrollToStart: () => undefined,
-      scrollToUser: () => undefined,
-    });
-    expect(scrollToMessage).toHaveBeenCalledWith('assistant-owner', 'center', 'smooth');
   });
 
   it('moves and republishes the tab bar when its setting changes', async () => {

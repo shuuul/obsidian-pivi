@@ -1,7 +1,6 @@
 import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
 
 import type { StreamChunk } from '../../foundation';
-import { PluginLogger } from '../../foundation/pluginLogger';
 import { toChatTurnRequestSnapshot } from '../../runtime/queuedTurn';
 import type { PreparedChatTurn } from '../../runtime/types';
 import type { PiAgentEventAdapter } from './piAgentEventAdapter';
@@ -25,8 +24,6 @@ import {
 import { toPiImageContent } from './piImageContent';
 import type { resolvePiModel } from './piModelEnv';
 import type { SessionTreeStore } from './session/sessionTreeStore';
-
-const logger = new PluginLogger('PiChatRuntimeTurn');
 
 export interface PiChatRuntimeTurnDeps {
   activeTurn: ActiveTurn;
@@ -81,13 +78,8 @@ export async function* streamPiChatTurn(
       }
     }
     if (event.type === 'agent_end') {
-      try {
-        deps.syncSessionMessages(
-          event.messages.length > 0 ? event.messages : emittedMessages,
-        );
-      } catch (error) {
-        logger.warn('failed to sync agent messages after turn', error);
-      }
+      // Persistence runs once after agent.prompt() resolves so a failed write
+      // reaches the turn error path instead of becoming silent history loss.
       return;
     }
     for (const chunk of deps.eventAdapter.adapt(event)) {
@@ -151,11 +143,7 @@ async function runPromptLifecycle(
   const finalMessages = emittedMessages.length > 0
     ? emittedMessages
     : agent.state.messages;
-  try {
-    deps.syncSessionMessages(finalMessages);
-  } catch (error) {
-    logger.warn('failed to sync final agent state after turn', error);
-  }
+  deps.syncSessionMessages(finalMessages);
   const latestUsage = latestUsageFromMessages(finalMessages, deps.resolveModel());
   const usage = latestUsage
     ? attachContextEnvelope(deps.compaction, latestUsage, turn)

@@ -38,7 +38,6 @@ export interface SessionJsonlSourceFingerprint {
   device: string;
   inode: string;
   modifiedNs: string;
-  changedNs: string;
   headSha256: string;
   tailSha256: string;
 }
@@ -101,7 +100,6 @@ interface BigIntStats {
   dev: bigint;
   ino: bigint;
   mtimeNs: bigint;
-  ctimeNs: bigint;
 }
 
 const indexCache = new Map<string, MutableSessionJsonlIndex>();
@@ -130,7 +128,7 @@ function stats(file: string): BigIntStats {
 }
 
 function statsIdentity(value: BigIntStats): string {
-  return [value.size, value.dev, value.ino, value.mtimeNs, value.ctimeNs].join(':');
+  return [value.size, value.dev, value.ino, value.mtimeNs].join(':');
 }
 
 function readSlice(file: string, offset: number, length: number): Buffer {
@@ -175,7 +173,6 @@ function fingerprintFromBuffer(
     device: fileStats.dev.toString(),
     inode: fileStats.ino.toString(),
     modifiedNs: fileStats.mtimeNs.toString(),
-    changedNs: fileStats.ctimeNs.toString(),
     headSha256: sha256(head),
     tailSha256: sha256(tail),
   };
@@ -197,7 +194,6 @@ function readStableFingerprint(file: string): SessionJsonlSourceFingerprint {
       device: before.dev.toString(),
       inode: before.ino.toString(),
       modifiedNs: before.mtimeNs.toString(),
-      changedNs: before.ctimeNs.toString(),
       headSha256: sha256(head),
       tailSha256: sha256(tail),
     };
@@ -219,7 +215,6 @@ function fingerprintsEqual(
     && a.device === b.device
     && a.inode === b.inode
     && a.modifiedNs === b.modifiedNs
-    && a.changedNs === b.changedNs
     && a.headSha256 === b.headSha256
     && a.tailSha256 === b.tailSha256;
 }
@@ -351,7 +346,6 @@ function isFingerprint(value: unknown): value is SessionJsonlSourceFingerprint {
     && typeof record.device === 'string'
     && typeof record.inode === 'string'
     && typeof record.modifiedNs === 'string'
-    && typeof record.changedNs === 'string'
     && typeof record.headSha256 === 'string'
     && typeof record.tailSha256 === 'string';
 }

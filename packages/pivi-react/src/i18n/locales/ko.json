@@ -117,21 +117,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage}%)",
-      "unknownContextLength": "현재 모델의 컨텍스트 길이를 확인할 수 없습니다.",
-      "inspectorTitle": "컨텍스트 검사기",
-      "closeInspector": "컨텍스트 검사기 닫기",
-      "total": "현재 합계",
-      "system": "시스템 및 도구",
-      "recentConversation": "최근 대화",
-      "selectedContext": "선택한 컨텍스트",
-      "toolAndAgentResults": "도구 및 Agent 결과",
-      "checkpoints": "체크포인트",
-      "usableInput": "사용 가능한 입력",
-      "compactionTrigger": "압축 트리거",
-      "reservedOutput": "예약 출력",
-      "compactionReserve": "압축 예약",
-      "safetyMargin": "안전 여유",
-      "estimateNote": "~는 보수적인 추정치입니다."
+      "unknownContextLength": "현재 모델의 컨텍스트 길이를 확인할 수 없습니다."
     },
     "todos": {
       "progress": "작업 {completed}/{total}",
@@ -141,18 +127,6 @@
     "activity": {
       "backgroundTask": "백그라운드 작업",
       "subagentTask": "하위 에이전트 작업",
-      "agentGroupCount": "에이전트 {count}개",
-      "agentGroupStatusCount": "{status} {count}개",
-      "agentRunTimeline": "{agent} 타임라인",
-      "objective": "목표",
-      "timeline": "활동 타임라인",
-      "agentConclusion": "{agent} 결론",
-      "findings": "발견 사항",
-      "decisions": "결정 사항",
-      "artifacts": "산출물",
-      "openQuestions": "열린 질문",
-      "activeWork": "활성 작업",
-      "goToAgentRun": "대화 기록의 {agent}(으)로 이동",
       "expand": "클릭하여 펼치기",
       "collapse": "클릭하여 접기",
       "prompt": "프롬프트",
@@ -163,6 +137,7 @@
       "error": "오류"
     },
     "status": {
+      "count": "{count}개 {status}",
       "queued": "대기열",
       "running": "실행 중",
       "waiting": "기다리는 중",
@@ -355,7 +330,7 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "보내기에 Command/Ctrl+Enter 필요",
-      "desc": "사용하면 Enter는 줄바꿈을 삽입합니다. macOS는 Command+Enter, Windows와 Linux는 Ctrl+Enter로 보냅니다."
+      "desc": "사용하면 Enter는 줄바꿈을 삽입합니다. Command+Enter 또는 Ctrl+Enter로 보냅니다."
     },
     "inlineEditHotkey": {
       "name": "인라인 편집"
@@ -406,10 +381,6 @@
       "allowBackground": {
         "name": "백그라운드 서브에이전트 허용",
         "desc": "run_in_background=true인 spawn_agent 호출을 허용합니다. 완료 결과는 서브에이전트 카드에 반영됩니다."
-      },
-      "activeWorkShelf": {
-        "name": "활성 작업 선반 표시",
-        "desc": "대기 중이거나 실행 중인 백그라운드 에이전트를 작성기 근처에 표시합니다. 대화 기록이 계속 기준 데이터입니다."
       },
       "maxConcurrent": {
         "name": "동시 서브에이전트 최대 수",

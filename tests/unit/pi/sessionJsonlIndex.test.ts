@@ -4,6 +4,7 @@ import path from 'path';
 import { SessionManager } from '@earendil-works/pi-coding-agent';
 
 import {
+  assertSessionJsonlSourceUnchanged,
   ensureSessionJsonlIndex,
   captureSessionJsonlSource,
   getSessionJsonlIndexPath,
@@ -152,6 +153,35 @@ describe('sessionJsonlIndex', () => {
     fs.utimesSync(sessionFile, previousStats.atime, previousStats.mtime);
 
     expect(() => loadSessionJsonlIndex(sessionFile)).toThrow(SessionIndexStaleError);
+  });
+
+  it('ignores metadata-only mode changes before validating and indexing an append', () => {
+    const initial = rebuildSessionJsonlIndex(sessionFile);
+    const before = fs.statSync(sessionFile, { bigint: true });
+    fs.chmodSync(sessionFile, Number(before.mode) ^ 0o100);
+    const after = fs.statSync(sessionFile, { bigint: true });
+
+    expect(after.mode).not.toBe(before.mode);
+    expect(after.mtimeNs).toBe(before.mtimeNs);
+    expect(() => assertSessionJsonlSourceUnchanged(sessionFile, initial.source)).not.toThrow();
+    expect(() => validateSessionJsonlIndexSource(initial)).not.toThrow();
+
+    fs.appendFileSync(sessionFile, line({
+      type: 'custom',
+      customType: 'pivi/message-ui',
+      id: 'ui-after-metadata-drift',
+      parentId: 'user-1',
+      timestamp: '2026-01-01T00:00:02.000Z',
+      data: { targetEntryId: 'user-1' },
+    }));
+
+    expect(() => refreshSessionJsonlIndexAfterAppend(
+      sessionFile,
+      initial.source,
+      ['ui-after-metadata-drift'],
+    )).not.toThrow();
+    expect(loadSessionJsonlIndex(sessionFile)?.entries.at(-1)?.id)
+      .toBe('ui-after-metadata-drift');
   });
 
   it('rejects unexpected appended entries instead of silently rebuilding', () => {

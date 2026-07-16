@@ -4,6 +4,7 @@ import {
   mergeCheckpoints,
   parseAgentReport,
   parseCheckpoint,
+  stripAgentReportBlocksFromText,
   type AgentReport,
   type Checkpoint,
 } from '@pivi/pivi-agent-core/session/continuationSchemas';
@@ -111,5 +112,32 @@ describe('continuation schemas', () => {
     ].join('\n');
     expect(extractAgentReportFromText(terminal)).toEqual(report);
     expect(extractAgentReportFromText('plain terminal result')).toBeNull();
+  });
+
+  it('strips every internal report fence from visible terminal text', () => {
+    const terminal = [
+      'Narrative remains available.',
+      `\`\`\`${AGENT_REPORT_BLOCK_LANGUAGE}`,
+      '{invalid json}',
+      '```',
+      '',
+      'Second paragraph.',
+      `\`\`\`${AGENT_REPORT_BLOCK_LANGUAGE}`,
+      JSON.stringify({ schemaVersion: 2, objective: 'Unknown', outcome: 'completed' }),
+      '```',
+    ].join('\n');
+    expect(stripAgentReportBlocksFromText(terminal)).toBe([
+      'Narrative remains available.',
+      '',
+      'Second paragraph.',
+    ].join('\n'));
+  });
+
+  it('removes an unclosed internal report fence through the end of terminal text', () => {
+    expect(stripAgentReportBlocksFromText([
+      'Visible result.',
+      `\`\`\`${AGENT_REPORT_BLOCK_LANGUAGE}`,
+      '{"schemaVersion":1',
+    ].join('\n'))).toBe('Visible result.');
   });
 });

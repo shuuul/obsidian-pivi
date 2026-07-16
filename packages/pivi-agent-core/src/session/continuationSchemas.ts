@@ -285,6 +285,19 @@ export function extractAgentReportFromText(text: string): AgentReport | null {
   return report;
 }
 
+/** Remove internal Agent-report protocol fences before terminal text reaches presentation. */
+export function stripAgentReportBlocksFromText(text: string): string {
+  const pattern = new RegExp(
+    '(^|\\r?\\n)[ \\t]*```' + AGENT_REPORT_BLOCK_LANGUAGE
+      + '[^\\S\\r\\n]*(?:\\r?\\n|$)[\\s\\S]*?(?:\\r?\\n[ \\t]*```(?=\\r?\\n|$)|$)',
+    'gi',
+  );
+  return text
+    .replace(pattern, (_block, prefix: string) => prefix)
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function formatReportList(label: string, values: readonly string[] | undefined): string[] {
   return values && values.length > 0
     ? [label, ...values.map((value) => `- ${value}`)]

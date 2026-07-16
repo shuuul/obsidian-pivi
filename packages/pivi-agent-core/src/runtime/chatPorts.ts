@@ -89,7 +89,6 @@ export interface ChatSettingsSnapshot {
   environmentVariables: string;
   externalReadDirectories: string[];
   hiddenSlashCommands: string[];
-  showActiveWorkShelf: boolean;
   modelCatalog: ChatModelCatalogSnapshot;
 }
 

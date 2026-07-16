@@ -22,7 +22,6 @@ export interface ChatTabPortalTargets {
   readonly composer?: HTMLElement | null;
 }
 
-
 export interface ComposerChromeActions {
   send: () => void;
   stop: () => void;
@@ -43,15 +42,6 @@ export interface MessagePresentationRuntime {
   readonly setViewportHandle?: (handle: MessageViewportHandle | null) => void;
 }
 
-export interface ActiveWorkShelfItem {
-  readonly tabId: string;
-  readonly run: NonNullable<ReturnType<ChatProjectionStore['getAgentRunSnapshot']>>;
-}
-
-export interface ActiveWorkShelfSource {
-  readonly tabId: string;
-  readonly store: ChatProjectionStore;
-}
 /**
  * Runtime-only selector for the active tab's immutable UI snapshot and React-owned portal slots.
  * Portal elements intentionally stay outside the serializable snapshot boundary.
@@ -63,10 +53,6 @@ export class ActiveChatUiBridge {
   private targets: ChatTabPortalTargets | null = null;
   private actions: ComposerChromeActions | null = null;
   private messagePresentation: MessagePresentationRuntime | null = null;
-  private workShelfSources: readonly ActiveWorkShelfSource[] = [];
-  private workShelfSourceUnsubscribers: Array<() => void> = [];
-  private workShelfSnapshot: readonly ActiveWorkShelfItem[] = Object.freeze([]);
-  private workShelfNavigate: ((tabId: string, messageId: string) => void | Promise<void>) | null = null;
   private readonly emptySnapshot = new ChatUiStore(createInitialChatUiSnapshot()).getSnapshot();
   private readonly listeners = new Set<ChatUiStoreListener>();
 
@@ -77,8 +63,6 @@ export class ActiveChatUiBridge {
   readonly getComposerActions = (): ComposerChromeActions | null => this.actions;
 
   readonly getMessagePresentation = (): MessagePresentationRuntime | null => this.messagePresentation;
-  readonly getActiveWorkShelfSnapshot = (): readonly ActiveWorkShelfItem[] => this.workShelfSnapshot;
-  readonly getActiveWorkShelfNavigate = () => this.workShelfNavigate;
   readonly subscribe = (listener: ChatUiStoreListener): (() => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -115,25 +99,6 @@ export class ActiveChatUiBridge {
     this.notify(new Set());
   }
 
-  setActiveWorkShelfSources(
-    sources: readonly ActiveWorkShelfSource[],
-    navigate: ((tabId: string, messageId: string) => void | Promise<void>) | null,
-  ): void {
-    this.workShelfNavigate = navigate;
-    const sourcesChanged = sources.length !== this.workShelfSources.length
-      || sources.some((source, index) => (
-        source.tabId !== this.workShelfSources[index]?.tabId
-        || source.store !== this.workShelfSources[index]?.store
-      ));
-    if (!sourcesChanged) return;
-    for (const unsubscribe of this.workShelfSourceUnsubscribers) unsubscribe();
-    this.workShelfSources = [...sources];
-    this.workShelfSourceUnsubscribers = sources.map(source => (
-      source.store.subscribeActiveAgentRuns(this.refreshActiveWorkShelf)
-    ));
-    this.refreshActiveWorkShelf();
-  }
-
   dispose(): void {
     this.activeProjectionStore?.setSurfaceActive(false);
     this.activeStoreUnsubscribe?.();
@@ -143,28 +108,8 @@ export class ActiveChatUiBridge {
     this.targets = null;
     this.actions = null;
     this.messagePresentation = null;
-    for (const unsubscribe of this.workShelfSourceUnsubscribers) unsubscribe();
-    this.workShelfSourceUnsubscribers = [];
-    this.workShelfSources = [];
-    this.workShelfSnapshot = Object.freeze([]);
-    this.workShelfNavigate = null;
     this.listeners.clear();
   }
-
-  private readonly refreshActiveWorkShelf = (): void => {
-    const next = this.workShelfSources.flatMap(source => (
-      source.store.getActiveAgentRunsSnapshot().map(run => ({ tabId: source.tabId, run }))
-    ));
-    if (next.length === this.workShelfSnapshot.length
-      && next.every((item, index) => (
-        item.tabId === this.workShelfSnapshot[index]?.tabId
-        && item.run === this.workShelfSnapshot[index]?.run
-      ))) {
-      return;
-    }
-    this.workShelfSnapshot = Object.freeze(next);
-    this.notify(new Set());
-  };
 
   private notify(changedKeys: ReadonlySet<ChatUiSnapshotKey>): void {
     for (const listener of this.listeners) listener(changedKeys);

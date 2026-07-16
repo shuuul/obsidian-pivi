@@ -386,67 +386,6 @@ describe('React ChatShell tabs', () => {
     await act(async () => mounted.mounted.dispose());
   });
 
-  it('owns context inspector dismissal and focus in the popout realm', async () => {
-    const iframe = document.createElement('iframe');
-    document.body.appendChild(iframe);
-    const ownerDocument = iframe.contentDocument;
-    const ownerWindow = iframe.contentWindow;
-    expect(ownerDocument).not.toBeNull();
-    expect(ownerWindow).not.toBeNull();
-    if (!ownerDocument || !ownerWindow) return;
-
-    const bridge = new ActiveChatUiBridge();
-    const uiStore = new ChatUiStore();
-    const projectionStore = new ChatProjectionStore();
-    const targets = createPortalTargets(ownerDocument);
-    for (const target of [
-      targets.welcome,
-      targets.queue,
-      targets.todo,
-      targets.navigation,
-      targets.composer,
-      targets.messages,
-    ]) {
-      ownerDocument.body.appendChild(target);
-    }
-    bridge.setActive(uiStore, projectionStore, targets, {
-      addExternalContext: jest.fn(),
-      removeExternalPath: jest.fn(),
-      send: jest.fn(),
-      setMode: jest.fn(),
-      setModel: jest.fn(),
-      setThinkingBudget: jest.fn(),
-      setThinkingLevel: jest.fn(),
-      stop: jest.fn(),
-      toggleExternalPath: jest.fn(),
-      toggleExternalPinned: jest.fn(),
-    });
-    const mounted = await mountShell({ activeChat: bridge, ownerDocument, ownerWindow });
-    act(() => uiStore.update({
-      usage: {
-        contextTokens: 800,
-        contextWindow: 1_000,
-        inputTokens: 800,
-        percentage: 80,
-      },
-    }));
-
-    const trigger = within(targets.composer).getByRole('button', { name: '800 / 1K (80%)' });
-    fireEvent.click(trigger);
-    expect(within(targets.composer).getByRole('dialog', { name: 'Context inspector' }))
-      .toHaveTextContent('Current total~800');
-    fireEvent.keyDown(document, { key: 'Escape' });
-    expect(within(targets.composer).getByRole('dialog', { name: 'Context inspector' })).toBeInTheDocument();
-    fireEvent.keyDown(ownerDocument, { key: 'Escape' });
-    expect(within(targets.composer).queryByRole('dialog', { name: 'Context inspector' })).toBeNull();
-    expect(trigger).toHaveFocus();
-
-    await act(async () => mounted.mounted.dispose());
-    bridge.dispose();
-    targets.remove();
-    iframe.remove();
-  });
-
   it('projects active chat state into dedicated welcome, queue, usage, todo, and navigation portals', async () => {
     const bridge = new ActiveChatUiBridge();
     const uiStore = new ChatUiStore();
@@ -545,14 +484,10 @@ describe('React ChatShell tabs', () => {
     }));
     const usageTrigger = within(targets.composer).getByLabelText('980 / 1K (98%)');
     expect(usageTrigger).toHaveClass('warning');
+    expect(usageTrigger.tagName).toBe('SPAN');
+    expect(usageTrigger).toHaveAttribute('data-tooltip', '980 / 1K (98%)');
     fireEvent.click(usageTrigger);
-    const inspector = within(targets.composer).getByRole('dialog', { name: 'Context inspector' });
-    expect(inspector).toHaveTextContent('Current total980');
-    expect(inspector).toHaveTextContent('System and tools~100');
-    expect(inspector).toHaveTextContent('Compaction trigger~600');
-    expect(inspector).toHaveTextContent('~ indicates a conservative estimate.');
-    fireEvent.keyDown(targets.composer.ownerDocument, { key: 'Escape' });
-    expect(within(targets.composer).queryByRole('dialog', { name: 'Context inspector' })).toBeNull();
+    expect(within(targets.composer).queryByRole('dialog')).toBeNull();
     expect(targets.composer.querySelector('path.pivi-meter-bg')?.getAttribute('d')).toBe('M 1.94 11.5 A 7 7 0 1 1 14.06 11.5');
     expect(within(targets.composer).queryByLabelText(/Output /)).toBeNull();
     expect(targets.composer.querySelector('.pivi-context-meter-gauge-output')).toBeNull();
@@ -733,7 +668,6 @@ describe('React ChatShell tabs', () => {
       uiStore.update({
         composer: {
           canSend: true,
-          showActiveWorkShelf: false,
           model: 'model-a',
           modelOptions: [
             { label: 'Model A', providerLogoSlug: 'anthropic', value: 'model-a' },
@@ -845,61 +779,4 @@ describe('React ChatShell tabs', () => {
     targets.remove();
   });
 
-  it('keeps the active work shelf off by default and navigates to projected owners when enabled', async () => {
-    const bridge = new ActiveChatUiBridge();
-    const uiStore = new ChatUiStore();
-    const activeProjectionStore = new ChatProjectionStore();
-    const projectionStore = new ChatProjectionStore();
-    const targets = createPortalTargets();
-    const navigateToMessage = jest.fn();
-    const composerActions = {
-      send: jest.fn(), stop: jest.fn(), setModel: jest.fn(), setMode: jest.fn(),
-      setThinkingBudget: jest.fn(), setThinkingLevel: jest.fn(),
-      toggleExternalPath: jest.fn(), toggleExternalPinned: jest.fn(),
-      removeExternalPath: jest.fn(), addExternalContext: jest.fn(),
-    };
-    const message = (status: 'running' | 'completed') => ({
-      id: 'assistant-owner',
-      role: 'assistant' as const,
-      content: '',
-      timestamp: 1,
-      toolCalls: [{
-        id: 'spawn-1', name: 'spawn_agent', input: {}, status,
-        subagent: {
-          id: 'run-1', writerName: 'Austen', description: 'Audit sources', isExpanded: false,
-          mode: 'async' as const, status, asyncStatus: status,
-          toolCalls: status === 'running'
-            ? [{ id: 'read-1', name: 'read', input: {}, status: 'running' as const }]
-            : [],
-        },
-      }],
-    });
-    projectionStore.replaceAll([message('running')]);
-    act(() => {
-      bridge.setActive(uiStore, activeProjectionStore, targets, composerActions);
-      bridge.setActiveWorkShelfSources(
-        [{ tabId: 'background-tab', store: projectionStore }],
-        navigateToMessage,
-      );
-    });
-    const mounted = await mountShell({ activeChat: bridge, position: 'header' });
-    await act(async () => {});
-
-    expect(targets.composer.querySelector('.pivi-active-work-shelf')).toBeNull();
-    act(() => uiStore.update({
-      composer: { ...uiStore.getSnapshot().composer, showActiveWorkShelf: true },
-    }));
-    const shelf = within(targets.composer).getByRole('region', { name: 'Active work' });
-    expect(shelf).toHaveTextContent('AustenreadRunning');
-    expect(shelf.querySelector('.pivi-active-work-items')).not.toHaveStyle({ overflow: 'auto' });
-    fireEvent.click(within(shelf).getByRole('button', { name: 'Go to Austen in the transcript' }));
-    expect(navigateToMessage).toHaveBeenCalledWith('background-tab', 'assistant-owner');
-
-    act(() => projectionStore.upsertNow(message('completed')));
-    expect(targets.composer.querySelector('.pivi-active-work-shelf')).toBeNull();
-
-    await act(async () => mounted.mounted.dispose());
-    bridge.dispose();
-    targets.remove();
-  });
 });

@@ -1,3 +1,4 @@
+import { stripAgentReportBlocksFromText } from '@pivi/pivi-agent-core/session/continuationSchemas';
 import { extractFinalResultFromSubagentJsonl } from '@pivi/pivi-agent-core/session/subagentJsonl';
 import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
 
@@ -169,6 +170,12 @@ export class SubagentResultParser {
   }
 
   public extractAgentResult(result: string, agentId: string, toolUseResult?: unknown): string {
+    return stripAgentReportBlocksFromText(
+      this.extractAgentResultRaw(result, agentId, toolUseResult),
+    );
+  }
+
+  private extractAgentResultRaw(result: string, agentId: string, toolUseResult?: unknown): string {
     if (isRecord(toolUseResult) && typeof toolUseResult.terminal_result === 'string') {
       const terminalResult = toolUseResult.terminal_result.trim();
       if (terminalResult) {
@@ -204,7 +211,7 @@ export class SubagentResultParser {
         if (parsedOutput) {
           return parsedOutput;
         }
-        return JSON.stringify(agentData, null, 2);
+        return '';
       }
 
       if (agents) {
@@ -221,7 +228,7 @@ export class SubagentResultParser {
               return parsedOutput;
             }
           }
-          return firstAgent === undefined ? payload : JSON.stringify(firstAgent, null, 2) ?? payload;
+          return '';
         }
       }
 
@@ -241,7 +248,7 @@ export class SubagentResultParser {
       return taggedResult;
     }
 
-    return payload;
+    return parsed ? '' : payload;
   }
 
   public extractResultFromTaskObject(task: unknown): string | null {

@@ -1,4 +1,5 @@
 import { SubagentResultParser } from '@/ui/chat/services/SubagentResultParser';
+import { AGENT_REPORT_BLOCK_LANGUAGE } from '@pivi/pivi-agent-core/session/continuationSchemas';
 import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
 
 const mockInterpreter: TaskResultInterpreter = {
@@ -90,6 +91,17 @@ describe('SubagentResultParser', () => {
       })).toBe('full terminal narrative');
     });
 
+    it('removes the internal report fence from the preserved terminal result', () => {
+      expect(parser.extractAgentResult('compact report', 'agent1', {
+        terminal_result: [
+          'Visible narrative.',
+          `\`\`\`${AGENT_REPORT_BLOCK_LANGUAGE}`,
+          '{"schemaVersion":1,"objective":"Audit","outcome":"completed"}',
+          '```',
+        ].join('\n'),
+      })).toBe('Visible narrative.');
+    });
+
     it('extracts result from task object', () => {
       const json = JSON.stringify({
         task: {
@@ -107,6 +119,15 @@ describe('SubagentResultParser', () => {
         }
       });
       expect(parser.extractAgentResult(json, 'agent1')).toBe('agent1 result');
+    });
+
+    it('does not stringify protocol wrappers without a textual result', () => {
+      const json = JSON.stringify({
+        agents: {
+          agent1: { status: 'completed', metadata: { internal: true } },
+        },
+      });
+      expect(parser.extractAgentResult(json, 'agent1')).toBe('');
     });
 
     it('falls back to tagged result', () => {

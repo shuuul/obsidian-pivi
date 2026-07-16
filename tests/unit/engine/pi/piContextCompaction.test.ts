@@ -74,6 +74,7 @@ None
     expect(getCompactionThresholdTokens(1_000, 0.99)).toBe(600);
     expect(getCompactionThresholdTokens(1_000, 0.8)).toBe(600);
     expect(getCompactionThresholdTokens(200_000, 0.9, true, 16_000)).toBe(164_000);
+    expect(getCompactionThresholdTokens(128_000, 0.8, true, 128_000)).toBe(93_600);
   });
 
   it('estimates CJK, code, JSON, and tool structures conservatively', () => {

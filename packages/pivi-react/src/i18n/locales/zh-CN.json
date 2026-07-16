@@ -117,21 +117,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
-      "unknownContextLength": "无法获取当前模型的上下文长度。",
-      "inspectorTitle": "上下文检查器",
-      "closeInspector": "关闭上下文检查器",
-      "total": "当前总量",
-      "system": "系统与工具",
-      "recentConversation": "近期对话",
-      "selectedContext": "所选上下文",
-      "toolAndAgentResults": "工具与 Agent 结果",
-      "checkpoints": "检查点",
-      "usableInput": "可用输入",
-      "compactionTrigger": "压缩触发线",
-      "reservedOutput": "预留输出",
-      "compactionReserve": "压缩预留",
-      "safetyMargin": "安全余量",
-      "estimateNote": "~ 表示保守估算。"
+      "unknownContextLength": "无法获取当前模型的上下文长度。"
     },
     "todos": {
       "progress": "任务 {completed}/{total}",
@@ -141,18 +127,6 @@
     "activity": {
       "backgroundTask": "后台任务",
       "subagentTask": "子代理任务",
-      "agentGroupCount": "{count} 个代理",
-      "agentGroupStatusCount": "{count} 个{status}",
-      "agentRunTimeline": "{agent} 时间线",
-      "objective": "目标",
-      "timeline": "活动时间线",
-      "agentConclusion": "{agent} 的结论",
-      "findings": "发现",
-      "decisions": "决策",
-      "artifacts": "产物",
-      "openQuestions": "待解决问题",
-      "activeWork": "进行中工作",
-      "goToAgentRun": "前往对话记录中的 {agent}",
       "expand": "点击展开",
       "collapse": "点击折叠",
       "prompt": "提示词",
@@ -163,6 +137,7 @@
       "error": "错误"
     },
     "status": {
+      "count": "{count} 个{status}",
       "queued": "已排队",
       "running": "运行中",
       "waiting": "等待中",
@@ -355,7 +330,7 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "需要 Command/Ctrl+Enter 发送",
-      "desc": "启用后，Enter 会插入换行。macOS 使用 Command+Enter 发送；Windows 和 Linux 使用 Ctrl+Enter 发送。"
+      "desc": "启用后，Enter 会插入换行。Command+Enter 或 Ctrl+Enter 均可发送。"
     },
     "inlineEditHotkey": {
       "name": "内联编辑"
@@ -406,10 +381,6 @@
       "allowBackground": {
         "name": "允许后台子智能体",
         "desc": "允许 run_in_background=true 的 spawn_agent 调用。完成后结果会回填到子智能体卡片。"
-      },
-      "activeWorkShelf": {
-        "name": "显示进行中工作架",
-        "desc": "在输入框附近显示排队中和运行中的后台代理。对话记录仍是唯一事实来源。"
       },
       "maxConcurrent": {
         "name": "最大并发子智能体数",

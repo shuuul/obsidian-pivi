@@ -118,6 +118,7 @@ export class StreamController {
       subagentManager: deps.subagentManager,
       getAgentService: deps.getAgentService,
       showThinkingIndicator: () => this.showThinkingIndicator(),
+      hideThinkingIndicator: () => this.hideThinkingIndicator(),
       scrollToBottom: () => {},
     });
     this.usagePresenter = new UsagePresenter({

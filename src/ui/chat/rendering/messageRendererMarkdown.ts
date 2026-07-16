@@ -7,6 +7,7 @@ import { MarkdownRenderer, setIcon } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
+import { createContextBadgeElement } from '@/ui/shared/context-badge/ContextBadgeRenderer';
 import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
 
@@ -236,10 +237,34 @@ export async function renderUserMessageText(
     options?: RenderContentOptions,
   ) => Promise<void>,
 ): Promise<void> {
-  if (renderMentionBadges(el, text, buildMentionBadgeContext(host, turnRequest), host.app)) {
+  const autoAttachedNotePath = turnRequest?.currentNotePath;
+  const textTarget = autoAttachedNotePath
+    ? el.ownerDocument.createElement('div')
+    : el;
+
+  if (autoAttachedNotePath) {
+    el.empty();
+    const badges = el.ownerDocument.createElement('div');
+    badges.className = 'pivi-user-context-badges';
+    badges.appendChild(createContextBadgeElement(
+      { kind: 'file', token: `[[${autoAttachedNotePath}]]`, path: autoAttachedNotePath },
+      {
+        inline: true,
+        onClick: () => { void host.app.workspace.openLinkText(autoAttachedNotePath, ''); },
+      },
+    ));
+    el.append(badges, textTarget);
+  }
+
+  if (renderMentionBadges(
+    textTarget,
+    text,
+    buildMentionBadgeContext(host, turnRequest),
+    host.app,
+  )) {
     return;
   }
-  await renderContent(el, text);
+  await renderContent(textTarget, text);
 }
 
 export async function renderMarkdownContent(

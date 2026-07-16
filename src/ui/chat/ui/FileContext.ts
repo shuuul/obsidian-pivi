@@ -158,9 +158,12 @@ export class FileContextManager {
     return !!resolvedPath && !this.state.hasSentCurrentNote();
   }
 
-  /** Marks current note as sent (call after sending a message). */
-  markCurrentNoteSent() {
+  /** Consume the current turn's auto-attach and explicit file cards after snapshotting. */
+  clearAfterSend() {
     this.state.markCurrentNoteSent();
+    this.state.clearAttachments();
+    this.currentNotePath = null;
+    this.refreshCurrentNoteChip();
   }
 
   isSessionStarted(): boolean {
@@ -187,10 +190,7 @@ export class FileContextManager {
 
   /** Sets current note (for restoring persisted state). */
   setCurrentNote(notePath: string | null) {
-    this.currentNotePath = notePath;
-    if (notePath) {
-      this.state.attachFile(notePath);
-    }
+    this.currentNotePath = this.state.hasSentCurrentNote() ? null : notePath;
     this.refreshCurrentNoteChip();
   }
 
@@ -201,7 +201,6 @@ export class FileContextManager {
       const normalizedPath = this.normalizePathForVault(activeFile.path);
       if (normalizedPath) {
         this.currentNotePath = normalizedPath;
-        this.state.attachFile(normalizedPath);
         this.refreshCurrentNoteChip();
       }
     }
@@ -216,7 +215,6 @@ export class FileContextManager {
       this.state.clearAttachments();
       if (!this.hasExcludedTag(file)) {
         this.currentNotePath = normalizedPath;
-        this.state.attachFile(normalizedPath);
       } else {
         this.currentNotePath = null;
       }

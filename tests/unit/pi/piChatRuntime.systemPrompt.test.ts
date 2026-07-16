@@ -542,6 +542,40 @@ describe('PiChatRuntime system prompt', () => {
     persistUser.mockRestore();
   });
 
+  it('surfaces a post-turn persistence failure instead of silently losing history', async () => {
+    const syncMessages = jest.spyOn(SessionTreeStore.prototype, 'syncAgentMessages')
+      .mockImplementationOnce(() => { throw new Error('session append failed'); });
+    const runtime = createRuntime(createMockPlugin());
+    const chunks: StreamChunk[] = [];
+
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Persist this reply' }))) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toContainEqual({
+      type: 'error',
+      content: 'session append failed',
+    });
+    syncMessages.mockRestore();
+  });
+
+  it('persists the completed assistant and tool sequence after the user prompt', async () => {
+    const runtime = createRuntime(createMockPlugin());
+
+    for await (const _chunk of runtime.query(runtime.prepareTurn({ text: 'Trigger tool usage update' }))) {
+      // Drain the complete turn before reopening its durable session.
+    }
+
+    const sessionFile = runtime.getSessionStateUpdates().sessionFile;
+    expect(sessionFile).toEqual(expect.any(String));
+    const persistedRoles = SessionTreeStore.open('/test/vault', sessionFile ?? '')
+      .getEntries()
+      .filter(entry => entry.type === 'message')
+      .map(entry => entry.message.role);
+
+    expect(persistedRoles).toEqual(['user', 'assistant', 'toolResult', 'assistant']);
+  });
+
   it('refreshes local model metadata once after the first prompt loads the model', async () => {
     process.env.LMSTUDIO_API_KEY = 'local-placeholder';
     const refreshSpy = jest
@@ -1005,6 +1039,37 @@ None
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).not.toHaveBeenCalled();
     expect(chunks).toContainEqual(expect.objectContaining({
+      type: 'error',
+      content: expect.stringContaining('too large'),
+    }));
+  });
+
+  it('allows a small first turn when the model output limit spans its context window', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    PI_AI_MODELS_CACHE.set(
+      'lmstudio/preflight-model',
+      {
+        ...localModelFixture(true),
+        contextWindow: 128_000,
+        maxTokens: 128_000,
+      },
+    );
+    const plugin = createMockPlugin({
+      model: 'lmstudio/preflight-model',
+      visibleModels: ['lmstudio/preflight-model'],
+      enableAutoCompact: true,
+      autoCompactThresholdRatio: 0.8,
+    });
+    const runtime = createRuntime(plugin);
+    const chunks: StreamChunk[] = [];
+
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Short first turn' }))) {
+      chunks.push(chunk);
+    }
+
+    expectDefined(mockAgentInstances[0]);
+    expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith('Short first turn');
+    expect(chunks).not.toContainEqual(expect.objectContaining({
       type: 'error',
       content: expect.stringContaining('too large'),
     }));

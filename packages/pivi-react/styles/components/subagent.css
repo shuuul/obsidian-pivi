@@ -75,13 +75,6 @@
   color: var(--pivi-host-text-accent);
 }
 
-.pivi-subagent-indicator-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--pivi-radius-pill);
-  background: currentColor;
-}
-
 .pivi-subagent-icon.status-completed {
   color: var(--pivi-host-text-muted);
 }
@@ -233,18 +226,14 @@
 .pivi-subagent-tools>.pivi-tool-step-group {
   min-width: 0;
   margin: 0;
-  padding: 3px 6px;
-  border: 1px solid var(--pivi-border-subtle);
-  border-radius: var(--pivi-radius-sm);
-  background: var(--pivi-surface-subtle);
 }
 
 .pivi-subagent-tools .pivi-tool-step-group-steps:not(.pivi-hidden) {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0;
   min-width: 0;
-  padding: 4px 0 2px;
+  padding: 2px 0 4px 8px;
 }
 
 .pivi-subagent-tools .pivi-tool-step-item {
@@ -254,9 +243,7 @@
 
 .pivi-subagent-tools .pivi-tool-call-in-step-group {
   min-width: 0;
-  border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.07);
-  border-radius: var(--pivi-radius-xs);
-  background: var(--pivi-surface-raised);
+  margin: 0;
 }
 
 @container pivi-subagent-content (max-width: 320px) {
@@ -274,8 +261,4 @@
   .pivi-subagent-tools .pivi-tool-summary {
     display: none;
   }
-}
-
-.pivi-subagent-progress {
-  display: none;
 }

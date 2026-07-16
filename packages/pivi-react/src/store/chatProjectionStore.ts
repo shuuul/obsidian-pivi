@@ -11,10 +11,6 @@ import {
 import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import {
-  type ChatAgentRunEntity,
-  deriveAgentRunEntities,
-} from './agentRunProjection';
-import {
   type ChatPerfProjectionCommitReason,
   type ChatPerfRecorder,
   NOOP_CHAT_PERF_RECORDER,
@@ -138,7 +134,6 @@ export function getChatProjectionBlockId(messageId: string, index: number): stri
 interface MessageEntityKeys {
   blockIds: string[];
   toolIds: string[];
-  agentIds: string[];
 }
 
 function cloneSerializableValue(value: unknown): unknown {
@@ -191,11 +186,7 @@ function structurallyEqual(left: unknown, right: unknown): boolean {
 }
 
 function toolEntitiesEqual(left: ToolCallInfo, right: ToolCallInfo): boolean {
-  const { subagent: leftSubagent, ...leftTool } = left;
-  const { subagent: rightSubagent, ...rightTool } = right;
-  return structurallyEqual(leftTool, rightTool)
-    && leftSubagent?.id === rightSubagent?.id
-    && leftSubagent?.agentId === rightSubagent?.agentId;
+  return structurallyEqual(left, right);
 }
 
 function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessage): boolean {
@@ -247,12 +238,10 @@ function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessag
  */
 export class ChatProjectionStore {
   private order: readonly string[] = Object.freeze([]);
-  private activeAgentRuns: readonly DeepReadonly<ChatAgentRunEntity>[] = Object.freeze([]);
   private readonly messages = new Map<string, ProjectionMessage>();
   private readonly messageStructures = new Map<string, ProjectionMessage>();
   private readonly blocks = new Map<string, DeepReadonly<ChatBlockEntity>>();
   private readonly tools = new Map<string, DeepReadonly<ChatToolEntity>>();
-  private readonly agentRuns = new Map<string, DeepReadonly<ChatAgentRunEntity>>();
   private readonly entityKeysByMessageId = new Map<string, MessageEntityKeys>();
   private sourceMessages: readonly ChatMessage[] = [];
   private projectedStart = 0;
@@ -266,12 +255,10 @@ export class ChatProjectionStore {
   private readonly lastSequenceByOwner = new Map<string, number>();
   private readonly terminalRuns = new Set<string>();
   private readonly orderListeners = new Set<ProjectionListener>();
-  private readonly activeAgentRunListeners = new Set<ProjectionListener>();
   private readonly messageListeners = new Map<string, Set<ProjectionListener>>();
   private readonly messageStructureListeners = new Map<string, Set<ProjectionListener>>();
   private readonly blockListeners = new Map<string, Set<ProjectionListener>>();
   private readonly toolListeners = new Map<string, Set<ProjectionListener>>();
-  private readonly agentRunListeners = new Map<string, Set<ProjectionListener>>();
 
   constructor(
     readonly perfRecorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
@@ -279,9 +266,6 @@ export class ChatProjectionStore {
   ) {}
 
   readonly getOrderSnapshot = (): readonly string[] => this.order;
-  readonly getActiveAgentRunsSnapshot = (): readonly DeepReadonly<ChatAgentRunEntity>[] => (
-    this.activeAgentRuns
-  );
 
   getMessageSnapshot = (messageId: string): ProjectionMessage | null => (
     this.messages.get(messageId) ?? null
@@ -299,18 +283,9 @@ export class ChatProjectionStore {
     this.tools.get(toolId) ?? null
   );
 
-  getAgentRunSnapshot = (runId: string): DeepReadonly<ChatAgentRunEntity> | null => (
-    this.agentRuns.get(runId) ?? null
-  );
-
   subscribeOrder = (listener: ProjectionListener): (() => void) => {
     this.orderListeners.add(listener);
     return () => this.orderListeners.delete(listener);
-  };
-
-  subscribeActiveAgentRuns = (listener: ProjectionListener): (() => void) => {
-    this.activeAgentRunListeners.add(listener);
-    return () => this.activeAgentRunListeners.delete(listener);
   };
 
   subscribeMessage(messageId: string, listener: ProjectionListener): () => void {
@@ -336,10 +311,6 @@ export class ChatProjectionStore {
 
   subscribeTool = (toolId: string, listener: ProjectionListener): (() => void) => (
     this.subscribeEntity(this.toolListeners, toolId, listener)
-  );
-
-  subscribeAgentRun = (runId: string, listener: ProjectionListener): (() => void) => (
-    this.subscribeEntity(this.agentRunListeners, runId, listener)
   );
 
   setOwnerWindow(ownerWindow: Window | null): void {
@@ -525,7 +496,6 @@ export class ChatProjectionStore {
       changedIds.add(message.id);
     }
     this.order = Object.freeze(projected.map(message => message.id));
-    this.refreshActiveAgentRuns();
     this.notifyOrder();
     for (const id of changedIds) this.notifyMessage(id);
     if (recorderEnabled) {
@@ -550,7 +520,6 @@ export class ChatProjectionStore {
       ...prepended.map(message => message.id),
       ...this.order,
     ]);
-    this.refreshActiveAgentRuns();
     this.notifyOrder();
     return true;
   }
@@ -579,7 +548,6 @@ export class ChatProjectionStore {
       ...prepended.map(message => message.id),
       ...this.order,
     ]);
-    this.refreshActiveAgentRuns();
     this.notifyOrder();
     return true;
   }
@@ -604,7 +572,6 @@ export class ChatProjectionStore {
       this.order = Object.freeze([...this.order, snapshot.id]);
       this.notifyOrder();
     }
-    this.refreshActiveAgentRuns();
   }
 
   private queueUpsert(message: ChatMessage): void {
@@ -639,7 +606,6 @@ export class ChatProjectionStore {
       }
     }
     this.order = Object.freeze(messageIds.filter(id => this.messages.has(id)));
-    this.refreshActiveAgentRuns();
     this.notifyOrder();
     if (recorderEnabled) this.recordCommit('truncate', this.order, startedAt);
   }
@@ -650,18 +616,14 @@ export class ChatProjectionStore {
     this.ownerWindow?.document?.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.pendingMessages.clear();
     this.orderListeners.clear();
-    this.activeAgentRunListeners.clear();
     this.messageListeners.clear();
     this.messageStructureListeners.clear();
     this.blockListeners.clear();
     this.toolListeners.clear();
-    this.agentRunListeners.clear();
     this.messages.clear();
     this.messageStructures.clear();
     this.blocks.clear();
     this.tools.clear();
-    this.agentRuns.clear();
-    this.activeAgentRuns = Object.freeze([]);
     this.entityKeysByMessageId.clear();
     this.activeOwnerByScope.clear();
     this.lastSequenceByOwner.clear();
@@ -758,29 +720,6 @@ export class ChatProjectionStore {
     for (const listener of this.orderListeners) listener();
   }
 
-  private refreshActiveAgentRuns(): void {
-    const next = this.order.flatMap((messageId) => {
-      const keys = this.entityKeysByMessageId.get(messageId);
-      if (!keys) return [];
-      return keys.agentIds.flatMap((runId) => {
-        const run = this.agentRuns.get(runId);
-        if (!run
-          || run.parentRunId !== null
-          || run.mode !== 'async'
-          || (run.status !== 'queued' && run.status !== 'running' && run.status !== 'waiting')) {
-          return [];
-        }
-        return [run];
-      });
-    });
-    if (next.length === this.activeAgentRuns.length
-      && next.every((run, index) => run === this.activeAgentRuns[index])) {
-      return;
-    }
-    this.activeAgentRuns = Object.freeze(next);
-    for (const listener of this.activeAgentRunListeners) listener();
-  }
-
   private notifyMessage(messageId: string): void {
     for (const listener of this.messageListeners.get(messageId) ?? []) listener();
   }
@@ -817,7 +756,6 @@ export class ChatProjectionStore {
     };
     remove(keys.blockIds, this.blocks, this.blockListeners);
     remove(keys.toolIds, this.tools, this.toolListeners);
-    remove(keys.agentIds, this.agentRuns, this.agentRunListeners);
     this.entityKeysByMessageId.delete(messageId);
   }
 
@@ -835,8 +773,8 @@ export class ChatProjectionStore {
 
   private indexMessageEntities(message: ProjectionMessage): void {
     const previous = this.entityKeysByMessageId.get(message.id)
-      ?? { blockIds: [], toolIds: [], agentIds: [] };
-    const keys: MessageEntityKeys = { blockIds: [], toolIds: [], agentIds: [] };
+      ?? { blockIds: [], toolIds: [] };
+    const keys: MessageEntityKeys = { blockIds: [], toolIds: [] };
     for (const [index, block] of (message.contentBlocks ?? []).entries()) {
       const id = getChatProjectionBlockId(message.id, index);
       keys.blockIds.push(id);
@@ -852,16 +790,6 @@ export class ChatProjectionStore {
       if (!current || !toolEntitiesEqual(current.tool as ToolCallInfo, tool as ToolCallInfo)) {
         this.tools.set(tool.id, deepFreeze({ id: tool.id, messageId: message.id, tool }));
         for (const listener of this.toolListeners.get(tool.id) ?? []) listener();
-      }
-      if (tool.subagent) {
-        for (const entity of deriveAgentRunEntities(tool as ToolCallInfo, message.id, null)) {
-          keys.agentIds.push(entity.runId);
-          const currentAgent = this.agentRuns.get(entity.runId);
-          if (!currentAgent || !structurallyEqual(currentAgent, entity)) {
-            this.agentRuns.set(entity.runId, deepFreeze(entity));
-            for (const listener of this.agentRunListeners.get(entity.runId) ?? []) listener();
-          }
-        }
       }
     }
     const removeMissing = (
@@ -879,21 +807,12 @@ export class ChatProjectionStore {
     };
     removeMissing(previous.blockIds, keys.blockIds, this.blocks, this.blockListeners);
     removeMissing(previous.toolIds, keys.toolIds, this.tools, this.toolListeners);
-    removeMissing(previous.agentIds, keys.agentIds, this.agentRuns, this.agentRunListeners);
     this.entityKeysByMessageId.set(message.id, keys);
   }
 }
 
 export function useChatProjectionOrder(store: ChatProjectionStore): readonly string[] {
   return useSyncExternalStore(store.subscribeOrder, store.getOrderSnapshot, store.getOrderSnapshot);
-}
-
-export function useActiveChatProjectionAgentRuns(store: ChatProjectionStore) {
-  return useSyncExternalStore(
-    store.subscribeActiveAgentRuns,
-    store.getActiveAgentRunsSnapshot,
-    store.getActiveAgentRunsSnapshot,
-  );
 }
 
 export function useChatProjectionMessageStructure(
@@ -970,48 +889,5 @@ export function useChatProjectionTools(
     snapshotRef.current = snapshot;
     return snapshot;
   }, [stableToolIds, store]);
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-export function useChatProjectionAgentRun(store: ChatProjectionStore, runId: string) {
-  const subscribe = useCallback(
-    (listener: ProjectionListener) => store.subscribeAgentRun(runId, listener),
-    [runId, store],
-  );
-  const getSnapshot = useCallback(
-    () => store.getAgentRunSnapshot(runId),
-    [runId, store],
-  );
-  return useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot,
-  );
-}
-
-export function useChatProjectionAgentRuns(
-  store: ChatProjectionStore,
-  runIds: readonly string[],
-) {
-  const runIdsKey = JSON.stringify(runIds);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- serialized IDs stabilize equal lists rebuilt from immutable messages
-  const stableRunIds = useMemo(() => [...runIds], [runIdsKey]);
-  const snapshotRef = useRef<readonly ReturnType<ChatProjectionStore['getAgentRunSnapshot']>[]>([]);
-  const subscribe = useCallback((listener: ProjectionListener) => {
-    const unsubscribers = stableRunIds.map(runId => store.subscribeAgentRun(runId, listener));
-    return () => {
-      for (const unsubscribe of unsubscribers) unsubscribe();
-    };
-  }, [stableRunIds, store]);
-  const getSnapshot = useCallback(() => {
-    const next = stableRunIds.map(runId => store.getAgentRunSnapshot(runId));
-    const previous = snapshotRef.current;
-    if (previous.length === next.length && previous.every((entity, index) => entity === next[index])) {
-      return previous;
-    }
-    const snapshot = Object.freeze(next);
-    snapshotRef.current = snapshot;
-    return snapshot;
-  }, [stableRunIds, store]);
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

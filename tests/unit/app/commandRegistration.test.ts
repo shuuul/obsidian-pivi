@@ -119,7 +119,7 @@ describe('chat command registration', () => {
     expect(commands.map(command => command.id)).toEqual(expect.arrayContaining([
       'debug-start-chat-performance-trace',
       'debug-sample-chat-performance-heap',
-      'debug-run-20-agent-runs-workload',
+      'debug-run-20-subagents-workload',
       'debug-run-indexed-session-paging-workload',
       'debug-run-100kb-markdown-stream',
       'debug-run-tab-switching-workload',
@@ -139,7 +139,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
-          run20AgentRunsWorkload: jest.fn(),
+          run20SubagentsWorkload: jest.fn(),
           runIndexedSessionPagingWorkload: jest.fn(),
           run100KbMarkdownStream,
           runTabSwitchingWorkload: jest.fn(),
@@ -155,11 +155,11 @@ describe('chat command registration', () => {
     expect(run100KbMarkdownStream).toHaveBeenCalledTimes(1);
   });
 
-  it('exports the isolated 20 Agent-run trace through the mounted view', async () => {
-    const run20AgentRunsWorkload = jest.fn(async (hooks: {
-      afterRender(result: { agentRuns: number; messages: number }): Promise<void>;
+  it('exports the isolated 20-subagent trace through the mounted view', async () => {
+    const run20SubagentsWorkload = jest.fn(async (hooks: {
+      afterRender(result: { subagents: number; messages: number }): Promise<void>;
     }) => {
-      const result = { agentRuns: 20, messages: 2 };
+      const result = { subagents: 20, messages: 2 };
       await hooks.afterRender(result);
       return result;
     });
@@ -169,7 +169,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
-          run20AgentRunsWorkload,
+          run20SubagentsWorkload,
           runIndexedSessionPagingWorkload: jest.fn(),
           run100KbMarkdownStream: jest.fn(),
           runTabSwitchingWorkload: jest.fn(),
@@ -180,13 +180,13 @@ describe('chat command registration', () => {
     perfController.enabled = false;
     registerPiviCommands(plugin as never);
 
-    commands.find(command => command.id === 'debug-run-20-agent-runs-workload')
+    commands.find(command => command.id === 'debug-run-20-subagents-workload')
       ?.callback?.();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(run20AgentRunsWorkload).toHaveBeenCalledTimes(1);
+    expect(run20SubagentsWorkload).toHaveBeenCalledTimes(1);
     expect(perfController.start).toHaveBeenCalledWith(
-      'agent-runs-20-main-isolated',
+      'subagents-20-main-isolated',
       expect.anything(),
     );
     expect(perfController.stopAndExport).toHaveBeenCalledTimes(1);
@@ -204,7 +204,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
-          run20AgentRunsWorkload: jest.fn(),
+          run20SubagentsWorkload: jest.fn(),
           runIndexedSessionPagingWorkload: jest.fn(),
           run100KbMarkdownStream: jest.fn(),
           runTabSwitchingWorkload,
@@ -235,7 +235,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
-          run20AgentRunsWorkload: jest.fn(),
+          run20SubagentsWorkload: jest.fn(),
           runIndexedSessionPagingWorkload,
           run100KbMarkdownStream: jest.fn(),
           runTabSwitchingWorkload: jest.fn(),

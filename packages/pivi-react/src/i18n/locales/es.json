@@ -117,21 +117,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
-      "unknownContextLength": "No se puede determinar la longitud de contexto del modelo actual.",
-      "inspectorTitle": "Inspector de contexto",
-      "closeInspector": "Cerrar inspector de contexto",
-      "total": "Total actual",
-      "system": "Sistema y herramientas",
-      "recentConversation": "Conversación reciente",
-      "selectedContext": "Contexto seleccionado",
-      "toolAndAgentResults": "Resultados de herramientas y Agent",
-      "checkpoints": "Puntos de control",
-      "usableInput": "Entrada utilizable",
-      "compactionTrigger": "Umbral de compactación",
-      "reservedOutput": "Salida reservada",
-      "compactionReserve": "Reserva de compactación",
-      "safetyMargin": "Margen de seguridad",
-      "estimateNote": "~ indica una estimación conservadora."
+      "unknownContextLength": "No se puede determinar la longitud de contexto del modelo actual."
     },
     "todos": {
       "progress": "Tareas {completed}/{total}",
@@ -141,18 +127,6 @@
     "activity": {
       "backgroundTask": "Tarea en segundo plano",
       "subagentTask": "Tarea de subagente",
-      "agentGroupCount": "{count} agentes",
-      "agentGroupStatusCount": "{count} {status}",
-      "agentRunTimeline": "Cronología de {agent}",
-      "objective": "Objetivo",
-      "timeline": "Cronología de actividad",
-      "agentConclusion": "Conclusión de {agent}",
-      "findings": "Hallazgos",
-      "decisions": "Decisiones",
-      "artifacts": "Artefactos",
-      "openQuestions": "Preguntas abiertas",
-      "activeWork": "Trabajo activo",
-      "goToAgentRun": "Ir a {agent} en la transcripción",
       "expand": "Haz clic para expandir",
       "collapse": "Haz clic para contraer",
       "prompt": "Instrucción",
@@ -163,6 +137,7 @@
       "error": "Error"
     },
     "status": {
+      "count": "{count} {status}",
       "queued": "En cola",
       "running": "En curso",
       "waiting": "Esperando",
@@ -355,7 +330,7 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Requerir Command/Ctrl+Enter para enviar",
-      "desc": "Si está activado, Enter inserta un salto de línea. Command+Enter envía en macOS; Ctrl+Enter en Windows y Linux."
+      "desc": "Si está activado, Enter inserta un salto de línea. Command+Enter o Ctrl+Enter envía."
     },
     "inlineEditHotkey": {
       "name": "Edición en línea"
@@ -406,10 +381,6 @@
       "allowBackground": {
         "name": "Permitir subagentes en segundo plano",
         "desc": "Permite llamadas spawn_agent con run_in_background=true. Los resultados completados rellenan la tarjeta del subagente."
-      },
-      "activeWorkShelf": {
-        "name": "Mostrar trabajo activo",
-        "desc": "Muestra agentes en segundo plano en cola y en ejecución cerca del cuadro de redacción. La transcripción sigue siendo la fuente de verdad."
       },
       "maxConcurrent": {
         "name": "Máx. de subagentes simultáneos",

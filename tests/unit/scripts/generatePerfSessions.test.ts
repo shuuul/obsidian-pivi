@@ -26,7 +26,7 @@ const fixtureFiles = [
   'perf-001-1k-messages.jsonl',
   'perf-002-5k-messages.jsonl',
   'perf-003-100kb-markdown.jsonl',
-  'perf-004-20-agent-runs.jsonl',
+  'perf-004-20-subagents.jsonl',
 ];
 
 function readEntries(filePath: string): FixtureEntry[] {
@@ -72,8 +72,8 @@ describe('generate-perf-sessions', () => {
       expectLinearSession(entries, vaultPath);
       return { filePath, entries };
     });
-    const [oneThousand, fiveThousand, markdown, agentRuns] = sessions;
-    if (!oneThousand || !fiveThousand || !markdown || !agentRuns) {
+    const [oneThousand, fiveThousand, markdown, subagents] = sessions;
+    if (!oneThousand || !fiveThousand || !markdown || !subagents) {
       throw new Error('Expected all four performance fixtures');
     }
 
@@ -86,7 +86,7 @@ describe('generate-perf-sessions', () => {
     const markdownText = Array.isArray(markdownContent) ? markdownContent[0]?.text : undefined;
     expect(Buffer.byteLength(markdownText ?? '', 'utf8')).toBe(100 * 1024);
 
-    const agentOverlay = agentRuns.entries.find(
+    const agentOverlay = subagents.entries.find(
       (entry) => entry.customType === 'pivi/message-ui',
     );
     expect(agentOverlay?.data?.contentBlocks).toHaveLength(21);

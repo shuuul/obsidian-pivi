@@ -25,7 +25,6 @@ function settingsSnapshot(model: string): ChatSettingsSnapshot {
     environmentVariables: '',
     externalReadDirectories: [],
     hiddenSlashCommands: [],
-    showActiveWorkShelf: false,
     modelCatalog: {
       addedProviders: [],
       disabledProviders: [],

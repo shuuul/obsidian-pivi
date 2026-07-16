@@ -38,7 +38,6 @@ export interface SettingsSubagentsSnapshot {
   readonly enabled: boolean;
   readonly allowBackground: boolean;
   readonly maxConcurrentSubagents: 1 | 2 | 3 | 4 | 8;
-  readonly showActiveWorkShelf: boolean;
 }
 
 export interface SettingsUiSnapshotData {

@@ -83,10 +83,10 @@ export interface PiviChatViewMaintenance {
 
 /** Development-only deterministic workload controls, absent from production bundles. */
 export interface PiviChatDevelopmentCommands {
-  run20AgentRunsWorkload(hooks: {
-    afterRender(result: { agentRuns: number; messages: number }): Promise<void>;
+  run20SubagentsWorkload(hooks: {
+    afterRender(result: { subagents: number; messages: number }): Promise<void>;
   }): Promise<{
-    agentRuns: number;
+    subagents: number;
     messages: number;
   }>;
   runIndexedSessionPagingWorkload(hooks: {

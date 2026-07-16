@@ -15,6 +15,10 @@ export function wireTabInputEvents(tab: TabData, settings: ChatSettingsPort): vo
   const { dom, ui, state, controllers } = tab;
 
   const keydownHandler = (e: KeyboardEvent) => {
+    if (dom.richInput.el.ownerDocument.activeElement !== dom.richInput.el) {
+      return;
+    }
+
     if (ui.slashCommandDropdown?.handleKeydown(e)) {
       return;
     }
@@ -62,11 +66,18 @@ export function wireTabInputEvents(tab: TabData, settings: ChatSettingsPort): vo
     dom.richInput.el.removeEventListener("paste", pasteHandler),
   );
 
-  dom.richInput.addEventListener("keydown", keydownHandler as EventListener);
+  const keydownWindow = getActiveWindow(dom.richInput.el);
+  const keydownOptions = { capture: true } as const;
+  keydownWindow.addEventListener(
+    "keydown",
+    keydownHandler as EventListener,
+    keydownOptions,
+  );
   dom.eventCleanups.push(() =>
-    dom.richInput.removeEventListener(
+    keydownWindow.removeEventListener(
       "keydown",
       keydownHandler as EventListener,
+      keydownOptions,
     ),
   );
 

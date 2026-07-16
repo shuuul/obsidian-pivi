@@ -79,6 +79,21 @@ describe('context envelope', () => {
     expect(envelope.selectedContext.tokens).toBe(0);
   });
 
+  it('caps a model output limit that spans the full context window', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 128_000,
+      contextWindowIsAuthoritative: true,
+      outputTokenLimit: 128_000,
+      thresholdRatio: 0.8,
+    });
+
+    expect(envelope.reservedOutput.tokens).toBe(DEFAULT_RESERVED_OUTPUT_TOKENS);
+    expect(envelope.compactionReserve.tokens).toBe(DEFAULT_COMPACTION_RESERVE_TOKENS);
+    expect(envelope.safetyMargin.tokens).toBe(6_400);
+    expect(envelope.usableInputTokens).toBe(93_600);
+    expect(envelope.compactionTriggerTokens).toBe(93_600);
+  });
+
   it('marks the fallback context window as estimated', () => {
     const envelope = calculateContextEnvelope({ recentConversation: 1_000 });
 

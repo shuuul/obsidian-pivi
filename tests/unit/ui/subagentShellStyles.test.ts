@@ -9,6 +9,8 @@ describe('subagent shell styles', () => {
 
   it('uses a uniform shell border without an inline branch line', () => {
     expect(styles).not.toContain('border-inline-start');
+    expect(styles).not.toContain('.pivi-subagent-progress');
+    expect(styles).not.toContain('.pivi-subagent-indicator-dot');
   });
 
   it('keeps the header and icon geometry stable while toggling', () => {

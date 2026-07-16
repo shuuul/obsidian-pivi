@@ -78,7 +78,10 @@ function projectionGroups(index: SessionJsonlIndex): ProjectionGroup[] {
     }
   }
   const visibleEntries = lastVisibleIndex >= 0
-    ? index.entries.slice(0, lastVisibleIndex + 1)
+    ? index.entries.filter((line, entryIndex) => (
+        entryIndex <= lastVisibleIndex
+        || (line.entryType === 'message' && line.role === 'toolResult')
+      ))
     : index.entries;
 
   for (const line of visibleEntries) {

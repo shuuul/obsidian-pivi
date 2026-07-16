@@ -39,7 +39,7 @@ function createDeps(options: {
   const attachedImages = options.attachedImages ?? [];
   const fileContextManager = {
     startSession: jest.fn(),
-    markCurrentNoteSent: jest.fn(),
+    clearAfterSend: jest.fn(),
     getCurrentNotePath: () => 'current.md',
     shouldSendCurrentNote: () => true,
     collectContextFilePathsForTurn: () => ['linked.md'],
@@ -104,7 +104,7 @@ describe('beginOutgoingTurn', () => {
     expect(deps.imageContextManager.clearImages).toHaveBeenCalled();
     expect(deps.inlineContextManager.clearAfterSend).toHaveBeenCalled();
     expect(fileContextManager.startSession).toHaveBeenCalled();
-    expect(fileContextManager.markCurrentNoteSent).toHaveBeenCalled();
+    expect(fileContextManager.clearAfterSend).toHaveBeenCalled();
     expect(state.isStreaming).toBe(true);
     expect(state.cancelRequested).toBe(false);
     expect(state.ignoreUsageUpdates).toBe(false);
@@ -151,6 +151,7 @@ describe('beginOutgoingTurn', () => {
     expect(deps.resetInputHeight).not.toHaveBeenCalled();
     expect(deps.imageContextManager.clearImages).not.toHaveBeenCalled();
     expect(deps.inlineContextManager.clearAfterSend).not.toHaveBeenCalled();
+    expect(deps.fileContextManager?.clearAfterSend).not.toHaveBeenCalled();
     expect(result.imagesForMessage).toHaveLength(1);
     expect(result.imagesForMessage).not.toBe(imageOverride);
   });

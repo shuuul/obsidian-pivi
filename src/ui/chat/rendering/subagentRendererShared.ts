@@ -3,20 +3,20 @@ import {
   resolveSubagentActivityStatus,
   type SubagentInfo,
 } from '@pivi/pivi-agent-core/foundation';
-import type { ActivityStatusPresentation } from '@pivi/pivi-react/store';
+import { stripAgentReportBlocksFromText } from '@pivi/pivi-agent-core/session';
+import {
+  type ActivityStatusPresentation,
+  getActivityStatusPresentation,
+} from '@pivi/pivi-react/store';
 
 import { t } from '@/app/i18n';
 
 import { resolveSubagentWriterName } from '../subagentProfiles';
-import {
-  renderActivityStatusContents,
-} from './activityStatusPresentation';
 import { setupCollapsible } from './collapsible';
 import type { RenderContentOptions } from './messageRendererTypes';
 import {
   appendSubagentCompletedIcon,
   appendSubagentRunningIcon,
-  clearSubagentAnimatedIcon,
 } from './subagentAnimatedIcon';
 
 export type SubagentRenderContentFn = (
@@ -100,6 +100,10 @@ export function getSubagentDisplayStatus(info: SubagentInfo): SubagentDisplaySta
   return resolveSubagentActivityStatus(info);
 }
 
+export function getVisibleSubagentResult(result: string | undefined, fallback: string): string {
+  return stripAgentReportBlocksFromText(result ?? '') || fallback;
+}
+
 export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo): void {
   const displayStatus = getSubagentDisplayStatus(info);
   for (const statusClass of ['status-queued', 'status-running', 'status-waiting', 'status-completed', 'status-failed', 'status-cancelled', 'status-orphaned']) {
@@ -107,19 +111,12 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
   }
   iconEl.addClass(`status-${displayStatus}`);
 
-  if (displayStatus === 'queued' || displayStatus === 'running') {
+  if (displayStatus === 'running') {
     appendSubagentRunningIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
     return;
   }
 
-  if (displayStatus === 'completed') {
-    appendSubagentCompletedIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
-    return;
-  }
-
-  clearSubagentAnimatedIcon(iconEl);
-  iconEl.empty();
-  iconEl.createDiv({ cls: 'pivi-subagent-indicator-dot' });
+  appendSubagentCompletedIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
 }
 
 export function renderSubagentStatus(
@@ -127,9 +124,19 @@ export function renderSubagentStatus(
   info: SubagentInfo,
 ): ActivityStatusPresentation {
   const displayStatus = getSubagentDisplayStatus(info);
-  statusEl.className = 'pivi-subagent-status pivi-activity-status';
+  const presentation = getActivityStatusPresentation(displayStatus, t);
+  statusEl.className = 'pivi-subagent-status';
   statusEl.addClass(`status-${displayStatus}`);
-  return renderActivityStatusContents(statusEl, displayStatus);
+  statusEl.empty();
+  statusEl.setAttribute('aria-atomic', 'true');
+  statusEl.setAttribute('aria-live', 'polite');
+  statusEl.setText(presentation.label);
+  if (presentation.accessibleLabel) {
+    statusEl.setAttribute('aria-label', presentation.accessibleLabel);
+  } else {
+    statusEl.removeAttribute('aria-label');
+  }
+  return presentation;
 }
 
 export function updateSubagentHeaderDisplay(options: UpdateSubagentHeaderDisplayOptions): void {

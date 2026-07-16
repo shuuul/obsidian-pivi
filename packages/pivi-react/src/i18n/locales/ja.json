@@ -117,21 +117,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
-      "unknownContextLength": "現在のモデルのコンテキスト長を取得できません。",
-      "inspectorTitle": "コンテキストインスペクター",
-      "closeInspector": "コンテキストインスペクターを閉じる",
-      "total": "現在の合計",
-      "system": "システムとツール",
-      "recentConversation": "最近の会話",
-      "selectedContext": "選択したコンテキスト",
-      "toolAndAgentResults": "ツールと Agent の結果",
-      "checkpoints": "チェックポイント",
-      "usableInput": "使用可能な入力",
-      "compactionTrigger": "圧縮トリガー",
-      "reservedOutput": "出力予約",
-      "compactionReserve": "圧縮予約",
-      "safetyMargin": "安全マージン",
-      "estimateNote": "~ は保守的な推定値です。"
+      "unknownContextLength": "現在のモデルのコンテキスト長を取得できません。"
     },
     "todos": {
       "progress": "タスク {completed}/{total}",
@@ -141,18 +127,6 @@
     "activity": {
       "backgroundTask": "バックグラウンドタスク",
       "subagentTask": "サブエージェントタスク",
-      "agentGroupCount": "エージェント {count} 件",
-      "agentGroupStatusCount": "{status} {count} 件",
-      "agentRunTimeline": "{agent} のタイムライン",
-      "objective": "目的",
-      "timeline": "アクティビティのタイムライン",
-      "agentConclusion": "{agent} の結論",
-      "findings": "調査結果",
-      "decisions": "決定事項",
-      "artifacts": "成果物",
-      "openQuestions": "未解決の質問",
-      "activeWork": "進行中の作業",
-      "goToAgentRun": "トランスクリプト内の {agent} へ移動",
       "expand": "クリックして展開",
       "collapse": "クリックして折りたたむ",
       "prompt": "指示",
@@ -163,6 +137,7 @@
       "error": "エラー"
     },
     "status": {
+      "count": "{count}件{status}",
       "queued": "キュー待ち",
       "running": "実行中",
       "waiting": "待機中",
@@ -355,7 +330,7 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "送信に Command/Ctrl+Enter を必須にする",
-      "desc": "有効時、Enter は改行を挿入します。macOS は Command+Enter、Windows と Linux は Ctrl+Enter で送信します。"
+      "desc": "有効時、Enter は改行を挿入します。Command+Enter または Ctrl+Enter で送信します。"
     },
     "inlineEditHotkey": {
       "name": "インライン編集"
@@ -406,10 +381,6 @@
       "allowBackground": {
         "name": "バックグラウンドサブエージェントを許可",
         "desc": "run_in_background=true の spawn_agent 呼び出しを許可します。完了結果はサブエージェントカードに反映されます。"
-      },
-      "activeWorkShelf": {
-        "name": "進行中の作業棚を表示",
-        "desc": "待機中および実行中のバックグラウンドエージェントをコンポーザー付近に表示します。正本は引き続きトランスクリプトです。"
       },
       "maxConcurrent": {
         "name": "同時サブエージェントの上限",

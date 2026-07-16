@@ -49,6 +49,48 @@ function createMigrationFixture(files: Record<string, string>) {
 }
 
 describe('PiSessionStore range reads', () => {
+  it('reopens persisted request badges, tool activity, and the final response together', async () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-complete-turn-'));
+    const sessionFile = '.pivi/sessions/session.jsonl';
+    const absoluteFile = path.join(vaultPath, sessionFile);
+    fs.mkdirSync(path.dirname(absoluteFile), { recursive: true });
+    const line = (value: unknown) => `${JSON.stringify(value)}\n`;
+    fs.writeFileSync(absoluteFile, [
+      line({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: vaultPath }),
+      line({ type: 'message', id: 'user-1', parentId: null, timestamp: '2026-01-01T00:00:01.000Z', message: { role: 'user', content: 'Inspect these notes', timestamp: 1 } }),
+      line({ type: 'custom', customType: PIVI_MESSAGE_UI, id: 'ui-1', parentId: 'user-1', timestamp: '2026-01-01T00:00:01.100Z', data: { targetEntryId: 'user-1', displayContent: '/tests', turnRequest: { text: 'Inspect these notes', currentNotePath: 'wiki/Han Lee.md', attachedFilePaths: ['wiki/Han Lee.md', 'daily/2026-07-16.md'] } } }),
+      line({ type: 'message', id: 'assistant-tool', parentId: 'ui-1', timestamp: '2026-01-01T00:00:02.000Z', message: { role: 'assistant', content: [{ type: 'toolCall', id: 'call-1', name: 'obsidian_read', arguments: { path: 'wiki/Han Lee.md' } }], timestamp: 2 } }),
+      line({ type: 'message', id: 'tool-result', parentId: 'assistant-tool', timestamp: '2026-01-01T00:00:03.000Z', message: { role: 'toolResult', toolCallId: 'call-1', toolName: 'obsidian_read', content: [{ type: 'text', text: 'note body' }], isError: false, timestamp: 3 } }),
+      line({ type: 'message', id: 'assistant-final', parentId: 'tool-result', timestamp: '2026-01-01T00:00:04.000Z', message: { role: 'assistant', content: 'Finished reading.', timestamp: 4 } }),
+    ].join(''));
+    const store = new PiSessionStore(
+      { exists: async () => false } as unknown as FileStore,
+      vaultPath,
+    );
+
+    try {
+      const page = await store.openRecent({ sessionFile, sessionId: 'session-1' }, 20);
+
+      expect(page.messages.map(message => message.role)).toEqual(['user', 'assistant']);
+      expect(page.messages[0]?.displayContent).toBe('/tests');
+      expect(page.messages[0]?.turnRequest).toMatchObject({
+        currentNotePath: 'wiki/Han Lee.md',
+        attachedFilePaths: ['wiki/Han Lee.md', 'daily/2026-07-16.md'],
+      });
+      expect(page.messages[1]).toMatchObject({ content: 'Finished reading.' });
+      expect(page.messages[1]?.toolCalls).toEqual([
+        expect.objectContaining({
+          id: 'call-1',
+          name: 'obsidian_read',
+          result: 'note body',
+          status: 'completed',
+        }),
+      ]);
+    } finally {
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
+  });
+
   it('exposes recent and older durable message pages through SessionStore', async () => {
     const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-range-'));
     const sessionFile = '.pivi/sessions/session.jsonl';

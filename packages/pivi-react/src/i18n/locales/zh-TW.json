@@ -117,21 +117,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
-      "unknownContextLength": "無法取得目前模型的上下文長度。",
-      "inspectorTitle": "上下文檢查器",
-      "closeInspector": "關閉上下文檢查器",
-      "total": "目前總量",
-      "system": "系統與工具",
-      "recentConversation": "近期對話",
-      "selectedContext": "所選上下文",
-      "toolAndAgentResults": "工具與 Agent 結果",
-      "checkpoints": "檢查點",
-      "usableInput": "可用輸入",
-      "compactionTrigger": "壓縮觸發線",
-      "reservedOutput": "預留輸出",
-      "compactionReserve": "壓縮預留",
-      "safetyMargin": "安全餘量",
-      "estimateNote": "~ 表示保守估算。"
+      "unknownContextLength": "無法取得目前模型的上下文長度。"
     },
     "todos": {
       "progress": "任務 {completed}/{total}",
@@ -141,18 +127,6 @@
     "activity": {
       "backgroundTask": "背景任務",
       "subagentTask": "子代理任務",
-      "agentGroupCount": "{count} 個代理",
-      "agentGroupStatusCount": "{count} 個{status}",
-      "agentRunTimeline": "{agent} 時間軸",
-      "objective": "目標",
-      "timeline": "活動時間軸",
-      "agentConclusion": "{agent} 的結論",
-      "findings": "發現",
-      "decisions": "決策",
-      "artifacts": "產出",
-      "openQuestions": "待解問題",
-      "activeWork": "進行中工作",
-      "goToAgentRun": "前往對話記錄中的 {agent}",
       "expand": "點擊展開",
       "collapse": "點擊收合",
       "prompt": "提示詞",
@@ -163,6 +137,7 @@
       "error": "錯誤"
     },
     "status": {
+      "count": "{count} 個{status}",
       "queued": "已排隊",
       "running": "執行中",
       "waiting": "等待中",
@@ -355,7 +330,7 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "需要 Command/Ctrl+Enter 傳送",
-      "desc": "啟用後，Enter 會插入換行。macOS 使用 Command+Enter 傳送；Windows 和 Linux 使用 Ctrl+Enter 傳送。"
+      "desc": "啟用後，Enter 會插入換行。Command+Enter 或 Ctrl+Enter 均可傳送。"
     },
     "inlineEditHotkey": {
       "name": "內嵌編輯"
@@ -406,10 +381,6 @@
       "allowBackground": {
         "name": "允許背景子代理",
         "desc": "允許 run_in_background=true 的 spawn_agent 呼叫。完成後結果會回填到子代理卡片。"
-      },
-      "activeWorkShelf": {
-        "name": "顯示進行中工作架",
-        "desc": "在輸入框附近顯示排隊中和執行中的背景代理。對話記錄仍是唯一事實來源。"
       },
       "maxConcurrent": {
         "name": "最大同時子代理數",

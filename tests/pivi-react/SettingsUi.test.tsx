@@ -13,7 +13,7 @@ const snapshot: SettingsUiSnapshotData = {
     requireCommandOrControlEnterToSend: false,
     keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
   },
-  subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2, showActiveWorkShelf: false },
+  subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
 };
 
 function createModelsPort() {
@@ -153,14 +153,30 @@ describe('React settings foundation', () => {
     expect(screen.getByText('Language')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'Subagents' }));
     expect(screen.getByText('Enable spawn_agent')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Show active work shelf' }));
+    expect(screen.queryByText('Show active work shelf')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow background subagents' }));
     await act(async () => undefined);
-    expect(saveSubagents).toHaveBeenCalledWith({ showActiveWorkShelf: true });
+    expect(saveSubagents).toHaveBeenCalledWith({ allowBackground: true });
     fireEvent.click(screen.getByRole('tab', { name: 'General' }));
     const autoScroll = screen.getByRole('checkbox', { name: 'Auto-scroll during streaming' });
     fireEvent.click(autoScroll!);
     await act(async () => undefined);
     expect(saveGeneral).toHaveBeenCalledWith({ enableAutoScroll: false });
+  });
+
+  it('shows and updates the compact threshold percentage', async () => {
+    const saveGeneral = jest.fn(async () => undefined);
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
+
+    const threshold = screen.getByRole('slider', { name: 'Compact threshold' });
+    expect(threshold).toHaveValue('90');
+    expect(screen.getByText('90%', { selector: 'output' })).toBeInTheDocument();
+
+    fireEvent.change(threshold, { target: { value: '85' } });
+    await act(async () => undefined);
+
+    expect(saveGeneral).toHaveBeenCalledWith({ autoCompactThresholdPercent: 85 });
+    expect(screen.getByText('85%', { selector: 'output' })).toBeInTheDocument();
   });
 
   it('applies a language change immediately and renders tabs without duplicate page headings', async () => {

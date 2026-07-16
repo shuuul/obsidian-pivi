@@ -10,6 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
+| [010-restore-individual-subagent-presentation.md](010-restore-individual-subagent-presentation.md) | Active | Restore one individual subagent-card presentation, remove Agent Group and composer Active Work Shelf end to end, keep virtualization, sanitize report protocol output, and make motion running-only. |
 
 ## Archived specs
 

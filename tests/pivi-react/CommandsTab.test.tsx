@@ -8,7 +8,7 @@ import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 
 const snapshot: SettingsUiSnapshotData = {
   general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false, autoCompact: true, autoCompactThresholdPercent: 90, autoCompactKeepRecentTokens: 20_000, userName: '', excludedTags: [], requireCommandOrControlEnterToSend: false, keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' } },
-  subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2, showActiveWorkShelf: false },
+  subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
 };
 
 const command: SlashCatalogEntry = { id: 'review', kind: 'command', name: 'review', description: 'Review text', argumentHint: 'text', icon: 'sparkles', integrationKey: 'review-key', content: 'Review {{selected_text}}', scope: 'workspace', source: 'user', isEditable: true, isDeletable: true, displayPrefix: '/', insertPrefix: '/', persistenceKey: 'commands/review.md' };

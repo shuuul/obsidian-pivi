@@ -17,14 +17,16 @@ function createCoordinator(onChange = jest.fn()) {
   const subagentManager = new SubagentManager(onChange, mockInterpreter);
   const state = new ChatState();
   const showThinkingIndicator = jest.fn();
+  const hideThinkingIndicator = jest.fn();
   const scrollToBottom = jest.fn();
   const coordinator = new StreamSubagentCoordinator({
     state,
     subagentManager,
     showThinkingIndicator,
+    hideThinkingIndicator,
     scrollToBottom,
   });
-  return { coordinator, subagentManager, showThinkingIndicator, scrollToBottom };
+  return { coordinator, subagentManager, showThinkingIndicator, hideThinkingIndicator, scrollToBottom };
 }
 
 function createMessage(): ChatMessage {
@@ -73,7 +75,7 @@ describe('StreamSubagentCoordinator', () => {
   });
 
   it('finalizes sync subagent tool results on the task tool call', () => {
-    const { coordinator, subagentManager } = createCoordinator();
+    const { coordinator, hideThinkingIndicator, subagentManager } = createCoordinator();
     const msg = createMessage();
     coordinator.handleTaskToolUseViaManager(
       { type: 'tool_use', id: 'task-1', name: 'Task', input: { prompt: 'Inspect', run_in_background: false } },
@@ -87,6 +89,45 @@ describe('StreamSubagentCoordinator', () => {
 
     expect(subagentManager.getSyncSubagent('task-1')).toMatchObject({ status: 'completed', result: 'done' });
     expect(msg.toolCalls?.[0]).toMatchObject({ status: 'completed', result: 'done' });
+    expect(hideThinkingIndicator).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the foreground indicator when an async subagent finishes', async () => {
+    const { coordinator, hideThinkingIndicator, subagentManager } = createCoordinator();
+    coordinator.handleTaskToolUseViaManager(
+      { type: 'tool_use', id: 'spawn-1', name: 'spawn_agent', input: { prompt: 'Research', run_in_background: true } },
+      createMessage(),
+    );
+    subagentManager.handleTaskToolResult('spawn-1', 'agent_id: agent-1');
+
+    await coordinator.handleAsyncSubagentResult({
+      type: 'async_subagent_result',
+      agentId: 'agent-1',
+      status: 'completed',
+      result: 'Done',
+      subagentId: 'spawn-1',
+    });
+
+    expect(hideThinkingIndicator).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not hide a foreground indicator for a background subagent result', async () => {
+    const { coordinator, hideThinkingIndicator, subagentManager } = createCoordinator();
+    coordinator.handleTaskToolUseViaManager(
+      { type: 'tool_use', id: 'spawn-1', name: 'spawn_agent', input: { prompt: 'Research', run_in_background: true } },
+      createMessage(),
+    );
+    subagentManager.handleTaskToolResult('spawn-1', 'agent_id: agent-1');
+
+    await coordinator.handleAsyncSubagentResult({
+      type: 'async_subagent_result',
+      agentId: 'agent-1',
+      status: 'completed',
+      result: 'Done',
+      subagentId: 'spawn-1',
+    }, { showThinkingIndicator: false });
+
+    expect(hideThinkingIndicator).not.toHaveBeenCalled();
   });
 
   it('swallows duplicate async task tool results after async completion', () => {
@@ -145,6 +186,7 @@ describe('StreamSubagentCoordinator', () => {
       subagentManager,
       getAgentService: getAgentService as never,
       showThinkingIndicator: jest.fn(),
+      hideThinkingIndicator: jest.fn(),
       scrollToBottom: jest.fn(),
     });
 
@@ -182,6 +224,7 @@ describe('StreamSubagentCoordinator', () => {
         subagentManager,
         getAgentService: (() => ({ loadSubagentFinalResult })) as never,
         showThinkingIndicator: jest.fn(),
+        hideThinkingIndicator: jest.fn(),
         scrollToBottom: jest.fn(),
       });
       coordinator.handleTaskToolUseViaManager(
@@ -218,6 +261,7 @@ describe('StreamSubagentCoordinator', () => {
       subagentManager,
       getAgentService: (() => ({ loadSubagentFinalResult })) as never,
       showThinkingIndicator: jest.fn(),
+      hideThinkingIndicator: jest.fn(),
       scrollToBottom: jest.fn(),
     });
     coordinator.handleTaskToolUseViaManager(
@@ -254,6 +298,7 @@ describe('StreamSubagentCoordinator', () => {
       subagentManager,
       getAgentService: (() => ({ loadSubagentFinalResult })) as never,
       showThinkingIndicator: jest.fn(),
+      hideThinkingIndicator: jest.fn(),
       scrollToBottom: jest.fn(),
     });
     coordinator.handleTaskToolUseViaManager(

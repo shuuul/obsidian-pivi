@@ -27,7 +27,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 | Path | Responsibility |
 |---|---|
 | `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host. It does not create message shells, action toolbars, or control transcript scrolling. |
-| `src/ui/chat/rendering/messageRendererMarkdown.ts` | Obsidian Markdown rendering, mention badges, file-link processing, code wrappers, math, and owner-window-aware Mermaid controls. |
+| `src/ui/chat/rendering/messageRendererMarkdown.ts` | Obsidian Markdown rendering, first-turn auto-note badge restoration, input-derived mention badges, file-link processing, code wrappers, math, and owner-window-aware Mermaid controls. Expanded `attachedFilePaths` are runtime context and must never be enumerated as UI badges. |
 | `src/ui/chat/rendering/ToolCallRenderer.ts`, `toolCallExpandedDispatcher.ts`, `toolCall*Expanded.ts` | Rich tool-body adapter registry used inside React-owned tool slots. |
 | `src/ui/chat/rendering/WriteEditRenderer.ts`, `DiffRenderer.ts` | Content-only write/edit diff renderer, context hunks, and bounded new-file rendering. The surrounding generic tool shell owns the sole header/collapse boundary. |
 | `src/ui/chat/rendering/SubagentRenderer.ts`, `AsyncSubagentRenderer.ts`, `subagentRendererShared.ts` | Stored nested subagent body adapters with stale-render protection. Runtime managers must never call them. |
@@ -43,6 +43,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Treat `ChatMessage`, `ContentBlock`, `ToolCallInfo`, `ToolDiffData`, `SubagentInfo`, and todo display models as upstream contracts. Normalize or parse only display-specific variants; do not recreate runtime policy.
 - Render from durable message state. Stored subagent renderers are owner-realm adapters only; runtime managers and stream coordination must not create, retain, or update their DOM state.
 - A mounted stored subagent must be updated through `updateStoredSubagent`; rebuilding it for every stream chunk discards expansion state and multiplies Markdown/tool rendering. Running text is retained in state and rendered as Markdown only when the subagent reaches a terminal result.
+- Every subagent uses the same individual card path regardless of sibling count. Visible terminal results must strip fenced `pivi-agent-report` protocol blocks without mutating the durable result. Animate the profile icon and bottom light bar only in the canonical `running` state; queued, waiting, and terminal states are static.
 - A mounted rich tool body must receive tool-entity changes through its adapter `update` path. Do not remount it for status/input/result patches; remount only when React supplies a new stable tool generation.
 - Extend tool bodies through `toolCallExpandedDispatcher.ts`; block classification, grouping, ordering, labels, and shell state belong to `@pivi/pivi-react`.
 - Completed Markdown Read results use the injected Obsidian Markdown renderer with the resolved vault path as `sourcePath`; generic/external reads render Markdown only for explicit Markdown paths. Preserve the existing bounded line previews.
@@ -57,7 +58,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - For element-bound document/window work, including animation-frame scheduling for scrolling, use `getActiveDocument()` and `getActiveWindow()` so pop-out windows remain functional.
 - Preserve accessibility roles, labels, status text, keyboard controls, and decorative `aria-hidden` attributes when changing headers or icons.
 - Bound large output. Reuse line caps, compact summaries, diff hunking, and collapsed bodies instead of mounting unlimited result text.
-- Imperative nested-subagent step groups mirror the React header contract: count plus unique translated tool names in first-use order, with input/result details confined to expanded rows.
+- Imperative nested-subagent step groups mirror the React header contract: count plus unique translated tool names in first-use order, followed by the shared slash-separated per-status counts, with input/result details confined to expanded rows.
 - Imperative Agent headers mirror the React `pivi-activity-*` layout and canonical status mapping while retaining their own DOM ownership. They may recompute elapsed text on lifecycle updates but must not start a recurring timer from legacy render helpers that return only bare DOM.
 
 ## Gotchas

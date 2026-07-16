@@ -57,6 +57,25 @@ textarea.pivi-settings-control {
   flex: 0 1 var(--pivi-settings-control-width);
 }
 
+.pivi-settings-range {
+  display: flex;
+  width: min(var(--pivi-settings-control-width), 100%);
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-settings-range input[type="range"] {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pivi-settings-range__value {
+  min-width: 3ch;
+  color: var(--pivi-host-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
 .pivi-settings-badge-field {
   box-sizing: border-box;
   width: 100%;
