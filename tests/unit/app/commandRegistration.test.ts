@@ -156,7 +156,13 @@ describe('chat command registration', () => {
   });
 
   it('exports the isolated 20 Agent-run trace through the mounted view', async () => {
-    const run20AgentRunsWorkload = jest.fn(async () => ({ agentRuns: 20, messages: 2 }));
+    const run20AgentRunsWorkload = jest.fn(async (hooks: {
+      afterRender(result: { agentRuns: number; messages: number }): Promise<void>;
+    }) => {
+      const result = { agentRuns: 20, messages: 2 };
+      await hooks.afterRender(result);
+      return result;
+    });
     jest.mocked(findPiviView).mockReturnValue({
       leaf: {} as never,
       getChatHandle: () => ({

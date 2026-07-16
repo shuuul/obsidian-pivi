@@ -219,8 +219,13 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
       }
 
       controller.start('agent-runs-20-main-isolated', ownerWindow);
-      void development.run20AgentRunsWorkload().then(async ({ agentRuns, messages }) => {
-        const path = await controller.stopAndExport(ownerWindow);
+      let tracePath = '';
+      void development.run20AgentRunsWorkload({
+        async afterRender() {
+          tracePath = await controller.stopAndExport(ownerWindow);
+        },
+      }).then(({ agentRuns, messages }) => {
+        const path = tracePath;
         new Notice(`20 Agent-run trace exported (${agentRuns} runs / ${messages} messages): ${path}`);
       }).catch((error: unknown) => {
         controller.dispose();

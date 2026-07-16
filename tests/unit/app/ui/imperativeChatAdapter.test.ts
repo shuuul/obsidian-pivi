@@ -761,9 +761,14 @@ describe('imperative chat semantic view handle', () => {
     });
     harness.manager.closeTab.mockImplementation(async (tabId: string) => tabs.delete(tabId));
 
-    await expect(harness.handle.development?.run20AgentRunsWorkload())
+    const afterRender = jest.fn(async () => {
+      expect(activeTabId).toMatch(/^pivi-development-agent-runs-/);
+      expect(tabs.size).toBe(2);
+    });
+    await expect(harness.handle.development?.run20AgentRunsWorkload({ afterRender }))
       .resolves.toEqual({ agentRuns: 20, messages: 1 });
 
+    expect(afterRender).toHaveBeenCalledWith({ agentRuns: 20, messages: 1 });
     expect(activeTabId).toBe('original');
     expect([...tabs.keys()]).toEqual(['original']);
     expect(harness.persistTabState).not.toHaveBeenCalled();

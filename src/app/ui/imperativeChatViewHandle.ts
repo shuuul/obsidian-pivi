@@ -123,6 +123,7 @@ async function runDevelopment20AgentRuns(
   manager: TabManager,
   ownerWindow: Window,
   plugin: PiviChatCompositionHost,
+  hooks: Parameters<PiviChatDevelopmentCommands['run20AgentRunsWorkload']>[0],
 ): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['run20AgentRunsWorkload']>>> {
   const originalTabId = manager.getActiveTabId();
   if (!originalTabId) {
@@ -149,7 +150,9 @@ async function runDevelopment20AgentRuns(
     if (agentRuns !== 20) {
       throw new Error(`Expected 20 Agent runs, received ${agentRuns}.`);
     }
-    return { agentRuns, messages: tab.state.messages.length };
+    const result = { agentRuns, messages: tab.state.messages.length };
+    await hooks.afterRender(result);
+    return result;
   } finally {
     try {
       if (manager.getTab(originalTabId)) await manager.switchToTab(originalTabId);
@@ -583,7 +586,7 @@ export function createImperativeChatViewHandle(
     },
     ...(process.env.NODE_ENV !== 'production' ? {
       development: {
-        async run20AgentRunsWorkload() {
+        async run20AgentRunsWorkload(hooks) {
           const manager = getTabManager();
           const activeTab = manager?.getActiveTab();
           const ownerWindow = activeTab?.dom.messagesEl.ownerDocument.defaultView;
@@ -591,7 +594,7 @@ export function createImperativeChatViewHandle(
             throw new Error('A mounted active chat is required for the 20 Agent-run workload.');
           }
           return runWithoutTabPersistence(
-            () => runDevelopment20AgentRuns(manager, ownerWindow, plugin),
+            () => runDevelopment20AgentRuns(manager, ownerWindow, plugin, hooks),
           );
         },
         async runIndexedSessionPagingWorkload(hooks) {

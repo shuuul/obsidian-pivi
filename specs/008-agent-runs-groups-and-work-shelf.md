@@ -146,7 +146,8 @@ Guidance for low-context agents:
 - Added one explicit session-compat fixture that restores the complete persisted Agent overlay: objective/prompt, parent and nested tool activity, recovery-relevant partial and terminal output, timing, usage, and cancelled/failed/orphaned lifecycle facts.
 - Extended the spec 001 development harness with a 20-Agent workload that copies the fixed fixture to a unique temporary session, opens it in a disposable persistence-suspended tab, verifies all 20 runs, restores the original tab, and removes the temporary tab/JSONL/index. The command owns trace start/export so no user tab or durable binding is reused.
 - Evidence so far: the consolidated lifecycle, compatibility, projection, owner-realm, virtual-scroll, fixture, command, and cleanup matrix passes in 20 suites / 222 tests. Source/test typecheck, zero-warning lint, architecture, package-readme, i18n, and spec checks pass. The 20-Agent after trace and full coverage/build gates remain pending.
-- Next action: commit the verified compatibility/harness step, deploy a development build, capture the isolated 20-Agent trace, then restore the production bundle.
+- Problem recorded: the first isolated after trace (`2026-07-16T04-30-51-653Z-agent-runs-20-main-isolated.json`) stopped after restoring the original tab. Its 25-row / 34-Markdown maxima included cleanup rendering and exceeded the scenario's ≤5-row / ≤6-render budget even though the 534-node maximum stayed inside the DOM ceiling. The harness now exposes a pre-cleanup hook so the command stops and exports while the isolated fixture is still active; cleanup remains unconditional in `finally`.
+- Next action: validate and commit the corrected trace boundary, deploy a development build, capture the isolated 20-Agent trace, then restore the production bundle.
 
 ### 2026-07-15 — Spec creation — coordinator
 
