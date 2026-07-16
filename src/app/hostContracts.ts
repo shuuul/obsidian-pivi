@@ -83,6 +83,10 @@ export interface PiviChatViewMaintenance {
 
 /** Development-only deterministic workload controls, absent from production bundles. */
 export interface PiviChatDevelopmentCommands {
+  run20AgentRunsWorkload(): Promise<{
+    agentRuns: number;
+    messages: number;
+  }>;
   runIndexedSessionPagingWorkload(hooks: {
     afterColdOpen(): Promise<void>;
     afterOlderPage(): Promise<void>;

@@ -410,7 +410,7 @@ obsidian dev:errors
 | ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
 | Silent swallowed async catches (heuristic scan) | ~11 empty/comment-only `.catch` bodies; more comment-only `try/catch` cleanup paths elsewhere |
 | `main.js` bundle size | 2,978,644 bytes on disk after the 2026-07-15 performance harness build |
-| Chat performance regression gates | Real-Obsidian baseline and three-run ceilings are recorded in `docs/11-chat-ui-evolution.md`; Jest locks 100-message pages, ≤20 mounted rows in the fixed 5K viewport, ≤67 commits for the 100KB stream, and persistence-free 10-tab switching |
+| Chat performance regression gates | Real-Obsidian baseline and three-run ceilings are recorded in `docs/11-chat-ui-evolution.md`; Jest locks 100-message pages, ≤20 mounted rows in the fixed 5K viewport, ≤67 commits for the 100KB stream, persistence-free 10-tab switching, and isolated 20-Agent fixture restoration/cleanup |
 
 ### Current high-value issues
 1. **Coverage still uneven.** Global lines are 68.23%, but app `src/**` is 56.49%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, navigation-mapping debounce, and subagent hydrate retry cancellation/rejection now have focused regression tests. Priority gaps remain settings hotkeys/port wiring and the imperative mention controller's wider interaction surface. Do not treat the global percentage as complete chat UI coverage.

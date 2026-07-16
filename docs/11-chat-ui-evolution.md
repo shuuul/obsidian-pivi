@@ -162,7 +162,7 @@ The fixed scenario shapes are:
 | Older-page load | From the 5K fixture's latest 100-message projection, scroll backward once to prepend exactly one 100-message page. |
 | Repeated prepend | Repeat that prepend three times in the same 5K tab. |
 | 100KB Markdown stream | Run the development command that creates a disposable unbound tab, streams exactly 102,400 bytes in 64 animation-frame chunks, performs the terminal fidelity render, then restores the original tab and removes the synthetic tab without persisting either transition. |
-| 20 Agent runs | Cold-open the generated fixture containing 20 completed nested Agent records. |
+| 20 Agent runs | Run the isolated development command. It copies the generated 20-run fixture to a unique temporary session, cold-opens it in a disposable tab, verifies exactly 20 restored runs, restores the original tab, and deletes the temporary JSONL/index while tab persistence is suspended. |
 | Scroll-away / late background | Scroll the 1K transcript away from the end, then run the deterministic stream while auto-follow remains disabled. |
 | Session switching | Run the isolated development command: ten in-memory tabs, 100 messages each, two passes / 20 switches. The command suspends tab persistence, restores the original active tab, and removes every synthetic tab. |
 | Indexed 5K cold open + older page | Run the isolated indexed-session paging command. It copies the fixed 5K fixture to a unique temporary session id, records cold open, scrolls the real virtual viewport backward to fetch one 100-message page, restores the original tab, and deletes the temporary JSONL/index while tab persistence is suspended. |

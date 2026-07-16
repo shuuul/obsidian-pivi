@@ -119,6 +119,7 @@ describe('chat command registration', () => {
     expect(commands.map(command => command.id)).toEqual(expect.arrayContaining([
       'debug-start-chat-performance-trace',
       'debug-sample-chat-performance-heap',
+      'debug-run-20-agent-runs-workload',
       'debug-run-indexed-session-paging-workload',
       'debug-run-100kb-markdown-stream',
       'debug-run-tab-switching-workload',
@@ -138,6 +139,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
+          run20AgentRunsWorkload: jest.fn(),
           runIndexedSessionPagingWorkload: jest.fn(),
           run100KbMarkdownStream,
           runTabSwitchingWorkload: jest.fn(),
@@ -153,6 +155,37 @@ describe('chat command registration', () => {
     expect(run100KbMarkdownStream).toHaveBeenCalledTimes(1);
   });
 
+  it('exports the isolated 20 Agent-run trace through the mounted view', async () => {
+    const run20AgentRunsWorkload = jest.fn(async () => ({ agentRuns: 20, messages: 2 }));
+    jest.mocked(findPiviView).mockReturnValue({
+      leaf: {} as never,
+      getChatHandle: () => ({
+        commands: {} as PiviChatViewCommands,
+        maintenance: {} as never,
+        development: {
+          run20AgentRunsWorkload,
+          runIndexedSessionPagingWorkload: jest.fn(),
+          run100KbMarkdownStream: jest.fn(),
+          runTabSwitchingWorkload: jest.fn(),
+        },
+      }),
+    });
+    const { commands, perfController, plugin } = createPlugin();
+    perfController.enabled = false;
+    registerPiviCommands(plugin as never);
+
+    commands.find(command => command.id === 'debug-run-20-agent-runs-workload')
+      ?.callback?.();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(run20AgentRunsWorkload).toHaveBeenCalledTimes(1);
+    expect(perfController.start).toHaveBeenCalledWith(
+      'agent-runs-20-main-isolated',
+      expect.anything(),
+    );
+    expect(perfController.stopAndExport).toHaveBeenCalledTimes(1);
+  });
+
   it('runs the isolated tab switching workload through the mounted view', async () => {
     const runTabSwitchingWorkload = jest.fn(async () => ({
       tabs: 10,
@@ -165,6 +198,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
+          run20AgentRunsWorkload: jest.fn(),
           runIndexedSessionPagingWorkload: jest.fn(),
           run100KbMarkdownStream: jest.fn(),
           runTabSwitchingWorkload,
@@ -195,6 +229,7 @@ describe('chat command registration', () => {
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
         development: {
+          run20AgentRunsWorkload: jest.fn(),
           runIndexedSessionPagingWorkload,
           run100KbMarkdownStream: jest.fn(),
           runTabSwitchingWorkload: jest.fn(),

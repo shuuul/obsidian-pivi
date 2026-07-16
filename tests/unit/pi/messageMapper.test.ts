@@ -503,6 +503,176 @@ describe('MessageMapper', () => {
     });
   });
 
+  it('preserves the complete durable Agent trace from a message-ui overlay', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'spawn-cancelled',
+            name: 'spawn_agent',
+            arguments: { label: 'Research', message: 'Inspect the vault' },
+          }],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: {
+          targetEntryId: 'a1',
+          assistantMessageId: 'a1',
+          contentBlocks: [
+            { type: 'subagent', subagentId: 'spawn-cancelled', mode: 'async' },
+            { type: 'subagent', subagentId: 'spawn-failed', mode: 'sync' },
+            { type: 'subagent', subagentId: 'spawn-orphaned', mode: 'async' },
+          ],
+          toolCalls: [
+            {
+              id: 'spawn-cancelled',
+              name: 'spawn_agent',
+              input: { label: 'Research', message: 'Inspect the vault' },
+              status: 'error',
+              activityStatus: 'cancelled',
+              startedAt: 10,
+              completedAt: 30,
+              result: 'Terminal parent result',
+              isExpanded: true,
+              subagent: {
+                id: 'spawn-cancelled',
+                writerName: 'Austen',
+                description: 'Research',
+                prompt: 'Inspect the vault',
+                mode: 'async',
+                status: 'error',
+                asyncStatus: 'error',
+                activityStatus: 'cancelled',
+                agentId: 'agent-cancelled',
+                outputToolId: 'child-output',
+                usage: { contextTokens: 100, inputTokens: 40, outputTokens: 20 },
+                startedAt: 11,
+                completedAt: 29,
+                result: 'Terminal Agent output',
+                isExpanded: true,
+                toolCalls: [{
+                  id: 'child-read',
+                  name: 'read',
+                  input: { path: 'Note.md' },
+                  status: 'running',
+                  activityStatus: 'waiting',
+                  startedAt: 12,
+                  completedAt: 20,
+                  result: 'Recovery-relevant partial output',
+                  isExpanded: true,
+                }],
+              },
+            },
+            {
+              id: 'spawn-failed',
+              name: 'spawn_agent',
+              input: { message: 'Fail deterministically' },
+              status: 'error',
+              activityStatus: 'failed',
+              result: 'Failure detail',
+              isExpanded: false,
+              subagent: {
+                id: 'spawn-failed',
+                description: 'Failure fixture',
+                prompt: 'Fail deterministically',
+                mode: 'sync',
+                status: 'error',
+                activityStatus: 'failed',
+                result: 'Failure detail',
+                toolCalls: [],
+                isExpanded: false,
+              },
+            },
+            {
+              id: 'spawn-orphaned',
+              name: 'spawn_agent',
+              input: { message: 'Resume after reload' },
+              status: 'error',
+              activityStatus: 'orphaned',
+              isExpanded: false,
+              subagent: {
+                id: 'spawn-orphaned',
+                description: 'Orphan fixture',
+                prompt: 'Resume after reload',
+                mode: 'async',
+                status: 'error',
+                asyncStatus: 'orphaned',
+                activityStatus: 'orphaned',
+                result: 'Partial output before reload',
+                toolCalls: [],
+                isExpanded: false,
+              },
+            },
+          ],
+        },
+      },
+    ];
+
+    const message = first(entriesToChatMessages(branch, collectMessageUiMap(branch)));
+
+    expect(message.contentBlocks).toEqual([
+      { type: 'subagent', subagentId: 'spawn-cancelled', mode: 'async' },
+      { type: 'subagent', subagentId: 'spawn-failed', mode: 'sync' },
+      { type: 'subagent', subagentId: 'spawn-orphaned', mode: 'async' },
+    ]);
+    expect(message.toolCalls).toHaveLength(3);
+    expect(message.toolCalls?.[0]).toMatchObject({
+      id: 'spawn-cancelled',
+      input: { label: 'Research', message: 'Inspect the vault' },
+      startedAt: 10,
+      completedAt: 30,
+      result: 'Terminal parent result',
+      subagent: {
+        writerName: 'Austen',
+        description: 'Research',
+        prompt: 'Inspect the vault',
+        agentId: 'agent-cancelled',
+        outputToolId: 'child-output',
+        usage: { contextTokens: 100, inputTokens: 40, outputTokens: 20 },
+        startedAt: 11,
+        completedAt: 29,
+        result: 'Terminal Agent output',
+        toolCalls: [expect.objectContaining({
+          id: 'child-read',
+          activityStatus: 'waiting',
+          startedAt: 12,
+          completedAt: 20,
+          result: 'Recovery-relevant partial output',
+        })],
+      },
+    });
+    expect(message.toolCalls?.[1]).toMatchObject({
+      activityStatus: 'failed',
+      result: 'Failure detail',
+      subagent: { activityStatus: 'failed', result: 'Failure detail' },
+    });
+    expect(message.toolCalls?.[2]).toMatchObject({
+      activityStatus: 'orphaned',
+      subagent: {
+        asyncStatus: 'orphaned',
+        activityStatus: 'orphaned',
+        result: 'Partial output before reload',
+      },
+    });
+    expect(message.toolCalls?.map(toolCall => toolCall.activityStatus)).toEqual([
+      'cancelled',
+      'failed',
+      'orphaned',
+    ]);
+  });
+
   it('merges multiple message-ui patches for the same entry', () => {
     const branch: SessionEntry[] = [
       {

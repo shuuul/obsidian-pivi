@@ -615,7 +615,9 @@ describe('imperative chat semantic view handle', () => {
     harness.manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
     harness.manager.createTab.mockImplementation(async (_openSessionId, tabId, options) => {
       expect(options).toMatchObject({
-        sessionFile: expect.stringMatching(/^\.pivi\/sessions\/perf-isolated-\d+\.jsonl$/),
+        sessionFile: expect.stringMatching(
+          /^\.pivi\/sessions\/perf-isolated-indexed-paging-\d+\.jsonl$/,
+        ),
       });
       const messages = Array.from({ length: 100 }, (_, index) => ({
         id: `recent-${index}`,
@@ -680,6 +682,88 @@ describe('imperative chat semantic view handle', () => {
 
     expect(afterColdOpen).toHaveBeenCalledTimes(1);
     expect(afterOlderPage).toHaveBeenCalledTimes(1);
+    expect(activeTabId).toBe('original');
+    expect([...tabs.keys()]).toEqual(['original']);
+    expect(harness.persistTabState).not.toHaveBeenCalled();
+    expect(harness.persistTabStateImmediate).not.toHaveBeenCalled();
+    expect(harness.plugin.app.vault.adapter.write).toHaveBeenCalledTimes(1);
+    expect(harness.plugin.app.vault.adapter.remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('isolates the 20 Agent-run trace from user tabs and persistence', async () => {
+    let now = 0;
+    const ownerWindow = {
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        now += 16;
+        callback(now);
+        return now;
+      },
+      setTimeout: (callback: TimerHandler) => {
+        if (typeof callback === 'function') callback();
+        return 1;
+      },
+    } as unknown as Window;
+    const harness = createHarness({ ownerWindow });
+    const original = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+    original.id = 'original';
+    original.dom!.messagesEl = {
+      ownerDocument: { defaultView: ownerWindow },
+    } as unknown as HTMLElement;
+    const tabs = new Map<string, TestTab>([[original.id, original]]);
+    let activeTabId = original.id;
+
+    await harness.mount();
+    harness.manager.getActiveTab.mockImplementation(() => tabs.get(activeTabId) ?? null);
+    harness.manager.getActiveTabId.mockImplementation(() => activeTabId);
+    harness.manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
+    harness.manager.createTab.mockImplementation(async (_openSessionId, tabId, options) => {
+      expect(options).toMatchObject({
+        sessionFile: expect.stringMatching(
+          /^\.pivi\/sessions\/perf-isolated-agent-runs-\d+\.jsonl$/,
+        ),
+      });
+      const toolCalls = Array.from({ length: 20 }, (_, index) => ({
+        id: `spawn-${index}`,
+        name: 'spawn_agent',
+        input: {},
+        status: 'completed' as const,
+        isExpanded: false,
+        subagent: {
+          id: `spawn-${index}`,
+          description: `Agent ${index}`,
+          mode: 'async' as const,
+          status: 'completed' as const,
+          asyncStatus: 'completed' as const,
+          toolCalls: [],
+          isExpanded: false,
+        },
+      }));
+      const tab = createTab({
+        id: tabId!,
+        state: {
+          isStreaming: false,
+          messages: [{
+            id: 'assistant-owner',
+            role: 'assistant',
+            content: '',
+            timestamp: 1,
+            toolCalls,
+          }],
+        },
+      });
+      tabs.set(tab.id, tab);
+      activeTabId = tab.id;
+      return tab;
+    });
+    harness.manager.switchToTab.mockImplementation(async (tabId: string) => {
+      activeTabId = tabId;
+    });
+    harness.manager.closeTab.mockImplementation(async (tabId: string) => tabs.delete(tabId));
+
+    await expect(harness.handle.development?.run20AgentRunsWorkload())
+      .resolves.toEqual({ agentRuns: 20, messages: 1 });
+
     expect(activeTabId).toBe('original');
     expect([...tabs.keys()]).toEqual(['original']);
     expect(harness.persistTabState).not.toHaveBeenCalled();

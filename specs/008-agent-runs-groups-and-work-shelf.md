@@ -65,7 +65,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Done | WS-02 | jsdom test asserting ordered depths, disclosure semantics, and no nested scroll |
 | WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Done | WS-01, spec 005 WS-04 | Projection and renderer tests over direct, fenced, invalid, and text fixtures |
 | WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Codex | Done | WS-01 | projection/settings/jsdom/app-adapter tests incl. inactive-tab owner navigation |
-| WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | Pending | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
+| WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | In progress | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
 
 Guidance for low-context agents:
 
@@ -140,6 +140,13 @@ Guidance for low-context agents:
 - Evidence: 91 focused settings/projection/React tests plus 70 focused bridge/app-adapter tests pass. Coverage includes default-off migration, toggle persistence, active-only filtering, stable snapshot identity, inactive-tab shelf visibility, completion removal, no nested shelf scroll, tab switching, deferred viewport navigation, typecheck, lint, CSS, i18n, and architecture checks.
 - Remaining: WS-06 lifecycle/session compatibility sweep, synthetic 20-Agent performance traces, full coverage/build/reload, and spec archival.
 - Next action: run the named lifecycle suites and session-compat fixtures, then the isolated spec 001 20-Agent harness without touching user tabs.
+
+### 2026-07-16 — WS-06 compatibility and isolated trace harness — Codex
+
+- Added one explicit session-compat fixture that restores the complete persisted Agent overlay: objective/prompt, parent and nested tool activity, recovery-relevant partial and terminal output, timing, usage, and cancelled/failed/orphaned lifecycle facts.
+- Extended the spec 001 development harness with a 20-Agent workload that copies the fixed fixture to a unique temporary session, opens it in a disposable persistence-suspended tab, verifies all 20 runs, restores the original tab, and removes the temporary tab/JSONL/index. The command owns trace start/export so no user tab or durable binding is reused.
+- Evidence so far: the consolidated lifecycle, compatibility, projection, owner-realm, virtual-scroll, fixture, command, and cleanup matrix passes in 20 suites / 222 tests. Source/test typecheck, zero-warning lint, architecture, package-readme, i18n, and spec checks pass. The 20-Agent after trace and full coverage/build gates remain pending.
+- Next action: commit the verified compatibility/harness step, deploy a development build, capture the isolated 20-Agent trace, then restore the production bundle.
 
 ### 2026-07-15 — Spec creation — coordinator
 
