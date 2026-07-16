@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.11.0](https://github.com/shuuul/obsidian-pivi/compare/0.10.0...0.11.0) (2026-07-16)
+
+
+### Features
+
+* **settings:** add Anthropic Pro/Max browser OAuth ([0146195](https://github.com/shuuul/obsidian-pivi/commit/0146195849ad0345019de5fcd5d1ecbcc7139cf8))
+* **settings:** add xAI provider with OAuth ([ff4e20c](https://github.com/shuuul/obsidian-pivi/commit/ff4e20c607026e63bb3122d073291c234978eb33))
+* **settings:** split subscription provider identities ([db59740](https://github.com/shuuul/obsidian-pivi/commit/db597400b55c4c28d17d2aef92f8dfa7b4434ddc))
+
+
+### Bug Fixes
+
+* **obsidian:** address community review feedback ([1cc9d31](https://github.com/shuuul/obsidian-pivi/commit/1cc9d319652efa16804137ff82718e6dc2eb1a14))
+
 ## [0.10.0](https://github.com/shuuul/obsidian-pivi/compare/0.9.0...0.10.0) (2026-07-16)
 
 
