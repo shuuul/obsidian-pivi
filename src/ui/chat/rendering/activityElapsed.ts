@@ -1,14 +1,8 @@
 import { resolveSubagentActivityStatus, type SubagentInfo } from '@pivi/pivi-agent-core/foundation';
+import { formatActivityElapsed } from '@pivi/pivi-react/store';
 
 export interface ActivityElapsedController {
   update(info: SubagentInfo): void;
-}
-
-function formatElapsed(milliseconds: number): string {
-  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return minutes > 0 ? `${minutes}m ${String(seconds).padStart(2, '0')}s` : `${seconds}s`;
 }
 
 export function createActivityElapsedController(
@@ -26,7 +20,7 @@ export function createActivityElapsedController(
       return;
     }
     element.removeClass('pivi-hidden');
-    element.setText(formatElapsed(end - startedAt));
+    element.setText(formatActivityElapsed(end - startedAt));
   };
   render();
   return {

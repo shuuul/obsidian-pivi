@@ -12,6 +12,7 @@ import {
   type ChatAgentRunEntity,
   type ChatProjectionStore,
   deriveAgentRunEntities,
+  getActivityStatusPresentation,
   useChatProjectionAgentRuns,
 } from '../../store';
 import { ActivityRow } from './ActivityRow';
@@ -42,18 +43,6 @@ export type AgentGroupViewProps = {
       readonly toolCalls: readonly ToolCallInfo[];
     }
 );
-
-function statusLabel(status: ActivityStatus, t: ReturnType<typeof useT>): string {
-  switch (status) {
-    case 'queued': return t('chat.status.queued');
-    case 'running': return t('chat.status.running');
-    case 'waiting': return t('chat.status.waiting');
-    case 'completed': return t('chat.status.completed');
-    case 'failed': return t('chat.status.failed');
-    case 'cancelled': return t('chat.status.cancelled');
-    case 'orphaned': return t('chat.status.orphaned');
-  }
-}
 
 function aggregateStatus(runs: readonly PresentedRun[]): ActivityStatus {
   const statuses = runs.map(run => run.status);
@@ -187,7 +176,7 @@ function AgentConclusion({ run }: { readonly run: PresentedRun }) {
     <section aria-label={t('chat.activity.agentConclusion', { agent: name })} className="pivi-agent-conclusion">
       <header>
         <h4>{t('chat.activity.agentConclusion', { agent: name })}</h4>
-        <span>{statusLabel(report.outcome, t)}</span>
+        <span>{getActivityStatusPresentation(report.outcome, t).label}</span>
       </header>
       <p>{report.summary ?? report.objective}</p>
       {lists.map(([label, values]) => values && values.length > 0 ? (
@@ -222,7 +211,7 @@ function AgentGroupPresentation({ runs }: { readonly runs: readonly PresentedRun
   const summary = [...counts.entries()]
     .map(([status, count]) => t('chat.activity.agentGroupStatusCount', {
       count,
-      status: statusLabel(status, t),
+      status: getActivityStatusPresentation(status, t).label,
     }))
     .join(' · ');
   const label = t('chat.activity.agentGroupCount', { count: runs.length });

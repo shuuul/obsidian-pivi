@@ -1,11 +1,20 @@
 export type {
+  ActivityStatusIcon,
+  ActivityStatusPresentation,
+} from './activityPresentation';
+export {
+  formatActivityElapsed,
+  getActivityStatusPresentation,
+} from './activityPresentation';
+export type { ChatAgentRunEntity } from './agentRunProjection';
+export { deriveAgentRunEntities } from './agentRunProjection';
+export type {
   ChatPerfProjectionCommitReason,
   ChatPerfProjectionEventKind,
   ChatPerfRecorder,
 } from './chatPerfRecorder';
 export { NOOP_CHAT_PERF_RECORDER } from './chatPerfRecorder';
 export type {
-  ChatAgentRunEntity,
   ChatBlockEntity,
   ChatProjectionDiagnostic,
   ChatProjectionDiagnosticCode,
@@ -19,7 +28,6 @@ export {
   CHAT_PROJECTION_HIDDEN_CADENCE_MS,
   CHAT_PROJECTION_PAGE_SIZE,
   ChatProjectionStore,
-  deriveAgentRunEntities,
   getChatProjectionBlockId,
   useActiveChatProjectionAgentRuns,
   useChatProjectionAgentRun,

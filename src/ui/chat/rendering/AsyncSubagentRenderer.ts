@@ -15,7 +15,6 @@ import {
   extractTaskPrompt,
   formatSubagentAgentName,
   getSubagentDisplayStatus,
-  getSubagentStatusLabel,
   nextMarkdownRenderGeneration,
   renderSubagentMarkdownWithFallback,
   renderSubagentStatus,
@@ -95,10 +94,6 @@ function createAsyncSubagentShell(
 
   const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header pivi-activity-row' });
   headerEl.setAttribute('aria-expanded', initiallyExpanded ? 'true' : 'false');
-  headerEl.setAttribute(
-    'aria-label',
-    `${t('chat.activity.backgroundTask')}: ${ariaDescription} - ${getSubagentStatusLabel(info)} - ${t('chat.activity.expand')}`,
-  );
 
   const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon pivi-activity-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
@@ -115,7 +110,11 @@ function createAsyncSubagentShell(
   const elapsed = createActivityElapsedController(elapsedEl, info);
 
   const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status pivi-activity-status' });
-  renderSubagentStatus(statusEl, info);
+  const statusPresentation = renderSubagentStatus(statusEl, info);
+  headerEl.setAttribute(
+    'aria-label',
+    `${t('chat.activity.backgroundTask')}: ${ariaDescription} - ${statusPresentation.label} - ${t('chat.activity.expand')}`,
+  );
 
   const progressEl = wrapperEl.createDiv({
     cls: progressVisible ? 'pivi-subagent-progress' : 'pivi-subagent-progress is-hidden',

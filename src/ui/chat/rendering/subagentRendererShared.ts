@@ -3,12 +3,12 @@ import {
   resolveSubagentActivityStatus,
   type SubagentInfo,
 } from '@pivi/pivi-agent-core/foundation';
+import type { ActivityStatusPresentation } from '@pivi/pivi-react/store';
 
 import { t } from '@/app/i18n';
 
 import { resolveSubagentWriterName } from '../subagentProfiles';
 import {
-  getActivityStatusLabel,
   renderActivityStatusContents,
 } from './activityStatusPresentation';
 import { setupCollapsible } from './collapsible';
@@ -100,10 +100,6 @@ export function getSubagentDisplayStatus(info: SubagentInfo): SubagentDisplaySta
   return resolveSubagentActivityStatus(info);
 }
 
-export function getSubagentStatusLabel(info: SubagentInfo): string {
-  return getActivityStatusLabel(getSubagentDisplayStatus(info));
-}
-
 export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo): void {
   const displayStatus = getSubagentDisplayStatus(info);
   for (const statusClass of ['status-queued', 'status-running', 'status-waiting', 'status-completed', 'status-failed', 'status-cancelled', 'status-orphaned']) {
@@ -126,11 +122,14 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
   iconEl.createDiv({ cls: 'pivi-subagent-indicator-dot' });
 }
 
-export function renderSubagentStatus(statusEl: HTMLElement, info: SubagentInfo): void {
+export function renderSubagentStatus(
+  statusEl: HTMLElement,
+  info: SubagentInfo,
+): ActivityStatusPresentation {
   const displayStatus = getSubagentDisplayStatus(info);
   statusEl.className = 'pivi-subagent-status pivi-activity-status';
   statusEl.addClass(`status-${displayStatus}`);
-  renderActivityStatusContents(statusEl, displayStatus);
+  return renderActivityStatusContents(statusEl, displayStatus);
 }
 
 export function updateSubagentHeaderDisplay(options: UpdateSubagentHeaderDisplayOptions): void {
@@ -143,15 +142,13 @@ export function updateSubagentHeaderDisplay(options: UpdateSubagentHeaderDisplay
     ariaLabelPrefix,
   } = options;
   labelEl?.setText(formatSubagentAgentName(info.id, info.writerName));
-  const statusLabel = getSubagentStatusLabel(info);
   const iconEl = headerEl.querySelector<HTMLElement>('.pivi-subagent-icon');
   if (iconEl) applySubagentHeaderIcon(iconEl, info);
-  const statusPhrase = statusLabel;
+  const statusPresentation = renderSubagentStatus(statusEl, info);
   headerEl.setAttribute(
     'aria-label',
-    `${ariaLabelPrefix}: ${truncateDescription(info.description)} - ${statusPhrase} - ${t('chat.activity.expand')}`,
+    `${ariaLabelPrefix}: ${truncateDescription(info.description)} - ${statusPresentation.label} - ${t('chat.activity.expand')}`,
   );
-  renderSubagentStatus(statusEl, info);
   updateSummaryText(summaryEl, info);
 }
 

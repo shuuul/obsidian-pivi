@@ -4,24 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n/I18nProvider';
 import { PlatformIcon } from '../../icons';
+import {
+  type ActivityStatusIcon,
+  formatActivityElapsed,
+  getActivityStatusPresentation,
+} from '../../store/activityPresentation';
 
-function getActivityStatusLabel(status: ActivityStatus, t: ReturnType<typeof useT>): string {
-  switch (status) {
-    case 'queued': return t('chat.status.queued');
-    case 'running': return t('chat.status.running');
-    case 'waiting': return t('chat.status.waiting');
-    case 'completed': return t('chat.status.completed');
-    case 'failed': return t('chat.status.failed');
-    case 'cancelled': return t('chat.status.cancelled');
-    case 'orphaned': return t('chat.status.orphaned');
-  }
-}
-
-function StatusIcon({ status }: { readonly status: ActivityStatus }) {
-  if (status === 'queued') {
+function StatusIcon({ icon }: { readonly icon: ActivityStatusIcon }) {
+  if (icon.kind === 'dot') {
     return <span className="pivi-status-icon-dot" aria-hidden="true" />;
   }
-  if (status === 'running') {
+  if (icon.kind === 'working') {
     return (
       <span className="pivi-working-icon" aria-hidden="true">
         <svg viewBox="0 0 16 16" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -31,41 +24,23 @@ function StatusIcon({ status }: { readonly status: ActivityStatus }) {
       </span>
     );
   }
-  const icon = status === 'waiting'
-    ? 'pause'
-    : status === 'completed'
-      ? 'check'
-      : status === 'failed'
-        ? 'x'
-        : status === 'cancelled'
-          ? 'square'
-          : 'unplug';
-  return <PlatformIcon name={icon} />;
+  return <PlatformIcon name={icon.name} />;
 }
 
 export function ActivityStatusBadge({ status }: { readonly status: ActivityStatus }) {
   const t = useT();
-  const label = getActivityStatusLabel(status, t);
+  const presentation = getActivityStatusPresentation(status, t);
   return (
     <span
-      aria-label={status === 'orphaned'
-        ? `${label}. ${t('chat.status.orphanedDescription')}`
-        : undefined}
+      aria-label={presentation.accessibleLabel}
       aria-atomic="true"
       aria-live="polite"
       className={`pivi-activity-status pivi-tool-status status-${status}`}
     >
-      <StatusIcon status={status} />
-      <span className="pivi-activity-status-label">{label}</span>
+      <StatusIcon icon={presentation.icon} />
+      <span className="pivi-activity-status-label">{presentation.label}</span>
     </span>
   );
-}
-
-function formatElapsed(milliseconds: number): string {
-  const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return minutes > 0 ? `${minutes}m ${String(seconds).padStart(2, '0')}s` : `${seconds}s`;
 }
 
 function ActivityElapsed({ completedAt, startedAt, status }: {
@@ -95,7 +70,7 @@ function ActivityElapsed({ completedAt, startedAt, status }: {
       dateTime={`PT${Math.max(0, Math.floor((end - startedAt) / 1000))}S`}
       ref={elementRef}
     >
-      {formatElapsed(end - startedAt)}
+      {formatActivityElapsed(end - startedAt)}
     </time>
   );
 }

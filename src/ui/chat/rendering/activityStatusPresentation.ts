@@ -1,60 +1,42 @@
 import type { ActivityStatus } from '@pivi/pivi-agent-core/foundation';
+import {
+  type ActivityStatusPresentation,
+  getActivityStatusPresentation,
+} from '@pivi/pivi-react/store';
 import { setIcon } from 'obsidian';
 
-import { t, type TFunction } from '@/app/i18n';
-
-export function getActivityStatusLabel(
-  status: ActivityStatus,
-  translate: TFunction = t,
-): string {
-  switch (status) {
-    case 'queued': return translate('chat.status.queued');
-    case 'running': return translate('chat.status.running');
-    case 'waiting': return translate('chat.status.waiting');
-    case 'completed': return translate('chat.status.completed');
-    case 'failed': return translate('chat.status.failed');
-    case 'cancelled': return translate('chat.status.cancelled');
-    case 'orphaned': return translate('chat.status.orphaned');
-  }
-}
+import { t } from '@/app/i18n';
 
 export function renderActivityStatusContents(
   container: HTMLElement,
   status: ActivityStatus,
-): void {
+): ActivityStatusPresentation {
+  const presentation = getActivityStatusPresentation(status, t);
   container.empty();
   container.setAttribute('aria-atomic', 'true');
   container.setAttribute('aria-live', 'polite');
 
-  if (status === 'queued') {
+  if (presentation.icon.kind === 'dot') {
     container.createSpan({ cls: 'pivi-status-icon-dot', attr: { 'aria-hidden': 'true' } });
-  } else if (status === 'running') {
+  } else if (presentation.icon.kind === 'working') {
     const workingIconEl = container.createSpan({
       cls: 'pivi-working-icon',
       attr: { 'aria-hidden': 'true' },
     });
     setIcon(workingIconEl, 'loader-circle');
   } else {
-    const icon = status === 'waiting'
-      ? 'pause'
-      : status === 'completed'
-        ? 'check'
-        : status === 'failed'
-          ? 'x'
-          : status === 'cancelled'
-            ? 'square'
-            : 'unplug';
     const iconEl = container.createSpan({ cls: 'pivi-activity-status-icon', attr: { 'aria-hidden': 'true' } });
-    setIcon(iconEl, icon);
+    setIcon(iconEl, presentation.icon.name);
   }
 
   container.createSpan({
     cls: 'pivi-activity-status-label',
-    text: getActivityStatusLabel(status),
+    text: presentation.label,
   });
-  if (status === 'orphaned') {
-    container.setAttribute('aria-label', `${getActivityStatusLabel(status)}. ${t('chat.status.orphanedDescription')}`);
+  if (presentation.accessibleLabel) {
+    container.setAttribute('aria-label', presentation.accessibleLabel);
   } else {
     container.removeAttribute('aria-label');
   }
+  return presentation;
 }

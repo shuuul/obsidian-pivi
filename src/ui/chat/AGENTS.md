@@ -149,6 +149,7 @@ flowchart TD
 - External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. Absolute roots and per-turn paths are overlaid from Obsidian's device-local cache and must never be written into synced settings or JSONL. MCP enable/disable lives in Settings; slash catalog + MCP tool lists are prefetched at tab/view open and refreshed after MCP settings save.
 - Allowed imperative composer surfaces: uncontrolled `RichChatInput`, file/image/inline context chips, and cursor-relative mention/slash dropdowns. React owns toolbar chrome and never reconciles those adapter children. Do not reintroduce `McpServerSelector` or other composer MCP pickers.
 - The optional Active Work Shelf is React chrome over derived `ChatProjectionStore` rows. It must include active top-level background work from inactive tabs, preserve the transcript as canonical, and navigate by tab/message identity through app-owned semantics plus `MessageViewportHandle`; do not query message DOM or persist shelf items.
+- Activity renderers consume the React store subpath's canonical status/icon/accessibility/elapsed presentation model. Imperative adapters still own Obsidian DOM/icon mounting and owner-realm scheduling, but must not define a second lifecycle switch or elapsed formatter.
 - All user-visible labels, notices, placeholders, status text, and accessibility text must use the shared translator from `@/app/i18n`.
 
 ### Ownership and cleanup
