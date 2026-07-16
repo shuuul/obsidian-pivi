@@ -93,8 +93,64 @@ export function formatSubagentAgentName(id: string, writerName?: string): string
   return writerName || resolveSubagentWriterName(id);
 }
 
-export function formatSubagentTitle(id: string, description: string, writerName?: string): string {
-  return `${formatSubagentAgentName(id, writerName)} [${truncateDescription(description)}]`;
+export interface SubagentShell {
+  wrapperEl: HTMLElement;
+  contentEl: HTMLElement;
+  headerEl: HTMLElement;
+  labelEl: HTMLElement;
+  summaryEl: HTMLElement;
+  statusEl: HTMLElement;
+}
+
+export interface CreateSubagentShellOptions {
+  parentEl: HTMLElement;
+  info: SubagentInfo;
+  ariaLabelPrefix: string;
+  initiallyExpanded: boolean;
+  dataset?: { key: 'subagentId' | 'asyncSubagentId'; value: string };
+  extraWrapperClasses?: string[];
+}
+
+export function createSubagentShell(options: CreateSubagentShellOptions): SubagentShell {
+  const {
+    parentEl,
+    info,
+    ariaLabelPrefix,
+    initiallyExpanded,
+    dataset,
+    extraWrapperClasses = [],
+  } = options;
+
+  const wrapperEl = parentEl.createDiv({
+    cls: ['pivi-subagent-list', 'pivi-subagent-card', ...extraWrapperClasses].join(' '),
+  });
+  if (dataset) {
+    wrapperEl.dataset[dataset.key] = dataset.value;
+  }
+
+  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });
+  headerEl.setAttribute('aria-expanded', initiallyExpanded ? 'true' : 'false');
+
+  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
+  iconEl.setAttribute('aria-hidden', 'true');
+  applySubagentHeaderIcon(iconEl, info);
+
+  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
+  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
+  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status' });
+
+  updateSubagentHeaderDisplay({
+    headerEl,
+    labelEl,
+    summaryEl,
+    statusEl,
+    info,
+    ariaLabelPrefix,
+  });
+
+  const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
+
+  return { wrapperEl, contentEl, headerEl, labelEl, summaryEl, statusEl };
 }
 
 export function getSubagentDisplayStatus(info: SubagentInfo): SubagentDisplayStatus {

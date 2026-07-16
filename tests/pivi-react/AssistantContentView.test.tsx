@@ -438,7 +438,7 @@ describe('AssistantContentView', () => {
     const subagentAdapter: NonNullable<MessageContentAdapters['subagent']> = {
       mount(container, subagent) {
         const activity = container.ownerDocument.createElement('div');
-        activity.className = 'pivi-subagent-activity-item';
+        activity.className = 'pivi-subagent-card';
         const icon = container.ownerDocument.createElement('span');
         icon.className = 'pivi-subagent-icon';
         const label = container.ownerDocument.createElement('span');
@@ -482,7 +482,7 @@ describe('AssistantContentView', () => {
   it('updates a streaming subagent adapter in place instead of remounting it', () => {
     const mount = jest.fn((container: HTMLElement) => {
       const activity = container.ownerDocument.createElement('div');
-      activity.className = 'pivi-subagent-activity-item';
+      activity.className = 'pivi-subagent-card';
       container.appendChild(activity);
     });
     const update = jest.fn();
@@ -516,6 +516,6 @@ describe('AssistantContentView', () => {
 
     expect(mount).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledTimes(1);
-    expect(view.container.querySelectorAll('.pivi-subagent-activity-item')).toHaveLength(1);
+    expect(view.container.querySelectorAll('.pivi-subagent-card')).toHaveLength(1);
   });
 });

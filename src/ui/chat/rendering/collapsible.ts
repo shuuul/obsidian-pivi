@@ -141,17 +141,3 @@ export function setupCollapsible(
     }
   });
 }
-
-/**
- * Collapse a collapsible element and sync state.
- * Use this when programmatically collapsing (e.g., on finalize).
- */
-export function collapseElement(
-  wrapperEl: HTMLElement,
-  headerEl: HTMLElement,
-  contentEl: HTMLElement,
-  state: CollapsibleState
-): void {
-  const chevronEl = headerEl.querySelector<HTMLElement>(`.${COLLAPSIBLE_CHEVRON_CLASS}`);
-  syncCollapsibleState(wrapperEl, headerEl, contentEl, state, false, chevronEl);
-}

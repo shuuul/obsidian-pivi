@@ -26,28 +26,17 @@
   margin-top: var(--pivi-spacing-sm);
 }
 
-.pivi-subagent-dock {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pivi-spacing-xs);
-  margin-top: var(--pivi-spacing-sm);
-}
-
-.pivi-subagent-dock:empty {
-  display: none;
-}
-
 .pivi-subagent-list+.pivi-tool-call {
   margin-top: var(--pivi-spacing-sm);
 }
 
-.pivi-subagent-activity-item {
+.pivi-subagent-card {
   margin: 4px 0;
   border-radius: var(--pivi-radius-sm);
   background: var(--pivi-surface-raised);
 }
 
-.pivi-subagent-activity-item:not(.expanded) {
+.pivi-subagent-card:not(.expanded) {
   box-shadow: none;
 }
 

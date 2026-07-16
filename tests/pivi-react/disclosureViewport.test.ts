@@ -33,6 +33,7 @@ describe('disclosure viewport controller', () => {
   const originalResizeObserver = window.ResizeObserver;
   const originalRequestAnimationFrame = window.requestAnimationFrame;
   const originalCancelAnimationFrame = window.cancelAnimationFrame;
+  const originalGetComputedStyle = window.getComputedStyle;
   let frames: Array<{ id: number; callback: FrameRequestCallback }> = [];
   let nextFrameId = 1;
 
@@ -61,6 +62,8 @@ describe('disclosure viewport controller', () => {
     });
     window.requestAnimationFrame = originalRequestAnimationFrame;
     window.cancelAnimationFrame = originalCancelAnimationFrame;
+    window.getComputedStyle = originalGetComputedStyle;
+    jest.restoreAllMocks();
     jest.useRealTimers();
     document.body.replaceChildren();
   });
@@ -186,7 +189,7 @@ describe('disclosure viewport controller', () => {
     controller.dispose();
   });
 
-  function createChainFixture(
+  function createDisclosureFixture(
     wrapperClass: string,
     headerClass: string,
     bodyClass: string,
@@ -279,6 +282,70 @@ describe('disclosure viewport controller', () => {
     controller.dispose();
   });
 
+  it('adjusts the inner subagent scrollport when a nested sticky tool header collapses', () => {
+    const { row, scrollElement } = createFixture();
+    const subagent = document.createElement('div');
+    subagent.className = 'pivi-subagent-list expanded';
+    const subagentContent = document.createElement('div');
+    subagentContent.className = 'pivi-subagent-content';
+    Object.defineProperties(subagentContent, {
+      clientHeight: { configurable: true, value: 200 },
+      scrollHeight: { configurable: true, value: 500 },
+      scrollTop: { configurable: true, value: 150, writable: true },
+    });
+    const getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudo) => {
+      const style = originalGetComputedStyle.call(window, element, pseudo);
+      if (element === subagentContent) {
+        return { ...style, overflowY: 'auto' } as CSSStyleDeclaration;
+      }
+      return style;
+    });
+
+    const group = document.createElement('div');
+    group.className = 'pivi-tool-step-group expanded';
+    const steps = document.createElement('div');
+    steps.className = 'pivi-tool-step-group-steps';
+    const stepItem = document.createElement('div');
+    stepItem.className = 'pivi-tool-step-item';
+    const tool = document.createElement('div');
+    tool.className = 'pivi-tool-call expanded pivi-tool-call-in-step-group';
+    const header = document.createElement('button');
+    header.className = 'pivi-tool-header';
+    tool.append(header, document.createElement('div'));
+    stepItem.appendChild(tool);
+    steps.appendChild(stepItem);
+    group.append(document.createElement('button'), steps);
+    subagentContent.appendChild(group);
+    subagent.append(document.createElement('div'), subagentContent);
+    row.appendChild(subagent);
+
+    let headerTop = 118;
+    header.getBoundingClientRect = jest.fn(() => ({
+      bottom: headerTop + 20,
+      height: 20,
+      left: 0,
+      right: 100,
+      top: headerTop,
+      width: 100,
+      x: 0,
+      y: headerTop,
+      toJSON: () => ({}),
+    }));
+
+    const controller = createDisclosureViewportController(scrollElement);
+    controller.beginDisclosureResize(header);
+
+    headerTop = 168;
+    tool.classList.remove('expanded');
+    const rowObserver = FakeResizeObserver.instances.find(observer => observer.observed.has(row));
+    rowObserver?.trigger(row);
+    flushFrames();
+
+    expect(subagentContent.scrollTop).toBe(200);
+    getComputedStyleSpy.mockRestore();
+    controller.dispose();
+  });
+
   it('publishes each expanded steps header height as its child sticky offset', () => {
     const { row, scrollElement } = createFixture();
     const group = document.createElement('div');
@@ -307,7 +374,7 @@ describe('disclosure viewport controller', () => {
   });
 
   it('does not shrink or expand wrappers on wheel after internal scroll end', () => {
-    const { body, header, scrollElement, wrapper } = createChainFixture(
+    const { body, header, scrollElement, wrapper } = createDisclosureFixture(
       'pivi-subagent-list',
       'pivi-subagent-header',
       'pivi-subagent-content',

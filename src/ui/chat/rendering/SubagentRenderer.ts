@@ -8,9 +8,9 @@ import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
 import {
-  applySubagentHeaderIcon,
   createSection,
   type CreateSubagentBlockOptions,
+  createSubagentShell,
   extractTaskDescription,
   extractTaskPrompt,
   formatSubagentAgentName,
@@ -211,23 +211,22 @@ export function createSubagentBlock(
     isExpanded: options.initiallyExpanded ?? false,
   };
 
-  const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-list pivi-subagent-activity-item running' });
-  wrapperEl.dataset.subagentId = taskToolId;
-
-  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });
-
-  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
-  iconEl.setAttribute('aria-hidden', 'true');
-  applySubagentHeaderIcon(iconEl, info);
-
-  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
-  labelEl.setText(formatSubagentAgentName(taskToolId, info.writerName));
-
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
-
-  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status status-running' });
-
-  const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
+  const shell = createSubagentShell({
+    parentEl,
+    info,
+    ariaLabelPrefix: t('chat.activity.subagentTask'),
+    initiallyExpanded: info.isExpanded,
+    dataset: { key: 'subagentId', value: taskToolId },
+    extraWrapperClasses: ['running'],
+  });
+  const {
+    wrapperEl,
+    contentEl,
+    headerEl,
+    labelEl,
+    summaryEl,
+    statusEl,
+  } = shell;
 
   const state: SubagentState = {
     wrapperEl,

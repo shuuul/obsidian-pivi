@@ -4,7 +4,7 @@
 
 This document records the accepted direction after the first virtualized Chat UI performance pass. It is an architectural and product-design guide, not a release commitment. Concrete implementation work should still be split into measured, independently reviewable changes.
 
-The current visual design remains the baseline until the Activity and Memory layers are implemented deliberately. Performance work must not gradually introduce one-off cards, status colors, nested scroll containers, or competing context indicators.
+The current visual design remains the baseline until the Activity and Memory layers are implemented deliberately. Performance work must not gradually introduce one-off cards, status colors, nested scroll containers beyond the bounded disclosure scrollport, or competing context indicators.
 
 ## Goals
 
@@ -83,7 +83,7 @@ A block update may remeasure its virtual row, but it should not rerender sibling
 
 One sequenced in-memory event plane now wraps whole-message publication. The store reconciles keyed entities, preserves unchanged snapshot identities, publishes only changed entities, and notifies removals. Projected rows subscribe to stable structure metadata; copy actions resolve the current full message only when invoked. Markdown, tool, and stored-subagent adapters mount once for a stable entity generation and receive subsequent snapshots through `update`.
 
-Disclosure growth stays on that virtual route. `MessageList` measures the active owner-realm messages viewport, caps each expanded top-level tool/steps/subagent wrapper at one third of it with `overflow: hidden`, and temporarily anchors the activated header while React commits, virtual-row measurement, and asynchronous Markdown settle. Full snapshot-backed bodies mount only after expansion; raw long text uses a constant-node representation, and nested disclosures share their parent's scroll body. Each top-level disclosure's direct body child owns the internal scrollbar while its direct title is layout-fixed at the card top. Nested titles inside the body scrollport use sticky positioning with measured offsets. Inside a subagent, the steps title sticks at `top: 0` in the content scrollport and tool titles stick below it at the measured steps height. Reaching the internal scroll end preserves the open disclosure and hands continued scrolling to the outer transcript; `disclosureViewport` then pins and progressively clips the scroll body beneath its title stack until the card leaves the viewport, rather than collapsing all at once. Pointer/keyboard transcript navigation still cancels the temporary resize anchor before user-directed scrolling.
+Disclosure growth stays on that virtual route. `MessageList` measures the active owner-realm messages viewport and publishes `--pivi-expanded-content-max-height` at one third of it and `--pivi-subagent-expanded-max-height` at two thirds. Expanded top-level tool and steps-group wrappers use the one-third maximum; expanded subagent cards use the two-thirds maximum (CSS fallbacks `min(320px, 33vh)` and `min(640px, 66vh)`). Each wrapper keeps `overflow: hidden` while its direct body child owns the sole internal scrollbar; the direct header is layout-fixed at the card top and never sticks to the transcript. `beginDisclosureResize` temporarily anchors the activated header while React commits, virtual-row measurement, and asynchronous Markdown settle; pointer/keyboard transcript navigation cancels that anchor before user-directed scrolling. Full snapshot-backed bodies mount only after expansion; raw long text uses a constant-node representation, and nested disclosures share their parent's scroll body. Nested titles inside the body scrollport use sticky positioning with measured offsets. Inside a subagent, the steps title sticks at `top: 0` in the content scrollport and tool titles stick below it at the measured steps height. Reaching the internal scroll end preserves disclosure state and card height; continued scrolling chains to the outer transcript so the fixed-height card moves upward as a whole.
 
 ### Sequenced UI event protocol
 
@@ -356,8 +356,10 @@ Activity represents work in progress or inspectable execution:
 The collapsed primitive is one individual subagent header:
 
 ```text
-◉ Researcher   Searching sources                         0:18
+◉ Researcher   Searching sources                       Running
 ```
+
+Subagent headers show profile icon, stable name, truncated task summary, and localized lifecycle status. They do not show elapsed-time chrome.
 
 Expansion reveals the card's prompt, nested tools, and terminal result in durable order:
 
@@ -369,9 +371,9 @@ Researcher
   Produce report
 ```
 
-Each expanded card preserves its prompt, direct tools, nested delegated work, and visible terminal text. The card has no independent overflow surface; virtual-row measurement and the transcript remain responsible for growth and scrolling.
+Each expanded card preserves its prompt, direct tools, nested delegated work, and visible terminal text inside a fixed-max-height body scrollport. Top-level tools and step groups cap at one third of the messages viewport; subagent cards cap at two thirds. Nested tool disclosures inside an expanded card reuse the ancestor scroll body rather than adding a second scrollbar.
 
-The transcript remains the only primary scroll container. Expanded Activity content should grow within its measured virtual row or open in an inspector; it should not create an independently scrolling card inside the transcript.
+The transcript remains the primary scroll container. Expanded Activity cards own one internal scrollbar on their direct body child while the wrapper height stays fixed at the measured maximum; reaching that internal scroll end chains further wheel or touch scrolling to the transcript so the whole card scrolls away. Individual tool headers may still show elapsed time through the shared `pivi-activity-*` row contract; subagent headers do not.
 
 The implemented foundation uses one seven-state lifecycle vocabulary with localized status text. While a subagent is running, its profile icon and bottom light bar move; queued/waiting states and every terminal state are static. Completion keeps the same profile icon, stops its motion, and removes the flowing bar. Composer chrome never mirrors active subagents.
 

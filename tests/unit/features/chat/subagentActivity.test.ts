@@ -347,7 +347,7 @@ describe('subagent activity rendering', () => {
       createRunningAsyncSubagent(),
     ) as unknown as FakeElement;
 
-    expect(wrapperEl.hasClass('pivi-subagent-activity-item')).toBe(true);
+    expect(wrapperEl.hasClass('pivi-subagent-card')).toBe(true);
     expect(wrapperEl.hasClass('expanded')).toBe(false);
     expect(wrapperEl.findByClass('pivi-subagent-content')?.hasClass('pivi-hidden')).toBe(true);
     expectSubagentHeaderShell(wrapperEl, {
@@ -639,7 +639,7 @@ describe('subagent activity rendering', () => {
       },
     ) as unknown as FakeElement;
 
-    expect(wrapperEl.hasClass('pivi-subagent-activity-item')).toBe(true);
+    expect(wrapperEl.hasClass('pivi-subagent-card')).toBe(true);
     expect(wrapperEl.findByClass('pivi-subagent-content')?.hasClass('pivi-hidden')).toBe(true);
     expect(wrapperEl.findByClass('pivi-subagent-status')?.hasClass('status-completed')).toBe(true);
   });

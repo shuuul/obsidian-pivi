@@ -4,23 +4,21 @@ import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
 import {
-  applySubagentHeaderIcon,
   createSection,
   type CreateSubagentBlockOptions,
+  createSubagentShell,
   extractTaskDescription,
   extractTaskPrompt,
-  formatSubagentAgentName,
   getSubagentDisplayStatus,
   getVisibleSubagentResult,
   nextMarkdownRenderGeneration,
   renderSubagentMarkdownWithFallback,
-  renderSubagentStatus,
   scrollSubagentContentToBottom,
   setPromptText,
   type SubagentDisplayStatus,
   type SubagentRenderContentFn,
+  type SubagentShell,
   updateSubagentHeaderDisplay,
-  updateSummaryText,
 } from './subagentRendererShared';
 import type { ToolContentRenderOptions } from './ToolCallRenderer';
 import { renderStoredToolRuns } from './ToolStepGroupRenderer';
@@ -42,20 +40,10 @@ export interface AsyncSubagentState {
   info: SubagentInfo;
 }
 
-interface AsyncSubagentShell {
-  wrapperEl: HTMLElement;
-  contentEl: HTMLElement;
-  headerEl: HTMLElement;
-  labelEl: HTMLElement;
-  summaryEl: HTMLElement;
-  statusEl: HTMLElement;
-}
-
 interface AsyncSubagentShellOptions {
   info: SubagentInfo;
   displayStatus: SubagentDisplayStatus;
   initiallyExpanded: boolean;
-  ariaDescription: string;
 }
 
 function setAsyncWrapperStatus(wrapperEl: HTMLElement, status: SubagentDisplayStatus): void {
@@ -79,35 +67,17 @@ function updateAsyncLabel(state: AsyncSubagentState): void {
 function createAsyncSubagentShell(
   parentEl: HTMLElement,
   options: AsyncSubagentShellOptions,
-): AsyncSubagentShell {
-  const { info, displayStatus, initiallyExpanded, ariaDescription } = options;
-  const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-list pivi-subagent-activity-item' });
-  setAsyncWrapperStatus(wrapperEl, displayStatus);
-  wrapperEl.dataset.asyncSubagentId = info.id;
-
-  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });
-  headerEl.setAttribute('aria-expanded', initiallyExpanded ? 'true' : 'false');
-
-  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
-  iconEl.setAttribute('aria-hidden', 'true');
-  applySubagentHeaderIcon(iconEl, info);
-
-  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
-  labelEl.setText(formatSubagentAgentName(info.id, info.writerName));
-
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
-  updateSummaryText(summaryEl, info);
-
-  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status' });
-  const statusPresentation = renderSubagentStatus(statusEl, info);
-  headerEl.setAttribute(
-    'aria-label',
-    `${t('chat.activity.backgroundTask')}: ${ariaDescription} - ${statusPresentation.label} - ${t('chat.activity.expand')}`,
-  );
-
-  const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
-
-  return { wrapperEl, contentEl, headerEl, labelEl, summaryEl, statusEl };
+): SubagentShell {
+  const { info, displayStatus, initiallyExpanded } = options;
+  const shell = createSubagentShell({
+    parentEl,
+    info,
+    ariaLabelPrefix: t('chat.activity.backgroundTask'),
+    initiallyExpanded,
+    dataset: { key: 'asyncSubagentId', value: info.id },
+  });
+  setAsyncWrapperStatus(shell.wrapperEl, displayStatus);
+  return shell;
 }
 
 function renderAsyncContentLikeSync(
@@ -226,7 +196,6 @@ export function createAsyncSubagentBlock(
     info,
     displayStatus: 'queued',
     initiallyExpanded: info.isExpanded,
-    ariaDescription: description,
   });
   const state: AsyncSubagentState = {
     wrapperEl: shell.wrapperEl,
@@ -329,7 +298,6 @@ export function renderStoredAsyncSubagent(
     info: subagent,
     displayStatus,
     initiallyExpanded: false,
-    ariaDescription: subagent.description,
   });
 
   if (displayStatus === 'completed') {

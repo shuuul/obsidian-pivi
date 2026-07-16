@@ -26,7 +26,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [008-agent-runs-groups-and-work-shelf.md](archive/008-agent-runs-groups-and-work-shelf.md) | 2026-07-16 | Stable AgentRun projections, grouped Activity/timeline presentation, structured Narrative conclusions, and a default-off cross-tab Active Work Shelf. |
 | [009-review-followup-and-release-validation.md](archive/009-review-followup-and-release-validation.md) | 2026-07-16 | Dead-code cleanup, canonical Activity presentation, separated AgentRun derivation, dedicated Shelf coverage, tag-writer migration provenance, and scoped RC evidence. |
 | [010-restore-individual-subagent-presentation.md](archive/010-restore-individual-subagent-presentation.md) | 2026-07-16 | Restored one individual subagent-card presentation, removed Agent Group and Active Work Shelf, sanitized report protocol output, and scoped motion to running only. |
-| [011-complete-lazy-tool-disclosures.md](archive/011-complete-lazy-tool-disclosures.md) | 2026-07-16 | Complete snapshot-backed lazy tool/subagent bodies, one-third viewport caps with one scroll owner, and stable disclosure headers through virtual-row growth. |
+| [011-complete-lazy-tool-disclosures.md](archive/011-complete-lazy-tool-disclosures.md) | 2026-07-16 | Complete snapshot-backed lazy tool/subagent bodies, viewport-capped disclosures with one scroll owner (later: tools/steps one third, subagents two thirds), and stable disclosure headers through virtual-row growth. |
 
 ## Numbering and files
 

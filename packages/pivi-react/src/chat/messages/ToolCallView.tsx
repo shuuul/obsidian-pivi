@@ -68,15 +68,22 @@ function ToolIcon({ name }: { readonly name: string }) {
   return <PlatformIcon name={icon} />;
 }
 
-function ImperativeToolSlot({ adapter, toolCall }: {
-  readonly adapter: MessageContentAdapter<ToolCallInfo>;
-  readonly toolCall: ToolCallInfo;
+function ImperativeContentSlot<T extends { id: string }>({
+  adapter,
+  value,
+  className,
+  identityKey,
+}: {
+  readonly adapter: MessageContentAdapter<T>;
+  readonly value: T;
+  readonly className: string;
+  readonly identityKey: string;
 }) {
   const beginDisclosureResize = useBeginDisclosureResize();
   const containerRef = useRef<HTMLDivElement>(null);
-  const mountedValueRef = useRef<ToolCallInfo | null>(null);
-  const latestValueRef = useRef(toolCall);
-  latestValueRef.current = toolCall;
+  const mountedValueRef = useRef<T | null>(null);
+  const latestValueRef = useRef(value);
+  latestValueRef.current = value;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -95,67 +102,22 @@ function ImperativeToolSlot({ adapter, toolCall }: {
       mountedValueRef.current = null;
       dispose?.();
     };
-  }, [adapter, beginDisclosureResize, toolCall.id]);
+  }, [adapter, beginDisclosureResize, identityKey]);
 
   useEffect(() => {
     const container = containerRef.current;
     const ownerWindow = container?.ownerDocument.defaultView;
-    if (!container || !ownerWindow || mountedValueRef.current === toolCall) return;
-    mountedValueRef.current = toolCall;
-    adapter.update?.(container, toolCall, {
+    if (!container || !ownerWindow || mountedValueRef.current === value) return;
+    mountedValueRef.current = value;
+    adapter.update?.(container, value, {
       beginDisclosureResize,
-      generation: toolCall.id,
+      generation: value.id,
       ownerDocument: container.ownerDocument,
       ownerWindow,
     });
-  }, [adapter, beginDisclosureResize, toolCall]);
+  }, [adapter, beginDisclosureResize, value]);
 
-  return <div ref={containerRef} className="pivi-tool-content-adapter" />;
-}
-
-function ImperativeSubagentSlot({
-  adapter,
-  subagent,
-}: {
-  readonly adapter: MessageContentAdapter<NonNullable<ToolCallInfo['subagent']>>;
-  readonly subagent: NonNullable<ToolCallInfo['subagent']>;
-}) {
-  const beginDisclosureResize = useBeginDisclosureResize();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mountedValueRef = useRef<typeof subagent | null>(null);
-  const latestValueRef = useRef(subagent);
-  latestValueRef.current = subagent;
-  useEffect(() => {
-    const container = containerRef.current;
-    const ownerWindow = container?.ownerDocument.defaultView;
-    if (!container || !ownerWindow) return;
-    const initialValue = latestValueRef.current;
-    mountedValueRef.current = initialValue;
-    const dispose = adapter.mount(container, initialValue, {
-      beginDisclosureResize,
-      generation: initialValue.id,
-      ownerDocument: container.ownerDocument,
-      ownerWindow,
-    });
-    return () => {
-      mountedValueRef.current = null;
-      dispose?.();
-    };
-  }, [adapter, beginDisclosureResize, subagent.id]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const ownerWindow = container?.ownerDocument.defaultView;
-    if (!container || !ownerWindow || mountedValueRef.current === subagent) return;
-    mountedValueRef.current = subagent;
-    adapter.update?.(container, subagent, {
-      beginDisclosureResize,
-      generation: subagent.id,
-      ownerDocument: container.ownerDocument,
-      ownerWindow,
-    });
-  }, [adapter, beginDisclosureResize, subagent]);
-  return <div className="pivi-subagent-content-adapter" ref={containerRef} />;
+  return <div ref={containerRef} className={className} />;
 }
 
 function resolveAdapter(toolCall: ToolCallInfo, contentAdapters?: MessageContentAdapters) {
@@ -189,7 +151,16 @@ function ToolContent({ toolCall, contentAdapters }: {
   const reactContent = contentAdapters?.renderToolContent?.(toolCall);
   if (reactContent !== undefined && reactContent !== null) return <>{reactContent}</>;
   const adapter = resolveAdapter(toolCall, contentAdapters);
-  if (adapter) return <ImperativeToolSlot adapter={adapter} toolCall={toolCall} />;
+  if (adapter) {
+    return (
+      <ImperativeContentSlot
+        adapter={adapter}
+        className="pivi-tool-content-adapter"
+        identityKey={toolCall.id}
+        value={toolCall}
+      />
+    );
+  }
   return <GenericToolContent toolCall={toolCall} />;
 }
 
@@ -202,7 +173,14 @@ function ToolCallPresentation({ toolCall, contentAdapters, compact = false }: {
   const beginDisclosureResize = useBeginDisclosureResize();
   const [expanded, setExpanded] = useState(false);
   if (toolCall.subagent && contentAdapters?.subagent) {
-    return <ImperativeSubagentSlot adapter={contentAdapters.subagent} subagent={toolCall.subagent} />;
+    return (
+      <ImperativeContentSlot
+        adapter={contentAdapters.subagent}
+        className="pivi-subagent-content-adapter"
+        identityKey={toolCall.subagent.id}
+        value={toolCall.subagent}
+      />
+    );
   }
   const descriptor = getToolPresentationDescriptor(toolCall.name);
   const summary = getToolSummary(toolCall);

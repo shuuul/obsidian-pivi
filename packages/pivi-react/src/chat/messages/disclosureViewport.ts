@@ -28,6 +28,47 @@ function getDisclosureRow(header: HTMLElement): HTMLElement | null {
   return header.closest<HTMLElement>('.pivi-message-virtual-row');
 }
 
+function isVerticalScrollContainer(element: HTMLElement): boolean {
+  if (element.scrollHeight <= element.clientHeight + ANCHOR_TOLERANCE_PX) return false;
+  const view = element.ownerDocument.defaultView;
+  if (!view) return false;
+  const { overflowY } = view.getComputedStyle(element);
+  return overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
+}
+
+function findInnerScrollContainer(
+  header: HTMLElement,
+  transcriptScroll: HTMLElement,
+): HTMLElement | null {
+  let inner: HTMLElement | null = null;
+  let node: HTMLElement | null = header.parentElement;
+  while (node && node !== transcriptScroll) {
+    if (isVerticalScrollContainer(node)) {
+      inner = node;
+    }
+    node = node.parentElement;
+  }
+  return inner;
+}
+
+function applyAnchorCorrection(
+  header: HTMLElement,
+  targetTop: number,
+  transcriptScroll: HTMLElement,
+): void {
+  let delta = header.getBoundingClientRect().top - targetTop;
+  if (Math.abs(delta) <= ANCHOR_TOLERANCE_PX) return;
+
+  const innerScroll = findInnerScrollContainer(header, transcriptScroll);
+  if (innerScroll) {
+    innerScroll.scrollTop += delta;
+    delta = header.getBoundingClientRect().top - targetTop;
+  }
+  if (Math.abs(delta) > ANCHOR_TOLERANCE_PX) {
+    transcriptScroll.scrollTop += delta;
+  }
+}
+
 export function createDisclosureViewportController(
   scrollElement: HTMLElement,
 ): DisclosureViewportController {
@@ -110,7 +151,7 @@ export function createDisclosureViewportController(
         }
         const delta = current.header.getBoundingClientRect().top - current.targetTop;
         if (Math.abs(delta) > ANCHOR_TOLERANCE_PX) {
-          scrollElement.scrollTop += delta;
+          applyAnchorCorrection(current.header, current.targetTop, scrollElement);
         }
       });
     });
