@@ -23,6 +23,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [006-activity-and-memory-visual-language.md](archive/006-activity-and-memory-visual-language.md) | 2026-07-16 | Canonical localized Activity rows and statuses, truthful elapsed timing, and approximation-marked Memory boundaries for compaction and older history. |
 | [007-context-inspector-and-checkpoint-presentation.md](archive/007-context-inspector-and-checkpoint-presentation.md) | 2026-07-16 | Conservative context envelope and compaction headroom, an estimate-labeled owner-realm Context Inspector, and expandable structured or legacy checkpoint Memory boundaries. |
 | [008-agent-runs-groups-and-work-shelf.md](archive/008-agent-runs-groups-and-work-shelf.md) | 2026-07-16 | Stable AgentRun projections, grouped Activity/timeline presentation, structured Narrative conclusions, and a default-off cross-tab Active Work Shelf. |
+| [009-review-followup-and-release-validation.md](archive/009-review-followup-and-release-validation.md) | 2026-07-16 | Dead-code cleanup, canonical Activity presentation, separated AgentRun derivation, dedicated Shelf coverage, tag-writer migration provenance, and scoped RC evidence. |
 
 ## Numbering and files
 

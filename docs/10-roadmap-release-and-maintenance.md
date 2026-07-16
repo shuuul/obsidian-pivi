@@ -10,9 +10,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
-- Complete release-candidate validation against a known pre-upgrade 0.7.0 vault copy.
-- Stress real app quit and vault close while multi-view tab persistence and workspace disposal are active.
-- Exercise main window, pop-out windows, Hover Editor, inline edit, stored rich tools, MCP OAuth, and multi-view tabs as one release-candidate matrix.
+- Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
 ### Next
@@ -29,6 +27,22 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 - Split large modules only when the affected behavior is next changed and the extracted boundary has domain meaning.
 - Keep `PiChatService`, `ChatPorts`, React presentation ports, and host ports narrow as capabilities evolve.
 - Periodically reconcile the root quality snapshot and this roadmap, moving completed items out rather than retaining stale history.
+
+## 2026-07-16 release-candidate evidence
+
+This matrix distinguishes reproducible repository evidence from live host checks and from integrations that the configured vault cannot exercise. It does not describe tag-generated synthetic data as captured user data.
+
+| Scenario | Status | Evidence |
+|---|---|---|
+| 0.7.0 session provenance and external-path migration | Complete | `scripts/generate-pivi-070-session-fixture.mjs` checks out the immutable `0.7.0` writer at `f27ca3be149ecf4497f8d2e6ab8a236d14308c59`, verifies the three Pi dependencies at `0.80.6`, and deterministically reproduces `tag-generated-pivi-0.7.0-v3.jsonl` (1,957 bytes; SHA-256 `3c191e3440fc1a95859ddb6a07687a74a2b5cc383062c0fab3b0c53e357ef67b`). The fixture uses synthetic inputs. `piSessionTagGeneratedCompatibility.test.ts` proves HEAD migrates its absolute external paths into the device-local overlay, restores messages/title/MCP data, writes the sidecar marker, and is byte-idempotent on a second open. |
+| Main window, pop-out window, and multi-view ownership | Complete | A live three-view layout spanned two owner realms and three React roots. Plugin reload, vault reload, and full app quit/relaunch each restored all three views without captured errors; the two temporary leaves were detached afterward. |
+| Inline edit | Complete | The live command mounted exactly one inline-edit modal and React root in an existing note; dispatching Escape through the owner window removed both, with no captured errors. |
+| Stored Agent runs / rich execution presentation | Complete | The development-only isolated 20-Agent fixture command exported a main-window trace with the expected two projected transcript messages, two mounted virtual rows, terminal Markdown renders, and no captured errors. Its disposable session was restored/cleaned by the workload contract; the fixed source fixture remained intact. |
+| Near-limit Context Inspector | Complete, deterministic | A focused `ChatShell` run injects a 98% authoritative context envelope and verifies the warning state, current total, system/tools estimate, compaction trigger, approximation note, single gauge, and Escape dismissal. Separate owner-realm tests cover pop-out focus/dismissal. No provider-backed turn was fabricated for this check. |
+| Hover Editor | Environment-limited | The community plugin is not installed in the configured vault. Pivi's owner-realm and view-lifecycle tests remain green, but the named third-party live integration still requires a vault with Hover Editor installed. |
+| MCP OAuth | Environment-limited | The configured vault has no MCP servers or OAuth flow to authorize. Vault/store/service/UI OAuth success and unhappy-path tests pass, but a live redirect/login round trip still requires a configured test server and credentials. |
+
+The same validation run passed 243 suites / 1,859 tests, typecheck, lint, architecture/spec/boundary and i18n dead-key checks, production build, bundle analysis, and the bundle-size gate. The production artifact was 3,071,059 bytes; the concrete development recorder had zero production metafile contribution.
 
 ## Standard release route
 

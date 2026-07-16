@@ -444,8 +444,8 @@ Only running work uses continuous motion. Respect `prefers-reduced-motion`. `ari
 4. **Completed:** stabilize sequenced UI event ownership and visibility-aware cadence.
 5. **Completed:** define hierarchical checkpoint and structured Agent-report schemas with compatibility tests.
 6. **Completed:** prototype Narrative / Activity / Memory components with additive optional lifecycle/timing/context facts and old-session compatibility.
-7. Add Checkpoint presentation and the estimate-based Context Inspector.
-8. Introduce Agent Group, timeline/inspector, and optional Active Work Shelf after interaction testing.
+7. **Completed:** add Checkpoint presentation and the estimate-based Context Inspector.
+8. **Completed:** introduce Agent Group, timeline/inspector, and optional Active Work Shelf after interaction testing.
 9. Evaluate a bounded Markdown segment cache only if traces justify it.
 
 Each stage must preserve queued/running abort, late events, orphaning, hydrate retry, session switching, pop-out owner realms, virtual scroll anchoring, Obsidian Markdown cleanup, and the existing JSONL compatibility tests.
