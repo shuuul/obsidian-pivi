@@ -41,10 +41,11 @@ describe('subagent shell styles', () => {
   });
 
   it('caps the shell while its body owns the only scrollbar', () => {
-    expect(styles).toMatch(/\.pivi-subagent-list\.expanded\s*\{[^}]*max-height:\s*var\(--pivi-expanded-content-max-height/s);
+    expect(styles).toMatch(/\.pivi-subagent-list\.expanded\s*\{[^}]*max-height:\s*var\(--pivi-subagent-expanded-max-height, min\(640px, 66vh\)\);/s);
     expect(styles).toMatch(/\.pivi-subagent-list\.expanded\s*\{[^}]*display:\s*flex;/s);
     expect(styles).not.toMatch(/\.pivi-subagent-content\s*\{[^}]*max-height:/s);
     expect(styles).toMatch(/\.pivi-subagent-list\.expanded > \.pivi-subagent-content\s*\{[^}]*overflow-y:\s*auto;/s);
+    expect(styles).not.toMatch(/overscroll-behavior-y:\s*contain;/);
     expect(styles).not.toMatch(/\.pivi-subagent-content\s*\{[^}]*resize:/s);
     expect(styles).not.toContain('58vh');
   });

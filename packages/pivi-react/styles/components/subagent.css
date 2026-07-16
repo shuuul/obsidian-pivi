@@ -10,7 +10,7 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  max-height: var(--pivi-expanded-content-max-height, min(320px, 33vh));
+  max-height: var(--pivi-subagent-expanded-max-height, min(640px, 66vh));
   overflow: hidden;
 }
 

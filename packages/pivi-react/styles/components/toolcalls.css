@@ -68,13 +68,6 @@
   scrollbar-gutter: stable;
 }
 
-.pivi-disclosure-chain-active {
-  position: relative;
-  z-index: 1;
-  transform: translateY(var(--pivi-disclosure-chain-shift, 0));
-  clip-path: inset(0 0 var(--pivi-disclosure-chain-clip-bottom, 0) 0);
-}
-
 .pivi-subagent-content .pivi-tool-step-group.expanded,
 .pivi-subagent-content .pivi-tool-call.expanded,
 .pivi-tool-step-group-steps .pivi-tool-call.expanded {

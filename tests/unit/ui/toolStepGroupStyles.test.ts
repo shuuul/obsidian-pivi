@@ -66,6 +66,7 @@ describe('tool step group styles', () => {
     expect(styles).toMatch(/\.pivi-tool-step-group\.expanded,[\s\S]*?\.pivi-tool-call\.expanded\s*\{[^}]*display:\s*flex;/s);
     expect(styles).toMatch(/\.pivi-tool-step-group\.expanded,[\s\S]*?\.pivi-tool-call\.expanded\s*\{[^}]*overflow:\s*hidden;/s);
     expect(styles).toMatch(/\.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-steps,[\s\S]*?\.pivi-tool-call\.expanded > \.pivi-tool-content\s*\{[^}]*overflow-y:\s*auto;/s);
+    expect(styles).not.toMatch(/overscroll-behavior-y:\s*contain;/);
     expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-step-group\.expanded,[\s\S]*?\.pivi-tool-step-group-steps \.pivi-tool-call\.expanded\s*\{[^}]*max-height:\s*none;/s);
     expect(styles).toMatch(/\.pivi-tool-step-group-steps \.pivi-tool-call\.expanded > \.pivi-tool-content\s*\{[^}]*overflow:\s*visible;/s);
   });
@@ -90,16 +91,14 @@ describe('tool step group styles', () => {
     expect(styles).toMatch(/\.pivi-subagent-content \.pivi-tool-step-group\.expanded > \.pivi-tool-step-group-steps\s*\{[^}]*overflow:\s*visible;/s);
   });
 
-  it('pins and clips an ended disclosure body without a height transition', () => {
+  it('keeps expanded card height fixed without a shrink-to-title chain', () => {
     const styles = readFileSync(
       join(process.cwd(), 'packages/pivi-react/styles/components/toolcalls.css'),
       'utf8',
     );
 
-    expect(styles).toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*transform:\s*translateY\(var\(--pivi-disclosure-chain-shift, 0\)\);/s);
-    expect(styles).toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*clip-path:\s*inset\(0 0 var\(--pivi-disclosure-chain-clip-bottom, 0\) 0\);/s);
-    expect(styles).not.toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*overflow:\s*hidden;/s);
-    expect(styles).not.toMatch(/\.pivi-disclosure-chain-active\s*\{[^}]*transition:/s);
+    expect(styles).not.toContain('pivi-disclosure-chain-active');
+    expect(styles).not.toContain('--pivi-disclosure-chain-max-height');
   });
 
   it('restores subagent motion only for the canonical running lifecycle class', () => {

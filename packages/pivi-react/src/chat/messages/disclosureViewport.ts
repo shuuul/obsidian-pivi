@@ -1,15 +1,13 @@
 import type { BeginDisclosureResize } from './types';
 
 const DISCLOSURE_HEIGHT_PROPERTY = '--pivi-expanded-content-max-height';
+const SUBAGENT_HEIGHT_PROPERTY = '--pivi-subagent-expanded-max-height';
 const DISCLOSURE_HEIGHT_RATIO = 1 / 3;
+const SUBAGENT_HEIGHT_RATIO = 2 / 3;
 const ANCHOR_QUIET_MS = 1_000;
 const ANCHOR_MAX_MS = 5_000;
 const ANCHOR_TOLERANCE_PX = 1;
 const STEP_GROUP_STICKY_TOP_PROPERTY = '--pivi-tool-step-group-sticky-top';
-const CHAIN_ACTIVE_CLASS = 'pivi-disclosure-chain-active';
-const CHAIN_SHIFT_PROPERTY = '--pivi-disclosure-chain-shift';
-const CHAIN_CLIP_PROPERTY = '--pivi-disclosure-chain-clip-bottom';
-const SCROLL_END_TOLERANCE_PX = 1;
 
 export interface DisclosureViewportController {
   readonly beginDisclosureResize: BeginDisclosureResize;
@@ -30,36 +28,6 @@ function getDisclosureRow(header: HTMLElement): HTMLElement | null {
   return header.closest<HTMLElement>('.pivi-message-virtual-row');
 }
 
-interface DisclosureParts {
-  readonly body: HTMLElement;
-  readonly header: HTMLElement;
-  readonly wrapper: HTMLElement;
-}
-
-function isNestedDisclosure(wrapper: HTMLElement): boolean {
-  return !!wrapper.parentElement?.closest(
-    '.pivi-subagent-content, .pivi-tool-step-group-steps',
-  );
-}
-
-function getDisclosureParts(wrapper: HTMLElement): DisclosureParts | null {
-  let headerSelector: string;
-  let bodySelector: string;
-  if (wrapper.classList.contains('pivi-subagent-list')) {
-    headerSelector = ':scope > .pivi-subagent-header';
-    bodySelector = ':scope > .pivi-subagent-content';
-  } else if (wrapper.classList.contains('pivi-tool-step-group')) {
-    headerSelector = ':scope > .pivi-tool-step-group-header';
-    bodySelector = ':scope > .pivi-tool-step-group-steps';
-  } else {
-    headerSelector = ':scope > .pivi-tool-header';
-    bodySelector = ':scope > .pivi-tool-content';
-  }
-  const header = wrapper.querySelector<HTMLElement>(headerSelector);
-  const body = wrapper.querySelector<HTMLElement>(bodySelector);
-  return header && body ? { body, header, wrapper } : null;
-}
-
 export function createDisclosureViewportController(
   scrollElement: HTMLElement,
 ): DisclosureViewportController {
@@ -70,11 +38,11 @@ export function createDisclosureViewportController(
 
   const previousHeightValue = scrollElement.style.getPropertyValue(DISCLOSURE_HEIGHT_PROPERTY);
   const previousHeightPriority = scrollElement.style.getPropertyPriority(DISCLOSURE_HEIGHT_PROPERTY);
+  const previousSubagentHeightValue = scrollElement.style.getPropertyValue(SUBAGENT_HEIGHT_PROPERTY);
+  const previousSubagentHeightPriority = scrollElement.style.getPropertyPriority(SUBAGENT_HEIGHT_PROPERTY);
   const ResizeObserverCtor = ownerWindow.ResizeObserver;
   let active: ActiveAnchor | null = null;
   let disposed = false;
-  let chainFrame: number | null = null;
-  const watchedBodies = new Set<HTMLElement>();
 
   const syncHeight = () => {
     const height = scrollElement.clientHeight || scrollElement.getBoundingClientRect().height;
@@ -82,6 +50,10 @@ export function createDisclosureViewportController(
     scrollElement.style.setProperty(
       DISCLOSURE_HEIGHT_PROPERTY,
       `${height * DISCLOSURE_HEIGHT_RATIO}px`,
+    );
+    scrollElement.style.setProperty(
+      SUBAGENT_HEIGHT_PROPERTY,
+      `${height * SUBAGENT_HEIGHT_RATIO}px`,
     );
   };
 
@@ -100,89 +72,15 @@ export function createDisclosureViewportController(
     }
   };
 
-  const clearDisclosureChain = (body: HTMLElement) => {
-    body.classList.remove(CHAIN_ACTIVE_CLASS);
-    body.style.removeProperty(CHAIN_SHIFT_PROPERTY);
-    body.style.removeProperty(CHAIN_CLIP_PROPERTY);
-  };
-
-  const ensureBodyWatched = (body: HTMLElement) => {
-    if (watchedBodies.has(body)) return;
-    watchedBodies.add(body);
-    body.addEventListener('scroll', scheduleDisclosureChainSync, { passive: true });
-  };
-
-  const syncDisclosureChains = () => {
-    chainFrame = null;
-    const seenBodies = new Set<HTMLElement>();
-    for (const wrapper of scrollElement.querySelectorAll<HTMLElement>(
-      '.pivi-subagent-list.expanded, .pivi-tool-step-group.expanded, .pivi-tool-call.expanded',
-    )) {
-      if (isNestedDisclosure(wrapper)) continue;
-      const parts = getDisclosureParts(wrapper);
-      if (!parts) continue;
-      const { body, header } = parts;
-      seenBodies.add(body);
-      ensureBodyWatched(body);
-      const maxScrollTop = body.scrollHeight - body.clientHeight;
-      if (
-        maxScrollTop <= SCROLL_END_TOLERANCE_PX
-        || body.scrollTop < maxScrollTop - SCROLL_END_TOLERANCE_PX
-      ) {
-        clearDisclosureChain(body);
-        continue;
-      }
-      const currentShift = Number.parseFloat(
-        body.style.getPropertyValue(CHAIN_SHIFT_PROPERTY),
-      ) || 0;
-      const bodyRect = body.getBoundingClientRect();
-      const naturalBodyTop = bodyRect.top - currentShift;
-      const headerRect = header.getBoundingClientRect();
-      const wrapperRect = wrapper.getBoundingClientRect();
-      const shift = headerRect.bottom - naturalBodyTop;
-      if (shift <= 0) {
-        clearDisclosureChain(body);
-        continue;
-      }
-      const visibleHeight = Math.max(
-        0,
-        Math.min(bodyRect.height, wrapperRect.bottom - headerRect.bottom),
-      );
-      body.style.setProperty(CHAIN_SHIFT_PROPERTY, `${shift}px`);
-      body.style.setProperty(
-        CHAIN_CLIP_PROPERTY,
-        `${Math.max(0, bodyRect.height - visibleHeight)}px`,
-      );
-      body.classList.add(CHAIN_ACTIVE_CLASS);
-    }
-    for (const body of scrollElement.querySelectorAll<HTMLElement>(
-      `.${CHAIN_ACTIVE_CLASS}`,
-    )) {
-      if (!seenBodies.has(body)) clearDisclosureChain(body);
-    }
-  };
-
-  const scheduleDisclosureChainSync = () => {
-    if (disposed || chainFrame !== null) return;
-    chainFrame = ownerWindow.requestAnimationFrame(syncDisclosureChains);
-  };
-
-  const clearWatchedBodies = () => {
-    for (const body of watchedBodies) {
-      body.removeEventListener('scroll', scheduleDisclosureChainSync);
-    }
-    watchedBodies.clear();
-  };
-
   const viewportObserver = typeof ResizeObserverCtor === 'function'
     ? new ResizeObserverCtor(() => {
         syncHeight();
         syncStepGroupStickyOffsets();
-        scheduleDisclosureChainSync();
       })
     : null;
   viewportObserver?.observe(scrollElement);
   syncHeight();
+  syncStepGroupStickyOffsets();
 
   const clearAnchor = () => {
     const current = active;
@@ -235,7 +133,6 @@ export function createDisclosureViewportController(
           scheduleCorrection();
           resetQuietTimer();
           syncStepGroupStickyOffsets();
-          scheduleDisclosureChainSync();
         })
       : null;
     active = {
@@ -272,9 +169,6 @@ export function createDisclosureViewportController(
   scrollElement.addEventListener('touchstart', cancelForUserGesture, { passive: true });
   scrollElement.addEventListener('pointerdown', cancelForUserGesture);
   scrollElement.addEventListener('keydown', cancelForNavigationKey);
-  scrollElement.addEventListener('scroll', scheduleDisclosureChainSync, true);
-  syncStepGroupStickyOffsets();
-  scheduleDisclosureChainSync();
 
   return {
     beginDisclosureResize,
@@ -287,15 +181,6 @@ export function createDisclosureViewportController(
       scrollElement.removeEventListener('touchstart', cancelForUserGesture);
       scrollElement.removeEventListener('pointerdown', cancelForUserGesture);
       scrollElement.removeEventListener('keydown', cancelForNavigationKey);
-      scrollElement.removeEventListener('scroll', scheduleDisclosureChainSync, true);
-      clearWatchedBodies();
-      if (chainFrame !== null) ownerWindow.cancelAnimationFrame(chainFrame);
-      chainFrame = null;
-      for (const body of scrollElement.querySelectorAll<HTMLElement>(
-        `.${CHAIN_ACTIVE_CLASS}`,
-      )) {
-        clearDisclosureChain(body);
-      }
       for (const group of scrollElement.querySelectorAll<HTMLElement>(
         '.pivi-tool-step-group',
       )) {
@@ -309,6 +194,15 @@ export function createDisclosureViewportController(
         );
       } else {
         scrollElement.style.removeProperty(DISCLOSURE_HEIGHT_PROPERTY);
+      }
+      if (previousSubagentHeightValue) {
+        scrollElement.style.setProperty(
+          SUBAGENT_HEIGHT_PROPERTY,
+          previousSubagentHeightValue,
+          previousSubagentHeightPriority,
+        );
+      } else {
+        scrollElement.style.removeProperty(SUBAGENT_HEIGHT_PROPERTY);
       }
     },
   };

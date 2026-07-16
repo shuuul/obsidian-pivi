@@ -106,13 +106,16 @@ describe('disclosure viewport controller', () => {
     const controller = createDisclosureViewportController(scrollElement);
 
     expect(scrollElement.style.getPropertyValue('--pivi-expanded-content-max-height')).toBe('200px');
+    expect(scrollElement.style.getPropertyValue('--pivi-subagent-expanded-max-height')).toBe('400px');
 
     Object.defineProperty(scrollElement, 'clientHeight', { configurable: true, value: 900 });
     FakeResizeObserver.instances[0]?.trigger(scrollElement);
     expect(scrollElement.style.getPropertyValue('--pivi-expanded-content-max-height')).toBe('300px');
+    expect(scrollElement.style.getPropertyValue('--pivi-subagent-expanded-max-height')).toBe('600px');
 
     controller.dispose();
     expect(scrollElement.style.getPropertyValue('--pivi-expanded-content-max-height')).toBe('111px');
+    expect(scrollElement.style.getPropertyValue('--pivi-subagent-expanded-max-height')).toBe('');
     expect(FakeResizeObserver.instances[0]?.disconnected).toBe(true);
   });
 
@@ -124,6 +127,11 @@ describe('disclosure viewport controller', () => {
         scrollElement.style.getPropertyValue('--pivi-expanded-content-max-height'),
       ),
     ).toBeCloseTo(739 / 3);
+    expect(
+      Number.parseFloat(
+        scrollElement.style.getPropertyValue('--pivi-subagent-expanded-max-height'),
+      ),
+    ).toBeCloseTo((739 * 2) / 3);
     controller.beginDisclosureResize(header);
     const rowObserver = FakeResizeObserver.instances.find(observer => observer.observed.has(row));
 
@@ -271,43 +279,6 @@ describe('disclosure viewport controller', () => {
     controller.dispose();
   });
 
-  it('pins and progressively clips an ended subagent body beneath its parent title stack', () => {
-    const { body, scrollElement } = createChainFixture(
-      'pivi-subagent-list',
-      'pivi-subagent-header',
-      'pivi-subagent-content',
-    );
-    const controller = createDisclosureViewportController(scrollElement);
-
-    flushFrames();
-
-    expect(body.classList.contains('pivi-disclosure-chain-active')).toBe(true);
-    expect(body.style.getPropertyValue('--pivi-disclosure-chain-shift')).toBe('50px');
-    expect(body.style.getPropertyValue('--pivi-disclosure-chain-clip-bottom')).toBe('20px');
-
-    body.scrollTop = 50;
-    body.dispatchEvent(new Event('scroll'));
-    flushFrames();
-    expect(body.classList.contains('pivi-disclosure-chain-active')).toBe(false);
-    controller.dispose();
-    expect(body.classList.contains('pivi-disclosure-chain-active')).toBe(false);
-    expect(body.style.getPropertyValue('--pivi-disclosure-chain-shift')).toBe('');
-  });
-
-  it.each([
-    ['pivi-tool-step-group', 'pivi-tool-step-group-header', 'pivi-tool-step-group-steps'],
-    ['pivi-tool-call', 'pivi-tool-header', 'pivi-tool-content'],
-  ])('chains top-level %s bodies at internal scroll end', (wrapperClass, headerClass, bodyClass) => {
-    const { body, scrollElement } = createChainFixture(wrapperClass, headerClass, bodyClass);
-    const controller = createDisclosureViewportController(scrollElement);
-
-    flushFrames();
-
-    expect(body.classList.contains('pivi-disclosure-chain-active')).toBe(true);
-    controller.dispose();
-    expect(body.classList.contains('pivi-disclosure-chain-active')).toBe(false);
-  });
-
   it('publishes each expanded steps header height as its child sticky offset', () => {
     const { row, scrollElement } = createFixture();
     const group = document.createElement('div');
@@ -335,18 +306,26 @@ describe('disclosure viewport controller', () => {
     expect(group.style.getPropertyValue('--pivi-tool-step-group-sticky-top')).toBe('');
   });
 
-  it('does not chain nested disclosures inside a subagent scroll body', () => {
-    const { body, scrollElement } = createChainFixture(
-      'pivi-tool-step-group',
-      'pivi-tool-step-group-header',
-      'pivi-tool-step-group-steps',
-      true,
+  it('does not shrink or expand wrappers on wheel after internal scroll end', () => {
+    const { body, header, scrollElement, wrapper } = createChainFixture(
+      'pivi-subagent-list',
+      'pivi-subagent-header',
+      'pivi-subagent-content',
     );
+    Object.defineProperty(wrapper, 'offsetHeight', { configurable: true, value: 120 });
+    Object.defineProperty(header, 'offsetHeight', { configurable: true, value: 20 });
     const controller = createDisclosureViewportController(scrollElement);
 
-    flushFrames();
+    const down = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 100 });
+    body.dispatchEvent(down);
+    const up = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -100 });
+    body.dispatchEvent(up);
 
-    expect(body.classList.contains('pivi-disclosure-chain-active')).toBe(false);
+    expect(down.defaultPrevented).toBe(false);
+    expect(up.defaultPrevented).toBe(false);
+    expect(wrapper.classList.contains('pivi-disclosure-chain-active')).toBe(false);
+    expect(wrapper.style.getPropertyValue('--pivi-disclosure-chain-max-height')).toBe('');
+    expect(wrapper.classList.contains('expanded')).toBe(true);
     controller.dispose();
   });
 
