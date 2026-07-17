@@ -163,10 +163,7 @@ export class InputTurnPipeline {
     this.host.setActiveStreamingAssistantMessage(assistantMsg);
     this.host.seedProviderBoundaryInitialTurn(displayContent, imagesForMessage);
 
-    streamController.showThinkingIndicator(
-      isCompact ? 'Compacting...' : undefined,
-      isCompact ? 'pivi-thinking--compact' : undefined,
-    );
+    streamController.showThinkingIndicator(isCompact ? 'Compacting...' : undefined);
     state.responseStartTime = performance.now();
 
     let wasInterrupted = false;
@@ -243,6 +240,8 @@ export class InputTurnPipeline {
     const agentService = this.host.getAgentService();
     if (!agentService) {
       new Notice(t('chat.errors.agentUnavailable'));
+      streamController.hideThinkingIndicator();
+      state.isStreaming = false;
       this.host.clearActiveStreamingAssistantMessage();
       this.host.resetProviderBoundaryState();
       return null;
