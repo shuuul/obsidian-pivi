@@ -42,6 +42,7 @@ function createModelsPort() {
     addBuiltinProvider: async () => undefined,
     addCustomKind: async () => 'custom-openai-compatible',
     removeProvider: async () => undefined,
+    ensureProviderCredentials: async () => undefined,
     testProvider: async () => ({ ok: true, detail: 'ok' }),
     patchCustomProvider: async () => undefined,
     fetchCustomProviderModels: async () => ({ count: 0 }),

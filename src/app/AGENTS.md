@@ -71,7 +71,7 @@ flowchart LR
 | `ui/PiviSettingTabHost.ts` | Obsidian 1.13 declarative settings-search bridge plus 1.12 `display()` fallback; both mount the same React `SettingsRoot` |
 | `ui/createUiPorts.ts` | Explicit-workspace `createChatUiPorts(host, workspace)` and `createSettingsUiPorts(host, workspace)` public entries |
 | `ui/createUiPortHelpers.ts` | Shared workspace/env/subagent helpers for UI port adapters |
-| `ui/createSettingsModelsPort.ts` | Settings models/credential port wiring; settings-authoritative provider removal and optional single-provider credential deletion |
+| `ui/createSettingsModelsPort.ts` | Settings models/credential port wiring; prefetches interactive OAuth credentials via `getAuth` before readiness badges render; settings-authoritative provider removal and optional single-provider credential deletion |
 | `ui/createMcpSettingsPorts.ts` | Settings MCP save/reload/auth port wiring |
 | `ui/createSubagentContentAdapter.ts` | Bridges React message-content mount/update calls to stored subagent imperative rendering without remounting on every stream update |
 | `workspace/PiWorkspaceServices.ts` | MCP, skills, tools, readiness, chat factories |

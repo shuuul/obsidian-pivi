@@ -29,6 +29,7 @@ export interface ProviderCardProps {
   readonly save: (patch: Parameters<SettingsModelsPort['saveSettings']>[0]) => Promise<void>;
   readonly onChanged: () => void;
   readonly onError: (message: string) => void;
+  readonly credentialCheckPending?: boolean;
 }
 
 /** One collapsible provider card in the models settings list. */
@@ -48,6 +49,7 @@ export function ProviderCard({
   save,
   onChanged,
   onError,
+  credentialCheckPending = false,
 }: ProviderCardProps) {
   const t = useT();
   const terminology = useHostTerminology();
@@ -124,10 +126,12 @@ export function ProviderCard({
       feedback.notify(t('settings.modelsTab.testError', { name: displayName, message }));
     } finally {
       setTesting(false);
+      onChanged();
     }
   };
 
   const oauthConnected = isInteractiveOAuth && models.hasProviderOAuth(providerId);
+  const showCredentialCheck = credentialCheckPending && isInteractiveOAuth;
   const style = dragging
     ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
     : undefined;
@@ -160,10 +164,14 @@ export function ProviderCard({
           <span className="pivi-provider-title">{displayName}</span>
         </div>
         <span
-          className={`pivi-provider-status ${readiness}`}
-          title={t(STATUS_DESC_KEYS[readiness])}
+          className={`pivi-provider-status${showCredentialCheck ? ' checking' : ` ${readiness}`}`}
+          title={showCredentialCheck
+            ? t('settings.modelsTab.statusDesc.checking')
+            : t(STATUS_DESC_KEYS[readiness])}
         >
-          {t(STATUS_LABEL_KEYS[readiness])}
+          {showCredentialCheck
+            ? t('settings.modelsTab.status.checking')
+            : t(STATUS_LABEL_KEYS[readiness])}
         </span>
         <button className="pivi-provider-disable-btn" type="button" onClick={toggleDisabled}>
           {disabled ? t('common.enable') : t('common.disable')}

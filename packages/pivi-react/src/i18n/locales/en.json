@@ -518,14 +518,16 @@
         "missingCredential": "Missing credential",
         "oauthExpired": "OAuth expired",
         "disabled": "Disabled",
-        "unavailable": "Unavailable"
+        "unavailable": "Unavailable",
+        "checking": "Checking…"
       },
       "statusDesc": {
         "ready": "Credentials are present locally.",
         "missingCredential": "Add an API key or supported OAuth credential to use this provider.",
         "oauthExpired": "An OAuth credential exists, but its expiry is in the past. Reconnect before using this provider.",
         "disabled": "Saved credentials are kept, but this provider is hidden from model selection.",
-        "unavailable": "No local pi-ai model metadata is available for this provider yet."
+        "unavailable": "No local pi-ai model metadata is available for this provider yet.",
+        "checking": "Refreshing stored OAuth credentials before showing readiness."
       },
       "codex": {
         "name": "OpenAI Codex",

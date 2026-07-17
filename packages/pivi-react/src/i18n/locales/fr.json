@@ -512,14 +512,16 @@
         "missingCredential": "Identifiant manquant",
         "oauthExpired": "OAuth expiré",
         "disabled": "Désactivé",
-        "unavailable": "Indisponible"
+        "unavailable": "Indisponible",
+        "checking": "Vérification…"
       },
       "statusDesc": {
         "ready": "Des identifiants sont présents localement.",
         "missingCredential": "Ajoutez une clé API ou un identifiant OAuth pris en charge pour utiliser ce fournisseur.",
         "oauthExpired": "Un identifiant OAuth existe, mais il est expiré. Reconnectez-vous avant d’utiliser ce fournisseur.",
         "disabled": "Les identifiants sont conservés, mais ce fournisseur est masqué de la sélection de modèles.",
-        "unavailable": "Aucune métadonnée de modèle pi-ai locale pour ce fournisseur pour l’instant."
+        "unavailable": "Aucune métadonnée de modèle pi-ai locale pour ce fournisseur pour l’instant.",
+        "checking": "Actualisation des identifiants OAuth stockés avant d’afficher l’état de préparation."
       },
       "codex": {
         "name": "OpenAI Codex",

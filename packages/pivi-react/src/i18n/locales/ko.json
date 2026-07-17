@@ -512,14 +512,16 @@
         "missingCredential": "자격 증명 없음",
         "oauthExpired": "OAuth 만료",
         "disabled": "사용 안 함",
-        "unavailable": "사용 불가"
+        "unavailable": "사용 불가",
+        "checking": "확인 중…"
       },
       "statusDesc": {
         "ready": "자격 증명이 로컬에 있습니다.",
         "missingCredential": "이 제공자를 사용하려면 API 키 또는 지원되는 OAuth 자격 증명을 추가하세요.",
         "oauthExpired": "OAuth 자격 증명이 있지만 만료되었습니다. 사용 전에 다시 연결하세요.",
         "disabled": "자격 증명은 유지되지만 이 제공자는 모델 선택에서 숨겨집니다.",
-        "unavailable": "이 제공자의 로컬 pi-ai 모델 메타데이터가 아직 없습니다."
+        "unavailable": "이 제공자의 로컬 pi-ai 모델 메타데이터가 아직 없습니다.",
+        "checking": "준비 상태를 표시하기 전에 저장된 OAuth 자격 증명을 새로 고치는 중입니다."
       },
       "codex": {
         "name": "OpenAI Codex",

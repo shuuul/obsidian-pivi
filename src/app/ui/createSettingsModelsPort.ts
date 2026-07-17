@@ -271,6 +271,13 @@ export function createSettingsModelsPort(
       }
       return readiness.testProvider(providerId, host.settings);
     },
+    async ensureProviderCredentials() {
+      const readiness = workspace.modelReadinessProvider;
+      if (!readiness.ensureProviderCredentials) {
+        return;
+      }
+      await readiness.ensureProviderCredentials(host.settings);
+    },
     async patchCustomProvider(providerId, patch) {
       const piSettings = getPiAgentSettings(host.settings);
       const customProviders = piSettings.customProviders.map(provider =>

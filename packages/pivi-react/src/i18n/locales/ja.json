@@ -512,14 +512,16 @@
         "missingCredential": "資格情報がありません",
         "oauthExpired": "OAuth 期限切れ",
         "disabled": "無効",
-        "unavailable": "利用不可"
+        "unavailable": "利用不可",
+        "checking": "確認中…"
       },
       "statusDesc": {
         "ready": "資格情報がローカルにあります。",
         "missingCredential": "このプロバイダーを使うには API キーまたは対応する OAuth 資格情報を追加してください。",
         "oauthExpired": "OAuth 資格情報はありますが期限切れです。使用前に再接続してください。",
         "disabled": "資格情報は保持されますが、このプロバイダーはモデル選択から非表示です。",
-        "unavailable": "このプロバイダーのローカル pi-ai モデルメタデータはまだありません。"
+        "unavailable": "このプロバイダーのローカル pi-ai モデルメタデータはまだありません。",
+        "checking": "準備状態を表示する前に保存済みの OAuth 資格情報を更新しています。"
       },
       "codex": {
         "name": "OpenAI Codex",

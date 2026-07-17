@@ -998,6 +998,11 @@ textarea.pivi-settings-control {
   color: var(--pivi-error);
 }
 
+.pivi-provider-status.checking {
+  background-color: var(--pivi-host-border);
+  color: var(--pivi-host-text-muted);
+}
+
 .pivi-provider-status.disabled {
   background-color: var(--pivi-host-border);
   color: var(--pivi-host-text-muted);

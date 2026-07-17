@@ -29,4 +29,7 @@ export interface AppModelReadinessProvider {
     providerId: string,
     settings: Record<string, unknown>,
   ): Promise<AppModelTestResult>;
+  ensureProviderCredentials?(
+    settings: Record<string, unknown>,
+  ): Promise<void>;
 }

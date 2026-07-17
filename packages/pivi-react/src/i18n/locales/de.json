@@ -512,14 +512,16 @@
         "missingCredential": "Anmeldedaten fehlen",
         "oauthExpired": "OAuth abgelaufen",
         "disabled": "Deaktiviert",
-        "unavailable": "Nicht verfügbar"
+        "unavailable": "Nicht verfügbar",
+        "checking": "Wird geprüft…"
       },
       "statusDesc": {
         "ready": "Anmeldedaten sind lokal vorhanden.",
         "missingCredential": "API-Schlüssel oder unterstützte OAuth-Anmeldedaten hinzufügen, um diesen Anbieter zu nutzen.",
         "oauthExpired": "OAuth-Anmeldedaten vorhanden, aber abgelaufen. Vor Nutzung erneut verbinden.",
         "disabled": "Gespeicherte Anmeldedaten bleiben, aber der Anbieter ist in der Modellauswahl ausgeblendet.",
-        "unavailable": "Noch keine lokalen pi-ai-Modellmetadaten für diesen Anbieter."
+        "unavailable": "Noch keine lokalen pi-ai-Modellmetadaten für diesen Anbieter.",
+        "checking": "Gespeicherte OAuth-Anmeldedaten werden aktualisiert, bevor der Bereitschaftsstatus angezeigt wird."
       },
       "codex": {
         "name": "OpenAI Codex",

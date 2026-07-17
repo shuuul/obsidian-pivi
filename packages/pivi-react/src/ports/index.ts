@@ -94,6 +94,8 @@ export interface SettingsModelsPort {
   /** Add a custom/local provider kind and return the new provider id. */
   addCustomKind(kind: string): Promise<string>;
   removeProvider(providerId: string, deleteCredential: boolean): Promise<void>;
+  /** Refresh interactive OAuth credentials before readiness badges render. */
+  ensureProviderCredentials(): Promise<void>;
   testProvider(providerId: string): Promise<{ ok: boolean; detail: string }>;
   patchCustomProvider(providerId: string, patch: { name?: string; baseUrl?: string }): Promise<void>;
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;

@@ -512,14 +512,16 @@
         "missingCredential": "Falta credencial",
         "oauthExpired": "OAuth caducado",
         "disabled": "Desactivado",
-        "unavailable": "No disponible"
+        "unavailable": "No disponible",
+        "checking": "Comprobando…"
       },
       "statusDesc": {
         "ready": "Hay credenciales presentes localmente.",
         "missingCredential": "Añade una clave API o una credencial OAuth admitida para usar este proveedor.",
         "oauthExpired": "Existe una credencial OAuth, pero ha caducado. Vuelve a conectar antes de usar este proveedor.",
         "disabled": "Se conservan las credenciales, pero este proveedor está oculto en la selección de modelos.",
-        "unavailable": "Aún no hay metadatos de modelo pi-ai locales para este proveedor."
+        "unavailable": "Aún no hay metadatos de modelo pi-ai locales para este proveedor.",
+        "checking": "Actualizando las credenciales OAuth almacenadas antes de mostrar el estado de preparación."
       },
       "codex": {
         "name": "OpenAI Codex",

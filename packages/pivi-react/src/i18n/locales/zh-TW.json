@@ -512,14 +512,16 @@
         "missingCredential": "缺少憑證",
         "oauthExpired": "OAuth 已過期",
         "disabled": "已停用",
-        "unavailable": "不可用"
+        "unavailable": "不可用",
+        "checking": "檢查中…"
       },
       "statusDesc": {
         "ready": "本機已存在憑證。",
         "missingCredential": "請新增 API 金鑰或受支援的 OAuth 憑證以使用此提供者。",
         "oauthExpired": "存在 OAuth 憑證，但已過期。請重新連線後再使用此提供者。",
         "disabled": "已儲存憑證，但此提供者在模型選擇中隱藏。",
-        "unavailable": "此提供者尚無本機 pi-ai 模型中繼資料。"
+        "unavailable": "此提供者尚無本機 pi-ai 模型中繼資料。",
+        "checking": "顯示準備狀態前正在重新整理已儲存的 OAuth 憑證。"
       },
       "codex": {
         "name": "OpenAI Codex",

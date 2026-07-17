@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
@@ -22,8 +22,29 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const [settings, setSettings] = useState(() => models.getSettings());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const [reorderPending, setReorderPending] = useState(false);
+  const [credentialCheckPending, setCredentialCheckPending] = useState(true);
 
   const reload = (): void => setSettings(models.getSettings());
+  const addedProvidersKey = settings.addedProviders.join('\0');
+
+  useEffect(() => {
+    let cancelled = false;
+    setCredentialCheckPending(true);
+    void models.ensureProviderCredentials()
+      .then(() => {
+        if (!cancelled) {
+          setSettings(models.getSettings());
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCredentialCheckPending(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [models, addedProvidersKey]);
   const save = async (patch: Parameters<SettingsModelsPort['saveSettings']>[0]): Promise<void> => {
     await models.saveSettings(patch);
     reload();
@@ -107,6 +128,7 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
             save={save}
             onChanged={reload}
             onError={(message) => feedback.notify(message)}
+            credentialCheckPending={credentialCheckPending}
           />
         ))}
       </div>

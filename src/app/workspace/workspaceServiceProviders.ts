@@ -1,6 +1,7 @@
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import type { ObsidianCredentialStore } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import type { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
+import { getPiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
 import type { AppModelReadinessProvider } from "@pivi/pivi-agent-core/foundation/modelReadiness";
 import type { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
 import type { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
@@ -23,6 +24,7 @@ import {
   runPiModelReadinessTest,
   runPiProviderReadinessTest,
 } from "./modelReadiness";
+import { ensureAddedProviderAuths } from "./providerReadiness";
 
 export class PiMcpToolProvider implements AppMcpToolProvider {
   private readonly pool: PiMcpConnectionPool;
@@ -199,6 +201,11 @@ export class PiModelReadinessProvider implements AppModelReadinessProvider {
 
   testProvider(providerId: string, settings: Record<string, unknown>) {
     return runPiProviderReadinessTest(providerId, settings);
+  }
+
+  ensureProviderCredentials(settings: Record<string, unknown>) {
+    const piSettings = getPiAgentSettings(settings);
+    return ensureAddedProviderAuths(piSettings.addedProviders, piSettings);
   }
 }
 

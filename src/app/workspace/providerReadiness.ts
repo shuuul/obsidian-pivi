@@ -1,4 +1,5 @@
 import { obsidianHttpClient } from '@pivi/obsidian-host/obsidianHttpClient';
+import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
 import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import {
@@ -67,4 +68,38 @@ export async function testProviderReadiness(
   }
 
   return testResolvedModel(providerId, model);
+}
+
+/** Resolve and refresh stored OAuth credentials the same way provider tests do. */
+export async function ensureProviderAuth(
+  providerId: string,
+  piSettings: Pick<PiAgentSettingsView, 'disabledProviders'>,
+): Promise<void> {
+  if (isProviderDisabled(piSettings.disabledProviders, providerId)) {
+    return;
+  }
+
+  const model = piAiModels.getModels(providerId)[0];
+  if (!model) {
+    return;
+  }
+
+  try {
+    await piAiModels.getAuth(model);
+  } catch {
+    // Readiness badges report refresh failures after this preflight.
+  }
+}
+
+export async function ensureAddedProviderAuths(
+  addedProviders: readonly string[],
+  piSettings: Pick<PiAgentSettingsView, 'disabledProviders'>,
+): Promise<void> {
+  const interactiveOAuthIds = new Set<string>(INTERACTIVE_OAUTH_PROVIDER_IDS);
+  for (const providerId of addedProviders) {
+    if (!interactiveOAuthIds.has(providerId)) {
+      continue;
+    }
+    await ensureProviderAuth(providerId, piSettings);
+  }
 }
