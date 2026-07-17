@@ -574,9 +574,25 @@ export async function compactCurrentSession(
   }
   const existing = compactionLocks.get(tree);
   if (existing) {
-    const result = await existing;
+    const trimmedInstructions = instructions?.trim();
+    const runManualWithInstructions = reason === 'manual' && !!trimmedInstructions;
+    let result: PiChatCompactionResult | null = null;
+    try {
+      result = await existing;
+    } catch (error) {
+      if (deps.agent) {
+        deps.agent.state.messages = tree.loadAgentMessages();
+      }
+      if (runManualWithInstructions) {
+        return compactCurrentSession(deps, reason, trimmedInstructions);
+      }
+      throw error;
+    }
     if (deps.agent) {
       deps.agent.state.messages = tree.loadAgentMessages();
+    }
+    if (runManualWithInstructions) {
+      return compactCurrentSession(deps, reason, trimmedInstructions);
     }
     return result;
   }

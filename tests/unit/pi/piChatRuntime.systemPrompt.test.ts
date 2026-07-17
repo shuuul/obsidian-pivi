@@ -931,6 +931,49 @@ describe('PiChatRuntime system prompt', () => {
     expect(chunks).toContainEqual(expect.objectContaining({ type: 'context_compacted' }));
   });
 
+  it('runs manual compaction with instructions after an in-flight threshold compaction', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    for (const text of ['First turn', 'Second turn']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Persist two complete turns (four message entries).
+      }
+    }
+    const internals = runtime as unknown as {
+      compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+    };
+    const deps = internals.compactionDeps();
+    let resolvePass1: ((value: string) => void) | undefined;
+    mockCompactionSample
+      .mockImplementationOnce(() => new Promise<string>((resolve) => {
+        resolvePass1 = resolve;
+      }))
+      .mockResolvedValue(defaultCompactionSample);
+
+    const thresholdCompaction = compactCurrentSession(deps, 'threshold');
+    await Promise.resolve();
+    expect(mockCompactionSample).toHaveBeenCalledTimes(1);
+
+    const manualCompaction = compactCurrentSession(
+      deps,
+      'manual',
+      'preserve wikilinks',
+    );
+    deps.compactionState.foregroundController?.abort();
+    resolvePass1?.(defaultCompactionSample);
+
+    const [, manualResult] = await Promise.all([
+      thresholdCompaction.catch(() => null),
+      manualCompaction,
+    ]);
+
+    expect(manualResult).not.toBeNull();
+    const instructionPass2 = mockCompactionSample.mock.calls.find((call) => (
+      String((call as unknown[])[2]).includes('preserve wikilinks')
+    ));
+    expect(instructionPass2).toBeDefined();
+    expect(String((instructionPass2 as unknown[])[2])).toContain('Create the final NOTE₂');
+  });
+
   it('serializes foreground compaction for two tabs sharing one session store', async () => {
     const runtime = createRuntime(createMockPlugin());
     for (const text of ['First turn', 'Second turn']) {
