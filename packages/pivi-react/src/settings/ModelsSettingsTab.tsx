@@ -8,6 +8,14 @@ import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
 import { useProviderReorder } from './providers/useProviderReorder';
 
+function buildInteractiveOAuthMembershipKey(
+  addedProviders: readonly string[],
+  interactiveOAuthProviderIds: readonly string[],
+): string {
+  const interactive = new Set(interactiveOAuthProviderIds);
+  return addedProviders.filter(providerId => interactive.has(providerId)).sort().join('\0');
+}
+
 export interface ModelsSettingsTabProps {
   readonly models: SettingsComplexPorts['models'];
   readonly catalog: SettingsCatalogPort;
@@ -25,13 +33,21 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const [credentialCheckPending, setCredentialCheckPending] = useState(true);
 
   const reload = (): void => setSettings(models.getSettings());
-  const addedProvidersKey = settings.addedProviders.join('\0');
+  const interactiveOAuthMembershipKey = buildInteractiveOAuthMembershipKey(
+    settings.addedProviders,
+    models.interactiveOAuthProviderIds,
+  );
 
   useEffect(() => {
     let cancelled = false;
     setCredentialCheckPending(true);
     void models.ensureProviderCredentials()
       .then(() => {
+        if (!cancelled) {
+          setSettings(models.getSettings());
+        }
+      })
+      .catch(() => {
         if (!cancelled) {
           setSettings(models.getSettings());
         }
@@ -44,7 +60,7 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
     return () => {
       cancelled = true;
     };
-  }, [models, addedProvidersKey]);
+  }, [models, interactiveOAuthMembershipKey]);
   const save = async (patch: Parameters<SettingsModelsPort['saveSettings']>[0]): Promise<void> => {
     await models.saveSettings(patch);
     reload();

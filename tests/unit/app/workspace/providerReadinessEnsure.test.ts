@@ -114,4 +114,44 @@ describe('provider readiness credential preflight', () => {
     });
     expect(status.kind).toBe('ready');
   });
+
+  it('logs getAuth rejections without throwing', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(piAiModels, 'getAuth').mockRejectedValue(new Error('refresh failed'));
+    jest.spyOn(piAiModels, 'getModels').mockImplementation((provider?: string) => {
+      if (provider === 'grok-build') {
+        return [grokBuildProbeModel as never];
+      }
+      return [];
+    });
+
+    await expect(ensureProviderAuth('grok-build', { disabledProviders: [] })).resolves.toBeUndefined();
+
+    expect(warn).toHaveBeenCalledWith(
+      '[Pivi:ProviderReadiness] Failed to refresh OAuth credentials for grok-build',
+      expect.any(Error),
+    );
+  });
+
+  it('reuses a single in-flight preflight for the same interactive OAuth membership', async () => {
+    let resolveGetAuth: ((value: { auth: { apiKey: string }; source: string }) => void) | undefined;
+    const getAuth = jest.spyOn(piAiModels, 'getAuth').mockImplementation(() => new Promise((resolve) => {
+      resolveGetAuth = resolve;
+    }));
+    jest.spyOn(piAiModels, 'getModels').mockImplementation((provider?: string) => {
+      if (provider === 'grok-build') {
+        return [grokBuildProbeModel as never];
+      }
+      return [];
+    });
+
+    const settings = { disabledProviders: [] as string[] };
+    const firstFlight = ensureAddedProviderAuths(['grok-build'], settings);
+    const secondFlight = ensureAddedProviderAuths(['grok-build'], settings);
+
+    expect(getAuth).toHaveBeenCalledTimes(1);
+
+    resolveGetAuth?.({ auth: { apiKey: 'fresh-access' }, source: 'OAuth' });
+    await Promise.all([firstFlight, secondFlight]);
+  });
 });

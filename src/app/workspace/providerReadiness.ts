@@ -6,9 +6,28 @@ import {
   type PiResolvedModel,
   resolvePiModelFromKeyWithLookup,
 } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import { getProviderIdFromModelValue } from '@pivi/pivi-agent-core/foundation/providerLogos';
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
 import { testEndpointConnectivity } from '@pivi/pivi-agent-core/runtime/connectivity';
+
+const logger = new PluginLogger('ProviderReadiness');
+
+const addedProviderAuthFlights = new Map<string, Promise<void>>();
+
+function interactiveOAuthMembershipKey(
+  addedProviders: readonly string[],
+  piSettings: Pick<PiAgentSettingsView, 'disabledProviders'>,
+): string {
+  const interactiveOAuthIds = new Set<string>(INTERACTIVE_OAUTH_PROVIDER_IDS);
+  return addedProviders
+    .filter(providerId => (
+      interactiveOAuthIds.has(providerId)
+      && !isProviderDisabled(piSettings.disabledProviders, providerId)
+    ))
+    .sort()
+    .join('\0');
+}
 
 export interface ProviderTestResult {
   ok: boolean;
@@ -86,8 +105,8 @@ export async function ensureProviderAuth(
 
   try {
     await piAiModels.getAuth(model);
-  } catch {
-    // Readiness badges report refresh failures after this preflight.
+  } catch (error) {
+    logger.warn(`Failed to refresh OAuth credentials for ${providerId}`, error);
   }
 }
 
@@ -95,11 +114,28 @@ export async function ensureAddedProviderAuths(
   addedProviders: readonly string[],
   piSettings: Pick<PiAgentSettingsView, 'disabledProviders'>,
 ): Promise<void> {
-  const interactiveOAuthIds = new Set<string>(INTERACTIVE_OAUTH_PROVIDER_IDS);
-  for (const providerId of addedProviders) {
-    if (!interactiveOAuthIds.has(providerId)) {
-      continue;
+  const flightKey = interactiveOAuthMembershipKey(addedProviders, piSettings);
+  const existingFlight = addedProviderAuthFlights.get(flightKey);
+  if (existingFlight) {
+    return existingFlight;
+  }
+
+  const flight = (async () => {
+    const interactiveOAuthIds = new Set<string>(INTERACTIVE_OAUTH_PROVIDER_IDS);
+    for (const providerId of addedProviders) {
+      if (!interactiveOAuthIds.has(providerId)) {
+        continue;
+      }
+      await ensureProviderAuth(providerId, piSettings);
     }
-    await ensureProviderAuth(providerId, piSettings);
+  })();
+
+  addedProviderAuthFlights.set(flightKey, flight);
+  try {
+    await flight;
+  } finally {
+    if (addedProviderAuthFlights.get(flightKey) === flight) {
+      addedProviderAuthFlights.delete(flightKey);
+    }
   }
 }
