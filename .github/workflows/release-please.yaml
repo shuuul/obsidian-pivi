@@ -13,13 +13,11 @@ permissions:
 jobs:
   release-please:
     # Manual release commits already contain an explicit version/changelog bump.
-    # Let release.yaml publish those tags; otherwise release-please may open a
-    # stale/incorrect release PR from the manual commit.
+    # Let a maintainer-pushed tag trigger release.yaml; otherwise release-please
+    # may open a stale/incorrect release PR from the manual commit.
     if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     runs-on: ubuntu-latest
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
       prs_created: ${{ steps.release.outputs.prs_created }}
       pr: ${{ steps.release.outputs.pr }}
     steps:
@@ -28,6 +26,9 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # Publishing is intentionally separate: a maintainer-pushed tag must
+          # trigger release.yaml so its provenance certificate records "push".
+          skip-github-release: true
 
   sync-obsidian-version-metadata:
     needs: release-please
@@ -59,20 +60,3 @@ jobs:
           git add manifest.json versions.json README.md
           git commit -m "chore(release): sync Obsidian version metadata"
           git push origin "HEAD:${HEAD_BRANCH}"
-
-  dispatch-plugin-release:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-    steps:
-      - name: Dispatch tag-bound release workflow
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
-        run: |
-          gh workflow run release.yaml \
-            --ref "$RELEASE_TAG" \
-            -f tag="$RELEASE_TAG"

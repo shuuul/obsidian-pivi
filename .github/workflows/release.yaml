@@ -1,15 +1,9 @@
 name: Release Obsidian plugin
 
 on:
-  release:
-    types:
-      - published
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to release (example: 0.2.0; must match manifest.json version exactly)"
-        required: true
-        type: string
+  push:
+    tags:
+      - "*"
 
 jobs:
   release:
@@ -22,8 +16,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.release.tag_name || github.event.inputs.tag }}
 
       - name: Use Node.js
         uses: actions/setup-node@v6
@@ -34,22 +26,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Sync plugin version metadata
-        run: node scripts/sync-version.js
-
       - name: Build plugin
         run: npm run build
 
       - name: Verify release artifacts
-        env:
-          INPUT_TAG: ${{ github.event.inputs.tag }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            tag="${INPUT_TAG}"
-          else
-            tag="${RELEASE_TAG}"
-          fi
+          tag="${GITHUB_REF_NAME}"
 
           expected_ref="refs/tags/${tag}"
           if [ "${GITHUB_REF}" != "$expected_ref" ]; then
@@ -65,6 +47,7 @@ jobs:
           done
 
           manifest_version="$(node -p "require('./manifest.json').version")"
+          package_version="$(node -p "require('./package.json').version")"
           if [[ "$tag" == v* ]]; then
             echo "Obsidian plugin releases must not use a leading 'v' tag. Use '${manifest_version}', not '$tag'."
             exit 1
@@ -73,49 +56,36 @@ jobs:
             echo "manifest.json version ($manifest_version) does not match tag ($tag)"
             exit 1
           fi
-
-      # Keep one subject per statement until downstream sigstore-rs consumers
-      # support every subject in multi-subject DSSE attestations.
-      - name: Attest main.js
-        uses: actions/attest@v4
-        with:
-          subject-path: main.js
-
-      - name: Attest manifest.json
-        uses: actions/attest@v4
-        with:
-          subject-path: manifest.json
-
-      - name: Attest styles.css
-        uses: actions/attest@v4
-        with:
-          subject-path: styles.css
-
-      - name: Prepare release notes
-        env:
-          INPUT_TAG: ${{ github.event.inputs.tag }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            tag="${INPUT_TAG}"
-          else
-            tag="${RELEASE_TAG}"
-          fi
-
-          version="$tag"
-          notes_file="${RUNNER_TEMP}/release-notes.md"
-          awk -v version="$version" '
-            $0 ~ "^## \\[" version "\\]" { found = 1; next }
-            found && $0 ~ "^## \\[" { exit }
-            found { print }
-          ' CHANGELOG.md > "$notes_file"
-
-          if [ ! -s "$notes_file" ]; then
-            echo "See CHANGELOG.md for details." > "$notes_file"
+          if [ "$package_version" != "$tag" ]; then
+            echo "package.json version ($package_version) does not match tag ($tag)"
+            exit 1
           fi
 
           echo "RELEASE_TAG_RESOLVED=${tag}" >> "$GITHUB_ENV"
+
+      - name: Prepare release notes
+        run: |
+          notes_file="${RUNNER_TEMP}/release-notes.md"
+          awk -v version="$RELEASE_TAG_RESOLVED" '
+            index($0, "## [" version "]") == 1 { found = 1; next }
+            found && index($0, "## [") == 1 { exit }
+            found { print }
+          ' CHANGELOG.md > "$notes_file"
+
+          if ! grep -q '[^[:space:]]' "$notes_file"; then
+            echo "CHANGELOG.md has no non-empty section for $RELEASE_TAG_RESOLVED."
+            exit 1
+          fi
+
           echo "RELEASE_NOTES_FILE=${notes_file}" >> "$GITHUB_ENV"
+
+      - name: Attest release assets
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Create or update GitHub release
         env:

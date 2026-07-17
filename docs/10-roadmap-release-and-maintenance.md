@@ -57,11 +57,14 @@ Pivi uses Conventional Commits and Release Please:
 3. Review generated version and `CHANGELOG.md` changes and the Obsidian metadata synchronized by `node scripts/sync-version.js`.
    For the next release, ensure the generated notes call out that an absent Obsidian CLI preference now defaults to disabled and that users can re-enable it in Pivi settings.
 4. Merge the release PR.
-5. Release Please creates the GitHub Release, then dispatches `.github/workflows/release.yaml` at the created tag. That tag-bound workflow builds, attests, and uploads `main.js`, `manifest.json`, and `styles.css`.
+5. Pull the merged release commit and confirm its package, manifest, release manifest, and changelog version all agree.
+6. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.
+7. The tag push directly triggers `.github/workflows/release.yaml`. That workflow builds the tag, requires a non-empty matching `CHANGELOG.md` section, uses that section as the GitHub Release notes, attests the three assets, and publishes them.
 
 While Pivi is pre-1.0, `fix` normally produces a patch and `feat` a minor release. README badge updates come from `scripts/sync-version.js`; do not add generic Release Please README markers.
 
 The Git tag and GitHub Release tag must equal `manifest.json.version` exactly and must not have a leading `v`.
+Release Please runs with `skip-github-release: true`; publication stays separate so the provenance identity records a real `push` event at `refs/tags/x.y.z`.
 
 ## Manual hotfix route
 
@@ -71,9 +74,10 @@ Use this path only when explicitly requested:
 2. Run `node scripts/sync-version.js`.
 3. Update `.release-please-manifest.json` and `CHANGELOG.md`.
 4. Commit `chore(release): prepare x.y.z`.
-5. Push `main`, create/push tag `x.y.z` without `v`, and run `.github/workflows/release.yaml` with both the workflow ref and input set to that tag: `gh workflow run release.yaml --ref x.y.z -f tag=x.y.z`.
+5. Push `main`.
+6. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.
 
-Do not mix standard and manual routes for one version. The publishing workflow verifies the workflow ref/tag/manifest invariant, extracts matching changelog notes, generates one single-subject attestation per asset, creates or updates the GitHub Release, then downloads and verifies the published bytes against the tag-bound workflow provenance.
+Do not mix standard and manual routes for one version. The tag push is the only publishing trigger. The publishing workflow verifies the tag/package/manifest invariant, rejects a missing or empty changelog section, generates one attestation covering all three release assets, creates or updates the GitHub Release with those changelog notes, then downloads and verifies the published bytes against the tag-push workflow provenance.
 
 ## Release artifact invariant
 
@@ -85,7 +89,7 @@ manifest.json
 styles.css
 ```
 
-Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Both publishing routes converge on the same tag-bound workflow, which retains `id-token: write`, `attestations: write`, and `artifact-metadata: write`. JavaScript and CSS builds include the package version in a leading banner, so unchanged product code still produces a version-specific asset digest instead of sharing historical attestation lookup results.
+Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Both publishing routes converge on the same `push.tags` workflow, which retains `id-token: write`, `attestations: write`, and `artifact-metadata: write`. JavaScript and CSS builds include the package version in a leading banner, so unchanged product code still produces a version-specific asset digest instead of sharing historical attestation lookup results.
 
 ## Documentation ownership
 

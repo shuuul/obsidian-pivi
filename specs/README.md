@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| — | — | No active specs. |
+| [017-obsidian-attestation-policy-compatibility.md](017-obsidian-attestation-policy-compatibility.md) | Active | Align release provenance with the stricter identity policy used by Obsidian automated review. |
 
 ## Archived specs
 
