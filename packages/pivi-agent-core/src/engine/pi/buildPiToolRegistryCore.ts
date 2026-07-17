@@ -28,6 +28,7 @@ export interface PiToolRegistry {
 export interface PiBaseToolProviderOptions {
   vaultPath: string;
   externalContextPaths?: readonly string[];
+  resolveReadMaxChars?: () => number;
 }
 
 export interface PiBaseToolProviderResult {
@@ -103,6 +104,7 @@ export function buildPiToolRegistry(options: {
   mcpBridge: PiMcpBridge | null;
   baseToolProvider: PiBaseToolProvider | null;
   subagentQueryRunner?: PiSubagentQueryRunner;
+  resolveReadMaxChars?: () => number;
 }): PiToolRegistry {
   if (!options.baseToolProvider) {
     throw new Error('Pi tool registry requires a baseToolProvider.');
@@ -111,6 +113,7 @@ export function buildPiToolRegistry(options: {
   const providedBaseTools = options.baseToolProvider({
     vaultPath: options.vaultPath,
     externalContextPaths: options.externalContextPaths,
+    resolveReadMaxChars: options.resolveReadMaxChars,
   });
   const subagentSettings = getSubagentRuntimeSettingsFromBag(options.host.settings);
 

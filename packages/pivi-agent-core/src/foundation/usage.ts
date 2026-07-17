@@ -5,6 +5,9 @@ export const DEFAULT_RESERVED_OUTPUT_TOKENS = 16_000;
 export const DEFAULT_COMPACTION_RESERVE_TOKENS = 12_000;
 export const DEFAULT_CONTEXT_SAFETY_MARGIN_TOKENS = 8_000;
 export const AUTO_COMPACTION_THRESHOLD_RATIO = 0.85;
+export const READ_TOOL_MAX_CHARS_CAP = 50_000;
+/** Matches compaction prose token estimation for conservative read budgeting. */
+export const READ_TOOL_CHARS_PER_TOKEN = 4;
 
 const OUTPUT_RESERVE_WINDOW_RATIO = 0.25;
 const COMPACTION_RESERVE_WINDOW_RATIO = 0.1;
@@ -116,6 +119,29 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
       : estimate(estimatedTotal),
     usableInputTokens,
   };
+}
+
+/** Remaining input tokens before automatic compaction should trigger. */
+export function calculateCompactionRemainingTokens(usage: UsageInfo): number {
+  const envelope = usage.contextEnvelope ?? calculateContextEnvelope({
+    contextWindow: usage.contextWindow || DEFAULT_CONTEXT_WINDOW_TOKENS,
+    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
+    outputTokenLimit: usage.outputTokenLimit,
+    providerContextTokens: usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined,
+  });
+  return Math.max(0, envelope.compactionTriggerTokens - envelope.pressureInputTokens);
+}
+
+/**
+ * Default read-tool character cap from remaining compaction headroom, capped at
+ * {@link READ_TOOL_MAX_CHARS_CAP}. Falls back to the cap when usage is unknown.
+ */
+export function calculateReadToolMaxChars(usage?: UsageInfo | null): number {
+  if (!usage) {
+    return READ_TOOL_MAX_CHARS_CAP;
+  }
+  const remainingChars = calculateCompactionRemainingTokens(usage) * READ_TOOL_CHARS_PER_TOKEN;
+  return Math.min(READ_TOOL_MAX_CHARS_CAP, remainingChars);
 }
 
 export function calculateUsagePercentage(tokens: number, limit: number): number {

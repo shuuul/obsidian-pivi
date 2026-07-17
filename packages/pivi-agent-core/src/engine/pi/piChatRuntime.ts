@@ -8,6 +8,7 @@ import type {
   StreamChunk,
 } from '../../foundation';
 import { PluginLogger } from '../../foundation/pluginLogger';
+import { calculateReadToolMaxChars } from '../../foundation/usage';
 import type { McpOAuthService, McpServerManager } from '../../mcp';
 import { PiMcpBridge } from '../../mcp';
 import type { McpProcessEnv, McpTransportFetch } from '../../mcp/ports';
@@ -48,6 +49,7 @@ import {
   getSubagentOwnerToolId,
 } from './piChatRuntimeActiveTurn';
 import {
+  attachContextEnvelope,
   compactCurrentSession,
   invalidateCompactionState,
   type PiChatCompactionState,
@@ -55,6 +57,10 @@ import {
 } from './piChatRuntimeCompaction';
 import { testPiChatConnectivity } from './piChatRuntimeConnectivity';
 import { streamPiChatTurn } from './piChatRuntimeTurn';
+import {
+  buildEstimatedUsageInfo,
+  latestUsageFromMessages,
+} from './piChatRuntimeUsage';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import { resolvePiThinkingLevelForModel } from './piThinkingLevels';
@@ -438,6 +444,7 @@ export class PiChatRuntime implements PiChatService {
 
   private buildToolRegistry() {
     const vaultPath = this.getVaultPath();
+    const resolveReadMaxChars = () => this.resolveReadMaxCharsForTools();
     if (!vaultPath) {
       return buildPiToolRegistry({
         host: this.plugin,
@@ -446,6 +453,7 @@ export class PiChatRuntime implements PiChatService {
         baseToolProvider: this.baseToolProvider,
         externalContextPaths: this.externalContextPaths,
         subagentQueryRunner: this.subagentRunner,
+        resolveReadMaxChars,
       });
     }
     return buildPiToolRegistry({
@@ -455,6 +463,7 @@ export class PiChatRuntime implements PiChatService {
       baseToolProvider: this.baseToolProvider,
       externalContextPaths: this.externalContextPaths,
       subagentQueryRunner: this.subagentRunner,
+      resolveReadMaxChars,
     });
   }
 
@@ -466,6 +475,7 @@ export class PiChatRuntime implements PiChatService {
     const providedBaseTools = this.baseToolProvider({
       vaultPath,
       externalContextPaths: this.externalContextPaths,
+      resolveReadMaxChars: () => this.resolveReadMaxCharsForTools(),
     });
     const baseTools = providedBaseTools.toolSpecs
       .map(toPiAgentTool)
@@ -525,6 +535,19 @@ export class PiChatRuntime implements PiChatService {
         this.currentTurnMetadata.assistantMessageId = entryId;
       },
     };
+  }
+
+  private resolveReadMaxCharsForTools(): number {
+    const model = this.resolveModel();
+    const messages = this.agent?.state.messages ?? [];
+    const latestUsage = latestUsageFromMessages(messages, model)
+      ?? buildEstimatedUsageInfo(messages, model);
+    if (!latestUsage) {
+      return calculateReadToolMaxChars(null);
+    }
+    return calculateReadToolMaxChars(
+      attachContextEnvelope(this.compactionDeps(), latestUsage, undefined, messages),
+    );
   }
 
   private syncSessionMessagesAfterTurn(messages: AgentMessage[], turn?: PreparedChatTurn): void {

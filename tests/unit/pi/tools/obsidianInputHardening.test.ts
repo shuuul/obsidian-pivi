@@ -117,6 +117,7 @@ describe('obsidian tool input hardening', () => {
 
   it('returns external file byte stats without reading large files by default', async () => {
     const deps = makeDeps({
+      resolveReadMaxChars: () => 20_000,
       externalFiles: {
         stat: jest.fn().mockReturnValue({ path: '/tmp/large.log', size: 25_000, isDirectory: false, isFile: true }),
         readFile: jest.fn(),
@@ -236,8 +237,9 @@ describe('obsidian tool input hardening', () => {
   });
 
   it('does not return large full-note reads by default', async () => {
-    const content = `${'x'.repeat(21_000)}\nSECRET_CONTENT`;
+    const content = `${'x'.repeat(51_000)}\nSECRET_CONTENT`;
     const deps = makeDeps({
+      resolveReadMaxChars: () => 50_000,
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/large.md', content }),
       } as never,

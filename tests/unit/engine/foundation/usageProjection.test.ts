@@ -1,8 +1,11 @@
 import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   calculateContextEnvelope,
+  calculateCompactionRemainingTokens,
   calculateContextUsagePercentage,
+  calculateReadToolMaxChars,
   calculateUsagePercentage,
+  READ_TOOL_MAX_CHARS_CAP,
   recalculateUsageForModel,
 } from '@pivi/pivi-agent-core/foundation/usage';
 
@@ -85,5 +88,67 @@ describe('usage projection', () => {
       compactionTriggerTokens: 19_200,
       pressureInputTokens: 50_000,
     });
+  });
+
+  it('uses compaction headroom converted to characters when below the read cap', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 157_000,
+    });
+    const usage: UsageInfo = {
+      contextEnvelope: envelope,
+      contextTokens: 157_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 157_000,
+      percentage: 79,
+    };
+
+    expect(calculateCompactionRemainingTokens(usage)).toBe(7_000);
+    expect(calculateReadToolMaxChars(usage)).toBe(28_000);
+  });
+
+  it('uses the read cap when compaction headroom exceeds it', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 10_000,
+    });
+    const usage: UsageInfo = {
+      contextEnvelope: envelope,
+      contextTokens: 10_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 10_000,
+      percentage: 5,
+    };
+
+    expect(calculateReadToolMaxChars(usage)).toBe(READ_TOOL_MAX_CHARS_CAP);
+  });
+
+  it('returns zero read max chars when compaction pressure is already at the trigger', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 164_000,
+    });
+    const usage: UsageInfo = {
+      contextEnvelope: envelope,
+      contextTokens: 164_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 164_000,
+      percentage: 82,
+    };
+
+    expect(calculateReadToolMaxChars(usage)).toBe(0);
+  });
+
+  it('falls back to the read cap when usage is unavailable', () => {
+    expect(calculateReadToolMaxChars(null)).toBe(READ_TOOL_MAX_CHARS_CAP);
   });
 });

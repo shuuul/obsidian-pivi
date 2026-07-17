@@ -44,4 +44,5 @@ export interface ObsidianToolDeps {
   obsidianCliAvailable?: boolean;
   processRunner: ProcessRunner;
   imageGenerator?: ObsidianImageGenerator;
+  resolveReadMaxChars?: () => number;
 }

@@ -45,6 +45,7 @@ export function createObsidianTools(
     imageGenerator?: ObsidianToolDeps['imageGenerator'];
     externalReadDirectories?: readonly string[];
     obsidianCliAvailable?: boolean;
+    resolveReadMaxChars?: ObsidianToolDeps['resolveReadMaxChars'];
   } = {},
 ): ToolSpec[] {
   const disabledTools = new Set(settings.disabledTools ?? []);
@@ -69,6 +70,7 @@ export function createObsidianTools(
     obsidianCliAvailable,
     processRunner: systemProcessRunner,
     imageGenerator: options.imageGenerator,
+    resolveReadMaxChars: options.resolveReadMaxChars,
   };
 
   const tools: ToolSpec[] = [

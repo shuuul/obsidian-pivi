@@ -214,7 +214,7 @@ function createObsidianBaseToolProvider(
   providerOAuth: ProviderOAuthService,
   webSearchCredentialStore: WebSearchCredentialStore | null,
 ): PiBaseToolProvider {
-  return ({ externalContextPaths }) => {
+  return ({ externalContextPaths, resolveReadMaxChars }) => {
     const settings = getObsidianToolsSettingsFromBag(host.settings);
     const externalContexts = (externalContextPaths ?? []).map((contextPath) => (
       settings.allowExternalRead
@@ -238,6 +238,7 @@ function createObsidianBaseToolProvider(
       imageGenerator,
       externalReadDirectories: availableExternalPaths,
       obsidianCliAvailable,
+      resolveReadMaxChars,
     });
 
     const webSearchSettings = getWebSearchToolsSettingsFromBag(host.settings);

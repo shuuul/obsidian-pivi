@@ -131,6 +131,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
       '- **Automatic delegation for complex multi-context tasks:** When multiple attached context groups need the same substantive analysis, comparison, extraction, or transformation, prefer spawning sub-agents automatically instead of reading every group in the main session. Use direct main-agent reads only for simple lookups, tiny context, or when the task clearly needs one shared reading pass.',
     ] : []),
     '- The list is **exhaustive for this turn**: for `@folder/` mentions it already includes every file under that folder. Counting or listing folder contents does not require extra search tools—use the paths given.',
+    ...(hasRead || hasExternalRead ? buildReadMaxCharsGuidance() : []),
     ...buildMarkdownReadGuidance({ hasRead, hasMarkdownStructure, hasSubagent: summary.includeSubagent }),
     '- Do **not** use a leading `/` or the vault absolute path for vault files.',
     ...(hasRead ? [
@@ -154,6 +155,13 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   );
 
   return lines.join('\n');
+}
+
+function buildReadMaxCharsGuidance(): string[] {
+  return [
+    '- `obsidian_read` and `obsidian_read_external` apply a runtime default `maxChars` from remaining compaction headroom (capped at 50000 characters). You may override this by passing `maxChars` explicitly.',
+    '- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, line ranges, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a larger body is required and the remaining budget can absorb it.',
+  ];
 }
 
 function buildExternalReadGuidance(params: { hasReadExternal: boolean; hasListExternal: boolean }): string {
@@ -248,8 +256,8 @@ function buildMarkdownReadGuidance(params: {
       : [];
     return [
       ...subagentFullReadGuidance,
-      '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If the whole file is truly needed, call `obsidian_read` again with `maxChars` set at least to the reported `Characters` value; do this deliberately because the full file enters context.',
-      '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"` or a line range before reading the full body, unless you intentionally raise `maxChars` to read the entire file.',
+      '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If the whole file is truly needed, call `obsidian_read` again with an explicit `maxChars` at least to the reported `Characters` value; do this deliberately because the full file enters context.',
+      '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"` or a line range before reading the full body, unless you intentionally override `maxChars` to read the entire file.',
     ];
   }
   return [
@@ -264,7 +272,7 @@ interface ObsidianToolPromptContext {
 function describeObsidianTool(name: string, context: ObsidianToolPromptContext): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
-      return 'Read note body safely (vault API): use mode=stats for large files, then startLine/endLine ranges for selected content';
+      return 'Read note body safely (vault API): default maxChars follows compaction headroom; override maxChars only after estimating remaining context and task need; use mode=stats for large files, then startLine/endLine ranges for selected content';
     case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
       return 'Extract Markdown heading structure with line numbers and character counts so large notes can be read section-by-section';
     case TOOL_OBSIDIAN_EDIT:
@@ -300,7 +308,7 @@ function describeObsidianTool(name: string, context: ObsidianToolPromptContext):
     case TOOL_OBSIDIAN_LIST:
       return 'List direct children of a vault folder, including files, folders, and attachments';
     case TOOL_OBSIDIAN_READ_EXTERNAL:
-      return 'Read external files by absolute path for research; use mode=stats for large files, then startLine/endLine ranges for selected content';
+      return 'Read external files by absolute path for research; default maxChars follows compaction headroom; override maxChars only after estimating remaining context and task need; use mode=stats for large files, then startLine/endLine ranges for selected content';
     case TOOL_OBSIDIAN_LIST_EXTERNAL:
       return 'List direct children of an external folder by absolute path';
     case TOOL_OBSIDIAN_MKDIR:
@@ -341,7 +349,7 @@ function describeObsidianTool(name: string, context: ObsidianToolPromptContext):
 function describeObsidianToolParameters(name: string, context: ObsidianToolPromptContext): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
-      return '`file?` wikilink title, `path?` vault-relative note path, `mode?` content|stats, `startLine?`/`endLine?` 1-based inclusive range, `maxChars?` content character cap.';
+      return '`file?` wikilink title, `path?` vault-relative note path, `mode?` content|stats, `startLine?`/`endLine?` 1-based inclusive range, `maxChars?` optional override of the runtime default content cap.';
     case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
       return '`file?` wikilink title, `path?` vault-relative Markdown path, `maxHeadings?` heading cap.';
     case TOOL_OBSIDIAN_EDIT:
@@ -373,7 +381,7 @@ function describeObsidianToolParameters(name: string, context: ObsidianToolPromp
     case TOOL_OBSIDIAN_LIST:
       return '`path?` vault-relative folder path; empty or omitted means vault root.';
     case TOOL_OBSIDIAN_READ_EXTERNAL:
-      return '`path` required absolute filesystem file path, `mode?` content|stats, `startLine?`/`endLine?` 1-based inclusive range, `maxChars?` content character cap.';
+      return '`path` required absolute filesystem file path, `mode?` content|stats, `startLine?`/`endLine?` 1-based inclusive range, `maxChars?` optional override of the runtime default content cap.';
     case TOOL_OBSIDIAN_LIST_EXTERNAL:
       return '`path` required absolute filesystem folder path.';
     case TOOL_OBSIDIAN_MKDIR:

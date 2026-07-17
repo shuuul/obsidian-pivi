@@ -7,12 +7,12 @@ import {
 import type { ObsidianToolDeps } from './deps';
 import {
   buildStatsText,
-  DEFAULT_SAFE_READ_MAX_CHARS,
   getLineSpans,
   getPositiveIntegerField,
   getReadMode,
   getStats,
   getStringField,
+  resolveEffectiveReadMaxChars,
   sliceLineRange,
 } from './readShared';
 
@@ -47,7 +47,7 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
         mode: { type: 'string', enum: ['content', 'stats'], description: 'stats returns only path, line count, and character count' },
         startLine: { type: 'number', description: '1-based first line to read' },
         endLine: { type: 'number', description: '1-based last line to read, inclusive' },
-        maxChars: { type: 'number', description: 'Maximum characters to return for content reads (default 20000). To read a full large file, first use mode=stats, then set maxChars to at least the reported Characters value deliberately.' },
+        maxChars: { type: 'number', description: 'Maximum characters to return for content reads. Defaults to the smaller of remaining compaction headroom and 50000. To read a full large file, first use mode=stats, then set maxChars to at least the reported Characters value deliberately.' },
       },
       required: ['path'],
       additionalProperties: false,
@@ -61,7 +61,7 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
       const mode = getReadMode(input);
       const startLine = getPositiveIntegerField(input, 'startLine');
       const endLine = getPositiveIntegerField(input, 'endLine');
-      const maxChars = getPositiveIntegerField(input, 'maxChars') ?? DEFAULT_SAFE_READ_MAX_CHARS;
+      const maxChars = resolveEffectiveReadMaxChars(input, deps.resolveReadMaxChars);
       const fileStat = externalFiles.stat(absolutePath);
       const isRangeRead = startLine !== undefined || endLine !== undefined;
       if (fileStat.size > MAX_EXTERNAL_READ_BYTES && (isRangeRead || maxChars >= fileStat.size)) {

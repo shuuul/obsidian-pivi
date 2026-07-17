@@ -1,8 +1,9 @@
+import { calculateReadToolMaxChars } from '@pivi/pivi-agent-core/foundation/usage';
+
 import type { LineSpan, ReadMode, ReadStats } from './readTypes';
 
 export * from './readTypes';
-
-export const DEFAULT_SAFE_READ_MAX_CHARS = 20_000;
+export { READ_TOOL_MAX_CHARS_CAP as DEFAULT_SAFE_READ_MAX_CHARS } from '@pivi/pivi-agent-core/foundation/usage';
 
 export function getStringField(input: Record<string, unknown>, key: string): string | undefined {
   const value = input[key];
@@ -18,6 +19,17 @@ export function getPositiveIntegerField(input: Record<string, unknown>, key: str
     throw new Error(`${key} must be a positive integer.`);
   }
   return value;
+}
+
+export function resolveEffectiveReadMaxChars(
+  input: Record<string, unknown>,
+  resolveDefault?: () => number,
+): number {
+  const explicit = getPositiveIntegerField(input, 'maxChars');
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  return resolveDefault?.() ?? calculateReadToolMaxChars(null);
 }
 
 export function getReadMode(input: Record<string, unknown>): ReadMode {
