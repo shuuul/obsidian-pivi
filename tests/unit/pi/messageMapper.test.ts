@@ -503,6 +503,156 @@ describe('MessageMapper', () => {
     });
   });
 
+  it('reconstructs a completed background subagent from Pi-native spawn_agent history without a UI overlay', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'spawn-native',
+            name: 'spawn_agent',
+            arguments: {
+              label: 'scan-notes',
+              message: 'Inspect the assigned notes.',
+              run_in_background: true,
+            },
+          }],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 't1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'spawn-native',
+          toolName: 'spawn_agent',
+          content: [{ type: 'text', text: 'Background task completed.' }],
+          details: {
+            agent_id: 'subagent-native',
+            status: 'completed',
+            result: 'Recovered terminal result',
+          },
+          isError: false,
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+    ];
+
+    const message = first(entriesToChatMessages(branch, new Map()));
+
+    expect(message.contentBlocks).toEqual([{
+      type: 'subagent',
+      subagentId: 'spawn-native',
+      mode: 'async',
+    }]);
+    expect(first(message.toolCalls ?? [])).toMatchObject({
+      id: 'spawn-native',
+      status: 'completed',
+      subagent: {
+        id: 'spawn-native',
+        agentId: 'subagent-native',
+        description: 'scan-notes',
+        prompt: 'Inspect the assigned notes.',
+        mode: 'async',
+        status: 'completed',
+        asyncStatus: 'completed',
+        result: 'Recovered terminal result',
+        toolCalls: [],
+      },
+    });
+  });
+
+  it('repairs an incomplete spawn_agent UI overlay while preserving its presentation fields', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'spawn-incomplete',
+            name: 'spawn_agent',
+            arguments: {
+              label: 'repair-card',
+              message: 'Recover this card.',
+              run_in_background: false,
+            },
+          }],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 't1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'spawn-incomplete',
+          toolName: 'spawn_agent',
+          content: [{ type: 'text', text: 'Recovered sync result' }],
+          isError: false,
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 't1',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: {
+          targetEntryId: 'a1',
+          contentBlocks: [{ type: 'tool_use', toolId: 'spawn-incomplete' }],
+          toolCalls: [{
+            id: 'spawn-incomplete',
+            name: 'spawn_agent',
+            input: {
+              label: 'repair-card',
+              message: 'Recover this card.',
+              run_in_background: false,
+            },
+            status: 'completed',
+            activityStatus: 'cancelled',
+            isExpanded: true,
+          }],
+        },
+      },
+    ];
+
+    const message = first(entriesToChatMessages(branch, collectMessageUiMap(branch)));
+
+    expect(message.contentBlocks).toEqual([{
+      type: 'subagent',
+      subagentId: 'spawn-incomplete',
+      mode: 'sync',
+    }]);
+    expect(first(message.toolCalls ?? [])).toMatchObject({
+      activityStatus: 'cancelled',
+      isExpanded: true,
+      result: 'Recovered sync result',
+      subagent: {
+        description: 'repair-card',
+        prompt: 'Recover this card.',
+        mode: 'sync',
+        status: 'completed',
+        activityStatus: 'cancelled',
+        result: 'Recovered sync result',
+      },
+    });
+  });
+
   it('preserves the complete durable Agent trace from a message-ui overlay', () => {
     const branch: SessionEntry[] = [
       {

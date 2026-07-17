@@ -103,7 +103,7 @@ Stored asynchronous lifecycle states are pending, running, completed, error, and
 
 ## Persistence and restore
 
-Pi assistant/tool entries are written to session JSONL. Structured subagent content blocks, nested tool calls, and presentation fields are appended as the session's `message_ui` overlay. On restore, the message mapper merges both layers.
+Pi assistant/tool entries are written to session JSONL. Structured subagent content blocks, nested tool calls, and presentation fields are appended as the session's `message_ui` overlay. On restore, the message mapper merges both layers. If an older, interrupted, or externally produced session has a Pi-native `spawn_agent` call/result but lacks the richer subagent overlay, the mapper reconstructs the card identity, mode, task label/prompt, terminal status, runtime agent ID, and result from those native fields. Complete overlay data still wins, so recovery never discards nested tool traces or richer presentation state.
 
 When a background result completes, Pivi also repairs the restored parent tool result so future LLM context sees the final report rather than only an initial job-start acknowledgement. Completed and error cards can therefore be rendered and reasoned about after reopening. Unresolved jobs become an explicit orphaned record with any partial output preserved.
 

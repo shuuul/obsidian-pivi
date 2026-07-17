@@ -32,6 +32,7 @@ import {
   extractAgentTextContent,
   normalizeVisibleUserText,
 } from './sessionMessageProjection';
+import { recoverPiSubagentPresentation } from './subagentMessageRecovery';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {
   return entry.type === 'message';
@@ -431,6 +432,7 @@ export function entriesToChatMessages(
     lastAssistantMessage = agentMsg.role === 'assistant' ? message : null;
   }
 
+  recoverPiSubagentPresentation(messages);
   return messages;
 }
 
