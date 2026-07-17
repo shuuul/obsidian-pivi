@@ -168,6 +168,13 @@ export class SubagentManager extends SubagentAsyncManagerBase {
 
   public orphanAllActive(): SubagentInfo[] {
     const orphaned = super.orphanAllActive();
+    for (const subagent of this.syncSubagents.values()) {
+      if (subagent.status === 'running') {
+        this.markOrphaned(subagent);
+        orphaned.push(subagent);
+      }
+    }
+    this.syncSubagents.clear();
     this.taskIdToWriterName.clear();
     this.usedWriterNames.clear();
     return orphaned;

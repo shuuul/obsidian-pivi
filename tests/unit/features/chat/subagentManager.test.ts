@@ -69,7 +69,21 @@ describe('SubagentManager', () => {
     if (created.action !== 'created_async') throw new Error('async task expected');
 
     expect(manager.orphanAllActive()).toEqual([created.info]);
-    expect(manager.getByTaskId('spawn-1')).toMatchObject({ asyncStatus: 'orphaned', status: 'error' });
+    expect(manager.getByTaskId('spawn-1')).toMatchObject({
+      asyncStatus: 'orphaned',
+      activityStatus: 'orphaned',
+      status: 'error',
+    });
+  });
+
+  it('preserves partial async output when orphaning active work', () => {
+    const manager = createManager();
+    const created = manager.handleTaskToolUse('spawn-1', { run_in_background: true });
+    if (created.action !== 'created_async') throw new Error('async task expected');
+
+    created.info.result = 'Partial output before reload';
+    expect(manager.orphanAllActive()).toEqual([created.info]);
+    expect(created.info.result).toBe('Partial output before reload');
   });
 
   it('moves pre-activity async work to running on its first child event', () => {

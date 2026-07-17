@@ -503,6 +503,61 @@ describe('MessageMapper', () => {
     });
   });
 
+  it('infers cancelled activity status from a pure Pi cancelled terminal result', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'spawn-cancelled-native',
+            name: 'spawn_agent',
+            arguments: {
+              label: 'cancel-task',
+              message: 'Stop this work.',
+              run_in_background: true,
+            },
+          }],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 't1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'spawn-cancelled-native',
+          toolName: 'spawn_agent',
+          content: [{ type: 'text', text: 'cancelled' }],
+          details: {
+            agent_id: 'subagent-cancelled',
+            status: 'error',
+            result: 'cancelled',
+          },
+          isError: true,
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+    ];
+
+    const message = first(entriesToChatMessages(branch, new Map()));
+
+    expect(first(message.toolCalls ?? [])).toMatchObject({
+      id: 'spawn-cancelled-native',
+      activityStatus: 'cancelled',
+      subagent: {
+        activityStatus: 'cancelled',
+        result: 'cancelled',
+      },
+    });
+  });
+
   it('reconstructs a completed background subagent from Pi-native spawn_agent history without a UI overlay', () => {
     const branch: SessionEntry[] = [
       {
@@ -722,6 +777,7 @@ describe('MessageMapper', () => {
               status: 'running',
               activityStatus: 'running',
               asyncStatus: 'running',
+              result: 'Partial output before reload',
               toolCalls: [{
                 id: 'child-read',
                 name: 'obsidian_read',

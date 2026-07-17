@@ -57,7 +57,7 @@ function markRestoredRunningAsyncSubagentsOrphaned(messages: ChatMessage[]): boo
     }
     for (const toolCall of message.toolCalls) {
       const subagent = toolCall.subagent;
-      if (!subagent || subagent.mode !== 'async') {
+      if (!subagent) {
         continue;
       }
       const status = subagent.asyncStatus ?? subagent.status;
@@ -67,11 +67,15 @@ function markRestoredRunningAsyncSubagentsOrphaned(messages: ChatMessage[]): boo
 
       const fallback = 'Session ended before task completed';
       const preservedResult = subagent.result?.trim() || toolCall.result?.trim() || fallback;
-      subagent.asyncStatus = 'orphaned';
       subagent.status = 'error';
+      subagent.activityStatus = 'orphaned';
+      if (subagent.mode === 'async') {
+        subagent.asyncStatus = 'orphaned';
+      }
       subagent.result = preservedResult;
       subagent.completedAt = subagent.completedAt ?? Date.now();
       toolCall.status = 'error';
+      toolCall.activityStatus = 'orphaned';
       toolCall.result = preservedResult;
       changed = true;
     }

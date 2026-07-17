@@ -106,13 +106,24 @@ export function resolveToolActivityStatus(
 export function resolveSubagentActivityStatus(
   subagent: Pick<SubagentInfo, 'activityStatus' | 'asyncStatus' | 'status'>,
 ): ActivityStatus {
+  switch (subagent.asyncStatus) {
+    case 'completed':
+      return 'completed';
+    case 'error':
+      return 'failed';
+    case 'orphaned':
+      return 'orphaned';
+    case 'pending':
+      if (subagent.activityStatus) return subagent.activityStatus;
+      return 'queued';
+    case 'running':
+      if (subagent.activityStatus) return subagent.activityStatus;
+      return 'running';
+  }
   if (subagent.activityStatus) return subagent.activityStatus;
-  const status = subagent.asyncStatus ?? subagent.status;
-  switch (status) {
-    case 'pending': return 'queued';
+  switch (subagent.status) {
     case 'running': return 'running';
     case 'completed': return 'completed';
     case 'error': return 'failed';
-    case 'orphaned': return 'orphaned';
   }
 }

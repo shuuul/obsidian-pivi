@@ -57,11 +57,20 @@ function recoveredResult(toolCall: ToolCallInfo): string | undefined {
     ?? nonEmptyString(toolCall.result);
 }
 
+function inferCancelledActivityStatus(toolCall: ToolCallInfo): ActivityStatus | undefined {
+  const result = recoveredResult(toolCall);
+  if (result && /^cancelled$/i.test(result.trim())) {
+    return 'cancelled';
+  }
+  return undefined;
+}
+
 function recoverSubagent(toolCall: ToolCallInfo): SubagentInfo {
   const mode = toolCall.input.run_in_background === false ? 'sync' : 'async';
   const status = terminalStatus(toolCall);
   const activityStatus = toolCall.activityStatus
-    ?? activityStatusFromResult(toolCall.toolUseResult?.activity_status);
+    ?? activityStatusFromResult(toolCall.toolUseResult?.activity_status)
+    ?? inferCancelledActivityStatus(toolCall);
   const result = recoveredResult(toolCall);
   const agentId = nonEmptyString(toolCall.toolUseResult?.agent_id)
     ?? nonEmptyString(toolCall.toolUseResult?.agentId);
@@ -135,7 +144,9 @@ function mergeRecoveredSubagent(
     agentId: existing.agentId ?? recovered.agentId,
     outputToolId: existing.outputToolId ?? recovered.outputToolId,
     writerName: existing.writerName ?? recovered.writerName,
-    result: nonEmptyString(existing.result) ?? recovered.result,
+    result: shouldUpgradeFromTerminal
+      ? (nonEmptyString(recovered.result) ?? nonEmptyString(existing.result))
+      : (nonEmptyString(existing.result) ?? recovered.result),
     startedAt: existing.startedAt ?? recovered.startedAt,
     completedAt: existing.completedAt ?? recovered.completedAt,
   };

@@ -23,6 +23,24 @@ describe('activity status mapping', () => {
     expect(resolveSubagentActivityStatus({ asyncStatus, status: 'running' })).toBe(expected);
   });
 
+  it('prefers terminal asyncStatus over stale running activityStatus', () => {
+    expect(resolveSubagentActivityStatus({
+      asyncStatus: 'orphaned',
+      status: 'running',
+      activityStatus: 'running',
+    })).toBe('orphaned');
+    expect(resolveSubagentActivityStatus({
+      asyncStatus: 'completed',
+      status: 'running',
+      activityStatus: 'running',
+    })).toBe('completed');
+    expect(resolveSubagentActivityStatus({
+      asyncStatus: 'error',
+      status: 'running',
+      activityStatus: 'queued',
+    })).toBe('failed');
+  });
+
   it('prefers explicit lifecycle facts without inferring unavailable states', () => {
     expect(resolveToolActivityStatus({ status: 'error', activityStatus: 'cancelled' })).toBe('cancelled');
     expect(resolveSubagentActivityStatus({ status: 'running', activityStatus: 'waiting' })).toBe('waiting');

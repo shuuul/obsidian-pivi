@@ -4,6 +4,7 @@ import {
   type SessionStore,
 } from '@pivi/pivi-agent-core/session';
 import type { ChatMessage, OpenSessionState, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import { resolveSubagentActivityStatus } from '@pivi/pivi-agent-core/foundation';
 import { OpenSessionManager } from '@pivi/pivi-agent-core/session/openSessionManager';
 
 const hydratedMessage: ChatMessage = {
@@ -376,9 +377,11 @@ describe('OpenSessionManager linear hydration', () => {
     if (!toolCall) throw new Error('Expected a subagent tool call');
     expect(toolCall).toEqual(expect.objectContaining({
       status: 'error',
+      activityStatus: 'orphaned',
       result: 'Partial result',
       subagent: expect.objectContaining({
         asyncStatus: 'orphaned',
+        activityStatus: 'orphaned',
         status: 'error',
         result: 'Partial result',
       }),
@@ -390,10 +393,100 @@ describe('OpenSessionManager linear hydration', () => {
         toolCalls: [expect.objectContaining({
           id: 'spawn-1',
           status: 'error',
-          subagent: expect.objectContaining({ asyncStatus: 'orphaned' }),
+          activityStatus: 'orphaned',
+          subagent: expect.objectContaining({
+            asyncStatus: 'orphaned',
+            activityStatus: 'orphaned',
+          }),
         })],
       })],
     );
+  });
+
+  it('clears stale running activityStatus when restoring an async subagent without a tool result', async () => {
+    const store = createStore();
+    store.getMessages.mockResolvedValue([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'Started background work',
+      timestamp: 1,
+      assistantMessageId: 'a1',
+      contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
+      toolCalls: [{
+        id: 'spawn-1',
+        name: 'spawn_agent',
+        input: { run_in_background: true, label: 'Read card' },
+        status: 'running',
+        activityStatus: 'running',
+        isExpanded: false,
+        subagent: {
+          id: 'spawn-1',
+          mode: 'async',
+          description: 'Read card',
+          prompt: 'Read the card',
+          status: 'running',
+          asyncStatus: 'running',
+          activityStatus: 'running',
+          toolCalls: [],
+          isExpanded: false,
+        },
+      }],
+    }]);
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+
+    const openSession = await manager.switch('conv-1');
+    const toolCall = openSession?.messages[0]?.toolCalls?.[0];
+
+    expect(toolCall?.activityStatus).toBe('orphaned');
+    expect(toolCall?.subagent?.activityStatus).toBe('orphaned');
+    expect(resolveSubagentActivityStatus(toolCall!.subagent!)).toBe('orphaned');
+  });
+
+  it('marks restored running sync subagents as orphaned', async () => {
+    const store = createStore();
+    store.getMessages.mockResolvedValue([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'Started sync work',
+      timestamp: 1,
+      assistantMessageId: 'a1',
+      contentBlocks: [{ type: 'subagent', subagentId: 'spawn-sync', mode: 'sync' }],
+      toolCalls: [{
+        id: 'spawn-sync',
+        name: 'spawn_agent',
+        input: { run_in_background: false, label: 'Sync card' },
+        status: 'running',
+        isExpanded: false,
+        subagent: {
+          id: 'spawn-sync',
+          mode: 'sync',
+          description: 'Sync card',
+          prompt: 'Do sync work',
+          status: 'running',
+          activityStatus: 'running',
+          toolCalls: [],
+          isExpanded: false,
+        },
+      }],
+    }]);
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+
+    const openSession = await manager.switch('conv-1');
+    const toolCall = openSession?.messages[0]?.toolCalls?.[0];
+
+    expect(toolCall?.subagent).toMatchObject({
+      status: 'error',
+      activityStatus: 'orphaned',
+    });
+    expect(resolveSubagentActivityStatus(toolCall!.subagent!)).toBe('orphaned');
   });
 
   it('attaches an existing sessionFile without overwriting durable title meta', async () => {

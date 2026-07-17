@@ -272,10 +272,15 @@ export abstract class SubagentAsyncManagerBase {
     }
   }
 
-  private markOrphaned(subagent: SubagentInfo): void {
-    subagent.asyncStatus = 'orphaned';
+  protected markOrphaned(subagent: SubagentInfo): void {
+    const fallback = 'Session ended before task completed';
+    const preservedResult = subagent.result?.trim() || fallback;
     subagent.status = 'error';
-    subagent.result = 'Session ended before task completed';
+    subagent.activityStatus = 'orphaned';
+    if (subagent.mode === 'async') {
+      subagent.asyncStatus = 'orphaned';
+    }
+    subagent.result = preservedResult;
     subagent.completedAt = Date.now();
     this.onStateChange(subagent);
   }
