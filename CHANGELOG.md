@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/shuuul/obsidian-pivi/compare/0.11.1...0.11.2) (2026-07-17)
+
+
+### Bug Fixes
+
+* **release:** bind attestations to release tags ([e9e60e6](https://github.com/shuuul/obsidian-pivi/commit/e9e60e6a777404048c2d18db54cf2ee0f8e63233))
+
 ## [0.11.1](https://github.com/shuuul/obsidian-pivi/compare/0.11.0...0.11.1) (2026-07-17)
 
 
