@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.3](https://github.com/shuuul/obsidian-pivi/compare/0.11.2...0.11.3) (2026-07-17)
+
+
+### Bug Fixes
+
+* **release:** harden asset attestations ([dd98c39](https://github.com/shuuul/obsidian-pivi/commit/dd98c39557a4992b830d8a257d84e9166ef2e6b3))
+
 ## [0.11.2](https://github.com/shuuul/obsidian-pivi/compare/0.11.1...0.11.2) (2026-07-17)
 
 

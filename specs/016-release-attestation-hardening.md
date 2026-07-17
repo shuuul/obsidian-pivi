@@ -47,7 +47,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-01 | Harden build and attestation workflow | Codex | Done | None | Build checks plus workflow inspection |
-| WS-02 | Validate and publish 0.11.3 | Codex | Pending | WS-01 | GitHub Actions run, asset digests, `gh attestation verify` |
+| WS-02 | Validate and publish 0.11.3 | Codex | In progress | WS-01 | GitHub Actions run, asset digests, `gh attestation verify` |
 | WS-03 | Independent evidence review | Verification subagent | Done | None | Written root-cause and risk review |
 
 ## Verification
@@ -81,6 +81,14 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 - Remaining: None.
 - Blockers: None.
 - Next action: Coordinator proceeds with the per-asset attestation design.
+
+### 2026-07-17 — Codex — WS-02
+
+- Changed: Prepared version 0.11.3 metadata and changelog.
+- Evidence: Package, manifest, and Release Please versions align at 0.11.3; focused release/build tests pass; production artifacts carry the 0.11.3 banner, remain below the bundle limit, deploy to the configured vault, and reload successfully.
+- Remaining: Push the fix and release commit, create the 0.11.3 tag, run the publishing workflow, and verify remote assets.
+- Blockers: None.
+- Next action: Commit and push the release preparation.
 
 ## Completion summary
 
