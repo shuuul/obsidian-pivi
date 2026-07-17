@@ -21,21 +21,20 @@ describe('release provenance workflow', () => {
     expect(workflow).toContain('expected_ref="refs/tags/${tag}"');
   });
 
-  it('creates one tag-push attestation for all Obsidian release assets', () => {
-    expect(workflow).toContain('artifact-metadata: write');
-    expect(workflow).toMatch(
-      /subject-path:\s*\|\s*\n\s+main\.js\s*\n\s+manifest\.json\s*\n\s+styles\.css/,
-    );
-    expect(workflow.match(/uses: actions\/attest@v4/g)).toHaveLength(1);
+  it('does not attach attestations that the live Obsidian reviewer rejects', () => {
+    expect(workflow).not.toContain('actions/attest');
+    expect(workflow).not.toContain('attestations: write');
+    expect(workflow).not.toContain('artifact-metadata: write');
+    expect(workflow).not.toContain('id-token: write');
   });
 
-  it('verifies the uploaded bytes against the release tag provenance', () => {
+  it('verifies that the uploaded bytes match the tag build', () => {
     expect(workflow).toContain('gh release download "$RELEASE_TAG_RESOLVED"');
-    expect(workflow).toContain('gh attestation verify "$download_dir/$file"');
-    expect(workflow).toContain('--signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yaml"');
-    expect(workflow).toContain('--source-ref "refs/tags/$RELEASE_TAG_RESOLVED"');
-    expect(workflow).toContain('--source-digest "$GITHUB_SHA"');
-    expect(workflow).toContain('--deny-self-hosted-runners');
+    expect(workflow).toContain(
+      'cmp --silent "$file" "$download_dir/$file"',
+    );
+    expect(workflow).toContain('sha256sum "$download_dir/main.js"');
+    expect(workflow).not.toContain('gh attestation verify');
   });
 
   it('requires complete changelog notes and leaves publication to the tag workflow', () => {

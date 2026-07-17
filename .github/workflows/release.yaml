@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -79,14 +76,6 @@ jobs:
 
           echo "RELEASE_NOTES_FILE=${notes_file}" >> "$GITHUB_ENV"
 
-      - name: Attest release assets
-        uses: actions/attest@v4
-        with:
-          subject-path: |
-            main.js
-            manifest.json
-            styles.css
-
       - name: Create or update GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -119,22 +108,12 @@ jobs:
             --pattern styles.css
 
           for file in main.js manifest.json styles.css; do
-            verified=false
-            for attempt in 1 2 3 4 5; do
-              if gh attestation verify "$download_dir/$file" \
-                --repo "$GITHUB_REPOSITORY" \
-                --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yaml" \
-                --source-ref "refs/tags/$RELEASE_TAG_RESOLVED" \
-                --source-digest "$GITHUB_SHA" \
-                --deny-self-hosted-runners; then
-                verified=true
-                break
-              fi
-              sleep 5
-            done
-
-            if [ "$verified" != true ]; then
-              echo "Published asset failed attestation verification: $file"
+            if ! cmp --silent "$file" "$download_dir/$file"; then
+              echo "Published asset differs from the tag build: $file"
               exit 1
             fi
           done
+
+          sha256sum "$download_dir/main.js" \
+            "$download_dir/manifest.json" \
+            "$download_dir/styles.css"

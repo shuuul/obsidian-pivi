@@ -37,9 +37,10 @@ Not in scope:
 | Date | Decision | Rationale | Affected workstreams |
 |---|---|---|---|
 | 2026-07-17 | Do not publish another patch until the Obsidian policy difference is evidenced. | GitHub CLI verification alone did not predict automated review behavior. | WS-01, WS-02 |
-| 2026-07-17 | Make `push.tags` the only publishing trigger and use one multi-subject release attestation. | The official sample, Claudian, and five recently released community-listed plugins all produce `push` certificates at tag refs; Pivi 0.11.3 records `workflow_dispatch`. The official sample and accepted releases also establish multi-subject statements as the compatible shape. | WS-01, WS-02, WS-04 |
+| 2026-07-17 | Superseded: make `push.tags` the only publishing trigger and use one multi-subject release attestation. | The tag-push part remains; 0.11.4 disproved the multi-subject attestation assumption in the live reviewer. | WS-01, WS-02, WS-04 |
 | 2026-07-17 | Keep Release Please for version/changelog PRs but set `skip-github-release: true`. | A tag created by the default `GITHUB_TOKEN` does not trigger another workflow; a maintainer-pushed tag preserves the required tag-push provenance identity. | WS-02, WS-04 |
 | 2026-07-17 | Fail publication when the matching changelog section is absent or empty. | Release notes must remain complete and auditable instead of falling back to generic text. | WS-02, WS-04 |
+| 2026-07-17 | Stop generating artifact attestations and verify published bytes directly. | 0.11.4 proves tag-push and multi-subject shape are not sufficient: its GitHub-valid bundle still fails the live directory review. Pivi's last completed scan predates attestations, and multiple plugins newly accepted on July 13–17 publish unattested assets. | WS-01, WS-02, WS-04 |
 
 ## Workstreams
 
@@ -91,6 +92,14 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 - Remaining: Commit/push the 0.11.4 release metadata, push its annotated tag, inspect the public certificate, and repeat the Obsidian automated review.
 - Blockers: Final automated-review confirmation is external to the repository.
 - Next action: Publish 0.11.4 from its annotated tag.
+
+### 2026-07-17 — Codex — WS-04
+
+- Changed: Published 0.11.4 from an annotated tag through the new tag-push workflow and queued a fresh Community review.
+- Evidence: GitHub Actions run `29555795196` records `event=push` and succeeded. Both checked assets resolve to exactly one multi-subject attestation with `sourceRepositoryRef=refs/tags/0.11.4`, source digest `ff2d1818a86a1c3b099495882b9aac6b546be6bc`, and the expected signer workflow; strict GitHub CLI verification passes. The Community review nevertheless reports the same cryptographic errors for both assets. Newly mirrored Interactive Map, Star Tags, Cursor-Smith, and FB2 Reader releases have no artifact attestations and passed automated review into the directory.
+- Remaining: Publish an unattested, version-distinct patch from the tag-push workflow and repeat the Community review.
+- Blockers: The review service's low-level signature-verifier implementation is not public.
+- Next action: Remove attestation generation, retain byte-for-byte publication checks, and release the next patch.
 
 ## Completion summary
 
