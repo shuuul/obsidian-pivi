@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [016-release-attestation-hardening.md](016-release-attestation-hardening.md) | Active | Single-subject, version-unique release provenance with uploaded-asset verification for 0.11.3. |
+| — | — | No active specs. |
 
 ## Archived specs
 
@@ -31,6 +31,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [013-grok-build-subscription-provider.md](archive/013-grok-build-subscription-provider.md) | 2026-07-17 | Historical dedicated Composer catalog work; model-list ownership was later superseded by the upstream xAI catalog. |
 | [014-obsidian-review-hardening.md](archive/014-obsidian-review-hardening.md) | 2026-07-17 | Public owner-realm DOM/settings APIs with default-off CLI, lazy stdio MCP, explicit JSON paste import, and reduced Vault enumeration. |
 | [015-repository-markdown-refresh.md](archive/015-repository-markdown-refresh.md) | 2026-07-17 | Repository-wide Markdown audit aligned commands, paths, ownership, terminology, quality gates, and historical-document boundaries. |
+| [016-release-attestation-hardening.md](archive/016-release-attestation-hardening.md) | 2026-07-17 | Version-unique, single-subject asset provenance plus uploaded-byte verification, validated by the 0.11.3 release. |
 
 ## Numbering and files
 
