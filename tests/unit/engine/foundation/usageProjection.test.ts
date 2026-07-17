@@ -19,9 +19,50 @@ const baseUsage: UsageInfo = {
 };
 
 describe('usage projection', () => {
-  it('calculates context percentage from all provider-reported prompt context', () => {
-    expect(calculateContextUsagePercentage(baseUsage)).toBe(98);
-    expect(calculateUsagePercentage(baseUsage.contextTokens, baseUsage.contextWindow)).toBe(98);
+  it('calculates context percentage from pressure against the compaction trigger', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 1000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 480,
+    });
+    const usage: UsageInfo = {
+      contextEnvelope: envelope,
+      contextTokens: 480,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 1000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 480,
+      outputTokens: 40,
+      outputTokenLimit: 200,
+      percentage: 48,
+    };
+
+    expect(calculateContextUsagePercentage(usage)).toBe(80);
+    expect(calculateUsagePercentage(usage.contextTokens, usage.contextWindow)).toBe(48);
+  });
+
+  it('follows pressureInputTokens when authoritative contextTokens are lower', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 32_000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 20_000,
+      recentConversation: 18_000,
+      system: 4_000,
+    });
+    const usage: UsageInfo = {
+      contextEnvelope: envelope,
+      contextTokens: 12_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 32_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 12_000,
+      outputTokens: 0,
+      percentage: 38,
+    };
+
+    expect(envelope.pressureInputTokens).toBe(22_000);
+    expect(calculateContextUsagePercentage(usage)).toBeGreaterThanOrEqual(80);
+    expect(calculateUsagePercentage(usage.contextTokens, usage.contextWindow)).toBeLessThan(80);
   });
 
   it('uses the fallback window and context-token percentage after a model switch', () => {
@@ -106,9 +147,28 @@ describe('usage projection', () => {
       percentage: 88,
     };
 
-    // Hard ceiling = 200k - 16k output reserve = 184k; remaining = 9k tokens → 36k chars.
+    // Hard ceiling = 200k - 16k output reserve = 184k; remaining = 9k tokens → 9k chars.
     expect(calculateCompactionRemainingTokens(usage)).toBe(0);
-    expect(calculateReadToolMaxChars(usage)).toBe(36_000);
+    expect(calculateReadToolMaxChars(usage)).toBe(9_000);
+  });
+
+  it('uses a 1:1 token-to-char budget for CJK-safe read limits', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 180_000,
+    });
+    const usage: UsageInfo = {
+      contextEnvelope: envelope,
+      contextTokens: 180_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 180_000,
+      percentage: 90,
+    };
+
+    expect(calculateReadToolMaxChars(usage)).toBe(4_000);
   });
 
   it('uses the read cap when output-reserve headroom exceeds it', () => {
@@ -147,8 +207,8 @@ describe('usage projection', () => {
     };
 
     expect(calculateCompactionRemainingTokens(usage)).toBe(0);
-    // Remaining to output-reserve ceiling: 184k - 164k = 20k tokens → capped at 50k chars.
-    expect(calculateReadToolMaxChars(usage)).toBe(READ_TOOL_MAX_CHARS_CAP);
+    // Remaining to output-reserve ceiling: 184k - 164k = 20k tokens → 20k chars.
+    expect(calculateReadToolMaxChars(usage)).toBe(20_000);
   });
 
   it('returns zero read max chars when pressure reaches the output-reserve ceiling', () => {

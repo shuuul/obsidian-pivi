@@ -6,8 +6,6 @@ export const DEFAULT_COMPACTION_RESERVE_TOKENS = 12_000;
 export const DEFAULT_CONTEXT_SAFETY_MARGIN_TOKENS = 8_000;
 export const AUTO_COMPACTION_THRESHOLD_RATIO = 0.85;
 export const READ_TOOL_MAX_CHARS_CAP = 50_000;
-/** Matches compaction prose token estimation for conservative read budgeting. */
-export const READ_TOOL_CHARS_PER_TOKEN = 4;
 
 const OUTPUT_RESERVE_WINDOW_RATIO = 0.25;
 const COMPACTION_RESERVE_WINDOW_RATIO = 0.1;
@@ -153,8 +151,8 @@ export function calculateReadToolMaxChars(usage?: UsageInfo | null): number {
     0,
     envelope.contextWindow.tokens - envelope.reservedOutput.tokens,
   );
-  const remainingChars = Math.max(0, hardCeilingTokens - envelope.pressureInputTokens)
-    * READ_TOOL_CHARS_PER_TOKEN;
+  // 1 char ≈ 1 token for CJK worst case, aligned with compaction prose estimates.
+  const remainingChars = Math.max(0, hardCeilingTokens - envelope.pressureInputTokens);
   return Math.min(READ_TOOL_MAX_CHARS_CAP, remainingChars);
 }
 
@@ -164,9 +162,18 @@ export function calculateUsagePercentage(tokens: number, limit: number): number 
     : 0;
 }
 
-/** Context-window metric: all provider-reported prompt context against the model limit. */
+/** Compaction-pressure metric: estimated/provider pressure against the compaction trigger. */
 export function calculateContextUsagePercentage(usage: UsageInfo): number {
-  return calculateUsagePercentage(usage.contextTokens, usage.contextWindow);
+  const envelope = usage.contextEnvelope ?? calculateContextEnvelope({
+    contextWindow: usage.contextWindow || DEFAULT_CONTEXT_WINDOW_TOKENS,
+    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
+    outputTokenLimit: usage.outputTokenLimit,
+    providerContextTokens: usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined,
+  });
+  return calculateUsagePercentage(
+    envelope.pressureInputTokens,
+    envelope.compactionTriggerTokens,
+  );
 }
 
 export function recalculateUsageForModel(
