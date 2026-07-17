@@ -28,6 +28,12 @@ function activityStatusFromResult(value: unknown): ActivityStatus | undefined {
   }
 }
 
+function isTerminalStatus(
+  status: SubagentInfo['status'] | SubagentInfo['asyncStatus'] | undefined,
+): boolean {
+  return status === 'completed' || status === 'error' || status === 'orphaned';
+}
+
 function terminalStatus(toolCall: ToolCallInfo): SubagentInfo['status'] {
   const resultStatus = toolCall.toolUseResult?.status;
   if (resultStatus === 'error') {
@@ -39,7 +45,16 @@ function terminalStatus(toolCall: ToolCallInfo): SubagentInfo['status'] {
   if (toolCall.status === 'error' || toolCall.status === 'blocked') {
     return 'error';
   }
+  if (toolCall.status === 'completed') {
+    return 'completed';
+  }
   return toolCall.status;
+}
+
+function recoveredResult(toolCall: ToolCallInfo): string | undefined {
+  return nonEmptyString(toolCall.toolUseResult?.terminal_result)
+    ?? nonEmptyString(toolCall.toolUseResult?.result)
+    ?? nonEmptyString(toolCall.result);
 }
 
 function recoverSubagent(toolCall: ToolCallInfo): SubagentInfo {
@@ -47,9 +62,7 @@ function recoverSubagent(toolCall: ToolCallInfo): SubagentInfo {
   const status = terminalStatus(toolCall);
   const activityStatus = toolCall.activityStatus
     ?? activityStatusFromResult(toolCall.toolUseResult?.activity_status);
-  const result = nonEmptyString(toolCall.toolUseResult?.terminal_result)
-    ?? nonEmptyString(toolCall.toolUseResult?.result)
-    ?? nonEmptyString(toolCall.result);
+  const result = recoveredResult(toolCall);
   const agentId = nonEmptyString(toolCall.toolUseResult?.agent_id)
     ?? nonEmptyString(toolCall.toolUseResult?.agentId);
 
@@ -74,10 +87,66 @@ function recoverSubagent(toolCall: ToolCallInfo): SubagentInfo {
 }
 
 /**
+ * Prefer the richer persisted overlay, but let a terminal Pi tool result upgrade
+ * an incomplete/running card that never received its final message_ui patch.
+ */
+function mergeRecoveredSubagent(
+  existing: SubagentInfo | undefined,
+  recovered: SubagentInfo,
+): SubagentInfo {
+  if (!existing) {
+    return recovered;
+  }
+
+  const existingTerminal = isTerminalStatus(existing.asyncStatus)
+    || isTerminalStatus(existing.status);
+  const recoveredTerminal = isTerminalStatus(recovered.asyncStatus)
+    || isTerminalStatus(recovered.status);
+  const mode = existing.mode ?? recovered.mode;
+  const shouldUpgradeFromTerminal = recoveredTerminal && !existingTerminal;
+
+  const status = shouldUpgradeFromTerminal
+    ? recovered.status
+    : (existingTerminal ? existing.status : recovered.status);
+  const activityStatus = shouldUpgradeFromTerminal
+    ? (recovered.activityStatus ?? (
+      recovered.status === 'error' ? 'failed' : 'completed'
+    ))
+    : (existing.activityStatus ?? recovered.activityStatus);
+  const asyncStatus = mode === 'async'
+    ? (
+      shouldUpgradeFromTerminal
+        ? (recovered.asyncStatus ?? recovered.status)
+        : (existing.asyncStatus ?? recovered.asyncStatus ?? status)
+    )
+    : existing.asyncStatus;
+
+  return {
+    ...existing,
+    id: existing.id || recovered.id,
+    description: nonEmptyString(existing.description) ?? recovered.description,
+    prompt: existing.prompt ?? recovered.prompt,
+    mode,
+    isExpanded: existing.isExpanded,
+    status,
+    ...(activityStatus ? { activityStatus } : {}),
+    toolCalls: existing.toolCalls.length > 0 ? existing.toolCalls : recovered.toolCalls,
+    ...(asyncStatus ? { asyncStatus } : {}),
+    agentId: existing.agentId ?? recovered.agentId,
+    outputToolId: existing.outputToolId ?? recovered.outputToolId,
+    writerName: existing.writerName ?? recovered.writerName,
+    result: nonEmptyString(existing.result) ?? recovered.result,
+    startedAt: existing.startedAt ?? recovered.startedAt,
+    completedAt: existing.completedAt ?? recovered.completedAt,
+  };
+}
+
+/**
  * Pi persists spawn_agent as an ordinary tool call/result pair. The richer
  * SubagentInfo normally comes from Pivi's additive message-ui entry, but older
- * or interrupted saves can lack that overlay. Rebuild only missing presentation
- * data so complete persisted cards remain authoritative.
+ * or interrupted saves can lack that overlay or only keep a running snapshot.
+ * Rebuild missing cards and upgrade incomplete ones from the terminal Pi
+ * result; complete persisted cards remain authoritative for nested traces.
  */
 export function recoverPiSubagentPresentation(messages: ChatMessage[]): void {
   for (const message of messages) {
@@ -90,7 +159,18 @@ export function recoverPiSubagentPresentation(messages: ChatMessage[]): void {
       if (toolCall.name !== TOOL_SPAWN_AGENT) {
         continue;
       }
-      toolCall.subagent ??= recoverSubagent(toolCall);
+      const recovered = recoverSubagent(toolCall);
+      toolCall.subagent = mergeRecoveredSubagent(toolCall.subagent, recovered);
+      if (
+        toolCall.status === 'running'
+        && isTerminalStatus(toolCall.subagent.status)
+      ) {
+        toolCall.status = toolCall.subagent.status;
+      }
+      toolCall.result = recoveredResult(toolCall) ?? nonEmptyString(toolCall.result);
+      if (!toolCall.activityStatus && toolCall.subagent.activityStatus) {
+        toolCall.activityStatus = toolCall.subagent.activityStatus;
+      }
       recoveredModes.set(toolCall.id, toolCall.subagent.mode);
     }
 

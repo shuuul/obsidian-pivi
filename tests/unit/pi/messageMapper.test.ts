@@ -653,6 +653,120 @@ describe('MessageMapper', () => {
     });
   });
 
+  it('upgrades a running spawn_agent overlay from the terminal Pi tool result', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [{
+            type: 'toolCall',
+            id: 'spawn-running',
+            name: 'spawn_agent',
+            arguments: {
+              label: 'scan-batch',
+              message: 'Inspect the assigned notes.',
+              run_in_background: true,
+            },
+          }],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 't1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'spawn-running',
+          toolName: 'spawn_agent',
+          content: [{ type: 'text', text: 'Background sub-agent subagent-running completed.' }],
+          details: {
+            agent_id: 'subagent-running',
+            status: 'completed',
+            result: 'Recovered terminal result',
+          },
+          isError: false,
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 't1',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: {
+          targetEntryId: 'a1',
+          contentBlocks: [{ type: 'subagent', subagentId: 'spawn-running', mode: 'async' }],
+          toolCalls: [{
+            id: 'spawn-running',
+            name: 'spawn_agent',
+            input: {
+              label: 'scan-batch',
+              message: 'Inspect the assigned notes.',
+              run_in_background: true,
+            },
+            status: 'running',
+            isExpanded: true,
+            subagent: {
+              id: 'spawn-running',
+              description: 'scan-batch',
+              prompt: 'Inspect the assigned notes.',
+              mode: 'async',
+              isExpanded: true,
+              status: 'running',
+              activityStatus: 'running',
+              asyncStatus: 'running',
+              toolCalls: [{
+                id: 'child-read',
+                name: 'obsidian_read',
+                input: { path: 'Note.md' },
+                status: 'completed',
+                isExpanded: false,
+              }],
+              writerName: 'Ada',
+            },
+          }],
+        },
+      },
+    ];
+
+    const message = first(entriesToChatMessages(branch, collectMessageUiMap(branch)));
+
+    expect(message.contentBlocks).toEqual([{
+      type: 'subagent',
+      subagentId: 'spawn-running',
+      mode: 'async',
+    }]);
+    expect(first(message.toolCalls ?? [])).toMatchObject({
+      id: 'spawn-running',
+      status: 'completed',
+      isExpanded: true,
+      result: 'Recovered terminal result',
+      subagent: {
+        id: 'spawn-running',
+        agentId: 'subagent-running',
+        description: 'scan-batch',
+        prompt: 'Inspect the assigned notes.',
+        mode: 'async',
+        status: 'completed',
+        activityStatus: 'completed',
+        asyncStatus: 'completed',
+        result: 'Recovered terminal result',
+        writerName: 'Ada',
+        toolCalls: [{
+          id: 'child-read',
+          name: 'obsidian_read',
+        }],
+      },
+    });
+  });
+
   it('preserves the complete durable Agent trace from a message-ui overlay', () => {
     const branch: SessionEntry[] = [
       {
