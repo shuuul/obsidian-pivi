@@ -8,9 +8,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 ## Active specs
 
-| Spec | Status | Summary |
-|---|---|---|
-| [017-obsidian-attestation-policy-compatibility.md](017-obsidian-attestation-policy-compatibility.md) | Active | Align release provenance with the stricter identity policy used by Obsidian automated review. |
+No active specs.
 
 ## Archived specs
 
@@ -32,6 +30,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [014-obsidian-review-hardening.md](archive/014-obsidian-review-hardening.md) | 2026-07-17 | Public owner-realm DOM/settings APIs with default-off CLI, lazy stdio MCP, explicit JSON paste import, and reduced Vault enumeration. |
 | [015-repository-markdown-refresh.md](archive/015-repository-markdown-refresh.md) | 2026-07-17 | Repository-wide Markdown audit aligned commands, paths, ownership, terminology, quality gates, and historical-document boundaries. |
 | [016-release-attestation-hardening.md](archive/016-release-attestation-hardening.md) | 2026-07-17 | Version-unique, single-subject asset provenance plus uploaded-byte verification, validated by the 0.11.3 release. |
+| [017-obsidian-attestation-policy-compatibility.md](archive/017-obsidian-attestation-policy-compatibility.md) | 2026-07-17 | Tag-push release publication with byte-for-byte asset verification and no incompatible attestations, validated by the completed 0.11.5 Community review. |
 
 ## Numbering and files
 

@@ -1,7 +1,7 @@
 ---
 id: "017"
 title: "Obsidian attestation policy compatibility"
-status: Active
+status: Completed
 created: 2026-07-17
 updated: 2026-07-17
 coordinator: "Codex"
@@ -15,11 +15,11 @@ Release 0.11.3 has three single-subject GitHub attestations that pass strict `gh
 
 ## Goal and success criteria
 
-Make Pivi's release provenance conform to the attestation identity expected by Obsidian's automated review.
+Make Pivi's release publication checks compatible with Obsidian's automated review without weakening the tag-to-asset integrity gate.
 
 - [x] The exact policy difference is supported by certificate/workflow evidence from Pivi and accepted Obsidian plugins.
 - [x] The release workflow follows the official tag-push publishing shape without duplicate release runs.
-- [ ] A new patch release contains only the required assets and no longer produces the reported Obsidian attestation errors.
+- [x] A new patch release contains only the required assets and no longer produces the reported Obsidian attestation errors.
 
 ## Scope and non-goals
 
@@ -51,7 +51,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | Compare official/sample/accepted workflows and certificate identities | Codex | Done | None | SHA-pinned workflow and attestation evidence |
 | WS-02 | Implement and test the compatible release path | Codex | Done | WS-01 | Static workflow tests and full quality gate |
 | WS-03 | Independent review of the policy hypothesis | Verification subagent | Done | None | Evidence-oriented written review |
-| WS-04 | Publish and validate the next patch | Codex | In progress | WS-02 | GitHub run plus Obsidian review result |
+| WS-04 | Publish and validate the next patch | Codex | Done | WS-02 | GitHub run plus Obsidian review result |
 
 ## Verification
 
@@ -101,6 +101,14 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 - Blockers: The review service's low-level signature-verifier implementation is not public.
 - Next action: Remove attestation generation, retain byte-for-byte publication checks, and release the next patch.
 
+### 2026-07-17 — Codex — WS-04 completion
+
+- Changed: Published 0.11.5 from annotated tag `0.11.5` with no artifact attestations and retained byte-for-byte verification of all three downloaded release assets.
+- Evidence: Tag-push release run `29556865543` succeeded at commit `16e84d74173835875b1b62c24a23c89af2fdb9e4`. The GitHub attestation API returns zero attestations for `main.js`, `manifest.json`, and `styles.css`. Obsidian's Community review completed for 0.11.5, promoted it to Current release, removed both cryptographic verification errors, and reports only the non-blocking missing-attestation recommendation.
+- Remaining: None.
+- Blockers: None.
+- Next action: Archive the completed spec.
+
 ## Completion summary
 
-Pending.
+Release 0.11.5 is published from an annotated `push.tags` ref with complete changelog-derived release notes and only the three required Obsidian assets. The workflow downloads every published asset and compares it byte-for-byte with the tag build while intentionally omitting GitHub attestations that the live Obsidian verifier rejects despite successful strict GitHub verification. Local and remote quality gates, the tag-push release run, asset digest checks, Obsidian reload, and the completed Community review all passed; 0.11.5 is the Current release and the original cryptographic errors are gone.
