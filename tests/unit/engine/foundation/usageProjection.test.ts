@@ -90,27 +90,28 @@ describe('usage projection', () => {
     });
   });
 
-  it('uses compaction headroom converted to characters when below the read cap', () => {
+  it('uses output-reserve headroom converted to characters when below the read cap', () => {
     const envelope = calculateContextEnvelope({
       contextWindow: 200_000,
       contextWindowIsAuthoritative: true,
-      providerContextTokens: 157_000,
+      providerContextTokens: 175_000,
     });
     const usage: UsageInfo = {
       contextEnvelope: envelope,
-      contextTokens: 157_000,
+      contextTokens: 175_000,
       contextTokensIsAuthoritative: true,
       contextWindow: 200_000,
       contextWindowIsAuthoritative: true,
-      inputTokens: 157_000,
-      percentage: 79,
+      inputTokens: 175_000,
+      percentage: 88,
     };
 
-    expect(calculateCompactionRemainingTokens(usage)).toBe(7_000);
-    expect(calculateReadToolMaxChars(usage)).toBe(28_000);
+    // Hard ceiling = 200k - 16k output reserve = 184k; remaining = 9k tokens → 36k chars.
+    expect(calculateCompactionRemainingTokens(usage)).toBe(0);
+    expect(calculateReadToolMaxChars(usage)).toBe(36_000);
   });
 
-  it('uses the read cap when compaction headroom exceeds it', () => {
+  it('uses the read cap when output-reserve headroom exceeds it', () => {
     const envelope = calculateContextEnvelope({
       contextWindow: 200_000,
       contextWindowIsAuthoritative: true,
@@ -129,7 +130,7 @@ describe('usage projection', () => {
     expect(calculateReadToolMaxChars(usage)).toBe(READ_TOOL_MAX_CHARS_CAP);
   });
 
-  it('returns zero read max chars when compaction pressure is already at the trigger', () => {
+  it('allows a full read cap when pressure is already at the compaction trigger', () => {
     const envelope = calculateContextEnvelope({
       contextWindow: 200_000,
       contextWindowIsAuthoritative: true,
@@ -143,6 +144,27 @@ describe('usage projection', () => {
       contextWindowIsAuthoritative: true,
       inputTokens: 164_000,
       percentage: 82,
+    };
+
+    expect(calculateCompactionRemainingTokens(usage)).toBe(0);
+    // Remaining to output-reserve ceiling: 184k - 164k = 20k tokens → capped at 50k chars.
+    expect(calculateReadToolMaxChars(usage)).toBe(READ_TOOL_MAX_CHARS_CAP);
+  });
+
+  it('returns zero read max chars when pressure reaches the output-reserve ceiling', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 184_000,
+    });
+    const usage: UsageInfo = {
+      contextEnvelope: envelope,
+      contextTokens: 184_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 184_000,
+      percentage: 92,
     };
 
     expect(calculateReadToolMaxChars(usage)).toBe(0);

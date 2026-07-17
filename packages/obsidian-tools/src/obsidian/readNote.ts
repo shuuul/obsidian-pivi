@@ -30,7 +30,7 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
         mode: { type: 'string', enum: ['content', 'stats'], description: 'stats returns only path, line count, and character count' },
         startLine: { type: 'number', description: '1-based first line to read' },
         endLine: { type: 'number', description: '1-based last line to read, inclusive' },
-        maxChars: { type: 'number', description: 'Maximum characters to return for content reads. Defaults to the smaller of remaining compaction headroom and 50000. To read a full large file, first use mode=stats, then set maxChars to at least the reported Characters value deliberately.' },
+        maxChars: { type: 'number', description: 'Maximum characters to return for content reads. Defaults to the smaller of remaining room before the output reserve and 50000 (may cross the compaction threshold). To read a full large file, first use mode=stats, then set maxChars to at least the reported Characters value deliberately.' },
       },
       additionalProperties: false,
     },

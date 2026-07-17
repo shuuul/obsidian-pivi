@@ -159,7 +159,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 
 function buildReadMaxCharsGuidance(): string[] {
   return [
-    '- `obsidian_read` and `obsidian_read_external` apply a runtime default `maxChars` from remaining compaction headroom (capped at 50000 characters). You may override this by passing `maxChars` explicitly.',
+    '- `obsidian_read` and `obsidian_read_external` apply a runtime default `maxChars` from remaining room before the output reserve (capped at 50000 characters). This default may cross the auto-compaction threshold so a large read can still trigger compaction. You may override this by passing `maxChars` explicitly.',
     '- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, line ranges, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a larger body is required and the remaining budget can absorb it.',
   ];
 }
@@ -272,7 +272,7 @@ interface ObsidianToolPromptContext {
 function describeObsidianTool(name: string, context: ObsidianToolPromptContext): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
-      return 'Read note body safely (vault API): default maxChars follows compaction headroom; override maxChars only after estimating remaining context and task need; use mode=stats for large files, then startLine/endLine ranges for selected content';
+      return 'Read note body safely (vault API): default maxChars follows room before the output reserve and may cross the compaction threshold; override maxChars only after estimating remaining context and task need; use mode=stats for large files, then startLine/endLine ranges for selected content';
     case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
       return 'Extract Markdown heading structure with line numbers and character counts so large notes can be read section-by-section';
     case TOOL_OBSIDIAN_EDIT:
@@ -308,7 +308,7 @@ function describeObsidianTool(name: string, context: ObsidianToolPromptContext):
     case TOOL_OBSIDIAN_LIST:
       return 'List direct children of a vault folder, including files, folders, and attachments';
     case TOOL_OBSIDIAN_READ_EXTERNAL:
-      return 'Read external files by absolute path for research; default maxChars follows compaction headroom; override maxChars only after estimating remaining context and task need; use mode=stats for large files, then startLine/endLine ranges for selected content';
+      return 'Read external files by absolute path for research; default maxChars follows room before the output reserve and may cross the compaction threshold; override maxChars only after estimating remaining context and task need; use mode=stats for large files, then startLine/endLine ranges for selected content';
     case TOOL_OBSIDIAN_LIST_EXTERNAL:
       return 'List direct children of an external folder by absolute path';
     case TOOL_OBSIDIAN_MKDIR:

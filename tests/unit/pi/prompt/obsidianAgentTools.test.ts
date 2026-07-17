@@ -264,7 +264,8 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('obsidian_read');
     expect(section).toContain('mode: "stats"');
     expect(section).toContain('line range');
-    expect(section).toContain('runtime default `maxChars` from remaining compaction headroom');
+    expect(section).toContain('runtime default `maxChars` from remaining room before the output reserve');
+    expect(section).toContain('may cross the auto-compaction threshold');
     expect(section).toContain('You may override this by passing `maxChars` explicitly');
     expect(section).toContain('estimate how much context budget remains');
     expect(section).toContain('obsidian_markdown_structure` is not registered');
@@ -294,7 +295,7 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain(TOOL_OBSIDIAN_READ_EXTERNAL);
     expect(section).toContain('obsidian_list_external');
     expect(section).toContain('Read external files by absolute path');
-    expect(section).toContain('default maxChars follows compaction headroom');
+    expect(section).toContain('default maxChars follows room before the output reserve');
     expect(section).toContain('use `obsidian_read_external` with an absolute path under an allowed external directory');
   });
 

@@ -133,14 +133,28 @@ export function calculateCompactionRemainingTokens(usage: UsageInfo): number {
 }
 
 /**
- * Default read-tool character cap from remaining compaction headroom, capped at
- * {@link READ_TOOL_MAX_CHARS_CAP}. Falls back to the cap when usage is unknown.
+ * Default read-tool character cap from remaining room before the output reserve,
+ * capped at {@link READ_TOOL_MAX_CHARS_CAP}. This may cross the compaction
+ * trigger so a large read can still force auto-compaction, while leaving
+ * reserved output tokens for the next model call. Falls back to the cap when
+ * usage is unknown.
  */
 export function calculateReadToolMaxChars(usage?: UsageInfo | null): number {
   if (!usage) {
     return READ_TOOL_MAX_CHARS_CAP;
   }
-  const remainingChars = calculateCompactionRemainingTokens(usage) * READ_TOOL_CHARS_PER_TOKEN;
+  const envelope = usage.contextEnvelope ?? calculateContextEnvelope({
+    contextWindow: usage.contextWindow || DEFAULT_CONTEXT_WINDOW_TOKENS,
+    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
+    outputTokenLimit: usage.outputTokenLimit,
+    providerContextTokens: usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined,
+  });
+  const hardCeilingTokens = Math.max(
+    0,
+    envelope.contextWindow.tokens - envelope.reservedOutput.tokens,
+  );
+  const remainingChars = Math.max(0, hardCeilingTokens - envelope.pressureInputTokens)
+    * READ_TOOL_CHARS_PER_TOKEN;
   return Math.min(READ_TOOL_MAX_CHARS_CAP, remainingChars);
 }
 
