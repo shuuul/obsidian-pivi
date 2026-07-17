@@ -112,6 +112,10 @@ export function MessageList({
   const listRef = useRef<HTMLDivElement>(null);
   const pendingAnchorRef = useRef<{ id: string; top: number } | null>(null);
   const pendingAnchorFrameRef = useRef<number | null>(null);
+  const streamingFollowFrameRef = useRef<number | null>(null);
+  const streamingFollowRef = useRef(autoScrollEnabled);
+  const previousAutoScrollRef = useRef(autoScrollEnabled);
+  const previousStreamingRef = useRef(isStreaming);
   const previousPageRequestRef = useRef<Promise<boolean> | null>(null);
   const disclosureViewportRef = useRef<DisclosureViewportController | null>(null);
   const messageIds = useChatProjectionOrder(store);
@@ -139,6 +143,17 @@ export function MessageList({
       height: rect.height || Math.max(600, scrollElement.clientHeight),
     }),
   ), [scrollElement]);
+  const scheduleStreamingFollow = useCallback((
+    instance: Virtualizer<HTMLElement, Element>,
+  ) => {
+    const ownerWindow = scrollElement.ownerDocument.defaultView;
+    if (!ownerWindow || streamingFollowFrameRef.current !== null) return;
+    streamingFollowFrameRef.current = ownerWindow.requestAnimationFrame(() => {
+      streamingFollowFrameRef.current = null;
+      if (!streamingFollowRef.current) return;
+      instance.scrollToEnd({ behavior: 'auto' });
+    });
+  }, [scrollElement]);
 
   const virtualizer = useVirtualizer({
     anchorTo: 'end',
@@ -153,6 +168,15 @@ export function MessageList({
       height: Math.max(600, scrollElement.clientHeight),
     },
     onChange: (instance, sync) => {
+      if (
+        sync
+        && instance.scrollDirection === 'backward'
+        && !instance.isAtEnd(SCROLL_END_THRESHOLD)
+      ) {
+        streamingFollowRef.current = false;
+      } else if (!sync && isStreaming && streamingFollowRef.current) {
+        scheduleStreamingFollow(instance);
+      }
       if (
         sync
         && instance.scrollDirection === 'backward'
@@ -191,6 +215,21 @@ export function MessageList({
     useAnimationFrameWithResizeObserver: true,
   });
   const virtualItems = virtualizer.getVirtualItems();
+
+  useLayoutEffect(() => {
+    const startedStreaming = isStreaming && !previousStreamingRef.current;
+    const resumedAutoScroll = (
+      isStreaming
+      && autoScrollEnabled
+      && !previousAutoScrollRef.current
+    );
+    previousStreamingRef.current = isStreaming;
+    previousAutoScrollRef.current = autoScrollEnabled;
+    streamingFollowRef.current = autoScrollEnabled;
+    if (autoScrollEnabled && (startedStreaming || resumedAutoScroll)) {
+      scheduleStreamingFollow(virtualizer);
+    }
+  }, [autoScrollEnabled, isStreaming, scheduleStreamingFollow, virtualizer]);
 
   useLayoutEffect(() => {
     const controller = createDisclosureViewportController(scrollElement);
@@ -286,6 +325,11 @@ export function MessageList({
     if (ownerWindow && pendingAnchorFrameRef.current !== null) {
       ownerWindow.cancelAnimationFrame(pendingAnchorFrameRef.current);
     }
+    if (ownerWindow && streamingFollowFrameRef.current !== null) {
+      ownerWindow.cancelAnimationFrame(streamingFollowFrameRef.current);
+    }
+    pendingAnchorFrameRef.current = null;
+    streamingFollowFrameRef.current = null;
   }, [scrollElement]);
 
   if (count === 0) {

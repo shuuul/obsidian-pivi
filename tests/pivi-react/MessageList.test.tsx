@@ -30,6 +30,34 @@ Object.defineProperties(scrollElement, {
   clientWidth: { configurable: true, value: 480 },
 });
 
+class FakeMessageResizeObserver {
+  static instances: FakeMessageResizeObserver[] = [];
+  readonly observed = new Set<Element>();
+
+  constructor(private readonly callback: ResizeObserverCallback) {
+    FakeMessageResizeObserver.instances.push(this);
+  }
+
+  disconnect() {
+    this.observed.clear();
+  }
+
+  observe(target: Element) {
+    this.observed.add(target);
+  }
+
+  unobserve(target: Element) {
+    this.observed.delete(target);
+  }
+
+  trigger(target: Element, blockSize: number) {
+    this.callback([{
+      borderBoxSize: [{ blockSize, inlineSize: 480 }],
+      target,
+    } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
+  }
+}
+
 function TestMessageList({
   actions,
   hasOlderMessages = false,
@@ -317,40 +345,14 @@ describe('MessageList', () => {
   });
 
   it('remeasures only the row whose subscribed block grows', () => {
-    class FakeResizeObserver {
-      static instances: FakeResizeObserver[] = [];
-      readonly observed = new Set<Element>();
-
-      constructor(private readonly callback: ResizeObserverCallback) {
-        FakeResizeObserver.instances.push(this);
-      }
-
-      disconnect() {
-        this.observed.clear();
-      }
-
-      observe(target: Element) {
-        this.observed.add(target);
-      }
-
-      unobserve(target: Element) {
-        this.observed.delete(target);
-      }
-
-      trigger(target: Element, blockSize: number) {
-        this.callback([{
-          borderBoxSize: [{ blockSize, inlineSize: 480 }],
-          target,
-        } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
-      }
-    }
+    FakeMessageResizeObserver.instances = [];
     const resizeObserverDescriptor = Object.getOwnPropertyDescriptor(window, 'ResizeObserver');
     const requestAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'requestAnimationFrame');
     const cancelAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'cancelAnimationFrame');
     const frames: FrameRequestCallback[] = [];
     Object.defineProperty(window, 'ResizeObserver', {
       configurable: true,
-      value: FakeResizeObserver,
+      value: FakeMessageResizeObserver,
     });
     Object.defineProperty(window, 'requestAnimationFrame', {
       configurable: true,
@@ -409,7 +411,9 @@ describe('MessageList', () => {
       const firstRow = rows[0];
       const secondRow = rows[1];
       if (!firstRow || !secondRow) throw new Error('Expected two measured virtual rows');
-      const rowObserver = FakeResizeObserver.instances.find(observer => observer.observed.has(firstRow));
+      const rowObserver = FakeMessageResizeObserver.instances.find(
+        observer => observer.observed.has(firstRow),
+      );
       if (!rowObserver) throw new Error('Expected a ResizeObserver for virtual rows');
 
       act(() => {
@@ -432,6 +436,131 @@ describe('MessageList', () => {
       expect(secondRow).toHaveStyle({ transform: 'translateY(240px)' });
       expect(rendered.container.querySelector('.pivi-message-list')).toHaveStyle({ height: '360px' });
     } finally {
+      if (resizeObserverDescriptor) Object.defineProperty(window, 'ResizeObserver', resizeObserverDescriptor);
+      else Reflect.deleteProperty(window, 'ResizeObserver');
+      if (requestAnimationFrameDescriptor) Object.defineProperty(window, 'requestAnimationFrame', requestAnimationFrameDescriptor);
+      else Reflect.deleteProperty(window, 'requestAnimationFrame');
+      if (cancelAnimationFrameDescriptor) Object.defineProperty(window, 'cancelAnimationFrame', cancelAnimationFrameDescriptor);
+      else Reflect.deleteProperty(window, 'cancelAnimationFrame');
+    }
+  });
+
+  it('follows streaming row growth until auto-scroll is paused', () => {
+    FakeMessageResizeObserver.instances = [];
+    const resizeObserverDescriptor = Object.getOwnPropertyDescriptor(window, 'ResizeObserver');
+    const requestAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'requestAnimationFrame');
+    const cancelAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'cancelAnimationFrame');
+    const frames: FrameRequestCallback[] = [];
+    let frameTime = 0;
+    const performanceNow = jest.spyOn(window.performance, 'now').mockImplementation(() => {
+      frameTime += 100;
+      return frameTime;
+    });
+    Object.defineProperty(window, 'ResizeObserver', {
+      configurable: true,
+      value: FakeMessageResizeObserver,
+    });
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      },
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      configurable: true,
+      value: jest.fn(),
+    });
+    const flushFrames = () => {
+      while (frames.length > 0) frames.shift()?.(0);
+    };
+
+    const localScrollElement = document.createElement('div');
+    let scrollTop = 0;
+    const scrollTo = jest.fn((options: ScrollToOptions) => {
+      scrollTop = Math.max(0, options.top ?? scrollTop);
+    });
+    Object.defineProperties(localScrollElement, {
+      clientHeight: { configurable: true, value: 100 },
+      clientWidth: { configurable: true, value: 480 },
+      scrollTop: {
+        configurable: true,
+        get: () => scrollTop,
+        set: (value: number) => { scrollTop = value; },
+      },
+      scrollTo: { configurable: true, value: scrollTo },
+    });
+    document.body.appendChild(localScrollElement);
+    const store = new ChatProjectionStore();
+    store.replaceAll(Array.from({ length: 12 }, (_, index) => ({
+      id: `message-${index}`,
+      role: index % 2 === 0 ? 'user' as const : 'assistant' as const,
+      content: `Message ${index}`,
+      contentBlocks: index % 2 === 0
+        ? undefined
+        : [{ type: 'text' as const, content: `Message ${index}` }],
+      timestamp: index,
+    })));
+    const actions = {
+      canCopy: jest.fn(() => false),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+    const renderMessageList = (autoScrollEnabled: boolean, isStreaming: boolean) => (
+      <I18nProvider i18n={createI18n()}>
+        <MessageList
+          actions={actions}
+          autoScrollEnabled={autoScrollEnabled}
+          isStreaming={isStreaming}
+          scrollElement={localScrollElement}
+          store={store}
+          thinkingIndicator={null}
+        />
+      </I18nProvider>
+    );
+
+    try {
+      const rendered = render(withTestPresentationPlatform(renderMessageList(false, false)));
+      act(flushFrames);
+      scrollTo.mockClear();
+
+      rendered.rerender(withTestPresentationPlatform(renderMessageList(true, true)));
+      act(flushFrames);
+      expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
+
+      const row = rendered.container.querySelector('.pivi-message-virtual-row');
+      if (!row) throw new Error('Expected a measured virtual row');
+      const rowObserver = FakeMessageResizeObserver.instances.find(
+        observer => observer.observed.has(row),
+      );
+      if (!rowObserver) throw new Error('Expected a ResizeObserver for virtual rows');
+
+      scrollTo.mockClear();
+      act(() => {
+        rowObserver.trigger(row, 240);
+        rowObserver.trigger(row, 260);
+        flushFrames();
+      });
+      expect(scrollTo.mock.calls.filter(([options]) => options.behavior === 'auto')).toHaveLength(1);
+
+      rendered.rerender(withTestPresentationPlatform(renderMessageList(false, true)));
+      scrollTo.mockClear();
+      act(() => {
+        rowObserver.trigger(row, 360);
+        flushFrames();
+      });
+      expect(scrollTo).not.toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
+
+      rendered.rerender(withTestPresentationPlatform(renderMessageList(true, true)));
+      act(flushFrames);
+      expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
+    } finally {
+      localScrollElement.remove();
+      performanceNow.mockRestore();
       if (resizeObserverDescriptor) Object.defineProperty(window, 'ResizeObserver', resizeObserverDescriptor);
       else Reflect.deleteProperty(window, 'ResizeObserver');
       if (requestAnimationFrameDescriptor) Object.defineProperty(window, 'requestAnimationFrame', requestAnimationFrameDescriptor);
