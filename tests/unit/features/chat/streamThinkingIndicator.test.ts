@@ -46,11 +46,11 @@ describe('streamThinkingIndicator', () => {
     state.isStreaming = true;
     state.responseStartTime = performance.now() - 1500;
 
-    showThinkingIndicator(deps, 'Custom thinking', 'pivi-thinking--compact');
+    showThinkingIndicator(deps, 'Custom thinking');
     const first = state.uiStore.getSnapshot().thinkingIndicator;
     expect(first).toEqual({
       text: 'Custom thinking',
-      className: 'pivi-thinking pivi-thinking--compact',
+      className: 'pivi-thinking',
       elapsedLabel: expect.stringContaining('esc to interrupt'),
     });
     expect(Object.isFrozen(first)).toBe(true);

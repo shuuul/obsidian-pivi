@@ -29,7 +29,6 @@ export interface StreamSubagentCoordinatorDeps {
   subagentManager: SubagentManager;
   getAgentService?: () => PiChatService | null;
   showThinkingIndicator: () => void;
-  scrollToBottom: () => void;
 }
 
 export class StreamSubagentCoordinator {
@@ -541,7 +540,6 @@ export class StreamSubagentCoordinator {
 
   onAsyncSubagentStateChange(subagent: SubagentInfo): void {
     this.updateSubagentInMessages(subagent);
-    this.deps.scrollToBottom();
   }
 
   private updateSubagentInMessages(subagent: SubagentInfo): void {

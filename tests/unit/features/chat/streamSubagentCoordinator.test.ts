@@ -17,14 +17,12 @@ function createCoordinator(onChange = jest.fn()) {
   const subagentManager = new SubagentManager(onChange, mockInterpreter);
   const state = new ChatState();
   const showThinkingIndicator = jest.fn();
-  const scrollToBottom = jest.fn();
   const coordinator = new StreamSubagentCoordinator({
     state,
     subagentManager,
     showThinkingIndicator,
-    scrollToBottom,
   });
-  return { coordinator, subagentManager, showThinkingIndicator, scrollToBottom };
+  return { coordinator, subagentManager, showThinkingIndicator };
 }
 
 function createMessage(): ChatMessage {
@@ -148,8 +146,8 @@ describe('StreamSubagentCoordinator', () => {
     })).toBe(true);
   });
 
-  it('scrolls on async subagent state changes and tolerates stream reset', () => {
-    const { coordinator, scrollToBottom } = createCoordinator();
+  it('updates async subagent state in messages and tolerates stream reset', () => {
+    const { coordinator } = createCoordinator();
     const msg = createMessage();
     coordinator.handleTaskToolUseViaManager(
       { type: 'tool_use', id: 'spawn-1', name: 'spawn_agent', input: { prompt: 'Research', run_in_background: true } },
@@ -164,7 +162,6 @@ describe('StreamSubagentCoordinator', () => {
       toolCalls: [],
       mode: 'async',
     });
-    expect(scrollToBottom).toHaveBeenCalled();
 
     expect(() => coordinator.resetStreamingState()).not.toThrow();
   });
@@ -187,7 +184,6 @@ describe('StreamSubagentCoordinator', () => {
       subagentManager,
       getAgentService: getAgentService as never,
       showThinkingIndicator: jest.fn(),
-      scrollToBottom: jest.fn(),
     });
 
     coordinator.handleTaskToolUseViaManager(
@@ -224,7 +220,6 @@ describe('StreamSubagentCoordinator', () => {
         subagentManager,
         getAgentService: (() => ({ loadSubagentFinalResult })) as never,
         showThinkingIndicator: jest.fn(),
-        scrollToBottom: jest.fn(),
       });
       coordinator.handleTaskToolUseViaManager(
         { type: 'tool_use', id: 'spawn-1', name: 'spawn_agent', input: { prompt: 'Research', run_in_background: true } },
@@ -260,7 +255,6 @@ describe('StreamSubagentCoordinator', () => {
       subagentManager,
       getAgentService: (() => ({ loadSubagentFinalResult })) as never,
       showThinkingIndicator: jest.fn(),
-      scrollToBottom: jest.fn(),
     });
     coordinator.handleTaskToolUseViaManager(
       { type: 'tool_use', id: 'spawn-1', name: 'spawn_agent', input: { prompt: 'Research', run_in_background: true } },
@@ -296,7 +290,6 @@ describe('StreamSubagentCoordinator', () => {
       subagentManager,
       getAgentService: (() => ({ loadSubagentFinalResult })) as never,
       showThinkingIndicator: jest.fn(),
-      scrollToBottom: jest.fn(),
     });
     coordinator.handleTaskToolUseViaManager(
       { type: 'tool_use', id: 'spawn-1', name: 'spawn_agent', input: { prompt: 'Research', run_in_background: true } },
