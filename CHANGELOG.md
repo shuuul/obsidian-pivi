@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.11.6](https://github.com/shuuul/obsidian-pivi/compare/0.11.5...0.11.6) (2026-07-17)
+
+
+### Bug Fixes
+
+* **chat:** align context indicator with compaction ([2ff4fbe](https://github.com/shuuul/obsidian-pivi/commit/2ff4fbe9416aedf905ff6473b19e62e0368e7100))
+* **chat:** cap read defaults by compaction headroom ([a56c727](https://github.com/shuuul/obsidian-pivi/commit/a56c7275d4d87bb8e537770494c304949fc01875))
+* **chat:** clear thinking indicator on agent unavailable ([944f335](https://github.com/shuuul/obsidian-pivi/commit/944f3353237e958001c601a8f5c469d828466fae))
+* **chat:** harden vault context compaction ([4bb4915](https://github.com/shuuul/obsidian-pivi/commit/4bb4915c39762820d822f0adcf93299cc2fc1917))
+* **chat:** keep streaming output in view ([65a78b6](https://github.com/shuuul/obsidian-pivi/commit/65a78b68a560721fc513955e77264ed5eb8b72ed))
+* **chat:** let read defaults cross compaction threshold ([de3c631](https://github.com/shuuul/obsidian-pivi/commit/de3c631adaaee8cf618b562afcf75d6aa4e69b9b))
+* **chat:** restore subagent cards from Pi history ([215de54](https://github.com/shuuul/obsidian-pivi/commit/215de540e3aca370f4542dc49b90d5cc57f651f7))
+* **chat:** run manual compaction instructions after lock contention ([b6d1d1f](https://github.com/shuuul/obsidian-pivi/commit/b6d1d1fa8021c127778f77c589980a46dcb281b6))
+* **chat:** stabilize live thinking indicator during streaming ([448984f](https://github.com/shuuul/obsidian-pivi/commit/448984f2ebe414e24ee671185e38692fdf686061))
+* **chat:** upgrade incomplete subagent overlays from Pi results ([7f5dd6a](https://github.com/shuuul/obsidian-pivi/commit/7f5dd6a8680e1f7e5bebe9db9e7241a405f5f19c))
+* **settings:** oauth precheck membership-stable deps and auth errors ([f4c9122](https://github.com/shuuul/obsidian-pivi/commit/f4c9122916c70caa43cdd18f79e36a2ff9a247a4))
+* **settings:** refresh OAuth credentials before provider readiness badges ([da457c8](https://github.com/shuuul/obsidian-pivi/commit/da457c845adeda302113848d94e65ad01fc7e8b6))
+* **subagent:** prefer Pi terminal result and clear orphan running state ([86a7929](https://github.com/shuuul/obsidian-pivi/commit/86a79292eadf2fe3f03b5fb7ac0a81dbd2fcbd55))
+* **usage:** CJK-safe read char budget and compaction-aligned meter ([af835b7](https://github.com/shuuul/obsidian-pivi/commit/af835b7c83c72c50704852112eec9d517581adc6))
+
 ## [0.11.5](https://github.com/shuuul/obsidian-pivi/compare/0.11.4...0.11.5) (2026-07-17)
 
 
