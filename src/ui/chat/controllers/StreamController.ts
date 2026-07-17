@@ -118,7 +118,6 @@ export class StreamController {
       subagentManager: deps.subagentManager,
       getAgentService: deps.getAgentService,
       showThinkingIndicator: () => this.showThinkingIndicator(),
-      hideThinkingIndicator: () => this.hideThinkingIndicator(),
       scrollToBottom: () => {},
     });
     this.usagePresenter = new UsagePresenter({
@@ -169,11 +168,7 @@ export class StreamController {
     }
     switch (chunk.type) {
       case 'thinking':
-        this.handleThinkingChunk();
-        break;
-
       case 'text':
-        this.handleTextChunk();
         break;
 
       case 'tool_use':
@@ -203,11 +198,11 @@ export class StreamController {
         break;
 
       case 'tool_output':
-        this.handleToolOutput();
         break;
 
       case 'notice':
-        this.handleNoticeChunk();
+      case 'context_compacting':
+      case 'context_compacted':
         break;
 
       case 'error':
@@ -215,14 +210,6 @@ export class StreamController {
         break;
 
       case 'done':
-        break;
-
-      case 'context_compacting':
-        this.handleContextCompactingChunk();
-        break;
-
-      case 'context_compacted':
-        this.handleContextCompactedChunk();
         break;
 
       case 'usage':
@@ -265,20 +252,10 @@ export class StreamController {
     return { childRunId, parentRunId };
   }
 
-  private handleThinkingChunk(): void {
-    this.hideThinkingIndicator();
-  }
-
-  private handleTextChunk(): void {
-    this.hideThinkingIndicator();
-  }
-
   private handleToolUseChunk(
     chunk: Extract<StreamChunk, { type: 'tool_use' }>,
     msg: ChatMessage,
   ): void {
-    this.hideThinkingIndicator();
-
     const subagentLifecycleAdapter = resolveSubagentLifecycleAdapter(chunk.name);
     switch (routeToolUseStreamChunk(chunk.name, subagentLifecycleAdapter)) {
       case 'subagent_task':
@@ -296,37 +273,16 @@ export class StreamController {
         this.subagentCoordinator.handleHiddenSubagentTool(chunk, msg);
         break;
       case 'regular':
-        this.handleRegularToolUse();
         break;
     }
-  }
-
-  private handleNoticeChunk(): void {
-    this.hideThinkingIndicator();
   }
 
   private handleErrorChunk(): void {
     this.hideThinkingIndicator();
   }
 
-  private handleContextCompactedChunk(): void {
-    this.hideThinkingIndicator();
-  }
-
-  private handleContextCompactingChunk(): void {
-    this.hideThinkingIndicator();
-  }
-
   private handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {
     this.usagePresenter.handleUsageChunk(chunk);
-  }
-
-  private handleRegularToolUse(): void {
-    this.showThinkingIndicator();
-  }
-
-  private handleToolOutput(): void {
-    this.showThinkingIndicator();
   }
 
   private async handleToolResult(
@@ -347,17 +303,14 @@ export class StreamController {
     }
 
     if (this.subagentCoordinator.handleAsyncTaskToolResult(chunk)) {
-      this.showThinkingIndicator();
       return;
     }
 
     if (await this.subagentCoordinator.handleAgentOutputToolResult(chunk)) {
-      this.showThinkingIndicator();
       return;
     }
 
     if (this.subagentCoordinator.handleSubagentResult(chunk, msg)) {
-      this.showThinkingIndicator();
       return;
     }
 
@@ -367,7 +320,6 @@ export class StreamController {
       notifyVaultFileChange: (input) => notifyVaultFileChange(plugin, input),
       notifyObsidianVaultPathChange: (input) => notifyObsidianVaultPathChange(plugin, input),
       notifyApplyPatchFileChanges: (input) => notifyApplyPatchFileChanges(plugin, input),
-      showThinkingIndicator: () => this.showThinkingIndicator(),
     }, chunk, msg, normalizedContent);
   }
 
@@ -396,10 +348,6 @@ export class StreamController {
       updateQueueIndicator: this.deps.updateQueueIndicator,
       getMessagesEl: this.deps.getMessagesEl,
     });
-  }
-
-  private renderCompactBoundary(): void {
-    this.hideThinkingIndicator();
   }
 
   resetStreamingState(): void {

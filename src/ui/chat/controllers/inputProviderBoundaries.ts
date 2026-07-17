@@ -76,7 +76,6 @@ export class InputProviderBoundaryHandler {
     if (previousAssistant && shouldDiscardPlaceholder) {
       this.host.discardStreamingAssistantMessage(previousAssistant.id);
     }
-    this.host.deps.streamController.hideThinkingIndicator();
 
     const displayContent = expected?.displayContent ?? chunk.content;
     const persistedContent = expected?.persistedContent ?? displayContent;

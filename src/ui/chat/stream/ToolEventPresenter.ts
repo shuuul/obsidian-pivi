@@ -69,7 +69,6 @@ export interface RegularToolResultDeps {
   notifyVaultFileChange: (input: Record<string, unknown>) => void;
   notifyObsidianVaultPathChange: (input: Record<string, unknown>) => void;
   notifyApplyPatchFileChanges: (input: Record<string, unknown>) => void;
-  showThinkingIndicator: () => void;
 }
 
 export function handleRegularToolResult(
@@ -82,7 +81,6 @@ export function handleRegularToolResult(
 
   const existingToolCall = msg.toolCalls?.find(tc => tc.id === chunk.id);
   if (!existingToolCall) {
-    deps.showThinkingIndicator();
     return;
   }
 
@@ -102,7 +100,6 @@ export function handleRegularToolResult(
   applyAskUserResolvedAnswers(existingToolCall, chunk, normalizedContent);
   applyToolResultDiff(chunk, existingToolCall, isBlocked);
   notifyModifiedFiles(deps, chunk, existingToolCall, isBlocked);
-  deps.showThinkingIndicator();
 }
 
 function applyAskUserResolvedAnswers(

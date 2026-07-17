@@ -52,7 +52,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pivi-thinking,
   .pivi-working-icon-arc,
   .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
   .pivi-subagent-running-icon .pivi-subagent-icon-motion,

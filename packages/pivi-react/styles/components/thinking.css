@@ -1,13 +1,8 @@
 .pivi-thinking {
-  color: var(--pivi-host-text-accent);
+  color: var(--pivi-host-text-muted);
   padding-block: var(--pivi-spacing-xs);
   padding-inline: 14px;
   text-align: start;
-  animation: pivi-thinking-pulse 1.5s ease-in-out infinite;
-}
-
-.pivi-thinking.pivi-thinking--compact {
-  color: var(--pivi-compact);
 }
 
 .pivi-thinking-hint {

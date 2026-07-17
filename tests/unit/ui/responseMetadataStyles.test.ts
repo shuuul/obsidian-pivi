@@ -21,5 +21,7 @@ describe('response metadata styles', () => {
     );
 
     expect(styles).toMatch(/\.pivi-thinking\s*\{[\s\S]*?padding-inline:\s*14px;/);
+    expect(styles).toMatch(/\.pivi-thinking\s*\{[\s\S]*?color:\s*var\(--pivi-host-text-muted\);/);
+    expect(styles).not.toMatch(/pivi-thinking-pulse/);
   });
 });

@@ -167,7 +167,7 @@ flowchart TD
 `StreamSubagentCoordinator` (`stream/streamSubagentLifecycle.ts`) deliberately stays in product UI rather than `@pivi/pivi-agent-core`:
 
 - It mutates live `ChatMessage` tool calls, content blocks, and thinking-indicator side effects while chunks arrive.
-- A foreground subagent terminal event clears the bottom thinking indicator and its owner-window timers. Background subagent terminal events update their projection without hiding an unrelated foreground indicator.
+- Subagent terminal events update their projection without hiding the bottom thinking indicator; the indicator stays visible for the full foreground turn and clears only on turn boundaries such as finalize, cancel, error, or stream reset.
 - Async hydration retries call back into injected `PiChatService` loaders. The coordinator owns retry timers and a lifecycle generation; reset/dispose cancels pending timers and invalidates in-flight loader results before they can mutate the next session or a closed tab.
 - `SubagentManager` remains the pure record layer (task buffering, nested tool correlation, terminal status). Keep new persistence rules there, but keep stream-order-sensitive projection and retry timing in the coordinator unless a future review extracts a host-neutral state machine with no UI or `PiChatService` dependencies.
 

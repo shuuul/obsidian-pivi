@@ -2,7 +2,6 @@ import { ChatState } from '@/ui/chat/state/ChatState';
 import {
   hideThinkingIndicator,
   showThinkingIndicator,
-  THINKING_INDICATOR_DELAY_MS,
 } from '@/ui/chat/stream/streamThinkingIndicator';
 
 describe('streamThinkingIndicator', () => {
@@ -42,15 +41,12 @@ describe('streamThinkingIndicator', () => {
     };
   }
 
-  it('writes an immutable thinkingIndicator after the delay and ticks elapsed labels', () => {
+  it('writes an immutable thinkingIndicator immediately and ticks elapsed labels', () => {
     const { state, deps } = createDeps();
     state.isStreaming = true;
     state.responseStartTime = performance.now() - 1500;
 
     showThinkingIndicator(deps, 'Custom thinking', 'pivi-thinking--compact');
-    expect(state.uiStore.getSnapshot().thinkingIndicator).toBeNull();
-
-    jest.advanceTimersByTime(THINKING_INDICATOR_DELAY_MS);
     const first = state.uiStore.getSnapshot().thinkingIndicator;
     expect(first).toEqual({
       text: 'Custom thinking',
@@ -68,23 +64,26 @@ describe('streamThinkingIndicator', () => {
     expect(state.uiStore.getSnapshot().thinkingIndicator).toBeNull();
   });
 
-  it('suppresses the indicator when real thinking content is present', () => {
+  it('keeps the indicator visible while real thinking content is present', () => {
     const { state, deps } = createDeps();
     state.isStreaming = true;
     state.uiStore.update({ currentThinkingContent: 'real thinking' });
 
-    showThinkingIndicator(deps, 'Should not show');
-    jest.advanceTimersByTime(THINKING_INDICATOR_DELAY_MS);
-    expect(state.uiStore.getSnapshot().thinkingIndicator).toBeNull();
+    showThinkingIndicator(deps, 'Still visible');
+    expect(state.uiStore.getSnapshot().thinkingIndicator).toEqual({
+      text: 'Still visible',
+      className: 'pivi-thinking',
+      elapsedLabel: '',
+    });
   });
 
-  it('does not resurrect a cancelled indicator after hide', () => {
+  it('clears the indicator and cancels elapsed ticks on hide', () => {
     const { state, deps } = createDeps();
     state.isStreaming = true;
 
-    showThinkingIndicator(deps, 'Pending');
+    showThinkingIndicator(deps, 'Visible');
     hideThinkingIndicator(deps);
-    jest.advanceTimersByTime(THINKING_INDICATOR_DELAY_MS);
+    jest.advanceTimersByTime(2000);
     expect(state.uiStore.getSnapshot().thinkingIndicator).toBeNull();
   });
 
@@ -93,11 +92,9 @@ describe('streamThinkingIndicator', () => {
     state.isStreaming = true;
 
     showThinkingIndicator(deps, 'First');
-    jest.advanceTimersByTime(THINKING_INDICATOR_DELAY_MS);
     const first = state.uiStore.getSnapshot().thinkingIndicator;
 
     showThinkingIndicator(deps, 'Second');
-    jest.advanceTimersByTime(THINKING_INDICATOR_DELAY_MS);
     expect(state.uiStore.getSnapshot().thinkingIndicator).toEqual(first);
   });
 });
