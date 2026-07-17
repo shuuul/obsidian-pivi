@@ -1,5 +1,6 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import {
+  buildContextEntries,
   convertToLlm,
   estimateTokens as estimatePiMessageTokens,
   findCutPoint,
@@ -376,20 +377,13 @@ export function estimateActiveContextCategories(
     recentConversation: 0,
     toolAndAgentResults: 0,
   };
-  let latestCompactionIndex = -1;
-  for (let index = entries.length - 1; index >= 0; index--) {
-    if (entries[index] && isCompactionEntry(entries[index]!)) {
-      latestCompactionIndex = index;
-      break;
+  for (const entry of buildContextEntries(entries)) {
+    if (isCompactionEntry(entry)) {
+      estimates.checkpoints += estimateTextTokens(entry.summary);
+      continue;
     }
-  }
-  const checkpoint = entries[latestCompactionIndex];
-  if (checkpoint && isCompactionEntry(checkpoint)) {
-    estimates.checkpoints = estimateTextTokens(checkpoint.summary);
-  }
-  for (const entry of entries.slice(latestCompactionIndex + 1)) {
-    if (isMessageEntry(entry)) {
-      addMessageCategory(estimates, entry.message);
+    for (const message of sessionEntryToContextMessages(entry)) {
+      addMessageCategory(estimates, message);
     }
   }
   return estimates;

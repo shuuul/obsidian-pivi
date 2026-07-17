@@ -2,6 +2,7 @@ import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
 
 import {
   calculateContextEnvelope,
+  calculateUsagePercentage,
   type CheckpointPresentation,
   type UsageInfo,
 } from '../../foundation';
@@ -159,28 +160,38 @@ export function attachContextEnvelope(
         pendingMessages.length > 0 ? pendingMessages : deps.agent?.state.messages ?? [],
       );
   if (deps.sessionTree && pendingMessages.length > 0) {
-    const pending = estimateAgentMessageCategories(pendingMessages);
+    const pending = estimateAgentMessageCategories(pendingMessages.filter((message) => (
+      (message as unknown as { role?: unknown }).role !== 'user'
+    )));
     categories.recentConversation += pending.recentConversation;
     categories.toolAndAgentResults += pending.toolAndAgentResults;
   }
   const selectedContext = deps.sessionTree && turn
     ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
     : 0;
+  const contextEnvelope = calculateContextEnvelope({
+    checkpoints: categories.checkpoints,
+    contextWindow: usage.contextWindow || DEFAULT_COMPACTION_CONTEXT_WINDOW,
+    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
+    outputTokenLimit: usage.outputTokenLimit,
+    providerContextTokens: usage.contextTokensIsAuthoritative
+      ? usage.contextTokens
+      : undefined,
+    recentConversation: categories.recentConversation,
+    selectedContext,
+    system: estimateSystemTokens(deps.agent),
+    toolAndAgentResults: categories.toolAndAgentResults,
+  });
+  if (usage.contextTokensIsAuthoritative) {
+    return { ...usage, contextEnvelope };
+  }
+  const contextTokens = contextEnvelope.total.tokens;
   return {
     ...usage,
-    contextEnvelope: calculateContextEnvelope({
-      checkpoints: categories.checkpoints,
-      contextWindow: usage.contextWindow || DEFAULT_COMPACTION_CONTEXT_WINDOW,
-      contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
-      outputTokenLimit: usage.outputTokenLimit,
-      providerContextTokens: usage.contextTokensIsAuthoritative
-        ? usage.contextTokens
-        : undefined,
-      recentConversation: categories.recentConversation,
-      selectedContext,
-      system: estimateSystemTokens(deps.agent),
-      toolAndAgentResults: categories.toolAndAgentResults,
-    }),
+    contextEnvelope,
+    contextTokens,
+    inputTokens: contextTokens,
+    percentage: calculateUsagePercentage(contextTokens, usage.contextWindow),
   };
 }
 

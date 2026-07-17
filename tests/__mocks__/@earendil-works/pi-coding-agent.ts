@@ -5,6 +5,9 @@ interface MockSessionEntry {
   type: string;
   message?: unknown;
   customType?: string;
+  content?: unknown;
+  display?: boolean;
+  fromId?: string;
   data?: unknown;
   summary?: string;
   firstKeptEntryId?: string;
@@ -277,6 +280,21 @@ export function sessionEntryToContextMessages(entry: MockSessionEntry): unknown[
         type: 'text',
         text: `<context_compaction_summary>\n${entry.summary ?? ''}\n</context_compaction_summary>`,
       }],
+    }];
+  }
+  if (entry.type === 'custom_message') {
+    return [{
+      role: 'custom',
+      customType: entry.customType,
+      content: entry.content,
+      display: entry.display,
+    }];
+  }
+  if (entry.type === 'branch_summary') {
+    return [{
+      role: 'branchSummary',
+      summary: entry.summary ?? '',
+      fromId: entry.fromId,
     }];
   }
   return [];

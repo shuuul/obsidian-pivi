@@ -6,6 +6,7 @@ import {
   buildPass2Prompt,
   COMPACTION_PREFIX_RATIO,
   convertCompactionMessages,
+  estimateActiveContextCategories,
   estimateActiveContextTokens,
   estimateAgentMessagesTokens,
   estimateAgentMessageTokens,
@@ -23,12 +24,14 @@ import {
 } from '@pivi/pivi-agent-core/engine/pi/session/piContextCompaction';
 import type { Checkpoint } from '@pivi/pivi-agent-core/session/continuationSchemas';
 
+type PiMessageEntry = Extract<PiContextCompactionEntry, { type: 'message' }>;
+
 function messageEntry(
   id: string,
   role: 'user' | 'assistant' | 'toolResult',
   content: unknown,
   parentId: string | null = null,
-): PiContextCompactionEntry {
+): PiMessageEntry {
   return {
     id,
     parentId,
@@ -41,7 +44,7 @@ function messageEntry(
         ? { toolCallId: 'call-1', toolName: 'obsidian_read', isError: false }
         : {}),
     },
-  } as unknown as PiContextCompactionEntry;
+  } as unknown as PiMessageEntry;
 }
 
 function compactionEntry(
@@ -138,6 +141,126 @@ describe('piContextCompaction', () => {
     const recent = messageEntry('recent', 'user', 'z'.repeat(200), 'c1');
     expect(estimateActiveContextTokens([old, kept, compacted, recent]))
       .toBe(estimateActiveContextTokens([kept, compacted, recent]));
+  });
+
+  it('categorizes retained messages in legacy compacted context', () => {
+    const old = messageEntry('old', 'user', 'x'.repeat(4_000));
+    const kept = messageEntry('kept', 'assistant', 'y'.repeat(400), 'old');
+    const compacted = {
+      ...compactionEntry('c1', 'durable summary', 'kept'),
+      firstKeptEntryId: 'kept',
+    } as PiContextCompactionEntry;
+    const recent = messageEntry('recent', 'user', 'z'.repeat(200), 'c1');
+
+    expect(estimateActiveContextCategories([old, kept, compacted, recent])).toEqual({
+      checkpoints: estimateTextTokens('durable summary'),
+      recentConversation: (
+        estimateAgentMessageTokens(kept.message!)
+        + estimateAgentMessageTokens(recent.message!)
+      ),
+      toolAndAgentResults: 0,
+    });
+  });
+
+  it('categorizes every entry retained across repeated compactions', () => {
+    const old = messageEntry('old', 'user', 'discarded '.repeat(1_000));
+    const firstKept = messageEntry('first-kept', 'assistant', 'first kept', 'old');
+    const firstCompaction = {
+      ...compactionEntry('c1', 'first summary', 'first-kept'),
+      firstKeptEntryId: 'first-kept',
+    } as PiContextCompactionEntry;
+    const between = messageEntry('between', 'toolResult', 'verified tool output', 'c1');
+    const secondCompaction = {
+      ...compactionEntry('c2', 'second summary', 'between'),
+      firstKeptEntryId: 'c1',
+    } as PiContextCompactionEntry;
+    const recent = messageEntry('recent', 'user', 'latest request', 'c2');
+
+    expect(estimateActiveContextCategories([
+      old,
+      firstKept,
+      firstCompaction,
+      between,
+      secondCompaction,
+      recent,
+    ])).toEqual({
+      checkpoints: (
+        estimateTextTokens('first summary')
+        + estimateTextTokens('second summary')
+      ),
+      recentConversation: estimateAgentMessageTokens(recent.message!),
+      toolAndAgentResults: estimateAgentMessageTokens(between.message!),
+    });
+  });
+
+  it('categorizes only the latest full replacement after repeated compaction', () => {
+    const old = messageEntry('old', 'user', 'discarded '.repeat(1_000));
+    const firstBoundary = {
+      id: 'b1',
+      parentId: 'old',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      type: 'custom',
+      customType: 'pivi-compaction-boundary',
+      data: { schemaVersion: 1 },
+    } as unknown as PiContextCompactionEntry;
+    const firstCompaction = {
+      ...compactionEntry('c1', 'first summary', 'b1'),
+      firstKeptEntryId: 'b1',
+    } as PiContextCompactionEntry;
+    const between = messageEntry('between', 'assistant', 'also discarded', 'c1');
+    const secondBoundary = {
+      id: 'b2',
+      parentId: 'between',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      type: 'custom',
+      customType: 'pivi-compaction-boundary',
+      data: { schemaVersion: 1 },
+    } as unknown as PiContextCompactionEntry;
+    const secondCompaction = {
+      ...compactionEntry('c2', 'second summary', 'b2'),
+      firstKeptEntryId: 'b2',
+    } as PiContextCompactionEntry;
+    const recent = messageEntry('recent', 'user', 'latest request', 'c2');
+
+    expect(estimateActiveContextCategories([
+      old,
+      firstBoundary,
+      firstCompaction,
+      between,
+      secondBoundary,
+      secondCompaction,
+      recent,
+    ])).toEqual({
+      checkpoints: estimateTextTokens('second summary'),
+      recentConversation: estimateAgentMessageTokens(recent.message!),
+      toolAndAgentResults: 0,
+    });
+  });
+
+  it('categorizes legacy context entries projected into model messages', () => {
+    const customMessage = {
+      id: 'custom-message',
+      parentId: null,
+      timestamp: '2026-01-01T00:00:00.000Z',
+      type: 'custom_message',
+      customType: 'legacy-context',
+      content: 'injected legacy context',
+      display: true,
+    } as unknown as PiContextCompactionEntry;
+    const branchSummary = {
+      id: 'branch-summary',
+      parentId: 'custom-message',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      type: 'branch_summary',
+      fromId: 'old-branch',
+      summary: 'retained branch decision',
+    } as unknown as PiContextCompactionEntry;
+
+    const categories = estimateActiveContextCategories([customMessage, branchSummary]);
+
+    expect(categories.checkpoints).toBe(0);
+    expect(categories.recentConversation).toBeGreaterThan(0);
+    expect(categories.toolAndAgentResults).toBe(0);
   });
 
   it('uses Pi cut-point rules for a token-weighted 95/5 split', () => {

@@ -205,8 +205,10 @@ export type StreamChunk =
 /**
  * Context window usage information.
  *
- * `contextTokens` is the provider-computed total token count in the context window.
- * Providers set it to their equivalent total (input + cache tokens where applicable).
+ * `contextTokens` is the complete active prompt-context count, never a
+ * current-stream-segment count. Providers set it to their reported total
+ * (input + cache tokens where applicable); temporary streaming updates use the
+ * full locally estimated context envelope until authoritative usage arrives.
  *
  * Cache token fields are optional — only providers with prompt caching populate them.
  * Feature code should use `contextTokens` for display, not recompute from the cache breakdown.

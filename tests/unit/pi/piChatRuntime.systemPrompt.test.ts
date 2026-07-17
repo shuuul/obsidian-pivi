@@ -1300,6 +1300,11 @@ describe('PiChatRuntime system prompt', () => {
     const plugin = createMockPlugin();
     const runtime = createRuntime(plugin);
     const chunks = [];
+    for await (const _chunk of runtime.query(runtime.prepareTurn({
+      text: `Earlier context ${'history '.repeat(1_000)}`,
+    }))) {
+      // Seed a large persisted context that the next streaming estimate must retain.
+    }
 
     for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Trigger tool usage update' }))) {
       chunks.push(chunk);
@@ -1312,6 +1317,15 @@ describe('PiChatRuntime system prompt', () => {
     expectDefined(firstUsageChunk);
     expectDefined(finalUsageChunk);
     expect(firstUsageChunk.usage.contextTokens).toBeGreaterThan(0);
+    expect(firstUsageChunk.usage.contextTokens).toBe(
+      firstUsageChunk.usage.contextEnvelope?.total.tokens,
+    );
+    expect(firstUsageChunk.usage.contextTokens).toBeGreaterThan(
+      firstUsageChunk.usage.contextEnvelope?.toolAndAgentResults.tokens ?? 0,
+    );
+    expect(firstUsageChunk.usage.contextEnvelope?.recentConversation.tokens)
+      .toBeGreaterThan(1_500);
+    expect(firstUsageChunk.usage.inputTokens).toBe(firstUsageChunk.usage.contextTokens);
     expect(firstUsageChunk.usage.contextTokens).not.toBe(300);
     expect(firstUsageChunk.usage.contextTokensIsAuthoritative).toBe(false);
     expect(firstUsageChunk.usage.contextEnvelope?.system.tokens).toBeGreaterThan(0);
