@@ -1,4 +1,10 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
+import {
+  convertToLlm,
+  estimateTokens as estimatePiMessageTokens,
+  findCutPoint,
+  sessionEntryToContextMessages,
+} from '@earendil-works/pi-coding-agent';
 
 import {
   calculateContextEnvelope,
@@ -14,37 +20,55 @@ import {
 } from '../../../session/continuationSchemas';
 import type { SessionTreeStore } from './sessionTreeStore';
 
+export { AUTO_COMPACTION_THRESHOLD_RATIO } from '../../../foundation';
+
 export type PiContextCompactionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
 
-export interface PiContextCompactionCutPoint {
-  firstKeptEntryId: string;
+export interface PiContextCompactionPlan {
+  activeEntries: PiContextCompactionEntry[];
   prefixEntries: PiContextCompactionEntry[];
+  prefixFingerprint: string;
+  prefixMessages: AgentMessage[];
+  tailEntries: PiContextCompactionEntry[];
+  tailMessages: AgentMessage[];
   tokensBefore: number;
 }
 
 export interface AutoCompactionDecisionInput {
-  enableAutoCompact?: boolean;
   compactionInFlight: boolean;
+  failedFingerprint: string | null;
+  sessionFingerprint: string;
   sessionLeafId: string | null;
-  lastAttemptLeafId: string | null;
   providerUsage: UsageInfo;
   storedConversationTokens: number;
-  thresholdRatio?: number;
 }
 
-export const COMPACTION_SYSTEM_PROMPT = `You are currently performing context compaction for Pivi before the next chat turn continues.
-Use exactly these Markdown sections in order: Continuation summary, Goal, Constraints, Decisions, Artifacts, Open work, Unresolved questions, and Next steps.
-Preserve durable facts, the current user goal, constraints, decisions made, files/notes/tools touched, important tool results, unresolved questions, and concrete next steps.
-Use bullet lists except for Continuation summary and Goal. For Artifacts, write each item as "- label :: vault-relative-path" or "- label"; never include an absolute device path.
-Write "None" for a section with no supported information.
-Do not add new facts. Be concise but specific enough that the next assistant can continue safely.`;
+export interface CompactionDraft {
+  continuationSummary: string;
+  goal: string | null;
+  constraints: string[];
+  decisions: string[];
+  artifacts: ArtifactReference[];
+  openWork: string[];
+  unresolvedQuestions: string[];
+  nextSteps: string[];
+}
+
+export const COMPACTION_PREFIRE_LEAD_RATIO = 0.1;
+export const COMPACTION_PREFIX_RATIO = 0.95;
+export const MIN_COMPACTION_MESSAGE_ENTRIES = 4;
+export const MIN_COMPACTION_NOTE_TOKENS = 128;
+export const COMPACTION_PROMPT_VERSION = 'pivi-vault-two-pass-v1';
+
+export const COMPACTION_SYSTEM_PROMPT = `You create continuation notes for a durable Obsidian vault conversation.
+Use only facts supported by the supplied conversation. Preserve the user's current objective, constraints, decisions, exact wikilinks, vault-relative note paths, dates, verified tool successes and failures, unresolved questions, and concrete next steps.
+Never expose an absolute device path, hidden reasoning, credentials, or unsupported inference.
+Return exactly one fenced pivi-checkpoint JSON object with these fields:
+continuationSummary (string), goal (string or null), constraints (string[]), decisions (string[]), artifacts ({label:string,vaultPath?:string}[]), openWork (string[]), unresolvedQuestions (string[]), nextSteps (string[]).
+Use empty arrays when no supported items exist. Do not include prose outside the fence.`;
 
 export const COMPACTION_SUMMARY_PREFIX = 'The earlier session history was compacted. Use this summary as authoritative context for the omitted earlier turns:';
 export const DEFAULT_COMPACTION_CONTEXT_WINDOW = 200_000;
-
-const DEFAULT_KEEP_RECENT_TOKENS = 20_000;
-const MIN_KEEP_RECENT_TOKENS = 1_000;
-const MAX_KEEP_RECENT_TOKENS = 200_000;
 
 const ASCII_PROSE_CHARS_PER_TOKEN = 4;
 const ASCII_STRUCTURED_CHARS_PER_TOKEN = 3;
@@ -96,30 +120,6 @@ export function estimateTextTokens(text: string): number {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
-}
-
-function textFromContent(content: unknown): string {
-  if (typeof content === 'string') {
-    return content;
-  }
-  if (!Array.isArray(content)) {
-    return '';
-  }
-  return content.map((part) => {
-    if (!isRecord(part)) return '';
-    if (part.type === 'text' && typeof part.text === 'string') return part.text;
-    if (part.type === 'thinking' && typeof part.thinking === 'string') return `[thinking]\n${part.thinking}`;
-    if (part.type === 'toolCall') {
-      const name = typeof part.name === 'string' ? part.name : 'tool';
-      return `[tool call: ${name}] ${JSON.stringify(part.arguments ?? {})}`;
-    }
-    return '';
-  }).filter(Boolean).join('\n');
-}
-
-function textFromAgentMessage(message: AgentMessage): string {
-  const record = message as unknown as Record<string, unknown>;
-  return textFromContent(record.content);
 }
 
 function estimateStructuredValueTokens(value: unknown): number {
@@ -179,7 +179,7 @@ export function estimateAgentMessageTokens(message: AgentMessage): number {
       tokens += estimateTextTokens(record.toolName);
     }
   }
-  return tokens;
+  return Math.max(tokens, estimatePiMessageTokens(message));
 }
 
 function isMessageEntry(
@@ -395,20 +395,6 @@ export function estimateActiveContextCategories(
   return estimates;
 }
 
-function roleForSummary(message: AgentMessage): string {
-  const role = (message as unknown as Record<string, unknown>).role;
-  return typeof role === 'string' ? role : 'message';
-}
-
-function truncateForSummary(text: string, maxChars: number): string {
-  if (text.length <= maxChars) {
-    return text;
-  }
-  const head = text.slice(0, Math.floor(maxChars * 0.65));
-  const tail = text.slice(text.length - Math.floor(maxChars * 0.25));
-  return `${head}\n...[truncated ${text.length - head.length - tail.length} chars]...\n${tail}`;
-}
-
 export function stripCompactCommand(text: string): string | undefined {
   const instructions = text.trim().replace(/^\/compact(?:\s|$)/i, '').trim();
   return instructions || undefined;
@@ -416,7 +402,6 @@ export function stripCompactCommand(text: string): string | undefined {
 
 export function getCompactionThresholdTokens(
   contextWindow = DEFAULT_COMPACTION_CONTEXT_WINDOW,
-  thresholdRatio?: number,
   contextWindowIsAuthoritative = false,
   outputTokenLimit?: number,
 ): number {
@@ -424,29 +409,28 @@ export function getCompactionThresholdTokens(
     contextWindow,
     contextWindowIsAuthoritative,
     outputTokenLimit,
-    thresholdRatio,
   }).compactionTriggerTokens;
 }
 
-export function normalizeCompactionKeepRecentTokens(keepRecentTokens?: number): number {
-  return Math.min(
-    MAX_KEEP_RECENT_TOKENS,
-    Math.max(MIN_KEEP_RECENT_TOKENS, keepRecentTokens ?? DEFAULT_KEEP_RECENT_TOKENS),
-  );
+export function getCompactionPrefireTokens(
+  hardTriggerTokens: number,
+  contextWindow = DEFAULT_COMPACTION_CONTEXT_WINDOW,
+): number {
+  return Math.max(0, hardTriggerTokens - Math.floor(contextWindow * COMPACTION_PREFIRE_LEAD_RATIO));
 }
 
 export function shouldAutoCompact(input: AutoCompactionDecisionInput): boolean {
-  if (!input.enableAutoCompact || input.compactionInFlight) {
+  if (input.compactionInFlight) {
     return false;
   }
 
-  if (!input.sessionLeafId || input.lastAttemptLeafId === input.sessionLeafId) {
+  if (!input.sessionLeafId || input.failedFingerprint === input.sessionFingerprint) {
     return false;
   }
 
   if (input.providerUsage.contextEnvelope) {
     return input.providerUsage.contextEnvelope.pressureInputTokens
-      > input.providerUsage.contextEnvelope.compactionTriggerTokens;
+      >= input.providerUsage.contextEnvelope.compactionTriggerTokens;
   }
 
   const envelope = calculateContextEnvelope({
@@ -457,190 +441,292 @@ export function shouldAutoCompact(input: AutoCompactionDecisionInput): boolean {
       ? input.providerUsage.contextTokens
       : undefined,
     recentConversation: input.storedConversationTokens,
-    thresholdRatio: input.thresholdRatio,
   });
-  return envelope.pressureInputTokens > envelope.compactionTriggerTokens;
+  return envelope.pressureInputTokens >= envelope.compactionTriggerTokens;
 }
 
-export function selectCompactionCutPoint(
-  entries: PiContextCompactionEntry[],
-  keepRecentTokens?: number,
-  tokenIndex = new PiContextTokenIndex(),
-): PiContextCompactionCutPoint | null {
-  tokenIndex.sync(entries);
-  let latestCompactionIndex = -1;
-  for (let index = entries.length - 1; index >= 0; index--) {
-    const entry = entries[index];
-    if (entry && isCompactionEntry(entry)) {
-      latestCompactionIndex = index;
-      break;
-    }
-  }
+const DEVICE_PATH_IN_TEXT = /(?:file:\/\/\/|[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|\/(?:Users|home|private|tmp|var|Volumes)\/)\S*/gi;
+const GENERIC_ABSOLUTE_PATH_IN_TEXT = /(?<![A-Za-z0-9_.:/-])\/(?:(?:[^/\s"'`<>]+\/)+[^/\s"'`<>]+|[^/\s"'`<>]+\.[A-Za-z0-9]+)/g;
 
-  const messageEntries = entries
-    .slice(latestCompactionIndex + 1)
-    .filter(isMessageEntry);
-  if (messageEntries.length < 4) {
-    return null;
-  }
+function redactDevicePaths(text: string): string {
+  return text
+    .replace(DEVICE_PATH_IN_TEXT, '[external path omitted]')
+    .replace(GENERIC_ABSOLUTE_PATH_IN_TEXT, '[external path omitted]');
+}
 
-  let keptTokens = 0;
-  let firstKeptIndex = -1;
-  for (let i = entries.length - 1; i >= 0; i--) {
-    if (i <= latestCompactionIndex) {
-      break;
-    }
-    const entry = entries[i];
-    if (!entry || !isMessageEntry(entry)) {
-      continue;
-    }
-    keptTokens += tokenIndex.tokensAt(i);
-    firstKeptIndex = i;
-    if (keptTokens >= normalizeCompactionKeepRecentTokens(keepRecentTokens)) {
-      break;
-    }
+function sanitizeStructuredValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return redactDevicePaths(value);
   }
-
-  if (firstKeptIndex <= latestCompactionIndex + 1) {
-    return null;
+  if (Array.isArray(value)) {
+    return value.map(sanitizeStructuredValue);
   }
-
-  const firstKept = entries[firstKeptIndex];
-  if (!firstKept || !isMessageEntry(firstKept)) {
-    return null;
+  if (isRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, sanitizeStructuredValue(item)]),
+    );
   }
+  return value;
+}
 
-  const prefixEntries = entries
-    .slice(Math.max(0, latestCompactionIndex), firstKeptIndex)
-    .filter((entry) => isMessageEntry(entry) || isCompactionEntry(entry));
-  const tokensBefore = activeContextTokensFromLatestCompaction(
-    entries,
-    tokenIndex,
-    latestCompactionIndex,
-  );
-  if (prefixEntries.length < 2) {
-    return null;
+/** Remove reasoning and device-local paths while preserving conversation/tool evidence. */
+export function sanitizeCompactionMessage(message: AgentMessage): AgentMessage {
+  const record = message as unknown as Record<string, unknown>;
+  let content: unknown;
+  if (typeof record.content === 'string') {
+    content = redactDevicePaths(record.content);
+  } else if (Array.isArray(record.content)) {
+    content = record.content.flatMap((part) => {
+      if (!isRecord(part) || part.type === 'thinking') {
+        return [];
+      }
+      if (part.type === 'image') {
+        return [{ type: 'text', text: '[image attachment omitted from compaction input]' }];
+      }
+      if (part.type === 'text' && typeof part.text === 'string') {
+        return [{ ...part, text: redactDevicePaths(part.text) }];
+      }
+      if (part.type === 'toolCall') {
+        return [{
+          ...part,
+          arguments: sanitizeStructuredValue(part.arguments ?? {}),
+        }];
+      }
+      return [sanitizeStructuredValue(part)];
+    });
+  } else {
+    content = [];
   }
-
   return {
-    firstKeptEntryId: firstKept.id,
+    ...record,
+    content,
+  } as unknown as AgentMessage;
+}
+
+function messageForEntry(entry: PiContextCompactionEntry): AgentMessage | null {
+  const projected = sessionEntryToContextMessages(entry);
+  const message = projected[0] as AgentMessage | undefined;
+  return message ? sanitizeCompactionMessage(message) : null;
+}
+
+function contextItems(entries: PiContextCompactionEntry[]): Array<{
+  entry: PiContextCompactionEntry;
+  message: AgentMessage;
+  tokens: number;
+}> {
+  return entries.flatMap((entry) => {
+    if (!isMessageEntry(entry) && !isCompactionEntry(entry)) {
+      return [];
+    }
+    const message = messageForEntry(entry);
+    return message ? [{
+      entry,
+      message,
+      tokens: estimateAgentMessageTokens(message),
+    }] : [];
+  });
+}
+
+export function compactionMessagesFromEntries(
+  entries: PiContextCompactionEntry[],
+): AgentMessage[] {
+  return contextItems(entries).map((item) => item.message);
+}
+
+function stableFingerprint(value: unknown): string {
+  const text = JSON.stringify(value);
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index++) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${text.length}:${(hash >>> 0).toString(16)}`;
+}
+
+export function fingerprintCompactionEntries(entries: PiContextCompactionEntry[]): string {
+  return stableFingerprint(contextItems(entries).map(({ entry, message }) => ({
+    id: entry.id,
+    message,
+  })));
+}
+
+export function buildCompactionPlan(
+  activeEntries: PiContextCompactionEntry[],
+): PiContextCompactionPlan | null {
+  const items = contextItems(activeEntries);
+  const messageEntryCount = activeEntries.filter(isMessageEntry).length;
+  if (messageEntryCount < MIN_COMPACTION_MESSAGE_ENTRIES || items.length < 2) {
+    return null;
+  }
+  const tokensBefore = items.reduce((total, item) => total + item.tokens, 0);
+  const targetTailTokens = Math.max(
+    1,
+    Math.ceil(tokensBefore * (1 - COMPACTION_PREFIX_RATIO)),
+  );
+  let desiredSplitIndex = items.length - 1;
+  let accumulatedTailTokens = 0;
+  for (let index = items.length - 1; index >= 0; index--) {
+    accumulatedTailTokens += items[index]?.tokens ?? 0;
+    desiredSplitIndex = index;
+    if (accumulatedTailTokens >= targetTailTokens) {
+      break;
+    }
+  }
+  const keepRecentTokens = Math.max(
+    1,
+    items.slice(desiredSplitIndex).reduce(
+      (total, item) => total + estimatePiMessageTokens(item.message),
+      0,
+    ),
+  );
+  const cutPoint = findCutPoint(
+    items.map((item) => item.entry),
+    0,
+    items.length,
+    keepRecentTokens,
+  );
+  const splitIndex = Math.max(
+    1,
+    Math.min(cutPoint.firstKeptEntryIndex, items.length - 1),
+  );
+
+  const prefix = items.slice(0, splitIndex);
+  const tail = items.slice(splitIndex);
+  if (prefix.length === 0 || tail.length === 0) {
+    return null;
+  }
+  const prefixEntries = prefix.map((item) => item.entry);
+  return {
+    activeEntries: items.map((item) => item.entry),
     prefixEntries,
+    prefixFingerprint: fingerprintCompactionEntries(prefixEntries),
+    prefixMessages: prefix.map((item) => item.message),
+    tailEntries: tail.map((item) => item.entry),
+    tailMessages: tail.map((item) => item.message),
     tokensBefore,
   };
 }
 
-export function buildCompactionPrompt(
-  prefixEntries: PiContextCompactionEntry[],
-  instructions?: string,
-): string {
-  const lines = prefixEntries.map((entry, index) => {
-    if (isCompactionEntry(entry)) {
-      const content = truncateForSummary(entry.summary, 8_000);
-      return `## ${index + 1}. previous compaction summary\n${content}`;
-    }
-    if (!isMessageEntry(entry)) {
-      return '';
-    }
-    const role = roleForSummary(entry.message);
-    const content = truncateForSummary(textFromAgentMessage(entry.message), 4_000);
-    return `## ${index + 1}. ${role}\n${content}`;
-  }).filter(Boolean);
+/** Pi's canonical AgentMessage-to-LLM conversion, preserving role/tool structure. */
+export function convertCompactionMessages(
+  messages: AgentMessage[],
+): ReturnType<typeof convertToLlm> {
+  return convertToLlm(messages);
+}
 
-  const customInstructions = instructions
-    ? `\n\nUser focus for this compaction:\n${instructions}`
+export function buildPass1Prompt(): string {
+  return `Create NOTE₁ from the conversation prefix already present in your context.
+NOTE₁ is an internal, self-contained vault continuation draft for a later finalization pass.
+Preserve durable facts and evidence; omit conversational filler and hidden reasoning.`;
+}
+
+export function buildPass2Prompt(instructions?: string): string {
+  const focus = instructions
+    ? `\nThe user supplied this focus for the final NOTE₂ only:\n${redactDevicePaths(instructions)}\n`
     : '';
-  const history = truncateForSummary(lines.join('\n\n'), 120_000);
-  return `You are doing context compaction now. Summarize the following earlier session history so the next assistant turn can continue with less context.
-Return exactly these Markdown sections in this order: ## Continuation summary, ## Goal, ## Constraints, ## Decisions, ## Artifacts, ## Open work, ## Unresolved questions, ## Next steps. Use bullet lists except for Continuation summary and Goal. For Artifacts, use "- label :: vault-relative-path" or "- label" and never include an absolute device path. Use "None" when the history does not support a section.${customInstructions}\n\n${history}`;
+  return `Create the final NOTE₂ from NOTE₁ and the original recent conversation already present in your context.
+Reconcile the recent raw messages with NOTE₁, giving newer explicit user decisions priority.
+NOTE₂ must stand alone because it will replace the complete active model context.${focus}`;
+}
+
+export function buildFallbackPrompt(instructions?: string): string {
+  const focus = instructions
+    ? `\nThe user supplied this focus for the final NOTE₂:\n${redactDevicePaths(instructions)}\n`
+    : '';
+  return `Create the final self-contained NOTE₂ from the complete active conversation already present in your context.
+This is the single-pass fallback; preserve all continuation-critical vault facts and reconcile later decisions.${focus}`;
+}
+
+export function buildNote1Carrier(note1: string): AgentMessage {
+  return {
+    role: 'user',
+    content: `<pivi_note_1>\n${note1.trim()}\n</pivi_note_1>`,
+    timestamp: Date.now(),
+  } as unknown as AgentMessage;
 }
 
 export function buildCompactionSummary(summaryText: string): string {
   return `${COMPACTION_SUMMARY_PREFIX}\n\n${summaryText.trim()}`;
 }
 
-interface ParsedCheckpointSections {
-  continuationSummary: string;
-  goal: string | null;
-  constraints: string[];
-  decisions: string[];
-  artifacts: ArtifactReference[];
-  openWork: string[];
-  unresolvedQuestions: string[];
-  nextSteps: string[];
-}
-
-const CHECKPOINT_SECTION_NAMES = [
-  'Continuation summary',
-  'Goal',
-  'Constraints',
-  'Decisions',
-  'Artifacts',
-  'Open work',
-  'Unresolved questions',
-  'Next steps',
-] as const;
-
-function parseCheckpointSections(text: string): Map<string, string> | null {
-  const sections = new Map<string, string>();
-  const headingPattern = /^##\s+(.+?)\s*$/gm;
-  const headings = [...text.matchAll(headingPattern)];
-  for (let index = 0; index < headings.length; index++) {
-    const heading = headings[index];
-    if (!heading) {
-      continue;
-    }
-    const name = heading[1]?.trim();
-    if (!name || !CHECKPOINT_SECTION_NAMES.includes(name as typeof CHECKPOINT_SECTION_NAMES[number])) {
-      continue;
-    }
-    const start = (heading.index ?? 0) + heading[0].length;
-    const end = headings[index + 1]?.index ?? text.length;
-    sections.set(name, text.slice(start, end).trim());
+function containsDevicePath(value: unknown): boolean {
+  if (typeof value === 'string') {
+    DEVICE_PATH_IN_TEXT.lastIndex = 0;
+    GENERIC_ABSOLUTE_PATH_IN_TEXT.lastIndex = 0;
+    return DEVICE_PATH_IN_TEXT.test(value)
+      || GENERIC_ABSOLUTE_PATH_IN_TEXT.test(value);
   }
-  return CHECKPOINT_SECTION_NAMES.every((name) => sections.has(name)) ? sections : null;
-}
-
-function parseListSection(value: string): string[] {
-  if (/^none[.!]?$/i.test(value.trim())) {
-    return [];
+  if (Array.isArray(value)) {
+    return value.some(containsDevicePath);
   }
-  return value.split('\n').map((line) => line.replace(/^\s*[-*]\s+/, '').trim())
-    .filter((line) => line && !/^none[.!]?$/i.test(line));
+  return isRecord(value) && Object.values(value).some(containsDevicePath);
 }
 
-function parseArtifactSection(value: string): ArtifactReference[] {
-  return parseListSection(value).map((item) => {
-    const separator = item.indexOf('::');
-    if (separator < 0) {
-      return { label: item };
+function extractCheckpointJson(text: string): unknown {
+  const pattern = /(?:^|\n)```pivi-checkpoint\s*\n([\s\S]*?)\n```(?=\n|$)/gi;
+  let candidate: unknown = null;
+  for (const match of text.matchAll(pattern)) {
+    try {
+      candidate = JSON.parse(match[1] ?? '');
+    } catch {
+      candidate = null;
     }
-    return {
-      label: item.slice(0, separator).trim(),
-      vaultPath: item.slice(separator + 2).trim(),
-    };
-  });
+  }
+  return candidate;
 }
 
-function parseCompactionCheckpointSections(text: string): ParsedCheckpointSections | null {
-  const sections = parseCheckpointSections(text);
-  if (!sections) {
+export function parseCompactionDraft(text: string): CompactionDraft | null {
+  const value = extractCheckpointJson(text);
+  if (!isRecord(value) || containsDevicePath(value)) {
     return null;
   }
-  const continuationSummary = sections.get('Continuation summary')?.trim() ?? '';
-  const goalText = sections.get('Goal')?.trim() ?? '';
-  if (!continuationSummary || /^none[.!]?$/i.test(continuationSummary)) {
+  const checkpoint = parsePiviCompactionDetails({
+    piviCheckpoint: {
+      schemaVersion: CHECKPOINT_SCHEMA_VERSION,
+      ...value,
+      source: {
+        firstEntryId: 'draft-first',
+        lastEntryId: 'draft-last',
+        firstKeptEntryId: 'draft-boundary',
+      },
+      tokenEstimates: {
+        contextBefore: 0,
+        checkpoint: 0,
+      },
+    },
+  })?.piviCheckpoint;
+  if (!checkpoint) {
     return null;
   }
-  return {
-    continuationSummary,
-    goal: /^none[.!]?$/i.test(goalText) ? null : goalText,
-    constraints: parseListSection(sections.get('Constraints') ?? ''),
-    decisions: parseListSection(sections.get('Decisions') ?? ''),
-    artifacts: parseArtifactSection(sections.get('Artifacts') ?? ''),
-    openWork: parseListSection(sections.get('Open work') ?? ''),
-    unresolvedQuestions: parseListSection(sections.get('Unresolved questions') ?? ''),
-    nextSteps: parseListSection(sections.get('Next steps') ?? ''),
+  const draft: CompactionDraft = {
+    continuationSummary: checkpoint.continuationSummary,
+    goal: checkpoint.goal,
+    constraints: checkpoint.constraints,
+    decisions: checkpoint.decisions,
+    artifacts: checkpoint.artifacts,
+    openWork: checkpoint.openWork,
+    unresolvedQuestions: checkpoint.unresolvedQuestions,
+    nextSteps: checkpoint.nextSteps,
   };
+  return estimateTextTokens(renderCompactionDraft(draft)) >= MIN_COMPACTION_NOTE_TOKENS
+    ? draft
+    : null;
+}
+
+export function renderCompactionDraft(draft: CompactionDraft): string {
+  return renderCheckpoint({
+    schemaVersion: CHECKPOINT_SCHEMA_VERSION,
+    ...draft,
+    source: {
+      firstEntryId: 'draft-first',
+      lastEntryId: 'draft-last',
+      firstKeptEntryId: 'draft-boundary',
+    },
+    tokenEstimates: {
+      contextBefore: 0,
+      checkpoint: 0,
+    },
+  });
 }
 
 export function findLatestCheckpoint(entries: PiContextCompactionEntry[]): Checkpoint | null {
@@ -660,28 +746,28 @@ export function findLatestCheckpoint(entries: PiContextCompactionEntry[]): Check
 }
 
 export function buildCheckpoint(
-  summaryText: string,
-  cutPoint: PiContextCompactionCutPoint,
+  draft: CompactionDraft,
+  plan: PiContextCompactionPlan,
   previous: Checkpoint | null,
+  firstKeptEntryId = 'pending-compaction-boundary',
 ): Checkpoint | null {
-  const sections = parseCompactionCheckpointSections(summaryText);
-  const first = cutPoint.prefixEntries[0];
-  const last = cutPoint.prefixEntries.at(-1);
-  if (!sections || !first || !last) {
+  const first = plan.activeEntries[0];
+  const last = plan.activeEntries.at(-1);
+  if (!first || !last) {
     return null;
   }
   const checkpoint = parsePiviCompactionDetails({
     piviCheckpoint: {
       schemaVersion: CHECKPOINT_SCHEMA_VERSION,
-      ...sections,
+      ...draft,
       source: {
         firstEntryId: first.id,
         lastEntryId: last.id,
-        firstKeptEntryId: cutPoint.firstKeptEntryId,
+        firstKeptEntryId,
       },
       tokenEstimates: {
-        contextBefore: cutPoint.tokensBefore,
-        checkpoint: estimateTextTokens(summaryText),
+        contextBefore: plan.tokensBefore,
+        checkpoint: estimateTextTokens(renderCompactionDraft(draft)),
       },
     },
   })?.piviCheckpoint ?? null;
@@ -689,6 +775,9 @@ export function buildCheckpoint(
     return null;
   }
   const merged = mergeCheckpoints(previous, checkpoint);
+  if (containsDevicePath(merged)) {
+    return null;
+  }
   return {
     ...merged,
     tokenEstimates: {

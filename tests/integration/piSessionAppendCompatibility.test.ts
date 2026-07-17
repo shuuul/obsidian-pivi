@@ -81,13 +81,22 @@ describe('Pi session append compatibility', () => {
             tokenEstimates: { contextBefore: 2, checkpoint: 20 },
           },
         };
+        const boundaryId = manager.appendCustomEntry('pivi/compaction-boundary', {
+          schemaVersion: 1,
+        });
+        assertAppend(boundaryId);
         const compactionId = manager.appendCompaction(
           'Earlier context.',
-          userId,
+          boundaryId,
           2,
           checkpoint,
         );
         assertAppend(compactionId);
+        assertAppend(manager.appendMessage({
+          role: 'user',
+          content: 'future turn',
+          timestamp: 3,
+        }));
 
         const reopened = SessionManager.open(manager.getSessionFile(), sessionDir, root);
         const reopenedEntries = reopened.getEntries();
@@ -102,6 +111,9 @@ describe('Pi session append compatibility', () => {
         }
         const context = JSON.stringify(reopened.buildSessionContext());
         if (!context.includes('Earlier context.')
+          || !context.includes('future turn')
+          || context.includes('你好, append')
+          || context.includes('round trip')
           || context.includes('Append compatibility')
           || context.includes('Verify compatibility')) {
           throw new Error('reopened context has incorrect custom/compaction semantics');
@@ -120,7 +132,7 @@ describe('Pi session append compatibility', () => {
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toEqual({
-      entries: 4,
+      entries: 6,
       bytes: expect.any(Number),
     });
   });

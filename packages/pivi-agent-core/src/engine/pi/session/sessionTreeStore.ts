@@ -1,6 +1,7 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
 import {
+  buildContextEntries,
   buildSessionContext,
   type FileEntry,
   type SessionEntry,
@@ -10,6 +11,7 @@ import {
 import type { ImageAttachment } from '../../../foundation';
 import {
   type AgentReport,
+  type Checkpoint,
   formatAgentReportForParent,
   parseAgentReport,
   parsePiviCompactionDetails,
@@ -22,6 +24,7 @@ import {
   toVaultRelativePath,
 } from '../../../session/sessionPaths';
 import {
+  PIVI_COMPACTION_BOUNDARY,
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
   PIVI_UI_CONTEXT,
@@ -428,7 +431,8 @@ export class SessionTreeStore {
 
   /**
    * Linear restore view: ignore tree leaves and expose file-order entries up to
-   * the latest visible user/assistant message. Fork still uses Pi's tree helper
+   * the latest visible user/assistant message plus any trailing compactions.
+   * Internal custom boundaries remain hidden. Fork still uses Pi's tree helper
    * to create a new file, but restoring an existing session is linear.
    */
   getLinearVisiblePrefix(): SessionEntry[] {
@@ -438,7 +442,13 @@ export class SessionTreeStore {
       return entries;
     }
     const visibleIndex = entries.findIndex((entry) => entry.id === visibleLeafId);
-    return visibleIndex >= 0 ? entries.slice(0, visibleIndex + 1) : entries;
+    if (visibleIndex < 0) {
+      return entries;
+    }
+    return [
+      ...entries.slice(0, visibleIndex + 1),
+      ...entries.slice(visibleIndex + 1).filter((entry) => entry.type === 'compaction'),
+    ];
   }
 
   /**
@@ -461,6 +471,11 @@ export class SessionTreeStore {
       }
     }
     return lastContextIndex >= 0 ? entries.slice(0, lastContextIndex + 1) : entries;
+  }
+
+  /** Pi-native compaction-aware context entries for planning the next summary. */
+  getActiveLlmContextEntries(): SessionEntry[] {
+    return buildContextEntries(this.getLinearLlmContextEntries());
   }
 
   findLastVisibleMessageEntryId(role: 'user' | 'assistant'): string | null {
@@ -557,6 +572,51 @@ export class SessionTreeStore {
     this.refreshIndexAfterAppend([entryId]);
     this.registerLive();
     return entryId;
+  }
+
+  /**
+   * Append a standard Pi compaction whose kept boundary is a context-invisible
+   * custom entry. Pi therefore rebuilds the next LLM context as NOTE₂ only.
+   */
+  appendFullReplacementCompaction(
+    tokensBefore: number,
+    createCheckpoint: (boundaryId: string) => Checkpoint,
+    renderSummary: (checkpoint: Checkpoint) => string,
+  ): {
+    boundaryId: string;
+    checkpoint: Checkpoint;
+    compactionId: string;
+    summary: string;
+  } {
+    this.assertWritableSource();
+    const boundaryId = this.manager.appendCustomEntry(PIVI_COMPACTION_BOUNDARY, {
+      schemaVersion: 1,
+    });
+    this.refreshIndexAfterAppend([boundaryId]);
+
+    const boundedCheckpoint = createCheckpoint(boundaryId);
+    const details = parsePiviCompactionDetails({
+      piviCheckpoint: boundedCheckpoint,
+    });
+    if (!details) {
+      throw new Error('Invalid Pivi checkpoint for full-replacement compaction.');
+    }
+    const summary = renderSummary(details.piviCheckpoint).trim();
+    if (!summary) {
+      throw new Error('Full-replacement compaction summary is empty.');
+    }
+    const compactionId = this.appendCompaction(
+      summary,
+      boundaryId,
+      tokensBefore,
+      details,
+    );
+    return {
+      boundaryId,
+      checkpoint: details.piviCheckpoint,
+      compactionId,
+      summary,
+    };
   }
 
   /** Fork to a new JSONL file at `atEntryId`; returns vault-relative path. */

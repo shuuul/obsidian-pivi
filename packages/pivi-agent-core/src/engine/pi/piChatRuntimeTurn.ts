@@ -13,6 +13,7 @@ import {
   attachContextEnvelope,
   compactCurrentSession,
   type PiChatCompactionDeps,
+  prepareCompactionPrefire,
   prepareContextForTurn,
   shouldAutoCompactSession,
 } from './piChatRuntimeCompaction';
@@ -167,6 +168,8 @@ async function runPromptLifecycle(
         content: `Auto compaction failed: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
+  } else if (!didCompactDuringTurn && usage) {
+    prepareCompactionPrefire(deps.compaction, usage);
   }
   finishActiveTurnQueue(activeTurn);
 }

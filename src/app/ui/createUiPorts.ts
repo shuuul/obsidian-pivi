@@ -281,9 +281,6 @@ export function createSettingsUiPorts(
         enableAutoScroll: settings.enableAutoScroll ?? true,
         deferMathRenderingDuringStreaming: settings.deferMathRenderingDuringStreaming ?? true,
         enableAutoTitleGeneration: settings.enableAutoTitleGeneration,
-        autoCompact: settings.enableAutoCompact,
-        autoCompactThresholdPercent: Math.round((settings.autoCompactThresholdRatio ?? 0.9) * 100),
-        autoCompactKeepRecentTokens: settings.autoCompactKeepRecentTokens ?? 20_000,
         userName: settings.userName,
         excludedTags: settings.excludedTags,
         requireCommandOrControlEnterToSend: settings.requireCommandOrControlEnterToSend ?? false,
@@ -309,9 +306,6 @@ export function createSettingsUiPorts(
     host.settings.enableAutoScroll = next.enableAutoScroll;
     host.settings.deferMathRenderingDuringStreaming = next.deferMathRenderingDuringStreaming;
     host.settings.enableAutoTitleGeneration = next.enableAutoTitleGeneration;
-    host.settings.enableAutoCompact = next.autoCompact;
-    host.settings.autoCompactThresholdRatio = next.autoCompactThresholdPercent / 100;
-    host.settings.autoCompactKeepRecentTokens = next.autoCompactKeepRecentTokens;
     host.settings.userName = next.userName;
     host.settings.excludedTags = [...next.excludedTags];
     host.settings.requireCommandOrControlEnterToSend = next.requireCommandOrControlEnterToSend;

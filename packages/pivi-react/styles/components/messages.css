@@ -407,7 +407,7 @@
   gap: 6px;
   min-height: 24px;
   padding: 2px 8px;
-  border-radius: var(--pivi-radius-full);
+  border-radius: var(--pivi-radius-pill);
   background: var(--pivi-host-background-secondary);
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-text-xs);
@@ -416,13 +416,25 @@
 }
 
 .pivi-memory-chip-button {
+  appearance: none;
   font: inherit;
   border: 0;
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-secondary);
+  box-shadow: none;
   cursor: pointer;
+  transform: none;
+  transition: none;
 }
 
-.pivi-memory-chip-button:hover {
+.pivi-memory-chip-button:hover,
+.pivi-memory-chip-button:focus,
+.pivi-memory-chip-button:active {
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-secondary);
+  box-shadow: none;
   color: var(--pivi-host-text-normal);
+  transform: none;
 }
 
 .pivi-memory-chip-button:focus-visible {

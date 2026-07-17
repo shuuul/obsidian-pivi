@@ -93,6 +93,13 @@ export function isAbsoluteDevicePath(value: string): boolean {
     || /^file:\/\//i.test(path);
 }
 
+function escapesVault(value: string): boolean {
+  const normalized = value.replace(/\\/g, '/');
+  return normalized === '..'
+    || normalized.startsWith('../')
+    || normalized.split('/').includes('..');
+}
+
 function parseArtifacts(value: unknown): ArtifactReference[] | null {
   if (!Array.isArray(value)) {
     return null;
@@ -113,7 +120,7 @@ function parseArtifacts(value: unknown): ArtifactReference[] | null {
     if (item.vaultPath !== undefined && !vaultPath) {
       return null;
     }
-    if (vaultPath && isAbsoluteDevicePath(vaultPath)) {
+    if (vaultPath && (isAbsoluteDevicePath(vaultPath) || escapesVault(vaultPath))) {
       return null;
     }
     const key = `${label}\u0000${vaultPath ?? ''}`;

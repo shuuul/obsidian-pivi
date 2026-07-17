@@ -260,7 +260,7 @@ describe('sessionJsonlRangeReader', () => {
       .toEqual(['user-1', 'assistant-1']);
   });
 
-  it('keeps a trailing compaction out of UI pages while preserving visible history', () => {
+  it('reopens a trailing compaction as the newest Memory boundary', () => {
     fs.writeFileSync(sessionFile, [
       jsonl({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root }),
       jsonl(message('user-1', 'user', 'one', null)),
@@ -276,10 +276,34 @@ describe('sessionJsonlRangeReader', () => {
       }),
     ].join(''));
 
-    const page = openRecentSessionJsonlMessages(sessionFile, 1);
+    const page = openRecentSessionJsonlMessages(sessionFile, 3);
 
-    expect(page.messages.map(({ id }) => id)).toEqual(['user-1', 'assistant-1']);
-    expect(page.totalMessageCount).toBe(2);
-    expect(page.stats.entryCount).toBe(2);
+    expect(page.messages.map(({ id }) => id)).toEqual([
+      'user-1',
+      'assistant-1',
+      'compaction-1',
+    ]);
+    expect(page.messages.at(-1)?.contentBlocks).toEqual([
+      expect.objectContaining({
+        type: 'context_compacted',
+        summary: 'Earlier context',
+      }),
+    ]);
+    expect(page.totalMessageCount).toBe(3);
+    expect(page.stats.entryCount).toBe(3);
+
+    const newest = openRecentSessionJsonlMessages(sessionFile, 1);
+    expect(newest).toMatchObject({
+      messages: [{ id: 'compaction-1' }],
+      hasOlder: true,
+      totalMessageCount: 3,
+      olderMessageCount: 2,
+    });
+    expect(readOlderSessionJsonlMessages(sessionFile, 'compaction-1', 2))
+      .toMatchObject({
+        messages: [{ id: 'user-1' }, { id: 'assistant-1' }],
+        hasOlder: false,
+        totalMessageCount: 3,
+      });
   });
 });

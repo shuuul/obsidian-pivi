@@ -139,7 +139,7 @@ describe("PiviSettingsStorage", () => {
     );
   });
 
-  it("normalizes compaction settings on load", async () => {
+  it("removes legacy compaction settings on load", async () => {
     const stored = {
       enableAutoCompact: "yes",
       autoCompactThresholdRatio: 2,
@@ -153,12 +153,12 @@ describe("PiviSettingsStorage", () => {
 
     const settings = await storage.load();
 
-    expect(settings.enableAutoCompact).toBe(true);
-    expect(settings.autoCompactThresholdRatio).toBe(0.95);
-    expect(settings.autoCompactKeepRecentTokens).toBe(1000);
+    expect(settings).not.toHaveProperty("enableAutoCompact");
+    expect(settings).not.toHaveProperty("autoCompactThresholdRatio");
+    expect(settings).not.toHaveProperty("autoCompactKeepRecentTokens");
     expect(adapter.write).toHaveBeenCalledWith(
       PIVI_SETTINGS_PATH,
-      expect.stringContaining('"autoCompactThresholdRatio": 0.95'),
+      expect.not.stringContaining("autoCompactThresholdRatio"),
     );
   });
 

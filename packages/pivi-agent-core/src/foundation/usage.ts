@@ -4,6 +4,7 @@ export const DEFAULT_CONTEXT_WINDOW_TOKENS = 200_000;
 export const DEFAULT_RESERVED_OUTPUT_TOKENS = 16_000;
 export const DEFAULT_COMPACTION_RESERVE_TOKENS = 12_000;
 export const DEFAULT_CONTEXT_SAFETY_MARGIN_TOKENS = 8_000;
+export const AUTO_COMPACTION_THRESHOLD_RATIO = 0.85;
 
 const OUTPUT_RESERVE_WINDOW_RATIO = 0.25;
 const COMPACTION_RESERVE_WINDOW_RATIO = 0.1;
@@ -21,7 +22,6 @@ export interface ContextEnvelopeInput {
   safetyMarginTokens?: number;
   selectedContext?: number;
   system?: number;
-  thresholdRatio?: number;
   toolAndAgentResults?: number;
 }
 
@@ -83,8 +83,9 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
     0,
     contextWindowTokens - reservedOutputTokens - compactionReserveTokens - safetyMarginTokens,
   );
-  const thresholdRatio = Math.min(0.95, Math.max(0.5, input.thresholdRatio ?? 0.9));
-  const ratioTriggerTokens = Math.floor(contextWindowTokens * thresholdRatio);
+  const ratioTriggerTokens = Math.floor(
+    contextWindowTokens * AUTO_COMPACTION_THRESHOLD_RATIO,
+  );
   const system = estimate(input.system);
   const recentConversation = estimate(input.recentConversation);
   const selectedContext = estimate(input.selectedContext);

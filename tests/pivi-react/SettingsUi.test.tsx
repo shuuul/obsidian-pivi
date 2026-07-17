@@ -8,8 +8,8 @@ import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 const snapshot: SettingsUiSnapshotData = {
   general: {
     locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true,
-    deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false, autoCompact: true,
-    autoCompactThresholdPercent: 90, autoCompactKeepRecentTokens: 20_000, userName: '', excludedTags: [],
+    deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false,
+    userName: '', excludedTags: [],
     requireCommandOrControlEnterToSend: false,
     keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
   },
@@ -166,19 +166,10 @@ describe('React settings foundation', () => {
     expect(saveGeneral).toHaveBeenCalledWith({ enableAutoScroll: false });
   });
 
-  it('shows and updates the compact threshold percentage', async () => {
-    const saveGeneral = jest.fn(async () => undefined);
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
-
-    const threshold = screen.getByRole('slider', { name: 'Compact threshold' });
-    expect(threshold).toHaveValue('90');
-    expect(screen.getByText('90%', { selector: 'output' })).toBeInTheDocument();
-
-    fireEvent.change(threshold, { target: { value: '85' } });
-    await act(async () => undefined);
-
-    expect(saveGeneral).toHaveBeenCalledWith({ autoCompactThresholdPercent: 85 });
-    expect(screen.getByText('85%', { selector: 'output' })).toBeInTheDocument();
+  it('does not expose internal compaction policy as a setting', () => {
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
+    expect(screen.queryByText('Compaction')).not.toBeInTheDocument();
+    expect(screen.queryByRole('slider', { name: 'Compact threshold' })).not.toBeInTheDocument();
   });
 
   it('applies a language change immediately and renders tabs without duplicate page headings', async () => {
@@ -243,13 +234,13 @@ describe('React settings foundation', () => {
     expect(saveGeneral).toHaveBeenLastCalledWith({ excludedTags: ['public', 'draft'] });
   });
 
-  it('uses the shared Settings control style without applying it to toggles or ranges', () => {
+  it('uses the shared Settings control style without applying it to toggles', () => {
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
     for (const control of container.querySelectorAll('input:not([type="checkbox"]):not([type="range"]), textarea, select')) {
       expect(control).toHaveClass('pivi-settings-control');
     }
     expect(container.querySelector('input[type="checkbox"]')).not.toHaveClass('pivi-settings-control');
-    expect(container.querySelector('input[type="range"]')).not.toHaveClass('pivi-settings-control');
+    expect(container.querySelector('input[type="range"]')).not.toBeInTheDocument();
   });
 
   it('debounces the latest keyboard navigation text', async () => {

@@ -308,21 +308,6 @@
       "name": "自動產生對話標題",
       "desc": "在使用者傳送首則訊息後自動產生對話標題。"
     },
-    "compaction": {
-      "title": "上下文壓縮",
-      "autoCompact": {
-        "name": "自動壓縮對話",
-        "desc": "當上下文用量超過閾值時，在回覆結束後自動總結較早的工作階段歷史。"
-      },
-      "threshold": {
-        "name": "壓縮閾值",
-        "desc": "觸發自動壓縮的目前模型上下文視窗百分比。"
-      },
-      "keepRecent": {
-        "name": "保留最近上下文",
-        "desc": "壓縮後原樣保留的最近工作階段歷史 token 近似數量。"
-      }
-    },
     "navMappings": {
       "name": "Vim 風格導覽對應",
       "desc": "每行一個對應。格式：\"map <鍵> <動作>\"（動作：scrollUp, scrollDown, focusInput）。"

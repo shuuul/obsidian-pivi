@@ -1,16 +1,22 @@
 import {
+  AUTO_COMPACTION_THRESHOLD_RATIO,
   buildCheckpoint,
-  buildCompactionPrompt,
+  buildCompactionPlan,
   buildCompactionSummary,
-  COMPACTION_SYSTEM_PROMPT,
+  buildPass2Prompt,
+  COMPACTION_PREFIX_RATIO,
+  convertCompactionMessages,
   estimateActiveContextTokens,
+  estimateAgentMessagesTokens,
   estimateAgentMessageTokens,
   estimateTextTokens,
   findLatestCheckpoint,
+  getCompactionPrefireTokens,
   getCompactionThresholdTokens,
+  parseCompactionDraft,
   PiContextTokenIndex,
   renderCheckpoint,
-  selectCompactionCutPoint,
+  sanitizeCompactionMessage,
   shouldAutoCompact,
   stripCompactCommand,
   type PiContextCompactionEntry,
@@ -19,19 +25,34 @@ import type { Checkpoint } from '@pivi/pivi-agent-core/session/continuationSchem
 
 function messageEntry(
   id: string,
-  role: 'user' | 'assistant',
-  content: string,
+  role: 'user' | 'assistant' | 'toolResult',
+  content: unknown,
+  parentId: string | null = null,
 ): PiContextCompactionEntry {
   return {
     id,
+    parentId,
+    timestamp: '2026-01-01T00:00:00.000Z',
     type: 'message',
-    message: { role, content },
+    message: {
+      role,
+      content,
+      ...(role === 'toolResult'
+        ? { toolCallId: 'call-1', toolName: 'obsidian_read', isError: false }
+        : {}),
+    },
   } as unknown as PiContextCompactionEntry;
 }
 
-function compactionEntry(id: string, summary: string): PiContextCompactionEntry {
+function compactionEntry(
+  id: string,
+  summary: string,
+  parentId: string | null = null,
+): PiContextCompactionEntry {
   return {
     id,
+    parentId,
+    timestamp: '2026-01-01T00:00:00.000Z',
     type: 'compaction',
     summary,
     firstKeptEntryId: 'kept',
@@ -39,49 +60,41 @@ function compactionEntry(id: string, summary: string): PiContextCompactionEntry 
   } as unknown as PiContextCompactionEntry;
 }
 
+function checkpointJson(overrides: Record<string, unknown> = {}): string {
+  return `\`\`\`pivi-checkpoint
+${JSON.stringify({
+    continuationSummary: 'Continue the vault migration with the verified decisions and evidence. '.repeat(12),
+    goal: 'Ship vault-native compaction',
+    constraints: ['Preserve durable JSONL history', 'Use vault-relative paths'],
+    decisions: ['Use Pi cut-point and session primitives'],
+    artifacts: [{ label: 'Spec', vaultPath: 'specs/018-vault-context-compaction-redesign.md' }],
+    openWork: ['Finish runtime integration'],
+    unresolvedQuestions: [],
+    nextSteps: ['Run focused tests', 'Reload Obsidian'],
+    ...overrides,
+  })}
+\`\`\``;
+}
+
 describe('piContextCompaction', () => {
-  const checkpointText = `## Continuation summary
-Continue schema integration.
-
-## Goal
-Ship checkpoints
-
-## Constraints
-- Keep legacy summaries
-
-## Decisions
-- Use details
-
-## Artifacts
-- Spec :: specs/005.md
-
-## Open work
-- Wire runtime
-
-## Unresolved questions
-None
-
-## Next steps
-- Run tests`;
-
-  it('strips compact commands while preserving optional user focus text', () => {
+  it('strips compact commands while preserving optional final-note focus', () => {
     expect(stripCompactCommand('/compact keep API decisions')).toBe('keep API decisions');
     expect(stripCompactCommand('  /compact  ')).toBeUndefined();
+    expect(buildPass2Prompt('preserve wikilinks')).toContain('final NOTE₂ only');
   });
 
-  it('clamps compaction thresholds to the supported ratio range', () => {
-    expect(getCompactionThresholdTokens(1_000, 0.1)).toBe(500);
-    expect(getCompactionThresholdTokens(1_000, 0.99)).toBe(600);
-    expect(getCompactionThresholdTokens(1_000, 0.8)).toBe(600);
-    expect(getCompactionThresholdTokens(200_000, 0.9, true, 16_000)).toBe(164_000);
-    expect(getCompactionThresholdTokens(128_000, 0.8, true, 128_000)).toBe(93_600);
+  it('uses a fixed bounded 85% trigger and ten-point prefire lead', () => {
+    expect(AUTO_COMPACTION_THRESHOLD_RATIO).toBe(0.85);
+    expect(COMPACTION_PREFIX_RATIO).toBe(0.95);
+    expect(getCompactionThresholdTokens(1_000)).toBe(600);
+    expect(getCompactionThresholdTokens(200_000, true, 16_000)).toBe(164_000);
+    expect(getCompactionPrefireTokens(164_000, 200_000)).toBe(144_000);
+    expect(getCompactionPrefireTokens(5_000, 128_000)).toBe(0);
   });
 
-  it('estimates CJK, code, JSON, and tool structures conservatively', () => {
+  it('estimates CJK, JSON, images, and Pi tool structures conservatively', () => {
     const ascii = estimateTextTokens('a'.repeat(120));
     const cjk = estimateTextTokens('知识管理系统'.repeat(20));
-    const code = estimateTextTokens(`\`\`\`ts\n${'const value = input[index];\n'.repeat(5)}\`\`\``);
-    const json = estimateTextTokens(JSON.stringify({ items: ['alpha', 'beta'], ok: true }));
     const toolCall = estimateAgentMessageTokens({
       role: 'assistant',
       content: [{
@@ -89,19 +102,17 @@ None
         id: 'call-1',
         name: 'obsidian_read',
         arguments: { path: '知识库/项目.md', lineStart: 1, lineEnd: 200 },
-      }],
-    } as unknown as Parameters<typeof estimateAgentMessageTokens>[0]);
+      }, { type: 'image', data: 'omitted', mimeType: 'image/png' }],
+    } as never);
 
-    expect(ascii).toBe(30);
+    expect(ascii).toBeGreaterThanOrEqual(30);
     expect(cjk).toBe(120);
-    expect(code).toBeGreaterThan(30);
-    expect(json).toBeGreaterThan(Math.ceil(JSON.stringify({ items: ['alpha', 'beta'], ok: true }).length / 4));
-    expect(toolCall).toBeGreaterThan(30);
+    expect(toolCall).toBeGreaterThan(280);
   });
 
-  it('updates cached entry estimates and prefix sums after append, replacement, and truncate', () => {
+  it('updates cached entry estimates after append, replacement, and truncate', () => {
     const first = messageEntry('m1', 'user', 'a'.repeat(40));
-    const second = messageEntry('m2', 'assistant', 'b'.repeat(80));
+    const second = messageEntry('m2', 'assistant', 'b'.repeat(80), 'm1');
     const index = new PiContextTokenIndex();
 
     index.sync([first]);
@@ -110,82 +121,119 @@ None
     const appendedTotal = index.tokensBetween(0);
     expect(appendedTotal).toBe(firstTotal + index.tokensAt(1));
 
-    const replacement = messageEntry('m2', 'assistant', '知识'.repeat(100));
+    const replacement = messageEntry('m2', 'assistant', '知识'.repeat(100), 'm1');
     index.sync([first, replacement]);
-    expect(index.tokensBetween(1)).toBe(index.tokensAt(1));
     expect(index.tokensBetween(0)).toBeGreaterThan(appendedTotal);
-
     index.sync([first]);
     expect(index.tokensBetween(0)).toBe(firstTotal);
   });
 
-  it('estimates only the active context around the latest compaction', () => {
+  it('estimates only Pi active context around the latest compaction', () => {
     const old = messageEntry('old', 'user', 'x'.repeat(4_000));
-    const kept = messageEntry('kept', 'assistant', 'y'.repeat(400));
+    const kept = messageEntry('kept', 'assistant', 'y'.repeat(400), 'old');
     const compacted = {
-      ...compactionEntry('c1', 'durable summary'),
+      ...compactionEntry('c1', 'durable summary', 'kept'),
       firstKeptEntryId: 'kept',
     } as PiContextCompactionEntry;
-    const recent = messageEntry('recent', 'user', 'z'.repeat(200));
-
-    const activeTokens = estimateActiveContextTokens([old, kept, compacted, recent]);
-    const withoutOld = estimateActiveContextTokens([kept, compacted, recent]);
-
-    expect(activeTokens).toBe(withoutOld);
+    const recent = messageEntry('recent', 'user', 'z'.repeat(200), 'c1');
+    expect(estimateActiveContextTokens([old, kept, compacted, recent]))
+      .toBe(estimateActiveContextTokens([kept, compacted, recent]));
   });
 
-  it('selects old active-context entries before the recent keep window', () => {
+  it('uses Pi cut-point rules for a token-weighted 95/5 split', () => {
     const entries = [
-      messageEntry('m1', 'user', 'old '.repeat(1_000)),
-      messageEntry('m2', 'assistant', 'middle '.repeat(1_000)),
-      compactionEntry('c1', 'previous summary'),
-      messageEntry('m3', 'user', 'after compact 1 '.repeat(1_000)),
-      messageEntry('m4', 'assistant', 'after compact 2 '.repeat(1_000)),
-      messageEntry('m5', 'user', 'after compact 3 '.repeat(1_000)),
-      messageEntry('m6', 'assistant', 'after compact 4 '.repeat(1_000)),
-      messageEntry('m7', 'user', 'recent '.repeat(1_000)),
+      messageEntry('m1', 'user', 'old '.repeat(4_000)),
+      messageEntry('m2', 'assistant', 'middle '.repeat(4_000), 'm1'),
+      messageEntry('m3', 'user', 'recent request '.repeat(200), 'm2'),
+      messageEntry('m4', 'assistant', [{
+        type: 'toolCall',
+        id: 'call-1',
+        name: 'obsidian_read',
+        arguments: { path: 'Projects/Pivi.md' },
+      }], 'm3'),
+      messageEntry('m5', 'toolResult', [{ type: 'text', text: 'verified result' }], 'm4'),
+      messageEntry('m6', 'assistant', 'recent answer', 'm5'),
     ];
+    const plan = buildCompactionPlan(entries);
 
-    const cutPoint = selectCompactionCutPoint(entries, 1_000);
-
-    expect(cutPoint?.firstKeptEntryId).toBe('m7');
-    expect(cutPoint?.prefixEntries.map((entry) => entry.id)).toEqual([
-      'c1',
-      'm3',
-      'm4',
-      'm5',
-      'm6',
-    ]);
-    expect(cutPoint?.tokensBefore).toBeGreaterThan(1_000);
+    expect(plan).not.toBeNull();
+    expect(plan!.prefixEntries.length).toBeGreaterThan(0);
+    expect(plan!.tailEntries.length).toBeGreaterThan(0);
+    expect((plan!.tailMessages[0] as { role?: string }).role).not.toBe('toolResult');
+    expect(plan!.prefixFingerprint).toMatch(/^\d+:[0-9a-f]+$/);
   });
 
-  it('builds prompts and stored summaries without exposing compacted raw history before the latest summary', () => {
-    const prompt = buildCompactionPrompt([
-      compactionEntry('c1', 'previous summary'),
-      messageEntry('m3', 'user', 'continue from here'),
-    ], 'preserve file decisions');
+  it('uses the multilingual estimator before snapping a CJK split to Pi boundaries', () => {
+    const entries = Array.from({ length: 20 }, (_, index) => messageEntry(
+      `cjk-${index}`,
+      index % 2 === 0 ? 'user' : 'assistant',
+      '中文知识库内容'.repeat(200),
+      index > 0 ? `cjk-${index - 1}` : undefined,
+    ));
+    const plan = buildCompactionPlan(entries);
 
-    expect(prompt).toContain('previous compaction summary');
-    expect(prompt).toContain('previous summary');
-    expect(prompt).toContain('preserve file decisions');
-    expect(prompt).toContain('continue from here');
-    expect(prompt).toContain('## Continuation summary');
-    expect(prompt).toContain('## Goal');
-    expect(prompt).toContain('## Constraints');
-    expect(prompt).toContain('## Decisions');
-    expect(prompt).toContain('## Artifacts');
-    expect(prompt).toContain('## Open work');
-    expect(prompt).toContain('## Unresolved questions');
-    expect(prompt).toContain('## Next steps');
-    expect(COMPACTION_SYSTEM_PROMPT).not.toContain('coding session');
-    expect(buildCompactionSummary(' new summary ')).toContain('new summary');
+    expect(plan).not.toBeNull();
+    const tailTokens = estimateAgentMessagesTokens(plan!.tailMessages);
+    expect(tailTokens / plan!.tokensBefore).toBeGreaterThanOrEqual(0.04);
+    expect(tailTokens / plan!.tokensBefore).toBeLessThanOrEqual(0.1);
   });
 
-  it('builds, renders, and discovers checkpoint details without losing prior ledgers', () => {
-    const prefixEntries = [
-      messageEntry('m1', 'user', 'old request'),
-      messageEntry('m2', 'assistant', 'old answer'),
+  it('keeps an earlier NOTE₂ as active input on repeated compaction', () => {
+    const entries = [
+      compactionEntry('c1', buildCompactionSummary('previous NOTE₂')),
+      messageEntry('m1', 'user', 'one '.repeat(1_000), 'c1'),
+      messageEntry('m2', 'assistant', 'two '.repeat(1_000), 'm1'),
+      messageEntry('m3', 'user', 'three '.repeat(1_000), 'm2'),
+      messageEntry('m4', 'assistant', 'four '.repeat(1_000), 'm3'),
     ];
+    const plan = buildCompactionPlan(entries);
+    expect(plan?.activeEntries[0]?.type).toBe('compaction');
+    expect(JSON.stringify(convertCompactionMessages(plan!.prefixMessages))).toContain('previous NOTE₂');
+  });
+
+  it('removes thinking, image payloads, and absolute device paths before Pi conversion', () => {
+    const sanitized = sanitizeCompactionMessage({
+      role: 'assistant',
+      content: [
+        { type: 'thinking', thinking: 'hidden chain' },
+        { type: 'text', text: 'Keep [[Projects/Pivi.md]]; omit /Users/example/private.md' },
+        { type: 'image', data: 'secret', mimeType: 'image/png' },
+      ],
+    } as never);
+    const converted = JSON.stringify(convertCompactionMessages([sanitized]));
+    expect(converted).not.toContain('hidden chain');
+    expect(converted).not.toContain('/Users/example');
+    expect(converted).not.toContain('secret');
+    expect(converted).toContain('[external path omitted]');
+    expect(converted).toContain('[image attachment omitted');
+    expect(converted).toContain('[[Projects/Pivi.md]]');
+  });
+
+  it('parses structured drafts and rejects undersized or unsafe results', () => {
+    expect(parseCompactionDraft(checkpointJson())).toMatchObject({
+      goal: 'Ship vault-native compaction',
+      artifacts: [{ label: 'Spec', vaultPath: 'specs/018-vault-context-compaction-redesign.md' }],
+    });
+    expect(parseCompactionDraft(checkpointJson({
+      artifacts: [{ label: 'Private', vaultPath: '../private.md' }],
+    }))).toBeNull();
+    expect(parseCompactionDraft(checkpointJson({
+      continuationSummary: 'Device path: /Users/example/private.md '.repeat(20),
+    }))).toBeNull();
+    expect(parseCompactionDraft(checkpointJson({
+      continuationSummary: 'Device path: /etc/pivi/config.json '.repeat(20),
+    }))).toBeNull();
+    expect(parseCompactionDraft('```pivi-checkpoint\n{"continuationSummary":"short"}\n```'))
+      .toBeNull();
+  });
+
+  it('builds and merges Checkpoint v1 ledgers for NOTE₂', () => {
+    const plan = buildCompactionPlan([
+      messageEntry('m1', 'user', 'old '.repeat(2_000)),
+      messageEntry('m2', 'assistant', 'answer '.repeat(2_000), 'm1'),
+      messageEntry('m3', 'user', 'recent '.repeat(100), 'm2'),
+      messageEntry('m4', 'assistant', 'done '.repeat(100), 'm3'),
+    ])!;
     const previous = {
       schemaVersion: 1,
       continuationSummary: 'Prior continuation.',
@@ -196,53 +244,33 @@ None
       openWork: [],
       unresolvedQuestions: [],
       nextSteps: [],
-      source: { firstEntryId: 'old-1', lastEntryId: 'old-2', firstKeptEntryId: 'm1' },
+      source: { firstEntryId: 'old-1', lastEntryId: 'old-2', firstKeptEntryId: 'old-boundary' },
       tokenEstimates: { contextBefore: 100, checkpoint: 10 },
     } satisfies Checkpoint;
-    const current = buildCheckpoint(checkpointText, {
-      prefixEntries,
-      firstKeptEntryId: 'm3',
-      tokensBefore: 500,
-    }, previous);
+    const draft = parseCompactionDraft(checkpointJson())!;
+    const current = buildCheckpoint(draft, plan, previous);
 
     expect(current).toMatchObject({
-      continuationSummary: 'Continue schema integration.',
-      decisions: ['Prior decision', 'Use details'],
+      decisions: ['Prior decision', 'Use Pi cut-point and session primitives'],
       artifacts: [
         { label: 'Prior', vaultPath: 'A.md' },
-        { label: 'Spec', vaultPath: 'specs/005.md' },
+        { label: 'Spec', vaultPath: 'specs/018-vault-context-compaction-redesign.md' },
       ],
-      source: { firstEntryId: 'old-1', lastEntryId: 'm2', firstKeptEntryId: 'm3' },
-      tokenEstimates: { contextBefore: 500 },
+      source: { firstEntryId: 'old-1', firstKeptEntryId: 'pending-compaction-boundary' },
     });
     expect(renderCheckpoint(current!)).toContain('## Unresolved questions\n\nNone');
-
-    const entry = {
+    const persisted = {
       ...compactionEntry('c2', buildCompactionSummary(renderCheckpoint(current!))),
       details: { piviCheckpoint: current },
     } as PiContextCompactionEntry;
-    expect(findLatestCheckpoint([compactionEntry('c1', 'legacy'), entry])).toEqual(current);
-    expect(findLatestCheckpoint([compactionEntry('c1', 'legacy')])).toBeNull();
+    expect(findLatestCheckpoint([persisted])).toEqual(current);
+    expect(buildCheckpoint(draft, plan, {
+      ...previous,
+      decisions: ['/etc/pivi/secret.json'],
+    })).toBeNull();
   });
 
-  it('falls back to legacy summary data when checkpoint sections or paths are invalid', () => {
-    const cutPoint = {
-      prefixEntries: [
-        messageEntry('m1', 'user', 'old request'),
-        messageEntry('m2', 'assistant', 'old answer'),
-      ],
-      firstKeptEntryId: 'm3',
-      tokensBefore: 500,
-    };
-    expect(buildCheckpoint('plain legacy summary', cutPoint, null)).toBeNull();
-    expect(buildCheckpoint(
-      checkpointText.replace('specs/005.md', '/Users/example/private/spec.md'),
-      cutPoint,
-      null,
-    )).toBeNull();
-  });
-
-  it('keeps auto-compaction decisions pure and leaf-scoped', () => {
+  it('keeps automatic decisions fixed, fingerprint-scoped, and provider-pressure aware', () => {
     const providerUsage = {
       contextTokens: 900,
       contextWindow: 1_000,
@@ -251,43 +279,21 @@ None
       percentage: 90,
       contextTokensIsAuthoritative: true,
     };
-
     expect(shouldAutoCompact({
-      enableAutoCompact: true,
       compactionInFlight: false,
-      sessionLeafId: 'leaf-1',
-      lastAttemptLeafId: null,
+      failedFingerprint: null,
       providerUsage,
+      sessionFingerprint: 'current',
+      sessionLeafId: 'leaf-1',
       storedConversationTokens: 100,
-      thresholdRatio: 0.8,
     })).toBe(true);
     expect(shouldAutoCompact({
-      enableAutoCompact: true,
       compactionInFlight: false,
-      sessionLeafId: 'leaf-1',
-      lastAttemptLeafId: 'leaf-1',
+      failedFingerprint: 'current',
       providerUsage,
-      storedConversationTokens: 1_000,
-      thresholdRatio: 0.8,
-    })).toBe(false);
-  });
-
-  it('does not let an older provider snapshot lower local compaction pressure', () => {
-    expect(shouldAutoCompact({
-      enableAutoCompact: true,
-      compactionInFlight: false,
+      sessionFingerprint: 'current',
       sessionLeafId: 'leaf-1',
-      lastAttemptLeafId: null,
-      providerUsage: {
-        contextTokens: 100,
-        contextTokensIsAuthoritative: true,
-        contextWindow: 1_000,
-        contextWindowIsAuthoritative: true,
-        inputTokens: 100,
-        percentage: 10,
-      },
-      storedConversationTokens: 700,
-      thresholdRatio: 0.8,
-    })).toBe(true);
+      storedConversationTokens: 1_000,
+    })).toBe(false);
   });
 });

@@ -250,6 +250,105 @@ export function buildSessionContext(entries: MockSessionEntry[], leafId?: string
   return buildContextFromEntries(entries, leafId);
 }
 
+export function buildContextEntries(entries: MockSessionEntry[]): MockSessionEntry[] {
+  let compactionIndex = -1;
+  for (let index = entries.length - 1; index >= 0; index--) {
+    if (entries[index]?.type === 'compaction') {
+      compactionIndex = index;
+      break;
+    }
+  }
+  if (compactionIndex < 0) return [...entries];
+  const compaction = entries[compactionIndex]!;
+  const firstKeptIndex = entries.findIndex((entry) => entry.id === compaction.firstKeptEntryId);
+  return [
+    compaction,
+    ...(firstKeptIndex >= 0 ? entries.slice(firstKeptIndex, compactionIndex) : []),
+    ...entries.slice(compactionIndex + 1),
+  ];
+}
+
+export function sessionEntryToContextMessages(entry: MockSessionEntry): unknown[] {
+  if (entry.type === 'message') return [entry.message];
+  if (entry.type === 'compaction') {
+    return [{
+      role: 'user',
+      content: [{
+        type: 'text',
+        text: `<context_compaction_summary>\n${entry.summary ?? ''}\n</context_compaction_summary>`,
+      }],
+    }];
+  }
+  return [];
+}
+
+export function estimateTokens(message: unknown): number {
+  return Math.max(1, Math.ceil(JSON.stringify(message).length / 4));
+}
+
+export function findCutPoint(
+  entries: MockSessionEntry[],
+  startIndex: number,
+  endIndex: number,
+  keepRecentTokens: number,
+): { firstKeptEntryIndex: number; turnStartIndex: number; isSplitTurn: boolean } {
+  const valid = entries.map((entry, index) => ({ entry, index }))
+    .filter(({ entry, index }) => (
+      index >= startIndex
+      && index < endIndex
+      && entry.type === 'message'
+      && (entry.message as { role?: string } | undefined)?.role !== 'toolResult'
+    ))
+    .map(({ index }) => index);
+  let cutIndex = valid[0] ?? startIndex;
+  let accumulated = 0;
+  for (let index = endIndex - 1; index >= startIndex; index--) {
+    accumulated += sessionEntryToContextMessages(entries[index]!)
+      .reduce<number>((total, message) => total + estimateTokens(message), 0);
+    if (accumulated >= keepRecentTokens) {
+      cutIndex = valid.find((candidate) => candidate >= index) ?? cutIndex;
+      break;
+    }
+  }
+  const role = (entries[cutIndex]?.message as { role?: string } | undefined)?.role;
+  let turnStartIndex = -1;
+  if (role !== 'user') {
+    for (let index = cutIndex - 1; index >= startIndex; index--) {
+      if ((entries[index]?.message as { role?: string } | undefined)?.role === 'user') {
+        turnStartIndex = index;
+        break;
+      }
+    }
+  }
+  return {
+    firstKeptEntryIndex: cutIndex,
+    turnStartIndex,
+    isSplitTurn: role !== 'user' && turnStartIndex >= 0,
+  };
+}
+
+export function convertToLlm(messages: unknown[]): unknown[] {
+  return messages;
+}
+
+export function serializeConversation(messages: unknown[]): string {
+  return messages.map((message) => {
+    const record = message as { role?: string; content?: unknown };
+    const label = record.role === 'toolResult'
+      ? 'Tool result'
+      : record.role === 'assistant' ? 'Assistant' : 'User';
+    const content = typeof record.content === 'string'
+      ? record.content
+      : (record.content as Array<Record<string, unknown>> | undefined)?.map((part) => {
+          if (part.type === 'text') return part.text;
+          if (part.type === 'thinking') return `[Assistant thinking]: ${String(part.thinking)}`;
+          if (part.type === 'toolCall') return `[Assistant tool calls]: ${String(part.name)}`;
+          return '';
+        }).filter(Boolean).join('\n') ?? '';
+    return `[${label}]: ${content}`;
+  }).join('\n');
+}
+
 export function loadSkillsFromDir(): { skills: []; diagnostics: [] } {
   return { skills: [], diagnostics: [] };
 }

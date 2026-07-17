@@ -270,41 +270,6 @@ export function GeneralSettingsTab({
           />
         </SettingRow>
       </SettingsSection>
-      <SettingsSection title={t('settings.compaction.title')}>
-        <SettingRow name={t('settings.compaction.autoCompact.name')} description={t('settings.compaction.autoCompact.desc')}>
-          <Toggle checked={general.autoCompact} label={t('settings.compaction.autoCompact.name')} onChange={(autoCompact) => { void save({ autoCompact }); }} />
-        </SettingRow>
-        <SettingRow name={t('settings.compaction.threshold.name')} description={t('settings.compaction.threshold.desc')}>
-          <div className="pivi-settings-range">
-            <input
-              type="range"
-              min="50"
-              max="95"
-              step="5"
-              value={general.autoCompactThresholdPercent}
-              aria-label={t('settings.compaction.threshold.name')}
-              onChange={(event) => { void save({ autoCompactThresholdPercent: Number(event.target.value) }); }}
-            />
-            <output className="pivi-settings-range__value">
-              {general.autoCompactThresholdPercent}%
-            </output>
-          </div>
-        </SettingRow>
-        <SettingRow name={t('settings.compaction.keepRecent.name')} description={t('settings.compaction.keepRecent.desc')}>
-          <input
-            className="pivi-settings-control"
-            type="number"
-            min="1000"
-            max="200000"
-            step="1000"
-            value={general.autoCompactKeepRecentTokens}
-            onChange={(event) => {
-              const value = Number(event.target.value);
-              if (Number.isFinite(value)) void save({ autoCompactKeepRecentTokens: Math.min(200000, Math.max(1000, value)) });
-            }}
-          />
-        </SettingRow>
-      </SettingsSection>
       <SessionFilesSettingsSection actions={actions} feedback={feedback} />
       <SettingsSection title={t('settings.personalizationContext')}>
         <SettingRow name={t('settings.userName.name')} description={t('settings.userName.desc')}>

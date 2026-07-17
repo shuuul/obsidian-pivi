@@ -310,11 +310,21 @@ usable input
 
 The compaction reserve should be conservative and model-independent by default. The UI must label estimated values as estimates and avoid presenting false precision.
 
-The implemented host-neutral envelope caps large-window reserves at 16K output, 12K compaction, and 8K safety tokens. For smaller windows those defaults scale down to 25%, 10%, and 5% of the context window respectively. The conservative trigger is the lower of the configured ratio threshold and usable input, and both automatic and preflight compaction use that trigger. Current pressure is the larger of the latest provider total and the local estimate, so an older provider snapshot cannot delay compaction. Provider usage can make only the aggregate context total authoritative; locally decomposed categories and reserves remain approximation-marked estimates.
+The implemented host-neutral envelope caps large-window reserves at 16K output, 12K compaction, and 8K safety tokens. For smaller windows those defaults scale down to 25%, 10%, and 5% of the context window respectively. Automatic compaction has no setting: its hard trigger is the lower of 85% of the context window and the usable-input envelope. Current pressure is the larger of the latest provider total and the local estimate, so an older provider snapshot cannot delay compaction. Provider usage can make only the aggregate context total authoritative; locally decomposed categories and reserves remain approximation-marked estimates.
+
+### Pi-native two-pass compaction
+
+Pivi keeps Pi's session and conversation mechanics as the foundation. `buildContextEntries` selects the already-compaction-aware active JSONL context; `findCutPoint` moves the weighted 95/5 split to a safe turn/tool boundary; `sessionEntryToContextMessages` and `convertToLlm` preserve Pi roles and tool evidence as structured sampling input. The result is persisted through Pi's standard `CompactionEntry`, and runtime reconstruction continues to use Pi's `buildSessionContext` semantics.
+
+At ten context-window percentage points before the hard trigger, Pivi invisibly prepares Pass 1 from the first 95% of active context. The cache is bound to the session, current model, prompt/schema version, split policy, and exact prefix fingerprint; appending only raw tail messages may reuse it. Session or model changes, rewind, runtime rebuild, cleanup, plugin unload, or cancellation abort and discard speculative work.
+
+Pass 1 produces an in-memory vault-native `NOTE₁`. Pass 2 sends that draft together with the raw final 5% to the current chat model and produces a validated, self-contained `NOTE₂`. Manual `/compact [instructions]` runs both passes when no draft is available, and the instructions apply only to Pass 2. Sampling uses no tools, low thinking, a 120-second timeout, and the active chat model. A failed pass enters a bounded full-context single-pass fallback; no compaction entry is written when all attempts fail.
+
+The final Pi compaction points `firstKeptEntryId` at an ordinary internal `custom` boundary immediately before it. Pi projects that boundary to neither LLM messages nor transcript messages, so the next active context is exactly `NOTE₂`; future turns become `NOTE₂ + new messages`. Immediately before appending, Pivi revalidates the session, active model, runtime generation, and exact active-context fingerprint; a concurrent turn or lifecycle/model change discards the stale sample instead of compacting new context away. The authoritative pre-compaction JSONL entries remain append-only and available to transcript history, reopen, fork, and recovery. Full and paged transcript restoration include a trailing compaction as the newest Memory boundary while keeping its internal custom boundary hidden. `NOTE₁` is never persisted and never becomes a Memory boundary.
 
 ### Hierarchical checkpoints
 
-Version-1 checkpoints now preserve more than one narrative summary. The durable model distinguishes:
+The validated `NOTE₂` is stored additively as a version-1 checkpoint while its rendered continuation remains the readable Pi summary. The durable model distinguishes:
 
 - a concise continuation summary;
 - the current goal and constraints;

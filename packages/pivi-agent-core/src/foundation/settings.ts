@@ -440,11 +440,6 @@ export interface PiviSettings {
   enableAutoTitleGeneration: boolean;
   titleGenerationModel: string;
 
-  // Context compaction
-  enableAutoCompact: boolean;
-  autoCompactThresholdRatio: number;
-  autoCompactKeepRecentTokens: number;
-
   // Content settings
   excludedTags: string[];
 

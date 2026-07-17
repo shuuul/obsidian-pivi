@@ -49,6 +49,7 @@ import {
 } from './piChatRuntimeActiveTurn';
 import {
   compactCurrentSession,
+  invalidateCompactionState,
   type PiChatCompactionState,
   syncSessionMessagesAfterTurn,
 } from './piChatRuntimeCompaction';
@@ -92,7 +93,10 @@ export class PiChatRuntime implements PiChatService {
   private leafId: string | null = null;
   private readonly compactionState: PiChatCompactionState = {
     autoCompactionInFlight: false,
-    lastAutoCompactionAttemptLeafId: null,
+    failedAutoFingerprint: null,
+    foregroundController: null,
+    generation: 0,
+    prefire: null,
   };
   private readonly subagentRunner: PiAuxQueryRunner;
   private readonly subagentChunkListeners = new Set<(chunk: StreamChunk) => void | Promise<void>>();
@@ -163,6 +167,8 @@ export class PiChatRuntime implements PiChatService {
 
     if (this.agent && prevSessionFile !== this.sessionFile) {
       this.invalidateAgentSession();
+    } else if (prevSessionFile !== this.sessionFile) {
+      invalidateCompactionState(this.compactionState);
     }
   }
 
@@ -214,6 +220,9 @@ export class PiChatRuntime implements PiChatService {
     if (this.agent && options?.force !== true) {
       this.syncAgentTools();
       return true;
+    }
+    if (this.agent && options?.force === true) {
+      invalidateCompactionState(this.compactionState);
     }
 
     const registry = this.buildToolRegistry();
@@ -329,6 +338,7 @@ export class PiChatRuntime implements PiChatService {
   cancel(): void {
     this.agent?.abort();
     this.subagentRunner.abortAllSubagents();
+    invalidateCompactionState(this.compactionState);
   }
 
   resetSession(): void {
@@ -351,6 +361,7 @@ export class PiChatRuntime implements PiChatService {
     }
     this.subagentRunner.reset();
     this.subagentRunner.abortAllSubagents();
+    invalidateCompactionState(this.compactionState);
     this.agent?.reset();
     this.agent = null;
     void this.mcpBridge?.dispose();
@@ -492,6 +503,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   private invalidateAgentSession(): void {
+    invalidateCompactionState(this.compactionState);
     this.agent?.reset();
     this.agent = null;
     this.systemPromptKey = null;
@@ -505,9 +517,7 @@ export class PiChatRuntime implements PiChatService {
       sessionTree: this.sessionTree,
       agent: this.agent,
       compactionState: this.compactionState,
-      subagentConcurrencyLimiter: this.subagentConcurrencyLimiter,
       resolveModel: () => this.resolveModel(),
-      getAuxiliaryModel: () => this.getAuxiliaryModel(),
       onLeafIdChanged: (leafId: string | null) => {
         this.leafId = leafId;
       },

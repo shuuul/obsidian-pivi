@@ -6,7 +6,7 @@ import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
 
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 
-const snapshot: SettingsUiSnapshotData = { general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false, autoCompact: true, autoCompactThresholdPercent: 90, autoCompactKeepRecentTokens: 20_000, userName: '', excludedTags: [], requireCommandOrControlEnterToSend: false, keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' } }, subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 } };
+const snapshot: SettingsUiSnapshotData = { general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], requireCommandOrControlEnterToSend: false, keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' } }, subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 } };
 
 function makePorts(initial: ManagedMcpServer[] = []) {
   let servers = initial;

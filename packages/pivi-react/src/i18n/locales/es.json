@@ -308,21 +308,6 @@
       "name": "Generar títulos de conversación automáticamente",
       "desc": "Genera títulos de conversación automáticamente tras el primer mensaje del usuario."
     },
-    "compaction": {
-      "title": "Compactación",
-      "autoCompact": {
-        "name": "Compactar conversaciones automáticamente",
-        "desc": "Resume automáticamente el historial antiguo de la sesión tras una respuesta cuando el uso del contexto supera el umbral."
-      },
-      "threshold": {
-        "name": "Umbral de compactación",
-        "desc": "Porcentaje de la ventana de contexto del modelo actual que activa la compactación automática."
-      },
-      "keepRecent": {
-        "name": "Conservar contexto reciente",
-        "desc": "Tokens aproximados del historial reciente de la sesión que se conservan literalmente tras la compactación."
-      }
-    },
     "navMappings": {
       "name": "Asignaciones de navegación estilo Vim",
       "desc": "Una asignación por línea. Formato: \"map <tecla> <acción>\" (acciones: scrollUp, scrollDown, focusInput)."

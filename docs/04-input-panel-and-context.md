@@ -92,7 +92,7 @@ There are three content layers:
 - Persisted content combines the original request with stable context XML needed to rebuild the session.
 - The provider prompt additionally applies API-only transformations: MCP emphasis, `/generate-image` instructions, and live external-capability availability. These transformations must never leak into visible history.
 
-`/compact` is a special pass-through command and does not attach normal turn context. Workspace-command tokens stay visible but resolve their templates and variables into runtime text at capture time.
+`/compact [instructions]` is a special pass-through command and does not attach normal turn context. Without a matching background draft it synchronously runs both compaction passes; its optional instructions affect only the final `NOTE₂`. Workspace-command tokens stay visible but resolve their templates and variables into runtime text at capture time.
 
 ## Note Toolbar selection capture
 

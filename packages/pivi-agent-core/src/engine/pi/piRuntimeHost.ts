@@ -5,8 +5,5 @@ export interface PiRuntimeHost {
     model?: string;
     titleGenerationModel?: string;
     userName?: string;
-    enableAutoCompact?: boolean;
-    autoCompactThresholdRatio?: number;
-    autoCompactKeepRecentTokens?: number;
   };
 }

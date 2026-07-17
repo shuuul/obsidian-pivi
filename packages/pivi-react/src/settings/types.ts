@@ -19,9 +19,6 @@ export interface SettingsGeneralSnapshot {
   readonly enableAutoScroll: boolean;
   readonly deferMathRenderingDuringStreaming: boolean;
   readonly enableAutoTitleGeneration: boolean;
-  readonly autoCompact: boolean;
-  readonly autoCompactThresholdPercent: number;
-  readonly autoCompactKeepRecentTokens: number;
   readonly userName: string;
   readonly excludedTags: readonly string[];
   readonly requireCommandOrControlEnterToSend: boolean;

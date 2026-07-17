@@ -191,6 +191,24 @@ jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
   }),
 }));
 
+const defaultCompactionSample = `\`\`\`pivi-checkpoint
+${JSON.stringify({
+  continuationSummary: 'Continue from the compacted session with all verified vault decisions and evidence. '.repeat(12),
+  goal: 'Finish checkpoint presentation.',
+  constraints: ['Keep estimates explicit.'],
+  decisions: ['Use the Memory boundary.'],
+  artifacts: [{ label: 'Spec', vaultPath: 'specs/018-vault-context-compaction-redesign.md' }],
+  openWork: ['Verify the live path.'],
+  unresolvedQuestions: [],
+  nextSteps: ['Run focused tests.'],
+})}
+\`\`\``;
+const mockCompactionSample = jest.fn(async (..._args: unknown[]) => defaultCompactionSample);
+
+jest.mock('@pivi/pivi-agent-core/engine/pi/piCompactionSampler', () => ({
+  sampleCompactionNote: (...args: unknown[]) => mockCompactionSample(...args),
+}));
+
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
@@ -201,6 +219,10 @@ import {
   buildEstimatedUsageInfo,
   buildUsageInfoFromAgentMessage,
 } from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeUsage';
+import {
+  compactCurrentSession,
+  prepareCompactionPrefire,
+} from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeCompaction';
 import {
   type PiCachedModel,
   PI_AI_MODELS_CACHE,
@@ -220,17 +242,11 @@ function createMockPlugin(overrides: {
   model?: string;
   environmentVariables?: string;
   visibleModels?: string[];
-  enableAutoCompact?: boolean;
-  autoCompactThresholdRatio?: number;
-  autoCompactKeepRecentTokens?: number;
 } = {}): {
   settings: {
     model: string;
     userName: string;
     sharedEnvironmentVariables: string;
-    enableAutoCompact: boolean;
-    autoCompactThresholdRatio: number;
-    autoCompactKeepRecentTokens: number;
     agentSettings: {
       environmentVariables: string;
       visibleModels: string[];
@@ -244,9 +260,6 @@ function createMockPlugin(overrides: {
       model: overrides.model ?? 'opencode-go/deepseek-v4-flash',
       userName: overrides.userName ?? '',
       sharedEnvironmentVariables: '',
-      enableAutoCompact: overrides.enableAutoCompact ?? false,
-      autoCompactThresholdRatio: overrides.autoCompactThresholdRatio ?? 0.9,
-      autoCompactKeepRecentTokens: overrides.autoCompactKeepRecentTokens ?? 1_000,
       agentSettings: {
         environmentVariables: overrides.environmentVariables ?? 'OPENCODE_API_KEY=test-key',
         visibleModels: overrides.visibleModels ?? ['opencode-go/deepseek-v4-flash'],
@@ -317,6 +330,8 @@ describe('PiChatRuntime system prompt', () => {
     mockAuxRunner.reset.mockClear();
     mockAuxRunner.cleanupIdleSubagents.mockClear();
     mockAuxRunner.abortAllSubagents.mockClear();
+    mockCompactionSample.mockClear();
+    mockCompactionSample.mockResolvedValue(defaultCompactionSample);
     mockCapturedSubagentToolProvider = undefined;
     mockCapturedSubagentChunkSink = undefined;
     process.env.OPENCODE_API_KEY = 'test-key';
@@ -847,38 +862,13 @@ describe('PiChatRuntime system prompt', () => {
         // Drain the stream so each turn is persisted before compacting.
       }
     }
-    mockAuxRunner.query.mockResolvedValueOnce(`## Continuation summary
-Continue from the compacted session.
-
-## Goal
-Finish checkpoint presentation.
-
-## Constraints
-- Keep estimates explicit.
-
-## Decisions
-- Use the Memory boundary.
-
-## Artifacts
-- Spec :: specs/007.md
-
-## Open work
-- Verify the live path.
-
-## Unresolved questions
-None
-
-## Next steps
-- Run focused tests.`);
-
     const chunks = [];
     for await (const chunk of runtime.query(runtime.prepareTurn({ text: '/compact preserve decisions' }))) {
       chunks.push(chunk);
     }
 
-    expect(mockAuxRunner.query).toHaveBeenCalledTimes(1);
-    expect((mockAuxRunner.query.mock.calls[0] as unknown[])[1]).toContain('preserve decisions');
-    expect(mockAuxRunner.reset).toHaveBeenCalledTimes(1);
+    expect(mockCompactionSample).toHaveBeenCalledTimes(2);
+    expect((mockCompactionSample.mock.calls[1] as unknown[])[2]).toContain('preserve decisions');
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).not.toHaveBeenCalledWith('/compact preserve decisions');
     expect(chunks).toEqual([
@@ -896,7 +886,7 @@ None
     expect(manualCompaction.tokensAfter).toBeLessThan(manualCompaction.tokensBefore ?? 0);
     expect(manualCompaction.summary).toContain('The earlier session history was compacted.');
     expect(manualCompaction.checkpoint).toMatchObject({
-      continuationSummary: 'Continue from the compacted session.',
+      continuationSummary: expect.stringContaining('Continue from the compacted session'),
       tokenEstimate: expect.any(Number),
     });
     expect(mockAgentInstances[0].state.messages).toEqual(expect.arrayContaining([
@@ -905,19 +895,251 @@ None
         content: expect.arrayContaining([
           expect.objectContaining({
             type: 'text',
-            text: expect.stringContaining('Continue from the compacted session.'),
+            text: expect.stringContaining('Continue from the compacted session'),
           }),
         ]),
       }),
     ]));
   });
 
-  it('does not recompact compacted-away raw history on a small follow-up turn', async () => {
-    const plugin = createMockPlugin({
-      enableAutoCompact: true,
-      autoCompactThresholdRatio: 0.5,
-      autoCompactKeepRecentTokens: 1_000,
+  it('falls back to one full-context sample when Pass 2 is invalid', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    for (const text of ['First turn', 'Second turn']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Persist two complete turns (four message entries).
+      }
+    }
+    mockCompactionSample
+      .mockResolvedValueOnce(defaultCompactionSample)
+      .mockResolvedValueOnce('invalid NOTE₂')
+      .mockResolvedValueOnce(defaultCompactionSample);
+
+    const chunks: StreamChunk[] = [];
+    for await (const chunk of runtime.query(runtime.prepareTurn({
+      text: '/compact preserve exact wikilinks',
+    }))) {
+      chunks.push(chunk);
+    }
+
+    expect(mockCompactionSample).toHaveBeenCalledTimes(3);
+    expect((mockCompactionSample.mock.calls[0] as unknown[])[2])
+      .not.toContain('preserve exact wikilinks');
+    expect((mockCompactionSample.mock.calls[1] as unknown[])[2])
+      .toContain('preserve exact wikilinks');
+    expect((mockCompactionSample.mock.calls[2] as unknown[])[2])
+      .toContain('single-pass fallback');
+    expect(chunks).toContainEqual(expect.objectContaining({ type: 'context_compacted' }));
+  });
+
+  it('serializes foreground compaction for two tabs sharing one session store', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    for (const text of ['First turn', 'Second turn']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Persist two complete turns (four message entries).
+      }
+    }
+    const internals = runtime as unknown as {
+      compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+      sessionTree: SessionTreeStore;
+    };
+    const firstDeps = internals.compactionDeps();
+    const secondDeps = {
+      ...firstDeps,
+      compactionState: {
+        autoCompactionInFlight: false,
+        failedAutoFingerprint: null,
+        foregroundController: null,
+        generation: 0,
+        prefire: null,
+      },
+    };
+
+    const [first, second] = await Promise.all([
+      compactCurrentSession(firstDeps, 'manual'),
+      compactCurrentSession(secondDeps, 'manual'),
+    ]);
+
+    expect(first).toEqual(second);
+    expect(mockCompactionSample).toHaveBeenCalledTimes(2);
+    expect(internals.sessionTree.getEntries().filter(
+      (entry) => entry.type === 'compaction',
+    )).toHaveLength(1);
+  });
+
+  it('discards a sampled compaction when another tab appends to the shared session', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    for (const text of ['First turn', 'Second turn']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Persist two complete turns (four message entries).
+      }
+    }
+    const internals = runtime as unknown as {
+      compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+      sessionTree: SessionTreeStore;
+    };
+    let resolvePass1: ((value: string) => void) | undefined;
+    mockCompactionSample
+      .mockImplementationOnce(() => new Promise<string>((resolve) => {
+        resolvePass1 = resolve;
+      }))
+      .mockResolvedValue(defaultCompactionSample);
+
+    const compaction = compactCurrentSession(
+      internals.compactionDeps(),
+      'manual',
+    );
+    await Promise.resolve();
+    expect(mockCompactionSample).toHaveBeenCalledTimes(1);
+
+    const concurrentUserId = internals.sessionTree.appendUserMessage('Concurrent tab turn');
+    internals.sessionTree.appendMessageUi({
+      targetEntryId: concurrentUserId,
+      displayContent: 'Concurrent tab turn',
+      turnRequest: { text: 'Concurrent tab turn' },
     });
+    resolvePass1?.(defaultCompactionSample);
+
+    await expect(compaction).rejects.toThrow(
+      'Session or model changed while context compaction was running.',
+    );
+    expect(internals.sessionTree.getEntries().filter(
+      (entry) => entry.type === 'compaction',
+    )).toHaveLength(0);
+    expect(internals.sessionTree.loadAgentMessages()).toContainEqual(
+      expect.objectContaining({ role: 'user', content: 'Concurrent tab turn' }),
+    );
+  });
+
+  it('does not suppress automatic retry when the model changes during sampling', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    for (const text of ['First turn', 'Second turn']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Persist two complete turns (four message entries).
+      }
+    }
+    const internals = runtime as unknown as {
+      compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+    };
+    const deps = internals.compactionDeps();
+    const initialModel = deps.resolveModel();
+    if (!initialModel) {
+      throw new Error('Expected an active model');
+    }
+    let selectedModel = initialModel;
+    deps.resolveModel = () => selectedModel;
+    let resolvePass1: ((value: string) => void) | undefined;
+    mockCompactionSample
+      .mockImplementationOnce(() => new Promise<string>((resolve) => {
+        resolvePass1 = resolve;
+      }))
+      .mockResolvedValue(defaultCompactionSample);
+
+    const compaction = compactCurrentSession(deps, 'threshold');
+    await Promise.resolve();
+    selectedModel = {
+      ...initialModel,
+      id: `${initialModel.id}-changed`,
+    };
+    resolvePass1?.(defaultCompactionSample);
+
+    await expect(compaction).rejects.toThrow(
+      'Session or model changed while context compaction was running.',
+    );
+    expect(deps.compactionState.failedAutoFingerprint).toBeNull();
+  });
+
+  it('does not append compaction when all bounded fallback attempts fail', async () => {
+    jest.useFakeTimers();
+    try {
+      const runtime = createRuntime(createMockPlugin());
+      for (const text of ['First turn', 'Second turn']) {
+        for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+          // Persist two complete turns (four message entries).
+        }
+      }
+      const internals = runtime as unknown as {
+        compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+        sessionTree: SessionTreeStore;
+      };
+      mockCompactionSample.mockResolvedValue('invalid checkpoint');
+
+      const compaction = compactCurrentSession(
+        internals.compactionDeps(),
+        'manual',
+      );
+      let rejection: unknown;
+      const handledCompaction = compaction.catch((error: unknown) => {
+        rejection = error;
+      });
+      await jest.runAllTimersAsync();
+
+      await handledCompaction;
+      expect(rejection).toEqual(expect.objectContaining({
+        message: 'Compaction model returned an invalid or undersized checkpoint.',
+      }));
+      expect(mockCompactionSample).toHaveBeenCalledTimes(4);
+      expect(internals.sessionTree.getEntries().filter(
+        (entry) => entry.type === 'compaction',
+      )).toHaveLength(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('prefires NOTE₁ once and keeps it valid when only the tail grows', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    PI_AI_MODELS_CACHE.set('lmstudio/prefire-model', {
+      ...localModelFixture(true),
+      id: 'prefire-model',
+      contextWindow: 200_000,
+      maxTokens: 16_000,
+    });
+    const runtime = createRuntime(createMockPlugin({
+      model: 'lmstudio/prefire-model',
+      visibleModels: ['lmstudio/prefire-model'],
+    }));
+    await runtime.ensureReady();
+    const internals = runtime as unknown as {
+      compactionDeps(): Parameters<typeof prepareCompactionPrefire>[0];
+      compactionState: { prefire: unknown };
+      sessionTree: SessionTreeStore;
+    };
+    for (let index = 0; index < 2; index++) {
+      const text = `Prefire turn ${index}`;
+      const userEntryId = internals.sessionTree.appendUserMessage(text);
+      internals.sessionTree.appendMessageUi({
+        targetEntryId: userEntryId,
+        displayContent: text,
+        turnRequest: { text },
+      });
+      internals.sessionTree.syncAgentMessages([
+        { role: 'user', content: text, timestamp: index * 2 + 1 },
+        { role: 'assistant', content: `Answer ${index}`, timestamp: index * 2 + 2 },
+      ] as never[]);
+    }
+    const usage: UsageInfo = {
+      contextTokens: 145_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 145_000,
+      percentage: 73,
+    };
+
+    prepareCompactionPrefire(internals.compactionDeps(), usage);
+    await Promise.resolve();
+    expect(mockCompactionSample).toHaveBeenCalledTimes(1);
+
+    internals.sessionTree.appendUserMessage('Appended tail');
+    prepareCompactionPrefire(internals.compactionDeps(), usage);
+    expect(mockCompactionSample).toHaveBeenCalledTimes(1);
+
+    runtime.cancel();
+    expect(internals.compactionState.prefire).toBeNull();
+  });
+
+  it('does not recompact compacted-away raw history on a small follow-up turn', async () => {
+    const plugin = createMockPlugin();
     const runtime = createRuntime(plugin);
     for (const text of [
       'Old turn '.repeat(400),
@@ -931,43 +1153,48 @@ None
     for await (const _chunk of runtime.query(runtime.prepareTurn({ text: '/compact keep essentials' }))) {
       // Drain manual compaction.
     }
-    mockAuxRunner.query.mockClear();
-    mockAuxRunner.reset.mockClear();
+    mockCompactionSample.mockClear();
 
     const chunks = [];
     for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Small follow-up' }))) {
       chunks.push(chunk);
     }
 
-    expect(mockAuxRunner.query).not.toHaveBeenCalled();
+    expect(mockCompactionSample).not.toHaveBeenCalled();
     expect(chunks).not.toContainEqual({ type: 'context_compacting' });
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Small follow-up');
   });
 
   it('compacts before sending a turn that would exceed the context threshold', async () => {
-    const plugin = createMockPlugin({
-      enableAutoCompact: false,
-      autoCompactThresholdRatio: 0.5,
-      autoCompactKeepRecentTokens: 1_000,
-    });
+    const plugin = createMockPlugin();
     const runtime = createRuntime(plugin);
-    for (let i = 0; i < 5; i++) {
-      for await (const _chunk of runtime.query(runtime.prepareTurn({ text: `Turn ${i} ${'x'.repeat(100_000)}` }))) {
-        // Drain the stream so session history grows past the preflight threshold.
-      }
+    await runtime.ensureReady();
+    const sessionTree = (runtime as unknown as {
+      sessionTree: SessionTreeStore;
+    }).sessionTree;
+    for (let i = 0; i < 2; i++) {
+      const content = `Turn ${i} ${'x'.repeat(100_000)}`;
+      sessionTree.appendUserMessage(content);
+      sessionTree.syncAgentMessages([
+        { role: 'user', content, timestamp: i * 2 + 1 },
+        { role: 'assistant', content: `Answer ${i}`, timestamp: i * 2 + 2 },
+      ] as never[]);
     }
-    plugin.settings.enableAutoCompact = true;
-    mockAuxRunner.query.mockClear();
-    mockAuxRunner.reset.mockClear();
+    mockCompactionSample.mockClear();
 
     const chunks = [];
-    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Continue after preflight compaction' }))) {
+    const oversizedTurn = `Continue after preflight compaction ${'y'.repeat(500_000)}`;
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: oversizedTurn }))) {
       chunks.push(chunk);
     }
 
-    expect(mockAuxRunner.query).toHaveBeenCalledTimes(1);
-    expect((mockAuxRunner.query.mock.calls[0] as unknown[])[1]).toContain('Preflight compaction');
+    expect(mockCompactionSample).toHaveBeenCalled();
+    expect(mockCompactionSample).toHaveBeenCalledTimes(2);
+    expect((mockCompactionSample.mock.calls[0] as unknown[])[2])
+      .toContain('Create NOTE₁');
+    expect((mockCompactionSample.mock.calls[1] as unknown[])[2])
+      .toContain('Create the final NOTE₂');
     expect(chunks.slice(0, 2)).toEqual([
       { type: 'context_compacting' },
       expect.objectContaining({
@@ -982,7 +1209,7 @@ None
     expectDefined(preflightCompaction);
     expect(preflightCompaction.tokensAfter).toBeLessThan(preflightCompaction.tokensBefore ?? 0);
     expectDefined(mockAgentInstances[0]);
-    expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Continue after preflight compaction');
+    expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith(oversizedTurn);
   });
 
   it('does not reject a first local turn using a synthetic context window', async () => {
@@ -997,8 +1224,6 @@ None
     const plugin = createMockPlugin({
       model: 'lmstudio/preflight-model',
       visibleModels: ['lmstudio/preflight-model'],
-      enableAutoCompact: true,
-      autoCompactThresholdRatio: 0.5,
     });
     const runtime = createRuntime(plugin);
     const oversizedForFallback = 'x'.repeat(12_000);
@@ -1026,8 +1251,6 @@ None
     const plugin = createMockPlugin({
       model: 'lmstudio/preflight-model',
       visibleModels: ['lmstudio/preflight-model'],
-      enableAutoCompact: true,
-      autoCompactThresholdRatio: 0.5,
     });
     const runtime = createRuntime(plugin);
     const chunks: StreamChunk[] = [];
@@ -1057,8 +1280,6 @@ None
     const plugin = createMockPlugin({
       model: 'lmstudio/preflight-model',
       visibleModels: ['lmstudio/preflight-model'],
-      enableAutoCompact: true,
-      autoCompactThresholdRatio: 0.8,
     });
     const runtime = createRuntime(plugin);
     const chunks: StreamChunk[] = [];

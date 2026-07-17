@@ -60,13 +60,6 @@ function normalizeAgentSettings(
   };
 }
 
-function clampNumber(value: unknown, fallback: number, min: number, max: number): number {
-  const numeric = typeof value === "number" && Number.isFinite(value)
-    ? value
-    : fallback;
-  return Math.min(max, Math.max(min, numeric));
-}
-
 function normalizeExternalReadDirectories(values: readonly unknown[]): string[] {
   const seen = new Set<string>();
   const directories: string[] = [];
@@ -129,6 +122,9 @@ function stripRemovedSettingsFields(settings: Record<string, unknown>): void {
   delete settings.envSnippets;
   delete settings.maxTabs;
   delete settings.persistentExternalContextPaths;
+  delete settings.enableAutoCompact;
+  delete settings.autoCompactThresholdRatio;
+  delete settings.autoCompactKeepRecentTokens;
 }
 
 export function normalizeStoredPiviSettings(
@@ -153,18 +149,6 @@ export function normalizeStoredPiviSettings(
     agentSettings,
   );
   const chatViewPlacement = normalizeChatViewPlacement(stored.chatViewPlacement);
-  const autoCompactThresholdRatio = clampNumber(
-    stored.autoCompactThresholdRatio,
-    DEFAULT_PIVI_SETTINGS.autoCompactThresholdRatio,
-    0.5,
-    0.95,
-  );
-  const autoCompactKeepRecentTokens = Math.round(clampNumber(
-    stored.autoCompactKeepRecentTokens,
-    DEFAULT_PIVI_SETTINGS.autoCompactKeepRecentTokens,
-    1_000,
-    200_000,
-  ));
   const providerSettings = {
     ...stored,
     hiddenSlashCommands,
@@ -180,11 +164,6 @@ export function normalizeStoredPiviSettings(
     hiddenSlashCommands,
     agentSettings,
     chatViewPlacement,
-    enableAutoCompact: typeof stored.enableAutoCompact === "boolean"
-      ? stored.enableAutoCompact
-      : DEFAULT_PIVI_SETTINGS.enableAutoCompact,
-    autoCompactThresholdRatio,
-    autoCompactKeepRecentTokens,
   };
   stripRemovedSettingsFields(settings);
 
@@ -197,15 +176,16 @@ export function normalizeStoredPiviSettings(
     agentSettingsChanged ||
     modelReconciled ||
     stored.chatViewPlacement !== chatViewPlacement ||
-    stored.autoCompactThresholdRatio !== autoCompactThresholdRatio ||
-    stored.autoCompactKeepRecentTokens !== autoCompactKeepRecentTokens ||
     externalReadDirectoriesMigrated ||
     subagentsChanged ||
     webSearchToolsChanged ||
     Object.hasOwn(stored, "systemPrompt") ||
     Object.hasOwn(stored, "mediaFolder") ||
     Object.hasOwn(stored, "envSnippets") ||
-    Object.hasOwn(stored, "maxTabs");
+    Object.hasOwn(stored, "maxTabs") ||
+    Object.hasOwn(stored, "enableAutoCompact") ||
+    Object.hasOwn(stored, "autoCompactThresholdRatio") ||
+    Object.hasOwn(stored, "autoCompactKeepRecentTokens");
 
   return { settings, changed };
 }

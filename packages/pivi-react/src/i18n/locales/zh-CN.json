@@ -308,21 +308,6 @@
       "name": "自动生成对话标题",
       "desc": "在用户发送首条消息后自动生成对话标题。"
     },
-    "compaction": {
-      "title": "上下文压缩",
-      "autoCompact": {
-        "name": "自动压缩对话",
-        "desc": "当上下文用量超过阈值时，在回复结束后自动总结较早的会话历史。"
-      },
-      "threshold": {
-        "name": "压缩阈值",
-        "desc": "触发自动压缩的当前模型上下文窗口百分比。"
-      },
-      "keepRecent": {
-        "name": "保留最近上下文",
-        "desc": "压缩后原样保留的最近会话历史 token 近似数量。"
-      }
-    },
     "navMappings": {
       "name": "Vim 风格导航映射",
       "desc": "每行一个映射。格式：\"map <键> <动作>\"（动作：scrollUp, scrollDown, focusInput）。"

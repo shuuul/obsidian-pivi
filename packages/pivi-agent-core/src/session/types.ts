@@ -41,6 +41,7 @@ export class SessionRangeCursorError extends SessionIndexError {
 export const PIVI_SESSION_META = 'pivi/session-meta';
 export const PIVI_UI_CONTEXT = 'pivi/ui-context';
 export const PIVI_MESSAGE_UI = 'pivi/message-ui';
+export const PIVI_COMPACTION_BOUNDARY = 'pivi/compaction-boundary';
 
 export interface PiviSessionMetaData {
   title: string;

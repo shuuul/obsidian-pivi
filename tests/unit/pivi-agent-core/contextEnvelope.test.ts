@@ -84,7 +84,6 @@ describe('context envelope', () => {
       contextWindow: 128_000,
       contextWindowIsAuthoritative: true,
       outputTokenLimit: 128_000,
-      thresholdRatio: 0.8,
     });
 
     expect(envelope.reservedOutput.tokens).toBe(DEFAULT_RESERVED_OUTPUT_TOKENS);

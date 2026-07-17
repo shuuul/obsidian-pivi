@@ -91,6 +91,55 @@ describe('PiSessionStore range reads', () => {
     }
   });
 
+  it('restores a trailing full-replacement Memory boundary through getMessages', async () => {
+    const vaultPath = '/test/pi-session-store-trailing-compaction';
+    const store = new PiSessionStore(
+      { exists: async () => false } as unknown as FileStore,
+      vaultPath,
+    );
+    const ref = await store.create(vaultPath);
+    const tree = SessionTreeStore.open(vaultPath, ref.sessionFile);
+    const userId = tree.appendUserMessage('Compact now');
+    tree.syncAgentMessages([
+      { role: 'user', content: 'Compact now', timestamp: 1 },
+      { role: 'assistant', content: 'Ready', timestamp: 2 },
+    ] as never[]);
+    const checkpoint = {
+      schemaVersion: 1 as const,
+      continuationSummary: 'Continue from NOTE₂.',
+      goal: null,
+      constraints: [],
+      decisions: [],
+      artifacts: [],
+      openWork: [],
+      unresolvedQuestions: [],
+      nextSteps: [],
+      source: {
+        firstEntryId: userId,
+        lastEntryId: tree.getLeafId()!,
+        firstKeptEntryId: 'pending',
+      },
+      tokenEstimates: { contextBefore: 100, checkpoint: 20 },
+    };
+    const appended = tree.appendFullReplacementCompaction(
+      100,
+      (boundaryId) => ({
+        ...checkpoint,
+        source: { ...checkpoint.source, firstKeptEntryId: boundaryId },
+      }),
+      () => 'NOTE₂',
+    );
+
+    await expect(store.getMessages(ref)).resolves.toEqual([
+      expect.objectContaining({ content: 'Compact now' }),
+      expect.objectContaining({ content: 'Ready' }),
+      expect.objectContaining({
+        id: appended.compactionId,
+        contentBlocks: [expect.objectContaining({ type: 'context_compacted' })],
+      }),
+    ]);
+  });
+
   it('exposes recent and older durable message pages through SessionStore', async () => {
     const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-range-'));
     const sessionFile = '.pivi/sessions/session.jsonl';

@@ -237,6 +237,7 @@ describe('SessionTreeStore', () => {
     expect(sessionFile).toBeTruthy();
 
     const reopened = SessionTreeStore.open('/test/vault', sessionFile!, 'missing-leaf');
+    expect(reopened).toBe(store);
     expect(reopened.getLeafId()).toBe(store.getLeafId());
   });
 
@@ -571,6 +572,110 @@ describe('SessionTreeStore', () => {
     ]);
   });
 
+  it('uses a custom boundary so full-replacement context contains only NOTE₂ and future turns', () => {
+    const store = SessionTreeStore.inMemory('/test/full-replacement-context');
+    const firstUser = store.appendUserMessage('old request');
+    store.syncAgentMessages([
+      { role: 'user', content: 'old request', timestamp: 1 },
+      { role: 'assistant', content: 'old answer', timestamp: 2 },
+    ] as never[]);
+    const checkpoint = {
+      schemaVersion: 1 as const,
+      continuationSummary: 'Continue only from NOTE₂.',
+      goal: 'Verify full replacement',
+      constraints: [],
+      decisions: [],
+      artifacts: [],
+      openWork: [],
+      unresolvedQuestions: [],
+      nextSteps: ['Continue'],
+      source: {
+        firstEntryId: firstUser,
+        lastEntryId: store.getLeafId()!,
+        firstKeptEntryId: 'pending-compaction-boundary',
+      },
+      tokenEstimates: { contextBefore: 100, checkpoint: 20 },
+    };
+
+    const appended = store.appendFullReplacementCompaction(
+      100,
+      (boundaryId) => ({
+        ...checkpoint,
+        source: { ...checkpoint.source, firstKeptEntryId: boundaryId },
+      }),
+      (boundedCheckpoint) => (
+        `NOTE₂ authoritative summary.\n${boundedCheckpoint.source.firstKeptEntryId}`
+      ),
+    );
+    expect(store.loadAgentMessages()).toEqual([
+      expect.objectContaining({
+        role: 'user',
+        content: [expect.objectContaining({
+          type: 'text',
+          text: expect.stringContaining('NOTE₂ authoritative summary.'),
+        })],
+      }),
+    ]);
+    expect(appended.checkpoint.source.firstKeptEntryId).toBe(appended.boundaryId);
+    expect(appended.summary).toContain(appended.boundaryId);
+    expect(store.getEntries()).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: 'message', message: expect.objectContaining({ content: 'old request' }) }),
+      expect.objectContaining({ type: 'custom', customType: 'pivi/compaction-boundary' }),
+    ]));
+
+    store.appendUserMessage('future turn');
+    expect(store.loadAgentMessages().map((message) => (message as { content?: unknown }).content))
+      .toEqual([
+        [expect.objectContaining({ text: expect.stringContaining('NOTE₂ authoritative summary.') })],
+        'future turn',
+      ]);
+  });
+
+  it('leaves a failed full-replacement boundary invisible and preserves active context', () => {
+    const store = SessionTreeStore.inMemory('/test/orphan-compaction-boundary');
+    const firstUser = store.appendUserMessage('old request');
+    store.syncAgentMessages([
+      { role: 'user', content: 'old request', timestamp: 1 },
+      { role: 'assistant', content: 'old answer', timestamp: 2 },
+    ] as never[]);
+    const before = store.loadAgentMessages();
+    const checkpoint = {
+      schemaVersion: 1 as const,
+      continuationSummary: 'This summary must not be installed.',
+      goal: null,
+      constraints: [],
+      decisions: [],
+      artifacts: [],
+      openWork: [],
+      unresolvedQuestions: [],
+      nextSteps: [],
+      source: {
+        firstEntryId: firstUser,
+        lastEntryId: store.getLeafId()!,
+        firstKeptEntryId: 'pending-compaction-boundary',
+      },
+      tokenEstimates: { contextBefore: 100, checkpoint: 20 },
+    };
+
+    expect(() => store.appendFullReplacementCompaction(
+      100,
+      (boundaryId) => ({
+        ...checkpoint,
+        source: { ...checkpoint.source, firstKeptEntryId: boundaryId },
+      }),
+      () => {
+        throw new Error('render failed');
+      },
+    )).toThrow('render failed');
+
+    expect(store.loadAgentMessages()).toEqual(before);
+    expect(store.getEntries().filter((entry) => entry.type === 'compaction')).toHaveLength(0);
+    expect(store.getEntries()).toContainEqual(expect.objectContaining({
+      type: 'custom',
+      customType: 'pivi/compaction-boundary',
+    }));
+  });
+
   it('stores validated checkpoint details without changing legacy compaction context', () => {
     const store = SessionTreeStore.inMemory('/test/checkpoint-details');
     const userId = store.appendUserMessage('request');
@@ -630,7 +735,7 @@ describe('SessionTreeStore', () => {
     expect(JSON.stringify(compaction)).not.toContain('/Users/example/private');
   });
 
-  it('keeps trailing compaction in LLM context but outside the visible UI prefix', () => {
+  it('keeps trailing compaction in both LLM context and the visible UI prefix', () => {
     const store = SessionTreeStore.inMemory('/test/trailing-compaction-boundary');
     const userId = store.appendUserMessage('request');
     store.syncAgentMessages([
@@ -642,6 +747,7 @@ describe('SessionTreeStore', () => {
     expect(store.getLinearVisiblePrefix().map((entry) => entry.type)).toEqual([
       'message',
       'message',
+      'compaction',
     ]);
     expect(store.getLinearLlmContextEntries().map((entry) => entry.type)).toEqual([
       'message',
