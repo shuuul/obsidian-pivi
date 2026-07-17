@@ -17,8 +17,8 @@ Release 0.11.3 has three single-subject GitHub attestations that pass strict `gh
 
 Make Pivi's release provenance conform to the attestation identity expected by Obsidian's automated review.
 
-- [ ] The exact policy difference is supported by certificate/workflow evidence from Pivi and accepted Obsidian plugins.
-- [ ] The release workflow follows the official tag-push publishing shape without duplicate release runs.
+- [x] The exact policy difference is supported by certificate/workflow evidence from Pivi and accepted Obsidian plugins.
+- [x] The release workflow follows the official tag-push publishing shape without duplicate release runs.
 - [ ] A new patch release contains only the required assets and no longer produces the reported Obsidian attestation errors.
 
 ## Scope and non-goals
@@ -48,9 +48,9 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-01 | Compare official/sample/accepted workflows and certificate identities | Codex | Done | None | SHA-pinned workflow and attestation evidence |
-| WS-02 | Implement and test the compatible release path | Codex | In progress | WS-01 | Static workflow tests and full quality gate |
+| WS-02 | Implement and test the compatible release path | Codex | Done | WS-01 | Static workflow tests and full quality gate |
 | WS-03 | Independent review of the policy hypothesis | Verification subagent | Done | None | Evidence-oriented written review |
-| WS-04 | Publish and validate the next patch | Codex | Pending | WS-02 | GitHub run plus Obsidian review result |
+| WS-04 | Publish and validate the next patch | Codex | In progress | WS-02 | GitHub run plus Obsidian review result |
 
 ## Verification
 
@@ -83,6 +83,14 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 - Remaining: None for hypothesis review.
 - Blockers: None.
 - Next action: Mirror the evidenced tag-push release shape.
+
+### 2026-07-17 — Codex — WS-02
+
+- Changed: Made `push.tags` the only publishing trigger, changed the release statement to the established multi-subject shape, separated Release Please PR generation from publication, and made versioned changelog notes mandatory.
+- Evidence: Focused release workflow tests, 256 suites / 1,957 tests with coverage, typecheck, zero-warning lint, architecture/package/i18n/spec checks, production build, and the bundle-size gate passed. Both workflow files parse as YAML; 0.11.4 package, lockfile, manifest, release manifest, and Obsidian versions metadata agree. The deployed build reloaded with no captured Obsidian errors.
+- Remaining: Commit/push the 0.11.4 release metadata, push its annotated tag, inspect the public certificate, and repeat the Obsidian automated review.
+- Blockers: Final automated-review confirmation is external to the repository.
+- Next action: Publish 0.11.4 from its annotated tag.
 
 ## Completion summary
 

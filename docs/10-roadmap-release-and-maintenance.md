@@ -55,7 +55,6 @@ Pivi uses Conventional Commits and Release Please:
 1. Merge conventional changes to `main`.
 2. Let `.github/workflows/release-please.yaml` open or update the release PR.
 3. Review generated version and `CHANGELOG.md` changes and the Obsidian metadata synchronized by `node scripts/sync-version.js`.
-   For the next release, ensure the generated notes call out that an absent Obsidian CLI preference now defaults to disabled and that users can re-enable it in Pivi settings.
 4. Merge the release PR.
 5. Pull the merged release commit and confirm its package, manifest, release manifest, and changelog version all agree.
 6. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.4](https://github.com/shuuul/obsidian-pivi/compare/0.11.3...0.11.4) (2026-07-17)
+
+
+### Bug Fixes
+
+* **release:** publish from tag pushes ([1373aab](https://github.com/shuuul/obsidian-pivi/commit/1373aaba807adf75294fd34272abdedbba6bbe47))
+
+**Release note:** Release artifacts are now built, attested, and published only by a workflow triggered directly from the version tag push, matching the provenance identity used by the official Obsidian sample and accepted community plugins. Publishing also requires the matching non-empty `CHANGELOG.md` section and uses it as the GitHub Release notes.
+
 ## [0.11.3](https://github.com/shuuul/obsidian-pivi/compare/0.11.2...0.11.3) (2026-07-17)
 
 
