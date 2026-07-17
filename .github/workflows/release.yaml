@@ -50,6 +50,12 @@ jobs:
             tag="${RELEASE_TAG}"
           fi
 
+          expected_ref="refs/tags/${tag}"
+          if [ "${GITHUB_REF}" != "$expected_ref" ]; then
+            echo "Release workflow must run from $expected_ref, not ${GITHUB_REF}."
+            exit 1
+          fi
+
           for file in main.js manifest.json styles.css; do
             if [ ! -f "$file" ]; then
               echo "Missing release artifact: $file"
@@ -68,7 +74,7 @@ jobs:
           fi
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest@v4
         with:
           subject-path: |
             main.js

@@ -57,7 +57,7 @@ Pivi uses Conventional Commits and Release Please:
 3. Review generated version and `CHANGELOG.md` changes and the Obsidian metadata synchronized by `node scripts/sync-version.js`.
    For the next release, ensure the generated notes call out that an absent Obsidian CLI preference now defaults to disabled and that users can re-enable it in Pivi settings.
 4. Merge the release PR.
-5. Release Please creates the GitHub Release; the artifact job builds, attests, and uploads `main.js`, `manifest.json`, and `styles.css`.
+5. Release Please creates the GitHub Release, then dispatches `.github/workflows/release.yaml` at the created tag. That tag-bound workflow builds, attests, and uploads `main.js`, `manifest.json`, and `styles.css`.
 
 While Pivi is pre-1.0, `fix` normally produces a patch and `feat` a minor release. README badge updates come from `scripts/sync-version.js`; do not add generic Release Please README markers.
 
@@ -71,9 +71,9 @@ Use this path only when explicitly requested:
 2. Run `node scripts/sync-version.js`.
 3. Update `.release-please-manifest.json` and `CHANGELOG.md`.
 4. Commit `chore(release): prepare x.y.z`.
-5. Push `main`, create/push tag `x.y.z` without `v`, and run `.github/workflows/release.yaml` with that tag.
+5. Push `main`, create/push tag `x.y.z` without `v`, and run `.github/workflows/release.yaml` with both the workflow ref and input set to that tag: `gh workflow run release.yaml --ref x.y.z -f tag=x.y.z`.
 
-Do not mix standard and manual routes for one version. The manual workflow verifies the tag/manifest invariant, extracts matching changelog notes, generates artifact attestations, and creates or updates the GitHub Release.
+Do not mix standard and manual routes for one version. The publishing workflow verifies the workflow ref/tag/manifest invariant, extracts matching changelog notes, generates artifact attestations, and creates or updates the GitHub Release.
 
 ## Release artifact invariant
 
@@ -85,7 +85,7 @@ manifest.json
 styles.css
 ```
 
-Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Both publishing routes retain `id-token: write` and `attestations: write` so release assets have provenance attestations.
+Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Both publishing routes converge on the same tag-bound workflow, which retains `id-token: write` and `attestations: write` so each release asset's provenance names `refs/tags/<version>` rather than `refs/heads/main`.
 
 ## Documentation ownership
 
