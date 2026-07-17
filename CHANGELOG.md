@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.5](https://github.com/shuuul/obsidian-pivi/compare/0.11.4...0.11.5) (2026-07-17)
+
+
+### Bug Fixes
+
+* **release:** avoid incompatible attestations ([fddd516](https://github.com/shuuul/obsidian-pivi/commit/fddd5163f669d68d9d73070b2bab69c4d4711761))
+
+**Release note:** Release artifacts remain built only from the pushed version tag, and the workflow downloads every published asset to compare it byte-for-byte with that tag build. GitHub artifact attestations are temporarily omitted because the live Obsidian directory rejects the current GitHub/Sigstore bundles even when strict GitHub CLI verification succeeds.
+
 ## [0.11.4](https://github.com/shuuul/obsidian-pivi/compare/0.11.3...0.11.4) (2026-07-17)
 
 
