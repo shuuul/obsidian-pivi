@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/shuuul/obsidian-pivi/compare/0.11.0...0.11.1) (2026-07-17)
+
+
+### Bug Fixes
+
+* **models:** follow upstream xAI catalog for Grok Build ([7195066](https://github.com/shuuul/obsidian-pivi/commit/719506672cd3f79de9c91163d7cec676f79cb0db))
+
 ## [0.11.0](https://github.com/shuuul/obsidian-pivi/compare/0.10.0...0.11.0) (2026-07-16)
 
 
