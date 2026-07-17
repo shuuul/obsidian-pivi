@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| — | — | No active specs. |
+| [016-release-attestation-hardening.md](016-release-attestation-hardening.md) | Active | Single-subject, version-unique release provenance with uploaded-asset verification for 0.11.3. |
 
 ## Archived specs
 

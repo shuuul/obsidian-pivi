@@ -18,6 +18,7 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -73,13 +74,22 @@ jobs:
             exit 1
           fi
 
-      - name: Generate artifact attestations
+      # Keep one subject per statement until downstream sigstore-rs consumers
+      # support every subject in multi-subject DSSE attestations.
+      - name: Attest main.js
         uses: actions/attest@v4
         with:
-          subject-path: |
-            main.js
-            manifest.json
-            styles.css
+          subject-path: main.js
+
+      - name: Attest manifest.json
+        uses: actions/attest@v4
+        with:
+          subject-path: manifest.json
+
+      - name: Attest styles.css
+        uses: actions/attest@v4
+        with:
+          subject-path: styles.css
 
       - name: Prepare release notes
         env:
@@ -124,3 +134,37 @@ jobs:
               --notes-file "$RELEASE_NOTES_FILE" \
               main.js manifest.json styles.css
           fi
+
+      - name: Verify published release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          download_dir="${RUNNER_TEMP}/published-release-assets"
+          mkdir -p "$download_dir"
+          gh release download "$RELEASE_TAG_RESOLVED" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir "$download_dir" \
+            --pattern main.js \
+            --pattern manifest.json \
+            --pattern styles.css
+
+          for file in main.js manifest.json styles.css; do
+            verified=false
+            for attempt in 1 2 3 4 5; do
+              if gh attestation verify "$download_dir/$file" \
+                --repo "$GITHUB_REPOSITORY" \
+                --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yaml" \
+                --source-ref "refs/tags/$RELEASE_TAG_RESOLVED" \
+                --source-digest "$GITHUB_SHA" \
+                --deny-self-hosted-runners; then
+                verified=true
+                break
+              fi
+              sleep 5
+            done
+
+            if [ "$verified" != true ]; then
+              echo "Published asset failed attestation verification: $file"
+              exit 1
+            fi
+          done

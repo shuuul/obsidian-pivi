@@ -1,6 +1,10 @@
 import { execFileSync } from 'child_process';
+import { readFileSync } from 'fs';
 
 const rootDir = process.cwd();
+const packageVersion = (
+  JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
+).version;
 
 function runBuildContract(code: string): string {
   return execFileSync('node', ['--input-type=module', '--eval', code], {
@@ -19,6 +23,7 @@ describe('shared build compatibility', () => {
         production: {
           target: production.target,
           define: production.define,
+          banner: production.banner,
           jsx: production.jsx,
           jsxImportSource: production.jsxImportSource,
           external: production.external,
@@ -29,6 +34,7 @@ describe('shared build compatibility', () => {
         analysis: {
           target: analysis.target,
           define: analysis.define,
+          banner: analysis.banner,
           jsx: analysis.jsx,
           jsxImportSource: analysis.jsxImportSource,
           external: analysis.external,
@@ -43,6 +49,7 @@ describe('shared build compatibility', () => {
       production: {
         target: string;
         define: Record<string, string>;
+        banner: Record<string, string>;
         jsx: string;
         jsxImportSource: string;
         external: string[];
@@ -53,6 +60,7 @@ describe('shared build compatibility', () => {
       analysis: {
         target: string;
         define: Record<string, string>;
+        banner: Record<string, string>;
         jsx: string;
         jsxImportSource: string;
         external: string[];
@@ -65,6 +73,7 @@ describe('shared build compatibility', () => {
     expect(options.production).toMatchObject({
       target: 'es2022',
       define: { 'process.env.NODE_ENV': '"production"' },
+      banner: { js: `/* Pivi ${packageVersion} */` },
       jsx: 'automatic',
       jsxImportSource: 'react',
       metafile: false,
@@ -73,6 +82,7 @@ describe('shared build compatibility', () => {
     expect(options.analysis).toMatchObject({
       target: 'es2022',
       define: { 'process.env.NODE_ENV': '"production"' },
+      banner: { js: `/* Pivi ${packageVersion} */` },
       jsx: 'automatic',
       jsxImportSource: 'react',
       metafile: true,

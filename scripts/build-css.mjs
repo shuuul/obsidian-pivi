@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join, dirname, resolve, relative } from 'path';
 import { fileURLToPath } from 'url';
 
+import { releaseArtifactBanner } from '../build/release-artifact-version.mjs';
 import { styleModules } from '../packages/pivi-react/styles/manifest.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -142,7 +143,8 @@ function build() {
   ]);
 
   const raw = parts.join('\n');
-  const output = isProduction ? minifyCss(raw) : raw;
+  const body = isProduction ? minifyCss(raw) : raw;
+  const output = `${releaseArtifactBanner}\n${body}`;
   writeFileSync(OUTPUT, output);
   const mode = isProduction ? 'minified' : 'dev';
   console.log(`Built styles.css (${mode}, ${(output.length / 1024).toFixed(1)} KB)`);

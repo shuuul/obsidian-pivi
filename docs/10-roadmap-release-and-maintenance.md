@@ -73,7 +73,7 @@ Use this path only when explicitly requested:
 4. Commit `chore(release): prepare x.y.z`.
 5. Push `main`, create/push tag `x.y.z` without `v`, and run `.github/workflows/release.yaml` with both the workflow ref and input set to that tag: `gh workflow run release.yaml --ref x.y.z -f tag=x.y.z`.
 
-Do not mix standard and manual routes for one version. The publishing workflow verifies the workflow ref/tag/manifest invariant, extracts matching changelog notes, generates artifact attestations, and creates or updates the GitHub Release.
+Do not mix standard and manual routes for one version. The publishing workflow verifies the workflow ref/tag/manifest invariant, extracts matching changelog notes, generates one single-subject attestation per asset, creates or updates the GitHub Release, then downloads and verifies the published bytes against the tag-bound workflow provenance.
 
 ## Release artifact invariant
 
@@ -85,7 +85,7 @@ manifest.json
 styles.css
 ```
 
-Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Both publishing routes converge on the same tag-bound workflow, which retains `id-token: write` and `attestations: write` so each release asset's provenance names `refs/tags/<version>` rather than `refs/heads/main`.
+Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Both publishing routes converge on the same tag-bound workflow, which retains `id-token: write`, `attestations: write`, and `artifact-metadata: write`. JavaScript and CSS builds include the package version in a leading banner, so unchanged product code still produces a version-specific asset digest instead of sharing historical attestation lookup results.
 
 ## Documentation ownership
 

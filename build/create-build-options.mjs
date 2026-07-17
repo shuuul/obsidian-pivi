@@ -11,6 +11,7 @@ import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
 import { shimMcpValidation } from './plugins/shim-mcp-validation.mjs';
+import { releaseArtifactBanner } from './release-artifact-version.mjs';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(rootDir, '..');
@@ -37,6 +38,9 @@ export function createBuildOptions({ production, metafile = false, write = true 
     platform: 'node',
     external,
     format: 'cjs',
+    banner: {
+      js: releaseArtifactBanner,
+    },
     charset: 'utf8',
     target: 'es2022',
     define: {

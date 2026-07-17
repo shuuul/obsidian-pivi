@@ -8,7 +8,7 @@ Small Node scripts backing `package.json` commands. Keep them single-purpose and
 
 ```mermaid
 flowchart LR
-  CSS["build-css.mjs<br/>UI style manifest -> styles.css"] -- "then" --> Build["build.mjs<br/>production orchestration"]
+  CSS["build-css.mjs<br/>UI style manifest + release version -> styles.css"] -- "then" --> Build["build.mjs<br/>production orchestration"]
   Build -- "runs" --> Esbuild["esbuild.config.mjs<br/>main.js bundle"]
   Analyze["analyze-bundle.mjs"] -- "writes" --> Meta["metafile.json"]
   BundleSize["check-bundle-size.mjs"] -- "checks" --> Bundle["main.js<br/>5 MB hard ceiling"]
@@ -21,7 +21,7 @@ flowchart LR
 
 ## Files
 
-- `build-css.mjs` — Prepends the Obsidian host theme-token mapping, concatenates the ordered `packages/pivi-react/styles/manifest.mjs` modules into root `styles.css`, validates missing/unlisted CSS modules, and rejects `!important` in every host/React CSS input. Production mode minifies while preserving the Style Settings metadata block.
+- `build-css.mjs` — Prepends the release-version banner and Obsidian host theme-token mapping, concatenates the ordered `packages/pivi-react/styles/manifest.mjs` modules into root `styles.css`, validates missing/unlisted CSS modules, and rejects `!important` in every host/React CSS input. Production mode minifies while preserving the Style Settings metadata block.
 - `build.mjs` — Production build orchestrator: CSS first, then esbuild bundle.
 - `analyze-bundle.mjs` — Uses the shared `build/create-build-options.mjs` configuration and generates the pre-postprocess esbuild `metafile.json` without writing a separate bundle.
 - `check-bundle-size.mjs` — Checks a built root `main.js` against the 5 MB hard ceiling and emits a warning when it grows more than 10% over the recorded soft baseline. Run after `npm run build` via `npm run check:bundle-size`.
@@ -44,5 +44,6 @@ flowchart LR
 - `build-css.mjs` intentionally fails if a CSS file under `packages/pivi-react/styles/` is not listed in its manifest.
 - Release workflows upload only `main.js`, `manifest.json`, and `styles.css`.
 - Production and analysis share the build plugins under `build/`. Pi source imports public session exports from the package root, while the build narrows that entrypoint away from the upstream CLI/TUI graph; nested shrinkwrap packages resolve from the project root only when a root copy exists, and package-import aliases (`#...`) stay with their owning package. Keep `buildCompatibility.test.ts` and a production build green when changing this boundary.
+- `build/release-artifact-version.mjs` supplies the package-version banner for both `main.js` and `styles.css`. Keep both release assets version-distinct so a digest cannot inherit ambiguous attestations from an earlier tag.
 - Keep architecture/readme/spec checks single-purpose and dependency-light; they are run both directly and from Jest smoke or fixture tests.
 - The 0.7.0 provenance generator must keep its tag commit, exact Pi dependency versions, frozen SHA, fixed synthetic paths, and fixture README record synchronized. Do not replace its tag writer with a hand-authored JSONL serializer or describe its synthetic content as captured user data.
