@@ -33,7 +33,7 @@ describe('split subscription provider identities', () => {
     ]));
   });
 
-  it('keeps the Grok Build subscription catalog separate from xAI API models', () => {
+  it('mirrors the xAI model list into the isolated Grok Build subscription namespace', () => {
     configurePiAiModels({});
 
     const apiProvider = piAiModels.getProvider(XAI_PROVIDER_ID);
@@ -49,13 +49,7 @@ describe('split subscription provider identities', () => {
       expect.objectContaining({ provider: XAI_PROVIDER_ID, id: 'mock-model' }),
     ]));
     expect(planModels).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        provider: GROK_BUILD_PROVIDER_ID,
-        id: 'grok-composer-2.5-fast',
-      }),
-    ]));
-    expect(planModels).not.toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: 'mock-model' }),
+      expect.objectContaining({ provider: GROK_BUILD_PROVIDER_ID, id: 'mock-model' }),
     ]));
   });
 });

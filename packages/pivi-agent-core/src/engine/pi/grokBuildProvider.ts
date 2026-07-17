@@ -1,4 +1,5 @@
 import {
+  type Api,
   createProvider,
   type Model,
   type Provider,
@@ -22,77 +23,24 @@ const GROK_BUILD_HEADERS = {
 
 type GrokBuildModel = Model<'openai-responses'>;
 
-function model(
-  id: string,
-  name: string,
-  options: {
-    reasoning: boolean;
-    contextWindow: number;
-    cost: GrokBuildModel['cost'];
-  },
-): GrokBuildModel {
+function toGrokBuildModel(source: Model<Api>): GrokBuildModel {
   return {
-    id,
-    name,
+    ...source,
     api: 'openai-responses',
     provider: GROK_BUILD_PROVIDER_ID,
     baseUrl: GROK_BUILD_BASE_URL,
-    reasoning: options.reasoning,
-    thinkingLevelMap: options.reasoning
-      ? undefined
-      : { off: 'none', minimal: null, low: null, medium: null, high: null, xhigh: null, max: null },
-    input: ['text'],
-    cost: options.cost,
-    contextWindow: options.contextWindow,
-    maxTokens: 30_000,
     headers: {
+      ...source.headers,
       ...GROK_BUILD_HEADERS,
-      'x-grok-model-override': id,
+      'x-grok-model-override': source.id,
     },
     compat: {
+      ...source.compat,
       supportsDeveloperRole: false,
       supportsLongCacheRetention: false,
     },
   };
 }
-
-export const GROK_BUILD_MODELS: readonly GrokBuildModel[] = [
-  model('grok-composer-2.5-fast', 'Composer 2.5 Fast (Grok CLI)', {
-    reasoning: false,
-    contextWindow: 200_000,
-    cost: { input: 3, output: 15, cacheRead: 0.5, cacheWrite: 0 },
-  }),
-  model('grok-build', 'Grok Build', {
-    reasoning: true,
-    contextWindow: 512_000,
-    cost: { input: 1, output: 2, cacheRead: 0.2, cacheWrite: 0.2 },
-  }),
-  model('grok-4.3', 'Grok 4.3', {
-    reasoning: true,
-    contextWindow: 1_000_000,
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-  }),
-  model('grok-4.5', 'Grok 4.5', {
-    reasoning: true,
-    contextWindow: 500_000,
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-  }),
-  model('grok-4.20-0309-reasoning', 'Grok 4.20 Reasoning', {
-    reasoning: true,
-    contextWindow: 2_000_000,
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-  }),
-  model('grok-4.20-0309-non-reasoning', 'Grok 4.20 Non-Reasoning', {
-    reasoning: false,
-    contextWindow: 2_000_000,
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-  }),
-  model('grok-4.20-0309-multi-agent', 'Grok 4.20 Multi-Agent', {
-    reasoning: true,
-    contextWindow: 2_000_000,
-    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-  }),
-];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -201,7 +149,7 @@ export function createGrokBuildProvider(xai: Provider): Provider<'openai-respons
     name: 'Grok Build',
     baseUrl: GROK_BUILD_BASE_URL,
     auth: { oauth: xai.auth.oauth },
-    models: GROK_BUILD_MODELS,
+    models: xai.getModels().map(toGrokBuildModel),
     api: grokBuildApi(),
   });
 }

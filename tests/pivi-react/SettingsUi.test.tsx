@@ -547,7 +547,7 @@ describe('React settings foundation', () => {
   it('lists Grok Build models under the Grok Build provider identity', () => {
     const listModelsForProvider = jest.fn((providerId: string) => (
       providerId === 'grok-build'
-        ? [{ value: 'grok-build/grok-composer-2.5-fast', label: 'Composer 2.5 Fast', description: 'Standard model' }]
+        ? [{ value: 'grok-build/grok-4.5', label: 'Grok 4.5', description: 'Standard model' }]
         : []
     ));
     const ports = createPorts();
@@ -568,7 +568,7 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
     fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-provider-title' }));
     expect(listModelsForProvider).toHaveBeenCalledWith('grok-build');
-    expect(screen.getByText('Composer 2.5 Fast')).toBeInTheDocument();
+    expect(screen.getByText('Grok 4.5')).toBeInTheDocument();
   });
   it('renders Anthropic API key controls without manual OAuth token UI', async () => {
     const loginProviderOAuth = jest.fn(async () => undefined);

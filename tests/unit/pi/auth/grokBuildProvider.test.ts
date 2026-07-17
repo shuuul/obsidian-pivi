@@ -1,37 +1,56 @@
 import {
+  createGrokBuildProvider,
   GROK_BUILD_BASE_URL,
-  GROK_BUILD_MODELS,
   sanitizeGrokBuildPayload,
 } from '@pivi/pivi-agent-core/engine/pi/grokBuildProvider';
+import type { Provider } from '@earendil-works/pi-ai';
 
 describe('Grok Build subscription provider', () => {
-  it('defines Composer 2.5 on the Grok inference proxy with required headers', () => {
-    const composer = GROK_BUILD_MODELS.find((model) => model.id === 'grok-composer-2.5-fast');
+  it('mirrors only the upstream xAI model list into the subscription proxy', () => {
+    const xaiModels = [
+      {
+        id: 'grok-4.5',
+        name: 'Grok 4.5',
+        api: 'openai-responses',
+        provider: 'xai',
+        baseUrl: 'https://api.x.ai/v1',
+        reasoning: true,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 500_000,
+        maxTokens: 30_000,
+      },
+      {
+        id: 'grok-build-0.1',
+        name: 'Grok Build 0.1',
+        api: 'openai-completions',
+        provider: 'xai',
+        baseUrl: 'https://api.x.ai/v1',
+        reasoning: true,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 256_000,
+        maxTokens: 30_000,
+      },
+    ];
+    const provider = createGrokBuildProvider({
+      auth: { oauth: {} },
+      getModels: () => xaiModels,
+    } as unknown as Provider);
 
-    expect(composer).toMatchObject({
+    expect(provider.getModels()).toEqual(xaiModels.map(source => expect.objectContaining({
+      id: source.id,
+      name: source.name,
       api: 'openai-responses',
       provider: 'grok-build',
       baseUrl: GROK_BUILD_BASE_URL,
-      reasoning: false,
-      thinkingLevelMap: {
-        off: 'none',
-        minimal: null,
-        low: null,
-        medium: null,
-        high: null,
-        xhigh: null,
-        max: null,
-      },
-      contextWindow: 200_000,
-      maxTokens: 30_000,
-      headers: {
-        'x-grok-client-identifier': 'grok-pager',
-        'x-grok-client-version': '0.2.91',
+      contextWindow: source.contextWindow,
+      headers: expect.objectContaining({
+        'x-grok-model-override': source.id,
         'x-xai-token-auth': 'xai-grok-cli',
-        'x-grok-model-override': 'grok-composer-2.5-fast',
-      },
-    });
-    expect(composer?.headers?.['User-Agent']).toContain('grok-shell/0.2.91');
+      }),
+    })));
+    expect(provider.getModels().some(model => model.id.includes('composer'))).toBe(false);
   });
 
   it('normalizes Responses payloads for the Grok Build proxy', () => {

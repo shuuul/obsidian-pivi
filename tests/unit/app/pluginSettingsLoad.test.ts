@@ -40,10 +40,10 @@ describe('plugin settings provider credential migration', () => {
     const migrated = getPiAgentSettings(settings as unknown as Record<string, unknown>);
     expect(migrated.addedProviders).toEqual(['xai', 'grok-build']);
     expect(migrated.disabledProviders).toEqual(['grok-build']);
-    expect(migrated.visibleModels).toEqual(['grok-build/grok-composer-2.5-fast']);
+    expect(migrated.visibleModels).toEqual(['grok-build/grok-3']);
     expect(migrated.environmentVariables).toBe('');
-    expect(settings.model).toBe('grok-build/grok-composer-2.5-fast');
-    expect(settings.titleGenerationModel).toBe('grok-build/grok-composer-2.5-fast');
+    expect(settings.model).toBe('grok-build/grok-3');
+    expect(settings.titleGenerationModel).toBe('grok-build/grok-3');
     expect(JSON.parse(app.secretStorage.getSecret(getPiAiCredentialSecretId('xai'))!))
       .toEqual({ type: 'api_key', key: 'api-key' });
     expect(JSON.parse(app.secretStorage.getSecret(getPiAiCredentialSecretId('grok-build'))!))
@@ -51,7 +51,7 @@ describe('plugin settings provider credential migration', () => {
     expect(migrateProviderSecretsToKeychain(context)).toBe(false);
   });
 
-  it('deduplicates legacy xAI models that converge on the Grok Build fallback', () => {
+  it('preserves legacy xAI model ids while moving them into the subscription namespace', () => {
     const app = createMockApp();
     const settings = structuredClone(DEFAULT_PIVI_SETTINGS);
     updatePiAgentSettings(settings as unknown as Record<string, unknown>, {
@@ -69,7 +69,7 @@ describe('plugin settings provider credential migration', () => {
 
     expect(migrateProviderSecretsToKeychain(context)).toBe(true);
     expect(getPiAgentSettings(settings as unknown as Record<string, unknown>).visibleModels)
-      .toEqual(['grok-build/grok-composer-2.5-fast']);
+      .toEqual(['grok-build/grok-3', 'grok-build/grok-4']);
   });
 
   it('preserves backing selections and adds subscription aliases when both identities exist', () => {
@@ -101,7 +101,7 @@ describe('plugin settings provider credential migration', () => {
     expect(migrated.visibleModels).toEqual([
       'xai/grok-3',
       'anthropic/claude-sonnet-4',
-      'grok-build/grok-composer-2.5-fast',
+      'grok-build/grok-3',
       'claude/claude-sonnet-4',
     ]);
     expect(migrated.disabledProviders).toEqual(['xai', 'anthropic']);

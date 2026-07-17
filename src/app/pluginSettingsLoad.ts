@@ -158,9 +158,6 @@ export function migrateProviderSecretsToKeychain(
     }
     const providerId = modelKey.substring(0, slashIndex);
     const nextProviderId = providerRewrites.get(providerId);
-    if (providerId === 'xai' && nextProviderId === 'grok-build') {
-      return 'grok-build/grok-composer-2.5-fast';
-    }
     return nextProviderId
       ? `${nextProviderId}${modelKey.substring(slashIndex)}`
       : modelKey;

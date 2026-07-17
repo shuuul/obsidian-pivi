@@ -9,6 +9,8 @@ coordinator: "Codex"
 
 # 013 — Grok Build subscription provider
 
+> Superseded on 2026-07-17: Pivi retains the isolated Grok Build OAuth namespace and subscription proxy transport, but no longer owns the static Composer catalog described below. The provider now mirrors pi-ai's upstream xAI model list without local additions while awaiting first-class upstream Grok Build support.
+
 ## Context
 
 The initial Grok OAuth provider cloned the xAI API-key catalog and dispatched through `api.x.ai`. OAuth inference is a distinct Grok Build surface at `cli-chat-proxy.grok.com`; its account catalog includes models such as `grok-composer-2.5-fast` and requires Grok CLI identification, model override, and request compatibility.
