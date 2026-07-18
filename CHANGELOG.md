@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.12.1](https://github.com/shuuul/obsidian-pivi/compare/0.12.0...0.12.1) (2026-07-19)
+
+
+### Code Refactoring
+
+* **editor:** remove inline edit and keep selection-to-context in the composer toolbar ([803e88c](https://github.com/shuuul/obsidian-pivi/commit/803e88cec31d7705f7d38da0ca34112d9682c016))
+
+
+### Documentation
+
+* **readme:** showcase example-vault workflows ([f127e73](https://github.com/shuuul/obsidian-pivi/commit/f127e739639c06a1e1bcb03b9fa446f38870e173))
+* **session:** record the cloud-file recovery follow-up without claiming iCloud compatibility is fixed ([bb7f691](https://github.com/shuuul/obsidian-pivi/commit/bb7f6918ed099344a904709fef9f0451ed8fe478))
+
 ## [0.12.0](https://github.com/shuuul/obsidian-pivi/compare/0.11.6...0.12.0) (2026-07-18)
 
 
