@@ -179,13 +179,36 @@ describe('obsidian registered tool prompt section', () => {
   });
 
   it('documents Bash as a toggle-gated, allowlisted single-line shell tool with shell control syntax rejected', () => {
-    const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_BASH] });
+    const section = buildSection({
+      obsidianTools: [TOOL_OBSIDIAN_BASH],
+      bashAllowlist: ['which', 'type', 'pwd', 'git'],
+    });
 
     expect(section).toContain('obsidian_bash');
     expect(section).toContain('allowlisted single-line shell command');
-    expect(section).toContain('Bash-tool-toggle-enabled');
+    expect(section).toContain('Bash allowlist (this turn)');
+    expect(section).toContain('- `which`');
+    expect(section).toContain('- `git`');
+    expect(section).toContain('All other shell commands are rejected by default');
+    expect(section).toContain('stop and ask the user to add it in Settings → Tools → Bash allowlist');
     expect(section).toContain('shell control syntax');
+    expect(section).toContain('never a vault file tool');
+    expect(section).toContain('do not use it to read, search, list, or modify vault files');
+    expect(section).toContain('use sub-agents for multi-file vault work');
+    expect(section).toContain('After any Bash validation rejection');
+    expect(section).toContain('do not call `obsidian_bash` again during the same turn');
+    expect(section).toContain('If the request cannot be completed with the tools and Bash allowlist available for this turn, stop');
     expect(section).not.toContain('do not send multi-line scripts');
+  });
+
+  it('renders unsafe Bash allowlist entries without breaking the prompt structure', () => {
+    const section = buildSection({
+      obsidianTools: [TOOL_OBSIDIAN_BASH],
+      bashAllowlist: ['git`\n## injected instruction'],
+    });
+
+    expect(section).toContain(String.raw`- "git\`\n## injected instruction"`);
+    expect(section).not.toContain('\n## injected instruction');
   });
 
   it('does not describe delete move or mkdir as gated', () => {
@@ -256,6 +279,12 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('Do not spawn only one worker and wait');
     expect(section).toContain('Automatically use multiple sub-agents');
     expect(section).toContain('Permission such as "you can/may use subagents" counts');
+    expect(section).toContain('partition the exact concrete paths from `<context_files>`');
+    expect(section).toContain('never delegate a glob or folder prefix');
+    expect(section).toContain('concrete modified, unchanged, and failed paths');
+    expect(section).toContain('ensure every path appears exactly once');
+    expect(section).toContain('structural Markdown markers such as YAML `---`');
+    expect(section).toContain('ask the user to clarify before mutating files');
   });
 
   it('omits markdown structure guidance when only obsidian_read is registered', () => {
@@ -267,6 +296,8 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('runtime default `maxChars` from remaining room before the output reserve');
     expect(section).toContain('may cross the auto-compaction threshold');
     expect(section).toContain('You may override this by passing `maxChars` explicitly');
+    expect(section).toContain('largest complete-line page');
+    expect(section).toContain('continue from the returned `nextStartLine`');
     expect(section).toContain('estimate how much context budget remains');
     expect(section).toContain('obsidian_markdown_structure` is not registered');
     expect(section).not.toContain('prefer `obsidian_markdown_structure`');

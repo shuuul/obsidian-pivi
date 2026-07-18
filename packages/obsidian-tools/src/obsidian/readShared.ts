@@ -65,19 +65,129 @@ export function sliceLineRange(content: string, spans: LineSpan[], startLine?: n
     return content;
   }
   const start = startLine ?? 1;
-  const end = endLine ?? spans.length;
-  if (end < start) {
+  if (endLine !== undefined && endLine < start) {
     throw new Error('endLine must be greater than or equal to startLine.');
   }
   const firstSpan = spans[start - 1];
   if (!firstSpan) {
     return '';
   }
+  const end = endLine ?? spans.length;
   const lastSpan = spans[Math.min(end, spans.length) - 1];
   if (!lastSpan) {
     return '';
   }
   return content.slice(firstSpan.start, lastSpan.end);
+}
+
+export interface PaginatedLineRange {
+  content: string;
+  rawContent: string;
+  requestedStartLine: number;
+  requestedEndLine: number;
+  returnedStartLine?: number;
+  returnedEndLine?: number;
+  truncated: boolean;
+  nextStartLine?: number;
+}
+
+function buildRangeContinuation(
+  requestedStartLine: number,
+  requestedEndLine: number,
+  returnedEndLine: number,
+): string {
+  const nextStartLine = returnedEndLine + 1;
+  return `\n\n[Read truncated: returned lines ${requestedStartLine}-${returnedEndLine}`
+    + ` of requested ${requestedStartLine}-${requestedEndLine}.`
+    + ` Continue with startLine=${nextStartLine}, endLine=${requestedEndLine}.]`;
+}
+
+export function paginateLineRange(
+  content: string,
+  spans: LineSpan[],
+  maxChars: number,
+  startLine?: number,
+  endLine?: number,
+): PaginatedLineRange {
+  const requestedStartLine = startLine ?? 1;
+  const requestedEndLine = endLine ?? spans.length;
+  if (endLine !== undefined && requestedEndLine < requestedStartLine) {
+    throw new Error('endLine must be greater than or equal to startLine.');
+  }
+
+  const firstSpan = spans[requestedStartLine - 1];
+  if (!firstSpan) {
+    return {
+      content: '',
+      rawContent: '',
+      requestedStartLine,
+      requestedEndLine,
+      truncated: false,
+    };
+  }
+
+  const actualEndLine = Math.min(requestedEndLine, spans.length);
+  const lastSpan = spans[actualEndLine - 1];
+  if (!lastSpan) {
+    return {
+      content: '',
+      rawContent: '',
+      requestedStartLine,
+      requestedEndLine,
+      truncated: false,
+    };
+  }
+
+  const fullRange = content.slice(firstSpan.start, lastSpan.end);
+  if (fullRange.length <= maxChars) {
+    return {
+      content: fullRange,
+      rawContent: fullRange,
+      requestedStartLine,
+      requestedEndLine,
+      returnedStartLine: requestedStartLine,
+      returnedEndLine: actualEndLine,
+      truncated: false,
+    };
+  }
+
+  let returnedEndLine: number | undefined;
+  let rawContent = '';
+  let output = '';
+  for (let line = requestedStartLine; line <= actualEndLine; line++) {
+    const span = spans[line - 1];
+    if (!span) break;
+    const candidateRaw = content.slice(firstSpan.start, span.end);
+    const continuation = buildRangeContinuation(requestedStartLine, requestedEndLine, line);
+    const candidateOutput = `${candidateRaw}${continuation}`;
+    if (candidateOutput.length > maxChars) {
+      break;
+    }
+    returnedEndLine = line;
+    rawContent = candidateRaw;
+    output = candidateOutput;
+  }
+
+  if (returnedEndLine === undefined) {
+    const firstLineLength = firstSpan.end - firstSpan.start;
+    const minimumBudget = firstLineLength
+      + buildRangeContinuation(requestedStartLine, requestedEndLine, requestedStartLine).length;
+    throw new Error(
+      `Line ${requestedStartLine} is ${firstLineLength} characters and cannot fit within maxChars=${maxChars}`
+      + ` with the continuation marker. Raise maxChars to at least ${minimumBudget}.`,
+    );
+  }
+
+  return {
+    content: output,
+    rawContent,
+    requestedStartLine,
+    requestedEndLine,
+    returnedStartLine: requestedStartLine,
+    returnedEndLine,
+    truncated: true,
+    nextStartLine: returnedEndLine + 1,
+  };
 }
 
 export function getStats(content: string): ReadStats {

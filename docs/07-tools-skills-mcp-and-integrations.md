@@ -33,7 +33,7 @@ Settings saves refresh the affected registries and open-runtime prompts. Disable
 | Host execution | `obsidian_bash`, `obsidian_command`, `obsidian_eval` | Potentially mutating and disabled by default |
 | Image generation | `obsidian_generate_image` | Writes an attachment and may insert an embed |
 
-Large-note reads start with `obsidian_read` in stats mode, then use `obsidian_markdown_structure` and bounded line ranges instead of loading an entire note into context.
+Large-note reads start with `obsidian_read` in stats mode, then use `obsidian_markdown_structure` and bounded line ranges instead of loading an entire note into context. Explicit ranges automatically stop at the largest complete-line page that fits `maxChars`; a truncated result reports `nextStartLine` for the next non-overlapping page.
 
 Prefer Obsidian's public in-process API for vault, metadata, file-manager, and workspace behavior. Use the official CLI only for capabilities the public API does not expose or for explicitly configured integrations; the CLI integration is disabled when its setting is absent. Pivi implements vault text search by scanning because Obsidian has no public vault-wide full-text search API. Base lookup by file/path uses direct vault and metadata-cache resolution, and an unresolved-links-only graph request reads `MetadataCache.unresolvedLinks` without enumerating vault files.
 
@@ -41,7 +41,7 @@ Prefer Obsidian's public in-process API for vault, metadata, file-manager, and w
 
 External reads require `allowExternalRead` and at least one allowed directory from device-local pinned settings or current-turn context. Host-side realpath containment rejects traversal outside those roots. Absolute paths are stripped from synchronized settings and JSONL.
 
-`obsidian_bash` requires `allowBash`, accepts one allowlisted single-line command, and rejects shell-control syntax before calling the host process runner. `obsidian_command` and `obsidian_eval` require their individual gates plus the official Obsidian CLI. Do not broaden one capability because another is enabled.
+`obsidian_bash` requires `allowBash`, accepts one allowlisted single-line host command, and rejects shell-control syntax before calling the host process runner. The system prompt lists the effective Bash allowlist, classifies Bash as a lowest-priority host diagnostic, forbids using it to read/search/list/modify vault files, and forbids another Bash attempt in the same turn after validation rejection. Multi-file vault work stays on Obsidian tools and subagents. `obsidian_command` and `obsidian_eval` require their individual gates plus the official Obsidian CLI. Do not broaden one capability because another is enabled.
 
 Pivi is a desktop-only plugin with optional filesystem, process, and environment-backed integrations. Direct filesystem access is confined to explicit external roots, vault-local Pivi data, provider compatibility stores, and configured Skills/CLI paths. Process execution occurs only for an enabled CLI-backed capability, an allowlisted Bash command, user-configured MCP stdio, Skills distribution tooling, or opening an external authentication URL. Environment values are read at those integration boundaries for provider credentials, MCP authentication/stdio variables, CLI discovery, and Skills tooling; Pivi does not collect or transmit machine identity to its author.
 
@@ -75,7 +75,7 @@ MCP settings save/reload invalidates slash caches, authenticates or diagnoses as
 
 ## Subagents
 
-`spawn_agent` is registered from the Pi engine when Subagents are enabled and the required runtime capabilities exist. It is described in detail in [Subagents, streaming, and rendering](06-subagents-streaming-and-rendering.md).
+`spawn_agent` is registered from the Pi engine when Subagents are enabled and the required runtime capabilities exist. Multi-file vault changes divide the concrete exhaustive `<context_files>` paths into non-overlapping batches rather than delegating globs or directory prefixes. Workers report modified, unchanged, and failed paths; the parent reconciles complete one-time coverage before claiming completion. Structural Markdown markers such as YAML `---`, code fences, and table separators require read-only sampling and clarification when structural and target meanings overlap. Subagents are described in detail in [Subagents, streaming, and rendering](06-subagents-streaming-and-rendering.md).
 
 ## Note Toolbar
 

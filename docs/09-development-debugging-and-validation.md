@@ -19,6 +19,7 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Production bundle and deploy | `npm run build` |
 | Bundle inspection metadata | `npm run analyze:bundle` |
 | Bundle-size ceiling | `npm run check:bundle-size` |
+| Privacy-safe session diagnostics | `npm run audit:sessions -- <vault-or-sessions-dir>` |
 
 Always run Jest through the npm wrapper:
 
@@ -29,6 +30,8 @@ npm run test -- -t "test name"
 ```
 
 `scripts/run-jest.js` supplies the Node local-storage file and repository setup. Direct Jest invocation can produce misleading failures.
+
+`audit:sessions` is read-only. It separates `perf-*` fixtures from real behavior and reports aggregate tool errors, Bash policy retries, malformed JSONL, oversized results/sessions, and message-UI overlay amplification. Add `--json` for machine-readable output. Reports intentionally omit user text, tool arguments, target entry IDs, and JSONL content; findings are diagnostic and do not cause a failing exit status.
 
 ## Feature test index
 

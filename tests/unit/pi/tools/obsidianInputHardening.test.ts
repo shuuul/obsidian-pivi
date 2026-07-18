@@ -187,7 +187,174 @@ describe('obsidian tool input hardening', () => {
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
     expect(result.content[0].text).toBe('two\nthree');
-    expect(result.details).toMatchObject({ startLine: 2, endLine: 3 });
+    expect(result.details).toMatchObject({
+      startLine: 2,
+      endLine: 3,
+      requestedRange: { startLine: 2, endLine: 3 },
+      returnedRange: { startLine: 2, endLine: 3, lines: 2, characters: 9 },
+      truncated: false,
+    });
+  });
+
+  it('automatically pages explicit note ranges at complete line boundaries', async () => {
+    const content = Array.from({ length: 5 }, (_, index) => `${index + 1}:${'x'.repeat(38)}\n`).join('');
+    const deps = makeDeps({
+      resolveReadMaxChars: () => 150,
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/a.md',
+      startLine: 1,
+      endLine: 5,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toContain('1:xxxxxxxx');
+    expect(result.content[0].text).not.toContain('2:xxxxxxxx');
+    expect(result.content[0].text).toContain('Continue with startLine=2, endLine=5');
+    expect(result.content[0].text.length).toBeLessThanOrEqual(150);
+    expect(result.details).toMatchObject({
+      requestedRange: { startLine: 1, endLine: 5 },
+      returnedRange: { startLine: 1, endLine: 1, lines: 1, characters: 41 },
+      truncated: true,
+      nextStartLine: 2,
+    });
+  });
+
+  it('uses an explicit maxChars budget for automatic note range pages', async () => {
+    const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'q'.repeat(38)}\n`).join('');
+    const deps = makeDeps({
+      resolveReadMaxChars: () => 50_000,
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/a.md',
+      startLine: 1,
+      endLine: 4,
+      maxChars: 150,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text.length).toBeLessThanOrEqual(150);
+    expect(result.details).toMatchObject({ truncated: true, nextStartLine: 2 });
+  });
+
+  it('returns the final note range page without a continuation marker', async () => {
+    const deps = makeDeps({
+      resolveReadMaxChars: () => 150,
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: 'one\ntwo\nthree\n' }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/a.md',
+      startLine: 2,
+      endLine: 3,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toBe('two\nthree\n');
+    expect(result.content[0].text).not.toContain('Read truncated');
+    expect(result.details).toMatchObject({
+      returnedRange: { startLine: 2, endLine: 3 },
+      truncated: false,
+    });
+    expect(result.details).not.toHaveProperty('nextStartLine');
+  });
+
+  it('reports the required budget when the first selected line cannot fit', async () => {
+    const deps = makeDeps({
+      resolveReadMaxChars: () => 50,
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: `${'界'.repeat(80)}\nnext\n` }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    await expect(tool.execute('call', {
+      path: 'notes/a.md',
+      startLine: 1,
+      endLine: 2,
+    })).rejects.toThrow('Line 1 is 81 characters');
+  });
+
+  it('returns an empty result for a line range beyond the end of a note', async () => {
+    const deps = makeDeps({
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: 'one\ntwo\n' }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/a.md',
+      startLine: 10,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toBe('');
+    expect(result.details).toMatchObject({
+      requestedRange: { startLine: 10, endLine: 2 },
+      truncated: false,
+    });
+    expect(result.details).not.toHaveProperty('nextStartLine');
+    expect(result.details).not.toHaveProperty('returnedRange');
+  });
+
+  it('counts CJK characters consistently while paging note ranges', async () => {
+    const content = `${'界'.repeat(60)}\n${'文'.repeat(60)}\n${'字'.repeat(60)}\n`;
+    const deps = makeDeps({
+      resolveReadMaxChars: () => 175,
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/cjk.md', content }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/cjk.md',
+      startLine: 1,
+      endLine: 3,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.details).toMatchObject({
+      returnedRange: { startLine: 1, endLine: 1, characters: 61 },
+      truncated: true,
+      nextStartLine: 2,
+    });
+  });
+
+  it('applies the same automatic range pagination to external reads', async () => {
+    const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'z'.repeat(38)}\n`).join('');
+    const deps = makeDeps({
+      resolveReadMaxChars: () => 150,
+      externalFiles: {
+        stat: jest.fn().mockReturnValue({ path: '/tmp/a.txt', size: content.length, isDirectory: false, isFile: true }),
+        readFile: jest.fn().mockResolvedValue({ path: '/tmp/a.txt', content }),
+        listPath: jest.fn(),
+      },
+    });
+    const tool = createReadExternalTool(deps);
+
+    const result = await tool.execute('call', {
+      path: '/tmp/a.txt',
+      startLine: 1,
+      endLine: 4,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toContain('Continue with startLine=2, endLine=4');
+    expect(result.details).toMatchObject({
+      requestedRange: { startLine: 1, endLine: 4 },
+      returnedRange: { startLine: 1, endLine: 1 },
+      truncated: true,
+      nextStartLine: 2,
+    });
   });
 
   it('preserves original line terminators for selected line ranges', async () => {
@@ -233,6 +400,8 @@ describe('obsidian tool input hardening', () => {
     expect(result.details).toMatchObject({
       wholeFile: { lines: 3, characters: 14 },
       selectedRange: { lines: 1, characters: 4, startLine: 2, endLine: 2 },
+      requestedRange: { startLine: 2, endLine: 2 },
+      returnedRange: { lines: 1, characters: 4, startLine: 2, endLine: 2 },
     });
   });
 

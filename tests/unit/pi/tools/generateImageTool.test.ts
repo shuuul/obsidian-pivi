@@ -273,6 +273,8 @@ describe('createBashTool', () => {
       processRunner,
     });
 
+    expect(tool.description).toContain('Never use Bash to read, search, list, or modify vault files');
+    expect(tool.description).toContain('After any Bash validation rejection');
     await expect(tool.execute('call-1', { command: 'git status', cwd: '/tmp' }))
       .resolves.toEqual(expect.objectContaining({ content: [expect.objectContaining({ text: expect.stringContaining('ok') })] }));
     await expect(tool.execute('call-2', { command: 'npm run build:css' }))

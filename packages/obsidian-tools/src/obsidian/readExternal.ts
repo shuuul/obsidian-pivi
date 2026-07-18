@@ -12,6 +12,7 @@ import {
   getReadMode,
   getStats,
   getStringField,
+  paginateLineRange,
   resolveEffectiveReadMaxChars,
   sliceLineRange,
 } from './readShared';
@@ -39,7 +40,7 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_READ_EXTERNAL,
     label: 'Read external file',
-    description: 'Read an external file by absolute path. Defaults to stats-only for large files; deliberately raise maxChars to read the full file when needed.',
+    description: 'Read an external file by absolute path. Defaults to stats-only for large files; explicit line ranges automatically return the largest complete-line page that fits maxChars and provide nextStartLine when more remains.',
     parameters: {
       type: 'object',
       properties: {
@@ -89,6 +90,9 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
       const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
       const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
       const large = !isRangeRead && characters > maxChars;
+      const requestedRange = isRangeRead
+        ? { startLine: startLine ?? 1, endLine: endLine ?? lines }
+        : undefined;
 
       const details = {
         path: result.path,
@@ -98,6 +102,7 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
         ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
         ...(startLine !== undefined ? { startLine } : {}),
         ...(endLine !== undefined ? { endLine } : {}),
+        ...(requestedRange ? { requestedRange } : {}),
         truncated: large,
       };
 
@@ -109,13 +114,33 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
           large,
           maxChars,
           readExternal: true,
-        }), details);
+        }), {
+          ...details,
+          ...(selectedStats && selectedStats.lines > 0 && requestedRange ? {
+            returnedRange: {
+              ...selectedStats,
+              startLine: requestedRange.startLine,
+              endLine: Math.min(requestedRange.endLine, lines),
+            },
+          } : {}),
+        });
       }
 
-      if (selectedContent.length > maxChars) {
-        throw new Error(
-          `Selected content is ${selectedContent.length} characters, which exceeds maxChars=${maxChars}. Narrow startLine/endLine or raise maxChars deliberately.`,
-        );
+      if (isRangeRead) {
+        const page = paginateLineRange(result.content, lineSpans, maxChars, startLine, endLine);
+        const returnedStats = getStats(page.rawContent);
+        return textResult(page.content, {
+          ...details,
+          ...(page.returnedStartLine !== undefined && page.returnedEndLine !== undefined ? {
+            returnedRange: {
+              ...returnedStats,
+              startLine: page.returnedStartLine,
+              endLine: page.returnedEndLine,
+            },
+          } : {}),
+          truncated: page.truncated,
+          ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
+        });
       }
       return textResult(selectedContent, details);
     },

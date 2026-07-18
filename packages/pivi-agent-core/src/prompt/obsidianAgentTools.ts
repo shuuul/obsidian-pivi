@@ -36,6 +36,8 @@ import {
 export interface RegisteredToolSummary {
   obsidianTools: readonly string[];
   obsidianCliAvailable: boolean;
+  /** Effective Bash allowlist entries when `obsidian_bash` is registered for this turn. */
+  bashAllowlist?: readonly string[];
   includeMcp: boolean;
   /** Cached inventory of settings-enabled MCP servers/tools for prompt injection. */
   mcpInventory?: readonly McpInventoryServer[];
@@ -46,7 +48,12 @@ export interface RegisteredToolSummary {
 }
 
 export function buildRegisteredToolsSection(summary: RegisteredToolSummary): string {
-  const lines: string[] = ['## Available Tools', '', 'Use only the tools listed below. Do not invent tool names.'];
+  const lines: string[] = [
+    '## Available Tools',
+    '',
+    'Use only the tools listed below. Do not invent tool names, unregistered capabilities, or shell commands.',
+    'If the request cannot be completed with the tools and Bash allowlist available for this turn, stop, explain what is missing, and ask the user to enable the needed Pivi tool or add the required Bash command in Settings → Tools before retrying.',
+  ];
   const registeredObsidianTools = new Set(summary.obsidianTools);
   const obsidianCliAvailable = summary.obsidianCliAvailable;
   const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
@@ -73,6 +80,10 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   for (const name of summary.obsidianTools) {
     const parameters = describeObsidianToolParameters(name, promptContext);
     lines.push(`- \`${name}\` — ${describeObsidianTool(name, promptContext)}${parameters ? ` Parameters: ${parameters}` : ''}`);
+  }
+
+  if (registeredObsidianTools.has(TOOL_OBSIDIAN_BASH)) {
+    lines.push('', ...buildBashAllowlistGuidance(summary.bashAllowlist ?? []));
   }
 
   if (summary.includeMcp) {
@@ -104,6 +115,8 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
       '- When a very long file must be read end-to-end, prefer assigning that file to a sub-agent as its own isolated context batch with `run_in_background: true`, so the worker can keep reading, searching, and using tools in the background while streaming progress/results back without importing the whole file into the main session. Only full-read it in the main session when delegation is unavailable, explicitly disallowed, or exact full text must be present in the main context.',
       '- When delegating attached context or vault files, assign a stable, non-overlapping context batch to each sub-agent and use clear labels so the resulting cards remain easy to audit. Do not have the main agent pre-read, summarize, or mix delegated files unless the sub-agent reports back first; this prevents context cross-contamination and keeps delegated context out of the main session.',
       '- Do not split one context batch across multiple sub-agents, and do not send unrelated context batches to the same sub-agent. Each spawn_agent call gets an isolated worker; labels are for coordination, not a safe memory boundary.',
+      '- For multi-file vault changes, partition the exact concrete paths from `<context_files>` into non-overlapping batches; never delegate a glob or folder prefix as though it proved complete coverage. Each worker must report concrete modified, unchanged, and failed paths. Reconcile those reports against the original path list, ensure every path appears exactly once, and assign any omissions before claiming completion.',
+      '- Before changing structural Markdown markers such as YAML `---`, code fences, or table separators across multiple files, perform a read-only sample and distinguish structural syntax from the intended matches. If the same marker has both structural and target meanings, ask the user to clarify before mutating files.',
     );
   }
 
@@ -160,7 +173,8 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 function buildReadMaxCharsGuidance(): string[] {
   return [
     '- `obsidian_read` and `obsidian_read_external` apply a runtime default `maxChars` from remaining room before the output reserve (capped at 50000 characters). This default may cross the auto-compaction threshold so a large read can still trigger compaction. You may override this by passing `maxChars` explicitly.',
-    '- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, line ranges, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a larger body is required and the remaining budget can absorb it.',
+    '- Explicit line ranges automatically return the largest complete-line page that fits `maxChars`. When `truncated` is true, continue from the returned `nextStartLine` instead of retrying overlapping ranges or raising the budget.',
+    '- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, paged line ranges, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a single line or larger body truly requires it and the remaining budget can absorb it.',
   ];
 }
 
@@ -205,9 +219,26 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
       : `\`${TOOL_OBSIDIAN_BASE}\` can list base files/views through the vault API; its query action is unavailable without Obsidian CLI.`);
   }
   if (shellTools.length > 0) {
-    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs one allowlisted single-line shell command, but Bash is the lowest-priority tool: when an Obsidian-specific tool can do the job, use that tool instead of Bash.`);
+    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs one allowlisted single-line host command only; see the Bash allowlist above. Bash is the lowest-priority tool and is never a vault file tool: do not use it to read, search, list, or modify vault files. Use Obsidian-specific tools instead, and use sub-agents for multi-file vault work.`);
   }
   return notes.join(' ');
+}
+
+function buildBashAllowlistGuidance(allowlist: readonly string[]): string[] {
+  return [
+    '**Bash allowlist (this turn):** `obsidian_bash` may run only these commands:',
+    ...allowlist.map((entry) => `- ${formatBashAllowlistEntry(entry)}`),
+    `All other shell commands are rejected by default. Shell control syntax such as pipes, redirects, \`;\`, \`&&\`, \`||\`, and command substitution is also rejected.`,
+    `Do not attempt commands outside this list. After any Bash validation rejection, do not call \`obsidian_bash\` again during the same turn with a different command or syntax.`,
+    `If a non-vault task truly needs another host command, stop and ask the user to add it in Settings → Tools → Bash allowlist. Missing Bash capability never justifies using shell commands for vault files.`,
+  ];
+}
+
+function formatBashAllowlistEntry(entry: string): string {
+  if (!/[`\r\n]/.test(entry)) {
+    return `\`${entry}\``;
+  }
+  return JSON.stringify(entry).replaceAll('`', '\\`');
 }
 
 function buildEditPriorityGuidance(hasRead: boolean): string {
@@ -332,7 +363,7 @@ function describeObsidianTool(name: string, context: ObsidianToolPromptContext):
         ? 'List .base files, inspect configured views through the vault API, or query a base view through the Obsidian CLI'
         : 'List .base files and inspect configured views through the vault API; query is unavailable without Obsidian CLI';
     case TOOL_OBSIDIAN_BASH:
-      return 'Lowest priority: run one Bash-tool-toggle-enabled, user-allowlisted single-line shell command only when no Obsidian-specific tool can do the job; shell control syntax such as pipes, redirects, command substitution, semicolons, and &&/|| is rejected';
+      return 'Lowest-priority host diagnostic only: run one allowlisted single-line command from the Bash allowlist above when no registered tool can do the job; never use Bash to read, search, list, or modify vault files, use sub-agents for multi-file vault work, and do not retry Bash after a validation rejection; shell control syntax is rejected';
     case TOOL_OBSIDIAN_COMMAND:
       return context.obsidianCliAvailable
         ? 'Execute an Obsidian palette command by id through the Obsidian CLI'

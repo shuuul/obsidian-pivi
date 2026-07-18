@@ -7,6 +7,7 @@ import { getVaultPath } from "@pivi/obsidian-host/path";
 import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
+  buildEffectiveBashAllowlist,
   createObsidianTools,
   getObsidianToolsSettingsFromBag,
 } from "@pivi/obsidian-tools";
@@ -48,6 +49,7 @@ import {
   createWebSearchCredentialStore,
   createWebSearchTool,
   isObsidianAgentTool,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
   type WebSearchCredentialStore,
 } from "@pivi/pivi-agent-core/tools";
@@ -268,6 +270,7 @@ function createObsidianBaseToolProvider(
     const obsidianTools = toolSpecs
       .map((tool) => tool.name)
       .filter(isObsidianAgentTool);
+    const bashEnabled = obsidianTools.includes(TOOL_OBSIDIAN_BASH);
 
     return {
       toolSpecs,
@@ -275,6 +278,7 @@ function createObsidianBaseToolProvider(
       registeredToolSummary: {
         obsidianTools,
         obsidianCliAvailable,
+        ...(bashEnabled ? { bashAllowlist: buildEffectiveBashAllowlist(settings.bashAllowlist) } : {}),
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,

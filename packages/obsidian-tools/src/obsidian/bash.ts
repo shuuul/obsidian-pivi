@@ -4,26 +4,12 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
+import { buildEffectiveBashAllowlist } from '../bashAllowlist';
 import type { ObsidianToolDeps } from './deps';
 
 const DEFAULT_BASH_TIMEOUT_MS = 30_000;
 const MAX_OUTPUT_CHARS = 20_000;
-const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'pwd'] as const;
 const SHELL_CONTROL_PATTERN = /[;&|<>`]|[$][(]|[$][{]/;
-
-function normalizeAllowlist(value: readonly string[] | undefined): string[] {
-  const seen = new Set<string>();
-  const normalized: string[] = [];
-  for (const entry of value ?? []) {
-    const command = entry.trim();
-    if (!command || seen.has(command)) {
-      continue;
-    }
-    seen.add(command);
-    normalized.push(command);
-  }
-  return normalized;
-}
 
 function firstShellToken(command: string): string {
   const trimmed = command.trim();
@@ -54,10 +40,14 @@ function truncateOutput(output: string): string {
 
 export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
   const { processRunner, settings } = deps;
+  const allowlist = buildEffectiveBashAllowlist(settings.bashAllowlist);
   return {
     name: TOOL_OBSIDIAN_BASH,
     label: 'Bash',
-    description: 'Run one allowlisted shell command. The command must be a single line and match the Bash allowlist configured by the user.',
+    description:
+      'Lowest-priority host diagnostic: run one allowlisted single-line shell command only when no registered tool can do the job. '
+      + 'Never use Bash to read, search, list, or modify vault files; use Obsidian tools and sub-agents for vault work. '
+      + 'Shell control syntax is rejected. After any Bash validation rejection, do not retry Bash during the same turn.',
     parameters: {
       type: 'object',
       properties: {
@@ -81,7 +71,6 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('Bash command must not contain shell control syntax');
       }
 
-      const allowlist = normalizeAllowlist([...DEFAULT_SAFE_BASH_ALLOWLIST, ...(settings.bashAllowlist ?? [])]);
       if (allowlist.length === 0 || !isAllowedCommand(normalizedCommand, allowlist)) {
         throw new Error(`Bash command not in allowlist: ${firstShellToken(normalizedCommand) || normalizedCommand}`);
       }
