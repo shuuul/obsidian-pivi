@@ -58,7 +58,6 @@ export interface CompactionDraft {
 export const COMPACTION_PREFIRE_LEAD_RATIO = 0.1;
 export const COMPACTION_PREFIX_RATIO = 0.95;
 export const MIN_COMPACTION_MESSAGE_ENTRIES = 4;
-export const MIN_COMPACTION_NOTE_TOKENS = 128;
 export const COMPACTION_PROMPT_VERSION = 'pivi-vault-two-pass-v1';
 
 export const COMPACTION_SYSTEM_PROMPT = `You create continuation notes for a durable Obsidian vault conversation.
@@ -666,7 +665,23 @@ function extractCheckpointJson(text: string): unknown {
       candidate = null;
     }
   }
-  return candidate;
+  if (candidate !== null) {
+    return candidate;
+  }
+
+  const trimmed = text.trim();
+  const wholeJsonFence = trimmed.match(/^```json\s*\n([\s\S]*?)\n```$/i);
+  const json = wholeJsonFence?.[1] ?? (
+    trimmed.startsWith('{') && trimmed.endsWith('}') ? trimmed : null
+  );
+  if (!json) {
+    return null;
+  }
+  try {
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
 }
 
 export function parseCompactionDraft(text: string): CompactionDraft | null {
@@ -702,9 +717,7 @@ export function parseCompactionDraft(text: string): CompactionDraft | null {
     unresolvedQuestions: checkpoint.unresolvedQuestions,
     nextSteps: checkpoint.nextSteps,
   };
-  return estimateTextTokens(renderCompactionDraft(draft)) >= MIN_COMPACTION_NOTE_TOKENS
-    ? draft
-    : null;
+  return draft;
 }
 
 export function renderCompactionDraft(draft: CompactionDraft): string {

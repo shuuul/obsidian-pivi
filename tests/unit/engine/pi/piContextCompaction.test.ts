@@ -332,11 +332,24 @@ describe('piContextCompaction', () => {
     expect(converted).toContain('[[Projects/Pivi.md]]');
   });
 
-  it('parses structured drafts and rejects undersized or unsafe results', () => {
+  it('normalizes complete structured drafts and rejects incomplete or unsafe results', () => {
     expect(parseCompactionDraft(checkpointJson())).toMatchObject({
       goal: 'Ship vault-native compaction',
       artifacts: [{ label: 'Spec', vaultPath: 'specs/018-vault-context-compaction-redesign.md' }],
     });
+    const concise = {
+      continuationSummary: 'Continue the verified migration.',
+      goal: null,
+      constraints: [],
+      decisions: [],
+      artifacts: [],
+      openWork: [],
+      unresolvedQuestions: [],
+      nextSteps: [],
+    };
+    expect(parseCompactionDraft(JSON.stringify(concise))).toEqual(concise);
+    expect(parseCompactionDraft(`\`\`\`json\n${JSON.stringify(concise)}\n\`\`\``))
+      .toEqual(concise);
     expect(parseCompactionDraft(checkpointJson({
       artifacts: [{ label: 'Private', vaultPath: '../private.md' }],
     }))).toBeNull();
@@ -348,6 +361,7 @@ describe('piContextCompaction', () => {
     }))).toBeNull();
     expect(parseCompactionDraft('```pivi-checkpoint\n{"continuationSummary":"short"}\n```'))
       .toBeNull();
+    expect(parseCompactionDraft(`Commentary\n${JSON.stringify(concise)}`)).toBeNull();
   });
 
   it('builds and merges Checkpoint v1 ledgers for NOTE₂', () => {

@@ -404,7 +404,7 @@ async function sampleValidatedDraft(
   const sampled = await sampleCompactionNote(deps.plugin, messages, prompt, signal);
   const draft = parseCompactionDraft(sampled);
   if (!draft) {
-    throw new Error('Compaction model returned an invalid or undersized checkpoint.');
+    throw new Error('Compaction model returned an invalid checkpoint.');
   }
   return draft;
 }
@@ -462,7 +462,12 @@ async function sampleFallback(
       return await sampleValidatedDraft(
         deps,
         compactionMessagesFromEntries(plan.activeEntries),
-        buildFallbackPrompt(instructions),
+        [
+          buildFallbackPrompt(instructions),
+          attempt > 0
+            ? 'A previous attempt failed validation. Return every required field in one complete JSON object with no commentary.'
+            : '',
+        ].filter(Boolean).join('\n\n'),
         signal,
       );
     } catch (error) {

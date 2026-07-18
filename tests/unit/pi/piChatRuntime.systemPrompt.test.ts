@@ -1133,9 +1133,11 @@ describe('PiChatRuntime system prompt', () => {
 
       await handledCompaction;
       expect(rejection).toEqual(expect.objectContaining({
-        message: 'Compaction model returned an invalid or undersized checkpoint.',
+        message: 'Compaction model returned an invalid checkpoint.',
       }));
       expect(mockCompactionSample).toHaveBeenCalledTimes(4);
+      expect(String((mockCompactionSample.mock.calls[3] as unknown[])[2]))
+        .toContain('A previous attempt failed validation.');
       expect(internals.sessionTree.getEntries().filter(
         (entry) => entry.type === 'compaction',
       )).toHaveLength(0);
