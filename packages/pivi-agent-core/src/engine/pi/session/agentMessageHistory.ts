@@ -176,6 +176,10 @@ export function sanitizeAgentMessagesForLlm(messages: AgentMessage[]): Message[]
     }
 
     if (message.role === 'assistant') {
+      if (message.stopReason === 'error') {
+        pendingToolCallIds = new Set();
+        continue;
+      }
       pendingToolCallIds = new Set(assistantToolCallIds(message));
       sanitized.push(message);
       continue;

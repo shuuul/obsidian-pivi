@@ -50,14 +50,14 @@ function createHarness(responses: AssistantMessage[]) {
     continue: continuePrompt,
   } as unknown as Agent;
   const chunks: StreamChunk[] = [];
-  const persisted: AssistantMessage[][] = [];
+  const discarded: AssistantMessage[] = [];
   const controller = new AbortController();
   const run = () => runPiChatPromptWithRetry({
     agent,
     contextWindow: 200_000,
+    discardFailedAttempt: message => discarded.push(message),
     emit: (chunk) => chunks.push(chunk),
     getLatestAssistantMessage: () => latest,
-    persistFailedAttempt: () => persisted.push([...state.messages]),
     prompt: async () => applyNext(),
     signal: controller.signal,
   });
@@ -66,7 +66,7 @@ function createHarness(responses: AssistantMessage[]) {
     chunks,
     continuePrompt,
     controller,
-    persisted,
+    discarded,
     run,
     state,
   };
@@ -94,7 +94,7 @@ describe('runPiChatPromptWithRetry', () => {
 
     await expect(resultPromise).resolves.toMatchObject({ status: 'success' });
     expect(harness.continuePrompt).toHaveBeenCalledTimes(2);
-    expect(harness.persisted).toHaveLength(2);
+    expect(harness.discarded).toHaveLength(2);
     expect(harness.chunks).toEqual([
       {
         type: 'retry_start',
@@ -137,7 +137,7 @@ describe('runPiChatPromptWithRetry', () => {
       finalMessage: expect.objectContaining({ errorMessage: 'socket hang up' }),
     });
     expect(harness.continuePrompt).toHaveBeenCalledTimes(3);
-    expect(harness.persisted).toHaveLength(3);
+    expect(harness.discarded).toHaveLength(3);
     expect(harness.chunks.at(-1)).toEqual({
       type: 'retry_end',
       success: false,
@@ -156,7 +156,7 @@ describe('runPiChatPromptWithRetry', () => {
 
     await expect(harness.run()).resolves.toMatchObject({ status: 'failed' });
     expect(harness.continuePrompt).not.toHaveBeenCalled();
-    expect(harness.persisted).toHaveLength(0);
+    expect(harness.discarded).toHaveLength(0);
     expect(harness.chunks).toEqual([]);
   });
 
@@ -176,7 +176,7 @@ describe('runPiChatPromptWithRetry', () => {
     await observedResult;
     expect(rejection).toEqual(new Error('continuation setup failed'));
     expect(harness.continuePrompt).toHaveBeenCalledTimes(1);
-    expect(harness.persisted).toHaveLength(1);
+    expect(harness.discarded).toHaveLength(1);
   });
 
   it('cancels an in-flight backoff without continuing the agent', async () => {

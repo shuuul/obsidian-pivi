@@ -163,8 +163,8 @@ export class InputTurnPipeline {
     this.host.setActiveStreamingAssistantMessage(assistantMsg);
     this.host.seedProviderBoundaryInitialTurn(displayContent, imagesForMessage);
 
-    streamController.showThinkingIndicator(isCompact ? 'Compacting...' : undefined);
     state.responseStartTime = performance.now();
+    streamController.showThinkingIndicator(isCompact ? 'Compacting...' : undefined);
 
     let wasInterrupted = false;
     let wasInvalidated = false;

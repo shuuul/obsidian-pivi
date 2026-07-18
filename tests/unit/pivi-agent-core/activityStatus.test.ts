@@ -43,6 +43,11 @@ describe('activity status mapping', () => {
 
   it('prefers explicit lifecycle facts without inferring unavailable states', () => {
     expect(resolveToolActivityStatus({ status: 'error', activityStatus: 'cancelled' })).toBe('cancelled');
+    expect(resolveSubagentActivityStatus({
+      asyncStatus: 'error',
+      status: 'error',
+      activityStatus: 'cancelled',
+    })).toBe('cancelled');
     expect(resolveSubagentActivityStatus({ status: 'running', activityStatus: 'waiting' })).toBe('waiting');
   });
 });

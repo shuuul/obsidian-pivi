@@ -39,6 +39,7 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
   const { externalFiles } = deps;
   return {
     name: TOOL_OBSIDIAN_READ_EXTERNAL,
+    executionMode: 'sequential',
     label: 'Read external file',
     description: 'Read an external file by absolute path. Defaults to stats-only for large files; explicit line ranges automatically return the largest complete-line page that fits maxChars and provide nextStartLine when more remains.',
     parameters: {
@@ -62,7 +63,10 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
       const mode = getReadMode(input);
       const startLine = getPositiveIntegerField(input, 'startLine');
       const endLine = getPositiveIntegerField(input, 'endLine');
-      const maxChars = resolveEffectiveReadMaxChars(input, deps.resolveReadMaxChars);
+      const maxChars = resolveEffectiveReadMaxChars(
+        input,
+        mode === 'stats' ? undefined : deps.resolveReadMaxChars,
+      );
       const fileStat = externalFiles.stat(absolutePath);
       const isRangeRead = startLine !== undefined || endLine !== undefined;
       if (fileStat.size > MAX_EXTERNAL_READ_BYTES && (isRangeRead || maxChars >= fileStat.size)) {

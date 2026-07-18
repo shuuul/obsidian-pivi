@@ -58,7 +58,9 @@ function createController() {
       removeMessage: jest.fn(),
     },
     streamController: {
-      showThinkingIndicator: jest.fn(),
+      showThinkingIndicator: jest.fn(() => {
+        expect(state.responseStartTime).not.toBeNull();
+      }),
       hideThinkingIndicator: jest.fn(),
       handleStreamChunk: jest.fn(),
       appendText: jest.fn(),

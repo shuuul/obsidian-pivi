@@ -79,6 +79,22 @@ export function buildEstimatedUsageInfo(
   };
 }
 
+export function buildZeroUsageInfoForModel(
+  resolvedModel: ResolvedPiModel,
+): UsageInfo {
+  const contextWindow = resolvedModel?.contextWindow ?? 0;
+  return {
+    contextTokens: 0,
+    contextTokensIsAuthoritative: false,
+    contextWindow,
+    contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
+    inputTokens: 0,
+    ...(resolvedModel?.maxTokens ? { outputTokenLimit: resolvedModel.maxTokens } : {}),
+    ...(typeof resolvedModel?.id === 'string' ? { model: resolvedModel.id } : {}),
+    percentage: 0,
+  };
+}
+
 export function latestUsageFromMessages(
   messages: AgentMessage[],
   resolvedModel: ResolvedPiModel,

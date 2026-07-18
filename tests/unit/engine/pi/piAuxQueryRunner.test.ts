@@ -6,7 +6,8 @@ const mockAgentInstances: Array<{
   prompt: jest.Mock;
   abort: jest.Mock;
   reset: jest.Mock;
-  options: { initialState: { systemPrompt: string; model: unknown }; streamFn: unknown };
+  state: { messages: unknown[] };
+  options: { initialState: { systemPrompt: string; model: unknown; messages?: unknown[] }; streamFn: unknown };
 }> = [];
 
 function expectDefined<T>(value: T | undefined): asserts value is T {
@@ -31,12 +32,13 @@ let promptBehavior: (instance: (typeof mockAgentInstances)[number], input: strin
 
 jest.mock('@earendil-works/pi-agent-core', () => ({
   Agent: jest.fn().mockImplementation((options: {
-    initialState: { systemPrompt: string; model: unknown };
+    initialState: { systemPrompt: string; model: unknown; messages?: unknown[] };
     streamFn: unknown;
   }) => {
     const listeners: Array<(event: unknown) => void> = [];
     const instance = {
       options,
+      state: { messages: options.initialState.messages ?? [] },
       listeners,
       subscribe: jest.fn((listener: (event: unknown) => void) => {
         listeners.push(listener);
@@ -154,6 +156,29 @@ describe('PiAuxQueryRunner (core)', () => {
     const agentOptions = agentCall[0];
     expectDefined(agentOptions);
     expect(agentOptions.streamFn).toBe(mockStreamSimple);
+  });
+
+  it('builds read headroom from the child model instead of a parent session', async () => {
+    let resolveChildReadMaxChars:
+      | ((requestedMaxChars?: number) => number)
+      | undefined;
+    mockResolveModel.mockReturnValue({
+      ...mockModel,
+      contextWindow: 20_000,
+      maxTokens: 4_000,
+    });
+    const runner = new PiAuxQueryRunner({
+      resolveModel: (modelKey) => mockResolveModel(modelKey),
+      resolveAuth: (model) => mockResolveAuth(model),
+      streamSimple: mockStreamSimple,
+      getTools: (resolveReadMaxChars) => {
+        resolveChildReadMaxChars = resolveReadMaxChars;
+        return [];
+      },
+    });
+
+    await runner.query(baseConfig(), 'prompt');
+    expect(resolveChildReadMaxChars?.()).toBe(16_000);
   });
 
   it('throws Cancelled when abort signal is already set before query', async () => {

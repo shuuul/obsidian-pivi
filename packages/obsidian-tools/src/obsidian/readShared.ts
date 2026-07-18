@@ -23,13 +23,14 @@ export function getPositiveIntegerField(input: Record<string, unknown>, key: str
 
 export function resolveEffectiveReadMaxChars(
   input: Record<string, unknown>,
-  resolveDefault?: () => number,
+  resolveDefault?: (requestedMaxChars?: number) => number,
 ): number {
   const explicit = getPositiveIntegerField(input, 'maxChars');
-  if (explicit !== undefined) {
-    return explicit;
+  if (!resolveDefault) {
+    return explicit ?? calculateReadToolMaxChars(null);
   }
-  return resolveDefault?.() ?? calculateReadToolMaxChars(null);
+  const resolved = resolveDefault(explicit);
+  return explicit === undefined ? resolved : Math.min(explicit, resolved);
 }
 
 export function getReadMode(input: Record<string, unknown>): ReadMode {

@@ -21,6 +21,7 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
   const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_READ,
+    executionMode: 'sequential',
     label: 'Read note',
     description: 'Read a note body via vault API. Defaults to stats-only for large files; explicit line ranges automatically return the largest complete-line page that fits maxChars and provide nextStartLine when more remains.',
     parameters: {
@@ -45,7 +46,10 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
       const mode = getReadMode(input);
       const startLine = getPositiveIntegerField(input, 'startLine');
       const endLine = getPositiveIntegerField(input, 'endLine');
-      const maxChars = resolveEffectiveReadMaxChars(input, deps.resolveReadMaxChars);
+      const maxChars = resolveEffectiveReadMaxChars(
+        input,
+        mode === 'stats' ? undefined : deps.resolveReadMaxChars,
+      );
       const result = await vault.readNote(file, notePath);
       const characters = result.content.length;
       const lineSpans = getLineSpans(result.content);

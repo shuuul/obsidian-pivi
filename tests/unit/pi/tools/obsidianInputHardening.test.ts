@@ -245,6 +245,13 @@ describe('obsidian tool input hardening', () => {
     expect(result.details).toMatchObject({ truncated: true, nextStartLine: 2 });
   });
 
+  it('marks content read tools sequential so sibling calls cannot race shared headroom', () => {
+    const deps = makeDeps();
+
+    expect(createReadNoteTool(deps).executionMode).toBe('sequential');
+    expect(createReadExternalTool(deps).executionMode).toBe('sequential');
+  });
+
   it('returns the final note range page without a continuation marker', async () => {
     const deps = makeDeps({
       resolveReadMaxChars: () => 150,

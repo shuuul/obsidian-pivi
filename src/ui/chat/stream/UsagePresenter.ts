@@ -11,15 +11,22 @@ export function shouldApplyUsageStreamChunk(params: {
   currentSessionId: string | null;
   subagentsSpawnedThisStream: number;
   ignoreUsageUpdates: boolean;
+  followsCompaction?: boolean;
 }): boolean {
-  const { chunkSessionId, currentSessionId, subagentsSpawnedThisStream, ignoreUsageUpdates } = params;
+  const {
+    chunkSessionId,
+    currentSessionId,
+    subagentsSpawnedThisStream,
+    ignoreUsageUpdates,
+    followsCompaction = false,
+  } = params;
 
   if (ignoreUsageUpdates) {
     return false;
   }
 
   // Pi may report cumulative usage while subagents ran; skip until stream ends.
-  if (subagentsSpawnedThisStream > 0) {
+  if (subagentsSpawnedThisStream > 0 && !followsCompaction) {
     return false;
   }
 
@@ -54,16 +61,25 @@ export interface UsagePresenterDeps {
 }
 
 export class UsagePresenter {
+  private nextUsageFollowsCompaction = false;
+
   constructor(private readonly deps: UsagePresenterDeps) {}
+
+  markCompactionApplied(): void {
+    this.nextUsageFollowsCompaction = true;
+  }
 
   handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {
     const { state } = this.deps;
     const currentSessionId = this.deps.getAgentService?.()?.getSessionId() ?? null;
+    const followsCompaction = this.nextUsageFollowsCompaction;
+    this.nextUsageFollowsCompaction = false;
     if (!shouldApplyUsageStreamChunk({
       chunkSessionId: chunk.sessionId ?? null,
       currentSessionId,
       subagentsSpawnedThisStream: this.deps.subagentManager.subagentsSpawnedThisStream,
       ignoreUsageUpdates: state.ignoreUsageUpdates,
+      followsCompaction,
     })) {
       return;
     }

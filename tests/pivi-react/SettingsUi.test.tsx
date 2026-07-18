@@ -513,6 +513,43 @@ describe('React settings foundation', () => {
     expect(within(codexSetting!).queryByText(/auth\.json/)).toBeNull();
     expect(within(codexSetting!).getByRole('button', { name: 'Reconnect' })).toBeInTheDocument();
   });
+  it('rechecks OAuth credentials when a provider is disabled or enabled', async () => {
+    const ensureProviderCredentials = jest.fn(async () => undefined);
+    const settings = {
+      addedProviders: ['openai-codex'],
+      disabledProviders: [] as string[],
+      customProviders: [],
+      visibleModels: [],
+      availableModes: [],
+      discoveredModels: [],
+      environmentVariables: '',
+      selectedMode: '',
+    };
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      ensureProviderCredentials,
+      getSettings: () => ({ ...settings, disabledProviders: [...settings.disabledProviders] }),
+      saveSettings: async (patch: { disabledProviders?: string[] }) => {
+        if (patch.disabledProviders) settings.disabledProviders = [...patch.disabledProviders];
+      },
+    });
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot ports={ports} initialTab="models" />
+      </I18nProvider>,
+    ));
+    await act(async () => undefined);
+    expect(ensureProviderCredentials).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Disable' }));
+    await act(async () => undefined);
+    expect(ensureProviderCredentials).toHaveBeenCalledTimes(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enable' }));
+    await act(async () => undefined);
+    expect(ensureProviderCredentials).toHaveBeenCalledTimes(3);
+  });
   it('calls Grok Build OAuth connect from an expanded provider card', async () => {
     const loginProviderOAuth = jest.fn(async () => undefined);
     const ports = createPorts();

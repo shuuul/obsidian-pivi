@@ -79,6 +79,7 @@ function createRetryingAgent() {
     for (const listener of listeners) listener(event);
   };
   const failed = assistant('error', 'socket hang up');
+  failed.content = [{ type: 'text', text: 'Partial answer' }];
   const recovered = assistant('stop');
   const user: AgentMessage = {
     role: 'user',
@@ -89,6 +90,16 @@ function createRetryingAgent() {
     state.messages = [user, failed];
     emit({ type: 'message_end', message: user });
     emit({ type: 'message_start', message: failed });
+    emit({
+      type: 'message_update',
+      message: failed,
+      assistantMessageEvent: {
+        type: 'text_delta',
+        contentIndex: 0,
+        delta: 'Partial answer',
+        partial: failed,
+      },
+    });
     emit({
       type: 'message_update',
       message: failed,
@@ -138,7 +149,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
     jest.useRealTimers();
   });
 
-  it('persists a transient failure without projecting it as a terminal error', async () => {
+  it('discards a transient failure from persistence before retrying', async () => {
     const { agent, continuePrompt } = createRetryingAgent();
     const activeTurn = createActiveTurn();
     const synced: AgentMessage[][] = [];
@@ -196,12 +207,11 @@ describe('streamPiChatTurn retry lifecycle', () => {
       'done',
     ]));
     expect(chunks).not.toContainEqual(expect.objectContaining({ type: 'error' }));
-    expect(synced).toHaveLength(2);
-    expect(synced[0]).toEqual(expect.arrayContaining([
-      expect.objectContaining({ stopReason: 'error', errorMessage: 'socket hang up' }),
+    expect(synced).toHaveLength(1);
+    expect(synced[0]).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ stopReason: 'error' }),
     ]));
-    expect(synced[1]).toEqual(expect.arrayContaining([
-      expect.objectContaining({ stopReason: 'error', errorMessage: 'socket hang up' }),
+    expect(synced[0]).toEqual(expect.arrayContaining([
       expect.objectContaining({ stopReason: 'stop' }),
     ]));
   });

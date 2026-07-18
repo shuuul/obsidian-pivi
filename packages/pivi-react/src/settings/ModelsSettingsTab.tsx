@@ -10,10 +10,15 @@ import { useProviderReorder } from './providers/useProviderReorder';
 
 function buildInteractiveOAuthMembershipKey(
   addedProviders: readonly string[],
+  disabledProviders: readonly string[],
   interactiveOAuthProviderIds: readonly string[],
 ): string {
   const interactive = new Set(interactiveOAuthProviderIds);
-  return addedProviders.filter(providerId => interactive.has(providerId)).sort().join('\0');
+  const disabled = new Set(disabledProviders);
+  return addedProviders
+    .filter(providerId => interactive.has(providerId) && !disabled.has(providerId))
+    .sort()
+    .join('\0');
 }
 
 export interface ModelsSettingsTabProps {
@@ -35,6 +40,7 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const reload = (): void => setSettings(models.getSettings());
   const interactiveOAuthMembershipKey = buildInteractiveOAuthMembershipKey(
     settings.addedProviders,
+    settings.disabledProviders,
     models.interactiveOAuthProviderIds,
   );
 

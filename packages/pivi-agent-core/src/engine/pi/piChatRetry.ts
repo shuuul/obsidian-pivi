@@ -23,9 +23,9 @@ export interface PiChatRetryResult {
 export interface PiChatRetryOptions {
   agent: Agent;
   contextWindow: number;
+  discardFailedAttempt: (message: AssistantMessage) => void;
   emit: (chunk: PiChatRetryChunk) => void;
   getLatestAssistantMessage: () => AssistantMessage | undefined;
-  persistFailedAttempt: () => void;
   prompt: () => Promise<void>;
   signal: AbortSignal;
 }
@@ -129,7 +129,7 @@ export async function runPiChatPromptWithRetry(
       return { status: 'failed', finalMessage: assistant };
     }
 
-    options.persistFailedAttempt();
+    options.discardFailedAttempt(assistant);
     removeFailedAssistantFromActiveContext(options.agent, assistant);
 
     retryAttempt += 1;

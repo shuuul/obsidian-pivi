@@ -3,11 +3,18 @@ import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
 
 import type { StreamChunk, ToolCallInfo } from '../../foundation';
 import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
+import { calculateReadToolMaxChars } from '../../foundation/usage';
 import type { AuxQueryConfig, AuxQueryRunner } from '../../runtime/auxQueryRunner';
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
 import { piAiModels } from './piAiModels';
 import { PiBackgroundSubagentJobs } from './piBackgroundSubagentJobs';
+import {
+  buildEstimatedUsageInfo,
+  buildZeroUsageInfoForModel,
+  latestUsageFromMessages,
+} from './piChatRuntimeUsage';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
+import { createPiReadBudget, type PiReadBudget } from './piReadBudget';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import type { SubagentConcurrencyLimiter } from './subagentConcurrencyLimiter';
 
@@ -22,7 +29,9 @@ export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = P
   onSubagentChunk?: (chunk: StreamChunk) => void;
   getMaxConcurrentSubagents?: () => number;
   subagentConcurrencyLimiter?: SubagentConcurrencyLimiter;
-  getTools?: () => AgentTool[];
+  getTools?: (
+    resolveReadMaxChars: (requestedMaxChars?: number) => number,
+  ) => AgentTool[];
 }
 
 export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> implements AuxQueryRunner {
@@ -30,6 +39,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
   private configKey: string | null = null;
   private readonly eventAdapter = new PiAgentEventAdapter();
   private readonly backgroundJobs: PiBackgroundSubagentJobs;
+  private readonly readBudgets = new WeakMap<Agent, PiReadBudget>();
 
   constructor(private readonly dependencies: PiAuxQueryRunnerDependencies<TModel>) {
     this.backgroundJobs = new PiBackgroundSubagentJobs({
@@ -77,6 +87,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
     config.abortController?.signal.addEventListener('abort', abortHandler, { once: true });
 
     try {
+      this.readBudgets.get(agent)?.reset();
       await agent.prompt(prompt);
 
       if (config.abortController?.signal.aborted) {
@@ -144,22 +155,36 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
       throw new Error(`Credentials not found for provider: ${model.provider}`);
     }
 
-    return new Agent({
+    let agent: Agent | null = null;
+    const readBudget = createPiReadBudget(() => {
+      const messages = agent?.state.messages ?? [];
+      const usage = latestUsageFromMessages(messages, model)
+        ?? buildEstimatedUsageInfo(messages, model)
+        ?? buildZeroUsageInfoForModel(model);
+      return calculateReadToolMaxChars(usage);
+    });
+    agent = new Agent({
       initialState: {
         model,
         systemPrompt: config.systemPrompt,
-        tools: this.dependencies.getTools?.() ?? [],
+        tools: this.dependencies.getTools?.(
+          requestedMaxChars => readBudget.reserve(requestedMaxChars),
+        ) ?? [],
         messages: [],
         thinkingLevel: 'low',
       },
       convertToLlm: (messages) => messages as never[],
       streamFn: this.dependencies.streamSimple,
     });
+    this.readBudgets.set(agent, readBudget);
+    return agent;
   }
 }
 
 export interface CreatePiAuxQueryRunnerOptions {
-  getTools?: () => AgentTool[];
+  getTools?: (
+    resolveReadMaxChars: (requestedMaxChars?: number) => number,
+  ) => AgentTool[];
   onSubagentChunk?: (chunk: StreamChunk) => void;
   subagentConcurrencyLimiter?: SubagentConcurrencyLimiter;
 }

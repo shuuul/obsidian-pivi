@@ -173,7 +173,7 @@ export class InputController {
   discardStreamingAssistantMessage(messageId: string): void {
     const { state } = this.controllerDeps;
     state.messages = state.messages.filter((message) => message.id !== messageId);
-    state.currentTextContent = '';
+    state.resetCurrentAssistantStream();
   }
 
   seedProviderBoundaryInitialTurn(displayContent: string, images: ChatMessage['images'] | undefined): void {

@@ -203,7 +203,9 @@ export class StreamController {
 
       case 'notice':
       case 'context_compacting':
+        break;
       case 'context_compacted':
+        this.usagePresenter.markCompactionApplied();
         break;
 
       case 'retry_start':

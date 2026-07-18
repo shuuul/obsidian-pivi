@@ -180,7 +180,9 @@ const mockAuxRunner = {
   cleanupIdleSubagents: jest.fn(),
   abortAllSubagents: jest.fn(),
 };
-let mockCapturedSubagentToolProvider: (() => unknown[]) | undefined;
+let mockCapturedSubagentToolProvider: ((
+  resolveReadMaxChars: (requestedMaxChars?: number) => number,
+) => unknown[]) | undefined;
 let mockCapturedSubagentChunkSink: ((chunk: StreamChunk) => void) | undefined;
 
 jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
@@ -392,7 +394,7 @@ describe('PiChatRuntime system prompt', () => {
 
     new PiChatRuntime(plugin, testNetwork, null, null, providerWithSpawnAgent);
 
-    const childTools = mockCapturedSubagentToolProvider?.() ?? [];
+    const childTools = mockCapturedSubagentToolProvider?.(() => 12_345) ?? [];
     expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['obsidian_read']);
   });
 
@@ -899,6 +901,7 @@ describe('PiChatRuntime system prompt', () => {
     expect(manualCompactionUsage.usage.contextTokens).toBeLessThanOrEqual(
       manualCompaction.tokensAfter + (manualCompactionUsage.usage.contextEnvelope?.system.tokens ?? 0),
     );
+    expect(manualCompactionUsage.usage.contextEnvelope?.selectedContext.tokens).toBe(0);
     expect(manualCompaction.summary).toContain('The earlier session history was compacted.');
     expect(manualCompaction.checkpoint).toMatchObject({
       continuationSummary: expect.stringContaining('Continue from the compacted session'),
@@ -987,6 +990,85 @@ describe('PiChatRuntime system prompt', () => {
     ));
     expect(instructionPass2).toBeDefined();
     expect(String((instructionPass2 as unknown[])[2])).toContain('Create the final NOTE₂');
+  });
+
+  it('recompacts the successful threshold note with waiting manual instructions', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    for (const text of ['First turn', 'Second turn']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Persist two complete turns (four message entries).
+      }
+    }
+    const internals = runtime as unknown as {
+      compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+      sessionTree: SessionTreeStore;
+    };
+    const deps = internals.compactionDeps();
+    let resolvePass1: ((value: string) => void) | undefined;
+    mockCompactionSample
+      .mockImplementationOnce(() => new Promise<string>((resolve) => {
+        resolvePass1 = resolve;
+      }))
+      .mockResolvedValue(defaultCompactionSample);
+
+    const thresholdCompaction = compactCurrentSession(deps, 'threshold');
+    await Promise.resolve();
+    const manualCompaction = compactCurrentSession(
+      deps,
+      'manual',
+      'preserve successful-lock instructions',
+    );
+    resolvePass1?.(defaultCompactionSample);
+
+    const [thresholdResult, manualResult] = await Promise.all([
+      thresholdCompaction,
+      manualCompaction,
+    ]);
+
+    expect(thresholdResult).not.toBeNull();
+    expect(manualResult).not.toBeNull();
+    expect(mockCompactionSample).toHaveBeenCalledTimes(3);
+    expect(String((mockCompactionSample.mock.calls[2] as unknown[])[2]))
+      .toContain('preserve successful-lock instructions');
+    expect(internals.sessionTree.getEntries().filter(
+      entry => entry.type === 'compaction',
+    )).toHaveLength(2);
+  });
+
+  it('does not retry a waiting manual compaction after lifecycle invalidation', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    for (const text of ['First turn', 'Second turn']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Persist two complete turns (four message entries).
+      }
+    }
+    const internals = runtime as unknown as {
+      compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+    };
+    const deps = internals.compactionDeps();
+    let resolvePass1: ((value: string) => void) | undefined;
+    mockCompactionSample
+      .mockImplementationOnce(() => new Promise<string>((resolve) => {
+        resolvePass1 = resolve;
+      }))
+      .mockResolvedValue(defaultCompactionSample);
+
+    const thresholdCompaction = compactCurrentSession(deps, 'threshold');
+    await Promise.resolve();
+    const manualCompaction = compactCurrentSession(deps, 'manual', 'stale instructions');
+    deps.compactionState.generation += 1;
+    deps.compactionState.foregroundController?.abort();
+    resolvePass1?.(defaultCompactionSample);
+
+    await expect(thresholdCompaction).rejects.toThrow(
+      'Session or model changed while context compaction was running.',
+    );
+    await expect(manualCompaction).rejects.toThrow(
+      'Session or model changed while context compaction was waiting for the active run.',
+    );
+    expect(mockCompactionSample.mock.calls.some(
+      call => String((call as unknown[])[2]).includes('stale instructions'),
+    )).toBe(false);
   });
 
   it('serializes foreground compaction for two tabs sharing one session store', async () => {

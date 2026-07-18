@@ -681,15 +681,18 @@ export class ChatState {
     this.uiStore.update({ responseStartTime: value });
   }
 
-
-  resetStreamingState(): void {
+  resetCurrentAssistantStream(): void {
     this.state.currentTextContent = '';
     this.currentThinkingContent = '';
+    this.uiStore.update({ currentThinkingContent: '' });
+  }
+
+  resetStreamingState(): void {
+    this.resetCurrentAssistantStream();
     this.state.isStreaming = false;
     this.state.cancelRequested = false;
     this.state.responseStartTime = null;
     this.uiStore.update({
-      currentThinkingContent: '',
       thinkingIndicator: null,
       isStreaming: false,
       cancelRequested: false,

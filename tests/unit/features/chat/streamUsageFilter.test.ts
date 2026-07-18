@@ -19,6 +19,16 @@ describe('shouldApplyUsageStreamChunk', () => {
     })).toBe(false);
   });
 
+  it('accepts the usage refresh immediately following compaction', () => {
+    expect(shouldApplyUsageStreamChunk({
+      chunkSessionId: 's1',
+      currentSessionId: 's1',
+      subagentsSpawnedThisStream: 2,
+      ignoreUsageUpdates: false,
+      followsCompaction: true,
+    })).toBe(true);
+  });
+
   it('rejects usage from a different session', () => {
     expect(shouldApplyUsageStreamChunk({
       chunkSessionId: 'other',

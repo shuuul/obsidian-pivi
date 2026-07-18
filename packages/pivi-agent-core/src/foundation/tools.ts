@@ -106,13 +106,17 @@ export function resolveToolActivityStatus(
 export function resolveSubagentActivityStatus(
   subagent: Pick<SubagentInfo, 'activityStatus' | 'asyncStatus' | 'status'>,
 ): ActivityStatus {
+  const explicitTerminalStatus = subagent.activityStatus
+    && !['queued', 'running', 'waiting'].includes(subagent.activityStatus)
+    ? subagent.activityStatus
+    : undefined;
   switch (subagent.asyncStatus) {
     case 'completed':
-      return 'completed';
+      return explicitTerminalStatus ?? 'completed';
     case 'error':
-      return 'failed';
+      return explicitTerminalStatus ?? 'failed';
     case 'orphaned':
-      return 'orphaned';
+      return explicitTerminalStatus ?? 'orphaned';
     case 'pending':
       if (subagent.activityStatus) return subagent.activityStatus;
       return 'queued';

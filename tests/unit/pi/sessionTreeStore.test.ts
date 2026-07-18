@@ -807,4 +807,25 @@ describe('agentMessageHistory', () => {
       'assistant',
     ]);
   });
+
+  it('drops persisted failed assistant attempts before replaying history to the model', () => {
+    const sanitized = sanitizeAgentMessagesForLlm([
+      { role: 'user', content: 'question', timestamp: 1 },
+      {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'partial failed answer' }],
+        stopReason: 'error',
+        errorMessage: 'socket hang up',
+        timestamp: 2,
+      },
+      { role: 'assistant', content: [{ type: 'text', text: 'recovered answer' }], timestamp: 3 },
+    ] as never[]);
+
+    expect(sanitized).toEqual([
+      expect.objectContaining({ role: 'user' }),
+      expect.objectContaining({ role: 'assistant', content: [
+        expect.objectContaining({ text: 'recovered answer' }),
+      ] }),
+    ]);
+  });
 });

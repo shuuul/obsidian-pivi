@@ -60,9 +60,11 @@ import { testPiChatConnectivity } from './piChatRuntimeConnectivity';
 import { streamPiChatTurn } from './piChatRuntimeTurn';
 import {
   buildEstimatedUsageInfo,
+  buildZeroUsageInfoForModel,
   latestUsageFromMessages,
 } from './piChatRuntimeUsage';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
+import { createPiReadBudget } from './piReadBudget';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import { resolvePiThinkingLevelForModel } from './piThinkingLevels';
 import { toPiAgentTool } from './piToolAdapter';
@@ -106,6 +108,9 @@ export class PiChatRuntime implements PiChatService {
     prefire: null,
   };
   private readonly subagentRunner: PiAuxQueryRunner;
+  private readonly readBudget = createPiReadBudget(
+    () => this.calculateReadMaxCharsForTools(),
+  );
   private readonly subagentChunkListeners = new Set<(chunk: StreamChunk) => void | Promise<void>>();
   private readonly readyState = new RuntimeReadyState((error) => {
     logger.warn('ready listener threw', error);
@@ -125,7 +130,7 @@ export class PiChatRuntime implements PiChatService {
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth, network.mcpFetch, network.mcpProcessEnv) : null;
     this.subagentRunner = createPiAuxQueryRunner(plugin, {
-      getTools: () => this.buildSubagentTools(),
+      getTools: (resolveReadMaxChars) => this.buildSubagentTools(resolveReadMaxChars),
       onSubagentChunk: (chunk) => {
         this.dispatchSubagentChunk(chunk);
       },
@@ -261,6 +266,7 @@ export class PiChatRuntime implements PiChatService {
     _queryOptions?: PiTurnOptions,
   ): AsyncGenerator<StreamChunk> {
     this.subagentRunner.cleanupIdleSubagents();
+    this.readBudget.reset();
     this.setExternalContextPaths(turn.request.externalContextPaths ?? []);
 
     if (!(await this.ensureReady())) {
@@ -284,7 +290,11 @@ export class PiChatRuntime implements PiChatService {
         const compacted = await compactCurrentSession(this.compactionDeps(), 'manual', stripCompactCommand(turn.request.text));
         if (compacted) {
           yield { type: 'context_compacted', ...compacted };
-          const usage = buildUsageAfterCompaction(this.compactionDeps(), turn, compacted.tokensAfter);
+          const usage = buildUsageAfterCompaction(
+            this.compactionDeps(),
+            undefined,
+            compacted.tokensAfter,
+          );
           if (usage) {
             yield { type: 'usage', usage };
           }
@@ -452,7 +462,9 @@ export class PiChatRuntime implements PiChatService {
 
   private buildToolRegistry() {
     const vaultPath = this.getVaultPath();
-    const resolveReadMaxChars = () => this.resolveReadMaxCharsForTools();
+    const resolveReadMaxChars = (requestedMaxChars?: number) => (
+      this.readBudget.reserve(requestedMaxChars)
+    );
     if (!vaultPath) {
       return buildPiToolRegistry({
         host: this.plugin,
@@ -475,7 +487,9 @@ export class PiChatRuntime implements PiChatService {
     });
   }
 
-  private buildSubagentTools(): AgentTool[] {
+  private buildSubagentTools(
+    resolveReadMaxChars: (requestedMaxChars?: number) => number,
+  ): AgentTool[] {
     const vaultPath = this.getVaultPath();
     if (!vaultPath || !this.baseToolProvider) {
       return [];
@@ -483,7 +497,7 @@ export class PiChatRuntime implements PiChatService {
     const providedBaseTools = this.baseToolProvider({
       vaultPath,
       externalContextPaths: this.externalContextPaths,
-      resolveReadMaxChars: () => this.resolveReadMaxCharsForTools(),
+      resolveReadMaxChars,
     });
     const baseTools = providedBaseTools.toolSpecs
       .map(toPiAgentTool)
@@ -545,14 +559,12 @@ export class PiChatRuntime implements PiChatService {
     };
   }
 
-  private resolveReadMaxCharsForTools(): number {
+  private calculateReadMaxCharsForTools(): number {
     const model = this.resolveModel();
     const messages = this.agent?.state.messages ?? [];
     const latestUsage = latestUsageFromMessages(messages, model)
-      ?? buildEstimatedUsageInfo(messages, model);
-    if (!latestUsage) {
-      return calculateReadToolMaxChars(null);
-    }
+      ?? buildEstimatedUsageInfo(messages, model)
+      ?? buildZeroUsageInfoForModel(model);
     return calculateReadToolMaxChars(
       attachContextEnvelope(this.compactionDeps(), latestUsage, undefined, messages),
     );

@@ -156,9 +156,14 @@ async function runPromptLifecycle(
   const retryResult = await runPiChatPromptWithRetry({
     agent,
     contextWindow: deps.resolveModel()?.contextWindow ?? 0,
+    discardFailedAttempt: (message) => {
+      const index = emittedMessages.lastIndexOf(message);
+      if (index >= 0) {
+        emittedMessages.splice(index, 1);
+      }
+    },
     emit: (chunk) => activeTurn.queue.push(chunk),
     getLatestAssistantMessage: () => latestAssistantMessage(emittedMessages),
-    persistFailedAttempt: () => deps.syncSessionMessages(emittedMessages),
     prompt: () => promptImages.length > 0
       ? agent.prompt(turn.prompt, promptImages)
       : agent.prompt(turn.prompt),
@@ -196,7 +201,7 @@ async function runPromptLifecycle(
     try {
       const compacted = await compactCurrentSession(deps.compaction, 'threshold');
       if (compacted) {
-        pushCompactionChunks(activeTurn.queue, deps.compaction, compacted, turn);
+        pushCompactionChunks(activeTurn.queue, deps.compaction, compacted);
       }
     } catch (error) {
       activeTurn.queue.push({

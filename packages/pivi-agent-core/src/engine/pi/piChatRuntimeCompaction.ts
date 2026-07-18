@@ -12,7 +12,10 @@ import { sampleCompactionNote } from './piCompactionSampler';
 import type { resolvePiModel } from './piModelEnv';
 import { isPiModelContextWindowAuthoritative } from './piModelRegistry';
 import type { PiRuntimeHost } from './piRuntimeHost';
-import type { MissingAgentMessagesOptions } from './session/agentMessageHistory';
+import {
+  missingAgentMessages,
+  type MissingAgentMessagesOptions,
+} from './session/agentMessageHistory';
 import {
   buildCheckpoint,
   buildCompactionPlan,
@@ -160,7 +163,11 @@ export function attachContextEnvelope(
         pendingMessages.length > 0 ? pendingMessages : deps.agent?.state.messages ?? [],
       );
   if (deps.sessionTree && pendingMessages.length > 0) {
-    const pending = estimateAgentMessageCategories(pendingMessages.filter((message) => (
+    const pendingOnly = missingAgentMessages(
+      deps.sessionTree.loadAgentMessages(),
+      pendingMessages,
+    );
+    const pending = estimateAgentMessageCategories(pendingOnly.filter((message) => (
       (message as unknown as { role?: unknown }).role !== 'user'
     )));
     categories.recentConversation += pending.recentConversation;
@@ -291,6 +298,29 @@ export function estimateProjectedTurnTokens(
 
 function getPlan(deps: PiChatCompactionDeps): PiContextCompactionPlan | null {
   return deps.sessionTree ? buildCompactionPlan(activeEntries(deps.sessionTree)) : null;
+}
+
+function getManualSinglePassPlan(
+  deps: PiChatCompactionDeps,
+  instructions: string | undefined,
+): PiContextCompactionPlan | null {
+  if (!deps.sessionTree || !instructions?.trim()) {
+    return null;
+  }
+  const entries = activeEntries(deps.sessionTree);
+  const messages = compactionMessagesFromEntries(entries);
+  if (entries.length === 0 || messages.length === 0) {
+    return null;
+  }
+  return {
+    activeEntries: entries,
+    prefixEntries: entries,
+    prefixFingerprint: fingerprintCompactionEntries(entries),
+    prefixMessages: messages,
+    tailEntries: [],
+    tailMessages: [],
+    tokensBefore: estimateActiveContextTokens(entries),
+  };
 }
 
 export function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {
@@ -533,10 +563,14 @@ async function compactUnlocked(
   if (!tree) {
     return null;
   }
-  const plan = getPlan(deps);
+  const regularPlan = getPlan(deps);
+  const plan = regularPlan ?? (
+    reason === 'manual' ? getManualSinglePassPlan(deps, instructions) : null
+  );
   if (!plan) {
     return null;
   }
+  const singlePass = regularPlan === null;
   const fingerprint = fingerprintCompactionEntries(plan.activeEntries);
   const generation = deps.compactionState.generation;
   const initialModelKey = modelKey(deps);
@@ -552,12 +586,9 @@ async function compactUnlocked(
   const controller = new AbortController();
   deps.compactionState.foregroundController = controller;
   try {
-    const draft = await sampleFinalNote(
-      deps,
-      plan,
-      instructions,
-      controller.signal,
-    );
+    const draft = singlePass
+      ? await sampleFallback(deps, plan, instructions, controller.signal)
+      : await sampleFinalNote(deps, plan, instructions, controller.signal);
     if (
       controller.signal.aborted
       || deps.compactionState.generation !== generation
@@ -630,12 +661,23 @@ export async function compactCurrentSession(
   }
   const existing = compactionLocks.get(tree);
   if (existing) {
+    const generation = deps.compactionState.generation;
+    const initialModelKey = modelKey(deps);
+    const initialSessionKey = sessionKey(deps);
     const trimmedInstructions = instructions?.trim();
     const runManualWithInstructions = reason === 'manual' && !!trimmedInstructions;
     let result: PiChatCompactionResult | null = null;
     try {
       result = await existing;
     } catch (error) {
+      if (
+        deps.compactionState.generation !== generation
+        || deps.sessionTree !== tree
+        || sessionKey(deps) !== initialSessionKey
+        || modelKey(deps) !== initialModelKey
+      ) {
+        throw new Error('Session or model changed while context compaction was waiting for the active run.');
+      }
       if (deps.agent) {
         deps.agent.state.messages = tree.loadAgentMessages();
       }
@@ -643,6 +685,14 @@ export async function compactCurrentSession(
         return compactCurrentSession(deps, reason, trimmedInstructions);
       }
       throw error;
+    }
+    if (
+      deps.compactionState.generation !== generation
+      || deps.sessionTree !== tree
+      || sessionKey(deps) !== initialSessionKey
+      || modelKey(deps) !== initialModelKey
+    ) {
+      throw new Error('Session or model changed while context compaction was waiting for the active run.');
     }
     if (deps.agent) {
       deps.agent.state.messages = tree.loadAgentMessages();

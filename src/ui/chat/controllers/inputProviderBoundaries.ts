@@ -46,6 +46,10 @@ export class InputProviderBoundaryHandler {
   }
 
   handleProviderMessageBoundaryChunk(chunk: StreamChunk): boolean {
+    if (chunk.type === 'retry_start') {
+      this.replaceFailedAssistantAttempt();
+      return false;
+    }
     if (isUserMessageStartChunk(chunk)) {
       this.handleProviderUserMessageStart(chunk);
       return true;
@@ -55,6 +59,24 @@ export class InputProviderBoundaryHandler {
       return true;
     }
     return false;
+  }
+
+  private replaceFailedAssistantAttempt(): void {
+    const failedAssistant = this.host.getActiveStreamingAssistantMessage();
+    if (failedAssistant) {
+      this.host.discardStreamingAssistantMessage(failedAssistant.id);
+    }
+    const assistantMessage: ChatMessage = {
+      id: this.host.deps.generateId(),
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      toolCalls: [],
+      contentBlocks: [],
+    };
+    this.host.deps.state.addMessage(assistantMessage);
+    this.host.setActiveStreamingAssistantMessage(assistantMessage);
+    this.awaitingProviderAssistantStart = true;
   }
 
   private handleProviderUserMessageStart(
@@ -103,8 +125,8 @@ export class InputProviderBoundaryHandler {
     };
     this.host.deps.state.addMessage(assistantMessage);
     this.host.setActiveStreamingAssistantMessage(assistantMessage);
-    this.host.deps.streamController.showThinkingIndicator();
     this.host.deps.state.responseStartTime = performance.now();
+    this.host.deps.streamController.showThinkingIndicator();
     this.awaitingProviderAssistantStart = true;
   }
 
