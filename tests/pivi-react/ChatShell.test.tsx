@@ -9,6 +9,7 @@ import {
   type ChatTabActions,
   type ChatTabsSnapshot,
 } from '@pivi/pivi-react/store';
+import { calculateContextEnvelope } from '@pivi/pivi-agent-core/foundation/usage';
 
 import { testPresentationPlatform } from '../helpers/presentationPlatform';
 
@@ -486,6 +487,9 @@ describe('React ChatShell tabs', () => {
     expect(usageTrigger).toHaveClass('warning');
     expect(usageTrigger.tagName).toBe('SPAN');
     expect(usageTrigger).toHaveAttribute('data-tooltip', '980 / 1K (98%)');
+    expect(
+      targets.composer.querySelector('path.pivi-meter-fill-input'),
+    ).toHaveAttribute('stroke-dashoffset', '0');
     fireEvent.click(usageTrigger);
     expect(within(targets.composer).queryByRole('dialog')).toBeNull();
     expect(targets.composer.querySelector('path.pivi-meter-bg')?.getAttribute('d')).toBe('M 1.94 11.5 A 7 7 0 1 1 14.06 11.5');
@@ -502,6 +506,11 @@ describe('React ChatShell tabs', () => {
         outputTokenLimit: 200,
         outputTokens: 40,
         percentage: 80,
+        contextEnvelope: calculateContextEnvelope({
+          contextWindow: 1000,
+          contextWindowIsAuthoritative: true,
+          providerContextTokens: 480,
+        }),
       },
     }));
     expect(within(targets.composer).getByLabelText('800 / 1K (80%)')).not.toHaveClass('warning');
@@ -514,6 +523,11 @@ describe('React ChatShell tabs', () => {
         outputTokenLimit: 200,
         outputTokens: 40,
         percentage: 81,
+        contextEnvelope: calculateContextEnvelope({
+          contextWindow: 1000,
+          contextWindowIsAuthoritative: true,
+          providerContextTokens: 486,
+        }),
       },
     }));
     expect(within(targets.composer).getByLabelText('810 / 1K (81%)')).toHaveClass('warning');
@@ -542,6 +556,11 @@ describe('React ChatShell tabs', () => {
         outputTokenLimit: 200,
         outputTokens: 40,
         percentage: 0,
+        contextEnvelope: calculateContextEnvelope({
+          contextWindow: 1000,
+          contextWindowIsAuthoritative: true,
+          providerContextTokens: 980,
+        }),
       },
     }));
     expect(within(targets.composer).getByLabelText('980 / 1K (98%)')).toHaveClass('warning');
