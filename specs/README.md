@@ -33,6 +33,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [016-release-attestation-hardening.md](archive/016-release-attestation-hardening.md) | 2026-07-17 | Version-unique, single-subject asset provenance plus uploaded-byte verification, validated by the 0.11.3 release. |
 | [017-obsidian-attestation-policy-compatibility.md](archive/017-obsidian-attestation-policy-compatibility.md) | 2026-07-17 | Tag-push release publication with byte-for-byte asset verification and no incompatible attestations, validated by the completed 0.11.5 Community review. |
 | [018-vault-context-compaction-redesign.md](archive/018-vault-context-compaction-redesign.md) | 2026-07-17 | Fixed-policy two-pass vault compaction over Pi-native context, cut-point, message, and session primitives. |
+| [019-live-session-source-mutation-diagnostic.md](archive/019-live-session-source-mutation-diagnostic.md) | 2026-07-19 | Diagnosed an example-vault stale-write guard as a real JSONL inode/content rollback, with the replacing process left unproven. |
 
 ## Numbering and files
 
