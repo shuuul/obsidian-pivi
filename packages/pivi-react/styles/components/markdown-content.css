@@ -70,16 +70,6 @@
   line-height: inherit;
 }
 
-/* Heading margins. */
-:is(
-  .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered,
-  .pivi-subagent-prompt-text.pivi-markdown-rendered,
-  .pivi-thinking-content.pivi-markdown-rendered
-) :is(h1, h2, h3, h4, h5, h6) {
-  margin: 6px 0 4px;
-}
-
 /* Heading sizes. */
 :is(
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
@@ -176,7 +166,6 @@
 ) table {
   width: 100%;
   border-collapse: collapse;
-  margin: 8px 0;
   font-size: inherit;
   line-height: inherit;
 }
@@ -339,4 +328,109 @@
 ) .pivi-mermaid-control-btn:focus-visible {
   background: var(--pivi-host-background-hover);
   color: var(--pivi-host-text-normal);
+}
+
+/* Document rhythm for narrative Markdown.
+ *
+ * Obsidian themes remain responsible for typography and color. Pivi owns the
+ * vertical relationship between top-level rendered blocks so paragraphs stay
+ * readable and headings remain attached to their section across host themes. */
+:is(
+  .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered
+) {
+  --pivi-markdown-flow-compact: var(--pivi-flow-compact);
+  --pivi-markdown-flow-content: var(--pivi-flow-content);
+  --pivi-markdown-flow-section: var(--pivi-flow-section);
+}
+
+:is(
+  .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered
+) > :is(
+  p,
+  ul,
+  ol,
+  blockquote,
+  pre,
+  table,
+  hr,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .callout,
+  .pivi-mermaid-scroll
+) {
+  margin-block: 0;
+}
+
+:is(
+  .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered
+) > :is(
+  p,
+  ul,
+  ol,
+  blockquote,
+  pre,
+  table,
+  hr,
+  .callout,
+  .pivi-mermaid-scroll
+) + :is(
+  p,
+  ul,
+  ol,
+  blockquote,
+  pre,
+  table,
+  hr,
+  .callout,
+  .pivi-mermaid-scroll
+) {
+  margin-block-start: var(--pivi-markdown-flow-content);
+}
+
+:is(
+  .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered
+) > :is(
+  p,
+  ul,
+  ol,
+  blockquote,
+  pre,
+  table,
+  hr,
+  .callout,
+  .pivi-mermaid-scroll
+) + :is(h1, h2, h3, h4, h5, h6) {
+  margin-block-start: var(--pivi-markdown-flow-section);
+}
+
+:is(
+  .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered
+) > :is(h1, h2, h3, h4, h5, h6) + :is(
+  p,
+  ul,
+  ol,
+  blockquote,
+  pre,
+  table,
+  hr,
+  .callout,
+  .pivi-mermaid-scroll
+) {
+  margin-block-start: var(--pivi-markdown-flow-compact);
+}
+
+:is(
+  .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered
+) > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
+  margin-block-start: var(--pivi-markdown-flow-content);
 }

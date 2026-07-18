@@ -244,23 +244,11 @@
 }
 
 .pivi-text-block+.pivi-tool-call {
-  margin-top: 6px;
+  margin-top: var(--pivi-flow-content);
 }
 
 .pivi-tool-call+.pivi-text-block {
-  margin-top: 6px;
-}
-
-.pivi-message-assistant .pivi-message-content p {
-  margin: 0 0 4px 0;
-}
-
-.pivi-message-assistant .pivi-message-content p:last-child {
-  margin-bottom: 0;
-}
-
-.pivi-message-content p:last-child {
-  margin-bottom: 0;
+  margin-top: var(--pivi-flow-content);
 }
 
 .pivi-messages::-webkit-scrollbar {

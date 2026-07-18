@@ -113,6 +113,9 @@ settings:
   --pivi-spacing-md: 12px;
   --pivi-spacing-lg: 16px;
   --pivi-spacing-xl: 24px;
+  --pivi-flow-compact: var(--pivi-spacing-xs);
+  --pivi-flow-content: var(--pivi-spacing-sm);
+  --pivi-flow-section: var(--pivi-spacing-lg);
   --pivi-radius-xs: 4px;
   --pivi-radius-sm: 6px;
   --pivi-radius-md: 8px;

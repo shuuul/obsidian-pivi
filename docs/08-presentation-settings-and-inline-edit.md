@@ -38,6 +38,8 @@ Adapters must mount, update, and dispose idempotently. Asynchronous rendering us
 
 Every non-empty transcript uses `@tanstack/react-virtual`. Rows use stable message IDs, dynamic measurement, end anchoring, six-row overscan, and an 80px end threshold. The thinking indicator is the measured final item. A non-serializable `MessageViewportHandle` exposes semantic start/end/message/user navigation to app wiring; no app controller queries message DOM nodes. The scroll viewport is passed explicitly through portal targets, including pop-out owner realms. Subagent cards and the usage ring remain presentation-owned surfaces over this projection boundary.
 
+Narrative Markdown keeps Obsidian's rendered semantics, host typography, colors, markers, list-item geometry, and inline indentation while Pivi controls transitions between top-level content blocks. Ordinary paragraph/list/code/table/callout transitions use content flow, and headings receive section separation before them while staying attached to the content that follows. Text-to-tool and tool-to-text transitions use the same semantic content-flow token, while consecutive tool rows retain their denser execution rhythm.
+
 ## Settings data flow
 
 `SettingsRoot` consumes package-owned `SettingsPorts` implemented by `src/app/ui/createUiPorts.ts` and focused settings-port modules. React does not import app settings types or engine facades.
