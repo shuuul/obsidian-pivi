@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.12.0](https://github.com/shuuul/obsidian-pivi/compare/0.11.6...0.12.0) (2026-07-18)
+
+
+### Features
+
+* **ui:** refine transcript content rhythm ([1f5c4f9](https://github.com/shuuul/obsidian-pivi/commit/1f5c4f995dd069e9ce6a2cf2e21292564e28b7e3))
+
+
+### Bug Fixes
+
+* **chat:** accept complete checkpoint JSON ([3da3172](https://github.com/shuuul/obsidian-pivi/commit/3da3172197af3f9dab8faa65cfe4f1e6a752c497))
+* **chat:** align context meter arc with tooltip percentage ([c31d7cc](https://github.com/shuuul/obsidian-pivi/commit/c31d7cc2ea5852ee59e0f20586d20a8dab6a1b0b))
+* **chat:** refresh context meter immediately after compaction ([225b0bb](https://github.com/shuuul/obsidian-pivi/commit/225b0bb707ea75eef3a6a1668ce9f5cd6bba6d99))
+* **chat:** retry transient provider failures ([24c6cfc](https://github.com/shuuul/obsidian-pivi/commit/24c6cfc076dd5944e4243546042d6337ada54515))
+* harden turn recovery and resource accounting ([389470c](https://github.com/shuuul/obsidian-pivi/commit/389470cb489e79659f57170a256ae13c79bd8759))
+* **tools:** harden Bash and paginated reads ([388e997](https://github.com/shuuul/obsidian-pivi/commit/388e997631863b2cf9160dfbad4e94fb4be6ba7a))
+* **usage:** separate totals from compaction pressure ([c1c128b](https://github.com/shuuul/obsidian-pivi/commit/c1c128bee0263fc676eabbb8b6a1de94334601cb))
+
 ## [0.11.6](https://github.com/shuuul/obsidian-pivi/compare/0.11.5...0.11.6) (2026-07-17)
 
 
