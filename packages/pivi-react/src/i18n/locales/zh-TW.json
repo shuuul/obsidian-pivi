@@ -318,9 +318,6 @@
       "name": "需要 Command/Ctrl+Enter 傳送",
       "desc": "啟用後，Enter 會插入換行。Command+Enter 或 Ctrl+Enter 均可傳送。"
     },
-    "inlineEditHotkey": {
-      "name": "內嵌編輯"
-    },
     "openChatHotkey": {
       "name": "開啟聊天"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "在新工作階段中執行 /{name}",
     "workspaceCommandEmpty": "請先選取文字，再執行此指令。",
     "workspaceCommandUnavailable": "此工作區指令無法使用。",
-    "inlineEdit": "內嵌編輯",
     "newTab": "新分頁",
     "newSession": "新工作階段（目前分頁）",
     "closeCurrentTab": "關閉目前分頁",
-    "openPiviRibbon": "開啟 Pivi",
-    "inlineEditUnavailableView": "無法使用內嵌編輯：無法存取目前 Markdown 檢視。",
-    "inlineEditInserted": "已插入",
-    "inlineEditApplied": "已套用編輯"
+    "openPiviRibbon": "開啟 Pivi"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "讀取 MCP 資源",
       "editNotebook": "編輯筆記本"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "插入說明…",
-    "placeholderEdit": "編輯說明…",
-    "placeholderReply": "回覆以繼續…",
-    "unavailableEditor": "無法使用內嵌編輯：無法存取目前編輯器。請嘗試重新開啟筆記。"
   },
   "host": {
     "failedSaveTabLayout": "儲存分頁配置失敗",

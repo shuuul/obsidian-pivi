@@ -1031,7 +1031,7 @@ describe('imperative chat semantic view handle', () => {
     expect(sendMessage).toHaveBeenCalledWith({ content: 'Resolved prompt' });
   });
 
-  it('projects editor selection, inline model precedence, and copied external contexts', async () => {
+  it('projects editor selection and copied external contexts', async () => {
     const { handle, manager, mount } = createHarness();
     await mount();
 
@@ -1040,9 +1040,7 @@ describe('imperative chat semantic view handle', () => {
     );
     const externalContexts = ['/outside/one', '/outside/two'];
     const getExternalContexts = jest.fn(() => externalContexts);
-    const getAuxiliaryModel = jest.fn<string | null, []>(() => 'runtime-model');
     const activeTab = createTab({
-      service: createService({ getAuxiliaryModel }),
       ui: {
         inlineContextManager: { addSelectionFromEditor },
         externalContextSelector: { getExternalContexts },
@@ -1054,10 +1052,6 @@ describe('imperative chat semantic view handle', () => {
     const markdownView = {} as MarkdownView;
     expect(handle.commands.addEditorSelection(editor, markdownView)).toBe(true);
     expect(addSelectionFromEditor).toHaveBeenCalledWith(editor, markdownView);
-    expect(handle.commands.getInlineEditModel()).toBe('runtime-model');
-
-    getAuxiliaryModel.mockReturnValue(null);
-    expect(handle.commands.getInlineEditModel()).toBe('draft-model');
 
     const projectedContexts = handle.commands.getActiveExternalContexts();
     expect(projectedContexts).toEqual(externalContexts);

@@ -25,7 +25,6 @@ export const styleModules = [
   'features/image-context.css',
   'features/image-embed.css',
   'features/image-modal.css',
-  'features/inline-edit.css',
   'features/diff.css',
   'features/slash-commands.css',
   'features/ask-user-question.css',

@@ -46,7 +46,7 @@ Runtime, sessions, model catalogs, slash catalogs, and projected settings enter 
 
 ### React 18 with imperative islands
 
-React owns stable product chrome: tabs, settings, composer selectors, message shells, status, and inline-edit presentation. Some host surfaces are intentionally imperative:
+React owns stable product chrome: tabs, settings, composer selectors, message shells, and status. Some host surfaces are intentionally imperative:
 
 - Obsidian Markdown rendering;
 - uncontrolled contenteditable input and mention badges;
@@ -96,7 +96,6 @@ Prefer the narrowest exported subpath:
 | Tool protocol and display models | `@pivi/pivi-agent-core/tools` |
 | React snapshots | `@pivi/pivi-react/store` |
 | Context badge presentation | `@pivi/pivi-react/context-badges` |
-| Inline-edit presentation | `@pivi/pivi-react/inline-edit` |
 | Concrete Pi construction | `@pivi/pivi-agent-core/engine/pi`, app composition only |
 
 Do not introduce a wrapper solely to rename one of these APIs. Add a boundary only when it validates, normalizes, composes operations, or adds domain meaning.

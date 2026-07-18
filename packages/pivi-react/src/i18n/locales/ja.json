@@ -318,9 +318,6 @@
       "name": "送信に Command/Ctrl+Enter を必須にする",
       "desc": "有効時、Enter は改行を挿入します。Command+Enter または Ctrl+Enter で送信します。"
     },
-    "inlineEditHotkey": {
-      "name": "インライン編集"
-    },
     "openChatHotkey": {
       "name": "チャットを開く"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "新しいセッションで /{name} を実行",
     "workspaceCommandEmpty": "このコマンドを実行する前にテキストを選択してください。",
     "workspaceCommandUnavailable": "このワークスペースコマンドは利用できません。",
-    "inlineEdit": "インライン編集",
     "newTab": "新しいタブ",
     "newSession": "新しいセッション（現在のタブ）",
     "closeCurrentTab": "現在のタブを閉じる",
-    "openPiviRibbon": "Pivi を開く",
-    "inlineEditUnavailableView": "インライン編集を利用できません：アクティブな Markdown ビューにアクセスできません。",
-    "inlineEditInserted": "挿入済み",
-    "inlineEditApplied": "編集を適用しました"
+    "openPiviRibbon": "Pivi を開く"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "MCP リソースを読み取り",
       "editNotebook": "ノートブックを編集"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "挿入の指示…",
-    "placeholderEdit": "編集の指示…",
-    "placeholderReply": "続けて返信…",
-    "unavailableEditor": "インライン編集を利用できません：アクティブなエディターにアクセスできません。ノートを開き直してください。"
   },
   "host": {
     "failedSaveTabLayout": "タブレイアウトの保存に失敗しました",

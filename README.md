@@ -51,10 +51,7 @@ Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/
 ### 💬 Sidebar chat
 Multi-tab conversational AI with streaming, file context, slash commands, and model switching. Sessions persist as Pi-compatible JSONL under `.pivi/sessions/` — resume a complete linear session or fork a new session file from an earlier entry.
 
-Attach vault files or explicitly allowed external folders as turn context. External folders require external read access and can be pinned on this device without syncing their absolute paths into settings or session history.
-
-### ✏️ Inline editing
-Select text, run a rewrite — Pivi uses auxiliary queries to edit with precision, no context window overhead, no conversation history pollution.
+Attach vault files or explicitly allowed external folders as turn context. Select text in an open note to add its exact range to the input panel as a removable context badge. External folders require external read access and can be pinned on this device without syncing their absolute paths into settings or session history.
 
 ### 🛠️ Obsidian-native tools
 Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Obsidian does not expose publicly use explicit CLI, network-provider, MCP, or allowlisted process integrations as noted below.

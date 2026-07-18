@@ -318,9 +318,6 @@
       "name": "보내기에 Command/Ctrl+Enter 필요",
       "desc": "사용하면 Enter는 줄바꿈을 삽입합니다. Command+Enter 또는 Ctrl+Enter로 보냅니다."
     },
-    "inlineEditHotkey": {
-      "name": "인라인 편집"
-    },
     "openChatHotkey": {
       "name": "채팅 열기"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "새 세션에서 /{name} 실행",
     "workspaceCommandEmpty": "이 명령을 실행하기 전에 텍스트를 선택하세요.",
     "workspaceCommandUnavailable": "이 워크스페이스 명령을 사용할 수 없습니다.",
-    "inlineEdit": "인라인 편집",
     "newTab": "새 탭",
     "newSession": "새 세션(현재 탭)",
     "closeCurrentTab": "현재 탭 닫기",
-    "openPiviRibbon": "Pivi 열기",
-    "inlineEditUnavailableView": "인라인 편집 사용 불가: 활성 Markdown 보기에 접근할 수 없습니다.",
-    "inlineEditInserted": "삽입됨",
-    "inlineEditApplied": "편집이 적용됨"
+    "openPiviRibbon": "Pivi 열기"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "MCP 리소스 읽기",
       "editNotebook": "노트북 편집"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "삽입 지시…",
-    "placeholderEdit": "편집 지시…",
-    "placeholderReply": "계속하려면 답장…",
-    "unavailableEditor": "인라인 편집 사용 불가: 활성 편집기에 접근할 수 없습니다. 노트를 다시 열어 보세요."
   },
   "host": {
     "failedSaveTabLayout": "탭 레이아웃을 저장하지 못했습니다",

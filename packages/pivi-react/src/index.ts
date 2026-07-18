@@ -8,7 +8,6 @@ export type {
   ContextBadgeViewModel,
 } from './context-badges/types';
 export * from './i18n';
-export * from './inline-edit';
 export * from './platform';
 export { assertBundledReactRuntime } from './runtime/assertBundledReactRuntime';
 export type {

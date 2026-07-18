@@ -64,7 +64,7 @@ Not in scope:
 
 ## Documentation sync
 
-- `docs/08-presentation-settings-and-inline-edit.md`
+- `docs/08-presentation-and-settings.md`
 - `packages/pivi-agent-core/src/engine/pi/AGENTS.md`
 - Other nearest guidance only if boundaries change.
 

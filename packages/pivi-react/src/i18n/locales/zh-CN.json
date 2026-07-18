@@ -318,9 +318,6 @@
       "name": "需要 Command/Ctrl+Enter 发送",
       "desc": "启用后，Enter 会插入换行。Command+Enter 或 Ctrl+Enter 均可发送。"
     },
-    "inlineEditHotkey": {
-      "name": "内联编辑"
-    },
     "openChatHotkey": {
       "name": "打开聊天"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "在新会话中运行 /{name}",
     "workspaceCommandEmpty": "请先选择文本，再运行此命令。",
     "workspaceCommandUnavailable": "此工作区命令不可用。",
-    "inlineEdit": "行内编辑",
     "newTab": "新建标签页",
     "newSession": "新建会话（当前标签页）",
     "closeCurrentTab": "关闭当前标签页",
-    "openPiviRibbon": "打开 Pivi",
-    "inlineEditUnavailableView": "无法使用行内编辑：无法访问当前 Markdown 视图。",
-    "inlineEditInserted": "已插入",
-    "inlineEditApplied": "已应用编辑"
+    "openPiviRibbon": "打开 Pivi"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "读取 MCP 资源",
       "editNotebook": "编辑笔记本"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "插入说明…",
-    "placeholderEdit": "编辑说明…",
-    "placeholderReply": "回复以继续…",
-    "unavailableEditor": "无法使用行内编辑：无法访问当前编辑器。请尝试重新打开笔记。"
   },
   "host": {
     "failedSaveTabLayout": "保存标签页布局失败",

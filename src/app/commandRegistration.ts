@@ -1,14 +1,8 @@
-import { buildCursorContext } from "@pivi/pivi-agent-core/context/editor";
 import type { Editor } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
 import { t } from "@/app/i18n";
-import { createInlineEditPort } from "@/app/ui/createInlineEditPort";
 import type PiviPlugin from "@/main"
-import {
-  type InlineEditContext,
-  InlineEditModal,
-} from "@/ui/inline-edit/ui/InlineEditModal";
 import { getActiveWindow } from "@/ui/shared/dom";
 
 import { findPiviView } from "./viewAccess";
@@ -24,62 +18,6 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     name: t("commands.openChatView"),
     callback: () => {
       void plugin.activateView();
-    },
-  });
-
-  plugin.addCommand({
-    id: "inline-edit",
-    name: t("commands.inlineEdit"),
-    editorCallback: async (editor: Editor, ctx) => {
-      const view =
-        ctx instanceof MarkdownView
-          ? ctx
-          : plugin.app.workspace.getActiveViewOfType(MarkdownView);
-      if (!view) {
-        new Notice(t("commands.inlineEditUnavailableView"));
-        return;
-      }
-
-      await plugin.ensureWorkspaceServices();
-
-      const selectedText = editor.getSelection();
-      const notePath = view.file?.path || "unknown";
-
-      let editContext: InlineEditContext;
-      if (selectedText.trim()) {
-        editContext = { mode: "selection", selectedText };
-      } else {
-        const cursor = editor.getCursor();
-        const cursorContext = buildCursorContext(
-          (line) => editor.getLine(line),
-          editor.lineCount(),
-          cursor.line,
-          cursor.ch,
-        );
-        editContext = { mode: "cursor", cursorContext };
-      }
-
-      const modal = new InlineEditModal(
-        editor,
-        view,
-        editContext,
-        notePath,
-        findPiviView(plugin.app)?.getChatHandle()?.commands.getInlineEditModel() ?? null,
-        () =>
-          findPiviView(plugin.app)
-            ?.getChatHandle()
-            ?.commands.getActiveExternalContexts() ?? [],
-        createInlineEditPort(plugin),
-      );
-      const result = await modal.openAndWait();
-
-      if (result.decision === "accept" && result.editedText !== undefined) {
-        new Notice(
-          editContext.mode === "cursor"
-            ? t("commands.inlineEditInserted")
-            : t("commands.inlineEditApplied"),
-        );
-      }
     },
   });
 

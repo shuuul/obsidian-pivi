@@ -57,7 +57,6 @@ export interface PiviChatViewCommands {
   cancelActiveTurn(): boolean;
   addEditorSelection(editor: Editor, markdownView: MarkdownView): boolean;
   sendWorkspaceCommandInNewSession(content: string): Promise<boolean>;
-  getInlineEditModel(): string | null;
   getActiveExternalContexts(): string[];
 }
 

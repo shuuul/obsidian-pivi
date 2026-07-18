@@ -1,5 +1,5 @@
 /**
- * SelectionHighlight - Shared CM6 selection highlight for chat and inline edit
+ * SelectionHighlight - Shared CM6 selection highlight for chat context
  *
  * Provides a reusable mechanism to highlight selected text in the editor
  * when focus moves elsewhere (e.g., to an input field).

@@ -193,7 +193,7 @@ Also run the renamed 20-subagent development workload in disposable main/pop-out
 
 ## Documentation sync
 
-- Numbered developer docs: update `docs/06-subagents-streaming-and-rendering.md`, `docs/08-presentation-settings-and-inline-edit.md`, `docs/09-development-debugging-and-validation.md`, `docs/10-roadmap-release-and-maintenance.md`, and `docs/11-chat-ui-evolution.md` to remove Group/Shelf claims, document individual cards/report sanitization/motion, and rename the retained performance workload.
+- Numbered developer docs: update `docs/06-subagents-streaming-and-rendering.md`, `docs/08-presentation-and-settings.md`, `docs/09-development-debugging-and-validation.md`, `docs/10-roadmap-release-and-maintenance.md`, and `docs/11-chat-ui-evolution.md` to remove Group/Shelf claims, document individual cards/report sanitization/motion, and rename the retained performance workload.
 - Nearest local guidance: update `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `packages/pivi-react/AGENTS.md`, `packages/pivi-react/src/i18n/AGENTS.md`, and `packages/pivi-react/styles/AGENTS.md` where their maps/rules mention AgentRun groups, Shelf, translations, or motion.
 - Parent/package guidance: update `packages/pivi-agent-core/AGENTS.md` if the rich `AgentRun` type and Shelf setting are removed from the foundation map.
 - Root guidance and roadmap: update root `AGENTS.md` architecture status, settings summary, glossary, quality snapshot/test map if counts change, and `docs/10-roadmap-release-and-maintenance.md` release risk/status.

@@ -14,7 +14,6 @@ import type {
   McpTestResult,
   McpTool,
 } from '@pivi/pivi-agent-core/mcp/types';
-import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 
 import type {
@@ -259,8 +258,4 @@ export interface SettingsPorts {
   hotkeys: SettingsHotkeysPort;
   catalog: SettingsCatalogPort;
   hostIntegrations: SettingsHostIntegrationsPort;
-}
-
-export interface InlineEditPort {
-  createAuxQueryRunner(): AuxQueryRunner;
 }

@@ -46,7 +46,6 @@ npm run test -- -t "test name"
 | React chat/settings | `tests/pivi-react/ChatShell.test.tsx`, `AssistantContentView.test.tsx`, `activityPresentation.test.ts`, `chatUiStore.test.tsx`, `SettingsUi.test.tsx`, `PiviSettingTabHost.test.ts` |
 | Owner-realm DOM | `tests/pivi-react/OwnerRealmDom.test.ts`, `DefaultVaultSkillsPrompt.test.ts`, `tests/unit/app/ui/createStreamingMarkdownContentAdapter.test.ts` |
 | Tools and MCP | Relevant suites under `tests/unit/engine/tools/`, `tests/unit/pi/tools/`, `tests/unit/pi/mcp/`, plus `tests/unit/pi/piMcpBridge.test.ts` and `tests/pivi-react/McpToolsSection.test.tsx` |
-| Inline edit | `tests/unit/pi/runtime/queryBackedInlineEditService.test.ts` and `tests/pivi-react/InlineEdit.test.tsx` |
 
 Use `rg --files tests | rg <feature>` to locate the current exact filename; test names move as ownership is refined.
 

@@ -1,4 +1,4 @@
-# Presentation, settings, and inline edit
+# Presentation and settings
 
 [Back to the developer handbook](README.md)
 
@@ -14,7 +14,6 @@ flowchart TD
   React -- "empty content slots" --> Adapters["Imperative adapters"]
   Adapters -- "Obsidian Markdown/tools/diffs" --> HostAPI["Owner document and Obsidian APIs"]
   Settings["SettingsRoot"] -- "SettingsPorts" --> Host
-  Inline["Inline-edit React widget"] -- "InlineEditPort" --> InlineHost["src/ui/inline-edit"]
 ```
 
 React snapshots contain data only. Runtime objects, controllers, Obsidian views, DOM elements, and mutable service aggregates remain in registries or adapter closures. `ActiveChatUiBridge` selects the active tab's store and portal elements without putting DOM into a snapshot.
@@ -28,7 +27,6 @@ React renders message ordering, roles, headers, collapsible shells, status, and 
 - Obsidian Markdown rendering;
 - rich tool, ask-user, diff, write/edit, and stored subagent content;
 - uncontrolled rich input and context chips;
-- CodeMirror inline-edit widget hosting.
 
 Adapters must mount, update, and dispose idempotently. Asynchronous rendering uses a generation check so an old completion cannot replace a newer slot. Resolve `window` and `document` from the owning element so pop-out windows work. App-owned imperative DOM uses the owning realm's Obsidian `createEl` helpers; product code must not construct nodes through global or raw `document.createElement*` calls.
 
@@ -89,22 +87,6 @@ Icons cross the presentation platform as product descriptors or SVG data. React 
 
 Respect reduced motion, keyboard focus, semantic roles, and owner-window timers. Animation timing must not become a runtime state transition; actions happen through the narrow callbacks after any presentation-only exit phase.
 
-## Inline edit
-
-Inline edit is an auxiliary query, not a chat session. The Obsidian editor command captures the selected CodeMirror range, mounts the React-owned widget through the app-side editor bridge, and calls an injected `AuxQueryRunner`.
-
-The flow has one active controller. Starting another edit rejects or cleans the previous controller. Accept applies the chosen replacement through the editor; reject restores/cleans decorations without adding a durable session or conversation history. IME and editor ownership rules must be preserved. The app-side CodeMirror bridge injects `createContainer()` into widget options so the host creates the detached React root with Obsidian helpers in the editor's owner realm; mount options receive the resulting container separately.
-
-```mermaid
-flowchart LR
-  Selection["CodeMirror selection"] -- "capture" --> Bridge["src/ui/inline-edit"]
-  Bridge -- "mount port" --> Widget["React inline-edit widget"]
-  Widget -- "request" --> Aux["AuxQueryRunner"]
-  Aux -- "stream result" --> Widget
-  Widget -- "accept" --> Editor["CodeMirror transaction"]
-  Widget -- "reject/dispose" --> Cleanup["Decoration and controller cleanup"]
-```
-
 ## Change checklist
 
 - Keep React inputs serializable and host-neutral.
@@ -114,4 +96,3 @@ flowchart LR
 - Validate manifest ordering and zero `!important` for CSS.
 - Test keyboard, accessibility, reduced motion, and pop-out owner realm for interactive changes.
 - Keep the 1.13 setting definition and the 1.12 `display()` fallback on the shared mount/dispose path.
-- Keep inline edit on `AuxQueryRunner`; do not create a chat session for it.

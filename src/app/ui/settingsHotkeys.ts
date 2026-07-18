@@ -22,7 +22,6 @@ type AppWithHotkeyInternals = App & {
 };
 
 export const SETTINGS_HOTKEY_ROWS = [
-  { commandId: 'pivi:inline-edit', labelKey: 'settings.inlineEditHotkey.name' },
   { commandId: 'pivi:open-view', labelKey: 'settings.openChatHotkey.name' },
   { commandId: 'pivi:new-session', labelKey: 'settings.newSessionHotkey.name' },
   { commandId: 'pivi:new-tab', labelKey: 'settings.newTabHotkey.name' },

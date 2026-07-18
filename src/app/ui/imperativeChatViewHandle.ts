@@ -454,10 +454,6 @@ export function createImperativeChatViewHandle(
         return getTabManager()?.getActiveTab()?.ui.inlineContextManager
           ?.addSelectionFromEditor(editor, markdownView) ?? false;
       },
-      getInlineEditModel() {
-        const tab = getTabManager()?.getActiveTab() ?? null;
-        return tab?.service?.getAuxiliaryModel?.() ?? tab?.draftModel ?? null;
-      },
       getActiveExternalContexts() {
         return [
           ...(getTabManager()?.getActiveTab()?.ui.externalContextSelector

@@ -106,8 +106,7 @@ settings:
 
 /* Shared product tokens for every Pivi presentation root. */
 .pivi-container,
-.pivi-settings,
-.pivi-inline-edit-modal {
+.pivi-settings {
   --pivi-spacing-xs: 4px;
   --pivi-spacing-sm: 8px;
   --pivi-spacing-md: 12px;

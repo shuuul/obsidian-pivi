@@ -318,9 +318,6 @@
       "name": "Requerir Command/Ctrl+Enter para enviar",
       "desc": "Si está activado, Enter inserta un salto de línea. Command+Enter o Ctrl+Enter envía."
     },
-    "inlineEditHotkey": {
-      "name": "Edición en línea"
-    },
     "openChatHotkey": {
       "name": "Abrir chat"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "Ejecutar /{name} en una nueva sesión",
     "workspaceCommandEmpty": "Selecciona texto antes de ejecutar este comando.",
     "workspaceCommandUnavailable": "Este comando del espacio de trabajo no está disponible.",
-    "inlineEdit": "Edición en línea",
     "newTab": "Nueva pestaña",
     "newSession": "Nueva sesión (pestaña actual)",
     "closeCurrentTab": "Cerrar pestaña actual",
-    "openPiviRibbon": "Abrir Pivi",
-    "inlineEditUnavailableView": "Edición en línea no disponible: no se pudo acceder a la vista Markdown activa.",
-    "inlineEditInserted": "Insertado",
-    "inlineEditApplied": "Edición aplicada"
+    "openPiviRibbon": "Abrir Pivi"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "Leer recurso MCP",
       "editNotebook": "Editar cuaderno"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "Instrucciones de inserción…",
-    "placeholderEdit": "Instrucciones de edición…",
-    "placeholderReply": "Responde para continuar…",
-    "unavailableEditor": "Edición en línea no disponible: no se pudo acceder al editor activo. Vuelve a abrir la nota."
   },
   "host": {
     "failedSaveTabLayout": "Error al guardar el diseño de pestañas",

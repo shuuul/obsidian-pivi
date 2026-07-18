@@ -251,9 +251,9 @@ export default defineConfig([
         },
         {
           regex:
-            "^@pivi/pivi-react(?:$|/(?!(?:store|inline-edit|context-badges)$))",
+            "^@pivi/pivi-react(?:$|/(?!(?:store|context-badges)$))",
           message:
-            "Product UI may import React presentation only through the exact store, inline-edit, or context-badges subpath.",
+            "Product UI may import React presentation only through the exact store or context-badges subpath.",
         },
         {
           regex: "^@/app/(?!(?:i18n|hostPlatform|hostContracts)$)",

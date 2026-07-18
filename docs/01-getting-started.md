@@ -32,7 +32,6 @@ Production builds copy only `main.js`, `manifest.json`, and `styles.css` into `.
 | `src/main.ts` | Obsidian `Plugin` composition root |
 | `src/app/` | Lifecycle, service graph, commands, view/settings hosts, and concrete port wiring |
 | `src/ui/chat/` | Tab/session orchestration, turn handling, streaming, and imperative adapters |
-| `src/ui/inline-edit/` | Obsidian/CodeMirror bridge for inline editing |
 | `packages/pivi-agent-core/` | Host-neutral foundations, sessions, prompts, tools, runtime contracts, and Pi engine |
 | `packages/pivi-react/` | Product React surfaces, stores, ports, localization, and CSS |
 | `packages/obsidian-host/` | Obsidian-backed host adapters |

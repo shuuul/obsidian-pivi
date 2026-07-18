@@ -98,7 +98,7 @@ Not in scope:
 - Changed: Installed real OAuth-only plan providers with plan-prefixed model keys; removed cross-provider credential fallback and settings remaps; made logout awaited and alias-scoped; fixed dual-signal OAuth cancellation; moved idempotent, destination-preserving migration to plugin settings load; and placed local optional API keys directly below Base URL.
 - Evidence: Focused auth/settings/React suites passed; `npm run typecheck`, `npm run lint`, `npm run check:boundaries`, and `npm run test -- --runInBand` passed (251 suites, 1929 tests).
 - Evidence: `npm run build` succeeded, bundle size was 3,091,532 bytes (2.95 MB), `obsidian plugin:reload id=pivi` succeeded for the configured vault, and `obsidian dev:errors` reported no errors.
-- Evidence: Durable behavior was synchronized into `docs/08-presentation-settings-and-inline-edit.md` and the nearest core, React, and app `AGENTS.md` files.
+- Evidence: Durable behavior was synchronized into `docs/08-presentation-and-settings.md` and the nearest core, React, and app `AGENTS.md` files.
 - Remaining: None.
 - Blockers: None.
 - Next action: Archive the completed spec.

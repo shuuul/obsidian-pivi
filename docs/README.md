@@ -17,7 +17,7 @@ For long-running or multi-agent work, use the tracked [specs system](../specs/RE
 | [05 — Tabs, sessions, and history](05-tabs-sessions-and-history.md) | Changing tab behavior, persistence, history, fork, or restore |
 | [06 — Subagents, streaming, and rendering](06-subagents-streaming-and-rendering.md) | Changing delegated work, concurrency, streamed events, or subagent cards |
 | [07 — Tools, skills, MCP, and integrations](07-tools-skills-mcp-and-integrations.md) | Adding or changing agent capabilities and host integrations |
-| [08 — Presentation, settings, and inline edit](08-presentation-settings-and-inline-edit.md) | Changing React surfaces, styling, localization, or inline edit |
+| [08 — Presentation and settings](08-presentation-and-settings.md) | Changing React surfaces, styling, or localization |
 | [09 — Development, debugging, and validation](09-development-debugging-and-validation.md) | Testing, debugging, building, and validating a contribution |
 | [10 — Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md) | Reviewing current technical priorities, publishing, or maintaining docs |
 | [11 — Chat UI evolution](11-chat-ui-evolution.md) | Planning long-session architecture, Agent activity, context memory, and the future visual language |

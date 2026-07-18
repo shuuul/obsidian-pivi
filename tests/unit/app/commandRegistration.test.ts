@@ -111,6 +111,17 @@ describe('chat command registration', () => {
       ?.checkCallback?.(true)).toBe(false);
   });
 
+  it('keeps selected-text context while omitting editor inline edit', () => {
+    const { commands, plugin } = createPlugin();
+
+    registerPiviCommands(plugin as never);
+
+    expect(commands.map(command => command.id)).toContain(
+      'add-selection-to-chat-input',
+    );
+    expect(commands.map(command => command.id)).not.toContain('inline-edit');
+  });
+
   it('registers explicit development trace lifecycle commands', () => {
     const { commands, plugin } = createPlugin();
 

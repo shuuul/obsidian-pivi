@@ -7,7 +7,6 @@ export * from './connectivity';
 export * from './messageContent';
 export * from './piChatService';
 export * from './prepareTurn';
-export * from './queryBackedInlineEditService';
 export * from './queryBackedTitleGenerationService';
 export * from './queuedTurn';
 export * from './runtimeReadyState';

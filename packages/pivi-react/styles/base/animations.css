@@ -1,9 +1,3 @@
-@keyframes pivi-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes pivi-working-icon-spin {
   to {
     transform: rotate(360deg);

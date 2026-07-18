@@ -318,9 +318,6 @@
       "name": "Require Command/Ctrl+Enter to send",
       "desc": "When enabled, Enter inserts a newline. Command+Enter or Ctrl+Enter sends."
     },
-    "inlineEditHotkey": {
-      "name": "Inline Edit"
-    },
     "openChatHotkey": {
       "name": "Open Chat"
     },
@@ -729,14 +726,10 @@
     "runWorkspaceCommand": "Run /{name} in a new session",
     "workspaceCommandEmpty": "Select text before running this command.",
     "workspaceCommandUnavailable": "This workspace command is unavailable.",
-    "inlineEdit": "Inline edit",
     "newTab": "New tab",
     "newSession": "New session (in current tab)",
     "closeCurrentTab": "Close current tab",
-    "openPiviRibbon": "Open Pivi",
-    "inlineEditUnavailableView": "Inline edit unavailable: could not access the active Markdown view.",
-    "inlineEditInserted": "Inserted",
-    "inlineEditApplied": "Edit applied"
+    "openPiviRibbon": "Open Pivi"
   },
   "tools": {
     "display": {
@@ -812,12 +805,6 @@
       "readMcpResource": "Read MCP resource",
       "editNotebook": "Edit notebook"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "Insert instructions…",
-    "placeholderEdit": "Edit instructions…",
-    "placeholderReply": "Reply to continue…",
-    "unavailableEditor": "Inline edit unavailable: could not access the active editor. Try reopening the note."
   },
   "host": {
     "failedSaveTabLayout": "Failed to save tab layout",

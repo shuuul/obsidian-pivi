@@ -1,13 +1,3 @@
-import type { InlineEditRequest, InlineEditResult } from '../prompt';
-
-export type {
-  InlineEditCursorRequest,
-  InlineEditMode,
-  InlineEditRequest,
-  InlineEditResult,
-  InlineEditSelectionRequest,
-} from '../prompt';
-
 export type TitleGenerationResult =
   | { success: true; title: string }
   | { success: false; error: string };
@@ -23,13 +13,5 @@ export interface TitleGenerationService {
     userMessage: string,
     callback: TitleGenerationCallback,
   ): Promise<void>;
-  cancel(): void;
-}
-
-export interface InlineEditService {
-  setModelOverride?(model?: string): void;
-  resetSession(): void;
-  editText(request: InlineEditRequest): Promise<InlineEditResult>;
-  continueSession(message: string, contextFiles?: string[]): Promise<InlineEditResult>;
   cancel(): void;
 }

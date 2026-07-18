@@ -5,7 +5,7 @@
 ## Purpose
 
 - `packages/pivi-react/styles/` contains the modular CSS source for Pivi's product React UI.
-- These modules style the sidebar chat, rendered messages and tool calls, composer toolbar, context features, inline editing, modals, settings, and accessibility states.
+- These modules style the sidebar chat, rendered messages and tool calls, composer toolbar, context features, modals, settings, and accessibility states.
 - The generated root `styles.css` is the release artifact; make source changes here rather than editing `styles.css` directly.
 
 ## Build flow
@@ -22,7 +22,7 @@
 - `base/`: shared custom properties, container utilities, host-neutral presentation primitives, and animations; loaded first after the host theme-token mapping.
 - `components/`: core chat structure—header, tabs, messages, markdown, navigation, code, thinking/tool/subagent/status displays, composer input, mentions, and context footer.
 - `toolbar/`: model, mode, thinking, and external-context selectors inside the composer toolbar.
-- `features/`: feature-specific chat and editor UI, including file/image context, embeds and modals, inline edit, diffs, slash commands, questions, and todos.
+- `features/`: feature-specific chat UI, including file/image context, embeds and modals, diffs, slash commands, questions, and todos.
 - `modals/`: standalone modal styling, currently MCP configuration.
 - `settings/`: settings navigation and shared layout plus slash, MCP, and agent-specific rules. `settings/base.css` owns shared `.pivi-sp-*` structures.
 - `accessibility.css`: shared focus-visible behavior; intentionally loaded last.
@@ -31,9 +31,9 @@
 ## Conventions
 
 - Prefix plugin-owned classes, custom properties, animations, and highlight names with `pivi-` (`.pivi-*`, `--pivi-*`, `pivi-*`). Strictly Pivi-scoped integration rules may consume upstream Markdown renderer, CodeMirror, or Lucide variables, but must not expose them as Pivi-owned public tokens.
-- Scope overrides beneath a Pivi root such as `.pivi-container`, `.pivi-settings`, or `.pivi-inline-edit-modal` when touching Obsidian or CodeMirror elements.
+- Scope overrides beneath a Pivi root such as `.pivi-container` or `.pivi-settings` when touching Obsidian elements.
 - Components consume `--pivi-host-*` theme tokens and shared `--pivi-*` product tokens. Each note-host maps its theme system into that contract; the Obsidian mapping lives in `packages/obsidian-host/styles/pivi-theme.css`.
-- Shared product spacing, radius, elevation, material, motion, surface, typography, focus, and press tokens are declared together for `.pivi-container`, `.pivi-settings`, and `.pivi-inline-edit-modal`. Keep Style Settings-backed chat and composer typography as separate semantic tokens.
+- Shared product spacing, radius, elevation, material, motion, surface, typography, focus, and press tokens are declared together for `.pivi-container` and `.pivi-settings`. Keep Style Settings-backed chat and composer typography as separate semantic tokens.
 - Transcript flow uses the shared `--pivi-flow-compact`, `--pivi-flow-content`, and `--pivi-flow-section` tokens. Narrative Markdown controls transitions between top-level content blocks while continuing to inherit host typography, color, list markers, list-item geometry, and inline indentation. Ordinary narrative blocks use content flow; headings use section flow before and compact flow after.
 - Product CSS targets only package-owned structural classes. Host adapters may normalize rendered third-party markup onto `.pivi-*` classes before package CSS consumes it; do not target host classes such as `setting-item`, `modal-*`, `svg-icon`, or theme-marker classes here.
 - Settings form controls share `.pivi-settings-control` for sizing, borders, focus, placeholder, and disabled states. Use `--fill` only for intentional full-width editors; checkbox, toggle, and range controls are excluded. Badge-list fields own wrapping, long-token overflow, and compact per-badge remove buttons in `settings/base.css`.
@@ -42,7 +42,7 @@
 - Native settings selectors must render through the shared React `Select` control and `.pivi-select` primitive. Keep them content-sized with a 100% container cap and the shared height, border, focus, hover, and disabled states; feature CSS must not stretch a selector to fill a row. Custom composer/menu selectors remain separate interaction components.
 - Keep selectors aligned with the classes and state modifiers emitted by UI code; common state forms include `.is-*`, `.active`, `.selected`, `.visible`, `.enabled`, and BEM-style `--modifier`.
 - Prefer logical properties (`margin-inline-*`, `padding-inline-*`, `inset-block-*`) where directionality matters.
-- Keep styles with their owning UI feature: chat primitives in `components/`, toolbar controls in `toolbar/`, inline edit and optional interactions in `features/`, and settings-only UI in `settings/`.
+- Keep styles with their owning UI feature: chat primitives in `components/`, toolbar controls in `toolbar/`, optional interactions in `features/`, and settings-only UI in `settings/`.
 - Put shared markdown rules in `components/markdown-content.css`; rendered markdown classes may be on the same element, so preserve compound-selector semantics.
 - Preserve the `/* @settings ... */` block in `base/variables.css`; external Style Settings integrations depend on it.
 
@@ -69,5 +69,4 @@
 - Never give collapsible step bodies an unconditional `display`; subagent step layout applies flex only to `.pivi-tool-step-group-steps:not(.pivi-hidden)` so the shared `.pivi-hidden` contract remains authoritative.
 - Individual subagent cards animate their profile icon and bottom light bar only while running. Terminal states retain the same profile icon in a static form and remove the flowing bar. Reduced-motion mode stops both effects while preserving icon, text, and color semantics.
 - Subagent shells use the same 6px outer radius while collapsed and expanded, matching tool windows, with one uniform border and no inline branch line. Their header order is profile icon, stable subagent name, truncated brief description, then trailing status. Header padding, line height, 13px name/summary typography, and the 16px icon slot match tool headers and remain identical while toggling content.
-- Inline-edit styles target CodeMirror 6 decorations and `.pivi-inline-edit-modal.cm-editor`; broad selectors can leak into normal editors.
 - Some small modules are intentionally shared or placeholders, such as `settings/agent-settings.css`; keep them imported so the manifest remains a complete inventory.

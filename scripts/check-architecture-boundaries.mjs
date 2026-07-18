@@ -205,7 +205,7 @@ const boundaryRules = [
     name: 'src/ui uses only approved @pivi/pivi-react presentation subpaths',
     root: 'src/ui',
     forbidden: [
-      /^@pivi\/pivi-react(?:$|\/(?!(?:store|inline-edit|context-badges)$))/,
+      /^@pivi\/pivi-react(?:$|\/(?!(?:store|context-badges)$))/,
     ],
     resolvedForbiddenRoots: [obsidianReactDir],
   },

@@ -318,9 +318,6 @@
       "name": "Exiger Command/Ctrl+Entrée pour envoyer",
       "desc": "Si activé, Entrée insère une nouvelle ligne. Command+Entrée ou Ctrl+Entrée envoie."
     },
-    "inlineEditHotkey": {
-      "name": "Édition en ligne"
-    },
     "openChatHotkey": {
       "name": "Ouvrir le chat"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "Exécuter /{name} dans une nouvelle session",
     "workspaceCommandEmpty": "Sélectionnez du texte avant d’exécuter cette commande.",
     "workspaceCommandUnavailable": "Cette commande de l’espace de travail est indisponible.",
-    "inlineEdit": "Édition en ligne",
     "newTab": "Nouvel onglet",
     "newSession": "Nouvelle session (onglet actuel)",
     "closeCurrentTab": "Fermer l’onglet actuel",
-    "openPiviRibbon": "Ouvrir Pivi",
-    "inlineEditUnavailableView": "Édition en ligne indisponible : impossible d’accéder à la vue Markdown active.",
-    "inlineEditInserted": "Inséré",
-    "inlineEditApplied": "Modification appliquée"
+    "openPiviRibbon": "Ouvrir Pivi"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "Lire la ressource MCP",
       "editNotebook": "Modifier le carnet"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "Instructions d’insertion…",
-    "placeholderEdit": "Instructions d’édition…",
-    "placeholderReply": "Répondre pour continuer…",
-    "unavailableEditor": "Édition en ligne indisponible : impossible d’accéder à l’éditeur actif. Réouvrez la note."
   },
   "host": {
     "failedSaveTabLayout": "Échec de l’enregistrement de la disposition des onglets",

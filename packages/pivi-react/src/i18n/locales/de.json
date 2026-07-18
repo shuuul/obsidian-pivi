@@ -318,9 +318,6 @@
       "name": "Command/Ctrl+Enter zum Senden erfordern",
       "desc": "Wenn aktiviert, fügt Enter einen Zeilenumbruch ein. Command+Enter oder Ctrl+Enter sendet."
     },
-    "inlineEditHotkey": {
-      "name": "Inline-Bearbeitung"
-    },
     "openChatHotkey": {
       "name": "Chat öffnen"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "/{name} in einer neuen Sitzung ausführen",
     "workspaceCommandEmpty": "Wähle Text aus, bevor du diesen Befehl ausführst.",
     "workspaceCommandUnavailable": "Dieser Workspace-Befehl ist nicht verfügbar.",
-    "inlineEdit": "Inline-Bearbeitung",
     "newTab": "Neuer Tab",
     "newSession": "Neue Sitzung (im aktuellen Tab)",
     "closeCurrentTab": "Aktuellen Tab schließen",
-    "openPiviRibbon": "Pivi öffnen",
-    "inlineEditUnavailableView": "Inline-Bearbeitung nicht verfügbar: aktive Markdown-Ansicht nicht erreichbar.",
-    "inlineEditInserted": "Eingefügt",
-    "inlineEditApplied": "Bearbeitung angewendet"
+    "openPiviRibbon": "Pivi öffnen"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "MCP-Ressource lesen",
       "editNotebook": "Notebook bearbeiten"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "Einfügeanweisungen…",
-    "placeholderEdit": "Bearbeitungsanweisungen…",
-    "placeholderReply": "Antworten zum Fortfahren…",
-    "unavailableEditor": "Inline-Bearbeitung nicht verfügbar: aktiver Editor nicht erreichbar. Notiz erneut öffnen."
   },
   "host": {
     "failedSaveTabLayout": "Tab-Layout konnte nicht gespeichert werden",

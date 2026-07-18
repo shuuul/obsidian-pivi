@@ -156,7 +156,7 @@ Guidance for low-context agents:
 - Full verification passed: `npm run test:coverage -- --runInBand` completed 239 suites / 1,847 tests with 68.93% statements, 58.31% branches, 66.02% functions, and 70.39% lines. `npm run typecheck`, zero-warning `npm run lint`, and `npm run check:boundaries` also passed.
 - Production evidence: `npm run build` deployed the production artifacts; `npm run check:bundle-size` measured `main.js` at 3,071,792 bytes (2.93 MB), leaving 2,171,088 bytes (2.07 MB) below Obsidian's 5 MB cap. `obsidian plugin:reload id=pivi` and `obsidian dev:errors` passed with no captured errors.
 - Interaction substitution: the user approved isolated synthetic tabs instead of reusing the original tabs. Deterministic lifecycle, projection, cross-tab shelf, deferred navigation, session compatibility, owner-realm, and virtual-scroll tests cover the manual matrix; the real Obsidian 20-Agent workload used a disposable tab/session and restored the original tab state byte-for-byte.
-- Documentation audit: durable conclusions are synchronized into `docs/06-subagents-streaming-and-rendering.md`, `docs/08-presentation-settings-and-inline-edit.md`, `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, and the owning core/React/app/chat/rendering guidance. No remaining code or documentation criterion is open.
+- Documentation audit: durable conclusions are synchronized into `docs/06-subagents-streaming-and-rendering.md`, `docs/08-presentation-and-settings.md`, `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, and the owning core/React/app/chat/rendering guidance. No remaining code or documentation criterion is open.
 - Next action: mark the spec completed, move it to `specs/archive/`, and update the index.
 
 ### 2026-07-15 — Spec creation — coordinator

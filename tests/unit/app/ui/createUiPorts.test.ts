@@ -10,7 +10,6 @@ import type {
   PiviSettingsHost,
   PiviUiFacades,
 } from '@/app/hostContracts';
-import { createInlineEditPort } from '@/app/ui/createInlineEditPort';
 import {
   createChatUiPorts,
   createSettingsUiPorts,
@@ -145,7 +144,6 @@ describe('UI port adapters', () => {
     });
     expect(openRecentSessionMessages).toHaveBeenCalledWith('open-session', 100);
     expect(readOlderSessionMessages).toHaveBeenCalledWith('open-session', 'message-50', 100);
-    expect(createInlineEditPort(host).createAuxQueryRunner()).toBe(auxRunner);
     await expect(ports.catalog.listMcpTools('server')).resolves.toEqual([{ name: 'search' }]);
     expect(ports.catalog.getSlashDropdownConfig()).toEqual({
       triggerChars: ['/'],

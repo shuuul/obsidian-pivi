@@ -318,9 +318,6 @@
       "name": "Требовать Command/Ctrl+Enter для отправки",
       "desc": "Если включено, Enter вставляет новую строку. Command+Enter или Ctrl+Enter отправляет сообщение."
     },
-    "inlineEditHotkey": {
-      "name": "Инлайн-редактирование"
-    },
     "openChatHotkey": {
       "name": "Открыть чат"
     },
@@ -737,14 +734,10 @@
     "runWorkspaceCommand": "Выполнить /{name} в новом сеансе",
     "workspaceCommandEmpty": "Выделите текст перед запуском этой команды.",
     "workspaceCommandUnavailable": "Эта команда рабочего пространства недоступна.",
-    "inlineEdit": "Инлайн-редактирование",
     "newTab": "Новая вкладка",
     "newSession": "Новый сеанс (в текущей вкладке)",
     "closeCurrentTab": "Закрыть текущую вкладку",
-    "openPiviRibbon": "Открыть Pivi",
-    "inlineEditUnavailableView": "Инлайн-редактирование недоступно: нет доступа к активному виду Markdown.",
-    "inlineEditInserted": "Вставлено",
-    "inlineEditApplied": "Правка применена"
+    "openPiviRibbon": "Открыть Pivi"
   },
   "tools": {
     "display": {
@@ -820,12 +813,6 @@
       "readMcpResource": "Читать ресурс MCP",
       "editNotebook": "Редактировать блокнот"
     }
-  },
-  "inlineEdit": {
-    "placeholderInsert": "Инструкции вставки…",
-    "placeholderEdit": "Инструкции правки…",
-    "placeholderReply": "Ответьте, чтобы продолжить…",
-    "unavailableEditor": "Инлайн-редактирование недоступно: нет доступа к активному редактору. Откройте заметку снова."
   },
   "host": {
     "failedSaveTabLayout": "Не удалось сохранить раскладку вкладок",

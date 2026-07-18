@@ -306,7 +306,6 @@ describe('architecture boundary scripts', () => {
 
   it.each([
     '@pivi/pivi-react/store',
-    '@pivi/pivi-react/inline-edit',
     '@pivi/pivi-react/context-badges',
   ])('allows the approved React presentation subpath: %s', (moduleName) => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
