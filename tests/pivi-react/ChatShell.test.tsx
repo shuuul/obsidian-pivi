@@ -489,7 +489,7 @@ describe('React ChatShell tabs', () => {
     expect(usageTrigger).toHaveAttribute('data-tooltip', '980 / 1K (98%)');
     expect(
       targets.composer.querySelector('path.pivi-meter-fill-input'),
-    ).toHaveAttribute('stroke-dashoffset', '0');
+    ).toHaveAttribute('stroke-dashoffset', '2');
     fireEvent.click(usageTrigger);
     expect(within(targets.composer).queryByRole('dialog')).toBeNull();
     expect(targets.composer.querySelector('path.pivi-meter-bg')?.getAttribute('d')).toBe('M 1.94 11.5 A 7 7 0 1 1 14.06 11.5');

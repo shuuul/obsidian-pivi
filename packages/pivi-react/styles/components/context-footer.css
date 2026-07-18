@@ -39,7 +39,7 @@
     stroke var(--pivi-duration-deliberate) var(--pivi-ease-in-out);
 }
 
-/* Warning state (> 80%) - scoped to the input gauge that crossed the threshold. */
+/* Warning state (> 80% compaction pressure) - arc fill still follows context usage. */
 .pivi-context-meter-gauge.warning .pivi-meter-fill,
 .pivi-context-meter-gauge.warning .pivi-meter-fill-input {
   stroke: #E57373;

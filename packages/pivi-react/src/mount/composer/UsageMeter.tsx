@@ -40,7 +40,7 @@ export function UsageMeter({ usage }: { usage: UsageInfo | null }) {
             fill="none"
             pathLength="100"
             strokeDasharray="100"
-            strokeDashoffset={100 - pressurePercentage}
+            strokeDashoffset={100 - totalPercentage}
             strokeLinecap="round"
             strokeWidth="2"
           />
