@@ -195,6 +195,57 @@ export function attachContextEnvelope(
   };
 }
 
+/** Rebuild composer usage from the compacted active session instead of stale provider totals. */
+export function buildUsageAfterCompaction(
+  deps: PiChatCompactionDeps,
+  turn?: PreparedChatTurn,
+  tokensAfter?: number,
+): UsageInfo | null {
+  const conversationTokens = tokensAfter ?? estimateStoredConversationTokens(deps);
+  if (conversationTokens <= 0) {
+    return null;
+  }
+  const resolvedModel = deps.resolveModel();
+  const contextWindow = resolvedModel?.contextWindow ?? 0;
+  const selectedContext = deps.sessionTree && turn
+    ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
+    : 0;
+  const contextEnvelope = calculateContextEnvelope({
+    contextWindow,
+    contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
+    outputTokenLimit: resolvedModel?.maxTokens,
+    recentConversation: conversationTokens,
+    selectedContext,
+    system: estimateSystemTokens(deps.agent),
+    toolAndAgentResults: 0,
+  });
+  const contextTokens = contextEnvelope.total.tokens;
+  return {
+    contextTokens,
+    contextTokensIsAuthoritative: false,
+    contextWindow,
+    contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
+    contextEnvelope,
+    inputTokens: contextTokens,
+    ...(resolvedModel?.maxTokens ? { outputTokenLimit: resolvedModel.maxTokens } : {}),
+    ...(typeof resolvedModel?.id === 'string' ? { model: resolvedModel.id } : {}),
+    percentage: calculateUsagePercentage(contextTokens, contextWindow),
+  };
+}
+
+export function pushCompactionChunks(
+  queue: Pick<StreamChunkQueue, 'push'>,
+  deps: PiChatCompactionDeps,
+  compaction: PiChatCompactionResult,
+  turn?: PreparedChatTurn,
+): void {
+  queue.push({ type: 'context_compacted', ...compaction });
+  const usage = buildUsageAfterCompaction(deps, turn, compaction.tokensAfter);
+  if (usage) {
+    queue.push({ type: 'usage', usage });
+  }
+}
+
 export function shouldAutoCompactSession(
   deps: PiChatCompactionDeps,
   providerUsage: UsageInfo,
@@ -265,7 +316,7 @@ export async function prepareContextForTurn(
     const compaction = await compactCurrentSession(deps, 'threshold');
     compacted = compaction !== null;
     if (compaction) {
-      queue.push({ type: 'context_compacted', ...compaction });
+      pushCompactionChunks(queue, deps, compaction, turn);
     }
   }
   if (estimateProjectedTurnTokens(deps, turn) < thresholdTokens) {

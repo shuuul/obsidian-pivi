@@ -877,13 +877,28 @@ describe('PiChatRuntime system prompt', () => {
         tokensAfter: expect.any(Number),
         tokensBefore: expect.any(Number),
       }),
+      expect.objectContaining({
+        type: 'usage',
+        usage: expect.objectContaining({
+          contextTokens: expect.any(Number),
+          percentage: expect.any(Number),
+        }),
+      }),
       { type: 'done' },
     ]);
     const manualCompaction = chunks.find((chunk): chunk is Extract<StreamChunk, { type: 'context_compacted' }> => (
       chunk.type === 'context_compacted'
     ));
     expectDefined(manualCompaction);
+    expectDefined(manualCompaction.tokensAfter);
     expect(manualCompaction.tokensAfter).toBeLessThan(manualCompaction.tokensBefore ?? 0);
+    const manualCompactionUsage = chunks.find((chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => (
+      chunk.type === 'usage'
+    ));
+    expectDefined(manualCompactionUsage);
+    expect(manualCompactionUsage.usage.contextTokens).toBeLessThanOrEqual(
+      manualCompaction.tokensAfter + (manualCompactionUsage.usage.contextEnvelope?.system.tokens ?? 0),
+    );
     expect(manualCompaction.summary).toContain('The earlier session history was compacted.');
     expect(manualCompaction.checkpoint).toMatchObject({
       continuationSummary: expect.stringContaining('Continue from the compacted session'),
@@ -1238,19 +1253,34 @@ describe('PiChatRuntime system prompt', () => {
       .toContain('Create NOTE₁');
     expect((mockCompactionSample.mock.calls[1] as unknown[])[2])
       .toContain('Create the final NOTE₂');
-    expect(chunks.slice(0, 2)).toEqual([
+    expect(chunks.slice(0, 3)).toEqual([
       { type: 'context_compacting' },
       expect.objectContaining({
         type: 'context_compacted',
         tokensAfter: expect.any(Number),
         tokensBefore: expect.any(Number),
       }),
+      expect.objectContaining({
+        type: 'usage',
+        usage: expect.objectContaining({
+          contextTokens: expect.any(Number),
+          percentage: expect.any(Number),
+        }),
+      }),
     ]);
     const preflightCompaction = chunks.find((chunk): chunk is Extract<StreamChunk, { type: 'context_compacted' }> => (
       chunk.type === 'context_compacted'
     ));
     expectDefined(preflightCompaction);
+    expectDefined(preflightCompaction.tokensAfter);
     expect(preflightCompaction.tokensAfter).toBeLessThan(preflightCompaction.tokensBefore ?? 0);
+    const preflightUsage = chunks.find((chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => (
+      chunk.type === 'usage'
+    ));
+    expectDefined(preflightUsage);
+    expect(preflightUsage.usage.contextTokens).toBeLessThanOrEqual(
+      preflightCompaction.tokensAfter + (preflightUsage.usage.contextEnvelope?.system.tokens ?? 0),
+    );
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith(oversizedTurn);
   });

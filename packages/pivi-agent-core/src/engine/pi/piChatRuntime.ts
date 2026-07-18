@@ -50,6 +50,7 @@ import {
 } from './piChatRuntimeActiveTurn';
 import {
   attachContextEnvelope,
+  buildUsageAfterCompaction,
   compactCurrentSession,
   invalidateCompactionState,
   type PiChatCompactionState,
@@ -281,9 +282,15 @@ export class PiChatRuntime implements PiChatService {
     if (turn.isCompact) {
       try {
         const compacted = await compactCurrentSession(this.compactionDeps(), 'manual', stripCompactCommand(turn.request.text));
-        yield compacted
-          ? { type: 'context_compacted', ...compacted }
-          : { type: 'notice', level: 'info', content: 'There is not enough session history to compact yet.' };
+        if (compacted) {
+          yield { type: 'context_compacted', ...compacted };
+          const usage = buildUsageAfterCompaction(this.compactionDeps(), turn, compacted.tokensAfter);
+          if (usage) {
+            yield { type: 'usage', usage };
+          }
+        } else {
+          yield { type: 'notice', level: 'info', content: 'There is not enough session history to compact yet.' };
+        }
       } catch (error) {
         yield { type: 'error', content: error instanceof Error ? error.message : String(error) };
       }

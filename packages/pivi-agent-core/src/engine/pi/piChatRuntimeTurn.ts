@@ -15,6 +15,7 @@ import {
   type PiChatCompactionDeps,
   prepareCompactionPrefire,
   prepareContextForTurn,
+  pushCompactionChunks,
   shouldAutoCompactSession,
 } from './piChatRuntimeCompaction';
 import {
@@ -159,7 +160,7 @@ async function runPromptLifecycle(
     try {
       const compacted = await compactCurrentSession(deps.compaction, 'threshold');
       if (compacted) {
-        activeTurn.queue.push({ type: 'context_compacted', ...compacted });
+        pushCompactionChunks(activeTurn.queue, deps.compaction, compacted, turn);
       }
     } catch (error) {
       activeTurn.queue.push({
