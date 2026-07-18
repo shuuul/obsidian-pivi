@@ -21,13 +21,25 @@
 
 <br>
 
-![Pivi sidebar chat](assets/pivi-example-sm.png)
+![Pivi turns linked project notes into a weekly action plan inside Obsidian](assets/pivi-vault-aware-planning.png)
 
 ---
 
 ## Quick start
 
 Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/pivi), add an API key in Settings → Pivi, and start chatting.
+
+---
+
+## See Pivi in action
+
+Work from the note already open in Obsidian, then bring in linked notes, vault tools, reusable skills, and commands without leaving the workspace.
+
+### Discover capabilities from the composer
+
+Type `/` to search Pivi's commands, installed vault skills, and enabled tools from one keyboard-friendly catalog.
+
+![Pivi slash catalog with commands, vault skills, and tools](assets/pivi-slash-catalog.png)
 
 ---
 
