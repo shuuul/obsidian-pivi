@@ -12,7 +12,9 @@ import {
 import type { PiviChatHost } from '@/app/hostContracts';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
 import {
+  hideRetryIndicator as hideStreamRetryIndicator,
   hideThinkingIndicator as hideStreamThinkingIndicator,
+  showRetryIndicator as showStreamRetryIndicator,
   showThinkingIndicator as showStreamThinkingIndicator,
 } from '@/ui/chat/stream/streamThinkingIndicator';
 import {
@@ -204,6 +206,11 @@ export class StreamController {
       case 'context_compacted':
         break;
 
+      case 'retry_start':
+      case 'retry_end':
+        this.handleRetryChunk(chunk, options.backgroundSubagent === true);
+        break;
+
       case 'error':
         this.handleErrorChunk();
         break;
@@ -278,6 +285,23 @@ export class StreamController {
 
   private handleErrorChunk(): void {
     this.hideThinkingIndicator();
+  }
+
+  private handleRetryChunk(
+    chunk: Extract<StreamChunk, { type: 'retry_end' | 'retry_start' }>,
+    backgroundSubagent: boolean,
+  ): void {
+    if (backgroundSubagent) return;
+    const deps = {
+      state: this.deps.state,
+      updateQueueIndicator: this.deps.updateQueueIndicator,
+      getMessagesEl: this.deps.getMessagesEl,
+    };
+    if (chunk.type === 'retry_start') {
+      showStreamRetryIndicator(deps, chunk);
+    } else {
+      hideStreamRetryIndicator(deps, chunk.attempt);
+    }
   }
 
   private handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {

@@ -178,6 +178,8 @@
       "interruptHint": "· Что вместо этого должен сделать Pivi?",
       "renderFailed": "Не удалось отрисовать содержимое сообщения.",
       "escInterruptDuration": "esc для прерывания · {duration}",
+      "retrying": "Соединение прервано · Повторная попытка {attempt}/{maxAttempts} через {seconds} с",
+      "retryActive": "Соединение прервано · Повторная попытка {attempt}/{maxAttempts}…",
       "noResult": "Нет результата",
       "noDetails": "Нет деталей",
       "noDescription": "Описание недоступно.",

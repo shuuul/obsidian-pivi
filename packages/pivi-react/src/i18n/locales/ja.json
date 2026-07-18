@@ -178,6 +178,8 @@
       "interruptHint": "· Pivi に代わりに何をさせますか？",
       "renderFailed": "メッセージ内容の描画に失敗しました。",
       "escInterruptDuration": "esc で中断 · {duration}",
+      "retrying": "接続が中断されました · {seconds}秒後に再試行（{attempt}/{maxAttempts}）",
+      "retryActive": "接続が中断されました · 再試行中（{attempt}/{maxAttempts}）…",
       "noResult": "結果なし",
       "noDetails": "詳細なし",
       "noDescription": "説明はありません。",

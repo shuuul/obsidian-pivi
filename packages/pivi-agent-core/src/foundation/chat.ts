@@ -187,6 +187,19 @@ export type StreamChunk =
   | { type: 'tool_output'; id: string; content: string }
   | { type: 'error'; content: string }
   | { type: 'notice'; content: string; level?: 'info' | 'warning' }
+  | {
+      type: 'retry_start';
+      attempt: number;
+      maxAttempts: number;
+      delayMs: number;
+      errorMessage: string;
+    }
+  | {
+      type: 'retry_end';
+      success: boolean;
+      attempt: number;
+      finalError?: string;
+    }
   | { type: 'done' }
   | { type: 'usage'; usage: UsageInfo; sessionId?: string | null }
   | { type: 'context_compacting' }

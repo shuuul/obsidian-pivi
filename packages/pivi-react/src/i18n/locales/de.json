@@ -178,6 +178,8 @@
       "interruptHint": "· Was soll Pivi stattdessen tun?",
       "renderFailed": "Nachrichteninhalt konnte nicht gerendert werden.",
       "escInterruptDuration": "esc zum Unterbrechen · {duration}",
+      "retrying": "Verbindung unterbrochen · Neuer Versuch {attempt}/{maxAttempts} in {seconds}s",
+      "retryActive": "Verbindung unterbrochen · Neuer Versuch {attempt}/{maxAttempts}…",
       "noResult": "Kein Ergebnis",
       "noDetails": "Keine Details",
       "noDescription": "Keine Beschreibung verfügbar.",

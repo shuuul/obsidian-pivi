@@ -70,6 +70,15 @@ export function streamSimple(): any {
   return createMockStream();
 }
 
+export function isContextOverflow(message: any): boolean {
+  return message?.errorMessage === 'context overflow';
+}
+
+export function isRetryableAssistantError(message: any): boolean {
+  return message?.stopReason === 'error'
+    && /socket hang up|rate limit|5\d\d|timed? out/i.test(message?.errorMessage ?? '');
+}
+
 export function registerBuiltInApiProviders(): void {}
 
 function credentialToMockAuth(credential: any): any {

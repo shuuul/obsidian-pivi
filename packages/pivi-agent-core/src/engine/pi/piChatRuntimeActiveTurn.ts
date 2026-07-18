@@ -4,6 +4,7 @@ import { TOOL_SPAWN_AGENT } from '../../tools';
 
 export interface ActiveTurn {
   queue: StreamChunkQueue;
+  abortController: AbortController;
   acceptingSubagentChunks: boolean;
   subagentToolIds: Set<string>;
 }
@@ -11,12 +12,14 @@ export interface ActiveTurn {
 export function createActiveTurn(): ActiveTurn {
   return {
     queue: new StreamChunkQueue(),
+    abortController: new AbortController(),
     acceptingSubagentChunks: true,
     subagentToolIds: new Set<string>(),
   };
 }
 
 export function closeActiveTurnQueue(activeTurn: ActiveTurn): void {
+  activeTurn.abortController.abort();
   activeTurn.acceptingSubagentChunks = false;
   activeTurn.queue.close();
 }

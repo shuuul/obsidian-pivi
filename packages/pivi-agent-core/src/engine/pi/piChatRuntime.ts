@@ -349,6 +349,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   cancel(): void {
+    this.activeTurn?.abortController.abort();
     this.agent?.abort();
     this.subagentRunner.abortAllSubagents();
     invalidateCompactionState(this.compactionState);

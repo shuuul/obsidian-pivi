@@ -15,6 +15,15 @@ export interface StreamThinkingIndicatorDeps {
 interface ThinkingIndicatorTimers {
   interval: number | null;
   ownerWindow: Window;
+  retry: RetryIndicatorState | null;
+}
+
+interface RetryIndicatorState {
+  attempt: number;
+  maxAttempts: number;
+  retryAt: number;
+  previousClassName: string;
+  previousText: string;
 }
 
 const timersByState = new WeakMap<ChatState, ThinkingIndicatorTimers>();
@@ -29,6 +38,22 @@ function buildElapsedLabel(state: ChatState): string {
   if (state.responseStartTime === null) return '';
   const elapsedSeconds = Math.floor((performance.now() - state.responseStartTime) / 1000);
   return ` (${t('chat.stream.escInterruptDuration', { duration: formatDurationMmSs(elapsedSeconds) })})`;
+}
+
+function buildRetryText(retry: RetryIndicatorState): string {
+  const remainingMs = retry.retryAt - performance.now();
+  if (remainingMs <= 0) {
+    return t('chat.stream.retryActive', {
+      attempt: retry.attempt,
+      maxAttempts: retry.maxAttempts,
+    });
+  }
+  const seconds = Math.ceil(remainingMs / 1000);
+  return t('chat.stream.retrying', {
+    attempt: retry.attempt,
+    maxAttempts: retry.maxAttempts,
+    seconds,
+  });
 }
 
 function writeIndicator(
@@ -51,7 +76,7 @@ function ensureElapsedInterval(deps: StreamThinkingIndicatorDeps, ownerWindow: W
   const { state } = deps;
   let timers = timersByState.get(state);
   if (!timers) {
-    timers = { interval: null, ownerWindow };
+    timers = { interval: null, ownerWindow, retry: null };
     timersByState.set(state, timers);
   } else {
     timers.ownerWindow = ownerWindow;
@@ -62,14 +87,14 @@ function ensureElapsedInterval(deps: StreamThinkingIndicatorDeps, ownerWindow: W
   timers.interval = ownerWindow.setInterval(() => {
     const snapshot = state.uiStore.getSnapshot();
     const current = snapshot.thinkingIndicator;
+    const active = timersByState.get(state);
     if (!current) {
-      const active = timersByState.get(state);
       if (active) clearIntervalOnly(active);
       return;
     }
     state.uiStore.update({
       thinkingIndicator: {
-        text: current.text,
+        text: active?.retry ? buildRetryText(active.retry) : current.text,
         className: current.className,
         elapsedLabel: buildElapsedLabel(state),
       },
@@ -86,7 +111,7 @@ export function showThinkingIndicator(
   const ownerWindow = getMessagesEl().ownerDocument.defaultView ?? window;
   let timers = timersByState.get(state);
   if (!timers) {
-    timers = { interval: null, ownerWindow };
+    timers = { interval: null, ownerWindow, retry: null };
     timersByState.set(state, timers);
   } else {
     timers.ownerWindow = ownerWindow;
@@ -102,6 +127,49 @@ export function showThinkingIndicator(
   const className = overrideCls ? `pivi-thinking ${overrideCls}` : 'pivi-thinking';
   writeIndicator(deps, text, className);
   ensureElapsedInterval(deps, ownerWindow);
+}
+
+export function showRetryIndicator(
+  deps: StreamThinkingIndicatorDeps,
+  retry: { attempt: number; maxAttempts: number; delayMs: number },
+): void {
+  showThinkingIndicator(deps);
+
+  const { state, getMessagesEl } = deps;
+  const current = state.uiStore.getSnapshot().thinkingIndicator;
+  if (!current) return;
+
+  const ownerWindow = getMessagesEl().ownerDocument.defaultView ?? window;
+  const timers = timersByState.get(state);
+  if (!timers) return;
+
+  const previous = timers.retry ?? {
+    previousClassName: current.className,
+    previousText: current.text,
+  };
+  timers.retry = {
+    attempt: retry.attempt,
+    maxAttempts: retry.maxAttempts,
+    retryAt: performance.now() + retry.delayMs,
+    previousClassName: previous.previousClassName,
+    previousText: previous.previousText,
+  };
+  timers.ownerWindow = ownerWindow;
+  writeIndicator(deps, buildRetryText(timers.retry), current.className);
+  ensureElapsedInterval(deps, ownerWindow);
+}
+
+export function hideRetryIndicator(
+  deps: StreamThinkingIndicatorDeps,
+  attempt: number,
+): void {
+  const { state } = deps;
+  const timers = timersByState.get(state);
+  const retry = timers?.retry;
+  if (!timers || !retry || retry.attempt !== attempt) return;
+
+  timers.retry = null;
+  writeIndicator(deps, retry.previousText, retry.previousClassName);
 }
 
 export function hideThinkingIndicator(deps: StreamThinkingIndicatorDeps): void {

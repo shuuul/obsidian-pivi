@@ -1,7 +1,9 @@
 import { ChatState } from '@/ui/chat/state/ChatState';
 import {
   hideThinkingIndicator,
+  hideRetryIndicator,
   showThinkingIndicator,
+  showRetryIndicator,
 } from '@/ui/chat/stream/streamThinkingIndicator';
 
 describe('streamThinkingIndicator', () => {
@@ -96,5 +98,47 @@ describe('streamThinkingIndicator', () => {
 
     showThinkingIndicator(deps, 'Second');
     expect(state.uiStore.getSnapshot().thinkingIndicator).toEqual(first);
+  });
+
+  it('projects retry countdowns onto the indicator and restores its prior text', () => {
+    const { state, deps } = createDeps();
+    state.isStreaming = true;
+    state.responseStartTime = performance.now() - 1500;
+
+    showThinkingIndicator(deps, 'Distilling...');
+    showRetryIndicator(deps, { attempt: 1, maxAttempts: 3, delayMs: 2000 });
+
+    expect(state.uiStore.getSnapshot().thinkingIndicator).toEqual({
+      text: 'Connection interrupted · Retrying 1/3 in 2s',
+      className: 'pivi-thinking',
+      elapsedLabel: expect.stringContaining('esc to interrupt'),
+    });
+
+    jest.advanceTimersByTime(1000);
+    expect(state.uiStore.getSnapshot().thinkingIndicator?.text)
+      .toBe('Connection interrupted · Retrying 1/3 in 1s');
+
+    jest.advanceTimersByTime(1000);
+    expect(state.uiStore.getSnapshot().thinkingIndicator?.text)
+      .toBe('Connection interrupted · Retrying 1/3…');
+
+    hideRetryIndicator(deps, 1);
+    expect(state.uiStore.getSnapshot().thinkingIndicator).toEqual({
+      text: 'Distilling...',
+      className: 'pivi-thinking',
+      elapsedLabel: expect.stringContaining('esc to interrupt'),
+    });
+  });
+
+  it('ignores stale retry_end events', () => {
+    const { state, deps } = createDeps();
+    state.isStreaming = true;
+
+    showThinkingIndicator(deps, 'Distilling...');
+    showRetryIndicator(deps, { attempt: 2, maxAttempts: 3, delayMs: 4000 });
+    hideRetryIndicator(deps, 1);
+
+    expect(state.uiStore.getSnapshot().thinkingIndicator?.text)
+      .toBe('Connection interrupted · Retrying 2/3 in 4s');
   });
 });

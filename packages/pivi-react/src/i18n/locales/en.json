@@ -178,6 +178,8 @@
       "interruptHint": "· What should Pivi do instead?",
       "renderFailed": "Failed to render message content.",
       "escInterruptDuration": "esc to interrupt · {duration}",
+      "retrying": "Connection interrupted · Retrying {attempt}/{maxAttempts} in {seconds}s",
+      "retryActive": "Connection interrupted · Retrying {attempt}/{maxAttempts}…",
       "noResult": "No result",
       "noDetails": "No details",
       "noDescription": "No description available.",

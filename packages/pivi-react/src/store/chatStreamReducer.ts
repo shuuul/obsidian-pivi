@@ -246,6 +246,8 @@ export function reduceChatStreamSnapshot(
     case 'assistant_message_start':
     case 'done':
     case 'context_compacting':
+    case 'retry_start':
+    case 'retry_end':
       return state;
   }
 }

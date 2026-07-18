@@ -178,6 +178,8 @@
       "interruptHint": "· Pivi가 대신 무엇을 하면 될까요?",
       "renderFailed": "메시지 내용을 렌더링하지 못했습니다.",
       "escInterruptDuration": "esc로 중단 · {duration}",
+      "retrying": "연결이 끊겼습니다 · {seconds}초 후 재시도 ({attempt}/{maxAttempts})",
+      "retryActive": "연결이 끊겼습니다 · 재시도 중 ({attempt}/{maxAttempts})…",
       "noResult": "결과 없음",
       "noDetails": "세부 정보 없음",
       "noDescription": "설명이 없습니다.",

@@ -1,9 +1,11 @@
 import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
+import type { AssistantMessage } from '@earendil-works/pi-ai';
 
 import type { StreamChunk } from '../../foundation';
 import { toChatTurnRequestSnapshot } from '../../runtime/queuedTurn';
 import type { PreparedChatTurn } from '../../runtime/types';
 import type { PiAgentEventAdapter } from './piAgentEventAdapter';
+import { runPiChatPromptWithRetry } from './piChatRetry';
 import {
   type ActiveTurn,
   finishActiveTurnQueue,
@@ -78,10 +80,24 @@ export async function* streamPiChatTurn(
           });
         }
       }
+      if (isAssistantErrorMessage(event.message)) {
+        // Retry policy owns whether this is transient or terminal. Defer the
+        // visible error until the prompt/continue cycle settles.
+        return;
+      }
     }
     if (event.type === 'agent_end') {
       // Persistence runs once after agent.prompt() resolves so a failed write
       // reaches the turn error path instead of becoming silent history loss.
+      return;
+    }
+    if (
+      event.type === 'message_update'
+      && event.assistantMessageEvent.type === 'error'
+    ) {
+      // pi-agent-core normally reports the finalized error on message_end.
+      // Suppress this safety-net event so a retryable attempt never renders as
+      // a terminal error before the retry decision.
       return;
     }
     for (const chunk of deps.eventAdapter.adapt(event)) {
@@ -137,9 +153,29 @@ async function runPromptLifecycle(
   persistUserMessage(deps, turn);
 
   const promptImages = toPiImageContent(turn.request.images);
-  await (promptImages.length > 0
-    ? agent.prompt(turn.prompt, promptImages)
-    : agent.prompt(turn.prompt));
+  const retryResult = await runPiChatPromptWithRetry({
+    agent,
+    contextWindow: deps.resolveModel()?.contextWindow ?? 0,
+    emit: (chunk) => activeTurn.queue.push(chunk),
+    getLatestAssistantMessage: () => latestAssistantMessage(emittedMessages),
+    persistFailedAttempt: () => deps.syncSessionMessages(emittedMessages),
+    prompt: () => promptImages.length > 0
+      ? agent.prompt(turn.prompt, promptImages)
+      : agent.prompt(turn.prompt),
+    signal: activeTurn.abortController.signal,
+  });
+
+  if (retryResult.status === 'failed' && retryResult.finalMessage) {
+    activeTurn.queue.push(deps.eventAdapter.adaptAssistantError(
+      retryResult.finalMessage as unknown as Record<string, unknown>,
+    ));
+  }
+  if (retryResult.status === 'cancelled') {
+    deps.syncSessionMessages(emittedMessages);
+    finishActiveTurnQueue(activeTurn);
+    return;
+  }
+
   const refreshedModelMetadata = await deps.refreshModelMetadata();
 
   const finalMessages = emittedMessages.length > 0
@@ -173,6 +209,22 @@ async function runPromptLifecycle(
     prepareCompactionPrefire(deps.compaction, usage);
   }
   finishActiveTurnQueue(activeTurn);
+}
+
+function isAssistantErrorMessage(message: AgentMessage): message is AssistantMessage {
+  return message.role === 'assistant' && message.stopReason === 'error';
+}
+
+function latestAssistantMessage(
+  messages: AgentMessage[],
+): AssistantMessage | undefined {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message?.role === 'assistant') {
+      return message;
+    }
+  }
+  return undefined;
 }
 
 function persistUserMessage(

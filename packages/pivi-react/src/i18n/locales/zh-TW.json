@@ -178,6 +178,8 @@
       "interruptHint": "· 希望 Pivi 改做什麼？",
       "renderFailed": "轉譯訊息內容失敗。",
       "escInterruptDuration": "按 esc 中斷 · {duration}",
+      "retrying": "連線中斷 · {seconds} 秒後重試（{attempt}/{maxAttempts}）",
+      "retryActive": "連線中斷 · 正在重試（{attempt}/{maxAttempts}）…",
       "noResult": "無結果",
       "noDetails": "無詳情",
       "noDescription": "暫無描述。",

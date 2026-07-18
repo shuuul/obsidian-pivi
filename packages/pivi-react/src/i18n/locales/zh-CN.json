@@ -178,6 +178,8 @@
       "interruptHint": "· 希望 Pivi 改为做什么？",
       "renderFailed": "渲染消息内容失败。",
       "escInterruptDuration": "按 esc 中断 · {duration}",
+      "retrying": "连接中断 · {seconds} 秒后重试（{attempt}/{maxAttempts}）",
+      "retryActive": "连接中断 · 正在重试（{attempt}/{maxAttempts}）…",
       "noResult": "无结果",
       "noDetails": "无详情",
       "noDescription": "暂无描述。",

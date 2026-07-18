@@ -161,6 +161,14 @@ describe('reduceChatStreamSnapshot', () => {
     { type: 'assistant_message_start' },
     { type: 'done' },
     { type: 'context_compacting' },
+    {
+      type: 'retry_start',
+      attempt: 1,
+      maxAttempts: 3,
+      delayMs: 2_000,
+      errorMessage: 'socket hang up',
+    },
+    { type: 'retry_end', success: true, attempt: 1 },
   ])('leaves orchestration-only $type chunks outside reducer state', (chunk) => {
     const state = createChatStreamSnapshot(assistantMessage());
     expect(reduceChatStreamSnapshot(state, chunk)).toBe(state);

@@ -89,8 +89,7 @@ export class PiAgentEventAdapter {
       case 'message_end': {
         const msg = event.message as unknown as Record<string, unknown>;
         if (msg.role === 'assistant' && typeof msg.errorMessage === 'string' && msg.errorMessage) {
-          const enhanced = this.enhanceErrorMessage(msg.errorMessage, msg);
-          return [{ type: 'error', content: enhanced }];
+          return [this.adaptAssistantError(msg)];
         }
         return [];
       }
@@ -103,6 +102,16 @@ export class PiAgentEventAdapter {
       default:
         return [];
     }
+  }
+
+  adaptAssistantError(message: Record<string, unknown>): Extract<StreamChunk, { type: 'error' }> {
+    const errorMessage = typeof message.errorMessage === 'string' && message.errorMessage
+      ? message.errorMessage
+      : 'An unknown error occurred';
+    return {
+      type: 'error',
+      content: this.enhanceErrorMessage(errorMessage, message),
+    };
   }
 
   private enhanceErrorMessage(errorMessage: string, msg: Record<string, unknown>): string {

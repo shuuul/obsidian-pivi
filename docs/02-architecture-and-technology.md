@@ -38,6 +38,8 @@ The build enforces important edges through `scripts/check-architecture-boundarie
 
 Pivi exposes one agent lifecycle through the narrow `PiChatService` contract. `PiChatRuntime` is the concrete engine implementation and is constructed only by app workspace composition. This prevents provider/SDK details from becoming UI dependencies and keeps durable session data authoritative over rebuildable runtime state.
 
+`PiChatRuntime` constructs the low-level Pi `Agent` directly rather than adopting pi-coding-agent `AgentSession`. `AgentSession` also owns persistence, compaction, tools, prompts, resources, models, and extensions, which overlaps Pivi's established boundaries. Its complete static dependency graph also expands the Obsidian artifact materially: with the installed `@earendil-works/pi-coding-agent@0.80.10`, a production build experiment grew `main.js` from roughly 3.0 MiB to 7.9 MiB. Pivi therefore keeps provider recovery narrow: retryable network, rate-limit, timeout, and 5xx assistant failures are persisted as failed attempts, removed from active model context, and retried up to three times with abortable 2/4/8-second backoff. Context overflow remains under the existing compaction policy.
+
 ### Ports and dependency injection
 
 Runtime, sessions, model catalogs, slash catalogs, and projected settings enter chat orchestration through core-owned `ChatPorts`. React settings use React-owned `SettingsPorts`. Host file, secret, HTTP, process, and storage capabilities are injected through core ports. Explicit ports make ownership testable and prevent a wide plugin object from becoming a service locator.

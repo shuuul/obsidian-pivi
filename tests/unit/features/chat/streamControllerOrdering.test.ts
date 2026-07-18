@@ -5,6 +5,62 @@ import { SubagentManager } from '@/ui/chat/services/SubagentManager';
 import { ChatState } from '@/ui/chat/state/ChatState';
 
 describe('StreamController background ordering', () => {
+  it('projects foreground retry lifecycle onto the thinking indicator only', async () => {
+    const state = new ChatState();
+    state.isStreaming = true;
+    const message = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: '',
+      timestamp: 1,
+    };
+    state.addMessage(message);
+    const ownerWindow = {
+      setInterval: (handler: TimerHandler, timeout?: number) => (
+        global.setInterval(handler, timeout) as unknown as number
+      ),
+      clearInterval: (id: number | null) => {
+        if (id !== null) global.clearInterval(id);
+      },
+    } as unknown as Window;
+    const messagesEl = {
+      ownerDocument: { defaultView: ownerWindow },
+    } as HTMLElement;
+    const controller = new StreamController({
+      plugin: {} as never,
+      settings: { getSettingsSnapshot: () => ({}) } as never,
+      state,
+      renderer: {} as never,
+      subagentManager: new SubagentManager(() => {}),
+      getMessagesEl: () => messagesEl,
+      getFileContextManager: () => null,
+      updateQueueIndicator: () => {},
+    });
+    controller.showThinkingIndicator('Distilling...');
+
+    await controller.handleStreamChunk({
+      type: 'retry_start',
+      attempt: 1,
+      maxAttempts: 3,
+      delayMs: 2000,
+      errorMessage: 'socket hang up',
+    }, message);
+
+    expect(state.uiStore.getSnapshot().thinkingIndicator?.text)
+      .toBe('Connection interrupted · Retrying 1/3 in 2s');
+    expect(state.messages).toHaveLength(1);
+
+    await controller.handleStreamChunk({
+      type: 'retry_end',
+      success: true,
+      attempt: 1,
+    }, message);
+
+    expect(state.uiStore.getSnapshot().thinkingIndicator?.text).toBe('Distilling...');
+    expect(state.messages).toHaveLength(1);
+    controller.resetStreamingState();
+  });
+
   it('serializes fire-and-forget background Agent chunks in arrival order', async () => {
     const state = new ChatState();
     state.addMessage({

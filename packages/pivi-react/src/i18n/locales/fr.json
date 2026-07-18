@@ -178,6 +178,8 @@
       "interruptHint": "· Que doit faire Pivi à la place ?",
       "renderFailed": "Échec du rendu du contenu du message.",
       "escInterruptDuration": "esc pour interrompre · {duration}",
+      "retrying": "Connexion interrompue · Nouvelle tentative {attempt}/{maxAttempts} dans {seconds}s",
+      "retryActive": "Connexion interrompue · Nouvelle tentative {attempt}/{maxAttempts}…",
       "noResult": "Aucun résultat",
       "noDetails": "Aucun détail",
       "noDescription": "Aucune description disponible.",
