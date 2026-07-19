@@ -1,4 +1,4 @@
-const XML_CONTEXT_PATTERN = /\n\n<(?:current_note|editor_selection|editor_cursor|inline_contexts|context_files|canvas_selection|browser_selection)[\s>]/;
+const XML_CONTEXT_PATTERN = /\n\n<(?:current_note|editor_selection|editor_cursor|inline_contexts|context_files|canvas_selection|browser_selection|external_contexts)[\s>]/;
 
 function stripXmlContextTags(text: string): string {
   return text
@@ -9,6 +9,7 @@ function stripXmlContextTags(text: string): string {
     .replace(/<context_files>[\s\S]*?<\/context_files>\s*/g, '')
     .replace(/<canvas_selection[\s\S]*?<\/canvas_selection>\s*/g, '')
     .replace(/<browser_selection[\s\S]*?<\/browser_selection>\s*/g, '')
+    .replace(/<external_contexts>[\s\S]*?<\/external_contexts>\s*/g, '')
     .trim();
 }
 

@@ -83,6 +83,36 @@ describe('MessageMapper', () => {
     expect(first(messages).displayContent).toBe('');
   });
 
+  it('strips leaked external_contexts from displayContent overlays on restore', () => {
+    const polluted = [
+      '继续补齐卡片',
+      '',
+      '<external_contexts>',
+      '  <context path="/Users/example/Projects" available="true" />',
+      '</external_contexts>',
+    ].join('\n');
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'u1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: { role: 'user', content: polluted, timestamp: 1 } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        customType: PIVI_MESSAGE_UI,
+        id: 'ui1',
+        parentId: 'u1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        data: { targetEntryId: 'u1', displayContent: polluted },
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
+    expect(first(messages).displayContent).toBe('继续补齐卡片');
+  });
+
   it('reconstructs assistant tool calls and ordered content blocks from JSONL messages', () => {
     const branch: SessionEntry[] = [
       {

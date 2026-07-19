@@ -13,9 +13,9 @@ const CURRENT_NOTE_SUFFIX_REGEX = /\n\n<current_note>\n[\s\S]*?<\/current_note>$
  * Pattern to match XML context tags appended to prompts.
  * These tags are always preceded by \n\n separator.
  * Matches: current_note, editor_selection (with attributes), editor_cursor (with attributes),
- * context_files, canvas_selection, browser_selection
+ * context_files, canvas_selection, browser_selection, and API-only external_contexts.
  */
-export const XML_CONTEXT_PATTERN = /\n\n<(?:current_note|editor_selection|editor_cursor|inline_contexts|context_files|canvas_selection|browser_selection)[\s>]/;
+export const XML_CONTEXT_PATTERN = /\n\n<(?:current_note|editor_selection|editor_cursor|inline_contexts|context_files|canvas_selection|browser_selection|external_contexts)[\s>]/;
 
 export function formatCurrentNote(notePath: string): string {
   return `<current_note>\n${notePath}\n</current_note>`;
@@ -55,6 +55,7 @@ export function stripXmlContextTags(text: string): string {
     .replace(/<context_files>[\s\S]*?<\/context_files>\s*/g, '')
     .replace(/<canvas_selection[\s\S]*?<\/canvas_selection>\s*/g, '')
     .replace(/<browser_selection[\s\S]*?<\/browser_selection>\s*/g, '')
+    .replace(/<external_contexts>[\s\S]*?<\/external_contexts>\s*/g, '')
     .trim();
 }
 
@@ -103,10 +104,11 @@ export function resolveUserMessageDisplayText(message: {
   displayContent?: string;
   content: string;
 }): string {
-  if (message.displayContent !== undefined) {
-    return message.displayContent;
-  }
-  return extractUserQuery(message.content);
+  // Always strip API-only / turn XML so a polluted displayContent overlay cannot
+  // leak <external_contexts> into the chat UI after reload.
+  return extractUserQuery(
+    message.displayContent !== undefined ? message.displayContent : message.content,
+  );
 }
 
 function formatContextFilesLine(files: string[]): string {

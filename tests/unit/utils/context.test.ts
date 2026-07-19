@@ -40,6 +40,23 @@ describe('extractUserQuery', () => {
 
     expect(extractUserQuery(persisted)).toBe('Summarize this paper');
   });
+
+  it('strips API-only external_contexts from restored user text', () => {
+    const withAvailability = [
+      '本地文件都已经补齐内容了吗？',
+      '',
+      '<external_contexts>',
+      '  <context path="/Users/example/Projects" available="true" />',
+      '</external_contexts>',
+    ].join('\n');
+    expect(extractUserQuery(withAvailability)).toBe('本地文件都已经补齐内容了吗？');
+    expect(extractUserQuery([
+      '',
+      '<external_contexts>',
+      '  <context path="/Users/example/Projects" available="true" />',
+      '</external_contexts>',
+    ].join('\n'))).toBe('');
+  });
 });
 
 describe('resolveUserMessageDisplayText', () => {
@@ -61,5 +78,18 @@ describe('resolveUserMessageDisplayText', () => {
       displayContent: '',
       content: '<current_note>\nnotes/a.md\n</current_note>',
     })).toBe('');
+  });
+
+  it('strips leaked external_contexts from polluted displayContent overlays', () => {
+    expect(resolveUserMessageDisplayText({
+      displayContent: [
+        '继续',
+        '',
+        '<external_contexts>',
+        '  <context path="/Users/example/repo" available="true" />',
+        '</external_contexts>',
+      ].join('\n'),
+      content: '继续',
+    })).toBe('继续');
   });
 });

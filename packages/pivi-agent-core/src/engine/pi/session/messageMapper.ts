@@ -433,8 +433,9 @@ export function entriesToChatMessages(
     const timestamp = typeof agentMsg.timestamp === 'number'
       ? agentMsg.timestamp
       : Date.parse(entry.timestamp) || Date.now();
-    const displayContent = ui?.displayContent
-      ?? (agentMsg.role === 'user' ? extractUserQuery(content) : undefined);
+    const displayContent = agentMsg.role === 'user'
+      ? extractUserQuery(ui?.displayContent ?? content)
+      : ui?.displayContent;
 
     const reconstructedContentBlocks = agentMsg.role === 'assistant'
       ? contentBlocksFromAssistantContent(agentMsg.content)

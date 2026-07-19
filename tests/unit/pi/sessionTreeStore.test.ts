@@ -437,6 +437,44 @@ describe('SessionTreeStore', () => {
     ]);
   });
 
+  it('does not re-append historical user turns that only differ by external_contexts XML', () => {
+    const store = SessionTreeStore.inMemory('/test/external-context-sync');
+    store.appendUserMessage('first');
+    store.syncAgentMessages([
+      { role: 'user', content: 'first', timestamp: 1 },
+      { role: 'assistant', content: [{ type: 'text', text: 'ok' }], timestamp: 2 },
+    ] as never[]);
+    store.appendUserMessage('second');
+
+    const externalBlock = [
+      '',
+      '<external_contexts>',
+      '  <context path="/Users/example/Projects" available="true" />',
+      '</external_contexts>',
+    ].join('\n');
+    store.syncAgentMessages([
+      {
+        role: 'user',
+        content: [{ type: 'text', text: `first${externalBlock}` }],
+        timestamp: 1,
+      },
+      { role: 'assistant', content: [{ type: 'text', text: 'ok' }], timestamp: 2 },
+      {
+        role: 'user',
+        content: [{ type: 'text', text: `second${externalBlock}` }],
+        timestamp: 3,
+      },
+      { role: 'assistant', content: [{ type: 'text', text: 'done' }], timestamp: 4 },
+    ] as never[]);
+
+    const users = store.getEntries().flatMap((entry) => (
+      entry.type === 'message' && entry.message.role === 'user'
+        ? [entry.message.content]
+        : []
+    ));
+    expect(users).toEqual(['first', 'second']);
+  });
+
   it('syncs a run-local tool turn after the pre-persisted user prompt', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
     store.appendUserMessage('first');

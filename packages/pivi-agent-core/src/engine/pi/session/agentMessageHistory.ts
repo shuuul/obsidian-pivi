@@ -33,12 +33,23 @@ export interface MissingAgentMessagesOptions {
   userMessageEquivalences?: UserMessageEquivalence[];
 }
 
+/** API-only availability XML must not create duplicate durable user rows. */
+function stripExternalContextsXml(text: string): string {
+  return text
+    .replace(/\n\n<external_contexts>[\s\S]*?<\/external_contexts>/gi, '')
+    .replace(/<external_contexts>[\s\S]*?<\/external_contexts>\s*/gi, '')
+    .trimEnd();
+}
+
 function userMessagesEqual(
   existingText: string,
   incomingText: string,
   options: MissingAgentMessagesOptions,
 ): boolean {
   if (existingText === incomingText) {
+    return true;
+  }
+  if (stripExternalContextsXml(existingText) === stripExternalContextsXml(incomingText)) {
     return true;
   }
   return options.userMessageEquivalences?.some((equivalence) => (
