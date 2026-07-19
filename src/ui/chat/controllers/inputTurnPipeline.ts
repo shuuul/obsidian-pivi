@@ -2,9 +2,11 @@ import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/brow
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
 import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import { resolveSubagentActivityStatus } from '@pivi/pivi-agent-core/foundation';
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
+import { isSubagentToolName } from '@pivi/pivi-agent-core/tools/toolNames';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';
@@ -16,6 +18,36 @@ import type { RichChatInput } from '../ui/RichChatInput';
 import type { InputControllerDeps } from './InputController';
 
 const logger = new PluginLogger('InputTurnPipeline');
+
+/** Mark still-running spawn/Task cards Cancelled after Esc/Stop (message-model belt-and-suspenders). */
+export function terminalizeInterruptedSubagentToolCalls(message: ChatMessage): void {
+  const now = Date.now();
+  for (const toolCall of message.toolCalls ?? []) {
+    if (!isSubagentToolName(toolCall.name)) continue;
+    const subagent = toolCall.subagent;
+    if (subagent) {
+      const status = resolveSubagentActivityStatus(subagent);
+      if (status !== 'queued' && status !== 'running' && status !== 'waiting') continue;
+      subagent.status = 'error';
+      subagent.activityStatus = 'cancelled';
+      if (subagent.mode === 'async') {
+        subagent.asyncStatus = 'error';
+      }
+      subagent.result = subagent.result?.trim() || 'Cancelled';
+      subagent.completedAt = now;
+      toolCall.status = 'error';
+      toolCall.activityStatus = 'cancelled';
+      toolCall.result = subagent.result;
+      toolCall.completedAt = toolCall.completedAt ?? now;
+      continue;
+    }
+    if (toolCall.status !== 'running') continue;
+    toolCall.status = 'error';
+    toolCall.activityStatus = 'cancelled';
+    toolCall.result = toolCall.result ?? 'Cancelled';
+    toolCall.completedAt = toolCall.completedAt ?? now;
+  }
+}
 
 export interface FinalizeOutgoingTurnOptions {
   streamGeneration: number;
@@ -326,6 +358,10 @@ export class InputTurnPipeline {
     const didCancelThisTurn = options.wasInterrupted || state.cancelRequested;
 
     if (didCancelThisTurn) {
+      // Abort kills workers, but presentation state lives on the assistant message.
+      // Terminalize before resetStreamingState clears manager bookkeeping maps.
+      this.host.deps.getSubagentManager().cancelAllActive();
+      terminalizeInterruptedSubagentToolCalls(options.finalAssistantMsg);
       const interruption = '\n\n<span class="pivi-interrupted">Interrupted</span> <span class="pivi-interrupted-hint">· What should Pivi do instead?</span>';
       options.finalAssistantMsg.content += interruption;
       options.finalAssistantMsg.contentBlocks = [

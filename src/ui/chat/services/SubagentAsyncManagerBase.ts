@@ -232,7 +232,7 @@ export abstract class SubagentAsyncManagerBase {
       orphaned.push(subagent);
     }
     for (const subagent of this.activeAsyncSubagents.values()) {
-      if (subagent.asyncStatus === 'running') {
+      if (subagent.asyncStatus === 'running' || subagent.asyncStatus === 'pending') {
         this.markOrphaned(subagent);
         orphaned.push(subagent);
       }
@@ -242,6 +242,31 @@ export abstract class SubagentAsyncManagerBase {
     this.taskIdToAgentId.clear();
     this.outputToolIdToAgentId.clear();
     return orphaned;
+  }
+
+  /**
+   * Terminalize in-flight background workers after a user interrupt.
+   *
+   * Distinct from {@link orphanAllActive}: cancel is an explicit Esc/Stop action,
+   * so cards show Cancelled rather than Orphaned (session ended / abandoned).
+   */
+  public cancelAllActive(): SubagentInfo[] {
+    const cancelled: SubagentInfo[] = [];
+    for (const subagent of this.pendingAsyncSubagents.values()) {
+      this.markCancelled(subagent);
+      cancelled.push(subagent);
+    }
+    for (const subagent of this.activeAsyncSubagents.values()) {
+      if (subagent.asyncStatus === 'running' || subagent.asyncStatus === 'pending') {
+        this.markCancelled(subagent);
+        cancelled.push(subagent);
+      }
+    }
+    this.pendingAsyncSubagents.clear();
+    this.activeAsyncSubagents.clear();
+    this.taskIdToAgentId.clear();
+    this.outputToolIdToAgentId.clear();
+    return cancelled;
   }
 
   protected clearAsyncState(): void {
@@ -279,6 +304,19 @@ export abstract class SubagentAsyncManagerBase {
     subagent.activityStatus = 'orphaned';
     if (subagent.mode === 'async') {
       subagent.asyncStatus = 'orphaned';
+    }
+    subagent.result = preservedResult;
+    subagent.completedAt = Date.now();
+    this.onStateChange(subagent);
+  }
+
+  protected markCancelled(subagent: SubagentInfo): void {
+    const fallback = 'Cancelled';
+    const preservedResult = subagent.result?.trim() || fallback;
+    subagent.status = 'error';
+    subagent.activityStatus = 'cancelled';
+    if (subagent.mode === 'async') {
+      subagent.asyncStatus = 'error';
     }
     subagent.result = preservedResult;
     subagent.completedAt = Date.now();

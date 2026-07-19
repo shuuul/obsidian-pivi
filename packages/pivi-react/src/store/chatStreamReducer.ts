@@ -238,6 +238,7 @@ export function reduceChatStreamSnapshot(
           ...(chunk.result !== undefined ? { result: chunk.result } : {}),
           status: chunk.status,
           asyncStatus: chunk.status,
+          ...(chunk.activityStatus ? { activityStatus: chunk.activityStatus } : {}),
           completedAt: subagent.completedAt,
         })),
       };

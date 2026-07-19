@@ -175,9 +175,25 @@ export class SubagentManager extends SubagentAsyncManagerBase {
       }
     }
     this.syncSubagents.clear();
+    this.pendingTasks.clear();
     this.taskIdToWriterName.clear();
     this.usedWriterNames.clear();
     return orphaned;
+  }
+
+  public cancelAllActive(): SubagentInfo[] {
+    const cancelled = super.cancelAllActive();
+    for (const subagent of this.syncSubagents.values()) {
+      if (subagent.status === 'running') {
+        this.markCancelled(subagent);
+        cancelled.push(subagent);
+      }
+    }
+    this.syncSubagents.clear();
+    this.pendingTasks.clear();
+    this.taskIdToWriterName.clear();
+    this.usedWriterNames.clear();
+    return cancelled;
   }
 
   public clear(): void {

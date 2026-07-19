@@ -85,6 +85,7 @@ function createController() {
     getSubagentManager: () => ({
       resetSpawnedCount: jest.fn(),
       resetStreamingState: jest.fn(),
+      cancelAllActive: jest.fn(() => []),
     }),
   };
 

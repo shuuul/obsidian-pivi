@@ -156,6 +156,25 @@ describe('reduceChatStreamSnapshot', () => {
     });
   });
 
+  it('preserves cancelled activityStatus from async_subagent_result', () => {
+    let state = createChatStreamSnapshot(assistantMessage());
+    state = reduceChatStreamSnapshot(state, {
+      type: 'async_subagent_result',
+      agentId: 'agent-id',
+      subagentId: 'subagent-1',
+      status: 'error',
+      activityStatus: 'cancelled',
+      result: 'Cancelled',
+    });
+
+    expect(state.message.toolCalls?.[0]?.subagent).toMatchObject({
+      status: 'error',
+      asyncStatus: 'error',
+      activityStatus: 'cancelled',
+      result: 'Cancelled',
+    });
+  });
+
   it.each<StreamChunk>([
     { type: 'user_message_start', content: 'User' },
     { type: 'assistant_message_start' },

@@ -98,6 +98,7 @@ Stored asynchronous lifecycle states are pending, running, completed, error, and
 - Aborting a running worker aborts the child, records cancellation/error, and releases its lease.
 - Construction or prompt failure releases the lease and produces an explicit error result.
 - `runtime.cancel()` and cleanup abort all owned workers.
+- User Esc/Stop interrupt aborts workers and terminalizes in-flight presentation cards as Cancelled (via `cancelAllActive` plus a message-model sweep). Session end/switch/reopen still maps unresolved cards to Orphaned.
 - Workspace disposal rejects queued and future admissions before providers, MCP, and session resources are released.
 - A late event without an owning message is ignored rather than attached to the current turn.
 - Terminal UI hydration retries a missing final result on bounded delays; generation changes and disposal cancel stale retries.
@@ -122,3 +123,4 @@ The strict parser also protects terminal presentation. Persisted structured repo
 - Persist structured UI overlays without replacing Pi-compatible message history.
 - Keep compact parent reports separate from complete terminal trace persistence and preserve text fallback.
 - Test queued abort, running abort, capacity changes, construction failure, late events, hydrate retries, session orphaning, and restore when changing this feature.
+- Test turn interrupt terminalizes in-flight subagent presentation as Cancelled (not left Running).

@@ -120,6 +120,35 @@ describe('SubagentManager', () => {
     });
   });
 
+  it('marks sync and async in-flight work cancelled on user interrupt', () => {
+    const onChange = jest.fn();
+    const manager = createManager(onChange);
+    const sync = manager.handleTaskToolUse('sync-1', { run_in_background: false, label: 'sync-job' });
+    const async = manager.handleTaskToolUse('async-1', { run_in_background: true, label: 'async-job' });
+    if (sync.action !== 'created_sync' || async.action !== 'created_async') {
+      throw new Error('expected sync and async tasks');
+    }
+
+    const cancelled = manager.cancelAllActive();
+
+    expect(cancelled).toEqual(expect.arrayContaining([sync.info, async.info]));
+    expect(sync.info).toMatchObject({
+      status: 'error',
+      activityStatus: 'cancelled',
+      result: 'Cancelled',
+    });
+    expect(async.info).toMatchObject({
+      status: 'error',
+      asyncStatus: 'error',
+      activityStatus: 'cancelled',
+      result: 'Cancelled',
+    });
+    expect(manager.getSyncSubagent('sync-1')).toBeUndefined();
+    expect(manager.hasRunningSubagents()).toBe(false);
+    expect(onChange).toHaveBeenCalledWith(sync.info);
+    expect(onChange).toHaveBeenCalledWith(async.info);
+  });
+
   it('resets the spawned count', () => {
     const manager = createManager();
     manager.handleTaskToolUse('task-1', { run_in_background: false });

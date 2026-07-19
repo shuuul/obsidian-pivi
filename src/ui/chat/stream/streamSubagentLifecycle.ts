@@ -540,6 +540,21 @@ export class StreamSubagentCoordinator {
 
   onAsyncSubagentStateChange(subagent: SubagentInfo): void {
     this.updateSubagentInMessages(subagent);
+    const { state } = this.deps;
+    for (let i = state.messages.length - 1; i >= 0; i--) {
+      const msg = state.messages[i];
+      if (msg === undefined || msg.role !== 'assistant') continue;
+      const linked = msg.toolCalls?.some(
+        tc => tc.id === subagent.id && isSubagentToolName(tc.name),
+      );
+      if (linked) {
+        state.notifyMessageChanged(msg, {
+          type: 'agent.upsert',
+          agent: subagent,
+        });
+        return;
+      }
+    }
   }
 
   private updateSubagentInMessages(subagent: SubagentInfo): void {
