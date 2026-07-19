@@ -209,7 +209,7 @@ describe('sessionJsonlRangeReader', () => {
     expect(page.totalMessageCount).toBe(1);
     expect(page.messages).toEqual([expect.objectContaining({
       id: 'user-expanded-2',
-      displayContent: ' /tests  ',
+      displayContent: '/tests',
     })]);
   });
 
