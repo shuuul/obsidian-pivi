@@ -20,6 +20,8 @@ flowchart TD
 
 Settings saves refresh the affected registries and open-runtime prompts. Disabled or unavailable tools disappear from subsequent turns; callers must not keep a silent fallback implementation registered under the same name.
 
+The base system prompt keeps note-backed answers concise: when requested information already exists in vault notes, the assistant returns only verified note wikilinks instead of repeating, quoting, or summarizing the stored content.
+
 ## Obsidian tools
 
 | Area | Tools | Operation semantics |

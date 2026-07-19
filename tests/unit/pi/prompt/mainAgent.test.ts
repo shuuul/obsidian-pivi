@@ -54,6 +54,9 @@ describe('mainAgent system prompt', () => {
     it('requires stable and verified vault note links', () => {
       const prompt = buildSystemPrompt();
 
+      expect(prompt).toContain('already present in one or more vault notes');
+      expect(prompt).toContain('do not repeat, quote, or summarize that note content');
+      expect(prompt).toContain('Return only the corresponding verified wikilinks');
       expect(prompt).toContain('Treat each link insertion as a verified edit');
       expect(prompt).toContain('Read the source note immediately before editing');
       expect(prompt).toContain('read back the changed span and confirm the exact link appears once');
