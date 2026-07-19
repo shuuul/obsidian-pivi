@@ -295,7 +295,7 @@ export function createImperativeChatAdapter(
           active?.controllers.inputController?.discardQueuedMessage(id);
           active?.ui.composerActions?.refresh();
         },
-        reorderQueuedTurns: ids => tabManager?.getActiveTab()?.controllers.inputController?.reorderQueuedMessages(ids),
+        reorderQueuedTurns: ids => tabManager?.getActiveTab()?.controllers.inputController?.reorderQueuedMessages(ids) ?? false,
         scrollToTop: () => scrollActiveMessages('top'),
         scrollToPreviousUserMessage: () => scrollActiveUserMessage('prev'),
         scrollToNextUserMessage: () => scrollActiveUserMessage('next'),

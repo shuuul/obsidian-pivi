@@ -65,6 +65,7 @@ import {
   buildZeroUsageInfoForModel,
   latestUsageFromMessages,
 } from './piChatRuntimeUsage';
+import { toPiImageContent } from './piImageContent';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 import { createPiReadBudget } from './piReadBudget';
 import type { PiRuntimeHost } from './piRuntimeHost';
@@ -377,9 +378,13 @@ export class PiChatRuntime implements PiChatService {
       return false;
     }
     activeTurn.steeredTurns.push(turn);
+    const images = toPiImageContent(turn.request.images);
     agent.steer({
       role: 'user',
-      content: turn.prompt,
+      // Mirror agent.prompt(text, images): text-only stays a string; attachments use content blocks.
+      content: images.length > 0
+        ? [{ type: 'text', text: turn.prompt }, ...images]
+        : turn.prompt,
       timestamp: Date.now(),
     });
     return true;

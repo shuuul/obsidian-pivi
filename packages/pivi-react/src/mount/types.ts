@@ -5,7 +5,7 @@ export interface ChatSurfaceActions {
   steerQueuedTurn: (id: string) => void;
   editQueuedTurn: (id: string) => void;
   discardQueuedTurn: (id: string) => void;
-  reorderQueuedTurns: (ids: readonly string[]) => void;
+  reorderQueuedTurns: (ids: readonly string[]) => boolean;
   scrollToTop: () => void;
   scrollToPreviousUserMessage: () => void;
   scrollToNextUserMessage: () => void;

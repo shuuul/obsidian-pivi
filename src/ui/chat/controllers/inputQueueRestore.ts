@@ -46,20 +46,21 @@ export class InputQueueRestoreCoordinator {
     state.queuedMessages = state.queuedMessages.filter(message => message.id !== id);
   }
 
-  reorderQueuedMessages(ids: readonly string[]): void {
+  reorderQueuedMessages(ids: readonly string[]): boolean {
     const { state } = this.host.deps;
     if (
       ids.length !== state.queuedMessages.length
       || new Set(ids).size !== ids.length
-    ) return;
+    ) return false;
     const messagesById = new Map(state.queuedMessages.map(message => [message.id, message]));
     const reordered: QueuedMessage[] = [];
     for (const id of ids) {
       const message = messagesById.get(id);
-      if (!message) return;
+      if (!message) return false;
       reordered.push(message);
     }
     state.queuedMessages = reordered;
+    return true;
   }
 
   withdrawQueuedMessageToComposer(id: string): void {

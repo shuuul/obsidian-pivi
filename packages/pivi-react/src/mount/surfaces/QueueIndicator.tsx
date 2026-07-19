@@ -77,9 +77,10 @@ export function QueueIndicator({ queuedTurns, actions }: {
     itemSelector: '[data-queue-sort-id]',
     itemDataKey: 'queueSortId',
     setOrder,
-    commitOrder: async ids => {
-      actions.reorderQueuedTurns(ids);
-      return true;
+    commitOrder: async (ids, originalOrder) => {
+      const saved = actions.reorderQueuedTurns(ids);
+      if (!saved) setOrder([...originalOrder]);
+      return saved;
     },
     positionAnnouncement: (_id, position, total) => t('chat.queue.reorder.position', {
       position,

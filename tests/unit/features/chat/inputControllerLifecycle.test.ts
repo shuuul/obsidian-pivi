@@ -217,10 +217,10 @@ describe('InputController service and cancellation lifecycle', () => {
       canvasContext: null,
     }];
 
-    controller.reorderQueuedMessages(['queued-2', 'queued-1']);
+    expect(controller.reorderQueuedMessages(['queued-2', 'queued-1'])).toBe(true);
     expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2', 'queued-1']);
 
-    controller.reorderQueuedMessages(['queued-1']);
+    expect(controller.reorderQueuedMessages(['queued-1'])).toBe(false);
     expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2', 'queued-1']);
   });
 

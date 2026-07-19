@@ -75,7 +75,7 @@ async function mountShell(options: {
     steerQueuedTurn: (id: string) => void;
     editQueuedTurn: (id: string) => void;
     discardQueuedTurn: (id: string) => void;
-    reorderQueuedTurns: (ids: readonly string[]) => void;
+    reorderQueuedTurns: (ids: readonly string[]) => boolean;
     scrollToTop: () => void;
     scrollToPreviousUserMessage: () => void;
     scrollToNextUserMessage: () => void;
@@ -419,7 +419,7 @@ describe('React ChatShell tabs', () => {
       steerQueuedTurn: jest.fn(),
       editQueuedTurn: jest.fn(),
       discardQueuedTurn: jest.fn(),
-      reorderQueuedTurns: jest.fn(),
+      reorderQueuedTurns: jest.fn(() => true),
       scrollToTop: jest.fn(),
       scrollToPreviousUserMessage: jest.fn(),
       scrollToNextUserMessage: jest.fn(),

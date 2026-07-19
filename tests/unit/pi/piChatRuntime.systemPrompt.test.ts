@@ -607,6 +607,42 @@ describe('PiChatRuntime system prompt', () => {
     expect(steeredTurns).toEqual([turn]);
   });
 
+  it('includes image attachments in the steered live model message', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    await runtime.ensureReady();
+    (runtime as unknown as {
+      activeTurn: {
+        abortController: AbortController;
+        steeredTurns: unknown[];
+      };
+    }).activeTurn = {
+      abortController: new AbortController(),
+      steeredTurns: [],
+    };
+    const turn = runtime.prepareTurn({
+      text: 'Describe this screenshot',
+      images: [{
+        id: 'img-1',
+        name: 'shot.png',
+        mediaType: 'image/png',
+        data: 'base64-shot',
+        size: 11,
+        source: 'paste',
+      }],
+    });
+
+    expect(runtime.steer(turn)).toBe(true);
+    expectDefined(mockAgentInstances[0]);
+    expect(mockAgentInstances[0].steer).toHaveBeenCalledWith({
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Describe this screenshot' },
+        { type: 'image', data: 'base64-shot', mimeType: 'image/png' },
+      ],
+      timestamp: expect.any(Number),
+    });
+  });
+
   it('persists steered visible text without duplicating the expanded API prompt', async () => {
     const runtime = createRuntime(createMockPlugin());
     await runtime.ensureReady();

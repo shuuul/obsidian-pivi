@@ -137,8 +137,8 @@ export class InputController {
     this.queueRestore.discardQueuedMessage(id);
   }
 
-  reorderQueuedMessages(ids: readonly string[]): void {
-    this.queueRestore.reorderQueuedMessages(ids);
+  reorderQueuedMessages(ids: readonly string[]): boolean {
+    return this.queueRestore.reorderQueuedMessages(ids);
   }
 
   withdrawQueuedMessageToComposer(id: string): void {
