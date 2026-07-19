@@ -58,7 +58,7 @@ React reserves empty containers for these adapters and consumes immutable snapsh
 
 ### Pi-compatible JSONL sessions
 
-Durable conversations live under `.pivi/sessions/` as Pi-compatible JSONL. A session file and its header identity are durable; open-session projections, UI tabs, controllers, DOM, and runtimes are rebuildable. Pivi appends a `message_ui` overlay for presentation data that the Pi message format does not own, such as structured subagent cards. On restore, a complete content-block overlay may replace the reconstructed presentation, but a partial final-segment overlay only enriches matching entities and cannot discard the earlier Pi-native tool/text order.
+Durable conversations live under `.pivi/sessions/` as Pi-compatible JSONL. A session file and its header identity are durable; open-session projections, UI tabs, controllers, DOM, and runtimes are rebuildable. Pivi appends a `message_ui` overlay for presentation data that the Pi message format does not own, such as structured subagent cards. On restore, a complete content-block overlay may replace the reconstructed presentation, but a partial final-segment overlay only enriches matching entities and cannot discard the earlier Pi-native tool/text order. Model-generated titles use the same append path: `pivi/session-meta` becomes durable before the open-session title or UI changes.
 
 ### Device-local absolute paths
 

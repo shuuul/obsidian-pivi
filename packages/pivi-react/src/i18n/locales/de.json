@@ -81,7 +81,8 @@
       "noTextSelected": "Im aktiven Editor ist kein Text ausgewählt.",
       "templateVarsFailed": "Vorlagenbefehlsvariablen konnten nicht aufgelöst werden.",
       "unableCreateForkTab": "Verzweigungs-Tab kann nicht erstellt werden",
-      "initChatService": "Chat-Dienst konnte nicht initialisiert werden"
+      "initChatService": "Chat-Dienst konnte nicht initialisiert werden",
+      "titlePersistenceFailed": "Der generierte Sitzungstitel konnte nicht gespeichert werden."
     },
     "toolbar": {
       "externalContexts": "Externe Kontexte",

@@ -81,7 +81,8 @@
       "noTextSelected": "Aucun texte sélectionné dans l’éditeur actif.",
       "templateVarsFailed": "Échec de la résolution des variables de commande de modèle.",
       "unableCreateForkTab": "Impossible de créer l’onglet de bifurcation",
-      "initChatService": "Échec de l’initialisation du service de chat"
+      "initChatService": "Échec de l’initialisation du service de chat",
+      "titlePersistenceFailed": "Impossible d’enregistrer le titre de session généré."
     },
     "toolbar": {
       "externalContexts": "Contextes externes",

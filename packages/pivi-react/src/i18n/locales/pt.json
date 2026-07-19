@@ -81,7 +81,8 @@
       "noTextSelected": "Nenhum texto selecionado no editor ativo.",
       "templateVarsFailed": "Falha ao resolver variáveis do comando de modelo.",
       "unableCreateForkTab": "Não foi possível criar a aba de fork",
-      "initChatService": "Falha ao inicializar o serviço de chat"
+      "initChatService": "Falha ao inicializar o serviço de chat",
+      "titlePersistenceFailed": "Não foi possível salvar o título de sessão gerado."
     },
     "toolbar": {
       "externalContexts": "Contextos externos",

@@ -81,7 +81,8 @@
       "noTextSelected": "No text selected in the active editor.",
       "templateVarsFailed": "Failed to resolve template command variables.",
       "unableCreateForkTab": "Unable to create fork tab",
-      "initChatService": "Failed to initialize chat service"
+      "initChatService": "Failed to initialize chat service",
+      "titlePersistenceFailed": "Failed to save the generated session title."
     },
     "toolbar": {
       "externalContexts": "External contexts",

@@ -53,7 +53,7 @@ Tab layout is stored in `.pivi/tab-manager-state.json`. `data.json.tabManagerSta
 
 The layout stores `tabId`, optional `sessionFile`, blank-tab `draftModel` and `draftTitle`, `isArchived`, `needsAttention`, and `activeTabId`. It does not store messages, runtime state, `openSessionId`, bound-session titles, DOM/controllers, or absolute external paths. Current writes omit `leafId`; readers accept it only for legacy compatibility, and restore ignores it.
 
-Session titles and messages belong to JSONL. A blank `draftTitle` moves into session metadata when the tab first binds.
+Session titles and messages belong to JSONL. A blank `draftTitle` moves into session metadata when the tab first binds. Background title generation keeps the first-prompt fallback when the model query fails; after a successful query, Pivi appends `pivi/session-meta` with `titleSource: "model"` before updating memory or UI. If that append fails, the fallback remains visible and a localized Notice reports the error.
 
 ## User behavior
 

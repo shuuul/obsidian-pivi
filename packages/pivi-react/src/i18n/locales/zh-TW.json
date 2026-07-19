@@ -81,7 +81,8 @@
       "noTextSelected": "目前編輯器中沒有選取文字。",
       "templateVarsFailed": "解析範本指令變數失敗。",
       "unableCreateForkTab": "無法建立分叉分頁",
-      "initChatService": "初始化聊天服務失敗"
+      "initChatService": "初始化聊天服務失敗",
+      "titlePersistenceFailed": "無法儲存產生的工作階段標題。"
     },
     "toolbar": {
       "externalContexts": "外部上下文",

@@ -81,7 +81,8 @@
       "noTextSelected": "アクティブなエディターでテキストが選択されていません。",
       "templateVarsFailed": "テンプレートコマンド変数の解決に失敗しました。",
       "unableCreateForkTab": "分岐タブを作成できません",
-      "initChatService": "チャットサービスの初期化に失敗しました"
+      "initChatService": "チャットサービスの初期化に失敗しました",
+      "titlePersistenceFailed": "生成されたセッションタイトルを保存できませんでした。"
     },
     "toolbar": {
       "externalContexts": "外部コンテキスト",

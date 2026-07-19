@@ -60,8 +60,7 @@ describe('ensureTitleGenerationService', () => {
     expect(typeof service!.generateTitle).toBe('function');
     expect(typeof service!.cancel).toBe('function');
 
-    const callback = jest.fn(async () => {});
-    await service!.generateTitle('open-session-1', 'user message body', callback);
+    const result = await service!.generateTitle('open-session-1', 'user message body');
 
     expect(mockQuery).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -70,7 +69,7 @@ describe('ensureTitleGenerationService', () => {
       }),
       expect.stringContaining('user message body'),
     );
-    expect(callback).toHaveBeenCalledWith('open-session-1', {
+    expect(result).toEqual({
       success: true,
       title: 'Generated tab title',
     });

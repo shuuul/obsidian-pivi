@@ -81,7 +81,8 @@
       "noTextSelected": "当前编辑器中没有选中文本。",
       "templateVarsFailed": "解析模板命令变量失败。",
       "unableCreateForkTab": "无法创建分叉标签页",
-      "initChatService": "初始化聊天服务失败"
+      "initChatService": "初始化聊天服务失败",
+      "titlePersistenceFailed": "无法保存生成的会话标题。"
     },
     "toolbar": {
       "externalContexts": "外部上下文",

@@ -6,6 +6,9 @@ import type {
   ChatSettingsPort,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
+import { Notice } from 'obsidian';
+
+import { t } from '@/app/i18n';
 
 import type { ChatState } from '../state/ChatState';
 import type { SessionController } from './SessionController';
@@ -102,25 +105,35 @@ export class TitleGenerationCoordinator {
     const convId = state.currentOpenSessionId;
     const expectedTitle = fallbackTitle; // Store to check if user renamed during generation
 
-    void titleService.generateTitle(
-      convId,
-      userContent,
-      async (openSessionId, result) => {
-        // Check if openSession still exists and user hasn't manually renamed
-        const currentConv = await sessions.getOpenSession(openSessionId);
-        if (!currentConv) return;
-
-        // Only apply AI title if user hasn't manually renamed.
-        const userManuallyRenamed = currentConv.titleSource === 'custom'
-          || currentConv.title !== expectedTitle;
-
-        if (result.success && !userManuallyRenamed) {
-          await sessions.renameSession(openSessionId, result.title, 'model');
-          this.deps.onTitleChanged?.(result.title);
-        }
+    void titleService.generateTitle(convId, userContent).then(async (result) => {
+      if (!result.success) {
+        logger.warn('title generation failed', result.error);
+        return;
       }
-    ).catch((error) => {
-      // Silently ignore title generation errors
+
+      // Re-check after the background query: the session may have been closed
+      // or the user may have renamed it while the model was running.
+      const currentConv = await sessions.getOpenSession(convId);
+      if (!currentConv) return;
+
+      const userManuallyRenamed = currentConv.titleSource === 'custom'
+        || currentConv.title !== expectedTitle;
+      if (userManuallyRenamed) return;
+
+      try {
+        // renameSession appends session metadata before mutating the open
+        // session, so UI publication is deliberately last.
+        await sessions.renameSession(convId, result.title, 'model');
+      } catch (error) {
+        logger.error('failed to persist generated title', error);
+        new Notice(t('chat.errors.titlePersistenceFailed'));
+        return;
+      }
+
+      if (state.currentOpenSessionId === convId) {
+        this.deps.onTitleChanged?.(result.title);
+      }
+    }).catch((error) => {
       logger.warn('title generation failed', error);
     });
   }

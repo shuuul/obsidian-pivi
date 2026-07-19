@@ -81,7 +81,8 @@
       "noTextSelected": "No hay texto seleccionado en el editor activo.",
       "templateVarsFailed": "Error al resolver las variables de la plantilla de comando.",
       "unableCreateForkTab": "No se puede crear la pestaña de bifurcación",
-      "initChatService": "Error al inicializar el servicio de chat"
+      "initChatService": "Error al inicializar el servicio de chat",
+      "titlePersistenceFailed": "No se pudo guardar el título de sesión generado."
     },
     "toolbar": {
       "externalContexts": "Contextos externos",

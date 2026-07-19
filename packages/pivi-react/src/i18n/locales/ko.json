@@ -81,7 +81,8 @@
       "noTextSelected": "활성 편집기에서 선택된 텍스트가 없습니다.",
       "templateVarsFailed": "템플릿 명령 변수를 해석하지 못했습니다.",
       "unableCreateForkTab": "분기 탭을 만들 수 없습니다",
-      "initChatService": "채팅 서비스 초기화 실패"
+      "initChatService": "채팅 서비스 초기화 실패",
+      "titlePersistenceFailed": "생성된 세션 제목을 저장하지 못했습니다."
     },
     "toolbar": {
       "externalContexts": "외부 컨텍스트",

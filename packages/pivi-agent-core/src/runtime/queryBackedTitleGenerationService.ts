@@ -5,7 +5,6 @@ import {
 } from '../prompt';
 import type { AuxQueryRunner } from './auxQueryRunner';
 import type {
-  TitleGenerationCallback,
   TitleGenerationResult,
   TitleGenerationService,
 } from './auxTypes';
@@ -28,8 +27,7 @@ export class QueryBackedTitleGenerationService implements TitleGenerationService
   async generateTitle(
     openSessionId: string,
     userMessage: string,
-    callback: TitleGenerationCallback,
-  ): Promise<void> {
+  ): Promise<TitleGenerationResult> {
     const existing = this.activeGenerations.get(openSessionId);
     if (existing) {
       existing.abortController.abort();
@@ -48,18 +46,14 @@ export class QueryBackedTitleGenerationService implements TitleGenerationService
         systemPrompt: TITLE_GENERATION_SYSTEM_PROMPT,
       }, buildTitleGenerationPrompt(userMessage));
       const title = parseTitleGenerationResponse(text);
-      await this.safeCallback(
-        callback,
-        openSessionId,
-        title
-          ? { success: true, title }
-          : { success: false, error: 'Failed to parse title from response' },
-      );
+      return title
+        ? { success: true, title }
+        : { success: false, error: 'Failed to parse title from response' };
     } catch (error) {
-      await this.safeCallback(callback, openSessionId, {
+      return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      };
     } finally {
       runner.reset();
       if (this.activeGenerations.get(openSessionId) === generation) {
@@ -74,17 +68,5 @@ export class QueryBackedTitleGenerationService implements TitleGenerationService
       active.runner.reset();
     }
     this.activeGenerations.clear();
-  }
-
-  private async safeCallback(
-    callback: TitleGenerationCallback,
-    openSessionId: string,
-    result: TitleGenerationResult,
-  ): Promise<void> {
-    try {
-      await callback(openSessionId, result);
-    } catch {
-      // Ignore callback failures to match existing service behavior.
-    }
   }
 }

@@ -11,13 +11,12 @@ function createRunner(response: string): AuxQueryRunner & { query: jest.Mock; re
 describe('QueryBackedTitleGenerationService', () => {
   it('generates a parsed title and resets the per-request runner', async () => {
     const runner = createRunner('"Fix runtime imports."');
-    const callback = jest.fn(async () => {});
     const service = new QueryBackedTitleGenerationService({
       createRunner: () => runner,
       resolveModel: () => 'anthropic/test',
     });
 
-    await service.generateTitle('session-1', 'please fix runtime imports', callback);
+    const result = await service.generateTitle('session-1', 'please fix runtime imports');
 
     expect(runner.query).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -27,7 +26,7 @@ describe('QueryBackedTitleGenerationService', () => {
       }),
       expect.stringContaining('please fix runtime imports'),
     );
-    expect(callback).toHaveBeenCalledWith('session-1', {
+    expect(result).toEqual({
       success: true,
       title: 'Fix runtime imports',
     });
@@ -36,12 +35,11 @@ describe('QueryBackedTitleGenerationService', () => {
 
   it('instructs the model to keep the generated title in the user request language', async () => {
     const runner = createRunner('整理会议记录');
-    const callback = jest.fn(async () => {});
     const service = new QueryBackedTitleGenerationService({
       createRunner: () => runner,
     });
 
-    await service.generateTitle('session-1', '帮我整理会议记录', callback);
+    const result = await service.generateTitle('session-1', '帮我整理会议记录');
 
     expect(runner.query).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -49,7 +47,7 @@ describe('QueryBackedTitleGenerationService', () => {
       }),
       expect.stringContaining('帮我整理会议记录'),
     );
-    expect(callback).toHaveBeenCalledWith('session-1', {
+    expect(result).toEqual({
       success: true,
       title: '整理会议记录',
     });
@@ -68,17 +66,41 @@ describe('QueryBackedTitleGenerationService', () => {
     const service = new QueryBackedTitleGenerationService({
       createRunner: () => runners.shift()!,
     });
-    const callback = jest.fn(async () => {});
-
-    const first = service.generateTitle('session-1', 'old request', callback);
+    const first = service.generateTitle('session-1', 'old request');
     await Promise.resolve();
-    await service.generateTitle('session-1', 'new request', callback);
+    const second = await service.generateTitle('session-1', 'new request');
     releaseFirst();
     await first;
 
     expect(firstRunner.query.mock.calls[0][0].abortController.signal.aborted).toBe(true);
     expect(firstRunner.reset).toHaveBeenCalled();
     expect(secondRunner.reset).toHaveBeenCalled();
-    expect(callback).toHaveBeenCalledWith('session-1', { success: true, title: 'New title' });
+    expect(second).toEqual({ success: true, title: 'New title' });
+  });
+
+  it('returns a failure result when the query fails', async () => {
+    const runner = createRunner('');
+    runner.query.mockRejectedValueOnce(new Error('provider unavailable'));
+    const service = new QueryBackedTitleGenerationService({
+      createRunner: () => runner,
+    });
+
+    await expect(service.generateTitle('session-1', 'request')).resolves.toEqual({
+      success: false,
+      error: 'provider unavailable',
+    });
+    expect(runner.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns a failure result when the response has no usable title', async () => {
+    const runner = createRunner('""');
+    const service = new QueryBackedTitleGenerationService({
+      createRunner: () => runner,
+    });
+
+    await expect(service.generateTitle('session-1', 'request')).resolves.toEqual({
+      success: false,
+      error: 'Failed to parse title from response',
+    });
   });
 });

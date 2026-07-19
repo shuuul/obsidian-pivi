@@ -4,7 +4,12 @@ import type { SessionController } from '@/ui/chat/controllers/SessionController'
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import { Notice } from 'obsidian';
 import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
+
+async function flushBackgroundTitleGeneration(): Promise<void> {
+  await new Promise<void>((resolve) => setImmediate(resolve));
+}
 
 describe('TitleGenerationCoordinator', () => {
   let mockSessions: jest.Mocked<ChatPorts['sessions']>;
@@ -17,6 +22,7 @@ describe('TitleGenerationCoordinator', () => {
   let coordinator: TitleGenerationCoordinator;
 
   beforeEach(() => {
+    jest.mocked(Notice).mockClear();
     const ports = createFakeChatPorts({
       sessions: {
         createSession: jest.fn().mockResolvedValue({ id: 'session-123' }),
@@ -44,9 +50,11 @@ describe('TitleGenerationCoordinator', () => {
     } as unknown as jest.Mocked<SessionController>;
 
     mockTitleService = {
-      generateTitle: jest.fn().mockImplementation(async (convId, userContent, callback) => {
-        await callback(convId, { success: true, title: 'AI Generated Title' });
+      generateTitle: jest.fn().mockResolvedValue({
+        success: true,
+        title: 'AI Generated Title',
       }),
+      cancel: jest.fn(),
     } as unknown as jest.Mocked<TitleGenerationService>;
 
     mockAgentService = {
@@ -77,12 +85,109 @@ describe('TitleGenerationCoordinator', () => {
 
   it('triggers AI title generation and renames session on success', async () => {
     await coordinator.triggerTitleGeneration();
+    await flushBackgroundTitleGeneration();
+
+    expect(mockTitleService.generateTitle).toHaveBeenCalledWith(
+      'session-123',
+      'Hello agent!',
+    );
+    expect(mockSessions.renameSession).toHaveBeenLastCalledWith('session-123', 'AI Generated Title', 'model');
+    expect(onTitleChanged).toHaveBeenCalledWith('AI Generated Title');
+  });
+
+  it('publishes the generated title only after metadata persistence succeeds', async () => {
+    let resolvePersistence!: () => void;
+    const persistence = new Promise<void>((resolve) => {
+      resolvePersistence = resolve;
+    });
+    mockSessions.renameSession.mockImplementation(async (_id, _title, source) => {
+      if (source === 'model') {
+        await persistence;
+      }
+    });
+
+    await coordinator.triggerTitleGeneration();
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(mockTitleService.generateTitle).toHaveBeenCalled();
-    expect(mockSessions.renameSession).toHaveBeenLastCalledWith('session-123', 'AI Generated Title', 'model');
+    expect(mockSessions.renameSession).toHaveBeenLastCalledWith(
+      'session-123',
+      'AI Generated Title',
+      'model',
+    );
+    expect(onTitleChanged).not.toHaveBeenCalledWith('AI Generated Title');
+
+    resolvePersistence();
+    await flushBackgroundTitleGeneration();
+
     expect(onTitleChanged).toHaveBeenCalledWith('AI Generated Title');
+  });
+
+  it('keeps the fallback title when the model query fails', async () => {
+    mockTitleService.generateTitle.mockResolvedValue({
+      success: false,
+      error: 'provider unavailable',
+    });
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await coordinator.triggerTitleGeneration();
+    await flushBackgroundTitleGeneration();
+
+    expect(mockSessions.renameSession).toHaveBeenCalledTimes(1);
+    expect(mockSessions.renameSession).toHaveBeenCalledWith(
+      'session-123',
+      'Fallback Title',
+      'firstPrompt',
+    );
+    expect(onTitleChanged).toHaveBeenCalledTimes(1);
+    expect(Notice).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('does not overwrite a title customized while the model query is running', async () => {
+    mockSessions.getOpenSession
+      .mockResolvedValueOnce({
+        id: 'session-123',
+        title: 'Fallback Title',
+        titleSource: 'firstPrompt',
+      } as never)
+      .mockResolvedValueOnce({
+        id: 'session-123',
+        title: 'My custom title',
+        titleSource: 'custom',
+      } as never);
+
+    await coordinator.triggerTitleGeneration();
+    await flushBackgroundTitleGeneration();
+
+    expect(mockSessions.renameSession).toHaveBeenCalledTimes(1);
+    expect(mockSessions.renameSession).not.toHaveBeenCalledWith(
+      'session-123',
+      'AI Generated Title',
+      'model',
+    );
+    expect(onTitleChanged).not.toHaveBeenCalledWith('AI Generated Title');
+  });
+
+  it('shows an error and leaves the fallback visible when model title persistence fails', async () => {
+    mockSessions.renameSession.mockImplementation(async (_id, _title, source) => {
+      if (source === 'model') {
+        throw new Error('append failed');
+      }
+    });
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await coordinator.triggerTitleGeneration();
+    await flushBackgroundTitleGeneration();
+
+    expect(mockSessions.renameSession).toHaveBeenLastCalledWith(
+      'session-123',
+      'AI Generated Title',
+      'model',
+    );
+    expect(onTitleChanged).not.toHaveBeenCalledWith('AI Generated Title');
+    expect(Notice).toHaveBeenCalledTimes(1);
+    error.mockRestore();
   });
 
   it('does not overwrite a custom title with generated title', async () => {
@@ -93,8 +198,7 @@ describe('TitleGenerationCoordinator', () => {
     } as never);
 
     await coordinator.triggerTitleGeneration();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushBackgroundTitleGeneration();
 
     expect(mockSessions.renameSession).not.toHaveBeenCalled();
     expect(mockTitleService.generateTitle).not.toHaveBeenCalled();
@@ -117,8 +221,7 @@ describe('TitleGenerationCoordinator', () => {
     });
 
     await coordinator.triggerTitleGeneration();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushBackgroundTitleGeneration();
 
     expect(mockSessions.renameSession).toHaveBeenCalledWith('session-123', 'My Draft Title', 'custom');
     expect(clearDraftCustomTitle).toHaveBeenCalled();
