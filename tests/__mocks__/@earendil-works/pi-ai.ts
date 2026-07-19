@@ -75,6 +75,8 @@ export function isContextOverflow(message: any): boolean {
 }
 
 export function isRetryableAssistantError(message: any): boolean {
+  // Mirror upstream pi-ai: TLS handshake disconnects / bare ECONNRESET are NOT matched here.
+  // Pivi's isPiChatRetryableAssistantError fills that gap in piChatRetry.ts.
   return message?.stopReason === 'error'
     && /socket hang up|rate limit|5\d\d|timed? out/i.test(message?.errorMessage ?? '');
 }

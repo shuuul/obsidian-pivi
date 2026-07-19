@@ -3,6 +3,7 @@ import type { AssistantMessage } from '@earendil-works/pi-ai';
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
 
 import {
+  isPiChatRetryableAssistantError,
   PI_CHAT_MAX_RETRIES,
   runPiChatPromptWithRetry,
 } from '../../../packages/pivi-agent-core/src/engine/pi/piChatRetry';
@@ -72,6 +73,21 @@ function createHarness(responses: AssistantMessage[]) {
   };
 }
 
+describe('isPiChatRetryableAssistantError', () => {
+  it('treats Node TLS handshake disconnects and ECONNRESET as retryable', () => {
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Client network socket disconnected before secure TLS connection was established',
+    ))).toBe(true);
+    expect(isPiChatRetryableAssistantError(assistant('error', 'ECONNRESET'))).toBe(true);
+  });
+
+  it('still rejects non-error stops and empty error text', () => {
+    expect(isPiChatRetryableAssistantError(assistant('stop'))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant('error'))).toBe(false);
+  });
+});
+
 describe('runPiChatPromptWithRetry', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -117,6 +133,54 @@ describe('runPiChatPromptWithRetry', () => {
       },
     ]);
     expect(harness.state.messages).toEqual([expect.objectContaining({ stopReason: 'stop' })]);
+  });
+
+  it('retries Codex TLS handshake disconnects that upstream classification misses', async () => {
+    const tlsError = 'Client network socket disconnected before secure TLS connection was established';
+    const harness = createHarness([
+      assistant('error', tlsError),
+      assistant('stop'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(2_000);
+
+    await expect(resultPromise).resolves.toMatchObject({ status: 'success' });
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(1);
+    expect(harness.discarded).toEqual([
+      expect.objectContaining({ errorMessage: tlsError }),
+    ]);
+    expect(harness.chunks).toEqual([
+      {
+        type: 'retry_start',
+        attempt: 1,
+        maxAttempts: PI_CHAT_MAX_RETRIES,
+        delayMs: 2_000,
+        errorMessage: tlsError,
+      },
+      {
+        type: 'retry_end',
+        success: true,
+        attempt: 1,
+      },
+    ]);
+  });
+
+  it('retries bare ECONNRESET transport failures', async () => {
+    const harness = createHarness([
+      assistant('error', 'ECONNRESET'),
+      assistant('stop'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(2_000);
+
+    await expect(resultPromise).resolves.toMatchObject({ status: 'success' });
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(1);
+    expect(harness.chunks[0]).toEqual(expect.objectContaining({
+      type: 'retry_start',
+      errorMessage: 'ECONNRESET',
+    }));
   });
 
   it('stops after three retries and keeps the final failure active', async () => {

@@ -10,6 +10,12 @@ import type { StreamChunk } from '../../foundation';
 export const PI_CHAT_MAX_RETRIES = 3;
 export const PI_CHAT_RETRY_BASE_DELAY_MS = 2_000;
 
+/**
+ * Node/Electron transport failures that pi-ai's retry classifier currently misses.
+ * Observed on openai-codex long turns when the TLS handshake is reset mid-connect.
+ */
+const PIVI_RETRYABLE_TRANSPORT_ERROR_PATTERN = /ECONNRESET|network socket disconnected|secure TLS connection was established/i;
+
 type PiChatRetryChunk = Extract<
   StreamChunk,
   { type: 'retry_end' | 'retry_start' }
@@ -28,6 +34,17 @@ export interface PiChatRetryOptions {
   getLatestAssistantMessage: () => AssistantMessage | undefined;
   prompt: () => Promise<void>;
   signal: AbortSignal;
+}
+
+/** Upstream pi-ai classification plus Pivi-owned TLS/socket transport gaps. */
+export function isPiChatRetryableAssistantError(message: AssistantMessage): boolean {
+  if (isRetryableAssistantError(message)) {
+    return true;
+  }
+  if (message.stopReason !== 'error' || !message.errorMessage) {
+    return false;
+  }
+  return PIVI_RETRYABLE_TRANSPORT_ERROR_PATTERN.test(message.errorMessage);
 }
 
 function removeFailedAssistantFromActiveContext(
@@ -116,7 +133,7 @@ export async function runPiChatPromptWithRetry(
     }
 
     const retryable = !isContextOverflow(assistant, options.contextWindow)
-      && isRetryableAssistantError(assistant);
+      && isPiChatRetryableAssistantError(assistant);
     if (!retryable || retryAttempt >= PI_CHAT_MAX_RETRIES) {
       if (retryAttempt > 0) {
         options.emit({
