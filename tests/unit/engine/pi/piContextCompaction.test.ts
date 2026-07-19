@@ -320,7 +320,14 @@ describe('piContextCompaction', () => {
       role: 'assistant',
       content: [
         { type: 'thinking', thinking: 'hidden chain' },
-        { type: 'text', text: 'Keep [[Projects/Pivi.md]]; omit /Users/example/private.md' },
+        {
+          type: 'text',
+          text: [
+            'Keep [[Projects/Pivi.md]]; omit /Users/example/private.md',
+            'Docs: [React](https://react.dev/) and http://example.com/docs',
+            '状态：已完成/无需更新/无内容可补齐',
+          ].join(' '),
+        },
         { type: 'image', data: 'secret', mimeType: 'image/png' },
       ],
     } as never);
@@ -331,6 +338,9 @@ describe('piContextCompaction', () => {
     expect(converted).toContain('[external path omitted]');
     expect(converted).toContain('[image attachment omitted');
     expect(converted).toContain('[[Projects/Pivi.md]]');
+    expect(converted).toContain('https://react.dev/');
+    expect(converted).toContain('http://example.com/docs');
+    expect(converted).toContain('已完成/无需更新/无内容可补齐');
   });
 
   it('normalizes complete structured drafts and rejects incomplete or unsafe results', () => {
@@ -363,6 +373,36 @@ describe('piContextCompaction', () => {
     expect(parseCompactionDraft('```pivi-checkpoint\n{"continuationSummary":"short"}\n```'))
       .toBeNull();
     expect(parseCompactionDraft(`Commentary\n${JSON.stringify(concise)}`)).toBeNull();
+  });
+
+  it('accepts doc URLs and slash-separated prose while still rejecting device paths', () => {
+    expect(parseCompactionDraftResult(checkpointJson({
+      continuationSummary: [
+        'Cards cite [React](https://react.dev/) and [Tailwind](https://tailwindcss.com/).',
+        'Also see http://example.com/docs and C:\\Users\\example\\private.md is forbidden.',
+      ].join(' '),
+    }))).toEqual({
+      ok: false,
+      reason: 'device-path',
+    });
+    expect(parseCompactionDraftResult(checkpointJson({
+      continuationSummary: [
+        'Continue Frontend enrichment using https://react.dev/ and https://bun.sh/docs.',
+        'Status markers remain 已完成/无需更新/无内容可补齐 for several cards.',
+        'Cover /hover/focus/disabled states without treating them as filesystem paths.',
+      ].join(' '),
+    }))).toMatchObject({
+      ok: true,
+      draft: expect.objectContaining({
+        continuationSummary: expect.stringContaining('https://react.dev/'),
+      }),
+    });
+    expect(parseCompactionDraftResult(checkpointJson({
+      openWork: ['Inspect /etc/passwd before rewriting secrets'],
+    }))).toEqual({
+      ok: false,
+      reason: 'device-path',
+    });
   });
 
   it('classifies invalid compaction drafts without exposing their contents', () => {

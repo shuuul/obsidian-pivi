@@ -446,8 +446,12 @@ export function shouldAutoCompact(input: AutoCompactionDecisionInput): boolean {
   return envelope.pressureInputTokens >= envelope.compactionTriggerTokens;
 }
 
-const DEVICE_PATH_IN_TEXT = /(?:file:\/\/\/|[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|\/(?:Users|home|private|tmp|var|Volumes)\/)\S*/gi;
-const GENERIC_ABSOLUTE_PATH_IN_TEXT = /(?<![A-Za-z0-9_.:/-])\/(?:(?:[^/\s"'`<>]+\/)+[^/\s"'`<>]+|[^/\s"'`<>]+\.[A-Za-z0-9]+)/g;
+// Windows drive letters need a non-letter boundary so URL schemes like
+// `https://` (`s:/`) and `http://` (`p:/`) are not treated as device paths.
+const DEVICE_PATH_IN_TEXT = /(?:file:\/\/\/|(?<![A-Za-z])[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|\/(?:Users|home|private|tmp|var|Volumes|etc|opt|usr|bin|sbin|root|dev|mnt|Library|Applications|System|Windows)\/)\S*/gi;
+// Extension-bearing absolute paths only. Slash-separated prose such as
+// `已完成/无需更新` or `/hover/focus/disabled` must not fail compaction.
+const GENERIC_ABSOLUTE_PATH_IN_TEXT = /(?<![A-Za-z0-9_.:/-])\/(?:(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+)\.[A-Za-z0-9]+/g;
 
 function redactDevicePaths(text: string): string {
   return text
