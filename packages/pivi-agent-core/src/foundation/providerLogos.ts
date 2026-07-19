@@ -17,7 +17,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   openai: 'OpenAI',
   'openai-codex': 'OpenAI Codex',
   opencode: 'OpenCode Zen',
-  'opencode-go': 'OpenCode Zen Go',
+  'opencode-go': 'OpenCode Go',
   openrouter: 'OpenRouter',
   xai: 'xAI',
   'grok-build': 'Grok Build',

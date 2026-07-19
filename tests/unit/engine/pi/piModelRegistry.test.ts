@@ -261,7 +261,7 @@ describe('PiModelRegistry (core)', () => {
           value: 'opencode-go/deepseek-v4-flash',
           label: 'DeepSeek V4 Flash',
           description: 'Default model (no models in pool)',
-          group: 'OpenCode Zen Go',
+          group: 'OpenCode Go',
           providerLogoSlug: 'opencode',
           fallbackIcon: 'search',
         },

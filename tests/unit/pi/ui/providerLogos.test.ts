@@ -48,6 +48,7 @@ describe('providerLogos', () => {
   it('formats display names', () => {
     expect(getProviderDisplayName('anthropic')).toBe('Anthropic');
     expect(getProviderDisplayName('kimi-coding')).toBe('Kimi For Coding');
+    expect(getProviderDisplayName('opencode-go')).toBe('OpenCode Go');
     expect(getProviderDisplayName('zai-coding-cn')).toBe('Z.AI Coding CN');
     expect(getProviderDisplayName('custom-vendor')).toBe('Custom Vendor');
   });
