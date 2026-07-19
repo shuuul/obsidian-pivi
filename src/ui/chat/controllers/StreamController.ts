@@ -160,6 +160,8 @@ export class StreamController {
     options: { backgroundSubagent?: boolean } = {},
   ): Promise<void> {
     if (this.disposed) return;
+    const backgroundSubagent = options.backgroundSubagent === true;
+    this.handleRetryProgressChunk(chunk, backgroundSubagent);
     const projectionRunScope = this.projectionRunScopeForChunk(chunk);
     if (
       chunk.type !== 'tool_use'
@@ -210,7 +212,7 @@ export class StreamController {
 
       case 'retry_start':
       case 'retry_end':
-        this.handleRetryChunk(chunk, options.backgroundSubagent === true);
+        this.handleRetryChunk(chunk, backgroundSubagent);
         break;
 
       case 'error':
@@ -304,6 +306,20 @@ export class StreamController {
     } else {
       hideStreamRetryIndicator(deps, chunk.attempt);
     }
+  }
+
+  private handleRetryProgressChunk(chunk: StreamChunk, backgroundSubagent: boolean): void {
+    if (
+      backgroundSubagent
+      || (chunk.type !== 'thinking' && chunk.type !== 'text' && chunk.type !== 'tool_use')
+    ) {
+      return;
+    }
+    hideStreamRetryIndicator({
+      state: this.deps.state,
+      updateQueueIndicator: this.deps.updateQueueIndicator,
+      getMessagesEl: this.deps.getMessagesEl,
+    });
   }
 
   private handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {

@@ -161,12 +161,12 @@ export function showRetryIndicator(
 
 export function hideRetryIndicator(
   deps: StreamThinkingIndicatorDeps,
-  attempt: number,
+  attempt?: number,
 ): void {
   const { state } = deps;
   const timers = timersByState.get(state);
   const retry = timers?.retry;
-  if (!timers || !retry || retry.attempt !== attempt) return;
+  if (!timers || !retry || (attempt !== undefined && retry.attempt !== attempt)) return;
 
   timers.retry = null;
   writeIndicator(deps, retry.previousText, retry.previousClassName);

@@ -5,7 +5,7 @@ import { SubagentManager } from '@/ui/chat/services/SubagentManager';
 import { ChatState } from '@/ui/chat/state/ChatState';
 
 describe('StreamController background ordering', () => {
-  it('projects foreground retry lifecycle onto the thinking indicator only', async () => {
+  it('restores the thinking indicator when a foreground retry resumes streaming', async () => {
     const state = new ChatState();
     state.isStreaming = true;
     const message = {
@@ -49,6 +49,13 @@ describe('StreamController background ordering', () => {
     expect(state.uiStore.getSnapshot().thinkingIndicator?.text)
       .toBe('Connection interrupted · Retrying 1/3 in 2s');
     expect(state.messages).toHaveLength(1);
+
+    await controller.handleStreamChunk({
+      type: 'text',
+      content: 'Recovered',
+    }, message);
+
+    expect(state.uiStore.getSnapshot().thinkingIndicator?.text).toBe('Distilling...');
 
     await controller.handleStreamChunk({
       type: 'retry_end',

@@ -141,4 +141,15 @@ describe('streamThinkingIndicator', () => {
     expect(state.uiStore.getSnapshot().thinkingIndicator?.text)
       .toBe('Connection interrupted · Retrying 2/3 in 4s');
   });
+
+  it('restores the prior text when retry progress arrives before retry_end', () => {
+    const { state, deps } = createDeps();
+    state.isStreaming = true;
+
+    showThinkingIndicator(deps, 'Distilling...');
+    showRetryIndicator(deps, { attempt: 1, maxAttempts: 3, delayMs: 2000 });
+    hideRetryIndicator(deps);
+
+    expect(state.uiStore.getSnapshot().thinkingIndicator?.text).toBe('Distilling...');
+  });
 });
