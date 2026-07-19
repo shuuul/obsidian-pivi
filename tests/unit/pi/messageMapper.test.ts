@@ -420,6 +420,83 @@ describe('MessageMapper', () => {
     expect(first(messages).contentBlocks).toEqual([{ type: 'text', content: 'from ui' }]);
   });
 
+  it('preserves reconstructed tool order when the final UI overlay covers only a suffix', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            { type: 'toolCall', id: 'old-1', name: 'obsidian_read', arguments: { path: 'old-1.md' } },
+            { type: 'toolCall', id: 'old-2', name: 'obsidian_read', arguments: { path: 'old-2.md' } },
+          ],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 'a2',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            { type: 'toolCall', id: 'recent-1', name: 'obsidian_read', arguments: { path: 'recent.md' } },
+          ],
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 'a3',
+        parentId: 'a2',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        message: {
+          role: 'assistant',
+          content: [{ type: 'text', text: 'Final answer.' }],
+          timestamp: 3,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 'a3',
+        timestamp: '2026-01-01T00:00:03.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: {
+          targetEntryId: 'a3',
+          contentBlocks: [
+            { type: 'tool_use', toolId: 'recent-1' },
+            { type: 'text', content: 'Final answer.' },
+          ],
+          toolCalls: [
+            { id: 'old-1', name: 'obsidian_read', input: { path: 'old-1.md' }, status: 'completed', isExpanded: false },
+            { id: 'old-2', name: 'obsidian_read', input: { path: 'old-2.md' }, status: 'completed', isExpanded: false },
+            { id: 'recent-1', name: 'obsidian_read', input: { path: 'recent.md' }, status: 'completed', isExpanded: false },
+          ],
+        },
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
+
+    expect(messages).toHaveLength(1);
+    expect(first(messages).contentBlocks).toEqual([
+      { type: 'tool_use', toolId: 'old-1' },
+      { type: 'tool_use', toolId: 'old-2' },
+      { type: 'tool_use', toolId: 'recent-1' },
+      { type: 'text', content: 'Final answer.' },
+    ]);
+    expect(first(messages).toolCalls?.map(toolCall => toolCall.id)).toEqual([
+      'old-1',
+      'old-2',
+      'recent-1',
+    ]);
+  });
+
   it('restores persisted assistant tool-call overlays without duplicating merged content blocks', () => {
     const branch: SessionEntry[] = [
       {

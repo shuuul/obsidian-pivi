@@ -218,6 +218,64 @@ function mergeToolCallOverlay(
   return merged;
 }
 
+function contentBlockToolId(block: ContentBlock): string | undefined {
+  if (block.type === 'tool_use') return block.toolId;
+  if (block.type === 'subagent') return block.subagentId;
+  return undefined;
+}
+
+function sameNonToolBlock(left: ContentBlock, right: ContentBlock): boolean {
+  if (left.type !== right.type) return false;
+  if (left.type === 'text' && right.type === 'text') return left.content === right.content;
+  if (left.type === 'thinking' && right.type === 'thinking') return left.content === right.content;
+  if (left.type === 'context_compacted' && right.type === 'context_compacted') {
+    return left.summary === right.summary
+      && left.tokensBefore === right.tokensBefore
+      && left.tokensAfter === right.tokensAfter;
+  }
+  return false;
+}
+
+/** Keep Pi-native order when a final message-ui patch covers only the last provider segment. */
+function reconcileAssistantContentBlocks(
+  reconstructed: ContentBlock[] | undefined,
+  overlay: ContentBlock[],
+): ContentBlock[] {
+  if (!reconstructed?.length) return overlay;
+
+  const reconstructedToolIds = new Set<string>();
+  for (const block of reconstructed) {
+    const toolId = contentBlockToolId(block);
+    if (toolId) reconstructedToolIds.add(toolId);
+  }
+  const overlayToolBlocks = new Map<string, ContentBlock>();
+  for (const block of overlay) {
+    const toolId = contentBlockToolId(block);
+    if (toolId) overlayToolBlocks.set(toolId, block);
+  }
+  const overlayIsComplete = [...reconstructedToolIds].every(toolId => overlayToolBlocks.has(toolId));
+  if (overlayIsComplete) return overlay;
+
+  const reconciled = reconstructed.map((block) => {
+    const toolId = contentBlockToolId(block);
+    return toolId ? (overlayToolBlocks.get(toolId) ?? block) : block;
+  });
+  for (const block of overlay) {
+    const toolId = contentBlockToolId(block);
+    if (toolId) {
+      if (!reconstructedToolIds.has(toolId)) reconciled.push(block);
+      continue;
+    }
+    const existingIndex = reconciled.findIndex(candidate => sameNonToolBlock(candidate, block));
+    if (existingIndex >= 0) {
+      reconciled[existingIndex] = block;
+    } else {
+      reconciled.push(block);
+    }
+  }
+  return reconciled;
+}
+
 function applyAssistantUiOverlay(
   target: ChatMessage,
   ui: PiviMessageUiData | undefined,
@@ -228,7 +286,10 @@ function applyAssistantUiOverlay(
     return;
   }
   if (ui.contentBlocks) {
-    target.contentBlocks = ui.contentBlocks as ContentBlock[];
+    target.contentBlocks = reconcileAssistantContentBlocks(
+      target.contentBlocks,
+      ui.contentBlocks as ContentBlock[],
+    );
   }
   if (ui.toolCalls) {
     target.toolCalls = mergeToolCallOverlay(target.toolCalls, ui.toolCalls);
