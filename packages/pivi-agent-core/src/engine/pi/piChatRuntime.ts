@@ -626,6 +626,8 @@ export class PiChatRuntime implements PiChatService {
       const content = typeof message.content === 'string'
         ? message.content
         : extractTextContent(message.content);
+      // Pi queues the exact AgentMessage passed to steer(); context transforms apply only
+      // to the provider request. Keep this strict so an earlier similar turn cannot match.
       return content === turn.prompt;
     });
     if (!containsSteeredUserMessage) {

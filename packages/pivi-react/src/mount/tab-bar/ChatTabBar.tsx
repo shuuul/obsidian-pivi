@@ -254,6 +254,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
       + TAB_SWITCHER_MENU_CHROME_HEIGHT_PX
     }px`,
   } as CSSProperties;
+  const archivedBoundaryIndex = tabOrder.indexOf(ARCHIVED_BOUNDARY_ID);
 
   const renderItem = (item: ChatTabSnapshotItem, previewArchived: boolean) => {
     const editing = editingTabId === item.id;
@@ -378,7 +379,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
                 }
                 const item = itemsById.get(id);
                 return item
-                  ? renderItem(item, index > tabOrder.indexOf(ARCHIVED_BOUNDARY_ID))
+                  ? renderItem(item, index > archivedBoundaryIndex)
                   : null;
               })}
             </div>

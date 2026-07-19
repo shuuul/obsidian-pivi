@@ -517,6 +517,31 @@ describe('React ChatShell tabs', () => {
     });
     fireEvent.keyDown(firstQueuedRow, { key: ' ' });
     fireEvent.keyDown(firstQueuedRow, { key: 'ArrowDown' });
+
+    act(() => uiStore.update({
+      queuedTurns: [
+        {
+          id: 'queued-1',
+          content: 'First independent turn',
+          hasBrowserContext: false,
+          hasCanvasContext: false,
+          hasEditorContext: false,
+          imageCount: 0,
+        },
+        {
+          id: 'queued-2',
+          content: 'Second independent turn',
+          hasBrowserContext: false,
+          hasCanvasContext: false,
+          hasEditorContext: false,
+          imageCount: 0,
+        },
+      ],
+    }));
+    expect(Array.from(targets.queue.querySelectorAll('.pivi-queue-item')).map(
+      item => item.getAttribute('data-queue-sort-id'),
+    )).toEqual(['queued-2', 'queued-1']);
+
     fireEvent.keyDown(firstQueuedRow, { key: ' ' });
     expect(surfaceActions.reorderQueuedTurns).toHaveBeenCalledWith(['queued-2', 'queued-1']);
 

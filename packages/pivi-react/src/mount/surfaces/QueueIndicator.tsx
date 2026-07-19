@@ -71,9 +71,6 @@ export function QueueIndicator({ queuedTurns, actions }: {
 }) {
   const t = useT();
   const [order, setOrder] = useState(() => queuedTurns.map(turn => turn.id));
-  useEffect(() => {
-    setOrder(queuedTurns.map(turn => turn.id));
-  }, [queuedTurns]);
   const reorder = useSortableReorder<string, HTMLDivElement>({
     order,
     disabled: queuedTurns.length < 2,
@@ -92,6 +89,9 @@ export function QueueIndicator({ queuedTurns, actions }: {
     cancelledAnnouncement: t('chat.queue.reorder.cancelled'),
     failedAnnouncement: t('common.error'),
   });
+  useEffect(() => {
+    if (reorder.draggingId === null) setOrder(queuedTurns.map(turn => turn.id));
+  }, [queuedTurns, reorder.draggingId]);
   if (queuedTurns.length === 0) return null;
   const turnsById = new Map(queuedTurns.map(turn => [turn.id, turn]));
   const orderedTurns = order
