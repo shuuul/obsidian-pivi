@@ -124,7 +124,7 @@ export function initializeTabControllers(
       getInlineContextManager: () => ui.inlineContextManager,
       getImageContextManager: () => ui.imageContextManager,
       getExternalContextSelector: () => ui.externalContextSelector,
-      clearQueuedMessage: () => tab.controllers.inputController?.clearQueuedMessage(),
+      clearQueuedMessages: () => tab.controllers.inputController?.clearQueuedMessages(),
       resetStreamingState: () => tab.controllers.streamController?.resetStreamingState(),
       getAgentService: () => tab.service,
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingInlinePrompts(),

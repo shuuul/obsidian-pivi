@@ -867,6 +867,16 @@ textarea.pivi-settings-control {
   will-change: transform;
 }
 
+.pivi-sortable-provider-card > .pivi-provider-header {
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.pivi-sortable-provider-card.is-dragging > .pivi-provider-header {
+  cursor: grabbing;
+}
+
 .pivi-web-provider-header {
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr) auto auto;

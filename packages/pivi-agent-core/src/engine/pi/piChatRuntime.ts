@@ -18,8 +18,10 @@ import {
   buildPiSystemPrompt,
   computePiSystemPromptKey,
 } from '../../prompt';
+import { extractTextContent } from '../../runtime/messageContent';
 import type { PiChatService } from '../../runtime/piChatService';
 import { prepareChatTurn } from '../../runtime/prepareTurn';
+import { toChatTurnRequestSnapshot } from '../../runtime/queuedTurn';
 import { RuntimeReadyState } from '../../runtime/runtimeReadyState';
 import {
   buildSessionStateUpdates,
@@ -252,6 +254,7 @@ export class PiChatRuntime implements PiChatService {
       convertToLlm: (messages) => sanitizeAgentMessagesForLlm(messages),
       streamFn: (streamModel, context, options) => piAiModels.streamSimple(streamModel, context, options),
       sessionId: this.sessionId ?? undefined,
+      steeringMode: 'one-at-a-time',
     });
 
     this.systemPromptKey = computePiSystemPromptKey(this.getVaultPath() ?? undefined, this.plugin.settings.userName, registry);
@@ -343,7 +346,11 @@ export class PiChatRuntime implements PiChatService {
         resolveModel: () => this.resolveModel(),
         refreshModelMetadata: () => this.refreshLocalModelMetadataAfterPrompt(agent),
         syncSessionMessages: (messages) => {
-          this.syncSessionMessagesAfterTurn(messages, effectiveTurn);
+          this.persistSteeredTurnBeforeSync(activeTurn, messages);
+          this.syncSessionMessagesAfterTurn(
+            messages,
+            [effectiveTurn, ...activeTurn.steeredTurns],
+          );
         },
         onUserMessagePersisted: ({ parentEntryId, userEntryId, leafId }) => {
           this.currentTurnMetadata.userParentEntryId = parentEntryId;
@@ -356,6 +363,26 @@ export class PiChatRuntime implements PiChatService {
         this.activeTurn = null;
       }
     }
+  }
+
+  steer(turn: PreparedChatTurn): boolean {
+    const activeTurn = this.activeTurn;
+    const agent = this.agent;
+    if (
+      !activeTurn
+      || activeTurn.abortController.signal.aborted
+      || !agent?.signal
+      || agent.signal.aborted
+    ) {
+      return false;
+    }
+    activeTurn.steeredTurns.push(turn);
+    agent.steer({
+      role: 'user',
+      content: turn.prompt,
+      timestamp: Date.now(),
+    });
+    return true;
   }
 
   cancel(): void {
@@ -570,11 +597,14 @@ export class PiChatRuntime implements PiChatService {
     );
   }
 
-  private syncSessionMessagesAfterTurn(messages: AgentMessage[], turn?: PreparedChatTurn): void {
+  private syncSessionMessagesAfterTurn(
+    messages: AgentMessage[],
+    turns?: PreparedChatTurn | readonly PreparedChatTurn[],
+  ): void {
     syncSessionMessagesAfterTurn(
       this.sessionTree,
       messages,
-      turn,
+      turns,
       (leafId) => {
         this.leafId = leafId;
       },
@@ -584,6 +614,33 @@ export class PiChatRuntime implements PiChatService {
         }
       },
     );
+  }
+
+  private persistSteeredTurnBeforeSync(activeTurn: ActiveTurn, messages: AgentMessage[]): void {
+    const turn = activeTurn.steeredTurns[activeTurn.persistedSteeredTurnCount];
+    if (!turn || !this.sessionTree) {
+      return;
+    }
+    const containsSteeredUserMessage = messages.some((message) => {
+      if (message.role !== 'user') return false;
+      const content = typeof message.content === 'string'
+        ? message.content
+        : extractTextContent(message.content);
+      return content === turn.prompt;
+    });
+    if (!containsSteeredUserMessage) {
+      return;
+    }
+    const targetEntryId = this.sessionTree.appendUserMessage(
+      turn.persistedContent,
+      turn.request.images,
+    );
+    this.sessionTree.appendMessageUi({
+      targetEntryId,
+      displayContent: turn.displayContent,
+      turnRequest: toChatTurnRequestSnapshot(turn.request),
+    });
+    activeTurn.persistedSteeredTurnCount += 1;
   }
 
   private dispatchSubagentChunk(chunk: StreamChunk): void {

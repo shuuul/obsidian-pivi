@@ -54,9 +54,11 @@
       "modelAria": "Modelo",
       "reasoningAria": "Raciocínio",
       "sendAria": "Enviar mensagem",
+      "queueAria": "Adicionar mensagem à fila",
       "stopAria": "Parar resposta",
       "sendEmptyAria": "Digite uma mensagem para enviar",
       "sendTitle": "Enviar",
+      "queueTitle": "Adicionar à fila",
       "stopTitle": "Parar",
       "sendEmptyTitle": "Digite uma mensagem para enviar"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "Falha ao alternar a aba",
       "failedCloseTab": "Falha ao fechar a aba",
       "failedEditTitle": "Falha ao editar o título da aba",
-      "failedArchiveTab": "Falha ao arquivar a aba"
+      "failedArchiveTab": "Falha ao arquivar a aba",
+      "failedReorderTabs": "Falha ao reordenar abas",
+      "active": "Ativas",
+      "reorder": {
+        "draggable": "aba ordenável",
+        "position": "Aba movida para {group}, posição {position} de {total}.",
+        "saved": "Ordem das abas salva.",
+        "cancelled": "Reordenação de abas cancelada.",
+        "failed": "Falha ao reordenar abas."
+      }
     },
     "errors": {
       "initAgentFailed": "Falha ao inicializar o serviço do agente. Tente novamente.",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ Na fila: {preview}",
+      "steer": "Direcionar com mensagem na fila",
       "edit": "Editar mensagem na fila",
       "discard": "Descartar mensagem na fila",
-      "images": "Imagens anexadas"
+      "images": "Imagens anexadas",
+      "reorder": {
+        "handle": "Reordenar mensagem na fila, atualmente na posição {position}",
+        "draggable": "mensagem ordenável na fila",
+        "position": "Mensagem movida para a posição {position} de {total}.",
+        "saved": "Ordem da fila atualizada.",
+        "cancelled": "Reordenação da fila cancelada."
+      }
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage}%)",

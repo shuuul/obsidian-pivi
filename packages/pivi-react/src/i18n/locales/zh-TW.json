@@ -54,9 +54,11 @@
       "modelAria": "模型",
       "reasoningAria": "推理",
       "sendAria": "傳送訊息",
+      "queueAria": "將訊息加入佇列",
       "stopAria": "停止回覆",
       "sendEmptyAria": "輸入訊息以傳送",
       "sendTitle": "傳送",
+      "queueTitle": "加入佇列",
       "stopTitle": "停止",
       "sendEmptyTitle": "請輸入訊息"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "切換分頁失敗",
       "failedCloseTab": "關閉分頁失敗",
       "failedEditTitle": "編輯分頁標題失敗",
-      "failedArchiveTab": "封存分頁失敗"
+      "failedArchiveTab": "封存分頁失敗",
+      "failedReorderTabs": "分頁排序失敗",
+      "active": "使用中",
+      "reorder": {
+        "draggable": "可排序分頁",
+        "position": "分頁已移至{group}群組第 {position} 項，共 {total} 項。",
+        "saved": "分頁順序已儲存。",
+        "cancelled": "已取消分頁排序。",
+        "failed": "分頁排序失敗。"
+      }
     },
     "errors": {
       "initAgentFailed": "初始化代理服務失敗。請重試。",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ 已排入佇列：{preview}",
+      "steer": "立即引導佇列訊息",
       "edit": "編輯佇列訊息",
       "discard": "捨棄佇列訊息",
-      "images": "已附加圖片"
+      "images": "已附加圖片",
+      "reorder": {
+        "handle": "調整佇列訊息順序，目前位置 {position}",
+        "draggable": "可排序的佇列訊息",
+        "position": "已將佇列訊息移到第 {position} 位，共 {total} 位。",
+        "saved": "佇列順序已更新。",
+        "cancelled": "已取消調整佇列順序。"
+      }
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",

@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort } from '../ports';
+import { useSortableReorder } from '../reorder/useSortableReorder';
 import { SettingsPageDescription } from './controls';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
-import { useProviderReorder } from './providers/useProviderReorder';
 
 function buildInteractiveOAuthMembershipKey(
   addedProviders: readonly string[],
@@ -87,9 +87,11 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
     reload();
   };
 
-  const reorder = useProviderReorder<string>({
+  const reorder = useSortableReorder<string, HTMLElement>({
     order: settings.addedProviders,
     disabled: reorderPending,
+    itemSelector: '[data-provider-sort-id]',
+    itemDataKey: 'providerSortId',
     setOrder: addedProviders => { setSettings(current => ({ ...current, addedProviders })); },
     commitOrder: async (addedProviders, originalOrder) => {
       setReorderPending(true);
@@ -146,6 +148,7 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
             dragging={reorder.draggingId === providerId}
             dragOffset={reorder.draggingId === providerId ? reorder.dragOffset : 0}
             reorderHandleProps={reorder.getHandleProps(providerId)}
+            suppressReorderClick={() => reorder.consumeClickAfterDrag(providerId)}
             onToggleExpanded={toggleExpanded}
             save={save}
             onChanged={reload}

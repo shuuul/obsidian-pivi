@@ -9,7 +9,7 @@ import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
 import type { RichChatInput } from '../ui/RichChatInput';
-import { createQueuedMessage, mergeQueuedMessages } from './ComposerQueue';
+import { createQueuedMessage } from './ComposerQueue';
 import { buildTurnSubmission } from './ComposerSubmission';
 
 export interface QueueTurnWhileStreamingDeps {
@@ -71,10 +71,10 @@ export function queueTurnWhileStreaming(
     browserContextOverride: browserContext,
     canvasContextOverride: canvasContext,
   });
-  state.queuedMessage = mergeQueuedMessages(
-    state.queuedMessage,
+  state.queuedMessages = [
+    ...state.queuedMessages,
     createQueuedMessage(displayContent, turnRequest),
-  );
+  ];
 
   if (options.shouldUseInput) {
     inputEl.value = '';

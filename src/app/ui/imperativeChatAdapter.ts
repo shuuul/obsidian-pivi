@@ -203,6 +203,23 @@ export function createImperativeChatAdapter(
       publishTabSnapshot();
     }, 'chat.tabs.failedArchiveTab', 'tab archive failed');
 
+  const handleTabReorder = async (
+    openIds: readonly TabId[],
+    archivedIds: readonly TabId[],
+  ): Promise<boolean> => {
+    try {
+      const reordered = await tabManager?.reorderTabs(openIds, archivedIds) ?? false;
+      if (!reordered) return false;
+      publishTabSnapshot();
+      persistCurrentTabState();
+      return true;
+    } catch (error) {
+      imperativeChatLogger.warn('tab reorder failed', error);
+      new Notice(t('chat.tabs.failedReorderTabs'));
+      return false;
+    }
+  };
+
   const handleTabRenameTitle = (tabId: TabId, title: string): Promise<void> =>
     runTabAction(async () => {
       await tabManager?.renameTabTitle(tabId, title);
@@ -240,7 +257,7 @@ export function createImperativeChatAdapter(
 
   return {
     prepareShell(ownerDocument) {
-      inputTabBarPortalEl = ownerDocument.win.createDiv();
+      inputTabBarPortalEl = ownerDocument.win.createDiv({ cls: 'pivi-input-nav-portal' });
       chatTabsStore = new ChatTabsStore(getChatTabsSnapshot());
       activeChatBridge = new ActiveChatUiBridge();
       return {
@@ -254,6 +271,7 @@ export function createImperativeChatAdapter(
       return {
         switchTab: tabId => handleTabClick(tabId),
         archiveTab: tabId => handleTabArchive(tabId),
+        reorderTabs: (openIds, archivedIds) => handleTabReorder(openIds, archivedIds),
         renameTab: (tabId, title) => handleTabRenameTitle(tabId, title),
         closeTab: tabId => handleTabClose(tabId),
         startNewChat: () => startNewChat(),
@@ -262,8 +280,22 @@ export function createImperativeChatAdapter(
 
     getSurfaceActions(): ChatSurfaceActions {
       return {
-        editQueuedTurn: () => tabManager?.getActiveTab()?.controllers.inputController?.withdrawQueuedMessageToComposer(),
-        discardQueuedTurn: () => tabManager?.getActiveTab()?.controllers.inputController?.clearQueuedMessage(),
+        steerQueuedTurn: (id) => {
+          const active = tabManager?.getActiveTab();
+          active?.controllers.inputController?.steerQueuedMessage(id);
+          active?.ui.composerActions?.refresh();
+        },
+        editQueuedTurn: (id) => {
+          const active = tabManager?.getActiveTab();
+          active?.controllers.inputController?.withdrawQueuedMessageToComposer(id);
+          active?.ui.composerActions?.refresh();
+        },
+        discardQueuedTurn: (id) => {
+          const active = tabManager?.getActiveTab();
+          active?.controllers.inputController?.discardQueuedMessage(id);
+          active?.ui.composerActions?.refresh();
+        },
+        reorderQueuedTurns: ids => tabManager?.getActiveTab()?.controllers.inputController?.reorderQueuedMessages(ids),
         scrollToTop: () => scrollActiveMessages('top'),
         scrollToPreviousUserMessage: () => scrollActiveUserMessage('prev'),
         scrollToNextUserMessage: () => scrollActiveUserMessage('next'),
@@ -305,6 +337,7 @@ export function createImperativeChatAdapter(
           onTabSwitched: onTabLifecycle,
           onTabClosed: onTabLifecycle,
           onTabArchived: onTabLifecycle,
+          onTabsReordered: onTabLifecycle,
           onTabStreamingChanged: () => {
             scheduleTabsSnapshotPublish();
             persistCurrentTabState();

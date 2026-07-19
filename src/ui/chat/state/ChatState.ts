@@ -51,7 +51,7 @@ function createInitialState(): ChatStateData {
     isSwitchingSession: false,
     hasPendingSessionSave: false,
     currentOpenSessionId: null,
-    queuedMessage: null,
+    queuedMessages: [],
     currentTextContent: '',
     usage: null,
     ignoreUsageUpdates: false,
@@ -524,25 +524,24 @@ export class ChatState {
   }
 
   // ============================================
-  // Queued Message
+  // Queued Messages
   // ============================================
 
-  get queuedMessage(): QueuedMessage | null {
-    return this.state.queuedMessage;
+  get queuedMessages(): QueuedMessage[] {
+    return this.state.queuedMessages;
   }
 
-  set queuedMessage(value: QueuedMessage | null) {
-    this.state.queuedMessage = value;
+  set queuedMessages(value: QueuedMessage[]) {
+    this.state.queuedMessages = value;
     this.uiStore.update({
-      queuedTurn: value
-        ? {
-            content: value.content,
-            imageCount: value.images?.length ?? 0,
-            hasEditorContext: value.editorContext !== null,
-            hasBrowserContext: value.browserContext != null,
-            hasCanvasContext: value.canvasContext !== null,
-          }
-        : null,
+      queuedTurns: value.map(message => ({
+        id: message.id,
+        content: message.content,
+        imageCount: message.images?.length ?? 0,
+        hasEditorContext: message.editorContext !== null,
+        hasBrowserContext: message.browserContext != null,
+        hasCanvasContext: message.canvasContext !== null,
+      })),
     });
   }
 
@@ -706,7 +705,7 @@ export class ChatState {
     this.clearMessages();
     this.resetStreamingState();
     this.clearMaps();
-    this.state.queuedMessage = null;
+    this.queuedMessages = [];
     this.usage = null;
     this.currentTodos = null;
     this.autoScrollEnabled = true;

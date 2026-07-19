@@ -4,6 +4,8 @@ const mockAgentInstances: Array<{
   state: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
   listeners: Array<(event: any) => void>;
   prompt: jest.Mock;
+  signal: AbortSignal;
+  steer: jest.Mock;
   prepareNextTurnWithContext?: (context: unknown) => Promise<{
     context?: { messages: unknown[] };
   } | undefined>;
@@ -214,6 +216,8 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
           listener({ type: 'agent_end', messages: [] });
         }
       }),
+      signal: new AbortController().signal,
+      steer: jest.fn(),
       abort: jest.fn(),
       reset: jest.fn(),
       sessionId: undefined,
@@ -576,6 +580,80 @@ describe('PiChatRuntime system prompt', () => {
       { type: 'text', content: 'Hello' },
       { type: 'done' },
     ]);
+  });
+
+  it('queues a prepared steering turn on the active Pi run', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    await runtime.ensureReady();
+    const steeredTurns: unknown[] = [];
+    (runtime as unknown as {
+      activeTurn: {
+        abortController: AbortController;
+        steeredTurns: unknown[];
+      };
+    }).activeTurn = {
+      abortController: new AbortController(),
+      steeredTurns,
+    };
+    const turn = runtime.prepareTurn({ text: 'Change direction' });
+
+    expect(runtime.steer(turn)).toBe(true);
+    expectDefined(mockAgentInstances[0]);
+    expect(mockAgentInstances[0].steer).toHaveBeenCalledWith({
+      role: 'user',
+      content: 'Change direction',
+      timestamp: expect.any(Number),
+    });
+    expect(steeredTurns).toEqual([turn]);
+  });
+
+  it('persists steered visible text without duplicating the expanded API prompt', async () => {
+    const runtime = createRuntime(createMockPlugin());
+    await runtime.ensureReady();
+    const turn = runtime.prepareTurn({ text: 'Expanded steering prompt' });
+    turn.displayContent = '/steer';
+    turn.persistedContent = 'Persisted steering prompt';
+    type SteeringActiveTurn = {
+      steeredTurns: typeof turn[];
+      persistedSteeredTurnCount: number;
+    };
+    const activeTurn: SteeringActiveTurn = {
+      steeredTurns: [turn],
+      persistedSteeredTurnCount: 0,
+    };
+    const messages: AgentMessage[] = [{
+      role: 'user',
+      content: turn.prompt,
+      timestamp: Date.now(),
+    }];
+    const internals = runtime as unknown as {
+      sessionTree: SessionTreeStore;
+      persistSteeredTurnBeforeSync(
+        activeTurn: SteeringActiveTurn,
+        messages: AgentMessage[],
+      ): void;
+      syncSessionMessagesAfterTurn(
+        messages: AgentMessage[],
+        turns: typeof activeTurn.steeredTurns,
+      ): void;
+    };
+
+    internals.persistSteeredTurnBeforeSync(activeTurn, messages);
+    internals.syncSessionMessagesAfterTurn(messages, activeTurn.steeredTurns);
+
+    const userMessages = internals.sessionTree.loadAgentMessages()
+      .filter(message => message.role === 'user');
+    expect(userMessages).toEqual([
+      expect.objectContaining({ content: 'Persisted steering prompt' }),
+    ]);
+    const messageUi = internals.sessionTree.getEntries().find(entry => (
+      entry.type === 'custom' && entry.customType === PIVI_MESSAGE_UI
+    ));
+    expect(messageUi).toEqual(expect.objectContaining({
+      data: expect.objectContaining({
+        displayContent: '/steer',
+      }),
+    }));
   });
 
   it('persists command badge text while sending the expanded prompt to the agent', async () => {

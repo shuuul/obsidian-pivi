@@ -29,6 +29,8 @@ export interface PiChatService {
     openSessionHistory?: ChatMessage[],
     queryOptions?: PiTurnOptions,
   ): AsyncGenerator<StreamChunk>;
+  /** Prioritize a user turn after the active assistant/tool turn settles. */
+  steer?(turn: PreparedChatTurn): boolean;
   cancel(): void;
   resetSession(): void;
   getSessionId(): string | null;

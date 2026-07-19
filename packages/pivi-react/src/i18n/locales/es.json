@@ -54,9 +54,11 @@
       "modelAria": "Modelo",
       "reasoningAria": "Razonamiento",
       "sendAria": "Enviar mensaje",
+      "queueAria": "Poner mensaje en cola",
       "stopAria": "Detener respuesta",
       "sendEmptyAria": "Escribe un mensaje para enviar",
       "sendTitle": "Enviar",
+      "queueTitle": "Poner en cola",
       "stopTitle": "Detener",
       "sendEmptyTitle": "Escribe un mensaje"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "Error al cambiar de pestaña",
       "failedCloseTab": "Error al cerrar la pestaña",
       "failedEditTitle": "Error al editar el título de la pestaña",
-      "failedArchiveTab": "Error al archivar la pestaña"
+      "failedArchiveTab": "Error al archivar la pestaña",
+      "failedReorderTabs": "Error al reordenar las pestañas",
+      "active": "Activas",
+      "reorder": {
+        "draggable": "pestaña ordenable",
+        "position": "Pestaña movida a {group}, posición {position} de {total}.",
+        "saved": "Orden de pestañas guardado.",
+        "cancelled": "Reordenación de pestañas cancelada.",
+        "failed": "Error al reordenar las pestañas."
+      }
     },
     "errors": {
       "initAgentFailed": "Error al inicializar el servicio del agente. Inténtalo de nuevo.",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ En cola: {preview}",
+      "steer": "Dirigir con el mensaje en cola",
       "edit": "Editar mensaje en cola",
       "discard": "Descartar mensaje en cola",
-      "images": "Imágenes adjuntas"
+      "images": "Imágenes adjuntas",
+      "reorder": {
+        "handle": "Reordenar mensaje en cola, actualmente en la posición {position}",
+        "draggable": "mensaje en cola ordenable",
+        "position": "Mensaje en cola movido a la posición {position} de {total}.",
+        "saved": "Orden de la cola actualizado.",
+        "cancelled": "Reordenación de la cola cancelada."
+      }
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",

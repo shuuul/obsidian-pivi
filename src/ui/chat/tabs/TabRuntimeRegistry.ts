@@ -33,6 +33,19 @@ export class TabRuntimeRegistry {
     this.runtimes.clear();
   }
 
+  reorder(tabIds: readonly TabId[]): boolean {
+    if (tabIds.length !== this.runtimes.size || new Set(tabIds).size !== tabIds.length) {
+      return false;
+    }
+    const ordered = tabIds.map(tabId => this.runtimes.get(tabId));
+    if (ordered.some(tab => tab === undefined)) return false;
+    this.runtimes.clear();
+    for (const tab of ordered) {
+      this.runtimes.set(tab!.id, tab!);
+    }
+    return true;
+  }
+
   keys(): MapIterator<TabId> {
     return this.runtimes.keys();
   }

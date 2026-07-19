@@ -55,6 +55,9 @@ type TestTab = {
     inputController?: {
       cancelStreaming?: jest.Mock<void, []>;
       sendMessage?: jest.Mock<Promise<void>, [{ content: string }]>;
+      discardQueuedMessage?: jest.Mock<void, [string]>;
+      withdrawQueuedMessageToComposer?: jest.Mock<void, [string]>;
+      steerQueuedMessage?: jest.Mock<void, [string]>;
     };
     openSessionController?: {
       createNew: jest.Mock<Promise<void>, [{ force: true }?]>;
@@ -68,7 +71,9 @@ type TestTab = {
     externalContextSelector?: {
       getExternalContexts: jest.Mock<string[], []>;
     };
-    composerActions?: Record<string, unknown> | null;
+    composerActions?: {
+      refresh?: jest.Mock<void, []>;
+    } | null;
   };
   dom?: {
     welcomePortalEl: HTMLElement;
@@ -100,6 +105,7 @@ type TestManager = {
   getTabBarItems: jest.Mock<ChatTabSnapshotItem[], []>;
   getPersistedState: jest.Mock<PersistedTabManagerState, []>;
   restoreState: jest.Mock<Promise<void>, [unknown]>;
+  reorderTabs: jest.Mock<Promise<boolean>, [readonly string[], readonly string[]]>;
   destroy: jest.Mock<Promise<void>, []>;
   switchToTab: jest.Mock<Promise<void>, [string]>;
   broadcastToAllTabs: jest.Mock<Promise<void>, [(service: TestService) => Promise<void>]>;
@@ -146,6 +152,10 @@ function createManager(): TestManager {
     getTabBarItems: jest.fn(() => []),
     getPersistedState: jest.fn(() => ({ openTabs: [], activeTabId: null })),
     restoreState: jest.fn(async (_state: unknown) => undefined),
+    reorderTabs: jest.fn(async (
+      _openIds: readonly string[],
+      _archivedIds: readonly string[],
+    ) => true),
     destroy: jest.fn(async () => undefined),
     switchToTab: jest.fn(async (_tabId: string) => undefined),
     broadcastToAllTabs: jest.fn(async (
@@ -263,6 +273,35 @@ function createHarness(options: HarnessOptions = {}) {
 describe('imperative chat semantic view handle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('refreshes composer chrome immediately after queued-turn actions', async () => {
+    const harness = createHarness();
+    const refresh = jest.fn();
+    const discardQueuedMessage = jest.fn();
+    const withdrawQueuedMessageToComposer = jest.fn();
+    const steerQueuedMessage = jest.fn();
+    harness.manager.getActiveTab.mockReturnValue(createTab({
+      controllers: {
+        inputController: {
+          discardQueuedMessage,
+          steerQueuedMessage,
+          withdrawQueuedMessageToComposer,
+        },
+      },
+      ui: { composerActions: { refresh } },
+    }));
+    await harness.mount();
+    const actions = harness.adapter.getSurfaceActions();
+
+    actions.discardQueuedTurn('queued-1');
+    actions.editQueuedTurn('queued-2');
+    actions.steerQueuedTurn('queued-3');
+
+    expect(discardQueuedMessage).toHaveBeenCalledWith('queued-1');
+    expect(withdrawQueuedMessageToComposer).toHaveBeenCalledWith('queued-2');
+    expect(steerQueuedMessage).toHaveBeenCalledWith('queued-3');
+    expect(refresh).toHaveBeenCalledTimes(3);
   });
 
   it('drives an exact 100 KB Markdown stream and restores the active state', async () => {
@@ -861,6 +900,8 @@ describe('imperative chat semantic view handle', () => {
     const activeTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
     harness.manager.getActiveTab.mockReturnValue(activeTab);
     const shell = harness.adapter.prepareShell(harness.ownerDocument);
+    expect(harness.ownerDocument.win.createDiv)
+      .toHaveBeenCalledWith({ cls: 'pivi-input-nav-portal' });
     await harness.mount();
 
     expect(shell.store.getSnapshot().position).toBe('header');

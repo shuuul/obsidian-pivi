@@ -22,6 +22,7 @@ export interface ChatTabsSnapshot {
 export interface ChatTabActions {
   switchTab(id: string): Promise<void> | void;
   archiveTab(id: string): Promise<void> | void;
+  reorderTabs(openIds: readonly string[], archivedIds: readonly string[]): Promise<boolean> | boolean;
   renameTab(id: string, title: string): Promise<void> | void;
   closeTab(id: string): Promise<void> | void;
   startNewChat(): Promise<void> | void;

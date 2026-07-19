@@ -15,6 +15,7 @@ function createChatShell(position: 'input' | 'header' = 'header') {
   const actions: ChatTabActions = {
     archiveTab: jest.fn(),
     closeTab: jest.fn(),
+    reorderTabs: jest.fn(async () => true),
     renameTab: jest.fn(),
     startNewChat: jest.fn(),
     switchTab: jest.fn(),

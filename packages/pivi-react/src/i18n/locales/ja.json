@@ -54,9 +54,11 @@
       "modelAria": "モデル",
       "reasoningAria": "推論",
       "sendAria": "メッセージを送信",
+      "queueAria": "メッセージをキューに追加",
       "stopAria": "応答を停止",
       "sendEmptyAria": "送信するメッセージを入力",
       "sendTitle": "送信",
+      "queueTitle": "キューに追加",
       "stopTitle": "停止",
       "sendEmptyTitle": "メッセージを入力"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "タブの切り替えに失敗しました",
       "failedCloseTab": "タブを閉じられませんでした",
       "failedEditTitle": "タブタイトルの編集に失敗しました",
-      "failedArchiveTab": "タブのアーカイブに失敗しました"
+      "failedArchiveTab": "タブのアーカイブに失敗しました",
+      "failedReorderTabs": "タブを並べ替えられませんでした",
+      "active": "アクティブ",
+      "reorder": {
+        "draggable": "並べ替え可能なタブ",
+        "position": "タブを{group}の {position}/{total} 番目に移動しました。",
+        "saved": "タブの順序を保存しました。",
+        "cancelled": "タブの並べ替えをキャンセルしました。",
+        "failed": "タブを並べ替えられませんでした。"
+      }
     },
     "errors": {
       "initAgentFailed": "エージェントサービスの初期化に失敗しました。もう一度お試しください。",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ キュー済み：{preview}",
+      "steer": "キュー済みメッセージで誘導",
       "edit": "キュー済みメッセージを編集",
       "discard": "キュー済みメッセージを破棄",
-      "images": "画像を添付済み"
+      "images": "画像を添付済み",
+      "reorder": {
+        "handle": "キュー済みメッセージを並べ替え、現在の位置は {position}",
+        "draggable": "並べ替え可能なキュー済みメッセージ",
+        "position": "キュー済みメッセージを {total} 件中 {position} 番目に移動しました。",
+        "saved": "キューの順序を更新しました。",
+        "cancelled": "キューの並べ替えをキャンセルしました。"
+      }
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",

@@ -267,6 +267,22 @@
   will-change: opacity, block-size;
 }
 
+.pivi-sortable-tab-item {
+  transform: translateY(var(--pivi-tab-drag-y, 0));
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.pivi-sortable-tab-item.is-dragging {
+  z-index: 3;
+  opacity: 0.94;
+  background: var(--pivi-host-background-hover);
+  box-shadow: var(--pivi-shadow-sm);
+  cursor: grabbing;
+  will-change: transform;
+}
+
 /* Continuous action mask: fully solid under the three icons, long soft fade
    left into the title (gradient may be long; icons must never show title). */
 .pivi-tab-switcher-item::after {
@@ -324,6 +340,10 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.pivi-tab-switcher-section-label[data-tab-sort-id] {
+  min-block-size: 24px;
 }
 
 .pivi-tab-switcher-item.is-archived {

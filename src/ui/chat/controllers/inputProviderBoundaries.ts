@@ -45,6 +45,10 @@ export class InputProviderBoundaryHandler {
     this.awaitingProviderAssistantStart = true;
   }
 
+  enqueueUserTurn(message: PendingProviderUserMessage): void {
+    this.pendingProviderUserMessages.push(message);
+  }
+
   handleProviderMessageBoundaryChunk(chunk: StreamChunk): boolean {
     if (chunk.type === 'retry_start') {
       this.replaceFailedAssistantAttempt();

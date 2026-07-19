@@ -1,4 +1,4 @@
-import type { CSSProperties, KeyboardEvent } from 'react';
+import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
 import {
   useCallback,
   useEffect,
@@ -11,6 +11,10 @@ import {
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
 import { usePresentationPlatform } from '../../platform';
+import {
+  type SortableReorderHandleProps,
+  useSortableReorder,
+} from '../../reorder/useSortableReorder';
 import type { ChatTabSnapshotItem } from '../../store';
 import type { ChatShellOptions } from '../types';
 import { ActiveTabTitle } from './ActiveTabTitle';
@@ -26,6 +30,28 @@ import {
 import { EditableTabTitle } from './EditableTabTitle';
 import { TabAction } from './TabAction';
 import { dotClass, getFallbackItem } from './tabUtils';
+
+const ARCHIVED_BOUNDARY_ID = '__pivi_archived_tabs_boundary__';
+
+function buildTabOrder(items: readonly ChatTabSnapshotItem[]): string[] {
+  return [
+    ...items.filter(item => !item.isArchived).map(item => item.id),
+    ARCHIVED_BOUNDARY_ID,
+    ...items.filter(item => item.isArchived).map(item => item.id),
+  ];
+}
+
+function splitTabOrder(order: readonly string[]): {
+  openIds: string[];
+  archivedIds: string[];
+} {
+  const boundaryIndex = order.indexOf(ARCHIVED_BOUNDARY_ID);
+  if (boundaryIndex < 0) return { openIds: [], archivedIds: [] };
+  return {
+    openIds: order.slice(0, boundaryIndex),
+    archivedIds: order.slice(boundaryIndex + 1),
+  };
+}
 
 export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ownerWindow: Window }) {
   const platform = usePresentationPlatform();
@@ -46,10 +72,47 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
   const [, setArchivedRevealProgress] = useState(0);
   const [isArchivedRevealed, setIsArchivedRevealed] = useState(false);
   const [focusMenuOnOpen, setFocusMenuOnOpen] = useState(false);
-  const { openItems, archivedItems } = useMemo(() => ({
-    openItems: snapshot.items.filter(item => !item.isArchived),
-    archivedItems: snapshot.items.filter(item => item.isArchived),
-  }), [snapshot.items]);
+  const [tabOrder, setTabOrder] = useState(() => buildTabOrder(snapshot.items));
+  const itemsById = useMemo(
+    () => new Map(snapshot.items.map(item => [item.id, item])),
+    [snapshot.items],
+  );
+  const reorder = useSortableReorder<string, HTMLDivElement>({
+    order: tabOrder,
+    disabled: editingTabId !== null || exitingTabIds.size > 0,
+    itemSelector: '[data-tab-sort-id]',
+    itemDataKey: 'tabSortId',
+    setOrder: setTabOrder,
+    commitOrder: async (order, originalOrder) => {
+      const { openIds, archivedIds } = splitTabOrder(order);
+      const saved = await shell.actions.reorderTabs(openIds, archivedIds);
+      if (!saved) setTabOrder([...originalOrder]);
+      return saved;
+    },
+    positionAnnouncement: (id, _position, _total, order) => {
+      const { openIds, archivedIds } = splitTabOrder(order);
+      const groupIds = archivedIds.includes(id) ? archivedIds : openIds;
+      return t('chat.tabs.reorder.position', {
+        group: t(archivedIds.includes(id) ? 'chat.tabs.archived' : 'chat.tabs.active'),
+        position: groupIds.indexOf(id) + 1,
+        total: groupIds.length,
+      });
+    },
+    savedAnnouncement: t('chat.tabs.reorder.saved'),
+    cancelledAnnouncement: t('chat.tabs.reorder.cancelled'),
+    failedAnnouncement: t('chat.tabs.reorder.failed'),
+  });
+  const { openIds } = splitTabOrder(tabOrder);
+  const openItems = openIds
+    .map(id => itemsById.get(id))
+    .filter((item): item is ChatTabSnapshotItem => item !== undefined);
+  useEffect(() => {
+    if (reorder.draggingId === null) setTabOrder(buildTabOrder(snapshot.items));
+  }, [reorder.draggingId, snapshot.items]);
+
+  useEffect(() => {
+    if (reorder.draggingId !== null) setIsArchivedRevealed(true);
+  }, [reorder.draggingId]);
 
   const closeMenu = useCallback((): void => {
     setEditingTabId(null);
@@ -158,7 +221,16 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
     items[(index + direction + items.length) % items.length]?.focus();
   };
 
-  const handleItemKeyDown = (event: KeyboardEvent<HTMLDivElement>, item: ChatTabSnapshotItem): void => {
+  const handleItemKeyDown = (
+    event: KeyboardEvent<HTMLDivElement>,
+    item: ChatTabSnapshotItem,
+    reorderHandleProps: SortableReorderHandleProps<HTMLDivElement>,
+  ): void => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === ' ' || reorder.draggingId === item.id) {
+      reorderHandleProps.onKeyDown(event);
+      if (event.defaultPrevented) return;
+    }
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       event.stopPropagation();
@@ -183,28 +255,49 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
     }px`,
   } as CSSProperties;
 
-  const renderItem = (item: ChatTabSnapshotItem) => {
+  const renderItem = (item: ChatTabSnapshotItem, previewArchived: boolean) => {
     const editing = editingTabId === item.id;
     const exiting = exitingTabIds.has(item.id);
+    const dragging = reorder.draggingId === item.id;
+    const reorderHandleProps = reorder.getHandleProps(item.id);
+    const style = dragging
+      ? { '--pivi-tab-drag-y': `${reorder.dragOffset}px` } as CSSProperties
+      : undefined;
+    const handlePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
+      if (
+        editing
+        || exiting
+        || (event.target as Element).closest('button, input, [role="button"], [contenteditable="true"]')
+      ) return;
+      reorderHandleProps.onPointerDown(event);
+    };
     return (
       <div
         aria-label={item.title}
-        className={`pivi-tab-switcher-item${item.isActive ? ' is-active' : ''}${item.needsAttention ? ' needs-attention' : ''}${item.isArchived ? ' is-archived' : ''}${exiting ? ' is-exiting' : ''}${editing ? ' is-editing' : ''}`}
+        aria-roledescription={t('chat.tabs.reorder.draggable')}
+        className={`pivi-tab-switcher-item pivi-sortable-tab-item${item.isActive ? ' is-active' : ''}${item.needsAttention ? ' needs-attention' : ''}${previewArchived ? ' is-archived' : ''}${exiting ? ' is-exiting' : ''}${editing ? ' is-editing' : ''}${dragging ? ' is-dragging' : ''}`}
         data-tab-id={item.id}
+        data-tab-sort-id={item.id}
         key={item.id}
         onClick={(event) => {
           event.stopPropagation();
+          if (reorder.consumeClickAfterDrag(item.id)) return;
           if (editing || exiting) return;
           closeMenu();
           void shell.actions.switchTab(item.id);
         }}
-        onKeyDown={event => handleItemKeyDown(event, item)}
+        onKeyDown={event => handleItemKeyDown(event, item, reorderHandleProps)}
+        onPointerCancel={reorderHandleProps.onPointerCancel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={reorderHandleProps.onPointerMove}
+        onPointerUp={reorderHandleProps.onPointerUp}
         role="menuitem"
         ref={(element) => {
           if (element) {
             platform.attachTooltip(element, item.title, { delay: TOOLTIP_DELAY_MS });
           }
         }}
+        style={style}
         tabIndex={0}
       >
         <span className={`pivi-tab-switcher-dot${dotClass(item)}`} />
@@ -232,12 +325,12 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
         />
         <TabAction
           className="pivi-tab-switcher-action pivi-tab-switcher-archive"
-          icon={item.isArchived ? 'archive-restore' : 'archive'}
-          label={t(item.isArchived ? 'chat.tabs.restoreTab' : 'chat.tabs.archiveTab', {
+          icon={previewArchived ? 'archive-restore' : 'archive'}
+          label={t(previewArchived ? 'chat.tabs.restoreTab' : 'chat.tabs.archiveTab', {
             title: item.title,
           })}
           onActivate={() => {
-            if (item.isArchived) {
+            if (previewArchived) {
               closeMenu();
               void shell.actions.switchTab(item.id);
             } else {
@@ -270,11 +363,25 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
             role="menu"
             style={menuStyle}
           >
-            {openItems.map(renderItem)}
-            {archivedItems.length > 0
-              ? <div className="pivi-tab-switcher-section-label">{t('chat.tabs.archived')}</div>
-              : null}
-            {archivedItems.map(renderItem)}
+            <div className="pivi-tab-sort-list" ref={reorder.listRef} role="presentation">
+              {tabOrder.map((id, index) => {
+                if (id === ARCHIVED_BOUNDARY_ID) {
+                  return (
+                    <div
+                      className="pivi-tab-switcher-section-label"
+                      data-tab-sort-id={ARCHIVED_BOUNDARY_ID}
+                      key={ARCHIVED_BOUNDARY_ID}
+                    >
+                      {t('chat.tabs.archived')}
+                    </div>
+                  );
+                }
+                const item = itemsById.get(id);
+                return item
+                  ? renderItem(item, index > tabOrder.indexOf(ARCHIVED_BOUNDARY_ID))
+                  : null;
+              })}
+            </div>
           </div>
         )
         : null}
@@ -328,6 +435,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
           <span className="pivi-tab-switcher-chevron"><PlatformIcon name="chevron-up" /></span>
         </span>
       </div>
+      <div aria-live="polite" className="pivi-visually-hidden">{reorder.announcement}</div>
     </div>
   );
 }

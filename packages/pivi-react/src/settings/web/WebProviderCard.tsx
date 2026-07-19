@@ -2,13 +2,14 @@ import type { WebProviderId } from '@pivi/pivi-agent-core/foundation/settings';
 import {
   type CSSProperties,
   Fragment,
+  type PointerEvent,
   useState,
 } from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../../ports';
-import type { ProviderReorderHandleProps } from '../providers/useProviderReorder';
+import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 
 const MASKED_KEY = '••••••••';
 
@@ -31,7 +32,8 @@ export interface WebProviderCardProps {
   readonly ports: SettingsPorts;
   readonly onToggleExpanded: () => void;
   readonly onToggleDisabled: () => void;
-  readonly reorderHandleProps: ProviderReorderHandleProps;
+  readonly reorderHandleProps: SortableReorderHandleProps<HTMLElement>;
+  readonly suppressReorderClick: () => boolean;
   readonly onError: () => void;
 }
 
@@ -96,6 +98,12 @@ export function WebProviderCard(props: WebProviderCardProps) {
   const style = dragging
     ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
     : undefined;
+  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
+    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"]')) {
+      return;
+    }
+    props.reorderHandleProps.onPointerDown(event);
+  };
 
   return <Fragment>
     <details
@@ -106,7 +114,14 @@ export function WebProviderCard(props: WebProviderCardProps) {
     >
       <summary
         className="pivi-provider-header pivi-web-provider-header"
-        onClick={event => { event.preventDefault(); props.onToggleExpanded(); }}
+        onClick={(event) => {
+          event.preventDefault();
+          if (!props.suppressReorderClick()) props.onToggleExpanded();
+        }}
+        onPointerCancel={props.reorderHandleProps.onPointerCancel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={props.reorderHandleProps.onPointerMove}
+        onPointerUp={props.reorderHandleProps.onPointerUp}
       >
         <button
           type="button"
@@ -114,7 +129,7 @@ export function WebProviderCard(props: WebProviderCardProps) {
           aria-label={t('settings.webSearch.reorder.handle', { provider: label, position })}
           aria-pressed={dragging}
           onClick={event => { event.preventDefault(); event.stopPropagation(); }}
-          {...props.reorderHandleProps}
+          onKeyDown={props.reorderHandleProps.onKeyDown}
         >
           <span aria-hidden="true">⠿</span>
         </button>

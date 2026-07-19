@@ -7,54 +7,61 @@ import {
 } from 'react';
 
 const DRAG_THRESHOLD_PX = 8;
-const PROVIDER_CARD_SELECTOR = '[data-provider-sort-id]';
 
-interface PointerDrag<ProviderId extends string> {
-  readonly id: ProviderId;
+interface PointerDrag<ItemId extends string> {
+  readonly id: ItemId;
   readonly pointerId: number;
   readonly startY: number;
   readonly grabOffset: number;
-  readonly originalOrder: readonly ProviderId[];
+  readonly originalOrder: readonly ItemId[];
   active: boolean;
 }
 
-interface KeyboardDrag<ProviderId extends string> {
-  readonly id: ProviderId;
-  readonly originalOrder: readonly ProviderId[];
+interface KeyboardDrag<ItemId extends string> {
+  readonly id: ItemId;
+  readonly originalOrder: readonly ItemId[];
 }
 
-export interface ProviderReorderHandleProps {
-  readonly onPointerDown: (event: PointerEvent<HTMLButtonElement>) => void;
-  readonly onPointerMove: (event: PointerEvent<HTMLButtonElement>) => void;
-  readonly onPointerUp: (event: PointerEvent<HTMLButtonElement>) => void;
-  readonly onPointerCancel: (event: PointerEvent<HTMLButtonElement>) => void;
-  readonly onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
+export interface SortableReorderHandleProps<Element extends HTMLElement = HTMLButtonElement> {
+  readonly onPointerDown: (event: PointerEvent<Element>) => void;
+  readonly onPointerMove: (event: PointerEvent<Element>) => void;
+  readonly onPointerUp: (event: PointerEvent<Element>) => void;
+  readonly onPointerCancel: (event: PointerEvent<Element>) => void;
+  readonly onKeyDown: (event: KeyboardEvent<Element>) => void;
 }
 
-interface UseProviderReorderOptions<ProviderId extends string> {
-  readonly order: readonly ProviderId[];
+interface UseSortableReorderOptions<ItemId extends string> {
+  readonly order: readonly ItemId[];
   readonly disabled: boolean;
-  readonly setOrder: (order: ProviderId[]) => void;
-  readonly commitOrder: (order: ProviderId[], originalOrder: readonly ProviderId[]) => Promise<boolean>;
-  readonly positionAnnouncement: (id: ProviderId, position: number, total: number) => string;
+  readonly itemSelector: string;
+  readonly itemDataKey: string;
+  readonly setOrder: (order: ItemId[]) => void;
+  readonly commitOrder: (order: ItemId[], originalOrder: readonly ItemId[]) => Promise<boolean>;
+  readonly positionAnnouncement: (
+    id: ItemId,
+    position: number,
+    total: number,
+    order: readonly ItemId[],
+  ) => string;
   readonly savedAnnouncement: string;
   readonly cancelledAnnouncement: string;
   readonly failedAnnouncement: string;
 }
 
-interface ProviderReorder<ProviderId extends string> {
+interface SortableReorder<ItemId extends string, Element extends HTMLElement> {
   readonly listRef: RefObject<HTMLDivElement>;
-  readonly draggingId: ProviderId | null;
+  readonly draggingId: ItemId | null;
   readonly dragOffset: number;
   readonly announcement: string;
-  readonly getHandleProps: (id: ProviderId) => ProviderReorderHandleProps;
+  readonly getHandleProps: (id: ItemId) => SortableReorderHandleProps<Element>;
+  readonly consumeClickAfterDrag: (id: ItemId) => boolean;
 }
 
-function moveProvider<ProviderId extends string>(
-  order: readonly ProviderId[],
-  id: ProviderId,
+function moveItem<ItemId extends string>(
+  order: readonly ItemId[],
+  id: ItemId,
   targetIndex: number,
-): ProviderId[] {
+): ItemId[] {
   const currentIndex = order.indexOf(id);
   if (currentIndex < 0 || currentIndex === targetIndex) return [...order];
   const next = [...order];
@@ -63,47 +70,51 @@ function moveProvider<ProviderId extends string>(
   return next;
 }
 
-/** Shared direct-manipulation and keyboard sorting for provider cards. */
-export function useProviderReorder<ProviderId extends string>(
-  options: UseProviderReorderOptions<ProviderId>,
-): ProviderReorder<ProviderId> {
-  const [draggingId, setDraggingId] = useState<ProviderId | null>(null);
+/** Shared direct-manipulation and keyboard sorting for compact ordered lists. */
+export function useSortableReorder<
+  ItemId extends string,
+  Element extends HTMLElement = HTMLButtonElement,
+>(
+  options: UseSortableReorderOptions<ItemId>,
+): SortableReorder<ItemId, Element> {
+  const [draggingId, setDraggingId] = useState<ItemId | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
-  const [keyboardDrag, setKeyboardDrag] = useState<KeyboardDrag<ProviderId> | null>(null);
+  const [keyboardDrag, setKeyboardDrag] = useState<KeyboardDrag<ItemId> | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
-  const pointerDragRef = useRef<PointerDrag<ProviderId> | null>(null);
+  const pointerDragRef = useRef<PointerDrag<ItemId> | null>(null);
+  const clickSuppressionRef = useRef<ItemId | null>(null);
   const dragOffsetRef = useRef(0);
   const orderRef = useRef(options.order);
   orderRef.current = options.order;
 
-  const previewOrder = (nextOrder: ProviderId[]): void => {
+  const previewOrder = (nextOrder: ItemId[]): void => {
     orderRef.current = nextOrder;
     options.setOrder(nextOrder);
   };
 
-  const announcePosition = (id: ProviderId, order: readonly ProviderId[]): void => {
-    setAnnouncement(options.positionAnnouncement(id, order.indexOf(id) + 1, order.length));
+  const announcePosition = (id: ItemId, order: readonly ItemId[]): void => {
+    setAnnouncement(options.positionAnnouncement(id, order.indexOf(id) + 1, order.length, order));
   };
 
-  const onPointerDown = (id: ProviderId, event: PointerEvent<HTMLButtonElement>): void => {
+  const onPointerDown = (id: ItemId, event: PointerEvent<Element>): void => {
     if (event.button !== 0 || options.disabled || keyboardDrag !== null) return;
     event.preventDefault();
     event.stopPropagation();
-    const card = event.currentTarget.closest<HTMLElement>(PROVIDER_CARD_SELECTOR);
-    if (!card) return;
+    const item = event.currentTarget.closest<HTMLElement>(options.itemSelector);
+    if (!item) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     pointerDragRef.current = {
       id,
       pointerId: event.pointerId,
       startY: event.clientY,
-      grabOffset: event.clientY - card.getBoundingClientRect().top,
+      grabOffset: event.clientY - item.getBoundingClientRect().top,
       originalOrder: [...orderRef.current],
       active: false,
     };
   };
 
-  const onPointerMove = (event: PointerEvent<HTMLButtonElement>): void => {
+  const onPointerMove = (event: PointerEvent<Element>): void => {
     const drag = pointerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     if (!drag.active && Math.abs(event.clientY - drag.startY) < DRAG_THRESHOLD_PX) return;
@@ -112,31 +123,31 @@ export function useProviderReorder<ProviderId extends string>(
       setDraggingId(drag.id);
     }
 
-    const card = event.currentTarget.closest<HTMLElement>(PROVIDER_CARD_SELECTOR);
-    if (card) {
-      const layoutTop = card.getBoundingClientRect().top - dragOffsetRef.current;
+    const item = event.currentTarget.closest<HTMLElement>(options.itemSelector);
+    if (item) {
+      const layoutTop = item.getBoundingClientRect().top - dragOffsetRef.current;
       const nextOffset = event.clientY - drag.grabOffset - layoutTop;
       dragOffsetRef.current = nextOffset;
       setDragOffset(nextOffset);
     }
 
     const elements = Array.from(
-      listRef.current?.querySelectorAll<HTMLElement>(PROVIDER_CARD_SELECTOR) ?? [],
-    ).filter(element => element.dataset.providerSortId !== drag.id);
+      listRef.current?.querySelectorAll<HTMLElement>(options.itemSelector) ?? [],
+    ).filter(element => element.dataset[options.itemDataKey] !== drag.id);
     const targetIndex = elements.findIndex((element) => {
       const rect = element.getBoundingClientRect();
       return event.clientY < rect.top + rect.height / 2;
     });
     const currentOrder = orderRef.current;
     const resolvedIndex = targetIndex < 0 ? elements.length : targetIndex;
-    const nextOrder = moveProvider(currentOrder, drag.id, resolvedIndex);
+    const nextOrder = moveItem(currentOrder, drag.id, resolvedIndex);
     if (nextOrder.some((id, index) => id !== currentOrder[index])) {
       previewOrder(nextOrder);
       announcePosition(drag.id, nextOrder);
     }
   };
 
-  const finishPointerDrag = (event: PointerEvent<HTMLButtonElement>, cancel = false): void => {
+  const finishPointerDrag = (event: PointerEvent<Element>, cancel = false): void => {
     const drag = pointerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     pointerDragRef.current = null;
@@ -152,13 +163,17 @@ export function useProviderReorder<ProviderId extends string>(
       setAnnouncement(options.cancelledAnnouncement);
       return;
     }
+    clickSuppressionRef.current = drag.id;
+    event.currentTarget.ownerDocument.defaultView?.setTimeout(() => {
+      if (clickSuppressionRef.current === drag.id) clickSuppressionRef.current = null;
+    }, 0);
     void options.commitOrder([...orderRef.current], drag.originalOrder).then(
       saved => { setAnnouncement(saved ? options.savedAnnouncement : options.failedAnnouncement); },
       () => { setAnnouncement(options.failedAnnouncement); },
     );
   };
 
-  const onHandleKeyDown = (id: ProviderId, event: KeyboardEvent<HTMLButtonElement>): void => {
+  const onHandleKeyDown = (id: ItemId, event: KeyboardEvent<Element>): void => {
     if (options.disabled) return;
     if (event.key === ' ' || event.key === 'Enter') {
       event.preventDefault();
@@ -190,7 +205,7 @@ export function useProviderReorder<ProviderId extends string>(
       event.preventDefault();
       const currentOrder = orderRef.current;
       const currentIndex = currentOrder.indexOf(id);
-      const nextOrder = moveProvider(
+      const nextOrder = moveItem(
         currentOrder,
         id,
         currentIndex + (event.key === 'ArrowUp' ? -1 : 1),
@@ -205,6 +220,11 @@ export function useProviderReorder<ProviderId extends string>(
     draggingId,
     dragOffset,
     announcement,
+    consumeClickAfterDrag: (id) => {
+      if (clickSuppressionRef.current !== id) return false;
+      clickSuppressionRef.current = null;
+      return true;
+    },
     getHandleProps: id => ({
       onPointerDown: event => { onPointerDown(id, event); },
       onPointerMove,

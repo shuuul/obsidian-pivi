@@ -35,7 +35,7 @@ export interface SessionControllerDeps {
   getInlineContextManager: () => InlineContextManager | null;
   getImageContextManager: () => ImageContextManager | null;
   getExternalContextSelector: () => ExternalContextSelector | null;
-  clearQueuedMessage: () => void;
+  clearQueuedMessages: () => void;
   resetStreamingState: () => void;
   getAgentService?: () => PiChatService | null;
   ensureServiceForSession?: (openSession: OpenSessionState | null) => Promise<void> | void;
@@ -128,7 +128,7 @@ export class SessionController {
       this.deps.getExternalContextSelector()?.resetForSession(
         settingsSnapshot.externalReadDirectories,
       );
-      this.deps.clearQueuedMessage();
+      this.deps.clearQueuedMessages();
 
       this.callbacks.onNewSession?.();
     } finally {
@@ -225,7 +225,7 @@ export class SessionController {
       await this.deps.ensureServiceForSession?.(openSession);
 
       this.deps.getInputEl().value = '';
-      this.deps.clearQueuedMessage();
+      this.deps.clearQueuedMessages();
 
       this.restoreOpenSession(openSession, { page });
 

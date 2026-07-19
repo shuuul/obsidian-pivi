@@ -14,6 +14,7 @@ import type { TodoItem, TodoVisualizationModel } from '@pivi/pivi-agent-core/too
 
 /** Queued message waiting to be sent after current streaming completes. */
 export interface QueuedMessage {
+  id: string;
   content: string;
   images?: ImageAttachment[];
   editorContext: EditorSelectionContext | null;
@@ -60,8 +61,8 @@ export interface ChatStateData {
   // Open session identity
   currentOpenSessionId: string | null;
 
-  // Queued message
-  queuedMessage: QueuedMessage | null;
+  // Queued messages
+  queuedMessages: QueuedMessage[];
 
   // Active streaming presentation state
   currentTextContent: string;

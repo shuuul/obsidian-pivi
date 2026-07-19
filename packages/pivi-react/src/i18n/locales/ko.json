@@ -54,9 +54,11 @@
       "modelAria": "모델",
       "reasoningAria": "추론",
       "sendAria": "메시지 보내기",
+      "queueAria": "메시지를 대기열에 추가",
       "stopAria": "응답 중지",
       "sendEmptyAria": "보낼 메시지를 입력하세요",
       "sendTitle": "보내기",
+      "queueTitle": "대기열에 추가",
       "stopTitle": "중지",
       "sendEmptyTitle": "메시지를 입력하세요"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "탭을 전환하지 못했습니다",
       "failedCloseTab": "탭을 닫지 못했습니다",
       "failedEditTitle": "탭 제목을 편집하지 못했습니다",
-      "failedArchiveTab": "탭을 보관하지 못했습니다"
+      "failedArchiveTab": "탭을 보관하지 못했습니다",
+      "failedReorderTabs": "탭 순서를 변경하지 못했습니다",
+      "active": "활성",
+      "reorder": {
+        "draggable": "정렬 가능한 탭",
+        "position": "탭을 {group}의 {position}/{total} 위치로 이동했습니다.",
+        "saved": "탭 순서를 저장했습니다.",
+        "cancelled": "탭 순서 변경을 취소했습니다.",
+        "failed": "탭 순서를 변경하지 못했습니다."
+      }
     },
     "errors": {
       "initAgentFailed": "에이전트 서비스를 초기화하지 못했습니다. 다시 시도하세요.",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ 대기열: {preview}",
+      "steer": "대기 중인 메시지로 유도",
       "edit": "대기 중인 메시지 편집",
       "discard": "대기 중인 메시지 삭제",
-      "images": "이미지 첨부됨"
+      "images": "이미지 첨부됨",
+      "reorder": {
+        "handle": "대기 중인 메시지 순서 변경, 현재 위치 {position}",
+        "draggable": "정렬 가능한 대기 메시지",
+        "position": "대기 메시지를 {total}개 중 {position}번째로 이동했습니다.",
+        "saved": "대기열 순서를 업데이트했습니다.",
+        "cancelled": "대기열 순서 변경을 취소했습니다."
+      }
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage}%)",

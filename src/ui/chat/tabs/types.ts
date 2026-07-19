@@ -225,6 +225,9 @@ export interface TabManagerCallbacks {
   /** Called when a tab archive state changes. */
   onTabArchived?: (tabId: TabId, isArchived: boolean) => void;
 
+  /** Called after tab order and archive-group membership are changed together. */
+  onTabsReordered?: () => void;
+
   /** Called when tab streaming state changes. */
   onTabStreamingChanged?: (tabId: TabId, isStreaming: boolean) => void;
 

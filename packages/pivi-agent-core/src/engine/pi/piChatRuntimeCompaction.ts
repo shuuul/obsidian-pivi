@@ -723,30 +723,36 @@ export async function compactCurrentSession(
 }
 
 export function buildTurnSyncOptions(
-  turn?: PreparedChatTurn,
+  turns?: PreparedChatTurn | readonly PreparedChatTurn[],
 ): MissingAgentMessagesOptions | undefined {
-  if (!turn || turn.persistedContent === turn.prompt) {
+  const normalizedTurns: readonly PreparedChatTurn[] = turns
+    ? Array.isArray(turns) ? turns as readonly PreparedChatTurn[] : [turns as PreparedChatTurn]
+    : [];
+  const userMessageEquivalences = normalizedTurns
+    .filter(turn => turn.persistedContent !== turn.prompt)
+    .map(turn => ({
+      existingText: turn.persistedContent,
+      incomingText: turn.prompt,
+    }));
+  if (userMessageEquivalences.length === 0) {
     return undefined;
   }
   return {
-    userMessageEquivalences: [{
-      existingText: turn.persistedContent,
-      incomingText: turn.prompt,
-    }],
+    userMessageEquivalences,
   };
 }
 
 export function syncSessionMessagesAfterTurn(
   sessionTree: SessionTreeStore | null,
   messages: AgentMessage[],
-  turn: PreparedChatTurn | undefined,
+  turns: PreparedChatTurn | readonly PreparedChatTurn[] | undefined,
   onLeafIdChanged: (leafId: string | null) => void,
   onAssistantMessageId: (entryId: string | undefined) => void,
 ): void {
   if (!sessionTree || messages.length === 0) {
     return;
   }
-  sessionTree.syncAgentMessages(messages, buildTurnSyncOptions(turn));
+  sessionTree.syncAgentMessages(messages, buildTurnSyncOptions(turns));
   onLeafIdChanged(sessionTree.getLeafId());
   onAssistantMessageId(
     sessionTree.findLastVisibleMessageEntryId('assistant') ?? undefined,

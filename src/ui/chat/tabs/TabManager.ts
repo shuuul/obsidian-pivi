@@ -374,6 +374,40 @@ export class TabManager {
     }
   }
 
+  async reorderTabs(
+    openTabIds: readonly TabId[],
+    archivedTabIds: readonly TabId[],
+  ): Promise<boolean> {
+    const requestedIds = [...openTabIds, ...archivedTabIds];
+    if (
+      requestedIds.length !== this.tabs.size
+      || new Set(requestedIds).size !== requestedIds.length
+      || requestedIds.some(tabId => !this.tabs.has(tabId))
+    ) return false;
+
+    let resolvedOpenIds = [...openTabIds];
+    if (resolvedOpenIds.length === 0) {
+      const fallback = await this.createTab(undefined, undefined, { activate: false });
+      if (!fallback) return false;
+      resolvedOpenIds = [fallback.id];
+    }
+
+    if (this.activeTabId && archivedTabIds.includes(this.activeTabId)) {
+      await this.switchToTab(resolvedOpenIds[0]!);
+      if (this.activeTabId !== resolvedOpenIds[0]) return false;
+    }
+
+    const resolvedIds = [...resolvedOpenIds, ...archivedTabIds];
+    if (!this.tabs.reorder(resolvedIds)) return false;
+    const archivedSet = new Set(archivedTabIds);
+    for (const tabId of resolvedIds) {
+      const tab = this.tabs.get(tabId)!;
+      tab.isArchived = archivedSet.has(tabId);
+    }
+    this.callbacks.onTabsReordered?.();
+    return true;
+  }
+
   async renameTabTitle(tabId: TabId, title: string): Promise<void> {
     const tab = this.tabs.get(tabId);
     if (!tab) return;

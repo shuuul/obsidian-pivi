@@ -24,6 +24,7 @@ describe('restoreQueuedMessageToInput', () => {
 
     restoreQueuedMessageToInput({
       message: {
+        id: 'queued-1',
         content: 'queued text',
         images: [image],
         editorContext: null,
@@ -52,6 +53,7 @@ describe('restoreQueuedMessageToInput', () => {
 
     restoreQueuedMessageToInput({
       message: {
+        id: 'queued-1',
         content: 'queued text',
         images: [queuedImage],
         editorContext: null,

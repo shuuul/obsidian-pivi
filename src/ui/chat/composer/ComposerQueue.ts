@@ -1,30 +1,12 @@
 import {
   type ChatTurnRequest,
   cloneChatTurnRequest,
-  mergeQueuedChatTurns,
   type QueuedChatTurn,
 } from '@pivi/pivi-agent-core/runtime';
 
 import type { QueuedMessage } from '../state/types';
 
-/** Short preview for the queued-message indicator. */
-export function formatQueuedMessagePreview(message: QueuedMessage | null): string {
-  if (!message) {
-    return '';
-  }
-
-  const rawContent = message.content.trim();
-  const preview = rawContent.length > 40
-    ? `${rawContent.slice(0, 40)}...`
-    : rawContent;
-  const hasImages = (message.images?.length ?? 0) > 0;
-
-  if (hasImages) {
-    return preview ? `${preview} [images]` : '[images]';
-  }
-
-  return preview;
-}
+let nextQueuedMessageId = 1;
 
 export function cloneQueuedMessage(message: QueuedMessage): QueuedMessage {
   return {
@@ -42,6 +24,7 @@ export function createQueuedMessage(
 ): QueuedMessage {
   const request = cloneChatTurnRequest(turnRequest);
   return {
+    id: `queued-turn-${nextQueuedMessageId++}`,
     content: displayContent,
     images: request.images,
     editorContext: request.editorSelection ?? null,
@@ -69,35 +52,4 @@ export function toQueuedChatTurn(message: QueuedMessage): QueuedChatTurn {
       canvasSelection: message.canvasContext,
     },
   };
-}
-
-export function mergeQueuedMessages(
-  existing: QueuedMessage | null,
-  incoming: QueuedMessage,
-): QueuedMessage {
-  if (!existing) {
-    return cloneQueuedMessage(incoming);
-  }
-
-  const mergedTurn = mergeQueuedChatTurns(
-    toQueuedChatTurn(existing),
-    toQueuedChatTurn(incoming),
-  );
-  return createQueuedMessage(mergedTurn.displayContent, mergedTurn.request);
-}
-
-export function mergePendingQueuedMessages(
-  first: QueuedMessage | null,
-  second: QueuedMessage | null,
-): QueuedMessage | null {
-  if (first && second) {
-    return mergeQueuedMessages(first, second);
-  }
-  if (first) {
-    return cloneQueuedMessage(first);
-  }
-  if (second) {
-    return cloneQueuedMessage(second);
-  }
-  return null;
 }

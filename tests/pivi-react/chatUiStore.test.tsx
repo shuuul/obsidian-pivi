@@ -154,19 +154,21 @@ describe('ChatUiStore', () => {
     const store = new ChatUiStore();
 
     store.update({
-      queuedTurn: {
+      queuedTurns: [{
+        id: 'queued-1',
         content: 'next',
         imageCount: 1,
         hasEditorContext: true,
         hasBrowserContext: false,
         hasCanvasContext: false,
-      },
+      }],
     });
 
     const snapshot = store.getSnapshot();
     expect(JSON.parse(JSON.stringify(snapshot))).toEqual(snapshot);
     expect(Object.isFrozen(snapshot)).toBe(true);
-    expect(Object.isFrozen(snapshot.queuedTurn)).toBe(true);
+    expect(Object.isFrozen(snapshot.queuedTurns)).toBe(true);
+    expect(Object.isFrozen(snapshot.queuedTurns[0])).toBe(true);
     expect(snapshot).not.toHaveProperty('currentTextEl');
     expect(snapshot).not.toHaveProperty('controller');
     expect(snapshot).not.toHaveProperty('renderer');
@@ -203,14 +205,15 @@ describe('ChatUiStore', () => {
   it('rejects runtime objects that cannot be structurally cloned', () => {
     const store = new ChatUiStore();
     expect(() => store.update({
-      queuedTurn: {
+      queuedTurns: [{
+        id: 'queued-1',
         content: 'invalid',
         imageCount: 0,
         hasEditorContext: false,
         hasBrowserContext: false,
         hasCanvasContext: false,
         runtimeCallback: () => undefined,
-      } as never,
+      }] as never,
     })).toThrow();
   });
 

@@ -54,9 +54,11 @@
       "modelAria": "Model",
       "reasoningAria": "Reasoning",
       "sendAria": "Send message",
+      "queueAria": "Queue message",
       "stopAria": "Stop response",
       "sendEmptyAria": "Enter a message to send",
       "sendTitle": "Send",
+      "queueTitle": "Queue",
       "stopTitle": "Stop",
       "sendEmptyTitle": "Enter a message"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "Failed to switch tab",
       "failedCloseTab": "Failed to close tab",
       "failedEditTitle": "Failed to edit tab title",
-      "failedArchiveTab": "Failed to archive tab"
+      "failedArchiveTab": "Failed to archive tab",
+      "failedReorderTabs": "Failed to reorder tabs",
+      "active": "Active",
+      "reorder": {
+        "draggable": "sortable tab",
+        "position": "Tab moved to {group}, position {position} of {total}.",
+        "saved": "Tab order saved.",
+        "cancelled": "Tab reorder cancelled.",
+        "failed": "Failed to reorder tabs."
+      }
     },
     "errors": {
       "initAgentFailed": "Failed to initialize agent service. Please try again.",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ Queued: {preview}",
+      "steer": "Steer queued message",
       "edit": "Edit queued message",
       "discard": "Discard queued message",
-      "images": "Images attached"
+      "images": "Images attached",
+      "reorder": {
+        "handle": "Reorder queued message, currently position {position}",
+        "draggable": "sortable queued message",
+        "position": "Queued message moved to position {position} of {total}.",
+        "saved": "Queue order updated.",
+        "cancelled": "Queue reorder cancelled."
+      }
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage}%)",

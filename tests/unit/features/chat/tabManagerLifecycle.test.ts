@@ -282,6 +282,43 @@ describe('TabManager lifecycle guards', () => {
     ]);
   });
 
+  it('reorders tabs across open and archived groups and safely switches the active tab', async () => {
+    const onTabsReordered = jest.fn();
+    const { manager } = makeManager({ onTabsReordered });
+    await manager.createTab('session-a', 'first');
+    await manager.createTab('session-b', 'second');
+    await manager.createTab('session-c', 'active');
+
+    await expect(manager.reorderTabs(
+      ['second', 'first'],
+      ['active'],
+    )).resolves.toBe(true);
+
+    expect(manager.getActiveTabId()).toBe('second');
+    expect(manager.getTab('active')?.isArchived).toBe(true);
+    expect(manager.getPersistedState().openTabs.map(tab => ({
+      id: tab.tabId,
+      archived: tab.isArchived ?? false,
+    }))).toEqual([
+      { id: 'second', archived: false },
+      { id: 'first', archived: false },
+      { id: 'active', archived: true },
+    ]);
+    expect(onTabsReordered).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates an open fallback when the last active tab is dragged into archived', async () => {
+    const { manager } = makeManager();
+    await manager.createTab('session-a', 'only');
+
+    await expect(manager.reorderTabs([], ['only'])).resolves.toBe(true);
+
+    expect(manager.getActiveTabId()).toBe('tab-1');
+    expect(manager.getTab('only')?.isArchived).toBe(true);
+    expect(manager.getTab('tab-1')?.isArchived).toBe(false);
+    expect(manager.getTabBarItems().map(item => item.id)).toEqual(['tab-1', 'only']);
+  });
+
   it('renames an existing session title as a custom title', async () => {
     const { manager, ports } = makeManager();
     await manager.createTab('session-a', 'tab-a');

@@ -7,3 +7,4 @@ export {
   ProviderLogo,
   type ProviderLogoProps,
 } from './ProviderLogo';
+export { QueueMessageIcon } from './QueueMessageIcon';

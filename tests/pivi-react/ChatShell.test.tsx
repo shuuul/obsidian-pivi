@@ -56,6 +56,10 @@ function actions(): jest.Mocked<ChatTabActions> {
   return {
     archiveTab: jest.fn(),
     closeTab: jest.fn(),
+    reorderTabs: jest.fn(async (
+      _openIds: readonly string[],
+      _archivedIds: readonly string[],
+    ) => true),
     renameTab: jest.fn(),
     startNewChat: jest.fn(),
     switchTab: jest.fn(),
@@ -68,8 +72,10 @@ async function mountShell(options: {
   ownerWindow?: Window;
   activeChat?: ActiveChatUiBridge;
   surfaceActions?: {
-    editQueuedTurn: () => void;
-    discardQueuedTurn: () => void;
+    steerQueuedTurn: (id: string) => void;
+    editQueuedTurn: (id: string) => void;
+    discardQueuedTurn: (id: string) => void;
+    reorderQueuedTurns: (ids: readonly string[]) => void;
     scrollToTop: () => void;
     scrollToPreviousUserMessage: () => void;
     scrollToNextUserMessage: () => void;
@@ -303,6 +309,23 @@ describe('React ChatShell tabs', () => {
     await act(async () => mounted.mounted.dispose());
   });
 
+  it('reorders tabs across the active and archived boundary with the keyboard', async () => {
+    const mounted = await mountShell({ position: 'header' });
+    fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Active chat' }));
+    const attentionRow = screen.getByRole('menuitem', { name: 'Needs attention' });
+
+    fireEvent.keyDown(attentionRow, { key: ' ' });
+    fireEvent.keyDown(attentionRow, { key: 'ArrowDown' });
+    fireEvent.keyDown(attentionRow, { key: ' ' });
+    await act(async () => {});
+
+    expect(mounted.tabActions.reorderTabs).toHaveBeenCalledWith(
+      ['active'],
+      ['attention', 'archived'],
+    );
+    await act(async () => mounted.mounted.dispose());
+  });
+
   it('caps the switcher at ten rows and opens around the active tab', async () => {
     const mounted = await mountShell({ position: 'header' });
     const items = Array.from({ length: 14 }, (_, index) => ({
@@ -393,8 +416,10 @@ describe('React ChatShell tabs', () => {
     const projectionStore = new ChatProjectionStore();
     const targets = createPortalTargets();
     const surfaceActions = {
+      steerQueuedTurn: jest.fn(),
       editQueuedTurn: jest.fn(),
       discardQueuedTurn: jest.fn(),
+      reorderQueuedTurns: jest.fn(),
       scrollToTop: jest.fn(),
       scrollToPreviousUserMessage: jest.fn(),
       scrollToNextUserMessage: jest.fn(),
@@ -440,20 +465,60 @@ describe('React ChatShell tabs', () => {
     expect(thinkingIndicator).toHaveTextContent('Distilling... (esc to interrupt · 0:03)');
 
     act(() => uiStore.update({
-      queuedTurn: {
+      queuedTurns: [{
+        id: 'queued-1',
         content: 'A queued request that is intentionally much longer than forty characters',
         hasBrowserContext: false,
         hasCanvasContext: false,
         hasEditorContext: false,
         imageCount: 2,
-      },
+      }],
     }));
     await act(async () => {});
     expect(targets.queue).toHaveTextContent(/Queued: A queued request that is intentionally m\.\.\. · Images attached/);
+    fireEvent.click(within(targets.queue).getByRole('button', { name: 'Steer queued message' }));
     fireEvent.click(within(targets.queue).getByRole('button', { name: 'Edit queued message' }));
     fireEvent.click(within(targets.queue).getByRole('button', { name: 'Discard queued message' }));
+    expect(surfaceActions.steerQueuedTurn).toHaveBeenCalledTimes(1);
+    expect(surfaceActions.steerQueuedTurn).toHaveBeenCalledWith('queued-1');
     expect(surfaceActions.editQueuedTurn).toHaveBeenCalledTimes(1);
+    expect(surfaceActions.editQueuedTurn).toHaveBeenCalledWith('queued-1');
     expect(surfaceActions.discardQueuedTurn).toHaveBeenCalledTimes(1);
+    expect(surfaceActions.discardQueuedTurn).toHaveBeenCalledWith('queued-1');
+
+    act(() => uiStore.update({
+      queuedTurns: [
+        {
+          id: 'queued-1',
+          content: 'First independent turn',
+          hasBrowserContext: false,
+          hasCanvasContext: false,
+          hasEditorContext: false,
+          imageCount: 0,
+        },
+        {
+          id: 'queued-2',
+          content: 'Second independent turn',
+          hasBrowserContext: false,
+          hasCanvasContext: false,
+          hasEditorContext: false,
+          imageCount: 0,
+        },
+      ],
+    }));
+    await act(async () => {});
+    expect(targets.queue.querySelector('.pivi-queue-list')).toHaveClass('is-expanded');
+    expect(targets.queue.querySelectorAll('.pivi-queue-item')).toHaveLength(2);
+    expect(targets.queue).toHaveTextContent(/First independent turn.*Second independent turn/);
+    fireEvent.click(within(targets.queue).getAllByRole('button', { name: 'Discard queued message' })[1]!);
+    expect(surfaceActions.discardQueuedTurn).toHaveBeenLastCalledWith('queued-2');
+    const firstQueuedRow = within(targets.queue).getByRole('listitem', {
+      name: 'Reorder queued message, currently position 1',
+    });
+    fireEvent.keyDown(firstQueuedRow, { key: ' ' });
+    fireEvent.keyDown(firstQueuedRow, { key: 'ArrowDown' });
+    fireEvent.keyDown(firstQueuedRow, { key: ' ' });
+    expect(surfaceActions.reorderQueuedTurns).toHaveBeenCalledWith(['queued-2', 'queued-1']);
 
     act(() => uiStore.update({
       usage: {
@@ -630,13 +695,14 @@ describe('React ChatShell tabs', () => {
 
     act(() => firstStore.update({ welcomeGreeting: 'First tab' }));
     act(() => firstStore.update({
-      queuedTurn: {
+      queuedTurns: [{
+        id: 'queued-first',
         content: 'First queued turn',
         hasBrowserContext: false,
         hasCanvasContext: false,
         hasEditorContext: false,
         imageCount: 0,
-      },
+      }],
     }));
     expect(firstTargets.welcome).toHaveTextContent('First tab');
 
@@ -646,13 +712,14 @@ describe('React ChatShell tabs', () => {
     expect(firstTargets.welcome).toBeEmptyDOMElement();
     expect(firstTargets.queue).toBeEmptyDOMElement();
     act(() => secondStore.update({
-      queuedTurn: {
+      queuedTurns: [{
+        id: 'queued-second',
         content: 'Second queued turn',
         hasBrowserContext: false,
         hasCanvasContext: false,
         hasEditorContext: false,
         imageCount: 0,
-      },
+      }],
       welcomeGreeting: 'Second tab',
     }));
     expect(secondTargets.welcome).toHaveTextContent('Second tab');
@@ -791,6 +858,19 @@ describe('React ChatShell tabs', () => {
 
     act(() => uiStore.update({ isStreaming: true }));
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Stop response' }));
+    expect(composerActions.stop).toHaveBeenCalledTimes(1);
+
+    act(() => uiStore.update({
+      composer: {
+        ...uiStore.getSnapshot().composer,
+        canSend: true,
+      },
+    }));
+    const queueButton = within(targets.composer).getByRole('button', { name: 'Queue message' });
+    expect(queueButton).toHaveClass('pivi-send-queue');
+    expect(queueButton.querySelector('svg')).not.toBeNull();
+    fireEvent.click(queueButton);
+    expect(composerActions.send).toHaveBeenCalledTimes(2);
     expect(composerActions.stop).toHaveBeenCalledTimes(1);
 
     await act(async () => mounted.mounted.dispose());

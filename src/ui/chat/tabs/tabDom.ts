@@ -27,10 +27,10 @@ export function buildTabDOM(
   const messagesBottomControlsEl = messagesWrapperEl.createDiv({
     cls: "pivi-messages-bottom-controls",
   });
-  const inputContainerEl = contentEl.createDiv({ cls: "pivi-input-container" });
-  const queuePortalEl = inputContainerEl.createDiv({
+  const queuePortalEl = messagesBottomControlsEl.createDiv({
     cls: "pivi-react-queue-slot",
   });
+  const inputContainerEl = contentEl.createDiv({ cls: "pivi-input-container" });
   const inputWrapper = inputContainerEl.createDiv({
     cls: "pivi-input-wrapper",
   });
@@ -43,7 +43,7 @@ export function buildTabDOM(
       mcpServerNames: new Set(),
     }),
   });
-  richInput.el.setAttr("dir", "auto");
+  richInput.el.setAttribute("dir", "auto");
   const composerPortalEl = inputWrapper.createDiv({ cls: "pivi-react-composer-slot" });
 
   return {

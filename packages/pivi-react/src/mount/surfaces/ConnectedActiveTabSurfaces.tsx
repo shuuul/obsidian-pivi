@@ -14,7 +14,7 @@ import { TodoSurface } from './TodoSurface';
 import { WelcomeSurface } from './WelcomeSurface';
 
 const WELCOME_SLICE_KEYS = ['welcomeGreeting'] as const;
-const QUEUE_SLICE_KEYS = ['queuedTurn'] as const;
+const QUEUE_SLICE_KEYS = ['queuedTurns'] as const;
 const TODO_SLICE_KEYS = ['currentTodoVisualizationModel'] as const;
 const NAVIGATION_SLICE_KEYS = ['autoScrollEnabled', 'navigationVisible'] as const;
 const COMPOSER_SLICE_KEYS = ['composer', 'externalContext', 'usage', 'isStreaming'] as const;
@@ -91,7 +91,7 @@ const QueuePortal = memo(function QueuePortal({
   if (!targets?.queue) return null;
   const actions = surfaceActions ?? EMPTY_SURFACE_ACTIONS;
   return createPortal(
-    <QueueIndicator actions={actions} queuedTurn={snapshot.queuedTurn} />,
+    <QueueIndicator actions={actions} queuedTurns={snapshot.queuedTurns} />,
     targets.queue,
   );
 });

@@ -211,6 +211,7 @@ describe('React tools settings', () => {
     ports.complex.webSearch.saveSettings = saveSettings;
     const { container } = renderTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ }) as HTMLButtonElement;
+    const dragSurface = handle.closest('summary') as HTMLElement;
     const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-provider-sort-id]'));
     for (const card of cards) {
       card.getBoundingClientRect = jest.fn(() => {
@@ -220,9 +221,9 @@ describe('React tools settings', () => {
         return { top, bottom: top + 80, height: 80, left: 0, right: 300, width: 300, x: 0, y: top, toJSON: () => ({}) };
       });
     }
-    handle.setPointerCapture = jest.fn();
-    handle.releasePointerCapture = jest.fn();
-    handle.hasPointerCapture = jest.fn(() => true);
+    dragSurface.setPointerCapture = jest.fn();
+    dragSurface.releasePointerCapture = jest.fn();
+    dragSurface.hasPointerCapture = jest.fn(() => true);
     const pointerEvent = (type: string, clientY: number) => {
       const event = new Event(type, { bubbles: true });
       Object.defineProperties(event, {
@@ -233,11 +234,11 @@ describe('React tools settings', () => {
       return event;
     };
 
-    fireEvent(handle, pointerEvent('pointerdown', 10));
+    fireEvent(dragSurface, pointerEvent('pointerdown', 10));
     for (const clientY of [20, 60, 100, 150, 190, 250, 350]) {
-      fireEvent(handle, pointerEvent('pointermove', clientY));
+      fireEvent(dragSurface, pointerEvent('pointermove', clientY));
     }
-    fireEvent(handle, pointerEvent('pointerup', 250));
+    fireEvent(dragSurface, pointerEvent('pointerup', 250));
     await act(async () => undefined);
 
     expect(saveSettings).toHaveBeenCalledWith({

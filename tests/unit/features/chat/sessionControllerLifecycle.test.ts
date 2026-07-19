@@ -89,7 +89,7 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
       getInlineContextManager: () => inlineCtx as never,
       getImageContextManager: () => null,
       getExternalContextSelector: () => externalContextSelector as never,
-      clearQueuedMessage: jest.fn(),
+      clearQueuedMessages: jest.fn(),
       resetStreamingState,
       getAgentService: () => agentService,
       ensureServiceForSession,

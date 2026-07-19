@@ -1,5 +1,6 @@
 import type { StreamChunk } from '../../foundation';
 import { StreamChunkQueue } from '../../runtime/streamChunkQueue';
+import type { PreparedChatTurn } from '../../runtime/types';
 import { TOOL_SPAWN_AGENT } from '../../tools';
 
 export interface ActiveTurn {
@@ -7,6 +8,8 @@ export interface ActiveTurn {
   abortController: AbortController;
   acceptingSubagentChunks: boolean;
   subagentToolIds: Set<string>;
+  steeredTurns: PreparedChatTurn[];
+  persistedSteeredTurnCount: number;
 }
 
 export function createActiveTurn(): ActiveTurn {
@@ -15,6 +18,8 @@ export function createActiveTurn(): ActiveTurn {
     abortController: new AbortController(),
     acceptingSubagentChunks: true,
     subagentToolIds: new Set<string>(),
+    steeredTurns: [],
+    persistedSteeredTurnCount: 0,
   };
 }
 

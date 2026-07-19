@@ -129,12 +129,28 @@ export class InputController {
     this.queueRestore.updateQueueIndicator();
   }
 
-  clearQueuedMessage(): void {
-    this.queueRestore.clearQueuedMessage();
+  clearQueuedMessages(): void {
+    this.queueRestore.clearQueuedMessages();
   }
 
-  withdrawQueuedMessageToComposer(): void {
-    this.queueRestore.withdrawQueuedMessageToComposer();
+  discardQueuedMessage(id: string): void {
+    this.queueRestore.discardQueuedMessage(id);
+  }
+
+  reorderQueuedMessages(ids: readonly string[]): void {
+    this.queueRestore.reorderQueuedMessages(ids);
+  }
+
+  withdrawQueuedMessageToComposer(id: string): void {
+    this.queueRestore.withdrawQueuedMessageToComposer(id);
+  }
+
+  steerQueuedMessage(id: string): void {
+    this.queueRestore.steerQueuedMessage(id);
+  }
+
+  enqueueProviderUserTurn(message: Parameters<InputProviderBoundaryHandler['enqueueUserTurn']>[0]): void {
+    this.providerBoundaries.enqueueUserTurn(message);
   }
 
   cancelStreaming(): void {

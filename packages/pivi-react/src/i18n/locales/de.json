@@ -54,9 +54,11 @@
       "modelAria": "Modell",
       "reasoningAria": "Schlussfolgerung",
       "sendAria": "Nachricht senden",
+      "queueAria": "Nachricht einreihen",
       "stopAria": "Antwort stoppen",
       "sendEmptyAria": "Nachricht zum Senden eingeben",
       "sendTitle": "Senden",
+      "queueTitle": "Einreihen",
       "stopTitle": "Stoppen",
       "sendEmptyTitle": "Nachricht eingeben"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "Tab konnte nicht gewechselt werden",
       "failedCloseTab": "Tab konnte nicht geschlossen werden",
       "failedEditTitle": "Tabtitel konnte nicht bearbeitet werden",
-      "failedArchiveTab": "Tab konnte nicht archiviert werden"
+      "failedArchiveTab": "Tab konnte nicht archiviert werden",
+      "failedReorderTabs": "Tabs konnten nicht neu angeordnet werden",
+      "active": "Aktiv",
+      "reorder": {
+        "draggable": "sortierbarer Tab",
+        "position": "Tab nach {group} verschoben, Position {position} von {total}.",
+        "saved": "Tab-Reihenfolge gespeichert.",
+        "cancelled": "Tab-Sortierung abgebrochen.",
+        "failed": "Tabs konnten nicht neu angeordnet werden."
+      }
     },
     "errors": {
       "initAgentFailed": "Agentendienst konnte nicht initialisiert werden. Bitte erneut versuchen.",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ Warteschlange: {preview}",
+      "steer": "Mit wartender Nachricht steuern",
       "edit": "Nachricht in der Warteschlange bearbeiten",
       "discard": "Nachricht aus der Warteschlange verwerfen",
-      "images": "Bilder angehängt"
+      "images": "Bilder angehängt",
+      "reorder": {
+        "handle": "Wartende Nachricht neu anordnen, derzeit Position {position}",
+        "draggable": "sortierbare wartende Nachricht",
+        "position": "Wartende Nachricht an Position {position} von {total} verschoben.",
+        "saved": "Reihenfolge der Warteschlange aktualisiert.",
+        "cancelled": "Neuordnung der Warteschlange abgebrochen."
+      }
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",

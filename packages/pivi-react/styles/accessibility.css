@@ -12,6 +12,8 @@
 .pivi-tab-switcher-trigger:focus-visible,
 .pivi-tab-switcher-new-chat:focus-visible,
 .pivi-tab-switcher-action:focus-visible,
+.pivi-sortable-queue-item:focus-visible,
+.pivi-queue-indicator-action:focus-visible,
 .pivi-settings-tab:focus-visible,
 .pivi-settings-action-btn:focus-visible,
 .pivi-settings-text-btn:focus-visible,
@@ -52,6 +54,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .pivi-sortable-queue-item {
+    transform: none;
+  }
+
+  .pivi-sortable-tab-item {
+    transform: none;
+  }
+
   .pivi-working-icon-arc,
   .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
   .pivi-subagent-running-icon .pivi-subagent-icon-motion,
@@ -116,6 +126,7 @@
 @media (prefers-reduced-transparency: reduce) {
   .pivi-tab-switcher-control,
   .pivi-tab-switcher-menu,
+  .pivi-queue-list,
   .pivi-model-dropdown,
   .pivi-thinking-options,
   .pivi-external-context-dropdown,
@@ -132,6 +143,7 @@
 @media (prefers-contrast: more) {
   .pivi-tab-switcher-control,
   .pivi-tab-switcher-menu,
+  .pivi-queue-list,
   .pivi-model-dropdown,
   .pivi-thinking-options,
   .pivi-external-context-dropdown,

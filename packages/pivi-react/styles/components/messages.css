@@ -25,9 +25,10 @@
   pointer-events: none;
   inset-inline: 12px;
   inset-block-end: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--pivi-spacing-xs);
 }
 
 .pivi-messages-bottom-controls:empty {

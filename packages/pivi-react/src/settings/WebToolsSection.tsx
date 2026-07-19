@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../ports';
+import { useSortableReorder } from '../reorder/useSortableReorder';
 import { SettingsPageDescription } from './controls';
-import { useProviderReorder } from './providers/useProviderReorder';
 import { WebProviderCard } from './web/WebProviderCard';
 
 export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
@@ -60,9 +60,11 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
     );
   };
 
-  const reorder = useProviderReorder<WebProviderId>({
+  const reorder = useSortableReorder<WebProviderId, HTMLElement>({
     order: settings.providerOrder,
     disabled: pending,
+    itemSelector: '[data-provider-sort-id]',
+    itemDataKey: 'providerSortId',
     setOrder: providerOrder => { setSettings(current => ({ ...current, providerOrder })); },
     commitOrder: async (providerOrder, originalOrder) => {
       return persist(
@@ -105,6 +107,7 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
             onToggleExpanded={() => { toggleExpanded(provider.id); }}
             onToggleDisabled={() => { toggleDisabled(provider.id); }}
             reorderHandleProps={reorder.getHandleProps(provider.id)}
+            suppressReorderClick={() => reorder.consumeClickAfterDrag(provider.id)}
             onError={() => { ports.feedback.notify(t('common.error')); }}
           />
         ))}

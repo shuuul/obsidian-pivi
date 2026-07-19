@@ -18,6 +18,12 @@ export interface InputQueueRestoreHost {
     images?: ChatMessage['images'];
     turnRequestOverride?: ChatTurnRequest;
   }): Promise<void>;
+  enqueueProviderUserTurn(message: {
+    displayContent: string;
+    persistedContent: string;
+    currentNote?: string;
+    images?: ChatMessage['images'];
+  }): void;
 }
 
 export class InputQueueRestoreCoordinator {
@@ -31,34 +37,87 @@ export class InputQueueRestoreCoordinator {
   updateQueueIndicator(): void {}
 
 
-  clearQueuedMessage(): void {
-    this.host.deps.state.queuedMessage = null;
+  clearQueuedMessages(): void {
+    this.host.deps.state.queuedMessages = [];
   }
 
-  withdrawQueuedMessageToComposer(): void {
+  discardQueuedMessage(id: string): void {
     const { state } = this.host.deps;
-    if (!state.queuedMessage) return;
+    state.queuedMessages = state.queuedMessages.filter(message => message.id !== id);
+  }
 
-    const queuedMessage = cloneQueuedMessage(state.queuedMessage);
-    state.queuedMessage = null;
-    this.restoreMessageToInput(queuedMessage, { mergeWithComposer: true });
+  reorderQueuedMessages(ids: readonly string[]): void {
+    const { state } = this.host.deps;
+    if (
+      ids.length !== state.queuedMessages.length
+      || new Set(ids).size !== ids.length
+    ) return;
+    const messagesById = new Map(state.queuedMessages.map(message => [message.id, message]));
+    const reordered: QueuedMessage[] = [];
+    for (const id of ids) {
+      const message = messagesById.get(id);
+      if (!message) return;
+      reordered.push(message);
+    }
+    state.queuedMessages = reordered;
+  }
+
+  withdrawQueuedMessageToComposer(id: string): void {
+    const { state } = this.host.deps;
+    const queuedMessage = state.queuedMessages.find(message => message.id === id);
+    if (!queuedMessage) return;
+
+    state.queuedMessages = state.queuedMessages.filter(message => message.id !== id);
+    this.restoreMessageToInput(cloneQueuedMessage(queuedMessage), { mergeWithComposer: true });
+  }
+
+  steerQueuedMessage(id: string): void {
+    const { state } = this.host.deps;
+    const agentService = this.host.deps.getAgentService?.();
+    const queuedMessage = state.queuedMessages.find(message => message.id === id);
+    if (!queuedMessage || !state.isStreaming || !agentService?.steer) return;
+
+    const queuedMessageSnapshot = cloneQueuedMessage(queuedMessage);
+    const queuedTurn = toQueuedChatTurn(queuedMessageSnapshot);
+    const externalContextPaths = this.host.deps.getExternalContextSelector()
+      ?.getExternalContexts() ?? [];
+    queuedTurn.request.externalContextPaths = externalContextPaths.length > 0
+      ? [...externalContextPaths]
+      : undefined;
+    queuedTurn.request.enabledMcpServers = undefined;
+    const preparedTurn = agentService.prepareTurn(queuedTurn.request);
+    if (!agentService.steer({
+      ...preparedTurn,
+      displayContent: queuedTurn.displayContent,
+    })) return;
+
+    state.queuedMessages = state.queuedMessages.filter(message => message.id !== id);
+    this.host.enqueueProviderUserTurn({
+      displayContent: queuedTurn.displayContent,
+      persistedContent: preparedTurn.persistedContent,
+      currentNote: preparedTurn.isCompact
+        ? undefined
+        : preparedTurn.request.currentNotePath,
+      images: queuedMessageSnapshot.images,
+    });
   }
 
   restorePendingMessagesToInput(): void {
     const { state } = this.host.deps;
-    const queuedMessage = state.queuedMessage
-      ? cloneQueuedMessage(state.queuedMessage)
-      : null;
-    this.restoreMessageToInput(queuedMessage, { mergeWithComposer: true });
-    state.queuedMessage = null;
+    const queuedMessages = state.queuedMessages.map(cloneQueuedMessage);
+    state.queuedMessages = [];
+    for (const queuedMessage of queuedMessages.reverse()) {
+      this.restoreMessageToInput(queuedMessage, { mergeWithComposer: true });
+    }
   }
 
   processQueuedMessage(): void {
     const { state } = this.host.deps;
-    if (!state.queuedMessage) return;
+    const [nextQueuedMessage, ...remainingQueuedMessages] = state.queuedMessages;
+    if (!nextQueuedMessage) return;
 
-    const queuedMessage = cloneQueuedMessage(state.queuedMessage);
-    state.queuedMessage = null;
+    const queuedMessage = cloneQueuedMessage(nextQueuedMessage);
+    state.queuedMessages = remainingQueuedMessages;
 
     getActiveWindow(this.host.deps.getMessagesEl()).setTimeout(
       () => {

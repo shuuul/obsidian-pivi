@@ -54,9 +54,11 @@
       "modelAria": "Modèle",
       "reasoningAria": "Raisonnement",
       "sendAria": "Envoyer le message",
+      "queueAria": "Mettre le message en file d’attente",
       "stopAria": "Arrêter la réponse",
       "sendEmptyAria": "Saisissez un message à envoyer",
       "sendTitle": "Envoyer",
+      "queueTitle": "Mettre en file",
       "stopTitle": "Arrêter",
       "sendEmptyTitle": "Saisissez un message"
     },
@@ -73,7 +75,16 @@
       "failedSwitchTab": "Échec du changement d’onglet",
       "failedCloseTab": "Échec de la fermeture de l’onglet",
       "failedEditTitle": "Échec de la modification du titre de l’onglet",
-      "failedArchiveTab": "Échec de l’archivage de l’onglet"
+      "failedArchiveTab": "Échec de l’archivage de l’onglet",
+      "failedReorderTabs": "Échec de la réorganisation des onglets",
+      "active": "Actifs",
+      "reorder": {
+        "draggable": "onglet triable",
+        "position": "Onglet déplacé vers {group}, position {position} sur {total}.",
+        "saved": "Ordre des onglets enregistré.",
+        "cancelled": "Réorganisation des onglets annulée.",
+        "failed": "Échec de la réorganisation des onglets."
+      }
     },
     "errors": {
       "initAgentFailed": "Échec de l’initialisation du service agent. Réessayez.",
@@ -112,9 +123,17 @@
     },
     "queue": {
       "queued": "⌙ En attente : {preview}",
+      "steer": "Orienter avec le message en attente",
       "edit": "Modifier le message en attente",
       "discard": "Supprimer le message en attente",
-      "images": "Images jointes"
+      "images": "Images jointes",
+      "reorder": {
+        "handle": "Réorganiser le message en attente, actuellement en position {position}",
+        "draggable": "message en attente triable",
+        "position": "Message en attente déplacé en position {position} sur {total}.",
+        "saved": "Ordre de la file mis à jour.",
+        "cancelled": "Réorganisation de la file annulée."
+      }
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",

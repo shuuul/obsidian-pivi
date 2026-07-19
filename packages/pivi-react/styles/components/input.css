@@ -59,7 +59,12 @@
 
 .pivi-messages-bottom-controls .pivi-input-nav-content {
   pointer-events: none;
-  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-input-nav-portal {
+  grid-column: 2;
+  min-width: 0;
+  pointer-events: none;
 }
 
 .pivi-messages-bottom-controls .pivi-tab-bar-container {
@@ -241,6 +246,19 @@
   color: var(--pivi-host-text-on-accent);
 }
 
+.pivi-send-button.pivi-send-queue {
+  background: var(--pivi-host-interactive-accent);
+  color: var(--pivi-host-text-on-accent);
+}
+
+.pivi-send-button.pivi-send-queue svg {
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.2;
+}
+
+.pivi-send-button.pivi-send-queue:hover,
 .pivi-send-button.pivi-send-ready:hover {
   background: var(--pivi-host-interactive-accent-hover);
 }
@@ -263,15 +281,79 @@
   font-size: var(--pivi-text-body);
 }
 
-/* Composer queue status row (queued follow-up preview + steer action) */
-.pivi-input-queue-row {
+/* Queued follow-up inside the chat surface, aligned with tab-switcher rows. */
+.pivi-react-queue-slot {
+  grid-column: 1;
+  min-width: 0;
+  width: 100%;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.pivi-react-queue-slot:empty {
   display: none;
-  font-size: var(--pivi-text-sm);
-  color: var(--pivi-host-text-muted);
-  font-style: normal;
+}
+
+.pivi-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  max-height: min(40vh, 298px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-primary);
+  box-shadow: var(--pivi-shadow-sm);
+  -webkit-backdrop-filter: var(--pivi-material-blur-md);
+  backdrop-filter: var(--pivi-material-blur-md);
+}
+
+.pivi-queue-list.is-expanded {
+  padding: 3px;
+  border-radius: var(--pivi-radius-lg);
+  box-shadow: var(--pivi-shadow-lg);
+}
+
+.pivi-queue-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--pivi-spacing-sm);
-  padding: 0 2px 8px 2px;
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-queue-list.is-expanded .pivi-queue-item {
+  height: 26px;
+  padding-inline: 6px;
+  border-radius: var(--pivi-radius-md);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.pivi-sortable-queue-item {
+  position: relative;
+  transform: translateY(var(--pivi-queue-drag-y, 0));
+}
+
+.pivi-sortable-queue-item.is-dragging {
+  z-index: 2;
+  background: var(--pivi-host-background-hover);
+  box-shadow: var(--pivi-shadow-sm);
+  cursor: grabbing;
+  opacity: 0.94;
+  will-change: transform;
 }
 
 .pivi-queue-indicator-text {
@@ -289,49 +371,53 @@
   gap: var(--pivi-spacing-xs);
 }
 
-.pivi-queue-indicator-action {
-  flex: 0 0 auto;
-  padding: 1px 8px;
-  border: 0;
-  background: transparent;
-  color: var(--pivi-host-interactive-accent);
-  font: inherit;
-  cursor: pointer;
-}
-
-.pivi-queue-indicator-action:hover {
-  text-decoration: underline;
-}
-
-.pivi-queue-indicator-action[disabled] {
-  color: var(--pivi-host-text-faint);
-  cursor: default;
-  text-decoration: none;
-}
-
-.pivi-queue-indicator-icon-action {
+.pivi-container .pivi-queue-item button.pivi-queue-indicator-action {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 0;
   border-radius: var(--pivi-radius-xs);
   background: transparent;
-  color: var(--pivi-host-text-muted);
+  box-shadow: none;
+  color: var(--pivi-host-text-faint);
   cursor: pointer;
+  font: inherit;
+  transition:
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    background var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
-.pivi-queue-indicator-icon-action:hover {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-normal);
-}
-
-.pivi-queue-indicator-icon-action svg {
+.pivi-queue-indicator-action svg {
   width: 14px;
   height: 14px;
+}
+
+.pivi-queue-reorder-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-queue-list.is-expanded .pivi-queue-item:hover {
+    background: var(--pivi-host-background-hover);
+  }
+
+  .pivi-container .pivi-queue-item button.pivi-queue-indicator-action:hover {
+    background: var(--pivi-host-border-hover);
+    color: var(--pivi-host-text-normal);
+  }
 }
 
 /* Pink border when bash mode is active */

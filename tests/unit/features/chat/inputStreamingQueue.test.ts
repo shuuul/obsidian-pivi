@@ -67,18 +67,19 @@ describe('queueTurnWhileStreaming', () => {
       hasImages: false,
     });
 
-    expect(deps.state.queuedMessage?.content).toBe('Review @note');
-    expect(deps.state.queuedMessage?.turnRequest?.text).toBe('Review note.md');
-    expect(deps.state.queuedMessage?.turnRequest?.currentNotePath).toBe('current.md');
-    expect(deps.state.queuedMessage?.turnRequest?.attachedFilePaths).toEqual(['linked.md']);
-    expect(deps.state.queuedMessage?.turnRequest?.enabledMcpServers).toBeUndefined();
-    expect(deps.state.queuedMessage?.turnRequest?.externalContextPaths).toEqual(['https://external.example']);
-    expect(deps.state.queuedMessage?.editorContext).toMatchObject({ selectedText: 'selected' });
-    expect(deps.state.queuedMessage?.browserContext).toMatchObject({ url: 'https://example.com' });
-    expect(deps.state.queuedMessage?.canvasContext).toMatchObject({ path: 'board.canvas' });
+    const [queuedMessage] = deps.state.queuedMessages;
+    expect(queuedMessage?.content).toBe('Review @note');
+    expect(queuedMessage?.turnRequest?.text).toBe('Review note.md');
+    expect(queuedMessage?.turnRequest?.currentNotePath).toBe('current.md');
+    expect(queuedMessage?.turnRequest?.attachedFilePaths).toEqual(['linked.md']);
+    expect(queuedMessage?.turnRequest?.enabledMcpServers).toBeUndefined();
+    expect(queuedMessage?.turnRequest?.externalContextPaths).toEqual(['https://external.example']);
+    expect(queuedMessage?.editorContext).toMatchObject({ selectedText: 'selected' });
+    expect(queuedMessage?.browserContext).toMatchObject({ url: 'https://example.com' });
+    expect(queuedMessage?.canvasContext).toMatchObject({ path: 'board.canvas' });
   });
 
-  it('merges with an existing queued message', () => {
+  it('keeps multiple queued messages independent and in FIFO order', () => {
     const state = new ChatState();
     const deps = createDeps({ state });
 
@@ -93,8 +94,9 @@ describe('queueTurnWhileStreaming', () => {
       hasImages: false,
     });
 
-    expect(state.queuedMessage?.content).toBe('first\n\nsecond');
-    expect(state.queuedMessage?.turnRequest?.text).toBe('first\n\nsecond');
+    expect(state.queuedMessages.map(message => message.content)).toEqual(['first', 'second']);
+    expect(state.queuedMessages.map(message => message.turnRequest?.text)).toEqual(['first', 'second']);
+    expect(state.queuedMessages[0]?.id).not.toBe(state.queuedMessages[1]?.id);
   });
 
   it('clears composer resources only for user-input sends', () => {
@@ -141,7 +143,7 @@ describe('queueTurnWhileStreaming', () => {
     });
     imageOverride.push(createImage('img-2'));
 
-    expect(deps.state.queuedMessage?.images).toEqual([image]);
-    expect(deps.state.queuedMessage?.images).not.toBe(imageOverride);
+    expect(deps.state.queuedMessages[0]?.images).toEqual([image]);
+    expect(deps.state.queuedMessages[0]?.images).not.toBe(imageOverride);
   });
 });

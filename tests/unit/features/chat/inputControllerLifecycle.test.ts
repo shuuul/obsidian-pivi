@@ -20,6 +20,7 @@ function createService(events: string[]): PiChatService {
       yield* [];
     }),
     cancel: jest.fn(() => events.push('cancel')),
+    steer: jest.fn(() => true),
     consumeTurnMetadata: jest.fn(() => ({})),
   } as unknown as PiChatService;
 }
@@ -71,7 +72,11 @@ function createController() {
     canvasSelectionController: { getContext: jest.fn(() => null) },
     openSessionController: { save: jest.fn(), generateFallbackTitle: jest.fn() },
     getInputEl: () => inputEl,
-    getMessagesEl: () => ({ scrollTop: 0, scrollHeight: 0 }) as HTMLElement,
+    getMessagesEl: () => ({
+      ownerDocument: { defaultView: { setTimeout } },
+      scrollTop: 0,
+      scrollHeight: 0,
+    }) as unknown as HTMLElement,
     getFileContextManager: () => null,
     getInlineContextManager: () => null,
     getImageContextManager: () => null,
@@ -115,16 +120,22 @@ describe('InputController service and cancellation lifecycle', () => {
     const { controller, events, inputEl, service, state } = createController();
     const flushProjection = jest.spyOn(state, 'flushProjection');
     state.isStreaming = true;
-    state.queuedMessage = {
+    state.queuedMessages = [{
+      id: 'queued-1',
       content: 'queued text',
       editorContext: null,
       canvasContext: null,
-    };
+    }, {
+      id: 'queued-2',
+      content: 'another queued text',
+      editorContext: null,
+      canvasContext: null,
+    }];
     inputEl.value = 'current text';
     (service.cancel as jest.Mock).mockImplementation(() => {
       expect(state.cancelRequested).toBe(true);
-      expect(state.queuedMessage).toBeNull();
-      expect(inputEl.value).toBe('queued text\n\ncurrent text');
+      expect(state.queuedMessages).toEqual([]);
+      expect(inputEl.value).toBe('queued text\n\nanother queued text\n\ncurrent text');
       events.push('cancel');
     });
     // Cancellation only targets a service that has already been initialized.
@@ -136,5 +147,104 @@ describe('InputController service and cancellation lifecycle', () => {
     expect(service.cancel).toHaveBeenCalledTimes(1);
     expect(flushProjection).toHaveBeenCalledTimes(1);
     expect(events).toEqual(['cancel']);
+  });
+
+  it('steers an active turn with the queued snapshot and removes it from the queue', async () => {
+    const { controller, ensureServiceInitialized, service, state } = createController();
+    state.isStreaming = true;
+    state.queuedMessages = [{
+      id: 'queued-1',
+      content: 'change direction',
+      editorContext: null,
+      canvasContext: null,
+    }, {
+      id: 'queued-2',
+      content: 'keep waiting',
+      editorContext: null,
+      canvasContext: null,
+    }];
+    await ensureServiceInitialized();
+
+    controller.steerQueuedMessage('queued-1');
+
+    expect(service.prepareTurn).toHaveBeenCalledWith(expect.objectContaining({
+      text: 'change direction',
+    }));
+    expect(service.steer).toHaveBeenCalledWith(expect.objectContaining({
+      displayContent: 'change direction',
+      persistedContent: 'change direction',
+    }));
+    expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2']);
+  });
+
+  it('edits and discards one queued message without changing its siblings', () => {
+    const { controller, inputEl, state } = createController();
+    state.queuedMessages = [{
+      id: 'queued-1',
+      content: 'first',
+      editorContext: null,
+      canvasContext: null,
+    }, {
+      id: 'queued-2',
+      content: 'second',
+      editorContext: null,
+      canvasContext: null,
+    }, {
+      id: 'queued-3',
+      content: 'third',
+      editorContext: null,
+      canvasContext: null,
+    }];
+
+    controller.withdrawQueuedMessageToComposer('queued-2');
+    controller.discardQueuedMessage('queued-3');
+
+    expect(inputEl.value).toBe('second');
+    expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-1']);
+  });
+
+  it('reorders queued messages only when the requested order is complete', () => {
+    const { controller, state } = createController();
+    state.queuedMessages = [{
+      id: 'queued-1',
+      content: 'first',
+      editorContext: null,
+      canvasContext: null,
+    }, {
+      id: 'queued-2',
+      content: 'second',
+      editorContext: null,
+      canvasContext: null,
+    }];
+
+    controller.reorderQueuedMessages(['queued-2', 'queued-1']);
+    expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2', 'queued-1']);
+
+    controller.reorderQueuedMessages(['queued-1']);
+    expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2', 'queued-1']);
+  });
+
+  it('processes queued messages in FIFO order', () => {
+    jest.useFakeTimers();
+    const { controller, state } = createController();
+    const sendMessage = jest.spyOn(controller, 'sendMessage').mockResolvedValue();
+    state.queuedMessages = [{
+      id: 'queued-1',
+      content: 'first',
+      editorContext: null,
+      canvasContext: null,
+    }, {
+      id: 'queued-2',
+      content: 'second',
+      editorContext: null,
+      canvasContext: null,
+    }];
+
+    controller.processQueuedMessage();
+    jest.runOnlyPendingTimers();
+
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ content: 'first' }));
+    expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2']);
+    jest.useRealTimers();
   });
 });

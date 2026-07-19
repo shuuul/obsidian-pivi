@@ -1,12 +1,18 @@
 import { isLocalCustomProviderKind } from '@pivi/pivi-agent-core/foundation/customProviders';
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
-import { type CSSProperties, Fragment, type MouseEvent, useState } from 'react';
+import {
+  type CSSProperties,
+  Fragment,
+  type MouseEvent,
+  type PointerEvent,
+  useState,
+} from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
-import type { ProviderReorderHandleProps } from '../providers/useProviderReorder';
+import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
 import { ProviderCredentials } from './ProviderCredentials';
@@ -24,7 +30,8 @@ export interface ProviderCardProps {
   readonly pending: boolean;
   readonly dragging: boolean;
   readonly dragOffset: number;
-  readonly reorderHandleProps: ProviderReorderHandleProps;
+  readonly reorderHandleProps: SortableReorderHandleProps<HTMLElement>;
+  readonly suppressReorderClick: () => boolean;
   readonly onToggleExpanded: (providerId: string, open?: boolean) => void;
   readonly save: (patch: Parameters<SettingsModelsPort['saveSettings']>[0]) => Promise<void>;
   readonly onChanged: () => void;
@@ -45,6 +52,7 @@ export function ProviderCard({
   dragging,
   dragOffset,
   reorderHandleProps,
+  suppressReorderClick,
   onToggleExpanded,
   save,
   onChanged,
@@ -135,6 +143,12 @@ export function ProviderCard({
   const style = dragging
     ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
     : undefined;
+  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
+    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"]')) {
+      return;
+    }
+    reorderHandleProps.onPointerDown(event);
+  };
 
   return <Fragment>
     <details
@@ -145,7 +159,14 @@ export function ProviderCard({
     >
       <summary
         className="pivi-provider-header pivi-model-provider-header"
-        onClick={event => { event.preventDefault(); onToggleExpanded(providerId); }}
+        onClick={(event) => {
+          event.preventDefault();
+          if (!suppressReorderClick()) onToggleExpanded(providerId);
+        }}
+        onPointerCancel={reorderHandleProps.onPointerCancel}
+        onPointerDown={handlePointerDown}
+        onPointerMove={reorderHandleProps.onPointerMove}
+        onPointerUp={reorderHandleProps.onPointerUp}
       >
         <button
           type="button"
@@ -154,7 +175,7 @@ export function ProviderCard({
           aria-pressed={dragging}
           disabled={pending}
           onClick={stop}
-          {...reorderHandleProps}
+          onKeyDown={reorderHandleProps.onKeyDown}
         >
           <span aria-hidden="true">⠿</span>
         </button>

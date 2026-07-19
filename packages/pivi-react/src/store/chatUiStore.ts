@@ -11,6 +11,7 @@ export type DeepReadonly<T> = T extends (...args: never[]) => unknown
       : T;
 
 export interface QueuedTurnSnapshot {
+  readonly id: string;
   readonly content: string;
   readonly imageCount: number;
   readonly hasEditorContext: boolean;
@@ -33,7 +34,7 @@ export interface ChatUiSnapshotData {
   hasPendingSessionSave: boolean;
   hasOlderMessages: boolean;
   currentOpenSessionId: string | null;
-  queuedTurn: QueuedTurnSnapshot | null;
+  queuedTurns: readonly QueuedTurnSnapshot[];
   currentThinkingContent: string;
   thinkingIndicator: ThinkingIndicatorSnapshot | null;
   usage: UsageInfo | null;
@@ -149,7 +150,7 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
     hasPendingSessionSave: false,
     hasOlderMessages: false,
     currentOpenSessionId: null,
-    queuedTurn: null,
+    queuedTurns: [],
     currentThinkingContent: '',
     thinkingIndicator: null,
     usage: null,

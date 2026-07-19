@@ -2,8 +2,10 @@ import type { MessagePresentationActions } from '../../chat/messages';
 import type { ChatSurfaceActions } from '../types';
 
 export const EMPTY_SURFACE_ACTIONS: ChatSurfaceActions = {
+  steerQueuedTurn: () => {},
   editQueuedTurn: () => {},
   discardQueuedTurn: () => {},
+  reorderQueuedTurns: () => {},
   scrollToTop: () => {},
   scrollToPreviousUserMessage: () => {},
   scrollToNextUserMessage: () => {},

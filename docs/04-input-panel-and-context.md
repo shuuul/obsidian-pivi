@@ -20,7 +20,7 @@ flowchart TD
   Controller -- "builds" --> Request["ChatTurnRequest"]
 ```
 
-React owns model, thinking, mode, external-context, send/stop, and usage presentation. `wireComposerChrome()` adapts the active tab's model catalog, projected settings, and external selector into immutable composer snapshots and narrow actions.
+React owns model, thinking, mode, external-context, send/queue/stop, and usage presentation. `wireComposerChrome()` adapts the active tab's model catalog, projected settings, and external selector into immutable composer snapshots and narrow actions.
 
 `RichChatInput` is an uncontrolled contenteditable adapter with a textarea-like API. It owns mention badges, plain-text paste, cursor placement, Markdown-list continuation, and IME-safe synchronization. React must not reconcile its children. File, image, inline-context, editor, browser, and canvas adapters follow the same owner-realm rule.
 
@@ -70,7 +70,7 @@ Input key handling follows this precedence:
 4. The configured Enter or Cmd/Ctrl+Enter shortcut submits.
 5. Composition events prevent submission and badge rewriting.
 
-Submitting while a turn is streaming creates one queued-turn snapshot. Further submissions merge through core queue helpers. The queue UI can edit by restoring content to the composer or discard the snapshot. Cancelling the foreground turn restores queued content and images to the composer. External-root permissions are deliberately re-read when a queued turn begins.
+Each submission made while a turn is streaming appends an independent FIFO queued-turn snapshot; content, images, and captured context are never merged with adjacent submissions. While streaming, an empty composer keeps the stop action; entering content replaces it with the queue-message action, whose click follows the normal submission path instead of cancelling the active run. Queue actions republish the composer state synchronously, so deleting the last queued row with an empty input immediately restores the stop action, while restoring a row for editing immediately shows the queue action. A single queued turn appears as one compact bar inside the chat surface. Multiple turns appear as separate rows in a tab-switcher-style expanded surface, ordered by execution, with the queue constrained to the left column and the input-position tab switcher protected on the right. Dragging a row changes its execution position; keyboard users can focus a row, press Space or Enter to pick it up, move it with Arrow Up/Down, then drop with Space/Enter or cancel with Escape. Row action buttons remain independent from drag initiation. Every row can steer the active Pi run, restore that snapshot to the composer for editing, or delete it. Steering uses Pi's one-at-a-time steering queue and preserves the user-visible message overlay when the API prompt differs. Cancelling the foreground turn restores queued content and images to the composer. External-root permissions are deliberately re-read when a queued turn begins or steers.
 
 ## Turn construction
 

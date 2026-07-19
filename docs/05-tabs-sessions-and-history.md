@@ -70,7 +70,7 @@ Session titles and messages belong to JSONL. A blank `draftTitle` moves into ses
 
 Switches are single-flight. A concurrent second request waits for the active switch; it is not a queued request to a later target. Code that adds switch callers must not assume otherwise.
 
-The React switcher groups open tabs before archived tabs, supports title editing, attention/stream indicators, exit animation, owner-window event handling, reduced motion, and configurable header/input placement. Archived rows are currently revealed by downward wheel progress; keyboard-only reveal is a known accessibility gap tracked in the roadmap.
+The React switcher groups open tabs before archived tabs, supports title editing, attention/stream indicators, exit animation, owner-window event handling, reduced motion, and configurable header/input placement. Rows share the queue/provider direct-manipulation sorter: dragging within a group changes persisted order, while crossing the Archived boundary also changes archive membership. Moving the active tab into Archived switches to an open fallback first, and moving the last open tab into Archived creates a blank open fallback. Space picks up a focused row, Arrow Up/Down moves it—including across the boundary—and Space drops it; Escape cancels. Archived rows are otherwise revealed by downward wheel progress; keyboard-only browsing of already archived rows without beginning a reorder remains a known accessibility gap tracked in the roadmap.
 
 ## Session switching and recovery
 
