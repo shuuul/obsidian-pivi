@@ -99,4 +99,21 @@ describe('sampleCompactionNote', () => {
     expect(mockResolvePiModel).not.toHaveBeenCalled();
     expect(mockStreamSimple).not.toHaveBeenCalled();
   });
+
+  it('reports when the checkpoint output is truncated at the token limit', async () => {
+    mockStreamSimple.mockReturnValue({
+      result: jest.fn().mockResolvedValue({
+        content: [{ type: 'text', text: '```pivi-checkpoint\n{"continuationSummary":' }],
+        stopReason: 'length',
+      }),
+    });
+
+    await expect(sampleCompactionNote(
+      { settings: { model: 'mock-provider/mock-model' } } as never,
+      [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+      'Create NOTE₂.',
+    )).rejects.toThrow(
+      'Compaction model output reached the 8192-token limit before completing the checkpoint.',
+    );
+  });
 });

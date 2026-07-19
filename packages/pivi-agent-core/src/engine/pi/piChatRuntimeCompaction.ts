@@ -37,7 +37,7 @@ import {
   fingerprintCompactionEntries,
   getCompactionPrefireTokens,
   getCompactionThresholdTokens as computeCompactionThresholdTokens,
-  parseCompactionDraft,
+  parseCompactionDraftResult,
   type PiContextCompactionEntry,
   type PiContextCompactionPlan,
   PiContextTokenIndex,
@@ -432,11 +432,20 @@ async function sampleValidatedDraft(
   signal: AbortSignal,
 ): Promise<CompactionDraft> {
   const sampled = await sampleCompactionNote(deps.plugin, messages, prompt, signal);
-  const draft = parseCompactionDraft(sampled);
-  if (!draft) {
-    throw new Error('Compaction model returned an invalid checkpoint.');
+  const result = parseCompactionDraftResult(sampled);
+  if (!result.ok) {
+    const detail = result.reason === 'missing-json'
+      ? 'no checkpoint JSON object was returned'
+      : result.reason === 'invalid-json'
+        ? 'the checkpoint JSON was malformed'
+        : result.reason === 'device-path'
+          ? 'the checkpoint contained a forbidden absolute device path'
+          : result.invalidFields?.length
+            ? `invalid fields: ${result.invalidFields.join(', ')}`
+            : 'the checkpoint fields failed schema validation';
+    throw new Error(`Compaction model returned an invalid checkpoint: ${detail}.`);
   }
-  return draft;
+  return result.draft;
 }
 
 function matchingPrefire(

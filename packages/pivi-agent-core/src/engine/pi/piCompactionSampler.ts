@@ -39,6 +39,10 @@ export async function sampleCompactionNote(
   const timeout = window.setTimeout(abort, COMPACTION_SAMPLE_TIMEOUT_MS);
   try {
     const conversation = convertCompactionMessages(messages);
+    const maxTokens = Math.min(
+      COMPACTION_SAMPLE_MAX_TOKENS,
+      model.maxTokens > 0 ? model.maxTokens : COMPACTION_SAMPLE_MAX_TOKENS,
+    );
     const stream = piAiModels.streamSimple(model, {
       systemPrompt: COMPACTION_SYSTEM_PROMPT,
       messages: [
@@ -55,10 +59,7 @@ export async function sampleCompactionNote(
       env: auth.env,
       headers: auth.auth.headers,
       maxRetries: 0,
-      maxTokens: Math.min(
-        COMPACTION_SAMPLE_MAX_TOKENS,
-        model.maxTokens > 0 ? model.maxTokens : COMPACTION_SAMPLE_MAX_TOKENS,
-      ),
+      maxTokens,
       reasoning: 'low',
       signal: controller.signal,
       timeoutMs: COMPACTION_SAMPLE_TIMEOUT_MS,
@@ -69,6 +70,14 @@ export async function sampleCompactionNote(
     }
     if (response.stopReason === 'error') {
       throw new Error(response.errorMessage || 'Compaction sampling failed.');
+    }
+    if (response.stopReason === 'length') {
+      throw new Error(
+        `Compaction model output reached the ${maxTokens}-token limit before completing the checkpoint.`,
+      );
+    }
+    if (response.stopReason === 'toolUse') {
+      throw new Error('Compaction model returned an unexpected tool call.');
     }
     const text = response.content
       .filter((part): part is { type: 'text'; text: string } => part.type === 'text')

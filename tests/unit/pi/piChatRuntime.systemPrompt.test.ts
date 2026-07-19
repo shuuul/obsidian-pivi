@@ -1275,7 +1275,7 @@ describe('PiChatRuntime system prompt', () => {
 
       await handledCompaction;
       expect(rejection).toEqual(expect.objectContaining({
-        message: 'Compaction model returned an invalid checkpoint.',
+        message: 'Compaction model returned an invalid checkpoint: no checkpoint JSON object was returned.',
       }));
       expect(mockCompactionSample).toHaveBeenCalledTimes(4);
       expect(String((mockCompactionSample.mock.calls[3] as unknown[])[2]))

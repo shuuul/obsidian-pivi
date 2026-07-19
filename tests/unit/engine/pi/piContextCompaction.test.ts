@@ -15,6 +15,7 @@ import {
   getCompactionPrefireTokens,
   getCompactionThresholdTokens,
   parseCompactionDraft,
+  parseCompactionDraftResult,
   PiContextTokenIndex,
   renderCheckpoint,
   sanitizeCompactionMessage,
@@ -362,6 +363,44 @@ describe('piContextCompaction', () => {
     expect(parseCompactionDraft('```pivi-checkpoint\n{"continuationSummary":"short"}\n```'))
       .toBeNull();
     expect(parseCompactionDraft(`Commentary\n${JSON.stringify(concise)}`)).toBeNull();
+  });
+
+  it('classifies invalid compaction drafts without exposing their contents', () => {
+    expect(parseCompactionDraftResult('not a checkpoint')).toEqual({
+      ok: false,
+      reason: 'missing-json',
+    });
+    expect(parseCompactionDraftResult('```pivi-checkpoint\n{invalid}\n```')).toEqual({
+      ok: false,
+      reason: 'invalid-json',
+    });
+    expect(parseCompactionDraftResult(checkpointJson({
+      artifacts: [{ label: 'Private', vaultPath: '/Users/example/private.md' }],
+    }))).toEqual({
+      ok: false,
+      reason: 'device-path',
+    });
+    expect(parseCompactionDraftResult(checkpointJson({
+      artifacts: [{ label: 'Private', vaultPath: '../private.md' }],
+    }))).toEqual({
+      invalidFields: ['artifacts'],
+      ok: false,
+      reason: 'invalid-fields',
+    });
+    expect(parseCompactionDraftResult(
+      '```pivi-checkpoint\n{"continuationSummary":"Continue.","goal":null}\n```',
+    )).toEqual({
+      invalidFields: [
+        'constraints',
+        'decisions',
+        'artifacts',
+        'openWork',
+        'unresolvedQuestions',
+        'nextSteps',
+      ],
+      ok: false,
+      reason: 'invalid-fields',
+    });
   });
 
   it('builds and merges Checkpoint v1 ledgers for NOTE₂', () => {

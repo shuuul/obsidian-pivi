@@ -55,6 +55,14 @@ export interface CompactionDraft {
   nextSteps: string[];
 }
 
+export type CompactionDraftParseResult =
+  | { draft: CompactionDraft; ok: true }
+  | {
+    invalidFields?: string[];
+    ok: false;
+    reason: 'device-path' | 'invalid-fields' | 'invalid-json' | 'missing-json';
+  };
+
 export const COMPACTION_PREFIRE_LEAD_RATIO = 0.1;
 export const COMPACTION_PREFIX_RATIO = 0.95;
 export const MIN_COMPACTION_MESSAGE_ENTRIES = 4;
@@ -655,17 +663,23 @@ function containsDevicePath(value: unknown): boolean {
   return isRecord(value) && Object.values(value).some(containsDevicePath);
 }
 
-function extractCheckpointJson(text: string): unknown {
+function extractCheckpointJson(text: string): {
+  ok: true;
+  value: unknown;
+} | {
+  ok: false;
+  reason: 'invalid-json' | 'missing-json';
+} {
   const pattern = /(?:^|\n)```pivi-checkpoint\s*\n([\s\S]*?)\n```(?=\n|$)/gi;
-  let candidate: unknown = null;
+  let candidate: { ok: true; value: unknown } | { ok: false; reason: 'invalid-json' } | null = null;
   for (const match of text.matchAll(pattern)) {
     try {
-      candidate = JSON.parse(match[1] ?? '');
+      candidate = { ok: true, value: JSON.parse(match[1] ?? '') };
     } catch {
-      candidate = null;
+      candidate = { ok: false, reason: 'invalid-json' };
     }
   }
-  if (candidate !== null) {
+  if (candidate) {
     return candidate;
   }
 
@@ -675,19 +689,88 @@ function extractCheckpointJson(text: string): unknown {
     trimmed.startsWith('{') && trimmed.endsWith('}') ? trimmed : null
   );
   if (!json) {
-    return null;
+    return { ok: false, reason: 'missing-json' };
   }
   try {
-    return JSON.parse(json);
+    return { ok: true, value: JSON.parse(json) };
   } catch {
-    return null;
+    return { ok: false, reason: 'invalid-json' };
   }
 }
 
-export function parseCompactionDraft(text: string): CompactionDraft | null {
-  const value = extractCheckpointJson(text);
+function invalidCompactionDraftFields(value: Record<string, unknown>): string[] {
+  const invalidFields: string[] = [];
+  if (
+    typeof value.continuationSummary !== 'string'
+    || !value.continuationSummary.trim()
+  ) {
+    invalidFields.push('continuationSummary');
+  }
+  if (
+    value.goal !== null
+    && (typeof value.goal !== 'string' || !value.goal.trim())
+  ) {
+    invalidFields.push('goal');
+  }
+  for (const field of [
+    'constraints',
+    'decisions',
+    'artifacts',
+    'openWork',
+    'unresolvedQuestions',
+    'nextSteps',
+  ] as const) {
+    if (!Array.isArray(value[field])) {
+      invalidFields.push(field);
+    }
+  }
+  if (
+    Array.isArray(value.artifacts)
+    && value.artifacts.some((artifact) => {
+      if (!isRecord(artifact)) {
+        return true;
+      }
+      if (typeof artifact.label !== 'string' || !artifact.label.trim()) {
+        return true;
+      }
+      if (artifact.vaultPath === undefined) {
+        return false;
+      }
+      if (typeof artifact.vaultPath !== 'string' || !artifact.vaultPath.trim()) {
+        return true;
+      }
+      const pathSegments = artifact.vaultPath.replace(/\\/g, '/').split('/');
+      return pathSegments.includes('..');
+    })
+    && !invalidFields.includes('artifacts')
+  ) {
+    invalidFields.push('artifacts');
+  }
+  if (
+    value.schemaVersion !== undefined
+    && value.schemaVersion !== CHECKPOINT_SCHEMA_VERSION
+  ) {
+    invalidFields.push('schemaVersion');
+  }
+  return invalidFields;
+}
+
+export function parseCompactionDraftResult(text: string): CompactionDraftParseResult {
+  const extracted = extractCheckpointJson(text);
+  if (!extracted.ok) {
+    return extracted;
+  }
+  const value = extracted.value;
   if (!isRecord(value) || containsDevicePath(value)) {
-    return null;
+    return {
+      ok: false,
+      reason: containsDevicePath(value) ? 'device-path' : 'invalid-fields',
+      ...(!isRecord(value) ? { invalidFields: ['root'] } : {}),
+    };
+  }
+  const invalidFields = invalidCompactionDraftFields(value);
+  if (invalidFields.length > 0) {
+    return { invalidFields, ok: false, reason: 'invalid-fields' };
   }
   const checkpoint = parsePiviCompactionDetails({
     piviCheckpoint: {
@@ -705,7 +788,7 @@ export function parseCompactionDraft(text: string): CompactionDraft | null {
     },
   })?.piviCheckpoint;
   if (!checkpoint) {
-    return null;
+    return { ok: false, reason: 'invalid-fields' };
   }
   const draft: CompactionDraft = {
     continuationSummary: checkpoint.continuationSummary,
@@ -717,7 +800,12 @@ export function parseCompactionDraft(text: string): CompactionDraft | null {
     unresolvedQuestions: checkpoint.unresolvedQuestions,
     nextSteps: checkpoint.nextSteps,
   };
-  return draft;
+  return { draft, ok: true };
+}
+
+export function parseCompactionDraft(text: string): CompactionDraft | null {
+  const result = parseCompactionDraftResult(text);
+  return result.ok ? result.draft : null;
 }
 
 export function renderCompactionDraft(draft: CompactionDraft): string {
