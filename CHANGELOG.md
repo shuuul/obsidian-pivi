@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.13.0](https://github.com/shuuul/obsidian-pivi/compare/0.12.1...0.13.0) (2026-07-19)
+
+
+### Features
+
+* **chat:** add sortable queued turns and tabs ([ed04f7c](https://github.com/shuuul/obsidian-pivi/commit/ed04f7c43cf50735fd4bd156f59e3f8d8a9d3899))
+* **prompt:** prefer note wikilinks over restating vault content ([4e3ba60](https://github.com/shuuul/obsidian-pivi/commit/4e3ba600ae1de3bfc3f811bef9e5e0e46e055bdd))
+
+
+### Bug Fixes
+
+* **chat:** clarify compaction checkpoint failures ([695352f](https://github.com/shuuul/obsidian-pivi/commit/695352f3dd93cb25e5f4240dfe14c8ebca8a99eb))
+* **chat:** clear retry indicator when streaming resumes ([86cb0a6](https://github.com/shuuul/obsidian-pivi/commit/86cb0a677e9e93b042bf1c263bbfe87bac350212))
+* **chat:** compact before tool loop continuations ([f5715c9](https://github.com/shuuul/obsidian-pivi/commit/f5715c90d85212ead8351c54d39240076d141d11))
+* **chat:** hide leaked external_contexts XML after reload ([7964740](https://github.com/shuuul/obsidian-pivi/commit/79647406b597e067910ce77da28f6b8e24714fcd))
+* **chat:** mark in-flight subagents Cancelled on interrupt ([d0a7f1f](https://github.com/shuuul/obsidian-pivi/commit/d0a7f1f5c9a6cacb5bc43e642e4db43e3ca36c24))
+* **chat:** pass images through steer and report queue reorder success ([13c9506](https://github.com/shuuul/obsidian-pivi/commit/13c95068cbcf950bb6fc544a6e6a0474d6f822f4))
+* **chat:** preserve queue order while dragging ([cb9488e](https://github.com/shuuul/obsidian-pivi/commit/cb9488e38d71f7d14a7bcc25603b56748dcb58a0))
+* **chat:** retry TLS handshake disconnects and ECONNRESET ([747e2dc](https://github.com/shuuul/obsidian-pivi/commit/747e2dc02e394ee034de979929de3912e3bc592f))
+* **chat:** stop treating https URLs as device paths in compaction ([d91220b](https://github.com/shuuul/obsidian-pivi/commit/d91220bb12834148489499364d76a70bb71cbc31))
+* **session:** persist generated titles before publishing ([069ec1b](https://github.com/shuuul/obsidian-pivi/commit/069ec1b6f6575f6913e7c94ab8c5b3ffba705bfe))
+* **session:** preserve tool order from partial overlays ([076be9b](https://github.com/shuuul/obsidian-pivi/commit/076be9bad74ab5a660fda476103c6683af9b8e6f))
+* **tools:** enforce minimum read budget ([c0631b1](https://github.com/shuuul/obsidian-pivi/commit/c0631b158efc9721343b89fb167f5d85b8c9dd3b))
+* **ui:** label OpenCode Go correctly ([f44393f](https://github.com/shuuul/obsidian-pivi/commit/f44393fd1c4dae981f273cebb9fbe552061caa95))
+
 ## [0.12.1](https://github.com/shuuul/obsidian-pivi/compare/0.12.0...0.12.1) (2026-07-19)
 
 
