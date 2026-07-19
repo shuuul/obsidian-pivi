@@ -4,6 +4,9 @@ const mockAgentInstances: Array<{
   state: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
   listeners: Array<(event: any) => void>;
   prompt: jest.Mock;
+  prepareNextTurnWithContext?: (context: unknown) => Promise<{
+    context?: { messages: unknown[] };
+  } | undefined>;
 }> = [];
 
 jest.mock('@earendil-works/pi-agent-core', () => ({
@@ -26,6 +29,9 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
           }
         };
       }),
+      prepareNextTurnWithContext: options.prepareNextTurnWithContext as ((context: unknown) => Promise<{
+        context?: { messages: unknown[] };
+      } | undefined>) | undefined,
       prompt: jest.fn(async (input: string) => {
         if (input === 'Use background subagent') {
           const spawnTool = (instance.state.tools ?? []).find((tool: unknown) => (
@@ -97,6 +103,9 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
             {
               role: 'assistant',
               content: [{ type: 'toolCall', id: 'call-1', name: 'obsidian_read', arguments: { path: 'A.md' } }],
+              usage: { input: 200, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 210 },
+              provider: 'opencode-go',
+              model: 'deepseek-v4-flash',
             },
             {
               role: 'toolResult',
@@ -134,6 +143,57 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
             });
             listener({ type: 'message_end', message: messages[3] });
             listener({ type: 'agent_end', messages });
+          }
+          return;
+        }
+        if (input === 'Trigger mid-turn compaction') {
+          const messages = [
+            { role: 'user', content: input },
+            {
+              role: 'assistant',
+              content: [{ type: 'toolCall', id: 'call-compact', name: 'obsidian_read', arguments: { path: 'Large.md' } }],
+              usage: { input: 180_000, output: 100, cacheRead: 0, cacheWrite: 0, totalTokens: 180_100 },
+              provider: 'opencode-go',
+              model: 'deepseek-v4-flash',
+            },
+            {
+              role: 'toolResult',
+              toolCallId: 'call-compact',
+              toolName: 'obsidian_read',
+              content: [{ type: 'text', text: 'tool result' }],
+              isError: false,
+            },
+          ];
+          instance.state.messages = messages;
+          for (const listener of [...listeners]) {
+            listener({ type: 'message_end', message: messages[0] });
+            listener({ type: 'message_end', message: messages[1] });
+            listener({ type: 'message_end', message: messages[2] });
+          }
+          const update = await instance.prepareNextTurnWithContext?.({
+            message: messages[1],
+            toolResults: [messages[2]],
+            context: {
+              systemPrompt: instance.state.systemPrompt,
+              messages,
+              tools: instance.state.tools ?? [],
+            },
+            newMessages: messages,
+          });
+          if (update?.context?.messages) {
+            instance.state.messages = update.context.messages;
+          }
+          const finalAssistant = {
+            role: 'assistant',
+            content: 'Done after compaction',
+            usage: { input: 1_000, output: 20, cacheRead: 0, cacheWrite: 0, totalTokens: 1_020 },
+            provider: 'opencode-go',
+            model: 'deepseek-v4-flash',
+          };
+          instance.state.messages = [...instance.state.messages, finalAssistant];
+          for (const listener of [...listeners]) {
+            listener({ type: 'message_end', message: finalAssistant });
+            listener({ type: 'agent_end', messages: instance.state.messages });
           }
           return;
         }
@@ -1468,31 +1528,74 @@ describe('PiChatRuntime system prompt', () => {
     }
 
     const usageChunks = chunks.filter((chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage');
-    expect(usageChunks.length).toBeGreaterThanOrEqual(2);
-    const firstUsageChunk = usageChunks[0];
+    expect(usageChunks).toHaveLength(3);
+    const toolCallUsageChunk = usageChunks[0];
+    const estimatedToolResultUsageChunk = usageChunks[1];
     const finalUsageChunk = usageChunks.at(-1);
-    expectDefined(firstUsageChunk);
+    expectDefined(toolCallUsageChunk);
+    expectDefined(estimatedToolResultUsageChunk);
     expectDefined(finalUsageChunk);
-    expect(firstUsageChunk.usage.contextTokens).toBeGreaterThan(0);
-    expect(firstUsageChunk.usage.contextTokens).toBe(
-      firstUsageChunk.usage.contextEnvelope?.total.tokens,
+    expect(toolCallUsageChunk.usage.contextTokens).toBe(200);
+    expect(toolCallUsageChunk.usage.contextTokensIsAuthoritative).toBe(true);
+    expect(estimatedToolResultUsageChunk.usage.contextTokens).toBeGreaterThan(0);
+    expect(estimatedToolResultUsageChunk.usage.contextTokens).toBe(
+      estimatedToolResultUsageChunk.usage.contextEnvelope?.total.tokens,
     );
-    expect(firstUsageChunk.usage.contextTokens).toBeGreaterThan(
-      firstUsageChunk.usage.contextEnvelope?.toolAndAgentResults.tokens ?? 0,
+    expect(estimatedToolResultUsageChunk.usage.contextTokens).toBeGreaterThan(
+      estimatedToolResultUsageChunk.usage.contextEnvelope?.toolAndAgentResults.tokens ?? 0,
     );
-    expect(firstUsageChunk.usage.contextEnvelope?.recentConversation.tokens)
+    expect(estimatedToolResultUsageChunk.usage.contextEnvelope?.recentConversation.tokens)
       .toBeGreaterThan(1_500);
-    expect(firstUsageChunk.usage.inputTokens).toBe(firstUsageChunk.usage.contextTokens);
-    expect(firstUsageChunk.usage.contextTokens).not.toBe(300);
-    expect(firstUsageChunk.usage.contextTokensIsAuthoritative).toBe(false);
-    expect(firstUsageChunk.usage.contextEnvelope?.system.tokens).toBeGreaterThan(0);
-    expect(firstUsageChunk.usage.contextEnvelope?.toolAndAgentResults.tokens).toBeGreaterThan(0);
+    expect(estimatedToolResultUsageChunk.usage.inputTokens).toBe(estimatedToolResultUsageChunk.usage.contextTokens);
+    expect(estimatedToolResultUsageChunk.usage.contextTokens).not.toBe(300);
+    expect(estimatedToolResultUsageChunk.usage.contextTokensIsAuthoritative).toBe(false);
+    expect(estimatedToolResultUsageChunk.usage.contextEnvelope?.system.tokens).toBeGreaterThan(0);
+    expect(estimatedToolResultUsageChunk.usage.contextEnvelope?.toolAndAgentResults.tokens).toBeGreaterThan(0);
     expect(finalUsageChunk.usage.contextTokens).toBe(300);
     expect(finalUsageChunk.usage.contextTokensIsAuthoritative).toBe(true);
     expect(finalUsageChunk.usage.contextEnvelope?.total).toEqual({
       source: 'authoritative',
       tokens: 300,
     });
+  });
+
+  it('compacts inside a tool loop before the next model continuation', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    await runtime.ensureReady();
+    const sessionTree = (runtime as unknown as { sessionTree: SessionTreeStore }).sessionTree;
+    for (let index = 0; index < 3; index += 1) {
+      const content = `History ${index} ${'x'.repeat(20_000)}`;
+      sessionTree.appendUserMessage(content);
+      sessionTree.syncAgentMessages([
+        { role: 'user', content, timestamp: index * 2 + 1 },
+        { role: 'assistant', content: `Answer ${index}`, timestamp: index * 2 + 2 },
+      ] as never[]);
+    }
+    mockCompactionSample.mockClear();
+
+    const chunks: StreamChunk[] = [];
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Trigger mid-turn compaction' }))) {
+      chunks.push(chunk);
+    }
+
+    expect(mockCompactionSample).toHaveBeenCalledTimes(2);
+    const compactingIndex = chunks.findIndex(chunk => chunk.type === 'context_compacting');
+    const compactedIndex = chunks.findIndex(chunk => chunk.type === 'context_compacted');
+    const finalUsageIndex = chunks.findLastIndex(chunk => (
+      chunk.type === 'usage' && chunk.usage.contextTokens === 1_000
+    ));
+    expect(compactingIndex).toBeGreaterThanOrEqual(0);
+    expect(compactedIndex).toBeGreaterThan(compactingIndex);
+    expect(finalUsageIndex).toBeGreaterThan(compactedIndex);
+    expectDefined(mockAgentInstances[0]);
+    expect(mockAgentInstances[0].prompt).toHaveBeenCalledTimes(1);
+    expect(mockAgentInstances[0].state.messages[0]).toEqual(expect.objectContaining({
+      role: 'user',
+      content: expect.arrayContaining([
+        expect.objectContaining({ text: expect.stringContaining('<context_compaction_summary>') }),
+      ]),
+    }));
   });
 
   it('does not expose the compaction fallback as a UI context window', () => {

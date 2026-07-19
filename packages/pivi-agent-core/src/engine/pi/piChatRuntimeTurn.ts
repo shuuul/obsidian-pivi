@@ -56,18 +56,28 @@ export async function* streamPiChatTurn(
 ): AsyncGenerator<StreamChunk> {
   const { activeTurn, agent } = deps;
   const emittedMessages: AgentMessage[] = [];
+  const pendingPersistenceMessages: AgentMessage[] = [];
 
   const unsubscribe = agent.subscribe((event) => {
     if (event.type === 'message_end') {
       emittedMessages.push(event.message);
+      pendingPersistenceMessages.push(event.message);
       const usage = buildUsageInfoFromAgentMessage(event.message, deps.resolveModel());
       if (usage) {
         activeTurn.queue.push({
           type: 'usage',
-          usage: attachContextEnvelope(deps.compaction, usage, turn, emittedMessages),
+          usage: attachContextEnvelope(
+            deps.compaction,
+            usage,
+            turn,
+            pendingPersistenceMessages,
+          ),
         });
       } else if ((event.message as { role?: unknown }).role === 'toolResult') {
-        const estimatedUsage = buildEstimatedUsageInfo(emittedMessages, deps.resolveModel());
+        const estimatedUsage = buildEstimatedUsageInfo(
+          agent.state.messages,
+          deps.resolveModel(),
+        );
         if (estimatedUsage) {
           activeTurn.queue.push({
             type: 'usage',
@@ -75,7 +85,7 @@ export async function* streamPiChatTurn(
               deps.compaction,
               estimatedUsage,
               turn,
-              emittedMessages,
+              pendingPersistenceMessages,
             ),
           });
         }
@@ -87,8 +97,8 @@ export async function* streamPiChatTurn(
       }
     }
     if (event.type === 'agent_end') {
-      // Persistence runs once after agent.prompt() resolves so a failed write
-      // reaches the turn error path instead of becoming silent history loss.
+      // Persistence is awaited at the next-request barrier and after prompt()
+      // so a failed write reaches the turn error path instead of becoming silent history loss.
       return;
     }
     if (
@@ -110,6 +120,7 @@ export async function* streamPiChatTurn(
     deps,
     turn,
     emittedMessages,
+    pendingPersistenceMessages,
   ).catch((error: unknown) => {
     activeTurn.queue.push({
       type: 'error',
@@ -137,6 +148,7 @@ async function runPromptLifecycle(
   deps: PiChatRuntimeTurnDeps,
   turn: PreparedChatTurn,
   emittedMessages: AgentMessage[],
+  pendingPersistenceMessages: AgentMessage[],
 ): Promise<void> {
   const { activeTurn, agent } = deps;
   const preflightCompacted = await prepareContextForTurn(
@@ -148,27 +160,73 @@ async function runPromptLifecycle(
     finishActiveTurnQueue(activeTurn);
     return;
   }
-  const didCompactDuringTurn = preflightCompacted;
+  let didCompactDuringTurn = preflightCompacted;
 
   persistUserMessage(deps, turn);
 
+  const previousPrepareNextTurn = agent.prepareNextTurnWithContext;
+  const prepareNextTurnWithContext: NonNullable<Agent['prepareNextTurnWithContext']> = async (nextTurn, signal) => {
+    if (signal?.aborted || activeTurn.abortController.signal.aborted) {
+      return undefined;
+    }
+
+    flushPendingSessionMessages(deps, pendingPersistenceMessages);
+    const latestUsage = latestUsageFromMessages(
+      nextTurn.context.messages,
+      deps.resolveModel(),
+    ) ?? buildEstimatedUsageInfo(nextTurn.context.messages, deps.resolveModel());
+    const usage = latestUsage
+      ? attachContextEnvelope(deps.compaction, latestUsage, turn)
+      : null;
+    if (!usage || nextTurn.toolResults.length === 0) {
+      return previousPrepareNextTurn?.(nextTurn, signal);
+    }
+    if (!shouldAutoCompactSession(deps.compaction, usage)) {
+      prepareCompactionPrefire(deps.compaction, usage);
+      return previousPrepareNextTurn?.(nextTurn, signal);
+    }
+
+    activeTurn.queue.push({ type: 'context_compacting' });
+    const compacted = await compactCurrentSession(deps.compaction, 'threshold');
+    if (!compacted) {
+      throw new Error('Context compaction could not prepare the next model request.');
+    }
+    if (signal?.aborted || activeTurn.abortController.signal.aborted) {
+      return undefined;
+    }
+    didCompactDuringTurn = true;
+    pushCompactionChunks(activeTurn.queue, deps.compaction, compacted, turn);
+    return {
+      context: {
+        ...nextTurn.context,
+        messages: deps.sessionTree?.loadAgentMessages() ?? agent.state.messages,
+      },
+    };
+  };
+  agent.prepareNextTurnWithContext = prepareNextTurnWithContext;
+
   const promptImages = toPiImageContent(turn.request.images);
-  const retryResult = await runPiChatPromptWithRetry({
-    agent,
-    contextWindow: deps.resolveModel()?.contextWindow ?? 0,
-    discardFailedAttempt: (message) => {
-      const index = emittedMessages.lastIndexOf(message);
-      if (index >= 0) {
-        emittedMessages.splice(index, 1);
-      }
-    },
-    emit: (chunk) => activeTurn.queue.push(chunk),
-    getLatestAssistantMessage: () => latestAssistantMessage(emittedMessages),
-    prompt: () => promptImages.length > 0
-      ? agent.prompt(turn.prompt, promptImages)
-      : agent.prompt(turn.prompt),
-    signal: activeTurn.abortController.signal,
-  });
+  let retryResult: Awaited<ReturnType<typeof runPiChatPromptWithRetry>>;
+  try {
+    retryResult = await runPiChatPromptWithRetry({
+      agent,
+      contextWindow: deps.resolveModel()?.contextWindow ?? 0,
+      discardFailedAttempt: (message) => {
+        removeMessage(emittedMessages, message);
+        removeMessage(pendingPersistenceMessages, message);
+      },
+      emit: (chunk) => activeTurn.queue.push(chunk),
+      getLatestAssistantMessage: () => latestAssistantMessage(emittedMessages),
+      prompt: () => promptImages.length > 0
+        ? agent.prompt(turn.prompt, promptImages)
+        : agent.prompt(turn.prompt),
+      signal: activeTurn.abortController.signal,
+    });
+  } finally {
+    if (agent.prepareNextTurnWithContext === prepareNextTurnWithContext) {
+      agent.prepareNextTurnWithContext = previousPrepareNextTurn;
+    }
+  }
 
   if (retryResult.status === 'failed' && retryResult.finalMessage) {
     activeTurn.queue.push(deps.eventAdapter.adaptAssistantError(
@@ -176,18 +234,22 @@ async function runPromptLifecycle(
     ));
   }
   if (retryResult.status === 'cancelled') {
-    deps.syncSessionMessages(emittedMessages);
+    flushPendingSessionMessages(deps, pendingPersistenceMessages);
     finishActiveTurnQueue(activeTurn);
     return;
   }
 
   const refreshedModelMetadata = await deps.refreshModelMetadata();
 
-  const finalMessages = emittedMessages.length > 0
-    ? emittedMessages
-    : agent.state.messages;
-  deps.syncSessionMessages(finalMessages);
-  const latestUsage = latestUsageFromMessages(finalMessages, deps.resolveModel());
+  const hadPendingMessages = pendingPersistenceMessages.length > 0;
+  flushPendingSessionMessages(deps, pendingPersistenceMessages);
+  if (!didCompactDuringTurn && !hadPendingMessages) {
+    // Retain the defensive full-state sync for SDK paths that omit a
+    // message_end event. After compaction only the pending suffix is safe:
+    // replaying the old cumulative context would resurrect compacted history.
+    deps.syncSessionMessages(agent.state.messages);
+  }
+  const latestUsage = latestUsageFromMessages(agent.state.messages, deps.resolveModel());
   const usage = latestUsage
     ? attachContextEnvelope(deps.compaction, latestUsage, turn)
     : null;
@@ -214,6 +276,24 @@ async function runPromptLifecycle(
     prepareCompactionPrefire(deps.compaction, usage);
   }
   finishActiveTurnQueue(activeTurn);
+}
+
+function flushPendingSessionMessages(
+  deps: PiChatRuntimeTurnDeps,
+  pendingMessages: AgentMessage[],
+): void {
+  if (pendingMessages.length === 0) {
+    return;
+  }
+  deps.syncSessionMessages(pendingMessages);
+  pendingMessages.length = 0;
+}
+
+function removeMessage(messages: AgentMessage[], message: AgentMessage): void {
+  const index = messages.lastIndexOf(message);
+  if (index >= 0) {
+    messages.splice(index, 1);
+  }
 }
 
 function isAssistantErrorMessage(message: AgentMessage): message is AssistantMessage {
