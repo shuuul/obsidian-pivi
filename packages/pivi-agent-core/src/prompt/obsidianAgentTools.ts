@@ -172,7 +172,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 
 function buildReadMaxCharsGuidance(): string[] {
   return [
-    '- `obsidian_read` and `obsidian_read_external` apply a runtime default `maxChars` from remaining room before the output reserve (capped at 50000 characters). This default may cross the auto-compaction threshold so a large read can still trigger compaction. You may override this by passing `maxChars` explicitly.',
+    '- `obsidian_read` and `obsidian_read_external` clamp `maxChars` to at least 1000 characters and apply a runtime default from remaining room before the output reserve, capped at 50000 characters. The 1000-character floor may cross the auto-compaction threshold so a read can still advance to the next compaction boundary instead of failing at `maxChars=0`. You may override this by passing `maxChars` explicitly, but values below 1000 are raised to the floor.',
     '- Explicit line ranges automatically return the largest complete-line page that fits `maxChars`. When `truncated` is true, continue from the returned `nextStartLine` instead of retrying overlapping ranges or raising the budget.',
     '- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, paged line ranges, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a single line or larger body truly requires it and the remaining budget can absorb it.',
   ];

@@ -1,4 +1,7 @@
-import { calculateReadToolMaxChars } from '@pivi/pivi-agent-core/foundation/usage';
+import {
+  calculateReadToolMaxChars,
+  READ_TOOL_MIN_CHARS,
+} from '@pivi/pivi-agent-core/foundation/usage';
 
 import type { LineSpan, ReadMode, ReadStats } from './readTypes';
 
@@ -26,11 +29,9 @@ export function resolveEffectiveReadMaxChars(
   resolveDefault?: (requestedMaxChars?: number) => number,
 ): number {
   const explicit = getPositiveIntegerField(input, 'maxChars');
-  if (!resolveDefault) {
-    return explicit ?? calculateReadToolMaxChars(null);
-  }
-  const resolved = resolveDefault(explicit);
-  return explicit === undefined ? resolved : Math.min(explicit, resolved);
+  const requested = explicit ?? calculateReadToolMaxChars(null);
+  const available = resolveDefault?.(explicit) ?? requested;
+  return Math.max(READ_TOOL_MIN_CHARS, Math.min(requested, available));
 }
 
 export function getReadMode(input: Record<string, unknown>): ReadMode {

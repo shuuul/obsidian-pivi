@@ -197,7 +197,7 @@ describe('obsidian tool input hardening', () => {
   });
 
   it('automatically pages explicit note ranges at complete line boundaries', async () => {
-    const content = Array.from({ length: 5 }, (_, index) => `${index + 1}:${'x'.repeat(38)}\n`).join('');
+    const content = Array.from({ length: 5 }, (_, index) => `${index + 1}:${'x'.repeat(298)}\n`).join('');
     const deps = makeDeps({
       resolveReadMaxChars: () => 150,
       vault: {
@@ -213,19 +213,19 @@ describe('obsidian tool input hardening', () => {
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
     expect(result.content[0].text).toContain('1:xxxxxxxx');
-    expect(result.content[0].text).not.toContain('2:xxxxxxxx');
-    expect(result.content[0].text).toContain('Continue with startLine=2, endLine=5');
-    expect(result.content[0].text.length).toBeLessThanOrEqual(150);
+    expect(result.content[0].text).not.toContain('4:xxxxxxxx');
+    expect(result.content[0].text).toContain('Continue with startLine=4, endLine=5');
+    expect(result.content[0].text.length).toBeLessThanOrEqual(1_000);
     expect(result.details).toMatchObject({
       requestedRange: { startLine: 1, endLine: 5 },
-      returnedRange: { startLine: 1, endLine: 1, lines: 1, characters: 41 },
+      returnedRange: { startLine: 1, endLine: 3, lines: 3, characters: 903 },
       truncated: true,
-      nextStartLine: 2,
+      nextStartLine: 4,
     });
   });
 
-  it('uses an explicit maxChars budget for automatic note range pages', async () => {
-    const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'q'.repeat(38)}\n`).join('');
+  it('uses an explicit maxChars budget above the minimum for automatic note range pages', async () => {
+    const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'q'.repeat(398)}\n`).join('');
     const deps = makeDeps({
       resolveReadMaxChars: () => 50_000,
       vault: {
@@ -238,11 +238,11 @@ describe('obsidian tool input hardening', () => {
       path: 'notes/a.md',
       startLine: 1,
       endLine: 4,
-      maxChars: 150,
+      maxChars: 1_200,
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
-    expect(result.content[0].text.length).toBeLessThanOrEqual(150);
-    expect(result.details).toMatchObject({ truncated: true, nextStartLine: 2 });
+    expect(result.content[0].text.length).toBeLessThanOrEqual(1_200);
+    expect(result.details).toMatchObject({ truncated: true, nextStartLine: 3 });
   });
 
   it('marks content read tools sequential so sibling calls cannot race shared headroom', () => {
@@ -250,6 +250,36 @@ describe('obsidian tool input hardening', () => {
 
     expect(createReadNoteTool(deps).executionMode).toBe('sequential');
     expect(createReadExternalTool(deps).executionMode).toBe('sequential');
+  });
+
+  it('enforces a 1000-character minimum for exhausted and explicit read budgets', async () => {
+    const content = 'x'.repeat(900);
+    const deps = makeDeps({
+      resolveReadMaxChars: requestedMaxChars => requestedMaxChars ?? 0,
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content }),
+      } as never,
+      externalFiles: {
+        stat: jest.fn().mockReturnValue({ path: '/tmp/a.txt', size: content.length, isDirectory: false, isFile: true }),
+        readFile: jest.fn().mockResolvedValue({ path: '/tmp/a.txt', content }),
+        listPath: jest.fn(),
+      },
+    });
+
+    const noteResult = await createReadNoteTool(deps).execute('note-call', {
+      path: 'notes/a.md',
+    }) as { content: [{ text: string }] };
+    const externalResult = await createReadExternalTool(deps).execute('external-call', {
+      path: '/tmp/a.txt',
+    }) as { content: [{ text: string }] };
+    const explicitResult = await createReadExternalTool(deps).execute('explicit-call', {
+      path: '/tmp/a.txt',
+      maxChars: 150,
+    }) as { content: [{ text: string }] };
+
+    expect(noteResult.content[0].text).toBe(content);
+    expect(externalResult.content[0].text).toBe(content);
+    expect(explicitResult.content[0].text).toBe(content);
   });
 
   it('returns the final note range page without a continuation marker', async () => {
@@ -280,7 +310,7 @@ describe('obsidian tool input hardening', () => {
     const deps = makeDeps({
       resolveReadMaxChars: () => 50,
       vault: {
-        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: `${'界'.repeat(80)}\nnext\n` }),
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: `${'界'.repeat(1_200)}\nnext\n` }),
       } as never,
     });
     const tool = createReadNoteTool(deps);
@@ -289,7 +319,7 @@ describe('obsidian tool input hardening', () => {
       path: 'notes/a.md',
       startLine: 1,
       endLine: 2,
-    })).rejects.toThrow('Line 1 is 81 characters');
+    })).rejects.toThrow('Line 1 is 1201 characters');
   });
 
   it('returns an empty result for a line range beyond the end of a note', async () => {
@@ -315,7 +345,7 @@ describe('obsidian tool input hardening', () => {
   });
 
   it('counts CJK characters consistently while paging note ranges', async () => {
-    const content = `${'界'.repeat(60)}\n${'文'.repeat(60)}\n${'字'.repeat(60)}\n`;
+    const content = `${'界'.repeat(400)}\n${'文'.repeat(400)}\n${'字'.repeat(400)}\n`;
     const deps = makeDeps({
       resolveReadMaxChars: () => 175,
       vault: {
@@ -331,14 +361,14 @@ describe('obsidian tool input hardening', () => {
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
     expect(result.details).toMatchObject({
-      returnedRange: { startLine: 1, endLine: 1, characters: 61 },
+      returnedRange: { startLine: 1, endLine: 2, characters: 802 },
       truncated: true,
-      nextStartLine: 2,
+      nextStartLine: 3,
     });
   });
 
   it('applies the same automatic range pagination to external reads', async () => {
-    const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'z'.repeat(38)}\n`).join('');
+    const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'z'.repeat(348)}\n`).join('');
     const deps = makeDeps({
       resolveReadMaxChars: () => 150,
       externalFiles: {
@@ -355,12 +385,12 @@ describe('obsidian tool input hardening', () => {
       endLine: 4,
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
-    expect(result.content[0].text).toContain('Continue with startLine=2, endLine=4');
+    expect(result.content[0].text).toContain('Continue with startLine=3, endLine=4');
     expect(result.details).toMatchObject({
       requestedRange: { startLine: 1, endLine: 4 },
-      returnedRange: { startLine: 1, endLine: 1 },
+      returnedRange: { startLine: 1, endLine: 2 },
       truncated: true,
-      nextStartLine: 2,
+      nextStartLine: 3,
     });
   });
 

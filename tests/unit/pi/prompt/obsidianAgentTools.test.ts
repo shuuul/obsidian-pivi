@@ -293,9 +293,12 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('obsidian_read');
     expect(section).toContain('mode: "stats"');
     expect(section).toContain('line range');
-    expect(section).toContain('runtime default `maxChars` from remaining room before the output reserve');
-    expect(section).toContain('may cross the auto-compaction threshold');
+    expect(section).toContain('clamp `maxChars` to at least 1000 characters');
+    expect(section).toContain('runtime default from remaining room before the output reserve');
+    expect(section).toContain('1000-character floor may cross the auto-compaction threshold');
+    expect(section).toContain('instead of failing at `maxChars=0`');
     expect(section).toContain('You may override this by passing `maxChars` explicitly');
+    expect(section).toContain('values below 1000 are raised to the floor');
     expect(section).toContain('largest complete-line page');
     expect(section).toContain('continue from the returned `nextStartLine`');
     expect(section).toContain('estimate how much context budget remains');
