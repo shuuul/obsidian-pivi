@@ -64,6 +64,14 @@ Durable conversations live under `.pivi/sessions/` as Pi-compatible JSONL. A ses
 
 External directory roots are capabilities tied to one device. Obsidian vault-scoped local storage holds pinned roots and per-turn overlays. Writers strip absolute external paths from synchronized `.pivi/settings.json` and session JSONL, while readers overlay device-local state. This is a privacy boundary, not merely a storage preference.
 
+### Device-local provider registry
+
+Provider membership, custom endpoints, model preferences, and web-search provider order/disabled state are device facts. Each vault/device stores them under Obsidian vault-scoped local storage (`pivi.providers.v1`). Credentials, custom header secrets, web API keys, and MCP OAuth tokens remain in `SecretStorage`; MCP server definitions stay in synced `.pivi/mcp.json`.
+
+Startup migration in `pluginSettingsLoad.ts` runs before workspace construction: read legacy synced fields once, canonicalize secrets, write initialized local state, then strip localized fields from `.pivi/settings.json`. Steady-state saves commit local provider authority first through `createPiviSettingsCodec`, then project portable `PersistedPiviSettings`. A synced write failure after a successful local commit retains local authority and surfaces a localized Notice.
+
+Built-in model `customContextLimits` entries remain synced; custom-provider context limits live in the local registry. A device that was offline during cutover and opens an already-stripped synced file seeds `DEFAULT_PI_PROVIDER_IDS` (`deepseek` only) and must re-add other providers locally; there is no automatic cross-device provider recovery.
+
 ### TypeScript and module resolution
 
 The repository is strict TypeScript targeting ES2022 with bundler resolution, isolated modules, no implicit returns, and unchecked-index protection. npm workspaces expose small package subpaths rather than relying on internal relative imports. TypeScript 6 compatibility supports current lint/test tooling; TypeScript 7's native CLI is the authoritative source and test checker.

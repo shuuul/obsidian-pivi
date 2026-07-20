@@ -57,9 +57,11 @@ flowchart LR
 Settings use the correct store for each data class:
 
 - synchronized vault settings for portable non-secret configuration;
-- Obsidian `secretStorage` for provider credentials;
-- vault-scoped device-local storage for absolute external roots and overlays;
+- Obsidian `secretStorage` for provider credentials, custom provider header secrets, web provider API keys, and MCP OAuth `AuthEntry` payloads;
+- vault-scoped device-local storage for absolute external roots/overlays and the provider registry (`pivi.providers.v1`);
 - vault files such as `.pivi/mcp.json` and `.pivi/commands/` for explicit workspace configuration.
+
+Provider/model/web-search settings mutations commit device-local state first, then save the stripped synced projection. Custom provider header values must never be written through `patchCustomProvider` or synced JSON; future header editing must use a dedicated SecretStorage-first settings-port path. A synced save failure after a successful local commit retains local authority and surfaces a localized Notice through app storage wiring.
 
 Save actions return structured feedback. App wiring converts transient results to Obsidian Notices while React retains only actionable errors beside their controls.
 

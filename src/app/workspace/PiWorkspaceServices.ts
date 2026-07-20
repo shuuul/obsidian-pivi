@@ -11,7 +11,9 @@ import {
   createObsidianTools,
   getObsidianToolsSettingsFromBag,
 } from "@pivi/obsidian-tools";
+import { mergeCustomProviderHeaderSecrets } from "@pivi/pivi-agent-core/auth/customProviderHeaderSecrets";
 import { credentialToApiKey } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
+import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
 import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
 import { createCodexImageGenerator } from "@pivi/pivi-agent-core/engine/pi/codexImageGenerator";
 import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
@@ -108,7 +110,7 @@ export async function createPiWorkspaceServices(
     host.app.secretStorage,
   );
   const mcpServerManager = new McpServerManager(mcpStorage);
-  const mcpOAuth = new McpOAuthService(vaultAdapter, nodeFetch, systemExternalOpener, {
+  const mcpOAuth = new McpOAuthService(host.app.secretStorage, nodeFetch, systemExternalOpener, {
     callbackPort: readMcpOAuthCallbackPort(),
   });
   const credentialStore = createObsidianCredentialStore(
@@ -119,13 +121,19 @@ export async function createPiWorkspaceServices(
   );
   migrateLegacyWebSearchCredentials(webSearchCredentialStore, credentialStore);
   registerBundledPiOAuthFlows(nodeFetch);
+  const customProviders = isSecretStorageAvailable(host.app.secretStorage)
+    ? mergeCustomProviderHeaderSecrets(
+      host.app.secretStorage,
+      getCustomProvidersFromBag(host.settings),
+    )
+    : getCustomProvidersFromBag(host.settings);
   configurePiAiModels({
     credentials: credentialStore ?? undefined,
     authContext: new ObsidianAuthContext({
       settings: host.settings,
       getVaultPath: () => getVaultPath(host.app),
     }, createSystemAuthContextHost()),
-    customProviders: getCustomProvidersFromBag(host.settings),
+    customProviders,
     httpGet: obsidianCustomProviderHttpRequest,
     getApiKey: (providerId) => {
       const credential = credentialStore?.readSync(providerId);

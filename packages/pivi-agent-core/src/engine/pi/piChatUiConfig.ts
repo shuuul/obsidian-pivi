@@ -5,6 +5,7 @@ import type {
 } from '../../foundation';
 import { getPiAgentSettings } from '../../foundation/agentSettings';
 import { PluginLogger } from '../../foundation/pluginLogger';
+import { DEFAULT_MODEL_KEY } from '../../foundation/settingsDefaults';
 import { piAiModels } from './piAiModels';
 import {
   buildPiModelOptions,
@@ -62,7 +63,7 @@ export const piChatUIConfig: ChatUIConfig = {
   },
 
   isDefaultModel(model: string): boolean {
-    return model === 'opencode-go/deepseek-v4-flash';
+    return model === DEFAULT_MODEL_KEY;
   },
 
   applyModelDefaults(model: string, settings: unknown): void {

@@ -3,14 +3,12 @@
  */
 import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
 import {
-  migratePiProviderCredentialsToKeychain,
-  migrateSplitSubscriptionOAuthCredentials,
-} from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
+  migrateMembershipAwareProviderSecrets,
+} from "@pivi/pivi-agent-core/engine/pi";
 import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
 import type { OpenSessionState, PiviSettings } from "@pivi/pivi-agent-core/foundation";
 import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
 import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
@@ -19,9 +17,12 @@ import {
   ensureDefaultVaultSkills,
 } from "@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills";
 import type { App } from "obsidian";
+import { Notice } from "obsidian";
 
+import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import type { Locale } from "@/app/i18n";
-import { setLocale } from "@/app/i18n";
+import { setLocale, t } from "@/app/i18n";
+import { runDeviceLocalProviderMigration } from "@/app/settings/deviceLocalProviderMigration";
 
 import { getVaultPath } from "./hostPlatform";
 
@@ -30,7 +31,9 @@ const logger = new PluginLogger('PluginSettingsLoad');
 export interface PluginSettingsLoadContext {
   app: App;
   storage: {
-    initialize(): Promise<{ pivi: Partial<PiviSettings> }>;
+    initialize(): Promise<void>;
+    loadRawPiviSettings(): Promise<Record<string, unknown> | null>;
+    saveRawPiviSettings(stored: Record<string, unknown>): Promise<void>;
     getAdapter(): FileStore;
   };
   sessionManager: OpenSessionManager;
@@ -51,18 +54,29 @@ export interface PluginSettingsLoadContext {
 export async function loadPluginSettings(
   ctx: PluginSettingsLoadContext,
 ): Promise<void> {
-  const { pivi } = await ctx.storage.initialize();
+  await ctx.storage.initialize();
+  const rawSettings = await ctx.storage.loadRawPiviSettings();
+  const deviceLocalStore = new ObsidianDeviceLocalProviderStore(ctx.app);
+  const migration = await runDeviceLocalProviderMigration({
+    app: ctx.app,
+    rawSettings,
+    deviceLocalStore,
+    vaultAdapter: ctx.storage.getAdapter(),
+    savePersistedSettings: (stored) => ctx.storage.saveRawPiviSettings(stored),
+  });
+  ctx.setSettings(migration.settings);
+  if (migration.syncedSaveFailed) {
+    logger.warn(
+      'Device-local provider state committed, but synced settings save failed during migration',
+    );
+    new Notice(t('host.failedSaveSyncedSettings'));
+  }
   ctx.setLastKnownTabManagerState(await ctx.getStorage().getTabManagerState());
 
-  const settings: PiviSettings = {
-    ...DEFAULT_PIVI_SETTINGS,
-    ...pivi,
-  };
-  ctx.setSettings(settings);
-
   const didReconcileModelSelections =
-    PiSettingsCoordinator.reconcileTitleGenerationModelSelection(settings);
-  const didMigrateProviderSecrets = migrateProviderSecretsToKeychain(ctx);
+    PiSettingsCoordinator.reconcileTitleGenerationModelSelection(migration.settings);
+  const didMigrateProviderSecrets = migration.credentialsMigrated
+    || migrateProviderSecretsToKeychain(ctx);
 
   const vaultPath = getVaultPath(ctx.app);
   if (vaultPath) {
@@ -78,15 +92,15 @@ export async function loadPluginSettings(
 
   await ctx.sessionManager.loadSummaries();
   await ctx.hideDeletedSessionSummaries();
-  setLocale(settings.locale as Locale);
+  setLocale(migration.settings.locale as Locale);
 
   const backfilledSessions = ctx.sessionManager.backfillSessionResponseTimestamps();
   const { changed, invalidatedSessions } = PiSettingsCoordinator.reconcileSettings(
-    settings,
+    migration.settings,
     ctx.getSessions(),
   );
 
-  PiSettingsCoordinator.projectActivePiState(settings);
+  PiSettingsCoordinator.projectActivePiState(migration.settings);
 
   if (changed || didReconcileModelSelections || didMigrateProviderSecrets) {
     await ctx.saveSettings();
@@ -112,85 +126,32 @@ export function migrateProviderSecretsToKeychain(
   const settings = ctx.getSettings();
   const settingsBag = settings as unknown as Record<string, unknown>;
   const piSettings = getPiAgentSettings(settingsBag);
-  // Split canonical OAuth first so a backing-provider API key from the
-  // environment can migrate without overwriting the plan credential.
-  const preSplit = migrateSplitSubscriptionOAuthCredentials(
+  const migrated = migrateMembershipAwareProviderSecrets(
     ctx.app.secretStorage,
-    piSettings.addedProviders,
+    {
+      addedProviders: piSettings.addedProviders,
+      disabledProviders: piSettings.disabledProviders,
+      environmentVariables: piSettings.environmentVariables,
+      visibleModels: piSettings.visibleModels,
+      model: settings.model,
+      titleGenerationModel: settings.titleGenerationModel,
+      ...(typeof settings.agentSettings.lastModel === 'string'
+        ? { lastModel: settings.agentSettings.lastModel }
+        : {}),
+      customProviders: piSettings.customProviders,
+    },
   );
-  const synced = migratePiProviderCredentialsToKeychain(
-    ctx.app.secretStorage,
-    preSplit.addedProviders,
-    piSettings.environmentVariables,
-  );
-  // Legacy credential formats become canonical in the generic pass, so run
-  // the idempotent split once more to catch a migrated legacy OAuth value.
-  const postSplit = migrateSplitSubscriptionOAuthCredentials(
-    ctx.app.secretStorage,
-    synced.addedProviders,
-  );
-  const migratedPiProviderIds = [
-    ...new Set([
-      ...preSplit.migratedPiProviderIds,
-      ...postSplit.migratedPiProviderIds,
-    ]),
-  ];
-
-  const providerRewrites = new Map<string, string>();
-  const ambiguousProviderSplits = new Set<string>();
-  if (migratedPiProviderIds.includes('xai')) {
-    providerRewrites.set('xai', 'grok-build');
-    if (piSettings.addedProviders.includes('xai') && piSettings.addedProviders.includes('grok-build')) {
-      ambiguousProviderSplits.add('xai');
-    }
-  }
-  if (migratedPiProviderIds.includes('anthropic')) {
-    providerRewrites.set('anthropic', 'claude');
-    if (piSettings.addedProviders.includes('anthropic') && piSettings.addedProviders.includes('claude')) {
-      ambiguousProviderSplits.add('anthropic');
-    }
-  }
-
-  const toSubscriptionModelKey = (modelKey: string): string => {
-    const slashIndex = modelKey.indexOf('/');
-    if (slashIndex < 1) {
-      return modelKey;
-    }
-    const providerId = modelKey.substring(0, slashIndex);
-    const nextProviderId = providerRewrites.get(providerId);
-    return nextProviderId
-      ? `${nextProviderId}${modelKey.substring(slashIndex)}`
-      : modelKey;
-  };
-  const rewriteModelKey = (modelKey: string): string => {
-    const providerId = modelKey.substring(0, modelKey.indexOf('/'));
-    return ambiguousProviderSplits.has(providerId)
-      ? modelKey
-      : toSubscriptionModelKey(modelKey);
-  };
-
-  const visibleModels = piSettings.visibleModels.map(rewriteModelKey);
-  for (const modelKey of piSettings.visibleModels) {
-    const providerId = modelKey.substring(0, modelKey.indexOf('/'));
-    if (ambiguousProviderSplits.has(providerId)) {
-      visibleModels.push(toSubscriptionModelKey(modelKey));
-    }
-  }
-
-  const nextDisabledProviders = piSettings.disabledProviders.flatMap((providerId) => {
-    const replacement = providerRewrites.get(providerId);
-    return replacement && !ambiguousProviderSplits.has(providerId)
-      ? [replacement]
-      : [providerId];
-  });
 
   updatePiAgentSettings(settingsBag, {
-    addedProviders: postSplit.addedProviders,
-    disabledProviders: [...new Set(nextDisabledProviders)],
-    environmentVariables: synced.environmentVariables,
-    visibleModels: [...new Set(visibleModels)],
+    addedProviders: [...migrated.membership.addedProviders],
+    disabledProviders: [...migrated.membership.disabledProviders],
+    environmentVariables: migrated.membership.environmentVariables,
+    visibleModels: [...migrated.membership.visibleModels],
   });
-  settings.model = rewriteModelKey(settings.model);
-  settings.titleGenerationModel = rewriteModelKey(settings.titleGenerationModel);
-  return preSplit.changed || synced.changed || postSplit.changed;
+  settings.model = migrated.membership.model;
+  settings.titleGenerationModel = migrated.membership.titleGenerationModel;
+  if (migrated.membership.lastModel) {
+    settings.agentSettings.lastModel = migrated.membership.lastModel;
+  }
+  return migrated.changed;
 }

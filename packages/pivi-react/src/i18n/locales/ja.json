@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "タブレイアウトの保存に失敗しました",
-    "failedSaveDeletedSessions": "削除済みセッション一覧の保存に失敗しました"
+    "failedSaveDeletedSessions": "削除済みセッション一覧の保存に失敗しました",
+    "failedSaveSyncedSettings": "プロバイダー設定はこのデバイスに保存されましたが、ポータブル設定をボールトファイルに書き込めませんでした。"
   }
 }

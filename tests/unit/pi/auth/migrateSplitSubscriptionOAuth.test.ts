@@ -57,6 +57,26 @@ describe('migrateSplitSubscriptionOAuthCredentials', () => {
     expect(result.addedProviders).toContain(GROK_BUILD_PROVIDER_ID);
   });
 
+  it('does not resurrect subscription providers from orphan oauth alone', () => {
+    const app = createMockApp();
+    const { secretStorage } = app;
+    secretStorage.setSecret(
+      getPiAiCredentialSecretId(GROK_BUILD_PROVIDER_ID),
+      serializeProviderCredential({
+        type: 'oauth',
+        access: 'xai-access',
+        refresh: 'xai-refresh',
+        expires: Date.now() + 3600_000,
+      }),
+    );
+
+    const result = migrateSplitSubscriptionOAuthCredentials(secretStorage, ['deepseek']);
+
+    expect(result.changed).toBe(false);
+    expect(result.addedProviders).toEqual(['deepseek']);
+    expect(result.addedProviders).not.toContain(GROK_BUILD_PROVIDER_ID);
+  });
+
   it('preserves an existing subscription credential while clearing the legacy slot', () => {
     const app = createMockApp();
     const { secretStorage } = app;

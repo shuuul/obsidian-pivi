@@ -1,77 +1,67 @@
-import { createHash } from "crypto";
+import type { SyncSecretStore } from '../../ports';
+import type {
+  AuthEntry,
+  McpAuthEntryStore,
+  StoredClientInfo,
+  StoredTokens,
+} from './mcpVaultAuthStore';
 
-import { PIVI_MCP_OAUTH_DIR } from "../paths";
-import type { FileStore } from "../ports";
+export const MCP_AUTH_ENTRY_SECRET_VERSION = 1 as const;
 
-export interface StoredTokens {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: number;
-  scope?: string;
+interface StoredMcpAuthEntryPayloadV1 {
+  version: typeof MCP_AUTH_ENTRY_SECRET_VERSION;
+  entry: AuthEntry;
 }
 
-export interface StoredClientInfo {
-  clientId: string;
-  clientSecret?: string;
-  clientIdIssuedAt?: number;
-  clientSecretExpiresAt?: number;
+const MCP_AUTH_SECRET_PREFIX = 'pivi-mcp-oauth';
+
+function encodeServerName(serverName: string): string {
+  return Array.from(new TextEncoder().encode(serverName))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-export interface AuthEntry {
-  tokens?: StoredTokens;
-  clientInfo?: StoredClientInfo;
-  codeVerifier?: string;
-  oauthState?: string;
-  serverUrl?: string;
+export function getMcpAuthEntrySecretId(serverName: string): string {
+  return `${MCP_AUTH_SECRET_PREFIX}-${encodeServerName(serverName)}-auth-v${MCP_AUTH_ENTRY_SECRET_VERSION}`;
 }
 
-export interface McpAuthEntryStore {
-  getEntry(serverName: string): Promise<AuthEntry | undefined>;
-  getAuthForUrl(serverName: string, serverUrl: string): Promise<AuthEntry | undefined>;
-  saveEntry(serverName: string, entry: AuthEntry, serverUrl?: string): Promise<void>;
-  removeEntry(serverName: string): Promise<void>;
-  updateTokens(serverName: string, tokens: StoredTokens, serverUrl?: string): Promise<void>;
-  updateClientInfo(serverName: string, clientInfo: StoredClientInfo, serverUrl?: string): Promise<void>;
-  updateCodeVerifier(serverName: string, codeVerifier: string, serverUrl?: string): Promise<void>;
-  clearCodeVerifier(serverName: string): Promise<void>;
-  updateOAuthState(serverName: string, state: string, serverUrl?: string): Promise<void>;
-  getOAuthState(serverName: string): Promise<string | undefined>;
-  clearOAuthState(serverName: string): Promise<void>;
-  isTokenExpired(serverName: string): Promise<boolean | null>;
-  hasStoredTokens(serverName: string): Promise<boolean>;
-  clearClientInfo(serverName: string): Promise<void>;
-  clearTokens(serverName: string): Promise<void>;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-export class McpVaultAuthStore implements McpAuthEntryStore {
-  constructor(private readonly adapter: FileStore) {}
-
-  private serverDir(serverName: string): string {
-    const storageKey = createHash("sha256")
-      .update(serverName, "utf8")
-      .digest("hex");
-    return `${PIVI_MCP_OAUTH_DIR}/sha256-${storageKey}`;
+function parseStoredEntry(raw: string | null | undefined): AuthEntry | undefined {
+  if (!raw?.trim()) {
+    return undefined;
   }
-
-  private entryPath(serverName: string): string {
-    return `${this.serverDir(serverName)}/tokens.json`;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isRecord(parsed) || parsed.version !== MCP_AUTH_ENTRY_SECRET_VERSION) {
+      return undefined;
+    }
+    const entry = parsed.entry;
+    if (!isRecord(entry)) {
+      return undefined;
+    }
+    return entry;
+  } catch {
+    return undefined;
   }
+}
+
+function serializeStoredEntry(entry: AuthEntry): string {
+  const payload: StoredMcpAuthEntryPayloadV1 = {
+    version: MCP_AUTH_ENTRY_SECRET_VERSION,
+    entry,
+  };
+  return JSON.stringify(payload);
+}
+
+/** SecretStorage-backed MCP OAuth auth entry store. */
+export class McpSecretAuthStore implements McpAuthEntryStore {
+  constructor(private readonly secretStorage: SyncSecretStore) {}
 
   async getEntry(serverName: string): Promise<AuthEntry | undefined> {
-    const path = this.entryPath(serverName);
-    if (!(await this.adapter.exists(path))) {
-      return undefined;
-    }
-    try {
-      const raw = await this.adapter.read(path);
-      const parsed: unknown = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") {
-        return parsed;
-      }
-    } catch {
-      return undefined;
-    }
-    return undefined;
+    return parseStoredEntry(this.secretStorage.getSecret(getMcpAuthEntrySecretId(serverName)));
   }
 
   async getAuthForUrl(
@@ -90,21 +80,18 @@ export class McpVaultAuthStore implements McpAuthEntryStore {
     entry: AuthEntry,
     serverUrl?: string,
   ): Promise<void> {
+    const next: AuthEntry = { ...entry };
     if (serverUrl) {
-      entry.serverUrl = serverUrl;
+      next.serverUrl = serverUrl;
     }
-    await this.adapter.ensureFolder(PIVI_MCP_OAUTH_DIR);
-    await this.adapter.ensureFolder(this.serverDir(serverName));
-    await this.adapter.write(
-      this.entryPath(serverName),
-      `${JSON.stringify(entry, null, 2)}\n`,
+    this.secretStorage.setSecret(
+      getMcpAuthEntrySecretId(serverName),
+      serializeStoredEntry(next),
     );
   }
 
   async removeEntry(serverName: string): Promise<void> {
-    const path = this.entryPath(serverName);
-    await this.adapter.delete(path);
-    await this.adapter.deleteFolder(this.serverDir(serverName));
+    this.secretStorage.setSecret(getMcpAuthEntrySecretId(serverName), '');
   }
 
   async updateTokens(

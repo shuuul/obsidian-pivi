@@ -1,3 +1,5 @@
+import { mergeCustomProviderHeaderSecrets } from "@pivi/pivi-agent-core/auth/customProviderHeaderSecrets";
+import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
 import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/installPiCustomProviders";
 import { syncCustomPiProviders } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
@@ -8,6 +10,7 @@ import {
   getCustomProviderById,
   getCustomProvidersFromBag,
 } from "@pivi/pivi-agent-core/foundation/customProviders";
+import type { SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 
 import type { PiviUiFacades } from "@/app/hostContracts";
 
@@ -19,7 +22,16 @@ import { obsidianCustomProviderHttpRequest } from "./obsidianHttpRequest";
  */
 export function createPiUiFacades(
   getCredentialApiKey?: (providerId: string) => string | undefined,
+  secretStorage?: SyncSecretStore,
 ): PiviUiFacades {
+  const withRuntimeHeaders = (settings: Parameters<typeof getCustomProvidersFromBag>[0]) => {
+    const configs = getCustomProvidersFromBag(settings);
+    if (!secretStorage || !isSecretStorageAvailable(secretStorage)) {
+      return configs;
+    }
+    return mergeCustomProviderHeaderSecrets(secretStorage, configs);
+  };
+
   return {
     chatUIConfig: piChatUIConfig,
     getSettingsSnapshot(settings) {
@@ -32,15 +44,17 @@ export function createPiUiFacades(
       return getPiAiModelsForProvider(providerId);
     },
     syncCustomProviders(settings) {
-      syncCustomPiProviders(getCustomProvidersFromBag(settings));
+      syncCustomPiProviders(withRuntimeHeaders(settings));
     },
     async fetchCustomProviderModels(providerId, settings) {
       const config = getCustomProviderById(settings, providerId);
       if (!config) {
         throw new Error(`Unknown custom provider: ${providerId}`);
       }
+      const runtimeConfig = withRuntimeHeaders(settings).find((provider) => provider.id === providerId)
+        ?? config;
       const apiKey = getCredentialApiKey?.(providerId);
-      const result = await fetchCustomProviderModels(config, obsidianCustomProviderHttpRequest, { apiKey });
+      const result = await fetchCustomProviderModels(runtimeConfig, obsidianCustomProviderHttpRequest, { apiKey });
       const customProviders = getCustomProvidersFromBag(settings).map((provider) =>
         provider.id === providerId
           ? { ...provider, models: result.models }

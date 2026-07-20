@@ -1,3 +1,4 @@
+import { deleteCustomProviderHeaders } from '@pivi/pivi-agent-core/auth/customProviderHeaderSecrets';
 import {
   CODEX_OAUTH_PROVIDER_ID,
   getPiAiCredentialSecretId,
@@ -53,16 +54,11 @@ export function createSettingsModelsPort(
     },
     getSettings: () => getPiAgentSettings(host.settings),
     async saveSettings(patch) {
-      const previous = getPiAgentSettings(host.settings);
       updatePiAgentSettings(host.settings, patch);
       uiFacades.syncCustomProviders(host.settings);
-      try {
-        await host.saveSettings();
-      } catch (cause) {
-        updatePiAgentSettings(host.settings, previous);
-        uiFacades.syncCustomProviders(host.settings);
-        throw cause;
-      }
+      // Local provider authority commits inside prepareForSave before the vault
+      // write. Do not roll back runtime state if the synced save fails afterward.
+      await host.saveSettings();
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.refreshModelPresentation();
       }
@@ -259,6 +255,9 @@ export function createSettingsModelsPort(
       await host.saveSettings();
       if (deleteCredential) {
         await credentialStore?.delete(providerId);
+        if (isSecretStorageAvailable(host.app.secretStorage)) {
+          deleteCustomProviderHeaders(host.app.secretStorage, providerId);
+        }
       }
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.refreshModelPresentation();

@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "Erro al salvar o diseño de pestañas",
-    "failedSaveDeletedSessions": "Erro al salvar la lista de sessões eliminadas"
+    "failedSaveDeletedSessions": "Erro al salvar la lista de sessões eliminadas",
+    "failedSaveSyncedSettings": "As configurações do provedor foram salvas neste dispositivo, mas as configurações portáteis não puderam ser gravadas no arquivo do cofre."
   }
 }

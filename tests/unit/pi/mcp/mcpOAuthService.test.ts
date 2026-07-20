@@ -1,42 +1,10 @@
-import { App } from "obsidian";
-
-import { ObsidianVaultFileAdapter } from "@pivi/obsidian-host";
 import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import type { McpTransportFetch } from "@pivi/pivi-agent-core/mcp/ports";
 import type { ExternalOpener } from "@pivi/pivi-agent-core/ports";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
-import { McpVaultAuthStore } from "@pivi/pivi-agent-core/mcp/oauth/mcpVaultAuthStore";
+import { McpSecretAuthStore } from "@pivi/pivi-agent-core/mcp/oauth/mcpSecretAuthStore";
 
-function createMemoryVaultAdapter(): ObsidianVaultFileAdapter {
-  const app = new App();
-  const files = new Map<string, string>();
-  const folders = new Set<string>();
-
-  app.vault.adapter.exists = jest.fn(
-    async (path: string) => files.has(path) || folders.has(path),
-  );
-  app.vault.adapter.read = jest.fn(async (path: string) => {
-    const value = files.get(path);
-    if (value === undefined) {
-      throw new Error(`missing: ${path}`);
-    }
-    return value;
-  });
-  app.vault.adapter.write = jest.fn(async (path: string, content: string) => {
-    files.set(path, content);
-  });
-  app.vault.adapter.remove = jest.fn(async (path: string) => {
-    files.delete(path);
-  });
-  app.vault.adapter.rmdir = jest.fn(async (path: string) => {
-    folders.delete(path);
-  });
-  app.vault.adapter.mkdir = jest.fn(async (path: string) => {
-    folders.add(path);
-  });
-
-  return new ObsidianVaultFileAdapter(app);
-}
+import { createMockApp } from "../../../helpers/mockApp";
 
 function oauthServer(name: string, url: string): ManagedMcpServer {
   return {
@@ -64,7 +32,8 @@ const mockExternalOpener: ExternalOpener = {
 describe("McpOAuthService", () => {
   it("returns not_applicable for non-OAuth servers", async () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
-    const service = new McpOAuthService(createMemoryVaultAdapter(), mockFetch, mockExternalOpener);
+    const app = createMockApp();
+    const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
     const server = stdioServer();
 
     await expect(service.getAuthStatus(server)).resolves.toBe("not_applicable");
@@ -74,7 +43,8 @@ describe("McpOAuthService", () => {
 
   it("returns not_authenticated when OAuth server has no stored tokens", async () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
-    const service = new McpOAuthService(createMemoryVaultAdapter(), mockFetch, mockExternalOpener);
+    const app = createMockApp();
+    const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
 
     await expect(
       service.getAuthStatus(oauthServer("github", "https://mcp.example.com")),
@@ -83,8 +53,8 @@ describe("McpOAuthService", () => {
 
   it("returns expired when stored OAuth tokens are past expiresAt", async () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
-    const adapter = createMemoryVaultAdapter();
-    const store = new McpVaultAuthStore(adapter);
+    const app = createMockApp();
+    const store = new McpSecretAuthStore(app.secretStorage);
     await store.updateTokens(
       "github",
       {
@@ -93,7 +63,7 @@ describe("McpOAuthService", () => {
       },
       "https://mcp.example.com",
     );
-    const service = new McpOAuthService(adapter, mockFetch, mockExternalOpener);
+    const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
 
     await expect(
       service.getAuthStatus(oauthServer("github", "https://mcp.example.com")),
@@ -102,7 +72,8 @@ describe("McpOAuthService", () => {
 
   it("scopes MCP OAuth tokens by server URL through created auth providers", async () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
-    const service = new McpOAuthService(createMemoryVaultAdapter(), mockFetch, mockExternalOpener);
+    const app = createMockApp();
+    const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
     const originalProvider = service.createAuthProvider(
       oauthServer("github", "https://mcp.example.com"),
     );
@@ -131,8 +102,9 @@ describe("McpOAuthService", () => {
 
   it("uses the injected callback port for auth provider redirect URLs", () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
+    const app = createMockApp();
     const service = new McpOAuthService(
-      createMemoryVaultAdapter(),
+      app.secretStorage,
       mockFetch,
       mockExternalOpener,
       { callbackPort: 34567 },

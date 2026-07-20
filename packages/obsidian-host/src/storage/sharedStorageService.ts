@@ -23,11 +23,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export type SharedStorageNoticeMessages = {
   failedSaveTabLayout: string;
   failedSaveDeletedSessions: string;
+  failedSaveSyncedSettings: string;
 };
 
 const DEFAULT_STORAGE_NOTICES: SharedStorageNoticeMessages = {
   failedSaveTabLayout: "Failed to save tab layout",
   failedSaveDeletedSessions: "Failed to save deleted session list",
+  failedSaveSyncedSettings:
+    "Provider settings were saved on this device, but portable settings could not be written to the vault file.",
 };
 
 export class SharedStorageService implements SharedAppStorage {
@@ -48,14 +51,27 @@ export class SharedStorageService implements SharedAppStorage {
     this.notices = { ...DEFAULT_STORAGE_NOTICES, ...notices };
   }
 
-  async initialize(): Promise<{ pivi: Record<string, unknown> }> {
+  async initialize(): Promise<void> {
     await this.ensureDirectories();
-    const pivi = await this.piviSettings.load();
-    return { pivi };
+  }
+
+  async loadRawPiviSettings(): Promise<Record<string, unknown> | null> {
+    await this.ensureDirectories();
+    return this.piviSettings.loadRaw();
+  }
+
+  async saveRawPiviSettings(stored: Record<string, unknown>): Promise<void> {
+    await this.piviSettings.saveRaw(stored);
   }
 
   async savePiviSettings(settings: Record<string, unknown>): Promise<void> {
-    await this.piviSettings.save(settings as StoredPiviSettings);
+    try {
+      await this.piviSettings.save(settings as StoredPiviSettings);
+    } catch (error) {
+      logger.warn('failed to save synced settings', error);
+      new Notice(this.notices.failedSaveSyncedSettings);
+      throw error;
+    }
   }
 
   async setTabManagerState(state: AppTabManagerState): Promise<void> {

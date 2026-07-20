@@ -60,7 +60,7 @@ function createHarness() {
 }
 
 describe('createSettingsModelsPort provider removal', () => {
-  it('restores in-memory provider order when saving settings fails', async () => {
+  it('keeps in-memory provider order when synced save fails after local commit', async () => {
     const harness = createHarness();
     harness.saveSettings.mockRejectedValueOnce(new Error('save failed'));
 
@@ -68,7 +68,7 @@ describe('createSettingsModelsPort provider removal', () => {
       addedProviders: ['deepseek', 'anthropic'],
     })).rejects.toThrow('save failed');
 
-    expect(harness.settings.agentSettings.addedProviders).toEqual(['anthropic', 'deepseek']);
+    expect(harness.settings.agentSettings.addedProviders).toEqual(['deepseek', 'anthropic']);
     expect(harness.refreshModelPresentation).not.toHaveBeenCalled();
   });
 

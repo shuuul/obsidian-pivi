@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "儲存分頁配置失敗",
-    "failedSaveDeletedSessions": "儲存已刪除工作階段清單失敗"
+    "failedSaveDeletedSessions": "儲存已刪除工作階段清單失敗",
+    "failedSaveSyncedSettings": "提供者設定已儲存在此裝置上，但無法將可攜式設定寫入庫檔案。"
   }
 }

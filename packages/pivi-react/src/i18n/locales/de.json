@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "Tab-Layout konnte nicht gespeichert werden",
-    "failedSaveDeletedSessions": "Liste gelöschter Sitzungen konnte nicht gespeichert werden"
+    "failedSaveDeletedSessions": "Liste gelöschter Sitzungen konnte nicht gespeichert werden",
+    "failedSaveSyncedSettings": "Anbieter-Einstellungen wurden auf diesem Gerät gespeichert, aber portierbare Einstellungen konnten nicht in die Vault-Datei geschrieben werden."
   }
 }

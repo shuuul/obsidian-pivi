@@ -44,6 +44,7 @@ flowchart LR
 - Provider credential migration belongs in `pluginSettingsLoad.ts`, before workspace services or settings surfaces are created. Split-plan migration must be eager and idempotent, preserve an existing destination credential, and rewrite persisted model selections into the same provider namespace as the migrated OAuth credential.
 - Unload starts persistence for every mounted chat view before invalidating or disposing workspace services. Collect all persistence promises synchronously and settle them together so a slow or failing view cannot prevent the others from saving; disposal must reject queued subagent admissions before provider/MCP/session resources are released.
 - **Absolute external paths are device-local.** `deviceLocalExternalContextStore.ts` uses Obsidian's public vault-scoped `App.loadLocalStorage` / `saveLocalStorage` API. Settings load moves legacy synced roots into this cache before `.pivi/settings.json` is rewritten; the settings codec overlays them into the in-memory tool settings and strips them from every vault settings save. Session-store startup similarly migrates legacy JSONL paths before summaries are loaded. Non-parse migration failures abort initialization; a malformed session is warned and skipped so it cannot prevent the rest of the workspace from starting, then fails explicitly if opened.
+- **Provider registry and model preferences are device-local.** `deviceLocalProviderStore.ts` persists `pivi.providers.v1` through the same public local-storage API. Startup migration (`deviceLocalProviderMigration.ts`) owns first-run cutover in `pluginSettingsLoad.ts` before workspace construction; steady-state saves go through `createPiviSettingsCodec`, which extracts and commits local provider state first, then strips provider/model/webSearchTools fields from `.pivi/settings.json`. A synced save failure after a successful local commit retains local authority and surfaces a localized Notice (`host.failedSaveSyncedSettings`). Production `createSharedStorage` always injects the provider store; bare `createPiviSettingsCodec()` without a provider store remains valid for focused external-context tests only. Custom provider header values must use SecretStorage-first settings-port writes; never persist header maps through `patchCustomProvider` or synced settings JSON.
 
 ## Key files
 
@@ -58,8 +59,12 @@ flowchart LR
 | `openStyleSettings.ts` | Style Settings tab open or marketplace fallback |
 | `piviViewActivation.ts` | Activate/open Pivi leaves and create tabs without stacking a blank cold-open tab |
 | `startupPerformance.ts` | Records settings and workspace initialization performance marks without changing lifecycle ordering |
-| `serviceGraph.ts` | Builds the Pi workspace from an explicit narrow app host; injects the device-local external-context store; asserts bundled React runtime |
+| `serviceGraph.ts` | Builds the Pi workspace from an explicit narrow app host; injects device-local external-context and provider stores into the settings codec; asserts bundled React runtime |
 | `deviceLocalExternalContextStore.ts` | Vault-scoped device-local cache for external-read roots, session selections, and per-turn overlays |
+| `deviceLocalProviderStore.ts` | Vault-scoped device-local provider registry (`pivi.providers.v1`) |
+| `settings/deviceLocalProviderMigration.ts` | Startup cutover coordinator: legacy synced fields → local state + secrets → strip |
+| `settings/piviSettingsCodec.ts` | Steady-state overlay/extract/strip for external roots and provider state |
+| `deviceLocalProviderStore.ts` | Vault-scoped device-local cache for provider registry, model preferences, and web provider order |
 | `ui/obsidianPresentationPlatform.ts` | Obsidian implementation of localized host terminology plus the product React icon/tooltip seam |
 | `ui/obsidianSettingsIntegration.ts` | Obsidian tool-row and settings-integration descriptors injected into generic product React settings |
 | `ui/PiviViewHost.ts` | Thin Obsidian chat view lifecycle; mounts React chat; receives `getWorkspace` from registration for `createChatUiPorts` |

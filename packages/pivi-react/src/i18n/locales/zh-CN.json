@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "保存标签页布局失败",
-    "failedSaveDeletedSessions": "保存已删除会话列表失败"
+    "failedSaveDeletedSessions": "保存已删除会话列表失败",
+    "failedSaveSyncedSettings": "提供商设置已保存在此设备上，但无法将可移植设置写入库文件。"
   }
 }

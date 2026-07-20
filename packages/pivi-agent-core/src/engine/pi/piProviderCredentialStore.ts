@@ -230,7 +230,13 @@ export function migrateSplitSubscriptionOAuthCredentials(
     if (hadLegacyOAuth && isOAuthCredential(subscriptionCredential)) {
       migratedPiProviderIds.push(piProviderId);
     }
-    if (isOAuthCredential(subscriptionCredential) && !nextAdded.includes(subscriptionProviderId)) {
+    // Expand membership only when the API-provider slot is still registered.
+    // Orphan subscription OAuth must never resurrect a removed provider.
+    if (
+      isOAuthCredential(subscriptionCredential)
+      && !nextAdded.includes(subscriptionProviderId)
+      && nextAdded.includes(piProviderId)
+    ) {
       nextAdded = [...nextAdded, subscriptionProviderId];
       changed = true;
     }

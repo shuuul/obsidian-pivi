@@ -828,6 +828,7 @@
   },
   "host": {
     "failedSaveTabLayout": "Failed to save tab layout",
-    "failedSaveDeletedSessions": "Failed to save deleted session list"
+    "failedSaveDeletedSessions": "Failed to save deleted session list",
+    "failedSaveSyncedSettings": "Provider settings were saved on this device, but portable settings could not be written to the vault file."
   }
 }

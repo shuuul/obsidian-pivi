@@ -8,8 +8,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 ## Active specs
 
-| Spec | Status | Outcome |
-|---|---|---|
+_None._
 
 ## Archived specs
 
@@ -35,6 +34,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [018-vault-context-compaction-redesign.md](archive/018-vault-context-compaction-redesign.md) | 2026-07-17 | Fixed-policy two-pass vault compaction over Pi-native context, cut-point, message, and session primitives. |
 | [019-live-session-source-mutation-diagnostic.md](archive/019-live-session-source-mutation-diagnostic.md) | 2026-07-19 | Diagnosed an example-vault stale-write guard as a real JSONL inode/content rollback, with the replacing process left unproven. |
 | [020-durable-ai-title-persistence.md](archive/020-durable-ai-title-persistence.md) | 2026-07-19 | Persistence-first model-generated titles with fallback preservation and visible write failures. |
+| [021-device-local-provider-state.md](archive/021-device-local-provider-state.md) | 2026-07-20 | Device-local provider registry (`pivi.providers.v1`), single-phase cutover, SecretStorage-backed headers and MCP OAuth tokens, and stripped synced provider/model fields. |
 
 ## Numbering and files
 

@@ -5,6 +5,7 @@ export * from './createSubagentTool';
 export * from './deviceVerificationUri';
 export * from './grokBuildProvider';
 export * from './installPiCustomProviders';
+export * from './membershipAwareCredentialMigration';
 export * from './piAgentEventAdapter';
 export * from './piAiModels';
 export * from './piAuxQueryRunner';

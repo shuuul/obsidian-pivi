@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "Échec de l’enregistrement de la disposition des onglets",
-    "failedSaveDeletedSessions": "Échec de l’enregistrement de la liste des sessions supprimées"
+    "failedSaveDeletedSessions": "Échec de l’enregistrement de la liste des sessions supprimées",
+    "failedSaveSyncedSettings": "Les paramètres du fournisseur ont été enregistrés sur cet appareil, mais les paramètres portables n’ont pas pu être écrits dans le fichier du coffre."
   }
 }

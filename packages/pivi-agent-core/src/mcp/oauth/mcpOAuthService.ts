@@ -1,7 +1,7 @@
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
 
-import type { ExternalOpener } from "../../ports";
-import type { AppMcpOAuth, FileStore, McpTransportFetch } from "../ports";
+import type { ExternalOpener, SyncSecretStore } from "../../ports";
+import type { AppMcpOAuth, McpTransportFetch } from "../ports";
 import type {
   ManagedMcpServer,
   McpAuthStatus,
@@ -13,23 +13,24 @@ import {
   McpAuthFlow,
 } from "./mcpAuthFlow";
 import { McpOAuthProvider } from "./mcpOAuthProvider";
-import { McpVaultAuthStore } from "./mcpVaultAuthStore";
+import { McpSecretAuthStore } from "./mcpSecretAuthStore";
+import type { McpAuthEntryStore } from "./mcpVaultAuthStore";
 
 export interface McpOAuthServiceOptions {
   callbackPort?: number;
 }
 
 export class McpOAuthService implements AppMcpOAuth {
-  private readonly store: McpVaultAuthStore;
+  private readonly store: McpAuthEntryStore;
   private readonly authFlow: McpAuthFlow;
 
   constructor(
-    adapter: FileStore,
+    secretStorage: SyncSecretStore,
     private readonly fetch: McpTransportFetch,
     private readonly externalOpener: ExternalOpener,
     options: McpOAuthServiceOptions = {},
   ) {
-    this.store = new McpVaultAuthStore(adapter);
+    this.store = new McpSecretAuthStore(secretStorage);
     this.authFlow = new McpAuthFlow(options.callbackPort);
   }
 

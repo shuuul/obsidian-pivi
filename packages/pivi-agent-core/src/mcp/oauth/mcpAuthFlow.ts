@@ -11,7 +11,7 @@ import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../types';
 import { getMcpServerUrl } from '../types';
 import { McpCallbackServer } from './mcpCallbackServer';
 import { McpOAuthProvider } from './mcpOAuthProvider';
-import type { McpVaultAuthStore } from './mcpVaultAuthStore';
+import type { McpAuthEntryStore } from './mcpVaultAuthStore';
 import { openAuthUrl } from './openAuthUrl';
 
 const logger = new PluginLogger('McpAuthFlow');
@@ -51,7 +51,7 @@ export interface StartedMcpAuth {
 
 export async function getAuthStatusForServer(
   serverName: string,
-  store: McpVaultAuthStore,
+  store: McpAuthEntryStore,
 ): Promise<McpAuthStatus> {
   const hasTokens = await store.hasStoredTokens(serverName);
   if (!hasTokens) {
@@ -79,7 +79,7 @@ export class McpAuthFlow {
 
   async startAuth(
     server: ManagedMcpServer,
-    store: McpVaultAuthStore,
+    store: McpAuthEntryStore,
     fetch: McpTransportFetch,
     operationId: OperationId = Symbol(server.name),
   ): Promise<StartedMcpAuth> {
@@ -190,7 +190,7 @@ export class McpAuthFlow {
 
   async authenticate(
     server: ManagedMcpServer,
-    store: McpVaultAuthStore,
+    store: McpAuthEntryStore,
     fetch: McpTransportFetch,
     externalOpener: ExternalOpener,
   ): Promise<McpAuthStatus> {
@@ -249,7 +249,7 @@ export class McpAuthFlow {
     }
   }
 
-  async removeAuth(serverName: string, store: McpVaultAuthStore): Promise<void> {
+  async removeAuth(serverName: string, store: McpAuthEntryStore): Promise<void> {
     const oauthState = await store.getOAuthState(serverName);
     if (oauthState) {
       this.callbackServer.cancelPendingCallback(oauthState);
@@ -293,7 +293,7 @@ export class McpAuthFlow {
   private async clearMatchingOAuthState(
     serverName: string,
     oauthState: string,
-    store: McpVaultAuthStore,
+    store: McpAuthEntryStore,
   ): Promise<void> {
     if (await store.getOAuthState(serverName) === oauthState) {
       await store.clearOAuthState(serverName);

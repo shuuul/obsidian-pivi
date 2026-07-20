@@ -3,7 +3,20 @@ import {
   PiviSettingsStorage,
 } from '@pivi/obsidian-host/settings/piviSettingsStorage';
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
+import type { DeviceLocalProviderStateV1 } from "@pivi/pivi-agent-core/foundation/deviceLocalProviderState";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
+
+function createDeviceLocalProviderStore(initialState?: DeviceLocalProviderStateV1 | null) {
+  let state: DeviceLocalProviderStateV1 | null = initialState ?? null;
+  return {
+    loadInitialized: (): DeviceLocalProviderStateV1 | null => state,
+    save: (next: DeviceLocalProviderStateV1) => {
+      state = { ...next, version: 1, initialized: true };
+    },
+    isInitialized: () => state?.initialized === true,
+    getState: () => state,
+  };
+}
 
 function createMemoryAdapter(initialContent?: string): Pick<
   FileStore,
@@ -129,9 +142,9 @@ describe("PiviSettingsStorage", () => {
 
     const settings = await storage.load();
 
-    expect(settings.model).toBe("opencode-go/deepseek-v4-flash");
+    expect(settings.model).toBe("deepseek/deepseek-chat");
     expect(settings.agentSettings.visibleModels).toEqual([
-      "opencode-go/deepseek-v4-flash",
+      "deepseek/deepseek-chat",
     ]);
     expect(adapter.write).toHaveBeenCalledWith(
       PIVI_SETTINGS_PATH,
@@ -261,5 +274,101 @@ describe("PiviSettingsStorage", () => {
     settings.userName = 'updated';
     await storage.save(settings);
     expect(localDirectories).toEqual(['/device/root', '/synced/legacy']);
+  });
+
+  it('moves provider state into device-local storage and strips it from synced settings', async () => {
+    const localStore = createDeviceLocalProviderStore({
+      version: 1,
+      initialized: true,
+      providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
+      modelPreferences: {
+        visibleModels: ['deepseek/deepseek-chat'],
+        activeModel: 'deepseek/deepseek-chat',
+        titleGenerationModel: '',
+        customContextLimits: {},
+      },
+      webSearchTools: {
+        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+        disabledProviders: [],
+      },
+    });
+    const adapter = createMemoryAdapter(JSON.stringify({
+      model: 'openai/gpt-4.1',
+      agentSettings: {
+        addedProviders: ['openai'],
+        visibleModels: ['openai/gpt-4.1'],
+        webSearchTools: {
+          providerOrder: ['exa'],
+          disabledProviders: [],
+        },
+      },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(undefined, localStore),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.model).toBe('deepseek/deepseek-chat');
+    expect(settings.agentSettings.addedProviders).toEqual(['deepseek']);
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
+      model?: string;
+      agentSettings?: Record<string, unknown>;
+    };
+    expect(persisted).not.toHaveProperty('model');
+    expect(persisted.agentSettings).not.toHaveProperty('addedProviders');
+    expect(persisted.agentSettings).not.toHaveProperty('webSearchTools');
+
+    settings.agentSettings.webSearchTools = {
+      providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
+      disabledProviders: ['brave'],
+    };
+    await storage.save(settings);
+    expect(localStore.getState()?.webSearchTools).toEqual({
+      providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
+      disabledProviders: ['brave'],
+    });
+    const saved = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
+      agentSettings?: Record<string, unknown>;
+    };
+    expect(saved.agentSettings).not.toHaveProperty('webSearchTools');
+  });
+
+  it('keeps committed device-local provider state when synced save fails', async () => {
+    const localStore = createDeviceLocalProviderStore({
+      version: 1,
+      initialized: true,
+      providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
+      modelPreferences: {
+        visibleModels: ['deepseek/deepseek-chat'],
+        activeModel: 'deepseek/deepseek-chat',
+        titleGenerationModel: '',
+        customContextLimits: {},
+      },
+      webSearchTools: {
+        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+        disabledProviders: [],
+      },
+    });
+    const adapter = createMemoryAdapter(JSON.stringify({ userName: 'Alice' }));
+    let writeCount = 0;
+    adapter.write = jest.fn(async (_path: string, nextContent: string) => {
+      writeCount += 1;
+      if (writeCount > 1) {
+        throw new Error('synced write failed');
+      }
+      adapter.writes.push(nextContent);
+    });
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(undefined, localStore),
+    );
+    const settings = await storage.load();
+    settings.agentSettings.addedProviders = ['deepseek', 'openai'];
+
+    await expect(storage.save(settings)).rejects.toThrow('synced write failed');
+    expect(localStore.getState()?.providers.map((provider) => provider.id))
+      .toEqual(['deepseek', 'openai']);
   });
 });

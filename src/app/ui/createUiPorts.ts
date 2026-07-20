@@ -420,15 +420,14 @@ export function createSettingsUiPorts(
           });
         },
         async saveSettings(patch) {
-          const current = resolveWebSearchToolsSettings(host.settings.agentSettings.webSearchTools);
-          const next = resolveWebSearchToolsSettings({ ...current, ...patch });
+          const next = resolveWebSearchToolsSettings({
+            ...resolveWebSearchToolsSettings(host.settings.agentSettings.webSearchTools),
+            ...patch,
+          });
           host.settings.agentSettings.webSearchTools = next;
-          try {
-            await host.saveSettings();
-          } catch (error) {
-            host.settings.agentSettings.webSearchTools = current;
-            throw error;
-          }
+          // webSearchTools lives in device-local provider state and commits before
+          // the vault write; keep runtime aligned with local authority on failure.
+          await host.saveSettings();
         },
         writeCredential(providerId, key) {
           if (!ws.webSearchCredentialStore) throw new Error('Web provider credential storage is unavailable.');

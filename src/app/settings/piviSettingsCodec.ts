@@ -11,6 +11,12 @@ import {
   normalizePiAgentSettingsRecord,
   updatePiAgentSettings,
 } from "@pivi/pivi-agent-core/foundation/agentSettings";
+import type { DeviceLocalProviderStateV1 } from "@pivi/pivi-agent-core/foundation/deviceLocalProviderState";
+import {
+  extractDeviceLocalProviderState,
+  overlayDeviceLocalProviderState,
+  stripLocalizedFieldsFromRuntimeSettings,
+} from "@pivi/pivi-agent-core/foundation/deviceLocalProviderState";
 import {
   type AgentRuntimeSettings,
   CHAT_VIEW_PLACEMENTS,
@@ -195,6 +201,40 @@ export interface DeviceLocalExternalReadDirectories {
   setExternalReadDirectories(paths: readonly string[]): void;
 }
 
+export interface DeviceLocalProviderSettings {
+  loadInitialized(): DeviceLocalProviderStateV1 | null;
+  save(state: DeviceLocalProviderStateV1): void;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasSyncedLocalizedProviderFields(stored: Record<string, unknown>): boolean {
+  if (Object.hasOwn(stored, 'model') || Object.hasOwn(stored, 'titleGenerationModel')) {
+    return true;
+  }
+  if (Object.hasOwn(stored, 'customContextLimits')) {
+    const limits = stored.customContextLimits;
+    if (isRecord(limits) && Object.keys(limits).length > 0) {
+      return true;
+    }
+  }
+  const agentSettings = stored.agentSettings;
+  if (!isRecord(agentSettings)) {
+    return false;
+  }
+  const localizedKeys = [
+    'addedProviders',
+    'disabledProviders',
+    'customProviders',
+    'visibleModels',
+    'lastModel',
+    'webSearchTools',
+  ] as const;
+  return localizedKeys.some((key) => Object.hasOwn(agentSettings, key));
+}
+
 function setExternalReadDirectories(
   settings: PiviSettings,
   directories: readonly string[],
@@ -234,6 +274,7 @@ function hasSyncedExternalReadDirectories(stored: Record<string, unknown>): bool
 
 export function createPiviSettingsCodec(
   deviceLocalExternalContexts?: DeviceLocalExternalReadDirectories,
+  deviceLocalProviders?: DeviceLocalProviderSettings,
 ): PiviSettingsCodec {
   return {
     getDefaults() {
@@ -247,40 +288,58 @@ export function createPiviSettingsCodec(
           deviceLocalExternalContexts.getExternalReadDirectories(),
         );
       }
+      const initializedProviders = deviceLocalProviders?.loadInitialized();
+      if (initializedProviders) {
+        overlayDeviceLocalProviderState(settings, initializedProviders);
+      }
       return settings;
     },
     normalize(stored) {
       const result = normalizeStoredPiviSettings(stored);
-      if (!deviceLocalExternalContexts) {
-        return result;
+      let changed = result.changed;
+      if (deviceLocalExternalContexts) {
+        const syncedDirectories = getObsidianToolsSettingsFromBag(result.settings)
+          .externalReadDirectories;
+        const deviceDirectories = deviceLocalExternalContexts.getExternalReadDirectories();
+        const mergedDirectories = normalizeExternalReadDirectories([
+          ...deviceDirectories,
+          ...syncedDirectories,
+        ]);
+        if (JSON.stringify(deviceDirectories) !== JSON.stringify(mergedDirectories)) {
+          deviceLocalExternalContexts.setExternalReadDirectories(mergedDirectories);
+        }
+        setExternalReadDirectories(result.settings, mergedDirectories);
+        changed = changed || hasSyncedExternalReadDirectories(stored);
       }
-      const syncedDirectories = getObsidianToolsSettingsFromBag(result.settings)
-        .externalReadDirectories;
-      const deviceDirectories = deviceLocalExternalContexts.getExternalReadDirectories();
-      const mergedDirectories = normalizeExternalReadDirectories([
-        ...deviceDirectories,
-        ...syncedDirectories,
-      ]);
-      if (JSON.stringify(deviceDirectories) !== JSON.stringify(mergedDirectories)) {
-        deviceLocalExternalContexts.setExternalReadDirectories(mergedDirectories);
+      const initializedProviders = deviceLocalProviders?.loadInitialized();
+      if (initializedProviders) {
+        overlayDeviceLocalProviderState(result.settings, initializedProviders);
+        changed = changed || hasSyncedLocalizedProviderFields(stored);
       }
-      setExternalReadDirectories(result.settings, mergedDirectories);
       return {
         settings: result.settings,
-        changed: result.changed || hasSyncedExternalReadDirectories(stored),
+        changed,
       };
     },
     updateAgentSettings(settings, updates) {
       updatePiAgentSettings(settings, updates);
     },
     prepareForSave(settings) {
-      if (!deviceLocalExternalContexts) {
-        return settings;
+      let nextSettings: PiviSettings | ReturnType<typeof stripLocalizedFieldsFromRuntimeSettings> =
+        settings;
+      if (deviceLocalProviders) {
+        const localState = extractDeviceLocalProviderState(settings);
+        deviceLocalProviders.save(localState);
+        nextSettings = stripLocalizedFieldsFromRuntimeSettings(settings);
       }
+      if (!deviceLocalExternalContexts) {
+        return nextSettings;
+      }
+      const withTools = nextSettings as PiviSettings;
       deviceLocalExternalContexts.setExternalReadDirectories(
-        getObsidianToolsSettingsFromBag(settings).externalReadDirectories,
+        getObsidianToolsSettingsFromBag(withTools).externalReadDirectories,
       );
-      return stripDeviceLocalSettings(settings);
+      return stripDeviceLocalSettings(withTools);
     },
   };
 }

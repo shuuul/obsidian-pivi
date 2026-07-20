@@ -1,4 +1,5 @@
 const mockSharedStorageInitialize = jest.fn();
+const mockLoadRawPiviSettings = jest.fn();
 const mockGetTabManagerState = jest.fn();
 const mockSavePiviSettings = jest.fn();
 const mockGetAdapter = jest.fn();
@@ -17,6 +18,8 @@ jest.mock("@pivi/obsidian-host", () => {
     ...actual,
   SharedStorageService: jest.fn().mockImplementation(() => ({
     initialize: mockSharedStorageInitialize,
+    loadRawPiviSettings: mockLoadRawPiviSettings,
+    saveRawPiviSettings: jest.fn().mockResolvedValue(undefined),
     getTabManagerState: mockGetTabManagerState,
     getDeletedSessionFiles: mockGetDeletedSessionFiles,
     savePiviSettings: mockSavePiviSettings,
@@ -113,6 +116,7 @@ describe("PiviPlugin lifecycle", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSharedStorageInitialize.mockResolvedValue({ pivi: {} });
+    mockLoadRawPiviSettings.mockResolvedValue(null);
     mockGetTabManagerState.mockResolvedValue(null);
     mockGetDeletedSessionFiles.mockResolvedValue([]);
     mockListSessions.mockResolvedValue([]);
@@ -205,8 +209,8 @@ describe("PiviPlugin lifecycle", () => {
 
   describe("loadSettings", () => {
     it("merges stored settings with defaults", async () => {
-      mockSharedStorageInitialize.mockResolvedValue({
-        pivi: { userName: "Ada" },
+      mockLoadRawPiviSettings.mockResolvedValue({
+        userName: "Ada",
       });
 
       const plugin = createPlugin();

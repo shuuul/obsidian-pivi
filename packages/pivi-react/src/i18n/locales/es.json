@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "Error al guardar el diseño de pestañas",
-    "failedSaveDeletedSessions": "Error al guardar la lista de sesiones eliminadas"
+    "failedSaveDeletedSessions": "Error al guardar la lista de sesiones eliminadas",
+    "failedSaveSyncedSettings": "La configuración del proveedor se guardó en este dispositivo, pero no se pudo escribir la configuración portable en el archivo del vault."
   }
 }

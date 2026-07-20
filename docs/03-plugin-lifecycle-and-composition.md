@@ -61,6 +61,8 @@ The adapter restores `.pivi/tab-manager-state.json` or creates a blank tab. Each
 
 Settings mount independently through `PiviSettingTabHost` and `SettingsRoot`. On Obsidian 1.13 or newer, the host exposes one localized custom setting definition so settings search can index the React page; `display()` remains the Obsidian 1.12 fallback. Both routes share the same generation guard and disposal path. The service graph does not contain a settings renderer.
 
+`loadPluginSettings()` runs device-local provider migration before session-store construction or workspace services. The coordinator reads raw `.pivi/settings.json`, migrates legacy provider fields into `pivi.providers.v1` and required secrets, overlays runtime settings, and strips localized fields from the synced file only after local state and secret writes succeed. A synced save failure after a successful local commit keeps the local registry authoritative and shows a localized Notice.
+
 ## Runtime creation and refresh
 
 Blank and cold tabs do not create `PiChatService`. `src/ui/chat/tabs/tabRuntime.ts` is the sole UI factory call and uses `ports.runtime.createChatService()` on the first turn or another operation that requires an active runtime.

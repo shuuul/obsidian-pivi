@@ -14,6 +14,7 @@
     "./engine/pi/createSubagentTool": "./src/engine/pi/createSubagentTool.ts",
     "./engine/pi/grokBuildProvider": "./src/engine/pi/grokBuildProvider.ts",
     "./engine/pi/installPiCustomProviders": "./src/engine/pi/installPiCustomProviders.ts",
+    "./engine/pi/membershipAwareCredentialMigration": "./src/engine/pi/membershipAwareCredentialMigration.ts",
     "./engine/pi/piAgentEventAdapter": "./src/engine/pi/piAgentEventAdapter.ts",
     "./engine/pi/piAiModels": "./src/engine/pi/piAiModels.ts",
     "./engine/pi/piAuthInteraction": "./src/engine/pi/piAuthInteraction.ts",

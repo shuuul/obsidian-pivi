@@ -25,12 +25,13 @@ import {
 import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 
 describe('customProviders foundation', () => {
-  it('creates fixed ids for local presets and unique ids for multi-instance kinds', () => {
+  it('creates fixed ids for local presets and collision-resistant ids for multi-instance kinds', () => {
     expect(createCustomProviderId('ollama', [])).toBe('ollama');
-    expect(createCustomProviderId('openai-compatible', [])).toBe('custom-openai-compatible');
-    expect(createCustomProviderId('openai-compatible', ['custom-openai-compatible'])).toBe(
-      'custom-openai-compatible-2',
-    );
+    const first = createCustomProviderId('openai-compatible', []);
+    expect(first).toMatch(/^custom-openai-compatible-[0-9a-f-]{36}$/);
+    const second = createCustomProviderId('openai-compatible', [first]);
+    expect(second).toMatch(/^custom-openai-compatible-[0-9a-f-]{36}$/);
+    expect(second).not.toBe(first);
   });
 
   it('creates defaults for ollama', () => {

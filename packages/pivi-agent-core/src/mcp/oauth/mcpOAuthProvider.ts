@@ -8,7 +8,7 @@ import type {
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 
 import type { McpOAuthConfig } from '../types';
-import type { McpVaultAuthStore, StoredClientInfo, StoredTokens } from './mcpVaultAuthStore';
+import type { McpAuthEntryStore, StoredClientInfo, StoredTokens } from './mcpVaultAuthStore';
 
 export const DEFAULT_OAUTH_CALLBACK_PORT = 19876;
 export const OAUTH_CALLBACK_PATH = '/callback';
@@ -29,7 +29,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
     private readonly serverName: string,
     private readonly serverUrl: string,
     private readonly config: McpOAuthConfig,
-    private readonly store: McpVaultAuthStore,
+    private readonly store: McpAuthEntryStore,
     private readonly callbacks: McpOAuthCallbacks,
     private readonly callbackPort: number,
   ) {}

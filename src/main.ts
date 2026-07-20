@@ -104,13 +104,16 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   private readonly noteToolbarSetupQueue: NoteToolbarSetupQueue = { active: null };
   private readonly workspaceCommandRegistry = new WorkspaceCommandRegistry(this);
   private chatPerfController: ChatPerfController = NOOP_CHAT_PERF_CONTROLLER;
-  private readonly uiFacades = createPiUiFacades((providerId) => {
-    const credential = this.piWorkspace?.credentialStore?.readSync(providerId);
-    if (!credential || credential.type !== "api_key" || !("key" in credential)) {
-      return undefined;
-    }
-    return typeof credential.key === "string" ? credential.key : undefined;
-  });
+  private readonly uiFacades = createPiUiFacades(
+    (providerId) => {
+      const credential = this.piWorkspace?.credentialStore?.readSync(providerId);
+      if (!credential || credential.type !== "api_key" || !("key" in credential)) {
+        return undefined;
+      }
+      return typeof credential.key === "string" ? credential.key : undefined;
+    },
+    this.app.secretStorage,
+  );
 
   getVaultPath(): string | null {
     return getVaultPath(this.app);

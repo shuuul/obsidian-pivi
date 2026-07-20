@@ -2,6 +2,7 @@ import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
 
 import { resolveProviderAuth } from '../../auth/resolveProviderAuth';
 import { getPiAgentSettings } from '../../foundation/agentSettings';
+import { DEFAULT_MODEL_KEY } from '../../foundation/settingsDefaults';
 import { isValidModelKey } from '../../foundation/settingsModelKey';
 import type { ModelAuthHost } from '../../ports';
 import { piAiModels } from './piAiModels';
@@ -11,7 +12,7 @@ import {
 } from './piModelRegistry';
 import type { PiRuntimeHost } from './piRuntimeHost';
 
-const PI_FALLBACK_MODEL_KEY = 'opencode-go/deepseek-v4-flash';
+const PI_FALLBACK_MODEL_KEY = DEFAULT_MODEL_KEY;
 
 export function resolvePiModel(plugin: PiRuntimeHost, modelKey?: string): PiResolvedModel | null {
   const preferredKey = modelKey?.trim() || plugin.settings.model;

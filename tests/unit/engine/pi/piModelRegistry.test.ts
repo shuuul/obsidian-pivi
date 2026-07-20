@@ -258,11 +258,11 @@ describe('PiModelRegistry (core)', () => {
 
       expect(options).toEqual([
         {
-          value: 'opencode-go/deepseek-v4-flash',
-          label: 'DeepSeek V4 Flash',
+          value: 'deepseek/deepseek-chat',
+          label: 'DeepSeek Chat',
           description: 'Default model (no models in pool)',
-          group: 'OpenCode Go',
-          providerLogoSlug: 'opencode',
+          group: 'DeepSeek',
+          providerLogoSlug: 'deepseek',
           fallbackIcon: 'search',
         },
       ]);
@@ -276,7 +276,7 @@ describe('PiModelRegistry (core)', () => {
 
       expect(options).toHaveLength(1);
       expect(options[0]?.value).toBe('custom/provider-model');
-      expect(options[0]?.label).toBe('DeepSeek V4 Flash');
+      expect(options[0]?.label).toBe('DeepSeek Chat');
       expect(options[0]?.description).toBe('Default model (no models in pool)');
     });
 

@@ -10,6 +10,7 @@ import type {
 import { assertBundledReactRuntime } from "@pivi/pivi-react";
 
 import type { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
+import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import { t } from "@/app/i18n";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
@@ -23,9 +24,13 @@ export function createSharedStorage(
   plugin: PiviPlugin,
   externalContexts: ObsidianDeviceLocalExternalContextStore,
 ): SharedStorageService {
-  return new SharedStorageService(plugin, createPiviSettingsCodec(externalContexts), {
+  return new SharedStorageService(plugin, createPiviSettingsCodec(
+    externalContexts,
+    new ObsidianDeviceLocalProviderStore(plugin.app),
+  ), {
     failedSaveTabLayout: t("host.failedSaveTabLayout"),
     failedSaveDeletedSessions: t("host.failedSaveDeletedSessions"),
+    failedSaveSyncedSettings: t("host.failedSaveSyncedSettings"),
   });
 }
 

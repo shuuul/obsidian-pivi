@@ -836,6 +836,7 @@
   },
   "host": {
     "failedSaveTabLayout": "탭 레이아웃을 저장하지 못했습니다",
-    "failedSaveDeletedSessions": "삭제된 세션 목록을 저장하지 못했습니다"
+    "failedSaveDeletedSessions": "삭제된 세션 목록을 저장하지 못했습니다",
+    "failedSaveSyncedSettings": "프로바이더 설정은 이 기기에 저장되었지만, 휴대용 설정을 보관소 파일에 쓸 수 없었습니다."
   }
 }

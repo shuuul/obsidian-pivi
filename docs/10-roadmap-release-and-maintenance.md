@@ -13,6 +13,10 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
+### Recently completed
+
+- **Device-local provider registry cutover** (spec `021`): provider membership, custom endpoints, model preferences, and `webSearchTools` order/disabled state now live in vault-scoped local storage (`pivi.providers.v1`) instead of synced `.pivi/settings.json`. Startup migration is single-phase and idempotent; credentials and custom headers migrate to `SecretStorage`; MCP OAuth `AuthEntry` payloads migrate out of plaintext `.pivi/mcp-oauth/` into `SecretStorage`. **Accepted limitation:** a device that was offline during cutover and later opens an already-stripped synced file seeds `deepseek` only and must re-add other providers locally; there is no automatic cross-device provider recovery.
+
 ### Next
 
 - Make session persistence resilient to cloud-file replacement, starting with iCloud Drive: keep a device-local write-ahead journal, recover rollback/divergence into an explicit recovered session instead of overwriting either source, and move rebuildable JSONL sidecar indexes out of the synced vault. Preserve the current stale-write guard. Define compatibility as no silent overwrite and no loss of a locally completed turn; simultaneous multi-device writers may still produce an explicit fork rather than one fabricated linear history. See the [example-vault diagnostic](../specs/archive/019-live-session-source-mutation-diagnostic.md).

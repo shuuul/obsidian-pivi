@@ -8,6 +8,7 @@ import {
   getProviderLogoSlug,
   getProviderLogoSlugFromModelValue,
 } from '../../foundation/providerLogos';
+import { DEFAULT_MODEL_KEY } from '../../foundation/settingsDefaults';
 import { formatContextLimit } from '../../foundation/settingsEnv';
 
 /** Model shape from the pi-ai registry and warm cache. */
@@ -40,9 +41,9 @@ export interface BuildPiModelOptionsInput {
   defaultModelKey?: string;
 }
 
-const DEFAULT_PI_MODEL_KEY = 'opencode-go/deepseek-v4-flash';
-const DEFAULT_PI_MODEL_LABEL = 'DeepSeek V4 Flash';
-const DEFAULT_PI_MODEL_PROVIDER = 'opencode-go';
+const DEFAULT_PI_MODEL_KEY = DEFAULT_MODEL_KEY;
+const DEFAULT_PI_MODEL_LABEL = 'DeepSeek Chat';
+const DEFAULT_PI_MODEL_PROVIDER = 'deepseek';
 
 function formatPiModelDescription(model: PiCachedModel): string {
   return `${model.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(model.contextWindow)})`;

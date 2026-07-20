@@ -135,15 +135,11 @@ export function createCustomProviderId(kind: CustomProviderKind, existingIds: re
   }
 
   const used = new Set(existingIds);
-  const base = `custom-${kind}`;
-  if (!used.has(base)) {
-    return base;
+  let candidate = `custom-${kind}-${crypto.randomUUID()}`;
+  while (used.has(candidate)) {
+    candidate = `custom-${kind}-${crypto.randomUUID()}`;
   }
-  let index = 2;
-  while (used.has(`${base}-${index}`)) {
-    index += 1;
-  }
-  return `${base}-${index}`;
+  return candidate;
 }
 
 export function createDefaultCustomProviderConfig(

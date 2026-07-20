@@ -14,6 +14,8 @@ export interface MockPiviPluginStub {
     setTabManagerState: jest.Mock;
     getAdapter: jest.Mock;
     initialize: jest.Mock;
+    loadRawPiviSettings: jest.Mock;
+    saveRawPiviSettings: jest.Mock;
   };
   sessions: OpenSessionState[];
   persistTabManagerState: jest.Mock;
@@ -44,7 +46,9 @@ export function createMockPiviPluginStub(
     getTabManagerState: jest.fn().mockResolvedValue(null),
     setTabManagerState: jest.fn().mockResolvedValue(undefined),
     getAdapter: jest.fn().mockReturnValue({}),
-    initialize: jest.fn().mockResolvedValue({ pivi: settings }),
+    initialize: jest.fn().mockResolvedValue(undefined),
+    loadRawPiviSettings: jest.fn().mockResolvedValue(null),
+    saveRawPiviSettings: jest.fn().mockResolvedValue(undefined),
   };
 
   const stub: MockPiviPluginStub = {

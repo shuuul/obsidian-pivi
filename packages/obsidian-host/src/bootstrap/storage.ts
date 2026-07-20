@@ -10,7 +10,9 @@ import type { AppTabManagerState } from "./types";
  * product services.
  */
 export interface SharedAppStorage {
-  initialize(): Promise<{ pivi: Record<string, unknown> }>;
+  initialize(): Promise<void>;
+  loadRawPiviSettings(): Promise<Record<string, unknown> | null>;
+  saveRawPiviSettings(stored: Record<string, unknown>): Promise<void>;
   savePiviSettings(settings: Record<string, unknown>): Promise<void>;
   setTabManagerState(state: AppTabManagerState): Promise<void>;
   getTabManagerState(): Promise<AppTabManagerState | null>;
