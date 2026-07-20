@@ -75,7 +75,7 @@
     "@earendil-works/pi-coding-agent": "^0.80.10",
     "@lobehub/icons-static-svg": "^1.93.0",
     "@modelcontextprotocol/sdk": "~1.29.0",
-    "@tanstack/react-virtual": "^3.14.6",
+    "@tanstack/react-virtual": "^3.14.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tslib": "^2.8.1"
