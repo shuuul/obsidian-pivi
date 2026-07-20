@@ -8,7 +8,7 @@ import type { ChatMessage, UsageInfo } from '../../../foundation';
 import { PluginLogger } from '../../../foundation/pluginLogger';
 import { sanitizeMessageUiForJsonl } from '../../../session/messageUi';
 import {
-  getPiviSessionDir,
+  getPiviSessionRoot,
   toAbsoluteSessionPath,
   toVaultRelativePath,
 } from '../../../session/sessionPaths';
@@ -120,6 +120,36 @@ function arraysEqual(a: readonly string[] | undefined, b: readonly string[] | un
     }
   }
   return true;
+}
+
+function listVaultSessionJsonlFiles(vaultPath: string): string[] {
+  const sessionRoot = getPiviSessionRoot(vaultPath);
+  const files: string[] = [];
+  let entries;
+  try {
+    entries = readdirSync(sessionRoot, { withFileTypes: true });
+  } catch {
+    return files;
+  }
+
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith('.jsonl')) {
+      files.push(join(sessionRoot, entry.name));
+      continue;
+    }
+    if (!entry.isDirectory()) {
+      continue;
+    }
+    const directory = join(sessionRoot, entry.name);
+    try {
+      files.push(...readdirSync(directory)
+        .filter(file => file.endsWith('.jsonl'))
+        .map(file => join(directory, file)));
+    } catch {
+      // An iCloud File Provider directory can disappear while being enumerated.
+    }
+  }
+  return files;
 }
 
 interface ExternalContextJsonlMigration {
@@ -353,16 +383,8 @@ export class PiSessionStore implements SessionStore {
   }
 
   async listSessions(vaultPath: string): Promise<StoreSessionInfo[]> {
-    const sessionDir = getPiviSessionDir(vaultPath);
     const summaries: StoreSessionInfo[] = [];
-    let files: string[] = [];
-    try {
-      files = readdirSync(sessionDir)
-        .filter(file => file.endsWith('.jsonl'))
-        .map(file => join(sessionDir, file));
-    } catch {
-      return summaries;
-    }
+    const files = listVaultSessionJsonlFiles(vaultPath);
     for (const absoluteFile of files) {
       try {
         const sessionFile = toVaultRelativePath(vaultPath, absoluteFile);

@@ -5,7 +5,10 @@ import path from 'path';
 
 import type { FileStore } from '@pivi/pivi-agent-core/session';
 import type { DeviceLocalExternalContextStore } from '@pivi/pivi-agent-core/session';
-import { getPiviSessionDir } from '@pivi/pivi-agent-core/session/sessionPaths';
+import {
+  getPiviSessionDir,
+  getPiviSessionRoot,
+} from '@pivi/pivi-agent-core/session/sessionPaths';
 import {
   PiSessionStore,
   stripExternalContextsFromSessionJsonl,
@@ -205,6 +208,40 @@ describe('PiSessionStore range reads', () => {
       expect(snapshotSpy).not.toHaveBeenCalled();
     } finally {
       snapshotSpy.mockRestore();
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
+  });
+
+  it('lists synced session titles from another device path directory', async () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-cross-device-'));
+    const foreignSessionDir = path.join(
+      getPiviSessionRoot(vaultPath),
+      '--Users-other-Library-Mobile Documents-iCloud~md~obsidian-Documents-Base--',
+    );
+    const absoluteFile = path.join(foreignSessionDir, 'foreign-session.jsonl');
+    fs.mkdirSync(foreignSessionDir, { recursive: true });
+    fs.writeFileSync(absoluteFile, [
+      JSON.stringify({ type: 'session', version: 3, id: 'foreign-session', timestamp: '2026-01-01T00:00:00.000Z', cwd: '/Users/other/Vault' }),
+      JSON.stringify({ type: 'message', id: 'user-1', parentId: null, timestamp: '2026-01-01T00:00:01.000Z', message: { role: 'user', content: 'synced prompt', timestamp: 1 } }),
+      JSON.stringify({ type: 'custom', id: 'meta-1', parentId: 'user-1', timestamp: '2026-01-01T00:00:02.000Z', customType: PIVI_SESSION_META, data: { title: 'Synced model title', titleSource: 'model', createdAt: 1, lastResponseAt: 42 } }),
+      '',
+    ].join('\n'));
+    const store = new PiSessionStore(
+      { exists: async () => false } as unknown as FileStore,
+      vaultPath,
+    );
+
+    try {
+      await expect(store.listSessions(vaultPath)).resolves.toEqual([
+        expect.objectContaining({
+          sessionFile: expect.stringContaining('/--Users-other-'),
+          sessionId: 'foreign-session',
+          title: 'Synced model title',
+          titleSource: 'model',
+          messagePreview: 'synced prompt',
+        }),
+      ]);
+    } finally {
       fs.rmSync(vaultPath, { recursive: true, force: true });
     }
   });

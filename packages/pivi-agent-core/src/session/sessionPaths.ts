@@ -6,9 +6,14 @@ export function encodeSessionCwd(cwd: string): string {
   return `--${resolved.replace(/^[/\\]/, '').replace(/[/\\:]/g, '-')}--`;
 }
 
+/** Vault-local root shared by every device's pi-compatible session directory. */
+export function getPiviSessionRoot(vaultPath: string): string {
+  return path.join(vaultPath, '.pivi', 'sessions');
+}
+
 /** Vault-local pi-compatible session root: `<vault>/.pivi/sessions/--<encoded>--/`. */
 export function getPiviSessionDir(vaultPath: string): string {
-  return path.join(vaultPath, '.pivi', 'sessions', encodeSessionCwd(vaultPath));
+  return path.join(getPiviSessionRoot(vaultPath), encodeSessionCwd(vaultPath));
 }
 
 /** Convert an absolute session path to vault-relative (forward slashes). */

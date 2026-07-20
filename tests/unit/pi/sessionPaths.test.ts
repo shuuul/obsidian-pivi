@@ -5,6 +5,7 @@ import * as path from 'path';
 import {
   encodeSessionCwd,
   getPiviSessionDir,
+  getPiviSessionRoot,
   toAbsoluteSessionPath,
   toVaultRelativePath,
 } from '@pivi/pivi-agent-core/session/sessionPaths';
@@ -22,6 +23,9 @@ describe('sessionPaths', () => {
 
     const sessionDir = getPiviSessionDir(vaultPath);
 
+    expect(getPiviSessionRoot(vaultPath)).toBe(
+      path.join(vaultPath, '.pivi', 'sessions'),
+    );
     expect(sessionDir).toBe(
       path.join(vaultPath, '.pivi', 'sessions', encodeSessionCwd(vaultPath)),
     );
