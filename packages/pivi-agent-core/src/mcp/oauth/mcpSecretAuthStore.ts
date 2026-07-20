@@ -1,3 +1,8 @@
+import {
+  encodeUtf8Hex,
+  listObsidianSecretIds,
+  stableProviderIdDigest,
+} from '../../auth/providerSecretStorage';
 import type { SyncSecretStore } from '../../ports';
 import type {
   AuthEntry,
@@ -14,15 +19,42 @@ interface StoredMcpAuthEntryPayloadV1 {
 }
 
 const MCP_AUTH_SECRET_PREFIX = 'pivi-mcp-oauth';
+const MCP_AUTH_SECRET_DIGEST_PREFIX = 'pivi-mcp-oauth-d';
 
 function encodeServerName(serverName: string): string {
-  return Array.from(new TextEncoder().encode(serverName))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
+  return encodeUtf8Hex(serverName);
+}
+
+function directMcpAuthEntrySecretId(serverName: string): string {
+  return `${MCP_AUTH_SECRET_PREFIX}-${encodeServerName(serverName)}-auth-v${MCP_AUTH_ENTRY_SECRET_VERSION}`;
+}
+
+function digestMcpAuthEntrySecretId(serverName: string): string {
+  return `${MCP_AUTH_SECRET_DIGEST_PREFIX}-${stableProviderIdDigest(serverName)}-auth-v${MCP_AUTH_ENTRY_SECRET_VERSION}`;
+}
+
+export function listMcpAuthEntrySecretIds(serverName: string): readonly string[] {
+  return listObsidianSecretIds(
+    directMcpAuthEntrySecretId(serverName),
+    digestMcpAuthEntrySecretId(serverName),
+  );
 }
 
 export function getMcpAuthEntrySecretId(serverName: string): string {
-  return `${MCP_AUTH_SECRET_PREFIX}-${encodeServerName(serverName)}-auth-v${MCP_AUTH_ENTRY_SECRET_VERSION}`;
+  return listMcpAuthEntrySecretIds(serverName)[0]!;
+}
+
+function readStoredMcpAuthEntry(
+  secretStorage: SyncSecretStore,
+  serverName: string,
+): AuthEntry | undefined {
+  for (const secretId of listMcpAuthEntrySecretIds(serverName)) {
+    const entry = parseStoredEntry(secretStorage.getSecret(secretId));
+    if (entry) {
+      return entry;
+    }
+  }
+  return undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -61,7 +93,7 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
   constructor(private readonly secretStorage: SyncSecretStore) {}
 
   async getEntry(serverName: string): Promise<AuthEntry | undefined> {
-    return parseStoredEntry(this.secretStorage.getSecret(getMcpAuthEntrySecretId(serverName)));
+    return readStoredMcpAuthEntry(this.secretStorage, serverName);
   }
 
   async getAuthForUrl(
@@ -91,7 +123,9 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
   }
 
   async removeEntry(serverName: string): Promise<void> {
-    this.secretStorage.setSecret(getMcpAuthEntrySecretId(serverName), '');
+    for (const secretId of listMcpAuthEntrySecretIds(serverName)) {
+      this.secretStorage.setSecret(secretId, '');
+    }
   }
 
   async updateTokens(

@@ -1,3 +1,8 @@
+import {
+  encodeUtf8Hex,
+  listObsidianSecretIds,
+  stableProviderIdDigest,
+} from '../auth/providerSecretStorage';
 import type { SyncSecretStore } from '../ports';
 import { PIVI_MCP_CONFIG_PATH } from "./paths";
 import type { FileStore } from "./ports";
@@ -25,13 +30,26 @@ function isSecretStorageAvailable(
 }
 
 function encodeSecretName(name: string): string {
-  return Array.from(new TextEncoder().encode(name))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  return encodeUtf8Hex(name);
+}
+
+function directMcpSecretId(serverName: string, kind: McpSecretKind): string {
+  return `pivi-mcp-${encodeSecretName(serverName)}-${kind}`;
+}
+
+function digestMcpSecretId(serverName: string, kind: McpSecretKind): string {
+  return `pivi-mcp-d-${stableProviderIdDigest(serverName)}-${kind}`;
+}
+
+function listMcpSecretIds(serverName: string, kind: McpSecretKind): readonly string[] {
+  return listObsidianSecretIds(
+    directMcpSecretId(serverName, kind),
+    digestMcpSecretId(serverName, kind),
+  );
 }
 
 function getMcpSecretId(serverName: string, kind: McpSecretKind): string {
-  return `pivi-mcp-${encodeSecretName(serverName)}-${kind}`;
+  return listMcpSecretIds(serverName, kind)[0]!;
 }
 
 function stripOAuthClientSecret(
@@ -212,7 +230,16 @@ export class McpStorage {
     const value = this.secretStorage.getSecret(
       getMcpSecretId(serverName, kind),
     );
-    return typeof value === "string" && value.length > 0 ? value : undefined;
+    if (typeof value === "string" && value.length > 0) {
+      return value;
+    }
+    for (const secretId of listMcpSecretIds(serverName, kind).slice(1)) {
+      const fallback = this.secretStorage.getSecret(secretId);
+      if (typeof fallback === "string" && fallback.length > 0) {
+        return fallback;
+      }
+    }
+    return undefined;
   }
 
   private setStoredSecret(
@@ -235,7 +262,9 @@ export class McpStorage {
     if (!isSecretStorageAvailable(this.secretStorage)) {
       return;
     }
-    this.secretStorage.setSecret(getMcpSecretId(serverName, kind), "");
+    for (const secretId of listMcpSecretIds(serverName, kind)) {
+      this.secretStorage.setSecret(secretId, "");
+    }
   }
 
   private clearServerSecrets(serverName: string): void {

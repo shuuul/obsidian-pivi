@@ -2,10 +2,13 @@ import {
   createCustomProviderId,
   createDefaultCustomProviderConfig,
   modelsListUrl,
+  MULTI_INSTANCE_CUSTOM_PROVIDER_KINDS,
   normalizeCustomProviderConfig,
   normalizeCustomProviders,
   parseOpenAiStyleModelsList,
 } from '@pivi/pivi-agent-core/foundation/customProviders';
+import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { MAX_OBSIDIAN_SECRET_ID_LENGTH } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
 import {
   getPiAgentSettings,
   updatePiAgentSettings,
@@ -28,10 +31,17 @@ describe('customProviders foundation', () => {
   it('creates fixed ids for local presets and collision-resistant ids for multi-instance kinds', () => {
     expect(createCustomProviderId('ollama', [])).toBe('ollama');
     const first = createCustomProviderId('openai-compatible', []);
-    expect(first).toMatch(/^custom-openai-compatible-[0-9a-f-]{36}$/);
+    expect(first).toMatch(/^custom-openai-compatible-[0-9a-f]{12}$/);
     const second = createCustomProviderId('openai-compatible', [first]);
-    expect(second).toMatch(/^custom-openai-compatible-[0-9a-f-]{36}$/);
+    expect(second).toMatch(/^custom-openai-compatible-[0-9a-f]{12}$/);
     expect(second).not.toBe(first);
+  });
+
+  it('keeps credential secret ids within Obsidian keychain limits', () => {
+    for (const kind of MULTI_INSTANCE_CUSTOM_PROVIDER_KINDS) {
+      const providerId = createCustomProviderId(kind, []);
+      expect(getPiAiCredentialSecretId(providerId).length).toBeLessThanOrEqual(MAX_OBSIDIAN_SECRET_ID_LENGTH);
+    }
   });
 
   it('creates defaults for ollama', () => {

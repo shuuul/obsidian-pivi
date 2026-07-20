@@ -7,8 +7,10 @@ import {
 import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
+  isObsidianSecretId,
   isProviderDisabled,
   isSecretStorageAvailable,
+  MAX_OBSIDIAN_SECRET_ID_LENGTH,
   parseProviderCredentialSecretId,
 } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
 import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
@@ -33,6 +35,9 @@ describe('ProviderSecretStorage', () => {
       providerId: 'openai',
       kind: 'api-key',
     });
+    expect(isObsidianSecretId(getPiAiCredentialSecretId('anthropic'))).toBe(true);
+    expect(isObsidianSecretId('pivi-custom-openai-compatible-369e807a-7e24-4204-a86d-3abbaaa3d1e2-credential')).toBe(false);
+    expect(MAX_OBSIDIAN_SECRET_ID_LENGTH).toBe(64);
   });
 
   it('writes only the canonical provider credential key for new credentials', () => {

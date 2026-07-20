@@ -5,6 +5,58 @@ export const PIVI_PROVIDER_SECRET_PREFIX = 'pivi';
 /** Obsidian SecretStorage (keychain) requires app 1.11.4+. */
 export const MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN = '1.11.4';
 
+/** Obsidian rejects secret IDs longer than 64 lowercase alphanumeric/dash characters. */
+export const MAX_OBSIDIAN_SECRET_ID_LENGTH = 64;
+
+const OBSIDIAN_SECRET_ID_PATTERN = /^[a-z0-9-]+$/;
+
+export function isObsidianSecretId(secretId: string): boolean {
+  return secretId.length > 0
+    && secretId.length <= MAX_OBSIDIAN_SECRET_ID_LENGTH
+    && OBSIDIAN_SECRET_ID_PATTERN.test(secretId);
+}
+
+/** Max provider id length for `pivi-{providerId}-credential` secret keys. */
+export function getMaxProviderIdLengthForPiCredentialSecret(): number {
+  return MAX_OBSIDIAN_SECRET_ID_LENGTH
+    - `${PIVI_PROVIDER_SECRET_PREFIX}-`.length
+    - '-credential'.length;
+}
+
+/** Stable lowercase hex digest for provider-scoped secret keys that cannot embed the raw id. */
+export function stableProviderIdDigest(providerId: string): string {
+  let hash = 0xcbf29ce484222325n;
+  for (const byte of new TextEncoder().encode(providerId)) {
+    hash ^= BigInt(byte);
+    hash = (hash * 0x100000001b3n) & 0xffffffffffffffffn;
+  }
+  return hash.toString(16).padStart(16, '0');
+}
+
+export function encodeUtf8Hex(value: string): string {
+  return Array.from(new TextEncoder().encode(value))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export function resolveObsidianSecretId(directId: string, digestId: string): string {
+  if (isObsidianSecretId(directId)) {
+    return directId;
+  }
+  if (!isObsidianSecretId(digestId)) {
+    throw new Error('Digest secret ID still exceeds Obsidian keychain limits.');
+  }
+  return digestId;
+}
+
+export function listObsidianSecretIds(directId: string, digestId: string): readonly string[] {
+  const canonical = resolveObsidianSecretId(directId, digestId);
+  if (canonical === directId) {
+    return [directId];
+  }
+  return [digestId, directId];
+}
+
 export type ProviderCredentialKind = 'api-key' | 'oauth-token';
 
 export function isSecretStorageAvailable(

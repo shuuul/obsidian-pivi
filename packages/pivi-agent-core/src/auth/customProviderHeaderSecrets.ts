@@ -1,5 +1,10 @@
 import type { CustomProviderConfig } from '../foundation/customProviders';
 import type { SyncSecretStore } from '../ports';
+import {
+  encodeUtf8Hex,
+  listObsidianSecretIds,
+  stableProviderIdDigest,
+} from './providerSecretStorage';
 
 export const CUSTOM_PROVIDER_HEADER_SECRET_VERSION = 1 as const;
 
@@ -9,15 +14,43 @@ export interface CustomProviderHeaderSecretPayloadV1 {
 }
 
 const HEADER_SECRET_PREFIX = 'pivi-custom-provider-headers';
+const HEADER_SECRET_DIGEST_PREFIX = 'pivi-cph';
 
 function encodeProviderId(providerId: string): string {
-  return Array.from(new TextEncoder().encode(providerId))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
+  return encodeUtf8Hex(providerId);
+}
+
+function legacyCustomProviderHeaderSecretId(providerId: string): string {
+  return `${HEADER_SECRET_PREFIX}-${encodeProviderId(providerId)}-v${CUSTOM_PROVIDER_HEADER_SECRET_VERSION}`;
+}
+
+function digestCustomProviderHeaderSecretId(providerId: string): string {
+  return `${HEADER_SECRET_DIGEST_PREFIX}-${stableProviderIdDigest(providerId)}-v${CUSTOM_PROVIDER_HEADER_SECRET_VERSION}`;
+}
+
+function listCustomProviderHeaderSecretIds(providerId: string): readonly string[] {
+  return listObsidianSecretIds(
+    legacyCustomProviderHeaderSecretId(providerId),
+    digestCustomProviderHeaderSecretId(providerId),
+  );
 }
 
 export function getCustomProviderHeaderSecretId(providerId: string): string {
-  return `${HEADER_SECRET_PREFIX}-${encodeProviderId(providerId)}-v${CUSTOM_PROVIDER_HEADER_SECRET_VERSION}`;
+  const ids = listCustomProviderHeaderSecretIds(providerId);
+  return ids[0]!;
+}
+
+function readCustomProviderHeaderSecretRaw(
+  secretStorage: SyncSecretStore,
+  providerId: string,
+): string | null {
+  for (const secretId of listCustomProviderHeaderSecretIds(providerId)) {
+    const raw = secretStorage.getSecret(secretId);
+    if (raw) {
+      return raw;
+    }
+  }
+  return null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -75,9 +108,7 @@ export function readCustomProviderHeaders(
   secretStorage: SyncSecretStore,
   providerId: string,
 ): Record<string, string> | null {
-  return parseCustomProviderHeaderSecret(
-    secretStorage.getSecret(getCustomProviderHeaderSecretId(providerId)),
-  );
+  return parseCustomProviderHeaderSecret(readCustomProviderHeaderSecretRaw(secretStorage, providerId));
 }
 
 export function writeCustomProviderHeaders(
@@ -98,7 +129,9 @@ export function deleteCustomProviderHeaders(
   secretStorage: SyncSecretStore,
   providerId: string,
 ): void {
-  secretStorage.setSecret(getCustomProviderHeaderSecretId(providerId), '');
+  for (const secretId of listCustomProviderHeaderSecretIds(providerId)) {
+    secretStorage.setSecret(secretId, '');
+  }
 }
 
 /** Merge SecretStorage header payloads into runtime custom provider configs. */

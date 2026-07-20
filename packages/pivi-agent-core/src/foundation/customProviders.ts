@@ -1,3 +1,5 @@
+import { getMaxProviderIdLengthForPiCredentialSecret } from '../auth/providerSecretStorage';
+
 /** Wire API used by a custom / local provider instance. */
 export type CustomProviderApi =
   | 'openai-completions'
@@ -91,6 +93,13 @@ const KIND_DISPLAY_NAMES: Record<CustomProviderKind, string> = {
 const DEFAULT_CONTEXT_WINDOW = 128_000;
 const DEFAULT_LOCAL_CONTEXT_WINDOW = 4096;
 const DEFAULT_MAX_TOKENS = 8192;
+const MULTI_INSTANCE_SUFFIX_HEX_LENGTH = 12;
+
+function randomHexSuffix(hexLength: number): string {
+  const bytes = new Uint8Array(hexLength / 2);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -134,10 +143,17 @@ export function createCustomProviderId(kind: CustomProviderKind, existingIds: re
     return FIXED_LOCAL_PROVIDER_IDS[kind as (typeof LOCAL_CUSTOM_PROVIDER_KINDS)[number]];
   }
 
+  const prefix = `custom-${kind}-`;
+  const maxSuffixLength = getMaxProviderIdLengthForPiCredentialSecret() - prefix.length;
+  if (maxSuffixLength < 8) {
+    throw new Error(`Custom provider kind "${kind}" cannot fit within Obsidian keychain secret ID limits.`);
+  }
+  const suffixLength = Math.min(MULTI_INSTANCE_SUFFIX_HEX_LENGTH, maxSuffixLength);
+
   const used = new Set(existingIds);
-  let candidate = `custom-${kind}-${crypto.randomUUID()}`;
+  let candidate = `${prefix}${randomHexSuffix(suffixLength)}`;
   while (used.has(candidate)) {
-    candidate = `custom-${kind}-${crypto.randomUUID()}`;
+    candidate = `${prefix}${randomHexSuffix(suffixLength)}`;
   }
   return candidate;
 }

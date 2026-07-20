@@ -113,6 +113,32 @@ describe("McpStorage", () => {
     });
   });
 
+  it("stores bearer tokens for long MCP server names using digest secret ids", async () => {
+    const adapter = new MemoryVaultAdapter();
+    const secretStorage = new SecretStorage();
+    const storage = new McpStorage(
+      adapter as unknown as FileStore,
+      secretStorage,
+    );
+    const serverName = "my-very-long-mcp-server-name-example";
+
+    await storage.save([
+      remoteServer({
+        name: serverName,
+        auth: "bearer",
+        bearerToken: "bearer-secret",
+      }),
+    ]);
+
+    const secretIds = secretStorage.listSecrets().filter((id) => id.startsWith("pivi-mcp"));
+    expect(secretIds).toHaveLength(1);
+    expect(secretIds[0]).toMatch(/^pivi-mcp-d-[0-9a-f]{16}-bearer-token$/);
+    expect(secretIds[0]!.length).toBeLessThanOrEqual(64);
+
+    const loaded = await storage.load();
+    expect(loaded[0]?.bearerToken).toBe("bearer-secret");
+  });
+
   it("migrates legacy plaintext MCP secrets out of mcp.json on load", async () => {
     const adapter = new MemoryVaultAdapter({
       [PIVI_MCP_CONFIG_PATH]: `${JSON.stringify(

@@ -1,10 +1,34 @@
-import { PIVI_PROVIDER_SECRET_PREFIX } from './providerSecretStorage';
+import {
+  listObsidianSecretIds,
+  PIVI_PROVIDER_SECRET_PREFIX,
+  stableProviderIdDigest,
+} from './providerSecretStorage';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
 const PI_AI_CREDENTIAL_KIND = 'credential';
+const PI_AI_CREDENTIAL_DIGEST_PREFIX = `${PIVI_PROVIDER_SECRET_PREFIX}-cp-cred`;
+
+function directPiAiCredentialSecretId(providerId: string): string {
+  return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${PI_AI_CREDENTIAL_KIND}`;
+}
+
+function digestPiAiCredentialSecretId(providerId: string): string {
+  return `${PI_AI_CREDENTIAL_DIGEST_PREFIX}-${stableProviderIdDigest(providerId)}`;
+}
+
+export function listPiAiCredentialSecretIds(providerId: string): readonly string[] {
+  return listObsidianSecretIds(
+    directPiAiCredentialSecretId(providerId),
+    digestPiAiCredentialSecretId(providerId),
+  );
+}
+
+export function getPiAiCredentialSecretId(providerId: string): string {
+  return listPiAiCredentialSecretIds(providerId)[0]!;
+}
 
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
 export const XAI_PROVIDER_ID = 'xai';
@@ -49,10 +73,6 @@ export interface OAuthProviderCredential {
 }
 
 export type ProviderCredential = ApiKeyProviderCredential | OAuthProviderCredential | { type: string };
-
-export function getPiAiCredentialSecretId(providerId: string): string {
-  return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${PI_AI_CREDENTIAL_KIND}`;
-}
 
 export function parseProviderCredential(raw: string | null): ProviderCredential | undefined {
   if (!raw) {

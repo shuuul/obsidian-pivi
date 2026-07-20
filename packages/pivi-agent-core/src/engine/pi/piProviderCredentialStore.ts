@@ -12,6 +12,7 @@ import {
   getPiAiCredentialSecretId,
   GROK_BUILD_PROVIDER_ID,
   isOAuthCredential,
+  listPiAiCredentialSecretIds,
   parseProviderCredential,
   serializeProviderCredential,
   XAI_PROVIDER_ID,
@@ -37,6 +38,19 @@ export { credentialToApiKey, getPiAiCredentialSecretId, isOAuthCredential };
 
 function getLegacyPiAiCredentialSecretId(providerId: string): string {
   return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${LEGACY_PI_AI_CREDENTIAL_KIND}`;
+}
+
+function readStoredProviderCredential(
+  secretStorage: SyncSecretStore,
+  providerId: string,
+): Credential | undefined {
+  for (const secretId of listPiAiCredentialSecretIds(providerId)) {
+    const credential = parseProviderCredential(secretStorage.getSecret(secretId));
+    if (credential) {
+      return credential as Credential;
+    }
+  }
+  return undefined;
 }
 
 function legacyCredentialForKind(
@@ -135,7 +149,7 @@ function migrateProviderCredential(
     return { credentialsChanged: true, environmentChanged };
   }
 
-  const current = parseProviderCredential(secretStorage.getSecret(getPiAiCredentialSecretId(providerId)));
+  const current = readStoredProviderCredential(secretStorage, providerId);
   if (current) {
     return {
       credentialsChanged: clearMigratedProviderSecrets(secretStorage, providerId),
@@ -206,12 +220,8 @@ export function migrateSplitSubscriptionOAuthCredentials(
   const migratedPiProviderIds: string[] = [];
 
   for (const { piProviderId, subscriptionProviderId } of SUBSCRIPTION_OAUTH_MIGRATION_PAIRS) {
-    const mainCredential = parseProviderCredential(
-      secretStorage.getSecret(getPiAiCredentialSecretId(piProviderId)),
-    );
-    const existingSubscriptionCredential = parseProviderCredential(
-      secretStorage.getSecret(getPiAiCredentialSecretId(subscriptionProviderId)),
-    );
+    const mainCredential = readStoredProviderCredential(secretStorage, piProviderId);
+    const existingSubscriptionCredential = readStoredProviderCredential(secretStorage, subscriptionProviderId);
     const hadLegacyOAuth = isOAuthCredential(mainCredential);
     if (hadLegacyOAuth) {
       if (!existingSubscriptionCredential) {
@@ -224,9 +234,7 @@ export function migrateSplitSubscriptionOAuthCredentials(
       changed = true;
     }
 
-    const subscriptionCredential = parseProviderCredential(
-      secretStorage.getSecret(getPiAiCredentialSecretId(subscriptionProviderId)),
-    );
+    const subscriptionCredential = readStoredProviderCredential(secretStorage, subscriptionProviderId);
     if (hadLegacyOAuth && isOAuthCredential(subscriptionCredential)) {
       migratedPiProviderIds.push(piProviderId);
     }
@@ -251,9 +259,7 @@ export class ObsidianCredentialStore implements CredentialStore {
   constructor(private readonly secretStorage: SyncSecretStore) {}
 
   readSync(providerId: string): Credential | undefined {
-    return parseProviderCredential(
-      this.secretStorage.getSecret(getPiAiCredentialSecretId(providerId)),
-    ) as Credential | undefined;
+    return readStoredProviderCredential(this.secretStorage, providerId);
   }
 
   read(providerId: string): Promise<Credential | undefined> {
@@ -305,7 +311,9 @@ export class ObsidianCredentialStore implements CredentialStore {
   }
 
   clearSync(providerId: string): void {
-    this.secretStorage.setSecret(getPiAiCredentialSecretId(providerId), '');
+    for (const secretId of listPiAiCredentialSecretIds(providerId)) {
+      this.secretStorage.setSecret(secretId, '');
+    }
   }
 
   private enqueue<T>(providerId: string, task: () => Promise<T>): Promise<T> {
