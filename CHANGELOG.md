@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.2](https://github.com/shuuul/obsidian-pivi/compare/0.13.1...0.13.2) (2026-07-20)
+
+
+### Bug Fixes
+
+* **auth:** keep Obsidian secret IDs within the 64-character keychain limit ([8541672](https://github.com/shuuul/obsidian-pivi/commit/85416729dfa7ee802288121ca214fe2dba721237))
+
 ## [0.13.1](https://github.com/shuuul/obsidian-pivi/compare/0.13.0...0.13.1) (2026-07-20)
 
 
