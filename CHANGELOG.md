@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.1](https://github.com/shuuul/obsidian-pivi/compare/0.13.0...0.13.1) (2026-07-20)
+
+
+### Bug Fixes
+
+* **session:** restore synced titles across devices ([26d93ad](https://github.com/shuuul/obsidian-pivi/commit/26d93ad0fb25149d5defd0b33fad59ebb97ca07f))
+* **settings:** keep provider registry device-local ([b7c86c7](https://github.com/shuuul/obsidian-pivi/commit/b7c86c75ee6620073001222fdb89c362a81e97dc))
+
 ## [0.13.0](https://github.com/shuuul/obsidian-pivi/compare/0.12.1...0.13.0) (2026-07-19)
 
 
