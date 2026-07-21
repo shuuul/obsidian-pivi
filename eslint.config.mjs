@@ -110,6 +110,7 @@ export default defineConfig([
       "main.js",
       "metafile.json",
       "styles.css",
+      ".agents/skills/**",
     ],
   },
   ...obsidianmd.configs.recommended,
