@@ -1,5 +1,14 @@
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
-import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type MouseEvent,
+  type PointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
@@ -10,6 +19,10 @@ import type {
   SettingsMentionEditorPort,
   SettingsPorts,
 } from '../ports';
+import {
+  type SortableReorderHandleProps,
+  useSortableReorder,
+} from '../reorder/useSortableReorder';
 import { SettingsActionFeedback, SettingsListHeader, SettingsPageDescription } from './controls';
 
 function normalizeCommandName(value: string): string {
@@ -111,6 +124,11 @@ interface CommandCardProps {
   readonly pending: boolean;
   readonly feedback?: SettingsFeedbackMessage;
   readonly mentionEditor: SettingsMentionEditorPort;
+  readonly position?: number;
+  readonly dragging?: boolean;
+  readonly dragOffset?: number;
+  readonly reorderHandleProps?: SortableReorderHandleProps<HTMLElement>;
+  readonly suppressReorderClick?: () => boolean;
   readonly onToggle: () => void;
   readonly onCancelDraft: () => void;
   readonly onDelete: (entry: SlashCatalogEntry) => void;
@@ -125,6 +143,11 @@ function CommandCard({
   pending,
   feedback,
   mentionEditor,
+  position,
+  dragging = false,
+  dragOffset = 0,
+  reorderHandleProps,
+  suppressReorderClick,
   onToggle,
   onCancelDraft,
   onDelete,
@@ -205,8 +228,48 @@ function CommandCard({
   };
 
   const displayName = normalizeCommandName(name) || t('settings.createCommand.newCommand');
-  return <details className="pivi-provider-card pivi-command-card" open={expanded} aria-label={isDraft ? t('settings.createCommand.titleCreate') : t('settings.createCommand.titleEdit')}>
-    <summary className="pivi-provider-header pivi-command-card-header" aria-label={!isDraft ? t('settings.slashCommandsUi.editAria', { name: displayName }) : undefined} onClick={(event) => { event.preventDefault(); onToggle(); }}>
+  const dragStyle = dragging
+    ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
+    : undefined;
+  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
+    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"]')) {
+      return;
+    }
+    reorderHandleProps?.onPointerDown(event);
+  };
+  return <details
+    className={`pivi-provider-card pivi-command-card${reorderHandleProps ? ' pivi-sortable-provider-card' : ''}${dragging ? ' is-dragging' : ''}`}
+    open={expanded}
+    aria-label={isDraft ? t('settings.createCommand.titleCreate') : t('settings.createCommand.titleEdit')}
+    data-command-sort-id={savedEntry?.id}
+    style={dragStyle}
+  >
+    <summary
+      className="pivi-provider-header pivi-command-card-header"
+      aria-label={!isDraft ? t('settings.slashCommandsUi.editAria', { name: displayName }) : undefined}
+      onClick={(event) => {
+        event.preventDefault();
+        if (suppressReorderClick?.()) return;
+        onToggle();
+      }}
+      onPointerCancel={(event) => reorderHandleProps?.onPointerCancel(event)}
+      onPointerDown={handlePointerDown}
+      onPointerMove={(event) => reorderHandleProps?.onPointerMove(event)}
+      onPointerUp={(event) => reorderHandleProps?.onPointerUp(event)}
+    >
+      {reorderHandleProps && position !== undefined
+        ? <button
+          type="button"
+          className="pivi-provider-drag-handle"
+          aria-label={t('settings.slashCommandsUi.reorder.handle', { name: displayName, position })}
+          aria-pressed={dragging}
+          onClick={stop}
+          onKeyDown={reorderHandleProps.onKeyDown}
+        >
+          <span aria-hidden="true">⠿</span>
+        </button>
+        : null}
+      {position !== undefined ? <span className="pivi-provider-priority" aria-hidden="true">{position}</span> : null}
       <div className="pivi-provider-title-row">
         <PlatformIcon name={icon} />
         <span className="pivi-provider-title">/{displayName}</span>
@@ -249,6 +312,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [commandFeedback, setCommandFeedback] = useState<Readonly<Record<string, SettingsFeedbackMessage>>>({});
+  const [order, setOrder] = useState<readonly string[]>([]);
   const iconNames = ports.complex.commands.listIconNames();
 
   const load = useCallback(async () => {
@@ -261,6 +325,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
       ]);
       if (mounted.current) {
         setEntries(next);
+        setOrder(next.map(entry => entry.id));
         setExistingIds(new Set(catalogEntries.map(entry => entry.id)));
         setInternalEntries(catalogEntries.filter(
           (entry) => entry.kind === 'command' && entry.scope === 'builtin',
@@ -333,6 +398,36 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     }
   };
 
+  const entryById = useMemo(
+    () => new Map((entries ?? []).map(entry => [entry.id, entry] as const)),
+    [entries],
+  );
+
+  const reorder = useSortableReorder<string, HTMLElement>({
+    order,
+    disabled: pending || order.length < 2,
+    itemSelector: '[data-command-sort-id]',
+    itemDataKey: 'commandSortId',
+    setOrder: (ids) => { setOrder(ids); },
+    commitOrder: async (ids, originalOrder) => {
+      setPending(true);
+      try {
+        await ports.complex.commands.saveWorkspaceOrder(ids);
+        return true;
+      } catch (cause) {
+        setOrder([...originalOrder]);
+        ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+        return false;
+      } finally {
+        setPending(false);
+      }
+    },
+    positionAnnouncement: (id, position, total) => t('settings.slashCommandsUi.reorder.position', { name: id, position, total }),
+    savedAnnouncement: t('settings.slashCommandsUi.reorder.saved'),
+    cancelledAnnouncement: t('settings.slashCommandsUi.reorder.cancelled'),
+    failedAnnouncement: t('common.error'),
+  });
+
   return <>
     <SettingsPageDescription>
       <p className="pivi-setting-description">{t('settings.slashCommands.desc', { workspaceName })}</p>
@@ -363,8 +458,10 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
         ? <p className="pivi-sp-empty-state">{t('settings.slashCommandsUi.loading')}</p>
         : entries.length === 0 && !draftOpen
           ? <p className="pivi-sp-empty-state">{t('settings.slashCommandsUi.empty')}</p>
-          : <div className="pivi-providers-list pivi-command-card-list">
-            {entries.map(entry => {
+          : <div className="pivi-providers-list pivi-command-card-list" ref={reorder.listRef}>
+            {order.map((id, index) => {
+              const entry = entryById.get(id);
+              if (!entry) return null;
               const key = commandKey(entry);
               return <CommandCard
                 key={key}
@@ -375,6 +472,11 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
                 pending={pending}
                 feedback={commandFeedback[key]}
                 mentionEditor={ports.mentionEditor}
+                position={index + 1}
+                dragging={reorder.draggingId === id}
+                dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
+                reorderHandleProps={reorder.getHandleProps(id)}
+                suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
                 onToggle={() => toggleExpanded(key)}
                 onCancelDraft={() => undefined}
                 onDelete={setConfirmDelete}
@@ -394,6 +496,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
               onSave={save}
             /> : null}
           </div>}
+      <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
       <div className="pivi-provider-add-controls">
         <button className="pivi-provider-add-trigger" type="button" aria-label={t('settings.slashCommandsUi.addAria')} disabled={pending || draftOpen} onClick={() => { setDraftOpen(true); }}>
           {t('settings.slashCommandsUi.add')}

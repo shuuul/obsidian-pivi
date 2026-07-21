@@ -48,6 +48,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
         listDropdownEntries: async () => entries,
         saveWorkspaceEntry: async entry => entry,
         deleteWorkspaceEntry: async () => undefined,
+        saveWorkspaceOrder: async () => undefined,
         ...overrides,
       },
     } as SettingsPorts['complex'],
@@ -82,6 +83,39 @@ describe('React commands settings', () => {
     expect(card).toHaveClass('pivi-provider-card', 'pivi-command-card');
     expect(card).not.toHaveAttribute('open');
     expect(screen.getByRole('button', { name: 'Delete command review' })).toBeInTheDocument();
+  });
+
+  it('reorders custom commands with the keyboard and saves the id order once on drop', async () => {
+    const second: SlashCatalogEntry = { ...command, id: 'explain', name: 'explain', integrationKey: 'explain-key', persistenceKey: 'commands/explain.md' };
+    const saveWorkspaceOrder = jest.fn(async () => undefined);
+    renderCommands(createPorts([command, second], { saveWorkspaceOrder }));
+
+    const handle = await screen.findByRole('button', { name: 'Reorder /review, currently position 1' });
+    fireEvent.keyDown(handle, { key: ' ' });
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    expect(saveWorkspaceOrder).not.toHaveBeenCalled();
+    fireEvent.keyDown(handle, { key: ' ' });
+    await act(async () => undefined);
+
+    expect(saveWorkspaceOrder).toHaveBeenCalledTimes(1);
+    expect(saveWorkspaceOrder).toHaveBeenCalledWith(['explain', 'review']);
+    expect(screen.getByRole('button', { name: 'Reorder /review, currently position 2' })).toBeInTheDocument();
+  });
+
+  it('rolls the command order back when saving the order fails', async () => {
+    const second: SlashCatalogEntry = { ...command, id: 'explain', name: 'explain', integrationKey: 'explain-key', persistenceKey: 'commands/explain.md' };
+    const saveWorkspaceOrder = jest.fn(async () => { throw new Error('disk unavailable'); });
+    const ports = createPorts([command, second], { saveWorkspaceOrder });
+    renderCommands(ports);
+
+    const handle = await screen.findByRole('button', { name: 'Reorder /review, currently position 1' });
+    fireEvent.keyDown(handle, { key: ' ' });
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    fireEvent.keyDown(handle, { key: ' ' });
+    await act(async () => undefined);
+
+    expect(ports.feedback.notify).toHaveBeenCalledWith('disk unavailable');
+    expect(screen.getByRole('button', { name: 'Reorder /review, currently position 1' })).toBeInTheDocument();
   });
 
   it('creates an expanded draft card, normalizes it on save, and supports cancelling the draft', async () => {

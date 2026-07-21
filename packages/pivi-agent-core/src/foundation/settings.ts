@@ -260,6 +260,34 @@ export function getHiddenSlashCommandSet(
   );
 }
 
+/** Normalized ordered workspace-command ids used to sort `.pivi/commands/` entries. */
+export function normalizeWorkspaceCommandOrder(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const item of value) {
+    if (typeof item !== "string") {
+      continue;
+    }
+    const id = item.trim();
+    if (!id) {
+      continue;
+    }
+    const key = id.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    normalized.push(id);
+  }
+
+  return normalized;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
@@ -585,6 +613,9 @@ export interface PiviSettings {
 
   // Slash command visibility (names without leading /)
   hiddenSlashCommands: string[];
+
+  /** Persisted display order of workspace slash command ids (file stems). */
+  workspaceCommandOrder: string[];
 
   /** Editor selection toolbar shortcut buttons. */
   editorSelectionToolbar: EditorSelectionToolbarSettings;

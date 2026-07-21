@@ -90,6 +90,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
         listDropdownEntries: async () => [],
         saveWorkspaceEntry: async (entry: never) => entry,
         deleteWorkspaceEntry: async () => undefined,
+        saveWorkspaceOrder: async () => undefined,
       },
     } as unknown as SettingsPorts['complex'],
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },

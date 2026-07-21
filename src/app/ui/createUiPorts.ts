@@ -490,6 +490,14 @@ export function createSettingsUiPorts(
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }
         },
+        async saveWorkspaceOrder(ids) {
+          host.settings.workspaceCommandOrder = [...ids];
+          await host.saveSettings();
+          await ws.slashCommandCatalog.refresh();
+          for (const view of host.getAllViews()) {
+            view.getChatHandle()?.maintenance.invalidateSlashCatalog();
+          }
+        },
       },
       mcp: createMcpSettingsPort(host, ws),
     },

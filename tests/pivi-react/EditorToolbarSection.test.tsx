@@ -142,6 +142,55 @@ describe('EditorToolbarSection', () => {
     });
   });
 
+  it('reorders shortcuts with the keyboard and persists the new order', async () => {
+    const saveEditorSelectionToolbar = jest.fn(async () => undefined);
+    const store = new SettingsUiStore({
+      ...snapshot,
+      general: {
+        ...snapshot.general,
+        editorSelectionToolbar: {
+          enabled: true,
+          shortcuts: [
+            { id: 'shortcut-1', kind: 'obsidian-command' as const, label: 'Toggle fold', enabled: true, commandId: 'editor:toggle-fold', icon: 'fold-vertical' },
+            { id: 'shortcut-2', kind: 'pivi-command' as const, label: '/summarize', enabled: true, piviCommandKey: 'cmd-key-1', icon: 'scan-text' },
+          ],
+        },
+      },
+    });
+    const ports = createPorts(saveEditorSelectionToolbar);
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <EditorToolbarSection
+          store={store}
+          actions={ports.actions}
+          editorToolbar={ports.editorToolbar}
+          feedback={ports.feedback}
+        />
+      </I18nProvider>,
+    ));
+
+    const handle = screen.getByRole('button', { name: 'Reorder Toggle fold, currently position 1' });
+    fireEvent.keyDown(handle, { key: ' ' });
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    expect(saveEditorSelectionToolbar).not.toHaveBeenCalled();
+    fireEvent.keyDown(handle, { key: ' ' });
+    await act(async () => undefined);
+
+    expect(saveEditorSelectionToolbar).toHaveBeenCalledTimes(1);
+    expect(saveEditorSelectionToolbar).toHaveBeenCalledWith({
+      enabled: true,
+      shortcuts: [
+        expect.objectContaining({ id: 'shortcut-2' }),
+        expect.objectContaining({ id: 'shortcut-1' }),
+      ],
+    });
+    expect(
+      store.getSnapshot().general.editorSelectionToolbar.shortcuts.map(shortcut => shortcut.id),
+    ).toEqual(['shortcut-2', 'shortcut-1']);
+    expect(screen.getByRole('button', { name: 'Reorder Toggle fold, currently position 2' })).toBeInTheDocument();
+  });
+
   it('hides shortcut controls when the toolbar is disabled', () => {
     const saveEditorSelectionToolbar = jest.fn(async () => undefined);
     const store = new SettingsUiStore({

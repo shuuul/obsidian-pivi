@@ -397,7 +397,13 @@
       "addPiviCommand": "+ Pivi コマンドを追加",
       "piviCommandPickerTitle": "Pivi コマンドを選択",
       "piviCommandSearchPlaceholder": "Pivi コマンドを検索",
-      "noPiviCommands": "一致する Pivi コマンドがありません。先に「コマンド」で作成してください。"
+      "noPiviCommands": "一致する Pivi コマンドがありません。先に「コマンド」で作成してください。",
+      "reorder": {
+        "handle": "{label} を並べ替え（現在 {position} 番目）",
+        "position": "{label} を {total} 件中 {position} 番目に移動しました。",
+        "saved": "ショートカットの順序を保存しました。",
+        "cancelled": "ショートカットの並べ替えをキャンセルしました。"
+      }
     },
     "slashCommands": {
       "desc": ".pivi/commands/ に保存された {workspaceName} レベルのカスタムコマンドを管理します。/name で起動します。"
@@ -667,7 +673,13 @@
       "editAria": "コマンド {name} を編集",
       "deleteAria": "コマンド {name} を削除",
       "deleteConfirm": "カスタムコマンド /{name} を削除しますか？追加済みの Note Toolbar 項目は削除されないため、手動で削除してください。",
-      "deleteFailed": "カスタムコマンドの削除に失敗：{message}"
+      "deleteFailed": "カスタムコマンドの削除に失敗：{message}",
+      "reorder": {
+        "handle": "/{name} を並べ替え（現在 {position} 番目）",
+        "position": "/{name} を {total} 件中 {position} 番目に移動しました。",
+        "saved": "コマンドの順序を保存しました。",
+        "cancelled": "コマンドの並べ替えをキャンセルしました。"
+      }
     },
     "createCommand": {
       "titleCreate": "カスタムスラッシュコマンドを作成",

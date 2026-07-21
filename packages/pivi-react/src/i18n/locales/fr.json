@@ -397,7 +397,13 @@
       "addPiviCommand": "+ Ajouter une commande Pivi",
       "piviCommandPickerTitle": "Choisir une commande Pivi",
       "piviCommandSearchPlaceholder": "Rechercher des commandes Pivi",
-      "noPiviCommands": "Aucune commande Pivi correspondante. Créez-en une d’abord sous Commandes."
+      "noPiviCommands": "Aucune commande Pivi correspondante. Créez-en une d’abord sous Commandes.",
+      "reorder": {
+        "handle": "Réorganiser {label}, actuellement en position {position}",
+        "position": "{label} déplacé à la position {position} sur {total}.",
+        "saved": "Ordre des raccourcis enregistré.",
+        "cancelled": "Réorganisation des raccourcis annulée."
+      }
     },
     "slashCommands": {
       "desc": "Gérez les commandes personnalisées du {workspaceName} dans .pivi/commands/. Déclenchées par /nom."
@@ -667,7 +673,13 @@
       "editAria": "Modifier la commande {name}",
       "deleteAria": "Supprimer la commande {name}",
       "deleteConfirm": "Supprimer la commande personnalisée /{name} ? Son élément Note Toolbar ne sera pas supprimé ; supprimez-le manuellement.",
-      "deleteFailed": "Échec de la suppression de la commande personnalisée : {message}"
+      "deleteFailed": "Échec de la suppression de la commande personnalisée : {message}",
+      "reorder": {
+        "handle": "Réorganiser /{name}, actuellement en position {position}",
+        "position": "/{name} déplacé à la position {position} sur {total}.",
+        "saved": "Ordre des commandes enregistré.",
+        "cancelled": "Réorganisation de la commande annulée."
+      }
     },
     "createCommand": {
       "titleCreate": "Créer une commande slash personnalisée",

@@ -397,7 +397,13 @@
       "addPiviCommand": "+ Pivi-Befehl hinzufügen",
       "piviCommandPickerTitle": "Pivi-Befehl wählen",
       "piviCommandSearchPlaceholder": "Pivi-Befehle suchen",
-      "noPiviCommands": "Keine passenden Pivi-Befehle. Legen Sie zuerst unter Befehle einen an."
+      "noPiviCommands": "Keine passenden Pivi-Befehle. Legen Sie zuerst unter Befehle einen an.",
+      "reorder": {
+        "handle": "Reihenfolge von {label} ändern, aktuell Position {position}",
+        "position": "{label} an Position {position} von {total} verschoben.",
+        "saved": "Reihenfolge der Kurzbefehle gespeichert.",
+        "cancelled": "Neuanordnung der Kurzbefehle abgebrochen."
+      }
     },
     "slashCommands": {
       "desc": "{workspaceName}-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."
@@ -667,7 +673,13 @@
       "editAria": "Befehl {name} bearbeiten",
       "deleteAria": "Befehl {name} löschen",
       "deleteConfirm": "Eigenen Befehl /{name} löschen? Das zugehörige Note-Toolbar-Element wird nicht entfernt und muss manuell gelöscht werden.",
-      "deleteFailed": "Eigener Befehl konnte nicht gelöscht werden: {message}"
+      "deleteFailed": "Eigener Befehl konnte nicht gelöscht werden: {message}",
+      "reorder": {
+        "handle": "Reihenfolge von /{name} ändern, aktuell Position {position}",
+        "position": "/{name} an Position {position} von {total} verschoben.",
+        "saved": "Befehlsreihenfolge gespeichert.",
+        "cancelled": "Neuanordnung des Befehls abgebrochen."
+      }
     },
     "createCommand": {
       "titleCreate": "Eigenen Slash-Befehl erstellen",

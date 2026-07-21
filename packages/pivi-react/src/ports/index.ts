@@ -160,6 +160,7 @@ export interface SettingsComplexPorts {
     listWorkspaceEntries(): Promise<readonly SlashCatalogEntry[]>;
     listDropdownEntries(): Promise<readonly SlashCatalogEntry[]>;
     saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<SlashCatalogEntry>;
+    saveWorkspaceOrder(ids: readonly string[]): Promise<void>;
     deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
   };
   mcp: {

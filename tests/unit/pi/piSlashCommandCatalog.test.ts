@@ -46,6 +46,7 @@ describe("PiSlashCommandCatalog", () => {
   beforeEach(() => {
     mockPlugin = {
       registerEvent: jest.fn(),
+      settings: { workspaceCommandOrder: [] },
       app: {
         vault: {
           on: jest.fn(),
@@ -124,6 +125,24 @@ Explain this: {{selected_text}}`,
       insertPrefix: "/",
       persistenceKey: "vault:explain",
     });
+  });
+
+  it("orders workspace entries by workspaceCommandOrder and keeps unlisted commands last", async () => {
+    mockPlugin.settings.workspaceCommandOrder = ["gamma", "alpha"];
+    mockAdapter.listFiles = jest.fn(async (folder: string) =>
+      folder === ".pivi/commands"
+        ? [
+            ".pivi/commands/beta.md",
+            ".pivi/commands/alpha.md",
+            ".pivi/commands/gamma.md",
+          ]
+        : [],
+    );
+
+    await catalog.refresh();
+    const entries = await catalog.listWorkspaceEntries();
+
+    expect(entries.map((entry) => entry.id)).toEqual(["gamma", "alpha", "beta"]);
   });
 
   it("loads legacy templates when no command file exists", async () => {

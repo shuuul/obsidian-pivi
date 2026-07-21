@@ -397,7 +397,13 @@
       "addPiviCommand": "+ 新增 Pivi 命令",
       "piviCommandPickerTitle": "選擇 Pivi 命令",
       "piviCommandSearchPlaceholder": "搜尋 Pivi 命令",
-      "noPiviCommands": "沒有符合的 Pivi 命令。請先在「命令」中建立。"
+      "noPiviCommands": "沒有符合的 Pivi 命令。請先在「命令」中建立。",
+      "reorder": {
+        "handle": "重新排序 {label}，目前位於第 {position} 位",
+        "position": "{label} 已移動到第 {position} 位，共 {total} 個。",
+        "saved": "捷徑順序已儲存。",
+        "cancelled": "已取消捷徑排序。"
+      }
     },
     "slashCommands": {
       "desc": "管理儲存在 .pivi/commands/ 中的{workspaceName}級自訂指令。由 /名稱 觸發。"
@@ -667,7 +673,13 @@
       "editAria": "編輯指令 {name}",
       "deleteAria": "刪除指令 {name}",
       "deleteConfirm": "刪除自訂指令 /{name}？這不會刪除已加入的 Note Toolbar 項目，請手動刪除該項目。",
-      "deleteFailed": "刪除自訂指令失敗：{message}"
+      "deleteFailed": "刪除自訂指令失敗：{message}",
+      "reorder": {
+        "handle": "重新排序 /{name}，目前位於第 {position} 位",
+        "position": "/{name} 已移動到第 {position} 位，共 {total} 個。",
+        "saved": "命令順序已儲存。",
+        "cancelled": "已取消命令排序。"
+      }
     },
     "createCommand": {
       "titleCreate": "建立自訂斜線指令",

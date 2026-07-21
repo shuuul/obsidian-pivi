@@ -35,6 +35,17 @@
   white-space: nowrap;
 }
 
+.pivi-sortable-provider-card > .pivi-command-card-header {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-sortable-provider-card > .pivi-command-card-header .pivi-provider-remove-btn {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .pivi-command-card-body {
   display: flex;
   flex-direction: column;

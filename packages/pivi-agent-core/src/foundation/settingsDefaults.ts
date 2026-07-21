@@ -51,5 +51,6 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   deferMathRenderingDuringStreaming: true,
   chatViewPlacement: "right-sidebar",
   hiddenSlashCommands: [],
+  workspaceCommandOrder: [],
   editorSelectionToolbar: { enabled: true, shortcuts: [] },
 };

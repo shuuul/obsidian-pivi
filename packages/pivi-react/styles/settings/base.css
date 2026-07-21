@@ -978,6 +978,14 @@ textarea.pivi-settings-control {
   .pivi-sortable-provider-card.is-dragging {
     opacity: 0.75;
   }
+
+  .pivi-sortable-toolbar-card {
+    transform: none;
+  }
+
+  .pivi-sortable-toolbar-card.is-dragging {
+    opacity: 0.75;
+  }
 }
 
 .pivi-web-provider-header .pivi-provider-disable-btn,
@@ -1302,7 +1310,7 @@ textarea.pivi-settings-control {
 
 .pivi-editor-toolbar-card {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-columns: auto 32px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-width: 0;
@@ -1314,6 +1322,21 @@ textarea.pivi-settings-control {
 
 .pivi-editor-toolbar-card--disabled {
   opacity: 0.65;
+}
+
+.pivi-sortable-toolbar-card {
+  position: relative;
+  transform: translateY(var(--pivi-toolbar-drag-y, 0));
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.pivi-sortable-toolbar-card.is-dragging {
+  z-index: 2;
+  opacity: 0.9;
+  box-shadow: var(--pivi-shadow-md);
+  cursor: grabbing;
 }
 
 .pivi-editor-toolbar-card__icon {

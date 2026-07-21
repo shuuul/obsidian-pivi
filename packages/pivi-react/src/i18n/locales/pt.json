@@ -397,7 +397,13 @@
       "addPiviCommand": "+ Adicionar comando Pivi",
       "piviCommandPickerTitle": "Escolher um comando Pivi",
       "piviCommandSearchPlaceholder": "Pesquisar comandos Pivi",
-      "noPiviCommands": "Nenhum comando Pivi correspondente. Crie um primeiro em Comandos."
+      "noPiviCommands": "Nenhum comando Pivi correspondente. Crie um primeiro em Comandos.",
+      "reorder": {
+        "handle": "Reordenar {label}, atualmente na posição {position}",
+        "position": "{label} movido para a posição {position} de {total}.",
+        "saved": "Ordem dos atalhos salva.",
+        "cancelled": "Reordenação de atalhos cancelada."
+      }
     },
     "slashCommands": {
       "desc": "Gerencie comandos personalizados a nível de {workspaceName} armazenados em .pivi/commands/. Acionados por /nome."
@@ -667,7 +673,13 @@
       "editAria": "Editar comando {name}",
       "deleteAria": "Excluir comando {name}",
       "deleteConfirm": "Excluir o comando personalizado /{name}? Isso não removerá o item do Note Toolbar; remova-o manualmente.",
-      "deleteFailed": "Erro al excluir o comando personalizado: {message}"
+      "deleteFailed": "Erro al excluir o comando personalizado: {message}",
+      "reorder": {
+        "handle": "Reordenar /{name}, atualmente na posição {position}",
+        "position": "/{name} movido para a posição {position} de {total}.",
+        "saved": "Ordem dos comandos salva.",
+        "cancelled": "Reordenação de comando cancelada."
+      }
     },
     "createCommand": {
       "titleCreate": "Crear comando slash personalizado",

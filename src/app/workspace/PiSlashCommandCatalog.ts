@@ -276,7 +276,13 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
           }
         }
       }
-      this.workspaceEntries = [...byId.values()];
+      const order = this.plugin.settings.workspaceCommandOrder ?? [];
+      const rank = new Map(order.map((id, index) => [id, index]));
+      this.workspaceEntries = [...byId.values()].sort((a, b) => {
+        const rankA = rank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const rankB = rank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        return rankA - rankB;
+      });
       this.options.onWorkspaceEntriesChanged?.(this.workspaceEntries);
     } catch (e) {
       logger.error("Failed to refresh slash command catalog", e);

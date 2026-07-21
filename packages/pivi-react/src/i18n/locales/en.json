@@ -397,7 +397,13 @@
       "addPiviCommand": "+ Add Pivi command",
       "piviCommandPickerTitle": "Choose a Pivi command",
       "piviCommandSearchPlaceholder": "Search Pivi commands",
-      "noPiviCommands": "No matching Pivi commands. Create one under Commands first."
+      "noPiviCommands": "No matching Pivi commands. Create one under Commands first.",
+      "reorder": {
+        "handle": "Reorder {label}, currently position {position}",
+        "position": "{label} moved to position {position} of {total}.",
+        "saved": "Shortcut order saved.",
+        "cancelled": "Shortcut reorder cancelled."
+      }
     },
     "slashCommands": {
       "desc": "Manage {workspaceName}-level custom commands stored in .pivi/commands/. Triggered by /name."
@@ -667,7 +673,13 @@
       "editAria": "Edit command {name}",
       "deleteAria": "Delete command {name}",
       "deleteConfirm": "Delete custom command /{name}? This will not remove its Note Toolbar item; remove that item manually.",
-      "deleteFailed": "Failed to delete custom command: {message}"
+      "deleteFailed": "Failed to delete custom command: {message}",
+      "reorder": {
+        "handle": "Reorder /{name}, currently position {position}",
+        "position": "/{name} moved to position {position} of {total}.",
+        "saved": "Command order saved.",
+        "cancelled": "Command reorder cancelled."
+      }
     },
     "createCommand": {
       "titleCreate": "Create custom slash command",

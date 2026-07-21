@@ -397,7 +397,13 @@
       "addPiviCommand": "+ Добавить команду Pivi",
       "piviCommandPickerTitle": "Выбрать команду Pivi",
       "piviCommandSearchPlaceholder": "Искать команды Pivi",
-      "noPiviCommands": "Нет подходящих команд Pivi. Сначала создайте команду во вкладке «Команды»."
+      "noPiviCommands": "Нет подходящих команд Pivi. Сначала создайте команду во вкладке «Команды».",
+      "reorder": {
+        "handle": "Изменить порядок {label}, текущая позиция {position}",
+        "position": "{label} перемещён на позицию {position} из {total}.",
+        "saved": "Порядок ярлыков сохранён.",
+        "cancelled": "Изменение порядка ярлыков отменено."
+      }
     },
     "slashCommands": {
       "desc": "Управление пользовательскими командами {workspaceName} в .pivi/commands/. Запуск через /имя."
@@ -667,7 +673,13 @@
       "editAria": "Редактировать команду {name}",
       "deleteAria": "Удалить команду {name}",
       "deleteConfirm": "Удалить пользовательскую команду /{name}? Её элемент Note Toolbar не будет удалён; удалите его вручную.",
-      "deleteFailed": "Не удалось удалить пользовательскую команду: {message}"
+      "deleteFailed": "Не удалось удалить пользовательскую команду: {message}",
+      "reorder": {
+        "handle": "Изменить порядок /{name}, текущая позиция {position}",
+        "position": "/{name} перемещена на позицию {position} из {total}.",
+        "saved": "Порядок команд сохранён.",
+        "cancelled": "Изменение порядка команды отменено."
+      }
     },
     "createCommand": {
       "titleCreate": "Создать пользовательскую слэш-команду",
