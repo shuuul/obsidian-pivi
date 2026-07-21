@@ -10,8 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Outcome |
 |---|---|---|
-| [022-editor-selection-toolbar-and-inline-edit.md](022-editor-selection-toolbar-and-inline-edit.md) | Active | Notion-style selection toolbar and Cursor-style inline edit in the note editor. |
-| [023-command-prompt-mentions.md](023-command-prompt-mentions.md) | Draft | Slash-command prompts support @file/@folder//skill//MCP mentions with dropdown completion. |
+| [023-command-prompt-mentions.md](023-command-prompt-mentions.md) | Active | Slash-command prompts support @file/@folder//skill//MCP mentions with dropdown completion. |
 
 ## Archived specs
 
@@ -38,6 +37,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [019-live-session-source-mutation-diagnostic.md](archive/019-live-session-source-mutation-diagnostic.md) | 2026-07-19 | Diagnosed an example-vault stale-write guard as a real JSONL inode/content rollback, with the replacing process left unproven. |
 | [020-durable-ai-title-persistence.md](archive/020-durable-ai-title-persistence.md) | 2026-07-19 | Persistence-first model-generated titles with fallback preservation and visible write failures. |
 | [021-device-local-provider-state.md](archive/021-device-local-provider-state.md) | 2026-07-20 | Device-local provider registry (`pivi.providers.v1`), single-phase cutover, SecretStorage-backed headers and MCP OAuth tokens, and stripped synced provider/model fields. |
+| [022-editor-selection-toolbar-and-inline-edit.md](archive/022-editor-selection-toolbar-and-inline-edit.md) | 2026-07-21 | Notion-style selection toolbar and Cursor-style inline edit in the note editor, with provider mutual exclusion, Pivi/Obsidian command shortcuts, archived inline-edit sessions, and full-locale i18n. |
 
 ## Numbering and files
 

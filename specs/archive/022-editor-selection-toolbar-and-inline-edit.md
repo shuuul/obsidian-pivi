@@ -1,7 +1,7 @@
 ---
 id: "022"
 title: "Editor selection toolbar and Cursor-style inline edit"
-status: Active
+status: Completed
 created: 2026-07-21
 updated: 2026-07-21
 coordinator: "Cursor Grok"
@@ -159,6 +159,14 @@ Append entries rather than rewriting another agent's record.
 - Remaining: Manual vault QA for provider off/pivi/note-toolbar and both shortcut kinds.
 - Blockers: None.
 
+### 2026-07-21 — Droid — user acceptance and archive
+
+- Changed: User signed off manual vault QA (provider off/pivi/note-toolbar, LP/Source selection, viewport edges, scroll, Ask AI accept/reject, Add to chat, configured command and Pivi-command shortcuts, archived-tab activation). Set status Completed and moved spec to `specs/archive/`.
+- Evidence: All success criteria checkboxes checked; automated gates green per WS-06 entry; `npm run check:specs` green.
+- Remaining: None.
+- Blockers: None.
+- Next action: None.
+
 ## Completion summary
 
-Implementation complete behind automated gates. Manual live-vault acceptance remains before archive.
+Implementation complete and accepted. All six workstreams Done, all success criteria met, automated quality gates green, and manual live-vault QA signed off. Spec archived.
