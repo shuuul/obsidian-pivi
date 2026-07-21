@@ -185,30 +185,49 @@ describe('MessageList', () => {
   });
 
   it('keeps a 5K transcript mounted row count bounded by the viewport and overscan', () => {
-    const longTranscript: ChatMessage[] = Array.from({ length: 5_000 }, (_, index) => ({
-      id: `message-${index}`,
-      role: index % 2 === 0 ? 'user' : 'assistant',
-      content: `Message ${index}`,
-      timestamp: index,
-    }));
-    const actions = {
-      canCopy: jest.fn(() => false),
-      canFork: jest.fn(() => false),
-      canRedo: jest.fn(() => false),
-      copy: jest.fn(),
-      fork: jest.fn(),
-      redo: jest.fn(),
-      scrollToRecentUser: jest.fn(),
-    };
-    const rendered = render(withTestPresentationPlatform(
-      <I18nProvider i18n={createI18n()}>
-        <TestMessageList actions={actions} isStreaming={false} messages={longTranscript} />
-      </I18nProvider>,
-    ));
+    // jsdom reports zero layout height. Matching the virtualizer's estimate
+    // avoids testing a degenerate zero-height range whose behavior changed
+    // when virtual-core 3.17.5 began clamping negative scroll offsets.
+    const offsetHeightDescriptor = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      'offsetHeight',
+    );
+    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+      configurable: true,
+      get: () => 120,
+    });
+    try {
+      const longTranscript: ChatMessage[] = Array.from({ length: 5_000 }, (_, index) => ({
+        id: `message-${index}`,
+        role: index % 2 === 0 ? 'user' : 'assistant',
+        content: `Message ${index}`,
+        timestamp: index,
+      }));
+      const actions = {
+        canCopy: jest.fn(() => false),
+        canFork: jest.fn(() => false),
+        canRedo: jest.fn(() => false),
+        copy: jest.fn(),
+        fork: jest.fn(),
+        redo: jest.fn(),
+        scrollToRecentUser: jest.fn(),
+      };
+      const rendered = render(withTestPresentationPlatform(
+        <I18nProvider i18n={createI18n()}>
+          <TestMessageList actions={actions} isStreaming={false} messages={longTranscript} />
+        </I18nProvider>,
+      ));
 
-    const mountedRows = rendered.container.querySelectorAll('.pivi-message-virtual-row').length;
-    expect(mountedRows).toBeGreaterThan(0);
-    expect(mountedRows).toBeLessThanOrEqual(20);
+      const mountedRows = rendered.container.querySelectorAll('.pivi-message-virtual-row').length;
+      expect(mountedRows).toBeGreaterThan(0);
+      expect(mountedRows).toBeLessThanOrEqual(20);
+    } finally {
+      if (offsetHeightDescriptor) {
+        Object.defineProperty(HTMLElement.prototype, 'offsetHeight', offsetHeightDescriptor);
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'offsetHeight');
+      }
+    }
   });
 
   it('reports mounted rows and DOM nodes through the injected recorder', () => {
