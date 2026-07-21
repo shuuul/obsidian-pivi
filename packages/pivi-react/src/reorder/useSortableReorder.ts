@@ -49,7 +49,7 @@ interface UseSortableReorderOptions<ItemId extends string> {
 }
 
 interface SortableReorder<ItemId extends string, Element extends HTMLElement> {
-  readonly listRef: RefObject<HTMLDivElement>;
+  readonly listRef: RefObject<HTMLDivElement | null>;
   readonly draggingId: ItemId | null;
   readonly dragOffset: number;
   readonly announcement: string;
