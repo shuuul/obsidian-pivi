@@ -56,6 +56,38 @@
 .pivi-command-prompt-field > textarea.pivi-settings-control {
   width: 100%;
 }
+.pivi-settings-mention-editor-container {
+  position: relative;
+  width: 100%;
+}
+.pivi-settings-mention-editor-container .pivi-settings-mention-editor {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 180px;
+  padding: 6px 10px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  outline: none;
+  background: var(--pivi-host-background-primary);
+  color: var(--pivi-host-text-normal);
+  font: inherit;
+  line-height: 1.45;
+  transition:
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+.pivi-settings-mention-editor-container .pivi-settings-mention-editor:hover {
+  border-color: var(--pivi-host-border-focus);
+}
+.pivi-settings-mention-editor-container .pivi-settings-mention-editor:focus-visible {
+  border-color: var(--pivi-host-interactive-accent);
+  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
+}
+.pivi-settings-mention-editor-container .pivi-settings-mention-editor[contenteditable="false"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
 
 .pivi-command-card-actions {
   display: flex;

@@ -704,9 +704,7 @@
       "needTemplate": "請輸入提示詞。",
       "duplicate": "名為 /{name} 的自訂指令已存在。",
       "saveFailed": "儲存自訂斜線指令失敗。",
-      "newCommand": "新指令",
-      "addToNoteToolbar": "加入 Note Toolbar",
-      "addToNoteToolbarFailed": "指令已儲存，但無法加入 Note Toolbar：{message}"
+      "newCommand": "新指令"
     },
     "mcp": {
       "empty": "尚未設定 MCP 伺服器。點擊新增以建立。",

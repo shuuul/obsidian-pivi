@@ -704,9 +704,7 @@
       "needTemplate": "プロンプトを入力してください。",
       "duplicate": "/{name} というカスタムコマンドは既に存在します。",
       "saveFailed": "カスタムスラッシュコマンドの保存に失敗しました。",
-      "newCommand": "新規コマンド",
-      "addToNoteToolbar": "Note Toolbar に追加",
-      "addToNoteToolbarFailed": "コマンドは保存されましたが、Note Toolbar に追加できませんでした：{message}"
+      "newCommand": "新規コマンド"
     },
     "mcp": {
       "empty": "MCP サーバーは未設定です。追加をクリックして作成してください。",

@@ -704,9 +704,7 @@
       "needTemplate": "Please enter a prompt.",
       "duplicate": "A custom command named /{name} already exists.",
       "saveFailed": "Failed to save the custom slash command.",
-      "newCommand": "new-command",
-      "addToNoteToolbar": "Add to Note Toolbar",
-      "addToNoteToolbarFailed": "The command was saved, but could not be added to Note Toolbar: {message}"
+      "newCommand": "new-command"
     },
     "mcp": {
       "empty": "No MCP servers configured. Click add to add one.",

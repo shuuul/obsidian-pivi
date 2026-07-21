@@ -51,9 +51,9 @@ import {
   validateDirectoryPath,
 } from './externalDirectory';
 import { listObsidianCommands } from './listObsidianCommands';
+import { createMentionEditorPort } from './mentionEditor/createMentionEditorPort';
 import {
   createObsidianToolRows,
-  describeNoteToolbarResult,
   listObsidianIntegrationSections,
   runObsidianIntegrationAction,
 } from './obsidianSettingsIntegration';
@@ -490,11 +490,6 @@ export function createSettingsUiPorts(
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }
         },
-        isNoteToolbarInstalled: () => host.isNoteToolbarInstalled(),
-        async setupNoteToolbar(entry) {
-          const result = await host.setupWorkspaceCommandNoteToolbar(entry);
-          return describeNoteToolbarResult(result);
-        },
       },
       mcp: createMcpSettingsPort(host, ws),
     },
@@ -559,5 +554,6 @@ export function createSettingsUiPorts(
       ),
       runAction: actionId => runObsidianIntegrationAction(host, actionId),
     },
+    mentionEditor: createMentionEditorPort(host, ws),
   };
 }

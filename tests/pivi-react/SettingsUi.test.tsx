@@ -90,8 +90,6 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
         listDropdownEntries: async () => [],
         saveWorkspaceEntry: async (entry: never) => entry,
         deleteWorkspaceEntry: async () => undefined,
-        isNoteToolbarInstalled: async () => false,
-        setupNoteToolbar: async () => ({ kind: 'success', message: 'Added command to Note Toolbar.' }),
       },
     } as unknown as SettingsPorts['complex'],
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
@@ -116,6 +114,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
+    mentionEditor: { mount: () => ({ getValue: () => '', setValue: () => undefined, focus: () => undefined, setDisabled: () => undefined, destroy: () => undefined }) },
   };
 }
 

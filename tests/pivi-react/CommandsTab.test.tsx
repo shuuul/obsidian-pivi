@@ -15,6 +15,26 @@ const command: SlashCatalogEntry = { id: 'review', kind: 'command', name: 'revie
 const compactCommand: SlashCatalogEntry = { id: 'compact', kind: 'command', name: 'compact', description: 'Compact this session to preserve context', content: '/compact', scope: 'builtin', source: 'builtin', isEditable: false, isDeletable: false, displayPrefix: '/', insertPrefix: '/' };
 const imageTool: SlashCatalogEntry = { id: 'generate-image', kind: 'tool', name: 'generate-image', description: 'Generate an image', content: '', toolName: 'obsidian_generate_image', scope: 'builtin', source: 'builtin', isEditable: false, isDeletable: false, displayPrefix: '', insertPrefix: '/' };
 
+function createMentionEditorPort(): SettingsPorts['mentionEditor'] {
+  return {
+    mount(container, initialValue, callbacks) {
+      const textarea = document.createElement('textarea');
+      textarea.className = 'pivi-settings-control pivi-settings-control--fill pivi-template-textarea';
+      textarea.value = initialValue;
+      textarea.addEventListener('input', () => callbacks.onChange?.(textarea.value));
+      textarea.addEventListener('change', () => callbacks.onChange?.(textarea.value));
+      container.appendChild(textarea);
+      return {
+        getValue: () => textarea.value,
+        setValue: (text: string) => { textarea.value = text; },
+        focus: () => textarea.focus(),
+        setDisabled: (disabled: boolean) => { textarea.disabled = disabled; },
+        destroy: () => textarea.remove(),
+      };
+    },
+  };
+}
+
 function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<SettingsPorts['complex']['commands']> = {}): SettingsPorts {
   return {
     snapshot: { getSnapshot: () => snapshot },
@@ -28,8 +48,6 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
         listDropdownEntries: async () => entries,
         saveWorkspaceEntry: async entry => entry,
         deleteWorkspaceEntry: async () => undefined,
-        isNoteToolbarInstalled: async () => true,
-        setupNoteToolbar: async () => ({ kind: 'success', message: 'Added command to Note Toolbar.' }),
         ...overrides,
       },
     } as SettingsPorts['complex'],
@@ -39,6 +57,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
     editorToolbar: { listHostCommands: () => [], listPiviCommands: async () => [], listIconNames: () => [], isNoteToolbarTextToolbarActive: () => false },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: async () => [], runAction: async () => ({}) },
+    mentionEditor: createMentionEditorPort(),
   };
 }
 
@@ -122,10 +141,9 @@ describe('React commands settings', () => {
     expect(within(card).getByRole('button', { name: 'Choose icon' })).toHaveTextContent('message-square');
   });
 
-  it('keeps Save separate and auto-saves current edits before adding to Note Toolbar', async () => {
+  it('saves the command prompt and collapses the card', async () => {
     const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'review-key' }));
-    const setupNoteToolbar = jest.fn(async () => ({ kind: 'success' as const, message: 'Added command to Note Toolbar.' }));
-    const ports = createPorts([command], { saveWorkspaceEntry, setupNoteToolbar });
+    const ports = createPorts([command], { saveWorkspaceEntry });
     renderCommands(ports);
     await screen.findByText('/review');
     fireEvent.click(screen.getByLabelText('Edit command review'));
@@ -133,17 +151,10 @@ describe('React commands settings', () => {
     fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Updated prompt' } });
 
     fireEvent.click(within(card).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({
+      content: 'Updated prompt',
+    })));
     expect(card).not.toHaveAttribute('open');
-    expect(setupNoteToolbar).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByLabelText('Edit command review'));
-    fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Toolbar prompt' } });
-    fireEvent.click(within(card).getByRole('button', { name: 'Add to Note Toolbar' }));
-    await waitFor(() => expect(setupNoteToolbar).toHaveBeenCalledWith(expect.objectContaining({ content: 'Toolbar prompt' })));
-    expect(saveWorkspaceEntry).toHaveBeenCalledTimes(2);
-    expect(saveWorkspaceEntry.mock.invocationCallOrder[1]).toBeLessThan(setupNoteToolbar.mock.invocationCallOrder[0]!);
-    expect(ports.feedback.notify).toHaveBeenCalledWith('Added command to Note Toolbar.');
   });
 
   it('places the prompt description below its label and keeps the editor full width', async () => {
@@ -153,39 +164,21 @@ describe('React commands settings', () => {
     const card = getCommandCard('Edit custom slash command');
     const promptField = within(card).getByText('Prompt').closest('label');
     const description = within(card).getByText('Instructions sent when the command runs.');
+    const editorContainer = card.querySelector('.pivi-settings-mention-editor-container');
     const textarea = card.querySelector('textarea');
 
     expect(promptField).not.toBeNull();
     expect(textarea).toHaveClass('pivi-settings-control--fill');
     expect(promptField?.children[1]).toBe(description);
-    expect(promptField?.children[2]).toBe(textarea);
+    expect(promptField?.children[2]).toBe(editorContainer);
   });
 
-  it('disables only the Note Toolbar action when the plugin is not installed', async () => {
-    renderCommands(createPorts([command], { isNoteToolbarInstalled: async () => false }));
+  it('keeps the Save button enabled', async () => {
+    renderCommands(createPorts([command]));
     await screen.findByText('/review');
     fireEvent.click(screen.getByLabelText('Edit command review'));
     const card = getCommandCard('Edit custom slash command');
-    expect(within(card).getByRole('button', { name: 'Add to Note Toolbar' })).toBeDisabled();
     expect(within(card).getByRole('button', { name: 'Save' })).not.toBeDisabled();
-    expect(within(card).getByText('Install Note Toolbar to use this action.')).toBeInTheDocument();
-  });
-
-  it('keeps a successfully saved command when Note Toolbar setup rejects', async () => {
-    const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'created-key' }));
-    const setupNoteToolbar = jest.fn(async () => { throw new Error('toolbar unavailable'); });
-    const ports = createPorts([], { saveWorkspaceEntry, setupNoteToolbar });
-    renderCommands(ports);
-    await screen.findByText('No custom commands yet. Add one to make it available from the / menu.');
-    fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
-    const draft = getCommandCard('Create custom slash command');
-    fireEvent.change(draft.querySelectorAll('input')[0]!, { target: { value: 'summarize' } });
-    fireEvent.change(draft.querySelector('textarea')!, { target: { value: 'Summarize this.' } });
-    fireEvent.click(within(draft).getByRole('button', { name: 'Add to Note Toolbar' }));
-
-    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledTimes(1));
-    expect(ports.feedback.notify).toHaveBeenCalledWith('The command was saved, but could not be added to Note Toolbar: toolbar unavailable');
-    await waitFor(() => expect(screen.queryByLabelText('Create custom slash command')).not.toBeInTheDocument());
   });
 
   it('shows a delete failure rather than leaving the command busy', async () => {

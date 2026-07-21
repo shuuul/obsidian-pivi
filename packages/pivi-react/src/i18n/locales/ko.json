@@ -704,9 +704,7 @@
       "needTemplate": "프롬프트를 입력하세요.",
       "duplicate": "/{name} 사용자 지정 명령이 이미 있습니다.",
       "saveFailed": "사용자 지정 슬래시 명령을 저장하지 못했습니다.",
-      "newCommand": "새-명령",
-      "addToNoteToolbar": "Note Toolbar에 추가",
-      "addToNoteToolbarFailed": "명령은 저장되었지만 Note Toolbar에 추가하지 못했습니다: {message}"
+      "newCommand": "새-명령"
     },
     "mcp": {
       "empty": "구성된 MCP 서버가 없습니다. 추가를 클릭하여 만드세요.",

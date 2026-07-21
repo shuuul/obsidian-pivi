@@ -704,9 +704,7 @@
       "needTemplate": "Insira um prompt.",
       "duplicate": "Ya existe um comando personalizado /{name}.",
       "saveFailed": "Erro al salvar o comando slash personalizado.",
-      "newCommand": "novo-comando",
-      "addToNoteToolbar": "Adicionar ao Note Toolbar",
-      "addToNoteToolbarFailed": "O comando foi salvo, mas não pôde ser adicionado ao Note Toolbar: {message}"
+      "newCommand": "novo-comando"
     },
     "mcp": {
       "empty": "No hay servidores MCP configurados. Haz clic en Adicionar para crear uno.",

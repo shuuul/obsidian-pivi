@@ -704,9 +704,7 @@
       "needTemplate": "Введите промпт.",
       "duplicate": "Пользовательская команда /{name} уже существует.",
       "saveFailed": "Не удалось сохранить пользовательскую слэш-команду.",
-      "newCommand": "новая-команда",
-      "addToNoteToolbar": "Добавить в Note Toolbar",
-      "addToNoteToolbarFailed": "Команда сохранена, но её не удалось добавить в Note Toolbar: {message}"
+      "newCommand": "новая-команда"
     },
     "mcp": {
       "empty": "MCP-серверы не настроены. Нажмите «Добавить».",

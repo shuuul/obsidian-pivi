@@ -704,9 +704,7 @@
       "needTemplate": "Veuillez saisir une invite.",
       "duplicate": "Une commande personnalisée /{name} existe déjà.",
       "saveFailed": "Échec de l’enregistrement de la commande slash personnalisée.",
-      "newCommand": "nouvelle-commande",
-      "addToNoteToolbar": "Ajouter à Note Toolbar",
-      "addToNoteToolbarFailed": "La commande a été enregistrée, mais n’a pas pu être ajoutée à Note Toolbar : {message}"
+      "newCommand": "nouvelle-commande"
     },
     "mcp": {
       "empty": "Aucun serveur MCP configuré. Cliquez sur Ajouter pour en créer un.",

@@ -161,8 +161,6 @@ export interface SettingsComplexPorts {
     listDropdownEntries(): Promise<readonly SlashCatalogEntry[]>;
     saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<SlashCatalogEntry>;
     deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
-    isNoteToolbarInstalled(): Promise<boolean>;
-    setupNoteToolbar(entry: SlashCatalogEntry): Promise<SettingsFeedbackMessage>;
   };
   mcp: {
     load(): Promise<readonly ManagedMcpServer[]>;
@@ -273,6 +271,33 @@ export interface SettingsCatalogPort {
   ): Promise<{ count: number }>;
 }
 
+/** Handle returned by the mention prompt editor port after mounting. */
+export interface SettingsMentionEditorHandle {
+  getValue(): string;
+  setValue(text: string): void;
+  focus(): void;
+  setDisabled(disabled: boolean): void;
+  destroy(): void;
+}
+
+export interface SettingsMentionEditorCallbacks {
+  onChange?(text: string): void;
+}
+
+/**
+ * Mounts an imperative mention-capable prompt editor (`@` vault files/folders/
+ * agents, `/` skills/MCP/tools/commands) into a React-owned empty container.
+ * The persisted value is canonical plain text identical to composer-extracted
+ * text; badges are editing-time presentation only.
+ */
+export interface SettingsMentionEditorPort {
+  mount(
+    container: HTMLElement,
+    initialValue: string,
+    callbacks: SettingsMentionEditorCallbacks,
+  ): SettingsMentionEditorHandle;
+}
+
 export interface SettingsPorts {
   feedback: SettingsFeedbackPort;
   snapshot: SettingsSnapshotPort;
@@ -284,4 +309,5 @@ export interface SettingsPorts {
   editorToolbar: SettingsEditorToolbarPort;
   catalog: SettingsCatalogPort;
   hostIntegrations: SettingsHostIntegrationsPort;
+  mentionEditor: SettingsMentionEditorPort;
 }

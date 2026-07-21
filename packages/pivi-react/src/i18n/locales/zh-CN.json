@@ -704,9 +704,7 @@
       "needTemplate": "请输入提示词。",
       "duplicate": "名为 /{name} 的自定义命令已存在。",
       "saveFailed": "保存自定义斜杠命令失败。",
-      "newCommand": "新命令",
-      "addToNoteToolbar": "添加到 Note Toolbar",
-      "addToNoteToolbarFailed": "命令已保存，但无法添加到 Note Toolbar：{message}"
+      "newCommand": "新命令"
     },
     "mcp": {
       "empty": "尚未配置 MCP 服务器。点击添加以创建。",

@@ -704,9 +704,7 @@
       "needTemplate": "Bitte einen Prompt eingeben.",
       "duplicate": "Ein eigener Befehl /{name} existiert bereits.",
       "saveFailed": "Eigener Slash-Befehl konnte nicht gespeichert werden.",
-      "newCommand": "neuer-befehl",
-      "addToNoteToolbar": "Zu Note Toolbar hinzufügen",
-      "addToNoteToolbarFailed": "Der Befehl wurde gespeichert, konnte aber nicht zu Note Toolbar hinzugefügt werden: {message}"
+      "newCommand": "neuer-befehl"
     },
     "mcp": {
       "empty": "Keine MCP-Server konfiguriert. Zum Hinzufügen auf Hinzufügen klicken.",
