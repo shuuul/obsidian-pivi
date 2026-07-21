@@ -81,7 +81,9 @@ MCP settings save/reload invalidates slash caches, authenticates or diagnoses as
 
 ## Note Toolbar
 
-Pivi can add the current Markdown editor selection or a custom Pivi command to Note Toolbar. The stable selection command ID is:
+Pivi can add the current Markdown editor selection or a custom Pivi command to Note Toolbar. Settings → Toolbar chooses a single selected-text toolbar provider: **Pivi**, **Note Toolbar**, or **Disabled**. Note Toolbar setup UI appears only when the provider is Note Toolbar (and the plugin is installed); with Pivi or Disabled selected, Note Toolbar content is hidden.
+
+The stable selection command ID is:
 
 ```text
 pivi:add-selection-to-chat-input

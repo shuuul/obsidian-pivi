@@ -300,7 +300,8 @@
       "skills": "技能",
       "tools": "工具",
       "subagents": "子代理",
-      "commands": "指令"
+      "commands": "指令",
+      "toolbar": "工具列"
     },
     "integrations": {
       "heading": "整合"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "使用 Style Settings 外掛自訂 Pivi 的外觀。",
       "open": "開啟 Style Settings",
-      "installationOpened": "已開啟 Style Settings 外掛頁面。請安裝或啟用它，然後返回整合設定。"
+      "installationOpened": "已開啟 Style Settings 外掛頁面。安裝或啟用後，請返回「一般」。"
     },
     "layout": "版面配置",
     "chatBehavior": "聊天行為",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar 回報設定成功，但無法驗證 Pivi 指令。",
       "failed": "無法設定 Note Toolbar：{message}",
       "unknownError": "未知錯誤"
+    },
+    "editorToolbar": {
+      "title": "編輯器選取工具列",
+      "desc": "設定會顯示在編輯器選取工具列上的捷徑按鈕，與 Ask AI 和加入聊天並列。",
+      "addCommand": "+ 新增 Obsidian 命令",
+      "enabled": "已啟用",
+      "kind": {
+        "command": "Obsidian 命令",
+        "piviCommand": "Pivi 命令"
+      },
+      "empty": "尚未設定任何工具列捷徑。",
+      "commandSearchPlaceholder": "依名稱或 ID 搜尋命令",
+      "commandPickerTitle": "選擇 Obsidian 命令",
+      "noCommands": "沒有符合的命令。",
+      "removeAria": "移除 {label}",
+      "provider": {
+        "title": "選取文字工具列",
+        "name": "啟用選取工具列",
+        "desc": "在編輯器中選取文字時顯示 Pivi 浮動工具列。",
+        "noteToolbarActive": "Note Toolbar 的選取文字工具列已啟用，Pivi 工具列已自動暫停。"
+      },
+      "addPiviCommand": "+ 新增 Pivi 命令",
+      "piviCommandPickerTitle": "選擇 Pivi 命令",
+      "piviCommandSearchPlaceholder": "搜尋 Pivi 命令",
+      "noPiviCommands": "沒有符合的 Pivi 命令。請先在「命令」中建立。"
     },
     "slashCommands": {
       "desc": "管理儲存在 .pivi/commands/ 中的{workspaceName}級自訂指令。由 /名稱 觸發。"
@@ -832,6 +858,27 @@
       "listMcpResources": "列出 MCP 資源",
       "readMcpResource": "讀取 MCP 資源",
       "editNotebook": "編輯筆記本"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "加入聊天",
+      "commandUnavailable": "無法執行該命令。",
+      "noActiveEditor": "沒有可用的作用中編輯器。"
+    },
+    "inlineEdit": {
+      "placeholder": "描述要如何編輯選取內容…",
+      "promptAria": "內嵌編輯指示",
+      "send": "傳送",
+      "accept": "接受",
+      "acceptHint": "⌘↩",
+      "reject": "拒絕",
+      "rejectHint": "esc",
+      "streaming": "產生中…",
+      "failed": "內嵌編輯失敗。請再試一次。",
+      "emptyPrompt": "傳送前請輸入指示。",
+      "chatUnavailable": "請先開啟 Pivi 聊天，再使用內嵌編輯。"
     }
   },
   "host": {

@@ -1,0 +1,313 @@
+.pivi-selection-toolbar-overlay {
+  position: absolute;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.pivi-selection-toolbar-overlay--hidden {
+  display: none;
+}
+
+.pivi-selection-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--pivi-spacing-xs);
+  padding: 3px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-primary);
+  box-shadow: var(--pivi-shadow-md);
+  max-width: min(92vw, 640px);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 140ms ease-out,
+    transform 140ms ease-out;
+}
+
+@starting-style {
+  .pivi-selection-toolbar {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+.pivi-selection-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: var(--pivi-spacing-xs);
+  min-width: 0;
+}
+
+.pivi-selection-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  align-self: center;
+  background: var(--pivi-host-border);
+  flex-shrink: 0;
+}
+
+.pivi-selection-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pivi-spacing-xs);
+  height: 28px;
+  padding: 0 var(--pivi-spacing-sm);
+  border: 0;
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-text-sm);
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--pivi-duration-fast) ease-out,
+    background-color var(--pivi-duration-fast) ease;
+}
+
+.pivi-selection-toolbar-btn--icon {
+  width: 28px;
+  padding: 0;
+}
+
+.pivi-selection-toolbar-btn--icon .pivi-platform-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.pivi-selection-toolbar-btn--icon .pivi-platform-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-selection-toolbar-btn:hover {
+    background: var(--pivi-host-background-hover);
+  }
+}
+
+.pivi-selection-toolbar-btn:active {
+  transform: scale(var(--pivi-press-scale));
+}
+
+.pivi-selection-toolbar-btn--primary {
+  font-weight: var(--pivi-host-font-semibold);
+  color: var(--pivi-host-text-accent);
+  background: color-mix(in srgb, var(--pivi-host-interactive-accent) 12%, transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-selection-toolbar-btn--primary:hover {
+    background: color-mix(in srgb, var(--pivi-host-interactive-accent) 18%, transparent);
+  }
+}
+
+.pivi-selection-toolbar-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.pivi-selection-toolbar-icon .pivi-brand-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.pivi-inline-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pivi-spacing-sm);
+  width: min(92vw, 400px);
+  padding: var(--pivi-spacing-sm);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-md);
+  background: var(--pivi-host-background-primary);
+  box-shadow: var(--pivi-shadow-lg);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 140ms ease-out,
+    transform 140ms ease-out;
+}
+
+@starting-style {
+  .pivi-inline-edit {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+.pivi-inline-edit-prompt {
+  width: 100%;
+  min-height: 4.5rem;
+  resize: vertical;
+  padding: var(--pivi-spacing-sm);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-primary);
+  color: var(--pivi-host-text-normal);
+  font: inherit;
+  transition:
+    border-color var(--pivi-duration-fast) ease,
+    box-shadow var(--pivi-duration-fast) ease;
+}
+
+.pivi-inline-edit-prompt:focus-visible {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+.pivi-inline-edit-prompt:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pivi-inline-edit-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-inline-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--pivi-spacing-xs);
+  margin-inline-start: auto;
+}
+
+.pivi-inline-edit-hint {
+  color: var(--pivi-host-text-faint);
+  font-size: var(--pivi-text-xs);
+  font-family: var(--pivi-host-font-monospace);
+  line-height: 1;
+}
+
+.pivi-inline-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--pivi-spacing-sm);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-primary);
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-text-sm);
+  cursor: pointer;
+  transition:
+    transform var(--pivi-duration-fast) ease-out,
+    background-color var(--pivi-duration-fast) ease,
+    border-color var(--pivi-duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-inline-edit-btn:hover {
+    background: var(--pivi-host-background-hover);
+    border-color: var(--pivi-host-border-hover);
+  }
+}
+
+.pivi-inline-edit-btn:active {
+  transform: scale(var(--pivi-press-scale));
+}
+
+.pivi-inline-edit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pivi-inline-edit-btn--primary {
+  border-color: transparent;
+  background: var(--pivi-host-interactive-accent);
+  color: var(--pivi-host-text-on-accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-inline-edit-btn--primary:hover {
+    background: var(--pivi-host-interactive-accent-hover);
+  }
+}
+
+.pivi-inline-edit-status {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-text-sm);
+  animation: pivi-inline-edit-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pivi-inline-edit-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.pivi-inline-edit-preview {
+  max-height: 8rem;
+  overflow: auto;
+  padding: var(--pivi-spacing-sm);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-text-sm);
+  white-space: pre-wrap;
+}
+
+.pivi-inline-edit-error {
+  color: var(--pivi-host-text-error);
+  font-size: var(--pivi-text-sm);
+}
+
+/* Compact composer selectors inside the inline edit box */
+.pivi-inline-edit .pivi-model-btn,
+.pivi-inline-edit .pivi-thinking-current {
+  height: 24px;
+  padding: 0 var(--pivi-spacing-xs);
+  font-size: var(--pivi-text-xs);
+  gap: 4px;
+}
+
+.pivi-inline-edit .pivi-model-btn svg,
+.pivi-inline-edit .pivi-thinking-current svg {
+  width: 12px;
+  height: 12px;
+}
+
+.pivi-inline-edit .pivi-model-label,
+.pivi-inline-edit .pivi-thinking-label {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pivi-inline-edit .pivi-model-dropdown,
+.pivi-inline-edit .pivi-thinking-options {
+  top: calc(100% + 4px);
+  bottom: auto;
+  max-width: min(340px, 84vw);
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--pivi-host-background-primary);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  font-size: var(--pivi-text-xs);
+}
+
+.pivi-inline-edit .pivi-model-option,
+.pivi-inline-edit .pivi-thinking-gear {
+  min-height: 26px;
+  padding: 2px var(--pivi-spacing-xs);
+  font-size: var(--pivi-text-xs);
+}
+
+.pivi-inline-edit .pivi-inline-edit-btn {
+  height: 24px;
+  padding: 0 var(--pivi-spacing-sm);
+  font-size: var(--pivi-text-xs);
+}

@@ -300,7 +300,8 @@
       "skills": "Habilidades",
       "tools": "Ferramentas",
       "subagents": "Subagentes",
-      "commands": "Comandos"
+      "commands": "Comandos",
+      "toolbar": "Barra de ferramentas"
     },
     "integrations": {
       "heading": "Integrações"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "Personalize a aparência do Pivi com o plugin Style Settings.",
       "open": "Abrir Style Settings",
-      "installationOpened": "A página do plugin Style Settings foi aberta. Instale-o ou ative-o e volte para Integrações."
+      "installationOpened": "A página do plugin Style Settings foi aberta. Instale ou ative-o e volte a Geral."
     },
     "layout": "Diseño",
     "chatBehavior": "Comportamento do chat",
@@ -372,6 +373,31 @@
       "verificationFailed": "O Note Toolbar informou sucesso, mas o comando Pivi não pôde ser verificado.",
       "failed": "Não foi possível configurar o Note Toolbar: {message}",
       "unknownError": "Erro desconhecido"
+    },
+    "editorToolbar": {
+      "title": "Barra de ferramentas de seleção do editor",
+      "desc": "Configure atalhos que aparecem na barra de seleção do editor junto com Ask AI e Adicionar ao chat.",
+      "addCommand": "+ Adicionar comando Obsidian",
+      "enabled": "Ativado",
+      "kind": {
+        "command": "Comando do Obsidian",
+        "piviCommand": "Comando Pivi"
+      },
+      "empty": "Nenhum atalho da barra configurado ainda.",
+      "commandSearchPlaceholder": "Pesquisar comandos por nome ou ID",
+      "commandPickerTitle": "Escolher um comando do Obsidian",
+      "noCommands": "Nenhum comando correspondente.",
+      "removeAria": "Remover {label}",
+      "provider": {
+        "title": "Barra de seleção de texto",
+        "name": "Ativar barra de seleção",
+        "desc": "Mostrar a barra flutuante do Pivi ao selecionar texto no editor.",
+        "noteToolbarActive": "A barra de texto selecionado do Note Toolbar está ativa, por isso a barra do Pivi é pausada automaticamente."
+      },
+      "addPiviCommand": "+ Adicionar comando Pivi",
+      "piviCommandPickerTitle": "Escolher um comando Pivi",
+      "piviCommandSearchPlaceholder": "Pesquisar comandos Pivi",
+      "noPiviCommands": "Nenhum comando Pivi correspondente. Crie um primeiro em Comandos."
     },
     "slashCommands": {
       "desc": "Gerencie comandos personalizados a nível de {workspaceName} armazenados em .pivi/commands/. Acionados por /nome."
@@ -832,6 +858,27 @@
       "listMcpResources": "Listar recursos MCP",
       "readMcpResource": "Leer recurso MCP",
       "editNotebook": "Editar cuaderno"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "Adicionar ao chat",
+      "commandUnavailable": "Não foi possível executar esse comando.",
+      "noActiveEditor": "Nenhum editor ativo está disponível."
+    },
+    "inlineEdit": {
+      "placeholder": "Descreva como editar a seleção…",
+      "promptAria": "Instrução de edição inline",
+      "send": "Enviar",
+      "accept": "Aceitar",
+      "acceptHint": "⌘↩",
+      "reject": "Rejeitar",
+      "rejectHint": "esc",
+      "streaming": "Gerando…",
+      "failed": "A edição inline falhou. Tente novamente.",
+      "emptyPrompt": "Digite uma instrução antes de enviar.",
+      "chatUnavailable": "Abra o chat do Pivi antes de usar a edição inline."
     }
   },
   "host": {

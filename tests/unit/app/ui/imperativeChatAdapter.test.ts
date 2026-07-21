@@ -16,7 +16,7 @@ import {
   runDevelopmentMarkdownStream,
   runDevelopmentMarkdownStreamInIsolatedTab,
   runDevelopmentTabSwitching,
-} from '@/app/ui/imperativeChatViewHandle';
+} from '@/app/ui/imperativeChatDevelopment';
 import { ChatState } from '@/ui/chat/state/ChatState';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type {
@@ -42,10 +42,12 @@ type TestTab = {
   openSessionId: string | null;
   sessionFile: string | null;
   draftModel: string | null;
+  lifecycleState?: string;
   service: TestService | null;
   serviceInitialized: boolean;
   state: {
     isStreaming: boolean;
+    streamGeneration?: number;
     uiStore?: ChatUiStore;
     projectionStore?: ChatProjectionStore;
     messages?: ChatMessage[];
@@ -1070,6 +1072,11 @@ describe('imperative chat semantic view handle', () => {
       .resolves.toBe(true);
     expect(manager.createTab).toHaveBeenCalledTimes(1);
     expect(sendMessage).toHaveBeenCalledWith({ content: 'Resolved prompt' });
+  });
+
+  it('returns null for inline edit turns before the chat surface is mounted', async () => {
+    const { handle } = createHarness();
+    await expect(handle.commands.submitInlineEditTurn({ content: 'Rewrite' })).resolves.toBeNull();
   });
 
   it('projects editor selection and copied external contexts', async () => {

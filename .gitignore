@@ -98,6 +98,5 @@ plans/
 # Git Worktrees
 .worktrees/
 
-# Agent skills (local development tooling)
+# Skills
 .agents/skills/
-

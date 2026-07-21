@@ -300,7 +300,8 @@
       "skills": "技能",
       "tools": "工具",
       "subagents": "子代理",
-      "commands": "命令"
+      "commands": "命令",
+      "toolbar": "工具栏"
     },
     "integrations": {
       "heading": "集成"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "使用 Style Settings 插件自定义 Pivi 的外观。",
       "open": "打开 Style Settings",
-      "installationOpened": "已打开 Style Settings 插件页面。请安装或启用它，然后返回集成设置。"
+      "installationOpened": "已打开 Style Settings 插件页面。安装或启用后，请返回「常规」。"
     },
     "layout": "布局",
     "chatBehavior": "聊天行为",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar 报告设置成功，但无法验证 Pivi 命令。",
       "failed": "无法设置 Note Toolbar：{message}",
       "unknownError": "未知错误"
+    },
+    "editorToolbar": {
+      "title": "编辑器选区工具栏",
+      "desc": "配置会显示在编辑器选区工具栏上的快捷按钮，与 Ask AI 和添加到聊天并列。",
+      "addCommand": "+ 添加 Obsidian 命令",
+      "enabled": "已启用",
+      "kind": {
+        "command": "Obsidian 命令",
+        "piviCommand": "Pivi 命令"
+      },
+      "empty": "尚未配置任何工具栏快捷方式。",
+      "commandSearchPlaceholder": "按名称或 ID 搜索命令",
+      "commandPickerTitle": "选择 Obsidian 命令",
+      "noCommands": "没有匹配的命令。",
+      "removeAria": "移除 {label}",
+      "provider": {
+        "title": "选中文本工具栏",
+        "name": "启用选中工具栏",
+        "desc": "在编辑器中选中文本时显示 Pivi 浮动工具栏。",
+        "noteToolbarActive": "Note Toolbar 的选中文本工具栏已启用，Pivi 工具栏已自动暂停。"
+      },
+      "addPiviCommand": "+ 添加 Pivi 命令",
+      "piviCommandPickerTitle": "选择 Pivi 命令",
+      "piviCommandSearchPlaceholder": "搜索 Pivi 命令",
+      "noPiviCommands": "没有匹配的 Pivi 命令。请先在「命令」中创建。"
     },
     "slashCommands": {
       "desc": "管理存储在 .pivi/commands/ 中的{workspaceName}级自定义命令。由 /名称 触发。"
@@ -832,6 +858,27 @@
       "listMcpResources": "列出 MCP 资源",
       "readMcpResource": "读取 MCP 资源",
       "editNotebook": "编辑笔记本"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "添加到聊天",
+      "commandUnavailable": "无法运行该命令。",
+      "noActiveEditor": "没有可用的活动编辑器。"
+    },
+    "inlineEdit": {
+      "placeholder": "描述如何编辑所选内容…",
+      "promptAria": "内联编辑指令",
+      "send": "发送",
+      "accept": "接受",
+      "acceptHint": "⌘↩",
+      "reject": "拒绝",
+      "rejectHint": "esc",
+      "streaming": "生成中…",
+      "failed": "内联编辑失败。请重试。",
+      "emptyPrompt": "发送前请输入指令。",
+      "chatUnavailable": "请先打开 Pivi 聊天，再使用内联编辑。"
     }
   },
   "host": {

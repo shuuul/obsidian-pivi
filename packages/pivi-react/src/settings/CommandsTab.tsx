@@ -21,14 +21,19 @@ function useMountedRef() {
   return mounted;
 }
 
-interface IconPickerProps {
+interface CommandIconPickerProps {
   readonly disabled: boolean;
   readonly icon: string;
   readonly iconNames: readonly string[];
   readonly onChange: (icon: string) => void;
 }
 
-function IconPicker({ disabled, icon, iconNames, onChange }: IconPickerProps) {
+export function CommandIconPicker({
+  disabled,
+  icon,
+  iconNames,
+  onChange,
+}: CommandIconPickerProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -185,7 +190,7 @@ function CommandCard({
       <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.name.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.name.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" autoFocus={isDraft} value={name} placeholder={t('settings.createCommand.name.placeholder')} onChange={(event) => { setName(normalizeCommandName(event.target.value)); setError(null); }} disabled={pending} /></div></label>
       <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.description.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.description.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={description} placeholder={t('settings.createCommand.description.placeholder')} onChange={(event) => { setDescription(event.target.value); setError(null); }} disabled={pending} /></div></label>
       <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.argumentHint.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.argumentHint.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={argumentHint} onChange={(event) => { setArgumentHint(event.target.value); setError(null); }} disabled={pending} /></div></label>
-      <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.icon.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.icon.desc')}</div></div><div className="pivi-setting-row__control pivi-command-icon-control"><IconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} /></div></div>
+      <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.icon.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.icon.desc')}</div></div><div className="pivi-setting-row__control pivi-command-icon-control"><CommandIconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} /></div></div>
       <label className="pivi-command-prompt-field">
         <span className="pivi-setting-row__name">{t('settings.createCommand.template.name')}</span>
         <span className="pivi-setting-description">{t('settings.createCommand.template.desc')}</span>

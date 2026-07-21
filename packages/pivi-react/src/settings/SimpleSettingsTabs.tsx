@@ -4,6 +4,7 @@ import type { Locale, TranslationKey } from '../i18n';
 import { useI18n, useT } from '../i18n';
 import type {
   SettingsActionsPort,
+  SettingsEditorToolbarPort,
   SettingsEnvironmentPort,
   SettingsFeedbackMessage,
   SettingsFeedbackPort,
@@ -12,6 +13,7 @@ import type {
   SettingsHotkeysPort,
 } from '../ports';
 import { BadgeListInput, Select, SettingRow, SettingsActionFeedback, SettingsSection, Toggle } from './controls';
+import { EditorToolbarSection } from './EditorToolbarSection';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
@@ -189,12 +191,14 @@ export function GeneralSettingsTab({
   environment,
   feedback,
   hotkeys,
+  integrations,
 }: {
   readonly store: SettingsUiStore;
   readonly actions: SettingsActionsPort;
   readonly environment: SettingsEnvironmentPort;
   readonly feedback: SettingsFeedbackPort;
   readonly hotkeys: SettingsHotkeysPort;
+  readonly integrations: SettingsHostIntegrationsPort;
 }) {
   const { general } = useSettingsUiSnapshot(store);
   const i18n = useI18n();
@@ -314,6 +318,37 @@ export function GeneralSettingsTab({
         <HotkeyGrid hotkeys={hotkeys} />
       </SettingsSection>
       <EnvironmentSection environment={environment} feedback={feedback} />
+      <IntegrationsSettingsSection
+        integrations={integrations}
+        feedback={feedback}
+        sectionIds={['obsidian:style-settings']}
+        showOuterHeading={false}
+      />
+    </>
+  );
+}
+
+export function ToolbarSettingsTab({
+  store,
+  actions,
+  editorToolbar,
+  feedback,
+  integrations,
+}: {
+  readonly store: SettingsUiStore;
+  readonly actions: SettingsActionsPort;
+  readonly editorToolbar: SettingsEditorToolbarPort;
+  readonly feedback: SettingsFeedbackPort;
+  readonly integrations: SettingsHostIntegrationsPort;
+}) {
+  return (
+    <>
+      <EditorToolbarSection
+        store={store}
+        actions={actions}
+        editorToolbar={editorToolbar}
+        feedback={feedback}
+      />
     </>
   );
 }
@@ -384,9 +419,16 @@ export function SessionFilesSettingsSection({ actions, feedback }: {
   );
 }
 
-export function IntegrationsSettingsSection({ integrations, feedback }: {
+export function IntegrationsSettingsSection({
+  integrations,
+  feedback,
+  sectionIds,
+  showOuterHeading = true,
+}: {
   readonly integrations: SettingsHostIntegrationsPort;
   readonly feedback: SettingsFeedbackPort;
+  readonly sectionIds?: readonly string[];
+  readonly showOuterHeading?: boolean;
 }) {
   const t = useT();
   const [pending, setPending] = useState(false);
@@ -396,17 +438,21 @@ export function IntegrationsSettingsSection({ integrations, feedback }: {
   const mounted = useMountedRef();
   useEffect(() => {
     const result = integrations.listSections();
+    const apply = (nextSections: readonly SettingsHostIntegrationSection[]) => {
+      const filtered = sectionIds
+        ? nextSections.filter((section) => sectionIds.includes(section.id))
+        : nextSections;
+      if (mounted.current) setSections(filtered);
+    };
     if (Array.isArray(result)) {
-      setSections(result);
+      apply(result);
       return;
     }
     const pendingSections = result as Promise<readonly SettingsHostIntegrationSection[]>;
-    void pendingSections.then((nextSections) => {
-      if (mounted.current) setSections(nextSections);
-    }).catch(() => {
+    void pendingSections.then(apply).catch(() => {
       if (mounted.current) setLoadFeedback({ kind: 'error', message: t('common.error') });
     });
-  }, [integrations, mounted, t]);
+  }, [integrations, mounted, sectionIds, t]);
   const run = async (actionId: string) => {
     setPending(true);
     setActionFeedback(current => {
@@ -429,6 +475,39 @@ export function IntegrationsSettingsSection({ integrations, feedback }: {
       if (mounted.current) setPending(false);
     }
   };
+  if (!showOuterHeading) {
+    return (
+      <>
+        <SettingsActionFeedback feedback={loadFeedback} />
+        {sections.map((section) => (
+          <SettingsSection key={section.id} title={section.heading}>
+            <p className="pivi-setting-description">{section.description}</p>
+            <div className="pivi-settings-action-group">
+              {section.actions.map((action) => (
+                <span className="pivi-settings-action-group" key={action.id}>
+                  <button
+                    type="button"
+                    disabled={pending || action.disabled}
+                    title={action.disabledReason}
+                    onClick={() => { void run(action.id); }}
+                  >
+                    {action.label}
+                  </button>
+                  <SettingsActionFeedback
+                    feedback={actionFeedback[action.id] ?? (
+                      action.disabledReason
+                        ? { kind: 'error' as const, message: action.disabledReason }
+                        : null
+                    )}
+                  />
+                </span>
+              ))}
+            </div>
+          </SettingsSection>
+        ))}
+      </>
+    );
+  }
   return (
     <SettingsSection title={t('settings.integrations.heading')}>
       <SettingsActionFeedback feedback={loadFeedback} />

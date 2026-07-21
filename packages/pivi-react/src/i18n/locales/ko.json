@@ -300,7 +300,8 @@
       "skills": "스킬",
       "tools": "도구",
       "subagents": "서브에이전트",
-      "commands": "명령"
+      "commands": "명령",
+      "toolbar": "툴바"
     },
     "integrations": {
       "heading": "통합"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "Style Settings 플러그인으로 Pivi의 모양을 사용자 지정하세요.",
       "open": "Style Settings 열기",
-      "installationOpened": "Style Settings 플러그인 페이지를 열었습니다. 설치하거나 활성화한 후 통합으로 돌아오세요."
+      "installationOpened": "Style Settings 플러그인 페이지가 열렸습니다. 설치하거나 사용하도록 설정한 다음 일반으로 돌아오세요."
     },
     "layout": "레이아웃",
     "chatBehavior": "채팅 동작",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar가 성공을 보고했지만 Pivi 명령을 확인할 수 없습니다.",
       "failed": "Note Toolbar를 설정할 수 없습니다: {message}",
       "unknownError": "알 수 없는 오류"
+    },
+    "editorToolbar": {
+      "title": "편집기 선택 도구 모음",
+      "desc": "Ask AI 및 채팅에 추가와 함께 편집기 선택 도구 모음에 표시되는 바로가기 버튼을 구성합니다.",
+      "addCommand": "+ Obsidian 명령 추가",
+      "enabled": "사용",
+      "kind": {
+        "command": "Obsidian 명령",
+        "piviCommand": "Pivi 명령"
+      },
+      "empty": "아직 구성된 도구 모음 바로가기가 없습니다.",
+      "commandSearchPlaceholder": "이름 또는 ID로 명령 검색",
+      "commandPickerTitle": "Obsidian 명령 선택",
+      "noCommands": "일치하는 명령이 없습니다.",
+      "removeAria": "{label} 제거",
+      "provider": {
+        "title": "텍스트 선택 도구 모음",
+        "name": "선택 도구 모음 사용",
+        "desc": "편집기에서 텍스트를 선택하면 Pivi 플로팅 도구 모음을 표시합니다.",
+        "noteToolbarActive": "Note Toolbar의 선택 텍스트 도구 모음이 활성화되어 있어 Pivi 도구 모음이 자동으로 일시 중지됩니다."
+      },
+      "addPiviCommand": "+ Pivi 명령 추가",
+      "piviCommandPickerTitle": "Pivi 명령 선택",
+      "piviCommandSearchPlaceholder": "Pivi 명령 검색",
+      "noPiviCommands": "일치하는 Pivi 명령이 없습니다. 먼저 명령 탭에서 만드세요."
     },
     "slashCommands": {
       "desc": ".pivi/commands/에 저장된 {workspaceName} 수준 사용자 지정 명령을 관리합니다. /이름으로 실행됩니다."
@@ -832,6 +858,27 @@
       "listMcpResources": "MCP 리소스 목록",
       "readMcpResource": "MCP 리소스 읽기",
       "editNotebook": "노트북 편집"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "채팅에 추가",
+      "commandUnavailable": "해당 명령을 실행할 수 없습니다.",
+      "noActiveEditor": "활성 편집기가 없습니다."
+    },
+    "inlineEdit": {
+      "placeholder": "선택 영역을 어떻게 편집할지 설명하세요…",
+      "promptAria": "인라인 편집 지시문",
+      "send": "보내기",
+      "accept": "적용",
+      "acceptHint": "⌘↩",
+      "reject": "거부",
+      "rejectHint": "esc",
+      "streaming": "생성 중…",
+      "failed": "인라인 편집에 실패했습니다. 다시 시도하세요.",
+      "emptyPrompt": "보내기 전에 지시문을 입력하세요.",
+      "chatUnavailable": "인라인 편집을 사용하려면 먼저 Pivi 채팅을 여세요."
     }
   },
   "host": {

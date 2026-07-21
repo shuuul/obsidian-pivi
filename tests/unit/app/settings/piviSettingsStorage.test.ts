@@ -371,4 +371,55 @@ describe("PiviSettingsStorage", () => {
     expect(localStore.getState()?.providers.map((provider) => provider.id))
       .toEqual(['deepseek', 'openai']);
   });
+
+  it('persists normalized editor selection toolbar shortcuts', async () => {
+    const adapter = createMemoryAdapter(JSON.stringify({
+      editorSelectionToolbar: {
+        shortcuts: [
+          {
+            id: 'pivi-1',
+            kind: 'pivi-command',
+            label: '/summarize',
+            enabled: true,
+            piviCommandKey: 'abc-key',
+          },
+          {
+            id: 'bad',
+            kind: 'pivi-command',
+            label: 'Missing key',
+            enabled: true,
+          },
+          {
+            id: 'legacy',
+            kind: 'preset-prompt',
+            label: 'Summarize',
+            enabled: true,
+            prompt: 'Summarize the selection.',
+          },
+        ],
+      },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.editorSelectionToolbar).toEqual({
+      enabled: true,
+      shortcuts: [
+        {
+          id: 'pivi-1',
+          kind: 'pivi-command',
+          label: '/summarize',
+          enabled: true,
+          piviCommandKey: 'abc-key',
+        },
+      ],
+    });
+    expect(JSON.parse(adapter.writes.at(-1) ?? '{}').editorSelectionToolbar).toEqual(
+      settings.editorSelectionToolbar,
+    );
+  });
 });

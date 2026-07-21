@@ -3,6 +3,7 @@ import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 import type { AppModelReadinessStatusKind } from '@pivi/pivi-agent-core/foundation/modelReadiness';
 import type {
+  EditorSelectionToolbarSettings,
   EnvironmentScope,
   WebProviderId,
   WebSearchToolsSettings,
@@ -187,6 +188,7 @@ export interface SettingsSnapshotPort {
 export interface SettingsActionsPort {
   saveGeneral(patch: Partial<SettingsGeneralSnapshot>): Promise<void>;
   saveSubagents(patch: Partial<SettingsSubagentsSnapshot>): Promise<void>;
+  saveEditorSelectionToolbar(settings: EditorSelectionToolbarSettings): Promise<void>;
   purgeDeletedSessionFiles(): Promise<number>;
 }
 
@@ -239,6 +241,29 @@ export interface SettingsHotkeysPort {
   openHotkeySettings(): void;
 }
 
+export interface SettingsEditorToolbarCommandEntry {
+  readonly id: string;
+  readonly name: string;
+  /** Host icon id when the command declares one. */
+  readonly iconId?: string;
+}
+
+export interface SettingsEditorToolbarPiviCommandEntry {
+  readonly key: string;
+  readonly name: string;
+  readonly description?: string;
+  /** Catalog icon id when the command declares one. */
+  readonly icon?: string;
+}
+
+export interface SettingsEditorToolbarPort {
+  listHostCommands(): readonly SettingsEditorToolbarCommandEntry[];
+  listPiviCommands(): Promise<readonly SettingsEditorToolbarPiviCommandEntry[]>;
+  listIconNames(): readonly string[];
+  /** True when Note Toolbar's selected-text toolbar is active and Pivi's toolbar auto-yields. */
+  isNoteToolbarTextToolbarActive(): boolean;
+}
+
 export interface SettingsCatalogPort {
   listModelsForProvider(providerId: string): ChatUIOption[];
   syncCustomProviders(snapshot: PiviSettings): void;
@@ -256,6 +281,7 @@ export interface SettingsPorts {
   persistence: SettingsPersistencePort;
   environment: SettingsEnvironmentPort;
   hotkeys: SettingsHotkeysPort;
+  editorToolbar: SettingsEditorToolbarPort;
   catalog: SettingsCatalogPort;
   hostIntegrations: SettingsHostIntegrationsPort;
 }

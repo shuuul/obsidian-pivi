@@ -74,6 +74,8 @@ flowchart LR
 | `ui/defaultVaultSkillsPrompt.ts` | Localized owner-realm Obsidian Notice shown only after host-neutral Skills orchestration requests confirmation |
 | `ui/externalDirectory.ts` | Desktop directory pick/validate for settings ports (no `@/ui` import) |
 | `ui/PiviSettingTabHost.ts` | Obsidian 1.13 declarative settings-search bridge plus 1.12 `display()` fallback; both mount the same React `SettingsRoot` |
+| `ui/selectionToolbar/SelectionToolbarSurfaceController.ts` | Mounts React selection-toolbar/inline-edit chrome into `SelectionToolbarHost`; wires Ask AI, Add to chat, shortcuts, and `submitInlineEditTurn` |
+| `editorSelectionToolbarRegistration.ts` | CM6 selection trigger + floating overlay host (`getSelectionToolbarHost`) |
 | `ui/createUiPorts.ts` | Explicit-workspace `createChatUiPorts(host, workspace)` and `createSettingsUiPorts(host, workspace)` public entries |
 | `ui/createUiPortHelpers.ts` | Shared workspace/env/subagent helpers for UI port adapters |
 | `ui/createSettingsModelsPort.ts` | Settings models/credential port wiring; prefetches interactive OAuth credentials via `getAuth` before readiness badges render; settings-authoritative provider removal and optional single-provider credential deletion |

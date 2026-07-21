@@ -8,7 +8,10 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 ## Active specs
 
-_None._
+| Spec | Status | Outcome |
+|---|---|---|
+| [022-editor-selection-toolbar-and-inline-edit.md](022-editor-selection-toolbar-and-inline-edit.md) | Active | Notion-style selection toolbar and Cursor-style inline edit in the note editor. |
+| [023-command-prompt-mentions.md](023-command-prompt-mentions.md) | Draft | Slash-command prompts support @file/@folder//skill//MCP mentions with dropdown completion. |
 
 ## Archived specs
 

@@ -300,7 +300,8 @@
       "skills": "Навыки",
       "tools": "Инструменты",
       "subagents": "Субагенты",
-      "commands": "Команды"
+      "commands": "Команды",
+      "toolbar": "Панель инструментов"
     },
     "integrations": {
       "heading": "Интеграции"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "Настройте внешний вид Pivi с помощью плагина Style Settings.",
       "open": "Открыть Style Settings",
-      "installationOpened": "Открыта страница плагина Style Settings. Установите или включите его, затем вернитесь в раздел интеграций."
+      "installationOpened": "Открыта страница плагина Style Settings. Установите или включите его, затем вернитесь в «Основные»."
     },
     "layout": "Макет",
     "chatBehavior": "Поведение чата",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar сообщил об успехе, но команду Pivi не удалось проверить.",
       "failed": "Не удалось настроить Note Toolbar: {message}",
       "unknownError": "Неизвестная ошибка"
+    },
+    "editorToolbar": {
+      "title": "Панель выделения в редакторе",
+      "desc": "Настройте кнопки быстрого доступа, которые появляются на панели выделения в редакторе рядом с Ask AI и Добавить в чат.",
+      "addCommand": "+ Добавить команду Obsidian",
+      "enabled": "Включено",
+      "kind": {
+        "command": "Команда Obsidian",
+        "piviCommand": "Команда Pivi"
+      },
+      "empty": "Ярлыки панели ещё не настроены.",
+      "commandSearchPlaceholder": "Искать команды по имени или ID",
+      "commandPickerTitle": "Выберите команду Obsidian",
+      "noCommands": "Подходящих команд нет.",
+      "removeAria": "Удалить {label}",
+      "provider": {
+        "title": "Панель выделения текста",
+        "name": "Включить панель выделения",
+        "desc": "Показывать плавающую панель Pivi при выделении текста в редакторе.",
+        "noteToolbarActive": "Панель выделенного текста Note Toolbar активна, поэтому панель Pivi автоматически приостановлена."
+      },
+      "addPiviCommand": "+ Добавить команду Pivi",
+      "piviCommandPickerTitle": "Выбрать команду Pivi",
+      "piviCommandSearchPlaceholder": "Искать команды Pivi",
+      "noPiviCommands": "Нет подходящих команд Pivi. Сначала создайте команду во вкладке «Команды»."
     },
     "slashCommands": {
       "desc": "Управление пользовательскими командами {workspaceName} в .pivi/commands/. Запуск через /имя."
@@ -832,6 +858,27 @@
       "listMcpResources": "Список ресурсов MCP",
       "readMcpResource": "Читать ресурс MCP",
       "editNotebook": "Редактировать блокнот"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "Добавить в чат",
+      "commandUnavailable": "Не удалось выполнить эту команду.",
+      "noActiveEditor": "Нет активного редактора."
+    },
+    "inlineEdit": {
+      "placeholder": "Опишите, как изменить выделение…",
+      "promptAria": "Инструкция для встроенного редактирования",
+      "send": "Отправить",
+      "accept": "Принять",
+      "acceptHint": "⌘↩",
+      "reject": "Отклонить",
+      "rejectHint": "esc",
+      "streaming": "Генерация…",
+      "failed": "Встроенное редактирование не удалось. Повторите попытку.",
+      "emptyPrompt": "Введите инструкцию перед отправкой.",
+      "chatUnavailable": "Откройте чат Pivi перед встроенным редактированием."
     }
   },
   "host": {

@@ -57,6 +57,7 @@ function createHandle(): PiviChatViewHandle {
       cancelActiveTurn: jest.fn(() => true),
     addEditorSelection: jest.fn(() => true),
     sendWorkspaceCommandInNewSession: jest.fn(async () => true),
+    submitInlineEditTurn: jest.fn(async () => null),
       getActiveExternalContexts: jest.fn(() => []),
     },
     maintenance: {

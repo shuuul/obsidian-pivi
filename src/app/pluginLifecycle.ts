@@ -1,8 +1,11 @@
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 
+import { registerSelectionToolbarUi } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
 import type PiviPlugin from "@/main"
 
 import { registerPiviCommands } from "./commandRegistration";
+import { registerEditorSelectionToolbar } from "./editorSelectionToolbarRegistration";
+import { isNoteToolbarTextToolbarActive } from "./noteToolbarIntegration";
 import { registerPiviSettings } from "./settingsRegistration";
 import { measureStartupPhase } from "./startupPerformance";
 import { findAllPiviViews } from "./viewAccess";
@@ -15,6 +18,13 @@ export async function initializePiviPlugin(plugin: PiviPlugin): Promise<void> {
   registerPiviViews(plugin);
   registerPiviCommands(plugin);
   registerPiviSettings(plugin);
+  registerEditorSelectionToolbar(plugin, {
+    isToolbarEnabled: () => (
+      plugin.settings.editorSelectionToolbar?.enabled !== false
+    ),
+    shouldYieldToNoteToolbar: () => isNoteToolbarTextToolbarActive(plugin.app),
+  });
+  registerSelectionToolbarUi(plugin);
 
   plugin.app.workspace.onLayoutReady(() => {
     void plugin.ensureWorkspaceServices().catch((error: unknown) => {

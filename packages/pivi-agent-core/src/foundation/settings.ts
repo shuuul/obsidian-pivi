@@ -155,6 +155,63 @@ export interface SubagentRuntimeSettings {
   allowBackground: boolean;
 }
 
+export type EditorToolbarShortcutKind = 'obsidian-command' | 'pivi-command';
+
+export interface EditorToolbarShortcut {
+  id: string;
+  kind: EditorToolbarShortcutKind;
+  label: string;
+  enabled: boolean;
+  /** Present when kind === 'obsidian-command'. */
+  commandId?: string;
+  /** Slash catalog integrationKey when kind === 'pivi-command'. */
+  piviCommandKey?: string;
+  /** Host icon id shown on the floating toolbar button. */
+  icon?: string;
+}
+
+export interface EditorSelectionToolbarSettings {
+  /**
+   * Whether Pivi's selected-text toolbar owns the editor UI. When false, Pivi
+   * stays out of the editor selection surface (e.g., disabled by the user or
+   * yielding to Note Toolbar via runtime detection).
+   */
+  enabled: boolean;
+  shortcuts: EditorToolbarShortcut[];
+}
+
+const EDITOR_TOOLBAR_SHORTCUT_KINDS = new Set<EditorToolbarShortcutKind>([
+  'obsidian-command',
+  'pivi-command',
+]);
+
+function isEditorToolbarShortcutKind(value: unknown): value is EditorToolbarShortcutKind {
+  return typeof value === 'string' && EDITOR_TOOLBAR_SHORTCUT_KINDS.has(value as EditorToolbarShortcutKind);
+}
+
+/**
+ * Resolve the `enabled` flag from a raw settings value. Accepts the new
+ * `enabled: boolean` field directly, and falls back to the legacy
+ * `provider` field for backward compatibility:
+ *   - 'pivi' / 'note-toolbar' → enabled true (runtime detection yields to Note Toolbar)
+ *   - 'off' → enabled false
+ *   - missing/invalid → default true
+ */
+function resolveToolbarEnabled(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    if (value === 'off') {
+      return false;
+    }
+    if (value === 'pivi' || value === 'note-toolbar') {
+      return true;
+    }
+  }
+  return true;
+}
+
 function normalizeHiddenCommandName(value: string): string {
   return value.trim().replace(/^[/$]+/, "");
 }
@@ -205,6 +262,68 @@ export function getHiddenSlashCommandSet(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+export function normalizeEditorSelectionToolbarSettings(
+  value: unknown,
+): EditorSelectionToolbarSettings {
+  const empty: EditorSelectionToolbarSettings = { enabled: true, shortcuts: [] };
+  if (!isRecord(value)) {
+    return empty;
+  }
+
+  // Prefer the new `enabled` boolean; fall back to the legacy `provider` string
+  // so existing persisted settings migrate cleanly.
+  const toolbarEnabled = Object.hasOwn(value, 'enabled')
+    ? resolveToolbarEnabled(value.enabled)
+    : resolveToolbarEnabled(value.provider);
+  if (!Array.isArray(value.shortcuts)) {
+    return { enabled: toolbarEnabled, shortcuts: [] };
+  }
+
+  const seenIds = new Set<string>();
+  const shortcuts: EditorToolbarShortcut[] = [];
+
+  for (const item of value.shortcuts) {
+    if (!isRecord(item)) {
+      continue;
+    }
+
+    const id = typeof item.id === 'string' ? item.id.trim() : '';
+    const kind = isEditorToolbarShortcutKind(item.kind) ? item.kind : null;
+    const label = typeof item.label === 'string' ? item.label.trim() : '';
+    if (!id || !kind || !label || seenIds.has(id)) {
+      continue;
+    }
+
+    seenIds.add(id);
+    const enabled = item.enabled !== false;
+
+    if (kind === 'obsidian-command') {
+      const commandId = typeof item.commandId === 'string' ? item.commandId.trim() : '';
+      if (!commandId) {
+        continue;
+      }
+      const icon = typeof item.icon === 'string' && item.icon.trim() ? item.icon.trim() : undefined;
+      shortcuts.push(icon
+        ? { id, kind, label, enabled, commandId, icon }
+        : { id, kind, label, enabled, commandId });
+      continue;
+    }
+
+    const piviCommandKey = typeof item.piviCommandKey === 'string'
+      ? item.piviCommandKey.trim()
+      : '';
+    if (!piviCommandKey) {
+      continue;
+    }
+    const piviIcon = typeof item.icon === 'string' && item.icon.trim() ? item.icon.trim() : undefined;
+    shortcuts.push(piviIcon
+      ? { id, kind, label, enabled, piviCommandKey, icon: piviIcon }
+      : { id, kind, label, enabled, piviCommandKey });
+  }
+
+  return { enabled: toolbarEnabled, shortcuts };
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -466,6 +585,9 @@ export interface PiviSettings {
 
   // Slash command visibility (names without leading /)
   hiddenSlashCommands: string[];
+
+  /** Editor selection toolbar shortcut buttons. */
+  editorSelectionToolbar: EditorSelectionToolbarSettings;
 
   /** Set after first successful default skills bundle install for this vault. */
   defaultVaultSkillsSeeded?: boolean;

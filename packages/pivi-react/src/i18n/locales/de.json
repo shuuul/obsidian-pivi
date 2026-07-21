@@ -300,7 +300,8 @@
       "skills": "Fähigkeiten",
       "tools": "Werkzeuge",
       "subagents": "Sub-Agenten",
-      "commands": "Befehle"
+      "commands": "Befehle",
+      "toolbar": "Werkzeugleiste"
     },
     "integrations": {
       "heading": "Integrationen"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "Passe das Erscheinungsbild von Pivi mit dem Style-Settings-Plugin an.",
       "open": "Style Settings öffnen",
-      "installationOpened": "Die Plugin-Seite von Style Settings wurde geöffnet. Installiere oder aktiviere es und kehre dann zu Integrationen zurück."
+      "installationOpened": "Die Style-Settings-Plugin-Seite wurde geöffnet. Installieren oder aktivieren Sie es und kehren Sie dann zu Allgemein zurück."
     },
     "layout": "Layout",
     "chatBehavior": "Chat-Verhalten",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar meldete Erfolg, aber der Pivi-Befehl konnte nicht überprüft werden.",
       "failed": "Note Toolbar konnte nicht eingerichtet werden: {message}",
       "unknownError": "Unbekannter Fehler"
+    },
+    "editorToolbar": {
+      "title": "Editor-Auswahl-Symbolleiste",
+      "desc": "Konfiguriere Kurzschaltflächen für die Editor-Auswahl-Symbolleiste neben Ask AI und Zum Chat hinzufügen.",
+      "addCommand": "+ Obsidian-Befehl hinzufügen",
+      "enabled": "Aktiviert",
+      "kind": {
+        "command": "Obsidian-Befehl",
+        "piviCommand": "Pivi-Befehl"
+      },
+      "empty": "Noch keine Symbolleisten-Kurzbefehle konfiguriert.",
+      "commandSearchPlaceholder": "Befehle nach Name oder ID suchen",
+      "commandPickerTitle": "Obsidian-Befehl auswählen",
+      "noCommands": "Keine passenden Befehle.",
+      "removeAria": "{label} entfernen",
+      "provider": {
+        "title": "Markierungs-Toolbar",
+        "name": "Markierungs-Toolbar aktivieren",
+        "desc": "Pivis schwebende Toolbar anzeigen, wenn Text im Editor markiert wird.",
+        "noteToolbarActive": "Die Markierungs-Toolbar von Note Toolbar ist aktiv, daher wird Pivis Toolbar automatisch pausiert."
+      },
+      "addPiviCommand": "+ Pivi-Befehl hinzufügen",
+      "piviCommandPickerTitle": "Pivi-Befehl wählen",
+      "piviCommandSearchPlaceholder": "Pivi-Befehle suchen",
+      "noPiviCommands": "Keine passenden Pivi-Befehle. Legen Sie zuerst unter Befehle einen an."
     },
     "slashCommands": {
       "desc": "{workspaceName}-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."
@@ -832,6 +858,27 @@
       "listMcpResources": "MCP-Ressourcen auflisten",
       "readMcpResource": "MCP-Ressource lesen",
       "editNotebook": "Notebook bearbeiten"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "Zum Chat hinzufügen",
+      "commandUnavailable": "Dieser Befehl konnte nicht ausgeführt werden.",
+      "noActiveEditor": "Kein aktiver Editor verfügbar."
+    },
+    "inlineEdit": {
+      "placeholder": "Beschreiben Sie, wie die Auswahl bearbeitet werden soll…",
+      "promptAria": "Inline-Bearbeitungsanweisung",
+      "send": "Senden",
+      "accept": "Übernehmen",
+      "acceptHint": "⌘↩",
+      "reject": "Ablehnen",
+      "rejectHint": "esc",
+      "streaming": "Wird generiert…",
+      "failed": "Inline-Bearbeitung fehlgeschlagen. Versuchen Sie es erneut.",
+      "emptyPrompt": "Geben Sie vor dem Senden eine Anweisung ein.",
+      "chatUnavailable": "Öffnen Sie den Pivi-Chat, bevor Sie die Inline-Bearbeitung starten."
     }
   },
   "host": {

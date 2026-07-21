@@ -1,8 +1,10 @@
 import type { OpenSessionState, SessionSummary } from '@pivi/pivi-agent-core/foundation';
 import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+import type { EditorSelectionToolbarSettings } from '@pivi/pivi-agent-core/foundation/settings';
 import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 import {
   getObsidianToolsSettingsFromBag,
+  normalizeEditorSelectionToolbarSettings,
   resolveObsidianToolsSettings,
   resolveWebSearchToolsSettings,
   WEB_PROVIDER_CAPABILITIES,
@@ -29,11 +31,13 @@ import type {
 import type { ChatPerfRecorder } from '@pivi/pivi-react/store';
 import { getIconIds } from 'obsidian';
 
+import { getSelectionToolbarHost } from '@/app/editorSelectionToolbarRegistration';
 import type {
   PiviChatCompositionHost,
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
+import { isNoteToolbarTextToolbarActive } from '@/app/noteToolbarIntegration';
 
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
@@ -46,6 +50,7 @@ import {
   pickDirectoryPath,
   validateDirectoryPath,
 } from './externalDirectory';
+import { listObsidianCommands } from './listObsidianCommands';
 import {
   createObsidianToolRows,
   describeNoteToolbarResult,
@@ -289,6 +294,9 @@ export function createSettingsUiPorts(
           scrollDownKey: host.settings.keyboardNavigation.scrollDownKey,
           focusInputKey: host.settings.keyboardNavigation.focusInputKey,
         },
+        editorSelectionToolbar: normalizeEditorSelectionToolbarSettings(
+          host.settings.editorSelectionToolbar,
+        ),
       },
       subagents: {
         enabled: subagents.enabled,
@@ -320,6 +328,15 @@ export function createSettingsUiPorts(
       }
     }
     await host.saveSettings();
+  };
+  const saveEditorSelectionToolbar = async (
+    settings: EditorSelectionToolbarSettings,
+  ): Promise<void> => {
+    host.settings.editorSelectionToolbar = normalizeEditorSelectionToolbarSettings(settings);
+    await host.saveSettings();
+    if (!host.settings.editorSelectionToolbar.enabled) {
+      getSelectionToolbarHost()?.dismissOverlay();
+    }
   };
   const saveSubagents = async (patch: Partial<SettingsSubagentsSnapshot>): Promise<void> => {
     const current = getSubagentRuntimeSettingsFromBag(host.settings);
@@ -487,6 +504,7 @@ export function createSettingsUiPorts(
     snapshot: { getSnapshot: snapshot },
     actions: {
       saveGeneral,
+      saveEditorSelectionToolbar,
       saveSubagents,
       purgeDeletedSessionFiles: () => host.purgeDeletedSessionFiles(),
     },
@@ -511,6 +529,22 @@ export function createSettingsUiPorts(
         hotkey: getHotkeyForCommand(host.app, row.commandId),
       })),
       openHotkeySettings: () => openHotkeySettings(host.app),
+    },
+    editorToolbar: {
+      listHostCommands: () => listObsidianCommands(host.app),
+      listPiviCommands: async () => {
+        const entries = await ws.slashCommandCatalog.listWorkspaceEntries();
+        return entries
+          .filter((entry) => entry.kind === 'command' && Boolean(entry.integrationKey))
+          .map((entry) => ({
+            key: entry.integrationKey as string,
+            name: entry.name,
+            description: entry.description,
+            ...(entry.icon ? { icon: entry.icon } : {}),
+          }));
+      },
+      listIconNames: () => getIconIds(),
+      isNoteToolbarTextToolbarActive: () => isNoteToolbarTextToolbarActive(host.app),
     },
     catalog: {
       listModelsForProvider: (providerId) => uiFacades.listModelsForProvider(providerId),

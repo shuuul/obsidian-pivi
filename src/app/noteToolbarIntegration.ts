@@ -1,4 +1,4 @@
-import type { DataAdapter } from "obsidian";
+import type { App, DataAdapter } from "obsidian";
 
 export const NOTE_TOOLBAR_PLUGIN_ID = "note-toolbar";
 export const MIN_NOTE_TOOLBAR_VERSION = "1.31.06";
@@ -396,5 +396,46 @@ export async function runQueuedNoteToolbarRequest(
     if (queue.active === setup) {
       queue.active = null;
     }
+  }
+}
+
+/**
+ * Returns true when the Note Toolbar community plugin is enabled AND its
+ * selected-text toolbar is configured (a non-empty `textToolbar` uuid in its
+ * data.json). Pivi uses this to yield the editor selection surface to Note
+ * Toolbar at runtime.
+ *
+ * The Obsidian plugins API is internal, so every access is defensively
+ * optional-chained; any failure returns false. This is fast and side-effect
+ * free — it only reads in-memory plugin state already loaded by Obsidian.
+ */
+export function isNoteToolbarTextToolbarActive(app: App): boolean {
+  try {
+    const plugins = (app as unknown as {
+      plugins?: {
+        enabledPlugins?: { has?: (id: string) => boolean };
+        plugins?: Record<string, { data?: { textToolbar?: unknown } } | undefined>;
+      };
+    }).plugins;
+    if (!plugins) {
+      return false;
+    }
+
+    const enabledPlugins = plugins.enabledPlugins;
+    if (!enabledPlugins || typeof enabledPlugins.has !== 'function') {
+      // Fall back to the plugin instance presence check below.
+    } else if (!enabledPlugins.has(NOTE_TOOLBAR_PLUGIN_ID)) {
+      return false;
+    }
+
+    const pluginInstance = plugins.plugins?.[NOTE_TOOLBAR_PLUGIN_ID];
+    if (!pluginInstance) {
+      return false;
+    }
+
+    const textToolbar = pluginInstance.data?.textToolbar;
+    return typeof textToolbar === 'string' && textToolbar.trim().length > 0;
+  } catch {
+    return false;
   }
 }

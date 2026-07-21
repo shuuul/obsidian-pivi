@@ -22,6 +22,7 @@ import {
   CHAT_VIEW_PLACEMENTS,
   type ChatViewPlacement,
   getObsidianToolsSettingsFromBag,
+  normalizeEditorSelectionToolbarSettings,
   normalizeHiddenCommandList,
   type PiviSettings,
   resolveObsidianToolsSettings,
@@ -139,6 +140,12 @@ export function normalizeStoredPiviSettings(
   const hiddenSlashCommands = normalizeHiddenCommandList(
     stored.hiddenSlashCommands,
   );
+  const storedEditorSelectionToolbar = stored.editorSelectionToolbar;
+  const editorSelectionToolbar = normalizeEditorSelectionToolbarSettings(
+    storedEditorSelectionToolbar,
+  );
+  const editorSelectionToolbarChanged = JSON.stringify(storedEditorSelectionToolbar ?? null)
+    !== JSON.stringify(editorSelectionToolbar);
   const agentSettings = normalizeAgentSettings(stored);
   const storedSubagents = agentSettings.subagents;
   const normalizedSubagents = resolveSubagentRuntimeSettings(storedSubagents);
@@ -168,6 +175,7 @@ export function normalizeStoredPiviSettings(
     sharedEnvironmentVariables:
       getSharedEnvironmentVariables(providerSettings),
     hiddenSlashCommands,
+    editorSelectionToolbar,
     agentSettings,
     chatViewPlacement,
   };
@@ -185,6 +193,7 @@ export function normalizeStoredPiviSettings(
     externalReadDirectoriesMigrated ||
     subagentsChanged ||
     webSearchToolsChanged ||
+    editorSelectionToolbarChanged ||
     Object.hasOwn(stored, "systemPrompt") ||
     Object.hasOwn(stored, "mediaFolder") ||
     Object.hasOwn(stored, "envSnippets") ||

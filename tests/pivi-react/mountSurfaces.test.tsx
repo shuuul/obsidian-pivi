@@ -145,6 +145,7 @@ describe('React surface mounts', () => {
                 excludedTags: [],
                 requireCommandOrControlEnterToSend: false,
                 keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
+                editorSelectionToolbar: { enabled: true, shortcuts: [] },
               },
               subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
             }),
@@ -160,6 +161,12 @@ describe('React surface mounts', () => {
           hotkeys: {
             listHotkeys: () => [],
             openHotkeySettings: () => undefined,
+          },
+          editorToolbar: {
+            listHostCommands: () => [],
+            listPiviCommands: async () => [],
+            listIconNames: () => [],
+            isNoteToolbarTextToolbarActive: () => false,
           },
           hostIntegrations: {
             listSections: () => [],

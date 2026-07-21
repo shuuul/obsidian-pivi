@@ -26,6 +26,8 @@ const imperativeChatBoundaryFiles = [
   'imperativeChatAdapter.ts',
   'imperativeChatViewHandle.ts',
   'imperativeChatMessagePresentation.ts',
+  'imperativeChatInlineEdit.ts',
+  'imperativeChatDevelopment.ts',
 ].map((name) => path.join(srcAppUiDir, name));
 const imperativeChatBoundaryFileSet = new Set(imperativeChatBoundaryFiles);
 const obsidianReactDir = path.join(rootDir, 'packages', 'pivi-react');

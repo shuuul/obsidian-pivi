@@ -7,6 +7,7 @@
     "./context-badges": "./src/context-badges/index.ts",
     "./mount": "./src/mount/index.ts",
     "./ports": "./src/ports/index.ts",
+    "./selectionToolbar": "./src/selectionToolbar/index.ts",
     "./settings": "./src/settings/index.ts",
     "./store": "./src/store/index.ts"
   },

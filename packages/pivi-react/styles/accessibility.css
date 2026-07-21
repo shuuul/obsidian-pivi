@@ -26,7 +26,9 @@
 .pivi-provider-test-btn:focus-visible,
 .pivi-auth-toggle-btn:focus-visible,
 .pivi-model-checkbox-wrapper:focus-visible,
-.pivi-skill-choice:focus-within {
+.pivi-skill-choice:focus-within,
+.pivi-selection-toolbar-btn:focus-visible,
+.pivi-inline-edit-btn:focus-visible {
   outline: var(--pivi-focus-ring);
   outline-offset: var(--pivi-focus-offset);
 }
@@ -121,6 +123,22 @@
   .pivi-message-image:hover {
     transform: none;
   }
+
+  .pivi-selection-toolbar,
+  .pivi-inline-edit {
+    transform: none;
+    transition: opacity 140ms ease-out;
+  }
+
+  .pivi-selection-toolbar-btn,
+  .pivi-inline-edit-btn {
+    transform: none;
+    transition: background-color var(--pivi-duration-fast) ease;
+  }
+
+  .pivi-inline-edit-status {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -133,7 +151,9 @@
   .pivi-mention-dropdown,
   .pivi-slash-dropdown,
   .pivi-slash-detail,
-  .pivi-status-panel {
+  .pivi-status-panel,
+  .pivi-selection-toolbar,
+  .pivi-inline-edit {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background: var(--pivi-host-background-primary);
@@ -150,7 +170,9 @@
   .pivi-mention-dropdown,
   .pivi-slash-dropdown,
   .pivi-slash-detail,
-  .pivi-status-panel {
+  .pivi-status-panel,
+  .pivi-selection-toolbar,
+  .pivi-inline-edit {
     border-color: var(--pivi-host-border-focus);
     background: var(--pivi-host-background-primary);
   }

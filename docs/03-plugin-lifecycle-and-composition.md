@@ -24,7 +24,7 @@ sequenceDiagram
   V->>V: mount ports and presentation
 ```
 
-`initializePiviPlugin()` loads required settings, registers commands/views/settings, and then starts the retryable single-flight workspace promise from `workspace.onLayoutReady` or the first visible surface. `PiviViewHost` and `PiviSettingTabHost` receive a lazy `getWorkspace` callback, so registration never captures a partially initialized service graph.
+`initializePiviPlugin()` loads required settings, registers commands/views/settings, registers the editor selection toolbar (`registerEditorExtension` + overlay host) and its React surface controller, and then starts the retryable single-flight workspace promise from `workspace.onLayoutReady` or the first visible surface. `PiviViewHost` and `PiviSettingTabHost` receive a lazy `getWorkspace` callback, so registration never captures a partially initialized service graph.
 
 Generation guards invalidate late initialization after a view closes or the plugin unloads. A failed workspace initialization clears the single-flight state so a later visible action can retry.
 
@@ -41,7 +41,7 @@ Generation guards invalidate late initialization after a view closes or the plug
 
 `createChatUiPorts(host, workspace)` adapts app facades and workspace services into `ChatPorts`. The app-owned imperative adapter closure captures those ports and constructs `TabManager`; the React mount contract never receives or forwards them.
 
-App callers control a mounted chat through behavior-named operations such as creating a chat, persisting state, refreshing models, or synchronizing external roots. Only `src/app/ui/imperativeChatAdapter.ts` and its focused siblings may inspect the internal `TabManager`, `TabData`, controller, runtime, UI, or DOM graph.
+App callers control a mounted chat through behavior-named operations such as creating a chat, persisting state, refreshing models, synchronizing external roots, or submitting an inline-edit turn. Only the `imperativeChat*.ts` adapter family may inspect the internal `TabManager`, `TabData`, controller, runtime, UI, or DOM graph.
 
 ## View mount
 

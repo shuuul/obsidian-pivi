@@ -1,3 +1,4 @@
+export { EditorToolbarSection } from './EditorToolbarSection';
 export { SettingsRoot } from './SettingsRoot';
 export { SettingsShell } from './SettingsShell';
 export type {

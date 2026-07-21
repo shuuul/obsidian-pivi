@@ -54,7 +54,7 @@ describe('Obsidian settings integration adapter', () => {
     )).resolves.toEqual({
       feedback: {
         kind: 'error',
-        message: 'The Style Settings plugin page was opened. Install or enable it, then return to Integrations.',
+        message: 'The Style Settings plugin page was opened. Install or enable it, then return to General.',
       },
     });
     await expect(runObsidianIntegrationAction(

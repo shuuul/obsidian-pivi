@@ -75,6 +75,8 @@ Compaction has no user-facing settings. Its automatic trigger, reserves, prefire
 
 Subagent settings control execution and concurrency only. Composer chrome does not display active subagents; each delegated task remains visible on its own transcript card.
 
+The Toolbar settings tab (last in the settings tablist) owns `editorSelectionToolbar.enabled` plus the synced shortcut registry of Obsidian command IDs and Pivi Commands (workspace slash commands from Settings → Commands). Pivi automatically yields whenever Note Toolbar's configured selected-text toolbar is active; settings show that detected status rather than exposing a provider selector. Host command and icon catalogs cross the React boundary through `SettingsEditorToolbarPort.listHostCommands()`, `listPiviCommands()`, and `listIconNames()`. Every shortcut displays its persisted icon; Obsidian shortcuts can choose another icon through the same searchable picker used by Commands settings, while Pivi Command shortcuts inherit their workspace-command catalog icon. Style Settings remains a General-tab-only open action.
+
 ## Localization
 
 All product copy, accessibility labels, settings descriptions, Notices, placeholders, commands, and tool display labels use the shared translator. `packages/pivi-react/src/i18n/locales/en.json` is canonical. Every locale must mirror its keys and interpolation placeholders in the same commit.

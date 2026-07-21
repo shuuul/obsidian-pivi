@@ -300,7 +300,8 @@
       "skills": "スキル",
       "tools": "ツール",
       "subagents": "サブエージェント",
-      "commands": "コマンド"
+      "commands": "コマンド",
+      "toolbar": "ツールバー"
     },
     "integrations": {
       "heading": "連携"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "Style Settings プラグインで Pivi の外観をカスタマイズします。",
       "open": "Style Settings を開く",
-      "installationOpened": "Style Settings のプラグインページを開きました。インストールまたは有効化してから、「連携」に戻ってください。"
+      "installationOpened": "Style Settings プラグインのページを開きました。インストールまたは有効化したら、「一般」に戻ってください。"
     },
     "layout": "レイアウト",
     "chatBehavior": "チャットの動作",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar は成功を報告しましたが、Pivi コマンドを確認できませんでした。",
       "failed": "Note Toolbar を設定できませんでした：{message}",
       "unknownError": "不明なエラー"
+    },
+    "editorToolbar": {
+      "title": "エディタ選択ツールバー",
+      "desc": "Ask AI とチャットに追加と並んで、エディタ選択ツールバーに表示されるショートカットボタンを設定します。",
+      "addCommand": "+ Obsidian コマンドを追加",
+      "enabled": "有効",
+      "kind": {
+        "command": "Obsidian コマンド",
+        "piviCommand": "Pivi コマンド"
+      },
+      "empty": "ツールバーのショートカットはまだ設定されていません。",
+      "commandSearchPlaceholder": "名前または ID でコマンドを検索",
+      "commandPickerTitle": "Obsidian コマンドを選択",
+      "noCommands": "一致するコマンドがありません。",
+      "removeAria": "{label} を削除",
+      "provider": {
+        "title": "テキスト選択ツールバー",
+        "name": "選択ツールバーを有効化",
+        "desc": "エディターでテキストを選択したときに Pivi のフローティングツールバーを表示します。",
+        "noteToolbarActive": "Note Toolbar の選択テキストツールバーが有効なため、Pivi のツールバーは自動的に一時停止されます。"
+      },
+      "addPiviCommand": "+ Pivi コマンドを追加",
+      "piviCommandPickerTitle": "Pivi コマンドを選択",
+      "piviCommandSearchPlaceholder": "Pivi コマンドを検索",
+      "noPiviCommands": "一致する Pivi コマンドがありません。先に「コマンド」で作成してください。"
     },
     "slashCommands": {
       "desc": ".pivi/commands/ に保存された {workspaceName} レベルのカスタムコマンドを管理します。/name で起動します。"
@@ -832,6 +858,27 @@
       "listMcpResources": "MCP リソースを一覧",
       "readMcpResource": "MCP リソースを読み取り",
       "editNotebook": "ノートブックを編集"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "チャットに追加",
+      "commandUnavailable": "そのコマンドを実行できませんでした。",
+      "noActiveEditor": "アクティブなエディターがありません。"
+    },
+    "inlineEdit": {
+      "placeholder": "選択範囲をどのように編集するか入力…",
+      "promptAria": "インライン編集の指示",
+      "send": "送信",
+      "accept": "適用",
+      "acceptHint": "⌘↩",
+      "reject": "拒否",
+      "rejectHint": "esc",
+      "streaming": "生成中…",
+      "failed": "インライン編集に失敗しました。もう一度お試しください。",
+      "emptyPrompt": "送信する前に指示を入力してください。",
+      "chatUnavailable": "インライン編集を使う前に Pivi チャットを開いてください。"
     }
   },
   "host": {

@@ -11,7 +11,9 @@ describe('product design tokens', () => {
   const thinkingSelector = readFileSync(join(stylesRoot, 'toolbar/thinking-selector.css'), 'utf8');
 
   it('defines shared tokens on every presentation root', () => {
-    expect(variables).toMatch(/\.pivi-container,\s*\.pivi-settings\s*\{/);
+    expect(variables).toMatch(
+      /\.pivi-container,\s*\.pivi-settings,\s*\.pivi-selection-toolbar-overlay\s*\{/,
+    );
     for (const token of [
       '--pivi-radius-xs',
       '--pivi-shadow-popover-up-md',

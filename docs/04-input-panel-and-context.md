@@ -106,6 +106,18 @@ It opens or reuses Pivi and inserts an inline context badge containing the note 
 
 Note Toolbar setup and CLI requirements are covered in [Tools, skills, MCP, and integrations](07-tools-skills-mcp-and-integrations.md).
 
+## Editor selection toolbar and inline edit
+
+Edit-mode Markdown selections (Live Preview and Source) also open a body-appended floating toolbar registered through `registerEditorExtension` in app composition when Settings → Toolbar uses the **Pivi** selected-text provider. Choosing **Note Toolbar** or **Disabled** suppresses this overlay so selected-text chrome never doubles up. The CM6 `ViewPlugin` and geometry helpers live under `src/ui/shared/selectionToolbar/`; React chrome mounts only through `src/app/ui` via `mountSelectionToolbarSurface`.
+
+The Pivi toolbar always offers **Ask AI** and **Add to chat**, plus enabled shortcuts from synced `editorSelectionToolbar` settings:
+
+- Obsidian command shortcuts call `app.commands.executeCommandById`.
+- Pivi command shortcuts run the matching Settings → Commands workspace command (selection-aware via `WorkspaceCommandRegistry`).
+- Ask AI sends through `PiviChatViewHandle.commands.submitInlineEditTurn`, which creates an **archived** session tab, streams the turn normally, and returns assistant text without activating the tab.
+
+Ask AI opens a compact inline-edit box (prompt, model, thinking level, send; no queue or tab chrome). Streaming keeps the original selection highlighted; **Accept** applies one `editor.replaceRange`, while **Reject** / Escape dismisses without mutating the note. Reading/preview mode is intentionally out of scope for v1.
+
 ## Change checklist
 
 - Keep React snapshots immutable, serializable, and free of DOM/runtime objects.

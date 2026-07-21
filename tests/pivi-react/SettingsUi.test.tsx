@@ -12,6 +12,7 @@ const snapshot: SettingsUiSnapshotData = {
     userName: '', excludedTags: [],
     requireCommandOrControlEnterToSend: false,
     keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
+    editorSelectionToolbar: { enabled: true, shortcuts: [] },
   },
   subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
 };
@@ -56,6 +57,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     actions: {
       saveGeneral: async () => undefined,
       saveSubagents: async () => undefined,
+      saveEditorSelectionToolbar: async () => undefined,
       purgeDeletedSessionFiles: async () => 0,
       ...overrides,
     },
@@ -106,13 +108,19 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       ],
       openHotkeySettings: () => undefined,
     },
+    editorToolbar: {
+      listHostCommands: () => [],
+      listPiviCommands: async () => [],
+      listIconNames: () => [],
+      isNoteToolbarTextToolbarActive: () => false,
+    },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
   };
 }
 
 describe('React settings foundation', () => {
-  it('renders six accessible primary tabs with keyboard navigation and active-tab scrolling', () => {
+  it('renders seven accessible primary tabs with keyboard navigation and active-tab scrolling', () => {
     const scrollIntoView = jest.fn();
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
 
@@ -120,13 +128,13 @@ describe('React settings foundation', () => {
       render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
       const tabs = screen.getAllByRole('tab');
       expect(tabs.map((tab) => tab.textContent)).toEqual([
-        'General', 'Models', 'Skills', 'Tools', 'Subagents', 'Commands',
+        'General', 'Models', 'Skills', 'Tools', 'Subagents', 'Commands', 'Toolbar',
       ]);
       expect(screen.queryByRole('tab', { name: 'Web' })).not.toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: 'MCPs' })).not.toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: 'Integrations' })).not.toBeInTheDocument();
       expect(screen.getByRole('tablist', { name: 'Settings sections' })).toBeInTheDocument();
-      expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1, -1, -1]);
+      expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1]);
 
       const panel = screen.getByRole('tabpanel');
       expect(tabs[0]).toHaveAttribute('aria-controls', panel.id);
@@ -137,13 +145,13 @@ describe('React settings foundation', () => {
       expect(tabs[1]).toHaveFocus();
       expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
       fireEvent.keyDown(tabs[1]!, { key: 'End' });
-      expect(tabs[5]).toHaveFocus();
-      fireEvent.keyDown(tabs[5]!, { key: 'Home' });
+      expect(tabs[6]).toHaveFocus();
+      fireEvent.keyDown(tabs[6]!, { key: 'Home' });
       expect(tabs[0]).toHaveFocus();
       fireEvent.keyDown(tabs[0]!, { key: 'ArrowLeft' });
-      expect(tabs[5]).toHaveFocus();
-      expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, -1, -1, -1, -1, 0]);
-      expect(panel).toHaveAttribute('aria-labelledby', tabs[5]?.id);
+      expect(tabs[6]).toHaveFocus();
+      expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, -1, -1, -1, -1, -1, 0]);
+      expect(panel).toHaveAttribute('aria-labelledby', tabs[6]?.id);
     } finally {
       delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     }
@@ -277,24 +285,20 @@ describe('React settings foundation', () => {
     const ports = createPorts();
     ports.hostIntegrations = {
       listSections: async () => [{
-        id: 'host:section',
-        heading: 'Host extension',
+        id: 'obsidian:style-settings',
+        heading: 'Style Settings',
         description: 'Connect Pivi to the note host.',
         actions: [{ id: 'host:connect', label: 'Connect' }, { id: 'host:configure', label: 'Configure' }],
       }],
       runAction,
     };
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="general" /></I18nProvider>));
-    const integrationsHeading = screen.getByRole('heading', { name: 'Integrations' });
-    expect(integrationsHeading).toHaveClass('pivi-settings-section-heading');
-    await screen.findByText('Host extension');
+    const styleHeading = await screen.findByRole('heading', { name: 'Style Settings' });
+    expect(styleHeading).toHaveClass('pivi-settings-section-heading');
+    await screen.findByText('Connect Pivi to the note host.');
     const integrationSetting = container.querySelector<HTMLElement>('.pivi-integration-setting.pivi-setting-stack');
-    expect(integrationSetting).not.toBeNull();
-    expect(within(integrationSetting!).getByText('Host extension')).toHaveClass('pivi-setting-row__name');
-    expect(within(integrationSetting!).getByText('Connect Pivi to the note host.')).toBeInTheDocument();
-    expect(within(integrationSetting!).getAllByRole('button')).toHaveLength(2);
-    expect(integrationsHeading.compareDocumentPosition(integrationSetting!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(integrationSetting!.querySelector('.pivi-setting-row__name:empty')).toBeNull();
+    expect(integrationSetting).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Connect' })).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
     expect(runAction).toHaveBeenCalledWith('host:connect');
@@ -305,8 +309,8 @@ describe('React settings foundation', () => {
     const ports = createPorts();
     ports.hostIntegrations = {
       listSections: async () => [{
-        id: 'host:section',
-        heading: 'Host extension',
+        id: 'obsidian:style-settings',
+        heading: 'Style Settings',
         description: 'Connect Pivi to the note host.',
         actions: [{ id: 'host:connect', label: 'Connect', disabled: true, disabledReason: 'Install the host extension first.' }],
       }],

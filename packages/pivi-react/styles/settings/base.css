@@ -1288,6 +1288,210 @@ textarea.pivi-settings-control {
   font-size: var(--pivi-host-font-ui-smaller);
 }
 
+.pivi-settings-section__body > .pivi-editor-toolbar-cards,
+.pivi-settings-section__body > .pivi-editor-toolbar-picker,
+.pivi-settings-section__body > .pivi-settings-action-group {
+  padding-inline: var(--pivi-settings-gutter);
+}
+
+.pivi-editor-toolbar-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pivi-editor-toolbar-card {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-md);
+  background: var(--pivi-host-background-secondary);
+}
+
+.pivi-editor-toolbar-card--disabled {
+  opacity: 0.65;
+}
+
+.pivi-editor-toolbar-card__icon {
+  position: relative;
+  min-width: 0;
+}
+
+.pivi-editor-toolbar-card__fixed-icon,
+.pivi-editor-toolbar-card .pivi-command-icon-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.pivi-editor-toolbar-card__fixed-icon .pivi-platform-icon,
+.pivi-editor-toolbar-card .pivi-command-icon-trigger .pivi-platform-icon {
+  --icon-size: 16px;
+}
+
+.pivi-editor-toolbar-card .pivi-command-icon-trigger > span:last-child {
+  display: none;
+}
+
+.pivi-editor-toolbar-card .pivi-command-icon-popover {
+  right: auto;
+  left: 0;
+  z-index: 10;
+}
+
+.pivi-editor-toolbar-card__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pivi-editor-toolbar-card__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--pivi-host-font-medium);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-editor-toolbar-card__badge {
+  flex-shrink: 0;
+  font-size: var(--pivi-host-font-ui-smaller);
+  color: var(--pivi-host-text-muted);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.pivi-editor-toolbar-card__meta {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-ui-smaller);
+  color: var(--pivi-host-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.pivi-editor-toolbar-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.pivi-editor-toolbar-card__remove.pivi-settings-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.pivi-editor-toolbar-card__remove .pivi-platform-icon {
+  --icon-size: 14px;
+}
+
+.pivi-editor-toolbar-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  margin-block-start: 12px;
+  padding: 12px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-md);
+  background: var(--pivi-host-background-secondary);
+}
+
+.pivi-editor-toolbar-picker__heading {
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-editor-toolbar-picker > .pivi-settings-control,
+.pivi-editor-toolbar-picker > .pivi-settings-control--fill {
+  width: 100%;
+  max-width: none;
+}
+
+.pivi-editor-toolbar-picker__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-primary);
+}
+
+.pivi-editor-toolbar-picker__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+  text-align: start;
+  cursor: pointer;
+}
+
+.pivi-editor-toolbar-picker__item + .pivi-editor-toolbar-picker__item {
+  border-top: 1px solid var(--pivi-host-border);
+}
+
+.pivi-editor-toolbar-picker__item:hover {
+  background: var(--pivi-host-background-modifier-hover);
+}
+
+.pivi-editor-toolbar-picker__name {
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-editor-toolbar-picker__id {
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-ui-smaller);
+  color: var(--pivi-host-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.pivi-editor-toolbar-picker > .pivi-settings-action-group,
+.pivi-settings-section__body > .pivi-settings-action-group {
+  margin-block-start: 4px;
+}
+
+.pivi-editor-toolbar-picker > .pivi-setting-description {
+  padding-inline: 10px;
+}
+
 @media (max-width: 520px) {
   .pivi-settings-control:not(.pivi-select) {
     width: 100%;

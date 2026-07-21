@@ -5,6 +5,7 @@ export {
   type ComposerChromeActions,
   type MessagePresentationRuntime,
 } from './activeChatUiBridge';
+export * from './mountSelectionToolbarSurface';
 export * from './mountSurfaces';
 export * from './surfaces';
 export type {

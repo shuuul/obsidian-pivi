@@ -29,6 +29,7 @@ export const styleModules = [
   'features/slash-commands.css',
   'features/ask-user-question.css',
   'features/todo.css',
+  'features/selection-toolbar.css',
   'modals/mcp-modal.css',
   'settings/base.css',
   'settings/slash-settings.css',

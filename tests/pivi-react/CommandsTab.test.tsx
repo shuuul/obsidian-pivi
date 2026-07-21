@@ -7,7 +7,7 @@ import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/sl
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 
 const snapshot: SettingsUiSnapshotData = {
-  general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], requireCommandOrControlEnterToSend: false, keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' } },
+  general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], requireCommandOrControlEnterToSend: false, keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' }, editorSelectionToolbar: { enabled: true, shortcuts: [] } },
   subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
 };
 
@@ -19,7 +19,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
   return {
     snapshot: { getSnapshot: () => snapshot },
     feedback: { notify: jest.fn() },
-    actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
+    actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, saveEditorSelectionToolbar: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
     complex: {
       commands: {
         refresh: async () => undefined,
@@ -36,6 +36,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
     environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] },
     hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined },
+    editorToolbar: { listHostCommands: () => [], listPiviCommands: async () => [], listIconNames: () => [], isNoteToolbarTextToolbarActive: () => false },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: async () => [], runAction: async () => ({}) },
   };

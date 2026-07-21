@@ -300,7 +300,8 @@
       "skills": "Skills",
       "tools": "Tools",
       "subagents": "Subagents",
-      "commands": "Commands"
+      "commands": "Commands",
+      "toolbar": "Toolbar"
     },
     "integrations": {
       "heading": "Integrations"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "Customize Pivi's appearance with the Style Settings plugin.",
       "open": "Open Style Settings",
-      "installationOpened": "The Style Settings plugin page was opened. Install or enable it, then return to Integrations."
+      "installationOpened": "The Style Settings plugin page was opened. Install or enable it, then return to General."
     },
     "layout": "Layout",
     "chatBehavior": "Chat behavior",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar reported success, but the Pivi command could not be verified.",
       "failed": "Could not set up Note Toolbar: {message}",
       "unknownError": "Unknown error"
+    },
+    "editorToolbar": {
+      "title": "Editor selection toolbar",
+      "desc": "Configure shortcut buttons that appear on the editor selection toolbar alongside Ask AI and Add to chat.",
+      "addCommand": "+ Add Obsidian command",
+      "enabled": "Enabled",
+      "kind": {
+        "command": "Obsidian command",
+        "piviCommand": "Pivi command"
+      },
+      "empty": "No toolbar shortcuts configured yet.",
+      "commandSearchPlaceholder": "Search commands by name or ID",
+      "commandPickerTitle": "Choose an Obsidian command",
+      "noCommands": "No matching commands.",
+      "removeAria": "Remove {label}",
+      "provider": {
+        "title": "Selected-text toolbar",
+        "name": "Enable selection toolbar",
+        "desc": "Show Pivi’s floating toolbar when you select text in the editor.",
+        "noteToolbarActive": "Note Toolbar’s selected-text toolbar is active, so Pivi’s toolbar is paused automatically."
+      },
+      "addPiviCommand": "+ Add Pivi command",
+      "piviCommandPickerTitle": "Choose a Pivi command",
+      "piviCommandSearchPlaceholder": "Search Pivi commands",
+      "noPiviCommands": "No matching Pivi commands. Create one under Commands first."
     },
     "slashCommands": {
       "desc": "Manage {workspaceName}-level custom commands stored in .pivi/commands/. Triggered by /name."
@@ -474,8 +500,16 @@
     },
     "webSearch": {
       "intro": "Drag providers into priority order. WebSearch and WebFetch automatically fall back when a provider is unavailable, rate-limited, or out of quota.",
-      "capability": { "search": "Search", "fetch": "Fetch" },
-      "status": { "configured": "Configured", "anonymous": "Anonymous", "missingKey": "Missing key", "disabled": "Disabled" },
+      "capability": {
+        "search": "Search",
+        "fetch": "Fetch"
+      },
+      "status": {
+        "configured": "Configured",
+        "anonymous": "Anonymous",
+        "missingKey": "Missing key",
+        "disabled": "Disabled"
+      },
       "providerKeyRequired": "{provider} requires an API key and is skipped when no key is configured.",
       "providerKeyOptional": "{provider} supports anonymous access with lower limits; an API key increases the available quota.",
       "fixedFallbacks": "Final fallbacks: WebSearch uses Exa public MCP; WebFetch uses direct HTTP. These safety fallbacks always run after the ordered providers.",
@@ -824,6 +858,27 @@
       "listMcpResources": "List MCP resources",
       "readMcpResource": "Read MCP resource",
       "editNotebook": "Edit notebook"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "Add to chat",
+      "commandUnavailable": "That command could not be run.",
+      "noActiveEditor": "No active editor is available."
+    },
+    "inlineEdit": {
+      "placeholder": "Describe how to edit the selection…",
+      "promptAria": "Inline edit instruction",
+      "send": "Send",
+      "accept": "Accept",
+      "acceptHint": "⌘↩",
+      "reject": "Reject",
+      "rejectHint": "esc",
+      "streaming": "Generating…",
+      "failed": "Inline edit failed. Try again.",
+      "emptyPrompt": "Enter an instruction before sending.",
+      "chatUnavailable": "Open Pivi chat before running inline edit."
     }
   },
   "host": {

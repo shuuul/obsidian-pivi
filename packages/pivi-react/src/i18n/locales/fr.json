@@ -300,7 +300,8 @@
       "skills": "Compétences",
       "tools": "Outils",
       "subagents": "Sous-agents",
-      "commands": "Commandes"
+      "commands": "Commandes",
+      "toolbar": "Barre d’outils"
     },
     "integrations": {
       "heading": "Intégrations"
@@ -309,7 +310,7 @@
       "name": "Style Settings",
       "desc": "Personnalisez l'apparence de Pivi avec le plugin Style Settings.",
       "open": "Ouvrir Style Settings",
-      "installationOpened": "La page du plugin Style Settings a été ouverte. Installez-le ou activez-le, puis revenez à Intégrations."
+      "installationOpened": "La page du plugin Style Settings a été ouverte. Installez-le ou activez-le, puis revenez à Général."
     },
     "layout": "Mise en page",
     "chatBehavior": "Comportement du chat",
@@ -372,6 +373,31 @@
       "verificationFailed": "Note Toolbar a signalé une réussite, mais la commande Pivi n’a pas pu être vérifiée.",
       "failed": "Impossible de configurer Note Toolbar : {message}",
       "unknownError": "Erreur inconnue"
+    },
+    "editorToolbar": {
+      "title": "Barre d'outils de sélection de l'éditeur",
+      "desc": "Configurez les raccourcis affichés sur la barre de sélection de l'éditeur, à côté de Ask AI et Ajouter au chat.",
+      "addCommand": "+ Ajouter une commande Obsidian",
+      "enabled": "Activé",
+      "kind": {
+        "command": "Commande Obsidian",
+        "piviCommand": "Commande Pivi"
+      },
+      "empty": "Aucun raccourci de barre d'outils configuré pour l'instant.",
+      "commandSearchPlaceholder": "Rechercher des commandes par nom ou ID",
+      "commandPickerTitle": "Choisir une commande Obsidian",
+      "noCommands": "Aucune commande correspondante.",
+      "removeAria": "Supprimer {label}",
+      "provider": {
+        "title": "Barre de sélection de texte",
+        "name": "Activer la barre de sélection",
+        "desc": "Afficher la barre flottante de Pivi lors de la sélection de texte dans l’éditeur.",
+        "noteToolbarActive": "La barre de texte sélectionné de Note Toolbar est active, la barre de Pivi est donc automatiquement mise en pause."
+      },
+      "addPiviCommand": "+ Ajouter une commande Pivi",
+      "piviCommandPickerTitle": "Choisir une commande Pivi",
+      "piviCommandSearchPlaceholder": "Rechercher des commandes Pivi",
+      "noPiviCommands": "Aucune commande Pivi correspondante. Créez-en une d’abord sous Commandes."
     },
     "slashCommands": {
       "desc": "Gérez les commandes personnalisées du {workspaceName} dans .pivi/commands/. Déclenchées par /nom."
@@ -832,6 +858,27 @@
       "listMcpResources": "Lister les ressources MCP",
       "readMcpResource": "Lire la ressource MCP",
       "editNotebook": "Modifier le carnet"
+    }
+  },
+  "editor": {
+    "selectionToolbar": {
+      "askAi": "Ask AI",
+      "addToChat": "Ajouter au chat",
+      "commandUnavailable": "Impossible d'exécuter cette commande.",
+      "noActiveEditor": "Aucun éditeur actif n'est disponible."
+    },
+    "inlineEdit": {
+      "placeholder": "Décrivez comment modifier la sélection…",
+      "promptAria": "Instruction d'édition en ligne",
+      "send": "Envoyer",
+      "accept": "Accepter",
+      "acceptHint": "⌘↩",
+      "reject": "Refuser",
+      "rejectHint": "esc",
+      "streaming": "Génération…",
+      "failed": "L'édition en ligne a échoué. Réessayez.",
+      "emptyPrompt": "Saisissez une instruction avant d'envoyer.",
+      "chatUnavailable": "Ouvrez le chat Pivi avant d'utiliser l'édition en ligne."
     }
   },
   "host": {

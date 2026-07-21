@@ -1,10 +1,23 @@
+import type {
+  EditorToolbarShortcut,
+  EditorToolbarShortcutKind,
+} from '@pivi/pivi-agent-core/foundation/settings';
+
+export type SettingsEditorSelectionToolbarSnapshot = {
+  readonly enabled: boolean;
+  readonly shortcuts: readonly EditorToolbarShortcut[];
+};
+
 export type SettingsTabId =
   | 'general'
+  | 'toolbar'
   | 'models'
   | 'skills'
   | 'tools'
   | 'subagents'
   | 'commands';
+
+export type { EditorToolbarShortcutKind };
 
 export interface SettingsKeyboardNavigationSnapshot {
   readonly scrollUpKey: string;
@@ -23,6 +36,7 @@ export interface SettingsGeneralSnapshot {
   readonly excludedTags: readonly string[];
   readonly requireCommandOrControlEnterToSend: boolean;
   readonly keyboardNavigation: SettingsKeyboardNavigationSnapshot;
+  readonly editorSelectionToolbar: SettingsEditorSelectionToolbarSnapshot;
 }
 
 export interface SettingsHotkeyRow {

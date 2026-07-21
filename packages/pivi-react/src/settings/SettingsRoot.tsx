@@ -5,7 +5,7 @@ import { CommandsTab } from './CommandsTab';
 import { ModelsSettingsTab } from './ModelsSettingsTab';
 import { SettingsShell } from './SettingsShell';
 import { SettingsUiStore } from './SettingsUiStore';
-import { GeneralSettingsTab, IntegrationsSettingsSection, SubagentsSettingsTab } from './SimpleSettingsTabs';
+import { GeneralSettingsTab, SubagentsSettingsTab, ToolbarSettingsTab } from './SimpleSettingsTabs';
 import { SkillsSettingsTab } from './SkillsSettingsTab';
 import { ToolsSettingsPage } from './ToolsSettingsPage';
 import type { SettingsTabId } from './types';
@@ -24,16 +24,23 @@ export function SettingsRoot({ ports, store: suppliedStore, initialTab }: Settin
   return <SettingsShell initialTab={initialTab}>{(activeTab) => {
     switch (activeTab) {
       case 'general': return (
-        <>
-          <GeneralSettingsTab
-            store={store}
-            actions={ports.actions}
-            environment={ports.environment}
-            feedback={ports.feedback}
-            hotkeys={ports.hotkeys}
-          />
-          <IntegrationsSettingsSection integrations={ports.hostIntegrations} feedback={ports.feedback} />
-        </>
+        <GeneralSettingsTab
+          store={store}
+          actions={ports.actions}
+          environment={ports.environment}
+          feedback={ports.feedback}
+          hotkeys={ports.hotkeys}
+          integrations={ports.hostIntegrations}
+        />
+      );
+      case 'toolbar': return (
+        <ToolbarSettingsTab
+          store={store}
+          actions={ports.actions}
+          editorToolbar={ports.editorToolbar}
+          feedback={ports.feedback}
+          integrations={ports.hostIntegrations}
+        />
       );
       case 'models': return <ModelsSettingsTab models={ports.complex.models} catalog={ports.catalog} feedback={ports.feedback} />;
       case 'skills': return <SkillsSettingsTab skills={ports.complex.skills} feedback={ports.feedback} />;
