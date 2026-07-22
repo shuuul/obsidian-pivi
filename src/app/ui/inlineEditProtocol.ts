@@ -18,6 +18,10 @@ const STREAMING_OPEN_TAGS = ['<replacement>', '<insertion>'] as const;
 export const INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS = [
   '## Inline edit response protocol',
   '',
+  'The user\'s requested output mode takes priority over whether the task could be applied as an edit.',
+  'If the user asks to only OUTPUT, SHOW, or DISPLAY the result (including a translation), or explicitly says not to replace, insert, or modify the selected text, respond with plain text and do NOT use tags.',
+  'If it is ambiguous whether the user wants an edit or output only, respond with plain text and do NOT use tags.',
+  '',
   'If the user wants to MODIFY or REPLACE the selected text, respond with ONLY the complete new text wrapped in <replacement> tags:',
   '<replacement>your replacement text here</replacement>',
   '',

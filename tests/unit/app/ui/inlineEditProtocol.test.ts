@@ -82,6 +82,18 @@ describe('inlineEditProtocol', () => {
     expect(INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS).toContain('<insertion>');
     expect(INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS).toContain('markdown code fences');
   });
+
+  it('prioritizes output-only requests over edit-shaped tasks', () => {
+    expect(INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS).toContain(
+      'only OUTPUT, SHOW, or DISPLAY the result',
+    );
+    expect(INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS).toContain(
+      'explicitly says not to replace, insert, or modify the selected text',
+    );
+    expect(INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS).toContain(
+      'ambiguous whether the user wants an edit or output only',
+    );
+  });
 });
 
 describe('stripInlineEditStreamingProtocolTags', () => {
