@@ -22,7 +22,7 @@
 - `base/`: shared custom properties, container utilities, host-neutral presentation primitives, and animations; loaded first after the host theme-token mapping.
 - `components/`: core chat structure—header, tabs, messages, markdown, navigation, code, thinking/tool/subagent/status displays, composer input, mentions, and context footer.
 - `toolbar/`: model, mode, thinking, and external-context selectors inside the composer toolbar.
-- `features/`: feature-specific chat UI, including file/image context, embeds and modals, diffs, slash commands, questions, and todos.
+- `features/`: feature-specific chat UI, including file/image context, embeds and modals, diffs, slash commands, questions, todos, selection toolbar overlay, and the editor-embedded inline edit surface (`inline-edit-surface.css`).
 - `modals/`: standalone modal styling, currently MCP configuration.
 - `settings/`: settings navigation and shared layout plus slash, MCP, and agent-specific rules. `settings/base.css` owns shared `.pivi-sp-*` structures.
 - `accessibility.css`: shared focus-visible behavior; intentionally loaded last.
