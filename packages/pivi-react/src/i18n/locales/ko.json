@@ -401,6 +401,7 @@
       "piviCommandPickerTitle": "Pivi 명령 선택",
       "piviCommandSearchPlaceholder": "Pivi 명령 검색",
       "noPiviCommands": "일치하는 Pivi 명령이 없습니다. 먼저 명령 탭에서 만드세요.",
+      "executionTarget": { "name": "실행 대상", "forCommand": "{label} 실행 대상", "sidebar": "사이드바", "inlineEdit": "인라인 편집" },
       "reorder": {
         "handle": "{label} 순서 변경, 현재 {position}번째",
         "position": "{label}을(를) {total}개 중 {position}번째로 이동했습니다.",

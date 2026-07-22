@@ -401,6 +401,7 @@
       "piviCommandPickerTitle": "Pivi コマンドを選択",
       "piviCommandSearchPlaceholder": "Pivi コマンドを検索",
       "noPiviCommands": "一致する Pivi コマンドがありません。先に「コマンド」で作成してください。",
+      "executionTarget": { "name": "実行先", "forCommand": "{label} の実行先", "sidebar": "サイドバー", "inlineEdit": "インライン編集" },
       "reorder": {
         "handle": "{label} を並べ替え（現在 {position} 番目）",
         "position": "{label} を {total} 件中 {position} 番目に移動しました。",

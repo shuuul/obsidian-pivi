@@ -429,6 +429,18 @@ Step groups preserve those semantics while summarizing every present outcome as 
 
 Only running work uses continuous motion. Respect `prefers-reduced-motion`. `aria-live` announces meaningful phase changes and terminal state, never token updates. Monospace is reserved for tool identifiers, IDs, paths, commands, and structured parameters; Agent names, summaries, and narrative results use the host UI font.
 
+## Tab switcher viewport stability
+
+Opening the tab switcher initializes its viewport once, centering the active tab within the capped ten-row window when needed. While that menu remains open, immutable tab-store updates do not own `scrollTop`: archive deletion, restore, active-tab changes, and reordering reconcile the stable keyed rows without replaying opening-time centering. Deleting an archived row preserves the menu node and revealed-archive state, transfers focus to the nearest surviving visible row when necessary, and lets normal layout compaction (plus native scroll-range clamping) fill the removed space in both header and input positions. Activating or explicitly restoring an archived row also keeps that same menu open, revealed, and at its user-owned scroll position while the row reconciles into the open section; activating an already-open row retains the normal close-on-switch behavior.
+
+## Editor selection command targets
+
+Each Pivi Command shortcut in Settings → Toolbar persists its own execution target. **Sidebar** preserves the registered workspace-command behavior and opens a new chat session. **Inline edit** resolves the same Command template against the current note, then immediately submits it through the existing embedded inline-edit session and diff-review pipeline for the captured editor range. Legacy or malformed target values normalize to Sidebar; ordinary Obsidian command shortcuts have no execution-target setting.
+
+Configured toolbar shortcuts use the same controlled disclosure-card interaction as Models providers. The collapsed summary stays compact and scannable with order, icon, label, kind, enabled state, and removal; opening it reveals Command metadata plus the editable icon or execution target. Disclosure state is presentation-only, newly added shortcuts open for review, and a completed pointer or keyboard reorder does not toggle the card.
+
+The selected range remains the single canonical `<selected_text>` block in an inline-edit turn. Resolving a Command consumes `{{selected_text}}` from its instruction instead of embedding a duplicate copy, while current-note, note-name, and date aliases resolve normally. The shortcut retains the Command's opaque integration key for rename-safe lookup, but Settings presents only its name, description, and target.
+
 ## Recommended sequence
 
 1. **Completed:** add real-app performance traces and budgets before the next optimization wave.

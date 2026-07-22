@@ -401,6 +401,7 @@
       "piviCommandPickerTitle": "Выбрать команду Pivi",
       "piviCommandSearchPlaceholder": "Искать команды Pivi",
       "noPiviCommands": "Нет подходящих команд Pivi. Сначала создайте команду во вкладке «Команды».",
+      "executionTarget": { "name": "Цель выполнения", "forCommand": "Цель выполнения для {label}", "sidebar": "Боковая панель", "inlineEdit": "Встроенное редактирование" },
       "reorder": {
         "handle": "Изменить порядок {label}, текущая позиция {position}",
         "position": "{label} перемещён на позицию {position} из {total}.",

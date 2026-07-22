@@ -8,9 +8,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 ## Active specs
 
-| Spec | Status | Outcome |
-|---|---|---|
-| *(none)* | — | — |
+_None._
 
 ## Archived specs
 
@@ -41,6 +39,8 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [023-command-prompt-mentions.md](archive/023-command-prompt-mentions.md) | 2026-07-22 | Slash-command prompts support @file/@folder//skill//MCP mentions with dropdown completion. |
 | [024-inline-edit-embedded-surface-and-diff-review.md](archive/024-inline-edit-embedded-surface-and-diff-review.md) | 2026-07-22 | Editor-embedded inline edit surface with full @// selectors, streaming reply, rendered-markdown diff review, and persistent multi-session decorations. |
 | [025-pre-write-file-recovery-snapshots.md](archive/025-pre-write-file-recovery-snapshots.md) | 2026-07-22 | Pre-write Obsidian File Recovery snapshots via private `forceAdd()` before Pivi vault note mutations. |
+| [026-toolbar-command-execution-target.md](archive/026-toolbar-command-execution-target.md) | 2026-07-22 | Per-shortcut Sidebar/Inline edit dispatch, user-facing Command metadata, and compact Models-style configuration disclosures. |
+| [027-stable-tab-switcher-archive-deletion.md](archive/027-stable-tab-switcher-archive-deletion.md) | 2026-07-22 | Stable menu, archive reveal, and user-owned viewport across archived-tab deletion and restoration. |
 
 ## Numbering and files
 

@@ -401,6 +401,7 @@
       "piviCommandPickerTitle": "Escolher um comando Pivi",
       "piviCommandSearchPlaceholder": "Pesquisar comandos Pivi",
       "noPiviCommands": "Nenhum comando Pivi correspondente. Crie um primeiro em Comandos.",
+      "executionTarget": { "name": "Destino de execução", "forCommand": "Destino de execução para {label}", "sidebar": "Barra lateral", "inlineEdit": "Edição em linha" },
       "reorder": {
         "handle": "Reordenar {label}, atualmente na posição {position}",
         "position": "{label} movido para a posição {position} de {total}.",

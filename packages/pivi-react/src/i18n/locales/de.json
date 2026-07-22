@@ -401,6 +401,7 @@
       "piviCommandPickerTitle": "Pivi-Befehl wählen",
       "piviCommandSearchPlaceholder": "Pivi-Befehle suchen",
       "noPiviCommands": "Keine passenden Pivi-Befehle. Legen Sie zuerst unter Befehle einen an.",
+      "executionTarget": { "name": "Ausführungsziel", "forCommand": "Ausführungsziel für {label}", "sidebar": "Seitenleiste", "inlineEdit": "Inline-Bearbeitung" },
       "reorder": {
         "handle": "Reihenfolge von {label} ändern, aktuell Position {position}",
         "position": "{label} an Position {position} von {total} verschoben.",

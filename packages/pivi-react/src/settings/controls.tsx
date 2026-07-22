@@ -103,8 +103,8 @@ export function Toggle({ checked, disabled = false, label, onChange }: { readonl
   );
 }
 
-export function Select({ value, children, label, onChange }: { readonly value: string; readonly children: ReactNode; readonly label?: string; readonly onChange: (value: string) => void }) {
-  return <select className="pivi-select pivi-settings-control" value={value} aria-label={label} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}>{children}</select>;
+export function Select({ value, children, disabled = false, label, onChange }: { readonly value: string; readonly children: ReactNode; readonly disabled?: boolean; readonly label?: string; readonly onChange: (value: string) => void }) {
+  return <select className="pivi-select pivi-settings-control" value={value} aria-label={label} disabled={disabled} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}>{children}</select>;
 }
 
 export function BadgeListInput({

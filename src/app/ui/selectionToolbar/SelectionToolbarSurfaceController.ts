@@ -1,4 +1,5 @@
 import type { EditorToolbarShortcut } from '@pivi/pivi-agent-core/foundation/settings';
+import { resolveWorkspaceCommandPrompt } from '@pivi/pivi-agent-core/skills/commands/resolveWorkspaceCommandPrompt';
 import {
   mountSelectionToolbarSurface,
   type SelectionToolbarMountedSurface,
@@ -196,13 +197,16 @@ export class SelectionToolbarSurfaceController {
     };
   }
 
-  private openInlineEdit(prefillPrompt = ''): void {
+  private openInlineEdit(
+    prefillPrompt = '',
+    snapshotOverride: EditorSelectionSnapshot | null = null,
+  ): InlineEditRecord | null {
     const host = getSelectionToolbarHost();
     // Prefer the live host snapshot when the controller copy was cleared by a
     // dismiss/leaf-change race while the toolbar button click is still in flight.
-    const snapshot = this.currentSnapshot ?? host?.getCurrentSnapshot() ?? null;
+    const snapshot = snapshotOverride ?? this.currentSnapshot ?? host?.getCurrentSnapshot() ?? null;
     if (!snapshot) {
-      return;
+      return null;
     }
 
     // Dismiss the transient toolbar fully so a later Ask AI cannot reuse a stale
@@ -241,6 +245,7 @@ export class SelectionToolbarSurfaceController {
     if (prefillPrompt.trim()) {
       session.setPrompt(prefillPrompt);
     }
+    return record;
   }
 
   private async handleAddToChat(): Promise<void> {
@@ -256,7 +261,7 @@ export class SelectionToolbarSurfaceController {
     getSelectionToolbarHost()?.dismissOverlay();
   }
 
-  private handleShortcut(id: string): void {
+  private async handleShortcut(id: string): Promise<void> {
     const shortcut = getEnabledShortcuts(this.plugin.settings).find(entry => entry.id === id);
     if (!shortcut || !this.currentSnapshot) {
       return;
@@ -279,11 +284,79 @@ export class SelectionToolbarSurfaceController {
       return;
     }
 
-    executeObsidianCommand(
-      this.plugin,
-      getWorkspaceCommandFullId(this.plugin.manifest.id, shortcut.piviCommandKey),
-    );
-    getSelectionToolbarHost()?.dismissOverlay();
+    if ((shortcut.executionTarget ?? 'sidebar') === 'sidebar') {
+      executeObsidianCommand(
+        this.plugin,
+        getWorkspaceCommandFullId(this.plugin.manifest.id, shortcut.piviCommandKey),
+      );
+      getSelectionToolbarHost()?.dismissOverlay();
+      return;
+    }
+
+    await this.runPiviCommandInline(shortcut, this.currentSnapshot);
+  }
+
+  private async runPiviCommandInline(
+    shortcut: EditorToolbarShortcut,
+    snapshot: EditorSelectionSnapshot,
+  ): Promise<void> {
+    if (!snapshot.text) {
+      new Notice(t('chat.errors.noTextSelected'));
+      getSelectionToolbarHost()?.dismissOverlay();
+      return;
+    }
+    let workspace;
+    try {
+      workspace = await this.plugin.ensureWorkspaceServices();
+    } catch {
+      new Notice(t('editor.inlineEdit.chatUnavailable'));
+      return;
+    }
+    let entries;
+    try {
+      entries = await workspace.slashCommandCatalog.listWorkspaceEntries();
+    } catch {
+      new Notice(t('commands.workspaceCommandUnavailable'));
+      return;
+    }
+    const entry = entries.find(candidate => (
+      candidate.kind === 'command' && candidate.integrationKey === shortcut.piviCommandKey
+    ));
+    if (!entry) {
+      new Notice(t('commands.workspaceCommandUnavailable'));
+      getSelectionToolbarHost()?.dismissOverlay();
+      return;
+    }
+    const markdownView = resolveActiveMarkdownView(this.plugin);
+    const file = markdownView?.file ?? null;
+    let currentNote = '';
+    try {
+      currentNote = file ? await this.plugin.app.vault.read(file) : '';
+    } catch {
+      new Notice(t('commands.workspaceCommandUnavailable'));
+      return;
+    }
+    const prompt = resolveWorkspaceCommandPrompt(entry.content, {
+      // Inline edit carries the exact selection once in buildInlineEditTurnContent.
+      selectedText: '',
+      currentNote,
+      currentNoteName: file?.basename ?? '',
+      date: new Date().toLocaleDateString(),
+    }).trim();
+    if (!prompt) {
+      new Notice(t('commands.workspaceCommandEmpty'));
+      getSelectionToolbarHost()?.dismissOverlay();
+      return;
+    }
+    const record = this.openInlineEdit(prompt, snapshot);
+    if (!record) return;
+    const defaults = getComposerDefaults(this.plugin);
+    await this.runInlineEditTurn(record, {
+      prompt,
+      contextFiles: [],
+      model: defaults.model,
+      thinkingLevel: defaults.thinkingLevel,
+    });
   }
 
   private async handleInlineEditSend(record: InlineEditRecord, payload: InlineEditSurfaceSendPayload): Promise<void> {

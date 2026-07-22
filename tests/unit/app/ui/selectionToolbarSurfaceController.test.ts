@@ -8,6 +8,11 @@ import type { InlineEditSurfaceSendPayload } from '@/app/ui/inlineEditSurface/ty
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
 const submitInlineEditTurn = jest.fn();
+const buildInlineEditTurnContent = jest.fn((
+  _prompt: string,
+  _selectedText: string,
+  _contextFiles: readonly unknown[],
+) => 'turn-content');
 const showSelectionHighlight = jest.fn();
 const hideSelectionHighlight = jest.fn();
 const mockHostOnShow = jest.fn();
@@ -43,7 +48,11 @@ jest.mock('@/ui/shared/components/SelectionHighlight', () => ({
 }));
 
 jest.mock('@/app/ui/inlineEditHelpers', () => ({
-  buildInlineEditTurnContent: jest.fn(() => 'turn-content'),
+  buildInlineEditTurnContent: (
+    prompt: string,
+    selectedText: string,
+    contextFiles: readonly unknown[],
+  ) => buildInlineEditTurnContent(prompt, selectedText, contextFiles),
 }));
 
 jest.mock('@pivi/pivi-react/mount', () => ({
@@ -140,21 +149,33 @@ function createPayload(): InlineEditSurfaceSendPayload {
   };
 }
 
-function createController(): SelectionToolbarSurfaceController {
+function createController({
+  shortcuts = [],
+  activeView = null,
+  workspace = {},
+  executeCommandById = jest.fn(() => true),
+}: {
+  shortcuts?: unknown[];
+  activeView?: unknown;
+  workspace?: unknown;
+  executeCommandById?: jest.Mock;
+} = {}): SelectionToolbarSurfaceController {
   const plugin = {
     app: {
       workspace: {
-        getActiveViewOfType: jest.fn(() => null),
+        getActiveViewOfType: jest.fn(() => activeView),
       },
+      commands: { executeCommandById },
+      vault: { read: jest.fn(async () => 'the full note') },
     },
     settings: {
       chatViewPlacement: 'right',
-      editorSelectionToolbar: { shortcuts: [] },
+      editorSelectionToolbar: { shortcuts },
       model: 'test-model',
       thinkingLevel: 'off',
     },
     manifest: { id: 'pivi' },
-    ensureWorkspaceServices: jest.fn(async () => ({})),
+    ensureWorkspaceServices: jest.fn(async () => workspace),
     register: jest.fn(),
     getUiFacades: jest.fn(() => ({
       getSettingsSnapshot: (settings: { model: string; thinkingLevel: string }) => settings,
@@ -377,5 +398,65 @@ describe('SelectionToolbarSurfaceController inline edit guards', () => {
     expect((controller as unknown as {
       inlineEditSessions: Map<string, unknown>;
     }).inlineEditSessions.size).toBe(0);
+  });
+
+  it('keeps sidebar Pivi shortcuts on the registered workspace command path', async () => {
+    const executeCommandById = jest.fn(() => true);
+    const controller = createController({
+      shortcuts: [{
+        id: 'sidebar-command',
+        kind: 'pivi-command',
+        label: '/summarize',
+        enabled: true,
+        piviCommandKey: 'stable-key',
+        executionTarget: 'sidebar',
+      }],
+      executeCommandById,
+    });
+    (controller as unknown as { currentSnapshot: EditorSelectionSnapshot | null }).currentSnapshot = snapshot;
+
+    await (controller as unknown as { handleShortcut: (id: string) => Promise<void> })
+      .handleShortcut('sidebar-command');
+
+    expect(executeCommandById).toHaveBeenCalledWith('pivi:workspace-command-stable-key');
+    expect(showInlineEditSession).not.toHaveBeenCalled();
+  });
+
+  it('runs an inline Pivi shortcut by stable key and injects selected text only through the canonical block', async () => {
+    submitInlineEditTurn.mockResolvedValue({ assistantText: '<replacement>updated</replacement>' });
+    const controller = createController({
+      shortcuts: [{
+        id: 'inline-command',
+        kind: 'pivi-command',
+        label: '/renamed-command',
+        enabled: true,
+        piviCommandKey: 'stable-key',
+        executionTarget: 'inline-edit',
+      }],
+      activeView: { file: { basename: 'Current note' } },
+      workspace: {
+        slashCommandCatalog: {
+          listWorkspaceEntries: jest.fn(async () => [{
+            kind: 'command',
+            integrationKey: 'stable-key',
+            name: 'new-name',
+            content: 'Rewrite {{selected_text}} from {{current_note_name}}: {{current_note}}',
+          }]),
+        },
+      },
+    });
+    (controller as unknown as { currentSnapshot: EditorSelectionSnapshot | null }).currentSnapshot = snapshot;
+
+    await (controller as unknown as { handleShortcut: (id: string) => Promise<void> })
+      .handleShortcut('inline-command');
+
+    expect(showInlineEditSession).toHaveBeenCalledWith(snapshot);
+    expect(buildInlineEditTurnContent).toHaveBeenCalledWith(
+      'Rewrite  from Current note: the full note',
+      'selected text',
+      [],
+    );
+    expect(submitInlineEditTurn).toHaveBeenCalledTimes(1);
+    expect(setPromptInlineEditSession).toHaveBeenCalledWith('Rewrite  from Current note: the full note');
   });
 });

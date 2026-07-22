@@ -42,6 +42,7 @@ describe('normalizeEditorSelectionToolbarSettings', () => {
           enabled: false,
           piviCommandKey: 'abc-key',
           icon: 'scan-text',
+          executionTarget: 'invalid',
         },
         {
           id: 'bad-pivi',
@@ -80,6 +81,7 @@ describe('normalizeEditorSelectionToolbarSettings', () => {
           label: '/summarize',
           enabled: false,
           piviCommandKey: 'abc-key',
+          executionTarget: 'sidebar',
           icon: 'scan-text',
         },
       ],

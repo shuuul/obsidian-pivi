@@ -415,6 +415,7 @@ describe("PiviSettingsStorage", () => {
           label: '/summarize',
           enabled: true,
           piviCommandKey: 'abc-key',
+          executionTarget: 'sidebar',
         },
       ],
     });

@@ -63,6 +63,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
   const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLSpanElement>(null);
   const exitTimers = useRef(new Map<string, number>());
   const menuCloseTimer = useRef<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -106,6 +107,8 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
   const openItems = openIds
     .map(id => itemsById.get(id))
     .filter((item): item is ChatTabSnapshotItem => item !== undefined);
+  const openItemsRef = useRef(openItems);
+  openItemsRef.current = openItems;
   useEffect(() => {
     if (reorder.draggingId === null) setTabOrder(buildTabOrder(snapshot.items));
   }, [reorder.draggingId, snapshot.items]);
@@ -149,16 +152,17 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
 
   useEffect(() => {
     const menu = menuRef.current;
-    if (!menu || !isOpen || openItems.length <= TAB_SWITCHER_VISIBLE_ITEM_COUNT) return;
-    const activeIndex = openItems.findIndex(item => item.isActive);
+    const items = openItemsRef.current;
+    if (!menu || !isOpen || items.length <= TAB_SWITCHER_VISIBLE_ITEM_COUNT) return;
+    const activeIndex = items.findIndex(item => item.isActive);
     if (activeIndex < 0) return;
     const centeredStart = activeIndex - Math.floor(TAB_SWITCHER_VISIBLE_ITEM_COUNT / 2);
     const windowStart = Math.max(
       0,
-      Math.min(centeredStart, openItems.length - TAB_SWITCHER_VISIBLE_ITEM_COUNT),
+      Math.min(centeredStart, items.length - TAB_SWITCHER_VISIBLE_ITEM_COUNT),
     );
     menu.scrollTop = windowStart * TAB_SWITCHER_ITEM_HEIGHT_PX;
-  }, [isOpen, openItems]);
+  }, [isOpen]);
 
   useEffect(() => {
     const menu = menuRef.current;
@@ -201,6 +205,21 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
     setExitingTabIds(current => new Set(current).add(item.id));
     const timer = ownerWindow.setTimeout(() => {
       exitTimers.current.delete(item.id);
+      const rows = Array.from(
+        containerRef.current?.querySelectorAll<HTMLElement>('.pivi-tab-switcher-item') ?? [],
+      );
+      const exitingRow = rows.find(row => row.dataset.tabId === item.id) ?? null;
+      if (exitingRow?.contains(ownerWindow.document.activeElement)) {
+        const index = rows.indexOf(exitingRow);
+        const isVisible = (row: HTMLElement): boolean => (
+          row !== exitingRow
+          && !row.classList.contains('is-exiting')
+          && (isArchivedRevealed || !row.classList.contains('is-archived'))
+        );
+        const next = rows.slice(index + 1).find(isVisible)
+          ?? rows.slice(0, index).reverse().find(isVisible);
+        (next ?? triggerRef.current)?.focus();
+      }
       setExitingTabIds(current => {
         const next = new Set(current);
         next.delete(item.id);
@@ -243,7 +262,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
       event.preventDefault();
       event.stopPropagation();
       if (exitingTabIds.has(item.id)) return;
-      closeMenu();
+      if (!item.isArchived) closeMenu();
       void shell.actions.switchTab(item.id);
     }
   };
@@ -284,7 +303,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
           event.stopPropagation();
           if (reorder.consumeClickAfterDrag(item.id)) return;
           if (editing || exiting) return;
-          closeMenu();
+          if (!previewArchived) closeMenu();
           void shell.actions.switchTab(item.id);
         }}
         onKeyDown={event => handleItemKeyDown(event, item, reorderHandleProps)}
@@ -332,7 +351,6 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
           })}
           onActivate={() => {
             if (previewArchived) {
-              closeMenu();
               void shell.actions.switchTab(item.id);
             } else {
               beginExit(item, 'archive');
@@ -422,6 +440,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
             }
           }}
           ref={(element) => {
+            triggerRef.current = element;
             if (element) {
               platform.attachTooltip(element, t('chat.tabs.switchTab', { title: activeItem.title }), {
                 delay: TOOLTIP_DELAY_MS,

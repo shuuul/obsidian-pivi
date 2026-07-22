@@ -401,6 +401,12 @@
       "piviCommandPickerTitle": "Choose a Pivi command",
       "piviCommandSearchPlaceholder": "Search Pivi commands",
       "noPiviCommands": "No matching Pivi commands. Create one under Commands first.",
+      "executionTarget": {
+        "name": "Execution target",
+        "forCommand": "Execution target for {label}",
+        "sidebar": "Sidebar",
+        "inlineEdit": "Inline edit"
+      },
       "reorder": {
         "handle": "Reorder {label}, currently position {position}",
         "position": "{label} moved to position {position} of {total}.",

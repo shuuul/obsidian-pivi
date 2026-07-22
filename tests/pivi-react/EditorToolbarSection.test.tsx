@@ -53,6 +53,64 @@ function createPorts(
 }
 
 describe('EditorToolbarSection', () => {
+  it('keeps shortcut configuration in a local disclosure panel', async () => {
+    const saveEditorSelectionToolbar = jest.fn(async () => undefined);
+    const store = new SettingsUiStore({
+      ...snapshot,
+      general: {
+        ...snapshot.general,
+        editorSelectionToolbar: {
+          enabled: true,
+          shortcuts: [{
+            id: 'shortcut-1',
+            kind: 'pivi-command' as const,
+            label: '/summarize',
+            enabled: true,
+            piviCommandKey: 'cmd-key-1',
+            icon: 'scan-text',
+            executionTarget: 'sidebar' as const,
+          }],
+        },
+      },
+    });
+    const ports = createPorts(saveEditorSelectionToolbar);
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <EditorToolbarSection
+          store={store}
+          actions={ports.actions}
+          editorToolbar={ports.editorToolbar}
+          feedback={ports.feedback}
+        />
+      </I18nProvider>,
+    ));
+    await screen.findByText('Summarize selection');
+
+    const details = screen.getByText('/summarize').closest('details');
+    const summary = details?.querySelector('summary');
+    expect(details).not.toBeNull();
+    expect(summary).not.toBeNull();
+    expect(details).not.toHaveAttribute('open');
+    expect(saveEditorSelectionToolbar).not.toHaveBeenCalled();
+
+    fireEvent.click(summary!);
+    expect(details).toHaveAttribute('open');
+    expect(screen.getByRole('combobox', { name: 'Execution target for /summarize' })).toHaveValue('sidebar');
+    expect(saveEditorSelectionToolbar).not.toHaveBeenCalled();
+
+    fireEvent.click(summary!);
+    expect(details).not.toHaveAttribute('open');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Enabled' }));
+    });
+    expect(details).not.toHaveAttribute('open');
+    expect(saveEditorSelectionToolbar).toHaveBeenCalledWith({
+      enabled: true,
+      shortcuts: [expect.objectContaining({ id: 'shortcut-1', enabled: false })],
+    });
+  });
+
   it('adds and removes a Pivi command shortcut through saveEditorSelectionToolbar', async () => {
     const saveEditorSelectionToolbar = jest.fn(async () => undefined);
     const store = new SettingsUiStore(snapshot);
@@ -71,6 +129,12 @@ describe('EditorToolbarSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add Pivi command' }));
     await screen.findByRole('option', { name: /\/summarize/ });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Execution target' }), {
+      target: { value: 'inline-edit' },
+    });
+
+    expect(screen.getByText('Summarize selection')).toBeInTheDocument();
+    expect(screen.queryByText('cmd-key-1')).not.toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByRole('option', { name: /\/summarize/ }));
@@ -85,10 +149,23 @@ describe('EditorToolbarSection', () => {
           enabled: true,
           piviCommandKey: 'cmd-key-1',
           icon: 'scan-text',
+          executionTarget: 'inline-edit',
         }),
       ],
     });
     expect(store.getSnapshot().general.editorSelectionToolbar.shortcuts).toHaveLength(1);
+
+    const details = screen.getByText('/summarize').closest('details');
+    expect(details).toHaveAttribute('open');
+    const targetSelect = screen.getByRole('combobox', { name: 'Execution target for /summarize' });
+    expect(targetSelect).toHaveValue('inline-edit');
+    await act(async () => {
+      fireEvent.change(targetSelect, { target: { value: 'sidebar' } });
+    });
+    expect(saveEditorSelectionToolbar).toHaveBeenLastCalledWith({
+      enabled: true,
+      shortcuts: [expect.objectContaining({ executionTarget: 'sidebar' })],
+    });
 
     const removeButton = screen.getByRole('button', { name: 'Remove /summarize' });
     await act(async () => {
@@ -125,6 +202,7 @@ describe('EditorToolbarSection', () => {
 
     const iconButton = screen.getByRole('button', { name: 'Choose icon' });
     expect(iconButton.querySelector('[data-test-icon="fold-vertical"]')).not.toBeNull();
+    expect(screen.queryByRole('combobox', { name: /Execution target for Toggle fold/ })).not.toBeInTheDocument();
 
     fireEvent.click(iconButton);
     await act(async () => {
@@ -189,6 +267,7 @@ describe('EditorToolbarSection', () => {
       store.getSnapshot().general.editorSelectionToolbar.shortcuts.map(shortcut => shortcut.id),
     ).toEqual(['shortcut-2', 'shortcut-1']);
     expect(screen.getByRole('button', { name: 'Reorder Toggle fold, currently position 2' })).toBeInTheDocument();
+    expect(screen.getByText('Toggle fold').closest('details')).not.toHaveAttribute('open');
   });
 
   it('hides shortcut controls when the toolbar is disabled', () => {

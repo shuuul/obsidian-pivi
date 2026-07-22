@@ -401,6 +401,7 @@
       "piviCommandPickerTitle": "选择 Pivi 命令",
       "piviCommandSearchPlaceholder": "搜索 Pivi 命令",
       "noPiviCommands": "没有匹配的 Pivi 命令。请先在「命令」中创建。",
+      "executionTarget": { "name": "执行目标", "forCommand": "{label} 的执行目标", "sidebar": "侧边栏", "inlineEdit": "内联编辑" },
       "reorder": {
         "handle": "重新排序 {label}，当前位于第 {position} 位",
         "position": "{label} 已移动到第 {position} 位，共 {total} 个。",

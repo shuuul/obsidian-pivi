@@ -156,6 +156,7 @@ export interface SubagentRuntimeSettings {
 }
 
 export type EditorToolbarShortcutKind = 'obsidian-command' | 'pivi-command';
+export type EditorToolbarExecutionTarget = 'inline-edit' | 'sidebar';
 
 export interface EditorToolbarShortcut {
   id: string;
@@ -166,6 +167,8 @@ export interface EditorToolbarShortcut {
   commandId?: string;
   /** Slash catalog integrationKey when kind === 'pivi-command'. */
   piviCommandKey?: string;
+  /** Where a Pivi command shortcut executes. */
+  executionTarget?: EditorToolbarExecutionTarget;
   /** Host icon id shown on the floating toolbar button. */
   icon?: string;
 }
@@ -346,9 +349,12 @@ export function normalizeEditorSelectionToolbarSettings(
       continue;
     }
     const piviIcon = typeof item.icon === 'string' && item.icon.trim() ? item.icon.trim() : undefined;
+    const executionTarget: EditorToolbarExecutionTarget = item.executionTarget === 'inline-edit'
+      ? 'inline-edit'
+      : 'sidebar';
     shortcuts.push(piviIcon
-      ? { id, kind, label, enabled, piviCommandKey, icon: piviIcon }
-      : { id, kind, label, enabled, piviCommandKey });
+      ? { id, kind, label, enabled, piviCommandKey, executionTarget, icon: piviIcon }
+      : { id, kind, label, enabled, piviCommandKey, executionTarget });
   }
 
   return { enabled: toolbarEnabled, shortcuts };

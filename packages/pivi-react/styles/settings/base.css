@@ -1309,15 +1309,7 @@ textarea.pivi-settings-control {
 }
 
 .pivi-editor-toolbar-card {
-  display: grid;
-  grid-template-columns: auto 32px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
   min-width: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-md);
-  background: var(--pivi-host-background-secondary);
 }
 
 .pivi-editor-toolbar-card--disabled {
@@ -1327,9 +1319,6 @@ textarea.pivi-settings-control {
 .pivi-sortable-toolbar-card {
   position: relative;
   transform: translateY(var(--pivi-toolbar-drag-y, 0));
-  cursor: grab;
-  touch-action: pan-y;
-  user-select: none;
 }
 
 .pivi-sortable-toolbar-card.is-dragging {
@@ -1339,9 +1328,17 @@ textarea.pivi-settings-control {
   cursor: grabbing;
 }
 
-.pivi-editor-toolbar-card__icon {
-  position: relative;
-  min-width: 0;
+.pivi-sortable-toolbar-card > .pivi-editor-toolbar-card__header {
+  display: grid;
+  grid-template-columns: auto auto 30px minmax(0, 1fr) auto auto;
+  gap: 10px;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.pivi-sortable-toolbar-card.is-dragging > .pivi-editor-toolbar-card__header {
+  cursor: grabbing;
 }
 
 .pivi-editor-toolbar-card__fixed-icon,
@@ -1371,13 +1368,24 @@ textarea.pivi-settings-control {
   z-index: 10;
 }
 
-.pivi-editor-toolbar-card__main {
+.pivi-editor-toolbar-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pivi-editor-toolbar-card__body .pivi-command-icon-picker {
+  position: relative;
+}
+
+.pivi-editor-toolbar-card__field {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
-  min-width: 0;
-  overflow: hidden;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
 }
 
 .pivi-editor-toolbar-card__label {
@@ -1404,7 +1412,6 @@ textarea.pivi-settings-control {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--pivi-host-font-monospace);
   font-size: var(--pivi-host-font-ui-smaller);
   color: var(--pivi-host-text-muted);
   overflow-wrap: anywhere;
