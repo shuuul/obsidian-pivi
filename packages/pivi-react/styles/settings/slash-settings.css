@@ -180,6 +180,7 @@
 
 .pivi-command-icon-grid > button .pivi-platform-icon {
   --icon-size: 32px;
+  font-size: 32px;
 }
 
 .pivi-command-icon-grid > button span:last-child {

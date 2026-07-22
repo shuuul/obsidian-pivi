@@ -175,6 +175,40 @@ describe('React commands settings', () => {
     expect(within(card).getByRole('button', { name: 'Choose icon' })).toHaveTextContent('message-square');
   });
 
+  it('prioritizes common icons and incrementally reveals the complete icon list', async () => {
+    const fillerIcons = Array.from({ length: 160 }, (_, index) => `icon-${index}`);
+    renderCommands(createPorts([command], {
+      listIconNames: () => [...fillerIcons, 'languages', 'sparkles'],
+    }));
+    await screen.findByText('/review');
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    const card = getCommandCard('Edit custom slash command');
+    fireEvent.click(within(card).getByRole('button', { name: 'Choose icon' }));
+    const picker = screen.getByRole('dialog', { name: 'Choose an icon' });
+
+    expect(within(picker).getByRole('option', { name: 'languages' })).toBeInTheDocument();
+    expect(within(picker).queryByRole('option', { name: 'icon-159' })).not.toBeInTheDocument();
+    fireEvent.scroll(within(picker).getByRole('listbox', { name: 'Icon results' }));
+    expect(within(picker).getByRole('option', { name: 'icon-159' })).toBeInTheDocument();
+    fireEvent.change(within(picker).getByRole('searchbox', { name: 'Search icons' }), {
+      target: { value: '翻译' },
+    });
+    expect(within(picker).queryByRole('option', { name: 'languages' })).not.toBeInTheDocument();
+  });
+
+  it('closes the icon selector when clicking outside it', async () => {
+    renderCommands(createPorts([command]));
+    await screen.findByText('/review');
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    const card = getCommandCard('Edit custom slash command');
+    fireEvent.click(within(card).getByRole('button', { name: 'Choose icon' }));
+    expect(screen.getByRole('dialog', { name: 'Choose an icon' })).toBeInTheDocument();
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole('dialog', { name: 'Choose an icon' })).not.toBeInTheDocument();
+  });
+
   it('saves the command prompt and collapses the card', async () => {
     const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'review-key' }));
     const ports = createPorts([command], { saveWorkspaceEntry });

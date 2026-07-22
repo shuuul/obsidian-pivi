@@ -479,6 +479,27 @@ export function createSettingsUiPorts(
           if (!saved) {
             throw new Error(`Saved workspace command /${entry.name} was not found`);
           }
+          if (saved.integrationKey && host.settings.editorSelectionToolbar.shortcuts.some(
+            shortcut => shortcut.kind === 'pivi-command'
+              && shortcut.piviCommandKey === saved.integrationKey,
+          )) {
+            host.settings.editorSelectionToolbar = {
+              ...host.settings.editorSelectionToolbar,
+              shortcuts: host.settings.editorSelectionToolbar.shortcuts.map((shortcut) => {
+                if (
+                  shortcut.kind !== 'pivi-command'
+                  || shortcut.piviCommandKey !== saved.integrationKey
+                ) {
+                  return shortcut;
+                }
+                const updated = { ...shortcut, label: `/${saved.name}` };
+                if (saved.icon) updated.icon = saved.icon;
+                else delete updated.icon;
+                return updated;
+              }),
+            };
+            await host.saveSettings();
+          }
           for (const view of host.getAllViews()) {
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }

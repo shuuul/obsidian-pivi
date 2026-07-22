@@ -53,6 +53,62 @@ function createPorts(
 }
 
 describe('EditorToolbarSection', () => {
+  it('refreshes Pivi command shortcut metadata from the command catalog', async () => {
+    const saveEditorSelectionToolbar = jest.fn(async () => undefined);
+    const store = new SettingsUiStore({
+      ...snapshot,
+      general: {
+        ...snapshot.general,
+        editorSelectionToolbar: {
+          enabled: true,
+          shortcuts: [{
+            id: 'shortcut-1',
+            kind: 'pivi-command' as const,
+            label: '/old-name',
+            enabled: true,
+            piviCommandKey: 'cmd-key-1',
+            icon: 'old-icon',
+            executionTarget: 'sidebar' as const,
+          }],
+        },
+      },
+    });
+    const ports = createPorts(saveEditorSelectionToolbar);
+    const listPiviCommands = ports.editorToolbar.listPiviCommands;
+    let resolveCommands!: (
+      commands: Awaited<ReturnType<typeof listPiviCommands>>,
+    ) => void;
+    const pendingCommands = new Promise<Awaited<ReturnType<typeof listPiviCommands>>>(
+      (resolve) => { resolveCommands = resolve; },
+    );
+    ports.editorToolbar.listPiviCommands = jest.fn(() => pendingCommands);
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <EditorToolbarSection
+          store={store}
+          actions={ports.actions}
+          editorToolbar={ports.editorToolbar}
+          feedback={ports.feedback}
+        />
+      </I18nProvider>,
+    ));
+    await act(async () => {
+      resolveCommands(await listPiviCommands());
+      await Promise.resolve();
+    });
+
+    await screen.findByText('/summarize');
+    expect(screen.queryByText('/old-name')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-test-icon="scan-text"]')).not.toBeNull();
+    expect(store.getSnapshot().general.editorSelectionToolbar.shortcuts[0]).toMatchObject({
+      label: '/summarize',
+      icon: 'scan-text',
+      executionTarget: 'sidebar',
+    });
+    expect(saveEditorSelectionToolbar).not.toHaveBeenCalled();
+  });
+
   it('keeps shortcut configuration in a local disclosure panel', async () => {
     const saveEditorSelectionToolbar = jest.fn(async () => undefined);
     const store = new SettingsUiStore({

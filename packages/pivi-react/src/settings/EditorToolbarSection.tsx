@@ -39,6 +39,27 @@ function cloneToolbarSettings(
   };
 }
 
+function syncPiviCommandShortcuts(
+  shortcuts: readonly EditorToolbarShortcut[],
+  commands: readonly SettingsEditorToolbarPiviCommandEntry[],
+): readonly EditorToolbarShortcut[] {
+  const commandByKey = new Map(commands.map(command => [command.key, command] as const));
+  let changed = false;
+  const synchronized = shortcuts.map((shortcut) => {
+    if (shortcut.kind !== 'pivi-command' || !shortcut.piviCommandKey) return shortcut;
+    const command = commandByKey.get(shortcut.piviCommandKey);
+    if (!command) return shortcut;
+    const label = `/${command.name}`;
+    if (shortcut.label === label && shortcut.icon === command.icon) return shortcut;
+    changed = true;
+    const updated = { ...shortcut, label };
+    if (command.icon) updated.icon = command.icon;
+    else delete updated.icon;
+    return updated;
+  });
+  return changed ? synchronized : shortcuts;
+}
+
 async function saveEditorSelectionToolbar(
   store: SettingsUiStore,
   actions: SettingsActionsPort,
@@ -378,9 +399,22 @@ export function EditorToolbarSection({
   const iconNames = editorToolbar.listIconNames();
   useEffect(() => {
     let active = true;
-    void editorToolbar.listPiviCommands().then(entries => { if (active) setPiviCommands(entries); }).catch(() => undefined);
+    void editorToolbar.listPiviCommands().then((entries) => {
+      if (!active) return;
+      setPiviCommands(entries);
+      const current = store.getSnapshot().general;
+      const shortcuts = syncPiviCommandShortcuts(current.editorSelectionToolbar.shortcuts, entries);
+      if (shortcuts !== current.editorSelectionToolbar.shortcuts) {
+        store.updateGeneral({
+          editorSelectionToolbar: {
+            ...current.editorSelectionToolbar,
+            shortcuts: [...shortcuts],
+          },
+        });
+      }
+    }).catch(() => undefined);
     return () => { active = false; };
-  }, [editorToolbar]);
+  }, [editorToolbar, store]);
 
   const existingHostCommandIds = useMemo(
     () => new Set(

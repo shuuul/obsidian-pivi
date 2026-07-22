@@ -247,6 +247,67 @@ describe('UI port adapters', () => {
     expect(ports).not.toHaveProperty('storage');
   });
 
+  it('synchronizes edited Pivi command metadata to matching toolbar shortcuts', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const saveWorkspaceEntry = jest.fn(async () => undefined);
+    const savedEntry = {
+      id: 'translate',
+      kind: 'command' as const,
+      name: 'translate-zh',
+      description: 'Translate selection to Chinese',
+      content: 'Translate {{selected_text}} to Chinese.',
+      scope: 'workspace' as const,
+      source: 'user' as const,
+      isEditable: true,
+      isDeletable: true,
+      displayPrefix: '/',
+      insertPrefix: '/',
+      integrationKey: 'translate-key',
+      icon: 'languages',
+    };
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        editorSelectionToolbar: {
+          enabled: true,
+          shortcuts: [{
+            id: 'translate-shortcut',
+            kind: 'pivi-command' as const,
+            label: '/old-translate',
+            enabled: true,
+            piviCommandKey: 'translate-key',
+            executionTarget: 'sidebar' as const,
+            icon: 'message-square',
+          }],
+        },
+      } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {
+        saveWorkspaceEntry,
+        listWorkspaceEntries: async () => [savedEntry],
+      },
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+
+    await ports.complex.commands.saveWorkspaceEntry(savedEntry);
+
+    expect(saveWorkspaceEntry).toHaveBeenCalledWith(savedEntry);
+    expect(host.settings.editorSelectionToolbar.shortcuts[0]).toMatchObject({
+      label: '/translate-zh',
+      icon: 'languages',
+      executionTarget: 'sidebar',
+    });
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+  });
+
   it('persists subagent limits and refreshes the prompt in every open tab', async () => {
     const saveSettings = jest.fn(async () => undefined);
     const refreshFirst = jest.fn(async () => undefined);
