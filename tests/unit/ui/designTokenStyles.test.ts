@@ -9,6 +9,7 @@ describe('product design tokens', () => {
   const primitives = readFileSync(join(stylesRoot, 'base/presentation-primitives.css'), 'utf8');
   const modelSelector = readFileSync(join(stylesRoot, 'toolbar/model-selector.css'), 'utf8');
   const thinkingSelector = readFileSync(join(stylesRoot, 'toolbar/thinking-selector.css'), 'utf8');
+  const inlineEdit = readFileSync(join(stylesRoot, 'features/inline-edit-surface.css'), 'utf8');
 
   it('defines shared tokens on every presentation root', () => {
     expect(variables).toMatch(
@@ -72,5 +73,26 @@ describe('product design tokens', () => {
     expect(thinkingSelector).toMatch(/\.pivi-thinking-gear\.selected\s*\{[^}]*background:\s*transparent;/s);
     expect(modelSelector).toMatch(/\.pivi-model-option:hover\s*\{[^}]*background:\s*var\(--pivi-host-background-hover\);/s);
     expect(thinkingSelector).toMatch(/\.pivi-thinking-gear:hover\s*\{[^}]*background:\s*var\(--pivi-host-background-hover\);/s);
+  });
+
+  it('keeps inline diff typography editor-native and action buttons legible', () => {
+    expect(inlineEdit).toMatch(
+      /\.pivi-inline-edit-diff-review-deletion,\s*\.pivi-inline-edit-diff-review-insertion\s*\{[^}]*font-family:\s*var\(--pivi-host-font-text, inherit\);[^}]*font-size:\s*var\(--pivi-host-font-text-size, inherit\);[^}]*line-height:\s*var\(--pivi-host-line-height-normal, normal\);/s,
+    );
+    expect(inlineEdit).not.toMatch(
+      /\.pivi-inline-edit-diff-review-deletion\s*\{[^}]*text-decoration:/s,
+    );
+    expect(inlineEdit).toMatch(
+      /\.pivi-inline-edit-diff-review-shortcut\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*font-size:\s*1em;[^}]*line-height:\s*1;/s,
+    );
+    expect(inlineEdit).toMatch(
+      /\.pivi-inline-edit-surface-input\.pivi-rich-input\s*\{[^}]*font-size:\s*var\(--pivi-text-composer\);/s,
+    );
+    expect(inlineEdit).toMatch(
+      /\.pivi-inline-edit-surface \.pivi-inline-edit-surface-send,[\s\S]*?\.pivi-inline-edit-surface \.pivi-inline-edit-surface-send:disabled\s*\{[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/s,
+    );
+    expect(inlineEdit).toMatch(
+      /\.pivi-inline-edit-surface \.pivi-inline-edit-surface-send--stop,[\s\S]*?\.pivi-inline-edit-surface \.pivi-inline-edit-surface-send--stop:active\s*\{[^}]*background:\s*transparent;[^}]*box-shadow:\s*none;/s,
+    );
   });
 });

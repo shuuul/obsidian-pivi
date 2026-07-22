@@ -1,7 +1,7 @@
 import { getObsidianToolsSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 import type { MountInlineEditSurfaceChromeOptions } from '@pivi/pivi-react/mount';
 import type { App } from 'obsidian';
-import { type Component, MarkdownRenderer } from 'obsidian';
+import { type Component, MarkdownRenderer, Platform } from 'obsidian';
 
 import type { PiviPluginHost } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
@@ -210,8 +210,8 @@ export function buildInlineEditDiffReviewDom(
     actions,
     'pivi-inline-edit-diff-review-accept',
     t('editor.inlineEdit.accept'),
-    t('editor.inlineEdit.acceptHint'),
-    'check',
+    Platform.isMacOS ? t('editor.inlineEdit.acceptHint') : 'Ctrl+Enter',
+    'circle-check',
     params.onAccept,
   );
   createInlineEditDiffReviewButton(
@@ -220,7 +220,7 @@ export function buildInlineEditDiffReviewDom(
     'pivi-inline-edit-diff-review-reject',
     t('editor.inlineEdit.reject'),
     t('editor.inlineEdit.rejectHint'),
-    'x',
+    'circle-x',
     params.onReject,
   );
 

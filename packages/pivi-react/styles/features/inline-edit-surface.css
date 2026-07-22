@@ -112,7 +112,7 @@
   color: var(--pivi-host-text-normal);
   caret-color: var(--pivi-host-interactive-accent);
   font-family: var(--pivi-host-font-text, inherit);
-  font-size: var(--pivi-host-font-text-size, var(--pivi-text-composer));
+  font-size: var(--pivi-text-composer);
   line-height: 1.4;
   box-shadow: none;
   outline: none;
@@ -192,7 +192,19 @@
   color: var(--pivi-host-interactive-accent);
 }
 
-.pivi-inline-edit-surface-send--stop {
+.pivi-inline-edit-surface .pivi-inline-edit-surface-send,
+.pivi-inline-edit-surface .pivi-inline-edit-surface-send:hover,
+.pivi-inline-edit-surface .pivi-inline-edit-surface-send:active,
+.pivi-inline-edit-surface .pivi-inline-edit-surface-send:disabled {
+  background: transparent;
+  box-shadow: none;
+}
+
+.pivi-inline-edit-surface .pivi-inline-edit-surface-send--stop,
+.pivi-inline-edit-surface .pivi-inline-edit-surface-send--stop:hover,
+.pivi-inline-edit-surface .pivi-inline-edit-surface-send--stop:active {
+  background: transparent;
+  box-shadow: none;
   color: var(--pivi-host-color-red, #e93147);
 }
 
@@ -202,14 +214,12 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .pivi-inline-edit-surface-send:hover:not(:disabled),
   .pivi-inline-edit-diff-review-accept:hover:not(:disabled),
   .pivi-inline-edit-diff-review-reject:hover:not(:disabled) {
     background: color-mix(in srgb, var(--pivi-host-text-normal) 8%, transparent);
   }
 }
 
-.pivi-inline-edit-surface-send:active:not(:disabled),
 .pivi-inline-edit-diff-review-accept:active:not(:disabled),
 .pivi-inline-edit-diff-review-reject:active:not(:disabled) {
   background: color-mix(in srgb, var(--pivi-host-text-normal) 12%, transparent);
@@ -374,11 +384,17 @@
   text-transform: uppercase;
 }
 
+.pivi-inline-edit-diff-review-deletion,
+.pivi-inline-edit-diff-review-insertion {
+  font-family: var(--pivi-host-font-text, inherit);
+  font-size: var(--pivi-host-font-text-size, inherit);
+  line-height: var(--pivi-host-line-height-normal, normal);
+}
+
 .pivi-inline-edit-diff-review-deletion {
   padding: 4px 8px;
   border-radius: var(--pivi-radius-xs);
   background: hsla(350, 88%, 25%, 0.25);
-  text-decoration: line-through;
 }
 
 .pivi-inline-edit-diff-review-insertion {
@@ -404,8 +420,11 @@
 }
 
 .pivi-inline-edit-diff-review-shortcut {
+  display: inline-flex;
+  align-items: center;
   color: var(--pivi-host-text-muted);
-  font-size: 11px;
+  font-size: 1em;
+  line-height: 1;
   font-family: var(--pivi-host-font-monospace);
   opacity: 0.85;
 }

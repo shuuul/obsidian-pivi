@@ -33,6 +33,7 @@ import {
   InlineEditDiffReviewWidget,
   showInlineEditDiffReviewDecoration,
 } from './inlineEditDiffReviewField';
+import { InlineEditKeyboardController } from './InlineEditKeyboardController';
 import {
   buildInlineEditDiffReviewDom,
   getInlineEditActiveVaultFilePath,
@@ -113,8 +114,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
   private readonly markdownComponent = new Component();
   private streaming = false;
   private destroyed = false;
-  private keydownHandler: ((event: KeyboardEvent) => void) | null = null;
-  private keydownWindow: Window | null = null;
+  private keyboardController: InlineEditKeyboardController | null = null;
 
   private model: string;
   private thinkingLevel: string;
@@ -153,6 +153,19 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     this.rootEl = createInlineEditSurfaceRoot(ownerDocument);
     this.buildDom(this.rootEl);
     this.widget = new InlineEditSurfaceWidget(this.rootEl);
+    const ownerWindow = ownerDocument.defaultView;
+    if (ownerWindow) {
+      this.keyboardController = new InlineEditKeyboardController(ownerWindow, {
+        isDiffReview: () => this.phase === 'diff-review',
+        isInputFocused: () => ownerDocument.activeElement === this.mentionInput?.el,
+        handleSlashKeydown: event => this.slashDropdown?.handleKeydown(event) ?? false,
+        handleMentionKeydown: event => this.mentionDropdown?.handleKeydown(event) ?? false,
+        canSend: () => this.canSend(),
+        onSend: () => this.handleSend(),
+        onAccept: () => this.handleDiffAccept(),
+        onReject: () => this.handleDiffReject(),
+      });
+    }
 
     showInlineEditSurfaceDecoration(
       snapshot.editorView,
@@ -186,7 +199,8 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       hideInlineEditDiffReviewDecoration(this.snapshot.editorView, this.id);
     }
 
-    this.removeKeydownHandler();
+    this.keyboardController?.destroy();
+    this.keyboardController = null;
     this.clearCopyFeedback();
     void this.chrome?.dispose();
     this.chrome = null;
@@ -416,6 +430,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       this.diffReviewNewText,
     );
     this.destroy();
+    editorView.focus();
     this.onAccept?.();
   }
 
@@ -423,7 +438,9 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     if (this.destroyed || this.phase !== 'diff-review') {
       return;
     }
+    const editorView = this.boundEditorView;
     this.destroy();
+    editorView?.focus();
     this.onDiffReject?.();
   }
 
@@ -495,32 +512,6 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       },
     );
 
-    this.keydownHandler = (event: KeyboardEvent): void => {
-      if (!this.mentionInput || this.mentionInput.el.ownerDocument.activeElement !== this.mentionInput.el) {
-        return;
-      }
-      if (this.slashDropdown?.handleKeydown(event)) {
-        return;
-      }
-      if (this.mentionDropdown?.handleKeydown(event)) {
-        return;
-      }
-      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && this.canSend()) {
-        event.preventDefault();
-        this.handleSend();
-      }
-    };
-    this.keydownWindow = ownerWindow;
-    this.keydownWindow.addEventListener('keydown', this.keydownHandler, { capture: true });
-  }
-
-  private removeKeydownHandler(): void {
-    if (!this.keydownHandler || !this.keydownWindow) {
-      return;
-    }
-    this.keydownWindow.removeEventListener('keydown', this.keydownHandler, { capture: true });
-    this.keydownHandler = null;
-    this.keydownWindow = null;
   }
 
   private buildChromeProps() {

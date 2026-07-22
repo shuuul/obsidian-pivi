@@ -158,7 +158,10 @@ export function hideInlineEditDiffReviewDecoration(
     return;
   }
   editorView.dispatch({
-    effects: hideInlineEditDiffReview.of(sessionId),
+    effects: [
+      hideInlineEditDiffReview.of(sessionId),
+      editorView.scrollSnapshot(),
+    ],
   });
 }
 

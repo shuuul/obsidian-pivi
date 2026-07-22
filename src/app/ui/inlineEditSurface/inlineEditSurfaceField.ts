@@ -162,7 +162,10 @@ export function hideInlineEditSurfaceDecoration(
     return;
   }
   editorView.dispatch({
-    effects: hideInlineEditSurface.of(sessionId),
+    effects: [
+      hideInlineEditSurface.of(sessionId),
+      editorView.scrollSnapshot(),
+    ],
   });
 }
 

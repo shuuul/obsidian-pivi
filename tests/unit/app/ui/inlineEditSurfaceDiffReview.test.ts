@@ -6,7 +6,7 @@ installObsidianDomHelpers(window);
 
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import type { Editor } from 'obsidian';
+import { type Editor, Platform } from 'obsidian';
 
 import { InlineEditSurfaceSession } from '@/app/ui/inlineEditSurface/InlineEditSurfaceSession';
 import {
@@ -15,6 +15,8 @@ import {
 } from '@/app/ui/inlineEditSurface/inlineEditDiffReviewField';
 import { applyInlineEditAcceptance } from '@/app/ui/inlineEditHelpers';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
+
+const renderIcon = jest.fn();
 
 jest.mock('@pivi/pivi-react/mount', () => ({
   mountInlineEditSurfaceChrome: jest.fn(() => ({
@@ -50,6 +52,7 @@ jest.mock('obsidian', () => ({
   MarkdownRenderer: {
     render: jest.fn(async () => undefined),
   },
+  Platform: { isMacOS: true },
 }));
 
 jest.mock('@/app/ui/inlineEditHelpers', () => ({
@@ -98,7 +101,7 @@ function createSession(options: {
         }),
       } as never,
       i18n: { t: (key: string) => key } as never,
-      platform: { renderIcon: jest.fn(), attachTooltip: jest.fn() } as never,
+      platform: { renderIcon, attachTooltip: jest.fn() } as never,
       composerDefaults: {
         model: 'model-a',
         thinkingLevel: 'medium',
@@ -130,6 +133,7 @@ describe('InlineEditSurfaceSession diff review', () => {
   let session: InlineEditSurfaceSession;
 
   beforeEach(() => {
+    Platform.isMacOS = true;
     const parent = document.createElement('div');
     document.body.appendChild(parent);
     editor = new EditorView({
@@ -151,13 +155,16 @@ describe('InlineEditSurfaceSession diff review', () => {
 
 
   it('enters diff review with replace decoration for replacement edits', () => {
+    renderIcon.mockClear();
     session.showDiffReview('selected line', 'replacement line', 'replacement');
 
     expect(hasInlineEditDiffReviewDecoration(editor)).toBe(true);
     expect(hasInlineEditDiffReviewReplaceDecoration(editor)).toBe(true);
     expect(editor.dom.querySelector('.pivi-inline-edit-diff-review')).not.toBeNull();
-    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-deletion')).not.toBeNull();
-    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-insertion')).not.toBeNull();
+    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-deletion')).toHaveClass('markdown-rendered');
+    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-insertion')).toHaveClass('markdown-rendered');
+    expect(renderIcon).toHaveBeenCalledWith(expect.any(HTMLElement), 'circle-check');
+    expect(renderIcon).toHaveBeenCalledWith(expect.any(HTMLElement), 'circle-x');
   });
 
   it('enters diff review without replace decoration for insertion edits', () => {
@@ -199,6 +206,8 @@ describe('InlineEditSurfaceSession diff review', () => {
     const snapshot = createSnapshot(editor, mockEditor);
     session.show(snapshot);
     session.showDiffReview('selected line', 'replacement line', 'replacement');
+    const focusSpy = jest.spyOn(editor, 'focus');
+    const scrollSnapshotSpy = jest.spyOn(editor, 'scrollSnapshot');
 
     editor.dispatch({
       changes: { from: 0, insert: 'prefix ' },
@@ -210,6 +219,46 @@ describe('InlineEditSurfaceSession diff review', () => {
       mockEditor,
       snapshot.from + 'prefix '.length,
       snapshot.to + 'prefix '.length,
+      'replacement line',
+    );
+    expect(onAccept).toHaveBeenCalled();
+    expect(hasInlineEditDiffReviewDecoration(editor)).toBe(false);
+    expect(scrollSnapshotSpy).toHaveBeenCalled();
+    expect(focusSpy).toHaveBeenCalled();
+  });
+
+  it('shows Ctrl+Enter as the accept shortcut on Windows/Linux', () => {
+    Platform.isMacOS = false;
+    session.showDiffReview('selected line', 'replacement line', 'replacement');
+
+    const shortcut = editor.dom.querySelector(
+      '.pivi-inline-edit-diff-review-accept .pivi-inline-edit-diff-review-shortcut',
+    );
+    expect(shortcut).toHaveTextContent('Ctrl+Enter');
+  });
+
+  it.each([
+    ['Command+Enter on macOS', { metaKey: true }],
+    ['Ctrl+Enter on Windows/Linux', { ctrlKey: true }],
+  ])('accepts the diff with %s', (_shortcut, modifier) => {
+    const onAccept = jest.fn();
+    session = createSession({ onAccept });
+    session.show(createSnapshot(editor, mockEditor));
+    session.showDiffReview('selected line', 'replacement line', 'replacement');
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      ...modifier,
+      bubbles: true,
+      cancelable: true,
+    });
+    editor.dom.ownerDocument.defaultView?.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(applyInlineEditAcceptance).toHaveBeenCalledWith(
+      mockEditor,
+      0,
+      'selected line'.length,
       'replacement line',
     );
     expect(onAccept).toHaveBeenCalled();
@@ -261,9 +310,32 @@ describe('InlineEditSurfaceSession diff review', () => {
     session = createSession({ onDiffReject });
     session.show(createSnapshot(editor, mockEditor));
     session.showDiffReview('selected line', 'replacement line', 'replacement');
+    const focusSpy = jest.spyOn(editor, 'focus');
+    const scrollSnapshotSpy = jest.spyOn(editor, 'scrollSnapshot');
 
     editor.dom.querySelector<HTMLButtonElement>('.pivi-inline-edit-diff-review-reject')?.click();
 
+    expect(applyInlineEditAcceptance).not.toHaveBeenCalled();
+    expect(onDiffReject).toHaveBeenCalled();
+    expect(hasInlineEditDiffReviewDecoration(editor)).toBe(false);
+    expect(scrollSnapshotSpy).toHaveBeenCalled();
+    expect(focusSpy).toHaveBeenCalled();
+  });
+
+  it('rejects the diff with Escape', () => {
+    const onDiffReject = jest.fn();
+    session = createSession({ onDiffReject });
+    session.show(createSnapshot(editor, mockEditor));
+    session.showDiffReview('selected line', 'replacement line', 'replacement');
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    editor.dom.ownerDocument.defaultView?.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
     expect(applyInlineEditAcceptance).not.toHaveBeenCalled();
     expect(onDiffReject).toHaveBeenCalled();
     expect(hasInlineEditDiffReviewDecoration(editor)).toBe(false);

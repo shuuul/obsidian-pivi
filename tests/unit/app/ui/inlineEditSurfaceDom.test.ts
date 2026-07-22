@@ -41,6 +41,7 @@ jest.mock('obsidian', () => ({
   MarkdownRenderer: {
     render: jest.fn(async () => undefined),
   },
+  Platform: { isMacOS: true },
 }));
 
 function createSnapshot(editor: EditorView): EditorSelectionSnapshot {
