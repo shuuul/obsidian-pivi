@@ -39,11 +39,11 @@ function createScanState(): MarkdownScanState {
 
 function scanMarkdownAppend(markdown: string, state: MarkdownScanState): void {
   const append = markdown.slice(state.offset);
-  const lines = append.match(/.*(?:\n|$)/g) ?? [];
+  let lineStart = 0;
+  let lineEnd = append.indexOf('\n', lineStart);
 
-  for (const lineWithBreak of lines) {
-    if (lineWithBreak.length === 0) continue;
-    const line = lineWithBreak.endsWith('\n') ? lineWithBreak.slice(0, -1) : lineWithBreak;
+  while (lineEnd >= 0) {
+    const line = append.slice(lineStart, lineEnd);
     const trimmed = line.trim();
     const fenceMatch = trimmed.match(/^(`{3,}|~{3,})/);
     if (fenceMatch) {
@@ -59,13 +59,16 @@ function scanMarkdownAppend(markdown: string, state: MarkdownScanState): void {
       }
     }
 
-    state.offset += lineWithBreak.length;
+    state.offset += lineEnd - lineStart + 1;
     if (
       trimmed === ''
       && !state.fence
       && !state.displayMath
       && state.htmlDepth === 0
     ) state.safeOffset = state.offset;
+
+    lineStart = lineEnd + 1;
+    lineEnd = append.indexOf('\n', lineStart);
   }
 }
 

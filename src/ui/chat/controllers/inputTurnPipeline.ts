@@ -76,6 +76,7 @@ export interface InputTurnPipelineHost {
     canvasContextOverride?: CanvasSelectionContext | null;
     content?: string;
     images?: ChatMessage['images'];
+    onAssistantText?: (accumulatedText: string) => void;
     turnRequestOverride?: ChatTurnRequest;
   }): Promise<void>;
 }
@@ -93,6 +94,7 @@ export class InputTurnPipeline {
     canvasContextOverride?: CanvasSelectionContext | null;
     content?: string;
     images?: ChatMessage['images'];
+    onAssistantText?: (accumulatedText: string) => void;
     turnRequestOverride?: ChatTurnRequest;
   }): Promise<void> {
     const {
@@ -214,6 +216,7 @@ export class InputTurnPipeline {
         userMsg,
         assistantMsg,
         streamGeneration,
+        onAssistantText: options?.onAssistantText,
       }));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -291,6 +294,7 @@ export class InputTurnPipeline {
     userMsg: ChatMessage;
     assistantMsg: ChatMessage;
     streamGeneration: number;
+    onAssistantText?: (accumulatedText: string) => void;
   }): Promise<{ wasInterrupted: boolean; wasInvalidated: boolean }> {
     const { state, streamController } = this.host.deps;
     const preparedTurn = {
@@ -315,10 +319,18 @@ export class InputTurnPipeline {
         continue;
       }
 
-      await streamController.handleStreamChunk(
-        chunk,
-        this.host.getActiveStreamingAssistantMessage() ?? options.assistantMsg,
-      );
+      const activeAssistantMessage = this.host.getActiveStreamingAssistantMessage()
+        ?? options.assistantMsg;
+      await streamController.handleStreamChunk(chunk, activeAssistantMessage);
+      if (chunk.type === 'text' && options.onAssistantText) {
+        const accumulatedText = activeAssistantMessage.contentBlocks?.length
+          ? activeAssistantMessage.contentBlocks.reduce(
+              (text, block) => block.type === 'text' ? text + block.content : text,
+              '',
+            )
+          : activeAssistantMessage.content;
+        options.onAssistantText(accumulatedText);
+      }
     }
 
     return { wasInterrupted: false, wasInvalidated: false };

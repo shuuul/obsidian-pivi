@@ -12,7 +12,7 @@ describe('product design tokens', () => {
 
   it('defines shared tokens on every presentation root', () => {
     expect(variables).toMatch(
-      /\.pivi-container,\s*\.pivi-settings,\s*\.pivi-selection-toolbar-overlay\s*\{/,
+      /\.pivi-container,\s*\.pivi-settings,\s*\.pivi-selection-toolbar-overlay,\s*\.pivi-inline-selector-portal,\s*\.pivi-inline-edit-surface,\s*\.pivi-inline-edit-diff-review\s*\{/,
     );
     for (const token of [
       '--pivi-radius-xs',

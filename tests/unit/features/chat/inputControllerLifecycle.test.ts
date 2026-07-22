@@ -116,6 +116,32 @@ describe('InputController service and cancellation lifecycle', () => {
     expect(events).toEqual(['init', 'prepare', 'query', 'init', 'prepare', 'query']);
   });
 
+  it('reports accumulated assistant text after each processed text chunk', async () => {
+    const { controller, service } = createController();
+    (service.query as jest.Mock).mockImplementation(async function* () {
+      yield { type: 'text', content: 'Hel' };
+      yield { type: 'text', content: 'lo' };
+      yield { type: 'text', content: ' world' };
+    });
+    let accumulated = '';
+    (controller.deps.streamController.handleStreamChunk as jest.Mock).mockImplementation(
+      async (chunk: { type: string; content: string }, message: { contentBlocks?: unknown[] }) => {
+        if (chunk.type !== 'text') return;
+        accumulated += chunk.content;
+        message.contentBlocks = [{ type: 'text', content: accumulated }];
+      },
+    );
+    const onAssistantText = jest.fn();
+
+    await controller.sendMessage({ content: 'first', onAssistantText });
+
+    expect(onAssistantText.mock.calls.map(call => call[0])).toEqual([
+      'Hel',
+      'Hello',
+      'Hello world',
+    ]);
+  });
+
   it('sets cancellation state and restores the queue before cancelling the service', () => {
     const { controller, events, inputEl, service, state } = createController();
     const flushProjection = jest.spyOn(state, 'flushProjection');

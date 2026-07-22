@@ -141,6 +141,17 @@
   gap: 6px;
 }
 
+.pivi-inline-edit-surface-progress {
+  display: none;
+  margin-inline-end: auto;
+  color: var(--pivi-host-text-muted);
+  white-space: nowrap;
+}
+
+.pivi-inline-edit-surface-progress--visible {
+  display: inline;
+}
+
 .pivi-inline-edit-surface-chrome {
   display: flex;
   align-items: center;
@@ -297,12 +308,7 @@
 .pivi-inline-edit-surface-reply {
   display: none;
   margin-block-start: 4px;
-  padding-block-start: 4px;
   border-block-start: 1px solid var(--pivi-host-border-hover);
-  color: var(--pivi-host-text-normal);
-  font-family: var(--pivi-host-font-text, inherit);
-  font-size: var(--pivi-text-base);
-  line-height: var(--pivi-chat-line-height, 1.4);
 }
 
 .pivi-inline-edit-surface-reply--visible {

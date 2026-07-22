@@ -35,6 +35,14 @@ function createPorts(): ChatPorts {
   } as unknown as ChatPorts;
 }
 
+async function flushUntil(predicate: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (predicate()) return;
+    await Promise.resolve();
+  }
+  throw new Error('Expected asynchronous setup to complete');
+}
+
 describe('submitInlineEditTurn', () => {
   it('creates an archived tab, sends the turn, and returns assistant text', async () => {
     let streaming = true;
@@ -54,6 +62,7 @@ describe('submitInlineEditTurn', () => {
       controllers: {
         inputController: {
           sendMessage: jest.fn(async () => {
+            tab.state.streamGeneration += 1;
             tab.state.messages = [
               { id: 'u1', role: 'user', content: 'prompt', timestamp: 1 },
               {
@@ -113,9 +122,8 @@ describe('submitInlineEditTurn', () => {
       },
       controllers: {
         inputController: {
-          // The mocked ownerWindow setTimeout is synchronous, so the streaming poll
-          // spins in microtasks; cancel must fire before the poll starts.
           sendMessage: jest.fn(async () => {
+            tab.state.streamGeneration += 1;
             registeredCancel?.();
           }),
           cancelStreaming,
@@ -138,9 +146,10 @@ describe('submitInlineEditTurn', () => {
     expect(cancelStreaming).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onAssistantText during streaming with monotonically accumulating text', async () => {
+  it('forwards assistant text from the live query before the turn promise resolves', async () => {
     let streaming = true;
-    let pollTick = 0;
+    let resolveSend: () => void = () => undefined;
+    let sendOptions: { onAssistantText?: (text: string) => void } | undefined;
     const assistantTextBlock = { type: 'text' as const, content: '' };
     const assistantMessage = {
       id: 'a1',
@@ -167,30 +176,15 @@ describe('submitInlineEditTurn', () => {
       },
       controllers: {
         inputController: {
-          sendMessage: jest.fn(async () => undefined),
+          sendMessage: jest.fn((options: { onAssistantText?: (text: string) => void }) => {
+            tab.state.streamGeneration += 1;
+            sendOptions = options;
+            return new Promise<void>((resolve) => {
+              resolveSend = resolve;
+            });
+          }),
         },
       },
-    };
-
-    const messagesEl = tab.dom.messagesEl;
-    const ownerWindow = messagesEl.ownerDocument.defaultView as Window & {
-      setTimeout: (callback: () => void, delay?: number) => number;
-    };
-    const originalSetTimeout = ownerWindow.setTimeout.bind(ownerWindow);
-    ownerWindow.setTimeout = (callback: () => void, delay?: number) => {
-      if (delay === 50) {
-        pollTick += 1;
-        if (pollTick === 1) {
-          assistantTextBlock.content = 'Hel';
-        } else if (pollTick === 2) {
-          assistantTextBlock.content = 'Hello';
-        } else if (pollTick === 3) {
-          assistantTextBlock.content = 'Hello world';
-        } else {
-          streaming = false;
-        }
-      }
-      return originalSetTimeout(callback, delay);
     };
 
     const manager = {
@@ -198,33 +192,42 @@ describe('submitInlineEditTurn', () => {
     } as unknown as TabManager;
 
     const onAssistantText = jest.fn();
-
-    await expect(submitInlineEditTurn(manager, createPorts(), {
+    let resolved = false;
+    const turnPromise = submitInlineEditTurn(manager, createPorts(), {
       content: 'Rewrite\n\n<selected_text>\nhello\n</selected_text>',
       onAssistantText,
-    })).resolves.toEqual({
+    }).then((result) => {
+      resolved = true;
+      return result;
+    });
+    await flushUntil(() => sendOptions !== undefined);
+
+    assistantTextBlock.content = 'Hel';
+    sendOptions?.onAssistantText?.('Hel');
+    assistantTextBlock.content = 'Hello';
+    sendOptions?.onAssistantText?.('Hello');
+    assistantTextBlock.content = 'Hello world';
+    sendOptions?.onAssistantText?.('Hello world');
+
+    const resolvedBeforeSendCompleted = resolved;
+    const streamedValues = onAssistantText.mock.calls.map(call => call[0]);
+
+    streaming = false;
+    resolveSend();
+    await expect(turnPromise).resolves.toEqual({
       assistantText: 'Hello world',
       tabId: 'inline-edit-tab',
     });
-
-    expect(onAssistantText).toHaveBeenCalledTimes(3);
-    expect(onAssistantText.mock.calls.map(call => call[0])).toEqual([
-      'Hel',
-      'Hello',
-      'Hello world',
-    ]);
-    for (let index = 1; index < onAssistantText.mock.calls.length; index += 1) {
-      const previous = onAssistantText.mock.calls[index - 1][0] as string;
-      const current = onAssistantText.mock.calls[index][0] as string;
-      expect(current.startsWith(previous)).toBe(true);
-      expect(current.length).toBeGreaterThanOrEqual(previous.length);
-    }
-    expect(onAssistantText.mock.calls.at(-1)?.[0]).toBe('Hello world');
+    expect(resolvedBeforeSendCompleted).toBe(false);
+    expect(streamedValues).toEqual(['Hel', 'Hello', 'Hello world']);
   });
 
-  it('does not call onAssistantText when streaming is cancelled', async () => {
+  it('does not forward late assistant text after cancellation', async () => {
     let streaming = true;
-    let pollTick = 0;
+    let registeredCancel: (() => void) | null = null;
+    const cancelStreaming = jest.fn(() => {
+      streaming = false;
+    });
     const assistantMessage = {
       id: 'a1',
       role: 'assistant' as const,
@@ -250,24 +253,14 @@ describe('submitInlineEditTurn', () => {
       },
       controllers: {
         inputController: {
-          sendMessage: jest.fn(async () => undefined),
+          sendMessage: jest.fn(async (options: { onAssistantText?: (text: string) => void }) => {
+            tab.state.streamGeneration += 1;
+            registeredCancel?.();
+            options.onAssistantText?.('Partial');
+          }),
+          cancelStreaming,
         },
       },
-    };
-
-    const messagesEl = tab.dom.messagesEl;
-    const ownerWindow = messagesEl.ownerDocument.defaultView as Window & {
-      setTimeout: (callback: () => void, delay?: number) => number;
-    };
-    const originalSetTimeout = ownerWindow.setTimeout.bind(ownerWindow);
-    ownerWindow.setTimeout = (callback: () => void, delay?: number) => {
-      if (delay === 50) {
-        pollTick += 1;
-        if (pollTick === 1) {
-          tab.lifecycleState = 'closing';
-        }
-      }
-      return originalSetTimeout(callback, delay);
     };
 
     const manager = {
@@ -279,9 +272,12 @@ describe('submitInlineEditTurn', () => {
     await expect(submitInlineEditTurn(manager, createPorts(), {
       content: 'Rewrite',
       onAssistantText,
+      registerCancel: (cancel) => {
+        registeredCancel = cancel;
+      },
     })).resolves.toBeNull();
 
-    expect(onAssistantText).toHaveBeenCalledTimes(1);
-    expect(onAssistantText).toHaveBeenCalledWith('Partial');
+    expect(cancelStreaming).toHaveBeenCalledTimes(1);
+    expect(onAssistantText).not.toHaveBeenCalled();
   });
 });

@@ -260,6 +260,41 @@ Append entries rather than rewriting another agent's record.
 - Remaining: None.
 - Blockers: None.
 
+### 2026-07-22 — Main — Direct chunk streaming and Sidebar output parity
+
+- Changed: Corrected the prior 50ms polling assessment: `submitInlineEditTurn` awaited the complete `sendMessage()` promise before entering its polling loop, so real turns could not publish progressive output. The normal input turn pipeline now emits accumulated assistant text immediately after each ordered text chunk is reduced, and the inline bridge forwards those events directly with cancellation/generation guards. Removed the timer poll entirely. Inline replies now use the same `pivi-message pivi-message-assistant` DOM contract and sealed-prefix/live-tail Markdown adapter as Sidebar; terminal state performs the same full-fidelity render, and partial protocol open tags remain hidden until visible content starts.
+- Evidence: Focused Jest covers direct callback delivery before turn resolution, per-chunk accumulation, cancellation, partial protocol tags, canonical assistant DOM, sealed-prefix streaming, terminal rendering, and unchanged diff review lifecycle. Full source/test typecheck, lint, boundary/spec checks, 286 Jest suites / 2211 tests, production build, and bundle-size gate pass. The built plugin reloaded in Obsidian and `obsidian dev:errors` reported no captured errors.
+- Remaining: User visual acceptance with one configured-provider turn; automated verification did not initiate a paid model request.
+- Blockers: None.
+
+### 2026-07-22 — Main — Inline first-output timer
+
+- Changed: Added an elapsed-only progress indicator at the lower-left of the inline edit composer. It uses the Sidebar's shared `pivi-response-meta` typography, owner-window scheduling, and one-decimal `x.xs` elapsed output. The indicator and bottom running light are mounted behind one waiting-state controller, so they start together for each turn and stop together on first visible streamed output, stop, failure, completion, or session disposal.
+- Evidence: Focused DOM/style Jest covers elapsed updates, whitespace-only chunks, first-visible-output stop, restart, disposal, shared typography, left-edge layout, and non-default editor owner realms. Full typecheck, lint, boundary/spec checks, 286 Jest suites / 2213 tests, production build, and bundle-size gate pass. The built plugin reloaded in Obsidian and `obsidian dev:errors` reported no captured errors.
+- Remaining: User visual acceptance with one configured-provider turn.
+- Blockers: None.
+
+### 2026-07-22 — Main — Chunk-safe ordered-list streaming
+
+- Changed: Traced the reported extra spacing after ordered-list markers against the live Obsidian theme and confirmed Sidebar/inline list DOM had identical computed list margins, padding, typography, and line height. The mismatch came from the shared streaming Markdown scanner advancing past unterminated chunk-tail lines: a newline arriving in the next provider chunk could be mistaken for a blank line, sealing `1.`, its text, and nested bullets into separate Markdown segments. The scanner now commits only newline-terminated lines, preserving one complete list segment while retaining immediate escaped-tail updates.
+- Evidence: Focused adapter and inline-surface Jest reproduces a provider stream split between `1. First item` and its later newline, verifies no premature Markdown render occurs, and confirms the complete item plus nested bullet seals only at the real blank-line boundary. Full verification follows with the implementation handoff.
+- Remaining: User visual acceptance with one configured-provider ordered-list response.
+- Blockers: None.
+
+### 2026-07-22 — Main — CodeMirror-independent inline output layout
+
+- Changed: Compared the same rendered list in the live inline surface and Sidebar. Their Markdown DOM and `li` margin, padding, font size, and line height matched, but the inline assistant inherited CodeMirror's `white-space: break-spaces`, `word-break: break-word`, `line-break: after-white-space`, tab size, and transparent caret through the block widget. MarkdownRenderer's formatting newlines between sibling `<li>` nodes therefore became visible line boxes, adding about 22px between items. The shared `.pivi-message-content` output boundary now restores the Sidebar text-layout defaults, while the streaming plaintext tail keeps its explicit `pre-wrap`; no list-specific spacing override was added.
+- Evidence: Live verification reduced the inline adjacent-item gap from about 25.87px to the Sidebar's 3.49px without changing list geometry, then confirmed the deployed stylesheet resolves `white-space: normal`, collapsed whitespace, normal/auto line breaking, tab size 8, and visible caret color inside a `break-spaces` CodeMirror line while the live tail remains `pre-wrap`. Focused CSS/streaming suites (4 suites / 21 tests), full typecheck, lint, boundary/spec checks, 286 Jest suites / 2216 tests, production build, and bundle-size gate pass; the built plugin reloaded with no captured runtime errors.
+- Remaining: None.
+- Blockers: None.
+
+### 2026-07-22 — Main — Persistent inline first-output duration
+
+- Changed: The inline first-output timer now renders as `* x.xs`, performs one final owner-window clock read when the running light stops, and keeps that frozen elapsed value visible after first output or terminal completion. Edit responses move the same metadata node into the Diff Review action row before replacing the input widget. Starting another turn resets it to `* 0.0s`; closing the surface still disposes its interval and DOM.
+- Evidence: Focused DOM/style coverage (3 suites / 19 tests) verifies the initial hidden state, starred one-decimal updates, frozen post-output/post-terminal visibility, Diff Review transfer, new-turn reset, and owner-realm interval cleanup. Full typecheck, lint, boundary/spec checks, and production build pass; the built plugin reloaded with no captured runtime errors.
+- Remaining: None.
+- Blockers: None.
+
 ## Completion summary
 
 Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated. The coordinator then sets `status: Completed`, updates the date, moves the unchanged filename to `archive/`, and moves its index entry in the same change.

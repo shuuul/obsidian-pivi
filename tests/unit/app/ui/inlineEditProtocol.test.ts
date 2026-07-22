@@ -85,6 +85,12 @@ describe('inlineEditProtocol', () => {
 });
 
 describe('stripInlineEditStreamingProtocolTags', () => {
+  it('hides a partial protocol open tag until content starts', () => {
+    expect(stripInlineEditStreamingProtocolTags('<')).toBe('');
+    expect(stripInlineEditStreamingProtocolTags('<repl')).toBe('');
+    expect(stripInlineEditStreamingProtocolTags('\n<insertion')).toBe('');
+  });
+
   it('strips leading protocol open tags during streaming', () => {
     expect(stripInlineEditStreamingProtocolTags('<replacement>updated text')).toBe('updated text');
     expect(stripInlineEditStreamingProtocolTags('\n<insertion>new line')).toBe('new line');

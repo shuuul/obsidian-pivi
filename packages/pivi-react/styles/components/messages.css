@@ -217,6 +217,11 @@
   font-family: inherit;
   font-size: var(--pivi-text-chat-body);
   line-height: var(--pivi-chat-line-height, 1.4);
+  white-space: normal;
+  word-break: normal;
+  line-break: auto;
+  tab-size: 8;
+  caret-color: auto;
   user-select: text;
   -webkit-user-select: text;
   unicode-bidi: plaintext; /* Proper BiDi text handling for mixed RTL/LTR */

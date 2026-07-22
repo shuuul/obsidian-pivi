@@ -25,6 +25,18 @@ describe('transcript rhythm styles', () => {
     );
   });
 
+  it('isolates shared message output from inherited editor text layout', () => {
+    const contentRule = messages.match(/\.pivi-message-content\s*\{([^}]*)\}/)?.[1] ?? '';
+    const streamingTailRule = messages.match(/\.pivi-streaming-markdown-tail\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(contentRule).toMatch(/white-space:\s*normal;/);
+    expect(contentRule).toMatch(/word-break:\s*normal;/);
+    expect(contentRule).toMatch(/line-break:\s*auto;/);
+    expect(contentRule).toMatch(/tab-size:\s*8;/);
+    expect(contentRule).toMatch(/caret-color:\s*auto;/);
+    expect(streamingTailRule).toMatch(/white-space:\s*pre-wrap;/);
+  });
+
   it('separates narrative blocks while keeping headings attached to their section', () => {
     expect(markdown).toContain(
       '.pivi-message-assistant .pivi-message-content .pivi-markdown-rendered',

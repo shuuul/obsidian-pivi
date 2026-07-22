@@ -1,28 +1,101 @@
 import { getObsidianToolsSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 import type { MountInlineEditSurfaceChromeOptions } from '@pivi/pivi-react/mount';
 import type { App } from 'obsidian';
-import { Component, MarkdownRenderer } from 'obsidian';
+import { type Component, MarkdownRenderer } from 'obsidian';
 
 import type { PiviPluginHost } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
+import { createStreamingMarkdownContentAdapter } from '@/app/ui/createStreamingMarkdownContentAdapter';
 import { renderMarkdownContent } from '@/ui/chat/rendering/messageRendererMarkdown';
 
 import type { InlineEditDiffReviewKind } from './types';
 
 type PresentationPlatform = MountInlineEditSurfaceChromeOptions['platform'];
 
-/** Renders one isolated reply snapshot so stale streaming renders stay detached. */
-export async function renderInlineEditReplyMarkdown(
+function createInlineEditWaitingTimer(progressEl: HTMLElement): {
+  start: () => void;
+  stop: () => void;
+} {
+  const ownerWindow = progressEl.ownerDocument.defaultView;
+  let startedAt: number | null = null;
+  let timer: number | null = null;
+
+  const update = (): void => {
+    if (!ownerWindow || startedAt === null) return;
+    const elapsedSeconds = Math.max(0, ownerWindow.performance.now() - startedAt) / 1_000;
+    progressEl.textContent = `* ${elapsedSeconds.toFixed(1)}s`;
+  };
+
+  return {
+    start: () => {
+      if (!ownerWindow || timer !== null) return;
+      startedAt = ownerWindow.performance.now();
+      progressEl.addClass('pivi-inline-edit-surface-progress--visible');
+      update();
+      timer = ownerWindow.setInterval(update, 100);
+    },
+    stop: () => {
+      update();
+      if (timer !== null) ownerWindow?.clearInterval(timer);
+      timer = null;
+      startedAt = null;
+    },
+  };
+}
+
+/** Mounts first-output latency chrome, freezing the elapsed result when the running light stops. */
+export function mountInlineEditWaitingIndicator(root: HTMLElement, parent: HTMLElement): {
+  setWaiting: (waiting: boolean) => void;
+  moveTo: (nextParent: HTMLElement) => void;
+} {
+  const progressEl = parent.createSpan({
+    cls: 'pivi-inline-edit-surface-progress pivi-response-meta',
+    attr: { role: 'timer', 'aria-live': 'off' },
+  });
+  const timer = createInlineEditWaitingTimer(progressEl);
+  return {
+    setWaiting: (waiting) => {
+      root.toggleClass('pivi-inline-edit-surface--waiting', waiting);
+      if (waiting) timer.start();
+      else timer.stop();
+    },
+    moveTo: nextParent => nextParent.prepend(progressEl),
+  };
+}
+
+/** Mounts the same sealed-prefix Markdown island used by Sidebar assistant text. */
+export function mountInlineEditReplyMarkdown(
   app: App,
-  template: HTMLElement,
-  markdown: string,
-): Promise<{ component: Component; contentEl: HTMLElement }> {
-  const component = new Component();
-  component.load();
-  const contentEl = template.cloneNode(false) as HTMLElement;
-  await renderMarkdownContent({ app, component }, contentEl, markdown);
-  return { component, contentEl };
+  parent: Component,
+  container: HTMLElement,
+  blockId: string,
+): {
+  update: (content: string, phase: 'streaming' | 'terminal') => void;
+  dispose: () => void;
+} {
+  const ownerWindow = container.ownerDocument.defaultView;
+  const adapter = createStreamingMarkdownContentAdapter(
+    parent,
+    (target, markdown, options) => renderMarkdownContent(
+      { app, component: parent }, target, markdown, options,
+    ),
+  );
+  if (!ownerWindow) return { update: () => undefined, dispose: () => undefined };
+  const context = {
+    generation: blockId,
+    ownerDocument: container.ownerDocument,
+    ownerWindow,
+  };
+  const dispose = adapter.mount(
+    container,
+    { blockId, content: '', phase: 'streaming' },
+    context,
+  );
+  return {
+    update: (content, phase) => adapter.update?.(container, { blockId, content, phase }, context),
+    dispose: () => dispose?.(),
+  };
 }
 
 /** Mounts a host icon into an inline-edit control surface. */
@@ -74,6 +147,7 @@ interface BuildInlineEditDiffReviewDomParams {
 interface InlineEditDiffReviewDom {
   root: HTMLElement;
   errorEl: HTMLElement;
+  actionsEl: HTMLElement;
 }
 
 /** Builds the diff-review widget root and action controls. */
@@ -150,7 +224,7 @@ export function buildInlineEditDiffReviewDom(
     params.onReject,
   );
 
-  return { root, errorEl };
+  return { root, errorEl, actionsEl: actions };
 }
 
 export function getInlineEditActiveVaultFilePath(app: App): string | null {

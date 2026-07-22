@@ -24,10 +24,19 @@ jest.mock('@pivi/pivi-react/mount', () => ({
 
 jest.mock('obsidian', () => ({
   Component: class Component {
+    children = new Set<object>();
     load(): void {}
     unload(): void {}
     register(): void {}
     registerDomEvent(): void {}
+    addChild(child: { load?: () => void }): void {
+      this.children.add(child);
+      child.load?.();
+    }
+    removeChild(child: { unload?: () => void }): void {
+      this.children.delete(child);
+      child.unload?.();
+    }
   },
   MarkdownRenderer: {
     render: jest.fn(async () => undefined),
@@ -42,6 +51,57 @@ function createSnapshot(editor: EditorView): EditorSelectionSnapshot {
     rect: { top: 0, bottom: 10, left: 0, right: 10 },
     editorView: editor,
   };
+}
+
+function createSession(): InlineEditSurfaceSession {
+  return new InlineEditSurfaceSession(
+    {
+      plugin: {
+        app: {
+          workspace: { getActiveFile: () => null },
+          vault: {
+            getFiles: () => [],
+            getAllFolders: () => [],
+          },
+          metadataCache: {
+            getFileCache: () => null,
+          },
+        },
+        settings: { obsidianTools: { externalReadDirectories: [] } },
+        getUiFacades: () => ({
+          getSettingsSnapshot: () => ({ model: 'model-a', thinkingLevel: 'medium' }),
+          chatUIConfig: {
+            getReasoningOptions: () => [{ value: 'medium', label: 'Medium' }],
+            isAdaptiveReasoningModel: () => false,
+            getDefaultReasoningValue: () => 'medium',
+          },
+        }),
+      } as never,
+      i18n: { t: (key: string) => key } as never,
+      platform: { renderIcon: jest.fn(), attachTooltip: jest.fn() } as never,
+      composerDefaults: {
+        model: 'model-a',
+        thinkingLevel: 'medium',
+        modelOptions: [{ value: 'model-a', label: 'Model A' }],
+        thinkingOptions: [{ value: 'medium', label: 'Medium' }],
+        adaptiveReasoning: false,
+        defaultReasoningValue: 'medium',
+      },
+      getWorkspace: async () => ({
+        mcpServerManager: {
+          getServers: () => [],
+          getContextSavingServers: () => [],
+        },
+        mcpToolProvider: { listTools: () => [] },
+        skillProvider: { listSkills: () => [] },
+        slashCommandCatalog: {
+          getDropdownConfig: () => ({}),
+          listDropdownEntries: async () => [],
+        },
+      }) as never,
+    },
+    { onReject },
+  );
 }
 
 describe('InlineEditSurfaceSession DOM', () => {
@@ -61,60 +121,14 @@ describe('InlineEditSurfaceSession DOM', () => {
       parent,
     });
 
-    session = new InlineEditSurfaceSession(
-      {
-        plugin: {
-          app: {
-            workspace: { getActiveFile: () => null },
-            vault: {
-              getFiles: () => [],
-              getAllFolders: () => [],
-            },
-            metadataCache: {
-              getFileCache: () => null,
-            },
-          },
-          settings: { obsidianTools: { externalReadDirectories: [] } },
-          getUiFacades: () => ({
-            getSettingsSnapshot: () => ({ model: 'model-a', thinkingLevel: 'medium' }),
-            chatUIConfig: {
-              getReasoningOptions: () => [{ value: 'medium', label: 'Medium' }],
-              isAdaptiveReasoningModel: () => false,
-              getDefaultReasoningValue: () => 'medium',
-            },
-          }),
-        } as never,
-        i18n: { t: (key: string) => key } as never,
-        platform: { renderIcon: jest.fn(), attachTooltip: jest.fn() } as never,
-        composerDefaults: {
-          model: 'model-a',
-          thinkingLevel: 'medium',
-          modelOptions: [{ value: 'model-a', label: 'Model A' }],
-          thinkingOptions: [{ value: 'medium', label: 'Medium' }],
-          adaptiveReasoning: false,
-          defaultReasoningValue: 'medium',
-        },
-        getWorkspace: async () => ({
-          mcpServerManager: {
-            getServers: () => [],
-            getContextSavingServers: () => [],
-          },
-          mcpToolProvider: { listTools: () => [] },
-          skillProvider: { listSkills: () => [] },
-          slashCommandCatalog: {
-            getDropdownConfig: () => ({}),
-            listDropdownEntries: async () => [],
-          },
-        }) as never,
-      },
-      { onReject },
-    );
+    session = createSession();
   });
 
   afterEach(() => {
     session.destroy();
     editor.destroy();
     editor.dom.remove();
+    jest.useRealTimers();
   });
 
   it('mounts the expected inline edit surface structure', () => {
@@ -124,13 +138,16 @@ describe('InlineEditSurfaceSession DOM', () => {
     expect(root).not.toBeNull();
     expect(root?.querySelector('.pivi-inline-edit-surface-gutter .pivi-inline-edit-surface-close')).not.toBeNull();
     expect(root?.querySelector('.pivi-inline-edit-surface-input-host .pivi-inline-edit-surface-input')).not.toBeNull();
+    expect(root?.querySelector('.pivi-inline-edit-surface-progress.pivi-response-meta'))
+      .toHaveAttribute('role', 'timer');
     expect(root?.querySelector('.pivi-inline-edit-surface-tail .pivi-inline-edit-surface-chrome')).not.toBeNull();
     expect(root?.querySelector('.pivi-inline-edit-surface-tail .pivi-inline-edit-surface-send')).not.toBeNull();
     expect(root?.querySelector('.pivi-inline-edit-surface-at')).toBeNull();
-    expect(root?.querySelector('.pivi-inline-edit-surface-reply.pivi-message-assistant')).not.toBeNull();
+    expect(root?.querySelector('article.pivi-inline-edit-surface-reply.pivi-message.pivi-message-assistant'))
+      .not.toBeNull();
     expect(root?.querySelector(
       '.pivi-inline-edit-surface-reply > .pivi-message-content > '
-      + '.pivi-inline-edit-surface-reply-content.pivi-text-block.pivi-markdown-rendered',
+      + '.pivi-inline-edit-surface-reply-content.pivi-text-block > .pivi-streaming-markdown',
     )).not.toBeNull();
     expect(root?.querySelectorAll('.pivi-inline-edit-surface-reply-actions button')).toHaveLength(1);
   });
@@ -150,44 +167,143 @@ describe('InlineEditSurfaceSession DOM', () => {
     expect(copyButton).toHaveClass('copied');
   });
 
-  it('animates only while waiting for the first visible streamed output', () => {
+  it('times exactly the interval spent waiting for the first visible streamed output', () => {
+    jest.useFakeTimers();
     session.show(createSnapshot(editor));
     const root = editor.dom.querySelector('.pivi-inline-edit-surface');
+    const progress = root?.querySelector('.pivi-inline-edit-surface-progress');
 
+    expect(progress).not.toHaveClass('pivi-inline-edit-surface-progress--visible');
     session.setStreaming(true);
     expect(root).toHaveClass('pivi-inline-edit-surface--waiting');
+    expect(progress).toHaveClass('pivi-inline-edit-surface-progress--visible');
+    expect(progress).toHaveTextContent('* 0.0s');
+
+    jest.advanceTimersByTime(2_200);
+    expect(progress).toHaveTextContent('* 2.2s');
 
     session.setReplyText('   ');
     expect(root).toHaveClass('pivi-inline-edit-surface--waiting');
 
     session.setReplyText('First streamed text');
     expect(root).not.toHaveClass('pivi-inline-edit-surface--waiting');
+    expect(progress).toHaveClass('pivi-inline-edit-surface-progress--visible');
+
+    jest.advanceTimersByTime(2_000);
+    expect(progress).toHaveTextContent('* 2.2s');
 
     session.setStreaming(false);
     expect(root).not.toHaveClass('pivi-inline-edit-surface--waiting');
+    expect(progress).toHaveClass('pivi-inline-edit-surface-progress--visible');
+    expect(progress).toHaveTextContent('* 2.2s');
+
+    session.setStreaming(true);
+    expect(progress).toHaveTextContent('* 0.0s');
+    expect(root).toHaveClass('pivi-inline-edit-surface--waiting');
   });
 
-  it('keeps a newer streamed Markdown render when an older render finishes late', async () => {
-    const pending: Array<() => void> = [];
+  it('schedules and clears the waiting timer in the editor owner realm', () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const ownerDocument = iframe.contentDocument!;
+    const ownerWindow = iframe.contentWindow!;
+    installObsidianDomHelpers(ownerWindow);
+    const ownerSetInterval = jest.spyOn(ownerWindow, 'setInterval');
+    const ownerClearInterval = jest.spyOn(ownerWindow, 'clearInterval');
+    const defaultSetInterval = jest.spyOn(window, 'setInterval');
+    const parent = ownerDocument.createElement('div');
+    ownerDocument.body.appendChild(parent);
+    const popupEditor = new EditorView({
+      state: EditorState.create({ doc: 'popup selection' }),
+      parent,
+    });
+    const popupSession = createSession();
+
+    try {
+      popupSession.show(createSnapshot(popupEditor));
+      ownerSetInterval.mockClear();
+      ownerClearInterval.mockClear();
+      defaultSetInterval.mockClear();
+
+      popupSession.setStreaming(true);
+      expect(ownerSetInterval).toHaveBeenCalledWith(expect.any(Function), 100);
+      expect(defaultSetInterval).not.toHaveBeenCalled();
+
+      popupSession.setReplyText('First streamed text');
+      expect(ownerClearInterval).toHaveBeenCalledTimes(1);
+
+      popupSession.setStreaming(false);
+      popupSession.setStreaming(true);
+      popupSession.destroy();
+      expect(ownerClearInterval).toHaveBeenCalledTimes(2);
+    } finally {
+      popupSession.destroy();
+      popupEditor.destroy();
+      iframe.remove();
+      ownerSetInterval.mockRestore();
+      ownerClearInterval.mockRestore();
+      defaultSetInterval.mockRestore();
+    }
+  });
+
+  it('updates a plain live tail immediately and performs full Markdown rendering only at terminal state', async () => {
     jest.mocked(MarkdownRenderer.render).mockImplementation(async (_app, markdown, target) => {
       target.textContent = markdown;
-      await new Promise<void>((resolve) => pending.push(resolve));
     });
     session.show(createSnapshot(editor));
+    await Promise.resolve();
+    await Promise.resolve();
+    jest.mocked(MarkdownRenderer.render).mockClear();
+    session.setStreaming(true);
 
-    session.setReplyText('Older chunk');
-    session.setReplyText('Newest chunk');
-    expect(pending).toHaveLength(2);
+    session.setReplyText('Settled paragraph.\n\n**live');
+    await Promise.resolve();
+    await Promise.resolve();
 
-    pending[1]?.();
-    await new Promise(resolve => window.setTimeout(resolve, 0));
-    expect(editor.dom.querySelector('.pivi-inline-edit-surface-reply-content'))
-      .toHaveTextContent('Newest chunk');
+    const reply = editor.dom.querySelector('.pivi-inline-edit-surface-reply-content');
+    expect(reply?.querySelector('.pivi-streaming-markdown-sealed')).toHaveTextContent('Settled paragraph.');
+    expect(reply?.querySelector('.pivi-streaming-markdown-tail')).toHaveTextContent('**live');
+    expect(MarkdownRenderer.render).toHaveBeenCalledTimes(1);
 
-    pending[0]?.();
-    await new Promise(resolve => window.setTimeout(resolve, 0));
-    expect(editor.dom.querySelector('.pivi-inline-edit-surface-reply-content'))
-      .toHaveTextContent('Newest chunk');
+    session.setReplyText('Settled paragraph.\n\n**live tail**');
+    expect(reply?.querySelector('.pivi-streaming-markdown-tail')).toHaveTextContent('**live tail**');
+    expect(MarkdownRenderer.render).toHaveBeenCalledTimes(1);
+
+    session.setStreaming(false);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(MarkdownRenderer.render).toHaveBeenLastCalledWith(
+      expect.anything(),
+      'Settled paragraph.\n\n**live tail**',
+      expect.any(HTMLElement),
+      expect.any(String),
+      expect.anything(),
+    );
+    expect(reply?.querySelector('.pivi-streaming-markdown-tail')).toBeEmptyDOMElement();
+  });
+
+  it('keeps ordered-list lines intact when the newline arrives after the item text', async () => {
+    jest.mocked(MarkdownRenderer.render).mockImplementation(async (_app, markdown, target) => {
+      target.textContent = markdown;
+    });
+    session.show(createSnapshot(editor));
+    await Promise.resolve();
+    await Promise.resolve();
+    jest.mocked(MarkdownRenderer.render).mockClear();
+    session.setStreaming(true);
+
+    session.setReplyText('Introduction.\n\n1.');
+    await Promise.resolve();
+    await Promise.resolve();
+    session.setReplyText('Introduction.\n\n1. First item');
+    session.setReplyText('Introduction.\n\n1. First item  \n');
+    session.setReplyText('Introduction.\n\n1. First item  \n   - Detail');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(MarkdownRenderer.render).toHaveBeenCalledTimes(1);
+    expect(editor.dom.querySelector('.pivi-streaming-markdown-tail')?.textContent)
+      .toBe('1. First item  \n   - Detail');
   });
 
   it('forwards typed input to the mention selector without a separate @ button', async () => {

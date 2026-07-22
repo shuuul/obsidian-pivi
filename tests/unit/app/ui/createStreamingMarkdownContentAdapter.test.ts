@@ -55,6 +55,57 @@ describe('createStreamingMarkdownContentAdapter', () => {
     );
   });
 
+  it('does not split an ordered list when line endings arrive in later chunks', async () => {
+    const renderContent = jest.fn(async (target: HTMLElement, markdown: string) => {
+      target.textContent = markdown;
+    });
+    const adapter = createStreamingMarkdownContentAdapter(new Component(), renderContent);
+    const container = document.createElement('div');
+    const context = { generation: 'ordered-list', ownerDocument: document, ownerWindow: window };
+    adapter.mount(container, {
+      blockId: 'ordered-list',
+      content: 'Introduction.\n\n1.',
+      phase: 'streaming',
+    }, context);
+    await flushRenderQueue();
+
+    adapter.update?.(container, {
+      blockId: 'ordered-list',
+      content: 'Introduction.\n\n1. First item',
+      phase: 'streaming',
+    }, context);
+    adapter.update?.(container, {
+      blockId: 'ordered-list',
+      content: 'Introduction.\n\n1. First item  \n',
+      phase: 'streaming',
+    }, context);
+    adapter.update?.(container, {
+      blockId: 'ordered-list',
+      content: 'Introduction.\n\n1. First item  \n   - Detail',
+      phase: 'streaming',
+    }, context);
+    await flushRenderQueue();
+
+    expect(renderContent).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('.pivi-streaming-markdown-tail')?.textContent)
+      .toBe('1. First item  \n   - Detail');
+
+    adapter.update?.(container, {
+      blockId: 'ordered-list',
+      content: 'Introduction.\n\n1. First item  \n   - Detail\n\n2.',
+      phase: 'streaming',
+    }, context);
+    await flushRenderQueue();
+
+    expect(renderContent).toHaveBeenNthCalledWith(
+      2,
+      expect.any(HTMLElement),
+      '1. First item  \n   - Detail\n\n',
+      expect.objectContaining({ component: expect.any(Component) }),
+    );
+    expect(container.querySelector('.pivi-streaming-markdown-tail')?.textContent).toBe('2.');
+  });
+
   it('keeps a 100KB unclosed code fence entirely in the plain-text tail', () => {
     const markdown = `\`\`\`text\n${'x'.repeat(100_000)}`;
     expect(findStreamingMarkdownSealOffset(markdown)).toBe(0);

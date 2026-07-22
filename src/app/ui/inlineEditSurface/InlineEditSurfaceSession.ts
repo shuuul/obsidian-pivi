@@ -37,8 +37,9 @@ import {
   buildInlineEditDiffReviewDom,
   getInlineEditActiveVaultFilePath,
   getInlineEditExternalContexts,
+  mountInlineEditReplyMarkdown,
+  mountInlineEditWaitingIndicator,
   renderInlineEditPlatformIcon,
-  renderInlineEditReplyMarkdown,
 } from './inlineEditSurfaceDomHelpers';
 import {
   createInlineEditSurfaceRoot,
@@ -102,12 +103,10 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
   private sendButton: HTMLButtonElement | null = null;
   private sendIconEl: HTMLElement | null = null;
   private replyEl: HTMLElement | null = null;
-  private replyContentHostEl: HTMLElement | null = null;
-  private replyContentEl: HTMLElement | null = null;
   private replyCopyIconEl: HTMLElement | null = null;
   private replyText = '';
-  private replyRenderGeneration = 0;
-  private replyRenderComponent: Component | null = null;
+  private replyMarkdown: ReturnType<typeof mountInlineEditReplyMarkdown> | null = null;
+  private waitingIndicator: ReturnType<typeof mountInlineEditWaitingIndicator> | null = null;
   private copyFeedbackTimeout: number | null = null;
   private vaultDataProvider: VaultMentionDataProvider | null = null;
   private workspace: PiviPluginWorkspace | null = null;
@@ -180,6 +179,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       return;
     }
     this.destroyed = true;
+    this.waitingIndicator?.setWaiting(false);
 
     if (this.snapshot) {
       hideInlineEditSurfaceDecoration(this.snapshot.editorView, this.id);
@@ -194,9 +194,8 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     this.slashDropdown?.destroy();
     this.mentionInput?.destroy();
     this.vaultDataProvider = null;
-    this.replyRenderGeneration += 1;
-    this.replyRenderComponent?.unload();
-    this.replyRenderComponent = null;
+    this.replyMarkdown?.dispose();
+    this.replyMarkdown = null;
     this.markdownComponent.unload();
     this.rootEl = null;
     this.widget = null;
@@ -208,31 +207,34 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     this.boundEditorView = null;
     this.boundEditor = null;
     this.diffErrorEl = null;
-    this.replyContentHostEl = null;
-    this.replyContentEl = null;
     this.replyCopyIconEl = null;
     this.replyText = '';
+    this.waitingIndicator = null;
     this.snapshot = null;
   }
 
   setStreaming(streaming: boolean): void {
+    const didChange = this.streaming !== streaming;
     this.streaming = streaming;
-    this.rootEl?.toggleClass('pivi-inline-edit-surface--waiting', streaming);
+    if (!streaming || didChange) this.waitingIndicator?.setWaiting(streaming);
+    if (didChange && !streaming) {
+      this.updateReplyMarkdown();
+    }
     this.updateInputDisabled();
     this.renderChrome();
     this.updateSendButton();
   }
 
   setReplyText(text: string): void {
-    if (!this.replyEl || !this.replyContentEl || !this.snapshot) {
+    if (!this.replyEl || !this.replyMarkdown || !this.snapshot) {
       return;
     }
 
     this.replyText = text;
     if (text.trim().length > 0) {
-      this.rootEl?.removeClass('pivi-inline-edit-surface--waiting');
+      this.waitingIndicator?.setWaiting(false);
     }
-    void this.renderReplyMarkdown(text);
+    this.updateReplyMarkdown();
     this.replyEl.toggleClass('pivi-inline-edit-surface-reply--visible', text.trim().length > 0);
   }
 
@@ -274,6 +276,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       onAccept: () => this.handleDiffAccept(),
       onReject: () => this.handleDiffReject(),
     });
+    this.waitingIndicator?.moveTo(diffDom.actionsEl);
     this.diffRootEl = diffDom.root;
     this.diffErrorEl = diffDom.errorEl;
     this.diffWidget = new InlineEditDiffReviewWidget(this.diffRootEl);
@@ -316,6 +319,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     const inputHost = inputRow.createDiv({ cls: 'pivi-inline-edit-surface-input-host' });
 
     const tail = body.createDiv({ cls: 'pivi-inline-edit-surface-tail' });
+    this.waitingIndicator = mountInlineEditWaitingIndicator(root, tail);
     const chromeEl = tail.createDiv({ cls: 'pivi-inline-edit-surface-chrome' });
     this.sendButton = tail.createEl('button', {
       cls: 'pivi-inline-edit-surface-send',
@@ -326,14 +330,23 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     renderInlineEditPlatformIcon(this.deps.platform, this.sendIconEl, 'send');
     this.sendButton.addEventListener('click', () => this.handleSendButtonClick());
 
-    this.replyEl = root.createDiv({
-      cls: 'pivi-inline-edit-surface-reply pivi-message-assistant',
-      attr: { 'aria-live': 'polite' },
+    this.replyEl = root.createEl('article', {
+      cls: 'pivi-inline-edit-surface-reply pivi-message pivi-message-assistant',
+      attr: { 'aria-live': 'polite', 'data-role': 'assistant' },
     });
-    this.replyContentHostEl = this.replyEl.createDiv({ cls: 'pivi-message-content' });
-    this.replyContentEl = this.replyContentHostEl.createDiv({
-      cls: 'pivi-inline-edit-surface-reply-content pivi-text-block pivi-markdown-rendered',
+    const replyContentHostEl = this.replyEl.createDiv({
+      cls: 'pivi-message-content',
+      attr: { dir: 'auto' },
     });
+    const replyContentEl = replyContentHostEl.createDiv({
+      cls: 'pivi-inline-edit-surface-reply-content pivi-text-block',
+    });
+    this.replyMarkdown = mountInlineEditReplyMarkdown(
+      this.deps.plugin.app,
+      this.markdownComponent,
+      replyContentEl,
+      `${this.id}:reply`,
+    );
     registerFileLinkHandler(this.deps.plugin.app, this.replyEl, this.markdownComponent);
     const replyActions = this.replyEl.createDiv({
       cls: 'pivi-inline-edit-surface-reply-actions pivi-message-actions pivi-assistant-msg-actions',
@@ -370,25 +383,12 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
 
     this.updateSendButton();
     this.updateInputDisabled();
+    this.waitingIndicator.setWaiting(this.streaming);
   }
 
-  private async renderReplyMarkdown(text: string): Promise<void> {
-    const contentHost = this.replyContentHostEl;
-    const template = this.replyContentEl;
-    if (!contentHost || !template || this.destroyed) return;
-    const generation = ++this.replyRenderGeneration;
-    const { component, contentEl } = await renderInlineEditReplyMarkdown(
-      this.deps.plugin.app, template, text,
-    );
-    if (this.destroyed || generation !== this.replyRenderGeneration || this.replyContentHostEl !== contentHost) {
-      component.unload();
-      return;
-    }
-
-    this.replyRenderComponent?.unload();
-    this.replyRenderComponent = component;
-    contentHost.replaceChildren(contentEl);
-    this.replyContentEl = contentEl;
+  private updateReplyMarkdown(): void {
+    if (this.destroyed) return;
+    this.replyMarkdown?.update(this.replyText, this.streaming ? 'streaming' : 'terminal');
   }
 
   private handleDiffAccept(): void {

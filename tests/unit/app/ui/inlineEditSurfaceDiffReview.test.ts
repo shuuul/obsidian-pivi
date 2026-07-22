@@ -26,6 +26,7 @@ jest.mock('@pivi/pivi-react/mount', () => ({
 jest.mock('obsidian', () => ({
   Component: class Component {
     loaded = false;
+    children = new Set<object>();
 
     load(): void {
       this.loaded = true;
@@ -36,6 +37,15 @@ jest.mock('obsidian', () => ({
     }
 
     register(): void {}
+    registerDomEvent(): void {}
+    addChild(child: { load?: () => void }): void {
+      this.children.add(child);
+      child.load?.();
+    }
+    removeChild(child: { unload?: () => void }): void {
+      this.children.delete(child);
+      child.unload?.();
+    }
   },
   MarkdownRenderer: {
     render: jest.fn(async () => undefined),
@@ -136,6 +146,7 @@ describe('InlineEditSurfaceSession diff review', () => {
     editor.destroy();
     editor.dom.remove();
     jest.clearAllMocks();
+    jest.useRealTimers();
   });
 
 
@@ -156,6 +167,22 @@ describe('InlineEditSurfaceSession diff review', () => {
     expect(hasInlineEditDiffReviewReplaceDecoration(editor)).toBe(false);
     expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-deletion')).toBeNull();
     expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-insertion')).not.toBeNull();
+  });
+
+  it('keeps the frozen first-output duration in diff review', () => {
+    jest.useFakeTimers();
+    session.setStreaming(true);
+    jest.advanceTimersByTime(1_200);
+
+    session.showDiffReview('selected line', 'replacement line', 'replacement');
+
+    const progress = editor.dom.querySelector(
+      '.pivi-inline-edit-diff-review-actions > .pivi-inline-edit-surface-progress',
+    );
+    expect(progress).toHaveClass('pivi-inline-edit-surface-progress--visible');
+    expect(progress).toHaveTextContent('* 1.2s');
+    jest.advanceTimersByTime(1_000);
+    expect(progress).toHaveTextContent('* 1.2s');
   });
 
   it('clears diff review decorations after destroy', () => {

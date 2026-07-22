@@ -24,4 +24,23 @@ describe('response metadata styles', () => {
     expect(styles).toMatch(/\.pivi-thinking\s*\{[\s\S]*?color:\s*var\(--pivi-host-text-muted\);/);
     expect(styles).not.toMatch(/pivi-thinking-pulse/);
   });
+
+  it('keeps the inline elapsed result at the left edge without redefining metadata typography', () => {
+    const styles = readFileSync(
+      join(process.cwd(), 'packages/pivi-react/styles/features/inline-edit-surface.css'),
+      'utf8',
+    );
+    const progressRule = styles.match(/\.pivi-inline-edit-surface-progress\s*\{([^}]*)\}/)?.[1] ?? '';
+
+    expect(progressRule).toMatch(/display:\s*none;/);
+    expect(progressRule).toMatch(/margin-inline-end:\s*auto;/);
+    expect(progressRule).toMatch(/color:\s*var\(--pivi-host-text-muted\);/);
+    expect(progressRule).not.toMatch(/font-(family|size|style|weight):/);
+    expect(styles).toMatch(
+      /\.pivi-inline-edit-surface-progress--visible\s*\{[^}]*display:\s*inline;/s,
+    );
+    expect(styles).not.toMatch(
+      /\.pivi-inline-edit-surface--waiting \.pivi-inline-edit-surface-progress\s*\{/,
+    );
+  });
 });

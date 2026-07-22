@@ -12,6 +12,7 @@ const OPEN_INSERTION_PATTERN = /<insertion>/;
 const STREAMING_OPEN_TAG_PATTERN = /^[\s\n]*<(?:replacement|insertion)>/;
 const STREAMING_CLOSE_TAG_PATTERN = /<\/(?:replacement|insertion)>/g;
 const PROTOCOL_TAG_RESIDUE_PATTERN = /<\/?(?:replacement|insertion)>/g;
+const STREAMING_OPEN_TAGS = ['<replacement>', '<insertion>'] as const;
 
 /** English protocol instructions prepended to inline-edit user turns. */
 export const INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS = [
@@ -34,6 +35,10 @@ export const INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS = [
  * Removes a leading `<replacement>` / `<insertion>` open tag and any residual close tags.
  */
 export function stripInlineEditStreamingProtocolTags(text: string): string {
+  const trimmedStart = text.trimStart();
+  if (STREAMING_OPEN_TAGS.some(tag => tag.startsWith(trimmedStart))) {
+    return '';
+  }
   const withoutOpenTag = text.replace(STREAMING_OPEN_TAG_PATTERN, '');
   return withoutOpenTag.replace(STREAMING_CLOSE_TAG_PATTERN, '');
 }

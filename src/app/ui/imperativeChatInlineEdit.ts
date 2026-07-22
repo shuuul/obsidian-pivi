@@ -1,4 +1,3 @@
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import { imperativeChatLogger } from '@/app/ui/imperativeChatTabAction';
@@ -15,7 +14,6 @@ export interface SubmitInlineEditTurnParams {
   registerCancel?: (cancel: () => void) => void;
 }
 
-const INLINE_EDIT_STREAMING_POLL_INTERVAL_MS = 50;
 let inlineEditSettingsOverlayTail = Promise.resolve();
 
 async function acquireInlineEditSettingsOverlay(): Promise<() => void> {
@@ -26,36 +24,6 @@ async function acquireInlineEditSettingsOverlay(): Promise<() => void> {
   });
   await previous;
   return release;
-}
-
-async function waitForTabStreamingComplete(
-  ownerWindow: Window,
-  isStreaming: () => boolean,
-  isCancelled: () => boolean,
-  options?: {
-    getMessages: () => readonly ChatMessage[];
-    onAssistantText?: (accumulatedText: string) => void;
-  },
-): Promise<boolean> {
-  const deadline = ownerWindow.performance.now() + 10 * 60 * 1000;
-  let lastReportedText = '';
-  while (isStreaming()) {
-    if (isCancelled()) {
-      return false;
-    }
-    if (ownerWindow.performance.now() >= deadline) {
-      throw new Error('Timed out waiting for inline edit streaming to complete.');
-    }
-    if (options?.onAssistantText) {
-      const accumulatedText = extractAssistantTextFromMessages(options.getMessages());
-      if (accumulatedText !== lastReportedText) {
-        lastReportedText = accumulatedText;
-        options.onAssistantText(accumulatedText);
-      }
-    }
-    await new Promise(resolve => ownerWindow.setTimeout(resolve, INLINE_EDIT_STREAMING_POLL_INTERVAL_MS));
-  }
-  return true;
 }
 
 /**
@@ -95,8 +63,7 @@ export async function submitInlineEditTurn(
     return null;
   }
   const inputController = tab?.controllers.inputController;
-  const ownerWindow = tab?.dom.messagesEl.ownerDocument.defaultView;
-  if (!tab || !inputController || !ownerWindow) {
+  if (!tab || !inputController) {
     releaseSettingsOverlay();
     return null;
   }
@@ -130,19 +97,29 @@ export async function submitInlineEditTurn(
       });
     }
 
-    await inputController.sendMessage({ content: params.content });
-    const completed = await waitForTabStreamingComplete(
-      ownerWindow,
-      () => tab.state.isStreaming,
-      () => tab.lifecycleState === 'closing' || tab.state.streamGeneration !== generation,
-      params.onAssistantText
-        ? {
-            getMessages: () => tab.state.messages,
-            onAssistantText: params.onAssistantText,
+    let lastReportedText = '';
+    await inputController.sendMessage({
+      content: params.content,
+      onAssistantText: params.onAssistantText
+        ? (accumulatedText) => {
+            if (
+              cancelled
+              || tab.lifecycleState === 'closing'
+              || tab.state.streamGeneration !== generation + 1
+              || accumulatedText === lastReportedText
+            ) {
+              return;
+            }
+            lastReportedText = accumulatedText;
+            params.onAssistantText?.(accumulatedText);
           }
         : undefined,
-    );
-    if (!completed) {
+    });
+    if (
+      cancelled
+      || tab.lifecycleState === 'closing'
+      || tab.state.streamGeneration !== generation + 1
+    ) {
       return null;
     }
 
