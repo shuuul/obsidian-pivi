@@ -9,6 +9,7 @@ import {
   parseWikilinkMentionAtIndex,
   resolveExternalRootMentionAtIndex,
 } from './mentionResolution';
+import { SELECTED_TEXT_TEMPLATE_TOKEN } from './mentionTokens';
 import type {
   AgentMentionPart,
   FileMentionPart,
@@ -18,6 +19,7 @@ import type {
   MentionBadgeParseContext,
   MentionBadgePart,
   MentionVaultLookup,
+  SelectedTextTemplateMentionPart,
   SkillMentionPart,
   ToolMentionPart,
 } from './mentionTypes';
@@ -34,15 +36,37 @@ function isSlashCommandStart(text: string, index: number): boolean {
   return /\s/.test(text[index - 1] ?? '');
 }
 
-function findNextSpecialIndex(text: string, from: number): number {
+function findNextSpecialIndex(
+  text: string,
+  from: number,
+  parseWorkspaceCommandVariables: boolean,
+): number {
   let index = from;
   while (index < text.length) {
-    if (isMentionStart(text, index) || isSlashCommandStart(text, index)) {
+    if (
+      isMentionStart(text, index)
+      || isSlashCommandStart(text, index)
+      || (parseWorkspaceCommandVariables && text.startsWith(SELECTED_TEXT_TEMPLATE_TOKEN, index))
+    ) {
       return index;
     }
     index++;
   }
   return text.length;
+}
+
+function tryParseSelectedTextTemplate(
+  text: string,
+  index: number,
+  enabled: boolean,
+): SelectedTextTemplateMentionPart | null {
+  if (!enabled || !text.startsWith(SELECTED_TEXT_TEMPLATE_TOKEN, index)) {
+    return null;
+  }
+  return {
+    kind: 'selected-text-template',
+    raw: SELECTED_TEXT_TEMPLATE_TOKEN,
+  };
 }
 
 function tryParseAgent(text: string, index: number): AgentMentionPart | null {
@@ -336,6 +360,17 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
   let index = 0;
 
   while (index < text.length) {
+    const selectedTextTemplate = tryParseSelectedTextTemplate(
+      text,
+      index,
+      ctx.parseWorkspaceCommandVariables === true,
+    );
+    if (selectedTextTemplate) {
+      parts.push(selectedTextTemplate);
+      index += partLength(selectedTextTemplate);
+      continue;
+    }
+
     if (isSlashCommandStart(text, index)) {
       const slashMcp = tryParseSlashMcp(text, index, ctx.mcpServerNames);
       if (slashMcp) {
@@ -403,7 +438,11 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
       continue;
     }
 
-    const nextSpecial = findNextSpecialIndex(text, index);
+    const nextSpecial = findNextSpecialIndex(
+      text,
+      index,
+      ctx.parseWorkspaceCommandVariables === true,
+    );
     const plainText = text.slice(index, nextSpecial);
     if (plainText) {
       appendPlain(parts, plainText);
@@ -423,8 +462,12 @@ function appendPlain(parts: MentionBadgePart[], text: string): void {
   parts.push({ kind: 'plain', text });
 }
 
-export function messageTextHasMentionBadges(text: string): boolean {
+export function messageTextHasMentionBadges(
+  text: string,
+  ctx?: Pick<MentionBadgeParseContext, 'parseWorkspaceCommandVariables'>,
+): boolean {
   if (!text) return false;
+  if (ctx?.parseWorkspaceCommandVariables && text.includes(SELECTED_TEXT_TEMPLATE_TOKEN)) return true;
   if (/@\[pivi-inline-context:/.test(text)) return true;
   if (/@/.test(text)) return true;
   return /(?:^|\s)\//m.test(text);

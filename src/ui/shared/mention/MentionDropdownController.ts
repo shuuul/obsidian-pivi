@@ -1,3 +1,4 @@
+import { SELECTED_TEXT_TEMPLATE_TOKEN } from '@pivi/pivi-agent-core/context/mentions';
 import type { TFile } from 'obsidian';
 import { setIcon } from 'obsidian';
 
@@ -39,6 +40,8 @@ export type { AgentMentionProvider };
 
 export interface MentionDropdownOptions {
   fixed?: boolean;
+  /** Exposes command-template variables. Enable only for the Settings command editor. */
+  suggestSelectedTextTemplate?: boolean;
 }
 
 export interface MentionDropdownCallbacks {
@@ -73,6 +76,7 @@ export class MentionDropdownController {
   private mcpManager: McpMentionProvider | null = null;
   private agentService: AgentMentionProvider | null = null;
   private fixed: boolean;
+  private suggestSelectedTextTemplate: boolean;
   private debounceTimer: number | null = null;
 
   constructor(
@@ -85,6 +89,7 @@ export class MentionDropdownController {
     this.inputEl = inputEl;
     this.callbacks = callbacks;
     this.fixed = options.fixed ?? false;
+    this.suggestSelectedTextTemplate = options.suggestSelectedTextTemplate ?? false;
 
     this.dropdown = new SelectableDropdown<MentionItem>(this.containerEl, {
       listClassName: 'pivi-mention-dropdown',
@@ -248,6 +253,18 @@ export class MentionDropdownController {
 
     this.activeAgentFilter = false;
 
+    const selectedTextLabel = t('chat.contextBadges.selectedText');
+    if (
+      this.suggestSelectedTextTemplate
+      && (selectedTextLabel.toLowerCase().includes(searchLower)
+        || 'selected_text'.includes(searchLower))
+    ) {
+      this.filteredMentionItems.push({
+        type: 'selected-text-template',
+        name: selectedTextLabel,
+      });
+    }
+
     if (this.agentService) {
       const hasAgents = this.agentService.searchAgents('').length > 0;
       if (hasAgents && 'agents'.includes(searchLower)) {
@@ -277,7 +294,10 @@ export class MentionDropdownController {
     const firstVaultItemIndex = this.filteredMentionItems.length;
     const vaultItemCount = this.appendVaultItems(searchLower);
 
-    this.selectedMentionIndex = vaultItemCount > 0 ? firstVaultItemIndex : 0;
+    this.selectedMentionIndex = this.suggestSelectedTextTemplate
+      && this.filteredMentionItems[0]?.type === 'selected-text-template'
+      ? 0
+      : vaultItemCount > 0 ? firstVaultItemIndex : 0;
 
     this.renderMentionDropdown();
   }
@@ -306,6 +326,7 @@ export class MentionDropdownController {
           case 'agent': return 'pivi-mention-item--agent';
           case 'agent-folder': return 'pivi-mention-item--agent-folder';
           case 'context-folder': return 'pivi-mention-item--context-folder';
+          case 'selected-text-template': return 'pivi-mention-item--selected-text-template';
         }
       },
       renderItem: (item, itemEl) => {
@@ -323,6 +344,9 @@ export class MentionDropdownController {
             break;
           case 'file':
             setIcon(iconEl, 'file-text');
+            break;
+          case 'selected-text-template':
+            setIcon(iconEl, 'text-select');
             break;
         }
 
@@ -366,6 +390,11 @@ export class MentionDropdownController {
             }).setText(item.path);
             break;
           }
+          case 'selected-text-template':
+            textEl.createSpan({
+              cls: 'pivi-mention-name pivi-mention-name-selected-text-template',
+            }).setText(item.name);
+            break;
         }
       },
       onItemClick: (item, index, e) => {
@@ -533,6 +562,9 @@ export class MentionDropdownController {
         this.insertReplacement(beforeAt, `${mentionToken} `, afterCursor);
         break;
       }
+      case 'selected-text-template':
+        this.insertReplacement(beforeAt, `${SELECTED_TEXT_TEMPLATE_TOKEN} `, afterCursor);
+        break;
     }
 
     this.hide();

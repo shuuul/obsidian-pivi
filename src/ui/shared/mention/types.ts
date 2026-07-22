@@ -50,9 +50,15 @@ export interface AgentFolderMentionItem {
   name: string;
 }
 
+export interface SelectedTextTemplateMentionItem {
+  type: 'selected-text-template';
+  name: string;
+}
+
 export type MentionItem =
   | FileMentionItem
   | FolderMentionItem
   | ContextFolderMentionItem
   | AgentMentionItem
-  | AgentFolderMentionItem;
+  | AgentFolderMentionItem
+  | SelectedTextTemplateMentionItem;

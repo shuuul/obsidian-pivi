@@ -2,13 +2,20 @@ import type { Plugin } from 'obsidian';
 import { ItemView, MarkdownView } from 'obsidian';
 
 import { getActiveDocument, getActiveWindow } from '@/ui/shared/dom';
-import { createFloatingOverlay } from '@/ui/shared/selectionToolbar/floatingOverlay';
+import {
+  createFloatingOverlay,
+  type FloatingOverlayHandle,
+} from '@/ui/shared/selectionToolbar/floatingOverlay';
 import { clampOverlayPosition } from '@/ui/shared/selectionToolbar/selectionGeometry';
 import {
   createSelectionInteractionState,
   type SelectionInteractionState,
 } from '@/ui/shared/selectionToolbar/selectionInteractionState';
-import { createSelectionToolbarViewPlugin } from '@/ui/shared/selectionToolbar/selectionToolbarPlugin';
+import {
+  createSelectionToolbarViewPlugin,
+  refreshSelectionToolbarViews,
+  resetSelectionToolbarViews,
+} from '@/ui/shared/selectionToolbar/selectionToolbarPlugin';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
 const OVERLAY_CLASS = 'pivi-selection-toolbar-overlay';
@@ -27,20 +34,25 @@ export class SelectionToolbarHost {
   private currentSnapshot: EditorSelectionSnapshot | null = null;
   private readonly showCallbacks = new Set<SelectionShowCallback>();
   private readonly dismissCallbacks = new Set<SelectionDismissCallback>();
-  private readonly overlay;
-  private readonly ownerDocument: Document;
-  private readonly ownerWindow: Window;
+  private overlay: FloatingOverlayHandle;
+  private ownerDocument: Document;
+  private ownerWindow: Window;
   private scrollListenerAttached = false;
 
   constructor(ownerDocument: Document) {
     this.ownerDocument = ownerDocument;
     this.ownerWindow = getActiveWindow(ownerDocument.documentElement);
-    this.overlay = createFloatingOverlay({
-      ownerDocument,
+    this.overlay = this.createOverlay(ownerDocument);
+  }
+
+  private createOverlay(ownerDocument: Document): FloatingOverlayHandle {
+    return createFloatingOverlay({
+      ownerDocument: ownerDocument,
       className: OVERLAY_CLASS,
       onDismiss: () => {
         this.currentSnapshot = null;
         this.overlay.hide();
+        resetSelectionToolbarViews();
         this.notifyDismissed();
       },
     });
@@ -69,6 +81,7 @@ export class SelectionToolbarHost {
   }
 
   handleSelection(snapshot: EditorSelectionSnapshot): void {
+    this.ensureOwnerDocument(snapshot.editorView.dom.ownerDocument);
     this.currentSnapshot = snapshot;
     this.overlay.show();
     this.repositionOverlay();
@@ -78,7 +91,10 @@ export class SelectionToolbarHost {
     }
   }
 
-  handleSelectionCleared(): void {
+  handleSelectionCleared(editorView?: EditorSelectionSnapshot['editorView']): void {
+    if (editorView && this.currentSnapshot?.editorView !== editorView) {
+      return;
+    }
     this.currentSnapshot = null;
     this.overlay.hide();
     this.notifyDismissed();
@@ -87,7 +103,12 @@ export class SelectionToolbarHost {
   dismissOverlay(): void {
     this.currentSnapshot = null;
     this.overlay.hide();
+    resetSelectionToolbarViews();
     this.notifyDismissed();
+  }
+
+  hideOverlayPreservingSnapshot(): void {
+    this.overlay.hide();
   }
 
   destroy(): void {
@@ -102,6 +123,17 @@ export class SelectionToolbarHost {
     for (const callback of this.dismissCallbacks) {
       callback();
     }
+  }
+
+  private ensureOwnerDocument(ownerDocument: Document): void {
+    if (ownerDocument === this.ownerDocument) {
+      return;
+    }
+    this.removeScrollListener();
+    this.overlay.destroy();
+    this.ownerDocument = ownerDocument;
+    this.ownerWindow = getActiveWindow(ownerDocument.documentElement);
+    this.overlay = this.createOverlay(ownerDocument);
   }
 
   repositionOverlay(): void {
@@ -176,7 +208,7 @@ export function registerEditorSelectionToolbar(
   interactionState = createSelectionInteractionState();
   selectionToolbarHost = new SelectionToolbarHost(ownerDocument);
 
-  const registeredDocuments = new Set<Document>([ownerDocument]);
+  const registeredDocuments = new Set<Document>();
 
   const registerDocumentListeners = (document: Document): void => {
     if (registeredDocuments.has(document)) {
@@ -185,10 +217,17 @@ export function registerEditorSelectionToolbar(
     registeredDocuments.add(document);
     plugin.registerDomEvent(document, 'pointerdown', () => {
       interactionState?.onPointerDown();
-    });
+    }, true);
     plugin.registerDomEvent(document, 'pointerup', () => {
       interactionState?.onPointerUp();
-    });
+      getActiveWindow(document.documentElement).requestAnimationFrame(() => {
+        refreshSelectionToolbarViews(document);
+      });
+    }, true);
+    plugin.registerDomEvent(document, 'pointercancel', () => {
+      interactionState?.onPointerUp();
+      refreshSelectionToolbarViews(document);
+    }, true);
     plugin.registerDomEvent(document, 'keydown', (event: KeyboardEvent) => {
       interactionState?.onKeyDown(event);
     });
@@ -201,21 +240,31 @@ export function registerEditorSelectionToolbar(
 
   plugin.registerEvent(
     plugin.app.workspace.on('active-leaf-change', () => {
-      registerDocumentListeners(resolveOwnerDocument(plugin));
+      const activeDocument = resolveOwnerDocument(plugin);
+      interactionState?.onPointerUp();
+      selectionToolbarHost?.handleSelectionCleared();
+      registerDocumentListeners(activeDocument);
+      getActiveWindow(activeDocument.documentElement).requestAnimationFrame(() => {
+        refreshSelectionToolbarViews(activeDocument, true);
+      });
     }),
   );
 
   plugin.registerEditorExtension(
     createSelectionToolbarViewPlugin({
       onSelection: (snapshot) => {
+        const activeEditor = plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+        if (snapshot.editor && snapshot.editor !== activeEditor) {
+          return;
+        }
         if (!options.isToolbarEnabled() || options.shouldYieldToNoteToolbar()) {
-          selectionToolbarHost?.handleSelectionCleared();
+          selectionToolbarHost?.handleSelectionCleared(snapshot.editorView);
           return;
         }
         selectionToolbarHost?.handleSelection(snapshot);
       },
-      onSelectionCleared: () => {
-        selectionToolbarHost?.handleSelectionCleared();
+      onSelectionCleared: (editorView) => {
+        selectionToolbarHost?.handleSelectionCleared(editorView);
       },
       isOverlayFocused: () => {
         const host = selectionToolbarHost;

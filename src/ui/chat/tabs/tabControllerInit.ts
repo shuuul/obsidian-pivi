@@ -231,6 +231,8 @@ export function initializeTabControllers(
         const file = activeView?.file;
         return {
           selectedText: tab.controllers.selectionController?.getContext()?.selectedText ?? '',
+          selectedTextContext:
+            tab.controllers.selectionController?.getInlineContextReference() ?? null,
           currentNote: file ? await plugin.app.vault.read(file) : '',
           currentNoteName: file?.basename ?? '',
           date: new Date().toLocaleDateString(),
@@ -238,8 +240,12 @@ export function initializeTabControllers(
       });
       if (resolved.missingSelectedText) {
         new Notice(t('chat.errors.noTextSelected'));
+        return null;
       }
-      return resolved.promptContent;
+      return {
+        displayContent: resolved.displayContent,
+        promptContent: resolved.promptContent,
+      };
     },
   });
 

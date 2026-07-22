@@ -1,6 +1,7 @@
 import type { Extension } from '@codemirror/state';
 import type { EditorView, PluginValue, ViewUpdate } from '@codemirror/view';
 import { ViewPlugin } from '@codemirror/view';
+import { editorInfoField } from 'obsidian';
 
 import { getActiveWindow } from '@/ui/shared/dom';
 
@@ -9,7 +10,7 @@ import type { EditorSelectionSnapshot } from './types';
 
 export interface SelectionToolbarPluginHandlers {
   onSelection: (snapshot: EditorSelectionSnapshot) => void;
-  onSelectionCleared: () => void;
+  onSelectionCleared: (editorView: EditorView) => void;
   /** When true, suppress hide while overlay focused (optional; default false) */
   isOverlayFocused?: () => boolean;
   shouldSuppressForPointerDown?: () => boolean;
@@ -27,6 +28,33 @@ interface SelectionSnapshot {
   text: string;
 }
 
+interface RefreshableSelectionToolbarPlugin {
+  refreshSelection(force: boolean): void;
+  resetSelection(): void;
+  readonly ownerDocument: Document;
+}
+
+const activeSelectionToolbarPlugins = new Set<RefreshableSelectionToolbarPlugin>();
+
+/** Re-checks CM selections after pointer state changes that do not create a transaction. */
+export function refreshSelectionToolbarViews(
+  ownerDocument?: Document,
+  force = false,
+): void {
+  for (const plugin of activeSelectionToolbarPlugins) {
+    if (!ownerDocument || plugin.ownerDocument === ownerDocument) {
+      plugin.refreshSelection(force);
+    }
+  }
+}
+
+/** Clears selection identity after a surface is dismissed so reselecting it can notify again. */
+export function resetSelectionToolbarViews(): void {
+  for (const plugin of activeSelectionToolbarPlugins) {
+    plugin.resetSelection();
+  }
+}
+
 export function createSelectionToolbarPluginClass(
   handlers: SelectionToolbarPluginHandlers,
 ): new (view: EditorView) => PluginValue {
@@ -34,8 +62,15 @@ export function createSelectionToolbarPluginClass(
     private lastSelection: SelectionSnapshot | null = null;
     private pendingSelection: SelectionSnapshot | null = null;
     private animationFrame: number | null = null;
+    private selectionSuppressed = false;
 
-    constructor(private readonly view: EditorView) {}
+    constructor(private readonly view: EditorView) {
+      activeSelectionToolbarPlugins.add(this);
+    }
+
+    get ownerDocument(): Document {
+      return this.view.dom.ownerDocument;
+    }
 
     update(update: ViewUpdate): void {
       const selection = update.state.selection.main;
@@ -46,8 +81,10 @@ export function createSelectionToolbarPluginClass(
       };
 
       if (handlers.shouldSuppressForPointerDown?.()) {
+        this.selectionSuppressed = true;
         return;
       }
+      this.selectionSuppressed = false;
 
       const interactionState = handlers.getInteractionState();
       if (
@@ -87,16 +124,45 @@ export function createSelectionToolbarPluginClass(
     }
 
     destroy(): void {
+      activeSelectionToolbarPlugins.delete(this);
       if (this.animationFrame !== null) {
         getActiveWindow(this.view.dom).cancelAnimationFrame(this.animationFrame);
         this.animationFrame = null;
       }
-      handlers.onSelectionCleared();
+      handlers.onSelectionCleared(this.view);
+    }
+
+    refreshSelection(force: boolean): void {
+      if (!force && !this.selectionSuppressed) {
+        return;
+      }
+      this.selectionSuppressed = false;
+      const selection = this.view.state.selection.main;
+      this.pendingSelection = {
+        from: selection.from,
+        to: selection.to,
+        text: this.view.state.doc.sliceString(selection.from, selection.to),
+      };
+      if (selection.empty) {
+        this.clearSelection();
+        return;
+      }
+      this.scheduleSelectionNotification();
+    }
+
+    resetSelection(): void {
+      if (this.animationFrame !== null) {
+        getActiveWindow(this.view.dom).cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+      }
+      this.lastSelection = null;
+      this.pendingSelection = null;
+      this.selectionSuppressed = false;
     }
 
     private clearSelection(): void {
       this.lastSelection = null;
-      handlers.onSelectionCleared();
+      handlers.onSelectionCleared(this.view);
     }
 
     private scheduleSelectionNotification(): void {
@@ -121,12 +187,16 @@ export function createSelectionToolbarPluginClass(
           text: pending.text,
         };
 
+        const editor = editorInfoField
+          ? this.view.state.field(editorInfoField, false)?.editor
+          : undefined;
         handlers.onSelection({
           from: pending.from,
           to: pending.to,
           text: pending.text,
           rect,
           editorView: this.view,
+          editor,
         });
       });
     }

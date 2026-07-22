@@ -1,3 +1,4 @@
+import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import {
   requiresSelectedText,
@@ -8,6 +9,7 @@ import { type App, type Command,getIcon, MarkdownView, Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';
 import { ensurePiviViewOpen } from '@/app/piviViewActivation';
+import { captureEditorSelectionInlineContext } from '@/ui/chat/ui/InlineContext';
 
 const logger = new PluginLogger('WorkspaceCommandRegistry');
 
@@ -21,6 +23,26 @@ interface WorkspaceCommandRegistryHost {
 
 interface NoteToolbarApiWindow extends Window {
   ntb?: { getSelection?: () => string };
+}
+
+function captureWorkspaceCommandSelection(markdownView: MarkdownView | null): {
+  selectedText: string;
+  selectedTextToken: string;
+} {
+  const ownerWindow = markdownView?.containerEl.ownerDocument
+    .defaultView as NoteToolbarApiWindow | null;
+  const isSourceMode = markdownView?.getMode() === 'source';
+  const inlineContext = isSourceMode && markdownView
+    ? captureEditorSelectionInlineContext(markdownView.editor, markdownView)
+    : null;
+  const selectedText = (isSourceMode ? markdownView.editor.getSelection() : '')
+    || ownerWindow?.ntb?.getSelection?.()
+    || ownerWindow?.getSelection()?.toString()
+    || '';
+  return {
+    selectedText,
+    selectedTextToken: inlineContext ? createInlineContextToken(inlineContext) : selectedText,
+  };
 }
 
 export function getWorkspaceCommandLocalId(integrationKey: string): string {
@@ -64,14 +86,7 @@ export class WorkspaceCommandRegistry {
 
   private async execute(entry: SlashCatalogEntry): Promise<void> {
     const markdownView = this.host.app.workspace.getActiveViewOfType(MarkdownView);
-    const ownerWindow = markdownView?.containerEl.ownerDocument.defaultView as NoteToolbarApiWindow | null;
-    const editorSelection = markdownView?.getMode() === 'source'
-      ? markdownView.editor.getSelection()
-      : '';
-    const selectedText = editorSelection
-      || ownerWindow?.ntb?.getSelection?.()
-      || ownerWindow?.getSelection()?.toString()
-      || '';
+    const { selectedText, selectedTextToken } = captureWorkspaceCommandSelection(markdownView);
 
     if (requiresSelectedText(entry.content) && !selectedText.trim()) {
       new Notice(t('chat.errors.noTextSelected'));
@@ -81,7 +96,7 @@ export class WorkspaceCommandRegistry {
     const file = markdownView?.file ?? null;
     const currentNote = file ? await this.host.app.vault.read(file) : '';
     const content = resolveWorkspaceCommandPrompt(entry.content, {
-      selectedText,
+      selectedText: selectedTextToken,
       currentNote,
       currentNoteName: file?.basename ?? '',
       date: new Date().toLocaleDateString(),

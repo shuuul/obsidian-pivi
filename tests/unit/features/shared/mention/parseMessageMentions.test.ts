@@ -43,6 +43,27 @@ describe('parseMessageMentions', () => {
     expect(messageTextHasMentionBadges('plain text')).toBe(false);
   });
 
+  it('parses selected-text command variables only for command template editors', () => {
+    const text = 'Review {{selected_text}} then {{selected_text}}';
+    expect(parseMessageMentions(text, createContext())).toEqual([
+      { kind: 'plain', text },
+    ]);
+
+    const parts = parseMessageMentions(text, createContext({
+      parseWorkspaceCommandVariables: true,
+    }));
+    expect(parts).toEqual([
+      { kind: 'plain', text: 'Review ' },
+      { kind: 'selected-text-template', raw: '{{selected_text}}' },
+      { kind: 'plain', text: ' then ' },
+      { kind: 'selected-text-template', raw: '{{selected_text}}' },
+    ]);
+    expect(messageTextHasMentionBadges(text)).toBe(false);
+    expect(messageTextHasMentionBadges(text, {
+      parseWorkspaceCommandVariables: true,
+    })).toBe(true);
+  });
+
   it('parses vault file, folder, mcp, slash, and agent mentions', () => {
     const parts = parseMessageMentions(
       'Check @notes/readme.md and @notes/ plus /exa then /compact with @my-agent (agent)',

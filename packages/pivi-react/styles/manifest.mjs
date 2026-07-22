@@ -30,6 +30,7 @@ export const styleModules = [
   'features/ask-user-question.css',
   'features/todo.css',
   'features/selection-toolbar.css',
+  'features/inline-edit-surface.css',
   'modals/mcp-modal.css',
   'settings/base.css',
   'settings/slash-settings.css',

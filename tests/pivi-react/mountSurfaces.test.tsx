@@ -1,8 +1,9 @@
-import { act } from '@testing-library/react';
+import { act, fireEvent } from '@testing-library/react';
 
 import { createI18n } from '@pivi/pivi-react';
 import {
   mountChatView,
+  mountInlineEditSurfaceChrome,
   mountSettings,
   type SurfaceEnvironment,
 } from '@pivi/pivi-react/mount';
@@ -179,5 +180,80 @@ describe('React surface mounts', () => {
     expect(hostContainer.firstElementChild?.ownerDocument).toBe(ownerDocument);
     expect(hostContainer.querySelector('[data-pivi-react-surface="settings"]')).not.toBeNull();
     await act(async () => mounted.dispose());
+  });
+
+  it('portals inline edit selectors into the owner realm above editor layers', async () => {
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const ownerDocument = iframe.contentDocument;
+    expect(ownerDocument).not.toBeNull();
+    if (!ownerDocument) return;
+
+    const container = ownerDocument.createElement('div');
+    ownerDocument.body.appendChild(container);
+    let mounted: ReturnType<typeof mountInlineEditSurfaceChrome>;
+    await act(async () => {
+      mounted = mountInlineEditSurfaceChrome({
+        container,
+        i18n: createI18n(),
+        platform: testPresentationPlatform,
+        props: {
+          adaptiveReasoning: true,
+          defaultReasoningValue: 'off',
+          model: 'model-a',
+          modelOptions: [
+            { label: 'Model A', value: 'model-a' },
+            { label: 'Model B', value: 'model-b' },
+          ],
+          onModelChange: jest.fn(),
+          onThinkingChange: jest.fn(),
+          thinkingLevel: 'high',
+          thinkingOptions: [
+            { label: 'Off', value: 'off' },
+            { label: 'High', value: 'high' },
+          ],
+        },
+      });
+    });
+
+    const modelButton = container.querySelector<HTMLButtonElement>('.pivi-model-btn');
+    expect(modelButton).not.toBeNull();
+    Object.defineProperty(modelButton, 'getBoundingClientRect', {
+      value: () => ({ bottom: 44, height: 24, left: 20, right: 120, top: 20, width: 100, x: 20, y: 20, toJSON: () => ({}) }),
+    });
+    await act(async () => modelButton?.click());
+
+    const modelDropdown = ownerDocument.body.querySelector<HTMLElement>('.pivi-model-dropdown.pivi-inline-selector-dropdown-fixed');
+    expect(modelDropdown).not.toBeNull();
+    expect(container.contains(modelDropdown)).toBe(false);
+    expect(modelDropdown?.style.top).toBe('48px');
+    expect(document.body.contains(modelDropdown)).toBe(false);
+
+    await act(async () => modelButton?.click());
+    expect(ownerDocument.querySelector('.pivi-model-dropdown.pivi-inline-selector-dropdown-fixed')).toBeNull();
+
+    const modelSelector = container.querySelector<HTMLElement>('.pivi-model-selector');
+    fireEvent.mouseEnter(modelSelector!);
+    expect(ownerDocument.querySelector('.pivi-model-dropdown.pivi-inline-selector-dropdown-fixed')).not.toBeNull();
+    fireEvent.mouseLeave(modelSelector!, { relatedTarget: ownerDocument.body });
+    await act(async () => new Promise(resolve => ownerDocument.defaultView?.setTimeout(resolve, 100)));
+    expect(ownerDocument.querySelector('.pivi-model-dropdown.pivi-inline-selector-dropdown-fixed')).toBeNull();
+
+    fireEvent.mouseEnter(modelSelector!);
+    await act(async () => modelButton?.click());
+    fireEvent.mouseLeave(modelSelector!, { relatedTarget: ownerDocument.body });
+    await act(async () => new Promise(resolve => ownerDocument.defaultView?.setTimeout(resolve, 100)));
+    expect(ownerDocument.querySelector('.pivi-model-dropdown.pivi-inline-selector-dropdown-fixed')).not.toBeNull();
+    await act(async () => modelButton?.click());
+
+    const thinkingButton = container.querySelector<HTMLButtonElement>('.pivi-thinking-current');
+    expect(thinkingButton).not.toBeNull();
+    await act(async () => thinkingButton?.click());
+    expect(ownerDocument.querySelector('.pivi-thinking-options.pivi-inline-selector-dropdown-fixed')).not.toBeNull();
+    await act(async () => thinkingButton?.click());
+    expect(ownerDocument.querySelector('.pivi-thinking-options.pivi-inline-selector-dropdown-fixed')).toBeNull();
+
+    await act(async () => mounted.dispose());
+    expect(ownerDocument.querySelector('.pivi-inline-selector-dropdown-fixed')).toBeNull();
   });
 });

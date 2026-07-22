@@ -120,13 +120,14 @@ export class InputTurnPipeline {
       : (imageContextManager?.hasImages() ?? false);
     if (!content && !hasImages) return;
 
-    const promptContent = await this.resolvePromptContent({
+    const resolvedContent = await this.resolvePromptContent({
       content,
       inputEl,
       shouldUseInput,
       turnRequestOverride: options?.turnRequestOverride,
     });
-    if (promptContent === null) return;
+    if (resolvedContent === null) return;
+    const { displayContent: resolvedDisplayContent, promptContent } = resolvedContent;
 
     if (state.isStreaming) {
       queueTurnWhileStreaming({
@@ -142,7 +143,7 @@ export class InputTurnPipeline {
         resetInputHeight: () => this.host.deps.resetInputHeight(),
         updateQueueIndicator: () => this.host.updateQueueIndicator(),
       }, {
-        content,
+        content: resolvedDisplayContent,
         promptContent,
         shouldUseInput,
         hasImages,
@@ -175,7 +176,7 @@ export class InputTurnPipeline {
       generateId: () => this.host.deps.generateId(),
       resetInputHeight: () => this.host.deps.resetInputHeight(),
     }, {
-      content,
+      content: resolvedDisplayContent,
       promptContent,
       shouldUseInput,
       imageOverride,
@@ -239,14 +240,16 @@ export class InputTurnPipeline {
     inputEl: RichChatInput;
     shouldUseInput: boolean;
     turnRequestOverride?: ChatTurnRequest;
-  }): Promise<string | null> {
+  }): Promise<{ displayContent: string; promptContent: string } | null> {
     const resolver = this.host.deps.resolveWorkspaceCommand;
-    if (options.turnRequestOverride || !resolver) return options.content;
+    if (options.turnRequestOverride || !resolver) {
+      return { displayContent: options.content, promptContent: options.content };
+    }
 
     try {
-      const promptContent = await resolver(options.content);
+      const resolved = await resolver(options.content);
       if (options.shouldUseInput && options.inputEl.value.trim() !== options.content) return null;
-      return promptContent;
+      return resolved;
     } catch (error) {
       logger.error('Failed to resolve custom template command', error);
       new Notice(t('chat.errors.templateVarsFailed'));

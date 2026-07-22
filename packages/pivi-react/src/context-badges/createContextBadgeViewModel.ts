@@ -50,6 +50,7 @@ function iconForToken(token: ContextBadgeToken): ContextBadgeIcon {
     case 'agent':
       return { name: 'bot' };
     case 'inline-context':
+    case 'selected-text-template':
       return { name: 'text-select' };
   }
 }
@@ -149,11 +150,24 @@ export function createContextBadgeViewModel(
         tooltip: formatInlineContextTooltip(token.context, t),
         icon: iconForToken(token),
         tone: 'inline',
+        clickable: true,
+        removable: true,
+        ariaLabel: formatInlineContextTooltip(token.context, t),
+        removeAriaLabel: formatRemoveInlineContextAriaLabel(token.context, t),
+      };
+    case 'selected-text-template':
+      return {
+        kind: token.kind,
+        token: token.token,
+        label: t('chat.contextBadges.selectedText'),
+        tooltip: t('chat.contextBadges.selectedTextTemplateTooltip'),
+        icon: iconForToken(token),
+        tone: 'inline',
         clickable: false,
         removable: true,
         disabled: true,
-        ariaLabel: formatInlineContextTooltip(token.context, t),
-        removeAriaLabel: formatRemoveInlineContextAriaLabel(token.context, t),
+        ariaLabel: t('chat.contextBadges.selectedTextTemplateTooltip'),
+        removeAriaLabel: t('chat.contextBadges.removeSelectedTextTemplate'),
       };
     case 'attachment':
       return {

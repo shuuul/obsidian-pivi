@@ -28,7 +28,10 @@
 .pivi-model-checkbox-wrapper:focus-visible,
 .pivi-skill-choice:focus-within,
 .pivi-selection-toolbar-btn:focus-visible,
-.pivi-inline-edit-btn:focus-visible {
+.pivi-inline-edit-surface-close:focus-visible,
+.pivi-inline-edit-surface-send:focus-visible,
+.pivi-inline-edit-diff-review-accept:focus-visible,
+.pivi-inline-edit-diff-review-reject:focus-visible {
   outline: var(--pivi-focus-ring);
   outline-offset: var(--pivi-focus-offset);
 }
@@ -65,12 +68,14 @@
   }
 
   .pivi-working-icon-arc,
+  .pivi-selection-highlight--flash,
   .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
   .pivi-subagent-running-icon .pivi-subagent-icon-motion,
   .pivi-subagent-running-icon--rocking-chair svg,
   .pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal,
   .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape,
   .pivi-subagent-header::after,
+  .pivi-inline-edit-surface--waiting::after,
   .pivi-welcome-quote-char.pivi-quote-char-visible,
   .pivi-tab-switcher-menu {
     animation: none;
@@ -125,19 +130,19 @@
   }
 
   .pivi-selection-toolbar,
-  .pivi-inline-edit {
+  .pivi-inline-edit-surface,
+  .pivi-inline-edit-diff-review {
     transform: none;
     transition: opacity 140ms ease-out;
   }
 
   .pivi-selection-toolbar-btn,
-  .pivi-inline-edit-btn {
+  .pivi-inline-edit-surface-close,
+  .pivi-inline-edit-surface-send,
+  .pivi-inline-edit-diff-review-accept,
+  .pivi-inline-edit-diff-review-reject {
     transform: none;
     transition: background-color var(--pivi-duration-fast) ease;
-  }
-
-  .pivi-inline-edit-status {
-    animation: none;
   }
 }
 
@@ -153,7 +158,8 @@
   .pivi-slash-detail,
   .pivi-status-panel,
   .pivi-selection-toolbar,
-  .pivi-inline-edit {
+  .pivi-inline-edit-surface,
+  .pivi-inline-edit-diff-review {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     background: var(--pivi-host-background-primary);
@@ -172,7 +178,8 @@
   .pivi-slash-detail,
   .pivi-status-panel,
   .pivi-selection-toolbar,
-  .pivi-inline-edit {
+  .pivi-inline-edit-surface,
+  .pivi-inline-edit-diff-review {
     border-color: var(--pivi-host-border-focus);
     background: var(--pivi-host-background-primary);
   }

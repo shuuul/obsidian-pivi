@@ -19,6 +19,13 @@ export class Component {
     this.cleanups.push(cleanup);
   }
 
+  load(): void {
+    this.onload();
+    for (const child of this.children) child.load();
+  }
+
+  onload(): void {}
+
   unload(): void {
     for (const child of this.children) child.unload();
     this.children.clear();

@@ -1,3 +1,5 @@
+import { SELECTED_TEXT_TEMPLATE_TOKEN } from '../../context/mentions/mentionTokens';
+
 export interface WorkspaceCommandPromptContext {
   selectedText: string;
   currentNote: string;
@@ -6,7 +8,7 @@ export interface WorkspaceCommandPromptContext {
 }
 
 export function requiresSelectedText(prompt: string): boolean {
-  return prompt.includes('{{selected_text}}');
+  return prompt.includes(SELECTED_TEXT_TEMPLATE_TOKEN);
 }
 
 export function resolveWorkspaceCommandPrompt(
@@ -14,7 +16,7 @@ export function resolveWorkspaceCommandPrompt(
   context: WorkspaceCommandPromptContext,
 ): string {
   return prompt
-    .replace(/{{selected_text}}/g, context.selectedText)
+    .replaceAll(SELECTED_TEXT_TEMPLATE_TOKEN, context.selectedText)
     .replace(/{{current_note}}/g, context.currentNote)
     .replace(/{{current_file}}/g, context.currentNote)
     .replace(/{{current_note_name}}/g, context.currentNoteName)

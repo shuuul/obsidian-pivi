@@ -117,197 +117,24 @@
   height: 16px;
 }
 
-.pivi-inline-edit {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pivi-spacing-sm);
-  width: min(92vw, 400px);
-  padding: var(--pivi-spacing-sm);
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-md);
-  background: var(--pivi-host-background-primary);
-  box-shadow: var(--pivi-shadow-lg);
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  transition:
-    opacity 140ms ease-out,
-    transform 140ms ease-out;
+.pivi-selection-highlight--flash {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--pivi-host-interactive-accent) 24%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--pivi-host-interactive-accent) 32%, transparent),
+    0 0 14px color-mix(in srgb, var(--pivi-host-interactive-accent) 28%, transparent);
+  animation: pivi-selection-highlight-flash 900ms ease-out both;
 }
 
-@starting-style {
-  .pivi-inline-edit {
-    opacity: 0;
-    transform: translateY(6px) scale(0.98);
+@keyframes pivi-selection-highlight-flash {
+  0% {
+    background: color-mix(in srgb, var(--pivi-host-interactive-accent) 42%, transparent);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--pivi-host-interactive-accent) 48%, transparent),
+      0 0 20px color-mix(in srgb, var(--pivi-host-interactive-accent) 42%, transparent);
   }
-}
-
-.pivi-inline-edit-prompt {
-  width: 100%;
-  min-height: 4.5rem;
-  resize: vertical;
-  padding: var(--pivi-spacing-sm);
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-sm);
-  background: var(--pivi-host-background-primary);
-  color: var(--pivi-host-text-normal);
-  font: inherit;
-  transition:
-    border-color var(--pivi-duration-fast) ease,
-    box-shadow var(--pivi-duration-fast) ease;
-}
-
-.pivi-inline-edit-prompt:focus-visible {
-  outline: var(--pivi-focus-ring);
-  outline-offset: var(--pivi-focus-offset);
-}
-
-.pivi-inline-edit-prompt:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.pivi-inline-edit-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--pivi-spacing-sm);
-}
-
-.pivi-inline-edit-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--pivi-spacing-xs);
-  margin-inline-start: auto;
-}
-
-.pivi-inline-edit-hint {
-  color: var(--pivi-host-text-faint);
-  font-size: var(--pivi-text-xs);
-  font-family: var(--pivi-host-font-monospace);
-  line-height: 1;
-}
-
-.pivi-inline-edit-btn {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 var(--pivi-spacing-sm);
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-sm);
-  background: var(--pivi-host-background-primary);
-  color: var(--pivi-host-text-normal);
-  font-size: var(--pivi-text-sm);
-  cursor: pointer;
-  transition:
-    transform var(--pivi-duration-fast) ease-out,
-    background-color var(--pivi-duration-fast) ease,
-    border-color var(--pivi-duration-fast) ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .pivi-inline-edit-btn:hover {
-    background: var(--pivi-host-background-hover);
-    border-color: var(--pivi-host-border-hover);
-  }
-}
-
-.pivi-inline-edit-btn:active {
-  transform: scale(var(--pivi-press-scale));
-}
-
-.pivi-inline-edit-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pivi-inline-edit-btn--primary {
-  border-color: transparent;
-  background: var(--pivi-host-interactive-accent);
-  color: var(--pivi-host-text-on-accent);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .pivi-inline-edit-btn--primary:hover {
-    background: var(--pivi-host-interactive-accent-hover);
-  }
-}
-
-.pivi-inline-edit-status {
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-text-sm);
-  animation: pivi-inline-edit-pulse 1.4s ease-in-out infinite;
-}
-
-@keyframes pivi-inline-edit-pulse {
-  0%,
   100% {
-    opacity: 1;
+    background: color-mix(in srgb, var(--pivi-host-interactive-accent) 12%, transparent);
+    box-shadow: 0 0 0 0 transparent, 0 0 0 transparent;
   }
-  50% {
-    opacity: 0.55;
-  }
-}
-
-.pivi-inline-edit-preview {
-  max-height: 8rem;
-  overflow: auto;
-  padding: var(--pivi-spacing-sm);
-  border-radius: var(--pivi-radius-sm);
-  background: var(--pivi-host-background-secondary);
-  color: var(--pivi-host-text-normal);
-  font-size: var(--pivi-text-sm);
-  white-space: pre-wrap;
-}
-
-.pivi-inline-edit-error {
-  color: var(--pivi-host-text-error);
-  font-size: var(--pivi-text-sm);
-}
-
-/* Compact composer selectors inside the inline edit box */
-.pivi-inline-edit .pivi-model-btn,
-.pivi-inline-edit .pivi-thinking-current {
-  height: 24px;
-  padding: 0 var(--pivi-spacing-xs);
-  font-size: var(--pivi-text-xs);
-  gap: 4px;
-}
-
-.pivi-inline-edit .pivi-model-btn svg,
-.pivi-inline-edit .pivi-thinking-current svg {
-  width: 12px;
-  height: 12px;
-}
-
-.pivi-inline-edit .pivi-model-label,
-.pivi-inline-edit .pivi-thinking-label {
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pivi-inline-edit .pivi-model-dropdown,
-.pivi-inline-edit .pivi-thinking-options {
-  top: calc(100% + 4px);
-  bottom: auto;
-  max-width: min(340px, 84vw);
-  max-height: 240px;
-  overflow-y: auto;
-  background: var(--pivi-host-background-primary);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  font-size: var(--pivi-text-xs);
-}
-
-.pivi-inline-edit .pivi-model-option,
-.pivi-inline-edit .pivi-thinking-gear {
-  min-height: 26px;
-  padding: 2px var(--pivi-spacing-xs);
-  font-size: var(--pivi-text-xs);
-}
-
-.pivi-inline-edit .pivi-inline-edit-btn {
-  height: 24px;
-  padding: 0 var(--pivi-spacing-sm);
-  font-size: var(--pivi-text-xs);
 }

@@ -237,6 +237,9 @@
       "skillTooltip": "技能：{skill}",
       "toolTooltip": "工具：{tool}",
       "agentTooltip": "代理程式：{agent}",
+      "selectedText": "所選文字",
+      "selectedTextTemplateTooltip": "執行此命令時的所選文字",
+      "removeSelectedTextTemplate": "移除所選文字變數",
       "inlineContextSource": "來自 {path} 的行內內容",
       "inlineContextSelection": "選取範圍：{range}",
       "inlineContextPreview": "預覽：{preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "拒絕",
       "rejectHint": "esc",
-      "streaming": "產生中…",
       "failed": "內嵌編輯失敗。請再試一次。",
       "emptyPrompt": "傳送前請輸入指示。",
-      "chatUnavailable": "請先開啟 Pivi 聊天，再使用內嵌編輯。"
+      "chatUnavailable": "請先開啟 Pivi 聊天，再使用內嵌編輯。",
+      "diffReviewTitle": "審閱變更",
+      "diffReviewHint": "接受以將編輯套用到筆記，或拒絕以保留原始文字。",
+      "diffReviewDeletion": "已刪除",
+      "diffReviewInsertion": "已新增",
+      "selectionUnavailable": "所選文字已變更。請拒絕後重試。",
+      "closeAria": "關閉行內編輯",
+      "stop": "停止"
     }
   },
   "host": {

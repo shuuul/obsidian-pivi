@@ -9,6 +9,7 @@ import {
   getActiveDocument,
   getActiveWindow,
 } from '../dom';
+import { revealInlineContext } from './inlineContextNavigation';
 
 /** Plain-text token stored in the composer and sent to the agent. */
 export function mentionPartToToken(part: MentionBadgePart): string {
@@ -26,6 +27,7 @@ export function mentionPartToToken(part: MentionBadgePart): string {
     case 'agent':
       return part.raw;
     case 'inline-context':
+    case 'selected-text-template':
       return part.raw;
     default:
       return '';
@@ -50,8 +52,12 @@ export function createInlineMentionBadge(
       ? () => {
         void app.workspace.openLinkText(token.path, '');
       }
-      : undefined,
-    onRemove: token.kind === 'inline-context'
+      : token.kind === 'inline-context'
+        ? () => {
+          void revealInlineContext(app, token.context);
+        }
+        : undefined,
+    onRemove: token.kind === 'inline-context' || token.kind === 'selected-text-template'
       ? (_token, event) => {
         if (!(event.currentTarget instanceof HTMLElement)) return;
         const badge = event.currentTarget.closest('.pivi-context-badge');
@@ -212,7 +218,7 @@ export function shouldSyncMentionBadgesOnInput(
   cursorPos: number,
   ctx: MentionBadgeParseContext,
 ): boolean {
-  if (!messageTextHasMentionBadges(text)) {
+  if (!messageTextHasMentionBadges(text, ctx)) {
     return false;
   }
 

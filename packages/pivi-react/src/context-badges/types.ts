@@ -8,6 +8,7 @@ export type ContextBadgeKind =
   | 'tool'
   | 'agent'
   | 'inline-context'
+  | 'selected-text-template'
   | 'attachment';
 
 export type ContextBadgeTone = 'context' | 'tool' | 'inline' | 'attachment' | 'muted';
@@ -20,6 +21,7 @@ export type ContextBadgeToken =
   | { kind: 'tool'; token: string; toolName: string; label?: string }
   | { kind: 'agent'; token: string; agentId: string; label: string; source?: string }
   | { kind: 'inline-context'; token: string; label?: string; context: InlineContextReference }
+  | { kind: 'selected-text-template'; token: '{{selected_text}}' }
   | { kind: 'attachment'; token: string; path: string; label?: string };
 
 export interface ContextBadgeIcon {

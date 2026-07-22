@@ -1,3 +1,6 @@
+/** Canonical workspace-command variable for the current editor selection. */
+export const SELECTED_TEXT_TEMPLATE_TOKEN = '{{selected_text}}';
+
 export function normalizeAliases(aliases: readonly string[] | undefined): string[] {
   if (!aliases) return [];
   const seen = new Set<string>();

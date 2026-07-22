@@ -1,4 +1,8 @@
 import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
+import {
+  buildMarkedSelectionText,
+  type InlineContextReference,
+} from '@pivi/pivi-agent-core/context/inlineContext';
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 
@@ -385,6 +389,37 @@ export class SelectionController {
       selectedText: this.storedSelection.selectedText,
       lineCount: this.storedSelection.lineCount,
       ...(this.storedSelection.startLine !== undefined && { startLine: this.storedSelection.startLine }),
+    };
+  }
+
+  getInlineContextReference(): InlineContextReference | null {
+    const selection = this.storedSelection;
+    if (
+      !selection?.editorView
+      || selection.from === undefined
+      || selection.to === undefined
+      || selection.from >= selection.to
+    ) {
+      return null;
+    }
+
+    const doc = selection.editorView.state.doc;
+    const fromLine = doc.lineAt(selection.from);
+    const toLine = doc.lineAt(selection.to);
+    const from = { line: fromLine.number - 1, ch: selection.from - fromLine.from };
+    const to = { line: toLine.number - 1, ch: selection.to - toLine.from };
+
+    return {
+      type: 'editor-selection',
+      notePath: selection.notePath,
+      noteName: selection.notePath.split('/').pop() ?? selection.notePath,
+      selection: { from, to },
+      includedLines: { from: from.line + 1, to: to.line + 1 },
+      text: buildMarkedSelectionText(
+        line => doc.line(line + 1).text,
+        from,
+        to,
+      ),
     };
   }
 

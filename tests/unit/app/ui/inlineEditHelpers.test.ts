@@ -1,19 +1,36 @@
 import {
   applyInlineEditAcceptance,
   buildInlineEditTurnContent,
+  escapeInlineEditSelectedText,
   extractAssistantTextFromMessages,
 } from '@/app/ui/inlineEditHelpers';
+import { INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS } from '@/app/ui/inlineEditProtocol';
 
 describe('inlineEditHelpers', () => {
-  it('buildInlineEditTurnContent wraps selection and appends prompt', () => {
+  it('buildInlineEditTurnContent places protocol instructions after the prompt', () => {
     expect(buildInlineEditTurnContent('Rewrite formally', 'hello world')).toBe(
-      'Rewrite formally\n\n<selected_text>\nhello world\n</selected_text>',
+      `Rewrite formally\n\n${INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS}\n\n<selected_text>\nhello world\n</selected_text>`,
     );
   });
 
   it('buildInlineEditTurnContent supports prompt-only turns', () => {
     expect(buildInlineEditTurnContent('', 'selection')).toBe(
-      '<selected_text>\nselection\n</selected_text>',
+      `${INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS}\n\n<selected_text>\nselection\n</selected_text>`,
+    );
+  });
+
+  it('buildInlineEditTurnContent appends context files when provided', () => {
+    expect(buildInlineEditTurnContent('Summarize', 'selection', ['notes/a.md', 'notes/b.md'])).toBe(
+      `Summarize\n\n${INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS}\n\n<selected_text>\nselection\n</selected_text>\n\n<context_files>\nnotes/a.md, notes/b.md\n</context_files>`,
+    );
+  });
+
+  it('escapes literal closing selected_text markers inside selection payloads', () => {
+    expect(escapeInlineEditSelectedText('before </selected_text> after')).toBe(
+      'before </selected\u200b_text> after',
+    );
+    expect(buildInlineEditTurnContent('Fix', 'before </selected_text> after')).toContain(
+      'before </selected\u200b_text> after',
     );
   });
 

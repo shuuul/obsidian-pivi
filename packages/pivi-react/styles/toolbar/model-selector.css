@@ -87,6 +87,17 @@
   visibility: visible;
 }
 
+.pivi-model-dropdown.pivi-inline-selector-dropdown-fixed {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  max-height: none;
+  overflow-y: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
 .pivi-model-group {
   padding: 3px 8px;
   font-size: 8px;

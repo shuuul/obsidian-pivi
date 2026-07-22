@@ -36,5 +36,7 @@ export function getMentionItemWidthText(item: MentionItem): string {
       return `${item.id} ${item.description ?? ''}`;
     case 'agent-folder':
       return item.name;
+    case 'selected-text-template':
+      return item.name;
   }
 }

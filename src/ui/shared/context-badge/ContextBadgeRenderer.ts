@@ -87,10 +87,19 @@ export function createContextBadgeElement(
 
   if (options.onClick && vm.clickable) {
     el.addClass('pivi-context-badge--clickable');
+    if (isInline) {
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+    }
     el.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
       options.onClick?.(token, event);
+    });
+    el.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      el.click();
     });
   }
 

@@ -14,7 +14,7 @@ export interface SelectionHighlighter {
   hide: (editorView: EditorView) => void;
 }
 
-function createSelectionHighlighter(): SelectionHighlighter {
+function createSelectionHighlighter(className = 'pivi-selection-highlight'): SelectionHighlighter {
   const showHighlight = StateEffect.define<{ from: number; to: number }>();
   const hideHighlight = StateEffect.define<null>();
 
@@ -25,7 +25,7 @@ function createSelectionHighlighter(): SelectionHighlighter {
         if (e.is(showHighlight)) {
           const builder = new RangeSetBuilder<Decoration>();
           builder.add(e.value.from, e.value.to, Decoration.mark({
-            class: 'pivi-selection-highlight',
+            class: className,
           }));
           return builder.finish();
         } else if (e.is(hideHighlight)) {
@@ -67,6 +67,10 @@ function createSelectionHighlighter(): SelectionHighlighter {
 }
 
 const defaultHighlighter = createSelectionHighlighter();
+const flashHighlighter = createSelectionHighlighter(
+  'pivi-selection-highlight pivi-selection-highlight--flash',
+);
+const flashTimers = new WeakMap<EditorView, number>();
 
 export function showSelectionHighlight(editorView: EditorView, from: number, to: number): void {
   defaultHighlighter.show(editorView, from, to);
@@ -74,4 +78,25 @@ export function showSelectionHighlight(editorView: EditorView, from: number, to:
 
 export function hideSelectionHighlight(editorView: EditorView): void {
   defaultHighlighter.hide(editorView);
+}
+
+export function flashSelectionHighlight(
+  editorView: EditorView,
+  from: number,
+  to: number,
+  durationMs = 900,
+): void {
+  const win = editorView.dom.ownerDocument.defaultView;
+  if (!win) return;
+
+  const existingTimer = flashTimers.get(editorView);
+  if (existingTimer !== undefined) {
+    win.clearTimeout(existingTimer);
+  }
+
+  flashHighlighter.show(editorView, from, to);
+  flashTimers.set(editorView, win.setTimeout(() => {
+    flashTimers.delete(editorView);
+    flashHighlighter.hide(editorView);
+  }, durationMs));
 }

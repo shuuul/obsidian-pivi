@@ -6,7 +6,16 @@ export interface ExternalContextDisplayEntry {
   displayNameLower: string;
 }
 
-export type MentionBadgeKind = 'plain' | 'file' | 'folder' | 'mcp' | 'skill' | 'tool' | 'agent' | 'inline-context';
+export type MentionBadgeKind =
+  | 'plain'
+  | 'file'
+  | 'folder'
+  | 'mcp'
+  | 'skill'
+  | 'tool'
+  | 'agent'
+  | 'inline-context'
+  | 'selected-text-template';
 
 export interface PlainMentionPart {
   kind: 'plain';
@@ -60,6 +69,11 @@ export interface InlineContextMentionPart {
   label: string;
 }
 
+export interface SelectedTextTemplateMentionPart {
+  kind: 'selected-text-template';
+  raw: '{{selected_text}}';
+}
+
 export type MentionBadgePart =
   | PlainMentionPart
   | FileMentionPart
@@ -68,7 +82,8 @@ export type MentionBadgePart =
   | SkillMentionPart
   | ToolMentionPart
   | AgentMentionPart
-  | InlineContextMentionPart;
+  | InlineContextMentionPart
+  | SelectedTextTemplateMentionPart;
 
 /** Vault file entry used by mention parsing (no Obsidian App). */
 export interface MentionVaultFile {
@@ -104,4 +119,6 @@ export interface MentionBadgeParseContext {
   mcpServerNames: Set<string>;
   skillCommandNames?: Set<string>;
   externalContextEntries?: ExternalContextDisplayEntry[];
+  /** Render command-template variables as editable badges. Settings editors only. */
+  parseWorkspaceCommandVariables?: boolean;
 }

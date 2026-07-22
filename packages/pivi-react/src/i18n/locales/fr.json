@@ -237,6 +237,9 @@
       "skillTooltip": "Compétence : {skill}",
       "toolTooltip": "Outil : {tool}",
       "agentTooltip": "Agent : {agent}",
+      "selectedText": "Texte sélectionné",
+      "selectedTextTemplateTooltip": "Texte sélectionné lors de l’exécution de cette commande",
+      "removeSelectedTextTemplate": "Supprimer la variable de texte sélectionné",
       "inlineContextSource": "Contexte intégré depuis {path}",
       "inlineContextSelection": "Sélection : {range}",
       "inlineContextPreview": "Aperçu : {preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "Refuser",
       "rejectHint": "esc",
-      "streaming": "Génération…",
       "failed": "L'édition en ligne a échoué. Réessayez.",
       "emptyPrompt": "Saisissez une instruction avant d'envoyer.",
-      "chatUnavailable": "Ouvrez le chat Pivi avant d'utiliser l'édition en ligne."
+      "chatUnavailable": "Ouvrez le chat Pivi avant d'utiliser l'édition en ligne.",
+      "diffReviewTitle": "Examiner les modifications",
+      "diffReviewHint": "Acceptez pour appliquer la modification à votre note, ou rejetez pour conserver le texte d'origine.",
+      "diffReviewDeletion": "Supprimé",
+      "diffReviewInsertion": "Ajouté",
+      "selectionUnavailable": "Le texte sélectionné a changé. Rejetez et réessayez.",
+      "closeAria": "Fermer l’édition en ligne",
+      "stop": "Arrêter"
     }
   },
   "host": {

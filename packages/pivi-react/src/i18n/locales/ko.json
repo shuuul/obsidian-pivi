@@ -237,6 +237,9 @@
       "skillTooltip": "스킬: {skill}",
       "toolTooltip": "도구: {tool}",
       "agentTooltip": "에이전트: {agent}",
+      "selectedText": "선택한 텍스트",
+      "selectedTextTemplateTooltip": "이 명령을 실행할 때 선택한 텍스트",
+      "removeSelectedTextTemplate": "선택한 텍스트 변수 제거",
       "inlineContextSource": "{path}의 인라인 컨텍스트",
       "inlineContextSelection": "선택 영역: {range}",
       "inlineContextPreview": "미리보기: {preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "거부",
       "rejectHint": "esc",
-      "streaming": "생성 중…",
       "failed": "인라인 편집에 실패했습니다. 다시 시도하세요.",
       "emptyPrompt": "보내기 전에 지시문을 입력하세요.",
-      "chatUnavailable": "인라인 편집을 사용하려면 먼저 Pivi 채팅을 여세요."
+      "chatUnavailable": "인라인 편집을 사용하려면 먼저 Pivi 채팅을 여세요.",
+      "diffReviewTitle": "변경 사항 검토",
+      "diffReviewHint": "적용하면 노트에 편집이 반영되고, 거부하면 원본 텍스트가 유지됩니다.",
+      "diffReviewDeletion": "삭제됨",
+      "diffReviewInsertion": "추가됨",
+      "selectionUnavailable": "선택한 텍스트가 변경되었습니다. 거부한 뒤 다시 시도하세요.",
+      "closeAria": "인라인 편집 닫기",
+      "stop": "중지"
     }
   },
   "host": {

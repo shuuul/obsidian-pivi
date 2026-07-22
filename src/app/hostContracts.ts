@@ -62,6 +62,8 @@ export interface PiviChatViewCommands {
     model?: string;
     thinkingLevel?: string;
     draftTitle?: string;
+    onAssistantText?: (accumulatedText: string) => void;
+    registerCancel?: (cancel: () => void) => void;
   }): Promise<{ assistantText: string; tabId: string } | null>;
   getActiveExternalContexts(): string[];
 }

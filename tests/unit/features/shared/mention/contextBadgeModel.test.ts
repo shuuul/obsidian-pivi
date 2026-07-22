@@ -85,6 +85,23 @@ describe('ContextBadge model and parser', () => {
     });
 
     expect(createContextBadgeViewModel({
+      kind: 'inline-context',
+      token: 'selection-token',
+      context: {
+        type: 'editor-selection',
+        notePath: 'notes/readme.md',
+        noteName: 'readme.md',
+        selection: { from: { line: 1, ch: 2 }, to: { line: 1, ch: 8 } },
+        includedLines: { from: 2, to: 2 },
+        text: 'selected',
+      },
+    }, t)).toMatchObject({
+      tone: 'inline',
+      clickable: true,
+      removable: true,
+    });
+
+    expect(createContextBadgeViewModel({
       kind: 'mcp',
       token: '/exa/search',
       serverName: 'exa',

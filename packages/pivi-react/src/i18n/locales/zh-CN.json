@@ -237,6 +237,9 @@
       "skillTooltip": "技能：{skill}",
       "toolTooltip": "工具：{tool}",
       "agentTooltip": "智能体：{agent}",
+      "selectedText": "所选文本",
+      "selectedTextTemplateTooltip": "运行此命令时的所选文本",
+      "removeSelectedTextTemplate": "移除所选文本变量",
       "inlineContextSource": "来自 {path} 的内联上下文",
       "inlineContextSelection": "选区：{range}",
       "inlineContextPreview": "预览：{preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "拒绝",
       "rejectHint": "esc",
-      "streaming": "生成中…",
       "failed": "内联编辑失败。请重试。",
       "emptyPrompt": "发送前请输入指令。",
-      "chatUnavailable": "请先打开 Pivi 聊天，再使用内联编辑。"
+      "chatUnavailable": "请先打开 Pivi 聊天，再使用内联编辑。",
+      "diffReviewTitle": "审阅更改",
+      "diffReviewHint": "接受以将编辑应用到笔记，或拒绝以保留原始文本。",
+      "diffReviewDeletion": "已删除",
+      "diffReviewInsertion": "已添加",
+      "selectionUnavailable": "所选文本已更改。请拒绝后重试。",
+      "closeAria": "关闭内联编辑",
+      "stop": "停止"
     }
   },
   "host": {

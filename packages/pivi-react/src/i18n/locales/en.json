@@ -237,6 +237,9 @@
       "skillTooltip": "Skill: {skill}",
       "toolTooltip": "Tool: {tool}",
       "agentTooltip": "Agent: {agent}",
+      "selectedText": "Selected text",
+      "selectedTextTemplateTooltip": "Selected text when this command runs",
+      "removeSelectedTextTemplate": "Remove selected text variable",
       "inlineContextSource": "Inline context from {path}",
       "inlineContextSelection": "Selection: {range}",
       "inlineContextPreview": "Preview: {preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "Reject",
       "rejectHint": "esc",
-      "streaming": "Generating…",
       "failed": "Inline edit failed. Try again.",
       "emptyPrompt": "Enter an instruction before sending.",
-      "chatUnavailable": "Open Pivi chat before running inline edit."
+      "chatUnavailable": "Open Pivi chat before running inline edit.",
+      "diffReviewTitle": "Review changes",
+      "diffReviewHint": "Accept to apply the edit to your note, or reject to keep the original text.",
+      "diffReviewDeletion": "Removed",
+      "diffReviewInsertion": "Added",
+      "selectionUnavailable": "The selected text changed. Reject and try again.",
+      "closeAria": "Close inline edit",
+      "stop": "Stop"
     }
   },
   "host": {

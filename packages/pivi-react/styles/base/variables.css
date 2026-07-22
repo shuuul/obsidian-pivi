@@ -107,7 +107,10 @@ settings:
 /* Shared product tokens for every Pivi presentation root. */
 .pivi-container,
 .pivi-settings,
-.pivi-selection-toolbar-overlay {
+.pivi-selection-toolbar-overlay,
+.pivi-inline-selector-portal,
+.pivi-inline-edit-surface,
+.pivi-inline-edit-diff-review {
   --pivi-spacing-xs: 4px;
   --pivi-spacing-sm: 8px;
   --pivi-spacing-md: 12px;

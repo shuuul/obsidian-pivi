@@ -237,6 +237,9 @@
       "skillTooltip": "スキル: {skill}",
       "toolTooltip": "ツール: {tool}",
       "agentTooltip": "エージェント: {agent}",
+      "selectedText": "選択したテキスト",
+      "selectedTextTemplateTooltip": "このコマンドの実行時に選択されているテキスト",
+      "removeSelectedTextTemplate": "選択テキスト変数を削除",
       "inlineContextSource": "{path} のインラインコンテキスト",
       "inlineContextSelection": "選択範囲: {range}",
       "inlineContextPreview": "プレビュー: {preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "拒否",
       "rejectHint": "esc",
-      "streaming": "生成中…",
       "failed": "インライン編集に失敗しました。もう一度お試しください。",
       "emptyPrompt": "送信する前に指示を入力してください。",
-      "chatUnavailable": "インライン編集を使う前に Pivi チャットを開いてください。"
+      "chatUnavailable": "インライン編集を使う前に Pivi チャットを開いてください。",
+      "diffReviewTitle": "変更を確認",
+      "diffReviewHint": "適用でノートに編集を反映し、拒否で元のテキストを保持します。",
+      "diffReviewDeletion": "削除",
+      "diffReviewInsertion": "追加",
+      "selectionUnavailable": "選択したテキストが変更されました。拒否してもう一度お試しください。",
+      "closeAria": "インライン編集を閉じる",
+      "stop": "停止"
     }
   },
   "host": {

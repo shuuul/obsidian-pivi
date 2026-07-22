@@ -1,4 +1,8 @@
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+import {
+  createInlineContextToken,
+  type InlineContextReference,
+} from '@pivi/pivi-agent-core/context/inlineContext';
 
 import { resolveComposerWorkspaceCommand } from '@/ui/chat/composer/ComposerWorkspaceCommand';
 
@@ -17,20 +21,35 @@ const reviewCommand: SlashCatalogEntry = {
 };
 
 describe('resolveComposerWorkspaceCommand', () => {
+  const selectedTextContext: InlineContextReference = {
+    type: 'editor-selection',
+    notePath: 'example.md',
+    noteName: 'example.md',
+    selection: {
+      from: { line: 0, ch: 0 },
+      to: { line: 0, ch: 16 },
+    },
+    includedLines: { from: 1, to: 1 },
+    text: '<selection_start>const value = 1;<selection_end>',
+  };
+
   it('expands the runtime prompt while leaving surrounding composer text intact', async () => {
     const result = await resolveComposerWorkspaceCommand(
       '/review focus on naming',
       [reviewCommand],
       async () => ({
         selectedText: 'const value = 1;',
+        selectedTextContext,
         currentNote: '# Example',
         currentNoteName: 'example',
         date: '7/15/2026',
       }),
     );
 
+    const token = createInlineContextToken(selectedTextContext);
     expect(result).toEqual({
-      promptContent: 'Review this:\nconst value = 1;\nFile: example focus on naming',
+      displayContent: `Review this:\n${token}\nFile: example focus on naming`,
+      promptContent: `Review this:\n${token}\nFile: example focus on naming`,
       missingSelectedText: false,
     });
   });
@@ -44,11 +63,16 @@ describe('resolveComposerWorkspaceCommand', () => {
     }));
 
     await expect(resolveComposerWorkspaceCommand('plain text', [reviewCommand], getContext))
-      .resolves.toEqual({ promptContent: 'plain text', missingSelectedText: false });
+      .resolves.toEqual({
+        displayContent: 'plain text',
+        promptContent: 'plain text',
+        missingSelectedText: false,
+      });
     expect(getContext).not.toHaveBeenCalled();
 
     await expect(resolveComposerWorkspaceCommand('/review', [reviewCommand], getContext))
       .resolves.toEqual({
+        displayContent: 'Review this:\n\nFile: ',
         promptContent: 'Review this:\n\nFile: ',
         missingSelectedText: true,
       });

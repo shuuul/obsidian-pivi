@@ -26,6 +26,17 @@
 }
 
 /* Current selection (visible when collapsed) */
+
+.pivi-thinking-chevron {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pivi-thinking-chevron svg {
+  width: 12px;
+  height: 12px;
+}
+
 .pivi-thinking-current {
   display: inline-flex;
   align-items: center;
@@ -72,6 +83,17 @@
 
 /* Expand while React owns the hover/focus selection lifecycle. */
 .pivi-thinking-gears.is-open .pivi-thinking-options {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pivi-thinking-options.pivi-inline-selector-dropdown-fixed {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  max-height: none;
+  overflow-y: auto;
   opacity: 1;
   visibility: visible;
 }

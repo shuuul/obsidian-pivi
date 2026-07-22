@@ -5,6 +5,7 @@ jest.mock('@/app/piviViewActivation', () => ({
 }));
 
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+import { extractInlineContextTokensFromMessage } from '@pivi/pivi-agent-core/context/inlineContext';
 import {
   getWorkspaceCommandFullId,
   WorkspaceCommandRegistry,
@@ -28,7 +29,7 @@ const entry: SlashCatalogEntry = {
 };
 
 function createHarness(selectedText = 'Selected text') {
-  const sendWorkspaceCommandInNewSession = jest.fn(async () => true);
+  const sendWorkspaceCommandInNewSession = jest.fn(async (_content: string) => true);
   mockEnsurePiviViewOpen.mockResolvedValue({
     getChatHandle: () => ({ commands: { sendWorkspaceCommandInNewSession } }),
   });
@@ -38,8 +39,15 @@ function createHarness(selectedText = 'Selected text') {
   };
   const markdownView = {
     containerEl: { ownerDocument: { defaultView: ownerWindow } },
-    editor: { getSelection: () => selectedText },
-    file: { basename: 'Note', path: 'Note.md' },
+    editor: {
+      getSelection: () => selectedText,
+      getCursor: (which: 'from' | 'to') => ({
+        line: 0,
+        ch: which === 'from' ? 0 : selectedText.length,
+      }),
+      getLine: () => selectedText,
+    },
+    file: { basename: 'Note', name: 'Note.md', path: 'Note.md' },
     getMode: () => 'source',
   };
   const commands: Array<{ id: string; name: string; icon?: string; callback?: () => void }> = [];
@@ -87,9 +95,16 @@ describe('WorkspaceCommandRegistry', () => {
     commands[0]?.callback?.();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(sendWorkspaceCommandInNewSession).toHaveBeenCalledWith(
-      'Summarize:\n\nSelected text',
-    );
+    const sentContent = sendWorkspaceCommandInNewSession.mock.calls[0]?.[0] ?? '';
+    const extracted = extractInlineContextTokensFromMessage(sentContent);
+    expect(extracted.messageWithoutInlineContextTokens.trim()).toBe('Summarize:');
+    expect(extracted.contexts).toEqual([
+      expect.objectContaining({
+        notePath: 'Note.md',
+        noteName: 'Note.md',
+        text: '<selection_start>Selected text<selection_end>',
+      }),
+    ]);
   });
 
   it('does not send a prompt that requires a missing selection', async () => {

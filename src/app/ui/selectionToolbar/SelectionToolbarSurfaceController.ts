@@ -13,26 +13,19 @@ import {
 import type { PiviPluginHost } from '@/app/hostContracts';
 import { appI18n, t } from '@/app/i18n';
 import { ensurePiviViewOpen } from '@/app/piviViewActivation';
+import { buildInlineEditTurnContent } from '@/app/ui/inlineEditHelpers';
 import {
-  applyInlineEditAcceptance,
-  buildInlineEditTurnContent,
-} from '@/app/ui/inlineEditHelpers';
+  parseInlineEditTurnResponse,
+  stripInlineEditStreamingProtocolTags,
+} from '@/app/ui/inlineEditProtocol';
+import {
+  InlineEditSurfaceSession,
+} from '@/app/ui/inlineEditSurface';
+import type { InlineEditSurfaceSendPayload } from '@/app/ui/inlineEditSurface/types';
 import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getWorkspaceCommandFullId } from '@/app/workspaceCommandRegistry';
 import type PiviPlugin from '@/main';
-import { hideSelectionHighlight, showSelectionHighlight } from '@/ui/shared/components/SelectionHighlight';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
-
-type SurfaceMode = 'toolbar' | 'inline-edit';
-
-type InlineEditState = {
-  prompt: string;
-  model: string;
-  thinkingLevel: string;
-  status: 'idle' | 'streaming' | 'ready' | 'error';
-  resultPreview?: string;
-  errorMessage?: string;
-};
 
 type ComposerDefaults = {
   model: string;
@@ -42,6 +35,14 @@ type ComposerDefaults = {
   adaptiveReasoning: boolean;
   defaultReasoningValue: string;
 };
+
+interface InlineEditRecord {
+  readonly snapshot: EditorSelectionSnapshot;
+  readonly session: InlineEditSurfaceSession;
+  turnInFlight: boolean;
+  cancel: (() => void) | null;
+  attempt: number;
+}
 
 function getEnabledShortcuts(settings: PiviPluginHost['settings']): EditorToolbarShortcut[] {
   return settings.editorSelectionToolbar.shortcuts.filter(shortcut => shortcut.enabled);
@@ -86,10 +87,9 @@ function executeObsidianCommand(plugin: PiviPluginHost, commandId: string): void
 
 export class SelectionToolbarSurfaceController {
   private mountedSurface: SelectionToolbarMountedSurface | null = null;
+  private mountedSurfaceContainer: HTMLElement | null = null;
   private currentSnapshot: EditorSelectionSnapshot | null = null;
-  private mode: SurfaceMode = 'toolbar';
-  private inlineEdit: InlineEditState | null = null;
-  private composerDefaults: ComposerDefaults | null = null;
+  private readonly inlineEditSessions = new Map<string, InlineEditRecord>();
   private readonly unsubscribers: Array<() => void> = [];
 
   constructor(private readonly plugin: PiviPlugin) {}
@@ -103,16 +103,11 @@ export class SelectionToolbarSurfaceController {
     this.unsubscribers.push(
       host.onShow(snapshot => {
         this.currentSnapshot = snapshot;
-        this.mode = 'toolbar';
-        this.inlineEdit = null;
         this.render();
         host.repositionOverlay();
       }),
       host.onDismiss(() => {
-        this.cleanupInlineEdit();
         this.currentSnapshot = null;
-        this.mode = 'toolbar';
-        this.inlineEdit = null;
         this.disposeSurface();
       }),
     );
@@ -127,24 +122,26 @@ export class SelectionToolbarSurfaceController {
       unsubscribe();
     }
     this.unsubscribers.length = 0;
-    this.cleanupInlineEdit();
+    for (const record of [...this.inlineEditSessions.values()]) this.destroyInlineEditSession(record);
     this.disposeSurface();
   }
 
   private disposeSurface(): void {
     void this.mountedSurface?.dispose();
     this.mountedSurface = null;
+    this.mountedSurfaceContainer = null;
   }
 
-  private cleanupInlineEdit(): void {
-    const snapshot = this.currentSnapshot;
-    if (snapshot) {
-      hideSelectionHighlight(snapshot.editorView);
-    }
+  private destroyInlineEditSession(record: InlineEditRecord): void {
+    record.attempt++;
+    record.cancel?.();
+    record.cancel = null;
+    record.session.destroy();
+    this.inlineEditSessions.delete(record.session.id);
   }
 
-  private dismiss(): void {
-    getSelectionToolbarHost()?.dismissOverlay();
+  private dismissRecord(record: InlineEditRecord): void {
+    this.destroyInlineEditSession(record);
   }
 
   private ensureSurface(): SelectionToolbarMountedSurface {
@@ -153,14 +150,20 @@ export class SelectionToolbarSurfaceController {
       throw new Error('Selection toolbar host is not registered.');
     }
 
+    const container = host.getOverlayElement();
+    if (this.mountedSurface && this.mountedSurfaceContainer !== container) {
+      this.disposeSurface();
+    }
+
     if (!this.mountedSurface) {
       this.mountedSurface = mountSelectionToolbarSurface({
-        container: host.getOverlayElement(),
+        container,
         i18n: appI18n,
         platform: obsidianPresentationPlatform,
         props: this.buildProps(),
       });
-      host.getOverlayElement().addEventListener(
+      this.mountedSurfaceContainer = container;
+      container.addEventListener(
         'pivi-selection-toolbar-mounted',
         () => host.repositionOverlay(),
         { once: true },
@@ -178,50 +181,6 @@ export class SelectionToolbarSurfaceController {
   }
 
   private buildProps(): SelectionToolbarSurfaceProps {
-    if (this.mode === 'inline-edit' && this.inlineEdit && this.composerDefaults) {
-      return {
-        mode: 'inline-edit',
-        adaptiveReasoning: this.composerDefaults.adaptiveReasoning,
-        defaultReasoningValue: this.composerDefaults.defaultReasoningValue,
-        errorMessage: this.inlineEdit.errorMessage,
-        model: this.inlineEdit.model,
-        modelOptions: this.composerDefaults.modelOptions,
-        onAccept: () => void this.handleAccept(),
-        onCancel: () => this.dismiss(),
-        onModelChange: (model) => {
-          if (!this.inlineEdit || !this.composerDefaults) return;
-          const uiFacades = this.plugin.getUiFacades();
-          const settings = uiFacades.getSettingsSnapshot(this.plugin.settings);
-          this.inlineEdit.model = model;
-          this.composerDefaults.thinkingOptions = uiFacades.chatUIConfig
-            .getReasoningOptions(model, settings)
-            .map(option => ({ ...option }));
-          this.composerDefaults.adaptiveReasoning = uiFacades.chatUIConfig
-            .isAdaptiveReasoningModel(model, settings);
-          this.composerDefaults.defaultReasoningValue = uiFacades.chatUIConfig
-            .getDefaultReasoningValue(model, settings);
-          this.render();
-        },
-        onPromptChange: (prompt) => {
-          if (!this.inlineEdit) return;
-          this.inlineEdit.prompt = prompt;
-          this.render();
-        },
-        onReject: () => this.dismiss(),
-        onSend: () => void this.handleSend(),
-        onThinkingChange: (thinkingLevel) => {
-          if (!this.inlineEdit) return;
-          this.inlineEdit.thinkingLevel = thinkingLevel;
-          this.render();
-        },
-        prompt: this.inlineEdit.prompt,
-        resultPreview: this.inlineEdit.resultPreview,
-        status: this.inlineEdit.status,
-        thinkingLevel: this.inlineEdit.thinkingLevel,
-        thinkingOptions: this.composerDefaults.thinkingOptions,
-      };
-    }
-
     const shortcuts = getEnabledShortcuts(this.plugin.settings).map(shortcut => ({
       id: shortcut.id,
       label: shortcut.label,
@@ -230,26 +189,53 @@ export class SelectionToolbarSurfaceController {
     }));
 
     return {
-      mode: 'toolbar',
       shortcuts,
       onAddToChat: () => void this.handleAddToChat(),
-      onAskAi: () => this.openInlineEdit(),
+      onAskAi: () => void this.openInlineEdit(),
       onShortcut: (id) => void this.handleShortcut(id),
     };
   }
 
   private openInlineEdit(prefillPrompt = ''): void {
+    const snapshot = this.currentSnapshot;
+    if (!snapshot) {
+      return;
+    }
+
+    const host = getSelectionToolbarHost();
+    host?.hideOverlayPreservingSnapshot();
+    this.disposeSurface();
+
     const defaults = getComposerDefaults(this.plugin);
-    this.composerDefaults = defaults;
-    this.mode = 'inline-edit';
-    this.inlineEdit = {
-      prompt: prefillPrompt,
-      model: defaults.model,
-      thinkingLevel: defaults.thinkingLevel,
-      status: 'idle',
-    };
-    this.render();
-    getSelectionToolbarHost()?.repositionOverlay();
+    let record: InlineEditRecord;
+    const session = new InlineEditSurfaceSession(
+      {
+        plugin: this.plugin,
+        i18n: appI18n,
+        platform: obsidianPresentationPlatform,
+        composerDefaults: defaults,
+        getWorkspace: async () => this.plugin.ensureWorkspaceServices(),
+      },
+      {
+        onSend: (payload) => void this.handleInlineEditSend(record, payload),
+        onReject: () => this.dismissRecord(record),
+        onDiffReject: () => this.dismissRecord(record),
+        onAccept: () => this.dismissRecord(record),
+        onStop: () => {
+          record.attempt++;
+          record.cancel?.();
+          record.cancel = null;
+          record.turnInFlight = false;
+          if (!record.session.isDestroyed()) record.session.setStreaming(false);
+        },
+      },
+    );
+    record = { snapshot, session, turnInFlight: false, cancel: null, attempt: 0 };
+    this.inlineEditSessions.set(session.id, record);
+    session.show(snapshot);
+    if (prefillPrompt.trim()) {
+      session.setPrompt(prefillPrompt);
+    }
   }
 
   private async handleAddToChat(): Promise<void> {
@@ -257,12 +243,12 @@ export class SelectionToolbarSurfaceController {
     const editor = markdownView?.editor;
     if (!editor || !markdownView) {
       new Notice(t('editor.selectionToolbar.noActiveEditor'));
-      this.dismiss();
+      getSelectionToolbarHost()?.dismissOverlay();
       return;
     }
 
     await this.plugin.addEditorSelectionToChatInput(editor, markdownView);
-    this.dismiss();
+    getSelectionToolbarHost()?.dismissOverlay();
   }
 
   private handleShortcut(id: string): void {
@@ -274,17 +260,17 @@ export class SelectionToolbarSurfaceController {
     if (shortcut.kind === 'obsidian-command') {
       if (!shortcut.commandId) {
         new Notice(t('editor.selectionToolbar.commandUnavailable'));
-        this.dismiss();
+        getSelectionToolbarHost()?.dismissOverlay();
         return;
       }
       executeObsidianCommand(this.plugin, shortcut.commandId);
-      this.dismiss();
+      getSelectionToolbarHost()?.dismissOverlay();
       return;
     }
 
     if (!shortcut.piviCommandKey) {
       new Notice(t('editor.selectionToolbar.commandUnavailable'));
-      this.dismiss();
+      getSelectionToolbarHost()?.dismissOverlay();
       return;
     }
 
@@ -292,91 +278,118 @@ export class SelectionToolbarSurfaceController {
       this.plugin,
       getWorkspaceCommandFullId(this.plugin.manifest.id, shortcut.piviCommandKey),
     );
-    this.dismiss();
+    getSelectionToolbarHost()?.dismissOverlay();
   }
 
-  private async handleSend(): Promise<void> {
-    if (!this.inlineEdit) {
+  private async handleInlineEditSend(record: InlineEditRecord, payload: InlineEditSurfaceSendPayload): Promise<void> {
+    if (!this.isInlineEditSessionAlive(record)) {
       return;
     }
-    const prompt = this.inlineEdit.prompt.trim();
+
+    const prompt = payload.prompt.trim();
     if (!prompt) {
       new Notice(t('editor.inlineEdit.emptyPrompt'));
       return;
     }
-    await this.runInlineEditTurn(prompt);
+
+    await this.runInlineEditTurn(record, payload);
   }
 
-  private async runInlineEditTurn(prompt: string): Promise<void> {
-    const snapshot = this.currentSnapshot;
-    if (!snapshot || !this.inlineEdit) {
-      return;
-    }
+  private isInlineEditSessionAlive(record: InlineEditRecord): boolean {
+    return this.inlineEditSessions.get(record.session.id) === record && !record.session.isDestroyed();
+  }
 
-    const view = await ensurePiviViewOpen(
-      this.plugin.app,
-      this.plugin.settings.chatViewPlacement,
-    );
-    if (!view) {
-      this.inlineEdit.status = 'error';
-      this.inlineEdit.errorMessage = t('editor.inlineEdit.chatUnavailable');
-      this.render();
+  private async runInlineEditTurn(
+    record: InlineEditRecord,
+    payload: InlineEditSurfaceSendPayload,
+  ): Promise<void> {
+    if (record.turnInFlight) {
       return;
     }
+    const attempt = ++record.attempt;
+    record.turnInFlight = true;
+    const { snapshot, session } = record;
+    session.setStreaming(true);
+    session.setReplyText('');
 
     try {
-      await this.plugin.ensureWorkspaceServices();
-    } catch {
-      this.inlineEdit.status = 'error';
-      this.inlineEdit.errorMessage = t('editor.inlineEdit.chatUnavailable');
-      this.render();
-      return;
+      const prompt = payload.prompt.trim();
+      const view = await ensurePiviViewOpen(
+        this.plugin.app,
+        this.plugin.settings.chatViewPlacement,
+      );
+      if (!view) {
+        if (this.isInlineEditSessionAlive(record) && record.attempt === attempt) {
+          session.setStreaming(false);
+          session.showError(t('editor.inlineEdit.chatUnavailable'));
+        }
+        return;
+      }
+
+      try {
+        await this.plugin.ensureWorkspaceServices();
+      } catch {
+        if (this.isInlineEditSessionAlive(record) && record.attempt === attempt) {
+          session.setStreaming(false);
+          session.showError(t('editor.inlineEdit.chatUnavailable'));
+        }
+        return;
+      }
+
+      if (!this.isInlineEditSessionAlive(record) || record.attempt !== attempt) {
+        return;
+      }
+
+      const content = buildInlineEditTurnContent(prompt, snapshot.text, payload.contextFiles);
+      const result = await view.getChatHandle()?.commands.submitInlineEditTurn({
+        content,
+        model: payload.model,
+        thinkingLevel: payload.thinkingLevel,
+        draftTitle: prompt.slice(0, 80),
+        registerCancel: (cancel) => {
+          if (this.isInlineEditSessionAlive(record) && record.attempt === attempt) record.cancel = cancel;
+          else cancel();
+        },
+        onAssistantText: (accumulatedText) => {
+          if (!this.isInlineEditSessionAlive(record) || record.attempt !== attempt) {
+            return;
+          }
+          session.setReplyText(stripInlineEditStreamingProtocolTags(accumulatedText));
+        },
+      }) ?? null;
+
+      if (!this.isInlineEditSessionAlive(record) || record.attempt !== attempt) {
+        return;
+      }
+
+      session.setStreaming(false);
+
+      if (!result || !result.assistantText.trim()) {
+        session.showError(t('editor.inlineEdit.failed'));
+        return;
+      }
+
+      const parsed = parseInlineEditTurnResponse(result.assistantText);
+      switch (parsed.kind) {
+        case 'reply':
+          session.setReplyText(parsed.text);
+          break;
+        case 'replacement':
+          session.showDiffReview(snapshot.text, parsed.text, 'replacement');
+          break;
+        case 'insertion':
+          session.showDiffReview('', parsed.text, 'insertion');
+          break;
+        case 'empty':
+          session.showError(t('editor.inlineEdit.failed'));
+          break;
+      }
+    } finally {
+      if (record.attempt === attempt) {
+        record.cancel = null;
+        record.turnInFlight = false;
+      }
     }
-
-    const content = buildInlineEditTurnContent(prompt, snapshot.text);
-    this.inlineEdit.status = 'streaming';
-    this.inlineEdit.errorMessage = undefined;
-    this.inlineEdit.resultPreview = undefined;
-    this.render();
-    showSelectionHighlight(snapshot.editorView, snapshot.from, snapshot.to);
-
-    const result = await view.getChatHandle()?.commands.submitInlineEditTurn({
-      content,
-      model: this.inlineEdit.model,
-      thinkingLevel: this.inlineEdit.thinkingLevel,
-      draftTitle: prompt.slice(0, 80),
-    }) ?? null;
-
-    if (!result || !result.assistantText.trim()) {
-      this.inlineEdit.status = 'error';
-      this.inlineEdit.errorMessage = t('editor.inlineEdit.failed');
-      this.render();
-      return;
-    }
-
-    this.inlineEdit.status = 'ready';
-    this.inlineEdit.resultPreview = result.assistantText;
-    this.render();
-  }
-
-  private handleAccept(): void {
-    const snapshot = this.currentSnapshot;
-    const result = this.inlineEdit?.resultPreview;
-    if (!snapshot || !result) {
-      this.dismiss();
-      return;
-    }
-
-    const markdownView = resolveActiveMarkdownView(this.plugin);
-    const editor = markdownView?.editor;
-    if (!editor) {
-      new Notice(t('editor.selectionToolbar.noActiveEditor'));
-      this.dismiss();
-      return;
-    }
-
-    applyInlineEditAcceptance(editor, snapshot.from, snapshot.to, result);
-    this.dismiss();
   }
 }
 

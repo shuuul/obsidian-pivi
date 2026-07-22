@@ -1,0 +1,405 @@
+/* Editor-embedded inline edit surface (CM6 block widget, Zed-style band) */
+
+.pivi-inline-edit-surface-selection {
+  background-color: var(--pivi-host-text-selection);
+}
+
+.pivi-inline-edit-surface,
+.pivi-inline-edit-diff-review {
+  position: relative;
+  z-index: 100;
+  pointer-events: auto;
+  margin: 0;
+  padding: 2px 4px 4px;
+  border-block: 2px solid var(--pivi-host-border-hover);
+  border-inline: 0;
+  border-radius: 0;
+  background: var(--pivi-host-background-primary);
+  box-shadow: none;
+  color: var(--pivi-host-text-normal);
+  font-family: var(--pivi-host-font-text, inherit);
+}
+
+.pivi-inline-edit-surface--waiting::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 18%,
+    rgba(var(--pivi-brand-rgb), 0.25) 36%,
+    var(--pivi-host-text-accent) 50%,
+    rgba(var(--pivi-brand-rgb), 0.25) 64%,
+    transparent 82%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  animation: pivi-running-header-flow 1.35s linear infinite;
+}
+
+.pivi-inline-edit-surface-band {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.pivi-inline-edit-surface-gutter {
+  display: flex;
+  flex: 0 0 40px;
+  align-items: flex-start;
+  justify-content: center;
+  padding-block-start: 2px;
+}
+
+.pivi-inline-edit-surface .pivi-inline-edit-surface-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  cursor: pointer;
+  appearance: none;
+  box-shadow: none;
+  transition: color var(--pivi-duration-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-inline-edit-surface .pivi-inline-edit-surface-close:hover {
+    background: transparent;
+    color: var(--pivi-host-text-normal);
+  }
+}
+
+.pivi-inline-edit-surface .pivi-inline-edit-surface-close:active {
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-inline-edit-surface-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pivi-inline-edit-surface-input-row {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pivi-inline-edit-surface-input-host {
+  min-height: 2.25rem;
+}
+
+.pivi-inline-edit-surface-input.pivi-rich-input {
+  min-height: 2.25rem;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+  caret-color: var(--pivi-host-interactive-accent);
+  font-family: var(--pivi-host-font-text, inherit);
+  font-size: var(--pivi-host-font-text-size, var(--pivi-text-composer));
+  line-height: 1.4;
+  box-shadow: none;
+  outline: none;
+}
+
+.pivi-inline-edit-surface-input.pivi-rich-input-empty::before {
+  inset-block-start: 2px;
+  inset-inline: 4px;
+  color: var(--pivi-host-text-faint);
+}
+
+.pivi-inline-edit-surface-input.pivi-rich-input:focus-visible {
+  outline: none;
+}
+
+.pivi-inline-edit-surface-input.pivi-rich-input[contenteditable='false'] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.pivi-inline-edit-surface-tail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.pivi-inline-edit-surface-chrome {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.pivi-inline-edit-surface-selectors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pivi-inline-edit-surface-send,
+.pivi-inline-edit-diff-review-accept,
+.pivi-inline-edit-diff-review-reject {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color var(--pivi-duration-fast) ease,
+    color var(--pivi-duration-fast) ease;
+}
+
+.pivi-inline-edit-surface-send {
+  color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-inline-edit-surface-send--stop {
+  color: var(--pivi-host-color-red, #e93147);
+}
+
+.pivi-inline-edit-surface-send:disabled:not(.pivi-inline-edit-surface-send--stop) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-inline-edit-surface-send:hover:not(:disabled),
+  .pivi-inline-edit-diff-review-accept:hover:not(:disabled),
+  .pivi-inline-edit-diff-review-reject:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--pivi-host-text-normal) 8%, transparent);
+  }
+}
+
+.pivi-inline-edit-surface-send:active:not(:disabled),
+.pivi-inline-edit-diff-review-accept:active:not(:disabled),
+.pivi-inline-edit-diff-review-reject:active:not(:disabled) {
+  background: color-mix(in srgb, var(--pivi-host-text-normal) 12%, transparent);
+}
+
+.pivi-inline-edit-surface-icon,
+.pivi-inline-edit-surface-send-icon,
+.pivi-inline-edit-diff-review-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.pivi-inline-edit-surface-icon svg,
+.pivi-inline-edit-surface-send-icon svg,
+.pivi-inline-edit-diff-review-btn-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-inline-edit-surface-send-label,
+.pivi-inline-edit-diff-review-btn-label {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.pivi-inline-edit-surface .pivi-model-selector,
+.pivi-inline-edit-surface .pivi-thinking-selector {
+  position: relative;
+  z-index: 30;
+}
+
+.pivi-inline-edit-surface .pivi-model-selector.is-open,
+.pivi-inline-edit-surface .pivi-thinking-gears.is-open {
+  z-index: 3000;
+}
+
+.pivi-inline-edit-surface .pivi-model-btn,
+.pivi-inline-edit-surface .pivi-thinking-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  min-height: 22px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  box-shadow: none;
+  transition: background-color var(--pivi-duration-fast) ease;
+}
+
+.pivi-inline-edit-surface .pivi-model-btn .pivi-model-provider-icon,
+.pivi-inline-edit-surface .pivi-model-btn .pivi-provider-logo-mask {
+  width: 12px;
+  height: 12px;
+  --pivi-provider-logo-size: 12px;
+}
+
+.pivi-inline-edit-surface .pivi-model-chevron,
+.pivi-inline-edit-surface .pivi-thinking-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-inline-edit-surface .pivi-model-chevron svg,
+.pivi-inline-edit-surface .pivi-thinking-chevron svg {
+  width: 12px;
+  height: 12px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-inline-edit-surface .pivi-model-btn:hover,
+  .pivi-inline-edit-surface .pivi-thinking-current:hover {
+    background: color-mix(in srgb, var(--pivi-host-text-normal) 8%, transparent);
+  }
+}
+
+.pivi-inline-edit-surface .pivi-model-btn:active,
+.pivi-inline-edit-surface .pivi-thinking-current:active {
+  background: color-mix(in srgb, var(--pivi-host-text-normal) 12%, transparent);
+}
+
+.pivi-inline-edit-surface-reply {
+  display: none;
+  margin-block-start: 4px;
+  padding-block-start: 4px;
+  border-block-start: 1px solid var(--pivi-host-border-hover);
+  color: var(--pivi-host-text-normal);
+  font-family: var(--pivi-host-font-text, inherit);
+  font-size: var(--pivi-text-base);
+  line-height: var(--pivi-chat-line-height, 1.4);
+}
+
+.pivi-inline-edit-surface-reply--visible {
+  display: block;
+}
+
+.pivi-inline-edit-surface-reply-actions {
+  justify-content: flex-end;
+  margin-block-start: var(--pivi-spacing-xs);
+}
+
+.pivi-inline-edit-surface-reply:hover .pivi-inline-edit-surface-reply-actions {
+  opacity: 1;
+}
+
+.pivi-inline-edit-surface .pivi-inline-edit-surface-copy {
+  background: transparent;
+}
+
+.pivi-inline-edit-surface-copy-icon,
+.pivi-inline-edit-surface-copy-icon .pivi-inline-edit-surface-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-inline-edit-diff-review-title {
+  font-family: var(--pivi-host-font-interface, inherit);
+  font-size: var(--pivi-text-sm);
+  font-weight: 600;
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-inline-edit-diff-review-hint {
+  margin-block-start: 4px;
+  color: var(--pivi-host-text-muted);
+  font-family: var(--pivi-host-font-interface, inherit);
+  font-size: var(--pivi-text-xs);
+  line-height: 1.4;
+}
+
+.pivi-inline-edit-diff-review-error {
+  display: none;
+  margin-block-start: 4px;
+  color: var(--pivi-host-color-red, #ef4444);
+  font-size: var(--pivi-text-sm);
+}
+
+.pivi-inline-edit-diff-review-error--visible {
+  display: block;
+}
+
+.pivi-inline-edit-diff-review-section {
+  margin-block-start: 8px;
+}
+
+.pivi-inline-edit-diff-review-section-label {
+  margin-block-end: 4px;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.pivi-inline-edit-diff-review-deletion {
+  padding: 4px 8px;
+  border-radius: var(--pivi-radius-xs);
+  background: hsla(350, 88%, 25%, 0.25);
+  text-decoration: line-through;
+}
+
+.pivi-inline-edit-diff-review-insertion {
+  padding: 4px 8px;
+  border-radius: var(--pivi-radius-xs);
+  background: color-mix(in srgb, var(--pivi-host-color-green, #22c55e) 12%, transparent);
+}
+
+.pivi-inline-edit-diff-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-block-start: 8px;
+}
+
+.pivi-inline-edit-diff-review-accept {
+  color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-inline-edit-diff-review-reject {
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-inline-edit-diff-review-shortcut {
+  color: var(--pivi-host-text-muted);
+  font-size: 11px;
+  font-family: var(--pivi-host-font-monospace);
+  opacity: 0.85;
+}

@@ -237,6 +237,9 @@
       "skillTooltip": "Skill: {skill}",
       "toolTooltip": "Tool: {tool}",
       "agentTooltip": "Agent: {agent}",
+      "selectedText": "Ausgewählter Text",
+      "selectedTextTemplateTooltip": "Ausgewählter Text beim Ausführen dieses Befehls",
+      "removeSelectedTextTemplate": "Variable für ausgewählten Text entfernen",
       "inlineContextSource": "Inline-Kontext aus {path}",
       "inlineContextSelection": "Auswahl: {range}",
       "inlineContextPreview": "Vorschau: {preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "Ablehnen",
       "rejectHint": "esc",
-      "streaming": "Wird generiert…",
       "failed": "Inline-Bearbeitung fehlgeschlagen. Versuchen Sie es erneut.",
       "emptyPrompt": "Geben Sie vor dem Senden eine Anweisung ein.",
-      "chatUnavailable": "Öffnen Sie den Pivi-Chat, bevor Sie die Inline-Bearbeitung starten."
+      "chatUnavailable": "Öffnen Sie den Pivi-Chat, bevor Sie die Inline-Bearbeitung starten.",
+      "diffReviewTitle": "Änderungen überprüfen",
+      "diffReviewHint": "Akzeptieren, um die Änderung auf deine Notiz anzuwenden, oder ablehnen, um den Originaltext beizubehalten.",
+      "diffReviewDeletion": "Entfernt",
+      "diffReviewInsertion": "Hinzugefügt",
+      "selectionUnavailable": "Der ausgewählte Text hat sich geändert. Ablehnen und erneut versuchen.",
+      "closeAria": "Inline-Bearbeitung schließen",
+      "stop": "Stopp"
     }
   },
   "host": {

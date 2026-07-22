@@ -1,14 +1,42 @@
+import { appendContextFiles } from '@pivi/pivi-agent-core/context';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import type { Editor } from 'obsidian';
 
+import { INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS } from '@/app/ui/inlineEditProtocol';
+
+const SELECTED_TEXT_CLOSE_MARKER = '</selected_text>';
+const ESCAPED_SELECTED_TEXT_CLOSE_MARKER = '</selected\u200b_text>';
+
+/**
+ * Escapes literal selected-text closing markers inside inline-edit selection payloads.
+ *
+ * Args:
+ *   selectedText: Raw editor selection text.
+ *
+ * Returns:
+ *   Selection text safe to embed inside `<selected_text>` blocks.
+ */
+export function escapeInlineEditSelectedText(selectedText: string): string {
+  return selectedText.replaceAll(SELECTED_TEXT_CLOSE_MARKER, ESCAPED_SELECTED_TEXT_CLOSE_MARKER);
+}
+
 /** Builds the user turn text for inline edit from a prompt and selected editor text. */
-export function buildInlineEditTurnContent(prompt: string, selectedText: string): string {
+export function buildInlineEditTurnContent(
+  prompt: string,
+  selectedText: string,
+  contextFiles?: string[],
+): string {
   const trimmedPrompt = prompt.trim();
-  const selectionBlock = `<selected_text>\n${selectedText}\n</selected_text>`;
-  if (!trimmedPrompt) {
-    return selectionBlock;
+  const selectionBlock = `<selected_text>\n${escapeInlineEditSelectedText(selectedText)}\n</selected_text>`;
+  let content = trimmedPrompt
+    ? `${trimmedPrompt}\n\n${INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS}\n\n${selectionBlock}`
+    : `${INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS}\n\n${selectionBlock}`;
+
+  if (contextFiles && contextFiles.length > 0) {
+    content = appendContextFiles(content, contextFiles);
   }
-  return `${trimmedPrompt}\n\n${selectionBlock}`;
+
+  return content;
 }
 
 /** Concatenates text blocks from the last assistant message, skipping tool_use blocks. */

@@ -1,4 +1,5 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
@@ -6,54 +7,160 @@ import type { ChatUiSnapshot, ComposerOptionSnapshot, DeepReadonly } from '../..
 import type { ComposerChromeActions } from '../activeChatUiBridge';
 import { ModelOptionIcon } from '../ModelOptionIcon';
 
+function getFixedDropdownStyle(trigger: HTMLElement, estimatedWidth: number): CSSProperties {
+  const ownerWindow = trigger.ownerDocument.defaultView;
+  if (!ownerWindow) return {};
+  const rect = trigger.getBoundingClientRect();
+  const margin = 8;
+  const gap = 4;
+  const opensAbove = rect.top > ownerWindow.innerHeight - rect.bottom;
+  const maxHeight = Math.max(80, (opensAbove ? rect.top : ownerWindow.innerHeight - rect.bottom) - margin - gap);
+  const left = Math.max(margin, Math.min(rect.left, ownerWindow.innerWidth - estimatedWidth - margin));
+  return opensAbove
+    ? { bottom: ownerWindow.innerHeight - rect.top + gap, left, maxHeight, maxWidth: ownerWindow.innerWidth - margin * 2 }
+    : { left, maxHeight, maxWidth: ownerWindow.innerWidth - margin * 2, top: rect.bottom + gap };
+}
+
+function containsEventTarget(container: HTMLElement | null, target: EventTarget | null): boolean {
+  return Boolean(container && target && 'nodeType' in target && container.contains(target as Node));
+}
+
+type SelectorOpenMode = 'closed' | 'hover' | 'pinned';
+
+function useSelectorDisclosure() {
+  const [mode, setMode] = useState<SelectorOpenMode>('closed');
+  const modeRef = useRef<SelectorOpenMode>('closed');
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const closeTimerWindowRef = useRef<Window | null>(null);
+  const setModeNow = useCallback((next: SelectorOpenMode): void => {
+    modeRef.current = next;
+    setMode(next);
+  }, []);
+  const cancelClose = useCallback((): void => {
+    if (closeTimerRef.current !== null) closeTimerWindowRef.current?.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+    closeTimerWindowRef.current = null;
+  }, []);
+  const close = useCallback((): void => {
+    cancelClose();
+    setModeNow('closed');
+  }, [cancelClose, setModeNow]);
+  const reveal = useCallback((): void => {
+    cancelClose();
+    if (modeRef.current === 'closed') setModeNow('hover');
+  }, [cancelClose, setModeNow]);
+  const togglePinned = useCallback((): void => {
+    cancelClose();
+    setModeNow(modeRef.current === 'pinned' ? 'closed' : 'pinned');
+  }, [cancelClose, setModeNow]);
+  const scheduleHoverClose = useCallback((relatedTarget: EventTarget | null): void => {
+    if (
+      modeRef.current !== 'hover'
+      || containsEventTarget(triggerRef.current, relatedTarget)
+      || containsEventTarget(dropdownRef.current, relatedTarget)
+    ) return;
+    cancelClose();
+    const ownerWindow = triggerRef.current?.ownerDocument.defaultView;
+    closeTimerWindowRef.current = ownerWindow ?? null;
+    closeTimerRef.current = ownerWindow?.setTimeout(() => {
+      if (modeRef.current === 'hover') setModeNow('closed');
+      closeTimerRef.current = null;
+      closeTimerWindowRef.current = null;
+    }, 80) ?? null;
+  }, [cancelClose, setModeNow]);
+  useEffect(() => cancelClose, [cancelClose]);
+  return {
+    open: mode !== 'closed',
+    triggerRef,
+    dropdownRef,
+    close,
+    reveal,
+    scheduleHoverClose,
+    togglePinned,
+  };
+}
+
 export function ModelSelector({
   options,
   value,
   onChange,
+  portalRoot,
 }: {
   options: readonly DeepReadonly<ComposerOptionSnapshot>[];
   value: string;
   onChange: (value: string) => void;
+  portalRoot?: HTMLElement;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const disclosure = useSelectorDisclosure();
+  const { close, dropdownRef, open, reveal, scheduleHoverClose, togglePinned, triggerRef } = disclosure;
+  const [portalStyle, setPortalStyle] = useState<CSSProperties>({});
   const selected = options.find(option => option.value === value) ?? options[0];
   const reversed = useMemo(() => [...options].reverse(), [options]);
+  useLayoutEffect(() => {
+    if (open && portalRoot && triggerRef.current) {
+      setPortalStyle(getFixedDropdownStyle(triggerRef.current, 240));
+    }
+  }, [open, portalRoot, triggerRef]);
+  useEffect(() => {
+    if (!open || !portalRoot) return;
+    const closeOutside = (event: PointerEvent): void => {
+      const target = event.target as Node | null;
+      if (!triggerRef.current?.contains(target) && !dropdownRef.current?.contains(target)) close();
+    };
+    portalRoot.ownerDocument.addEventListener('pointerdown', closeOutside, true);
+    return () => portalRoot.ownerDocument.removeEventListener('pointerdown', closeOutside, true);
+  }, [close, dropdownRef, open, portalRoot, triggerRef]);
+  const dropdown = (
+    <div
+      aria-hidden={!open}
+      className={`pivi-model-dropdown${portalRoot ? ' pivi-inline-selector-portal pivi-inline-selector-dropdown-fixed' : ''}`}
+      onMouseEnter={reveal}
+      onMouseLeave={(event) => scheduleHoverClose(event.relatedTarget)}
+      ref={dropdownRef}
+      style={portalRoot ? portalStyle : undefined}
+    >
+      {reversed.map((option, index) => {
+        const showGroup = Boolean(option.group && option.group !== reversed[index - 1]?.group);
+        return (
+          <Fragment key={option.value}>
+            {showGroup ? <div className="pivi-model-group">{option.group}</div> : null}
+            <button
+              aria-pressed={option.value === value}
+              className={`pivi-model-option${option.value === value ? ' selected' : ''}`}
+              onClick={(event) => {
+                close();
+                event.currentTarget.blur();
+                onChange(option.value);
+              }}
+              title={option.description}
+              type="button"
+            >
+              <ModelOptionIcon option={option} />
+              <span className="pivi-model-option-label">{option.label}</span>
+            </button>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
   return (
     <div
       className={`pivi-model-selector${open ? ' is-open' : ''}`}
-      onFocusCapture={() => setOpen(true)}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onFocusCapture={reveal}
+      onMouseEnter={reveal}
+      onMouseLeave={(event) => scheduleHoverClose(event.relatedTarget)}
     >
-      <button aria-expanded={open} aria-label={t('chat.composer.modelAria')} className="pivi-model-btn" onClick={() => setOpen(true)} type="button">
+      <button aria-expanded={open} aria-label={t('chat.composer.modelAria')} className="pivi-model-btn" onClick={togglePinned} ref={triggerRef} type="button">
         {selected ? <ModelOptionIcon option={selected} /> : null}
         <span className="pivi-model-label">{selected?.label ?? 'Unknown'}</span>
+        <span className="pivi-model-chevron">
+          <PlatformIcon name="chevron-down" />
+        </span>
       </button>
-      <div aria-hidden={!open} className="pivi-model-dropdown">
-        {reversed.map((option, index) => {
-          const showGroup = Boolean(option.group && option.group !== reversed[index - 1]?.group);
-          return (
-            <Fragment key={option.value}>
-              {showGroup ? <div className="pivi-model-group">{option.group}</div> : null}
-              <button
-                aria-pressed={option.value === value}
-                className={`pivi-model-option${option.value === value ? ' selected' : ''}`}
-                onClick={(event) => {
-                  setOpen(false);
-                  event.currentTarget.blur();
-                  onChange(option.value);
-                }}
-                title={option.description}
-                type="button"
-              >
-                <ModelOptionIcon option={option} />
-                <span className="pivi-model-option-label">{option.label}</span>
-              </button>
-            </Fragment>
-          );
-        })}
-      </div>
+      {portalRoot ? (open ? createPortal(dropdown, portalRoot) : null) : dropdown}
     </div>
   );
 }
@@ -64,16 +171,34 @@ export function ThinkingSelector({
   options,
   value,
   onChange,
+  portalRoot,
 }: {
   adaptive: boolean;
   defaultValue: string;
   options: readonly DeepReadonly<ComposerOptionSnapshot>[];
   value: string;
   onChange: (value: string) => void;
+  portalRoot?: HTMLElement;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const disclosure = useSelectorDisclosure();
+  const { close, dropdownRef, open, reveal, scheduleHoverClose, togglePinned, triggerRef } = disclosure;
+  const [portalStyle, setPortalStyle] = useState<CSSProperties>({});
   const reversed = useMemo(() => [...options].reverse(), [options]);
+  useLayoutEffect(() => {
+    if (open && portalRoot && triggerRef.current) {
+      setPortalStyle(getFixedDropdownStyle(triggerRef.current, 140));
+    }
+  }, [open, portalRoot, triggerRef]);
+  useEffect(() => {
+    if (!open || !portalRoot) return;
+    const closeOutside = (event: PointerEvent): void => {
+      const target = event.target as Node | null;
+      if (!triggerRef.current?.contains(target) && !dropdownRef.current?.contains(target)) close();
+    };
+    portalRoot.ownerDocument.addEventListener('pointerdown', closeOutside, true);
+    return () => portalRoot.ownerDocument.removeEventListener('pointerdown', closeOutside, true);
+  }, [close, dropdownRef, open, portalRoot, triggerRef]);
   if (options.length === 0 || (options.length === 1 && options[0]?.value === defaultValue)) return null;
   const selected = options.find(option => option.value === value) ?? options[0];
   const fallbackLabel = adaptive ? 'High' : 'Off';
@@ -82,14 +207,24 @@ export function ThinkingSelector({
       <div className={adaptive ? 'pivi-thinking-effort' : 'pivi-thinking-budget'}>
         <div
           className={`pivi-thinking-gears${open ? ' is-open' : ''}`}
-          onFocusCapture={() => setOpen(true)}
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          onFocusCapture={reveal}
+          onMouseEnter={reveal}
+          onMouseLeave={(event) => scheduleHoverClose(event.relatedTarget)}
         >
-          <button aria-expanded={open} aria-label={t('chat.composer.reasoningAria')} className="pivi-thinking-current" onClick={() => setOpen(true)} type="button">
+          <button aria-expanded={open} aria-label={t('chat.composer.reasoningAria')} className="pivi-thinking-current" onClick={togglePinned} ref={triggerRef} type="button">
             <span className="pivi-thinking-label">{selected?.label ?? fallbackLabel}</span>
+            <span className="pivi-thinking-chevron">
+              <PlatformIcon name="chevron-down" />
+            </span>
           </button>
-          <div aria-hidden={!open} className="pivi-thinking-options">
+          {portalRoot ? (open ? createPortal(<div
+            aria-hidden={!open}
+            className="pivi-thinking-options pivi-inline-selector-portal pivi-inline-selector-dropdown-fixed"
+            onMouseEnter={reveal}
+            onMouseLeave={(event) => scheduleHoverClose(event.relatedTarget)}
+            ref={dropdownRef}
+            style={portalStyle}
+          >
             {reversed.map(option => {
               const tokenTitle = option.tokens === undefined
                 ? option.description
@@ -102,7 +237,7 @@ export function ThinkingSelector({
                   className={`pivi-thinking-gear${option.value === value ? ' selected' : ''}`}
                   key={option.value}
                   onClick={(event) => {
-                    setOpen(false);
+                    close();
                     event.currentTarget.blur();
                     onChange(option.value);
                   }}
@@ -113,7 +248,31 @@ export function ThinkingSelector({
                 </button>
               );
             })}
-          </div>
+          </div>, portalRoot) : null) : <div aria-hidden={!open} className="pivi-thinking-options" ref={dropdownRef}>
+            {reversed.map(option => {
+              const tokenTitle = option.tokens === undefined
+                ? option.description
+                : option.tokens > 0
+                  ? `${option.tokens.toLocaleString()} tokens`
+                  : 'Disabled';
+              return (
+                <button
+                  aria-pressed={option.value === value}
+                  className={`pivi-thinking-gear${option.value === value ? ' selected' : ''}`}
+                  key={option.value}
+                  onClick={(event) => {
+                    close();
+                    event.currentTarget.blur();
+                    onChange(option.value);
+                  }}
+                  title={tokenTitle}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>}
         </div>
       </div>
     </div>

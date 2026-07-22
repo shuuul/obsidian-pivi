@@ -237,6 +237,9 @@
       "skillTooltip": "Навык: {skill}",
       "toolTooltip": "Инструмент: {tool}",
       "agentTooltip": "Агент: {agent}",
+      "selectedText": "Выделенный текст",
+      "selectedTextTemplateTooltip": "Текст, выделенный при запуске этой команды",
+      "removeSelectedTextTemplate": "Удалить переменную выделенного текста",
       "inlineContextSource": "Встроенный контекст из {path}",
       "inlineContextSelection": "Выделение: {range}",
       "inlineContextPreview": "Предпросмотр: {preview}",
@@ -885,10 +888,16 @@
       "acceptHint": "⌘↩",
       "reject": "Отклонить",
       "rejectHint": "esc",
-      "streaming": "Генерация…",
       "failed": "Встроенное редактирование не удалось. Повторите попытку.",
       "emptyPrompt": "Введите инструкцию перед отправкой.",
-      "chatUnavailable": "Откройте чат Pivi перед встроенным редактированием."
+      "chatUnavailable": "Откройте чат Pivi перед встроенным редактированием.",
+      "diffReviewTitle": "Проверка изменений",
+      "diffReviewHint": "Примите, чтобы применить правку к заметке, или отклоните, чтобы оставить исходный текст.",
+      "diffReviewDeletion": "Удалено",
+      "diffReviewInsertion": "Добавлено",
+      "selectionUnavailable": "Выделенный текст изменился. Отклоните и попробуйте снова.",
+      "closeAria": "Закрыть встроенное редактирование",
+      "stop": "Стоп"
     }
   },
   "host": {

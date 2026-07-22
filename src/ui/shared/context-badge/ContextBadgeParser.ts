@@ -25,6 +25,8 @@ export function mentionPartToContextBadgeToken(part: Exclude<MentionBadgePart, {
       return { kind: 'agent', token: part.raw, agentId: part.agentId, label: part.label };
     case 'inline-context':
       return { kind: 'inline-context', token: part.raw, context: part.context, label: part.label };
+    case 'selected-text-template':
+      return { kind: 'selected-text-template', token: part.raw };
   }
 }
 

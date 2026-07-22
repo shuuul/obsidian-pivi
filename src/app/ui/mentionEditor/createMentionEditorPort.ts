@@ -38,6 +38,7 @@ function buildMentionContext(
     externalContextEntries: buildExternalContextDisplayEntries(
       getObsidianToolsSettingsFromBag(host.settings).externalReadDirectories,
     ),
+    parseWorkspaceCommandVariables: true,
   };
 }
 
@@ -101,6 +102,7 @@ export function createMentionEditorPort(
           normalizePathForVault: (rawPath) =>
             normalizePathForVault(rawPath, getVaultPath(app)),
         },
+        { suggestSelectedTextTemplate: true },
       );
       mentionDropdown.setMcpManager(mcpMentionProvider);
       mentionDropdown.setAgentService(null);
