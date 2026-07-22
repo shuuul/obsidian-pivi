@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.1](https://github.com/shuuul/obsidian-pivi/compare/0.14.0...0.14.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* **obsidian:** satisfy community review CSS, audit, and dependency findings ([aff6bd4](https://github.com/shuuul/obsidian-pivi/commit/aff6bd43c6893c0a06c6ecd6bc0d74acb0f0b9ac))
+
 ## [0.14.0](https://github.com/shuuul/obsidian-pivi/compare/0.13.2...0.14.0) (2026-07-22)
 
 
