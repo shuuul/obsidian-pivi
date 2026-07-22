@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { external } from './externals.mjs';
 import { assertCommunityAudit } from './plugins/assert-community-audit.mjs';
+import { stripReactHoistableScripts } from './plugins/strip-react-hoistable-scripts.mjs';
 import { dedupePiCodingAgentNested } from './plugins/dedupe-pi-dependencies.mjs';
 import {
   shimPiCodingAgentConfig,
@@ -33,6 +34,7 @@ export function createBuildOptions({ production, metafile = false, write = true 
       shimSignalExit,
       shimDebug,
       shimMcpValidation,
+      stripReactHoistableScripts,
       ...(production ? [assertCommunityAudit] : []),
     ],
     platform: 'node',

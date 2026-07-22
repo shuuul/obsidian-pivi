@@ -44,7 +44,7 @@ Pivi exposes one agent lifecycle through the narrow `PiChatService` contract. `P
 
 Runtime, sessions, model catalogs, slash catalogs, and projected settings enter chat orchestration through core-owned `ChatPorts`. React settings use React-owned `SettingsPorts`. Host file, secret, HTTP, process, and storage capabilities are injected through core ports. Explicit ports make ownership testable and prevent a wide plugin object from becoming a service locator.
 
-### React 18 with imperative islands
+### React 19 with imperative islands
 
 React owns stable product chrome: tabs, settings, composer selectors, message shells, and status. Some host surfaces are intentionally imperative:
 
@@ -54,7 +54,7 @@ React owns stable product chrome: tabs, settings, composer selectors, message sh
 - rich tool, diff, ask-user, and stored subagent bodies;
 - owner-document behavior for pop-out windows.
 
-React reserves empty containers for these adapters and consumes immutable snapshots. It never reconciles adapter-owned children. React 18 is bundled intentionally and avoids unused React 19 resource machinery in the plugin artifact.
+React reserves empty containers for these adapters and consumes immutable snapshots. It never reconciles adapter-owned children. React 19 is bundled for the presentation layer; the production build strips unused hoistable-script helpers so the plugin artifact never creates dynamic `<script>` elements for Obsidian community review.
 
 ### Pi-compatible JSONL sessions
 
