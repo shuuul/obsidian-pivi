@@ -38,10 +38,7 @@ export async function captureFileRecoverySnapshot(app: App, file: TFile): Promis
 
   const fileRecovery = getFileRecoveryPlugin(app);
   if (!fileRecovery) {
-    logger.warn('File Recovery pre-write snapshot skipped', {
-      path: file.path,
-      reason: 'plugin_unavailable',
-    });
+    // File Recovery disabled/unavailable is expected; do not warn per write.
     return;
   }
 

@@ -117,11 +117,12 @@ export function createImperativeChatViewHandle(
         if (!manager || !ports) {
           return null;
         }
-        const result = await runSubmitInlineEditTurn(manager, ports, params);
-        if (result) {
+        try {
+          return await runSubmitInlineEditTurn(manager, ports, params);
+        } finally {
+          // Transport tab is closed after each turn; refresh so archived rows do not linger.
           publishTabSnapshot();
         }
-        return result;
       },
       addEditorSelection(editor: Editor, markdownView: MarkdownView) {
         return getTabManager()?.getActiveTab()?.ui.inlineContextManager

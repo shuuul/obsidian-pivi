@@ -644,6 +644,7 @@ describe('ObsidianVaultApi', () => {
   });
 
   it('editNote still mutates when File Recovery is unavailable', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
       fileRecoveryEnabled: false,
     });
@@ -656,5 +657,7 @@ describe('ObsidianVaultApi', () => {
     });
 
     expect(app.getContent('notes/a.md')).toBe('hello vault');
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 });

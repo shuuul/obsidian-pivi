@@ -81,6 +81,7 @@ describe('submitInlineEditTurn', () => {
 
     const manager = {
       createTab: jest.fn(async () => tab),
+      closeTab: jest.fn(async () => true),
     } as unknown as TabManager;
 
     await expect(submitInlineEditTurn(manager, createPorts(), {
@@ -99,6 +100,7 @@ describe('submitInlineEditTurn', () => {
       draftModel: 'draft-model',
       draftTitle: 'Rewrite',
     });
+    expect(manager.closeTab).toHaveBeenCalledWith('inline-edit-tab', true);
   });
 
   it('registers a cancel callback that cancels the tab streaming', async () => {
@@ -133,6 +135,7 @@ describe('submitInlineEditTurn', () => {
 
     const manager = {
       createTab: jest.fn(async () => tab),
+      closeTab: jest.fn(async () => true),
     } as unknown as TabManager;
 
     await submitInlineEditTurn(manager, createPorts(), {
@@ -144,6 +147,7 @@ describe('submitInlineEditTurn', () => {
 
     expect(registeredCancel).not.toBeNull();
     expect(cancelStreaming).toHaveBeenCalledTimes(1);
+    expect(manager.closeTab).toHaveBeenCalledWith('inline-edit-tab', true);
   });
 
   it('forwards assistant text from the live query before the turn promise resolves', async () => {
@@ -189,6 +193,7 @@ describe('submitInlineEditTurn', () => {
 
     const manager = {
       createTab: jest.fn(async () => tab),
+      closeTab: jest.fn(async () => true),
     } as unknown as TabManager;
 
     const onAssistantText = jest.fn();
@@ -220,6 +225,7 @@ describe('submitInlineEditTurn', () => {
     });
     expect(resolvedBeforeSendCompleted).toBe(false);
     expect(streamedValues).toEqual(['Hel', 'Hello', 'Hello world']);
+    expect(manager.closeTab).toHaveBeenCalledWith('inline-edit-tab', true);
   });
 
   it('does not forward late assistant text after cancellation', async () => {
@@ -265,6 +271,7 @@ describe('submitInlineEditTurn', () => {
 
     const manager = {
       createTab: jest.fn(async () => tab),
+      closeTab: jest.fn(async () => true),
     } as unknown as TabManager;
 
     const onAssistantText = jest.fn();
@@ -279,5 +286,6 @@ describe('submitInlineEditTurn', () => {
 
     expect(cancelStreaming).toHaveBeenCalledTimes(1);
     expect(onAssistantText).not.toHaveBeenCalled();
+    expect(manager.closeTab).toHaveBeenCalledWith('inline-edit-tab', true);
   });
 });

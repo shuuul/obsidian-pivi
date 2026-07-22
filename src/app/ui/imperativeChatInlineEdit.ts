@@ -27,9 +27,11 @@ async function acquireInlineEditSettingsOverlay(): Promise<() => void> {
 }
 
 /**
- * Runs one inline-edit turn on a newly created archived tab.
+ * Runs one inline-edit turn on a temporary archived transport tab.
  * Model selection uses draftModel; thinking-level temporarily overlays shared
  * settings and is restored afterward so the active composer is not left changed.
+ * The tab is force-closed when the turn ends so repeated Ask AI turns do not
+ * accumulate archived tabs; the session JSONL remains in history.
  */
 export async function submitInlineEditTurn(
   manager: TabManager,
@@ -49,7 +51,7 @@ export async function submitInlineEditTurn(
     return null;
   }
 
-  let tab: Awaited<ReturnType<TabManager['createTab']>>;
+  let tab: Awaited<ReturnType<TabManager['createTab']>> | null = null;
   try {
     tab = await manager.createTab(undefined, undefined, {
       activate: false,
@@ -65,15 +67,29 @@ export async function submitInlineEditTurn(
   const inputController = tab?.controllers.inputController;
   if (!tab || !inputController) {
     releaseSettingsOverlay();
+    if (tab) {
+      try {
+        await manager.closeTab(tab.id, true);
+      } catch (closeError) {
+        imperativeChatLogger.warn('failed to close incomplete inline edit tab', closeError);
+      }
+    }
     return null;
   }
 
+  const activeTab = tab;
+  const tabId = activeTab.id;
   cancelActiveTurn = () => inputController.cancelStreaming();
   if (cancelled) {
     releaseSettingsOverlay();
+    try {
+      await manager.closeTab(tabId, true);
+    } catch (closeError) {
+      imperativeChatLogger.warn('failed to close inline edit tab after cancel', closeError);
+    }
     return null;
   }
-  const generation = tab.state.streamGeneration;
+  const generation = activeTab.state.streamGeneration;
   const previousSnapshot = ports.settings.getSettingsSnapshot();
   const previousModel = previousSnapshot.model;
   const previousThinkingLevel = previousSnapshot.thinkingLevel;
@@ -104,8 +120,8 @@ export async function submitInlineEditTurn(
         ? (accumulatedText) => {
             if (
               cancelled
-              || tab.lifecycleState === 'closing'
-              || tab.state.streamGeneration !== generation + 1
+              || activeTab.lifecycleState === 'closing'
+              || activeTab.state.streamGeneration !== generation + 1
               || accumulatedText === lastReportedText
             ) {
               return;
@@ -117,15 +133,15 @@ export async function submitInlineEditTurn(
     });
     if (
       cancelled
-      || tab.lifecycleState === 'closing'
-      || tab.state.streamGeneration !== generation + 1
+      || activeTab.lifecycleState === 'closing'
+      || activeTab.state.streamGeneration !== generation + 1
     ) {
       return null;
     }
 
     return {
-      assistantText: extractAssistantTextFromMessages(tab.state.messages),
-      tabId: tab.id,
+      assistantText: extractAssistantTextFromMessages(activeTab.state.messages),
+      tabId,
     };
   } catch (error) {
     imperativeChatLogger.warn('inline edit turn failed', error);
@@ -148,5 +164,10 @@ export async function submitInlineEditTurn(
       }
     }
     releaseSettingsOverlay();
+    try {
+      await manager.closeTab(tabId, true);
+    } catch (closeError) {
+      imperativeChatLogger.warn('failed to close inline edit tab', closeError);
+    }
   }
 }
