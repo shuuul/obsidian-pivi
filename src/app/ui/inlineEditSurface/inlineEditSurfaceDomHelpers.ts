@@ -1,15 +1,29 @@
 import { getObsidianToolsSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 import type { MountInlineEditSurfaceChromeOptions } from '@pivi/pivi-react/mount';
-import type { App, Component } from 'obsidian';
-import { MarkdownRenderer } from 'obsidian';
+import type { App } from 'obsidian';
+import { Component, MarkdownRenderer } from 'obsidian';
 
 import type { PiviPluginHost } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
+import { renderMarkdownContent } from '@/ui/chat/rendering/messageRendererMarkdown';
 
 import type { InlineEditDiffReviewKind } from './types';
 
 type PresentationPlatform = MountInlineEditSurfaceChromeOptions['platform'];
+
+/** Renders one isolated reply snapshot so stale streaming renders stay detached. */
+export async function renderInlineEditReplyMarkdown(
+  app: App,
+  template: HTMLElement,
+  markdown: string,
+): Promise<{ component: Component; contentEl: HTMLElement }> {
+  const component = new Component();
+  component.load();
+  const contentEl = template.cloneNode(false) as HTMLElement;
+  await renderMarkdownContent({ app, component }, contentEl, markdown);
+  return { component, contentEl };
+}
 
 /** Mounts a host icon into an inline-edit control surface. */
 export function renderInlineEditPlatformIcon(

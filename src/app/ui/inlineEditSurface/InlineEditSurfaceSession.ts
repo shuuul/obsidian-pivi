@@ -6,8 +6,7 @@ import {
   type MountInlineEditSurfaceChromeOptions,
 } from '@pivi/pivi-react/mount';
 import type { ComposerOptionSnapshot } from '@pivi/pivi-react/store';
-import type { Editor } from 'obsidian';
-import { Component, MarkdownRenderer } from 'obsidian';
+import { Component, type Editor } from 'obsidian';
 
 import type { PiviPluginHost, PiviPluginWorkspace } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
@@ -25,6 +24,7 @@ import { getVaultFileAliases as getVaultFileAliasesFromMetadata } from '@/ui/sha
 import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataProvider';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 import { buildExternalContextDisplayEntries } from '@/ui/shared/utils/externalContext';
+import { registerFileLinkHandler } from '@/ui/shared/utils/fileLink';
 
 import { extractInlineEditContextFiles } from './extractInlineEditContextFiles';
 import {
@@ -38,6 +38,7 @@ import {
   getInlineEditActiveVaultFilePath,
   getInlineEditExternalContexts,
   renderInlineEditPlatformIcon,
+  renderInlineEditReplyMarkdown,
 } from './inlineEditSurfaceDomHelpers';
 import {
   createInlineEditSurfaceRoot,
@@ -101,9 +102,12 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
   private sendButton: HTMLButtonElement | null = null;
   private sendIconEl: HTMLElement | null = null;
   private replyEl: HTMLElement | null = null;
+  private replyContentHostEl: HTMLElement | null = null;
   private replyContentEl: HTMLElement | null = null;
   private replyCopyIconEl: HTMLElement | null = null;
   private replyText = '';
+  private replyRenderGeneration = 0;
+  private replyRenderComponent: Component | null = null;
   private copyFeedbackTimeout: number | null = null;
   private vaultDataProvider: VaultMentionDataProvider | null = null;
   private workspace: PiviPluginWorkspace | null = null;
@@ -190,6 +194,9 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     this.slashDropdown?.destroy();
     this.mentionInput?.destroy();
     this.vaultDataProvider = null;
+    this.replyRenderGeneration += 1;
+    this.replyRenderComponent?.unload();
+    this.replyRenderComponent = null;
     this.markdownComponent.unload();
     this.rootEl = null;
     this.widget = null;
@@ -201,6 +208,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     this.boundEditorView = null;
     this.boundEditor = null;
     this.diffErrorEl = null;
+    this.replyContentHostEl = null;
     this.replyContentEl = null;
     this.replyCopyIconEl = null;
     this.replyText = '';
@@ -220,20 +228,11 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       return;
     }
 
-    const app = this.deps.plugin.app;
-    const sourcePath = app.workspace.getActiveFile()?.path ?? '';
     this.replyText = text;
     if (text.trim().length > 0) {
       this.rootEl?.removeClass('pivi-inline-edit-surface--waiting');
     }
-    this.replyContentEl.empty();
-    void MarkdownRenderer.render(
-      app,
-      text,
-      this.replyContentEl,
-      sourcePath,
-      this.markdownComponent,
-    );
+    void this.renderReplyMarkdown(text);
     this.replyEl.toggleClass('pivi-inline-edit-surface-reply--visible', text.trim().length > 0);
   }
 
@@ -328,12 +327,14 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     this.sendButton.addEventListener('click', () => this.handleSendButtonClick());
 
     this.replyEl = root.createDiv({
-      cls: 'pivi-inline-edit-surface-reply pivi-message-content',
+      cls: 'pivi-inline-edit-surface-reply pivi-message-assistant',
       attr: { 'aria-live': 'polite' },
     });
-    this.replyContentEl = this.replyEl.createDiv({
-      cls: 'pivi-inline-edit-surface-reply-content pivi-markdown-rendered',
+    this.replyContentHostEl = this.replyEl.createDiv({ cls: 'pivi-message-content' });
+    this.replyContentEl = this.replyContentHostEl.createDiv({
+      cls: 'pivi-inline-edit-surface-reply-content pivi-text-block pivi-markdown-rendered',
     });
+    registerFileLinkHandler(this.deps.plugin.app, this.replyEl, this.markdownComponent);
     const replyActions = this.replyEl.createDiv({
       cls: 'pivi-inline-edit-surface-reply-actions pivi-message-actions pivi-assistant-msg-actions',
     });
@@ -369,6 +370,25 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
 
     this.updateSendButton();
     this.updateInputDisabled();
+  }
+
+  private async renderReplyMarkdown(text: string): Promise<void> {
+    const contentHost = this.replyContentHostEl;
+    const template = this.replyContentEl;
+    if (!contentHost || !template || this.destroyed) return;
+    const generation = ++this.replyRenderGeneration;
+    const { component, contentEl } = await renderInlineEditReplyMarkdown(
+      this.deps.plugin.app, template, text,
+    );
+    if (this.destroyed || generation !== this.replyRenderGeneration || this.replyContentHostEl !== contentHost) {
+      component.unload();
+      return;
+    }
+
+    this.replyRenderComponent?.unload();
+    this.replyRenderComponent = component;
+    contentHost.replaceChildren(contentEl);
+    this.replyContentEl = contentEl;
   }
 
   private handleDiffAccept(): void {
@@ -585,13 +605,9 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
   private async copyReplyMarkdown(button: HTMLButtonElement): Promise<void> {
     const ownerWindow = button.ownerDocument.defaultView;
     const clipboard = ownerWindow?.navigator.clipboard;
-    if (!ownerWindow || !clipboard?.writeText || !this.replyText) {
-      return;
-    }
+    if (!ownerWindow || !clipboard?.writeText || !this.replyText) return;
     await clipboard.writeText(this.replyText);
-    if (!this.replyCopyIconEl) {
-      return;
-    }
+    if (!this.replyCopyIconEl) return;
     this.clearCopyFeedback();
     button.addClass('copied');
     renderInlineEditPlatformIcon(this.deps.platform, this.replyCopyIconEl, 'check');

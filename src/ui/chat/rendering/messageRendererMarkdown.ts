@@ -21,11 +21,14 @@ import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
 import { runRendererAction } from './messageRendererActions';
 import type { RenderContentOptions } from './messageRendererTypes';
 
-export interface MessageRendererMarkdownHost {
+export interface MarkdownContentRenderHost {
   readonly app: App;
+  readonly component: Component;
+}
+
+export interface MessageRendererMarkdownHost extends MarkdownContentRenderHost {
   readonly plugin: PiviChatHost;
   readonly ports: ChatPorts;
-  readonly component: Component;
 }
 
 export function buildMentionBadgeContext(
@@ -50,7 +53,7 @@ export function buildMentionBadgeContext(
   };
 }
 
-export function getMarkdownRenderSourcePath(host: MessageRendererMarkdownHost): string {
+export function getMarkdownRenderSourcePath(host: MarkdownContentRenderHost): string {
   return host.app.workspace.getActiveFile()?.path ?? '';
 }
 
@@ -268,7 +271,7 @@ export async function renderUserMessageText(
 }
 
 export async function renderMarkdownContent(
-  host: MessageRendererMarkdownHost,
+  host: MarkdownContentRenderHost,
   el: HTMLElement,
   markdown: string,
   options?: RenderContentOptions,

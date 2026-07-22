@@ -6,6 +6,7 @@ installObsidianDomHelpers(window);
 
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { MarkdownRenderer } from 'obsidian';
 
 import { InlineEditSurfaceSession } from '@/app/ui/inlineEditSurface/InlineEditSurfaceSession';
 import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownController';
@@ -26,6 +27,7 @@ jest.mock('obsidian', () => ({
     load(): void {}
     unload(): void {}
     register(): void {}
+    registerDomEvent(): void {}
   },
   MarkdownRenderer: {
     render: jest.fn(async () => undefined),
@@ -47,6 +49,7 @@ describe('InlineEditSurfaceSession DOM', () => {
   let session: InlineEditSurfaceSession;
 
   beforeEach(() => {
+    jest.mocked(MarkdownRenderer.render).mockImplementation(async () => undefined);
     Object.defineProperty(window.navigator, 'clipboard', {
       configurable: true,
       value: { writeText },
@@ -124,8 +127,11 @@ describe('InlineEditSurfaceSession DOM', () => {
     expect(root?.querySelector('.pivi-inline-edit-surface-tail .pivi-inline-edit-surface-chrome')).not.toBeNull();
     expect(root?.querySelector('.pivi-inline-edit-surface-tail .pivi-inline-edit-surface-send')).not.toBeNull();
     expect(root?.querySelector('.pivi-inline-edit-surface-at')).toBeNull();
-    expect(root?.querySelector('.pivi-inline-edit-surface-reply')).not.toBeNull();
-    expect(root?.querySelector('.pivi-inline-edit-surface-reply-content.pivi-markdown-rendered')).not.toBeNull();
+    expect(root?.querySelector('.pivi-inline-edit-surface-reply.pivi-message-assistant')).not.toBeNull();
+    expect(root?.querySelector(
+      '.pivi-inline-edit-surface-reply > .pivi-message-content > '
+      + '.pivi-inline-edit-surface-reply-content.pivi-text-block.pivi-markdown-rendered',
+    )).not.toBeNull();
     expect(root?.querySelectorAll('.pivi-inline-edit-surface-reply-actions button')).toHaveLength(1);
   });
 
@@ -159,6 +165,29 @@ describe('InlineEditSurfaceSession DOM', () => {
 
     session.setStreaming(false);
     expect(root).not.toHaveClass('pivi-inline-edit-surface--waiting');
+  });
+
+  it('keeps a newer streamed Markdown render when an older render finishes late', async () => {
+    const pending: Array<() => void> = [];
+    jest.mocked(MarkdownRenderer.render).mockImplementation(async (_app, markdown, target) => {
+      target.textContent = markdown;
+      await new Promise<void>((resolve) => pending.push(resolve));
+    });
+    session.show(createSnapshot(editor));
+
+    session.setReplyText('Older chunk');
+    session.setReplyText('Newest chunk');
+    expect(pending).toHaveLength(2);
+
+    pending[1]?.();
+    await new Promise(resolve => window.setTimeout(resolve, 0));
+    expect(editor.dom.querySelector('.pivi-inline-edit-surface-reply-content'))
+      .toHaveTextContent('Newest chunk');
+
+    pending[0]?.();
+    await new Promise(resolve => window.setTimeout(resolve, 0));
+    expect(editor.dom.querySelector('.pivi-inline-edit-surface-reply-content'))
+      .toHaveTextContent('Newest chunk');
   });
 
   it('forwards typed input to the mention selector without a separate @ button', async () => {

@@ -19,6 +19,16 @@ export class Component {
     this.cleanups.push(cleanup);
   }
 
+  registerDomEvent(
+    el: EventTarget,
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
+    el.addEventListener(type, callback, options);
+    this.register(() => el.removeEventListener(type, callback, options));
+  }
+
   load(): void {
     this.onload();
     for (const child of this.children) child.load();
