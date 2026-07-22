@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.14.0](https://github.com/shuuul/obsidian-pivi/compare/0.13.2...0.14.0) (2026-07-22)
+
+
+### Features
+
+* **chat:** randomly assign unused subagent writer names ([9a59e3b](https://github.com/shuuul/obsidian-pivi/commit/9a59e3b5dbd3e811666b5bfda024ca1adccff1cc))
+* **commands:** add mention support in prompt editor, remove Note Toolbar button ([988bb3d](https://github.com/shuuul/obsidian-pivi/commit/988bb3d9526d831676d900d21366cad8c292262f))
+* **editor:** add persistent inline edit workflow ([2f1391a](https://github.com/shuuul/obsidian-pivi/commit/2f1391afbbf14d92b0d8db9bfbcbc6e5e10f5cf2))
+* **host:** snapshot notes in File Recovery before vault mutations ([fb3dcd6](https://github.com/shuuul/obsidian-pivi/commit/fb3dcd6ac7a790239f5c3d006cf1245bd3f0ed1f))
+* **settings:** add drag reorder for custom commands and toolbar shortcuts ([07c0fd2](https://github.com/shuuul/obsidian-pivi/commit/07c0fd25a55772b0606baf1a93a06a60aa8a76b0))
+* **toolbar:** add editor selection toolbar and inline edit ([b80d3e4](https://github.com/shuuul/obsidian-pivi/commit/b80d3e4ac33f3719d15073649d9436dcee52364a))
+
+
+### Bug Fixes
+
+* **build:** restore copy-to-obsidian deploy blocked by audit false positive ([dfcd035](https://github.com/shuuul/obsidian-pivi/commit/dfcd0354f3cc85641d4a60b3e9fc3b820a2bde41))
+* **editor:** align inline edit markdown rhythm ([423df37](https://github.com/shuuul/obsidian-pivi/commit/423df37017a21c022b7428092d5a432f8ba36690))
+* **editor:** align inline edit streaming with sidebar output ([6ea5367](https://github.com/shuuul/obsidian-pivi/commit/6ea5367d28089f377f379e73b511bb6512c28970))
+* **editor:** close Ask AI transport tabs after each turn ([6387167](https://github.com/shuuul/obsidian-pivi/commit/6387167a0d01d668567548a7aa2cc1c1e345b3bf))
+* **editor:** honor output-only inline edit requests ([9c9d7f0](https://github.com/shuuul/obsidian-pivi/commit/9c9d7f014d61d5ecfddfe2a74710bc3d600d9699))
+* **editor:** keep inline edit openable across file switches ([bc0ef99](https://github.com/shuuul/obsidian-pivi/commit/bc0ef99e6a3abd8e74727df9c1056dac94b3e9f9))
+* **editor:** polish inline edit review interactions ([22776ee](https://github.com/shuuul/obsidian-pivi/commit/22776ee1d11da617c23efef6e47121aa734a79a1))
+* **editor:** reuse chat markdown rendering for inline edit ([b3ee714](https://github.com/shuuul/obsidian-pivi/commit/b3ee714f0b2c766fc12a3326df90ec8697398813))
+
 ## [0.13.2](https://github.com/shuuul/obsidian-pivi/compare/0.13.1...0.13.2) (2026-07-21)
 
 
