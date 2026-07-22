@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Outcome |
 |---|---|---|
-| [023-command-prompt-mentions.md](023-command-prompt-mentions.md) | Active | Slash-command prompts support @file/@folder//skill//MCP mentions with dropdown completion. |
+| [024-inline-edit-embedded-surface-and-diff-review.md](024-inline-edit-embedded-surface-and-diff-review.md) | Active | Editor-embedded inline edit surface with full @// selectors, streaming reply, and rendered-markdown diff review with accept/reject. |
 
 ## Archived specs
 
@@ -38,6 +38,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [020-durable-ai-title-persistence.md](archive/020-durable-ai-title-persistence.md) | 2026-07-19 | Persistence-first model-generated titles with fallback preservation and visible write failures. |
 | [021-device-local-provider-state.md](archive/021-device-local-provider-state.md) | 2026-07-20 | Device-local provider registry (`pivi.providers.v1`), single-phase cutover, SecretStorage-backed headers and MCP OAuth tokens, and stripped synced provider/model fields. |
 | [022-editor-selection-toolbar-and-inline-edit.md](archive/022-editor-selection-toolbar-and-inline-edit.md) | 2026-07-21 | Notion-style selection toolbar and Cursor-style inline edit in the note editor, with provider mutual exclusion, Pivi/Obsidian command shortcuts, archived inline-edit sessions, and full-locale i18n. |
+| [023-command-prompt-mentions.md](archive/023-command-prompt-mentions.md) | 2026-07-22 | Slash-command prompts support @file/@folder//skill//MCP mentions with dropdown completion. |
 
 ## Numbering and files
 

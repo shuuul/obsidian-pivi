@@ -1,9 +1,9 @@
 ---
 id: "023"
 title: "Mention support in command prompts"
-status: Active
+status: Completed
 created: 2026-07-21
-updated: 2026-07-21
+updated: 2026-07-22
 coordinator: "Droid"
 ---
 
@@ -143,4 +143,4 @@ Append entries rather than rewriting another agent's record.
 
 ## Completion summary
 
-Implementation complete behind automated gates. All four workstreams Done, all success criteria met, full quality gates green (typecheck, lint, check:boundaries, test:coverage 280/2142, build, check:bundle-size, check:specs). Manual live-vault QA remains before archive: create a command with `@` and `/` mentions, save, reopen to confirm badges re-render, run the command, and confirm context files/skill/MCP land in the turn.
+Implementation complete behind automated gates. All four workstreams Done, all success criteria met, full quality gates green (typecheck, lint, check:boundaries, test:coverage 280/2142, build, check:bundle-size, check:specs). Manual live-vault QA completed 2026-07-22; all acceptance criteria satisfied.
