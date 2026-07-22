@@ -8,7 +8,7 @@ import {
 } from '@/ui/chat/subagentProfiles';
 
 describe('subagent profiles', () => {
-  it('keeps writer names unique and in the established assignment order', () => {
+  it('keeps writer names unique and stable in catalog order', () => {
     expect(SUBAGENT_WRITER_NAMES).toEqual([
       'Austen',
       'Baldwin',

@@ -1,5 +1,6 @@
 import { SubagentManager } from '@/ui/chat/services/SubagentManager';
 import { extractFullOutputPath } from '@/ui/chat/services/subagentOutput';
+import { SUBAGENT_WRITER_NAMES } from '@/ui/chat/subagentProfiles';
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
 
@@ -11,8 +12,17 @@ const mockInterpreter: TaskResultInterpreter = {
   extractTagValue: () => null,
 };
 
-function createManager(onChange = jest.fn()): SubagentManager {
-  return new SubagentManager(onChange, mockInterpreter);
+function createManager(onChange = jest.fn(), random: () => number = Math.random): SubagentManager {
+  return new SubagentManager(onChange, mockInterpreter, random);
+}
+
+function createRandomSequence(...values: number[]): () => number {
+  let index = 0;
+  return () => {
+    const value = values[Math.min(index, values.length - 1)] ?? 0;
+    index += 1;
+    return value;
+  };
 }
 
 describe('SubagentManager', () => {
@@ -154,6 +164,58 @@ describe('SubagentManager', () => {
     manager.handleTaskToolUse('task-1', { run_in_background: false });
     manager.resetSpawnedCount();
     expect(manager.subagentsSpawnedThisStream).toBe(0);
+  });
+
+  it('assigns writer names by sampling unused names instead of catalog order', () => {
+    const manager = createManager(jest.fn(), createRandomSequence(0.9, 0.1));
+
+    const first = manager.handleTaskToolUse('task-1', { run_in_background: false, description: 'one' });
+    const second = manager.handleTaskToolUse('task-2', { run_in_background: false, description: 'two' });
+
+    expect(first.action).toBe('created_sync');
+    expect(second.action).toBe('created_sync');
+    if (first.action !== 'created_sync' || second.action !== 'created_sync') {
+      throw new Error('expected sync creation');
+    }
+
+    expect(first.info.writerName).toBe(SUBAGENT_WRITER_NAMES[Math.floor(0.9 * SUBAGENT_WRITER_NAMES.length)]);
+    expect(second.info.writerName).toBe(
+      SUBAGENT_WRITER_NAMES.filter(name => name !== first.info.writerName)[
+        Math.floor(0.1 * (SUBAGENT_WRITER_NAMES.length - 1))
+      ],
+    );
+    expect(first.info.writerName).not.toBe(SUBAGENT_WRITER_NAMES[0]);
+    expect(first.info.writerName).not.toBe(second.info.writerName);
+  });
+
+  it('keeps writer-name assignment idempotent for the same task id', () => {
+    const manager = createManager(jest.fn(), createRandomSequence(0.75));
+    const created = manager.handleTaskToolUse('task-1', { run_in_background: false, description: 'one' });
+    expect(created.action).toBe('created_sync');
+    if (created.action !== 'created_sync') throw new Error('expected sync creation');
+
+    const again = manager.handleTaskToolUse('task-1', { run_in_background: false, description: 'one updated' });
+    expect(again.action).toBe('label_updated');
+    if (again.action !== 'label_updated') throw new Error('expected label update');
+    expect(again.info.writerName).toBe(created.info.writerName);
+  });
+
+  it('uses random unused suffixed names after the base pool is exhausted', () => {
+    const picks = Array.from({ length: SUBAGENT_WRITER_NAMES.length }, () => 0);
+    picks.push(0.95);
+    const manager = createManager(jest.fn(), createRandomSequence(...picks));
+
+    for (let index = 0; index < SUBAGENT_WRITER_NAMES.length; index++) {
+      manager.handleTaskToolUse(`task-${index}`, { run_in_background: false, description: `base-${index}` });
+    }
+
+    const overflow = manager.handleTaskToolUse('task-overflow', {
+      run_in_background: false,
+      description: 'overflow',
+    });
+    expect(overflow.action).toBe('created_sync');
+    if (overflow.action !== 'created_sync') throw new Error('expected sync creation');
+    expect(overflow.info.writerName).toBe(`${SUBAGENT_WRITER_NAMES[Math.floor(0.95 * SUBAGENT_WRITER_NAMES.length)]} 2`);
   });
 });
 

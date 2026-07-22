@@ -29,12 +29,15 @@ export class SubagentManager extends SubagentAsyncManagerBase {
   private _spawnedThisStream = 0;
   private taskIdToWriterName = new Map<string, string>();
   private usedWriterNames = new Set<string>();
+  private readonly random: () => number;
 
   constructor(
     onStateChange: SubagentStateChangeCallback,
     taskResultInterpreter: TaskResultInterpreter = defaultTaskResultInterpreter,
+    random: () => number = Math.random,
   ) {
     super(onStateChange, taskResultInterpreter, new SubagentResultParser(taskResultInterpreter));
+    this.random = random;
   }
 
   public setCallback(callback: SubagentStateChangeCallback): void {
@@ -207,17 +210,20 @@ export class SubagentManager extends SubagentAsyncManagerBase {
   protected assignWriterName(taskToolId: string): string {
     const existing = this.taskIdToWriterName.get(taskToolId);
     if (existing) return existing;
-    for (const writerName of SUBAGENT_WRITER_NAMES) {
-      if (!this.usedWriterNames.has(writerName)) {
-        this.usedWriterNames.add(writerName);
-        this.taskIdToWriterName.set(taskToolId, writerName);
-        return writerName;
-      }
-    }
-    const fallback = `${SUBAGENT_WRITER_NAMES[this.usedWriterNames.size % SUBAGENT_WRITER_NAMES.length]} ${Math.floor(this.usedWriterNames.size / SUBAGENT_WRITER_NAMES.length) + 1}`;
-    this.usedWriterNames.add(fallback);
-    this.taskIdToWriterName.set(taskToolId, fallback);
-    return fallback;
+
+    const unusedBaseNames = SUBAGENT_WRITER_NAMES.filter(name => !this.usedWriterNames.has(name));
+    const candidates = unusedBaseNames.length > 0
+      ? unusedBaseNames
+      : SUBAGENT_WRITER_NAMES
+        .map(name => `${name} ${Math.floor(this.usedWriterNames.size / SUBAGENT_WRITER_NAMES.length) + 1}`)
+        .filter(name => !this.usedWriterNames.has(name));
+    const writerName = candidates.length > 0
+      ? candidates[Math.floor(this.random() * candidates.length)]!
+      : `${SUBAGENT_WRITER_NAMES[Math.floor(this.random() * SUBAGENT_WRITER_NAMES.length)]!} ${Math.floor(this.usedWriterNames.size / SUBAGENT_WRITER_NAMES.length) + 1}`;
+
+    this.usedWriterNames.add(writerName);
+    this.taskIdToWriterName.set(taskToolId, writerName);
+    return writerName;
   }
 
   private createTask(taskToolId: string, taskInput: Record<string, unknown>, mode: 'sync' | 'async'): HandleTaskResult {
