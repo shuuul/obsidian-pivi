@@ -30,6 +30,9 @@ describe('transcript rhythm styles', () => {
       '.pivi-message-assistant .pivi-message-content .pivi-markdown-rendered',
     );
     expect(markdown).toContain(
+      '.pivi-inline-edit-surface-reply-content.pivi-markdown-rendered',
+    );
+    expect(markdown).toContain(
       '--pivi-markdown-flow-content: var(--pivi-flow-content);',
     );
     expect(markdown).toContain(

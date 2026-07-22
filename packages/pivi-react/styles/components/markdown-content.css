@@ -357,7 +357,8 @@
  * readable and headings remain attached to their section across host themes. */
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-surface-reply-content.pivi-markdown-rendered
 ) {
   --pivi-markdown-flow-compact: var(--pivi-flow-compact);
   --pivi-markdown-flow-content: var(--pivi-flow-content);
@@ -366,7 +367,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-surface-reply-content.pivi-markdown-rendered
 ) > :is(
   p,
   ul,
@@ -389,7 +391,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-surface-reply-content.pivi-markdown-rendered
 ) > :is(
   p,
   ul,
@@ -416,7 +419,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-surface-reply-content.pivi-markdown-rendered
 ) > :is(
   p,
   ul,
@@ -433,7 +437,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-surface-reply-content.pivi-markdown-rendered
 ) > :is(h1, h2, h3, h4, h5, h6) + :is(
   p,
   ul,
@@ -450,7 +455,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-surface-reply-content.pivi-markdown-rendered
 ) > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
   margin-block-start: var(--pivi-markdown-flow-content);
 }
