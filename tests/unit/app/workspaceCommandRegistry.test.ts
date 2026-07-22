@@ -1,6 +1,8 @@
 const mockEnsurePiviViewOpen = jest.fn();
+const mockActivatePiviView = jest.fn();
 
 jest.mock('@/app/piviViewActivation', () => ({
+  activatePiviView: mockActivatePiviView,
   ensurePiviViewOpen: mockEnsurePiviViewOpen,
 }));
 
@@ -70,7 +72,10 @@ function createHarness(selectedText = 'Selected text') {
 }
 
 describe('WorkspaceCommandRegistry', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockActivatePiviView.mockResolvedValue(undefined);
+  });
 
   it('registers a stable icon-bearing Obsidian command and removes it on reconcile', () => {
     const { commands, host, registry } = createHarness();
@@ -89,12 +94,13 @@ describe('WorkspaceCommandRegistry', () => {
   });
 
   it('resolves the selected text and sends it in a new session', async () => {
-    const { commands, registry, sendWorkspaceCommandInNewSession } = createHarness();
+    const { commands, host, registry, sendWorkspaceCommandInNewSession } = createHarness();
     registry.reconcile([entry]);
 
     commands[0]?.callback?.();
     await new Promise(resolve => setTimeout(resolve, 0));
 
+    expect(mockActivatePiviView).toHaveBeenCalledWith(host.app, 'right-sidebar');
     const sentContent = sendWorkspaceCommandInNewSession.mock.calls[0]?.[0] ?? '';
     const extracted = extractInlineContextTokensFromMessage(sentContent);
     expect(extracted.messageWithoutInlineContextTokens.trim()).toBe('Summarize:');

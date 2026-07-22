@@ -8,7 +8,7 @@ import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/sl
 import { type App, type Command,getIcon, MarkdownView, Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';
-import { ensurePiviViewOpen } from '@/app/piviViewActivation';
+import { activatePiviView, ensurePiviViewOpen } from '@/app/piviViewActivation';
 import { captureEditorSelectionInlineContext } from '@/ui/chat/ui/InlineContext';
 
 const logger = new PluginLogger('WorkspaceCommandRegistry');
@@ -106,6 +106,7 @@ export class WorkspaceCommandRegistry {
       return;
     }
 
+    await activatePiviView(this.host.app, this.host.settings.chatViewPlacement);
     const view = await ensurePiviViewOpen(this.host.app, this.host.settings.chatViewPlacement);
     const sent = await view?.getChatHandle()?.commands
       .sendWorkspaceCommandInNewSession(content) ?? false;
