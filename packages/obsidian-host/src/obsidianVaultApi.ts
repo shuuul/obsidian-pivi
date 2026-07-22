@@ -11,6 +11,7 @@ import {
   TFolder,
 } from 'obsidian';
 
+import { captureFileRecoverySnapshot } from './fileRecoverySnapshot';
 import { getVaultPath, normalizePathForVault } from './path';
 
 function asciiDoubleQuotesToCurly(text: string): string {
@@ -147,6 +148,10 @@ export class ObsidianVaultApi {
     return abstract instanceof TFile ? abstract : null;
   }
 
+  private async capturePreWriteSnapshot(file: TFile): Promise<void> {
+    await captureFileRecoverySnapshot(this.app, file);
+  }
+
   private resolveAbstract(path: string): TAbstractFile | null {
     const normalized = normalizePathForVault(path.trim(), this.vaultPath());
     if (!normalized) {
@@ -245,6 +250,7 @@ export class ObsidianVaultApi {
     const replaceAll = Boolean(params.replace_all);
 
     let replacements = 0;
+    await this.capturePreWriteSnapshot(resolved);
     await this.app.vault.process(resolved, (data) => {
       const parts = data.split(oldString);
       const count = parts.length - 1;
@@ -279,6 +285,7 @@ export class ObsidianVaultApi {
       if (!resolved) {
         throw new Error('Note not found for append/prepend.');
       }
+      await this.capturePreWriteSnapshot(resolved);
       await this.app.vault.process(resolved, (data) =>
         mode === 'append' ? `${data}${content}` : `${content}${data}`,
       );
@@ -305,6 +312,7 @@ export class ObsidianVaultApi {
     }
 
     if (existing) {
+      await this.capturePreWriteSnapshot(existing);
       await this.app.vault.process(existing, () => content);
       return { path: normalized };
     }
@@ -413,6 +421,7 @@ export class ObsidianVaultApi {
     if (!resolved) {
       throw new Error('Note not found. Provide file= or path=.');
     }
+    await this.capturePreWriteSnapshot(resolved);
     await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
       frontmatter[name] = value;
     });
@@ -424,6 +433,7 @@ export class ObsidianVaultApi {
     if (!resolved) {
       throw new Error('Note not found. Provide file= or path=.');
     }
+    await this.capturePreWriteSnapshot(resolved);
     await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
       delete frontmatter[name];
     });

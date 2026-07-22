@@ -49,7 +49,7 @@ Type `/` to search Pivi's commands, installed vault skills, and enabled tools fr
 
 ✦ **Obsidian-native tools** — Read, search, edit, link, and manage notes through tools that understand wikilinks, frontmatter, backlinks — not file paths.
 
-✦ **No plan mode** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Changes are recoverable through Obsidian trash and file history instead.
+✦ **No plan mode** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Changes are recoverable through Obsidian trash and file history when File Recovery is enabled.
 
 ✦ **Vault skills** — Install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` to teach the agent your workflows.
 
@@ -180,7 +180,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **Clipboard** | MCP import accepts JSON pasted into an editor and never invokes the clipboard-read API. Writes occur only after explicit copy actions. |
 | **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
 | **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |
-| **File recovery** | Edits use Obsidian APIs, deletes go to trash, `obsidian_history` can list/read/restore file-history snapshots. |
+| **File recovery** | Mutating note tools snapshot the current content into Obsidian File Recovery (when enabled) before `edit` / `write` / `properties` changes; deletes go to trash; `obsidian_history` can list/read/restore retained snapshots. |
 | **Telemetry** | Pivi sends none to the plugin author or this project. |
 
 </details>

@@ -5,6 +5,11 @@ import { ObsidianVaultApi } from '@pivi/obsidian-host';
 function makeApp(
   files: Array<{ path: string; content: string; tags?: string[]; frontmatter?: Record<string, unknown> }>,
   folders: string[] = [],
+  options: {
+    fileRecoveryEnabled?: boolean;
+    forceAdd?: jest.Mock;
+    failForceAdd?: boolean;
+  } = {},
 ) {
   const byPath = new Map(files.map((f) => [f.path, { ...f }]));
   const trashed: string[] = [];
@@ -31,6 +36,11 @@ function makeApp(
     const folder = new TFolder();
     Object.assign(folder, { path, name: path.split('/').pop() ?? path, children: [] });
     return folder;
+  }
+
+  const forceAdd = options.forceAdd ?? jest.fn(async () => undefined);
+  if (options.failForceAdd) {
+    forceAdd.mockRejectedValue(new Error('forceAdd failed'));
   }
 
   const app = {
@@ -93,6 +103,10 @@ function makeApp(
       createFolder: async (path: string) => {
         folders.push(path);
         return makeFolder(path);
+      },
+      create: async (path: string, content: string) => {
+        byPath.set(path, { path, content });
+        return makeFile(path);
       },
       createBinary: async (path: string, data: ArrayBuffer) => {
         binaries.set(path, data);
@@ -172,10 +186,20 @@ function makeApp(
       }),
       setActiveLeaf: jest.fn(),
     },
+    internalPlugins: {
+      getEnabledPluginById: (id: string) => (
+        options.fileRecoveryEnabled === false || id !== 'file-recovery'
+          ? null
+          : { forceAdd }
+      ),
+    },
   };
   return Object.assign(app, {
     getBinary(path: string): ArrayBuffer | undefined {
       return binaries.get(path);
+    },
+    getForceAdd(): jest.Mock {
+      return forceAdd;
     },
   });
 }
@@ -544,5 +568,93 @@ describe('ObsidianVaultApi', () => {
 
     expect(app.getListed()).toEqual(['']);
     expect(app.getModified()).toEqual([]);
+  });
+
+  it('editNote captures a File Recovery snapshot before mutating', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
+      fileRecoveryEnabled: true,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.editNote({
+      path: 'notes/a.md',
+      old_string: 'world',
+      new_string: 'vault',
+    });
+
+    expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'hello world');
+    expect(app.getContent('notes/a.md')).toBe('hello vault');
+  });
+
+  it('writeNote create skips File Recovery snapshots', async () => {
+    const app = makeApp([], [], { fileRecoveryEnabled: true });
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.writeNote({
+      path: 'notes/new.md',
+      content: 'created',
+      mode: 'create',
+    });
+
+    expect(app.getForceAdd()).not.toHaveBeenCalled();
+    expect(app.getContent('notes/new.md')).toBe('created');
+  });
+
+  it('writeNote overwrite captures a File Recovery snapshot', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'before' }], [], {
+      fileRecoveryEnabled: true,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.writeNote({
+      path: 'notes/a.md',
+      content: 'after',
+      mode: 'overwrite',
+    });
+
+    expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'before');
+    expect(app.getContent('notes/a.md')).toBe('after');
+  });
+
+  it('setProperty captures a File Recovery snapshot before frontmatter mutation', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'body' }], [], {
+      fileRecoveryEnabled: true,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.setProperty(undefined, 'notes/a.md', 'status', 'draft');
+
+    expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'body');
+  });
+
+  it('editNote still mutates when File Recovery snapshot capture fails', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
+      fileRecoveryEnabled: true,
+      failForceAdd: true,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.editNote({
+      path: 'notes/a.md',
+      old_string: 'world',
+      new_string: 'vault',
+    });
+
+    expect(app.getContent('notes/a.md')).toBe('hello vault');
+  });
+
+  it('editNote still mutates when File Recovery is unavailable', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
+      fileRecoveryEnabled: false,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.editNote({
+      path: 'notes/a.md',
+      old_string: 'world',
+      new_string: 'vault',
+    });
+
+    expect(app.getContent('notes/a.md')).toBe('hello vault');
   });
 });

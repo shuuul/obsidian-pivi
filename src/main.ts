@@ -4,6 +4,7 @@ import { patchRendererFetchForElectron } from "@pivi/obsidian-host/nodeFetch";
 patchSetMaxListenersForElectron();
 patchRendererFetchForElectron();
 
+import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
@@ -117,6 +118,11 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
 
   getVaultPath(): string | null {
     return getVaultPath(this.app);
+  }
+
+  /** Host-neutral vault adapter used by Obsidian tools and automation hooks. */
+  createVaultApi(): ObsidianVaultApi {
+    return new ObsidianVaultApi(this.app);
   }
 
   getChatPerfController(): ChatPerfController {
