@@ -114,16 +114,22 @@ const inlineEditSurfaceField = StateField.define<InlineEditSurfaceFieldState>({
   provide: field => EditorView.decorations.from(field, value => value.decorations),
 });
 
-const installedEditors = new WeakSet<EditorView>();
-
+/**
+ * Ensures the surface field is present on this view.
+ *
+ * Prefer registering `inlineEditSurfaceField` through `registerEditorExtension`
+ * so Obsidian reconfigures keep it. This fallback reinstalls after a reconfigure
+ * that wiped a prior `appendConfig` install — checking the live state field,
+ * not a side WeakSet, so a reused EditorView cannot get stuck believing the
+ * field is installed when it is gone.
+ */
 function ensureInlineEditSurfaceField(editorView: EditorView): void {
-  if (installedEditors.has(editorView)) {
+  if (editorView.state.field(inlineEditSurfaceField, false) !== undefined) {
     return;
   }
   editorView.dispatch({
     effects: StateEffect.appendConfig.of(inlineEditSurfaceField),
   });
-  installedEditors.add(editorView);
 }
 
 /** Returns the document offset for the first line of a selection. */
@@ -152,7 +158,7 @@ export function hideInlineEditSurfaceDecoration(
   editorView: EditorView,
   sessionId: InlineEditSurfaceSessionId,
 ): void {
-  if (!installedEditors.has(editorView)) {
+  if (editorView.state.field(inlineEditSurfaceField, false) === undefined) {
     return;
   }
   editorView.dispatch({

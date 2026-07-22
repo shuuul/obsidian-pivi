@@ -4,7 +4,7 @@ import { installObsidianDomHelpers } from '../../../setupObsidianUi';
 
 installObsidianDomHelpers(window);
 
-import { EditorState } from '@codemirror/state';
+import { EditorState, StateEffect } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
 import {
@@ -103,5 +103,24 @@ describe('inlineEditSurfaceField', () => {
     const root = createInlineEditSurfaceRoot(editor.dom.ownerDocument);
     const widget = new InlineEditSurfaceWidget(root);
     expect(widget.ignoreEvent()).toBe(true);
+  });
+
+  it('reinstalls the surface field after EditorState reconfigure wipes appendConfig', () => {
+    const root = createInlineEditSurfaceRoot(editor.dom.ownerDocument);
+    const widget = new InlineEditSurfaceWidget(root);
+    const line = editor.state.doc.line(1);
+
+    showInlineEditSurfaceDecoration(editor, sessionA, line.from, line.to, widget);
+    expect(getInlineEditSurfaceAnchorPos(editor, sessionA)).toBe(line.from);
+
+    // Simulate Obsidian rebuilding the editor config without dynamically appended fields.
+    editor.dispatch({
+      effects: StateEffect.reconfigure.of([]),
+    });
+    expect(getInlineEditSurfaceAnchorPos(editor, sessionA)).toBeNull();
+
+    showInlineEditSurfaceDecoration(editor, sessionA, line.from, line.to, widget);
+    expect(getInlineEditSurfaceAnchorPos(editor, sessionA)).toBe(line.from);
+    expect(editor.dom.querySelector('[data-pivi-inline-edit-surface="true"]')).toBe(root);
   });
 });

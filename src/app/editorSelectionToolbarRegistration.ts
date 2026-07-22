@@ -1,6 +1,8 @@
 import type { Plugin } from 'obsidian';
 import { ItemView, MarkdownView } from 'obsidian';
 
+import { inlineEditDiffReviewField } from '@/app/ui/inlineEditSurface/inlineEditDiffReviewField';
+import { inlineEditSurfaceField } from '@/app/ui/inlineEditSurface/inlineEditSurfaceField';
 import { getActiveDocument, getActiveWindow } from '@/ui/shared/dom';
 import {
   createFloatingOverlay,
@@ -249,6 +251,14 @@ export function registerEditorSelectionToolbar(
       });
     }),
   );
+
+  // Keep inline-edit decoration fields in the base editor config so Obsidian
+  // reconfigures (same-leaf file switches, mode toggles) cannot wipe them the
+  // way a one-shot StateEffect.appendConfig install can.
+  plugin.registerEditorExtension([
+    inlineEditSurfaceField,
+    inlineEditDiffReviewField,
+  ]);
 
   plugin.registerEditorExtension(
     createSelectionToolbarViewPlugin({

@@ -12,6 +12,8 @@ const showSelectionHighlight = jest.fn();
 const hideSelectionHighlight = jest.fn();
 const mockHostOnShow = jest.fn();
 const mockHostOnDismiss = jest.fn();
+const mockGetCurrentSnapshot = jest.fn<EditorSelectionSnapshot | null, []>(() => null);
+const mockDismissOverlay = jest.fn();
 
 jest.mock('@/app/editorSelectionToolbarRegistration', () => ({
   getSelectionToolbarHost: () => ({
@@ -19,8 +21,9 @@ jest.mock('@/app/editorSelectionToolbarRegistration', () => ({
     onDismiss: mockHostOnDismiss,
     getOverlayElement: () => document.body,
     repositionOverlay: jest.fn(),
-    dismissOverlay: jest.fn(),
+    dismissOverlay: mockDismissOverlay,
     hideOverlayPreservingSnapshot: jest.fn(),
+    getCurrentSnapshot: () => mockGetCurrentSnapshot(),
   }),
 }));
 
@@ -53,6 +56,31 @@ jest.mock('@pivi/pivi-react/mount', () => ({
 jest.mock('obsidian', () => ({
   MarkdownView: class MarkdownView {},
   Notice: class Notice {},
+}));
+
+const showInlineEditSession = jest.fn();
+const setPromptInlineEditSession = jest.fn();
+jest.mock('@/app/ui/inlineEditSurface', () => ({
+  InlineEditSurfaceSession: jest.fn().mockImplementation(() => ({
+    id: `inline-edit-mock-${Math.random()}`,
+    show: showInlineEditSession,
+    setPrompt: setPromptInlineEditSession,
+    isDestroyed: jest.fn(() => false),
+    destroy: jest.fn(),
+    setStreaming: jest.fn(),
+    setReplyText: jest.fn(),
+    showError: jest.fn(),
+    showDiffReview: jest.fn(),
+  })),
+}));
+
+jest.mock('@/app/ui/obsidianPresentationPlatform', () => ({
+  obsidianPresentationPlatform: {},
+}));
+
+jest.mock('@/app/i18n', () => ({
+  appI18n: {},
+  t: (key: string) => key,
 }));
 
 type MockSession = {
@@ -128,7 +156,15 @@ function createController(): SelectionToolbarSurfaceController {
     manifest: { id: 'pivi' },
     ensureWorkspaceServices: jest.fn(async () => ({})),
     register: jest.fn(),
-    getUiFacades: jest.fn(),
+    getUiFacades: jest.fn(() => ({
+      getSettingsSnapshot: (settings: { model: string; thinkingLevel: string }) => settings,
+      chatUIConfig: {
+        getModelOptions: () => [{ value: 'test-model', label: 'Test' }],
+        getReasoningOptions: () => [{ value: 'off', label: 'Off' }],
+        isAdaptiveReasoningModel: () => false,
+        getDefaultReasoningValue: () => 'off',
+      },
+    })),
   };
 
   return new SelectionToolbarSurfaceController(plugin as never);
@@ -140,6 +176,9 @@ describe('SelectionToolbarSurfaceController inline edit guards', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetCurrentSnapshot.mockReturnValue(null);
+    showInlineEditSession.mockClear();
+    setPromptInlineEditSession.mockClear();
     const parent = document.createElement('div');
     document.body.appendChild(parent);
     editor = new EditorView({
@@ -308,5 +347,35 @@ describe('SelectionToolbarSurfaceController inline edit guards', () => {
     }).inlineEditSessions;
     expect(sessions.has(firstSession.id)).toBe(false);
     expect(sessions.has(secondSession.id)).toBe(true);
+  });
+
+  it('opens an inline edit session from the host snapshot when controller snapshot was cleared', () => {
+    const controller = createController();
+    controller.register();
+    mockGetCurrentSnapshot.mockReturnValue(snapshot);
+    (controller as unknown as { currentSnapshot: EditorSelectionSnapshot | null }).currentSnapshot = null;
+
+    (controller as unknown as { openInlineEdit: (prefill?: string) => void }).openInlineEdit();
+
+    expect(mockDismissOverlay).toHaveBeenCalledTimes(1);
+    expect(showInlineEditSession).toHaveBeenCalledWith(snapshot);
+    expect((controller as unknown as {
+      inlineEditSessions: Map<string, unknown>;
+    }).inlineEditSessions.size).toBe(1);
+  });
+
+  it('no-ops Ask AI when neither controller nor host has a snapshot', () => {
+    const controller = createController();
+    controller.register();
+    mockGetCurrentSnapshot.mockReturnValue(null);
+    (controller as unknown as { currentSnapshot: EditorSelectionSnapshot | null }).currentSnapshot = null;
+
+    (controller as unknown as { openInlineEdit: (prefill?: string) => void }).openInlineEdit();
+
+    expect(mockDismissOverlay).not.toHaveBeenCalled();
+    expect(showInlineEditSession).not.toHaveBeenCalled();
+    expect((controller as unknown as {
+      inlineEditSessions: Map<string, unknown>;
+    }).inlineEditSessions.size).toBe(0);
   });
 });

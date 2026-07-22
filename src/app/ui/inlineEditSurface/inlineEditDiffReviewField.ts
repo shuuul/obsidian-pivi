@@ -118,16 +118,20 @@ const inlineEditDiffReviewField = StateField.define<InlineEditDiffReviewFieldSta
   provide: field => EditorView.decorations.from(field, value => value.decorations),
 });
 
-const installedEditors = new WeakSet<EditorView>();
-
+/**
+ * Ensures the diff-review field is present on this view.
+ *
+ * Prefer registering `inlineEditDiffReviewField` through `registerEditorExtension`.
+ * Fall back to `appendConfig` only when the live state field is missing so a
+ * reused EditorView can recover after Obsidian wipes dynamic config.
+ */
 function ensureInlineEditDiffReviewField(editorView: EditorView): void {
-  if (installedEditors.has(editorView)) {
+  if (editorView.state.field(inlineEditDiffReviewField, false) !== undefined) {
     return;
   }
   editorView.dispatch({
     effects: StateEffect.appendConfig.of(inlineEditDiffReviewField),
   });
-  installedEditors.add(editorView);
 }
 
 export function showInlineEditDiffReviewDecoration(
@@ -150,7 +154,7 @@ export function hideInlineEditDiffReviewDecoration(
   editorView: EditorView,
   sessionId: InlineEditSurfaceSessionId,
 ): void {
-  if (!installedEditors.has(editorView)) {
+  if (editorView.state.field(inlineEditDiffReviewField, false) === undefined) {
     return;
   }
   editorView.dispatch({

@@ -4,7 +4,7 @@ import { installObsidianDomHelpers } from '../../../setupObsidianUi';
 
 installObsidianDomHelpers(window);
 
-import { EditorState } from '@codemirror/state';
+import { EditorState, StateEffect } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
 import {
@@ -172,5 +172,36 @@ describe('inlineEditDiffReviewField', () => {
     const root = createInlineEditSurfaceRoot(editor.dom.ownerDocument);
     const widget = new InlineEditDiffReviewWidget(root);
     expect(widget.ignoreEvent()).toBe(true);
+  });
+
+  it('reinstalls the diff-review field after EditorState reconfigure wipes appendConfig', () => {
+    const line = editor.state.doc.line(1);
+    const root = createInlineEditSurfaceRoot(editor.dom.ownerDocument);
+    const widget = new InlineEditDiffReviewWidget(root);
+
+    showInlineEditDiffReviewDecoration(editor, sessionA, {
+      from: line.from,
+      to: line.to,
+      kind: 'replacement',
+      widget,
+    });
+    expect(hasInlineEditDiffReviewDecoration(editor, sessionA)).toBe(true);
+
+    editor.dispatch({
+      effects: StateEffect.reconfigure.of([]),
+    });
+    expect(hasInlineEditDiffReviewDecoration(editor, sessionA)).toBe(false);
+
+    showInlineEditDiffReviewDecoration(editor, sessionA, {
+      from: line.from,
+      to: line.to,
+      kind: 'replacement',
+      widget,
+    });
+    expect(hasInlineEditDiffReviewDecoration(editor, sessionA)).toBe(true);
+    expect(getInlineEditDiffReviewAcceptRange(editor, sessionA)).toEqual({
+      from: line.from,
+      to: line.to,
+    });
   });
 });

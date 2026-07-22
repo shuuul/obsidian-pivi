@@ -197,13 +197,18 @@ export class SelectionToolbarSurfaceController {
   }
 
   private openInlineEdit(prefillPrompt = ''): void {
-    const snapshot = this.currentSnapshot;
+    const host = getSelectionToolbarHost();
+    // Prefer the live host snapshot when the controller copy was cleared by a
+    // dismiss/leaf-change race while the toolbar button click is still in flight.
+    const snapshot = this.currentSnapshot ?? host?.getCurrentSnapshot() ?? null;
     if (!snapshot) {
       return;
     }
 
-    const host = getSelectionToolbarHost();
-    host?.hideOverlayPreservingSnapshot();
+    // Dismiss the transient toolbar fully so a later Ask AI cannot reuse a stale
+    // range from another file. Inline-edit sessions are independent of dismiss.
+    host?.dismissOverlay();
+    this.currentSnapshot = null;
     this.disposeSurface();
 
     const defaults = getComposerDefaults(this.plugin);
