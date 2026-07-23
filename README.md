@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/shuuul/obsidian-pivi/releases"><img src="https://img.shields.io/static/v1?label=version&message=0.15.0&color=blue" alt="version"></a>
+  <a href="https://github.com/shuuul/obsidian-pivi/releases"><img src="https://img.shields.io/static/v1?label=version&message=0.15.1&color=blue" alt="version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
   <a href="https://obsidian.md/plugins"><img src="https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white" alt="Obsidian plugin"></a>
 </p>
