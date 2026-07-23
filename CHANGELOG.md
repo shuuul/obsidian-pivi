@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.15.0](https://github.com/shuuul/obsidian-pivi/compare/0.14.1...0.15.0) (2026-07-23)
+
+
+### Features
+
+* **network:** add scoped HTTP egress client and remove global fetch patch ([a01973c](https://github.com/shuuul/obsidian-pivi/commit/a01973cebd6c4bfbc8cadc5ff5f81513909e206d))
+* **security:** add turn-scoped high-risk confirms and bounded Skills/MCP extensions ([8b28a09](https://github.com/shuuul/obsidian-pivi/commit/8b28a0985183ec468e0afafd5b15526772a47d26))
+* **security:** bound process execution and vault mutation paths ([0fe7a27](https://github.com/shuuul/obsidian-pivi/commit/0fe7a27c376b4f4d60e15ad3c9c2af3bf5b5c934))
+* **security:** complete release assurance gates and Pi pin hardening ([1f641e4](https://github.com/shuuul/obsidian-pivi/commit/1f641e45b19043af6f897bc333fdcfee12ea1f5a))
+* **security:** device-local env sources and transactional MCP secrets ([d274b8e](https://github.com/shuuul/obsidian-pivi/commit/d274b8e0d02db956bdc6d12ff6244c35ba74ce09))
+* **session:** recover cloud JSONL replacement via device-local journal ([2ce349f](https://github.com/shuuul/obsidian-pivi/commit/2ce349fb9dc0729caaf8c2f04b5bf7cbb6bad22c))
+* **settings:** improve command icon selection ([6115154](https://github.com/shuuul/obsidian-pivi/commit/6115154dc8adc126da3d89172ecc23ee98ff155e))
+* **settings:** unify enable and remove controls across cards ([c563896](https://github.com/shuuul/obsidian-pivi/commit/c563896d72dd8493a2a45e2c0cf6d6b457b4e727))
+* **skills:** restore pinned skills CLI and refresh minor deps ([450dd18](https://github.com/shuuul/obsidian-pivi/commit/450dd18f862e9ce98be9f91cddc01c52fdfc78cc))
+* **toolbar:** add configurable editor commands ([6971eeb](https://github.com/shuuul/obsidian-pivi/commit/6971eebefabdf71458b568114813ce98b7ac57aa))
+* **toolbar:** add inline edit selection command ([20d727a](https://github.com/shuuul/obsidian-pivi/commit/20d727a084d20fc0a3744ab667a9f107b09d515a))
+* **ui:** refine toolbar commands and archived tabs ([adc9542](https://github.com/shuuul/obsidian-pivi/commit/adc9542004a27402b593bb259d7457bcfc505b9f))
+* **web:** remove WebFetch mode and always try extractors ([a501a8b](https://github.com/shuuul/obsidian-pivi/commit/a501a8b1ea58edab22785a976e7e2f41ba3619dd))
+
+
+### Bug Fixes
+
+* **security:** address release-blocking review findings ([d315bfc](https://github.com/shuuul/obsidian-pivi/commit/d315bfc4a87676a2c5360d05b737ec3ad5e6aca5))
+* **security:** block private web targets and harden local provider grants ([7935502](https://github.com/shuuul/obsidian-pivi/commit/7935502751bca7067f2591bd29df2e18977f7471))
+* **security:** bypass vault confirms with File Recovery ([764afe9](https://github.com/shuuul/obsidian-pivi/commit/764afe9c593297fd134d2922869d97d63bfadad9))
+* **security:** close release review gaps ([6cca618](https://github.com/shuuul/obsidian-pivi/commit/6cca6180bd35606cf9922e5917b30e5a8da79f88))
+* **security:** harden MCP OAuth, stdio env, and process results ([82300f0](https://github.com/shuuul/obsidian-pivi/commit/82300f0483456b4e57059bebac6c688be9a51bb5))
+* **toolbar:** reveal Pivi for sidebar commands ([c1507bc](https://github.com/shuuul/obsidian-pivi/commit/c1507bc198cde718b3bc61fa986caa53936248f8))
+
+
+### Reverts
+
+* **security:** remove turn-scoped high-risk confirms and Skills/MCP bounds ([b924dcf](https://github.com/shuuul/obsidian-pivi/commit/b924dcffa5c62d4cfc98c9be5b3800520417f245))
+
 ## [0.14.1](https://github.com/shuuul/obsidian-pivi/compare/0.14.0...0.14.1) (2026-07-22)
 
 
