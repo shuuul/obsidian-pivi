@@ -65,7 +65,7 @@ When available, `/generate-image` appears as a built-in tool mention. The visibl
 
 ## Skills
 
-Vault skills live under `.pivi/skills/`. The `skill` tool loads their instructions for an agent turn. A first vault load may offer the `kepano/obsidian-skills` bundle, but installation and updates require explicit user confirmation. This repository does not track runtime vault skills.
+Vault skills live under `.pivi/skills/`. The `skill` tool loads their instructions for an agent turn. Install/update uses the exact pinned `skills` dependency (`node <cli.mjs>`, `shell: forbidden`), validates a staged tree (no symlinks/escapes; size/`SKILL.md` limits), then publishes atomically. A first vault load may offer the `kepano/obsidian-skills` bundle, but installation and updates require explicit user confirmation. This repository does not track runtime vault skills.
 
 Keep remote activity explicit and do not introduce a global or cross-vault skill directory.
 

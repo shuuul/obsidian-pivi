@@ -12,9 +12,9 @@
     "./store": "./src/store/index.ts"
   },
   "dependencies": {
-    "@lobehub/icons-static-svg": "^1.91.0",
+    "@lobehub/icons-static-svg": "^1.94.0",
     "@pivi/pivi-agent-core": "*",
-    "@tanstack/react-virtual": "^3.14.7"
+    "@tanstack/react-virtual": "^3.14.8"
   },
   "peerDependencies": {
     "react": "^19.0.0",
