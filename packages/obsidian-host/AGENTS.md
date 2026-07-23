@@ -20,7 +20,7 @@
 - `src/path/` owns filesystem/vault path normalization and safety helpers.
 - `src/authContextHost.ts` adapts the canonical auth context host port to system environment variables, filesystem existence checks, and home-directory lookup for Pi auth resolution.
 - `src/providerLegacyAuthStore.ts` adapts the canonical provider legacy auth store port to the vault-local `.pivi/auth.json` file used only for old Codex credential migration.
-- `src/electronCompat.ts`, `src/nodeFetch.ts`, `src/obsidianHttpClient.ts`, and `src/systemProcessRunner.ts` patch renderer/Electron compatibility gaps; `nodeFetch`, `obsidianHttpClient`, and `systemProcessRunner` are the concrete Obsidian/Electron network/process implementations injected into Pi/MCP/skills runtime seams by app composition. `nodeFetch` advertises the current package version from the build-owned release metadata; `systemProcessRunner` reports signal-aware exit results and bounds stdout/stderr for current callers.
+- `src/scopedHttpClient.ts` implements the streaming scoped HTTP client (deadlines, encoded/decoded byte limits, content types, redirects, DNS pin) over `@pivi/pivi-agent-core/network` policy. `src/createPiviNetworkClients.ts` builds purpose-scoped clients (`provider`, `mcp`, `web-search`, `web-fetch`, `image`, `skills`, connectivity) and a shared `OriginGrantRegistry` for short-lived private-origin exceptions. `src/bundledFetch.ts` is esbuild-injected so free `fetch` identifiers resolve to the scoped provider client without assigning `window.fetch`. `src/nodeFetch.ts` remains a legacy export surface over scoped fetch; do not reintroduce global fetch patching. `src/obsidianHttpClient.ts` adapts scoped clients to the `HttpClient` port. `src/electronCompat.ts` and `src/systemProcessRunner.ts` cover other renderer/Electron compatibility gaps; `systemProcessRunner` reports signal-aware exit results and bounds stdout/stderr for current callers.
 - `styles/pivi-theme.css` maps Obsidian theme variables into the `--pivi-host-*` contract consumed by `@pivi/pivi-react`; the root CSS build prepends it directly before the React style manifest. It is a build input, not a JavaScript package export.
 
 ## Boundaries
@@ -35,7 +35,7 @@
 
 ## Package map
 
-- `package.json` exports the barrel and explicit leaf subpaths (`authContextHost`, `bootstrap/*`, `cli/*`, `electronCompat`, `externalFileApi`, `nodeFetch`, `obsidianHttpClient`, `openExternalUrl`, `path`, `providerLegacyAuthStore`, `settings/piviSettingsStorage`, `storage/sharedStorageService`, `systemProcessRunner`). Add new intentional host APIs to `src/index.ts` and the matching export entry.
+- `package.json` exports the barrel and explicit leaf subpaths (`authContextHost`, `bootstrap/*`, `bundledFetch`, `cli/*`, `createPiviNetworkClients`, `electronCompat`, `externalFileApi`, `nodeFetch`, `obsidianHttpClient`, `openExternalUrl`, `path`, `providerLegacyAuthStore`, `scopedHttpClient`, `settings/piviSettingsStorage`, `storage/sharedStorageService`, `systemProcessRunner`). Add new intentional host APIs to `src/index.ts` and the matching export entry.
 - There is no package-local build step; source is consumed by the root build.
 - There is no package-local typecheck script. Verify host changes with the root typecheck and targeted tests for affected tools/runtime/UI.
 

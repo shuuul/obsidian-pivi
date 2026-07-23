@@ -44,6 +44,8 @@ Pivi exposes one agent lifecycle through the narrow `PiChatService` contract. `P
 
 Runtime, sessions, model catalogs, slash catalogs, and projected settings enter chat orchestration through core-owned `ChatPorts`. React settings use React-owned `SettingsPorts`. Host file, secret, HTTP, process, and storage capabilities are injected through core ports. Explicit ports make ownership testable and prevent a wide plugin object from becoming a service locator.
 
+Network egress is enforced at a shared transport boundary. Host-neutral policy lives in `@pivi/pivi-agent-core/network`; `@pivi/obsidian-host` implements purpose-scoped streaming HTTP clients with deadlines, byte limits, redirects, and DNS pinning. App composition installs those clients into Pi providers, MCP/OAuth, WebSearch/WebFetch, image generation, skills, and connectivity probes. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` for upstream SDK call sites only. See [SECURITY.md](../SECURITY.md).
+
 ### React 19 with imperative islands
 
 React owns stable product chrome: tabs, settings, composer selectors, message shells, and status. Some host surfaces are intentionally imperative:

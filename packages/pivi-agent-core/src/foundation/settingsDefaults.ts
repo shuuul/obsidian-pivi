@@ -24,6 +24,7 @@ export const DEFAULT_AGENT_SETTINGS = Object.freeze({
   webSearchTools: {
     providerOrder: [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],
     disabledProviders: [],
+    fetchMode: DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.fetchMode,
   },
   subagents: { ...DEFAULT_SUBAGENT_RUNTIME_SETTINGS },
 });

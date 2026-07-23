@@ -52,6 +52,8 @@
     "./mcp": "./src/mcp/index.ts",
     "./mcp/*": "./src/mcp/*.ts",
     "./mcp/oauth/*": "./src/mcp/oauth/*.ts",
+    "./network": "./src/network/index.ts",
+    "./network/*": "./src/network/*.ts",
     "./ports": "./src/ports/index.ts",
     "./plugins": "./src/plugins/index.ts",
     "./prompt": "./src/prompt/index.ts",

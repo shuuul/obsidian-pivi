@@ -1,3 +1,4 @@
+import { getActivePiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
 import { mergeCustomProviderHeaderSecrets } from "@pivi/pivi-agent-core/auth/customProviderHeaderSecrets";
 import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
 import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/installPiCustomProviders";
@@ -14,7 +15,7 @@ import type { SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 
 import type { PiviUiFacades } from "@/app/hostContracts";
 
-import { obsidianCustomProviderHttpRequest } from "./obsidianHttpRequest";
+import { createCustomProviderHttpRequest } from "./obsidianHttpRequest";
 
 /**
  * App-owned facades that hide Pi engine details from product UI.
@@ -54,7 +55,10 @@ export function createPiUiFacades(
       const runtimeConfig = withRuntimeHeaders(settings).find((provider) => provider.id === providerId)
         ?? config;
       const apiKey = getCredentialApiKey?.(providerId);
-      const result = await fetchCustomProviderModels(runtimeConfig, obsidianCustomProviderHttpRequest, { apiKey });
+      const httpGet = createCustomProviderHttpRequest(
+        getActivePiviNetworkClients().localProviderHttpClient,
+      );
+      const result = await fetchCustomProviderModels(runtimeConfig, httpGet, { apiKey });
       const customProviders = getCustomProvidersFromBag(settings).map((provider) =>
         provider.id === providerId
           ? { ...provider, models: result.models }

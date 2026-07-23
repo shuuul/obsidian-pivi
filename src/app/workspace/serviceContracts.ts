@@ -1,3 +1,4 @@
+import type { PiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 import type { FileStore } from '@pivi/pivi-agent-core/ports';
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
@@ -15,4 +16,5 @@ export interface PiviWorkspaceHost {
 export interface WorkspaceInitContext {
   host: PiviWorkspaceHost;
   vaultAdapter: FileStore;
+  network: PiviNetworkClients;
 }

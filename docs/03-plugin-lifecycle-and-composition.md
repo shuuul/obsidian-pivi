@@ -26,6 +26,8 @@ sequenceDiagram
 
 `initializePiviPlugin()` loads required settings, registers commands/views/settings, registers the editor selection toolbar (`registerEditorExtension` + overlay host) and its React surface controller, and then starts the retryable single-flight workspace promise from `workspace.onLayoutReady` or the first visible surface. `PiviViewHost` and `PiviSettingTabHost` receive a lazy `getWorkspace` callback, so registration never captures a partially initialized service graph.
 
+`PiviPlugin` constructs purpose-scoped network clients at composition (`createPiviNetworkClients`) and passes them through `WorkspaceInitContext.network` into MCP/OAuth, web tools, image generation, custom providers, and connectivity. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` shim for upstream SDK identifiers only.
+
 Generation guards invalidate late initialization after a view closes or the plugin unloads. A failed workspace initialization clears the single-flight state so a later visible action can retry.
 
 ## Composition contracts

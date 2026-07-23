@@ -1,7 +1,7 @@
 ---
 id: "032"
 title: "Network egress and HTTP client"
-status: Draft
+status: Completed
 created: 2026-07-23
 updated: 2026-07-23
 coordinator: "/root"
@@ -21,19 +21,19 @@ This is the third review-hardening spec. It depends on spec `030` for baseline U
 
 Route every Pivi network client through explicit, scoped HTTP capabilities with a single enforceable egress policy.
 
-- [ ] Pivi never assigns to global `window.fetch`; unload has no fetch restoration obligation and other plugins/Obsidian retain their original fetch identity.
-- [ ] Pi providers, MCP/OAuth, WebSearch/WebFetch, image generation, and other network integrations receive explicit HTTP clients from composition.
-- [ ] Only `http:` and `https:` URLs reach network transports; username/password URL credentials are rejected.
-- [ ] Default policy rejects loopback, private, link-local, multicast, unspecified, and cloud-metadata destinations for IPv4 and IPv6, including alternate IP representations.
-- [ ] Hostnames are resolved and checked before connect; the connected address is pinned/verified against the approved resolution to resist DNS rebinding.
-- [ ] Every redirect is resolved, normalized, and rechecked; redirect count is bounded.
-- [ ] Connect, first-byte, idle, and total deadlines are explicit and abortable.
-- [ ] Request and response byte limits are enforced while streaming; output character limits do not stand in for transport limits.
-- [ ] Allowed response content types are explicit per caller; decompression cannot bypass byte limits.
-- [ ] Logs, errors, audit entries, and UI redact URL credentials and sensitive query values.
-- [ ] WebFetch offers an explicit direct-only mode and obtains a clear user policy/setting before sending a target URL to Tavily, Exa, AnySearch, or another extractor.
-- [ ] Local-network access, when enabled, is origin-scoped and turn-scoped rather than a permanent global bypass.
-- [ ] A standard-compatible `Response` surface is returned where an upstream SDK requires Fetch semantics.
+- [x] Pivi never assigns to global `window.fetch`; unload has no fetch restoration obligation and other plugins/Obsidian retain their original fetch identity.
+- [x] Pi providers, MCP/OAuth, WebSearch/WebFetch, image generation, and other network integrations receive explicit HTTP clients from composition.
+- [x] Only `http:` and `https:` URLs reach network transports; username/password URL credentials are rejected.
+- [x] Default policy rejects loopback, private, link-local, multicast, unspecified, and cloud-metadata destinations for IPv4 and IPv6, including alternate IP representations.
+- [x] Hostnames are resolved and checked before connect; the connected address is pinned/verified against the approved resolution to resist DNS rebinding.
+- [x] Every redirect is resolved, normalized, and rechecked; redirect count is bounded.
+- [x] Connect, first-byte, idle, and total deadlines are explicit and abortable.
+- [x] Request and response byte limits are enforced while streaming; output character limits do not stand in for transport limits.
+- [x] Allowed response content types are explicit per caller; decompression cannot bypass byte limits.
+- [x] Logs, errors, audit entries, and UI redact URL credentials and sensitive query values.
+- [x] WebFetch offers an explicit direct-only mode and obtains a clear user policy/setting before sending a target URL to Tavily, Exa, AnySearch, or another extractor.
+- [x] Local-network access, when enabled, is origin-scoped and turn-scoped rather than a permanent global bypass.
+- [x] A standard-compatible `Response` surface is returned where an upstream SDK requires Fetch semantics.
 
 ## Scope and non-goals
 
@@ -66,11 +66,11 @@ Not in scope:
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Define URL normalization/redaction, IP classification, DNS pinning, redirect, and origin-grant policy | Unassigned | Pending | Specs 030–031 completed | Pure IPv4/IPv6/DNS/redirect policy tests |
-| WS-02 | Implement scoped streaming HTTP client with deadlines, abort, byte/content/decompression limits, and standard response adaptation | Unassigned | Pending | WS-01 | Local adversarial HTTP server integration tests |
-| WS-03 | Rework WebFetch provider disclosure, direct-only mode, errors, and bounded streaming | Unassigned | Pending | WS-01, WS-02 | WebFetch chain/privacy/oversize tests |
-| WS-04 | Inject clients into Pi, MCP/OAuth, image, and app composition; delete global fetch patch | Unassigned | Pending | WS-02 | Architecture checks and original-fetch identity test |
-| WS-05 | Documentation, threat model entries, full gates, live reload, and network regression matrix | Unassigned | Pending | WS-01–WS-04 | Full verification and runtime inspection |
+| WS-01 | Define URL normalization/redaction, IP classification, DNS pinning, redirect, and origin-grant policy | /032-network | Completed | Specs 030–031 completed | Pure IPv4/IPv6/DNS/redirect policy tests |
+| WS-02 | Implement scoped streaming HTTP client with deadlines, abort, byte/content/decompression limits, and standard response adaptation | /032-network | Completed | WS-01 | Local adversarial HTTP server integration tests |
+| WS-03 | Rework WebFetch provider disclosure, direct-only mode, errors, and bounded streaming | /032-network | Completed | WS-01, WS-02 | WebFetch chain/privacy/oversize tests |
+| WS-04 | Inject clients into Pi, MCP/OAuth, image, and app composition; delete global fetch patch | /032-network | Completed | WS-02 | Architecture checks and original-fetch identity test |
+| WS-05 | Documentation, threat model entries, full gates, live reload, and network regression matrix | /032-network | Completed | WS-01–WS-04 | Full verification and runtime inspection |
 
 ## Verification
 
@@ -104,6 +104,13 @@ obsidian dev:errors
 npm run check:specs
 ```
 
+Evidence (2026-07-23):
+
+- Focused suites: `tests/unit/network`, `tests/unit/host`, `tests/unit/pi/tools/webSearch`, `tests/unit/pi/mcp`, `tests/integration` — 24 suites / 93 tests passed.
+- `npm run typecheck`, `npm run lint`, `npm run check:architecture`, `npm run check:boundaries`, `npm run build` passed.
+- Pre-existing unused i18n keys `common.disable` / `common.disabled` / `common.enable` still reported by dead-key check (unchanged, not cleaned here).
+- `obsidian plugin:reload id=pivi` succeeded; `obsidian dev:errors` → `No errors captured.`
+
 ## Documentation sync
 
 - Numbered developer docs: `docs/02-architecture-and-technology.md`, `docs/03-plugin-lifecycle-and-composition.md`, and `docs/07-tools-skills-mcp-and-integrations.md`.
@@ -121,6 +128,22 @@ npm run check:specs
 - Blockers: Source-aware sensitive headers from spec `031` must exist before redirect/header forwarding rules become final.
 - Next action: Complete prior specs, then activate this spec and implement the shared policy before migrating callers.
 
+### 2026-07-23 — /032-network — activation
+
+- Changed: Set status to Active; claimed WS-01 through WS-05.
+- Evidence: Specs 030–031 archived; working tree on main.
+- Remaining: Implement policy, streaming client, WebFetch disclosure, composition injection, docs, and verification.
+- Blockers: None.
+- Next action: Implement host-neutral egress policy and Obsidian streaming HTTP client.
+
+### 2026-07-23 — /032-network — completion
+
+- Changed: Implemented shared egress policy, scoped streaming HTTP client, WebFetch direct-only default + extractor disclosure setting, composition injection, removal of global fetch patch, docs/`SECURITY.md`, and verification.
+- Evidence: Focused Jest suites, typecheck/lint/architecture/boundaries/build, Obsidian reload with zero captured errors.
+- Remaining: None for this spec. Specs 033+ can consume network decisions for process/vault and high-risk capability profiling.
+- Blockers: None.
+- Next action: Archive this spec.
+
 ## Completion summary
 
-Pending.
+Scoped HTTP clients now enforce SSRF-resistant egress at the shared transport: only http(s), no URL credentials, default deny for private/metadata destinations, DNS pin + redirect revalidation, streaming byte/deadline/content-type limits, and redacted diagnostics. WebFetch defaults to direct-only with an explicit settings disclosure for extractors. Composition injects purpose-scoped clients; the production bundle resolves free `fetch` via inject without assigning `window.fetch`.

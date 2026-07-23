@@ -1,16 +1,15 @@
-// Must run before any SDK imports to patch Electron/Node.js realm incompatibility
+// Must run before SDK usage to patch Electron EventEmitter defaults.
 import { patchSetMaxListenersForElectron } from "@pivi/obsidian-host/electronCompat";
-import { patchRendererFetchForElectron } from "@pivi/obsidian-host/nodeFetch";
 patchSetMaxListenersForElectron();
-patchRendererFetchForElectron();
 
 import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
+import { installBundledFetch } from "@pivi/obsidian-host/bundledFetch";
 import { ObsidianCliTransport } from "@pivi/obsidian-host/cli/obsidianCliTransport";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
-import { obsidianHttpClient } from "@pivi/obsidian-host/obsidianHttpClient";
+import { createPiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
 import { openExternalUrl } from "@pivi/obsidian-host/openExternalUrl";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import { warmPiAiModelsCache } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
@@ -23,6 +22,7 @@ import type {
 import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings";
 import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
+import { OriginGrantRegistry } from "@pivi/pivi-agent-core/network";
 import type { SessionMessagePage, SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
@@ -90,7 +90,12 @@ const logger = new PluginLogger('PiviPlugin');
  */
 export default class PiviPlugin extends Plugin implements PiviPluginHost {
   declare settings: PiviSettings;
-  readonly httpClient = obsidianHttpClient;
+  readonly network = (() => {
+    const clients = createPiviNetworkClients(new OriginGrantRegistry());
+    installBundledFetch(clients.providerFetch);
+    return clients;
+  })();
+  readonly httpClient = this.network.httpClient;
   readonly processRunner = systemProcessRunner;
   storage!: SharedAppStorage;
   private readonly deviceLocalExternalContexts =

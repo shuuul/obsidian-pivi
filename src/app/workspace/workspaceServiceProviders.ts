@@ -1,4 +1,3 @@
-import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import type { ObsidianCredentialStore } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import type { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
 import { getPiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
@@ -15,7 +14,7 @@ import type {
   AppMcpToolSummary,
 } from "@pivi/pivi-agent-core/mcp/ports";
 import { getMcpServerUrl } from "@pivi/pivi-agent-core/mcp/types";
-import type { ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
+import type { FetchCompatible, ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/vaultSkillsService";
 
@@ -39,9 +38,10 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
   constructor(
     private readonly mcpServerManager: McpServerManager,
     mcpOAuth: McpOAuthService,
+    mcpFetch: FetchCompatible,
     secretStorage?: SyncSecretStore,
   ) {
-    this.pool = new PiMcpConnectionPool(mcpOAuth, nodeFetch, process.env, secretStorage);
+    this.pool = new PiMcpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage);
   }
 
   invalidate(serverName?: string): void {
@@ -145,8 +145,12 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
 export class PiMcpDiagnostics implements AppMcpDiagnostics {
   private readonly pool: PiMcpConnectionPool;
 
-  constructor(mcpOAuth: McpOAuthService, secretStorage?: SyncSecretStore) {
-    this.pool = new PiMcpConnectionPool(mcpOAuth, nodeFetch, process.env, secretStorage);
+  constructor(
+    mcpOAuth: McpOAuthService,
+    mcpFetch: FetchCompatible,
+    secretStorage?: SyncSecretStore,
+  ) {
+    this.pool = new PiMcpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage);
   }
 
   async testConnection(server: Parameters<AppMcpDiagnostics["testConnection"]>[0]) {
@@ -169,10 +173,13 @@ export class PiMcpDiagnostics implements AppMcpDiagnostics {
 }
 
 export class PiMcpServerTester implements AppMcpServerTester {
-  constructor(private readonly secretStorage?: SyncSecretStore) {}
+  constructor(
+    private readonly mcpFetch: FetchCompatible,
+    private readonly secretStorage?: SyncSecretStore,
+  ) {}
 
   async testServer(server: Parameters<AppMcpServerTester["testServer"]>[0]) {
-    return testPiMcpServer(server, nodeFetch, process.env, this.secretStorage);
+    return testPiMcpServer(server, this.mcpFetch, process.env, this.secretStorage);
   }
 }
 

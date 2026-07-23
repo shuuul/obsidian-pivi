@@ -1,4 +1,5 @@
 import { WEB_PROVIDER_CAPABILITIES } from '../../foundation/settings';
+import { redactUrl } from '../../network/urlPolicy';
 import { TOOL_WEB_FETCH } from '../toolNames';
 import type { ToolSpec } from '../toolSpec';
 import { formatFetchResponse } from './format';
@@ -43,6 +44,9 @@ function parseFetchInput(params: unknown): WebFetchInput {
   }
   if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
     throw new Error('Invalid WebFetch input: url must be http(s).');
+  }
+  if (parsedUrl.username || parsedUrl.password) {
+    throw new Error('Invalid WebFetch input: URL credentials are not allowed.');
   }
   const query = typeof record.query === 'string' && record.query.trim()
     ? record.query.trim()
@@ -176,6 +180,7 @@ async function fetchDirect(
   if (!response.ok) {
     throw new Error(`Direct web fetch failed: HTTP ${response.status} ${response.statusText}`);
   }
+  // Transport already streams with byte limits; character truncation remains a product cap.
   const content = normalizeFetchedContent(await response.text(), input.maxChars);
   if (!content) {
     throw new Error('Direct web fetch returned no readable content.');
@@ -184,6 +189,10 @@ async function fetchDirect(
 }
 
 function buildFetchChain(deps: WebFetchToolDeps): (WebFetchProviderId | 'direct')[] {
+  const fetchMode = deps.fetchMode ?? 'direct-only';
+  if (fetchMode === 'direct-only') {
+    return ['direct'];
+  }
   const disabled = new Set(deps.disabledProviders ?? []);
   const providers = deps.providerOrder.filter((providerId): providerId is WebFetchProviderId => {
     const capabilities = WEB_PROVIDER_CAPABILITIES[providerId];
@@ -217,10 +226,13 @@ async function runFetchProvider(
 }
 
 export function createWebFetchTool(deps: WebFetchToolDeps): ToolSpec {
+  const fetchMode = deps.fetchMode ?? 'direct-only';
   return {
     name: TOOL_WEB_FETCH,
     label: 'Web fetch',
-    description: 'Fetch readable content from a web URL. Tries enabled providers in the user-configured order, with direct HTTP fallback.',
+    description: fetchMode === 'direct-only'
+      ? 'Fetch readable content from a web URL over direct HTTP only. Third-party extractors are disabled.'
+      : 'Fetch readable content from a web URL. Tries enabled extractors in the user-configured order, with direct HTTP fallback. Extractors receive the full target URL.',
     parameters: {
       type: 'object',
       properties: {
@@ -250,7 +262,9 @@ export function createWebFetchTool(deps: WebFetchToolDeps): ToolSpec {
           errors.push(`${providerId}: ${message}`);
         }
       }
-      throw new Error(`No web fetch content found for URL "${input.url}". Tried: ${errors.join('; ')}`);
+      throw new Error(
+        `No web fetch content found for URL "${redactUrl(input.url)}". Tried: ${errors.join('; ')}`,
+      );
     },
   };
 }

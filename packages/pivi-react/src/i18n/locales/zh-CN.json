@@ -542,7 +542,7 @@
       },
       "providerKeyRequired": "{provider} 需要 API 密钥；未配置密钥时会跳过。",
       "providerKeyOptional": "{provider} 支持额度较低的匿名访问；配置 API 密钥可提高可用额度。",
-      "fixedFallbacks": "最终兜底：WebSearch 使用 Exa 公共 MCP；WebFetch 使用直接 HTTP。它们始终在排序的提供商之后运行。",
+      "fixedFallbacks": "最终回退：WebSearch 使用 Exa 公共 MCP；WebFetch 使用直接 HTTP。这些安全回退始终在已排序提供商之后运行。",
       "reorder": {
         "handle": "调整 {provider} 的顺序，当前位置 {position}",
         "position": "已将 {provider} 移到第 {position} 位，共 {total} 位。",
@@ -554,7 +554,14 @@
       "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
       "removeKey": "移除",
       "enableAria": "启用 {provider}",
-      "disableAria": "禁用 {provider}"
+      "disableAria": "禁用 {provider}",
+      "fetchMode": {
+        "name": "WebFetch 模式",
+        "desc": "选择 WebFetch 是否可将目标 URL 发送给第三方提取服务。",
+        "directOnly": "仅直接 HTTP",
+        "allowExtractors": "允许第三方提取服务",
+        "disclosure": "提取模式会在直接 HTTP 之前，把完整目标 URL（含路径与查询参数）发送给 Tavily、Exa、AnySearch 或其他已启用的抓取提供商。"
+      }
     },
     "modelsTab": {
       "intro": "API 密钥和 OAuth 令牌保存在{secureStorageName}中。已禁用的提供商仍会保存，但会在模型选择器中隐藏。",

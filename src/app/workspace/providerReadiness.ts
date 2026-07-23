@@ -1,4 +1,4 @@
-import { obsidianHttpClient } from '@pivi/obsidian-host/obsidianHttpClient';
+import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
 import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
@@ -48,7 +48,7 @@ async function testResolvedModel(modelKey: string, model: PiResolvedModel): Prom
     };
   }
 
-  return testEndpointConnectivity(obsidianHttpClient, baseUrl, {
+  return testEndpointConnectivity(getActivePiviNetworkClients().httpClient, baseUrl, {
     detailSuffix: `; credentials resolved from ${auth.source}.`,
   });
 }

@@ -1,11 +1,10 @@
-import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
 import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner";
 import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import type { PiRuntimeHost } from "@pivi/pivi-agent-core/engine/pi/piRuntimeHost";
 import type { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
 import type { McpOAuthService, McpServerManager } from "@pivi/pivi-agent-core/mcp";
-import type { HttpClient, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
+import type { FetchCompatible, HttpClient, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
 import type { PiChatService } from "@pivi/pivi-agent-core/runtime/piChatService";
 
@@ -24,6 +23,7 @@ export function createChatRuntimeServiceFactories(deps: {
   baseToolProvider: PiBaseToolProvider | null;
   subagentConcurrencyLimiter: SubagentConcurrencyLimiter;
   mcpSecretStorage?: SyncSecretStore;
+  mcpFetch: FetchCompatible;
 }): ChatRuntimeServiceFactories {
   return {
     createChatService(host, httpClient) {
@@ -31,7 +31,7 @@ export function createChatRuntimeServiceFactories(deps: {
         host,
         {
           httpClient,
-          mcpFetch: nodeFetch,
+          mcpFetch: deps.mcpFetch,
           mcpProcessEnv: process.env,
           mcpSecretStorage: deps.mcpSecretStorage,
         },

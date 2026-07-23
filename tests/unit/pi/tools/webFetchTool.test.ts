@@ -27,6 +27,7 @@ function makeDeps(overrides: Partial<WebFetchToolDeps> = {}): WebFetchToolDeps {
     providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
     disabledProviders: [],
     environmentVariables: {},
+    fetchMode: 'allow-extractors',
     ...overrides,
   };
 }
@@ -224,8 +225,37 @@ describe('createWebFetchTool', () => {
       providerOrder: [],
     }));
 
-    await expect(tool.execute('id', { url: 'https://example.com/fail' })).rejects.toThrow(
+    await expect(tool.execute('id', { url: 'https://example.com/fail?token=secret' })).rejects.toThrow(
       /No web fetch content found.*direct/s,
     );
+    await expect(tool.execute('id', { url: 'https://example.com/fail?token=secret' })).rejects.toThrow(
+      /token=\*\*\*/,
+    );
+  });
+
+  it('defaults to direct-only and never calls extractors', async () => {
+    const fetch = jest.fn(async () => makeResponse('<html><body><p>Direct only</p></body></html>'));
+    const tool = createWebFetchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      fetchMode: 'direct-only',
+      getCredential: () => 'should-not-matter',
+    }));
+
+    const result = await tool.execute('id', { url: 'https://example.com/direct' });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(asMock(fetch).mock.calls[0]![0]).toBe('https://example.com/direct');
+    expect(toolResultText(result)).toContain('Provider: direct');
+  });
+
+  it('rejects URL credentials before any network call', async () => {
+    const fetch = jest.fn(async () => makeResponse('ok'));
+    const tool = createWebFetchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      fetchMode: 'direct-only',
+    }));
+    await expect(tool.execute('id', { url: 'https://user:pass@example.com/' })).rejects.toThrow(
+      /credentials/i,
+    );
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

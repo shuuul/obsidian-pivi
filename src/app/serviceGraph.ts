@@ -69,6 +69,7 @@ export async function createPluginServiceGraph(
   const piWorkspace = await createPiWorkspaceServices({
     host: plugin,
     vaultAdapter,
+    network: plugin.network,
   });
 
   return { piWorkspace };

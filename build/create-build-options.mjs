@@ -25,6 +25,9 @@ export function createBuildOptions({ production, metafile = false, write = true 
   return {
     entryPoints: [path.join(projectRoot, 'src/main.ts')],
     bundle: true,
+    // Replace free `fetch` identifiers in upstream SDKs with the scoped Pivi client
+    // without assigning `window.fetch`.
+    inject: [path.join(projectRoot, 'packages/obsidian-host/src/bundledFetch.ts')],
     plugins: [
       dedupePiCodingAgentNested,
       shimPiCodingAgentSessionEntrypoint,

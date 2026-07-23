@@ -84,7 +84,9 @@ describe("PiviSettingsStorage", () => {
   it('migrates legacy web provider preferences to the ordered provider queue', async () => {
     const adapter = createMemoryAdapter(JSON.stringify({
       agentSettings: {
-        webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily' },
+        webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily',
+      fetchMode: 'direct-only',
+    },
       },
     }));
     const storage = new PiviSettingsStorage(
@@ -290,6 +292,7 @@ describe("PiviSettingsStorage", () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
+      fetchMode: 'direct-only',
       },
     });
     const adapter = createMemoryAdapter(JSON.stringify({
@@ -300,6 +303,7 @@ describe("PiviSettingsStorage", () => {
         webSearchTools: {
           providerOrder: ['exa'],
           disabledProviders: [],
+      fetchMode: 'direct-only',
         },
       },
     }));
@@ -323,11 +327,13 @@ describe("PiviSettingsStorage", () => {
     settings.agentSettings.webSearchTools = {
       providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
       disabledProviders: ['brave'],
+      fetchMode: 'direct-only',
     };
     await storage.save(settings);
     expect(localStore.getState()?.webSearchTools).toEqual({
       providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
       disabledProviders: ['brave'],
+      fetchMode: 'direct-only',
     });
     const saved = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
       agentSettings?: Record<string, unknown>;
@@ -349,6 +355,7 @@ describe("PiviSettingsStorage", () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
+      fetchMode: 'direct-only',
       },
     });
     const adapter = createMemoryAdapter(JSON.stringify({ userName: 'Alice' }));

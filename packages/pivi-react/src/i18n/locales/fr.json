@@ -542,7 +542,7 @@
       },
       "providerKeyRequired": "{provider} nécessite une clé API et est ignoré sans clé configurée.",
       "providerKeyOptional": "{provider} autorise l’accès anonyme avec des limites réduites ; une clé API augmente le quota.",
-      "fixedFallbacks": "Replis finaux : WebSearch utilise le MCP public Exa ; WebFetch utilise HTTP direct.",
+      "fixedFallbacks": "Secours finaux : WebSearch utilise le MCP public Exa ; WebFetch utilise HTTP direct. Ces secours de sécurité s’exécutent toujours après les fournisseurs ordonnés.",
       "reorder": {
         "handle": "Réordonner {provider}, position actuelle {position}",
         "position": "{provider} déplacé en position {position} sur {total}.",
@@ -554,7 +554,14 @@
       "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
       "removeKey": "Retirer",
       "enableAria": "Activer {provider}",
-      "disableAria": "Désactiver {provider}"
+      "disableAria": "Désactiver {provider}",
+      "fetchMode": {
+        "name": "Mode WebFetch",
+        "desc": "Choisissez si WebFetch peut envoyer l’URL cible à des extracteurs tiers.",
+        "directOnly": "HTTP direct uniquement",
+        "allowExtractors": "Autoriser les extracteurs tiers",
+        "disclosure": "Le mode extracteur envoie l’URL cible complète, chemin et requête compris, à Tavily, Exa, AnySearch ou un autre fournisseur d’extraction activé avant le HTTP direct."
+      }
     },
     "modelsTab": {
       "intro": "Les clés API et jetons OAuth sont stockés dans le {secureStorageName}. Les fournisseurs désactivés restent enregistrés mais sont masqués dans le sélecteur de modèles.",

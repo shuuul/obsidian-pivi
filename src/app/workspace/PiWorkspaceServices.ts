@@ -1,7 +1,7 @@
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
+import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
 import { inspectExternalDirectory } from "@pivi/obsidian-host/externalFileApi";
-import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
 import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
@@ -43,6 +43,13 @@ import type {
   AppMcpStorage,
   AppMcpToolProvider,
 } from "@pivi/pivi-agent-core/mcp/ports";
+import { getMcpServerUrl } from "@pivi/pivi-agent-core/mcp/types";
+import {
+  classifyHostnameOrAddress,
+  isDeniedIpClass,
+  normalizeHttpUrl,
+  type OriginGrantRegistry,
+} from "@pivi/pivi-agent-core/network";
 import { ensureDefaultWorkspaceCommands } from "@pivi/pivi-agent-core/skills/commands/defaultWorkspaceCommands";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
@@ -60,7 +67,7 @@ import {
   type ChatRuntimeServiceFactories,
   createChatRuntimeServiceFactories,
 } from "./createChatRuntimeServices";
-import { obsidianCustomProviderHttpRequest } from "./obsidianHttpRequest";
+import { createCustomProviderHttpRequest } from "./obsidianHttpRequest";
 import { PiSlashCommandCatalog } from "./PiSlashCommandCatalog";
 import type { PiviWorkspaceHost, WorkspaceInitContext } from "./serviceContracts";
 import {
@@ -86,6 +93,7 @@ export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
   webSearchCredentialStore: WebSearchCredentialStore | null;
   providerOAuth: ProviderOAuthService;
   slashCommandCatalog: SlashCommandCatalog;
+  network: PiviNetworkClients;
   dispose(): Promise<void>;
 }
 
@@ -101,16 +109,37 @@ function readMcpOAuthCallbackPort(): number | undefined {
     : undefined;
 }
 
+
+/** Grant configured private origins for the plugin lifetime (origin-scoped, not a global bypass). */
+function grantConfiguredPrivateOrigins(
+  grants: OriginGrantRegistry,
+  urls: readonly string[],
+  purpose: "mcp" | "provider",
+): void {
+  const ttlMs = 24 * 60 * 60 * 1000;
+  for (const raw of urls) {
+    try {
+      const url = normalizeHttpUrl(raw);
+      const classification = classifyHostnameOrAddress(url.hostname);
+      if (isDeniedIpClass(classification) || url.hostname.toLowerCase() === "localhost") {
+        grants.grant(url, ttlMs, purpose);
+      }
+    } catch {
+      // Ignore malformed configured URLs; validation surfaces elsewhere.
+    }
+  }
+}
+
 export async function createPiWorkspaceServices(
   context: WorkspaceInitContext,
 ): Promise<PiWorkspaceServices> {
-  const { host, vaultAdapter } = context;
+  const { host, vaultAdapter, network } = context;
   const mcpStorage = new McpStorage(
     vaultAdapter,
     host.app.secretStorage,
   );
   const mcpServerManager = new McpServerManager(mcpStorage);
-  const mcpOAuth = new McpOAuthService(host.app.secretStorage, nodeFetch, systemExternalOpener, {
+  const mcpOAuth = new McpOAuthService(host.app.secretStorage, network.mcpFetch, systemExternalOpener, {
     callbackPort: readMcpOAuthCallbackPort(),
   });
   const credentialStore = createObsidianCredentialStore(
@@ -120,13 +149,18 @@ export async function createPiWorkspaceServices(
     host.app.secretStorage,
   );
   migrateLegacyWebSearchCredentials(webSearchCredentialStore, credentialStore);
-  registerBundledPiOAuthFlows(nodeFetch);
+  registerBundledPiOAuthFlows(network.providerFetch);
   const customProviders = isSecretStorageAvailable(host.app.secretStorage)
     ? mergeCustomProviderHeaderSecrets(
       host.app.secretStorage,
       getCustomProvidersFromBag(host.settings),
     )
     : getCustomProvidersFromBag(host.settings);
+  grantConfiguredPrivateOrigins(
+    network.grants,
+    customProviders.map((provider) => provider.baseUrl).filter(Boolean),
+    "provider",
+  );
   configurePiAiModels({
     credentials: credentialStore ?? undefined,
     authContext: new ObsidianAuthContext({
@@ -134,7 +168,7 @@ export async function createPiWorkspaceServices(
       getVaultPath: () => getVaultPath(host.app),
     }, createSystemAuthContextHost()),
     customProviders,
-    httpGet: obsidianCustomProviderHttpRequest,
+    httpGet: createCustomProviderHttpRequest(network.localProviderHttpClient),
     getApiKey: (providerId) => {
       const credential = credentialStore?.readSync(providerId);
       return credentialToApiKey(credential) ?? undefined;
@@ -151,11 +185,12 @@ export async function createPiWorkspaceServices(
   const mcpToolProvider = new PiMcpToolProvider(
     mcpServerManager,
     mcpOAuth,
+    network.mcpFetch,
     host.app.secretStorage,
   );
-  const mcpDiagnostics = new PiMcpDiagnostics(mcpOAuth, host.app.secretStorage);
+  const mcpDiagnostics = new PiMcpDiagnostics(mcpOAuth, network.mcpFetch, host.app.secretStorage);
   const mcpServerProbeProvider = new PiMcpServerProbeProvider(mcpToolProvider);
-  const mcpServerTester = new PiMcpServerTester(host.app.secretStorage);
+  const mcpServerTester = new PiMcpServerTester(network.mcpFetch, host.app.secretStorage);
   const modelReadinessProvider = new PiModelReadinessProvider(
     credentialStore,
     providerOAuth,
@@ -179,7 +214,7 @@ export async function createPiWorkspaceServices(
       ),
     },
   );
-  const baseToolProvider = createObsidianBaseToolProvider(host, providerOAuth, webSearchCredentialStore);
+  const baseToolProvider = createObsidianBaseToolProvider(host, providerOAuth, webSearchCredentialStore, network);
   const subagentConcurrencyLimiter = new SubagentConcurrencyLimiter(
     () => getSubagentRuntimeSettingsFromBag(host.settings).maxConcurrentSubagents,
   );
@@ -189,9 +224,18 @@ export async function createPiWorkspaceServices(
     baseToolProvider,
     subagentConcurrencyLimiter,
     mcpSecretStorage: host.app.secretStorage,
+    mcpFetch: network.mcpFetch,
   });
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
+  grantConfiguredPrivateOrigins(
+    network.grants,
+    mcpServerManager
+      .getServers()
+      .map((server) => getMcpServerUrl(server.config))
+      .filter((url): url is string => Boolean(url)),
+    "mcp",
+  );
   // Warm MCP tool lists for slash/runtime without blocking workspace boot.
   void mcpToolProvider.prefetchEnabledServers().catch(() => {
     // Best-effort; first slash open or settings verify will retry.
@@ -211,7 +255,9 @@ export async function createPiWorkspaceServices(
     webSearchCredentialStore,
     providerOAuth,
     slashCommandCatalog,
+    network,
     dispose: async () => {
+      network.grants.clear();
       subagentConcurrencyLimiter.dispose();
       providerOAuth.dispose();
       await Promise.all([
@@ -228,6 +274,7 @@ function createObsidianBaseToolProvider(
   host: PiviWorkspaceHost,
   providerOAuth: ProviderOAuthService,
   webSearchCredentialStore: WebSearchCredentialStore | null,
+  network: PiviNetworkClients,
 ): PiBaseToolProvider {
   return ({ externalContextPaths, resolveReadMaxChars }) => {
     const settings = getObsidianToolsSettingsFromBag(host.settings);
@@ -245,7 +292,7 @@ function createObsidianBaseToolProvider(
     const obsidianCliAvailable = settings.cliEnabled && isOfficialObsidianCliEnabled();
     const imageGenerator = providerOAuth.hasCodexAuth()
       ? createCodexImageGenerator({
-        fetch: nodeFetch,
+        fetch: network.imageFetch,
         getAccessToken: async () => providerOAuth.getCodexApiKey(),
       })
       : undefined;
@@ -262,7 +309,7 @@ function createObsidianBaseToolProvider(
     );
     toolSpecs.push(
       createWebSearchTool({
-        fetch: nodeFetch,
+        fetch: network.webSearchFetch,
         providerOrder: webSearchSettings.providerOrder,
         disabledProviders: webSearchSettings.disabledProviders,
         getCredential: (providerId) =>
@@ -270,9 +317,10 @@ function createObsidianBaseToolProvider(
         environmentVariables,
       }),
       createWebFetchTool({
-        fetch: nodeFetch,
+        fetch: network.webFetch,
         providerOrder: webSearchSettings.providerOrder,
         disabledProviders: webSearchSettings.disabledProviders,
+        fetchMode: webSearchSettings.fetchMode,
         getCredential: (providerId) =>
           webSearchCredentialStore?.readSync(providerId),
         environmentVariables,

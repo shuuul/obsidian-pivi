@@ -51,9 +51,11 @@ function createProvider(servers: ManagedMcpServer[]): PiMcpToolProvider {
   const manager = {
     getServers: () => servers,
   } as Pick<McpServerManager, 'getServers'>;
+  const fetchImpl = jest.fn(async () => new Response('{}', { status: 200 }));
   return new PiMcpToolProvider(
     manager as McpServerManager,
     {} as McpOAuthService,
+    fetchImpl,
   );
 }
 
@@ -179,7 +181,7 @@ describe('PiMcpDiagnostics', () => {
   });
 
   it('reconnects and returns every tool regardless of disabled settings', async () => {
-    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService);
+    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService, jest.fn(async () => new Response('{}')));
     const server = { ...createServer(), disabledTools: ['search'] };
     listTools.mockResolvedValue([{ name: 'search', inputSchema: { type: 'object' } }]);
 
@@ -193,7 +195,7 @@ describe('PiMcpDiagnostics', () => {
   });
 
   it('preserves connection failures as diagnostic results', async () => {
-    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService);
+    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService, jest.fn(async () => new Response('{}')));
     listTools.mockRejectedValue(new Error('Unauthorized'));
 
     await expect(diagnostics.testConnection(createServer())).resolves.toEqual({
@@ -204,7 +206,7 @@ describe('PiMcpDiagnostics', () => {
   });
 
   it('disposes its connection pool', async () => {
-    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService);
+    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService, jest.fn(async () => new Response('{}')));
 
     await diagnostics.dispose();
     expect(dispose).toHaveBeenCalledTimes(1);

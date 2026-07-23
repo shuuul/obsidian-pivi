@@ -123,6 +123,7 @@ function readWebSearchToolsFromRaw(raw: Record<string, unknown>): WebSearchTools
       ? providerOrder
       : [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],
     disabledProviders,
+    fetchMode: DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.fetchMode,
   };
 }
 

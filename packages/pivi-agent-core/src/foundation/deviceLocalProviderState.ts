@@ -8,8 +8,9 @@ import type { PersistedPiviSettings } from './persistedPiviSettings';
 import {
   DEFAULT_WEB_SEARCH_TOOLS_SETTINGS,
   getWebSearchToolsSettingsFromBag,
-  isWebProviderId,
   type PiviSettings,
+  resolveWebSearchToolsSettings,
+  type WebFetchMode,
   type WebProviderId,
   type WebSearchToolsSettings,
 } from './settings';
@@ -50,6 +51,7 @@ export interface DeviceLocalProviderStateV1 {
   webSearchTools: {
     providerOrder: WebProviderId[];
     disabledProviders: WebProviderId[];
+    fetchMode: WebFetchMode;
   };
 }
 
@@ -274,24 +276,8 @@ function normalizeCustomContextLimits(
 }
 
 function normalizeWebSearchTools(raw: unknown): WebSearchToolsSettings {
-  const record = isRecord(raw) ? raw : {};
-  const providerOrder = Array.isArray(record.providerOrder)
-    ? record.providerOrder
-      .filter(isWebProviderId)
-      .filter((providerId, index, ids) => ids.indexOf(providerId) === index)
-    : [];
-  const disabledProviders = Array.isArray(record.disabledProviders)
-    ? record.disabledProviders
-      .filter(isWebProviderId)
-      .filter((providerId) => providerOrder.includes(providerId))
-      .filter((providerId, index, ids) => ids.indexOf(providerId) === index)
-    : [];
-  return {
-    providerOrder: providerOrder.length > 0
-      ? providerOrder
-      : [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],
-    disabledProviders,
-  };
+  return resolveWebSearchToolsSettings(isRecord(raw) ? raw : undefined);
+
 }
 
 function normalizeModelPreferences(
@@ -366,6 +352,7 @@ export function normalizeDeviceLocalProviderState(
     webSearchTools: {
       providerOrder: [...webSearchTools.providerOrder],
       disabledProviders: [...webSearchTools.disabledProviders],
+      fetchMode: webSearchTools.fetchMode,
     },
   };
 }
@@ -388,6 +375,7 @@ export function seedDefaultDeviceLocalProviderState(): DeviceLocalProviderStateV
     webSearchTools: {
       providerOrder: [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],
       disabledProviders: [],
+      fetchMode: DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.fetchMode,
     },
   });
 }

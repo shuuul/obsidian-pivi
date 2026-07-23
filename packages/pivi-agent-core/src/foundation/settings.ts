@@ -497,10 +497,24 @@ export const WEB_PROVIDER_CAPABILITIES: Readonly<Record<WebProviderId, WebProvid
   anysearch: Object.freeze({ search: true, fetch: true, apiKeyRequired: false }),
 });
 
+/** How WebFetch may disclose the user target URL to third-party extractors. */
+export type WebFetchMode = 'direct-only' | 'allow-extractors';
+
+export const WEB_FETCH_MODES: readonly WebFetchMode[] = ['direct-only', 'allow-extractors'];
+
+export function isWebFetchMode(value: unknown): value is WebFetchMode {
+  return typeof value === 'string' && (WEB_FETCH_MODES as readonly string[]).includes(value);
+}
+
 /** Ordered, shared WebSearch/WebFetch provider configuration. */
 export interface WebSearchToolsSettings {
   providerOrder: WebProviderId[];
   disabledProviders: WebProviderId[];
+  /**
+   * `direct-only` (default) never sends the target URL to Tavily/Exa/AnySearch.
+   * `allow-extractors` permits the ordered provider chain before direct HTTP.
+   */
+  fetchMode: WebFetchMode;
 }
 
 interface LegacyWebSearchToolsSettings {
@@ -512,6 +526,7 @@ interface LegacyWebSearchToolsSettings {
 export const DEFAULT_WEB_SEARCH_TOOLS_SETTINGS: Readonly<WebSearchToolsSettings> = Object.freeze({
   providerOrder: [...WEB_PROVIDER_IDS],
   disabledProviders: [],
+  fetchMode: 'direct-only',
 });
 
 export const DEFAULT_SUBAGENT_RUNTIME_SETTINGS: Readonly<SubagentRuntimeSettings> = Object.freeze({
@@ -531,6 +546,7 @@ export function resolveWebSearchToolsSettings(
     return {
       providerOrder: [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],
       disabledProviders: [],
+      fetchMode: DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.fetchMode,
     };
   }
   const providerOrder: WebProviderId[] = [];
@@ -550,9 +566,13 @@ export function resolveWebSearchToolsSettings(
   const disabledProviders = 'disabledProviders' in raw && Array.isArray(raw.disabledProviders)
     ? raw.disabledProviders.filter(isWebProviderId).filter((id, index, ids) => ids.indexOf(id) === index)
     : [];
+  const fetchMode = 'fetchMode' in raw && isWebFetchMode(raw.fetchMode)
+    ? raw.fetchMode
+    : DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.fetchMode;
   return {
     providerOrder,
     disabledProviders,
+    fetchMode,
   };
 }
 
@@ -581,6 +601,7 @@ function isOptionalWebSearchToolsSettings(
   return (
     (value.providerOrder === undefined || Array.isArray(value.providerOrder)) &&
     (value.disabledProviders === undefined || Array.isArray(value.disabledProviders)) &&
+    (value.fetchMode === undefined || isWebFetchMode(value.fetchMode)) &&
     (value.searchProvider === undefined || typeof value.searchProvider === 'string') &&
     (value.fetchProvider === undefined || typeof value.fetchProvider === 'string') &&
     (value.provider === undefined || typeof value.provider === 'string')

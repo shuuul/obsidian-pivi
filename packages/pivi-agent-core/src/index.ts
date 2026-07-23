@@ -3,6 +3,7 @@ export * as context from './context';
 export * as engine from './engine';
 export * as foundation from './foundation';
 export * as mcp from './mcp';
+export * as network from './network';
 export * as plugins from './plugins';
 export * as ports from './ports';
 export * as prompt from './prompt';

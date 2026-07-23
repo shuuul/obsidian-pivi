@@ -53,7 +53,9 @@ Vault-wide enumeration remains operation-driven: full-text search, tag and graph
 
 `WebSearch` and `WebFetch` share an ordered provider queue configured by `webSearchTools.providerOrder` and `disabledProviders`. Supported configured providers are Brave, Tavily, Exa, and AnySearch. Failures fall through in user order. Exa public MCP is the fixed terminal search fallback; direct HTTP is the fixed terminal fetch fallback.
 
-Provider keys and availability are resolved at the app/engine boundary. Tool implementations should preserve useful provider errors while allowing only the configured, explicit fallthrough behavior.
+`WebFetch` defaults to `fetchMode: 'direct-only'`, which never sends the target URL to a third-party extractor. `allow-extractors` permits the ordered provider chain before direct HTTP; settings expose this mode with explicit disclosure because extraction shares the full target URL with the configured provider. Terminal fetch errors redact the target URL.
+
+Provider keys and availability are resolved at the app/engine boundary. Tool implementations should preserve useful provider errors while allowing only the configured, explicit fallthrough behavior. Both tools use injected scoped HTTP clients with shared egress policy (see [SECURITY.md](../SECURITY.md)).
 
 ## Image generation
 
@@ -74,6 +76,8 @@ MCP configuration lives only in `.pivi/mcp.json`; OAuth material lives under `.p
 The Pi registry exposes one proxy tool named `mcp` rather than one top-level Pi tool per server tool. The proxy searches and calls enabled vault servers. Settings own server/tool availability. `/server` and `/server/tool` composer tokens are optional emphasis: enabled servers are already available, and prompt finalization changes only the provider prompt.
 
 MCP settings save/reload invalidates slash caches, authenticates or diagnoses as requested, warms enabled remote tool inventories, and reloads open runtime bridges. Automatic startup/runtime prefetch never starts stdio servers; a configured stdio command starts only when the user explicitly chooses **Connect / refresh tools** or the agent first searches, lists, or calls its tools. Configuration import opens a JSON editor and parses only text the user pastes and confirms; it does not read the system clipboard. Anonymous remote probes can report authentication as not applicable; explicitly OAuth-configured servers always enter the OAuth flow.
+
+Remote MCP transports and OAuth use injected scoped `fetch` clients from composition, not a global renderer fetch patch. Configured private MCP origins receive short-lived origin grants for the active operation.
 
 Stdio MCP children inherit only a documented cross-platform parent-environment allowlist plus values explicitly configured for that server; `KEY=$NAME` bulk import stores a `systemEnvironment` reference and never copies the host value into Pivi stores. Remote MCP URLs accept only `http:`/`https:`, with plaintext `http:` limited to loopback hosts; server names reject reserved prototype keys; and the settings editor stores stdio executable and argument vector as separate structured fields rather than reparsing a shell string. The OAuth callback server accepts only `GET`, returns explicit UTF-8 responses with browser hardening headers, and never interpolates authorization-server error text into HTML.
 

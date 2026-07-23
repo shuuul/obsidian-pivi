@@ -117,6 +117,12 @@ export interface HttpClient {
   fetch(request: HttpRequest): Promise<HttpResponse>;
 }
 
+/** Fetch-compatible function used by MCP SDK, web tools, OAuth, and provider adapters. */
+export type FetchCompatible = (
+  input: string | URL | Request,
+  init?: RequestInit,
+) => Promise<Response>;
+
 export interface ProcessRunRequest {
   command: string;
   args?: string[];
