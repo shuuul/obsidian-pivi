@@ -24,7 +24,7 @@ import type { FetchCompatible, HttpClient, HttpRequest, HttpResponse } from '@pi
 import * as dns from 'dns';
 import * as http from 'http';
 import * as https from 'https';
-import { PassThrough, type Readable } from 'stream';
+import type { Readable } from 'stream';
 import { brotliDecompressSync, gunzipSync, inflateSync } from 'zlib';
 
 declare const __PIVI_RELEASE_VERSION__: string | undefined;
@@ -66,21 +66,38 @@ function stripBrackets(hostname: string): string {
     : hostname;
 }
 
-function mergeAbortSignals(signals: Array<AbortSignal | undefined>): AbortSignal {
+function mergeAbortSignals(signals: Array<AbortSignal | undefined>): {
+  signal: AbortSignal;
+  dispose: () => void;
+} {
   const controller = new AbortController();
+  const listeners: Array<{ signal: AbortSignal; listener: () => void }> = [];
+  let disposed = false;
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    for (const { signal, listener } of listeners) {
+      signal.removeEventListener('abort', listener);
+    }
+    listeners.length = 0;
+  };
   for (const signal of signals) {
     if (!signal) continue;
     if (signal.aborted) {
       controller.abort(signal.reason);
-      return controller.signal;
+      dispose();
+      break;
     }
-    signal.addEventListener('abort', () => {
+    const listener = () => {
       if (!controller.signal.aborted) {
         controller.abort(signal.reason);
       }
-    }, { once: true });
+      dispose();
+    };
+    listeners.push({ signal, listener });
+    signal.addEventListener('abort', listener, { once: true });
   }
-  return controller.signal;
+  return { signal: controller.signal, dispose };
 }
 
 function createDeadlineSignal(ms: number, label: string): {
@@ -169,6 +186,7 @@ function createLimitedBodyStream(
     idleMs: number;
     signal: AbortSignal;
   },
+  onDone: () => void,
 ): ReadableStream<Uint8Array> {
   let encodedTotal = 0;
   let decodedTotal = 0;
@@ -179,6 +197,13 @@ function createLimitedBodyStream(
     && limits.encoding !== 'identity'
     && /gzip|deflate|br/i.test(limits.encoding),
   );
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    onDone();
+  };
+  let cancelBody = finish;
 
   const resetIdle = (fail: (error: Error) => void) => {
     if (idleTimer !== undefined) window.clearTimeout(idleTimer);
@@ -189,8 +214,24 @@ function createLimitedBodyStream(
 
   return new ReadableStream<Uint8Array>({
     start(controller) {
-      const fail = (error: unknown) => {
+      let settled = false;
+      const cleanup = () => {
         if (idleTimer !== undefined) window.clearTimeout(idleTimer);
+        limits.signal.removeEventListener('abort', onAbort);
+        source.removeListener('data', onData);
+        source.removeListener('end', onEnd);
+        source.removeListener('error', fail);
+        finish();
+      };
+      cancelBody = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+      };
+      const fail = (error: unknown) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
         source.destroy();
         controller.error(error instanceof Error ? error : new Error(String(error)));
       };
@@ -201,14 +242,8 @@ function createLimitedBodyStream(
           : new EgressPolicyError('aborted', 'Request aborted'));
       };
 
-      if (limits.signal.aborted) {
-        onAbort();
-        return;
-      }
-      limits.signal.addEventListener('abort', onAbort, { once: true });
-      resetIdle(fail);
-
-      source.on('data', (chunk: Buffer | string) => {
+      const onData = (chunk: Buffer | string) => {
+        if (settled) return;
         resetIdle(fail);
         const buffer = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
         encodedTotal += buffer.byteLength;
@@ -232,11 +267,10 @@ function createLimitedBodyStream(
           return;
         }
         controller.enqueue(new Uint8Array(buffer));
-      });
+      };
 
-      source.on('end', () => {
-        if (idleTimer !== undefined) window.clearTimeout(idleTimer);
-        limits.signal.removeEventListener('abort', onAbort);
+      const onEnd = () => {
+        if (settled) return;
         try {
           if (isCompressed) {
             const merged = Buffer.concat(encodedChunks);
@@ -250,16 +284,26 @@ function createLimitedBodyStream(
             }
             controller.enqueue(new Uint8Array(decoded));
           }
+          settled = true;
+          cleanup();
           controller.close();
         } catch (error) {
           fail(error);
         }
-      });
+      };
 
-      source.on('error', (error: Error) => fail(error));
+      if (limits.signal.aborted) {
+        onAbort();
+        return;
+      }
+      limits.signal.addEventListener('abort', onAbort, { once: true });
+      source.on('data', onData);
+      source.on('end', onEnd);
+      source.on('error', fail);
+      resetIdle(fail);
     },
     cancel(reason?: unknown) {
-      if (idleTimer !== undefined) window.clearTimeout(idleTimer);
+      cancelBody();
       source.destroy(reason instanceof Error ? reason : new Error('Response body cancelled'));
     },
   });
@@ -407,14 +451,15 @@ function requestOnce(
         settled = true;
         connectDeadline.clear();
         firstByteDeadline.clear();
-        combined.removeEventListener('abort', onAbort);
+        combined.signal.removeEventListener('abort', onAbort);
+        combined.dispose();
         reject(error instanceof Error ? error : new Error(String(error)));
       };
 
       const onAbort = () => {
         req.destroy();
-        fail(combined.reason instanceof Error
-          ? combined.reason
+        fail(combined.signal.reason instanceof Error
+          ? combined.signal.reason
           : new EgressPolicyError('aborted', 'Request aborted'));
       };
 
@@ -438,7 +483,8 @@ function requestOnce(
           settled = true;
           connectDeadline.clear();
           firstByteDeadline.clear();
-          combined.removeEventListener('abort', onAbort);
+          combined.signal.removeEventListener('abort', onAbort);
+          combined.dispose();
 
           const remote = res.socket?.remoteAddress?.replace(/^::ffff:/, '');
           if (remote) {
@@ -468,11 +514,11 @@ function requestOnce(
       });
       req.setTimeout(policy.deadlines.connectMs);
 
-      if (combined.aborted) {
+      if (combined.signal.aborted) {
         onAbort();
         return;
       }
-      combined.addEventListener('abort', onAbort, { once: true });
+      combined.signal.addEventListener('abort', onAbort, { once: true });
 
       if (body) req.end(body);
       else req.end();
@@ -485,9 +531,11 @@ function toResponse(
   policy: ResolvedEgressPolicy,
   signal: AbortSignal,
   followBody: boolean,
+  onBodyDone: () => void,
 ): Response {
   if (!followBody || !raw.body) {
     raw.body?.resume();
+    onBodyDone();
     return createFetchResponse(raw.status, raw.statusText, raw.headers, null);
   }
 
@@ -499,15 +547,13 @@ function toResponse(
     );
   }
 
-  const pass = new PassThrough();
-  raw.body.pipe(pass);
-  const bodyStream = createLimitedBodyStream(pass, {
+  const bodyStream = createLimitedBodyStream(raw.body, {
     maxEncoded: policy.byteLimits.maxEncodedResponseBytes,
     maxDecoded: policy.byteLimits.maxDecodedResponseBytes,
     encoding: raw.headers.get('content-encoding'),
     idleMs: policy.deadlines.idleMs,
     signal,
-  });
+  }, onBodyDone);
   return createFetchResponse(raw.status, raw.statusText, raw.headers, bodyStream);
 }
 
@@ -519,11 +565,17 @@ async function scopedFetch(
   const policy = resolveEgressPolicy(options.policy);
   const lookup = options.lookup ?? defaultLookup;
   const totalDeadline = createDeadlineSignal(policy.deadlines.totalMs, 'Total');
-  const signal = mergeAbortSignals([
+  let deadlineOwnedByBody = false;
+  const merged = mergeAbortSignals([
     init?.signal ?? (input instanceof Request ? input.signal : undefined),
     policy.signal,
     totalDeadline.signal,
   ]);
+  const signal = merged.signal;
+  const finish = () => {
+    totalDeadline.clear();
+    merged.dispose();
+  };
 
   try {
     const rawUrl = input instanceof Request ? input.url : input;
@@ -570,7 +622,7 @@ async function scopedFetch(
         const location = raw.headers.get('location');
         raw.body?.resume();
         if (!location) {
-          return toResponse(raw, policy, signal, false);
+          return toResponse(raw, policy, signal, false, finish);
         }
         const nextUrl = prepareRedirect(url, location, redirectCount, policy);
         headers = filterRedirectHeaders(headers, url, nextUrl);
@@ -586,7 +638,9 @@ async function scopedFetch(
         continue;
       }
 
-      return toResponse(raw, policy, signal, true);
+      const response = toResponse(raw, policy, signal, true, finish);
+      deadlineOwnedByBody = response.body !== null;
+      return response;
     }
   } catch (error) {
     if (error instanceof NetworkUrlError || error instanceof EgressPolicyError) {
@@ -594,7 +648,9 @@ async function scopedFetch(
     }
     throw error;
   } finally {
-    totalDeadline.clear();
+    if (!deadlineOwnedByBody) {
+      finish();
+    }
   }
 }
 

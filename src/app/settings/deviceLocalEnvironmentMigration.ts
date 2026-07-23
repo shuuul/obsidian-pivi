@@ -78,10 +78,11 @@ function readLegacyEnvironmentTexts(
   };
 }
 
-function migrateCanonicalCredentialsFromText(
+export function migrateCanonicalCredentialsFromText(
   secretStorage: SyncSecretStore,
   envText: string,
   addedProviders: readonly string[],
+  options: { overwriteWebCredentials?: boolean } = {},
 ): { remainingText: string; changed: boolean } {
   const { providerEnv, webCredentials, remainingText } = extractCanonicalCredentialCandidates(envText);
   let changed = false;
@@ -95,6 +96,11 @@ function migrateCanonicalCredentialsFromText(
       addedProviders,
       providerText,
     );
+    if (synced.environmentVariables.trim()) {
+      throw new DeviceLocalEnvironmentMigrationError(
+        'Provider credentials could not be handed off because their provider is not configured.',
+      );
+    }
     changed = changed || synced.changed;
   }
 
@@ -102,7 +108,7 @@ function migrateCanonicalCredentialsFromText(
   if (webStore) {
     for (const { providerId, apiKey } of webCredentials) {
       const existing = webStore.readSync(providerId);
-      if (!existing) {
+      if (!existing || options.overwriteWebCredentials) {
         webStore.writeSync(providerId, apiKey);
         changed = true;
       } else if (existing !== apiKey) {

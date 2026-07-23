@@ -10,9 +10,8 @@ import {
   clearObsoleteEnvironmentSecrets,
   createSecretStoreResolveHost,
   environmentStatesEqual,
-  formatEnvironmentMap,
+  extractCanonicalCredentialCandidates,
   projectEnvironmentOntoSettings,
-  resolveEnvironmentMap,
   stageEnvironmentSecrets,
   toEnvironmentUiEntries,
 } from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
@@ -24,7 +23,10 @@ import {
 import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
-import { publishEnvironmentEntries } from '@/app/settings/deviceLocalEnvironmentMigration';
+import {
+  migrateCanonicalCredentialsFromText,
+  publishEnvironmentEntries,
+} from '@/app/settings/deviceLocalEnvironmentMigration';
 
 export interface EnvironmentApplyHooks {
   persistSessionSummary(openSession: OpenSessionState): Promise<void>;
@@ -43,6 +45,28 @@ type EnvironmentApplyHost = Pick<
   app: { secretStorage: SyncSecretStore | undefined };
   getEnvironmentStore(): DeviceLocalEnvironmentStore;
 };
+
+interface SecretMutation {
+  id: string;
+  previous: string | null;
+  next: string | null;
+}
+
+interface PreparedImport {
+  drafts: EnvironmentEntryDraft[];
+  credentialMutations: SecretMutation[];
+}
+
+const publicationQueues = new WeakMap<object, Promise<void>>();
+
+function enqueuePublication<T extends object>(host: T, operation: () => Promise<void>): Promise<void> {
+  const previous = publicationQueues.get(host) ?? Promise.resolve();
+  const next = previous.catch(() => undefined).then(operation);
+  publicationQueues.set(host, next);
+  return next.finally(() => {
+    if (publicationQueues.get(host) === next) publicationQueues.delete(host);
+  });
+}
 
 function getSystemEnvironmentVariable(name: string): string | undefined {
   try {
@@ -122,7 +146,7 @@ async function afterEnvironmentPublished(
   plugin.notify(noticeText);
 }
 
-export async function applyEnvironmentEntries(
+async function applyEnvironmentEntriesNow(
   plugin: EnvironmentApplyHost,
   drafts: readonly EnvironmentEntryDraft[],
   hooks: EnvironmentApplyHooks,
@@ -135,6 +159,119 @@ export async function applyEnvironmentEntries(
   await afterEnvironmentPublished(plugin, hooks);
 }
 
+export function applyEnvironmentEntries(
+  plugin: EnvironmentApplyHost,
+  drafts: readonly EnvironmentEntryDraft[],
+  hooks: EnvironmentApplyHooks,
+): Promise<void> {
+  return enqueuePublication(plugin, () => applyEnvironmentEntriesNow(plugin, drafts, hooks));
+}
+
+function preserveEntry(entry: NonNullable<ReturnType<DeviceLocalEnvironmentStore['loadInitialized']>>['entries'][number]): EnvironmentEntryDraft {
+  return {
+    key: entry.key,
+    scope: entry.scope,
+    source: entry.source.kind === 'plain'
+      ? { kind: 'plain', value: entry.source.value }
+      : entry.source.kind === 'secret'
+        ? { kind: 'secret' }
+        : { kind: 'systemEnvironment', ...(entry.source.name ? { name: entry.source.name } : {}) },
+  };
+}
+
+function createSecretMutationRecorder(secretStorage: SyncSecretStore): {
+  store: SyncSecretStore;
+  mutations: Map<string, SecretMutation>;
+} {
+  const mutations = new Map<string, SecretMutation>();
+  const current = (id: string): string | null => mutations.has(id)
+    ? mutations.get(id)!.next
+    : secretStorage.getSecret(id);
+  const record = (id: string, next: string | null): void => {
+    const existing = mutations.get(id);
+    mutations.set(id, {
+      id,
+      previous: existing?.previous ?? secretStorage.getSecret(id),
+      next,
+    });
+  };
+  return {
+    store: {
+      getSecret: current,
+      setSecret: (id, value) => record(id, value || null),
+      listSecrets: prefix => secretStorage.listSecrets(prefix),
+      deleteSecret: id => record(id, null),
+    },
+    mutations,
+  };
+}
+
+function prepareImports(
+  plugin: EnvironmentApplyHost,
+  imports: ReadonlyMap<EnvironmentScope, string>,
+): PreparedImport {
+  const secretStorage = isSecretStorageAvailable(plugin.app.secretStorage)
+    ? plugin.app.secretStorage
+    : undefined;
+  if (!secretStorage) {
+    const drafts: EnvironmentEntryDraft[] = [];
+    for (const [scope, envText] of imports) {
+      const candidates = extractCanonicalCredentialCandidates(envText);
+      if (Object.keys(candidates.providerEnv).length || candidates.webCredentials.length) {
+        throw new Error('SecretStorage is required to import provider credentials.');
+      }
+      drafts.push(...(scope === 'shared'
+        ? buildEntriesFromLegacyText(envText, '')
+        : buildEntriesFromLegacyText('', envText)));
+    }
+    return { drafts, credentialMutations: [] };
+  }
+  const recorder = createSecretMutationRecorder(secretStorage);
+  const drafts: EnvironmentEntryDraft[] = [];
+  for (const [scope, envText] of imports) {
+    const migrated = migrateCanonicalCredentialsFromText(
+      recorder.store,
+      envText,
+      plugin.settings.agentSettings.addedProviders ?? [],
+      { overwriteWebCredentials: true },
+    );
+    drafts.push(...(scope === 'shared'
+      ? buildEntriesFromLegacyText(migrated.remainingText, '')
+      : buildEntriesFromLegacyText('', migrated.remainingText)));
+  }
+  return { drafts, credentialMutations: [...recorder.mutations.values()] };
+}
+
+function commitCredentialMutations(
+  secretStorage: SyncSecretStore,
+  mutations: readonly SecretMutation[],
+): void {
+  for (const mutation of mutations) {
+    if (mutation.next === null) {
+      if (secretStorage.deleteSecret) secretStorage.deleteSecret(mutation.id);
+      else secretStorage.setSecret(mutation.id, '');
+    } else secretStorage.setSecret(mutation.id, mutation.next);
+  }
+}
+
+function rollbackCredentialMutations(
+  secretStorage: SyncSecretStore,
+  mutations: readonly SecretMutation[],
+): void {
+  for (const mutation of [...mutations].reverse()) {
+    try {
+      if (mutation.previous === null) {
+        if (secretStorage.deleteSecret) secretStorage.deleteSecret(mutation.id);
+        else secretStorage.setSecret(mutation.id, '');
+      } else {
+        secretStorage.setSecret(mutation.id, mutation.previous);
+      }
+    } catch {
+      // Preserve the publication failure; rollback is necessarily best-effort.
+    }
+  }
+}
+
 /**
  * Bulk-import KEY=VALUE text into structured entries for one scope, preserving
  * other scopes. Parses before save; secret-like keys become secret sources.
@@ -145,29 +282,21 @@ export async function importEnvironmentText(
   envText: string,
   hooks: EnvironmentApplyHooks,
 ): Promise<void> {
-  const store = plugin.getEnvironmentStore();
-  const previous = store.loadInitialized();
-  const otherScope: EnvironmentScope = scope === 'shared' ? 'agent' : 'shared';
-  const otherEntries = (previous?.entries ?? [])
-    .filter((entry) => entry.scope === otherScope)
-    .map((entry): EnvironmentEntryDraft => ({
-      key: entry.key,
-      scope: entry.scope,
-      source: entry.source.kind === 'plain'
-        ? { kind: 'plain', value: entry.source.value }
-        : entry.source.kind === 'secret'
-          ? { kind: 'secret' }
-          : {
-              kind: 'systemEnvironment',
-              ...(entry.source.name ? { name: entry.source.name } : {}),
-            },
-    }));
-
-  const imported = scope === 'shared'
-    ? buildEntriesFromLegacyText(envText, '')
-    : buildEntriesFromLegacyText('', envText);
-
-  await applyEnvironmentEntries(plugin, [...otherEntries, ...imported], hooks);
+  await enqueuePublication(plugin, async () => {
+    const previous = plugin.getEnvironmentStore().loadInitialized();
+    const untouched = (previous?.entries ?? [])
+      .filter(entry => entry.scope !== scope)
+      .map(preserveEntry);
+    const prepared = prepareImports(plugin, new Map([[scope, envText]]));
+    const secretStorage = plugin.app.secretStorage!;
+    try {
+      commitCredentialMutations(secretStorage, prepared.credentialMutations);
+      await applyEnvironmentEntriesNow(plugin, [...untouched, ...prepared.drafts], hooks);
+    } catch (error) {
+      rollbackCredentialMutations(secretStorage, prepared.credentialMutations);
+      throw error;
+    }
+  });
 }
 
 /** Bulk text apply that parses into structured entries before save. */
@@ -176,47 +305,44 @@ export async function applyEnvironmentVariablesBatch(
   updates: Array<{ scope: EnvironmentScope; envText: string }>,
   hooks: EnvironmentApplyHooks,
 ): Promise<void> {
-  const store = plugin.getEnvironmentStore();
-  const previous = store.loadInitialized();
-  const byScope = new Map<EnvironmentScope, string>();
-  for (const update of updates) {
-    byScope.set(update.scope, update.envText);
-  }
+  await enqueuePublication(plugin, async () => {
+    const store = plugin.getEnvironmentStore();
+    const previous = store.loadInitialized();
+    const byScope = new Map<EnvironmentScope, string>();
+    for (const update of updates) {
+      byScope.set(update.scope, update.envText);
+    }
 
-  const sharedText = byScope.has('shared')
-    ? byScope.get('shared')!
-    : formatEnvironmentMap(
-      previous
-        ? resolveEnvironmentMap(previous, createHostResolve(plugin), 'shared')
-        : {},
-    );
-  const agentText = byScope.has('agent')
-    ? byScope.get('agent')!
-    : formatEnvironmentMap(
-      previous
-        ? resolveEnvironmentMap(previous, createHostResolve(plugin), 'agent')
-        : {},
-    );
-
-  const drafts = buildEntriesFromLegacyText(sharedText, agentText);
-  const secretStorage = isSecretStorageAvailable(plugin.app.secretStorage)
-    ? plugin.app.secretStorage
-    : undefined;
-  if (!secretStorage) {
-    throw new Error('SecretStorage is required to save environment configuration.');
-  }
-  const staged = stageEnvironmentSecrets(secretStorage, drafts, previous);
-  if (
-    previous
-    && environmentStatesEqual(previous, staged.nextState)
-    && staged.stagedSecretIds.length === 0
-    && staged.obsoleteSecretIds.length === 0
-  ) {
-    await plugin.saveSettings();
-    return;
-  }
-  store.save(staged.nextState);
-  projectEnvironmentOntoSettings(plugin.settings, staged.nextState, createHostResolve(plugin));
-  await afterEnvironmentPublished(plugin, hooks);
-  clearObsoleteEnvironmentSecrets(secretStorage, staged.obsoleteSecretIds);
+    const prepared = prepareImports(plugin, byScope);
+    const drafts: EnvironmentEntryDraft[] = (previous?.entries ?? [])
+      .filter(entry => !byScope.has(entry.scope))
+      .map(preserveEntry);
+    drafts.push(...prepared.drafts);
+    const secretStorage = isSecretStorageAvailable(plugin.app.secretStorage)
+      ? plugin.app.secretStorage
+      : undefined;
+    if (!secretStorage) {
+      throw new Error('SecretStorage is required to save environment configuration.');
+    }
+    const staged = stageEnvironmentSecrets(secretStorage, drafts, previous);
+    try {
+      commitCredentialMutations(secretStorage, prepared.credentialMutations);
+      if (
+        previous
+        && environmentStatesEqual(previous, staged.nextState)
+        && staged.stagedSecretIds.length === 0
+        && staged.obsoleteSecretIds.length === 0
+      ) {
+        await plugin.saveSettings();
+        return;
+      }
+      store.save(staged.nextState);
+      projectEnvironmentOntoSettings(plugin.settings, staged.nextState, createHostResolve(plugin));
+      await afterEnvironmentPublished(plugin, hooks);
+      clearObsoleteEnvironmentSecrets(secretStorage, staged.obsoleteSecretIds);
+    } catch (error) {
+      rollbackCredentialMutations(secretStorage, prepared.credentialMutations);
+      throw error;
+    }
+  });
 }

@@ -264,6 +264,21 @@ describe('React ChatShell tabs', () => {
     await act(async () => mounted.mounted.dispose());
   });
 
+  it('wraps arrow navigation across only visible, non-exiting tab rows', async () => {
+    jest.useFakeTimers();
+    const mounted = await mountShell({ position: 'header' });
+    fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Active chat' }));
+    const active = screen.getByRole('menuitem', { name: 'Active chat' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close Needs attention' }));
+    active.focus();
+    fireEvent.keyDown(active, { key: 'ArrowDown' });
+
+    expect(active).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Archived chat' })).not.toHaveFocus();
+    await act(async () => mounted.mounted.dispose());
+  });
+
   it('keeps the menu mounted for its close animation for trigger and outside clicks', async () => {
     jest.useFakeTimers();
     const mounted = await mountShell({ position: 'header' });

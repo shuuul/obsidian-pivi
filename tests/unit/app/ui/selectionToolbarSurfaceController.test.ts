@@ -165,6 +165,7 @@ function createController({
     app: {
       workspace: {
         getActiveViewOfType: jest.fn(() => activeView),
+        getLeavesOfType: jest.fn(() => activeView ? [{ view: activeView }] : []),
       },
       commands: { executeCommandById },
       vault: { read: jest.fn(async () => 'the full note') },
@@ -493,6 +494,15 @@ describe('SelectionToolbarSurfaceController inline edit guards', () => {
 
   it('runs an inline Pivi shortcut by stable key and injects selected text only through the canonical block', async () => {
     submitInlineEditTurn.mockResolvedValue({ assistantText: '<replacement>updated</replacement>' });
+    const MarkdownView = (jest.requireMock('obsidian') as { MarkdownView: new () => {
+      editor?: unknown;
+      file?: unknown;
+    } }).MarkdownView;
+    const originatingView = new MarkdownView();
+    const originatingEditor = {};
+    originatingView.editor = originatingEditor;
+    originatingView.file = { basename: 'Current note' };
+    snapshot.editor = originatingEditor as never;
     const controller = createController({
       shortcuts: [{
         id: 'inline-command',
@@ -502,7 +512,7 @@ describe('SelectionToolbarSurfaceController inline edit guards', () => {
         piviCommandKey: 'stable-key',
         executionTarget: 'inline-edit',
       }],
-      activeView: { file: { basename: 'Current note' } },
+      activeView: originatingView,
       workspace: {
         slashCommandCatalog: {
           listWorkspaceEntries: jest.fn(async () => [{

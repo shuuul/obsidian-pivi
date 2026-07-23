@@ -234,7 +234,13 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
   const focusAdjacent = (element: HTMLElement, direction: 1 | -1): void => {
     const items = Array.from(
       containerRef.current?.querySelectorAll<HTMLElement>('.pivi-tab-switcher-item') ?? [],
-    );
+    ).filter(item => (
+      !item.classList.contains('is-exiting')
+      && (isArchivedRevealed || !item.classList.contains('is-archived'))
+      && !item.hidden
+      && ownerWindow.getComputedStyle(item).display !== 'none'
+      && ownerWindow.getComputedStyle(item).visibility !== 'hidden'
+    ));
     if (items.length === 0) return;
     const index = items.indexOf(element);
     items[(index + direction + items.length) % items.length]?.focus();

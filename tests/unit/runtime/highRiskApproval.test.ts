@@ -141,6 +141,32 @@ describe('high-risk classification', () => {
     expect(bulk?.resources.bulkCount).toBe(HIGH_RISK_BULK_CHILD_THRESHOLD + 1);
   });
 
+  it('classifies explicit overwrite intent without consulting path existence', async () => {
+    const pathExists = jest.fn(() => false);
+    await expect(classifyHighRiskToolCall(
+      'obsidian_write',
+      { path: 'new.md', mode: 'overwrite' },
+      { pathExists },
+    )).resolves.toMatchObject({ kind: 'overwrite' });
+    await expect(classifyHighRiskToolCall(
+      'obsidian_write',
+      { path: 'new.md', mode: 'create', overwrite: true },
+      { pathExists },
+    )).resolves.toMatchObject({ kind: 'overwrite' });
+    expect(pathExists).not.toHaveBeenCalled();
+  });
+
+  it('fingerprints Bash using the same quote-aware argv that execution uses', async () => {
+    const classification = await classifyHighRiskToolCall(
+      'obsidian_bash',
+      { command: `echo "a b" 'c d'` },
+    );
+    expect(classification?.resources).toMatchObject({
+      executable: 'echo',
+      args: ['a b', 'c d'],
+    });
+  });
+
   it('builds stable grant keys from normalized resources', () => {
     const keyA = buildHighRiskGrantKey('s', 't', 'delete', { paths: ['B.md', 'A.md'] });
     const keyB = buildHighRiskGrantKey('s', 't', 'delete', { paths: ['A.md', 'B.md'] });

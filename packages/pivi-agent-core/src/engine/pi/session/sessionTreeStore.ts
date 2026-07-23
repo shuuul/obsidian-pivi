@@ -23,6 +23,9 @@ import {
   acknowledgeJournalEntry,
   createJournalEntryId,
   sealJournalEntryWithAppend,
+  SessionJournalBoundsError,
+  type SessionJournalEntryV1,
+  type SessionJournalIntent,
   type SessionJournalStore,
   upsertJournalEntry,
 } from '../../../session/sessionJournal';
@@ -228,7 +231,10 @@ export class SessionTreeStore {
     }
   }
 
-  private refreshIndexAfterAppend(entryIds: readonly string[]): void {
+  private refreshIndexAfterAppend(
+    entryIds: readonly string[],
+    journalEntry?: SessionJournalEntryV1,
+  ): void {
     const sessionFile = this.persistentSessionFile();
     if (!sessionFile || !this.sourceFingerprint) {
       return;
@@ -241,7 +247,7 @@ export class SessionTreeStore {
         this.sourceFingerprint,
         entryIds,
       );
-      this.recordAndAckJournal(sessionFile, relative, baseFingerprint, entryIds);
+      this.recordAndAckJournal(sessionFile, relative, baseFingerprint, entryIds, journalEntry);
     } catch (error) {
       this.evictLive();
       throw error;
@@ -250,14 +256,15 @@ export class SessionTreeStore {
 
   /**
    * After a successful JSONL append, seal the continuation into the device-local
-   * journal and mark it confirmed. Confirmed rows are retained until the next
-   * confirmed append for the same session or startup verification removes them.
+   * journal and mark it confirmed. Confirmed rows remain a bounded fingerprint
+   * chain so a later synced rollback can recover exactly the local epoch.
    */
   private recordAndAckJournal(
     absoluteSessionFile: string,
     relativeSessionFile: string | null,
     baseFingerprint: SessionJsonlSourceFingerprint,
     entryIds: readonly string[],
+    journalEntry?: SessionJournalEntryV1,
   ): void {
     if (!boundJournal || !relativeSessionFile || !this.sourceFingerprint) {
       return;
@@ -275,16 +282,13 @@ export class SessionTreeStore {
       const lines = appended.endsWith('\n')
         ? appended.slice(0, -1).split('\n')
         : appended.split('\n');
-      const createdAt = boundJournal.now();
-      const intent = { kind: 'jsonl-lines' as const, lines };
-      const id = createJournalEntryId(
-        relativeSessionFile,
-        baseFingerprint,
-        intent,
-        createdAt,
+      const createdAt = journalEntry?.createdAt ?? boundJournal.now();
+      const intent = journalEntry?.intent ?? { kind: 'jsonl-lines' as const, lines };
+      const id = journalEntry?.id ?? createJournalEntryId(
+        relativeSessionFile, baseFingerprint, intent, createdAt,
       );
       const sealed = sealJournalEntryWithAppend(
-        {
+        journalEntry ?? {
           version: 1,
           id,
           sessionFile: relativeSessionFile,
@@ -309,6 +313,39 @@ export class SessionTreeStore {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  private persistJournalIntent(intent: SessionJournalIntent): SessionJournalEntryV1 | undefined {
+    const relative = this.getVaultRelativeSessionFile();
+    if (!boundJournal || !relative || !this.sourceFingerprint) {
+      return undefined;
+    }
+    const createdAt = boundJournal.now();
+    const entry: SessionJournalEntryV1 = {
+      version: 1,
+      id: createJournalEntryId(relative, this.sourceFingerprint, intent, createdAt),
+      sessionFile: relative,
+      createdAt,
+      status: 'intent',
+      baseFingerprint: this.sourceFingerprint,
+      intent,
+    };
+    try {
+      boundJournal.store.save(upsertJournalEntry(boundJournal.store.load(), entry));
+    } catch (error) {
+      if (error instanceof SessionJournalBoundsError) {
+        // The journal is a recovery aid, not the authoritative write path. A
+        // supported large image must still reach Pi even when its intent cannot
+        // fit in the bounded device-local journal.
+        logger.warn('Session journal intent exceeds the recovery bound', {
+          sessionFile: relative,
+          error: error.message,
+        });
+        return undefined;
+      }
+      throw error;
+    }
+    return entry;
   }
 
   /** Rewrite the authoritative file after a non-append mutation. */
@@ -555,6 +592,7 @@ export class SessionTreeStore {
 
   appendUserMessage(content: string, images?: ImageAttachment[]): string {
     this.assertWritableSource();
+    const journalEntry = this.persistJournalIntent({ kind: 'user', content, images });
     if (images && images.length > 0) {
       const parts: Array<TextContent | ImageContent> = [
         { type: 'text', text: content },
@@ -565,7 +603,7 @@ export class SessionTreeStore {
         content: parts,
         timestamp: Date.now(),
       });
-      this.refreshIndexAfterAppend([imageEntryId]);
+      this.refreshIndexAfterAppend([imageEntryId], journalEntry);
       this.registerLive();
       return imageEntryId;
     }
@@ -574,7 +612,7 @@ export class SessionTreeStore {
       content,
       timestamp: Date.now(),
     });
-    this.refreshIndexAfterAppend([entryId]);
+    this.refreshIndexAfterAppend([entryId], journalEntry);
     this.registerLive();
     return entryId;
   }
@@ -587,28 +625,33 @@ export class SessionTreeStore {
       return;
     }
     this.assertWritableSource();
-    const entryIds: string[] = [];
     for (const message of missingMessages) {
-      entryIds.push(this.manager.appendMessage(
+      const journalEntry = this.persistJournalIntent({
+        kind: 'agent',
+        messages: [message as unknown as Record<string, unknown>],
+      });
+      const entryId = this.manager.appendMessage(
         message as Parameters<SessionManager['appendMessage']>[0],
-      ));
+      );
+      this.refreshIndexAfterAppend([entryId], journalEntry);
     }
-    this.refreshIndexAfterAppend(entryIds);
     this.registerLive();
   }
 
   appendCustomMeta(data: PiviSessionMetaData): string {
     this.assertWritableSource();
+    const journalEntry = this.persistJournalIntent({ kind: 'custom', customType: PIVI_SESSION_META, data: { ...data } });
     const entryId = this.manager.appendCustomEntry(PIVI_SESSION_META, data);
-    this.refreshIndexAfterAppend([entryId]);
+    this.refreshIndexAfterAppend([entryId], journalEntry);
     this.registerLive();
     return entryId;
   }
 
   appendUiContext(data: PiviUiContextData): string {
     this.assertWritableSource();
+    const journalEntry = this.persistJournalIntent({ kind: 'custom', customType: PIVI_UI_CONTEXT, data: { ...data } });
     const entryId = this.manager.appendCustomEntry(PIVI_UI_CONTEXT, data);
-    this.refreshIndexAfterAppend([entryId]);
+    this.refreshIndexAfterAppend([entryId], journalEntry);
     this.registerLive();
     return entryId;
   }
@@ -616,8 +659,9 @@ export class SessionTreeStore {
   appendMessageUi(data: PiviMessageUiData): string {
     this.assertWritableSource();
     const { sanitized } = sanitizeMessageUiForJsonl(data);
+    const journalEntry = this.persistJournalIntent({ kind: 'custom', customType: PIVI_MESSAGE_UI, data: { ...sanitized } });
     const entryId = this.manager.appendCustomEntry(PIVI_MESSAGE_UI, sanitized);
-    this.refreshIndexAfterAppend([entryId]);
+    this.refreshIndexAfterAppend([entryId], journalEntry);
     this.registerLive();
     return entryId;
   }
@@ -630,13 +674,17 @@ export class SessionTreeStore {
   ): string {
     this.assertWritableSource();
     const validatedDetails = details ? parsePiviCompactionDetails(details) ?? undefined : undefined;
+    const journalEntry = this.persistJournalIntent({
+      kind: 'compaction', summary, firstKeptEntryId, tokensBefore,
+      ...(validatedDetails ? { details: { ...validatedDetails } } : {}),
+    });
     const entryId = this.manager.appendCompaction(
       summary,
       firstKeptEntryId,
       tokensBefore,
       validatedDetails,
     );
-    this.refreshIndexAfterAppend([entryId]);
+    this.refreshIndexAfterAppend([entryId], journalEntry);
     this.registerLive();
     return entryId;
   }
@@ -656,10 +704,13 @@ export class SessionTreeStore {
     summary: string;
   } {
     this.assertWritableSource();
+    const journalEntry = this.persistJournalIntent({
+      kind: 'custom', customType: PIVI_COMPACTION_BOUNDARY, data: { schemaVersion: 1 },
+    });
     const boundaryId = this.manager.appendCustomEntry(PIVI_COMPACTION_BOUNDARY, {
       schemaVersion: 1,
     });
-    this.refreshIndexAfterAppend([boundaryId]);
+    this.refreshIndexAfterAppend([boundaryId], journalEntry);
 
     const boundedCheckpoint = createCheckpoint(boundaryId);
     const details = parsePiviCompactionDetails({

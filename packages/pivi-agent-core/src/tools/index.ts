@@ -1,3 +1,4 @@
+export * from './bashArgv';
 export * from './diff';
 export * from './obsidianToolNames';
 export * from './taskTypes';

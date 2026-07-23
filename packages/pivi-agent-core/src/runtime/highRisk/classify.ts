@@ -2,6 +2,7 @@
  * Classify tool invocations into the fixed high-risk operation table.
  */
 
+import { tokenizeBashArgv } from '../../tools/bashArgv';
 import {
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_DELETE,
@@ -51,7 +52,7 @@ export async function classifyHighRiskToolCall(
 
   if (toolName === TOOL_OBSIDIAN_BASH) {
     const command = stringField(input, 'command') ?? '';
-    const tokens = command.split(/\s+/).filter(Boolean);
+    const tokens = tokenizeBashArgv(command);
     return {
       kind: 'bash',
       resources: {
@@ -116,12 +117,11 @@ export async function classifyHighRiskToolCall(
     if (!path) {
       return null;
     }
-    const exists = context.pathExists ? await context.pathExists(path) : false;
     const overwriteFlag = input.overwrite === true;
-    if (mode === 'overwrite' && exists) {
+    if (mode === 'overwrite') {
       return { kind: 'overwrite', resources: { paths: [path] } };
     }
-    if (mode === 'create' && overwriteFlag && exists) {
+    if (mode === 'create' && overwriteFlag) {
       return { kind: 'overwrite', resources: { paths: [path] } };
     }
     return null;

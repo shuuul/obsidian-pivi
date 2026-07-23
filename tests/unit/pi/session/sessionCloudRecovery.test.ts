@@ -113,7 +113,7 @@ describe('session journal schema', () => {
       .toThrow(SessionJournalBoundsError);
   });
 
-  it('acknowledge retains one confirmed entry per session', () => {
+  it('acknowledge retains the complete bounded continuation chain', () => {
     const fp: SessionJsonlSourceFingerprint = {
       size: 10,
       device: '1',
@@ -142,7 +142,7 @@ describe('session journal schema', () => {
     state = acknowledgeJournalEntry(state, 'one');
     state = upsertJournalEntry(state, second);
     state = acknowledgeJournalEntry(state, 'two');
-    expect(state.entries.map((entry) => entry.id)).toEqual(['two']);
+    expect(state.entries.map((entry) => entry.id)).toEqual(['one', 'two']);
     expect(state.entries[0]?.status).toBe('confirmed');
   });
 });
@@ -211,7 +211,8 @@ describe('session cloud recovery fault matrix', () => {
     void result;
     const recovered = reconcileJournalEntry(vaultPath, store, store.load().entries[0]!);
     expect(recovered.action).toBe('ack');
-    expect(store.load().entries).toHaveLength(0);
+    expect(store.load().entries).toHaveLength(1);
+    expect(store.load().entries[0]?.status).toBe('confirmed');
   });
 
   it('applies journal after crash before JSONL append', () => {
@@ -228,7 +229,8 @@ describe('session cloud recovery fault matrix', () => {
     const result = reconcileJournalEntry(vaultPath, store, store.load().entries[0]!);
     expect(result.action).toBe('apply_append');
     expect(readFileSync(sessionAbsolute, 'utf8')).toContain(lines[0]!);
-    expect(store.load().entries).toHaveLength(0);
+    expect(store.load().entries).toHaveLength(1);
+    expect(store.load().entries[0]?.status).toBe('confirmed');
   });
 
   it('completes an interrupted append', () => {
@@ -263,6 +265,61 @@ describe('session cloud recovery fault matrix', () => {
     expect(text).toContain(lineB);
   });
 
+  it('repairs a malformed byte-partial JSON append before classifying corrupt tail', () => {
+    const { base, lines, entry } = seedBaseAndAppend();
+    const partial = Buffer.from(`${lines[0]}\n`).subarray(0, Math.floor(lines[0]!.length / 2));
+    writeFileSync(sessionAbsolute, Buffer.concat([
+      readFileSync(sessionAbsolute).subarray(0, base.size),
+      partial,
+    ]));
+    const store = memoryJournalStore(upsertJournalEntry(emptySessionJournalState(), entry));
+    const result = reconcileJournalEntry(vaultPath, store, entry);
+    expect(result.classification.kind).toBe('interrupted_append');
+    expect(result.action).toBe('complete_interrupted');
+    expect(readFileSync(sessionAbsolute, 'utf8')).toContain(lines[0]!);
+  });
+
+  it('recovers an intent into a separate valid session after its append tears before sealing', () => {
+    const header = makeSessionHeader('sess-1');
+    const baseLine = makeMessageLine('base-message', 'hello');
+    writeSession(sessionAbsolute, [header, baseLine]);
+    const base = captureSessionJsonlSource(sessionAbsolute);
+    const intent = { kind: 'user' as const, content: 'recover this turn' };
+    const entry: SessionJournalEntryV1 = {
+      version: 1,
+      id: createJournalEntryId(sessionRelative, base, intent, 42),
+      sessionFile: sessionRelative,
+      createdAt: 42,
+      status: 'intent',
+      baseFingerprint: base,
+      intent,
+    };
+    writeFileSync(sessionAbsolute, Buffer.concat([
+      readFileSync(sessionAbsolute),
+      Buffer.from('{"type":"message","id":"torn'),
+    ]));
+    const store = memoryJournalStore(upsertJournalEntry(emptySessionJournalState(), entry));
+
+    const result = reconcileJournalEntry(vaultPath, store, entry);
+
+    expect(result.classification.kind).toBe('corrupt_tail');
+    expect(result.action).toBe('recovered_session');
+    const recoveredLines = readFileSync(join(vaultPath, result.recoveredSessionFile!), 'utf8')
+      .trimEnd()
+      .split('\n')
+      .map(line => JSON.parse(line) as Record<string, unknown>);
+    const recoveredMessage = recoveredLines.find(line => (
+      line.type === 'message' && JSON.stringify(line).includes('recover this turn')
+    ));
+    const provenance = recoveredLines.at(-1)!;
+    expect(recoveredMessage).toMatchObject({ parentId: 'base-message' });
+    expect(provenance).toMatchObject({
+      type: 'custom',
+      parentId: recoveredMessage?.id,
+    });
+    expect(typeof provenance.timestamp).toBe('string');
+  });
+
   it('acks after append before acknowledgment', () => {
     const { entry } = seedBaseAndAppend();
     const store = memoryJournalStore(upsertJournalEntry(emptySessionJournalState(), {
@@ -272,6 +329,122 @@ describe('session cloud recovery fault matrix', () => {
     const result = reconcileJournalEntry(vaultPath, store, store.load().entries[0]!);
     expect(result.classification.kind).toBe('unacknowledged');
     expect(result.action).toBe('ack');
+    expect(store.load().entries[0]?.status).toBe('confirmed');
+  });
+
+  it('seals an intent when the append landed before its acknowledgment', () => {
+    const { base, lines } = seedBaseAndAppend();
+    const intent = { kind: 'user' as const, content: 'local-turn' };
+    const entry: SessionJournalEntryV1 = {
+      version: 1,
+      id: createJournalEntryId(sessionRelative, base, intent, 42),
+      sessionFile: sessionRelative,
+      createdAt: 42,
+      status: 'intent',
+      baseFingerprint: base,
+      intent,
+    };
+    const store = memoryJournalStore(upsertJournalEntry(emptySessionJournalState(), entry));
+    const result = reconcileJournalEntry(vaultPath, store, entry);
+    expect(result.classification.kind).toBe('unacknowledged');
+    expect(store.load().entries[0]).toMatchObject({
+      status: 'confirmed',
+      appendLines: lines,
+    });
+  });
+
+  it('materializes intent with Pi timestamps, image shape, and base parent linkage', () => {
+    const header = makeSessionHeader('sess-1');
+    const baseLine = makeMessageLine('base-message', 'hello');
+    writeSession(sessionAbsolute, [header, baseLine]);
+    const base = captureSessionJsonlSource(sessionAbsolute);
+    const intent = {
+      kind: 'user' as const,
+      content: 'with image',
+      images: [{ data: 'abc', mediaType: 'image/png' }],
+    };
+    const entry: SessionJournalEntryV1 = {
+      version: 1,
+      id: createJournalEntryId(sessionRelative, base, intent, 42),
+      sessionFile: sessionRelative,
+      createdAt: 42,
+      status: 'intent',
+      baseFingerprint: base,
+      intent,
+    };
+    const store = memoryJournalStore(upsertJournalEntry(emptySessionJournalState(), entry));
+    expect(reconcileJournalEntry(vaultPath, store, entry).action).toBe('apply_append');
+    const appended = JSON.parse(readFileSync(sessionAbsolute, 'utf8').trimEnd().split('\n').at(-1)!);
+    expect(appended).toMatchObject({
+      type: 'message',
+      parentId: 'base-message',
+      timestamp: new Date(42).toISOString(),
+      message: {
+        content: [
+          { type: 'text', text: 'with image' },
+          { type: 'image', data: 'abc', mimeType: 'image/png' },
+        ],
+      },
+    });
+  });
+
+  it('retains matching evidence for a later cloud rollback', () => {
+    const { base, entry } = seedBaseAndAppend();
+    const store = memoryJournalStore(upsertJournalEntry(emptySessionJournalState(), {
+      ...entry, status: 'confirmed',
+    }));
+    expect(reconcileSessionJournal(vaultPath, store)[0]?.action).toBe('ack');
+    expect(store.load().entries).toHaveLength(1);
+    writeFileSync(sessionAbsolute, readFileSync(sessionAbsolute).subarray(0, base.size));
+    expect(reconcileSessionJournal(vaultPath, store)[0]?.action).toBe('recovered_session');
+  });
+
+  it('coalesces every retained fragment when a multi-fragment turn rolls back', () => {
+    const first = seedBaseAndAppend();
+    const secondBase = first.result;
+    const secondLine = makeMessageLine('a2', 'assistant-fragment');
+    writeFileSync(sessionAbsolute, `${readFileSync(sessionAbsolute, 'utf8')}${secondLine}\n`);
+    const secondResult = captureSessionJsonlSource(sessionAbsolute);
+    const intent = { kind: 'jsonl-lines' as const, lines: [secondLine] };
+    const second = sealJournalEntryWithAppend({
+      version: 1,
+      id: createJournalEntryId(sessionRelative, secondBase, intent, 43),
+      sessionFile: sessionRelative,
+      createdAt: 43,
+      status: 'intent',
+      baseFingerprint: secondBase,
+      intent,
+    }, ['a2'], [secondLine], secondResult);
+    let state = upsertJournalEntry(emptySessionJournalState(), { ...first.entry, status: 'confirmed' });
+    state = upsertJournalEntry(state, { ...second, status: 'confirmed' });
+    const store = memoryJournalStore(state);
+    writeFileSync(sessionAbsolute, readFileSync(sessionAbsolute).subarray(0, first.base.size));
+    const result = reconcileJournalEntry(vaultPath, store, store.load().entries[1]!);
+    const recovered = readFileSync(join(vaultPath, result.recoveredSessionFile!), 'utf8');
+    expect(recovered).toContain(first.lines[0]!);
+    expect(recovered).toContain(secondLine);
+  });
+
+  it('excludes an unrelated pre-rewrite epoch from a recovered adjacent chain', () => {
+    const first = seedBaseAndAppend();
+    const unrelatedLine = makeMessageLine('old-epoch', 'must-not-recover');
+    const unrelated = sealJournalEntryWithAppend({
+      version: 1,
+      id: 'old-epoch-row',
+      sessionFile: sessionRelative,
+      createdAt: 100,
+      status: 'intent',
+      baseFingerprint: { ...first.base, size: first.base.size + 1 },
+      intent: { kind: 'jsonl-lines', lines: [unrelatedLine] },
+    }, ['old-epoch'], [unrelatedLine], { ...first.base, size: first.base.size + 2 });
+    let state = upsertJournalEntry(emptySessionJournalState(), { ...unrelated, status: 'confirmed' });
+    state = upsertJournalEntry(state, { ...first.entry, status: 'confirmed', createdAt: 1 });
+    const store = memoryJournalStore(state);
+    writeFileSync(sessionAbsolute, readFileSync(sessionAbsolute).subarray(0, first.base.size));
+    const result = reconcileJournalEntry(vaultPath, store, store.load().entries[1]!);
+    const recovered = readFileSync(join(vaultPath, result.recoveredSessionFile!), 'utf8');
+    expect(recovered).toContain(first.lines[0]!);
+    expect(recovered).not.toContain('must-not-recover');
   });
 
   it('recovers rollback without overwriting the external source', () => {

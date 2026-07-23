@@ -4,13 +4,21 @@ import os from 'os';
 import path from 'path';
 
 import { captureSessionJsonlSource } from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
-import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+import {
+  bindSessionJournal,
+  SessionTreeStore,
+} from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,
 } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
 import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
 import { SessionIndexStaleError } from '@pivi/pivi-agent-core/session';
+import {
+  emptySessionJournalState,
+  SESSION_JOURNAL_MAX_ENTRY_BYTES,
+  type SessionJournalStateV1,
+} from '@pivi/pivi-agent-core/session/sessionJournal';
 
 const assistantToolCall = {
   role: 'assistant',
@@ -33,6 +41,50 @@ const toolResult = {
 };
 
 describe('SessionTreeStore', () => {
+  it('skips an oversized journal intent without blocking the authoritative append path', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-large-journal-intent-'));
+    const sessionFile = path.join(root, '.pivi', 'sessions', 'session.jsonl');
+    fs.mkdirSync(path.dirname(sessionFile), { recursive: true });
+    fs.writeFileSync(sessionFile, `${JSON.stringify({
+      type: 'session', version: 3, id: 'session-1', timestamp: new Date().toISOString(), cwd: root,
+    })}\n`);
+    let journalState: SessionJournalStateV1 = emptySessionJournalState();
+    bindSessionJournal({
+      load: () => structuredClone(journalState),
+      save: next => { journalState = structuredClone(next); },
+    });
+    const manager = {
+      appendMessage: jest.fn((message: { content: string }) => {
+        fs.appendFileSync(sessionFile, `${JSON.stringify({
+          type: 'message',
+          id: 'user-1',
+          parentId: null,
+          timestamp: new Date().toISOString(),
+          message,
+        })}\n`);
+        return 'user-1';
+      }),
+      getSessionFile: () => sessionFile,
+      isPersisted: () => true,
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(sessionFile);
+
+    try {
+      expect(store.appendUserMessage('x'.repeat(SESSION_JOURNAL_MAX_ENTRY_BYTES)))
+        .toBe('user-1');
+      expect(manager.appendMessage).toHaveBeenCalledTimes(1);
+      expect(journalState.entries).toHaveLength(0);
+    } finally {
+      bindSessionJournal(null);
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('strips device-local external paths at the JSONL message UI boundary', () => {
     const store = SessionTreeStore.inMemory('/test/vault-message-ui-privacy');
 

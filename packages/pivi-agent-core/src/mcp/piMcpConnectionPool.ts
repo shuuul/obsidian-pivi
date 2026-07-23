@@ -191,7 +191,6 @@ export class PiMcpConnectionPool {
   private readonly connectPromises = new Map<string, PendingConnection>();
   private readonly pendingConnections = new Set<Promise<ServerConnection>>();
   private readonly serverGenerations = new Map<string, number>();
-  private readonly launchedStdioServers = new Set<string>();
   private generation = 0;
   private disposed = false;
 
@@ -299,7 +298,6 @@ export class PiMcpConnectionPool {
     const connections = [...this.connections.values()];
     this.connections.clear();
     this.connectPromises.clear();
-    this.launchedStdioServers.clear();
     await Promise.all(connections.map((connection) => this.closeConnection(connection)));
   }
 
@@ -359,13 +357,12 @@ export class PiMcpConnectionPool {
         `MCP stdio server "${server.name}" is inactive until its executable, arguments, cwd, and environment variable names are confirmed in Settings → MCP.`,
       );
     }
-    if (this.connections.has(server.name) || this.launchedStdioServers.has(server.name)) {
+    if (this.connections.has(server.name)) {
       return;
     }
     if (!this.highRisk) {
       // Settings diagnostics may connect without a turn-scoped controller after
       // activation confirmation; agent turns always inject a controller.
-      this.launchedStdioServers.add(server.name);
       return;
     }
 
@@ -393,7 +390,6 @@ export class PiMcpConnectionPool {
       resources: classification.resources,
       toolName: 'mcp',
     });
-    this.launchedStdioServers.add(server.name);
   }
 
   private async acceptConnection(

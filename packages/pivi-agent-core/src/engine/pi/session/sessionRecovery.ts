@@ -127,6 +127,114 @@ function resolveAppendLines(entry: SessionJournalEntryV1): string[] | null {
   return null;
 }
 
+function lastEntryIdInPrefix(absolute: string, baseSize: number): string | null {
+  const lines = readFileSync(absolute).subarray(0, baseSize).toString('utf8').trimEnd().split('\n');
+  for (let index = lines.length - 1; index >= 0; index--) {
+    try {
+      const parsed = JSON.parse(lines[index]!) as Record<string, unknown>;
+      if (parsed.type !== 'session' && typeof parsed.id === 'string') {
+        return parsed.id;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function lastEntryIdInLines(lines: readonly string[]): string | null {
+  for (let index = lines.length - 1; index >= 0; index--) {
+    try {
+      const parsed = JSON.parse(lines[index]!) as Record<string, unknown>;
+      if (parsed.type !== 'session' && typeof parsed.id === 'string') {
+        return parsed.id;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function reparentFirstEntry(lines: readonly string[], parentId: string | null): string[] {
+  if (lines.length === 0) return [];
+  try {
+    const first = JSON.parse(lines[0]!) as Record<string, unknown>;
+    return [JSON.stringify({ ...first, parentId }), ...lines.slice(1)];
+  } catch {
+    return [...lines];
+  }
+}
+
+function materializeIntentLines(
+  entry: SessionJournalEntryV1,
+  parentId: string | null,
+): string[] | null {
+  const timestamp = new Date(entry.createdAt).toISOString();
+  const id = `journal-${entry.id.slice(0, 16)}`;
+  const chain = (values: Record<string, unknown>[]): string[] => values.map((value, index) => JSON.stringify({
+    ...value,
+    id: values.length === 1 ? id : `${id}-${index}`,
+    parentId: index === 0 ? parentId : `${id}-${index - 1}`,
+    timestamp,
+  }));
+  switch (entry.intent.kind) {
+    case 'user':
+      return chain([{
+        type: 'message',
+        message: {
+          role: 'user',
+          content: entry.intent.images?.length
+            ? [{ type: 'text', text: entry.intent.content }, ...entry.intent.images.map((image) => {
+              const record = image as Record<string, unknown>;
+              return {
+                type: 'image',
+                data: record.data,
+                mimeType: record.mediaType ?? record.mimeType,
+              };
+            })]
+            : entry.intent.content,
+          timestamp: entry.createdAt,
+        },
+      }]);
+    case 'agent':
+      return chain(entry.intent.messages.map((message) => ({ type: 'message', message })));
+    case 'custom':
+      return chain([{
+        type: 'custom',
+        customType: entry.intent.customType, data: entry.intent.data,
+      }]);
+    case 'compaction':
+      return chain([{
+        type: 'compaction',
+        summary: entry.intent.summary,
+        firstKeptEntryId: entry.intent.firstKeptEntryId,
+        tokensBefore: entry.intent.tokensBefore,
+        ...(entry.intent.details ? { details: entry.intent.details } : {}),
+      }]);
+    case 'jsonl-lines':
+      return [...entry.intent.lines];
+    default:
+      return null;
+  }
+}
+
+function observedAppendLines(absolute: string, baseSize: number): string[] | null {
+  const suffix = readFileSync(absolute).subarray(baseSize).toString('utf8');
+  if (!suffix || !suffix.endsWith('\n')) {
+    return null;
+  }
+  const lines = suffix.slice(0, -1).split('\n');
+  try {
+    lines.forEach((line) => {
+      JSON.parse(line);
+    });
+    return lines;
+  } catch {
+    return null;
+  }
+}
+
 function appendPayloadSha(entry: SessionJournalEntryV1): string {
   if (entry.appendSha256) {
     return entry.appendSha256;
@@ -203,6 +311,24 @@ export function classifyJournalDivergence(
     };
   }
 
+  const lines = resolveAppendLines(entry);
+  if (lines && current.size > entry.baseFingerprint.size && prefixMatchesBase(absolute, entry.baseFingerprint)) {
+    const expectedAppend = `${lines.join('\n')}\n`;
+    const actualAppend = readFileSync(absolute)
+      .subarray(entry.baseFingerprint.size)
+      .toString('utf8');
+    // A torn write is expected to be malformed JSONL. Recognize only an exact
+    // non-empty byte prefix so unrelated corruption is never repaired.
+    if (actualAppend.length > 0
+      && actualAppend.length < expectedAppend.length
+      && expectedAppend.startsWith(actualAppend)) {
+      return {
+        kind: 'interrupted_append', sessionFile: entry.sessionFile, entry,
+        currentFingerprint: current, divergenceId,
+      };
+    }
+  }
+
   if (!isValidJsonlFile(absolute)) {
     return {
       kind: 'corrupt_tail',
@@ -254,7 +380,14 @@ export function classifyJournalDivergence(
     };
   }
 
-  const lines = resolveAppendLines(entry);
+  if (!lines && current.size > entry.baseFingerprint.size && prefixMatchesBase(absolute, entry.baseFingerprint)) {
+    if (observedAppendLines(absolute, entry.baseFingerprint.size)) {
+      return {
+        kind: 'unacknowledged', sessionFile: entry.sessionFile, entry,
+        currentFingerprint: current, divergenceId,
+      };
+    }
+  }
   if (lines && current.size > entry.baseFingerprint.size && prefixMatchesBase(absolute, entry.baseFingerprint)) {
     const expectedAppend = `${lines.join('\n')}\n`;
     const actualAppend = readFileSync(absolute)
@@ -269,9 +402,9 @@ export function classifyJournalDivergence(
         divergenceId,
       };
     }
-    if (expectedAppend.startsWith(actualAppend) && actualAppend.length > 0) {
+    if (actualAppend.startsWith(expectedAppend)) {
       return {
-        kind: 'interrupted_append',
+        kind: entry.status === 'confirmed' ? 'identical' : 'unacknowledged',
         sessionFile: entry.sessionFile,
         entry,
         currentFingerprint: current,
@@ -344,16 +477,17 @@ function buildRecoveredFromLinesOnly(
       type: 'session',
       version: 3,
       id: `recovered-${entry.id.slice(0, 12)}`,
-      timestamp: entry.createdAt,
+      timestamp: new Date(entry.createdAt).toISOString(),
       cwd: '',
       parentSession: null,
     });
   }
+  const recoveredLines = reparentFirstEntry(lines, null);
   const provenance = JSON.stringify({
     type: 'custom',
     id: `prov-${entry.id.slice(0, 12)}`,
-    parentId: null,
-    timestamp: Date.now(),
+    parentId: lastEntryIdInLines(recoveredLines),
+    timestamp: new Date().toISOString(),
     customType: 'pivi/session-meta',
     data: {
       title: recoveredTitle,
@@ -363,7 +497,7 @@ function buildRecoveredFromLinesOnly(
       recoveryJournalEntryId: entry.id,
     },
   });
-  return Buffer.from([headerLine, provenance, ...lines].join('\n') + '\n', 'utf8');
+  return Buffer.from([headerLine, ...recoveredLines, provenance].join('\n') + '\n', 'utf8');
 }
 
 function writeRecoveredSessionFile(
@@ -390,8 +524,9 @@ function writeRecoveredSessionFile(
       const provenance = JSON.stringify({
         type: 'custom',
         id: `prov-${entry.id.slice(0, 12)}`,
-        parentId: null,
-        timestamp: Date.now(),
+        parentId: lastEntryIdInLines(lines)
+          ?? lastEntryIdInPrefix(sourceAbsolute, entry.baseFingerprint.size),
+        timestamp: new Date().toISOString(),
         customType: 'pivi/session-meta',
         data: {
           title: recoveredTitle,
@@ -464,25 +599,43 @@ export function reconcileJournalEntry(
 
   switch (classification.kind) {
     case 'identical':
-    case 'unacknowledged':
     case 'inode_only': {
-      // Source still reflects the sealed local append — drop the journal row.
-      drop();
+      // Confirmed evidence survives matching startups so a later cloud rollback
+      // can still reconstruct this continuation.
+      if (entry.status !== 'confirmed') {
+        state = acknowledgeJournalEntry(state, entry.id);
+        store.save(state);
+      }
       return {
         classification,
         action: 'ack',
-        noticeKey: classification.kind === 'unacknowledged'
-          ? 'host.sessionRecovery.applied'
-          : undefined,
+        noticeParams: { sessionFile: entry.sessionFile },
+      };
+    }
+    case 'unacknowledged': {
+      const absolute = toAbsoluteSessionPath(vaultPath, entry.sessionFile);
+      const lines = resolveAppendLines(entry)
+        ?? observedAppendLines(absolute, entry.baseFingerprint.size);
+      if (!lines) {
+        return { classification, action: 'noop' };
+      }
+      state = upsertJournalEntry(state, sealJournalEntryWithAppend(
+        entry, entry.entryIds ?? [], lines, captureSessionJsonlSource(absolute),
+      ));
+      state = acknowledgeJournalEntry(state, entry.id);
+      store.save(state);
+      return {
+        classification, action: 'ack', noticeKey: 'host.sessionRecovery.applied',
         noticeParams: { sessionFile: entry.sessionFile },
       };
     }
     case 'append_compatible': {
-      const lines = resolveAppendLines(entry);
+      const absolute = toAbsoluteSessionPath(vaultPath, entry.sessionFile);
+      const lines = resolveAppendLines(entry)
+        ?? materializeIntentLines(entry, lastEntryIdInPrefix(absolute, entry.baseFingerprint.size));
       if (!lines || lines.length === 0) {
         return { classification, action: 'noop' };
       }
-      const absolute = toAbsoluteSessionPath(vaultPath, entry.sessionFile);
       applyAppendLines(absolute, entry.baseFingerprint.size, lines);
       const resultFp = captureSessionJsonlSource(absolute);
       state = upsertJournalEntry(
@@ -490,7 +643,6 @@ export function reconcileJournalEntry(
         sealJournalEntryWithAppend(entry, entry.entryIds ?? [], lines, resultFp),
       );
       state = acknowledgeJournalEntry(state, entry.id);
-      state = removeJournalEntry(state, entry.id);
       store.save(state);
       return {
         classification,
@@ -506,7 +658,12 @@ export function reconcileJournalEntry(
       }
       const absolute = toAbsoluteSessionPath(vaultPath, entry.sessionFile);
       completeInterruptedAppend(absolute, entry.baseFingerprint.size, lines);
-      drop();
+      const completed = captureSessionJsonlSource(absolute);
+      state = upsertJournalEntry(state, sealJournalEntryWithAppend(
+        entry, entry.entryIds ?? [], lines, completed,
+      ));
+      state = acknowledgeJournalEntry(state, entry.id);
+      store.save(state);
       return {
         classification,
         action: 'complete_interrupted',
@@ -532,7 +689,37 @@ export function reconcileJournalEntry(
           };
         }
       }
-      const lines = resolveAppendLines(entry);
+      const selectedIndex = state.entries.findIndex((candidate) => candidate.id === entry.id);
+      const chain = selectedIndex >= 0 ? [state.entries[selectedIndex]!] : [entry];
+      for (let index = selectedIndex - 1; index >= 0; index--) {
+        const candidate = state.entries[index]!;
+        const next = chain[0]!;
+        if (candidate.sessionFile !== entry.sessionFile) {
+          continue;
+        }
+        if (!candidate.resultFingerprint
+          || !fingerprintsContentEqual(candidate.resultFingerprint, next.baseFingerprint)) {
+          break;
+        }
+        chain.unshift(candidate);
+      }
+      const recoverableChain = chain
+        .map((candidate) => ({ candidate, lines: resolveAppendLines(candidate) }))
+        .filter((item): item is { candidate: SessionJournalEntryV1; lines: string[] } => !!item.lines);
+      const recoveryEntry = recoverableChain[0]?.candidate ?? entry;
+      let lines = recoverableChain.length > 0
+        ? recoverableChain.flatMap((item) => item.lines)
+        : resolveAppendLines(entry);
+      if (!resolveAppendLines(entry) && classification.kind === 'corrupt_tail') {
+        const absolute = toAbsoluteSessionPath(vaultPath, entry.sessionFile);
+        const materialized = materializeIntentLines(
+          entry,
+          lastEntryIdInPrefix(absolute, entry.baseFingerprint.size),
+        );
+        if (materialized) {
+          lines = [...(lines ?? []), ...materialized];
+        }
+      }
       if (!lines || lines.length === 0) {
         logger.warn('Journal entry lacks append lines for recovered session', {
           sessionFile: entry.sessionFile,
@@ -546,13 +733,15 @@ export function reconcileJournalEntry(
         : null;
       const recovered = writeRecoveredSessionFile(
         vaultPath,
-        entry,
+        recoveryEntry,
         lines,
         sourceAbsolute,
         options?.recoveredTitle ?? 'Recovered session',
       );
       state = recordRecoveredIdentity(state, classification.divergenceId, recovered);
-      state = removeJournalEntry(state, entry.id);
+      for (const linked of chain) {
+        state = removeJournalEntry(state, linked.id);
+      }
       store.save(state);
       return {
         classification,
@@ -578,9 +767,14 @@ export function reconcileSessionJournal(
   options?: { recoveredTitle?: string },
 ): SessionRecoveryResult[] {
   const state = store.load();
-  const active = listActiveJournalEntries(state);
+  // Journal insertion order, reversed, lets one rolled-back tail recover its
+  // complete chain without trusting wall clocks or creating partial duplicates.
+  const active = listActiveJournalEntries(state).reverse();
   const results: SessionRecoveryResult[] = [];
   for (const entry of active) {
+    if (!store.load().entries.some((current) => current.id === entry.id)) {
+      continue;
+    }
     try {
       results.push(reconcileJournalEntry(vaultPath, store, entry, options));
     } catch (error) {

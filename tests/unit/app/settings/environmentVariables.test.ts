@@ -1,9 +1,15 @@
+import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/engine/pi';
 import type { OpenSessionState, PiviSettings } from '@pivi/pivi-agent-core/foundation';
+import { getEnvironmentSecretId } from '@pivi/pivi-agent-core/foundation/configValueSource';
 import type { DeviceLocalEnvironmentStateV1 } from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
 import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+import { getWebSearchCredentialSecretId } from '@pivi/pivi-agent-core/tools/webSearch/credentialStore';
 
 import type { PiviChatView, PiviChatViewMaintenance } from '@/app/hostContracts';
-import { applyEnvironmentVariablesBatch } from '@/app/settings/environmentVariables';
+import {
+  applyEnvironmentVariablesBatch,
+  importEnvironmentText,
+} from '@/app/settings/environmentVariables';
 
 function createMemorySecretStore(): SyncSecretStore {
   const secrets = new Map<string, string>();
@@ -69,6 +75,142 @@ function createHost(options: {
 }
 
 describe('environment variable runtime propagation', () => {
+  it('hands canonical provider and web keys to credential stores before publishing the registry', async () => {
+    const secretStorage = createMemorySecretStore();
+    secretStorage.setSecret(getWebSearchCredentialSecretId('brave'), 'brave-old');
+    const environmentStore = createEnvironmentStore();
+    const settings = {
+      sharedEnvironmentVariables: '',
+      agentSettings: { environmentVariables: '', addedProviders: ['anthropic'] },
+    } as unknown as PiviSettings;
+
+    await importEnvironmentText(
+      createHost({ settings, views: [], secretStorage, environmentStore }),
+      'shared',
+      'ANTHROPIC_API_KEY=sk-next\nBRAVE_API_KEY=brave-next\nPATH=/bin',
+      {
+        persistSessionSummary: jest.fn(async () => undefined),
+        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+      },
+    );
+
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toContain('sk-next');
+    expect(secretStorage.getSecret(getWebSearchCredentialSecretId('brave'))).toBe('brave-next');
+    expect(environmentStore.loadInitialized()?.entries.map(entry => entry.key)).toEqual(['PATH']);
+  });
+
+  it('preflights every scope before changing credentials or publishing', async () => {
+    const secretStorage = createMemorySecretStore();
+    const providerId = getPiAiCredentialSecretId('anthropic');
+    secretStorage.setSecret(providerId, 'old-provider');
+    const environmentStore = createEnvironmentStore();
+    const settings = {
+      sharedEnvironmentVariables: '',
+      agentSettings: { environmentVariables: '', addedProviders: ['anthropic'] },
+    } as unknown as PiviSettings;
+
+    await expect(applyEnvironmentVariablesBatch(
+      createHost({ settings, views: [], secretStorage, environmentStore }),
+      [
+        { scope: 'shared', envText: 'ANTHROPIC_API_KEY=next' },
+        { scope: 'agent', envText: 'OPENAI_API_KEY=unconfigured' },
+      ],
+      {
+        persistSessionSummary: jest.fn(async () => undefined),
+        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+      },
+    )).rejects.toThrow('provider is not configured');
+
+    expect(secretStorage.getSecret(providerId)).toBe('old-provider');
+    expect(environmentStore.loadInitialized()).toBeNull();
+  });
+
+  it('rolls canonical credentials back when publication fails', async () => {
+    const secretStorage = createMemorySecretStore();
+    const webId = getWebSearchCredentialSecretId('brave');
+    secretStorage.setSecret(webId, 'brave-old');
+    const environmentStore = createEnvironmentStore();
+    const settings = {
+      sharedEnvironmentVariables: '',
+      agentSettings: { environmentVariables: '', addedProviders: [] },
+    } as unknown as PiviSettings;
+
+    await expect(importEnvironmentText(
+      createHost({
+        settings,
+        views: [],
+        secretStorage,
+        environmentStore,
+        saveSettings: jest.fn(async () => { throw new Error('save failed'); }),
+      }),
+      'shared',
+      'BRAVE_API_KEY=brave-next\nPATH=/bin',
+      {
+        persistSessionSummary: jest.fn(async () => undefined),
+        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+      },
+    )).rejects.toThrow('save failed');
+
+    expect(secretStorage.getSecret(webId)).toBe('brave-old');
+  });
+
+  it('continues the serialized queue after a rejected operation', async () => {
+    const environmentStore = createEnvironmentStore();
+    const host = createHost({
+      settings: {
+        sharedEnvironmentVariables: '',
+        agentSettings: { environmentVariables: '', addedProviders: [] },
+      } as unknown as PiviSettings,
+      views: [],
+      environmentStore,
+    });
+    const hooks = {
+      persistSessionSummary: jest.fn(async () => undefined),
+      reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+    };
+
+    const rejected = importEnvironmentText(host, 'shared', 'OPENAI_API_KEY=nope', hooks);
+    const accepted = importEnvironmentText(host, 'shared', 'PATH=/after', hooks);
+    await expect(rejected).rejects.toThrow('provider is not configured');
+    await expect(accepted).resolves.toBeUndefined();
+    expect(environmentStore.loadInitialized()?.entries).toEqual([
+      { key: 'PATH', scope: 'shared', source: { kind: 'plain', value: '/after' } },
+    ]);
+  });
+
+  it('preserves untouched secret and system source references during a partial batch', async () => {
+    const secretStorage = createMemorySecretStore();
+    secretStorage.setSecret(getEnvironmentSecretId('agent', 'TOKEN'), 'hidden');
+    const environmentStore = createEnvironmentStore({
+      version: 1,
+      initialized: true,
+      entries: [
+        { key: 'PATH', scope: 'shared', source: { kind: 'plain', value: '/old' } },
+        { key: 'TOKEN', scope: 'agent', source: { kind: 'secret' } },
+        { key: 'HOME_REF', scope: 'agent', source: { kind: 'systemEnvironment', name: 'HOME' } },
+      ],
+    });
+    const settings = {
+      sharedEnvironmentVariables: '',
+      agentSettings: { environmentVariables: '', addedProviders: [] },
+    } as unknown as PiviSettings;
+
+    await applyEnvironmentVariablesBatch(
+      createHost({ settings, views: [], secretStorage, environmentStore }),
+      [{ scope: 'shared', envText: 'PATH=/new' }],
+      {
+        persistSessionSummary: jest.fn(async () => undefined),
+        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+      },
+    );
+
+    expect(environmentStore.loadInitialized()?.entries.filter(entry => entry.scope === 'agent'))
+      .toEqual([
+        { key: 'TOKEN', scope: 'agent', source: { kind: 'secret' } },
+        { key: 'HOME_REF', scope: 'agent', source: { kind: 'systemEnvironment', name: 'HOME' } },
+      ]);
+  });
+
   it('uses semantic view maintenance and reports failed tab restarts', async () => {
     const applyEnvironmentRuntimeChange = jest.fn(async () => ({ failedTabs: 2 }));
     const invalidateSlashCatalog = jest.fn();

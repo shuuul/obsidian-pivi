@@ -50,6 +50,11 @@ interface InlineEditRecord {
   attempt: number;
 }
 
+interface OriginatingMarkdownContext {
+  readonly view: MarkdownView;
+  readonly file: MarkdownView['file'];
+}
+
 function getEnabledShortcuts(settings: PiviPluginHost['settings']): EditorToolbarShortcut[] {
   return settings.editorSelectionToolbar.shortcuts.filter(shortcut => shortcut.enabled);
 }
@@ -75,6 +80,33 @@ function getComposerDefaults(plugin: PiviPluginHost): ComposerDefaults {
 
 function resolveActiveMarkdownView(plugin: PiviPluginHost): MarkdownView | null {
   return plugin.app.workspace.getActiveViewOfType(MarkdownView);
+}
+
+function captureOriginatingMarkdownContext(
+  plugin: PiviPluginHost,
+  snapshot: EditorSelectionSnapshot,
+): OriginatingMarkdownContext | null {
+  const editor = snapshot.editor;
+  if (!editor) {
+    const view = resolveActiveMarkdownView(plugin);
+    return view ? { view, file: view.file } : null;
+  }
+  const view = plugin.app.workspace.getLeavesOfType('markdown')
+    .map(leaf => leaf.view)
+    .find((candidate): candidate is MarkdownView => (
+      candidate instanceof MarkdownView && candidate.editor === editor
+    ));
+  return view ? { view, file: view.file } : null;
+}
+
+function stillOwnsSnapshot(
+  plugin: PiviPluginHost,
+  snapshot: EditorSelectionSnapshot,
+  origin: OriginatingMarkdownContext,
+): boolean {
+  return origin.view.file === origin.file
+    && (!snapshot.editor || origin.view.editor === snapshot.editor)
+    && plugin.app.workspace.getLeavesOfType('markdown').some(leaf => leaf.view === origin.view);
 }
 
 function executeObsidianCommand(plugin: PiviPluginHost, commandId: string): void {
@@ -316,13 +348,18 @@ export class SelectionToolbarSurfaceController {
           getSelectionToolbarHost()?.dismissOverlay();
           return;
         }
-        if (this.currentSnapshot) await this.runPiviCommandInline(shortcut, this.currentSnapshot);
+        if (this.currentSnapshot) {
+          const snapshot = this.currentSnapshot;
+          const origin = captureOriginatingMarkdownContext(this.plugin, snapshot);
+          if (origin) await this.runPiviCommandInline(shortcut, snapshot, origin);
+        }
     }
   }
 
   private async runPiviCommandInline(
     shortcut: EditorToolbarPiviCommand,
     snapshot: EditorSelectionSnapshot,
+    origin: OriginatingMarkdownContext,
   ): Promise<void> {
     if (!snapshot.text) {
       new Notice(t('chat.errors.noTextSelected'));
@@ -351,8 +388,8 @@ export class SelectionToolbarSurfaceController {
       getSelectionToolbarHost()?.dismissOverlay();
       return;
     }
-    const markdownView = resolveActiveMarkdownView(this.plugin);
-    const file = markdownView?.file ?? null;
+    if (!stillOwnsSnapshot(this.plugin, snapshot, origin)) return;
+    const file = origin.file;
     let currentNote = '';
     try {
       currentNote = file ? await this.plugin.app.vault.read(file) : '';
@@ -360,6 +397,7 @@ export class SelectionToolbarSurfaceController {
       new Notice(t('commands.workspaceCommandUnavailable'));
       return;
     }
+    if (!stillOwnsSnapshot(this.plugin, snapshot, origin)) return;
     const prompt = resolveWorkspaceCommandPrompt(entry.content, {
       // Inline edit carries the exact selection once in buildInlineEditTurnContent.
       selectedText: '',

@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { normalizePathForComparison, normalizePathForFilesystem } from '@pivi/obsidian-host/path';
+import { tokenizeBashArgv } from '@pivi/pivi-agent-core/tools';
 
 export const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'pwd'] as const;
 
@@ -41,7 +42,7 @@ export function parseBashAllowlistEntry(entry: string): BashAllowlistEntry | nul
   if (!trimmed) {
     return null;
   }
-  const tokens = tokenizeArgv(trimmed);
+  const tokens = tokenizeBashArgv(trimmed);
   if (tokens.length === 0) {
     return null;
   }
@@ -52,47 +53,7 @@ export function parseBashAllowlistEntry(entry: string): BashAllowlistEntry | nul
   return { executable, argsPrefix };
 }
 
-export function tokenizeArgv(command: string): string[] {
-  const tokens: string[] = [];
-  let current = '';
-  let inQuote: '"' | "'" | null = null;
-
-  for (let i = 0; i < command.length; i += 1) {
-    const char = command[i]!;
-    if (inQuote) {
-      if (char === inQuote) {
-        inQuote = null;
-        continue;
-      }
-      if (char === '\\' && inQuote === '"' && i + 1 < command.length) {
-        current += command[i + 1]!;
-        i += 1;
-        continue;
-      }
-      current += char;
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      inQuote = char;
-      continue;
-    }
-    if (/\s/.test(char)) {
-      if (current) {
-        tokens.push(current);
-        current = '';
-      }
-      continue;
-    }
-    current += char;
-  }
-  if (inQuote) {
-    throw new Error('Bash command has unmatched quotes');
-  }
-  if (current) {
-    tokens.push(current);
-  }
-  return tokens;
-}
+export const tokenizeArgv = tokenizeBashArgv;
 
 function pathLookupDirs(envPath: string | undefined): string[] {
   if (!envPath) {

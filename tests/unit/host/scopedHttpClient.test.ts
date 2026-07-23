@@ -132,4 +132,83 @@ describe('scopedHttpClient', () => {
     });
     await expect(fetchImpl('https://example.test/')).rejects.toThrow(/changed before connect|pin/i);
   });
+
+  it('keeps the total deadline active until the response body completes', async () => {
+    const { port, close } = await listen((_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('first');
+      window.setTimeout(() => res.end('late'), 100);
+    });
+    const grants = new OriginGrantRegistry();
+    const url = `http://127.0.0.1:${port}/`;
+    grants.grant(url, 60_000, 'web-fetch');
+    const fetchImpl = createScopedFetch({
+      policy: {
+        purpose: 'web-fetch',
+        deadlines: { totalMs: 30, idleMs: 1_000 },
+      },
+      grants,
+      lookup: async () => ['127.0.0.1'],
+    });
+    const response = await fetchImpl(url);
+    await expect(response.text()).rejects.toThrow(/Total deadline exceeded/i);
+    await close();
+  });
+
+  it('applies one total deadline across redirects and the final body', async () => {
+    const { port, close } = await listen((req, res) => {
+      if (req.url === '/start') {
+        res.writeHead(302, { location: '/final' });
+        res.end();
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('first');
+      window.setTimeout(() => res.end('late'), 100);
+    });
+    const grants = new OriginGrantRegistry();
+    const url = `http://127.0.0.1:${port}/start`;
+    grants.grant(url, 60_000, 'web-fetch');
+    const fetchImpl = createScopedFetch({
+      policy: {
+        purpose: 'web-fetch',
+        deadlines: { totalMs: 30, idleMs: 1_000 },
+      },
+      grants,
+      lookup: async () => ['127.0.0.1'],
+    });
+    const response = await fetchImpl(url);
+    await expect(response.text()).rejects.toThrow(/Total deadline exceeded/i);
+    await close();
+  });
+
+  it('cleans up abort listeners when the response body is cancelled', async () => {
+    const { port, close } = await listen((_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('first');
+    });
+    const grants = new OriginGrantRegistry();
+    const url = `http://127.0.0.1:${port}/`;
+    grants.grant(url, 60_000, 'web-fetch');
+    const abort = new AbortController();
+    const add = jest.spyOn(abort.signal, 'addEventListener');
+    const remove = jest.spyOn(abort.signal, 'removeEventListener');
+    const fetchImpl = createScopedFetch({
+      policy: {
+        purpose: 'web-fetch',
+        signal: abort.signal,
+        deadlines: { totalMs: 10_000, idleMs: 10_000 },
+      },
+      grants,
+      lookup: async () => ['127.0.0.1'],
+    });
+
+    const response = await fetchImpl(url);
+    await response.body?.cancel();
+    abort.abort(new Error('late abort'));
+
+    expect(add).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+    await close();
+  });
 });

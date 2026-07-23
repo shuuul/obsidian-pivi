@@ -27,9 +27,8 @@ export const SESSION_JOURNAL_MAX_ENTRY_BYTES = 1_500_000;
 /**
  * `intent` — recorded before/around a local append.
  * `pending` — append bytes sealed; not yet confirmed against a stable source.
- * `confirmed` — JSONL append succeeded on this device; retained until a newer
- *   confirmed entry for the same session supersedes it or startup verifies the
- *   source still matches (so post-ack cloud rollback remains recoverable).
+ * `confirmed` — JSONL append succeeded on this device; retained as one link in
+ *   the bounded fingerprint chain so post-ack cloud rollback remains recoverable.
  */
 export type SessionJournalEntryStatus = 'intent' | 'pending' | 'confirmed';
 
@@ -354,23 +353,15 @@ export function acknowledgeJournalEntry(
       ? { ...entry, status: 'confirmed' as const }
       : entry
   ));
-  const confirmed = entries.find((entry) => entry.id === entryId && entry.status === 'confirmed');
-  if (!confirmed) {
-    return { ...state, entries };
-  }
-  // One confirmed continuation per session is enough; drop older confirmed rows.
-  const pruned = entries.filter((entry) => (
-    entry.id === confirmed.id
-    || entry.sessionFile !== confirmed.sessionFile
-    || entry.status !== 'confirmed'
-  ));
   return {
     ...state,
-    entries: compactEntries(pruned),
+    // Every row is one link in the continuation chain. The global bound, rather
+    // than per-session latest-row pruning, keeps that chain finite.
+    entries: compactEntries(entries),
   };
 }
 
-/** Remove a journal entry after startup proves the source still matches. */
+/** Remove a journal entry after recovery consumes or explicitly retires it. */
 export function removeJournalEntry(
   state: SessionJournalStateV1,
   entryId: string,
