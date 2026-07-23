@@ -11,10 +11,11 @@
  * This module consolidates the shared rules using compound selectors that
  * match where `pivi-markdown-rendered` is actually applied. */
 
-/* Base 14px scale: main chat assistant + subagent result output. */
+/* Base 14px scale: main chat assistant, subagent result, and inline diff review. */
 :is(
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) {
   --font-text-size: var(--pivi-text-chat-body);
   --h1-size: var(--pivi-chat-h1-size, 16px);
@@ -63,6 +64,7 @@
 :is(
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) :is(p, li, table, th, td) {
@@ -74,6 +76,7 @@
 :is(
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) h1 {
@@ -84,6 +87,7 @@
 :is(
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) h2 {
@@ -94,6 +98,7 @@
 :is(
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) h3 {
@@ -104,6 +109,7 @@
 :is(
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) :is(h4, h5, h6) {
@@ -115,6 +121,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) ul:not(.pivi-markdown-task-list) {
@@ -124,6 +131,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) ul:not(.pivi-markdown-task-list) ul {
@@ -133,6 +141,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) ul:not(.pivi-markdown-task-list) ul ul {
@@ -142,6 +151,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) ul:not(.pivi-markdown-task-list) > li:not(.pivi-markdown-task-item)::marker {
@@ -151,6 +161,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) ul:not(.pivi-markdown-task-list) > li:not(.pivi-markdown-task-item)::before {
@@ -161,6 +172,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) table {
@@ -173,12 +185,14 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) th,
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) td {
@@ -192,6 +206,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) th {
@@ -202,6 +217,7 @@
 :is(
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
 ) tr:hover {
@@ -334,10 +350,12 @@
  *
  * Obsidian themes remain responsible for typography and color. Pivi owns the
  * vertical relationship between top-level rendered blocks so paragraphs stay
- * readable and headings remain attached to their section across host themes. */
+ * readable and headings remain attached to their section across host themes.
+ * Inline diff review intentionally participates in this exact rhythm. */
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) {
   --pivi-markdown-flow-compact: var(--pivi-flow-compact);
   --pivi-markdown-flow-content: var(--pivi-flow-content);
@@ -346,7 +364,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) > :is(
   p,
   ul,
@@ -369,7 +388,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) > :is(
   p,
   ul,
@@ -396,7 +416,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) > :is(
   p,
   ul,
@@ -413,7 +434,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) > :is(h1, h2, h3, h4, h5, h6) + :is(
   p,
   ul,
@@ -430,7 +452,8 @@
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
   margin-block-start: var(--pivi-markdown-flow-content);
 }

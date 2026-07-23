@@ -61,14 +61,22 @@ function buildDecorations(
   for (const [sessionId, entry] of [...entries].sort(
     ([, left], [, right]) => left.order - right.order,
   )) {
-    ranges.push(Decoration.widget({
-      widget: entry.widget,
-      block: true,
-      side: -1,
-      sessionId,
-    }).range(entry.anchorPos));
+    // One replace+widget owns the selection height. A separate block widget
+    // beside Decoration.replace can leave host line boxes that inflate the
+    // review card far beyond the rendered Markdown.
     if (entry.kind === 'replacement' && entry.from < entry.to) {
-      ranges.push(Decoration.replace({ sessionId }).range(entry.from, entry.to));
+      ranges.push(Decoration.replace({
+        widget: entry.widget,
+        block: true,
+        sessionId,
+      }).range(entry.from, entry.to));
+    } else {
+      ranges.push(Decoration.widget({
+        widget: entry.widget,
+        block: true,
+        side: 1,
+        sessionId,
+      }).range(entry.anchorPos));
     }
   }
   return Decoration.set(ranges, true);

@@ -162,7 +162,13 @@ describe('InlineEditSurfaceSession diff review', () => {
     expect(hasInlineEditDiffReviewReplaceDecoration(editor)).toBe(true);
     expect(editor.dom.querySelector('.pivi-inline-edit-diff-review')).not.toBeNull();
     expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-deletion')).toHaveClass('markdown-rendered');
+    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-deletion')).toHaveClass('pivi-markdown-rendered');
+    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-deletion'))
+      .toHaveClass('pivi-inline-edit-diff-review-content');
     expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-insertion')).toHaveClass('markdown-rendered');
+    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-insertion')).toHaveClass('pivi-markdown-rendered');
+    expect(editor.dom.querySelector('.pivi-inline-edit-diff-review-insertion'))
+      .toHaveClass('pivi-inline-edit-diff-review-content');
     expect(renderIcon).toHaveBeenCalledWith(expect.any(HTMLElement), 'circle-check');
     expect(renderIcon).toHaveBeenCalledWith(expect.any(HTMLElement), 'circle-x');
   });

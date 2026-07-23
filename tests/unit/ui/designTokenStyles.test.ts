@@ -10,6 +10,7 @@ describe('product design tokens', () => {
   const modelSelector = readFileSync(join(stylesRoot, 'toolbar/model-selector.css'), 'utf8');
   const thinkingSelector = readFileSync(join(stylesRoot, 'toolbar/thinking-selector.css'), 'utf8');
   const inlineEdit = readFileSync(join(stylesRoot, 'features/inline-edit-surface.css'), 'utf8');
+  const markdown = readFileSync(join(stylesRoot, 'components/markdown-content.css'), 'utf8');
 
   it('defines shared tokens on every presentation root', () => {
     expect(variables).toMatch(
@@ -75,9 +76,13 @@ describe('product design tokens', () => {
     expect(thinkingSelector).toMatch(/\.pivi-thinking-gear:hover\s*\{[^}]*background:\s*var\(--pivi-host-background-hover\);/s);
   });
 
-  it('keeps inline diff typography editor-native and action buttons legible', () => {
+  it('uses the Sidebar output scale and text boundary for inline diff Markdown', () => {
+    expect(markdown).toMatch(
+      /:is\([^}]*\.pivi-inline-edit-diff-review-content\.pivi-markdown-rendered[^}]*\)\s*\{[^}]*--font-text-size:\s*var\(--pivi-text-chat-body\);[^}]*font-size:\s*var\(--font-text-size\);[^}]*line-height:\s*var\(--pivi-chat-line-height, 1\.4\);/s,
+    );
+    expect(markdown).toContain(') :is(p, li, table, th, td)');
     expect(inlineEdit).toMatch(
-      /\.pivi-inline-edit-diff-review-deletion,\s*\.pivi-inline-edit-diff-review-insertion\s*\{[^}]*font-family:\s*var\(--pivi-host-font-text, inherit\);[^}]*font-size:\s*var\(--pivi-host-font-text-size, inherit\);[^}]*line-height:\s*var\(--pivi-host-line-height-normal, normal\);/s,
+      /\.pivi-inline-edit-diff-review-content\s*\{[^}]*font-family:\s*var\(--pivi-host-font-text, inherit\);[^}]*white-space:\s*normal;[^}]*word-break:\s*normal;[^}]*line-break:\s*auto;[^}]*tab-size:\s*8;[^}]*caret-color:\s*auto;/s,
     );
     expect(inlineEdit).not.toMatch(
       /\.pivi-inline-edit-diff-review-deletion\s*\{[^}]*text-decoration:/s,

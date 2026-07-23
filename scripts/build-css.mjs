@@ -29,7 +29,8 @@ export function minifyCss(css) {
   return withPlaceholders
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\s+/g, ' ')
-    .replace(/\s*([{}:;,>+~])\s*/g, '$1')
+    .replace(/\s*([{},;>+~])\s*/g, '$1')
+    .replace(/:\s+/g, ':')
     .trim()
     .replace(/___PIVI_PRESERVED_COMMENT_(\d+)___/g, (_match, index) => preservedComments[Number(index)] ?? '');
 }

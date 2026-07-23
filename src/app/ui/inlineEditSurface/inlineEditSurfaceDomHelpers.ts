@@ -1,7 +1,7 @@
 import { getObsidianToolsSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 import type { MountInlineEditSurfaceChromeOptions } from '@pivi/pivi-react/mount';
 import type { App } from 'obsidian';
-import { type Component, MarkdownRenderer, Platform } from 'obsidian';
+import { type Component, Platform } from 'obsidian';
 
 import type { PiviPluginHost } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
@@ -170,6 +170,8 @@ export function buildInlineEditDiffReviewDom(
 
   const sourcePath = params.app.workspace.getActiveFile()?.path ?? '';
 
+  const markdownHost = { app: params.app, component: params.markdownComponent };
+
   if (params.kind === 'replacement') {
     const deletionSection = root.createDiv({ cls: 'pivi-inline-edit-diff-review-section' });
     deletionSection.createDiv({
@@ -177,15 +179,14 @@ export function buildInlineEditDiffReviewDom(
       text: t('editor.inlineEdit.diffReviewDeletion'),
     });
     const deletionEl = deletionSection.createDiv({
-      cls: 'pivi-inline-edit-diff-review-deletion markdown-rendered',
+      cls: 'pivi-inline-edit-diff-review-deletion pivi-inline-edit-diff-review-content',
     });
-    void MarkdownRenderer.render(
-      params.app,
-      params.oldText,
-      deletionEl,
+    // Use the Sidebar renderer and its explicit output context so typography,
+    // block rhythm, and Markdown post-processing stay identical.
+    void renderMarkdownContent(markdownHost, deletionEl, params.oldText, {
       sourcePath,
-      params.markdownComponent,
-    );
+      component: params.markdownComponent,
+    });
   }
 
   const insertionSection = root.createDiv({ cls: 'pivi-inline-edit-diff-review-section' });
@@ -194,15 +195,12 @@ export function buildInlineEditDiffReviewDom(
     text: t('editor.inlineEdit.diffReviewInsertion'),
   });
   const insertionEl = insertionSection.createDiv({
-    cls: 'pivi-inline-edit-diff-review-insertion markdown-rendered',
+    cls: 'pivi-inline-edit-diff-review-insertion pivi-inline-edit-diff-review-content',
   });
-  void MarkdownRenderer.render(
-    params.app,
-    params.newText,
-    insertionEl,
+  void renderMarkdownContent(markdownHost, insertionEl, params.newText, {
     sourcePath,
-    params.markdownComponent,
-  );
+    component: params.markdownComponent,
+  });
 
   const actions = root.createDiv({ cls: 'pivi-inline-edit-diff-review-actions' });
   createInlineEditDiffReviewButton(

@@ -372,11 +372,11 @@
 }
 
 .pivi-inline-edit-diff-review-section {
-  margin-block-start: 8px;
+  margin-block-start: var(--pivi-flow-compact);
 }
 
 .pivi-inline-edit-diff-review-section-label {
-  margin-block-end: 4px;
+  margin-block-end: 2px;
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-text-xs);
   font-weight: 600;
@@ -384,22 +384,22 @@
   text-transform: uppercase;
 }
 
-.pivi-inline-edit-diff-review-deletion,
-.pivi-inline-edit-diff-review-insertion {
+.pivi-inline-edit-diff-review-content {
+  padding: 4px 8px;
+  border-radius: var(--pivi-radius-xs);
   font-family: var(--pivi-host-font-text, inherit);
-  font-size: var(--pivi-host-font-text-size, inherit);
-  line-height: var(--pivi-host-line-height-normal, normal);
+  white-space: normal;
+  word-break: normal;
+  line-break: auto;
+  tab-size: 8;
+  caret-color: auto;
 }
 
 .pivi-inline-edit-diff-review-deletion {
-  padding: 4px 8px;
-  border-radius: var(--pivi-radius-xs);
   background: hsla(350, 88%, 25%, 0.25);
 }
 
 .pivi-inline-edit-diff-review-insertion {
-  padding: 4px 8px;
-  border-radius: var(--pivi-radius-xs);
   background: color-mix(in srgb, var(--pivi-host-color-green, #22c55e) 12%, transparent);
 }
 
@@ -408,7 +408,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
-  margin-block-start: 8px;
+  margin-block-start: var(--pivi-flow-compact);
 }
 
 .pivi-inline-edit-diff-review-accept {

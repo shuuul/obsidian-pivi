@@ -41,6 +41,10 @@ describe('transcript rhythm styles', () => {
     expect(markdown).toContain(
       '.pivi-message-assistant .pivi-message-content .pivi-markdown-rendered',
     );
+    expect(markdown).toContain(
+      '.pivi-inline-edit-diff-review-content.pivi-markdown-rendered',
+    );
+    expect(markdown).not.toContain('.pivi-inline-edit-diff-review-deletion');
     expect(markdown).not.toContain('.pivi-inline-edit-surface-reply-content');
     expect(markdown).toContain(
       '--pivi-markdown-flow-content: var(--pivi-flow-content);',
@@ -56,7 +60,7 @@ describe('transcript rhythm styles', () => {
     );
   });
 
-  it('leaves list item geometry to the host theme', () => {
+  it('leaves shared transcript list item geometry to the host theme', () => {
     expect(markdown).not.toMatch(
       /:is\(ul, ol\) > li\s*\{[^}]*margin:/s,
     );

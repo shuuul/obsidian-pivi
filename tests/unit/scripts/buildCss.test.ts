@@ -81,6 +81,24 @@ describe('build CSS minifier', () => {
     expect(output).not.toContain('another ordinary comment');
     expect((output.match(/\/\* @settings/g) ?? []).length).toBe(2);
   });
+
+  it('preserves descendant selectors before pseudo classes', () => {
+    const output = runMinify(`
+      .pivi-output :is(p, li) {
+        line-height: inherit;
+      }
+
+      .pivi-output :hover {
+        color: red;
+      }
+    `);
+
+    expect(output).toBe(
+      '.pivi-output :is(p,li){line-height:inherit;}.pivi-output :hover{color:red;}',
+    );
+    expect(output).not.toContain('.pivi-output:is');
+    expect(output).not.toContain('.pivi-output:hover');
+  });
 });
 
 describe('UI package style manifest', () => {

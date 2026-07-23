@@ -22,7 +22,7 @@ flowchart LR
 
 ## Files
 
-- `build-css.mjs` — Prepends the release-version banner and Obsidian host theme-token mapping, concatenates the ordered `packages/pivi-react/styles/manifest.mjs` modules into root `styles.css`, validates missing/unlisted CSS modules, and rejects `!important` in every host/React CSS input. Production mode minifies while preserving the Style Settings metadata block.
+- `build-css.mjs` — Prepends the release-version banner and Obsidian host theme-token mapping, concatenates the ordered `packages/pivi-react/styles/manifest.mjs` modules into root `styles.css`, validates missing/unlisted CSS modules, and rejects `!important` in every host/React CSS input. Production mode minifies while preserving the Style Settings metadata block and selector-significant whitespace before pseudo classes.
 - `build.mjs` — Production build orchestrator: CSS first, then esbuild bundle.
 - `analyze-bundle.mjs` — Uses the shared `build/create-build-options.mjs` configuration and generates the pre-postprocess esbuild `metafile.json` without writing a separate bundle.
 - `check-bundle-size.mjs` — Checks a built root `main.js` against the 5 MB hard ceiling and emits a warning when it grows more than 10% over the recorded soft baseline. Run after `npm run build` via `npm run check:bundle-size`.
