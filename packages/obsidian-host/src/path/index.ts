@@ -429,10 +429,9 @@ export function requireVaultRelativeMutationPath(
     throw new Error(`Vault mutation path escapes the vault: ${trimmed}`);
   }
 
-  const platformRelative = path.relative(vaultPath, absolute);
-  const relative = process.platform === 'win32'
-    ? platformRelative.replace(/\\/g, '/')
-    : platformRelative;
+  // The contract promises `/` separators; path.relative emits `\` on Windows,
+  // so normalize unconditionally instead of trusting the host platform branch.
+  const relative = path.relative(vaultPath, absolute).replace(/\\/g, '/');
   if (!relative || relative === '.' || relative.startsWith('../') || path.isAbsolute(relative)) {
     throw new Error(`Vault mutation path must be a non-empty vault-relative path: ${trimmed}`);
   }

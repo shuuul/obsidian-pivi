@@ -30,7 +30,10 @@ describe('vault skills environment helpers', () => {
       },
     );
 
-    expect(spawnEnv.PATH?.split(':')).toContain('/Applications/Obsidian.app/Contents/MacOS');
+    // Simulating darwin on a Windows host yields backslash-joined entries from
+    // the host path module, so compare with separators normalized.
+    const entries = spawnEnv.PATH?.split(':').map((entry) => entry.replace(/\\/g, '/'));
+    expect(entries).toContain('/Applications/Obsidian.app/Contents/MacOS');
   });
 
   it('uses Windows separators and mirrors PATH into Path', () => {

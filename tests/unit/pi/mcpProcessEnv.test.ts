@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import {
   buildMcpStdioEnv,
   MCP_STDIO_PARENT_ENV_ALLOWLIST,
@@ -64,7 +66,7 @@ describe('mcpProcessEnv', () => {
     expect(env.SERVER_ONLY).toBe('server');
     expect(env.SHARED).toBe('server-value');
     expect(env.HOME).toBe('/home/user');
-    expect(env.PATH?.split(':')[0]).toBe('/server/bin');
+    expect(env.PATH?.split(path.delimiter)[0]).toBe('/server/bin');
     expect(env.HOME).toBe('/home/user');
     for (const key of MCP_STDIO_PARENT_ENV_ALLOWLIST) {
       if (key === 'PATH' || parentEnv[key as keyof typeof parentEnv] === undefined) {

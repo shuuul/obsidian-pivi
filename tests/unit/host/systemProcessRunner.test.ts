@@ -37,9 +37,12 @@ describe('systemProcessRunner', () => {
       shell: { mode: 'forbidden' },
     });
 
-    expect(result.termination).toBe('signal');
-    expect(result.exitCode).toBeNull();
-    expect(result.signal).toBe('SIGTERM');
+    // Windows has no POSIX signals: a self-SIGTERM surfaces as a nonzero exit.
+    const isWindows = process.platform === 'win32';
+    expect(result.termination).toBe(isWindows ? 'exit' : 'signal');
+    expect(result.signal).toBe(isWindows ? null : 'SIGTERM');
+    expect(result.exitCode).not.toBe(0);
+    expect(result.exitCode === null).toBe(!isWindows);
   });
 
   it('bounds stdout and stderr with truncation metadata without retaining excess bytes', async () => {
