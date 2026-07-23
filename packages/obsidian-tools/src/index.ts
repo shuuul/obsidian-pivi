@@ -1,6 +1,13 @@
 import { createObsidianTools } from './createObsidianTools';
 
-export { buildEffectiveBashAllowlist, DEFAULT_SAFE_BASH_ALLOWLIST } from './bashAllowlist';
+export {
+  buildEffectiveBashAllowlist,
+  DEFAULT_SAFE_BASH_ALLOWLIST,
+  matchBashAllowlist,
+  parseBashAllowlistEntry,
+  resolveExecutablePath,
+  tokenizeArgv,
+} from './bashAllowlist';
 export { createObsidianTools } from './createObsidianTools';
 export * from './frontmatter';
 export { createAttachmentTool } from './obsidian/attachment';

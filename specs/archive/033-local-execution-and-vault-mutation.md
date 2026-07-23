@@ -1,7 +1,7 @@
 ---
 id: "033"
 title: "Local execution and Vault mutation"
-status: Draft
+status: Completed
 created: 2026-07-23
 updated: 2026-07-23
 coordinator: "/root"
@@ -21,19 +21,19 @@ This is the fourth review-hardening spec. It builds safe local primitives before
 
 Make process execution and Vault mutation safe, explicit primitives whose constraints cannot be bypassed by higher-level callers.
 
-- [ ] `ProcessRunRequest` requires explicit output limits, timeout/deadline, shell policy, cwd policy, and supports `AbortSignal`.
-- [ ] Output is bounded while streaming with deterministic truncation metadata; memory use does not scale with child output.
-- [ ] Results distinguish numeric exit, signal termination, timeout, abort, spawn error, and forced-kill escalation.
-- [ ] Timeout/abort terminates the complete owned process tree on macOS, Linux, and Windows, waits for close, and cannot resolve twice.
-- [ ] Shell execution is forbidden by default; callers use a resolved executable plus argument vector.
-- [ ] Bash no longer loads login-shell startup files and uses a structured executable/argument policy or is removed if the claimed sandbox cannot be made true.
-- [ ] Executable allowlists match canonical executable paths and argument schemas, not string prefixes.
-- [ ] Process cwd is constrained to the Vault or an explicitly approved external root appropriate to the capability.
-- [ ] Read/display path normalization is separate from mutation validation.
-- [ ] Every Vault mutation requires a non-empty canonical vault-relative path and rejects absolute paths, drive/UNC paths, traversal, NUL, invalid separator combinations, and symlink-parent escape.
-- [ ] Nonexistent mutation targets under symlinked parents are contained using the nearest existing ancestor.
-- [ ] Existing File Recovery behavior remains intact for eligible note overwrites.
-- [ ] Platform-focused tests cover path case sensitivity, drives/UNC, signals, process groups, and kill escalation.
+- [x] `ProcessRunRequest` requires explicit output limits, timeout/deadline, shell policy, cwd policy, and supports `AbortSignal`.
+- [x] Output is bounded while streaming with deterministic truncation metadata; memory use does not scale with child output.
+- [x] Results distinguish numeric exit, signal termination, timeout, abort, spawn error, and forced-kill escalation.
+- [x] Timeout/abort terminates the complete owned process tree on macOS, Linux, and Windows, waits for close, and cannot resolve twice.
+- [x] Shell execution is forbidden by default; callers use a resolved executable plus argument vector.
+- [x] Bash no longer loads login-shell startup files and uses a structured executable/argument policy or is removed if the claimed sandbox cannot be made true.
+- [x] Executable allowlists match canonical executable paths and argument schemas, not string prefixes.
+- [x] Process cwd is constrained to the Vault or an explicitly approved external root appropriate to the capability.
+- [x] Read/display path normalization is separate from mutation validation.
+- [x] Every Vault mutation requires a non-empty canonical vault-relative path and rejects absolute paths, drive/UNC paths, traversal, NUL, invalid separator combinations, and symlink-parent escape.
+- [x] Nonexistent mutation targets under symlinked parents are contained using the nearest existing ancestor.
+- [x] Existing File Recovery behavior remains intact for eligible note overwrites.
+- [x] Platform-focused tests cover path case sensitivity, drives/UNC, signals, process groups, and kill escalation.
 
 ## Scope and non-goals
 
@@ -66,11 +66,11 @@ Not in scope:
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Redesign process ports/runner for bounded streams, abort, signals, deadlines, and process-tree termination | Unassigned | Pending | Spec 030 completed | Unit and real-child fixtures on supported OSes |
-| WS-02 | Migrate CLI/Bash/MCP/Skills callers to resolved executables, argument schemas, cwd policies, and no ambient shell | Unassigned | Pending | WS-01 | Caller-focused injection/cwd/output/abort tests |
-| WS-03 | Split path helpers and enforce canonical vault-relative mutation containment including symlink parents | Unassigned | Pending | None | POSIX/Windows path and temporary-filesystem tests |
-| WS-04 | Migrate every mutation tool/host path and preserve File Recovery ordering | Unassigned | Pending | WS-03 | Mutation integration and recovery regression tests |
-| WS-05 | Platform matrix, docs/guidance, full gates, build, and live reload | Unassigned | Pending | WS-01–WS-04 | macOS/Windows/Ubuntu evidence plus Obsidian reload |
+| WS-01 | Redesign process ports/runner for bounded streams, abort, signals, deadlines, and process-tree termination | /subagent | Completed | Spec 030 completed | Unit and real-child fixtures on supported OSes |
+| WS-02 | Migrate CLI/Bash/MCP/Skills callers to resolved executables, argument schemas, cwd policies, and no ambient shell | /subagent | Completed | WS-01 | Caller-focused injection/cwd/output/abort tests |
+| WS-03 | Split path helpers and enforce canonical vault-relative mutation containment including symlink parents | /subagent | Completed | None | POSIX/Windows path and temporary-filesystem tests |
+| WS-04 | Migrate every mutation tool/host path and preserve File Recovery ordering | /subagent | Completed | WS-03 | Mutation integration and recovery regression tests |
+| WS-05 | Platform matrix, docs/guidance, full gates, build, and live reload | /subagent | Completed | WS-01–WS-04 | macOS/Windows/Ubuntu evidence plus Obsidian reload |
 
 ## Verification
 
@@ -122,6 +122,23 @@ npm run check:specs
 - Blockers: Spec `030` must land its signal-result correction before this broader port migration.
 - Next action: Complete spec `030`, activate this spec, and establish focused process/path fixtures before implementation.
 
+### 2026-07-23 — /subagent — activation
+
+- Changed: Set status `Active` and claimed WS-01–WS-05 for implementation.
+- Evidence: Spec frontmatter and workstream table updated; Specs 030–032 archived on `main`.
+- Remaining: Implement process/path primitives, migrate callers, tests, docs, verification, and archive.
+- Blockers: None.
+- Next action: Redesign `ProcessRunRequest` / runner and `requireVaultRelativeMutationPath`, then migrate Bash/CLI/Skills/mutation callers.
+
+### 2026-07-23 — /subagent — implementation complete
+
+- Changed: Redesigned `ProcessRunRequest`/`ProcessRunResult`, rewrote `systemProcessRunner` for bounded streams/abort/process-tree kill, migrated Bash/CLI/Skills/MCP callers, added `requireVaultRelativeMutationPath` and vault mutation migration, updated i18n/docs/SECURITY, and verified on macOS.
+- Evidence: Focused Jest suites (host/tools/skills/mcp/obsidian-tools) 243 passed; `npm run typecheck`; `npm run lint`; `npm run check:boundaries` architecture/package-readmes/specs; `npm run build`; `obsidian plugin:reload id=pivi` + `obsidian dev:errors` → `No errors captured.`
+- Remaining: Specs 034–036 for authorization UX, session cloud recovery, and release assurance.
+- Blockers: None for this spec. Pre-existing i18n dead keys `common.disable`/`disabled`/`enable` still fail dead-key checks (noted only).
+- Next action: Archive this spec and hand off to coordinator.
+
 ## Completion summary
 
-Pending.
+Spec `033` completed bounded local process execution and mandatory vault-relative mutation containment. The process port now requires output limits, timeout, shell/cwd policy, and AbortSignal; the host runner streams with truncation metadata, terminates process trees with forced-kill escalation, and reports exit/signal/timeout/abort/spawn-error/forced-kill without double-resolve. Bash no longer uses login-shell `-lc` and matches canonical executable paths plus argument schemas; CLI/Skills use the shared runner; MCP stdio gets vault cwd and shell-syntax rejection. Vault mutations use `requireVaultRelativeMutationPath` separately from display normalization, including symlink-parent containment, while File Recovery ordering remains intact. Documentation, SECURITY.md, and package guidance were synchronized; verification commands and Obsidian reload succeeded on macOS.
+

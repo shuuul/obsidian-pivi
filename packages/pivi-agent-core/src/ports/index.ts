@@ -123,23 +123,58 @@ export type FetchCompatible = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+/**
+ * Shell is forbidden by default. A reviewed adapter may opt in only when a
+ * platform constraint (for example Windows `.cmd`) cannot use argv spawn.
+ */
+export type ProcessShellPolicy =
+  | { mode: 'forbidden' }
+  | { mode: 'reviewed-adapter'; reason: string };
+
+/**
+ * Every process run must declare a cwd root. Relative `cwd` values resolve
+ * under that root; absolute values must stay inside it after realpath.
+ */
+export type ProcessCwdPolicy =
+  | { mode: 'vault'; vaultRoot: string }
+  | { mode: 'approved-root'; root: string };
+
+export type ProcessTerminationKind =
+  | 'exit'
+  | 'signal'
+  | 'timeout'
+  | 'abort'
+  | 'spawn-error'
+  | 'forced-kill';
+
 export interface ProcessRunRequest {
-  command: string;
-  args?: string[];
+  /** Resolved executable path or PATH name; never a shell command string. */
+  executable: string;
+  args: readonly string[];
+  cwdPolicy: ProcessCwdPolicy;
+  /** Optional working directory; defaults to the cwd policy root. */
   cwd?: string;
   env?: Record<string, string | undefined>;
-  timeoutMs?: number;
-  shell?: boolean;
-  outputByteLimit?: number;
+  /** Hard deadline for the owned process tree. */
+  timeoutMs: number;
+  stdoutByteLimit: number;
+  stderrByteLimit: number;
+  shell: ProcessShellPolicy;
+  signal?: AbortSignal;
 }
 
 export interface ProcessRunResult {
+  termination: ProcessTerminationKind;
   exitCode: number | null;
-  signal?: string | null;
+  signal: string | null;
   stdout: string;
   stderr: string;
-  stdoutTruncated?: boolean;
-  stderrTruncated?: boolean;
+  stdoutTruncated: boolean;
+  stderrTruncated: boolean;
+  /** Present when termination is `spawn-error`. */
+  spawnError?: string;
+  /** Present when termination is `forced-kill`. */
+  forcedKillAfter?: 'timeout' | 'abort' | 'signal';
 }
 
 export interface ProcessRunner {

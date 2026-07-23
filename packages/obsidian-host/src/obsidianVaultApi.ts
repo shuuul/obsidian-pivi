@@ -12,7 +12,7 @@ import {
 } from 'obsidian';
 
 import { captureFileRecoverySnapshot } from './fileRecoverySnapshot';
-import { getVaultPath, normalizePathForVault } from './path';
+import { getVaultPath, normalizePathForVault, requireVaultRelativeMutationPath } from './path';
 
 function asciiDoubleQuotesToCurly(text: string): string {
   let useOpen = true;
@@ -144,6 +144,10 @@ export class ObsidianVaultApi {
     return getVaultPath(this.app);
   }
 
+  private requireMutationPath(rawPath: string): string {
+    return requireVaultRelativeMutationPath(rawPath, this.vaultPath());
+  }
+
   private asFile(abstract: TAbstractFile | null): TFile | null {
     return abstract instanceof TFile ? abstract : null;
   }
@@ -160,10 +164,35 @@ export class ObsidianVaultApi {
     return this.app.vault.getAbstractFileByPath(normalized);
   }
 
+  private requireMutationAbstract(path: string): TAbstractFile {
+    const normalized = this.requireMutationPath(path.trim());
+    const resolved = this.app.vault.getAbstractFileByPath(normalized);
+    if (!resolved) {
+      throw new Error(`Vault path not found: ${path}`);
+    }
+    return resolved;
+  }
+
   private requireAbstract(path: string): TAbstractFile {
     const resolved = this.resolveAbstract(path);
     if (!resolved) {
       throw new Error(`Vault path not found: ${path}`);
+    }
+    return resolved;
+  }
+
+  private resolveMutationFile(file?: string, path?: string): TFile {
+    if (path?.trim()) {
+      const normalized = this.requireMutationPath(path);
+      const resolved = this.asFile(this.app.vault.getAbstractFileByPath(normalized));
+      if (!resolved) {
+        throw new Error(`Vault path not found: ${path}`);
+      }
+      return resolved;
+    }
+    const resolved = this.resolveFile(file, undefined);
+    if (!resolved) {
+      throw new Error('Note not found. Provide file= (wikilink name) or path= (vault-relative).');
     }
     return resolved;
   }
@@ -238,10 +267,7 @@ export class ObsidianVaultApi {
     path: string;
     replacements: number;
   }> {
-    const resolved = this.resolveFile(params.file, params.path);
-    if (!resolved) {
-      throw new Error('Note not found. Provide file= (wikilink name) or path= (vault-relative).');
-    }
+    const resolved = this.resolveMutationFile(params.file, params.path);
     const oldString = params.old_string;
     if (!oldString) {
       throw new Error('old_string must not be empty.');
@@ -281,10 +307,7 @@ export class ObsidianVaultApi {
   }): Promise<{ path: string }> {
     const { content, mode } = params;
     if (mode === 'append' || mode === 'prepend') {
-      const resolved = this.resolveFile(params.file, params.path);
-      if (!resolved) {
-        throw new Error('Note not found for append/prepend.');
-      }
+      const resolved = this.resolveMutationFile(params.file, params.path);
       await this.capturePreWriteSnapshot(resolved);
       await this.app.vault.process(resolved, (data) =>
         mode === 'append' ? `${data}${content}` : `${content}${data}`,
@@ -301,11 +324,7 @@ export class ObsidianVaultApi {
       throw new Error('path= or file= required for create/overwrite.');
     }
 
-    const normalized = normalizePathForVault(targetPath, this.vaultPath());
-    if (!normalized) {
-      throw new Error('Invalid vault path.');
-    }
-
+    const normalized = this.requireMutationPath(targetPath);
     const existing = this.asFile(this.app.vault.getAbstractFileByPath(normalized));
     if (existing && !params.overwrite && mode === 'create') {
       throw new Error(`File already exists: ${normalized}`);
@@ -324,9 +343,9 @@ export class ObsidianVaultApi {
   async trashPath(params: { file?: string; path?: string }): Promise<VaultDeleteResult> {
     let target: TAbstractFile | null = null;
     if (params.path?.trim()) {
-      target = this.resolveAbstract(params.path);
+      target = this.requireMutationAbstract(params.path);
     } else if (params.file?.trim()) {
-      target = this.resolveFile(params.file, undefined);
+      target = this.resolveMutationFile(params.file, undefined);
     }
 
     if (!target) {
@@ -341,20 +360,14 @@ export class ObsidianVaultApi {
   }
 
   async movePath(params: { path: string; newPath: string }): Promise<{ path: string; newPath: string }> {
-    const target = this.requireAbstract(params.path);
-    const normalizedNewPath = normalizePathForVault(params.newPath.trim(), this.vaultPath());
-    if (!normalizedNewPath) {
-      throw new Error('Invalid destination path.');
-    }
+    const target = this.requireMutationAbstract(params.path);
+    const normalizedNewPath = this.requireMutationPath(params.newPath.trim());
     await this.app.fileManager.renameFile(target, normalizedNewPath);
     return { path: target.path, newPath: normalizedNewPath };
   }
 
   async createFolder(path: string): Promise<{ path: string }> {
-    const normalized = normalizePathForVault(path.trim(), this.vaultPath());
-    if (!normalized) {
-      throw new Error('Invalid folder path.');
-    }
+    const normalized = this.requireMutationPath(path.trim());
     await this.app.vault.createFolder(normalized);
     return { path: normalized };
   }
@@ -417,10 +430,7 @@ export class ObsidianVaultApi {
   }
 
   async setProperty(file: string | undefined, path: string | undefined, name: string, value: string): Promise<{ path: string; name: string }> {
-    const resolved = this.resolveFile(file, path);
-    if (!resolved) {
-      throw new Error('Note not found. Provide file= or path=.');
-    }
+    const resolved = this.resolveMutationFile(file, path);
     await this.capturePreWriteSnapshot(resolved);
     await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
       frontmatter[name] = value;
@@ -429,10 +439,7 @@ export class ObsidianVaultApi {
   }
 
   async removeProperty(file: string | undefined, path: string | undefined, name: string): Promise<{ path: string; name: string }> {
-    const resolved = this.resolveFile(file, path);
-    if (!resolved) {
-      throw new Error('Note not found. Provide file= or path=.');
-    }
+    const resolved = this.resolveMutationFile(file, path);
     await this.capturePreWriteSnapshot(resolved);
     await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
       delete frontmatter[name];
@@ -478,10 +485,7 @@ export class ObsidianVaultApi {
       filename,
       params.sourcePath,
     );
-    const normalized = normalizePathForVault(availablePath, this.vaultPath());
-    if (!normalized) {
-      throw new Error('Invalid attachment path.');
-    }
+    const normalized = this.requireMutationPath(availablePath);
 
     const file = await this.app.vault.createBinary(normalized, params.data);
     return {

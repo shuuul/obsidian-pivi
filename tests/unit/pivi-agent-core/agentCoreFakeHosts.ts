@@ -218,9 +218,13 @@ export function createCliProjectLikeHost(overrides?: FakeHostPortOverrides): Age
   };
   const process: ProcessRunner = {
     run: jest.fn(async (_request: ProcessRunRequest): Promise<ProcessRunResult> => ({
+      termination: 'exit',
       exitCode: 0,
+      signal: null,
       stdout: 'done',
       stderr: '',
+      stdoutTruncated: false,
+      stderrTruncated: false,
     })),
   };
 

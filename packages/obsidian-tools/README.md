@@ -24,7 +24,7 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 - `obsidian_history`, `obsidian_tasks`, and `obsidian_daily` register only when the official Obsidian CLI is available; `obsidian_base` uses the CLI only for its query action.
 - `obsidian_base` resolves a requested Base directly for view inspection, while its list action remains an explicit vault inventory operation. `obsidian_graph` enumerates files only for orphan/deadend analysis; unresolved-only analysis uses cached link metadata.
 - `obsidian_command` / `obsidian_eval` additionally require their settings gates and CLI availability. Image generation requires an injected generator.
-- `obsidian_bash` registers only when the Bash tool toggle is enabled, runs allowlisted one-line commands, and rejects shell control syntax before invoking the injected process runner.
+- `obsidian_bash` registers only when the Bash tool toggle is enabled, runs allowlisted executable/argument vectors without a login shell, and rejects shell control syntax before invoking the injected process runner.
 - Exported through `@pivi/obsidian-tools`.
 
 ## See also

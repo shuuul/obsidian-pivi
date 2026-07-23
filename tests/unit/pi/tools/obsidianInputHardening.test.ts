@@ -20,6 +20,8 @@ import type { ObsidianToolDeps } from '@pivi/obsidian-tools';
 
 function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
   return {
+    app: { vault: { adapter: { basePath: '/vault' } } } as never,
+    vaultPath: '/vault',
     vault: {
       createFolder: jest.fn().mockResolvedValue({ path: 'notes/new' }),
       editNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', replacements: 1 }),

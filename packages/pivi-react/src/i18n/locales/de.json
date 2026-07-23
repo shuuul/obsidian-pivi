@@ -504,7 +504,7 @@
       "heading": "Bash-Zugriff",
       "allowlist": {
         "name": "Erlaubte Bash-Befehle",
-        "desc": "Bash-Tool über den Bash-Schalter unter Tool-Schaltern ein-/ausschalten. Ein nacktes Executable wie git erlaubt Unterbefehle; ein Befehl mit Leerzeichen wie npm run build erlaubt genau dieses Präfix. which, type und pwd sind immer erlaubt. Shell-Steuersyntax wird abgelehnt.",
+        "desc": "Bash-Werkzeug über den Schalter unter Werkzeugschalter ein- oder ausschalten. Allowlist-Einträge prüfen den aufgelösten Executable-Pfad plus optionales Argumentpräfix (z. B. git oder npm run build). Kein Login-Shell. which, type und pwd sind immer erlaubt. Shell-Steuerzeichen werden abgelehnt; das Arbeitsverzeichnis muss im Vault bleiben.",
         "inputLabel": "Erlaubten Bash-Befehl hinzufügen",
         "removeAria": "Erlaubten Bash-Befehl {value} entfernen"
       }
@@ -821,7 +821,8 @@
         "argsPlaceholder": "Ein Argument pro Zeile",
         "urlInvalid": "Gib eine gültige URL ein",
         "urlScheme": "MCP-URLs müssen http oder https verwenden",
-        "urlPlainHttp": "Unverschlüsseltes HTTP ist nur für Loopback-Hosts erlaubt"
+        "urlPlainHttp": "Unverschlüsseltes HTTP ist nur für Loopback-Hosts erlaubt",
+        "commandShellSyntax": "Die ausführbare Datei darf keine Shell-Steuerzeichen enthalten"
       },
       "test": {
         "connecting": "Tools werden aktualisiert…",
@@ -881,7 +882,7 @@
       "generateImage": "Bild erzeugen",
       "generateImageDesc": "Bilder mit Codex erzeugen, als Anhänge speichern und optional in Notizen einbetten.",
       "bash": "Bash",
-      "bashDesc": "Einzeilige Shell-Befehle ausführen, wenn Bash aktiv ist und der Befehl der Allowlist entspricht.",
+      "bashDesc": "Einen freigegebenen Befehl mit Argumentvektor ausführen, wenn Bash aktiv ist. Kein Login-Shell, Arbeitsverzeichnis bleibt im Vault.",
       "outline": "Gliederung",
       "command": "Befehl",
       "eval": "Auswerten",

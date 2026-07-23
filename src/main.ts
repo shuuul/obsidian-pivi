@@ -161,7 +161,10 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
       itemStyle,
       async (style) => {
         const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
-        const cli = new ObsidianCliTransport(toolSettings);
+        const cli = new ObsidianCliTransport(toolSettings, {
+          processRunner: this.processRunner,
+          vaultPath: getVaultPath(this.app),
+        });
         return setupNoteToolbar({
           adapter: this.app.vault.adapter,
           apiVersion,
@@ -195,7 +198,10 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     const key = `${entry.integrationKey}:${icon}`;
     return runQueuedNoteToolbarRequest(this.noteToolbarSetupQueue, key, async () => {
       const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
-      const cli = new ObsidianCliTransport(toolSettings);
+      const cli = new ObsidianCliTransport(toolSettings, {
+        processRunner: this.processRunner,
+        vaultPath: getVaultPath(this.app),
+      });
       return setupNoteToolbar({
         adapter: this.app.vault.adapter,
         apiVersion,

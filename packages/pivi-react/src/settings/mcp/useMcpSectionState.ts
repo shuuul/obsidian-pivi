@@ -4,6 +4,7 @@ import {
   parseMcpArgsLines,
 } from '@pivi/pivi-agent-core/mcp/mcpUtils';
 import {
+  assertMcpStdioExecutable,
   assertValidMcpServerName,
   isValidMcpServerName,
   MCP_SERVER_NAME_PATTERN,
@@ -79,6 +80,8 @@ export function mcpValidationMessage(
         return t('settings.mcp.modal.urlPlainHttp');
       case 'commandRequired':
         return t('settings.mcp.modal.needCommand');
+      case 'commandShellSyntax':
+        return t('settings.mcp.modal.commandShellSyntax');
       default:
         return error.message;
     }
@@ -162,6 +165,7 @@ export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): Ma
     if (!command) {
       throw new McpValidationError('commandRequired', 'MCP stdio executable is required');
     }
+    assertMcpStdioExecutable(command);
     const args = parseMcpArgsText(draft.argsText);
     const env = mcpDraftFromLines(draft.env);
     config = {

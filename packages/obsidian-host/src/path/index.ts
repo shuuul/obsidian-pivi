@@ -343,3 +343,92 @@ export function normalizePathForVault(
 
   return normalizedRaw.replace(/\\/g, '/');
 }
+
+function containsNul(value: string): boolean {
+  return value.includes('\0');
+}
+
+function isAbsoluteOrDrivePath(value: string): boolean {
+  if (path.isAbsolute(value)) {
+    return true;
+  }
+  if (/^[A-Za-z]:[\\/]/.test(value) || /^[A-Za-z]:$/.test(value)) {
+    return true;
+  }
+  if (value.startsWith('\\\\') || value.startsWith('//')) {
+    return true;
+  }
+  if (/^\\\\[.?]\\/.test(value) || value.startsWith('\\\\.\\') || value.startsWith('\\\\?\\')) {
+    return true;
+  }
+  return false;
+}
+
+function hasInvalidSeparatorMix(value: string): boolean {
+  // Reject Windows UNC/device forms and drive-relative segments in vault-relative input.
+  if (value.includes('\\\\') || value.includes('//')) {
+    return true;
+  }
+  if (/^[A-Za-z]:/.test(value)) {
+    return true;
+  }
+  return false;
+}
+
+function hasTraversalSegment(value: string): boolean {
+  return value.split(/[\\/]/).some((segment) => segment === '..');
+}
+
+/**
+ * Validates a vault mutation target and returns a non-empty canonical
+ * vault-relative path using `/` separators. Unlike `normalizePathForVault`,
+ * this never returns an external/absolute path and fails loudly on escape.
+ */
+export function requireVaultRelativeMutationPath(
+  rawPath: string | undefined | null,
+  vaultPath: string | null | undefined,
+): string {
+  if (typeof rawPath !== 'string' || !rawPath.trim()) {
+    throw new Error('Vault mutation path must be a non-empty vault-relative path');
+  }
+  if (!vaultPath || typeof vaultPath !== 'string' || !vaultPath.trim()) {
+    throw new Error('Vault path is required for mutation containment');
+  }
+
+  const trimmed = rawPath.trim();
+  if (containsNul(trimmed)) {
+    throw new Error('Vault mutation path must not contain NUL');
+  }
+  if (trimmed === '.' || trimmed === './' || trimmed === '.\\') {
+    throw new Error('Vault mutation path must not be the vault root');
+  }
+  if (isAbsoluteOrDrivePath(trimmed) || hasInvalidSeparatorMix(trimmed)) {
+    throw new Error(`Vault mutation path must be vault-relative: ${trimmed}`);
+  }
+  if (hasTraversalSegment(trimmed)) {
+    throw new Error(`Vault mutation path must not contain traversal segments: ${trimmed}`);
+  }
+
+  const expanded = normalizePathBeforeResolution(trimmed);
+  if (isAbsoluteOrDrivePath(expanded) || hasTraversalSegment(expanded)) {
+    throw new Error(`Vault mutation path must be vault-relative: ${trimmed}`);
+  }
+
+  const normalized = process.platform === 'win32'
+    ? path.win32.normalize(expanded)
+    : path.normalize(expanded);
+  if (!normalized || normalized === '.' || isAbsoluteOrDrivePath(normalized) || hasTraversalSegment(normalized)) {
+    throw new Error(`Vault mutation path must be vault-relative: ${trimmed}`);
+  }
+
+  const absolute = path.resolve(vaultPath, normalized);
+  if (!isPathWithinDirectory(absolute, vaultPath, vaultPath)) {
+    throw new Error(`Vault mutation path escapes the vault: ${trimmed}`);
+  }
+
+  const relative = path.relative(vaultPath, absolute).replace(/\\/g, '/');
+  if (!relative || relative === '.' || relative.startsWith('../') || path.isAbsolute(relative)) {
+    throw new Error(`Vault mutation path must be a non-empty vault-relative path: ${trimmed}`);
+  }
+  return relative;
+}

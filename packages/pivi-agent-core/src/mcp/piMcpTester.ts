@@ -12,6 +12,7 @@ import {
   resolveMcpHeaders,
 } from "./mcpProcessEnv";
 import { parseCommand } from "./mcpUtils";
+import { assertMcpStdioExecutable } from "./mcpValidation";
 import {
   isLegacyPlainStringMap,
   normalizeMcpStoredValueMap,
@@ -28,6 +29,7 @@ export async function testPiMcpServer(
   fetch: McpTransportFetch,
   processEnv: McpProcessEnv,
   secretStorage?: SyncSecretStore,
+  stdioCwd?: string,
 ): Promise<McpTestResult> {
   const resolveHost = createMcpResolveHost(processEnv, secretStorage);
   let transport: Transport;
@@ -38,6 +40,7 @@ export async function testPiMcpServer(
       if (!cmd) {
         return { success: false, tools: [], error: "Missing command" };
       }
+      assertMcpStdioExecutable(cmd);
       transport = new StdioClientTransport({
         command: cmd,
         args,
@@ -49,6 +52,7 @@ export async function testPiMcpServer(
           secretStorage,
         ),
         stderr: "ignore",
+        ...(stdioCwd ? { cwd: stdioCwd } : {}),
       });
     } else {
       const config = server.config;

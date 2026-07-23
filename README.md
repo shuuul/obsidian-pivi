@@ -173,7 +173,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **MCP** | User-provided servers. Enabled remote HTTP/SSE servers may receive inventory requests during startup/settings refresh. Stdio commands run only after explicit **Connect / refresh tools** or the agent's first search/list/call. |
 | **Skills** | Listing, installing, or updating remote skills uses `npx skills` / `skills.sh`. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
 | **External file access** | Disabled by default. Allowed absolute roots come from this device's vault-local overlay or folders attached for the current turn; they are not synced through `.pivi/settings.json` or session JSONL. |
-| **Bash access** | Disabled by default. Allowlisted one-line commands only; rejects shell control syntax. |
+| **Bash access** | Disabled by default. Allowlisted executable plus argument vector (canonical path + schema); no login shell; vault cwd only. |
 | **Obsidian CLI** | Disabled by default. When enabled, Pivi starts the configured official Obsidian CLI for the specific CLI-backed tools listed above. |
 | **Vault index** | File mentions, search, graph, tags, and properties enumerate vault metadata and file paths locally; Pivi does not send an index to its author. |
 | **System environment** | Read only at desktop integration boundaries for configured provider credentials, MCP authentication/stdio variables, the official CLI, and Skills tooling. Pivi does not transmit machine identity to its author. |

@@ -504,7 +504,7 @@
       "heading": "Bash 存取",
       "allowlist": {
         "name": "允許的 bash 命令",
-        "desc": "在「工具開關」中用 bash 開關控制是否啟用 bash 工具。單獨的可執行檔名（如 git）允許其子命令；含空白的命令（如 npm run build）僅允許該精確前綴。which、type、pwd 等基本查詢命令一律允許。會拒絕 shell 控制語法。",
+        "desc": "透過工具開關啟用或關閉 Bash。允許清單比對已解析的可執行檔路徑與選擇性參數前置（例如 git，或 npm run build）。不使用登入 shell。which、type、pwd 一律允許。拒絕 shell 控制語法，工作目錄必須位於保管庫內。",
         "inputLabel": "新增允許的 bash 命令",
         "removeAria": "移除允許的 bash 命令 {value}"
       }
@@ -821,7 +821,8 @@
         "argsPlaceholder": "每行一個參數",
         "urlInvalid": "請輸入有效的 URL",
         "urlScheme": "MCP URL 必須使用 http 或 https",
-        "urlPlainHttp": "僅允許對回環主機使用明文 HTTP"
+        "urlPlainHttp": "僅允許對回環主機使用明文 HTTP",
+        "commandShellSyntax": "可執行檔不得包含 shell 控制語法"
       },
       "test": {
         "connecting": "正在重新整理工具…",
@@ -881,7 +882,7 @@
       "generateImage": "產生圖片",
       "generateImageDesc": "使用 Codex 產生圖片，儲存為附件，並可選擇插入到筆記中。",
       "bash": "Bash",
-      "bashDesc": "當 Bash 開關啟用且命令符合上方允許清單時，執行單行 shell 命令。",
+      "bashDesc": "啟用 Bash 時，以參數向量執行允許的可執行檔。不使用登入 shell，工作目錄必須位於保管庫內。",
       "outline": "大綱",
       "command": "命令",
       "eval": "求值",

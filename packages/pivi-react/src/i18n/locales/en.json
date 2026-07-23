@@ -504,7 +504,7 @@
       "heading": "Bash access",
       "allowlist": {
         "name": "Allowed bash commands",
-        "desc": "Turn the bash tool on or off with the bash toggle under tool toggles. A bare executable such as git allows git subcommands; a command with spaces such as npm run build allows that exact command prefix. Basic lookup commands such as which, type, and pwd are always allowed. Shell control syntax is rejected.",
+        "desc": "Turn the bash tool on or off with the bash toggle under tool toggles. Allowlist entries match a resolved executable path plus an optional required argument prefix (for example git, or npm run build). Commands run without a login shell. Basic lookup commands such as which, type, and pwd are always allowed. Shell control syntax is rejected, and the working directory must stay inside the vault.",
         "inputLabel": "Add an allowed bash command",
         "removeAria": "Remove allowed bash command {value}"
       }
@@ -799,6 +799,7 @@
         "executable": "Executable",
         "command": "Command",
         "needCommand": "Please enter an executable",
+        "commandShellSyntax": "Executable must not contain shell control syntax",
         "args": "Arguments",
         "argsPlaceholder": "One argument per line",
         "url": "URL",
@@ -881,7 +882,7 @@
       "generateImage": "Generate image",
       "generateImageDesc": "Generate images with Codex, save them as attachments, and optionally insert embeds into notes.",
       "bash": "Bash",
-      "bashDesc": "Run one-line shell commands when the Bash toggle is enabled and the command matches the allowlist configured above.",
+      "bashDesc": "Run one allowlisted executable with an argument vector when Bash is enabled. Commands do not use a login shell, and the working directory must stay inside the vault.",
       "outline": "Outline",
       "command": "Command",
       "eval": "Eval",

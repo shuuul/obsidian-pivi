@@ -10,6 +10,7 @@ function makeDeps(): { deps: ObsidianToolDeps; cliRun: CliRun; vaultGetNote: jes
   const cliRun: CliRun = jest.fn(async (_request: { vaultName: string; args: string[] }) => 'cli output');
   const vaultGetNote = jest.fn();
   const deps: ObsidianToolDeps = {
+    app: { vault: { adapter: { basePath: '/vault' } } } as unknown as ObsidianToolDeps['app'],
     vault: {
       getNote: vaultGetNote,
     } as unknown as ObsidianToolDeps['vault'],
@@ -19,6 +20,7 @@ function makeDeps(): { deps: ObsidianToolDeps; cliRun: CliRun; vaultGetNote: jes
     externalFiles: {} as unknown as ObsidianToolDeps['externalFiles'],
     settings: {} as unknown as ObsidianToolDeps['settings'],
     vaultName: 'Test Vault',
+    vaultPath: '/vault',
     processRunner: { run: jest.fn() },
   };
   return { deps, cliRun, vaultGetNote };

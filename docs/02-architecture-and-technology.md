@@ -46,6 +46,8 @@ Runtime, sessions, model catalogs, slash catalogs, and projected settings enter 
 
 Network egress is enforced at a shared transport boundary. Host-neutral policy lives in `@pivi/pivi-agent-core/network`; `@pivi/obsidian-host` implements purpose-scoped streaming HTTP clients with deadlines, byte limits, redirects, and DNS pinning. App composition installs those clients into Pi providers, MCP/OAuth, WebSearch/WebFetch, image generation, skills, and connectivity probes. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` for upstream SDK call sites only. See [SECURITY.md](../SECURITY.md).
 
+Local process execution and vault mutation are similarly explicit host primitives. `ProcessRunRequest` requires byte limits, timeout, cwd policy, shell policy (forbidden by default), and optional abort; the host runner terminates owned process trees and reports termination kinds without double-resolve. Vault writes use `requireVaultRelativeMutationPath` separately from display/read normalization so absolute/UNC/traversal/symlink-parent escapes fail before Obsidian APIs run. See [SECURITY.md](../SECURITY.md).
+
 ### React 19 with imperative islands
 
 React owns stable product chrome: tabs, settings, composer selectors, message shells, and status. Some host surfaces are intentionally imperative:

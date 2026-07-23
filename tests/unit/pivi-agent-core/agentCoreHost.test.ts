@@ -86,7 +86,15 @@ describe('AgentCoreHost contract', () => {
     const response = await host.network!.fetch({ url: 'https://example.com/health', method: 'GET' });
     expect(response.status).toBe(200);
 
-    const run = await host.process!.run({ command: 'echo', args: ['hi'], cwd: '/tmp' });
+    const run = await host.process!.run({
+      executable: 'echo',
+      args: ['hi'],
+      cwdPolicy: { mode: 'approved-root', root: '/tmp' },
+      timeoutMs: 5_000,
+      stdoutByteLimit: 1024,
+      stderrByteLimit: 1024,
+      shell: { mode: 'forbidden' },
+    });
     expect(run.stdout).toBe('done');
     host.logger!.info?.('cli ready');
     expect(host.logger!.info).toHaveBeenCalledWith('cli ready');

@@ -1,35 +1,21 @@
+import { getVaultPath } from '@pivi/obsidian-host/path';
 import {
   textResult,
   TOOL_OBSIDIAN_BASH,
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { buildEffectiveBashAllowlist } from '../bashAllowlist';
+import {
+  buildEffectiveBashAllowlist,
+  matchBashAllowlist,
+  tokenizeArgv,
+} from '../bashAllowlist';
 import type { ObsidianToolDeps } from './deps';
 
 const DEFAULT_BASH_TIMEOUT_MS = 30_000;
+const DEFAULT_BASH_OUTPUT_BYTE_LIMIT = 256 * 1024;
 const MAX_OUTPUT_CHARS = 20_000;
 const SHELL_CONTROL_PATTERN = /[;&|<>`]|[$][(]|[$][{]/;
-
-function firstShellToken(command: string): string {
-  const trimmed = command.trim();
-  const match = /^(?:"([^"]+)"|'([^']+)'|(\S+))/.exec(trimmed);
-  return match?.[1] ?? match?.[2] ?? match?.[3] ?? '';
-}
-
-function isAllowedCommand(command: string, allowlist: readonly string[]): boolean {
-  const token = firstShellToken(command);
-  return allowlist.some((entry) => {
-    if (entry.includes(' ')) {
-      return command === entry || command.startsWith(`${entry} `) || command.startsWith(`${entry}:`);
-    }
-    return token === entry;
-  });
-}
-
-function getUserShellPath(): string {
-  return process.env.SHELL?.trim() || '/bin/bash';
-}
 
 function truncateOutput(output: string): string {
   if (output.length <= MAX_OUTPUT_CHARS) {
@@ -39,20 +25,26 @@ function truncateOutput(output: string): string {
 }
 
 export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
-  const { processRunner, settings } = deps;
+  const { processRunner, settings, app } = deps;
   const allowlist = buildEffectiveBashAllowlist(settings.bashAllowlist);
   return {
     name: TOOL_OBSIDIAN_BASH,
     label: 'Bash',
     description:
-      'Lowest-priority host diagnostic: run one allowlisted single-line shell command only when no registered tool can do the job. '
+      'Lowest-priority host diagnostic: run one allowlisted executable with an argument vector only when no registered tool can do the job. '
       + 'Never use Bash to read, search, list, or modify vault files; use Obsidian tools and sub-agents for vault work. '
-      + 'Shell control syntax is rejected. After any Bash validation rejection, do not retry Bash during the same turn.',
+      + 'Shell control syntax is rejected. Commands run without a login shell. After any Bash validation rejection, do not retry Bash during the same turn.',
     parameters: {
       type: 'object',
       properties: {
-        command: { type: 'string', description: 'Single-line shell command to run' },
-        cwd: { type: 'string', description: 'Optional working directory' },
+        command: {
+          type: 'string',
+          description: 'Single-line command as executable plus arguments (no shell operators)',
+        },
+        cwd: {
+          type: 'string',
+          description: 'Optional working directory inside the vault',
+        },
       },
       required: ['command'],
       additionalProperties: false,
@@ -71,22 +63,68 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('Bash command must not contain shell control syntax');
       }
 
-      if (allowlist.length === 0 || !isAllowedCommand(normalizedCommand, allowlist)) {
-        throw new Error(`Bash command not in allowlist: ${firstShellToken(normalizedCommand) || normalizedCommand}`);
+      let tokens: string[];
+      try {
+        tokens = tokenizeArgv(normalizedCommand);
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : String(error));
+      }
+      if (tokens.length === 0) {
+        throw new Error('Bash command is required');
       }
 
-      const shellPath = getUserShellPath();
+      if (allowlist.length === 0) {
+        throw new Error(`Bash command not in allowlist: ${tokens[0]}`);
+      }
+
+      const matched = matchBashAllowlist(tokens, allowlist);
+      if (!matched) {
+        throw new Error(`Bash command not in allowlist: ${tokens[0]}`);
+      }
+
+      const vaultRoot = getVaultPath(app);
+      if (!vaultRoot) {
+        throw new Error('Vault path is unavailable for Bash cwd containment');
+      }
+
+      const timeoutMs = settings.cliTimeoutMs || DEFAULT_BASH_TIMEOUT_MS;
       const result = await processRunner.run({
-        command: shellPath,
-        args: ['-lc', normalizedCommand],
-        cwd: typeof cwd === 'string' && cwd.trim() ? cwd.trim() : undefined,
-        timeoutMs: settings.cliTimeoutMs || DEFAULT_BASH_TIMEOUT_MS,
+        executable: matched.executablePath,
+        args: matched.args,
+        cwdPolicy: { mode: 'vault', vaultRoot },
+        ...(typeof cwd === 'string' && cwd.trim() ? { cwd: cwd.trim() } : {}),
+        timeoutMs,
+        stdoutByteLimit: DEFAULT_BASH_OUTPUT_BYTE_LIMIT,
+        stderrByteLimit: DEFAULT_BASH_OUTPUT_BYTE_LIMIT,
+        shell: { mode: 'forbidden' },
       });
+
+      if (result.termination === 'spawn-error') {
+        throw new Error(result.spawnError ?? 'Bash process failed to start');
+      }
+
+      const statusLine = (() => {
+        switch (result.termination) {
+          case 'exit':
+            return `exit code: ${result.exitCode ?? 'unknown'}`;
+          case 'signal':
+            return `signal: ${result.signal ?? 'unknown'}`;
+          case 'timeout':
+            return 'terminated: timeout';
+          case 'abort':
+            return 'terminated: abort';
+          case 'forced-kill':
+            return `terminated: forced-kill after ${result.forcedKillAfter ?? 'unknown'}`;
+          default: {
+            const termination: string = result.termination;
+            return `terminated: ${termination}`;
+          }
+        }
+      })();
+
       const output = [
         `$ ${normalizedCommand}`,
-        result.signal
-          ? `signal: ${result.signal}`
-          : `exit code: ${result.exitCode ?? 'unknown'}`,
+        statusLine,
         result.stdout ? `\nstdout:\n${result.stdout.trimEnd()}` : '',
         result.stderr ? `\nstderr:\n${result.stderr.trimEnd()}` : '',
         result.stdoutTruncated ? '\n[stdout truncated]' : '',

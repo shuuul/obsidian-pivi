@@ -504,7 +504,7 @@
       "heading": "Acesso ao Bash",
       "allowlist": {
         "name": "Comandos bash permitidos",
-        "desc": "Ative ou desative a ferramenta bash no seletor de ferramentas. Um executável puro como git permite subcomandos; um comando com espaços como npm run build permite exatamente esse prefixo. Comandos básicos como which, type e pwd são sempre permitidos. Sintaxe de controle de shell é rejeitada.",
+        "desc": "Ative ou desative o Bash no interruptor de ferramentas. As entradas correspondem ao caminho canônico do executável mais um prefixo opcional de argumentos (por exemplo git, ou npm run build). Sem shell de login. which, type e pwd são sempre permitidos. Sintaxe de controlo do shell é rejeitada; o diretório de trabalho deve permanecer no vault.",
         "inputLabel": "Adicionar um comando bash permitido",
         "removeAria": "Remover o comando bash permitido {value}"
       }
@@ -821,7 +821,8 @@
         "argsPlaceholder": "Um argumento por linha",
         "urlInvalid": "Introduza um URL válido",
         "urlScheme": "Os URLs MCP devem usar http ou https",
-        "urlPlainHttp": "HTTP simples só é permitido para hosts loopback"
+        "urlPlainHttp": "HTTP simples só é permitido para hosts loopback",
+        "commandShellSyntax": "O executável não deve conter sintaxe de controlo do shell"
       },
       "test": {
         "connecting": "Atualizando ferramentas…",
@@ -881,7 +882,7 @@
       "generateImage": "Generar imagen",
       "generateImageDesc": "Generar imágenes com Codex, guardarlas como adjuntos e insertar incrustaciones en notas de forma opcional.",
       "bash": "Bash",
-      "bashDesc": "Ejecutar comandos de shell de uma línea cuando o interruptor Bash está activado e o comando coincide com la lista permitida.",
+      "bashDesc": "Executar um executável permitido com vetor de argumentos quando o Bash está ativo. Sem shell de login; o diretório de trabalho deve permanecer no vault.",
       "outline": "Esboço",
       "command": "Comando",
       "eval": "Evaluar",

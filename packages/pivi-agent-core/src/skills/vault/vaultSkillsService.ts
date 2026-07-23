@@ -410,16 +410,22 @@ export class VaultSkillsService {
     }
 
     const result = await this.options.processRunner.run({
-      command: npxCommand,
+      executable: npxCommand,
       args,
+      cwdPolicy: { mode: 'vault', vaultRoot: this.vaultPath },
       cwd: this.ensurePiviWorkDir(),
       env: getSpawnEnvWithEnhancedPath(undefined, this.processEnv, this.environment),
       timeoutMs: SKILLS_INSTALL_TIMEOUT_MS,
-      shell: this.isWindows,
+      stdoutByteLimit: 1024 * 1024,
+      stderrByteLimit: 1024 * 1024,
+      shell: this.isWindows
+        ? { mode: 'reviewed-adapter', reason: 'npx.cmd requires Windows command processor' }
+        : { mode: 'forbidden' },
     });
-    if (result.signal || result.exitCode !== 0) {
+    if (result.termination !== 'exit' || result.exitCode !== 0) {
       const detail = result.stderr.trim() || result.stdout.trim()
-        || (result.signal ? `signal ${result.signal}` : `exit ${result.exitCode}`);
+        || result.spawnError
+        || (result.signal ? `signal ${result.signal}` : `termination ${result.termination}`);
       throw new Error(`npx skills ${commandName} failed: ${detail}`);
     }
     return result.stdout;

@@ -327,7 +327,11 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         return {
+          termination: 'exit' as const,
           exitCode: 0,
+          signal: null,
+          stdoutTruncated: false,
+          stderrTruncated: false,
           stdout: '◇  Available Skills\n│\n│    demo\n│\n│      Demo skill.\n',
           stderr: '',
         };
@@ -352,7 +356,11 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         return {
+          termination: 'exit' as const,
           exitCode: 0,
+          signal: null,
+          stdoutTruncated: false,
+          stderrTruncated: false,
           stdout: '◇  Available Skills\n│\n│    demo\n│\n│      Demo skill.\n',
           stderr: '',
         };
@@ -366,12 +374,12 @@ describe('VaultSkillsService sync', () => {
 
     await service.listRemoteSkills('owner/repo');
 
-    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.env?.CUSTOM_SKILLS_ENV).toBe('injected');
     expect(calls[0]?.env?.PATH?.split(':')).toContain(path.dirname(npxPath));
   });
 
-  it('uses injected platform context for process runner shell mode', async () => {
+  it('uses reviewed Windows shell adapter for npx.cmd', async () => {
     const binDir = path.join(vaultPath, 'win-bin');
     fs.mkdirSync(binDir, { recursive: true });
     fs.writeFileSync(path.join(binDir, 'node.exe'), '');
@@ -382,7 +390,11 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         return {
+          termination: 'exit' as const,
           exitCode: 0,
+          signal: null,
+          stdoutTruncated: false,
+          stderrTruncated: false,
           stdout: '◇  Available Skills\n│\n│    demo\n│\n│      Demo skill.\n',
           stderr: '',
         };
@@ -404,8 +416,11 @@ describe('VaultSkillsService sync', () => {
 
     await service.listRemoteSkills('owner/repo');
 
-    expect(calls[0]?.command).toBe(npxPath);
-    expect(calls[0]?.shell).toBe(true);
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.shell).toEqual({
+      mode: 'reviewed-adapter',
+      reason: 'npx.cmd requires Windows command processor',
+    });
   });
 
   it('installs selected remote skills through the process runner', async () => {
@@ -415,7 +430,15 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         writeCliSkill('selected-skill', 'selected');
-        return { exitCode: 0, stdout: '', stderr: '' };
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
       }),
     };
 
@@ -424,7 +447,7 @@ describe('VaultSkillsService sync', () => {
       'selected-skill',
     ]);
 
-    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.args).toEqual([
       'skills',
       'add',
@@ -444,7 +467,15 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         writeCliSkill('all-skills', 'all');
-        return { exitCode: 0, stdout: '', stderr: '' };
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
       }),
     };
 
@@ -453,7 +484,7 @@ describe('VaultSkillsService sync', () => {
       'all-skills',
     ]);
 
-    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.args).toEqual([
       'skills',
       'add',
@@ -473,14 +504,22 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         writeCliSkill('existing', 'new');
-        return { exitCode: 0, stdout: '', stderr: '' };
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
       }),
     };
 
     const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.updateAll()).resolves.toEqual(['existing']);
 
-    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.args).toEqual(['skills', 'update', '-p', '-y']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: new');
   });
@@ -495,14 +534,22 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         writeCliSkill('target-folder', 'target');
-        return { exitCode: 0, stdout: '', stderr: '' };
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
       }),
     };
 
     const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.updateSkill('target', 'target-folder')).resolves.toEqual(['target-folder']);
 
-    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.args).toEqual(['skills', 'update', 'target', '-p', '-y']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: target');
   });
@@ -518,7 +565,15 @@ describe('VaultSkillsService sync', () => {
         calls.push(request);
         writeCliSkill('obsidian-markdown', 'markdown');
         writeCliSkill('json-canvas', 'canvas');
-        return { exitCode: 0, stdout: '', stderr: '' };
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
       }),
     };
 
@@ -528,7 +583,7 @@ describe('VaultSkillsService sync', () => {
       'json-canvas',
     ]);
 
-    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.args).toEqual(['skills', 'add', 'kepano/obsidian-skills', '--copy', '-y']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: markdown');
   });
@@ -546,9 +601,13 @@ describe('VaultSkillsService sync', () => {
   it('reports npx skills failures from the injected process runner', async () => {
     const processRunner: ProcessRunner = {
       run: jest.fn(async () => ({
+        termination: 'exit' as const,
         exitCode: 2,
+        signal: null,
         stdout: '',
         stderr: 'network failed',
+        stdoutTruncated: false,
+        stderrTruncated: false,
       })),
     };
 
@@ -569,14 +628,22 @@ describe('VaultSkillsService sync', () => {
       run: jest.fn(async (request) => {
         calls.push(request);
         writeCliSkill('existing', 'new');
-        return { exitCode: 0, stdout: '', stderr: '' };
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
       }),
     };
 
     const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.updateAll()).resolves.toEqual(['existing']);
 
-    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.args).toEqual(['skills', 'update', '-p', '-y']);
     expect(fs.existsSync(path.join(existing, '.disabled'))).toBe(true);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: new');

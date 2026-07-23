@@ -1,5 +1,6 @@
 import {
   ExternalFileApi,
+  getVaultPath,
   isOfficialObsidianCliEnabled,
   ObsidianCliTransport,
   ObsidianVaultApi,
@@ -50,7 +51,11 @@ export function createObsidianTools(
 ): ToolSpec[] {
   const disabledTools = new Set(settings.disabledTools ?? []);
   const vault = new ObsidianVaultApi(app);
-  const cli = new ObsidianCliTransport(settings);
+  const vaultPath = getVaultPath(app);
+  const cli = new ObsidianCliTransport(settings, {
+    processRunner: systemProcessRunner,
+    vaultPath,
+  });
   const obsidianCliAvailable = options.obsidianCliAvailable ?? (
     settings.cliEnabled && isOfficialObsidianCliEnabled()
   );
@@ -62,11 +67,13 @@ export function createObsidianTools(
     : [];
   const externalFiles = new ExternalFileApi(externalReadDirectories);
   const deps: ObsidianToolDeps = {
+    app,
     vault,
     cli,
     externalFiles,
     settings,
     vaultName: vault.getVaultName(),
+    vaultPath,
     obsidianCliAvailable,
     processRunner: systemProcessRunner,
     imageGenerator: options.imageGenerator,

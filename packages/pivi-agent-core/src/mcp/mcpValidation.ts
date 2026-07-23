@@ -12,7 +12,8 @@ export type McpValidationErrorCode =
   | 'urlInvalid'
   | 'urlScheme'
   | 'urlPlainHttp'
-  | 'commandRequired';
+  | 'commandRequired'
+  | 'commandShellSyntax';
 
 export class McpValidationError extends Error {
   readonly code: McpValidationErrorCode;
@@ -108,4 +109,24 @@ export function setMcpServerMapEntry<T>(
 ): void {
   assertValidMcpServerName(name);
   map[name] = value;
+}
+
+const MCP_STDIO_SHELL_CONTROL = /[;&|<>`]|[$][(]|[$][{]|\r|\n/;
+
+/**
+ * Stdio MCP must receive a resolved executable path/name, not a shell string.
+ * Argument vectors are separate; shell control characters in the command are rejected.
+ */
+export function assertMcpStdioExecutable(command: string): string {
+  const trimmed = command.trim();
+  if (!trimmed) {
+    throw new McpValidationError('commandRequired', 'MCP stdio executable is required');
+  }
+  if (MCP_STDIO_SHELL_CONTROL.test(trimmed)) {
+    throw new McpValidationError(
+      'commandShellSyntax',
+      'MCP stdio executable must not contain shell control syntax',
+    );
+  }
+  return trimmed;
 }

@@ -1,6 +1,6 @@
 # Security
 
-Pivi is an Obsidian community plugin that runs inside the desktop renderer with vault, network, and optional process integrations. This page records durable trust boundaries for network egress. Broader disclosure, credential, and release-assurance guidance may expand here as later hardening work lands.
+Pivi is an Obsidian community plugin that runs inside the desktop renderer with vault, network, and optional process integrations. This page records durable trust boundaries for network egress, local process execution, and vault mutation containment. Broader disclosure and release-assurance guidance may expand here as later hardening work lands.
 
 ## Reporting
 
@@ -36,8 +36,25 @@ Production bundles resolve free `fetch` identifiers through esbuild `inject` of 
 
 Terminal WebFetch errors redact the target URL.
 
+## Local process execution
+
+One-shot process work (CLI, Bash, Skills tooling) uses the host `ProcessRunner` as a **bounded execution primitive**, not a shell convenience wrapper:
+
+- Requests require explicit stdout/stderr byte limits, timeout, cwd policy (vault or approved root), shell policy, and may carry an `AbortSignal`.
+- Shell execution is forbidden by default. A reviewed adapter may opt in only with an explicit reason (for example Windows `.cmd` for `npx`).
+- Output is truncated while streaming; retained memory does not grow with unbounded child output.
+- Timeout and abort terminate the owned process tree (POSIX process group or Windows `taskkill /T`), escalate to forced kill when needed, wait for close, and never double-resolve.
+- Results distinguish exit, signal, timeout, abort, spawn error, and forced-kill escalation.
+
+Bash allowlists match canonical executable paths plus argument schemas. Commands do not load login-shell startup files. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field.
+
+## Vault mutation containment
+
+Read/display path helpers (`normalizePathForVault`) must not be used as mutation authority. Mutating vault operations call `requireVaultRelativeMutationPath`, which requires a non-empty canonical vault-relative path and rejects absolute, drive/UNC, traversal, NUL, invalid separators, and symlink-parent escape (including nonexistent targets beneath a symlinked parent via nearest-existing-ancestor realpath). Eligible note overwrites still capture Obsidian File Recovery before the first write.
+
 ## Related guidance
 
 - Architecture: [docs/02-architecture-and-technology.md](docs/02-architecture-and-technology.md)
 - Web tools and MCP: [docs/07-tools-skills-mcp-and-integrations.md](docs/07-tools-skills-mcp-and-integrations.md)
-- Implementation spec: [specs/032-network-egress-and-http-client.md](specs/032-network-egress-and-http-client.md)
+- Network egress implementation: [specs/archive/032-network-egress-and-http-client.md](specs/archive/032-network-egress-and-http-client.md)
+- Local execution and vault mutation: [specs/archive/033-local-execution-and-vault-mutation.md](specs/archive/033-local-execution-and-vault-mutation.md)

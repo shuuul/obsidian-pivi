@@ -16,6 +16,9 @@ import {
 } from "./mcpProcessEnv";
 import { parseCommand } from "./mcpUtils";
 import {
+  assertMcpStdioExecutable,
+} from "./mcpValidation";
+import {
   isLegacyPlainStringMap,
   normalizeMcpStoredValueMap,
 } from './mcpValueSources';
@@ -91,6 +94,7 @@ function createTransport(
   fetch: McpTransportFetch,
   processEnv: McpProcessEnv,
   secretStorage: SyncSecretStore | undefined,
+  stdioCwd: string | undefined,
 ): Transport {
   const config = server.config;
   const type = getMcpServerType(config);
@@ -105,11 +109,13 @@ function createTransport(
     if (!cmd) {
       throw new Error("MCP stdio server is missing command");
     }
+    assertMcpStdioExecutable(cmd);
     return new StdioClientTransport({
       command: cmd,
       args,
       env: resolveStoredEnv(server.name, stdio.env, processEnv, secretStorage),
       stderr: "ignore",
+      ...(stdioCwd ? { cwd: stdioCwd } : {}),
     });
   }
 
@@ -161,6 +167,7 @@ export class PiMcpConnectionPool {
     private readonly fetch: McpTransportFetch,
     private readonly processEnv: McpProcessEnv,
     private readonly secretStorage?: SyncSecretStore,
+    private readonly stdioCwd?: string,
   ) {}
 
   private readonly connections = new Map<string, ServerConnection>();
@@ -332,7 +339,14 @@ export class PiMcpConnectionPool {
     server: ManagedMcpServer,
     signal?: AbortSignal,
   ): Promise<ServerConnection> {
-    const transport = createTransport(server, this.oauth, this.fetch, this.processEnv, this.secretStorage);
+    const transport = createTransport(
+      server,
+      this.oauth,
+      this.fetch,
+      this.processEnv,
+      this.secretStorage,
+      this.stdioCwd,
+    );
     const client = new Client({ name: "pivi-mcp", version: "0.1.0" });
     await client.connect(transport, signal ? { signal } : undefined);
 

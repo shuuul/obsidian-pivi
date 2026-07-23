@@ -504,7 +504,7 @@
       "heading": "Accès Bash",
       "allowlist": {
         "name": "Commandes bash autorisées",
-        "desc": "Activez ou désactivez l’outil bash via la bascule bash des outils. Un exécutable nu comme git autorise ses sous-commandes ; une commande avec espaces comme npm run build autorise exactement ce préfixe. which, type et pwd sont toujours autorisés. La syntaxe de contrôle shell est rejetée.",
+        "desc": "Activez ou désactivez Bash via le bascule des outils. Les entrées correspondent au chemin canonique de l’exécutable plus un préfixe d’arguments optionnel (par exemple git, ou npm run build). Pas de shell de connexion. which, type et pwd sont toujours autorisés. La syntaxe de contrôle du shell est refusée ; le répertoire de travail doit rester dans le coffre.",
         "inputLabel": "Ajouter une commande bash autorisée",
         "removeAria": "Supprimer la commande bash autorisée {value}"
       }
@@ -821,7 +821,8 @@
         "argsPlaceholder": "Un argument par ligne",
         "urlInvalid": "Saisissez une URL valide",
         "urlScheme": "Les URL MCP doivent utiliser http ou https",
-        "urlPlainHttp": "HTTP non chiffré est autorisé uniquement pour les hôtes loopback"
+        "urlPlainHttp": "HTTP non chiffré est autorisé uniquement pour les hôtes loopback",
+        "commandShellSyntax": "L’exécutable ne doit pas contenir de syntaxe de contrôle du shell"
       },
       "test": {
         "connecting": "Actualisation des outils…",
@@ -881,7 +882,7 @@
       "generateImage": "Générer une image",
       "generateImageDesc": "Générer des images avec Codex, les enregistrer en pièces jointes, et éventuellement les intégrer dans des notes.",
       "bash": "Bash",
-      "bashDesc": "Exécuter des commandes shell d’une ligne lorsque le bascule Bash est activé et que la commande correspond à la liste d’autorisation.",
+      "bashDesc": "Exécuter un exécutable autorisé avec un vecteur d’arguments lorsque Bash est activé. Pas de shell de connexion ; le répertoire de travail doit rester dans le coffre.",
       "outline": "Plan",
       "command": "Commande",
       "eval": "Évaluer",

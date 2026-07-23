@@ -36,8 +36,9 @@ export class PiMcpBridge {
     fetch: McpTransportFetch,
     processEnv: McpProcessEnv,
     secretStorage?: SyncSecretStore,
+    stdioCwd?: string,
   ) {
-    this.pool = new PiMcpConnectionPool(oauth, fetch, processEnv, secretStorage);
+    this.pool = new PiMcpConnectionPool(oauth, fetch, processEnv, secretStorage, stdioCwd);
   }
 
   hasServers(): boolean {

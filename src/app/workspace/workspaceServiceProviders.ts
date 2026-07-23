@@ -40,8 +40,9 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
     mcpOAuth: McpOAuthService,
     mcpFetch: FetchCompatible,
     secretStorage?: SyncSecretStore,
+    stdioCwd?: string,
   ) {
-    this.pool = new PiMcpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage);
+    this.pool = new PiMcpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage, stdioCwd);
   }
 
   invalidate(serverName?: string): void {
@@ -149,8 +150,9 @@ export class PiMcpDiagnostics implements AppMcpDiagnostics {
     mcpOAuth: McpOAuthService,
     mcpFetch: FetchCompatible,
     secretStorage?: SyncSecretStore,
+    stdioCwd?: string,
   ) {
-    this.pool = new PiMcpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage);
+    this.pool = new PiMcpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage, stdioCwd);
   }
 
   async testConnection(server: Parameters<AppMcpDiagnostics["testConnection"]>[0]) {
@@ -176,10 +178,11 @@ export class PiMcpServerTester implements AppMcpServerTester {
   constructor(
     private readonly mcpFetch: FetchCompatible,
     private readonly secretStorage?: SyncSecretStore,
+    private readonly stdioCwd?: string,
   ) {}
 
   async testServer(server: Parameters<AppMcpServerTester["testServer"]>[0]) {
-    return testPiMcpServer(server, this.mcpFetch, process.env, this.secretStorage);
+    return testPiMcpServer(server, this.mcpFetch, process.env, this.secretStorage, this.stdioCwd);
   }
 }
 

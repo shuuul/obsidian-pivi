@@ -187,10 +187,20 @@ export async function createPiWorkspaceServices(
     mcpOAuth,
     network.mcpFetch,
     host.app.secretStorage,
+    vaultPath ?? undefined,
   );
-  const mcpDiagnostics = new PiMcpDiagnostics(mcpOAuth, network.mcpFetch, host.app.secretStorage);
+  const mcpDiagnostics = new PiMcpDiagnostics(
+    mcpOAuth,
+    network.mcpFetch,
+    host.app.secretStorage,
+    vaultPath ?? undefined,
+  );
   const mcpServerProbeProvider = new PiMcpServerProbeProvider(mcpToolProvider);
-  const mcpServerTester = new PiMcpServerTester(network.mcpFetch, host.app.secretStorage);
+  const mcpServerTester = new PiMcpServerTester(
+    network.mcpFetch,
+    host.app.secretStorage,
+    vaultPath ?? undefined,
+  );
   const modelReadinessProvider = new PiModelReadinessProvider(
     credentialStore,
     providerOAuth,

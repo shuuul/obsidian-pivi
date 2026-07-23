@@ -504,7 +504,7 @@
       "heading": "Acceso a Bash",
       "allowlist": {
         "name": "Comandos bash permitidos",
-        "desc": "Activa o desactiva la herramienta bash con el interruptor bash de herramientas. Un ejecutable suelto como git permite subcomandos; un comando con espacios como npm run build permite exactamente ese prefijo. which, type y pwd siempre se permiten. Se rechaza la sintaxis de control del shell.",
+        "desc": "Activa o desactiva Bash con el interruptor de herramientas. Las entradas coinciden con la ruta canónica del ejecutable y un prefijo opcional de argumentos (por ejemplo git, o npm run build). Sin shell de inicio de sesión. which, type y pwd siempre están permitidos. Se rechaza la sintaxis de control del shell; el directorio de trabajo debe permanecer en el vault.",
         "inputLabel": "Añadir un comando bash permitido",
         "removeAria": "Eliminar el comando bash permitido {value}"
       }
@@ -821,7 +821,8 @@
         "argsPlaceholder": "Un argumento por línea",
         "urlInvalid": "Introduce una URL válida",
         "urlScheme": "Las URL de MCP deben usar http o https",
-        "urlPlainHttp": "HTTP sin cifrar solo está permitido en hosts loopback"
+        "urlPlainHttp": "HTTP sin cifrar solo está permitido en hosts loopback",
+        "commandShellSyntax": "El ejecutable no debe contener sintaxis de control del shell"
       },
       "test": {
         "connecting": "Actualizando herramientas…",
@@ -881,7 +882,7 @@
       "generateImage": "Generar imagen",
       "generateImageDesc": "Generar imágenes con Codex, guardarlas como adjuntos e insertar incrustaciones en notas de forma opcional.",
       "bash": "Bash",
-      "bashDesc": "Ejecutar comandos de shell de una línea cuando el interruptor Bash está activado y el comando coincide con la lista permitida.",
+      "bashDesc": "Ejecutar un ejecutable permitido con vector de argumentos cuando Bash está activo. Sin shell de inicio de sesión; el directorio de trabajo debe permanecer en el vault.",
       "outline": "Esquema",
       "command": "Comando",
       "eval": "Evaluar",
