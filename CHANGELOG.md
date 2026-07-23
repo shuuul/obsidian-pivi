@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.15.1](https://github.com/shuuul/obsidian-pivi/compare/0.15.0...0.15.1) (2026-07-23)
+
+
+### Bug Fixes
+
+* **editor:** align inline edit review with sidebar output ([6e61de5](https://github.com/shuuul/obsidian-pivi/commit/6e61de5a9b4a8ab60ed38a5fe7bb1391c9badf83))
+* **tests:** compare bash allowlist paths via realpathSync.native ([42f6a56](https://github.com/shuuul/obsidian-pivi/commit/42f6a5642696df30c92d8e55ac6f6c6cc151a6a0))
+* **tests:** make platform-security tests pass on Windows ([5d6a490](https://github.com/shuuul/obsidian-pivi/commit/5d6a490c85d894b739da0699fd720050f0e1cb4e))
+
 ## [0.15.0](https://github.com/shuuul/obsidian-pivi/compare/0.14.1...0.15.0) (2026-07-23)
 
 
