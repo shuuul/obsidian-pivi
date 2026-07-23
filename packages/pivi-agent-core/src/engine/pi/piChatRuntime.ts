@@ -18,6 +18,13 @@ import {
   buildPiSystemPrompt,
   computePiSystemPromptKey,
 } from '../../prompt';
+import {
+  HighRiskApprovalController,
+  type HighRiskApprovalPresenter,
+  type HighRiskAuditSink,
+  runWithHighRiskContext,
+  wrapToolSpecsWithHighRiskGate,
+} from '../../runtime/highRisk';
 import { extractTextContent } from '../../runtime/messageContent';
 import type { PiChatService } from '../../runtime/piChatService';
 import { prepareChatTurn } from '../../runtime/prepareTurn';
@@ -84,6 +91,17 @@ export interface PiChatRuntimeNetwork {
   mcpSecretStorage?: SyncSecretStore;
 }
 
+export interface PiChatRuntimeHighRiskOptions {
+  presenter?: HighRiskApprovalPresenter;
+  audit?: HighRiskAuditSink;
+  classificationContext?: {
+    pathExists?: (vaultRelativePath: string) => boolean | Promise<boolean>;
+    folderChildCount?: (vaultRelativePath: string) => number | Promise<number | undefined> | undefined;
+  };
+  /** Optional writer for oversized MCP result artifacts under `.pivi/artifacts/mcp/`. */
+  writeMcpArtifact?: (vaultRelativePath: string, content: string) => Promise<void>;
+}
+
 const POST_LOAD_MODEL_METADATA_PROVIDER_IDS = new Set([
   'ollama',
   'lmstudio',
@@ -122,6 +140,8 @@ export class PiChatRuntime implements PiChatService {
   private openSessionAgentState: Record<string, unknown> | undefined;
   private externalContextPaths: string[] = [];
   private readonly postLoadModelRefreshSuccesses = new Set<string>();
+  private readonly highRisk: HighRiskApprovalController;
+  private turnSequence = 0;
 
   constructor(
     private readonly plugin: PiRuntimeHost,
@@ -130,7 +150,12 @@ export class PiChatRuntime implements PiChatService {
     mcpOAuth: McpOAuthService | null = null,
     private readonly baseToolProvider: PiBaseToolProvider | null = null,
     private readonly subagentConcurrencyLimiter?: SubagentConcurrencyLimiter,
+    private readonly highRiskOptions: PiChatRuntimeHighRiskOptions = {},
   ) {
+    this.highRisk = new HighRiskApprovalController({
+      presenter: highRiskOptions.presenter,
+      audit: highRiskOptions.audit,
+    });
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager
       ? new PiMcpBridge(
@@ -140,6 +165,12 @@ export class PiChatRuntime implements PiChatService {
         network.mcpProcessEnv,
         network.mcpSecretStorage,
         this.getVaultPath() ?? undefined,
+        this.highRisk,
+        highRiskOptions.writeMcpArtifact
+          ? async ({ vaultRelativePath, content }) => {
+            await highRiskOptions.writeMcpArtifact?.(vaultRelativePath, content);
+          }
+          : null,
       )
       : null;
     this.subagentRunner = createPiAuxQueryRunner(plugin, {
@@ -180,6 +211,9 @@ export class PiChatRuntime implements PiChatService {
     const sessionFile = ref?.sessionFile ?? null;
     this.sessionFile = sessionFile ?? null;
     this.leafId = null;
+    if (prevSessionFile !== sessionFile) {
+      this.highRisk.invalidate('invalidated');
+    }
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
       this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile);
@@ -339,6 +373,9 @@ export class PiChatRuntime implements PiChatService {
     }
     this.activeTurn = createActiveTurn();
     this.currentTurnMetadata = {};
+    this.turnSequence += 1;
+    const sessionKey = this.sessionFile ?? this.sessionId ?? 'anonymous';
+    this.highRisk.beginTurn(sessionKey, `turn-${this.turnSequence}`);
 
     const activeTurn = this.activeTurn;
     const agent = this.agent;
@@ -370,6 +407,7 @@ export class PiChatRuntime implements PiChatService {
         },
       }, effectiveTurn);
     } finally {
+      this.highRisk.endTurn();
       if (this.activeTurn === activeTurn) {
         this.activeTurn = null;
       }
@@ -402,6 +440,7 @@ export class PiChatRuntime implements PiChatService {
 
   cancel(): void {
     this.activeTurn?.abortController.abort();
+    this.highRisk.invalidate('cancelled');
     this.agent?.abort();
     this.subagentRunner.abortAllSubagents();
     invalidateCompactionState(this.compactionState);
@@ -425,6 +464,7 @@ export class PiChatRuntime implements PiChatService {
     if (this.activeTurn) {
       closeActiveTurnQueue(this.activeTurn);
     }
+    this.highRisk.dispose();
     this.subagentRunner.reset();
     this.subagentRunner.abortAllSubagents();
     invalidateCompactionState(this.compactionState);
@@ -507,6 +547,12 @@ export class PiChatRuntime implements PiChatService {
     const resolveReadMaxChars = (requestedMaxChars?: number) => (
       this.readBudget.reserve(requestedMaxChars)
     );
+    const wrapBaseToolSpecs = (specs: ReturnType<NonNullable<PiBaseToolProvider>>['toolSpecs']) => (
+      wrapToolSpecsWithHighRiskGate(specs, {
+        controller: this.highRisk,
+        classificationContext: this.highRiskOptions.classificationContext,
+      })
+    );
     if (!vaultPath) {
       return buildPiToolRegistry({
         host: this.plugin,
@@ -516,6 +562,7 @@ export class PiChatRuntime implements PiChatService {
         externalContextPaths: this.externalContextPaths,
         subagentQueryRunner: this.subagentRunner,
         resolveReadMaxChars,
+        wrapBaseToolSpecs,
       });
     }
     return buildPiToolRegistry({
@@ -526,6 +573,7 @@ export class PiChatRuntime implements PiChatService {
       externalContextPaths: this.externalContextPaths,
       subagentQueryRunner: this.subagentRunner,
       resolveReadMaxChars,
+      wrapBaseToolSpecs,
     });
   }
 
@@ -541,13 +589,28 @@ export class PiChatRuntime implements PiChatService {
       externalContextPaths: this.externalContextPaths,
       resolveReadMaxChars,
     });
-    const baseTools = providedBaseTools.toolSpecs
+    const childController = new HighRiskApprovalController();
+    childController.setMode('inherit-only');
+    const sessionKey = this.sessionFile ?? this.sessionId ?? 'anonymous';
+    childController.beginTurn(sessionKey, `subagent-${Date.now()}`);
+    childController.setParentGrants(this.highRisk.snapshotGrants());
+    const gatedSpecs = wrapToolSpecsWithHighRiskGate(providedBaseTools.toolSpecs, {
+      controller: childController,
+      classificationContext: this.highRiskOptions.classificationContext,
+    });
+    const baseTools = gatedSpecs
       .map(toPiAgentTool)
       .filter((tool) => tool.name !== TOOL_SPAWN_AGENT);
     const mcpTools = this.mcpBridge?.getToolSpecs()
       .map(toPiAgentTool)
       .filter((tool) => tool.name !== TOOL_SPAWN_AGENT) ?? [];
-    return [...baseTools, ...mcpTools];
+    const context = { mode: 'inherit-only' as const, controller: childController };
+    return [...baseTools, ...mcpTools].map((tool) => ({
+      ...tool,
+      execute: (toolCallId: string, params: unknown, signal?: AbortSignal) => (
+        runWithHighRiskContext(context, () => tool.execute(toolCallId, params, signal))
+      ),
+    }));
   }
 
   private ensureSessionTree(options?: PiEnsureReadyOptions): void {

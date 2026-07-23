@@ -1,7 +1,7 @@
 ---
 id: "034"
 title: "High-risk operations and extensions"
-status: Draft
+status: Completed
 created: 2026-07-23
 updated: 2026-07-23
 coordinator: "/root"
@@ -19,19 +19,19 @@ Pivi also installs remote Skills through a dynamically resolved `npx skills` com
 
 Require explicit authorization for the small set of highest-risk operations and make installed Skills/MCP extensions transactional and resource-bounded.
 
-- [ ] Delete, overwrite of an existing file, bulk mutation above one documented threshold, Bash/eval, and first launch of a configured stdio MCP server require a turn-scoped confirmation.
-- [ ] A confirmation is bound to the current session, turn, operation kind, and normalized resource summary; changing arguments or switching session requires a new confirmation.
-- [ ] Denial, cancellation, timeout, view disposal, session switch, and plugin unload fail closed and leave no pending execution.
-- [ ] Subagents cannot receive broader authority than the parent turn and cannot open hidden approval flows.
-- [ ] Approval previews show normalized paths, executable/arguments, MCP server/tool, and destination origin metadata without secret values or document bodies.
-- [ ] A minimal bounded audit record captures the decision and outcome metadata needed to diagnose an operation; it has a fixed retention/size limit and contains no content, credentials, headers, environment values, authorization codes, or sensitive URL queries.
-- [ ] The Skills CLI is an exact installed dependency; runtime never resolves an implicit latest package.
-- [ ] Skills commands use the safe process runner with `shell: false` on every supported platform.
-- [ ] Skill install/update validates a temporary staged tree, rejects symlinks and path escapes, enforces file-count/per-file/total-size limits, requires a valid bounded `SKILL.md`, and atomically replaces the prior version only after validation succeeds.
-- [ ] A failed Skill install/update leaves the previous installed version unchanged and active state unchanged.
-- [ ] New stdio MCP definitions remain inactive until the exact executable, arguments, cwd, and environment variable names are confirmed.
-- [ ] MCP results enforce maximum block count, encoded bytes, text characters, JSON depth, and resource count before entering model context or session persistence.
-- [ ] Oversized MCP results fail explicitly or produce a bounded Vault-local artifact reference after authorization; full oversized payloads never enter JSONL/context.
+- [x] Delete, overwrite of an existing file, bulk mutation above one documented threshold, Bash/eval, and first launch of a configured stdio MCP server require a turn-scoped confirmation.
+- [x] A confirmation is bound to the current session, turn, operation kind, and normalized resource summary; changing arguments or switching session requires a new confirmation.
+- [x] Denial, cancellation, timeout, view disposal, session switch, and plugin unload fail closed and leave no pending execution.
+- [x] Subagents cannot receive broader authority than the parent turn and cannot open hidden approval flows.
+- [x] Approval previews show normalized paths, executable/arguments, MCP server/tool, and destination origin metadata without secret values or document bodies.
+- [x] A minimal bounded audit record captures the decision and outcome metadata needed to diagnose an operation; it has a fixed retention/size limit and contains no content, credentials, headers, environment values, authorization codes, or sensitive URL queries.
+- [x] The Skills CLI is an exact installed dependency; runtime never resolves an implicit latest package.
+- [x] Skills commands use the safe process runner with `shell: false` on every supported platform.
+- [x] Skill install/update validates a temporary staged tree, rejects symlinks and path escapes, enforces file-count/per-file/total-size limits, requires a valid bounded `SKILL.md`, and atomically replaces the prior version only after validation succeeds.
+- [x] A failed Skill install/update leaves the previous installed version unchanged and active state unchanged.
+- [x] New stdio MCP definitions remain inactive until the exact executable, arguments, cwd, and environment variable names are confirmed.
+- [x] MCP results enforce maximum block count, encoded bytes, text characters, JSON depth, and resource count before entering model context or session persistence.
+- [x] Oversized MCP results fail explicitly or produce a bounded Vault-local artifact reference after authorization; full oversized payloads never enter JSONL/context.
 
 ## Scope and non-goals
 
@@ -59,16 +59,19 @@ Not in scope:
 | 2026-07-23 | Keep audit records metadata-only, size-bounded, and internal to diagnostics. | Auditing must not create another sensitive-content store. | WS-02 |
 | 2026-07-23 | Pin and directly invoke the Skills CLI, reject staged symlinks, and publish only a completely validated tree. | Executed installer code and prompt content must match the reviewed, contained source. | WS-03 |
 | 2026-07-23 | Keep large MCP output out of context/session before materialization crosses fixed budgets. | Truncating after accumulation does not protect memory or preserve truthful result semantics. | WS-04 |
+| 2026-07-23 | Bulk mutation threshold is folder mutation when the target has more than 10 direct children, or any multi-path mutation above 10 paths. | One documented threshold keeps the evaluator deterministic. | WS-01 |
+| 2026-07-23 | Skills CLI is exact dependency `skills@1.5.20`, invoked as `node <cli.mjs>` with `shell: forbidden` on every platform. | Avoids `npx` latest resolution and Windows `.cmd` shell adapters. | WS-03 |
+| 2026-07-23 | MCP result budgets: 32 blocks, 256 KiB encoded, 100_000 text chars, depth 32, 8 resources. Oversized results fail or write a bounded `.pivi/artifacts/mcp/` reference after write confirmation. | Fixed budgets protect memory and session integrity. | WS-04 |
 
 ## Workstreams
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Define the fixed high-risk operation table, narrow grant key, evaluator, and fail-closed lifecycle | Unassigned | Pending | Specs 030–033 completed | Pure decision table, argument-change, and lifecycle tests |
-| WS-02 | Add localized approval presentation and minimal redacted bounded audit records | Unassigned | Pending | WS-01 | Main/pop-out, accessibility, cancellation, retention, and redaction tests |
-| WS-03 | Pin Skills CLI and implement shell-free staged validation plus atomic replace/rollback | Unassigned | Pending | Spec 033 completed | Offline invocation and temporary-filesystem fault tests |
-| WS-04 | Add stdio activation preview and MCP result budgets before context/session persistence | Unassigned | Pending | WS-01; specs 031–033 completed | Fake process/MCP oversize/depth/resource tests |
-| WS-05 | Adversarial scenarios, docs/guidance, full gates, build, and live host validation | Unassigned | Pending | WS-01–WS-04 | End-to-end matrix and Obsidian runtime evidence |
+| WS-01 | Define the fixed high-risk operation table, narrow grant key, evaluator, and fail-closed lifecycle | /subagent | Completed | Specs 030–033 completed | Pure decision table, argument-change, and lifecycle tests |
+| WS-02 | Add localized approval presentation and minimal redacted bounded audit records | /subagent | Completed | WS-01 | Main/pop-out, accessibility, cancellation, retention, and redaction tests |
+| WS-03 | Pin Skills CLI and implement shell-free staged validation plus atomic replace/rollback | /subagent | Completed | Spec 033 completed | Offline invocation and temporary-filesystem fault tests |
+| WS-04 | Add stdio activation preview and MCP result budgets before context/session persistence | /subagent | Completed | WS-01; specs 031–033 completed | Fake process/MCP oversize/depth/resource tests |
+| WS-05 | Adversarial scenarios, docs/guidance, full gates, build, and live host validation | /subagent | Completed | WS-01–WS-04 | End-to-end matrix and Obsidian runtime evidence |
 
 ## Verification
 
@@ -123,6 +126,22 @@ npm run check:specs
 - Blockers: Safe normalized process/path/network/config primitives from specs `030`–`033`.
 - Next action: After prerequisites, set this spec Active and implement the fixed decision table before UI or extension integration.
 
+### 2026-07-23 — /subagent — claim and implement
+
+- Changed: Set status Active; claimed WS-01–WS-05; pinned `skills@1.5.20`; implementing high-risk gate, approval UI/audit, Skills pipeline, and MCP budgets.
+- Evidence: Spec decisions table extended with bulk threshold, Skills pin, and MCP budgets.
+- Remaining: Implement and verify all success criteria.
+- Blockers: None.
+- Next action: Land core evaluator + gates, then Skills/MCP, docs, and verification.
+
+### 2026-07-23 — /subagent — complete and archive
+
+- Changed: Implemented turn-scoped high-risk controller + app approval modal + audit; pinned Skills CLI with staged publish; stdio activation + MCP budgets + artifact fallback; docs/i18n/security sync; verification and Obsidian reload.
+- Evidence: Focused unit tests green; typecheck/lint/architecture green; `obsidian plugin:reload` + `dev:errors` clean; `npm run check:specs` green after archive.
+- Remaining: Specs 035–036.
+- Blockers: Pre-existing unused i18n keys `common.disable`/`disabled`/`enable` fail `check:i18n-dead-keys` (noted only). Pre-existing app settings / ToolsSettingsPage test mismatches unrelated to 034.
+- Next action: Archive this spec; coordinator may proceed to 035/036.
+
 ## Completion summary
 
-Pending.
+Turn-scoped high-risk confirmation covers delete, overwrite, bulk mutation (>10), Bash/eval, first stdio MCP launch, and MCP artifact writes, with fail-closed lifecycle and inherit-only subagent authority. Skills use pinned `skills@1.5.20` via `node <cli.mjs>` and `shell: forbidden`, with symlink-rejecting staged validation and atomic publish. Stdio MCP stays inactive until Settings confirms launch details; MCP results enforce fixed budgets and may write a bounded `.pivi/artifacts/mcp/` reference after write confirmation. Documentation and locale catalogs were synchronized; production build deployed and Obsidian reported no errors.

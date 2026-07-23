@@ -667,7 +667,7 @@
       "intro": "代理技能位於 .pivi/skills/，並在下一回合載入（skill 工具 + 系統提示）。僅在你選擇下方操作後，Pivi 才會安裝或更新技能。",
       "defaultBundle": {
         "name": "官方 {hostName} 技能",
-        "desc": "為此{workspaceName}安裝或更新官方 kepano/obsidian-skills 技能套件。會存取 GitHub/skills.sh、執行 npx skills，並將檔案寫入 .pivi/skills/。",
+        "desc": "為此{workspaceName}安裝或更新官方 kepano/obsidian-skills 技能套件。會存取 GitHub/skills.sh、執行固定版本的 skills CLI，並將檔案寫入 .pivi/skills/。",
         "button": "安裝官方技能",
         "updateButton": "更新官方技能",
         "label": "官方技能套件：",
@@ -830,7 +830,15 @@
         "connected": "工具已重新整理",
         "availableTools": "可用工具（{count}）",
         "noTools": "此伺服器未回傳任何工具。"
-      }
+      },
+      "stdioInactive": "未確認啟動詳情前保持停用",
+      "confirmStdioTitle": "確認本機 MCP 伺服器",
+      "confirmStdioMessage": "請核對可執行檔、參數、工作目錄和環境變數名稱。不會顯示密鑰值。",
+      "confirmStdioAction": "確認並啟用",
+      "confirmStdioPreviewExecutable": "可執行檔：{command}",
+      "confirmStdioPreviewArgs": "參數：{args}",
+      "confirmStdioPreviewCwd": "工作目錄：庫根目錄",
+      "confirmStdioPreviewEnv": "環境變數名稱：{names}"
     }
   },
   "commands": {
@@ -949,5 +957,31 @@
     "failedSaveTabLayout": "儲存分頁配置失敗",
     "failedSaveDeletedSessions": "儲存已刪除工作階段清單失敗",
     "failedSaveSyncedSettings": "提供者設定已儲存在此裝置上，但無法將可攜式設定寫入庫檔案。"
+  },
+  "highRisk": {
+    "message": "此回合想要執行高風險操作。請查看預覽後批准或拒絕。更改參數需要重新確認。",
+    "approve": "批准",
+    "deny": "拒絕",
+    "previewAria": "高風險操作預覽",
+    "preview": {
+      "paths": "路徑：{paths}",
+      "command": "命令：{command}",
+      "cwd": "工作目錄：{cwd}",
+      "envNames": "環境變數名稱：{names}",
+      "mcpServer": "MCP 伺服器：{server}",
+      "mcpTool": "MCP 工具：{tool}",
+      "origin": "來源：{origin}",
+      "bulkCount": "受影響項目：{count}"
+    },
+    "title": {
+      "generic": "確認高風險操作",
+      "delete": "確認刪除",
+      "overwrite": "確認覆寫",
+      "bulkMutation": "確認大量變更",
+      "bash": "確認 Bash 命令",
+      "eval": "確認 Obsidian eval",
+      "stdioMcpLaunch": "確認本機 MCP 啟動",
+      "mcpArtifactWrite": "確認 MCP 產物寫入"
+    }
   }
 }

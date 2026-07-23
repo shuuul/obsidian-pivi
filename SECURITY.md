@@ -46,7 +46,17 @@ One-shot process work (CLI, Bash, Skills tooling) uses the host `ProcessRunner` 
 - Timeout and abort terminate the owned process tree (POSIX process group or Windows `taskkill /T`), escalate to forced kill when needed, wait for close, and never double-resolve.
 - Results distinguish exit, signal, timeout, abort, spawn error, and forced-kill escalation.
 
-Bash allowlists match canonical executable paths plus argument schemas. Commands do not load login-shell startup files. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field.
+Bash allowlists match canonical executable paths plus argument schemas. Commands do not load login-shell startup files. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field. New stdio definitions remain inactive until Settings confirms executable, arguments, cwd, and environment variable **names**; the first process launch in a chat turn also requires turn-scoped confirmation.
+
+## High-risk operations
+
+A fixed table of high-risk operations—delete, overwrite of an existing file, bulk mutation above the documented threshold, Bash/eval, first stdio MCP launch, and oversized MCP artifact writes—requires turn-scoped confirmation bound to the current session, turn, operation kind, and normalized resource summary. Denial, timeout, cancellation, session switch, view disposal, and unload fail closed. Subagents inherit only parent grants and cannot open hidden approval UI. Previews show normalized paths, executable/args, MCP server/tool, and origin metadata without secrets or document bodies. A size-bounded diagnostics audit under `.pivi/diagnostics/` records decision/outcome metadata only.
+
+## Skills and MCP extension bounds
+
+The Skills CLI is the exact installed `skills` package invoked as `node <cli.mjs>` with `shell: forbidden` on every platform. Install/update validates a temporary staged tree (no symlinks/path escapes; file-count and size limits; valid bounded `SKILL.md`) and atomically replaces the prior version only after validation; failures leave the previous install and active state unchanged.
+
+MCP tool results enforce fixed budgets (block count, encoded bytes, text characters, JSON depth, resource count) before entering model context or session persistence. Oversized results fail explicitly or, after write confirmation, produce a bounded Vault-local reference under `.pivi/artifacts/mcp/`; full oversized payloads never enter JSONL or context.
 
 ## Vault mutation containment
 
@@ -58,3 +68,4 @@ Read/display path helpers (`normalizePathForVault`) must not be used as mutation
 - Web tools and MCP: [docs/07-tools-skills-mcp-and-integrations.md](docs/07-tools-skills-mcp-and-integrations.md)
 - Network egress implementation: [specs/archive/032-network-egress-and-http-client.md](specs/archive/032-network-egress-and-http-client.md)
 - Local execution and vault mutation: [specs/archive/033-local-execution-and-vault-mutation.md](specs/archive/033-local-execution-and-vault-mutation.md)
+- High-risk operations and extensions: [specs/archive/034-high-risk-operations-and-extensions.md](specs/archive/034-high-risk-operations-and-extensions.md)

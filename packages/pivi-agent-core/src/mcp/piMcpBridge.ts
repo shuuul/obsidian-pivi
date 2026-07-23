@@ -1,10 +1,12 @@
 import { PluginLogger } from '../foundation/pluginLogger';
 import type { SyncSecretStore } from '../ports';
+import type { HighRiskApprovalController } from '../runtime/highRisk/approvalController';
 import type { ToolSpec } from '../tools';
 import { createMcpProxyToolSpec } from './createMcpProxyToolSpec';
 import type { McpServerManager } from './mcpServerManager';
+import { isMcpServerRuntimeActive } from './mcpServerManager';
 import type { McpOAuthService } from './oauth/mcpOAuthService';
-import { PiMcpConnectionPool } from './piMcpConnectionPool';
+import { type McpArtifactWriter,PiMcpConnectionPool } from './piMcpConnectionPool';
 import type { McpProcessEnv, McpTransportFetch } from './ports';
 import type { McpTool } from './types';
 import { getMcpServerUrl, type ManagedMcpServer, type McpServerConfig } from './types';
@@ -37,12 +39,22 @@ export class PiMcpBridge {
     processEnv: McpProcessEnv,
     secretStorage?: SyncSecretStore,
     stdioCwd?: string,
+    highRisk?: HighRiskApprovalController | null,
+    artifactWriter?: McpArtifactWriter | null,
   ) {
-    this.pool = new PiMcpConnectionPool(oauth, fetch, processEnv, secretStorage, stdioCwd);
+    this.pool = new PiMcpConnectionPool(
+      oauth,
+      fetch,
+      processEnv,
+      secretStorage,
+      stdioCwd,
+      highRisk,
+      artifactWriter,
+    );
   }
 
   hasServers(): boolean {
-    return this.mcpManager.getServers().some((server) => server.enabled);
+    return this.mcpManager.getServers().some((server) => isMcpServerRuntimeActive(server));
   }
 
   getToolSpecs(): ToolSpec[] {
@@ -98,7 +110,7 @@ export class PiMcpBridge {
   }> {
     return this.mcpManager
       .getServers()
-      .filter((server) => server.enabled)
+      .filter((server) => isMcpServerRuntimeActive(server))
       .map((server) => {
         const tools = this.toolCache.get(server.name)?.tools ?? [];
         return {

@@ -49,7 +49,7 @@ Type `/` to search Pivi's commands, installed vault skills, and enabled tools fr
 
 ✦ **Obsidian-native tools** — Read, search, edit, link, and manage notes through tools that understand wikilinks, frontmatter, backlinks — not file paths.
 
-✦ **No plan mode** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Changes are recoverable through Obsidian trash and file history when File Recovery is enabled.
+✦ **Turn-scoped high-risk confirms** — Delete, overwrite, bulk mutation, Bash/eval, and first stdio MCP launch ask once per turn with a normalized preview. There is no coding-agent plan mode; Obsidian trash and File Recovery remain the recovery path for approved edits.
 
 ✦ **Vault skills** — Install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` to teach the agent your workflows.
 
@@ -108,8 +108,8 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 </details>
 
 ### 🔌 Skills & MCP
-- **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. Add more via `npx skills add`.
-- **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings.
+- **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. Distribution uses the pinned `skills` CLI (never an implicit latest/`npx` resolve), with staged validation before publish.
+- **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support. New stdio servers stay inactive until you confirm executable, args, cwd, and env var names. Test connections, inspect available tools, and enable or disable individual tools from settings.
 - **`/server` slash tokens**: Type `/server` or `/server/tool` in chat to emphasize an MCP server or tool; settings-enabled servers are already available to the agent.
 - **`/generate-image` tool token**: When Codex image generation is connected and `obsidian_generate_image` is enabled under Tools, the slash selector inserts this durable token. Pivi expands it only in the API prompt; the composer and session keep `/generate-image` unchanged.
 
@@ -170,8 +170,9 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **API keys** | Required for hosted AI providers. Stored via Obsidian `secretStorage` (Electron `safeStorage`), not in plugin JSON or `.pivi/mcp.json`. Environment and MCP secret values use the same store (`pivi-env-*`, `pivi-mcp-v-*`). |
 | **Network use** | Prompts, vault context, attachments, tool results, and MCP results may be sent to the selected model provider. |
 | **Image generation** | Available only with `openai-codex` credentials. Prompts go to ChatGPT / Codex backend. Images saved as vault attachments. |
-| **MCP** | User-provided servers. Enabled remote HTTP/SSE servers may receive inventory requests during startup/settings refresh. Stdio commands run only after explicit **Connect / refresh tools** or the agent's first search/list/call. |
-| **Skills** | Listing, installing, or updating remote skills uses `npx skills` / `skills.sh`. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
+| **MCP** | User-provided servers. Enabled remote HTTP/SSE servers may receive inventory requests during startup/settings refresh. Stdio servers stay inactive until launch details are confirmed; processes start only after explicit **Connect / refresh tools** or the agent's first search/list/call with turn-scoped launch confirmation. MCP results are budget-capped before context/session; oversized results fail or write a bounded `.pivi/artifacts/mcp/` reference after confirmation. |
+| **Skills** | Listing, installing, or updating remote skills uses the pinned `skills` CLI via the safe process runner (`shell: forbidden`). Staged trees are validated before atomic publish. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
+| **High-risk ops** | Delete, overwrite, bulk mutation, Bash/eval, first stdio MCP launch, and MCP artifact writes require turn-scoped confirmation with normalized previews and fail-closed lifecycle. |
 | **External file access** | Disabled by default. Allowed absolute roots come from this device's vault-local overlay or folders attached for the current turn; they are not synced through `.pivi/settings.json` or session JSONL. |
 | **Bash access** | Disabled by default. Allowlisted executable plus argument vector (canonical path + schema); no login shell; vault cwd only. |
 | **Obsidian CLI** | Disabled by default. When enabled, Pivi starts the configured official Obsidian CLI for the specific CLI-backed tools listed above. |

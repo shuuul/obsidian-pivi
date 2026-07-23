@@ -6,7 +6,15 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
 import { PluginLogger } from '../foundation/pluginLogger';
 import type { SyncSecretStore } from '../ports';
+import type { HighRiskApprovalController } from '../runtime/highRisk/approvalController';
+import { classifyMcpArtifactWrite, classifyStdioMcpLaunch } from '../runtime/highRisk/classify';
+import { getHighRiskExecutionContext } from '../runtime/highRisk/executionContext';
 import { createLegacySseTransport } from "./legacySseTransport";
+import {
+  buildMcpArtifactVaultPath,
+  formatMcpArtifactReference,
+  serializeBoundedMcpArtifact,
+} from './mcpArtifactFallback';
 import {
   buildMcpStdioEnv,
   createMcpResolveHost,
@@ -14,6 +22,7 @@ import {
   resolveMcpBearerToken,
   resolveMcpHeaders,
 } from "./mcpProcessEnv";
+import { materializeMcpToolResult, McpResultBudgetError } from './mcpResultBudget';
 import { parseCommand } from "./mcpUtils";
 import {
   assertMcpStdioExecutable,
@@ -28,6 +37,12 @@ import type { McpProcessEnv, McpTransportFetch } from "./ports";
 import type { McpTool } from "./types";
 import type { ManagedMcpServer } from "./types";
 import { getMcpServerType, supportsMcpOAuth } from "./types";
+
+/** Writes a bounded Vault-relative MCP artifact after high-risk authorization. */
+export type McpArtifactWriter = (args: {
+  vaultRelativePath: string;
+  content: string;
+}) => Promise<void>;
 
 interface UrlServerConfig {
   url: string;
@@ -168,12 +183,15 @@ export class PiMcpConnectionPool {
     private readonly processEnv: McpProcessEnv,
     private readonly secretStorage?: SyncSecretStore,
     private readonly stdioCwd?: string,
+    private readonly highRisk?: HighRiskApprovalController | null,
+    private readonly artifactWriter?: McpArtifactWriter | null,
   ) {}
 
   private readonly connections = new Map<string, ServerConnection>();
   private readonly connectPromises = new Map<string, PendingConnection>();
   private readonly pendingConnections = new Set<Promise<ServerConnection>>();
   private readonly serverGenerations = new Map<string, number>();
+  private readonly launchedStdioServers = new Set<string>();
   private generation = 0;
   private disposed = false;
 
@@ -198,30 +216,62 @@ export class PiMcpConnectionPool {
       { signal },
     );
 
-    const parts: string[] = [];
-    const content = Array.isArray(result.content) ? result.content : [];
-    for (const block of content) {
-      if (block && typeof block === "object" && "type" in block) {
-        const typed = block as {
-          type: string;
-          text?: string;
-          resource?: unknown;
-        };
-        if (typed.type === "text" && typeof typed.text === "string") {
-          parts.push(typed.text);
-        } else if (typed.type === "resource") {
-          parts.push(JSON.stringify(typed.resource));
-        } else {
-          parts.push(JSON.stringify(block));
+    let materialized;
+    try {
+      materialized = materializeMcpToolResult(result.content);
+    } catch (error) {
+      if (error instanceof McpResultBudgetError) {
+        const artifact = await this.tryWriteOversizedArtifact(
+          server.name,
+          toolName,
+          result.content,
+          error.violation,
+        );
+        if (artifact) {
+          return artifact;
         }
+        throw new Error(
+          `MCP tool "${toolName}" on "${server.name}" exceeded result budget (${error.violation}). `
+            + 'Full oversized payloads are never entered into context or session history.',
+        );
       }
+      throw error;
     }
 
     if (result.isError) {
-      throw new Error(parts.join("\n") || `MCP tool "${toolName}" failed`);
+      throw new Error(materialized.text || `MCP tool "${toolName}" failed`);
     }
 
-    return parts.join("\n") || "(empty result)";
+    return materialized.text;
+  }
+
+  private async tryWriteOversizedArtifact(
+    serverName: string,
+    toolName: string,
+    content: unknown,
+    violation: string,
+  ): Promise<string | null> {
+    if (!this.artifactWriter || !this.highRisk) {
+      return null;
+    }
+
+    const vaultRelativePath = buildMcpArtifactVaultPath(serverName, toolName);
+    const classification = classifyMcpArtifactWrite(vaultRelativePath);
+    const nested = getHighRiskExecutionContext();
+    const controller = nested?.controller ?? this.highRisk;
+    await controller.requireAuthorized({
+      kind: classification.kind,
+      resources: classification.resources,
+      toolName: 'mcp',
+    });
+
+    const artifactBody = serializeBoundedMcpArtifact(content, violation);
+    await this.artifactWriter({
+      vaultRelativePath,
+      content: artifactBody,
+    });
+
+    return formatMcpArtifactReference(serverName, toolName, violation, vaultRelativePath);
   }
 
   async probe(server: ManagedMcpServer): Promise<McpTool[]> {
@@ -249,6 +299,7 @@ export class PiMcpConnectionPool {
     const connections = [...this.connections.values()];
     this.connections.clear();
     this.connectPromises.clear();
+    this.launchedStdioServers.clear();
     await Promise.all(connections.map((connection) => this.closeConnection(connection)));
   }
 
@@ -299,6 +350,52 @@ export class PiMcpConnectionPool {
     }
   }
 
+  private async authorizeStdioLaunch(server: ManagedMcpServer): Promise<void> {
+    if (getMcpServerType(server.config) !== 'stdio') {
+      return;
+    }
+    if (server.stdioActivationConfirmed !== true) {
+      throw new Error(
+        `MCP stdio server "${server.name}" is inactive until its executable, arguments, cwd, and environment variable names are confirmed in Settings → MCP.`,
+      );
+    }
+    if (this.connections.has(server.name) || this.launchedStdioServers.has(server.name)) {
+      return;
+    }
+    if (!this.highRisk) {
+      // Settings diagnostics may connect without a turn-scoped controller after
+      // activation confirmation; agent turns always inject a controller.
+      this.launchedStdioServers.add(server.name);
+      return;
+    }
+
+    const stdio = server.config as {
+      command: string;
+      args?: string[];
+      env?: Record<string, unknown> | undefined;
+    };
+    const { cmd, args } = parseCommand(stdio.command, stdio.args);
+    const envVarNames = stdio.env && typeof stdio.env === 'object'
+      ? Object.keys(stdio.env)
+      : [];
+    const classification = classifyStdioMcpLaunch({
+      mcpServer: server.name,
+      executable: cmd,
+      args,
+      cwd: this.stdioCwd,
+      envVarNames,
+    });
+
+    const nested = getHighRiskExecutionContext();
+    const controller = nested?.controller ?? this.highRisk;
+    await controller.requireAuthorized({
+      kind: classification.kind,
+      resources: classification.resources,
+      toolName: 'mcp',
+    });
+    this.launchedStdioServers.add(server.name);
+  }
+
   private async acceptConnection(
     serverName: string,
     generation: number,
@@ -339,6 +436,7 @@ export class PiMcpConnectionPool {
     server: ManagedMcpServer,
     signal?: AbortSignal,
   ): Promise<ServerConnection> {
+    await this.authorizeStdioLaunch(server);
     const transport = createTransport(
       server,
       this.oauth,

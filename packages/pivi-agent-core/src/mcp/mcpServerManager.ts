@@ -1,5 +1,6 @@
 import { extractMcpMentions, transformMcpMentions } from './mcpUtils';
 import type { ManagedMcpServer, McpServerConfig } from './types';
+import { getMcpServerType } from './types';
 
 export interface McpAvailabilitySummary {
   totalCount: number;
@@ -11,6 +12,17 @@ export interface McpAvailabilitySummary {
 /** Storage interface for loading MCP servers. */
 export interface McpStorageAdapter {
   load(): Promise<ManagedMcpServer[]>;
+}
+
+/** Stdio servers require explicit activation confirmation before they can run. */
+export function isMcpServerRuntimeActive(server: ManagedMcpServer): boolean {
+  if (!server.enabled) {
+    return false;
+  }
+  if (getMcpServerType(server.config) === 'stdio') {
+    return server.stdioActivationConfirmed === true;
+  }
+  return true;
 }
 
 export class McpServerManager {
@@ -30,7 +42,7 @@ export class McpServerManager {
   }
 
   getEnabledCount(): number {
-    return this.servers.filter((s) => s.enabled).length;
+    return this.servers.filter((s) => isMcpServerRuntimeActive(s)).length;
   }
 
   getAvailabilitySummary(): McpAvailabilitySummary {
@@ -39,7 +51,7 @@ export class McpServerManager {
     let contextSavingCount = 0;
 
     for (const server of this.servers) {
-      if (!server.enabled) continue;
+      if (!isMcpServerRuntimeActive(server)) continue;
       enabledCount += 1;
       if (server.contextSaving) {
         contextSavingCount += 1;
@@ -59,16 +71,14 @@ export class McpServerManager {
   /**
    * Get servers available to the proxy `mcp` tool for a turn.
    *
-   * All settings-enabled servers participate. Slash `/server` tokens remain
-   * optional prompt emphasis (via extract/transformMentions) and are not
-   * required for discovery or tool calls. `mentionedNames` is retained for
-   * call-site compatibility but no longer filters the active set.
+   * Settings-enabled servers participate only after stdio activation is
+   * confirmed. Slash `/server` tokens remain optional prompt emphasis.
    */
   getActiveServers(_mentionedNames?: Set<string>): Record<string, McpServerConfig> {
     const result: Record<string, McpServerConfig> = {};
 
     for (const server of this.servers) {
-      if (!server.enabled) continue;
+      if (!isMcpServerRuntimeActive(server)) continue;
       result[server.name] = server.config;
     }
 
@@ -98,7 +108,7 @@ export class McpServerManager {
     const disallowed = new Set<string>();
 
     for (const server of this.servers) {
-      if (!server.enabled) continue;
+      if (!isMcpServerRuntimeActive(server)) continue;
       if (filter && !filter(server)) continue;
       if (!server.disabledTools || server.disabledTools.length === 0) continue;
 

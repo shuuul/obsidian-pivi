@@ -58,6 +58,9 @@ describe('PiMcpConnectionPool', () => {
     mockConnectPromises.push(connected.promise);
     const pool = new PiMcpConnectionPool(null, jest.fn(), {});
     const listPromise = pool.listTools(server);
+    // authorizeStdioLaunch is async even for remote servers, so Client construction
+    // happens on a subsequent microtask.
+    await Promise.resolve();
     expect(mockClients).toHaveLength(1);
     mockClients[0]?.listTools.mockResolvedValue({ tools: [] });
 

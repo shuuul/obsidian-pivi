@@ -4,6 +4,7 @@ export * from './auxQueryRunner';
 export * from './auxTypes';
 export * from './chatPorts';
 export * from './connectivity';
+export * from './highRisk';
 export * from './messageContent';
 export * from './piChatService';
 export * from './prepareTurn';

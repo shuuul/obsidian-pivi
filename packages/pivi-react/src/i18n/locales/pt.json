@@ -667,7 +667,7 @@
       "intro": "Las habilidades do agente están en .pivi/skills/ e se cargan en o siguiente turno (herramienta skill + prompt do sistema). Pivi solo instala o actualiza tras uma acción de abajo.",
       "defaultBundle": {
         "name": "Habilidades oficiais do {hostName}",
-        "desc": "Instala ou atualiza o pacote oficial kepano/obsidian-skills para este {workspaceName}. Acessa GitHub/skills.sh, executa npx skills e grava em .pivi/skills/.",
+        "desc": "Instala ou atualiza o pacote oficial kepano/obsidian-skills para este {workspaceName}. Acessa GitHub/skills.sh, executa o skills CLI fixado e grava em .pivi/skills/.",
         "button": "Instalar habilidades oficiais",
         "updateButton": "Atualizar habilidades oficiais",
         "label": "Pacote oficial:",
@@ -830,7 +830,15 @@
         "connected": "Ferramentas atualizadas",
         "availableTools": "Ferramentas disponibles ({count})",
         "noTools": "Este servidor não retornou ferramentas."
-      }
+      },
+      "stdioInactive": "Inativo até confirmar os detalhes de lançamento",
+      "confirmStdioTitle": "Confirmar servidor MCP local",
+      "confirmStdioMessage": "Revise o executável, os argumentos, o diretório de trabalho e os nomes das variáveis de ambiente. Valores secretos nunca são mostrados.",
+      "confirmStdioAction": "Confirmar e ativar",
+      "confirmStdioPreviewExecutable": "Executável: {command}",
+      "confirmStdioPreviewArgs": "Argumentos: {args}",
+      "confirmStdioPreviewCwd": "Diretório de trabalho: raiz do vault",
+      "confirmStdioPreviewEnv": "Nomes de variáveis de ambiente: {names}"
     }
   },
   "commands": {
@@ -949,5 +957,31 @@
     "failedSaveTabLayout": "Erro al salvar o diseño de pestañas",
     "failedSaveDeletedSessions": "Erro al salvar la lista de sessões eliminadas",
     "failedSaveSyncedSettings": "As configurações do provedor foram salvas neste dispositivo, mas as configurações portáteis não puderam ser gravadas no arquivo do cofre."
+  },
+  "highRisk": {
+    "message": "Este turno quer executar uma operação de alto risco. Revise a prévia e aprove ou negue. Alterar argumentos exige nova confirmação.",
+    "approve": "Aprovar",
+    "deny": "Negar",
+    "previewAria": "Prévia da operação de alto risco",
+    "preview": {
+      "paths": "Caminhos: {paths}",
+      "command": "Comando: {command}",
+      "cwd": "Diretório de trabalho: {cwd}",
+      "envNames": "Nomes de variáveis de ambiente: {names}",
+      "mcpServer": "Servidor MCP: {server}",
+      "mcpTool": "Ferramenta MCP: {tool}",
+      "origin": "Origem: {origin}",
+      "bulkCount": "Itens afetados: {count}"
+    },
+    "title": {
+      "generic": "Confirmar operação de alto risco",
+      "delete": "Confirmar exclusão",
+      "overwrite": "Confirmar sobrescrita",
+      "bulkMutation": "Confirmar alteração em massa",
+      "bash": "Confirmar comando Bash",
+      "eval": "Confirmar Obsidian eval",
+      "stdioMcpLaunch": "Confirmar lançamento MCP local",
+      "mcpArtifactWrite": "Confirmar gravação de artefato MCP"
+    }
   }
 }

@@ -105,6 +105,7 @@ export function buildPiToolRegistry(options: {
   baseToolProvider: PiBaseToolProvider | null;
   subagentQueryRunner?: PiSubagentQueryRunner;
   resolveReadMaxChars?: (requestedMaxChars?: number) => number;
+  wrapBaseToolSpecs?: (specs: ToolSpec[]) => ToolSpec[];
 }): PiToolRegistry {
   if (!options.baseToolProvider) {
     throw new Error('Pi tool registry requires a baseToolProvider.');
@@ -116,13 +117,16 @@ export function buildPiToolRegistry(options: {
     resolveReadMaxChars: options.resolveReadMaxChars,
   });
   const subagentSettings = getSubagentRuntimeSettingsFromBag(options.host.settings);
+  const baseToolSpecs = options.wrapBaseToolSpecs
+    ? options.wrapBaseToolSpecs(providedBaseTools.toolSpecs)
+    : providedBaseTools.toolSpecs;
 
   return buildPiToolRegistryCore({
     subagentQueryRunner: options.subagentQueryRunner ?? createPiAuxQueryRunner(options.host),
     vaultPath: options.vaultPath,
     activeNotePath: options.activeNotePath,
     mcpBridge: options.mcpBridge,
-    baseToolSpecs: providedBaseTools.toolSpecs,
+    baseToolSpecs,
     registeredToolSummary: providedBaseTools.registeredToolSummary,
     externalContexts: providedBaseTools.externalContexts,
     subagentSettings,

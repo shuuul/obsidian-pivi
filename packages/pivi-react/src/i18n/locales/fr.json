@@ -667,7 +667,7 @@
       "intro": "Les compétences d’agent sont dans .pivi/skills/ et se chargent au tour suivant (outil skill + prompt système). Pivi n’installe ou ne met à jour qu’après une action ci-dessous.",
       "defaultBundle": {
         "name": "Compétences {hostName} officielles",
-        "desc": "Installe ou met à jour le bundle officiel kepano/obsidian-skills pour ce {workspaceName}. Accède à GitHub/skills.sh, exécute npx skills et écrit sous .pivi/skills/.",
+        "desc": "Installe ou met à jour le bundle officiel kepano/obsidian-skills pour ce {workspaceName}. Accède à GitHub/skills.sh, exécute le CLI skills épinglé et écrit sous .pivi/skills/.",
         "button": "Installer les compétences officielles",
         "updateButton": "Mettre à jour les compétences officielles",
         "label": "Bundle officiel :",
@@ -830,7 +830,15 @@
         "connected": "Outils actualisés",
         "availableTools": "Outils disponibles ({count})",
         "noTools": "Ce serveur n’a renvoyé aucun outil."
-      }
+      },
+      "stdioInactive": "Inactif jusqu’à confirmation des détails de lancement",
+      "confirmStdioTitle": "Confirmer le serveur MCP local",
+      "confirmStdioMessage": "Vérifiez l’exécutable, les arguments, le répertoire de travail et les noms de variables d’environnement. Les valeurs secrètes ne sont jamais affichées.",
+      "confirmStdioAction": "Confirmer et activer",
+      "confirmStdioPreviewExecutable": "Exécutable : {command}",
+      "confirmStdioPreviewArgs": "Arguments : {args}",
+      "confirmStdioPreviewCwd": "Répertoire de travail : racine du coffre",
+      "confirmStdioPreviewEnv": "Noms de variables d’environnement : {names}"
     }
   },
   "commands": {
@@ -949,5 +957,31 @@
     "failedSaveTabLayout": "Échec de l’enregistrement de la disposition des onglets",
     "failedSaveDeletedSessions": "Échec de l’enregistrement de la liste des sessions supprimées",
     "failedSaveSyncedSettings": "Les paramètres du fournisseur ont été enregistrés sur cet appareil, mais les paramètres portables n’ont pas pu être écrits dans le fichier du coffre."
+  },
+  "highRisk": {
+    "message": "Ce tour veut exécuter une opération à haut risque. Examinez l’aperçu, puis approuvez ou refusez. Modifier les arguments exige une nouvelle confirmation.",
+    "approve": "Approuver",
+    "deny": "Refuser",
+    "previewAria": "Aperçu de l’opération à haut risque",
+    "preview": {
+      "paths": "Chemins : {paths}",
+      "command": "Commande : {command}",
+      "cwd": "Répertoire de travail : {cwd}",
+      "envNames": "Noms de variables d’environnement : {names}",
+      "mcpServer": "Serveur MCP : {server}",
+      "mcpTool": "Outil MCP : {tool}",
+      "origin": "Origine : {origin}",
+      "bulkCount": "Éléments concernés : {count}"
+    },
+    "title": {
+      "generic": "Confirmer l’opération à haut risque",
+      "delete": "Confirmer la suppression",
+      "overwrite": "Confirmer l’écrasement",
+      "bulkMutation": "Confirmer la modification en masse",
+      "bash": "Confirmer la commande Bash",
+      "eval": "Confirmer Obsidian eval",
+      "stdioMcpLaunch": "Confirmer le lancement MCP local",
+      "mcpArtifactWrite": "Confirmer l’écriture d’artefact MCP"
+    }
   }
 }

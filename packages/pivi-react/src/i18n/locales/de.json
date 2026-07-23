@@ -667,7 +667,7 @@
       "intro": "Agenten-Skills liegen in .pivi/skills/ und werden im nächsten Turn geladen (Skill-Tool + Systemprompt). Pivi installiert oder aktualisiert Skills nur nach Aktion unten.",
       "defaultBundle": {
         "name": "Offizielle {hostName}-Skills",
-        "desc": "Installiert oder aktualisiert das offizielle Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt npx skills aus und schreibt nach .pivi/skills/.",
+        "desc": "Installiert oder aktualisiert das offizielle Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt die festgelegte skills-CLI aus und schreibt nach .pivi/skills/.",
         "button": "Offizielle Skills installieren",
         "updateButton": "Offizielle Skills aktualisieren",
         "label": "Offizielles Bundle:",
@@ -830,7 +830,15 @@
         "connected": "Tools aktualisiert",
         "availableTools": "Verfügbare Tools ({count})",
         "noTools": "Dieser Server hat keine Tools zurückgegeben."
-      }
+      },
+      "stdioInactive": "Inaktiv, bis Startdetails bestätigt sind",
+      "confirmStdioTitle": "Lokalen MCP-Server bestätigen",
+      "confirmStdioMessage": "Prüfen Sie ausführbare Datei, Argumente, Arbeitsverzeichnis und Umgebungsvariablennamen. Geheimwerte werden nicht angezeigt.",
+      "confirmStdioAction": "Bestätigen und aktivieren",
+      "confirmStdioPreviewExecutable": "Ausführbare Datei: {command}",
+      "confirmStdioPreviewArgs": "Argumente: {args}",
+      "confirmStdioPreviewCwd": "Arbeitsverzeichnis: Vault-Stamm",
+      "confirmStdioPreviewEnv": "Umgebungsvariablennamen: {names}"
     }
   },
   "commands": {
@@ -949,5 +957,31 @@
     "failedSaveTabLayout": "Tab-Layout konnte nicht gespeichert werden",
     "failedSaveDeletedSessions": "Liste gelöschter Sitzungen konnte nicht gespeichert werden",
     "failedSaveSyncedSettings": "Anbieter-Einstellungen wurden auf diesem Gerät gespeichert, aber portierbare Einstellungen konnten nicht in die Vault-Datei geschrieben werden."
+  },
+  "highRisk": {
+    "message": "Dieser Zug möchte eine risikoreiche Operation ausführen. Prüfen Sie die Vorschau und genehmigen oder lehnen Sie ab. Geänderte Argumente erfordern eine neue Bestätigung.",
+    "approve": "Genehmigen",
+    "deny": "Ablehnen",
+    "previewAria": "Vorschau der risikoreichen Operation",
+    "preview": {
+      "paths": "Pfade: {paths}",
+      "command": "Befehl: {command}",
+      "cwd": "Arbeitsverzeichnis: {cwd}",
+      "envNames": "Umgebungsvariablennamen: {names}",
+      "mcpServer": "MCP-Server: {server}",
+      "mcpTool": "MCP-Tool: {tool}",
+      "origin": "Ursprung: {origin}",
+      "bulkCount": "Betroffene Elemente: {count}"
+    },
+    "title": {
+      "generic": "Risikoreiche Operation bestätigen",
+      "delete": "Löschen bestätigen",
+      "overwrite": "Überschreiben bestätigen",
+      "bulkMutation": "Massenänderung bestätigen",
+      "bash": "Bash-Befehl bestätigen",
+      "eval": "Obsidian-eval bestätigen",
+      "stdioMcpLaunch": "Lokalen MCP-Start bestätigen",
+      "mcpArtifactWrite": "MCP-Artefaktschreiben bestätigen"
+    }
   }
 }

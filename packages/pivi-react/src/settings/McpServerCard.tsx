@@ -93,6 +93,9 @@ export function McpServerCard({
           {authStatus === 'expired' ? (
             <span className="pivi-mcp-type-badge" title={t('settings.mcp.oauthExpiredTitle')}>{t('settings.mcp.oauthExpiredBadge')}</span>
           ) : null}
+          {getMcpServerType(server.config) === 'stdio' && server.stdioActivationConfirmed !== true ? (
+            <span className="pivi-mcp-type-badge" title={t('settings.mcp.stdioInactive')}>{t('settings.mcp.stdioInactive')}</span>
+          ) : null}
         </span>
         <span className="pivi-mcp-tool-count">{t('settings.mcp.toolCount', { count: tools.length })}</span>
         <SettingsItemActions>

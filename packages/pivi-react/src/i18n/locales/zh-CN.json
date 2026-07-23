@@ -667,7 +667,7 @@
       "intro": "智能体技能位于 .pivi/skills/，并在下一回合加载（skill 工具 + 系统提示）。仅在你选择下方操作后，Pivi 才会安装或更新技能。",
       "defaultBundle": {
         "name": "官方 {hostName} 技能",
-        "desc": "为此{workspaceName}安装或更新官方 kepano/obsidian-skills 技能包。会访问 GitHub/skills.sh、运行 npx skills，并将文件写入 .pivi/skills/。",
+        "desc": "为此{workspaceName}安装或更新官方 kepano/obsidian-skills 技能包。会访问 GitHub/skills.sh、运行固定版本的 skills CLI，并将文件写入 .pivi/skills/。",
         "button": "安装官方技能",
         "updateButton": "更新官方技能",
         "label": "官方技能包：",
@@ -830,7 +830,15 @@
         "connected": "工具已刷新",
         "availableTools": "可用工具（{count}）",
         "noTools": "此服务器未返回任何工具。"
-      }
+      },
+      "stdioInactive": "未确认启动详情前保持停用",
+      "confirmStdioTitle": "确认本地 MCP 服务器",
+      "confirmStdioMessage": "请核对可执行文件、参数、工作目录和环境变量名。不会显示密钥值。",
+      "confirmStdioAction": "确认并启用",
+      "confirmStdioPreviewExecutable": "可执行文件：{command}",
+      "confirmStdioPreviewArgs": "参数：{args}",
+      "confirmStdioPreviewCwd": "工作目录：库根目录",
+      "confirmStdioPreviewEnv": "环境变量名：{names}"
     }
   },
   "commands": {
@@ -949,5 +957,31 @@
     "failedSaveTabLayout": "保存标签页布局失败",
     "failedSaveDeletedSessions": "保存已删除会话列表失败",
     "failedSaveSyncedSettings": "提供商设置已保存在此设备上，但无法将可移植设置写入库文件。"
+  },
+  "highRisk": {
+    "message": "此回合想要执行高风险操作。请查看预览后批准或拒绝。更改参数需要重新确认。",
+    "approve": "批准",
+    "deny": "拒绝",
+    "previewAria": "高风险操作预览",
+    "preview": {
+      "paths": "路径：{paths}",
+      "command": "命令：{command}",
+      "cwd": "工作目录：{cwd}",
+      "envNames": "环境变量名：{names}",
+      "mcpServer": "MCP 服务器：{server}",
+      "mcpTool": "MCP 工具：{tool}",
+      "origin": "来源：{origin}",
+      "bulkCount": "受影响项：{count}"
+    },
+    "title": {
+      "generic": "确认高风险操作",
+      "delete": "确认删除",
+      "overwrite": "确认覆盖",
+      "bulkMutation": "确认批量更改",
+      "bash": "确认 Bash 命令",
+      "eval": "确认 Obsidian eval",
+      "stdioMcpLaunch": "确认本地 MCP 启动",
+      "mcpArtifactWrite": "确认 MCP 产物写入"
+    }
   }
 }

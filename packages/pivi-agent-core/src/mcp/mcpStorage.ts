@@ -236,6 +236,7 @@ export class McpStorage {
 
       const meta: {
         enabled?: boolean;
+        stdioActivationConfirmed?: boolean;
         contextSaving?: boolean;
         disabledTools?: string[];
         description?: string;
@@ -246,6 +247,9 @@ export class McpStorage {
 
       if (server.enabled !== DEFAULT_MCP_SERVER.enabled) {
         meta.enabled = server.enabled;
+      }
+      if (getMcpServerType(server.config) === 'stdio' && server.stdioActivationConfirmed) {
+        meta.stdioActivationConfirmed = true;
       }
       if (server.contextSaving !== DEFAULT_MCP_SERVER.contextSaving) {
         meta.contextSaving = server.contextSaving;
@@ -625,6 +629,9 @@ export class McpStorage {
         name,
         config,
         enabled: meta.enabled ?? DEFAULT_MCP_SERVER.enabled,
+        stdioActivationConfirmed: getMcpServerType(config) === 'stdio'
+          ? meta.stdioActivationConfirmed === true
+          : true,
         contextSaving: meta.contextSaving ?? DEFAULT_MCP_SERVER.contextSaving,
         disabledTools: normalizedDisabledTools,
         description: meta.description,
