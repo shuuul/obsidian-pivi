@@ -540,7 +540,9 @@
       "apiKeyName": "{provider}-API-Schlüssel",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
       "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
-      "removeKey": "Entfernen"
+      "removeKey": "Entfernen",
+      "enableAria": "{provider} aktivieren",
+      "disableAria": "{provider} deaktivieren"
     },
     "modelsTab": {
       "intro": "API-Schlüssel und OAuth-Token liegen im {secureStorageName}. Deaktivierte Anbieter bleiben gespeichert, sind aber im Modellwähler ausgeblendet.",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "Anbieter {name} entfernen?",
       "removeConfirmDescription": "Dadurch werden der Anbieter und seine Modellauswahl entfernt. Die gespeicherten Zugangsdaten bleiben standardmäßig erhalten.",
       "removeCredential": "Zugangsdaten dieses Anbieters ebenfalls aus {secureStorageName} löschen",
+      "enableAria": "{name}-Anbieter aktivieren",
+      "disableAria": "{name}-Anbieter deaktivieren",
+      "removeAria": "{name}-Anbieter entfernen",
       "testProvider": "Anbieter testen",
       "testing": "Teste…",
       "testReady": "{name} bereit: {detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "MCP-Server konnte nicht gespeichert werden",
       "alreadyExists": "Server „{name}“ existiert bereits",
       "deleteConfirm": "MCP-Server „{name}“ löschen?",
+      "enableAria": "MCP-Server {name} aktivieren",
+      "disableAria": "MCP-Server {name} deaktivieren",
+      "removeAria": "MCP-Server {name} entfernen",
       "authFailed": "Auth für „{name}“ fehlgeschlagen",
       "modal": {
         "titleAdd": "MCP-Server hinzufügen",

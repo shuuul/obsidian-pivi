@@ -41,7 +41,9 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
     expect(screen.getByText('read', { selector: '.pivi-mcp-tool-name' })).toBeInTheDocument();
     expect(screen.getByText('search', { selector: '.pivi-mcp-tool-name' })).toBeInTheDocument();
-    expect(within(screen.getByRole('heading', { name: 'MCP servers' }).closest('section')!).queryByRole('checkbox')).not.toBeInTheDocument();
+    const cardBody = document.querySelector('.pivi-mcp-card-body');
+    expect(cardBody).not.toBeNull();
+    expect(within(cardBody as HTMLElement).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(mcp.connect).not.toHaveBeenCalled();
     expect(mcp.listTools).toHaveBeenCalledWith('remote');
   });
@@ -54,14 +56,14 @@ describe('React MCP settings', () => {
 
     const card = document.querySelector('.pivi-mcp-card') as HTMLDetailsElement;
     const header = card.querySelector('.pivi-mcp-card-header');
-    expect(header).toContainElement(screen.getByRole('button', { name: 'Disable' }));
-    expect(header).toContainElement(screen.getByRole('button', { name: 'Remove' }));
+    expect(header).toContainElement(screen.getByRole('checkbox', { name: 'Disable MCP server remote' }));
+    expect(header).toContainElement(screen.getByRole('button', { name: 'Remove MCP server remote' }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Disable' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Disable MCP server remote' }));
     await act(async () => undefined);
     expect(card).not.toHaveAttribute('open');
     expect(getServers()[0]?.enabled).toBe(false);
-    expect(screen.getByRole('button', { name: 'Enable' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Enable MCP server remote' })).toBeInTheDocument();
   });
 
   it('validates, creates, edits, deletes, and imports MCP servers', async () => {
@@ -70,7 +72,7 @@ describe('React MCP settings', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Please enter a server name');
     fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'local' } }); fireEvent.change(screen.getByLabelText('Command'), { target: { value: 'npx mcp-server' } }); fireEvent.click(screen.getByRole('button', { name: 'Add' })); await act(async () => undefined); expect(getServers()).toHaveLength(1);
     fireEvent.click(screen.getByText('local', { selector: '.pivi-mcp-name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument(); const inlineEditor = document.querySelector('.pivi-mcp-inline-editor'); expect(inlineEditor).toContainElement(screen.getByRole('button', { name: 'Connect / refresh tools' })); expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'renamed' } }); fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' })); await act(async () => undefined); expect(getServers()[0]?.name).toBe('renamed'); expect(mcp.connect).toHaveBeenCalledWith(expect.objectContaining({ name: 'renamed' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' })); expect(getServers()).toHaveLength(1); fireEvent.click(screen.getByRole('button', { name: 'Delete' })); await act(async () => undefined); expect(getServers()).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove MCP server renamed' })); expect(getServers()).toHaveLength(1); fireEvent.click(screen.getByRole('button', { name: 'Delete' })); await act(async () => undefined); expect(getServers()).toHaveLength(0);
     const readText = jest.fn(async () => '{"mcpServers":{"unwanted":{"command":"node"}}}');
     Object.assign(navigator, { clipboard: { readText } });
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
@@ -158,7 +160,9 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
     expect(mcp.connect).toHaveBeenCalledWith(server);
     expect(screen.getByText('Tools refreshed')).toBeInTheDocument();
-    expect(within(screen.getByRole('heading', { name: 'MCP servers' }).closest('section')!).queryByRole('checkbox')).not.toBeInTheDocument();
+    const cardBody = document.querySelector('.pivi-mcp-card-body');
+    expect(cardBody).not.toBeNull();
+    expect(within(cardBody as HTMLElement).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enable all' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Disable all' })).not.toBeInTheDocument();
   });

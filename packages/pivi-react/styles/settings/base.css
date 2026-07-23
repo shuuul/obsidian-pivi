@@ -885,7 +885,7 @@ textarea.pivi-settings-control {
 
 .pivi-model-provider-header {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   gap: var(--pivi-spacing-sm);
 }
 
@@ -988,11 +988,16 @@ textarea.pivi-settings-control {
   }
 }
 
-.pivi-web-provider-header .pivi-provider-disable-btn,
-.pivi-model-provider-header .pivi-provider-disable-btn,
-.pivi-model-provider-header .pivi-provider-remove-btn {
-  margin-left: 0;
-  margin-right: 0;
+.pivi-settings-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pivi-spacing-xs);
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.pivi-settings-item-actions.pivi-sp-item-actions {
+  margin-left: var(--pivi-spacing-lg);
 }
 
 .pivi-provider-status.ready {
@@ -1032,41 +1037,6 @@ textarea.pivi-settings-control {
 
 .pivi-provider-card-disabled .pivi-provider-header {
   background: var(--pivi-host-background-primary);
-}
-
-.pivi-provider-disable-btn {
-  font-size: var(--pivi-host-font-ui-smaller);
-  padding: 2px 8px;
-  border-radius: var(--pivi-radius-xs);
-  background-color: var(--pivi-host-border);
-  color: var(--pivi-host-text-muted);
-  border: none;
-  cursor: pointer;
-  margin-right: var(--pivi-spacing-sm);
-  transition: background var(--pivi-duration-fast) var(--pivi-ease-out), color var(--pivi-duration-fast) var(--pivi-ease-out);
-}
-
-.pivi-provider-disable-btn:hover {
-  background-color: var(--pivi-host-interactive-accent);
-  color: var(--pivi-host-text-on-accent);
-}
-
-.pivi-provider-remove-btn {
-  font-size: var(--pivi-host-font-ui-smaller);
-  padding: 2px 8px;
-  border-radius: var(--pivi-radius-xs);
-  background-color: var(--pivi-host-border);
-  color: var(--pivi-host-text-muted);
-  border: none;
-  cursor: pointer;
-  margin-left: auto;
-  margin-right: 10px;
-  transition: background var(--pivi-duration-fast) var(--pivi-ease-out), color var(--pivi-duration-fast) var(--pivi-ease-out);
-}
-
-.pivi-provider-remove-btn:hover {
-  background-color: var(--pivi-host-text-error);
-  color: #ffffff;
 }
 
 .pivi-provider-test-btn {
@@ -1435,11 +1405,7 @@ textarea.pivi-settings-control {
 }
 
 .pivi-editor-toolbar-card__actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   justify-self: end;
-  white-space: nowrap;
 }
 
 .pivi-editor-toolbar-card__remove.pivi-settings-action-btn {

@@ -10,6 +10,7 @@ import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
+import { SettingsItemActions, Toggle } from '../controls';
 
 const MASKED_KEY = '••••••••';
 
@@ -145,14 +146,16 @@ export function WebProviderCard(props: WebProviderCardProps) {
         <span className={`pivi-provider-status ${disabled ? 'disabled' : credentialConfigured ? 'configured' : 'missing'}`}>
           {status}
         </span>
-        <button
-          className="pivi-provider-disable-btn"
-          type="button"
-          disabled={pending}
-          onClick={event => { event.preventDefault(); event.stopPropagation(); props.onToggleDisabled(); }}
-        >
-          {disabled ? t('common.enable') : t('common.disable')}
-        </button>
+        <SettingsItemActions>
+          <Toggle
+            checked={!disabled}
+            disabled={pending}
+            label={disabled
+              ? t('settings.webSearch.enableAria', { provider: label })
+              : t('settings.webSearch.disableAria', { provider: label })}
+            onChange={() => { props.onToggleDisabled(); }}
+          />
+        </SettingsItemActions>
       </summary>
       <div className="pivi-provider-body pivi-web-provider-body">
         <p className="pivi-setting-description">

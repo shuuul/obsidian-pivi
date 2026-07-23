@@ -545,7 +545,9 @@
       "apiKeyName": "{provider} API key",
       "apiKeyPlaceholder": "Enter API key...",
       "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
-      "removeKey": "Remove"
+      "removeKey": "Remove",
+      "enableAria": "Enable {provider}",
+      "disableAria": "Disable {provider}"
     },
     "modelsTab": {
       "intro": "API keys and OAuth tokens are stored in {secureStorageName}. Disabled providers stay saved but are hidden from the model picker.",
@@ -583,6 +585,9 @@
       "removeConfirmTitle": "Remove {name} provider?",
       "removeConfirmDescription": "This removes the provider and its model selections. Its stored credential is kept by default.",
       "removeCredential": "Also delete this provider's credential from {secureStorageName}",
+      "enableAria": "Enable {name} provider",
+      "disableAria": "Disable {name} provider",
+      "removeAria": "Remove {name} provider",
       "testProvider": "Test provider",
       "testing": "Testing…",
       "testReady": "{name} ready: {detail}",
@@ -761,6 +766,9 @@
       "saveFailed": "Failed to save MCP server",
       "alreadyExists": "Server \"{name}\" already exists",
       "deleteConfirm": "Delete MCP server \"{name}\"?",
+      "enableAria": "Enable MCP server {name}",
+      "disableAria": "Disable MCP server {name}",
+      "removeAria": "Remove MCP server {name}",
       "authFailed": "Auth failed for \"{name}\"",
       "modal": {
         "titleAdd": "Add MCP server",

@@ -540,7 +540,9 @@
       "apiKeyName": "Chave API de {provider}",
       "apiKeyPlaceholder": "Introduce la chave API…",
       "apiKeySavedPlaceholder": "Guardada en o {secureStorageName}",
-      "removeKey": "Quitar"
+      "removeKey": "Quitar",
+      "enableAria": "Ativar {provider}",
+      "disableAria": "Desativar {provider}"
     },
     "modelsTab": {
       "intro": "Las claves API e tokens OAuth se guardan en o {secureStorageName}. Los proveedores desactivados permanecen guardados pero ocultos en o selector de modelos.",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "Remover o provedor {name}?",
       "removeConfirmDescription": "Isto remove o provedor e suas seleções de modelos. A credencial armazenada é mantida por padrão.",
       "removeCredential": "Também excluir a credencial deste provedor de {secureStorageName}",
+      "enableAria": "Ativar provedor {name}",
+      "disableAria": "Desativar provedor {name}",
+      "removeAria": "Remover provedor {name}",
       "testProvider": "Probar provedor",
       "testing": "Probando…",
       "testReady": "{name} listo: {detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "Erro al salvar o servidor MCP",
       "alreadyExists": "El servidor «{name}» ya existe",
       "deleteConfirm": "¿Excluir o servidor MCP «{name}»?",
+      "enableAria": "Ativar servidor MCP {name}",
+      "disableAria": "Desativar servidor MCP {name}",
+      "removeAria": "Remover servidor MCP {name}",
       "authFailed": "Erro de auth de «{name}»",
       "modal": {
         "titleAdd": "Adicionar servidor MCP",

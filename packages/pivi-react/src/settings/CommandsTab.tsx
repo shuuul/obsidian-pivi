@@ -23,7 +23,7 @@ import {
   type SortableReorderHandleProps,
   useSortableReorder,
 } from '../reorder/useSortableReorder';
-import { SettingsActionFeedback, SettingsListHeader, SettingsPageDescription } from './controls';
+import { SettingsActionFeedback, SettingsItemActions, SettingsListHeader, SettingsPageDescription, SettingsRemoveButton } from './controls';
 
 function normalizeCommandName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
@@ -342,9 +342,15 @@ function CommandCard({
         <span className="pivi-provider-title">/{displayName}</span>
         {argumentHint ? <span className="pivi-slash-item-hint">{argumentHint}</span> : null}
       </div>
-      {isDraft
-        ? <button className="pivi-provider-remove-btn" type="button" disabled={pending} onClick={(event) => { stop(event); onCancelDraft(); }}>{t('common.cancel')}</button>
-        : <button className="pivi-provider-remove-btn" type="button" aria-label={t('settings.slashCommandsUi.deleteAria', { name: displayName })} disabled={pending} onClick={(event) => { stop(event); onDelete(savedEntry); }}>{t('common.remove')}</button>}
+      <SettingsItemActions>
+        {isDraft
+          ? <button className="pivi-settings-text-btn" type="button" disabled={pending} onClick={(event) => { stop(event); onCancelDraft(); }}>{t('common.cancel')}</button>
+          : <SettingsRemoveButton
+            ariaLabel={t('settings.slashCommandsUi.deleteAria', { name: displayName })}
+            disabled={pending}
+            onClick={(event) => { stop(event); onDelete(savedEntry); }}
+          />}
+      </SettingsItemActions>
     </summary>
     <form className="pivi-provider-body pivi-command-card-body" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
       <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.name.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.name.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" autoFocus={isDraft} value={name} placeholder={t('settings.createCommand.name.placeholder')} onChange={(event) => { setName(normalizeCommandName(event.target.value)); setError(null); }} disabled={pending} /></div></label>

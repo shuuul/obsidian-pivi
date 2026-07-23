@@ -20,7 +20,7 @@ import {
   useSortableReorder,
 } from '../reorder/useSortableReorder';
 import { CommandIconPicker } from './CommandsTab';
-import { Select, SettingRow, SettingsSection, Toggle } from './controls';
+import { Select, SettingRow, SettingsItemActions, SettingsRemoveButton, SettingsSection, Toggle } from './controls';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
 import type { SettingsEditorSelectionToolbarSnapshot } from './types';
@@ -458,15 +458,17 @@ function ShortcutCard({
       )}
       <span className="pivi-editor-toolbar-card__label">{label}</span>
       <span className="pivi-editor-toolbar-card__badge">{kindLabel}</span>
-      <span
-        className="pivi-editor-toolbar-card__actions"
-        data-toolbar-control
-        onClick={(event) => { event.stopPropagation(); }}
-        onPointerDown={(event) => { event.stopPropagation(); }}
-      >
+      <SettingsItemActions className="pivi-editor-toolbar-card__actions">
         <Toggle disabled={pending} checked={shortcut.enabled} label={t('settings.editorToolbar.itemEnabledAria', { label })} onChange={onToggleEnabled} />
-        {removable ? <button type="button" className="pivi-settings-action-btn pivi-editor-toolbar-card__remove" disabled={pending} aria-label={t('settings.editorToolbar.removeAria', { label })} onClick={onRemove}><PlatformIcon name="x" /></button> : null}
-      </span>
+        {removable ? (
+          <SettingsRemoveButton
+            className="pivi-editor-toolbar-card__remove"
+            ariaLabel={t('settings.editorToolbar.removeAria', { label })}
+            disabled={pending}
+            onClick={onRemove}
+          />
+        ) : null}
+      </SettingsItemActions>
     </>
   );
   const pointerProps = {

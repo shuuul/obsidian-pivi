@@ -13,6 +13,7 @@ import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
+import { SettingsItemActions, SettingsRemoveButton, Toggle } from '../controls';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
 import { ProviderCredentials } from './ProviderCredentials';
@@ -82,10 +83,9 @@ export function ProviderCard({
     event.stopPropagation();
   };
 
-  const toggleDisabled = (event: MouseEvent): void => {
-    stop(event);
+  const toggleDisabled = (checked: boolean): void => {
     const next = new Set(settings.disabledProviders);
-    if (next.has(providerId)) next.delete(providerId);
+    if (checked) next.delete(providerId);
     else next.add(providerId);
     void save({ disabledProviders: [...next] }).catch((cause: unknown) => {
       onError(cause instanceof Error ? cause.message : t('common.error'));
@@ -194,12 +194,20 @@ export function ProviderCard({
             ? t('settings.modelsTab.status.checking')
             : t(STATUS_LABEL_KEYS[readiness])}
         </span>
-        <button className="pivi-provider-disable-btn" type="button" onClick={toggleDisabled}>
-          {disabled ? t('common.enable') : t('common.disable')}
-        </button>
-        <button className="pivi-provider-remove-btn" type="button" onClick={remove}>
-          {t('common.remove')}
-        </button>
+        <SettingsItemActions>
+          <Toggle
+            checked={!disabled}
+            disabled={pending}
+            label={disabled
+              ? t('settings.modelsTab.enableAria', { name: displayName })
+              : t('settings.modelsTab.disableAria', { name: displayName })}
+            onChange={toggleDisabled}
+          />
+          <SettingsRemoveButton
+            ariaLabel={t('settings.modelsTab.removeAria', { name: displayName })}
+            onClick={remove}
+          />
+        </SettingsItemActions>
       </summary>
       <div className="pivi-provider-body">
         {custom ? (

@@ -86,21 +86,6 @@
   border-top: 1px solid var(--pivi-host-border);
 }
 
-.pivi-mcp-status {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.pivi-mcp-status-enabled {
-  background: var(--pivi-host-color-green);
-}
-
-.pivi-mcp-status-disabled {
-  background: var(--pivi-host-text-muted);
-}
-
 .pivi-mcp-name {
   font-weight: 600;
   overflow-wrap: anywhere;

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackMessage, SettingsFeedbackPort } from '../ports';
-import { SettingRow, SettingsActionFeedback, SettingsListHeader, SettingsPageDescription } from './controls';
+import { SettingRow, SettingsActionFeedback, SettingsItemActions, SettingsListHeader, SettingsPageDescription, SettingsRemoveButton, Toggle } from './controls';
 
 type Skill = SettingsComplexPorts['skills']['list'] extends () => readonly (infer Entry)[] ? Entry : never;
 type RemoteSkill = { readonly name: string; readonly description: string };
@@ -186,22 +186,18 @@ export function SkillsSettingsTab({ skills, feedback }: {
                 <div className="pivi-sp-item-header">
                   <span className="pivi-sp-item-name">{skill.name}</span>
                   <span className="pivi-sp-item-folder">{skill.folderName}</span>
-                  {skill.disabled ? <span className="pivi-slash-item-badge">{t('common.disabled')}</span> : null}
                 </div>
                 {skill.description ? <div className="pivi-sp-item-desc">{skill.description}</div> : null}
               </div>
-              <div className="pivi-sp-item-actions">
-                <button
-                  type="button"
-                  className="pivi-settings-text-btn"
+              <SettingsItemActions className="pivi-sp-item-actions" isolate={false}>
+                <Toggle
+                  checked={!skill.disabled}
                   disabled={busy}
-                  aria-label={skill.disabled
+                  label={skill.disabled
                     ? t('settings.skills.installed.enableAria', { name: skill.name })
                     : t('settings.skills.installed.disableAria', { name: skill.name })}
-                  onClick={() => { void run(() => skills.setDisabled(skill.folderName, !skill.disabled)); }}
-                >
-                  {skill.disabled ? t('common.enable') : t('common.disable')}
-                </button>
+                  onChange={() => { void run(() => skills.setDisabled(skill.folderName, !skill.disabled)); }}
+                />
                 <button
                   type="button"
                   className="pivi-settings-action-btn"
@@ -211,16 +207,12 @@ export function SkillsSettingsTab({ skills, feedback }: {
                 >
                   <PlatformIcon name="refresh-cw" />
                 </button>
-                <button
-                  type="button"
-                  className="pivi-settings-action-btn pivi-settings-delete-btn"
+                <SettingsRemoveButton
+                  ariaLabel={t('settings.skills.installed.removeAria', { name: skill.name })}
                   disabled={busy}
-                  aria-label={t('settings.skills.installed.removeAria', { name: skill.name })}
                   onClick={() => { void run(() => skills.remove(skill.folderName)); }}
-                >
-                  <PlatformIcon name="trash-2" />
-                </button>
-              </div>
+                />
+              </SettingsItemActions>
             </div>
           ))}
         </div>

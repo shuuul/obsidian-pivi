@@ -540,7 +540,9 @@
       "apiKeyName": "{provider} API キー",
       "apiKeyPlaceholder": "API キーを入力…",
       "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
-      "removeKey": "削除"
+      "removeKey": "削除",
+      "enableAria": "{provider} を有効化",
+      "disableAria": "{provider} を無効化"
     },
     "modelsTab": {
       "intro": "API キーと OAuth トークンは {secureStorageName} に保存されます。無効なプロバイダーは保存されたままモデル選択から非表示になります。",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "{name} プロバイダーを削除しますか？",
       "removeConfirmDescription": "プロバイダーとモデルの選択を削除します。保存済みの認証情報はデフォルトで保持されます。",
       "removeCredential": "このプロバイダーの認証情報も{secureStorageName}から削除する",
+      "enableAria": "プロバイダー {name} を有効化",
+      "disableAria": "プロバイダー {name} を無効化",
+      "removeAria": "プロバイダー {name} を削除",
       "testProvider": "プロバイダーをテスト",
       "testing": "テスト中…",
       "testReady": "{name} 準備完了：{detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "MCP サーバーの保存に失敗しました",
       "alreadyExists": "サーバー「{name}」は既に存在します",
       "deleteConfirm": "MCP サーバー「{name}」を削除しますか？",
+      "enableAria": "MCP サーバー {name} を有効化",
+      "disableAria": "MCP サーバー {name} を無効化",
+      "removeAria": "MCP サーバー {name} を削除",
       "authFailed": "「{name}」の認証に失敗",
       "modal": {
         "titleAdd": "MCP サーバーを追加",

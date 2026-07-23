@@ -540,7 +540,9 @@
       "apiKeyName": "API-ключ {provider}",
       "apiKeyPlaceholder": "Введите API-ключ…",
       "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
-      "removeKey": "Убрать"
+      "removeKey": "Убрать",
+      "enableAria": "Включить {provider}",
+      "disableAria": "Отключить {provider}"
     },
     "modelsTab": {
       "intro": "API-ключи и OAuth-токены хранятся в {secureStorageName}. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "Удалить провайдера {name}?",
       "removeConfirmDescription": "Провайдер и выбранные для него модели будут удалены. Сохранённые учётные данные по умолчанию останутся.",
       "removeCredential": "Также удалить учётные данные этого провайдера из {secureStorageName}",
+      "enableAria": "Включить провайдера {name}",
+      "disableAria": "Отключить провайдера {name}",
+      "removeAria": "Удалить провайдера {name}",
       "testProvider": "Проверить провайдера",
       "testing": "Проверка…",
       "testReady": "{name} готов: {detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "Не удалось сохранить MCP-сервер",
       "alreadyExists": "Сервер «{name}» уже существует",
       "deleteConfirm": "Удалить MCP-сервер «{name}»?",
+      "enableAria": "Включить MCP-сервер {name}",
+      "disableAria": "Отключить MCP-сервер {name}",
+      "removeAria": "Удалить MCP-сервер {name}",
       "authFailed": "Ошибка auth для «{name}»",
       "modal": {
         "titleAdd": "Добавить MCP-сервер",

@@ -41,11 +41,6 @@
   gap: var(--pivi-spacing-sm);
 }
 
-.pivi-sortable-provider-card > .pivi-command-card-header .pivi-provider-remove-btn {
-  margin-left: 0;
-  margin-right: 0;
-}
-
 .pivi-command-card-body {
   display: flex;
   flex-direction: column;

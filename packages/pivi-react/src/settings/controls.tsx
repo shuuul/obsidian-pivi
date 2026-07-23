@@ -1,4 +1,11 @@
-import { type ChangeEvent, type ClipboardEvent, type ReactNode, useState } from 'react';
+import {
+  type ChangeEvent,
+  type ClipboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+  useState,
+} from 'react';
 
 import { PlatformIcon } from '../icons';
 import type { SettingsFeedbackMessage } from '../ports';
@@ -100,6 +107,53 @@ export function Toggle({ checked, disabled = false, label, onChange }: { readonl
       />
       <span aria-hidden="true" className="pivi-toggle-thumb" />
     </label>
+  );
+}
+
+export function SettingsItemActions({
+  children,
+  className = '',
+  isolate = true,
+}: {
+  readonly children: ReactNode;
+  readonly className?: string;
+  readonly isolate?: boolean;
+}) {
+  return (
+    <span
+      className={`pivi-settings-item-actions${className ? ` ${className}` : ''}`}
+      {...(isolate ? {
+        'data-toolbar-control': true,
+        onClick: (event: MouseEvent<HTMLSpanElement>) => { event.stopPropagation(); },
+        onPointerDown: (event: PointerEvent<HTMLSpanElement>) => { event.stopPropagation(); },
+      } : {})}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function SettingsRemoveButton({
+  ariaLabel,
+  disabled = false,
+  className = '',
+  onClick,
+}: {
+  readonly ariaLabel: string;
+  readonly disabled?: boolean;
+  readonly className?: string;
+  readonly onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`pivi-settings-action-btn pivi-settings-delete-btn${className ? ` ${className}` : ''}`}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      onClick={onClick}
+    >
+      <PlatformIcon name="trash-2" />
+    </button>
   );
 }
 

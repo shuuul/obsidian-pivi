@@ -540,7 +540,9 @@
       "apiKeyName": "{provider} API 키",
       "apiKeyPlaceholder": "API 키 입력…",
       "apiKeySavedPlaceholder": "{secureStorageName}에 저장됨",
-      "removeKey": "제거"
+      "removeKey": "제거",
+      "enableAria": "{provider} 활성화",
+      "disableAria": "{provider} 비활성화"
     },
     "modelsTab": {
       "intro": "API 키와 OAuth 토큰은 {secureStorageName}에 저장됩니다. 비활성화된 제공자는 저장되지만 모델 선택기에서 숨겨집니다.",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "{name} 제공자를 제거할까요?",
       "removeConfirmDescription": "제공자와 모델 선택을 제거합니다. 저장된 자격 증명은 기본적으로 유지됩니다.",
       "removeCredential": "이 제공자의 자격 증명도 {secureStorageName}에서 삭제",
+      "enableAria": "{name} 제공자 활성화",
+      "disableAria": "{name} 제공자 비활성화",
+      "removeAria": "{name} 제공자 제거",
       "testProvider": "제공자 테스트",
       "testing": "테스트 중…",
       "testReady": "{name} 준비됨: {detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "MCP 서버를 저장하지 못했습니다",
       "alreadyExists": "서버 \"{name}\"이(가) 이미 있습니다",
       "deleteConfirm": "MCP 서버 \"{name}\"을(를) 삭제할까요?",
+      "enableAria": "MCP 서버 {name} 활성화",
+      "disableAria": "MCP 서버 {name} 비활성화",
+      "removeAria": "MCP 서버 {name} 제거",
       "authFailed": "\"{name}\" 인증 실패",
       "modal": {
         "titleAdd": "MCP 서버 추가",

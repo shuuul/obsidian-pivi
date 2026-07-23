@@ -546,11 +546,11 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(ensureProviderCredentials).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Disable' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Disable openai-codex provider' }));
     await act(async () => undefined);
     expect(ensureProviderCredentials).toHaveBeenCalledTimes(2);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Enable' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable openai-codex provider' }));
     await act(async () => undefined);
     expect(ensureProviderCredentials).toHaveBeenCalledTimes(3);
   });
@@ -773,7 +773,7 @@ describe('React settings foundation', () => {
     Object.assign(ports.complex.models, { removeProvider });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove openai provider' }));
     const dialog = screen.getByRole('dialog', { name: 'Remove openai provider?' });
     const deleteCredential = within(dialog).getByRole('checkbox', {
       name: "Also delete this provider's credential from secure storage",
@@ -790,7 +790,7 @@ describe('React settings foundation', () => {
     Object.assign(ports.complex.models, { removeProvider });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove openai provider' }));
     const dialog = screen.getByRole('dialog', { name: 'Remove openai provider?' });
     fireEvent.click(within(dialog).getByRole('checkbox'));
     fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));

@@ -540,7 +540,9 @@
       "apiKeyName": "{provider} API 密钥",
       "apiKeyPlaceholder": "输入 API 密钥…",
       "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
-      "removeKey": "移除"
+      "removeKey": "移除",
+      "enableAria": "启用 {provider}",
+      "disableAria": "禁用 {provider}"
     },
     "modelsTab": {
       "intro": "API 密钥和 OAuth 令牌保存在{secureStorageName}中。已禁用的提供商仍会保存，但会在模型选择器中隐藏。",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "移除 {name} 提供商？",
       "removeConfirmDescription": "这会移除该提供商及其模型选择。默认保留已存储的凭据。",
       "removeCredential": "同时从{secureStorageName}中删除此提供商的凭据",
+      "enableAria": "启用提供商 {name}",
+      "disableAria": "禁用提供商 {name}",
+      "removeAria": "移除提供商 {name}",
       "testProvider": "测试提供商",
       "testing": "测试中…",
       "testReady": "{name} 就绪：{detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "保存 MCP 服务器失败",
       "alreadyExists": "服务器「{name}」已存在",
       "deleteConfirm": "删除 MCP 服务器「{name}」？",
+      "enableAria": "启用 MCP 服务器 {name}",
+      "disableAria": "禁用 MCP 服务器 {name}",
+      "removeAria": "移除 MCP 服务器 {name}",
       "authFailed": "「{name}」认证失败",
       "modal": {
         "titleAdd": "添加 MCP 服务器",

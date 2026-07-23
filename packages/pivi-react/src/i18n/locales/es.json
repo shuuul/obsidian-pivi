@@ -540,7 +540,9 @@
       "apiKeyName": "Clave API de {provider}",
       "apiKeyPlaceholder": "Introduce la clave API…",
       "apiKeySavedPlaceholder": "Guardada en el {secureStorageName}",
-      "removeKey": "Quitar"
+      "removeKey": "Quitar",
+      "enableAria": "Activar {provider}",
+      "disableAria": "Desactivar {provider}"
     },
     "modelsTab": {
       "intro": "Las claves API y tokens OAuth se guardan en el {secureStorageName}. Los proveedores desactivados permanecen guardados pero ocultos en el selector de modelos.",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "¿Eliminar el proveedor {name}?",
       "removeConfirmDescription": "Esto elimina el proveedor y sus selecciones de modelos. La credencial guardada se conserva de forma predeterminada.",
       "removeCredential": "Eliminar también la credencial de este proveedor de {secureStorageName}",
+      "enableAria": "Activar proveedor {name}",
+      "disableAria": "Desactivar proveedor {name}",
+      "removeAria": "Eliminar proveedor {name}",
       "testProvider": "Probar proveedor",
       "testing": "Probando…",
       "testReady": "{name} listo: {detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "Error al guardar el servidor MCP",
       "alreadyExists": "El servidor «{name}» ya existe",
       "deleteConfirm": "¿Eliminar el servidor MCP «{name}»?",
+      "enableAria": "Activar servidor MCP {name}",
+      "disableAria": "Desactivar servidor MCP {name}",
+      "removeAria": "Eliminar servidor MCP {name}",
       "authFailed": "Error de auth de «{name}»",
       "modal": {
         "titleAdd": "Añadir servidor MCP",

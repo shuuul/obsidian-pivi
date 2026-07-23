@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import type { SettingsFeedbackMessage } from '../ports';
+import { SettingsItemActions, SettingsRemoveButton, Toggle } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { McpToolInventory } from './McpToolInventory';
 
@@ -80,7 +81,6 @@ export function McpServerCard({
         className="pivi-mcp-card-header"
         onClick={(event) => { event.preventDefault(); onToggleExpanded(); }}
       >
-        <span className={`pivi-mcp-status ${server.enabled ? 'pivi-mcp-status-enabled' : 'pivi-mcp-status-disabled'}`} />
         <span className="pivi-mcp-card-title-row">
           <span className="pivi-mcp-name">{server.name}</span>
           <span className="pivi-mcp-type-badge">{getMcpServerType(server.config)}</span>
@@ -95,30 +95,25 @@ export function McpServerCard({
           ) : null}
         </span>
         <span className="pivi-mcp-tool-count">{t('settings.mcp.toolCount', { count: tools.length })}</span>
-        <button
-          className="pivi-provider-disable-btn"
-          type="button"
-          disabled={busy}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            void onToggleEnabled();
-          }}
-        >
-          {server.enabled ? t('common.disable') : t('common.enable')}
-        </button>
-        <button
-          className="pivi-provider-remove-btn"
-          type="button"
-          disabled={busy}
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onRemove();
-          }}
-        >
-          {t('common.remove')}
-        </button>
+        <SettingsItemActions>
+          <Toggle
+            checked={server.enabled}
+            disabled={busy}
+            label={server.enabled
+              ? t('settings.mcp.disableAria', { name: server.name })
+              : t('settings.mcp.enableAria', { name: server.name })}
+            onChange={() => { void onToggleEnabled(); }}
+          />
+          <SettingsRemoveButton
+            ariaLabel={t('settings.mcp.removeAria', { name: server.name })}
+            disabled={busy}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onRemove();
+            }}
+          />
+        </SettingsItemActions>
       </summary>
       <div className="pivi-mcp-card-body">
         {preview ? <p className="pivi-mcp-preview">{preview}</p> : null}

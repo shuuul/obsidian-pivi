@@ -540,7 +540,9 @@
       "apiKeyName": "Clé API {provider}",
       "apiKeyPlaceholder": "Saisir la clé API…",
       "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
-      "removeKey": "Retirer"
+      "removeKey": "Retirer",
+      "enableAria": "Activer {provider}",
+      "disableAria": "Désactiver {provider}"
     },
     "modelsTab": {
       "intro": "Les clés API et jetons OAuth sont stockés dans le {secureStorageName}. Les fournisseurs désactivés restent enregistrés mais sont masqués dans le sélecteur de modèles.",
@@ -564,6 +566,9 @@
       "removeConfirmTitle": "Supprimer le fournisseur {name} ?",
       "removeConfirmDescription": "Cela supprime le fournisseur et ses sélections de modèles. Les identifiants enregistrés sont conservés par défaut.",
       "removeCredential": "Supprimer également les identifiants de ce fournisseur de {secureStorageName}",
+      "enableAria": "Activer le fournisseur {name}",
+      "disableAria": "Désactiver le fournisseur {name}",
+      "removeAria": "Supprimer le fournisseur {name}",
       "testProvider": "Tester le fournisseur",
       "testing": "Test…",
       "testReady": "{name} prêt : {detail}",
@@ -756,6 +761,9 @@
       "saveFailed": "Échec de l’enregistrement du serveur MCP",
       "alreadyExists": "Le serveur « {name} » existe déjà",
       "deleteConfirm": "Supprimer le serveur MCP « {name} » ?",
+      "enableAria": "Activer le serveur MCP {name}",
+      "disableAria": "Désactiver le serveur MCP {name}",
+      "removeAria": "Supprimer le serveur MCP {name}",
       "authFailed": "Échec d’auth pour « {name} »",
       "modal": {
         "titleAdd": "Ajouter un serveur MCP",
