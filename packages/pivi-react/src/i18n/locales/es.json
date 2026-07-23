@@ -956,7 +956,12 @@
   "host": {
     "failedSaveTabLayout": "Error al guardar el diseño de pestañas",
     "failedSaveDeletedSessions": "Error al guardar la lista de sesiones eliminadas",
-    "failedSaveSyncedSettings": "La configuración del proveedor se guardó en este dispositivo, pero no se pudo escribir la configuración portable en el archivo del vault."
+    "failedSaveSyncedSettings": "La configuración del proveedor se guardó en este dispositivo, pero no se pudo escribir la configuración portable en el archivo del vault.",
+    "sessionRecovery": {
+      "recoveredTitle": "Sesión recuperada",
+      "recovered": "Se recuperó un turno de chat local en una sesión nueva tras un cambio en el archivo sincronizado ({reason}).",
+      "applied": "Se restauró un turno de chat completado localmente que no terminó de guardarse."
+    }
   },
   "highRisk": {
     "message": "Este turno quiere ejecutar una operación de alto riesgo. Revise la vista previa y apruebe o deniegue. Cambiar los argumentos requiere una nueva confirmación.",

@@ -56,7 +56,7 @@ npm run test -- -t "prefetches enabled remote servers but leaves stdio lazy"
 - `unit/engine/` — host-neutral engine/runtime tests.
 - `unit/features/` — feature UI/service tests such as chat tab lifecycle and fork flows.
 - `unit/main/` — plugin lifecycle tests.
-- `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests.
+- `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests. Session cloud recovery fault-matrix fixtures live under `unit/pi/session/`.
 - `unit/pivi-agent-core/` — aggregate package host/runtime contract tests.
 - `unit/scripts/` — build compatibility, CSS manifest, Jest project-discovery, and repository spec-validation tests.
 - `unit/ui/` — imperative DOM and response/tool/subagent CSS contract tests; React and settings behavior belongs in `pivi-react/`.

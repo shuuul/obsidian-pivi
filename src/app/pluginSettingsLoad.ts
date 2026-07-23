@@ -21,8 +21,10 @@ import { Notice } from "obsidian";
 
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
+import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
 import type { Locale } from "@/app/i18n";
 import { setLocale, t } from "@/app/i18n";
+import { reconcileSessionCloudRecovery } from "@/app/serviceGraph";
 import { runDeviceLocalEnvironmentMigration } from "@/app/settings/deviceLocalEnvironmentMigration";
 import { runDeviceLocalProviderMigration } from "@/app/settings/deviceLocalProviderMigration";
 
@@ -97,6 +99,8 @@ export async function loadPluginSettings(
 
   const vaultPath = getVaultPath(ctx.app);
   if (vaultPath) {
+    const journalStore = new ObsidianDeviceLocalSessionJournalStore(ctx.app);
+    reconcileSessionCloudRecovery(ctx.app, vaultPath, journalStore);
     const sessionStore = ctx.createSessionStore(ctx.storage.getAdapter(), vaultPath);
     if (!sessionStore.migrateDeviceLocalExternalContexts) {
       throw new Error('Session store does not support device-local external context migration');

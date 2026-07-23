@@ -7,6 +7,7 @@ import {
   appendFileSync,
   closeSync,
   existsSync,
+  mkdirSync,
   openSync,
   readFileSync,
   readSync,
@@ -16,7 +17,9 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs';
+import { dirname } from 'path';
 
+import type { SessionJsonlSourceFingerprint } from '../../../session/sessionJournal';
 import {
   PIVI_MESSAGE_UI,
   PIVI_UI_CONTEXT,
@@ -25,22 +28,26 @@ import {
   SessionIndexStaleError,
 } from '../../../session/types';
 import {
+  getLegacySessionJsonlIndexPath,
+  getSessionJsonlIndexPath,
+  migrateLegacySessionJsonlIndex,
+} from './sessionJsonlIndexLocation';
+import {
   hashDurableUserContent,
   hashVisibleUserText,
 } from './sessionMessageProjection';
 
+export type { SessionJsonlSourceFingerprint } from '../../../session/sessionJournal';
+export {
+  configureSessionJsonlIndexRoot,
+  getConfiguredSessionJsonlIndexRoot,
+  getLegacySessionJsonlIndexPath,
+  getSessionJsonlIndexPath,
+  migrateLegacySessionJsonlIndex,
+} from './sessionJsonlIndexLocation';
+
 const INDEX_VERSION = 2;
 const FINGERPRINT_BYTES = 4096;
-const INDEX_SUFFIX = '.pivi-index';
-
-export interface SessionJsonlSourceFingerprint {
-  size: number;
-  device: string;
-  inode: string;
-  modifiedNs: string;
-  headSha256: string;
-  tailSha256: string;
-}
 
 interface IndexFormatRecord {
   kind: 'index';
@@ -359,6 +366,7 @@ function isMigrations(value: unknown): value is SessionJsonlIndexMigrations {
 }
 
 function parseIndexFile(sessionFile: string): MutableSessionJsonlIndex | null {
+  migrateLegacySessionJsonlIndex(sessionFile);
   const indexFile = getSessionJsonlIndexPath(sessionFile);
   if (!existsSync(indexFile)) {
     return null;
@@ -464,10 +472,6 @@ function cache(index: MutableSessionJsonlIndex): MutableSessionJsonlIndex {
   return index;
 }
 
-export function getSessionJsonlIndexPath(sessionFile: string): string {
-  return `${sessionFile}${INDEX_SUFFIX}`;
-}
-
 export function captureSessionJsonlSource(sessionFile: string): SessionJsonlSourceFingerprint {
   return readStableFingerprint(sessionFile);
 }
@@ -543,7 +547,9 @@ export function rebuildSessionJsonlIndex(sessionFile: string): SessionJsonlIndex
   const migrations: SessionJsonlIndexMigrations = {
     externalContexts: lines.some((line) => line.hasLegacyExternalContext) ? 0 : 1,
   };
+  migrateLegacySessionJsonlIndex(sessionFile);
   const indexFile = getSessionJsonlIndexPath(sessionFile);
+  mkdirSync(dirname(indexFile), { recursive: true });
   const temporary = `${indexFile}.tmp-${process.pid}-${Date.now()}`;
   try {
     writeFileSync(temporary, serializeRecords([
@@ -552,6 +558,10 @@ export function rebuildSessionJsonlIndex(sessionFile: string): SessionJsonlIndex
       { kind: 'checkpoint', source, lineChainSha256, migrations },
     ]));
     renameSync(temporary, indexFile);
+    const legacy = getLegacySessionJsonlIndexPath(sessionFile);
+    if (legacy !== indexFile && existsSync(legacy)) {
+      unlinkSync(legacy);
+    }
   } finally {
     rmSync(temporary, { force: true });
   }
@@ -643,6 +653,10 @@ export function invalidateSessionJsonlIndex(sessionFile: string): void {
   const indexFile = getSessionJsonlIndexPath(sessionFile);
   if (existsSync(indexFile)) {
     unlinkSync(indexFile);
+  }
+  const legacy = getLegacySessionJsonlIndexPath(sessionFile);
+  if (legacy !== indexFile && existsSync(legacy)) {
+    unlinkSync(legacy);
   }
 }
 

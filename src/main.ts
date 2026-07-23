@@ -37,6 +37,7 @@ import {
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
+import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
 import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
@@ -268,6 +269,13 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     const persistence = persistOpenTabStates(this);
     const workspace = this.piWorkspace;
     this.piWorkspace = null;
+    // Best-effort: drop the live journal binding. Device-local journal/source
+    // state remains for deterministic startup reconciliation.
+    void import('@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore')
+      .then(({ bindSessionJournal }) => {
+        bindSessionJournal(null);
+      })
+      .catch(() => undefined);
     if (workspace) {
       void workspace.dispose().catch((error: unknown) => {
         logger.error('Failed to dispose workspace services', error);
@@ -356,6 +364,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
           vaultAdapter,
           vaultPath,
           this.deviceLocalExternalContexts,
+          new ObsidianDeviceLocalSessionJournalStore(this.app),
         ),
       hideDeletedSessionSummaries: () =>
         sessionApi.hideDeletedSessionSummaries(this.sessionContext()),

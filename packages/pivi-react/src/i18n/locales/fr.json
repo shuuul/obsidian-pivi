@@ -956,7 +956,12 @@
   "host": {
     "failedSaveTabLayout": "Échec de l’enregistrement de la disposition des onglets",
     "failedSaveDeletedSessions": "Échec de l’enregistrement de la liste des sessions supprimées",
-    "failedSaveSyncedSettings": "Les paramètres du fournisseur ont été enregistrés sur cet appareil, mais les paramètres portables n’ont pas pu être écrits dans le fichier du coffre."
+    "failedSaveSyncedSettings": "Les paramètres du fournisseur ont été enregistrés sur cet appareil, mais les paramètres portables n’ont pas pu être écrits dans le fichier du coffre.",
+    "sessionRecovery": {
+      "recoveredTitle": "Session récupérée",
+      "recovered": "Un tour de chat local a été récupéré dans une nouvelle session après une modification du fichier synchronisé ({reason}).",
+      "applied": "Un tour de chat terminé localement qui n’avait pas fini d’être enregistré a été restauré."
+    }
   },
   "highRisk": {
     "message": "Ce tour veut exécuter une opération à haut risque. Examinez l’aperçu, puis approuvez ou refusez. Modifier les arguments exige une nouvelle confirmation.",

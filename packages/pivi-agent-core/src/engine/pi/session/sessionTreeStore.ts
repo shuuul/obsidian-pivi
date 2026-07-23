@@ -7,8 +7,10 @@ import {
   type SessionEntry,
   SessionManager,
 } from '@earendil-works/pi-coding-agent';
+import { readFileSync } from 'fs';
 
 import type { ImageAttachment } from '../../../foundation';
+import { PluginLogger } from '../../../foundation/pluginLogger';
 import {
   type AgentReport,
   type Checkpoint,
@@ -18,6 +20,13 @@ import {
   type PiviCompactionDetails,
 } from '../../../session/continuationSchemas';
 import { sanitizeMessageUiForJsonl } from '../../../session/messageUi';
+import {
+  acknowledgeJournalEntry,
+  createJournalEntryId,
+  sealJournalEntryWithAppend,
+  type SessionJournalStore,
+  upsertJournalEntry,
+} from '../../../session/sessionJournal';
 import {
   getPiviSessionDir,
   toAbsoluteSessionPath,
@@ -48,6 +57,26 @@ import {
 } from './sessionJsonlIndex';
 import { findLastVisibleConversationEntryId } from './visibleSessionEntries';
 
+const logger = new PluginLogger('SessionTreeStore');
+
+interface BoundSessionJournal {
+  store: SessionJournalStore;
+  now: () => number;
+}
+
+let boundJournal: BoundSessionJournal | null = null;
+
+/** Bind the vault-scoped device-local session journal used by live appends. */
+export function bindSessionJournal(
+  store: SessionJournalStore | null,
+  now: () => number = () => Date.now(),
+): void {
+  boundJournal = store ? { store, now } : null;
+}
+
+export function getBoundSessionJournal(): SessionJournalStore | null {
+  return boundJournal?.store ?? null;
+}
 
 function cacheKey(vaultPath: string, sessionFile: string): string {
   return `${vaultPath}::${sessionFile}`;
@@ -206,15 +235,81 @@ export class SessionTreeStore {
     if (!sessionFile || !this.sourceFingerprint) {
       return;
     }
+    const baseFingerprint = this.sourceFingerprint;
+    const relative = this.getVaultRelativeSessionFile();
     try {
       this.sourceFingerprint = refreshSessionJsonlIndexAfterAppend(
         sessionFile,
         this.sourceFingerprint,
         entryIds,
       );
+      this.recordAndAckJournal(sessionFile, relative, baseFingerprint, entryIds);
     } catch (error) {
       this.evictLive();
       throw error;
+    }
+  }
+
+  /**
+   * After a successful JSONL append, seal the continuation into the device-local
+   * journal and mark it confirmed. Confirmed rows are retained until the next
+   * confirmed append for the same session or startup verification removes them.
+   */
+  private recordAndAckJournal(
+    absoluteSessionFile: string,
+    relativeSessionFile: string | null,
+    baseFingerprint: SessionJsonlSourceFingerprint,
+    entryIds: readonly string[],
+  ): void {
+    if (!boundJournal || !relativeSessionFile || !this.sourceFingerprint) {
+      return;
+    }
+    try {
+      const baseSize = baseFingerprint.size;
+      const content = readFileSync(absoluteSessionFile);
+      if (content.length < baseSize) {
+        return;
+      }
+      const appended = content.subarray(baseSize).toString('utf8');
+      if (!appended) {
+        return;
+      }
+      const lines = appended.endsWith('\n')
+        ? appended.slice(0, -1).split('\n')
+        : appended.split('\n');
+      const createdAt = boundJournal.now();
+      const intent = { kind: 'jsonl-lines' as const, lines };
+      const id = createJournalEntryId(
+        relativeSessionFile,
+        baseFingerprint,
+        intent,
+        createdAt,
+      );
+      const sealed = sealJournalEntryWithAppend(
+        {
+          version: 1,
+          id,
+          sessionFile: relativeSessionFile,
+          createdAt,
+          status: 'intent',
+          baseFingerprint,
+          intent,
+        },
+        entryIds,
+        lines,
+        this.sourceFingerprint,
+      );
+      let state = boundJournal.store.load();
+      state = upsertJournalEntry(state, sealed);
+      // Persist pending before confirmation so a crash mid-ack remains recoverable.
+      boundJournal.store.save(state);
+      state = acknowledgeJournalEntry(state, id);
+      boundJournal.store.save(state);
+    } catch (error) {
+      logger.warn('Failed to confirm session journal after append', {
+        sessionFile: relativeSessionFile,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

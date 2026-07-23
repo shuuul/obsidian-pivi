@@ -956,7 +956,12 @@
   "host": {
     "failedSaveTabLayout": "保存标签页布局失败",
     "failedSaveDeletedSessions": "保存已删除会话列表失败",
-    "failedSaveSyncedSettings": "提供商设置已保存在此设备上，但无法将可移植设置写入库文件。"
+    "failedSaveSyncedSettings": "提供商设置已保存在此设备上，但无法将可移植设置写入库文件。",
+    "sessionRecovery": {
+      "recoveredTitle": "已恢复的会话",
+      "recovered": "同步文件发生变化后，已将本地聊天回合恢复为新会话（{reason}）。",
+      "applied": "已恢复尚未完成保存的本地已完成聊天回合。"
+    }
   },
   "highRisk": {
     "message": "此回合想要执行高风险操作。请查看预览后批准或拒绝。更改参数需要重新确认。",

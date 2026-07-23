@@ -65,6 +65,8 @@ Settings mount independently through `PiviSettingTabHost` and `SettingsRoot`. On
 
 `loadPluginSettings()` runs device-local provider and environment migration before session-store construction or workspace services. The coordinator reads raw `.pivi/settings.json`, migrates legacy provider fields into `pivi.providers.v1` and required secrets, migrates free-form environment text into the structured device-local registry (`pivi.environment.v1`) with `plain`, `secret`, and `systemEnvironment` sources, overlays runtime settings, and strips device-local fields from the synced file only after local state and secret writes succeed. Runtime still projects resolved `sharedEnvironmentVariables` and `agentSettings.environmentVariables` maps in memory for consumers, but synced `.pivi/settings.json` must not persist those fields. A synced save failure after a successful local commit keeps the local registry authoritative and shows a localized Notice.
 
+Before constructing the session store, startup also reconciles the vault-scoped device-local session journal (`pivi.session-journal.v1`) against on-disk JSONL. Confirmed or pending continuations that still match the source are dropped; append-compatible gaps are reapplied; non-append-compatible cloud replacement/rollback creates an explicit recovered session with visible provenance and never overwrites the externally changed file. Rebuildable JSONL indexes live under a device-local home cache (`~/.pivi/session-indexes/<vault-key>/`), not beside synced `.pivi/sessions/*.jsonl`.
+
 ## Runtime creation and refresh
 
 Blank and cold tabs do not create `PiChatService`. `src/ui/chat/tabs/tabRuntime.ts` is the sole UI factory call and uses `ports.runtime.createChatService()` on the first turn or another operation that requires an active runtime.
@@ -98,7 +100,7 @@ sequenceDiagram
   P->>P: settle persistence and disposal
 ```
 
-View close persists before adapter disposal. Adapter disposal destroys tabs and releases bridges, stores, portals, listeners, and render adapters even when cleanup fails. Plugin unload starts persistence for every mounted view before invalidating workspace services, then disposes instance-owned MCP OAuth, provider, connection-pool, runtime, and subagent resources. High-risk approval controllers invalidate on session switch, turn end, cancel, view disposal, and unload so no pending high-risk execution survives those lifecycle events.
+View close persists before adapter disposal. Adapter disposal destroys tabs and releases bridges, stores, portals, listeners, and render adapters even when cleanup fails. Plugin unload starts persistence for every mounted view before invalidating workspace services, then disposes instance-owned MCP OAuth, provider, connection-pool, runtime, and subagent resources. High-risk approval controllers invalidate on session switch, turn end, cancel, view disposal, and unload so no pending high-risk execution survives those lifecycle events. Unload persistence remains best-effort: the device-local session journal and source fingerprints are left so the next startup can reconcile deterministically even when a final asynchronous flush does not complete.
 
 Cleanup must tolerate partial initialization and repeated calls. Connections or agents that finish construction during shutdown must still be disposed. Failures that can cause state divergence are logged or propagated; best-effort cleanup is narrow and documented.
 

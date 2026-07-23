@@ -956,7 +956,12 @@
   "host": {
     "failedSaveTabLayout": "Tab-Layout konnte nicht gespeichert werden",
     "failedSaveDeletedSessions": "Liste gelöschter Sitzungen konnte nicht gespeichert werden",
-    "failedSaveSyncedSettings": "Anbieter-Einstellungen wurden auf diesem Gerät gespeichert, aber portierbare Einstellungen konnten nicht in die Vault-Datei geschrieben werden."
+    "failedSaveSyncedSettings": "Anbieter-Einstellungen wurden auf diesem Gerät gespeichert, aber portierbare Einstellungen konnten nicht in die Vault-Datei geschrieben werden.",
+    "sessionRecovery": {
+      "recoveredTitle": "Wiederhergestellte Sitzung",
+      "recovered": "Ein lokaler Chat-Turn wurde nach einer Änderung der synchronisierten Datei in eine neue Sitzung wiederhergestellt ({reason}).",
+      "applied": "Ein lokal abgeschlossener Chat-Turn, der nicht fertig gespeichert war, wurde wiederhergestellt."
+    }
   },
   "highRisk": {
     "message": "Dieser Zug möchte eine risikoreiche Operation ausführen. Prüfen Sie die Vorschau und genehmigen oder lehnen Sie ab. Geänderte Argumente erfordern eine neue Bestätigung.",

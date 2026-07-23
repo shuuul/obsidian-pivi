@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [035-session-cloud-recovery.md](035-session-cloud-recovery.md) | 2026-07-23 | Journal-backed recovery from session cloud replacement, rollback, interrupted persistence, and unload. |
 | [036-security-release-assurance.md](036-security-release-assurance.md) | 2026-07-23 | Exact Pi compatibility, focused platform/security tests, real-host smoke, shared release gates, and disclosure policy. |
 
 ## Archived specs
@@ -51,6 +50,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [032-network-egress-and-http-client.md](archive/032-network-egress-and-http-client.md) | 2026-07-23 | Scoped injected HTTP clients with SSRF, DNS/redirect, deadline, byte, content-type, disclosure, and redaction policy. |
 | [033-local-execution-and-vault-mutation.md](archive/033-local-execution-and-vault-mutation.md) | 2026-07-23 | Bounded cross-platform process execution and mandatory vault-relative mutation containment. |
 | [034-high-risk-operations-and-extensions.md](archive/034-high-risk-operations-and-extensions.md) | 2026-07-23 | Turn-scoped confirmation for fixed high-risk operations plus transactional Skills and bounded MCP extensions. |
+| [035-session-cloud-recovery.md](archive/035-session-cloud-recovery.md) | 2026-07-23 | Journal-backed recovery from session cloud replacement, rollback, interrupted persistence, and unload. |
 
 ## Numbering and files
 

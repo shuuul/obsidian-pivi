@@ -956,7 +956,12 @@
   "host": {
     "failedSaveTabLayout": "Erro al salvar o diseño de pestañas",
     "failedSaveDeletedSessions": "Erro al salvar la lista de sessões eliminadas",
-    "failedSaveSyncedSettings": "As configurações do provedor foram salvas neste dispositivo, mas as configurações portáteis não puderam ser gravadas no arquivo do cofre."
+    "failedSaveSyncedSettings": "As configurações do provedor foram salvas neste dispositivo, mas as configurações portáteis não puderam ser gravadas no arquivo do cofre.",
+    "sessionRecovery": {
+      "recoveredTitle": "Sessão recuperada",
+      "recovered": "Um turno de chat local foi recuperado numa nova sessão após alteração do ficheiro sincronizado ({reason}).",
+      "applied": "Foi restaurado um turno de chat concluído localmente que não tinha terminado de ser guardado."
+    }
   },
   "highRisk": {
     "message": "Este turno quer executar uma operação de alto risco. Revise a prévia e aprove ou negue. Alterar argumentos exige nova confirmação.",

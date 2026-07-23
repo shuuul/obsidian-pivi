@@ -956,7 +956,12 @@
   "host": {
     "failedSaveTabLayout": "儲存分頁配置失敗",
     "failedSaveDeletedSessions": "儲存已刪除工作階段清單失敗",
-    "failedSaveSyncedSettings": "提供者設定已儲存在此裝置上，但無法將可攜式設定寫入庫檔案。"
+    "failedSaveSyncedSettings": "提供者設定已儲存在此裝置上，但無法將可攜式設定寫入庫檔案。",
+    "sessionRecovery": {
+      "recoveredTitle": "已復原的工作階段",
+      "recovered": "同步檔案變更後，已將本機聊天回合復原為新工作階段（{reason}）。",
+      "applied": "已還原尚未完成儲存的本機已完成聊天回合。"
+    }
   },
   "highRisk": {
     "message": "此回合想要執行高風險操作。請查看預覽後批准或拒絕。更改參數需要重新確認。",

@@ -956,7 +956,12 @@
   "host": {
     "failedSaveTabLayout": "탭 레이아웃을 저장하지 못했습니다",
     "failedSaveDeletedSessions": "삭제된 세션 목록을 저장하지 못했습니다",
-    "failedSaveSyncedSettings": "프로바이더 설정은 이 기기에 저장되었지만, 휴대용 설정을 보관소 파일에 쓸 수 없었습니다."
+    "failedSaveSyncedSettings": "프로바이더 설정은 이 기기에 저장되었지만, 휴대용 설정을 보관소 파일에 쓸 수 없었습니다.",
+    "sessionRecovery": {
+      "recoveredTitle": "복구된 세션",
+      "recovered": "동기화된 파일이 변경되어 로컬 채팅 턴을 새 세션으로 복구했습니다({reason}).",
+      "applied": "저장이 끝나지 않은 로컬 완료 채팅 턴을 복원했습니다."
+    }
   },
   "highRisk": {
     "message": "이 턴에서 고위험 작업을 실행하려고 합니다. 미리보기를 검토한 뒤 승인하거나 거부하세요. 인자를 바꾸면 다시 확인해야 합니다.",
