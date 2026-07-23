@@ -19,9 +19,11 @@ import {
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
 
+import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import type { Locale } from "@/app/i18n";
 import { setLocale, t } from "@/app/i18n";
+import { runDeviceLocalEnvironmentMigration } from "@/app/settings/deviceLocalEnvironmentMigration";
 import { runDeviceLocalProviderMigration } from "@/app/settings/deviceLocalProviderMigration";
 
 import { getVaultPath } from "./hostPlatform";
@@ -56,18 +58,32 @@ export async function loadPluginSettings(
 ): Promise<void> {
   await ctx.storage.initialize();
   const rawSettings = await ctx.storage.loadRawPiviSettings();
+  const environmentStore = new ObsidianDeviceLocalEnvironmentStore(ctx.app);
+  const environmentMigration = await runDeviceLocalEnvironmentMigration({
+    app: ctx.app,
+    rawSettings,
+    environmentStore,
+    savePersistedSettings: (stored) => ctx.storage.saveRawPiviSettings(stored),
+  });
   const deviceLocalStore = new ObsidianDeviceLocalProviderStore(ctx.app);
   const migration = await runDeviceLocalProviderMigration({
     app: ctx.app,
-    rawSettings,
+    rawSettings: await ctx.storage.loadRawPiviSettings(),
     deviceLocalStore,
     vaultAdapter: ctx.storage.getAdapter(),
     savePersistedSettings: (stored) => ctx.storage.saveRawPiviSettings(stored),
   });
-  ctx.setSettings(migration.settings);
-  if (migration.syncedSaveFailed) {
+  ctx.setSettings({
+    ...migration.settings,
+    sharedEnvironmentVariables: environmentMigration.settings.sharedEnvironmentVariables,
+    agentSettings: {
+      ...migration.settings.agentSettings,
+      environmentVariables: environmentMigration.settings.agentSettings.environmentVariables,
+    },
+  });
+  if (migration.syncedSaveFailed || environmentMigration.syncedSaveFailed) {
     logger.warn(
-      'Device-local provider state committed, but synced settings save failed during migration',
+      'Device-local state committed, but synced settings save failed during migration',
     );
     new Notice(t('host.failedSaveSyncedSettings'));
   }
@@ -76,6 +92,7 @@ export async function loadPluginSettings(
   const didReconcileModelSelections =
     PiSettingsCoordinator.reconcileTitleGenerationModelSelection(migration.settings);
   const didMigrateProviderSecrets = migration.credentialsMigrated
+    || environmentMigration.credentialsMigrated
     || migrateProviderSecretsToKeychain(ctx);
 
   const vaultPath = getVaultPath(ctx.app);

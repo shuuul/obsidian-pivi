@@ -1,25 +1,34 @@
 /** MCP (Model Context Protocol) type definitions used by the shared manager/UI. */
 
+import {
+  isLegacyPlainStringMap,
+  isMcpStoredValueMap,
+  type McpStoredValueMap,
+} from './mcpValueSources';
+
+/** Persisted structured map; UI drafts may supply legacy plain strings until save. */
+export type McpConfigValueMap = McpStoredValueMap | Record<string, string>;
+
 /** Stdio server configuration (local command-line programs). */
 export interface McpStdioServerConfig {
   type?: 'stdio';
   command: string;
   args?: string[];
-  env?: Record<string, string>;
+  env?: McpConfigValueMap;
 }
 
 /** Server-Sent Events remote server configuration. */
 export interface McpSSEServerConfig {
   type: 'sse';
   url: string;
-  headers?: Record<string, string>;
+  headers?: McpConfigValueMap;
 }
 
 /** HTTP remote server configuration. */
 export interface McpHttpServerConfig {
   type: 'http';
   url: string;
-  headers?: Record<string, string>;
+  headers?: McpConfigValueMap;
 }
 
 /** OAuth settings for remote MCP servers. */
@@ -136,12 +145,12 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
-function isStringRecord(value: unknown): value is Record<string, string> {
-  return isRecord(value) && Object.values(value).every((item) => typeof item === 'string');
+function isMcpConfigValueMap(value: unknown): value is McpConfigValueMap {
+  return isLegacyPlainStringMap(value) || isMcpStoredValueMap(value);
 }
 
-function hasOptionalStringRecord(value: Record<string, unknown>, key: string): boolean {
-  return value[key] === undefined || isStringRecord(value[key]);
+function hasOptionalMcpConfigValueMap(value: Record<string, unknown>, key: string): boolean {
+  return value[key] === undefined || isMcpConfigValueMap(value[key]);
 }
 
 export function isMcpStdioServerConfig(obj: unknown): obj is McpStdioServerConfig {
@@ -152,7 +161,7 @@ export function isMcpStdioServerConfig(obj: unknown): obj is McpStdioServerConfi
   return (obj.type === undefined || obj.type === 'stdio')
     && typeof obj.command === 'string'
     && (obj.args === undefined || isStringArray(obj.args))
-    && hasOptionalStringRecord(obj, 'env');
+    && hasOptionalMcpConfigValueMap(obj, 'env');
 }
 
 export function isMcpSseServerConfig(obj: unknown): obj is McpSSEServerConfig {
@@ -162,7 +171,7 @@ export function isMcpSseServerConfig(obj: unknown): obj is McpSSEServerConfig {
 
   return obj.type === 'sse'
     && typeof obj.url === 'string'
-    && hasOptionalStringRecord(obj, 'headers');
+    && hasOptionalMcpConfigValueMap(obj, 'headers');
 }
 
 export function isMcpHttpServerConfig(obj: unknown): obj is McpHttpServerConfig {
@@ -172,7 +181,7 @@ export function isMcpHttpServerConfig(obj: unknown): obj is McpHttpServerConfig 
 
   return (obj.type === undefined || obj.type === 'http')
     && typeof obj.url === 'string'
-    && hasOptionalStringRecord(obj, 'headers');
+    && hasOptionalMcpConfigValueMap(obj, 'headers');
 }
 
 export function isValidMcpServerConfig(obj: unknown): obj is McpServerConfig {

@@ -10,13 +10,11 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [031-credential-and-config-storage.md](031-credential-and-config-storage.md) | 2026-07-23 | Device-local structured environment sources, SecretStorage-backed MCP values, and transactional diagnostic persistence. |
 | [032-network-egress-and-http-client.md](032-network-egress-and-http-client.md) | 2026-07-23 | Scoped injected HTTP clients with SSRF, DNS/redirect, deadline, byte, content-type, disclosure, and redaction policy. |
 | [033-local-execution-and-vault-mutation.md](033-local-execution-and-vault-mutation.md) | 2026-07-23 | Bounded cross-platform process execution and mandatory vault-relative mutation containment. |
-| [034-capability-authorization-and-audit.md](034-capability-authorization-and-audit.md) | 2026-07-23 | Typed capability profiles, narrow turn grants, lifecycle-safe approvals, and redacted bounded audit records. |
-| [035-skills-and-mcp-extension-safety.md](035-skills-and-mcp-extension-safety.md) | 2026-07-23 | Pinned transactional Skill installation and capability-aware, resource-bounded MCP extension behavior. |
-| [036-architecture-platform-and-release-assurance.md](036-architecture-platform-and-release-assurance.md) | 2026-07-23 | Exact Pi compatibility seams, narrow exports, cross-platform/security/host tests, and shared release gates. |
-| [037-runtime-resilience-and-scale.md](037-runtime-resilience-and-scale.md) | 2026-07-23 | Bounded search/listing, measured React tuning, and journal-backed cloud-session recovery. |
+| [034-high-risk-operations-and-extensions.md](034-high-risk-operations-and-extensions.md) | 2026-07-23 | Turn-scoped confirmation for fixed high-risk operations plus transactional Skills and bounded MCP extensions. |
+| [035-session-cloud-recovery.md](035-session-cloud-recovery.md) | 2026-07-23 | Journal-backed recovery from session cloud replacement, rollback, interrupted persistence, and unload. |
+| [036-security-release-assurance.md](036-security-release-assurance.md) | 2026-07-23 | Exact Pi compatibility, focused platform/security tests, real-host smoke, shared release gates, and disclosure policy. |
 
 ## Archived specs
 
@@ -52,6 +50,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [028-user-configurable-editor-selection-toolbar.md](archive/028-user-configurable-editor-selection-toolbar.md) | 2026-07-22 | Unified fixed Pivi actions, curated removable editor commands, and Pivi Commands into one enableable and user-ordered selection toolbar. |
 | [029-toolbar-command-controls-and-pickers.md](archive/029-toolbar-command-controls-and-pickers.md) | 2026-07-22 | Independent toolbar toggles, separate editor/Obsidian pickers, and top-level command icon controls. |
 | [030-immediate-security-correctness.md](archive/030-immediate-security-correctness.md) | 2026-07-23 | Patch-sized OAuth, MCP stdio/input, process-result, and temporary fetch-identity correctness fixes. |
+| [031-credential-and-config-storage.md](archive/031-credential-and-config-storage.md) | 2026-07-23 | Device-local structured environment sources, SecretStorage-backed MCP values, and transactional diagnostic persistence. |
 
 ## Numbering and files
 

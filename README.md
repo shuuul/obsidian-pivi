@@ -167,7 +167,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 
 | Area | Policy |
 |------|--------|
-| **API keys** | Required for hosted AI providers. Stored via Obsidian `secretStorage` (Electron `safeStorage`), not in plugin JSON or `.pivi/mcp.json`. |
+| **API keys** | Required for hosted AI providers. Stored via Obsidian `secretStorage` (Electron `safeStorage`), not in plugin JSON or `.pivi/mcp.json`. Environment and MCP secret values use the same store (`pivi-env-*`, `pivi-mcp-v-*`). |
 | **Network use** | Prompts, vault context, attachments, tool results, and MCP results may be sent to the selected model provider. |
 | **Image generation** | Available only with `openai-codex` credentials. Prompts go to ChatGPT / Codex backend. Images saved as vault attachments. |
 | **MCP** | User-provided servers. Enabled remote HTTP/SSE servers may receive inventory requests during startup/settings refresh. Stdio commands run only after explicit **Connect / refresh tools** or the agent's first search/list/call. |

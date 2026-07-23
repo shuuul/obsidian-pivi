@@ -53,7 +53,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
       },
     } as SettingsPorts['complex'],
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
-    environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] },
+    environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, importEnvironmentText: async () => undefined, listEntries: () => [], getReviewKeys: () => [] },
     hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined },
     editorToolbar: { listHostCommands: () => [], listPiviCommands: async () => [], listIconNames: () => [], isNoteToolbarTextToolbarActive: () => false },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },

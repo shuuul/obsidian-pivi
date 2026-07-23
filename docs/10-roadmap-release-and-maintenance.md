@@ -15,6 +15,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Recently completed
 
+- **Credential and config storage** (spec `031`): environment configuration is device-local (`pivi.environment.v1`) with `plain`, `secret`, and `systemEnvironment` sources; synced `.pivi/settings.json` no longer persists environment fields. MCP remote `headers` and stdio `env` use structured `ConfigValueRef` maps with secret values in `SecretStorage`. Settings and MCP loaders preserve corrupt JSON as `.corrupt-*` artifacts, return diagnostics, and publish through failure-safe staged secret writes plus serialized atomic file replacement.
 - **Device-local provider registry cutover** (spec `021`): provider membership, custom endpoints, model preferences, and `webSearchTools` order/disabled state now live in vault-scoped local storage (`pivi.providers.v1`) instead of synced `.pivi/settings.json`. Startup migration is single-phase and idempotent; credentials and custom headers migrate to `SecretStorage`; MCP OAuth `AuthEntry` payloads migrate out of plaintext `.pivi/mcp-oauth/` into `SecretStorage`. **Accepted limitation:** a device that was offline during cutover and later opens an already-stripped synced file seeds `deepseek` only and must re-add other providers locally; there is no automatic cross-device provider recovery.
 
 ### Next

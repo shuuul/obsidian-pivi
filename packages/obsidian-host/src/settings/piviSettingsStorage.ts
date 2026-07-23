@@ -1,3 +1,10 @@
+import {
+  type ParseDiagnostic,
+  parseJsonObjectWithDiagnostics,
+  preserveCorruptArtifact,
+  runSerializedSave,
+  writeFileAtomically,
+} from '@pivi/pivi-agent-core/foundation/configPublication';
 import type { PersistedPiviSettings } from '@pivi/pivi-agent-core/foundation/persistedPiviSettings';
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { AgentRuntimeSettings, PiviSettings } from "@pivi/pivi-agent-core/foundation/settings";
@@ -52,27 +59,58 @@ export const DEFAULT_PIVI_SETTINGS_CODEC: PiviSettingsCodec = {
   },
 };
 
+export class PiviSettingsCorruptError extends Error {
+  constructor(
+    message: string,
+    readonly diagnostics: readonly ParseDiagnostic[],
+    readonly corruptPath: string,
+  ) {
+    super(message);
+    this.name = 'PiviSettingsCorruptError';
+  }
+}
+
 export class PiviSettingsStorage {
+  private lastDiagnostics: ParseDiagnostic[] = [];
+  private corruptPath: string | null = null;
+
   constructor(
     private adapter: FileStore,
     private codec: PiviSettingsCodec = DEFAULT_PIVI_SETTINGS_CODEC,
   ) {}
 
+  getDiagnostics(): readonly ParseDiagnostic[] {
+    return this.lastDiagnostics;
+  }
+
+  getCorruptPath(): string | null {
+    return this.corruptPath;
+  }
+
   async load(): Promise<StoredPiviSettings> {
     if (!(await this.adapter.exists(PIVI_SETTINGS_PATH))) {
+      this.lastDiagnostics = [];
+      this.corruptPath = null;
       return this.getDefaults();
     }
 
     const content = await this.adapter.read(PIVI_SETTINGS_PATH);
-    let stored: Record<string, unknown>;
-    try {
-      stored = JSON.parse(content) as Record<string, unknown>;
-    } catch (error) {
-      logger.warn('settings JSON is invalid; using defaults', error);
+    const parsed = parseJsonObjectWithDiagnostics(PIVI_SETTINGS_PATH, content);
+    if (!parsed.ok) {
+      this.lastDiagnostics = parsed.diagnostics;
+      this.corruptPath = await preserveCorruptArtifact(
+        this.adapter,
+        PIVI_SETTINGS_PATH,
+        parsed.rawContent,
+      );
+      logger.warn('settings JSON is invalid; preserved corrupt artifact and using defaults');
+      // Do not auto-save defaults over the corrupt source.
       return this.getDefaults();
     }
 
-    const { settings, changed } = this.codec.normalize(stored);
+    this.lastDiagnostics = parsed.diagnostics;
+    this.corruptPath = null;
+    const { settings, changed } = this.codec.normalize(parsed.value);
     if (changed) {
       await this.save(settings);
     }
@@ -86,27 +124,35 @@ export class PiviSettingsStorage {
     }
 
     const content = await this.adapter.read(PIVI_SETTINGS_PATH);
-    try {
-      const stored = JSON.parse(content) as unknown;
-      if (!stored || typeof stored !== 'object' || Array.isArray(stored)) {
-        return null;
-      }
-      return stored as Record<string, unknown>;
-    } catch (error) {
-      logger.warn('settings JSON is invalid during raw load', error);
+    const parsed = parseJsonObjectWithDiagnostics(PIVI_SETTINGS_PATH, content);
+    if (!parsed.ok) {
+      this.lastDiagnostics = parsed.diagnostics;
+      this.corruptPath = await preserveCorruptArtifact(
+        this.adapter,
+        PIVI_SETTINGS_PATH,
+        parsed.rawContent,
+      );
+      logger.warn('settings JSON is invalid during raw load; preserved corrupt artifact');
       return null;
     }
+    this.lastDiagnostics = [];
+    this.corruptPath = null;
+    return parsed.value;
   }
 
   async saveRaw(stored: Record<string, unknown>): Promise<void> {
     const content = JSON.stringify(stored, null, 2);
-    await this.adapter.write(PIVI_SETTINGS_PATH, content);
+    await runSerializedSave(PIVI_SETTINGS_PATH, async () => {
+      await writeFileAtomically(this.adapter, PIVI_SETTINGS_PATH, content);
+    });
   }
 
   async save(settings: StoredPiviSettings): Promise<void> {
     const stored: VaultPersistedPiviSettings = this.codec.prepareForSave?.(settings) ?? settings;
     const content = JSON.stringify(stored, null, 2);
-    await this.adapter.write(PIVI_SETTINGS_PATH, content);
+    await runSerializedSave(PIVI_SETTINGS_PATH, async () => {
+      await writeFileAtomically(this.adapter, PIVI_SETTINGS_PATH, content);
+    });
   }
 
   async exists(): Promise<boolean> {

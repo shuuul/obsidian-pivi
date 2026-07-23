@@ -495,6 +495,7 @@ export function stripLocalizedFieldsFromRuntimeSettings(
     visibleModels: _visibleModels,
     lastModel: _lastModel,
     webSearchTools: _webSearchTools,
+    environmentVariables: _environmentVariables,
     ...syncedAgentSettings
   } = settings.agentSettings;
 
@@ -503,6 +504,7 @@ export function stripLocalizedFieldsFromRuntimeSettings(
     titleGenerationModel: _titleGenerationModel,
     customContextLimits: _customContextLimits,
     agentSettings: _agentSettings,
+    sharedEnvironmentVariables: _sharedEnvironmentVariables,
     ...portableSettings
   } = settings;
 

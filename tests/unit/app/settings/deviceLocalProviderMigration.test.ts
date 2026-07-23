@@ -143,7 +143,9 @@ describe('device local provider migration coordinator', () => {
     expect(agentSettings).not.toHaveProperty('addedProviders');
     expect(agentSettings).not.toHaveProperty('visibleModels');
     expect(persisted).not.toHaveProperty('model');
-    expect(agentSettings.environmentVariables).toBe('PI_ENABLE_EXA=1');
+    // Spec 031: environment values are device-local and must not remain in synced settings.
+    expect(agentSettings).not.toHaveProperty('environmentVariables');
+    expect(persisted).not.toHaveProperty('sharedEnvironmentVariables');
   });
 
   it('is idempotent when initialized local state and synced settings are already clean', async () => {

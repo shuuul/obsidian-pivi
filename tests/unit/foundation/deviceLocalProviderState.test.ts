@@ -297,8 +297,7 @@ describe('stripLocalizedFieldsFromRuntimeSettings', () => {
     expect(stripped.agentSettings).not.toHaveProperty('visibleModels');
     expect(stripped.agentSettings).not.toHaveProperty('lastModel');
     expect(stripped.agentSettings).not.toHaveProperty('webSearchTools');
-    expect(stripped.agentSettings.environmentVariables).toBe(
-      DEFAULT_PIVI_SETTINGS.agentSettings.environmentVariables,
-    );
+    expect(stripped.agentSettings).not.toHaveProperty('environmentVariables');
+    expect(stripped).not.toHaveProperty('sharedEnvironmentVariables');
   });
 });

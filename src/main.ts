@@ -35,6 +35,7 @@ import {
   NOOP_CHAT_PERF_CONTROLLER,
 } from "@/app/chatPerformanceController";
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
+import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
@@ -68,6 +69,8 @@ import {
   applyEnvironmentVariablesBatch as applyEnvironmentVariablesBatchForPlugin,
   getActiveEnvironmentVariables as getActiveEnvironmentVariablesFromSettings,
   getEnvironmentVariablesForScope as getEnvironmentVariablesForSettingsScope,
+  importEnvironmentText as importEnvironmentTextForPlugin,
+  listEnvironmentUiEntries as listEnvironmentUiEntriesForPlugin,
 } from "@/app/settings/environmentVariables";
 import { measureStartupPhase } from "@/app/startupPerformance";
 import { showDefaultVaultSkillsInstallPrompt } from "@/app/ui/defaultVaultSkillsPrompt";
@@ -92,6 +95,8 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   storage!: SharedAppStorage;
   private readonly deviceLocalExternalContexts =
     new ObsidianDeviceLocalExternalContextStore(this.app);
+  private readonly deviceLocalEnvironmentStore =
+    new ObsidianDeviceLocalEnvironmentStore(this.app);
   private readonly sessionManager = new OpenSessionManager({
     getVaultPath: () => getVaultPath(this.app),
     getStore: () => this.requireSessionStore(),
@@ -370,7 +375,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     scope: EnvironmentScope,
     envText: string,
   ): Promise<void> {
-    await this.applyEnvironmentVariablesBatch([{ scope, envText }]);
+    await this.importEnvironmentText(scope, envText);
   }
 
   async applyEnvironmentVariablesBatch(
@@ -381,6 +386,25 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
         this.sessionManager.persistSessionSummary(openSession),
       reconcileModelWithEnvironment: () => this.reconcileModelWithEnvironment(),
     });
+  }
+
+  async importEnvironmentText(
+    scope: EnvironmentScope,
+    envText: string,
+  ): Promise<void> {
+    await importEnvironmentTextForPlugin(this, scope, envText, {
+      persistSessionSummary: (openSession) =>
+        this.sessionManager.persistSessionSummary(openSession),
+      reconcileModelWithEnvironment: () => this.reconcileModelWithEnvironment(),
+    });
+  }
+
+  listEnvironmentEntries(scope?: EnvironmentScope) {
+    return listEnvironmentUiEntriesForPlugin(this, scope);
+  }
+
+  getEnvironmentStore() {
+    return this.deviceLocalEnvironmentStore;
   }
 
   getActiveEnvironmentVariables(): string {

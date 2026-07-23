@@ -5,9 +5,20 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
 import { PluginLogger } from '../foundation/pluginLogger';
+import type { SyncSecretStore } from '../ports';
 import { createLegacySseTransport } from "./legacySseTransport";
-import { buildMcpStdioEnv, resolveMcpBearerToken } from "./mcpProcessEnv";
+import {
+  buildMcpStdioEnv,
+  createMcpResolveHost,
+  resolveAndBuildMcpStdioEnv,
+  resolveMcpBearerToken,
+  resolveMcpHeaders,
+} from "./mcpProcessEnv";
 import { parseCommand } from "./mcpUtils";
+import {
+  isLegacyPlainStringMap,
+  normalizeMcpStoredValueMap,
+} from './mcpValueSources';
 import type { McpOAuthService } from "./oauth/mcpOAuthService";
 import { testPiMcpServer } from "./piMcpTester";
 import type { McpProcessEnv, McpTransportFetch } from "./ports";
@@ -42,11 +53,44 @@ function mergeBearerHeaders(
   };
 }
 
+function resolveStoredHeaders(
+  serverName: string,
+  headers: unknown,
+  processEnv: McpProcessEnv,
+  secretStorage: SyncSecretStore | undefined,
+): Record<string, string> | undefined {
+  if (isLegacyPlainStringMap(headers)) {
+    return headers;
+  }
+  const stored = normalizeMcpStoredValueMap(headers);
+  if (!stored) {
+    return undefined;
+  }
+  const host = createMcpResolveHost(processEnv, secretStorage);
+  const resolved = resolveMcpHeaders(serverName, stored, host, secretStorage);
+  return Object.keys(resolved).length > 0 ? resolved : undefined;
+}
+
+function resolveStoredEnv(
+  serverName: string,
+  env: unknown,
+  processEnv: McpProcessEnv,
+  secretStorage: SyncSecretStore | undefined,
+): Record<string, string> {
+  if (isLegacyPlainStringMap(env)) {
+    return buildMcpStdioEnv(processEnv, env);
+  }
+  const stored = normalizeMcpStoredValueMap(env);
+  const host = createMcpResolveHost(processEnv, secretStorage);
+  return resolveAndBuildMcpStdioEnv(serverName, processEnv, stored, host, secretStorage);
+}
+
 function createTransport(
   server: ManagedMcpServer,
   oauth: McpOAuthService | null,
   fetch: McpTransportFetch,
   processEnv: McpProcessEnv,
+  secretStorage: SyncSecretStore | undefined,
 ): Transport {
   const config = server.config;
   const type = getMcpServerType(config);
@@ -55,7 +99,7 @@ function createTransport(
     const stdio = config as {
       command: string;
       args?: string[];
-      env?: Record<string, string>;
+      env?: unknown;
     };
     const { cmd, args } = parseCommand(stdio.command, stdio.args);
     if (!cmd) {
@@ -64,20 +108,26 @@ function createTransport(
     return new StdioClientTransport({
       command: cmd,
       args,
-      env: buildMcpStdioEnv(processEnv, stdio.env),
+      env: resolveStoredEnv(server.name, stdio.env, processEnv, secretStorage),
       stderr: "ignore",
     });
   }
 
   const urlConfig = config as UrlServerConfig;
   const url = new URL(urlConfig.url);
+  const resolvedHeaders = resolveStoredHeaders(
+    server.name,
+    urlConfig.headers,
+    processEnv,
+    secretStorage,
+  );
   const options: {
     fetch: typeof fetch;
     requestInit?: RequestInit;
     authProvider?: OAuthClientProvider;
   } = {
     fetch,
-    requestInit: urlConfig.headers ? { headers: urlConfig.headers } : undefined,
+    requestInit: resolvedHeaders ? { headers: resolvedHeaders } : undefined,
   };
 
   if (supportsMcpOAuth(server) && oauth) {
@@ -110,6 +160,7 @@ export class PiMcpConnectionPool {
     private readonly oauth: McpOAuthService | null,
     private readonly fetch: McpTransportFetch,
     private readonly processEnv: McpProcessEnv,
+    private readonly secretStorage?: SyncSecretStore,
   ) {}
 
   private readonly connections = new Map<string, ServerConnection>();
@@ -281,7 +332,7 @@ export class PiMcpConnectionPool {
     server: ManagedMcpServer,
     signal?: AbortSignal,
   ): Promise<ServerConnection> {
-    const transport = createTransport(server, this.oauth, this.fetch, this.processEnv);
+    const transport = createTransport(server, this.oauth, this.fetch, this.processEnv, this.secretStorage);
     const client = new Client({ name: "pivi-mcp", version: "0.1.0" });
     await client.connect(transport, signal ? { signal } : undefined);
 

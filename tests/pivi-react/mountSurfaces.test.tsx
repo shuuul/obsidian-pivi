@@ -157,6 +157,8 @@ describe('React surface mounts', () => {
             getEnvironmentVariables: () => '',
             applyEnvironmentVariables: async () => undefined,
             applyEnvironmentVariablesBatch: async () => undefined,
+            importEnvironmentText: async () => undefined,
+            listEntries: () => [],
             getReviewKeys: () => [],
           },
           hotkeys: {

@@ -10,9 +10,14 @@ import {
   McpValidationError,
   validateMcpRemoteUrl,
 } from '@pivi/pivi-agent-core/mcp/mcpValidation';
+import {
+  isLegacyPlainStringMap,
+  isMcpStoredValueMap,
+} from '@pivi/pivi-agent-core/mcp/mcpValueSources';
 import type {
   ManagedMcpServer,
   McpAuthStatus,
+  McpConfigValueMap,
   McpHttpServerConfig,
   McpServerConfig,
   McpServerType,
@@ -84,8 +89,29 @@ export function mcpValidationMessage(
 export const mcpErrorText = (error: unknown, fallback: string) =>
   (error instanceof Error && error.message ? error.message : fallback);
 
-export const mcpDraftToLines = (record?: Record<string, string>) =>
-  Object.entries(record ?? {}).map(([key, value]) => `${key}=${value}`).join('\n');
+export const mcpDraftToLines = (record?: McpConfigValueMap) => {
+  if (!record) {
+    return '';
+  }
+  if (isLegacyPlainStringMap(record)) {
+    return Object.entries(record).map(([key, value]) => `${key}=${value}`).join('\n');
+  }
+  if (!isMcpStoredValueMap(record)) {
+    return '';
+  }
+  return Object.entries(record)
+    .map(([key, ref]) => {
+      if (ref.kind === 'plain') {
+        return `${key}=${ref.value}`;
+      }
+      if (ref.kind === 'secret') {
+        return `${key}=`;
+      }
+      const envName = ref.name?.trim() || key;
+      return `${key}=$${envName}`;
+    })
+    .join('\n');
+};
 
 export function mcpDraftFromLines(value: string): Record<string, string> {
   const result: Record<string, string> = {};

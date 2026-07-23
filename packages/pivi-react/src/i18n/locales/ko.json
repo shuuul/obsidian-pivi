@@ -479,9 +479,14 @@
     },
     "sharedEnvironment": {
       "name": "환경 변수",
-      "desc": "Pi 런타임 환경 변수(KEY=VALUE, 한 줄에 하나). shell export 접두사 지원.",
+      "desc": "기기 로컬 환경 항목(KEY=VALUE, 한 줄에 하나). 비밀처럼 보이는 키는 보안 저장소에 저장됩니다. KEY=$NAME을 사용하면 값을 복사하지 않고 시스템 환경 변수를 참조할 수 있습니다.",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "환경 변수 소유권 확인: {keys}"
+      "reviewOwnership": "환경 변수 소유권 확인: {keys}",
+      "storageDeviceLocal": "기기 로컬 저장소",
+      "storageSecure": "보안 저장소",
+      "storageSystem": "시스템 환경",
+      "secretStored": "안전하게 저장됨",
+      "secretMissing": "보안 값 없음"
     },
     "tools": {
       "sections": {
@@ -764,6 +769,7 @@
       "oauthAuthenticated": "OAuth 인증됨",
       "oauthExpiredBadge": "만료됨",
       "oauthExpiredTitle": "OAuth 토큰 만료",
+      "valueStorageHint": "헤더 및 환경의 비밀처럼 보이는 값은 보안 저장소에 저장됩니다.",
       "refreshFailed": "도구 새로 고침 실패",
       "saveFailed": "MCP 서버를 저장하지 못했습니다",
       "alreadyExists": "서버 \"{name}\"이(가) 이미 있습니다",

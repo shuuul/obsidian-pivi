@@ -5,7 +5,7 @@ import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import type { PiRuntimeHost } from "@pivi/pivi-agent-core/engine/pi/piRuntimeHost";
 import type { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
 import type { McpOAuthService, McpServerManager } from "@pivi/pivi-agent-core/mcp";
-import type { HttpClient } from "@pivi/pivi-agent-core/ports";
+import type { HttpClient, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
 import type { PiChatService } from "@pivi/pivi-agent-core/runtime/piChatService";
 
@@ -23,6 +23,7 @@ export function createChatRuntimeServiceFactories(deps: {
   mcpOAuth: McpOAuthService | null;
   baseToolProvider: PiBaseToolProvider | null;
   subagentConcurrencyLimiter: SubagentConcurrencyLimiter;
+  mcpSecretStorage?: SyncSecretStore;
 }): ChatRuntimeServiceFactories {
   return {
     createChatService(host, httpClient) {
@@ -32,6 +33,7 @@ export function createChatRuntimeServiceFactories(deps: {
           httpClient,
           mcpFetch: nodeFetch,
           mcpProcessEnv: process.env,
+          mcpSecretStorage: deps.mcpSecretStorage,
         },
         deps.mcpServerManager,
         deps.mcpOAuth,

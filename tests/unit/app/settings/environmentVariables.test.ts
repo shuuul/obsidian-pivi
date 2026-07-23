@@ -1,7 +1,42 @@
 import type { OpenSessionState, PiviSettings } from '@pivi/pivi-agent-core/foundation';
+import type { DeviceLocalEnvironmentStateV1 } from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
+import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
 
 import type { PiviChatView, PiviChatViewMaintenance } from '@/app/hostContracts';
 import { applyEnvironmentVariablesBatch } from '@/app/settings/environmentVariables';
+
+function createMemorySecretStore(): SyncSecretStore {
+  const secrets = new Map<string, string>();
+  return {
+    getSecret(key) {
+      return secrets.get(key) ?? null;
+    },
+    setSecret(key, value) {
+      if (!value) {
+        secrets.delete(key);
+        return;
+      }
+      secrets.set(key, value);
+    },
+    listSecrets(prefix) {
+      return [...secrets.keys()].filter((key) => !prefix || key.startsWith(prefix));
+    },
+    deleteSecret(key) {
+      secrets.delete(key);
+    },
+  };
+}
+
+function createEnvironmentStore(initial: DeviceLocalEnvironmentStateV1 | null = null) {
+  let state = initial;
+  return {
+    loadInitialized: () => state,
+    isInitialized: () => state !== null,
+    save(next: DeviceLocalEnvironmentStateV1) {
+      state = next;
+    },
+  };
+}
 
 function createView(maintenance: Partial<PiviChatViewMaintenance>): PiviChatView {
   return {
@@ -10,6 +45,26 @@ function createView(maintenance: Partial<PiviChatViewMaintenance>): PiviChatView
       commands: {} as never,
       maintenance: maintenance as PiviChatViewMaintenance,
     }),
+  };
+}
+
+function createHost(options: {
+  settings: PiviSettings;
+  views: PiviChatView[];
+  notify?: jest.Mock;
+  saveSettings?: jest.Mock;
+  environmentStore?: ReturnType<typeof createEnvironmentStore>;
+  secretStorage?: SyncSecretStore;
+}) {
+  return {
+    settings: options.settings,
+    saveSettings: options.saveSettings ?? jest.fn(async () => undefined),
+    getAllViews: () => options.views,
+    notify: options.notify ?? jest.fn(),
+    app: {
+      secretStorage: options.secretStorage ?? createMemorySecretStore(),
+    },
+    getEnvironmentStore: () => options.environmentStore ?? createEnvironmentStore(),
   };
 }
 
@@ -36,12 +91,7 @@ describe('environment variable runtime propagation', () => {
     const persistSessionSummary = jest.fn(async () => undefined);
 
     await applyEnvironmentVariablesBatch(
-      {
-        settings,
-        saveSettings,
-        getAllViews: () => [view],
-        notify,
-      },
+      createHost({ settings, views: [view], notify, saveSettings }),
       [{ scope: 'shared', envText: 'PATH=/next' }],
       {
         persistSessionSummary,
@@ -93,13 +143,8 @@ describe('environment variable runtime propagation', () => {
     } as unknown as PiviSettings;
 
     await applyEnvironmentVariablesBatch(
-      {
-        settings,
-        saveSettings: jest.fn(async () => undefined),
-        getAllViews: () => views,
-        notify,
-      },
-      [{ scope: 'agent', envText: 'API_TOKEN=next' }],
+      createHost({ settings, views, notify }),
+      [{ scope: 'agent', envText: 'PI_FLAG=next' }],
       {
         persistSessionSummary: jest.fn(async () => undefined),
         reconcileModelWithEnvironment: () => ({
@@ -130,18 +175,20 @@ describe('environment variable runtime propagation', () => {
       invalidateSlashCatalog: jest.fn(),
       refreshModelPresentation: jest.fn(),
     });
+    const environmentStore = createEnvironmentStore({
+      version: 1,
+      initialized: true,
+      entries: [
+        { key: 'PATH', scope: 'shared', source: { kind: 'plain', value: '/same' } },
+      ],
+    });
     const settings = {
       sharedEnvironmentVariables: 'PATH=/same',
       agentSettings: { environmentVariables: '' },
     } as unknown as PiviSettings;
 
     await applyEnvironmentVariablesBatch(
-      {
-        settings,
-        saveSettings: jest.fn(async () => undefined),
-        getAllViews: () => [view],
-        notify: jest.fn(),
-      },
+      createHost({ settings, views: [view], environmentStore }),
       [{ scope: 'shared', envText: 'PATH=/same' }],
       {
         persistSessionSummary: jest.fn(async () => undefined),

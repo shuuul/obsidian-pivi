@@ -99,6 +99,8 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       getEnvironmentVariables: () => '',
       applyEnvironmentVariables: async () => undefined,
       applyEnvironmentVariablesBatch: async () => undefined,
+      importEnvironmentText: async () => undefined,
+      listEntries: () => [],
       getReviewKeys: () => [],
     },
     hotkeys: {

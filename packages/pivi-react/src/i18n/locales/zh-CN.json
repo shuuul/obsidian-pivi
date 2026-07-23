@@ -479,9 +479,14 @@
     },
     "sharedEnvironment": {
       "name": "环境变量",
-      "desc": "Pi 运行时的环境变量（KEY=VALUE，每行一条）。支持 shell export 前缀。",
+      "desc": "设备本地的环境条目（KEY=VALUE，每行一条）。类似密钥的键会存入安全存储。使用 KEY=$NAME 可引用系统环境变量而无需复制其值。",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "请检查环境变量归属：{keys}"
+      "reviewOwnership": "请检查环境变量归属：{keys}",
+      "storageDeviceLocal": "设备本地存储",
+      "storageSecure": "安全存储",
+      "storageSystem": "系统环境",
+      "secretStored": "已安全存储",
+      "secretMissing": "缺少安全值"
     },
     "tools": {
       "sections": {
@@ -764,6 +769,7 @@
       "oauthAuthenticated": "OAuth 已认证",
       "oauthExpiredBadge": "已过期",
       "oauthExpiredTitle": "OAuth 令牌已过期",
+      "valueStorageHint": "标头和环境中类似密钥的值会存入安全存储。",
       "refreshFailed": "刷新工具失败",
       "saveFailed": "保存 MCP 服务器失败",
       "alreadyExists": "服务器「{name}」已存在",

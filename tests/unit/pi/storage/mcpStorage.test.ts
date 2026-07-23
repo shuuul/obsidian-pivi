@@ -2,19 +2,26 @@ import { SecretStorage } from "obsidian";
 
 import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import {
+  McpConfigLoadError,
   McpStorage,
   PIVI_MCP_CONFIG_PATH,
 } from "@pivi/pivi-agent-core/mcp/mcpStorage";
+import { getMcpValueSecretId } from "@pivi/pivi-agent-core/mcp/mcpValueSources";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 
 class MemoryVaultAdapter {
   private readonly files = new Map<string, string>();
   private readonly folders = new Set<string>();
+  private readonly renameShouldFail: boolean;
 
-  constructor(initialFiles: Record<string, string> = {}) {
+  constructor(
+    initialFiles: Record<string, string> = {},
+    options: { renameShouldFail?: boolean } = {},
+  ) {
     for (const [path, content] of Object.entries(initialFiles)) {
       this.files.set(path, content);
     }
+    this.renameShouldFail = options.renameShouldFail ?? false;
   }
 
   async exists(path: string): Promise<boolean> {
@@ -29,12 +36,32 @@ class MemoryVaultAdapter {
     this.files.set(path, content);
   }
 
+  async delete(path: string): Promise<void> {
+    this.files.delete(path);
+  }
+
+  async rename(oldPath: string, newPath: string): Promise<void> {
+    if (this.renameShouldFail) {
+      throw new Error("rename unavailable");
+    }
+    const content = this.files.get(oldPath);
+    if (content === undefined) {
+      throw new Error(`missing file: ${oldPath}`);
+    }
+    this.files.set(newPath, content);
+    this.files.delete(oldPath);
+  }
+
   async ensureFolder(path: string): Promise<void> {
     this.folders.add(path);
   }
 
   readSync(path: string): string {
     return this.files.get(path) ?? "";
+  }
+
+  listPaths(): string[] {
+    return [...this.files.keys()];
   }
 }
 
@@ -180,5 +207,167 @@ describe("McpStorage", () => {
     const raw = adapter.readSync(PIVI_MCP_CONFIG_PATH);
     expect(raw).not.toContain("legacy-client-secret");
     expect(raw).not.toContain("legacy-bearer-secret");
+  });
+
+  it("migrates secret-like headers and stdio env into SecretStorage on load", async () => {
+    const adapter = new MemoryVaultAdapter({
+      [PIVI_MCP_CONFIG_PATH]: `${JSON.stringify(
+        {
+          mcpServers: {
+            remote: {
+              type: "http",
+              url: "https://mcp.example.com",
+              headers: {
+                Authorization: "Bearer legacy-token",
+                "X-Custom": "plain-value",
+              },
+            },
+            local: {
+              command: "node",
+              env: {
+                PLAIN_VAR: "visible",
+                API_KEY: "secret-env",
+              },
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    });
+    const secretStorage = new SecretStorage();
+    const storage = new McpStorage(
+      adapter as unknown as FileStore,
+      secretStorage,
+    );
+
+    const loaded = await storage.load();
+    const remote = loaded.find((server) => server.name === "remote");
+    const local = loaded.find((server) => server.name === "local");
+    expect(remote?.config).toMatchObject({
+      headers: {
+        Authorization: { kind: "secret" },
+        "X-Custom": { kind: "plain", value: "plain-value" },
+      },
+    });
+    expect(local?.config).toMatchObject({
+      env: {
+        PLAIN_VAR: { kind: "plain", value: "visible" },
+        API_KEY: { kind: "secret" },
+      },
+    });
+
+    const raw = adapter.readSync(PIVI_MCP_CONFIG_PATH);
+    expect(raw).not.toContain("legacy-token");
+    expect(raw).not.toContain("secret-env");
+    expect(secretStorage.getSecret(getMcpValueSecretId("remote", "header", "Authorization")))
+      .toBe("Bearer legacy-token");
+    expect(secretStorage.getSecret(getMcpValueSecretId("local", "env", "API_KEY")))
+      .toBe("secret-env");
+  });
+
+  it("preserves corrupt JSON and throws a typed load error", async () => {
+    const corrupt = "{ not-json";
+    const adapter = new MemoryVaultAdapter({
+      [PIVI_MCP_CONFIG_PATH]: corrupt,
+    });
+    const storage = new McpStorage(adapter as unknown as FileStore, new SecretStorage());
+
+    await expect(storage.load()).rejects.toBeInstanceOf(McpConfigLoadError);
+    expect(adapter.readSync(PIVI_MCP_CONFIG_PATH)).toBe(corrupt);
+    expect(adapter.listPaths().some((path) => path.includes(".corrupt-"))).toBe(true);
+  });
+
+  it("does not delete obsolete secrets when config publication fails", async () => {
+    const adapter = new MemoryVaultAdapter({
+      [PIVI_MCP_CONFIG_PATH]: `${JSON.stringify(
+        {
+          mcpServers: {
+            remote: {
+              type: "http",
+              url: "https://mcp.example.com",
+              headers: { Authorization: { kind: "secret" } },
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    }, { renameShouldFail: true });
+    const secretStorage = new SecretStorage();
+    secretStorage.setSecret(
+      getMcpValueSecretId("remote", "header", "Authorization"),
+      "stored-token",
+    );
+    const storage = new McpStorage(adapter as unknown as FileStore, secretStorage);
+
+    await storage.load();
+
+    const failingAdapter = Object.assign(adapter, {
+      write: jest.fn(async () => {
+        throw new Error("disk full");
+      }),
+    }) as unknown as FileStore;
+
+    const failingStorage = new McpStorage(failingAdapter, secretStorage);
+    await expect(failingStorage.save([])).rejects.toThrow("disk full");
+    expect(secretStorage.getSecret(getMcpValueSecretId("remote", "header", "Authorization")))
+      .toBe("stored-token");
+  });
+
+  it("serializes concurrent saves", async () => {
+    const adapter = new MemoryVaultAdapter();
+    const secretStorage = new SecretStorage();
+    const storage = new McpStorage(adapter as unknown as FileStore, secretStorage);
+    const order: string[] = [];
+
+    const first = storage.save([
+      remoteServer({
+        name: "first",
+        config: { type: "http", url: "https://first.example.com" },
+      }),
+    ]).then(() => {
+      order.push("first");
+    });
+    const second = storage.save([
+      remoteServer({
+        name: "second",
+        config: { type: "http", url: "https://second.example.com" },
+      }),
+    ]).then(() => {
+      order.push("second");
+    });
+
+    await Promise.all([first, second]);
+    expect(order).toEqual(["first", "second"]);
+    const loaded = await storage.load();
+    expect(loaded).toHaveLength(1);
+    expect(["first", "second"]).toContain(loaded[0]?.name);
+  });
+
+  it("does not rewrite mcp.json on a second load after migration", async () => {
+    const adapter = new MemoryVaultAdapter({
+      [PIVI_MCP_CONFIG_PATH]: `${JSON.stringify(
+        {
+          mcpServers: {
+            remote: {
+              type: "http",
+              url: "https://mcp.example.com",
+              headers: { Authorization: "Bearer legacy-token" },
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    });
+    const secretStorage = new SecretStorage();
+    const storage = new McpStorage(adapter as unknown as FileStore, secretStorage);
+
+    await storage.load();
+    const afterFirst = adapter.readSync(PIVI_MCP_CONFIG_PATH);
+    await storage.load();
+    const afterSecond = adapter.readSync(PIVI_MCP_CONFIG_PATH);
+    expect(afterSecond).toBe(afterFirst);
   });
 });

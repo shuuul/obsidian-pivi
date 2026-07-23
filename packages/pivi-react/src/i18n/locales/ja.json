@@ -479,9 +479,14 @@
     },
     "sharedEnvironment": {
       "name": "環境変数",
-      "desc": "Pi ランタイムの環境変数（KEY=VALUE、1 行 1 件）。shell の export 接頭辞に対応。",
+      "desc": "デバイスローカルの環境エントリ（KEY=VALUE、1 行 1 件）。シークレットらしいキーはセキュアストレージに保存されます。KEY=$NAME を使用すると、システム環境変数を値をコピーせずに参照できます。",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "環境変数の所有を確認：{keys}"
+      "reviewOwnership": "環境変数の所有を確認：{keys}",
+      "storageDeviceLocal": "デバイスローカルストレージ",
+      "storageSecure": "セキュアストレージ",
+      "storageSystem": "システム環境",
+      "secretStored": "安全に保存済み",
+      "secretMissing": "セキュア値がありません"
     },
     "tools": {
       "sections": {
@@ -764,6 +769,7 @@
       "oauthAuthenticated": "OAuth 認証済み",
       "oauthExpiredBadge": "期限切れ",
       "oauthExpiredTitle": "OAuth トークンの期限切れ",
+      "valueStorageHint": "ヘッダーと環境のシークレットらしい値はセキュアストレージに保存されます。",
       "refreshFailed": "ツールの更新に失敗しました",
       "saveFailed": "MCP サーバーの保存に失敗しました",
       "alreadyExists": "サーバー「{name}」は既に存在します",

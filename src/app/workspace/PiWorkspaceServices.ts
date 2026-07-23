@@ -148,10 +148,14 @@ export async function createPiWorkspaceServices(
     },
     createFileProviderLegacyAuthStore(vaultPath ? `${vaultPath}/.pivi/auth.json` : null),
   );
-  const mcpToolProvider = new PiMcpToolProvider(mcpServerManager, mcpOAuth);
-  const mcpDiagnostics = new PiMcpDiagnostics(mcpOAuth);
+  const mcpToolProvider = new PiMcpToolProvider(
+    mcpServerManager,
+    mcpOAuth,
+    host.app.secretStorage,
+  );
+  const mcpDiagnostics = new PiMcpDiagnostics(mcpOAuth, host.app.secretStorage);
   const mcpServerProbeProvider = new PiMcpServerProbeProvider(mcpToolProvider);
-  const mcpServerTester = new PiMcpServerTester();
+  const mcpServerTester = new PiMcpServerTester(host.app.secretStorage);
   const modelReadinessProvider = new PiModelReadinessProvider(
     credentialStore,
     providerOAuth,
@@ -184,6 +188,7 @@ export async function createPiWorkspaceServices(
     mcpOAuth,
     baseToolProvider,
     subagentConcurrencyLimiter,
+    mcpSecretStorage: host.app.secretStorage,
   });
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();

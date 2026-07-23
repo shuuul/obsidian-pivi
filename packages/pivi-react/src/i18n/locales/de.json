@@ -479,9 +479,14 @@
     },
     "sharedEnvironment": {
       "name": "Umgebungsvariablen",
-      "desc": "Umgebungsvariablen für die Pi-Laufzeit (KEY=VALUE, eine pro Zeile). Shell-export-Präfix unterstützt.",
+      "desc": "Gerätelokale Umgebungseinträge (KEY=VALUE, eine pro Zeile). Schlüssel mit geheimem Charakter werden im sicheren Speicher gespeichert. Verwenden Sie KEY=$NAME, um eine Systemumgebungsvariable zu referenzieren, ohne deren Wert zu kopieren.",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "Umgebungsbesitz prüfen für: {keys}"
+      "reviewOwnership": "Umgebungsbesitz prüfen für: {keys}",
+      "storageDeviceLocal": "Gerätelokaler Speicher",
+      "storageSecure": "Sicherer Speicher",
+      "storageSystem": "Systemumgebung",
+      "secretStored": "Sicher gespeichert",
+      "secretMissing": "Fehlender sicherer Wert"
     },
     "tools": {
       "sections": {
@@ -764,6 +769,7 @@
       "oauthAuthenticated": "OAuth authentifiziert",
       "oauthExpiredBadge": "Abgelaufen",
       "oauthExpiredTitle": "OAuth-Token abgelaufen",
+      "valueStorageHint": "Header- und Umgebungswerte mit geheimem Charakter werden im sicheren Speicher gespeichert.",
       "refreshFailed": "Tool-Aktualisierung fehlgeschlagen",
       "saveFailed": "MCP-Server konnte nicht gespeichert werden",
       "alreadyExists": "Server „{name}“ existiert bereits",

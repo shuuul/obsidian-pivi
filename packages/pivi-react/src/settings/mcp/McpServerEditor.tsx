@@ -86,6 +86,7 @@ export function McpServerEditor({
           <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area">
             <span>{t('settings.mcp.modal.env')}</span>
             <textarea className="pivi-settings-control" value={draft.env} onChange={(event) => update('env', event.target.value)} />
+            <span className="pivi-setting-desc">{t('settings.mcp.valueStorageHint')}</span>
           </label>
         </>
       ) : (
@@ -116,6 +117,7 @@ export function McpServerEditor({
           <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area pivi-mcp-editor-field-headers">
             <span>{t('settings.mcp.modal.headersName')}</span>
             <textarea className="pivi-settings-control pivi-settings-control--fill" value={draft.headers} onChange={(event) => update('headers', event.target.value)} />
+            <span className="pivi-setting-desc">{t('settings.mcp.valueStorageHint')}</span>
           </label>
           {draft.auth === 'oauth' ? (
             <div className="pivi-mcp-editor-row">

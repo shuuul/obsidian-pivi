@@ -1,4 +1,11 @@
+import type { ResolveConfigValueHost } from '../foundation/configValueSource';
+import { readSecretAcrossIds } from '../foundation/configValueSource';
+import type { SyncSecretStore } from '../ports';
 import { getEnhancedPath } from './env';
+import {
+  type McpStoredValueMap,
+  resolveMcpValueMap,
+} from './mcpValueSources';
 import type { McpProcessEnv } from './ports';
 import type { ManagedMcpServer } from './types';
 
@@ -72,4 +79,50 @@ export function buildMcpStdioEnv(
       return typeof entry[1] === 'string';
     }),
   );
+}
+
+export function createMcpResolveHost(
+  processEnv: McpProcessEnv,
+  secretStorage?: SyncSecretStore,
+): ResolveConfigValueHost {
+  return {
+    getSecret(secretId: string) {
+      if (!secretStorage) {
+        return undefined;
+      }
+      return readSecretAcrossIds(secretStorage, [secretId]);
+    },
+    getSystemEnvironmentVariable(name: string) {
+      return processEnv[name];
+    },
+  };
+}
+
+export function resolveMcpStdioEnv(
+  serverName: string,
+  storedEnv: McpStoredValueMap | undefined,
+  host: ResolveConfigValueHost,
+  secretStorage?: SyncSecretStore,
+): Record<string, string> {
+  return resolveMcpValueMap(serverName, 'env', storedEnv, host, secretStorage);
+}
+
+export function resolveMcpHeaders(
+  serverName: string,
+  storedHeaders: McpStoredValueMap | undefined,
+  host: ResolveConfigValueHost,
+  secretStorage?: SyncSecretStore,
+): Record<string, string> {
+  return resolveMcpValueMap(serverName, 'header', storedHeaders, host, secretStorage);
+}
+
+export function resolveAndBuildMcpStdioEnv(
+  serverName: string,
+  processEnv: McpProcessEnv,
+  storedEnv: McpStoredValueMap | undefined,
+  host: ResolveConfigValueHost,
+  secretStorage?: SyncSecretStore,
+): Record<string, string> {
+  const resolved = resolveMcpStdioEnv(serverName, storedEnv, host, secretStorage);
+  return buildMcpStdioEnv(processEnv, resolved);
 }

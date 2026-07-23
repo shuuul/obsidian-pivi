@@ -57,9 +57,11 @@ flowchart LR
 Settings use the correct store for each data class:
 
 - synchronized vault settings for portable non-secret configuration;
-- Obsidian `secretStorage` for provider credentials, custom provider header secrets, web provider API keys, and MCP OAuth `AuthEntry` payloads;
-- vault-scoped device-local storage for absolute external roots/overlays and the provider registry (`pivi.providers.v1`);
+- Obsidian `secretStorage` for provider credentials, custom provider header secrets, web provider API keys, environment secret values (`pivi-env-*`), MCP header/env secret values (`pivi-mcp-v-*`), and MCP OAuth `AuthEntry` payloads;
+- vault-scoped device-local storage for absolute external roots/overlays, the provider registry (`pivi.providers.v1`), and the structured environment registry (`pivi.environment.v1`);
 - vault files such as `.pivi/mcp.json` and `.pivi/commands/` for explicit workspace configuration.
+
+Environment settings use source-aware controls instead of free-form synced text. Each entry has a `plain`, `secret`, or `systemEnvironment` source; the UI shows the effective storage location and never echoes stored secret values after reload. Bulk import parses `KEY=value` lines into structured entries; `KEY=$NAME` becomes a system-environment reference. Save blocks secret-like plaintext unless the user chooses an allowed secret or system source. Recognized provider/web keys migrate into their canonical credential stores during startup migration. Settings and MCP JSON loaders preserve corrupt source bytes as `.corrupt-*` artifacts, return diagnostics, and publish through serialized atomic writes.
 
 Provider/model/web-search settings mutations commit device-local state first, then save the stripped synced projection. Custom provider header values must never be written through `patchCustomProvider` or synced JSON; future header editing must use a dedicated SecretStorage-first settings-port path. A synced save failure after a successful local commit retains local authority and surfaces a localized Notice through app storage wiring.
 

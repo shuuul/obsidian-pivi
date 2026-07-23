@@ -5,6 +5,7 @@ import { useI18n, useT } from '../i18n';
 import type {
   SettingsActionsPort,
   SettingsEditorToolbarPort,
+  SettingsEnvironmentEntryView,
   SettingsEnvironmentPort,
   SettingsFeedbackMessage,
   SettingsFeedbackPort,
@@ -54,18 +55,67 @@ function useMountedRef() {
   return mounted;
 }
 
+function environmentEntriesToSafeText(entries: readonly SettingsEnvironmentEntryView[]): string {
+  return entries.map((entry) => {
+    if (entry.sourceKind === 'secret') {
+      return `${entry.key}=`;
+    }
+    if (entry.sourceKind === 'systemEnvironment') {
+      return `${entry.key}=$${entry.systemName ?? entry.key}`;
+    }
+    return `${entry.key}=${entry.plainValue ?? ''}`;
+  }).join('\n');
+}
+
 function EnvironmentSection({ environment, feedback }: {
   readonly environment: SettingsEnvironmentPort;
   readonly feedback: SettingsFeedbackPort;
 }) {
   const t = useT();
-  const [value, setValue] = useState(() => environment.getEnvironmentVariables('shared'));
+  const [entries, setEntries] = useState(() => environment.listEntries('shared'));
+  const [value, setValue] = useState(() => environmentEntriesToSafeText(environment.listEntries('shared')));
   const reviewKeys = environment.getReviewKeys('shared', value);
+
+  const refreshEntries = () => {
+    const next = environment.listEntries('shared');
+    setEntries(next);
+    setValue(environmentEntriesToSafeText(next));
+  };
+
+  const storageLabel = (location: SettingsEnvironmentEntryView['storageLocation']) => {
+    if (location === 'secureStorage') {
+      return t('settings.sharedEnvironment.storageSecure');
+    }
+    if (location === 'systemEnvironment') {
+      return t('settings.sharedEnvironment.storageSystem');
+    }
+    return t('settings.sharedEnvironment.storageDeviceLocal');
+  };
+
   return (
     <SettingsSection title={t('settings.environment')}>
       {reviewKeys.length > 0 ? (
         <div className="pivi-env-review-warning pivi-setting-validation pivi-setting-validation-warning">
           {t('settings.sharedEnvironment.reviewOwnership', { keys: reviewKeys.join(', ') })}
+        </div>
+      ) : null}
+      {entries.length > 0 ? (
+        <div className="pivi-env-entry-list" role="list">
+          {entries.map((entry) => (
+            <div key={`${entry.scope}:${entry.key}`} className="pivi-env-entry-row" role="listitem">
+              <span className="pivi-env-entry-key">{entry.key}</span>
+              <span className="pivi-env-entry-source">{storageLabel(entry.storageLocation)}</span>
+              <span className="pivi-env-entry-value">
+                {entry.sourceKind === 'secret'
+                  ? (entry.hasStoredSecret
+                    ? t('settings.sharedEnvironment.secretStored')
+                    : t('settings.sharedEnvironment.secretMissing'))
+                  : entry.sourceKind === 'systemEnvironment'
+                    ? `$${entry.systemName ?? entry.key}`
+                    : (entry.plainValue ?? '')}
+              </span>
+            </div>
+          ))}
         </div>
       ) : null}
       <SettingRow name={t('settings.sharedEnvironment.name')} description={t('settings.sharedEnvironment.desc')}>
@@ -76,10 +126,15 @@ function EnvironmentSection({ environment, feedback }: {
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onBlur={() => {
-            void environment.applyEnvironmentVariables('shared', value).catch((cause: unknown) => {
-              feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
-            });
+            void environment.importEnvironmentText('shared', value)
+              .then(() => {
+                refreshEntries();
+              })
+              .catch((cause: unknown) => {
+                feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+              });
           }}
+          aria-label={t('settings.sharedEnvironment.name')}
         />
       </SettingRow>
     </SettingsSection>

@@ -1,7 +1,9 @@
 import {
   SharedStorageService,
 } from "@pivi/obsidian-host";
+import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
 import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/piSessionStore";
+import { createSecretStoreResolveHost } from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type {
   DeviceLocalExternalContextStore,
@@ -9,6 +11,7 @@ import type {
 } from "@pivi/pivi-agent-core/session";
 import { assertBundledReactRuntime } from "@pivi/pivi-react";
 
+import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import type { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import { t } from "@/app/i18n";
@@ -24,9 +27,25 @@ export function createSharedStorage(
   plugin: PiviPlugin,
   externalContexts: ObsidianDeviceLocalExternalContextStore,
 ): SharedStorageService {
+  const environmentStore = new ObsidianDeviceLocalEnvironmentStore(plugin.app);
   return new SharedStorageService(plugin, createPiviSettingsCodec(
     externalContexts,
     new ObsidianDeviceLocalProviderStore(plugin.app),
+    {
+      loadInitialized: () => environmentStore.loadInitialized(),
+      createResolveHost: () => createSecretStoreResolveHost(
+        isSecretStorageAvailable(plugin.app.secretStorage)
+          ? plugin.app.secretStorage
+          : undefined,
+        (name) => {
+          try {
+            return process.env[name];
+          } catch {
+            return undefined;
+          }
+        },
+      ),
+    },
   ), {
     failedSaveTabLayout: t("host.failedSaveTabLayout"),
     failedSaveDeletedSessions: t("host.failedSaveDeletedSessions"),

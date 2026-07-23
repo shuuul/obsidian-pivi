@@ -11,6 +11,12 @@ import {
   normalizePiAgentSettingsRecord,
   updatePiAgentSettings,
 } from "@pivi/pivi-agent-core/foundation/agentSettings";
+import type { DeviceLocalEnvironmentStateV1 } from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
+import {
+  createSecretStoreResolveHost,
+  projectEnvironmentOntoSettings,
+  stripEnvironmentFieldsFromPersistedSettings,
+} from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
 import type { DeviceLocalProviderStateV1 } from "@pivi/pivi-agent-core/foundation/deviceLocalProviderState";
 import {
   extractDeviceLocalProviderState,
@@ -224,8 +230,23 @@ export interface DeviceLocalProviderSettings {
   save(state: DeviceLocalProviderStateV1): void;
 }
 
+export interface DeviceLocalEnvironmentSettings {
+  loadInitialized(): DeviceLocalEnvironmentStateV1 | null;
+  /** Optional secret/system hosts for runtime projection. */
+  createResolveHost?(): ReturnType<typeof createSecretStoreResolveHost>;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasSyncedEnvironmentFields(stored: Record<string, unknown>): boolean {
+  if (Object.hasOwn(stored, 'sharedEnvironmentVariables')
+    || Object.hasOwn(stored, 'environmentVariables')) {
+    return true;
+  }
+  const agentSettings = stored.agentSettings;
+  return isRecord(agentSettings) && Object.hasOwn(agentSettings, 'environmentVariables');
 }
 
 function hasSyncedLocalizedProviderFields(stored: Record<string, unknown>): boolean {
@@ -293,6 +314,7 @@ function hasSyncedExternalReadDirectories(stored: Record<string, unknown>): bool
 export function createPiviSettingsCodec(
   deviceLocalExternalContexts?: DeviceLocalExternalReadDirectories,
   deviceLocalProviders?: DeviceLocalProviderSettings,
+  deviceLocalEnvironment?: DeviceLocalEnvironmentSettings,
 ): PiviSettingsCodec {
   return {
     getDefaults() {
@@ -309,6 +331,12 @@ export function createPiviSettingsCodec(
       const initializedProviders = deviceLocalProviders?.loadInitialized();
       if (initializedProviders) {
         overlayDeviceLocalProviderState(settings, initializedProviders);
+      }
+      const initializedEnvironment = deviceLocalEnvironment?.loadInitialized();
+      if (initializedEnvironment) {
+        const host = deviceLocalEnvironment?.createResolveHost?.()
+          ?? createSecretStoreResolveHost(undefined, () => undefined);
+        projectEnvironmentOntoSettings(settings, initializedEnvironment, host);
       }
       return settings;
     },
@@ -334,6 +362,17 @@ export function createPiviSettingsCodec(
         overlayDeviceLocalProviderState(result.settings, initializedProviders);
         changed = changed || hasSyncedLocalizedProviderFields(stored);
       }
+      const initializedEnvironment = deviceLocalEnvironment?.loadInitialized();
+      if (initializedEnvironment) {
+        const host = deviceLocalEnvironment?.createResolveHost?.()
+          ?? createSecretStoreResolveHost(undefined, () => undefined);
+        projectEnvironmentOntoSettings(result.settings, initializedEnvironment, host);
+        changed = changed || hasSyncedEnvironmentFields(stored);
+      } else if (hasSyncedEnvironmentFields(stored)) {
+        // Legacy synced env remains readable until migration runs; mark dirty so
+        // prepareForSave strips after cutover.
+        changed = true;
+      }
       return {
         settings: result.settings,
         changed,
@@ -349,6 +388,11 @@ export function createPiviSettingsCodec(
         const localState = extractDeviceLocalProviderState(settings);
         deviceLocalProviders.save(localState);
         nextSettings = stripLocalizedFieldsFromRuntimeSettings(settings);
+      } else {
+        // Still strip environment fields from synced JSON even without provider store.
+        const persisted = { ...(nextSettings as unknown as Record<string, unknown>) };
+        stripEnvironmentFieldsFromPersistedSettings(persisted);
+        nextSettings = persisted as typeof nextSettings;
       }
       if (!deviceLocalExternalContexts) {
         return nextSettings;

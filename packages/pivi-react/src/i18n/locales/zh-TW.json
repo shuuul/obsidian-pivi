@@ -479,9 +479,14 @@
     },
     "sharedEnvironment": {
       "name": "環境變數",
-      "desc": "Pi 執行階段的環境變數（KEY=VALUE，每行一筆）。支援 shell export 前綴。",
+      "desc": "裝置本機的環境項目（KEY=VALUE，每行一筆）。類似密鑰的鍵會存入安全儲存。使用 KEY=$NAME 可參照系統環境變數而無需複製其值。",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "請檢查環境變數歸屬：{keys}"
+      "reviewOwnership": "請檢查環境變數歸屬：{keys}",
+      "storageDeviceLocal": "裝置本機儲存",
+      "storageSecure": "安全儲存",
+      "storageSystem": "系統環境",
+      "secretStored": "已安全儲存",
+      "secretMissing": "缺少安全值"
     },
     "tools": {
       "sections": {
@@ -764,6 +769,7 @@
       "oauthAuthenticated": "OAuth 已驗證",
       "oauthExpiredBadge": "已過期",
       "oauthExpiredTitle": "OAuth 權杖已過期",
+      "valueStorageHint": "標頭與環境中類似密鑰的值會存入安全儲存。",
       "refreshFailed": "重新整理工具失敗",
       "saveFailed": "儲存 MCP 伺服器失敗",
       "alreadyExists": "伺服器「{name}」已存在",

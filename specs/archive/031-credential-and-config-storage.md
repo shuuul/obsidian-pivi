@@ -1,7 +1,7 @@
 ---
 id: "031"
 title: "Credential and config storage"
-status: Draft
+status: Completed
 created: 2026-07-23
 updated: 2026-07-23
 coordinator: "/root"
@@ -24,17 +24,17 @@ This is the second review-hardening spec. It depends on spec `030` for strict na
 
 Give every environment/header value an explicit storage source, keep device facts and secrets out of synced vault JSON, and publish settings/config changes transactionally.
 
-- [ ] Runtime environment configuration uses a structured, versioned model with `plain`, `secret`, and `systemEnvironment` value sources.
-- [ ] Environment configuration is device-local by default; no environment value or machine-specific path is written to `.pivi/settings.json`.
-- [ ] Secret-like environment keys default to `SecretStorage`; provider keys are migrated into their canonical credential stores when possible.
-- [ ] MCP headers and stdio env use structured value sources; sensitive headers/env values are absent from `.pivi/mcp.json` and local storage.
-- [ ] Existing plaintext environment, MCP header, and MCP env values migrate idempotently; source plaintext is removed only after destination publication succeeds.
-- [ ] The UI shows the effective storage location and never echoes stored secret values after reload.
-- [ ] Settings save blocks unresolved secret-like plaintext unless the user intentionally changes the value source to an allowed non-secret mode.
-- [ ] Settings and MCP parsing returns diagnostics instead of silently substituting defaults; malformed source files are preserved as recoverable corrupt artifacts before any replacement.
-- [ ] File and secret publication ordering is failure-safe: new secrets are staged first, config is atomically published, obsolete secrets are cleared last, and failed stages are recoverable.
-- [ ] Concurrent saves to the same logical file are serialized; repeated load/save is idempotent.
-- [ ] Two simulated devices sharing `.pivi` retain independent environment values and secrets while portable settings and non-secret MCP definitions continue to sync.
+- [x] Runtime environment configuration uses a structured, versioned model with `plain`, `secret`, and `systemEnvironment` value sources.
+- [x] Environment configuration is device-local by default; no environment value or machine-specific path is written to `.pivi/settings.json`.
+- [x] Secret-like environment keys default to `SecretStorage`; provider keys are migrated into their canonical credential stores when possible.
+- [x] MCP headers and stdio env use structured value sources; sensitive headers/env values are absent from `.pivi/mcp.json` and local storage.
+- [x] Existing plaintext environment, MCP header, and MCP env values migrate idempotently; source plaintext is removed only after destination publication succeeds.
+- [x] The UI shows the effective storage location and never echoes stored secret values after reload.
+- [x] Settings save blocks unresolved secret-like plaintext unless the user intentionally changes the value source to an allowed non-secret mode.
+- [x] Settings and MCP parsing returns diagnostics instead of silently substituting defaults; malformed source files are preserved as recoverable corrupt artifacts before any replacement.
+- [x] File and secret publication ordering is failure-safe: new secrets are staged first, config is atomically published, obsolete secrets are cleared last, and failed stages are recoverable.
+- [x] Concurrent saves to the same logical file are serialized; repeated load/save is idempotent.
+- [x] Two simulated devices sharing `.pivi` retain independent environment values and secrets while portable settings and non-secret MCP definitions continue to sync.
 
 ## Scope and non-goals
 
@@ -68,12 +68,12 @@ Not in scope:
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Define structured environment entry, local-state, persisted projection, secret-key policy, and runtime resolution contracts | Unassigned | Pending | Spec 030 completed | Pure schema/projection/classification tests |
-| WS-02 | Implement idempotent environment migration and canonical provider/web credential handoff | Unassigned | Pending | WS-01 | Migration, two-device, retry, and no-plaintext tests |
-| WS-03 | Define and implement MCP header/env references plus legacy plaintext migration | Unassigned | Pending | WS-01 | MCP load/save/runtime hydration and migration tests |
-| WS-04 | Replace free-form settings with source-aware localized controls and safe bulk import | Unassigned | Pending | WS-01, WS-03 | React interaction, masking, i18n parity, accessibility tests |
-| WS-05 | Add diagnostic parsing, corrupt preservation, serialized atomic publication, and failure-safe secret staging | Unassigned | Pending | WS-02, WS-03 | Fault-injection and concurrent-save tests |
-| WS-06 | Documentation, full gates, migration fixture, deploy, and closeout | Unassigned | Pending | WS-01–WS-05 | Verification matrix and Obsidian reload |
+| WS-01 | Define structured environment entry, local-state, persisted projection, secret-key policy, and runtime resolution contracts | Cursor Grok 4.5 | Completed | Spec 030 completed | Pure schema/projection/classification tests |
+| WS-02 | Implement idempotent environment migration and canonical provider/web credential handoff | Cursor Grok 4.5 | Completed | WS-01 | Migration, two-device, retry, and no-plaintext tests |
+| WS-03 | Define and implement MCP header/env references plus legacy plaintext migration | Cursor Grok 4.5 | Completed | WS-01 | MCP load/save/runtime hydration and migration tests |
+| WS-04 | Replace free-form settings with source-aware localized controls and safe bulk import | Cursor Grok 4.5 | Completed | WS-01, WS-03 | React interaction, masking, i18n parity, accessibility tests |
+| WS-05 | Add diagnostic parsing, corrupt preservation, serialized atomic publication, and failure-safe secret staging | Cursor Grok 4.5 | Completed | WS-02, WS-03 | Fault-injection and concurrent-save tests |
+| WS-06 | Documentation, full gates, migration fixture, deploy, and closeout | Cursor Grok 4.5 | Completed | WS-01–WS-05 | Verification matrix and Obsidian reload |
 
 ## Verification
 
@@ -125,6 +125,22 @@ npm run check:specs
 - Blockers: Spec `030` must establish strict valid MCP inputs before legacy configuration migration.
 - Next action: Complete spec `030`, then make this spec Active and record final schema/transaction decisions.
 
+### 2026-07-23 — Cursor Grok 4.5 — implementation start
+
+- Changed: Set status to Active; claimed WS-01 through WS-06.
+- Evidence: Spec 030 archived; working tree clean on main at claim time.
+- Remaining: Implement structured env/MCP value sources, migration, UI, transactional publication, tests, docs, and closeout.
+- Blockers: None.
+- Next action: Define contracts (WS-01) and implement migration + MCP + UI + publication.
+
+### 2026-07-23 — Cursor Grok 4.5 — closeout
+
+- Changed: Implemented structured `plain`/`secret`/`systemEnvironment` sources; device-local `pivi.environment.v1`; MCP header/env refs; transactional publication; source-aware UI + i18n; docs sync.
+- Evidence: Focused matrix tests green (124); typecheck/lint/build green; Obsidian reload with `No errors captured.`; architecture boundaries passed. `check:i18n-dead-keys` still reports pre-existing unused `common.disable`/`common.disabled`/`common.enable`.
+- Remaining: None for this spec.
+- Blockers: None.
+- Next action: Archive spec and run `npm run check:specs`.
+
 ## Completion summary
 
-Pending.
+Spec 031 is complete. Environment configuration is a versioned device-local registry (`pivi.environment.v1`) with `plain` / `secret` / `systemEnvironment` sources; secrets live only in SecretStorage (`pivi-env-*`). Synced `.pivi/settings.json` no longer stores environment fields. Recognized provider/web keys migrate into canonical credential stores before plaintext removal. MCP headers and stdio env use structured `ConfigValueRef` maps with SecretStorage-backed sensitive values (`pivi-mcp-v-*`), published as stage-secrets → atomic config write → clear obsolete. Corrupt settings/MCP JSON is preserved as `.corrupt-*` artifacts with diagnostics. Settings UI lists storage location and never echoes secrets after reload; bulk import parses into structured entries (`KEY=$NAME` → systemEnvironment). Focused tests, typecheck, lint, build, and Obsidian reload all passed.

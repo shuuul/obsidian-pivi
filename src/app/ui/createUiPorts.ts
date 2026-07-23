@@ -542,8 +542,10 @@ export function createSettingsUiPorts(
     environment: {
       getActiveEnvironmentVariables: () => host.getActiveEnvironmentVariables(),
       getEnvironmentVariables: (scope) => host.getEnvironmentVariablesForScope(scope),
+      listEntries: (scope) => host.listEnvironmentEntries(scope),
       applyEnvironmentVariables: (scope, envText) => host.applyEnvironmentVariables(scope, envText),
       applyEnvironmentVariablesBatch: (updates) => host.applyEnvironmentVariablesBatch(updates),
+      importEnvironmentText: (scope, envText) => host.importEnvironmentText(scope, envText),
       getReviewKeys: (scope, envText) => getEnvironmentReviewKeysForScope(envText, scope),
     },
     hotkeys: {

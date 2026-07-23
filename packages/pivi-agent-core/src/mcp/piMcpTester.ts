@@ -4,9 +4,18 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
 import { PluginLogger } from '../foundation/pluginLogger';
+import type { SyncSecretStore } from '../ports';
 import { createLegacySseTransport } from "./legacySseTransport";
-import { buildMcpStdioEnv } from "./mcpProcessEnv";
+import {
+  createMcpResolveHost,
+  resolveAndBuildMcpStdioEnv,
+  resolveMcpHeaders,
+} from "./mcpProcessEnv";
 import { parseCommand } from "./mcpUtils";
+import {
+  isLegacyPlainStringMap,
+  normalizeMcpStoredValueMap,
+} from './mcpValueSources';
 import type { McpProcessEnv, McpTransportFetch } from "./ports";
 import type { McpTestResult, McpTool } from "./types";
 import type { ManagedMcpServer } from "./types";
@@ -18,7 +27,9 @@ export async function testPiMcpServer(
   server: ManagedMcpServer,
   fetch: McpTransportFetch,
   processEnv: McpProcessEnv,
+  secretStorage?: SyncSecretStore,
 ): Promise<McpTestResult> {
+  const resolveHost = createMcpResolveHost(processEnv, secretStorage);
   let transport: Transport;
   try {
     if (isMcpStdioServerConfig(server.config)) {
@@ -30,15 +41,31 @@ export async function testPiMcpServer(
       transport = new StdioClientTransport({
         command: cmd,
         args,
-        env: buildMcpStdioEnv(processEnv, config.env),
+        env: resolveAndBuildMcpStdioEnv(
+          server.name,
+          processEnv,
+          normalizeMcpStoredValueMap(config.env),
+          resolveHost,
+          secretStorage,
+        ),
         stderr: "ignore",
       });
     } else {
       const config = server.config;
       const url = new URL(config.url);
+      const resolvedHeaders = isLegacyPlainStringMap(config.headers)
+        ? config.headers
+        : resolveMcpHeaders(
+          server.name,
+          normalizeMcpStoredValueMap(config.headers),
+          resolveHost,
+          secretStorage,
+        );
       const options = {
         fetch,
-        requestInit: config.headers ? { headers: config.headers } : undefined,
+        requestInit: resolvedHeaders && Object.keys(resolvedHeaders).length > 0
+          ? { headers: resolvedHeaders }
+          : undefined,
       };
       transport = isMcpSseServerConfig(config)
         ? createLegacySseTransport(url, options)

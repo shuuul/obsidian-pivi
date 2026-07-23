@@ -207,6 +207,13 @@ describe('UI port adapters', () => {
       getEnvironmentVariablesForScope: () => 'SCOPE=1',
       applyEnvironmentVariables,
       applyEnvironmentVariablesBatch: async () => {},
+      importEnvironmentText: async () => {},
+      listEnvironmentEntries: () => [],
+      getEnvironmentStore: () => ({
+        loadInitialized: () => null,
+        save: () => undefined,
+        isInitialized: () => false,
+      }),
     } as unknown as PiviSettingsHost;
     const loadMcp = jest.fn(async () => []);
     const getCachedMcpTools = jest.fn(() => [{ name: 'search' }]);

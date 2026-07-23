@@ -1,4 +1,5 @@
 import { PluginLogger } from '../foundation/pluginLogger';
+import type { SyncSecretStore } from '../ports';
 import type { ToolSpec } from '../tools';
 import { createMcpProxyToolSpec } from './createMcpProxyToolSpec';
 import type { McpServerManager } from './mcpServerManager';
@@ -34,8 +35,9 @@ export class PiMcpBridge {
     oauth: McpOAuthService | null,
     fetch: McpTransportFetch,
     processEnv: McpProcessEnv,
+    secretStorage?: SyncSecretStore,
   ) {
-    this.pool = new PiMcpConnectionPool(oauth, fetch, processEnv);
+    this.pool = new PiMcpConnectionPool(oauth, fetch, processEnv, secretStorage);
   }
 
   hasServers(): boolean {

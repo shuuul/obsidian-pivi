@@ -1,4 +1,5 @@
 import { isValidMcpServerName, validateMcpRemoteUrl } from './mcpValidation';
+import { normalizeMcpStoredValueMap } from './mcpValueSources';
 import type { McpServerConfig, ParsedMcpConfig } from './types';
 import { getMcpServerType, isValidMcpServerConfig } from './types';
 
@@ -17,12 +18,13 @@ function normalizeImportedServer(
     return { name, config };
   }
   try {
-    const remote = config as { url: string; type?: 'sse' | 'http'; headers?: Record<string, string> };
+    const remote = config as { url: string; type?: 'sse' | 'http'; headers?: unknown };
     const url = validateMcpRemoteUrl(remote.url);
+    const headers = normalizeMcpStoredValueMap(remote.headers);
     if (remote.type === 'sse') {
-      return { name, config: { type: 'sse', url, ...(remote.headers ? { headers: remote.headers } : {}) } };
+      return { name, config: { type: 'sse', url, ...(headers ? { headers } : {}) } };
     }
-    return { name, config: { type: 'http', url, ...(remote.headers ? { headers: remote.headers } : {}) } };
+    return { name, config: { type: 'http', url, ...(headers ? { headers } : {}) } };
   } catch {
     return null;
   }

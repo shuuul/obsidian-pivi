@@ -12,7 +12,7 @@ import { calculateReadToolMaxChars } from '../../foundation/usage';
 import type { McpOAuthService, McpServerManager } from '../../mcp';
 import { PiMcpBridge } from '../../mcp';
 import type { McpProcessEnv, McpTransportFetch } from '../../mcp/ports';
-import type { HttpClient } from '../../ports';
+import type { HttpClient, SyncSecretStore } from '../../ports';
 import {
   appendExternalContextAvailability,
   buildPiSystemPrompt,
@@ -81,6 +81,7 @@ export interface PiChatRuntimeNetwork {
   httpClient: HttpClient;
   mcpFetch: McpTransportFetch;
   mcpProcessEnv: McpProcessEnv;
+  mcpSecretStorage?: SyncSecretStore;
 }
 
 const POST_LOAD_MODEL_METADATA_PROVIDER_IDS = new Set([
@@ -131,7 +132,15 @@ export class PiChatRuntime implements PiChatService {
     private readonly subagentConcurrencyLimiter?: SubagentConcurrencyLimiter,
   ) {
     this.mcpManager = mcpManager;
-    this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth, network.mcpFetch, network.mcpProcessEnv) : null;
+    this.mcpBridge = mcpManager
+      ? new PiMcpBridge(
+        mcpManager,
+        mcpOAuth,
+        network.mcpFetch,
+        network.mcpProcessEnv,
+        network.mcpSecretStorage,
+      )
+      : null;
     this.subagentRunner = createPiAuxQueryRunner(plugin, {
       getTools: (resolveReadMaxChars) => this.buildSubagentTools(resolveReadMaxChars),
       onSubagentChunk: (chunk) => {

@@ -479,9 +479,14 @@
     },
     "sharedEnvironment": {
       "name": "Variáveis de ambiente",
-      "desc": "Variáveis de ambiente do runtime Pi (KEY=VALUE, uma por linha). Prefixo export do shell suportado.",
+      "desc": "Entradas de ambiente locais do dispositivo (KEY=VALUE, uma por linha). Chaves com aspecto de segredo são armazenadas em armazenamento seguro. Use KEY=$NAME para referenciar uma variável de ambiente do sistema sem copiar seu valor.",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "Revise a propriedade do ambiente para: {keys}"
+      "reviewOwnership": "Revise a propriedade do ambiente para: {keys}",
+      "storageDeviceLocal": "Armazenamento local do dispositivo",
+      "storageSecure": "Armazenamento seguro",
+      "storageSystem": "Ambiente do sistema",
+      "secretStored": "Armazenado com segurança",
+      "secretMissing": "Valor seguro ausente"
     },
     "tools": {
       "sections": {
@@ -764,6 +769,7 @@
       "oauthAuthenticated": "OAuth autenticado",
       "oauthExpiredBadge": "Caducado",
       "oauthExpiredTitle": "Token OAuth caducado",
+      "valueStorageHint": "Valores de cabeçalho e ambiente com aspecto de segredo são armazenados em armazenamento seguro.",
       "refreshFailed": "Falha ao atualizar ferramentas",
       "saveFailed": "Erro al salvar o servidor MCP",
       "alreadyExists": "El servidor «{name}» ya existe",

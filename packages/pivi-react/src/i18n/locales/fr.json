@@ -479,9 +479,14 @@
     },
     "sharedEnvironment": {
       "name": "Variables d’environnement",
-      "desc": "Variables d’environnement pour le runtime Pi (KEY=VALUE, une par ligne). Préfixe export shell pris en charge.",
+      "desc": "Entrées d’environnement locales à l’appareil (KEY=VALUE, une par ligne). Les clés de type secret sont stockées dans le stockage sécurisé. Utilisez KEY=$NAME pour référencer une variable d’environnement système sans copier sa valeur.",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "Vérifier la propriété de l’environnement pour : {keys}"
+      "reviewOwnership": "Vérifier la propriété de l’environnement pour : {keys}",
+      "storageDeviceLocal": "Stockage local sur l’appareil",
+      "storageSecure": "Stockage sécurisé",
+      "storageSystem": "Environnement système",
+      "secretStored": "Stocké de manière sécurisée",
+      "secretMissing": "Valeur sécurisée manquante"
     },
     "tools": {
       "sections": {
@@ -764,6 +769,7 @@
       "oauthAuthenticated": "OAuth authentifié",
       "oauthExpiredBadge": "Expiré",
       "oauthExpiredTitle": "Jeton OAuth expiré",
+      "valueStorageHint": "Les valeurs d’en-tête et d’environnement de type secret sont stockées dans le stockage sécurisé.",
       "refreshFailed": "Échec de l’actualisation des outils",
       "saveFailed": "Échec de l’enregistrement du serveur MCP",
       "alreadyExists": "Le serveur « {name} » existe déjà",

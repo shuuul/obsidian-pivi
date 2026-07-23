@@ -477,9 +477,14 @@
     },
     "sharedEnvironment": {
       "name": "Environment variables",
-      "desc": "Environment variables for Pi runtime (KEY=VALUE format, one per line). Shell export prefix supported.",
+      "desc": "Device-local environment entries (KEY=VALUE, one per line). Secret-like keys are stored in secure storage. Use KEY=$NAME to reference a system environment variable without copying its value.",
       "placeholder": "KEY=VALUE",
-      "reviewOwnership": "Review environment ownership for: {keys}"
+      "reviewOwnership": "Review environment ownership for: {keys}",
+      "storageDeviceLocal": "Device-local storage",
+      "storageSecure": "Secure storage",
+      "storageSystem": "System environment",
+      "secretStored": "Stored securely",
+      "secretMissing": "Missing secure value"
     },
     "tools": {
       "sections": {
@@ -762,6 +767,7 @@
       "oauthAuthenticated": "OAuth authenticated",
       "oauthExpiredBadge": "Expired",
       "oauthExpiredTitle": "OAuth token expired",
+      "valueStorageHint": "Header and environment secret-like values are stored in secure storage.",
       "refreshFailed": "Tool refresh failed",
       "saveFailed": "Failed to save MCP server",
       "alreadyExists": "Server \"{name}\" already exists",

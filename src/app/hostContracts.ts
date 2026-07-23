@@ -10,6 +10,10 @@ import type { ProviderOAuthProgress } from "@pivi/pivi-agent-core/auth/providerO
 import type { PiviSettings } from "@pivi/pivi-agent-core/foundation";
 import type { ChatUIConfig, ChatUIOption } from "@pivi/pivi-agent-core/foundation/chatUi";
 import type {
+  DeviceLocalEnvironmentStore,
+  EnvironmentUiEntry,
+} from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
+import type {
   AppModelReadinessProvider,
 } from "@pivi/pivi-agent-core/foundation/modelReadiness";
 import type { EnvironmentScope, WebProviderId } from "@pivi/pivi-agent-core/foundation/settings";
@@ -273,6 +277,9 @@ export interface PiviSettingsHost extends PiviHostCore {
   applyEnvironmentVariablesBatch(
     updates: Array<{ scope: EnvironmentScope; envText: string }>,
   ): Promise<void>;
+  importEnvironmentText(scope: EnvironmentScope, envText: string): Promise<void>;
+  listEnvironmentEntries(scope?: EnvironmentScope): readonly EnvironmentUiEntry[];
+  getEnvironmentStore(): DeviceLocalEnvironmentStore;
   /** Obsidian Notice adapter used for timely settings and workspace feedback. */
   notify(
     message: string | DocumentFragment,
