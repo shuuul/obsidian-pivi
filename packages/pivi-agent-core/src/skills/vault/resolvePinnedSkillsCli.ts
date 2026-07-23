@@ -56,9 +56,8 @@ function cliPathFromPackageRoot(packageRoot: string): string | null {
 /**
  * Resolve the pinned skills CLI from known locations:
  * 1. Explicit override path (tests / composition)
- * 2. Vault vendor `.pivi/vendor/skills/<version>`
- * 3. Plugin/vendor next to an injected plugin directory
- * 4. Node module resolution from process.cwd() / search paths
+ * 2. Plugin/vendor next to an injected plugin directory
+ * 3. Node module resolution from process.cwd() / search paths
  */
 export function resolvePinnedSkillsCli(options: {
   processEnv?: SkillsProcessEnv;
@@ -74,12 +73,6 @@ export function resolvePinnedSkillsCli(options: {
 
   if (options.overridePackageRoot) {
     candidates.push(options.overridePackageRoot);
-  }
-  if (options.vaultPath) {
-    candidates.push(
-      path.join(options.vaultPath, '.pivi', 'vendor', 'skills', PINNED_SKILLS_CLI_VERSION),
-      path.join(options.vaultPath, '.pivi', 'vendor', 'skills'),
-    );
   }
   if (options.pluginDir) {
     candidates.push(path.join(options.pluginDir, 'vendor', 'skills'));
@@ -116,33 +109,6 @@ export function resolvePinnedSkillsCli(options: {
 
   throw new Error(
     `Pinned Skills CLI ${PINNED_SKILLS_CLI_PACKAGE}@${PINNED_SKILLS_CLI_VERSION} was not found. `
-      + 'Install the exact lockfile dependency or materialize it under .pivi/vendor/skills/.',
+      + 'Install the exact lockfile dependency or bundle it with the plugin.',
   );
-}
-
-/**
- * Copy the resolved package into the vault vendor path so later offline runs
- * do not depend on node_modules next to the Obsidian plugin.
- */
-export function materializePinnedSkillsCliToVault(
-  vaultPath: string,
-  sourcePackageRoot: string,
-): string {
-  const version = packageVersion(sourcePackageRoot);
-  if (version !== PINNED_SKILLS_CLI_VERSION) {
-    throw new Error(
-      `Refusing to materialize skills package with version ${version ?? 'unknown'}; expected ${PINNED_SKILLS_CLI_VERSION}`,
-    );
-  }
-  const dest = path.join(vaultPath, '.pivi', 'vendor', 'skills', PINNED_SKILLS_CLI_VERSION);
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  if (fs.existsSync(dest)) {
-    const existing = packageVersion(dest);
-    if (existing === PINNED_SKILLS_CLI_VERSION && cliPathFromPackageRoot(dest)) {
-      return dest;
-    }
-    fs.rmSync(dest, { recursive: true, force: true });
-  }
-  fs.cpSync(sourcePackageRoot, dest, { recursive: true });
-  return dest;
 }

@@ -85,6 +85,47 @@ describe('SessionTreeStore', () => {
     }
   });
 
+  it('continues the authoritative append when journal storage fails', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-failed-journal-intent-'));
+    const sessionFile = path.join(root, '.pivi', 'sessions', 'session.jsonl');
+    fs.mkdirSync(path.dirname(sessionFile), { recursive: true });
+    fs.writeFileSync(sessionFile, `${JSON.stringify({
+      type: 'session', version: 3, id: 'session-1', timestamp: new Date().toISOString(), cwd: root,
+    })}\n`);
+    bindSessionJournal({
+      load: () => { throw new Error('device-local storage unavailable'); },
+      save: jest.fn(),
+    });
+    const manager = {
+      appendMessage: jest.fn((message: { content: string }) => {
+        fs.appendFileSync(sessionFile, `${JSON.stringify({
+          type: 'message',
+          id: 'user-1',
+          parentId: null,
+          timestamp: new Date().toISOString(),
+          message,
+        })}\n`);
+        return 'user-1';
+      }),
+      getSessionFile: () => sessionFile,
+      isPersisted: () => true,
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(sessionFile);
+
+    try {
+      expect(store.appendUserMessage('still append')).toBe('user-1');
+      expect(manager.appendMessage).toHaveBeenCalledTimes(1);
+    } finally {
+      bindSessionJournal(null);
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('strips device-local external paths at the JSONL message UI boundary', () => {
     const store = SessionTreeStore.inMemory('/test/vault-message-ui-privacy');
 

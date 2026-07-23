@@ -154,24 +154,39 @@ function headersToRecord(headers: Headers): Record<string, string> {
   return record;
 }
 
-function decompressBuffer(encoding: string | null, encoded: Buffer): Buffer {
+function decompressBuffer(
+  encoding: string | null,
+  encoded: Buffer,
+  maxDecoded: number,
+): Buffer {
   if (!encoding || encoding === 'identity') {
     return encoded;
   }
   try {
     if (/br/i.test(encoding)) {
-      return brotliDecompressSync(encoded);
+      return brotliDecompressSync(encoded, { maxOutputLength: maxDecoded });
     }
     if (/gzip|x-gzip/i.test(encoding)) {
-      return gunzipSync(encoded);
+      return gunzipSync(encoded, { maxOutputLength: maxDecoded });
     }
     if (/deflate/i.test(encoding)) {
-      return inflateSync(encoded);
+      return inflateSync(encoded, { maxOutputLength: maxDecoded });
     }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (
+      (typeof error === 'object' && error !== null && 'code' in error
+        && error.code === 'ERR_BUFFER_TOO_LARGE')
+      || /maxOutputLength|larger than/i.test(errorMessage)
+    ) {
+      throw new EgressPolicyError(
+        'byte-limit',
+        `Decoded response exceeds limit (${maxDecoded} bytes)`,
+      );
+    }
     throw new EgressPolicyError(
       'byte-limit',
-      `Failed to decompress response: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to decompress response: ${errorMessage}`,
     );
   }
   return encoded;
@@ -274,7 +289,7 @@ function createLimitedBodyStream(
         try {
           if (isCompressed) {
             const merged = Buffer.concat(encodedChunks);
-            const decoded = decompressBuffer(limits.encoding, merged);
+            const decoded = decompressBuffer(limits.encoding, merged, limits.maxDecoded);
             if (decoded.byteLength > limits.maxDecoded) {
               fail(new EgressPolicyError(
                 'byte-limit',

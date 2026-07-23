@@ -9,12 +9,16 @@ import {
   bindSessionJournal,
 } from "@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore";
 import { createSecretStoreResolveHost } from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
+import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type {
   DeviceLocalExternalContextStore,
   SessionStore,
 } from "@pivi/pivi-agent-core/session";
-import type { SessionJournalStore } from "@pivi/pivi-agent-core/session/sessionJournal";
+import {
+  type SessionJournalStore,
+  SessionJournalVersionError,
+} from "@pivi/pivi-agent-core/session/sessionJournal";
 import { assertBundledReactRuntime } from "@pivi/pivi-react";
 import { createHash } from 'crypto';
 import type { App } from "obsidian";
@@ -30,6 +34,8 @@ import { t } from "@/app/i18n";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
 import type PiviPlugin from "@/main"
+
+const logger = new PluginLogger('ServiceGraph');
 
 export interface PiviServiceGraph {
   piWorkspace: PiWorkspaceServices;
@@ -79,7 +85,18 @@ export function createSessionStore(
 ): SessionStore {
   configureSessionJsonlIndexRoot(resolveDeviceLocalSessionIndexRoot(vaultPath));
   if (journalStore) {
-    bindSessionJournal(journalStore);
+    try {
+      journalStore.load();
+      bindSessionJournal(journalStore);
+    } catch (error) {
+      if (!(error instanceof SessionJournalVersionError)) {
+        throw error;
+      }
+      bindSessionJournal(null);
+      logger.warn('Disabled session journaling for an unsupported journal version', {
+        error: error.message,
+      });
+    }
   }
   return new PiSessionStore(vaultAdapter, vaultPath, externalContexts);
 }
@@ -90,9 +107,21 @@ export function reconcileSessionCloudRecovery(
   journalStore: SessionJournalStore = new ObsidianDeviceLocalSessionJournalStore(app),
 ): void {
   bindSessionJournal(journalStore);
-  const results = reconcileSessionJournal(vaultPath, journalStore, {
-    recoveredTitle: t('host.sessionRecovery.recoveredTitle'),
-  });
+  let results;
+  try {
+    results = reconcileSessionJournal(vaultPath, journalStore, {
+      recoveredTitle: t('host.sessionRecovery.recoveredTitle'),
+    });
+  } catch (error) {
+    if (!(error instanceof SessionJournalVersionError)) {
+      throw error;
+    }
+    bindSessionJournal(null);
+    logger.warn('Disabled session recovery for an unsupported journal version', {
+      error: error.message,
+    });
+    return;
+  }
   for (const result of results) {
     if (result.noticeKey === 'host.sessionRecovery.recovered' && result.noticeParams) {
       new Notice(t('host.sessionRecovery.recovered', result.noticeParams));

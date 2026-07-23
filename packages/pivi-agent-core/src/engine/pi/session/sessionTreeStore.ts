@@ -333,17 +333,18 @@ export class SessionTreeStore {
     try {
       boundJournal.store.save(upsertJournalEntry(boundJournal.store.load(), entry));
     } catch (error) {
-      if (error instanceof SessionJournalBoundsError) {
-        // The journal is a recovery aid, not the authoritative write path. A
-        // supported large image must still reach Pi even when its intent cannot
-        // fit in the bounded device-local journal.
-        logger.warn('Session journal intent exceeds the recovery bound', {
+      // The journal is a recovery aid, not the authoritative write path. A
+      // journal codec/storage failure must never prevent the Pi JSONL append.
+      logger.warn(
+        error instanceof SessionJournalBoundsError
+          ? 'Session journal intent exceeds the recovery bound'
+          : 'Failed to persist session journal intent',
+        {
           sessionFile: relative,
-          error: error.message,
-        });
-        return undefined;
-      }
-      throw error;
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+      return undefined;
     }
     return entry;
   }

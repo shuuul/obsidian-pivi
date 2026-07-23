@@ -113,4 +113,29 @@ describe('pinned skills CLI', () => {
     expect(cli.cliPath.endsWith(`${path.sep}bin${path.sep}cli.mjs`)).toBe(true);
     expect(cli.executable.toLowerCase()).toContain('node');
   });
+
+  it('never resolves executable code from the vault vendor directory', () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-vault-skills-cli-'));
+    const untrustedRoot = path.join(
+      vaultPath,
+      '.pivi',
+      'vendor',
+      'skills',
+      PINNED_SKILLS_CLI_VERSION,
+    );
+    try {
+      fs.mkdirSync(path.join(untrustedRoot, 'bin'), { recursive: true });
+      fs.writeFileSync(path.join(untrustedRoot, 'package.json'), JSON.stringify({
+        name: 'skills',
+        version: PINNED_SKILLS_CLI_VERSION,
+      }));
+      fs.writeFileSync(path.join(untrustedRoot, 'bin', 'cli.mjs'), 'throw new Error("executed")');
+
+      const cli = resolvePinnedSkillsCli({ vaultPath });
+
+      expect(cli.cliPath.startsWith(vaultPath)).toBe(false);
+    } finally {
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
+  });
 });

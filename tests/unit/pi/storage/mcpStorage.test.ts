@@ -140,6 +140,37 @@ describe("McpStorage", () => {
     });
   });
 
+  it("does not revive bearer and OAuth secrets after they are cleared", async () => {
+    const adapter = new MemoryVaultAdapter();
+    const secretStorage = new SecretStorage();
+    const storage = new McpStorage(adapter as unknown as FileStore, secretStorage);
+
+    await storage.save([
+      remoteServer({ auth: "bearer", bearerToken: "bearer-secret" }),
+      remoteServer({
+        name: "oauth",
+        auth: "oauth",
+        oauth: {
+          grantType: "client_credentials",
+          clientId: "client-id",
+          clientSecret: "client-secret",
+        },
+      }),
+    ]);
+    await storage.save([
+      remoteServer({ auth: "bearer" }),
+      remoteServer({
+        name: "oauth",
+        auth: "oauth",
+        oauth: { grantType: "client_credentials", clientId: "client-id" },
+      }),
+    ]);
+
+    const loaded = await storage.load();
+    expect(loaded.find(server => server.name === "remote")?.bearerToken).toBeUndefined();
+    expect(loaded.find(server => server.name === "oauth")?.oauth).not.toHaveProperty("clientSecret");
+  });
+
   it("stores bearer tokens for long MCP server names using digest secret ids", async () => {
     const adapter = new MemoryVaultAdapter();
     const secretStorage = new SecretStorage();
@@ -313,6 +344,47 @@ describe("McpStorage", () => {
     await expect(failingStorage.save([])).rejects.toThrow("disk full");
     expect(secretStorage.getSecret(getMcpValueSecretId("remote", "header", "Authorization")))
       .toBe("stored-token");
+  });
+
+  it("keeps whitespace-cleared credentials when config publication fails", async () => {
+    const adapter = new MemoryVaultAdapter();
+    const secretStorage = new SecretStorage();
+    const storage = new McpStorage(adapter as unknown as FileStore, secretStorage);
+    await storage.save([
+      remoteServer({ auth: "bearer", bearerToken: "bearer-secret" }),
+      remoteServer({
+        name: "oauth",
+        auth: "oauth",
+        oauth: {
+          grantType: "client_credentials",
+          clientId: "client-id",
+          clientSecret: "client-secret",
+        },
+      }),
+    ]);
+    const failingAdapter = Object.assign(adapter, {
+      write: jest.fn(async () => { throw new Error("disk full"); }),
+    }) as unknown as FileStore;
+    const failingStorage = new McpStorage(failingAdapter, secretStorage);
+
+    await expect(failingStorage.save([
+      remoteServer({ auth: "bearer", bearerToken: "   " }),
+      remoteServer({
+        name: "oauth",
+        auth: "oauth",
+        oauth: {
+          grantType: "client_credentials",
+          clientId: "client-id",
+          clientSecret: "   ",
+        },
+      }),
+    ])).rejects.toThrow("disk full");
+
+    const loaded = await failingStorage.load();
+    expect(loaded.find(server => server.name === "remote")?.bearerToken).toBe("bearer-secret");
+    expect(loaded.find(server => server.name === "oauth")?.oauth).toMatchObject({
+      clientSecret: "client-secret",
+    });
   });
 
   it("serializes concurrent saves", async () => {

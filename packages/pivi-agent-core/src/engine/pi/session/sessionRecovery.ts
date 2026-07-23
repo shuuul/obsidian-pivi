@@ -500,6 +500,29 @@ function buildRecoveredFromLinesOnly(
   return Buffer.from([headerLine, ...recoveredLines, provenance].join('\n') + '\n', 'utf8');
 }
 
+function rewriteRecoveredSessionHeader(
+  prefix: Buffer,
+  entry: SessionJournalEntryV1,
+): Buffer | null {
+  const newline = prefix.indexOf(0x0a);
+  if (newline < 0) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(prefix.subarray(0, newline).toString('utf8')) as Record<string, unknown>;
+    if (parsed.type !== 'session' || typeof parsed.id !== 'string') {
+      return null;
+    }
+    const header = Buffer.from(`${JSON.stringify({
+      ...parsed,
+      id: `recovered-${entry.id.slice(0, 12)}`,
+    })}\n`, 'utf8');
+    return Buffer.concat([header, prefix.subarray(newline + 1)]);
+  } catch {
+    return null;
+  }
+}
+
 function writeRecoveredSessionFile(
   vaultPath: string,
   entry: SessionJournalEntryV1,
@@ -517,26 +540,31 @@ function writeRecoveredSessionFile(
   if (sourceAbsolute && existsSync(sourceAbsolute) && entry.baseFingerprint.size > 0) {
     const source = readFileSync(sourceAbsolute);
     if (prefixMatchesBase(sourceAbsolute, entry.baseFingerprint)) {
-      body = Buffer.concat([
+      const recoveredPrefix = rewriteRecoveredSessionHeader(
         source.subarray(0, entry.baseFingerprint.size),
-        Buffer.from(`${lines.join('\n')}\n`, 'utf8'),
-      ]);
-      const provenance = JSON.stringify({
-        type: 'custom',
-        id: `prov-${entry.id.slice(0, 12)}`,
-        parentId: lastEntryIdInLines(lines)
-          ?? lastEntryIdInPrefix(sourceAbsolute, entry.baseFingerprint.size),
-        timestamp: new Date().toISOString(),
-        customType: 'pivi/session-meta',
-        data: {
-          title: recoveredTitle,
-          titleSource: 'custom',
-          createdAt: entry.createdAt,
-          recoverySourceSessionFile: entry.sessionFile,
-          recoveryJournalEntryId: entry.id,
-        },
-      });
-      body = Buffer.concat([body, Buffer.from(`${provenance}\n`, 'utf8')]);
+        entry,
+      );
+      if (!recoveredPrefix) {
+        body = buildRecoveredFromLinesOnly(source, lines, entry, recoveredTitle);
+      } else {
+        body = Buffer.concat([recoveredPrefix, Buffer.from(`${lines.join('\n')}\n`, 'utf8')]);
+        const provenance = JSON.stringify({
+          type: 'custom',
+          id: `prov-${entry.id.slice(0, 12)}`,
+          parentId: lastEntryIdInLines(lines)
+            ?? lastEntryIdInPrefix(sourceAbsolute, entry.baseFingerprint.size),
+          timestamp: new Date().toISOString(),
+          customType: 'pivi/session-meta',
+          data: {
+            title: recoveredTitle,
+            titleSource: 'custom',
+            createdAt: entry.createdAt,
+            recoverySourceSessionFile: entry.sessionFile,
+            recoveryJournalEntryId: entry.id,
+          },
+        });
+        body = Buffer.concat([body, Buffer.from(`${provenance}\n`, 'utf8')]);
+      }
     } else {
       body = buildRecoveredFromLinesOnly(source, lines, entry, recoveredTitle);
     }

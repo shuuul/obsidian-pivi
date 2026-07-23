@@ -64,6 +64,13 @@ describe('requireVaultRelativeMutationPath', () => {
     expect(() => requireVaultRelativeMutationPath('notes//a.md', vaultPath)).toThrow(/vault-relative|separator/i);
   });
 
+  it('rejects POSIX backslashes instead of changing the validated target', () => {
+    withPlatform('linux', () => {
+      expect(() => requireVaultRelativeMutationPath('notes\\a.md', vaultPath))
+        .toThrow(/backslash|separator/i);
+    });
+  });
+
   it('contains creation beneath a symlinked parent that escapes the vault', () => {
     if (process.platform === 'win32') {
       return;

@@ -517,22 +517,18 @@ export class McpStorage {
 
   private stageBearerAndOAuthSecrets(server: ManagedMcpServer): string[] {
     const obsoleteSecretIds: string[] = [];
-    if (server.auth === 'bearer') {
-      if (server.bearerToken) {
-        this.setStoredSecret(server.name, 'bearer-token', server.bearerToken);
-      }
+    const bearerToken = server.bearerToken?.trim();
+    if (server.auth === 'bearer' && bearerToken) {
+      this.setStoredSecret(server.name, 'bearer-token', bearerToken);
     } else {
       obsoleteSecretIds.push(...listMcpSecretIds(server.name, 'bearer-token'));
     }
 
-    if (server.oauth && typeof server.oauth === 'object') {
-      if (server.oauth.clientSecret) {
-        this.setStoredSecret(
-          server.name,
-          'client-secret',
-          server.oauth.clientSecret,
-        );
-      }
+    const clientSecret = server.oauth && typeof server.oauth === 'object'
+      ? server.oauth.clientSecret?.trim()
+      : undefined;
+    if (clientSecret) {
+      this.setStoredSecret(server.name, 'client-secret', clientSecret);
     } else {
       obsoleteSecretIds.push(...listMcpSecretIds(server.name, 'client-secret'));
     }

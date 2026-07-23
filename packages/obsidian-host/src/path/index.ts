@@ -399,6 +399,9 @@ export function requireVaultRelativeMutationPath(
   if (containsNul(trimmed)) {
     throw new Error('Vault mutation path must not contain NUL');
   }
+  if (process.platform !== 'win32' && trimmed.includes('\\')) {
+    throw new Error('Vault mutation path must not contain backslash separators on this platform');
+  }
   if (trimmed === '.' || trimmed === './' || trimmed === '.\\') {
     throw new Error('Vault mutation path must not be the vault root');
   }
@@ -426,7 +429,10 @@ export function requireVaultRelativeMutationPath(
     throw new Error(`Vault mutation path escapes the vault: ${trimmed}`);
   }
 
-  const relative = path.relative(vaultPath, absolute).replace(/\\/g, '/');
+  const platformRelative = path.relative(vaultPath, absolute);
+  const relative = process.platform === 'win32'
+    ? platformRelative.replace(/\\/g, '/')
+    : platformRelative;
   if (!relative || relative === '.' || relative.startsWith('../') || path.isAbsolute(relative)) {
     throw new Error(`Vault mutation path must be a non-empty vault-relative path: ${trimmed}`);
   }

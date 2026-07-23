@@ -1,3 +1,4 @@
+import type { ParseDiagnostic } from '../foundation/configPublication';
 import { extractMcpMentions, transformMcpMentions } from './mcpUtils';
 import type { ManagedMcpServer, McpServerConfig } from './types';
 import { getMcpServerType } from './types';
@@ -12,6 +13,11 @@ export interface McpAvailabilitySummary {
 /** Storage interface for loading MCP servers. */
 export interface McpStorageAdapter {
   load(): Promise<ManagedMcpServer[]>;
+  loadWithDiagnostics?(): Promise<{
+    servers: ManagedMcpServer[];
+    diagnostics: ParseDiagnostic[];
+    corruptPath?: string;
+  }>;
 }
 
 /** Stdio servers require explicit activation confirmation before they can run. */
@@ -27,6 +33,10 @@ export function isMcpServerRuntimeActive(server: ManagedMcpServer): boolean {
 
 export class McpServerManager {
   private servers: ManagedMcpServer[] = [];
+  private loadDiagnostics: {
+    diagnostics: readonly ParseDiagnostic[];
+    corruptPath?: string;
+  } | null = null;
   private storage: McpStorageAdapter;
 
   constructor(storage: McpStorageAdapter) {
@@ -34,11 +44,27 @@ export class McpServerManager {
   }
 
   async loadServers(): Promise<void> {
+    if (this.storage.loadWithDiagnostics) {
+      const result = await this.storage.loadWithDiagnostics();
+      this.servers = result.servers;
+      this.loadDiagnostics = result.diagnostics.length > 0 || result.corruptPath
+        ? { diagnostics: result.diagnostics, corruptPath: result.corruptPath }
+        : null;
+      return;
+    }
     this.servers = await this.storage.load();
+    this.loadDiagnostics = null;
   }
 
   getServers(): ManagedMcpServer[] {
     return this.servers;
+  }
+
+  getLoadDiagnostics(): {
+    diagnostics: readonly ParseDiagnostic[];
+    corruptPath?: string;
+  } | null {
+    return this.loadDiagnostics;
   }
 
   getEnabledCount(): number {

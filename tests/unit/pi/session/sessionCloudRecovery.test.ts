@@ -461,8 +461,12 @@ describe('session cloud recovery fault matrix', () => {
     expect(result.recoveredSessionFile).toBeTruthy();
     expect(readFileSync(sessionAbsolute).equals(rolled)).toBe(true);
     const recoveredAbsolute = join(vaultPath, result.recoveredSessionFile!);
-    expect(readFileSync(recoveredAbsolute, 'utf8')).toContain(lines[0]!);
-    expect(readFileSync(recoveredAbsolute, 'utf8')).toContain('recoverySourceSessionFile');
+    const recoveredText = readFileSync(recoveredAbsolute, 'utf8');
+    const recoveredHeader = JSON.parse(recoveredText.split('\n')[0]!) as Record<string, unknown>;
+    expect(recoveredHeader.id).toBe(`recovered-${entry.id.slice(0, 12)}`);
+    expect(recoveredHeader.id).not.toBe('sess-1');
+    expect(recoveredText).toContain(lines[0]!);
+    expect(recoveredText).toContain('recoverySourceSessionFile');
   });
 
   it('recovers truncation and replacement into explicit sessions', () => {
