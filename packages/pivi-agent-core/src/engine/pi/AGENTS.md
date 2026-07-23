@@ -94,7 +94,7 @@ flowchart TD
 - Device-local external-context overlays are deliberately not part of durable session identity. Fork copies the source overlay to the new session file; redo reuses the same session overlay and recaptures current capabilities when the turn is submitted again.
 - `SessionTreeStore` deliberately uses isolated Pi internals (`fileEntries`, `_buildIndex()`, `_rewriteFile()`, `flushed`) for the one-time eager header bootstrap and rewind because upstream lacks equivalent public APIs. Those members are reached only through `piSessionManagerPrivateAdapter.ts`. Normal message, custom-entry, and compaction writes use Pi's public typed append methods and must not rewrite prior JSONL bytes.
 - Source imports Pi's public session, compaction, and message exports from the package root. The production build narrows that root import to a generated facade over upstream `core/session-manager.js`, `core/compaction/index.js`, and `core/messages.js` because the root ESM entrypoint statically re-exports the CLI/TUI; keep this build adaptation aligned with the consumed public exports and covered by production-build verification.
-- Do not widen that facade to `AgentSession` without an explicit architecture and bundle review. In the installed 0.80.10 graph, a forced production import increased the measured plugin bundle from about 3.0 MiB to 7.9 MiB and required substantially broader config/pi-ai compatibility shims.
+- Do not widen that facade to `AgentSession` without an explicit architecture and bundle review. In the installed 0.81.1 graph, a forced production import increased the measured plugin bundle from about 3.0 MiB to 7.9 MiB and required substantially broader config/pi-ai compatibility shims.
 
 ## Boundaries
 
