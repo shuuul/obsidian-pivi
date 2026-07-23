@@ -2,6 +2,7 @@ import type { Editor } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
 import { t } from "@/app/i18n";
+import { openInlineEditForEditorSelection } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
 import type PiviPlugin from "@/main"
 import { getActiveWindow } from "@/ui/shared/dom";
 
@@ -9,6 +10,7 @@ import { findPiviView } from "./viewAccess";
 
 export const ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID =
   "add-selection-to-chat-input";
+export const INLINE_EDIT_SELECTION_COMMAND_ID = "inline-edit-selection";
 const CHAT_PERF_SCENARIO_PATH = '.pivi/perf-scenario.txt';
 
 export function registerPiviCommands(plugin: PiviPlugin): void {
@@ -18,6 +20,24 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     name: t("commands.openChatView"),
     callback: () => {
       void plugin.activateView();
+    },
+  });
+
+  plugin.addCommand({
+    id: INLINE_EDIT_SELECTION_COMMAND_ID,
+    name: t("settings.inlineEditSelectionHotkey.name"),
+    editorCheckCallback: (checking: boolean, editor: Editor, ctx) => {
+      const view =
+        ctx instanceof MarkdownView
+          ? ctx
+          : plugin.app.workspace.getActiveViewOfType(MarkdownView);
+      if (!view || view.getMode() === "preview" || !editor.somethingSelected()) {
+        return false;
+      }
+      if (!checking && !openInlineEditForEditorSelection(editor)) {
+        new Notice(t("chat.inlineContext.selectTextFirst"));
+      }
+      return true;
     },
   });
 

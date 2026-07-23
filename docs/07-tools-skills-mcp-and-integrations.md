@@ -116,7 +116,7 @@ Pivi detects the installed manifest before enabling setup. It never installs Not
 
 Pivi can add `message-square-plus` with a visible `Pivi` label or as icon-only. Setup is idempotent for a matching command/style. For an existing item, Pivi first uses Note Toolbar's runtime item API to synchronize its icon, label, and tooltip. If that API is unavailable and the style differs, Pivi opens the relevant item or plugin settings for manual adjustment; it still does not rewrite configuration directly.
 
-Without automatic setup, add a Command item manually in the toolbar assigned to Selected text, choose **Pivi: Add selection to chat input**, and use `message-square-plus`. Custom slash-command cards can similarly save and add their stable icon-only commands.
+Without automatic setup, add a Command item manually in the toolbar assigned to Selected text, choose **Pivi: Add selection to chat**, and use `message-square-plus`. Custom slash-command cards can similarly save and add their stable icon-only commands.
 
 Troubleshooting:
 

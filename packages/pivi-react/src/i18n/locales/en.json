@@ -67,7 +67,7 @@
       "scrollToRecentUserAriaLabel": "Scroll to most recent user message"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "Add selection to chat input",
+      "addSelectionToChatInput": "Add selection to chat",
       "selectTextFirst": "Select text in a note first.",
       "noActiveChatInput": "Unable to find an active chat input.",
       "selectionAdded": "Selection added to chat input."
@@ -377,8 +377,11 @@
     "closeTabHotkey": {
       "name": "Close Tab"
     },
+    "inlineEditSelectionHotkey": {
+      "name": "Inline edit selection"
+    },
     "addSelectionHotkey": {
-      "name": "Add selection to chat input"
+      "name": "Add selection to chat"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",

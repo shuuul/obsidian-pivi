@@ -41,7 +41,7 @@
       "scrollToRecentUserAriaLabel": "最新のユーザーメッセージへスクロール"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "選択範囲をチャット入力に追加",
+      "addSelectionToChatInput": "選択範囲をチャットに追加",
       "selectTextFirst": "先にノート内のテキストを選択してください。",
       "noActiveChatInput": "アクティブなチャット入力が見つかりません。",
       "selectionAdded": "選択範囲をチャット入力に追加しました。"
@@ -351,8 +351,11 @@
     "closeTabHotkey": {
       "name": "タブを閉じる"
     },
+    "inlineEditSelectionHotkey": {
+      "name": "選択範囲をインライン編集"
+    },
     "addSelectionHotkey": {
-      "name": "選択範囲をチャット入力に追加"
+      "name": "選択範囲をチャットに追加"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",

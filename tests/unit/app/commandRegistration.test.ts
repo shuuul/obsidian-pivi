@@ -14,6 +14,11 @@ type RegisteredCommand = {
   id: string;
   callback?: () => void;
   checkCallback?: (checking: boolean) => boolean;
+  editorCheckCallback?: (
+    checking: boolean,
+    editor: { somethingSelected(): boolean },
+    context: unknown,
+  ) => boolean | void;
 };
 
 function createPlugin() {
@@ -38,7 +43,7 @@ function createPlugin() {
         },
         workspace: {
           on: jest.fn(() => ({})),
-          getActiveViewOfType: jest.fn(() => null),
+          getActiveViewOfType: jest.fn<unknown, [unknown]>(() => null),
         },
       },
       addCommand: jest.fn((command: RegisteredCommand) => {
@@ -111,7 +116,7 @@ describe('chat command registration', () => {
       ?.checkCallback?.(true)).toBe(false);
   });
 
-  it('keeps selected-text context while omitting editor inline edit', () => {
+  it('registers selection-based chat and inline edit commands', () => {
     const { commands, plugin } = createPlugin();
 
     registerPiviCommands(plugin as never);
@@ -119,7 +124,21 @@ describe('chat command registration', () => {
     expect(commands.map(command => command.id)).toContain(
       'add-selection-to-chat-input',
     );
-    expect(commands.map(command => command.id)).not.toContain('inline-edit');
+    const inlineEdit = commands.find(command => command.id === 'inline-edit-selection');
+    expect(inlineEdit).toBeDefined();
+    expect(inlineEdit?.editorCheckCallback?.(
+      true,
+      { somethingSelected: () => false },
+      {},
+    )).toBe(false);
+    jest.mocked(plugin.app.workspace.getActiveViewOfType).mockReturnValue({
+      getMode: () => 'source',
+    });
+    expect(inlineEdit?.editorCheckCallback?.(
+      true,
+      { somethingSelected: () => true },
+      {},
+    )).toBe(true);
   });
 
   it('registers explicit development trace lifecycle commands', () => {

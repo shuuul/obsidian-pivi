@@ -26,6 +26,7 @@ export const SETTINGS_HOTKEY_ROWS = [
   { commandId: 'pivi:new-session', labelKey: 'settings.newSessionHotkey.name' },
   { commandId: 'pivi:new-tab', labelKey: 'settings.newTabHotkey.name' },
   { commandId: 'pivi:close-current-tab', labelKey: 'settings.closeTabHotkey.name' },
+  { commandId: 'pivi:inline-edit-selection', labelKey: 'settings.inlineEditSelectionHotkey.name' },
   { commandId: 'pivi:add-selection-to-chat-input', labelKey: 'settings.addSelectionHotkey.name' },
 ] as const;
 

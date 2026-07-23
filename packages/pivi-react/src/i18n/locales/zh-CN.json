@@ -41,7 +41,7 @@
       "scrollToRecentUserAriaLabel": "滚动到最近的用户消息"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "将选区添加到聊天输入",
+      "addSelectionToChatInput": "将选区添加到聊天",
       "selectTextFirst": "请先在笔记中选择文本。",
       "noActiveChatInput": "找不到活动的聊天输入。",
       "selectionAdded": "已将选区添加到聊天输入。"
@@ -351,8 +351,11 @@
     "closeTabHotkey": {
       "name": "关闭标签页"
     },
+    "inlineEditSelectionHotkey": {
+      "name": "内联编辑选区"
+    },
     "addSelectionHotkey": {
-      "name": "将选区添加到聊天输入"
+      "name": "将选区添加到聊天"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",

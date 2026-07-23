@@ -41,7 +41,7 @@
       "scrollToRecentUserAriaLabel": "К последнему сообщению пользователя"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "Добавить выделение во ввод чата",
+      "addSelectionToChatInput": "Добавить выделение в чат",
       "selectTextFirst": "Сначала выделите текст в заметке.",
       "noActiveChatInput": "Не найден активный ввод чата.",
       "selectionAdded": "Выделение добавлено во ввод чата."
@@ -351,8 +351,11 @@
     "closeTabHotkey": {
       "name": "Закрыть вкладку"
     },
+    "inlineEditSelectionHotkey": {
+      "name": "Встроенное редактирование выделения"
+    },
     "addSelectionHotkey": {
-      "name": "Добавить выделение во ввод чата"
+      "name": "Добавить выделение в чат"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",

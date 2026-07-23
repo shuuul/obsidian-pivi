@@ -41,7 +41,7 @@
       "scrollToRecentUserAriaLabel": "捲動到最近的使用者訊息"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "將選取內容加入聊天輸入",
+      "addSelectionToChatInput": "將選取內容加入聊天",
       "selectTextFirst": "請先在筆記中選取文字。",
       "noActiveChatInput": "找不到作用中的聊天輸入。",
       "selectionAdded": "已將選取內容加入聊天輸入。"
@@ -351,8 +351,11 @@
     "closeTabHotkey": {
       "name": "關閉分頁"
     },
+    "inlineEditSelectionHotkey": {
+      "name": "行內編輯選取內容"
+    },
     "addSelectionHotkey": {
-      "name": "將選取內容加入聊天輸入"
+      "name": "將選取內容加入聊天"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",

@@ -110,6 +110,8 @@ Note Toolbar setup and CLI requirements are covered in [Tools, skills, MCP, and 
 
 Edit-mode Markdown selections (Live Preview and Source) open a body-appended floating toolbar registered through `registerEditorExtension` in app composition when Settings → Toolbar uses the **Pivi** selected-text provider. The same registration also installs the inline-edit surface and diff-review `StateField`s into every markdown editor so same-leaf file switches and mode toggles cannot wipe a lazy `appendConfig` install. Choosing **Note Toolbar** or **Disabled** suppresses this overlay so selected-text chrome never doubles up. Selection ownership is scoped to the active editor view and owner document, including pop-out windows; pointer tracking runs in the capture phase so CodeMirror or third-party event handling cannot leave toolbar triggering suppressed. The CM6 `ViewPlugin` and geometry helpers live under `src/ui/shared/selectionToolbar/`; React chrome mounts only through `src/app/ui` via `mountSelectionToolbarSurface`.
 
+The editor-only `pivi:inline-edit-selection` command opens the same inline-edit surface for the current non-empty selection even when the floating toolbar is disabled. It is listed in the shortcut links under Settings → General; users can assign `Mod+K` (`Command+K` on macOS and `Ctrl+K` on Windows/Linux) or another shortcut in Obsidian Hotkeys. Pivi does not claim a default plugin hotkey that could override an existing user or host binding.
+
 The Pivi toolbar always offers **Ask AI** and **Add to chat**, plus enabled shortcuts from synced `editorSelectionToolbar` settings:
 
 - Obsidian command shortcuts call `app.commands.executeCommandById`.

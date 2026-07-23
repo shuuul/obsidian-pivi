@@ -20,6 +20,11 @@ const mockHostOnShow = jest.fn();
 const mockHostOnDismiss = jest.fn();
 const mockGetCurrentSnapshot = jest.fn<EditorSelectionSnapshot | null, []>(() => null);
 const mockDismissOverlay = jest.fn();
+const mockCaptureEditorSelectionSnapshot = jest.fn<EditorSelectionSnapshot | null, [unknown]>(() => null);
+
+jest.mock('@/ui/shared/selectionToolbar/selectionToolbarPlugin', () => ({
+  captureEditorSelectionSnapshot: (editor: unknown) => mockCaptureEditorSelectionSnapshot(editor),
+}));
 
 jest.mock('@/app/editorSelectionToolbarRegistration', () => ({
   getSelectionToolbarHost: () => ({
@@ -389,6 +394,17 @@ describe('SelectionToolbarSurfaceController inline edit guards', () => {
     expect((controller as unknown as {
       inlineEditSessions: Map<string, unknown>;
     }).inlineEditSessions.size).toBe(1);
+  });
+
+  it('opens inline edit from the editor command selection snapshot', () => {
+    const controller = createController();
+    const editor = {};
+    mockCaptureEditorSelectionSnapshot.mockReturnValueOnce(snapshot);
+
+    expect(controller.openInlineEditForSelection(editor as never)).toBe(true);
+
+    expect(mockCaptureEditorSelectionSnapshot).toHaveBeenCalledWith(editor);
+    expect(showInlineEditSession).toHaveBeenCalledWith(snapshot);
   });
 
   it('dispatches curated editor commands by exact ID and ignores unknown item IDs', async () => {

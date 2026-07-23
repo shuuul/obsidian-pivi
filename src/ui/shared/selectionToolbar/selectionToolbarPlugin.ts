@@ -1,6 +1,7 @@
 import type { Extension } from '@codemirror/state';
 import type { EditorView, PluginValue, ViewUpdate } from '@codemirror/view';
 import { ViewPlugin } from '@codemirror/view';
+import type { Editor } from 'obsidian';
 import { editorInfoField } from 'obsidian';
 
 import { getActiveWindow } from '@/ui/shared/dom';
@@ -31,10 +32,24 @@ interface SelectionSnapshot {
 interface RefreshableSelectionToolbarPlugin {
   refreshSelection(force: boolean): void;
   resetSelection(): void;
+  captureSelection(editor: Editor): EditorSelectionSnapshot | null;
   readonly ownerDocument: Document;
 }
 
 const activeSelectionToolbarPlugins = new Set<RefreshableSelectionToolbarPlugin>();
+
+/** Captures the current CM selection for an Obsidian editor, independent of toolbar visibility. */
+export function captureEditorSelectionSnapshot(
+  editor: Editor,
+): EditorSelectionSnapshot | null {
+  for (const plugin of activeSelectionToolbarPlugins) {
+    const snapshot = plugin.captureSelection(editor);
+    if (snapshot) {
+      return snapshot;
+    }
+  }
+  return null;
+}
 
 /** Re-checks CM selections after pointer state changes that do not create a transaction. */
 export function refreshSelectionToolbarViews(
@@ -158,6 +173,31 @@ export function createSelectionToolbarPluginClass(
       this.lastSelection = null;
       this.pendingSelection = null;
       this.selectionSuppressed = false;
+    }
+
+    captureSelection(editor: Editor): EditorSelectionSnapshot | null {
+      const owningEditor = editorInfoField
+        ? this.view.state.field(editorInfoField, false)?.editor
+        : undefined;
+      if (owningEditor !== editor) {
+        return null;
+      }
+      const selection = this.view.state.selection.main;
+      if (selection.empty) {
+        return null;
+      }
+      const rect = getSelectionRect(this.view);
+      if (!rect) {
+        return null;
+      }
+      return {
+        from: selection.from,
+        to: selection.to,
+        text: this.view.state.doc.sliceString(selection.from, selection.to),
+        rect,
+        editorView: this.view,
+        editor,
+      };
     }
 
     private clearSelection(): void {

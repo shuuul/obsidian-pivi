@@ -10,6 +10,7 @@ import {
   type SelectionToolbarSurfaceProps,
 } from '@pivi/pivi-react/mount';
 import type { ComposerOptionSnapshot } from '@pivi/pivi-react/store';
+import type { Editor } from 'obsidian';
 import { MarkdownView, Notice } from 'obsidian';
 
 import {
@@ -31,6 +32,7 @@ import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
 import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getWorkspaceCommandFullId } from '@/app/workspaceCommandRegistry';
 import type PiviPlugin from '@/main';
+import { captureEditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/selectionToolbarPlugin';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
 type ComposerDefaults = {
@@ -162,6 +164,14 @@ export class SelectionToolbarSurfaceController {
     this.unsubscribers.length = 0;
     for (const record of [...this.inlineEditSessions.values()]) this.destroyInlineEditSession(record);
     this.disposeSurface();
+  }
+
+  openInlineEditForSelection(editor: Editor): boolean {
+    const snapshot = captureEditorSelectionSnapshot(editor);
+    if (!snapshot) {
+      return false;
+    }
+    return this.openInlineEdit('', snapshot) !== null;
   }
 
   private disposeSurface(): void {
@@ -533,7 +543,19 @@ export class SelectionToolbarSurfaceController {
   }
 }
 
+let registeredSelectionToolbarController: SelectionToolbarSurfaceController | null = null;
+
+export function openInlineEditForEditorSelection(editor: Editor): boolean {
+  return registeredSelectionToolbarController?.openInlineEditForSelection(editor) ?? false;
+}
+
 export function registerSelectionToolbarUi(plugin: PiviPlugin): void {
   const controller = new SelectionToolbarSurfaceController(plugin);
+  registeredSelectionToolbarController = controller;
   controller.register();
+  plugin.register(() => {
+    if (registeredSelectionToolbarController === controller) {
+      registeredSelectionToolbarController = null;
+    }
+  });
 }

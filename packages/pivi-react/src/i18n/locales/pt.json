@@ -41,7 +41,7 @@
       "scrollToRecentUserAriaLabel": "Rolar para a mensagem de usuário mais recente"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "Adicionar seleção à entrada do chat",
+      "addSelectionToChatInput": "Adicionar seleção ao chat",
       "selectTextFirst": "Selecione texto em uma nota primeiro.",
       "noActiveChatInput": "Não foi possível encontrar uma entrada de chat ativa.",
       "selectionAdded": "Seleção adicionada à entrada do chat."
@@ -351,8 +351,11 @@
     "closeTabHotkey": {
       "name": "Fechar aba"
     },
+    "inlineEditSelectionHotkey": {
+      "name": "Editar seleção em linha"
+    },
     "addSelectionHotkey": {
-      "name": "Adicionar seleção à entrada do chat"
+      "name": "Adicionar seleção ao chat"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
