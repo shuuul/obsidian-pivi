@@ -388,7 +388,6 @@ function createObsidianBaseToolProvider(
         fetch: network.webFetch,
         providerOrder: webSearchSettings.providerOrder,
         disabledProviders: webSearchSettings.disabledProviders,
-        fetchMode: webSearchSettings.fetchMode,
         getCredential: (providerId) =>
           webSearchCredentialStore?.readSync(providerId),
         environmentVariables,

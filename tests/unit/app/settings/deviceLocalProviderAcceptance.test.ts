@@ -81,7 +81,6 @@ describe('device-local provider acceptance matrix', () => {
         webSearchTools: {
           providerOrder: ['brave'],
           disabledProviders: [],
-      fetchMode: 'direct-only',
         },
       },
       model: 'openai/gpt-4.1',
@@ -109,7 +108,6 @@ describe('device-local provider acceptance matrix', () => {
       webSearchTools: {
         providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
         disabledProviders: ['exa'],
-      fetchMode: 'direct-only',
       },
     });
     appB.secretStorage.setSecret(
@@ -122,13 +120,11 @@ describe('device-local provider acceptance matrix', () => {
     const localA = appA.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
       providers: Array<{ id: string }>;
       webSearchTools: { providerOrder: string[],
-      fetchMode: 'direct-only',
     };
     };
     const localB = appB.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
       providers: Array<{ id: string }>;
       webSearchTools: { providerOrder: string[],
-      fetchMode: 'direct-only',
     };
     };
     const synced = parseSyncedSettings(adapter);

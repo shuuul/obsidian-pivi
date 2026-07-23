@@ -10,7 +10,6 @@ import {
   getWebSearchToolsSettingsFromBag,
   type PiviSettings,
   resolveWebSearchToolsSettings,
-  type WebFetchMode,
   type WebProviderId,
   type WebSearchToolsSettings,
 } from './settings';
@@ -51,7 +50,6 @@ export interface DeviceLocalProviderStateV1 {
   webSearchTools: {
     providerOrder: WebProviderId[];
     disabledProviders: WebProviderId[];
-    fetchMode: WebFetchMode;
   };
 }
 
@@ -352,7 +350,6 @@ export function normalizeDeviceLocalProviderState(
     webSearchTools: {
       providerOrder: [...webSearchTools.providerOrder],
       disabledProviders: [...webSearchTools.disabledProviders],
-      fetchMode: webSearchTools.fetchMode,
     },
   };
 }
@@ -375,7 +372,6 @@ export function seedDefaultDeviceLocalProviderState(): DeviceLocalProviderStateV
     webSearchTools: {
       providerOrder: [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],
       disabledProviders: [],
-      fetchMode: DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.fetchMode,
     },
   });
 }

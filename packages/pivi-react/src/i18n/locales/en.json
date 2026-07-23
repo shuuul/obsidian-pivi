@@ -552,7 +552,7 @@
       "pathMustBeAbsolute": "Path must be absolute: {path}"
     },
     "webSearch": {
-      "intro": "Drag providers into priority order. WebSearch automatically falls back when a provider is unavailable, rate-limited, or out of quota. WebFetch defaults to direct HTTP only.",
+      "intro": "Drag providers into priority order. WebSearch and WebFetch automatically fall back when a provider is unavailable, rate-limited, or out of quota.",
       "capability": {
         "search": "Search",
         "fetch": "Fetch"
@@ -565,7 +565,7 @@
       },
       "providerKeyRequired": "{provider} requires an API key and is skipped when no key is configured.",
       "providerKeyOptional": "{provider} supports anonymous access with lower limits; an API key increases the available quota.",
-      "fixedFallbacks": "Final fallbacks: WebSearch uses Exa public MCP; WebFetch always keeps direct HTTP. Extractors run only when WebFetch mode allows them.",
+      "fixedFallbacks": "Final fallbacks: WebSearch uses Exa public MCP; WebFetch uses direct HTTP. Enabled extractors may receive the full target URL before that fallback.",
       "reorder": {
         "handle": "Reorder {provider}, currently position {position}",
         "position": "{provider} moved to position {position} of {total}.",
@@ -577,14 +577,7 @@
       "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
       "removeKey": "Remove",
       "enableAria": "Enable {provider}",
-      "disableAria": "Disable {provider}",
-      "fetchMode": {
-        "name": "WebFetch mode",
-        "desc": "Choose whether WebFetch may send the target URL to third-party extractors.",
-        "directOnly": "Direct HTTP only",
-        "allowExtractors": "Allow third-party extractors",
-        "disclosure": "Extractor mode sends the complete target URL, including path and query string, to Tavily, Exa, AnySearch, or another enabled fetch provider before direct HTTP."
-      }
+      "disableAria": "Disable {provider}"
     },
     "modelsTab": {
       "intro": "API keys and OAuth tokens are stored in {secureStorageName}. Disabled providers stay saved but are hidden from the model picker.",

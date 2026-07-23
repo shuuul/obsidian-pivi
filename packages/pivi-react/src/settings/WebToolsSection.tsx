@@ -91,34 +91,6 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
       <SettingsPageDescription>
         <p className="pivi-setting-description">{t('settings.webSearch.intro')}</p>
       </SettingsPageDescription>
-      <div className="pivi-setting-item">
-        <div className="pivi-setting-item-info">
-          <div className="pivi-setting-item-name">{t('settings.webSearch.fetchMode.name')}</div>
-          <div className="pivi-setting-item-description">{t('settings.webSearch.fetchMode.desc')}</div>
-        </div>
-        <div className="pivi-setting-item-control">
-          <select
-            className="pivi-settings-control"
-            disabled={pending}
-            value={settings.fetchMode}
-            aria-label={t('settings.webSearch.fetchMode.name')}
-            onChange={(event) => {
-              const fetchMode = event.target.value === 'allow-extractors'
-                ? 'allow-extractors'
-                : 'direct-only';
-              void persist({ ...settings, fetchMode }, settings);
-            }}
-          >
-            <option value="direct-only">{t('settings.webSearch.fetchMode.directOnly')}</option>
-            <option value="allow-extractors">{t('settings.webSearch.fetchMode.allowExtractors')}</option>
-          </select>
-        </div>
-      </div>
-      {settings.fetchMode === 'allow-extractors' ? (
-        <p className="pivi-setting-description pivi-web-fetch-disclosure">
-          {t('settings.webSearch.fetchMode.disclosure')}
-        </p>
-      ) : null}
       <div className="pivi-providers-list" ref={reorder.listRef}>
         {orderedProviders.map((provider, index) => (
           <WebProviderCard

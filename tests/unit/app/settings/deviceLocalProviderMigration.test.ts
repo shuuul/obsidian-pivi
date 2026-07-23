@@ -64,7 +64,6 @@ describe('device local provider migration coordinator', () => {
         webSearchTools: {
           providerOrder: ['brave', 'tavily'],
           disabledProviders: ['tavily'],
-      fetchMode: 'direct-only',
         },
         customProviders: [{
           id: 'my-openai',
@@ -92,12 +91,10 @@ describe('device local provider migration coordinator', () => {
     expect(result.settings.agentSettings.webSearchTools).toEqual({
       providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
       disabledProviders: ['tavily'],
-      fetchMode: 'direct-only',
     });
     const local = app.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
       webSearchTools: {
         providerOrder: string[];
-        fetchMode: 'direct-only';
       };
     };
     expect(local.webSearchTools.providerOrder).toEqual(['brave', 'tavily', 'exa', 'anysearch']);
@@ -122,7 +119,6 @@ describe('device local provider migration coordinator', () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
-      fetchMode: 'direct-only',
       },
     });
 
@@ -173,7 +169,6 @@ describe('device local provider migration coordinator', () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
-      fetchMode: 'direct-only',
       },
     });
 

@@ -85,7 +85,6 @@ describe("PiviSettingsStorage", () => {
     const adapter = createMemoryAdapter(JSON.stringify({
       agentSettings: {
         webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily',
-      fetchMode: 'direct-only',
     },
       },
     }));
@@ -99,7 +98,6 @@ describe("PiviSettingsStorage", () => {
     expect(settings.agentSettings.webSearchTools).toEqual({
       providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
       disabledProviders: [],
-      fetchMode: 'direct-only',
     });
     const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}');
     expect(persisted.agentSettings.webSearchTools).not.toHaveProperty('searchProvider');
@@ -293,7 +291,6 @@ describe("PiviSettingsStorage", () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
-      fetchMode: 'direct-only',
       },
     });
     const adapter = createMemoryAdapter(JSON.stringify({
@@ -304,7 +301,6 @@ describe("PiviSettingsStorage", () => {
         webSearchTools: {
           providerOrder: ['exa'],
           disabledProviders: [],
-      fetchMode: 'direct-only',
         },
       },
     }));
@@ -328,13 +324,11 @@ describe("PiviSettingsStorage", () => {
     settings.agentSettings.webSearchTools = {
       providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
       disabledProviders: ['brave'],
-      fetchMode: 'direct-only',
     };
     await storage.save(settings);
     expect(localStore.getState()?.webSearchTools).toEqual({
       providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
       disabledProviders: ['brave'],
-      fetchMode: 'direct-only',
     });
     const saved = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
       agentSettings?: Record<string, unknown>;
@@ -356,7 +350,6 @@ describe("PiviSettingsStorage", () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
-      fetchMode: 'direct-only',
       },
     });
     const adapter = createMemoryAdapter(JSON.stringify({ userName: 'Alice' }));

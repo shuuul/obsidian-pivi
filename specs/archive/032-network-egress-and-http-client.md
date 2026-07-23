@@ -31,7 +31,7 @@ Route every Pivi network client through explicit, scoped HTTP capabilities with 
 - [x] Request and response byte limits are enforced while streaming; output character limits do not stand in for transport limits.
 - [x] Allowed response content types are explicit per caller; decompression cannot bypass byte limits.
 - [x] Logs, errors, audit entries, and UI redact URL credentials and sensitive query values.
-- [x] WebFetch offers an explicit direct-only mode and obtains a clear user policy/setting before sending a target URL to Tavily, Exa, AnySearch, or another extractor.
+- [x] WebFetch offers an explicit direct-only mode and obtains a clear user policy/setting before sending a target URL to Tavily, Exa, AnySearch, or another extractor. *(Superseded 2026-07-23: removed `fetchMode`; WebFetch always tries enabled extractors before direct HTTP.)*
 - [x] Local-network access, when enabled, is origin-scoped and turn-scoped rather than a permanent global bypass.
 - [x] A standard-compatible `Response` surface is returned where an upstream SDK requires Fetch semantics.
 
@@ -60,6 +60,7 @@ Not in scope:
 | 2026-07-23 | Deny local/private/metadata destinations by default and represent exceptions as short-lived origin grants. | Broad permanent allowlists turn prompt injection into durable network authority. | WS-01, WS-04 |
 | 2026-07-23 | Stream and bound encoded plus decoded bytes independently. | Compressed responses can evade a limit applied only after decompression or text conversion. | WS-02 |
 | 2026-07-23 | Do not send the user's target URL to a third-party extractor without an explicit product-level mode. | Extraction is a disclosure of the full target, including potentially sensitive paths/query data. | WS-03 |
+| 2026-07-23 | Remove the WebFetch `fetchMode` setting; always try enabled extractors before direct HTTP. | Product prefers simpler Web tools settings and accepts third-party URL disclosure by default. | WS-03 follow-up |
 | 2026-07-23 | Remove the global fetch patch rather than adding an unload restoration shim. | Explicit injection yields a testable ownership boundary and avoids renderer-wide side effects. | WS-04 |
 
 ## Workstreams
@@ -83,7 +84,7 @@ Required cases:
 - Redirect loops, excess redirects, cross-origin sensitive-header stripping, scheme downgrade policy, and URL credential rejection.
 - Slow connect/headers/body, abort during each phase, infinite body, misleading content length, compressed expansion, and disallowed content type.
 - Query values named or shaped like tokens/signatures are redacted without destroying safe origin/path diagnostics.
-- Direct-only WebFetch never calls an extractor; extractor mode exposes the disclosure in UI/settings and sends only after authorization.
+- Direct-only WebFetch never calls an extractor; extractor mode exposes the disclosure in UI/settings and sends only after authorization. *(Superseded: no direct-only mode remains; settings disclosure removed with the `fetchMode` control.)*
 - Provider SDK and MCP/OAuth smoke fixtures use injected clients successfully.
 - Plugin load/unload leaves `window.fetch` strictly identical to its pre-load value.
 
@@ -147,3 +148,11 @@ Evidence (2026-07-23):
 ## Completion summary
 
 Scoped HTTP clients now enforce SSRF-resistant egress at the shared transport: only http(s), no URL credentials, default deny for private/metadata destinations, DNS pin + redirect revalidation, streaming byte/deadline/content-type limits, and redacted diagnostics. WebFetch defaults to direct-only with an explicit settings disclosure for extractors. Composition injects purpose-scoped clients; the production bundle resolves free `fetch` via inject without assigning `window.fetch`.
+
+### 2026-07-23 — /032-network — WebFetch mode removal
+
+- Changed: Removed `webSearchTools.fetchMode` and the Settings > Tools > Web control. WebFetch always runs the ordered extractor chain (Tavily, Exa, AnySearch) before the direct HTTP terminal fallback.
+- Evidence: Updated settings/types, WebFetch tool chain, i18n copy, `SECURITY.md`, handbook docs, and focused Jest coverage.
+- Remaining: None for this follow-up.
+- Blockers: None.
+- Next action: None.

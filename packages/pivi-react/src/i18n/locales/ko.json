@@ -539,7 +539,7 @@
       },
       "providerKeyRequired": "{provider}에는 API 키가 필요하며 키가 없으면 건너뜁니다.",
       "providerKeyOptional": "{provider}는 낮은 한도로 익명 액세스를 지원하며 API 키로 할당량을 늘릴 수 있습니다.",
-      "fixedFallbacks": "최종 폴백: WebSearch는 Exa 공개 MCP를, WebFetch는 직접 HTTP를 사용합니다. 이 안전 폴백은 항상 정렬된 제공자 이후에 실행됩니다.",
+      "fixedFallbacks": "최종 폴백: WebSearch는 Exa 공개 MCP를, WebFetch는 직접 HTTP를 사용합니다. 사용 중인 추출 서비스는 그 전에 전체 대상 URL을 받을 수 있습니다.",
       "reorder": {
         "handle": "{provider} 순서 변경, 현재 위치 {position}",
         "position": "{provider}를 전체 {total}개 중 {position}번째로 이동했습니다.",
@@ -551,14 +551,7 @@
       "apiKeySavedPlaceholder": "{secureStorageName}에 저장됨",
       "removeKey": "제거",
       "enableAria": "{provider} 활성화",
-      "disableAria": "{provider} 비활성화",
-      "fetchMode": {
-        "name": "WebFetch 모드",
-        "desc": "WebFetch가 대상 URL을 타사 추출 서비스로 보낼지 선택합니다.",
-        "directOnly": "직접 HTTP만",
-        "allowExtractors": "타사 추출 허용",
-        "disclosure": "추출 모드에서는 직접 HTTP 전에 경로와 쿼리를 포함한 전체 대상 URL이 Tavily, Exa, AnySearch 또는 다른 사용 중인 가져오기 제공자로 전송됩니다."
-      }
+      "disableAria": "{provider} 비활성화"
     },
     "modelsTab": {
       "intro": "API 키와 OAuth 토큰은 {secureStorageName}에 저장됩니다. 비활성화된 제공자는 저장되지만 모델 선택기에서 숨겨집니다.",

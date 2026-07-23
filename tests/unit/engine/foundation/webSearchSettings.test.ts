@@ -11,7 +11,6 @@ describe('resolveWebSearchToolsSettings', () => {
     expect(resolved).toEqual({
       providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
       disabledProviders: [],
-      fetchMode: 'direct-only',
     });
     expect(resolved).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
     expect(resolved.providerOrder).not.toBe(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder);
@@ -25,7 +24,6 @@ describe('resolveWebSearchToolsSettings', () => {
     expect(resolveWebSearchToolsSettings(raw)).toEqual({
       providerOrder: ['exa', 'brave', 'tavily', 'anysearch'],
       disabledProviders: ['brave'],
-      fetchMode: 'direct-only',
     });
   });
 
@@ -37,7 +35,6 @@ describe('resolveWebSearchToolsSettings', () => {
     expect(resolveWebSearchToolsSettings(raw)).toEqual({
       providerOrder: ['anysearch', 'brave', 'tavily', 'exa'],
       disabledProviders: ['exa'],
-      fetchMode: 'direct-only',
     });
   });
 
@@ -45,7 +42,6 @@ describe('resolveWebSearchToolsSettings', () => {
     expect(resolveWebSearchToolsSettings({ searchProvider: 'exa', fetchProvider: 'tavily' })).toEqual({
       providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
       disabledProviders: [],
-      fetchMode: 'direct-only',
     });
   });
 
@@ -57,15 +53,14 @@ describe('resolveWebSearchToolsSettings', () => {
     })).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
   });
 
-  it('preserves an explicit allow-extractors fetch mode', () => {
+  it('drops legacy fetchMode fields from persisted settings', () => {
     expect(resolveWebSearchToolsSettings({
       providerOrder: ['brave'],
       disabledProviders: [],
-      fetchMode: 'allow-extractors',
-    })).toEqual({
+      fetchMode: 'direct-only',
+    } as unknown as WebSearchToolsSettings)).toEqual({
       providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
       disabledProviders: [],
-      fetchMode: 'allow-extractors',
     });
   });
 });
@@ -87,7 +82,6 @@ describe('getWebSearchToolsSettingsFromBag', () => {
     })).toEqual({
       providerOrder: ['anysearch', 'tavily', 'brave', 'exa'],
       disabledProviders: ['tavily'],
-      fetchMode: 'direct-only',
     });
   });
 });

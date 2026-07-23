@@ -1,4 +1,4 @@
-import type { WebFetchMode, WebProviderId } from '../../foundation/settings';
+import type { WebProviderId } from '../../foundation/settings';
 
 export interface WebSearchSource {
   title: string;
@@ -26,10 +26,7 @@ interface OrderedWebProviderDeps {
 }
 
 export type WebSearchToolDeps = OrderedWebProviderDeps;
-export type WebFetchToolDeps = OrderedWebProviderDeps & {
-  /** Defaults to direct-only when omitted. */
-  fetchMode?: WebFetchMode;
-};
+export type WebFetchToolDeps = OrderedWebProviderDeps;
 
 export interface WebFetchResponse {
   provider: WebFetchProviderId | 'direct';

@@ -57,7 +57,7 @@ Vault-wide enumeration remains operation-driven: full-text search, tag and graph
 
 `WebSearch` and `WebFetch` share an ordered provider queue configured by `webSearchTools.providerOrder` and `disabledProviders`. Supported configured providers are Brave, Tavily, Exa, and AnySearch. Failures fall through in user order. Exa public MCP is the fixed terminal search fallback; direct HTTP is the fixed terminal fetch fallback.
 
-`WebFetch` defaults to `fetchMode: 'direct-only'`, which never sends the target URL to a third-party extractor. `allow-extractors` permits the ordered provider chain before direct HTTP; settings expose this mode with explicit disclosure because extraction shares the full target URL with the configured provider. Terminal fetch errors redact the target URL.
+`WebFetch` tries enabled third-party extractors (Tavily, Exa, AnySearch) in the user-configured provider order before the direct HTTP terminal fallback. Extraction shares the full target URL—including paths and query data—with the configured provider. Terminal fetch errors redact the target URL.
 
 Provider keys and availability are resolved at the app/engine boundary. Tool implementations should preserve useful provider errors while allowing only the configured, explicit fallthrough behavior. Both tools use injected scoped HTTP clients with shared egress policy (see [SECURITY.md](../SECURITY.md)).
 

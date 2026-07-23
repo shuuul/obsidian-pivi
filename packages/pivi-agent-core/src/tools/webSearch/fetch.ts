@@ -189,10 +189,6 @@ async function fetchDirect(
 }
 
 function buildFetchChain(deps: WebFetchToolDeps): (WebFetchProviderId | 'direct')[] {
-  const fetchMode = deps.fetchMode ?? 'direct-only';
-  if (fetchMode === 'direct-only') {
-    return ['direct'];
-  }
   const disabled = new Set(deps.disabledProviders ?? []);
   const providers = deps.providerOrder.filter((providerId): providerId is WebFetchProviderId => {
     const capabilities = WEB_PROVIDER_CAPABILITIES[providerId];
@@ -226,13 +222,10 @@ async function runFetchProvider(
 }
 
 export function createWebFetchTool(deps: WebFetchToolDeps): ToolSpec {
-  const fetchMode = deps.fetchMode ?? 'direct-only';
   return {
     name: TOOL_WEB_FETCH,
     label: 'Web fetch',
-    description: fetchMode === 'direct-only'
-      ? 'Fetch readable content from a web URL over direct HTTP only. Third-party extractors are disabled.'
-      : 'Fetch readable content from a web URL. Tries enabled extractors in the user-configured order, with direct HTTP fallback. Extractors receive the full target URL.',
+    description: 'Fetch readable content from a web URL. Tries enabled extractors in the user-configured order, with direct HTTP fallback. Extractors receive the full target URL.',
     parameters: {
       type: 'object',
       properties: {

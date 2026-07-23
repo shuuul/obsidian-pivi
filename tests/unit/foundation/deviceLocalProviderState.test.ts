@@ -81,7 +81,6 @@ describe('normalizeDeviceLocalProviderState', () => {
       webSearchTools: {
         providerOrder: ['brave', 'brave', 'tavily', 'bogus'],
         disabledProviders: ['tavily', 'exa'],
-      fetchMode: 'direct-only',
       },
     });
 
@@ -104,7 +103,6 @@ describe('normalizeDeviceLocalProviderState', () => {
     expect(state.webSearchTools).toEqual({
       providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
       disabledProviders: ['tavily', 'exa'],
-      fetchMode: 'direct-only',
     });
   });
 
@@ -124,7 +122,6 @@ describe('normalizeDeviceLocalProviderState', () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
-      fetchMode: 'direct-only',
       },
     });
 
@@ -188,7 +185,6 @@ describe('projectProviderState', () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
-      fetchMode: 'direct-only',
       },
     }));
 
@@ -231,7 +227,6 @@ describe('extractDeviceLocalProviderState', () => {
         webSearchTools: {
           providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
           disabledProviders: ['exa'],
-      fetchMode: 'direct-only',
         },
       },
     });
@@ -286,7 +281,6 @@ describe('stripLocalizedFieldsFromRuntimeSettings', () => {
         webSearchTools: {
           providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
           disabledProviders: ['exa'],
-      fetchMode: 'direct-only',
         },
       },
     });

@@ -63,9 +63,7 @@ Production bundles resolve free `fetch` identifiers through esbuild `inject` of 
 
 ### WebFetch disclosure
 
-`WebFetch` defaults to `fetchMode: 'direct-only'`, which fetches the target URL directly and never sends it to Tavily, Exa, AnySearch, or another third-party extractor.
-
-`fetchMode: 'allow-extractors'` permits the ordered provider chain before the direct HTTP terminal fallback. Settings expose this mode with explicit disclosure because extraction shares the full target URL—including paths and query data—with the configured provider.
+`WebFetch` tries enabled third-party extractors (Tavily, Exa, AnySearch) in the user-configured provider order before the direct HTTP terminal fallback. Extraction shares the full target URL—including paths and query data—with the configured provider.
 
 Terminal WebFetch errors redact the target URL.
 

@@ -43,7 +43,6 @@ describe('ObsidianDeviceLocalProviderStore', () => {
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
         disabledProviders: [],
-        fetchMode: 'direct-only',
       },
     });
   });

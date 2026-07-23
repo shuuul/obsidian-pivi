@@ -539,7 +539,7 @@
       },
       "providerKeyRequired": "{provider} には API キーが必要です。未設定の場合はスキップされます。",
       "providerKeyOptional": "{provider} は低い制限で匿名アクセスできます。API キーで利用可能なクォータが増えます。",
-      "fixedFallbacks": "最終フォールバック: WebSearch は Exa 公開 MCP、WebFetch は直接 HTTP を使用します。これらの安全フォールバックは常に順序付きプロバイダーの後に実行されます。",
+      "fixedFallbacks": "最終フォールバック: WebSearch は Exa 公開 MCP、WebFetch は直接 HTTP を使用します。有効な抽出サービスは、その前に完全な対象 URL を受け取る場合があります。",
       "reorder": {
         "handle": "{provider} を並べ替え、現在の位置 {position}",
         "position": "{provider} を {total} 件中 {position} 番目に移動しました。",
@@ -551,14 +551,7 @@
       "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
       "removeKey": "削除",
       "enableAria": "{provider} を有効化",
-      "disableAria": "{provider} を無効化",
-      "fetchMode": {
-        "name": "WebFetch モード",
-        "desc": "WebFetch が対象 URL をサードパーティ抽出サービスへ送るかどうかを選択します。",
-        "directOnly": "直接 HTTP のみ",
-        "allowExtractors": "サードパーティ抽出を許可",
-        "disclosure": "抽出モードでは、直接 HTTP の前に、パスとクエリを含む完全な対象 URL が Tavily、Exa、AnySearch、または有効な他の取得プロバイダーへ送信されます。"
-      }
+      "disableAria": "{provider} を無効化"
     },
     "modelsTab": {
       "intro": "API キーと OAuth トークンは {secureStorageName} に保存されます。無効なプロバイダーは保存されたままモデル選択から非表示になります。",

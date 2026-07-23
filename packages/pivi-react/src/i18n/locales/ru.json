@@ -539,7 +539,7 @@
       },
       "providerKeyRequired": "{provider} требует API-ключ и пропускается, если ключ не настроен.",
       "providerKeyOptional": "{provider} поддерживает анонимный доступ с меньшими лимитами; API-ключ увеличивает квоту.",
-      "fixedFallbacks": "Финальные запасные варианты: WebSearch использует публичный MCP Exa; WebFetch использует прямой HTTP. Эти запасные варианты безопасности всегда выполняются после упорядоченных провайдеров.",
+      "fixedFallbacks": "Финальные запасные варианты: WebSearch использует публичный MCP Exa; WebFetch использует прямой HTTP. Включённые экстракторы могут получить полный целевой URL до этого запасного варианта.",
       "reorder": {
         "handle": "Изменить порядок {provider}, текущая позиция {position}",
         "position": "{provider} перемещён на позицию {position} из {total}.",
@@ -551,14 +551,7 @@
       "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
       "removeKey": "Убрать",
       "enableAria": "Включить {provider}",
-      "disableAria": "Отключить {provider}",
-      "fetchMode": {
-        "name": "Режим WebFetch",
-        "desc": "Выберите, может ли WebFetch отправлять целевой URL сторонним экстракторам.",
-        "directOnly": "Только прямой HTTP",
-        "allowExtractors": "Разрешить сторонние экстракторы",
-        "disclosure": "В режиме экстрактора полный целевой URL, включая путь и строку запроса, отправляется в Tavily, Exa, AnySearch или другому включённому провайдеру извлечения до прямого HTTP."
-      }
+      "disableAria": "Отключить {provider}"
     },
     "modelsTab": {
       "intro": "API-ключи и OAuth-токены хранятся в {secureStorageName}. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
