@@ -21,7 +21,7 @@ describe('piCodingAgentConfig host seams', () => {
       dependencies: Record<string, string>;
     };
 
-    expect(packageJson.dependencies['@earendil-works/pi-coding-agent']).toBe(`^${VERSION}`);
+    expect(packageJson.dependencies['@earendil-works/pi-coding-agent']).toBe(VERSION);
   });
 
   it('uses the injected agent directory environment override', () => {

@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [036-security-release-assurance.md](036-security-release-assurance.md) | 2026-07-23 | Exact Pi compatibility, focused platform/security tests, real-host smoke, shared release gates, and disclosure policy. |
 
 ## Archived specs
 
@@ -51,6 +50,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [033-local-execution-and-vault-mutation.md](archive/033-local-execution-and-vault-mutation.md) | 2026-07-23 | Bounded cross-platform process execution and mandatory vault-relative mutation containment. |
 | [034-high-risk-operations-and-extensions.md](archive/034-high-risk-operations-and-extensions.md) | 2026-07-23 | Turn-scoped confirmation for fixed high-risk operations plus transactional Skills and bounded MCP extensions. |
 | [035-session-cloud-recovery.md](archive/035-session-cloud-recovery.md) | 2026-07-23 | Journal-backed recovery from session cloud replacement, rollback, interrupted persistence, and unload. |
+| [036-security-release-assurance.md](archive/036-security-release-assurance.md) | 2026-07-23 | Exact Pi pins/private adapter, focused platform/security CI and coverage, real-host smoke, shared release gates, SHA-pinned Actions, and SECURITY.md disclosure. |
 
 ## Numbering and files
 

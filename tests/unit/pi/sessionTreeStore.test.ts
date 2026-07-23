@@ -58,15 +58,19 @@ describe('SessionTreeStore', () => {
   it('marks the Pi manager flushed after Pivi eagerly rewrites a persisted file', () => {
     interface PersistedTestManager {
       flushed: boolean;
+      fileEntries: unknown[];
       getSessionFile(): string | undefined;
       isPersisted(): boolean;
       _rewriteFile(): void;
+      _buildIndex(): void;
     }
     const manager: PersistedTestManager = {
       flushed: false,
+      fileEntries: [],
       getSessionFile: () => undefined,
       isPersisted: () => true,
       _rewriteFile: jest.fn(),
+      _buildIndex: jest.fn(),
     };
     const StoreCtor = SessionTreeStore as unknown as {
       new(vaultPath: string, manager: PersistedTestManager): SessionTreeStore;

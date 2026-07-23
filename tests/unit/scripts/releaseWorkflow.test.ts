@@ -8,8 +8,20 @@ describe('release provenance workflow', () => {
     join(rootDir, '.github', 'workflows', 'release.yaml'),
     'utf8',
   );
+  const ciWorkflow = readFileSync(
+    join(rootDir, '.github', 'workflows', 'ci.yaml'),
+    'utf8',
+  );
   const releasePleaseWorkflow = readFileSync(
     join(rootDir, '.github', 'workflows', 'release-please.yaml'),
+    'utf8',
+  );
+  const qualityGates = readFileSync(
+    join(rootDir, '.github', 'actions', 'quality-gates', 'action.yml'),
+    'utf8',
+  );
+  const dependabot = readFileSync(
+    join(rootDir, '.github', 'dependabot.yml'),
     'utf8',
   );
 
@@ -44,5 +56,35 @@ describe('release provenance workflow', () => {
     expect(workflow).not.toContain('See CHANGELOG.md for details.');
     expect(releasePleaseWorkflow).toContain('skip-github-release: true');
     expect(releasePleaseWorkflow).not.toContain('gh workflow run release.yaml');
+  });
+
+  it('runs the same mandatory quality gates as CI before publication', () => {
+    expect(qualityGates).toContain('npm run typecheck');
+    expect(qualityGates).toContain('npm run lint');
+    expect(qualityGates).toContain('npm run check:boundaries');
+    expect(qualityGates).toContain('npm run test:coverage');
+    expect(qualityGates).toContain('npm run build');
+    expect(qualityGates).toContain('npm run check:bundle-size');
+    expect(ciWorkflow).toContain('uses: ./.github/actions/quality-gates');
+    expect(workflow).toContain('uses: ./.github/actions/quality-gates');
+    expect(workflow.indexOf('uses: ./.github/actions/quality-gates'))
+      .toBeLessThan(workflow.indexOf('Create or update GitHub release'));
+  });
+
+  it('pins third-party Actions to full commit SHAs and keeps Dependabot coverage', () => {
+    const pinPattern = /uses:\s+(actions\/checkout|actions\/setup-node|googleapis\/release-please-action)@[0-9a-f]{40}/g;
+    expect(ciWorkflow.match(pinPattern)?.length).toBeGreaterThanOrEqual(2);
+    expect(workflow.match(pinPattern)?.length).toBeGreaterThanOrEqual(2);
+    expect(releasePleaseWorkflow.match(pinPattern)?.length).toBeGreaterThanOrEqual(2);
+    expect(ciWorkflow).not.toMatch(/uses:\s+actions\/checkout@v\d/);
+    expect(workflow).not.toMatch(/uses:\s+actions\/setup-node@v\d/);
+    expect(releasePleaseWorkflow).not.toMatch(/uses:\s+googleapis\/release-please-action@v\d/);
+    expect(dependabot).toContain('package-ecosystem: "github-actions"');
+  });
+
+  it('runs focused macOS and Windows platform-security jobs', () => {
+    expect(ciWorkflow).toContain('macos-latest');
+    expect(ciWorkflow).toContain('windows-latest');
+    expect(ciWorkflow).toContain('npm run test:platform-security');
   });
 });

@@ -184,6 +184,8 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **File recovery** | Mutating note tools snapshot the current content into Obsidian File Recovery (when enabled) before `edit` / `write` / `properties` changes; deletes go to trash; `obsidian_history` can list/read/restore retained snapshots. |
 | **Telemetry** | Pivi sends none to the plugin author or this project. |
 
+Full trust-boundary, disclosure, credential matrix, network, prompt-injection, and Skills/MCP responsibility details: [SECURITY.md](SECURITY.md).
+
 </details>
 
 

@@ -90,15 +90,17 @@ describe('device local provider migration coordinator', () => {
     expect(result.settings.agentSettings.addedProviders).toEqual(['openai', 'my-openai']);
     expect(result.settings.agentSettings.customProviders?.[0]?.headers).toBeUndefined();
     expect(result.settings.agentSettings.webSearchTools).toEqual({
-      providerOrder: ['brave', 'tavily'],
+      providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
       disabledProviders: ['tavily'],
+      fetchMode: 'direct-only',
     });
     const local = app.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
-      webSearchTools: { providerOrder: string[],
-      fetchMode: 'direct-only',
+      webSearchTools: {
+        providerOrder: string[];
+        fetchMode: 'direct-only';
+      };
     };
-    };
-    expect(local.webSearchTools.providerOrder).toEqual(['brave', 'tavily']);
+    expect(local.webSearchTools.providerOrder).toEqual(['brave', 'tavily', 'exa', 'anysearch']);
   });
 
   it('strips reintroduced synced provider fields on already-initialized devices', async () => {

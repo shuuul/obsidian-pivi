@@ -15,6 +15,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Recently completed
 
+- **Security and release assurance** (spec `036`): exact synchronized Pi pins with a private SessionManager capability adapter and `test:pi-compat` gate; focused macOS/Windows path/process/MCP/Skills CI; direct security-module branch coverage thresholds; shared CI/release quality gates; SHA-pinned Actions; deterministic `smoke:obsidian`; expanded [SECURITY.md](../SECURITY.md) disclosure and trust-boundary documentation without unsupported guarantees.
 - **High-risk operations and extensions** (spec `034`): turn-scoped confirmation for delete/overwrite/bulk mutation/Bash/eval/first stdio MCP launch and MCP artifact writes; pinned Skills CLI with staged validation and atomic publish; stdio activation confirmation; MCP result budgets with bounded `.pivi/artifacts/mcp/` fallback. See [SECURITY.md](../SECURITY.md).
 - **Network egress and HTTP client** (spec `032`): purpose-scoped HTTP clients with host-neutral egress policy replace the global `window.fetch` patch. Local/private destinations are denied by default; configured MCP and custom-provider private origins receive short-lived origin grants. WebFetch defaults to `direct-only`; extractor mode requires explicit settings disclosure. See [SECURITY.md](../SECURITY.md).
 - **Local execution and Vault mutation** (spec `033`): bounded cross-platform `ProcessRunner` (limits, abort, process-tree kill, shell-forbidden default) plus mandatory vault-relative mutation containment via `requireVaultRelativeMutationPath`, with Bash/CLI/Skills/MCP callers migrated onto explicit policies. See [SECURITY.md](../SECURITY.md).
@@ -66,7 +67,7 @@ Pivi uses Conventional Commits and Release Please:
 4. Merge the release PR.
 5. Pull the merged release commit and confirm its package, manifest, release manifest, and changelog version all agree.
 6. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.
-7. The tag push directly triggers `.github/workflows/release.yaml`. That workflow builds the tag, requires a non-empty matching `CHANGELOG.md` section, uses that section as the GitHub Release notes, publishes the three assets, and compares the downloaded release bytes with the tag build.
+7. The tag push directly triggers `.github/workflows/release.yaml`. That workflow runs the same mandatory quality gates as CI (typecheck, lint, boundaries, coverage, build, bundle-size) for the exact tag commit, requires a non-empty matching `CHANGELOG.md` section, uses that section as the GitHub Release notes, publishes the three assets, and compares the downloaded release bytes with the tag build. Third-party Actions are pinned to reviewed full commit SHAs.
 
 While Pivi is pre-1.0, `fix` normally produces a patch and `feat` a minor release. README badge updates come from `scripts/sync-version.js`; do not add generic Release Please README markers.
 

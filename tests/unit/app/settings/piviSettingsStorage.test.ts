@@ -99,6 +99,7 @@ describe("PiviSettingsStorage", () => {
     expect(settings.agentSettings.webSearchTools).toEqual({
       providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
       disabledProviders: [],
+      fetchMode: 'direct-only',
     });
     const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}');
     expect(persisted.agentSettings.webSearchTools).not.toHaveProperty('searchProvider');

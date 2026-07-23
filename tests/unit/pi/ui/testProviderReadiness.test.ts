@@ -1,9 +1,23 @@
-import { requestUrl } from 'obsidian';
-
 import { configurePiAiModels, piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import type { HttpClient, HttpResponse } from '@pivi/pivi-agent-core/ports';
 import { testProviderReadiness } from '@/app/workspace/providerReadiness';
 
-const requestUrlMock = requestUrl as jest.MockedFunction<typeof requestUrl>;
+const httpFetch = jest.fn<ReturnType<HttpClient['fetch']>, Parameters<HttpClient['fetch']>>();
+
+function mockHttpResponse(status: number): HttpResponse {
+  return {
+    status,
+    ok: status >= 200 && status < 300,
+    text: async () => '',
+    json: async <T>() => ({}) as T,
+  };
+}
+
+jest.mock('@pivi/obsidian-host/createPiviNetworkClients', () => ({
+  getActivePiviNetworkClients: () => ({
+    httpClient: { fetch: httpFetch },
+  }),
+}));
 
 const anthropicProbeModel = {
   provider: 'anthropic',
@@ -23,12 +37,15 @@ function stubAnthropicProbeModel(): jest.SpyInstance {
 describe('testProviderReadiness', () => {
   let getModelsSpy: jest.SpyInstance | undefined;
 
+  beforeEach(() => {
+    httpFetch.mockReset();
+    httpFetch.mockResolvedValue(mockHttpResponse(200));
+  });
+
   afterEach(() => {
     getModelsSpy?.mockRestore();
     getModelsSpy = undefined;
     configurePiAiModels({});
-    requestUrlMock.mockReset();
-    requestUrlMock.mockResolvedValue({ status: 200 } as never);
     delete process.env.ANTHROPIC_API_KEY;
   });
 
@@ -40,17 +57,16 @@ describe('testProviderReadiness', () => {
   it('resolves auth through pi-ai before testing endpoint reachability', async () => {
     getModelsSpy = stubAnthropicProbeModel();
     process.env.ANTHROPIC_API_KEY = 'sk-test';
-    requestUrlMock.mockResolvedValue({ status: 204 } as never);
+    httpFetch.mockResolvedValue(mockHttpResponse(204));
 
     const result = await testProviderReadiness('anthropic', { disabledProviders: [] });
 
     expect(result.ok).toBe(true);
     expect(result.detail).toContain('credentials resolved from ANTHROPIC_API_KEY');
-    expect(requestUrlMock).toHaveBeenCalledWith(
+    expect(httpFetch).toHaveBeenCalledWith(
       expect.objectContaining({
         url: 'https://api.anthropic.com',
         method: 'HEAD',
-        throw: false,
       }),
     );
   });
@@ -62,27 +78,27 @@ describe('testProviderReadiness', () => {
 
     expect(result.ok).toBe(true);
     expect(result.detail).toContain('no endpoint URL to probe locally');
-    expect(requestUrlMock).not.toHaveBeenCalled();
+    expect(httpFetch).not.toHaveBeenCalled();
   });
 
   it('treats 4xx HEAD responses as reachable for provider readiness', async () => {
     getModelsSpy = stubAnthropicProbeModel();
     process.env.ANTHROPIC_API_KEY = 'sk-test';
-    requestUrlMock.mockResolvedValue({ status: 404 } as never);
+    httpFetch.mockResolvedValue(mockHttpResponse(404));
 
     const result = await testProviderReadiness('anthropic', { disabledProviders: [] });
 
     expect(result.ok).toBe(true);
     expect(result.detail).toMatch(/responded with status 404/);
-    expect(requestUrlMock).toHaveBeenCalledWith(
-      expect.objectContaining({ method: 'HEAD', throw: false }),
+    expect(httpFetch).toHaveBeenCalledWith(
+      expect.objectContaining({ method: 'HEAD' }),
     );
   });
 
   it('treats 5xx HEAD responses as unreachable for provider readiness', async () => {
     getModelsSpy = stubAnthropicProbeModel();
     process.env.ANTHROPIC_API_KEY = 'sk-test';
-    requestUrlMock.mockResolvedValue({ status: 503 } as never);
+    httpFetch.mockResolvedValue(mockHttpResponse(503));
 
     const result = await testProviderReadiness('anthropic', { disabledProviders: [] });
 
@@ -93,7 +109,7 @@ describe('testProviderReadiness', () => {
   it('reports requestUrl failures with endpoint and message detail', async () => {
     getModelsSpy = stubAnthropicProbeModel();
     process.env.ANTHROPIC_API_KEY = 'sk-test';
-    requestUrlMock.mockRejectedValue(new Error('network down'));
+    httpFetch.mockRejectedValue(new Error('network down'));
 
     const result = await testProviderReadiness('anthropic', { disabledProviders: [] });
 
@@ -105,6 +121,6 @@ describe('testProviderReadiness', () => {
     const result = await testProviderReadiness('anthropic', { disabledProviders: [] });
 
     expect(result).toMatchObject({ ok: false, detail: 'No credential resolved for anthropic.' });
-    expect(requestUrlMock).not.toHaveBeenCalled();
+    expect(httpFetch).not.toHaveBeenCalled();
   });
 });

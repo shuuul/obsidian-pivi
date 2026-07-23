@@ -102,8 +102,9 @@ describe('normalizeDeviceLocalProviderState', () => {
       'custom-openai-compatible/local-model': 32000,
     });
     expect(state.webSearchTools).toEqual({
-      providerOrder: ['brave', 'tavily'],
-      disabledProviders: ['tavily'],
+      providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+      disabledProviders: ['tavily', 'exa'],
+      fetchMode: 'direct-only',
     });
   });
 

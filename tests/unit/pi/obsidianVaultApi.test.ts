@@ -139,6 +139,7 @@ function makeApp(
         return makeFile(path);
       },
       adapter: {
+        basePath: '/tmp/pivi-test-vault',
         list: async (path: string) => {
           listed.push(path);
           return { files: [], folders: [] };

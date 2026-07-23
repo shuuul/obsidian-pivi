@@ -137,7 +137,7 @@ describe('device-local provider acceptance matrix', () => {
     expect(resultB.settings.agentSettings.addedProviders).toEqual(['deepseek', 'anthropic']);
     expect(localA.providers.map((provider) => provider.id)).toEqual(['openai', 'my-openai']);
     expect(localB.providers.map((provider) => provider.id)).toEqual(['deepseek', 'anthropic']);
-    expect(localA.webSearchTools.providerOrder).toEqual(['brave']);
+    expect(localA.webSearchTools.providerOrder).toEqual(['brave', 'tavily', 'exa', 'anysearch']);
     expect(localB.webSearchTools.providerOrder[0]).toBe('tavily');
     expect(synced.userName).toBe('Alice');
     expect(synced).not.toHaveProperty('model');

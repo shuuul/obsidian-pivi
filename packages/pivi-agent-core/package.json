@@ -37,6 +37,7 @@
     "./engine/pi/session/messageMapper": "./src/engine/pi/session/messageMapper.ts",
     "./engine/pi/session/piContextCompaction": "./src/engine/pi/session/piContextCompaction.ts",
     "./engine/pi/session/piSessionStore": "./src/engine/pi/session/piSessionStore.ts",
+    "./engine/pi/session/piSessionManagerPrivateAdapter": "./src/engine/pi/session/piSessionManagerPrivateAdapter.ts",
     "./engine/pi/session/sessionJsonlIndex": "./src/engine/pi/session/sessionJsonlIndex.ts",
     "./engine/pi/session/sessionJsonlIndexLocation": "./src/engine/pi/session/sessionJsonlIndexLocation.ts",
     "./engine/pi/session/sessionJsonlRangeReader": "./src/engine/pi/session/sessionJsonlRangeReader.ts",
@@ -81,8 +82,8 @@
     "./workspace": "./src/workspace/index.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-agent-core": "^0.80.10",
-    "@earendil-works/pi-ai": "^0.80.10",
-    "@earendil-works/pi-coding-agent": "^0.80.10"
+    "@earendil-works/pi-agent-core": "0.80.10",
+    "@earendil-works/pi-ai": "0.80.10",
+    "@earendil-works/pi-coding-agent": "0.80.10"
   }
 }

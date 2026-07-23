@@ -32,12 +32,14 @@ describe('PiMcpBridge', () => {
         name: 'ctx',
         enabled: true,
         contextSaving: true,
+        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {
         name: 'always',
         enabled: true,
         contextSaving: false,
+        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {
@@ -70,6 +72,7 @@ describe('PiMcpBridge', () => {
         name: 'local',
         enabled: true,
         contextSaving: true,
+        stdioActivationConfirmed: true,
         config: { type: 'stdio', command: 'node', args: ['server.js'] },
       },
     ];
@@ -96,12 +99,14 @@ describe('PiMcpBridge', () => {
         name: 'ctx',
         enabled: true,
         contextSaving: true,
+        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {
         name: 'always',
         enabled: true,
         contextSaving: false,
+        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {

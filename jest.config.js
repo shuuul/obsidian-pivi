@@ -67,6 +67,50 @@ module.exports = {
       functions: 58,
       lines: 62,
     },
+    // Direct security-boundary thresholds (specs 030–034 / 036). Unrelated UI
+    // coverage cannot satisfy these paths.
+    './packages/obsidian-host/src/systemProcessRunner.ts': {
+      branches: 70,
+    },
+    './packages/obsidian-host/src/path/index.ts': {
+      branches: 40,
+    },
+    './packages/obsidian-host/src/scopedHttpClient.ts': {
+      branches: 50,
+    },
+    './packages/pivi-agent-core/src/network/egressPolicy.ts': {
+      branches: 70,
+    },
+    './packages/pivi-agent-core/src/network/ipClassification.ts': {
+      branches: 70,
+    },
+    './packages/pivi-agent-core/src/network/urlPolicy.ts': {
+      branches: 80,
+    },
+    './packages/pivi-agent-core/src/mcp/mcpProcessEnv.ts': {
+      branches: 55,
+    },
+    './packages/pivi-agent-core/src/mcp/mcpValidation.ts': {
+      branches: 70,
+    },
+    './packages/pivi-agent-core/src/mcp/mcpResultBudget.ts': {
+      branches: 45,
+    },
+    './packages/pivi-agent-core/src/mcp/oauth/mcpCallbackServer.ts': {
+      branches: 45,
+    },
+    './packages/pivi-agent-core/src/skills/vault/skillStagePublish.ts': {
+      branches: 50,
+    },
+    './packages/pivi-agent-core/src/skills/vault/resolvePinnedSkillsCli.ts': {
+      branches: 40,
+    },
+    './packages/pivi-agent-core/src/runtime/highRisk/approvalController.ts': {
+      branches: 45,
+    },
+    './packages/pivi-agent-core/src/engine/pi/session/piSessionManagerPrivateAdapter.ts': {
+      branches: 80,
+    },
   },
   coverageDirectory: 'coverage',
 };

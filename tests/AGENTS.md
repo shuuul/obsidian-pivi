@@ -27,8 +27,14 @@ npm run test
 # List tests across projects
 npm run test -- --listTests
 
-# Coverage (CI command)
+# Coverage (CI command; includes global + security-module branch thresholds)
 npm run test:coverage
+
+# Exact Pi pin upgrade gate
+npm run test:pi-compat
+
+# Focused path/process/MCP/Skills suite used on macOS/Windows CI
+npm run test:platform-security
 
 # One file
 npm run test -- tests/unit/pi/piMcpBridge.test.ts

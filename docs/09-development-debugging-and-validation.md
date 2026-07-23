@@ -13,9 +13,13 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Build CSS | `npm run build:css` |
 | Typecheck source and tests | `npm run typecheck` |
 | Lint with zero warnings | `npm run lint` |
-| Architecture/package/i18n/spec guards | `npm run check:boundaries` |
+| Architecture/package/i18n/spec/Pi-pin guards | `npm run check:boundaries` |
+| Exact synchronized Pi pins | `npm run check:pi-pins` |
 | All Jest projects | `npm run test` |
-| Coverage and thresholds | `npm run test:coverage` |
+| Coverage and thresholds (global + security-module branches) | `npm run test:coverage` |
+| Pi upgrade compatibility gate | `npm run test:pi-compat` |
+| Focused path/process/MCP/Skills platform suite | `npm run test:platform-security` |
+| Real Obsidian/Electron lifecycle smoke | `npm run smoke:obsidian` |
 | Production bundle and deploy | `npm run build` |
 | Bundle inspection metadata | `npm run analyze:bundle` |
 | Bundle-size ceiling | `npm run check:bundle-size` |
@@ -59,7 +63,11 @@ obsidian plugin:reload id=pivi
 obsidian dev:errors
 ```
 
-Use a configured development vault. Verify the main window and a pop-out when changing element-bound DOM, timers, scrolling, portals, or tooltips. Include Hover Editor when changing view lifecycle. Test Source mode and Live Preview for editor integrations.
+Use a configured development vault (`.env.local` `OBSIDIAN_VAULT`). Verify the main window and a pop-out when changing element-bound DOM, timers, scrolling, portals, or tooltips. Include Hover Editor when changing view lifecycle. Test Source mode and Live Preview for editor integrations.
+
+### Deterministic host smoke
+
+`npm run smoke:obsidian` requires the Obsidian CLI and `OBSIDIAN_VAULT`. It reloads Pivi, opens the chat view, creates and mutates a disposable note, writes and re-reads a disposable session JSONL, starts and stops a fake stdio listener (failing on a leaked PID), asserts `window.fetch` identity is unchanged, and requires `obsidian dev:errors` to report no captured errors. It does not claim full product certification on every OS.
 
 Useful symptom routes:
 
@@ -98,7 +106,9 @@ npm run build && \
 npm run check:bundle-size
 ```
 
-CI runs the same categories on pull requests and pushes to `main`. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
+CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Release publication for a tag runs the same shared quality-gate action (typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
+
+Before bumping `@earendil-works/pi-*`, keep the three packages on one exact version, run `npm run test:pi-compat`, and keep `check:pi-pins` green. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
 
 ## Bundle and CSS analysis
 

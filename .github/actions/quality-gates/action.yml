@@ -1,0 +1,28 @@
+name: Quality gates
+description: Shared typecheck, lint, boundaries, coverage, build, and bundle-size gates
+runs:
+  using: composite
+  steps:
+    - name: Typecheck
+      shell: bash
+      run: npm run typecheck
+
+    - name: Lint
+      shell: bash
+      run: npm run lint
+
+    - name: Architecture boundaries
+      shell: bash
+      run: npm run check:boundaries
+
+    - name: Test with coverage
+      shell: bash
+      run: npm run test:coverage
+
+    - name: Build
+      shell: bash
+      run: npm run build
+
+    - name: Bundle size gate
+      shell: bash
+      run: npm run check:bundle-size

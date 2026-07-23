@@ -137,6 +137,8 @@ export class SessionManager {
 
   _rewriteFile(): void {}
 
+  flushed = false;
+
   getSessionFile(): string {
     return this.sessionFile;
   }

@@ -3,7 +3,6 @@ import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
 import {
   buildContextEntries,
   buildSessionContext,
-  type FileEntry,
   type SessionEntry,
   SessionManager,
 } from '@earendil-works/pi-coding-agent';
@@ -49,6 +48,10 @@ import {
   sanitizeAgentMessagesForLlm,
 } from './agentMessageHistory';
 import {
+  rewritePersistedSessionManager,
+  truncatePersistedSessionManager,
+} from './piSessionManagerPrivateAdapter';
+import {
   assertSessionJsonlSourceUnchanged,
   captureSessionJsonlSource,
   invalidateSessionJsonlIndex,
@@ -91,11 +94,6 @@ interface AsyncSubagentPersistedResult {
   status: 'completed' | 'error';
   result: string;
   report?: AgentReport;
-}
-
-interface TruncatableSessionManager {
-  fileEntries: FileEntry[];
-  _buildIndex(): void;
 }
 
 function collectPersistedAsyncSubagentResults(
@@ -318,15 +316,10 @@ export class SessionTreeStore {
     if (!this.manager.isPersisted()) {
       return;
     }
-    const manager = this.manager as unknown as {
-      _rewriteFile(): void;
-      flushed?: boolean;
-    };
-    manager._rewriteFile();
     // Pi normally creates the file lazily on the first assistant message. Since
     // Pivi flushes earlier so history rows exist immediately, keep Pi's lazy
     // writer state in sync or the next append tries to create an existing file.
-    manager.flushed = true;
+    rewritePersistedSessionManager(this.manager);
     const sessionFile = this.manager.getSessionFile();
     if (sessionFile) {
       invalidateSessionJsonlIndex(sessionFile);
@@ -464,32 +457,11 @@ export class SessionTreeStore {
   /** Rewrite this session to the append-order prefix ending at `entryId`. */
   truncateAfter(entryId: string | null): boolean {
     this.assertWritableSource();
-    // Pi does not currently expose a public truncate API. Keep the internal
-    // dependency isolated here so it can be replaced by SessionManager.truncate(entryId)
-    // or an equivalent upstream method when one exists.
-    const manager = this.manager as unknown as TruncatableSessionManager;
-    const fileEntries = manager.fileEntries;
-    if (!Array.isArray(fileEntries) || typeof manager._buildIndex !== 'function') {
+    // Pi does not currently expose a public truncate API. Private access stays in
+    // piSessionManagerPrivateAdapter so a missing capability fails before mutation.
+    if (!truncatePersistedSessionManager(this.manager, entryId)) {
       return false;
     }
-    const header = fileEntries.find((entry) => entry.type === 'session');
-    if (!header) {
-      return false;
-    }
-
-    if (entryId === null) {
-      manager.fileEntries = [header];
-    } else {
-      const index = fileEntries.findIndex((entry) => (
-        entry.type !== 'session' && entry.id === entryId
-      ));
-      if (index < 0) {
-        return false;
-      }
-      manager.fileEntries = fileEntries.slice(0, index + 1);
-    }
-
-    manager._buildIndex();
     this.rewriteToDisk();
     this.registerLive();
     return true;

@@ -81,7 +81,7 @@ describe('React tools settings', () => {
     const setToolEnabled = jest.fn(async () => undefined);
     const ports = createPorts({ setToolEnabled });
     renderTools(ports);
-    const hostToolToggle = screen.getAllByRole('checkbox').at(-1)!;
+    const hostToolToggle = screen.getByRole('checkbox', { name: 'Host tool' });
     expect(hostToolToggle.parentElement).toHaveClass('pivi-toggle');
     expect(hostToolToggle.parentElement).not.toHaveClass('checkbox-container', 'is-enabled', 'is-disabled');
     fireEvent.click(hostToolToggle);
@@ -108,7 +108,7 @@ describe('React tools settings', () => {
 
   it('keeps unavailable tools disabled and reports invalid external paths', async () => {
     renderTools(createPorts({ listToolRows: () => [{ name: 'unavailable', label: 'Unavailable host tool', description: 'Requires host support', enabled: false, available: false }] }));
-    expect(screen.getAllByRole('checkbox').at(-1)!).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'Unavailable host tool' })).toBeDisabled();
     const input = screen.getByRole('textbox', { name: 'Add an allowed external directory' });
     fireEvent.change(input, { target: { value: 'relative/path' } });
     fireEvent.blur(input);
