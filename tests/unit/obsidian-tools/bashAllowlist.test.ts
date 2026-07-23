@@ -43,9 +43,10 @@ describe('bashAllowlist structured matching', () => {
   it('matches canonical executable paths rather than string prefixes', () => {
     const env = { ...process.env, PATH: binDir };
     const matched = matchBashAllowlist(['git', 'status'], ['git'], env);
-    // The resolver uses realpathSync.native, which keeps 8.3 short names on
-    // Windows; compare through realpathSync so both sides canonicalize alike.
-    expect(fs.realpathSync(matched!.executablePath)).toBe(fs.realpathSync(gitPath));
+    // realpathSync.native (used by the resolver) expands 8.3 short names on
+    // Windows while legacy realpathSync does not; mirror the resolver here.
+    const realpath = (fs.realpathSync.native ?? fs.realpathSync) as (value: fs.PathLike) => string;
+    expect(matched?.executablePath).toBe(realpath(gitPath));
     expect(matched?.args).toEqual(['status']);
   });
 
@@ -62,6 +63,7 @@ describe('bashAllowlist structured matching', () => {
   });
 
   it('resolves absolute executables', () => {
-    expect(fs.realpathSync(resolveExecutablePath(gitPath)!)).toBe(fs.realpathSync(gitPath));
+    const realpath = (fs.realpathSync.native ?? fs.realpathSync) as (value: fs.PathLike) => string;
+    expect(resolveExecutablePath(gitPath)).toBe(realpath(gitPath));
   });
 });
