@@ -15,27 +15,6 @@ function createStorage(servers: ManagedMcpServer[]) {
 
 
 describe('PiMcpBridge', () => {
-  it('keeps MCP available in a diagnosed empty state for corrupt config', async () => {
-    const manager = new McpServerManager({
-      load: jest.fn(async () => { throw new Error('must not use strict load'); }),
-      loadWithDiagnostics: jest.fn(async () => ({
-        servers: [],
-        diagnostics: [{
-          code: 'invalid-json' as const,
-          message: 'Invalid JSON',
-          path: '.pivi/mcp.json',
-        }],
-        corruptPath: '.pivi/mcp.json.corrupt-test',
-      })),
-    });
-
-    await expect(manager.loadServers()).resolves.toBeUndefined();
-    expect(manager.getServers()).toEqual([]);
-    expect(manager.getLoadDiagnostics()).toMatchObject({
-      corruptPath: '.pivi/mcp.json.corrupt-test',
-    });
-  });
-
   it('disposes its private connection pool', async () => {
     const manager = new McpServerManager(createStorage([]));
     const dispose = jest.spyOn(PiMcpConnectionPool.prototype, 'dispose');
@@ -53,14 +32,12 @@ describe('PiMcpBridge', () => {
         name: 'ctx',
         enabled: true,
         contextSaving: true,
-        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {
         name: 'always',
         enabled: true,
         contextSaving: false,
-        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {
@@ -93,7 +70,6 @@ describe('PiMcpBridge', () => {
         name: 'local',
         enabled: true,
         contextSaving: true,
-        stdioActivationConfirmed: true,
         config: { type: 'stdio', command: 'node', args: ['server.js'] },
       },
     ];
@@ -120,14 +96,12 @@ describe('PiMcpBridge', () => {
         name: 'ctx',
         enabled: true,
         contextSaving: true,
-        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {
         name: 'always',
         enabled: true,
         contextSaving: false,
-        stdioActivationConfirmed: true,
         config: { command: 'echo', args: ['mcp'] },
       },
       {

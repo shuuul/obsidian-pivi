@@ -823,15 +823,7 @@
         "connected": "Ferramentas atualizadas",
         "availableTools": "Ferramentas disponibles ({count})",
         "noTools": "Este servidor não retornou ferramentas."
-      },
-      "stdioInactive": "Inativo até confirmar os detalhes de lançamento",
-      "confirmStdioTitle": "Confirmar servidor MCP local",
-      "confirmStdioMessage": "Revise o executável, os argumentos, o diretório de trabalho e os nomes das variáveis de ambiente. Valores secretos nunca são mostrados.",
-      "confirmStdioAction": "Confirmar e ativar",
-      "confirmStdioPreviewExecutable": "Executável: {command}",
-      "confirmStdioPreviewArgs": "Argumentos: {args}",
-      "confirmStdioPreviewCwd": "Diretório de trabalho: raiz do vault",
-      "confirmStdioPreviewEnv": "Nomes de variáveis de ambiente: {names}"
+      }
     }
   },
   "commands": {
@@ -954,32 +946,6 @@
       "recoveredTitle": "Sessão recuperada",
       "recovered": "Um turno de chat local foi recuperado numa nova sessão após alteração do ficheiro sincronizado ({reason}).",
       "applied": "Foi restaurado um turno de chat concluído localmente que não tinha terminado de ser guardado."
-    }
-  },
-  "highRisk": {
-    "message": "Este turno quer executar uma operação de alto risco. Revise a prévia e aprove ou negue. Alterar argumentos exige nova confirmação.",
-    "approve": "Aprovar",
-    "deny": "Negar",
-    "previewAria": "Prévia da operação de alto risco",
-    "preview": {
-      "paths": "Caminhos: {paths}",
-      "command": "Comando: {command}",
-      "cwd": "Diretório de trabalho: {cwd}",
-      "envNames": "Nomes de variáveis de ambiente: {names}",
-      "mcpServer": "Servidor MCP: {server}",
-      "mcpTool": "Ferramenta MCP: {tool}",
-      "origin": "Origem: {origin}",
-      "bulkCount": "Itens afetados: {count}"
-    },
-    "title": {
-      "generic": "Confirmar operação de alto risco",
-      "delete": "Confirmar exclusão",
-      "overwrite": "Confirmar sobrescrita",
-      "bulkMutation": "Confirmar alteração em massa",
-      "bash": "Confirmar comando Bash",
-      "eval": "Confirmar Obsidian eval",
-      "stdioMcpLaunch": "Confirmar lançamento MCP local",
-      "mcpArtifactWrite": "Confirmar gravação de artefato MCP"
     }
   }
 }

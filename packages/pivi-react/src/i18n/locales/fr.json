@@ -823,15 +823,7 @@
         "connected": "Outils actualisés",
         "availableTools": "Outils disponibles ({count})",
         "noTools": "Ce serveur n’a renvoyé aucun outil."
-      },
-      "stdioInactive": "Inactif jusqu’à confirmation des détails de lancement",
-      "confirmStdioTitle": "Confirmer le serveur MCP local",
-      "confirmStdioMessage": "Vérifiez l’exécutable, les arguments, le répertoire de travail et les noms de variables d’environnement. Les valeurs secrètes ne sont jamais affichées.",
-      "confirmStdioAction": "Confirmer et activer",
-      "confirmStdioPreviewExecutable": "Exécutable : {command}",
-      "confirmStdioPreviewArgs": "Arguments : {args}",
-      "confirmStdioPreviewCwd": "Répertoire de travail : racine du coffre",
-      "confirmStdioPreviewEnv": "Noms de variables d’environnement : {names}"
+      }
     }
   },
   "commands": {
@@ -954,32 +946,6 @@
       "recoveredTitle": "Session récupérée",
       "recovered": "Un tour de chat local a été récupéré dans une nouvelle session après une modification du fichier synchronisé ({reason}).",
       "applied": "Un tour de chat terminé localement qui n’avait pas fini d’être enregistré a été restauré."
-    }
-  },
-  "highRisk": {
-    "message": "Ce tour veut exécuter une opération à haut risque. Examinez l’aperçu, puis approuvez ou refusez. Modifier les arguments exige une nouvelle confirmation.",
-    "approve": "Approuver",
-    "deny": "Refuser",
-    "previewAria": "Aperçu de l’opération à haut risque",
-    "preview": {
-      "paths": "Chemins : {paths}",
-      "command": "Commande : {command}",
-      "cwd": "Répertoire de travail : {cwd}",
-      "envNames": "Noms de variables d’environnement : {names}",
-      "mcpServer": "Serveur MCP : {server}",
-      "mcpTool": "Outil MCP : {tool}",
-      "origin": "Origine : {origin}",
-      "bulkCount": "Éléments concernés : {count}"
-    },
-    "title": {
-      "generic": "Confirmer l’opération à haut risque",
-      "delete": "Confirmer la suppression",
-      "overwrite": "Confirmer l’écrasement",
-      "bulkMutation": "Confirmer la modification en masse",
-      "bash": "Confirmer la commande Bash",
-      "eval": "Confirmer Obsidian eval",
-      "stdioMcpLaunch": "Confirmer le lancement MCP local",
-      "mcpArtifactWrite": "Confirmer l’écriture d’artefact MCP"
     }
   }
 }

@@ -186,23 +186,6 @@ export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): Ma
     enabled: existing?.enabled ?? DEFAULT_MCP_SERVER.enabled,
     contextSaving: existing?.contextSaving ?? DEFAULT_MCP_SERVER.contextSaving,
   };
-  if (draft.type === 'stdio') {
-    const previous = existing && getMcpServerType(existing.config) === 'stdio'
-      ? existing.config as McpStdioServerConfig
-      : undefined;
-    const sameExecutable = previous?.command === (config as McpStdioServerConfig).command;
-    const sameArgs = JSON.stringify(previous?.args ?? []) === JSON.stringify((config as McpStdioServerConfig).args ?? []);
-    const prevEnvNames = Object.keys(previous?.env ?? {}).sort().join('\0');
-    const nextEnvNames = Object.keys((config as McpStdioServerConfig).env ?? {}).sort().join('\0');
-    const unchanged = Boolean(previous) && sameExecutable && sameArgs && prevEnvNames === nextEnvNames;
-    if (unchanged && existing?.stdioActivationConfirmed) {
-      server.stdioActivationConfirmed = true;
-    } else {
-      // New or changed stdio definitions stay inactive until explicit confirmation.
-      server.stdioActivationConfirmed = false;
-      server.enabled = false;
-    }
-  }
   if (draft.type !== 'stdio') {
     if (draft.auth === 'none') { server.auth = 'none'; server.oauth = false; }
     if (draft.auth === 'bearer') {
@@ -232,7 +215,6 @@ type McpSectionState = {
   auth: Record<string, McpAuthStatus | null>;
   toolsByServer: Record<string, readonly McpTool[]>;
   deleteCandidate: ManagedMcpServer | null;
-  stdioActivationCandidate: ManagedMcpServer | null;
   importDraft: string | null;
   addOpen: boolean;
   expandedServers: ReadonlySet<string>;
@@ -248,7 +230,6 @@ type McpSectionAction =
   | { type: 'set_tools'; name: string; tools: readonly McpTool[] }
   | { type: 'reset_tools'; servers: readonly ManagedMcpServer[] }
   | { type: 'set_delete_candidate'; server: ManagedMcpServer | null }
-  | { type: 'set_stdio_activation_candidate'; server: ManagedMcpServer | null }
   | { type: 'set_import_draft'; draft: string | null }
   | { type: 'toggle_add_open' }
   | { type: 'set_add_open'; open: boolean }
@@ -264,7 +245,6 @@ const initialMcpSectionState: McpSectionState = {
   auth: {},
   toolsByServer: {},
   deleteCandidate: null,
-  stdioActivationCandidate: null,
   importDraft: null,
   addOpen: false,
   expandedServers: new Set(),
@@ -293,8 +273,6 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
       };
     case 'set_delete_candidate':
       return { ...state, deleteCandidate: action.server };
-    case 'set_stdio_activation_candidate':
-      return { ...state, stdioActivationCandidate: action.server };
     case 'set_import_draft':
       return { ...state, importDraft: action.draft };
     case 'toggle_add_open':

@@ -24,7 +24,7 @@
     "test:watch": "node scripts/run-jest.js --watch",
     "test:coverage": "node scripts/run-jest.js --coverage",
     "test:pi-compat": "node scripts/run-jest.js --runInBand tests/integration/piUpgradeCompatibility.test.ts tests/integration/piSessionAppendCompatibility.test.ts tests/unit/pi/session/piSessionManagerPrivateAdapter.test.ts",
-    "test:platform-security": "node scripts/run-jest.js --runInBand tests/unit/host/vaultMutationPath.test.ts tests/unit/host/systemProcessRunner.test.ts tests/unit/utils/path.test.ts tests/unit/obsidian-tools/bashAllowlist.test.ts tests/unit/pi/tools/externalFileApi.test.ts tests/unit/pi/mcpProcessEnv.test.ts tests/unit/pi/mcp/mcpStdioDraft.test.ts tests/unit/pi/mcp/mcpValidation.test.ts tests/unit/pi/piMcpBridge.test.ts tests/unit/runtime/skillsMcpBounds.test.ts tests/unit/pi/skills/vaultSkillsService.test.ts tests/unit/pi/skills/installDefaultVaultSkills.test.ts tests/unit/pi/skills/vaultEnv.test.ts",
+    "test:platform-security": "node scripts/run-jest.js --runInBand tests/unit/host/vaultMutationPath.test.ts tests/unit/host/systemProcessRunner.test.ts tests/unit/utils/path.test.ts tests/unit/obsidian-tools/bashAllowlist.test.ts tests/unit/pi/tools/externalFileApi.test.ts tests/unit/pi/mcpProcessEnv.test.ts tests/unit/pi/mcp/mcpStdioDraft.test.ts tests/unit/pi/mcp/mcpValidation.test.ts tests/unit/pi/piMcpBridge.test.ts tests/unit/pi/skills/vaultSkillsService.test.ts tests/unit/pi/skills/installDefaultVaultSkills.test.ts tests/unit/pi/skills/vaultEnv.test.ts",
     "smoke:obsidian": "node scripts/smoke-obsidian.mjs",
     "analyze:bundle": "node scripts/analyze-bundle.mjs",
     "audit:sessions": "node scripts/audit-sessions.mjs",
@@ -82,7 +82,6 @@
     "@tanstack/react-virtual": "^3.14.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "skills": "1.5.20",
     "tslib": "^2.8.1"
   },
   "overrides": {

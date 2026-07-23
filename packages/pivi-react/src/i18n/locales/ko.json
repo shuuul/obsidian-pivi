@@ -823,15 +823,7 @@
         "connected": "도구를 새로 고쳤습니다",
         "availableTools": "사용 가능한 도구({count})",
         "noTools": "이 서버에서 반환된 도구가 없습니다."
-      },
-      "stdioInactive": "실행 세부정보가 확인될 때까지 비활성",
-      "confirmStdioTitle": "로컬 MCP 서버 확인",
-      "confirmStdioMessage": "실행 파일, 인자, 작업 디렉터리, 환경 변수 이름을 검토하세요. 비밀 값은 표시되지 않습니다.",
-      "confirmStdioAction": "확인 후 사용",
-      "confirmStdioPreviewExecutable": "실행 파일: {command}",
-      "confirmStdioPreviewArgs": "인자: {args}",
-      "confirmStdioPreviewCwd": "작업 디렉터리: vault 루트",
-      "confirmStdioPreviewEnv": "환경 변수 이름: {names}"
+      }
     }
   },
   "commands": {
@@ -954,32 +946,6 @@
       "recoveredTitle": "복구된 세션",
       "recovered": "동기화된 파일이 변경되어 로컬 채팅 턴을 새 세션으로 복구했습니다({reason}).",
       "applied": "저장이 끝나지 않은 로컬 완료 채팅 턴을 복원했습니다."
-    }
-  },
-  "highRisk": {
-    "message": "이 턴에서 고위험 작업을 실행하려고 합니다. 미리보기를 검토한 뒤 승인하거나 거부하세요. 인자를 바꾸면 다시 확인해야 합니다.",
-    "approve": "승인",
-    "deny": "거부",
-    "previewAria": "고위험 작업 미리보기",
-    "preview": {
-      "paths": "경로: {paths}",
-      "command": "명령: {command}",
-      "cwd": "작업 디렉터리: {cwd}",
-      "envNames": "환경 변수 이름: {names}",
-      "mcpServer": "MCP 서버: {server}",
-      "mcpTool": "MCP 도구: {tool}",
-      "origin": "출처: {origin}",
-      "bulkCount": "영향받는 항목: {count}"
-    },
-    "title": {
-      "generic": "고위험 작업 확인",
-      "delete": "삭제 확인",
-      "overwrite": "덮어쓰기 확인",
-      "bulkMutation": "대량 변경 확인",
-      "bash": "Bash 명령 확인",
-      "eval": "Obsidian eval 확인",
-      "stdioMcpLaunch": "로컬 MCP 실행 확인",
-      "mcpArtifactWrite": "MCP 아티팩트 쓰기 확인"
     }
   }
 }

@@ -6,15 +6,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
 import { PluginLogger } from '../foundation/pluginLogger';
 import type { SyncSecretStore } from '../ports';
-import type { HighRiskApprovalController } from '../runtime/highRisk/approvalController';
-import { classifyMcpArtifactWrite, classifyStdioMcpLaunch } from '../runtime/highRisk/classify';
-import { getHighRiskExecutionContext } from '../runtime/highRisk/executionContext';
 import { createLegacySseTransport } from "./legacySseTransport";
-import {
-  buildMcpArtifactVaultPath,
-  formatMcpArtifactReference,
-  serializeBoundedMcpArtifact,
-} from './mcpArtifactFallback';
 import {
   buildMcpStdioEnv,
   createMcpResolveHost,
@@ -22,7 +14,6 @@ import {
   resolveMcpBearerToken,
   resolveMcpHeaders,
 } from "./mcpProcessEnv";
-import { materializeMcpToolResult, McpResultBudgetError } from './mcpResultBudget';
 import { parseCommand } from "./mcpUtils";
 import {
   assertMcpStdioExecutable,
@@ -37,12 +28,6 @@ import type { McpProcessEnv, McpTransportFetch } from "./ports";
 import type { McpTool } from "./types";
 import type { ManagedMcpServer } from "./types";
 import { getMcpServerType, supportsMcpOAuth } from "./types";
-
-/** Writes a bounded Vault-relative MCP artifact after high-risk authorization. */
-export type McpArtifactWriter = (args: {
-  vaultRelativePath: string;
-  content: string;
-}) => Promise<void>;
 
 interface UrlServerConfig {
   url: string;
@@ -183,8 +168,6 @@ export class PiMcpConnectionPool {
     private readonly processEnv: McpProcessEnv,
     private readonly secretStorage?: SyncSecretStore,
     private readonly stdioCwd?: string,
-    private readonly highRisk?: HighRiskApprovalController | null,
-    private readonly artifactWriter?: McpArtifactWriter | null,
   ) {}
 
   private readonly connections = new Map<string, ServerConnection>();
@@ -215,62 +198,30 @@ export class PiMcpConnectionPool {
       { signal },
     );
 
-    let materialized;
-    try {
-      materialized = materializeMcpToolResult(result.content);
-    } catch (error) {
-      if (error instanceof McpResultBudgetError) {
-        const artifact = await this.tryWriteOversizedArtifact(
-          server.name,
-          toolName,
-          result.content,
-          error.violation,
-        );
-        if (artifact) {
-          return artifact;
+    const parts: string[] = [];
+    const content = Array.isArray(result.content) ? result.content : [];
+    for (const block of content) {
+      if (block && typeof block === "object" && "type" in block) {
+        const typed = block as {
+          type: string;
+          text?: string;
+          resource?: unknown;
+        };
+        if (typed.type === "text" && typeof typed.text === "string") {
+          parts.push(typed.text);
+        } else if (typed.type === "resource") {
+          parts.push(JSON.stringify(typed.resource));
+        } else {
+          parts.push(JSON.stringify(block));
         }
-        throw new Error(
-          `MCP tool "${toolName}" on "${server.name}" exceeded result budget (${error.violation}). `
-            + 'Full oversized payloads are never entered into context or session history.',
-        );
       }
-      throw error;
     }
 
     if (result.isError) {
-      throw new Error(materialized.text || `MCP tool "${toolName}" failed`);
+      throw new Error(parts.join("\n") || `MCP tool "${toolName}" failed`);
     }
 
-    return materialized.text;
-  }
-
-  private async tryWriteOversizedArtifact(
-    serverName: string,
-    toolName: string,
-    content: unknown,
-    violation: string,
-  ): Promise<string | null> {
-    if (!this.artifactWriter || !this.highRisk) {
-      return null;
-    }
-
-    const vaultRelativePath = buildMcpArtifactVaultPath(serverName, toolName);
-    const classification = classifyMcpArtifactWrite(vaultRelativePath);
-    const nested = getHighRiskExecutionContext();
-    const controller = nested?.controller ?? this.highRisk;
-    await controller.requireAuthorized({
-      kind: classification.kind,
-      resources: classification.resources,
-      toolName: 'mcp',
-    });
-
-    const artifactBody = serializeBoundedMcpArtifact(content, violation);
-    await this.artifactWriter({
-      vaultRelativePath,
-      content: artifactBody,
-    });
-
-    return formatMcpArtifactReference(serverName, toolName, violation, vaultRelativePath);
+    return parts.join("\n") || "(empty result)";
   }
 
   async probe(server: ManagedMcpServer): Promise<McpTool[]> {
@@ -348,50 +299,6 @@ export class PiMcpConnectionPool {
     }
   }
 
-  private async authorizeStdioLaunch(server: ManagedMcpServer): Promise<void> {
-    if (getMcpServerType(server.config) !== 'stdio') {
-      return;
-    }
-    if (server.stdioActivationConfirmed !== true) {
-      throw new Error(
-        `MCP stdio server "${server.name}" is inactive until its executable, arguments, cwd, and environment variable names are confirmed in Settings → MCP.`,
-      );
-    }
-    if (this.connections.has(server.name)) {
-      return;
-    }
-    if (!this.highRisk) {
-      // Settings diagnostics may connect without a turn-scoped controller after
-      // activation confirmation; agent turns always inject a controller.
-      return;
-    }
-
-    const stdio = server.config as {
-      command: string;
-      args?: string[];
-      env?: Record<string, unknown> | undefined;
-    };
-    const { cmd, args } = parseCommand(stdio.command, stdio.args);
-    const envVarNames = stdio.env && typeof stdio.env === 'object'
-      ? Object.keys(stdio.env)
-      : [];
-    const classification = classifyStdioMcpLaunch({
-      mcpServer: server.name,
-      executable: cmd,
-      args,
-      cwd: this.stdioCwd,
-      envVarNames,
-    });
-
-    const nested = getHighRiskExecutionContext();
-    const controller = nested?.controller ?? this.highRisk;
-    await controller.requireAuthorized({
-      kind: classification.kind,
-      resources: classification.resources,
-      toolName: 'mcp',
-    });
-  }
-
   private async acceptConnection(
     serverName: string,
     generation: number,
@@ -432,7 +339,6 @@ export class PiMcpConnectionPool {
     server: ManagedMcpServer,
     signal?: AbortSignal,
   ): Promise<ServerConnection> {
-    await this.authorizeStdioLaunch(server);
     const transport = createTransport(
       server,
       this.oauth,

@@ -1,6 +1,6 @@
 import { TFile, TFolder } from 'obsidian';
 
-import { isFileRecoveryEnabled, ObsidianVaultApi } from '@pivi/obsidian-host';
+import { ObsidianVaultApi } from '@pivi/obsidian-host';
 
 function makeApp(
   files: Array<{ path: string; content: string; tags?: string[]; frontmatter?: Record<string, unknown> }>,
@@ -577,8 +577,6 @@ describe('ObsidianVaultApi', () => {
     });
     const api = new ObsidianVaultApi(app as never);
 
-    expect(isFileRecoveryEnabled(app as never)).toBe(true);
-
     await api.editNote({
       path: 'notes/a.md',
       old_string: 'world',
@@ -652,8 +650,6 @@ describe('ObsidianVaultApi', () => {
       fileRecoveryEnabled: false,
     });
     const api = new ObsidianVaultApi(app as never);
-
-    expect(isFileRecoveryEnabled(app as never)).toBe(false);
 
     await api.editNote({
       path: 'notes/a.md',

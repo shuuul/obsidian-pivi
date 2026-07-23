@@ -60,11 +60,6 @@ export interface ManagedMcpServer {
   name: string;
   config: McpServerConfig;
   enabled: boolean;
-  /**
-   * Stdio servers stay inactive until the exact executable, args, cwd, and env
-   * var names are confirmed. Remote servers are always treated as confirmed.
-   */
-  stdioActivationConfirmed?: boolean;
   /** Context-saving mode: hide tools unless referenced with /server/tool. */
   contextSaving: boolean;
   /** Tool names disabled for this server. */
@@ -99,8 +94,6 @@ export interface ManagedMcpConfigFile extends McpConfigFile {
       string,
       {
         enabled?: boolean;
-        /** Stdio activation confirmation; omitted/false keeps the server inactive. */
-        stdioActivationConfirmed?: boolean;
         contextSaving?: boolean;
         disabledTools?: string[];
         description?: string;

@@ -823,15 +823,7 @@
         "connected": "Tools aktualisiert",
         "availableTools": "Verfügbare Tools ({count})",
         "noTools": "Dieser Server hat keine Tools zurückgegeben."
-      },
-      "stdioInactive": "Inaktiv, bis Startdetails bestätigt sind",
-      "confirmStdioTitle": "Lokalen MCP-Server bestätigen",
-      "confirmStdioMessage": "Prüfen Sie ausführbare Datei, Argumente, Arbeitsverzeichnis und Umgebungsvariablennamen. Geheimwerte werden nicht angezeigt.",
-      "confirmStdioAction": "Bestätigen und aktivieren",
-      "confirmStdioPreviewExecutable": "Ausführbare Datei: {command}",
-      "confirmStdioPreviewArgs": "Argumente: {args}",
-      "confirmStdioPreviewCwd": "Arbeitsverzeichnis: Vault-Stamm",
-      "confirmStdioPreviewEnv": "Umgebungsvariablennamen: {names}"
+      }
     }
   },
   "commands": {
@@ -954,32 +946,6 @@
       "recoveredTitle": "Wiederhergestellte Sitzung",
       "recovered": "Ein lokaler Chat-Turn wurde nach einer Änderung der synchronisierten Datei in eine neue Sitzung wiederhergestellt ({reason}).",
       "applied": "Ein lokal abgeschlossener Chat-Turn, der nicht fertig gespeichert war, wurde wiederhergestellt."
-    }
-  },
-  "highRisk": {
-    "message": "Dieser Zug möchte eine risikoreiche Operation ausführen. Prüfen Sie die Vorschau und genehmigen oder lehnen Sie ab. Geänderte Argumente erfordern eine neue Bestätigung.",
-    "approve": "Genehmigen",
-    "deny": "Ablehnen",
-    "previewAria": "Vorschau der risikoreichen Operation",
-    "preview": {
-      "paths": "Pfade: {paths}",
-      "command": "Befehl: {command}",
-      "cwd": "Arbeitsverzeichnis: {cwd}",
-      "envNames": "Umgebungsvariablennamen: {names}",
-      "mcpServer": "MCP-Server: {server}",
-      "mcpTool": "MCP-Tool: {tool}",
-      "origin": "Ursprung: {origin}",
-      "bulkCount": "Betroffene Elemente: {count}"
-    },
-    "title": {
-      "generic": "Risikoreiche Operation bestätigen",
-      "delete": "Löschen bestätigen",
-      "overwrite": "Überschreiben bestätigen",
-      "bulkMutation": "Massenänderung bestätigen",
-      "bash": "Bash-Befehl bestätigen",
-      "eval": "Obsidian-eval bestätigen",
-      "stdioMcpLaunch": "Lokalen MCP-Start bestätigen",
-      "mcpArtifactWrite": "MCP-Artefaktschreiben bestätigen"
     }
   }
 }

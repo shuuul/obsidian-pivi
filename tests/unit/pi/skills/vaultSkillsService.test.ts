@@ -5,6 +5,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import * as vaultSkillLoader from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
+import { formatNpxNotFoundError } from '@pivi/pivi-agent-core/skills/vault/env';
 import {
   normalizeSkillSlug,
   parseRemoteSkillsListOutput,
@@ -23,7 +24,7 @@ describe('normalizeSkillSlug', () => {
     );
   });
 
-  it('accepts git URLs and direct repo paths supported by the skills CLI', () => {
+  it('accepts git URLs and direct repo paths supported by npx skills', () => {
     expect(normalizeSkillSlug('git@github.com:heptameta/heptabase-cli-skills.git')).toBe(
       'git@github.com:heptameta/heptabase-cli-skills.git',
     );
@@ -44,7 +45,7 @@ describe('normalizeSkillSlug', () => {
 });
 
 describe('parseRemoteSkillsListOutput', () => {
-  it('extracts skill names and descriptions from skills --list output', () => {
+  it('extracts skill names and descriptions from npx skills --list output', () => {
     const output = `
 ◇  Available Skills
 │
@@ -120,24 +121,19 @@ describe('VaultSkillsService sync', () => {
     );
   }
 
-  function pinnedSkillsOptions(): {
-    skillsCliPackageRoot: string;
-    processEnv: NodeJS.ProcessEnv;
-  } {
+  function createNpxProcessEnv(): { processEnv: NodeJS.ProcessEnv; npxPath: string } {
+    const binDir = path.join(vaultPath, 'bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    fs.writeFileSync(path.join(binDir, 'node'), '');
+    const npxPath = path.join(binDir, 'npx');
+    fs.writeFileSync(npxPath, '');
     return {
-      skillsCliPackageRoot: path.join(process.cwd(), 'node_modules', 'skills'),
+      npxPath,
       processEnv: {
         HOME: vaultPath,
-        PATH: '/usr/bin',
+        PATH: binDir,
       },
     };
-  }
-
-  function expectPinnedSkillsInvocation(request: ProcessRunRequest | undefined, cliArgs: string[]): void {
-    expect(request?.executable.toLowerCase()).toContain('node');
-    expect(request?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
-    expect(request?.args?.slice(1)).toEqual(cliArgs);
-    expect(request?.shell).toEqual({ mode: 'forbidden' });
   }
 
   it('lists skills from loadVaultSkills', () => {
@@ -233,7 +229,7 @@ describe('VaultSkillsService sync', () => {
     );
   });
 
-  it('syncs skills written under .pivi by the skills CLI working directory', () => {
+  it('syncs skills written under .pivi by npx skills working directory', () => {
     const flatDir = path.join(vaultPath, '.pivi', '.agents', 'skills', 'flat-skill');
     fs.mkdirSync(flatDir, { recursive: true });
     fs.writeFileSync(
@@ -342,18 +338,18 @@ describe('VaultSkillsService sync', () => {
       }),
     };
 
-    const service = new VaultSkillsService(vaultPath, { processRunner, skillsCliPackageRoot: path.join(process.cwd(), 'node_modules', 'skills') });
+    const service = new VaultSkillsService(vaultPath, { processRunner });
     await expect(service.listRemoteSkills('owner/repo')).resolves.toEqual([
       { name: 'demo', description: 'Demo skill.' },
     ]);
 
-    expectPinnedSkillsInvocation(calls[0], ['add', 'owner/repo', '--list']);
+    expect(calls[0]?.args).toEqual(['skills', 'add', 'owner/repo', '--list']);
     expect(calls[0]?.cwd).toBe(path.join(vaultPath, '.pivi'));
     expect(calls[0]?.timeoutMs).toBe(120_000);
   });
 
   it('runs skills commands with injected process environment lookup', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+    const { processEnv, npxPath } = createNpxProcessEnv();
     processEnv.CUSTOM_SKILLS_ENV = 'injected';
     const calls: ProcessRunRequest[] = [];
     const processRunner: ProcessRunner = {
@@ -374,19 +370,21 @@ describe('VaultSkillsService sync', () => {
     const service = new VaultSkillsService(vaultPath, {
       processRunner,
       processEnv,
-      skillsCliPackageRoot,
     });
 
     await service.listRemoteSkills('owner/repo');
 
-    expect(calls[0]?.executable.toLowerCase()).toContain('node');
-    expect(calls[0]?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
+    expect(calls[0]?.executable).toBe(npxPath);
     expect(calls[0]?.env?.CUSTOM_SKILLS_ENV).toBe('injected');
-    // PATH still enhanced for node resolution
+    expect(calls[0]?.env?.PATH?.split(':')).toContain(path.dirname(npxPath));
   });
 
-  it('keeps shell forbidden on Windows for the pinned skills CLI', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+  it('uses reviewed Windows shell adapter for npx.cmd', async () => {
+    const binDir = path.join(vaultPath, 'win-bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    fs.writeFileSync(path.join(binDir, 'node.exe'), '');
+    const npxPath = path.join(binDir, 'npx.cmd');
+    fs.writeFileSync(npxPath, '');
     const calls: ProcessRunRequest[] = [];
     const processRunner: ProcessRunner = {
       run: jest.fn(async (request) => {
@@ -409,18 +407,24 @@ describe('VaultSkillsService sync', () => {
         homeDir: vaultPath,
         platform: 'win32',
       },
-      processEnv,
+      processEnv: {
+        HOME: vaultPath,
+        PATH: binDir,
+      },
       processRunner,
-      skillsCliPackageRoot,
     });
 
     await service.listRemoteSkills('owner/repo');
-    expectPinnedSkillsInvocation(calls[0], ['add', 'owner/repo', '--list']);
-    expect(calls[0]?.shell).toEqual({ mode: 'forbidden' });
+
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.shell).toEqual({
+      mode: 'reviewed-adapter',
+      reason: 'npx.cmd requires Windows command processor',
+    });
   });
 
   it('installs selected remote skills through the process runner', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+    const { processEnv, npxPath } = createNpxProcessEnv();
     const calls: ProcessRunRequest[] = [];
     const processRunner: ProcessRunner = {
       run: jest.fn(async (request) => {
@@ -438,12 +442,14 @@ describe('VaultSkillsService sync', () => {
       }),
     };
 
-    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv, skillsCliPackageRoot });
+    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.installFromSource('owner/repo', { skillNames: ['selected'] })).resolves.toEqual([
       'selected-skill',
     ]);
 
-    expectPinnedSkillsInvocation(calls[0], [
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.args).toEqual([
+      'skills',
       'add',
       'owner/repo',
       '--copy',
@@ -455,7 +461,7 @@ describe('VaultSkillsService sync', () => {
   });
 
   it('installs a normalized slug without selected skill flags', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+    const { processEnv, npxPath } = createNpxProcessEnv();
     const calls: ProcessRunRequest[] = [];
     const processRunner: ProcessRunner = {
       run: jest.fn(async (request) => {
@@ -473,12 +479,14 @@ describe('VaultSkillsService sync', () => {
       }),
     };
 
-    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv, skillsCliPackageRoot });
+    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.installFromSlug('https://github.com/owner/repo.git')).resolves.toEqual([
       'all-skills',
     ]);
 
-    expectPinnedSkillsInvocation(calls[0], [
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.args).toEqual([
+      'skills',
       'add',
       'https://github.com/owner/repo.git',
       '--copy',
@@ -487,7 +495,7 @@ describe('VaultSkillsService sync', () => {
   });
 
   it('updates all existing skills through the process runner', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+    const { processEnv, npxPath } = createNpxProcessEnv();
     const existing = path.join(vaultPath, '.pivi', 'skills', 'existing');
     fs.mkdirSync(existing, { recursive: true });
     fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: old\ndescription: old\n---\n', 'utf-8');
@@ -508,17 +516,16 @@ describe('VaultSkillsService sync', () => {
       }),
     };
 
-    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv, skillsCliPackageRoot });
+    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.updateAll()).resolves.toEqual(['existing']);
 
-    expect(calls[0]?.executable.toLowerCase()).toContain('node');
-    expect(calls[0]?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
-    expectPinnedSkillsInvocation(calls[0], ['update', '-p', '-y']);
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.args).toEqual(['skills', 'update', '-p', '-y']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: new');
   });
 
   it('updates one skill through the process runner', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+    const { processEnv, npxPath } = createNpxProcessEnv();
     const existing = path.join(vaultPath, '.pivi', 'skills', 'target-folder');
     fs.mkdirSync(existing, { recursive: true });
     fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: old\ndescription: old\n---\n', 'utf-8');
@@ -539,17 +546,16 @@ describe('VaultSkillsService sync', () => {
       }),
     };
 
-    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv, skillsCliPackageRoot });
+    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.updateSkill('target', 'target-folder')).resolves.toEqual(['target-folder']);
 
-    expect(calls[0]?.executable.toLowerCase()).toContain('node');
-    expect(calls[0]?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
-    expectPinnedSkillsInvocation(calls[0], ['update', 'target', '-p', '-y']);
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.args).toEqual(['skills', 'update', 'target', '-p', '-y']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: target');
   });
 
   it('upgrades default bundle folders through the process runner', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+    const { processEnv, npxPath } = createNpxProcessEnv();
     const existing = path.join(vaultPath, '.pivi', 'skills', 'obsidian-markdown');
     fs.mkdirSync(existing, { recursive: true });
     fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: old\ndescription: old\n---\n', 'utf-8');
@@ -571,19 +577,28 @@ describe('VaultSkillsService sync', () => {
       }),
     };
 
-    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv, skillsCliPackageRoot });
+    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.upgradeDefaultBundle(new Set(['obsidian-cli']))).resolves.toEqual([
       'obsidian-markdown',
       'json-canvas',
     ]);
 
-    expect(calls[0]?.executable.toLowerCase()).toContain('node');
-    expect(calls[0]?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
-    expectPinnedSkillsInvocation(calls[0], ['add', 'kepano/obsidian-skills', '--copy', '-y']);
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.args).toEqual(['skills', 'add', 'kepano/obsidian-skills', '--copy', '-y']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: markdown');
   });
 
-  it('reports skills CLI failures from the injected process runner', async () => {
+  it('reports injected node directory when formatting missing-npx errors', () => {
+    const binDir = path.join(vaultPath, 'node-only-bin');
+    fs.mkdirSync(binDir, { recursive: true });
+    fs.writeFileSync(path.join(binDir, 'node'), '');
+
+    expect(formatNpxNotFoundError({ HOME: vaultPath, PATH: binDir })).toContain(
+      `Found node in ${binDir} but not npx alongside it.`,
+    );
+  });
+
+  it('reports npx skills failures from the injected process runner', async () => {
     const processRunner: ProcessRunner = {
       run: jest.fn(async () => ({
         termination: 'exit' as const,
@@ -596,17 +611,14 @@ describe('VaultSkillsService sync', () => {
       })),
     };
 
-    const service = new VaultSkillsService(vaultPath, {
-      processRunner,
-      skillsCliPackageRoot: path.join(process.cwd(), 'node_modules', 'skills'),
-    });
+    const service = new VaultSkillsService(vaultPath, { processRunner });
     await expect(service.listRemoteSkills('owner/repo')).rejects.toThrow(
-      'skills list failed: network failed',
+      'npx skills list failed: network failed',
     );
   });
 
   it('preserves the disabled marker when updating an existing skill', async () => {
-    const { processEnv, skillsCliPackageRoot } = pinnedSkillsOptions();
+    const { processEnv, npxPath } = createNpxProcessEnv();
     const existing = path.join(vaultPath, '.pivi', 'skills', 'existing');
     fs.mkdirSync(existing, { recursive: true });
     fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: old\ndescription: old\n---\n', 'utf-8');
@@ -628,12 +640,11 @@ describe('VaultSkillsService sync', () => {
       }),
     };
 
-    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv, skillsCliPackageRoot });
+    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
     await expect(service.updateAll()).resolves.toEqual(['existing']);
 
-    expect(calls[0]?.executable.toLowerCase()).toContain('node');
-    expect(calls[0]?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
-    expectPinnedSkillsInvocation(calls[0], ['update', '-p', '-y']);
+    expect(calls[0]?.executable).toBe(npxPath);
+    expect(calls[0]?.args).toEqual(['skills', 'update', '-p', '-y']);
     expect(fs.existsSync(path.join(existing, '.disabled'))).toBe(true);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: new');
     expect(service.list()[0]?.disabled).toBe(true);

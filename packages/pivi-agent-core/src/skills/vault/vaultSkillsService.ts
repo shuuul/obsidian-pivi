@@ -6,23 +6,14 @@ import {
   DEFAULT_VAULT_SKILL_FOLDER_NAMES,
   DEFAULT_VAULT_SKILLS_SLUG,
 } from './defaultVaultSkills';
-import { getSpawnEnvWithEnhancedPath, type SkillsEnvironmentOptions } from './env';
+import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath, isWindowsSkillsEnvironment, type SkillsEnvironmentOptions } from './env';
 import { loadVaultSkills, SKILL_DISABLED_MARKER } from './loadVaultSkills';
 import { PIVI_SKILLS_PATH } from './paths';
-import { resolvePinnedSkillsCli } from './resolvePinnedSkillsCli';
-import {
-  publishValidatedSkillTree,
-  SkillStageValidationError,
-  stageSkillTreeFromSource,
-} from './skillStagePublish';
 
 export interface VaultSkillsServiceOptions {
   processRunner?: ProcessRunner;
   processEnv?: NodeJS.ProcessEnv;
   environment?: SkillsEnvironmentOptions;
-  /** Optional override for tests / composition (package root containing bin/cli.mjs). */
-  skillsCliPackageRoot?: string;
-  pluginDir?: string;
 }
 
 export interface SyncCliSkillsOptions {
@@ -31,7 +22,7 @@ export interface SyncCliSkillsOptions {
 }
 
 export interface InstallSkillsOptions {
-  /** Skill names to request from multi-skill repositories (`skills add --skill`). */
+  /** Skill names to request from multi-skill repositories (`npx skills add --skill`). */
   skillNames?: string[];
 }
 
@@ -43,7 +34,7 @@ export interface RemoteSkillEntry {
 
 const SKILLS_INSTALL_TIMEOUT_MS = 120_000;
 
-/** Candidate dirs where `skills add --copy` may place skills before Pivi sync. */
+/** Candidate dirs where `npx skills add --copy` may place skills before Pivi sync. */
 const SKILLS_CLI_SOURCE_ROOTS = [
   '.pivi/.agents/skills',
   '.pivi/.cursor/skills',
@@ -52,8 +43,6 @@ const SKILLS_CLI_SOURCE_ROOTS = [
   '.cursor/skills',
   'skills',
 ] as const;
-
-const SKILLS_STAGING_ROOT = path.join('.pivi', 'skills-staging');
 
 const SKILLS_CLI_METADATA_FILES = ['skills-lock.json', '.skills.json'] as const;
 
@@ -145,7 +134,6 @@ function copySkillTree(
   dest: string,
   existingBefore: Set<string>,
   installed: string[],
-  vaultPath: string,
   overwriteFolders?: ReadonlySet<string>,
 ): boolean {
   const destDir = path.join(dest, folderName);
@@ -161,33 +149,23 @@ function copySkillTree(
   }
 
   const overwrite = overwriteFolders?.has(folderName) ?? false;
+  const wasDisabled = fs.existsSync(path.join(destDir, SKILL_DISABLED_MARKER));
   if (!overwrite && (fs.existsSync(destDir) || existingBefore.has(folderName))) {
     return false;
   }
 
-  const stagingRoot = path.join(vaultPath, SKILLS_STAGING_ROOT, `sync-${process.pid}-${Date.now()}`);
-  try {
-    const stagedDir = stageSkillTreeFromSource(sourceDir, stagingRoot, folderName);
-    publishValidatedSkillTree({
-      stagedDir,
-      destinationDir: dest,
-      folderName,
-      preserveDisabledMarker: true,
-    });
-    if (!installed.includes(folderName)) {
-      installed.push(folderName);
-    }
-    return true;
-  } catch (error) {
-    if (error instanceof SkillStageValidationError) {
-      throw error;
-    }
-    throw error;
-  } finally {
-    if (fs.existsSync(stagingRoot)) {
-      fs.rmSync(stagingRoot, { recursive: true, force: true });
-    }
+  if (fs.existsSync(destDir)) {
+    fs.rmSync(destDir, { recursive: true, force: true });
   }
+
+  fs.cpSync(sourceDir, destDir, { recursive: true });
+  if (wasDisabled) {
+    fs.writeFileSync(path.join(destDir, SKILL_DISABLED_MARKER), 'disabled\n', 'utf8');
+  }
+  if (!installed.includes(folderName)) {
+    installed.push(folderName);
+  }
+  return true;
 }
 
 /** Copy skill trees from CLI default locations into `.pivi/skills/`. */
@@ -214,7 +192,7 @@ export function syncCliSkillsIntoPivi(
       const flatSkillDir = path.join(sourceRoot, entry.name);
       const skillMd = path.join(flatSkillDir, 'SKILL.md');
       if (fs.existsSync(skillMd)) {
-        if (copySkillTree(flatSkillDir, entry.name, dest, existingBefore, installed, vaultPath, overwriteFolders)) {
+        if (copySkillTree(flatSkillDir, entry.name, dest, existingBefore, installed, overwriteFolders)) {
           continue;
         }
       }
@@ -234,7 +212,7 @@ export function syncCliSkillsIntoPivi(
           continue;
         }
 
-        copySkillTree(nestedSkillDir, nested.name, dest, existingBefore, installed, vaultPath, overwriteFolders);
+        copySkillTree(nestedSkillDir, nested.name, dest, existingBefore, installed, overwriteFolders);
       }
     }
   }
@@ -256,6 +234,10 @@ export class VaultSkillsService {
 
   private get environment(): SkillsEnvironmentOptions | undefined {
     return this.options.environment;
+  }
+
+  private get isWindows(): boolean {
+    return isWindowsSkillsEnvironment(this.environment);
   }
 
   list(): VaultSkillEntry[] {
@@ -296,13 +278,13 @@ export class VaultSkillsService {
     const piviSkillsDir = this.ensurePiviSkillsDir();
     const before = new Set(this.listDirNames(piviSkillsDir));
 
-    await this.runSkillsAdd(source, skillNames);
+    await this.runNpxSkillsAdd(source, skillNames);
     const synced = syncCliSkillsIntoPivi(this.vaultPath, before);
 
     if (synced.length === 0) {
       throw new Error(
         'Install finished but no new skill folders were found under .pivi/skills/. '
-          + 'Check that the pinned skills CLI completed and SKILL.md exists in the vault.',
+          + 'Check that npx skills completed and SKILL.md exists in the vault.',
       );
     }
 
@@ -311,12 +293,12 @@ export class VaultSkillsService {
 
   async listRemoteSkills(sourceInput: string): Promise<RemoteSkillEntry[]> {
     const source = normalizeSkillSlug(sourceInput);
-    const output = await this.runSkillsCommand(['add', source, '--list'], 'list');
+    const output = await this.runNpxSkillsCommand(['skills', 'add', source, '--list'], 'list');
     return parseRemoteSkillsListOutput(output);
   }
 
   /**
-   * Re-fetch kepano/obsidian-skills via the pinned skills CLI and refresh bundle folders (overwrite).
+   * Re-fetch kepano/obsidian-skills via npx and refresh bundle folders (overwrite).
    * Skips folder names in `skipFolders` (user-removed defaults).
    */
   async upgradeDefaultBundle(skipFolders: ReadonlySet<string>): Promise<string[]> {
@@ -324,11 +306,11 @@ export class VaultSkillsService {
       (name) => !skipFolders.has(name),
     );
     if (bundleFolders.length === 0) {
-      await this.runSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG);
+      await this.runNpxSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG);
       return [];
     }
 
-    await this.runSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG);
+    await this.runNpxSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG);
     return syncCliSkillsIntoPivi(this.vaultPath, new Set(), {
       overwriteFolders: new Set(bundleFolders),
     });
@@ -350,7 +332,7 @@ export class VaultSkillsService {
 
   async updateAll(): Promise<string[]> {
     const folders = new Set(this.listDirNames(this.ensurePiviSkillsDir()));
-    await this.runSkillsUpdate();
+    await this.runNpxSkillsUpdate();
     return syncCliSkillsIntoPivi(this.vaultPath, new Set(), { overwriteFolders: folders });
   }
 
@@ -361,7 +343,7 @@ export class VaultSkillsService {
       throw new Error('Invalid skill name.');
     }
 
-    await this.runSkillsUpdate([normalizedSkillName]);
+    await this.runNpxSkillsUpdate([normalizedSkillName]);
     return syncCliSkillsIntoPivi(this.vaultPath, new Set(), {
       overwriteFolders: new Set([safeFolderName]),
     });
@@ -405,48 +387,46 @@ export class VaultSkillsService {
     }
   }
 
-  private runSkillsAdd(source: string, skillNames: string[] = []): Promise<void> {
-    const args = ['add', source, '--copy', '-y'];
+  private runNpxSkillsAdd(source: string, skillNames: string[] = []): Promise<void> {
+    const args = ['skills', 'add', source, '--copy', '-y'];
     for (const skillName of skillNames) {
       args.push('--skill', skillName);
     }
-    return this.runSkillsCommand(args, 'add').then(() => undefined);
+    return this.runNpxSkillsCommand(args, 'add').then(() => undefined);
   }
 
-  private runSkillsUpdate(skillNames: string[] = []): Promise<void> {
-    return this.runSkillsCommand(['update', ...skillNames, '-p', '-y'], 'update')
+  private runNpxSkillsUpdate(skillNames: string[] = []): Promise<void> {
+    return this.runNpxSkillsCommand(['skills', 'update', ...skillNames, '-p', '-y'], 'update')
       .then(() => undefined);
   }
 
-  private async runSkillsCommand(args: string[], commandName: string): Promise<string> {
+  private async runNpxSkillsCommand(args: string[], commandName: string): Promise<string> {
+    const npxCommand = findNpxExecutable(undefined, this.processEnv, this.environment);
+    if (!npxCommand) {
+      throw new Error(formatNpxNotFoundError(this.processEnv, this.environment));
+    }
     if (!this.options.processRunner) {
-      throw new Error('A ProcessRunner is required to run skills CLI commands.');
+      throw new Error('A ProcessRunner is required to run npx skills commands.');
     }
 
-    const cli = resolvePinnedSkillsCli({
-      processEnv: this.processEnv,
-      environment: this.environment,
-      vaultPath: this.vaultPath,
-      pluginDir: this.options.pluginDir,
-      overridePackageRoot: this.options.skillsCliPackageRoot,
-    });
-
     const result = await this.options.processRunner.run({
-      executable: cli.executable,
-      args: [cli.cliPath, ...args],
+      executable: npxCommand,
+      args,
       cwdPolicy: { mode: 'vault', vaultRoot: this.vaultPath },
       cwd: this.ensurePiviWorkDir(),
       env: getSpawnEnvWithEnhancedPath(undefined, this.processEnv, this.environment),
       timeoutMs: SKILLS_INSTALL_TIMEOUT_MS,
       stdoutByteLimit: 1024 * 1024,
       stderrByteLimit: 1024 * 1024,
-      shell: { mode: 'forbidden' },
+      shell: this.isWindows
+        ? { mode: 'reviewed-adapter', reason: 'npx.cmd requires Windows command processor' }
+        : { mode: 'forbidden' },
     });
     if (result.termination !== 'exit' || result.exitCode !== 0) {
       const detail = result.stderr.trim() || result.stdout.trim()
         || result.spawnError
         || (result.signal ? `signal ${result.signal}` : `termination ${result.termination}`);
-      throw new Error(`skills ${commandName} failed: ${detail}`);
+      throw new Error(`npx skills ${commandName} failed: ${detail}`);
     }
     return result.stdout;
   }

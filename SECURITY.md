@@ -22,7 +22,7 @@ Maintainers triage advisory reports and coordinate disclosure. There is no separ
 | Synced `.pivi/` JSON | May sync across devices; treat as non-secret configuration and session history | Secrets, absolute host paths, and environment values must not be written here |
 | Device-local storage / `SecretStorage` | Per-device; secrets and path caches stay off synced JSON | Loss of device storage loses those secrets/paths; cloud sync of the vault does not restore them |
 | Model providers / MCP remotes | Third-party services receive prompts, tool results, and configured headers | Prompt injection and malicious tool output are expected adversarial inputs |
-| Skills / stdio MCP | User-installed code and executables run with the Obsidian process privileges | Installation and first launch require explicit confirmation; Pivi does not sandbox third-party skill or MCP code |
+| Skills / stdio MCP | User-installed code and executables run with the Obsidian process privileges | Pivi does not sandbox third-party skill or MCP code; treat installs as trusted by the vault owner |
 
 Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, silent secret sync). It does **not** claim to stop a determined local attacker who already controls the Obsidian process, the vault filesystem, or the user's OS account.
 
@@ -34,10 +34,8 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 | Environment variables | Empty registry | Device-local `pivi.environment.v1`; secrets in `SecretStorage` (`pivi-env-*`) | Synced `.pivi/settings.json` must not persist environment maps |
 | MCP remote headers / stdio env | Structured `ConfigValueRef` | Secret values in `SecretStorage` (`pivi-mcp-v-*`); config in `.pivi/mcp.json` | Names may appear in config; secret values do not |
 | External absolute-path reads | Off (`allowExternalRead`) | Device-local allowed directories / turn folders | Absolute paths never enter synced settings or session JSONL |
-| Bash tool | Off (`allowBash`) | Allowlisted executable + argument schema | No login shell; turn-scoped high-risk confirmation |
-| MCP stdio servers | Inactive until confirmed | Vault-local `.pivi/mcp.json` | First process launch in a turn also requires confirmation |
-| High-risk vault mutations | Confirm per turn when File Recovery is unavailable | Session/turn/kind/resource-bound grants | Enabled File Recovery bypasses approval in favor of snapshots; otherwise fail closed |
-| Subagents | Inherit parent grants only | No hidden approval UI | Cannot escalate beyond parent turn grants |
+| Bash tool | Off (`allowBash`) | Allowlisted executable + argument schema | No login shell |
+| MCP stdio servers | Settings-enabled, lazy connect | Vault-local `.pivi/mcp.json` | Connects on diagnostics or first agent search/list/call; no turn-scoped launch gate |
 
 ## Network flows
 
@@ -72,9 +70,7 @@ Terminal WebFetch errors redact the target URL.
 Model and tool outputs are untrusted. Pivi treats prompt injection as an expected condition:
 
 - Network authority comes from composition-time clients and short-lived origin grants, not from model-suggested URLs alone.
-- High-risk filesystem, process, and MCP launch operations require turn-scoped confirmation bound to normalized resources.
-- MCP result budgets and artifact fallbacks limit how much untrusted tool output enters context or session JSONL.
-- Skills and MCP servers installed by the user can still follow malicious instructions once approved; confirmation is not a sandbox.
+- Skills and MCP servers installed by the user can still follow malicious instructions once enabled; Pivi does not sandbox them.
 
 Pivi does not claim reliable automatic detection or neutralization of all prompt-injection content.
 
@@ -82,9 +78,8 @@ Pivi does not claim reliable automatic detection or neutralization of all prompt
 
 Installing a Skill or enabling an MCP server is an explicit trust decision:
 
-- The Skills CLI is the exact installed `skills` package invoked as `node <cli.mjs>` with `shell: forbidden`. Staged trees reject symlinks/path escapes and enforce size/`SKILL.md` limits before atomic publish. Failures leave the previous version unchanged.
 - MCP stdio executables run as child processes of Obsidian with the configured args, cwd, and resolved environment. Remote MCP servers receive prompts and tool arguments over the network.
-- Pivi validates packaging bounds and requires confirmation for high-risk first launches; it does **not** audit Skill or MCP server source code for malice and does **not** isolate their filesystem or network beyond the shared host policies above.
+- Pivi does **not** audit Skill or MCP server source code for malice and does **not** isolate their filesystem or network beyond the shared host policies above.
 - Users remain responsible for reviewing Skill and MCP provenance before enablement.
 
 ## Local process execution
@@ -97,17 +92,9 @@ One-shot process work (CLI, Bash, Skills tooling) uses the host `ProcessRunner` 
 - Timeout and abort terminate the owned process tree (POSIX process group or Windows `taskkill /T`), escalate to forced kill when needed, wait for close, and never double-resolve.
 - Results distinguish exit, signal, timeout, abort, spawn error, and forced-kill escalation.
 
-Bash allowlists match canonical executable paths plus argument schemas. Commands do not load login-shell startup files. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field. New stdio definitions remain inactive until Settings confirms executable, arguments, cwd, and environment variable **names**; the first process launch in a chat turn also requires turn-scoped confirmation.
+Bash allowlists match canonical executable paths plus argument schemas. Commands do not load login-shell startup files. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field.
 
 Cross-platform process and path behavior is covered by focused Ubuntu, macOS, and Windows CI jobs for the security-sensitive suites. That coverage does **not** certify full product support on every OS; support claims follow tested behavior only.
-
-## High-risk operations
-
-A fixed table covers delete, overwrite of an existing file, bulk mutation above the documented threshold, Bash/eval, first stdio MCP launch, and oversized MCP artifact writes. Vault mutation entries bypass confirmation while Obsidian File Recovery is enabled so snapshots provide the recovery path; if it is disabled or unavailable, they require turn-scoped confirmation. The remaining operation kinds always require confirmation bound to the current session, turn, operation kind, and normalized resource summary. Denial, timeout, cancellation, session switch, view disposal, and unload fail closed. Subagents inherit only parent grants and cannot open hidden approval UI. Previews show normalized paths, executable/args, MCP server/tool, and origin metadata without secrets or document bodies. A size-bounded diagnostics audit under `.pivi/diagnostics/` records decision/outcome metadata only.
-
-## Skills and MCP extension bounds
-
-MCP tool results enforce fixed budgets (block count, encoded bytes, text characters, JSON depth, resource count) before entering model context or session persistence. Oversized results fail explicitly or, after write confirmation, produce a bounded Vault-local reference under `.pivi/artifacts/mcp/`; full oversized payloads never enter JSONL or context.
 
 ## Vault mutation containment
 
@@ -125,5 +112,5 @@ The three `@earendil-works/pi-*` packages are pinned to one exact synchronized v
 - Release route: [docs/10-roadmap-release-and-maintenance.md](docs/10-roadmap-release-and-maintenance.md)
 - Network egress implementation: [specs/archive/032-network-egress-and-http-client.md](specs/archive/032-network-egress-and-http-client.md)
 - Local execution and vault mutation: [specs/archive/033-local-execution-and-vault-mutation.md](specs/archive/033-local-execution-and-vault-mutation.md)
-- High-risk operations and extensions: [specs/archive/034-high-risk-operations-and-extensions.md](specs/archive/034-high-risk-operations-and-extensions.md)
+- Reverted high-risk operations spec (historical): [specs/archive/034-high-risk-operations-and-extensions.md](specs/archive/034-high-risk-operations-and-extensions.md)
 - Security and release assurance: [specs/archive/036-security-release-assurance.md](specs/archive/036-security-release-assurance.md)

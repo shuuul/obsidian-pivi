@@ -1,13 +1,15 @@
 ---
 id: "034"
 title: "High-risk operations and extensions"
-status: Completed
+status: Reverted
 created: 2026-07-23
 updated: 2026-07-23
 coordinator: "/root"
 ---
 
 # 034 — High-risk operations and extensions
+
+> **Reverted (2026-07-23):** This spec shipped on `main` in `8b28a098` / `764afe9c` and was rolled back on branch `revert/high-risk-confirms-and-skills-mcp-bounds`. The archive remains for historical context only; do not treat turn-scoped confirmation, pinned Skills CLI staging, stdio activation confirmation, or MCP result budgets as current product behavior.
 
 ## Context
 

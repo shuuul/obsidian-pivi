@@ -88,8 +88,7 @@ flowchart LR
 | `ui/createMcpSettingsPorts.ts` | Settings MCP save/reload/auth port wiring |
 | `ui/mentionEditor/createMentionEditorPort.ts` | Implements `SettingsPorts.mentionEditor`: mounts an imperative `MentionInput` with `MentionDropdownController` + `SlashCommandDropdown` into a React-owned container for command prompt editing |
 | `ui/createSubagentContentAdapter.ts` | Bridges React message-content mount/update calls to stored subagent imperative rendering without remounting on every stream update |
-| `workspace/PiWorkspaceServices.ts` | MCP, skills, tools, readiness, chat factories; wires high-risk presenter/audit/MCP artifact writer |
-| `ui/HighRiskApprovalModal.ts` | App-owned localized turn-scoped high-risk approval modal |
+| `workspace/PiWorkspaceServices.ts` | MCP, skills, tools, readiness, chat factories |
 | `workspace/createChatRuntimeServices.ts` | `PiChatRuntime` / aux-query construction only |
 | `workspace/obsidianHttpRequest.ts` | Adapts Obsidian HTTP into custom-provider composition without leaking host networking into the Pi engine |
 | `workspace/piUiFacades.ts` | Settings/model/auth facades for product UI |

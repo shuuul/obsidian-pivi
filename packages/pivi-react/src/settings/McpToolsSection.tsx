@@ -1,5 +1,3 @@
-import { getMcpServerType } from '@pivi/pivi-agent-core/mcp/types';
-
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackPort } from '../ports';
@@ -31,7 +29,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
     auth,
     toolsByServer,
     deleteCandidate,
-    stdioActivationCandidate,
     importDraft,
     addOpen,
     expandedServers,
@@ -55,15 +52,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
           onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}
           onToggleEnabled={async () => {
             try {
-              const enabling = !server.enabled;
-              if (
-                enabling
-                && getMcpServerType(server.config) === 'stdio'
-                && server.stdioActivationConfirmed !== true
-              ) {
-                dispatch({ type: 'set_stdio_activation_candidate', server });
-                return;
-              }
               await commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)));
             } catch (cause) {
               feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
@@ -183,68 +171,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
           >
             {t('common.delete')}
           </button>
-        </div>
-      ) : null}
-      {stdioActivationCandidate ? (
-        <div
-          className="pivi-modal-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('settings.mcp.confirmStdioTitle')}
-        >
-          <div
-            className="pivi-modal-backdrop"
-            onClick={() => dispatch({ type: 'set_stdio_activation_candidate', server: null })}
-          />
-          <div className="pivi-modal">
-            <div className="pivi-modal__title">{t('settings.mcp.confirmStdioTitle')}</div>
-            <p>{t('settings.mcp.confirmStdioMessage')}</p>
-            <pre className="pivi-high-risk-preview">
-              {[
-                t('settings.mcp.confirmStdioPreviewExecutable', {
-                  command: 'command' in stdioActivationCandidate.config
-                    ? stdioActivationCandidate.config.command
-                    : '',
-                }),
-                t('settings.mcp.confirmStdioPreviewArgs', {
-                  args: ('args' in stdioActivationCandidate.config
-                    ? (stdioActivationCandidate.config.args ?? [])
-                    : []).join(' ') || '(none)',
-                }),
-                t('settings.mcp.confirmStdioPreviewCwd'),
-                t('settings.mcp.confirmStdioPreviewEnv', {
-                  names: ('env' in stdioActivationCandidate.config
-                    && stdioActivationCandidate.config.env
-                    ? Object.keys(stdioActivationCandidate.config.env)
-                    : []).join(', ') || '(none)',
-                }),
-              ].join('\n')}
-            </pre>
-            <div className="pivi-modal__actions">
-              <button
-                type="button"
-                onClick={() => dispatch({ type: 'set_stdio_activation_candidate', server: null })}
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="button"
-                className="pivi-button--danger"
-                onClick={() => {
-                  const target = stdioActivationCandidate;
-                  void commit(servers.map((item) => (
-                    item.name === target.name
-                      ? { ...item, stdioActivationConfirmed: true, enabled: true }
-                      : item
-                  )))
-                    .then(() => dispatch({ type: 'set_stdio_activation_candidate', server: null }))
-                    .catch((cause) => feedback.notify(cause instanceof Error ? cause.message : t('common.error')));
-                }}
-              >
-                {t('settings.mcp.confirmStdioAction')}
-              </button>
-            </div>
-          </div>
         </div>
       ) : null}
     </section>

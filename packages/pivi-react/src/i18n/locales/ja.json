@@ -823,15 +823,7 @@
         "connected": "ツールを更新しました",
         "availableTools": "利用可能なツール（{count}）",
         "noTools": "このサーバーからツールが返されませんでした。"
-      },
-      "stdioInactive": "起動詳細が確認されるまで非アクティブ",
-      "confirmStdioTitle": "ローカル MCP サーバーを確認",
-      "confirmStdioMessage": "実行ファイル、引数、作業ディレクトリ、環境変数名を確認してください。シークレット値は表示されません。",
-      "confirmStdioAction": "確認して有効化",
-      "confirmStdioPreviewExecutable": "実行ファイル: {command}",
-      "confirmStdioPreviewArgs": "引数: {args}",
-      "confirmStdioPreviewCwd": "作業ディレクトリ: 保管庫のルート",
-      "confirmStdioPreviewEnv": "環境変数名: {names}"
+      }
     }
   },
   "commands": {
@@ -954,32 +946,6 @@
       "recoveredTitle": "復旧したセッション",
       "recovered": "同期ファイルの変更後、ローカルのチャットターンを新しいセッションとして復旧しました（{reason}）。",
       "applied": "保存が完了していなかったローカル完了チャットターンを復元しました。"
-    }
-  },
-  "highRisk": {
-    "message": "このターンは高リスク操作を実行しようとしています。プレビューを確認して承認または拒否してください。引数を変更すると再確認が必要です。",
-    "approve": "承認",
-    "deny": "拒否",
-    "previewAria": "高リスク操作のプレビュー",
-    "preview": {
-      "paths": "パス: {paths}",
-      "command": "コマンド: {command}",
-      "cwd": "作業ディレクトリ: {cwd}",
-      "envNames": "環境変数名: {names}",
-      "mcpServer": "MCP サーバー: {server}",
-      "mcpTool": "MCP ツール: {tool}",
-      "origin": "オリジン: {origin}",
-      "bulkCount": "影響を受ける項目: {count}"
-    },
-    "title": {
-      "generic": "高リスク操作を確認",
-      "delete": "削除を確認",
-      "overwrite": "上書きを確認",
-      "bulkMutation": "一括変更を確認",
-      "bash": "Bash コマンドを確認",
-      "eval": "Obsidian eval を確認",
-      "stdioMcpLaunch": "ローカル MCP 起動を確認",
-      "mcpArtifactWrite": "MCP 成果物の書き込みを確認"
     }
   }
 }

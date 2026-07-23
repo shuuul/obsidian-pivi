@@ -18,7 +18,7 @@ The model-facing input is:
 
 The tool is registered only when Subagents are enabled. Empty messages, `/compact`, disallowed background execution, or missing runtime capabilities fail explicitly. New code should not add aliases for old field names.
 
-The child receives the current selected model and authentication, a focused system prompt, low thinking, and an empty message history. It can use the app-injected base and MCP tools, but `spawn_agent` is filtered to prevent recursive delegation. External-file tools are rebuilt from the active runtime's allowed external roots. The parent must still put all task-specific context in `message`; the child does not inherit the parent conversation. High-risk authority is inherit-only: subagents receive a snapshot of parent-turn grants, cannot broaden that authority, and cannot open hidden approval UI for new high-risk operations.
+The child receives the current selected model and authentication, a focused system prompt, low thinking, and an empty message history. It can use the app-injected base and MCP tools, but `spawn_agent` is filtered to prevent recursive delegation. External-file tools are rebuilt from the active runtime's allowed external roots. The parent must still put all task-specific context in `message`; the child does not inherit the parent conversation.
 
 ## Execution flow
 

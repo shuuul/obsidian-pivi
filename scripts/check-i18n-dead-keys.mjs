@@ -64,7 +64,7 @@ function addKey(set, key) {
 }
 
 const TRANSLATION_KEY_PATTERN =
-  /(?:'|")((?:common|chat|settings|commands|tools|host|editor|highRisk)\.[A-Za-z0-9_.]+)(?:'|")/g;
+  /(?:'|")((?:common|chat|settings|commands|tools|host|editor)\.[A-Za-z0-9_.]+)(?:'|")/g;
 
 function collectLiteralKeysFromSource(source) {
   const keys = new Set();

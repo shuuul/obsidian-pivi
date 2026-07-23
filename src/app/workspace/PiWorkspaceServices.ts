@@ -1,4 +1,3 @@
-import { isFileRecoveryEnabled } from "@pivi/obsidian-host";
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
@@ -18,7 +17,6 @@ import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSec
 import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
 import { createCodexImageGenerator } from "@pivi/pivi-agent-core/engine/pi/codexImageGenerator";
 import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
-import type { PiChatRuntimeHighRiskOptions } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import {
   createObsidianCredentialStore,
   ObsidianAuthContext,
@@ -52,8 +50,6 @@ import {
   normalizeHttpUrl,
   type OriginGrantRegistry,
 } from "@pivi/pivi-agent-core/network";
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
-import { FileHighRiskAuditSink } from "@pivi/pivi-agent-core/runtime/highRisk";
 import { ensureDefaultWorkspaceCommands } from "@pivi/pivi-agent-core/skills/commands/defaultWorkspaceCommands";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
@@ -66,9 +62,6 @@ import {
   TOOL_OBSIDIAN_GENERATE_IMAGE,
   type WebSearchCredentialStore,
 } from "@pivi/pivi-agent-core/tools";
-import { TFolder } from "obsidian";
-
-import { presentHighRiskApproval } from "@/app/ui/HighRiskApprovalModal";
 
 import {
   type ChatRuntimeServiceFactories,
@@ -135,58 +128,6 @@ function grantConfiguredPrivateOrigins(
       // Ignore malformed configured URLs; validation surfaces elsewhere.
     }
   }
-}
-
-function createHighRiskRuntimeOptions(
-  host: PiviWorkspaceHost,
-  vaultAdapter: FileStore,
-): PiChatRuntimeHighRiskOptions {
-  const vaultPath = getVaultPath(host.app);
-  const auditPath = '.pivi/diagnostics/high-risk-audit.jsonl';
-  const audit = vaultPath
-    ? new FileHighRiskAuditSink({
-      async read() {
-        try {
-          return await vaultAdapter.read(auditPath);
-        } catch {
-          return '';
-        }
-      },
-      async write(content: string) {
-        await vaultAdapter.ensureFolder('.pivi/diagnostics');
-        await vaultAdapter.write(auditPath, content);
-      },
-    })
-    : undefined;
-
-  return {
-    presenter: {
-      present: (request) => presentHighRiskApproval(host.app, request),
-    },
-    audit,
-    classificationContext: {
-      mutationRecoveryAvailable: () => isFileRecoveryEnabled(host.app),
-      pathExists: (vaultRelativePath) => {
-        const file = host.app.vault.getAbstractFileByPath(vaultRelativePath);
-        return Boolean(file);
-      },
-      folderChildCount: (vaultRelativePath) => {
-        const file = host.app.vault.getAbstractFileByPath(vaultRelativePath);
-        if (file instanceof TFolder) {
-          return file.children.length;
-        }
-        return undefined;
-      },
-    },
-    writeMcpArtifact: async (vaultRelativePath, content) => {
-      if (!vaultRelativePath.startsWith('.pivi/artifacts/mcp/')) {
-        throw new Error('MCP artifact path must stay under .pivi/artifacts/mcp/');
-      }
-      const parent = vaultRelativePath.slice(0, vaultRelativePath.lastIndexOf('/'));
-      await vaultAdapter.ensureFolder(parent);
-      await vaultAdapter.write(vaultRelativePath, content);
-    },
-  };
 }
 
 export async function createPiWorkspaceServices(
@@ -294,7 +235,6 @@ export async function createPiWorkspaceServices(
     subagentConcurrencyLimiter,
     mcpSecretStorage: host.app.secretStorage,
     mcpFetch: network.mcpFetch,
-    highRisk: createHighRiskRuntimeOptions(host, vaultAdapter),
   });
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();

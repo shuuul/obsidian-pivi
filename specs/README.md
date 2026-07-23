@@ -48,7 +48,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [031-credential-and-config-storage.md](archive/031-credential-and-config-storage.md) | 2026-07-23 | Device-local structured environment sources, SecretStorage-backed MCP values, and transactional diagnostic persistence. |
 | [032-network-egress-and-http-client.md](archive/032-network-egress-and-http-client.md) | 2026-07-23 | Scoped injected HTTP clients with SSRF, DNS/redirect, deadline, byte, content-type, disclosure, and redaction policy. |
 | [033-local-execution-and-vault-mutation.md](archive/033-local-execution-and-vault-mutation.md) | 2026-07-23 | Bounded cross-platform process execution and mandatory vault-relative mutation containment. |
-| [034-high-risk-operations-and-extensions.md](archive/034-high-risk-operations-and-extensions.md) | 2026-07-23 | Turn-scoped confirmation for fixed high-risk operations plus transactional Skills and bounded MCP extensions. |
+| [034-high-risk-operations-and-extensions.md](archive/034-high-risk-operations-and-extensions.md) | 2026-07-23 | **Reverted** — turn-scoped confirmation, pinned Skills CLI staging, stdio activation confirmation, and MCP result budgets were rolled back on branch `revert/high-risk-confirms-and-skills-mcp-bounds`. |
 | [035-session-cloud-recovery.md](archive/035-session-cloud-recovery.md) | 2026-07-23 | Journal-backed recovery from session cloud replacement, rollback, interrupted persistence, and unload. |
 | [036-security-release-assurance.md](archive/036-security-release-assurance.md) | 2026-07-23 | Exact Pi pins/private adapter, focused platform/security CI and coverage, real-host smoke, shared release gates, SHA-pinned Actions, and SECURITY.md disclosure. |
 

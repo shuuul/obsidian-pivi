@@ -93,19 +93,7 @@ module.exports = {
     './packages/pivi-agent-core/src/mcp/mcpValidation.ts': {
       branches: 70,
     },
-    './packages/pivi-agent-core/src/mcp/mcpResultBudget.ts': {
-      branches: 45,
-    },
     './packages/pivi-agent-core/src/mcp/oauth/mcpCallbackServer.ts': {
-      branches: 45,
-    },
-    './packages/pivi-agent-core/src/skills/vault/skillStagePublish.ts': {
-      branches: 50,
-    },
-    './packages/pivi-agent-core/src/skills/vault/resolvePinnedSkillsCli.ts': {
-      branches: 40,
-    },
-    './packages/pivi-agent-core/src/runtime/highRisk/approvalController.ts': {
       branches: 45,
     },
     './packages/pivi-agent-core/src/engine/pi/session/piSessionManagerPrivateAdapter.ts': {

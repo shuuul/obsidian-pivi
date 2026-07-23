@@ -13,32 +13,6 @@
     "lines": "lines",
     "copied": "Copied!"
   },
-  "highRisk": {
-    "message": "This turn wants to run a high-risk operation. Review the preview, then approve or deny. Changing arguments requires a new confirmation.",
-    "approve": "Approve",
-    "deny": "Deny",
-    "previewAria": "High-risk operation preview",
-    "preview": {
-      "paths": "Paths: {paths}",
-      "command": "Command: {command}",
-      "cwd": "Working directory: {cwd}",
-      "envNames": "Environment variable names: {names}",
-      "mcpServer": "MCP server: {server}",
-      "mcpTool": "MCP tool: {tool}",
-      "origin": "Origin: {origin}",
-      "bulkCount": "Affected items: {count}"
-    },
-    "title": {
-      "generic": "Confirm high-risk operation",
-      "delete": "Confirm delete",
-      "overwrite": "Confirm overwrite",
-      "bulkMutation": "Confirm bulk change",
-      "bash": "Confirm Bash command",
-      "eval": "Confirm Obsidian eval",
-      "stdioMcpLaunch": "Confirm local MCP launch",
-      "mcpArtifactWrite": "Confirm MCP artifact write"
-    }
-  },
   "chat": {
     "fork": {
       "ariaLabel": "Fork conversation",
@@ -804,14 +778,6 @@
       "disableAria": "Disable MCP server {name}",
       "removeAria": "Remove MCP server {name}",
       "authFailed": "Auth failed for \"{name}\"",
-      "stdioInactive": "Inactive until launch details are confirmed",
-      "confirmStdioTitle": "Confirm local MCP server",
-      "confirmStdioMessage": "Review the executable, arguments, working directory, and environment variable names. Secret values are never shown.",
-      "confirmStdioAction": "Confirm and enable",
-      "confirmStdioPreviewExecutable": "Executable: {command}",
-      "confirmStdioPreviewArgs": "Arguments: {args}",
-      "confirmStdioPreviewCwd": "Working directory: vault root",
-      "confirmStdioPreviewEnv": "Environment variable names: {names}",
       "modal": {
         "titleAdd": "Add MCP server",
         "serverName": "Server name",

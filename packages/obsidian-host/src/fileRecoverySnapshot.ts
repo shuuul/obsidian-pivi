@@ -27,10 +27,6 @@ function getFileRecoveryPlugin(app: App): FileRecoveryInternalPlugin | null {
   return plugin as FileRecoveryInternalPlugin;
 }
 
-export function isFileRecoveryEnabled(app: App): boolean {
-  return getFileRecoveryPlugin(app) !== null;
-}
-
 /**
  * Best-effort pre-write snapshot into Obsidian File Recovery via the internal
  * `forceAdd` API. Mutations must continue when File Recovery is unavailable.
