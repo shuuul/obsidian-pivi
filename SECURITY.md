@@ -36,7 +36,7 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 | External absolute-path reads | Off (`allowExternalRead`) | Device-local allowed directories / turn folders | Absolute paths never enter synced settings or session JSONL |
 | Bash tool | Off (`allowBash`) | Allowlisted executable + argument schema | No login shell; turn-scoped high-risk confirmation |
 | MCP stdio servers | Inactive until confirmed | Vault-local `.pivi/mcp.json` | First process launch in a turn also requires confirmation |
-| High-risk vault mutations | Confirm per turn | Session/turn/kind/resource-bound grants | Deny/timeout/cancel/session switch/unload fail closed |
+| High-risk vault mutations | Confirm per turn when File Recovery is unavailable | Session/turn/kind/resource-bound grants | Enabled File Recovery bypasses approval in favor of snapshots; otherwise fail closed |
 | Subagents | Inherit parent grants only | No hidden approval UI | Cannot escalate beyond parent turn grants |
 
 ## Network flows
@@ -103,7 +103,7 @@ Cross-platform process and path behavior is covered by focused Ubuntu, macOS, an
 
 ## High-risk operations
 
-A fixed table of high-risk operations—delete, overwrite of an existing file, bulk mutation above the documented threshold, Bash/eval, first stdio MCP launch, and oversized MCP artifact writes—requires turn-scoped confirmation bound to the current session, turn, operation kind, and normalized resource summary. Denial, timeout, cancellation, session switch, view disposal, and unload fail closed. Subagents inherit only parent grants and cannot open hidden approval UI. Previews show normalized paths, executable/args, MCP server/tool, and origin metadata without secrets or document bodies. A size-bounded diagnostics audit under `.pivi/diagnostics/` records decision/outcome metadata only.
+A fixed table covers delete, overwrite of an existing file, bulk mutation above the documented threshold, Bash/eval, first stdio MCP launch, and oversized MCP artifact writes. Vault mutation entries bypass confirmation while Obsidian File Recovery is enabled so snapshots provide the recovery path; if it is disabled or unavailable, they require turn-scoped confirmation. The remaining operation kinds always require confirmation bound to the current session, turn, operation kind, and normalized resource summary. Denial, timeout, cancellation, session switch, view disposal, and unload fail closed. Subagents inherit only parent grants and cannot open hidden approval UI. Previews show normalized paths, executable/args, MCP server/tool, and origin metadata without secrets or document bodies. A size-bounded diagnostics audit under `.pivi/diagnostics/` records decision/outcome metadata only.
 
 ## Skills and MCP extension bounds
 

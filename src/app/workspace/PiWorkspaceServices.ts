@@ -1,3 +1,4 @@
+import { isFileRecoveryEnabled } from "@pivi/obsidian-host";
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
@@ -164,6 +165,7 @@ function createHighRiskRuntimeOptions(
     },
     audit,
     classificationContext: {
+      mutationRecoveryAvailable: () => isFileRecoveryEnabled(host.app),
       pathExists: (vaultRelativePath) => {
         const file = host.app.vault.getAbstractFileByPath(vaultRelativePath);
         return Boolean(file);

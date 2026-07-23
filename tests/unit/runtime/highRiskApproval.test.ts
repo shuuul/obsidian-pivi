@@ -156,6 +156,29 @@ describe('high-risk classification', () => {
     expect(pathExists).not.toHaveBeenCalled();
   });
 
+  it('skips vault mutation approval when host recovery is available', async () => {
+    const context = {
+      mutationRecoveryAvailable: () => true,
+      folderChildCount: () => HIGH_RISK_BULK_CHILD_THRESHOLD + 1,
+    };
+
+    await expect(classifyHighRiskToolCall(
+      'obsidian_write',
+      { path: 'note.md', mode: 'overwrite' },
+      context,
+    )).resolves.toBeNull();
+    await expect(classifyHighRiskToolCall(
+      'obsidian_delete',
+      { path: 'folder' },
+      context,
+    )).resolves.toBeNull();
+    await expect(classifyHighRiskToolCall(
+      'obsidian_move',
+      { path: 'folder', newPath: 'archive/folder' },
+      context,
+    )).resolves.toBeNull();
+  });
+
   it('fingerprints Bash using the same quote-aware argv that execution uses', async () => {
     const classification = await classifyHighRiskToolCall(
       'obsidian_bash',

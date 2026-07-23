@@ -21,6 +21,8 @@ export interface HighRiskClassificationContext {
   pathExists?: (vaultRelativePath: string) => boolean | Promise<boolean>;
   /** Direct child count for a folder; undefined when not a folder / unknown. */
   folderChildCount?: (vaultRelativePath: string) => number | Promise<number | undefined> | undefined;
+  /** True when the host can recover vault mutations without an approval gate. */
+  mutationRecoveryAvailable?: () => boolean | Promise<boolean>;
 }
 
 export interface HighRiskClassification {
@@ -78,6 +80,9 @@ export async function classifyHighRiskToolCall(
     if (!path) {
       return null;
     }
+    if (await context.mutationRecoveryAvailable?.()) {
+      return null;
+    }
     const childCount = context.folderChildCount
       ? await context.folderChildCount(path)
       : undefined;
@@ -97,6 +102,9 @@ export async function classifyHighRiskToolCall(
     const path = stringField(input, 'path');
     const newPath = stringField(input, 'newPath');
     if (!path || !newPath) {
+      return null;
+    }
+    if (await context.mutationRecoveryAvailable?.()) {
       return null;
     }
     const childCount = context.folderChildCount
@@ -119,9 +127,15 @@ export async function classifyHighRiskToolCall(
     }
     const overwriteFlag = input.overwrite === true;
     if (mode === 'overwrite') {
+      if (await context.mutationRecoveryAvailable?.()) {
+        return null;
+      }
       return { kind: 'overwrite', resources: { paths: [path] } };
     }
     if (mode === 'create' && overwriteFlag) {
+      if (await context.mutationRecoveryAvailable?.()) {
+        return null;
+      }
       return { kind: 'overwrite', resources: { paths: [path] } };
     }
     return null;

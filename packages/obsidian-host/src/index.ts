@@ -9,6 +9,7 @@ export * from './cli/officialObsidianCli';
 export * from './createPiviNetworkClients';
 export * from './electronCompat';
 export * from './externalFileApi';
+export * from './fileRecoverySnapshot';
 export * from './nodeFetch';
 export * from './obsidianHttpClient';
 export * from './obsidianVaultApi';

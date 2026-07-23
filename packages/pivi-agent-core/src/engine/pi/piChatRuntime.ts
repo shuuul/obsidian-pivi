@@ -97,6 +97,7 @@ export interface PiChatRuntimeHighRiskOptions {
   classificationContext?: {
     pathExists?: (vaultRelativePath: string) => boolean | Promise<boolean>;
     folderChildCount?: (vaultRelativePath: string) => number | Promise<number | undefined> | undefined;
+    mutationRecoveryAvailable?: () => boolean | Promise<boolean>;
   };
   /** Optional writer for oversized MCP result artifacts under `.pivi/artifacts/mcp/`. */
   writeMcpArtifact?: (vaultRelativePath: string, content: string) => Promise<void>;
