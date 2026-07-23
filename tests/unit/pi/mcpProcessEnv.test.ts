@@ -1,5 +1,6 @@
 import {
   buildMcpStdioEnv,
+  MCP_STDIO_PARENT_ENV_ALLOWLIST,
   resolveMcpBearerToken,
 } from '@pivi/pivi-agent-core/mcp/mcpProcessEnv';
 import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
@@ -44,15 +45,47 @@ describe('mcpProcessEnv', () => {
     }
   });
 
-  it('builds stdio transport env from injected process env plus server env', () => {
-    const env = buildMcpStdioEnv(
-      { BASE_ONLY: 'base', SHARED: 'base-value', PATH: '/base/bin' },
-      { SERVER_ONLY: 'server', SHARED: 'server-value', PATH: '/server/bin' },
-    );
+  it('inherits only the documented allowlist plus explicit server env', () => {
+    const parentEnv = {
+      PATH: '/base/bin',
+      HOME: '/home/user',
+      OPENAI_API_KEY: 'secret',
+      AWS_SECRET_ACCESS_KEY: 'cloud',
+      HTTP_PROXY: 'http://proxy',
+      CI: 'true',
+      SHARED: 'parent',
+    };
+    const env = buildMcpStdioEnv(parentEnv, { SERVER_ONLY: 'server', SHARED: 'server-value', PATH: '/server/bin' });
 
-    expect(env.BASE_ONLY).toBe('base');
+    expect(env.OPENAI_API_KEY).toBeUndefined();
+    expect(env.AWS_SECRET_ACCESS_KEY).toBeUndefined();
+    expect(env.HTTP_PROXY).toBeUndefined();
+    expect(env.CI).toBeUndefined();
     expect(env.SERVER_ONLY).toBe('server');
     expect(env.SHARED).toBe('server-value');
+    expect(env.HOME).toBe('/home/user');
     expect(env.PATH?.split(':')[0]).toBe('/server/bin');
+    expect(env.HOME).toBe('/home/user');
+    for (const key of MCP_STDIO_PARENT_ENV_ALLOWLIST) {
+      if (key === 'PATH' || parentEnv[key as keyof typeof parentEnv] === undefined) {
+        continue;
+      }
+      expect(env[key]).toBe(parentEnv[key as keyof typeof parentEnv]);
+    }
+  });
+
+  it('retains POSIX and Windows executable discovery essentials from fixtures', () => {
+    const posix = buildMcpStdioEnv({ PATH: '/usr/bin', HOME: '/home/pivi', SHELL: '/bin/zsh' }, undefined);
+    expect(posix.PATH).toContain('/usr/bin');
+
+    const windows = buildMcpStdioEnv({
+      PATH: 'C:\\Windows\\system32',
+      USERPROFILE: 'C:\\Users\\pivi',
+      APPDATA: 'C:\\Users\\pivi\\AppData\\Roaming',
+      LOCALAPPDATA: 'C:\\Users\\pivi\\AppData\\Local',
+      COMSPEC: 'C:\\Windows\\system32\\cmd.exe',
+    }, undefined);
+    expect(windows.USERPROFILE).toBe('C:\\Users\\pivi');
+    expect(windows.PATH).toContain('C:\\Windows\\system32');
   });
 });

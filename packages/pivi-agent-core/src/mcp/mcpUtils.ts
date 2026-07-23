@@ -43,6 +43,17 @@ function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+export function parseMcpArgsLines(value: string): string[] {
+  if (value.length === 0) {
+    return [];
+  }
+  return value.split('\n');
+}
+
+export function formatMcpArgsLines(args: readonly string[] | undefined): string {
+  return args?.join('\n') ?? '';
+}
+
 export function parseCommand(command: string, providedArgs?: string[]): { cmd: string; args: string[] } {
   if (providedArgs && providedArgs.length > 0) {
     return { cmd: command, args: providedArgs };

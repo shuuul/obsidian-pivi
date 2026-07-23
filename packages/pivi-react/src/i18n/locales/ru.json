@@ -394,7 +394,9 @@
         "command": "Команда Obsidian",
         "piviCommand": "Команда Pivi"
       },
-      "actions": { "inlineEdit": "Встроенное редактирование" },
+      "actions": {
+        "inlineEdit": "Встроенное редактирование"
+      },
       "empty": "Ярлыки панели ещё не настроены.",
       "commandSearchPlaceholder": "Искать команды по имени или ID",
       "noCommands": "Подходящих команд нет.",
@@ -409,7 +411,12 @@
       "piviCommandPickerTitle": "Выбрать команду Pivi",
       "piviCommandSearchPlaceholder": "Искать команды Pivi",
       "noPiviCommands": "Нет подходящих команд Pivi. Сначала создайте команду во вкладке «Команды».",
-      "executionTarget": { "name": "Цель выполнения", "forCommand": "Цель выполнения для {label}", "sidebar": "Боковая панель", "inlineEdit": "Встроенное редактирование" },
+      "executionTarget": {
+        "name": "Цель выполнения",
+        "forCommand": "Цель выполнения для {label}",
+        "sidebar": "Боковая панель",
+        "inlineEdit": "Встроенное редактирование"
+      },
       "reorder": {
         "handle": "Изменить порядок {label}, текущая позиция {position}",
         "position": "{label} перемещён на позицию {position} из {total}.",
@@ -776,7 +783,7 @@
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "Команда",
-        "needCommand": "Введите команду",
+        "needCommand": "Введите исполняемый файл",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Введите URL",
@@ -794,7 +801,14 @@
         "clientSecret": "Client secret",
         "bearerToken": "Bearer-токен",
         "bearerTokenEnv": "Переменная окружения Bearer-токена",
-        "scope": "Область"
+        "scope": "Область",
+        "serverNameReserved": "Это имя сервера зарезервировано и не может использоваться",
+        "executable": "Исполняемый файл",
+        "args": "Аргументы",
+        "argsPlaceholder": "Один аргумент на строку",
+        "urlInvalid": "Введите корректный URL",
+        "urlScheme": "URL MCP должны использовать http или https",
+        "urlPlainHttp": "Незашифрованный HTTP разрешён только для loopback-хостов"
       },
       "test": {
         "connecting": "Обновление инструментов…",

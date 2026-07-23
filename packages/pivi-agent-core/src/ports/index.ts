@@ -124,12 +124,16 @@ export interface ProcessRunRequest {
   env?: Record<string, string | undefined>;
   timeoutMs?: number;
   shell?: boolean;
+  outputByteLimit?: number;
 }
 
 export interface ProcessRunResult {
-  exitCode: number;
+  exitCode: number | null;
+  signal?: string | null;
   stdout: string;
   stderr: string;
+  stdoutTruncated?: boolean;
+  stderrTruncated?: boolean;
 }
 
 export interface ProcessRunner {

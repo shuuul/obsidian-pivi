@@ -1,5 +1,15 @@
 import { tryParseClipboardConfig } from '@pivi/pivi-agent-core/mcp/mcpConfigParser';
-import { parseCommand } from '@pivi/pivi-agent-core/mcp/mcpUtils';
+import {
+  formatMcpArgsLines,
+  parseMcpArgsLines,
+} from '@pivi/pivi-agent-core/mcp/mcpUtils';
+import {
+  assertValidMcpServerName,
+  isValidMcpServerName,
+  MCP_SERVER_NAME_PATTERN,
+  McpValidationError,
+  validateMcpRemoteUrl,
+} from '@pivi/pivi-agent-core/mcp/mcpValidation';
 import type {
   ManagedMcpServer,
   McpAuthStatus,
@@ -13,6 +23,7 @@ import type {
 import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
+import type { TFunction } from '../../i18n';
 import { useT } from '../../i18n';
 import type { SettingsComplexPorts, SettingsFeedbackPort } from '../../ports';
 
@@ -21,7 +32,8 @@ export type McpPorts = SettingsComplexPorts['mcp'];
 export type McpDraft = {
   name: string;
   type: McpServerType;
-  command: string;
+  executable: string;
+  argsText: string;
   env: string;
   url: string;
   headers: string;
@@ -34,7 +46,40 @@ export type McpDraft = {
   bearerTokenEnv: string;
 };
 
-export const MCP_SERVER_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
+export { MCP_SERVER_NAME_PATTERN };
+
+export const parseMcpArgsText = parseMcpArgsLines;
+export const formatMcpArgsText = formatMcpArgsLines;
+
+export function mcpValidationMessage(
+  error: unknown,
+  t: TFunction,
+  fallback: string,
+): string {
+  if (error instanceof McpValidationError) {
+    switch (error.code) {
+      case 'serverNameRequired':
+        return t('settings.mcp.modal.needName');
+      case 'serverNameInvalid':
+        return t('settings.mcp.modal.serverNameInvalid');
+      case 'serverNameReserved':
+        return t('settings.mcp.modal.serverNameReserved');
+      case 'urlRequired':
+        return t('settings.mcp.modal.needUrl');
+      case 'urlInvalid':
+        return t('settings.mcp.modal.urlInvalid');
+      case 'urlScheme':
+        return t('settings.mcp.modal.urlScheme');
+      case 'urlPlainHttp':
+        return t('settings.mcp.modal.urlPlainHttp');
+      case 'commandRequired':
+        return t('settings.mcp.modal.needCommand');
+      default:
+        return error.message;
+    }
+  }
+  return mcpErrorText(error, fallback);
+}
 
 export const mcpErrorText = (error: unknown, fallback: string) =>
   (error instanceof Error && error.message ? error.message : fallback);
@@ -62,7 +107,8 @@ export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 's
   return {
     name: server?.name ?? '',
     type: serverType,
-    command: stdio ? [stdio.command, ...(stdio.args ?? [])].join(' ') : '',
+    executable: stdio?.command ?? '',
+    argsText: formatMcpArgsText(stdio?.args),
     env: mcpDraftToLines(stdio?.env),
     url: remote?.url ?? '',
     headers: mcpDraftToLines(remote?.headers),
@@ -82,19 +128,23 @@ export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 's
   };
 }
 
-export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): ManagedMcpServer | null {
-  const name = draft.name.trim();
-  if (!name || !MCP_SERVER_NAME_PATTERN.test(name)) return null;
+export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): ManagedMcpServer {
+  const name = assertValidMcpServerName(draft.name);
   let config: McpServerConfig;
   if (draft.type === 'stdio') {
-    const command = draft.command.trim();
-    if (!command) return null;
-    const parsed = parseCommand(command);
+    const command = draft.executable.trim();
+    if (!command) {
+      throw new McpValidationError('commandRequired', 'MCP stdio executable is required');
+    }
+    const args = parseMcpArgsText(draft.argsText);
     const env = mcpDraftFromLines(draft.env);
-    config = { command: parsed.cmd, ...(parsed.args.length ? { args: parsed.args } : {}), ...(Object.keys(env).length ? { env } : {}) };
+    config = {
+      command,
+      ...(args.length > 0 ? { args } : {}),
+      ...(Object.keys(env).length > 0 ? { env } : {}),
+    };
   } else {
-    const url = draft.url.trim();
-    if (!url) return null;
+    const url = validateMcpRemoteUrl(draft.url);
     const headers = mcpDraftFromLines(draft.headers);
     config = draft.type === 'sse'
       ? { type: 'sse', url, ...(Object.keys(headers).length ? { headers } : {}) }
@@ -319,7 +369,7 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
       }
       const names = new Set(state.servers.map((server) => server.name));
       const added = parsed.servers
-        .filter((server) => MCP_SERVER_NAME_PATTERN.test(server.name.trim()) && !names.has(server.name.trim()))
+        .filter((server) => isValidMcpServerName(server.name.trim()) && !names.has(server.name.trim()))
         .map((server) => ({
           name: server.name.trim(),
           config: server.config,

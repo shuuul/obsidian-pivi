@@ -394,7 +394,9 @@
         "command": "Obsidian 命令",
         "piviCommand": "Pivi 命令"
       },
-      "actions": { "inlineEdit": "行內編輯" },
+      "actions": {
+        "inlineEdit": "行內編輯"
+      },
       "empty": "尚未設定任何工具列捷徑。",
       "commandSearchPlaceholder": "依名稱或 ID 搜尋命令",
       "noCommands": "沒有符合的命令。",
@@ -409,7 +411,12 @@
       "piviCommandPickerTitle": "選擇 Pivi 命令",
       "piviCommandSearchPlaceholder": "搜尋 Pivi 命令",
       "noPiviCommands": "沒有符合的 Pivi 命令。請先在「命令」中建立。",
-      "executionTarget": { "name": "執行目標", "forCommand": "{label} 的執行目標", "sidebar": "側邊欄", "inlineEdit": "行內編輯" },
+      "executionTarget": {
+        "name": "執行目標",
+        "forCommand": "{label} 的執行目標",
+        "sidebar": "側邊欄",
+        "inlineEdit": "行內編輯"
+      },
       "reorder": {
         "handle": "重新排序 {label}，目前位於第 {position} 位",
         "position": "{label} 已移動到第 {position} 位，共 {total} 個。",
@@ -776,7 +783,7 @@
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "命令",
-        "needCommand": "請輸入命令",
+        "needCommand": "請輸入可執行檔",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "請輸入 URL",
@@ -794,7 +801,14 @@
         "clientSecret": "用戶端密鑰",
         "bearerToken": "Bearer 權杖",
         "bearerTokenEnv": "Bearer 權杖環境變數",
-        "scope": "範圍"
+        "scope": "範圍",
+        "serverNameReserved": "該伺服器名稱已保留，無法使用",
+        "executable": "可執行檔",
+        "args": "參數",
+        "argsPlaceholder": "每行一個參數",
+        "urlInvalid": "請輸入有效的 URL",
+        "urlScheme": "MCP URL 必須使用 http 或 https",
+        "urlPlainHttp": "僅允許對回環主機使用明文 HTTP"
       },
       "test": {
         "connecting": "正在重新整理工具…",

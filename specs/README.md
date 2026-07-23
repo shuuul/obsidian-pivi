@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [030-immediate-security-correctness.md](030-immediate-security-correctness.md) | 2026-07-23 | Patch-sized OAuth, MCP stdio/input, process-result, and temporary fetch-identity correctness fixes. |
 | [031-credential-and-config-storage.md](031-credential-and-config-storage.md) | 2026-07-23 | Device-local structured environment sources, SecretStorage-backed MCP values, and transactional diagnostic persistence. |
 | [032-network-egress-and-http-client.md](032-network-egress-and-http-client.md) | 2026-07-23 | Scoped injected HTTP clients with SSRF, DNS/redirect, deadline, byte, content-type, disclosure, and redaction policy. |
 | [033-local-execution-and-vault-mutation.md](033-local-execution-and-vault-mutation.md) | 2026-07-23 | Bounded cross-platform process execution and mandatory vault-relative mutation containment. |
@@ -52,6 +51,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [027-stable-tab-switcher-archive-deletion.md](archive/027-stable-tab-switcher-archive-deletion.md) | 2026-07-22 | Stable menu, archive reveal, and user-owned viewport across archived-tab deletion and restoration. |
 | [028-user-configurable-editor-selection-toolbar.md](archive/028-user-configurable-editor-selection-toolbar.md) | 2026-07-22 | Unified fixed Pivi actions, curated removable editor commands, and Pivi Commands into one enableable and user-ordered selection toolbar. |
 | [029-toolbar-command-controls-and-pickers.md](archive/029-toolbar-command-controls-and-pickers.md) | 2026-07-22 | Independent toolbar toggles, separate editor/Obsidian pickers, and top-level command icon controls. |
+| [030-immediate-security-correctness.md](archive/030-immediate-security-correctness.md) | 2026-07-23 | Patch-sized OAuth, MCP stdio/input, process-result, and temporary fetch-identity correctness fixes. |
 
 ## Numbering and files
 

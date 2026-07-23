@@ -20,7 +20,7 @@
 - `src/path/` owns filesystem/vault path normalization and safety helpers.
 - `src/authContextHost.ts` adapts the canonical auth context host port to system environment variables, filesystem existence checks, and home-directory lookup for Pi auth resolution.
 - `src/providerLegacyAuthStore.ts` adapts the canonical provider legacy auth store port to the vault-local `.pivi/auth.json` file used only for old Codex credential migration.
-- `src/electronCompat.ts`, `src/nodeFetch.ts`, `src/obsidianHttpClient.ts`, and `src/systemProcessRunner.ts` patch renderer/Electron compatibility gaps; `nodeFetch`, `obsidianHttpClient`, and `systemProcessRunner` are the concrete Obsidian/Electron network/process implementations injected into Pi/MCP/skills runtime seams by app composition.
+- `src/electronCompat.ts`, `src/nodeFetch.ts`, `src/obsidianHttpClient.ts`, and `src/systemProcessRunner.ts` patch renderer/Electron compatibility gaps; `nodeFetch`, `obsidianHttpClient`, and `systemProcessRunner` are the concrete Obsidian/Electron network/process implementations injected into Pi/MCP/skills runtime seams by app composition. `nodeFetch` advertises the current package version from the build-owned release metadata; `systemProcessRunner` reports signal-aware exit results and bounds stdout/stderr for current callers.
 - `styles/pivi-theme.css` maps Obsidian theme variables into the `--pivi-host-*` contract consumed by `@pivi/pivi-react`; the root CSS build prepends it directly before the React style manifest. It is a build input, not a JavaScript package export.
 
 ## Boundaries

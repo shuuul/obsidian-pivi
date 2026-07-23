@@ -84,9 +84,13 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
       });
       const output = [
         `$ ${normalizedCommand}`,
-        `exit code: ${result.exitCode}`,
+        result.signal
+          ? `signal: ${result.signal}`
+          : `exit code: ${result.exitCode ?? 'unknown'}`,
         result.stdout ? `\nstdout:\n${result.stdout.trimEnd()}` : '',
         result.stderr ? `\nstderr:\n${result.stderr.trimEnd()}` : '',
+        result.stdoutTruncated ? '\n[stdout truncated]' : '',
+        result.stderrTruncated ? '\n[stderr truncated]' : '',
       ].filter(Boolean).join('\n');
       return textResult(truncateOutput(output));
     },

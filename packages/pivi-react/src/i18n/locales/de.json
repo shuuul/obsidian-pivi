@@ -394,7 +394,9 @@
         "command": "Obsidian-Befehl",
         "piviCommand": "Pivi-Befehl"
       },
-      "actions": { "inlineEdit": "Inline bearbeiten" },
+      "actions": {
+        "inlineEdit": "Inline bearbeiten"
+      },
       "empty": "Noch keine Symbolleisten-Kurzbefehle konfiguriert.",
       "commandSearchPlaceholder": "Befehle nach Name oder ID suchen",
       "noCommands": "Keine passenden Befehle.",
@@ -409,7 +411,12 @@
       "piviCommandPickerTitle": "Pivi-Befehl wählen",
       "piviCommandSearchPlaceholder": "Pivi-Befehle suchen",
       "noPiviCommands": "Keine passenden Pivi-Befehle. Legen Sie zuerst unter Befehle einen an.",
-      "executionTarget": { "name": "Ausführungsziel", "forCommand": "Ausführungsziel für {label}", "sidebar": "Seitenleiste", "inlineEdit": "Inline-Bearbeitung" },
+      "executionTarget": {
+        "name": "Ausführungsziel",
+        "forCommand": "Ausführungsziel für {label}",
+        "sidebar": "Seitenleiste",
+        "inlineEdit": "Inline-Bearbeitung"
+      },
       "reorder": {
         "handle": "Reihenfolge von {label} ändern, aktuell Position {position}",
         "position": "{label} an Position {position} von {total} verschoben.",
@@ -776,7 +783,7 @@
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "Befehl",
-        "needCommand": "Bitte einen Befehl eingeben",
+        "needCommand": "Bitte eine ausführbare Datei eingeben",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Bitte eine URL eingeben",
@@ -794,7 +801,14 @@
         "clientSecret": "Client-Secret",
         "bearerToken": "Bearer-Token",
         "bearerTokenEnv": "Bearer-Token-Umgebungsvariable",
-        "scope": "Scope"
+        "scope": "Scope",
+        "serverNameReserved": "Dieser Servername ist reserviert und kann nicht verwendet werden",
+        "executable": "Ausführbare Datei",
+        "args": "Argumente",
+        "argsPlaceholder": "Ein Argument pro Zeile",
+        "urlInvalid": "Gib eine gültige URL ein",
+        "urlScheme": "MCP-URLs müssen http oder https verwenden",
+        "urlPlainHttp": "Unverschlüsseltes HTTP ist nur für Loopback-Hosts erlaubt"
       },
       "test": {
         "connecting": "Tools werden aktualisiert…",

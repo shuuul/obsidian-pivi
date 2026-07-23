@@ -394,7 +394,9 @@
         "command": "Commande Obsidian",
         "piviCommand": "Commande Pivi"
       },
-      "actions": { "inlineEdit": "Modification intégrée" },
+      "actions": {
+        "inlineEdit": "Modification intégrée"
+      },
       "empty": "Aucun raccourci de barre d'outils configuré pour l'instant.",
       "commandSearchPlaceholder": "Rechercher des commandes par nom ou ID",
       "noCommands": "Aucune commande correspondante.",
@@ -409,7 +411,12 @@
       "piviCommandPickerTitle": "Choisir une commande Pivi",
       "piviCommandSearchPlaceholder": "Rechercher des commandes Pivi",
       "noPiviCommands": "Aucune commande Pivi correspondante. Créez-en une d’abord sous Commandes.",
-      "executionTarget": { "name": "Cible d’exécution", "forCommand": "Cible d’exécution pour {label}", "sidebar": "Barre latérale", "inlineEdit": "Modification en ligne" },
+      "executionTarget": {
+        "name": "Cible d’exécution",
+        "forCommand": "Cible d’exécution pour {label}",
+        "sidebar": "Barre latérale",
+        "inlineEdit": "Modification en ligne"
+      },
       "reorder": {
         "handle": "Réorganiser {label}, actuellement en position {position}",
         "position": "{label} déplacé à la position {position} sur {total}.",
@@ -776,7 +783,7 @@
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "Commande",
-        "needCommand": "Veuillez saisir une commande",
+        "needCommand": "Veuillez saisir un exécutable",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Veuillez saisir une URL",
@@ -794,7 +801,14 @@
         "clientSecret": "Secret client",
         "bearerToken": "Jeton Bearer",
         "bearerTokenEnv": "Variable d’env. du jeton Bearer",
-        "scope": "Portée"
+        "scope": "Portée",
+        "serverNameReserved": "Ce nom de serveur est réservé et ne peut pas être utilisé",
+        "executable": "Exécutable",
+        "args": "Arguments",
+        "argsPlaceholder": "Un argument par ligne",
+        "urlInvalid": "Saisissez une URL valide",
+        "urlScheme": "Les URL MCP doivent utiliser http ou https",
+        "urlPlainHttp": "HTTP non chiffré est autorisé uniquement pour les hôtes loopback"
       },
       "test": {
         "connecting": "Actualisation des outils…",

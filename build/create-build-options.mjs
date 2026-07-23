@@ -12,7 +12,7 @@ import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
 import { shimMcpValidation } from './plugins/shim-mcp-validation.mjs';
-import { releaseArtifactBanner } from './release-artifact-version.mjs';
+import { releaseArtifactBanner, releaseArtifactVersion } from './release-artifact-version.mjs';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(rootDir, '..');
@@ -47,6 +47,7 @@ export function createBuildOptions({ production, metafile = false, write = true 
     target: 'es2022',
     define: {
       'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
+      __PIVI_RELEASE_VERSION__: JSON.stringify(releaseArtifactVersion),
     },
     jsx: 'automatic',
     jsxImportSource: 'react',

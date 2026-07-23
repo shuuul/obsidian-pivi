@@ -6,9 +6,17 @@ import {
   validateOAuthCallbackPort,
 } from './mcpOAuthProvider';
 
+const CALLBACK_SECURITY_HEADERS = {
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
+  'X-Content-Type-Options': 'nosniff',
+  'Cache-Control': 'no-store',
+  'Referrer-Policy': 'no-referrer',
+} as const;
+
 const HTML_SUCCESS = `<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Pivi - Authorization Successful</title>
   <style>
     body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
@@ -26,26 +34,45 @@ const HTML_SUCCESS = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const htmlError = (error: string): string => `<!DOCTYPE html>
+const HTML_ERROR = `<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Pivi - Authorization Failed</title>
   <style>
     body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
     .container { text-align: center; padding: 2rem; }
     h1 { color: #f87171; margin-bottom: 1rem; }
     p { color: #aaa; }
-    .error { color: #fca5a5; font-family: monospace; margin-top: 1rem; padding: 1rem; background: rgba(248,113,113,0.1); border-radius: 0.5rem; }
+    .error { color: #fca5a5; font-family: monospace; margin-top: 1rem; padding: 1rem; background: rgba(248,113,113,0.1); border-radius: 0.5rem; white-space: pre-wrap; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Authorization Failed</h1>
     <p>An error occurred during authorization.</p>
-    <div class="error">${error}</div>
+    <div class="error" id="error-detail"></div>
   </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const detail = params.get('error_description') || params.get('error') || 'Authorization failed';
+    document.getElementById('error-detail').textContent = detail;
+  </script>
 </body>
 </html>`;
+
+function writeResponse(
+  res: ServerResponse,
+  statusCode: number,
+  contentType: string,
+  body: string,
+): void {
+  res.writeHead(statusCode, {
+    ...CALLBACK_SECURITY_HEADERS,
+    'Content-Type': contentType,
+  });
+  res.end(body);
+}
 
 interface PendingAuth {
   resolve: (code: string) => void;
@@ -65,11 +92,15 @@ function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
 ): void {
+  if (req.method !== 'GET') {
+    writeResponse(res, 405, 'text/plain; charset=utf-8', 'Method not allowed');
+    return;
+  }
+
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
 
   if (url.pathname !== OAUTH_CALLBACK_PATH) {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not found');
+    writeResponse(res, 404, 'text/plain; charset=utf-8', 'Not found');
     return;
   }
 
@@ -79,16 +110,13 @@ function handleRequest(
   const errorDescription = url.searchParams.get('error_description');
 
   if (!state) {
-    const errorMsg = 'Missing required state parameter';
-    res.writeHead(400, { 'Content-Type': 'text/html' });
-    res.end(htmlError(errorMsg));
+    writeResponse(res, 400, 'text/plain; charset=utf-8', 'Missing required state parameter');
     return;
   }
 
   if (error) {
     const errorMsg = errorDescription || error;
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(htmlError(errorMsg));
+    writeResponse(res, 200, 'text/html; charset=utf-8', HTML_ERROR);
     if (pendingAuths.has(state)) {
       const pending = pendingAuths.get(state)!;
       window.clearTimeout(pending.timeout);
@@ -99,15 +127,12 @@ function handleRequest(
   }
 
   if (!code) {
-    res.writeHead(400, { 'Content-Type': 'text/html' });
-    res.end(htmlError('No authorization code provided'));
+    writeResponse(res, 400, 'text/plain; charset=utf-8', 'No authorization code provided');
     return;
   }
 
   if (!pendingAuths.has(state)) {
-    const errorMsg = 'Invalid or expired state parameter';
-    res.writeHead(400, { 'Content-Type': 'text/html' });
-    res.end(htmlError(errorMsg));
+    writeResponse(res, 400, 'text/plain; charset=utf-8', 'Invalid or expired state parameter');
     return;
   }
 
@@ -116,8 +141,7 @@ function handleRequest(
   pendingAuths.delete(state);
   pending.resolve(code);
 
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end(HTML_SUCCESS);
+  writeResponse(res, 200, 'text/html; charset=utf-8', HTML_SUCCESS);
 }
 
 export class McpCallbackServer {

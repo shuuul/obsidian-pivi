@@ -4,6 +4,13 @@ import {
   stableProviderIdDigest,
 } from '../auth/providerSecretStorage';
 import type { SyncSecretStore } from '../ports';
+import {
+  assertValidMcpServerName,
+  createMcpServerMap,
+  isValidMcpServerName,
+  setMcpServerMapEntry,
+  validateMcpRemoteUrl,
+} from './mcpValidation';
 import { PIVI_MCP_CONFIG_PATH } from "./paths";
 import type { FileStore } from "./ports";
 import type {
@@ -12,7 +19,7 @@ import type {
   McpServerConfig,
   StoredMcpOAuthConfig,
 } from "./types";
-import { DEFAULT_MCP_SERVER, isValidMcpServerConfig } from "./types";
+import { DEFAULT_MCP_SERVER, getMcpServerType, isValidMcpServerConfig } from "./types";
 
 export { PIVI_MCP_CONFIG_PATH } from "./paths";
 
@@ -111,23 +118,22 @@ export class McpStorage {
       }
     }
 
-    const mcpServers: Record<string, McpServerConfig> = {};
-    const piviServers: Record<
-      string,
-      {
-        enabled?: boolean;
-        contextSaving?: boolean;
-        disabledTools?: string[];
-        description?: string;
-        auth?: ManagedMcpServer["auth"];
-        oauth?: StoredMcpOAuthConfig | false;
-        bearerTokenEnv?: string;
-      }
-    > = {};
+    const mcpServers = createMcpServerMap<McpServerConfig>();
+    const piviServers = createMcpServerMap<{
+      enabled?: boolean;
+      contextSaving?: boolean;
+      disabledTools?: string[];
+      description?: string;
+      auth?: ManagedMcpServer["auth"];
+      oauth?: StoredMcpOAuthConfig | false;
+      bearerTokenEnv?: string;
+    }>();
 
     for (const server of servers) {
-      mcpServers[server.name] = server.config;
-      this.persistServerSecrets(server);
+      const normalizedName = assertValidMcpServerName(server.name);
+      const normalizedConfig = normalizeManagedServerConfig(server.config);
+      setMcpServerMapEntry(mcpServers, normalizedName, normalizedConfig);
+      this.persistServerSecrets({ ...server, name: normalizedName, config: normalizedConfig });
 
       const meta: {
         enabled?: boolean;
@@ -165,7 +171,7 @@ export class McpStorage {
       }
 
       if (Object.keys(meta).length > 0) {
-        piviServers[server.name] = meta;
+        setMcpServerMapEntry(piviServers, normalizedName, meta);
       }
     }
 
@@ -358,7 +364,7 @@ export class McpStorage {
     const servers: ManagedMcpServer[] = [];
 
     for (const [name, config] of Object.entries(file.mcpServers)) {
-      if (!isValidMcpServerConfig(config)) {
+      if (!isValidMcpServerName(name) || !isValidMcpServerConfig(config)) {
         continue;
       }
 
@@ -385,4 +391,16 @@ export class McpStorage {
 
     return servers;
   }
+}
+
+function normalizeManagedServerConfig(config: McpServerConfig): McpServerConfig {
+  if (getMcpServerType(config) === 'stdio') {
+    return config;
+  }
+  const remote = config as { url: string; type?: 'sse' | 'http'; headers?: Record<string, string> };
+  const url = validateMcpRemoteUrl(remote.url);
+  if (remote.type === 'sse') {
+    return { type: 'sse', url, ...(remote.headers ? { headers: remote.headers } : {}) };
+  }
+  return { type: 'http', url, ...(remote.headers ? { headers: remote.headers } : {}) };
 }

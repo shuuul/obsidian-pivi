@@ -1,8 +1,42 @@
+import { isValidMcpServerName, validateMcpRemoteUrl } from './mcpValidation';
 import type { McpServerConfig, ParsedMcpConfig } from './types';
-import { isValidMcpServerConfig } from './types';
+import { getMcpServerType, isValidMcpServerConfig } from './types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeImportedServer(
+  name: string,
+  config: McpServerConfig,
+): { name: string; config: McpServerConfig } | null {
+  if (!isValidMcpServerName(name)) {
+    return null;
+  }
+  if (getMcpServerType(config) === 'stdio') {
+    return { name, config };
+  }
+  try {
+    const remote = config as { url: string; type?: 'sse' | 'http'; headers?: Record<string, string> };
+    const url = validateMcpRemoteUrl(remote.url);
+    if (remote.type === 'sse') {
+      return { name, config: { type: 'sse', url, ...(remote.headers ? { headers: remote.headers } : {}) } };
+    }
+    return { name, config: { type: 'http', url, ...(remote.headers ? { headers: remote.headers } : {}) } };
+  } catch {
+    return null;
+  }
+}
+
+function pushImportedServer(
+  servers: Array<{ name: string; config: McpServerConfig }>,
+  name: string,
+  config: McpServerConfig,
+): void {
+  const normalized = normalizeImportedServer(name, config);
+  if (normalized) {
+    servers.push(normalized);
+  }
 }
 
 /**
@@ -29,7 +63,7 @@ export function parseClipboardConfig(json: string): ParsedMcpConfig {
 
       for (const [name, config] of Object.entries(parsed.mcpServers)) {
         if (isValidMcpServerConfig(config)) {
-          servers.push({ name, config });
+          pushImportedServer(servers, name, config);
         }
       }
 
@@ -56,8 +90,12 @@ export function parseClipboardConfig(json: string): ParsedMcpConfig {
     if (entry) {
       const [name, config] = entry;
       if (isValidMcpServerConfig(config)) {
+        const normalized = normalizeImportedServer(name, config);
+        if (!normalized) {
+          throw new Error('Invalid MCP configuration format');
+        }
         return {
-          servers: [{ name, config }],
+          servers: [normalized],
           needsName: false,
         };
       }
@@ -68,7 +106,7 @@ export function parseClipboardConfig(json: string): ParsedMcpConfig {
     const servers: Array<{ name: string; config: McpServerConfig }> = [];
     for (const [name, config] of entries) {
       if (isValidMcpServerConfig(config)) {
-        servers.push({ name, config });
+        pushImportedServer(servers, name, config);
       }
     }
 

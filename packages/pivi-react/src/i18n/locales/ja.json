@@ -394,7 +394,9 @@
         "command": "Obsidian コマンド",
         "piviCommand": "Pivi コマンド"
       },
-      "actions": { "inlineEdit": "インライン編集" },
+      "actions": {
+        "inlineEdit": "インライン編集"
+      },
       "empty": "ツールバーのショートカットはまだ設定されていません。",
       "commandSearchPlaceholder": "名前または ID でコマンドを検索",
       "noCommands": "一致するコマンドがありません。",
@@ -409,7 +411,12 @@
       "piviCommandPickerTitle": "Pivi コマンドを選択",
       "piviCommandSearchPlaceholder": "Pivi コマンドを検索",
       "noPiviCommands": "一致する Pivi コマンドがありません。先に「コマンド」で作成してください。",
-      "executionTarget": { "name": "実行先", "forCommand": "{label} の実行先", "sidebar": "サイドバー", "inlineEdit": "インライン編集" },
+      "executionTarget": {
+        "name": "実行先",
+        "forCommand": "{label} の実行先",
+        "sidebar": "サイドバー",
+        "inlineEdit": "インライン編集"
+      },
       "reorder": {
         "handle": "{label} を並べ替え（現在 {position} 番目）",
         "position": "{label} を {total} 件中 {position} 番目に移動しました。",
@@ -776,7 +783,7 @@
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "コマンド",
-        "needCommand": "コマンドを入力してください",
+        "needCommand": "実行ファイルを入力してください",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "URL を入力してください",
@@ -794,7 +801,14 @@
         "clientSecret": "クライアントシークレット",
         "bearerToken": "Bearer トークン",
         "bearerTokenEnv": "Bearer トークン環境変数",
-        "scope": "スコープ"
+        "scope": "スコープ",
+        "serverNameReserved": "そのサーバー名は予約されており使用できません",
+        "executable": "実行ファイル",
+        "args": "引数",
+        "argsPlaceholder": "1 行に 1 つの引数",
+        "urlInvalid": "有効な URL を入力してください",
+        "urlScheme": "MCP URL は http または https を使用する必要があります",
+        "urlPlainHttp": "平文 HTTP はループバックホストのみ許可されます"
       },
       "test": {
         "connecting": "ツールを更新中…",

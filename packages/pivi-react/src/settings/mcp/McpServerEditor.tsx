@@ -8,7 +8,7 @@ import {
   buildMcpServer,
   type McpDraft,
   mcpDraftFrom,
-  mcpErrorText,
+  mcpValidationMessage,
 } from './useMcpSectionState';
 
 export function McpServerEditor({
@@ -39,23 +39,13 @@ export function McpServerEditor({
     setError('');
   };
   const submit = async () => {
-    const next = buildMcpServer(draft, server);
-    if (!next) {
-      setError(!draft.name.trim()
-        ? t('settings.mcp.modal.needName')
-        : !/^[a-zA-Z0-9._-]+$/.test(draft.name.trim())
-          ? t('settings.mcp.modal.serverNameInvalid')
-          : draft.type === 'stdio'
-            ? t('settings.mcp.modal.needCommand')
-            : t('settings.mcp.modal.needUrl'));
-      return;
-    }
     setBusy(true);
     setError('');
     try {
+      const next = buildMcpServer(draft, server);
       await onSave(next);
     } catch (cause) {
-      setError(mcpErrorText(cause, t('settings.mcp.saveFailed')));
+      setError(mcpValidationMessage(cause, t, t('settings.mcp.saveFailed')));
     } finally {
       setBusy(false);
     }
@@ -85,10 +75,14 @@ export function McpServerEditor({
               </Select>
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
-              <span>{t('settings.mcp.modal.command')}</span>
-              <input className="pivi-settings-control" value={draft.command} onChange={(event) => update('command', event.target.value)} />
+              <span>{t('settings.mcp.modal.executable')}</span>
+              <input className="pivi-settings-control" value={draft.executable} onChange={(event) => update('executable', event.target.value)} />
             </label>
           </div>
+          <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area">
+            <span>{t('settings.mcp.modal.args')}</span>
+            <textarea className="pivi-settings-control" value={draft.argsText} placeholder={t('settings.mcp.modal.argsPlaceholder')} onChange={(event) => update('argsText', event.target.value)} />
+          </label>
           <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area">
             <span>{t('settings.mcp.modal.env')}</span>
             <textarea className="pivi-settings-control" value={draft.env} onChange={(event) => update('env', event.target.value)} />

@@ -1,7 +1,15 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 type TestWindow = typeof window & {
   cancelAnimationFrame?: (handle: number) => void;
   requestAnimationFrame?: (callback: FrameRequestCallback) => number;
 };
+
+const packageJson = JSON.parse(
+  readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'),
+) as { version?: string };
+(globalThis as { __PIVI_RELEASE_VERSION__?: string }).__PIVI_RELEASE_VERSION__ = packageJson.version;
 
 const testWindow = (globalThis.window ?? globalThis) as TestWindow;
 
@@ -35,4 +43,3 @@ if (!testWindow.cancelAnimationFrame) {
     globalThis.clearTimeout(handle);
   };
 }
-

@@ -417,8 +417,9 @@ export class VaultSkillsService {
       timeoutMs: SKILLS_INSTALL_TIMEOUT_MS,
       shell: this.isWindows,
     });
-    if (result.exitCode !== 0) {
-      const detail = result.stderr.trim() || result.stdout.trim() || `exit ${result.exitCode}`;
+    if (result.signal || result.exitCode !== 0) {
+      const detail = result.stderr.trim() || result.stdout.trim()
+        || (result.signal ? `signal ${result.signal}` : `exit ${result.exitCode}`);
       throw new Error(`npx skills ${commandName} failed: ${detail}`);
     }
     return result.stdout;

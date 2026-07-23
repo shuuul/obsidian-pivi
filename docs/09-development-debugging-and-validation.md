@@ -45,7 +45,7 @@ npm run test -- -t "test name"
 | Subagents | `tests/unit/pi/tools/createSubagentTool.test.ts`, `piBackgroundSubagentJobs.test.ts`, `subagentConcurrencyLimiter.test.ts` |
 | React chat/settings | `tests/pivi-react/ChatShell.test.tsx`, `AssistantContentView.test.tsx`, `activityPresentation.test.ts`, `chatUiStore.test.tsx`, `SettingsUi.test.tsx`, `PiviSettingTabHost.test.ts` |
 | Owner-realm DOM | `tests/pivi-react/OwnerRealmDom.test.ts`, `DefaultVaultSkillsPrompt.test.ts`, `tests/unit/app/ui/createStreamingMarkdownContentAdapter.test.ts` |
-| Tools and MCP | Relevant suites under `tests/unit/engine/tools/`, `tests/unit/pi/tools/`, `tests/unit/pi/mcp/`, plus `tests/unit/pi/piMcpBridge.test.ts` and `tests/pivi-react/McpToolsSection.test.tsx` |
+| Tools and MCP | Relevant suites under `tests/unit/engine/tools/`, `tests/unit/pi/tools/`, `tests/unit/pi/mcp/`, `tests/unit/host/systemProcessRunner.test.ts`, plus `tests/unit/pi/piMcpBridge.test.ts` and `tests/pivi-react/McpToolsSection.test.tsx` |
 
 Use `rg --files tests | rg <feature>` to locate the current exact filename; test names move as ownership is refined.
 

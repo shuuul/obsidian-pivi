@@ -394,7 +394,9 @@
         "command": "Comando do Obsidian",
         "piviCommand": "Comando Pivi"
       },
-      "actions": { "inlineEdit": "Edição em linha" },
+      "actions": {
+        "inlineEdit": "Edição em linha"
+      },
       "empty": "Nenhum atalho da barra configurado ainda.",
       "commandSearchPlaceholder": "Pesquisar comandos por nome ou ID",
       "noCommands": "Nenhum comando correspondente.",
@@ -409,7 +411,12 @@
       "piviCommandPickerTitle": "Escolher um comando Pivi",
       "piviCommandSearchPlaceholder": "Pesquisar comandos Pivi",
       "noPiviCommands": "Nenhum comando Pivi correspondente. Crie um primeiro em Comandos.",
-      "executionTarget": { "name": "Destino de execução", "forCommand": "Destino de execução para {label}", "sidebar": "Barra lateral", "inlineEdit": "Edição em linha" },
+      "executionTarget": {
+        "name": "Destino de execução",
+        "forCommand": "Destino de execução para {label}",
+        "sidebar": "Barra lateral",
+        "inlineEdit": "Edição em linha"
+      },
       "reorder": {
         "handle": "Reordenar {label}, atualmente na posição {position}",
         "position": "{label} movido para a posição {position} de {total}.",
@@ -776,7 +783,7 @@
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "Comando",
-        "needCommand": "Introduce um comando",
+        "needCommand": "Introduza um executável",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Introduce uma URL",
@@ -794,7 +801,14 @@
         "clientSecret": "Secreto de cliente",
         "bearerToken": "Token Bearer",
         "bearerTokenEnv": "Variable de entorno do token Bearer",
-        "scope": "Ámbito"
+        "scope": "Ámbito",
+        "serverNameReserved": "Esse nome de servidor é reservado e não pode ser usado",
+        "executable": "Executável",
+        "args": "Argumentos",
+        "argsPlaceholder": "Um argumento por linha",
+        "urlInvalid": "Introduza um URL válido",
+        "urlScheme": "Os URLs MCP devem usar http ou https",
+        "urlPlainHttp": "HTTP simples só é permitido para hosts loopback"
       },
       "test": {
         "connecting": "Atualizando ferramentas…",
