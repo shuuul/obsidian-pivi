@@ -1310,10 +1310,26 @@ textarea.pivi-settings-control {
 
 .pivi-editor-toolbar-card {
   min-width: 0;
+  overflow: visible;
 }
 
-.pivi-editor-toolbar-card--disabled {
-  opacity: 0.65;
+.pivi-editor-toolbar-card:focus-within {
+  z-index: 3;
+}
+
+.pivi-editor-toolbar-card:not([open]) > .pivi-editor-toolbar-card__header {
+  border-radius: inherit;
+}
+
+.pivi-editor-toolbar-card[open] > .pivi-editor-toolbar-card__header {
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+}
+
+.pivi-editor-toolbar-card--disabled .pivi-editor-toolbar-card__fixed-icon,
+.pivi-editor-toolbar-card--disabled .pivi-editor-toolbar-card__label,
+.pivi-editor-toolbar-card--disabled .pivi-editor-toolbar-card__badge {
+  opacity: 0.55;
 }
 
 .pivi-sortable-toolbar-card {
@@ -1342,6 +1358,7 @@ textarea.pivi-settings-control {
 }
 
 .pivi-editor-toolbar-card__fixed-icon,
+.pivi-editor-toolbar-card__icon-control,
 .pivi-editor-toolbar-card .pivi-command-icon-trigger {
   display: inline-flex;
   align-items: center;
@@ -1365,7 +1382,7 @@ textarea.pivi-settings-control {
 .pivi-editor-toolbar-card .pivi-command-icon-popover {
   right: auto;
   left: 0;
-  z-index: 10;
+  z-index: 20;
 }
 
 .pivi-editor-toolbar-card__body {
@@ -1465,6 +1482,21 @@ textarea.pivi-settings-control {
   max-width: none;
 }
 
+.pivi-editor-toolbar-picker__target {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.pivi-editor-toolbar-picker__target .pivi-select {
+  min-block-size: 28px;
+  padding-block: 3px;
+  padding-inline: 8px 24px;
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
 .pivi-editor-toolbar-picker__list {
   display: flex;
   flex-direction: column;
@@ -1478,13 +1510,37 @@ textarea.pivi-settings-control {
   background: var(--pivi-host-background-primary);
 }
 
-.pivi-editor-toolbar-picker__item {
+.pivi-editor-toolbar-picker__group {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+}
+
+.pivi-editor-toolbar-picker__group + .pivi-editor-toolbar-picker__group {
+  border-top: 1px solid var(--pivi-host-border);
+}
+
+.pivi-editor-toolbar-picker__category {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 6px 10px;
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-weight: var(--pivi-host-font-semibold);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+
+.pivi-editor-toolbar-picker__item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
   box-sizing: border-box;
   width: 100%;
+  height: auto;
+  min-height: 52px;
   padding: 8px 10px;
   border: 0;
   border-radius: 0;
@@ -1494,23 +1550,62 @@ textarea.pivi-settings-control {
   cursor: pointer;
 }
 
+.pivi-editor-toolbar-picker__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .pivi-editor-toolbar-picker__item + .pivi-editor-toolbar-picker__item {
   border-top: 1px solid var(--pivi-host-border);
 }
 
-.pivi-editor-toolbar-picker__item:hover {
+.pivi-editor-toolbar-picker__item:hover:not(:disabled) {
   background: var(--pivi-host-background-modifier-hover);
 }
 
+.pivi-editor-toolbar-picker__icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-editor-toolbar-picker__icon .pivi-platform-icon {
+  --icon-size: 17px;
+}
+
+.pivi-editor-toolbar-picker__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .pivi-editor-toolbar-picker__name {
+  overflow: hidden;
+  color: var(--pivi-host-text-normal);
   font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pivi-editor-toolbar-picker__id,
+.pivi-editor-toolbar-picker__detail {
+  min-width: 0;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .pivi-editor-toolbar-picker__id {
   font-family: var(--pivi-host-font-monospace);
-  font-size: var(--pivi-host-font-ui-smaller);
-  color: var(--pivi-host-text-muted);
-  overflow-wrap: anywhere;
 }
 
 .pivi-editor-toolbar-picker > .pivi-settings-action-group,
@@ -1529,5 +1624,25 @@ textarea.pivi-settings-control {
 
   .pivi-settings-badge-input.pivi-settings-control {
     width: 120px;
+  }
+
+  .pivi-sortable-toolbar-card > .pivi-editor-toolbar-card__header {
+    grid-template-columns: auto 30px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .pivi-editor-toolbar-card__header > .pivi-provider-priority {
+    display: none;
+  }
+
+  .pivi-editor-toolbar-card__badge {
+    grid-column: 3;
+    justify-self: start;
+  }
+
+  .pivi-editor-toolbar-card__actions {
+    grid-column: 4;
+    grid-row: 1 / span 2;
   }
 }

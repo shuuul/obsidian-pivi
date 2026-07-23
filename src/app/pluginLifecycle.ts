@@ -21,6 +21,7 @@ export async function initializePiviPlugin(plugin: PiviPlugin): Promise<void> {
   registerEditorSelectionToolbar(plugin, {
     isToolbarEnabled: () => (
       plugin.settings.editorSelectionToolbar?.enabled !== false
+      && plugin.settings.editorSelectionToolbar.shortcuts.some(item => item.enabled)
     ),
     shouldYieldToNoteToolbar: () => isNoteToolbarTextToolbarActive(plugin.app),
   });

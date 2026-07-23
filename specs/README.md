@@ -8,7 +8,8 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 ## Active specs
 
-_None._
+| Spec | Created | Outcome |
+|---|---|---|
 
 ## Archived specs
 
@@ -41,6 +42,8 @@ _None._
 | [025-pre-write-file-recovery-snapshots.md](archive/025-pre-write-file-recovery-snapshots.md) | 2026-07-22 | Pre-write Obsidian File Recovery snapshots via private `forceAdd()` before Pivi vault note mutations. |
 | [026-toolbar-command-execution-target.md](archive/026-toolbar-command-execution-target.md) | 2026-07-22 | Per-shortcut Sidebar/Inline edit dispatch, user-facing Command metadata, and compact Models-style configuration disclosures. |
 | [027-stable-tab-switcher-archive-deletion.md](archive/027-stable-tab-switcher-archive-deletion.md) | 2026-07-22 | Stable menu, archive reveal, and user-owned viewport across archived-tab deletion and restoration. |
+| [028-user-configurable-editor-selection-toolbar.md](archive/028-user-configurable-editor-selection-toolbar.md) | 2026-07-22 | Unified fixed Pivi actions, curated removable editor commands, and Pivi Commands into one enableable and user-ordered selection toolbar. |
+| [029-toolbar-command-controls-and-pickers.md](archive/029-toolbar-command-controls-and-pickers.md) | 2026-07-22 | Independent toolbar toggles, separate editor/Obsidian pickers, and top-level command icon controls. |
 
 ## Numbering and files
 

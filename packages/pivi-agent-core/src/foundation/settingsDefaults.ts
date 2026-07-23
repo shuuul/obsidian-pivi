@@ -52,5 +52,11 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   chatViewPlacement: "right-sidebar",
   hiddenSlashCommands: [],
   workspaceCommandOrder: [],
-  editorSelectionToolbar: { enabled: true, shortcuts: [] },
+  editorSelectionToolbar: {
+    enabled: true,
+    shortcuts: [
+      { id: "inline-edit", kind: "pivi-action", actionId: "inline-edit", enabled: true },
+      { id: "add-to-chat", kind: "pivi-action", actionId: "add-to-chat", enabled: true },
+    ],
+  },
 };

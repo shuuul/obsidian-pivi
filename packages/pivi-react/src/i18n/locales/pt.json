@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "Barra de ferramentas de seleção do editor",
-      "desc": "Configure atalhos que aparecem na barra de seleção do editor junto com Ask AI e Adicionar ao chat.",
+      "desc": "Escolha, ative e reordene ações e comandos na barra de seleção do editor.",
+      "added": "Adicionado",
+      "unavailable": "Indisponível neste editor",
+      "addEditorCommand": "+ Adicionar comando do editor",
       "addCommand": "+ Adicionar comando Obsidian",
-      "enabled": "Ativado",
+      "editorCommandPickerTitle": "Escolher um comando do editor",
+      "commandPickerTitle": "Escolher um comando do Obsidian",
+      "editorCommandDescription": "Executar {command} na seleção do editor.",
+      "itemEnabledAria": "Ativar {label}",
       "kind": {
+        "editorCommand": "Comando do editor",
+        "piviAction": "Ação do Pivi",
         "command": "Comando do Obsidian",
         "piviCommand": "Comando Pivi"
       },
+      "actions": { "inlineEdit": "Edição em linha" },
       "empty": "Nenhum atalho da barra configurado ainda.",
       "commandSearchPlaceholder": "Pesquisar comandos por nome ou ID",
-      "commandPickerTitle": "Escolher um comando do Obsidian",
       "noCommands": "Nenhum comando correspondente.",
       "removeAria": "Remover {label}",
       "provider": {

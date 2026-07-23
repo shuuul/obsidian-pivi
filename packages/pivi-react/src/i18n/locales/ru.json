@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "Панель выделения в редакторе",
-      "desc": "Настройте кнопки быстрого доступа, которые появляются на панели выделения в редакторе рядом с Ask AI и Добавить в чат.",
+      "desc": "Выбирайте, включайте и меняйте порядок действий и команд на панели выделения в редакторе.",
+      "added": "Добавлено",
+      "unavailable": "Недоступно в этом редакторе",
+      "addEditorCommand": "+ Добавить команду редактора",
       "addCommand": "+ Добавить команду Obsidian",
-      "enabled": "Включено",
+      "editorCommandPickerTitle": "Выбрать команду редактора",
+      "commandPickerTitle": "Выберите команду Obsidian",
+      "editorCommandDescription": "Выполнить {command} для выделения в редакторе.",
+      "itemEnabledAria": "Включить {label}",
       "kind": {
+        "editorCommand": "Команда редактора",
+        "piviAction": "Действие Pivi",
         "command": "Команда Obsidian",
         "piviCommand": "Команда Pivi"
       },
+      "actions": { "inlineEdit": "Встроенное редактирование" },
       "empty": "Ярлыки панели ещё не настроены.",
       "commandSearchPlaceholder": "Искать команды по имени или ID",
-      "commandPickerTitle": "Выберите команду Obsidian",
       "noCommands": "Подходящих команд нет.",
       "removeAria": "Удалить {label}",
       "provider": {

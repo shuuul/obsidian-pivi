@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "편집기 선택 도구 모음",
-      "desc": "Ask AI 및 채팅에 추가와 함께 편집기 선택 도구 모음에 표시되는 바로가기 버튼을 구성합니다.",
+      "desc": "편집기 선택 도구 모음의 작업과 명령을 선택하고 활성화하며 순서를 변경합니다.",
+      "added": "추가됨",
+      "unavailable": "이 편집기에서는 사용할 수 없음",
+      "addEditorCommand": "+ 편집기 명령 추가",
       "addCommand": "+ Obsidian 명령 추가",
-      "enabled": "사용",
+      "editorCommandPickerTitle": "편집기 명령 선택",
+      "commandPickerTitle": "Obsidian 명령 선택",
+      "editorCommandDescription": "편집기 선택 영역에서 {command}을 실행합니다.",
+      "itemEnabledAria": "{label} 활성화",
       "kind": {
+        "editorCommand": "편집기 명령",
+        "piviAction": "Pivi 작업",
         "command": "Obsidian 명령",
         "piviCommand": "Pivi 명령"
       },
+      "actions": { "inlineEdit": "인라인 편집" },
       "empty": "아직 구성된 도구 모음 바로가기가 없습니다.",
       "commandSearchPlaceholder": "이름 또는 ID로 명령 검색",
-      "commandPickerTitle": "Obsidian 명령 선택",
       "noCommands": "일치하는 명령이 없습니다.",
       "removeAria": "{label} 제거",
       "provider": {

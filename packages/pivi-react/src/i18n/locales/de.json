@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "Editor-Auswahl-Symbolleiste",
-      "desc": "Konfiguriere Kurzschaltflächen für die Editor-Auswahl-Symbolleiste neben Ask AI und Zum Chat hinzufügen.",
+      "desc": "Wähle, aktiviere und sortiere Aktionen und Befehle in der Editor-Auswahl-Symbolleiste.",
+      "added": "Hinzugefügt",
+      "unavailable": "In diesem Editor nicht verfügbar",
+      "addEditorCommand": "+ Editor-Befehl hinzufügen",
       "addCommand": "+ Obsidian-Befehl hinzufügen",
-      "enabled": "Aktiviert",
+      "editorCommandPickerTitle": "Editor-Befehl auswählen",
+      "commandPickerTitle": "Obsidian-Befehl auswählen",
+      "editorCommandDescription": "{command} auf die Editor-Auswahl anwenden.",
+      "itemEnabledAria": "{label} aktivieren",
       "kind": {
+        "editorCommand": "Editor-Befehl",
+        "piviAction": "Pivi-Aktion",
         "command": "Obsidian-Befehl",
         "piviCommand": "Pivi-Befehl"
       },
+      "actions": { "inlineEdit": "Inline bearbeiten" },
       "empty": "Noch keine Symbolleisten-Kurzbefehle konfiguriert.",
       "commandSearchPlaceholder": "Befehle nach Name oder ID suchen",
-      "commandPickerTitle": "Obsidian-Befehl auswählen",
       "noCommands": "Keine passenden Befehle.",
       "removeAria": "{label} entfernen",
       "provider": {

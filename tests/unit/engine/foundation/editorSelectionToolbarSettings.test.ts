@@ -1,138 +1,90 @@
-import {
-  DEFAULT_PIVI_SETTINGS,
-} from '@pivi/pivi-agent-core/foundation/settingsDefaults';
-import {
-  normalizeEditorSelectionToolbarSettings,
-} from '@pivi/pivi-agent-core/foundation/settings';
+import { normalizeEditorSelectionToolbarSettings } from '@pivi/pivi-agent-core/foundation/settings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+
+const required = [
+  { id: 'inline-edit', kind: 'pivi-action', actionId: 'inline-edit', enabled: true },
+  { id: 'add-to-chat', kind: 'pivi-action', actionId: 'add-to-chat', enabled: true },
+];
 
 describe('normalizeEditorSelectionToolbarSettings', () => {
-  it('returns an enabled toolbar with an empty shortcut list for missing or invalid values', () => {
-    expect(normalizeEditorSelectionToolbarSettings(undefined)).toEqual({ enabled: true, shortcuts: [] });
-    expect(normalizeEditorSelectionToolbarSettings(null)).toEqual({ enabled: true, shortcuts: [] });
-    expect(normalizeEditorSelectionToolbarSettings('invalid')).toEqual({ enabled: true, shortcuts: [] });
-    expect(normalizeEditorSelectionToolbarSettings({ shortcuts: 'invalid' })).toEqual({
-      enabled: true,
-      shortcuts: [],
-    });
+  it('repairs missing and malformed settings with required actions', () => {
+    for (const value of [undefined, null, 'invalid', { shortcuts: 'invalid' }]) {
+      expect(normalizeEditorSelectionToolbarSettings(value)).toEqual({ enabled: true, shortcuts: required });
+    }
   });
 
-  it('normalizes valid host and Pivi command shortcuts and drops invalid entries', () => {
-    expect(normalizeEditorSelectionToolbarSettings({
-      enabled: true,
-      shortcuts: [
-        {
-          id: 'cmd-1',
-          kind: 'obsidian-command',
-          label: ' Toggle fold ',
-          enabled: true,
-          commandId: 'editor:toggle-fold',
-          icon: ' fold-vertical ',
-        },
-        {
-          id: 'cmd-1',
-          kind: 'obsidian-command',
-          label: 'Duplicate',
-          enabled: true,
-          commandId: 'editor:duplicate',
-        },
-        {
-          id: 'pivi-1',
-          kind: 'pivi-command',
-          label: '/summarize',
-          enabled: false,
-          piviCommandKey: 'abc-key',
-          icon: 'scan-text',
-          executionTarget: 'invalid',
-        },
-        {
-          id: 'bad-pivi',
-          kind: 'pivi-command',
-          label: 'Missing key',
-          enabled: true,
-        },
-        {
-          id: 'legacy-preset',
-          kind: 'preset-prompt',
-          label: 'Summarize',
-          enabled: true,
-          prompt: 'Summarize the selection.',
-        },
-        {
-          id: 'bad-command',
-          kind: 'obsidian-command',
-          label: 'Missing command id',
-          enabled: true,
-        },
-      ],
-    })).toEqual({
-      enabled: true,
-      shortcuts: [
-        {
-          id: 'cmd-1',
-          kind: 'obsidian-command',
-          label: 'Toggle fold',
-          enabled: true,
-          commandId: 'editor:toggle-fold',
-          icon: 'fold-vertical',
-        },
-        {
-          id: 'pivi-1',
-          kind: 'pivi-command',
-          label: '/summarize',
-          enabled: false,
-          piviCommandKey: 'abc-key',
-          executionTarget: 'sidebar',
-          icon: 'scan-text',
-        },
-      ],
-    });
+  it('preserves legacy provider mapping', () => {
+    expect(normalizeEditorSelectionToolbarSettings({ provider: 'off', shortcuts: [] }).enabled).toBe(false);
+    expect(normalizeEditorSelectionToolbarSettings({ provider: 'pivi', shortcuts: [] }).enabled).toBe(true);
+    expect(normalizeEditorSelectionToolbarSettings({ provider: 'note-toolbar', shortcuts: [] }).enabled).toBe(true);
+    expect(normalizeEditorSelectionToolbarSettings({ enabled: false, provider: 'pivi', shortcuts: [] }).enabled).toBe(false);
   });
 
-  it('accepts an explicit enabled boolean', () => {
-    expect(normalizeEditorSelectionToolbarSettings({
-      enabled: false,
-      shortcuts: [],
-    })).toEqual({ enabled: false, shortcuts: [] });
-    expect(normalizeEditorSelectionToolbarSettings({
-      enabled: true,
-      shortcuts: [],
-    })).toEqual({ enabled: true, shortcuts: [] });
+  it('maps curated legacy commands and retains unmatched arbitrary commands', () => {
+    expect(normalizeEditorSelectionToolbarSettings({ shortcuts: [
+      { id: 'bold-old', kind: 'obsidian-command', label: 'Forged', enabled: false, commandId: 'editor:toggle-bold', icon: 'forged' },
+      { id: 'arbitrary', kind: 'obsidian-command', label: ' Plugin action ', enabled: true, commandId: 'plugin:action', icon: ' star ' },
+    ] }).shortcuts).toEqual([
+      ...required,
+      { id: 'editor:toggle-bold', kind: 'editor-command', commandId: 'editor:toggle-bold', enabled: false },
+      { id: 'arbitrary', kind: 'obsidian-command', label: 'Plugin action', commandId: 'plugin:action', icon: 'star', enabled: true },
+    ]);
   });
 
-  it('maps legacy provider field for backward compatibility', () => {
-    expect(normalizeEditorSelectionToolbarSettings({
-      provider: 'pivi',
-      shortcuts: [],
-    })).toEqual({ enabled: true, shortcuts: [] });
-    expect(normalizeEditorSelectionToolbarSettings({
-      provider: 'note-toolbar',
-      shortcuts: [],
-    })).toEqual({ enabled: true, shortcuts: [] });
-    expect(normalizeEditorSelectionToolbarSettings({
-      provider: 'off',
-      shortcuts: [],
-    })).toEqual({ enabled: false, shortcuts: [] });
+  it('drops malformed records while preserving valid Pivi command sidebar fallback', () => {
+    expect(normalizeEditorSelectionToolbarSettings({ shortcuts: [
+      null,
+      { id: 'bad', kind: 'obsidian-command', label: '', commandId: '' },
+      { id: 'pivi', kind: 'pivi-command', label: '/summarize', piviCommandKey: ' stable ', enabled: false, executionTarget: 'bad' },
+    ] }).shortcuts).toEqual([
+      ...required,
+      { id: 'pivi', kind: 'pivi-command', label: '/summarize', piviCommandKey: 'stable', enabled: false, executionTarget: 'sidebar' },
+    ]);
   });
 
-  it('defaults unknown legacy providers to enabled', () => {
-    expect(normalizeEditorSelectionToolbarSettings({
-      provider: 'other',
-      shortcuts: [],
-    })).toEqual({ enabled: true, shortcuts: [] });
+  it('repairs one missing required action in one canonical insertion pass', () => {
+    expect(normalizeEditorSelectionToolbarSettings({ shortcuts: [required[1]] }).shortcuts).toEqual(required);
   });
 
-  it('prefers the enabled field over the legacy provider field', () => {
-    expect(normalizeEditorSelectionToolbarSettings({
-      enabled: false,
-      provider: 'pivi',
-      shortcuts: [],
-    })).toEqual({ enabled: false, shortcuts: [] });
+  it('deduplicates canonical actions and editor commands', () => {
+    const result = normalizeEditorSelectionToolbarSettings({ shortcuts: [
+      { ...required[0], id: 'forged' },
+      { ...required[0], enabled: false },
+      { id: 'first', kind: 'editor-command', commandId: 'editor:toggle-bold', enabled: false },
+      { id: 'second', kind: 'obsidian-command', commandId: 'editor:toggle-bold', label: 'Bold', enabled: true },
+    ] });
+    expect(result.shortcuts).toEqual([
+      required[1],
+      required[0],
+      { id: 'editor:toggle-bold', kind: 'editor-command', commandId: 'editor:toggle-bold', enabled: false },
+    ]);
   });
 
-  it('is included in default Pivi settings', () => {
-    expect(DEFAULT_PIVI_SETTINGS.editorSelectionToolbar).toEqual({
-      enabled: true,
-      shortcuts: [],
-    });
+  it('remaps legacy IDs that collide with reserved and emitted IDs without dropping rows', () => {
+    const result = normalizeEditorSelectionToolbarSettings({ shortcuts: [
+      { id: 'inline-edit', kind: 'obsidian-command', label: 'One', commandId: 'plugin:one', enabled: true },
+      { id: 'same', kind: 'obsidian-command', label: 'Two', commandId: 'plugin:two', enabled: true },
+      { id: 'same', kind: 'pivi-command', label: '/three', piviCommandKey: 'three', enabled: true },
+      { id: 'editor:toggle-bold', kind: 'pivi-command', label: '/four', piviCommandKey: 'four', enabled: true },
+    ] });
+    expect(result.shortcuts.map(item => item.id)).toEqual([
+      'inline-edit', 'add-to-chat',
+      'legacy:obsidian-command:inline-edit', 'same', 'legacy:pivi-command:same',
+      'legacy:pivi-command:editor:toggle-bold',
+    ]);
+    expect(new Set(result.shortcuts.map(item => item.id)).size).toBe(result.shortcuts.length);
+  });
+
+  it('is stable on second normalization', () => {
+    const once = normalizeEditorSelectionToolbarSettings({ shortcuts: [
+      { id: 'inline-edit', kind: 'obsidian-command', label: 'One', commandId: 'plugin:one', enabled: true },
+      { id: 'same', kind: 'pivi-command', label: '/one', piviCommandKey: 'one', enabled: true },
+      { id: 'same', kind: 'pivi-command', label: '/two', piviCommandKey: 'two', enabled: false },
+    ] });
+    expect(normalizeEditorSelectionToolbarSettings(once)).toEqual(once);
+  });
+
+  it('uses normalized required actions as defaults', () => {
+    expect(DEFAULT_PIVI_SETTINGS.editorSelectionToolbar).toEqual(normalizeEditorSelectionToolbarSettings(undefined));
   });
 });

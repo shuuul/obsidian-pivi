@@ -2,6 +2,7 @@
 
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { mountSelectionToolbarSurface } from '@pivi/pivi-react/mount';
 
 import { SelectionToolbarSurfaceController } from '@/app/ui/selectionToolbar/SelectionToolbarSurfaceController';
 import type { InlineEditSurfaceSendPayload } from '@/app/ui/inlineEditSurface/types';
@@ -175,6 +176,7 @@ function createController({
       thinkingLevel: 'off',
     },
     manifest: { id: 'pivi' },
+    addEditorSelectionToChatInput: jest.fn(async () => undefined),
     ensureWorkspaceServices: jest.fn(async () => workspace),
     register: jest.fn(),
     getUiFacades: jest.fn(() => ({
@@ -371,18 +373,85 @@ describe('SelectionToolbarSurfaceController inline edit guards', () => {
   });
 
   it('opens an inline edit session from the host snapshot when controller snapshot was cleared', () => {
-    const controller = createController();
+    const controller = createController({ shortcuts: [{
+      id: 'inline-edit', kind: 'pivi-action', actionId: 'inline-edit', enabled: true,
+    }] });
     controller.register();
     mockGetCurrentSnapshot.mockReturnValue(snapshot);
     (controller as unknown as { currentSnapshot: EditorSelectionSnapshot | null }).currentSnapshot = null;
 
-    (controller as unknown as { openInlineEdit: (prefill?: string) => void }).openInlineEdit();
+    (controller as unknown as { buildProps: () => { onItem: (id: string) => void } })
+      .buildProps().onItem('inline-edit');
 
     expect(mockDismissOverlay).toHaveBeenCalledTimes(1);
     expect(showInlineEditSession).toHaveBeenCalledWith(snapshot);
     expect((controller as unknown as {
       inlineEditSessions: Map<string, unknown>;
     }).inlineEditSessions.size).toBe(1);
+  });
+
+  it('dispatches curated editor commands by exact ID and ignores unknown item IDs', async () => {
+    const executeCommandById = jest.fn(() => true);
+    const controller = createController({
+      shortcuts: [
+        { id: 'editor:toggle-bold', kind: 'editor-command', commandId: 'editor:toggle-bold', enabled: true },
+        { id: 'editor:toggle-italics', kind: 'editor-command', commandId: 'editor:toggle-italics', enabled: true },
+      ],
+      executeCommandById,
+    });
+
+    const onItem = (controller as unknown as {
+      buildProps: () => { onItem: (id: string) => void };
+    }).buildProps().onItem;
+    onItem('editor:toggle-bold');
+    onItem('editor:toggle-italics');
+    onItem('missing');
+
+    expect(executeCommandById.mock.calls).toEqual([
+      ['editor:toggle-bold'],
+      ['editor:toggle-italics'],
+    ]);
+  });
+
+  it('dispatches Add to chat through the active editor path', async () => {
+    const activeView = { editor: {}, file: { basename: 'Current note' } };
+    const controller = createController({
+      activeView,
+      shortcuts: [{
+        id: 'add-to-chat', kind: 'pivi-action', actionId: 'add-to-chat', enabled: true,
+      }],
+    });
+
+    (controller as unknown as { buildProps: () => { onItem: (id: string) => void } })
+      .buildProps().onItem('add-to-chat');
+    await Promise.resolve();
+
+    const plugin = (controller as unknown as {
+      plugin: { addEditorSelectionToChatInput: jest.Mock };
+    }).plugin;
+    expect(plugin.addEditorSelectionToChatInput).toHaveBeenCalledWith(activeView.editor, activeView);
+  });
+
+  it('builds the floating toolbar in enabled persisted order only', () => {
+    const controller = createController({ shortcuts: [
+      { id: 'add-to-chat', kind: 'pivi-action', actionId: 'add-to-chat', enabled: true },
+      { id: 'editor:toggle-bold', kind: 'editor-command', commandId: 'editor:toggle-bold', enabled: false },
+      { id: 'inline-edit', kind: 'pivi-action', actionId: 'inline-edit', enabled: true },
+    ] });
+
+    const props = (controller as unknown as { buildProps: () => { items: Array<{ id: string }> } }).buildProps();
+    expect(props.items.map(item => item.id)).toEqual(['add-to-chat', 'inline-edit']);
+  });
+
+  it('dismisses instead of mounting when every persisted item is disabled', () => {
+    const controller = createController({ shortcuts: [{
+      id: 'inline-edit', kind: 'pivi-action', actionId: 'inline-edit', enabled: false,
+    }] });
+
+    (controller as unknown as { render: () => void }).render();
+
+    expect(mockDismissOverlay).toHaveBeenCalledTimes(1);
+    expect(mountSelectionToolbarSurface).not.toHaveBeenCalled();
   });
 
   it('no-ops Ask AI when neither controller nor host has a snapshot', () => {

@@ -31,7 +31,7 @@ const SETTINGS_SEARCH_KEYS = [
   'settings.editorToolbar.provider.title',
   'settings.editorToolbar.provider.name',
   'settings.editorToolbar.title',
-  'settings.editorToolbar.addCommand',
+  'settings.editorToolbar.addEditorCommand',
   'settings.editorToolbar.addPiviCommand',
   'settings.noteToolbar.heading',
   'settings.modelsTab.addProvider',

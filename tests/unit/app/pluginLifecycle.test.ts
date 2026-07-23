@@ -46,6 +46,14 @@ describe('initializePiviPlugin', () => {
     expect(registerSelectionToolbarUi).toHaveBeenCalledWith(plugin);
     expect(plugin.ensureWorkspaceServices).not.toHaveBeenCalled();
 
+    const toolbarOptions = (registerEditorSelectionToolbar as jest.Mock).mock.calls[0]?.[1] as {
+      isToolbarEnabled: () => boolean;
+    };
+    (plugin as typeof plugin & { settings: unknown }).settings = {
+      editorSelectionToolbar: { enabled: true, shortcuts: [{ enabled: false }, { enabled: false }] },
+    };
+    expect(toolbarOptions.isToolbarEnabled()).toBe(false);
+
     expect(onLayoutReady).not.toBeNull();
     (onLayoutReady as unknown as () => void)();
     expect(plugin.ensureWorkspaceServices).toHaveBeenCalledTimes(1);

@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "Barra de herramientas de selección del editor",
-      "desc": "Configura accesos directos que aparecen en la barra de selección del editor junto a Ask AI y Añadir al chat.",
+      "desc": "Elige, activa y reordena acciones y comandos en la barra de selección del editor.",
+      "added": "Añadido",
+      "unavailable": "No disponible en este editor",
+      "addEditorCommand": "+ Añadir comando del editor",
       "addCommand": "+ Añadir comando de Obsidian",
-      "enabled": "Activado",
+      "editorCommandPickerTitle": "Elegir un comando del editor",
+      "commandPickerTitle": "Elegir un comando de Obsidian",
+      "editorCommandDescription": "Ejecutar {command} en la selección del editor.",
+      "itemEnabledAria": "Activar {label}",
       "kind": {
+        "editorCommand": "Comando del editor",
+        "piviAction": "Acción de Pivi",
         "command": "Comando de Obsidian",
         "piviCommand": "Comando de Pivi"
       },
+      "actions": { "inlineEdit": "Edición integrada" },
       "empty": "Aún no hay accesos directos configurados en la barra.",
       "commandSearchPlaceholder": "Buscar comandos por nombre o ID",
-      "commandPickerTitle": "Elegir un comando de Obsidian",
       "noCommands": "No hay comandos coincidentes.",
       "removeAria": "Eliminar {label}",
       "provider": {

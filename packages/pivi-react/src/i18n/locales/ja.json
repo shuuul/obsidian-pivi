@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "エディタ選択ツールバー",
-      "desc": "Ask AI とチャットに追加と並んで、エディタ選択ツールバーに表示されるショートカットボタンを設定します。",
+      "desc": "エディター選択ツールバーのアクションとコマンドを選択、有効化、並べ替えできます。",
+      "added": "追加済み",
+      "unavailable": "このエディターでは利用できません",
+      "addEditorCommand": "+ エディターコマンドを追加",
       "addCommand": "+ Obsidian コマンドを追加",
-      "enabled": "有効",
+      "editorCommandPickerTitle": "エディターコマンドを選択",
+      "commandPickerTitle": "Obsidian コマンドを選択",
+      "editorCommandDescription": "エディターの選択範囲で {command} を実行します。",
+      "itemEnabledAria": "{label} を有効化",
       "kind": {
+        "editorCommand": "エディターコマンド",
+        "piviAction": "Pivi アクション",
         "command": "Obsidian コマンド",
         "piviCommand": "Pivi コマンド"
       },
+      "actions": { "inlineEdit": "インライン編集" },
       "empty": "ツールバーのショートカットはまだ設定されていません。",
       "commandSearchPlaceholder": "名前または ID でコマンドを検索",
-      "commandPickerTitle": "Obsidian コマンドを選択",
       "noCommands": "一致するコマンドがありません。",
       "removeAria": "{label} を削除",
       "provider": {

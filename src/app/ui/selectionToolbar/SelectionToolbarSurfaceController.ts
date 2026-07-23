@@ -1,4 +1,8 @@
-import type { EditorToolbarShortcut } from '@pivi/pivi-agent-core/foundation/settings';
+import {
+  EDITOR_COMMANDS,
+  type EditorToolbarPiviCommand,
+  type EditorToolbarShortcut,
+} from '@pivi/pivi-agent-core/foundation/settings';
 import { resolveWorkspaceCommandPrompt } from '@pivi/pivi-agent-core/skills/commands/resolveWorkspaceCommandPrompt';
 import {
   mountSelectionToolbarSurface,
@@ -23,6 +27,7 @@ import {
   InlineEditSurfaceSession,
 } from '@/app/ui/inlineEditSurface';
 import type { InlineEditSurfaceSendPayload } from '@/app/ui/inlineEditSurface/types';
+import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
 import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getWorkspaceCommandFullId } from '@/app/workspaceCommandRegistry';
 import type PiviPlugin from '@/main';
@@ -177,23 +182,43 @@ export class SelectionToolbarSurfaceController {
   }
 
   private render(): void {
+    if (getEnabledShortcuts(this.plugin.settings).length === 0) {
+      this.disposeSurface();
+      getSelectionToolbarHost()?.dismissOverlay();
+      return;
+    }
     this.ensureSurface();
     getSelectionToolbarHost()?.repositionOverlay();
   }
 
   private buildProps(): SelectionToolbarSurfaceProps {
-    const shortcuts = getEnabledShortcuts(this.plugin.settings).map(shortcut => ({
-      id: shortcut.id,
-      label: shortcut.label,
-      kind: shortcut.kind,
-      ...(shortcut.icon ? { icon: shortcut.icon } : {}),
-    }));
+    const items = getEnabledShortcuts(this.plugin.settings).map(shortcut => {
+      if (shortcut.kind === 'pivi-action') {
+        return {
+          id: shortcut.id,
+          kind: shortcut.kind,
+          label: t(shortcut.actionId === 'inline-edit'
+            ? 'editor.selectionToolbar.askAi'
+            : 'editor.selectionToolbar.addToChat'),
+          icon: shortcut.actionId === 'inline-edit' ? 'pivi-p' : 'message-square-plus',
+        } as const;
+      }
+      if (shortcut.kind === 'editor-command') {
+        const catalog = EDITOR_COMMANDS.find(command => command.id === shortcut.commandId);
+        return {
+          id: shortcut.id,
+          kind: shortcut.kind,
+          label: listObsidianCommands(this.plugin.app).find(command => command.id === shortcut.commandId)?.name
+            ?? shortcut.commandId,
+          ...(catalog ? { icon: catalog.icon } : {}),
+        } as const;
+      }
+      return { id: shortcut.id, label: shortcut.label, kind: shortcut.kind, ...(shortcut.icon ? { icon: shortcut.icon } : {}) };
+    });
 
     return {
-      shortcuts,
-      onAddToChat: () => void this.handleAddToChat(),
-      onAskAi: () => void this.openInlineEdit(),
-      onShortcut: (id) => void this.handleShortcut(id),
+      items,
+      onItem: (id) => void this.handleShortcut(id),
     };
   }
 
@@ -263,41 +288,40 @@ export class SelectionToolbarSurfaceController {
 
   private async handleShortcut(id: string): Promise<void> {
     const shortcut = getEnabledShortcuts(this.plugin.settings).find(entry => entry.id === id);
-    if (!shortcut || !this.currentSnapshot) {
-      return;
-    }
+    if (!shortcut) return;
 
-    if (shortcut.kind === 'obsidian-command') {
-      if (!shortcut.commandId) {
-        new Notice(t('editor.selectionToolbar.commandUnavailable'));
+    switch (shortcut.kind) {
+      case 'pivi-action':
+        switch (shortcut.actionId) {
+          case 'inline-edit': this.openInlineEdit(); return;
+          case 'add-to-chat': await this.handleAddToChat(); return;
+        }
+        return;
+      case 'obsidian-command':
+      case 'editor-command':
+        executeObsidianCommand(this.plugin, shortcut.commandId);
         getSelectionToolbarHost()?.dismissOverlay();
         return;
-      }
-      executeObsidianCommand(this.plugin, shortcut.commandId);
-      getSelectionToolbarHost()?.dismissOverlay();
-      return;
+      case 'pivi-command':
+        if (!shortcut.piviCommandKey) {
+          new Notice(t('editor.selectionToolbar.commandUnavailable'));
+          getSelectionToolbarHost()?.dismissOverlay();
+          return;
+        }
+        if ((shortcut.executionTarget ?? 'sidebar') === 'sidebar') {
+          executeObsidianCommand(
+            this.plugin,
+            getWorkspaceCommandFullId(this.plugin.manifest.id, shortcut.piviCommandKey),
+          );
+          getSelectionToolbarHost()?.dismissOverlay();
+          return;
+        }
+        if (this.currentSnapshot) await this.runPiviCommandInline(shortcut, this.currentSnapshot);
     }
-
-    if (!shortcut.piviCommandKey) {
-      new Notice(t('editor.selectionToolbar.commandUnavailable'));
-      getSelectionToolbarHost()?.dismissOverlay();
-      return;
-    }
-
-    if ((shortcut.executionTarget ?? 'sidebar') === 'sidebar') {
-      executeObsidianCommand(
-        this.plugin,
-        getWorkspaceCommandFullId(this.plugin.manifest.id, shortcut.piviCommandKey),
-      );
-      getSelectionToolbarHost()?.dismissOverlay();
-      return;
-    }
-
-    await this.runPiviCommandInline(shortcut, this.currentSnapshot);
   }
 
   private async runPiviCommandInline(
-    shortcut: EditorToolbarShortcut,
+    shortcut: EditorToolbarPiviCommand,
     snapshot: EditorSelectionSnapshot,
   ): Promise<void> {
     if (!snapshot.text) {

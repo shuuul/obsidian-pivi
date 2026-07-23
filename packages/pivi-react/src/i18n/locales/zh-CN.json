@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "编辑器选区工具栏",
-      "desc": "配置会显示在编辑器选区工具栏上的快捷按钮，与 Ask AI 和添加到聊天并列。",
+      "desc": "选择、启用并重新排列编辑器选区工具栏中的操作和命令。",
+      "added": "已添加",
+      "unavailable": "当前编辑器不可用",
+      "addEditorCommand": "+ 添加编辑器命令",
       "addCommand": "+ 添加 Obsidian 命令",
-      "enabled": "已启用",
+      "editorCommandPickerTitle": "选择编辑器命令",
+      "commandPickerTitle": "选择 Obsidian 命令",
+      "editorCommandDescription": "对编辑器所选内容运行 {command}。",
+      "itemEnabledAria": "启用 {label}",
       "kind": {
+        "editorCommand": "编辑器命令",
+        "piviAction": "Pivi 操作",
         "command": "Obsidian 命令",
         "piviCommand": "Pivi 命令"
       },
+      "actions": { "inlineEdit": "内联编辑" },
       "empty": "尚未配置任何工具栏快捷方式。",
       "commandSearchPlaceholder": "按名称或 ID 搜索命令",
-      "commandPickerTitle": "选择 Obsidian 命令",
       "noCommands": "没有匹配的命令。",
       "removeAria": "移除 {label}",
       "provider": {

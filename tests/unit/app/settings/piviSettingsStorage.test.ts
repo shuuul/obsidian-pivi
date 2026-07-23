@@ -410,6 +410,18 @@ describe("PiviSettingsStorage", () => {
       enabled: true,
       shortcuts: [
         {
+          id: 'inline-edit',
+          kind: 'pivi-action',
+          actionId: 'inline-edit',
+          enabled: true,
+        },
+        {
+          id: 'add-to-chat',
+          kind: 'pivi-action',
+          actionId: 'add-to-chat',
+          enabled: true,
+        },
+        {
           id: 'pivi-1',
           kind: 'pivi-command',
           label: '/summarize',

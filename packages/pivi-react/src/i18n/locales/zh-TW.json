@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "編輯器選取工具列",
-      "desc": "設定會顯示在編輯器選取工具列上的捷徑按鈕，與 Ask AI 和加入聊天並列。",
+      "desc": "選擇、啟用並重新排列編輯器選取工具列中的動作和命令。",
+      "added": "已新增",
+      "unavailable": "目前編輯器無法使用",
+      "addEditorCommand": "+ 新增編輯器命令",
       "addCommand": "+ 新增 Obsidian 命令",
-      "enabled": "已啟用",
+      "editorCommandPickerTitle": "選擇編輯器命令",
+      "commandPickerTitle": "選擇 Obsidian 命令",
+      "editorCommandDescription": "對編輯器選取內容執行 {command}。",
+      "itemEnabledAria": "啟用 {label}",
       "kind": {
+        "editorCommand": "編輯器命令",
+        "piviAction": "Pivi 操作",
         "command": "Obsidian 命令",
         "piviCommand": "Pivi 命令"
       },
+      "actions": { "inlineEdit": "行內編輯" },
       "empty": "尚未設定任何工具列捷徑。",
       "commandSearchPlaceholder": "依名稱或 ID 搜尋命令",
-      "commandPickerTitle": "選擇 Obsidian 命令",
       "noCommands": "沒有符合的命令。",
       "removeAria": "移除 {label}",
       "provider": {

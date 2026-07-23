@@ -1,5 +1,5 @@
 export {
   SelectionToolbar,
+  type SelectionToolbarItem,
   type SelectionToolbarProps,
-  type SelectionToolbarShortcut,
 } from './SelectionToolbar';

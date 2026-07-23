@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "Barre d'outils de sélection de l'éditeur",
-      "desc": "Configurez les raccourcis affichés sur la barre de sélection de l'éditeur, à côté de Ask AI et Ajouter au chat.",
+      "desc": "Choisissez, activez et réorganisez les actions et commandes de la barre de sélection de l’éditeur.",
+      "added": "Ajouté",
+      "unavailable": "Indisponible dans cet éditeur",
+      "addEditorCommand": "+ Ajouter une commande d’éditeur",
       "addCommand": "+ Ajouter une commande Obsidian",
-      "enabled": "Activé",
+      "editorCommandPickerTitle": "Choisir une commande d’éditeur",
+      "commandPickerTitle": "Choisir une commande Obsidian",
+      "editorCommandDescription": "Exécuter {command} sur la sélection de l’éditeur.",
+      "itemEnabledAria": "Activer {label}",
       "kind": {
+        "editorCommand": "Commande d’éditeur",
+        "piviAction": "Action Pivi",
         "command": "Commande Obsidian",
         "piviCommand": "Commande Pivi"
       },
+      "actions": { "inlineEdit": "Modification intégrée" },
       "empty": "Aucun raccourci de barre d'outils configuré pour l'instant.",
       "commandSearchPlaceholder": "Rechercher des commandes par nom ou ID",
-      "commandPickerTitle": "Choisir une commande Obsidian",
       "noCommands": "Aucune commande correspondante.",
       "removeAria": "Supprimer {label}",
       "provider": {

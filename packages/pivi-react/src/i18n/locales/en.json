@@ -379,16 +379,24 @@
     },
     "editorToolbar": {
       "title": "Editor selection toolbar",
-      "desc": "Configure shortcut buttons that appear on the editor selection toolbar alongside Ask AI and Add to chat.",
+      "desc": "Choose, enable, and reorder actions and commands on the editor selection toolbar.",
+      "added": "Added",
+      "unavailable": "Unavailable in this editor",
+      "addEditorCommand": "+ Add editor command",
       "addCommand": "+ Add Obsidian command",
-      "enabled": "Enabled",
+      "editorCommandPickerTitle": "Choose an editor command",
+      "commandPickerTitle": "Choose an Obsidian command",
+      "editorCommandDescription": "Run {command} on the editor selection.",
+      "itemEnabledAria": "Enable {label}",
       "kind": {
         "command": "Obsidian command",
+        "editorCommand": "Editor command",
+        "piviAction": "Pivi action",
         "piviCommand": "Pivi command"
       },
-      "empty": "No toolbar shortcuts configured yet.",
+      "empty": "No toolbar items configured yet.",
+      "actions": { "inlineEdit": "Inline edit" },
       "commandSearchPlaceholder": "Search commands by name or ID",
-      "commandPickerTitle": "Choose an Obsidian command",
       "noCommands": "No matching commands.",
       "removeAria": "Remove {label}",
       "provider": {

@@ -2,21 +2,18 @@ import { type ReactNode, useEffect, useRef } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
-import { ChatLogo } from '../mount/ChatLogo';
 import { usePresentationPlatform } from '../platform';
 
-export interface SelectionToolbarShortcut {
+export interface SelectionToolbarItem {
   id: string;
   label: string;
-  kind: 'obsidian-command' | 'pivi-command';
+  kind: 'pivi-action' | 'editor-command' | 'obsidian-command' | 'pivi-command';
   icon?: string;
 }
 
 export interface SelectionToolbarProps {
-  shortcuts: readonly SelectionToolbarShortcut[];
-  onAskAi: () => void;
-  onAddToChat: () => void;
-  onShortcut: (id: string) => void;
+  items: readonly SelectionToolbarItem[];
+  onItem: (id: string) => void;
 }
 
 function IconButton({
@@ -48,56 +45,31 @@ function IconButton({
   );
 }
 
-function shortcutIconName(shortcut: SelectionToolbarShortcut): string {
-  if (shortcut.icon) return shortcut.icon;
-  return shortcut.kind === 'pivi-command' ? 'message-square' : 'terminal';
+function itemIconName(item: SelectionToolbarItem): string {
+  if (item.icon) return item.icon;
+  return item.kind === 'pivi-command' ? 'message-square' : 'terminal';
 }
 
 export function SelectionToolbar({
-  shortcuts,
-  onAskAi,
-  onAddToChat,
-  onShortcut,
+  items,
+  onItem,
 }: SelectionToolbarProps) {
-  const t = useT();
+  useT();
 
   return (
     <div className="pivi-selection-toolbar" data-pivi-react-surface="selection-toolbar">
       <div className="pivi-selection-toolbar-group">
-        <IconButton
-          className="pivi-selection-toolbar-btn pivi-selection-toolbar-btn--icon pivi-selection-toolbar-btn--primary"
-          label={t('editor.selectionToolbar.askAi')}
-          onClick={onAskAi}
-        >
-          <span className="pivi-selection-toolbar-icon" aria-hidden="true">
-            <ChatLogo icon={{ kind: 'pivi-brand', viewBox: '0 0 100 100' }} />
-          </span>
-        </IconButton>
-        <IconButton
-          className="pivi-selection-toolbar-btn pivi-selection-toolbar-btn--icon"
-          label={t('editor.selectionToolbar.addToChat')}
-          onClick={onAddToChat}
-        >
-          <PlatformIcon name="message-square-plus" />
-        </IconButton>
+        {items.map(item => (
+          <IconButton
+            className="pivi-selection-toolbar-btn pivi-selection-toolbar-btn--icon"
+            key={item.id}
+            label={item.label}
+            onClick={() => onItem(item.id)}
+          >
+            <PlatformIcon name={itemIconName(item)} />
+          </IconButton>
+        ))}
       </div>
-      {shortcuts.length > 0 ? (
-        <>
-          <div aria-hidden="true" className="pivi-selection-toolbar-divider" />
-          <div className="pivi-selection-toolbar-group">
-            {shortcuts.map(shortcut => (
-              <IconButton
-                className="pivi-selection-toolbar-btn pivi-selection-toolbar-btn--icon"
-                key={shortcut.id}
-                label={shortcut.label}
-                onClick={() => onShortcut(shortcut.id)}
-              >
-                <PlatformIcon name={shortcutIconName(shortcut)} />
-              </IconButton>
-            ))}
-          </div>
-        </>
-      ) : null}
     </div>
   );
 }

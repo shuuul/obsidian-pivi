@@ -1,6 +1,5 @@
 import type {
   EditorToolbarShortcut,
-  EditorToolbarShortcutKind,
 } from '@pivi/pivi-agent-core/foundation/settings';
 
 export type SettingsEditorSelectionToolbarSnapshot = {
@@ -16,8 +15,6 @@ export type SettingsTabId =
   | 'tools'
   | 'subagents'
   | 'commands';
-
-export type { EditorToolbarShortcutKind };
 
 export interface SettingsKeyboardNavigationSnapshot {
   readonly scrollUpKey: string;
