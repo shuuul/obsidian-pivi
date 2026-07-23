@@ -174,6 +174,15 @@ export class OriginGrantRegistry {
     this.grants.clear();
   }
 
+  /** Remove all grants scoped to one purpose without touching other purposes. */
+  revokeByPurpose(purpose: NetworkPurpose): void {
+    for (const [origin, grant] of this.grants) {
+      if (grant.purpose === purpose) {
+        this.grants.delete(origin);
+      }
+    }
+  }
+
   has(originOrUrl: string | URL, purpose?: NetworkPurpose, now = Date.now()): boolean {
     const origin = typeof originOrUrl === 'string' && !originOrUrl.includes('://')
       ? originOrUrl.toLowerCase()
@@ -202,6 +211,39 @@ export function classifyHostnameOrAddress(hostname: string): IpDestinationClass 
     return 'public';
   }
   return classifyIpLiteral(hostname);
+}
+
+/**
+ * TTL for configured private-origin grants. Spans a normal plugin session so
+ * local providers (Ollama, LM Studio, LAN endpoints) keep working across long
+ * uptimes without per-request re-grants. Grants are cleared on workspace dispose.
+ */
+export const PRIVATE_ORIGIN_GRANT_TTL_MS = 365 * 24 * 60 * 60 * 1000;
+
+/**
+ * Grant only the private/loopback origins among `urls` for `purpose`. Public
+ * domains are left to DNS-time egress checks; malformed entries are ignored so
+ * validation can surface them through its own path. Callers that re-derive the
+ * full origin set should `revokeByPurpose(purpose)` first so removed origins
+ * drop out.
+ */
+export function grantPrivateOrigins(
+  grants: OriginGrantRegistry,
+  urls: readonly (string | null | undefined)[],
+  purpose: NetworkPurpose,
+  ttlMs: number = PRIVATE_ORIGIN_GRANT_TTL_MS,
+): void {
+  for (const raw of urls) {
+    if (!raw) continue;
+    try {
+      const url = normalizeHttpUrl(raw);
+      if (isDeniedIpClass(classifyHostnameOrAddress(url.hostname))) {
+        grants.grant(url, ttlMs, purpose);
+      }
+    } catch {
+      // Ignore malformed configured URLs; validation surfaces elsewhere.
+    }
+  }
 }
 
 export function assertDestinationAllowed(

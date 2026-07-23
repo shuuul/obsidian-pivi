@@ -1,5 +1,5 @@
 import { WEB_PROVIDER_CAPABILITIES } from '../../foundation/settings';
-import { redactUrl } from '../../network/urlPolicy';
+import { classifyHostnameOrAddress, isDeniedIpClass, redactUrl } from '../../network';
 import { TOOL_WEB_FETCH } from '../toolNames';
 import type { ToolSpec } from '../toolSpec';
 import { formatFetchResponse } from './format';
@@ -47,6 +47,13 @@ function parseFetchInput(params: unknown): WebFetchInput {
   }
   if (parsedUrl.username || parsedUrl.password) {
     throw new Error('Invalid WebFetch input: URL credentials are not allowed.');
+  }
+  // WebFetch/WebSearch reach the public web only. Reject private/loopback
+  // targets up front so the URL is never handed to a third-party extractor nor
+  // direct-fetched. Local LLM providers are served by the provider egress path,
+  // not this tool.
+  if (isDeniedIpClass(classifyHostnameOrAddress(parsedUrl.hostname))) {
+    throw new Error('Invalid WebFetch input: local and private network addresses are not allowed.');
   }
   const query = typeof record.query === 'string' && record.query.trim()
     ? record.query.trim()

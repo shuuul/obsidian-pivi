@@ -11,11 +11,26 @@ import {
   getCustomProviderById,
   getCustomProvidersFromBag,
 } from "@pivi/pivi-agent-core/foundation/customProviders";
+import { grantPrivateOrigins } from "@pivi/pivi-agent-core/network";
 import type { SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 
 import type { PiviUiFacades } from "@/app/hostContracts";
 
 import { createCustomProviderHttpRequest } from "./obsidianHttpRequest";
+
+/** Re-grant provider private origins from the current custom-provider set. */
+function regrantProviderPrivateOrigins(
+  configs: ReturnType<typeof getCustomProvidersFromBag>,
+): void {
+  try {
+    const grants = getActivePiviNetworkClients().grants;
+    grants.revokeByPurpose("provider");
+    grantPrivateOrigins(grants, configs.map((provider) => provider.baseUrl), "provider");
+  } catch {
+    // Network clients may not be installed during early bootstrap; the startup
+    // grant pass in createPiWorkspaceServices covers the steady state.
+  }
+}
 
 /**
  * App-owned facades that hide Pi engine details from product UI.
@@ -45,7 +60,9 @@ export function createPiUiFacades(
       return getPiAiModelsForProvider(providerId);
     },
     syncCustomProviders(settings) {
-      syncCustomPiProviders(withRuntimeHeaders(settings));
+      const configs = withRuntimeHeaders(settings);
+      syncCustomPiProviders(configs);
+      regrantProviderPrivateOrigins(configs);
     },
     async fetchCustomProviderModels(providerId, settings) {
       const config = getCustomProviderById(settings, providerId);

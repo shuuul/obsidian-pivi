@@ -24,6 +24,9 @@ export const SESSION_JOURNAL_MAX_ENTRIES = 64;
 /** Maximum UTF-8 bytes for a single entry's appendLines + intent payload. */
 export const SESSION_JOURNAL_MAX_ENTRY_BYTES = 1_500_000;
 
+/** Maximum retained recovered-identity mappings (divergence id → recovered file). */
+export const SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES = 64;
+
 /**
  * `intent` — recorded before/around a local append.
  * `pending` — append bytes sealed; not yet confirmed against a stable source.
@@ -275,7 +278,7 @@ export function normalizeSessionJournalState(raw: unknown): SessionJournalStateV
   return {
     version: SESSION_JOURNAL_VERSION,
     entries,
-    recoveredIdentities,
+    recoveredIdentities: compactRecoveredIdentities(recoveredIdentities),
   };
 }
 
@@ -325,6 +328,18 @@ function compactEntries(entries: readonly SessionJournalEntryV1[]): SessionJourn
     return [...entries];
   }
   return entries.slice(entries.length - SESSION_JOURNAL_MAX_ENTRIES);
+}
+
+function compactRecoveredIdentities(
+  identities: Record<string, string>,
+): Record<string, string> {
+  const entries = Object.entries(identities);
+  if (entries.length <= SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES) {
+    return identities;
+  }
+  // Drop the oldest recovery mappings; insertion order is preserved for string keys.
+  const kept = entries.slice(entries.length - SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES);
+  return Object.fromEntries(kept);
 }
 
 export function upsertJournalEntry(
@@ -382,10 +397,10 @@ export function recordRecoveredIdentity(
   }
   return {
     ...state,
-    recoveredIdentities: {
+    recoveredIdentities: compactRecoveredIdentities({
       ...state.recoveredIdentities,
       [divergenceId]: recoveredSessionFile,
-    },
+    }),
   };
 }
 

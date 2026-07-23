@@ -403,7 +403,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
                 }
                 const item = itemsById.get(id);
                 return item
-                  ? renderItem(item, index > archivedBoundaryIndex)
+                  ? renderItem(item, archivedBoundaryIndex >= 0 && index > archivedBoundaryIndex)
                   : null;
               })}
             </div>

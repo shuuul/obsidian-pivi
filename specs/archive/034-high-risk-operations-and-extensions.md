@@ -1,7 +1,7 @@
 ---
 id: "034"
 title: "High-risk operations and extensions"
-status: Reverted
+status: Completed
 created: 2026-07-23
 updated: 2026-07-23
 coordinator: "/root"

@@ -14,10 +14,12 @@ import {
   emptySessionJournalState,
   hashAppendLines,
   normalizeSessionJournalState,
+  recordRecoveredIdentity,
   removeJournalEntry,
   sealJournalEntryWithAppend,
   sessionDivergenceIdentity,
   SESSION_JOURNAL_MAX_ENTRY_BYTES,
+  SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES,
   SessionJournalBoundsError,
   type SessionJournalEntryV1,
   type SessionJournalStateV1,
@@ -574,5 +576,30 @@ describe('session cloud recovery fault matrix', () => {
     state = removeJournalEntry(state, entry.id);
     state = removeJournalEntry(state, entry.id);
     expect(state.entries).toHaveLength(0);
+  });
+
+  it('bounds recoveredIdentities so the map cannot grow unbounded', () => {
+    let state = emptySessionJournalState();
+    const overflow = SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES + 5;
+    for (let index = 0; index < overflow; index++) {
+      state = recordRecoveredIdentity(state, `div-${index}`, `sessions/recovered-${index}.jsonl`);
+    }
+    expect(Object.keys(state.recoveredIdentities)).toHaveLength(SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES);
+    // Oldest mappings are pruned; the most recent survive.
+    expect(state.recoveredIdentities[`div-0`]).toBeUndefined();
+    expect(state.recoveredIdentities[`div-${overflow - 1}`]).toBe(`sessions/recovered-${overflow - 1}.jsonl`);
+  });
+
+  it('normalizeSessionJournalState caps an oversized recoveredIdentities map on load', () => {
+    const oversized: Record<string, string> = {};
+    for (let index = 0; index < SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES + 3; index++) {
+      oversized[`div-${index}`] = `sessions/r-${index}.jsonl`;
+    }
+    const normalized = normalizeSessionJournalState({
+      version: 1,
+      entries: [],
+      recoveredIdentities: oversized,
+    });
+    expect(Object.keys(normalized.recoveredIdentities)).toHaveLength(SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES);
   });
 });

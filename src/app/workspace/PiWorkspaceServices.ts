@@ -45,10 +45,7 @@ import type {
 } from "@pivi/pivi-agent-core/mcp/ports";
 import { getMcpServerUrl } from "@pivi/pivi-agent-core/mcp/types";
 import {
-  classifyHostnameOrAddress,
-  isDeniedIpClass,
-  normalizeHttpUrl,
-  type OriginGrantRegistry,
+  grantPrivateOrigins,
 } from "@pivi/pivi-agent-core/network";
 import { ensureDefaultWorkspaceCommands } from "@pivi/pivi-agent-core/skills/commands/defaultWorkspaceCommands";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
@@ -110,26 +107,6 @@ function readMcpOAuthCallbackPort(): number | undefined {
 }
 
 
-/** Grant configured private origins for the plugin lifetime (origin-scoped, not a global bypass). */
-function grantConfiguredPrivateOrigins(
-  grants: OriginGrantRegistry,
-  urls: readonly string[],
-  purpose: "mcp" | "provider",
-): void {
-  const ttlMs = 24 * 60 * 60 * 1000;
-  for (const raw of urls) {
-    try {
-      const url = normalizeHttpUrl(raw);
-      const classification = classifyHostnameOrAddress(url.hostname);
-      if (isDeniedIpClass(classification) || url.hostname.toLowerCase() === "localhost") {
-        grants.grant(url, ttlMs, purpose);
-      }
-    } catch {
-      // Ignore malformed configured URLs; validation surfaces elsewhere.
-    }
-  }
-}
-
 export async function createPiWorkspaceServices(
   context: WorkspaceInitContext,
 ): Promise<PiWorkspaceServices> {
@@ -156,9 +133,9 @@ export async function createPiWorkspaceServices(
       getCustomProvidersFromBag(host.settings),
     )
     : getCustomProvidersFromBag(host.settings);
-  grantConfiguredPrivateOrigins(
+  grantPrivateOrigins(
     network.grants,
-    customProviders.map((provider) => provider.baseUrl).filter(Boolean),
+    customProviders.map((provider) => provider.baseUrl),
     "provider",
   );
   configurePiAiModels({
@@ -238,12 +215,11 @@ export async function createPiWorkspaceServices(
   });
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
-  grantConfiguredPrivateOrigins(
+  grantPrivateOrigins(
     network.grants,
     mcpServerManager
       .getServers()
-      .map((server) => getMcpServerUrl(server.config))
-      .filter((url): url is string => Boolean(url)),
+      .map((server) => getMcpServerUrl(server.config)),
     "mcp",
   );
   // Warm MCP tool lists for slash/runtime without blocking workspace boot.

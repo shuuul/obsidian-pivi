@@ -9,6 +9,7 @@ import {
   mkdirSync,
   readFileSync,
   renameSync,
+  unlinkSync,
   writeFileSync,
 } from 'fs';
 import { join } from 'path';
@@ -39,6 +40,22 @@ import {
 
 const logger = new PluginLogger('SessionRecovery');
 const FINGERPRINT_BYTES = 4096;
+
+/** Write a session file atomically via temp + rename, cleaning up the temp on failure. */
+function writeAtomicFileSync(absoluteFile: string, body: Buffer): void {
+  const temporary = `${absoluteFile}.tmp-${process.pid}`;
+  writeFileSync(temporary, body);
+  try {
+    renameSync(temporary, absoluteFile);
+  } catch (error) {
+    try {
+      unlinkSync(temporary);
+    } catch {
+      // Best-effort cleanup; the rename error is the real failure.
+    }
+    throw error;
+  }
+}
 
 export type SessionDivergenceKind =
   | 'identical'
@@ -577,9 +594,7 @@ function writeRecoveredSessionFile(
     );
   }
 
-  const temporary = `${absolute}.tmp-${process.pid}`;
-  writeFileSync(temporary, body);
-  renameSync(temporary, absolute);
+  writeAtomicFileSync(absolute, body);
   invalidateSessionJsonlIndex(absolute);
   return toVaultRelativePath(vaultPath, absolute);
 }
@@ -589,7 +604,7 @@ function applyAppendLines(absoluteFile: string, baseSize: number, lines: readonl
   if (expected.length !== baseSize) {
     throw new Error('Session changed before journal append could be applied');
   }
-  writeFileSync(absoluteFile, Buffer.concat([
+  writeAtomicFileSync(absoluteFile, Buffer.concat([
     expected,
     Buffer.from(`${lines.join('\n')}\n`, 'utf8'),
   ]));
@@ -604,7 +619,7 @@ function completeInterruptedAppend(
   const expectedAppend = `${lines.join('\n')}\n`;
   const current = readFileSync(absoluteFile);
   const prefix = current.subarray(0, baseSize);
-  writeFileSync(absoluteFile, Buffer.concat([
+  writeAtomicFileSync(absoluteFile, Buffer.concat([
     prefix,
     Buffer.from(expectedAppend, 'utf8'),
   ]));

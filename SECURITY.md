@@ -49,7 +49,7 @@ Default policy:
 - Redirects are normalized, rechecked, and bounded.
 - Logs, errors, and UI surfaces redact URL credentials and sensitive query values.
 
-Configured MCP remote servers and custom OpenAI-compatible providers may target private origins. Those destinations receive **short-lived origin grants** for the active turn or settings operation—not a permanent global bypass. Prompt injection must not become durable network authority.
+Configured MCP remote servers and custom OpenAI-compatible providers may target private origins. Those destinations receive **origin-scoped grants for the plugin session**—re-issued when settings change and cleared on unload, not a permanent global bypass. Only user-configured origins are granted; model-suggested URLs never receive grants, so prompt injection cannot become durable network authority.
 
 Provider SDKs, MCP/OAuth, WebSearch/WebFetch, image generation, skills distribution, and connectivity probes each receive an explicit injected client; there is no renderer-wide HTTP shim.
 
@@ -61,7 +61,7 @@ Production bundles resolve free `fetch` identifiers through esbuild `inject` of 
 
 ### WebFetch disclosure
 
-`WebFetch` tries enabled third-party extractors (Tavily, Exa, AnySearch) in the user-configured provider order before the direct HTTP terminal fallback. Extraction shares the full target URL—including paths and query data—with the configured provider.
+`WebFetch` rejects local and private network targets (loopback, private ranges, link-local, cloud metadata) before any provider attempt, so the URL is never sent to a third-party extractor or direct-fetched. For public targets it tries enabled third-party extractors (Tavily, Exa, AnySearch) in the user-configured provider order before the direct HTTP terminal fallback. Extraction shares the full target URL—including paths and query data—with the configured provider.
 
 Terminal WebFetch errors redact the target URL.
 
@@ -69,7 +69,7 @@ Terminal WebFetch errors redact the target URL.
 
 Model and tool outputs are untrusted. Pivi treats prompt injection as an expected condition:
 
-- Network authority comes from composition-time clients and short-lived origin grants, not from model-suggested URLs alone.
+- Network authority comes from composition-time clients and origin-scoped grants for user-configured private origins, not from model-suggested URLs alone.
 - Skills and MCP servers installed by the user can still follow malicious instructions once enabled; Pivi does not sandbox them.
 
 Pivi does not claim reliable automatic detection or neutralization of all prompt-injection content.

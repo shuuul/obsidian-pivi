@@ -242,4 +242,25 @@ describe('createWebFetchTool', () => {
     );
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it('rejects local and private network addresses before any network call', async () => {
+    const fetch = jest.fn(async () => makeResponse('ok'));
+    const tool = createWebFetchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['tavily', 'exa'],
+    }));
+
+    for (const url of [
+      'http://127.0.0.1:11434/',
+      'http://localhost:3000/api',
+      'http://192.168.1.5/',
+      'http://10.0.0.2/',
+      'http://[::1]/',
+      'http://169.254.169.254/latest/meta-data/',
+    ]) {
+      await expect(tool.execute('id', { url })).rejects.toThrow(/local and private network/i);
+    }
+    // Neither third-party extractors nor direct fetch should receive the URL.
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

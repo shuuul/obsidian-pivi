@@ -1,9 +1,31 @@
-import { supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
+import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
+import {
+  getMcpServerUrl,
+  type ManagedMcpServer,
+  supportsMcpOAuth,
+} from '@pivi/pivi-agent-core/mcp/types';
+import { grantPrivateOrigins } from '@pivi/pivi-agent-core/network';
 import type { SettingsComplexPorts } from '@pivi/pivi-react/ports';
 
 import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
 
 type SettingsMcpPort = SettingsComplexPorts['mcp'];
+
+/** Re-grant MCP private origins from the freshly saved server set. */
+function regrantMcpPrivateOrigins(servers: readonly ManagedMcpServer[]): void {
+  try {
+    const grants = getActivePiviNetworkClients().grants;
+    grants.revokeByPurpose('mcp');
+    grantPrivateOrigins(
+      grants,
+      servers.map((server) => getMcpServerUrl(server.config)),
+      'mcp',
+    );
+  } catch {
+    // Network clients may not be installed during early teardown; the startup
+    // grant pass in createPiWorkspaceServices covers the steady state.
+  }
+}
 
 /** Warm MCP tool lists and slash caches after config changes without blocking settings UI. */
 function warmMcpCaches(host: PiviSettingsHost, workspace: PiviPluginWorkspace): void {
@@ -41,6 +63,7 @@ export function createMcpSettingsPort(
     listTools: serverName => Promise.resolve(workspace.mcpToolProvider.getCachedTools(serverName)),
     async save(servers) {
       await workspace.mcpStorage.save([...servers]);
+      regrantMcpPrivateOrigins(servers);
       await reloadMcpAcrossViews(host, workspace);
     },
     async connect(server) {

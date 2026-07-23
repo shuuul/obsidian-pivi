@@ -4,6 +4,7 @@ import {
   EgressDeniedError,
   EgressPolicyError,
   filterRedirectHeaders,
+  grantPrivateOrigins,
   OriginGrantRegistry,
   prepareRedirect,
   resolveEgressPolicy,
@@ -29,6 +30,44 @@ describe('egressPolicy', () => {
       ...policy,
       purpose: 'provider',
     }, grants)).not.toThrow();
+  });
+
+  it('grantPrivateOrigins grants only private origins and revokeByPurpose is scoped', () => {
+    const grants = new OriginGrantRegistry();
+    grantPrivateOrigins(
+      grants,
+      ['http://127.0.0.1:11434', 'https://api.example.com', 'http://localhost:3000', 'not-a-url'],
+      'provider',
+    );
+    const providerPolicy = { ...policy, purpose: 'provider' as const };
+
+    // Private/loopback configured origins are granted for the provider purpose.
+    expect(() => assertDestinationAllowed(
+      new URL('http://127.0.0.1:11434/'), ['127.0.0.1'], providerPolicy, grants,
+    )).not.toThrow();
+    expect(() => assertDestinationAllowed(
+      new URL('http://localhost:3000/'), ['127.0.0.1'], providerPolicy, grants,
+    )).not.toThrow();
+
+    // Public-looking domains are NOT pre-granted; a private resolution is denied.
+    expect(() => assertDestinationAllowed(
+      new URL('https://api.example.com/'), ['10.0.0.1'], providerPolicy, grants,
+    )).toThrow(EgressDeniedError);
+
+    // The grant is purpose-scoped: MCP egress to the same origin is still denied.
+    expect(() => assertDestinationAllowed(
+      new URL('http://127.0.0.1:11434/'), ['127.0.0.1'], { ...policy, purpose: 'mcp' }, grants,
+    )).toThrow(EgressDeniedError);
+
+    // Revoking the provider purpose removes its grants without affecting others.
+    grants.grant(new URL('http://192.168.0.5/'), 60_000, 'mcp');
+    grants.revokeByPurpose('provider');
+    expect(() => assertDestinationAllowed(
+      new URL('http://127.0.0.1:11434/'), ['127.0.0.1'], providerPolicy, grants,
+    )).toThrow(EgressDeniedError);
+    expect(() => assertDestinationAllowed(
+      new URL('http://192.168.0.5/'), ['192.168.0.5'], { ...policy, purpose: 'mcp' }, grants,
+    )).not.toThrow();
   });
 
   it('pins connected addresses against the approved resolution set', () => {
