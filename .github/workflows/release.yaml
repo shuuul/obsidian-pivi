@@ -23,11 +23,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Publication depends on the same mandatory gates as CI for this exact tag commit.
-      - name: Quality gates
-        uses: ./.github/actions/quality-gates
-
-      - name: Verify release artifacts
+      - name: Resolve release metadata
         run: |
           tag="${GITHUB_REF_NAME}"
 
@@ -37,21 +33,9 @@ jobs:
             exit 1
           fi
 
-          for file in main.js manifest.json styles.css; do
-            if [ ! -f "$file" ]; then
-              echo "Missing release artifact: $file"
-              exit 1
-            fi
-          done
-
-          manifest_version="$(node -p "require('./manifest.json').version")"
           package_version="$(node -p "require('./package.json').version")"
           if [[ "$tag" == v* ]]; then
-            echo "Obsidian plugin releases must not use a leading 'v' tag. Use '${manifest_version}', not '$tag'."
-            exit 1
-          fi
-          if [ "$manifest_version" != "$tag" ]; then
-            echo "manifest.json version ($manifest_version) does not match tag ($tag)"
+            echo "Obsidian plugin releases must not use a leading 'v' tag. Use '${package_version}', not '$tag'."
             exit 1
           fi
           if [ "$package_version" != "$tag" ]; then
@@ -59,7 +43,43 @@ jobs:
             exit 1
           fi
 
+          if node -e "process.exit(require('semver').prerelease('$package_version') ? 0 : 1)"; then
+            echo "IS_PRERELEASE=true" >> "$GITHUB_ENV"
+          else
+            echo "IS_PRERELEASE=false" >> "$GITHUB_ENV"
+          fi
+
           echo "RELEASE_TAG_RESOLVED=${tag}" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION_RESOLVED=${package_version}" >> "$GITHUB_ENV"
+
+      # Publication depends on the same mandatory gates as CI for this exact tag commit.
+      - name: Quality gates
+        uses: ./.github/actions/quality-gates
+
+      - name: Prepare release manifest
+        run: |
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            node scripts/write-release-manifest.js
+          else
+            manifest_version="$(node -p "require('./manifest.json').version")"
+            if [ "$manifest_version" != "$RELEASE_TAG_RESOLVED" ]; then
+              echo "manifest.json version ($manifest_version) does not match tag ($RELEASE_TAG_RESOLVED)"
+              exit 1
+            fi
+          fi
+
+          release_manifest_version="$(node -p "require('./manifest.json').version")"
+          if [ "$release_manifest_version" != "$RELEASE_TAG_RESOLVED" ]; then
+            echo "Release manifest version ($release_manifest_version) does not match tag ($RELEASE_TAG_RESOLVED)"
+            exit 1
+          fi
+
+          for file in main.js manifest.json styles.css; do
+            if [ ! -f "$file" ]; then
+              echo "Missing release artifact: $file"
+              exit 1
+            fi
+          done
 
       - name: Prepare release notes
         run: |
@@ -71,8 +91,12 @@ jobs:
           ' CHANGELOG.md > "$notes_file"
 
           if ! grep -q '[^[:space:]]' "$notes_file"; then
-            echo "CHANGELOG.md has no non-empty section for $RELEASE_TAG_RESOLVED."
-            exit 1
+            if [ "$IS_PRERELEASE" = "true" ]; then
+              printf 'Pivi Obsidian plugin v%s\n' "$RELEASE_TAG_RESOLVED" > "$notes_file"
+            else
+              echo "CHANGELOG.md has no non-empty section for $RELEASE_TAG_RESOLVED."
+              exit 1
+            fi
           fi
 
           echo "RELEASE_NOTES_FILE=${notes_file}" >> "$GITHUB_ENV"
@@ -81,10 +105,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          prerelease_flag=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            prerelease_flag="--prerelease"
+          fi
+
           if gh release view "$RELEASE_TAG_RESOLVED" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG_RESOLVED" \
               --title "$RELEASE_TAG_RESOLVED" \
-              --notes-file "$RELEASE_NOTES_FILE"
+              --notes-file "$RELEASE_NOTES_FILE" \
+              $prerelease_flag
             gh release upload "$RELEASE_TAG_RESOLVED" \
               main.js manifest.json styles.css \
               --clobber
@@ -92,6 +122,7 @@ jobs:
             gh release create "$RELEASE_TAG_RESOLVED" \
               --title="$RELEASE_TAG_RESOLVED" \
               --notes-file "$RELEASE_NOTES_FILE" \
+              $prerelease_flag \
               main.js manifest.json styles.css
           fi
 

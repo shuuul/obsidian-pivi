@@ -49,10 +49,14 @@ describe('release provenance workflow', () => {
     expect(workflow).not.toContain('gh attestation verify');
   });
 
-  it('requires complete changelog notes and leaves publication to the tag workflow', () => {
+  it('requires complete changelog notes for stable releases and supports prerelease fallbacks', () => {
     expect(workflow).toContain(
       'CHANGELOG.md has no non-empty section for $RELEASE_TAG_RESOLVED.',
     );
+    expect(workflow).toContain('Pivi Obsidian plugin v%s');
+    expect(workflow).toContain('IS_PRERELEASE=true');
+    expect(workflow).toContain('--prerelease');
+    expect(workflow).toContain('node scripts/write-release-manifest.js');
     expect(workflow).not.toContain('See CHANGELOG.md for details.');
     expect(releasePleaseWorkflow).toContain('skip-github-release: true');
     expect(releasePleaseWorkflow).not.toContain('gh workflow run release.yaml');

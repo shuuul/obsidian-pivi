@@ -13,7 +13,9 @@ flowchart LR
   Analyze["analyze-bundle.mjs"] -- "writes" --> Meta["metafile.json"]
   BundleSize["check-bundle-size.mjs"] -- "checks" --> Bundle["main.js<br/>5 MB hard ceiling"]
   Jest["run-jest.js"] -- "sets localStorage file" --> Tests["Jest unit project (includes integration)<br/>+ pivi-react project"]
-  Version["sync-version.js"] -- "updates" --> Manifest["manifest.json + versions.json + README badge"]
+  Version["sync-version.js"] -- "stable only" --> Manifest["manifest.json + versions.json + README badge"]
+  BetaVersion["prepare-beta-release.js"] -- "package.json only" --> NextBranch["next / beta branch"]
+  ReleaseManifest["write-release-manifest.js"] -- "prerelease tags" --> ReleaseAsset["published manifest.json"]
   Fixtures["generate-perf-sessions.mjs"] --> Sessions["Vault .pivi/sessions<br/>deterministic perf fixtures"]
   Provenance["generate-pivi-070-session-fixture.mjs"] --> Frozen["Frozen tag-generated<br/>0.7.0 JSONL"]
   AppendBench["benchmark-session-append.mjs"] --> Sessions
@@ -27,7 +29,10 @@ flowchart LR
 - `analyze-bundle.mjs` — Uses the shared `build/create-build-options.mjs` configuration and generates the pre-postprocess esbuild `metafile.json` without writing a separate bundle.
 - `check-bundle-size.mjs` — Checks a built root `main.js` against the 5 MB hard ceiling and emits a warning when it grows more than 10% over the recorded soft baseline. Run after `npm run build` via `npm run check:bundle-size`.
 - `run-jest.js` — Required Jest wrapper; supplies the Node `--localstorage-file` backing file expected by tests.
-- `sync-version.js` — Syncs `package.json` version into `manifest.json`, `versions.json`, and the root README version badge.
+- `sync-version.js` — Syncs **stable** `package.json` versions into `manifest.json`, `versions.json`, and the root README version badge. Skips those files for semver prerelease versions so the community-plugin channel stays on the last stable release.
+- `versionMetadata.js` — Shared stable/prerelease version helpers used by the sync and release scripts.
+- `prepare-beta-release.js` — Bumps `package.json` on `next` or `beta`, prints commit/tag commands, and never mutates root `manifest.json`. Entry point for `npm run version:beta`.
+- `write-release-manifest.js` — Writes a release asset `manifest.json` from the stable root template plus `package.json.version`. Used by `release.yaml` for prerelease tags.
 - `postinstall.mjs` — Creates `.env.local` from example outside CI when missing.
 - `generate-perf-sessions.mjs` — Writes four deterministic, Pi-compatible JSONL sessions (1K messages, 5K messages, one 100KB Markdown response, and 20 completed subagents) under a supplied vault's `.pivi/sessions/`. It only overwrites its fixed `perf-00*-*.jsonl` fixture names. Run with `node scripts/generate-perf-sessions.mjs <vault>`.
 - `generate-pivi-070-session-fixture.mjs` — Reproduces the frozen Pivi 0.7.0 session fixture from immutable tag commit `f27ca3be149ecf4497f8d2e6ab8a236d14308c59`. It verifies the tag and exact Pi 0.80.6 lock and installed versions, runs the tag's real `PiSessionStore` writer in a disposable worktree with fixed time/random inputs, rejects machine paths, verifies SHA-256, and writes only the requested output file. Run with `node scripts/generate-pivi-070-session-fixture.mjs <output-jsonl>` from a disposable checkout whose installed Pi dependencies match the tag lock; the normal current install may intentionally fail this provenance guard.
@@ -46,7 +51,7 @@ flowchart LR
 
 - Do not bypass `run-jest.js` for normal test runs; direct Jest may use different localStorage behavior.
 - `build-css.mjs` intentionally fails if a CSS file under `packages/pivi-react/styles/` is not listed in its manifest.
-- Release workflows upload only `main.js`, `manifest.json`, and `styles.css`.
+- Release workflows upload only `main.js`, `manifest.json`, and `styles.css`. Prerelease tags may keep a stable root `manifest.json` in git while the uploaded manifest matches the tag.
 - Production and analysis share the build plugins under `build/`. Pi source imports public session exports from the package root, while the build narrows that entrypoint away from the upstream CLI/TUI graph; nested shrinkwrap packages resolve from the project root only when a root copy exists, and package-import aliases (`#...`) stay with their owning package. Keep `buildCompatibility.test.ts` and a production build green when changing this boundary.
 - `build/release-artifact-version.mjs` supplies the package-version banner for both `main.js` and `styles.css`. Keep both release assets version-distinct so a digest cannot inherit ambiguous attestations from an earlier tag.
 - Keep architecture/readme/spec checks single-purpose and dependency-light; they are run both directly and from Jest smoke or fixture tests.

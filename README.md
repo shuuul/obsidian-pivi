@@ -175,6 +175,19 @@ Optional integration with the official Obsidian CLI powers history, tasks, daily
 
 Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/pivi).
 
+### Beta testing
+
+Pre-release builds ship as GitHub **Pre-releases** and install through [BRAT](https://tfthacker.com/BRAT) (Beta Reviewer's Auto-update Tool), not the community plugin directory. Beta builds may be unstable.
+
+1. Install and enable **BRAT** from Community Plugins.
+2. Open the command palette and run **BRAT: Add a beta plugin for testing**.
+3. Enter `shuuul/obsidian-pivi`.
+4. Enable **Pivi** in **Settings → Community plugins**.
+
+To update a beta install, run **BRAT: Check for updates to beta plugins and UPDATE**. For the stable release channel, remove Pivi from BRAT tracking and install from Community Plugins instead.
+
+Maintainers: see [Beta / pre-release route](docs/10-roadmap-release-and-maintenance.md#beta--pre-release-route) in the developer handbook.
+
 On first launch with no vault skills installed, Pivi asks before installing [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `.pivi/skills/`. You can skip the prompt and install skills later from settings.
 
 ---

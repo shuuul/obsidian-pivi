@@ -71,6 +71,35 @@ While Pivi is pre-1.0, `fix` normally produces a patch and `feat` a minor releas
 The Git tag and GitHub Release tag must equal `manifest.json.version` exactly and must not have a leading `v`.
 Release Please runs with `skip-github-release: true`; publication stays separate so the release is built directly from a real `push` event at `refs/tags/x.y.z`.
 
+## Beta / pre-release route
+
+Beta builds ship as GitHub **Pre-releases** and install through [BRAT](https://tfthacker.com/BRAT). The root `manifest.json` on `main` stays on the last **stable** community-plugin version while testers consume the release assets directly.
+
+### Invariants
+
+1. Tag, GitHub Release name, and the **published** `manifest.json` asset must all match (for example `0.17.0-beta.1`).
+2. Root `manifest.json`, `versions.json`, and the README version badge on `main` stay on the stable channel until a Release Please stable release lands.
+3. `package.json.version` on the `next` (or `beta`) branch is the beta build/tag authority.
+4. Beta tags use the same `.github/workflows/release.yaml` path, run the full quality gates, publish a GitHub Pre-release, and fall back to a short release note when no matching `CHANGELOG.md` section exists.
+
+### Maintainer workflow
+
+1. Keep day-to-day feature work on `main`.
+2. Create or update a long-lived `next` branch from `main` when a beta cycle starts.
+3. Merge the beta candidate commits into `next`.
+4. On `next`, run `npm run version:beta` (or `node scripts/prepare-beta-release.js`). The script bumps **only** `package.json`, leaves root `manifest.json` unchanged, and prints the commit/tag commands.
+5. Commit, annotate the tag (`git tag -a 0.17.0-beta.0 -m "0.17.0-beta.0"`), and push both the branch and the tag.
+6. Confirm the GitHub Release is marked **Pre-release** and that BRAT can install it.
+7. When the beta line is ready for everyone, merge `next` into `main`, let Release Please prepare the stable release PR, and publish the stable tag from `main` as usual.
+
+Optional: pass `--base 0.17.0` to `prepare-beta-release.js` when the first beta should target a specific stable line instead of the default `preminor` bump from `.release-please-manifest.json`.
+
+### Tester graduation
+
+Users who install through BRAT will not automatically move from `0.17.0-beta.N` to the stable `0.17.0` release through Obsidian's built-in updater. After the stable release ships, they should use BRAT's update command or remove BRAT tracking and reinstall from Community Plugins. Obsidian's updater resumes only after a later stable version is higher than the installed beta according to Obsidian's numeric version rules.
+
+See [README.md](../README.md) for end-user BRAT install steps.
+
 ## Manual hotfix route
 
 Use this path only when explicitly requested:
