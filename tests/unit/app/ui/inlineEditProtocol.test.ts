@@ -31,28 +31,19 @@ describe('inlineEditProtocol', () => {
     expect(parseInlineEditTurnResponse('   \n\t  ')).toEqual({ kind: 'empty' });
   });
 
-  it('discards wrapping text outside closed tags', () => {
-    expect(
-      parseInlineEditTurnResponse('Here is the edit:\n<replacement>Fixed text</replacement>'),
-    ).toEqual({
-      kind: 'replacement',
-      text: 'Fixed text',
+  it('treats a tagged edit with wrapping explanation as a reply', () => {
+    const response = 'Here is the edit:\n<replacement>Fixed text</replacement>';
+    expect(parseInlineEditTurnResponse(response)).toEqual({
+      kind: 'reply',
+      text: response,
     });
   });
 
-  it('prefers the first closed tag when both appear', () => {
-    expect(
-      parseInlineEditTurnResponse('<insertion>first</insertion><replacement>second</replacement>'),
-    ).toEqual({
-      kind: 'insertion',
-      text: 'first',
-    });
-
-    expect(
-      parseInlineEditTurnResponse('<replacement>first</replacement><insertion>second</insertion>'),
-    ).toEqual({
-      kind: 'replacement',
-      text: 'first',
+  it('treats multiple edit envelopes as a reply', () => {
+    const response = '<insertion>first</insertion><replacement>second</replacement>';
+    expect(parseInlineEditTurnResponse(response)).toEqual({
+      kind: 'reply',
+      text: 'firstsecond',
     });
   });
 
@@ -64,13 +55,30 @@ describe('inlineEditProtocol', () => {
     expect(
       parseInlineEditTurnResponse('I started: <insertion>partial content</insertion> and stopped'),
     ).toEqual({
-      kind: 'insertion',
-      text: 'partial content',
+      kind: 'reply',
+      text: 'I started: <insertion>partial content</insertion> and stopped',
     });
   });
 
   it('preserves fenced code blocks in reply text', () => {
     const response = '```ts\nconst answer = 1;\n```';
+    expect(parseInlineEditTurnResponse(response)).toEqual({
+      kind: 'reply',
+      text: response,
+    });
+  });
+
+  it('does not interpret protocol tags quoted by a plain-text explanation as an edit', () => {
+    const response = [
+      '这段话是在说明输出格式规则：',
+      '',
+      '- 要替换文字时返回：',
+      '  ```text',
+      '  <replacement>新内容</replacement>',
+      '  ```',
+      '- 要插入文字时返回 `<insertion>新内容</insertion>`。',
+    ].join('\n');
+
     expect(parseInlineEditTurnResponse(response)).toEqual({
       kind: 'reply',
       text: response,
@@ -110,5 +118,10 @@ describe('stripInlineEditStreamingProtocolTags', () => {
 
   it('removes residual close tags from streamed text', () => {
     expect(stripInlineEditStreamingProtocolTags('<replacement>updated</replacement>')).toBe('updated');
+  });
+
+  it('preserves protocol tags quoted inside a streaming explanation', () => {
+    const response = 'To replace text, return `<replacement>updated</replacement>`.';
+    expect(stripInlineEditStreamingProtocolTags(response)).toBe(response);
   });
 });
