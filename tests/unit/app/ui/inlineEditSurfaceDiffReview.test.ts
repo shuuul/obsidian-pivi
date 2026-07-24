@@ -17,6 +17,8 @@ import { applyInlineEditAcceptance } from '@/app/ui/inlineEditHelpers';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
 const renderIcon = jest.fn();
+const pushScope = jest.fn();
+const popScope = jest.fn();
 
 jest.mock('@pivi/pivi-react/mount', () => ({
   mountInlineEditSurfaceChrome: jest.fn(() => ({
@@ -53,6 +55,9 @@ jest.mock('obsidian', () => ({
     render: jest.fn(async () => undefined),
   },
   Platform: { isMacOS: true },
+  Scope: class Scope {
+    register(): void {}
+  },
 }));
 
 jest.mock('@/app/ui/inlineEditHelpers', () => ({
@@ -86,6 +91,8 @@ function createSession(options: {
     {
       plugin: {
         app: {
+          scope: {},
+          keymap: { pushScope, popScope },
           workspace: {
             getActiveFile: () => null,
           },
