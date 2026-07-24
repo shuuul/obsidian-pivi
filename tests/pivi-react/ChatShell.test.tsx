@@ -204,10 +204,16 @@ describe('React ChatShell tabs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Active chat' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit title for Needs attention' }));
     const titleInput = screen.getByRole('textbox', { name: 'Tab title' });
+    expect(screen.queryByRole('button', { name: 'Edit title for Needs attention' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Archive Needs attention' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close Needs attention' })).not.toBeInTheDocument();
     titleInput.textContent = 'Renamed';
     fireEvent.input(titleInput);
     fireEvent.keyDown(titleInput, { key: 'Enter' });
     expect(mounted.tabActions.renameTab).toHaveBeenCalledWith('attention', 'Renamed');
+    expect(screen.getByRole('button', { name: 'Edit title for Needs attention' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Archive Needs attention' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close Needs attention' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Archive Needs attention' }));
     act(() => jest.advanceTimersByTime(200));
@@ -243,6 +249,27 @@ describe('React ChatShell tabs', () => {
     act(() => jest.advanceTimersByTime(200));
     expect(mounted.tabActions.archiveTab).toHaveBeenCalledTimes(1);
     expect(mounted.tabActions.archiveTab).toHaveBeenCalledWith('active');
+    await act(async () => mounted.mounted.dispose());
+  });
+
+  it('restores row actions when title editing ends by selecting another tab', async () => {
+    const mounted = await mountShell({ position: 'header' });
+    fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Active chat' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit title for Needs attention' }));
+    const titleInput = screen.getByRole<HTMLSpanElement>('textbox', { name: 'Tab title' });
+    titleInput.textContent = 'Renamed on blur';
+    fireEvent.input(titleInput);
+
+    const otherTab = screen.getByRole('menuitem', { name: 'Active chat' });
+    act(() => otherTab.focus());
+
+    expect(mounted.tabActions.renameTab).toHaveBeenCalledWith('attention', 'Renamed on blur');
+    expect(screen.getByRole('button', { name: 'Edit title for Needs attention' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Archive Needs attention' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close Needs attention' })).toBeInTheDocument();
+    fireEvent.click(otherTab);
+    expect(mounted.tabActions.switchTab).toHaveBeenCalledWith('active');
+
     await act(async () => mounted.mounted.dispose());
   });
 
@@ -439,6 +466,154 @@ describe('React ChatShell tabs', () => {
         'archive-1',
         'archive-3',
       ]);
+
+      await act(async () => mounted.mounted.dispose());
+    },
+  );
+
+  it.each([
+    ['header', 'archive'],
+    ['header', 'close'],
+    ['input', 'archive'],
+    ['input', 'close'],
+  ] as const)(
+    'updates an open tab through %s %s without refreshing the switcher',
+    async (position, action) => {
+      jest.useFakeTimers();
+      const mounted = await mountShell({ position });
+      const openItems = Array.from({ length: 12 }, (_, index) => ({
+        id: `open-${index + 1}`,
+        index: index + 1,
+        title: `Open ${index + 1}`,
+        isActive: index === 9,
+        isStreaming: false,
+        needsAttention: false,
+        isArchived: false,
+        canClose: true,
+      }));
+      const archivedItems = Array.from({ length: 3 }, (_, index) => ({
+        id: `archive-${index + 1}`,
+        index: openItems.length + index + 1,
+        title: `Archive ${index + 1}`,
+        isActive: false,
+        isStreaming: false,
+        needsAttention: false,
+        isArchived: true,
+        canClose: true,
+      }));
+      const items = [...openItems, ...archivedItems];
+      act(() => mounted.store.update({ ...snapshot(position), items }));
+      mounted.tabActions.archiveTab.mockImplementation((id) => {
+        const updated = items.map(item => item.id === id ? { ...item, isArchived: true } : item);
+        mounted.store.update({
+          ...snapshot(position),
+          items: [...updated.filter(item => !item.isArchived), ...updated.filter(item => item.isArchived)],
+        });
+      });
+      mounted.tabActions.closeTab.mockImplementation((id) => {
+        mounted.store.update({
+          ...snapshot(position),
+          items: items.filter(item => item.id !== id),
+        });
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Open 10' }));
+      const menu = screen.getByRole('menu');
+      fireEvent.wheel(menu, { deltaY: 80 });
+      expect(menu).toHaveClass('is-archived-revealed');
+      menu.scrollTop = 91;
+
+      const target = screen.getByRole('menuitem', { name: 'Open 11' });
+      target.focus();
+      fireEvent.click(screen.getByRole('button', {
+        name: action === 'archive' ? 'Archive Open 11' : 'Close Open 11',
+      }));
+      act(() => jest.advanceTimersByTime(200));
+
+      const stableMenu = screen.getByRole('menu');
+      expect(stableMenu).toBe(menu);
+      expect(stableMenu).toHaveClass('is-archived-revealed');
+      expect(stableMenu.scrollTop).toBe(91);
+      expect(screen.getByRole('menuitem', { name: 'Open 12' })).toHaveFocus();
+      const updatedTarget = screen.queryByRole('menuitem', { name: 'Open 11' });
+      expect(updatedTarget === null).toBe(action === 'close');
+      expect(updatedTarget?.classList.contains('is-archived') ?? false).toBe(action === 'archive');
+
+      await act(async () => mounted.mounted.dispose());
+    },
+  );
+
+  it.each([
+    ['header', 'archive'],
+    ['header', 'close'],
+    ['input', 'archive'],
+    ['input', 'close'],
+  ] as const)(
+    'updates the currently active tab through %s %s without refreshing the switcher',
+    async (position, action) => {
+      jest.useFakeTimers();
+      const mounted = await mountShell({ position });
+      let items = Array.from({ length: 12 }, (_, index) => ({
+        id: `open-${index + 1}`,
+        index: index + 1,
+        title: `Open ${index + 1}`,
+        isActive: index === 9,
+        isStreaming: false,
+        needsAttention: false,
+        isArchived: false,
+        canClose: true,
+      }));
+      const archivedItems = Array.from({ length: 3 }, (_, index) => ({
+        id: `archive-${index + 1}`,
+        index: items.length + index + 1,
+        title: `Archive ${index + 1}`,
+        isActive: false,
+        isStreaming: false,
+        needsAttention: false,
+        isArchived: true,
+        canClose: true,
+      }));
+      items = [...items, ...archivedItems];
+      const publish = (): void => mounted.store.update({ ...snapshot(position), items });
+      act(publish);
+      mounted.tabActions.switchTab.mockImplementation((id) => {
+        items = items.map(item => ({ ...item, isActive: item.id === id }));
+        publish();
+      });
+      mounted.tabActions.archiveTab.mockImplementation((id) => {
+        items = items.map(item => item.id === id ? { ...item, isArchived: true } : item);
+        items = [...items.filter(item => !item.isArchived), ...items.filter(item => item.isArchived)];
+        publish();
+      });
+      mounted.tabActions.closeTab.mockImplementation((id) => {
+        items = items.filter(item => item.id !== id);
+        publish();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Open 10' }));
+      const menu = screen.getByRole('menu');
+      fireEvent.wheel(menu, { deltaY: 80 });
+      expect(menu).toHaveClass('is-archived-revealed');
+      menu.scrollTop = 91;
+
+      fireEvent.click(screen.getByRole('button', {
+        name: action === 'archive' ? 'Archive Open 10' : 'Close Open 10',
+      }));
+
+      expect(mounted.tabActions.switchTab).toHaveBeenCalledWith('open-9');
+      expect(screen.getByRole('menu')).toBe(menu);
+      expect(menu).toHaveClass('is-archived-revealed');
+      expect(menu.scrollTop).toBe(91);
+      act(() => jest.advanceTimersByTime(200));
+
+      const stableMenu = screen.getByRole('menu');
+      expect(stableMenu).toBe(menu);
+      expect(stableMenu).toHaveClass('is-archived-revealed');
+      expect(stableMenu.scrollTop).toBe(91);
+      expect(screen.getByRole('button', { name: 'Switch tab: Open 9' })).toHaveAttribute('aria-expanded', 'true');
+      const updatedTarget = screen.queryByRole('menuitem', { name: 'Open 10' });
+      expect(updatedTarget === null).toBe(action === 'close');
+      expect(updatedTarget?.classList.contains('is-archived') ?? false).toBe(action === 'archive');
 
       await act(async () => mounted.mounted.dispose());
     },

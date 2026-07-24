@@ -315,7 +315,7 @@
       var(--pivi-host-background-primary) 38%,
       var(--pivi-host-background-primary) 100%
     );
-  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out);
+  transition: opacity 60ms var(--pivi-ease-out);
 }
 
 .pivi-tab-switcher-item:focus-within::after {
@@ -449,11 +449,6 @@
 .pivi-tab-switcher-item:focus-within .pivi-tab-switcher-close {
   pointer-events: auto;
   visibility: visible;
-}
-
-.pivi-tab-switcher-item.is-editing .pivi-tab-switcher-action {
-  pointer-events: none;
-  visibility: hidden;
 }
 
 @media (hover: hover) and (pointer: fine) {

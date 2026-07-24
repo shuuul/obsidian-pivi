@@ -341,37 +341,41 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
             )
             : item.title}
         </span>
-        <TabAction
-          className="pivi-tab-switcher-action pivi-tab-switcher-edit-title"
-          icon="pencil"
-          label={t('chat.tabs.editTitle', { title: item.title })}
-          onActivate={() => {
-            if (!exiting) setEditingTabId(item.id);
-          }}
-        />
-        <TabAction
-          className="pivi-tab-switcher-action pivi-tab-switcher-archive"
-          icon={previewArchived ? 'archive-restore' : 'archive'}
-          label={t(previewArchived ? 'chat.tabs.restoreTab' : 'chat.tabs.archiveTab', {
-            title: item.title,
-          })}
-          onActivate={() => {
-            if (previewArchived) {
-              void shell.actions.switchTab(item.id);
-            } else {
-              beginExit(item, 'archive');
-            }
-          }}
-        />
-        {item.canClose
-          ? (
+        {!editing
+          ? <>
             <TabAction
-              className="pivi-tab-switcher-action pivi-tab-switcher-close"
-              icon="x"
-              label={t('chat.tabs.closeTab', { title: item.title })}
-              onActivate={() => beginExit(item, 'close')}
+              className="pivi-tab-switcher-action pivi-tab-switcher-edit-title"
+              icon="pencil"
+              label={t('chat.tabs.editTitle', { title: item.title })}
+              onActivate={() => {
+                if (!exiting) setEditingTabId(item.id);
+              }}
             />
-          )
+            <TabAction
+              className="pivi-tab-switcher-action pivi-tab-switcher-archive"
+              icon={previewArchived ? 'archive-restore' : 'archive'}
+              label={t(previewArchived ? 'chat.tabs.restoreTab' : 'chat.tabs.archiveTab', {
+                title: item.title,
+              })}
+              onActivate={() => {
+                if (previewArchived) {
+                  void shell.actions.switchTab(item.id);
+                } else {
+                  beginExit(item, 'archive');
+                }
+              }}
+            />
+            {item.canClose
+              ? (
+                <TabAction
+                  className="pivi-tab-switcher-action pivi-tab-switcher-close"
+                  icon="x"
+                  label={t('chat.tabs.closeTab', { title: item.title })}
+                  onActivate={() => beginExit(item, 'close')}
+                />
+              )
+              : null}
+          </>
           : null}
       </div>
     );
