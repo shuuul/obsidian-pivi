@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.16.0](https://github.com/shuuul/obsidian-pivi/compare/0.15.1...0.16.0) (2026-07-24)
+
+
+### Features
+
+* **auth:** upgrade pi to 0.82.0 and add OpenRouter/Kimi OAuth ([94b0697](https://github.com/shuuul/obsidian-pivi/commit/94b0697af645835666da548b05624c0fd98b0ade))
+* **ui:** harden accessibility, overlays, and settings confirmations ([0881251](https://github.com/shuuul/obsidian-pivi/commit/0881251d3c556be2e30bcc058709c1d2e063d551))
+
+
+### Bug Fixes
+
+* **chat:** align selector selected typography ([bbe597a](https://github.com/shuuul/obsidian-pivi/commit/bbe597af7717f2b499004a5ba95876e2ba844905))
+* **chat:** keep tab switcher stable during tab actions ([5748341](https://github.com/shuuul/obsidian-pivi/commit/574834196b8b5b68dd42297fbc0678de6dd0575e))
+* **settings:** align provider picker styling ([1fd98bb](https://github.com/shuuul/obsidian-pivi/commit/1fd98bb05d89a53ca015dc333a623a44e236aa37))
+* **skills:** restore bundled CLI updates ([6671b4d](https://github.com/shuuul/obsidian-pivi/commit/6671b4d0dbe10c25b8a40dc060aa68ba92df107a))
+* **toolbar:** list registered editor commands ([78f2753](https://github.com/shuuul/obsidian-pivi/commit/78f275360b63755d366f4afbac1361af8c87f718))
+* **ui:** close review gaps in overlay focus, tooltip, and confirmation lifecycle ([15c802a](https://github.com/shuuul/obsidian-pivi/commit/15c802aef9b4795e6cc6f834032d013b27244876))
+* **ui:** make Pivi icon inherit theme color ([5b7e94c](https://github.com/shuuul/obsidian-pivi/commit/5b7e94c997117b1a02a5e322962d93dfb397bf3e))
+* **ui:** sync Pivi icon across surfaces ([f5c57f4](https://github.com/shuuul/obsidian-pivi/commit/f5c57f41a517c3d06e41fcb6da05990ba24725ce))
+
 ## [0.15.1](https://github.com/shuuul/obsidian-pivi/compare/0.15.0...0.15.1) (2026-07-23)
 
 
