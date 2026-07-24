@@ -47,6 +47,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 List exact commands, fixtures, manual scenarios, and acceptance evidence. Keep performance and correctness claims tied to reproducible conditions. Include `npm run check:specs` before closeout.
 
+Any workstream that changes rendered CSS (sizing, hit boxes, hover/focus emphasis, spacing, color, layout, motion) must list a "Human visual sign-off" verification item naming the exact surfaces and states to inspect in the reloaded UI (for example hover/focus on specific icon buttons, across light and dark themes). The coordinating agent must not check this item itself; only a human who has seen the rendered UI can mark it done. Add a visual-side-effect note to the Decisions table for any accessibility or sizing change, since textbook rules (for example 32/44px target sizing) can produce visible regressions (oversized emphasis blocks) that automated gates and code review do not catch.
+
 ## Documentation sync
 
 - Numbered developer docs: `docs/NN-*.md` or `None` with rationale.

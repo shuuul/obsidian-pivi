@@ -329,6 +329,8 @@ npm run build && obsidian plugin:reload id=pivi
 
 Requires `.env.local` with `OBSIDIAN_VAULT` (see manual integration testing below). Optional sanity check: `obsidian dev:errors` (expect `No errors captured.`).
 
+For changes that affect **rendered CSS** (sizing, hit boxes, hover/focus emphasis, spacing, color, layout, motion), do not commit or push until the user has visually confirmed the result in the reloaded UI. The agent cannot see the rendered UI and must not self-attest visual QA (see Coding Standards #11); innocuous CSS such as an accessibility `min-width: 32px` hit box can produce visible regressions that automated gates and code review do not catch.
+
 **Obsidian plugin folder layout:** Deploy only `main.js`, `manifest.json`, and `styles.css`. Obsidian may also create `data.json` at runtime. Do not copy CLI entrypoints, `node_modules`, or other pi-coding-agent artifacts into `.obsidian/plugins/pivi/` — the esbuild `copy-to-obsidian` plugin prunes stale files on each build.
 
 ---
@@ -405,6 +407,7 @@ Keep this section durable. Do not record point-in-time test counts, coverage per
 - **Chat performance:** keep deterministic Jest invariants and the real-Obsidian measurement protocol aligned with `docs/11-chat-ui-evolution.md`; do not publish timing, memory, or bundle claims without a fresh measurement.
 - **Release evidence:** keep migration provenance and environment-dependent live verification in `docs/10-roadmap-release-and-maintenance.md`, not in this operational guide.
 - **CSS and UI copy:** `build-css.mjs` enforces zero `!important` across build inputs; Obsidian sentence-case lint and `scripts/check-i18n-dead-keys.mjs` must remain green.
+- **Rendered-CSS visual sign-off:** any change to rendered CSS requires human visual confirmation in the reloaded UI before commit; an agent must not self-attest visual QA (see Coding Standards #11). Automated gates do not catch visual regressions such as an oversized emphasis block on an enlarged icon hit box.
 - **Service boundary:** preserve the narrow injected `PiChatService`; never import `PiChatRuntime` from `src/ui/**`.
 
 ---
@@ -427,6 +430,7 @@ Keep this section durable. Do not record point-in-time test counts, coverage per
    - Packages other than `@pivi/pivi-react` receive translated strings when host/package code surfaces Notices or labels; they must not import app translator state.
    - Intentional exceptions: technical identifiers (tool ids, model/provider ids), brand names used as identifiers, and raw user content.
    - Details and catalog workflow: `packages/pivi-react/src/i18n/AGENTS.md`.
+11. **Rendered-CSS changes need human visual sign-off**: CSS changes that affect what is rendered (sizing, hit boxes, hover/focus emphasis, spacing, color, layout, motion) must not be committed or pushed on automated-gates-green alone. The agent must `npm run build` and reload the plugin, then hand the affected surface back to the user for visual confirmation in the live UI before committing. The agent must never self-attest visual QA, mark a visual verification item done, or claim a rendering change "looks right" or "is verified" on its own, because an agent cannot see the rendered UI. Innocuous-looking CSS (for example a textbook accessibility `min-width: 32px` hit box) can produce visible regressions (an oversized hover/outline block around a small icon) that automated tests and code review do not catch; only eyes on the UI catch them. When enlarging a control's hit box beyond its visible glyph, keep hover/focus emphasis scoped to the glyph, not the full hit box.
 
 ### File naming
 
