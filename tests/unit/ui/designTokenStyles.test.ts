@@ -7,6 +7,8 @@ describe('product design tokens', () => {
   const variables = readFileSync(join(stylesRoot, 'base/variables.css'), 'utf8');
   const accessibility = readFileSync(join(stylesRoot, 'accessibility.css'), 'utf8');
   const primitives = readFileSync(join(stylesRoot, 'base/presentation-primitives.css'), 'utf8');
+  const input = readFileSync(join(stylesRoot, 'components/input.css'), 'utf8');
+  const thinkingContent = readFileSync(join(stylesRoot, 'components/thinking.css'), 'utf8');
   const modelSelector = readFileSync(join(stylesRoot, 'toolbar/model-selector.css'), 'utf8');
   const thinkingSelector = readFileSync(join(stylesRoot, 'toolbar/thinking-selector.css'), 'utf8');
   const inlineEdit = readFileSync(join(stylesRoot, 'features/inline-edit-surface.css'), 'utf8');
@@ -74,6 +76,17 @@ describe('product design tokens', () => {
     expect(thinkingSelector).toMatch(/\.pivi-thinking-gear\.selected\s*\{[^}]*background:\s*transparent;/s);
     expect(modelSelector).toMatch(/\.pivi-model-option:hover\s*\{[^}]*background:\s*var\(--pivi-host-background-hover\);/s);
     expect(thinkingSelector).toMatch(/\.pivi-thinking-gear:hover\s*\{[^}]*background:\s*var\(--pivi-host-background-hover\);/s);
+  });
+
+  it('keeps selected model and thinking typography consistent with their menu options', () => {
+    expect(modelSelector).toMatch(/\.pivi-model-btn\s*\{[^}]*font-family:\s*var\(--pivi-host-font-interface, inherit\);[^}]*font-size:\s*var\(--pivi-text-sm\);/s);
+    expect(modelSelector).toMatch(/\.pivi-model-dropdown \.pivi-model-option\s*\{[^}]*font-family:\s*var\(--pivi-host-font-interface, inherit\);[^}]*font-size:\s*var\(--pivi-text-sm\);/s);
+    expect(thinkingSelector).toMatch(/\.pivi-thinking-current\s*\{[^}]*font-family:\s*var\(--pivi-host-font-interface, inherit\);[^}]*font-size:\s*var\(--pivi-text-xs\);/s);
+    expect(thinkingSelector).toMatch(/\.pivi-thinking-options \.pivi-thinking-gear\s*\{[^}]*font-family:\s*var\(--pivi-host-font-interface, inherit\);[^}]*font-size:\s*var\(--pivi-text-xs\);/s);
+    expect(input).toMatch(/\.pivi-container \.pivi-input-toolbar > \.pivi-model-selector > \.pivi-model-btn,\s*\.pivi-container \.pivi-input-toolbar \.pivi-thinking-current\s*\{[^}]*font-family:\s*var\(--pivi-host-font-interface, inherit\);/s);
+    expect(inlineEdit).toMatch(/\.pivi-inline-edit-surface \.pivi-thinking-current\s*\{[^}]*font-size:\s*var\(--pivi-text-xs\);/s);
+    expect(thinkingContent).toMatch(/\.pivi-thinking-header \.pivi-thinking-label\s*\{/);
+    expect(thinkingContent).not.toMatch(/(^|\})\s*\.pivi-thinking-label\s*\{/);
   });
 
   it('uses the Sidebar output scale and text boundary for inline diff Markdown', () => {

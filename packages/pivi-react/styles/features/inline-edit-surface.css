@@ -272,7 +272,7 @@
   border-radius: var(--pivi-radius-xs);
   background: transparent;
   color: var(--pivi-host-text-muted);
-  font-family: inherit;
+  font-family: var(--pivi-host-font-interface, inherit);
   font-size: 12px;
   font-weight: 500;
   line-height: 1;
@@ -281,6 +281,10 @@
   appearance: none;
   box-shadow: none;
   transition: background-color var(--pivi-duration-fast) ease;
+}
+
+.pivi-inline-edit-surface .pivi-thinking-current {
+  font-size: var(--pivi-text-xs);
 }
 
 .pivi-inline-edit-surface .pivi-model-btn .pivi-model-provider-icon,

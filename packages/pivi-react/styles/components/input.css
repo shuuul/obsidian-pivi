@@ -172,6 +172,11 @@
   font-family: inherit;
 }
 
+.pivi-container .pivi-input-toolbar > .pivi-model-selector > .pivi-model-btn,
+.pivi-container .pivi-input-toolbar .pivi-thinking-current {
+  font-family: var(--pivi-host-font-interface, inherit);
+}
+
 .pivi-container .pivi-input-toolbar > .pivi-model-selector > .pivi-model-btn {
   padding: 4px 8px;
 }

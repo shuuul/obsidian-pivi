@@ -41,7 +41,7 @@
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
-  font-family: inherit;
+  font-family: var(--pivi-host-font-interface, inherit);
   font-size: var(--pivi-text-xs);
   line-height: 1.2;
   color: var(--pivi-host-text-accent);
@@ -100,6 +100,7 @@
 
 .pivi-thinking-options .pivi-thinking-gear {
   padding: 3px 8px;
+  font-family: var(--pivi-host-font-interface, inherit);
   font-size: var(--pivi-text-xs);
   color: var(--pivi-host-text-muted);
   cursor: pointer;
