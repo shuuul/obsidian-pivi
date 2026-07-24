@@ -36,7 +36,7 @@
 
 ## Package map
 
-- `package.json` exports the barrel and explicit leaf subpaths (`authContextHost`, `bootstrap/*`, `bundledFetch`, `cli/*`, `createPiviNetworkClients`, `electronCompat`, `externalFileApi`, `nodeFetch`, `obsidianHttpClient`, `openExternalUrl`, `path`, `providerLegacyAuthStore`, `scopedHttpClient`, `settings/piviSettingsStorage`, `storage/sharedStorageService`, `systemProcessRunner`). Add new intentional host APIs to `src/index.ts` and the matching export entry.
+- `package.json` exports the barrel and explicit leaf subpaths (`authContextHost`, `bootstrap/hostContext`, `bootstrap/storage`, `bootstrap/types`, `bundledFetch`, `cli/obsidianCliTransport`, `cli/officialObsidianCli`, `createPiviNetworkClients`, `electronCompat`, `externalFileApi`, `nodeFetch`, `obsidianHttpClient`, `openExternalUrl`, `path`, `providerLegacyAuthStore`, `scopedHttpClient`, `settings/piviSettingsStorage`, `storage/sharedStorageService`, `systemProcessRunner`). Add new intentional host APIs to `src/index.ts` and the matching export entry.
 - There is no package-local build step; source is consumed by the root build.
 - There is no package-local typecheck script. Verify host changes with the root typecheck and targeted tests for affected tools/runtime/UI.
 

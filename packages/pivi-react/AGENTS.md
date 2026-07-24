@@ -17,6 +17,20 @@ It also owns UI internationalization under `src/i18n/` and ordered CSS sources u
 - Define narrow Settings presentation ports. Runtime/application `ChatPorts` remain in core; never accept a raw plugin object or recreate the broad `PiviPluginHost` contract.
 - App adapters under `src/app/ui` are the only concrete port implementations and the only product layer that may call `mountChatView` / `mountSettings` / `mountSelectionToolbarSurface`.
 
+## Package exports
+
+| Subpath | Consumers | Contents |
+|---------|-----------|----------|
+| `.` | app composition | i18n, platform, settings, store re-exports, chat message views |
+| `./mount` | `src/app/ui` only | `mountChatView`, `mountSettings`, `mountSelectionToolbarSurface`, `ActiveChatUiBridge`, `getSettingsSearchAliases` |
+| `./ports` | `src/app/ui` only | `SettingsPorts` and focused settings-port contracts |
+| `./settings` | package-internal / tests | `SettingsRoot`, `SettingsUiStore`, snapshot types |
+| `./selectionToolbar` | app selection-toolbar wiring | selection toolbar surface |
+| `./store` | `src/ui` + app | `ChatUiStore`, `ChatProjectionStore`, activity presentation, perf recorder |
+| `./context-badges` | `src/ui` | context-badge view model, labels, icon helpers |
+
+Public presentation seams used by `src/ui` remain exactly `store` and `context-badges` (see Ownership rules).
+
 ## Ownership rules
 
 - React is the sole DOM owner inside each mounted package root. `ImperativeChatAdapter` receives one empty portal container and exclusively owns only that container's children (tab runtime scaffolds + uncontrolled composer adapters). Product chrome inside portal slots is React-owned via `createPortal`.

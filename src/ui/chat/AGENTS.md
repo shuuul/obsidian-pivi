@@ -58,8 +58,8 @@ flowchart TD
 | Directory | Responsibility | Local guidance |
 |---|---|---|
 | `src/ui/chat/tabs/` | Per-tab construction, activation, archive/close/reorder behavior, persisted restoration, session opening, lazy runtime creation, fork/redo, portal slot scaffolding, and wiring of controllers/context. Cross-boundary reorder changes archive membership and preserves an open active fallback. | — |
-| `src/ui/chat/controllers/` | Stateful coordinators for input, session projection, stream dispatch, selections, keyboard navigation, provider boundaries, title generation, and welcome quote background. | — |
-| `src/ui/chat/composer/` | Provider-neutral turn request construction, outgoing-turn setup/finalization, FIFO turn queueing/restoration, inline prompts, response duration, and pure ordered-Markdown-list continuation edits. | — |
+| `src/ui/chat/controllers/` | Stateful coordinators for input, session projection, stream dispatch, selections, keyboard navigation, provider boundaries, input queue restore, context-row visibility, title generation, and welcome quote background. | — |
+| `src/ui/chat/composer/` | Provider-neutral turn request construction, outgoing-turn setup/finalization, FIFO turn queueing/restoration, inline prompts, capability approval prompts and tab bridging, response duration, and pure ordered-Markdown-list continuation edits. | — |
 | `src/ui/chat/stream/` | Chunk-to-state projection for text, thinking, tools, usage, todos, subagents, scrolling, and vault-change notifications. No message DOM; React consumes chrome state from `ChatUiStore` and message entities from `ChatProjectionStore`. | — |
 | `src/ui/chat/rendering/` | Imperative adapter slots for Obsidian Markdown, rich tool bodies, diffs, ask-user prompts, write/edit blocks, and stored nested subagents inside React message shells. | `src/ui/chat/rendering/AGENTS.md` |
 | `src/ui/chat/toolbar/` | DOM-free external-context runtime model plus toolbar callback types; React owns presentation. MCP availability is settings-owned (no composer toolbar picker). | — |

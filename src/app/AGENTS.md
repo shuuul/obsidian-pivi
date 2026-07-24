@@ -55,6 +55,8 @@ flowchart LR
 |------|------|
 | `hostContracts.ts` | Semantic `PiviChatViewHandle`, structural view, runtime/composition Chat hosts, Settings/Plugin host surfaces |
 | `hostPlatform.ts` | Path, vault notify, CLI flags, service-contract re-exports for UI |
+| `i18n.ts` | App-owned shared translator (`appI18n`, `t`) consumed by imperative adapters and injected into React roots |
+| `viewAccess.ts` | Type-guarded enumeration of open Pivi chat views over workspace leaves |
 | `pluginSessionApi.ts` | Session CRUD / purge; cross-view resets and protected bindings use semantic view maintenance |
 | `pluginSettingsLoad.ts` | Settings load, keychain migration, skills seed |
 | `noteToolbarIntegration.ts` | Public-adapter Note Toolbar installation gate, enable fallback, per-command icon-only CLI setup, official item-API synchronization, and keyed setup queue |
@@ -69,6 +71,8 @@ flowchart LR
 | `deviceLocalEnvironmentStore.ts` | Vault-scoped device-local structured environment registry (`pivi.environment.v1`) |
 | `settings/deviceLocalProviderMigration.ts` | Startup cutover coordinator: legacy synced provider fields → local state + secrets → strip |
 | `settings/deviceLocalEnvironmentMigration.ts` | Startup cutover coordinator: legacy synced environment text → structured local registry + secrets/canonical credentials → strip |
+| `settings/customProviderHeaderMigration.ts` | Moves custom-provider headers into `SecretStorage` references; fails loudly via `CustomProviderHeaderMigrationError` |
+| `settings/legacyProviderSnapshot.ts` | Rebuilds legacy provider membership snapshots into normalized custom-provider and web-search state |
 | `settings/environmentVariables.ts` | Steady-state environment port helpers: structured entry apply/import and secret staging |
 | `settings/piviSettingsCodec.ts` | Steady-state overlay/extract/strip for external roots, provider state, and environment fields |
 | `ui/obsidianPresentationPlatform.ts` | Obsidian implementation of localized host terminology plus the product React icon/tooltip seam |

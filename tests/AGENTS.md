@@ -61,7 +61,11 @@ npm run test -- -t "prefetches enabled remote servers but leaves stdio lazy"
 - `unit/architecture/` — dependency boundary and architecture guard tests.
 - `unit/engine/` — host-neutral engine/runtime tests.
 - `unit/features/` — feature UI/service tests such as chat tab lifecycle and fork flows.
+- `unit/foundation/` — device-local provider/environment state and config-value source contract tests.
+- `unit/host/` — Obsidian host adapter tests: scoped HTTP client, process runner, vault mutation paths, and `window.fetch` identity.
 - `unit/main/` — plugin lifecycle tests.
+- `unit/network/` — host-neutral egress, IP classification, and URL policy tests.
+- `unit/obsidian-tools/` — concrete tool helper tests: bash allowlist, capability approval gate, and login shell.
 - `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests. Session cloud recovery fault-matrix fixtures live under `unit/pi/session/`.
 - `unit/pivi-agent-core/` — aggregate package host/runtime contract tests.
 - `unit/scripts/` — build compatibility, CSS manifest, Jest project-discovery, and repository spec-validation tests.

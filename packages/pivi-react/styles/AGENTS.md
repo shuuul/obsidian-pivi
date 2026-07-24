@@ -11,7 +11,7 @@
 ## Build flow
 
 - `manifest.mjs` is the authoritative module inventory and cascade order.
-- `scripts/build-css.mjs` prepends `packages/obsidian-host/styles/pivi-theme.css`, then resolves the 39 manifest paths within this directory, concatenates modules in declaration order, and writes root `styles.css`.
+- `scripts/build-css.mjs` prepends `packages/obsidian-host/styles/pivi-theme.css`, then resolves the 40 manifest paths within this directory, concatenates modules in declaration order, and writes root `styles.css`.
 - Development output retains module headers and formatting. Production output removes ordinary comments and whitespace while preserving the Style Settings `/* @settings ... */` metadata block.
 - Manifest entries must resolve to `.css` files inside this directory.
 - Every CSS file below this directory must be listed. Missing entries, missing files, invalid paths, or an empty manifest fail the build.
