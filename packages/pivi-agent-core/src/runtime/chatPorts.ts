@@ -11,6 +11,7 @@ import type {
 import type { CustomProviderConfig } from '../foundation/customProviders';
 import type { KeyboardNavigationSettings } from '../foundation/settings';
 import type { ManagedMcpServer } from '../mcp/types';
+import type { CapabilityApprovalPort } from '../ports/capabilityApproval';
 import type { SessionMessagePage } from '../session';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
@@ -18,7 +19,9 @@ import type { AuxQueryRunner } from './auxQueryRunner';
 import type { PiChatService } from './piChatService';
 
 export interface ChatRuntimePort {
-  createChatService(): PiChatService;
+  createChatService(options?: {
+    capabilityApproval?: CapabilityApprovalPort | null;
+  }): PiChatService;
   createAuxQueryRunner(): AuxQueryRunner;
 }
 
@@ -114,6 +117,8 @@ export interface ChatSettingsPort {
   getSettingsSnapshot(): ChatSettingsSnapshot;
   commitSettingsSnapshot(snapshot: ChatSettingsSnapshot): Promise<void>;
   setPinnedExternalReadDirectories(paths: string[]): Promise<void>;
+  appendBashAllowlistEntry?(command: string): Promise<void>;
+  appendExternalReadDirectory?(directory: string): Promise<void>;
 }
 
 export interface ChatPorts {

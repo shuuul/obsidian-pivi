@@ -59,6 +59,21 @@
       "stopTitle": "停止",
       "sendEmptyTitle": "メッセージを入力"
     },
+    "capabilityApproval": {
+      "title": "権限が必要です",
+      "scopeQuestion": "どのくらいの期間許可しますか？",
+      "deny": "拒否",
+      "allowOnce": "今回のみ許可",
+      "allowSession": "このセッションで許可",
+      "allowAlways": "常に許可",
+      "allowAlwaysDescription": "設定に保存（次の手順で範囲を選択）",
+      "bashPersistTitle": "常に許可するコマンドは？",
+      "bashPersistQuestion": "設定の Bash 許可リストに次の形式で追加:",
+      "bashPersistFull": "このコマンドのみ",
+      "bashPersistFullDescription": "`{command}` のみ",
+      "bashPersistPrefix": "このプレフィックスのコマンド",
+      "bashPersistPrefixDescription": "`{prefix}` で始まるすべてのコマンド"
+    },
     "tabs": {
       "startNewChat": "新しいチャットを開始",
       "switchTab": "タブを切り替え: {title}",
@@ -521,7 +536,7 @@
       "heading": "Bash アクセス",
       "allowlist": {
         "name": "許可する bash コマンド",
-        "desc": "ツール切替の Bash トグルでオン/オフします。許可リストは解決済み実行ファイルパスと任意の引数プレフィックス（例: git、npm run build）に一致します。ログインシェルは使いません。which、type、pwd は常に許可。シェル制御構文は拒否され、作業ディレクトリは保管庫内に限られます。",
+        "desc": "ツール切替の Bash トグルでオン/オフします。許可リストは完全一致または必要なプレフィックス（例: git、npm run build）に一致します。コマンドはログインシェル経由で実行されるため、ターミナルの PATH（pixi、Homebrew など）が使えます。which、type、pwd は常に許可。許可されたコマンド内ではパイプなどのシェル構文も可。作業ディレクトリは保管庫内に限られます。",
         "inputLabel": "許可する bash コマンドを追加",
         "removeAria": "許可する bash コマンド {value} を削除"
       }
@@ -940,7 +955,7 @@
       "generateImage": "画像を生成",
       "generateImageDesc": "Codex で画像を生成し、添付として保存し、必要に応じてノートへ埋め込みます。",
       "bash": "Bash",
-      "bashDesc": "Bash が有効なとき、許可された実行ファイルを引数ベクトルで実行します。ログインシェルは使わず、作業ディレクトリは保管庫内に限定されます。",
+      "bashDesc": "Bash が有効なとき、許可された単一行シェルコマンドをログインシェル経由で実行します。作業ディレクトリは保管庫内に限定されます。",
       "outline": "アウトライン",
       "command": "コマンド",
       "eval": "評価",

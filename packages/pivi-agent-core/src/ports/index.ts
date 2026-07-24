@@ -189,3 +189,12 @@ export interface RuntimeUiCallbacks {
   notify?(message: string): void;
   requestConfirmation?(request: { title: string; message: string }): Promise<boolean>;
 }
+
+export type {
+  BashAllowlistPersistScope,
+  CapabilityApprovalDecision,
+  CapabilityApprovalKind,
+  CapabilityApprovalPort,
+  CapabilityApprovalRequest,
+  CapabilityApprovalResult,
+} from './capabilityApproval';

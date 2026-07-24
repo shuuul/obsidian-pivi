@@ -1,7 +1,10 @@
+import type { CapabilityApprovalRequest, CapabilityApprovalResult } from '@pivi/pivi-agent-core/ports';
+
 import type { StreamController } from '../controllers/StreamController';
 import { type InlineAskQuestionConfig, InlineAskUserQuestion } from '../rendering/InlineAskUserQuestion';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { ChatState } from '../state/ChatState';
+import { showCapabilityApprovalPrompt } from './capabilityApprovalPrompt';
 
 function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
@@ -36,6 +39,18 @@ export class ComposerInlinePrompts {
       input,
       (inline) => { this.pendingAskInline = inline; },
       signal,
+    );
+  }
+
+  async handleCapabilityApproval(
+    request: CapabilityApprovalRequest,
+  ): Promise<CapabilityApprovalResult> {
+    return showCapabilityApprovalPrompt(
+      this.deps,
+      request,
+      (inline) => { this.pendingAskInline = inline; },
+      (el) => this.hideInputContainer(el),
+      (el) => this.restoreInputContainer(el),
     );
   }
 

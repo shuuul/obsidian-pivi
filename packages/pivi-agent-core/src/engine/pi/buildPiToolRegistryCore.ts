@@ -3,6 +3,7 @@ import type { AgentTool } from '@earendil-works/pi-agent-core';
 import { loadContextLayers } from '../../context/loadContextLayers';
 import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
 import type { PiMcpBridge } from '../../mcp';
+import type { CapabilityApprovalPort } from '../../ports/capabilityApproval';
 import {
   buildRegisteredToolsSection,
   type RegisteredToolSummary,
@@ -29,6 +30,7 @@ export interface PiBaseToolProviderOptions {
   vaultPath: string;
   externalContextPaths?: readonly string[];
   resolveReadMaxChars?: (requestedMaxChars?: number) => number;
+  capabilityApproval?: CapabilityApprovalPort | null;
 }
 
 export interface PiBaseToolProviderResult {
@@ -105,6 +107,7 @@ export function buildPiToolRegistry(options: {
   baseToolProvider: PiBaseToolProvider | null;
   subagentQueryRunner?: PiSubagentQueryRunner;
   resolveReadMaxChars?: (requestedMaxChars?: number) => number;
+  capabilityApproval?: CapabilityApprovalPort | null;
 }): PiToolRegistry {
   if (!options.baseToolProvider) {
     throw new Error('Pi tool registry requires a baseToolProvider.');
@@ -114,6 +117,7 @@ export function buildPiToolRegistry(options: {
     vaultPath: options.vaultPath,
     externalContextPaths: options.externalContextPaths,
     resolveReadMaxChars: options.resolveReadMaxChars,
+    capabilityApproval: options.capabilityApproval ?? null,
   });
   const subagentSettings = getSubagentRuntimeSettingsFromBag(options.host.settings);
 

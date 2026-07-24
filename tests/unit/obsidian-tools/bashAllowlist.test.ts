@@ -4,6 +4,7 @@ import * as path from 'node:path';
 
 import {
   matchBashAllowlist,
+  matchBashCommandAllowlist,
   parseBashAllowlistEntry,
   resolveExecutablePath,
   tokenizeArgv,
@@ -65,5 +66,18 @@ describe('bashAllowlist structured matching', () => {
   it('resolves absolute executables', () => {
     const realpath = (fs.realpathSync.native ?? fs.realpathSync) as (value: fs.PathLike) => string;
     expect(resolveExecutablePath(gitPath)).toBe(realpath(gitPath));
+  });
+});
+
+describe('matchBashCommandAllowlist', () => {
+  it('matches exact commands and argument prefixes', () => {
+    expect(matchBashCommandAllowlist('git status', ['git'])).toBe(true);
+    expect(matchBashCommandAllowlist('git', ['git'])).toBe(true);
+    expect(matchBashCommandAllowlist('npm run build --silent', ['npm run build'])).toBe(true);
+  });
+
+  it('rejects commands outside the allowlist prefix', () => {
+    expect(matchBashCommandAllowlist('npm install', ['npm run build'])).toBe(false);
+    expect(matchBashCommandAllowlist('npm run build:evil', ['npm run build'])).toBe(false);
   });
 });

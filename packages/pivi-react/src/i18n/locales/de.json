@@ -64,6 +64,21 @@
       "stopTitle": "Stoppen",
       "sendEmptyTitle": "Nachricht eingeben"
     },
+    "capabilityApproval": {
+      "title": "Berechtigung erforderlich",
+      "scopeQuestion": "Wie lange soll Pivi dies erlauben?",
+      "deny": "Ablehnen",
+      "allowOnce": "Einmal erlauben",
+      "allowSession": "Für diese Sitzung erlauben",
+      "allowAlways": "Immer erlauben",
+      "allowAlwaysDescription": "In Einstellungen speichern (Umfang im nächsten Schritt)",
+      "bashPersistTitle": "Welche Befehle dauerhaft erlauben?",
+      "bashPersistQuestion": "Zur Bash-Allowlist in den Einstellungen hinzufügen als:",
+      "bashPersistFull": "Nur dieser Befehl",
+      "bashPersistFullDescription": "Nur `{command}`",
+      "bashPersistPrefix": "Befehle mit diesem Präfix",
+      "bashPersistPrefixDescription": "Alle Befehle, die mit `{prefix}` beginnen"
+    },
     "tabs": {
       "startNewChat": "Neuen Chat starten",
       "switchTab": "Tab wechseln: {title}",
@@ -521,7 +536,7 @@
       "heading": "Bash-Zugriff",
       "allowlist": {
         "name": "Erlaubte Bash-Befehle",
-        "desc": "Bash-Werkzeug über den Schalter unter Werkzeugschalter ein- oder ausschalten. Allowlist-Einträge prüfen den aufgelösten Executable-Pfad plus optionales Argumentpräfix (z. B. git oder npm run build). Kein Login-Shell. which, type und pwd sind immer erlaubt. Shell-Steuerzeichen werden abgelehnt; das Arbeitsverzeichnis muss im Vault bleiben.",
+        "desc": "Bash-Werkzeug über den Schalter unter Werkzeugschalter ein- oder ausschalten. Allowlist-Einträge entsprechen einem exakten Befehl oder erforderlichen Präfix (z. B. git oder npm run build). Befehle laufen über deine Login-Shell, daher sind Terminal-PATH-Tools (z. B. pixi, Homebrew) verfügbar. which, type und pwd sind immer erlaubt. Shell-Syntax wie Pipes ist in erlaubten Befehlen erlaubt; das Arbeitsverzeichnis muss im Vault bleiben.",
         "inputLabel": "Erlaubten Bash-Befehl hinzufügen",
         "removeAria": "Erlaubten Bash-Befehl {value} entfernen"
       }
@@ -940,7 +955,7 @@
       "generateImage": "Bild erzeugen",
       "generateImageDesc": "Bilder mit Codex erzeugen, als Anhänge speichern und optional in Notizen einbetten.",
       "bash": "Bash",
-      "bashDesc": "Einen freigegebenen Befehl mit Argumentvektor ausführen, wenn Bash aktiv ist. Kein Login-Shell, Arbeitsverzeichnis bleibt im Vault.",
+      "bashDesc": "Einen erlaubten einzeiligen Shell-Befehl über die Login-Shell ausführen, wenn Bash aktiv ist. Das Arbeitsverzeichnis muss im Vault bleiben.",
       "outline": "Gliederung",
       "command": "Befehl",
       "eval": "Auswerten",

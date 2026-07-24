@@ -13,6 +13,7 @@ import type { McpOAuthService, McpServerManager } from '../../mcp';
 import { PiMcpBridge } from '../../mcp';
 import type { McpProcessEnv, McpTransportFetch } from '../../mcp/ports';
 import type { HttpClient, SyncSecretStore } from '../../ports';
+import type { CapabilityApprovalPort } from '../../ports/capabilityApproval';
 import {
   appendExternalContextAvailability,
   buildPiSystemPrompt,
@@ -122,6 +123,7 @@ export class PiChatRuntime implements PiChatService {
   private openSessionAgentState: Record<string, unknown> | undefined;
   private externalContextPaths: string[] = [];
   private readonly postLoadModelRefreshSuccesses = new Set<string>();
+  private capabilityApproval: CapabilityApprovalPort | null = null;
 
   constructor(
     private readonly plugin: PiRuntimeHost,
@@ -130,7 +132,9 @@ export class PiChatRuntime implements PiChatService {
     mcpOAuth: McpOAuthService | null = null,
     private readonly baseToolProvider: PiBaseToolProvider | null = null,
     private readonly subagentConcurrencyLimiter?: SubagentConcurrencyLimiter,
+    capabilityApproval: CapabilityApprovalPort | null = null,
   ) {
+    this.capabilityApproval = capabilityApproval;
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager
       ? new PiMcpBridge(
@@ -153,6 +157,10 @@ export class PiChatRuntime implements PiChatService {
 
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn {
     return prepareChatTurn(request, this.mcpManager);
+  }
+
+  setCapabilityApproval(port: CapabilityApprovalPort | null): void {
+    this.capabilityApproval = port;
   }
 
   getAuxiliaryModel(): string | null {
@@ -516,6 +524,7 @@ export class PiChatRuntime implements PiChatService {
         externalContextPaths: this.externalContextPaths,
         subagentQueryRunner: this.subagentRunner,
         resolveReadMaxChars,
+        capabilityApproval: this.capabilityApproval,
       });
     }
     return buildPiToolRegistry({
@@ -526,6 +535,7 @@ export class PiChatRuntime implements PiChatService {
       externalContextPaths: this.externalContextPaths,
       subagentQueryRunner: this.subagentRunner,
       resolveReadMaxChars,
+      capabilityApproval: this.capabilityApproval,
     });
   }
 
@@ -540,6 +550,7 @@ export class PiChatRuntime implements PiChatService {
       vaultPath,
       externalContextPaths: this.externalContextPaths,
       resolveReadMaxChars,
+      capabilityApproval: this.capabilityApproval,
     });
     const baseTools = providedBaseTools.toolSpecs
       .map(toPiAgentTool)

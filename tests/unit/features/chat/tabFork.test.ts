@@ -37,6 +37,7 @@ function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): Tab
     ui: {} as never,
     dom: { inputWrapper: { toggleClass: jest.fn() } } as never,
     renderer: null,
+    capabilityApproval: null,
     ...overrides,
   };
 }

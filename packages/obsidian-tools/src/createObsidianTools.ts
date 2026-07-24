@@ -7,6 +7,7 @@ import {
   systemProcessRunner,
 } from '@pivi/obsidian-host';
 import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
+import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
 import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
 import type { App } from 'obsidian';
 
@@ -47,6 +48,7 @@ export function createObsidianTools(
     externalReadDirectories?: readonly string[];
     obsidianCliAvailable?: boolean;
     resolveReadMaxChars?: ObsidianToolDeps['resolveReadMaxChars'];
+    capabilityApproval?: CapabilityApprovalPort | null;
   } = {},
 ): ToolSpec[] {
   const disabledTools = new Set(settings.disabledTools ?? []);
@@ -78,6 +80,7 @@ export function createObsidianTools(
     processRunner: systemProcessRunner,
     imageGenerator: options.imageGenerator,
     resolveReadMaxChars: options.resolveReadMaxChars,
+    capabilityApproval: options.capabilityApproval ?? null,
   };
 
   const tools: ToolSpec[] = [
@@ -106,7 +109,7 @@ export function createObsidianTools(
     tools.push(createGenerateImageTool(deps));
   }
 
-  if (settings.allowExternalRead && externalReadDirectories.length > 0) {
+  if (settings.allowExternalRead) {
     tools.push(createReadExternalTool(deps));
     tools.push(createListExternalTool(deps));
   }

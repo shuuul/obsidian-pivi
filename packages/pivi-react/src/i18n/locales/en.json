@@ -64,6 +64,21 @@
       "stopTitle": "Stop",
       "sendEmptyTitle": "Enter a message"
     },
+    "capabilityApproval": {
+      "title": "Permission required",
+      "scopeQuestion": "How long should Pivi allow this?",
+      "deny": "Deny",
+      "allowOnce": "Allow once",
+      "allowSession": "Allow for this session",
+      "allowAlways": "Always allow",
+      "allowAlwaysDescription": "Save to Settings (you will choose the scope next)",
+      "bashPersistTitle": "Always allow which commands?",
+      "bashPersistQuestion": "Add to the Bash allowlist in Settings as:",
+      "bashPersistFull": "This command only",
+      "bashPersistFullDescription": "Only `{command}`",
+      "bashPersistPrefix": "Commands with this prefix",
+      "bashPersistPrefixDescription": "All commands starting with `{prefix}`"
+    },
     "tabs": {
       "startNewChat": "Start new chat",
       "switchTab": "Switch tab: {title}",
@@ -521,7 +536,7 @@
       "heading": "Bash access",
       "allowlist": {
         "name": "Allowed bash commands",
-        "desc": "Turn the bash tool on or off with the bash toggle under tool toggles. Allowlist entries match a resolved executable path plus an optional required argument prefix (for example git, or npm run build). Commands run without a login shell. Basic lookup commands such as which, type, and pwd are always allowed. Shell control syntax is rejected, and the working directory must stay inside the vault.",
+        "desc": "Turn the bash tool on or off with the bash toggle under tool toggles. Allowlist entries match an exact command or a required prefix (for example git, or npm run build). Commands run through your login shell, so tools on your terminal PATH (such as pixi or Homebrew) are available. Basic lookup commands such as which, type, and pwd are always allowed. Shell syntax such as pipes is allowed inside an allowlisted command, and the working directory must stay inside the vault.",
         "inputLabel": "Add an allowed bash command",
         "removeAria": "Remove allowed bash command {value}"
       }
@@ -940,7 +955,7 @@
       "generateImage": "Generate image",
       "generateImageDesc": "Generate images with Codex, save them as attachments, and optionally insert embeds into notes.",
       "bash": "Bash",
-      "bashDesc": "Run one allowlisted executable with an argument vector when Bash is enabled. Commands do not use a login shell, and the working directory must stay inside the vault.",
+      "bashDesc": "Run one allowlisted single-line shell command through your login shell when Bash is enabled. The working directory must stay inside the vault.",
       "outline": "Outline",
       "command": "Command",
       "eval": "Eval",

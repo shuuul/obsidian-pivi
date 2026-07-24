@@ -53,6 +53,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [035-session-cloud-recovery.md](archive/035-session-cloud-recovery.md) | 2026-07-23 | Journal-backed recovery from session cloud replacement, rollback, interrupted persistence, and unload. |
 | [036-security-release-assurance.md](archive/036-security-release-assurance.md) | 2026-07-23 | Exact Pi pins/private adapter, focused platform/security CI and coverage, real-host smoke, shared release gates, SHA-pinned Actions, and SECURITY.md disclosure. |
 | [037-ui-ux-accessibility-and-overlay-hardening.md](archive/037-ui-ux-accessibility-and-overlay-hardening.md) | 2026-07-24 | Closed verified keyboard, focus, overlay, destructive-action, responsive, i18n, and host-theme gaps without changing Pivi's visual direction. |
+| [038-sidebar-capability-approvals.md](archive/038-sidebar-capability-approvals.md) | 2026-07-24 | Sidebar inline Deny / once / session / always confirmations for unlisted bash and external directory access. |
 
 ## Numbering and files
 

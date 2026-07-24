@@ -70,6 +70,7 @@ function createToolbarTab(state: ChatState): TabData {
       inputWrapper: document.createElement('div'),
     } as never,
     renderer: null,
+    capabilityApproval: null,
   };
 }
 

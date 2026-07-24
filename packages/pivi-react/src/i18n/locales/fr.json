@@ -59,6 +59,21 @@
       "stopTitle": "Arrêter",
       "sendEmptyTitle": "Saisissez un message"
     },
+    "capabilityApproval": {
+      "title": "Autorisation requise",
+      "scopeQuestion": "Pendant combien de temps Pivi doit-il autoriser ceci ?",
+      "deny": "Refuser",
+      "allowOnce": "Autoriser une fois",
+      "allowSession": "Autoriser pour cette session",
+      "allowAlways": "Toujours autoriser",
+      "allowAlwaysDescription": "Enregistrer dans les paramètres (choisissez la portée à l'étape suivante)",
+      "bashPersistTitle": "Quelles commandes autoriser en permanence ?",
+      "bashPersistQuestion": "Ajouter à la liste Bash des paramètres en tant que :",
+      "bashPersistFull": "Cette commande seulement",
+      "bashPersistFullDescription": "Uniquement `{command}`",
+      "bashPersistPrefix": "Commandes avec ce préfixe",
+      "bashPersistPrefixDescription": "Toutes les commandes commençant par `{prefix}`"
+    },
     "tabs": {
       "startNewChat": "Démarrer un nouveau chat",
       "switchTab": "Changer d’onglet : {title}",
@@ -521,7 +536,7 @@
       "heading": "Accès Bash",
       "allowlist": {
         "name": "Commandes bash autorisées",
-        "desc": "Activez ou désactivez Bash via le bascule des outils. Les entrées correspondent au chemin canonique de l’exécutable plus un préfixe d’arguments optionnel (par exemple git, ou npm run build). Pas de shell de connexion. which, type et pwd sont toujours autorisés. La syntaxe de contrôle du shell est refusée ; le répertoire de travail doit rester dans le coffre.",
+        "desc": "Activez ou désactivez Bash via le bascule des outils. Les entrées correspondent à une commande exacte ou à un préfixe requis (par exemple git, ou npm run build). Les commandes passent par votre shell de connexion, donc les outils du PATH du terminal (pixi, Homebrew, etc.) sont disponibles. which, type et pwd sont toujours autorisés. La syntaxe shell comme les pipes est autorisée dans une commande autorisée ; le répertoire de travail doit rester dans le coffre.",
         "inputLabel": "Ajouter une commande bash autorisée",
         "removeAria": "Supprimer la commande bash autorisée {value}"
       }
@@ -940,7 +955,7 @@
       "generateImage": "Générer une image",
       "generateImageDesc": "Générer des images avec Codex, les enregistrer en pièces jointes, et éventuellement les intégrer dans des notes.",
       "bash": "Bash",
-      "bashDesc": "Exécuter un exécutable autorisé avec un vecteur d’arguments lorsque Bash est activé. Pas de shell de connexion ; le répertoire de travail doit rester dans le coffre.",
+      "bashDesc": "Exécuter une commande shell d’une ligne autorisée via votre shell de connexion lorsque Bash est activé. Le répertoire de travail doit rester dans le coffre.",
       "outline": "Plan",
       "command": "Commande",
       "eval": "Évaluer",

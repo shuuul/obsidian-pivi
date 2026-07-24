@@ -1,7 +1,10 @@
+import { getObsidianToolsSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
 import type { SettingsSubagentsSnapshot } from '@pivi/pivi-react/settings';
 
-import type { PiviPluginWorkspace } from '@/app/hostContracts';
+import type { PiviChatCompositionHost, PiviPluginWorkspace } from '@/app/hostContracts';
+
+import { validateDirectoryPath } from './externalDirectory';
 
 /** Chat/settings ports take an explicit workspace; throw when composition has not wired one. */
 export function requireWorkspace(workspace: PiviPluginWorkspace | null): PiviPluginWorkspace {
@@ -34,5 +37,48 @@ export function normalizeMaxConcurrentSubagents(
       return value;
     default:
       return 2;
+  }
+}
+
+export async function appendBashAllowlistEntry(
+  host: PiviChatCompositionHost,
+  command: string,
+): Promise<void> {
+  const trimmed = command.trim();
+  if (!trimmed) {
+    return;
+  }
+  const current = getObsidianToolsSettingsFromBag(host.settings);
+  const bashAllowlist = [...new Set([...(current.bashAllowlist ?? []), trimmed])];
+  host.settings.agentSettings.obsidianTools = {
+    ...current,
+    bashAllowlist,
+  };
+  await host.saveSettings();
+  for (const view of host.getAllViews()) {
+    await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
+  }
+}
+
+export async function appendExternalReadDirectory(
+  host: PiviChatCompositionHost,
+  directory: string,
+): Promise<void> {
+  const validation = validateDirectoryPath(directory);
+  if (!validation.valid) {
+    throw new Error(validation.error ?? 'Invalid external directory.');
+  }
+  const current = getObsidianToolsSettingsFromBag(host.settings);
+  const externalReadDirectories = [
+    ...new Set([...(current.externalReadDirectories ?? []), directory]),
+  ];
+  host.settings.agentSettings.obsidianTools = {
+    ...current,
+    externalReadDirectories,
+  };
+  await host.saveSettings();
+  for (const view of host.getAllViews()) {
+    await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
+    view.getChatHandle()?.maintenance.syncExternalReadDirectories(externalReadDirectories);
   }
 }

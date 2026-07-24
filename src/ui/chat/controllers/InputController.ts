@@ -5,6 +5,7 @@ import type {
   ChatMessage,
   StreamChunk,
 } from '@pivi/pivi-agent-core/foundation';
+import type { CapabilityApprovalRequest, CapabilityApprovalResult } from '@pivi/pivi-agent-core/ports';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
 import type {
   ChatPorts,
@@ -172,6 +173,12 @@ export class InputController {
     signal?: AbortSignal,
   ): Promise<Record<string, string | string[]> | null> {
     return this.inlinePrompts.handleAskUserQuestion(input, signal);
+  }
+
+  async handleCapabilityApproval(
+    request: CapabilityApprovalRequest,
+  ): Promise<CapabilityApprovalResult> {
+    return this.inlinePrompts.handleCapabilityApproval(request);
   }
 
   dismissPendingInlinePrompts(): void {

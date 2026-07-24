@@ -59,6 +59,21 @@
       "stopTitle": "Parar",
       "sendEmptyTitle": "Digite uma mensagem para enviar"
     },
+    "capabilityApproval": {
+      "title": "Permissão necessária",
+      "scopeQuestion": "Por quanto tempo o Pivi deve permitir isto?",
+      "deny": "Negar",
+      "allowOnce": "Permitir uma vez",
+      "allowSession": "Permitir nesta sessão",
+      "allowAlways": "Sempre permitir",
+      "allowAlwaysDescription": "Guardar nas configurações (escolha o âmbito no passo seguinte)",
+      "bashPersistTitle": "Quais comandos permitir sempre?",
+      "bashPersistQuestion": "Adicionar à lista Bash nas configurações como:",
+      "bashPersistFull": "Apenas este comando",
+      "bashPersistFullDescription": "Apenas `{command}`",
+      "bashPersistPrefix": "Comandos com este prefixo",
+      "bashPersistPrefixDescription": "Todos os comandos que começam por `{prefix}`"
+    },
     "tabs": {
       "startNewChat": "Iniciar novo chat",
       "switchTab": "Alternar aba: {title}",
@@ -521,7 +536,7 @@
       "heading": "Acesso ao Bash",
       "allowlist": {
         "name": "Comandos bash permitidos",
-        "desc": "Ative ou desative o Bash no interruptor de ferramentas. As entradas correspondem ao caminho canônico do executável mais um prefixo opcional de argumentos (por exemplo git, ou npm run build). Sem shell de login. which, type e pwd são sempre permitidos. Sintaxe de controlo do shell é rejeitada; o diretório de trabalho deve permanecer no vault.",
+        "desc": "Ative ou desative o Bash no interruptor de ferramentas. As entradas correspondem a um comando exato ou prefixo obrigatório (por exemplo git, ou npm run build). Os comandos executam pelo seu shell de login, portanto ferramentas no PATH do terminal (como pixi ou Homebrew) ficam disponíveis. which, type e pwd são sempre permitidos. Sintaxe de shell como pipes é permitida em comandos autorizados; o diretório de trabalho deve permanecer no vault.",
         "inputLabel": "Adicionar um comando bash permitido",
         "removeAria": "Remover o comando bash permitido {value}"
       }
@@ -940,7 +955,7 @@
       "generateImage": "Generar imagen",
       "generateImageDesc": "Generar imágenes com Codex, guardarlas como adjuntos e insertar incrustaciones en notas de forma opcional.",
       "bash": "Bash",
-      "bashDesc": "Executar um executável permitido com vetor de argumentos quando o Bash está ativo. Sem shell de login; o diretório de trabalho deve permanecer no vault.",
+      "bashDesc": "Executar um comando shell de uma linha permitido pelo shell de login quando o Bash está ativo. O diretório de trabalho deve permanecer no vault.",
       "outline": "Esboço",
       "command": "Comando",
       "eval": "Evaluar",

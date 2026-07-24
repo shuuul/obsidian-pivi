@@ -36,6 +36,7 @@ function makeTab(titleGenerationService: TabData['services']['titleGenerationSer
     ui: {} as never,
     dom: {} as never,
     renderer: null,
+    capabilityApproval: null,
   };
 }
 

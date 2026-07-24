@@ -57,6 +57,7 @@ function makeTab(id: string, openSessionId: string | null = null): TabData {
     ui: { slashCommandDropdown: null } as never,
     dom: { eventCleanups: [] } as never,
     renderer: null,
+    capabilityApproval: null,
   };
 }
 

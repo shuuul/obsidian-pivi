@@ -55,16 +55,25 @@ export class ExternalFileApi {
   private readonly allowedDirectories: string[];
 
   constructor(allowedDirectories: readonly string[] = []) {
+    this.allowedDirectories = ExternalFileApi.normalizeAllowedDirectories(allowedDirectories);
+  }
+
+  static normalizeAllowedDirectories(allowedDirectories: readonly string[]): string[] {
     const seen = new Set<string>();
-    this.allowedDirectories = [];
+    const normalizedDirectories: string[] = [];
     for (const directory of allowedDirectories) {
       const normalized = normalizePathForFilesystem(directory);
       if (!normalized || !path.isAbsolute(normalized) || seen.has(normalized)) {
         continue;
       }
       seen.add(normalized);
-      this.allowedDirectories.push(normalized);
+      normalizedDirectories.push(normalized);
     }
+    return normalizedDirectories;
+  }
+
+  withAdditionalAllowedDirectories(extraDirectories: readonly string[]): ExternalFileApi {
+    return new ExternalFileApi([...this.allowedDirectories, ...extraDirectories]);
   }
 
   private normalizeAbsolutePath(absolutePath: string): string {
@@ -86,6 +95,17 @@ export class ExternalFileApi {
       return;
     }
     throw new Error(`External path is outside allowed directories: ${normalizedPath}`);
+  }
+
+  /** Returns whether the normalized absolute path is within configured allowed roots. */
+  isPathAllowed(absolutePath: string): boolean {
+    try {
+      const normalized = this.normalizeAbsolutePath(absolutePath);
+      this.assertAllowed(normalized);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**

@@ -6,6 +6,7 @@ import type {
   ObsidianVaultApi,
 } from '@pivi/obsidian-host';
 import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
+import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
 import type { ProcessRunner } from '@pivi/pivi-agent-core/ports';
 import type { App } from 'obsidian';
 
@@ -34,6 +35,7 @@ export interface ExternalFileApiLike {
   readFile(absolutePath: string): Promise<ExternalFileReadResult>;
   listPath(absolutePath: string): ExternalFileEntry[];
   stat(absolutePath: string): ExternalFileStat;
+  isPathAllowed?(absolutePath: string): boolean;
 }
 
 export interface ObsidianToolDeps {
@@ -48,4 +50,5 @@ export interface ObsidianToolDeps {
   processRunner: ProcessRunner;
   imageGenerator?: ObsidianImageGenerator;
   resolveReadMaxChars?: (requestedMaxChars?: number) => number;
+  capabilityApproval?: CapabilityApprovalPort | null;
 }

@@ -4,11 +4,11 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
+import { CAPABILITY_TOOL_NAMES, ensureExternalDirectoryAccess } from '../capabilityApprovalGate';
 import type { ObsidianToolDeps } from './deps';
 import { getStringField } from './readShared';
 
 export function createListExternalTool(deps: ObsidianToolDeps): ToolSpec {
-  const { externalFiles } = deps;
   return {
     name: TOOL_OBSIDIAN_LIST_EXTERNAL,
     label: 'List external folder',
@@ -27,6 +27,12 @@ export function createListExternalTool(deps: ObsidianToolDeps): ToolSpec {
       if (!absolutePath) {
         throw new Error('Invalid list external input: path must be an absolute string.');
       }
+      const externalFiles = await ensureExternalDirectoryAccess(
+        deps,
+        absolutePath,
+        true,
+        CAPABILITY_TOOL_NAMES.listExternal,
+      );
       const result = externalFiles.listPath(absolutePath);
       return textResult(JSON.stringify(result, null, 2), { count: result.length });
     },

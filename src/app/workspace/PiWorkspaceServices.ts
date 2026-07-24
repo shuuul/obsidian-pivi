@@ -262,7 +262,7 @@ function createObsidianBaseToolProvider(
   webSearchCredentialStore: WebSearchCredentialStore | null,
   network: PiviNetworkClients,
 ): PiBaseToolProvider {
-  return ({ externalContextPaths, resolveReadMaxChars }) => {
+  return ({ externalContextPaths, resolveReadMaxChars, capabilityApproval }) => {
     const settings = getObsidianToolsSettingsFromBag(host.settings);
     const externalContexts = (externalContextPaths ?? []).map((contextPath) => (
       settings.allowExternalRead
@@ -287,6 +287,7 @@ function createObsidianBaseToolProvider(
       externalReadDirectories: availableExternalPaths,
       obsidianCliAvailable,
       resolveReadMaxChars,
+      capabilityApproval: capabilityApproval ?? null,
     });
 
     const webSearchSettings = getWebSearchToolsSettingsFromBag(host.settings);

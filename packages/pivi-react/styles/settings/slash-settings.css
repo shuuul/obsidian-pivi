@@ -6,15 +6,6 @@
   font-style: italic;
 }
 
-.pivi-slash-item-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  background: var(--pivi-host-border);
-  border-radius: var(--pivi-radius-xs);
-  color: var(--pivi-host-text-muted);
-  text-transform: uppercase;
-}
-
 .pivi-command-icon-control {
   position: relative;
 }

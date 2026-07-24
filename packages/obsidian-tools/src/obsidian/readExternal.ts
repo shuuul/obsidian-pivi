@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
+import { CAPABILITY_TOOL_NAMES, ensureExternalDirectoryAccess } from '../capabilityApprovalGate';
 import type { ObsidianToolDeps } from './deps';
 import {
   buildStatsText,
@@ -36,7 +37,6 @@ function buildExternalByteStatsText(params: {
 }
 
 export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
-  const { externalFiles } = deps;
   return {
     name: TOOL_OBSIDIAN_READ_EXTERNAL,
     executionMode: 'sequential',
@@ -66,6 +66,12 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
       const maxChars = resolveEffectiveReadMaxChars(
         input,
         mode === 'stats' ? undefined : deps.resolveReadMaxChars,
+      );
+      const externalFiles = await ensureExternalDirectoryAccess(
+        deps,
+        absolutePath,
+        false,
+        CAPABILITY_TOOL_NAMES.readExternal,
       );
       const fileStat = externalFiles.stat(absolutePath);
       const isRangeRead = startLine !== undefined || endLine !== undefined;

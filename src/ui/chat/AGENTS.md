@@ -121,7 +121,7 @@ flowchart TD
 - `tab.id`, `openSessionId`, runtime session ID, JSONL header ID, `sessionFile`, and legacy `leafId` are distinct identifiers.
 - Persist tab binding with `sessionFile` plus draft UI state. Do not treat `openSessionId`, tab ID, runtime ID, or `leafId` as durable session identity.
 - Bound-session titles are durable JSONL session metadata. A restored tab resolves its title from the session store; do not copy titles into tab bindings or plugin data as a second source of truth.
-- Session switching must save current state, dismiss inline prompts, orphan/clear active subagents, reset queued/transient UI, sync the service, and re-publish stored messages into the React snapshot.
+- Session switching must save current state, dismiss inline prompts, clear capability session grants, orphan/clear active subagents, reset queued/transient UI, sync the service, and re-publish stored messages into the React snapshot.
 - Archiving hides a tab without destroying its runtime/session state. Closing destroys it. Do not collapse these behaviors.
 - Fork and redo operations require persisted user/assistant entry IDs. Preserve `userMessageId`, `assistantMessageId`, and `parentEntryId` through rendering and hydration.
 

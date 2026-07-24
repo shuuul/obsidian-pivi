@@ -52,7 +52,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '## Available Tools',
     '',
     'Use only the tools listed below. Do not invent tool names, unregistered capabilities, or shell commands.',
-    'If the request cannot be completed with the tools and Bash allowlist available for this turn, stop, explain what is missing, and ask the user to enable the needed Pivi tool or add the required Bash command in Settings → Tools before retrying.',
+    'If the request cannot be completed with the registered tools available for this turn, stop and explain what is missing. For Bash, prefer pre-approved allowlist commands; when the user explicitly asks you to run a specific shell command that is not allowlisted, you may call `obsidian_bash` and Pivi will ask the user to approve it in the sidebar.',
   ];
   const registeredObsidianTools = new Set(summary.obsidianTools);
   const obsidianCliAvailable = summary.obsidianCliAvailable;
@@ -219,18 +219,20 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
       : `\`${TOOL_OBSIDIAN_BASE}\` can list base files/views through the vault API; its query action is unavailable without Obsidian CLI.`);
   }
   if (shellTools.length > 0) {
-    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs one allowlisted single-line host command only; see the Bash allowlist above. Bash is the lowest-priority tool and is never a vault file tool: do not use it to read, search, list, or modify vault files. Use Obsidian-specific tools instead, and use sub-agents for multi-file vault work.`);
+    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs single-line commands through the user login shell; see the Bash allowlist above for pre-approved commands. Bash is the lowest-priority tool and is never a vault file tool: do not use it to read, search, list, or modify vault files. Use Obsidian-specific tools instead, and use sub-agents for multi-file vault work.`);
   }
   return notes.join(' ');
 }
 
 function buildBashAllowlistGuidance(allowlist: readonly string[]): string[] {
   return [
-    '**Bash allowlist (this turn):** `obsidian_bash` may run only these commands:',
+    '**Bash allowlist (this turn):** These commands are pre-approved for `obsidian_bash`:',
     ...allowlist.map((entry) => `- ${formatBashAllowlistEntry(entry)}`),
-    `All other shell commands are rejected by default. Shell control syntax such as pipes, redirects, \`;\`, \`&&\`, \`||\`, and command substitution is also rejected.`,
-    `Do not attempt commands outside this list. After any Bash validation rejection, do not call \`obsidian_bash\` again during the same turn with a different command or syntax.`,
-    `If a non-vault task truly needs another host command, stop and ask the user to add it in Settings → Tools → Bash allowlist. Missing Bash capability never justifies using shell commands for vault files.`,
+    `Commands not on this list are not pre-approved. Do not run them on your own initiative.`,
+    `When the user explicitly asks you to run a specific shell command that is not on this list, you may call \`obsidian_bash\` with that command; Pivi shows a sidebar prompt (Deny / once / session / always) before executing.`,
+    `Commands run through the user login shell, so pipes, redirects, and other shell syntax are allowed.`,
+    `After the user denies a command or Bash validation rejects it, do not call \`obsidian_bash\` again during the same turn with a different command.`,
+    `Missing Bash capability never justifies using shell commands for vault files.`,
   ];
 }
 
@@ -363,7 +365,7 @@ function describeObsidianTool(name: string, context: ObsidianToolPromptContext):
         ? 'List .base files, inspect configured views through the vault API, or query a base view through the Obsidian CLI'
         : 'List .base files and inspect configured views through the vault API; query is unavailable without Obsidian CLI';
     case TOOL_OBSIDIAN_BASH:
-      return 'Lowest-priority host diagnostic only: run one allowlisted single-line command from the Bash allowlist above when no registered tool can do the job; never use Bash to read, search, list, or modify vault files, use sub-agents for multi-file vault work, and do not retry Bash after a validation rejection; shell control syntax is rejected';
+      return 'Lowest-priority host diagnostic only: run a single-line shell command through the user login shell when no registered tool can do the job; prefer pre-approved allowlist commands, but when the user explicitly requests a specific command you may call this tool even if it is not allowlisted (Pivi asks the user in the sidebar first); never use Bash to read, search, list, or modify vault files; use sub-agents for multi-file vault work; do not retry Bash after the user denies or validation rejects it';
     case TOOL_OBSIDIAN_COMMAND:
       return context.obsidianCliAvailable
         ? 'Execute an Obsidian palette command by id through the Obsidian CLI'
@@ -434,7 +436,7 @@ function describeObsidianToolParameters(name: string, context: ObsidianToolPromp
         ? '`action` required list|views|query, `file?` base name or `path?` .base vault path required for views/query, `view?` query view name, `format?` json|csv|tsv|md|paths for query.'
         : '`action` required list|views (do not use query without CLI), `file?` base name or `path?` .base vault path required for views; `view?` and `format?` are query-only and unavailable without CLI.';
     case TOOL_OBSIDIAN_BASH:
-      return '`command` required allowlisted single-line shell command, `cwd?` optional working directory.';
+      return '`command` required single-line shell command (pre-approved allowlist entry, or user-explicit command pending sidebar approval), `cwd?` optional working directory.';
     case TOOL_OBSIDIAN_COMMAND:
       return '`id` required Obsidian command id.';
     case TOOL_OBSIDIAN_EVAL:

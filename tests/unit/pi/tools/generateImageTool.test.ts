@@ -123,7 +123,10 @@ describe('createGenerateImageTool', () => {
       ...baseSettings,
       allowExternalRead: true,
       externalReadDirectories: [],
-    }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+    }).map((tool) => tool.name)).toEqual(expect.arrayContaining([
+      'obsidian_read_external',
+      'obsidian_list_external',
+    ]));
     expect(createObsidianTools(app as never, {
       ...baseSettings,
       allowExternalRead: true,
@@ -296,7 +299,7 @@ describe('createBashTool', () => {
       .toContain('obsidian_bash');
   });
 
-  it('runs allowlisted executables without a login shell', async () => {
+  it('runs allowlisted commands through the user login shell', async () => {
     const processRunner = {
       run: jest.fn(async () => ({
         termination: 'exit',
@@ -310,8 +313,7 @@ describe('createBashTool', () => {
     };
     const tool = createBashTool(makeDeps(processRunner));
 
-    expect(tool.description).toContain('Never use Bash to read, search, list, or modify vault files');
-    expect(tool.description).toContain('without a login shell');
+    expect(tool.description).toContain('login shell');
     await expect(tool.execute('call-1', { command: 'git status' }))
       .resolves.toEqual(expect.objectContaining({ content: [expect.objectContaining({ text: expect.stringContaining('ok') })] }));
     await expect(tool.execute('call-2', { command: 'npm run build' }))
@@ -320,8 +322,8 @@ describe('createBashTool', () => {
       .rejects.toThrow('not in allowlist');
 
     expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
-      executable: expect.stringContaining(`${binDir}${path.sep}git`),
-      args: ['status'],
+      executable: expect.any(String),
+      args: ['-lc', 'git status'],
       cwdPolicy: { mode: 'vault', vaultRoot: vaultDir },
       timeoutMs: 12_000,
       shell: { mode: 'forbidden' },
@@ -365,8 +367,7 @@ describe('createBashTool', () => {
     await expect(tool.execute('call-1', { command: 'type ntn' })).resolves.toBeDefined();
 
     expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
-      executable: expect.stringContaining(`${binDir}${path.sep}type`),
-      args: ['ntn'],
+      args: ['-lc', 'type ntn'],
       shell: { mode: 'forbidden' },
     }));
   });
@@ -388,12 +389,23 @@ describe('createBashTool', () => {
     expect(processRunner.run).not.toHaveBeenCalled();
   });
 
-  it('rejects shell control syntax before invoking the process runner', async () => {
-    const processRunner = { run: jest.fn() };
+  it('allows shell control syntax inside allowlisted commands', async () => {
+    const processRunner = {
+      run: jest.fn(async () => ({
+        termination: 'exit',
+        exitCode: 0,
+        signal: null,
+        stdout: 'ok\n',
+        stderr: '',
+        stdoutTruncated: false,
+        stderrTruncated: false,
+      })),
+    };
     const tool = createBashTool(makeDeps(processRunner, ['git', 'pwd']));
 
-    await expect(tool.execute('call-1', { command: 'pwd ; ls' })).rejects.toThrow('shell control syntax');
-    await expect(tool.execute('call-2', { command: 'git status && echo pwned' })).rejects.toThrow('shell control syntax');
-    expect(processRunner.run).not.toHaveBeenCalled();
+    await expect(tool.execute('call-1', { command: 'pwd | wc -l' })).resolves.toBeDefined();
+    expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
+      args: ['-lc', 'pwd | wc -l'],
+    }));
   });
 });

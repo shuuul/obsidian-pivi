@@ -32,11 +32,3 @@
   margin: 0.75em 0;
 }
 
-/* Fallback when image file not found */
-.pivi-embedded-image-fallback {
-  color: var(--pivi-host-text-muted);
-  font-style: italic;
-  background: var(--pivi-host-background-hover);
-  padding: 0.1em 0.4em;
-  border-radius: var(--pivi-host-radius-small);
-}

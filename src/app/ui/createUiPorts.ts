@@ -15,6 +15,7 @@ import {
   getRuntimeEnvironmentText,
 } from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
 import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
+import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
 import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 import type {
   ChatPorts,
@@ -43,6 +44,8 @@ import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
 import { createSettingsSkillsPort } from './createSettingsSkillsPort';
 import {
+  appendBashAllowlistEntry as persistBashAllowlistEntry,
+  appendExternalReadDirectory as persistExternalReadDirectory,
   normalizeMaxConcurrentSubagents,
   requireWorkspace,
 } from './createUiPortHelpers';
@@ -67,6 +70,9 @@ import {
 export type ChatUiCompositionHost = PiviChatCompositionHost & {
   getChatPerfRecorder(): ChatPerfRecorder;
   createChatService(): PiChatService;
+  createChatService(options?: {
+    capabilityApproval?: CapabilityApprovalPort | null;
+  }): PiChatService;
   createAuxQueryRunner(): AuxQueryRunner;
   getSessionList(): SessionSummary[];
   getOpenSessionSync(id: string): OpenSessionState | null;
@@ -173,7 +179,7 @@ export function createChatUiPorts(
   };
   return {
     runtime: {
-      createChatService: () => host.createChatService(),
+      createChatService: (options) => host.createChatService(options),
       createAuxQueryRunner: () => host.createAuxQueryRunner(),
     },
     sessions: {
@@ -264,6 +270,12 @@ export function createChatUiPorts(
         for (const view of host.getAllViews()) {
           view.getChatHandle()?.maintenance.syncExternalReadDirectories(paths);
         }
+      },
+      async appendBashAllowlistEntry(command) {
+        await persistBashAllowlistEntry(host, command);
+      },
+      async appendExternalReadDirectory(directory) {
+        await persistExternalReadDirectory(host, directory);
       },
     },
   };

@@ -255,3 +255,51 @@
   padding-top: 6px;
   border-top: 1px solid var(--pivi-host-border);
 }
+
+/* ── Capability approval header ───────────────── */
+
+.pivi-ask-approval-info {
+  padding: 8px 10px 0;
+}
+
+.pivi-ask-approval-tool {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-text-xs);
+  line-height: 1.4;
+}
+
+.pivi-ask-approval-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.pivi-ask-approval-tool-name {
+  font-weight: 600;
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-ask-approval-reason {
+  font-weight: 700;
+  color: var(--pivi-host-text-normal);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.pivi-ask-approval-blocked-path {
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-text-xs);
+  color: var(--pivi-host-text-muted);
+  margin-bottom: 4px;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.pivi-ask-approval-desc {
+  color: var(--pivi-host-text-muted);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}

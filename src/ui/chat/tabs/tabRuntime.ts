@@ -48,7 +48,9 @@ export async function initializeTabService(
     tab.service = null;
     tab.serviceInitialized = false;
 
-    service = ports.runtime.createChatService();
+    service = ports.runtime.createChatService({
+      capabilityApproval: tab.capabilityApproval?.getPort() ?? null,
+    });
     subscriptions = registerServiceSubscriptions(tab, service);
 
     // Passive sync: set session state without starting the runtime process.

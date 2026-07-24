@@ -8,6 +8,7 @@ import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 
 import { resolveComposerWorkspaceCommand } from '../composer/ComposerWorkspaceCommand';
+import { TabCapabilityApprovalBridge } from '../composer/TabCapabilityApprovalBridge';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { InputController } from '../controllers/InputController';
@@ -49,6 +50,24 @@ export function initializeTabControllers(
   onTitleChanged?: (title: string) => void,
 ): void {
   const { dom, state, services, ui } = tab;
+
+  tab.capabilityApproval = new TabCapabilityApprovalBridge({
+    persistBashAllowlistEntry: async (command) => {
+      await ports.settings.appendBashAllowlistEntry?.(command);
+    },
+    persistExternalDirectory: async (directory) => {
+      await ports.settings.appendExternalReadDirectory?.(directory);
+    },
+    onExternalDirectoryAllowed: (directory) => {
+      tab.ui.externalContextSelector?.addExternalContext(directory);
+      syncTabSessionExternalContext(
+        tab,
+        { sessionFile: tab.sessionFile },
+        ports.settings.getSettingsSnapshot().externalReadDirectories,
+      );
+      return Promise.resolve();
+    },
+  });
 
   tab.renderer = new MessageRenderer(
     plugin,
@@ -128,7 +147,9 @@ export function initializeTabControllers(
       resetStreamingState: () => tab.controllers.streamController?.resetStreamingState(),
       getAgentService: () => tab.service,
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingInlinePrompts(),
+      clearCapabilitySessionGrants: () => tab.capabilityApproval?.clearSessionGrants(),
       ensureServiceForSession: (openSession) => {
+        tab.capabilityApproval?.clearSessionGrants();
         tab.openSessionId = openSession?.id ?? null;
         tab.sessionFile = openSession?.sessionFile ?? null;
         tab.leafId = null;
@@ -159,6 +180,7 @@ export function initializeTabControllers(
     },
     {
       onNewSession: () => {
+        tab.capabilityApproval?.clearSessionGrants();
         cleanupTabRuntime(tab);
         tab.lifecycleState = 'blank';
         tab.draftModel = resolveBlankTabModel(ports);
@@ -171,7 +193,10 @@ export function initializeTabControllers(
         syncSlashCommandDropdown(tab, ports.settings, getSlashCatalogConfig);
       },
       onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
-      onSessionSwitched: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
+      onSessionSwitched: () => {
+        tab.capabilityApproval?.clearSessionGrants();
+        ui.slashCommandDropdown?.resetRuntimeSkillsCache();
+      },
     },
   );
 
@@ -248,6 +273,10 @@ export function initializeTabControllers(
       };
     },
   });
+
+  if (tab.controllers.inputController && tab.capabilityApproval) {
+    tab.capabilityApproval.bindInputController(tab.controllers.inputController);
+  }
 
   tab.controllers.navigationController = new NavigationController({
     getMessagesEl: () => dom.messagesEl,

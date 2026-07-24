@@ -178,26 +178,30 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).not.toContain(removedGatePhrase);
   });
 
-  it('documents Bash as a toggle-gated, allowlisted single-line shell tool with shell control syntax rejected', () => {
+  it('documents Bash as a toggle-gated login-shell tool with sidebar approval for user-explicit commands', () => {
     const section = buildSection({
       obsidianTools: [TOOL_OBSIDIAN_BASH],
       bashAllowlist: ['which', 'type', 'pwd', 'git'],
     });
 
     expect(section).toContain('obsidian_bash');
-    expect(section).toContain('allowlisted single-line shell command');
+    expect(section).toContain('pre-approved for `obsidian_bash`');
+    expect(section).toContain('user login shell');
     expect(section).toContain('Bash allowlist (this turn)');
     expect(section).toContain('- `which`');
     expect(section).toContain('- `git`');
-    expect(section).toContain('All other shell commands are rejected by default');
-    expect(section).toContain('stop and ask the user to add it in Settings → Tools → Bash allowlist');
-    expect(section).toContain('shell control syntax');
+    expect(section).toContain('not pre-approved');
+    expect(section).toContain('Do not run them on your own initiative');
+    expect(section).toContain('user explicitly asks you to run a specific shell command');
+    expect(section).toContain('sidebar prompt');
+    expect(section).toContain('login shell');
+    expect(section).toContain('pipes, redirects');
     expect(section).toContain('never a vault file tool');
     expect(section).toContain('do not use it to read, search, list, or modify vault files');
     expect(section).toContain('use sub-agents for multi-file vault work');
-    expect(section).toContain('After any Bash validation rejection');
+    expect(section).toContain('After the user denies a command');
     expect(section).toContain('do not call `obsidian_bash` again during the same turn');
-    expect(section).toContain('If the request cannot be completed with the tools and Bash allowlist available for this turn, stop');
+    expect(section).toContain('when the user explicitly asks you to run a specific shell command that is not allowlisted');
     expect(section).not.toContain('do not send multi-line scripts');
   });
 

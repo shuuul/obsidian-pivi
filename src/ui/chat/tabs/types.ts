@@ -3,6 +3,7 @@ import type { Component } from 'obsidian';
 
 import type { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';
 
+import type { TabCapabilityApprovalBridge } from '../composer/TabCapabilityApprovalBridge';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import type { InputController } from '../controllers/InputController';
@@ -181,6 +182,9 @@ export interface TabData {
 
   /** Per-tab renderer. */
   renderer: MessageRenderer | null;
+
+  /** Sidebar capability approval bridge for bash/external tools. */
+  capabilityApproval: TabCapabilityApprovalBridge | null;
 }
 
 export type TabAgentContext = Pick<TabData, 'openSessionId' | 'service' | 'lifecycleState' | 'draftModel'>;

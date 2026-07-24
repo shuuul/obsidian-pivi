@@ -23,6 +23,7 @@ import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings";
 import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
 import { OriginGrantRegistry } from "@pivi/pivi-agent-core/network";
+import type { CapabilityApprovalPort } from "@pivi/pivi-agent-core/ports";
 import type { SessionMessagePage, SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
@@ -337,12 +338,14 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     return this.uiFacades;
   }
 
-  createChatService() {
+  createChatService(options?: {
+    capabilityApproval?: CapabilityApprovalPort | null;
+  }) {
     const workspace = this.piWorkspace;
     if (!workspace) {
       throw new Error("Pi workspace is not initialized");
     }
-    return workspace.createChatService(this, this.httpClient);
+    return workspace.createChatService(this, this.httpClient, options);
   }
 
   createAuxQueryRunner() {

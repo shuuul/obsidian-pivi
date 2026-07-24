@@ -59,6 +59,21 @@
       "stopTitle": "停止",
       "sendEmptyTitle": "请输入消息"
     },
+    "capabilityApproval": {
+      "title": "需要权限",
+      "scopeQuestion": "允许多长时间？",
+      "deny": "拒绝",
+      "allowOnce": "仅本次允许",
+      "allowSession": "本会话内允许",
+      "allowAlways": "始终允许",
+      "allowAlwaysDescription": "写入设置（下一步选择范围）",
+      "bashPersistTitle": "永久允许哪些命令？",
+      "bashPersistQuestion": "在设置的 Bash 白名单中添加为：",
+      "bashPersistFull": "仅此命令",
+      "bashPersistFullDescription": "仅 `{command}`",
+      "bashPersistPrefix": "以此开头的命令",
+      "bashPersistPrefixDescription": "所有以 `{prefix}` 开头的命令"
+    },
     "tabs": {
       "startNewChat": "开始新聊天",
       "switchTab": "切换标签页：{title}",
@@ -521,7 +536,7 @@
       "heading": "Bash 访问",
       "allowlist": {
         "name": "允许的 bash 命令",
-        "desc": "通过工具开关启用或关闭 Bash。允许列表匹配已解析的可执行文件路径以及可选参数前缀（例如 git，或 npm run build）。不使用登录 shell。which、type、pwd 始终允许。拒绝 shell 控制语法，工作目录必须位于仓库内。",
+        "desc": "通过工具开关启用或关闭 Bash。允许列表匹配完整命令或所需前缀（例如 git，或 npm run build）。命令通过你的登录 shell 运行，因此终端 PATH 中的工具（如 pixi、Homebrew）可用。which、type、pwd 始终允许。已允许的命令内可使用管道等 shell 语法，工作目录必须位于仓库内。",
         "inputLabel": "添加允许的 bash 命令",
         "removeAria": "移除允许的 bash 命令 {value}"
       }
@@ -940,7 +955,7 @@
       "generateImage": "生成图片",
       "generateImageDesc": "使用 Codex 生成图片，保存为附件，并可选择插入到笔记中。",
       "bash": "Bash",
-      "bashDesc": "启用 Bash 时，按参数向量运行已允许的可执行文件。不使用登录 shell，工作目录必须位于仓库内。",
+      "bashDesc": "启用 Bash 时，通过登录 shell 运行已允许的单行 shell 命令。工作目录必须位于仓库内。",
       "outline": "大纲",
       "command": "命令",
       "eval": "求值",

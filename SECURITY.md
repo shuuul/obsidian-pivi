@@ -34,7 +34,7 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 | Environment variables | Empty registry | Device-local `pivi.environment.v1`; secrets in `SecretStorage` (`pivi-env-*`) | Synced `.pivi/settings.json` must not persist environment maps |
 | MCP remote headers / stdio env | Structured `ConfigValueRef` | Secret values in `SecretStorage` (`pivi-mcp-v-*`); config in `.pivi/mcp.json` | Names may appear in config; secret values do not |
 | External absolute-path reads | Off (`allowExternalRead`) | Device-local allowed directories / turn folders | Absolute paths never enter synced settings or session JSONL |
-| Bash tool | Off (`allowBash`) | Allowlisted executable + argument schema | No login shell |
+| Bash tool | Off (`allowBash`) | Command prefix allowlist | User login shell (`$SHELL -lc`) |
 | MCP stdio servers | Settings-enabled, lazy connect | Vault-local `.pivi/mcp.json` | Connects on diagnostics or first agent search/list/call; no turn-scoped launch gate |
 
 ## Network flows
@@ -92,7 +92,7 @@ One-shot process work (CLI, Bash, Skills tooling) uses the host `ProcessRunner` 
 - Timeout and abort terminate the owned process tree (POSIX process group or Windows `taskkill /T`), escalate to forced kill when needed, wait for close, and never double-resolve.
 - Results distinguish exit, signal, timeout, abort, spawn error, and forced-kill escalation.
 
-Bash allowlists match canonical executable paths plus argument schemas. Commands do not load login-shell startup files. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field.
+Bash allowlists match an exact command or required prefix. Commands run through the user's login shell and load shell startup configuration. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field.
 
 Cross-platform process and path behavior is covered by focused Ubuntu, macOS, and Windows CI jobs for the security-sensitive suites. That coverage does **not** certify full product support on every OS; support claims follow tested behavior only.
 

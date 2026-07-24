@@ -7,15 +7,15 @@ import {
 
 import {
   buildEffectiveBashAllowlist,
-  matchBashAllowlist,
-  tokenizeArgv,
+  matchBashCommandAllowlist,
 } from '../bashAllowlist';
+import { ensureBashCommandAllowed } from '../capabilityApprovalGate';
+import { buildLoginShellInvocation } from '../loginShell';
 import type { ObsidianToolDeps } from './deps';
 
 const DEFAULT_BASH_TIMEOUT_MS = 30_000;
 const DEFAULT_BASH_OUTPUT_BYTE_LIMIT = 256 * 1024;
 const MAX_OUTPUT_CHARS = 20_000;
-const SHELL_CONTROL_PATTERN = /[;&|<>`]|[$][(]|[$][{]/;
 
 function truncateOutput(output: string): string {
   if (output.length <= MAX_OUTPUT_CHARS) {
@@ -26,20 +26,20 @@ function truncateOutput(output: string): string {
 
 export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
   const { processRunner, settings, app } = deps;
-  const allowlist = buildEffectiveBashAllowlist(settings.bashAllowlist);
   return {
     name: TOOL_OBSIDIAN_BASH,
     label: 'Bash',
     description:
-      'Lowest-priority host diagnostic: run one allowlisted executable with an argument vector only when no registered tool can do the job. '
+      'Lowest-priority host diagnostic: run a single-line shell command through the user login shell when no registered tool can do the job. '
+      + 'Prefer pre-approved allowlist commands; when the user explicitly requests a specific command, call this tool even if it is not allowlisted—Pivi shows a sidebar approval prompt first. '
       + 'Never use Bash to read, search, list, or modify vault files; use Obsidian tools and sub-agents for vault work. '
-      + 'Shell control syntax is rejected. Commands run without a login shell. After any Bash validation rejection, do not retry Bash during the same turn.',
+      + 'After the user denies or validation rejects a command, do not retry Bash during the same turn.',
     parameters: {
       type: 'object',
       properties: {
         command: {
           type: 'string',
-          description: 'Single-line command as executable plus arguments (no shell operators)',
+          description: 'Single-line shell command (may include pipes and other shell syntax when allowlisted)',
         },
         cwd: {
           type: 'string',
@@ -59,27 +59,9 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('Bash command must be a single line');
       }
 
-      if (SHELL_CONTROL_PATTERN.test(normalizedCommand)) {
-        throw new Error('Bash command must not contain shell control syntax');
-      }
-
-      let tokens: string[];
-      try {
-        tokens = tokenizeArgv(normalizedCommand);
-      } catch (error) {
-        throw new Error(error instanceof Error ? error.message : String(error));
-      }
-      if (tokens.length === 0) {
-        throw new Error('Bash command is required');
-      }
-
-      if (allowlist.length === 0) {
-        throw new Error(`Bash command not in allowlist: ${tokens[0]}`);
-      }
-
-      const matched = matchBashAllowlist(tokens, allowlist);
-      if (!matched) {
-        throw new Error(`Bash command not in allowlist: ${tokens[0]}`);
+      const effectiveAllowlist = buildEffectiveBashAllowlist(settings.bashAllowlist);
+      if (!matchBashCommandAllowlist(normalizedCommand, effectiveAllowlist)) {
+        await ensureBashCommandAllowed(deps, normalizedCommand, false);
       }
 
       const vaultRoot = getVaultPath(app);
@@ -87,10 +69,11 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('Vault path is unavailable for Bash cwd containment');
       }
 
+      const { executable, args } = buildLoginShellInvocation(normalizedCommand);
       const timeoutMs = settings.cliTimeoutMs || DEFAULT_BASH_TIMEOUT_MS;
       const result = await processRunner.run({
-        executable: matched.executablePath,
-        args: matched.args,
+        executable,
+        args: [...args],
         cwdPolicy: { mode: 'vault', vaultRoot },
         ...(typeof cwd === 'string' && cwd.trim() ? { cwd: cwd.trim() } : {}),
         timeoutMs,

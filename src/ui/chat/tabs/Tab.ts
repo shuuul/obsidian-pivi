@@ -146,6 +146,7 @@ export function createTab(options: TabCreateOptions): TabData {
     },
     dom,
     renderer: null,
+    capabilityApproval: null,
   };
 
   state.needsAttention = options.needsAttention ?? false;
@@ -247,6 +248,8 @@ export function destroyTab(tab: TabData): Promise<void> {
 
 
   tab.controllers.inputController?.dismissPendingInlinePrompts();
+  tab.capabilityApproval?.dispose();
+  tab.capabilityApproval = null;
 
   tab.ui.fileContextManager?.destroy();
   tab.ui.inlineContextManager?.destroy();

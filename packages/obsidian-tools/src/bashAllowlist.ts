@@ -36,6 +36,31 @@ export function buildEffectiveBashAllowlist(userAllowlist?: readonly string[]): 
   return normalizeAllowlist([...DEFAULT_SAFE_BASH_ALLOWLIST, ...(userAllowlist ?? [])]);
 }
 
+/**
+ * Match a command string against allowlist entries using exact or prefix rules.
+ * Entry `git` matches `git status`; `npm run build` matches `npm run build --watch`
+ * but not `npm run build:css`.
+ */
+export function matchBashCommandAllowlist(
+  command: string,
+  allowlist: readonly string[],
+): boolean {
+  const trimmed = command.trim();
+  if (!trimmed) {
+    return false;
+  }
+  for (const entry of allowlist) {
+    const allowed = entry.trim();
+    if (!allowed) {
+      continue;
+    }
+    if (trimmed === allowed || trimmed.startsWith(`${allowed} `)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Parse a settings allowlist string into executable + required argv prefix. */
 export function parseBashAllowlistEntry(entry: string): BashAllowlistEntry | null {
   const trimmed = entry.trim();
@@ -134,6 +159,27 @@ function argsMatchPrefix(args: readonly string[], prefix: readonly string[]): bo
 
 function sameExecutable(left: string, right: string): boolean {
   return normalizePathForComparison(left) === normalizePathForComparison(right);
+}
+
+/**
+ * Resolve a tokenized invocation to an executable path without allowlist checks.
+ */
+export function resolveBashInvocationFromTokens(
+  tokens: readonly string[],
+  env: NodeJS.ProcessEnv = process.env,
+): ResolvedBashInvocation | null {
+  if (tokens.length === 0) {
+    return null;
+  }
+  const [rawExecutable, ...args] = tokens;
+  if (!rawExecutable) {
+    return null;
+  }
+  const resolvedExecutable = resolveExecutablePath(rawExecutable, env);
+  if (!resolvedExecutable) {
+    return null;
+  }
+  return { executablePath: resolvedExecutable, args };
 }
 
 /**

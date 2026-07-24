@@ -77,6 +77,7 @@ function minimalTab(): TabData {
       eventCleanups: [],
     },
     renderer: null,
+    capabilityApproval: null,
   };
 }
 

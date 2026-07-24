@@ -59,6 +59,21 @@
       "stopTitle": "停止",
       "sendEmptyTitle": "請輸入訊息"
     },
+    "capabilityApproval": {
+      "title": "需要權限",
+      "scopeQuestion": "允許多長時間？",
+      "deny": "拒絕",
+      "allowOnce": "僅本次允許",
+      "allowSession": "本工作階段內允許",
+      "allowAlways": "始終允許",
+      "allowAlwaysDescription": "寫入設定（下一步選擇範圍）",
+      "bashPersistTitle": "永久允許哪些命令？",
+      "bashPersistQuestion": "在設定的 Bash 白名單中新增為：",
+      "bashPersistFull": "僅此命令",
+      "bashPersistFullDescription": "僅 `{command}`",
+      "bashPersistPrefix": "以此開頭的命令",
+      "bashPersistPrefixDescription": "所有以 `{prefix}` 開頭的命令"
+    },
     "tabs": {
       "startNewChat": "開始新聊天",
       "switchTab": "切換分頁：{title}",
@@ -521,7 +536,7 @@
       "heading": "Bash 存取",
       "allowlist": {
         "name": "允許的 bash 命令",
-        "desc": "透過工具開關啟用或關閉 Bash。允許清單比對已解析的可執行檔路徑與選擇性參數前置（例如 git，或 npm run build）。不使用登入 shell。which、type、pwd 一律允許。拒絕 shell 控制語法，工作目錄必須位於保管庫內。",
+        "desc": "透過工具開關啟用或關閉 Bash。允許清單比對完整命令或所需前綴（例如 git，或 npm run build）。命令透過你的登入 shell 執行，因此終端 PATH 中的工具（如 pixi、Homebrew）可用。which、type、pwd 一律允許。已允許的命令內可使用管道等 shell 語法，工作目錄必須位於保管庫內。",
         "inputLabel": "新增允許的 bash 命令",
         "removeAria": "移除允許的 bash 命令 {value}"
       }
@@ -940,7 +955,7 @@
       "generateImage": "產生圖片",
       "generateImageDesc": "使用 Codex 產生圖片，儲存為附件，並可選擇插入到筆記中。",
       "bash": "Bash",
-      "bashDesc": "啟用 Bash 時，以參數向量執行允許的可執行檔。不使用登入 shell，工作目錄必須位於保管庫內。",
+      "bashDesc": "啟用 Bash 時，透過登入 shell 執行已允許的單行 shell 命令。工作目錄必須位於保管庫內。",
       "outline": "大綱",
       "command": "命令",
       "eval": "求值",

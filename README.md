@@ -125,9 +125,9 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 | `obsidian_history` | List, read, and restore file-history snapshots (requires the official Obsidian CLI) |
 | `obsidian_tasks` | List or update Markdown task status (requires the official Obsidian CLI) |
 | `obsidian_open` | Open a file in the Obsidian workspace |
-| `obsidian_read_external` | Read files outside the vault (off by default) |
-| `obsidian_list_external` | List external directories (off by default) |
-| `obsidian_bash` | Run an allowlisted shell command (off by default) |
+| `obsidian_read_external` | Read files outside the vault (off by default; sidebar prompt on unlisted roots) |
+| `obsidian_list_external` | List external directories (off by default; sidebar prompt on unlisted roots) |
+| `obsidian_bash` | Run an allowlisted shell command via login shell (off by default; sidebar prompt on unlisted commands) |
 | `obsidian_command` | Execute an Obsidian command by id (off by default) |
 | `obsidian_eval` | Run JavaScript in Obsidian context (off by default) |
 | `obsidian_generate_image` | Generate images with Codex, save as attachments |
@@ -218,7 +218,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **MCP** | User-provided servers. Enabled remote HTTP/SSE servers may receive inventory requests during startup/settings refresh. Stdio processes start only after explicit **Connect / refresh tools** or the agent's first search/list/call. |
 | **Skills** | Listing, installing, or updating remote skills uses the host process runner. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
 | **External file access** | Disabled by default. Allowed absolute roots come from this device's vault-local overlay or folders attached for the current turn; they are not synced through `.pivi/settings.json` or session JSONL. |
-| **Bash access** | Disabled by default. Allowlisted executable plus argument vector (canonical path + schema); no login shell; vault cwd only. |
+| **Bash access** | Disabled by default. Allowlisted command prefix; runs through user login shell; vault cwd only. |
 | **Obsidian CLI** | Disabled by default. When enabled, Pivi starts the configured official Obsidian CLI for the specific CLI-backed tools listed above. |
 | **Vault index** | File mentions, search, graph, tags, and properties enumerate vault metadata and file paths locally; Pivi does not send an index to its author. |
 | **System environment** | Read only at desktop integration boundaries for configured provider credentials, MCP authentication/stdio variables, the official CLI, and Skills tooling. Pivi does not transmit machine identity to its author. |
