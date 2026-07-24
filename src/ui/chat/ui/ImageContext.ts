@@ -308,7 +308,15 @@ export class ImageContextManager {
 
   private showFullImage(image: ImageAttachment) {
     const ownerDocument = this.containerEl.ownerDocument ?? window.document;
-    const overlay = ownerDocument.body.createDiv({ cls: 'pivi-image-modal-overlay' });
+    const overlay = ownerDocument.body.createDiv({
+      cls: 'pivi-modal-layer pivi-image-modal-layer',
+      attr: {
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-label': t('chat.messageImages.lightboxAria'),
+      },
+    });
+    const backdrop = overlay.createDiv({ cls: 'pivi-modal-backdrop' });
     const modal = overlay.createDiv({ cls: 'pivi-image-modal' });
 
     modal.createEl('img', {
@@ -318,7 +326,13 @@ export class ImageContextManager {
       },
     });
 
-    const closeBtn = modal.createDiv({ cls: 'pivi-image-modal-close' });
+    const closeBtn = modal.createEl('button', {
+      cls: 'pivi-image-modal-close',
+      attr: {
+        type: 'button',
+        'aria-label': t('chat.messageImages.closeAria'),
+      },
+    });
     closeBtn.setText('\u00D7');
 
     const handleEsc = (e: KeyboardEvent) => {
@@ -333,9 +347,7 @@ export class ImageContextManager {
     };
 
     closeBtn.addEventListener('click', close);
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) close();
-    });
+    backdrop.addEventListener('click', close);
     ownerDocument.addEventListener('keydown', handleEsc);
   }
 

@@ -62,7 +62,11 @@ export function useModalLayer({
       : null;
 
     const focusTarget = resolveInitialFocus(layer, initialFocus);
-    focusTarget?.focus();
+    if (focusTarget) {
+      focusTarget.focus();
+    } else {
+      layer.focus();
+    }
 
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') {
@@ -75,6 +79,7 @@ export function useModalLayer({
       const focusable = getFocusableElements(layer);
       if (focusable.length === 0) {
         event.preventDefault();
+        layer.focus();
         return;
       }
       const first = focusable[0];
@@ -85,13 +90,13 @@ export function useModalLayer({
       }
       const active = ownerDocument.activeElement;
       if (event.shiftKey) {
-        if (active === first || !layer.contains(active)) {
+        if (active === first || active === layer || !layer.contains(active)) {
           event.preventDefault();
           last.focus();
         }
         return;
       }
-      if (active === last || !layer.contains(active)) {
+      if (active === last || active === layer || !layer.contains(active)) {
         event.preventDefault();
         first.focus();
       }

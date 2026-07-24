@@ -20,6 +20,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
     importJson,
     connect,
     logout,
+    removeServer,
   } = useMcpSectionState(mcp, feedback);
   const {
     servers,
@@ -161,7 +162,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
       <ModalLayer
         ariaLabel={t('settings.mcp.deleteConfirmTitle', { name: deleteCandidate?.name ?? '' })}
         open={deleteCandidate !== null}
-        onClose={() => dispatch({ type: 'set_delete_candidate', server: null })}
+        onClose={() => { if (busy !== 'delete') dispatch({ type: 'set_delete_candidate', server: null }); }}
       >
         {deleteCandidate ? (
           <div className="pivi-modal">
@@ -173,6 +174,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
               <button
                 type="button"
                 data-modal-cancel
+                disabled={busy === 'delete'}
                 onClick={() => dispatch({ type: 'set_delete_candidate', server: null })}
               >
                 {t('common.cancel')}
@@ -180,11 +182,8 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
               <button
                 className="pivi-button--danger"
                 type="button"
-                onClick={() => {
-                  void commit(servers.filter((item) => item.name !== deleteCandidate.name))
-                    .then(() => dispatch({ type: 'set_delete_candidate', server: null }))
-                    .catch((cause) => feedback.notify(cause instanceof Error ? cause.message : t('common.error')));
-                }}
+                disabled={busy === 'delete'}
+                onClick={() => { void removeServer(deleteCandidate.name); }}
               >
                 {t('common.delete')}
               </button>

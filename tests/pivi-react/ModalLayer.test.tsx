@@ -29,6 +29,26 @@ function TestDialog({
   );
 }
 
+function TestDisablingDialog() {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>Open</button>
+      <ModalLayer
+        ariaLabel="Delete dialog"
+        open={open}
+        onClose={() => { if (!pending) setOpen(false); }}
+      >
+        <div className="pivi-modal">
+          <button type="button" data-modal-cancel disabled={pending} onClick={() => setOpen(false)}>Cancel</button>
+          <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => setPending(true)}>Delete</button>
+        </div>
+      </ModalLayer>
+    </>
+  );
+}
+
 describe('ModalLayer', () => {
   it('focuses cancel by default and closes on Escape', () => {
     render(<TestDialog />);
@@ -55,5 +75,18 @@ describe('ModalLayer', () => {
     expect(name).toHaveFocus();
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
     expect(remove).toHaveFocus();
+  });
+
+  it('holds focus on the layer when all focusable elements become disabled', () => {
+    render(<TestDisablingDialog />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    const dialog = screen.getByRole('dialog', { name: 'Delete dialog' });
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    // Both buttons are now disabled; Tab must keep focus within the layer.
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(dialog).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(dialog).toHaveFocus();
   });
 });

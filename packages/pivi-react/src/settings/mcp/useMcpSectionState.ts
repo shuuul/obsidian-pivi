@@ -448,6 +448,18 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     dispatch({ type: 'set_busy', busy: null });
   }, [mcp, t]);
 
+  const removeServer = useCallback(async (name: string) => {
+    dispatch({ type: 'set_busy', busy: 'delete' });
+    try {
+      await commit(state.servers.filter((item) => item.name !== name));
+      dispatch({ type: 'set_delete_candidate', server: null });
+    } catch (cause) {
+      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+    } finally {
+      dispatch({ type: 'set_busy', busy: null });
+    }
+  }, [commit, feedback, state.servers, t]);
+
   return {
     rootRef,
     state,
@@ -457,5 +469,6 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     importJson,
     connect,
     logout,
+    removeServer,
   };
 }

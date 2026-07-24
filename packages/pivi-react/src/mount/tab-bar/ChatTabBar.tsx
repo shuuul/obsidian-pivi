@@ -66,6 +66,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
   const triggerRef = useRef<HTMLSpanElement>(null);
   const exitTimers = useRef(new Map<string, number>());
   const menuCloseTimer = useRef<number | null>(null);
+  const revealViaKeyboardRef = useRef(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
@@ -183,6 +184,17 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
     return () => menu.removeEventListener('wheel', handleWheel);
   }, [isArchivedRevealed, isOpen, snapshot.items]);
 
+  useEffect(() => {
+    if (!isArchivedRevealed || !revealViaKeyboardRef.current) return;
+    revealViaKeyboardRef.current = false;
+    const menu = menuRef.current;
+    if (!menu) return;
+    const firstArchived = menu.querySelector<HTMLElement>(
+      '.pivi-tab-switcher-item.is-archived:not(.is-exiting)',
+    );
+    firstArchived?.focus();
+  }, [isArchivedRevealed]);
+
   const activeItem = snapshot.items.find(item => item.isActive) ?? snapshot.items[0];
   if (!activeItem) return null;
 
@@ -249,6 +261,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
     } else if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       event.stopPropagation();
+      revealViaKeyboardRef.current = true;
       revealArchivedTabs();
     }
   };

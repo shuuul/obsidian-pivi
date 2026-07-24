@@ -32,6 +32,7 @@ export function ModalLayer({
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
+      tabIndex={-1}
     >
       <div
         className="pivi-modal-backdrop"

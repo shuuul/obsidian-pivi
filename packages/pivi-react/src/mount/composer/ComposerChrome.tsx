@@ -36,9 +36,9 @@ export function ComposerChrome({
         : t('chat.composer.sendEmptyTitle');
   useEffect(() => {
     const wrap = sendWrapRef.current;
-    if (!wrap || !actions || !sendDisabled) return;
+    if (!wrap || !actions) return;
     platform.attachTooltip(wrap, sendTooltip);
-  }, [actions, platform, sendDisabled, sendTooltip]);
+  }, [actions, platform, sendTooltip]);
   if (!actions) return null;
   return (
     <div className="pivi-input-toolbar">
@@ -72,7 +72,6 @@ export function ComposerChrome({
             className={`pivi-send-button pivi-send-${queuesMessage ? 'queue' : stopsResponse ? 'streaming' : composer.canSend ? 'ready' : 'disabled'}`}
             disabled={sendDisabled}
             onClick={stopsResponse ? actions.stop : actions.send}
-            title={sendDisabled ? undefined : sendTooltip}
             type="button"
           >
             {queuesMessage
