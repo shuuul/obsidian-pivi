@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.1](https://github.com/shuuul/obsidian-pivi/compare/0.16.0...0.16.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* **editor:** close inline edit on escape ([12cb3b3](https://github.com/shuuul/obsidian-pivi/commit/12cb3b304f65776aad86865785944dd45c062769))
+* **editor:** keep inline edit output in reply mode ([7653a1a](https://github.com/shuuul/obsidian-pivi/commit/7653a1a2525209855fa67387991e1c325c7a82e9))
+* **ui:** speed up and align composer selectors ([15314bf](https://github.com/shuuul/obsidian-pivi/commit/15314bfd206605de941a8d5482644b3292627024))
+
 ## [0.16.0](https://github.com/shuuul/obsidian-pivi/compare/0.15.1...0.16.0) (2026-07-24)
 
 
