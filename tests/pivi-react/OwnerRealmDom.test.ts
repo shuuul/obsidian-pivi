@@ -68,6 +68,9 @@ describe('owner-realm DOM creation', () => {
     expect(icon.ownerDocument).toBe(ownerDocument);
     expect(icon.namespaceURI).toBe('http://www.w3.org/2000/svg');
     expect(brandIcon.ownerDocument).toBe(ownerDocument);
-    expect(brandIcon.querySelector('image')?.getAttribute('href')).toMatch(/^data:image\/svg\+xml,/);
+    expect(brandIcon.namespaceURI).toBe('http://www.w3.org/2000/svg');
+    expect(brandIcon.matches('[fill="currentColor"], [stroke="currentColor"]')
+      || brandIcon.querySelector('[fill="currentColor"], [stroke="currentColor"]') !== null).toBe(true);
+    expect(brandIcon.querySelector('linearGradient')).toBeNull();
   });
 });

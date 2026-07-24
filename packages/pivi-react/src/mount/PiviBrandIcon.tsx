@@ -1,6 +1,6 @@
-import piviIconSvg from '../../../../assets/icons/pivi-p.svg';
+import { type CSSProperties, useId } from 'react';
 
-const PIVI_ICON_DATA_URI = `data:image/svg+xml,${encodeURIComponent(piviIconSvg)}`;
+import piviIconSvg from '../../../../assets/icons/pivi-p.svg';
 
 export interface PiviBrandIconProps {
   readonly className: string;
@@ -10,14 +10,15 @@ export interface PiviBrandIconProps {
 
 /** Pivi's bundled brand asset, shared by every React-owned brand-icon surface. */
 export function PiviBrandIcon({ className, height, width }: PiviBrandIconProps) {
+  const maskId = `pivi-bowl-cutout-${useId().replace(/:/g, '')}`;
+  const iconSvg = piviIconSvg.replaceAll('pivi-bowl-cutout', maskId);
+  const style: CSSProperties = { height, width };
   return (
-    <img
-      alt=""
+    <span
       aria-hidden="true"
       className={className}
-      height={height}
-      src={PIVI_ICON_DATA_URI}
-      width={width}
+      dangerouslySetInnerHTML={{ __html: iconSvg }}
+      style={style}
     />
   );
 }

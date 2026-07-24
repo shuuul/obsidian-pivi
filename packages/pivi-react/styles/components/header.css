@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  color: var(--pivi-brand);
+  color: var(--pivi-host-text-muted);
 }
 
 .pivi-logo .pivi-brand-icon {

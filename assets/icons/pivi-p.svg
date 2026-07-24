@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="pivi-violet" gradientUnits="userSpaceOnUse" x1="118" y1="66" x2="450" y2="440">
-      <stop offset="0" stop-color="#7C5CF0"/>
-      <stop offset="1" stop-color="#A78BFA"/>
-    </linearGradient>
     <mask id="pivi-bowl-cutout">
       <rect width="512" height="512" fill="black"/>
       <g transform="rotate(15 287 200)">
@@ -18,10 +14,10 @@
   <!-- orbit ring, behind the glyph -->
   <g transform="rotate(-24 287 200)">
     <ellipse cx="287" cy="200" rx="218" ry="92" fill="none"
-             stroke="#C4B5FD" stroke-width="10" opacity="0.55"/>
+             stroke="currentColor" stroke-width="10" opacity="0.55"/>
   </g>
 
   <!-- P glyph -->
-  <path d="M 124 185 L 124 394 A 46 46 0 0 0 216 394 L 216 140 Z" fill="url(#pivi-violet)"/>
-  <rect width="512" height="512" fill="url(#pivi-violet)" mask="url(#pivi-bowl-cutout)"/>
+  <path d="M 124 185 L 124 394 A 46 46 0 0 0 216 394 L 216 140 Z" fill="currentColor"/>
+  <rect width="512" height="512" fill="currentColor" mask="url(#pivi-bowl-cutout)"/>
 </svg>

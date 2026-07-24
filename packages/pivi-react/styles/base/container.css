@@ -29,6 +29,12 @@
   display: flex;
 }
 
+.pivi-brand-icon > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .pivi-provider-logo-mask {
   --pivi-provider-logo-size: 14px;
   display: inline-block;
