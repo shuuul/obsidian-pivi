@@ -54,21 +54,21 @@ Work from the note already open in Obsidian, then bring in linked notes, vault t
   <tr><td colspan="2"><br></td></tr>
   <tr>
     <td width="48%" valign="top">
-      <img src="assets/inline-edit.png" alt="Pivi polish command on selected text in Note Toolbar" width="100%" />
+      <img src="assets/inline-edit.png" alt="Pivi polish command on selected text in the editor toolbar" width="100%" />
     </td>
     <td width="52%" valign="top">
       <h3>Edit selections inline</h3>
-      <p>Select text in an open note and polish, refine, or run vault skills from your Note Toolbar without leaving the editor.</p>
+      <p>Select text in an open note and polish, refine, or run vault skills from Pivi's built-in editor toolbar without leaving the editor.</p>
     </td>
   </tr>
   <tr><td colspan="2"><br></td></tr>
   <tr>
     <td width="48%" valign="top">
-      <img src="assets/customizable-toolbar.png" alt="Customizable Note Toolbar with Pivi commands" width="100%" />
+      <img src="assets/customizable-toolbar.png" alt="Pivi editor selection toolbar with customizable shortcuts" width="100%" />
     </td>
     <td width="52%" valign="top">
       <h3>Customize your toolbar</h3>
-      <p>Add Pivi commands to <a href="https://github.com/chrisgurney/obsidian-note-toolbar">Note Toolbar</a> for one-click access to polish, refine, and other skills from any note.</p>
+      <p>Enable and reorder shortcuts in <strong>Settings → Toolbar</strong> — Pivi commands, vault skills, and Obsidian editor actions appear on selected text in any note.</p>
     </td>
   </tr>
 </table>
