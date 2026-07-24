@@ -58,10 +58,16 @@ describe('owner-realm DOM creation', () => {
       path: 'M0 0h1v1z',
       viewBox: '0 0 1 1',
     }, { ownerDocument });
+    const brandIcon = createChatIconSvg({
+      kind: 'pivi-brand',
+      viewBox: '0 0 512 512',
+    }, { ownerDocument });
 
     expect(badge.ownerDocument).toBe(ownerDocument);
     expect(badge.querySelector('svg')?.ownerDocument).toBe(ownerDocument);
     expect(icon.ownerDocument).toBe(ownerDocument);
     expect(icon.namespaceURI).toBe('http://www.w3.org/2000/svg');
+    expect(brandIcon.ownerDocument).toBe(ownerDocument);
+    expect(brandIcon.querySelector('image')?.getAttribute('href')).toMatch(/^data:image\/svg\+xml,/);
   });
 });

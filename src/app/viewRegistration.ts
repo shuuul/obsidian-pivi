@@ -1,29 +1,15 @@
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
-import { addIcon } from "obsidian";
+import { addIcon, removeIcon } from "obsidian";
 
 import { t } from "@/app/i18n";
 import { PiviViewHost } from "@/app/ui/PiviViewHost";
 import type PiviPlugin from "@/main"
 
+import piviIconSvg from "../../assets/icons/pivi-p.svg";
+
 export function registerPiviViews(plugin: PiviPlugin): void {
-  addIcon(
-    "pivi-p",
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-      <defs>
-        <mask id="pivi-p-cutout">
-          <rect width="100" height="100" fill="black" />
-          <rect x="23" y="14" width="18" height="72" rx="9" fill="white" />
-          <g transform="rotate(18 56 35)">
-            <ellipse cx="56" cy="35" rx="31" ry="25" fill="white" />
-          </g>
-          <g transform="rotate(-20 58 36)">
-            <ellipse cx="58" cy="36" rx="14" ry="11" fill="black" />
-          </g>
-        </mask>
-      </defs>
-      <rect width="100" height="100" fill="#6F6F6F" mask="url(#pivi-p-cutout)" />
-    </svg>`,
-  );
+  removeIcon("pivi-p");
+  addIcon("pivi-p", piviIconSvg);
 
   plugin.registerView(
     VIEW_TYPE_PIVI,

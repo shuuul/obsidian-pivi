@@ -38,7 +38,7 @@ export interface ChatCompositeIconSvg {
   children: ChatSvgChild[];
 }
 
-/** Mask-based Pivi p icon (matches ribbon `pivi-p` orientation). */
+/** Pivi brand icon rendered from the product's bundled SVG asset. */
 export interface ChatPiviBrandIconSvg {
   kind: 'pivi-brand';
   viewBox: string;

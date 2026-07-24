@@ -148,7 +148,8 @@ describe('React ChatShell tabs', () => {
     const root = mounted.host.querySelector('[data-pivi-react-surface="chat"]');
 
     expect(root).toHaveClass('pivi-container--header-mode');
-    expect(root?.querySelector('.pivi-header .pivi-brand-icon')).not.toBeNull();
+    const logo = root?.querySelector<HTMLImageElement>('.pivi-header img.pivi-brand-icon');
+    expect(logo?.src).toMatch(/^data:image\/svg\+xml,/);
     expect(root?.querySelector('.pivi-header .pivi-tab-switcher')).not.toBeNull();
     expect(mounted.inputPortal).toBeEmptyDOMElement();
 

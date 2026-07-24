@@ -84,6 +84,6 @@ export const piChatUIConfig: ChatUIConfig = {
   },
 
   getChatIcon() {
-    return { kind: 'pivi-brand', viewBox: '0 0 100 100' };
+    return { kind: 'pivi-brand', viewBox: '0 0 512 512' };
   },
 };
