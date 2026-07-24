@@ -779,11 +779,16 @@ textarea.pivi-settings-control {
   position: absolute;
   top: 100%;
   left: 0;
+  flex-direction: column;
+  gap: 2px;
   min-width: 220px;
   margin-top: var(--pivi-spacing-xs);
   max-height: 240px;
   overflow-y: auto;
-  background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
+  padding: var(--pivi-spacing-xs);
+  background: var(--pivi-material-bg-secondary);
+  -webkit-backdrop-filter: var(--pivi-material-blur-lg);
+  backdrop-filter: var(--pivi-material-blur-lg);
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-sm);
   box-shadow: var(--pivi-shadow-md);
@@ -791,26 +796,44 @@ textarea.pivi-settings-control {
 }
 
 .pivi-provider-add-dropdown.is-visible {
-  display: block;
+  display: flex;
 }
 
 .pivi-provider-add-section {
-  padding: 8px 12px 4px;
-  font-size: var(--pivi-host-font-ui-smaller);
+  padding: 3px 8px;
+  font-size: 10px;
   font-weight: var(--pivi-host-font-semibold, 600);
-  color: var(--pivi-host-text-muted);
+  color: var(--pivi-host-text-faint);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+.pivi-provider-add-section:not(:first-child) {
+  margin-top: var(--pivi-spacing-xs);
+  border-top: 1px solid var(--pivi-host-border);
+  padding-top: 6px;
 }
 
 .pivi-provider-add-option {
   display: flex;
   align-items: center;
-  gap: var(--pivi-spacing-sm);
-  padding: 8px 12px;
+  justify-content: flex-start;
+  gap: 5px;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
-  font-size: var(--pivi-host-font-ui-small);
-  color: var(--pivi-host-text-normal);
+  font-family: var(--pivi-host-font-interface, inherit);
+  font-size: var(--pivi-text-sm);
+  color: var(--pivi-host-text-muted);
+  text-align: start;
+  white-space: nowrap;
 }
 
 .pivi-provider-add-option.is-added {
@@ -839,8 +862,18 @@ textarea.pivi-settings-control {
 }
 
 .pivi-provider-add-option-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   opacity: 0.85;
+}
+
+.pivi-provider-add-option-logo svg {
+  width: 16px;
+  height: 16px;
 }
 
 .pivi-provider-status {
