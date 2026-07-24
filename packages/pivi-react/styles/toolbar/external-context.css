@@ -1,11 +1,11 @@
 /* External Context Selector — trigger matches pre-React toolbar (compact btn + count). */
 .pivi-external-context-selector {
   position: relative;
-  z-index: 30;
+  z-index: var(--pivi-z-composer-selector);
 }
 
 .pivi-external-context-selector:focus-within {
-  z-index: 3000;
+  z-index: var(--pivi-z-dropdown-open);
 }
 
 .pivi-external-context-btn {
@@ -70,7 +70,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), visibility var(--pivi-duration-fast) var(--pivi-ease-out);
-  z-index: 3000;
+  z-index: var(--pivi-z-dropdown-open);
   font-family: inherit;
 }
 
@@ -240,7 +240,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .pivi-external-context-selector:hover {
-    z-index: 3000;
+    z-index: var(--pivi-z-dropdown-open);
   }
 
   .pivi-external-context-btn:hover {

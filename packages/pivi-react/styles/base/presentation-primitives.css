@@ -139,7 +139,7 @@
 .pivi-modal-layer {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--pivi-z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,6 +214,48 @@
 
 .pivi-send-button:active:not(:disabled) {
   scale: var(--pivi-press-scale-strong);
+}
+
+/* Shared thin scrollbar for transcript and dropdown scrollports. */
+.pivi-messages::-webkit-scrollbar,
+.pivi-mention-dropdown::-webkit-scrollbar,
+.pivi-slash-list::-webkit-scrollbar,
+.pivi-slash-detail::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pivi-messages::-webkit-scrollbar-track,
+.pivi-mention-dropdown::-webkit-scrollbar-track,
+.pivi-slash-list::-webkit-scrollbar-track,
+.pivi-slash-detail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pivi-messages::-webkit-scrollbar-thumb,
+.pivi-mention-dropdown::-webkit-scrollbar-thumb,
+.pivi-slash-list::-webkit-scrollbar-thumb,
+.pivi-slash-detail::-webkit-scrollbar-thumb {
+  background: var(--pivi-host-border);
+  border-radius: var(--pivi-radius-xs);
+}
+
+/* Shared disclosure marker removal for summary-style headers. */
+.pivi-thinking-header::-webkit-details-marker,
+.pivi-provider-header::-webkit-details-marker,
+.pivi-mcp-card-header::-webkit-details-marker {
+  display: none;
+}
+
+.pivi-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (max-width: 520px) {

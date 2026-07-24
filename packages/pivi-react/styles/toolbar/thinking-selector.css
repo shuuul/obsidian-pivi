@@ -15,14 +15,14 @@
 
 .pivi-thinking-gears {
   position: relative;
-  z-index: 30;
+  z-index: var(--pivi-z-composer-selector);
   display: flex;
   align-items: center;
   border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-thinking-gears.is-open {
-  z-index: 3000;
+  z-index: var(--pivi-z-dropdown-open);
 }
 
 /* Current selection (visible when collapsed) */
@@ -75,7 +75,7 @@
   border-radius: var(--pivi-radius-sm);
   box-shadow: var(--pivi-shadow-popover-up-sm);
   padding: var(--pivi-spacing-xs);
-  z-index: 3000;
+  z-index: var(--pivi-z-dropdown-open);
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), visibility var(--pivi-duration-fast) var(--pivi-ease-out);

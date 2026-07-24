@@ -1,6 +1,6 @@
 /* Full-size Image Modal */
 .pivi-image-modal-layer {
-  z-index: 10000;
+  z-index: var(--pivi-z-media-modal);
 }
 
 .pivi-image-modal-layer .pivi-modal-backdrop {

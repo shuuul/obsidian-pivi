@@ -21,7 +21,7 @@
 
 .pivi-messages-bottom-controls {
   position: absolute;
-  z-index: 40;
+  z-index: var(--pivi-z-bottom-controls);
   pointer-events: none;
   inset-inline: 12px;
   inset-block-end: 8px;
@@ -260,19 +260,6 @@
 
 .pivi-tool-call+.pivi-text-block {
   margin-top: var(--pivi-flow-content);
-}
-
-.pivi-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.pivi-messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.pivi-messages::-webkit-scrollbar-thumb {
-  background: var(--pivi-host-border);
-  border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-messages::-webkit-scrollbar-thumb:hover {

@@ -45,10 +45,6 @@
   list-style: none;
 }
 
-.pivi-thinking-header::-webkit-details-marker {
-  display: none;
-}
-
 .pivi-thinking-header:hover {
   background: rgba(var(--pivi-host-mono-rgb-100), 0.03);
 }

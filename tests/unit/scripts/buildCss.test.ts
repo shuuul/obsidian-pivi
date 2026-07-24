@@ -158,9 +158,11 @@ assertNoImportantRules([fixture]);`,
       'base/presentation-primitives.css',
       'base/animations.css',
     ]);
-    expect(styleModules.slice(-6)).toEqual([
+    expect(styleModules.slice(-8)).toEqual([
       'modals/mcp-modal.css',
       'settings/base.css',
+      'settings/provider-settings.css',
+      'settings/command-editor.css',
       'settings/slash-settings.css',
       'settings/mcp-settings.css',
       'settings/agent-settings.css',

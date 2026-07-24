@@ -31,8 +31,6 @@ body {
   --pivi-host-color-red: var(--color-red);
   --pivi-host-color-red-rgb: var(--color-red-rgb);
   --pivi-host-font-text: var(--font-text);
-  --pivi-host-font-text-size: var(--font-text-size);
-  --pivi-host-line-height-normal: var(--line-height-normal);
   --pivi-host-font-interface: var(--font-interface);
   --pivi-host-font-monospace: var(--font-monospace);
   --pivi-host-font-bold: var(--font-bold);

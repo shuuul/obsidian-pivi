@@ -33,6 +33,8 @@ export const styleModules = [
   'features/inline-edit-surface.css',
   'modals/mcp-modal.css',
   'settings/base.css',
+  'settings/provider-settings.css',
+  'settings/command-editor.css',
   'settings/slash-settings.css',
   'settings/mcp-settings.css',
   'settings/agent-settings.css',

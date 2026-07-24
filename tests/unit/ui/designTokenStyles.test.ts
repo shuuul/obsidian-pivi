@@ -41,7 +41,10 @@ describe('product design tokens', () => {
       /\.pivi-inline-composer-selector-portal \{[\s\S]*?font-family: var\(--pivi-host-font-text\);[\s\S]*?font-size: var\(--pivi-text-base\);/,
     );
     expect(variables).toMatch(
-      /\.pivi-inline-composer-selector-portal \{[\s\S]*?z-index: 10004;[\s\S]*?pointer-events: none;/,
+      /\.pivi-inline-composer-selector-portal \{[\s\S]*?z-index: var\(--pivi-z-inline-portal\);[\s\S]*?pointer-events: none;/,
+    );
+    expect(variables).toMatch(
+      /body \{[\s\S]*?--pivi-z-settings-popover: 20;[\s\S]*?--pivi-z-inline-portal: 10004;[\s\S]*?\}/,
     );
   });
 

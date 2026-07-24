@@ -64,10 +64,6 @@
   transition: background var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
-.pivi-mcp-card-header::-webkit-details-marker {
-  display: none;
-}
-
 .pivi-mcp-card-header:hover {
   background: var(--pivi-host-background-hover);
 }

@@ -150,7 +150,6 @@ settings:
   --pivi-text-sm: 12px;
   --pivi-text-base: 13px;
   --pivi-text-body: 14px;
-  --pivi-text-lg: 16px;
   --pivi-text-chat-body: var(--pivi-chat-font-size, var(--pivi-text-body));
   --pivi-text-composer: var(--pivi-composer-font-size, var(--pivi-text-body));
   --pivi-focus-ring: 2px solid var(--pivi-host-interactive-accent);
@@ -167,11 +166,32 @@ settings:
   font-size: var(--pivi-text-base);
   position: fixed;
   inset: 0;
-  z-index: 10004;
+  z-index: var(--pivi-z-inline-portal);
   pointer-events: none;
 }
 
 .pivi-inline-composer-selector-portal > .pivi-mention-dropdown,
 .pivi-inline-composer-selector-portal > .pivi-slash-dropdown {
   pointer-events: auto;
+}
+
+/* Global overlay order, low to high. Declared on body so body-level portals resolve them.
+ * In-context stacking (z-index 1–9) stays literal in component files. */
+body {
+  --pivi-z-settings-popover: 20;
+  --pivi-z-composer-selector: 30;
+  --pivi-z-bottom-controls: 40;
+  --pivi-z-composer: 50;
+  --pivi-z-overlay: 100;
+  --pivi-z-modal: 1000;
+  --pivi-z-tab-menu: 2100;
+  --pivi-z-tab-control: 2110;
+  --pivi-z-dropdown-open: 3000;
+  --pivi-z-composer-active: 7000;
+  --pivi-z-mention-dropdown: 7100;
+  --pivi-z-slash-dropdown: 7200;
+  --pivi-z-slash-detail: 7201;
+  --pivi-z-media-modal: 10000;
+  --pivi-z-file-popover: 10003;
+  --pivi-z-inline-portal: 10004;
 }

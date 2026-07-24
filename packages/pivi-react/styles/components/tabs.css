@@ -28,7 +28,7 @@
 
 .pivi-tab-switcher-control {
   position: relative;
-  z-index: 2110;
+  z-index: var(--pivi-z-tab-control);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
@@ -199,7 +199,7 @@
 
 .pivi-tab-switcher-menu {
   position: absolute;
-  z-index: 2100;
+  z-index: var(--pivi-z-tab-menu);
   inset-inline-end: 0;
   bottom: 100%;
   width: calc(100% - 30px);

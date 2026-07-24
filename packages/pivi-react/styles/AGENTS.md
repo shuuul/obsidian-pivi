@@ -11,7 +11,7 @@
 ## Build flow
 
 - `manifest.mjs` is the authoritative module inventory and cascade order.
-- `scripts/build-css.mjs` prepends `packages/obsidian-host/styles/pivi-theme.css`, then resolves the 37 manifest paths within this directory, concatenates modules in declaration order, and writes root `styles.css`.
+- `scripts/build-css.mjs` prepends `packages/obsidian-host/styles/pivi-theme.css`, then resolves the 39 manifest paths within this directory, concatenates modules in declaration order, and writes root `styles.css`.
 - Development output retains module headers and formatting. Production output removes ordinary comments and whitespace while preserving the Style Settings `/* @settings ... */` metadata block.
 - Manifest entries must resolve to `.css` files inside this directory.
 - Every CSS file below this directory must be listed. Missing entries, missing files, invalid paths, or an empty manifest fail the build.
@@ -24,7 +24,7 @@
 - `toolbar/`: model, mode, thinking, and external-context selectors inside the composer toolbar.
 - `features/`: feature-specific chat UI, including file/image context, embeds and modals, diffs, slash commands, questions, todos, selection toolbar overlay, and the editor-embedded inline edit surface (`inline-edit-surface.css`).
 - `modals/`: standalone modal styling, currently MCP configuration.
-- `settings/`: settings navigation and shared layout plus slash, MCP, and agent-specific rules. `settings/base.css` owns shared `.pivi-sp-*` structures.
+- `settings/`: shared settings navigation/layout plus provider registry, command editor, slash, MCP, and agent-specific rules. `settings/base.css` owns only shared settings infrastructure; feature-specific rules live in their named modules.
 - `accessibility.css`: shared focus-visible behavior; intentionally loaded last.
 - `manifest.mjs`: build manifest only; it must not contain CSS rules.
 
@@ -63,7 +63,7 @@
 - Slash row descriptions stay within the selector width, while the adjacent detail panel consumes only the measured remaining width inside the owning sidebar/input container and wraps unbroken content; below 420px container width the detail panel stacks under the list instead of clipping to the right.
 - In-scope compact icon actions (message actions, tab actions, send control, and similar) keep the hit box snug to the glyph (compact 16–20px sizing) and do not enlarge it to 32×32/44×44; hover/focus emphasis stays icon-sized (a snug background or small outline), not a large block.
 - MCP provider-style disclosure cards and read-only tool inventory live in `settings/mcp-settings.css`; `modals/mcp-modal.css` styles both the add-server modal and the inline configuration editor shown above each expanded card's refresh action and adjacent shared feedback.
-- Shared provider-card whole-header pointer sorting, keyboard drag handles, priorities, transform-only drag feedback, reduced-motion fallback, and screen-reader-only reorder status live in `settings/base.css`; Web and model provider lists use the same sorting chrome.
+- Shared provider-card whole-header pointer sorting, keyboard drag handles, priorities, transform-only drag feedback, and reduced-motion fallback live in `settings/provider-settings.css`; Web and model provider lists use the same sorting chrome, while screen-reader-only reorder status stays in `base/presentation-primitives.css`.
 - Workspace-command visual icon picker, searchable grid, responsive popover, and command-row icon alignment live in `settings/slash-settings.css`; keep icon previews on the injected platform renderer rather than bundling host icons into React.
 - Generic tool-call shells are structural disclosure rows, not cards: `.pivi-tool-call` has no static border, border radius, background, or clipping surface in transcript or subagent contexts. The subagent card (`.pivi-subagent-list` with inner `.pivi-subagent-card`) remains the enclosing bordered/background surface for delegated work; expanded tool content may retain its own inline result rule where it communicates hierarchy.
 - Tool step-group headers are plain count/name summaries without a decorative list marker. React buttons and imperative subagent `div[role=button]` headers share the same one-line flex contract. The far-right status is a slash-separated, per-status count summary rather than one aggregate label. A step group nested inside a subagent reuses the unboxed outer step-group chrome and outer compact tool-row treatment rather than adding subagent-specific rectangular cards; its expanded tool rows have zero gap and zero margins between rows. Container queries progressively hide secondary summaries when the subagent content area narrows.

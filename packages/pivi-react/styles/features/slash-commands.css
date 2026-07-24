@@ -22,7 +22,7 @@
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-sm);
   box-shadow: var(--pivi-shadow-popover-up-md);
-  z-index: 7200;
+  z-index: var(--pivi-z-slash-dropdown);
   --pivi-slash-list-max-height: min(260px, calc(100vh - 160px));
   overflow: visible;
   transform-origin: bottom left;
@@ -55,7 +55,7 @@
   right: auto;
   width: min(var(--pivi-fixed-dropdown-width), 300px);
   max-width: calc(100vw - 32px);
-  z-index: 10004;
+  z-index: var(--pivi-z-inline-portal);
 }
 
 .pivi-slash-list {
@@ -162,7 +162,7 @@
   position: absolute;
   top: var(--pivi-slash-detail-top, 0);
   left: 100%;
-  z-index: 7201;
+  z-index: var(--pivi-z-slash-detail);
   margin-left: 6px;
   min-height: 0;
   width: max-content;
@@ -259,21 +259,4 @@
   text-align: center;
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-text-base);
-}
-
-/* Scrollbar */
-.pivi-slash-list::-webkit-scrollbar,
-.pivi-slash-detail::-webkit-scrollbar {
-  width: 6px;
-}
-
-.pivi-slash-list::-webkit-scrollbar-track,
-.pivi-slash-detail::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.pivi-slash-list::-webkit-scrollbar-thumb,
-.pivi-slash-detail::-webkit-scrollbar-thumb {
-  background: var(--pivi-host-border);
-  border-radius: var(--pivi-radius-xs);
 }

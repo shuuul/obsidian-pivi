@@ -46,17 +46,12 @@ describe('transcript rhythm styles', () => {
     );
     expect(markdown).not.toContain('.pivi-inline-edit-diff-review-deletion');
     expect(markdown).not.toContain('.pivi-inline-edit-surface-reply-content');
-    expect(markdown).toContain(
-      '--pivi-markdown-flow-content: var(--pivi-flow-content);',
-    );
-    expect(markdown).toContain(
-      '--pivi-markdown-flow-section: var(--pivi-flow-section);',
+    expect(markdown).not.toContain('--pivi-markdown-flow-');
+    expect(markdown).toMatch(
+      /\+ :is\(h1, h2, h3, h4, h5, h6\)\s*\{[^}]*margin-block-start:\s*var\(--pivi-flow-section\);/s,
     );
     expect(markdown).toMatch(
-      /\+ :is\(h1, h2, h3, h4, h5, h6\)\s*\{[^}]*margin-block-start:\s*var\(--pivi-markdown-flow-section\);/s,
-    );
-    expect(markdown).toMatch(
-      /> :is\(h1, h2, h3, h4, h5, h6\) \+ :is\([^}]*margin-block-start:\s*var\(--pivi-markdown-flow-compact\);/s,
+      /> :is\(h1, h2, h3, h4, h5, h6\) \+ :is\([^}]*margin-block-start:\s*var\(--pivi-flow-compact\);/s,
     );
   });
 

@@ -4,19 +4,19 @@
  */
 .pivi-input-container {
   position: relative;
-  z-index: 50;
+  z-index: var(--pivi-z-composer);
   padding: 0;
 }
 
 .pivi-input-container.pivi-mention-dropdown-open,
 .pivi-input-container.pivi-slash-dropdown-open,
 .pivi-input-container:focus-within {
-  z-index: 7000;
+  z-index: var(--pivi-z-composer-active);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .pivi-input-container:hover {
-    z-index: 7000;
+    z-index: var(--pivi-z-composer-active);
   }
 }
 

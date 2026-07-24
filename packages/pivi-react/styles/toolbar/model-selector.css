@@ -1,11 +1,11 @@
 /* Model selector */
 .pivi-model-selector {
   position: relative;
-  z-index: 30;
+  z-index: var(--pivi-z-composer-selector);
 }
 
 .pivi-model-selector.is-open {
-  z-index: 3000;
+  z-index: var(--pivi-z-dropdown-open);
 }
 
 .pivi-model-btn {
@@ -74,7 +74,7 @@
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-sm);
   box-shadow: var(--pivi-shadow-popover-up-sm);
-  z-index: 3000;
+  z-index: var(--pivi-z-dropdown-open);
   width: max-content;
   padding: var(--pivi-spacing-xs);
   opacity: 0;

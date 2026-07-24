@@ -1,0 +1,348 @@
+/* Editor toolbar command cards and command picker settings. */
+
+@media (prefers-reduced-motion: reduce) {
+  .pivi-sortable-toolbar-card {
+    transform: none;
+  }
+
+  .pivi-sortable-toolbar-card.is-dragging {
+    opacity: 0.75;
+  }
+}
+
+.pivi-settings-section__body > .pivi-editor-toolbar-cards,
+.pivi-settings-section__body > .pivi-editor-toolbar-picker {
+  padding-inline: var(--pivi-settings-gutter);
+}
+
+.pivi-editor-toolbar-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pivi-editor-toolbar-card {
+  min-width: 0;
+  overflow: visible;
+}
+
+.pivi-editor-toolbar-card:focus-within {
+  z-index: 3;
+}
+
+.pivi-editor-toolbar-card:not([open]) > .pivi-editor-toolbar-card__header {
+  border-radius: inherit;
+}
+
+.pivi-editor-toolbar-card[open] > .pivi-editor-toolbar-card__header {
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+}
+
+.pivi-editor-toolbar-card--disabled .pivi-editor-toolbar-card__fixed-icon,
+.pivi-editor-toolbar-card--disabled .pivi-editor-toolbar-card__label,
+.pivi-editor-toolbar-card--disabled .pivi-editor-toolbar-card__badge {
+  opacity: 0.55;
+}
+
+.pivi-sortable-toolbar-card {
+  position: relative;
+  transform: translateY(var(--pivi-toolbar-drag-y, 0));
+}
+
+.pivi-sortable-toolbar-card.is-dragging {
+  z-index: 2;
+  opacity: 0.9;
+  box-shadow: var(--pivi-shadow-md);
+  cursor: grabbing;
+}
+
+.pivi-sortable-toolbar-card > .pivi-editor-toolbar-card__header {
+  display: grid;
+  grid-template-columns: auto auto 30px minmax(0, 1fr) auto auto;
+  gap: 10px;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.pivi-sortable-toolbar-card.is-dragging > .pivi-editor-toolbar-card__header {
+  cursor: grabbing;
+}
+
+.pivi-editor-toolbar-card__fixed-icon,
+.pivi-editor-toolbar-card__icon-control,
+.pivi-editor-toolbar-card .pivi-command-icon-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.pivi-editor-toolbar-card__fixed-icon .pivi-platform-icon,
+.pivi-editor-toolbar-card .pivi-command-icon-trigger .pivi-platform-icon {
+  --icon-size: 16px;
+}
+
+.pivi-editor-toolbar-card .pivi-command-icon-trigger > span:last-child {
+  display: none;
+}
+
+.pivi-editor-toolbar-card .pivi-command-icon-popover {
+  right: auto;
+  left: 0;
+  z-index: var(--pivi-z-settings-popover);
+}
+
+.pivi-editor-toolbar-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pivi-editor-toolbar-card__body .pivi-command-icon-picker {
+  position: relative;
+}
+
+.pivi-editor-toolbar-card__field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-editor-toolbar-card__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--pivi-host-font-medium);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-editor-toolbar-card__badge {
+  flex-shrink: 0;
+  font-size: var(--pivi-host-font-ui-smaller);
+  color: var(--pivi-host-text-muted);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+
+.pivi-editor-toolbar-card__meta {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--pivi-host-font-ui-smaller);
+  color: var(--pivi-host-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.pivi-editor-toolbar-card__actions {
+  justify-self: end;
+}
+
+.pivi-editor-toolbar-card__remove.pivi-settings-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.pivi-editor-toolbar-card__remove .pivi-platform-icon {
+  --icon-size: 14px;
+}
+
+.pivi-editor-toolbar-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  margin-block-start: 12px;
+  padding: 12px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-md);
+  background: var(--pivi-host-background-secondary);
+}
+
+.pivi-editor-toolbar-picker__heading {
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-editor-toolbar-picker > .pivi-settings-control,
+.pivi-editor-toolbar-picker > .pivi-settings-control--fill {
+  width: 100%;
+  max-width: none;
+}
+
+.pivi-editor-toolbar-picker__target {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.pivi-editor-toolbar-picker__target .pivi-select {
+  min-block-size: 28px;
+  padding-block: 3px;
+  padding-inline: 8px 24px;
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-editor-toolbar-picker__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-primary);
+}
+
+.pivi-editor-toolbar-picker__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.pivi-editor-toolbar-picker__group + .pivi-editor-toolbar-picker__group {
+  border-top: 1px solid var(--pivi-host-border);
+}
+
+.pivi-editor-toolbar-picker__category {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 6px 10px;
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-weight: var(--pivi-host-font-semibold);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+
+.pivi-editor-toolbar-picker__item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+  text-align: start;
+  cursor: pointer;
+}
+
+.pivi-editor-toolbar-picker__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.pivi-editor-toolbar-picker__item + .pivi-editor-toolbar-picker__item {
+  border-top: 1px solid var(--pivi-host-border);
+}
+
+.pivi-editor-toolbar-picker__item:hover:not(:disabled) {
+  background: var(--pivi-host-background-modifier-hover);
+}
+
+.pivi-editor-toolbar-picker__icon {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-editor-toolbar-picker__icon .pivi-platform-icon {
+  --icon-size: 17px;
+}
+
+.pivi-editor-toolbar-picker__content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pivi-editor-toolbar-picker__name {
+  overflow: hidden;
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pivi-editor-toolbar-picker__id,
+.pivi-editor-toolbar-picker__detail {
+  min-width: 0;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.pivi-editor-toolbar-picker__id {
+  font-family: var(--pivi-host-font-monospace);
+}
+
+.pivi-editor-toolbar-picker > .pivi-settings-action-group {
+  margin-block-start: 4px;
+}
+
+.pivi-editor-toolbar-picker > .pivi-setting-description {
+  padding-inline: 10px;
+}
+
+@media (max-width: 520px) {
+  .pivi-sortable-toolbar-card > .pivi-editor-toolbar-card__header {
+    grid-template-columns: auto 30px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .pivi-editor-toolbar-card__header > .pivi-provider-priority {
+    display: none;
+  }
+
+  .pivi-editor-toolbar-card__badge {
+    grid-column: 3;
+    justify-self: start;
+  }
+
+  .pivi-editor-toolbar-card__actions {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+  }
+}

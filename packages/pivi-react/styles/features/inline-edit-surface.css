@@ -7,7 +7,7 @@
 .pivi-inline-edit-surface,
 .pivi-inline-edit-diff-review {
   position: relative;
-  z-index: 100;
+  z-index: var(--pivi-z-overlay);
   pointer-events: auto;
   margin: 0;
   padding: 2px 4px 4px;
@@ -252,12 +252,12 @@
 .pivi-inline-edit-surface .pivi-model-selector,
 .pivi-inline-edit-surface .pivi-thinking-selector {
   position: relative;
-  z-index: 30;
+  z-index: var(--pivi-z-composer-selector);
 }
 
 .pivi-inline-edit-surface .pivi-model-selector.is-open,
 .pivi-inline-edit-surface .pivi-thinking-gears.is-open {
-  z-index: 3000;
+  z-index: var(--pivi-z-dropdown-open);
 }
 
 .pivi-inline-edit-surface .pivi-model-btn,

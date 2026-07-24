@@ -352,15 +352,6 @@
  * vertical relationship between top-level rendered blocks so paragraphs stay
  * readable and headings remain attached to their section across host themes.
  * Inline diff review intentionally participates in this exact rhythm. */
-:is(
-  .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
-  .pivi-subagent-result-output.pivi-markdown-rendered,
-  .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
-) {
-  --pivi-markdown-flow-compact: var(--pivi-flow-compact);
-  --pivi-markdown-flow-content: var(--pivi-flow-content);
-  --pivi-markdown-flow-section: var(--pivi-flow-section);
-}
 
 :is(
   .pivi-message-assistant .pivi-message-content .pivi-markdown-rendered,
@@ -411,7 +402,7 @@
   .callout,
   .pivi-mermaid-scroll
 ) {
-  margin-block-start: var(--pivi-markdown-flow-content);
+  margin-block-start: var(--pivi-flow-content);
 }
 
 :is(
@@ -429,7 +420,7 @@
   .callout,
   .pivi-mermaid-scroll
 ) + :is(h1, h2, h3, h4, h5, h6) {
-  margin-block-start: var(--pivi-markdown-flow-section);
+  margin-block-start: var(--pivi-flow-section);
 }
 
 :is(
@@ -447,7 +438,7 @@
   .callout,
   .pivi-mermaid-scroll
 ) {
-  margin-block-start: var(--pivi-markdown-flow-compact);
+  margin-block-start: var(--pivi-flow-compact);
 }
 
 :is(
@@ -455,5 +446,5 @@
   .pivi-subagent-result-output.pivi-markdown-rendered,
   .pivi-inline-edit-diff-review-content.pivi-markdown-rendered
 ) > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
-  margin-block-start: var(--pivi-markdown-flow-content);
+  margin-block-start: var(--pivi-flow-content);
 }

@@ -1,6 +1,6 @@
 .pivi-selection-toolbar-overlay {
   position: absolute;
-  z-index: 1000;
+  z-index: var(--pivi-z-modal);
   pointer-events: auto;
 }
 
@@ -55,7 +55,7 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    transform var(--pivi-duration-fast) ease-out,
+    scale var(--pivi-duration-fast) ease-out,
     background-color var(--pivi-duration-fast) ease;
 }
 
@@ -82,7 +82,7 @@
 }
 
 .pivi-selection-toolbar-btn:active {
-  transform: scale(var(--pivi-press-scale));
+  scale: var(--pivi-press-scale);
 }
 
 .pivi-selection-highlight--flash {
