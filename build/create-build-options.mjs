@@ -1,3 +1,4 @@
+import { buildSync } from 'esbuild';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { external } from './externals.mjs';
@@ -16,6 +17,28 @@ import { releaseArtifactBanner, releaseArtifactVersion } from './release-artifac
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(rootDir, '..');
+
+function buildEmbeddedSkillsCli() {
+  const result = buildSync({
+    entryPoints: [path.join(projectRoot, 'node_modules/skills/bin/cli.mjs')],
+    bundle: true,
+    platform: 'node',
+    format: 'esm',
+    target: 'node22',
+    banner: {
+      js: "import { createRequire as __piviCreateRequire } from 'node:module'; const require = __piviCreateRequire(import.meta.url);",
+    },
+    minify: true,
+    write: false,
+  });
+  const source = result.outputFiles?.[0]?.contents;
+  if (!source) {
+    throw new Error('Failed to bundle the pinned skills CLI dependency.');
+  }
+  return Buffer.from(source).toString('base64');
+}
+
+const embeddedSkillsCliBase64 = buildEmbeddedSkillsCli();
 
 /**
  * Returns the common production/development build configuration without deployment side effects.
@@ -51,6 +74,7 @@ export function createBuildOptions({ production, metafile = false, write = true 
     define: {
       'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
       __PIVI_RELEASE_VERSION__: JSON.stringify(releaseArtifactVersion),
+      __PIVI_EMBEDDED_SKILLS_CLI_BASE64__: JSON.stringify(embeddedSkillsCliBase64),
     },
     jsx: 'automatic',
     jsxImportSource: 'react',

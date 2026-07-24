@@ -431,24 +431,29 @@ export class VaultSkillsService {
       overridePackageRoot: this.options.skillsCliPackageRoot,
     });
 
-    const result = await this.options.processRunner.run({
-      executable: cli.executable,
-      args: [cli.cliPath, ...args],
-      cwdPolicy: { mode: 'vault', vaultRoot: this.vaultPath },
-      cwd: this.ensurePiviWorkDir(),
-      env: getSpawnEnvWithEnhancedPath(undefined, this.processEnv, this.environment),
-      timeoutMs: SKILLS_INSTALL_TIMEOUT_MS,
-      stdoutByteLimit: 1024 * 1024,
-      stderrByteLimit: 1024 * 1024,
-      shell: { mode: 'forbidden' },
-    });
-    if (result.termination !== 'exit' || result.exitCode !== 0) {
-      const detail = result.stderr.trim() || result.stdout.trim()
-        || result.spawnError
-        || (result.signal ? `signal ${result.signal}` : `termination ${result.termination}`);
-      throw new Error(`skills ${commandName} failed: ${detail}`);
+    try {
+      const env = getSpawnEnvWithEnhancedPath(undefined, this.processEnv, this.environment);
+      const result = await this.options.processRunner.run({
+        executable: cli.executable,
+        args: [cli.cliPath, ...args],
+        cwdPolicy: { mode: 'vault', vaultRoot: this.vaultPath },
+        cwd: this.ensurePiviWorkDir(),
+        env,
+        timeoutMs: SKILLS_INSTALL_TIMEOUT_MS,
+        stdoutByteLimit: 1024 * 1024,
+        stderrByteLimit: 1024 * 1024,
+        shell: { mode: 'forbidden' },
+      });
+      if (result.termination !== 'exit' || result.exitCode !== 0) {
+        const detail = result.stderr.trim() || result.stdout.trim()
+          || result.spawnError
+          || (result.signal ? `signal ${result.signal}` : `termination ${result.termination}`);
+        throw new Error(`skills ${commandName} failed: ${detail}`);
+      }
+      return result.stdout;
+    } finally {
+      cli.cleanup?.();
     }
-    return result.stdout;
   }
 
 }

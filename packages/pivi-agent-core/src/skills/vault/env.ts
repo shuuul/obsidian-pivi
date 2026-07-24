@@ -404,9 +404,18 @@ function findNodeDirectory(additionalPaths: string | undefined, context: SkillsE
   return null;
 }
 
-function findNodeExecutable(additionalPaths: string | undefined, context: SkillsEnvironmentContext): string | null {
+function findNodeExecutableInSearchPaths(additionalPaths: string | undefined, context: SkillsEnvironmentContext): string | null {
   const nodeDir = findNodeDirectory(additionalPaths, context);
   return nodeDir ? path.join(nodeDir, context.nodeExecutable) : null;
+}
+
+export function findNodeExecutable(
+  additionalPaths?: string,
+  processEnv: SkillsProcessEnv = process.env,
+  options?: SkillsEnvironmentOptions,
+): string {
+  const context = createSkillsEnvironmentContext(processEnv, options);
+  return findNodeExecutableInSearchPaths(additionalPaths, context) ?? context.nodeExecutable;
 }
 
 export function findNpxExecutable(
@@ -415,7 +424,7 @@ export function findNpxExecutable(
   options?: SkillsEnvironmentOptions,
 ): string | null {
   const context = createSkillsEnvironmentContext(processEnv, options);
-  const nodeExecutable = findNodeExecutable(additionalPaths, context);
+  const nodeExecutable = findNodeExecutableInSearchPaths(additionalPaths, context);
   if (nodeExecutable) {
     const sibling = path.join(path.dirname(nodeExecutable), context.npxExecutable);
     try {

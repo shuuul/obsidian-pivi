@@ -83,4 +83,22 @@ describe('pinned skills CLI', () => {
       fs.rmSync(vaultPath, { recursive: true, force: true });
     }
   });
+
+  it('materializes and cleans up the CLI bundled with the plugin', () => {
+    const cli = resolvePinnedSkillsCli({
+      overridePackageRoot: path.join(os.tmpdir(), 'missing-skills-package'),
+      embeddedCliBase64: Buffer.from('export {};\n').toString('base64'),
+      resolveFromWorkspace: false,
+    });
+    expect(fs.readFileSync(cli.cliPath, 'utf8')).toBe("await import('../dist/cli.mjs');\n");
+    expect(fs.readFileSync(path.join(path.dirname(cli.cliPath), '..', 'dist', 'cli.mjs'), 'utf8'))
+      .toBe('export {};\n');
+    expect(JSON.parse(fs.readFileSync(path.join(path.dirname(cli.cliPath), '..', 'package.json'), 'utf8')))
+      .toMatchObject({ name: 'skills', version: PINNED_SKILLS_CLI_VERSION, type: 'module' });
+    expect(cli.cliPath.startsWith(os.tmpdir())).toBe(true);
+
+    cli.cleanup?.();
+
+    expect(fs.existsSync(cli.cliPath)).toBe(false);
+  });
 });

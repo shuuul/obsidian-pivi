@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { createI18n, I18nProvider, SettingsRoot, SettingsUiStore } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
@@ -375,6 +376,24 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update official skills' }));
     await act(async () => undefined);
     expect(update).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-enables skills actions after completion in React Strict Mode', async () => {
+    const ports = createPorts();
+    const install = jest.fn(async () => undefined);
+    Object.assign(ports.complex.skills.featuredBundle, { install });
+    render(withTestPresentationPlatform(
+      <StrictMode>
+        <I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="skills" /></I18nProvider>
+      </StrictMode>,
+    ));
+
+    const button = screen.getByRole('button', { name: 'Install official skills' });
+    fireEvent.click(button);
+    await act(async () => undefined);
+
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(button).toBeEnabled();
   });
   it('expands a provider card and persists visible model selection', async () => {
     const saveSettings = jest.fn(async () => undefined);

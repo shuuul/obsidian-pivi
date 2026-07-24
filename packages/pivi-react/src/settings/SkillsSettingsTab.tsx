@@ -40,7 +40,10 @@ export function SkillsSettingsTab({ skills, feedback }: {
   const [installedFeedback, setInstalledFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const [removeCandidate, setRemoveCandidate] = useState<Skill | null>(null);
   const featuredBundle = skills.featuredBundle.getDescriptor();
-  useEffect(() => () => { mounted.current = false; }, []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
   const refresh = () => { if (mounted.current) setEntries(skills.list()); };
 
