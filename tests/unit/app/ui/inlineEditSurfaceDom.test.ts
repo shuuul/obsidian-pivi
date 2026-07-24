@@ -8,12 +8,16 @@ import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { MarkdownRenderer } from 'obsidian';
 
+import { InlineEditKeyboardController } from '@/app/ui/inlineEditSurface/InlineEditKeyboardController';
 import { InlineEditSurfaceSession } from '@/app/ui/inlineEditSurface/InlineEditSurfaceSession';
 import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownController';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
 const writeText = jest.fn(async () => undefined);
 const onReject = jest.fn();
+const pushScope = jest.fn();
+const popScope = jest.fn();
+let escapeScopeHandler: ((event: KeyboardEvent) => boolean | void) | null = null;
 
 jest.mock('@pivi/pivi-react/mount', () => ({
   mountInlineEditSurfaceChrome: jest.fn(() => ({
@@ -42,6 +46,15 @@ jest.mock('obsidian', () => ({
     render: jest.fn(async () => undefined),
   },
   Platform: { isMacOS: true },
+  Scope: class Scope {
+    register(
+      _modifiers: string[],
+      key: string,
+      handler: (event: KeyboardEvent) => boolean | void,
+    ): void {
+      if (key === 'Escape') escapeScopeHandler = handler;
+    }
+  },
 }));
 
 function createSnapshot(editor: EditorView): EditorSelectionSnapshot {
@@ -59,6 +72,8 @@ function createSession(): InlineEditSurfaceSession {
     {
       plugin: {
         app: {
+          scope: {},
+          keymap: { pushScope, popScope },
           workspace: { getActiveFile: () => null },
           vault: {
             getFiles: () => [],
@@ -110,6 +125,9 @@ describe('InlineEditSurfaceSession DOM', () => {
   let session: InlineEditSurfaceSession;
 
   beforeEach(() => {
+    escapeScopeHandler = null;
+    pushScope.mockClear();
+    popScope.mockClear();
     jest.mocked(MarkdownRenderer.render).mockImplementation(async () => undefined);
     Object.defineProperty(Range.prototype, 'getBoundingClientRect', {
       configurable: true,
@@ -178,6 +196,27 @@ describe('InlineEditSurfaceSession DOM', () => {
 
     session.destroy();
     expect(document.body.querySelector('.pivi-inline-selector-portal')).toBeNull();
+  });
+
+  it('exits inline edit through the active Obsidian scope while a selector is open', async () => {
+    session.onReject = () => session.destroy();
+    session.show(createSnapshot(editor));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const input = editor.dom.querySelector<HTMLElement>('.pivi-inline-edit-surface-input');
+    session.setPrompt('/');
+    input?.dispatchEvent(new Event('input', { bubbles: true }));
+    input?.focus();
+    expect(document.body.querySelector('.pivi-slash-dropdown')).not.toBeNull();
+
+    const handled = escapeScopeHandler?.(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(handled).toBe(false);
+    expect(session.isDestroyed()).toBe(true);
+    expect(editor.dom.querySelector('.pivi-inline-edit-surface')).toBeNull();
+    expect(document.body.querySelector('.pivi-inline-selector-portal')).toBeNull();
+    expect(popScope).toHaveBeenCalledTimes(1);
   });
 
   it('copies the raw Markdown reply from the transparent output action', async () => {
@@ -355,5 +394,36 @@ describe('InlineEditSurfaceSession DOM', () => {
 
     editor.contentDOM.dispatchEvent(new window.Event('pointerdown', { bubbles: true }));
     expect(onReject).not.toHaveBeenCalled();
+  });
+});
+
+describe('InlineEditKeyboardController', () => {
+  it('prioritizes Escape over an open selector while the input is focused', () => {
+    const onReject = jest.fn();
+    const handleSlashKeydown = jest.fn(() => true);
+    const controller = new InlineEditKeyboardController(window, {
+      isDiffReview: () => false,
+      isInputFocused: () => true,
+      handleSlashKeydown,
+      handleMentionKeydown: () => false,
+      canSend: () => false,
+      onSend: () => undefined,
+      onAccept: () => undefined,
+      onReject,
+    }, {
+      scope: {} as never,
+      keymap: { pushScope, popScope } as never,
+    });
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+    expect(onReject).not.toHaveBeenCalled();
+    expect(handleSlashKeydown).toHaveBeenCalledTimes(1);
+    handleSlashKeydown.mockClear();
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(onReject).toHaveBeenCalledTimes(1);
+    expect(handleSlashKeydown).not.toHaveBeenCalled();
+    controller.destroy();
   });
 });

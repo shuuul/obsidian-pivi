@@ -164,8 +164,10 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
         canSend: () => this.canSend(),
         onSend: () => this.handleSend(),
         onAccept: () => this.handleDiffAccept(),
-        onReject: () => this.handleDiffReject(),
-      });
+        onReject: () => this.phase === 'diff-review'
+          ? this.handleDiffReject()
+          : this.handleReject(),
+      }, this.deps.plugin.app);
     }
 
     showInlineEditSurfaceDecoration(
