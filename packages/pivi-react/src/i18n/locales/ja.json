@@ -392,7 +392,7 @@
       "title": "エディタ選択ツールバー",
       "desc": "エディター選択ツールバーのアクションとコマンドを選択、有効化、並べ替えできます。",
       "added": "追加済み",
-      "unavailable": "このエディターでは利用できません",
+      "unavailable": "コマンドが登録されていません",
       "addEditorCommand": "+ エディターコマンドを追加",
       "addCommand": "+ Obsidian コマンドを追加",
       "editorCommandPickerTitle": "エディターコマンドを選択",

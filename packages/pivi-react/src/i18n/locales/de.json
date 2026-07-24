@@ -392,7 +392,7 @@
       "title": "Editor-Auswahl-Symbolleiste",
       "desc": "Wähle, aktiviere und sortiere Aktionen und Befehle in der Editor-Auswahl-Symbolleiste.",
       "added": "Hinzugefügt",
-      "unavailable": "In diesem Editor nicht verfügbar",
+      "unavailable": "Befehl nicht registriert",
       "addEditorCommand": "+ Editor-Befehl hinzufügen",
       "addCommand": "+ Obsidian-Befehl hinzufügen",
       "editorCommandPickerTitle": "Editor-Befehl auswählen",

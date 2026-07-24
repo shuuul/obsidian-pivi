@@ -392,7 +392,7 @@
       "title": "编辑器选区工具栏",
       "desc": "选择、启用并重新排列编辑器选区工具栏中的操作和命令。",
       "added": "已添加",
-      "unavailable": "当前编辑器不可用",
+      "unavailable": "命令未注册",
       "addEditorCommand": "+ 添加编辑器命令",
       "addCommand": "+ 添加 Obsidian 命令",
       "editorCommandPickerTitle": "选择编辑器命令",

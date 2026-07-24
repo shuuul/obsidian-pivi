@@ -392,7 +392,7 @@
       "title": "Barra de herramientas de selección del editor",
       "desc": "Elige, activa y reordena acciones y comandos en la barra de selección del editor.",
       "added": "Añadido",
-      "unavailable": "No disponible en este editor",
+      "unavailable": "Comando no registrado",
       "addEditorCommand": "+ Añadir comando del editor",
       "addCommand": "+ Añadir comando de Obsidian",
       "editorCommandPickerTitle": "Elegir un comando del editor",

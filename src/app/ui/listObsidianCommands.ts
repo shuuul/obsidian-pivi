@@ -7,6 +7,7 @@ export interface ObsidianCommandListEntry {
 }
 
 interface ObsidianCommandsRegistry {
+  commands?: Record<string, { id?: string; name?: string; icon?: string }>;
   listCommands(): Array<{ id: string; name: string; icon?: string }>;
 }
 
@@ -17,14 +18,22 @@ type AppWithCommands = App & {
 /** Lists registered Obsidian command-palette commands via the semi-private commands API. */
 export function listObsidianCommands(app: App): readonly ObsidianCommandListEntry[] {
   const commands = (app as AppWithCommands).commands;
-  if (!commands || typeof commands.listCommands !== 'function') {
+  if (!commands) {
     return [];
   }
 
-  return commands.listCommands()
+  // listCommands() applies each command's check callback. While Settings is
+  // focused, that excludes editor commands even though they are registered and
+  // will execute from Pivi's selection toolbar.
+  const registered = commands.commands
+    ? Object.entries(commands.commands).map(([id, command]) => ({ ...command, id: command.id ?? id }))
+    : typeof commands.listCommands === 'function'
+      ? commands.listCommands()
+      : [];
+
+  return registered
     .filter((command): command is { id: string; name: string; icon?: string } => (
-      typeof command.id === 'string'
-      && command.id.trim().length > 0
+      typeof command.id === 'string' && command.id.trim().length > 0
       && typeof command.name === 'string'
       && command.name.trim().length > 0
     ))

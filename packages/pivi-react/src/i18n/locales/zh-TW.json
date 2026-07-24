@@ -392,7 +392,7 @@
       "title": "編輯器選取工具列",
       "desc": "選擇、啟用並重新排列編輯器選取工具列中的動作和命令。",
       "added": "已新增",
-      "unavailable": "目前編輯器無法使用",
+      "unavailable": "命令未註冊",
       "addEditorCommand": "+ 新增編輯器命令",
       "addCommand": "+ 新增 Obsidian 命令",
       "editorCommandPickerTitle": "選擇編輯器命令",

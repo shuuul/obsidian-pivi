@@ -15,6 +15,7 @@ import {
   createSettingsUiPorts,
 } from '@/app/ui/createUiPorts';
 import type { ChatUiCompositionHost } from '@/app/ui/createUiPorts';
+import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
 
 function createUiFacades(): PiviUiFacades {
   return {
@@ -59,6 +60,36 @@ describe('UI port adapters', () => {
     expect(() => ports.catalog.listMcpServers()).toThrow(
       'Pivi workspace services are not initialized.',
     );
+  });
+
+  it('lists registered editor commands even when command-palette checks hide them', () => {
+    const app = {
+      commands: {
+        commands: {
+          'editor:toggle-bold': {
+            id: 'editor:toggle-bold',
+            name: 'Toggle bold',
+            icon: 'lucide-bold',
+          },
+          'workspace:toggle-pin': {
+            id: 'workspace:toggle-pin',
+            name: 'Toggle pin',
+            icon: 'lucide-pin',
+          },
+        },
+        listCommands: jest.fn(() => [{
+          id: 'workspace:toggle-pin',
+          name: 'Toggle pin',
+          icon: 'lucide-pin',
+        }]),
+      },
+    };
+
+    expect(listObsidianCommands(app as never)).toEqual([
+      { id: 'editor:toggle-bold', name: 'Toggle bold', iconId: 'lucide-bold' },
+      { id: 'workspace:toggle-pin', name: 'Toggle pin', iconId: 'lucide-pin' },
+    ]);
+    expect(app.commands.listCommands).not.toHaveBeenCalled();
   });
 
   it('projects chat capabilities without exposing the raw host or workspace', async () => {

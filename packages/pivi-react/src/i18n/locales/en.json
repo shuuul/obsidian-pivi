@@ -392,7 +392,7 @@
       "title": "Editor selection toolbar",
       "desc": "Choose, enable, and reorder actions and commands on the editor selection toolbar.",
       "added": "Added",
-      "unavailable": "Unavailable in this editor",
+      "unavailable": "Command not registered",
       "addEditorCommand": "+ Add editor command",
       "addCommand": "+ Add Obsidian command",
       "editorCommandPickerTitle": "Choose an editor command",

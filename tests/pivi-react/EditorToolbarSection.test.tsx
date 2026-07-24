@@ -317,7 +317,7 @@ describe('EditorToolbarSection', () => {
     expect(screen.getByRole('option', { name: /Toggle fold/ })).toBeEnabled();
     expect(screen.getByRole('option', { name: /Bold.*Added/ })).toBeDisabled();
     expect(screen.getByRole('option', { name: /Bold.*Added/ })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('option', { name: /editor:toggle-italics.*Unavailable/ })).toBeDisabled();
+    expect(screen.getByRole('option', { name: /editor:toggle-italics.*Command not registered/ })).toBeDisabled();
   });
 
   it('announces when the Obsidian command picker truncates results', () => {

@@ -392,7 +392,7 @@
       "title": "Barre d'outils de sélection de l'éditeur",
       "desc": "Choisissez, activez et réorganisez les actions et commandes de la barre de sélection de l’éditeur.",
       "added": "Ajouté",
-      "unavailable": "Indisponible dans cet éditeur",
+      "unavailable": "Commande non enregistrée",
       "addEditorCommand": "+ Ajouter une commande d’éditeur",
       "addCommand": "+ Ajouter une commande Obsidian",
       "editorCommandPickerTitle": "Choisir une commande d’éditeur",
