@@ -19,10 +19,6 @@
   <a href="https://obsidian.md/plugins"><img src="https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white" alt="Obsidian plugin"></a>
 </p>
 
-<br>
-
-![Pivi turns linked project notes into a weekly action plan inside Obsidian](assets/pivi-vault-aware-planning.png)
-
 ---
 
 ## Quick start
@@ -35,11 +31,47 @@ Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/
 
 Work from the note already open in Obsidian, then bring in linked notes, vault tools, reusable skills, and commands without leaving the workspace.
 
-### Discover capabilities from the composer
-
-Type `/` to search Pivi's commands, installed vault skills, and enabled tools from one keyboard-friendly catalog.
-
-![Pivi slash catalog with commands, vault skills, and tools](assets/pivi-slash-catalog.png)
+<table>
+  <tr>
+    <td width="48%" valign="top">
+      <img src="assets/subagents.png" alt="Pivi running three subagents to scan and summarize the vault" width="100%" />
+    </td>
+    <td width="52%" valign="top">
+      <h3>Delegate with subagents</h3>
+      <p>Split large vault work across concurrent subagents — each with its own objective, tools, and progress — while you keep chatting in the same session.</p>
+    </td>
+  </tr>
+  <tr><td colspan="2"><br></td></tr>
+  <tr>
+    <td width="48%" valign="top">
+      <img src="assets/slash-selector.png" alt="Pivi slash selector with commands, vault skills, and tools" width="100%" />
+    </td>
+    <td width="52%" valign="top">
+      <h3>Discover capabilities from the composer</h3>
+      <p>Type <code>/</code> to search Pivi's commands, installed vault skills, enabled tools, and MCP servers from one keyboard-friendly catalog.</p>
+    </td>
+  </tr>
+  <tr><td colspan="2"><br></td></tr>
+  <tr>
+    <td width="48%" valign="top">
+      <img src="assets/inline-edit.png" alt="Pivi polish command on selected text in Note Toolbar" width="100%" />
+    </td>
+    <td width="52%" valign="top">
+      <h3>Edit selections inline</h3>
+      <p>Select text in an open note and polish, refine, or run vault skills from your Note Toolbar without leaving the editor.</p>
+    </td>
+  </tr>
+  <tr><td colspan="2"><br></td></tr>
+  <tr>
+    <td width="48%" valign="top">
+      <img src="assets/customizable-toolbar.png" alt="Customizable Note Toolbar with Pivi commands" width="100%" />
+    </td>
+    <td width="52%" valign="top">
+      <h3>Customize your toolbar</h3>
+      <p>Add Pivi commands to <a href="https://github.com/chrisgurney/obsidian-note-toolbar">Note Toolbar</a> for one-click access to polish, refine, and other skills from any note.</p>
+    </td>
+  </tr>
+</table>
 
 ---
 
