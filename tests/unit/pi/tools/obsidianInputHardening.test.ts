@@ -44,6 +44,7 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
       readFile: jest.fn().mockResolvedValue({ path: '/tmp/file.txt', content: 'external content' }),
       listPath: jest.fn().mockReturnValue([]),
       stat: jest.fn().mockReturnValue({ path: '/tmp/file.txt', size: 'external content'.length, isDirectory: false, isFile: true }),
+      isPathAllowed: jest.fn().mockReturnValue(true),
     },
     cli: { run: jest.fn().mockResolvedValue('ok') } as never,
     settings: { cliEnabled: true } as never,
@@ -124,6 +125,7 @@ describe('obsidian tool input hardening', () => {
         stat: jest.fn().mockReturnValue({ path: '/tmp/large.log', size: 25_000, isDirectory: false, isFile: true }),
         readFile: jest.fn(),
         listPath: jest.fn(),
+        isPathAllowed: jest.fn().mockReturnValue(true),
       },
     });
     const tool = createReadExternalTool(deps);
@@ -144,6 +146,7 @@ describe('obsidian tool input hardening', () => {
         stat: jest.fn().mockReturnValue({ path: '/tmp/huge.log', size: 10_000_001, isDirectory: false, isFile: true }),
         readFile: jest.fn(),
         listPath: jest.fn(),
+        isPathAllowed: jest.fn().mockReturnValue(true),
       },
     });
     const tool = createReadExternalTool(deps);
@@ -265,6 +268,7 @@ describe('obsidian tool input hardening', () => {
         stat: jest.fn().mockReturnValue({ path: '/tmp/a.txt', size: content.length, isDirectory: false, isFile: true }),
         readFile: jest.fn().mockResolvedValue({ path: '/tmp/a.txt', content }),
         listPath: jest.fn(),
+        isPathAllowed: jest.fn().mockReturnValue(true),
       },
     });
 
@@ -377,6 +381,7 @@ describe('obsidian tool input hardening', () => {
         stat: jest.fn().mockReturnValue({ path: '/tmp/a.txt', size: content.length, isDirectory: false, isFile: true }),
         readFile: jest.fn().mockResolvedValue({ path: '/tmp/a.txt', content }),
         listPath: jest.fn(),
+        isPathAllowed: jest.fn().mockReturnValue(true),
       },
     });
     const tool = createReadExternalTool(deps);

@@ -46,9 +46,9 @@ Not in scope:
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Port, session grants, runtime/tool wiring | /agent | In progress | None | Unit tests |
-| WS-02 | Inline UI, CSS, i18n | /agent | Pending | WS-01 | Keyboard + composer hide tests |
-| WS-03 | Docs and AGENTS sync | /agent | Pending | WS-01–WS-02 | `npm run check:specs` |
+| WS-01 | Port, session grants, runtime/tool wiring | /agent | Done | None | Unit tests |
+| WS-02 | Inline UI, CSS, i18n | /agent | Done | WS-01 | Keyboard + composer hide tests |
+| WS-03 | Docs and AGENTS sync | /agent | Done | WS-01–WS-02 | `npm run check:specs` |
 
 ## Verification
 
@@ -69,3 +69,22 @@ Not in scope:
 
 - Changed: Initial implementation in progress.
 - Next action: Complete port, tools, UI, tests, docs.
+
+### 2026-07-24 — Agent — Closeout
+
+- Changed: Delivered sidebar capability approvals for bash and external read tools.
+- Evidence: Unit tests for approval gate, session grants, login shell, and tab bridge; docs and AGENTS sync.
+- Remaining: Human visual sign-off for approval prompt layout in reloaded Obsidian UI.
+
+## Completion summary
+
+Spec 038 added sidebar inline capability approvals for unlisted `obsidian_bash` commands and external read paths outside configured roots, replacing the reverted spec 034 modal flow.
+
+Delivered behavior:
+
+- Four-option inline prompt (Deny / once / session / always) reusing `InlineAskUserQuestion` and composer inline prompts.
+- `CapabilityApprovalPort`, per-tab runtime wiring, and in-memory session grants cleared on session switch.
+- Always allow persists to `bashAllowlist` or device-local `externalReadDirectories` and refreshes runtime tools.
+- Bash runs through the user login shell (`$SHELL -lc`) so terminal PATH and shell init apply.
+
+Documentation synchronized into `AGENTS.md`, `README.md`, `SECURITY.md`, `docs/07-tools-skills-mcp-and-integrations.md`, and package/local `AGENTS.md` files.
