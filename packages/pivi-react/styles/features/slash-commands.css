@@ -1,6 +1,11 @@
 /* Slash Command Dropdown */
-.pivi-slash-dropdown {
+.pivi-input-container,
+.pivi-settings-mention-editor-container {
+  container-name: pivi-slash-host;
   container-type: inline-size;
+}
+
+.pivi-slash-dropdown {
   display: none;
   position: absolute;
   bottom: var(--pivi-anchored-dropdown-bottom, 100%);
@@ -176,8 +181,21 @@
   color: var(--pivi-host-text-muted);
 }
 
-@container (max-width: 420px) {
+@container pivi-slash-host (max-width: 420px) {
   .pivi-slash-detail {
+    position: static;
+    top: auto;
+    left: auto;
+    margin-left: 0;
+    margin-top: 6px;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .pivi-slash-dropdown-fixed .pivi-slash-detail {
     position: static;
     top: auto;
     left: auto;

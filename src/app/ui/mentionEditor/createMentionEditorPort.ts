@@ -124,6 +124,7 @@ export function createMentionEditorPort(
           getSkills: () => workspace.skillProvider.listSkills(),
         },
       );
+      void slashDropdown.prefetchCaches();
 
       const inputHandler = (): void => {
         mentionDropdown.handleInputChange();

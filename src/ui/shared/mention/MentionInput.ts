@@ -106,6 +106,10 @@ export class MentionInput implements ComposerInput {
     this.el.focus();
   }
 
+  contains(node: Node | null): boolean {
+    return this.el.contains(node);
+  }
+
   blur(): void {
     this.el.blur();
   }

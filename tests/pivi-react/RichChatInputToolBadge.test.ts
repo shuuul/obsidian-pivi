@@ -7,6 +7,7 @@ import type { App } from 'obsidian';
 
 import { appI18n } from '@/app/i18n';
 import { RichChatInput } from '@/ui/chat/ui/RichChatInput';
+import { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';
 import { MentionInput } from '@/ui/shared/mention/MentionInput';
 
 describe('RichChatInput tool badges', () => {
@@ -64,6 +65,39 @@ describe('RichChatInput tool badges', () => {
     expect(badge).toHaveClass('pivi-context-badge-kind-tool', 'pivi-context-badge--inline');
     expect(badge).toHaveTextContent('generate image');
     expect(input.value).toBe('/generate-image a moonlit lake');
+  });
+
+  it('dismisses the slash dropdown outside a rich composer without treating its adapter as a DOM node', async () => {
+    const container = document.body.createDiv();
+    const input = new RichChatInput(container, {
+      app: {} as App,
+      getMentionContext: () => ({
+        vault: {
+          getFiles: () => [],
+          getFolders: () => [],
+          getByPath: () => null,
+          resolveWikilink: () => null,
+        },
+        mcpServerNames: new Set(),
+      }),
+    });
+    jest.spyOn(input, 'getTextOffsetClientRect').mockReturnValue(null);
+    const dropdown = new SlashCommandDropdown(
+      container,
+      input,
+      { onSelect: jest.fn() },
+      { getSkills: () => [{ name: 'review' }] },
+    );
+    input.value = '/';
+
+    dropdown.handleInputChange();
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+    expect(dropdown.isVisible()).toBe(true);
+
+    document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    expect(dropdown.isVisible()).toBe(false);
+    dropdown.destroy();
+    input.destroy();
   });
 
   it('localizes the image tool tooltip without translating its identifier', () => {

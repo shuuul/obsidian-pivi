@@ -57,6 +57,15 @@ describe('product animation styles', () => {
     }
   });
 
+  it('sizes slash detail responsiveness from its host instead of the narrow list', () => {
+    const styles = readFileSync(slashDropdownPath, 'utf8');
+
+    expect(styles).toMatch(/\.pivi-input-container,[\s\S]*?container-name: pivi-slash-host;/);
+    expect(styles).toMatch(/\.pivi-input-container,[\s\S]*?container-type: inline-size;/);
+    expect(styles).toContain('@container pivi-slash-host (max-width: 420px)');
+    expect(styles).not.toMatch(/\.pivi-slash-dropdown\s*\{[^}]*container-(?:name|type):/);
+  });
+
   it('loads motion and transparency preferences after component styles', () => {
     const manifest = readFileSync(manifestPath, 'utf8');
     const accessibilityStyles = readFileSync(accessibilityPath, 'utf8');

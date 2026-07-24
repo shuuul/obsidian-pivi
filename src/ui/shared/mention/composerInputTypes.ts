@@ -4,6 +4,7 @@ export interface ComposerInput {
   selectionStart: number | null;
   selectionEnd: number | null;
   focus(): void;
+  contains(node: Node | null): boolean;
   getBoundingClientRect(): DOMRect;
   addEventListener(
     type: string,

@@ -28,6 +28,7 @@ import {
 } from './types';
 
 type MentionInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
+const MENTION_FILTER_DEBOUNCE_MS = 40;
 
 function getTextOffsetClientRect(inputEl: MentionInputElement, offset: number): DOMRect | null {
   if ('getTextOffsetClientRect' in inputEl && typeof inputEl.getTextOffsetClientRect === 'function') {
@@ -78,6 +79,7 @@ export class MentionDropdownController {
   private fixed: boolean;
   private suggestSelectedTextTemplate: boolean;
   private debounceTimer: number | null = null;
+  private pendingSearchText: string | null = null;
   private overlayListenersAttached = false;
 
   private get ownerWindow(): Window {
@@ -125,6 +127,7 @@ export class MentionDropdownController {
       getActiveWindow(this.containerEl).clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
     }
+    this.pendingSearchText = null;
     this.removeOverlayListeners();
     this.dropdown.hide();
     this.containerEl.removeClass('pivi-mention-dropdown-open');
@@ -139,6 +142,7 @@ export class MentionDropdownController {
     if (this.debounceTimer !== null) {
       getActiveWindow(this.containerEl).clearTimeout(this.debounceTimer);
     }
+    this.pendingSearchText = null;
     this.removeOverlayListeners();
     this.containerEl.removeClass('pivi-mention-dropdown-open');
     this.dropdown.destroy();
@@ -163,41 +167,55 @@ export class MentionDropdownController {
     const win = getActiveWindow(this.containerEl);
     if (this.debounceTimer !== null) {
       win.clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
     }
 
-    this.debounceTimer = win.setTimeout(() => {
-      const text = this.inputEl.value;
-      this.updateMcpMentionsFromText(text);
+    const text = this.inputEl.value;
+    this.updateMcpMentionsFromText(text);
 
-      const cursorPos = this.inputEl.selectionStart || 0;
-      const textBeforeCursor = text.substring(0, cursorPos);
-      const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    const cursorPos = this.inputEl.selectionStart || 0;
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
-      if (lastAtIndex === -1) {
-        this.hide();
-        return;
-      }
+    if (lastAtIndex === -1) {
+      this.hide();
+      return;
+    }
 
-      const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] ?? ' ' : ' ';
-      if (!/\s/.test(charBeforeAt) && lastAtIndex !== 0) {
-        this.hide();
-        return;
-      }
+    const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] ?? ' ' : ' ';
+    if (!/\s/.test(charBeforeAt) && lastAtIndex !== 0) {
+      this.hide();
+      return;
+    }
 
-      const searchText = textBeforeCursor.substring(lastAtIndex + 1);
+    const searchText = textBeforeCursor.substring(lastAtIndex + 1);
 
-      if (searchText.startsWith('[') || /\s/.test(searchText)) {
-        this.hide();
-        return;
-      }
+    if (searchText.startsWith('[') || /\s/.test(searchText)) {
+      this.hide();
+      return;
+    }
 
-      this.mentionStartIndex = lastAtIndex;
+    this.mentionStartIndex = lastAtIndex;
+    if (!this.dropdown.isVisible() || searchText.length === 0) {
+      this.pendingSearchText = null;
       this.showMentionDropdown(searchText);
-    }, 200);
+      return;
+    }
+
+    // Keep an already-open list responsive while coalescing expensive vault filtering
+    // when several characters arrive in one typing burst.
+    this.pendingSearchText = searchText;
+    this.debounceTimer = win.setTimeout(() => {
+      this.debounceTimer = null;
+      const pendingSearchText = this.pendingSearchText;
+      this.pendingSearchText = null;
+      if (pendingSearchText !== null) this.showMentionDropdown(pendingSearchText);
+    }, MENTION_FILTER_DEBOUNCE_MS);
   }
 
   handleKeydown(e: KeyboardEvent): boolean {
     if (!this.dropdown.isVisible()) return false;
+    if (e.key !== 'Escape') this.flushPendingFilter();
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -409,6 +427,7 @@ export class MentionDropdownController {
         }
       },
       onItemClick: (item, index, e) => {
+        if (this.flushPendingFilter()) return;
         // Stop propagation for folder items to prevent document click handler
         // from hiding dropdown (since dropdown is re-rendered with new DOM)
         if (item.type === 'context-folder' || item.type === 'agent-folder') {
@@ -433,9 +452,10 @@ export class MentionDropdownController {
 
   private readonly onOutsidePointerDown = (event: PointerEvent): void => {
     const target = event.target;
-    if (!target || !(target instanceof Node)) return;
+    const OwnerNode = this.containerEl.ownerDocument?.defaultView?.Node;
+    if (!target || !OwnerNode || !(target instanceof OwnerNode)) return;
     const dropdownEl = this.dropdown.getElement();
-    if (dropdownEl?.contains(target) || (this.inputEl as HTMLElement).contains(target)) return;
+    if (dropdownEl?.contains(target) || this.inputEl.contains(target)) return;
     this.hide();
   };
 
@@ -534,6 +554,18 @@ export class MentionDropdownController {
     const estimatedWidth = longestTextLength * ESTIMATED_MENTION_TEXT_CHAR_WIDTH
       + MENTION_DROPDOWN_HORIZONTAL_CHROME;
     return Math.min(maxWidth, Math.max(baseWidth, estimatedWidth));
+  }
+
+  private flushPendingFilter(): boolean {
+    if (this.pendingSearchText === null) return false;
+    if (this.debounceTimer !== null) {
+      getActiveWindow(this.containerEl).clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    const searchText = this.pendingSearchText;
+    this.pendingSearchText = null;
+    this.showMentionDropdown(searchText);
+    return true;
   }
 
   private insertReplacement(beforeAt: string, replacement: string, afterCursor: string): void {

@@ -90,9 +90,13 @@ export class SlashCommandDropdown {
   private catalogEntriesFetched = false;
   private cachedMcpToolEntries: DropdownItem[] = [];
   private mcpToolEntriesFetched = false;
+  private cacheGeneration = 0;
+  private catalogLoadPromise: Promise<void> | null = null;
+  private mcpToolLoadPromise: Promise<void> | null = null;
 
   private requestId = 0;
   private currentSearchText = '';
+  private isLoading = false;
   private detailEl: HTMLElement | null = null;
   private overlayListenersAttached = false;
 
@@ -131,10 +135,7 @@ export class SlashCommandDropdown {
   ): void {
     this.catalogConfig = config;
     this.getCatalogEntries = getEntries;
-    this.cachedCatalogEntries = [];
-    this.catalogEntriesFetched = false;
-    this.cachedMcpToolEntries = [];
-    this.mcpToolEntriesFetched = false;
+    this.invalidateCaches();
     this.requestId += 1;
   }
 
@@ -217,6 +218,9 @@ export class SlashCommandDropdown {
 
   destroy(): void {
     this.requestId += 1;
+    this.cacheGeneration += 1;
+    this.catalogLoadPromise = null;
+    this.mcpToolLoadPromise = null;
     this.removeOverlayListeners();
     this.inputEl.removeEventListener('input', this.onInput);
     this.containerEl.removeClass('pivi-slash-dropdown-open');
@@ -227,45 +231,84 @@ export class SlashCommandDropdown {
   }
 
   resetRuntimeSkillsCache(): void {
+    this.invalidateCaches();
+    this.requestId += 1;
+  }
+
+  private invalidateCaches(): void {
     this.cachedCatalogEntries = [];
     this.catalogEntriesFetched = false;
     this.cachedMcpToolEntries = [];
     this.mcpToolEntriesFetched = false;
-    this.requestId += 1;
+    this.cacheGeneration += 1;
+    this.catalogLoadPromise = null;
+    this.mcpToolLoadPromise = null;
   }
 
-  /** Warm catalog + MCP tool caches in the background so first `/` open is sync from cache. */
+  /** Warm catalog + MCP tool caches without delaying or invalidating an active selector. */
   async prefetchCaches(): Promise<void> {
-    const currentRequest = ++this.requestId;
-    await this.loadCachesForRequest(currentRequest);
+    await this.loadCaches();
   }
 
-  private async loadCachesForRequest(currentRequest: number): Promise<boolean> {
-    const catalogResult = await fetchCatalogEntries(
-      this.catalogEntriesFetched,
-      this.getCatalogEntries,
-    );
-    if (currentRequest !== this.requestId) return false;
-    if (catalogResult.kind === 'ok') {
-      this.cachedCatalogEntries = catalogResult.entries;
-      this.catalogEntriesFetched = true;
-    }
+  private loadCaches(): Promise<void> {
+    return Promise.all([
+      this.loadCatalogEntries(),
+      this.loadMcpToolEntries(),
+    ]).then(() => undefined);
+  }
 
-    const mcpResult = await fetchMcpToolEntries(
-      this.mcpToolEntriesFetched,
+  private loadCatalogEntries(): Promise<void> {
+    if (this.catalogEntriesFetched || !this.getCatalogEntries) {
+      return Promise.resolve();
+    }
+    if (this.catalogLoadPromise) return this.catalogLoadPromise;
+
+    const generation = this.cacheGeneration;
+    let loadPromise: Promise<void>;
+    loadPromise = fetchCatalogEntries(false, this.getCatalogEntries)
+      .then((result) => {
+        if (generation !== this.cacheGeneration || result.kind !== 'ok') return;
+        this.cachedCatalogEntries = result.entries;
+        this.catalogEntriesFetched = true;
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (this.catalogLoadPromise === loadPromise) this.catalogLoadPromise = null;
+      });
+    this.catalogLoadPromise = loadPromise;
+    return loadPromise;
+  }
+
+  private loadMcpToolEntries(): Promise<void> {
+    if (this.mcpToolEntriesFetched || !this.getMcpManager) {
+      return Promise.resolve();
+    }
+    if (this.mcpToolLoadPromise) return this.mcpToolLoadPromise;
+
+    const generation = this.cacheGeneration;
+    let loadPromise: Promise<void>;
+    loadPromise = fetchMcpToolEntries(
+      false,
       this.getMcpManager,
       this.getMcpToolProvider,
-    );
-    if (currentRequest !== this.requestId) return false;
-    if (mcpResult.kind === 'ok') {
-      this.cachedMcpToolEntries = mcpResult.fetched
-        ? mcpResult.entries
-        : mergeMcpEntries(this.cachedMcpToolEntries, mcpResult.entries);
-      this.mcpToolEntriesFetched = mcpResult.fetched;
-    } else if (mcpResult.fetched) {
-      this.mcpToolEntriesFetched = true;
-    }
-    return true;
+    )
+      .then((result) => {
+        if (generation !== this.cacheGeneration) return;
+        if (result.kind === 'ok') {
+          this.cachedMcpToolEntries = result.fetched
+            ? result.entries
+            : mergeMcpEntries(this.cachedMcpToolEntries, result.entries);
+          this.mcpToolEntriesFetched = result.fetched;
+        } else if (result.fetched) {
+          this.mcpToolEntriesFetched = true;
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (this.mcpToolLoadPromise === loadPromise) this.mcpToolLoadPromise = null;
+      });
+    this.mcpToolLoadPromise = loadPromise;
+    return loadPromise;
   }
 
   private getInputValue(): string {
@@ -285,13 +328,33 @@ export class SlashCommandDropdown {
     this.inputEl.selectionEnd = pos;
   }
 
-  private async showDropdown(searchText: string): Promise<void> {
+  private showDropdown(searchText: string): void {
     const currentRequest = ++this.requestId;
-    const searchLower = searchText.toLowerCase();
     this.currentSearchText = searchText;
+    const pendingLoads: Promise<void>[] = [];
+    if (!this.catalogEntriesFetched && this.getCatalogEntries !== null) {
+      pendingLoads.push(this.loadCatalogEntries());
+    }
+    if (!this.mcpToolEntriesFetched && this.getMcpManager !== null) {
+      pendingLoads.push(this.loadMcpToolEntries());
+    }
 
-    if (!await this.loadCachesForRequest(currentRequest)) return;
+    this.filterAndRender(searchText, pendingLoads.length === 0);
+    if (pendingLoads.length === 0) return;
 
+    let remainingLoads = pendingLoads.length;
+    for (const load of pendingLoads) {
+      void load.then(() => {
+        remainingLoads -= 1;
+        if (currentRequest === this.requestId) {
+          this.filterAndRender(searchText, remainingLoads === 0);
+        }
+      });
+    }
+  }
+
+  private filterAndRender(searchText: string, hideWhenEmpty: boolean): void {
+    const searchLower = searchText.toLowerCase();
     const allItems = buildItemList(
       this.getSkills,
       this.cachedMcpToolEntries,
@@ -310,10 +373,9 @@ export class SlashCommandDropdown {
         }
         return a.displayName.localeCompare(b.displayName);
       });
+    this.isLoading = !hideWhenEmpty && this.filteredItems.length === 0;
 
-    if (currentRequest !== this.requestId) return;
-
-    if (searchText.length > 0 && this.filteredItems.length === 0) {
+    if (hideWhenEmpty && searchText.length > 0 && this.filteredItems.length === 0) {
       this.hide();
       return;
     }
@@ -332,7 +394,7 @@ export class SlashCommandDropdown {
 
     if (this.filteredItems.length === 0) {
       const emptyEl = this.dropdownEl.createDiv({ cls: 'pivi-slash-empty' });
-      emptyEl.setText(t('chat.slash.noMatches'));
+      emptyEl.setText(t(this.isLoading ? 'common.loading' : 'chat.slash.noMatches'));
     } else {
       const listEl = this.dropdownEl.createDiv({ cls: 'pivi-slash-list' });
       listEl.setAttribute('role', 'listbox');
@@ -396,8 +458,9 @@ export class SlashCommandDropdown {
 
   private readonly onOutsidePointerDown = (event: PointerEvent): void => {
     const target = event.target;
-    if (!target || !(target instanceof Node)) return;
-    if (this.dropdownEl?.contains(target) || (this.inputEl as HTMLElement).contains(target)) return;
+    const OwnerNode = this.containerEl.ownerDocument?.defaultView?.Node;
+    if (!target || !OwnerNode || !(target instanceof OwnerNode)) return;
+    if (this.dropdownEl?.contains(target) || this.inputEl.contains(target)) return;
     this.hide();
   };
 

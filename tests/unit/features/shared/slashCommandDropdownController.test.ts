@@ -147,7 +147,7 @@ function deferred<T>(): {
 }
 
 async function flushAsyncDropdown(): Promise<void> {
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 16; i++) {
     await Promise.resolve();
   }
 }
@@ -247,38 +247,91 @@ describe('SlashCommandDropdown controller', () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it('does not let an older catalog request overwrite the latest cache', async () => {
-    const first = deferred<SlashCatalogEntry[]>();
-    const second = deferred<SlashCatalogEntry[]>();
-    const getCatalogEntries = jest.fn()
-      .mockReturnValueOnce(first.promise)
-      .mockReturnValueOnce(second.promise);
+  it('shows cached skills immediately and shares an in-flight catalog request', async () => {
+    const catalog = deferred<SlashCatalogEntry[]>();
+    const getCatalogEntries = jest.fn(() => catalog.promise);
     const container = new FakeElement();
     const input = new FakeInput();
     const dropdown = new SlashCommandDropdown(
       container as unknown as HTMLElement,
       input as unknown as HTMLTextAreaElement,
       { onSelect: jest.fn() },
-      { getCatalogEntries },
+      {
+        getCatalogEntries,
+        getSkills: () => [{ name: 'review' }],
+      },
     );
 
-    setInput(input, '/fir');
+    setInput(input, '/');
     dropdown.handleInputChange();
-    setInput(input, '/sec');
-    dropdown.handleInputChange();
-
-    second.resolve([catalogEntry('second')]);
-    await flushAsyncDropdown();
-    first.resolve([catalogEntry('first')]);
-    await flushAsyncDropdown();
-
-    setInput(input, '/sec');
-    dropdown.handleInputChange();
-    await flushAsyncDropdown();
     expect(dropdown.isVisible()).toBe(true);
+    expect(container.querySelectorAll('.pivi-slash-icon--skill')).toHaveLength(2);
+
+    setInput(input, '/rev');
+    dropdown.handleInputChange();
+    expect(getCatalogEntries).toHaveBeenCalledTimes(1);
+
+    catalog.resolve([catalogEntry('explain')]);
+    await flushAsyncDropdown();
 
     expect(dropdown.handleKeydown(keyboardEvent('Enter'))).toBe(true);
-    expect(input.value).toBe('/second ');
+    expect(input.value).toBe('/review ');
+  });
+
+  it('loads catalog and MCP tools in parallel and publishes each result progressively', async () => {
+    const catalog = deferred<SlashCatalogEntry[]>();
+    const tools = deferred<Array<{ name: string }>>();
+    const getCatalogEntries = jest.fn(() => catalog.promise);
+    const listTools = jest.fn(() => tools.promise);
+    const container = new FakeElement();
+    const input = new FakeInput();
+    const dropdown = new SlashCommandDropdown(
+      container as unknown as HTMLElement,
+      input as unknown as HTMLTextAreaElement,
+      { onSelect: jest.fn() },
+      {
+        getCatalogEntries,
+        getMcpManager: () => ({
+          getServers: () => [{ name: 'notes', enabled: true }],
+        }),
+        getMcpToolProvider: () => ({ listTools }),
+      },
+    );
+
+    setInput(input, '/');
+    dropdown.handleInputChange();
+
+    expect(getCatalogEntries).toHaveBeenCalledTimes(1);
+    expect(listTools).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('.pivi-slash-empty')?.text).toBe('Loading');
+
+    catalog.resolve([catalogEntry('explain')]);
+    await flushAsyncDropdown();
+    expect(container.querySelectorAll('.pivi-slash-icon--command').length).toBeGreaterThan(0);
+
+    tools.resolve([]);
+    await flushAsyncDropdown();
+    dropdown.destroy();
+  });
+
+  it('keeps cache failures retryable without rejecting background prefetch', async () => {
+    const getServers = jest.fn(() => {
+      throw new Error('MCP unavailable');
+    });
+    const dropdown = new SlashCommandDropdown(
+      new FakeElement() as unknown as HTMLElement,
+      new FakeInput() as unknown as HTMLTextAreaElement,
+      { onSelect: jest.fn() },
+      {
+        getMcpManager: () => ({ getServers }),
+        getMcpToolProvider: () => ({ listTools: async () => [] }),
+      },
+    );
+
+    await expect(dropdown.prefetchCaches()).resolves.toBeUndefined();
+    await expect(dropdown.prefetchCaches()).resolves.toBeUndefined();
+    expect(getServers).toHaveBeenCalledTimes(2);
+    dropdown.destroy();
   });
 
   it('does not reopen after the trigger is removed while a request is pending', async () => {
@@ -352,7 +405,7 @@ describe('SlashCommandDropdown controller', () => {
     await flushAsyncDropdown();
 
     expect(input.listeners.get('input')?.size).toBe(0);
-    expect(container.children).toHaveLength(0);
+    expect(container.children[0]?.removed).toBe(true);
     expect(container.hasClass('pivi-slash-dropdown-open')).toBe(false);
   });
 });

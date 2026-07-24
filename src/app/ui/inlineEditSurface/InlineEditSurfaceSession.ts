@@ -100,6 +100,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
   private mentionInput: MentionInput | null = null;
   private mentionDropdown: MentionDropdownController | null = null;
   private slashDropdown: SlashCommandDropdown | null = null;
+  private selectorPortalEl: HTMLElement | null = null;
   private chrome: InlineEditSurfaceChromeHandle | null = null;
   private sendButton: HTMLButtonElement | null = null;
   private sendIconEl: HTMLElement | null = null;
@@ -206,6 +207,8 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     this.chrome = null;
     this.mentionDropdown?.destroy();
     this.slashDropdown?.destroy();
+    this.selectorPortalEl?.remove();
+    this.selectorPortalEl = null;
     this.mentionInput?.destroy();
     this.vaultDataProvider = null;
     this.replyMarkdown?.dispose();
@@ -457,8 +460,12 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
 
     const app = this.deps.plugin.app;
     // CM block widgets participate in the editor's stacking context. Mount popup
-    // selectors in the owner document so preceding editor lines cannot paint over them.
-    const dropdownHost = this.rootEl.ownerDocument.body;
+    // selectors in a token-owning owner-document portal so preceding editor lines
+    // cannot paint over them without losing the shared sidebar presentation tokens.
+    const dropdownHost = ownerWindow.document.body.createDiv({
+      cls: 'pivi-inline-selector-portal pivi-inline-composer-selector-portal',
+    });
+    this.selectorPortalEl = dropdownHost;
 
     this.vaultDataProvider = new VaultMentionDataProvider(app);
     this.vaultDataProvider.initializeInBackground();
@@ -511,6 +518,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
         fixed: true,
       },
     );
+    void this.slashDropdown.prefetchCaches();
 
   }
 

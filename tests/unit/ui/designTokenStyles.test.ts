@@ -37,6 +37,12 @@ describe('product design tokens', () => {
     }
     expect(variables).toContain('--pivi-text-chat-body: var(--pivi-chat-font-size');
     expect(variables).toContain('--pivi-text-composer: var(--pivi-composer-font-size');
+    expect(variables).toMatch(
+      /\.pivi-inline-composer-selector-portal \{[\s\S]*?font-family: var\(--pivi-host-font-text\);[\s\S]*?font-size: var\(--pivi-text-base\);/,
+    );
+    expect(variables).toMatch(
+      /\.pivi-inline-composer-selector-portal \{[\s\S]*?z-index: 10004;[\s\S]*?pointer-events: none;/,
+    );
   });
 
   it('keeps focus rings independent from component geometry', () => {

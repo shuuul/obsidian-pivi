@@ -111,6 +111,10 @@ describe('InlineEditSurfaceSession DOM', () => {
 
   beforeEach(() => {
     jest.mocked(MarkdownRenderer.render).mockImplementation(async () => undefined);
+    Object.defineProperty(Range.prototype, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => new DOMRect(),
+    });
     Object.defineProperty(window.navigator, 'clipboard', {
       configurable: true,
       value: { writeText },
@@ -151,6 +155,29 @@ describe('InlineEditSurfaceSession DOM', () => {
       + '.pivi-inline-edit-surface-reply-content.pivi-text-block > .pivi-streaming-markdown',
     )).not.toBeNull();
     expect(root?.querySelectorAll('.pivi-inline-edit-surface-reply-actions button')).toHaveLength(1);
+  });
+
+  it('mounts fixed mention and slash selectors in a shared token-owning portal', async () => {
+    session.show(createSnapshot(editor));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const portal = document.body.querySelector(
+      '.pivi-inline-selector-portal.pivi-inline-composer-selector-portal',
+    );
+    const input = editor.dom.querySelector<HTMLElement>('.pivi-inline-edit-surface-input');
+    expect(portal).not.toBeNull();
+
+    session.setPrompt('@');
+    input?.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(portal?.querySelector('.pivi-mention-dropdown-fixed')).not.toBeNull();
+
+    session.setPrompt('/');
+    input?.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(portal?.querySelector('.pivi-slash-dropdown-fixed')).not.toBeNull();
+
+    session.destroy();
+    expect(document.body.querySelector('.pivi-inline-selector-portal')).toBeNull();
   });
 
   it('copies the raw Markdown reply from the transparent output action', async () => {

@@ -35,7 +35,7 @@ describe('MentionDropdownController folder labels', () => {
     });
 
     controller.handleInputChange();
-    jest.advanceTimersByTime(200);
+    expect(controller.isVisible()).toBe(true);
 
     expect(container.querySelector('.pivi-mention-name-folder')).toHaveTextContent('notes/');
     expect(container.querySelector('.pivi-mention-name-folder')).not.toHaveTextContent('@notes/');
@@ -69,6 +69,36 @@ describe('MentionDropdownController folder labels', () => {
     expect(controller.handleKeydown(new KeyboardEvent('keydown', { key: 'Escape' }))).toBe(true);
     expect(controller.isVisible()).toBe(false);
     expect(controller.handleKeydown(new KeyboardEvent('keydown', { key: 'a' }))).toBe(false);
+    controller.destroy();
+  });
+
+  it('flushes a pending filter before accepting a keyboard selection', () => {
+    const container = document.body.createDiv();
+    const input = document.createElement('textarea');
+    document.body.appendChild(input);
+    const controller = new MentionDropdownController(container, input, {
+      onAttachFile: jest.fn(),
+      getMentionedMcpServers: () => new Set(),
+      setMentionedMcpServers: () => false,
+      addMentionedMcpServer: jest.fn(),
+      getExternalContexts: () => [],
+      getCachedVaultFolders: () => [
+        { name: 'alpha', path: 'alpha' },
+        { name: 'beta', path: 'beta' },
+      ],
+      getCachedVaultFiles: () => [],
+      normalizePathForVault: (path) => path ?? null,
+    });
+
+    input.value = '@a';
+    input.selectionStart = input.selectionEnd = input.value.length;
+    controller.handleInputChange();
+    input.value = '@b';
+    input.selectionStart = input.selectionEnd = input.value.length;
+    controller.handleInputChange();
+
+    expect(controller.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }))).toBe(true);
+    expect(input.value).toBe('@beta/ ');
     controller.destroy();
   });
 
