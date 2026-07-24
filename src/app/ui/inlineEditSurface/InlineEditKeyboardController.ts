@@ -24,6 +24,12 @@ export class InlineEditKeyboardController {
     }
     if (!this.deps.isInputFocused()) return;
     if (this.deps.handleSlashKeydown(event) || this.deps.handleMentionKeydown(event)) return;
+    if (event.key === 'Escape' && !event.isComposing) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.deps.onReject();
+      return;
+    }
     if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && this.deps.canSend()) {
       event.preventDefault();
       this.deps.onSend();

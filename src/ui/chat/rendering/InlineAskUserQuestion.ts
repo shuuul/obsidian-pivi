@@ -1,6 +1,8 @@
 import type { AskUserQuestionItem, AskUserQuestionOption } from '@pivi/pivi-agent-core/foundation/tools';
 
-import { createInlineAskKeyDownHandler } from './inlineAskUserQuestionKeys';
+import { t } from '@/app/i18n';
+
+import { createInlineAskKeyDownHandler, shouldFocusAskUserRoot } from './inlineAskUserQuestionKeys';
 import {
   parseQuestionsFromInput,
   renderAskUserQuestionTabs,
@@ -48,7 +50,7 @@ export class InlineAskUserQuestion {
     this.resolveCallback = resolve;
     this.signal = signal;
     this.config = {
-      title: config?.title ?? 'Question',
+      title: config?.title ?? t('chat.askUser.defaultTitle'),
       headerEl: config?.headerEl,
       showCustomInput: config?.showCustomInput ?? true,
       immediateSelect: config?.immediateSelect ?? false,
@@ -93,6 +95,7 @@ export class InlineAskUserQuestion {
     this.rootEl.addEventListener('keydown', this.boundKeyDown);
 
     window.requestAnimationFrame(() => {
+      if (!shouldFocusAskUserRoot(this.rootEl.ownerDocument)) return;
       this.rootEl.focus();
       this.rootEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     });

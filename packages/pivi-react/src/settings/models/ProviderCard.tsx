@@ -13,6 +13,7 @@ import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
+import { ModalLayer } from '../../shared/ModalLayer';
 import { SettingsItemActions, SettingsRemoveButton, Toggle } from '../controls';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
@@ -245,16 +246,11 @@ export function ProviderCard({
       </div>
     </details>
     {confirmingRemove ? (
-      <div
-        className="pivi-modal-layer"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('settings.modelsTab.removeConfirmTitle', { name: displayName })}
+      <ModalLayer
+        ariaLabel={t('settings.modelsTab.removeConfirmTitle', { name: displayName })}
+        open
+        onClose={() => { if (!removing) setConfirmingRemove(false); }}
       >
-        <div
-          className="pivi-modal-backdrop"
-          onClick={removing ? undefined : () => { setConfirmingRemove(false); }}
-        />
         <div className="pivi-modal">
           <div className="pivi-modal__title">
             {t('settings.modelsTab.removeConfirmTitle', { name: displayName })}
@@ -272,7 +268,7 @@ export function ProviderCard({
             })}</span>
           </label>
           <div className="pivi-modal__actions">
-            <button type="button" disabled={removing} onClick={() => { setConfirmingRemove(false); }}>
+            <button type="button" data-modal-cancel disabled={removing} onClick={() => { setConfirmingRemove(false); }}>
               {t('common.cancel')}
             </button>
             <button
@@ -285,7 +281,7 @@ export function ProviderCard({
             </button>
           </div>
         </div>
-      </div>
+      </ModalLayer>
     ) : null}
   </Fragment>;
 }

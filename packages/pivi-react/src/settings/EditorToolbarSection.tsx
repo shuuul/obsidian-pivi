@@ -187,7 +187,7 @@ function ObsidianCommandPicker({
 }) {
   const t = useT();
   const [query, setQuery] = useState('');
-  const commands = useMemo(() => {
+  const filteredCommands = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const editorCommandIds = new Set(EDITOR_COMMANDS.map(command => command.id));
     return editorToolbar.listHostCommands()
@@ -197,9 +197,10 @@ function ObsidianCommandPicker({
         !normalizedQuery
         || command.name.toLowerCase().includes(normalizedQuery)
         || command.id.toLowerCase().includes(normalizedQuery)
-      ))
-      .slice(0, 100);
+      ));
   }, [editorToolbar, existingCommandIds, query]);
+  const commands = filteredCommands.slice(0, 100);
+  const truncated = filteredCommands.length > commands.length;
 
   return (
     <div className="pivi-editor-toolbar-picker">
@@ -240,6 +241,11 @@ function ObsidianCommandPicker({
           </button>
         ))}
       </div>
+      {truncated ? (
+        <p className="pivi-setting-description">
+          {t('settings.editorToolbar.commandsTruncated', { count: commands.length })}
+        </p>
+      ) : null}
       <div className="pivi-settings-action-group">
         <button type="button" disabled={pending} onClick={onCancel}>{t('common.cancel')}</button>
       </div>

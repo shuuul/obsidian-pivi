@@ -23,6 +23,7 @@ import {
   type SortableReorderHandleProps,
   useSortableReorder,
 } from '../reorder/useSortableReorder';
+import { ModalLayer } from '../shared/ModalLayer';
 import { SettingsActionFeedback, SettingsItemActions, SettingsListHeader, SettingsPageDescription, SettingsRemoveButton } from './controls';
 
 function normalizeCommandName(value: string): string {
@@ -577,16 +578,22 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
       </div>
     </div>
     {confirmDelete
-      ? <div className="pivi-modal-layer" role="dialog" aria-modal="true" aria-label={t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}>
-        <div className="pivi-modal-backdrop" onClick={() => setConfirmDelete(null)} />
+      ? <ModalLayer
+        ariaLabel={t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
+        open
+        onClose={() => { if (!pending) setConfirmDelete(null); }}
+      >
         <div className="pivi-modal">
+          <div className="pivi-modal__title">
+            {t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
+          </div>
           <p>{t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}</p>
           <div className="pivi-modal__actions">
-            <button type="button" disabled={pending} onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
+            <button type="button" data-modal-cancel disabled={pending} onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
             <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void remove(confirmDelete); }}>{t('common.delete')}</button>
           </div>
         </div>
-      </div>
+      </ModalLayer>
       : null}
   </>;
 }

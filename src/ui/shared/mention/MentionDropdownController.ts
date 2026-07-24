@@ -78,6 +78,11 @@ export class MentionDropdownController {
   private fixed: boolean;
   private suggestSelectedTextTemplate: boolean;
   private debounceTimer: number | null = null;
+  private overlayListenersAttached = false;
+
+  private get ownerWindow(): Window {
+    return getActiveWindow(this.containerEl);
+  }
 
   constructor(
     containerEl: HTMLElement,
@@ -116,6 +121,11 @@ export class MentionDropdownController {
   }
 
   hide(): void {
+    if (this.debounceTimer !== null) {
+      getActiveWindow(this.containerEl).clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    this.removeOverlayListeners();
     this.dropdown.hide();
     this.containerEl.removeClass('pivi-mention-dropdown-open');
     this.mentionStartIndex = -1;
@@ -129,6 +139,7 @@ export class MentionDropdownController {
     if (this.debounceTimer !== null) {
       getActiveWindow(this.containerEl).clearTimeout(this.debounceTimer);
     }
+    this.removeOverlayListeners();
     this.containerEl.removeClass('pivi-mention-dropdown-open');
     this.dropdown.destroy();
   }
@@ -417,6 +428,47 @@ export class MentionDropdownController {
     } else {
       this.positionAnchored();
     }
+    this.ensureOverlayListeners();
+  }
+
+  private readonly onOutsidePointerDown = (event: PointerEvent): void => {
+    const target = event.target;
+    if (!target || !(target instanceof Node)) return;
+    const dropdownEl = this.dropdown.getElement();
+    if (dropdownEl?.contains(target) || (this.inputEl as HTMLElement).contains(target)) return;
+    this.hide();
+  };
+
+  private readonly onOwnerScroll = (): void => {
+    if (!this.dropdown.isVisible()) return;
+    if (this.mentionStartIndex < 0) {
+      this.hide();
+      return;
+    }
+    if (this.fixed) {
+      this.positionFixed();
+    } else {
+      this.positionAnchored();
+    }
+  };
+
+  private ensureOverlayListeners(): void {
+    if (this.overlayListenersAttached) return;
+    const ownerDocument = this.containerEl.ownerDocument;
+    if (!ownerDocument?.addEventListener) return;
+    ownerDocument.addEventListener('pointerdown', this.onOutsidePointerDown, true);
+    this.ownerWindow.addEventListener('scroll', this.onOwnerScroll, true);
+    this.overlayListenersAttached = true;
+  }
+
+  private removeOverlayListeners(): void {
+    if (!this.overlayListenersAttached) return;
+    const ownerDocument = this.containerEl.ownerDocument;
+    if (ownerDocument?.removeEventListener) {
+      ownerDocument.removeEventListener('pointerdown', this.onOutsidePointerDown, true);
+    }
+    this.ownerWindow.removeEventListener('scroll', this.onOwnerScroll, true);
+    this.overlayListenersAttached = false;
   }
 
   private positionAnchored(): void {

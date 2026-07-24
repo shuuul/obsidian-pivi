@@ -43,11 +43,15 @@ export function createFloatingOverlay(
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      dismiss('escape');
+    if (event.key !== 'Escape') {
+      return;
     }
+    if (!isVisible) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    dismiss('escape');
   };
 
   const onPointerDown = (event: PointerEvent): void => {

@@ -15,6 +15,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Recently completed
 
+- **UI/UX accessibility and overlay hardening** (spec `037`): deterministic overlay Escape/outside-pointer/scroll behavior; composer listbox selectors; shared React `ModalLayer` confirmations; explicit environment apply and destructive-action review; ask-user conditional focus plus guarded 1–9 shortcuts and full locale coverage; image lightbox dialog lifecycle; keyboard archived-tab reveal; host-token semantic color migration; compact 32px / coarse 44px pointer targets; and focused owner-realm regression tests.
 - **Security and release assurance** (spec `036`): exact synchronized Pi pins with a private SessionManager capability adapter and `test:pi-compat` gate; focused macOS/Windows path/process/MCP/Skills CI; direct security-module branch coverage thresholds; shared CI/release quality gates; SHA-pinned Actions; deterministic `smoke:obsidian`; expanded [SECURITY.md](../SECURITY.md) disclosure and trust-boundary documentation without unsupported guarantees.
 - **Network egress and HTTP client** (spec `032`): purpose-scoped HTTP clients with host-neutral egress policy replace the global `window.fetch` patch. Local/private destinations are denied by default; configured MCP and custom-provider private origins receive session-scoped grants re-issued on settings save and cleared on unload. WebFetch rejects local/private targets before any extractor or direct attempt. See [SECURITY.md](../SECURITY.md).
 - **Local execution and Vault mutation** (spec `033`): bounded cross-platform `ProcessRunner` (limits, abort, process-tree kill, shell-forbidden default) plus mandatory vault-relative mutation containment via `requireVaultRelativeMutationPath`, with Bash/CLI/Skills/MCP callers migrated onto explicit policies. See [SECURITY.md](../SECURITY.md).
@@ -30,9 +31,6 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 - Harden session/lifecycle edges: delete a newly forked session when tab creation returns `null`, and coordinate unload snapshot persistence with workspace disposal.
 - Pass the file-indicator root into current-note context badge creation and add a pop-out owner-realm regression test.
 - Update bundle-analysis and bundle-size script messages to reference the durable quality gates instead of the removed quality snapshot.
-- Add keyboard access to archived-tab reveal; the current switcher reveals archived rows through downward wheel progress.
-- Continue focused accessibility and owner-realm tests for model/thinking selectors, context indicators, and pop-out interaction.
-
 ### Later
 
 - Evolve long-session paging, context checkpoints, and the Narrative / Activity / Memory visual language according to [Chat UI evolution](11-chat-ui-evolution.md), promoting only measured and accepted slices into Now or Next.

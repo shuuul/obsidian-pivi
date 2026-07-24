@@ -68,6 +68,7 @@
       "editTitleInputLabel": "标签页标题",
       "closeTab": "关闭 {title}",
       "archived": "已归档",
+      "revealArchived": "显示已归档标签页",
       "failedCreateChat": "创建聊天失败",
       "failedSwitchTab": "切换标签页失败",
       "failedCloseTab": "关闭标签页失败",
@@ -215,7 +216,12 @@
       "typeSomething": "请输入内容。",
       "enterSecret": "请输入密钥。",
       "notAnswered": "未回答",
-      "submit": "提交"
+      "submit": "提交",
+      "defaultTitle": "问题",
+      "optionFallback": "选项",
+      "hints": "Enter 选择 · Tab/方向键导航 · Esc 取消",
+      "hintsImmediate": "Enter 选择 · 方向键导航 · Esc 取消",
+      "questionHeader": "Q{number}"
     },
     "slash": {
       "ariaLabel": "斜杠命令",
@@ -290,6 +296,11 @@
       "resetZoom": "重置 Mermaid 图表缩放",
       "zoomIn": "放大 Mermaid 图表",
       "fitToWidth": "适应 Mermaid 图表宽度"
+    },
+    "messageImages": {
+      "lightboxAria": "图片预览",
+      "closeAria": "关闭图片预览",
+      "openAria": "全尺寸打开 {name}"
     }
   },
   "settings": {
@@ -422,7 +433,8 @@
         "position": "{label} 已移动到第 {position} 位，共 {total} 个。",
         "saved": "快捷按钮顺序已保存。",
         "cancelled": "已取消快捷按钮排序。"
-      }
+      },
+      "commandsTruncated": "仅显示前 {count} 个匹配项。请缩小搜索范围以查看更多。"
     },
     "slashCommands": {
       "desc": "管理存储在 .pivi/commands/ 中的{workspaceName}级自定义命令。由 /名称 触发。"
@@ -474,7 +486,9 @@
         "desc": "仅永久删除已从历史中移除、且未归档或当前未打开的会话文件。",
         "button": "删除",
         "success": "已删除 {count} 个已移除的会话文件。",
-        "failed": "删除已移除的会话文件失败"
+        "failed": "删除已移除的会话文件失败",
+        "confirmTitle": "删除已移除的会话文件？",
+        "confirmDescription": "这将永久删除已从历史记录中移除且未归档或当前未打开的会话文件。"
       }
     },
     "sharedEnvironment": {
@@ -486,7 +500,10 @@
       "storageSecure": "安全存储",
       "storageSystem": "系统环境",
       "secretStored": "已安全存储",
-      "secretMissing": "缺少安全值"
+      "secretMissing": "缺少安全值",
+      "apply": "应用更改",
+      "pending": "正在保存环境变量…",
+      "success": "环境变量已保存。"
     },
     "tools": {
       "sections": {
@@ -684,11 +701,36 @@
         "disableAria": "禁用技能 {name}",
         "updateAria": "更新技能 {name}",
         "removeAria": "移除技能 {name}",
-        "installAria": "安装技能 {name}"
+        "installAria": "安装技能 {name}",
+        "removeConfirmTitle": "移除技能 {name}？",
+        "removeConfirm": "从 .pivi/skills/ 中移除 {name}？这将从您的设备中删除该技能文件夹。"
       },
       "notices": {
         "noRemote": "此来源未找到远程技能。",
         "selectOne": "请至少选择一个要安装的技能。"
+      },
+      "feedback": {
+        "pending": {
+          "installBundle": "正在安装官方技能…",
+          "updateBundle": "正在更新官方技能…",
+          "listRemote": "正在列出远程技能…",
+          "installSelected": "正在安装所选技能…",
+          "updateAll": "正在更新所有技能…",
+          "update": "正在更新 {name}…",
+          "remove": "正在移除 {name}…",
+          "enable": "正在启用 {name}…",
+          "disable": "正在禁用 {name}…"
+        },
+        "success": {
+          "installBundle": "官方技能已安装。",
+          "updateBundle": "官方技能已更新。",
+          "installSelected": "所选技能已安装。",
+          "updateAll": "所有技能已更新。",
+          "update": "{name} 已更新。",
+          "remove": "{name} 已移除。",
+          "enable": "{name} 已启用。",
+          "disable": "{name} 已禁用。"
+        }
       }
     },
     "slashCommandsUi": {
@@ -708,7 +750,8 @@
         "position": "/{name} 已移动到第 {position} 位，共 {total} 个。",
         "saved": "命令顺序已保存。",
         "cancelled": "已取消命令排序。"
-      }
+      },
+      "deleteConfirmTitle": "删除自定义命令 /{name}？"
     },
     "createCommand": {
       "titleCreate": "创建自定义斜杠命令",
@@ -823,7 +866,8 @@
         "connected": "工具已刷新",
         "availableTools": "可用工具（{count}）",
         "noTools": "此服务器未返回任何工具。"
-      }
+      },
+      "deleteConfirmTitle": "删除 MCP 服务器「{name}」？"
     }
   },
   "commands": {

@@ -420,6 +420,10 @@ textarea.pivi-settings-control {
   color: var(--pivi-host-color-green);
 }
 
+.pivi-settings-action-feedback.is-pending {
+  color: var(--pivi-host-text-muted);
+}
+
 .pivi-settings-action-feedback.is-error {
   color: var(--pivi-host-text-error);
 }
@@ -1017,8 +1021,8 @@ textarea.pivi-settings-control {
 }
 
 .pivi-provider-status.oauth-expired {
-  background-color: rgba(var(--pivi-error-rgb), 0.12);
-  color: var(--pivi-error);
+  background-color: rgba(var(--pivi-host-color-red-rgb), 0.12);
+  color: var(--pivi-host-text-error);
 }
 
 .pivi-provider-status.checking {

@@ -100,7 +100,7 @@
 
 .pivi-model-group {
   padding: 3px 8px;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--pivi-host-text-faint);
   text-transform: uppercase;
@@ -191,6 +191,11 @@
   background: transparent;
   color: var(--pivi-host-text-accent);
   font-weight: 500;
+}
+
+.pivi-model-option.is-highlighted {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
 }
 
 @media (hover: hover) and (pointer: fine) {

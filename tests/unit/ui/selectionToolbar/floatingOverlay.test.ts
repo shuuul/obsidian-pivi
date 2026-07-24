@@ -153,6 +153,25 @@ describe('createFloatingOverlay', () => {
     overlay.destroy();
   });
 
+  it('passes Escape through when the overlay is hidden', () => {
+    const { document, listeners } = createTestDocument();
+    const overlay = createFloatingOverlay({
+      ownerDocument: document,
+      className: 'pivi-selection-toolbar-overlay',
+    });
+
+    const event = {
+      key: 'Escape',
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    } as unknown as KeyboardEvent;
+    dispatch(listeners, 'keydown', event);
+
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(event.stopPropagation).not.toHaveBeenCalled();
+    overlay.destroy();
+  });
+
   it('removes listeners on destroy', () => {
     const { document, listeners } = createTestDocument();
     const overlay = createFloatingOverlay({

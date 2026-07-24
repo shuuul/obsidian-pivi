@@ -40,6 +40,11 @@
       "copyAgentResponseAriaLabel": "Diese Agentenantwort kopieren",
       "scrollToRecentUserAriaLabel": "Zur neuesten Benutzernachricht scrollen"
     },
+    "messageImages": {
+      "lightboxAria": "Bildvorschau",
+      "closeAria": "Bildvorschau schließen",
+      "openAria": "{name} in voller Größe öffnen"
+    },
     "inlineContext": {
       "addSelectionToChatInput": "Auswahl zum Chat hinzufügen",
       "selectTextFirst": "Wähle zuerst Text in einer Notiz aus.",
@@ -68,6 +73,7 @@
       "editTitleInputLabel": "Tabtitel",
       "closeTab": "{title} schließen",
       "archived": "Archiviert",
+      "revealArchived": "Archivierte Tabs anzeigen",
       "failedCreateChat": "Chat konnte nicht erstellt werden",
       "failedSwitchTab": "Tab konnte nicht gewechselt werden",
       "failedCloseTab": "Tab konnte nicht geschlossen werden",
@@ -215,7 +221,12 @@
       "typeSomething": "Etwas eingeben.",
       "enterSecret": "Geheimnis eingeben.",
       "notAnswered": "Nicht beantwortet",
-      "submit": "Senden"
+      "submit": "Senden",
+      "defaultTitle": "Frage",
+      "optionFallback": "Option",
+      "hints": "Eingabe zum Auswählen · Tab/Pfeiltasten zum Navigieren · Esc zum Abbrechen",
+      "hintsImmediate": "Eingabe zum Auswählen · Pfeiltasten zum Navigieren · Esc zum Abbrechen",
+      "questionHeader": "F{number}"
     },
     "slash": {
       "ariaLabel": "Slash-Befehle",
@@ -400,6 +411,7 @@
       "empty": "Noch keine Symbolleisten-Kurzbefehle konfiguriert.",
       "commandSearchPlaceholder": "Befehle nach Name oder ID suchen",
       "noCommands": "Keine passenden Befehle.",
+      "commandsTruncated": "Es werden die ersten {count} Treffer angezeigt. Verfeinere die Suche, um mehr zu sehen.",
       "removeAria": "{label} entfernen",
       "provider": {
         "title": "Markierungs-Toolbar",
@@ -474,7 +486,9 @@
         "desc": "Löscht dauerhaft nur Sitzungsdateien, die aus dem Verlauf entfernt wurden und weder archiviert noch geöffnet sind.",
         "button": "Löschen",
         "success": "{count} entfernte Sitzungsdatei(en) gelöscht.",
-        "failed": "Entfernte Sitzungsdateien konnten nicht gelöscht werden"
+        "failed": "Entfernte Sitzungsdateien konnten nicht gelöscht werden",
+        "confirmTitle": "Entfernte Sitzungsdateien löschen?",
+        "confirmDescription": "Dies löscht dauerhaft nur Sitzungsdateien, die aus dem Verlauf entfernt wurden und weder archiviert noch geöffnet sind."
       }
     },
     "sharedEnvironment": {
@@ -486,7 +500,10 @@
       "storageSecure": "Sicherer Speicher",
       "storageSystem": "Systemumgebung",
       "secretStored": "Sicher gespeichert",
-      "secretMissing": "Fehlender sicherer Wert"
+      "secretMissing": "Fehlender sicherer Wert",
+      "apply": "Änderungen anwenden",
+      "pending": "Umgebungsvariablen werden gespeichert…",
+      "success": "Umgebungsvariablen gespeichert."
     },
     "tools": {
       "sections": {
@@ -684,11 +701,36 @@
         "disableAria": "Skill {name} deaktivieren",
         "updateAria": "Skill {name} aktualisieren",
         "removeAria": "Skill {name} entfernen",
-        "installAria": "Skill {name} installieren"
+        "installAria": "Skill {name} installieren",
+        "removeConfirmTitle": "Skill {name} entfernen?",
+        "removeConfirm": "{name} aus .pivi/skills/ entfernen? Dadurch wird der Skill-Ordner auf Ihrem Gerät gelöscht."
       },
       "notices": {
         "noRemote": "Keine Remote-Skills für diese Quelle gefunden.",
         "selectOne": "Mindestens einen Skill zum Installieren auswählen."
+      },
+      "feedback": {
+        "pending": {
+          "installBundle": "Offizielle Skills werden installiert…",
+          "updateBundle": "Offizielle Skills werden aktualisiert…",
+          "listRemote": "Remote-Skills werden aufgelistet…",
+          "installSelected": "Ausgewählte Skills werden installiert…",
+          "updateAll": "Alle Skills werden aktualisiert…",
+          "update": "{name} wird aktualisiert…",
+          "remove": "{name} wird entfernt…",
+          "enable": "{name} wird aktiviert…",
+          "disable": "{name} wird deaktiviert…"
+        },
+        "success": {
+          "installBundle": "Offizielle Skills installiert.",
+          "updateBundle": "Offizielle Skills aktualisiert.",
+          "installSelected": "Ausgewählte Skills installiert.",
+          "updateAll": "Alle Skills aktualisiert.",
+          "update": "{name} aktualisiert.",
+          "remove": "{name} entfernt.",
+          "enable": "{name} aktiviert.",
+          "disable": "{name} deaktiviert."
+        }
       }
     },
     "slashCommandsUi": {
@@ -708,7 +750,8 @@
         "position": "/{name} an Position {position} von {total} verschoben.",
         "saved": "Befehlsreihenfolge gespeichert.",
         "cancelled": "Neuanordnung des Befehls abgebrochen."
-      }
+      },
+      "deleteConfirmTitle": "Benutzerdefinierten Befehl /{name} löschen?"
     },
     "createCommand": {
       "titleCreate": "Eigenen Slash-Befehl erstellen",
@@ -823,7 +866,8 @@
         "connected": "Tools aktualisiert",
         "availableTools": "Verfügbare Tools ({count})",
         "noTools": "Dieser Server hat keine Tools zurückgegeben."
-      }
+      },
+      "deleteConfirmTitle": "MCP-Server „{name}“ löschen?"
     }
   },
   "commands": {

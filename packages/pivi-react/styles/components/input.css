@@ -32,6 +32,11 @@
   background: var(--pivi-host-background-primary);
 }
 
+.pivi-input-wrapper:focus-within {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
 /* Context row (file chip start, selection indicator end) - inside input wrapper at top */
 /* Collapsed by default; expanded via .has-content class; textarea fills remaining space */
 .pivi-context-row {
@@ -77,7 +82,7 @@
 .pivi-selection-indicator,
 .pivi-browser-selection-indicator,
 .pivi-canvas-indicator {
-  color: #7abaff;
+  color: var(--pivi-host-text-accent);
   font-size: var(--pivi-text-sm);
   line-height: 1;
   opacity: 0.9;
@@ -208,8 +213,18 @@
 .pivi-send-button-wrap {
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-inline-start: 0;
   flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+@media (pointer: coarse) {
+  .pivi-send-button-wrap {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .pivi-send-button {
@@ -427,8 +442,8 @@
 
 /* Pink border when bash mode is active */
 .pivi-container .pivi-input-wrapper.pivi-input-bang-bash-mode {
-  border-color: #f472b6;
-  box-shadow: 0 0 0 1px #f472b6;
+  border-color: var(--pivi-host-text-warning);
+  box-shadow: 0 0 0 1px var(--pivi-host-text-warning);
 }
 
 /* Monospace input while in bash mode */

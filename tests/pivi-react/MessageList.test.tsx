@@ -687,21 +687,21 @@ describe('MessageList', () => {
       </I18nProvider>,
     ));
 
-    const wrapper = document.querySelector('.pivi-message-images .pivi-message-image img');
+    const wrapper = document.querySelector('.pivi-message-images .pivi-message-image');
     expect(wrapper).not.toBeNull();
     fireEvent.click(wrapper!);
-    expect(document.querySelector('.pivi-image-modal-overlay .pivi-image-modal img')).not.toBeNull();
+    expect(document.querySelector('.pivi-image-modal-layer .pivi-image-modal img')).not.toBeNull();
 
     fireEvent.click(document.querySelector('.pivi-image-modal-close')!);
-    expect(document.querySelector('.pivi-image-modal-overlay')).toBeNull();
+    expect(document.querySelector('.pivi-image-modal-layer')).toBeNull();
 
     fireEvent.click(wrapper!);
-    fireEvent.click(document.querySelector('.pivi-image-modal-overlay')!);
-    expect(document.querySelector('.pivi-image-modal-overlay')).toBeNull();
+    fireEvent.click(document.querySelector('.pivi-image-modal-layer .pivi-modal-backdrop')!);
+    expect(document.querySelector('.pivi-image-modal-layer')).toBeNull();
 
     fireEvent.click(wrapper!);
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(document.querySelector('.pivi-image-modal-overlay')).toBeNull();
+    expect(document.querySelector('.pivi-image-modal-layer')).toBeNull();
   });
 
   it('hides empty assistants, shows stored interrupt indicators, and marks tool-only shells', () => {

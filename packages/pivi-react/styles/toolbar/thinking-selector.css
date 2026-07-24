@@ -121,6 +121,11 @@
   font-weight: 500;
 }
 
+.pivi-thinking-gear.is-highlighted {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .pivi-thinking-gear:hover {
     background: var(--pivi-host-background-hover);

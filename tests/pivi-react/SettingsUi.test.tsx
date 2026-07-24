@@ -807,8 +807,43 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>));
     const button = screen.getByRole('button', { name: 'Delete' });
     fireEvent.click(button);
-    expect(button).toBeDisabled();
+    const dialog = screen.getByRole('dialog', { name: 'Delete removed session files?' });
+    const confirmDelete = within(dialog).getByRole('button', { name: 'Delete' });
+    fireEvent.click(confirmDelete);
+    expect(confirmDelete).toBeDisabled();
     await act(async () => resolve(3));
     expect(ports.feedback.notify).toHaveBeenCalledWith('Deleted 3 removed session file(s).');
+  });
+
+  it('requires Apply before environment changes are persisted', async () => {
+    const importEnvironmentText = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.environment, {
+      listEntries: () => [{ key: 'FOO', scope: 'shared', sourceKind: 'plain', plainValue: 'bar', storageLocation: 'deviceLocal', hasStoredSecret: false }],
+      importEnvironmentText,
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>));
+    const textarea = screen.getByLabelText('Environment variables');
+    fireEvent.change(textarea, { target: { value: 'FOO=changed' } });
+    fireEvent.blur(textarea);
+    expect(importEnvironmentText).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+    await act(async () => undefined);
+    expect(importEnvironmentText).toHaveBeenCalledWith('shared', 'FOO=changed');
+    expect(screen.getByText('Environment variables saved.')).toBeInTheDocument();
+  });
+
+  it('requires confirmation before removing an installed skill', async () => {
+    const remove = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.complex.skills, { remove });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="skills" /></I18nProvider>));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove skill Example' }));
+    expect(remove).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog', { name: 'Remove skill Example?' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await act(async () => undefined);
+    expect(remove).toHaveBeenCalledWith('example');
+    expect(screen.getByText('Example removed.')).toBeInTheDocument();
   });
 });

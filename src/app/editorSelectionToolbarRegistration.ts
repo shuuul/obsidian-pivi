@@ -8,7 +8,10 @@ import {
   createFloatingOverlay,
   type FloatingOverlayHandle,
 } from '@/ui/shared/selectionToolbar/floatingOverlay';
-import { clampOverlayPosition } from '@/ui/shared/selectionToolbar/selectionGeometry';
+import {
+  clampOverlayPosition,
+  getSelectionRect,
+} from '@/ui/shared/selectionToolbar/selectionGeometry';
 import {
   createSelectionInteractionState,
   type SelectionInteractionState,
@@ -144,10 +147,17 @@ export class SelectionToolbarHost {
       return;
     }
 
+    const liveRect = getSelectionRect(snapshot.editorView);
+    if (!liveRect) {
+      this.dismissOverlay();
+      return;
+    }
+
+    snapshot.rect = liveRect;
     const { left, top } = clampOverlayPosition({
       overlayWidth: this.overlay.element.offsetWidth,
       overlayHeight: this.overlay.element.offsetHeight,
-      anchor: snapshot.rect,
+      anchor: liveRect,
       viewport: {
         width: this.ownerWindow.innerWidth,
         height: this.ownerWindow.innerHeight,
@@ -197,10 +207,6 @@ function resolveOwnerDocument(plugin: Plugin): Document {
   return getActiveDocument(activeView?.containerEl ?? null);
 }
 
-function isSourceMode(plugin: Plugin): boolean {
-  const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
-  return markdownView?.getState().source === true;
-}
 
 export function registerEditorSelectionToolbar(
   plugin: Plugin,
@@ -284,12 +290,7 @@ export function registerEditorSelectionToolbar(
         const activeDocument = resolveOwnerDocument(plugin);
         return host.getOverlayElement().contains(activeDocument.activeElement);
       },
-      shouldSuppressForPointerDown: () => {
-        if (!interactionState?.isPointerDown) {
-          return false;
-        }
-        return !isSourceMode(plugin);
-      },
+      shouldSuppressForPointerDown: () => interactionState?.isPointerDown ?? false,
       getInteractionState: () => ({
         isPointerDown: interactionState?.isPointerDown ?? false,
         isKeyboardSelection: interactionState?.isKeyboardSelection ?? false,

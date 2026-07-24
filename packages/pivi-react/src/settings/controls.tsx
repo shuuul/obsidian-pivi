@@ -1,14 +1,70 @@
 import {
   type ChangeEvent,
+  Children,
   type ClipboardEvent,
+  cloneElement,
+  createContext,
+  isValidElement,
   type MouseEvent,
   type PointerEvent,
+  type ReactElement,
   type ReactNode,
+  useContext,
+  useId,
   useState,
 } from 'react';
 
 import { PlatformIcon } from '../icons';
 import type { SettingsFeedbackMessage } from '../ports';
+
+interface SettingRowLabelContextValue {
+  readonly nameId: string;
+  readonly descriptionId?: string;
+}
+
+const SettingRowLabelContext = createContext<SettingRowLabelContextValue | null>(null);
+
+function buildSettingRowLabelledBy(
+  nameId: string,
+  descriptionId?: string,
+  existing?: string,
+): string {
+  return [nameId, descriptionId, existing].filter(Boolean).join(' ');
+}
+
+function augmentSettingRowControl(
+  node: ReactNode,
+  context: SettingRowLabelContextValue,
+): ReactNode {
+  if (!isValidElement(node)) return node;
+  const props = node.props as {
+    readonly 'aria-label'?: string;
+    readonly 'aria-labelledby'?: string;
+    readonly children?: ReactNode;
+    readonly label?: string;
+  };
+  if (props['aria-label'] || props.label) return node;
+
+  const elementType = node.type;
+  if (typeof elementType === 'string' && ['input', 'textarea', 'select'].includes(elementType)) {
+    return cloneElement(node as ReactElement<Record<string, unknown>>, {
+      'aria-labelledby': buildSettingRowLabelledBy(
+        context.nameId,
+        context.descriptionId,
+        props['aria-labelledby'],
+      ),
+    });
+  }
+
+  if (props.children) {
+    return cloneElement(
+      node,
+      {},
+      Children.map(props.children, child => augmentSettingRowControl(child, context)),
+    );
+  }
+  return node;
+}
 
 export interface SettingRowProps {
   readonly name: string;
@@ -78,7 +134,22 @@ export function SettingsSection({
 }
 
 export function SettingRow({ name, description, children }: SettingRowProps) {
-  return <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{name}</div>{description ? <div className="pivi-setting-description">{description}</div> : null}</div><div className="pivi-setting-row__control">{children}</div></div>;
+  const nameId = useId();
+  const descriptionId = description ? `${nameId}-desc` : undefined;
+  const context: SettingRowLabelContextValue = { nameId, descriptionId };
+  return (
+    <div className="pivi-setting-row">
+      <div className="pivi-setting-row__info">
+        <div className="pivi-setting-row__name" id={nameId}>{name}</div>
+        {description ? <div className="pivi-setting-description" id={descriptionId}>{description}</div> : null}
+      </div>
+      <div className="pivi-setting-row__control">
+        <SettingRowLabelContext.Provider value={context}>
+          {Children.map(children, child => augmentSettingRowControl(child, context))}
+        </SettingRowLabelContext.Provider>
+      </div>
+    </div>
+  );
 }
 
 export function SettingsActionFeedback({ feedback }: { readonly feedback?: SettingsFeedbackMessage | null }) {
@@ -158,7 +229,23 @@ export function SettingsRemoveButton({
 }
 
 export function Select({ value, children, disabled = false, label, onChange }: { readonly value: string; readonly children: ReactNode; readonly disabled?: boolean; readonly label?: string; readonly onChange: (value: string) => void }) {
-  return <select className="pivi-select pivi-settings-control" value={value} aria-label={label} disabled={disabled} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}>{children}</select>;
+  const rowContext = useContext(SettingRowLabelContext);
+  const ariaLabel = label;
+  const ariaLabelledBy = !label && rowContext
+    ? buildSettingRowLabelledBy(rowContext.nameId, rowContext.descriptionId)
+    : undefined;
+  return (
+    <select
+      className="pivi-select pivi-settings-control"
+      value={value}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      disabled={disabled}
+      onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}
+    >
+      {children}
+    </select>
+  );
 }
 
 export function BadgeListInput({

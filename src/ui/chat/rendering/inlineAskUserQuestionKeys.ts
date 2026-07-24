@@ -3,6 +3,18 @@ import type { AskUserQuestionItem } from '@pivi/pivi-agent-core/foundation/tools
 import { updateFocusIndicator } from './inlineAskUserQuestionRender';
 import type { InlineAskUserQuestionHost } from './inlineAskUserQuestionTypes';
 
+function isEditableElement(element: Element | null): element is HTMLElement {
+  if (!(element instanceof HTMLElement)) return false;
+  if (element.isContentEditable) return true;
+  return element.matches('textarea, input, select, [contenteditable="true"]');
+}
+
+export function shouldFocusAskUserRoot(ownerDocument: Document): boolean {
+  const active = ownerDocument.activeElement;
+  if (!active || active === ownerDocument.body) return true;
+  return !isEditableElement(active);
+}
+
 function blurActiveElement(host: InlineAskUserQuestionHost): void {
   (host.rootEl.ownerDocument.activeElement as HTMLElement | null)?.blur();
 }
@@ -112,6 +124,57 @@ function handleImmediateSelectKeyDown(host: InlineAskUserQuestionHost, e: Keyboa
   }
 }
 
+function handleDigitShortcut(host: InlineAskUserQuestionHost, e: KeyboardEvent): boolean {
+  if (e.isComposing || host.isInputFocused) return false;
+  const active = host.rootEl.ownerDocument.activeElement;
+  if (isEditableElement(active)) return false;
+  if (active !== host.rootEl && !host.rootEl.contains(active)) return false;
+  const digit = Number(e.key);
+  if (!Number.isInteger(digit) || digit < 1 || digit > 9) return false;
+
+  if (host.activeTabIndex === host.questions.length) {
+    if (digit === 1) {
+      e.preventDefault();
+      e.stopPropagation();
+      host.focusedItemIndex = 0;
+      host.handleSubmit();
+      return true;
+    }
+    if (digit === 2) {
+      e.preventDefault();
+      e.stopPropagation();
+      host.handleResolve(null);
+      return true;
+    }
+    return false;
+  }
+
+  const q = host.questions[host.activeTabIndex];
+  if (!q) return false;
+  const optionIndex = digit - 1;
+  if (optionIndex < q.options.length) {
+    e.preventDefault();
+    e.stopPropagation();
+    host.focusedItemIndex = optionIndex;
+    updateFocusIndicator(host);
+    const option = q.options[optionIndex];
+    if (option) host.selectOption(host.activeTabIndex, option);
+    return true;
+  }
+  if (host.canShowCustomInputForQuestion(q) && optionIndex === q.options.length) {
+    e.preventDefault();
+    e.stopPropagation();
+    host.focusedItemIndex = optionIndex;
+    updateFocusIndicator(host);
+    host.isInputFocused = true;
+    const customRow = host.currentItems[optionIndex];
+    const input = customRow?.querySelector('.pivi-ask-custom-text') as HTMLInputElement | null;
+    input?.focus();
+    return true;
+  }
+  return false;
+}
+
 function handleSubmitTabEnter(host: InlineAskUserQuestionHost, e: KeyboardEvent): void {
   if (e.key !== 'Enter') return;
   e.preventDefault();
@@ -164,6 +227,7 @@ function handleTabbedKeyDown(host: InlineAskUserQuestionHost, e: KeyboardEvent):
 
 export function handleKeyDown(host: InlineAskUserQuestionHost, e: KeyboardEvent): void {
   if (handleInputFocusedKeyDown(host, e)) return;
+  if (handleDigitShortcut(host, e)) return;
   if (host.config.immediateSelect) {
     handleImmediateSelectKeyDown(host, e);
     return;

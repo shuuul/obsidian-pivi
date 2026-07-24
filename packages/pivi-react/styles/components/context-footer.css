@@ -33,7 +33,7 @@
 
 .pivi-meter-fill,
 .pivi-meter-fill-input {
-  stroke: var(--pivi-brand);
+  stroke: var(--pivi-host-text-accent);
   transition:
     stroke-dashoffset var(--pivi-duration-deliberate) var(--pivi-ease-in-out),
     stroke var(--pivi-duration-deliberate) var(--pivi-ease-in-out);
@@ -42,15 +42,15 @@
 /* Warning state (> 80% compaction pressure) - arc fill still follows context usage. */
 .pivi-context-meter-gauge.warning .pivi-meter-fill,
 .pivi-context-meter-gauge.warning .pivi-meter-fill-input {
-  stroke: #E57373;
+  stroke: var(--pivi-host-text-warning);
 }
 
 .pivi-context-meter-gauge.unknown .pivi-meter-bg {
-  stroke: #E57373;
+  stroke: var(--pivi-host-text-warning);
 }
 
 .pivi-meter-unknown-mark {
-  fill: #E57373;
+  fill: var(--pivi-host-text-warning);
   font-size: 10px;
   font-weight: 700;
 }

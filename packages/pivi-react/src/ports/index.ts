@@ -101,7 +101,7 @@ export interface SettingsModelsPort {
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
 }
 
-export type SettingsFeedbackKind = 'success' | 'error';
+export type SettingsFeedbackKind = 'success' | 'error' | 'pending';
 
 export interface SettingsFeedbackMessage {
   readonly kind: SettingsFeedbackKind;

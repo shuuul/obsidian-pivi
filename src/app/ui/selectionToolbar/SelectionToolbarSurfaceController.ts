@@ -315,17 +315,25 @@ export class SelectionToolbarSurfaceController {
     return record;
   }
 
+  private dismissToolbarAndRestoreEditorFocus(): void {
+    const snapshot = this.currentSnapshot ?? getSelectionToolbarHost()?.getCurrentSnapshot() ?? null;
+    getSelectionToolbarHost()?.dismissOverlay();
+    this.currentSnapshot = null;
+    snapshot?.editor?.focus();
+    snapshot?.editorView?.focus();
+  }
+
   private async handleAddToChat(): Promise<void> {
     const markdownView = resolveActiveMarkdownView(this.plugin);
     const editor = markdownView?.editor;
     if (!editor || !markdownView) {
       new Notice(t('editor.selectionToolbar.noActiveEditor'));
-      getSelectionToolbarHost()?.dismissOverlay();
+      this.dismissToolbarAndRestoreEditorFocus();
       return;
     }
 
     await this.plugin.addEditorSelectionToChatInput(editor, markdownView);
-    getSelectionToolbarHost()?.dismissOverlay();
+    this.dismissToolbarAndRestoreEditorFocus();
   }
 
   private async handleShortcut(id: string): Promise<void> {
@@ -342,12 +350,12 @@ export class SelectionToolbarSurfaceController {
       case 'obsidian-command':
       case 'editor-command':
         executeObsidianCommand(this.plugin, shortcut.commandId);
-        getSelectionToolbarHost()?.dismissOverlay();
+        this.dismissToolbarAndRestoreEditorFocus();
         return;
       case 'pivi-command':
         if (!shortcut.piviCommandKey) {
           new Notice(t('editor.selectionToolbar.commandUnavailable'));
-          getSelectionToolbarHost()?.dismissOverlay();
+          this.dismissToolbarAndRestoreEditorFocus();
           return;
         }
         if ((shortcut.executionTarget ?? 'sidebar') === 'sidebar') {
@@ -355,7 +363,7 @@ export class SelectionToolbarSurfaceController {
             this.plugin,
             getWorkspaceCommandFullId(this.plugin.manifest.id, shortcut.piviCommandKey),
           );
-          getSelectionToolbarHost()?.dismissOverlay();
+          this.dismissToolbarAndRestoreEditorFocus();
           return;
         }
         if (this.currentSnapshot) {
@@ -373,7 +381,7 @@ export class SelectionToolbarSurfaceController {
   ): Promise<void> {
     if (!snapshot.text) {
       new Notice(t('chat.errors.noTextSelected'));
-      getSelectionToolbarHost()?.dismissOverlay();
+      this.dismissToolbarAndRestoreEditorFocus();
       return;
     }
     let workspace;

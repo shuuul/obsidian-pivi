@@ -24,7 +24,7 @@
 }
 
 .pivi-mode-label.active {
-  color: var(--pivi-brand);
+  color: var(--pivi-host-text-accent);
   font-weight: 600;
 }
 

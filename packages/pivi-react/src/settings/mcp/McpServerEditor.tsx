@@ -1,5 +1,5 @@
 import type { ManagedMcpServer, McpServerType } from '@pivi/pivi-agent-core/mcp/types';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsFeedbackMessage } from '../../ports';
@@ -31,6 +31,7 @@ export function McpServerEditor({
   readonly onSave: (server: ManagedMcpServer) => Promise<unknown>;
 }) {
   const t = useT();
+  const editorRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState(() => mcpDraftFrom(server ?? initial, type));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,6 +39,19 @@ export function McpServerEditor({
     setDraft((current) => ({ ...current, [key]: value }));
     setError('');
   };
+
+  useEffect(() => {
+    if (!inline) return;
+    const root = editorRef.current;
+    if (!root) return;
+    const firstField = root.querySelector<HTMLElement>(
+      'input.pivi-settings-control, textarea.pivi-settings-control, select.pivi-settings-control',
+    );
+    if (!firstField) return;
+    firstField.focus();
+    firstField.scrollIntoView?.({ block: 'nearest' });
+  }, [inline]);
+
   const submit = async () => {
     setBusy(true);
     setError('');
@@ -53,6 +67,7 @@ export function McpServerEditor({
 
   return (
     <div
+      ref={editorRef}
       className={inline ? 'pivi-mcp-inline-editor' : 'pivi-mcp-modal'}
       {...(inline ? {} : { role: 'dialog', 'aria-modal': true, 'aria-label': t('settings.mcp.modal.titleAdd') })}
     >

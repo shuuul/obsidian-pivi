@@ -48,6 +48,19 @@ export function EditableTabTitle({
           event.currentTarget.blur();
         }
       }}
+      onPaste={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const text = event.clipboardData.getData('text/plain').replace(/[\r\n\u2028\u2029]+/g, ' ').trim();
+        const selection = event.currentTarget.ownerDocument.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+          event.currentTarget.textContent = text;
+          return;
+        }
+        selection.deleteFromDocument();
+        selection.getRangeAt(0).insertNode(event.currentTarget.ownerDocument.createTextNode(text));
+        selection.collapseToEnd();
+      }}
       ref={inputRef}
       role="textbox"
       suppressContentEditableWarning

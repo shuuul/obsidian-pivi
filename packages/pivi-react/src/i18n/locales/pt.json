@@ -68,6 +68,7 @@
       "editTitleInputLabel": "Título da aba",
       "closeTab": "Fechar {title}",
       "archived": "Arquivados",
+      "revealArchived": "Mostrar abas arquivadas",
       "failedCreateChat": "Falha ao criar o chat",
       "failedSwitchTab": "Falha ao alternar a aba",
       "failedCloseTab": "Falha ao fechar a aba",
@@ -215,7 +216,12 @@
       "typeSomething": "Escribe algo.",
       "enterSecret": "Introduce o secreto.",
       "notAnswered": "Sin respuesta",
-      "submit": "Enviar"
+      "submit": "Enviar",
+      "defaultTitle": "Pergunta",
+      "optionFallback": "Opção",
+      "hints": "Enter para selecionar · Tab/setas para navegar · Esc para cancelar",
+      "hintsImmediate": "Enter para selecionar · Setas para navegar · Esc para cancelar",
+      "questionHeader": "P{number}"
     },
     "slash": {
       "ariaLabel": "Comandos slash",
@@ -290,6 +296,11 @@
       "resetZoom": "Redefinir zoom do diagrama Mermaid",
       "zoomIn": "Ampliar diagrama Mermaid",
       "fitToWidth": "Ajustar diagrama Mermaid à largura"
+    },
+    "messageImages": {
+      "lightboxAria": "Pré-visualização da imagem",
+      "closeAria": "Fechar pré-visualização da imagem",
+      "openAria": "Abrir {name} em tamanho real"
     }
   },
   "settings": {
@@ -422,7 +433,8 @@
         "position": "{label} movido para a posição {position} de {total}.",
         "saved": "Ordem dos atalhos salva.",
         "cancelled": "Reordenação de atalhos cancelada."
-      }
+      },
+      "commandsTruncated": "Mostrando as primeiras {count} correspondências. Refine a pesquisa para ver mais."
     },
     "slashCommands": {
       "desc": "Gerencie comandos personalizados a nível de {workspaceName} armazenados em .pivi/commands/. Acionados por /nome."
@@ -474,7 +486,9 @@
         "desc": "Exclui permanentemente apenas arquivos de sessão removidos do histórico, não arquivados e não abertos.",
         "button": "Excluir",
         "success": "Excluído(s) {count} arquivo(s) de sessão removido(s).",
-        "failed": "Falha ao excluir arquivos de sessão removidos"
+        "failed": "Falha ao excluir arquivos de sessão removidos",
+        "confirmTitle": "Excluir arquivos de sessão removidos?",
+        "confirmDescription": "Isso exclui permanentemente apenas arquivos de sessão removidos do histórico que não estão arquivados nem abertos."
       }
     },
     "sharedEnvironment": {
@@ -486,7 +500,10 @@
       "storageSecure": "Armazenamento seguro",
       "storageSystem": "Ambiente do sistema",
       "secretStored": "Armazenado com segurança",
-      "secretMissing": "Valor seguro ausente"
+      "secretMissing": "Valor seguro ausente",
+      "apply": "Aplicar alterações",
+      "pending": "Salvando variáveis de ambiente…",
+      "success": "Variáveis de ambiente salvas."
     },
     "tools": {
       "sections": {
@@ -684,11 +701,36 @@
         "disableAria": "Desactivar habilidad {name}",
         "updateAria": "Atualizar habilidad {name}",
         "removeAria": "Quitar habilidad {name}",
-        "installAria": "Instalar habilidad {name}"
+        "installAria": "Instalar habilidad {name}",
+        "removeConfirmTitle": "Remover a habilidade {name}?",
+        "removeConfirm": "Remover {name} de .pivi/skills/? Isso exclui a pasta da habilidade do seu dispositivo."
       },
       "notices": {
         "noRemote": "No se encontraron habilidades remotas para esta fuente.",
         "selectOne": "Selecciona al menos uma habilidad para instalar."
+      },
+      "feedback": {
+        "pending": {
+          "installBundle": "Instalando habilidades oficiais…",
+          "updateBundle": "Atualizando habilidades oficiais…",
+          "listRemote": "Listando habilidades remotas…",
+          "installSelected": "Instalando habilidades selecionadas…",
+          "updateAll": "Atualizando todas as habilidades…",
+          "update": "Atualizando {name}…",
+          "remove": "Removendo {name}…",
+          "enable": "Ativando {name}…",
+          "disable": "Desativando {name}…"
+        },
+        "success": {
+          "installBundle": "Habilidades oficiais instaladas.",
+          "updateBundle": "Habilidades oficiais atualizadas.",
+          "installSelected": "Habilidades selecionadas instaladas.",
+          "updateAll": "Todas as habilidades atualizadas.",
+          "update": "{name} atualizada.",
+          "remove": "{name} removida.",
+          "enable": "{name} ativada.",
+          "disable": "{name} desativada."
+        }
       }
     },
     "slashCommandsUi": {
@@ -708,7 +750,8 @@
         "position": "/{name} movido para a posição {position} de {total}.",
         "saved": "Ordem dos comandos salva.",
         "cancelled": "Reordenação de comando cancelada."
-      }
+      },
+      "deleteConfirmTitle": "Excluir o comando personalizado /{name}?"
     },
     "createCommand": {
       "titleCreate": "Crear comando slash personalizado",
@@ -823,7 +866,8 @@
         "connected": "Ferramentas atualizadas",
         "availableTools": "Ferramentas disponibles ({count})",
         "noTools": "Este servidor não retornou ferramentas."
-      }
+      },
+      "deleteConfirmTitle": "Excluir o servidor MCP \"{name}\"?"
     }
   },
   "commands": {

@@ -40,6 +40,11 @@
       "copyAgentResponseAriaLabel": "Copy this agent response",
       "scrollToRecentUserAriaLabel": "Scroll to most recent user message"
     },
+    "messageImages": {
+      "lightboxAria": "Image preview",
+      "closeAria": "Close image preview",
+      "openAria": "Open {name} full size"
+    },
     "inlineContext": {
       "addSelectionToChatInput": "Add selection to chat",
       "selectTextFirst": "Select text in a note first.",
@@ -68,6 +73,7 @@
       "editTitleInputLabel": "Tab title",
       "closeTab": "Close {title}",
       "archived": "Archived",
+      "revealArchived": "Show archived tabs",
       "failedCreateChat": "Failed to create chat",
       "failedSwitchTab": "Failed to switch tab",
       "failedCloseTab": "Failed to close tab",
@@ -209,6 +215,11 @@
       "noOptionsRecorded": "No options recorded"
     },
     "askUser": {
+      "defaultTitle": "Question",
+      "optionFallback": "Option",
+      "hints": "Enter to select · Tab/Arrow keys to navigate · Esc to cancel",
+      "hintsImmediate": "Enter to select · Arrow keys to navigate · Esc to cancel",
+      "questionHeader": "Q{number}",
       "reviewAnswers": "Review your answers",
       "submitAnswers": "Submit answers",
       "readyToSubmit": "Ready to submit your answers?",
@@ -400,6 +411,7 @@
       },
       "commandSearchPlaceholder": "Search commands by name or ID",
       "noCommands": "No matching commands.",
+      "commandsTruncated": "Showing the first {count} matches. Refine your search to see more.",
       "removeAria": "Remove {label}",
       "provider": {
         "title": "Selected-text toolbar",
@@ -473,6 +485,8 @@
         "name": "Delete removed session files",
         "desc": "Permanently deletes only session files that were removed from history and are not archived or currently open.",
         "button": "Delete",
+        "confirmTitle": "Delete removed session files?",
+        "confirmDescription": "This permanently deletes session files that were removed from history and are not archived or currently open.",
         "success": "Deleted {count} removed session file(s).",
         "failed": "Failed to delete removed session files"
       }
@@ -486,7 +500,10 @@
       "storageSecure": "Secure storage",
       "storageSystem": "System environment",
       "secretStored": "Stored securely",
-      "secretMissing": "Missing secure value"
+      "secretMissing": "Missing secure value",
+      "apply": "Apply changes",
+      "pending": "Saving environment variables…",
+      "success": "Environment variables saved."
     },
     "tools": {
       "sections": {
@@ -684,7 +701,32 @@
         "disableAria": "Disable skill {name}",
         "updateAria": "Update skill {name}",
         "removeAria": "Remove skill {name}",
-        "installAria": "Install skill {name}"
+        "installAria": "Install skill {name}",
+        "removeConfirmTitle": "Remove skill {name}?",
+        "removeConfirm": "Remove {name} from .pivi/skills/? This deletes the skill folder from your device."
+      },
+      "feedback": {
+        "pending": {
+          "installBundle": "Installing official skills…",
+          "updateBundle": "Updating official skills…",
+          "listRemote": "Listing remote skills…",
+          "installSelected": "Installing selected skills…",
+          "updateAll": "Updating all skills…",
+          "update": "Updating {name}…",
+          "remove": "Removing {name}…",
+          "enable": "Enabling {name}…",
+          "disable": "Disabling {name}…"
+        },
+        "success": {
+          "installBundle": "Official skills installed.",
+          "updateBundle": "Official skills updated.",
+          "installSelected": "Selected skills installed.",
+          "updateAll": "All skills updated.",
+          "update": "{name} updated.",
+          "remove": "{name} removed.",
+          "enable": "{name} enabled.",
+          "disable": "{name} disabled."
+        }
       },
       "notices": {
         "noRemote": "No remote skills found for this source.",
@@ -702,6 +744,7 @@
       "editAria": "Edit command {name}",
       "deleteAria": "Delete command {name}",
       "deleteConfirm": "Delete custom command /{name}? This will not remove its Note Toolbar item; remove that item manually.",
+      "deleteConfirmTitle": "Delete custom command /{name}?",
       "deleteFailed": "Failed to delete custom command: {message}",
       "reorder": {
         "handle": "Reorder /{name}, currently position {position}",
@@ -774,6 +817,7 @@
       "saveFailed": "Failed to save MCP server",
       "alreadyExists": "Server \"{name}\" already exists",
       "deleteConfirm": "Delete MCP server \"{name}\"?",
+      "deleteConfirmTitle": "Delete MCP server \"{name}\"?",
       "enableAria": "Enable MCP server {name}",
       "disableAria": "Disable MCP server {name}",
       "removeAria": "Remove MCP server {name}",

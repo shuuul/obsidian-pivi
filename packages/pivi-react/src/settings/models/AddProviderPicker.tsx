@@ -56,29 +56,31 @@ export function AddProviderPicker({ models, onProviderAdded, onError }: AddProvi
   };
 
   const renderKindOption = (option: ModelsAddableKind) => (
-    <div
+    <button
+      type="button"
       className="pivi-provider-add-option"
       key={option.kind}
       onClick={() => addKind(option.kind)}
     >
       {option.logoSlug ? <ProviderLogo slug={option.logoSlug} size={16} className="pivi-provider-add-option-logo" /> : null}
       <span>{option.name}</span>
-    </div>
+    </button>
   );
 
   const renderProviderOption = (option: ModelsAddableProvider) => (
-    <div
-      aria-disabled={addedProviderIds.has(option.id)}
+    <button
+      type="button"
+      disabled={addedProviderIds.has(option.id)}
       className={`pivi-provider-add-option${addedProviderIds.has(option.id) ? ' is-added' : ''}`}
       key={option.id}
-      onClick={addedProviderIds.has(option.id) ? undefined : () => addBuiltin(option.id)}
+      onClick={() => addBuiltin(option.id)}
     >
       {option.logoSlug ? <ProviderLogo slug={option.logoSlug} size={16} className="pivi-provider-add-option-logo" /> : null}
       <span>{option.name}</span>
       {addedProviderIds.has(option.id) ? (
         <span className="pivi-provider-add-option-state">{t('settings.modelsTab.addProviderAdded')}</span>
       ) : null}
-    </div>
+    </button>
   );
 
   return (

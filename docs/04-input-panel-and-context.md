@@ -60,7 +60,7 @@ New/load session flows reset session-only choices to current pinned device-local
 
 At execution time, selected roots become `ChatTurnRequest.externalContextPaths`. A queued turn snapshots its content, but permissions are refreshed from the current UI when it actually runs. Writers remove absolute paths from `.pivi/settings.json` and JSONL `message_ui`; readers overlay the device-local data after loading.
 
-## Keyboard and queue behavior
+## Keyboard, focus, and overlays
 
 Input key handling follows this precedence:
 
@@ -69,6 +69,20 @@ Input key handling follows this precedence:
 3. Unmodified Enter continues or exits an ordered Markdown list when applicable.
 4. The configured Enter or Cmd/Ctrl+Enter shortcut submits.
 5. Composition events prevent submission and badge rewriting.
+
+Composer model and thinking selectors are `listbox` menus with `option` rows. They keep hover preview plus click-to-pin behavior, but pinned menus also support Escape dismissal, outside-pointer close, Arrow/Home/End roving highlight, and Enter to select. Escape returns focus to the trigger.
+
+Imperative slash and mention dropdowns dismiss on outside `pointerdown` (capture phase), cancel pending mention debounce on hide, and recompute or dismiss when the owner viewport/container scrolls. Narrow slash detail panels stack below the list inside container queries instead of clipping off-screen.
+
+The input wrapper shows a host-accent `:focus-within` ring. The virtual transcript exposes a focusable messages panel with a matching `:focus-visible` ring for keyboard navigation.
+
+Ask-user prompts localize title, hints, option fallbacks, and waiting/result chrome. Rendering focuses the prompt root only when no other editable or IME composition owns focus. When the root owns focus and no text field is active, digit keys `1`–`9` select the matching numbered option.
+
+Message images open a React `ModalLayer` lightbox from keyboard-focusable buttons. The dialog traps focus, dismisses on Escape/backdrop, and restores the triggering control.
+
+When Send is disabled, its tooltip is attached to a non-disabled wrapper so hover still explains why submission is blocked.
+
+## Queue behavior
 
 Each submission made while a turn is streaming appends an independent FIFO queued-turn snapshot; content, images, and captured context are never merged with adjacent submissions. While streaming, an empty composer keeps the stop action; entering content replaces it with the queue-message action, whose click follows the normal submission path instead of cancelling the active run. Queue actions republish the composer state synchronously, so deleting the last queued row with an empty input immediately restores the stop action, while restoring a row for editing immediately shows the queue action. A single queued turn appears as one compact bar inside the chat surface. Multiple turns appear as separate rows in a tab-switcher-style expanded surface, ordered by execution, with the queue constrained to the left column and the input-position tab switcher protected on the right. Dragging a row changes its execution position; keyboard users can focus a row, press Space or Enter to pick it up, move it with Arrow Up/Down, then drop with Space/Enter or cancel with Escape. Row action buttons remain independent from drag initiation. Every row can steer the active Pi run, restore that snapshot to the composer for editing, or delete it. Steering uses Pi's one-at-a-time steering queue and preserves the user-visible message overlay when the API prompt differs. Cancelling the foreground turn restores queued content and images to the composer. External-root permissions are deliberately re-read when a queued turn begins or steers.
 
@@ -111,6 +125,8 @@ Note Toolbar setup and CLI requirements are covered in [Tools, skills, MCP, and 
 Edit-mode Markdown selections (Live Preview and Source) open a body-appended floating toolbar registered through `registerEditorExtension` in app composition when Settings → Toolbar uses the **Pivi** selected-text provider. The same registration also installs the inline-edit surface and diff-review `StateField`s into every markdown editor so same-leaf file switches and mode toggles cannot wipe a lazy `appendConfig` install. Choosing **Note Toolbar** or **Disabled** suppresses this overlay so selected-text chrome never doubles up. Selection ownership is scoped to the active editor view and owner document, including pop-out windows; pointer tracking runs in the capture phase so CodeMirror or third-party event handling cannot leave toolbar triggering suppressed. The CM6 `ViewPlugin` and geometry helpers live under `src/ui/shared/selectionToolbar/`; React chrome mounts only through `src/app/ui` via `mountSelectionToolbarSurface`.
 
 The editor-only `pivi:inline-edit-selection` command opens the same inline-edit surface for the current non-empty selection even when the floating toolbar is disabled. It is listed in the shortcut links under Settings → General; users can assign `Mod+K` (`Command+K` on macOS and `Ctrl+K` on Windows/Linux) or another shortcut in Obsidian Hotkeys. Pivi does not claim a default plugin hotkey that could override an existing user or host binding.
+
+The floating overlay passes Escape through to the host when invisible and consumes it only while visible. Scroll listeners recompute live selection geometry when possible and dismiss when the selection is invalid or outside the editor. Ordinary toolbar actions restore editor focus after dispatch unless the action intentionally opens another durable surface. Source-mode pointer drag is suppressed like Live Preview. Inline edit handles Escape during prompt input as well as diff review.
 
 The Pivi toolbar always offers **Ask AI** and **Add to chat**, plus enabled shortcuts from synced `editorSelectionToolbar` settings:
 

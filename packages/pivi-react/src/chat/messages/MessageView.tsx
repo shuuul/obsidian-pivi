@@ -3,6 +3,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
+import { ModalLayer } from '../../shared/ModalLayer';
 import type { ChatProjectionStore } from '../../store';
 import {
   AssistantContentView,
@@ -33,51 +34,52 @@ function AdapterSlot({ adapter, message }: {
 }
 
 function MessageImages({ images }: { readonly images: readonly ImageAttachment[] }) {
+  const t = useT();
   const [activeImage, setActiveImage] = useState<ImageAttachment | null>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!activeImage) return;
-    const ownerDocument = overlayRef.current?.ownerDocument ?? activeDocument;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setActiveImage(null);
-    };
-    ownerDocument.addEventListener('keydown', onKeyDown);
-    return () => ownerDocument.removeEventListener('keydown', onKeyDown);
-  }, [activeImage]);
 
   return (
     <>
       <div className="pivi-message-images">
         {images.map(image => (
-          <div className="pivi-message-image" key={image.id}>
+          <button
+            aria-label={t('chat.messageImages.openAria', { name: image.name })}
+            className="pivi-message-image"
+            key={image.id}
+            onClick={() => setActiveImage(image)}
+            type="button"
+          >
             <img
-              alt={image.name}
-              onClick={() => setActiveImage(image)}
+              alt=""
               src={`data:${image.mediaType};base64,${image.data}`}
             />
-          </div>
+          </button>
         ))}
       </div>
-      {activeImage ? (
-        <div
-          className="pivi-image-modal-overlay"
-          onClick={event => {
-            if (event.target === event.currentTarget) setActiveImage(null);
-          }}
-          ref={overlayRef}
-        >
+      <ModalLayer
+        ariaLabel={t('chat.messageImages.lightboxAria')}
+        className="pivi-image-modal-layer"
+        initialFocus="cancel"
+        onClose={() => setActiveImage(null)}
+        open={activeImage !== null}
+      >
+        {activeImage ? (
           <div className="pivi-image-modal">
             <img
               alt={activeImage.name}
               src={`data:${activeImage.mediaType};base64,${activeImage.data}`}
             />
-            <div className="pivi-image-modal-close" onClick={() => setActiveImage(null)}>
-              ×
-            </div>
+            <button
+              aria-label={t('chat.messageImages.closeAria')}
+              className="pivi-image-modal-close"
+              data-modal-cancel
+              onClick={() => setActiveImage(null)}
+              type="button"
+            >
+              <PlatformIcon name="x" />
+            </button>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </ModalLayer>
     </>
   );
 }

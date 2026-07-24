@@ -10,6 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
+| _None_ | — | — |
 
 ## Archived specs
 
@@ -51,6 +52,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [034-high-risk-operations-and-extensions.md](archive/034-high-risk-operations-and-extensions.md) | 2026-07-23 | **Reverted** — turn-scoped confirmation, pinned Skills CLI staging, stdio activation confirmation, and MCP result budgets were rolled back on branch `revert/high-risk-confirms-and-skills-mcp-bounds`. |
 | [035-session-cloud-recovery.md](archive/035-session-cloud-recovery.md) | 2026-07-23 | Journal-backed recovery from session cloud replacement, rollback, interrupted persistence, and unload. |
 | [036-security-release-assurance.md](archive/036-security-release-assurance.md) | 2026-07-23 | Exact Pi pins/private adapter, focused platform/security CI and coverage, real-host smoke, shared release gates, SHA-pinned Actions, and SECURITY.md disclosure. |
+| [037-ui-ux-accessibility-and-overlay-hardening.md](archive/037-ui-ux-accessibility-and-overlay-hardening.md) | 2026-07-24 | Closed verified keyboard, focus, overlay, destructive-action, responsive, i18n, and host-theme gaps without changing Pivi's visual direction. |
 
 ## Numbering and files
 

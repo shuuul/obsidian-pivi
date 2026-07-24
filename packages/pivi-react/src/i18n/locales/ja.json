@@ -68,6 +68,7 @@
       "editTitleInputLabel": "タブタイトル",
       "closeTab": "{title} を閉じる",
       "archived": "アーカイブ済み",
+      "revealArchived": "アーカイブ済みタブを表示",
       "failedCreateChat": "チャットの作成に失敗しました",
       "failedSwitchTab": "タブの切り替えに失敗しました",
       "failedCloseTab": "タブを閉じられませんでした",
@@ -215,7 +216,12 @@
       "typeSomething": "入力してください。",
       "enterSecret": "シークレットを入力してください。",
       "notAnswered": "未回答",
-      "submit": "送信"
+      "submit": "送信",
+      "defaultTitle": "質問",
+      "optionFallback": "オプション",
+      "hints": "Enter で選択 · Tab/矢印キーで移動 · Esc でキャンセル",
+      "hintsImmediate": "Enter で選択 · 矢印キーで移動 · Esc でキャンセル",
+      "questionHeader": "Q{number}"
     },
     "slash": {
       "ariaLabel": "スラッシュコマンド",
@@ -290,6 +296,11 @@
       "resetZoom": "Mermaid 図のズームをリセット",
       "zoomIn": "Mermaid 図を拡大",
       "fitToWidth": "Mermaid 図を幅に合わせる"
+    },
+    "messageImages": {
+      "lightboxAria": "画像プレビュー",
+      "closeAria": "画像プレビューを閉じる",
+      "openAria": "{name} をフルサイズで開く"
     }
   },
   "settings": {
@@ -422,7 +433,8 @@
         "position": "{label} を {total} 件中 {position} 番目に移動しました。",
         "saved": "ショートカットの順序を保存しました。",
         "cancelled": "ショートカットの並べ替えをキャンセルしました。"
-      }
+      },
+      "commandsTruncated": "最初の {count} 件を表示しています。検索を絞り込むとさらに表示されます。"
     },
     "slashCommands": {
       "desc": ".pivi/commands/ に保存された {workspaceName} レベルのカスタムコマンドを管理します。/name で起動します。"
@@ -474,7 +486,9 @@
         "desc": "履歴から削除され、アーカイブでも開いてもいないセッションファイルのみを完全に削除します。",
         "button": "削除",
         "success": "削除済みセッションファイルを {count} 件消去しました。",
-        "failed": "削除済みセッションファイルの消去に失敗しました"
+        "failed": "削除済みセッションファイルの消去に失敗しました",
+        "confirmTitle": "削除済みセッションファイルを削除しますか？",
+        "confirmDescription": "履歴から削除され、アーカイブまたは現在開いていないセッションファイルのみを完全に削除します。"
       }
     },
     "sharedEnvironment": {
@@ -486,7 +500,10 @@
       "storageSecure": "セキュアストレージ",
       "storageSystem": "システム環境",
       "secretStored": "安全に保存済み",
-      "secretMissing": "セキュア値がありません"
+      "secretMissing": "セキュア値がありません",
+      "apply": "変更を適用",
+      "pending": "環境変数を保存しています…",
+      "success": "環境変数を保存しました。"
     },
     "tools": {
       "sections": {
@@ -684,11 +701,36 @@
         "disableAria": "スキル {name} を無効化",
         "updateAria": "スキル {name} を更新",
         "removeAria": "スキル {name} を削除",
-        "installAria": "スキル {name} をインストール"
+        "installAria": "スキル {name} をインストール",
+        "removeConfirmTitle": "スキル {name} を削除しますか？",
+        "removeConfirm": ".pivi/skills/ から {name} を削除しますか？デバイスからスキルフォルダが削除されます。"
       },
       "notices": {
         "noRemote": "このソースのリモートスキルは見つかりません。",
         "selectOne": "インストールするスキルを少なくとも 1 つ選択してください。"
+      },
+      "feedback": {
+        "pending": {
+          "installBundle": "公式スキルをインストールしています…",
+          "updateBundle": "公式スキルを更新しています…",
+          "listRemote": "リモートスキルを一覧表示しています…",
+          "installSelected": "選択したスキルをインストールしています…",
+          "updateAll": "すべてのスキルを更新しています…",
+          "update": "{name} を更新しています…",
+          "remove": "{name} を削除しています…",
+          "enable": "{name} を有効にしています…",
+          "disable": "{name} を無効にしています…"
+        },
+        "success": {
+          "installBundle": "公式スキルをインストールしました。",
+          "updateBundle": "公式スキルを更新しました。",
+          "installSelected": "選択したスキルをインストールしました。",
+          "updateAll": "すべてのスキルを更新しました。",
+          "update": "{name} を更新しました。",
+          "remove": "{name} を削除しました。",
+          "enable": "{name} を有効にしました。",
+          "disable": "{name} を無効にしました。"
+        }
       }
     },
     "slashCommandsUi": {
@@ -708,7 +750,8 @@
         "position": "/{name} を {total} 件中 {position} 番目に移動しました。",
         "saved": "コマンドの順序を保存しました。",
         "cancelled": "コマンドの並べ替えをキャンセルしました。"
-      }
+      },
+      "deleteConfirmTitle": "カスタムコマンド /{name} を削除しますか？"
     },
     "createCommand": {
       "titleCreate": "カスタムスラッシュコマンドを作成",
@@ -823,7 +866,8 @@
         "connected": "ツールを更新しました",
         "availableTools": "利用可能なツール（{count}）",
         "noTools": "このサーバーからツールが返されませんでした。"
-      }
+      },
+      "deleteConfirmTitle": "MCP サーバー「{name}」を削除しますか？"
     }
   },
   "commands": {

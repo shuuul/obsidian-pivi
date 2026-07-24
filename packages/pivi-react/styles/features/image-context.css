@@ -111,8 +111,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(var(--pivi-brand-rgb), 0.08);
-  border: 2px dashed var(--pivi-brand);
+  background: rgba(var(--pivi-host-interactive-accent-rgb), 0.08);
+  border: 2px dashed var(--pivi-host-interactive-accent);
   border-radius: var(--pivi-radius-sm);
   display: none;
   align-items: center;
@@ -130,7 +130,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--pivi-spacing-xs);
-  color: var(--pivi-brand);
+  color: var(--pivi-host-text-accent);
 }
 
 .pivi-drop-content svg {
@@ -158,9 +158,12 @@
 .pivi-message-image {
   width: 120px;
   height: 120px;
+  padding: 0;
+  margin: 0;
   border-radius: var(--pivi-radius-md);
   overflow: hidden;
   cursor: pointer;
+  appearance: none;
   transition: transform var(--pivi-duration-fast) var(--pivi-ease-out), box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
   background: var(--pivi-host-background-secondary);
   border: 1px solid var(--pivi-host-border);

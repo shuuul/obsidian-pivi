@@ -68,6 +68,7 @@
       "editTitleInputLabel": "Заголовок вкладки",
       "closeTab": "Закрыть {title}",
       "archived": "В архиве",
+      "revealArchived": "Показать архивные вкладки",
       "failedCreateChat": "Не удалось создать чат",
       "failedSwitchTab": "Не удалось переключить вкладку",
       "failedCloseTab": "Не удалось закрыть вкладку",
@@ -215,7 +216,12 @@
       "typeSomething": "Введите что-нибудь.",
       "enterSecret": "Введите секрет.",
       "notAnswered": "Без ответа",
-      "submit": "Отправить"
+      "submit": "Отправить",
+      "defaultTitle": "Вопрос",
+      "optionFallback": "Вариант",
+      "hints": "Enter — выбрать · Tab/стрелки — навигация · Esc — отмена",
+      "hintsImmediate": "Enter — выбрать · Стрелки — навигация · Esc — отмена",
+      "questionHeader": "В{number}"
     },
     "slash": {
       "ariaLabel": "Слэш-команды",
@@ -290,6 +296,11 @@
       "resetZoom": "Сбросить масштаб диаграммы Mermaid",
       "zoomIn": "Увеличить диаграмму Mermaid",
       "fitToWidth": "Подогнать диаграмму Mermaid по ширине"
+    },
+    "messageImages": {
+      "lightboxAria": "Просмотр изображения",
+      "closeAria": "Закрыть просмотр изображения",
+      "openAria": "Открыть {name} в полном размере"
     }
   },
   "settings": {
@@ -422,7 +433,8 @@
         "position": "{label} перемещён на позицию {position} из {total}.",
         "saved": "Порядок ярлыков сохранён.",
         "cancelled": "Изменение порядка ярлыков отменено."
-      }
+      },
+      "commandsTruncated": "Показаны первые {count} совпадений. Уточните поиск, чтобы увидеть больше."
     },
     "slashCommands": {
       "desc": "Управление пользовательскими командами {workspaceName} в .pivi/commands/. Запуск через /имя."
@@ -474,7 +486,9 @@
         "desc": "Окончательно удаляет только файлы сеансов, убранные из истории и не архивированные и не открытые.",
         "button": "Удалить",
         "success": "Удалено файлов сеансов: {count}.",
-        "failed": "Не удалось удалить снятые файлы сеансов"
+        "failed": "Не удалось удалить снятые файлы сеансов",
+        "confirmTitle": "Удалить удалённые файлы сессий?",
+        "confirmDescription": "Безвозвратно удаляются только файлы сессий, убранные из истории и не архивированные и не открытые сейчас."
       }
     },
     "sharedEnvironment": {
@@ -486,7 +500,10 @@
       "storageSecure": "Защищённое хранилище",
       "storageSystem": "Системное окружение",
       "secretStored": "Сохранено безопасно",
-      "secretMissing": "Отсутствует защищённое значение"
+      "secretMissing": "Отсутствует защищённое значение",
+      "apply": "Применить изменения",
+      "pending": "Сохранение переменных окружения…",
+      "success": "Переменные окружения сохранены."
     },
     "tools": {
       "sections": {
@@ -684,11 +701,36 @@
         "disableAria": "Отключить навык {name}",
         "updateAria": "Обновить навык {name}",
         "removeAria": "Удалить навык {name}",
-        "installAria": "Установить навык {name}"
+        "installAria": "Установить навык {name}",
+        "removeConfirmTitle": "Удалить навык {name}?",
+        "removeConfirm": "Удалить {name} из .pivi/skills/? Папка навыка будет удалена с устройства."
       },
       "notices": {
         "noRemote": "Для этого источника удалённые навыки не найдены.",
         "selectOne": "Выберите хотя бы один навык для установки."
+      },
+      "feedback": {
+        "pending": {
+          "installBundle": "Установка официальных навыков…",
+          "updateBundle": "Обновление официальных навыков…",
+          "listRemote": "Получение списка удалённых навыков…",
+          "installSelected": "Установка выбранных навыков…",
+          "updateAll": "Обновление всех навыков…",
+          "update": "Обновление {name}…",
+          "remove": "Удаление {name}…",
+          "enable": "Включение {name}…",
+          "disable": "Отключение {name}…"
+        },
+        "success": {
+          "installBundle": "Официальные навыки установлены.",
+          "updateBundle": "Официальные навыки обновлены.",
+          "installSelected": "Выбранные навыки установлены.",
+          "updateAll": "Все навыки обновлены.",
+          "update": "{name} обновлён.",
+          "remove": "{name} удалён.",
+          "enable": "{name} включён.",
+          "disable": "{name} отключён."
+        }
       }
     },
     "slashCommandsUi": {
@@ -708,7 +750,8 @@
         "position": "/{name} перемещена на позицию {position} из {total}.",
         "saved": "Порядок команд сохранён.",
         "cancelled": "Изменение порядка команды отменено."
-      }
+      },
+      "deleteConfirmTitle": "Удалить пользовательскую команду /{name}?"
     },
     "createCommand": {
       "titleCreate": "Создать пользовательскую слэш-команду",
@@ -823,7 +866,8 @@
         "connected": "Инструменты обновлены",
         "availableTools": "Доступные инструменты ({count})",
         "noTools": "Сервер не вернул инструменты."
-      }
+      },
+      "deleteConfirmTitle": "Удалить MCP-сервер «{name}»?"
     }
   },
   "commands": {

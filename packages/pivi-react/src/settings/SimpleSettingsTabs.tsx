@@ -13,6 +13,7 @@ import type {
   SettingsHostIntegrationsPort,
   SettingsHotkeysPort,
 } from '../ports';
+import { ModalLayer } from '../shared/ModalLayer';
 import { BadgeListInput, Select, SettingRow, SettingsActionFeedback, SettingsSection, Toggle } from './controls';
 import { EditorToolbarSection } from './EditorToolbarSection';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
@@ -74,12 +75,35 @@ function EnvironmentSection({ environment, feedback }: {
   const t = useT();
   const [entries, setEntries] = useState(() => environment.listEntries('shared'));
   const [value, setValue] = useState(() => environmentEntriesToSafeText(environment.listEntries('shared')));
+  const [savedValue, setSavedValue] = useState(value);
+  const [applying, setApplying] = useState(false);
+  const [applyFeedback, setApplyFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const reviewKeys = environment.getReviewKeys('shared', value);
+  const isDirty = value !== savedValue;
 
   const refreshEntries = () => {
     const next = environment.listEntries('shared');
+    const nextValue = environmentEntriesToSafeText(next);
     setEntries(next);
-    setValue(environmentEntriesToSafeText(next));
+    setValue(nextValue);
+    setSavedValue(nextValue);
+  };
+
+  const apply = () => {
+    setApplying(true);
+    setApplyFeedback({ kind: 'pending', message: t('settings.sharedEnvironment.pending') });
+    void environment.importEnvironmentText('shared', value)
+      .then(() => {
+        refreshEntries();
+        setApplyFeedback({ kind: 'success', message: t('settings.sharedEnvironment.success') });
+      })
+      .catch((cause: unknown) => {
+        setApplyFeedback(null);
+        feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+      })
+      .finally(() => {
+        setApplying(false);
+      });
   };
 
   const storageLabel = (location: SettingsEnvironmentEntryView['storageLocation']) => {
@@ -124,18 +148,16 @@ function EnvironmentSection({ environment, feedback }: {
           rows={6}
           placeholder={t('settings.sharedEnvironment.placeholder')}
           value={value}
-          onChange={(event) => setValue(event.target.value)}
-          onBlur={() => {
-            void environment.importEnvironmentText('shared', value)
-              .then(() => {
-                refreshEntries();
-              })
-              .catch((cause: unknown) => {
-                feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
-              });
+          onChange={(event) => {
+            setValue(event.target.value);
+            setApplyFeedback(null);
           }}
           aria-label={t('settings.sharedEnvironment.name')}
         />
+        <button type="button" className="pivi-button--primary" disabled={!isDirty || applying} onClick={apply}>
+          {t('settings.sharedEnvironment.apply')}
+        </button>
+        <SettingsActionFeedback feedback={applyFeedback} />
       </SettingRow>
     </SettingsSection>
   );
@@ -451,6 +473,7 @@ export function SessionFilesSettingsSection({ actions, feedback }: {
 }) {
   const t = useT();
   const [pending, setPending] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const mounted = useMountedRef();
   const clean = async () => {
     setPending(true);
@@ -460,16 +483,37 @@ export function SessionFilesSettingsSection({ actions, feedback }: {
     } catch {
       if (mounted.current) feedback.notify(t('settings.sessionFiles.deleteRemoved.failed'));
     } finally {
-      if (mounted.current) setPending(false);
+      if (mounted.current) {
+        setPending(false);
+        setConfirmOpen(false);
+      }
     }
   };
   return (
     <SettingsSection title={t('settings.sessionFiles.heading')}>
       <SettingRow name={t('settings.sessionFiles.deleteRemoved.name')} description={t('settings.sessionFiles.deleteRemoved.desc')}>
-        <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void clean(); }}>
+        <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => setConfirmOpen(true)}>
           {t('settings.sessionFiles.deleteRemoved.button')}
         </button>
       </SettingRow>
+      <ModalLayer
+        ariaLabel={t('settings.sessionFiles.deleteRemoved.confirmTitle')}
+        open={confirmOpen}
+        onClose={() => { if (!pending) setConfirmOpen(false); }}
+      >
+        <div className="pivi-modal">
+          <div className="pivi-modal__title">{t('settings.sessionFiles.deleteRemoved.confirmTitle')}</div>
+          <p>{t('settings.sessionFiles.deleteRemoved.confirmDescription')}</p>
+          <div className="pivi-modal__actions">
+            <button type="button" data-modal-cancel disabled={pending} onClick={() => setConfirmOpen(false)}>
+              {t('common.cancel')}
+            </button>
+            <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void clean(); }}>
+              {t('settings.sessionFiles.deleteRemoved.button')}
+            </button>
+          </div>
+        </div>
+      </ModalLayer>
     </SettingsSection>
   );
 }

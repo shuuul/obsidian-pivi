@@ -61,7 +61,11 @@ Settings use the correct store for each data class:
 - vault-scoped device-local storage for absolute external roots/overlays, the provider registry (`pivi.providers.v1`), and the structured environment registry (`pivi.environment.v1`);
 - vault files such as `.pivi/mcp.json` and `.pivi/commands/` for explicit workspace configuration.
 
-Environment settings use source-aware controls instead of free-form synced text. Each entry has a `plain`, `secret`, or `systemEnvironment` source; the UI shows the effective storage location and never echoes stored secret values after reload. Bulk import parses `KEY=value` lines into structured entries; `KEY=$NAME` becomes a system-environment reference. Save blocks secret-like plaintext unless the user chooses an allowed secret or system source. Recognized provider/web keys migrate into their canonical credential stores during startup migration. Settings and MCP JSON loaders preserve corrupt source bytes as `.corrupt-*` artifacts, return diagnostics, and publish through serialized atomic writes.
+Environment settings use source-aware controls instead of free-form synced text. Each entry has a `plain`, `secret`, or `systemEnvironment` source; the UI shows the effective storage location and never echoes stored secret values after reload. Bulk import parses `KEY=value` lines into structured entries; `KEY=$NAME` becomes a system-environment reference. The General-page editor drafts freely, but durable changes—including removals—commit only through an explicit **Apply** action with review warnings for ownership-sensitive keys. Apply blocks secret-like plaintext unless the user chooses an allowed secret or system source. Recognized provider/web keys migrate into their canonical credential stores during startup migration. Settings and MCP JSON loaders preserve corrupt source bytes as `.corrupt-*` artifacts, return diagnostics, and publish through serialized atomic writes.
+
+React-owned `ModalLayer` / `useModalLayer` provide the shared confirmation lifecycle: accessible dialog name, conservative initial focus (Cancel for destructive flows, first field for import/input), Tab containment, Escape/backdrop dismissal where safe, and trigger-focus restoration on close. Provider removal, workspace-command delete, MCP JSON import, MCP server delete, skill-folder removal, and deleted-session-file purge all use this layer.
+
+Add-provider and similar picker rows are native `<button>` elements so keyboard and disabled semantics stay built-in. Opening the inline MCP server editor scrolls its first field into view and focuses it rather than switching to a modal editor.
 
 Provider/model/web-search settings mutations commit device-local state first, then save the stripped synced projection. Custom provider header values must never be written through `patchCustomProvider` or synced JSON; future header editing must use a dedicated SecretStorage-first settings-port path. A synced save failure after a successful local commit retains local authority and surfaces a localized Notice through app storage wiring.
 
@@ -92,6 +96,8 @@ CSS is organized by responsibility under `packages/pivi-react/styles/` and conca
 Icons cross the presentation platform as product descriptors or SVG data. React does not call Obsidian icon APIs directly. Tooltips are attached through the injected platform and must be cleaned up with their owner surface.
 
 Respect reduced motion, keyboard focus, semantic roles, and owner-window timers. Animation timing must not become a runtime state transition; actions happen through the narrow callbacks after any presentation-only exit phase.
+
+Semantic themed colors derive from `--pivi-host-*` tokens or `color-mix()` from them; legacy product color literals are guarded by `tests/unit/scripts/themeTokens.test.ts`. In-scope icon actions use at least 32×32 CSS px hit boxes on fine pointers and 44×44 CSS px under `(pointer: coarse)` without enlarging glyph size. Settings controls expose programmatic names and descriptions; multi-control rows do not require wrapping `<label>` elements when that would create nested-label ambiguity.
 
 ## Change checklist
 

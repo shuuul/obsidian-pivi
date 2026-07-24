@@ -320,6 +320,33 @@ describe('EditorToolbarSection', () => {
     expect(screen.getByRole('option', { name: /editor:toggle-italics.*Unavailable/ })).toBeDisabled();
   });
 
+  it('announces when the Obsidian command picker truncates results', () => {
+    const store = new SettingsUiStore(snapshot);
+    const hostCommands = Array.from({ length: 120 }, (_, index) => ({
+      id: `workspace:command-${index}`,
+      name: `Command ${index}`,
+      iconId: 'terminal',
+    }));
+    const ports = createPorts(async () => undefined);
+    ports.editorToolbar.listHostCommands = () => hostCommands;
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <EditorToolbarSection
+          store={store}
+          actions={ports.actions}
+          editorToolbar={ports.editorToolbar}
+          feedback={ports.feedback}
+        />
+      </I18nProvider>,
+    ));
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add Obsidian command' }));
+
+    expect(screen.getAllByRole('option')).toHaveLength(100);
+    expect(screen.getByText('Showing the first 100 matches. Refine your search to see more.')).toBeInTheDocument();
+  });
+
   it('keeps editor and Obsidian command catalogs separate and gives every picker row an icon', async () => {
     let resolveSave!: () => void;
     const saveEditorSelectionToolbar = jest.fn(() => new Promise<void>((resolve) => {

@@ -94,6 +94,11 @@ export class SlashCommandDropdown {
   private requestId = 0;
   private currentSearchText = '';
   private detailEl: HTMLElement | null = null;
+  private overlayListenersAttached = false;
+
+  private get ownerWindow(): Window {
+    return getActiveWindow(this.containerEl);
+  }
 
   constructor(
     containerEl: HTMLElement,
@@ -202,6 +207,7 @@ export class SlashCommandDropdown {
 
   hide(): void {
     this.requestId += 1;
+    this.removeOverlayListeners();
     if (this.dropdownEl) {
       this.dropdownEl.removeClass('visible');
     }
@@ -211,6 +217,7 @@ export class SlashCommandDropdown {
 
   destroy(): void {
     this.requestId += 1;
+    this.removeOverlayListeners();
     this.inputEl.removeEventListener('input', this.onInput);
     this.containerEl.removeClass('pivi-slash-dropdown-open');
     if (this.dropdownEl) {
@@ -384,6 +391,47 @@ export class SlashCommandDropdown {
       this.positionAnchored();
     }
     this.positionDetailPanel();
+    this.ensureOverlayListeners();
+  }
+
+  private readonly onOutsidePointerDown = (event: PointerEvent): void => {
+    const target = event.target;
+    if (!target || !(target instanceof Node)) return;
+    if (this.dropdownEl?.contains(target) || (this.inputEl as HTMLElement).contains(target)) return;
+    this.hide();
+  };
+
+  private readonly onOwnerScroll = (): void => {
+    if (!this.isVisible()) return;
+    if (this.triggerStartIndex < 0) {
+      this.hide();
+      return;
+    }
+    if (this.isFixed) {
+      this.positionFixed();
+    } else {
+      this.positionAnchored();
+    }
+    this.positionDetailPanel();
+  };
+
+  private ensureOverlayListeners(): void {
+    if (this.overlayListenersAttached) return;
+    const ownerDocument = this.containerEl.ownerDocument;
+    if (!ownerDocument?.addEventListener) return;
+    ownerDocument.addEventListener('pointerdown', this.onOutsidePointerDown, true);
+    this.ownerWindow.addEventListener('scroll', this.onOwnerScroll, true);
+    this.overlayListenersAttached = true;
+  }
+
+  private removeOverlayListeners(): void {
+    if (!this.overlayListenersAttached) return;
+    const ownerDocument = this.containerEl.ownerDocument;
+    if (ownerDocument?.removeEventListener) {
+      ownerDocument.removeEventListener('pointerdown', this.onOutsidePointerDown, true);
+    }
+    this.ownerWindow.removeEventListener('scroll', this.onOwnerScroll, true);
+    this.overlayListenersAttached = false;
   }
 
   private createDropdownElement(): HTMLElement {

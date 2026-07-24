@@ -158,11 +158,6 @@ settings:
   --pivi-press-scale: 0.97;
   --pivi-press-scale-strong: 0.94;
   --pivi-press-duration: var(--pivi-duration-fast);
-  --pivi-brand: #1B365D;
-  --pivi-brand-rgb: 27, 54, 93;
-  --pivi-error: #dc3545;
-  --pivi-error-rgb: 220, 53, 69;
-  --pivi-compact: #5bc0de;
   --pivi-chat-accent: var(--pivi-host-text-accent);
   font-optical-sizing: auto;
 }

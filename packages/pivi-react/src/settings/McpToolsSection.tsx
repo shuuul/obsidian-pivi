@@ -1,6 +1,7 @@
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackPort } from '../ports';
+import { ModalLayer } from '../shared/ModalLayer';
 import { SettingsActionFeedback } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpSectionState } from './mcp/useMcpSectionState';
@@ -84,18 +85,30 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
             {t('settings.mcp.add')}
           </button>
           <div className={`pivi-provider-add-dropdown${addOpen ? ' is-visible' : ''}`}>
-            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'stdio' } }); }}>
+            <button
+              type="button"
+              className="pivi-provider-add-option"
+              onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'stdio' } }); }}
+            >
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="terminal" /></span>
               <span>{t('settings.mcp.typeStdio')}</span>
-            </div>
-            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'http' } }); }}>
+            </button>
+            <button
+              type="button"
+              className="pivi-provider-add-option"
+              onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'http' } }); }}
+            >
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="globe" /></span>
               <span>{t('settings.mcp.typeHttp')}</span>
-            </div>
-            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_import_draft', draft: '' }); }}>
+            </button>
+            <button
+              type="button"
+              className="pivi-provider-add-option"
+              onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_import_draft', draft: '' }); }}
+            >
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="clipboard-paste" /></span>
               <span>{t('settings.mcp.importJson')}</span>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -108,71 +121,77 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
           onSave={(server) => save(server)}
         />
       ) : null}
-      {importDraft !== null ? (
-        <div
-          className="pivi-modal-layer"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('settings.mcp.importJsonTitle')}
-          onKeyDown={(event) => {
-            if (event.key !== 'Escape') return;
-            event.preventDefault();
-            event.stopPropagation();
-            dispatch({ type: 'set_import_draft', draft: null });
-          }}
-        >
-          <div
-            className="pivi-modal-backdrop"
-            onClick={() => dispatch({ type: 'set_import_draft', draft: null })}
-          />
+      <ModalLayer
+        ariaLabel={t('settings.mcp.importJsonTitle')}
+        initialFocus="first-field"
+        open={importDraft !== null}
+        onClose={() => dispatch({ type: 'set_import_draft', draft: null })}
+      >
+        <div className="pivi-modal">
+          <div className="pivi-modal__title">{t('settings.mcp.importJsonTitle')}</div>
+          <p>{t('settings.mcp.importJsonDescription')}</p>
+          <label>
+            <span>{t('settings.mcp.importJsonField')}</span>
+            <textarea
+              className="pivi-settings-control pivi-settings-control--fill"
+              rows={10}
+              value={importDraft ?? ''}
+              placeholder={t('settings.mcp.importJsonPlaceholder')}
+              onChange={(event) => dispatch({ type: 'set_import_draft', draft: event.target.value })}
+            />
+          </label>
+          <div className="pivi-modal__actions">
+            <button
+              type="button"
+              data-modal-cancel
+              onClick={() => dispatch({ type: 'set_import_draft', draft: null })}
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="button"
+              disabled={busy === 'import' || !importDraft?.trim()}
+              onClick={() => { if (importDraft) void importJson(importDraft); }}
+            >
+              {t('settings.mcp.importAction')}
+            </button>
+          </div>
+        </div>
+      </ModalLayer>
+      <ModalLayer
+        ariaLabel={t('settings.mcp.deleteConfirmTitle', { name: deleteCandidate?.name ?? '' })}
+        open={deleteCandidate !== null}
+        onClose={() => dispatch({ type: 'set_delete_candidate', server: null })}
+      >
+        {deleteCandidate ? (
           <div className="pivi-modal">
-            <div className="pivi-modal__title">{t('settings.mcp.importJsonTitle')}</div>
-            <p>{t('settings.mcp.importJsonDescription')}</p>
-            <label>
-              <span>{t('settings.mcp.importJsonField')}</span>
-              <textarea
-                autoFocus
-                className="pivi-settings-control pivi-settings-control--fill"
-                rows={10}
-                value={importDraft}
-                placeholder={t('settings.mcp.importJsonPlaceholder')}
-                onChange={(event) => dispatch({ type: 'set_import_draft', draft: event.target.value })}
-              />
-            </label>
+            <div className="pivi-modal__title">
+              {t('settings.mcp.deleteConfirmTitle', { name: deleteCandidate.name })}
+            </div>
+            <p>{t('settings.mcp.deleteConfirm', { name: deleteCandidate.name })}</p>
             <div className="pivi-modal__actions">
               <button
                 type="button"
-                onClick={() => dispatch({ type: 'set_import_draft', draft: null })}
+                data-modal-cancel
+                onClick={() => dispatch({ type: 'set_delete_candidate', server: null })}
               >
                 {t('common.cancel')}
               </button>
               <button
+                className="pivi-button--danger"
                 type="button"
-                disabled={busy === 'import' || !importDraft.trim()}
-                onClick={() => { void importJson(importDraft); }}
+                onClick={() => {
+                  void commit(servers.filter((item) => item.name !== deleteCandidate.name))
+                    .then(() => dispatch({ type: 'set_delete_candidate', server: null }))
+                    .catch((cause) => feedback.notify(cause instanceof Error ? cause.message : t('common.error')));
+                }}
               >
-                {t('settings.mcp.importAction')}
+                {t('common.delete')}
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
-      {deleteCandidate ? (
-        <div role="dialog" aria-modal="true" aria-label={t('settings.mcp.deleteConfirm', { name: deleteCandidate.name })}>
-          <p>{t('settings.mcp.deleteConfirm', { name: deleteCandidate.name })}</p>
-          <button type="button" onClick={() => dispatch({ type: 'set_delete_candidate', server: null })}>{t('common.cancel')}</button>
-          <button
-            type="button"
-            onClick={() => {
-              void commit(servers.filter((item) => item.name !== deleteCandidate.name))
-                .then(() => dispatch({ type: 'set_delete_candidate', server: null }))
-                .catch((cause) => feedback.notify(cause instanceof Error ? cause.message : t('common.error')));
-            }}
-          >
-            {t('common.delete')}
-          </button>
-        </div>
-      ) : null}
+        ) : null}
+      </ModalLayer>
     </section>
   );
 }

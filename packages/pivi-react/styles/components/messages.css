@@ -72,6 +72,11 @@
   outline: none;
 }
 
+.pivi-messages-focusable:focus-visible {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
 .pivi-react-welcome-slot {
   position: absolute;
   z-index: 1;
@@ -228,7 +233,7 @@
 }
 
 .pivi-interrupted {
-  color: #d45d5d;
+  color: var(--pivi-host-text-error);
 }
 
 .pivi-interrupted-hint {
@@ -324,14 +329,21 @@
   box-shadow: none;
   padding: 0;
   margin: 0;
-  height: 16px;
-  min-width: 16px;
+  min-width: 32px;
+  min-height: 32px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--pivi-host-text-faint);
   transition: color var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+@media (pointer: coarse) {
+  .pivi-message-action-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .pivi-message-action-btn svg {

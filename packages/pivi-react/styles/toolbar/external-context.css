@@ -31,7 +31,7 @@
 }
 
 .pivi-external-context-btn.active {
-  color: var(--pivi-brand);
+  color: var(--pivi-host-text-accent);
 }
 
 .pivi-external-context-icon,
@@ -41,14 +41,14 @@
 }
 
 .pivi-external-context-count {
-  color: var(--pivi-brand);
+  color: var(--pivi-host-text-accent);
   font-size: var(--pivi-text-xs);
   font-weight: 500;
   line-height: 1;
 }
 
 .pivi-external-context-count.has-unavailable {
-  color: var(--pivi-error);
+  color: var(--pivi-host-text-warning);
 }
 
 .pivi-external-context-dropdown {
@@ -81,7 +81,7 @@
 
 .pivi-external-context-header {
   padding: 3px 8px;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--pivi-host-text-faint);
   text-transform: uppercase;
@@ -129,7 +129,7 @@
 }
 
 .pivi-external-context-item.enabled {
-  color: var(--pivi-brand);
+  color: var(--pivi-host-text-accent);
   font-weight: 500;
 }
 
@@ -165,7 +165,7 @@
 
 .pivi-external-context-warning {
   display: flex;
-  color: var(--pivi-error);
+  color: var(--pivi-host-text-warning);
 }
 
 .pivi-external-context-warning svg {
@@ -244,7 +244,7 @@
   }
 
   .pivi-external-context-btn:hover {
-    color: var(--pivi-brand);
+    color: var(--pivi-host-text-accent);
   }
 
   .pivi-external-context-selector:hover .pivi-external-context-dropdown {

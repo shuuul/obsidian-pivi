@@ -4,15 +4,12 @@ import { t } from '@/app/i18n';
 
 import type { InlineAskUserQuestionHost } from './inlineAskUserQuestionTypes';
 
-export const HINTS_TEXT = 'Enter to select \u00B7 Tab/Arrow keys to navigate \u00B7 Esc to cancel';
-export const HINTS_TEXT_IMMEDIATE = 'Enter to select \u00B7 Arrow keys to navigate \u00B7 Esc to cancel';
-
 function extractLabel(obj: Record<string, unknown>): string {
   if (typeof obj.label === 'string') return obj.label;
   if (typeof obj.value === 'string') return obj.value;
   if (typeof obj.text === 'string') return obj.text;
   if (typeof obj.name === 'string') return obj.name;
-  return 'Option';
+  return t('chat.askUser.optionFallback');
 }
 
 function stringifyOptionValue(value: unknown): string {
@@ -20,7 +17,7 @@ function stringifyOptionValue(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
     return `${value}`;
   }
-  return 'Option';
+  return t('chat.askUser.optionFallback');
 }
 
 function extractValue(obj: Record<string, unknown>, fallback: string): string {
@@ -75,7 +72,7 @@ export function parseQuestionsFromInput(input: Record<string, unknown>): AskUser
     .map((q, idx) => ({
       question: q.question,
       id: typeof (q as Record<string, unknown>).id === 'string' ? (q as Record<string, unknown>).id as string : undefined,
-      header: typeof q.header === 'string' ? q.header.slice(0, 12) : `Q${idx + 1}`,
+      header: typeof q.header === 'string' ? q.header.slice(0, 12) : t('chat.askUser.questionHeader', { number: idx + 1 }),
       options: deduplicateOptions((q.options ?? []).map((o) => coerceOption(o))),
       multiSelect: q.multiSelect === true,
       isOther: q.isOther === true,
@@ -291,7 +288,7 @@ function renderQuestionTab(host: InlineAskUserQuestionHost, idx: number): void {
   }
 
   host.contentArea.createDiv({
-    text: host.config.immediateSelect ? HINTS_TEXT_IMMEDIATE : HINTS_TEXT,
+    text: host.config.immediateSelect ? t('chat.askUser.hintsImmediate') : t('chat.askUser.hints'),
     cls: 'pivi-ask-hints',
   });
 }
@@ -353,7 +350,7 @@ function renderSubmitTab(host: InlineAskUserQuestionHost): void {
   host.currentItems.push(cancelRow);
 
   host.contentArea.createDiv({
-    text: HINTS_TEXT,
+    text: t('chat.askUser.hints'),
     cls: 'pivi-ask-hints',
   });
 }

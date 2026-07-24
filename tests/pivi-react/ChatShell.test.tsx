@@ -141,6 +141,7 @@ function createPortalTargets(ownerDocument: Document = document) {
 describe('React ChatShell tabs', () => {
   afterEach(() => {
     jest.useRealTimers();
+    document.body.replaceChildren();
   });
 
   it('owns header/logo and renders the tab bar in header mode', async () => {
@@ -304,7 +305,7 @@ describe('React ChatShell tabs', () => {
     active.focus();
     fireEvent.keyDown(active, { key: 'ArrowDown' });
 
-    expect(active).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Show archived tabs' })).toHaveFocus();
     expect(screen.getByRole('menuitem', { name: 'Archived chat' })).not.toHaveFocus();
     await act(async () => mounted.mounted.dispose());
   });
@@ -746,6 +747,22 @@ describe('React ChatShell tabs', () => {
     await act(async () => mounted.mounted.dispose());
   });
 
+  it('reveals archived tabs from the keyboard reveal control', async () => {
+    const mounted = await mountShell({ position: 'header' });
+    const ownerDocument = mounted.host.ownerDocument;
+    const trigger = ownerDocument.querySelector<HTMLElement>('[aria-label="Switch tab: Active chat"]');
+    fireEvent.click(trigger!);
+    const menu = ownerDocument.querySelector<HTMLElement>('[role="menu"]');
+    expect(menu).not.toHaveClass('is-archived-revealed');
+
+    const reveal = within(menu!).getByRole('menuitem', { name: 'Show archived tabs' });
+    fireEvent.click(reveal);
+    expect(menu).toHaveClass('is-archived-revealed');
+    expect(screen.getByRole('menuitem', { name: 'Archived chat' })).toBeInTheDocument();
+
+    await act(async () => mounted.mounted.dispose());
+  });
+
   it('projects active chat state into dedicated welcome, queue, usage, todo, and navigation portals', async () => {
     const bridge = new ActiveChatUiBridge();
     const uiStore = new ChatUiStore();
@@ -1174,12 +1191,12 @@ describe('React ChatShell tabs', () => {
     expect(modelDropdown).toHaveAttribute('aria-hidden', 'true');
     fireEvent.mouseEnter(modelSelector);
     expect(modelTrigger).toHaveAttribute('aria-expanded', 'true');
-    fireEvent.click(within(targets.composer).getByRole('button', { name: 'Longer Model B Name' }));
+    fireEvent.click(within(targets.composer).getByRole('option', { name: 'Longer Model B Name' }));
     expect(modelTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(modelDropdown).toHaveAttribute('aria-hidden', 'true');
 
     fireEvent.mouseEnter(modelSelector);
-    fireEvent.click(within(targets.composer).getByRole('button', { name: 'Model A' }));
+    fireEvent.click(within(targets.composer).getByRole('option', { name: 'Model A' }));
     expect(modelTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(composerActions.setModel).toHaveBeenCalledWith('model-a');
 
@@ -1190,12 +1207,12 @@ describe('React ChatShell tabs', () => {
     const thinkingOptions = targets.composer.querySelector('.pivi-thinking-options')!;
     fireEvent.mouseEnter(thinkingGears);
     expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'true');
-    fireEvent.click(within(targets.composer).getByRole('button', { name: 'High' }));
+    fireEvent.click(within(targets.composer).getByRole('option', { name: 'High' }));
     expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(thinkingOptions).toHaveAttribute('aria-hidden', 'true');
 
     fireEvent.mouseEnter(thinkingGears);
-    fireEvent.click(within(targets.composer).getByRole('button', { name: 'Low' }));
+    fireEvent.click(within(targets.composer).getByRole('option', { name: 'Low' }));
     expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(composerActions.setThinkingBudget).toHaveBeenCalledWith('low');
 

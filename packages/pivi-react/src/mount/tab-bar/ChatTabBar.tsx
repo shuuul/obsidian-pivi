@@ -231,9 +231,33 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
     exitTimers.current.set(item.id, timer);
   };
 
+  const revealArchivedTabs = (): void => {
+    setArchivedRevealProgress(0);
+    setIsArchivedRevealed(true);
+  };
+
+  const handleRevealArchivedKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      event.stopPropagation();
+      focusAdjacent(event.currentTarget, event.key === 'ArrowDown' ? 1 : -1);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMenu();
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      event.stopPropagation();
+      revealArchivedTabs();
+    }
+  };
+
   const focusAdjacent = (element: HTMLElement, direction: 1 | -1): void => {
     const items = Array.from(
-      containerRef.current?.querySelectorAll<HTMLElement>('.pivi-tab-switcher-item') ?? [],
+      containerRef.current?.querySelectorAll<HTMLElement>(
+        '.pivi-tab-switcher-item, .pivi-tab-switcher-reveal-archived',
+      ) ?? [],
     ).filter(item => (
       !item.classList.contains('is-exiting')
       && (isArchivedRevealed || !item.classList.contains('is-archived'))
@@ -395,6 +419,29 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
             <div className="pivi-tab-sort-list" ref={reorder.listRef} role="presentation">
               {tabOrder.map((id, index) => {
                 if (id === ARCHIVED_BOUNDARY_ID) {
+                  const hasArchived = snapshot.items.some(item => item.isArchived);
+                  if (!hasArchived) return null;
+                  if (!isArchivedRevealed) {
+                    return (
+                      <div
+                        aria-label={t('chat.tabs.revealArchived')}
+                        className="pivi-tab-switcher-item pivi-tab-switcher-reveal-archived"
+                        data-tab-sort-id={ARCHIVED_BOUNDARY_ID}
+                        key={ARCHIVED_BOUNDARY_ID}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          revealArchivedTabs();
+                        }}
+                        onKeyDown={handleRevealArchivedKeyDown}
+                        role="menuitem"
+                        tabIndex={0}
+                      >
+                        <span className="pivi-tab-switcher-reveal-archived-label">
+                          {t('chat.tabs.revealArchived')}
+                        </span>
+                      </div>
+                    );
+                  }
                   return (
                     <div
                       className="pivi-tab-switcher-section-label"

@@ -32,9 +32,9 @@
     90deg,
     transparent 0%,
     transparent 18%,
-    rgba(var(--pivi-brand-rgb), 0.25) 36%,
+    rgba(var(--pivi-host-interactive-accent-rgb), 0.25) 36%,
     var(--pivi-host-text-accent) 50%,
-    rgba(var(--pivi-brand-rgb), 0.25) 64%,
+    rgba(var(--pivi-host-interactive-accent-rgb), 0.25) 64%,
     transparent 82%,
     transparent 100%
   );

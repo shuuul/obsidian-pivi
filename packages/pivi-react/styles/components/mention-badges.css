@@ -57,14 +57,14 @@ button.pivi-context-badge {
 }
 
 .pivi-context-badge--tool {
-  border-color: rgba(var(--pivi-brand-rgb), 0.35);
-  background: rgba(var(--pivi-brand-rgb), 0.14);
-  color: color-mix(in srgb, var(--pivi-brand) 72%, var(--pivi-host-text-normal));
+  border-color: rgba(var(--pivi-host-interactive-accent-rgb), 0.35);
+  background: rgba(var(--pivi-host-interactive-accent-rgb), 0.14);
+  color: color-mix(in srgb, var(--pivi-host-text-accent) 72%, var(--pivi-host-text-normal));
 }
 
 .pivi-context-badge--tool:hover:not(:disabled) {
-  background: rgba(var(--pivi-brand-rgb), 0.22);
-  border-color: rgba(var(--pivi-brand-rgb), 0.45);
+  background: rgba(var(--pivi-host-interactive-accent-rgb), 0.22);
+  border-color: rgba(var(--pivi-host-interactive-accent-rgb), 0.45);
 }
 
 .pivi-context-badge--inline {
@@ -93,7 +93,7 @@ button.pivi-context-badge {
 }
 
 .pivi-context-badge--tool .pivi-context-badge-icon {
-  color: color-mix(in srgb, var(--pivi-brand) 80%, var(--pivi-host-text-muted));
+  color: color-mix(in srgb, var(--pivi-host-text-accent) 80%, var(--pivi-host-text-muted));
 }
 
 .pivi-context-badge--inline .pivi-context-badge-icon {

@@ -1,5 +1,8 @@
+import { useEffect, useRef } from 'react';
+
 import { useT } from '../../i18n';
 import { PlatformIcon, QueueMessageIcon } from '../../icons';
+import { usePresentationPlatform } from '../../platform';
 import type { ChatUiSnapshot } from '../../store';
 import type { ComposerChromeActions } from '../activeChatUiBridge';
 import {
@@ -18,10 +21,25 @@ export function ComposerChrome({
   actions: ComposerChromeActions | null;
 }) {
   const t = useT();
-  if (!actions) return null;
+  const platform = usePresentationPlatform();
+  const sendWrapRef = useRef<HTMLDivElement>(null);
   const { composer } = snapshot;
   const queuesMessage = snapshot.isStreaming && composer.canSend;
   const stopsResponse = snapshot.isStreaming && !composer.canSend;
+  const sendDisabled = !snapshot.isStreaming && !composer.canSend;
+  const sendTooltip = queuesMessage
+    ? t('chat.composer.queueTitle')
+    : stopsResponse
+      ? t('chat.composer.stopTitle')
+      : composer.canSend
+        ? t('chat.composer.sendTitle')
+        : t('chat.composer.sendEmptyTitle');
+  useEffect(() => {
+    const wrap = sendWrapRef.current;
+    if (!wrap || !actions || !sendDisabled) return;
+    platform.attachTooltip(wrap, sendTooltip);
+  }, [actions, platform, sendDisabled, sendTooltip]);
+  if (!actions) return null;
   return (
     <div className="pivi-input-toolbar">
       <ModelSelector onChange={actions.setModel} options={composer.modelOptions} value={composer.model} />
@@ -42,7 +60,7 @@ export function ComposerChrome({
       />
       <div className="pivi-input-action-group">
         <UsageMeter usage={snapshot.usage} />
-        <div className="pivi-send-button-wrap">
+        <div className="pivi-send-button-wrap" ref={sendWrapRef}>
           <button
             aria-label={queuesMessage
               ? t('chat.composer.queueAria')
@@ -52,15 +70,9 @@ export function ComposerChrome({
                 ? t('chat.composer.sendAria')
                 : t('chat.composer.sendEmptyAria')}
             className={`pivi-send-button pivi-send-${queuesMessage ? 'queue' : stopsResponse ? 'streaming' : composer.canSend ? 'ready' : 'disabled'}`}
-            disabled={!snapshot.isStreaming && !composer.canSend}
+            disabled={sendDisabled}
             onClick={stopsResponse ? actions.stop : actions.send}
-            title={queuesMessage
-              ? t('chat.composer.queueTitle')
-              : stopsResponse
-              ? t('chat.composer.stopTitle')
-              : composer.canSend
-                ? t('chat.composer.sendTitle')
-                : t('chat.composer.sendEmptyTitle')}
+            title={sendDisabled ? undefined : sendTooltip}
             type="button"
           >
             {queuesMessage

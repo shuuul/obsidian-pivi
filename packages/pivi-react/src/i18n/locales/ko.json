@@ -68,6 +68,7 @@
       "editTitleInputLabel": "탭 제목",
       "closeTab": "{title} 닫기",
       "archived": "보관됨",
+      "revealArchived": "보관된 탭 표시",
       "failedCreateChat": "채팅을 만들지 못했습니다",
       "failedSwitchTab": "탭을 전환하지 못했습니다",
       "failedCloseTab": "탭을 닫지 못했습니다",
@@ -215,7 +216,12 @@
       "typeSomething": "내용을 입력하세요.",
       "enterSecret": "비밀 값을 입력하세요.",
       "notAnswered": "답변하지 않음",
-      "submit": "제출"
+      "submit": "제출",
+      "defaultTitle": "질문",
+      "optionFallback": "옵션",
+      "hints": "Enter로 선택 · Tab/화살표로 이동 · Esc로 취소",
+      "hintsImmediate": "Enter로 선택 · 화살표로 이동 · Esc로 취소",
+      "questionHeader": "Q{number}"
     },
     "slash": {
       "ariaLabel": "슬래시 명령",
@@ -290,6 +296,11 @@
       "resetZoom": "Mermaid 다이어그램 확대/축소 재설정",
       "zoomIn": "Mermaid 다이어그램 확대",
       "fitToWidth": "Mermaid 다이어그램 너비에 맞추기"
+    },
+    "messageImages": {
+      "lightboxAria": "이미지 미리보기",
+      "closeAria": "이미지 미리보기 닫기",
+      "openAria": "{name} 전체 크기로 열기"
     }
   },
   "settings": {
@@ -422,7 +433,8 @@
         "position": "{label}을(를) {total}개 중 {position}번째로 이동했습니다.",
         "saved": "바로 가기 순서를 저장했습니다.",
         "cancelled": "바로 가기 재정렬을 취소했습니다."
-      }
+      },
+      "commandsTruncated": "처음 {count}개 결과만 표시됩니다. 검색을 좁히면 더 볼 수 있습니다."
     },
     "slashCommands": {
       "desc": ".pivi/commands/에 저장된 {workspaceName} 수준 사용자 지정 명령을 관리합니다. /이름으로 실행됩니다."
@@ -474,7 +486,9 @@
         "desc": "기록에서 제거되었고 보관되지 않았으며 현재 열려 있지 않은 세션 파일만 영구 삭제합니다.",
         "button": "삭제",
         "success": "제거된 세션 파일 {count}개를 삭제했습니다.",
-        "failed": "제거된 세션 파일 삭제 실패"
+        "failed": "제거된 세션 파일 삭제 실패",
+        "confirmTitle": "제거된 세션 파일을 삭제할까요?",
+        "confirmDescription": "기록에서 제거되었고 보관되지 않았거나 현재 열려 있지 않은 세션 파일만 영구적으로 삭제합니다."
       }
     },
     "sharedEnvironment": {
@@ -486,7 +500,10 @@
       "storageSecure": "보안 저장소",
       "storageSystem": "시스템 환경",
       "secretStored": "안전하게 저장됨",
-      "secretMissing": "보안 값 없음"
+      "secretMissing": "보안 값 없음",
+      "apply": "변경 사항 적용",
+      "pending": "환경 변수를 저장하는 중…",
+      "success": "환경 변수를 저장했습니다."
     },
     "tools": {
       "sections": {
@@ -684,11 +701,36 @@
         "disableAria": "스킬 {name} 사용 안 함",
         "updateAria": "스킬 {name} 업데이트",
         "removeAria": "스킬 {name} 제거",
-        "installAria": "스킬 {name} 설치"
+        "installAria": "스킬 {name} 설치",
+        "removeConfirmTitle": "스킬 {name}을(를) 제거할까요?",
+        "removeConfirm": ".pivi/skills/에서 {name}을(를) 제거할까요? 기기에서 스킬 폴더가 삭제됩니다."
       },
       "notices": {
         "noRemote": "이 소스에 대한 원격 스킬이 없습니다.",
         "selectOne": "설치할 스킬을 하나 이상 선택하세요."
+      },
+      "feedback": {
+        "pending": {
+          "installBundle": "공식 스킬을 설치하는 중…",
+          "updateBundle": "공식 스킬을 업데이트하는 중…",
+          "listRemote": "원격 스킬을 나열하는 중…",
+          "installSelected": "선택한 스킬을 설치하는 중…",
+          "updateAll": "모든 스킬을 업데이트하는 중…",
+          "update": "{name} 업데이트 중…",
+          "remove": "{name} 제거 중…",
+          "enable": "{name} 사용 설정 중…",
+          "disable": "{name} 사용 중지 중…"
+        },
+        "success": {
+          "installBundle": "공식 스킬을 설치했습니다.",
+          "updateBundle": "공식 스킬을 업데이트했습니다.",
+          "installSelected": "선택한 스킬을 설치했습니다.",
+          "updateAll": "모든 스킬을 업데이트했습니다.",
+          "update": "{name}을(를) 업데이트했습니다.",
+          "remove": "{name}을(를) 제거했습니다.",
+          "enable": "{name}을(를) 사용 설정했습니다.",
+          "disable": "{name}을(를) 사용 중지했습니다."
+        }
       }
     },
     "slashCommandsUi": {
@@ -708,7 +750,8 @@
         "position": "/{name}을(를) {total}개 중 {position}번째로 이동했습니다.",
         "saved": "명령 순서를 저장했습니다.",
         "cancelled": "명령 재정렬을 취소했습니다."
-      }
+      },
+      "deleteConfirmTitle": "사용자 지정 명령 /{name}을(를) 삭제할까요?"
     },
     "createCommand": {
       "titleCreate": "사용자 지정 슬래시 명령 만들기",
@@ -823,7 +866,8 @@
         "connected": "도구를 새로 고쳤습니다",
         "availableTools": "사용 가능한 도구({count})",
         "noTools": "이 서버에서 반환된 도구가 없습니다."
-      }
+      },
+      "deleteConfirmTitle": "MCP 서버 \"{name}\"을(를) 삭제할까요?"
     }
   },
   "commands": {
