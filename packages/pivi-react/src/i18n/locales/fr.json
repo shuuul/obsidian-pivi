@@ -647,6 +647,7 @@
       "authHeadingOptional": "Authentification (facultative)",
       "apiKeyOptionalDesc": "Facultatif. Laissez vide pour les serveurs locaux sans authentification. Si renseignée, enregistrée dans le {secureStorageName} sous {secretId}.",
       "apiKeyOptionalPlaceholder": "Clé API facultative…",
+      "dualAuthApiKeyBlocked": "Ce fournisseur nécessite désormais une connexion OAuth. Les clés API existantes peuvent encore être mises à jour ou supprimées.",
       "grokBuild": {
         "name": "Grok Build",
         "desc": "Connectez-vous à Grok Build avec votre compte xAI. Les identifiants sont stockés dans {secureStorageName}.",
@@ -666,6 +667,26 @@
         "connected": "Claude connecté.",
         "disconnected": "Claude déconnecté.",
         "loginFailed": "Échec de la connexion Claude : {message}"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "Connectez-vous à OpenRouter dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "connected": "OpenRouter connecté.",
+        "disconnected": "OpenRouter déconnecté.",
+        "loginFailed": "Échec de la connexion OpenRouter : {message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "Connectez-vous avec votre abonnement Kimi Code. Les identifiants sont stockés dans {secureStorageName}.",
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "connected": "Kimi For Coding connecté.",
+        "disconnected": "Kimi For Coding déconnecté.",
+        "loginFailed": "Échec de la connexion Kimi For Coding : {message}"
       },
       "oauthCommon": {
         "cancel": "Annuler",

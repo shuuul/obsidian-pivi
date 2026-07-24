@@ -647,6 +647,7 @@
       "authHeadingOptional": "Authentifizierung (optional)",
       "apiKeyOptionalDesc": "Optional. Leer lassen für lokale Server ohne Auth. Bei Angabe im {secureStorageName} als {secretId} gespeichert.",
       "apiKeyOptionalPlaceholder": "Optionaler API-Schlüssel…",
+      "dualAuthApiKeyBlocked": "Dieser Anbieter erfordert jetzt OAuth-Anmeldung. Bestehende API-Schlüssel können weiterhin aktualisiert oder gelöscht werden.",
       "grokBuild": {
         "name": "Grok Build",
         "desc": "Mit dem xAI-Konto bei Grok Build anmelden. Anmeldedaten im {secureStorageName}.",
@@ -666,6 +667,26 @@
         "connected": "Claude verbunden.",
         "disconnected": "Claude getrennt.",
         "loginFailed": "Claude-Anmeldung fehlgeschlagen: {message}"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "Im Browser bei OpenRouter anmelden. Anmeldedaten im {secureStorageName}.",
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen",
+        "connected": "OpenRouter verbunden.",
+        "disconnected": "OpenRouter getrennt.",
+        "loginFailed": "OpenRouter-Anmeldung fehlgeschlagen: {message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "Mit Kimi Code-Abonnement anmelden. Anmeldedaten im {secureStorageName}.",
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen",
+        "connected": "Kimi For Coding verbunden.",
+        "disconnected": "Kimi For Coding getrennt.",
+        "loginFailed": "Kimi For Coding-Anmeldung fehlgeschlagen: {message}"
       },
       "oauthCommon": {
         "cancel": "Abbrechen",

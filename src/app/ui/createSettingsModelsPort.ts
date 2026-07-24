@@ -3,6 +3,7 @@ import {
   CODEX_OAUTH_PROVIDER_ID,
   getPiAiCredentialSecretId,
   INTERACTIVE_OAUTH_PROVIDER_IDS,
+  isDualAuthOAuthProviderId,
   SUBSCRIPTION_OAUTH_PROVIDER_IDS,
 } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
@@ -78,8 +79,7 @@ export function createSettingsModelsPort(
       const piSettings = getPiAgentSettings(host.settings);
       const custom = piSettings.customProviders.find(provider => provider.id === providerId);
       const allowKeyless = !!custom && custom.apiKeyRequired === false;
-      const isSubscriptionShell = (SUBSCRIPTION_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId);
-      const interactiveOAuthConnected = isSubscriptionShell || providerId === CODEX_OAUTH_PROVIDER_ID
+      const interactiveOAuthConnected = (INTERACTIVE_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId)
         ? (workspace.providerOAuth?.hasProviderOAuth(providerId) ?? false)
         : false;
       return deriveProviderReadinessStatus({
@@ -105,6 +105,12 @@ export function createSettingsModelsPort(
     async setApiKey(providerId, key) {
       const store = workspace.credentialStore;
       if (!store) throw new Error('Provider credential storage is unavailable.');
+      if (
+        isDualAuthOAuthProviderId(providerId)
+        && workspace.credentialStore?.readSync(providerId)?.type !== 'api_key'
+      ) {
+        throw new Error(appT('settings.modelsTab.dualAuthApiKeyBlocked'));
+      }
       await store.modify(providerId, () => Promise.resolve({ type: 'api_key', key }));
       const piSettings = getPiAgentSettings(host.settings);
       const environmentVariables = removeEnvVar(piSettings.environmentVariables, getProviderEnvVarNames(providerId).apiKeyVar);

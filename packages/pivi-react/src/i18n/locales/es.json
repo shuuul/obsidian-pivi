@@ -647,6 +647,7 @@
       "authHeadingOptional": "Autenticación (opcional)",
       "apiKeyOptionalDesc": "Opcional. Déjalo vacío para servidores locales sin autenticación. Si se define, se guarda en el {secureStorageName} como {secretId}.",
       "apiKeyOptionalPlaceholder": "Clave API opcional…",
+      "dualAuthApiKeyBlocked": "Este proveedor ahora requiere inicio de sesión OAuth. Las claves API existentes aún se pueden actualizar o borrar.",
       "grokBuild": {
         "name": "Grok Build",
         "desc": "Inicia sesión en Grok Build con tu cuenta de xAI. Las credenciales se guardan en el {secureStorageName}.",
@@ -666,6 +667,26 @@
         "connected": "Claude conectado.",
         "disconnected": "Claude desconectado.",
         "loginFailed": "Error de inicio de sesión de Claude: {message}"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "Inicia sesión en OpenRouter en el navegador. Las credenciales se guardan en {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "OpenRouter conectado.",
+        "disconnected": "OpenRouter desconectado.",
+        "loginFailed": "Error de inicio de sesión de OpenRouter: {message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "Inicia sesión con tu suscripción Kimi Code. Las credenciales se guardan en {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "Kimi For Coding conectado.",
+        "disconnected": "Kimi For Coding desconectado.",
+        "loginFailed": "Error de inicio de sesión de Kimi For Coding: {message}"
       },
       "oauthCommon": {
         "cancel": "Cancelar",

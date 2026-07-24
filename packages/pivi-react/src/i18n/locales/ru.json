@@ -647,6 +647,7 @@
       "authHeadingOptional": "Аутентификация (необязательно)",
       "apiKeyOptionalDesc": "Необязательно. Оставьте пустым для локальных серверов без авторизации. При указании сохраняется в {secureStorageName} как {secretId}.",
       "apiKeyOptionalPlaceholder": "Необязательный API-ключ…",
+      "dualAuthApiKeyBlocked": "Для этого провайдера теперь требуется вход через OAuth. Существующие API-ключи по-прежнему можно обновлять или удалять.",
       "grokBuild": {
         "name": "Grok Build",
         "desc": "Войдите в Grok Build с учётной записью xAI. Учётные данные сохраняются в {secureStorageName}.",
@@ -666,6 +667,26 @@
         "connected": "Claude подключён.",
         "disconnected": "Claude отключён.",
         "loginFailed": "Ошибка входа Claude: {message}"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "Войдите в OpenRouter в браузере. Учётные данные сохраняются в {secureStorageName}.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "OpenRouter подключён.",
+        "disconnected": "OpenRouter отключён.",
+        "loginFailed": "Ошибка входа OpenRouter: {message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "Войдите с подпиской Kimi Code. Учётные данные сохраняются в {secureStorageName}.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "Kimi For Coding подключён.",
+        "disconnected": "Kimi For Coding отключён.",
+        "loginFailed": "Ошибка входа Kimi For Coding: {message}"
       },
       "oauthCommon": {
         "cancel": "Отмена",

@@ -33,6 +33,28 @@ export const CLAUDE_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.claude.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
+export const OPENROUTER_OAUTH_SETTINGS_KEYS = {
+  name: 'settings.modelsTab.openrouter.name',
+  desc: 'settings.modelsTab.openrouter.desc',
+  connect: 'settings.modelsTab.openrouter.connect',
+  reconnect: 'settings.modelsTab.openrouter.reconnect',
+  disconnect: 'settings.modelsTab.openrouter.disconnect',
+  connected: 'settings.modelsTab.openrouter.connected',
+  disconnected: 'settings.modelsTab.openrouter.disconnected',
+  loginFailed: 'settings.modelsTab.openrouter.loginFailed',
+} as const satisfies Record<string, TranslationKey>;
+
+export const KIMI_CODING_OAUTH_SETTINGS_KEYS = {
+  name: 'settings.modelsTab.kimiCoding.name',
+  desc: 'settings.modelsTab.kimiCoding.desc',
+  connect: 'settings.modelsTab.kimiCoding.connect',
+  reconnect: 'settings.modelsTab.kimiCoding.reconnect',
+  disconnect: 'settings.modelsTab.kimiCoding.disconnect',
+  connected: 'settings.modelsTab.kimiCoding.connected',
+  disconnected: 'settings.modelsTab.kimiCoding.disconnected',
+  loginFailed: 'settings.modelsTab.kimiCoding.loginFailed',
+} as const satisfies Record<string, TranslationKey>;
+
 export const OAUTH_COMMON_SETTINGS_KEYS = {
   cancel: 'settings.modelsTab.oauthCommon.cancel',
   deviceCode: 'settings.modelsTab.oauthCommon.deviceCode',
@@ -43,6 +65,8 @@ const PROVIDER_OAUTH_SETTINGS_KEYS = {
   'openai-codex': CODEX_OAUTH_SETTINGS_KEYS,
   'grok-build': GROK_BUILD_OAUTH_SETTINGS_KEYS,
   claude: CLAUDE_OAUTH_SETTINGS_KEYS,
+  openrouter: OPENROUTER_OAUTH_SETTINGS_KEYS,
+  'kimi-coding': KIMI_CODING_OAUTH_SETTINGS_KEYS,
 } as const;
 
 export function getProviderOAuthSettingsKeys(providerId: string) {

@@ -1,3 +1,4 @@
+import { isDualAuthOAuthProviderId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { isLocalCustomProviderKind } from '@pivi/pivi-agent-core/foundation/customProviders';
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
 import {
@@ -17,7 +18,7 @@ import { ModalLayer } from '../../shared/ModalLayer';
 import { SettingsItemActions, SettingsRemoveButton, Toggle } from '../controls';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
-import { ProviderCredentials } from './ProviderCredentials';
+import { ProviderApiKeyField,ProviderCredentials } from './ProviderCredentials';
 import { ProviderOAuthSection } from './ProviderOAuthSection';
 import { STATUS_DESC_KEYS, STATUS_LABEL_KEYS } from './statusLabels';
 
@@ -77,7 +78,9 @@ export function ProviderCard({
   const isLocalProvider = !!custom && isLocalCustomProviderKind(custom.kind);
   const isInteractiveOAuth = models.interactiveOAuthProviderIds.includes(providerId);
   const isCodex = providerId === models.codexProviderId;
-  const isAccountOAuth = isInteractiveOAuth && !isCodex;
+  const isDualAuthOAuth = isDualAuthOAuthProviderId(providerId);
+  const isAccountOAuth = isInteractiveOAuth && !isCodex && !isDualAuthOAuth;
+  const hasLegacyApiKey = models.getCredentialKind(providerId) === 'api_key';
 
   const stop = (event: MouseEvent): void => {
     event.preventDefault();
@@ -227,6 +230,20 @@ export function ProviderCard({
         ) : isAccountOAuth ? (
           <>
             <ProviderOAuthSection models={models} feedback={feedback} providerId={providerId} connected={oauthConnected} onChanged={onChanged} />
+            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+          </>
+        ) : isDualAuthOAuth ? (
+          <>
+            <ProviderOAuthSection models={models} feedback={feedback} providerId={providerId} connected={oauthConnected} onChanged={onChanged} />
+            {hasLegacyApiKey ? (
+              <ProviderApiKeyField
+                models={models}
+                providerId={providerId}
+                allowKeyless={false}
+                onChanged={onChanged}
+                onError={onError}
+              />
+            ) : null}
             <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
           </>
         ) : (

@@ -647,6 +647,7 @@
       "authHeadingOptional": "认证（可选）",
       "apiKeyOptionalDesc": "可选。本地服务器无需鉴权时可留空。若填写，将以 {secretId} 保存在{secureStorageName}中。",
       "apiKeyOptionalPlaceholder": "可选 API 密钥…",
+      "dualAuthApiKeyBlocked": "此提供商现在需要 OAuth 登录。已有 API 密钥仍可更新或清除。",
       "grokBuild": {
         "name": "Grok Build",
         "desc": "使用你的 xAI 账户登录 Grok Build。凭据保存在{secureStorageName}中。",
@@ -666,6 +667,26 @@
         "connected": "Claude 已连接。",
         "disconnected": "Claude 已断开。",
         "loginFailed": "Claude 登录失败：{message}"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "在浏览器中登录 OpenRouter。凭据保存在 {secureStorageName}。",
+        "connect": "连接",
+        "reconnect": "重新连接",
+        "disconnect": "断开连接",
+        "connected": "OpenRouter 已连接。",
+        "disconnected": "OpenRouter 已断开。",
+        "loginFailed": "OpenRouter 登录失败：{message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "使用 Kimi Code 订阅登录。凭据保存在 {secureStorageName}。",
+        "connect": "连接",
+        "reconnect": "重新连接",
+        "disconnect": "断开连接",
+        "connected": "Kimi For Coding 已连接。",
+        "disconnected": "Kimi For Coding 已断开。",
+        "loginFailed": "Kimi For Coding 登录失败：{message}"
       },
       "oauthCommon": {
         "cancel": "取消",

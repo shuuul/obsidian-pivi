@@ -664,6 +664,26 @@
         "disconnected": "Claude disconnected.",
         "loginFailed": "Claude login failed: {message}"
       },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "Sign in with OpenRouter in your browser. Credentials are stored in {secureStorageName}.",
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect",
+        "connected": "OpenRouter connected.",
+        "disconnected": "OpenRouter disconnected.",
+        "loginFailed": "OpenRouter login failed: {message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "Sign in with your Kimi Code subscription. Credentials are stored in {secureStorageName}.",
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect",
+        "connected": "Kimi For Coding connected.",
+        "disconnected": "Kimi For Coding disconnected.",
+        "loginFailed": "Kimi For Coding login failed: {message}"
+      },
       "oauthCommon": {
         "cancel": "Cancel",
         "deviceCode": "Device code",
@@ -671,7 +691,8 @@
       },
       "authHeadingOptional": "Authentication (optional)",
       "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in {secureStorageName} as {secretId} when set.",
-      "apiKeyOptionalPlaceholder": "Optional API key..."
+      "apiKeyOptionalPlaceholder": "Optional API key...",
+      "dualAuthApiKeyBlocked": "This provider now requires OAuth sign-in. Existing API keys can still be updated or cleared."
     },
     "skills": {
       "intro": "Agent skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs or updates skills only after you choose an action below.",

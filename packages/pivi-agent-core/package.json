@@ -27,6 +27,7 @@
     "./engine/pi/piModelRegistry": "./src/engine/pi/piModelRegistry.ts",
     "./engine/pi/piProviderCredentialStore": "./src/engine/pi/piProviderCredentialStore.ts",
     "./engine/pi/piProviderOAuthService": "./src/engine/pi/piProviderOAuthService.ts",
+    "./engine/pi/piviOpenRouterOAuth": "./src/engine/pi/piviOpenRouterOAuth.ts",
     "./engine/pi/registerBundledPiOAuthFlows": "./src/engine/pi/registerBundledPiOAuthFlows.ts",
     "./engine/pi/piRuntimeHost": "./src/engine/pi/piRuntimeHost.ts",
     "./engine/pi/piSettingsCoordinator": "./src/engine/pi/piSettingsCoordinator.ts",
@@ -82,8 +83,8 @@
     "./workspace": "./src/workspace/index.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-agent-core": "0.81.1",
-    "@earendil-works/pi-ai": "0.81.1",
-    "@earendil-works/pi-coding-agent": "0.81.1"
+    "@earendil-works/pi-agent-core": "0.82.0",
+    "@earendil-works/pi-ai": "0.82.0",
+    "@earendil-works/pi-coding-agent": "0.82.0"
   }
 }

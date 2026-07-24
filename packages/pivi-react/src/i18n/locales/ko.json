@@ -647,6 +647,7 @@
       "authHeadingOptional": "인증(선택 사항)",
       "apiKeyOptionalDesc": "선택 사항입니다. 인증이 필요 없는 로컬 서버는 비워 두세요. 설정 시 {secureStorageName}에 {secretId}로 저장됩니다.",
       "apiKeyOptionalPlaceholder": "선택적 API 키…",
+      "dualAuthApiKeyBlocked": "이 제공자는 이제 OAuth 로그인이 필요합니다. 기존 API 키는 계속 업데이트하거나 삭제할 수 있습니다.",
       "grokBuild": {
         "name": "Grok Build",
         "desc": "xAI 계정으로 Grok Build에 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
@@ -666,6 +667,26 @@
         "connected": "Claude가 연결되었습니다.",
         "disconnected": "Claude 연결이 해제되었습니다.",
         "loginFailed": "Claude 로그인 실패: {message}"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "브라우저에서 OpenRouter에 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
+        "connect": "연결",
+        "reconnect": "다시 연결",
+        "disconnect": "연결 해제",
+        "connected": "OpenRouter가 연결되었습니다.",
+        "disconnected": "OpenRouter 연결이 해제되었습니다.",
+        "loginFailed": "OpenRouter 로그인 실패: {message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "Kimi Code 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
+        "connect": "연결",
+        "reconnect": "다시 연결",
+        "disconnect": "연결 해제",
+        "connected": "Kimi For Coding이 연결되었습니다.",
+        "disconnected": "Kimi For Coding 연결이 해제되었습니다.",
+        "loginFailed": "Kimi For Coding 로그인 실패: {message}"
       },
       "oauthCommon": {
         "cancel": "취소",

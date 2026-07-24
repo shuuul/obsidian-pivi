@@ -1,9 +1,11 @@
 import { anthropicOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/anthropic.js';
 import { githubCopilotOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/github-copilot.js';
+import { kimiCodingOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/kimi-coding.js';
 import { registerBundledOAuthFlowLoaders } from '@earendil-works/pi-ai/dist/auth/oauth/load.js';
 import { openaiCodexOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/openai-codex.js';
 import { createRadiusOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/radius.js';
 
+import { createPiviOpenRouterOAuth } from './piviOpenRouterOAuth';
 import {
   createPiviXaiOAuth,
   type ProviderOAuthFetch,
@@ -15,6 +17,8 @@ export function registerPiviBundledOAuthFlowLoaders(request: ProviderOAuthFetch)
     anthropic: () => anthropicOAuth,
     openaiCodex: () => openaiCodexOAuth,
     githubCopilot: () => githubCopilotOAuth,
+    openrouter: () => createPiviOpenRouterOAuth(request),
+    kimiCoding: () => kimiCodingOAuth,
     xai: () => createPiviXaiOAuth(request),
     radius: createRadiusOAuth,
   });

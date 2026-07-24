@@ -647,6 +647,7 @@
       "authHeadingOptional": "認証（任意）",
       "apiKeyOptionalDesc": "任意。認証不要なローカルサーバーでは空のままにできます。設定した場合は {secureStorageName} に {secretId} として保存されます。",
       "apiKeyOptionalPlaceholder": "任意の API キー…",
+      "dualAuthApiKeyBlocked": "このプロバイダーは OAuth サインインが必要になりました。既存の API キーは引き続き更新または削除できます。",
       "grokBuild": {
         "name": "Grok Build",
         "desc": "xAI アカウントで Grok Build にサインインします。資格情報は {secureStorageName} に保存されます。",
@@ -666,6 +667,26 @@
         "connected": "Claude に接続しました。",
         "disconnected": "Claude を切断しました。",
         "loginFailed": "Claude ログインに失敗：{message}"
+      },
+      "openrouter": {
+        "name": "OpenRouter",
+        "desc": "ブラウザで OpenRouter にサインインします。認証情報は {secureStorageName} に保存されます。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "OpenRouter に接続しました。",
+        "disconnected": "OpenRouter を切断しました。",
+        "loginFailed": "OpenRouter ログインに失敗：{message}"
+      },
+      "kimiCoding": {
+        "name": "Kimi For Coding",
+        "desc": "Kimi Code サブスクリプションでサインインします。認証情報は {secureStorageName} に保存されます。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "Kimi For Coding に接続しました。",
+        "disconnected": "Kimi For Coding を切断しました。",
+        "loginFailed": "Kimi For Coding ログインに失敗：{message}"
       },
       "oauthCommon": {
         "cancel": "キャンセル",
