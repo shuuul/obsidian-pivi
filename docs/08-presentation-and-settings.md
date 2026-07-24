@@ -97,7 +97,7 @@ Icons cross the presentation platform as product descriptors or SVG data. React 
 
 Respect reduced motion, keyboard focus, semantic roles, and owner-window timers. Animation timing must not become a runtime state transition; actions happen through the narrow callbacks after any presentation-only exit phase.
 
-Semantic themed colors derive from `--pivi-host-*` tokens or `color-mix()` from them; legacy product color literals are guarded by `tests/unit/scripts/themeTokens.test.ts`. In-scope icon actions use at least 32×32 CSS px hit boxes on fine pointers and 44×44 CSS px under `(pointer: coarse)` without enlarging glyph size. Settings controls expose programmatic names and descriptions; multi-control rows do not require wrapping `<label>` elements when that would create nested-label ambiguity.
+Semantic themed colors derive from `--pivi-host-*` tokens or `color-mix()` from them; legacy product color literals are guarded by `tests/unit/scripts/themeTokens.test.ts`. In-scope compact icon actions (message actions, tab switcher actions, send control) keep their hit box snug to the glyph (compact 16–20px sizing) and do not enlarge it to 32×32/44×44; hover and focus emphasis stays icon-sized rather than a large background or outline block. Settings controls expose programmatic names and descriptions; multi-control rows do not require wrapping `<label>` elements when that would create nested-label ambiguity.
 
 ## Change checklist
 

@@ -213,18 +213,8 @@
 .pivi-send-button-wrap {
   display: flex;
   align-items: center;
-  justify-content: center;
   margin-inline-start: 0;
   flex-shrink: 0;
-  min-width: 32px;
-  min-height: 32px;
-}
-
-@media (pointer: coarse) {
-  .pivi-send-button-wrap {
-    min-width: 44px;
-    min-height: 44px;
-  }
 }
 
 .pivi-send-button {

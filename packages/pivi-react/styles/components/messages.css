@@ -329,21 +329,14 @@
   box-shadow: none;
   padding: 0;
   margin: 0;
-  min-width: 32px;
-  min-height: 32px;
+  height: 16px;
+  min-width: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--pivi-host-text-faint);
   transition: color var(--pivi-duration-fast) var(--pivi-ease-out);
-}
-
-@media (pointer: coarse) {
-  .pivi-message-action-btn {
-    min-width: 44px;
-    min-height: 44px;
-  }
 }
 
 .pivi-message-action-btn svg {

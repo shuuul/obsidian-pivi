@@ -414,8 +414,6 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  min-width: 32px;
-  min-height: 32px;
   transform: translateY(-50%);
   color: var(--pivi-host-text-normal);
   background: transparent;
@@ -444,13 +442,6 @@
 .pivi-tab-switcher-close svg {
   width: 14px;
   height: 14px;
-}
-
-@media (pointer: coarse) {
-  .pivi-tab-switcher-action {
-    min-width: 44px;
-    min-height: 44px;
-  }
 }
 
 .pivi-tab-switcher-reveal-archived {
