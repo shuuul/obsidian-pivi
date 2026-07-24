@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.2](https://github.com/shuuul/obsidian-pivi/compare/0.16.1...0.16.2) (2026-07-24)
+
+
+### Bug Fixes
+
+* **ui:** restore compact icon sizing and drop oversized hit boxes ([5091064](https://github.com/shuuul/obsidian-pivi/commit/5091064946b13c978c7f1748cf162e5354ce091c))
+
 ## [0.16.1](https://github.com/shuuul/obsidian-pivi/compare/0.16.0...0.16.1) (2026-07-24)
 
 
