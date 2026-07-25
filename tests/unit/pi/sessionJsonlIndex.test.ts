@@ -254,4 +254,90 @@ describe('sessionJsonlIndex', () => {
     expect(loadSessionJsonlIndex(sessionFile)).toBeNull();
     expect(ensureSessionJsonlIndex(sessionFile).entries).toHaveLength(1);
   });
+
+  it('rebuilds a stale cached index instead of failing a validated append', () => {
+    const initial = rebuildSessionJsonlIndex(sessionFile);
+    // Cloud-sync style replacement: identical bytes on a new inode/mtime.
+    const replacement = `${sessionFile}.replacement`;
+    fs.copyFileSync(sessionFile, replacement);
+    fs.renameSync(replacement, sessionFile);
+    const previous = captureSessionJsonlSource(sessionFile);
+    expect(previous.inode).not.toBe(initial.source.inode);
+
+    fs.appendFileSync(sessionFile, line({
+      type: 'custom',
+      customType: 'pivi/message-ui',
+      id: 'ui-resync',
+      parentId: 'user-1',
+      timestamp: '2026-01-01T00:00:02.000Z',
+      data: { targetEntryId: 'user-1' },
+    }));
+
+    expect(() => refreshSessionJsonlIndexAfterAppend(
+      sessionFile,
+      previous,
+      ['ui-resync'],
+    )).not.toThrow();
+    expect(loadSessionJsonlIndex(sessionFile)?.entries.map((entry) => entry.id))
+      .toEqual(['user-1', 'ui-resync']);
+  });
+
+  it('rebuilds a missing index during append refresh instead of skipping it', () => {
+    const initial = rebuildSessionJsonlIndex(sessionFile);
+    invalidateSessionJsonlIndex(sessionFile);
+
+    fs.appendFileSync(sessionFile, line({
+      type: 'custom',
+      customType: 'pivi/message-ui',
+      id: 'ui-missing',
+      parentId: 'user-1',
+      timestamp: '2026-01-01T00:00:02.000Z',
+      data: { targetEntryId: 'user-1' },
+    }));
+
+    expect(() => refreshSessionJsonlIndexAfterAppend(
+      sessionFile,
+      initial.source,
+      ['ui-missing'],
+    )).not.toThrow();
+    const loaded = loadSessionJsonlIndex(sessionFile);
+    expect(loaded?.entries.map((entry) => entry.id)).toEqual(['user-1', 'ui-missing']);
+
+    fs.appendFileSync(sessionFile, line({
+      type: 'custom',
+      customType: 'pivi/message-ui',
+      id: 'ui-next',
+      parentId: 'ui-missing',
+      timestamp: '2026-01-01T00:00:03.000Z',
+      data: { targetEntryId: 'user-1' },
+    }));
+    expect(() => refreshSessionJsonlIndexAfterAppend(
+      sessionFile,
+      loaded!.source,
+      ['ui-next'],
+    )).not.toThrow();
+    expect(loadSessionJsonlIndex(sessionFile)?.entries.at(-1)?.id).toBe('ui-next');
+  });
+
+  it('rebuilds a corrupt index during append refresh', () => {
+    const initial = rebuildSessionJsonlIndex(sessionFile);
+    invalidateSessionJsonlIndex(sessionFile);
+    fs.writeFileSync(getSessionJsonlIndexPath(sessionFile), 'not json\n');
+
+    fs.appendFileSync(sessionFile, line({
+      type: 'custom',
+      customType: 'pivi/message-ui',
+      id: 'ui-corrupt',
+      parentId: 'user-1',
+      timestamp: '2026-01-01T00:00:02.000Z',
+      data: { targetEntryId: 'user-1' },
+    }));
+
+    expect(() => refreshSessionJsonlIndexAfterAppend(
+      sessionFile,
+      initial.source,
+      ['ui-corrupt'],
+    )).not.toThrow();
+    expect(loadSessionJsonlIndex(sessionFile)?.entries.at(-1)?.id).toBe('ui-corrupt');
+  });
 });

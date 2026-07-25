@@ -592,6 +592,28 @@ export function readSessionJsonlIndex(sessionFile: string): SessionJsonlIndex {
   }
 }
 
+/**
+ * Write-path self-heal, mirroring the read path: the append above was already
+ * validated against `previous`, so a stale, corrupt, or missing index is an
+ * outdated optimization, not evidence of concurrent mutation. Rebuild from the
+ * authoritative JSONL, then prove the appended entries are still the tail so a
+ * genuine concurrent write during the refresh fails loudly.
+ */
+function rebuildAfterAppendRefresh(
+  sessionFile: string,
+  source: SessionJsonlSourceFingerprint,
+  expectedEntryIds: readonly string[],
+): SessionJsonlSourceFingerprint {
+  const rebuilt = rebuildSessionJsonlIndex(sessionFile);
+  if (expectedEntryIds.length > 0) {
+    const tailIds = rebuilt.entries.slice(-expectedEntryIds.length).map((entry) => entry.id);
+    if (JSON.stringify(tailIds) !== JSON.stringify(expectedEntryIds)) {
+      throw new SessionIndexStaleError('Session changed while its index was rebuilt after an append', sessionFile);
+    }
+  }
+  return source;
+}
+
 export function refreshSessionJsonlIndexAfterAppend(
   sessionFile: string,
   previous: SessionJsonlSourceFingerprint,
@@ -620,14 +642,18 @@ export function refreshSessionJsonlIndexAfterAppend(
     throw new SessionIndexStaleError('Session changed while appended offsets were being indexed', sessionFile);
   }
   if (!existsSync(indexFile)) {
-    return source;
+    return rebuildAfterAppendRefresh(sessionFile, source, expectedEntryIds);
   }
-  const index = indexCache.get(sessionFile) ?? parseIndexFile(sessionFile);
-  if (!index) {
-    throw new SessionIndexCorruptError('Session index disappeared during append refresh', sessionFile);
+  let index: MutableSessionJsonlIndex | null = null;
+  try {
+    index = indexCache.get(sessionFile) ?? parseIndexFile(sessionFile);
+  } catch (error) {
+    if (!(error instanceof SessionIndexError)) {
+      throw error;
+    }
   }
-  if (!fingerprintsEqual(index.source, previous)) {
-    throw new SessionIndexStaleError('Session index was stale before append refresh', sessionFile);
+  if (!index || !fingerprintsEqual(index.source, previous)) {
+    return rebuildAfterAppendRefresh(sessionFile, source, expectedEntryIds);
   }
   const lineChainSha256 = extendLineChain(index.lineChainSha256, lines);
   const migrations: SessionJsonlIndexMigrations = {
