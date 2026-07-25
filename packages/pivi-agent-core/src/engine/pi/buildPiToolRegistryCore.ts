@@ -2,6 +2,7 @@ import type { AgentTool } from '@earendil-works/pi-agent-core';
 
 import { loadContextLayers } from '../../context/loadContextLayers';
 import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
+import type { ReadAllowanceReservation } from '../../foundation/usage';
 import type { PiMcpBridge } from '../../mcp';
 import type { CapabilityApprovalPort } from '../../ports/capabilityApproval';
 import {
@@ -29,7 +30,7 @@ export interface PiToolRegistry {
 export interface PiBaseToolProviderOptions {
   vaultPath: string;
   externalContextPaths?: readonly string[];
-  resolveReadMaxChars?: (requestedMaxChars?: number) => number;
+  resolveReadMaxChars?: (requestedMaxChars?: number) => ReadAllowanceReservation;
   capabilityApproval?: CapabilityApprovalPort | null;
 }
 
@@ -106,7 +107,7 @@ export function buildPiToolRegistry(options: {
   mcpBridge: PiMcpBridge | null;
   baseToolProvider: PiBaseToolProvider | null;
   subagentQueryRunner?: PiSubagentQueryRunner;
-  resolveReadMaxChars?: (requestedMaxChars?: number) => number;
+  resolveReadMaxChars?: (requestedMaxChars?: number) => ReadAllowanceReservation;
   capabilityApproval?: CapabilityApprovalPort | null;
 }): PiToolRegistry {
   if (!options.baseToolProvider) {

@@ -18,6 +18,13 @@ import { createTasksTool } from '@pivi/obsidian-tools';
 import { createWriteNoteTool } from '@pivi/obsidian-tools';
 import type { ObsidianToolDeps } from '@pivi/obsidian-tools';
 
+import { createPiReadBudget } from '../../../../packages/pivi-agent-core/src/engine/pi/piReadBudget';
+
+const readAllowance = (maxChars: number): { maxChars: number; settle: (returnedChars: number) => void } => ({
+  maxChars,
+  settle: () => {},
+});
+
 function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
   return {
     app: { vault: { adapter: { basePath: '/vault' } } } as never,
@@ -120,7 +127,7 @@ describe('obsidian tool input hardening', () => {
 
   it('returns external file byte stats without reading large files by default', async () => {
     const deps = makeDeps({
-      resolveReadMaxChars: () => 20_000,
+      resolveReadMaxChars: () => readAllowance(20_000),
       externalFiles: {
         stat: jest.fn().mockReturnValue({ path: '/tmp/large.log', size: 25_000, isDirectory: false, isFile: true }),
         readFile: jest.fn(),
@@ -204,7 +211,7 @@ describe('obsidian tool input hardening', () => {
   it('automatically pages explicit note ranges at complete line boundaries', async () => {
     const content = Array.from({ length: 5 }, (_, index) => `${index + 1}:${'x'.repeat(298)}\n`).join('');
     const deps = makeDeps({
-      resolveReadMaxChars: () => 150,
+      resolveReadMaxChars: () => readAllowance(150),
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content }),
       } as never,
@@ -232,7 +239,7 @@ describe('obsidian tool input hardening', () => {
   it('uses an explicit maxChars budget above the minimum for automatic note range pages', async () => {
     const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'q'.repeat(398)}\n`).join('');
     const deps = makeDeps({
-      resolveReadMaxChars: () => 50_000,
+      resolveReadMaxChars: () => readAllowance(50_000),
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content }),
       } as never,
@@ -260,7 +267,7 @@ describe('obsidian tool input hardening', () => {
   it('enforces a 1000-character minimum for exhausted and explicit read budgets', async () => {
     const content = 'x'.repeat(900);
     const deps = makeDeps({
-      resolveReadMaxChars: requestedMaxChars => requestedMaxChars ?? 0,
+      resolveReadMaxChars: (requestedMaxChars?: number) => readAllowance(requestedMaxChars ?? 0),
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content }),
       } as never,
@@ -290,7 +297,7 @@ describe('obsidian tool input hardening', () => {
 
   it('returns the final note range page without a continuation marker', async () => {
     const deps = makeDeps({
-      resolveReadMaxChars: () => 150,
+      resolveReadMaxChars: () => readAllowance(150),
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: 'one\ntwo\nthree\n' }),
       } as never,
@@ -314,7 +321,7 @@ describe('obsidian tool input hardening', () => {
 
   it('reports the required budget when the first selected line cannot fit', async () => {
     const deps = makeDeps({
-      resolveReadMaxChars: () => 50,
+      resolveReadMaxChars: () => readAllowance(50),
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: `${'界'.repeat(1_200)}\nnext\n` }),
       } as never,
@@ -353,7 +360,7 @@ describe('obsidian tool input hardening', () => {
   it('counts CJK characters consistently while paging note ranges', async () => {
     const content = `${'界'.repeat(400)}\n${'文'.repeat(400)}\n${'字'.repeat(400)}\n`;
     const deps = makeDeps({
-      resolveReadMaxChars: () => 175,
+      resolveReadMaxChars: () => readAllowance(175),
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/cjk.md', content }),
       } as never,
@@ -376,7 +383,7 @@ describe('obsidian tool input hardening', () => {
   it('applies the same automatic range pagination to external reads', async () => {
     const content = Array.from({ length: 4 }, (_, index) => `${index + 1}:${'z'.repeat(348)}\n`).join('');
     const deps = makeDeps({
-      resolveReadMaxChars: () => 150,
+      resolveReadMaxChars: () => readAllowance(150),
       externalFiles: {
         stat: jest.fn().mockReturnValue({ path: '/tmp/a.txt', size: content.length, isDirectory: false, isFile: true }),
         readFile: jest.fn().mockResolvedValue({ path: '/tmp/a.txt', content }),
@@ -452,7 +459,7 @@ describe('obsidian tool input hardening', () => {
   it('does not return large full-note reads by default', async () => {
     const content = `${'x'.repeat(51_000)}\nSECRET_CONTENT`;
     const deps = makeDeps({
-      resolveReadMaxChars: () => 50_000,
+      resolveReadMaxChars: () => readAllowance(50_000),
       vault: {
         readNote: jest.fn().mockResolvedValue({ path: 'notes/large.md', content }),
       } as never,
@@ -753,5 +760,58 @@ describe('obsidian tool input hardening', () => {
     await expect(createSearchTool(deps).execute('call', { query: 'project' }))
       .rejects.toThrow('api failed');
     expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+});
+
+describe('read budget settlement', () => {
+  it('refunds a stats-only large-file read so later reads keep the turn budget', async () => {
+    const budget = createPiReadBudget(() => 50_000);
+    const content = Array.from({ length: 600 }, (_, index) => `${index + 1}:${'q'.repeat(97)}\n`).join('');
+    const deps = makeDeps({
+      resolveReadMaxChars: (requestedMaxChars?: number) => budget.reserve(requestedMaxChars),
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/large.md', content }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const statsResult = await tool.execute('stats-call', { path: 'notes/large.md' }) as {
+      content: [{ text: string }];
+    };
+    expect(statsResult.content[0].text).toContain('Large file');
+
+    // Before settlement, the stats-only read consumed the whole 50k turn budget and this
+    // range read collapsed to the 1000-character floor.
+    const rangeResult = await tool.execute('range-call', {
+      path: 'notes/large.md',
+      startLine: 1,
+      endLine: 50,
+      maxChars: 20_000,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(rangeResult.content[0].text.length).toBeGreaterThan(1_000);
+    expect(rangeResult.details).toMatchObject({
+      returnedRange: { startLine: 1, endLine: 50 },
+      truncated: false,
+    });
+  });
+
+  it('explains when an explicit maxChars is clamped by the remaining turn budget', async () => {
+    const content = 'x'.repeat(60_000);
+    const deps = makeDeps({
+      resolveReadMaxChars: () => readAllowance(2_000),
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/large.md', content }),
+      } as never,
+    });
+
+    const result = await createReadNoteTool(deps).execute('call', {
+      path: 'notes/large.md',
+      maxChars: 50_000,
+    }) as { content: [{ text: string }] };
+
+    expect(result.content[0].text).toContain(
+      "Requested maxChars=50000 exceeds this turn's remaining read budget (2000 characters)",
+    );
   });
 });

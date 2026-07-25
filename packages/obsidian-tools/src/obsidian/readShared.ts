@@ -1,6 +1,7 @@
 import {
   calculateReadToolMaxChars,
   READ_TOOL_MIN_CHARS,
+  type ReadAllowanceReservation,
 } from '@pivi/pivi-agent-core/foundation/usage';
 
 import type { LineSpan, ReadMode, ReadStats } from './readTypes';
@@ -24,14 +25,40 @@ export function getPositiveIntegerField(input: Record<string, unknown>, key: str
   return value;
 }
 
+export interface EffectiveReadMaxChars {
+  /** Effective cap for this read after the turn budget and the minimum floor. */
+  maxChars: number;
+  /** Explicit maxChars from the tool input, when provided. */
+  requestedMaxChars?: number;
+  /** Turn budget allocated to this read before the floor is applied. */
+  availableChars: number;
+  /** Reconcile the budget with the characters actually returned. */
+  settle: (returnedChars: number) => void;
+}
+
+const noopSettle = (): void => {};
+
 export function resolveEffectiveReadMaxChars(
   input: Record<string, unknown>,
-  resolveDefault?: (requestedMaxChars?: number) => number,
-): number {
+  resolveDefault?: (requestedMaxChars?: number) => ReadAllowanceReservation,
+): EffectiveReadMaxChars {
   const explicit = getPositiveIntegerField(input, 'maxChars');
   const requested = explicit ?? calculateReadToolMaxChars(null);
-  const available = resolveDefault?.(explicit) ?? requested;
-  return Math.max(READ_TOOL_MIN_CHARS, Math.min(requested, available));
+  if (!resolveDefault) {
+    return {
+      maxChars: Math.max(READ_TOOL_MIN_CHARS, requested),
+      requestedMaxChars: explicit,
+      availableChars: requested,
+      settle: noopSettle,
+    };
+  }
+  const reservation = resolveDefault(explicit);
+  return {
+    maxChars: Math.max(READ_TOOL_MIN_CHARS, Math.min(requested, reservation.maxChars)),
+    requestedMaxChars: explicit,
+    availableChars: reservation.maxChars,
+    settle: reservation.settle,
+  };
 }
 
 export function getReadMode(input: Record<string, unknown>): ReadMode {
@@ -205,6 +232,8 @@ export function buildStatsText(params: {
   selectedRange?: ReadStats & { startLine?: number; endLine?: number };
   large: boolean;
   maxChars: number;
+  requestedMaxChars?: number;
+  availableChars?: number;
   readExternal?: boolean;
 }): string {
   const lines = [
@@ -227,6 +256,17 @@ export function buildStatsText(params: {
     lines.push(
       '',
       `Large file: content was not returned because it exceeds ${params.maxChars} characters.`,
+    );
+    if (
+      params.requestedMaxChars !== undefined
+      && params.availableChars !== undefined
+      && params.requestedMaxChars > params.availableChars
+    ) {
+      lines.push(
+        `Requested maxChars=${params.requestedMaxChars} exceeds this turn's remaining read budget (${params.availableChars} characters), so the response is limited to ${params.maxChars} characters.`,
+      );
+    }
+    lines.push(
       `Call ${readTool} with startLine/endLine for the needed section.`,
       `If you truly need the entire file, call ${readTool} again with maxChars set to at least ${params.wholeFile.characters}; do this deliberately because the full file will be added to context.`,
     );

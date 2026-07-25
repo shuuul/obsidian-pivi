@@ -3,7 +3,7 @@ import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
 
 import type { StreamChunk, ToolCallInfo } from '../../foundation';
 import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
-import { calculateReadToolMaxChars } from '../../foundation/usage';
+import { calculateReadToolMaxChars, type ReadAllowanceReservation } from '../../foundation/usage';
 import type { AuxQueryConfig, AuxQueryRunner } from '../../runtime/auxQueryRunner';
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
 import { streamPiAiModelsSimple } from './piAiModels';
@@ -30,7 +30,7 @@ export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = P
   getMaxConcurrentSubagents?: () => number;
   subagentConcurrencyLimiter?: SubagentConcurrencyLimiter;
   getTools?: (
-    resolveReadMaxChars: (requestedMaxChars?: number) => number,
+    resolveReadMaxChars: (requestedMaxChars?: number) => ReadAllowanceReservation,
   ) => AgentTool[];
 }
 
@@ -183,7 +183,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
 
 export interface CreatePiAuxQueryRunnerOptions {
   getTools?: (
-    resolveReadMaxChars: (requestedMaxChars?: number) => number,
+    resolveReadMaxChars: (requestedMaxChars?: number) => ReadAllowanceReservation,
   ) => AgentTool[];
   onSubagentChunk?: (chunk: StreamChunk) => void;
   subagentConcurrencyLimiter?: SubagentConcurrencyLimiter;

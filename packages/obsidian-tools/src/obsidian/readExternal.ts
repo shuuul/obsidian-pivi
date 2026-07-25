@@ -63,96 +63,110 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
       const mode = getReadMode(input);
       const startLine = getPositiveIntegerField(input, 'startLine');
       const endLine = getPositiveIntegerField(input, 'endLine');
-      const maxChars = resolveEffectiveReadMaxChars(
+      const readBudget = resolveEffectiveReadMaxChars(
         input,
         mode === 'stats' ? undefined : deps.resolveReadMaxChars,
       );
-      const externalFiles = await ensureExternalDirectoryAccess(
-        deps,
-        absolutePath,
-        false,
-        CAPABILITY_TOOL_NAMES.readExternal,
-      );
-      const fileStat = externalFiles.stat(absolutePath);
-      const isRangeRead = startLine !== undefined || endLine !== undefined;
-      if (fileStat.size > MAX_EXTERNAL_READ_BYTES && (isRangeRead || maxChars >= fileStat.size)) {
-        throw new Error(
-          `External file is ${fileStat.size} bytes, which exceeds the hard safety limit of ${MAX_EXTERNAL_READ_BYTES} bytes. Narrow the file outside Pivi before reading it.`,
+      const maxChars = readBudget.maxChars;
+      try {
+        const externalFiles = await ensureExternalDirectoryAccess(
+          deps,
+          absolutePath,
+          false,
+          CAPABILITY_TOOL_NAMES.readExternal,
         );
-      }
-      if (!isRangeRead && fileStat.size > maxChars) {
-        return textResult(buildExternalByteStatsText({
-          path: fileStat.path,
-          bytes: fileStat.size,
-          maxChars,
-          hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
-        }), {
-          path: fileStat.path,
-          bytes: fileStat.size,
-          truncated: true,
-          hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
-        });
-      }
-      const result = await externalFiles.readFile(absolutePath);
-      const characters = result.content.length;
-      const lineSpans = getLineSpans(result.content);
-      const lines = lineSpans.length;
-      const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
-      const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
-      const large = !isRangeRead && characters > maxChars;
-      const requestedRange = isRangeRead
-        ? { startLine: startLine ?? 1, endLine: endLine ?? lines }
-        : undefined;
+        const fileStat = externalFiles.stat(absolutePath);
+        const isRangeRead = startLine !== undefined || endLine !== undefined;
+        if (fileStat.size > MAX_EXTERNAL_READ_BYTES && (isRangeRead || maxChars >= fileStat.size)) {
+          throw new Error(
+            `External file is ${fileStat.size} bytes, which exceeds the hard safety limit of ${MAX_EXTERNAL_READ_BYTES} bytes. Narrow the file outside Pivi before reading it.`,
+          );
+        }
+        if (!isRangeRead && fileStat.size > maxChars) {
+          const text = buildExternalByteStatsText({
+            path: fileStat.path,
+            bytes: fileStat.size,
+            maxChars,
+            hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
+          });
+          readBudget.settle(text.length);
+          return textResult(text, {
+            path: fileStat.path,
+            bytes: fileStat.size,
+            truncated: true,
+            hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
+          });
+        }
+        const result = await externalFiles.readFile(absolutePath);
+        const characters = result.content.length;
+        const lineSpans = getLineSpans(result.content);
+        const lines = lineSpans.length;
+        const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
+        const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
+        const large = !isRangeRead && characters > maxChars;
+        const requestedRange = isRangeRead
+          ? { startLine: startLine ?? 1, endLine: endLine ?? lines }
+          : undefined;
 
-      const details = {
-        path: result.path,
-        characters,
-        lines,
-        wholeFile: { characters, lines },
-        ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
-        ...(startLine !== undefined ? { startLine } : {}),
-        ...(endLine !== undefined ? { endLine } : {}),
-        ...(requestedRange ? { requestedRange } : {}),
-        truncated: large,
-      };
-
-      if (mode === 'stats' || large) {
-        return textResult(buildStatsText({
+        const details = {
           path: result.path,
+          characters,
+          lines,
           wholeFile: { characters, lines },
-          selectedRange: selectedStats ? { ...selectedStats, startLine, endLine } : undefined,
-          large,
-          maxChars,
-          readExternal: true,
-        }), {
-          ...details,
-          ...(selectedStats && selectedStats.lines > 0 && requestedRange ? {
-            returnedRange: {
-              ...selectedStats,
-              startLine: requestedRange.startLine,
-              endLine: Math.min(requestedRange.endLine, lines),
-            },
-          } : {}),
-        });
-      }
+          ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
+          ...(startLine !== undefined ? { startLine } : {}),
+          ...(endLine !== undefined ? { endLine } : {}),
+          ...(requestedRange ? { requestedRange } : {}),
+          truncated: large,
+        };
 
-      if (isRangeRead) {
-        const page = paginateLineRange(result.content, lineSpans, maxChars, startLine, endLine);
-        const returnedStats = getStats(page.rawContent);
-        return textResult(page.content, {
-          ...details,
-          ...(page.returnedStartLine !== undefined && page.returnedEndLine !== undefined ? {
-            returnedRange: {
-              ...returnedStats,
-              startLine: page.returnedStartLine,
-              endLine: page.returnedEndLine,
-            },
-          } : {}),
-          truncated: page.truncated,
-          ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
-        });
+        if (mode === 'stats' || large) {
+          const text = buildStatsText({
+            path: result.path,
+            wholeFile: { characters, lines },
+            selectedRange: selectedStats ? { ...selectedStats, startLine, endLine } : undefined,
+            large,
+            maxChars,
+            requestedMaxChars: readBudget.requestedMaxChars,
+            availableChars: readBudget.availableChars,
+            readExternal: true,
+          });
+          readBudget.settle(text.length);
+          return textResult(text, {
+            ...details,
+            ...(selectedStats && selectedStats.lines > 0 && requestedRange ? {
+              returnedRange: {
+                ...selectedStats,
+                startLine: requestedRange.startLine,
+                endLine: Math.min(requestedRange.endLine, lines),
+              },
+            } : {}),
+          });
+        }
+
+        if (isRangeRead) {
+          const page = paginateLineRange(result.content, lineSpans, maxChars, startLine, endLine);
+          const returnedStats = getStats(page.rawContent);
+          readBudget.settle(page.content.length);
+          return textResult(page.content, {
+            ...details,
+            ...(page.returnedStartLine !== undefined && page.returnedEndLine !== undefined ? {
+              returnedRange: {
+                ...returnedStats,
+                startLine: page.returnedStartLine,
+                endLine: page.returnedEndLine,
+              },
+            } : {}),
+            truncated: page.truncated,
+            ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
+          });
+        }
+        readBudget.settle(selectedContent.length);
+        return textResult(selectedContent, details);
+      } catch (error) {
+        readBudget.settle(0);
+        throw error;
       }
-      return textResult(selectedContent, details);
     },
   };
 }

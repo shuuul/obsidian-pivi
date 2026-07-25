@@ -6,6 +6,7 @@ import type {
   ObsidianVaultApi,
 } from '@pivi/obsidian-host';
 import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
+import type { ReadAllowanceReservation } from '@pivi/pivi-agent-core/foundation/usage';
 import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
 import type { ProcessRunner } from '@pivi/pivi-agent-core/ports';
 import type { App } from 'obsidian';
@@ -49,6 +50,6 @@ export interface ObsidianToolDeps {
   obsidianCliAvailable?: boolean;
   processRunner: ProcessRunner;
   imageGenerator?: ObsidianImageGenerator;
-  resolveReadMaxChars?: (requestedMaxChars?: number) => number;
+  resolveReadMaxChars?: (requestedMaxChars?: number) => ReadAllowanceReservation;
   capabilityApproval?: CapabilityApprovalPort | null;
 }

@@ -160,7 +160,7 @@ describe('PiAuxQueryRunner (core)', () => {
 
   it('builds read headroom from the child model instead of a parent session', async () => {
     let resolveChildReadMaxChars:
-      | ((requestedMaxChars?: number) => number)
+      | ((requestedMaxChars?: number) => { maxChars: number; settle: (returnedChars: number) => void })
       | undefined;
     mockResolveModel.mockReturnValue({
       ...mockModel,
@@ -178,7 +178,7 @@ describe('PiAuxQueryRunner (core)', () => {
     });
 
     await runner.query(baseConfig(), 'prompt');
-    expect(resolveChildReadMaxChars?.()).toBe(16_000);
+    expect(resolveChildReadMaxChars?.().maxChars).toBe(16_000);
   });
 
   it('throws Cancelled when abort signal is already set before query', async () => {

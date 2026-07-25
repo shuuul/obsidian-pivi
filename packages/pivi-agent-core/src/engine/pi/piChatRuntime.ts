@@ -8,7 +8,7 @@ import type {
   StreamChunk,
 } from '../../foundation';
 import { PluginLogger } from '../../foundation/pluginLogger';
-import { calculateReadToolMaxChars } from '../../foundation/usage';
+import { calculateReadToolMaxChars, type ReadAllowanceReservation } from '../../foundation/usage';
 import type { McpOAuthService, McpServerManager } from '../../mcp';
 import { PiMcpBridge } from '../../mcp';
 import type { McpProcessEnv, McpTransportFetch } from '../../mcp/ports';
@@ -540,7 +540,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   private buildSubagentTools(
-    resolveReadMaxChars: (requestedMaxChars?: number) => number,
+    resolveReadMaxChars: (requestedMaxChars?: number) => ReadAllowanceReservation,
   ): AgentTool[] {
     const vaultPath = this.getVaultPath();
     if (!vaultPath || !this.baseToolProvider) {

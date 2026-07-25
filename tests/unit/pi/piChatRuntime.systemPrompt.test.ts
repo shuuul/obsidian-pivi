@@ -245,7 +245,10 @@ const mockAuxRunner = {
   abortAllSubagents: jest.fn(),
 };
 let mockCapturedSubagentToolProvider: ((
-  resolveReadMaxChars: (requestedMaxChars?: number) => number,
+  resolveReadMaxChars: (requestedMaxChars?: number) => {
+    maxChars: number;
+    settle: (returnedChars: number) => void;
+  },
 ) => unknown[]) | undefined;
 let mockCapturedSubagentChunkSink: ((chunk: StreamChunk) => void) | undefined;
 
@@ -458,7 +461,7 @@ describe('PiChatRuntime system prompt', () => {
 
     new PiChatRuntime(plugin, testNetwork, null, null, providerWithSpawnAgent);
 
-    const childTools = mockCapturedSubagentToolProvider?.(() => 12_345) ?? [];
+    const childTools = mockCapturedSubagentToolProvider?.(() => ({ maxChars: 12_345, settle: () => {} })) ?? [];
     expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['obsidian_read']);
   });
 

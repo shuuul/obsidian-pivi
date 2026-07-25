@@ -8,6 +8,16 @@ export const AUTO_COMPACTION_THRESHOLD_RATIO = 0.85;
 export const READ_TOOL_MIN_CHARS = 1_000;
 export const READ_TOOL_MAX_CHARS_CAP = 50_000;
 
+/**
+ * One read's share of the turn read allowance. The budget charges `maxChars` up front so
+ * parallel sibling reads cannot each claim the full headroom; `settle` refunds the unused
+ * remainder once the read's actual returned size is known.
+ */
+export interface ReadAllowanceReservation {
+  maxChars: number;
+  settle: (returnedChars: number) => void;
+}
+
 const OUTPUT_RESERVE_WINDOW_RATIO = 0.25;
 const COMPACTION_RESERVE_WINDOW_RATIO = 0.1;
 const SAFETY_MARGIN_WINDOW_RATIO = 0.05;

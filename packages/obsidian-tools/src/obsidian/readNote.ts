@@ -46,70 +46,82 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
       const mode = getReadMode(input);
       const startLine = getPositiveIntegerField(input, 'startLine');
       const endLine = getPositiveIntegerField(input, 'endLine');
-      const maxChars = resolveEffectiveReadMaxChars(
+      const readBudget = resolveEffectiveReadMaxChars(
         input,
         mode === 'stats' ? undefined : deps.resolveReadMaxChars,
       );
-      const result = await vault.readNote(file, notePath);
-      const characters = result.content.length;
-      const lineSpans = getLineSpans(result.content);
-      const lines = lineSpans.length;
-      const isRangeRead = startLine !== undefined || endLine !== undefined;
-      const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
-      const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
-      const large = !isRangeRead && characters > maxChars;
-      const requestedRange = isRangeRead
-        ? { startLine: startLine ?? 1, endLine: endLine ?? lines }
-        : undefined;
+      const maxChars = readBudget.maxChars;
+      try {
+        const result = await vault.readNote(file, notePath);
+        const characters = result.content.length;
+        const lineSpans = getLineSpans(result.content);
+        const lines = lineSpans.length;
+        const isRangeRead = startLine !== undefined || endLine !== undefined;
+        const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
+        const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
+        const large = !isRangeRead && characters > maxChars;
+        const requestedRange = isRangeRead
+          ? { startLine: startLine ?? 1, endLine: endLine ?? lines }
+          : undefined;
 
-      const details = {
-        path: result.path,
-        characters,
-        lines,
-        wholeFile: { characters, lines },
-        ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
-        ...(startLine !== undefined ? { startLine } : {}),
-        ...(endLine !== undefined ? { endLine } : {}),
-        ...(requestedRange ? { requestedRange } : {}),
-        truncated: large,
-      };
-
-      if (mode === 'stats' || large) {
-        return textResult(buildStatsText({
+        const details = {
           path: result.path,
+          characters,
+          lines,
           wholeFile: { characters, lines },
-          selectedRange: selectedStats ? { ...selectedStats, startLine, endLine } : undefined,
-          large,
-          maxChars,
-        }), {
-          ...details,
-          ...(selectedStats && selectedStats.lines > 0 && requestedRange ? {
-            returnedRange: {
-              ...selectedStats,
-              startLine: requestedRange.startLine,
-              endLine: Math.min(requestedRange.endLine, lines),
-            },
-          } : {}),
-        });
-      }
+          ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
+          ...(startLine !== undefined ? { startLine } : {}),
+          ...(endLine !== undefined ? { endLine } : {}),
+          ...(requestedRange ? { requestedRange } : {}),
+          truncated: large,
+        };
 
-      if (isRangeRead) {
-        const page = paginateLineRange(result.content, lineSpans, maxChars, startLine, endLine);
-        const returnedStats = getStats(page.rawContent);
-        return textResult(page.content, {
-          ...details,
-          ...(page.returnedStartLine !== undefined && page.returnedEndLine !== undefined ? {
-            returnedRange: {
-              ...returnedStats,
-              startLine: page.returnedStartLine,
-              endLine: page.returnedEndLine,
-            },
-          } : {}),
-          truncated: page.truncated,
-          ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
-        });
+        if (mode === 'stats' || large) {
+          const text = buildStatsText({
+            path: result.path,
+            wholeFile: { characters, lines },
+            selectedRange: selectedStats ? { ...selectedStats, startLine, endLine } : undefined,
+            large,
+            maxChars,
+            requestedMaxChars: readBudget.requestedMaxChars,
+            availableChars: readBudget.availableChars,
+          });
+          readBudget.settle(text.length);
+          return textResult(text, {
+            ...details,
+            ...(selectedStats && selectedStats.lines > 0 && requestedRange ? {
+              returnedRange: {
+                ...selectedStats,
+                startLine: requestedRange.startLine,
+                endLine: Math.min(requestedRange.endLine, lines),
+              },
+            } : {}),
+          });
+        }
+
+        if (isRangeRead) {
+          const page = paginateLineRange(result.content, lineSpans, maxChars, startLine, endLine);
+          const returnedStats = getStats(page.rawContent);
+          readBudget.settle(page.content.length);
+          return textResult(page.content, {
+            ...details,
+            ...(page.returnedStartLine !== undefined && page.returnedEndLine !== undefined ? {
+              returnedRange: {
+                ...returnedStats,
+                startLine: page.returnedStartLine,
+                endLine: page.returnedEndLine,
+              },
+            } : {}),
+            truncated: page.truncated,
+            ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
+          });
+        }
+        readBudget.settle(selectedContent.length);
+        return textResult(selectedContent, details);
+      } catch (error) {
+        readBudget.settle(0);
+        throw error;
       }
-      return textResult(selectedContent, details);
     },
   };
 }
