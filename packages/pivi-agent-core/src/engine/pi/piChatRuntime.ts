@@ -41,8 +41,8 @@ import { TOOL_SPAWN_AGENT } from '../../tools';
 import { buildPiToolRegistry, type PiBaseToolProvider } from './buildPiToolRegistryCore';
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
 import {
-  piAiModels,
   refreshCustomPiProviderModels,
+  streamPiAiModelsSimple,
 } from './piAiModels';
 import { createPiAuxQueryRunner, type PiAuxQueryRunner } from './piAuxQueryRunner';
 import {
@@ -271,7 +271,7 @@ export class PiChatRuntime implements PiChatService {
         thinkingLevel: this.resolveThinkingLevelForModel(model),
       },
       convertToLlm: (messages) => sanitizeAgentMessagesForLlm(messages),
-      streamFn: (streamModel, context, options) => piAiModels.streamSimple(streamModel, context, options),
+      streamFn: (streamModel, context, options) => streamPiAiModelsSimple(streamModel, context, options),
       sessionId: this.sessionId ?? undefined,
       steeringMode: 'one-at-a-time',
     });

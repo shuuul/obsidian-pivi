@@ -6,7 +6,7 @@ import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
 import { calculateReadToolMaxChars } from '../../foundation/usage';
 import type { AuxQueryConfig, AuxQueryRunner } from '../../runtime/auxQueryRunner';
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
-import { piAiModels } from './piAiModels';
+import { streamPiAiModelsSimple } from './piAiModels';
 import { PiBackgroundSubagentJobs } from './piBackgroundSubagentJobs';
 import {
   buildEstimatedUsageInfo,
@@ -196,7 +196,7 @@ export function createPiAuxQueryRunner(
   return new PiAuxQueryRunner({
     resolveModel: (modelKey) => resolvePiModel(plugin, modelKey),
     resolveAuth: (model) => resolvePiProviderAuth(plugin, model),
-    streamSimple: piAiModels.streamSimple.bind(piAiModels),
+    streamSimple: streamPiAiModelsSimple,
     onSubagentChunk: options.onSubagentChunk,
     getMaxConcurrentSubagents: () => getSubagentRuntimeSettingsFromBag(plugin.settings).maxConcurrentSubagents,
     subagentConcurrencyLimiter: options.subagentConcurrencyLimiter,

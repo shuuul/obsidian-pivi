@@ -8,9 +8,7 @@ jest.mock('@pivi/pivi-agent-core/engine/pi/piModelEnv', () => ({
 }));
 
 jest.mock('@pivi/pivi-agent-core/engine/pi/piAiModels', () => ({
-  piAiModels: {
-    streamSimple: (...args: unknown[]) => mockStreamSimple(...args),
-  },
+  streamPiAiModelsSimple: (...args: unknown[]) => mockStreamSimple(...args),
 }));
 
 import { sampleCompactionNote } from '../../../../packages/pivi-agent-core/src/engine/pi/piCompactionSampler';

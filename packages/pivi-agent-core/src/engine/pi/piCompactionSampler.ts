@@ -1,6 +1,6 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 
-import { piAiModels } from './piAiModels';
+import { streamPiAiModelsSimple } from './piAiModels';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import {
@@ -43,7 +43,7 @@ export async function sampleCompactionNote(
       COMPACTION_SAMPLE_MAX_TOKENS,
       model.maxTokens > 0 ? model.maxTokens : COMPACTION_SAMPLE_MAX_TOKENS,
     );
-    const stream = piAiModels.streamSimple(model, {
+    const stream = streamPiAiModelsSimple(model, {
       systemPrompt: COMPACTION_SYSTEM_PROMPT,
       messages: [
         ...conversation,

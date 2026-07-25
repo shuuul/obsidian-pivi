@@ -1,8 +1,13 @@
 import {
+  type Api,
+  type AssistantMessageEventStream,
   type AuthContext,
+  type Context,
   createModels,
   type CredentialStore,
+  type Model,
   type MutableModels,
+  type SimpleStreamOptions,
 } from '@earendil-works/pi-ai';
 import { anthropicProvider } from '@earendil-works/pi-ai/providers/anthropic';
 import { deepseekProvider } from '@earendil-works/pi-ai/providers/deepseek';
@@ -41,6 +46,23 @@ import {
 } from './splitProviderAuth';
 
 const logger = new PluginLogger('PiAiModels');
+
+/**
+ * pi-ai's codex WebSocket transport builds `new WebSocket(url, { headers })` Node-`ws`-style.
+ * Obsidian's browser WebSocket rejects that options object as an invalid subprotocol and cannot
+ * send auth headers at all, so the codex WS transport can never succeed in-renderer. Pin codex
+ * to SSE unless the caller explicitly chose a transport.
+ */
+export function streamPiAiModelsSimple(
+  model: Model<Api>,
+  context: Context,
+  options?: SimpleStreamOptions,
+): AssistantMessageEventStream {
+  const pinned = model.provider === 'openai-codex' && options?.transport === undefined
+    ? { ...options, transport: 'sse' as const }
+    : options;
+  return piAiModels.streamSimple(model, context, pinned);
+}
 
 /** Shared pi-ai Models collection for the Pi engine adapter. */
 export let piAiModels: MutableModels = createModels();

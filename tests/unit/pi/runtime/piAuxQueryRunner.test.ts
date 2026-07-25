@@ -62,9 +62,7 @@ jest.mock('@pivi/pivi-agent-core/engine/pi/piModelEnv', () => ({
 }));
 
 jest.mock('@pivi/pivi-agent-core/engine/pi/piAiModels', () => ({
-  piAiModels: {
-    streamSimple: mockStreamSimple,
-  },
+  streamPiAiModelsSimple: (...args: unknown[]) => mockStreamSimple(...args),
 }));
 
 import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
