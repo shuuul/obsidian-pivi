@@ -31,6 +31,14 @@ export function resolvePiModel(plugin: PiRuntimeHost, modelKey?: string): PiReso
   return getModelByKey(PI_FALLBACK_MODEL_KEY);
 }
 
+/**
+ * Resolves a model by explicit key only (no settings fallback). Used when the
+ * serving provider/model comes from a runtime message rather than settings.
+ */
+export function resolvePiModelByKey(key: string): PiResolvedModel | null {
+  return isValidModelKey(key) ? getModelByKey(key) : null;
+}
+
 export function resolvePiProviderAuth(
   plugin: PiRuntimeHost,
   model: Model<Api>,

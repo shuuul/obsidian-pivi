@@ -122,6 +122,86 @@ describe('PiAgentEventAdapter', () => {
       });
       expect(chunks).toEqual([]);
     });
+
+    it('enriches context overflow errors with model, window, usage, and guidance', () => {
+      const diagnosing = new PiAgentEventAdapter(() => ({
+        model: 'openai-codex/gpt-5.3-codex-spark',
+        contextWindow: 128_000,
+        contextTokens: 126_816,
+      }));
+      const chunks = diagnosing.adapt({
+        type: 'message_end',
+        message: {
+          role: 'assistant',
+          content: [],
+          errorMessage: 'Codex error: Your input exceeds the context window of this model. Please adjust your input and try again.',
+          stopReason: 'error',
+          usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+          api: 'openai-codex-responses',
+          provider: 'openai-codex',
+          model: 'gpt-5.3-codex-spark',
+          timestamp: Date.now(),
+        } as any,
+      });
+      expect(chunks).toHaveLength(1);
+      const overflowChunk = chunks[0];
+      if (overflowChunk?.type !== 'error') {
+        throw new Error('expected an error chunk');
+      }
+      const content = overflowChunk.content;
+      expect(content).toContain('exceeds the context window');
+      expect(content).toContain('Model: openai-codex/gpt-5.3-codex-spark.');
+      expect(content).toContain('Context window: 128K tokens.');
+      expect(content).toContain('Current context usage: ~126.8K tokens.');
+      expect(content).toContain('/compact');
+    });
+
+    it('falls back to the message model when no error context resolver is set', () => {
+      const chunks = adapter.adapt({
+        type: 'message_end',
+        message: {
+          role: 'assistant',
+          content: [],
+          errorMessage: 'prompt is too long: 213462 tokens > 200000 maximum',
+          stopReason: 'error',
+          usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+          api: 'anthropic-messages',
+          provider: 'anthropic',
+          model: 'claude-3-5-sonnet',
+          timestamp: Date.now(),
+        } as any,
+      });
+      const fallbackChunk = chunks[0];
+      if (fallbackChunk?.type !== 'error') {
+        throw new Error('expected an error chunk');
+      }
+      const content = fallbackChunk.content;
+      expect(content).toContain('prompt is too long');
+      expect(content).toContain('Model: anthropic/claude-3-5-sonnet.');
+      expect(content).not.toContain('Context window:');
+    });
+
+    it('leaves non-overflow errors untouched when a resolver is set', () => {
+      const diagnosing = new PiAgentEventAdapter(() => ({
+        model: 'openai-codex/gpt-5.3-codex-spark',
+        contextWindow: 128_000,
+      }));
+      const chunks = diagnosing.adapt({
+        type: 'message_end',
+        message: {
+          role: 'assistant',
+          content: [],
+          errorMessage: 'API key is invalid',
+          stopReason: 'error',
+          usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+          api: 'openai-codex-responses',
+          provider: 'openai-codex',
+          model: 'gpt-5.3-codex-spark',
+          timestamp: Date.now(),
+        } as any,
+      });
+      expect(chunks).toEqual([{ type: 'error', content: 'API key is invalid' }]);
+    });
   });
 
   describe('message_update', () => {

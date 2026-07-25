@@ -70,8 +70,14 @@ export function streamSimple(): any {
   return createMockStream();
 }
 
+// Mirror upstream pi-ai: error-based overflow detection pattern-matches the
+// provider error text (see dist/utils/overflow.js OVERFLOW_PATTERNS).
+const MOCK_OVERFLOW_PATTERN =
+  /context overflow|exceeds the context window|maximum context length|prompt is too long|context[_ ]length[_ ]exceeded|too many tokens|token limit exceeded/i;
+
 export function isContextOverflow(message: any): boolean {
-  return message?.errorMessage === 'context overflow';
+  return message?.stopReason === 'error'
+    && MOCK_OVERFLOW_PATTERN.test(message?.errorMessage ?? '');
 }
 
 export function isRetryableAssistantError(message: any): boolean {

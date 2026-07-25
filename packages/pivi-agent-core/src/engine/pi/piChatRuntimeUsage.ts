@@ -1,11 +1,11 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 
 import type { UsageInfo } from '../../foundation';
-import type { resolvePiModel } from './piModelEnv';
+import type { PiResolvedModel } from './piModelRegistry';
 import { isPiModelContextWindowAuthoritative } from './piModelRegistry';
 import { estimateAgentMessagesTokens } from './session/piContextCompaction';
 
-type ResolvedPiModel = ReturnType<typeof resolvePiModel>;
+type ResolvedPiModel = PiResolvedModel | null;
 
 function getRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)

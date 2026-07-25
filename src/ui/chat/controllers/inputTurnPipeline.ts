@@ -1,7 +1,7 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
-import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage, StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { resolveSubagentActivityStatus } from '@pivi/pivi-agent-core/foundation';
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
@@ -13,6 +13,7 @@ import { t } from '@/app/i18n';
 import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerResponseDuration';
 import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
+import { notifyIfContextOverLimit } from '@/ui/chat/composer/contextOverLimitNotice';
 
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { InputControllerDeps } from './InputController';
@@ -88,6 +89,17 @@ export class InputTurnPipeline {
     this.host = host;
   }
 
+  /**
+   * Blocks empty submissions and any send while the session context exceeds
+   * the model window (the model cannot accept even a /compact request then).
+   */
+  private shouldBlockSubmission(usage: UsageInfo | null, content: string, hasImages: boolean): boolean {
+    if (!content && !hasImages) {
+      return true;
+    }
+    return notifyIfContextOverLimit(usage);
+  }
+
   async sendMessage(options?: {
     editorContextOverride?: EditorSelectionContext | null;
     browserContextOverride?: BrowserSelectionContext | null;
@@ -120,7 +132,7 @@ export class InputTurnPipeline {
     const hasImages = imageOverride !== undefined
       ? imageOverride.length > 0
       : (imageContextManager?.hasImages() ?? false);
-    if (!content && !hasImages) return;
+    if (this.shouldBlockSubmission(state.usage, content, hasImages)) return;
 
     const resolvedContent = await this.resolvePromptContent({
       content,

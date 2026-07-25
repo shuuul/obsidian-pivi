@@ -9,7 +9,7 @@ import {
 import type { StreamChunkQueue } from '../../runtime/streamChunkQueue';
 import type { PreparedChatTurn } from '../../runtime/types';
 import { sampleCompactionNote } from './piCompactionSampler';
-import type { resolvePiModel } from './piModelEnv';
+import type { PiResolvedModel } from './piModelRegistry';
 import { isPiModelContextWindowAuthoritative } from './piModelRegistry';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import {
@@ -78,7 +78,7 @@ export interface PiChatCompactionDeps {
   sessionTree: SessionTreeStore | null;
   agent: Agent | null;
   compactionState: PiChatCompactionState;
-  resolveModel: () => ReturnType<typeof resolvePiModel>;
+  resolveModel: () => PiResolvedModel | null;
   onLeafIdChanged: (leafId: string | null) => void;
   onAssistantMessageId: (entryId: string) => void;
 }

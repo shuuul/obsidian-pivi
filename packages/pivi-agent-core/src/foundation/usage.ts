@@ -173,6 +173,15 @@ export function calculateUsagePercentage(tokens: number, limit: number): number 
     : 0;
 }
 
+/**
+ * True when the session context no longer fits the selected model's window.
+ * Sending would either overflow the provider or force an immediate compaction,
+ * so the composer blocks submission (except /compact) while this holds.
+ */
+export function isContextOverLimit(usage: UsageInfo | null | undefined): boolean {
+  return !!usage && usage.contextWindow > 0 && usage.contextTokens >= usage.contextWindow;
+}
+
 /** Compaction-pressure metric: estimated/provider pressure against the compaction trigger. */
 export function calculateContextUsagePercentage(usage: UsageInfo): number {
   const envelope = usage.contextEnvelope ?? calculateContextEnvelope({

@@ -120,7 +120,8 @@
       "externalUnavailable": "無法使用：{reason}",
       "externalRemove": "移除路徑",
       "externalActiveTitle": "{count} 個外部上下文（點擊新增更多）",
-      "externalIdleTitle": "新增外部上下文（點擊）"
+      "externalIdleTitle": "新增外部上下文（點擊）",
+    "contextOverLimit": "目前上下文（約 {tokens}）已超出所選模型的 {limit} 上下文視窗。請切換到上下文視窗更大的模型，或開始新對話。"
     },
     "selection": {
       "linesSelected": "已選取 {count} {lines}",

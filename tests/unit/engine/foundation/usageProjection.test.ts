@@ -5,6 +5,7 @@ import {
   calculateContextUsagePercentage,
   calculateReadToolMaxChars,
   calculateUsagePercentage,
+  isContextOverLimit,
   READ_TOOL_MAX_CHARS_CAP,
   recalculateUsageForModel,
 } from '@pivi/pivi-agent-core/foundation/usage';
@@ -232,5 +233,15 @@ describe('usage projection', () => {
 
   it('falls back to the read cap when usage is unavailable', () => {
     expect(calculateReadToolMaxChars(null)).toBe(READ_TOOL_MAX_CHARS_CAP);
+  });
+
+  it('flags over-limit only when context tokens reach a known window', () => {
+    expect(isContextOverLimit(null)).toBe(false);
+    expect(isContextOverLimit(undefined)).toBe(false);
+    expect(isContextOverLimit({ ...baseUsage, contextWindow: 0 })).toBe(false);
+    expect(isContextOverLimit({ ...baseUsage, contextTokens: 999 })).toBe(false);
+    expect(isContextOverLimit(baseUsage)).toBe(false);
+    expect(isContextOverLimit({ ...baseUsage, contextTokens: 1000 })).toBe(true);
+    expect(isContextOverLimit({ ...baseUsage, contextTokens: 147_000, contextWindow: 128_000 })).toBe(true);
   });
 });

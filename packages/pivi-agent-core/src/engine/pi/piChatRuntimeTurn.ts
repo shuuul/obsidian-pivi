@@ -26,7 +26,7 @@ import {
   latestUsageFromMessages,
 } from './piChatRuntimeUsage';
 import { toPiImageContent } from './piImageContent';
-import type { resolvePiModel } from './piModelEnv';
+import type { PiResolvedModel } from './piModelRegistry';
 import type { SessionTreeStore } from './session/sessionTreeStore';
 
 export interface PiChatRuntimeTurnDeps {
@@ -35,7 +35,7 @@ export interface PiChatRuntimeTurnDeps {
   compaction: PiChatCompactionDeps;
   eventAdapter: PiAgentEventAdapter;
   sessionTree: SessionTreeStore | null;
-  resolveModel: () => ReturnType<typeof resolvePiModel>;
+  resolveModel: () => PiResolvedModel | null;
   refreshModelMetadata: () => Promise<boolean>;
   syncSessionMessages: (messages: AgentMessage[]) => void;
   onUserMessagePersisted: (result: {

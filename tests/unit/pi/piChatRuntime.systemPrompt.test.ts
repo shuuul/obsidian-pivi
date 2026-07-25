@@ -1,7 +1,7 @@
 const mockAgentInstances: Array<{
-  initialState: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
+  initialState: { systemPrompt: string; messages: unknown[]; tools?: unknown[]; model?: { id: string; provider?: string; contextWindow?: number } };
   options: Record<string, unknown>;
-  state: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
+  state: { systemPrompt: string; messages: unknown[]; tools?: unknown[]; model?: { id: string; provider?: string; contextWindow?: number } };
   listeners: Array<(event: any) => void>;
   prompt: jest.Mock;
   signal: AbortSignal;
@@ -13,7 +13,7 @@ const mockAgentInstances: Array<{
 
 jest.mock('@earendil-works/pi-agent-core', () => ({
   Agent: jest.fn().mockImplementation((options: {
-    initialState: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
+    initialState: { systemPrompt: string; messages: unknown[]; tools?: unknown[]; model?: { id: string; provider?: string; contextWindow?: number } };
     [key: string]: unknown;
   }) => {
     const listeners: Array<(event: any) => void> = [];
@@ -535,6 +535,94 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAgentInstances).toHaveLength(1);
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].state.systemPrompt).toContain('**Alice**');
+  });
+
+  it('ensureReady hot-swaps the running agent model when the composer selection changes', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    PI_AI_MODELS_CACHE.set('lmstudio/model-a', {
+      ...localModelFixture(true),
+      id: 'model-a',
+      contextWindow: 128_000,
+    });
+    PI_AI_MODELS_CACHE.set('lmstudio/model-b', {
+      ...localModelFixture(true),
+      id: 'model-b',
+      contextWindow: 1_000_000,
+    });
+    const plugin = createMockPlugin({
+      model: 'lmstudio/model-a',
+      visibleModels: ['lmstudio/model-a', 'lmstudio/model-b'],
+    });
+    const runtime = createRuntime(plugin);
+
+    await runtime.ensureReady();
+    expect(mockAgentInstances).toHaveLength(1);
+    const agent = mockAgentInstances[0];
+    expectDefined(agent);
+    expect(agent.state.model?.id).toBe('model-a');
+
+    plugin.settings.model = 'lmstudio/model-b';
+    await runtime.ensureReady();
+
+    expect(mockAgentInstances).toHaveLength(1);
+    expect(agent.state.model?.id).toBe('model-b');
+    expect(agent.state.model?.contextWindow).toBe(1_000_000);
+  });
+
+  it('resolves overflow error context from the message serving model, not current settings', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    PI_AI_MODELS_CACHE.set('lmstudio/model-a', {
+      ...localModelFixture(true),
+      id: 'model-a',
+      contextWindow: 128_000,
+    });
+    PI_AI_MODELS_CACHE.set('lmstudio/model-b', {
+      ...localModelFixture(true),
+      id: 'model-b',
+      contextWindow: 1_000_000,
+    });
+    const plugin = createMockPlugin({
+      model: 'lmstudio/model-a',
+      visibleModels: ['lmstudio/model-a', 'lmstudio/model-b'],
+    });
+    const runtime = createRuntime(plugin);
+    await runtime.ensureReady();
+    const agent = mockAgentInstances[0];
+    expectDefined(agent);
+    agent.state.messages = [{
+      role: 'assistant',
+      content: [],
+      stopReason: 'stop',
+      usage: {
+        input: 100,
+        output: 10,
+        cacheRead: 126_000,
+        cacheWrite: 0,
+        totalTokens: 126_110,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+      },
+      timestamp: Date.now(),
+    }];
+    plugin.settings.model = 'lmstudio/model-b';
+    await runtime.ensureReady();
+
+    const internals = runtime as unknown as {
+      resolveErrorContext(message: Record<string, unknown>): {
+        model: string;
+        contextWindow: number;
+        contextTokens?: number;
+      } | null;
+    };
+    const context = internals.resolveErrorContext({
+      provider: 'lmstudio',
+      model: 'model-a',
+    });
+
+    expect(context).toEqual({
+      model: 'lmstudio/model-a',
+      contextWindow: 128_000,
+      contextTokens: 126_100,
+    });
   });
 
   it('persists session file without exposing legacy leaf id in session state updates', () => {

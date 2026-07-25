@@ -120,7 +120,8 @@
       "externalUnavailable": "利用不可：{reason}",
       "externalRemove": "パスを削除",
       "externalActiveTitle": "外部コンテキスト {count} 件（クリックして追加）",
-      "externalIdleTitle": "外部コンテキストを追加（クリック）"
+      "externalIdleTitle": "外部コンテキストを追加（クリック）",
+    "contextOverLimit": "コンテキスト（約 {tokens}）が選択したモデルの {limit} ウィンドウを超えています。より大きなコンテキストウィンドウのモデルに切り替えるか、新しいセッションを開始してください。"
     },
     "selection": {
       "linesSelected": "{count} {lines} 選択中",

@@ -1,4 +1,4 @@
-import { recalculateUsageForModel } from "@pivi/pivi-agent-core/foundation/usage";
+import { isContextOverLimit, recalculateUsageForModel } from "@pivi/pivi-agent-core/foundation/usage";
 import type { ChatPorts } from "@pivi/pivi-agent-core/runtime/chatPorts";
 import { Notice } from "obsidian";
 
@@ -6,6 +6,7 @@ import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 
 import { pickDirectoryPath } from '../../shared/utils/folderPicker';
+import { notifyIfContextOverLimit } from '../composer/contextOverLimitNotice';
 import { ExternalContextSelector } from "../toolbar/ExternalContextControl";
 import type { ToolbarCallbacks } from "../toolbar/ToolbarTypes";
 import { InlineContextManager } from "../ui/InlineContext";
@@ -93,6 +94,7 @@ export function wireComposerChrome(
       refreshUsageContextWindow(model, providerSettings.customContextLimits);
       await uiConfig.prepareModelMetadata(model);
       refreshUsageContextWindow(model, providerSettings.customContextLimits);
+      notifyIfContextOverLimit(tab.state.usage);
       tab.service?.syncThinkingLevel?.();
     },
     onModeChange: async (mode: string) => {
@@ -159,7 +161,7 @@ export function wireComposerChrome(
     const reasoningOptions = uiConfig.getReasoningOptions(settings.model, settings);
     tab.state.uiStore.update({
       composer: {
-        canSend: dom.richInput.value.trim().length > 0,
+        canSend: dom.richInput.value.trim().length > 0 && !isContextOverLimit(tab.state.usage),
         model: settings.model,
         modelOptions: uiConfig.getModelOptions(settings).map(option => ({ ...option })),
         mode: mode?.value ?? null,
@@ -175,6 +177,13 @@ export function wireComposerChrome(
     });
   }
   refreshComposerSnapshot();
+
+  // Usage shifts (turn end, session load, model switch) also gate sending.
+  tab.state.uiStore.subscribe((changedKeys) => {
+    if (changedKeys.has('usage')) {
+      refreshComposerSnapshot();
+    }
+  });
 
   tab.ui.externalContextSelector.setOnPinnedChange(async (pinnedPaths) => {
     await ports.settings.setPinnedExternalReadDirectories(pinnedPaths);

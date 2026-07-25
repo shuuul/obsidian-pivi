@@ -120,7 +120,8 @@
       "externalUnavailable": "Недоступно: {reason}",
       "externalRemove": "Удалить путь",
       "externalActiveTitle": "{count} внешних контекст(ов) (нажмите, чтобы добавить)",
-      "externalIdleTitle": "Добавить внешние контексты (нажмите)"
+      "externalIdleTitle": "Добавить внешние контексты (нажмите)",
+    "contextOverLimit": "Контекст (~{tokens}) превышает окно {limit} выбранной модели. Переключитесь на модель с большим контекстным окном или начните новую сессию."
     },
     "selection": {
       "linesSelected": "Выбрано {count} {lines}",

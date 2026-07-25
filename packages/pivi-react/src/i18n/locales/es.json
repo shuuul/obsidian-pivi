@@ -120,7 +120,8 @@
       "externalUnavailable": "No disponible: {reason}",
       "externalRemove": "Eliminar ruta",
       "externalActiveTitle": "{count} contexto(s) externo(s) (haz clic para añadir más)",
-      "externalIdleTitle": "Añadir contextos externos (clic)"
+      "externalIdleTitle": "Añadir contextos externos (clic)",
+    "contextOverLimit": "El contexto (~{tokens}) supera la ventana de {limit} del modelo seleccionado. Cambia a un modelo con una ventana de contexto mayor o inicia una nueva sesión."
     },
     "selection": {
       "linesSelected": "{count} {lines} seleccionada(s)",

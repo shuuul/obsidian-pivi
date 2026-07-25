@@ -39,7 +39,7 @@ import type {
 } from '../../runtime/types';
 import { TOOL_SPAWN_AGENT } from '../../tools';
 import { buildPiToolRegistry, type PiBaseToolProvider } from './buildPiToolRegistryCore';
-import { PiAgentEventAdapter } from './piAgentEventAdapter';
+import { PiAgentEventAdapter, type PiChatErrorContext } from './piAgentEventAdapter';
 import {
   refreshCustomPiProviderModels,
   streamPiAiModelsSimple,
@@ -67,7 +67,8 @@ import {
   latestUsageFromMessages,
 } from './piChatRuntimeUsage';
 import { toPiImageContent } from './piImageContent';
-import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
+import { resolvePiModel, resolvePiModelByKey, resolvePiProviderAuth } from './piModelEnv';
+import type { PiResolvedModel } from './piModelRegistry';
 import { createPiReadBudget } from './piReadBudget';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import { resolvePiThinkingLevelForModel } from './piThinkingLevels';
@@ -97,7 +98,9 @@ export class PiChatRuntime implements PiChatService {
   private agent: Agent | null = null;
   private sessionId: string | null = null;
   private systemPromptKey: string | null = null;
-  private readonly eventAdapter = new PiAgentEventAdapter();
+  private readonly eventAdapter = new PiAgentEventAdapter(
+    (message) => this.resolveErrorContext(message),
+  );
   private currentTurnMetadata: ChatTurnMetadata = {};
   private readonly mcpManager: McpServerManager | null;
   private readonly mcpBridge: PiMcpBridge | null;
@@ -251,6 +254,7 @@ export class PiChatRuntime implements PiChatService {
 
     // Prompt-only changes hot-update; force rebuilds the agent (model/env paths).
     if (this.agent && options?.force !== true) {
+      this.syncAgentModelSelection(model);
       this.syncAgentTools();
       return true;
     }
@@ -774,8 +778,49 @@ export class PiChatRuntime implements PiChatService {
    *
    * Settings store models as "<provider>/<modelId>".
    */
-  private resolveModel(): ReturnType<typeof resolvePiModel> {
+  private resolveModel(): PiResolvedModel | null {
     return resolvePiModel(this.plugin);
+  }
+
+  /**
+   * The composer switches models without resetting the session, so the running
+   * Agent must follow: keeping the construction-time model made usage/compaction
+   * assume the new window while requests still hit the old provider/model.
+   */
+  private syncAgentModelSelection(model: PiResolvedModel): void {
+    const agent = this.agent;
+    const current = agent?.state.model;
+    if (!agent || (current?.provider === model.provider && current.id === model.id)) {
+      return;
+    }
+    agent.state.model = model;
+    // Compaction thresholds derive from the model's context window.
+    invalidateCompactionState(this.compactionState);
+  }
+
+  /**
+   * The failed assistant message records the serving provider/model; settings
+   * may already point at a different model, so diagnostics resolve from the
+   * message first and fall back to the current selection.
+   */
+  private resolveErrorContext(message: Record<string, unknown>): PiChatErrorContext | null {
+    const provider = typeof message.provider === 'string' ? message.provider : '';
+    const modelId = typeof message.model === 'string' ? message.model : '';
+    const servingModel = provider && modelId
+      ? resolvePiModelByKey(`${provider}/${modelId}`)
+      : null;
+    const model = servingModel ?? this.resolveModel();
+    if (!model) {
+      return null;
+    }
+    const messages = this.agent?.state.messages ?? [];
+    const usage = latestUsageFromMessages(messages, model)
+      ?? buildEstimatedUsageInfo(messages, model);
+    return {
+      model: `${model.provider}/${model.id}`,
+      contextWindow: model.contextWindow ?? 0,
+      ...(usage && usage.contextTokens > 0 ? { contextTokens: usage.contextTokens } : {}),
+    };
   }
 
   private async resolveAuth(model: NonNullable<ReturnType<typeof resolvePiModel>>) {

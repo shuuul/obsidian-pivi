@@ -120,7 +120,8 @@
       "externalUnavailable": "사용할 수 없음: {reason}",
       "externalRemove": "경로 제거",
       "externalActiveTitle": "외부 컨텍스트 {count}개 (클릭하여 더 추가)",
-      "externalIdleTitle": "외부 컨텍스트 추가 (클릭)"
+      "externalIdleTitle": "외부 컨텍스트 추가 (클릭)",
+    "contextOverLimit": "컨텍스트(약 {tokens})가 선택한 모델의 {limit} 컨텍스트 창을 초과했습니다. 더 큰 컨텍스트 창을 가진 모델로 전환하거나 새 세션을 시작하세요."
     },
     "selection": {
       "linesSelected": "{count} {lines} 선택됨",

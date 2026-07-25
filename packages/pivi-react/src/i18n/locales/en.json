@@ -125,7 +125,8 @@
       "externalUnavailable": "Unavailable: {reason}",
       "externalRemove": "Remove path",
       "externalActiveTitle": "{count} external context(s) (click to add more)",
-      "externalIdleTitle": "Add external contexts (click)"
+      "externalIdleTitle": "Add external contexts (click)",
+    "contextOverLimit": "Context (~{tokens}) exceeds the selected model's {limit} window. Switch to a model with a larger context window or start a new session."
     },
     "selection": {
       "linesSelected": "{count} {lines} selected",
