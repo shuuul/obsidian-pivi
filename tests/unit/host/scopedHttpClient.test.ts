@@ -211,4 +211,61 @@ describe('scopedHttpClient', () => {
     expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
     await close();
   });
+
+  it('survives body idle longer than connectMs after headers arrive', async () => {
+    const { port, close } = await listen((_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('first');
+      // Node socket timeout is wall-clock inactivity; fake timers cannot arm it.
+      window.setTimeout(() => res.end('second'), 80);
+    });
+    try {
+      const grants = new OriginGrantRegistry();
+      const url = `http://127.0.0.1:${port}/`;
+      grants.grant(url, 60_000, 'web-fetch');
+      const fetchImpl = createScopedFetch({
+        policy: {
+          purpose: 'web-fetch',
+          deadlines: { connectMs: 30, idleMs: 1_000, totalMs: 5_000 },
+        },
+        grants,
+        lookup: async () => ['127.0.0.1'],
+      });
+      const response = await fetchImpl(url);
+      await expect(response.text()).resolves.toBe('firstsecond');
+    } finally {
+      await close();
+    }
+  });
+
+  it('normalizes mid-stream socket death to Connection closed prematurely', async () => {
+    let killSocket: (() => void) | undefined;
+    const { port, close } = await listen((_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('partial');
+      // Defer destroy until the client has attached body listeners (after headers).
+      killSocket = () => {
+        res.socket?.destroy();
+      };
+    });
+    try {
+      const grants = new OriginGrantRegistry();
+      const url = `http://127.0.0.1:${port}/`;
+      grants.grant(url, 60_000, 'web-fetch');
+      const fetchImpl = createScopedFetch({
+        policy: {
+          purpose: 'web-fetch',
+          deadlines: { totalMs: 5_000, idleMs: 5_000 },
+        },
+        grants,
+        lookup: async () => ['127.0.0.1'],
+      });
+      const response = await fetchImpl(url);
+      const pending = response.text();
+      killSocket?.();
+      await expect(pending).rejects.toThrow('Connection closed prematurely');
+    } finally {
+      await close();
+    }
+  });
 });

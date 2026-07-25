@@ -82,6 +82,21 @@ describe('isPiChatRetryableAssistantError', () => {
     expect(isPiChatRetryableAssistantError(assistant('error', 'ECONNRESET'))).toBe(true);
   });
 
+  it('treats premature SSE close as retryable', () => {
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Connection closed prematurely',
+    ))).toBe(true);
+  });
+
+  it('does not treat user-aborted stops as retryable', () => {
+    expect(isPiChatRetryableAssistantError(assistant('aborted'))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'aborted',
+      'Connection closed prematurely',
+    ))).toBe(false);
+  });
+
   it('still rejects non-error stops and empty error text', () => {
     expect(isPiChatRetryableAssistantError(assistant('stop'))).toBe(false);
     expect(isPiChatRetryableAssistantError(assistant('error'))).toBe(false);

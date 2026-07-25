@@ -12,9 +12,11 @@ export const PI_CHAT_RETRY_BASE_DELAY_MS = 2_000;
 
 /**
  * Node/Electron transport failures that pi-ai's retry classifier currently misses.
- * Observed on openai-codex long turns when the TLS handshake is reset mid-connect.
+ * Covers TLS handshake resets mid-connect and servers that close an SSE stream early
+ * (e.g. openai-codex long thinking gaps surfaced as "Connection closed prematurely").
  */
-const PIVI_RETRYABLE_TRANSPORT_ERROR_PATTERN = /ECONNRESET|network socket disconnected|secure TLS connection was established/i;
+const PIVI_RETRYABLE_TRANSPORT_ERROR_PATTERN =
+  /ECONNRESET|network socket disconnected|secure TLS connection was established|closed prematurely/i;
 
 type PiChatRetryChunk = Extract<
   StreamChunk,

@@ -248,9 +248,22 @@ function createLimitedBodyStream(
         settled = true;
         cleanup();
         source.destroy();
+        // Node surfaces mid-stream socket death as message "aborted" (ECONNRESET).
+        // Duck-type the message: Node's Error can fail instanceof across realms.
+        let message: string | undefined;
+        if (error && typeof error === 'object' && 'message' in error) {
+          const rawMessage = error.message;
+          if (typeof rawMessage === 'string') message = rawMessage;
+        }
+        if (message === 'aborted') {
+          const cause = error instanceof Error
+            ? error
+            : Object.assign(new Error(message), error);
+          controller.error(new Error('Connection closed prematurely', { cause }));
+          return;
+        }
         controller.error(error instanceof Error ? error : new Error(String(error)));
       };
-
       const onAbort = () => {
         fail(limits.signal.reason instanceof Error
           ? limits.signal.reason
@@ -496,11 +509,13 @@ function requestOnce(
         (res: http.IncomingMessage) => {
           if (settled) return;
           settled = true;
+          // Connect deadline only covers handshake; leaving the socket timeout armed
+          // kills SSE streams during multi-second idle gaps between chunks.
+          req.setTimeout(0);
           connectDeadline.clear();
           firstByteDeadline.clear();
           combined.signal.removeEventListener('abort', onAbort);
           combined.dispose();
-
           const remote = res.socket?.remoteAddress?.replace(/^::ffff:/, '');
           if (remote) {
             try {
