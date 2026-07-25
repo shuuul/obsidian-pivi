@@ -45,6 +45,30 @@ describe('CapabilitySessionGrants', () => {
     grants.clear();
     expect(grants.hasSessionGrant(bashRequest)).toBe(false);
   });
+
+  it('matches always-allowed bash entries by token prefix and clears them', () => {
+    const grants = new CapabilitySessionGrants();
+    grants.rememberBashAllowEntry('grep');
+
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'grep -n "foo" note.md' })).toBe(true);
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'grep' })).toBe(true);
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'grepfoo bar' })).toBe(false);
+    expect(grants.hasSessionGrant(bashRequest)).toBe(false);
+
+    grants.rememberBashAllowEntry('npm run build');
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'npm run build --watch' })).toBe(true);
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'npm run build:css' })).toBe(false);
+
+    grants.clear();
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'grep -n "foo" note.md' })).toBe(false);
+  });
+
+  it('ignores empty and untokenizable bash allow entries', () => {
+    const grants = new CapabilitySessionGrants();
+    grants.rememberBashAllowEntry('   ');
+    grants.rememberBashAllowEntry('grep "unterminated');
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'grep anything' })).toBe(false);
+  });
 });
 
 function result(decision: CapabilityApprovalResult['decision'], bashAllowlistScope?: CapabilityApprovalResult['bashAllowlistScope']): CapabilityApprovalResult {
@@ -126,6 +150,45 @@ describe('createCapabilityApprovalPort', () => {
     expect(persistExternal).toHaveBeenCalledWith('/tmp/project');
     expect(onExternalDirectoryAllowed).toHaveBeenCalledWith('/tmp/project');
     expect(grants.hasSessionGrant(externalRequest)).toBe(true);
+  });
+
+  it('grants follow-up commands matching an always-allowed prefix without reprompting', async () => {
+    const grants = new CapabilitySessionGrants();
+    const present = jest.fn().mockResolvedValue(result('allow-always', 'prefix'));
+    const port = createCapabilityApprovalPort({
+      grants,
+      present,
+      persistence: { persistBashAllowlistEntry: jest.fn().mockResolvedValue(undefined) },
+    });
+
+    const grepRequest = (command: string): CapabilityApprovalRequest => ({
+      ...bashRequest,
+      command,
+      blockedPath: command,
+    });
+
+    await port.requestApproval(grepRequest('grep -o "q _ { [^}]* }" note.md'));
+    expect(present).toHaveBeenCalledTimes(1);
+
+    const followUp = grepRequest('grep -n "bar {" note.md');
+    expect(port.hasSessionGrant(followUp)).toBe(true);
+
+    const unrelated = grepRequest('find . -type f');
+    expect(port.hasSessionGrant(unrelated)).toBe(false);
+  });
+
+  it('scopes always-allowed full commands to the exact entry', async () => {
+    const grants = new CapabilitySessionGrants();
+    const port = createCapabilityApprovalPort({
+      grants,
+      present: async () => result('allow-always', 'full'),
+      persistence: { persistBashAllowlistEntry: jest.fn().mockResolvedValue(undefined) },
+    });
+
+    await port.requestApproval({ ...bashRequest, command: 'npm run build' });
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'npm run build' })).toBe(true);
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'npm run build:css' })).toBe(false);
+    expect(grants.hasSessionGrant({ ...bashRequest, command: 'npm test' })).toBe(false);
   });
 
   it('clears session grants through the port', () => {
