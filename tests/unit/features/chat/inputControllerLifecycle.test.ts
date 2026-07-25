@@ -203,6 +203,23 @@ describe('InputController service and cancellation lifecycle', () => {
     expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2']);
   });
 
+  it('keeps compact commands queued instead of sending them as steering messages', async () => {
+    const { controller, ensureServiceInitialized, service, state } = createController();
+    state.isStreaming = true;
+    state.queuedMessages = [{
+      id: 'queued-1',
+      content: '/compact preserve decisions',
+      editorContext: null,
+      canvasContext: null,
+    }];
+    await ensureServiceInitialized();
+
+    controller.steerQueuedMessage('queued-1');
+
+    expect(service.steer).not.toHaveBeenCalled();
+    expect(state.queuedMessages).toHaveLength(1);
+  });
+
   it('edits and discards one queued message without changing its siblings', () => {
     const { controller, inputEl, state } = createController();
     state.queuedMessages = [{
@@ -253,7 +270,9 @@ describe('InputController service and cancellation lifecycle', () => {
   it('processes queued messages in FIFO order', () => {
     jest.useFakeTimers();
     const { controller, state } = createController();
-    const sendMessage = jest.spyOn(controller, 'sendMessage').mockResolvedValue();
+    const sendMessage = jest.spyOn(controller, 'sendMessage').mockImplementation(async options => {
+      options?.onSubmissionAccepted?.();
+    });
     state.queuedMessages = [{
       id: 'queued-1',
       content: 'first',
@@ -271,6 +290,69 @@ describe('InputController service and cancellation lifecycle', () => {
 
     expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ content: 'first' }));
     expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-2']);
+    jest.useRealTimers();
+  });
+
+  it('keeps an over-limit queued turn instead of dropping it before submission', () => {
+    jest.useFakeTimers();
+    const { controller, state } = createController();
+    const sendMessage = jest.spyOn(controller, 'sendMessage').mockResolvedValue();
+    state.usage = {
+      contextTokens: 100_000,
+      contextWindow: 100_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 100_000,
+      model: 'provider/small',
+      percentage: 100,
+    };
+    state.queuedMessages = [{
+      id: 'queued-1',
+      content: 'ordinary queued turn',
+      editorContext: null,
+      canvasContext: null,
+    }];
+
+    controller.processQueuedMessage();
+    jest.runOnlyPendingTimers();
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(state.queuedMessages).toHaveLength(1);
+    jest.useRealTimers();
+  });
+
+  it('runs queued compact recovery ahead of an over-limit ordinary turn', () => {
+    jest.useFakeTimers();
+    const { controller, state } = createController();
+    const sendMessage = jest.spyOn(controller, 'sendMessage').mockImplementation(async options => {
+      options?.onSubmissionAccepted?.();
+    });
+    state.usage = {
+      contextTokens: 100_000,
+      contextWindow: 100_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 100_000,
+      model: 'provider/small',
+      percentage: 100,
+    };
+    state.queuedMessages = [{
+      id: 'queued-1',
+      content: 'blocked ordinary turn',
+      editorContext: null,
+      canvasContext: null,
+    }, {
+      id: 'queued-2',
+      content: '/compact preserve decisions',
+      editorContext: null,
+      canvasContext: null,
+    }];
+
+    controller.processQueuedMessage();
+    jest.runOnlyPendingTimers();
+
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
+      content: '/compact preserve decisions',
+    }));
+    expect(state.queuedMessages.map(message => message.id)).toEqual(['queued-1']);
     jest.useRealTimers();
   });
 });

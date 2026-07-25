@@ -68,6 +68,7 @@ function createToolbarTab(state: ChatState): TabData {
     dom: {
       richInput: { value: '', el: document.createElement('div') } as never,
       inputWrapper: document.createElement('div'),
+      eventCleanups: [],
     } as never,
     renderer: null,
     capabilityApproval: null,
@@ -75,6 +76,48 @@ function createToolbarTab(state: ChatState): TabData {
 }
 
 describe('composer model usage limits', () => {
+  it('allows an image-only submission when context pressure is below the limit', () => {
+    const state = new ChatState();
+    const tab = createToolbarTab(state);
+    tab.ui.imageContextManager = {
+      hasImages: () => true,
+      setEnabled: jest.fn(),
+    } as never;
+
+    wireComposerChrome(
+      tab,
+      asPiviPlugin(createMockPiviPluginStub()),
+      createFakeChatPorts(),
+    );
+
+    expect(state.uiStore.getSnapshot().composer.canSend).toBe(true);
+  });
+
+  it('blocks an image-only submission when context pressure is over the limit', () => {
+    const state = new ChatState();
+    state.usage = {
+      contextTokens: 100_000,
+      contextWindow: 100_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 100_000,
+      model: 'provider/small',
+      percentage: 100,
+    };
+    const tab = createToolbarTab(state);
+    tab.ui.imageContextManager = {
+      hasImages: () => true,
+      setEnabled: jest.fn(),
+    } as never;
+
+    wireComposerChrome(
+      tab,
+      asPiviPlugin(createMockPiviPluginStub()),
+      createFakeChatPorts(),
+    );
+
+    expect(state.uiStore.getSnapshot().composer.canSend).toBe(false);
+  });
+
   it('updates the context limit before metadata preparation completes and refreshes it afterward', async () => {
     let settings = settingsSnapshot('provider/small');
     let largeContextWindow = 200_000;

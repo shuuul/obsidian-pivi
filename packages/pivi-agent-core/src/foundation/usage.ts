@@ -173,13 +173,20 @@ export function calculateUsagePercentage(tokens: number, limit: number): number 
     : 0;
 }
 
+/** Conservative complete-input pressure used for hard context-window decisions. */
+export function getContextPressureTokens(usage: UsageInfo): number {
+  return usage.contextEnvelope?.pressureInputTokens ?? usage.contextTokens;
+}
+
 /**
  * True when the session context no longer fits the selected model's window.
  * Sending would either overflow the provider or force an immediate compaction,
  * so the composer blocks submission (except /compact) while this holds.
  */
 export function isContextOverLimit(usage: UsageInfo | null | undefined): boolean {
-  return !!usage && usage.contextWindow > 0 && usage.contextTokens >= usage.contextWindow;
+  return !!usage
+    && usage.contextWindow > 0
+    && getContextPressureTokens(usage) >= usage.contextWindow;
 }
 
 /** Compaction-pressure metric: estimated/provider pressure against the compaction trigger. */

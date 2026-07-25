@@ -1,5 +1,4 @@
 import type {
-  ChatModelReadinessPort,
   ChatModelsPort,
   ChatSettingsSnapshot,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
@@ -11,5 +10,4 @@ export interface ToolbarCallbacks {
   onThinkingLevelChange: (thinkingLevel: string) => Promise<void>;
   getSettings: () => ChatSettingsSnapshot;
   getUIConfig: () => ChatModelsPort;
-  getModelReadinessProvider?: () => ChatModelReadinessPort | null;
 }

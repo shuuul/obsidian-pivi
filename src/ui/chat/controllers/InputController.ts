@@ -124,6 +124,7 @@ export class InputController {
     canvasContextOverride?: CanvasSelectionContext | null;
     content?: string;
     images?: ChatMessage['images'];
+    onSubmissionAccepted?: () => void;
     onAssistantText?: (accumulatedText: string) => void;
     turnRequestOverride?: ChatTurnRequest;
   }): Promise<void> {

@@ -133,6 +133,7 @@ export function initializeTabControllers(
 
   tab.controllers.openSessionController = new SessionController(
     {
+      models: ports.models,
       settings: ports.settings,
       sessions: ports.sessions,
       state,

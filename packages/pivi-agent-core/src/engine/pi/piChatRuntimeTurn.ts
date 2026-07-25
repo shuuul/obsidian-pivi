@@ -1,4 +1,4 @@
-import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
+import type { Agent, AgentMessage, ThinkingLevel } from '@earendil-works/pi-agent-core';
 import type { AssistantMessage } from '@earendil-works/pi-ai';
 
 import type { StreamChunk } from '../../foundation';
@@ -36,6 +36,8 @@ export interface PiChatRuntimeTurnDeps {
   eventAdapter: PiAgentEventAdapter;
   sessionTree: SessionTreeStore | null;
   resolveModel: () => PiResolvedModel | null;
+  resolveThinkingLevel: (model: PiResolvedModel) => ThinkingLevel;
+  authorizeAndSyncAgentModelSelection: (model: PiResolvedModel) => Promise<PiResolvedModel | null>;
   refreshModelMetadata: () => Promise<boolean>;
   syncSessionMessages: (messages: AgentMessage[]) => void;
   onUserMessagePersisted: (result: {
@@ -170,6 +172,32 @@ async function runPromptLifecycle(
       return undefined;
     }
 
+    const mergeCurrentSelection = async (
+      update: ReturnType<NonNullable<Agent['prepareNextTurnWithContext']>>,
+    ) => {
+      const previousUpdate = await update;
+      if (signal?.aborted || activeTurn.abortController.signal.aborted) {
+        return undefined;
+      }
+      const model = deps.resolveModel();
+      if (!model) {
+        return previousUpdate;
+      }
+      // Continuations do not pass through PiChatRuntime.ensureReady(). Resolve
+      // credentials before moving a live Agent to a newly selected provider.
+      const authorizedModel = await deps.authorizeAndSyncAgentModelSelection(model);
+      if (
+        !authorizedModel
+        || signal?.aborted
+        || activeTurn.abortController.signal.aborted
+      ) return undefined;
+      return {
+        ...previousUpdate,
+        model: authorizedModel,
+        thinkingLevel: deps.resolveThinkingLevel(authorizedModel),
+      };
+    };
+
     flushPendingSessionMessages(deps, pendingPersistenceMessages);
     const latestUsage = latestUsageFromMessages(
       nextTurn.context.messages,
@@ -179,11 +207,16 @@ async function runPromptLifecycle(
       ? attachContextEnvelope(deps.compaction, latestUsage, turn)
       : null;
     if (!usage || nextTurn.toolResults.length === 0) {
-      return previousPrepareNextTurn?.(nextTurn, signal);
+      const previousUpdate = await previousPrepareNextTurn?.(nextTurn, signal);
+      const hasPendingSteering = activeTurn.steeredTurns.length
+        > activeTurn.persistedSteeredTurnCount;
+      return hasPendingSteering
+        ? mergeCurrentSelection(Promise.resolve(previousUpdate))
+        : previousUpdate;
     }
     if (!shouldAutoCompactSession(deps.compaction, usage)) {
       prepareCompactionPrefire(deps.compaction, usage);
-      return previousPrepareNextTurn?.(nextTurn, signal);
+      return mergeCurrentSelection(previousPrepareNextTurn?.(nextTurn, signal));
     }
 
     activeTurn.queue.push({ type: 'context_compacting' });
@@ -196,12 +229,12 @@ async function runPromptLifecycle(
     }
     didCompactDuringTurn = true;
     pushCompactionChunks(activeTurn.queue, deps.compaction, compacted, turn);
-    return {
+    return mergeCurrentSelection(Promise.resolve({
       context: {
         ...nextTurn.context,
         messages: deps.sessionTree?.loadAgentMessages() ?? agent.state.messages,
       },
-    };
+    }));
   };
   agent.prepareNextTurnWithContext = prepareNextTurnWithContext;
 

@@ -6,6 +6,7 @@ import type { SessionEntry } from '@earendil-works/pi-coding-agent';
 
 import type { ChatMessage, UsageInfo } from '../../../foundation';
 import { PluginLogger } from '../../../foundation/pluginLogger';
+import { calculateContextEnvelope } from '../../../foundation/usage';
 import { sanitizeMessageUiForJsonl } from '../../../session/messageUi';
 import {
   getPiviSessionRoot,
@@ -47,6 +48,7 @@ import {
   firstUserMessagePreview,
   readSessionMetaFromBranch,
 } from './messageMapper';
+import { estimateActiveContextCategories } from './piContextCompaction';
 import {
   assertSessionJsonlSourceUnchanged,
   captureSessionJsonlSource,
@@ -521,7 +523,22 @@ export class PiSessionStore implements SessionStore {
       const entry = readSessionJsonlIndexedLine(index, line);
       const usage = this.buildUsageInfo(entry.message as AgentMessage | undefined);
       if (usage) {
-        return Promise.resolve(usage);
+        const estimates = estimateActiveContextCategories(index.entries.map(indexEntry =>
+          readSessionJsonlIndexedLine(index, indexEntry) as unknown as SessionEntry));
+        return Promise.resolve({
+          ...usage,
+          contextEnvelope: calculateContextEnvelope({
+            checkpoints: estimates.checkpoints,
+            contextWindow: usage.contextWindow,
+            contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
+            outputTokenLimit: usage.outputTokenLimit,
+            providerContextTokens: usage.contextTokensIsAuthoritative
+              ? usage.contextTokens
+              : undefined,
+            recentConversation: estimates.recentConversation,
+            toolAndAgentResults: estimates.toolAndAgentResults,
+          }),
+        });
       }
     }
     return Promise.resolve(null);

@@ -1,4 +1,5 @@
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import { recalculateUsageForModel } from '@pivi/pivi-agent-core/foundation/usage';
 import type {
   ChatPorts,
   ChatSettingsPort,
@@ -25,6 +26,7 @@ export interface SessionControllerCallbacks {
 }
 
 export interface SessionControllerDeps {
+  models: ChatPorts['models'];
   settings: ChatSettingsPort;
   sessions: ChatPorts['sessions'];
   state: ChatState;
@@ -311,7 +313,16 @@ export class SessionController {
 
     state.currentOpenSessionId = openSession.id;
     this.restoreMessages(openSession, options?.page);
-    state.usage = openSession.usage ?? null;
+    state.usage = openSession.usage
+      ? recalculateUsageForModel(
+          openSession.usage,
+          settingsSnapshot.model,
+          this.deps.models.getContextWindowSize(
+            settingsSnapshot.model,
+            settingsSnapshot.customContextLimits,
+          ),
+        )
+      : null;
     state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
     state.hasPendingSessionSave = false;
 

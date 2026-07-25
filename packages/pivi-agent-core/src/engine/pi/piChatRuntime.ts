@@ -367,6 +367,33 @@ export class PiChatRuntime implements PiChatService {
         eventAdapter: this.eventAdapter,
         sessionTree: this.sessionTree,
         resolveModel: () => this.resolveModel(),
+        resolveThinkingLevel: (model) => this.resolveThinkingLevelForModel(model),
+        authorizeAndSyncAgentModelSelection: async (model) => {
+          let selectedModel = model;
+          while (true) {
+            const auth = await this.resolveAuth(selectedModel);
+            if (
+              activeTurn.abortController.signal.aborted
+              || this.activeTurn !== activeTurn
+              || this.agent !== agent
+            ) return null;
+            if (!auth) {
+              throw new Error(`Provider authentication is unavailable for ${selectedModel.provider}.`);
+            }
+
+            const latestModel = this.resolveModel();
+            if (!latestModel) return null;
+            if (
+              latestModel.provider !== selectedModel.provider
+              || latestModel.id !== selectedModel.id
+            ) {
+              selectedModel = latestModel;
+              continue;
+            }
+            this.syncAgentModelSelection(selectedModel, agent);
+            return selectedModel;
+          }
+        },
         refreshModelMetadata: () => this.refreshLocalModelMetadataAfterPrompt(agent),
         syncSessionMessages: (messages) => {
           this.persistSteeredTurnBeforeSync(activeTurn, messages);
@@ -787,15 +814,17 @@ export class PiChatRuntime implements PiChatService {
    * Agent must follow: keeping the construction-time model made usage/compaction
    * assume the new window while requests still hit the old provider/model.
    */
-  private syncAgentModelSelection(model: PiResolvedModel): void {
-    const agent = this.agent;
+  private syncAgentModelSelection(model: PiResolvedModel, agent = this.agent): void {
     const current = agent?.state.model;
-    if (!agent || (current?.provider === model.provider && current.id === model.id)) {
+    if (!agent) {
       return;
     }
-    agent.state.model = model;
-    // Compaction thresholds derive from the model's context window.
-    invalidateCompactionState(this.compactionState);
+    if (current?.provider !== model.provider || current.id !== model.id) {
+      agent.state.model = model;
+      // Compaction thresholds derive from the model's context window.
+      invalidateCompactionState(this.compactionState);
+    }
+    agent.state.thinkingLevel = this.resolveThinkingLevelForModel(model);
   }
 
   /**

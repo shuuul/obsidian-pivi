@@ -43,6 +43,7 @@ function createController(openSession?: Partial<OpenSessionState>) {
   const sessions = ports.sessions;
 
   const controller = new SessionController({
+    models: ports.models,
     settings: ports.settings,
     sessions,
     state,

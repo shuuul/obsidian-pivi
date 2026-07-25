@@ -51,6 +51,7 @@ export function initializeContextManagers(
         tab.controllers.browserSelectionController?.updateContextRowVisibility();
         tab.controllers.canvasSelectionController?.updateContextRowVisibility();
         autoResizeTextarea(dom.richInput.el);
+        tab.ui.composerActions?.refresh();
       },
     },
     dom.contextRowEl,

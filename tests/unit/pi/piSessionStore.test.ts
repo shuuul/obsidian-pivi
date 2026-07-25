@@ -284,7 +284,13 @@ describe('PiSessionStore usage restoration', () => {
 
     try {
       const usage = await store.getUsage({ sessionFile, sessionId: 'session-1' });
-      expect(usage).toMatchObject({ contextWindow: 0, percentage: 0 });
+      expect(usage).toMatchObject({
+        contextWindow: 0,
+        percentage: 0,
+        contextEnvelope: {
+          pressureInputTokens: 300,
+        },
+      });
     } finally {
       fs.rmSync(vaultPath, { recursive: true, force: true });
     }

@@ -1,5 +1,14 @@
 import { buildTurnSubmission, type TurnSubmissionSources } from '@/ui/chat/composer/ComposerSubmission';
+import { isSubmissionBlockedByContextLimit } from '@/ui/chat/composer/contextOverLimitNotice';
 import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
+
+const overLimitUsage: UsageInfo = {
+  contextTokens: 1_000,
+  contextWindow: 1_000,
+  inputTokens: 1_000,
+  percentage: 100,
+};
 
 describe('buildTurnSubmission', () => {
   it('marks compact commands without file context transforms', () => {
@@ -22,6 +31,12 @@ describe('buildTurnSubmission', () => {
 
     expect(result.turnRequest.text).toBe('/compact keep recent');
     expect(result.displayContent).toBe('/compact keep recent');
+  });
+
+  it('keeps compact available while blocking ordinary over-limit submissions', () => {
+    expect(isSubmissionBlockedByContextLimit(overLimitUsage, 'continue')).toBe(true);
+    expect(isSubmissionBlockedByContextLimit(overLimitUsage, '/compact')).toBe(false);
+    expect(isSubmissionBlockedByContextLimit(overLimitUsage, '  /COMPACT keep decisions')).toBe(false);
   });
 
   it('includes folder-expanded paths in attachedFilePaths', () => {

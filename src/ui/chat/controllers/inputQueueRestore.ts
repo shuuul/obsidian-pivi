@@ -6,6 +6,10 @@ import {
   toQueuedChatTurn,
 } from '@/ui/chat/composer/ComposerQueue';
 import { restoreQueuedMessageToInput } from '@/ui/chat/composer/ComposerQueueRestore';
+import {
+  isCompactCommandText,
+  isSubmissionBlockedByContextLimit,
+} from '@/ui/chat/composer/contextOverLimitNotice';
 import { getActiveWindow } from '@/ui/shared/dom';
 
 import type { QueuedMessage } from '../state/types';
@@ -16,6 +20,7 @@ export interface InputQueueRestoreHost {
   sendMessage(options?: {
     content?: string;
     images?: ChatMessage['images'];
+    onSubmissionAccepted?: () => void;
     turnRequestOverride?: ChatTurnRequest;
   }): Promise<void>;
   enqueueProviderUserTurn(message: {
@@ -28,6 +33,7 @@ export interface InputQueueRestoreHost {
 
 export class InputQueueRestoreCoordinator {
   private readonly host: InputQueueRestoreHost;
+  private pendingQueuedMessageId: string | null = null;
 
   constructor(host: InputQueueRestoreHost) {
     this.host = host;
@@ -80,6 +86,13 @@ export class InputQueueRestoreCoordinator {
 
     const queuedMessageSnapshot = cloneQueuedMessage(queuedMessage);
     const queuedTurn = toQueuedChatTurn(queuedMessageSnapshot);
+    // Compaction is a standalone runtime path, not a Pi steering message. Leave
+    // it queued for normal execution after the active run settles. Ordinary
+    // over-limit steering also stays recoverable in the queue.
+    if (
+      isCompactCommandText(queuedTurn.request.text)
+      || isSubmissionBlockedByContextLimit(state.usage, queuedTurn.request.text)
+    ) return;
     const externalContextPaths = this.host.deps.getExternalContextSelector()
       ?.getExternalContexts() ?? [];
     queuedTurn.request.externalContextPaths = externalContextPaths.length > 0
@@ -114,22 +127,55 @@ export class InputQueueRestoreCoordinator {
 
   processQueuedMessage(): void {
     const { state } = this.host.deps;
-    const [nextQueuedMessage, ...remainingQueuedMessages] = state.queuedMessages;
+    if (state.isStreaming || this.pendingQueuedMessageId) return;
+
+    const nextQueuedMessage = this.getNextExecutableQueuedMessage();
     if (!nextQueuedMessage) return;
 
     const queuedMessage = cloneQueuedMessage(nextQueuedMessage);
-    state.queuedMessages = remainingQueuedMessages;
+    const queuedMessageId = nextQueuedMessage.id;
+    this.pendingQueuedMessageId = queuedMessageId;
 
     getActiveWindow(this.host.deps.getMessagesEl()).setTimeout(
       () => {
+        if (state.isStreaming) {
+          this.pendingQueuedMessageId = null;
+          return;
+        }
+        const currentCandidate = this.getNextExecutableQueuedMessage();
+        if (currentCandidate?.id !== queuedMessageId) {
+          this.pendingQueuedMessageId = null;
+          this.processQueuedMessage();
+          return;
+        }
         void this.host.sendMessage({
           content: queuedMessage.content,
           images: queuedMessage.images,
-          turnRequestOverride: toQueuedChatTurn(queuedMessage).request,
+          onSubmissionAccepted: () => {
+            state.queuedMessages = state.queuedMessages.filter(
+              message => message.id !== queuedMessageId,
+            );
+          },
+          turnRequestOverride: toQueuedChatTurn(currentCandidate).request,
+        }).finally(() => {
+          if (this.pendingQueuedMessageId === queuedMessageId) {
+            this.pendingQueuedMessageId = null;
+          }
         });
       },
       0,
     );
+  }
+
+  private getNextExecutableQueuedMessage(): QueuedMessage | undefined {
+    const { queuedMessages, usage } = this.host.deps.state;
+    const head = queuedMessages[0];
+    if (!head) return undefined;
+    if (!isSubmissionBlockedByContextLimit(usage, toQueuedChatTurn(head).request.text)) {
+      return head;
+    }
+    return queuedMessages.find(message =>
+      isCompactCommandText(toQueuedChatTurn(message).request.text));
   }
 
   private restoreMessageToInput(

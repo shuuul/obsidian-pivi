@@ -79,6 +79,7 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
 
   const controller = new SessionController(
     {
+      models: ports.models,
       settings: ports.settings,
       sessions,
       state,

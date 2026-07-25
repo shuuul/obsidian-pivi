@@ -1,4 +1,5 @@
-import { isContextOverLimit, recalculateUsageForModel } from "@pivi/pivi-agent-core/foundation/usage";
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+import { recalculateUsageForModel } from "@pivi/pivi-agent-core/foundation/usage";
 import type { ChatPorts } from "@pivi/pivi-agent-core/runtime/chatPorts";
 import { Notice } from "obsidian";
 
@@ -6,7 +7,10 @@ import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 
 import { pickDirectoryPath } from '../../shared/utils/folderPicker';
-import { notifyIfContextOverLimit } from '../composer/contextOverLimitNotice';
+import {
+  isSubmissionBlockedByContextLimit,
+  notifyIfContextOverLimit,
+} from '../composer/contextOverLimitNotice';
 import { ExternalContextSelector } from "../toolbar/ExternalContextControl";
 import type { ToolbarCallbacks } from "../toolbar/ToolbarTypes";
 import { InlineContextManager } from "../ui/InlineContext";
@@ -22,6 +26,8 @@ import {
 } from "./tabSlashCatalog";
 import type { TabData } from "./types";
 
+const logger = new PluginLogger('tabToolbarInit');
+
 /**
  * Wires composer chrome snapshots and React actions for a tab.
  */
@@ -32,6 +38,7 @@ export function wireComposerChrome(
   getSlashCatalogConfig?: () => SlashCatalogInfo,
 ): void {
   const { dom } = tab;
+  const isTabOpen = (): boolean => tab.lifecycleState !== 'closing';
 
   const refreshUsageContextWindow = (
     model: string,
@@ -59,7 +66,6 @@ export function wireComposerChrome(
   const toolbarCallbacks: ToolbarCallbacks = {
     getUIConfig: () => ports.models,
     getSettings: () => ports.settings.getSettingsSnapshot(),
-    getModelReadinessProvider: () => ports.models.getReadinessProvider(),
     onModelChange: async (model: string) => {
       if (tab.lifecycleState === "blank") {
         tab.draftModel = model;
@@ -73,10 +79,12 @@ export function wireComposerChrome(
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
         });
+        if (!isTabOpen()) return;
         refreshUsageContextWindow(model, providerSettings.customContextLimits);
         await uiConfig.prepareModelMetadata(
           tab.draftModel ?? model,
         );
+        if (!isTabOpen()) return;
         refreshUsageContextWindow(model, providerSettings.customContextLimits);
         applyCapabilityUIGating(tab, ports);
         tab.service?.syncThinkingLevel?.();
@@ -91,11 +99,14 @@ export function wireComposerChrome(
           uiConfig.applyModelDefaults(model, settings);
         },
       );
+      if (!isTabOpen()) return;
       refreshUsageContextWindow(model, providerSettings.customContextLimits);
       await uiConfig.prepareModelMetadata(model);
+      if (!isTabOpen()) return;
       refreshUsageContextWindow(model, providerSettings.customContextLimits);
-      notifyIfContextOverLimit(tab.state.usage);
+      notifyIfContextOverLimit(tab.state.usage, dom.richInput.value);
       tab.service?.syncThinkingLevel?.();
+      if (!tab.state.isStreaming) tab.controllers.inputController?.processQueuedMessage();
     },
     onModeChange: async (mode: string) => {
       await updateTabAgentSettings(ports, (settings) => {
@@ -121,18 +132,25 @@ export function wireComposerChrome(
           settings,
         );
       });
-      tab.service?.syncThinkingLevel?.();
+      if (isTabOpen()) tab.service?.syncThinkingLevel?.();
     },
   };
   tab.ui.externalContextSelector = new ExternalContextSelector();
   tab.ui.externalContextSelector.setOnChange(externalContext => tab.state.uiStore.update({ externalContext }));
+  const runComposerAction = (action: () => Promise<unknown>): void => {
+    void action()
+      .then(() => {
+        if (isTabOpen()) refreshComposerSnapshot();
+      })
+      .catch(error => logger.error('Composer action failed', error));
+  };
   tab.ui.composerActions = {
-    send: () => void tab.controllers.inputController?.sendMessage().finally(refreshComposerSnapshot),
+    send: () => runComposerAction(async () => tab.controllers.inputController?.sendMessage()),
     stop: () => tab.controllers.inputController?.cancelStreaming(),
-    setModel: model => void toolbarCallbacks.onModelChange(model).then(refreshComposerSnapshot),
-    setMode: mode => void toolbarCallbacks.onModeChange(mode).then(refreshComposerSnapshot),
-    setThinkingBudget: budget => void toolbarCallbacks.onThinkingBudgetChange(budget).then(refreshComposerSnapshot),
-    setThinkingLevel: level => void toolbarCallbacks.onThinkingLevelChange(level).then(refreshComposerSnapshot),
+    setModel: model => runComposerAction(() => toolbarCallbacks.onModelChange(model)),
+    setMode: mode => runComposerAction(() => toolbarCallbacks.onModeChange(mode)),
+    setThinkingBudget: budget => runComposerAction(() => toolbarCallbacks.onThinkingBudgetChange(budget)),
+    setThinkingLevel: level => runComposerAction(() => toolbarCallbacks.onThinkingLevelChange(level)),
     toggleExternalPath: pathValue => tab.ui.externalContextSelector?.togglePath(pathValue),
     toggleExternalPinned: pathValue => tab.ui.externalContextSelector?.togglePinned(pathValue),
     removeExternalPath: pathValue => tab.ui.externalContextSelector?.removePath(pathValue),
@@ -146,7 +164,7 @@ export function wireComposerChrome(
         title: t('chat.toolbar.externalPickerTitle'),
         hostWindow: dom.inputWrapper.ownerDocument.defaultView,
       });
-      if (!selectedPath) return;
+      if (!selectedPath || !isTabOpen()) return;
       const result = tab.ui.externalContextSelector?.addExternalContext(selectedPath);
       if (result && !result.success) new Notice(result.error, 5000);
     } catch {
@@ -155,13 +173,16 @@ export function wireComposerChrome(
   }
 
   function refreshComposerSnapshot(): void {
+    if (!isTabOpen()) return;
     const settings = toolbarCallbacks.getSettings();
     const uiConfig = toolbarCallbacks.getUIConfig();
     const mode = uiConfig.getModeSelector?.(settings) ?? null;
     const reasoningOptions = uiConfig.getReasoningOptions(settings.model, settings);
+    const inputText = dom.richInput.value.trim();
     tab.state.uiStore.update({
       composer: {
-        canSend: dom.richInput.value.trim().length > 0 && !isContextOverLimit(tab.state.usage),
+        canSend: (inputText.length > 0 || (tab.ui.imageContextManager?.hasImages() ?? false))
+          && !isSubmissionBlockedByContextLimit(tab.state.usage, inputText),
         model: settings.model,
         modelOptions: uiConfig.getModelOptions(settings).map(option => ({ ...option })),
         mode: mode?.value ?? null,
@@ -179,11 +200,11 @@ export function wireComposerChrome(
   refreshComposerSnapshot();
 
   // Usage shifts (turn end, session load, model switch) also gate sending.
-  tab.state.uiStore.subscribe((changedKeys) => {
+  tab.dom.eventCleanups.push(tab.state.uiStore.subscribe((changedKeys) => {
     if (changedKeys.has('usage')) {
       refreshComposerSnapshot();
     }
-  });
+  }));
 
   tab.ui.externalContextSelector.setOnPinnedChange(async (pinnedPaths) => {
     await ports.settings.setPinnedExternalReadDirectories(pinnedPaths);

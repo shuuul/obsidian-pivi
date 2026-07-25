@@ -58,6 +58,17 @@ export interface FinalizeOutgoingTurnOptions {
   wasInvalidated: boolean;
 }
 
+interface InputSendMessageOptions {
+  editorContextOverride?: EditorSelectionContext | null;
+  browserContextOverride?: BrowserSelectionContext | null;
+  canvasContextOverride?: CanvasSelectionContext | null;
+  content?: string;
+  images?: ChatMessage['images'];
+  onSubmissionAccepted?: () => void;
+  onAssistantText?: (accumulatedText: string) => void;
+  turnRequestOverride?: ChatTurnRequest;
+}
+
 export interface InputTurnPipelineHost {
   readonly deps: InputControllerDeps;
   getAgentService(): PiChatService | null;
@@ -71,15 +82,32 @@ export interface InputTurnPipelineHost {
   updateQueueIndicator(): void;
   processQueuedMessage(): void;
   syncScrollToBottomAfterRenderUpdates(): void;
-  sendMessage(options?: {
-    editorContextOverride?: EditorSelectionContext | null;
-    browserContextOverride?: BrowserSelectionContext | null;
-    canvasContextOverride?: CanvasSelectionContext | null;
-    content?: string;
-    images?: ChatMessage['images'];
-    onAssistantText?: (accumulatedText: string) => void;
-    turnRequestOverride?: ChatTurnRequest;
-  }): Promise<void>;
+  sendMessage(options?: InputSendMessageOptions): Promise<void>;
+}
+
+function resolveSubmissionPreflight(
+  options: InputSendMessageOptions | undefined,
+  inputEl: RichChatInput,
+  imageContextManager: { hasImages(): boolean } | null,
+): {
+  content: string;
+  hasImages: boolean;
+  imageOverride: ChatMessage['images'] | undefined;
+  requestText: string;
+  shouldUseInput: boolean;
+} {
+  const contentOverride = options?.content;
+  const content = (contentOverride ?? inputEl.value).trim();
+  const imageOverride = options?.images;
+  return {
+    content,
+    hasImages: imageOverride !== undefined
+      ? imageOverride.length > 0
+      : (imageContextManager?.hasImages() ?? false),
+    imageOverride,
+    requestText: options?.turnRequestOverride?.text.trim() ?? content,
+    shouldUseInput: contentOverride === undefined,
+  };
 }
 
 export class InputTurnPipeline {
@@ -90,25 +118,22 @@ export class InputTurnPipeline {
   }
 
   /**
-   * Blocks empty submissions and any send while the session context exceeds
-   * the model window (the model cannot accept even a /compact request then).
+   * Blocks empty submissions and ordinary sends while the session context
+   * exceeds the model window. /compact remains available as the recovery path.
    */
-  private shouldBlockSubmission(usage: UsageInfo | null, content: string, hasImages: boolean): boolean {
-    if (!content && !hasImages) {
+  private shouldBlockSubmission(
+    usage: UsageInfo | null,
+    content: string,
+    requestText: string,
+    hasImages: boolean,
+  ): boolean {
+    if (!content && !requestText && !hasImages) {
       return true;
     }
-    return notifyIfContextOverLimit(usage);
+    return notifyIfContextOverLimit(usage, requestText);
   }
 
-  async sendMessage(options?: {
-    editorContextOverride?: EditorSelectionContext | null;
-    browserContextOverride?: BrowserSelectionContext | null;
-    canvasContextOverride?: CanvasSelectionContext | null;
-    content?: string;
-    images?: ChatMessage['images'];
-    onAssistantText?: (accumulatedText: string) => void;
-    turnRequestOverride?: ChatTurnRequest;
-  }): Promise<void> {
+  async sendMessage(options?: InputSendMessageOptions): Promise<void> {
     const {
       settings,
       state,
@@ -125,14 +150,14 @@ export class InputTurnPipeline {
     const fileContextManager = this.host.deps.getFileContextManager();
     const inlineContextManager = this.host.deps.getInlineContextManager();
 
-    const contentOverride = options?.content;
-    const shouldUseInput = contentOverride === undefined;
-    const content = (contentOverride ?? inputEl.value).trim();
-    const imageOverride = options?.images;
-    const hasImages = imageOverride !== undefined
-      ? imageOverride.length > 0
-      : (imageContextManager?.hasImages() ?? false);
-    if (this.shouldBlockSubmission(state.usage, content, hasImages)) return;
+    const {
+      content,
+      hasImages,
+      imageOverride,
+      requestText,
+      shouldUseInput,
+    } = resolveSubmissionPreflight(options, inputEl, imageContextManager);
+    if (this.shouldBlockSubmission(state.usage, content, requestText, hasImages)) return;
 
     const resolvedContent = await this.resolvePromptContent({
       content,
@@ -142,7 +167,17 @@ export class InputTurnPipeline {
     });
     if (resolvedContent === null) return;
     const { displayContent: resolvedDisplayContent, promptContent } = resolvedContent;
-
+    const currentPreflight = resolveSubmissionPreflight(options, inputEl, imageContextManager);
+    if (
+      state.isCreatingSession
+      || state.isSwitchingSession
+      || this.shouldBlockSubmission(
+        state.usage,
+        resolvedDisplayContent,
+        currentPreflight.requestText,
+        currentPreflight.hasImages,
+      )
+    ) return;
     if (state.isStreaming) {
       queueTurnWhileStreaming({
         state,
@@ -160,9 +195,10 @@ export class InputTurnPipeline {
         content: resolvedDisplayContent,
         promptContent,
         shouldUseInput,
-        hasImages,
+        hasImages: currentPreflight.hasImages,
         imageOverride,
       });
+      options?.onSubmissionAccepted?.();
       return;
     }
 
@@ -199,6 +235,7 @@ export class InputTurnPipeline {
       browserContextOverride: options?.browserContextOverride,
       canvasContextOverride: options?.canvasContextOverride,
     });
+    options?.onSubmissionAccepted?.();
 
     try {
       await this.host.triggerTitleGeneration();

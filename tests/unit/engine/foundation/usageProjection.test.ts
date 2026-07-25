@@ -244,4 +244,19 @@ describe('usage projection', () => {
     expect(isContextOverLimit({ ...baseUsage, contextTokens: 1000 })).toBe(true);
     expect(isContextOverLimit({ ...baseUsage, contextTokens: 147_000, contextWindow: 128_000 })).toBe(true);
   });
+
+  it('uses conservative context pressure when it exceeds stale provider usage', () => {
+    const contextEnvelope = calculateContextEnvelope({
+      contextWindow: 1_000,
+      providerContextTokens: 500,
+      recentConversation: 700,
+      system: 400,
+    });
+
+    expect(isContextOverLimit({
+      ...baseUsage,
+      contextEnvelope,
+      contextTokens: 500,
+    })).toBe(true);
+  });
 });
