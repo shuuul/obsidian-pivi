@@ -75,7 +75,7 @@
   "dependencies": {
     "@cfworker/json-schema": "^4.1.1",
     "@codemirror/state": "^6.7.1",
-    "@codemirror/view": "^6.43.6",
+    "@codemirror/view": "^6.43.7",
     "@earendil-works/pi-agent-core": "0.82.0",
     "@earendil-works/pi-ai": "0.82.0",
     "@earendil-works/pi-coding-agent": "0.82.0",
