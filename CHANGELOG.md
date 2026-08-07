@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.17.3](https://github.com/shuuul/obsidian-pivi/compare/0.17.2...0.17.3) (2026-08-07)
+
+
+### Bug Fixes
+
+* **network:** separate connect and first-byte deadlines ([70431f9](https://github.com/shuuul/obsidian-pivi/commit/70431f9fe8503b97dcdff7853ac1aaab8526b8d0))
+
+
+### Performance Improvements
+
+* **build:** compress embedded skills cli ([879750a](https://github.com/shuuul/obsidian-pivi/commit/879750ad9f778fb77d106666ade053b2c5d564e8))
+
 ## [0.17.2](https://github.com/shuuul/obsidian-pivi/compare/0.17.1...0.17.2) (2026-08-03)
 
 
