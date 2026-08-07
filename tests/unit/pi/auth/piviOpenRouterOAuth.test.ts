@@ -50,6 +50,7 @@ describe('piviOpenRouterOAuth', () => {
     const prompt = jest.fn().mockResolvedValue('https://remote.test/callback?code=manual-code');
 
     await expect(oauth.login({
+      signal: new AbortController().signal,
       notify: jest.fn(),
       prompt,
     })).resolves.toMatchObject({

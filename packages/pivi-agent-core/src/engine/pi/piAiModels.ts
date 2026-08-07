@@ -36,7 +36,6 @@ import { PluginLogger } from '../../foundation/pluginLogger';
 import type { FetchCompatible } from '../../ports';
 import { createGrokBuildProvider } from './grokBuildProvider';
 import {
-  buildCustomPiProvider,
   type CustomProviderHttpGet,
   installCustomProviders,
 } from './installPiCustomProviders';
@@ -172,26 +171,14 @@ export async function refreshCustomPiProviderModels(providerId: string): Promise
   if (!provider?.refreshModels) {
     return false;
   }
-  const store = {
-    read: async () => undefined,
-    write: async () => {},
-    delete: async () => {},
-  };
-  await provider.refreshModels({
-    store,
+  const result = await piAiModels.refresh({
+    providers: [providerId],
     allowNetwork: true,
     force: true,
   });
-  const config = customProviderRuntime.installedConfigs.get(providerId);
-  if (config && customProviderRuntime.httpGet) {
-    piAiModels.setProvider(
-      buildCustomPiProvider(config, {
-        httpGet: customProviderRuntime.httpGet,
-        getApiKey: customProviderRuntime.getApiKey
-          ? () => customProviderRuntime.getApiKey?.(providerId)
-          : undefined,
-      }),
-    );
+  const error = result.errors.get(providerId);
+  if (error) {
+    throw error;
   }
   cachePiAiRegistryModels(piAiModels);
   return true;

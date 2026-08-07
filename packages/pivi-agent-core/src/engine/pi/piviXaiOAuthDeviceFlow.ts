@@ -1,7 +1,7 @@
 /**
  * xAI OAuth device-code flow with CLIProxyAPI verification URL selection.
  */
-import type { AuthInteraction, OAuthAuth, OAuthCredential } from '@earendil-works/pi-ai';
+import type { OAuthAuth, OAuthCredential, ProviderAuthInteraction } from '@earendil-works/pi-ai';
 import { pollOAuthDeviceCodeFlow } from '@earendil-works/pi-ai/dist/auth/oauth/device-code.js';
 import { xaiOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/xai.js';
 
@@ -144,7 +144,7 @@ function credentialsFromTokenResponse(body: Record<string, unknown>, previousRef
   };
 }
 
-async function requestDeviceCode(request: ProviderOAuthFetch, signal?: AbortSignal) {
+async function requestDeviceCode(request: ProviderOAuthFetch, signal: AbortSignal) {
   const response = await postForm(request, XAI_DEVICE_CODE_URL, {
     client_id: XAI_CLIENT_ID,
     scope: XAI_SCOPE,
@@ -159,7 +159,7 @@ async function requestDeviceCode(request: ProviderOAuthFetch, signal?: AbortSign
 async function pollForTokens(
   request: ProviderOAuthFetch,
   device: ReturnType<typeof parseDeviceCode>,
-  signal?: AbortSignal,
+  signal: AbortSignal,
 ): Promise<OAuthCredential> {
   return pollOAuthDeviceCodeFlow<OAuthCredential>({
     intervalSeconds: device.intervalSeconds,
@@ -199,7 +199,7 @@ async function pollForTokens(
 
 async function loginXai(
   request: ProviderOAuthFetch,
-  interaction: AuthInteraction,
+  interaction: ProviderAuthInteraction,
 ): Promise<OAuthCredential> {
   const device = await requestDeviceCode(request, interaction.signal);
   interaction.notify({

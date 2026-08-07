@@ -6,7 +6,7 @@
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
-import type { AuthInteraction, OAuthAuth, OAuthCredential } from '@earendil-works/pi-ai';
+import type { OAuthAuth, OAuthCredential, ProviderAuthInteraction } from '@earendil-works/pi-ai';
 
 import type { ProviderOAuthFetch } from './piviXaiOAuthDeviceFlow';
 
@@ -311,7 +311,7 @@ async function startCallbackServer(
 
 async function loginOpenRouter(
   request: ProviderOAuthFetch,
-  interaction: AuthInteraction,
+  interaction: ProviderAuthInteraction,
 ): Promise<OAuthCredential> {
   const { verifier, challenge } = await generatePkce();
   const callbackPath = `/oauth/callback/${crypto.randomUUID()}`;
