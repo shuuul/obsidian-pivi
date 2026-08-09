@@ -10,6 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
+| [042-mobile-v1.md](042-mobile-v1.md) | 2026-08-09 | Mobile-safe platform composition, Vault-relative sessions, per-device SecretStorage credentials, proven provider streaming, exact capability gating, and real iOS/Android release acceptance. |
 
 ## Archived specs
 
