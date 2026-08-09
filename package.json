@@ -1,6 +1,6 @@
 {
   "name": "pivi",
-  "version": "0.17.2",
+  "version": "0.18.0",
   "description": "Pivi - Pi agent embedded in Obsidian sidebar",
   "main": "main.js",
   "scripts": {
@@ -53,8 +53,8 @@
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "@typescript-eslint/eslint-plugin": "^8.65.0",
-    "@typescript-eslint/parser": "^8.65.0",
+    "@typescript-eslint/eslint-plugin": "^8.66.0",
+    "@typescript-eslint/parser": "^8.66.0",
     "esbuild": "^0.28.1",
     "eslint": "^10.8.0",
     "eslint-plugin-jest": "^29.15.5",
@@ -68,23 +68,23 @@
     "obsidian": "^1.13.1",
     "semver": "^7.8.5",
     "ts-jest": "^29.4.12",
-    "tsx": "^4.23.1",
+    "tsx": "^4.23.11",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-native": "npm:typescript@^7.0.2"
   },
   "dependencies": {
     "@cfworker/json-schema": "^4.1.1",
     "@codemirror/state": "^6.7.1",
-    "@codemirror/view": "^6.43.7",
-    "@earendil-works/pi-agent-core": "0.83.0",
-    "@earendil-works/pi-ai": "0.83.0",
-    "@earendil-works/pi-coding-agent": "0.83.0",
+    "@codemirror/view": "^6.43.8",
+    "@earendil-works/pi-agent-core": "0.84.1",
+    "@earendil-works/pi-ai": "0.84.1",
+    "@earendil-works/pi-coding-agent": "0.84.1",
     "@lobehub/icons-static-svg": "^1.94.0",
     "@modelcontextprotocol/sdk": "~1.30.0",
     "@tanstack/react-virtual": "^3.14.9",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "skills": "1.5.21",
+    "skills": "1.5.22",
     "tslib": "^2.8.1"
   },
   "overrides": {
@@ -92,7 +92,7 @@
       "@earendil-works/pi-agent-core": "$@earendil-works/pi-agent-core",
       "@earendil-works/pi-ai": "$@earendil-works/pi-ai"
     },
-    "fast-uri": "3.1.4",
+    "fast-uri": "3.1.5",
     "@hono/node-server": "2.0.11"
   },
   "workspaces": [

@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.18.0](https://github.com/shuuul/obsidian-pivi/compare/0.17.2...0.18.0) (2026-08-09)
+
+
+### Features
+
+* **engine:** upgrade Pi and dependencies ([b2b4a7f](https://github.com/shuuul/obsidian-pivi/commit/b2b4a7fde4e23655b6c700bc383feb3eec6ed0d7))
+
+
+### Bug Fixes
+
+* **network:** separate connect and first-byte deadlines ([70431f9](https://github.com/shuuul/obsidian-pivi/commit/70431f9fe8503b97dcdff7853ac1aaab8526b8d0))
+
+
+### Performance Improvements
+
+* **build:** compress embedded skills cli ([879750a](https://github.com/shuuul/obsidian-pivi/commit/879750ad9f778fb77d106666ade053b2c5d564e8))
+
+
+### Other Changes
+
+* **maintenance:** remove stale internal APIs ([69c0450](https://github.com/shuuul/obsidian-pivi/commit/69c04500330640ac6a861a8f0bf6d4d68582eeaf))
+
+
+**Full Changelog**: https://github.com/shuuul/obsidian-pivi/compare/0.17.2...0.18.0
+
 ## [0.17.2](https://github.com/shuuul/obsidian-pivi/compare/0.17.1...0.17.2) (2026-08-03)
 
 

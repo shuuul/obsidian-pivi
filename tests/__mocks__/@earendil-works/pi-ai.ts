@@ -210,6 +210,31 @@ export function createModels(options?: any): any {
       return [...providers.keys()].flatMap((id) => getModels(id));
     },
     getModel: (provider: string, modelId: string) => getModel(provider, modelId),
+    refresh: async (refreshOptions: any = {}) => {
+      const errors = new Map<string, Error>();
+      const signal = refreshOptions.signal ?? new AbortController().signal;
+      const providerIds = refreshOptions.providers ?? [...providers.keys()];
+      for (const providerId of providerIds) {
+        const provider = providers.get(providerId);
+        if (!provider?.refreshModels) {
+          continue;
+        }
+        try {
+          await provider.refreshModels({
+            allowNetwork: refreshOptions.allowNetwork ?? true,
+            force: refreshOptions.force,
+            signal,
+            publish: async ({ update }: any) => {
+              update?.();
+              return true;
+            },
+          });
+        } catch (error) {
+          errors.set(providerId, error instanceof Error ? error : new Error(String(error)));
+        }
+      }
+      return { aborted: signal.aborted, errors };
+    },
     getAuth: async (model: any) => {
       const stored = credentialToMockAuth(await options?.credentials?.read?.(model.provider));
       if (stored) {
