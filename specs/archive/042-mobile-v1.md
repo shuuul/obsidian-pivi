@@ -1,7 +1,7 @@
 ---
 id: "042"
 title: "Obsidian Mobile V1"
-status: Active
+status: Completed
 created: 2026-08-09
 updated: 2026-08-09
 coordinator: "Amp"
@@ -237,4 +237,8 @@ Append entries rather than rewriting another agent's record.
 
 ## Completion summary
 
-Complete this section before archiving. Record the shipped Mobile capability set, any target capabilities removed from V1, transport/security decisions, desktop compatibility, device matrix, secret and session evidence, release/rollback result, and durable documentation updated. Then set `status: Completed`, update the date, move this unchanged filename to `archive/`, and move its index entry in the same change.
+**Outcome: abandoned; not shipped.** The Mobile prototype proved that Obsidian Mobile can load Pivi, use Vault-relative `.pivi` session storage, keep API credentials in per-device `SecretStorage`, stream supported remote providers, and expose a constrained public-API Vault tool set. The experiment also showed that the resulting Mobile interaction quality and maintenance cost did not justify continuing toward release: the compact surface remained materially worse than the Desktop product, especially around touch composition, `@` context, slash commands, navigation, and debugging.
+
+The prototype is preserved on the remote `mobile` branch for research only. It must not be merged, released, or treated as a supported product path without a new product decision and a new spec. `main` remains Desktop-only, retains `manifest.json:isDesktopOnly: true`, and does not include the Mobile implementation. API keys continue to use device-local Obsidian `SecretStorage`; no encrypted or plaintext credential synchronization through `.pivi` was adopted.
+
+Repository automation established storage/session compatibility, secret-boundary hardening, Mobile startup isolation, and Desktop regression coverage for the prototype. Those results document feasibility, not release acceptance: the required iOS/Android UX, lifecycle, and transport matrix was never completed, and no Mobile release, tag, or merge was produced.
