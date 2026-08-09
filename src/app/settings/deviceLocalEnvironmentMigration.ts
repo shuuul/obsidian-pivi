@@ -3,11 +3,8 @@
  * device-local structured registry + SecretStorage / canonical credential stores.
  */
 
-import { isSecretStorageAvailable } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import {
-  migratePiProviderCredentialsToKeychain,
-} from '@pivi/pivi-agent-core/engine/pi';
-import type { DeviceLocalEnvironmentStore } from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
+import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
+import type { DeviceLocalEnvironmentStore } from '@pivi/agent/foundation/deviceLocalEnvironmentState';
 import {
   buildEntriesFromLegacyText,
   clearObsoleteEnvironmentSecrets,
@@ -19,15 +16,18 @@ import {
   projectEnvironmentOntoSettings,
   stageEnvironmentSecrets,
   stripEnvironmentFieldsFromPersistedSettings,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation/settings';
+} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { PiviSettings } from '@pivi/agent/foundation/settings';
 import {
   getAgentEnvironmentVariables,
   getSharedEnvironmentVariables,
-} from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
-import { createWebSearchCredentialStore } from '@pivi/pivi-agent-core/tools/webSearch/credentialStore';
+} from '@pivi/agent/foundation/settingsAgentEnvironment';
+import type { SyncSecretStore } from '@pivi/agent/ports';
+import { createWebSearchCredentialStore } from '@pivi/agent/tools/webSearch/credentialStore';
+import {
+  migratePiProviderCredentialsToKeychain,
+} from '@pivi/engine-pi';
 import type { App } from 'obsidian';
 
 import { normalizeStoredPiviSettings } from '@/app/settings/piviSettingsCodec';

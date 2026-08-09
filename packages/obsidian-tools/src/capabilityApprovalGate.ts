@@ -1,17 +1,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { ExternalFileApi } from '@pivi/obsidian-host/externalFileApi';
-import { normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 import type {
   CapabilityApprovalRequest,
   CapabilityApprovalResult,
-} from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/ports';
 import {
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_READ_EXTERNAL,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
+import { ExternalFileApi } from '@pivi/obsidian-host/externalFileApi';
+import { normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 
 import type { ExternalFileApiLike, ObsidianToolDeps } from './obsidian/deps';
 

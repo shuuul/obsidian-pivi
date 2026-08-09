@@ -1,6 +1,6 @@
-import { buildRegisteredToolsSection } from '@pivi/pivi-agent-core/prompt';
-import { buildSystemPrompt } from '@pivi/pivi-agent-core/prompt';
-import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
+import { buildRegisteredToolsSection } from '@pivi/agent/prompt';
+import { buildSystemPrompt } from '@pivi/agent/prompt';
+import type { ToolSpec } from '@pivi/agent/tools';
 
 function spec(name: string, marker: string, required = true): ToolSpec {
   return {

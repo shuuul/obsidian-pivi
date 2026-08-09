@@ -1,6 +1,6 @@
-import type { StructuredPatchHunk } from '@pivi/pivi-agent-core/foundation/diff';
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation/tools';
-import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import type { StructuredPatchHunk } from '@pivi/agent/foundation/diff';
+import type { ToolCallInfo } from '@pivi/agent/foundation/tools';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/agent/tools/obsidianToolNames';
 import {
   buildSubstringPatchHunks,
   countLineChanges,
@@ -8,7 +8,7 @@ import {
   extractDiffData,
   parseApplyPatchDiffs,
   structuredPatchToDiffLines,
-} from '@pivi/pivi-agent-core/tools/diff';
+} from '@pivi/agent/tools/diff';
 
 describe('diff utils', () => {
   describe('structuredPatchToDiffLines', () => {

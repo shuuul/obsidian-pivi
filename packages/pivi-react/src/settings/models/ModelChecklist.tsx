@@ -1,4 +1,4 @@
-import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
+import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
 
 import { useT } from '../../i18n';
 import type { SettingsCatalogPort } from '../../ports';

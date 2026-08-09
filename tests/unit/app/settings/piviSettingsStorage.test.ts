@@ -2,8 +2,8 @@ import {
   PIVI_SETTINGS_PATH,
   PiviSettingsStorage,
 } from '@pivi/obsidian-host/settings/piviSettingsStorage';
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
-import type { DeviceLocalProviderStateV1 } from "@pivi/pivi-agent-core/foundation/deviceLocalProviderState";
+import type { FileStore } from "@pivi/agent/ports";
+import type { DeviceLocalProviderStateV1 } from "@pivi/agent/foundation/deviceLocalProviderState";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 
 function createDeviceLocalProviderStore(initialState?: DeviceLocalProviderStateV1 | null) {

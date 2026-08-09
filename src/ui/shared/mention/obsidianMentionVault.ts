@@ -1,4 +1,4 @@
-import { normalizeMentionPath } from '@pivi/pivi-agent-core/context/mentions';
+import { normalizeMentionPath } from '@pivi/agent/context/mentions';
 import type { App } from 'obsidian';
 import { parseFrontMatterAliases, TFile, TFolder } from 'obsidian';
 

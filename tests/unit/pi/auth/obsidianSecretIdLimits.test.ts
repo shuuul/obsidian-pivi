@@ -1,24 +1,24 @@
-import { getCustomProviderHeaderSecretId } from '@pivi/pivi-agent-core/auth/customProviderHeaderSecrets';
+import { getCustomProviderHeaderSecretId } from '@pivi/agent/auth/customProviderHeaderSecrets';
 import {
   getPiAiCredentialSecretId,
   INTERACTIVE_OAUTH_PROVIDER_IDS,
   SUBSCRIPTION_OAUTH_PROVIDER_IDS,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+} from '@pivi/agent/auth/piProviderCredentials';
 import {
   getProviderCredentialSecretId,
   isObsidianSecretId,
   MAX_OBSIDIAN_SECRET_ID_LENGTH,
-} from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import { SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
+} from '@pivi/agent/auth/providerSecretStorage';
+import { SUPPORTED_PI_PROVIDER_IDS } from '@pivi/agent/auth/piProviderValidation';
 import {
   createCustomProviderId,
   FIXED_LOCAL_PROVIDER_IDS,
   LOCAL_CUSTOM_PROVIDER_KINDS,
   MULTI_INSTANCE_CUSTOM_PROVIDER_KINDS,
-} from '@pivi/pivi-agent-core/foundation/customProviders';
-import { WEB_PROVIDER_IDS } from '@pivi/pivi-agent-core/foundation/settings';
-import { getMcpAuthEntrySecretId } from '@pivi/pivi-agent-core/mcp/oauth/mcpSecretAuthStore';
-import { getWebSearchCredentialSecretId } from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/foundation/customProviders';
+import { WEB_PROVIDER_IDS } from '@pivi/agent/foundation/settings';
+import { getMcpAuthEntrySecretId } from '@pivi/agent/mcp/oauth/mcpSecretAuthStore';
+import { getWebSearchCredentialSecretId } from '@pivi/agent/tools';
 
 const LONG_CUSTOM_PROVIDER_ID = 'custom-openai-compatible-369e807a-7e24-4204-a86d-3abbaaa3d1e2';
 const LONG_MCP_SERVER_NAME = 'my-very-long-mcp-server-name-example';

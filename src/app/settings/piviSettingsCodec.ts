@@ -1,28 +1,20 @@
-import {
-  normalizePathForComparison,
-  normalizePathForFilesystem,
-} from "@pivi/obsidian-host/path";
-import type {
-  PiviSettingsCodec,
-  PiviSettingsNormalizationResult,
-} from "@pivi/obsidian-host/settings/piviSettingsStorage";
-import { reconcileActiveModelFields } from "@pivi/pivi-agent-core/foundation/activeModel";
+import { reconcileActiveModelFields } from "@pivi/agent/foundation/activeModel";
 import {
   normalizePiAgentSettingsRecord,
   updatePiAgentSettings,
-} from "@pivi/pivi-agent-core/foundation/agentSettings";
-import type { DeviceLocalEnvironmentStateV1 } from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
+} from "@pivi/agent/foundation/agentSettings";
+import type { DeviceLocalEnvironmentStateV1 } from "@pivi/agent/foundation/deviceLocalEnvironmentState";
 import {
   createSecretStoreResolveHost,
   projectEnvironmentOntoSettings,
   stripEnvironmentFieldsFromPersistedSettings,
-} from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
-import type { DeviceLocalProviderStateV1 } from "@pivi/pivi-agent-core/foundation/deviceLocalProviderState";
+} from "@pivi/agent/foundation/deviceLocalEnvironmentState";
+import type { DeviceLocalProviderStateV1 } from "@pivi/agent/foundation/deviceLocalProviderState";
 import {
   extractDeviceLocalProviderState,
   overlayDeviceLocalProviderState,
   stripLocalizedFieldsFromRuntimeSettings,
-} from "@pivi/pivi-agent-core/foundation/deviceLocalProviderState";
+} from "@pivi/agent/foundation/deviceLocalProviderState";
 import {
   type AgentRuntimeSettings,
   CHAT_VIEW_PLACEMENTS,
@@ -35,11 +27,19 @@ import {
   resolveObsidianToolsSettings,
   resolveSubagentRuntimeSettings,
   resolveWebSearchToolsSettings,
-} from "@pivi/pivi-agent-core/foundation/settings";
+} from "@pivi/agent/foundation/settings";
 import {
   getSharedEnvironmentVariables,
-} from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
-import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
+} from "@pivi/agent/foundation/settingsAgentEnvironment";
+import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/agent/foundation/settingsDefaults";
+import {
+  normalizePathForComparison,
+  normalizePathForFilesystem,
+} from "@pivi/obsidian-host/path";
+import type {
+  PiviSettingsCodec,
+  PiviSettingsNormalizationResult,
+} from "@pivi/obsidian-host/settings/piviSettingsStorage";
 import * as path from "path";
 
 function isChatViewPlacement(value: unknown): value is ChatViewPlacement {

@@ -1,4 +1,4 @@
-import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
+import type { SubagentLifecycleAdapter } from '@pivi/agent/tools';
 
 export function resolveSubagentLifecycleAdapter(
   toolName?: string,

@@ -2,7 +2,7 @@ import {
   type ChatTurnRequest,
   cloneChatTurnRequest,
   type QueuedChatTurn,
-} from '@pivi/pivi-agent-core/runtime';
+} from '@pivi/agent/runtime';
 
 import type { QueuedMessage } from '../state/types';
 

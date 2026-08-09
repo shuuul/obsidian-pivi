@@ -1,4 +1,4 @@
-import { createPiReadBudget } from '../../../../packages/pivi-agent-core/src/engine/pi/piReadBudget';
+import { createPiReadBudget } from '../../../../packages/engine-pi/src/piReadBudget';
 
 describe('createPiReadBudget', () => {
   it('shares one synchronous allowance across sibling reads', () => {

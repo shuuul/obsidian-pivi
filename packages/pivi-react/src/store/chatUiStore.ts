@@ -1,5 +1,5 @@
-import type { ChatIconSvg, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import type { TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
+import type { ChatIconSvg, UsageInfo } from '@pivi/agent/foundation';
+import type { TodoVisualizationModel } from '@pivi/agent/tools';
 import { useSyncExternalStore } from 'react';
 
 export type DeepReadonly<T> = T extends (...args: never[]) => unknown

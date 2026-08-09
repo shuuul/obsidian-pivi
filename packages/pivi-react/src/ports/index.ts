@@ -1,21 +1,21 @@
-import type { ProviderOAuthProgress } from '@pivi/pivi-agent-core/auth/providerOAuthProgress';
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
-import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
-import type { AppModelReadinessStatusKind } from '@pivi/pivi-agent-core/foundation/modelReadiness';
+import type { ProviderOAuthProgress } from '@pivi/agent/auth/providerOAuthProgress';
+import type { PiviSettings } from '@pivi/agent/foundation';
+import type { ChatUIOption } from '@pivi/agent/foundation/chatUi';
+import type { AppModelReadinessStatusKind } from '@pivi/agent/foundation/modelReadiness';
 import type {
   EditorSelectionToolbarSettings,
   EnvironmentScope,
   WebProviderId,
   WebSearchToolsSettings,
-} from '@pivi/pivi-agent-core/foundation/settings';
-import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
+} from '@pivi/agent/foundation/settings';
+import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
 import type {
   ManagedMcpServer,
   McpAuthStatus,
   McpTestResult,
   McpTool,
-} from '@pivi/pivi-agent-core/mcp/types';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+} from '@pivi/agent/mcp/types';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
 import type {
   SettingsGeneralSnapshot,
@@ -24,7 +24,7 @@ import type {
   SettingsUiSnapshotData,
 } from '../settings/types';
 
-export type { ProviderOAuthProgress } from '@pivi/pivi-agent-core/auth/providerOAuthProgress';
+export type { ProviderOAuthProgress } from '@pivi/agent/auth/providerOAuthProgress';
 
 /** Stored credential kind for a provider, or null when none is present. */
 export type ModelsCredentialKind = 'api_key' | 'oauth';

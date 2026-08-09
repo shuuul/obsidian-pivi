@@ -32,7 +32,7 @@ jest.mock("@pivi/obsidian-host", () => {
   };
 });
 
-jest.mock("@pivi/pivi-agent-core/engine/pi/session/piSessionStore", () => ({
+jest.mock("@pivi/engine-pi/session/piSessionStore", () => ({
   PiSessionStore: jest.fn().mockImplementation(() => ({
     migrateDeviceLocalExternalContexts: jest.fn().mockResolvedValue(0),
     listSessions: mockListSessions,
@@ -43,10 +43,10 @@ jest.mock("@pivi/pivi-agent-core/engine/pi/session/piSessionStore", () => ({
   })),
 }));
 
-jest.mock("@pivi/pivi-agent-core/auth/providerSecretStorage", () => {
+jest.mock("@pivi/agent/auth/providerSecretStorage", () => {
   const actual = jest.requireActual<
-    typeof import("@pivi/pivi-agent-core/auth/providerSecretStorage")
-  >("@pivi/pivi-agent-core/auth/providerSecretStorage");
+    typeof import("@pivi/agent/auth/providerSecretStorage")
+  >("@pivi/agent/auth/providerSecretStorage");
   return {
     ...actual,
     isSecretStorageAvailable: jest.fn().mockReturnValue(false),
@@ -73,9 +73,9 @@ jest.mock("@/app/serviceGraph", () => {
   };
 });
 
-import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
-import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
+import type { OpenSessionState } from "@pivi/agent/foundation";
+import { VIEW_TYPE_PIVI } from "@pivi/agent/foundation";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/foundation/settingsDefaults";
 import { persistOpenTabStates } from "@/app/pluginLifecycle";
 import PiviPlugin from "@/main";
 import { createMockApp } from "../../helpers/mockApp";

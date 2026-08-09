@@ -1,7 +1,7 @@
-import { parseSlashCommandContent } from '@pivi/pivi-agent-core/skills/slashCommand';
-import { RESERVED_COMMAND_IDS } from '@pivi/pivi-agent-core/skills/commands/slashCommandIds';
+import { parseSlashCommandContent } from '@pivi/agent/skills/slashCommand';
+import { RESERVED_COMMAND_IDS } from '@pivi/agent/skills/commands/slashCommandIds';
 import { PiSlashCommandCatalog } from '@/app/workspace/PiSlashCommandCatalog';
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
+import type { FileStore } from "@pivi/agent/ports";
 import type PiviPlugin from "@/main";
 import { TAbstractFile } from "obsidian";
 

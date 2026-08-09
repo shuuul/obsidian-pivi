@@ -1,4 +1,4 @@
-import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
+import type { ImageAttachment } from '@pivi/agent/foundation';
 import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
 import { ChatState } from '@/ui/chat/state/ChatState';
 

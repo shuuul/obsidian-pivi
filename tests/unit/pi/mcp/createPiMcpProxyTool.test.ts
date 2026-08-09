@@ -1,5 +1,5 @@
-import { createMcpProxyToolSpec } from '@pivi/pivi-agent-core/mcp/createMcpProxyToolSpec';
-import type { PiMcpBridge } from '@pivi/pivi-agent-core/mcp/piMcpBridge';
+import { createMcpProxyToolSpec } from '@pivi/agent/mcp/createMcpProxyToolSpec';
+import type { PiMcpBridge } from '@pivi/agent/mcp/piMcpBridge';
 
 function makeBridge(): PiMcpBridge {
   return {

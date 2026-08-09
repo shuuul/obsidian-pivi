@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const signalExitShim = path.join(
   rootDir,
-  'packages/pivi-agent-core/src/engine/pi/shims/signalExit.cjs',
+  'packages/engine-pi/src/shims/signalExit.cjs',
 );
 
 /** proper-lockfile calls require('signal-exit') as a function; avoid ESM interop object wrapper. */

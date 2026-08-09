@@ -1,8 +1,7 @@
-import type { PiMainOnlyToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
-import type { McpManagementCoordinator } from "@pivi/pivi-agent-core/mcp/mcpManagementCoordinator";
+import type { McpManagementCoordinator } from "@pivi/agent/mcp/mcpManagementCoordinator";
 import type {
   SkillsManagementCoordinator,
-} from "@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator";
+} from "@pivi/agent/skills/vault/skillsManagementCoordinator";
 import {
   createPiviCommandsTool,
   createPiviMcpTool,
@@ -17,7 +16,8 @@ import {
   type PiviManagementPort,
   type PiviMcpInput,
   type PiviSkillsInput,
-} from "@pivi/pivi-agent-core/tools/piviManagement";
+} from "@pivi/agent/tools/piviManagement";
+import type { PiMainOnlyToolProvider } from "@pivi/engine-pi/buildPiToolRegistryCore";
 
 import { t } from "../i18n";
 import {

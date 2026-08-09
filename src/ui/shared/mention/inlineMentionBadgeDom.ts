@@ -1,5 +1,5 @@
-import type { MentionBadgeParseContext, MentionBadgePart } from '@pivi/pivi-agent-core/context/mentions';
-import { messageTextHasMentionBadges, parseMessageMentions } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionBadgeParseContext, MentionBadgePart } from '@pivi/agent/context/mentions';
+import { messageTextHasMentionBadges, parseMessageMentions } from '@pivi/agent/context/mentions';
 import type { App } from 'obsidian';
 
 import { removeContextBadgeFromComposer } from '../context-badge/ContextBadgeDom';

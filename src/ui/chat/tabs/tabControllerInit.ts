@@ -1,6 +1,6 @@
-import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { SubagentInfo } from '@pivi/agent/foundation';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import type { Component } from 'obsidian';
 import { MarkdownView, Notice } from 'obsidian';
 

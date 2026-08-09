@@ -1,5 +1,5 @@
-import { PiMcpConnectionPool } from '@pivi/pivi-agent-core/mcp/piMcpConnectionPool';
-import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
+import { PiMcpConnectionPool } from '@pivi/agent/mcp/piMcpConnectionPool';
+import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
 
 const mockClients: Array<{
   connect: jest.Mock;

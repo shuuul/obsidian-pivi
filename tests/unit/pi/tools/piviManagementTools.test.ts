@@ -1,4 +1,4 @@
-import { buildRegisteredToolsSection } from '@pivi/pivi-agent-core/prompt';
+import { buildRegisteredToolsSection } from '@pivi/agent/prompt';
 import {
   createPiviCommandsTool,
   createPiviMcpTool,
@@ -13,11 +13,11 @@ import {
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
   TOOL_PIVI_SKILLS,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 import {
   getToolPresentationDescriptor,
   MCP_ICON_MARKER,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/toolPresentation';
 import { Validator } from '@cfworker/json-schema';
 
 function getText(result: unknown): string {

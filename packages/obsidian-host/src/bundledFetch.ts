@@ -4,7 +4,7 @@
  * resolve here without assigning `window.fetch`.
  */
 
-import type { FetchCompatible } from '@pivi/pivi-agent-core/ports';
+import type { FetchCompatible } from '@pivi/agent/ports';
 
 let installed: FetchCompatible | null = null;
 

@@ -1,6 +1,6 @@
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import { recalculateUsageForModel } from "@pivi/pivi-agent-core/foundation/usage";
-import type { ChatPorts } from "@pivi/pivi-agent-core/runtime/chatPorts";
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { recalculateUsageForModel } from "@pivi/agent/foundation/usage";
+import type { ChatPorts } from "@pivi/agent/runtime/chatPorts";
 import { Notice } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";

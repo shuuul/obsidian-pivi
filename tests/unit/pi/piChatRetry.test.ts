@@ -1,12 +1,12 @@
 import type { Agent } from '@earendil-works/pi-agent-core';
 import type { AssistantMessage } from '@earendil-works/pi-ai';
-import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import type { StreamChunk } from '@pivi/agent/foundation';
 
 import {
   isPiChatRetryableAssistantError,
   PI_CHAT_MAX_RETRIES,
   runPiChatPromptWithRetry,
-} from '../../../packages/pivi-agent-core/src/engine/pi/piChatRetry';
+} from '../../../packages/engine-pi/src/piChatRetry';
 
 function assistant(
   stopReason: AssistantMessage['stopReason'],

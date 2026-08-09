@@ -1,8 +1,8 @@
-import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { InlineContextReference } from '@pivi/agent/context/inlineContext';
 import {
   formatInlineContextPreview,
   formatInlineContextRange,
-} from '@pivi/pivi-agent-core/context/mentions';
+} from '@pivi/agent/context/mentions';
 
 import type { TFunction } from '../i18n/types';
 

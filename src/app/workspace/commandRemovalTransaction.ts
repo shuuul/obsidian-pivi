@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
-import { writeFileAtomically } from '@pivi/pivi-agent-core/foundation/configPublication';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { FileStore } from '@pivi/pivi-agent-core/ports';
+import { writeFileAtomically } from '@pivi/agent/foundation/configPublication';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { FileStore } from '@pivi/agent/ports';
 
 const COMMANDS_DIR = '.pivi/commands';
 const LEGACY_TEMPLATES_DIR = '.pivi/templates';

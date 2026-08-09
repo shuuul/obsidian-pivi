@@ -1,11 +1,11 @@
-import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
+import { getProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
 import {
   isBuiltinPiProviderId,
   isKnownPiProviderId,
   isSupportedPiModelKey,
   isSupportedPiProviderId,
   SUPPORTED_PI_PROVIDER_IDS,
-} from '@pivi/pivi-agent-core/auth/piProviderValidation';
+} from '@pivi/agent/auth/piProviderValidation';
 
 describe('pi provider validation', () => {
   it('recognizes the supported provider ids used by pi runtime defaults', () => {

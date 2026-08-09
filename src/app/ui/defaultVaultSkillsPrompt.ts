@@ -1,8 +1,8 @@
 import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
   DEFAULT_VAULT_SKILLS_SLUG,
-} from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
-import type { DefaultVaultSkillsPromptActions } from '@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills';
+} from '@pivi/agent/skills/vault/defaultVaultSkills';
+import type { DefaultVaultSkillsPromptActions } from '@pivi/agent/skills/vault/ensureDefaultVaultSkills';
 import { Notice } from 'obsidian';
 
 import { appI18n } from '@/app/i18n';

@@ -5,11 +5,11 @@ import * as path from 'path';
 import {
   SkillsManagementCoordinator,
   type SkillsManagementMetadataPort,
-} from '@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator';
+} from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 import {
   VaultSkillsService,
   type InstallSkillsOptions,
-} from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
+} from '@pivi/agent/skills/vault/vaultSkillsService';
 
 function mockService(skills: Array<{
   name: string;

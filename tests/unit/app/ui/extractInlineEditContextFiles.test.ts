@@ -1,4 +1,4 @@
-import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
 
 import { extractInlineEditContextFiles } from '@/app/ui/inlineEditSurface/extractInlineEditContextFiles';
 

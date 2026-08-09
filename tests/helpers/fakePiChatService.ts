@@ -1,10 +1,10 @@
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 import type {
   ChatTurnMetadata,
   ChatTurnRequest,
   PreparedChatTurn,
-} from '@pivi/pivi-agent-core/runtime/types';
-import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
+} from '@pivi/agent/runtime/types';
+import type { StreamChunk } from '@pivi/agent/foundation';
 
 export interface FakePiChatServiceSpies {
   syncSession: jest.Mock<void, [{ sessionFile: string | null; leafId?: string | null } | null, string[]?]>;

@@ -1,7 +1,7 @@
-import type { SlashCommand } from '@pivi/pivi-agent-core/foundation';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
+import type { SlashCommand } from '@pivi/agent/foundation';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
+import type { SlashCommandDropdownConfig } from "@pivi/agent/skills/commands/slashCommandCatalog";
+import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 
 import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
 

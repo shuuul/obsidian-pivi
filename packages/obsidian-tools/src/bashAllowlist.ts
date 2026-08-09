@@ -1,4 +1,4 @@
-import { matchEncodedBashAllowlist } from '@pivi/pivi-agent-core/tools';
+import { matchEncodedBashAllowlist } from '@pivi/agent/tools';
 
 export const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'pwd'] as const;
 

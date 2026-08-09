@@ -41,7 +41,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 ## Patterns and constraints
 
 - Keep this directory presentation-only. Do not execute tools, mutate vault files, create chat services, interpret provider events, or persist sessions here.
-- Consume host-neutral models and helpers from non-engine `@pivi/pivi-agent-core/*` subpaths. Follow the `src/ui/AGENTS.md` prohibition on engine, raw Pi SDK, host-adapter, concrete-tool, and workspace implementation imports.
+- Consume host-neutral models and helpers from non-engine `@pivi/agent/*` subpaths. Follow the `src/ui/AGENTS.md` prohibition on engine, raw Pi SDK, host-adapter, concrete-tool, and workspace implementation imports.
 - Treat `ChatMessage`, `ContentBlock`, `ToolCallInfo`, `ToolDiffData`, `SubagentInfo`, and todo display models as upstream contracts. Normalize or parse only display-specific variants; do not recreate runtime policy.
 - Render from durable message state. Stored subagent renderers are owner-realm adapters only; runtime managers and stream coordination must not create, retain, or update their DOM state.
 - A mounted stored subagent must be updated through `updateStoredSubagent`; rebuilding it for every stream chunk discards expansion state and multiplies Markdown/tool rendering. Running text is retained in state and rendered as Markdown only when the subagent reaches a terminal result.
@@ -66,8 +66,8 @@ Each adapter exclusively owns the children of one empty React-provided container
 ## Gotchas
 
 - Tool icons are a cross-package contract. `getToolIcon()` may return `MCP_ICON_MARKER`, which must go through `appendMcpIcon()` rather than Obsidian `setIcon()`. Do not duplicate icon maps locally.
-- Tool semantics are single-sourced in `@pivi/pivi-agent-core/tools/toolPresentation`: add or rename a tool there once for kind, icon, translation keys, visibility/grouping, and summary. `toolPresentationI18n.ts` only translates title/step tokens and composes ARIA text; `obsidianToolResultPresentation.ts` only decides whether structured Obsidian results use the compact imperative body. Expanded-body capability remains in the dispatcher.
-- Obsidian tool display names are keyed by canonical constants from `@pivi/pivi-agent-core/tools/obsidianToolNames`; unknown tools intentionally fall back to their raw names.
+- Tool semantics are single-sourced in `@pivi/agent/tools/toolPresentation`: add or rename a tool there once for kind, icon, translation keys, visibility/grouping, and summary. `toolPresentationI18n.ts` only translates title/step tokens and composes ARIA text; `obsidianToolResultPresentation.ts` only decides whether structured Obsidian results use the compact imperative body. Expanded-body capability remains in the dispatcher.
+- Obsidian tool display names are keyed by canonical constants from `@pivi/agent/tools/obsidianToolNames`; unknown tools intentionally fall back to their raw names.
 - `contentBlocks` order is authoritative, but historical/provider data can leave tool calls unreferenced. Preserve orphan rendering and ID deduplication.
 - Streaming tool input is reduced into durable `ChatMessage` entities and dispatched through `ChatProjectionStore` before rendering. React content blocks own order and status; imperative renderers must not retain stream-specific DOM maps or create duplicate tool rows.
 - Async Markdown can finish out of order. Subagent rendering uses generation tokens to discard stale completions; preserve that guard when rerendering prompt or result sections.

@@ -1,4 +1,4 @@
-import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
+import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
 
 const connect = jest.fn();
 const listTools = jest.fn();
@@ -19,7 +19,7 @@ jest.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
   StdioClientTransport: jest.fn().mockImplementation(() => ({})),
 }));
 
-import { testPiMcpServer } from '@pivi/pivi-agent-core/mcp/piMcpTester';
+import { testPiMcpServer } from '@pivi/agent/mcp/piMcpTester';
 
 const server: ManagedMcpServer = {
   name: 'safe-server',

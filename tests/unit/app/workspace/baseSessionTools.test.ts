@@ -1,5 +1,5 @@
 import { createObsidianTools } from '@pivi/obsidian-tools';
-import { TOOL_PIVI_SESSIONS } from '@pivi/pivi-agent-core/tools';
+import { TOOL_PIVI_SESSIONS } from '@pivi/agent/tools';
 
 import { createBaseSessionTools } from '@/app/workspace/baseSessionTools';
 

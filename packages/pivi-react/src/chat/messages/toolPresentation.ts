@@ -2,7 +2,7 @@ import {
   type ActivityStatus,
   resolveToolActivityStatus,
   type ToolCallInfo,
-} from '@pivi/pivi-agent-core/foundation';
+} from '@pivi/agent/foundation';
 import {
   getToolStepPhraseModel,
   isToolPresentationGroupable,
@@ -10,7 +10,7 @@ import {
   resolveToolPresentation,
   shouldPresentToolCall,
   type ToolPresentationTitle,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/toolPresentation';
 
 import type { TFunction } from '../../i18n/types';
 

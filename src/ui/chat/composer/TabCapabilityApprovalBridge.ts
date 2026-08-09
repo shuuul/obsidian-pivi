@@ -1,9 +1,9 @@
-import type { CapabilityApprovalPort, CapabilityApprovalRequest } from '@pivi/pivi-agent-core/ports';
+import type { CapabilityApprovalPort, CapabilityApprovalRequest } from '@pivi/agent/ports';
 import {
   type CapabilityApprovalPersistence,
   CapabilitySessionGrants,
   createCapabilityApprovalPort,
-} from '@pivi/pivi-agent-core/runtime/capabilitySessionGrants';
+} from '@pivi/agent/runtime/capabilitySessionGrants';
 
 import type { InputController } from '../controllers/InputController';
 

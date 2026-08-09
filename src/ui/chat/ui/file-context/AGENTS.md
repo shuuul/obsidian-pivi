@@ -15,6 +15,6 @@
 ## Rules
 
 - UI state belongs in `state/`; DOM chip rendering belongs in `view/`; Vault/mention coordination stays in `FileContextManager`.
-- This layer collects and normalizes context paths only. `ComposerSubmission` builds the `ChatTurnRequest`; core/runtime prompt helpers perform final serialization.
+- This layer collects and normalizes context paths only. `ComposerSubmission` builds the `ChatTurnRequest`; `@pivi/agent/runtime` prompt helpers perform final serialization.
 - Preserve the current-note chip's accessible open/remove controls and cleanup callbacks when adding interactions.
 - Do not turn explicit inline file/folder mentions into duplicate chip rows. The rich composer owns those badges; `FileChipsView` renders only the automatic current-note attachment.

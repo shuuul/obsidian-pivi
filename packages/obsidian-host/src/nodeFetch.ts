@@ -4,7 +4,7 @@
  * assigns window.fetch.
  */
 
-import type { FetchCompatible } from '@pivi/pivi-agent-core/ports';
+import type { FetchCompatible } from '@pivi/agent/ports';
 
 import { applyScopedHttpDefaultHeaders, createScopedFetch } from './scopedHttpClient';
 

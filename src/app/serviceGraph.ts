@@ -1,24 +1,24 @@
-import {
-  SharedStorageService,
-} from "@pivi/obsidian-host";
-import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
-import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/piSessionStore";
-import { configureSessionJsonlIndexRoot } from "@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex";
-import { reconcileSessionJournal } from "@pivi/pivi-agent-core/engine/pi/session/sessionRecovery";
-import {
-  bindSessionJournal,
-} from "@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore";
-import { createSecretStoreResolveHost } from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
-import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
+import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
+import { createSecretStoreResolveHost } from "@pivi/agent/foundation/deviceLocalEnvironmentState";
+import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import type { FileStore } from "@pivi/agent/ports";
 import type {
   DeviceLocalExternalContextStore,
   SessionStore,
-} from "@pivi/pivi-agent-core/session";
+} from "@pivi/agent/session";
 import {
   type SessionJournalStore,
   SessionJournalVersionError,
-} from "@pivi/pivi-agent-core/session/sessionJournal";
+} from "@pivi/agent/session/sessionJournal";
+import { PiSessionStore } from "@pivi/engine-pi/session/piSessionStore";
+import { configureSessionJsonlIndexRoot } from "@pivi/engine-pi/session/sessionJsonlIndex";
+import { reconcileSessionJournal } from "@pivi/engine-pi/session/sessionRecovery";
+import {
+  bindSessionJournal,
+} from "@pivi/engine-pi/session/sessionTreeStore";
+import {
+  SharedStorageService,
+} from "@pivi/obsidian-host";
 import { assertBundledReactRuntime } from "@pivi/pivi-react";
 import { createHash } from 'crypto';
 import type { App } from "obsidian";

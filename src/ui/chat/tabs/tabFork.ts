@@ -1,5 +1,5 @@
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';

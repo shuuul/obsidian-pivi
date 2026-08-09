@@ -14,11 +14,11 @@ import {
   rebuildSessionJsonlIndex,
   refreshSessionJsonlIndexAfterAppend,
   validateSessionJsonlIndexSource,
-} from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
+} from '@pivi/engine-pi/session/sessionJsonlIndex';
 import {
   SessionIndexCorruptError,
   SessionIndexStaleError,
-} from '@pivi/pivi-agent-core/session';
+} from '@pivi/agent/session';
 
 function line(value: unknown): string {
   return `${JSON.stringify(value)}\n`;

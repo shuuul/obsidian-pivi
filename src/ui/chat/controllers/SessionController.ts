@@ -1,11 +1,11 @@
-import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
-import { recalculateUsageForModel } from '@pivi/pivi-agent-core/foundation/usage';
+import type { OpenSessionState } from '@pivi/agent/foundation';
+import { recalculateUsageForModel } from '@pivi/agent/foundation/usage';
 import type {
   ChatPorts,
   ChatSettingsPort,
-} from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import type { SessionMessagePage } from '@pivi/pivi-agent-core/session';
+} from '@pivi/agent/runtime/chatPorts';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import type { SessionMessagePage } from '@pivi/agent/session';
 import { CHAT_PROJECTION_PAGE_SIZE } from '@pivi/pivi-react/store';
 
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';

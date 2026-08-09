@@ -1,6 +1,6 @@
-import { stripAgentReportBlocksFromText } from '@pivi/pivi-agent-core/session/continuationSchemas';
-import { extractFinalResultFromSubagentJsonl } from '@pivi/pivi-agent-core/session/subagentJsonl';
-import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
+import { stripAgentReportBlocksFromText } from '@pivi/agent/session/continuationSchemas';
+import { extractFinalResultFromSubagentJsonl } from '@pivi/agent/session/subagentJsonl';
+import type { TaskResultInterpreter } from '@pivi/agent/tools';
 
 import { extractFullOutputPath, readTrustedFullOutputFile } from './subagentOutput';
 

@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
-import type { SlashCommand } from '@pivi/pivi-agent-core/foundation';
-import { runSerializedSave, writeFileAtomically } from '@pivi/pivi-agent-core/foundation/configPublication';
-import type { FileStore } from '@pivi/pivi-agent-core/ports';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
-import { isReservedCommandId } from '@pivi/pivi-agent-core/skills/commands/slashCommandIds';
-import { serializeSlashCommandMarkdown } from '@pivi/pivi-agent-core/skills/slashCommand';
-import type { AgentCommandDetail, PiviCommandsInput, PiviManagementMutationResult } from '@pivi/pivi-agent-core/tools/piviManagement';
-import { PiviManagementError } from '@pivi/pivi-agent-core/tools/piviManagement';
+import type { SlashCommand } from '@pivi/agent/foundation';
+import { runSerializedSave, writeFileAtomically } from '@pivi/agent/foundation/configPublication';
+import type { FileStore } from '@pivi/agent/ports';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
+import { isReservedCommandId } from '@pivi/agent/skills/commands/slashCommandIds';
+import { serializeSlashCommandMarkdown } from '@pivi/agent/skills/slashCommand';
+import type { AgentCommandDetail, PiviCommandsInput, PiviManagementMutationResult } from '@pivi/agent/tools/piviManagement';
+import { PiviManagementError } from '@pivi/agent/tools/piviManagement';
 
 import { recoverCommandRemovalTransactions, removeCommandFiles } from './commandRemovalTransaction';
 import type { PiviWorkspaceHost } from './serviceContracts';

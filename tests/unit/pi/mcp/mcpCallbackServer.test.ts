@@ -2,10 +2,10 @@ import { get, request as httpRequest, type IncomingHttpHeaders } from 'http';
 
 import {
   McpCallbackServer,
-} from '@pivi/pivi-agent-core/mcp/oauth/mcpCallbackServer';
+} from '@pivi/agent/mcp/oauth/mcpCallbackServer';
 import {
   OAUTH_CALLBACK_PATH,
-} from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthProvider';
+} from '@pivi/agent/mcp/oauth/mcpOAuthProvider';
 
 function requestCallback(
   port: number,

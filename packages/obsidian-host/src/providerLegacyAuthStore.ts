@@ -1,4 +1,4 @@
-import type { ProviderLegacyAuthData, ProviderLegacyAuthStore } from '@pivi/pivi-agent-core/ports';
+import type { ProviderLegacyAuthData, ProviderLegacyAuthStore } from '@pivi/agent/ports';
 import * as fs from 'fs';
 
 export function createFileProviderLegacyAuthStore(path: string | null): ProviderLegacyAuthStore | null {

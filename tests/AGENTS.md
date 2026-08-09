@@ -14,7 +14,7 @@ flowchart TD
   Jest -- "moduleNameMapper" --> Mocks["__mocks__/<br/>Obsidian + Pi packages"]
   Unit["unit/**/*.test.ts"] -- "use" --> Helpers["helpers/<br/>fake runtime, mock app/plugin/settings"]
   Integration["integration/**/*.test.ts<br/>included in unit project"] -- "use" --> Helpers
-  Unit -- "exercise" --> Codebase["src/ (app + runtime adapters)<br/>+ packages/ (core, host, tools, React + i18n)"]
+  Unit -- "exercise" --> Codebase["src/ (app + runtime adapters)<br/>+ packages/ (agent, engine-pi, host, tools, React + i18n)"]
   Integration -- "exercise" --> Codebase
 ```
 
@@ -66,8 +66,8 @@ npm run test -- -t "prefetches enabled remote servers but leaves stdio lazy"
 - `unit/main/` — plugin lifecycle tests.
 - `unit/network/` — host-neutral egress, IP classification, and URL policy tests.
 - `unit/obsidian-tools/` — concrete tool helper tests: bash allowlist, capability approval gate, and login shell.
-- `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests. Session cloud recovery fault-matrix fixtures live under `unit/pi/session/`.
-- `unit/pivi-agent-core/` — aggregate package host/runtime contract tests.
+- `unit/pi/` — `@pivi/engine-pi` and closely related MCP/session/tool/prompt/auth/slash-catalog tests (directory name is historical). Session cloud recovery fault-matrix fixtures live under `unit/pi/session/`.
+- `unit/agent/` — aggregate `@pivi/agent` package host/runtime contract tests.
 - `unit/scripts/` — build compatibility, CSS manifest, Jest project-discovery, and repository spec-validation tests.
 - `unit/ui/` — imperative DOM and response/tool/subagent CSS contract tests; React and settings behavior belongs in `pivi-react/`.
 - `unit/utils/` — pure utility tests.
@@ -79,4 +79,4 @@ npm run test -- -t "prefetches enabled remote servers but leaves stdio lazy"
 - Keep mocks centralized in `__mocks__/` or `helpers/`; avoid ad hoc large inline mocks in each test.
 - Existing unit and integration tests run together in the Node `unit` project. Only `tests/pivi-react/**` runs in jsdom; keep DOM-heavy React tests there.
 - Chat performance tests assert deterministic invariants rather than speculative speedups: one projection commit per fake animation frame, at most 20 mounted rows in the fixed 5K jsdom viewport, 100-message projection pages, at most 67 projection commits for the exact 102,400-byte / 64-chunk development stream, persistence-free 10-tab / 20-switch cleanup, isolated 20-subagent fixture restoration/cleanup, stable entity identity, safe Markdown sealing, and synchronous lifecycle flushes. Record timing/heap claims only from the three-run real-Obsidian protocol and budgets in `docs/11-chat-ui-evolution.md`.
-- Architecture fixtures lock the four ownership seams: core owns runtime/application ports, app owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. React portability fixtures additionally reject host DOM classes, host-specific public port identifiers, host-specific locale keys, and unparameterized credential/workspace copy while proving that `pivi-*` classes and app-owned host adapters remain valid.
+- Architecture fixtures lock the four ownership seams: `@pivi/agent` owns runtime/application ports, app owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. React portability fixtures additionally reject host DOM classes, host-specific public port identifiers, host-specific locale keys, and unparameterized credential/workspace copy while proving that `pivi-*` classes and app-owned host adapters remain valid.

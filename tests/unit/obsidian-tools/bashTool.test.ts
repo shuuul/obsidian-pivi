@@ -1,4 +1,4 @@
-import type { ProcessRunRequest } from '@pivi/pivi-agent-core/ports';
+import type { ProcessRunRequest } from '@pivi/agent/ports';
 import { createBashTool } from '@pivi/obsidian-tools';
 import type { ObsidianToolDeps } from '@pivi/obsidian-tools';
 

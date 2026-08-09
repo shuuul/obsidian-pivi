@@ -1,3 +1,54 @@
+import { mergeCustomProviderHeaderSecrets } from "@pivi/agent/auth/customProviderHeaderSecrets";
+import { credentialToApiKey } from "@pivi/agent/auth/piProviderCredentials";
+import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
+import {
+  type AppModelReadinessProvider,
+  getCustomProvidersFromBag,
+  getSubagentRuntimeSettingsFromBag,
+  getWebSearchToolsSettingsFromBag,
+  parseEnvironmentVariables,
+  WEB_PROVIDER_IDS,
+} from "@pivi/agent/foundation";
+import { McpManagementCoordinator } from "@pivi/agent/mcp/mcpManagementCoordinator";
+import { McpServerManager } from "@pivi/agent/mcp/mcpServerManager";
+import { McpStorage } from "@pivi/agent/mcp/mcpStorage";
+import { McpOAuthService } from "@pivi/agent/mcp/oauth/mcpOAuthService";
+import type {
+  AppMcpDiagnostics,
+  AppMcpServerProbeProvider,
+  AppMcpServerTester,
+  AppMcpStorage,
+  AppMcpToolProvider,
+} from "@pivi/agent/mcp/ports";
+import { getMcpServerUrl } from "@pivi/agent/mcp/types";
+import {
+  grantPrivateOrigins,
+} from "@pivi/agent/network";
+import { ensureDefaultWorkspaceCommands } from "@pivi/agent/skills/commands/defaultWorkspaceCommands";
+import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashCommandCatalog";
+import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
+import { SkillsManagementCoordinator } from "@pivi/agent/skills/vault/skillsManagementCoordinator";
+import { VaultSkillsService } from "@pivi/agent/skills/vault/vaultSkillsService";
+import {
+  createWebFetchTool,
+  createWebSearchCredentialStore,
+  createWebSearchTool,
+  isObsidianAgentTool,
+  TOOL_OBSIDIAN_BASH,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
+  type WebSearchCredentialStore,
+} from "@pivi/agent/tools";
+import type { PiBaseToolProvider } from "@pivi/engine-pi/buildPiToolRegistryCore";
+import { createCodexImageGenerator } from "@pivi/engine-pi/codexImageGenerator";
+import { configurePiAiModels } from "@pivi/engine-pi/piAiModels";
+import {
+  createObsidianCredentialStore,
+  ObsidianAuthContext,
+  type ObsidianCredentialStore,
+} from "@pivi/engine-pi/piProviderCredentialStore";
+import { ProviderOAuthService } from "@pivi/engine-pi/piProviderOAuthService";
+import { registerBundledPiOAuthFlows } from "@pivi/engine-pi/registerBundledPiOAuthFlows";
+import { SubagentConcurrencyLimiter } from "@pivi/engine-pi/subagentConcurrencyLimiter";
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
@@ -11,57 +62,6 @@ import {
   createObsidianTools,
   getObsidianToolsSettingsFromBag,
 } from "@pivi/obsidian-tools";
-import { mergeCustomProviderHeaderSecrets } from "@pivi/pivi-agent-core/auth/customProviderHeaderSecrets";
-import { credentialToApiKey } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
-import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
-import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
-import { createCodexImageGenerator } from "@pivi/pivi-agent-core/engine/pi/codexImageGenerator";
-import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
-import {
-  createObsidianCredentialStore,
-  ObsidianAuthContext,
-  type ObsidianCredentialStore,
-} from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
-import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
-import { registerBundledPiOAuthFlows } from "@pivi/pivi-agent-core/engine/pi/registerBundledPiOAuthFlows";
-import { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
-import {
-  type AppModelReadinessProvider,
-  getCustomProvidersFromBag,
-  getSubagentRuntimeSettingsFromBag,
-  getWebSearchToolsSettingsFromBag,
-  parseEnvironmentVariables,
-  WEB_PROVIDER_IDS,
-} from "@pivi/pivi-agent-core/foundation";
-import { McpManagementCoordinator } from "@pivi/pivi-agent-core/mcp/mcpManagementCoordinator";
-import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
-import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
-import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
-import type {
-  AppMcpDiagnostics,
-  AppMcpServerProbeProvider,
-  AppMcpServerTester,
-  AppMcpStorage,
-  AppMcpToolProvider,
-} from "@pivi/pivi-agent-core/mcp/ports";
-import { getMcpServerUrl } from "@pivi/pivi-agent-core/mcp/types";
-import {
-  grantPrivateOrigins,
-} from "@pivi/pivi-agent-core/network";
-import { ensureDefaultWorkspaceCommands } from "@pivi/pivi-agent-core/skills/commands/defaultWorkspaceCommands";
-import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
-import { SkillsManagementCoordinator } from "@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator";
-import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/vaultSkillsService";
-import {
-  createWebFetchTool,
-  createWebSearchCredentialStore,
-  createWebSearchTool,
-  isObsidianAgentTool,
-  TOOL_OBSIDIAN_BASH,
-  TOOL_OBSIDIAN_GENERATE_IMAGE,
-  type WebSearchCredentialStore,
-} from "@pivi/pivi-agent-core/tools";
 
 import { requestOAuthManualCode } from "@/app/oauthManualCodePrompt";
 

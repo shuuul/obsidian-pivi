@@ -2,8 +2,8 @@ import {
   appendExternalContextAvailability,
   buildTurnPrompt,
   finalizeTurnPrompt,
-} from '@pivi/pivi-agent-core/prompt';
-import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
+} from '@pivi/agent/prompt';
+import type { ChatTurnRequest } from '@pivi/agent/runtime/types';
 
 describe('buildTurnPrompt', () => {
   it('passes through compact commands without context tags', () => {

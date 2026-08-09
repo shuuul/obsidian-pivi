@@ -1,4 +1,4 @@
-import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
+import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
 import type { App, ItemView } from 'obsidian';
 
 import { t } from '@/app/i18n';

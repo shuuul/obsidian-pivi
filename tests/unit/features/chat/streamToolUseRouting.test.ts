@@ -1,5 +1,5 @@
-import { TOOL_AGENT_OUTPUT, TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
-import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
+import { TOOL_AGENT_OUTPUT, TOOL_TASK } from '@pivi/agent/tools/toolNames';
+import type { SubagentLifecycleAdapter } from '@pivi/agent/tools';
 import {
   routeToolUseStreamChunk,
   shouldProjectToolUseChunk,

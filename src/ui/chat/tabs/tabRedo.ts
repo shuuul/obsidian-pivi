@@ -1,10 +1,10 @@
-import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/context';
-import type { ChatMessage, ImageAttachment } from '@pivi/pivi-agent-core/foundation';
+import { resolveUserMessageDisplayText } from '@pivi/agent/context/context';
+import type { ChatMessage, ImageAttachment } from '@pivi/agent/foundation';
 import {
   type ChatTurnRequest,
   chatTurnRequestFromSnapshot,
-} from '@pivi/pivi-agent-core/runtime';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+} from '@pivi/agent/runtime';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';

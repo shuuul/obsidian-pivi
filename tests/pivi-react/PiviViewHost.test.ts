@@ -1,7 +1,7 @@
 import type { MountedSurface, MountChatViewOptions } from '@pivi/pivi-react/mount';
 import { mountChatView } from '@pivi/pivi-react/mount';
 import type { AppTabManagerState } from '@pivi/obsidian-host/bootstrap/types';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { NOOP_CHAT_PERF_RECORDER } from '@pivi/pivi-react/store';
 import { Scope } from 'obsidian';
 import type { WorkspaceLeaf } from 'obsidian';

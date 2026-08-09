@@ -1,16 +1,16 @@
 import type { ReactElement } from 'react';
-import type { ActivityStatus, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ActivityStatus, ToolCallInfo } from '@pivi/agent/foundation';
 import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_SEARCH,
-} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+} from '@pivi/agent/tools/obsidianToolNames';
 import {
   TOOL_BASH,
   TOOL_MCP,
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE,
-} from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/toolNames';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ChatProjectionEvent } from '@pivi/pivi-react/store';
 

@@ -2,8 +2,8 @@ import {
   EDITOR_COMMANDS,
   type EditorToolbarPiviCommand,
   type EditorToolbarShortcut,
-} from '@pivi/pivi-agent-core/foundation/settings';
-import { resolveWorkspaceCommandPrompt } from '@pivi/pivi-agent-core/skills/commands/resolveWorkspaceCommandPrompt';
+} from '@pivi/agent/foundation/settings';
+import { resolveWorkspaceCommandPrompt } from '@pivi/agent/skills/commands/resolveWorkspaceCommandPrompt';
 import {
   mountSelectionToolbarSurface,
   type SelectionToolbarMountedSurface,

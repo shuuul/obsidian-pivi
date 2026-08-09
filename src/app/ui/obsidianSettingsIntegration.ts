@@ -27,7 +27,7 @@ import {
   TOOL_PIVI_MCP,
   TOOL_PIVI_SESSIONS,
   TOOL_PIVI_SKILLS,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 import type {
   SettingsFeedbackMessage,
   SettingsHostIntegrationSection,

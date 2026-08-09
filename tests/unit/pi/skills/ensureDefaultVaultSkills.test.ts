@@ -3,7 +3,7 @@ import {
   ensureDefaultVaultSkills,
   shouldSeedDefaultVaultSkills,
   shouldUpgradeDefaultVaultSkills,
-} from '@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills';
+} from '@pivi/agent/skills/vault/ensureDefaultVaultSkills';
 
 describe('shouldSeedDefaultVaultSkills', () => {
   it('returns true when not seeded and no skills installed', () => {

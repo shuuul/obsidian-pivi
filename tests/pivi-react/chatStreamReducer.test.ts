@@ -2,7 +2,7 @@ import {
   createChatStreamSnapshot,
   reduceChatStreamSnapshot,
 } from '@pivi/pivi-react/store';
-import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/foundation';
 
 function assistantMessage(): ChatMessage {
   return {

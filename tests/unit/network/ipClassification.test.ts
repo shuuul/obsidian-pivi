@@ -3,7 +3,7 @@ import {
   classifyIpLiteral,
   expandIpv4Literal,
   isDeniedIpClass,
-} from '@pivi/pivi-agent-core/network';
+} from '@pivi/agent/network';
 
 describe('ipClassification', () => {
   it('classifies IPv4 loopback, private, link-local, multicast, unspecified, and metadata', () => {

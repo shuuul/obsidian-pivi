@@ -1,8 +1,8 @@
-import { tryParseClipboardConfig } from '@pivi/pivi-agent-core/mcp/mcpConfigParser';
+import { tryParseClipboardConfig } from '@pivi/agent/mcp/mcpConfigParser';
 import {
   formatMcpArgsLines,
   parseMcpArgsLines,
-} from '@pivi/pivi-agent-core/mcp/mcpUtils';
+} from '@pivi/agent/mcp/mcpUtils';
 import {
   assertMcpStdioExecutable,
   assertValidMcpServerName,
@@ -10,11 +10,11 @@ import {
   MCP_SERVER_NAME_PATTERN,
   McpValidationError,
   validateMcpRemoteUrl,
-} from '@pivi/pivi-agent-core/mcp/mcpValidation';
+} from '@pivi/agent/mcp/mcpValidation';
 import {
   isLegacyPlainStringMap,
   isMcpStoredValueMap,
-} from '@pivi/pivi-agent-core/mcp/mcpValueSources';
+} from '@pivi/agent/mcp/mcpValueSources';
 import type {
   ManagedMcpServer,
   McpAuthStatus,
@@ -25,8 +25,8 @@ import type {
   McpSSEServerConfig,
   McpStdioServerConfig,
   McpTool,
-} from '@pivi/pivi-agent-core/mcp/types';
-import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
+} from '@pivi/agent/mcp/types';
+import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/agent/mcp/types';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import type { TFunction } from '../../i18n';

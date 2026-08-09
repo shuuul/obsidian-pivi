@@ -1,4 +1,4 @@
-import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
+import { VIEW_TYPE_PIVI } from "@pivi/agent/foundation";
 import { addIcon, removeIcon } from "obsidian";
 
 import { t } from "@/app/i18n";

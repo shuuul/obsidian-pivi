@@ -1,8 +1,8 @@
 import {
   writeCustomProviderHeaders,
-} from '@pivi/pivi-agent-core/auth/customProviderHeaderSecrets';
-import type { CustomProviderConfig } from '@pivi/pivi-agent-core/foundation/customProviders';
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/auth/customProviderHeaderSecrets';
+import type { CustomProviderConfig } from '@pivi/agent/foundation/customProviders';
+import type { SyncSecretStore } from '@pivi/agent/ports';
 
 export class CustomProviderHeaderMigrationError extends Error {
   constructor(message: string) {

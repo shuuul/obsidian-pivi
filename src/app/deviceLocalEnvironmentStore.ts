@@ -1,11 +1,11 @@
 import type {
   DeviceLocalEnvironmentStateV1,
   DeviceLocalEnvironmentStore,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
+} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
 import {
   assertSupportedDeviceLocalEnvironmentStateVersion,
   normalizeDeviceLocalEnvironmentState,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
+} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
 import type { App } from 'obsidian';
 
 export const DEVICE_LOCAL_ENVIRONMENT_STORAGE_KEY = 'pivi.environment.v1';

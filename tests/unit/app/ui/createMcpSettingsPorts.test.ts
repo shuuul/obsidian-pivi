@@ -1,4 +1,4 @@
-import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
+import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
 
 import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
 import { createMcpSettingsPort } from '@/app/ui/createMcpSettingsPorts';

@@ -1,13 +1,13 @@
 import {
   createInlineContextToken,
   type InlineContextReference,
-} from '@pivi/pivi-agent-core/context/inlineContext';
+} from '@pivi/agent/context/inlineContext';
 import {
   requiresSelectedText,
   resolveWorkspaceCommandPrompt,
   type WorkspaceCommandPromptContext,
-} from '@pivi/pivi-agent-core/skills/commands/resolveWorkspaceCommandPrompt';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+} from '@pivi/agent/skills/commands/resolveWorkspaceCommandPrompt';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
 export interface ResolvedComposerWorkspaceCommand {
   displayContent: string;

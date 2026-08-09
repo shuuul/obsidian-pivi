@@ -5,7 +5,7 @@ import {
   getProviderIdFromModelValue,
   getProviderLogoSlug,
   getProviderLogoSlugFromModelValue,
-} from '@pivi/pivi-agent-core/foundation/providerLogos';
+} from '@pivi/agent/foundation/providerLogos';
 
 describe('providerLogos', () => {
 

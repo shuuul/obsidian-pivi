@@ -32,31 +32,31 @@ flowchart TD
   App -- "mounts and injects ports" --> AppUI["UI composition<br/>src/app/ui/"]
   AppUI -- "mounts" --> React["React presentation<br/>@pivi/pivi-react"]
   AppUI -- "injects ChatPorts" --> Chat["Chat orchestration<br/>src/ui/chat/"]
-  App -- "constructs" --> Engine["Pi engine<br/>core/engine/pi"]
+  App -- "constructs" --> Engine["Pi engine<br/>@pivi/engine-pi"]
   App -- "uses" --> Host["Obsidian host<br/>@pivi/obsidian-host"]
   App -- "registers" --> Tools["Obsidian tools<br/>@pivi/obsidian-tools"]
-  React -- "uses domain models" --> Core["Host-neutral core<br/>@pivi/pivi-agent-core"]
-  Chat -- "uses contracts" --> Core
-  Engine -- "implements runtime" --> Core
+  React -- "uses domain models" --> Agent["Host-neutral agent<br/>@pivi/agent"]
+  Chat -- "uses contracts" --> Agent
+  Engine -- "implements runtime" --> Agent
   Tools -- "uses host adapters" --> Host
-  Tools -- "implements ToolSpec" --> Core
+  Tools -- "implements ToolSpec" --> Agent
 ```
 
-Imports and capabilities flow through explicit seams. Presentation does not construct engines, product UI does not reach into app workspace services, and host-neutral packages do not import Obsidian implementations.
+Imports and capabilities flow through explicit seams. Presentation does not construct engines, product UI does not reach into app workspace services, and host-neutral packages do not import Obsidian implementations. Only `src/app/**` and `src/main.ts` import `@pivi/engine-pi`.
 
 ```mermaid
 flowchart TD
   Composition["Composition<br/>src/main.ts + src/app/"] --> Presentation["Presentation wiring<br/>src/app/ui/"]
   Presentation --> ProductUI["Product orchestration<br/>src/ui/"]
   Presentation --> React["React surfaces<br/>@pivi/pivi-react"]
-  ProductUI --> Core["Core contracts and models<br/>@pivi/pivi-agent-core"]
-  React --> Core
-  Composition --> Engine["Concrete Pi engine<br/>core/engine/pi"]
-  Engine --> Core
+  ProductUI --> Agent["Agent contracts and models<br/>@pivi/agent"]
+  React --> Agent
+  Composition --> Engine["Concrete Pi engine<br/>@pivi/engine-pi"]
+  Engine --> Agent
   Composition --> Host["Concrete host<br/>@pivi/obsidian-host"]
   Composition --> Tools["Concrete tools<br/>@pivi/obsidian-tools"]
   Tools --> Host
-  Tools --> Core
+  Tools --> Agent
 ```
 
 ## Representative chat turn
@@ -67,9 +67,9 @@ The visible input, persisted session content, and provider prompt are related bu
 flowchart LR
   User["Composer input"] -- "captures text and context" --> Input["InputController"]
   Input -- "builds" --> Request["ChatTurnRequest"]
-  Request -- "prepares" --> Prompt["core/prompt"]
+  Request -- "prepares" --> Prompt["@pivi/agent/prompt"]
   Prompt -- "queries" --> Service["PiChatService"]
-  Service -- "runs" --> Engine["PiChatRuntime"]
+  Service -- "runs" --> Engine["PiChatRuntime<br/>@pivi/engine-pi"]
   Engine -- "streams chunks" --> Stream["StreamController"]
   Stream -- "updates state" --> Store["ChatUiStore + ChatProjectionStore"]
   Store -- "renders chrome and virtualized messages" --> React["ChatShell"]

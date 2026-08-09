@@ -7,15 +7,15 @@ import type {
 import {
   type AssistantMessage,
 } from '@earendil-works/pi-ai';
-import { PiAgentEventAdapter } from '@pivi/pivi-agent-core/engine/pi/piAgentEventAdapter';
-import type { PiResolvedModel } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
-import type { PiRuntimeHost } from '@pivi/pivi-agent-core/engine/pi/piRuntimeHost';
-import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
-import type { PreparedChatTurn } from '@pivi/pivi-agent-core/runtime/types';
+import { PiAgentEventAdapter } from '@pivi/engine-pi/piAgentEventAdapter';
+import type { PiResolvedModel } from '@pivi/engine-pi/piModelRegistry';
+import type { PiRuntimeHost } from '@pivi/engine-pi/piRuntimeHost';
+import type { StreamChunk } from '@pivi/agent/foundation';
+import type { PreparedChatTurn } from '@pivi/agent/runtime/types';
 
-import { createActiveTurn } from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeActiveTurn';
-import type { PiChatCompactionDeps } from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeCompaction';
-import { streamPiChatTurn } from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeTurn';
+import { createActiveTurn } from '../../../packages/engine-pi/src/piChatRuntimeActiveTurn';
+import type { PiChatCompactionDeps } from '../../../packages/engine-pi/src/piChatRuntimeCompaction';
+import { streamPiChatTurn } from '../../../packages/engine-pi/src/piChatRuntimeTurn';
 
 function assistant(
   stopReason: AssistantMessage['stopReason'],

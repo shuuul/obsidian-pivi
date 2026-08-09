@@ -1,6 +1,6 @@
 import { createI18n, SUPPORTED_LOCALES, type TFunction } from '@pivi/pivi-react';
-import type { McpManagementPlan } from '@pivi/pivi-agent-core/mcp/mcpManagementCoordinator';
-import type { SkillsManagementPlan } from '@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator';
+import type { McpManagementPlan } from '@pivi/agent/mcp/mcpManagementCoordinator';
+import type { SkillsManagementPlan } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 
 import {
   presentCommandsManagementApproval,

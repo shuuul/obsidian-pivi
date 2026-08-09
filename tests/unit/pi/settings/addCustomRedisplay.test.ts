@@ -1,7 +1,7 @@
-import { isKnownPiProviderId } from '@pivi/pivi-agent-core/auth/piProviderValidation';
-import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
-import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
-import { createDefaultCustomProviderConfig } from '@pivi/pivi-agent-core/foundation/customProviders';
+import { isKnownPiProviderId } from '@pivi/agent/auth/piProviderValidation';
+import { migratePiProviderCredentialsToKeychain } from '@pivi/engine-pi/piProviderCredentialStore';
+import { updatePiAgentSettings } from '@pivi/agent/foundation/agentSettings';
+import { createDefaultCustomProviderConfig } from '@pivi/agent/foundation/customProviders';
 
 describe('add ollama then redisplay normalize', () => {
   it('keeps ollama after addedProviders-only update like migration path', () => {

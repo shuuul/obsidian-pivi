@@ -1,5 +1,5 @@
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
+import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatTurnRequest } from '@pivi/agent/runtime/types';
 
 import {
   cloneQueuedMessage,

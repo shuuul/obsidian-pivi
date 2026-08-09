@@ -1,7 +1,7 @@
 import type { App } from 'obsidian';
 
 import { ObsidianDeviceLocalSessionJournalStore } from '@/app/deviceLocalSessionJournalStore';
-import { emptySessionJournalState } from '@pivi/pivi-agent-core/session/sessionJournal';
+import { emptySessionJournalState } from '@pivi/agent/session/sessionJournal';
 
 interface FakeApp {
   loadLocalStorage: jest.Mock;

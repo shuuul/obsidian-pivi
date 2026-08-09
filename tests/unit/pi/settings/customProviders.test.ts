@@ -6,26 +6,26 @@ import {
   normalizeCustomProviderConfig,
   normalizeCustomProviders,
   parseOpenAiStyleModelsList,
-} from '@pivi/pivi-agent-core/foundation/customProviders';
-import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { MAX_OBSIDIAN_SECRET_ID_LENGTH } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
+} from '@pivi/agent/foundation/customProviders';
+import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
+import { MAX_OBSIDIAN_SECRET_ID_LENGTH } from '@pivi/agent/auth/providerSecretStorage';
 import {
   getPiAgentSettings,
   updatePiAgentSettings,
-} from '@pivi/pivi-agent-core/foundation/agentSettings';
+} from '@pivi/agent/foundation/agentSettings';
 import {
   buildCustomPiProvider,
   buildCustomProviderModels,
   fetchCustomProviderModels,
-} from '@pivi/pivi-agent-core/engine/pi/installPiCustomProviders';
+} from '@pivi/engine-pi/installPiCustomProviders';
 import {
   configurePiAiModels,
   getInstalledCustomProviderIds,
   piAiModels,
   refreshCustomPiProviderModels,
   syncCustomPiProviders,
-} from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
+} from '@pivi/engine-pi/piAiModels';
+import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/piModelRegistry';
 
 describe('customProviders foundation', () => {
   it('creates fixed ids for local presets and collision-resistant ids for multi-instance kinds', () => {

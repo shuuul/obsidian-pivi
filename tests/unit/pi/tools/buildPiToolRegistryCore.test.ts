@@ -1,13 +1,13 @@
-import type { PiSubagentQueryRunner } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
-import type { PiMcpBridge } from '@pivi/pivi-agent-core/mcp';
-import type { RegisteredToolSummary } from '@pivi/pivi-agent-core/prompt';
+import type { PiSubagentQueryRunner } from '@pivi/engine-pi/createSubagentTool';
+import type { PiMcpBridge } from '@pivi/agent/mcp';
+import type { RegisteredToolSummary } from '@pivi/agent/prompt';
 import {
   TOOL_PIVI_SESSIONS,
   TOOL_SKILL,
   TOOL_SPAWN_AGENT,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
-import { buildPiToolRegistryCore } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
+} from '@pivi/agent/tools';
+import { buildPiToolRegistryCore } from '@pivi/engine-pi/buildPiToolRegistryCore';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';

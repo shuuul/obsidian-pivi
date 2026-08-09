@@ -32,7 +32,7 @@ const DYNAMIC_KEY_SOURCE_FILES = [
     ],
   },
   {
-    file: 'packages/pivi-agent-core/src/tools/toolPresentation.ts',
+    file: 'packages/agent/src/tools/toolPresentation.ts',
     patterns: [
       /(?:labelKey|stepPhraseKey):\s*'((?:tools\.(?:display|steps))\.[^']+)'/g,
       /key:\s*'((?:tools\.(?:display|steps))\.[^']+)'/g,

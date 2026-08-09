@@ -5,14 +5,14 @@ import path from 'path';
 import {
   openRecentSessionJsonlMessages,
   readOlderSessionJsonlMessages,
-} from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlRangeReader';
+} from '@pivi/engine-pi/session/sessionJsonlRangeReader';
 import {
   invalidateSessionJsonlIndex,
-} from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
+} from '@pivi/engine-pi/session/sessionJsonlIndex';
 import {
   SessionIndexStaleError,
   SessionRangeCursorError,
-} from '@pivi/pivi-agent-core/session';
+} from '@pivi/agent/session';
 
 function jsonl(value: unknown): string {
   return `${JSON.stringify(value)}\n`;

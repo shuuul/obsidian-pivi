@@ -1,5 +1,5 @@
-import { getMcpServerType } from '@pivi/pivi-agent-core/mcp/types';
-import type { ChatCatalogPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import { getMcpServerType } from '@pivi/agent/mcp/types';
+import type { ChatCatalogPort } from '@pivi/agent/runtime/chatPorts';
 
 import type {
   DropdownMcpServerProvider,

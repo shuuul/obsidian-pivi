@@ -1,5 +1,5 @@
-import type { CapabilityApprovalRequest, CapabilityApprovalResult } from '@pivi/pivi-agent-core/ports';
-import type { PiviManagementApprovalDecision, PiviManagementApprovalRequest } from '@pivi/pivi-agent-core/tools/piviManagement';
+import type { CapabilityApprovalRequest, CapabilityApprovalResult } from '@pivi/agent/ports';
+import type { PiviManagementApprovalDecision, PiviManagementApprovalRequest } from '@pivi/agent/tools/piviManagement';
 
 import type { StreamController } from '../controllers/StreamController';
 import { type InlineAskQuestionConfig, InlineAskUserQuestion } from '../rendering/InlineAskUserQuestion';

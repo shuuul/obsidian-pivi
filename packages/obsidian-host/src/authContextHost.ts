@@ -1,4 +1,4 @@
-import type { AuthContextHost } from '@pivi/pivi-agent-core/ports';
+import type { AuthContextHost } from '@pivi/agent/ports';
 import * as fs from 'fs';
 
 export function createSystemAuthContextHost(): AuthContextHost {

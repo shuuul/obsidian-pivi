@@ -1,16 +1,16 @@
+import type { McpOAuthService, McpServerManager } from "@pivi/agent/mcp";
+import type { CapabilityApprovalPort, FetchCompatible, HttpClient, SyncSecretStore } from "@pivi/agent/ports";
+import type { AuxQueryRunner } from "@pivi/agent/runtime/auxQueryRunner";
+import type { PiChatService } from "@pivi/agent/runtime/piChatService";
+import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
 import type {
   PiBaseToolProvider,
   PiMainOnlyToolProvider,
-} from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
-import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner";
-import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
-import type { PiRuntimeHost } from "@pivi/pivi-agent-core/engine/pi/piRuntimeHost";
-import type { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
-import type { McpOAuthService, McpServerManager } from "@pivi/pivi-agent-core/mcp";
-import type { CapabilityApprovalPort, FetchCompatible, HttpClient, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
-import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
-import type { PiChatService } from "@pivi/pivi-agent-core/runtime/piChatService";
-import type { PiviManagementApprovalPort } from '@pivi/pivi-agent-core/tools/piviManagement';
+} from "@pivi/engine-pi/buildPiToolRegistryCore";
+import { createPiAuxQueryRunner } from "@pivi/engine-pi/piAuxQueryRunner";
+import { PiChatRuntime } from "@pivi/engine-pi/piChatRuntime";
+import type { PiRuntimeHost } from "@pivi/engine-pi/piRuntimeHost";
+import type { SubagentConcurrencyLimiter } from "@pivi/engine-pi/subagentConcurrencyLimiter";
 
 /**
  * App-layer factories that construct concrete Pi engine services.

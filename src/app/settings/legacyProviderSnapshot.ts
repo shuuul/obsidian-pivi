@@ -1,13 +1,13 @@
-import type { LegacyProviderMembershipSnapshot } from '@pivi/pivi-agent-core/engine/pi';
 import {
   type CustomProviderConfig,
   normalizeCustomProviders,
-} from '@pivi/pivi-agent-core/foundation/customProviders';
+} from '@pivi/agent/foundation/customProviders';
 import {
   DEFAULT_WEB_SEARCH_TOOLS_SETTINGS,
   isWebProviderId,
   type WebSearchToolsSettings,
-} from '@pivi/pivi-agent-core/foundation/settings';
+} from '@pivi/agent/foundation/settings';
+import type { LegacyProviderMembershipSnapshot } from '@pivi/engine-pi';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);

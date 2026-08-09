@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { createI18n, I18nProvider, MessageList } from '@pivi/pivi-react';
 import { type ChatPerfRecorder, ChatProjectionStore } from '@pivi/pivi-react/store';
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage } from '@pivi/agent/foundation';
 
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 

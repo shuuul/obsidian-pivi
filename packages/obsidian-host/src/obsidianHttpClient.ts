@@ -1,4 +1,4 @@
-import type { HttpClient, HttpRequest, HttpResponse } from '@pivi/pivi-agent-core/ports';
+import type { HttpClient, HttpRequest, HttpResponse } from '@pivi/agent/ports';
 import { requestUrl } from 'obsidian';
 
 export const obsidianHttpClient: HttpClient = {

@@ -1,6 +1,6 @@
-import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
-import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/engine-pi/piModelRegistry'
+import { PiSettingsCoordinator } from '@pivi/engine-pi/piSettingsCoordinator';
+import { updatePiAgentSettings } from '@pivi/agent/foundation/agentSettings';
 
 const REASONING_MODEL = 'anthropic/claude-reasoning';
 const STANDARD_MODEL = 'deepseek/deepseek-chat';

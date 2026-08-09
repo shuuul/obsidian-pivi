@@ -1,12 +1,12 @@
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 import type {
   SessionJournalStateV1,
   SessionJournalStore,
-} from '@pivi/pivi-agent-core/session/sessionJournal';
+} from '@pivi/agent/session/sessionJournal';
 import {
   assertSupportedSessionJournalVersion,
   normalizeSessionJournalState,
-} from '@pivi/pivi-agent-core/session/sessionJournal';
+} from '@pivi/agent/session/sessionJournal';
 import type { App } from 'obsidian';
 
 export const DEVICE_LOCAL_SESSION_JOURNAL_STORAGE_KEY = 'pivi.session-journal.v1';

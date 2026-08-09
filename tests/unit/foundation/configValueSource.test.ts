@@ -9,7 +9,7 @@ import {
   isSecretLikeKey,
   normalizeConfigValueRef,
   resolveConfigValue,
-} from '@pivi/pivi-agent-core/foundation/configValueSource';
+} from '@pivi/agent/foundation/configValueSource';
 
 describe('configValueSource', () => {
   it('classifies secret-like keys', () => {

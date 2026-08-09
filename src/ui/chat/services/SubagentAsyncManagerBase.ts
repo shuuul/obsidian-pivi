@@ -1,6 +1,6 @@
-import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
-import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
+import type { TaskResultInterpreter } from '@pivi/agent/tools';
+import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 
 import type { SubagentStateChangeCallback } from './subagentManagerTypes';
 import type { SubagentResultParser } from './SubagentResultParser';

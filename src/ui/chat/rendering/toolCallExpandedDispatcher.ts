@@ -1,4 +1,4 @@
-import { isObsidianAgentTool } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import { isObsidianAgentTool } from '@pivi/agent/tools/obsidianToolNames';
 import {
   isAgentLifecycleTool,
   TOOL_APPLY_PATCH,
@@ -12,7 +12,7 @@ import {
   TOOL_WEB_FETCH,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/toolNames';
 
 import { t } from '@/app/i18n';
 

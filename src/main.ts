@@ -2,6 +2,22 @@
 import { patchSetMaxListenersForElectron } from "@pivi/obsidian-host/electronCompat";
 patchSetMaxListenersForElectron();
 
+import type {
+  OpenSessionState,
+  PiviSettings,
+  SessionSummary,
+} from "@pivi/agent/foundation";
+import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import type { EnvironmentScope } from "@pivi/agent/foundation/settings";
+import { getObsidianToolsSettingsFromBag } from "@pivi/agent/foundation/settings";
+import { OriginGrantRegistry } from "@pivi/agent/network";
+import type { CapabilityApprovalPort } from "@pivi/agent/ports";
+import type { SessionMessagePage, SessionStore } from "@pivi/agent/session";
+import { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
+import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
+import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
+import { warmPiAiModelsCache } from "@pivi/engine-pi/piChatUiConfig";
+import { PiSettingsCoordinator } from "@pivi/engine-pi/piSettingsCoordinator";
 import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
@@ -12,22 +28,6 @@ import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialOb
 import { createPiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
 import { openExternalUrl } from "@pivi/obsidian-host/openExternalUrl";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
-import { warmPiAiModelsCache } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
-import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
-import type {
-  OpenSessionState,
-  PiviSettings,
-  SessionSummary,
-} from "@pivi/pivi-agent-core/foundation";
-import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings";
-import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
-import { OriginGrantRegistry } from "@pivi/pivi-agent-core/network";
-import type { CapabilityApprovalPort } from "@pivi/pivi-agent-core/ports";
-import type { SessionMessagePage, SessionStore } from "@pivi/pivi-agent-core/session";
-import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
-import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
-import type { PiviManagementApprovalPort } from '@pivi/pivi-agent-core/tools/piviManagement';
 import type { ChatPerfRecorder } from "@pivi/pivi-react/store";
 import type { Editor, MarkdownView } from "obsidian";
 import { apiVersion, getIcon, Notice, Plugin } from "obsidian";
@@ -332,7 +332,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     this.piWorkspace = null;
     // Best-effort: drop the live journal binding. Device-local journal/source
     // state remains for deterministic startup reconciliation.
-    void import('@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore')
+    void import('@pivi/engine-pi/session/sessionTreeStore')
       .then(({ bindSessionJournal }) => {
         bindSessionJournal(null);
       })

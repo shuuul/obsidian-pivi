@@ -1,10 +1,10 @@
 import {
   resolveToolActivityStatus,
   type ToolCallInfo,
-} from '@pivi/pivi-agent-core/foundation';
+} from '@pivi/agent/foundation';
 import {
   isToolPresentationGroupable,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/toolPresentation';
 
 import { t } from '@/app/i18n';
 

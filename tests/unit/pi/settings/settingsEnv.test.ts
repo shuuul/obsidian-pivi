@@ -1,7 +1,7 @@
 import {
   formatContextLimit,
   parseEnvironmentVariables,
-} from '@pivi/pivi-agent-core/foundation/settingsEnv';
+} from '@pivi/agent/foundation/settingsEnv';
 
 describe('parseEnvironmentVariables', () => {
   it('ignores blank lines and comment lines', () => {

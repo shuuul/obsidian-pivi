@@ -22,8 +22,8 @@ import {
   shouldAutoCompact,
   stripCompactCommand,
   type PiContextCompactionEntry,
-} from '@pivi/pivi-agent-core/engine/pi/session/piContextCompaction';
-import type { Checkpoint } from '@pivi/pivi-agent-core/session/continuationSchemas';
+} from '@pivi/engine-pi/session/piContextCompaction';
+import type { Checkpoint } from '@pivi/agent/session/continuationSchemas';
 
 type PiMessageEntry = Extract<PiContextCompactionEntry, { type: 'message' }>;
 

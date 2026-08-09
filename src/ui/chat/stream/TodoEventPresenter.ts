@@ -1,11 +1,11 @@
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage } from '@pivi/agent/foundation';
 import {
   deriveTodoVisualizationModel,
   extractLastTodoVisualizationFromMessages,
   parseTodoToolInput,
   type TodoVisualizationModel,
   TOOL_TODO_WRITE,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 
 export interface TodoEventState {
   currentTodoVisualizationModel: TodoVisualizationModel | null;

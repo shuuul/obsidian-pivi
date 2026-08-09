@@ -1,8 +1,8 @@
-import type { SlashCommand } from '@pivi/pivi-agent-core/foundation';
-import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
-import { NEW_SESSION_COMMAND_ID } from '@pivi/pivi-agent-core/skills/commands/slashCommandIds';
-import { normalizeArgumentHint } from '@pivi/pivi-agent-core/skills/slashCommand';
+import type { SlashCommand } from '@pivi/agent/foundation';
+import type { SlashCommandDropdownConfig } from '@pivi/agent/skills/commands/slashCommandCatalog';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
+import { NEW_SESSION_COMMAND_ID } from '@pivi/agent/skills/commands/slashCommandIds';
+import { normalizeArgumentHint } from '@pivi/agent/skills/slashCommand';
 import { setIcon } from 'obsidian';
 
 import { t } from '@/app/i18n';

@@ -1,4 +1,4 @@
-import { formatInlineContextBadgeLabel } from '@pivi/pivi-agent-core/context/mentions';
+import { formatInlineContextBadgeLabel } from '@pivi/agent/context/mentions';
 
 import type { TFunction } from '../i18n/types';
 import {

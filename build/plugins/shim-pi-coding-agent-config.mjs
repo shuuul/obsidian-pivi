@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const piCodingAgentConfigShim = path.join(
   rootDir,
-  'packages/pivi-agent-core/src/engine/pi/shims/piCodingAgentConfig.ts',
+  'packages/engine-pi/src/shims/piCodingAgentConfig.ts',
 );
 const piCodingAgentConfigPath = path.join(
   rootDir,

@@ -1,4 +1,4 @@
-import { createInlineContextToken, type InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import { createInlineContextToken, type InlineContextReference } from '@pivi/agent/context/inlineContext';
 
 import { getOrderedListEnterEdit } from '@/ui/chat/composer/markdownListContinuation';
 import {

@@ -9,14 +9,14 @@
 - React and ReactDOM peer runtimes.
 - Browser DOM APIs resolved from each surface's owning document and window.
 - Bundled provider icon data from `@lobehub/icons-static-svg`.
-- Host-neutral, non-engine contracts and display models from `@pivi/pivi-agent-core`.
+- Host-neutral, non-engine contracts and display models from `@pivi/agent`.
 - An injected `PresentationPlatform` for icon and tooltip behavior, plus host-provided tool and integration descriptors for settings.
 
 ## Forbidden dependencies
 
 - Product code under `src/**` or the `@/**` alias.
 - Raw `@earendil-works/*` Pi SDK packages.
-- `@pivi/pivi-agent-core/engine/pi` implementations.
+- `@pivi/engine-pi` implementations.
 - `@pivi/obsidian-host` concrete host adapters.
 - `@pivi/obsidian-tools` concrete tool implementations.
 - Obsidian or another note-host SDK.
@@ -26,7 +26,7 @@
 
 - `createI18n()`, `I18nProvider`, and `useT()` provide one app-owned translator to imperative and React surfaces.
 - The `/context-badges` view-model builder requires that translator; it localizes tooltip and accessibility copy while preserving tool, MCP, skill, agent, path, and range identifiers.
-- Feature-specific settings presentation ports are exported from `@pivi/pivi-react/ports`; only `src/app/ui` implements them. Application-facing chat ports come from `@pivi/pivi-agent-core/runtime/chatPorts`.
+- Feature-specific settings presentation ports are exported from `@pivi/pivi-react/ports`; only `src/app/ui` implements them. Application-facing chat ports come from `@pivi/agent/runtime/chatPorts`.
 - `mountChatView()` and `mountSettings()` receive a `PresentationPlatform`, create one deterministic React root per surface, and return an idempotent async `dispose()` handle. The `/mount` subpath also exports synchronous localized settings-search aliases for the Obsidian 1.13 host bridge.
 - Settings render host-provided tool rows and integration sections; Obsidian CLI, Note Toolbar, and Style Settings behavior stays in the embedding app adapter.
 - MCP JSON import is an explicit paste-and-confirm editor flow; presentation code does not read the system clipboard.
@@ -34,7 +34,7 @@
 - `ChatTabsStore` drives the React-owned chat header, logo, and tab switcher. Input-position rendering uses one stable app-owned portal container so active-tab switches do not remount the React subtree or cancel pending interactions.
 - The package root exports general presentation components and i18n. Public subpaths are `/context-badges`, `/mount`, `/ports`, `/settings`, and `/store`; `src/ui` is limited to the store and context-badges presentation seams.
 - `styles/manifest.mjs` is the ordered source manifest used to build the root `styles.css` release artifact.
-- Chat messages and settings are React-owned. Core owns runtime/application ports; each host app owns concrete wiring and host-specific Markdown adapters.
+- Chat messages and settings are React-owned. `@pivi/agent` owns runtime/application ports; each host app owns concrete wiring and host-specific Markdown adapters.
 
 ## See also
 

@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage } from '@pivi/agent/foundation';
 import type { ChatProjectionEvent } from '@pivi/pivi-react/store';
 import { ChatState } from '@/ui/chat/state/ChatState';
 

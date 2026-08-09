@@ -18,7 +18,7 @@ import { createTasksTool } from '@pivi/obsidian-tools';
 import { createWriteNoteTool } from '@pivi/obsidian-tools';
 import type { ObsidianToolDeps } from '@pivi/obsidian-tools';
 
-import { createPiReadBudget } from '../../../../packages/pivi-agent-core/src/engine/pi/piReadBudget';
+import { createPiReadBudget } from '../../../../packages/engine-pi/src/piReadBudget';
 
 const readAllowance = (maxChars: number): { maxChars: number; settle: (returnedChars: number) => void } => ({
   maxChars,

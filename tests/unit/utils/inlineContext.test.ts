@@ -6,8 +6,8 @@ import {
   formatSelectionRangeAttribute,
   normalizeEditorSelection,
   parseInlineContextToken,
-} from '@pivi/pivi-agent-core/context/inlineContext';
-import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+} from '@pivi/agent/context/inlineContext';
+import type { InlineContextReference } from '@pivi/agent/context/inlineContext';
 
 describe('normalizeEditorSelection', () => {
   it('swaps reversed selections', () => {

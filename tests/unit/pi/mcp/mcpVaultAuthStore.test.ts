@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 
-import { PIVI_MCP_OAUTH_DIR } from '@pivi/pivi-agent-core/mcp/paths';
-import { McpVaultAuthStore } from '@pivi/pivi-agent-core/mcp/oauth/mcpVaultAuthStore';
+import { PIVI_MCP_OAUTH_DIR } from '@pivi/agent/mcp/paths';
+import { McpVaultAuthStore } from '@pivi/agent/mcp/oauth/mcpVaultAuthStore';
 
 function entryPath(serverName: string): string {
   const storageKey = createHash('sha256').update(serverName, 'utf8').digest('hex');

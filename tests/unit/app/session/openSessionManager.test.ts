@@ -2,10 +2,10 @@ import {
   type SessionRef,
   SessionIndexStaleError,
   type SessionStore,
-} from '@pivi/pivi-agent-core/session';
-import type { ChatMessage, OpenSessionState, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import { resolveSubagentActivityStatus } from '@pivi/pivi-agent-core/foundation';
-import { OpenSessionManager } from '@pivi/pivi-agent-core/session/openSessionManager';
+} from '@pivi/agent/session';
+import type { ChatMessage, OpenSessionState, UsageInfo } from '@pivi/agent/foundation';
+import { resolveSubagentActivityStatus } from '@pivi/agent/foundation';
+import { OpenSessionManager } from '@pivi/agent/session/openSessionManager';
 
 const hydratedMessage: ChatMessage = {
   id: 'm1',

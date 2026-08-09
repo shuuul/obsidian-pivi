@@ -6,8 +6,8 @@ describe('production session append recovery', () => {
       import fs from 'node:fs';
       import os from 'node:os';
       import path from 'node:path';
-      import { PiSessionStore } from '@pivi/pivi-agent-core/engine/pi/session/piSessionStore';
-      import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+      import { PiSessionStore } from '@pivi/engine-pi/session/piSessionStore';
+      import { SessionTreeStore } from '@pivi/engine-pi/session/sessionTreeStore';
 
       const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-live-append-recovery-'));
       try {

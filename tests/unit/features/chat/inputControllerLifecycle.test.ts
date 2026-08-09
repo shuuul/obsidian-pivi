@@ -1,4 +1,4 @@
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 
 import { InputController } from '@/ui/chat/controllers/InputController';
 import { ChatState } from '@/ui/chat/state/ChatState';

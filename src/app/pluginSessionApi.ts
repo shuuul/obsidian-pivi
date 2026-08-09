@@ -2,12 +2,12 @@
  * Session CRUD and lifecycle helpers used by the plugin shell.
  * Keeps session orchestration out of the thin Obsidian Plugin class body.
  */
+import type { OpenSessionState, SessionSummary } from "@pivi/agent/foundation";
+import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import type { SessionMessagePage, SessionStore } from "@pivi/agent/session";
+import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import type { DeletedSessionFileRecord } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
-import type { OpenSessionState, SessionSummary } from "@pivi/pivi-agent-core/foundation";
-import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { SessionMessagePage, SessionStore } from "@pivi/pivi-agent-core/session";
-import type { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 
 import type { PiviChatView } from "./hostContracts";
 

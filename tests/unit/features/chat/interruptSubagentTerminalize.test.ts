@@ -1,6 +1,6 @@
-import { resolveSubagentActivityStatus } from '@pivi/pivi-agent-core/foundation';
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import { TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools/toolNames';
+import { resolveSubagentActivityStatus } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/foundation';
+import { TOOL_SPAWN_AGENT } from '@pivi/agent/tools/toolNames';
 
 import { terminalizeInterruptedSubagentToolCalls } from '@/ui/chat/controllers/inputTurnPipeline';
 

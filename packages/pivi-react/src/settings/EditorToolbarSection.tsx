@@ -2,8 +2,8 @@ import type {
   EditorCommandId,
   EditorSelectionToolbarSettings,
   EditorToolbarShortcut,
-} from '@pivi/pivi-agent-core/foundation/settings';
-import { EDITOR_COMMANDS } from '@pivi/pivi-agent-core/foundation/settings';
+} from '@pivi/agent/foundation/settings';
+import { EDITOR_COMMANDS } from '@pivi/agent/foundation/settings';
 import { type CSSProperties, type PointerEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../i18n';

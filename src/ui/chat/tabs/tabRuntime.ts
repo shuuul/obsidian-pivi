@@ -1,6 +1,6 @@
-import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { OpenSessionState } from '@pivi/agent/foundation';
+import type { PiChatService } from '@pivi/agent/runtime';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 
 import { syncTabSessionExternalContext } from './tabExternalContext';
 import type { TabData } from "./types";

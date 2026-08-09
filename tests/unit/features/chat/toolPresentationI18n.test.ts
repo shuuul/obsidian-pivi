@@ -1,6 +1,6 @@
 import {
   normalizeWebSearchDisplayData,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/toolPresentation';
 import {
   TOOL_APPLY_PATCH,
   TOOL_BASH,
@@ -8,7 +8,7 @@ import {
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/toolNames';
 import {
   getToolLabel,
   getToolName,

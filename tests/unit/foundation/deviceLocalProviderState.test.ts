@@ -2,17 +2,17 @@ import {
   DEFAULT_MODEL_KEY,
   DEFAULT_PI_PROVIDER_IDS,
   DEFAULT_PIVI_SETTINGS,
-} from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+} from '@pivi/agent/foundation/settingsDefaults';
 import {
   type PiviSettings,
-} from '@pivi/pivi-agent-core/foundation/settings';
+} from '@pivi/agent/foundation/settings';
 import {
   extractDeviceLocalProviderState,
   normalizeDeviceLocalProviderState,
   projectProviderState,
   seedDefaultDeviceLocalProviderState,
   stripLocalizedFieldsFromRuntimeSettings,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalProviderState';
+} from '@pivi/agent/foundation/deviceLocalProviderState';
 
 function runtimeSettings(overrides: Partial<PiviSettings> = {}): PiviSettings {
   return {

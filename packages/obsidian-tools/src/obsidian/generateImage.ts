@@ -1,7 +1,7 @@
 import {
   TOOL_OBSIDIAN_GENERATE_IMAGE,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 
 import type { ObsidianToolDeps } from './deps';
 

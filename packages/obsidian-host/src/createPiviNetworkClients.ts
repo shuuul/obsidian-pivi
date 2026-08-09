@@ -2,8 +2,8 @@ import {
   type EgressPolicyOptions,
   type NetworkPurpose,
   OriginGrantRegistry,
-} from '@pivi/pivi-agent-core/network';
-import type { FetchCompatible, HttpClient } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/network';
+import type { FetchCompatible, HttpClient } from '@pivi/agent/ports';
 
 import { createScopedFetch, createScopedHttpClient } from './scopedHttpClient';
 

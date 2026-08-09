@@ -5,8 +5,8 @@
  * vault adapter instead of Node's fs module.
  */
 
-import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
+import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import type { FileStore } from "@pivi/agent/ports";
 import type { App } from "obsidian";
 
 const logger = new PluginLogger('ObsidianVaultFileAdapter');

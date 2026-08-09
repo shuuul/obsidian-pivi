@@ -1,20 +1,20 @@
-import { isSecretStorageAvailable } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import {
-  migrateMembershipAwareProviderSecrets,
-} from '@pivi/pivi-agent-core/engine/pi';
-import type { DeviceLocalProviderStore } from '@pivi/pivi-agent-core/foundation/deviceLocalProviderState';
+import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
+import type { DeviceLocalProviderStore } from '@pivi/agent/foundation/deviceLocalProviderState';
 import {
   DeviceLocalProviderStateVersionError,
   normalizeDeviceLocalProviderState,
   overlayDeviceLocalProviderState,
   seedDefaultDeviceLocalProviderState,
   stripLocalizedFieldsFromRuntimeSettings,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalProviderState';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation/settings';
-import { migrateMcpAuthEntriesToSecretStorage } from '@pivi/pivi-agent-core/mcp/oauth/mcpAuthEntryMigration';
-import { PIVI_MCP_CONFIG_PATH } from '@pivi/pivi-agent-core/mcp/paths';
-import type { FileStore, SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/foundation/deviceLocalProviderState';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { PiviSettings } from '@pivi/agent/foundation/settings';
+import { migrateMcpAuthEntriesToSecretStorage } from '@pivi/agent/mcp/oauth/mcpAuthEntryMigration';
+import { PIVI_MCP_CONFIG_PATH } from '@pivi/agent/mcp/paths';
+import type { FileStore, SyncSecretStore } from '@pivi/agent/ports';
+import {
+  migrateMembershipAwareProviderSecrets,
+} from '@pivi/engine-pi';
 import type { App } from 'obsidian';
 
 import {

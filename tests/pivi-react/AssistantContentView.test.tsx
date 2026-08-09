@@ -1,6 +1,6 @@
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
-import { TOOL_ASK_USER_QUESTION, TOOL_BASH, TOOL_EDIT, TOOL_READ, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ChatMessage } from '@pivi/agent/foundation';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/agent/tools/obsidianToolNames';
+import { TOOL_ASK_USER_QUESTION, TOOL_BASH, TOOL_EDIT, TOOL_READ, TOOL_WRITE } from '@pivi/agent/tools/toolNames';
 import { act, fireEvent, render } from '@testing-library/react';
 
 import { createI18n, I18nProvider } from '../../packages/pivi-react/src/i18n';

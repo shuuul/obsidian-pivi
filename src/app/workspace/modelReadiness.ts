@@ -1,14 +1,14 @@
-import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
-import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
-import type { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
-import type { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/piProviderOAuthService';
-import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/agent/auth/piProviderCredentials';
+import { deriveProviderReadinessStatus } from '@pivi/agent/auth/providerReadiness';
+import { getPiAgentSettings } from '@pivi/agent/foundation/agentSettings';
 import type {
   AppModelReadinessStatus,
   AppModelTestResult,
-} from '@pivi/pivi-agent-core/foundation/modelReadiness';
-import { getProviderIdFromModelValue } from '@pivi/pivi-agent-core/foundation/providerLogos';
+} from '@pivi/agent/foundation/modelReadiness';
+import { getProviderIdFromModelValue } from '@pivi/agent/foundation/providerLogos';
+import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/piModelRegistry';
+import type { ObsidianCredentialStore } from '@pivi/engine-pi/piProviderCredentialStore';
+import type { ProviderOAuthService } from '@pivi/engine-pi/piProviderOAuthService';
 
 import { testModelReadiness, testProviderReadiness } from './providerReadiness';
 

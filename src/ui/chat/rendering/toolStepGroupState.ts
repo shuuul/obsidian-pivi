@@ -1,4 +1,4 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ToolCallInfo } from '@pivi/agent/foundation';
 
 import type { ToolContentRenderOptions } from './ToolCallRenderer';
 

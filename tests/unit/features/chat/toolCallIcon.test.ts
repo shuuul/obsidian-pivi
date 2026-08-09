@@ -1,4 +1,4 @@
-import { TOOL_MCP, TOOL_READ } from '@pivi/pivi-agent-core/tools/toolNames';
+import { TOOL_MCP, TOOL_READ } from '@pivi/agent/tools/toolNames';
 import { setIcon } from 'obsidian';
 
 import { appendToolIcon } from '@/ui/chat/rendering/toolCallIcon';

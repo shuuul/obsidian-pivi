@@ -1,4 +1,4 @@
-import type { ChatCatalogPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatCatalogPort } from '@pivi/agent/runtime/chatPorts';
 
 import {
   createDropdownMcpToolProvider,

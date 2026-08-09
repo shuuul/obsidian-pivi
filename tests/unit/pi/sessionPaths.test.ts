@@ -8,7 +8,7 @@ import {
   getPiviSessionRoot,
   toAbsoluteSessionPath,
   toVaultRelativePath,
-} from '@pivi/pivi-agent-core/session/sessionPaths';
+} from '@pivi/agent/session/sessionPaths';
 
 describe('sessionPaths', () => {
   it('encodes absolute vault paths for pi-compatible session directories', () => {

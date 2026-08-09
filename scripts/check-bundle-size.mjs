@@ -13,7 +13,8 @@ const ROOT = join(__dirname, '..');
 const MAIN_JS = join(ROOT, 'main.js');
 const MAX_BYTES = 5 * 1024 * 1024;
 const SOFT_GROWTH_RATIO = 1.1;
-const RECORDED_BASELINE_BYTES = 2_959_314;
+// Soft regression signal only: refresh after intentional, measured production-bundle growth.
+const RECORDED_BASELINE_BYTES = 3_956_976;
 
 function formatBytes(bytes) {
   const mb = bytes / (1024 * 1024);

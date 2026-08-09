@@ -1,6 +1,6 @@
 import { shouldSyncMentionBadgesOnInput } from '@/ui/shared/mention/inlineMentionBadgeDom';
 import { revealInlineContext } from '@/ui/shared/mention/inlineContextNavigation';
-import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/agent/context/mentions';
 
 const flashSelectionHighlight = jest.fn();
 

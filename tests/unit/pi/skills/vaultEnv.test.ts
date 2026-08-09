@@ -6,7 +6,7 @@ import {
   findNpxExecutable,
   formatNpxNotFoundError,
   getSpawnEnvWithEnhancedPath,
-} from '@pivi/pivi-agent-core/skills/vault/env';
+} from '@pivi/agent/skills/vault/env';
 
 describe('vault skills environment helpers', () => {
   let tempDir: string;

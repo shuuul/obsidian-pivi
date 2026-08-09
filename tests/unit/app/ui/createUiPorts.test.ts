@@ -1,8 +1,8 @@
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
-import * as defaultSkillsRemote from '@pivi/pivi-agent-core/skills/vault/fetchDefaultVaultSkillsRemoteSha';
-import { SkillsManagementCoordinator } from '@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator';
-import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
+import type { PiviSettings } from '@pivi/agent/foundation';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
+import * as defaultSkillsRemote from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
+import { SkillsManagementCoordinator } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
+import { VaultSkillsService } from '@pivi/agent/skills/vault/vaultSkillsService';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

@@ -1,7 +1,7 @@
-import type { OpenSessionState, SessionSummary } from '@pivi/pivi-agent-core/foundation';
-import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
-import type { EditorSelectionToolbarSettings } from '@pivi/pivi-agent-core/foundation/settings';
-import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
+import type { OpenSessionState, SessionSummary } from '@pivi/agent/foundation';
+import { getPiAgentSettings } from '@pivi/agent/foundation/agentSettings';
+import type { EditorSelectionToolbarSettings } from '@pivi/agent/foundation/settings';
+import { getSubagentRuntimeSettingsFromBag } from '@pivi/agent/foundation/settings';
 import {
   getObsidianToolsSettingsFromBag,
   normalizeEditorSelectionToolbarSettings,
@@ -9,22 +9,22 @@ import {
   resolveWebSearchToolsSettings,
   WEB_PROVIDER_CAPABILITIES,
   WEB_PROVIDER_IDS,
-} from '@pivi/pivi-agent-core/foundation/settings';
+} from '@pivi/agent/foundation/settings';
 import {
   getEnvironmentReviewKeysForScope,
   getRuntimeEnvironmentText,
-} from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
-import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
-import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
-import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
+} from '@pivi/agent/foundation/settingsAgentEnvironment';
+import { parseEnvironmentVariables } from '@pivi/agent/foundation/settingsEnv';
+import type { CapabilityApprovalPort } from '@pivi/agent/ports';
+import type { AuxQueryRunner } from '@pivi/agent/runtime/auxQueryRunner';
 import type {
   ChatPorts,
   ChatSettingsSnapshot,
-} from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import type { SessionMessagePage } from '@pivi/pivi-agent-core/session';
-import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/pivi-agent-core/tools';
-import type { PiviManagementApprovalPort } from '@pivi/pivi-agent-core/tools/piviManagement';
+} from '@pivi/agent/runtime/chatPorts';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import type { SessionMessagePage } from '@pivi/agent/session';
+import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/agent/tools';
+import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {
   SettingsGeneralSnapshot,

@@ -1,4 +1,4 @@
-import type { ChatIconSvg } from '@pivi/pivi-agent-core/foundation';
+import type { ChatIconSvg } from '@pivi/agent/foundation';
 
 export interface ChatTabSnapshotItem {
   readonly id: string;

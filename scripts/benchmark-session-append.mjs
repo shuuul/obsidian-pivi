@@ -14,10 +14,10 @@ import { performance } from 'node:perf_hooks';
 
 import {
   ensureSessionJsonlIndex,
-} from '../packages/pivi-agent-core/src/engine/pi/session/sessionJsonlIndex.ts';
+} from '../packages/engine-pi/src/session/sessionJsonlIndex.ts';
 import {
   SessionTreeStore,
-} from '../packages/pivi-agent-core/src/engine/pi/session/sessionTreeStore.ts';
+} from '../packages/engine-pi/src/session/sessionTreeStore.ts';
 
 const FIXTURE_NAME = 'perf-002-5k-messages.jsonl';
 const TRIALS = 5;

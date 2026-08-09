@@ -2,7 +2,7 @@ import {
   textResult,
   TOOL_OBSIDIAN_DELETE,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 
 import type { ObsidianToolDeps } from './deps';
 

@@ -1,4 +1,4 @@
-import { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
+import { SubagentConcurrencyLimiter } from "@pivi/engine-pi/subagentConcurrencyLimiter";
 
 describe("SubagentConcurrencyLimiter", () => {
   it("removes an aborted queued admission without consuming the next slot", async () => {

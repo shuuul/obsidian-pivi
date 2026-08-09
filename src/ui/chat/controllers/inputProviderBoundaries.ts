@@ -1,4 +1,4 @@
-import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/foundation';
 
 import type { InputControllerDeps } from './InputController';
 import {

@@ -1,5 +1,5 @@
-import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+import type { ChatUIOption } from '@pivi/agent/foundation/chatUi';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
 
 import type { PiviPluginWorkspace, PiviSettingsHost, PiviUiFacades } from '@/app/hostContracts';
 import { createSettingsModelsPort } from '@/app/ui/createSettingsModelsPort';

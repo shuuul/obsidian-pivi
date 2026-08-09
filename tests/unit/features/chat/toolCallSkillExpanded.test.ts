@@ -1,4 +1,4 @@
-import { TOOL_SKILL } from '@pivi/pivi-agent-core/tools/toolNames';
+import { TOOL_SKILL } from '@pivi/agent/tools/toolNames';
 import { renderExpandedContent } from '@/ui/chat/rendering/toolCallExpandedDispatcher';
 
 class FakeElement {

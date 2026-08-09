@@ -2,7 +2,7 @@ import {
   getToolStepPhraseModel,
   resolveToolPresentation,
   type ToolPresentationTitle,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/toolPresentation';
 
 import { t } from '@/app/i18n';
 

@@ -2,16 +2,16 @@ const mockResolvePiModel = jest.fn();
 const mockResolvePiProviderAuth = jest.fn();
 const mockStreamSimple = jest.fn();
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/piModelEnv', () => ({
+jest.mock('@pivi/engine-pi/piModelEnv', () => ({
   resolvePiModel: (...args: unknown[]) => mockResolvePiModel(...args),
   resolvePiProviderAuth: (...args: unknown[]) => mockResolvePiProviderAuth(...args),
 }));
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/piAiModels', () => ({
+jest.mock('@pivi/engine-pi/piAiModels', () => ({
   streamPiAiModelsSimple: (...args: unknown[]) => mockStreamSimple(...args),
 }));
 
-import { sampleCompactionNote } from '../../../../packages/pivi-agent-core/src/engine/pi/piCompactionSampler';
+import { sampleCompactionNote } from '../../../../packages/engine-pi/src/piCompactionSampler';
 
 const mockModel = {
   id: 'mock-model',

@@ -35,7 +35,7 @@ npm run test -- -t "test name"
 
 `scripts/run-jest.js` supplies the Node local-storage file and repository setup. Direct Jest invocation can produce misleading failures.
 
-`check:architecture` also guards the hardened tool ownership seams: core-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and the existing package dependency rules prevent core from depending on concrete host/tool adapters. `check:package-readmes` keeps package API claims aligned with those exports.
+`check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and the existing package dependency rules prevent `@pivi/agent` from depending on `@pivi/engine-pi` or concrete host/tool adapters. `check:package-readmes` keeps package API claims aligned with those exports.
 
 `audit:sessions` is read-only. It separates `perf-*` fixtures from real behavior and reports aggregate tool errors, Bash policy retries, malformed JSONL, oversized results/sessions, and message-UI overlay amplification. Add `--json` for machine-readable output. Reports intentionally omit user text, tool arguments, target entry IDs, and JSONL content; findings are diagnostic and do not cause a failing exit status.
 

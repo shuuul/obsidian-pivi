@@ -2,7 +2,7 @@ import {
   configurePiAiModels,
   piAiModels,
   streamPiAiModelsSimple,
-} from '../../../../packages/pivi-agent-core/src/engine/pi/piAiModels';
+} from '../../../../packages/engine-pi/src/piAiModels';
 
 describe('streamPiAiModelsSimple', () => {
   const streamSimple = jest.fn().mockReturnValue({ result: async () => ({}) });

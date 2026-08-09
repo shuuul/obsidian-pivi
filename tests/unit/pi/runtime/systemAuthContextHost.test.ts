@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import { createSystemAuthContextHost } from '@pivi/obsidian-host/authContextHost';
-import { ObsidianAuthContext } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+import { ObsidianAuthContext } from '@pivi/engine-pi/piProviderCredentialStore';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 const envKey = 'PIVI_SYSTEM_AUTH_CONTEXT_TEST_KEY';

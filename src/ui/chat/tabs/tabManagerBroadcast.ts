@@ -1,5 +1,5 @@
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { PiChatService } from '@pivi/agent/runtime';
 
 import type { TabData } from './types';
 

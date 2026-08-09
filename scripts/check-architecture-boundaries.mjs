@@ -22,6 +22,7 @@ const sourceRoots = ['packages', 'src'];
 const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
 const srcAppDir = path.join(rootDir, 'src', 'app');
 const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
+const srcMainFile = path.join(rootDir, 'src', 'main.ts');
 const imperativeChatBoundaryFiles = [
   'imperativeChatAdapter.ts',
   'imperativeChatViewHandle.ts',
@@ -40,12 +41,15 @@ const retiredReactPackagePattern = new RegExp(
   '^@pivi/' + ['obsidian', '(?:ui|react)'].join('-') + '(?:/|$)',
 );
 
+const retiredAgentCorePackagePattern = /^@pivi\/pivi-agent-core(?:\/|$)/;
+const enginePiPackagePattern = /^@pivi\/engine-pi(?:\/|$)/;
+
 const fileBoundaryRules = [
   {
     name: 'src/app/hostContracts stays structural and implementation-free',
     file: 'src/app/hostContracts.ts',
     forbidden: [
-      /^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/,
+      enginePiPackagePattern,
       /^@\/app\/workspace(?:\/|$)/,
     ],
     resolvedForbiddenRoots: [srcAppWorkspaceDir],
@@ -69,15 +73,25 @@ const boundaryRules = [
     forbidden: [retiredReactPackagePattern],
   },
   {
+    name: 'src does not reference the retired @pivi/pivi-agent-core package',
+    root: 'src',
+    forbidden: [retiredAgentCorePackagePattern],
+  },
+  {
+    name: 'packages do not reference the retired @pivi/pivi-agent-core package',
+    root: 'packages',
+    forbidden: [retiredAgentCorePackagePattern],
+  },
+  {
     name: '@pivi/pivi-react stays presentation-only and product-neutral',
     root: 'packages/pivi-react',
     forbidden: [
       /^@\//,
       /^src(?:\/|$)/,
       /^@earendil-works\//,
-      /^@pivi\/pivi-agent-core$/,
-      /^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/,
-      /^@pivi\/pivi-agent-core\/runtime(?:$|\/chatPorts(?:\/|$))/,
+      /^@pivi\/agent$/,
+      enginePiPackagePattern,
+      /^@pivi\/agent\/runtime(?:$|\/chatPorts(?:\/|$))/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
       /^obsidian(?:\/|$)/,
@@ -88,8 +102,8 @@ const boundaryRules = [
     ],
   },
   {
-    name: '@pivi/pivi-agent-core/foundation stays runtime and SDK free',
-    root: 'packages/pivi-agent-core/src/foundation',
+    name: '@pivi/agent/foundation stays runtime and SDK free',
+    root: 'packages/agent/src/foundation',
     forbidden: [
       /^obsidian$/,
       /^electron$/,
@@ -98,19 +112,22 @@ const boundaryRules = [
       /^node:path(?:\/|$)/,
       /^path(?:\/|$)/,
       /^@earendil-works\//,
+      enginePiPackagePattern,
     ],
   },
   {
-    name: '@pivi/pivi-agent-core/tools stays protocol-only',
-    root: 'packages/pivi-agent-core/src/tools',
-    forbidden: [/^obsidian$/, /^electron$/, /^@earendil-works\//],
+    name: '@pivi/agent/tools stays protocol-only',
+    root: 'packages/agent/src/tools',
+    forbidden: [/^obsidian$/, /^electron$/, /^@earendil-works\//, enginePiPackagePattern],
   },
   {
-    name: '@pivi/pivi-agent-core stays host-neutral',
-    root: 'packages/pivi-agent-core',
+    name: '@pivi/agent stays host-neutral',
+    root: 'packages/agent',
     forbidden: [
       /^obsidian$/,
       /^electron$/,
+      /^@earendil-works\//,
+      enginePiPackagePattern,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
       /^@pivi\/pivi-react(?:\/|$)/,
@@ -122,52 +139,68 @@ const boundaryRules = [
     ],
   },
   {
-    name: '@pivi/pivi-agent-core auth has no raw Pi SDK imports',
-    root: 'packages/pivi-agent-core/src/auth',
-    forbidden: [/^@earendil-works\//],
+    name: '@pivi/engine-pi stays host-neutral and product-neutral',
+    root: 'packages/engine-pi',
+    forbidden: [
+      /^obsidian$/,
+      /^electron$/,
+      /^@pivi\/obsidian-host(?:\/|$)/,
+      /^@pivi\/obsidian-tools(?:\/|$)/,
+      /^@pivi\/pivi-react(?:\/|$)/,
+      /^react(?:\/|$)/,
+      /^react-dom(?:\/|$)/,
+      /^@\/app(?:\/|$)/,
+      /^@\/ui(?:\/|$)/,
+    ],
   },
   {
-    name: '@pivi/pivi-agent-core session has no direct filesystem writes',
-    root: 'packages/pivi-agent-core/src/session',
+    name: '@pivi/agent auth has no raw Pi SDK imports',
+    root: 'packages/agent/src/auth',
+    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
+  },
+  {
+    name: '@pivi/agent session has no direct filesystem writes',
+    root: 'packages/agent/src/session',
     forbidden: [/^node:fs(?:\/|$)/, /^fs(?:\/|$)/],
   },
   {
-    name: '@pivi/pivi-agent-core context has no raw Pi SDK imports',
-    root: 'packages/pivi-agent-core/src/context',
-    forbidden: [/^@earendil-works\//],
+    name: '@pivi/agent context has no raw Pi SDK imports',
+    root: 'packages/agent/src/context',
+    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
   },
   {
-    name: '@pivi/pivi-agent-core mcp has no raw Pi SDK imports',
-    root: 'packages/pivi-agent-core/src/mcp',
-    forbidden: [/^@earendil-works\//],
+    name: '@pivi/agent mcp has no raw Pi SDK imports',
+    root: 'packages/agent/src/mcp',
+    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
   },
   {
-    name: '@pivi/pivi-agent-core plugins has no raw Pi SDK imports',
-    root: 'packages/pivi-agent-core/src/plugins',
-    forbidden: [/^@earendil-works\//],
+    name: '@pivi/agent plugins has no raw Pi SDK imports',
+    root: 'packages/agent/src/plugins',
+    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
   },
   {
-    name: '@pivi/pivi-agent-core prompt has no raw Pi SDK imports',
-    root: 'packages/pivi-agent-core/src/prompt',
-    forbidden: [/^@earendil-works\//],
+    name: '@pivi/agent prompt has no raw Pi SDK imports',
+    root: 'packages/agent/src/prompt',
+    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
   },
   {
-    name: '@pivi/pivi-agent-core runtime has no raw Pi SDK imports',
-    root: 'packages/pivi-agent-core/src/runtime',
-    forbidden: [/^@earendil-works\//],
+    name: '@pivi/agent runtime has no raw Pi SDK imports',
+    root: 'packages/agent/src/runtime',
+    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
   },
   {
-    name: '@pivi/pivi-agent-core session has no raw Pi SDK imports',
-    root: 'packages/pivi-agent-core/src/session',
-    forbidden: [/^@earendil-works\//],
+    name: '@pivi/agent session has no raw Pi SDK imports',
+    root: 'packages/agent/src/session',
+    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
   },
   {
-    name: '@pivi/pivi-agent-core skills has no host or process SDK imports',
-    root: 'packages/pivi-agent-core/src/skills',
+    name: '@pivi/agent skills has no host or process SDK imports',
+    root: 'packages/agent/src/skills',
     forbidden: [
       /^obsidian$/,
       /^electron$/,
       /^@earendil-works\//,
+      enginePiPackagePattern,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
       /^@\/app(?:\/|$)/,
@@ -177,8 +210,8 @@ const boundaryRules = [
     ],
   },
   {
-    name: '@pivi/pivi-agent-core ports stay dependency-free',
-    root: 'packages/pivi-agent-core/src/ports',
+    name: '@pivi/agent ports stay dependency-free',
+    root: 'packages/agent/src/ports',
     forbidden: [
       /^@pivi\//,
       /^@earendil-works\//,
@@ -201,7 +234,14 @@ const boundaryRules = [
   {
     name: 'src/ui does not import Pi engine implementations',
     root: 'src/ui',
-    forbidden: [/^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/],
+    forbidden: [enginePiPackagePattern],
+  },
+  {
+    name: 'only src/app and src/main.ts import @pivi/engine-pi',
+    root: 'src',
+    forbidden: [enginePiPackagePattern],
+    // Composition root (src/main.ts) and src/app may reach the Pi engine adapter.
+    excludedRoots: [srcAppDir, srcMainFile],
   },
   {
     name: 'src/ui uses only approved @pivi/pivi-react presentation subpaths',
@@ -239,7 +279,8 @@ const boundaryRules = [
     root: 'packages/obsidian-tools',
     forbidden: [
       /^@earendil-works\//,
-      /^@pivi\/pivi-agent-core\/engine(?:\/pi)?(?:\/|$)/,
+      enginePiPackagePattern,
+      /^@pivi\/agent\/engine(?:\/|$)/,
       obsidianReactPackagePattern,
     ],
   },
@@ -247,9 +288,9 @@ const boundaryRules = [
     name: '@pivi/obsidian-host stays host-only',
     root: 'packages/obsidian-host',
     forbidden: [
-      /^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/,
-      /^@pivi\/pivi-agent-core\/skills(?:\/|$)/,
-      /^@pivi\/pivi-agent-core\/tools(?:\/|$)/,
+      enginePiPackagePattern,
+      /^@pivi\/agent\/skills(?:\/|$)/,
+      /^@pivi\/agent\/tools(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
       obsidianReactPackagePattern,
     ],

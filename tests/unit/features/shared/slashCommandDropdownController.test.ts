@@ -1,5 +1,5 @@
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
-import { NEW_SESSION_COMMAND_ID } from '@pivi/pivi-agent-core/skills/commands/slashCommandIds';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
+import { NEW_SESSION_COMMAND_ID } from '@pivi/agent/skills/commands/slashCommandIds';
 import { setIcon } from 'obsidian';
 
 import { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';

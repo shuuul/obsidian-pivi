@@ -3,12 +3,12 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { ExternalFileApi } from '@pivi/obsidian-host/externalFileApi';
-import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
-import type { CapabilityApprovalResult } from '@pivi/pivi-agent-core/ports';
+import type { CapabilityApprovalPort } from '@pivi/agent/ports';
+import type { CapabilityApprovalResult } from '@pivi/agent/ports';
 import {
   createCapabilityApprovalPort,
   CapabilitySessionGrants,
-} from '@pivi/pivi-agent-core/runtime/capabilitySessionGrants';
+} from '@pivi/agent/runtime/capabilitySessionGrants';
 import {
   ensureBashCommandAllowed,
   ensureExternalDirectoryAccess,

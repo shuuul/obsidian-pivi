@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/pivi-agent-core/tools` to Obsidian vault operations, CLI-backed gaps, Obsidian file-history recovery, and injected image generation that persists outputs as Obsidian attachments. The host-neutral `pivi_sessions` tool and recovery port belong to core and are composed by the app's shared base provider.
+`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/agent/tools` to Obsidian vault operations, CLI-backed gaps, Obsidian file-history recovery, and injected image generation that persists outputs as Obsidian attachments. The host-neutral `pivi_sessions` tool and recovery port belong to `@pivi/agent` and are composed by the app's shared base provider.
 
 ## Public entrypoints
 
@@ -33,7 +33,7 @@
 ## Boundaries
 
 - Tool implementations use `@pivi/obsidian-host` APIs and the Obsidian CLI transport where public API coverage is unavailable.
-- Do not import `@pivi/pivi-agent-core/engine/pi` or raw `@earendil-works/*` SDKs; consume host-neutral core contracts only (enforced by ESLint and `check:architecture`).
+- Do not import `@pivi/engine-pi` or raw `@earendil-works/*` SDKs; consume host-neutral `@pivi/agent` contracts only (enforced by ESLint and `check:architecture`).
 - Image generation tools depend only on an injected generator port; Pi/Codex provider wiring stays in app/Pi composition.
 - Do not import UI renderers. Return structured/text tool results and let UI packages render them.
 - Mutating vault operations execute directly; optional tools are setting-gated: `allowCommand`, `allowBash` plus `bashAllowlist`, `allowEval`, and `allowExternalRead` plus allowed external directory roots for external filesystem tools.
@@ -43,7 +43,7 @@
 ## Tool display contract
 
 - Obsidian tool factories in `packages/obsidian-tools/src/obsidian/*` own `name`, `label`, `description`, parameters, optional detailed `promptUsage`, execution, and result shape. Prompt guidance consumes these actual registered ToolSpecs; never duplicate argument or behavior contracts in a central tool-name switch.
-- Any new Obsidian tool constant must be added to `packages/pivi-agent-core/src/tools/obsidianToolNames.ts`, and its complete Chat presentation entry must be added once to `packages/pivi-agent-core/src/tools/toolPresentation.ts`. That canonical entry owns kind, icon, translation key, visibility/grouping, and pure summary behavior; tests must cover the descriptor and both renderer surfaces.
+- Any new Obsidian tool constant must be added to `packages/agent/src/tools/obsidianToolNames.ts`, and its complete Chat presentation entry must be added once to `packages/agent/src/tools/toolPresentation.ts`. That canonical entry owns kind, icon, translation key, visibility/grouping, and pure summary behavior; tests must cover the descriptor and both renderer surfaces.
 - Chat UI renderers must use `appendToolIcon`/`getToolIcon`; they must not hardcode Obsidian tool icon names or add per-tool CSS sizing.
 - Tool-call alignment is class-based: standard 16px `.pivi-tool-icon`, 14px only through `.pivi-tool-icon--small`, and no ad hoc `margin-top`/`transform` nudges for tool icons.
 - Vault skills such as `defuddle` are not `@pivi/obsidian-tools` tools; every skill/tool call rendered in a nested/subshell tool list must use the shared `TOOL_SKILL`/`getToolIcon`/`appendToolIcon` contract and the same `.pivi-tool-icon` or `.pivi-tool-icon--small` class standard as adjacent tool rows.

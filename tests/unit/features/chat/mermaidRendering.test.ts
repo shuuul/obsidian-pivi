@@ -1,4 +1,4 @@
-import { parseMessageMentions } from '@pivi/pivi-agent-core/context/mentions';
+import { parseMessageMentions } from '@pivi/agent/context/mentions';
 
 import {
   buildMentionBadgeContext,

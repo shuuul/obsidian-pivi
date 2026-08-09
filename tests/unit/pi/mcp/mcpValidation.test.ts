@@ -5,7 +5,7 @@ import {
   McpValidationError,
   setMcpServerMapEntry,
   validateMcpRemoteUrl,
-} from '@pivi/pivi-agent-core/mcp/mcpValidation';
+} from '@pivi/agent/mcp/mcpValidation';
 
 describe('mcpValidation', () => {
   it('rejects reserved server names', () => {

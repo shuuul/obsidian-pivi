@@ -2,8 +2,8 @@ import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
-} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
-import { parseObsidianSearchHits } from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/obsidianToolNames';
+import { parseObsidianSearchHits } from '@pivi/agent/tools/toolPresentation';
 
 function parseObsidianListEntries(result: string): unknown[] | null {
   try {

@@ -3,7 +3,7 @@ import * as https from 'https';
 import * as net from 'net';
 import { gzipSync } from 'zlib';
 
-import { OriginGrantRegistry } from '@pivi/pivi-agent-core/network';
+import { OriginGrantRegistry } from '@pivi/agent/network';
 import { createScopedFetch } from '@pivi/obsidian-host/scopedHttpClient';
 
 async function listen(

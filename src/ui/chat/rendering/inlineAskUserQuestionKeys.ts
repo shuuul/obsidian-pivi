@@ -1,4 +1,4 @@
-import type { AskUserQuestionItem } from '@pivi/pivi-agent-core/foundation/tools';
+import type { AskUserQuestionItem } from '@pivi/agent/foundation/tools';
 
 import { updateFocusIndicator } from './inlineAskUserQuestionRender';
 import type { InlineAskUserQuestionHost } from './inlineAskUserQuestionTypes';

@@ -1,1 +1,1 @@
-export * from '@pivi/pivi-agent-core/auth/providerSecretStorage';
+export * from '@pivi/agent/auth/providerSecretStorage';

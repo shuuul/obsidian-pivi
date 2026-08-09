@@ -1,11 +1,11 @@
 import {
   loadAgentsMdChain,
   loadContextLayers,
-} from '@pivi/pivi-agent-core/context/loadContextLayers';
+} from '@pivi/agent/context/loadContextLayers';
 import {
   loadRuntimeVaultSkills,
   loadVaultSkills,
-} from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
+} from '@pivi/agent/skills/vault/loadVaultSkills';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';

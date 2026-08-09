@@ -2,7 +2,7 @@ import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
-} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+} from '@pivi/agent/tools/obsidianToolNames';
 
 import { isObsidianToolCompactResult } from '@/ui/chat/rendering/obsidianToolResultPresentation';
 

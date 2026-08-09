@@ -1,4 +1,4 @@
-import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 
 import { getActiveWindow } from "@/ui/shared/dom";
 

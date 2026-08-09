@@ -1,3 +1,7 @@
+import type { ObsidianToolsSettings } from '@pivi/agent/foundation';
+import type { ReadAllowanceReservation } from '@pivi/agent/foundation/usage';
+import type { CapabilityApprovalPort } from '@pivi/agent/ports';
+import type { ProcessRunner } from '@pivi/agent/ports';
 import type {
   ExternalFileEntry,
   ExternalFileReadResult,
@@ -5,10 +9,6 @@ import type {
   ObsidianCliTransport,
   ObsidianVaultApi,
 } from '@pivi/obsidian-host';
-import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
-import type { ReadAllowanceReservation } from '@pivi/pivi-agent-core/foundation/usage';
-import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
-import type { ProcessRunner } from '@pivi/pivi-agent-core/ports';
 import type { App } from 'obsidian';
 
 

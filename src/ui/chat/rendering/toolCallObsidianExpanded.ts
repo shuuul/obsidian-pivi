@@ -1,4 +1,4 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ToolCallInfo } from '@pivi/agent/foundation';
 import {
   TOOL_OBSIDIAN_ATTACHMENT,
   TOOL_OBSIDIAN_COMMAND,
@@ -18,12 +18,12 @@ import {
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
-} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
-import { TOOL_APPLY_PATCH, TOOL_BASH, TOOL_WEB_SEARCH } from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/obsidianToolNames';
+import { TOOL_APPLY_PATCH, TOOL_BASH, TOOL_WEB_SEARCH } from '@pivi/agent/tools/toolNames';
 import {
   getToolPresentationDescriptor,
   parseObsidianSearchHits,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/toolPresentation';
 
 import { isObsidianToolCompactResult } from './obsidianToolResultPresentation';
 import {

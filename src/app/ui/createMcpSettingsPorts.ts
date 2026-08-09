@@ -1,10 +1,10 @@
-import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 import {
   getMcpServerUrl,
   type ManagedMcpServer,
   supportsMcpOAuth,
-} from '@pivi/pivi-agent-core/mcp/types';
-import { grantPrivateOrigins } from '@pivi/pivi-agent-core/network';
+} from '@pivi/agent/mcp/types';
+import { grantPrivateOrigins } from '@pivi/agent/network';
+import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 import type { SettingsComplexPorts } from '@pivi/pivi-react/ports';
 
 import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';

@@ -1,12 +1,12 @@
 import {
   formatMcpArgsLines,
   parseMcpArgsLines,
-} from '@pivi/pivi-agent-core/mcp/mcpUtils';
+} from '@pivi/agent/mcp/mcpUtils';
 import {
   assertValidMcpServerName,
   validateMcpRemoteUrl,
-} from '@pivi/pivi-agent-core/mcp/mcpValidation';
-import type { McpStdioServerConfig } from '@pivi/pivi-agent-core/mcp/types';
+} from '@pivi/agent/mcp/mcpValidation';
+import type { McpStdioServerConfig } from '@pivi/agent/mcp/types';
 
 function buildStdioConfig(
   executable: string,

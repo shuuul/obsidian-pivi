@@ -1,4 +1,4 @@
-import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
+import { createInlineContextToken } from '@pivi/agent/context/inlineContext';
 import {
   TextDecoder as NodeTextDecoder,
   TextEncoder as NodeTextEncoder,

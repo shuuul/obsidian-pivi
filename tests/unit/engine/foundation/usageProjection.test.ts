@@ -1,4 +1,4 @@
-import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import type { UsageInfo } from '@pivi/agent/foundation';
 import {
   calculateContextEnvelope,
   calculateCompactionRemainingTokens,
@@ -8,7 +8,7 @@ import {
   isContextOverLimit,
   READ_TOOL_MAX_CHARS_CAP,
   recalculateUsageForModel,
-} from '@pivi/pivi-agent-core/foundation/usage';
+} from '@pivi/agent/foundation/usage';
 
 const baseUsage: UsageInfo = {
   contextTokens: 980,

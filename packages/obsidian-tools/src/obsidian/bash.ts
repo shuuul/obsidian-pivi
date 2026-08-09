@@ -1,9 +1,9 @@
-import { getVaultPath } from '@pivi/obsidian-host/path';
 import {
   textResult,
   TOOL_OBSIDIAN_BASH,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
+import { getVaultPath } from '@pivi/obsidian-host/path';
 
 import {
   buildEffectiveBashAllowlist,

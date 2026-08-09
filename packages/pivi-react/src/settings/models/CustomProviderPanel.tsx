@@ -1,7 +1,7 @@
 import {
   type CustomProviderConfig,
   isLocalCustomProviderKind,
-} from '@pivi/pivi-agent-core/foundation/customProviders';
+} from '@pivi/agent/foundation/customProviders';
 import { useState } from 'react';
 
 import { useT } from '../../i18n';

@@ -1,10 +1,10 @@
-import { isSecretStorageAvailable } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import type { OpenSessionState, PiviSettings } from '@pivi/pivi-agent-core/foundation';
+import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
+import type { OpenSessionState, PiviSettings } from '@pivi/agent/foundation';
 import type {
   DeviceLocalEnvironmentStore,
   EnvironmentEntryDraft,
   EnvironmentUiEntry,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
+} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
 import {
   buildEntriesFromLegacyText,
   clearObsoleteEnvironmentSecrets,
@@ -14,13 +14,13 @@ import {
   projectEnvironmentOntoSettings,
   stageEnvironmentSecrets,
   toEnvironmentUiEntries,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
-import type { EnvironmentScope } from '@pivi/pivi-agent-core/foundation/settings';
+} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import type { EnvironmentScope } from '@pivi/agent/foundation/settings';
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
-} from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/foundation/settingsAgentEnvironment';
+import type { SyncSecretStore } from '@pivi/agent/ports';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import {

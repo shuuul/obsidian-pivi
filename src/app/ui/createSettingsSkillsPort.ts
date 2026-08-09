@@ -2,11 +2,11 @@ import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
   DEFAULT_VAULT_SKILLS_SLUG,
   isDefaultVaultSkillFolder,
-} from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
-import { fetchDefaultVaultSkillsRemoteSha } from '@pivi/pivi-agent-core/skills/vault/fetchDefaultVaultSkillsRemoteSha';
-import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
-import type { SkillsManagementCommitResult } from '@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator';
-import type { SkillsManagementCoordinator } from '@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator';
+} from '@pivi/agent/skills/vault/defaultVaultSkills';
+import { fetchDefaultVaultSkillsRemoteSha } from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
+import { notifyVaultSkillsChanged } from '@pivi/agent/skills/vault/notifyVaultSkillsChanged';
+import type { SkillsManagementCommitResult } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
+import type { SkillsManagementCoordinator } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 import type { SettingsComplexPorts } from '@pivi/pivi-react/ports';
 
 import type { PiviSettingsHost } from '@/app/hostContracts';

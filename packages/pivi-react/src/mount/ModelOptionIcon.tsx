@@ -1,4 +1,4 @@
-import type { ChatIconSvg, ChatSvgChild } from '@pivi/pivi-agent-core/foundation';
+import type { ChatIconSvg, ChatSvgChild } from '@pivi/agent/foundation';
 import type { CSSProperties } from 'react';
 
 import { LucideIcon, PROVIDER_LOGOS, providerFallbackIcon } from '../icons/ProviderLogo';

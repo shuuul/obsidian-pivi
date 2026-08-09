@@ -7,9 +7,9 @@ import {
   publishValidatedSkillTree,
   SkillStageValidationError,
   validateStagedSkillTree,
-} from '@pivi/pivi-agent-core/skills/vault/skillStagePublish';
-import { resolvePinnedSkillsCli } from '@pivi/pivi-agent-core/skills/vault/resolvePinnedSkillsCli';
-import { PINNED_SKILLS_CLI_VERSION } from '@pivi/pivi-agent-core/skills/vault/skillsCliConstants';
+} from '@pivi/agent/skills/vault/skillStagePublish';
+import { resolvePinnedSkillsCli } from '@pivi/agent/skills/vault/resolvePinnedSkillsCli';
+import { PINNED_SKILLS_CLI_VERSION } from '@pivi/agent/skills/vault/skillsCliConstants';
 
 describe('skills staged publish', () => {
   it('rejects symlinks and publishes atomically only after validation', () => {

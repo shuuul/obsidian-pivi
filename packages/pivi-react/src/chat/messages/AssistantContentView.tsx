@@ -1,4 +1,4 @@
-import type { ChatMessage, ContentBlock, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage, ContentBlock, SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
 import { memo, type ReactElement, useEffect, useRef } from 'react';
 
 import { useT } from '../../i18n';

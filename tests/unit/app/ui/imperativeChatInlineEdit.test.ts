@@ -1,4 +1,4 @@
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 
 import { submitInlineEditTurn } from '@/app/ui/imperativeChatInlineEdit';
 import type { TabManager } from '@/ui/chat/tabs/TabManager';

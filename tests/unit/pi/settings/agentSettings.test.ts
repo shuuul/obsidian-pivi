@@ -2,17 +2,17 @@ import {
   DEFAULT_MODEL_KEY,
   DEFAULT_PI_PROVIDER_IDS,
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
-} from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+} from '@pivi/agent/foundation/settingsDefaults';
 import {
   getObsidianToolsSettingsFromBag,
   resolveObsidianToolsSettings,
-} from '@pivi/pivi-agent-core/foundation/settings';
-import { isValidModelKey } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
+} from '@pivi/agent/foundation/settings';
+import { isValidModelKey } from '@pivi/agent/foundation/settingsModelKey';
 import {
   getPiAgentSettings,
   normalizePiAgentSettingsRecord,
   updatePiAgentSettings,
-} from '@pivi/pivi-agent-core/foundation/agentSettings';
+} from '@pivi/agent/foundation/agentSettings';
 
 
 function isPersistedAgentSettings(

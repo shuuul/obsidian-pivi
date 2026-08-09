@@ -4,7 +4,7 @@ import {
   redactUrl,
   resolveRedirectUrl,
   isSchemeDowngrade,
-} from '@pivi/pivi-agent-core/network';
+} from '@pivi/agent/network';
 
 describe('urlPolicy', () => {
   it('normalizes http(s) URLs and rejects credentials and other schemes', () => {

@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import type { ManagedMcpServer, McpAuthStatus } from '@pivi/pivi-agent-core/mcp/types';
+import type { ManagedMcpServer, McpAuthStatus } from '@pivi/agent/mcp/types';
 import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';

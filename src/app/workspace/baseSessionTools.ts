@@ -1,9 +1,9 @@
-import type { SessionRecoveryPort } from '@pivi/pivi-agent-core/session';
+import type { SessionRecoveryPort } from '@pivi/agent/session';
 import {
   createSessionsTool,
   TOOL_PIVI_SESSIONS,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 
 /** Compose host-neutral session tooling into the shared/base Agent inventory. */
 export function createBaseSessionTools(

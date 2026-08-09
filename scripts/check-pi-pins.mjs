@@ -2,7 +2,7 @@
  * Fail when declared or locked Pi package versions are ranged or desynchronized.
  *
  * The three @earendil-works/pi-* packages must share one exact version across
- * root package.json, packages/pivi-agent-core/package.json, package-lock.json,
+ * root package.json, packages/engine-pi/package.json, package-lock.json,
  * and the engine shim VERSION constant.
  */
 
@@ -29,16 +29,14 @@ function isExactVersion(value) {
 function collectErrors() {
   const errors = [];
   const rootPackage = readJson(path.join(rootDir, 'package.json'));
-  const corePackage = readJson(path.join(rootDir, 'packages', 'pivi-agent-core', 'package.json'));
+  const enginePackage = readJson(path.join(rootDir, 'packages', 'engine-pi', 'package.json'));
   const lockfile = readJson(path.join(rootDir, 'package-lock.json'));
   const shimSource = fs.readFileSync(
     path.join(
       rootDir,
       'packages',
-      'pivi-agent-core',
+      'engine-pi',
       'src',
-      'engine',
-      'pi',
       'shims',
       'piCodingAgentConfig.ts',
     ),
@@ -52,14 +50,14 @@ function collectErrors() {
   const shimVersion = shimMatch[1];
 
   const rootVersions = [];
-  const coreVersions = [];
+  const engineVersions = [];
   const rootLockDeps = lockfile.packages?.['']?.dependencies ?? {};
   const workspaceLockDeps =
-    lockfile.packages?.['packages/pivi-agent-core']?.dependencies ?? {};
+    lockfile.packages?.['packages/engine-pi']?.dependencies ?? {};
 
   for (const name of PI_PACKAGES) {
     const rootVersion = rootPackage.dependencies?.[name];
-    const coreVersion = corePackage.dependencies?.[name];
+    const engineVersion = enginePackage.dependencies?.[name];
     if (!isExactVersion(rootVersion)) {
       errors.push(
         `Root package.json must pin ${name} to an exact version; found ${JSON.stringify(rootVersion)}`,
@@ -67,12 +65,12 @@ function collectErrors() {
     } else {
       rootVersions.push(rootVersion);
     }
-    if (!isExactVersion(coreVersion)) {
+    if (!isExactVersion(engineVersion)) {
       errors.push(
-        `packages/pivi-agent-core/package.json must pin ${name} to an exact version; found ${JSON.stringify(coreVersion)}`,
+        `packages/engine-pi/package.json must pin ${name} to an exact version; found ${JSON.stringify(engineVersion)}`,
       );
     } else {
-      coreVersions.push(coreVersion);
+      engineVersions.push(engineVersion);
     }
 
     const declaredRootLock = rootLockDeps[name];
@@ -91,9 +89,9 @@ function collectErrors() {
       errors.push(
         `package-lock.json workspace dependency for ${name} must be exact; found ${JSON.stringify(declaredWorkspaceLock)}`,
       );
-    } else if (isExactVersion(coreVersion) && declaredWorkspaceLock !== coreVersion) {
+    } else if (isExactVersion(engineVersion) && declaredWorkspaceLock !== engineVersion) {
       errors.push(
-        `package-lock.json workspace dependency for ${name} is ${declaredWorkspaceLock} but package.json declares ${coreVersion}`,
+        `package-lock.json workspace dependency for ${name} is ${declaredWorkspaceLock} but package.json declares ${engineVersion}`,
       );
     }
 
@@ -111,20 +109,20 @@ function collectErrors() {
   }
 
   const uniqueRoot = [...new Set(rootVersions)];
-  const uniqueCore = [...new Set(coreVersions)];
+  const uniqueEngine = [...new Set(engineVersions)];
   if (uniqueRoot.length > 1) {
     errors.push(`Root Pi package versions must match exactly; found ${uniqueRoot.join(', ')}`);
   }
-  if (uniqueCore.length > 1) {
+  if (uniqueEngine.length > 1) {
     errors.push(
-      `pivi-agent-core Pi package versions must match exactly; found ${uniqueCore.join(', ')}`,
+      `engine-pi Pi package versions must match exactly; found ${uniqueEngine.join(', ')}`,
     );
   }
-  const expected = uniqueRoot[0] ?? uniqueCore[0];
+  const expected = uniqueRoot[0] ?? uniqueEngine[0];
   if (expected) {
-    if (uniqueCore.some((version) => version !== expected)) {
+    if (uniqueEngine.some((version) => version !== expected)) {
       errors.push(
-        `Root and pivi-agent-core Pi pins must match; root=${expected} core=${uniqueCore.join(',')}`,
+        `Root and engine-pi Pi pins must match; root=${expected} engine-pi=${uniqueEngine.join(',')}`,
       );
     }
     if (shimVersion !== expected) {

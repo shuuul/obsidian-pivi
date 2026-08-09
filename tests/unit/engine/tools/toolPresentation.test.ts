@@ -1,4 +1,4 @@
-import * as obsidianToolNames from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import * as obsidianToolNames from '@pivi/agent/tools/obsidianToolNames';
 import {
   OBSIDIAN_AGENT_TOOLS,
   OBSIDIAN_OPTIONAL_TOOLS,
@@ -11,7 +11,7 @@ import {
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
-} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+} from '@pivi/agent/tools/obsidianToolNames';
 import {
   getToolPresentationDescriptor,
   isToolPresentationGroupable,
@@ -22,8 +22,8 @@ import {
   shouldPresentToolCall,
   summarizeObsidianSearchHits,
   TOOL_PRESENTATION_DESCRIPTORS,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
-import * as toolNames from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/toolPresentation';
+import * as toolNames from '@pivi/agent/tools/toolNames';
 import {
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
@@ -35,7 +35,7 @@ import {
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/toolNames';
 
 function exportedToolNames(module: Record<string, unknown>): string[] {
   return [...new Set(Object.entries(module)

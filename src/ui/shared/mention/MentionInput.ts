@@ -1,5 +1,5 @@
-import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
-import { parseMessageMentions } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
+import { parseMessageMentions } from '@pivi/agent/context/mentions';
 import type { App } from 'obsidian';
 
 import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';

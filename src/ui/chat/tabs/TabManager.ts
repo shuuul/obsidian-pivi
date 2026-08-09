@@ -1,6 +1,6 @@
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
-import { NEW_SESSION_COMMAND_ID } from '@pivi/pivi-agent-core/skills/commands/slashCommandIds';
+import type { PiChatService } from '@pivi/agent/runtime';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
+import { NEW_SESSION_COMMAND_ID } from '@pivi/agent/skills/commands/slashCommandIds';
 import {
   type ChatPerfRecorder,
   NOOP_CHAT_PERF_RECORDER,

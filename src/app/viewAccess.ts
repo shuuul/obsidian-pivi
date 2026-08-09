@@ -1,4 +1,4 @@
-import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
+import { VIEW_TYPE_PIVI } from '@pivi/agent/foundation';
 import type { App } from 'obsidian';
 
 import type { PiviChatView } from '@/app/hostContracts';

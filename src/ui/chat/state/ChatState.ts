@@ -1,7 +1,7 @@
-import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { SessionMessagePage } from '@pivi/pivi-agent-core/session';
-import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
+import type { StreamChunk, UsageInfo } from '@pivi/agent/foundation';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { SessionMessagePage } from '@pivi/agent/session';
+import { deriveTodoVisualizationModel } from '@pivi/agent/tools';
 import {
   type ChatPerfRecorder,
   type ChatProjectionEventMetadata,

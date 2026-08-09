@@ -6,8 +6,8 @@ import {
   type ChatPerfRecorder,
   type ChatTabSnapshotItem,
 } from '@pivi/pivi-react/store';
-import type { ChatMessage, SessionSummary } from '@pivi/pivi-agent-core/foundation';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatMessage, SessionSummary } from '@pivi/agent/foundation';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { Component, type Editor, type MarkdownView } from 'obsidian';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';

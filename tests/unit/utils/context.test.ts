@@ -1,8 +1,8 @@
 import {
   extractUserQuery,
   resolveUserMessageDisplayText,
-} from '@pivi/pivi-agent-core/context/context';
-import { extractUserQuery as extractSessionUserQuery } from '@pivi/pivi-agent-core/session/userQuery';
+} from '@pivi/agent/context/context';
+import { extractUserQuery as extractSessionUserQuery } from '@pivi/agent/session/userQuery';
 
 describe('extractUserQuery', () => {
   it('strips context-only turns with no user text', () => {

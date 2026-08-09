@@ -1,5 +1,5 @@
-import { configurePiAiModels, piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import type { HttpClient, HttpResponse } from '@pivi/pivi-agent-core/ports';
+import { configurePiAiModels, piAiModels } from '@pivi/engine-pi/piAiModels';
+import type { HttpClient, HttpResponse } from '@pivi/agent/ports';
 import { testProviderReadiness } from '@/app/workspace/providerReadiness';
 
 const httpFetch = jest.fn<ReturnType<HttpClient['fetch']>, Parameters<HttpClient['fetch']>>();

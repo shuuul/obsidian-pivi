@@ -1,4 +1,4 @@
-import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
+import { formatDurationMmSs } from '@pivi/agent/context/date';
 
 import { t } from '@/app/i18n';
 

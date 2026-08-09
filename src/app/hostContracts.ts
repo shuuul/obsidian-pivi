@@ -2,22 +2,19 @@
  * Narrow UI-facing host contracts. Product UI depends on these shapes — not on
  * concrete PiviViewHost or workspace implementation modules.
  */
-import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
-import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
-import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
-import type { ProviderCredential } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
-import type { ProviderOAuthProgress } from "@pivi/pivi-agent-core/auth/providerOAuthProgress";
-import type { PiviSettings } from "@pivi/pivi-agent-core/foundation";
-import type { ChatUIConfig, ChatUIOption } from "@pivi/pivi-agent-core/foundation/chatUi";
+import type { ProviderCredential } from "@pivi/agent/auth/piProviderCredentials";
+import type { ProviderOAuthProgress } from "@pivi/agent/auth/providerOAuthProgress";
+import type { PiviSettings } from "@pivi/agent/foundation";
+import type { ChatUIConfig, ChatUIOption } from "@pivi/agent/foundation/chatUi";
 import type {
   DeviceLocalEnvironmentStore,
   EnvironmentUiEntry,
-} from "@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState";
+} from "@pivi/agent/foundation/deviceLocalEnvironmentState";
 import type {
   AppModelReadinessProvider,
-} from "@pivi/pivi-agent-core/foundation/modelReadiness";
-import type { EnvironmentScope, WebProviderId } from "@pivi/pivi-agent-core/foundation/settings";
-import type { McpManagementCoordinator } from "@pivi/pivi-agent-core/mcp/mcpManagementCoordinator";
+} from "@pivi/agent/foundation/modelReadiness";
+import type { EnvironmentScope, WebProviderId } from "@pivi/agent/foundation/settings";
+import type { McpManagementCoordinator } from "@pivi/agent/mcp/mcpManagementCoordinator";
 import type {
   AppMcpDiagnostics,
   AppMcpOAuth,
@@ -25,13 +22,16 @@ import type {
   AppMcpServerTester,
   AppMcpStorage,
   AppMcpToolProvider,
-} from "@pivi/pivi-agent-core/mcp/ports";
-import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
-import type { HttpClient, ProcessRunner } from "@pivi/pivi-agent-core/ports";
-import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
-import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
-import type { SkillsManagementCoordinator } from "@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator";
+} from "@pivi/agent/mcp/ports";
+import type { ManagedMcpServer } from "@pivi/agent/mcp/types";
+import type { HttpClient, ProcessRunner } from "@pivi/agent/ports";
+import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashCommandCatalog";
+import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
+import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
+import type { SkillsManagementCoordinator } from "@pivi/agent/skills/vault/skillsManagementCoordinator";
+import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
+import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
+import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type {
   App,
   Editor,

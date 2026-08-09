@@ -6,7 +6,7 @@ import {
   decodeBashGrant,
   encodeBashGrant,
   tokenizeBashArgv,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 
 describe('bashAllowlist shell-aware matching', () => {
   it('tokenizes quoted argv literally', () => {

@@ -1,12 +1,12 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ToolCallInfo } from '@pivi/agent/foundation';
 import {
   isWriteEditTool,
   TOOL_ASK_USER_QUESTION,
   TOOL_BASH,
   TOOL_TODO_WRITE,
-} from '@pivi/pivi-agent-core/tools/toolNames';
-import { getToolPresentationDescriptor } from '@pivi/pivi-agent-core/tools/toolPresentation';
-import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
+} from '@pivi/agent/tools/toolNames';
+import { getToolPresentationDescriptor } from '@pivi/agent/tools/toolPresentation';
+import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 
 import { setupCollapsible } from './collapsible';
 import { renderDiffStats } from './DiffRenderer';

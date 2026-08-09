@@ -1,16 +1,16 @@
 import {
   resolveToolActivityStatus,
   type ToolCallInfo,
-} from '@pivi/pivi-agent-core/foundation';
+} from '@pivi/agent/foundation';
 import {
   isWriteEditTool,
   TOOL_ASK_USER_QUESTION,
-} from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/toolNames';
 import {
   getToolIcon,
   getToolPresentationDescriptor,
   MCP_ICON_MARKER,
-} from '@pivi/pivi-agent-core/tools/toolPresentation';
+} from '@pivi/agent/tools/toolPresentation';
 import { memo, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n/I18nProvider';

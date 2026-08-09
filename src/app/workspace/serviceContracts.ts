@@ -1,8 +1,8 @@
+import type { PiviSettings } from '@pivi/agent/foundation';
+import type { FileStore } from '@pivi/agent/ports';
+import type { SessionRecoveryPort } from '@pivi/agent/session';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 import type { PiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
-import type { FileStore } from '@pivi/pivi-agent-core/ports';
-import type { SessionRecoveryPort } from '@pivi/pivi-agent-core/session';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import type { App, EventRef } from 'obsidian';
 
 /** Obsidian lifecycle capabilities required while constructing app-owned services. */

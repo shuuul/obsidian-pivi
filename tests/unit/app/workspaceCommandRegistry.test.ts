@@ -6,8 +6,8 @@ jest.mock('@/app/piviViewActivation', () => ({
   ensurePiviViewOpen: mockEnsurePiviViewOpen,
 }));
 
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
-import { extractInlineContextTokensFromMessage } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
+import { extractInlineContextTokensFromMessage } from '@pivi/agent/context/inlineContext';
 import {
   getWorkspaceCommandFullId,
   WorkspaceCommandRegistry,

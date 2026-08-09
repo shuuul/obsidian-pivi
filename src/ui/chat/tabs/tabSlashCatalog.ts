@@ -1,7 +1,7 @@
-import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
-import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+import type { OpenSessionState } from '@pivi/agent/foundation';
+import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
+import type { SlashCommandDropdownConfig } from '@pivi/agent/skills/commands/slashCommandCatalog';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
 import { getTabHiddenCommands } from './tabAgentContext';
 import type { TabData } from './types';

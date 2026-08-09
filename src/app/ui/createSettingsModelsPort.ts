@@ -1,16 +1,16 @@
-import { deleteCustomProviderHeaders } from '@pivi/pivi-agent-core/auth/customProviderHeaderSecrets';
+import { deleteCustomProviderHeaders } from '@pivi/agent/auth/customProviderHeaderSecrets';
 import {
   CODEX_OAUTH_PROVIDER_ID,
   getPiAiCredentialSecretId,
   INTERACTIVE_OAUTH_PROVIDER_IDS,
   isDualAuthOAuthProviderId,
   SUBSCRIPTION_OAUTH_PROVIDER_IDS,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
-import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
-import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
-import { isSecretStorageAvailable, MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+} from '@pivi/agent/auth/piProviderCredentials';
+import { SUPPORTED_PI_PROVIDER_IDS } from '@pivi/agent/auth/piProviderValidation';
+import { getProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
+import { deriveProviderReadinessStatus } from '@pivi/agent/auth/providerReadiness';
+import { isSecretStorageAvailable, MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN } from '@pivi/agent/auth/providerSecretStorage';
+import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/agent/foundation/agentSettings';
 import {
   ALL_CUSTOM_PROVIDER_KINDS,
   createDefaultCustomProviderConfig,
@@ -19,12 +19,12 @@ import {
   getCustomProviderKindDisplayName,
   getCustomProvidersFromBag,
   isLocalCustomProviderKind,
-} from '@pivi/pivi-agent-core/foundation/customProviders';
+} from '@pivi/agent/foundation/customProviders';
 import {
   getLogoSlugForCustomProviderKind,
   getProviderDisplayName,
   getProviderLogoSlug,
-} from '@pivi/pivi-agent-core/foundation/providerLogos';
+} from '@pivi/agent/foundation/providerLogos';
 import type { SettingsModelsPort } from '@pivi/pivi-react/ports';
 
 import type {

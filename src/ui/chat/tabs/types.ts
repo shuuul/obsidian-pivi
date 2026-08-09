@@ -1,4 +1,4 @@
-import type { PiChatService, TitleGenerationService } from '@pivi/pivi-agent-core/runtime';
+import type { PiChatService, TitleGenerationService } from '@pivi/agent/runtime';
 import type { Component } from 'obsidian';
 
 import type { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';

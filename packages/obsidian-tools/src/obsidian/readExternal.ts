@@ -2,7 +2,7 @@ import {
   textResult,
   TOOL_OBSIDIAN_READ_EXTERNAL,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 
 import { CAPABILITY_TOOL_NAMES, ensureExternalDirectoryAccess } from '../capabilityApprovalGate';
 import type { ObsidianToolDeps } from './deps';

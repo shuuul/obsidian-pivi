@@ -1,11 +1,11 @@
 import type {
   CapabilityApprovalRequest,
   CapabilityApprovalResult,
-} from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/ports';
 import {
   bashAllowlistPersistScopesDiffer,
-} from '@pivi/pivi-agent-core/runtime/capabilitySessionGrants';
-import { createPrefixBashGrant } from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/runtime/capabilitySessionGrants';
+import { createPrefixBashGrant } from '@pivi/agent/tools';
 
 import { t } from '@/app/i18n';
 

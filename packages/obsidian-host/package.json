@@ -25,7 +25,7 @@
     "./systemProcessRunner": "./src/systemProcessRunner.ts"
   },
   "dependencies": {
-    "@pivi/pivi-agent-core": "*"
+    "@pivi/agent": "*"
   },
   "peerDependencies": {
     "obsidian": ">=1.12.0"

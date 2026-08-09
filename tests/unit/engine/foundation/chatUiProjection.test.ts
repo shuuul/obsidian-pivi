@@ -1,6 +1,6 @@
-import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
-import { projectActiveChatState, reconcileTitleGenerationModelSelection } from '@pivi/pivi-agent-core/foundation/chatUiProjection';
-import { DEFAULT_MODEL_KEY } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+import type { ChatUIConfig } from '@pivi/agent/foundation/chatUi';
+import { projectActiveChatState, reconcileTitleGenerationModelSelection } from '@pivi/agent/foundation/chatUiProjection';
+import { DEFAULT_MODEL_KEY } from '@pivi/agent/foundation/settingsDefaults';
 
 const ADAPTIVE_MODEL = 'provider/adaptive-model';
 const STANDARD_MODEL = 'provider/standard-model';

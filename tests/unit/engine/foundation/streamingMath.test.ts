@@ -1,7 +1,7 @@
 import {
   escapeMathDelimitersForStreaming,
   hasStreamingMathDelimiters,
-} from '@pivi/pivi-agent-core/foundation/streamingMath';
+} from '@pivi/agent/foundation/streamingMath';
 
 describe('streaming math escaping', () => {
   it('escapes math delimiters but preserves already escaped dollars and inline code', () => {

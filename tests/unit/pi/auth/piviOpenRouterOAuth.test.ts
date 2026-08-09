@@ -2,7 +2,7 @@ import {
   createPiviOpenRouterOAuth,
   parseOpenRouterAuthorizationInput,
   resolveOpenRouterOAuthCallbackHost,
-} from '@pivi/pivi-agent-core/engine/pi/piviOpenRouterOAuth';
+} from '@pivi/engine-pi/piviOpenRouterOAuth';
 
 describe('piviOpenRouterOAuth', () => {
   const originalHost = process.env.PI_OAUTH_CALLBACK_HOST;

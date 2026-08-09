@@ -1,6 +1,6 @@
-import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
-import { configurePiAiModels, piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+import { deriveProviderReadinessStatus } from '@pivi/agent/auth/providerReadiness';
+import { configurePiAiModels, piAiModels } from '@pivi/engine-pi/piAiModels';
+import { ObsidianCredentialStore } from '@pivi/engine-pi/piProviderCredentialStore';
 
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 import {

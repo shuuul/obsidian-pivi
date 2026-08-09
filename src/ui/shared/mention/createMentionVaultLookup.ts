@@ -1,4 +1,4 @@
-import type { MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionVaultLookup } from '@pivi/agent/context/mentions';
 import type { App } from 'obsidian';
 import { TFile, TFolder } from 'obsidian';
 

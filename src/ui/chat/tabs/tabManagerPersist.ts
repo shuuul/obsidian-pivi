@@ -1,4 +1,4 @@
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 
 import type {
   PersistedTabManagerState,

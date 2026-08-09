@@ -19,8 +19,8 @@ import {
   redactUrl,
   type ResolvedEgressPolicy,
   resolveEgressPolicy,
-} from '@pivi/pivi-agent-core/network';
-import type { FetchCompatible, HttpClient, HttpRequest, HttpResponse } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/network';
+import type { FetchCompatible, HttpClient, HttpRequest, HttpResponse } from '@pivi/agent/ports';
 import * as dns from 'dns';
 import * as http from 'http';
 import * as https from 'https';

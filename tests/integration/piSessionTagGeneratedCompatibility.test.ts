@@ -7,10 +7,10 @@ describe('Pivi 0.7.0 tag-generated session compatibility', () => {
       import fs from 'node:fs';
       import os from 'node:os';
       import path from 'node:path';
-      import { PiSessionStore } from '@pivi/pivi-agent-core/engine/pi/session/piSessionStore';
-      import { readSessionJsonlIndex } from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
-      import { OpenSessionManager } from '@pivi/pivi-agent-core/session/openSessionManager';
-      import { getPiviSessionDir, toVaultRelativePath } from '@pivi/pivi-agent-core/session/sessionPaths';
+      import { PiSessionStore } from '@pivi/engine-pi/session/piSessionStore';
+      import { readSessionJsonlIndex } from '@pivi/engine-pi/session/sessionJsonlIndex';
+      import { OpenSessionManager } from '@pivi/agent/session/openSessionManager';
+      import { getPiviSessionDir, toVaultRelativePath } from '@pivi/agent/session/sessionPaths';
 
       const fixtureSha256 = '3c191e3440fc1a95859ddb6a07687a74a2b5cc383062c0fab3b0c53e357ef67b';
       const source = path.join(

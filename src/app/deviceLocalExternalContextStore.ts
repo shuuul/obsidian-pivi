@@ -1,4 +1,4 @@
-import type { DeviceLocalExternalContextStore } from '@pivi/pivi-agent-core/session';
+import type { DeviceLocalExternalContextStore } from '@pivi/agent/session';
 import type { App } from 'obsidian';
 
 export const DEVICE_LOCAL_EXTERNAL_CONTEXT_STORAGE_KEY = 'pivi.external-contexts.v1';

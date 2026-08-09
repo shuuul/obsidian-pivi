@@ -2,7 +2,7 @@ import {
   createSettingsSkillsPort,
 } from '@/app/ui/createSettingsSkillsPort';
 import type { PiviSettingsHost } from '@/app/hostContracts';
-import type { SkillsManagementCoordinator } from '@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator';
+import type { SkillsManagementCoordinator } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 
 describe('createSettingsSkillsPort', () => {
   it('notifies when a saved mutation has partial post-save failures', async () => {

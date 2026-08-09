@@ -1,4 +1,4 @@
-import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import type { OpenSessionState } from '@pivi/agent/foundation';
 
 import type { PiviChatView } from '@/app/hostContracts';
 import {

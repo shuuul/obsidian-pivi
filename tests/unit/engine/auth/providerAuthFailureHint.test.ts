@@ -1,4 +1,4 @@
-import { getProviderAuthFailureHint } from '@pivi/pivi-agent-core/auth/providerAuthFailureHint';
+import { getProviderAuthFailureHint } from '@pivi/agent/auth/providerAuthFailureHint';
 
 describe('getProviderAuthFailureHint', () => {
   it('returns the Codex OAuth reconnect hint for openai-codex', () => {

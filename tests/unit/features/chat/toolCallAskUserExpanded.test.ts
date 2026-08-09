@@ -1,5 +1,5 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { TOOL_ASK_USER_QUESTION } from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ToolCallInfo } from '@pivi/agent/foundation';
+import { TOOL_ASK_USER_QUESTION } from '@pivi/agent/tools/toolNames';
 
 import {
   formatAnswer,

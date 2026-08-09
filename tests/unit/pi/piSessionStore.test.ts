@@ -3,22 +3,22 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import type { FileStore } from '@pivi/pivi-agent-core/session';
-import type { DeviceLocalExternalContextStore } from '@pivi/pivi-agent-core/session';
+import type { FileStore } from '@pivi/agent/session';
+import type { DeviceLocalExternalContextStore } from '@pivi/agent/session';
 import {
   getPiviSessionDir,
   getPiviSessionRoot,
-} from '@pivi/pivi-agent-core/session/sessionPaths';
+} from '@pivi/agent/session/sessionPaths';
 import {
   PiSessionStore,
   stripExternalContextsFromSessionJsonl,
-} from '@pivi/pivi-agent-core/engine/pi/session/piSessionStore';
-import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+} from '@pivi/engine-pi/session/piSessionStore';
+import { SessionTreeStore } from '@pivi/engine-pi/session/sessionTreeStore';
 import {
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
   PIVI_UI_CONTEXT,
-} from '@pivi/pivi-agent-core/session/types';
+} from '@pivi/agent/session/types';
 
 function countCustomEntries(vaultPath: string, sessionFile: string, customType: string): number {
   return SessionTreeStore.openSnapshot(vaultPath, sessionFile)

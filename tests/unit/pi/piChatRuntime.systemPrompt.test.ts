@@ -252,7 +252,7 @@ let mockCapturedSubagentToolProvider: ((
 ) => unknown[]) | undefined;
 let mockCapturedSubagentChunkSink: ((chunk: StreamChunk) => void) | undefined;
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
+jest.mock('@pivi/engine-pi/piAuxQueryRunner', () => ({
   createPiAuxQueryRunner: jest.fn((_plugin, options) => {
     mockCapturedSubagentChunkSink = options?.onSubagentChunk;
     mockCapturedSubagentToolProvider = options?.getTools;
@@ -274,35 +274,35 @@ ${JSON.stringify({
 \`\`\``;
 const mockCompactionSample = jest.fn(async (..._args: unknown[]) => defaultCompactionSample);
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/piCompactionSampler', () => ({
+jest.mock('@pivi/engine-pi/piCompactionSampler', () => ({
   sampleCompactionNote: (...args: unknown[]) => mockCompactionSample(...args),
 }));
 
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
-import type { HttpClient } from '@pivi/pivi-agent-core/ports';
-import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import * as piAiModelRegistry from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
+import type { McpTransportFetch } from '@pivi/agent/mcp/ports';
+import type { HttpClient } from '@pivi/agent/ports';
+import type { StreamChunk, UsageInfo } from '@pivi/agent/foundation';
+import * as piAiModelRegistry from '@pivi/engine-pi/piAiModels';
+import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';
 import {
   buildEstimatedUsageInfo,
   buildUsageInfoFromAgentMessage,
-} from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeUsage';
+} from '../../../packages/engine-pi/src/piChatRuntimeUsage';
 import {
   compactCurrentSession,
   prepareCompactionPrefire,
-} from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeCompaction';
+} from '../../../packages/engine-pi/src/piChatRuntimeCompaction';
 import {
   type PiCachedModel,
   PI_AI_MODELS_CACHE,
-} from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
+} from '@pivi/engine-pi/piModelRegistry';
 import type {
   PiBaseToolProvider,
   PiMainOnlyToolProvider,
-} from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
-import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
-import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
-import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
+} from '@pivi/engine-pi/buildPiToolRegistryCore';
+import { SessionTreeStore } from '@pivi/engine-pi/session/sessionTreeStore';
+import { PIVI_MESSAGE_UI } from '@pivi/agent/session';
+import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/agent/tools';
 
 function expectDefined<T>(value: T | undefined): asserts value is T {
   expect(value).toBeDefined();

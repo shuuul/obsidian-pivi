@@ -1,9 +1,9 @@
-import { credentialToApiKey, getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { credentialToApiKey, getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import {
   createObsidianCredentialStore,
   migratePiProviderCredentialsToKeychain,
   ObsidianCredentialStore,
-} from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+} from '@pivi/engine-pi/piProviderCredentialStore';
 import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
@@ -12,9 +12,9 @@ import {
   isSecretStorageAvailable,
   MAX_OBSIDIAN_SECRET_ID_LENGTH,
   parseProviderCredentialSecretId,
-} from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
-import { createWebSearchCredentialStore, getWebSearchCredentialSecretId } from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/auth/providerSecretStorage';
+import type { SyncSecretStore } from '@pivi/agent/ports';
+import { createWebSearchCredentialStore, getWebSearchCredentialSecretId } from '@pivi/agent/tools';
 import { SecretStorage } from 'obsidian';
 
 describe('ProviderSecretStorage', () => {

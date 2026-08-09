@@ -1,10 +1,10 @@
-import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+import { createInlineContextToken } from '@pivi/agent/context/inlineContext';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 import {
   requiresSelectedText,
   resolveWorkspaceCommandPrompt,
-} from '@pivi/pivi-agent-core/skills/commands/resolveWorkspaceCommandPrompt';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+} from '@pivi/agent/skills/commands/resolveWorkspaceCommandPrompt';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 import { type App, type Command,getIcon, MarkdownView, Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';

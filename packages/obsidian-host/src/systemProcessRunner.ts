@@ -9,7 +9,7 @@ import type {
   ProcessRunResult,
   ProcessShellPolicy,
   ProcessTerminationKind,
-} from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/ports';
 
 import { isPathWithinDirectory, normalizePathForFilesystem } from './path';
 

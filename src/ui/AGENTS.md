@@ -15,10 +15,10 @@ flowchart TD
   Main["src/main.ts"] --> App["src/app composition"]
   App --> AppUI["src/app/ui concrete wiring"]
   AppUI -- "mount + React-owned SettingsPorts" --> ReactUI["@pivi/pivi-react React roots"]
-  AppUI -. "injects core-owned ChatPorts" .-> Chat["src/ui/chat runtime + adapters"]
+  AppUI -. "injects @pivi/agent ChatPorts" .-> Chat["src/ui/chat runtime + adapters"]
   Chat -. "ChatUiStore snapshots + ActiveChatUiBridge" .-> ReactUI
   ReactUI -. "empty adapter slots" .-> Chat
-  Chat --> Runtime["@pivi/pivi-agent-core/runtime"]
+  Chat --> Runtime["@pivi/agent/runtime"]
   Chat --> Shared["src/ui/shared imperative helpers"]
 ```
 
@@ -35,15 +35,15 @@ Read the applicable child `AGENTS.md` before changing a subdirectory.
 
 ## Boundary rules
 
-- Never import raw `@earendil-works/*` packages. Pi SDK use belongs under `packages/pivi-agent-core/src/engine/pi/`.
-- Never import `@pivi/pivi-agent-core/engine/pi` or its subpaths. Obtain concrete behavior through injected core-owned `ChatPorts`, `PiChatService`, and `AuxQueryRunner` contracts. `src/ui/**` must never call `getUiFacades()`, `getPiWorkspace()`, `saveSettings()`, or `getAllViews()`.
+- Never import raw `@earendil-works/*` packages. Pi SDK use belongs under `packages/engine-pi/src/`.
+- Never import `@pivi/engine-pi` or its subpaths. Obtain concrete behavior through injected `@pivi/agent`-owned `ChatPorts`, `PiChatService`, and `AuxQueryRunner` contracts. `src/ui/**` must never call `getUiFacades()`, `getPiWorkspace()`, `saveSettings()`, or `getAllViews()`.
 - Never import `@pivi/obsidian-host` or its subpaths. Use `@/app/hostPlatform` for Pivi-owned host/path/vault helpers and service-contract re-exports; keep direct Node `fs`/`os`/`path` use limited to imperative filesystem/path adapters.
 - Never import `@pivi/obsidian-tools`; UI consumes Pivi tool contracts/display models, not concrete tool implementations.
 - Never import `@/app/workspace` or its subpaths, including via relative paths. Chat runtime/session/model/catalog/settings capabilities arrive through `ChatPorts` injected into `TabManager`; do not reach back into composition hosts for them.
-- Never import `@/app/ui` or its subpaths from `src/ui/**`. App composition mounts React and creates adapters; this layer is imperative adapters + runtime orchestration only. Import application-facing `ChatPorts` from `@pivi/pivi-agent-core/runtime/chatPorts`, never from the React package.
-- Import `@pivi/pivi-react` only through the exact `store` or `context-badges` presentation subpath. Root-barrel, `mount`, `ports`, deep-internal, and relative-path package imports are forbidden; pure parsing, matching, markdown transforms, and usage projection come from core domain subpaths.
+- Never import `@/app/ui` or its subpaths from `src/ui/**`. App composition mounts React and creates adapters; this layer is imperative adapters + runtime orchestration only. Import application-facing `ChatPorts` from `@pivi/agent/runtime/chatPorts`, never from the React package.
+- Import `@pivi/pivi-react` only through the exact `store` or `context-badges` presentation subpath. Root-barrel, `mount`, `ports`, deep-internal, and relative-path package imports are forbidden; pure parsing, matching, markdown transforms, and usage projection come from `@pivi/agent` domain subpaths.
 - `PiviChatHost` intentionally contains only `app`. Never type product UI against `PiviChatCompositionHost`, `PiviSettingsHost`, or `PiviPluginHost`; those wide contracts belong to app composition.
-- UI may import host-neutral APIs from non-engine `@pivi/pivi-agent-core/*` subpaths, public Obsidian APIs, narrowly scoped Node platform modules required by imperative adapters, the two approved React presentation subpaths, `@/app/i18n`, and `@/app/hostPlatform`; host-contract imports remain type-only. Keep app/UI composition one-way: app mounts UI and owns concrete wiring; UI never imports app workspace or app UI implementations.
+- UI may import host-neutral APIs from non-engine `@pivi/agent/*` subpaths, public Obsidian APIs, narrowly scoped Node platform modules required by imperative adapters, the two approved React presentation subpaths, `@/app/i18n`, and `@/app/hostPlatform`; host-contract imports remain type-only. Keep app/UI composition one-way: app mounts UI and owns concrete wiring; UI never imports app workspace or app UI implementations.
 
 ## Key conventions
 

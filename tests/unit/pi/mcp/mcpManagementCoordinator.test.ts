@@ -1,9 +1,9 @@
-import { McpManagementCoordinator } from '@pivi/pivi-agent-core/mcp/mcpManagementCoordinator';
-import { listMcpServerSecretIds, McpStorage } from '@pivi/pivi-agent-core/mcp/mcpStorage';
-import { listMcpAuthEntrySecretIds } from '@pivi/pivi-agent-core/mcp/oauth/mcpSecretAuthStore';
-import type { AppMcpToolProvider } from '@pivi/pivi-agent-core/mcp/ports';
-import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
-import type { FileStore, SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+import { McpManagementCoordinator } from '@pivi/agent/mcp/mcpManagementCoordinator';
+import { listMcpServerSecretIds, McpStorage } from '@pivi/agent/mcp/mcpStorage';
+import { listMcpAuthEntrySecretIds } from '@pivi/agent/mcp/oauth/mcpSecretAuthStore';
+import type { AppMcpToolProvider } from '@pivi/agent/mcp/ports';
+import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
+import type { FileStore, SyncSecretStore } from '@pivi/agent/ports';
 
 class MemoryFileStore {
   private readonly files = new Map<string, string>();

@@ -9,7 +9,7 @@ import {
   getSessionsDir,
   resetPiCodingAgentConfigHost,
   VERSION,
-} from '@pivi/pivi-agent-core/engine/pi/shims/piCodingAgentConfig';
+} from '@pivi/engine-pi/shims/piCodingAgentConfig';
 
 describe('piCodingAgentConfig host seams', () => {
   afterEach(() => {

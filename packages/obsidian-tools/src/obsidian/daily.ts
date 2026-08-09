@@ -1,9 +1,9 @@
-import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 import {
   textResult,
   TOOL_OBSIDIAN_DAILY,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
+import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 
 import type { ObsidianToolDeps } from './deps';
 

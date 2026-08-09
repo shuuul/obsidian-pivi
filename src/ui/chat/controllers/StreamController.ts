@@ -1,9 +1,9 @@
-import type { ChatMessage, StreamChunk, SubagentInfo } from '@pivi/pivi-agent-core/foundation';
-import type { ToolUseResult } from '@pivi/pivi-agent-core/foundation/diff';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
+import type { ChatMessage, StreamChunk, SubagentInfo } from '@pivi/agent/foundation';
+import type { ToolUseResult } from '@pivi/agent/foundation/diff';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 import {
   type ChatProjectionMessageChange,
   getChatProjectionBlockId,

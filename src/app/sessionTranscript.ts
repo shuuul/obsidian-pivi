@@ -1,6 +1,6 @@
-import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context';
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import type { SessionStore } from '@pivi/pivi-agent-core/session';
+import { resolveUserMessageDisplayText } from '@pivi/agent/context';
+import type { ChatMessage } from '@pivi/agent/foundation';
+import type { SessionStore } from '@pivi/agent/session';
 
 export async function readSessionTranscript(options: {
   sessionFile: string;

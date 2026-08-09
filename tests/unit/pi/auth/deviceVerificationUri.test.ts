@@ -1,4 +1,4 @@
-import { selectDeviceVerificationUri } from '@pivi/pivi-agent-core/engine/pi';
+import { selectDeviceVerificationUri } from '@pivi/engine-pi';
 
 describe('selectDeviceVerificationUri', () => {
   it('prefers verification_uri_complete over verification_uri', () => {

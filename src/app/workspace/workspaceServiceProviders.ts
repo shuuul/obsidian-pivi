@@ -1,22 +1,22 @@
-import type { ObsidianCredentialStore } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
-import type { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
-import { getPiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
-import type { AppModelReadinessProvider } from "@pivi/pivi-agent-core/foundation/modelReadiness";
-import type { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
-import type { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
-import { PiMcpConnectionPool } from "@pivi/pivi-agent-core/mcp/piMcpConnectionPool";
-import { testPiMcpServer } from "@pivi/pivi-agent-core/mcp/piMcpTester";
+import { getPiAgentSettings } from "@pivi/agent/foundation/agentSettings";
+import type { AppModelReadinessProvider } from "@pivi/agent/foundation/modelReadiness";
+import type { McpServerManager } from "@pivi/agent/mcp/mcpServerManager";
+import type { McpOAuthService } from "@pivi/agent/mcp/oauth/mcpOAuthService";
+import { PiMcpConnectionPool } from "@pivi/agent/mcp/piMcpConnectionPool";
+import { testPiMcpServer } from "@pivi/agent/mcp/piMcpTester";
 import type {
   AppMcpDiagnostics,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpToolProvider,
   AppMcpToolSummary,
-} from "@pivi/pivi-agent-core/mcp/ports";
-import { getMcpServerUrl } from "@pivi/pivi-agent-core/mcp/types";
-import type { FetchCompatible, ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
-import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
-import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/vaultSkillsService";
+} from "@pivi/agent/mcp/ports";
+import { getMcpServerUrl } from "@pivi/agent/mcp/types";
+import type { FetchCompatible, ProcessRunner, SyncSecretStore } from "@pivi/agent/ports";
+import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
+import { VaultSkillsService } from "@pivi/agent/skills/vault/vaultSkillsService";
+import type { ObsidianCredentialStore } from "@pivi/engine-pi/piProviderCredentialStore";
+import type { ProviderOAuthService } from "@pivi/engine-pi/piProviderOAuthService";
 
 import {
   derivePiModelReadinessStatus,

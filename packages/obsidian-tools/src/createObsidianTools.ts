@@ -1,3 +1,6 @@
+import type { ObsidianToolsSettings } from '@pivi/agent/foundation';
+import type { CapabilityApprovalPort } from '@pivi/agent/ports';
+import type { ToolSpec } from '@pivi/agent/tools';
 import {
   ExternalFileApi,
   getVaultPath,
@@ -6,9 +9,6 @@ import {
   ObsidianVaultApi,
   systemProcessRunner,
 } from '@pivi/obsidian-host';
-import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
-import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
-import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
 import type { App } from 'obsidian';
 
 import { createAttachmentTool } from './obsidian/attachment';

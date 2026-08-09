@@ -2,7 +2,7 @@
 
 [Back to the developer handbook](README.md)
 
-Pivi tools implement the host-neutral `ToolSpec` protocol. Concrete Obsidian execution belongs to `@pivi/obsidian-tools`; Pi SDK adaptation belongs to the Pi engine. A capability is registered only when its settings, credentials, platform support, and runtime dependencies are available.
+Pivi tools implement the host-neutral `ToolSpec` protocol. Concrete Obsidian execution belongs to `@pivi/obsidian-tools`; Pi SDK adaptation belongs to `@pivi/engine-pi`. A capability is registered only when its settings, credentials, platform support, and runtime dependencies are available.
 
 ## Registration architecture
 
@@ -10,12 +10,12 @@ Pivi tools implement the host-neutral `ToolSpec` protocol. Concrete Obsidian exe
 flowchart TD
   Settings["Projected settings and credentials"] -- "gate" --> Registry["Tool registry"]
   Obsidian["@pivi/obsidian-tools<br/>native + CLI adapters"] -- "returns ToolSpec" --> Registry
-  Sessions["core/tools<br/>pivi_sessions"] -- "returns ToolSpec" --> Registry
+  Sessions["@pivi/agent/tools<br/>pivi_sessions"] -- "returns ToolSpec" --> Registry
   Web["Web provider queue"] -- "returns ToolSpec" --> Registry
   MCP["Vault MCP bridge"] -- "exposes proxy tool" --> Registry
   Skills["Vault skill loader"] -- "exposes skill tool" --> Registry
   Subagents["Pi subagent tool"] -- "exposes spawn_agent" --> Registry
-  Registry -- "adapts" --> Pi["Pi Agent tools"]
+  Registry -- "adapts" --> Pi["@pivi/engine-pi Agent tools"]
   Registry -- "summarizes" --> Prompt["System prompt"]
 ```
 
@@ -25,7 +25,7 @@ The base system prompt keeps note-backed answers concise: when requested informa
 
 ## System prompt layers
 
-The agent system prompt is assembled in three layers under `packages/pivi-agent-core/src/prompt/`:
+The agent system prompt is assembled in three layers under `packages/agent/src/prompt/`:
 
 ```mermaid
 flowchart LR
@@ -59,7 +59,7 @@ Large-note reads start with `obsidian_read` in stats mode, then use `obsidian_ma
 
 Prefer Obsidian's public in-process API for vault, metadata, file-manager, and workspace behavior. Use the official CLI only for capabilities the public API does not expose or for explicitly configured integrations; the CLI integration is disabled when its setting is absent. Pivi implements vault text search by scanning because Obsidian has no public vault-wide full-text search API. Base lookup by file/path uses direct vault and metadata-cache resolution, and an unresolved-links-only graph request reads `MetadataCache.unresolvedLinks` without enumerating vault files.
 
-`pivi_sessions` is a host-neutral core tool over an injected `SessionRecoveryPort`, composed into the shared base provider by the app rather than returned by `createObsidianTools`. Core Skills owns skill/command frontmatter parsing. The host package owns exact vault-edit occurrence matching and mismatch diagnostics used by `ObsidianVaultApi`; the concrete tools package does not maintain duplicate helpers for either responsibility.
+`pivi_sessions` is a host-neutral `@pivi/agent` tool over an injected `SessionRecoveryPort`, composed into the shared base provider by the app rather than returned by `createObsidianTools`. `@pivi/agent` Skills owns skill/command frontmatter parsing. The host package owns exact vault-edit occurrence matching and mismatch diagnostics used by `ObsidianVaultApi`; the concrete tools package does not maintain duplicate helpers for either responsibility.
 
 ## External access and process execution
 
@@ -85,7 +85,7 @@ Provider keys and availability are resolved at the app/engine boundary. Tool imp
 
 `obsidian_generate_image` registers only when the `openai-codex` provider has usable credentials and the tool is enabled. It generates through Codex, saves through Obsidian attachment handling, and can insert a standard Markdown embed.
 
-When available, `/generate-image` appears as a built-in tool mention. The visible token is persisted unchanged; core prompt preparation expands only the provider prompt into an explicit tool request. It is not a workspace command template.
+When available, `/generate-image` appears as a built-in tool mention. The visible token is persisted unchanged; `@pivi/agent` prompt preparation expands only the provider prompt into an explicit tool request. It is not a workspace command template.
 
 ## Skills
 

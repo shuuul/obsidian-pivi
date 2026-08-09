@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage } from '@pivi/agent/foundation';
 import {
   CHAT_PROJECTION_HIDDEN_CADENCE_MS,
   type ChatProjectionEvent,

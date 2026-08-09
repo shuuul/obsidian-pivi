@@ -1,5 +1,5 @@
-import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { extractResolvedAnswersFromResultText } from '@pivi/pivi-agent-core/tools/toolInput';
+import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/agent/foundation';
+import { extractResolvedAnswersFromResultText } from '@pivi/agent/tools/toolInput';
 
 import { t } from '@/app/i18n';
 

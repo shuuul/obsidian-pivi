@@ -2,7 +2,7 @@ import type {
   PiviManagementApprovalDecision,
   PiviManagementApprovalPort,
   PiviManagementApprovalRequest,
-} from '@pivi/pivi-agent-core/tools/piviManagement';
+} from '@pivi/agent/tools/piviManagement';
 
 import type { InputController } from '../controllers/InputController';
 

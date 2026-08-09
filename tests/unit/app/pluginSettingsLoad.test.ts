@@ -1,12 +1,12 @@
 import {
   getPiAiCredentialSecretId,
   serializeProviderCredential,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+} from '@pivi/agent/auth/piProviderCredentials';
 import {
   getPiAgentSettings,
   updatePiAgentSettings,
-} from '@pivi/pivi-agent-core/foundation/agentSettings';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+} from '@pivi/agent/foundation/agentSettings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
 
 import {
   migrateProviderSecretsToKeychain,

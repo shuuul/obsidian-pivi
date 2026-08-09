@@ -64,7 +64,7 @@ const piPackageBoundaryRule = [
           "@earendil-works/pi-coding-agent/*",
         ],
         message:
-          "Raw Pi SDK imports belong in @pivi/pivi-agent-core/engine/pi. App and UI code should depend on Pivi-owned package APIs instead.",
+          "Raw Pi SDK imports belong in @pivi/engine-pi. App and UI code should depend on Pivi-owned package APIs instead.",
       },
     ],
   },
@@ -73,7 +73,7 @@ const piPackageBoundaryRule = [
 const rawPiSdkRestriction = {
   group: ["@earendil-works/*"],
   message:
-    "Raw Pi SDK imports belong in @pivi/pivi-agent-core/engine/pi. Depend on Pivi-owned package APIs instead.",
+    "Raw Pi SDK imports belong in @pivi/engine-pi. Depend on Pivi-owned package APIs instead.",
 };
 
 const obsidianHostRestriction = {
@@ -208,8 +208,8 @@ export default defineConfig([
         rawPiSdkRestriction,
         {
           group: [
-            "@pivi/pivi-agent-core/engine/pi",
-            "@pivi/pivi-agent-core/engine/pi/*",
+            "@pivi/engine-pi",
+            "@pivi/engine-pi/*",
           ],
           message:
             "Host contracts must stay structural and must not name concrete Pi engine implementation types.",
@@ -229,8 +229,8 @@ export default defineConfig([
         rawPiSdkRestriction,
         {
           group: [
-            "@pivi/pivi-agent-core/engine/pi",
-            "@pivi/pivi-agent-core/engine/pi/*",
+            "@pivi/engine-pi",
+            "@pivi/engine-pi/*",
           ],
           message:
             "Product UI must not import Pi engine implementations. Use injected PiChatService, AuxQueryRunner, and feature ports instead.",
@@ -316,8 +316,10 @@ export default defineConfig([
         obsidianReactRestriction,
         {
           group: [
-            "@pivi/pivi-agent-core/engine",
-            "@pivi/pivi-agent-core/engine/*",
+            "@pivi/engine-pi",
+            "@pivi/engine-pi/*",
+            "@pivi/agent/engine",
+            "@pivi/agent/engine/*",
           ],
           message:
             "@pivi/obsidian-tools must not import Pi engine implementations. Consume host-neutral core contracts instead.",
@@ -333,18 +335,18 @@ export default defineConfig([
         obsidianReactRestriction,
         {
           group: [
-            "@pivi/pivi-agent-core/engine/pi",
-            "@pivi/pivi-agent-core/engine/pi/*",
+            "@pivi/engine-pi",
+            "@pivi/engine-pi/*",
           ],
           message:
             "@pivi/obsidian-host must not import Pi engine implementations. Implement host adapters against core ports instead.",
         },
         {
           group: [
-            "@pivi/pivi-agent-core/skills",
-            "@pivi/pivi-agent-core/skills/*",
-            "@pivi/pivi-agent-core/tools",
-            "@pivi/pivi-agent-core/tools/*",
+            "@pivi/agent/skills",
+            "@pivi/agent/skills/*",
+            "@pivi/agent/tools",
+            "@pivi/agent/tools/*",
           ],
           message:
             "@pivi/obsidian-host must not import skills or tools semantics. Keep product/runtime concerns above the host layer.",
@@ -366,11 +368,26 @@ export default defineConfig([
         electronRestriction,
         {
           group: [
-            "@pivi/pivi-agent-core/engine/pi",
-            "@pivi/pivi-agent-core/engine/pi/*",
+            "@pivi/engine-pi",
+            "@pivi/engine-pi/*",
           ],
           message:
             "@pivi/pivi-react must not import Pi engine implementations. Use host-neutral contracts and display models.",
+        },
+        {
+          // Exact root only: group "@pivi/agent" would also match "@pivi/agent/foundation".
+          regex: "^@pivi/agent$",
+          message:
+            "@pivi/pivi-react must not import the aggregate @pivi/agent root. Use narrow host-neutral presentation-safe subpaths.",
+        },
+        {
+          group: [
+            "@pivi/agent/runtime",
+            "@pivi/agent/runtime/chatPorts",
+            "@pivi/agent/runtime/chatPorts/*",
+          ],
+          message:
+            "@pivi/pivi-react must not import ChatPorts-capable runtime contracts. Receive presentation ports from app composition.",
         },
         {
           group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
@@ -396,7 +413,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/foundation/**/*.{ts,tsx}"],
+    files: ["packages/agent/src/foundation/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -410,13 +427,13 @@ export default defineConfig([
         {
           group: ["@", "@/*", "src", "src/*"],
           message:
-            "@pivi/pivi-agent-core/foundation must not import product src code.",
+            "@pivi/agent/foundation must not import product src code.",
         },
       ]),
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/tools/**/*.{ts,tsx}"],
+    files: ["packages/agent/src/tools/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -425,13 +442,13 @@ export default defineConfig([
         {
           group: ["@", "@/*", "src", "src/*"],
           message:
-            "@pivi/pivi-agent-core/tools must not import product src code.",
+            "@pivi/agent/tools must not import product src code.",
         },
       ]),
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/**/*.{ts,tsx}"],
+    files: ["packages/agent/src/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -439,29 +456,40 @@ export default defineConfig([
         {
           group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
           message:
-            "@pivi/pivi-agent-core must not depend on concrete host adapters. Inject host ports from the app layer.",
+            "@pivi/agent must not depend on concrete host adapters. Inject host ports from the app layer.",
         },
         {
           group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
           message:
-            "@pivi/pivi-agent-core must not depend on concrete host tools. Inject generic ToolSpec providers.",
+            "@pivi/agent must not depend on concrete host tools. Inject generic ToolSpec providers.",
+        },
+        {
+          group: ["@pivi/engine-pi", "@pivi/engine-pi/*"],
+          message:
+            "@pivi/agent must not import @pivi/engine-pi. Keep host-neutral contracts free of the Pi engine adapter.",
+        },
+        {
+          group: ["@pivi/pivi-react", "@pivi/pivi-react/*"],
+          message:
+            "@pivi/agent must not depend on React presentation.",
         },
         rawPiSdkRestriction,
         {
-          group: ["@pivi/pivi-agent-core", "@pivi/pivi-agent-core/*"],
+          group: ["@pivi/agent", "@pivi/agent/*"],
           message:
-            "Use relative imports within @pivi/pivi-agent-core. Package subpaths are for cross-package consumers only.",
+            "Use relative imports within @pivi/agent. Package subpaths are for cross-package consumers only.",
         },
         {
           group: ["@", "@/*", "src", "src/*"],
           message:
-            "@pivi/pivi-agent-core must not import product app or UI code.",
+            "@pivi/agent must not import product app or UI code.",
         },
       ]),
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/engine/pi/**/*.{ts,tsx}"],
+    // Raw @earendil-works/* Pi SDK imports are allowed only under packages/engine-pi/**.
+    files: ["packages/engine-pi/src/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -469,28 +497,33 @@ export default defineConfig([
         {
           group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
           message:
-            "@pivi/pivi-agent-core/engine/pi must not depend on concrete host adapters. Inject host ports from the app layer.",
+            "@pivi/engine-pi must not depend on concrete host adapters. Inject host ports from the app layer.",
         },
         {
           group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
           message:
-            "@pivi/pivi-agent-core/engine/pi must not depend on concrete host tools. Inject generic ToolSpec providers.",
+            "@pivi/engine-pi must not depend on concrete host tools. Inject generic ToolSpec providers.",
         },
         {
-          group: ["@pivi/pivi-agent-core", "@pivi/pivi-agent-core/*"],
+          group: ["@pivi/pivi-react", "@pivi/pivi-react/*"],
           message:
-            "Use relative imports within @pivi/pivi-agent-core. Package subpaths are for cross-package consumers only.",
+            "@pivi/engine-pi must not depend on React presentation.",
+        },
+        {
+          group: ["react", "react/*", "react-dom", "react-dom/*"],
+          message:
+            "@pivi/engine-pi must not depend on React.",
         },
         {
           group: ["@", "@/*", "src", "src/*"],
           message:
-            "@pivi/pivi-agent-core/engine/pi must not import product app or UI code.",
+            "@pivi/engine-pi must not import product app or UI code.",
         },
       ]),
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/session/**/*.{ts,tsx}"],
+    files: ["packages/agent/src/session/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,

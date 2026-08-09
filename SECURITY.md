@@ -39,7 +39,7 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 
 ## Network flows
 
-All Pivi-initiated HTTP(S) traffic uses **purpose-scoped clients** created at composition time (`createPiviNetworkClients` in `@pivi/obsidian-host`). Each client carries an egress policy from `@pivi/pivi-agent-core/network` (URL normalization/redaction, IP classification, DNS pinning, redirect limits, deadlines, streaming byte limits, and content-type gates).
+All Pivi-initiated HTTP(S) traffic uses **purpose-scoped clients** created at composition time (`createPiviNetworkClients` in `@pivi/obsidian-host`). Each client carries an egress policy from `@pivi/agent/network` (URL normalization/redaction, IP classification, DNS pinning, redirect limits, deadlines, streaming byte limits, and content-type gates).
 
 Default policy:
 

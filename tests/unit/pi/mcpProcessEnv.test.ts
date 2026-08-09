@@ -4,8 +4,8 @@ import {
   buildMcpStdioEnv,
   MCP_STDIO_PARENT_ENV_ALLOWLIST,
   resolveMcpBearerToken,
-} from '@pivi/pivi-agent-core/mcp/mcpProcessEnv';
-import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
+} from '@pivi/agent/mcp/mcpProcessEnv';
+import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
 
 function bearerServer(overrides: Partial<ManagedMcpServer> = {}): ManagedMcpServer {
   return {

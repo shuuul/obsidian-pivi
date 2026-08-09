@@ -1,8 +1,8 @@
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 import {
   createInlineContextToken,
   type InlineContextReference,
-} from '@pivi/pivi-agent-core/context/inlineContext';
+} from '@pivi/agent/context/inlineContext';
 
 import { resolveComposerWorkspaceCommand } from '@/ui/chat/composer/ComposerWorkspaceCommand';
 

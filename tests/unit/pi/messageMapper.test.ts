@@ -1,15 +1,15 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { SessionEntry } from '@earendil-works/pi-coding-agent';
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
-import { TOOL_SKILL } from '@pivi/pivi-agent-core/tools';
+import type { ChatMessage } from '@pivi/agent/foundation';
+import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
+import { TOOL_SKILL } from '@pivi/agent/tools';
 
 import {
   applySkillDescriptions,
   collectMessageUiMap,
   entriesToChatMessages,
-} from '@pivi/pivi-agent-core/engine/pi/session/messageMapper';
-import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
+} from '@pivi/engine-pi/session/messageMapper';
+import { PIVI_MESSAGE_UI } from '@pivi/agent/session';
 
 function first<T>(values: readonly T[]): T {
   const value = values[0];

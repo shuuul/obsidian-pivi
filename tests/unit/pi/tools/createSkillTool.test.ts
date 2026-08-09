@@ -1,5 +1,5 @@
-import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
-import { createSkillTool } from '@pivi/pivi-agent-core/engine/pi/createSkillTool';
+import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
+import { createSkillTool } from '@pivi/engine-pi/createSkillTool';
 
 describe('createSkillTool', () => {
   const skillDir = '/vault/.pivi/skills/demo-skill';

@@ -4,7 +4,7 @@ import type {
   SubagentInfo,
   ToolCallInfo,
   UsageInfo,
-} from '@pivi/pivi-agent-core/foundation';
+} from '@pivi/agent/foundation';
 
 export interface ChatStreamSnapshot {
   readonly message: ChatMessage;

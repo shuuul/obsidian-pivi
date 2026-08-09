@@ -1,4 +1,4 @@
-import { SELECTED_TEXT_TEMPLATE_TOKEN } from '@pivi/pivi-agent-core/context/mentions';
+import { SELECTED_TEXT_TEMPLATE_TOKEN } from '@pivi/agent/context/mentions';
 import type { TFile } from 'obsidian';
 import { setIcon } from 'obsidian';
 

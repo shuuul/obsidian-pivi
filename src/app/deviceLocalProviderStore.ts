@@ -1,11 +1,11 @@
 import type {
   DeviceLocalProviderStateV1,
   DeviceLocalProviderStore,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalProviderState';
+} from '@pivi/agent/foundation/deviceLocalProviderState';
 import {
   assertSupportedDeviceLocalProviderStateVersion,
   normalizeDeviceLocalProviderState,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalProviderState';
+} from '@pivi/agent/foundation/deviceLocalProviderState';
 import type { App } from 'obsidian';
 
 export const DEVICE_LOCAL_PROVIDER_STORAGE_KEY = 'pivi.providers.v1';

@@ -1,31 +1,31 @@
 import { randomUUID } from 'node:crypto';
 
-import type { SlashCommand } from "@pivi/pivi-agent-core/foundation";
-import { writeFileAtomically } from '@pivi/pivi-agent-core/foundation/configPublication';
-import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
+import type { SlashCommand } from "@pivi/agent/foundation";
+import { writeFileAtomically } from '@pivi/agent/foundation/configPublication';
+import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import type { FileStore } from "@pivi/agent/ports";
 import type {
   SlashCommandCatalog,
   SlashCommandDropdownConfig,
-} from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
+} from "@pivi/agent/skills/commands/slashCommandCatalog";
+import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import {
   COMPACT_COMMAND_ID,
   GENERATE_IMAGE_TOOL_ID,
   isReservedCommandId,
   NEW_SESSION_COMMAND_ID,
-} from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";
+} from "@pivi/agent/skills/commands/slashCommandIds";
 import {
   parseSlashCommandContent,
   serializeSlashCommandMarkdown,
-} from "@pivi/pivi-agent-core/skills/slashCommand";
-import { TOOL_OBSIDIAN_GENERATE_IMAGE } from "@pivi/pivi-agent-core/tools/obsidianToolNames";
+} from "@pivi/agent/skills/slashCommand";
+import { TOOL_OBSIDIAN_GENERATE_IMAGE } from "@pivi/agent/tools/obsidianToolNames";
 import type {
   AgentCommandSummary,
   PiviCommandsGetResult,
   PiviCommandsInput,
   PiviCommandsListResult,
-} from '@pivi/pivi-agent-core/tools/piviManagement';
+} from '@pivi/agent/tools/piviManagement';
 import type { TAbstractFile } from "obsidian";
 
 import { t } from '@/app/i18n';

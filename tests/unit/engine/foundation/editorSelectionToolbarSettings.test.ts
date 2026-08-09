@@ -1,5 +1,5 @@
-import { normalizeEditorSelectionToolbarSettings } from '@pivi/pivi-agent-core/foundation/settings';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+import { normalizeEditorSelectionToolbarSettings } from '@pivi/agent/foundation/settings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
 
 const required = [
   { id: 'inline-edit', kind: 'pivi-action', actionId: 'inline-edit', enabled: true },

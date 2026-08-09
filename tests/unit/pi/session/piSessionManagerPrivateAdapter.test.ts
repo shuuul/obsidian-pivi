@@ -3,8 +3,8 @@ import {
   PI_SESSION_MANAGER_PRIVATE_CAPABILITIES,
   rewritePersistedSessionManager,
   truncatePersistedSessionManager,
-} from '@pivi/pivi-agent-core/engine/pi/session/piSessionManagerPrivateAdapter';
-import { VERSION } from '@pivi/pivi-agent-core/engine/pi/shims/piCodingAgentConfig';
+} from '@pivi/engine-pi/session/piSessionManagerPrivateAdapter';
+import { VERSION } from '@pivi/engine-pi/shims/piCodingAgentConfig';
 
 function createCapableManager(overrides: Record<string, unknown> = {}) {
   return {

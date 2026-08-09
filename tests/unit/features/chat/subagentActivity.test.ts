@@ -1,4 +1,4 @@
-import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
 import {
   addSubagentToolCall,
   createSubagentBlock,

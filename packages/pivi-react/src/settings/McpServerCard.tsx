@@ -3,8 +3,8 @@ import type {
   McpAuthStatus,
   McpTestResult,
   McpTool,
-} from '@pivi/pivi-agent-core/mcp/types';
-import { getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
+} from '@pivi/agent/mcp/types';
+import { getMcpServerType, supportsMcpOAuth } from '@pivi/agent/mcp/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';

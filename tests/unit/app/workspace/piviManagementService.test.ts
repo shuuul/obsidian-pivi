@@ -2,23 +2,23 @@ import type {
   McpManagementCommitResult,
   McpManagementCoordinator,
   McpManagementPlan,
-} from '@pivi/pivi-agent-core/mcp/mcpManagementCoordinator';
+} from '@pivi/agent/mcp/mcpManagementCoordinator';
 import type {
   SkillsManagementCommitResult,
   SkillsManagementCoordinator,
   SkillsManagementPlan,
-} from '@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator';
+} from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 import {
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
   TOOL_PIVI_SKILLS,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 import {
   type PiviManagementApprovalDecision,
   type PiviManagementApprovalPort,
   type PiviManagementApprovalRequest,
   PiviManagementError,
-} from '@pivi/pivi-agent-core/tools/piviManagement';
+} from '@pivi/agent/tools/piviManagement';
 
 import {
   PiviCommandsManagementError,

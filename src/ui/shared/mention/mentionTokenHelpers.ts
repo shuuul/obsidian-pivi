@@ -4,7 +4,7 @@ import {
   formatVaultFileMentionToken,
   getPreferredAlias,
   normalizeAliases,
-} from '@pivi/pivi-agent-core/context/mentions';
+} from '@pivi/agent/context/mentions';
 
 import type { MentionItem } from './types';
 

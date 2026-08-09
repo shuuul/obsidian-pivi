@@ -3,7 +3,7 @@ import {
   getFuzzyMatchIndexes,
   getTextMatchScore,
   isSearchBoundary,
-} from '@pivi/pivi-agent-core/skills/commands/fuzzyScore';
+} from '@pivi/agent/skills/commands/fuzzyScore';
 
 import type { DropdownItem } from './slashCommandDropdownData';
 

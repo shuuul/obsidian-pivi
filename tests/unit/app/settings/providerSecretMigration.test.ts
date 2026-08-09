@@ -4,11 +4,11 @@ import {
   getCustomProviderHeaderSecretId,
   parseCustomProviderHeaderSecret,
   writeCustomProviderHeaders,
-} from '@pivi/pivi-agent-core/auth/customProviderHeaderSecrets';
-import { PIVI_MCP_OAUTH_DIR } from '@pivi/pivi-agent-core/mcp/paths';
-import { getMcpAuthEntrySecretId } from '@pivi/pivi-agent-core/mcp/oauth/mcpSecretAuthStore';
-import { McpVaultAuthStore } from '@pivi/pivi-agent-core/mcp/oauth/mcpVaultAuthStore';
-import type { FileStore } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/auth/customProviderHeaderSecrets';
+import { PIVI_MCP_OAUTH_DIR } from '@pivi/agent/mcp/paths';
+import { getMcpAuthEntrySecretId } from '@pivi/agent/mcp/oauth/mcpSecretAuthStore';
+import { McpVaultAuthStore } from '@pivi/agent/mcp/oauth/mcpVaultAuthStore';
+import type { FileStore } from '@pivi/agent/ports';
 
 function entryPath(serverName: string): string {
   const storageKey = createHash('sha256').update(serverName, 'utf8').digest('hex');
@@ -71,7 +71,7 @@ class MemoryVaultAdapter {
 describe('mcpAuthEntryMigration', () => {
   it('migrates vault OAuth entries into SecretStorage and cleans plaintext files', async () => {
     const { migrateMcpAuthEntriesToSecretStorage } = await import(
-      '@pivi/pivi-agent-core/mcp/oauth/mcpAuthEntryMigration'
+      '@pivi/agent/mcp/oauth/mcpAuthEntryMigration'
     );
     const adapter = new MemoryVaultAdapter();
     const vaultStore = new McpVaultAuthStore(adapter as never);
@@ -113,7 +113,7 @@ describe('mcpAuthEntryMigration', () => {
 
   it('cleans orphan vault OAuth folders even when no listed server migrates', async () => {
     const { migrateMcpAuthEntriesToSecretStorage } = await import(
-      '@pivi/pivi-agent-core/mcp/oauth/mcpAuthEntryMigration'
+      '@pivi/agent/mcp/oauth/mcpAuthEntryMigration'
     );
     const adapter = new MemoryVaultAdapter();
     const orphanDir = `${PIVI_MCP_OAUTH_DIR}/sha256-deadbeef`;
@@ -199,7 +199,7 @@ describe('customProviderHeaderMigration', () => {
 
   it('merges stored header secrets into runtime custom provider configs', async () => {
     const { mergeCustomProviderHeaderSecrets } = await import(
-      '@pivi/pivi-agent-core/auth/customProviderHeaderSecrets'
+      '@pivi/agent/auth/customProviderHeaderSecrets'
     );
     const secretStorage = {
       secrets: new Map<string, string>(),
@@ -235,10 +235,10 @@ describe('customProviderHeaderMigration', () => {
 
   it('uses digest-based header secret ids for long custom provider ids', async () => {
     const { getCustomProviderHeaderSecretId } = await import(
-      '@pivi/pivi-agent-core/auth/customProviderHeaderSecrets'
+      '@pivi/agent/auth/customProviderHeaderSecrets'
     );
     const { MAX_OBSIDIAN_SECRET_ID_LENGTH } = await import(
-      '@pivi/pivi-agent-core/auth/providerSecretStorage'
+      '@pivi/agent/auth/providerSecretStorage'
     );
     const providerId = 'custom-openai-compatible-369e807a-7e24-4204-a86d-3abbaaa3d1e2';
     const secretId = getCustomProviderHeaderSecretId(providerId);

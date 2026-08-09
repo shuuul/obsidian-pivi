@@ -2,8 +2,8 @@ import {
   DEFAULT_WORKSPACE_COMMANDS,
   ensureDefaultWorkspaceCommands,
   seedDefaultWorkspaceCommands,
-} from '@pivi/pivi-agent-core/skills/commands/defaultWorkspaceCommands';
-import type { FileStore } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/skills/commands/defaultWorkspaceCommands';
+import type { FileStore } from '@pivi/agent/ports';
 
 describe('default workspace commands', () => {
   function createAdapter(existing: readonly string[] = []) {

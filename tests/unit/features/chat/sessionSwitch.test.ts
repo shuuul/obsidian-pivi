@@ -1,5 +1,5 @@
 import { SessionController } from '@/ui/chat/controllers/SessionController';
-import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import type { OpenSessionState } from '@pivi/agent/foundation';
 import { ChatState } from '@/ui/chat/state/ChatState';
 import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 

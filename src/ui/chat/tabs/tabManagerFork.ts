@@ -1,5 +1,5 @@
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';

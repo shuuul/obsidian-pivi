@@ -1,15 +1,15 @@
-import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
-import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/agent/auth/piProviderCredentials';
+import { isProviderDisabled } from '@pivi/agent/auth/providerSecretStorage';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { getProviderIdFromModelValue } from '@pivi/agent/foundation/providerLogos';
+import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
+import { testEndpointConnectivity } from '@pivi/agent/runtime/connectivity';
+import { piAiModels } from '@pivi/engine-pi/piAiModels';
 import {
   type PiResolvedModel,
   resolvePiModelFromKeyWithLookup,
-} from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import { getProviderIdFromModelValue } from '@pivi/pivi-agent-core/foundation/providerLogos';
-import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
-import { testEndpointConnectivity } from '@pivi/pivi-agent-core/runtime/connectivity';
+} from '@pivi/engine-pi/piModelRegistry';
+import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 
 const logger = new PluginLogger('ProviderReadiness');
 

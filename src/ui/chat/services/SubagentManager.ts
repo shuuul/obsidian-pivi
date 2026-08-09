@@ -1,7 +1,7 @@
-import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
-import { TOOL_SPAWN_AGENT, TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
-import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
+import type { TaskResultInterpreter } from '@pivi/agent/tools';
+import { TOOL_SPAWN_AGENT, TOOL_TASK } from '@pivi/agent/tools/toolNames';
+import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 
 import { SUBAGENT_WRITER_NAMES } from '../subagentProfiles';
 import { SubagentAsyncManagerBase } from './SubagentAsyncManagerBase';

@@ -1,10 +1,10 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ToolCallInfo } from '@pivi/agent/foundation';
 import {
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
-} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
-import { TOOL_BASH } from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/tools/obsidianToolNames';
+import { TOOL_BASH } from '@pivi/agent/tools/toolNames';
 
 import {
   renderStoredToolCall,

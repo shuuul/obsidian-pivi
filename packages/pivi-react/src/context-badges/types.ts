@@ -1,4 +1,4 @@
-import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { InlineContextReference } from '@pivi/agent/context/inlineContext';
 
 export type ContextBadgeKind =
   | 'file'

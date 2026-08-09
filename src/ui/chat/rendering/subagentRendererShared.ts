@@ -2,8 +2,8 @@ import {
   type ActivityStatus,
   resolveSubagentActivityStatus,
   type SubagentInfo,
-} from '@pivi/pivi-agent-core/foundation';
-import { stripAgentReportBlocksFromText } from '@pivi/pivi-agent-core/session';
+} from '@pivi/agent/foundation';
+import { stripAgentReportBlocksFromText } from '@pivi/agent/session';
 import {
   type ActivityStatusPresentation,
   getActivityStatusPresentation,

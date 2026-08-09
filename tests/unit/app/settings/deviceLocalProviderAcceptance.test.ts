@@ -1,10 +1,10 @@
 import {
   getPiAiCredentialSecretId,
   serializeProviderCredential,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { migrateMembershipAwareProviderSecrets } from '@pivi/pivi-agent-core/engine/pi';
+} from '@pivi/agent/auth/piProviderCredentials';
+import { migrateMembershipAwareProviderSecrets } from '@pivi/engine-pi';
 import { PIVI_SETTINGS_PATH } from '@pivi/obsidian-host/settings/piviSettingsStorage';
-import type { FileStore } from '@pivi/pivi-agent-core/ports';
+import type { FileStore } from '@pivi/agent/ports';
 import { App, Notice } from 'obsidian';
 
 import {
@@ -267,7 +267,7 @@ describe('device-local provider acceptance matrix', () => {
     const app = createMockApp();
     const adapter = createSharedSyncedAdapter();
     const { loadPluginSettings } = await import('@/app/pluginSettingsLoad');
-    const { DEFAULT_PIVI_SETTINGS } = await import('@pivi/pivi-agent-core/foundation/settingsDefaults');
+    const { DEFAULT_PIVI_SETTINGS } = await import('@pivi/agent/foundation/settingsDefaults');
     let settings = structuredClone(DEFAULT_PIVI_SETTINGS);
 
     await loadPluginSettings({

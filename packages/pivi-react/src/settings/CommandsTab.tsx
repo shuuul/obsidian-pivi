@@ -1,4 +1,4 @@
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 import {
   type CSSProperties,
   type MouseEvent,

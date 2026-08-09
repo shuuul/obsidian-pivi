@@ -1,4 +1,4 @@
-import type { ActivityStatus } from '@pivi/pivi-agent-core/foundation';
+import type { ActivityStatus } from '@pivi/agent/foundation';
 import {
   type ActivityStatusPresentation,
   getActivityStatusCountPresentations,

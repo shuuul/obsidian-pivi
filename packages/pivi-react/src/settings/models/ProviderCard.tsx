@@ -1,6 +1,6 @@
-import { isDualAuthOAuthProviderId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { isLocalCustomProviderKind } from '@pivi/pivi-agent-core/foundation/customProviders';
-import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
+import { isDualAuthOAuthProviderId } from '@pivi/agent/auth/piProviderCredentials';
+import { isLocalCustomProviderKind } from '@pivi/agent/foundation/customProviders';
+import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
 import {
   type CSSProperties,
   Fragment,

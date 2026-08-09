@@ -36,7 +36,7 @@ Generation guards invalidate late initialization after a view closes or the plug
 |---|---|
 | `PiviChatHost` | App-only runtime host containing the Obsidian `app`; used by `src/ui/chat` for UI context |
 | `PiviChatCompositionHost` | Wider app composition surface for settings, facades, view enumeration, and tab-state persistence |
-| `ChatPorts` | Core-owned runtime, session, catalog, models, and settings capabilities injected into `TabManager` |
+| `ChatPorts` | `@pivi/agent`-owned runtime, session, catalog, models, and settings capabilities injected into `TabManager` |
 | `SettingsPorts` | React-owned settings capabilities implemented by `src/app/ui` |
 | `PiviChatViewHandle` | Semantic app control surface split into user `commands` and lifecycle `maintenance` operations |
 | `PiWorkspaceServices` | Plugin-wide service graph: stores, tools, MCP, skills, providers, runtime factories, and subagent limiter |
@@ -68,7 +68,7 @@ Settings mount independently through `PiviSettingTabHost` and `SettingsRoot`. On
 
 Before constructing the session store, startup also reconciles the vault-scoped device-local session journal (`pivi.session-journal.v1`) against on-disk JSONL. Confirmed or pending continuations that still match the source are dropped; append-compatible gaps are reapplied; non-append-compatible cloud replacement/rollback creates an explicit recovered session with visible provenance and never overwrites the externally changed file. A corrupt device-local journal blob resets to an empty journal with a warning rather than blocking startup. Rebuildable JSONL indexes live under a device-local home cache (`~/.pivi/session-indexes/<vault-key>/`), not beside synced `.pivi/sessions/*.jsonl`.
 
-Workspace composition builds the ordinary Obsidian-native inventory through `createObsidianTools`, then adds core-owned `pivi_sessions` through the shared base provider over an injected `SessionRecoveryPort`. The same base provider feeds main Agents and subagents. `@pivi/obsidian-tools` therefore retains concrete Obsidian/CLI adapters without owning host-neutral session recovery.
+Workspace composition builds the ordinary Obsidian-native inventory through `createObsidianTools`, then adds `@pivi/agent`-owned `pivi_sessions` through the shared base provider over an injected `SessionRecoveryPort`. The same base provider feeds main Agents and subagents. `@pivi/obsidian-tools` therefore retains concrete Obsidian/CLI adapters without owning host-neutral session recovery.
 
 ## Runtime creation and refresh
 

@@ -1,9 +1,9 @@
-import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/agent/context/mentions';
 import {
   messageTextHasMentionBadges,
   parseMessageMentions,
-} from '@pivi/pivi-agent-core/context/mentions';
-import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
+} from '@pivi/agent/context/mentions';
+import { createInlineContextToken } from '@pivi/agent/context/inlineContext';
 
 function createVaultLookup(): MentionVaultLookup {
   const files = [

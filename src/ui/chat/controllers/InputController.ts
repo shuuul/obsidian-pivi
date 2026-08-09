@@ -1,19 +1,19 @@
-import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
-import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
-import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
+import type { BrowserSelectionContext } from '@pivi/agent/context/browser';
+import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
+import type { EditorSelectionContext } from '@pivi/agent/context/editor';
 import type {
   ChatMessage,
   StreamChunk,
-} from '@pivi/pivi-agent-core/foundation';
-import type { CapabilityApprovalRequest, CapabilityApprovalResult } from '@pivi/pivi-agent-core/ports';
-import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
+} from '@pivi/agent/foundation';
+import type { CapabilityApprovalRequest, CapabilityApprovalResult } from '@pivi/agent/ports';
+import type { TitleGenerationService } from '@pivi/agent/runtime/auxTypes';
 import type {
   ChatPorts,
   ChatSettingsPort,
-} from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
-import type { PiviManagementApprovalDecision, PiviManagementApprovalRequest } from '@pivi/pivi-agent-core/tools/piviManagement';
+} from '@pivi/agent/runtime/chatPorts';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import type { ChatTurnRequest } from '@pivi/agent/runtime/types';
+import type { PiviManagementApprovalDecision, PiviManagementApprovalRequest } from '@pivi/agent/tools/piviManagement';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { ComposerInlinePrompts } from '@/ui/chat/composer/ComposerInlinePrompts';

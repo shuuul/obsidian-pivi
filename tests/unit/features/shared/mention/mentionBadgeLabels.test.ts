@@ -1,14 +1,14 @@
 import {
   formatInlineContextBadgeLabel,
   formatInlineContextPreview,
-} from '@pivi/pivi-agent-core/context/mentions';
+} from '@pivi/agent/context/mentions';
 import {
   formatInlineContextTooltip,
   formatRemoveInlineContextAriaLabel,
   formatMcpBadgeLabel,
   formatSkillBadgeLabel,
 } from '@pivi/pivi-react/context-badges';
-import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { InlineContextReference } from '@pivi/agent/context/inlineContext';
 import { createI18n } from '@pivi/pivi-react';
 
 describe('mentionBadgeLabels', () => {

@@ -2,24 +2,24 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import type { OAuthFlowHost, ProviderLegacyAuthData, ProviderLegacyAuthStore } from '@pivi/pivi-agent-core/ports';
+import type { OAuthFlowHost, ProviderLegacyAuthData, ProviderLegacyAuthStore } from '@pivi/agent/ports';
 import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/providerLegacyAuthStore';
 import {
   isProviderOAuthLoginCancelled,
-} from '@pivi/pivi-agent-core/auth/providerOAuthProgress';
+} from '@pivi/agent/auth/providerOAuthProgress';
 import {
   ANTHROPIC_PROVIDER_ID,
   CLAUDE_PROVIDER_ID,
   CODEX_OAUTH_PROVIDER_ID,
   GROK_BUILD_PROVIDER_ID,
   XAI_PROVIDER_ID,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+} from '@pivi/agent/auth/piProviderCredentials';
+import { configurePiAiModels } from '@pivi/engine-pi/piAiModels';
+import { ObsidianCredentialStore } from '@pivi/engine-pi/piProviderCredentialStore';
 import {
   normalizeCodexBrowserAuthUrl,
   ProviderOAuthService,
-} from '@pivi/pivi-agent-core/engine/pi/piProviderOAuthService';
+} from '@pivi/engine-pi/piProviderOAuthService';
 import { createMockApp } from '../../../helpers/mockApp';
 
 function createMockOAuthFlowHost(): OAuthFlowHost & { openAuthUrl: jest.Mock } {

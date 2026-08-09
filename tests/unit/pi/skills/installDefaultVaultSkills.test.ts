@@ -1,11 +1,11 @@
-import type { HttpClient, HttpRequest, HttpResponse, ProcessRunner } from '@pivi/pivi-agent-core/ports';
-import * as fetchRemoteSha from '@pivi/pivi-agent-core/skills/vault/fetchDefaultVaultSkillsRemoteSha';
+import type { HttpClient, HttpRequest, HttpResponse, ProcessRunner } from '@pivi/agent/ports';
+import * as fetchRemoteSha from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
 import {
   installDefaultVaultSkills,
   type DefaultVaultSkillsContext,
-} from '@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills';
-import * as notifyModule from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
-import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
+} from '@pivi/agent/skills/vault/ensureDefaultVaultSkills';
+import * as notifyModule from '@pivi/agent/skills/vault/notifyVaultSkillsChanged';
+import { VaultSkillsService } from '@pivi/agent/skills/vault/vaultSkillsService';
 
 function mockHttpClient(): HttpClient {
   return {

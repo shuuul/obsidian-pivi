@@ -5,7 +5,7 @@ import {
   parsePiviPluginManifest,
   type PluginResourceLoader,
   type SlashCommandContribution,
-} from '@pivi/pivi-agent-core/plugins';
+} from '@pivi/agent/plugins';
 
 const explainCommand: SlashCommandContribution = {
   id: 'explain',
@@ -21,7 +21,7 @@ const explainCommand: SlashCommandContribution = {
   insertPrefix: '/',
 };
 
-describe('pivi-agent-core plugin registry', () => {
+describe('@pivi/agent plugin registry', () => {
   it('parses declarative plugin manifests', () => {
     expect(parsePiviPluginManifest({
       id: 'demo-plugin',

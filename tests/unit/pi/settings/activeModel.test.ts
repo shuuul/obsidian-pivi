@@ -1,7 +1,7 @@
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
-import { reconcileActiveModelFields } from '@pivi/pivi-agent-core/foundation/activeModel';
-import { DEFAULT_MODEL_KEY } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation/settings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
+import { reconcileActiveModelFields } from '@pivi/agent/foundation/activeModel';
+import { DEFAULT_MODEL_KEY } from '@pivi/agent/foundation/settingsDefaults';
+import type { PiviSettings } from '@pivi/agent/foundation/settings';
 
 function settingsFixture(overrides: Partial<PiviSettings> = {}): PiviSettings {
   return {

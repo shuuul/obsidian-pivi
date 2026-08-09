@@ -1,4 +1,4 @@
-import { normalizeWebSearchDisplayData } from '@pivi/pivi-agent-core/tools/toolPresentation';
+import { normalizeWebSearchDisplayData } from '@pivi/agent/tools/toolPresentation';
 
 import { t } from '@/app/i18n';
 

@@ -1,4 +1,4 @@
-import type { ImageAttachment, ImageMediaType } from '@pivi/pivi-agent-core/foundation';
+import type { ImageAttachment, ImageMediaType } from '@pivi/agent/foundation';
 import { Notice } from 'obsidian';
 import * as path from 'path';
 

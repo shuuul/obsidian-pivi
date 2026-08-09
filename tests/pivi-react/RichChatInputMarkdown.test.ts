@@ -1,5 +1,5 @@
 import type { App } from 'obsidian';
-import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 
 import { wireTabInputEvents } from '@/ui/chat/tabs/tabInputWiring';
 import type { TabData } from '@/ui/chat/tabs/types';

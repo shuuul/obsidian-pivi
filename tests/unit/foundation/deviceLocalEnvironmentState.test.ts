@@ -16,9 +16,9 @@ import {
   stageEnvironmentSecrets,
   stripEnvironmentFieldsFromPersistedSettings,
   toStoredEnvironmentEntries,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
+import type { SyncSecretStore } from '@pivi/agent/ports';
 
 function createMemorySecretStore(): SyncSecretStore {
   const secrets = new Map<string, string>();

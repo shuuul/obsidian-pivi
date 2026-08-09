@@ -5,7 +5,7 @@
   "exports": "./src/index.ts",
   "dependencies": {
     "@pivi/obsidian-host": "*",
-    "@pivi/pivi-agent-core": "*"
+    "@pivi/agent": "*"
   },
   "peerDependencies": {
     "obsidian": ">=1.12.0"

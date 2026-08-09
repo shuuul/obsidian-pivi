@@ -38,13 +38,13 @@ flowchart TD
 
   Tabs --> Host["PiviChatHost.app<br/>Obsidian UI context only"]
   Tabs --> Ports["ChatPorts<br/>runtime / sessions / catalog / models / settings"]
-  Controllers --> ChatService["PiChatService<br/>@pivi/pivi-agent-core/runtime"]
+  Controllers --> ChatService["PiChatService<br/>@pivi/agent/runtime"]
   Ports -. "creates/injects" .-> ChatService
 ```
 
 ### Lifecycle and data flow
 
-1. `PiviViewHost.onOpen()` creates core-owned `ChatPorts` via `createChatUiPorts`, prepares the React shell through `createImperativeChatAdapter`, and mounts one React shell via `mountChatView`. An app-owned adapter closure captures the ports and passes them directly to `TabManager`; the React mount contract never receives them, and `ChatShell` consumes snapshots/actions only.
+1. `PiviViewHost.onOpen()` creates `@pivi/agent`-owned `ChatPorts` via `createChatUiPorts`, prepares the React shell through `createImperativeChatAdapter`, and mounts one React shell via `mountChatView`. An app-owned adapter closure captures the ports and passes them directly to `TabManager`; the React mount contract never receives them, and `ChatShell` consumes snapshots/actions only.
 2. `ImperativeChatAdapter.mount` constructs `TabManager` with the same `ChatPorts`, loads persisted tab bindings or creates a blank tab, and primes eligible runtime state. `TabManager` creates each `TabData`, initializes its controller/UI/state graph plus the uncontrolled rich-input and empty portal slots (`tabDom`), and activates only the selected tab; blank and cold tabs still create no chat service. Live chrome and message entities reach React through `ActiveChatUiBridge` plus immutable `ChatUiStore` and `ChatProjectionStore` snapshots; `scheduleTabsSnapshotPublish` keeps the separate tab strip store in sync. Ports supply catalogs/factories/model behavior/projected settings (`catalog` / `models` / `settings` / `runtime` / `sessions`), not live UI state or facade objects. There is no composer `McpServerSelector`, no `navRowEl`, and no DOM-mutating stream path.
 3. A new tab begins as `blank`: it has draft UI settings but no durable open-session binding and no chat service.
 4. Loading history produces a `bound_cold` tab associated with `openSessionId` and `sessionFile`; runtime work remains lazy.
@@ -101,7 +101,7 @@ Pivi management confirmation is a dedicated per-tab, one-shot bridge under `comp
 | `src/ui/chat/services/SubagentManager.ts` | Correlates task, child-tool, agent-output, and asynchronous completion events into pure subagent records. |
 | `src/ui/chat/services/SubagentAsyncManagerBase.ts` | Shared base for background subagent tracking: job registration, completion waiters, and retention bookkeeping. |
 | `src/ui/chat/services/SubagentResultParser.ts` | Tolerant parsing of subagent terminal output into structured Agent-report/text results. |
-| `src/ui/chat/stream/streamSubagentLifecycle.ts` | UI stream coordinator for subagent tool_use/result/retry/hydrate. Depends on `ChatState`, scroll/thinking callbacks, and `window.setTimeout` — keep in `src/ui/chat/stream/`. Do not sink into core `SubagentManager` / engine jobs without first extracting a host-neutral pure reducer; engine already owns concurrency (`subagentConcurrencyLimiter`) and background jobs (`piBackgroundSubagentJobs`). |
+| `src/ui/chat/stream/streamSubagentLifecycle.ts` | UI stream coordinator for subagent tool_use/result/retry/hydrate. Depends on `ChatState`, scroll/thinking callbacks, and `window.setTimeout` — keep in `src/ui/chat/stream/`. Do not sink into a shared `SubagentManager` / engine jobs without first extracting a host-neutral pure reducer; `@pivi/engine-pi` already owns concurrency (`subagentConcurrencyLimiter`) and background jobs (`piBackgroundSubagentJobs`). |
 | `src/ui/chat/ui/RichChatInput.ts` | Uncontrolled contenteditable adapter with textarea-compatible API, mention badges, plain-text paste, ordered-list continuation, and IME-safe synchronization. React never owns its children. |
 
 ## Patterns and constraints
@@ -109,13 +109,13 @@ Pivi management confirmation is a dedicated per-tab, one-shot bridge under `comp
 ### Boundaries
 
 - UI chat code depends on the `app`-only `PiviChatHost` contract from `src/app/hostContracts.ts`, not `PiviChatCompositionHost`, the concrete plugin class, `PiviViewHost`, or app workspace implementations. Do not import `@/app/ui/**` from this directory.
-- Depend on `PiChatService` from `@pivi/pivi-agent-core/runtime`. Never import, instantiate, or type against `PiChatRuntime`.
-- Consume injected `ChatPorts` (`runtime` / `sessions` / `catalog` / `models` / `settings`) via `TabManager` and type-import them from `@pivi/pivi-agent-core/runtime/chatPorts`; all chat settings reads go through the explicit `ChatSettingsSnapshot` projection, never `plugin.settings`, `PiviSettings`, or an `agentSettings` bag. Never import React-owned presentation ports or `@pivi/pivi-react/mount`, never implement application ports here, never call `getPiWorkspace()`, `getUiFacades()`, `saveSettings()`, or `getAllViews()`, and never cast host objects `as ChatPorts`.
+- Depend on `PiChatService` from `@pivi/agent/runtime`. Never import, instantiate, or type against `PiChatRuntime`.
+- Consume injected `ChatPorts` (`runtime` / `sessions` / `catalog` / `models` / `settings`) via `TabManager` and type-import them from `@pivi/agent/runtime/chatPorts`; all chat settings reads go through the explicit `ChatSettingsSnapshot` projection, never `plugin.settings`, `PiviSettings`, or an `agentSettings` bag. Never import React-owned presentation ports or `@pivi/pivi-react/mount`, never implement application ports here, never call `getPiWorkspace()`, `getUiFacades()`, `saveSettings()`, or `getAllViews()`, and never cast host objects `as ChatPorts`.
 - `TabManager` also receives the presentation-owned `ChatPerfRecorder` contract from app composition and passes it unchanged into each `ChatState` projection store. Chat runtime may emit through that seam but must not start/stop tracing, write trace files, create observers, or inspect the concrete app recorder.
 - Projection sequence ownership stays in `ChatState`, never in React. A first turn may have null session/open-session identity, so `projectionScopeId` owns that pre-binding epoch; changing the durable binding resets the sequence. Capture a background Agent's parent projection run when its state is first registered and reuse it across later turns. Raw `done`/`error` chunks do not seal a run because final footer/service effects follow them. Emit `run.terminal` only after the final main/child mutation; use `projection.flush` for urgent non-sealing publication. On tab teardown, unsubscribe service callbacks before disposing `StreamController`; its disposal guard must prevent queued or await-resumed background work from publishing.
-- Do not import `@pivi/pivi-agent-core/engine/pi`, raw `@earendil-works/*` SDK modules, `src/app/workspace/**`, or `@pivi/obsidian-host/**` from this directory.
+- Do not import `@pivi/engine-pi`, raw `@earendil-works/*` SDK modules, `src/app/workspace/**`, or `@pivi/obsidian-host/**` from this directory.
 - Obsidian UI context may arrive through `PiviChatHost.app`; runtime/session/model/catalog/settings capabilities must arrive through `ChatPorts`. Other host/platform operations use narrow structural callbacks or approved adapters such as `src/app/hostPlatform.ts`.
-- Use core-owned message, turn, tool, session, todo, context, and usage models. Do not duplicate provider/runtime protocols in UI.
+- Use `@pivi/agent`-owned message, turn, tool, session, todo, context, and usage models. Do not duplicate provider/runtime protocols in UI.
 - Keep `src/app/hostContracts.ts` structural and UI-neutral. App callers use `PiviChatViewHandle.commands` / `.maintenance`; they must never receive the internal `TabManager`, `TabData`, controller, UI, or DOM graph. `ImperativeChatAdapter` is the only boundary allowed to translate semantic view operations onto that aggregate. Use interfaces such as `TabManagerViewHost` to prevent app↔UI and view↔tab cycles.
 - Runtime state is rebuildable. Durable identity belongs to the session file/header; open-session projections and adapter DOM are rebuildable.
 
@@ -146,7 +146,7 @@ Pivi management confirmation is a dedicated per-tab, one-shot bridge under `comp
 - Build `ChatTurnRequest` at send time from current UI capability selections. Visible `displayContent` and runtime/persisted prompt content are intentionally different.
 - Workspace command tokens remain visible as composer/history badges; resolve their templates and variables only at send time into `ChatTurnRequest.text`, including when capturing a queued turn.
 - Clear the blank-session welcome snapshot only after the outgoing submission is assembled successfully and before publishing its user message.
-- MCP slash tokens (`/server`), built-in tool tokens (`/generate-image`), attached files, inline references, editor/browser/canvas selections, images, and external roots belong in the turn request—not ad hoc prompt strings in controllers. Built-in tool tokens are expanded only in the core API prompt while persisted UI text remains unchanged.
+- MCP slash tokens (`/server`), built-in tool tokens (`/generate-image`), attached files, inline references, editor/browser/canvas selections, images, and external roots belong in the turn request—not ad hoc prompt strings in controllers. Built-in tool tokens are expanded only in the `@pivi/agent` API prompt while persisted UI text remains unchanged.
 - Queued submissions are independent FIFO snapshots of turn content/context; external-context permissions refresh from current UI when a queued turn executes or steers the active Pi run. During streaming, composer content switches the primary control from cancel to the React-owned queue-message action, which calls the ordinary send boundary. Each chat-surface queue row has a stable ID, can reorder execution through the validated whole-queue ID action, and exposes steer, composer-edit, and delete actions without changing sibling entries. Queue mutations that can change composer emptiness refresh composer chrome in the same adapter action so stop/queue state never waits for another input event. MCP availability comes from settings-enabled servers (no per-turn toolbar pick).
 - Preserve IME composition guards in `RichChatInput`; rebuilding mention badges during composition breaks CJK input.
 - The composer sends Markdown as plain text rather than rendering a WYSIWYG preview. On an ordered-list item, unmodified Enter (or Shift+Enter) continues the next numeric marker before the normal send shortcut runs; Enter on an empty marker exits the list. The live shortcut setting is checked from the composer owner-window capture phase because Obsidian's keymap may stop propagation before the contenteditable target; handle it only while that exact composer owns focus. When required, Command+Enter or Ctrl+Enter sends and plain Enter edits; when disabled, plain Enter sends. Alt/Shift combinations and IME composition never send.
@@ -168,14 +168,14 @@ Pivi management confirmation is a dedicated per-tab, one-shot bridge under `comp
 
 ## Subagent stream boundary
 
-`StreamSubagentCoordinator` (`stream/streamSubagentLifecycle.ts`) deliberately stays in product UI rather than `@pivi/pivi-agent-core`:
+`StreamSubagentCoordinator` (`stream/streamSubagentLifecycle.ts`) deliberately stays in product UI rather than `@pivi/agent`:
 
 - It mutates live `ChatMessage` tool calls, content blocks, and thinking-indicator side effects while chunks arrive.
 - Subagent terminal events update their projection without hiding the bottom thinking indicator; the indicator stays visible for the full foreground turn and clears only on turn boundaries such as finalize, cancel, error, or stream reset.
 - Async hydration retries call back into injected `PiChatService` loaders. The coordinator owns retry timers and a lifecycle generation; reset/dispose cancels pending timers and invalidates in-flight loader results before they can mutate the next session or a closed tab.
 - `SubagentManager` remains the pure record layer (task buffering, nested tool correlation, terminal status). Keep new persistence rules there, but keep stream-order-sensitive projection and retry timing in the coordinator unless a future review extracts a host-neutral state machine with no UI or `PiChatService` dependencies.
 
-Do not move retry/hydrate logic into core `SubagentManager` without that boundary review.
+Do not move retry/hydrate logic into a shared `SubagentManager` without that boundary review.
 
 ## Gotchas
 

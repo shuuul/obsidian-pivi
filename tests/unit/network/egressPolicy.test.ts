@@ -8,7 +8,7 @@ import {
   OriginGrantRegistry,
   prepareRedirect,
   resolveEgressPolicy,
-} from '@pivi/pivi-agent-core/network';
+} from '@pivi/agent/network';
 
 describe('egressPolicy', () => {
   const policy = resolveEgressPolicy({ purpose: 'web-fetch' });

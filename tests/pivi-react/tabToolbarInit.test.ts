@@ -1,4 +1,4 @@
-import type { ChatSettingsSnapshot } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatSettingsSnapshot } from '@pivi/agent/runtime/chatPorts';
 import { ChatState } from '@/ui/chat/state/ChatState';
 import { wireComposerChrome } from '@/ui/chat/tabs/tabToolbarInit';
 import type { TabData } from '@/ui/chat/tabs/types';

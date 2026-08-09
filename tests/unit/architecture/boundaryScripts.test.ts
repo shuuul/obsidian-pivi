@@ -171,15 +171,15 @@ describe('architecture boundary scripts', () => {
   it.each([
     [
       'runtime barrel',
-      "import type { ChatPorts } from '@pivi/pivi-agent-core/runtime';",
+      "import type { ChatPorts } from '@pivi/agent/runtime';",
     ],
     [
       'chatPorts leaf',
-      "import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';",
+      "import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';",
     ],
     [
       'core root namespace',
-      "import type { runtime } from '@pivi/pivi-agent-core'; type Leaked = runtime.ChatPorts;",
+      "import type { runtime } from '@pivi/agent'; type Leaked = runtime.ChatPorts;",
     ],
   ])('rejects ChatPorts-capable imports from the React package via %s', (_label, source) => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
@@ -208,7 +208,7 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, 'packages/pivi-react/src'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, 'packages/pivi-react/src/fixture.ts'),
-        "import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';",
+        "import type { AuxQueryRunner } from '@pivi/agent/runtime/auxQueryRunner';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
@@ -375,7 +375,7 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, 'packages/obsidian-tools/src'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, 'packages/obsidian-tools/src/fixture.ts'),
-        "import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';",
+        "import { piAiModels } from '@pivi/engine-pi/piAiModels';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
@@ -384,6 +384,84 @@ describe('architecture boundary scripts', () => {
       expect(result.stderr).toContain(
         '[@pivi/obsidian-tools does not import raw Pi SDKs or the Pi engine]',
       );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects the retired @pivi/pivi-agent-core package name', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'src/app/fixture.ts'),
+        "import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[src does not reference the retired @pivi/pivi-agent-core package]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects @pivi/engine-pi imports outside composition', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'src/ui'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'src/ui/fixture.ts'),
+        "import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toMatch(
+        /\[(?:only src\/app and src\/main\.ts import @pivi\/engine-pi|src\/ui does not import Pi engine implementations)\]/,
+      );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ['src/app', 'src/app/fixture.ts'],
+    ['src', 'src/main.ts'],
+  ])('allows @pivi/engine-pi imports in composition (%s)', (dir, relativeFile) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, dir), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, relativeFile),
+        "import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(0);
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects @pivi/engine-pi imports from @pivi/agent', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/agent/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/agent/src/fixture.ts'),
+        "import { piAiModels } from '@pivi/engine-pi/piAiModels';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[@pivi/agent stays host-neutral]');
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }
@@ -817,7 +895,7 @@ describe('architecture boundary scripts', () => {
       '--input-type=module',
       '--eval',
       `try {
-        import.meta.resolve('@pivi/pivi-agent-core/engine/pi/piChatRuntimeUsage');
+        import.meta.resolve('@pivi/engine-pi/piChatRuntimeUsage');
         process.exitCode = 2;
       } catch (error) {
         if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;

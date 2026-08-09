@@ -65,7 +65,7 @@ Environment settings use source-aware controls instead of free-form synced text.
 
 React-owned `ModalLayer` / `useModalLayer` provide the shared confirmation lifecycle: accessible dialog name, conservative initial focus (Cancel for destructive flows, first field for import/input), Tab containment, Escape/backdrop dismissal where safe, and trigger-focus restoration on close. Provider removal, workspace-command delete, MCP JSON import, MCP server delete, skill-folder removal, and deleted-session-file purge all use this layer.
 
-Agent-requested Pivi management approval is a separate one-shot flow. Core and coordinators produce structured semantic plans; app-local `piviManagementApprovalPresentation.ts` turns the already normalized plan into localized titles, fields, and change lines. Approval cards never present raw Agent descriptions as trusted review copy, and commit rechecks the approved revision so a concurrent change fails rather than overwriting newer state.
+Agent-requested Pivi management approval is a separate one-shot flow. `@pivi/agent` and app coordinators produce structured semantic plans; app-local `piviManagementApprovalPresentation.ts` turns the already normalized plan into localized titles, fields, and change lines. Approval cards never present raw Agent descriptions as trusted review copy, and commit rechecks the approved revision so a concurrent change fails rather than overwriting newer state.
 
 Add-provider and similar picker rows are native `<button>` elements so keyboard and disabled semantics stay built-in. Opening the inline MCP server editor scrolls its first field into view and focuses it rather than switching to a modal editor.
 

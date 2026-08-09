@@ -2,9 +2,9 @@ import {
   type ActivityStatus,
   resolveToolActivityStatus,
   type ToolCallInfo,
-} from '@pivi/pivi-agent-core/foundation';
-import type { TodoItem } from '@pivi/pivi-agent-core/tools/todo';
-import { TOOL_APPLY_PATCH } from '@pivi/pivi-agent-core/tools/toolNames';
+} from '@pivi/agent/foundation';
+import type { TodoItem } from '@pivi/agent/tools/todo';
+import { TOOL_APPLY_PATCH } from '@pivi/agent/tools/toolNames';
 
 import { t } from '@/app/i18n';
 

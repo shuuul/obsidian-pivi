@@ -3,22 +3,22 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { captureSessionJsonlSource } from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
+import { captureSessionJsonlSource } from '@pivi/engine-pi/session/sessionJsonlIndex';
 import {
   bindSessionJournal,
   SessionTreeStore,
-} from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+} from '@pivi/engine-pi/session/sessionTreeStore';
 import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,
-} from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
-import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
-import { SessionIndexStaleError } from '@pivi/pivi-agent-core/session';
+} from '@pivi/engine-pi/session/agentMessageHistory';
+import { PIVI_MESSAGE_UI } from '@pivi/agent/session';
+import { SessionIndexStaleError } from '@pivi/agent/session';
 import {
   emptySessionJournalState,
   SESSION_JOURNAL_MAX_ENTRY_BYTES,
   type SessionJournalStateV1,
-} from '@pivi/pivi-agent-core/session/sessionJournal';
+} from '@pivi/agent/session/sessionJournal';
 
 const assistantToolCall = {
   role: 'assistant',

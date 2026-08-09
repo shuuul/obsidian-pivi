@@ -1,4 +1,4 @@
-import { findLastVisibleConversationEntryId } from '@pivi/pivi-agent-core/engine/pi/session/visibleSessionEntries';
+import { findLastVisibleConversationEntryId } from '@pivi/engine-pi/session/visibleSessionEntries';
 
 type TestEntry = Parameters<typeof findLastVisibleConversationEntryId>[0][number];
 

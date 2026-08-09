@@ -2,16 +2,16 @@
  * Spec 031 environment migration and two-device acceptance coverage.
  */
 
-import { createWebSearchCredentialStore } from '@pivi/pivi-agent-core/tools/webSearch/credentialStore';
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
-import type { DeviceLocalEnvironmentStateV1 } from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
+import { createWebSearchCredentialStore } from '@pivi/agent/tools/webSearch/credentialStore';
+import type { SyncSecretStore } from '@pivi/agent/ports';
+import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/foundation/deviceLocalEnvironmentState';
 import {
   createEmptyDeviceLocalEnvironmentState,
   hasPersistedEnvironmentFields,
   stripEnvironmentFieldsFromPersistedSettings,
-} from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
-import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { getWebSearchCredentialSecretId } from '@pivi/pivi-agent-core/tools/webSearch/credentialStore';
+} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
+import { getWebSearchCredentialSecretId } from '@pivi/agent/tools/webSearch/credentialStore';
 
 import { runDeviceLocalEnvironmentMigration } from '@/app/settings/deviceLocalEnvironmentMigration';
 

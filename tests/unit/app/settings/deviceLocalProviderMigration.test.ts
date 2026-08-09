@@ -1,5 +1,5 @@
 import { PIVI_SETTINGS_PATH } from '@pivi/obsidian-host/settings/piviSettingsStorage';
-import type { FileStore } from '@pivi/pivi-agent-core/ports';
+import type { FileStore } from '@pivi/agent/ports';
 import { App } from 'obsidian';
 
 import {
@@ -241,7 +241,7 @@ describe('plugin settings load ordering', () => {
     const app = new App();
     const adapter = createMemoryAdapter();
     const { loadPluginSettings } = await import('@/app/pluginSettingsLoad');
-    const { DEFAULT_PIVI_SETTINGS } = await import('@pivi/pivi-agent-core/foundation/settingsDefaults');
+    const { DEFAULT_PIVI_SETTINGS } = await import('@pivi/agent/foundation/settingsDefaults');
     let settings = structuredClone(DEFAULT_PIVI_SETTINGS);
 
     await loadPluginSettings({

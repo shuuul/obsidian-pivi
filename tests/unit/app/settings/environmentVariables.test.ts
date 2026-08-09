@@ -1,9 +1,9 @@
-import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/engine/pi';
-import type { OpenSessionState, PiviSettings } from '@pivi/pivi-agent-core/foundation';
-import { getEnvironmentSecretId } from '@pivi/pivi-agent-core/foundation/configValueSource';
-import type { DeviceLocalEnvironmentStateV1 } from '@pivi/pivi-agent-core/foundation/deviceLocalEnvironmentState';
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
-import { getWebSearchCredentialSecretId } from '@pivi/pivi-agent-core/tools/webSearch/credentialStore';
+import { getPiAiCredentialSecretId } from '@pivi/engine-pi';
+import type { OpenSessionState, PiviSettings } from '@pivi/agent/foundation';
+import { getEnvironmentSecretId } from '@pivi/agent/foundation/configValueSource';
+import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import type { SyncSecretStore } from '@pivi/agent/ports';
+import { getWebSearchCredentialSecretId } from '@pivi/agent/tools/webSearch/credentialStore';
 
 import type { PiviChatView, PiviChatViewMaintenance } from '@/app/hostContracts';
 import {

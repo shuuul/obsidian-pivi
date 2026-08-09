@@ -1,11 +1,11 @@
-import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/context';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
+import { resolveUserMessageDisplayText } from '@pivi/agent/context/context';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { TitleGenerationService } from '@pivi/agent/runtime/auxTypes';
 import type {
   ChatPorts,
   ChatSettingsPort,
-} from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
+} from '@pivi/agent/runtime/chatPorts';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';

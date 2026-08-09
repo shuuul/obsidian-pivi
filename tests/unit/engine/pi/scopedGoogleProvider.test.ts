@@ -1,6 +1,6 @@
 import type { Provider } from '@earendil-works/pi-ai';
 
-import { withScopedGoogleTransport } from '../../../../packages/pivi-agent-core/src/engine/pi/scopedGoogleProvider';
+import { withScopedGoogleTransport } from '../../../../packages/engine-pi/src/scopedGoogleProvider';
 
 function createProvider(): Provider {
   return {

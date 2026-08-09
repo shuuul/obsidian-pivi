@@ -6,7 +6,7 @@ import {
   findEnvKeys,
   getEnvApiKey,
   resetPiAiEnvironmentHost,
-} from '@pivi/pivi-agent-core/engine/pi/shims/piAiEnvApiKeys';
+} from '@pivi/engine-pi/shims/piAiEnvApiKeys';
 
 function configureEnv(values: Record<string, string | undefined>): void {
   configurePiAiEnvironmentHost({

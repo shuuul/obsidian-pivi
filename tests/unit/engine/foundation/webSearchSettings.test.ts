@@ -3,7 +3,7 @@ import {
   getWebSearchToolsSettingsFromBag,
   resolveWebSearchToolsSettings,
   type WebSearchToolsSettings,
-} from '@pivi/pivi-agent-core/foundation/settings';
+} from '@pivi/agent/foundation/settings';
 
 describe('resolveWebSearchToolsSettings', () => {
   it('returns an independent canonical default queue', () => {

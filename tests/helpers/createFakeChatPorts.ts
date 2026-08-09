@@ -1,4 +1,4 @@
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 
 /** Minimal fake ChatPorts for mount/shell tests — no cast-to-empty object. */
 export function createFakeChatPorts(

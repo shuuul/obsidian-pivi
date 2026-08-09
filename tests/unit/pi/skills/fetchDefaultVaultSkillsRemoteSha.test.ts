@@ -1,6 +1,6 @@
-import type { HttpClient, HttpRequest, HttpResponse } from '@pivi/pivi-agent-core/ports';
-import { DEFAULT_VAULT_SKILLS_COMMITS_URL } from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
-import { fetchDefaultVaultSkillsRemoteSha } from '@pivi/pivi-agent-core/skills/vault/fetchDefaultVaultSkillsRemoteSha';
+import type { HttpClient, HttpRequest, HttpResponse } from '@pivi/agent/ports';
+import { DEFAULT_VAULT_SKILLS_COMMITS_URL } from '@pivi/agent/skills/vault/defaultVaultSkills';
+import { fetchDefaultVaultSkillsRemoteSha } from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
 
 function createHttpResponse(
   status: number,

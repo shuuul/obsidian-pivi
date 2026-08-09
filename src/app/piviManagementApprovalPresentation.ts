@@ -1,11 +1,11 @@
-import type { McpManagementPlan } from "@pivi/pivi-agent-core/mcp/mcpManagementCoordinator";
-import type { SkillsManagementPlan } from "@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator";
+import type { McpManagementPlan } from "@pivi/agent/mcp/mcpManagementCoordinator";
+import type { SkillsManagementPlan } from "@pivi/agent/skills/vault/skillsManagementCoordinator";
 import type {
   AgentMcpServerInput,
   PiviManagementApprovalRequest,
   PiviManagementPlanField,
   PiviManagementPlanValue,
-} from "@pivi/pivi-agent-core/tools/piviManagement";
+} from "@pivi/agent/tools/piviManagement";
 
 import type { TFunction } from "./i18n";
 import type { WorkspaceCommandsPlan } from './workspace/WorkspaceCommandsCoordinator';

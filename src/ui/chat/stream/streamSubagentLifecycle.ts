@@ -1,13 +1,13 @@
-import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
+import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import type { SubagentLifecycleAdapter } from '@pivi/agent/tools';
 import {
   isSubagentToolName,
   TOOL_SPAWN_AGENT,
   TOOL_TASK,
-} from '@pivi/pivi-agent-core/tools/toolNames';
-import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
+} from '@pivi/agent/tools/toolNames';
+import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 
 import { registerMessageToolCall } from '@/ui/chat/stream/StreamEventReducer';
 import { applySubagentLifecycleToolResult } from '@/ui/chat/stream/SubagentEventPresenter';

@@ -1,12 +1,12 @@
-import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
-import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
-import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
-import type { ChatMessage, StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import { resolveSubagentActivityStatus } from '@pivi/pivi-agent-core/foundation';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
-import { isSubagentToolName } from '@pivi/pivi-agent-core/tools/toolNames';
+import type { BrowserSelectionContext } from '@pivi/agent/context/browser';
+import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
+import type { EditorSelectionContext } from '@pivi/agent/context/editor';
+import type { ChatMessage, StreamChunk, UsageInfo } from '@pivi/agent/foundation';
+import { resolveSubagentActivityStatus } from '@pivi/agent/foundation';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import type { ChatTurnRequest } from '@pivi/agent/runtime/types';
+import { isSubagentToolName } from '@pivi/agent/tools/toolNames';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';

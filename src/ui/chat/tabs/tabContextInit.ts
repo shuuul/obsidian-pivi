@@ -1,4 +1,4 @@
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 
 import type { PiviChatHost } from "@/app/hostContracts";
 

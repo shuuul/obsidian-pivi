@@ -1,5 +1,5 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { TOOL_BASH } from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ToolCallInfo } from '@pivi/agent/foundation';
+import { TOOL_BASH } from '@pivi/agent/tools/toolNames';
 
 import { createToolStepGroup } from '@/ui/chat/rendering/ToolStepGroupRenderer';
 

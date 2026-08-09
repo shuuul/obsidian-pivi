@@ -1,7 +1,7 @@
 import type {
   PiviManagementApprovalDecision,
   PiviManagementApprovalRequest,
-} from '@pivi/pivi-agent-core/tools/piviManagement';
+} from '@pivi/agent/tools/piviManagement';
 
 import { t } from '@/app/i18n';
 

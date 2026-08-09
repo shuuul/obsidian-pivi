@@ -1,4 +1,4 @@
-import type { InlineContextPosition, InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { InlineContextPosition, InlineContextReference } from '@pivi/agent/context/inlineContext';
 import type { App, Editor, EditorPosition } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 

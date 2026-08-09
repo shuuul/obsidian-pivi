@@ -3,11 +3,11 @@ import {
   CLAUDE_PROVIDER_ID,
   GROK_BUILD_PROVIDER_ID,
   XAI_PROVIDER_ID,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+} from '@pivi/agent/auth/piProviderCredentials';
 import {
   configurePiAiModels,
   piAiModels,
-} from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+} from '@pivi/engine-pi/piAiModels';
 
 describe('split subscription provider identities', () => {
   afterEach(() => {

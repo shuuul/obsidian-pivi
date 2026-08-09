@@ -1,7 +1,7 @@
-import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
-import type { ChatTurnRequestSnapshot } from '@pivi/pivi-agent-core/foundation';
-import { escapeMathDelimitersForStreaming } from '@pivi/pivi-agent-core/foundation/streamingMath';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
+import type { ChatTurnRequestSnapshot } from '@pivi/agent/foundation';
+import { escapeMathDelimitersForStreaming } from '@pivi/agent/foundation/streamingMath';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, setIcon } from 'obsidian';
 

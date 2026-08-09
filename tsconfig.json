@@ -7,11 +7,17 @@
       "@test/*": [
         "./tests/*"
       ],
-      "@pivi/pivi-agent-core": [
-        "./packages/pivi-agent-core/src/index.ts"
+      "@pivi/agent": [
+        "./packages/agent/src/index.ts"
       ],
-      "@pivi/pivi-agent-core/*": [
-        "./packages/pivi-agent-core/src/*"
+      "@pivi/agent/*": [
+        "./packages/agent/src/*"
+      ],
+      "@pivi/engine-pi": [
+        "./packages/engine-pi/src/index.ts"
+      ],
+      "@pivi/engine-pi/*": [
+        "./packages/engine-pi/src/*"
       ],
       "@pivi/obsidian-host": [
         "./packages/obsidian-host/src/index.ts"

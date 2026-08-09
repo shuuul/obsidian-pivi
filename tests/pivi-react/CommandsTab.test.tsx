@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
+import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 

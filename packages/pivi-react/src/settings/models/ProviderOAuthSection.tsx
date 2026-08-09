@@ -1,7 +1,7 @@
 import {
   isProviderOAuthLoginCancelled,
   type ProviderOAuthProgress,
-} from '@pivi/pivi-agent-core/auth/providerOAuthProgress';
+} from '@pivi/agent/auth/providerOAuthProgress';
 import { useCallback, useState } from 'react';
 
 import { useT } from '../../i18n';

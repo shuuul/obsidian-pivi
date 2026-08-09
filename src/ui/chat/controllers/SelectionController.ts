@@ -1,8 +1,8 @@
-import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
+import type { EditorSelectionContext } from '@pivi/agent/context/editor';
 import {
   buildMarkedSelectionText,
   type InlineContextReference,
-} from '@pivi/pivi-agent-core/context/inlineContext';
+} from '@pivi/agent/context/inlineContext';
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 

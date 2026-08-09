@@ -1,16 +1,16 @@
-import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
-import type { ProcessRunner, ProcessRunRequest } from '@pivi/pivi-agent-core/ports';
+import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
+import type { ProcessRunner, ProcessRunRequest } from '@pivi/agent/ports';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import * as vaultSkillLoader from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
+import * as vaultSkillLoader from '@pivi/agent/skills/vault/loadVaultSkills';
 import {
   normalizeSkillSlug,
   parseRemoteSkillsListOutput,
   syncCliSkillsIntoPivi,
   VaultSkillsService,
-} from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
+} from '@pivi/agent/skills/vault/vaultSkillsService';
 
 describe('normalizeSkillSlug', () => {
   it('accepts owner/repo', () => {

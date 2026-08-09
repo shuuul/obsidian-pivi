@@ -2,7 +2,7 @@ import {
   buildMarkedSelectionText,
   type InlineContextReference,
   normalizeEditorSelection,
-} from '@pivi/pivi-agent-core/context/inlineContext';
+} from '@pivi/agent/context/inlineContext';
 import type { Editor, MarkdownView } from 'obsidian';
 import { Notice } from 'obsidian';
 

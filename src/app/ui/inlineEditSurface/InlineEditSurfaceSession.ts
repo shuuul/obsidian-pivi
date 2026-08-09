@@ -1,5 +1,5 @@
 import type { EditorView } from '@codemirror/view';
-import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
 import {
   type InlineEditSurfaceChromeHandle,
   mountInlineEditSurfaceChrome,

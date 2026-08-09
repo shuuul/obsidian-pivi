@@ -3,7 +3,7 @@ import {
   textResult,
   TOOL_OBSIDIAN_EDIT,
   type ToolSpec,
-} from '@pivi/pivi-agent-core/tools';
+} from '@pivi/agent/tools';
 
 import type { ObsidianToolDeps } from './deps';
 

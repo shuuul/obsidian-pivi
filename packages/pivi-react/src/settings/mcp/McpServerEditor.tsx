@@ -1,4 +1,4 @@
-import type { ManagedMcpServer, McpServerType } from '@pivi/pivi-agent-core/mcp/types';
+import type { ManagedMcpServer, McpServerType } from '@pivi/agent/mcp/types';
 import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';

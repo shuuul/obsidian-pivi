@@ -9,7 +9,7 @@ import {
   type ChatTabActions,
   type ChatTabsSnapshot,
 } from '@pivi/pivi-react/store';
-import { calculateContextEnvelope } from '@pivi/pivi-agent-core/foundation/usage';
+import { calculateContextEnvelope } from '@pivi/agent/foundation/usage';
 
 import { testPresentationPlatform } from '../helpers/presentationPlatform';
 

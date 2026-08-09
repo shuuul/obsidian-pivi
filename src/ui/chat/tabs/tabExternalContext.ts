@@ -1,4 +1,4 @@
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
+import type { PiChatService } from '@pivi/agent/runtime';
 
 import type { TabData } from './types';
 

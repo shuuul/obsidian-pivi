@@ -6,8 +6,8 @@ import {
   assertPiSessionManagerPrivateCapabilities,
   PI_SESSION_MANAGER_PRIVATE_CAPABILITIES,
   rewritePersistedSessionManager,
-} from '@pivi/pivi-agent-core/engine/pi/session/piSessionManagerPrivateAdapter';
-import { VERSION } from '@pivi/pivi-agent-core/engine/pi/shims/piCodingAgentConfig';
+} from '@pivi/engine-pi/session/piSessionManagerPrivateAdapter';
+import { VERSION } from '@pivi/engine-pi/shims/piCodingAgentConfig';
 
 /**
  * Focused gate that must stay green before bumping the exact Pi pin.
@@ -30,8 +30,8 @@ describe('Pi upgrade compatibility gate', () => {
     const root = JSON.parse(readFileSync(join(rootDir, 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
-    const core = JSON.parse(
-      readFileSync(join(rootDir, 'packages', 'pivi-agent-core', 'package.json'), 'utf8'),
+    const engine = JSON.parse(
+      readFileSync(join(rootDir, 'packages', 'engine-pi', 'package.json'), 'utf8'),
     ) as { dependencies: Record<string, string> };
     const names = [
       '@earendil-works/pi-agent-core',
@@ -47,7 +47,7 @@ describe('Pi upgrade compatibility gate', () => {
     expect(version.startsWith('^') || version.startsWith('~')).toBe(false);
     for (const name of names) {
       expect(root.dependencies[name]).toBe(version);
-      expect(core.dependencies[name]).toBe(version);
+      expect(engine.dependencies[name]).toBe(version);
     }
   });
 

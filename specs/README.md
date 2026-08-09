@@ -57,6 +57,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [040-agent-managed-pivi-capabilities.md](archive/040-agent-managed-pivi-capabilities.md) | 2026-08-01 | Main-Agent-only `pivi_mcp` / `pivi_skills` / `pivi_commands` with one-shot localized confirmation, shared revisioned coordinators, managed-path protection, and automatic transactional refresh. |
 | [041-tool-architecture-hardening.md](archive/041-tool-architecture-hardening.md) | 2026-08-01 | Shell-aware Bash grants, Skills transaction path protection, unified reserved command identity, Commands transaction coordinator, localized approval presentation, ToolSpec-owned prompt usage, and duplicate-ownership cleanup. |
 | [042-mobile-v1.md](archive/042-mobile-v1.md) | 2026-08-09 | **Abandoned, not shipped** — feasibility prototype preserved on the remote `mobile` branch; `main` remains Desktop-only. |
+| [043-agent-package-split.md](archive/043-agent-package-split.md) | 2026-08-10 | Renamed host-neutral package to `@pivi/agent` and extracted `@pivi/engine-pi` with package-level Pi SDK quarantine. |
 
 ## Numbering and files
 

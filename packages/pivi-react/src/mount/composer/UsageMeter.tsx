@@ -1,8 +1,8 @@
-import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import type { UsageInfo } from '@pivi/agent/foundation';
 import {
   calculateContextUsagePercentage,
   calculateUsagePercentage,
-} from '@pivi/pivi-agent-core/foundation/usage';
+} from '@pivi/agent/foundation/usage';
 
 import { useT } from '../../i18n';
 import { formatCompactTokenCount } from '../../usage/usageInfo';

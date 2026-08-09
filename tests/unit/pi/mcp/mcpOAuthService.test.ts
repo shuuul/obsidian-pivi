@@ -1,8 +1,8 @@
-import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
-import type { McpTransportFetch } from "@pivi/pivi-agent-core/mcp/ports";
-import type { ExternalOpener } from "@pivi/pivi-agent-core/ports";
-import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
-import { McpSecretAuthStore } from "@pivi/pivi-agent-core/mcp/oauth/mcpSecretAuthStore";
+import type { ManagedMcpServer } from "@pivi/agent/mcp/types";
+import type { McpTransportFetch } from "@pivi/agent/mcp/ports";
+import type { ExternalOpener } from "@pivi/agent/ports";
+import { McpOAuthService } from "@pivi/agent/mcp/oauth/mcpOAuthService";
+import { McpSecretAuthStore } from "@pivi/agent/mcp/oauth/mcpSecretAuthStore";
 
 import { createMockApp } from "../../../helpers/mockApp";
 

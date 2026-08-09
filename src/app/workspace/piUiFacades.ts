@@ -1,18 +1,18 @@
-import { getActivePiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
-import { mergeCustomProviderHeaderSecrets } from "@pivi/pivi-agent-core/auth/customProviderHeaderSecrets";
-import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
-import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/installPiCustomProviders";
-import { syncCustomPiProviders } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
-import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
-import { getPiAiModelsForProvider } from "@pivi/pivi-agent-core/engine/pi/piModelRegistry";
-import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
-import { updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
+import { mergeCustomProviderHeaderSecrets } from "@pivi/agent/auth/customProviderHeaderSecrets";
+import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
+import { updatePiAgentSettings } from "@pivi/agent/foundation/agentSettings";
 import {
   getCustomProviderById,
   getCustomProvidersFromBag,
-} from "@pivi/pivi-agent-core/foundation/customProviders";
-import { grantPrivateOrigins } from "@pivi/pivi-agent-core/network";
-import type { SyncSecretStore } from "@pivi/pivi-agent-core/ports";
+} from "@pivi/agent/foundation/customProviders";
+import { grantPrivateOrigins } from "@pivi/agent/network";
+import type { SyncSecretStore } from "@pivi/agent/ports";
+import { fetchCustomProviderModels } from "@pivi/engine-pi/installPiCustomProviders";
+import { syncCustomPiProviders } from "@pivi/engine-pi/piAiModels";
+import { piChatUIConfig } from "@pivi/engine-pi/piChatUiConfig";
+import { getPiAiModelsForProvider } from "@pivi/engine-pi/piModelRegistry";
+import { PiSettingsCoordinator } from "@pivi/engine-pi/piSettingsCoordinator";
+import { getActivePiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
 
 import type { PiviUiFacades } from "@/app/hostContracts";
 
@@ -34,7 +34,7 @@ function regrantProviderPrivateOrigins(
 
 /**
  * App-owned facades that hide Pi engine details from product UI.
- * Constructed once at composition; UI must call these instead of engine/pi imports.
+ * Constructed once at composition; UI must call these instead of `@pivi/engine-pi` imports.
  */
 export function createPiUiFacades(
   getCredentialApiKey?: (providerId: string) => string | undefined,

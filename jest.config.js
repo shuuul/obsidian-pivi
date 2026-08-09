@@ -12,7 +12,7 @@ const baseConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@test/(.*)$': '<rootDir>/tests/$1',
-    '^@pivi/pivi-agent-core/engine/pi/registerBundledPiOAuthFlows$':
+    '^@pivi/engine-pi/registerBundledPiOAuthFlows$':
       '<rootDir>/tests/__mocks__/registerPiviBundledOAuthFlowLoaders.ts',
     '^@pivi/([^/]+)$': '<rootDir>/packages/$1/src/index.ts',
     '^@pivi/([^/]+)/(.*)$': '<rootDir>/packages/$1/src/$2',
@@ -78,25 +78,25 @@ module.exports = {
     './packages/obsidian-host/src/scopedHttpClient.ts': {
       branches: 50,
     },
-    './packages/pivi-agent-core/src/network/egressPolicy.ts': {
+    './packages/agent/src/network/egressPolicy.ts': {
       branches: 70,
     },
-    './packages/pivi-agent-core/src/network/ipClassification.ts': {
+    './packages/agent/src/network/ipClassification.ts': {
       branches: 70,
     },
-    './packages/pivi-agent-core/src/network/urlPolicy.ts': {
+    './packages/agent/src/network/urlPolicy.ts': {
       branches: 80,
     },
-    './packages/pivi-agent-core/src/mcp/mcpProcessEnv.ts': {
+    './packages/agent/src/mcp/mcpProcessEnv.ts': {
       branches: 55,
     },
-    './packages/pivi-agent-core/src/mcp/mcpValidation.ts': {
+    './packages/agent/src/mcp/mcpValidation.ts': {
       branches: 70,
     },
-    './packages/pivi-agent-core/src/mcp/oauth/mcpCallbackServer.ts': {
+    './packages/agent/src/mcp/oauth/mcpCallbackServer.ts': {
       branches: 45,
     },
-    './packages/pivi-agent-core/src/engine/pi/session/piSessionManagerPrivateAdapter.ts': {
+    './packages/engine-pi/src/session/piSessionManagerPrivateAdapter.ts': {
       branches: 80,
     },
   },

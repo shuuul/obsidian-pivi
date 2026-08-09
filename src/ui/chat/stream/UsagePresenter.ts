@@ -1,6 +1,6 @@
-import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
-import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
+import type { StreamChunk } from '@pivi/agent/foundation';
+import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
+import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';

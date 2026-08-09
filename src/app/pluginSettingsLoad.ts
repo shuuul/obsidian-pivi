@@ -1,21 +1,21 @@
 /**
  * Plugin settings load/reconcile path extracted from the Obsidian Plugin shell.
  */
-import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
-import {
-  migrateMembershipAwareProviderSecrets,
-} from "@pivi/pivi-agent-core/engine/pi";
-import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
-import type { OpenSessionState, PiviSettings } from "@pivi/pivi-agent-core/foundation";
-import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
-import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
-import type { SessionStore } from "@pivi/pivi-agent-core/session";
-import type { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
+import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
+import type { OpenSessionState, PiviSettings } from "@pivi/agent/foundation";
+import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/agent/foundation/agentSettings";
+import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import type { FileStore } from "@pivi/agent/ports";
+import type { SessionStore } from "@pivi/agent/session";
+import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import {
   type DefaultVaultSkillsContext,
   ensureDefaultVaultSkills,
-} from "@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills";
+} from "@pivi/agent/skills/vault/ensureDefaultVaultSkills";
+import {
+  migrateMembershipAwareProviderSecrets,
+} from "@pivi/engine-pi";
+import { PiSettingsCoordinator } from "@pivi/engine-pi/piSettingsCoordinator";
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
 

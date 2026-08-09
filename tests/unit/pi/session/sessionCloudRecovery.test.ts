@@ -26,7 +26,7 @@ import {
   type SessionJournalStore,
   type SessionJsonlSourceFingerprint,
   upsertJournalEntry,
-} from '@pivi/pivi-agent-core/session/sessionJournal';
+} from '@pivi/agent/session/sessionJournal';
 import {
   captureSessionJsonlSource,
   configureSessionJsonlIndexRoot,
@@ -35,13 +35,13 @@ import {
   invalidateSessionJsonlIndex,
   readSessionJsonlIndex,
   rebuildSessionJsonlIndex,
-} from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
+} from '@pivi/engine-pi/session/sessionJsonlIndex';
 import {
   classifyJournalDivergence,
   reconcileJournalEntry,
   reconcileSessionJournal,
-} from '@pivi/pivi-agent-core/engine/pi/session/sessionRecovery';
-import { getPiviSessionDir } from '@pivi/pivi-agent-core/session/sessionPaths';
+} from '@pivi/engine-pi/session/sessionRecovery';
+import { getPiviSessionDir } from '@pivi/agent/session/sessionPaths';
 
 function memoryJournalStore(initial?: SessionJournalStateV1): SessionJournalStore {
   let state = initial ?? emptySessionJournalState();

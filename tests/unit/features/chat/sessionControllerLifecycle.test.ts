@@ -1,4 +1,4 @@
-import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import type { OpenSessionState } from '@pivi/agent/foundation';
 
 import { SessionController } from '@/ui/chat/controllers/SessionController';
 import { ChatState } from '@/ui/chat/state/ChatState';

@@ -1,4 +1,4 @@
-import type { McpTool } from '@pivi/pivi-agent-core/mcp/types';
+import type { McpTool } from '@pivi/agent/mcp/types';
 
 import { useT } from '../i18n';
 

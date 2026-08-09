@@ -1,5 +1,5 @@
-import type { ToolCallInfo, ToolDiffData } from '@pivi/pivi-agent-core/foundation';
-import { TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ToolCallInfo, ToolDiffData } from '@pivi/agent/foundation';
+import { TOOL_WRITE } from '@pivi/agent/tools/toolNames';
 
 import { renderWriteEditContent } from '@/ui/chat/rendering/WriteEditRenderer';
 

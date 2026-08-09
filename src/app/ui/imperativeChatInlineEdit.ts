@@ -1,4 +1,4 @@
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 
 import { imperativeChatLogger } from '@/app/ui/imperativeChatTabAction';
 import { extractAssistantTextFromMessages } from '@/app/ui/inlineEditHelpers';

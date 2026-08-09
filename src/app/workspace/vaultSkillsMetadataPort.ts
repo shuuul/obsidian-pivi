@@ -1,9 +1,9 @@
-import type { PiviSettings } from "@pivi/pivi-agent-core/foundation";
+import type { PiviSettings } from "@pivi/agent/foundation";
 import {
   DEFAULT_VAULT_SKILLS_SLUG,
   isDefaultVaultSkillFolder,
-} from "@pivi/pivi-agent-core/skills/vault/defaultVaultSkills";
-import type { SkillsManagementMetadataPort } from "@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator";
+} from "@pivi/agent/skills/vault/defaultVaultSkills";
+import type { SkillsManagementMetadataPort } from "@pivi/agent/skills/vault/skillsManagementCoordinator";
 
 /** Narrow host slice required for default-bundle bookkeeping. */
 export interface VaultSkillsMetadataHost {

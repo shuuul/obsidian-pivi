@@ -1,5 +1,5 @@
-import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+import { VIEW_TYPE_PIVI } from '@pivi/agent/foundation';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 import {
   type ImperativeChatAdapter,
   mountChatView,

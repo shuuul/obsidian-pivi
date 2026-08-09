@@ -4,12 +4,12 @@ import {
   preserveCorruptArtifact,
   runSerializedSave,
   writeFileAtomically,
-} from '@pivi/pivi-agent-core/foundation/configPublication';
-import type { PersistedPiviSettings } from '@pivi/pivi-agent-core/foundation/persistedPiviSettings';
-import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
-import type { AgentRuntimeSettings, PiviSettings } from "@pivi/pivi-agent-core/foundation/settings";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
+} from '@pivi/agent/foundation/configPublication';
+import type { PersistedPiviSettings } from '@pivi/agent/foundation/persistedPiviSettings';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import type { AgentRuntimeSettings, PiviSettings } from "@pivi/agent/foundation/settings";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/foundation/settingsDefaults";
+import type { FileStore } from "@pivi/agent/ports";
 
 import { PIVI_SETTINGS_PATH } from "./storagePaths";
 

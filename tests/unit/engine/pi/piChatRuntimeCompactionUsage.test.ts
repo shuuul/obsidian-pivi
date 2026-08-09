@@ -1,8 +1,8 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { PiRuntimeHost } from '@pivi/pivi-agent-core/engine/pi/piRuntimeHost';
-import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import type { PiRuntimeHost } from '@pivi/engine-pi/piRuntimeHost';
+import type { UsageInfo } from '@pivi/agent/foundation';
 
-import { attachContextEnvelope } from '../../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeCompaction';
+import { attachContextEnvelope } from '../../../../packages/engine-pi/src/piChatRuntimeCompaction';
 
 const usage: UsageInfo = {
   contextTokens: 1,
