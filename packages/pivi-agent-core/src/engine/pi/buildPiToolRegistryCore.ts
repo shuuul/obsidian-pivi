@@ -1,6 +1,6 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 
-import { loadContextLayers } from '../../context/loadContextLayers';
+import type { ContextLayers } from '../../context/loadContextLayers';
 import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
 import type { ReadAllowanceReservation } from '../../foundation/usage';
 import type { PiMcpBridge } from '../../mcp';
@@ -65,9 +65,17 @@ export function buildPiToolRegistryCore(options: {
   registeredToolSummary: RegisteredToolSummary;
   externalContexts?: ExternalContextAvailability[];
   subagentSettings?: { enabled: boolean; allowBackground: boolean; maxConcurrentSubagents: number };
+  contextLayers?: ContextLayers;
 }): PiToolRegistry {
-  const layers = loadContextLayers(options.vaultPath, options.activeNotePath);
-  const skillTool = createSkillTool(layers.skills);
+  const layers = options.contextLayers ?? {
+    agentsMd: '',
+    systemMd: '',
+    skillsXml: '',
+    skills: [],
+  };
+  const skillTool = options.registeredToolSummary.includeSkill
+    ? createSkillTool(layers.skills)
+    : null;
   const subagentEnabled = options.subagentSettings?.enabled ?? true;
   const subagentTool = subagentEnabled
     ? createSubagentTool(options.subagentQueryRunner, {
@@ -83,7 +91,7 @@ export function buildPiToolRegistryCore(options: {
   const tools: AgentTool[] = [
     ...baseTools,
     ...mainOnlyTools,
-    skillTool,
+    ...(skillTool ? [skillTool] : []),
     ...(subagentTool ? [subagentTool] : []),
     ...mcpTools,
   ];
@@ -119,7 +127,7 @@ export function buildPiToolRegistryCore(options: {
       toolSpecs: registeredSpecs,
       includeMcp: mcpTools.length > 0,
       mcpInventory: options.mcpBridge?.getCachedInventory() ?? [],
-      includeSkill: true,
+      includeSkill: skillTool !== null,
       includeSubagent: subagentEnabled,
       maxConcurrentSubagents: options.subagentSettings?.maxConcurrentSubagents ?? 3,
     }),
@@ -140,6 +148,7 @@ export function buildPiToolRegistry(options: {
   subagentQueryRunner?: PiSubagentQueryRunner;
   resolveReadMaxChars?: (requestedMaxChars?: number) => ReadAllowanceReservation;
   capabilityApproval?: CapabilityApprovalPort | null;
+  contextLayers?: ContextLayers;
 }): PiToolRegistry {
   if (!options.baseToolProvider) {
     throw new Error('Pi tool registry requires a baseToolProvider.');
@@ -167,5 +176,6 @@ export function buildPiToolRegistry(options: {
     registeredToolSummary: providedBaseTools.registeredToolSummary,
     externalContexts: providedBaseTools.externalContexts,
     subagentSettings,
+    contextLayers: options.contextLayers,
   });
 }

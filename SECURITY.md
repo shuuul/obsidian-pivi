@@ -46,6 +46,7 @@ Default policy:
 - Only `http:` and `https:` URLs reach transports; URL credentials are rejected.
 - Loopback, private, link-local, multicast, unspecified, and cloud-metadata destinations are denied for IPv4 and IPv6, including alternate IP representations.
 - Hostnames are resolved and checked before connect; the connected address is pinned against the approved resolution to resist DNS rebinding.
+- Mobile custom providers must use remote HTTPS URLs. Browser-safe URL checks reject localhost and local/private IP literals before provider publication or readiness; DNS hostname resolution remains a device transport gate.
 - Redirects are normalized, rechecked, and bounded.
 - Logs, errors, and UI surfaces redact URL credentials and sensitive query values.
 

@@ -1,4 +1,5 @@
 import type { PiSubagentQueryRunner } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
+import { loadContextLayers } from '@pivi/pivi-agent-core/context/loadContextLayers';
 import type { PiMcpBridge } from '@pivi/pivi-agent-core/mcp';
 import type { RegisteredToolSummary } from '@pivi/pivi-agent-core/prompt';
 import {
@@ -7,10 +8,24 @@ import {
   TOOL_SPAWN_AGENT,
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
-import { buildPiToolRegistryCore } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
+import { buildPiToolRegistryCore as buildPiToolRegistryCoreRaw } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+
+function buildPiToolRegistryCore(
+  options: Parameters<typeof buildPiToolRegistryCoreRaw>[0],
+): ReturnType<typeof buildPiToolRegistryCoreRaw> {
+  const contextLayers = loadContextLayers(options.vaultPath, options.activeNotePath);
+  return buildPiToolRegistryCoreRaw({
+    ...options,
+    registeredToolSummary: {
+      ...options.registeredToolSummary,
+      includeSkill: contextLayers.skills.length > 0,
+    },
+    contextLayers,
+  });
+}
 
 function createBaseToolSpec(name = 'fixture_base'): ToolSpec {
   return {

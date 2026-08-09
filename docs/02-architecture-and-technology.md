@@ -35,6 +35,12 @@ flowchart TD
 
 The build enforces important edges through `scripts/check-architecture-boundaries.mjs`. Treat `npm run check:boundaries` as an architecture test, not a style check.
 
+### Desktop and Mobile composition
+
+`src/main.ts` is a platform-neutral lifecycle shell. It selects one dynamically loaded composition root from `src/app/composition/desktop/` or `src/app/composition/mobile/`; Mobile never routes through the desktop service graph. Both platforms remain in one Community Plugins bundle and package. The Mobile startup artifact test runs that bundle without Node built-ins, Electron, or `process` and requires registration of the Mobile view, ribbon action, and Settings surface while desktop modules remain unevaluated.
+
+Mobile composition uses Obsidian's public Vault `DataAdapter`, vault-scoped local storage, `SecretStorage`, and browser fetch APIs. Desktop alone installs ambient process/file credential discovery and Node-backed compatibility seams. Platform capabilities are structural construction inputs as well as presentation inputs: hiding an unavailable setting does not make its implementation Mobile-safe.
+
 ## Technology choices
 
 ### Pi-only runtime
@@ -80,6 +86,8 @@ Provider membership, custom endpoints, model preferences, and web-search provide
 Startup migration in `pluginSettingsLoad.ts` runs before workspace construction: read legacy synced fields once, canonicalize secrets, write initialized local state, then strip localized fields from `.pivi/settings.json`. Steady-state saves commit local provider authority first through `createPiviSettingsCodec`, then project portable `PersistedPiviSettings`. A synced write failure after a successful local commit retains local authority and surfaces a localized Notice.
 
 Built-in model `customContextLimits` entries remain synced; custom-provider context limits live in the local registry. A device that was offline during cutover and opens an already-stripped synced file seeds `DEFAULT_PI_PROVIDER_IDS` (`deepseek` only) and must re-add other providers locally; there is no automatic cross-device provider recovery.
+
+On Mobile, API keys are entered independently on each device and remain only in Obsidian `SecretStorage`. `.pivi` never contains plaintext or encrypted credentials. Mobile V1 accepts API-key providers and remote custom providers only when the endpoint is HTTPS and not localhost/private-network; OAuth-only plans and local model servers are excluded until separately proven on real devices.
 
 ### TypeScript and module resolution
 

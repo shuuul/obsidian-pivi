@@ -1,6 +1,5 @@
 import type { ImageAttachment, ImageMediaType } from '@pivi/pivi-agent-core/foundation';
 import { Notice } from 'obsidian';
-import * as path from 'path';
 
 import { t } from '@/app/i18n';
 
@@ -15,6 +14,29 @@ const IMAGE_EXTENSIONS: Record<string, ImageMediaType> = {
   '.gif': 'image/gif',
   '.webp': 'image/webp',
 };
+
+
+/** Browser-safe last-segment extension including the leading dot. */
+function filenameExtension(filename: string): string {
+  const base = filename.includes('/') || filename.includes('\\')
+    ? filename.slice(Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\')) + 1)
+    : filename;
+  const dot = base.lastIndexOf('.');
+  if (dot <= 0) return '';
+  return base.slice(dot);
+}
+
+/** Encode binary image bytes as standard base64 without Node binary helpers. */
+function arrayBufferToBase64(arrayBuffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    const chunk = bytes.subarray(offset, offset + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
 
 export interface ImageContextCallbacks {
   onImagesChanged: () => void;
@@ -200,7 +222,7 @@ export class ImageContextManager {
   }
 
   private getMediaType(filename: string): ImageMediaType | null {
-    const ext = path.extname(filename).toLowerCase();
+    const ext = filenameExtension(filename).toLowerCase();
     return IMAGE_EXTENSIONS[ext] ?? null;
   }
 
@@ -246,8 +268,7 @@ export class ImageContextManager {
 
   private async fileToBase64(file: File): Promise<string> {
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    return buffer.toString('base64');
+    return arrayBufferToBase64(arrayBuffer);
   }
 
   // ============================================
@@ -357,7 +378,7 @@ export class ImageContextManager {
 
   private truncateName(name: string, maxLen: number): string {
     if (name.length <= maxLen) return name;
-    const ext = path.extname(name);
+    const ext = filenameExtension(name);
     const base = name.slice(0, name.length - ext.length);
     const truncatedBase = base.slice(0, maxLen - ext.length - 3);
     return `${truncatedBase}...${ext}`;

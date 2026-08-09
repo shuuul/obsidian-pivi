@@ -10,6 +10,7 @@ Small Node scripts backing `package.json` commands. Keep them single-purpose and
 flowchart LR
   CSS["build-css.mjs<br/>UI style manifest + release version -> styles.css"] -- "then" --> Build["build.mjs<br/>production orchestration"]
   Build -- "runs" --> Esbuild["esbuild.config.mjs<br/>main.js bundle"]
+  MobileStartup["check-mobile-startup.mjs"] --> Bundle
   Analyze["analyze-bundle.mjs"] -- "writes" --> Meta["metafile.json"]
   BundleSize["check-bundle-size.mjs"] -- "checks" --> Bundle["main.js<br/>5 MB hard ceiling"]
   Jest["run-jest.js"] -- "sets localStorage file" --> Tests["Jest unit project (includes integration)<br/>+ pivi-react project"]
@@ -29,6 +30,7 @@ flowchart LR
 - `build.mjs` — Production build orchestrator: CSS first, then esbuild bundle.
 - `analyze-bundle.mjs` — Uses the shared `build/create-build-options.mjs` configuration and generates the pre-postprocess esbuild `metafile.json` without writing a separate bundle.
 - `check-bundle-size.mjs` — Checks a built root `main.js` against the 5 MB hard ceiling and emits a warning when it grows more than 10% over the recorded soft baseline. Run after `npm run build` via `npm run check:bundle-size`.
+- `check-mobile-startup.mjs` — Loads the existing single production `main.js` in a Mobile-shaped VM with Node/Electron modules unavailable, runs the Mobile lifecycle, and fails if desktop modules are eagerly required. Run after `npm run build`; it is an artifact check, not a second Mobile build.
 - `run-jest.js` — Required Jest wrapper; supplies the Node `--localstorage-file` backing file expected by tests.
 - `sync-version.js` — Syncs **stable** `package.json` versions into `manifest.json`, `versions.json`, and the root README version badge. Skips those files for semver prerelease versions so the community-plugin channel stays on the last stable release.
 - `versionMetadata.js` — Shared stable/prerelease version helpers used by the sync and release scripts.

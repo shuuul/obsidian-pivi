@@ -1,7 +1,9 @@
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+import type { Plugin } from 'obsidian';
 
+import type { PiviPluginHost } from '@/app/hostContracts';
+import type { ChatUiCompositionHost } from '@/app/ui/createUiPorts';
 import { registerSelectionToolbarUi } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
-import type PiviPlugin from "@/main"
 
 import { registerPiviCommands } from "./commandRegistration";
 import { registerEditorSelectionToolbar } from "./editorSelectionToolbarRegistration";
@@ -13,29 +15,32 @@ import { registerPiviViews } from "./viewRegistration";
 
 const logger = new PluginLogger('PluginLifecycle');
 
-export async function initializePiviPlugin(plugin: PiviPlugin): Promise<void> {
-  await measureStartupPhase('settings', () => plugin.loadSettings());
-  registerPiviViews(plugin);
-  registerPiviCommands(plugin);
-  registerPiviSettings(plugin);
-  registerEditorSelectionToolbar(plugin, {
+export async function initializePiviPlugin(
+  owner: Plugin,
+  host: PiviPluginHost & ChatUiCompositionHost,
+): Promise<void> {
+  await measureStartupPhase('settings', () => host.loadSettings());
+  registerPiviViews(owner, host);
+  registerPiviCommands(owner, host);
+  registerPiviSettings(owner, host);
+  registerEditorSelectionToolbar(owner, {
     isToolbarEnabled: () => (
-      plugin.settings.editorSelectionToolbar?.enabled !== false
-      && plugin.settings.editorSelectionToolbar.shortcuts.some(item => item.enabled)
+      host.settings.editorSelectionToolbar?.enabled !== false
+      && host.settings.editorSelectionToolbar.shortcuts.some(item => item.enabled)
     ),
-    shouldYieldToNoteToolbar: () => isNoteToolbarTextToolbarActive(plugin.app),
+    shouldYieldToNoteToolbar: () => isNoteToolbarTextToolbarActive(host.app),
   });
-  registerSelectionToolbarUi(plugin);
+  registerSelectionToolbarUi(owner, host);
 
-  plugin.app.workspace.onLayoutReady(() => {
-    void plugin.ensureWorkspaceServices().catch((error: unknown) => {
+  host.app.workspace.onLayoutReady(() => {
+    void host.ensureWorkspaceServices().catch((error: unknown) => {
       logger.error('Failed to initialize workspace services', error);
     });
   });
 }
 
 export async function persistOpenTabStates(
-  plugin: PiviPlugin,
+  plugin: Pick<PiviPluginHost, 'app'>,
 ): Promise<void> {
   // Ensures state is saved even if Obsidian quits without calling onClose().
   const persistOperations: Promise<void>[] = [];

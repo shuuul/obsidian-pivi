@@ -301,6 +301,7 @@ import type {
   PiMainOnlyToolProvider,
 } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+import { DesktopPiSessionTreeFactory } from '@pivi/pivi-agent-core/engine/pi/session/desktopPiSessionTree';
 import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
 import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
 
@@ -371,7 +372,7 @@ const testNetwork = {
 };
 
 function createRuntime(plugin: ReturnType<typeof createMockPlugin>): PiChatRuntime {
-  return new PiChatRuntime(plugin, testNetwork, null, null, testBaseToolProvider);
+  return new PiChatRuntime(plugin, testNetwork, new DesktopPiSessionTreeFactory(plugin.getVaultPath() ?? ''), null, null, testBaseToolProvider);
 }
 
 function localModelFixture(contextWindowIsAuthoritative: boolean): PiCachedModel {
@@ -462,7 +463,7 @@ describe('PiChatRuntime system prompt', () => {
       },
     });
 
-    new PiChatRuntime(plugin, testNetwork, null, null, providerWithSpawnAgent);
+    new PiChatRuntime(plugin, testNetwork, new DesktopPiSessionTreeFactory(plugin.getVaultPath() ?? ''), null, null, providerWithSpawnAgent);
 
     const childTools = mockCapturedSubagentToolProvider?.(() => ({ maxChars: 12_345, settle: () => {} })) ?? [];
     expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['obsidian_read']);
@@ -518,6 +519,7 @@ describe('PiChatRuntime system prompt', () => {
     const runtime = new PiChatRuntime(
       plugin,
       testNetwork,
+      new DesktopPiSessionTreeFactory(plugin.getVaultPath() ?? ''),
       null,
       null,
       baseProvider,
@@ -587,7 +589,7 @@ describe('PiChatRuntime system prompt', () => {
         includeWebSearch: false,
       },
     });
-    const runtime = new PiChatRuntime(plugin, testNetwork, null, null, provider);
+    const runtime = new PiChatRuntime(plugin, testNetwork, new DesktopPiSessionTreeFactory(plugin.getVaultPath() ?? ''), null, null, provider);
 
     await runtime.ensureReady();
     const agent = mockAgentInstances[0];
@@ -705,11 +707,12 @@ describe('PiChatRuntime system prompt', () => {
     });
   });
 
-  it('persists session file without exposing legacy leaf id in session state updates', () => {
+  it('persists session file without exposing legacy leaf id in session state updates', async () => {
     const plugin = createMockPlugin();
     const runtime = createRuntime(plugin);
 
     runtime.syncSession({ sessionFile: '.pivi/sessions/a.jsonl', leafId: 'entry-1' });
+    await runtime.ensureReady();
 
     const updates = runtime.getSessionStateUpdates();
 
@@ -838,15 +841,15 @@ describe('PiChatRuntime system prompt', () => {
       persistSteeredTurnBeforeSync(
         activeTurn: SteeringActiveTurn,
         messages: AgentMessage[],
-      ): void;
+      ): Promise<void>;
       syncSessionMessagesAfterTurn(
         messages: AgentMessage[],
         turns: typeof activeTurn.steeredTurns,
-      ): void;
+      ): Promise<void>;
     };
 
-    internals.persistSteeredTurnBeforeSync(activeTurn, messages);
-    internals.syncSessionMessagesAfterTurn(messages, activeTurn.steeredTurns);
+    await internals.persistSteeredTurnBeforeSync(activeTurn, messages);
+    await internals.syncSessionMessagesAfterTurn(messages, activeTurn.steeredTurns);
 
     const userMessages = internals.sessionTree.loadAgentMessages()
       .filter(message => message.role === 'user');
@@ -1014,7 +1017,7 @@ describe('PiChatRuntime system prompt', () => {
         includeWebSearch: false,
       },
     }));
-    const runtime = new PiChatRuntime(plugin, testNetwork, null, null, provider);
+    const runtime = new PiChatRuntime(plugin, testNetwork, new DesktopPiSessionTreeFactory(plugin.getVaultPath() ?? ''), null, null, provider);
 
     for await (const _chunk of runtime.query(runtime.prepareTurn({
       text: 'First turn',
@@ -1964,6 +1967,196 @@ describe('PiChatRuntime system prompt', () => {
       sessionId: null,
       sessionFile: undefined,
       agentState: undefined,
+    });
+  });
+
+  describe('deferred session tree lifecycle', () => {
+    type DeferredTree = {
+      getSessionFile: () => string;
+      getSessionId: () => string;
+      getLeafId: () => string | null;
+      loadAgentMessages: () => unknown[];
+    };
+
+    function deferredFactory(): {
+      factory: { create: jest.Mock; open: jest.Mock };
+      resolveCreate: (tree?: DeferredTree) => void;
+      rejectCreate: (error: unknown) => void;
+      waitForCreate: (expectedCalls?: number) => Promise<void>;
+    } {
+      const pending: Array<{
+        resolve: (tree: DeferredTree) => void;
+        reject: (error: unknown) => void;
+      }> = [];
+      const defaultTree = (): DeferredTree => ({
+        getSessionFile: () => '.pivi/sessions/deferred.jsonl',
+        getSessionId: () => 'session-deferred',
+        getLeafId: () => 'leaf-deferred',
+        loadAgentMessages: () => [],
+      });
+      const factory = {
+        // Each call is a distinct deferred; runtime single-flight must keep this at 1.
+        create: jest.fn(() => new Promise<DeferredTree>((resolve, reject) => {
+          pending.push({ resolve, reject });
+        })),
+        open: jest.fn(async (sessionFile: string) => ({
+          getSessionFile: () => sessionFile,
+          getSessionId: () => 'session-open',
+          getLeafId: () => 'leaf-open',
+          loadAgentMessages: () => [],
+        })),
+      };
+      return {
+        factory,
+        resolveCreate: (tree = defaultTree()) => {
+          const next = pending.shift();
+          if (!next) throw new Error('No pending create to resolve');
+          next.resolve(tree);
+        },
+        rejectCreate: (error: unknown) => {
+          const next = pending.shift();
+          if (!next) throw new Error('No pending create to reject');
+          next.reject(error);
+        },
+        waitForCreate: async (expectedCalls = 1) => {
+          for (let attempt = 0; attempt < 50; attempt++) {
+            if (factory.create.mock.calls.length >= expectedCalls) {
+              return;
+            }
+            await Promise.resolve();
+          }
+          throw new Error(
+            `Timed out waiting for create() call count ${expectedCalls}; saw ${factory.create.mock.calls.length}`,
+          );
+        },
+      };
+    }
+
+    it('single-flights concurrent ensureReady create/open for one generation', async () => {
+      const plugin = createMockPlugin();
+      const deferred = deferredFactory();
+      const runtime = new PiChatRuntime(
+        plugin,
+        testNetwork,
+        deferred.factory as never,
+        null,
+        null,
+        testBaseToolProvider,
+      );
+
+      const first = runtime.ensureReady();
+      const second = runtime.ensureReady();
+      await deferred.waitForCreate(1);
+
+      expect(deferred.factory.create).toHaveBeenCalledTimes(1);
+
+      deferred.resolveCreate();
+      await expect(Promise.all([first, second])).resolves.toEqual([true, true]);
+      expect(mockAgentInstances).toHaveLength(1);
+      expect(runtime.isReady()).toBe(true);
+      expect(runtime.getSessionStateUpdates().sessionFile).toBe('.pivi/sessions/deferred.jsonl');
+    });
+
+    it('syncSession invalidates in-flight init so the loser does not publish tree or Agent', async () => {
+      const plugin = createMockPlugin();
+      const deferred = deferredFactory();
+      const runtime = new PiChatRuntime(
+        plugin,
+        testNetwork,
+        deferred.factory as never,
+        null,
+        null,
+        testBaseToolProvider,
+      );
+
+      const pendingReady = runtime.ensureReady();
+      await deferred.waitForCreate(1);
+      expect(deferred.factory.create).toHaveBeenCalledTimes(1);
+
+      runtime.syncSession({ sessionFile: null });
+      deferred.resolveCreate({
+        getSessionFile: () => '.pivi/sessions/orphan.jsonl',
+        getSessionId: () => 'session-orphan',
+        getLeafId: () => 'leaf-orphan',
+        loadAgentMessages: () => [],
+      });
+
+      await expect(pendingReady).resolves.toBe(false);
+      expect(mockAgentInstances).toHaveLength(0);
+      expect(runtime.isReady()).toBe(false);
+      expect(runtime.getSessionStateUpdates()).toEqual({
+        sessionId: null,
+        sessionFile: undefined,
+        agentState: undefined,
+      });
+    });
+
+    it('resetSession and cleanup invalidate in-flight init without publishing Agent', async () => {
+      const plugin = createMockPlugin();
+      const deferred = deferredFactory();
+      const runtime = new PiChatRuntime(
+        plugin,
+        testNetwork,
+        deferred.factory as never,
+        null,
+        null,
+        testBaseToolProvider,
+      );
+
+      const pendingReset = runtime.ensureReady();
+      await deferred.waitForCreate(1);
+      runtime.resetSession();
+      deferred.resolveCreate({
+        getSessionFile: () => '.pivi/sessions/reset-orphan.jsonl',
+        getSessionId: () => 'session-reset-orphan',
+        getLeafId: () => null,
+        loadAgentMessages: () => [],
+      });
+      await expect(pendingReset).resolves.toBe(false);
+      expect(mockAgentInstances).toHaveLength(0);
+      expect(runtime.isReady()).toBe(false);
+
+      const pendingCleanup = runtime.ensureReady();
+      await deferred.waitForCreate(2);
+      expect(deferred.factory.create).toHaveBeenCalledTimes(2);
+      runtime.cleanup();
+      deferred.resolveCreate({
+        getSessionFile: () => '.pivi/sessions/cleanup-orphan.jsonl',
+        getSessionId: () => 'session-cleanup-orphan',
+        getLeafId: () => null,
+        loadAgentMessages: () => [],
+      });
+      await expect(pendingCleanup).resolves.toBe(false);
+      expect(mockAgentInstances).toHaveLength(0);
+      expect(runtime.isReady()).toBe(false);
+    });
+
+    it('retries ensureReady after a rejected tree initialization', async () => {
+      const plugin = createMockPlugin();
+      const deferred = deferredFactory();
+      const runtime = new PiChatRuntime(
+        plugin,
+        testNetwork,
+        deferred.factory as never,
+        null,
+        null,
+        testBaseToolProvider,
+      );
+
+      const failing = runtime.ensureReady();
+      await deferred.waitForCreate(1);
+      deferred.rejectCreate(new Error('create failed'));
+      await expect(failing).rejects.toThrow('create failed');
+      expect(mockAgentInstances).toHaveLength(0);
+      expect(runtime.isReady()).toBe(false);
+
+      const retry = runtime.ensureReady();
+      await deferred.waitForCreate(2);
+      expect(deferred.factory.create).toHaveBeenCalledTimes(2);
+      deferred.resolveCreate();
+      await expect(retry).resolves.toBe(true);
+      expect(mockAgentInstances).toHaveLength(1);
+      expect(runtime.isReady()).toBe(true);
     });
   });
 });

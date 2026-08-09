@@ -4,7 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
 type GraphAction = 'orphans' | 'deadends' | 'unresolved';
 const VALID_ACTIONS: readonly GraphAction[] = ['orphans', 'deadends', 'unresolved'];
@@ -49,7 +49,7 @@ function getBooleanField(input: Record<string, unknown>, key: string): boolean |
   return typeof value === 'boolean' ? value : undefined;
 }
 
-export function createGraphTool(deps: ObsidianToolDeps): ToolSpec {
+export function createGraphTool(deps: VaultToolDeps): ToolSpec {
   const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_GRAPH,

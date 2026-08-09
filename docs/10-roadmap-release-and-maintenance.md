@@ -10,6 +10,8 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
+- **Mobile V1 acceptance** (spec `042`): the single-bundle Mobile composition, Vault JSONL sessions, per-device SecretStorage provider settings, exact 15-tool Vault inventory, Vault `@` mentions, allowlisted `/new` and `/compact`, revised touch chat/settings surfaces, and automated startup/security/regression gates are implemented on `mobile`. The unreleased branch uses `isDesktopOnly: false` so current iOS and Android Obsidian builds can execute the acceptance matrix; publication remains blocked on authenticated streaming, SecretStorage persistence, lifecycle/keyboard, visual behavior, and repeated Desktop real-host smoke. Mobile V1 still excludes MCP, Skills, workspace Commands, subagents, web/image tools, local providers, and editor inline-edit surfaces.
+
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 

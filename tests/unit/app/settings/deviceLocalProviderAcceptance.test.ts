@@ -2,7 +2,9 @@ import {
   getPiAiCredentialSecretId,
   serializeProviderCredential,
 } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
 import { migrateMembershipAwareProviderSecrets } from '@pivi/pivi-agent-core/engine/pi';
+import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { PIVI_SETTINGS_PATH } from '@pivi/obsidian-host/settings/piviSettingsStorage';
 import type { FileStore } from '@pivi/pivi-agent-core/ports';
 import { App, Notice } from 'obsidian';
@@ -141,6 +143,66 @@ describe('device-local provider acceptance matrix', () => {
     expect(appA.secretStorage.getSecret(getPiAiCredentialSecretId('openai'))).toContain('device-a-openai');
     expect(appB.secretStorage.getSecret(getPiAiCredentialSecretId('deepseek'))).toContain('device-b-deepseek');
     expect(appB.secretStorage.getSecret(getPiAiCredentialSecretId('openai'))).toBeNull();
+  });
+
+  it('keeps a sentinel credential exclusively in device A SecretStorage across serializable surfaces', async () => {
+    const sentinel = ['pivi', 'ws04', 'sentinel', 'credential'].join('-');
+    const adapter = createSharedSyncedAdapter();
+    const appA = createMockApp();
+    const appB = createMockApp();
+    const resultA = await migrateOnDevice(appA, adapter, {
+      locale: 'en',
+      agentSettings: {
+        addedProviders: ['anthropic'],
+        visibleModels: ['anthropic/claude-sonnet-4'],
+      },
+      model: 'anthropic/claude-sonnet-4',
+    });
+    appA.secretStorage.setSecret(
+      getPiAiCredentialSecretId('anthropic'),
+      serializeProviderCredential({ type: 'api_key', key: sentinel }),
+    );
+
+    const resultB = await migrateOnDevice(appB, adapter, parseSyncedSettings(adapter));
+    const deviceBSettings = getPiAgentSettings(resultB.settings);
+    const deviceBProvider = deviceBSettings.addedProviders[0]!;
+    const readiness = deriveProviderReadinessStatus({
+      providerId: deviceBProvider,
+      piSettings: deviceBSettings,
+      credential: undefined,
+      interactiveOAuthConnected: false,
+      modelCount: 1,
+      allowKeyless: false,
+    });
+
+    const serializableSurfaces = {
+      syncedVaultSettingsWrites: adapter.writes,
+      syncedVaultSettings: parseSyncedSettings(adapter),
+      sessionJsonl: [
+        JSON.stringify({ type: 'session', version: 3, id: 'shared-session' }),
+        JSON.stringify({ type: 'message', message: { role: 'user', content: 'hello' } }),
+      ].join('\n'),
+      deviceALocalStorage: appA.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY),
+      deviceBLocalStorage: appB.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY),
+      logs: ['Provider settings saved'],
+      notices: ['Credential required on this device'],
+      errors: ['Provider credential is not configured'],
+      toolOutputs: [{ ok: false, detail: 'Authentication required' }],
+      builtArtifactSerialization: JSON.stringify({
+        entry: 'main.js',
+        platform: 'mobile',
+        settings: parseSyncedSettings(adapter),
+      }),
+    };
+
+    expect(resultA.settings.agentSettings.addedProviders).toEqual(['anthropic']);
+    // Provider/model authority follows the storage table: it is local, not copied
+    // to device B through the shared Vault settings payload.
+    expect(deviceBProvider).toBe('deepseek');
+    expect(readiness.kind).toBe('missing-credential');
+    expect(appB.secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBeNull();
+    expect(JSON.stringify(serializableSurfaces)).not.toContain(sentinel);
+    expect(appA.secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toContain(sentinel);
   });
 
   it('seeds default local registrations when an offline device opens an already-stripped synced file', async () => {

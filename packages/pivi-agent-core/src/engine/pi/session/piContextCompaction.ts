@@ -1,10 +1,8 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import {
-  buildContextEntries,
   convertToLlm,
   estimateTokens as estimatePiMessageTokens,
   findCutPoint,
-  sessionEntryToContextMessages,
 } from '@earendil-works/pi-coding-agent';
 
 import {
@@ -19,6 +17,10 @@ import {
   mergeCheckpoints,
   parsePiviCompactionDetails,
 } from '../../../session/continuationSchemas';
+import {
+  buildPiSessionContextEntries,
+  piSessionEntryToContextMessages,
+} from './piSessionContextProjection';
 import type { SessionTreeStore } from './sessionTreeStore';
 
 export { AUTO_COMPACTION_THRESHOLD_RATIO } from '../../../foundation';
@@ -384,12 +386,12 @@ export function estimateActiveContextCategories(
     recentConversation: 0,
     toolAndAgentResults: 0,
   };
-  for (const entry of buildContextEntries(entries)) {
+  for (const entry of buildPiSessionContextEntries(entries)) {
     if (isCompactionEntry(entry)) {
       estimates.checkpoints += estimateTextTokens(entry.summary);
       continue;
     }
-    for (const message of sessionEntryToContextMessages(entry)) {
+    for (const message of piSessionEntryToContextMessages(entry)) {
       addMessageCategory(estimates, message);
     }
   }
@@ -509,7 +511,7 @@ export function sanitizeCompactionMessage(message: AgentMessage): AgentMessage {
 }
 
 function messageForEntry(entry: PiContextCompactionEntry): AgentMessage | null {
-  const projected = sessionEntryToContextMessages(entry);
+  const projected = piSessionEntryToContextMessages(entry);
   const message = projected[0] as AgentMessage | undefined;
   return message ? sanitizeCompactionMessage(message) : null;
 }

@@ -1,8 +1,8 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import type {
-  PiviChatCompositionHost,
   PiviChatDevelopmentCommands,
+  PiviChatHost,
 } from '@/app/hostContracts';
 import type { TabManager } from '@/ui/chat/tabs/TabManager';
 import type { TabId } from '@/ui/chat/tabs/types';
@@ -70,7 +70,7 @@ async function waitForDevelopmentMessageCount(
 }
 
 async function createDevelopmentSessionFixture(
-  plugin: PiviChatCompositionHost,
+  plugin: PiviChatHost,
   runId: number,
   sourceFile: string,
   fixtureName: string,
@@ -92,7 +92,7 @@ async function createDevelopmentSessionFixture(
 }
 
 async function removeDevelopmentSessionFixture(
-  plugin: PiviChatCompositionHost,
+  plugin: PiviChatHost,
   sessionFile: string,
 ): Promise<void> {
   const adapter = plugin.app.vault.adapter;
@@ -104,7 +104,7 @@ async function removeDevelopmentSessionFixture(
 export async function runDevelopment20Subagents(
   manager: TabManager,
   ownerWindow: Window,
-  plugin: PiviChatCompositionHost,
+  plugin: PiviChatHost,
   hooks: Parameters<PiviChatDevelopmentCommands['run20SubagentsWorkload']>[0],
 ): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['run20SubagentsWorkload']>>> {
   const originalTabId = manager.getActiveTabId();
@@ -148,7 +148,7 @@ export async function runDevelopment20Subagents(
 export async function runDevelopmentIndexedSessionPaging(
   manager: TabManager,
   ownerWindow: Window,
-  plugin: PiviChatCompositionHost,
+  plugin: PiviChatHost,
   hooks: Parameters<PiviChatDevelopmentCommands['runIndexedSessionPagingWorkload']>[0],
 ): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['runIndexedSessionPagingWorkload']>>> {
   const originalTabId = manager.getActiveTabId();

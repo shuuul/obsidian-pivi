@@ -7,7 +7,6 @@ import {
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
-import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from "@/app/hostPlatform";
 import { t } from '@/app/i18n';
 import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
 import {
@@ -297,8 +296,16 @@ export class FileContextManager {
 
   /** Normalizes a file path to be vault-relative with forward slashes. */
   normalizePathForVault(rawPath: string | undefined | null): string | null {
-    const vaultPath = getVaultPath(this.app);
-    return normalizePathForVaultUtil(rawPath, vaultPath);
+    const normalized = rawPath?.trim().replace(/\\/g, '/') ?? '';
+    if (!normalized) return null;
+    const basePath = (this.app.vault.adapter as { basePath?: unknown }).basePath;
+    if (typeof basePath !== 'string') return normalized.replace(/^\.\//, '');
+    const normalizedBase = basePath.replace(/\\/g, '/').replace(/\/+$/, '');
+    return normalized === normalizedBase
+      ? null
+      : normalized.startsWith(`${normalizedBase}/`)
+        ? normalized.slice(normalizedBase.length + 1)
+        : normalized;
   }
 
   private getActiveVaultFilePath(): string | null {

@@ -4,7 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
 const DEFAULT_MAX_HEADINGS = 200;
 
@@ -164,7 +164,7 @@ function extractMarkdownHeadings(content: string): MarkdownHeading[] {
   });
 }
 
-export function createMarkdownStructureTool(deps: ObsidianToolDeps): ToolSpec {
+export function createMarkdownStructureTool(deps: VaultToolDeps): ToolSpec {
   const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,

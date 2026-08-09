@@ -27,19 +27,19 @@ import {
 } from './piChatRuntimeUsage';
 import { toPiImageContent } from './piImageContent';
 import type { PiResolvedModel } from './piModelRegistry';
-import type { SessionTreeStore } from './session/sessionTreeStore';
+import type { PiSessionTree } from './session/piSessionTree';
 
 export interface PiChatRuntimeTurnDeps {
   activeTurn: ActiveTurn;
   agent: Agent;
   compaction: PiChatCompactionDeps;
   eventAdapter: PiAgentEventAdapter;
-  sessionTree: SessionTreeStore | null;
+  sessionTree: PiSessionTree | null;
   resolveModel: () => PiResolvedModel | null;
   resolveThinkingLevel: (model: PiResolvedModel) => ThinkingLevel;
   authorizeAndSyncAgentModelSelection: (model: PiResolvedModel) => Promise<PiResolvedModel | null>;
   refreshModelMetadata: () => Promise<boolean>;
-  syncSessionMessages: (messages: AgentMessage[]) => void;
+  syncSessionMessages: (messages: AgentMessage[]) => Promise<void>;
   onUserMessagePersisted: (result: {
     parentEntryId: string | null;
     userEntryId: string;
@@ -164,7 +164,11 @@ async function runPromptLifecycle(
   }
   let didCompactDuringTurn = preflightCompacted;
 
-  persistUserMessage(deps, turn);
+  await persistUserMessage(deps, turn);
+  if (activeTurn.abortController.signal.aborted) {
+    finishActiveTurnQueue(activeTurn);
+    return;
+  }
 
   const previousPrepareNextTurn = agent.prepareNextTurnWithContext;
   const prepareNextTurnWithContext: NonNullable<Agent['prepareNextTurnWithContext']> = async (nextTurn, signal) => {
@@ -228,7 +232,10 @@ async function runPromptLifecycle(
       });
     };
 
-    flushPendingSessionMessages(deps, pendingPersistenceMessages);
+    await flushPendingSessionMessages(deps, pendingPersistenceMessages);
+    if (signal?.aborted || activeTurn.abortController.signal.aborted) {
+      return undefined;
+    }
     const latestUsage = latestUsageFromMessages(
       nextTurn.context.messages,
       deps.resolveModel(),
@@ -305,7 +312,7 @@ async function runPromptLifecycle(
     ));
   }
   if (retryResult.status === 'cancelled') {
-    flushPendingSessionMessages(deps, pendingPersistenceMessages);
+    await flushPendingSessionMessages(deps, pendingPersistenceMessages);
     finishActiveTurnQueue(activeTurn);
     return;
   }
@@ -313,12 +320,12 @@ async function runPromptLifecycle(
   const refreshedModelMetadata = await deps.refreshModelMetadata();
 
   const hadPendingMessages = pendingPersistenceMessages.length > 0;
-  flushPendingSessionMessages(deps, pendingPersistenceMessages);
+  await flushPendingSessionMessages(deps, pendingPersistenceMessages);
   if (!didCompactDuringTurn && !hadPendingMessages) {
     // Retain the defensive full-state sync for SDK paths that omit a
     // message_end event. After compaction only the pending suffix is safe:
     // replaying the old cumulative context would resurrect compacted history.
-    deps.syncSessionMessages(agent.state.messages);
+    await deps.syncSessionMessages(agent.state.messages);
   }
   const latestUsage = latestUsageFromMessages(agent.state.messages, deps.resolveModel());
   const usage = latestUsage
@@ -349,14 +356,14 @@ async function runPromptLifecycle(
   finishActiveTurnQueue(activeTurn);
 }
 
-function flushPendingSessionMessages(
+async function flushPendingSessionMessages(
   deps: PiChatRuntimeTurnDeps,
   pendingMessages: AgentMessage[],
-): void {
+): Promise<void> {
   if (pendingMessages.length === 0) {
     return;
   }
-  deps.syncSessionMessages(pendingMessages);
+  await deps.syncSessionMessages(pendingMessages);
   pendingMessages.length = 0;
 }
 
@@ -383,24 +390,23 @@ function latestAssistantMessage(
   return undefined;
 }
 
-function persistUserMessage(
+async function persistUserMessage(
   deps: PiChatRuntimeTurnDeps,
   turn: PreparedChatTurn,
-): void {
+): Promise<void> {
   if (!deps.sessionTree) {
     return;
   }
   try {
     const parentEntryId = deps.sessionTree.getLeafId();
-    const userEntryId = deps.sessionTree.appendUserMessage(
+    const userEntryId = await deps.sessionTree.appendUserTurn(
       turn.persistedContent,
       turn.request.images,
+      {
+        displayContent: turn.displayContent,
+        turnRequest: toChatTurnRequestSnapshot(turn.request),
+      },
     );
-    deps.sessionTree.appendMessageUi({
-      targetEntryId: userEntryId,
-      displayContent: turn.displayContent,
-      turnRequest: toChatTurnRequestSnapshot(turn.request),
-    });
     deps.onUserMessagePersisted({
       parentEntryId,
       userEntryId,

@@ -1,23 +1,22 @@
 import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import {
   type ImperativeChatAdapter,
   mountChatView,
   type MountedSurface,
 } from '@pivi/pivi-react/mount';
+import type { ChatPerfRecorder, ChatTabsSnapshot } from '@pivi/pivi-react/store';
 import type { WorkspaceLeaf } from 'obsidian';
 import { ItemView, Scope } from 'obsidian';
 
 import type {
+  PiviChatCompositionHost,
+  PiviChatView,
   PiviChatViewHandle,
-  PiviPluginWorkspace,
 } from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
 import { activateOpenSessionElsewhere } from '@/app/ui/activateOpenSessionElsewhere';
-import {
-  type ChatUiCompositionHost,
-  createChatUiPorts,
-} from '@/app/ui/createUiPorts';
 import {
   type CreatedImperativeChatAdapter,
   createImperativeChatAdapter,
@@ -33,9 +32,16 @@ type LoadableView = {
   load: () => Promise<void> | void;
 };
 
+export interface PiviViewCompositionHost extends Pick<
+  PiviChatCompositionHost,
+  'app' | 'settings' | 'getAllViews' | 'loadTabManagerState' | 'persistTabManagerState'
+> {
+  getAllViews(): PiviChatView[];
+  getChatPerfRecorder(): ChatPerfRecorder;
+}
+
 export class PiviViewHost extends ItemView {
-  private plugin: ChatUiCompositionHost;
-  private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
+  private plugin: PiviViewCompositionHost;
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
   private mountGeneration = 0;
@@ -45,12 +51,12 @@ export class PiviViewHost extends ItemView {
 
   constructor(
     leaf: WorkspaceLeaf,
-    plugin: ChatUiCompositionHost,
-    getWorkspace: () => Promise<PiviPluginWorkspace>,
+    plugin: PiviViewCompositionHost,
+    private readonly resolvePorts: () => Promise<ChatPorts>,
+    private readonly chatIcon: ChatTabsSnapshot['chatIcon'] = null,
   ) {
     super(leaf);
     this.plugin = plugin;
-    this.getWorkspace = getWorkspace;
 
     // Hover Editor compatibility: Define load as an instance method that can't be
     // overwritten by prototype patching. Hover Editor patches PiviViewHost.prototype.load
@@ -115,15 +121,14 @@ export class PiviViewHost extends ItemView {
     container.empty();
     container.createDiv({ cls: 'pivi-loading', text: appI18n.t('common.loading') });
 
-    const workspace = await this.getWorkspace();
+    const ports = await this.resolvePorts();
     if (generation !== this.mountGeneration) return;
-    const ports = createChatUiPorts(this.plugin, workspace);
     container.empty();
     const chatAdapter = createImperativeChatAdapter({
       plugin: this.plugin,
       view: this,
       getContainerEl: () => this.containerEl,
-      chatIcon: this.plugin.getUiFacades().chatUIConfig.getChatIcon?.() ?? null,
+      chatIcon: this.chatIcon,
       persistTabState: state => this.persistTabState(state),
       persistTabStateImmediate: state => this.plugin.persistTabManagerState(state),
       loadPersistedTabState: () => this.plugin.loadTabManagerState(),
@@ -131,6 +136,7 @@ export class PiviViewHost extends ItemView {
         this.activateOpenSessionElsewhere(openSessionId)
       ),
       perfRecorder: this.plugin.getChatPerfRecorder(),
+      enableDevelopmentCommands: this.plugin.getChatPerfRecorder().enabled,
     });
     this.chatAdapter = chatAdapter;
 
@@ -259,7 +265,7 @@ export class PiviViewHost extends ItemView {
   // ============================================
 
   private persistTabState(
-    state: Parameters<ChatUiCompositionHost['persistTabManagerState']>[0],
+    state: Parameters<PiviViewCompositionHost['persistTabManagerState']>[0],
   ): void {
     // Debounce persistence to avoid rapid writes (300ms delay)
     const win = getActiveWindow(this.containerEl);

@@ -34,16 +34,16 @@ describe('initializePiviPlugin', () => {
       ensureWorkspaceServices: jest.fn(() => neverReady),
     };
 
-    await initializePiviPlugin(plugin as never);
+    await initializePiviPlugin(plugin as never, plugin as never);
 
-    expect(registerPiviViews).toHaveBeenCalledWith(plugin);
-    expect(registerPiviCommands).toHaveBeenCalledWith(plugin);
-    expect(registerPiviSettings).toHaveBeenCalledWith(plugin);
+    expect(registerPiviViews).toHaveBeenCalledWith(plugin, plugin);
+    expect(registerPiviCommands).toHaveBeenCalledWith(plugin, plugin);
+    expect(registerPiviSettings).toHaveBeenCalledWith(plugin, plugin);
     expect(registerEditorSelectionToolbar).toHaveBeenCalledWith(plugin, {
       isToolbarEnabled: expect.any(Function),
       shouldYieldToNoteToolbar: expect.any(Function),
     });
-    expect(registerSelectionToolbarUi).toHaveBeenCalledWith(plugin);
+    expect(registerSelectionToolbarUi).toHaveBeenCalledWith(plugin, plugin);
     expect(plugin.ensureWorkspaceServices).not.toHaveBeenCalled();
 
     const toolbarOptions = (registerEditorSelectionToolbar as jest.Mock).mock.calls[0]?.[1] as {

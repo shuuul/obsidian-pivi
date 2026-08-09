@@ -1,5 +1,9 @@
 import { SubagentManager } from '@/ui/chat/services/SubagentManager';
-import { extractFullOutputPath } from '@/ui/chat/services/subagentOutput';
+import {
+  configureTrustedFullOutputReader,
+  extractFullOutputPath,
+  readTrustedFullOutputFile,
+} from '@/ui/chat/services/subagentOutput';
 import { SUBAGENT_WRITER_NAMES } from '@/ui/chat/subagentProfiles';
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
@@ -220,11 +224,26 @@ describe('SubagentManager', () => {
 });
 
 describe('subagent output helpers', () => {
+  afterEach(() => {
+    configureTrustedFullOutputReader(null);
+  });
+
   it('extracts a trimmed full output path from truncated output text', () => {
     expect(extractFullOutputPath('before [Truncated. Full output: /tmp/agent.output ] after')).toBe('/tmp/agent.output');
   });
 
   it('ignores missing full output markers', () => {
     expect(extractFullOutputPath('plain output')).toBeNull();
+  });
+
+  it('returns null from readTrustedFullOutputFile when no reader is configured', () => {
+    expect(readTrustedFullOutputFile('/tmp/agent.output')).toBeNull();
+  });
+
+  it('delegates readTrustedFullOutputFile to the injected reader', () => {
+    const reader = jest.fn().mockReturnValue('full-jsonl');
+    configureTrustedFullOutputReader(reader);
+    expect(readTrustedFullOutputFile('/tmp/agent.output')).toBe('full-jsonl');
+    expect(reader).toHaveBeenCalledWith('/tmp/agent.output');
   });
 });

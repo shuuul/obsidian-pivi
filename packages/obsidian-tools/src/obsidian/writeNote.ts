@@ -4,7 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
 type WriteNoteMode = 'create' | 'overwrite' | 'append' | 'prepend';
 
@@ -19,7 +19,7 @@ function getWriteMode(value: unknown): WriteNoteMode | undefined {
     : undefined;
 }
 
-export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
+export function createWriteNoteTool(deps: VaultToolDeps): ToolSpec {
   const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_WRITE,

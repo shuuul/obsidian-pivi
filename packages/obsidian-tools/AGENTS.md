@@ -8,10 +8,11 @@
 
 ## Public entrypoints
 
+- `@pivi/obsidian-tools/mobile` is an isolated Mobile-safe leaf. It composes exactly the 15 projected vault tools from structural vault dependencies, forces API-only behavior, and approval-gates write/edit/move/delete/mkdir/attachment. It is intentionally not re-exported by `src/index.ts`.
 - `src/index.ts` re-exports all tool creators, settings, and types. Default export is `createObsidianTools`.
 - `src/createObsidianTools.ts` constructs the full `ToolSpec[]` from an Obsidian `App`, settings, and optional image generator.
 - `src/obsidian/` contains per-tool factories plus their shared dependency, read-range, and result helpers. Tool factories accept `ObsidianToolDeps` and return `ToolSpec` values.
-- `src/obsidian/deps.ts` defines shared tool dependencies: vault API, external-file API, CLI transport, settings, vault name, and optional image generator.
+- `src/obsidian/vaultDeps.ts` defines the minimal structural vault-tool dependency shared by desktop and Mobile factories; `src/obsidian/deps.ts` extends it with desktop-only app, external-file, CLI, process, and image capabilities.
 - `src/obsidian/readNote.ts`, `writeNote.ts`, `editNote.ts`, `search.ts`, `listPath.ts`, `mkdir.ts`, `movePath.ts`, `deletePath.ts`, `openPath.ts`, `noteInfo.ts`, `links.ts`, `properties.ts`, and `attachment.ts` define the core vault tools (`obsidian_read`, `obsidian_write`, `obsidian_edit`, `obsidian_search`, `obsidian_list`, `obsidian_mkdir`, `obsidian_move`, `obsidian_delete`, `obsidian_open`, `obsidian_note_info`, `obsidian_links`, `obsidian_properties`, `obsidian_attachment`) over the injected vault API; mutating paths go through host `requireAgentVaultMutationPath` (containment + Pivi-managed MCP/Skills/Commands namespace rejection with `pivi_*` tool guidance).
 - `src/obsidian/tasks.ts` defines `obsidian_tasks` (CLI-backed; no public task index API). `src/obsidian/command.ts` and `src/obsidian/eval.ts` define the separately gated `obsidian_command` / `obsidian_eval` tools (`allowCommand` / `allowEval`).
 - `src/obsidian/history.ts` defines `obsidian_history`; it uses the Obsidian CLI history commands to list, read, and restore stored file versions, including deleted files when history exists.
@@ -50,7 +51,7 @@
 
 ## Package map
 
-- `package.json` exports `src/index.ts` only.
+- `package.json` exports `src/index.ts` and the intentionally separate `./mobile` leaf; the root must not re-export Mobile composition.
 - There is no package-local build step; source is consumed by the root build.
 - There is no package-local typecheck script. Verify tool changes with the root typecheck and targeted Obsidian tool tests.
 

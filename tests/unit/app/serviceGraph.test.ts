@@ -50,10 +50,11 @@ describe('createPluginServiceGraph', () => {
     };
     createPiWorkspaceServices.mockResolvedValue(workspace);
 
-    const result = await createPluginServiceGraph(plugin as never);
+    const result = await createPluginServiceGraph(plugin as never, plugin as never);
 
     expect(assertBundledReactRuntime).toHaveBeenCalledTimes(1);
     expect(createPiWorkspaceServices).toHaveBeenCalledWith({
+      owner: plugin,
       host: plugin,
       vaultAdapter,
     });

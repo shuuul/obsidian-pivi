@@ -38,7 +38,7 @@ function createHost(locale = 'en') {
   } as unknown as PiviPluginHost;
   const workspace = {} as PiviPluginWorkspace;
   const getWorkspace = jest.fn(async () => workspace);
-  const host = new PiviSettingTabHost({} as never, plugin, getWorkspace);
+  const host = new PiviSettingTabHost({} as never, plugin as never, plugin, getWorkspace);
   host.containerEl = document.createElement('div');
   return { cleanups, getWorkspace, host, plugin, workspace };
 }

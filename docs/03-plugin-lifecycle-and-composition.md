@@ -6,6 +6,10 @@ Pivi registers visible Obsidian surfaces before performing workspace I/O. Expens
 
 ## Startup
 
+The shared plugin shell first detects `Platform.isMobile`, then dynamically loads exactly one runtime composition. Desktop preserves the full product lifecycle. Mobile constructs its Vault/session/provider/runtime dependencies directly from public Obsidian APIs and registers a compact chat view, ribbon action, and settings tab without evaluating desktop services. Deferred bootstrap and unload both use generation guards so a late async platform load cannot mount after unload.
+
+The unreleased `mobile` branch sets `manifest.json:isDesktopOnly` to `false` only after the built-artifact startup gate passes, because Obsidian Mobile otherwise refuses to load the acceptance candidate. This is necessary but not sufficient for publication: iOS and Android streaming, SecretStorage behavior, keyboard/lifecycle behavior, visual acceptance, and a repeated Desktop real-host smoke must still pass first.
+
 ```mermaid
 sequenceDiagram
   participant O as Obsidian

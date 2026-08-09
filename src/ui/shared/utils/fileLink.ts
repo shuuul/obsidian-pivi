@@ -21,7 +21,7 @@ import { getVaultFileByPath, revealWorkspaceLeaf } from './obsidianCompat';
  * Image embeds ![[image.png]] are matched separately so their visible syntax can
  * stay intact while becoming clickable.
  */
-const WIKILINK_PATTERN_SOURCE = '(?<!!)\\[\\[([^\\]|#^]+)(?:#[^\\]|]+)?(?:\\^[^\\]|]+)?(?:\\|[^\\]]+)?\\]\\]';
+const WIKILINK_PATTERN_SOURCE = '\\[\\[([^\\]|#^]+)(?:#[^\\]|]+)?(?:\\^[^\\]|]+)?(?:\\|[^\\]]+)?\\]\\]';
 const EMBED_PATTERN_SOURCE = '!\\[\\[([^\\]|#^]+)(?:#[^\\]|]+)?(?:\\^[^\\]|]+)?(?:\\|[^\\]]+)?\\]\\]';
 const OBSIDIAN_APP_MARKDOWN_LINK_PATTERN = /(!?)\[([^\]\n]*)\]\((app:\/\/obsidian\.md\/[^)\s]+|obsidian:\/\/[^)\s]+)\)/g;
 
@@ -83,6 +83,7 @@ function collectLinkMatches(
     const fullMatch = match[0];
     const linkPath = match[1];
     if (fullMatch === undefined || linkPath === undefined) continue;
+    if (!isEmbed && match.index > 0 && text[match.index - 1] === '!') continue;
 
     if (!fileExistsInVault(app, linkPath)) continue;
 

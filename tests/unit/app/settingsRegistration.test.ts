@@ -11,16 +11,22 @@ describe('registerPiviSettings', () => {
     const secondWorkspace = { id: 'second' };
     const ensureWorkspaceServices = jest.fn(async () => firstWorkspace);
     const addSettingTab = jest.fn();
-    const plugin = {
+    const owner = { addSettingTab };
+    const host = {
       app: { id: 'app' },
-      addSettingTab,
       ensureWorkspaceServices,
     };
 
-    registerPiviSettings(plugin as never);
+    registerPiviSettings(owner as never, host as never);
 
     expect(PiviSettingTabHost).toHaveBeenCalledTimes(1);
-    const getWorkspace = jest.mocked(PiviSettingTabHost).mock.calls[0]?.[2];
+    expect(PiviSettingTabHost).toHaveBeenCalledWith(
+      host.app,
+      owner,
+      host,
+      expect.any(Function),
+    );
+    const getWorkspace = jest.mocked(PiviSettingTabHost).mock.calls[0]?.[3];
     expect(getWorkspace).toEqual(expect.any(Function));
     expect(ensureWorkspaceServices).not.toHaveBeenCalled();
     await expect(getWorkspace?.()).resolves.toBe(firstWorkspace);

@@ -122,6 +122,13 @@ export default defineConfig([
         tsconfigRootDir,
       },
     },
+    rules: {
+      // TypeScript resolves ambient globals; `no-undef` is not TypeScript-aware.
+      "no-undef": "off",
+      // Platform import safety is enforced on Mobile composition below and by
+      // the architecture checker rather than warning on Desktop/tests/scripts.
+      "obsidianmd/no-nodejs-modules": "off",
+    },
   },
   {
     files: ["jest.config.js"],
@@ -130,10 +137,19 @@ export default defineConfig([
     },
   },
   {
-    files: ["esbuild.config.mjs", "scripts/**/*.js", "scripts/**/*.mjs", "build/**/*.mjs"],
+    files: [
+      "*.config.{js,mjs}",
+      "eslint.config.mjs",
+      "**/*.cjs",
+      "scripts/**/*.js",
+      "scripts/**/*.mjs",
+      "build/**/*.mjs",
+    ],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
       "no-console": "off",
+      "no-undef": "off",
+      "obsidianmd/no-nodejs-modules": "off",
       "obsidianmd/rule-custom-message": "off",
     },
   },
@@ -179,6 +195,15 @@ export default defineConfig([
       "max-lines": [
         "warn",
         { max: 600, skipBlankLines: true, skipComments: true },
+      ],
+    },
+  },
+  {
+    files: ["src/app/composition/desktop/PiviDesktopRuntime.ts"],
+    rules: {
+      "max-lines": [
+        "warn",
+        { max: 650, skipBlankLines: true, skipComments: true },
       ],
     },
   },
@@ -546,6 +571,20 @@ export default defineConfig([
         "error",
         { functions: ["fit", "fdescribe"] },
       ],
+    },
+  },
+  {
+    files: ["src/app/composition/mobile/**/*.ts"],
+    rules: {
+      // Mobile provider transport must bind the current WebView's native streaming fetch.
+      "obsidianmd/no-global-this": "off",
+      "obsidianmd/no-nodejs-modules": "error",
+    },
+  },
+  {
+    files: ["src/app/composition/mobile/MobileSurfaces.ts"],
+    rules: {
+      "complexity": ["warn", 30],
     },
   },
 ]);

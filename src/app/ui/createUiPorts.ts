@@ -414,7 +414,11 @@ export function createSettingsUiPorts(
         },
         listToolRows: () => {
           const settings = getObsidianToolsSettingsFromBag(host.settings);
-          return createObsidianToolRows(settings, ws.providerOAuth?.hasCodexAuth() ?? false);
+          return createObsidianToolRows(
+            settings,
+            ws.providerOAuth?.hasCodexAuth() ?? false,
+            host.platformCapabilities,
+          );
         },
         async setToolEnabled(name, enabled) {
           if (name === TOOL_OBSIDIAN_BASH) {

@@ -4,6 +4,12 @@
 
 A Pivi tab is an in-view conversation surface managed by `TabManager`; it is not an Obsidian `WorkspaceLeaf`. A session is a durable JSONL conversation. One or more Pivi views can exist, and opening history first looks for an existing tab binding before creating another surface.
 
+## Mobile Vault sessions
+
+Mobile reads and writes the same Pi-compatible Vault JSONL through `ObsidianVaultFileAdapter`; it never asks the adapter for a desktop `basePath`. `DataAdapter.process()` provides atomic compare-and-swap mutation, and uncertain writes are accepted only when a bounded reread proves the exact intended result. Otherwise the live writer fail-stops rather than guessing. User message plus UI overlay is one atomic append, retry first rewinds to the durable parent, fork validates the source revision, and delete appends a terminal tombstone.
+
+Mobile deliberately has no synchronized sidecar index and no WAL journal: JSONL is the only authority, and bounded recent/history reads scan it directly. Archive membership is device-local Obsidian storage (`pivi.mobile.archived-sessions.v1`) rather than synchronized session state. Desktop keeps its device-local index/journal recovery implementation.
+
 ## Layer flow
 
 ```mermaid

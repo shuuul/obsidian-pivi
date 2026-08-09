@@ -1,9 +1,12 @@
-import { existsSync, readFileSync, realpathSync } from 'fs';
-import { tmpdir } from 'os';
-import { isAbsolute, sep } from 'path';
+/** Reads truncated subagent full-output files. Desktop composition injects the implementation. */
+export type TrustedFullOutputReader = (fullOutputPath: string) => string | null;
 
-const TRUSTED_OUTPUT_EXT = '.output';
-const TRUSTED_TMP_ROOTS = resolveTrustedTmpRoots();
+let trustedFullOutputReader: TrustedFullOutputReader | null = null;
+
+/** Desktop composition installs the Node-backed reader; Mobile leaves this unset. */
+export function configureTrustedFullOutputReader(reader: TrustedFullOutputReader | null): void {
+  trustedFullOutputReader = reader;
+}
 
 export function extractFullOutputPath(content: string): string | null {
   const truncatedPattern = /\[Truncated\.\s*Full output:\s*([^\]\n]+)\]/i;
@@ -16,54 +19,7 @@ export function extractFullOutputPath(content: string): string | null {
   return outputPath.length > 0 ? outputPath : null;
 }
 
+/** Delegates to the Desktop-injected reader; returns null when none is configured. */
 export function readTrustedFullOutputFile(fullOutputPath: string): string | null {
-  try {
-    if (!isTrustedOutputPath(fullOutputPath)) {
-      return null;
-    }
-
-    if (!existsSync(fullOutputPath)) {
-      return null;
-    }
-
-    const fileContent = readFileSync(fullOutputPath, 'utf-8');
-    const trimmed = fileContent.trim();
-    return trimmed.length > 0 ? trimmed : null;
-  } catch {
-    return null;
-  }
-}
-
-function resolveTrustedTmpRoots(): string[] {
-  const roots = new Set<string>();
-  const candidates = [tmpdir(), '/tmp', '/private/tmp'];
-  for (const candidate of candidates) {
-    try {
-      roots.add(realpathSync(candidate));
-    } catch {
-      // Ignore unavailable temp roots.
-    }
-  }
-  return Array.from(roots);
-}
-
-function isTrustedOutputPath(fullOutputPath: string): boolean {
-  if (!isAbsolute(fullOutputPath)) {
-    return false;
-  }
-
-  if (!fullOutputPath.toLowerCase().endsWith(TRUSTED_OUTPUT_EXT)) {
-    return false;
-  }
-
-  let resolvedPath: string;
-  try {
-    resolvedPath = realpathSync(fullOutputPath);
-  } catch {
-    return false;
-  }
-
-  return TRUSTED_TMP_ROOTS.some((root) =>
-    resolvedPath === root || resolvedPath.startsWith(`${root}${sep}`)
-  );
+  return trustedFullOutputReader?.(fullOutputPath) ?? null;
 }

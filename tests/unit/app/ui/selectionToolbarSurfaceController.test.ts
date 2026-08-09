@@ -196,7 +196,7 @@ function createController({
     })),
   };
 
-  return new SelectionToolbarSurfaceController(plugin as never);
+  return new SelectionToolbarSurfaceController(plugin as never, plugin as never);
 }
 
 describe('SelectionToolbarSurfaceController inline edit guards', () => {

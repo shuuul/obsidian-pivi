@@ -4,7 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
 type PropertiesAction = 'list' | 'read' | 'set' | 'remove';
 
@@ -19,7 +19,7 @@ function getPropertiesAction(value: unknown): PropertiesAction | undefined {
     : undefined;
 }
 
-export function createPropertiesTool(deps: ObsidianToolDeps): ToolSpec {
+export function createPropertiesTool(deps: VaultToolDeps): ToolSpec {
   const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_PROPERTIES,

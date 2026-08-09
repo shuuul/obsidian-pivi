@@ -60,6 +60,35 @@ function createHarness() {
 }
 
 describe('createSettingsModelsPort provider removal', () => {
+  it('writes a replacement credential before attempting any settings persistence', async () => {
+    const harness = createHarness();
+    const events: string[] = [];
+    const modify = jest.fn(async () => {
+      events.push('secret');
+    });
+    harness.saveSettings.mockImplementation(async () => {
+      events.push('settings');
+      throw new Error('save failed');
+    });
+    const port = createSettingsModelsPort(
+      harness.host,
+      harness.uiFacades,
+      {
+        credentialStore: {
+          readSync: () => undefined,
+          modify,
+          delete: harness.deleteCredential,
+        },
+      } as unknown as PiviPluginWorkspace,
+    );
+
+    await expect(port.setApiKey('anthropic', 'replacement')).rejects.toThrow('save failed');
+
+    expect(events).toEqual(['secret', 'settings']);
+    expect(modify).toHaveBeenCalledWith('anthropic', expect.any(Function));
+    expect(harness.deleteCredential).not.toHaveBeenCalled();
+  });
+
   it('keeps in-memory provider order when synced save fails after local commit', async () => {
     const harness = createHarness();
     harness.saveSettings.mockRejectedValueOnce(new Error('save failed'));
@@ -96,6 +125,15 @@ describe('createSettingsModelsPort provider removal', () => {
     await harness.port.removeProvider('anthropic', true);
 
     expect(harness.deleteCredential).toHaveBeenCalledWith('anthropic');
+  });
+
+  it('retains the credential when provider settings fail to persist', async () => {
+    const harness = createHarness();
+    harness.saveSettings.mockRejectedValueOnce(new Error('save failed'));
+
+    await expect(harness.port.removeProvider('anthropic', true)).rejects.toThrow('save failed');
+
+    expect(harness.deleteCredential).not.toHaveBeenCalled();
   });
 
   it('does not select a disabled provider as the active fallback', async () => {

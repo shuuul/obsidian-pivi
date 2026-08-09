@@ -2,11 +2,11 @@
  * Obsidian-safe replacement for @earendil-works/pi-ai/dist/env-api-keys.js.
  * Upstream uses dynamic import("node:" + "fs") for browser/Vite compatibility;
  * in Obsidian's renderer that becomes a URL fetch and fails at plugin load.
+ *
+ * Keep the default host browser-safe. Desktop composition installs the Node-backed
+ * host explicitly; Mobile credentials come from SecretStorage instead of ambient
+ * process state.
  */
-import { existsSync, readFileSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
-
 export const ANTHROPIC_AUTH_TOKEN_ENV = 'ANTHROPIC_AUTH_TOKEN';
 export const ANTHROPIC_OAUTH_TOKEN_ENV = 'ANTHROPIC_OAUTH_TOKEN';
 export const ANTHROPIC_API_KEY_ENV = 'ANTHROPIC_API_KEY';
@@ -22,24 +22,13 @@ export interface PiAiEnvironmentHost {
   joinPath(...segments: string[]): string;
 }
 
-function getProcessEnvironmentVariable(name: string): string | undefined {
-  return process.env[name];
-}
-
 const defaultEnvironmentHost: PiAiEnvironmentHost = {
-  getEnvironmentVariable: getProcessEnvironmentVariable,
-  shouldReadProcessEnvironmentFallback: () => !!process.versions?.bun
-    && Object.keys(process.env).length === 0,
-  readProcessEnvironment: () => {
-    try {
-      return readFileSync('/proc/self/environ', 'utf-8');
-    } catch {
-      return null;
-    }
-  },
-  hasFile: existsSync,
-  getHomeDirectory: homedir,
-  joinPath: join,
+  getEnvironmentVariable: () => undefined,
+  shouldReadProcessEnvironmentFallback: () => false,
+  readProcessEnvironment: () => null,
+  hasFile: () => false,
+  getHomeDirectory: () => '',
+  joinPath: (...segments) => segments.join('/'),
 };
 
 let environmentHost: PiAiEnvironmentHost = defaultEnvironmentHost;

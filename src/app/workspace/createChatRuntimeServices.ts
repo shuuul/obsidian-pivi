@@ -1,3 +1,4 @@
+import { loadContextLayers } from "@pivi/pivi-agent-core/context/loadContextLayers";
 import type {
   PiBaseToolProvider,
   PiMainOnlyToolProvider,
@@ -5,8 +6,10 @@ import type {
 import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner";
 import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import type { PiRuntimeHost } from "@pivi/pivi-agent-core/engine/pi/piRuntimeHost";
+import type { PiSessionTreeFactory } from "@pivi/pivi-agent-core/engine/pi/session/piSessionTree";
 import type { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
 import type { McpOAuthService, McpServerManager } from "@pivi/pivi-agent-core/mcp";
+import { PiMcpBridge } from "@pivi/pivi-agent-core/mcp";
 import type { CapabilityApprovalPort, FetchCompatible, HttpClient, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
 import type { PiChatService } from "@pivi/pivi-agent-core/runtime/piChatService";
@@ -51,6 +54,7 @@ export function createChatRuntimeServiceFactories(deps: {
   subagentConcurrencyLimiter: SubagentConcurrencyLimiter;
   mcpSecretStorage?: SyncSecretStore;
   mcpFetch: FetchCompatible;
+  sessionTreeFactory: PiSessionTreeFactory | null;
 }): ChatRuntimeServiceFactories {
   return {
     createChatService(host, httpClient, options) {
@@ -65,12 +69,22 @@ export function createChatRuntimeServiceFactories(deps: {
           mcpProcessEnv: process.env,
           mcpSecretStorage: deps.mcpSecretStorage,
         },
+        deps.sessionTreeFactory,
         deps.mcpServerManager,
         deps.mcpOAuth,
         deps.baseToolProvider,
         deps.subagentConcurrencyLimiter,
         options?.capabilityApproval ?? null,
         mainOnly,
+        (manager, oauth, network, vaultPath) => new PiMcpBridge(
+          manager,
+          oauth,
+          network.mcpFetch,
+          network.mcpProcessEnv,
+          network.mcpSecretStorage,
+          vaultPath,
+        ),
+        loadContextLayers,
       );
     },
     createAuxQueryRunner(host) {

@@ -107,6 +107,7 @@ settings:
 /* Shared product tokens for every Pivi presentation root. */
 .pivi-container,
 .pivi-settings,
+.pivi-mobile-chat,
 .pivi-selection-toolbar-overlay,
 .pivi-inline-selector-portal,
 .pivi-inline-edit-surface,

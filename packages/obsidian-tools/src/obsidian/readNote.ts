@@ -4,7 +4,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
 import {
   buildStatsText,
   getLineSpans,
@@ -16,8 +15,9 @@ import {
   resolveEffectiveReadMaxChars,
   sliceLineRange,
 } from './readShared';
+import type { VaultToolDeps } from './vaultDeps';
 
-export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
+export function createReadNoteTool(deps: VaultToolDeps): ToolSpec {
   const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_READ,

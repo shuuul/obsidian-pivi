@@ -5,7 +5,8 @@ import {
   resolveWorkspaceCommandPrompt,
 } from '@pivi/pivi-agent-core/skills/commands/resolveWorkspaceCommandPrompt';
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
-import { type App, type Command,getIcon, MarkdownView, Notice } from 'obsidian';
+import type { App, Plugin } from 'obsidian';
+import { getIcon, MarkdownView, Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';
 import { activatePiviView, ensurePiviViewOpen } from '@/app/piviViewActivation';
@@ -17,8 +18,6 @@ interface WorkspaceCommandRegistryHost {
   readonly app: App;
   readonly manifest: { readonly id: string };
   readonly settings: { readonly chatViewPlacement: 'right-sidebar' | 'left-sidebar' | 'main-tab' };
-  addCommand(command: Command): Command;
-  removeCommand(commandId: string): void;
 }
 
 interface NoteToolbarApiWindow extends Window {
@@ -56,13 +55,16 @@ export function getWorkspaceCommandFullId(pluginId: string, integrationKey: stri
 export class WorkspaceCommandRegistry {
   private readonly registered = new Set<string>();
 
-  constructor(private readonly host: WorkspaceCommandRegistryHost) {}
+  constructor(
+    private readonly owner: Pick<Plugin, 'addCommand' | 'removeCommand'>,
+    private readonly host: WorkspaceCommandRegistryHost,
+  ) {}
 
   reconcile(entries: readonly SlashCatalogEntry[]): void {
     this.clear();
     for (const entry of entries) {
       if (!entry.integrationKey) continue;
-      this.host.addCommand({
+      this.owner.addCommand({
         id: getWorkspaceCommandLocalId(entry.integrationKey),
         name: t('commands.runWorkspaceCommand', { name: entry.name }),
         icon: entry.icon && getIcon(entry.icon) ? entry.icon : 'message-square',
@@ -79,7 +81,7 @@ export class WorkspaceCommandRegistry {
 
   clear(): void {
     for (const commandId of this.registered) {
-      this.host.removeCommand(commandId);
+      this.owner.removeCommand(commandId);
     }
     this.registered.clear();
   }

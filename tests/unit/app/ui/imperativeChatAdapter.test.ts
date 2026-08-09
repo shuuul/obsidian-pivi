@@ -255,6 +255,7 @@ function createHarness(options: HarnessOptions = {}) {
     loadPersistedTabState,
     activateOpenSessionElsewhere: jest.fn(async () => false),
     perfRecorder: NOOP_CHAT_PERF_RECORDER,
+    enableDevelopmentCommands: true,
   });
 
   const mount = async (): Promise<void> => {

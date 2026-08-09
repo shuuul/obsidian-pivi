@@ -2,7 +2,8 @@ import { parseSlashCommandContent } from '@pivi/pivi-agent-core/skills/slashComm
 import { RESERVED_COMMAND_IDS } from '@pivi/pivi-agent-core/skills/commands/slashCommandIds';
 import { PiSlashCommandCatalog } from '@/app/workspace/PiSlashCommandCatalog';
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
-import type PiviPlugin from "@/main";
+import type { PiviWorkspaceHost } from '@/app/workspace/serviceContracts';
+import type { Plugin } from 'obsidian';
 import { TAbstractFile } from "obsidian";
 
 describe("parseSlashCommandContent", () => {
@@ -40,7 +41,7 @@ Review: {{selected_text}}`;
 });
 
 describe("PiSlashCommandCatalog", () => {
-  let mockPlugin: jest.Mocked<PiviPlugin>;
+  let mockPlugin: jest.Mocked<PiviWorkspaceHost & Pick<Plugin, 'registerEvent'>>;
   let mockAdapter: jest.Mocked<FileStore>;
   let catalog: PiSlashCommandCatalog;
 
@@ -53,7 +54,7 @@ describe("PiSlashCommandCatalog", () => {
           on: jest.fn(),
         },
       },
-    } as unknown as jest.Mocked<PiviPlugin>;
+    } as unknown as jest.Mocked<PiviWorkspaceHost & Pick<Plugin, 'registerEvent'>>;
 
     mockAdapter = {
       ensureFolder: jest.fn().mockResolvedValue(undefined),
@@ -78,7 +79,7 @@ Explain this: {{selected_text}}`,
       rename: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<FileStore>;
 
-    catalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
+    catalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, mockAdapter, {
       createIntegrationKey: () => 'generated-key',
     });
   });
@@ -154,7 +155,7 @@ Explain this: {{selected_text}}`,
       ".pivi/commands/review notes.md": COMMAND_BYTES,
       ".pivi/commands/复盘.md": COMMAND_BYTES,
     });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
 
@@ -169,7 +170,7 @@ Explain this: {{selected_text}}`,
       ".pivi/commands/first.md": COMMAND_BYTES,
       ".pivi/commands/second.md": COMMAND_BYTES,
     });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
 
@@ -192,7 +193,7 @@ Explain this: {{selected_text}}`,
       ".pivi/commands/first.md": COMMAND_BYTES,
       ".pivi/commands/second.md": COMMAND_BYTES,
     });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
 
@@ -298,7 +299,7 @@ Explain this: {{selected_text}}`,
       `legacy bytes for ${id}`,
     ]));
     const store = createMemoryCommandStore(Object.fromEntries(reservedBytes));
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       isImageGenerationEnabled: () => true,
       createIntegrationKey: () => 'generated-key',
     });
@@ -331,7 +332,7 @@ Explain this: {{selected_text}}`,
   });
 
   it("adds the image generation tool only when it is enabled", async () => {
-    const imageCatalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
+    const imageCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, mockAdapter, {
       isImageGenerationEnabled: () => true,
       createIntegrationKey: () => 'generated-key',
     });
@@ -359,7 +360,7 @@ Explain this: {{selected_text}}`,
     const store = createMemoryCommandStore({
       ".pivi/commands/explain.md": COMMAND_BYTES,
     });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const newEntry = {
@@ -396,7 +397,7 @@ Explain this: {{selected_text}}`,
 
     await catalog.prepareWorkspace();
     expect(bytes).toContain('integration-key: generated-key');
-    const restarted = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
+    const restarted = new PiSlashCommandCatalog(mockPlugin, mockPlugin, mockAdapter, {
       createIntegrationKey: () => 'different-key',
     });
     const entries = await restarted.listWorkspaceEntries();
@@ -432,7 +433,7 @@ Explain this: {{selected_text}}`,
 
   it.each(['Settings', 'Agent'])('%s upserts preserve leading and trailing prompt whitespace bytes', async (surface) => {
     const store = createMemoryCommandStore({ '.pivi/commands/explain.md': COMMAND_BYTES });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const content = '\n  Keep these prompt bytes.  \n\n';
@@ -453,7 +454,7 @@ Explain this: {{selected_text}}`,
 
   it('rejects an approved Agent plan after a watcher-visible change without writing', async () => {
     const store = createMemoryCommandStore({ '.pivi/commands/explain.md': COMMAND_BYTES });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const snapshot = await memoryCatalog.getWorkspaceSnapshot();
@@ -532,7 +533,7 @@ Explain this: {{selected_text}}`,
       ".pivi/commands/explain.md": COMMAND_BYTES,
       ".pivi/templates/explain.md": COMMAND_BYTES,
     });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const snapshot = await memoryCatalog.getWorkspaceSnapshot();
@@ -554,7 +555,7 @@ Explain this: {{selected_text}}`,
       if (from === ".pivi/templates/explain.md") throw new Error('legacy staging failed');
       return originalRename(from, to);
     });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const snapshot = await memoryCatalog.getWorkspaceSnapshot();
@@ -580,7 +581,7 @@ Explain this: {{selected_text}}`,
       }
       return originalRename(from, to);
     });
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const snapshot = await memoryCatalog.getWorkspaceSnapshot();
@@ -608,7 +609,7 @@ Explain this: {{selected_text}}`,
       }, null, 2),
     });
     store.folders.add(root);
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
 
@@ -624,7 +625,7 @@ Explain this: {{selected_text}}`,
       ".pivi/commands/explain.md": COMMAND_BYTES,
     });
     store.adapter.deleteFolder = jest.fn(async (_path: string) => undefined);
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const snapshot = await memoryCatalog.getWorkspaceSnapshot();
@@ -646,7 +647,7 @@ Explain this: {{selected_text}}`,
       ".pivi/commands/explain.md": COMMAND_BYTES,
     });
     store.adapter.deleteFolder = jest.fn(async (_path: string) => undefined);
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
     const listed = await memoryCatalog.executeCommands({ action: 'list' }) as { catalogRevision: number };
@@ -683,7 +684,7 @@ Explain this: {{selected_text}}`,
       ".pivi/commands/explain.md.remove-stale": COMMAND_BYTES,
     });
     store.folders.add(".pivi/.commands-removal-x");
-    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, store.adapter, {
+    const memoryCatalog = new PiSlashCommandCatalog(mockPlugin, mockPlugin, store.adapter, {
       createIntegrationKey: () => 'generated-key',
     });
 

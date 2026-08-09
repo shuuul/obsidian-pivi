@@ -50,6 +50,8 @@ File cards are consumed when a user submission—or a queued user submission—s
 
 File and folder mentions are resolved at send time. Folder mentions expand to the eligible paths used by prompt construction, but visible user-message history continues to render the single folder token from `displayContent` rather than enumerating those expanded files. The only request metadata supplemented as a historical badge is the first-turn auto-attached current note; every other visible file/folder badge comes from what the user entered. Inline contexts are structured tokens embedded in the input. Explicit selected-text contexts preserve exact source positions, complete touched lines, and selection markers. Ambient editor polling records selected text with note and available line metadata; browser and canvas controllers capture their host-specific structured context.
 
+The Mobile composer reuses the IME-safe mention input and Vault file/folder picker. Its selected `@` tokens are parsed at send time and contribute deduplicated Vault-relative file paths, including recursive folder expansion. Mobile slash suggestions are a strict built-in allowlist: `/new` starts a new session and `/compact` enters the runtime's manual compaction command; workspace Commands, Skills, MCP, and desktop-only entries are not loaded into that picker.
+
 IME composition is a correctness boundary. Key handling and badge rebuilding must not mutate the contenteditable tree while `isComposing` is true; synchronization happens after composition ends.
 
 ## External context

@@ -1,6 +1,8 @@
 import {
   TOOL_OBSIDIAN_BASH,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_TASKS,
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
@@ -10,6 +12,7 @@ import {
 
 import type { PiviSettingsHost } from '@/app/hostContracts';
 import { setLocale } from '@/app/i18n';
+import { MOBILE_PLATFORM_CAPABILITIES } from '@/app/platformCapabilities';
 import {
   createObsidianToolRows,
   listObsidianIntegrationSections,
@@ -65,6 +68,22 @@ describe('Obsidian settings integration adapter', () => {
       disabledTools: [TOOL_PIVI_MCP],
     }, false);
     expect(disabled.find(row => row.name === TOOL_PIVI_MCP)?.enabled).toBe(false);
+  });
+
+  it('omits desktop-only tool rows on Mobile', () => {
+    const names = createObsidianToolRows({
+      allowBash: true,
+      allowExternalRead: true,
+    }, false, MOBILE_PLATFORM_CAPABILITIES).map(row => row.name);
+
+    expect(names).not.toEqual(expect.arrayContaining([
+      TOOL_OBSIDIAN_BASH,
+      TOOL_OBSIDIAN_TASKS,
+      TOOL_OBSIDIAN_READ_EXTERNAL,
+      TOOL_OBSIDIAN_LIST_EXTERNAL,
+    ]));
+    expect(names).toContain(TOOL_OBSIDIAN_READ);
+    expect(names).toContain(TOOL_PIVI_SESSIONS);
   });
 
   it('describes and runs Obsidian-only integration actions', async () => {

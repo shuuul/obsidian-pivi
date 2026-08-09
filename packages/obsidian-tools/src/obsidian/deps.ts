@@ -11,6 +11,8 @@ import type { CapabilityApprovalPort } from '@pivi/pivi-agent-core/ports';
 import type { ProcessRunner } from '@pivi/pivi-agent-core/ports';
 import type { App } from 'obsidian';
 
+import type { VaultToolDeps } from './vaultDeps';
+
 
 export interface ObsidianImageGenerator {
   generateImage(request: {
@@ -39,7 +41,7 @@ export interface ExternalFileApiLike {
   isPathAllowed?(absolutePath: string): boolean;
 }
 
-export interface ObsidianToolDeps {
+export interface ObsidianToolDeps extends Omit<VaultToolDeps, 'cli' | 'obsidianCliAvailable' | 'vault'> {
   app: App;
   vault: ObsidianVaultApi;
   cli: ObsidianCliTransport;

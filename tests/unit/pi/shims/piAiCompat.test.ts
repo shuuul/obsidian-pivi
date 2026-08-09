@@ -112,6 +112,9 @@ describe('piAiCompat shim', () => {
 
   it('injects env API keys only when request options do not already provide one', () => {
     process.env[deepseekEnvName] = 'env-value-for-test';
+    configurePiAiEnvironmentHost({
+      getEnvironmentVariable: (name) => process.env[name],
+    });
     const streamSpy = jest.fn(() => createTestStream());
     registerApiProvider({ api: 'mock-api', stream: streamSpy as any, streamSimple: streamSpy as any });
 

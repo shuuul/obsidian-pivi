@@ -121,6 +121,30 @@ function createStore(): SessionStore & {
 }
 
 describe('OpenSessionManager linear hydration', () => {
+  it('allows a Vault-relative store to load without an OS vault path only when opted in', async () => {
+    const mobileStore = createStore();
+    mobileStore.listSessions.mockResolvedValue([]);
+    const mobileManager = new OpenSessionManager({
+      getVaultPath: () => null,
+      getStore: () => mobileStore,
+      storeOwnsLocation: true,
+    });
+
+    await mobileManager.loadSummaries();
+
+    expect(mobileStore.listSessions).toHaveBeenCalledWith('');
+
+    const desktopStore = createStore();
+    const desktopManager = new OpenSessionManager({
+      getVaultPath: () => null,
+      getStore: () => desktopStore,
+    });
+
+    await desktopManager.loadSummaries();
+
+    expect(desktopStore.listSessions).not.toHaveBeenCalled();
+  });
+
   it('routes bounded pages through the durable session ref without hydrating', async () => {
     const store = createStore();
     const usage = { inputTokens: 3, outputTokens: 1 } as UsageInfo;

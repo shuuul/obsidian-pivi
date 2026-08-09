@@ -4,7 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
   const value = input[key];
@@ -26,7 +26,7 @@ function getSearchFormat(input: Record<string, unknown>): 'text' | 'json' | unde
   return value === 'text' || value === 'json' ? value : undefined;
 }
 
-export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
+export function createSearchTool(deps: VaultToolDeps): ToolSpec {
   const { vault, cli, settings, vaultName } = deps;
   const obsidianCliAvailable = deps.obsidianCliAvailable ?? settings.cliEnabled;
   return {

@@ -2,6 +2,7 @@ import { Agent, type AgentMessage, type AgentTool, type ThinkingLevel } from '@e
 
 import { getProviderAuthFailureHint } from '../../auth/providerAuthFailureHint';
 import { getProviderEnvVarNames } from '../../auth/providerEnvVars';
+import type { ContextLayers } from '../../context/loadContextLayers';
 import type {
   ChatMessage,
   OpenSessionState,
@@ -10,7 +11,7 @@ import type {
 import { PluginLogger } from '../../foundation/pluginLogger';
 import { calculateReadToolMaxChars, type ReadAllowanceReservation } from '../../foundation/usage';
 import type { McpOAuthService, McpServerManager } from '../../mcp';
-import { PiMcpBridge } from '../../mcp';
+import type { PiMcpBridge } from '../../mcp';
 import type { McpProcessEnv, McpTransportFetch } from '../../mcp/ports';
 import type { HttpClient, SyncSecretStore } from '../../ports';
 import type { CapabilityApprovalPort } from '../../ports/capabilityApproval';
@@ -79,7 +80,7 @@ import { resolvePiThinkingLevelForModel } from './piThinkingLevels';
 import { toPiAgentTool } from './piToolAdapter';
 import { sanitizeAgentMessagesForLlm } from './session/agentMessageHistory';
 import { stripCompactCommand } from './session/piContextCompaction';
-import { SessionTreeStore } from './session/sessionTreeStore';
+import type { PiSessionTree, PiSessionTreeFactory } from './session/piSessionTree';
 import type { SubagentConcurrencyLimiter } from './subagentConcurrencyLimiter';
 
 
@@ -89,6 +90,18 @@ export interface PiChatRuntimeNetwork {
   mcpProcessEnv: McpProcessEnv;
   mcpSecretStorage?: SyncSecretStore;
 }
+
+export type PiMcpBridgeFactory = (
+  manager: McpServerManager,
+  oauth: McpOAuthService | null,
+  network: PiChatRuntimeNetwork,
+  vaultPath?: string,
+) => PiMcpBridge;
+
+export type PiContextLayersFactory = (
+  vaultPath: string,
+  activeNotePath?: string | null,
+) => ContextLayers;
 
 const POST_LOAD_MODEL_METADATA_PROVIDER_IDS = new Set([
   'ollama',
@@ -109,7 +122,10 @@ export class PiChatRuntime implements PiChatService {
   private readonly mcpManager: McpServerManager | null;
   private readonly mcpBridge: PiMcpBridge | null;
   private toolRegistryKey: string | null = null;
-  private sessionTree: SessionTreeStore | null = null;
+  private sessionTree: PiSessionTree | null = null;
+  private sessionGeneration = 0;
+  /** In-flight tree create/open for the current generation; cleared on settle or invalidate. */
+  private sessionTreeInit: { generation: number; promise: Promise<void> } | null = null;
   private sessionFile: string | null = null;
   private leafId: string | null = null;
   private readonly compactionState: PiChatCompactionState = {
@@ -135,6 +151,7 @@ export class PiChatRuntime implements PiChatService {
   constructor(
     private readonly plugin: PiRuntimeHost,
     private readonly network: PiChatRuntimeNetwork,
+    private readonly sessionTreeFactory: PiSessionTreeFactory | null,
     mcpManager: McpServerManager | null = null,
     mcpOAuth: McpOAuthService | null = null,
     private readonly baseToolProvider: PiBaseToolProvider | null = null,
@@ -145,16 +162,16 @@ export class PiChatRuntime implements PiChatService {
      * Never requested by {@link buildSubagentTools} — structural exclusion, not filtering.
      */
     private readonly mainOnlyToolProvider: PiMainOnlyToolProvider | null = null,
+    mcpBridgeFactory?: PiMcpBridgeFactory,
+    private readonly contextLayersFactory?: PiContextLayersFactory,
   ) {
     this.capabilityApproval = capabilityApproval;
     this.mcpManager = mcpManager;
-    this.mcpBridge = mcpManager
-      ? new PiMcpBridge(
+    this.mcpBridge = mcpManager && mcpBridgeFactory
+      ? mcpBridgeFactory(
         mcpManager,
         mcpOAuth,
-        network.mcpFetch,
-        network.mcpProcessEnv,
-        network.mcpSecretStorage,
+        network,
         this.getVaultPath() ?? undefined,
       )
       : null;
@@ -200,19 +217,13 @@ export class PiChatRuntime implements PiChatService {
     const sessionFile = ref?.sessionFile ?? null;
     this.sessionFile = sessionFile ?? null;
     this.leafId = null;
-    const vaultPath = this.getVaultPath();
-    if (vaultPath && sessionFile) {
-      this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile);
-      this.sessionFile = this.sessionTree.getVaultRelativeSessionFile() ?? sessionFile;
-      this.sessionId = this.sessionTree.getSessionId();
-      this.leafId = this.sessionTree.getLeafId();
-    } else {
-      this.sessionTree = null;
-    }
 
-    if (this.agent && prevSessionFile !== this.sessionFile) {
-      this.invalidateAgentSession();
-    } else if (prevSessionFile !== this.sessionFile) {
+    const sessionChanged = prevSessionFile !== this.sessionFile;
+    if (sessionChanged || this.sessionTreeInit) {
+      this.invalidatePendingSessionTree();
+      if (sessionChanged && this.agent) {
+        this.invalidateAgentSession();
+      }
       invalidateCompactionState(this.compactionState);
     }
   }
@@ -240,6 +251,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   async ensureReady(options?: PiEnsureReadyOptions): Promise<boolean> {
+    const generation = this.sessionGeneration;
     const model = this.resolveModel();
     if (!model) {
       logger.error('Could not resolve Pi model from settings');
@@ -248,6 +260,7 @@ export class PiChatRuntime implements PiChatService {
     }
 
     const auth = await this.resolveAuth(model);
+    if (generation !== this.sessionGeneration) return false;
     if (!auth) {
       if (model.provider === 'openai-codex') {
         logger.error('OpenAI Codex OAuth credentials are missing or unavailable. Reconnect OpenAI Codex in provider settings.');
@@ -259,7 +272,8 @@ export class PiChatRuntime implements PiChatService {
       return false;
     }
 
-    this.ensureSessionTree(options);
+    await this.ensureSessionTree(options, generation);
+    if (generation !== this.sessionGeneration) return false;
 
     // Prompt-only changes hot-update; force rebuilds the agent (model/env paths).
     if (this.agent && options?.force !== true) {
@@ -271,9 +285,14 @@ export class PiChatRuntime implements PiChatService {
       invalidateCompactionState(this.compactionState);
     }
 
+    // Re-check after any await above: a losing generation must never construct Agent.
+    if (generation !== this.sessionGeneration) return false;
+
     const registry = this.buildToolRegistry();
     const systemPrompt = buildPiSystemPrompt(this.getVaultPath() ?? undefined, this.plugin.settings.userName, registry);
     const sessionMessages = this.sessionTree?.loadAgentMessages() ?? [];
+
+    if (generation !== this.sessionGeneration) return false;
 
     this.agent = new Agent({
       initialState: {
@@ -288,6 +307,13 @@ export class PiChatRuntime implements PiChatService {
       sessionId: this.sessionId ?? undefined,
       steeringMode: 'one-at-a-time',
     });
+
+    if (generation !== this.sessionGeneration) {
+      // sync/reset/cleanup raced Agent construction; drop the orphan Agent.
+      this.agent.reset();
+      this.agent = null;
+      return false;
+    }
 
     this.systemPromptKey = computePiSystemPromptKey(this.getVaultPath() ?? undefined, this.plugin.settings.userName, registry);
     this.toolRegistryKey = registry.registeredToolsSection;
@@ -404,9 +430,9 @@ export class PiChatRuntime implements PiChatService {
           }
         },
         refreshModelMetadata: () => this.refreshLocalModelMetadataAfterPrompt(agent),
-        syncSessionMessages: (messages) => {
-          this.persistSteeredTurnBeforeSync(activeTurn, messages);
-          this.syncSessionMessagesAfterTurn(
+        syncSessionMessages: async (messages) => {
+          await this.persistSteeredTurnBeforeSync(activeTurn, messages);
+          await this.syncSessionMessagesAfterTurn(
             messages,
             [effectiveTurn, ...activeTurn.steeredTurns],
           );
@@ -456,6 +482,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   resetSession(): void {
+    this.invalidatePendingSessionTree();
     this.invalidateAgentSession();
     this.sessionId = null;
   }
@@ -473,6 +500,7 @@ export class PiChatRuntime implements PiChatService {
     if (this.activeTurn) {
       closeActiveTurnQueue(this.activeTurn);
     }
+    this.invalidatePendingSessionTree();
     this.subagentRunner.reset();
     this.subagentRunner.abortAllSubagents();
     invalidateCompactionState(this.compactionState);
@@ -496,12 +524,12 @@ export class PiChatRuntime implements PiChatService {
       return { canRewind: false, error: 'Cannot redo while a turn is streaming.' };
     }
 
-    this.ensureSessionTree({ allowSessionCreation: false });
+    await this.ensureSessionTree({ allowSessionCreation: false }, this.sessionGeneration);
     if (!this.sessionTree) {
       return { canRewind: false, error: 'No active session to rewind.' };
     }
 
-    if (!this.sessionTree.truncateAfter(checkpointId)) {
+    if (!await this.sessionTree.truncateAfter(checkpointId)) {
       return { canRewind: false, error: 'Rewind checkpoint was not found.' };
     }
 
@@ -518,7 +546,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   getSessionStateUpdates(): Partial<OpenSessionState> {
-    const sessionFile = this.sessionTree?.getVaultRelativeSessionFile()
+    const sessionFile = this.sessionTree?.getSessionFile()
       ?? this.sessionFile;
 
     return buildSessionStateUpdates({
@@ -566,6 +594,7 @@ export class PiChatRuntime implements PiChatService {
         subagentQueryRunner: this.subagentRunner,
         resolveReadMaxChars,
         capabilityApproval: this.capabilityApproval,
+        contextLayers: this.contextLayersFactory?.('', null),
       });
     }
     return buildPiToolRegistry({
@@ -578,6 +607,7 @@ export class PiChatRuntime implements PiChatService {
       subagentQueryRunner: this.subagentRunner,
       resolveReadMaxChars,
       capabilityApproval: this.capabilityApproval,
+      contextLayers: this.contextLayersFactory?.(vaultPath, null),
     });
   }
 
@@ -605,30 +635,79 @@ export class PiChatRuntime implements PiChatService {
     return [...baseTools, ...mcpTools];
   }
 
-  private ensureSessionTree(options?: PiEnsureReadyOptions): void {
+  private async ensureSessionTree(options: PiEnsureReadyOptions | undefined, generation: number): Promise<void> {
+    if (generation !== this.sessionGeneration) {
+      return;
+    }
     if (this.sessionTree) {
       return;
     }
-    const vaultPath = this.getVaultPath();
-    if (!vaultPath) {
+    if (!this.sessionTreeFactory) {
       return;
     }
+    if (this.sessionTreeInit && this.sessionTreeInit.generation === generation) {
+      await this.sessionTreeInit.promise;
+      return;
+    }
+
     const existingFile = this.sessionFile
-      ?? getLegacySessionFileFromAgentState(this.openSessionAgentState);
+      ?? getLegacySessionFileFromAgentState(this.openSessionAgentState)
+      ?? null;
+    if (!existingFile && options?.allowSessionCreation === false) {
+      return;
+    }
+
+    const initGeneration = generation;
+    const promise = this.openOrCreateSessionTree(existingFile)
+      .then(async (tree) => {
+        // Losing generation: retire a newly created unpublished tree when the
+        // factory owns a safe terminal-discard operation.
+        if (initGeneration !== this.sessionGeneration) {
+          if (!existingFile) await this.sessionTreeFactory?.discardCreated?.(tree);
+          return;
+        }
+        this.sessionTree = tree;
+        this.sessionFile = tree.getSessionFile();
+        this.leafId = tree.getLeafId();
+        this.sessionId = tree.getSessionId();
+      })
+      .finally(() => {
+        if (this.sessionTreeInit?.promise === promise) {
+          this.sessionTreeInit = null;
+        }
+      });
+
+    this.sessionTreeInit = { generation: initGeneration, promise };
+    try {
+      await promise;
+    } catch (error) {
+      // Invalidated waiters must not surface factory errors as readiness failures.
+      if (initGeneration !== this.sessionGeneration) {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private async openOrCreateSessionTree(existingFile: string | null): Promise<PiSessionTree> {
+    if (!this.sessionTreeFactory) {
+      throw new Error('Session persistence is unavailable.');
+    }
     if (existingFile) {
-      this.sessionTree = SessionTreeStore.open(vaultPath, existingFile);
-      this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
-      this.leafId = this.sessionTree.getLeafId();
-      this.sessionId = this.sessionTree.getSessionId();
-      return;
+      return this.sessionTreeFactory.open(existingFile);
     }
-    if (options?.allowSessionCreation === false) {
-      return;
-    }
-    this.sessionTree = SessionTreeStore.create(vaultPath);
-    this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
-    this.leafId = this.sessionTree.getLeafId();
-    this.sessionId = this.sessionTree.getSessionId();
+    return this.sessionTreeFactory.create();
+  }
+
+  /**
+   * Bump the session generation and drop any published or in-flight tree so a
+   * concurrent ensureReady cannot assign state for a superseded binding.
+   */
+  private invalidatePendingSessionTree(): void {
+    this.sessionTree = null;
+    this.sessionId = null;
+    this.sessionGeneration += 1;
+    this.sessionTreeInit = null;
   }
 
   private invalidateAgentSession(): void {
@@ -670,8 +749,8 @@ export class PiChatRuntime implements PiChatService {
   private syncSessionMessagesAfterTurn(
     messages: AgentMessage[],
     turns?: PreparedChatTurn | readonly PreparedChatTurn[],
-  ): void {
-    syncSessionMessagesAfterTurn(
+  ): Promise<void> {
+    return syncSessionMessagesAfterTurn(
       this.sessionTree,
       messages,
       turns,
@@ -686,7 +765,7 @@ export class PiChatRuntime implements PiChatService {
     );
   }
 
-  private persistSteeredTurnBeforeSync(activeTurn: ActiveTurn, messages: AgentMessage[]): void {
+  private async persistSteeredTurnBeforeSync(activeTurn: ActiveTurn, messages: AgentMessage[]): Promise<void> {
     const turn = activeTurn.steeredTurns[activeTurn.persistedSteeredTurnCount];
     if (!turn || !this.sessionTree) {
       return;
@@ -703,15 +782,14 @@ export class PiChatRuntime implements PiChatService {
     if (!containsSteeredUserMessage) {
       return;
     }
-    const targetEntryId = this.sessionTree.appendUserMessage(
+    await this.sessionTree.appendUserTurn(
       turn.persistedContent,
       turn.request.images,
+      {
+        displayContent: turn.displayContent,
+        turnRequest: toChatTurnRequestSnapshot(turn.request),
+      },
     );
-    this.sessionTree.appendMessageUi({
-      targetEntryId,
-      displayContent: turn.displayContent,
-      turnRequest: toChatTurnRequestSnapshot(turn.request),
-    });
     activeTurn.persistedSteeredTurnCount += 1;
   }
 

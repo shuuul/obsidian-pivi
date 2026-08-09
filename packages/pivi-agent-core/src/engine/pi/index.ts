@@ -20,3 +20,5 @@ export * from './piRuntimeHost';
 export * from './piSettingsCoordinator';
 export * from './piThinkingLevels';
 export * from './piToolAdapter';
+export * from './session/piSessionJsonlDocument';
+export * from './session/sessionJsonlStorage';

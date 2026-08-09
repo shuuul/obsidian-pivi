@@ -6,3 +6,4 @@ export * from './sessionPaths';
 export * from './sessionRecoveryPort';
 export * from './subagentJsonl';
 export * from './types';
+export * from './vaultSessionPaths';

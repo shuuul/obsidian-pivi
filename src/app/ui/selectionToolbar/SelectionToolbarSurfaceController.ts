@@ -10,7 +10,7 @@ import {
   type SelectionToolbarSurfaceProps,
 } from '@pivi/pivi-react/mount';
 import type { ComposerOptionSnapshot } from '@pivi/pivi-react/store';
-import type { Editor } from 'obsidian';
+import type { Editor, Plugin } from 'obsidian';
 import { MarkdownView, Notice } from 'obsidian';
 
 import {
@@ -31,7 +31,6 @@ import type { InlineEditSurfaceSendPayload } from '@/app/ui/inlineEditSurface/ty
 import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
 import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getWorkspaceCommandFullId } from '@/app/workspaceCommandRegistry';
-import type PiviPlugin from '@/main';
 import { captureEditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/selectionToolbarPlugin';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
@@ -132,7 +131,10 @@ export class SelectionToolbarSurfaceController {
   private readonly inlineEditSessions = new Map<string, InlineEditRecord>();
   private readonly unsubscribers: Array<() => void> = [];
 
-  constructor(private readonly plugin: PiviPlugin) {}
+  constructor(
+    private readonly owner: Plugin,
+    private readonly plugin: PiviPluginHost,
+  ) {}
 
   register(): void {
     const host = getSelectionToolbarHost();
@@ -152,7 +154,7 @@ export class SelectionToolbarSurfaceController {
       }),
     );
 
-    this.plugin.register(() => {
+    this.owner.register(() => {
       this.destroy();
     });
   }
@@ -557,11 +559,11 @@ export function openInlineEditForEditorSelection(editor: Editor): boolean {
   return registeredSelectionToolbarController?.openInlineEditForSelection(editor) ?? false;
 }
 
-export function registerSelectionToolbarUi(plugin: PiviPlugin): void {
-  const controller = new SelectionToolbarSurfaceController(plugin);
+export function registerSelectionToolbarUi(owner: Plugin, host: PiviPluginHost): void {
+  const controller = new SelectionToolbarSurfaceController(owner, host);
   registeredSelectionToolbarController = controller;
   controller.register();
-  plugin.register(() => {
+  owner.register(() => {
     if (registeredSelectionToolbarController === controller) {
       registeredSelectionToolbarController = null;
     }

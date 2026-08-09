@@ -10,6 +10,10 @@ const piAiCompatShim = path.join(
   rootDir,
   'packages/pivi-agent-core/src/engine/pi/shims/piAiCompat.ts',
 );
+const googleGenAiWeb = path.join(
+  rootDir,
+  'node_modules/@google/genai/dist/web/index.mjs',
+);
 
 /** pi-ai compat pulls every upstream provider; Pivi only needs its supported provider set. */
 export const shimPiAiCompat = {
@@ -30,5 +34,13 @@ export const shimPiAiEnvApiKeys = {
       }
       return { path: piAiEnvApiKeysShim };
     });
+  },
+};
+
+/** Obsidian's renderer uses the browser transport, never Google ADC/Node auth. */
+export const shimGoogleGenAiWeb = {
+  name: 'shim-google-genai-web',
+  setup(build) {
+    build.onResolve({ filter: /^@google\/genai$/ }, () => ({ path: googleGenAiWeb }));
   },
 };

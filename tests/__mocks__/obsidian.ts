@@ -139,6 +139,9 @@ export class Scope {
 
 export const Platform = {
   isMacOS: true,
+  isWin: false,
+  isDesktopApp: true,
+  isMobileApp: false,
 };
 
 export const requestUrl = jest.fn().mockResolvedValue({ status: 200 });
@@ -213,8 +216,28 @@ export class Setting {
   constructor(containerEl: any) {}
   setName = jest.fn().mockReturnThis();
   setDesc = jest.fn().mockReturnThis();
+  setCta = jest.fn().mockReturnThis();
   addToggle = jest.fn().mockReturnThis();
   addTextArea = jest.fn().mockReturnThis();
+  addText = jest.fn((cb?: (component: any) => void) => {
+    const component = {
+      inputEl: { type: 'text', value: '' },
+      setValue: jest.fn().mockReturnThis(),
+      onChange: jest.fn().mockReturnThis(),
+    };
+    cb?.(component);
+    return this;
+  });
+  addButton = jest.fn((cb?: (button: any) => void) => {
+    const button = {
+      setButtonText: jest.fn().mockReturnThis(),
+      setCta: jest.fn().mockReturnThis(),
+      onClick: jest.fn().mockReturnThis(),
+      setDisabled: jest.fn().mockReturnThis(),
+    };
+    cb?.(button);
+    return this;
+  });
 }
 
 export class TextAreaComponent {

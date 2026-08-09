@@ -1,6 +1,6 @@
 import type { MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
 import type { App } from 'obsidian';
-import { TFile, TFolder } from 'obsidian';
+import { Platform, TFile, TFolder } from 'obsidian';
 
 import { resolveVaultWikilinkTarget } from './obsidianMentionVault';
 
@@ -44,7 +44,7 @@ export function createMentionVaultLookup(app: App): MentionVaultLookup {
       return null;
     },
     normalizeLookupKey(value) {
-      return process.platform === 'win32' ? value.toLowerCase() : value;
+      return Platform.isWin ? value.toLowerCase() : value;
     },
   };
 }

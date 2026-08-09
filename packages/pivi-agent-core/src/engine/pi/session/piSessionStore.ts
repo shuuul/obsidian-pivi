@@ -27,7 +27,6 @@ import type {
   UserTurnUi,
 } from '../../../session/types';
 import {
-  PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
   PIVI_UI_CONTEXT,
   type PiviSessionMetaData,
@@ -41,6 +40,10 @@ import {
   isPiModelContextWindowAuthoritative,
   resolvePiModelFromKeyWithLookup,
 } from '../piModelRegistry';
+import {
+  ExternalContextJsonlMigrationError,
+  stripExternalContextsFromSessionJsonl,
+} from './externalContextJsonl';
 import {
   applySkillDescriptions,
   collectMessageUiMap,
@@ -154,79 +157,7 @@ function listVaultSessionJsonlFiles(vaultPath: string): string[] {
   return files;
 }
 
-interface ExternalContextJsonlMigration {
-  content: string;
-  changed: boolean;
-  sessionPaths?: string[];
-  turnPaths: Map<string, string[]>;
-}
-
-function externalPaths(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((path): path is string => typeof path === 'string')
-    : [];
-}
-
-class ExternalContextJsonlMigrationError extends Error {}
-
-/** Pure, line-preserving migration used by startup and lazy session opens. */
-export function stripExternalContextsFromSessionJsonl(
-  content: string,
-  sessionFile: string,
-): ExternalContextJsonlMigration {
-  const hasFinalNewline = content.endsWith('\n');
-  const lines = content.split('\n');
-  if (hasFinalNewline) {
-    lines.pop();
-  }
-  let changed = false;
-  let sessionPaths: string[] | undefined;
-  const turnPaths = new Map<string, string[]>();
-  const migratedLines = lines.map((line, index) => {
-    if (!line.trim()) {
-      return line;
-    }
-    let parsed: Record<string, unknown>;
-    try {
-      const value: unknown = JSON.parse(line);
-      if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return line;
-      }
-      parsed = value as Record<string, unknown>;
-    } catch (error) {
-      throw new ExternalContextJsonlMigrationError(
-        `Failed to migrate external contexts in ${sessionFile} at line ${index + 1}`,
-        { cause: error },
-      );
-    }
-    if (parsed.type !== 'custom' || !parsed.data || typeof parsed.data !== 'object' || Array.isArray(parsed.data)) {
-      return line;
-    }
-    const data = parsed.data as Record<string, unknown>;
-    if (parsed.customType === PIVI_UI_CONTEXT && Object.hasOwn(data, 'externalContextPaths')) {
-      sessionPaths = externalPaths(data.externalContextPaths);
-      const nextData = { ...data };
-      Reflect.deleteProperty(nextData, 'externalContextPaths');
-      changed = true;
-      return JSON.stringify({ ...parsed, data: nextData });
-    }
-    if (parsed.customType === PIVI_MESSAGE_UI && typeof data.targetEntryId === 'string') {
-      const result = sanitizeMessageUiForJsonl(data);
-      if (result.externalContextPaths) {
-        turnPaths.set(data.targetEntryId, result.externalContextPaths);
-        changed = true;
-        return JSON.stringify({ ...parsed, data: result.sanitized });
-      }
-    }
-    return line;
-  });
-  return {
-    content: migratedLines.join('\n') + (hasFinalNewline ? '\n' : ''),
-    changed,
-    sessionPaths,
-    turnPaths,
-  };
-}
+export { stripExternalContextsFromSessionJsonl } from './externalContextJsonl';
 
 class MemoryExternalContextStore implements DeviceLocalExternalContextStore {
   private readonly sessions = new Map<string, { selected: string[]; turns: Map<string, string[]> }>();

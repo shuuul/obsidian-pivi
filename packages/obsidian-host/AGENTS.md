@@ -8,6 +8,8 @@
 
 ## Public entrypoints
 
+- `@pivi/obsidian-host/mobile` is the isolated public-Obsidian-API vault adapter. It uses browser lexical mutation-path validation, reports File Recovery as explicitly unavailable, and must not reach Node/Electron/private File Recovery or the root barrel. It is intentionally absent from `src/index.ts`.
+- Mobile session JSONL is authoritative and intentionally has no rebuildable sidecar index or WAL journal. Mutations use Vault-relative `DataAdapter.process` compare-and-swap through `FileStoreSessionJsonlStorage`; an uncertain write is read-reconciled where its exact result is identifiable and otherwise fail-stops the live writer. Bounded recent reads scan the authoritative file directly. This avoids synchronized sidecars and leaves no unrecorded continuation gap: user-plus-UI persistence is one atomic mutation and retry rewinds the authoritative JSONL before resubmission.
 - `src/index.ts` re-exports the package surface. Add new intentional host APIs here.
 - `src/obsidianVaultApi.ts` wraps Obsidian `App` vault operations: note reads/writes/edits, file resolution, tree/list, move/trash/folder creation, open-in-leaf, scan-based search, note info, links, backlinks, tag/graph analysis, base-file/view inspection, recent files, attachment metadata, and binary attachment creation with Obsidian markdown links. Base lookup uses direct path/metadata resolution, and unresolved-only graph analysis reads metadata without enumerating files. Mutating paths use `requireAgentVaultMutationPath` (containment + managed-namespace policy); delete/move-source/mkdir use recursive mode so ancestors of managed roots are rejected. Mutating note operations best-effort call `fileRecoverySnapshot.ts` to `forceAdd` the current content into Obsidian File Recovery before `vault.process` / `processFrontMatter`; unavailable File Recovery is a silent no-op, while capture failures are logged and never block writes.
 - `src/vaultEditMatch.ts` owns exact occurrence counting, replacement, ambiguity errors, and straight-versus-curly quote mismatch diagnostics used by `ObsidianVaultApi.editNote`.
@@ -39,7 +41,7 @@
 
 ## Package map
 
-- `package.json` exports the barrel and explicit leaf subpaths (`authContextHost`, `bootstrap/hostContext`, `bootstrap/storage`, `bootstrap/types`, `bundledFetch`, `cli/obsidianCliTransport`, `cli/officialObsidianCli`, `createPiviNetworkClients`, `electronCompat`, `externalFileApi`, `nodeFetch`, `obsidianHttpClient`, `openExternalUrl`, `path`, `providerLegacyAuthStore`, `scopedHttpClient`, `settings/piviSettingsStorage`, `storage/sharedStorageService`, `systemProcessRunner`). The canonical vault edit matcher is intentionally available through the root barrel beside `ObsidianVaultApi`. Add new intentional leaf APIs to both `src/index.ts` and the matching export entry.
+- `package.json` exports the barrel and explicit leaf subpaths, including the root-isolated `mobile` leaf. Mobile is the exception to the normal root re-export rule: never add it to `src/index.ts`. The canonical vault edit matcher remains available through the root barrel beside desktop `ObsidianVaultApi`.
 - There is no package-local build step; source is consumed by the root build.
 - There is no package-local typecheck script. Verify host changes with the root typecheck and targeted tests for affected tools/runtime/UI.
 

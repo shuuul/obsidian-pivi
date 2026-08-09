@@ -1,6 +1,7 @@
 import {
   SharedStorageService,
 } from "@pivi/obsidian-host";
+import type { PiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
 import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/piSessionStore";
 import { configureSessionJsonlIndexRoot } from "@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex";
@@ -21,7 +22,7 @@ import {
 } from "@pivi/pivi-agent-core/session/sessionJournal";
 import { assertBundledReactRuntime } from "@pivi/pivi-react";
 import { createHash } from 'crypto';
-import type { App } from "obsidian";
+import type { App, Plugin } from "obsidian";
 import { Notice } from "obsidian";
 import { homedir } from 'os';
 import { join } from 'path';
@@ -30,10 +31,10 @@ import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmen
 import type { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
+import type { PiviPluginHost } from '@/app/hostContracts';
 import { t } from "@/app/i18n";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
-import type PiviPlugin from "@/main"
 
 const logger = new PluginLogger('ServiceGraph');
 
@@ -42,11 +43,12 @@ export interface PiviServiceGraph {
 }
 
 export function createSharedStorage(
-  plugin: PiviPlugin,
+  owner: Plugin,
+  plugin: Pick<PiviPluginHost, 'app'>,
   externalContexts: ObsidianDeviceLocalExternalContextStore,
 ): SharedStorageService {
   const environmentStore = new ObsidianDeviceLocalEnvironmentStore(plugin.app);
-  return new SharedStorageService(plugin, createPiviSettingsCodec(
+  return new SharedStorageService(owner, createPiviSettingsCodec(
     externalContexts,
     new ObsidianDeviceLocalProviderStore(plugin.app),
     {
@@ -132,11 +134,16 @@ export function reconcileSessionCloudRecovery(
 }
 
 export async function createPluginServiceGraph(
-  plugin: PiviPlugin,
+  owner: Plugin,
+  plugin: Parameters<typeof createPiWorkspaceServices>[0]['host'] & {
+    storage: PiviPluginHost['storage'];
+    network: PiviNetworkClients;
+  },
 ): Promise<PiviServiceGraph> {
   assertBundledReactRuntime();
   const vaultAdapter = plugin.storage.getAdapter();
   const piWorkspace = await createPiWorkspaceServices({
+    owner,
     host: plugin,
     vaultAdapter,
     network: plugin.network,

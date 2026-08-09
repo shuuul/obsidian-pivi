@@ -51,6 +51,22 @@ describe('ProviderSecretStorage', () => {
     );
   });
 
+  it('enumerates direct and digest canonical credentials without legacy or unrelated secrets', () => {
+    const store = new ObsidianCredentialStore(secretStorage);
+    const longProviderId = `custom-${'a'.repeat(80)}`;
+    store.writeSync('anthropic', { type: 'api_key', key: 'direct-key' });
+    store.writeSync(longProviderId, {
+      type: 'oauth', access: 'access-token', refresh: 'refresh-token', expires: 1,
+    });
+    setLegacyProviderSecret('legacy', 'api-key', 'legacy-key');
+    secretStorage.setSecret('pivi-web-exa-api-key', 'web-key');
+
+    expect(store.listStoredSync()).toEqual([
+      { type: 'api_key', key: 'direct-key' },
+      { type: 'oauth', access: 'access-token', refresh: 'refresh-token', expires: 1 },
+    ]);
+  });
+
   it('does not read legacy provider key slots without migration', async () => {
     setLegacyProviderSecret('anthropic', 'api-key', 'sk-legacy');
     const store = new ObsidianCredentialStore(secretStorage);

@@ -4,9 +4,7 @@
  * Utilities for external context validation, normalization, and conflict detection.
  */
 
-import * as fs from 'fs';
-
-import { normalizePathForComparison as normalizePathForComparisonImpl } from "@/app/hostPlatform";
+import { getExternalContextPlatform } from './externalContextPlatform';
 
 export interface PathConflict {
   path: string;
@@ -21,7 +19,7 @@ export interface PathConflict {
  * - Trailing slash removed
  */
 export function normalizePathForComparison(p: string): string {
-  return normalizePathForComparisonImpl(p);
+  return getExternalContextPlatform().normalizeForComparison(p);
 }
 
 function normalizePathForDisplay(p: string): string {
@@ -111,22 +109,7 @@ export interface DirectoryValidationResult {
 }
 
 export function validateDirectoryPath(p: string): DirectoryValidationResult {
-  try {
-    const stats = fs.statSync(p);
-    if (!stats.isDirectory()) {
-      return { valid: false, error: 'Path exists but is not a directory' };
-    }
-    return { valid: true };
-  } catch (err) {
-    const error = err as NodeJS.ErrnoException;
-    if (error.code === 'ENOENT') {
-      return { valid: false, error: 'Path does not exist' };
-    }
-    if (error.code === 'EACCES') {
-      return { valid: false, error: 'Permission denied' };
-    }
-    return { valid: false, error: `Cannot access path: ${error.message}` };
-  }
+  return getExternalContextPlatform().validateDirectory(p);
 }
 
 export function isDuplicatePath(newPath: string, existingPaths: string[]): boolean {

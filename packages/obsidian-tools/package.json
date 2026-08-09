@@ -2,7 +2,10 @@
   "name": "@pivi/obsidian-tools",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mobile": "./src/mobile.ts"
+  },
   "dependencies": {
     "@pivi/obsidian-host": "*",
     "@pivi/pivi-agent-core": "*"

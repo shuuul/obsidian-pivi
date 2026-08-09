@@ -1,6 +1,18 @@
 import type { App } from "obsidian";
+import { normalizePath, TFile } from 'obsidian';
 
-import { triggerVaultModify } from "@/app/hostPlatform";
+function triggerVaultModify(app: App, path: string): void {
+  const normalized = normalizePath(path.trim());
+  if (!normalized) return;
+  const file = app.vault.getAbstractFileByPath(normalized);
+  if (file instanceof TFile) {
+    app.vault.trigger('modify', file);
+    return;
+  }
+  const separator = normalized.lastIndexOf('/');
+  const parent = separator >= 0 ? normalized.slice(0, separator) : '';
+  void app.vault.adapter.list(parent).catch(() => undefined);
+}
 
 export function notifyVaultFileChange(
   plugin: { app: App },

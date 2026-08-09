@@ -14,6 +14,10 @@ const baseConfig = {
     '^@test/(.*)$': '<rootDir>/tests/$1',
     '^@pivi/pivi-agent-core/engine/pi/registerBundledPiOAuthFlows$':
       '<rootDir>/tests/__mocks__/registerPiviBundledOAuthFlowLoaders.ts',
+    '^@pivi/obsidian-host/mobile$':
+      '<rootDir>/packages/obsidian-host/src/mobile/mobileObsidianVaultApi.ts',
+    '^@pivi/obsidian-tools/mobile$':
+      '<rootDir>/packages/obsidian-tools/src/mobile/createMobileVaultTools.ts',
     '^@pivi/([^/]+)$': '<rootDir>/packages/$1/src/index.ts',
     '^@pivi/([^/]+)/(.*)$': '<rootDir>/packages/$1/src/$2',
     '^obsidian$': '<rootDir>/tests/__mocks__/obsidian.ts',

@@ -38,6 +38,10 @@ import type { PiviSettingsHost } from '@/app/hostContracts';
 import { isOfficialObsidianCliEnabled } from '@/app/hostPlatform';
 import { t, type TranslationKey } from '@/app/i18n';
 import type { NoteToolbarSetupResult } from '@/app/noteToolbarIntegration';
+import {
+  type PiviPlatformCapabilities,
+  resolvePiviPlatformCapabilities,
+} from '@/app/platformCapabilities';
 
 type ToolRequirement = 'cli' | 'external' | 'codex';
 
@@ -85,9 +89,16 @@ interface ObsidianToolSettingsView {
 export function createObsidianToolRows(
   settings: ObsidianToolSettingsView,
   hasCodexAuth: boolean,
+  capabilities: PiviPlatformCapabilities = resolvePiviPlatformCapabilities(),
 ): readonly SettingsToolRow[] {
-  const officialCliEnabled = isOfficialObsidianCliEnabled();
-  return TOOL_DESCRIPTORS.map(([name, labelKey, descriptionKey, requirement]) => {
+  const officialCliEnabled = capabilities.officialObsidianCli
+    && isOfficialObsidianCliEnabled();
+  return TOOL_DESCRIPTORS.filter(([name, , , requirement]) => {
+    if (requirement === 'cli') return capabilities.officialObsidianCli;
+    if (requirement === 'external') return capabilities.externalFileAccess;
+    if (name === TOOL_OBSIDIAN_BASH) return capabilities.processExecution;
+    return true;
+  }).map(([name, labelKey, descriptionKey, requirement]) => {
     const managementTool = isPiviManagementTool(name);
     const group = name === TOOL_PIVI_SESSIONS || managementTool
       ? 'pivi'

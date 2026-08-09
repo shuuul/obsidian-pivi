@@ -26,7 +26,7 @@ import type {
   PiviCommandsInput,
   PiviCommandsListResult,
 } from '@pivi/pivi-agent-core/tools/piviManagement';
-import type { TAbstractFile } from "obsidian";
+import type { Plugin, TAbstractFile } from "obsidian";
 
 import { t } from '@/app/i18n';
 
@@ -62,6 +62,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   readonly commandsCoordinator: WorkspaceCommandsCoordinator;
 
   constructor(
+    private readonly owner: Pick<Plugin, 'registerEvent'>,
     private readonly plugin: PiviWorkspaceHost,
     private readonly adapter: FileStore,
     private readonly options: PiSlashCommandCatalogOptions = {},
@@ -80,7 +81,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     if (this.isWatching) return;
     this.isWatching = true;
 
-    this.plugin.registerEvent(
+    this.owner.registerEvent(
       this.plugin.app.vault.on("create", (file: TAbstractFile) => {
         if (isCatalogCommandPath(file.path)) {
           void this.refresh().catch(error => logger.error('Failed to refresh command watcher event', error));
@@ -88,7 +89,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
       }),
     );
 
-    this.plugin.registerEvent(
+    this.owner.registerEvent(
       this.plugin.app.vault.on("modify", (file: TAbstractFile) => {
         if (isCatalogCommandPath(file.path)) {
           void this.refresh().catch(error => logger.error('Failed to refresh command watcher event', error));
@@ -96,7 +97,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
       }),
     );
 
-    this.plugin.registerEvent(
+    this.owner.registerEvent(
       this.plugin.app.vault.on("delete", (file: TAbstractFile) => {
         if (isCatalogCommandPath(file.path)) {
           void this.refresh().catch(error => logger.error('Failed to refresh command watcher event', error));
@@ -104,7 +105,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
       }),
     );
 
-    this.plugin.registerEvent(
+    this.owner.registerEvent(
       this.plugin.app.vault.on(
         "rename",
         (file: TAbstractFile, oldPath: string) => {

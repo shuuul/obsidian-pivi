@@ -24,6 +24,7 @@ import {
 } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
 import { registerBundledPiOAuthFlows } from "@pivi/pivi-agent-core/engine/pi/registerBundledPiOAuthFlows";
+import { DesktopPiSessionTreeFactory } from "@pivi/pivi-agent-core/engine/pi/session/desktopPiSessionTree";
 import { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
 import {
   type AppModelReadinessProvider,
@@ -120,7 +121,7 @@ function readMcpOAuthCallbackPort(): number | undefined {
 export async function createPiWorkspaceServices(
   context: WorkspaceInitContext,
 ): Promise<PiWorkspaceServices> {
-  const { host, vaultAdapter, network } = context;
+  const { owner, host, vaultAdapter, network } = context;
   const mcpStorage = new McpStorage(
     vaultAdapter,
     host.app.secretStorage,
@@ -229,6 +230,7 @@ export async function createPiWorkspaceServices(
     () => host.saveSettings(),
   );
   const slashCommandCatalog = new PiSlashCommandCatalog(
+    owner,
     host,
     vaultAdapter,
     {
@@ -267,6 +269,7 @@ export async function createPiWorkspaceServices(
     subagentConcurrencyLimiter,
     mcpSecretStorage: host.app.secretStorage,
     mcpFetch: network.mcpFetch,
+    sessionTreeFactory: vaultPath ? new DesktopPiSessionTreeFactory(vaultPath) : null,
   });
   await mcpServerManager.loadServers();
   grantPrivateOrigins(
@@ -321,7 +324,7 @@ function createObsidianBaseToolProvider(
   return ({ externalContextPaths, resolveReadMaxChars, capabilityApproval }) => {
     const settings = getObsidianToolsSettingsFromBag(host.settings);
     const externalContexts = (externalContextPaths ?? []).map((contextPath) => (
-      settings.allowExternalRead
+      host.platformCapabilities.externalFileAccess && settings.allowExternalRead
         ? inspectExternalDirectory(contextPath)
         : { path: contextPath, available: false, reason: 'external-read-disabled' }
     ));
@@ -330,8 +333,17 @@ function createObsidianBaseToolProvider(
       .map((context) => context.path);
     // Settings directories are the pin catalog. The checked turn selection is
     // the complete access list for this chat runtime.
-    const runtimeSettings = { ...settings, externalReadDirectories: [] };
-    const obsidianCliAvailable = settings.cliEnabled && isOfficialObsidianCliEnabled();
+    const runtimeSettings = {
+      ...settings,
+      allowBash: host.platformCapabilities.processExecution && settings.allowBash,
+      allowCommand: host.platformCapabilities.officialObsidianCli && settings.allowCommand,
+      allowEval: host.platformCapabilities.officialObsidianCli && settings.allowEval,
+      allowExternalRead: host.platformCapabilities.externalFileAccess && settings.allowExternalRead,
+      externalReadDirectories: [],
+    };
+    const obsidianCliAvailable = host.platformCapabilities.officialObsidianCli
+      && settings.cliEnabled
+      && isOfficialObsidianCliEnabled();
     const imageGenerator = providerOAuth.hasCodexAuth()
       ? createCodexImageGenerator({
         fetch: network.imageFetch,

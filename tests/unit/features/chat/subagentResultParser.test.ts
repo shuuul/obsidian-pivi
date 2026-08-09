@@ -1,4 +1,5 @@
 import { SubagentResultParser } from '@/ui/chat/services/SubagentResultParser';
+import { configureTrustedFullOutputReader } from '@/ui/chat/services/subagentOutput';
 import { AGENT_REPORT_BLOCK_LANGUAGE } from '@pivi/pivi-agent-core/session/continuationSchemas';
 import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
 
@@ -21,6 +22,10 @@ describe('SubagentResultParser', () => {
 
   beforeEach(() => {
     parser = new SubagentResultParser(mockInterpreter);
+  });
+
+  afterEach(() => {
+    configureTrustedFullOutputReader(null);
   });
 
   describe('extractAgentId', () => {
@@ -133,6 +138,24 @@ describe('SubagentResultParser', () => {
     it('falls back to tagged result', () => {
       const payload = '<result>tagged output</result>';
       expect(parser.extractAgentResult(payload, 'agent1')).toBe('tagged output');
+    });
+  });
+
+  describe('extractResultFromOutputJsonl truncated full output', () => {
+    it('uses the injected trusted reader when truncated output points at a full file', () => {
+      const finalResult = 'recovered final answer';
+      const fullJsonl = [
+        JSON.stringify({ type: 'message', message: { role: 'assistant', content: [{ type: 'text', text: finalResult }] } }),
+      ].join('\n');
+      configureTrustedFullOutputReader(() => fullJsonl);
+
+      const truncated = `[Truncated. Full output: /tmp/agent.output]`;
+      expect(parser.extractResultFromOutputJsonl(truncated)).toBe(finalResult);
+    });
+
+    it('returns null when no trusted reader is configured', () => {
+      const truncated = `[Truncated. Full output: /tmp/agent.output]`;
+      expect(parser.extractResultFromOutputJsonl(truncated)).toBeNull();
     });
   });
 });

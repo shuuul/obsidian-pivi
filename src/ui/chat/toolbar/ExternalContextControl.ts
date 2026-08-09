@@ -1,14 +1,10 @@
-import * as os from 'os';
-import * as path from 'path';
-
-import { expandHomePath, normalizePathForFilesystem } from '@/app/hostPlatform';
-
 import {
   findConflictingPath,
   isDuplicatePath,
   normalizePathForComparison,
   validateDirectoryPath,
 } from '../../shared/utils/externalContext';
+import { getExternalContextPlatform } from '../../shared/utils/externalContextPlatform';
 
 export type AddExternalContextResult =
   | { success: true; normalizedPath: string }
@@ -126,8 +122,9 @@ export class ExternalContextSelector {
     if (!trimmed) return { success: false, error: 'No path provided.' };
     let cleanPath = trimmed;
     if ((cleanPath.startsWith('"') && cleanPath.endsWith('"')) || (cleanPath.startsWith("'") && cleanPath.endsWith("'"))) cleanPath = cleanPath.slice(1, -1);
-    const normalizedPath = normalizePathForFilesystem(expandHomePath(cleanPath));
-    if (!path.isAbsolute(normalizedPath)) return { success: false, error: 'Path must be absolute.' };
+    const platform = getExternalContextPlatform();
+    const normalizedPath = platform.normalizePath(platform.expandPath(cleanPath));
+    if (!platform.isAbsolute(normalizedPath)) return { success: false, error: 'Path must be absolute.' };
     const validation = validateDirectoryPath(normalizedPath);
     if (!validation.valid) return { success: false, error: `${validation.error}: ${pathInput}` };
     const catalog = this.getCatalogPaths();
@@ -151,9 +148,11 @@ export class ExternalContextSelector {
   private shortenPath(fullPath: string): string {
     try {
       const normalize = (value: string) => value.replace(/\\/g, '/');
-      const normalizedFull = normalize(fullPath); const normalizedHome = normalize(os.homedir());
-      const compare = process.platform === 'win32' ? normalizedFull.toLowerCase() : normalizedFull;
-      const compareHome = process.platform === 'win32' ? normalizedHome.toLowerCase() : normalizedHome;
+      const home = getExternalContextPlatform().homeDirectory();
+      if (!home) return fullPath;
+      const normalizedFull = normalize(fullPath); const normalizedHome = normalize(home);
+      const compare = getExternalContextPlatform().normalizeForComparison(normalizedFull);
+      const compareHome = getExternalContextPlatform().normalizeForComparison(normalizedHome);
       if (compare.startsWith(compareHome)) return `~${normalizedFull.slice(normalizedHome.length)}`;
     } catch { /* use the full path */ }
     return fullPath;

@@ -6,5 +6,5 @@
   "description": "Bring AI agents into your vault with fine-grained context controls.",
   "author": "shuuul",
   "authorUrl": "https://github.com/shuuul",
-  "isDesktopOnly": true
+  "isDesktopOnly": false
 }

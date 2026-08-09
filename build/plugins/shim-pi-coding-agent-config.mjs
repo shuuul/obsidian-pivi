@@ -23,6 +23,19 @@ const piCodingAgentMessagesEntrypoint = path.join(
   'node_modules/@earendil-works/pi-coding-agent/dist/core/messages.js',
 );
 const piCodingAgentFacadeNamespace = 'pivi-pi-coding-agent-public-facade';
+const piCodingAgentContextFacadeNamespace = 'pivi-pi-coding-agent-context-facade';
+const piContextCompactionImporter = path.join(
+  rootDir,
+  'packages/pivi-agent-core/src/engine/pi/session/piContextCompaction.ts',
+);
+const piAgentCompactionEntrypoint = path.join(
+  rootDir,
+  'node_modules/@earendil-works/pi-agent-core/dist/harness/compaction/compaction.js',
+);
+const piAgentMessagesEntrypoint = path.join(
+  rootDir,
+  'node_modules/@earendil-works/pi-agent-core/dist/harness/messages.js',
+);
 
 /**
  * Pivi consumes only public session, compaction, and message exports. The
@@ -32,10 +45,17 @@ const piCodingAgentFacadeNamespace = 'pivi-pi-coding-agent-public-facade';
 export const shimPiCodingAgentSessionEntrypoint = {
   name: 'shim-pi-coding-agent-session-entrypoint',
   setup(build) {
-    build.onResolve({ filter: /^@earendil-works\/pi-coding-agent$/ }, () => ({
-      path: 'pi-coding-agent-public-facade',
-      namespace: piCodingAgentFacadeNamespace,
-    }));
+    build.onResolve({ filter: /^@earendil-works\/pi-coding-agent$/ }, (args) => (
+      path.normalize(args.importer) === piContextCompactionImporter
+        ? {
+            path: 'pi-coding-agent-context-facade',
+            namespace: piCodingAgentContextFacadeNamespace,
+          }
+        : {
+            path: 'pi-coding-agent-public-facade',
+            namespace: piCodingAgentFacadeNamespace,
+          }
+    ));
     build.onLoad(
       {
         filter: /.*/,
@@ -46,6 +66,20 @@ export const shimPiCodingAgentSessionEntrypoint = {
           `export * from ${JSON.stringify(piCodingAgentSessionEntrypoint)};`,
           `export { estimateTokens, findCutPoint } from ${JSON.stringify(piCodingAgentCompactionEntrypoint)};`,
           `export { convertToLlm } from ${JSON.stringify(piCodingAgentMessagesEntrypoint)};`,
+        ].join('\n'),
+        loader: 'js',
+        resolveDir: rootDir,
+      }),
+    );
+    build.onLoad(
+      {
+        filter: /.*/,
+        namespace: piCodingAgentContextFacadeNamespace,
+      },
+      () => ({
+        contents: [
+          `export { estimateTokens, findCutPoint } from ${JSON.stringify(piAgentCompactionEntrypoint)};`,
+          `export { convertToLlm } from ${JSON.stringify(piAgentMessagesEntrypoint)};`,
         ].join('\n'),
         loader: 'js',
         resolveDir: rootDir,

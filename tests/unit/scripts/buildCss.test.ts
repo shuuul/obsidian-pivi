@@ -158,7 +158,7 @@ assertNoImportantRules([fixture]);`,
       'base/presentation-primitives.css',
       'base/animations.css',
     ]);
-    expect(styleModules.slice(-8)).toEqual([
+    expect(styleModules.slice(-9)).toEqual([
       'modals/mcp-modal.css',
       'settings/base.css',
       'settings/provider-settings.css',
@@ -166,6 +166,7 @@ assertNoImportantRules([fixture]);`,
       'settings/slash-settings.css',
       'settings/mcp-settings.css',
       'settings/agent-settings.css',
+      'features/mobile-chat.css',
       'accessibility.css',
     ]);
     expect(new Set(styleModules).size).toBe(styleModules.length);

@@ -76,17 +76,19 @@ jest.mock("@/app/serviceGraph", () => {
 import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
+import { DESKTOP_PLATFORM_CAPABILITIES } from '@/app/platformCapabilities';
 import { persistOpenTabStates } from "@/app/pluginLifecycle";
-import PiviPlugin from "@/main";
+import PiviDesktopRuntime from '@/app/composition/desktop/PiviDesktopRuntime';
 import { createMockApp } from "../../helpers/mockApp";
 
-function createPlugin(): PiviPlugin {
+function createPlugin(): PiviDesktopRuntime {
   const app = createMockApp();
-  return new PiviPlugin(app, {
+  const owner = new (jest.requireMock('obsidian').Plugin)(app, {
     id: "pivi",
     name: "Pivi",
     version: "0.0.0",
   } as never);
+  return new PiviDesktopRuntime(owner, DESKTOP_PLATFORM_CAPABILITIES);
 }
 
 function createWorkspace() {
@@ -113,7 +115,7 @@ function openSession(
   };
 }
 
-describe("PiviPlugin lifecycle", () => {
+describe("Pivi desktop runtime lifecycle", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();

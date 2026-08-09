@@ -3,7 +3,7 @@ import {
   type MountedSurface,
   mountSettings,
 } from "@pivi/pivi-react/mount";
-import type { App, SettingDefinitionItem } from "obsidian";
+import type { App, Plugin, SettingDefinitionItem } from "obsidian";
 import { Notice, PluginSettingTab } from "obsidian";
 
 import type {
@@ -28,14 +28,15 @@ export class PiviSettingTabHost extends PluginSettingTab {
 
   constructor(
     app: App,
+    owner: Plugin,
     plugin: PiviPluginHost,
     getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
-    super(app, plugin);
+    super(app, owner);
     this.plugin = plugin;
     this.getWorkspace = getWorkspace;
     setLocale(this.plugin.settings.locale as Locale);
-    plugin.register(appI18n.subscribe(() => {
+    owner.register(appI18n.subscribe(() => {
       refreshSettingDefinitions(this);
     }));
   }

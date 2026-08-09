@@ -4,7 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
 type TagsAction = 'list' | 'info';
 const VALID_ACTIONS: readonly TagsAction[] = ['list', 'info'];
@@ -35,7 +35,7 @@ function getSortField(value: unknown): 'name' | 'count' {
   throw new Error('Invalid tags sort: must be name or count.');
 }
 
-export function createTagsTool(deps: ObsidianToolDeps): ToolSpec {
+export function createTagsTool(deps: VaultToolDeps): ToolSpec {
   const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_TAGS,

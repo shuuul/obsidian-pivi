@@ -46,7 +46,7 @@ import {
   shouldAutoCompact,
   toCheckpointPresentation,
 } from './session/piContextCompaction';
-import type { SessionTreeStore } from './session/sessionTreeStore';
+import type { PiSessionTree } from './session/piSessionTree';
 
 interface PiCompactionPrefire {
   controller: AbortController;
@@ -75,7 +75,7 @@ export interface PiChatCompactionResult {
 
 export interface PiChatCompactionDeps {
   plugin: PiRuntimeHost;
-  sessionTree: SessionTreeStore | null;
+  sessionTree: PiSessionTree | null;
   agent: Agent | null;
   compactionState: PiChatCompactionState;
   resolveModel: () => PiResolvedModel | null;
@@ -85,13 +85,13 @@ export interface PiChatCompactionDeps {
 
 const FALLBACK_ATTEMPTS = 3;
 const FALLBACK_RETRY_DELAY_MS = 3_000;
-const contextTokenIndexes = new WeakMap<SessionTreeStore, PiContextTokenIndex>();
+const contextTokenIndexes = new WeakMap<PiSessionTree, PiContextTokenIndex>();
 const compactionLocks = new WeakMap<
-  SessionTreeStore,
+  PiSessionTree,
   Promise<PiChatCompactionResult | null>
 >();
 
-function getContextTokenIndex(sessionTree: SessionTreeStore): PiContextTokenIndex {
+function getContextTokenIndex(sessionTree: PiSessionTree): PiContextTokenIndex {
   let index = contextTokenIndexes.get(sessionTree);
   if (!index) {
     index = new PiContextTokenIndex();
@@ -100,13 +100,13 @@ function getContextTokenIndex(sessionTree: SessionTreeStore): PiContextTokenInde
   return index;
 }
 
-function activeEntries(sessionTree: SessionTreeStore): PiContextCompactionEntry[] {
-  return sessionTree.getActiveLlmContextEntries();
+function activeEntries(sessionTree: PiSessionTree): PiContextCompactionEntry[] {
+  return [...sessionTree.getActiveLlmContextEntries()];
 }
 
-function estimateSessionEntriesTokens(sessionTree: SessionTreeStore): number {
+function estimateSessionEntriesTokens(sessionTree: PiSessionTree): number {
   return estimateActiveContextTokens(
-    sessionTree.getLinearLlmContextEntries(),
+    [...sessionTree.getLinearLlmContextEntries()],
     getContextTokenIndex(sessionTree),
   );
 }
@@ -131,7 +131,7 @@ function modelKey(deps: PiChatCompactionDeps): string {
 function sessionKey(deps: PiChatCompactionDeps): string {
   const tree = deps.sessionTree;
   return tree
-    ? `${tree.getSessionId()}::${tree.getVaultRelativeSessionFile() ?? ''}`
+    ? `${tree.getSessionId()}::${tree.getSessionFile()}`
     : '';
 }
 
@@ -158,7 +158,7 @@ export function attachContextEnvelope(
   pendingMessages: AgentMessage[] = [],
 ): UsageInfo {
   const categories = deps.sessionTree
-    ? estimateActiveContextCategories(deps.sessionTree.getLinearLlmContextEntries())
+    ? estimateActiveContextCategories([...deps.sessionTree.getLinearLlmContextEntries()])
     : estimateAgentMessageCategories(
         pendingMessages.length > 0 ? pendingMessages : deps.agent?.state.messages ?? [],
       );
@@ -609,7 +609,7 @@ async function compactUnlocked(
       throw new Error('Session or model changed while context compaction was running.');
     }
     const previousCheckpoint = findLatestCheckpoint(plan.activeEntries);
-    const appended = tree.appendFullReplacementCompaction(
+    const appended = await tree.appendFullReplacementCompaction(
       plan.tokensBefore,
       (boundaryId) => {
         const checkpoint = buildCheckpoint(
@@ -742,17 +742,17 @@ export function buildTurnSyncOptions(
   };
 }
 
-export function syncSessionMessagesAfterTurn(
-  sessionTree: SessionTreeStore | null,
+export async function syncSessionMessagesAfterTurn(
+  sessionTree: PiSessionTree | null,
   messages: AgentMessage[],
   turns: PreparedChatTurn | readonly PreparedChatTurn[] | undefined,
   onLeafIdChanged: (leafId: string | null) => void,
   onAssistantMessageId: (entryId: string | undefined) => void,
-): void {
+): Promise<void> {
   if (!sessionTree || messages.length === 0) {
     return;
   }
-  sessionTree.syncAgentMessages(messages, buildTurnSyncOptions(turns));
+  await sessionTree.syncAgentMessages(messages, buildTurnSyncOptions(turns));
   onLeafIdChanged(sessionTree.getLeafId());
   onAssistantMessageId(
     sessionTree.findLastVisibleMessageEntryId('assistant') ?? undefined,

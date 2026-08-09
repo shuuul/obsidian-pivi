@@ -2,7 +2,6 @@ import type { InlineContextPosition, InlineContextReference } from '@pivi/pivi-a
 import type { App, Editor, EditorPosition } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 
-import { flashSelectionHighlight } from '../components/SelectionHighlight';
 import { getEditorView } from '../utils/editor';
 
 function clampEditorPosition(editor: Editor, position: InlineContextPosition): EditorPosition {
@@ -31,6 +30,7 @@ export async function revealInlineContext(
 
   const editorView = getEditorView(view.editor);
   if (!editorView) return;
+  const { flashSelectionHighlight } = await import('../components/SelectionHighlight');
   flashSelectionHighlight(
     editorView,
     view.editor.posToOffset(from),

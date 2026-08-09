@@ -11,10 +11,7 @@ import { readFileSync } from 'fs';
 import type { ImageAttachment } from '../../../foundation';
 import { PluginLogger } from '../../../foundation/pluginLogger';
 import {
-  type AgentReport,
   type Checkpoint,
-  formatAgentReportForParent,
-  parseAgentReport,
   parsePiviCompactionDetails,
   type PiviCompactionDetails,
 } from '../../../session/continuationSchemas';
@@ -54,6 +51,7 @@ import {
   rewritePersistedSessionManager,
   truncatePersistedSessionManager,
 } from './piSessionManagerPrivateAdapter';
+import { applyAsyncSubagentResultOverlays } from './piSessionTreeSemantics';
 import {
   assertSessionJsonlSourceUnchanged,
   captureSessionJsonlSource,
@@ -90,88 +88,6 @@ function cacheKey(vaultPath: string, sessionFile: string): string {
 
 function isLlmContextControlEntry(entry: SessionEntry): boolean {
   return entry.type === 'compaction';
-}
-
-interface AsyncSubagentPersistedResult {
-  agentId?: string;
-  status: 'completed' | 'error';
-  result: string;
-  report?: AgentReport;
-}
-
-function collectPersistedAsyncSubagentResults(
-  entries: SessionEntry[],
-): Map<string, AsyncSubagentPersistedResult> {
-  const results = new Map<string, AsyncSubagentPersistedResult>();
-  for (const entry of entries) {
-    if (entry.type !== 'custom' || entry.customType !== PIVI_MESSAGE_UI) {
-      continue;
-    }
-    const data = entry.data as PiviMessageUiData | undefined;
-    for (const toolCall of data?.toolCalls ?? []) {
-      const subagent = toolCall.subagent;
-      if (!subagent || subagent.mode !== 'async') {
-        continue;
-      }
-      const status = subagent.asyncStatus ?? subagent.status;
-      if (status !== 'completed' && status !== 'error') {
-        continue;
-      }
-      const result = subagent.result?.trim() || toolCall.result?.trim();
-      if (!result) {
-        continue;
-      }
-      const report = parseAgentReport(toolCall.toolUseResult?.agent_report);
-      results.set(toolCall.id, {
-        agentId: subagent.agentId,
-        status,
-        result,
-        ...(report ? { report } : {}),
-      });
-    }
-  }
-  return results;
-}
-
-function formatPersistedAsyncSubagentResult(result: AsyncSubagentPersistedResult): string {
-  const statusText = result.status === 'error' ? 'failed' : 'completed';
-  const header = result.agentId
-    ? `Background sub-agent ${result.agentId} ${statusText}.`
-    : `Background sub-agent ${statusText}.`;
-  return `${header}\n\n${result.report
-    ? formatAgentReportForParent(result.report)
-    : result.result}`;
-}
-
-function applyPersistedAsyncSubagentResults(
-  messages: AgentMessage[],
-  entries: SessionEntry[],
-): AgentMessage[] {
-  const results = collectPersistedAsyncSubagentResults(entries);
-  if (results.size === 0) {
-    return messages;
-  }
-
-  let changed = false;
-  const next = messages.map((message) => {
-    const record = message as unknown as Record<string, unknown>;
-    if (record.role !== 'toolResult' || record.toolName !== 'spawn_agent') {
-      return message;
-    }
-    const toolCallId = typeof record.toolCallId === 'string' ? record.toolCallId : null;
-    const result = toolCallId ? results.get(toolCallId) : undefined;
-    if (!result) {
-      return message;
-    }
-    changed = true;
-    return {
-      ...record,
-      content: [{ type: 'text', text: formatPersistedAsyncSubagentResult(result) }],
-      isError: result.status === 'error',
-    } as unknown as AgentMessage;
-  });
-
-  return changed ? next : messages;
 }
 
 export class SessionTreeStore {
@@ -507,7 +423,7 @@ export class SessionTreeStore {
 
   loadAgentMessages(): AgentMessage[] {
     const entries = this.getLinearLlmContextEntries();
-    const messages = applyPersistedAsyncSubagentResults(
+    const messages = applyAsyncSubagentResultOverlays(
       buildSessionContext(entries).messages,
       this.getEntries(),
     );

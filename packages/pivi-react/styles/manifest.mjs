@@ -38,5 +38,6 @@ export const styleModules = [
   'settings/slash-settings.css',
   'settings/mcp-settings.css',
   'settings/agent-settings.css',
+  'features/mobile-chat.css',
   'accessibility.css',
 ];

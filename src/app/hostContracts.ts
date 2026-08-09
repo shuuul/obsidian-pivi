@@ -32,19 +32,24 @@ import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import type { SkillsManagementCoordinator } from "@pivi/pivi-agent-core/skills/vault/skillsManagementCoordinator";
+import type { ChatPerfRecorder } from '@pivi/pivi-react/store';
 import type {
   App,
   Editor,
   MarkdownView,
-  Plugin,
+  PluginManifest,
   TFile,
   WorkspaceLeaf,
 } from "obsidian";
 
 import type {
+  ChatPerfController,
+} from '@/app/chatPerformanceController';
+import type {
   NoteToolbarItemStyle,
   NoteToolbarSetupResult,
 } from "@/app/noteToolbarIntegration";
+import type { PiviPlatformCapabilities } from "@/app/platformCapabilities";
 
 
 export interface PiviChatViewCommandState {
@@ -244,6 +249,7 @@ export interface PiviPluginWorkspace {
 export interface PiviHostCore {
   app: App;
   settings: PiviSettings;
+  platformCapabilities: PiviPlatformCapabilities;
 
   saveSettings(): Promise<void>;
   getAgentHostContext(): AgentHostContext;
@@ -310,10 +316,18 @@ export interface PiviSettingsHost extends PiviHostCore {
  * Plugin class. `settings` is Pivi-typed and overrides Plugin's looser field.
  */
 export interface PiviPluginHost
-  extends Omit<Plugin, "settings">,
-    PiviChatCompositionHost,
+  extends PiviChatCompositionHost,
     PiviSettingsHost {
+  manifest: PluginManifest;
   settings: PiviSettings;
+  loadSettings(): Promise<void>;
+  ensureWorkspaceServices(): Promise<PiviPluginWorkspace>;
+  activateView(): Promise<void>;
+  canCreateNewTab(): boolean;
+  openNewTab(): Promise<void>;
+  addEditorSelectionToChatInput(editor: Editor, markdownView: MarkdownView): Promise<void>;
+  getChatPerfController(): ChatPerfController;
+  getChatPerfRecorder(): ChatPerfRecorder;
 }
 
 export type { PiviPluginHost as default, PiviPluginHost as PiviPlugin };

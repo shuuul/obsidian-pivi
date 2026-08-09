@@ -35,7 +35,7 @@ import {
 } from '@/ui/shared/utils/animationFrame';
 
 export interface ImperativeChatAdapterDeps {
-  plugin: PiviChatCompositionHost;
+  plugin: Pick<PiviChatCompositionHost, 'app' | 'settings'>;
   view: TabManagerViewHost;
   /** Owning view element used for RAF scheduling and tab-bar portal placement. */
   getContainerEl: () => HTMLElement;
@@ -51,6 +51,7 @@ export interface ImperativeChatAdapterDeps {
   activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean>;
   /** App-owned development instrumentation; disabled no-op in production. */
   perfRecorder: ChatPerfRecorder;
+  enableDevelopmentCommands?: boolean;
 }
 
 export interface CreatedImperativeChatAdapter {
@@ -112,6 +113,7 @@ export function createImperativeChatAdapter(
     perfRecorder,
     plugin,
     view,
+    enableDevelopmentCommands = false,
   } = deps;
 
   let tabManager: TabManager | null = null;
@@ -322,6 +324,7 @@ export function createImperativeChatAdapter(
     publishTabSnapshot,
     runWithoutTabPersistence,
     syncInputTabBarPortal,
+    enableDevelopmentCommands,
   });
 
   return {

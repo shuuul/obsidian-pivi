@@ -258,6 +258,18 @@ export class ObsidianCredentialStore implements CredentialStore {
 
   constructor(private readonly secretStorage: SyncSecretStore) {}
 
+  /** Enumerate canonical credential payloads without requiring reversible provider IDs. */
+  listStoredSync(): readonly Credential[] {
+    const directPattern = new RegExp(`^${PIVI_PROVIDER_SECRET_PREFIX}-.+-credential$`);
+    const digestPattern = new RegExp(`^${PIVI_PROVIDER_SECRET_PREFIX}-cp-cred-[0-9a-f]+$`);
+    return this.secretStorage.listSecrets(`${PIVI_PROVIDER_SECRET_PREFIX}-`)
+      .filter(secretId => directPattern.test(secretId) || digestPattern.test(secretId))
+      .map(secretId => parseProviderCredential(this.secretStorage.getSecret(secretId)))
+      .filter((credential): credential is Credential => (
+        credential?.type === 'api_key' || credential?.type === 'oauth'
+      ));
+  }
+
   readSync(providerId: string): Credential | undefined {
     return readStoredProviderCredential(this.secretStorage, providerId);
   }

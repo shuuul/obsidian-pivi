@@ -10,7 +10,12 @@ import {
   shimPiCodingAgentConfig,
   shimPiCodingAgentSessionEntrypoint,
 } from './plugins/shim-pi-coding-agent-config.mjs';
-import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
+import {
+  shimGoogleGenAiWeb,
+  shimPiAiCompat,
+  shimPiAiEnvApiKeys,
+} from './plugins/shim-pi-ai.mjs';
+import { shimPiAgentCoreRuntime } from './plugins/shim-pi-agent-core.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
 import { shimMcpValidation } from './plugins/shim-mcp-validation.mjs';
@@ -58,6 +63,8 @@ export function createBuildOptions({ production, metafile = false, write = true 
       shimPiCodingAgentConfig,
       shimPiAiCompat,
       shimPiAiEnvApiKeys,
+      shimGoogleGenAiWeb,
+      shimPiAgentCoreRuntime,
       shimSignalExit,
       shimDebug,
       shimMcpValidation,

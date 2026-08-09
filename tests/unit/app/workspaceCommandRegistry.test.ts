@@ -66,7 +66,7 @@ function createHarness(selectedText = 'Selected text') {
   return {
     commands,
     host,
-    registry: new WorkspaceCommandRegistry(host as never),
+    registry: new WorkspaceCommandRegistry(host as never, host as never),
     sendWorkspaceCommandInNewSession,
   };
 }

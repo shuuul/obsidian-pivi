@@ -191,7 +191,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
         resolveThinkingLevel: () => 'medium',
         authorizeAndSyncAgentModelSelection: jest.fn(async model => model),
         refreshModelMetadata: async () => false,
-        syncSessionMessages: messages => synced.push([...messages]),
+        syncSessionMessages: async messages => { synced.push([...messages]); },
         onUserMessagePersisted: jest.fn(),
       }, turn)) {
         chunks.push(chunk);

@@ -4,7 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
 function getOptionalStringField(input: Record<string, unknown>, key: string, message: string): string | undefined {
   const value = input[key];
@@ -26,7 +26,7 @@ function getPositiveIntegerField(input: Record<string, unknown>, key: string): n
   return value;
 }
 
-export function createNoteInfoTool(deps: ObsidianToolDeps): ToolSpec {
+export function createNoteInfoTool(deps: VaultToolDeps): ToolSpec {
   const { vault, cli, settings, vaultName } = deps;
   const obsidianCliAvailable = deps.obsidianCliAvailable ?? settings.cliEnabled;
   return {

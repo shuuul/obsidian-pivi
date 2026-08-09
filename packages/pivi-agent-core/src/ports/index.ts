@@ -20,6 +20,10 @@ export interface WorkspaceFileStore {
   stat(path: string): Promise<WorkspaceFileStat | null>;
 }
 
+export interface AtomicWorkspaceFileStore extends WorkspaceFileStore {
+  process(path: string, transform: (content: string) => string): Promise<string>;
+}
+
 export type FileStore = WorkspaceFileStore;
 
 export type HomeFileStore = Pick<

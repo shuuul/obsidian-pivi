@@ -3,6 +3,16 @@ import type { App } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 
+export {
+  type AgentManagedPathMutationMode,
+  assertAgentManagedPathMutationAllowed,
+  type PiviManagedPathTool,
+} from '../managedAgentVaultPaths';
+import {
+  type AgentManagedPathMutationMode,
+  assertAgentManagedPathMutationAllowed,
+} from '../managedAgentVaultPaths';
+
 export function getVaultPath(app: App): string | null {
   const basePath = (app.vault.adapter as { basePath?: unknown } | undefined)?.basePath;
   return typeof basePath === 'string' ? basePath : null;
@@ -436,161 +446,6 @@ export function requireVaultRelativeMutationPath(
     throw new Error(`Vault mutation path must be a non-empty vault-relative path: ${trimmed}`);
   }
   return relative;
-}
-
-/** Management tools that own Pivi-managed vault namespaces (spec 040). */
-export type PiviManagedPathTool = 'pivi_mcp' | 'pivi_skills' | 'pivi_commands';
-
-export type AgentManagedPathMutationMode = 'direct' | 'recursive';
-
-interface ManagedPathNamespace {
-  tool: PiviManagedPathTool;
-  /** Exact files (vault-relative, `/` separators). */
-  files: readonly string[];
-  /**
-   * Basename/path prefixes for publication artifacts beside an exact file
-   * (e.g. `.pivi/mcp.json.corrupt-*`, `.tmp-*`, `.bak-*`).
-   */
-  filePrefixes: readonly string[];
-  /** Directory roots: exact path and all descendants. */
-  directories: readonly string[];
-}
-
-const PIVI_SKILLS_TRANSACTION_ROOT_PREFIX = '.pivi/.skills-transaction-';
-const PIVI_COMMANDS_REMOVAL_ROOT_PREFIX = '.pivi/.commands-removal-';
-
-/**
- * Pivi-managed namespaces that standard Agent vault mutations must not alter.
- * Unrelated `.pivi/*` paths (sessions, settings, prompts, …) stay writable.
- */
-const PIVI_MANAGED_PATH_NAMESPACES: readonly ManagedPathNamespace[] = [
-  {
-    tool: 'pivi_mcp',
-    files: ['.pivi/mcp.json'],
-    filePrefixes: ['.pivi/mcp.json.'],
-    directories: ['.pivi/mcp-oauth'],
-  },
-  {
-    tool: 'pivi_skills',
-    files: [
-      '.pivi/skills-lock.json',
-      '.pivi/.skills.json',
-      // Legacy CLI metadata before migration into `.pivi/`.
-      'skills-lock.json',
-      '.skills.json',
-    ],
-    filePrefixes: [],
-    directories: [
-      '.pivi/skills',
-      '.pivi/skills-staging',
-      '.pivi/skills-install-',
-      '.pivi/skills-list-',
-      '.pivi/skills-remove-',
-      '.pivi/skills-update-',
-      '.pivi/skills-update-all-',
-      '.pivi/skills-default-update-',
-      PIVI_SKILLS_TRANSACTION_ROOT_PREFIX,
-      '.pivi/.skills-publication-',
-      '.pivi/.skills-backup-',
-      '.pivi/.agents/skills',
-      '.pivi/.cursor/skills',
-    ],
-  },
-  {
-    tool: 'pivi_commands',
-    files: [],
-    filePrefixes: [],
-    directories: ['.pivi/commands', '.pivi/templates', PIVI_COMMANDS_REMOVAL_ROOT_PREFIX],
-  },
-];
-
-function canonicalizeVaultRelativePath(value: string): string {
-  return value.replace(/\\/g, '/').replace(/\/+$/, '');
-}
-
-function isExactOrDescendant(candidate: string, root: string): boolean {
-  return candidate === root || candidate.startsWith(`${root}/`)
-    || (root.endsWith('-') && candidate.startsWith(root));
-}
-
-function isStrictAncestor(candidate: string, root: string): boolean {
-  return root.startsWith(`${candidate}/`);
-}
-
-function matchesManagedNamespace(
-  candidate: string,
-  namespace: ManagedPathNamespace,
-  mode: AgentManagedPathMutationMode,
-): boolean {
-  for (const file of namespace.files) {
-    if (candidate === file) {
-      return true;
-    }
-    if (mode === 'recursive' && isStrictAncestor(candidate, file)) {
-      return true;
-    }
-  }
-  for (const prefix of namespace.filePrefixes) {
-    if (candidate.startsWith(prefix)) {
-      return true;
-    }
-    // Recursive parent of artifact siblings (e.g. deleting `.pivi` removes mcp.json.*).
-    const parent = prefix.includes('/') ? prefix.slice(0, prefix.lastIndexOf('/')) : '';
-    if (mode === 'recursive' && parent && (candidate === parent || isStrictAncestor(candidate, parent))) {
-      return true;
-    }
-  }
-  for (const dir of namespace.directories) {
-    if (isExactOrDescendant(candidate, dir)) {
-      return true;
-    }
-    if (mode === 'recursive' && isStrictAncestor(candidate, dir)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function findManagedPathConflict(
-  vaultRelativePath: string,
-  mode: AgentManagedPathMutationMode,
-): ManagedPathNamespace | null {
-  const candidate = canonicalizeVaultRelativePath(vaultRelativePath);
-  if (!candidate) {
-    return null;
-  }
-  for (const namespace of PIVI_MANAGED_PATH_NAMESPACES) {
-    if (matchesManagedNamespace(candidate, namespace, mode)) {
-      return namespace;
-    }
-  }
-  return null;
-}
-
-/**
- * Rejects Agent vault mutations whose normalized target overlaps a Pivi-managed
- * MCP, Skills, or Commands namespace.
- *
- * - `direct`: exact managed path or descendant (write/edit/mkdir-into/move dest).
- * - `recursive`: also ancestors that would recursively alter managed content
- *   (delete/move source/mkdir of a parent that owns managed children).
- *
- * Call after `requireVaultRelativeMutationPath`. Does not claim Bash/eval containment.
- */
-export function assertAgentManagedPathMutationAllowed(
-  vaultRelativePath: string,
-  options: { mode?: AgentManagedPathMutationMode } = {},
-): void {
-  const mode = options.mode ?? 'direct';
-  const conflict = findManagedPathConflict(vaultRelativePath, mode);
-  if (!conflict) {
-    return;
-  }
-  const displayPath = canonicalizeVaultRelativePath(vaultRelativePath);
-  throw new Error(
-    `Path "${displayPath}" is managed by Pivi. `
-    + `Use the \`${conflict.tool}\` tool instead of generic vault mutation APIs.`,
-  );
 }
 
 export function requireAgentVaultMutationPath(

@@ -4,9 +4,9 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import type { ObsidianToolDeps } from './deps';
+import type { VaultToolDeps } from './vaultDeps';
 
-export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
+export function createLinksTool(deps: VaultToolDeps): ToolSpec {
   const { vault, cli, settings, vaultName } = deps;
   const obsidianCliAvailable = deps.obsidianCliAvailable ?? settings.cliEnabled;
   return {

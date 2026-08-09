@@ -23,11 +23,13 @@ import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExterna
 export interface ImperativeChatViewHandleDeps {
   getTabManager: () => TabManager | null;
   getMountedPorts: () => ChatPorts | null;
-  plugin: PiviChatCompositionHost;
+  plugin: Pick<PiviChatCompositionHost, 'app' | 'settings'>;
   persistTabStateImmediate: (state: ReturnType<TabManager['getPersistedState']>) => Promise<void>;
   publishTabSnapshot: () => void;
   runWithoutTabPersistence: <T>(action: () => Promise<T>) => Promise<T>;
   syncInputTabBarPortal: (tabId?: TabId | null) => void;
+  /** When true, attach development workload commands on the view handle. */
+  enableDevelopmentCommands?: boolean;
 }
 
 export function createImperativeChatViewHandle(
@@ -41,6 +43,7 @@ export function createImperativeChatViewHandle(
     publishTabSnapshot,
     runWithoutTabPersistence,
     syncInputTabBarPortal,
+    enableDevelopmentCommands = false,
   } = deps;
 
   const refreshModelPresentation = (): void => {
@@ -296,7 +299,7 @@ export function createImperativeChatViewHandle(
         }
       },
     },
-    ...(process.env.NODE_ENV !== 'production' ? {
+    ...(enableDevelopmentCommands ? {
       development: {
         async run20SubagentsWorkload(hooks) {
           const manager = getTabManager();

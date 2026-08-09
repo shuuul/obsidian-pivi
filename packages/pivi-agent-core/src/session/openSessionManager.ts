@@ -4,6 +4,8 @@ import type { MessageUiPatch, SessionMessagePage, SessionStore } from './types';
 export interface OpenSessionManagerDeps {
   getVaultPath(): string | null;
   getStore(): SessionStore;
+  /** Vault-relative stores own their location and do not require an OS base path. */
+  storeOwnsLocation?: boolean;
 }
 
 function cloneToolCallForUi(toolCall: ToolCallInfo): ToolCallInfo {
@@ -88,6 +90,10 @@ export class OpenSessionManager {
 
   constructor(private readonly deps: OpenSessionManagerDeps) {}
 
+  private storeLocation(): string | null {
+    return this.deps.getVaultPath() ?? (this.deps.storeOwnsLocation ? '' : null);
+  }
+
   getAll(): OpenSessionState[] {
     return this.sessions;
   }
@@ -97,8 +103,8 @@ export class OpenSessionManager {
   }
 
   async loadSummaries(): Promise<void> {
-    const vaultPath = this.deps.getVaultPath();
-    if (!vaultPath) {
+    const vaultPath = this.storeLocation();
+    if (vaultPath === null) {
       this.sessions = [];
       return;
     }
@@ -224,8 +230,8 @@ export class OpenSessionManager {
     sessionId?: string;
     sessionFile?: string;
   }): Promise<OpenSessionState> {
-    const vaultPath = this.deps.getVaultPath();
-    if (!vaultPath) {
+    const vaultPath = this.storeLocation();
+    if (vaultPath === null) {
       throw new Error('Vault path unavailable');
     }
 
@@ -275,6 +281,13 @@ export class OpenSessionManager {
       }
     }
 
+    const attachedWhileLoading = this.sessions.find(
+      (candidate) => candidate.sessionFile === sessionFile,
+    );
+    if (attachedWhileLoading) {
+      return attachedWhileLoading;
+    }
+
     const openSession: OpenSessionState = {
       id: sessionId ?? this.generateOpenSessionId(),
       title,
@@ -303,8 +316,8 @@ export class OpenSessionManager {
   }
 
   async openByFile(sessionFile: string): Promise<OpenSessionState> {
-    const vaultPath = this.deps.getVaultPath();
-    if (!vaultPath) {
+    const vaultPath = this.storeLocation();
+    if (vaultPath === null) {
       throw new Error('Vault path unavailable');
     }
 

@@ -4,7 +4,7 @@ import type {
   SubagentInfo,
   ToolCallInfo,
 } from '../../../foundation';
-import { TOOL_SPAWN_AGENT } from '../../../tools';
+import { TOOL_SPAWN_AGENT } from '../../../tools/toolNames';
 
 function nonEmptyString(value: unknown): string | undefined {
   if (typeof value !== 'string') {

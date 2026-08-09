@@ -6,12 +6,12 @@
  */
 
 import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { FileStore } from "@pivi/pivi-agent-core/ports";
+import type { AtomicWorkspaceFileStore } from "@pivi/pivi-agent-core/ports";
 import type { App } from "obsidian";
 
 const logger = new PluginLogger('ObsidianVaultFileAdapter');
 
-export class ObsidianVaultFileAdapter implements FileStore {
+export class ObsidianVaultFileAdapter implements AtomicWorkspaceFileStore {
   private writeQueue: Promise<void> = Promise.resolve();
 
   constructor(private app: App) {}
@@ -32,18 +32,18 @@ export class ObsidianVaultFileAdapter implements FileStore {
   async append(path: string, content: string): Promise<void> {
     await this.ensureParentFolder(path);
     const appendOperation = this.writeQueue.then(async () => {
-      if (await this.exists(path)) {
-        const existing = await this.read(path);
-        await this.app.vault.adapter.write(path, existing + content);
-      } else {
-        await this.app.vault.adapter.write(path, content);
-      }
+      await this.app.vault.adapter.append(path, content);
     });
     this.writeQueue = appendOperation.catch((error) => {
       // Keep later appends usable while still rejecting the failed caller.
       logger.warn(`Vault append failed for ${path}`, error);
     });
     await appendOperation;
+  }
+
+  async process(path: string, transform: (content: string) => string): Promise<string> {
+    await this.ensureParentFolder(path);
+    return this.app.vault.adapter.process(path, transform);
   }
 
   async delete(path: string): Promise<void> {

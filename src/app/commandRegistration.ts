@@ -1,9 +1,9 @@
-import type { Editor } from "obsidian";
+import type { Editor, Plugin } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
+import type { PiviPluginHost } from '@/app/hostContracts';
 import { t } from "@/app/i18n";
 import { openInlineEditForEditorSelection } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
-import type PiviPlugin from "@/main"
 import { getActiveWindow } from "@/ui/shared/dom";
 
 import { findPiviView } from "./viewAccess";
@@ -13,9 +13,9 @@ export const ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID =
 export const INLINE_EDIT_SELECTION_COMMAND_ID = "inline-edit-selection";
 const CHAT_PERF_SCENARIO_PATH = '.pivi/perf-scenario.txt';
 
-export function registerPiviCommands(plugin: PiviPlugin): void {
-  if (process.env.NODE_ENV !== 'production') registerChatPerfCommands(plugin);
-  plugin.addCommand({
+export function registerPiviCommands(owner: Plugin, plugin: PiviPluginHost): void {
+  if (process.env.NODE_ENV !== 'production') registerChatPerfCommands(owner, plugin);
+  owner.addCommand({
     id: "open-view",
     name: t("commands.openChatView"),
     callback: () => {
@@ -23,7 +23,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: INLINE_EDIT_SELECTION_COMMAND_ID,
     name: t("settings.inlineEditSelectionHotkey.name"),
     editorCheckCallback: (checking: boolean, editor: Editor, ctx) => {
@@ -41,7 +41,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID,
     name: t("chat.inlineContext.addSelectionToChatInput"),
     editorCallback: (editor: Editor, ctx) => {
@@ -58,7 +58,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.registerEvent(
+  owner.registerEvent(
     plugin.app.workspace.on("editor-menu", (menu, editor, info) => {
       if (!editor.somethingSelected()) {
         return;
@@ -84,7 +84,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     }),
   );
 
-  plugin.addCommand({
+  owner.addCommand({
     id: "new-tab",
     name: t("commands.newTab"),
     checkCallback: (checking: boolean) => {
@@ -97,7 +97,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: "new-session",
     name: t("commands.newSession"),
     checkCallback: (checking: boolean) => {
@@ -114,7 +114,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: "close-current-tab",
     name: t("commands.closeCurrentTab"),
     checkCallback: (checking: boolean) => {
@@ -132,8 +132,8 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
   });
 }
 
-function registerChatPerfCommands(plugin: PiviPlugin): void {
-  plugin.addCommand({
+function registerChatPerfCommands(owner: Plugin, plugin: PiviPluginHost): void {
+  owner.addCommand({
     id: 'debug-start-chat-performance-trace',
     name: 'Debug: start chat performance trace',
     callback: () => {
@@ -147,7 +147,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: 'debug-sample-chat-performance-heap',
     name: 'Debug: sample chat performance heap',
     callback: () => {
@@ -160,7 +160,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: 'debug-run-20-subagents-workload',
     name: 'Debug: run isolated 20-subagent workload',
     callback: () => {
@@ -192,7 +192,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: 'debug-run-indexed-session-paging-workload',
     name: 'Debug: run isolated indexed session paging workload',
     callback: () => {
@@ -229,7 +229,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: 'debug-run-100kb-markdown-stream',
     name: 'Debug: run large Markdown performance stream',
     callback: () => {
@@ -251,7 +251,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: 'debug-run-tab-switching-workload',
     name: 'Debug: run isolated tab switching workload',
     callback: () => {
@@ -273,7 +273,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     },
   });
 
-  plugin.addCommand({
+  owner.addCommand({
     id: 'debug-stop-chat-performance-trace',
     name: 'Debug: stop and export chat performance trace',
     callback: () => {
@@ -286,7 +286,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
   });
 }
 
-async function resolveChatPerfScenario(plugin: PiviPlugin): Promise<string> {
+async function resolveChatPerfScenario(plugin: PiviPluginHost): Promise<string> {
   const adapter = plugin.app.vault.adapter;
   if (!(await adapter.exists(CHAT_PERF_SCENARIO_PATH))) return 'manual';
   const scenario = (await adapter.read(CHAT_PERF_SCENARIO_PATH)).trim();

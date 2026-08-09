@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { builtinModules } from 'node:module';
 import path from 'node:path';
 import ts from 'typescript';
 
@@ -22,6 +23,7 @@ const sourceRoots = ['packages', 'src'];
 const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
 const srcAppDir = path.join(rootDir, 'src', 'app');
 const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
+const desktopCompositionDir = path.join(srcAppDir, 'composition', 'desktop');
 const imperativeChatBoundaryFiles = [
   'imperativeChatAdapter.ts',
   'imperativeChatViewHandle.ts',
@@ -58,6 +60,25 @@ const fileBoundaryRules = [
 ];
 
 const boundaryRules = [
+  {
+    name: 'app modules do not depend on the Obsidian Plugin shell',
+    root: 'src/app',
+    forbidden: [/^@\/main$/],
+  },
+  {
+    name: 'Mobile composition does not import desktop authorities',
+    root: 'src/app/composition/mobile',
+    forbidden: [
+      /^@pivi\/(?!pivi-agent-core\/(?:auth\/providerSecretStorage|context\/mentions|foundation(?:\/settingsDefaults)?|ports|runtime\/(?:chatPorts|piChatService)|session\/(?:openSessionManager|types)|skills\/commands\/(?:slashCommandCatalog|slashCommandEntry|slashCommandIds)|engine\/pi\/(?:buildPiToolRegistryCore|piAiModels|piChatRuntime|piProviderCredentialStore|piRuntimeHost|session\/(?:sessionJsonlStorage|vaultPiSessionStore|vaultPiSessionTree)))$|obsidian-host\/(?:mobile|bootstrap\/types|storage\/obsidianVaultFileAdapter)$|obsidian-tools\/mobile$|pivi-react\/store$)/,
+      /^@\/app\/(?!platformCapabilities$|i18n$|viewAccess$|deviceLocalExternalContextStore$|deviceLocalProviderStore$|ui\/PiviViewHost$)/,
+      /^electron(?:\/|$)/,
+      /^node:/,
+      /^fs(?:\/|$)/,
+      /^os(?:\/|$)/,
+      /^path(?:\/|$)/,
+    ],
+    resolvedForbiddenRoots: [desktopCompositionDir],
+  },
   {
     name: 'src does not reference the retired React package identity',
     root: 'src',
@@ -416,6 +437,26 @@ for (const rule of fileBoundaryRules) {
       || resolvesToForbiddenRoot(moduleName, file, rule.resolvedForbiddenRoots)
     ) {
       pushFailure('packages', { rule: rule.name, file: relativeFile, line, moduleName });
+    }
+  }
+}
+
+const mainEntryFile = path.join(rootDir, 'src', 'main.ts');
+if (fs.existsSync(mainEntryFile)) {
+  const allowedEntryImports = new Set([
+    'obsidian',
+    '@/app/platformCapabilities',
+    '@/app/composition/mobile/bootstrap',
+    '@/app/composition/desktop/bootstrap',
+  ]);
+  for (const { moduleName, line } of collectModuleSpecifiers(mainEntryFile)) {
+    if (!allowedEntryImports.has(moduleName)) {
+      failures.push({
+        rule: 'src/main.ts stays a platform-neutral Plugin shell',
+        file: 'src/main.ts',
+        line,
+        moduleName,
+      });
     }
   }
 }
@@ -1021,6 +1062,59 @@ for (const failure of pluginBaseImports) {
     rule: 'src/main.ts is the only Obsidian Plugin composition root',
     ...failure,
   });
+}
+
+const mobileSessionDirectory = path.join(
+  rootDir,
+  'packages/pivi-agent-core/src/engine/pi/session',
+);
+const mobileSessionRoots = [
+  'piSessionTree.ts',
+  'vaultPiSessionTree.ts',
+  'piSessionTreeSemantics.ts',
+  'piSessionJsonlDocument.ts',
+  'sessionJsonlStorage.ts',
+  'externalContextJsonl.ts',
+  'mobileMessageMapper.ts',
+  'vaultPiSessionStore.ts',
+].map(file => path.join(mobileSessionDirectory, file)).filter(file => fs.existsSync(file));
+const nodeBuiltins = new Set(builtinModules.flatMap(name => [name, `node:${name}`]));
+const forbiddenMobileSessionTarget = /(?:sessionTreeStore|desktopPiSessionTree|sessionRecovery|loadVaultSkills|\/app\/|\/host\/|\/process\/|\/index)\.ts$/;
+const mobileQueue = [...mobileSessionRoots];
+const visitedMobileModules = new Set();
+const productionSourceFiles = new Set(sourceRoots.flatMap(sourceRoot => (
+  listSourceFiles(path.join(rootDir, sourceRoot))
+)));
+while (mobileQueue.length > 0) {
+  const file = path.normalize(mobileQueue.shift());
+  if (visitedMobileModules.has(file)) continue;
+  visitedMobileModules.add(file);
+  for (const imported of collectModuleSpecifiers(file)) {
+    if (imported.isTypeOnly) continue;
+    if (nodeBuiltins.has(imported.moduleName)
+      || imported.moduleName.startsWith('@earendil-works/pi-coding-agent')) {
+      failures.push({
+        rule: 'Mobile session modules have a transitively Mobile-safe value-import graph',
+        file: path.relative(rootDir, file),
+        line: imported.line,
+        moduleName: imported.moduleName,
+      });
+      continue;
+    }
+    if (!imported.moduleName.startsWith('.')) continue;
+    const target = resolveSourceModuleFile(imported.moduleName, file, productionSourceFiles);
+    if (!target) continue;
+    if (forbiddenMobileSessionTarget.test(target.replaceAll('\\', '/'))) {
+      failures.push({
+        rule: 'Mobile session modules have a transitively Mobile-safe value-import graph',
+        file: path.relative(rootDir, file),
+        line: imported.line,
+        moduleName: imported.moduleName,
+      });
+    } else if (target.startsWith(path.join(rootDir, 'packages/pivi-agent-core/src'))) {
+      mobileQueue.push(target);
+    }
+  }
 }
 
 if (failures.length > 0) {
