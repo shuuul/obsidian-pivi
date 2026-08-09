@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [042-mobile-v1.md](042-mobile-v1.md) | 2026-08-09 | Mobile-safe platform composition, Vault-relative sessions, per-device SecretStorage credentials, proven provider streaming, exact capability gating, and real iOS/Android release acceptance. |
 
 ## Archived specs
 
@@ -57,6 +56,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [039-self-healing-session-index-append-refresh.md](archive/039-self-healing-session-index-append-refresh.md) | 2026-07-25 | Self-healing session-index append refresh: stale/corrupt/missing indexes rebuild from authoritative JSONL instead of aborting validated turns under cloud file replacement. |
 | [040-agent-managed-pivi-capabilities.md](archive/040-agent-managed-pivi-capabilities.md) | 2026-08-01 | Main-Agent-only `pivi_mcp` / `pivi_skills` / `pivi_commands` with one-shot localized confirmation, shared revisioned coordinators, managed-path protection, and automatic transactional refresh. |
 | [041-tool-architecture-hardening.md](archive/041-tool-architecture-hardening.md) | 2026-08-01 | Shell-aware Bash grants, Skills transaction path protection, unified reserved command identity, Commands transaction coordinator, localized approval presentation, ToolSpec-owned prompt usage, and duplicate-ownership cleanup. |
+| [042-mobile-v1.md](archive/042-mobile-v1.md) | 2026-08-09 | **Abandoned, not shipped** — feasibility prototype preserved on the remote `mobile` branch; `main` remains Desktop-only. |
 
 ## Numbering and files
 
