@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { buildRegisteredToolsSection } from '@pivi/agent/prompt';
 import {
   createPiviCommandsTool,
@@ -14,6 +15,7 @@ import {
   TOOL_PIVI_MCP,
   TOOL_PIVI_SKILLS,
 } from '@pivi/agent/tools';
+import { toPiAgentTool } from '@pivi/engine-pi/piToolAdapter';
 import {
   getToolPresentationDescriptor,
   MCP_ICON_MARKER,
@@ -46,6 +48,95 @@ function makePort(): {
   };
 }
 
+type ProtocolApi =
+  | 'anthropic-messages'
+  | 'google-generative-ai'
+  | 'openai-codex-responses'
+  | 'openai-completions'
+  | 'openai-responses';
+
+function serializeThroughProtocol(api: ProtocolApi): Record<string, unknown>[] {
+  const port = makePort();
+  const tools = [
+    createPiviMcpTool(port),
+    createPiviSkillsTool(port),
+    createPiviCommandsTool(port),
+  ].map(toPiAgentTool).map(({ name, label, description, parameters }) => ({
+    name,
+    label,
+    description,
+    parameters,
+  }));
+  const script = String.raw`
+    import fs from 'node:fs';
+
+    const api = process.argv[1];
+    const tools = JSON.parse(fs.readFileSync(0, 'utf8'));
+    const providers = {
+      'anthropic-messages': ['anthropic-messages.lazy', 'anthropicMessagesApi'],
+      'google-generative-ai': ['google-generative-ai.lazy', 'googleGenerativeAIApi'],
+      'openai-codex-responses': ['openai-codex-responses.lazy', 'openAICodexResponsesApi'],
+      'openai-completions': ['openai-completions.lazy', 'openAICompletionsApi'],
+      'openai-responses': ['openai-responses.lazy', 'openAIResponsesApi'],
+    };
+    const [moduleName, exportName] = providers[api];
+    const provider = (await import('@earendil-works/pi-ai/api/' + moduleName))[exportName];
+    const model = {
+      id: 'pivi-schema-fixture',
+      name: 'Pivi schema fixture',
+      api,
+      provider: api === 'openai-codex-responses' ? 'openai-codex' : 'pivi-fixture',
+      baseUrl: api === 'openai-codex-responses'
+        ? 'https://chatgpt.com/backend-api'
+        : 'https://example.com/v1',
+      reasoning: false,
+      input: ['text'],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 1000,
+      maxTokens: 100,
+    };
+    const tokenPayload = Buffer.from(JSON.stringify({
+      'https://api.openai.com/auth': { chatgpt_account_id: 'pivi-fixture' },
+    })).toString('base64url');
+    let payload;
+    const stream = provider().stream(model, { messages: [], tools }, {
+      apiKey: api === 'openai-codex-responses'
+        ? 'header.' + tokenPayload + '.signature'
+        : 'pivi-test-key',
+      ...(api === 'openai-codex-responses' ? { transport: 'sse' } : {}),
+      onPayload(value) {
+        payload = value;
+        throw new Error('pivi schema payload captured');
+      },
+    });
+    await stream.result();
+    if (!payload) throw new Error('protocol did not expose a payload');
+
+    let schemas;
+    if (api === 'openai-completions') {
+      schemas = payload.tools.map((tool) => tool.function.parameters);
+    } else if (api === 'anthropic-messages') {
+      schemas = payload.tools.map((tool) => tool.input_schema);
+    } else if (api === 'google-generative-ai') {
+      schemas = payload.config.tools[0].functionDeclarations.map(
+        (tool) => tool.parametersJsonSchema,
+      );
+    } else {
+      schemas = payload.tools.map((tool) => tool.parameters);
+    }
+    process.stdout.write(JSON.stringify(schemas));
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, api], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    input: JSON.stringify(tools),
+    maxBuffer: 2 * 1024 * 1024,
+  });
+  expect(result.status).toBe(0);
+  expect(result.stderr).toBe('');
+  return JSON.parse(result.stdout) as Record<string, unknown>[];
+}
+
 describe('pivi management tool contracts', () => {
   it('exposes exact action sets via oneOf schemas', () => {
     expect(listActionConsts(PIVI_MCP_PARAMETERS)).toEqual([
@@ -57,6 +148,36 @@ describe('pivi management tool contracts', () => {
     expect(listActionConsts(PIVI_COMMANDS_PARAMETERS)).toEqual([
       'list', 'get', 'upsert', 'remove', 'move',
     ]);
+  });
+
+  it('declares an object root for every management schema', () => {
+    for (const schema of [PIVI_MCP_PARAMETERS, PIVI_SKILLS_PARAMETERS, PIVI_COMMANDS_PARAMETERS]) {
+      expect(schema.type).toBe('object');
+    }
+  });
+
+  it.each([
+    ['OpenAI Chat Completions', 'openai-completions'],
+    ['OpenAI Responses', 'openai-responses'],
+    ['OpenAI Codex Responses', 'openai-codex-responses'],
+    ['Anthropic Messages', 'anthropic-messages'],
+    ['Google Generative AI', 'google-generative-ai'],
+  ] as const)('serializes usable object schemas through %s', (_label, api) => {
+    const schemas = serializeThroughProtocol(api);
+
+    expect(schemas).toHaveLength(3);
+    const expectedActions = [
+      listActionConsts(PIVI_MCP_PARAMETERS),
+      listActionConsts(PIVI_SKILLS_PARAMETERS),
+      listActionConsts(PIVI_COMMANDS_PARAMETERS),
+    ];
+    for (const [index, schema] of schemas.entries()) {
+      expect(schema).toMatchObject({
+        type: 'object',
+        properties: { action: { type: 'string', enum: expectedActions[index] } },
+        required: expect.arrayContaining(['action']),
+      });
+    }
   });
 
   it('marks every management ToolSpec sequential with canonical names', () => {

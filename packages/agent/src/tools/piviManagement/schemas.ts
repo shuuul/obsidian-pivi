@@ -120,6 +120,14 @@ const AGENT_MCP_SERVER = {
 } as const;
 
 export const PIVI_MCP_PARAMETERS = {
+  type: 'object',
+  properties: {
+    action: { type: 'string', enum: ['list', 'test', 'upsert', 'set_enabled', 'remove'] },
+    name: STRING,
+    server: AGENT_MCP_SERVER,
+    enabled: BOOLEAN,
+  },
+  required: ['action'],
   oneOf: [
     {
       type: 'object',
@@ -166,9 +174,22 @@ export const PIVI_MCP_PARAMETERS = {
       additionalProperties: false,
     },
   ],
+  additionalProperties: false,
 } as const;
 
 export const PIVI_SKILLS_PARAMETERS = {
+  type: 'object',
+  properties: {
+    action: {
+      type: 'string',
+      enum: ['list', 'list_remote', 'install', 'set_enabled', 'update', 'update_all', 'remove'],
+    },
+    source: STRING,
+    skillNames: STRING_ARRAY,
+    name: STRING,
+    enabled: BOOLEAN,
+  },
+  required: ['action'],
   oneOf: [
     {
       type: 'object',
@@ -230,9 +251,24 @@ export const PIVI_SKILLS_PARAMETERS = {
       additionalProperties: false,
     },
   ],
+  additionalProperties: false,
 } as const;
 
 export const PIVI_COMMANDS_PARAMETERS = {
+  type: 'object',
+  properties: {
+    action: { type: 'string', enum: ['list', 'get', 'upsert', 'remove', 'move'] },
+    id: STRING,
+    name: STRING,
+    description: STRING,
+    argumentHint: STRING,
+    icon: STRING,
+    content: STRING,
+    catalogRevision: { type: 'number' },
+    beforeId: STRING,
+    afterId: STRING,
+  },
+  required: ['action'],
   oneOf: [
     {
       type: 'object',
@@ -291,4 +327,5 @@ export const PIVI_COMMANDS_PARAMETERS = {
       additionalProperties: false,
     },
   ],
+  additionalProperties: false,
 } as const;
