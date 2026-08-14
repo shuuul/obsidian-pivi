@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.18.2](https://github.com/shuuul/obsidian-pivi/compare/0.18.1...0.18.2) (2026-08-15)
+
+
+### Bug Fixes
+
+* **network:** unblock Kimi and Grok login through proxy DNS ([1b1c02b](https://github.com/shuuul/obsidian-pivi/commit/1b1c02bf))
+
+
+**Full Changelog**: https://github.com/shuuul/obsidian-pivi/compare/0.18.1...0.18.2
+
 ## [0.18.1](https://github.com/shuuul/obsidian-pivi/compare/0.18.0...0.18.1) (2026-08-10)
 
 
