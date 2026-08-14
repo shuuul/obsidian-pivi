@@ -160,6 +160,22 @@ describe('scopedHttpClient', () => {
     await expect(fetchImpl('https://example.test/')).rejects.toThrow(/changed before connect|pin/i);
   });
 
+  it('pins the public address when lookup also returns a private ULA', async () => {
+    let calls = 0;
+    const fetchImpl = createScopedFetch({
+      policy: { purpose: 'provider' },
+      lookup: async () => {
+        calls += 1;
+        return calls === 1
+          ? ['1.2.3.4', 'fd12:3456:789a::1']
+          : ['fd12:3456:789a::1'];
+      },
+    });
+    await expect(fetchImpl('https://auth.kimi.com/api/oauth/device_authorization'))
+      .rejects.toThrow(/changed before connect|pin/i);
+    expect(calls).toBe(2);
+  });
+
   it('keeps the total deadline active until the response body completes', async () => {
     const { port, close } = await listen((_req, res) => {
       res.writeHead(200, { 'content-type': 'text/plain' });

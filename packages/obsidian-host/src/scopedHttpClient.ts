@@ -4,7 +4,6 @@
  */
 
 import {
-  assertDestinationAllowed,
   assertPinnedAddress,
   contentTypeAllowed,
   type DnsLookupFn,
@@ -19,6 +18,7 @@ import {
   redactUrl,
   type ResolvedEgressPolicy,
   resolveEgressPolicy,
+  selectAllowedResolvedAddresses,
 } from '@pivi/agent/network';
 import type { FetchCompatible, HttpClient, HttpRequest, HttpResponse } from '@pivi/agent/ports';
 import * as dns from 'dns';
@@ -424,12 +424,12 @@ async function resolveAndPin(
   const first = isLiteralIpHostname(hostname)
     ? [hostname]
     : [...await lookup(hostname)];
-  assertDestinationAllowed(url, first, policy, grants);
+  const approved = selectAllowedResolvedAddresses(url, first, policy, grants);
 
   const second = isLiteralIpHostname(hostname)
     ? [hostname]
     : [...await lookup(hostname)];
-  const approvedSet = new Set(first.map((address) => address.toLowerCase()));
+  const approvedSet = new Set(approved.map((address) => address.toLowerCase()));
   const pinned = second.find((address) => approvedSet.has(address.toLowerCase()));
   if (!pinned) {
     throw new EgressPolicyError(
@@ -437,10 +437,10 @@ async function resolveAndPin(
       `DNS addresses changed before connect for ${redactUrl(url)}`,
     );
   }
-  assertPinnedAddress(first, pinned, url);
+  assertPinnedAddress(approved, pinned, url);
   return {
     pinned,
-    approved: first,
+    approved,
     family: pinned.includes(':') ? 6 : 4,
   };
 }

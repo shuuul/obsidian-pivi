@@ -8,16 +8,56 @@ import {
   OriginGrantRegistry,
   prepareRedirect,
   resolveEgressPolicy,
+  selectAllowedResolvedAddresses,
 } from '@pivi/agent/network';
 
 describe('egressPolicy', () => {
   const policy = resolveEgressPolicy({ purpose: 'web-fetch' });
+  const providerPolicy = resolveEgressPolicy({ purpose: 'provider' });
 
   it('denies public-looking hosts that resolve to private addresses', () => {
     expect(() => assertDestinationAllowed(
       new URL('https://evil.example/'),
       ['10.0.0.5'],
       policy,
+    )).toThrow(EgressDeniedError);
+  });
+
+  it('prefers public addresses and ignores extra private records in the same lookup', () => {
+    expect(selectAllowedResolvedAddresses(
+      new URL('https://auth.kimi.com/api/oauth/device_authorization'),
+      ['8.8.8.8', 'fd12:3456:789a::1'],
+      policy,
+    )).toEqual(['8.8.8.8']);
+    expect(selectAllowedResolvedAddresses(
+      new URL('https://auth.kimi.com/api/oauth/device_authorization'),
+      ['8.8.8.8', 'fd12:3456:789a::1'],
+      providerPolicy,
+    )).toEqual(['8.8.8.8']);
+  });
+
+  it('allows named-host RFC1918 and CGNAT DNS for provider purposes but not WebFetch', () => {
+    const kimi = new URL('https://auth.kimi.com/api/oauth/device_authorization');
+    expect(selectAllowedResolvedAddresses(kimi, ['172.19.0.1'], providerPolicy))
+      .toEqual(['172.19.0.1']);
+    expect(selectAllowedResolvedAddresses(kimi, ['100.64.1.1'], providerPolicy))
+      .toEqual(['100.64.1.1']);
+    expect(() => selectAllowedResolvedAddresses(kimi, ['172.19.0.1'], policy))
+      .toThrow(EgressDeniedError);
+    expect(() => selectAllowedResolvedAddresses(kimi, ['100.64.1.1'], policy))
+      .toThrow(EgressDeniedError);
+  });
+
+  it('keeps literal private IPs grant-gated for provider purposes', () => {
+    expect(() => assertDestinationAllowed(
+      new URL('http://10.0.0.1/'),
+      ['10.0.0.1'],
+      providerPolicy,
+    )).toThrow(EgressDeniedError);
+    expect(() => assertDestinationAllowed(
+      new URL('http://127.0.0.1:11434/'),
+      ['127.0.0.1'],
+      providerPolicy,
     )).toThrow(EgressDeniedError);
   });
 
@@ -39,8 +79,6 @@ describe('egressPolicy', () => {
       ['http://127.0.0.1:11434', 'https://api.example.com', 'http://localhost:3000', 'not-a-url'],
       'provider',
     );
-    const providerPolicy = { ...policy, purpose: 'provider' as const };
-
     // Private/loopback configured origins are granted for the provider purpose.
     expect(() => assertDestinationAllowed(
       new URL('http://127.0.0.1:11434/'), ['127.0.0.1'], providerPolicy, grants,
@@ -49,9 +87,14 @@ describe('egressPolicy', () => {
       new URL('http://localhost:3000/'), ['127.0.0.1'], providerPolicy, grants,
     )).not.toThrow();
 
-    // Public-looking domains are NOT pre-granted; a private resolution is denied.
-    expect(() => assertDestinationAllowed(
+    // Public domains are not pre-granted. Provider named-host RFC1918 DNS is
+    // still allowed (user TUN/fake-ip); WebFetch stays fail-closed.
+    expect(grants.has(new URL('https://api.example.com/'), 'provider')).toBe(false);
+    expect(selectAllowedResolvedAddresses(
       new URL('https://api.example.com/'), ['10.0.0.1'], providerPolicy, grants,
+    )).toEqual(['10.0.0.1']);
+    expect(() => assertDestinationAllowed(
+      new URL('https://api.example.com/'), ['10.0.0.1'], policy, grants,
     )).toThrow(EgressDeniedError);
 
     // The grant is purpose-scoped: MCP egress to the same origin is still denied.

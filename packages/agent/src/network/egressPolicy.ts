@@ -246,44 +246,103 @@ export function grantPrivateOrigins(
   }
 }
 
+/** Purposes that talk to user-configured hosts, not model-supplied URLs. */
+const NAMED_HOST_PRIVATE_DNS_PURPOSES: ReadonlySet<NetworkPurpose> = new Set([
+  'provider',
+  'mcp',
+  'oauth',
+  'image',
+  'skills',
+  'connectivity',
+]);
+
+function isAlwaysDeniedClass(classification: IpDestinationClass): boolean {
+  return (
+    classification === 'multicast'
+    || classification === 'unspecified'
+    || classification === 'invalid'
+    || classification === 'cloud-metadata'
+  );
+}
+
+function allowsNamedHostPrivateDns(purpose: NetworkPurpose): boolean {
+  return NAMED_HOST_PRIVATE_DNS_PURPOSES.has(purpose);
+}
+
+/**
+ * Choose connectable resolved addresses. Public IPs win over extra private
+ * records (TUN ULA / CGNAT mixed into the same lookup). Named hosts on
+ * provider-like purposes may use remaining RFC1918 / CGNAT / ULA so user
+ * fake-ip DNS still reaches Kimi/Grok; WebFetch stays fail-closed.
+ */
+export function selectAllowedResolvedAddresses(
+  url: URL,
+  resolvedAddresses: readonly string[],
+  policy: ResolvedEgressPolicy,
+  grants?: OriginGrantRegistry,
+): string[] {
+  if (resolvedAddresses.length === 0) {
+    throw new EgressPolicyError(
+      'dns',
+      `DNS resolution returned no addresses for ${redactUrl(url)}`,
+    );
+  }
+
+  const originGranted = grants?.has(url, policy.purpose) === true;
+  const privateNetworkAllowed = policy.allowPrivateNetwork || originGranted;
+  const hostClass = classifyHostnameOrAddress(url.hostname);
+  const namedHost = hostClass === 'public';
+
+  if (!namedHost && !privateNetworkAllowed && isDeniedIpClass(hostClass)) {
+    throw new EgressDeniedError(hostClass, url);
+  }
+
+  const publicAddresses: string[] = [];
+  const privateAddresses: string[] = [];
+  let firstAlwaysDenied: IpDestinationClass | undefined;
+  let firstSoftDenied: IpDestinationClass | undefined;
+
+  for (const address of resolvedAddresses) {
+    const classification = classifyIpLiteral(address);
+    if (classification === 'public') {
+      publicAddresses.push(address);
+      continue;
+    }
+    if (isAlwaysDeniedClass(classification)) {
+      firstAlwaysDenied ??= classification;
+      continue;
+    }
+    if (privateNetworkAllowed) {
+      privateAddresses.push(address);
+      continue;
+    }
+    if (
+      classification === 'private'
+      && namedHost
+      && allowsNamedHostPrivateDns(policy.purpose)
+    ) {
+      privateAddresses.push(address);
+      continue;
+    }
+    firstSoftDenied ??= classification;
+  }
+
+  if (publicAddresses.length > 0) {
+    return publicAddresses;
+  }
+  if (privateAddresses.length > 0) {
+    return privateAddresses;
+  }
+  throw new EgressDeniedError(firstAlwaysDenied ?? firstSoftDenied ?? 'invalid', url);
+}
+
 export function assertDestinationAllowed(
   url: URL,
   resolvedAddresses: readonly string[],
   policy: ResolvedEgressPolicy,
   grants?: OriginGrantRegistry,
 ): void {
-  const originGranted = grants?.has(url, policy.purpose) === true;
-  if (policy.allowPrivateNetwork || originGranted) {
-    // Still reject multicast / unspecified / invalid even with grants.
-    for (const address of resolvedAddresses) {
-      const classification = classifyIpLiteral(address);
-      if (
-        classification === 'multicast'
-        || classification === 'unspecified'
-        || classification === 'invalid'
-        || classification === 'cloud-metadata'
-      ) {
-        throw new EgressDeniedError(classification, url);
-      }
-    }
-    return;
-  }
-
-  const hostClass = classifyHostnameOrAddress(url.hostname);
-  if (isDeniedIpClass(hostClass) && hostClass !== 'public') {
-    throw new EgressDeniedError(hostClass, url);
-  }
-
-  if (resolvedAddresses.length === 0) {
-    throw new EgressPolicyError('dns', `DNS resolution returned no addresses for ${redactUrl(url)}`);
-  }
-
-  for (const address of resolvedAddresses) {
-    const classification = classifyIpLiteral(address);
-    if (isDeniedIpClass(classification)) {
-      throw new EgressDeniedError(classification, url);
-    }
-  }
+  selectAllowedResolvedAddresses(url, resolvedAddresses, policy, grants);
 }
 
 export function assertPinnedAddress(

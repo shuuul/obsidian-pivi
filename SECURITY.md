@@ -45,7 +45,8 @@ Default policy:
 
 - Only `http:` and `https:` URLs reach transports; URL credentials are rejected.
 - Loopback, private, link-local, multicast, unspecified, and cloud-metadata destinations are denied for IPv4 and IPv6, including alternate IP representations.
-- Hostnames are resolved and checked before connect; the connected address is pinned against the approved resolution to resist DNS rebinding.
+- Hostnames are resolved and checked before connect. Public addresses are preferred when a lookup also returns private records (TUN ULA / CGNAT). Named hosts on provider, OAuth, MCP, image, skills, and connectivity clients may use remaining RFC1918 / CGNAT / ULA so user fake-ip DNS still reaches those services; WebFetch and WebSearch stay fail-closed. The connected address is pinned against that selected set to resist DNS rebinding.
+- Literal private/loopback IPs stay grant-gated. Cloud-metadata, multicast, unspecified, and invalid addresses remain denied even with grants.
 - Redirects are normalized, rechecked, and bounded.
 - Logs, errors, and UI surfaces redact URL credentials and sensitive query values.
 
