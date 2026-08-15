@@ -58,7 +58,7 @@ obsidian plugin:reload id=pivi
 obsidian dev:errors
 ```
 
-`obsidian dev:errors` should report `No errors captured.` The broader `obsidian reload` command remains useful when a full vault reload is required.
+`obsidian dev:errors` should report `No errors captured.` Official CLI commands target the vault of the current working directory, or `vault=<name>`; `obsidian --help` is not a valid invocation. The broader `obsidian reload` command remains useful when a full vault reload is required.
 
 ## A first safe change
 
@@ -76,7 +76,7 @@ For a runtime change, start with [Architecture and technology](02-architecture-a
 ## Common setup failures
 
 - A build that does not deploy usually means `OBSIDIAN_VAULT` is missing or points at the wrong vault.
-- Obsidian CLI commands require the official CLI to be enabled in Obsidian settings.
+- Obsidian CLI commands require the official CLI to be enabled in Obsidian settings. Run them from the vault directory or pass `vault=<name>`; a bare `obsidian --help` reports `Vault not found`.
 - Tests must run through `npm run test`; `scripts/run-jest.js` supplies the test-local storage environment.
 - A type result from an editor using a global TypeScript installation is not authoritative.
 - Build output and caches are generated artifacts. Do not commit them unless the repository already tracks the specific release artifact.

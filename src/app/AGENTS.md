@@ -56,7 +56,7 @@ flowchart LR
 | `hostContracts.ts` | Semantic `PiviChatViewHandle`, structural view, runtime/composition Chat hosts, Settings/Plugin host surfaces |
 | `hostPlatform.ts` | Path, vault notify, CLI flags, service-contract re-exports for UI |
 | `i18n.ts` | App-owned shared translator (`appI18n`, `t`) consumed by imperative adapters and injected into React roots |
-| `viewAccess.ts` | Type-guarded enumeration of open Pivi chat views over workspace leaves |
+| `viewAccess.ts` | Type-guarded enumeration of open Pivi chat views; skill refresh isolates per-view failures so one disposed view cannot fail a durable publication commit |
 | `pluginSessionApi.ts` | Session CRUD / purge; cross-view resets and protected bindings use semantic view maintenance |
 | `pluginSettingsLoad.ts` | Settings load, keychain migration, skills seed |
 | `noteToolbarIntegration.ts` | In-memory plugin-registry Note Toolbar detection (no manifest file probes, keeping self-file literals out of the bundle), enable fallback, per-command icon-only CLI setup, official item-API synchronization, and keyed setup queue |

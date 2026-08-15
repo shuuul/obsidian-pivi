@@ -65,7 +65,7 @@ obsidian plugin:reload id=pivi
 obsidian dev:errors
 ```
 
-Use a configured development vault (`.env.local` `OBSIDIAN_VAULT`). Verify the main window and a pop-out when changing element-bound DOM, timers, scrolling, portals, or tooltips. Include Hover Editor when changing view lifecycle. Test Source mode and Live Preview for editor integrations.
+Use a configured development vault (`.env.local` `OBSIDIAN_VAULT`). Official CLI commands target the vault of the current working directory, or `vault=<name>`; `obsidian --help` is not a valid invocation. Verify the main window and a pop-out when changing element-bound DOM, timers, scrolling, portals, or tooltips. Include Hover Editor when changing view lifecycle. Test Source mode and Live Preview for editor integrations.
 
 ### Deterministic host smoke
 
