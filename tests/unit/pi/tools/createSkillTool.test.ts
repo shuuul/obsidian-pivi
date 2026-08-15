@@ -2,7 +2,7 @@ import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
 import { createSkillTool } from '@pivi/engine-pi/createSkillTool';
 
 describe('createSkillTool', () => {
-  const skillDir = '/vault/.pivi/skills/demo-skill';
+  const skillDir = '.pivi/skills/demo-skill';
   const skillFilePath = `${skillDir}/SKILL.md`;
   const skills: Skill[] = [
     {
@@ -21,8 +21,8 @@ Follow these steps.`,
     {
       name: 'other-skill',
       description: 'Other',
-      filePath: '/vault/.pivi/skills/other/SKILL.md',
-      baseDir: '/vault/.pivi/skills/other',
+      filePath: '.pivi/skills/other/SKILL.md',
+      baseDir: '.pivi/skills/other',
       content: '# Other skill',
     },
   ];

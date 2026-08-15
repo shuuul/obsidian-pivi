@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { PluginLogger } from '../../foundation/pluginLogger';
+import { toVaultRelativePath } from '../../session/sessionPaths';
 import { extractString, parseFrontmatter } from '../frontmatter';
 import { PIVI_SKILLS_PATH } from './paths';
 
@@ -27,10 +28,10 @@ function escapeXml(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function loadSkillFromDir(baseDir: string): Skill | null {
+function loadSkillFromDir(vaultPath: string, baseDir: string): Skill | null {
   try {
-    const filePath = path.join(baseDir, 'SKILL.md');
-    if (!fs.existsSync(filePath)) {
+    const absoluteFilePath = path.join(baseDir, 'SKILL.md');
+    if (!fs.existsSync(absoluteFilePath)) {
       return null;
     }
 
@@ -38,13 +39,20 @@ function loadSkillFromDir(baseDir: string): Skill | null {
     // dragging a folder) while a runtime refresh is reading them. On Windows
     // that can produce a transient ENOENT/EPERM, and one incomplete skill must
     // not tear down the chat/settings surface.
-    const raw = fs.readFileSync(filePath, 'utf8');
+    const raw = fs.readFileSync(absoluteFilePath, 'utf8');
     const parsed = parseFrontmatter(raw);
     const frontmatter = parsed?.frontmatter ?? {};
     const name = extractString(frontmatter, 'name') ?? path.basename(baseDir);
     const description = extractString(frontmatter, 'description') ?? '';
     const disabled = fs.existsSync(path.join(baseDir, SKILL_DISABLED_MARKER));
-    return { name, description, filePath, baseDir, content: raw, disabled };
+    return {
+      name,
+      description,
+      filePath: toVaultRelativePath(vaultPath, absoluteFilePath),
+      baseDir: toVaultRelativePath(vaultPath, baseDir),
+      content: raw,
+      disabled,
+    };
   } catch (error) {
     // The next refresh will pick up the skill once its files are complete and
     // readable. Keep the current runtime usable in the meantime.
@@ -106,7 +114,7 @@ export function loadVaultSkills(
 
   const skills = entries
     .filter((entry) => entry.isDirectory())
-    .map((entry) => loadSkillFromDir(path.join(skillsDir, entry.name)))
+    .map((entry) => loadSkillFromDir(vaultPath, path.join(skillsDir, entry.name)))
     .filter((skill): skill is Skill => skill !== null)
     .sort((a, b) => a.name.localeCompare(b.name));
   lastInventoryByVault.set(vaultPath, projectInventory(skills));

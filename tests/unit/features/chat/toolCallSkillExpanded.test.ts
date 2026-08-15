@@ -49,8 +49,8 @@ class FakeElement {
 }
 
 const skillInstructionResult = [
-  '<skill name="demo" location="/vault/.pivi/skills/demo/SKILL.md">',
-  'References are relative to /vault/.pivi/skills/demo.',
+  '<skill name="demo" location=".pivi/skills/demo/SKILL.md">',
+  'References are relative to .pivi/skills/demo.',
   '',
   '# Full instructions',
   'Follow these steps.',

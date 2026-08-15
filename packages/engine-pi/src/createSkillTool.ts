@@ -18,7 +18,7 @@ export function createSkillTool(skills: Skill[]): AgentTool {
     name: 'skill',
     label: 'Skill',
     description:
-      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description.',
+      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description. Skill location and references are vault-relative paths; read them with vault tools, not external-path tools.',
     parameters: {
       type: 'object',
       properties: {
