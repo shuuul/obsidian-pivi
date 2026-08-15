@@ -86,12 +86,18 @@ export function tokenizeCmdArgv(command: string): string[] {
     if (/[!%^]/.test(char)) {
       throw new Error('Bash command must not contain shell control or expansion syntax');
     }
-    if (!inQuotes && /[;&|<>()]/.test(char)) {
+    // cmd.exe does not reliably neutralize operators inside quotes, so prefix
+    // authorization rejects them in every quoting state.
+    if (/[;&|<>()]/.test(char)) {
       throw new Error('Bash command must not contain shell control or expansion syntax');
     }
     if (/\s/.test(char)) {
       if (char !== ' ' && char !== '\t') {
         throw new Error('Bash command must not contain control syntax');
+      }
+      if (inQuotes) {
+        current += char;
+        continue;
       }
       if (current) {
         tokens.push(current);

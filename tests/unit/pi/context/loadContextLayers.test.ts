@@ -213,6 +213,21 @@ describe('loadContextLayers', () => {
     expect(inventory.skills).toEqual([]);
   });
 
+  it('keeps the last inventory when the skills directory is temporarily unreadable', () => {
+    seedSkill(vaultPath, 'demo-skill', 'demo-skill', 'A demo skill');
+    const first = loadVaultSkills(vaultPath);
+    expect(first.skills.map((skill) => skill.name)).toEqual(['demo-skill']);
+
+    const skillsDir = path.join(vaultPath, '.pivi', 'skills');
+    fs.rmSync(skillsDir, { recursive: true, force: true });
+    fs.writeFileSync(skillsDir, 'not a directory');
+
+    const inventory = loadVaultSkills(vaultPath);
+    const runtime = loadRuntimeVaultSkills(vaultPath);
+    expect(inventory.skills.map((skill) => skill.name)).toEqual(['demo-skill']);
+    expect(runtime.skills.map((skill) => skill.name)).toEqual(['demo-skill']);
+  });
+
   it('ignores AGENTS.md outside the vault for escaped active note paths', () => {
     const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-layers-out-'));
     try {

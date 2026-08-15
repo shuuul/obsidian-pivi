@@ -1,18 +1,32 @@
 import {
   buildEffectiveBashAllowlist,
   matchBashCommandAllowlist,
+  resolveLoginShellPath,
 } from '@pivi/obsidian-tools';
 import {
   createPrefixBashGrant,
   decodeBashGrant,
   encodeBashGrant,
+  isWindowsCmdShell,
   tokenizeBashArgv,
+  tokenizeCmdArgv,
 } from '@pivi/agent/tools';
 
 describe('bashAllowlist shell-aware matching', () => {
   it('uses cmd.exe lookup defaults on Windows', () => {
     expect(buildEffectiveBashAllowlist([], 'cmd.exe')).toEqual(['where', 'cd']);
     expect(buildEffectiveBashAllowlist([], '/bin/sh')).toEqual(['which', 'type', 'pwd']);
+    expect(buildEffectiveBashAllowlist([], String.raw`C:\Program Files\Git\bin\bash.exe`)).toEqual(['which', 'type', 'pwd']);
+    expect(buildEffectiveBashAllowlist([], resolveLoginShellPath({ SHELL: String.raw`C:\Windows\System32\cmd.exe` }))).toEqual(['where', 'cd']);
+    expect(buildEffectiveBashAllowlist([], resolveLoginShellPath({ SHELL: String.raw`C:\Program Files\Git\bin\bash.exe` }))).toEqual(['which', 'type', 'pwd']);
+  });
+
+  it('does not treat command.com as cmd.exe', () => {
+    expect(isWindowsCmdShell('command.com')).toBe(false);
+    expect(isWindowsCmdShell(String.raw`C:\Windows\System32\command.com`)).toBe(false);
+    expect(isWindowsCmdShell('cmd.exe')).toBe(true);
+    expect(createPrefixBashGrant('git status', 'command.com')).toBeNull();
+    expect(matchBashCommandAllowlist('git status', ['git'], 'command.com')).toBe(false);
   });
 
   it('tokenizes quoted argv literally', () => {
@@ -52,18 +66,20 @@ describe('bashAllowlist shell-aware matching', () => {
   });
 
   it('rejects cmd.exe control syntax and unknown shells', () => {
-    expect(matchBashCommandAllowlist('type \\& whoami', ['type'], 'C:\\Windows\\System32\\cmd.exe')).toBe(false);
+    expect(matchBashCommandAllowlist('type \\& whoami', ['type'], String.raw`C:\Windows\System32\cmd.exe`)).toBe(false);
     expect(matchBashCommandAllowlist('echo %PATH%', ['echo'], 'cmd.exe')).toBe(false);
     expect(matchBashCommandAllowlist('echo foo ^& whoami', ['echo'], 'cmd.exe')).toBe(false);
     expect(matchBashCommandAllowlist('git status', ['git'], '/opt/custom-shell')).toBe(false);
   });
 
   it('matches safe argv prefixes through cmd.exe without enabling control syntax', () => {
-    const shell = 'C:\\Windows\\System32\\cmd.exe';
+    const shell = String.raw`C:\Windows\System32\cmd.exe`;
+    expect(tokenizeCmdArgv(String.raw`where "Program Files\app.exe"`)).toEqual(['where', String.raw`Program Files\app.exe`]);
     expect(matchBashCommandAllowlist('git status', ['git'], shell)).toBe(true);
     expect(matchBashCommandAllowlist('npm run build --silent', ['npm run build'], shell)).toBe(true);
-    expect(matchBashCommandAllowlist('where "Program Files\\app.exe"', ['where'], shell)).toBe(true);
+    expect(matchBashCommandAllowlist(String.raw`where "Program Files\app.exe"`, ['where'], shell)).toBe(true);
     expect(matchBashCommandAllowlist('git status & whoami', ['git'], shell)).toBe(false);
+    expect(matchBashCommandAllowlist('"git & whoami"', ['git'], shell)).toBe(false);
     expect(matchBashCommandAllowlist('echo %PATH%', ['echo'], shell)).toBe(false);
     expect(matchBashCommandAllowlist('echo "%PATH%"', ['echo'], shell)).toBe(false);
   });

@@ -8,7 +8,7 @@ export const BASH_EXACT_ENTRY_PREFIX = 'exact: ';
 export const BASH_PREFIX_ENTRY_PREFIX = 'prefix: ';
 
 const POSIX_SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'ksh93']);
-const CMD_SHELLS = new Set(['cmd', 'cmd.exe', 'command', 'command.com']);
+const CMD_SHELLS = new Set(['cmd', 'cmd.exe']);
 
 export function normalizeBashCommand(command: string): string {
   return command.trim();

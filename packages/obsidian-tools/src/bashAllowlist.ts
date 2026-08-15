@@ -30,7 +30,7 @@ export function buildEffectiveBashAllowlist(
 /**
  * Match one shell-safe command against exact argv or argv-prefix entries.
  * Shell control, substitution, redirects, and additional commands are rejected
- * before matching because execution uses `$SHELL -lc`.
+ * before matching because execution uses the resolved login shell.
  */
 export function matchBashCommandAllowlist(
   command: string,

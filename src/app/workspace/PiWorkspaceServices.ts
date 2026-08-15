@@ -61,6 +61,7 @@ import {
   buildEffectiveBashAllowlist,
   createObsidianTools,
   getObsidianToolsSettingsFromBag,
+  resolveLoginShellPath,
 } from "@pivi/obsidian-tools";
 
 import { requestOAuthManualCode } from "@/app/oauthManualCodePrompt";
@@ -383,7 +384,7 @@ function createObsidianBaseToolProvider(
       registeredToolSummary: {
         obsidianTools,
         obsidianCliAvailable,
-        ...(bashEnabled ? { bashAllowlist: buildEffectiveBashAllowlist(settings.bashAllowlist) } : {}),
+        ...(bashEnabled ? { bashAllowlist: buildEffectiveBashAllowlist(settings.bashAllowlist, resolveLoginShellPath()) } : {}),
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,
