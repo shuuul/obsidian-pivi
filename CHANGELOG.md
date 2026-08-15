@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.4](https://github.com/shuuul/obsidian-pivi/compare/0.18.3...0.18.4) (2026-08-15)
+
+
+### Bug Fixes
+
+* **prompt:** stop exposing the vault filesystem path ([bc66dcd](https://github.com/shuuul/obsidian-pivi/commit/bc66dcd1347afd897bfa18ad60e7496f70168e4f))
+* **skills:** expose vault-relative skill paths to agents ([9304510](https://github.com/shuuul/obsidian-pivi/commit/9304510afa767c8e3ba3cad1ee9e53b2f580dccd))
+* **ui:** wrap composer badges against the full input width ([f9b73dd](https://github.com/shuuul/obsidian-pivi/commit/f9b73dd0edf5f4053837799bda83684ac726cb5b))
+
 ## [0.18.3](https://github.com/shuuul/obsidian-pivi/compare/0.18.2...0.18.3) (2026-08-15)
 
 
