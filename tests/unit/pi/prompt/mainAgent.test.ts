@@ -108,9 +108,12 @@ describe('mainAgent system prompt', () => {
       expect(prompt).not.toContain('![[assets/image.png]]');
     });
 
-    it('includes vault path when provided', () => {
+    it('does not expose the vault filesystem path', () => {
       const prompt = buildSystemPrompt({ vaultPath: '/vault/path' });
-      expect(prompt).toContain('Vault absolute path: /vault/path');
+      expect(prompt).not.toContain('Vault absolute path:');
+      expect(prompt).not.toContain('/vault/path');
+      expect(prompt).toContain('/absolute/device/path/file.md');
+      expect(prompt).toContain('never use external-path tools for files inside the vault');
     });
   });
 

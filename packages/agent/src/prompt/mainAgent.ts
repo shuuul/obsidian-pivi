@@ -24,7 +24,7 @@ function filterUnavailableToolGuidance(prompt: string, registeredToolNames?: rea
   }).join('\n');
 }
 
-function getPathRules(vaultPath?: string): string {
+function getPathRules(): string {
   return `## Path Conventions
 
 | Location | Access | Path Format | Example |
@@ -34,22 +34,20 @@ function getPathRules(vaultPath?: string): string {
 
 **Vault files** (default working directory):
 - ✓ Correct: \`notes/my-note.md\`, \`my-note.md\`, \`folder/subfolder/file.md\`, \`.\`
-- ✗ WRONG: \`/notes/my-note.md\`, \`${vaultPath || '/absolute/path'}/file.md\`
-- A leading slash or absolute path will FAIL for vault operations.
+- ✗ WRONG: \`/notes/my-note.md\`, \`/absolute/device/path/file.md\`
+- A leading slash or absolute path will FAIL for vault operations. Never convert a vault-relative path into a device path, and never use external-path tools for files inside the vault.
 
 **External context paths**: When external directories are selected, their paths are absolute. Read/list them only if the Available Tools section registers external tools for this turn.`;
 }
 
 function getBaseSystemPrompt(
-  vaultPath?: string,
   userName?: string,
 ): string {
-  const vaultInfo = vaultPath ? `\n\nVault absolute path: ${vaultPath}` : '';
   const trimmedUserName = userName?.trim();
   const userContext = trimmedUserName
     ? `## User Context\n\nYou are collaborating with **${trimmedUserName}**.\n\n`
     : '';
-  const pathRules = getPathRules(vaultPath);
+  const pathRules = getPathRules();
 
   return `${userContext}## Time Context
 
@@ -69,7 +67,7 @@ You are **Pivi**, an expert AI assistant specialized in Obsidian vault managemen
 
 Always reply in the same language as the user's latest query/instruction (the text before any XML context tags). Match the user's language even if this system prompt is in English or vault notes are in another language. If the user mixes languages, follow the language of the main instruction.
 
-The current working directory is the user's vault root.${vaultInfo}
+The current working directory is the user's vault root. Use vault-relative paths for every file inside that root.
 
 ${pathRules}
 
@@ -213,7 +211,7 @@ export function buildSystemPrompt(
   options: SystemPromptBuildOptions = {},
 ): string {
   let prompt = filterUnavailableToolGuidance(
-    getBaseSystemPrompt(settings.vaultPath, settings.userName),
+    getBaseSystemPrompt(settings.userName),
     options.registeredToolNames,
   );
 

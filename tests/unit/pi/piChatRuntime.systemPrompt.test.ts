@@ -427,7 +427,8 @@ describe('PiChatRuntime system prompt', () => {
     expectDefined(agent);
     expect(agent.initialState.systemPrompt).toContain('You are **Pivi**');
     expect(agent.initialState.systemPrompt).not.toContain('## Custom Instructions');
-    expect(agent.initialState.systemPrompt).toContain('Vault absolute path: /test/vault');
+    expect(agent.initialState.systemPrompt).not.toContain('Vault absolute path:');
+    expect(agent.initialState.systemPrompt).not.toContain('/test/vault');
     expect(agent.options).not.toHaveProperty('getApiKey');
   });
 
