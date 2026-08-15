@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.3](https://github.com/shuuul/obsidian-pivi/compare/0.18.2...0.18.3) (2026-08-15)
+
+
+### Bug Fixes
+
+* improve Windows compatibility and skill resilience ([a2d480c](https://github.com/shuuul/obsidian-pivi/commit/a2d480c7492a3a6f9cd5a158cdda8f87e5a358c7))
+
 ## [0.18.2](https://github.com/shuuul/obsidian-pivi/compare/0.18.1...0.18.2) (2026-08-15)
 
 
