@@ -156,6 +156,11 @@ describe('sessionJsonlIndex', () => {
   });
 
   it('ignores metadata-only mode changes before validating and indexing an append', () => {
+    // NTFS does not expose POSIX mode bits in the same way as Unix filesystems.
+    // The index fingerprint deliberately excludes mode, so this behavior is
+    // covered on platforms where chmod can produce a metadata-only change.
+    if (process.platform === 'win32') return;
+
     const initial = rebuildSessionJsonlIndex(sessionFile);
     const before = fs.statSync(sessionFile, { bigint: true });
     fs.chmodSync(sessionFile, Number(before.mode) ^ 0o100);

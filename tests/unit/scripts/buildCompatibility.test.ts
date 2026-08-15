@@ -160,6 +160,35 @@ describe('shared build compatibility', () => {
     ]);
   });
 
+  it('applies the MCP validation shim on Windows-style resolved paths', () => {
+    const output = runBuildContract(`
+      import { build } from 'esbuild';
+      import { shimMcpValidation } from './build/plugins/shim-mcp-validation.mjs';
+      const result = await build({
+        stdin: {
+          contents: [
+            'import { AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/ajv";',
+            'void AjvJsonSchemaValidator;',
+          ].join('\\n'),
+          resolveDir: process.cwd(),
+          sourcefile: 'mcp-validation-contract.ts',
+        },
+        bundle: true,
+        platform: 'node',
+        format: 'esm',
+        write: false,
+        plugins: [shimMcpValidation],
+        logLevel: 'silent',
+      });
+      process.stdout.write(JSON.stringify({
+        errors: result.errors.map((error) => error.text),
+        usesDynamicFunction: /new Function\\s*\\(/.test(result.outputFiles[0].text),
+      }));
+    `);
+
+    expect(JSON.parse(output)).toEqual({ errors: [], usesDynamicFunction: false });
+  });
+
   it('rewrites dynamic node imports and rejects surviving node specifiers', () => {
     const output = runBuildContract(`
       import { rewriteDynamicNodeImports } from './build/postprocess/rewrite-node-imports.mjs';

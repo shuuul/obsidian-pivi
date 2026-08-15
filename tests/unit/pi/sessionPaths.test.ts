@@ -12,9 +12,14 @@ import {
 
 describe('sessionPaths', () => {
   it('encodes absolute vault paths for pi-compatible session directories', () => {
-    const encoded = encodeSessionCwd('/Users/example/Vault:Main');
+    const vaultPath = process.platform === 'win32'
+      ? 'C:\\Users\\example\\Vault:Main'
+      : '/Users/example/Vault:Main';
+    const encoded = encodeSessionCwd(vaultPath);
 
-    expect(encoded).toBe('--Users-example-Vault-Main--');
+    expect(encoded).toBe(process.platform === 'win32'
+      ? '--C--Users-example-Vault-Main--'
+      : '--Users-example-Vault-Main--');
   });
 
   it('computes the vault-local session directory without creating it', () => {

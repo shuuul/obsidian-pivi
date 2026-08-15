@@ -1,7 +1,10 @@
 import { VIEW_TYPE_PIVI } from '@pivi/agent/foundation';
+import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 import type { App } from 'obsidian';
 
 import type { PiviChatView } from '@/app/hostContracts';
+
+const logger = new PluginLogger('PiviViewAccess');
 
 function isPiviView(view: unknown): view is PiviChatView {
   return typeof view === 'object'
@@ -28,6 +31,20 @@ export function findAllPiviViews(app: App): PiviChatView[] {
     if (isPiviView(view)) views.push(view);
   }
   return views;
+}
+
+/** Refresh all open views without turning one disposed view into a failed commit. */
+export async function refreshVaultSkillsViews(
+  views: readonly PiviChatView[],
+): Promise<void> {
+  for (const view of views) {
+    try {
+      await view.getChatHandle()?.maintenance.refreshVaultSkills();
+    } catch (error) {
+      // Skill publication is already durable when this notification runs.
+      logger.warn('Failed to refresh vault skills in a Pivi view', error);
+    }
+  }
 }
 
 export async function refreshPiviManagementViews(

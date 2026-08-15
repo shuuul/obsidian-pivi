@@ -71,6 +71,16 @@ describe('SkillsManagementCoordinator', () => {
     }]);
   });
 
+  it('keeps snapshots available when a managed skill file is temporarily unreadable', () => {
+    fs.mkdirSync(path.join(vaultPath, '.pivi', 'skills', 'demo', 'SKILL.md'), { recursive: true });
+    const coordinator = new SkillsManagementCoordinator({
+      service: mockService([]),
+      vaultPath,
+    });
+
+    expect(() => coordinator.snapshot()).not.toThrow();
+  });
+
   it('normalizes an install source before service and metadata callbacks', async () => {
     const metadata: SkillsManagementMetadataPort = {
       mutationPublished: jest.fn(),

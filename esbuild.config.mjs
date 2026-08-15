@@ -23,7 +23,9 @@ const context = await esbuild.context(buildOptions);
 
 if (production) {
   await context.rebuild();
-  process.exit(0);
+  await context.dispose();
+  // Let the process exit naturally after all esbuild lifecycle hooks settle.
+  // An explicit process.exit can terminate deferred onEnd deployment/postprocess work.
+} else {
+  await context.watch();
 }
-
-await context.watch();

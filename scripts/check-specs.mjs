@@ -35,7 +35,7 @@ function readRequiredFile(filePath) {
     fail(`${relative(filePath)} is missing`);
     return null;
   }
-  return fs.readFileSync(filePath, 'utf8');
+  return fs.readFileSync(filePath, 'utf8').replace(/\r\n?/g, '\n');
 }
 
 function parseScalar(value, filePath, lineNumber) {
@@ -140,7 +140,7 @@ function validateSpec(filePath, location) {
     return null;
   }
 
-  const contents = fs.readFileSync(filePath, 'utf8');
+  const contents = fs.readFileSync(filePath, 'utf8').replace(/\r\n?/g, '\n');
   const metadata = validateStructure(contents, filePath);
   const id = filenameMatch[1];
   if (metadata.id !== id) {

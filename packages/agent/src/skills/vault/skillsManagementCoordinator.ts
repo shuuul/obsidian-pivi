@@ -110,20 +110,29 @@ function fingerprintSkillsState(vaultPath: string): string {
     path.join(vaultPath, '.pivi', '.skills.json'),
   ];
   const visit = (target: string, relative: string): void => {
-    if (!fs.existsSync(target)) {
-      hash.update(`missing\0${relative}\0`);
-      return;
+    try {
+      if (!fs.existsSync(target)) {
+        hash.update(`missing\0${relative}\0`);
+        return;
+      }
+      const stat = fs.lstatSync(target);
+      hash.update(`${stat.isDirectory() ? 'dir' : stat.isSymbolicLink() ? 'link' : 'file'}\0${relative}\0`);
+      if (stat.isSymbolicLink()) {
+        hash.update(fs.readlinkSync(target));
+      } else if (stat.isDirectory()) {
+        for (const name of fs.readdirSync(target).sort()) {
+          visit(path.join(target, name), `${relative}/${name}`);
+        }
+      } else {
+        hash.update(fs.readFileSync(target));
+      }
+      hash.update('\0');
+    } catch {
+      // External skill copies and Windows file indexing can briefly make one
+      // entry unavailable. Keep the revision deterministic for this snapshot;
+      // the next snapshot will observe the completed tree.
+      hash.update(`unreadable\0${relative}\0`);
     }
-    const stat = fs.lstatSync(target);
-    hash.update(`${stat.isDirectory() ? 'dir' : stat.isSymbolicLink() ? 'link' : 'file'}\0${relative}\0`);
-    if (stat.isSymbolicLink()) {
-      hash.update(fs.readlinkSync(target));
-    } else if (stat.isDirectory()) {
-      for (const name of fs.readdirSync(target).sort()) visit(path.join(target, name), `${relative}/${name}`);
-    } else {
-      hash.update(fs.readFileSync(target));
-    }
-    hash.update('\0');
   };
   for (const root of roots) visit(root, path.relative(vaultPath, root).replace(/\\/g, '/'));
   return hash.digest('hex');

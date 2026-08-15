@@ -24,18 +24,28 @@ function escapeXml(value: string): string {
 }
 
 function loadSkillFromDir(baseDir: string): Skill | null {
-  const filePath = path.join(baseDir, 'SKILL.md');
-  if (!fs.existsSync(filePath)) {
+  try {
+    const filePath = path.join(baseDir, 'SKILL.md');
+    if (!fs.existsSync(filePath)) {
+      return null;
+    }
+
+    // Skills may be copied into the vault by another process (or by a user
+    // dragging a folder) while a runtime refresh is reading them. On Windows
+    // that can produce a transient ENOENT/EPERM, and one incomplete skill must
+    // not tear down the chat/settings surface.
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = parseFrontmatter(raw);
+    const frontmatter = parsed?.frontmatter ?? {};
+    const name = extractString(frontmatter, 'name') ?? path.basename(baseDir);
+    const description = extractString(frontmatter, 'description') ?? '';
+    const disabled = fs.existsSync(path.join(baseDir, SKILL_DISABLED_MARKER));
+    return { name, description, filePath, baseDir, content: raw, disabled };
+  } catch {
+    // The next refresh will pick up the skill once its files are complete and
+    // readable. Keep the current runtime usable in the meantime.
     return null;
   }
-
-  const raw = fs.readFileSync(filePath, 'utf8');
-  const parsed = parseFrontmatter(raw);
-  const frontmatter = parsed?.frontmatter ?? {};
-  const name = extractString(frontmatter, 'name') ?? path.basename(baseDir);
-  const description = extractString(frontmatter, 'description') ?? '';
-  const disabled = fs.existsSync(path.join(baseDir, SKILL_DISABLED_MARKER));
-  return { name, description, filePath, baseDir, content: raw, disabled };
 }
 
 function formatSkillsForPrompt(skills: Skill[]): string {
@@ -57,12 +67,20 @@ export function loadVaultSkills(
   options: { includeDisabled?: boolean } = { includeDisabled: true },
 ): { skills: Skill[]; skillsXml: string } {
   const skillsDir = path.join(vaultPath, PIVI_SKILLS_PATH);
-  if (!fs.existsSync(skillsDir)) {
+  let entries: fs.Dirent[];
+  try {
+    if (!fs.existsSync(skillsDir)) {
+      return { skills: [], skillsXml: '' };
+    }
+    entries = fs.readdirSync(skillsDir, { withFileTypes: true });
+  } catch {
+    // A vault watcher can observe the directory between an atomic replace and
+    // its final contents becoming visible. Treat that refresh as empty rather
+    // than allowing a transient filesystem error to blank the surface.
     return { skills: [], skillsXml: '' };
   }
 
-  const skills = fs
-    .readdirSync(skillsDir, { withFileTypes: true })
+  const skills = entries
     .filter((entry) => entry.isDirectory())
     .map((entry) => loadSkillFromDir(path.join(skillsDir, entry.name)))
     .filter((skill): skill is Skill => skill !== null)

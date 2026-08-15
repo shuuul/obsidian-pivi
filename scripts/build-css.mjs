@@ -52,7 +52,7 @@ export function assertNoImportantRules(files) {
   const violations = findImportantRules(files);
   if (violations.length > 0) {
     console.error('CSS build inputs must not use !important:');
-    violations.forEach((file) => console.error(`  - ${relative(ROOT, file)}`));
+    violations.forEach((file) => console.error(`  - ${relative(ROOT, file).split('\\').join('/')}`));
     process.exit(1);
   }
 }

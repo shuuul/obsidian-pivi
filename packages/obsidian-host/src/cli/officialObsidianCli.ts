@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import { homedir } from 'os';
-import { join } from 'path';
+import { posix, win32 } from 'path';
 
 export function getOfficialObsidianConfigPath(): string | null {
   if (typeof process === 'undefined') {
@@ -8,15 +8,15 @@ export function getOfficialObsidianConfigPath(): string | null {
   }
 
   if (process.platform === 'darwin') {
-    return join(homedir(), 'Library', 'Application Support', 'obsidian', 'obsidian.json');
+    return posix.join(homedir(), 'Library', 'Application Support', 'obsidian', 'obsidian.json');
   }
 
   if (process.platform === 'win32') {
     const appData = process.env.APPDATA?.trim();
-    return appData ? join(appData, 'obsidian', 'obsidian.json') : null;
+    return appData ? win32.join(appData, 'obsidian', 'obsidian.json') : null;
   }
 
-  return join(homedir(), '.config', 'obsidian', 'obsidian.json');
+  return posix.join(homedir(), '.config', 'obsidian', 'obsidian.json');
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

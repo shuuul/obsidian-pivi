@@ -1,6 +1,7 @@
-import { matchEncodedBashAllowlist } from '@pivi/agent/tools';
+import { isWindowsCmdShell, matchEncodedBashAllowlist } from '@pivi/agent/tools';
 
 export const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'pwd'] as const;
+export const DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST = ['where', 'cd'] as const;
 
 function normalizeAllowlist(value: readonly string[] | undefined): string[] {
   const seen = new Set<string>();
@@ -16,8 +17,14 @@ function normalizeAllowlist(value: readonly string[] | undefined): string[] {
   return normalized;
 }
 
-export function buildEffectiveBashAllowlist(userAllowlist?: readonly string[]): readonly string[] {
-  return normalizeAllowlist([...DEFAULT_SAFE_BASH_ALLOWLIST, ...(userAllowlist ?? [])]);
+export function buildEffectiveBashAllowlist(
+  userAllowlist?: readonly string[],
+  shellPath = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
+): readonly string[] {
+  const defaults = isWindowsCmdShell(shellPath)
+    ? DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST
+    : DEFAULT_SAFE_BASH_ALLOWLIST;
+  return normalizeAllowlist([...defaults, ...(userAllowlist ?? [])]);
 }
 
 /**

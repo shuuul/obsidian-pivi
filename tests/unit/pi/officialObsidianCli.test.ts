@@ -32,6 +32,21 @@ describe('official Obsidian CLI detection', () => {
     );
   });
 
+  it('uses the roaming AppData path on Windows', () => {
+    const originalAppData = process.env.APPDATA;
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    process.env.APPDATA = 'C:\\Users\\tester\\AppData\\Roaming';
+    try {
+      expect(getOfficialObsidianConfigPath()).toBe(
+        'C:\\Users\\tester\\AppData\\Roaming\\obsidian\\obsidian.json',
+      );
+    } finally {
+      Object.defineProperty(process, 'platform', { value: 'darwin' });
+      if (originalAppData === undefined) delete process.env.APPDATA;
+      else process.env.APPDATA = originalAppData;
+    }
+  });
+
   it('returns true only when the global cli flag is true', () => {
     mockedExistsSync.mockReturnValue(true);
     mockedReadFileSync.mockReturnValue('{"cli":true}');

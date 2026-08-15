@@ -259,7 +259,7 @@ describe('createBashTool', () => {
   beforeEach(() => {
     binDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-bash-test-bin-'));
     vaultDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-bash-test-vault-'));
-    for (const name of ['git', 'npm', 'type', 'pwd', 'which']) {
+    for (const name of ['git', 'npm', 'type', 'pwd', 'which', 'where']) {
       const file = path.join(binDir, name);
       fs.writeFileSync(file, '#!/bin/sh\n');
       fs.chmodSync(file, 0o755);
@@ -325,7 +325,9 @@ describe('createBashTool', () => {
 
     expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
       executable: expect.any(String),
-      args: ['-lc', 'git status'],
+      args: process.platform === 'win32'
+        ? ['/d', '/s', '/c', 'git status']
+        : ['-lc', 'git status'],
       cwdPolicy: { mode: 'vault', vaultRoot: vaultDir },
       timeoutMs: 12_000,
       shell: { mode: 'forbidden' },
@@ -366,10 +368,13 @@ describe('createBashTool', () => {
     };
     const tool = createBashTool(makeDeps(processRunner, []));
 
-    await expect(tool.execute('call-1', { command: 'type ntn' })).resolves.toBeDefined();
+    const lookupCommand = process.platform === 'win32' ? 'where ntn' : 'type ntn';
+    await expect(tool.execute('call-1', { command: lookupCommand })).resolves.toBeDefined();
 
     expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
-      args: ['-lc', 'type ntn'],
+      args: process.platform === 'win32'
+        ? ['/d', '/s', '/c', 'where ntn']
+        : ['-lc', 'type ntn'],
       shell: { mode: 'forbidden' },
     }));
   });

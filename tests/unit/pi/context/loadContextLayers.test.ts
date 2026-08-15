@@ -205,6 +205,14 @@ describe('loadContextLayers', () => {
     expect(inventory.skillsXml).toContain('enabled-skill');
   });
 
+  it('skips a skill whose markdown is temporarily unreadable', () => {
+    fs.mkdirSync(path.join(vaultPath, '.pivi', 'skills', 'broken-skill', 'SKILL.md'), { recursive: true });
+
+    const inventory = loadVaultSkills(vaultPath);
+
+    expect(inventory.skills).toEqual([]);
+  });
+
   it('ignores AGENTS.md outside the vault for escaped active note paths', () => {
     const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-layers-out-'));
     try {

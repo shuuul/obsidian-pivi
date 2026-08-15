@@ -1,4 +1,5 @@
 import {
+  buildEffectiveBashAllowlist,
   matchBashCommandAllowlist,
 } from '@pivi/obsidian-tools';
 import {
@@ -9,6 +10,11 @@ import {
 } from '@pivi/agent/tools';
 
 describe('bashAllowlist shell-aware matching', () => {
+  it('uses cmd.exe lookup defaults on Windows', () => {
+    expect(buildEffectiveBashAllowlist([], 'cmd.exe')).toEqual(['where', 'cd']);
+    expect(buildEffectiveBashAllowlist([], '/bin/sh')).toEqual(['which', 'type', 'pwd']);
+  });
+
   it('tokenizes quoted argv literally', () => {
     expect(tokenizeBashArgv(`echo "a b" 'c d'`)).toEqual(['echo', 'a b', 'c d']);
   });
@@ -45,11 +51,21 @@ describe('bashAllowlist shell-aware matching', () => {
     expect(matchBashCommandAllowlist("git show ';'", ['git show'])).toBe(true);
   });
 
-  it('never applies POSIX prefixes to cmd.exe or unknown shells', () => {
+  it('rejects cmd.exe control syntax and unknown shells', () => {
     expect(matchBashCommandAllowlist('type \\& whoami', ['type'], 'C:\\Windows\\System32\\cmd.exe')).toBe(false);
     expect(matchBashCommandAllowlist('echo %PATH%', ['echo'], 'cmd.exe')).toBe(false);
     expect(matchBashCommandAllowlist('echo foo ^& whoami', ['echo'], 'cmd.exe')).toBe(false);
     expect(matchBashCommandAllowlist('git status', ['git'], '/opt/custom-shell')).toBe(false);
+  });
+
+  it('matches safe argv prefixes through cmd.exe without enabling control syntax', () => {
+    const shell = 'C:\\Windows\\System32\\cmd.exe';
+    expect(matchBashCommandAllowlist('git status', ['git'], shell)).toBe(true);
+    expect(matchBashCommandAllowlist('npm run build --silent', ['npm run build'], shell)).toBe(true);
+    expect(matchBashCommandAllowlist('where "Program Files\\app.exe"', ['where'], shell)).toBe(true);
+    expect(matchBashCommandAllowlist('git status & whoami', ['git'], shell)).toBe(false);
+    expect(matchBashCommandAllowlist('echo %PATH%', ['echo'], shell)).toBe(false);
+    expect(matchBashCommandAllowlist('echo "%PATH%"', ['echo'], shell)).toBe(false);
   });
 
   it('distinguishes tagged exact grants from prefixes, including unsafe exact commands', () => {

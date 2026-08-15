@@ -63,3 +63,48 @@ export function tokenizeBashArgv(command: string): string[] {
   if (current) tokens.push(current);
   return tokens;
 }
+
+/**
+ * Parse the literal argv subset accepted by Windows cmd.exe authorization.
+ * Cmd has different quoting and expansion rules from POSIX shells, so it is
+ * intentionally kept separate from tokenizeBashArgv.
+ */
+export function tokenizeCmdArgv(command: string): string[] {
+  const tokens: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (const char of command) {
+    const code = char.charCodeAt(0);
+    if ((code < 0x20 && char !== '\t') || code === 0x7f) {
+      throw new Error('Bash command must not contain control syntax');
+    }
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (/[!%^]/.test(char)) {
+      throw new Error('Bash command must not contain shell control or expansion syntax');
+    }
+    if (!inQuotes && /[;&|<>()]/.test(char)) {
+      throw new Error('Bash command must not contain shell control or expansion syntax');
+    }
+    if (/\s/.test(char)) {
+      if (char !== ' ' && char !== '\t') {
+        throw new Error('Bash command must not contain control syntax');
+      }
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
+      continue;
+    }
+    current += char;
+  }
+
+  if (inQuotes) {
+    throw new Error('Bash command has unmatched quotes');
+  }
+  if (current) tokens.push(current);
+  return tokens;
+}

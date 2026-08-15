@@ -5,7 +5,7 @@
 export const shimMcpValidation = {
   name: 'shim-mcp-validation',
   setup(build) {
-    build.onLoad({ filter: /@modelcontextprotocol\/sdk\/dist\/(?:esm|cjs)\/validation\/ajv-provider\.js$/ }, () => ({
+    build.onLoad({ filter: /@modelcontextprotocol[\\/]sdk[\\/]dist[\\/](?:esm|cjs)[\\/]validation[\\/]ajv-provider\.js$/ }, () => ({
       contents: [
         "export { CfWorkerJsonSchemaValidator as AjvJsonSchemaValidator }",
         "  from '@modelcontextprotocol/sdk/validation/cfworker';",

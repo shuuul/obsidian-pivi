@@ -26,7 +26,8 @@ describe('Pivi 0.7.0 tag-generated session compatibility', () => {
       fs.mkdirSync(sessionDir, { recursive: true });
       fs.copyFileSync(source, target);
       const sessionFile = toVaultRelativePath(root, target);
-      const sourceBytes = fs.readFileSync(target);
+      const sourceBytes = Buffer.from(fs.readFileSync(source).toString('utf8').replace(/\r\n?/g, '\n'));
+      fs.writeFileSync(target, sourceBytes);
       const sourceDigest = createHash('sha256').update(sourceBytes).digest('hex');
       if (sourceDigest !== fixtureSha256) {
         throw new Error('Frozen 0.7.0 fixture SHA256 changed: ' + sourceDigest);

@@ -344,13 +344,14 @@ const allowlistedImports = {
 };
 
 function formatFailure({ rule, file, line, moduleName, methodName, detail }) {
+  const displayFile = file.split(path.sep).join('/');
   if (detail) {
-    return `- ${file}:${line} ${detail} (${rule})`;
+    return `- ${displayFile}:${line} ${detail} (${rule})`;
   }
   if (methodName) {
-    return `- ${file}:${line} calls forbidden method "${methodName}" (${rule})`;
+    return `- ${displayFile}:${line} calls forbidden method "${methodName}" (${rule})`;
   }
-  return `- ${file}:${line} imports "${moduleName}" (${rule})`;
+  return `- ${displayFile}:${line} imports "${moduleName}" (${rule})`;
 }
 
 function isPathInside(candidatePath, directoryPath) {
@@ -1044,7 +1045,7 @@ for (const file of listSourceFiles(obsidianToolsRoot)) {
 const pluginBaseImports = [];
 for (const root of sourceRoots) {
   for (const file of listSourceFiles(path.join(rootDir, root))) {
-    const relativeFile = path.relative(rootDir, file);
+    const relativeFile = path.relative(rootDir, file).split(path.sep).join('/');
     for (const { moduleName, line } of collectModuleSpecifiers(file)) {
       if (moduleName !== 'obsidian') {
         continue;

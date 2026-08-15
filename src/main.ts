@@ -80,7 +80,11 @@ import {
 } from "@/app/settings/environmentVariables";
 import { measureStartupPhase } from "@/app/startupPerformance";
 import { showDefaultVaultSkillsInstallPrompt } from "@/app/ui/defaultVaultSkillsPrompt";
-import { findAllPiviViews, refreshPiviManagementViews } from "@/app/viewAccess";
+import {
+  findAllPiviViews,
+  refreshPiviManagementViews,
+  refreshVaultSkillsViews,
+} from "@/app/viewAccess";
 import { createPiUiFacades } from "@/app/workspace/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
 import {
@@ -614,9 +618,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   }
 
   async refreshVaultSkills(): Promise<void> {
-    for (const view of this.getAllViews()) {
-      await view.getChatHandle()?.maintenance.refreshVaultSkills();
-    }
+    await refreshVaultSkillsViews(this.getAllViews());
   }
 
   /**

@@ -64,7 +64,7 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
       }
 
       const invocation = buildLoginShellInvocation(normalizedCommand);
-      const effectiveAllowlist = buildEffectiveBashAllowlist(settings.bashAllowlist);
+      const effectiveAllowlist = buildEffectiveBashAllowlist(settings.bashAllowlist, invocation.executable);
       if (!matchBashCommandAllowlist(normalizedCommand, effectiveAllowlist, invocation.executable)) {
         await ensureBashCommandAllowed(deps, normalizedCommand, false, invocation.executable);
       }
