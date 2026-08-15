@@ -204,6 +204,29 @@ describe('SlashCommandDropdown controller', () => {
     expect(container.querySelector('.pivi-slash-detail')?.cssProps).toMatchObject({
       '--pivi-slash-detail-max-width': '0px',
     });
+    expect(container.querySelector('.pivi-slash-dropdown')?.cssProps).toMatchObject({
+      '--pivi-anchored-dropdown-width': '220px',
+    });
+  });
+
+  it('sizes the slash list from the full panel width instead of half the input', async () => {
+    const container = new FakeElement();
+    const input = new FakeInput();
+    const longName = 'obsidian-marp-extended-syntax-reference';
+    const dropdown = new SlashCommandDropdown(
+      container as unknown as HTMLElement,
+      input as unknown as HTMLTextAreaElement,
+      { onSelect: jest.fn() },
+      { getCatalogEntries: async () => [catalogEntry(longName)] },
+    );
+
+    setInput(input, '/');
+    dropdown.handleInputChange();
+    await flushAsyncDropdown();
+
+    expect(container.querySelector('.pivi-slash-dropdown')?.cssProps).toMatchObject({
+      '--pivi-anchored-dropdown-width': '325px',
+    });
   });
 
   it('keeps tool tokens in the composer without invoking command callbacks', async () => {

@@ -14,6 +14,28 @@ export {
   isSearchBoundary,
 };
 
+const MIN_SLASH_DROPDOWN_WIDTH = 220;
+const EXPANDED_SLASH_DROPDOWN_MAX_WIDTH = 480;
+const ESTIMATED_SLASH_TEXT_CHAR_WIDTH = 7;
+const SLASH_DROPDOWN_HORIZONTAL_CHROME = 52;
+
+export function estimateSlashDropdownWidth(
+  items: readonly DropdownItem[],
+  panelWidth: number,
+): number {
+  const longestTextLength = items.reduce(
+    (maxLength, item) => Math.max(maxLength, item.displayName.length),
+    0,
+  );
+  const estimatedWidth = longestTextLength * ESTIMATED_SLASH_TEXT_CHAR_WIDTH
+    + SLASH_DROPDOWN_HORIZONTAL_CHROME;
+  const maxWidth = Math.min(
+    EXPANDED_SLASH_DROPDOWN_MAX_WIDTH,
+    Math.max(MIN_SLASH_DROPDOWN_WIDTH, panelWidth),
+  );
+  return Math.min(maxWidth, Math.max(MIN_SLASH_DROPDOWN_WIDTH, estimatedWidth));
+}
+
 export function getItemMatchScore(item: DropdownItem, searchLower: string): number {
   if (!searchLower) return 0;
 

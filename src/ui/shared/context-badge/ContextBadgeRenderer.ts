@@ -52,15 +52,21 @@ export function createContextBadgeElement(
   if (vm.tooltip) el.setAttribute('title', vm.tooltip);
   if (vm.ariaLabel) el.setAttribute('aria-label', vm.ariaLabel);
 
+  const contentEl = isInline ? doc.win.createSpan() : el;
+  if (isInline) {
+    contentEl.className = 'pivi-context-badge-content';
+    el.appendChild(contentEl);
+  }
+
   const iconEl = doc.win.createSpan();
   iconEl.className = 'pivi-context-badge-icon';
   renderIcon(iconEl, vm.icon);
-  el.appendChild(iconEl);
+  contentEl.appendChild(iconEl);
 
   const labelEl = doc.win.createSpan();
   labelEl.className = 'pivi-context-badge-label';
   labelEl.textContent = vm.label;
-  el.appendChild(labelEl);
+  contentEl.appendChild(labelEl);
 
   if (options.onRemove && vm.removable) {
     const removeEl = doc.win.createSpan();
@@ -82,7 +88,7 @@ export function createContextBadgeElement(
       if (event.key !== 'Enter' && event.key !== ' ') return;
       remove(event);
     });
-    el.appendChild(removeEl);
+    contentEl.appendChild(removeEl);
   }
 
   if (options.onClick && vm.clickable) {

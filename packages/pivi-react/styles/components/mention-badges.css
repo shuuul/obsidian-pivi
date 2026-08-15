@@ -15,7 +15,9 @@
   display: inline-flex;
   align-items: center;
   gap: var(--pivi-spacing-xs);
-  max-width: min(100%, 220px);
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
   min-height: 20px;
   padding: 1px 6px 1px 5px;
   border-radius: var(--pivi-radius-lg);
@@ -67,8 +69,13 @@ button.pivi-context-badge {
   border-color: rgba(var(--pivi-host-interactive-accent-rgb), 0.45);
 }
 
+/* Contenteditable wrap uses remaining-line shrink-to-fit for inline-flex.
+ * inline-block measures against the full line box, so add/remove rebuilds
+ * wrap the same way instead of jumping early. */
 .pivi-context-badge--inline {
   --pivi-inline-context-accent-rgb: 167, 139, 250;
+  display: inline-block;
+  vertical-align: -0.1em;
   min-height: 18px;
   padding: 1px 5px 1px 4px;
   border-radius: var(--pivi-radius-md);
@@ -83,6 +90,14 @@ button.pivi-context-badge {
 .pivi-context-badge--inline:hover {
   background: var(--pivi-host-background-hover);
   border-color: var(--pivi-host-border-hover);
+}
+
+.pivi-context-badge-content {
+  display: flex;
+  align-items: center;
+  gap: var(--pivi-spacing-xs);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .pivi-context-badge-icon {

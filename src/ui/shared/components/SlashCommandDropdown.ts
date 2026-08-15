@@ -21,6 +21,11 @@ import {
   mergeMcpEntries,
 } from './slashCommandDropdownData';
 import {
+  positionAnchoredSlashDropdown,
+  positionFixedSlashDropdown,
+  positionSlashDetailPanel,
+} from './slashCommandDropdownLayout';
+import {
   appendHighlightedText,
   getItemMatchScore,
 } from './slashCommandDropdownMatch';
@@ -47,13 +52,6 @@ function renderItemIcon(container: HTMLElement, item: DropdownItem): void {
       ? 'sparkles'
       : 'image-plus';
   setIcon(container, iconName);
-}
-
-function getTextOffsetClientRect(inputEl: SlashInputElement, offset: number): DOMRect | null {
-  if ('getTextOffsetClientRect' in inputEl && typeof inputEl.getTextOffsetClientRect === 'function') {
-    return inputEl.getTextOffsetClientRect(offset);
-  }
-  return null;
 }
 
 export interface SlashCommandDropdownCallbacks {
@@ -559,40 +557,24 @@ export class SlashCommandDropdown {
 
   private positionFixed(): void {
     if (!this.dropdownEl || !this.isFixed) return;
-
-    const inputRect = this.inputEl.getBoundingClientRect();
-    const anchorRect = getTextOffsetClientRect(this.inputEl, this.triggerStartIndex) ?? inputRect;
-    const dropdownWidth = Math.min(300, Math.max(220, inputRect.width / 2));
-    const left = Math.min(
-      Math.max(anchorRect.left, inputRect.left),
-      Math.max(inputRect.left, inputRect.right - dropdownWidth),
+    positionFixedSlashDropdown(
+      this.dropdownEl,
+      this.inputEl,
+      this.containerEl,
+      this.filteredItems,
+      this.triggerStartIndex,
     );
-
-    this.dropdownEl.setCssProps({
-      '--pivi-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - anchorRect.top + 4}px`,
-      '--pivi-fixed-dropdown-left': `${left}px`,
-      '--pivi-fixed-dropdown-width': `${dropdownWidth}px`,
-    });
   }
 
   private positionAnchored(): void {
     if (!this.dropdownEl) return;
-
-    const inputRect = this.inputEl.getBoundingClientRect();
-    const anchorRect = getTextOffsetClientRect(this.inputEl, this.triggerStartIndex) ?? inputRect;
-    const containerRect = this.containerEl.getBoundingClientRect();
-    const dropdownWidth = Math.min(300, Math.max(220, inputRect.width / 2));
-    const left = Math.min(
-      Math.max(anchorRect.left - containerRect.left, 0),
-      Math.max(0, containerRect.width - dropdownWidth),
+    positionAnchoredSlashDropdown(
+      this.dropdownEl,
+      this.inputEl,
+      this.containerEl,
+      this.filteredItems,
+      this.triggerStartIndex,
     );
-    const bottom = Math.max(0, containerRect.bottom - anchorRect.top + 4);
-
-    this.dropdownEl.setCssProps({
-      '--pivi-anchored-dropdown-bottom': `${bottom}px`,
-      '--pivi-anchored-dropdown-left': `${left}px`,
-      '--pivi-anchored-dropdown-width': `${dropdownWidth}px`,
-    });
   }
 
   private navigate(direction: number): void {
@@ -666,19 +648,7 @@ export class SlashCommandDropdown {
 
   private positionDetailPanel(): void {
     if (!this.dropdownEl || !this.detailEl) return;
-
-    const selectedEl = this.dropdownEl.querySelector<HTMLElement>('.pivi-slash-item.selected');
-    if (!selectedEl) return;
-
-    const dropdownRect = this.dropdownEl.getBoundingClientRect();
-    const selectedRect = selectedEl.getBoundingClientRect();
-    const containerRect = this.containerEl.getBoundingClientRect();
-    const top = Math.max(0, selectedRect.top - dropdownRect.top);
-    const availableWidth = Math.max(0, containerRect.right - dropdownRect.right - 6);
-    this.detailEl.setCssProps({
-      '--pivi-slash-detail-top': `${top}px`,
-      '--pivi-slash-detail-max-width': `${availableWidth}px`,
-    });
+    positionSlashDetailPanel(this.dropdownEl, this.detailEl, this.containerEl);
   }
 
   private selectItem(): void {

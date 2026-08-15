@@ -39,6 +39,8 @@ describe('product animation styles', () => {
     expect(styles).toContain('.pivi-context-badge-kind-skill .pivi-context-badge-icon svg');
     expect(styles).toContain('.pivi-context-badge-kind-mcp .pivi-context-badge-icon svg');
     expect(styles).toMatch(/\.pivi-context-badge--inline \{[\s\S]*?min-height: 18px;/);
+    expect(styles).toMatch(/\.pivi-context-badge--inline \{[\s\S]*?display: inline-block;/);
+    expect(styles).toContain('.pivi-context-badge-content');
     expect(styles).toMatch(/pivi-context-badge--inline\.pivi-context-badge-kind-skill[\s\S]*?width: 10px;/);
     expect(styles).toMatch(/\.pivi-context-badge--inline \{[\s\S]*?background: var\(--pivi-host-background-primary\);/);
     expect(styles).toMatch(/\.pivi-context-badge--inline \{[\s\S]*?border-color: var\(--pivi-host-border\);/);
