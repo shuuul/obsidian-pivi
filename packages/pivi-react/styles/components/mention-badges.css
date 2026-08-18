@@ -81,7 +81,6 @@ button.pivi-context-badge {
   border-radius: var(--pivi-radius-md);
   font-size: 0.88em;
   line-height: 1.1;
-  vertical-align: -0.1em;
   border-color: var(--pivi-host-border);
   background: var(--pivi-host-background-primary);
   color: var(--pivi-host-text-normal);
