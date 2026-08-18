@@ -288,10 +288,12 @@
 }
 
 .pivi-inline-edit-surface .pivi-model-btn .pivi-model-provider-icon,
-.pivi-inline-edit-surface .pivi-model-btn .pivi-provider-logo-mask {
+.pivi-inline-edit-surface .pivi-model-btn .pivi-provider-logo-mask,
+.pivi-inline-edit-surface .pivi-model-dropdown .pivi-provider-logo-mask {
   width: 12px;
   height: 12px;
   --pivi-provider-logo-size: 12px;
+  --icon-size: 12px;
 }
 
 .pivi-inline-edit-surface .pivi-model-chevron,

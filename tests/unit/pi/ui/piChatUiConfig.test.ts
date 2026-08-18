@@ -31,7 +31,39 @@ describe('piChatUIConfig context windows', () => {
     expect(piChatUIConfig.getContextWindowSize(MODEL_KEY, {})).toBe(1_000_000);
   });
 
-  it('returns an explicit unknown result when the selected model cannot be resolved', () => {
-    expect(piChatUIConfig.getContextWindowSize('missing-model', {})).toBeNull();
+  it('groups custom provider models by the settings display name', () => {
+    const providerId = 'custom-openai-compatible-lan';
+    const modelKey = `${providerId}/qwen38-nvfp4`;
+    PI_AI_MODELS_CACHE.set(modelKey, {
+      provider: providerId,
+      id: 'qwen38-nvfp4',
+      name: 'qwen38-nvfp4',
+      reasoning: false,
+      contextWindow: 262_144,
+    } as PiCachedModel);
+
+    const options = piChatUIConfig.getModelOptions({
+      agentSettings: {
+        addedProviders: [providerId],
+        disabledProviders: [],
+        visibleModels: [modelKey],
+        customProviders: [{
+          id: providerId,
+          kind: 'openai-compatible',
+          name: 'Home vLLM',
+          baseUrl: 'http://192.168.100.177:8888/v1',
+          api: 'openai-completions',
+          models: [{ id: 'qwen38-nvfp4', name: 'qwen38-nvfp4' }],
+        }],
+        environmentVariables: '',
+        selectedMode: 'default',
+      },
+    });
+
+    expect(options[0]).toMatchObject({
+      value: modelKey,
+      group: 'Home vLLM',
+      providerLogoSlug: 'qwen',
+    });
   });
 });

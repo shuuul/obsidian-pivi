@@ -25,9 +25,11 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
   const [fetching, setFetching] = useState(false);
 
   const patch = (value: { name?: string; baseUrl?: string }): void => {
-    void models.patchCustomProvider(config.id, value).catch((cause: unknown) => {
-      onError(cause instanceof Error ? cause.message : t('common.error'));
-    });
+    void models.patchCustomProvider(config.id, value)
+      .then(() => { onChanged(); })
+      .catch((cause: unknown) => {
+        onError(cause instanceof Error ? cause.message : t('common.error'));
+      });
   };
 
   const fetchModels = async (): Promise<void> => {

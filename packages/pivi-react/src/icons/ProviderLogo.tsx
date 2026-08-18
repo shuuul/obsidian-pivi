@@ -1,19 +1,30 @@
 import anthropicSvg from '@lobehub/icons-static-svg/icons/anthropic.svg';
 import braveSvg from '@lobehub/icons-static-svg/icons/brave.svg';
 import deepseekSvg from '@lobehub/icons-static-svg/icons/deepseek.svg';
+import doubaoSvg from '@lobehub/icons-static-svg/icons/doubao.svg';
 import exaSvg from '@lobehub/icons-static-svg/icons/exa.svg';
+import geminiSvg from '@lobehub/icons-static-svg/icons/gemini.svg';
+import gemmaSvg from '@lobehub/icons-static-svg/icons/gemma.svg';
 import googleSvg from '@lobehub/icons-static-svg/icons/google.svg';
+import hunyuanSvg from '@lobehub/icons-static-svg/icons/hunyuan.svg';
+import internlmSvg from '@lobehub/icons-static-svg/icons/internlm.svg';
 import kimiSvg from '@lobehub/icons-static-svg/icons/kimi.svg';
 import lmstudioSvg from '@lobehub/icons-static-svg/icons/lmstudio.svg';
+import metaSvg from '@lobehub/icons-static-svg/icons/meta.svg';
+import microsoftSvg from '@lobehub/icons-static-svg/icons/microsoft.svg';
 import minimaxSvg from '@lobehub/icons-static-svg/icons/minimax.svg';
+import mistralSvg from '@lobehub/icons-static-svg/icons/mistral.svg';
 import moonshotSvg from '@lobehub/icons-static-svg/icons/moonshot.svg';
+import nvidiaSvg from '@lobehub/icons-static-svg/icons/nvidia.svg';
 import ollamaSvg from '@lobehub/icons-static-svg/icons/ollama.svg';
 import openaiSvg from '@lobehub/icons-static-svg/icons/openai.svg';
 import opencodeSvg from '@lobehub/icons-static-svg/icons/opencode.svg';
 import openrouterSvg from '@lobehub/icons-static-svg/icons/openrouter.svg';
+import qwenSvg from '@lobehub/icons-static-svg/icons/qwen.svg';
 import tavilySvg from '@lobehub/icons-static-svg/icons/tavily.svg';
 import xaiSvg from '@lobehub/icons-static-svg/icons/xai.svg';
 import xiaomiMiMoSvg from '@lobehub/icons-static-svg/icons/xiaomimimo.svg';
+import yiSvg from '@lobehub/icons-static-svg/icons/yi.svg';
 import zaiSvg from '@lobehub/icons-static-svg/icons/zai.svg';
 import { type CSSProperties, useEffect, useRef } from 'react';
 
@@ -31,20 +42,31 @@ export const PROVIDER_LOGOS: Readonly<Record<string, string>> = {
   anysearch: svgToDataUri(anysearchSvg),
   brave: svgToDataUri(braveSvg),
   deepseek: svgToDataUri(deepseekSvg),
+  doubao: svgToDataUri(doubaoSvg),
   exa: svgToDataUri(exaSvg),
+  gemini: svgToDataUri(geminiSvg),
+  gemma: svgToDataUri(gemmaSvg),
   google: svgToDataUri(googleSvg),
+  hunyuan: svgToDataUri(hunyuanSvg),
+  internlm: svgToDataUri(internlmSvg),
   kimi: svgToDataUri(kimiSvg),
   lmstudio: svgToDataUri(lmstudioSvg),
   'llama-cpp': svgToDataUri(llamaCppSvg),
+  meta: svgToDataUri(metaSvg),
+  microsoft: svgToDataUri(microsoftSvg),
   minimax: svgToDataUri(minimaxSvg),
+  mistral: svgToDataUri(mistralSvg),
   moonshot: svgToDataUri(moonshotSvg),
+  nvidia: svgToDataUri(nvidiaSvg),
   ollama: svgToDataUri(ollamaSvg),
   openai: svgToDataUri(openaiSvg),
   opencode: svgToDataUri(opencodeSvg),
   openrouter: svgToDataUri(openrouterSvg),
+  qwen: svgToDataUri(qwenSvg),
   tavily: svgToDataUri(tavilySvg),
   xai: svgToDataUri(xaiSvg),
   xiaomimimo: svgToDataUri(xiaomiMiMoSvg),
+  yi: svgToDataUri(yiSvg),
   zai: svgToDataUri(zaiSvg),
 };
 

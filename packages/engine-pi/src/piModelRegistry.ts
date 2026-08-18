@@ -2,6 +2,8 @@ import type { Api, Model } from '@earendil-works/pi-ai';
 import type { ChatUIOption } from '@pivi/agent/foundation';
 import {
   getModelFallbackLucideIcon,
+  getModelFamilyLogoSlug,
+  getModelIdFromModelValue,
   getProviderDisplayName,
   getProviderIdFromModelValue,
   getProviderLogoSlug,
@@ -38,6 +40,10 @@ export interface BuildPiModelOptionsInput {
   disabledProviders?: readonly string[];
   addedProviders?: readonly string[];
   defaultModelKey?: string;
+  /** Custom provider id → Settings display name for composer group labels. */
+  providerDisplayNames?: Readonly<Record<string, string>>;
+  /** Custom provider id → bundled logo slug (kind-based; ids are not in PROVIDER_ID_TO_SLUG). */
+  providerLogoSlugs?: Readonly<Record<string, string>>;
 }
 
 const DEFAULT_PI_MODEL_KEY = DEFAULT_MODEL_KEY;
@@ -65,15 +71,24 @@ function titleizeModelId(modelValue: string): string {
     .join(' ');
 }
 
-function optionFromModelKey(modelKey: string, cached: PiCachedModel | undefined): ChatUIOption {
+function optionFromModelKey(
+  modelKey: string,
+  cached: PiCachedModel | undefined,
+  input: Pick<BuildPiModelOptionsInput, 'providerDisplayNames' | 'providerLogoSlugs'>,
+): ChatUIOption {
   const label = cached?.name ?? titleizeModelId(modelKey);
   const providerId = getProviderIdFromModelValue(modelKey);
+  const modelId = getModelIdFromModelValue(modelKey);
   return {
     value: modelKey,
     label,
     description: cached ? formatPiModelDescription(cached) : 'Pi-supported model',
-    group: providerId ? getProviderDisplayName(providerId) : undefined,
-    providerLogoSlug: getProviderLogoSlugFromModelValue(modelKey) ?? undefined,
+    group: providerId ? getProviderDisplayName(providerId, input.providerDisplayNames) : undefined,
+    providerLogoSlug:
+      getModelFamilyLogoSlug(modelId, label)
+      ?? (providerId ? input.providerLogoSlugs?.[providerId] : undefined)
+      ?? getProviderLogoSlugFromModelValue(modelKey)
+      ?? undefined,
     fallbackIcon: getModelFallbackLucideIcon(modelKey, label),
   };
 }
@@ -159,14 +174,14 @@ export function buildPiModelOptions(input: BuildPiModelOptionsInput): ChatUIOpti
     if (providerId && isProviderDisabled(input.disabledProviders, providerId)) {
       continue;
     }
-    options.push(optionFromModelKey(modelKey, PI_AI_MODELS_CACHE.get(modelKey)));
+    options.push(optionFromModelKey(modelKey, PI_AI_MODELS_CACHE.get(modelKey), input));
   }
 
   if (options.length === 0) {
     const fallback = findFallbackCachedModel(input.addedProviders ?? [], input.disabledProviders);
     if (fallback) {
       const [fallbackKey, fallbackModel] = fallback;
-      options.push(optionFromModelKey(fallbackKey, fallbackModel));
+      options.push(optionFromModelKey(fallbackKey, fallbackModel, input));
     } else {
       options.push(defaultFallbackOption(input.defaultModelKey ?? DEFAULT_PI_MODEL_KEY));
     }

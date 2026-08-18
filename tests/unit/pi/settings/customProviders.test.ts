@@ -56,6 +56,29 @@ describe('customProviders foundation', () => {
     });
   });
 
+  it('treats private OpenAI-compatible URLs as keyless and public URLs as requiring a key', () => {
+    expect(createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    }).apiKeyRequired).toBe(false);
+    expect(createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'https://api.example.test/v1',
+    }).apiKeyRequired).toBe(true);
+    expect(createDefaultCustomProviderConfig('openai-compatible', []).apiKeyRequired).toBe(true);
+  });
+
+  it('recomputes apiKeyRequired from the URL even when a stale stored flag disagrees', () => {
+    const config = normalizeCustomProviderConfig({
+      id: 'custom-openai-compatible-abc',
+      kind: 'openai-compatible',
+      name: 'vLLM',
+      baseUrl: 'http://192.168.100.177:8888/v1',
+      api: 'openai-completions',
+      apiKeyRequired: true,
+      models: [],
+    });
+    expect(config?.apiKeyRequired).toBe(false);
+  });
+
   it('normalizes configs and drops invalid entries', () => {
     const configs = normalizeCustomProviders([
       {
@@ -429,6 +452,33 @@ describe('buildCustomPiProvider keyless auth', () => {
       credential: undefined,
     } as any);
 
+    expect(resolved?.source).toBe('keyless');
+    expect(resolved?.auth.apiKey).toBeTruthy();
+  });
+
+  it('resolves keyless auth for a private OpenAI-compatible endpoint', async () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    const provider = buildCustomPiProvider(config);
+    const resolved = await provider.auth.apiKey?.resolve({
+      model: {
+        id: 'qwen',
+        name: 'Qwen',
+        provider: config.id,
+        api: 'openai-completions',
+        baseUrl: config.baseUrl,
+        reasoning: false,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 8192,
+        maxTokens: 2048,
+      },
+      ctx: { env: async () => undefined, fileExists: async () => false },
+      credential: undefined,
+    } as any);
+
+    expect(config.apiKeyRequired).toBe(false);
     expect(resolved?.source).toBe('keyless');
     expect(resolved?.auth.apiKey).toBeTruthy();
   });

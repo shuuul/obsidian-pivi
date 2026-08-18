@@ -33,19 +33,23 @@
   font-weight: 500;
 }
 
-/* Fixed icon slot so provider mark / Lucide fallback swaps do not shift thinking. */
-.pivi-model-btn .pivi-model-provider-icon,
-.pivi-model-btn .pivi-provider-logo-mask {
+/* 12px slot for trigger + dropdown. Dropdown may portal out of the selector.
+   Brand masks use --pivi-provider-logo-size; Obsidian Lucide uses --icon-size (18px default). */
+.pivi-model-provider-icon,
+.pivi-model-btn .pivi-provider-logo-mask,
+.pivi-model-dropdown .pivi-provider-logo-mask {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 12px;
   height: 12px;
   flex-shrink: 0;
+  line-height: 0;
   --pivi-provider-logo-size: 12px;
+  --icon-size: 12px;
 }
 
-.pivi-model-btn .pivi-model-provider-icon svg {
+.pivi-model-provider-icon svg {
   width: 12px;
   height: 12px;
 }

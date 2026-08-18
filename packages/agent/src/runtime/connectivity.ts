@@ -4,6 +4,7 @@ import type { ConnectivityTestResult } from './types';
 export interface ConnectivityProbeOptions {
   detailSuffix?: string;
   isReachableStatus?: (status: number) => boolean;
+  method?: 'HEAD' | 'GET';
 }
 
 function defaultReachableStatus(status: number): boolean {
@@ -24,7 +25,7 @@ export async function testEndpointConnectivity(
   try {
     const response = await httpClient.fetch({
       url: endpoint,
-      method: 'HEAD',
+      method: options.method ?? 'HEAD',
     });
     const suffix = options.detailSuffix ?? '';
     return {

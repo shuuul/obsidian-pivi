@@ -40,6 +40,19 @@ describe('testEndpointConnectivity', () => {
     });
   });
 
+  it('probes with GET when requested', async () => {
+    const httpClient = mockHttpClient(async () => createHttpResponse(200));
+
+    await testEndpointConnectivity(httpClient, 'http://192.168.100.177:8888/v1/models', {
+      method: 'GET',
+    });
+
+    expect(httpClient.fetch).toHaveBeenCalledWith({
+      url: 'http://192.168.100.177:8888/v1/models',
+      method: 'GET',
+    });
+  });
+
   it.each([
     { status: 200, expectedOk: true },
     { status: 204, expectedOk: true },

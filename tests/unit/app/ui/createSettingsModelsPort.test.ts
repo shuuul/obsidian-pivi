@@ -1,4 +1,5 @@
 import type { ChatUIOption } from '@pivi/agent/foundation/chatUi';
+import type { CustomProviderConfig } from '@pivi/agent/foundation/customProviders';
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
 
 import type { PiviPluginWorkspace, PiviSettingsHost, PiviUiFacades } from '@/app/hostContracts';
@@ -14,7 +15,7 @@ function createHarness() {
       addedProviders: ['anthropic', 'deepseek'],
       disabledProviders: ['anthropic'],
       visibleModels: ['anthropic/claude-test'],
-      customProviders: [],
+      customProviders: [] as CustomProviderConfig[],
     },
   };
   const saveSettings = jest.fn(async () => undefined);
@@ -87,6 +88,24 @@ describe('createSettingsModelsPort provider removal', () => {
     expect(harness.settings.titleGenerationModel).toBe('');
     expect(harness.deleteCredential).not.toHaveBeenCalled();
     expect(harness.saveSettings).toHaveBeenCalledTimes(1);
+    expect(harness.refreshModelPresentation).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes open chat model pickers after a custom provider display-name change', async () => {
+    const harness = createHarness();
+    harness.settings.agentSettings.addedProviders = ['custom-openai-compatible-lan'];
+    harness.settings.agentSettings.customProviders = [{
+      id: 'custom-openai-compatible-lan',
+      kind: 'openai-compatible',
+      name: 'OpenAI compatible',
+      baseUrl: 'http://192.168.100.177:8888/v1',
+      api: 'openai-completions',
+      models: [],
+    }];
+
+    await harness.port.patchCustomProvider('custom-openai-compatible-lan', { name: 'Home vLLM' });
+
+    expect(harness.settings.agentSettings.customProviders[0]?.name).toBe('Home vLLM');
     expect(harness.refreshModelPresentation).toHaveBeenCalledTimes(1);
   });
 

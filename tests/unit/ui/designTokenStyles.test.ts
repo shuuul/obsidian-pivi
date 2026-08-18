@@ -80,6 +80,18 @@ describe('product design tokens', () => {
     }
   });
 
+  it('sizes model selector provider icons to 12px including Obsidian Lucide', () => {
+    expect(modelSelector).toMatch(
+      /\.pivi-model-provider-icon,[\s\S]*?\.pivi-model-dropdown \.pivi-provider-logo-mask\s*\{[^}]*width:\s*12px;[^}]*height:\s*12px;[^}]*--pivi-provider-logo-size:\s*12px;[^}]*--icon-size:\s*12px;/s,
+    );
+    expect(modelSelector).toMatch(
+      /\.pivi-model-provider-icon svg\s*\{[^}]*width:\s*12px;[^}]*height:\s*12px;/s,
+    );
+    expect(inlineEdit).toMatch(
+      /\.pivi-inline-edit-surface \.pivi-model-dropdown \.pivi-provider-logo-mask\s*\{[^}]*--icon-size:\s*12px;/s,
+    );
+  });
+
   it('blends selected model and thinking options into the menu until interaction', () => {
     expect(modelSelector).toMatch(/\.pivi-model-dropdown \.pivi-model-option\s*\{[^}]*background:\s*transparent;/s);
     expect(thinkingSelector).toMatch(/\.pivi-thinking-options \.pivi-thinking-gear\s*\{[^}]*background:\s*transparent;/s);

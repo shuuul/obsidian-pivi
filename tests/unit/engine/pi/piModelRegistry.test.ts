@@ -294,6 +294,56 @@ describe('PiModelRegistry (core)', () => {
         },
       ]);
     });
+
+    it('prefers model-family logo over custom provider kind slug', () => {
+      const providerId = 'custom-openai-compatible-abc';
+      const modelKey = `${providerId}/qwen38-nvfp4`;
+      PI_AI_MODELS_CACHE.set(
+        modelKey,
+        modelFixture({ provider: providerId, id: 'qwen38-nvfp4', name: 'qwen38-nvfp4' }),
+      );
+
+      const options = buildPiModelOptions({
+        visibleModels: [modelKey],
+        providerDisplayNames: { [providerId]: 'Home vLLM' },
+        providerLogoSlugs: { [providerId]: 'openai' },
+      });
+
+      expect(options[0]?.group).toBe('Home vLLM');
+      expect(options[0]?.providerLogoSlug).toBe('qwen');
+    });
+
+    it('uses qwen family logo for qwen model on llama-cpp provider id', () => {
+      const providerId = 'llama-cpp';
+      const modelKey = `${providerId}/qwen38`;
+      PI_AI_MODELS_CACHE.set(
+        modelKey,
+        modelFixture({ provider: providerId, id: 'qwen38', name: 'qwen38' }),
+      );
+
+      const options = buildPiModelOptions({
+        visibleModels: [modelKey],
+        providerLogoSlugs: { [providerId]: 'llama-cpp' },
+      });
+
+      expect(options[0]?.providerLogoSlug).toBe('qwen');
+    });
+
+    it('falls back to custom provider kind slug when family is unknown', () => {
+      const providerId = 'custom-openai-compatible-abc';
+      const modelKey = `${providerId}/local-chat`;
+      PI_AI_MODELS_CACHE.set(
+        modelKey,
+        modelFixture({ provider: providerId, id: 'local-chat', name: 'Local Chat' }),
+      );
+
+      const options = buildPiModelOptions({
+        visibleModels: [modelKey],
+        providerLogoSlugs: { [providerId]: 'openai' },
+      });
+
+      expect(options[0]?.providerLogoSlug).toBe('openai');
+    });
   });
 
 

@@ -71,6 +71,37 @@ export function getLogoSlugForCustomProviderKind(kind: string): string | null {
   }
 }
 
+/**
+ * Model id/label keywords → bundled logo slug for composer family detection.
+ * Patterns are lowercase-only; the haystack is lowercased before matching.
+ */
+const MODEL_FAMILY_LOGO_PATTERNS: readonly [RegExp, string][] = [
+  [/qwq|qvq|qwen|tongyi/, 'qwen'],
+  [/(?:^|[/-])o1(?:[-/]|$)/, 'openai'],
+  [/(?:^|[/-])o3(?:[-/]|$)/, 'openai'],
+  [/(?:^|[/-])o4(?:[-/]|$)/, 'openai'],
+  [/gpt-|gpt\d|openai|codex/, 'openai'],
+  [/claude/, 'anthropic'],
+  [/anthropic/, 'anthropic'],
+  [/deepseek/, 'deepseek'],
+  [/gemini/, 'gemini'],
+  [/gemma/, 'gemma'],
+  [/mixtral|codestral|mathstral|pixtral|ministral|magistral|devstral|voxtral|mistral/, 'mistral'],
+  [/llama(?!v)/, 'meta'],
+  [/kimi/, 'kimi'],
+  [/moonshot/, 'moonshot'],
+  [/chatglm|glm-/, 'zai'],
+  [/grok-/, 'xai'],
+  [/minimax|abab/, 'minimax'],
+  [/(?:^|[/-])mimo-/, 'xiaomimimo'],
+  [/(?:^|[/-])yi-|[/-]yi-/, 'yi'],
+  [/internlm|internvl/, 'internlm'],
+  [/hunyuan/, 'hunyuan'],
+  [/doubao-/, 'doubao'],
+  [/phi-|wizardlm/, 'microsoft'],
+  [/nemotron/, 'nvidia'],
+];
+
 const MODEL_ICON_PATTERNS: [RegExp, string][] = [
   [/opus/i, 'gem'],
   [/sonnet/i, 'music'],
@@ -93,7 +124,34 @@ export function getProviderIdFromModelValue(modelValue: string): string | null {
   return modelValue.substring(0, slash);
 }
 
-export function getProviderDisplayName(providerId: string): string {
+/** Model id portion of a `provider/modelId` key (or the full value when unqualified). */
+export function getModelIdFromModelValue(modelValue: string): string {
+  const slash = modelValue.indexOf('/');
+  if (slash <= 0) {
+    return modelValue;
+  }
+  return modelValue.substring(slash + 1);
+}
+
+/** Bundled lobe-icons slug from model id + label (composer family logos). */
+export function getModelFamilyLogoSlug(modelId: string, modelLabel: string): string | null {
+  const haystack = `${modelId} ${modelLabel}`.toLowerCase();
+  for (const [pattern, slug] of MODEL_FAMILY_LOGO_PATTERNS) {
+    if (pattern.test(haystack)) {
+      return slug;
+    }
+  }
+  return null;
+}
+
+export function getProviderDisplayName(
+  providerId: string,
+  customDisplayNames?: Readonly<Record<string, string>>,
+): string {
+  const customName = customDisplayNames?.[providerId]?.trim();
+  if (customName) {
+    return customName;
+  }
   if (PROVIDER_DISPLAY_NAMES[providerId]) {
     return PROVIDER_DISPLAY_NAMES[providerId];
   }

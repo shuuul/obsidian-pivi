@@ -1,4 +1,9 @@
 import { getMaxProviderIdLengthForPiCredentialSecret } from '../auth/providerSecretStorage';
+import {
+  classifyIpLiteral,
+  type IpDestinationClass,
+  isLiteralIpHostname,
+} from '../network/ipClassification';
 
 /** Wire API used by a custom / local provider instance. */
 export type CustomProviderApi =
@@ -33,7 +38,10 @@ export interface CustomProviderConfig {
   api: CustomProviderApi;
   headers?: Record<string, string>;
   models: CustomProviderModelDef[];
-  /** When true, readiness requires an API key (or env). Locals default false. */
+  /**
+   * When true, readiness requires an API key (or env). Local kinds and
+   * loopback/private/link-local custom URLs default false.
+   */
   apiKeyRequired?: boolean;
 }
 
@@ -94,6 +102,11 @@ const DEFAULT_CONTEXT_WINDOW = 128_000;
 const DEFAULT_LOCAL_CONTEXT_WINDOW = 4096;
 const DEFAULT_MAX_TOKENS = 8192;
 const MULTI_INSTANCE_SUFFIX_HEX_LENGTH = 12;
+const KEYLESS_HOST_CLASSES: ReadonlySet<IpDestinationClass> = new Set([
+  'loopback',
+  'private',
+  'link-local',
+]);
 
 function randomHexSuffix(hexLength: number): string {
   const bytes = new Uint8Array(hexLength / 2);
@@ -138,6 +151,35 @@ export function modelsListUrl(baseUrl: string): string {
   return `${normalized}/models`;
 }
 
+/**
+ * Local presets and LAN/loopback custom endpoints do not require an API key.
+ * Public custom URLs still do; a stored key remains optional to send.
+ */
+export function inferCustomProviderApiKeyRequired(
+  kind: CustomProviderKind,
+  baseUrl: string,
+): boolean {
+  if (isLocalCustomProviderKind(kind)) {
+    return false;
+  }
+  const normalized = normalizeProviderBaseUrl(baseUrl);
+  if (!normalized) {
+    return true;
+  }
+  try {
+    const hostname = new URL(normalized).hostname;
+    if (hostname.toLowerCase() === 'localhost') {
+      return false;
+    }
+    if (!isLiteralIpHostname(hostname)) {
+      return true;
+    }
+    return !KEYLESS_HOST_CLASSES.has(classifyIpLiteral(hostname));
+  } catch {
+    return true;
+  }
+}
+
 export function createCustomProviderId(kind: CustomProviderKind, existingIds: readonly string[]): string {
   if (isLocalCustomProviderKind(kind)) {
     return FIXED_LOCAL_PROVIDER_IDS[kind as (typeof LOCAL_CUSTOM_PROVIDER_KINDS)[number]];
@@ -171,7 +213,7 @@ export function createDefaultCustomProviderConfig(
     baseUrl: normalizeProviderBaseUrl(options?.baseUrl ?? DEFAULT_BASE_URLS[kind]),
     api: KIND_TO_API[kind],
     models: [],
-    apiKeyRequired: !isLocalCustomProviderKind(kind),
+    apiKeyRequired: inferCustomProviderApiKeyRequired(kind, options?.baseUrl ?? DEFAULT_BASE_URLS[kind]),
   };
 }
 
@@ -245,9 +287,7 @@ export function normalizeCustomProviderConfig(raw: unknown): CustomProviderConfi
     api,
     models,
     ...(headers ? { headers } : {}),
-    apiKeyRequired: typeof raw.apiKeyRequired === 'boolean'
-      ? raw.apiKeyRequired
-      : !isLocalCustomProviderKind(raw.kind),
+    apiKeyRequired: inferCustomProviderApiKeyRequired(raw.kind, raw.baseUrl),
   };
 }
 

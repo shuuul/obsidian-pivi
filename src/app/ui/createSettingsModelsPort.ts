@@ -291,6 +291,9 @@ export function createSettingsModelsPort(
       updatePiAgentSettings(host.settings, { customProviders });
       uiFacades.syncCustomProviders(host.settings);
       await host.saveSettings();
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.refreshModelPresentation();
+      }
     },
     async fetchCustomProviderModels(providerId) {
       uiFacades.syncCustomProviders(host.settings);

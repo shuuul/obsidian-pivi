@@ -5,6 +5,7 @@ import type {
 } from '@pivi/agent/foundation';
 import { getPiAgentSettings } from '@pivi/agent/foundation/agentSettings';
 import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { getLogoSlugForCustomProviderKind } from '@pivi/agent/foundation/providerLogos';
 import { DEFAULT_MODEL_KEY } from '@pivi/agent/foundation/settingsDefaults';
 
 import { piAiModels } from './piAiModels';
@@ -32,10 +33,22 @@ export function warmPiAiModelsCache() {
 export const piChatUIConfig: ChatUIConfig = {
   getModelOptions(settings): ChatUIOption[] {
     const piSettings = getPiAgentSettings(settings);
+    const providerDisplayNames = Object.fromEntries(
+      piSettings.customProviders.map((provider) => [provider.id, provider.name]),
+    );
+    const providerLogoSlugs: Record<string, string> = {};
+    for (const provider of piSettings.customProviders) {
+      const slug = getLogoSlugForCustomProviderKind(provider.kind);
+      if (slug) {
+        providerLogoSlugs[provider.id] = slug;
+      }
+    }
     return buildPiModelOptions({
       visibleModels: piSettings.visibleModels,
       disabledProviders: piSettings.disabledProviders,
       addedProviders: piSettings.addedProviders,
+      providerDisplayNames,
+      providerLogoSlugs,
     });
   },
 

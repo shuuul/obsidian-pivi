@@ -1,5 +1,6 @@
 import { INTERACTIVE_OAUTH_PROVIDER_IDS } from '@pivi/agent/auth/piProviderCredentials';
 import { isProviderDisabled } from '@pivi/agent/auth/providerSecretStorage';
+import { modelsListUrl } from '@pivi/agent/foundation/customProviders';
 import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 import { getProviderIdFromModelValue } from '@pivi/agent/foundation/providerLogos';
 import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
@@ -48,9 +49,16 @@ async function testResolvedModel(modelKey: string, model: PiResolvedModel): Prom
     };
   }
 
-  return testEndpointConnectivity(getActivePiviNetworkClients().httpClient, baseUrl, {
+  return testEndpointConnectivity(getProviderProbeClient(), baseUrl, {
     detailSuffix: `; credentials resolved from ${auth.source}.`,
   });
+}
+
+function getProviderProbeClient() {
+  const clients = getActivePiviNetworkClients();
+  // Provider tests must use the provider-purpose client so configured private
+  // origins (LAN vLLM, Ollama) receive the same grants as model discovery.
+  return clients.localProviderHttpClient ?? clients.httpClient;
 }
 
 export async function testModelReadiness(
@@ -75,10 +83,25 @@ export async function testModelReadiness(
 
 export async function testProviderReadiness(
   providerId: string,
-  piSettings: Pick<PiAgentSettingsView, 'disabledProviders'>,
+  piSettings: Pick<PiAgentSettingsView, 'disabledProviders' | 'customProviders'>,
 ): Promise<ProviderTestResult> {
   if (isProviderDisabled(piSettings.disabledProviders, providerId)) {
     return { ok: false, detail: `${providerId} is disabled.` };
+  }
+
+  const custom = piSettings.customProviders?.find((provider) => provider.id === providerId) ?? null;
+  if (custom) {
+    const baseUrl = custom.baseUrl.trim();
+    if (!baseUrl) {
+      return { ok: false, detail: `No endpoint URL is configured for ${providerId}.` };
+    }
+    const keyless = custom.apiKeyRequired === false;
+    // vLLM and similar servers 404 HEAD on /v1 and 405 HEAD on /v1/models.
+    // GET /models is the discovery endpoint the user actually needs.
+    return testEndpointConnectivity(getProviderProbeClient(), modelsListUrl(baseUrl), {
+      method: 'GET',
+      detailSuffix: keyless ? '; no API key required.' : '',
+    });
   }
 
   const model = piAiModels.getModels(providerId)[0];
