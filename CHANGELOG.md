@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.5](https://github.com/shuuul/obsidian-pivi/compare/0.18.4...0.18.5) (2026-08-18)
+
+
+### Features
+
+* **settings:** improve LAN custom providers and composer model chrome ([0f8ba75](https://github.com/shuuul/obsidian-pivi/commit/0f8ba75de8d0ab9b93e14a68e811d6da189e94fb))
+
 ## [0.18.4](https://github.com/shuuul/obsidian-pivi/compare/0.18.3...0.18.4) (2026-08-15)
 
 
