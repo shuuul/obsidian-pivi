@@ -81,6 +81,7 @@ export class InputProviderBoundaryHandler {
     this.host.deps.state.addMessage(assistantMessage);
     this.host.setActiveStreamingAssistantMessage(assistantMessage);
     this.awaitingProviderAssistantStart = true;
+    this.host.deps.state.pauseTurnGeneration(performance.now());
   }
 
   private handleProviderUserMessageStart(

@@ -163,6 +163,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
+      "cacheHit": "{percentage}% 快取命中（{cached} / {prompt}）",
       "unknownContextLength": "無法取得目前模型的上下文長度。"
     },
     "todos": {
@@ -196,6 +197,7 @@
       "thought": "思考",
       "defaultDurationFlavor": "完成",
       "responseDuration": "* {flavor} 用時 {duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "延伸思考 — 點擊展開",
       "writing": "寫入中…",
       "statusDone": "完成",
@@ -492,6 +494,14 @@
     "enableAutoScroll": {
       "name": "串流時自動捲動",
       "desc": "在 Pi 串流回應時自動捲動到底部。停用後將停留在頂部，從頭開始閱讀。"
+    },
+    "showCacheHitRate": {
+      "name": "顯示快取命中率",
+      "desc": "在上下文用量環旁顯示最近一輪的提示快取命中率。"
+    },
+    "showTokensPerSecond": {
+      "name": "顯示每秒權杖數",
+      "desc": "在已完成的助手回覆上顯示產生速度。"
     },
     "deferMathRenderingDuringStreaming": {
       "name": "串流時延遲轉譯數學公式",

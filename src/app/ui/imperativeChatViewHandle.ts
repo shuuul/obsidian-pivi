@@ -183,6 +183,14 @@ export function createImperativeChatViewHandle(
         syncInputTabBarPortal();
         publishTabSnapshot();
       },
+      refreshChatDisplaySettings() {
+        const ports = getMountedPorts();
+        const snapshot = ports?.settings.getSettingsSnapshot();
+        if (!snapshot) return;
+        for (const tab of getTabManager()?.getAllTabs() ?? []) {
+          tab.state.applyChatDisplaySettings(snapshot);
+        }
+      },
       async refreshRuntimePrompt() {
         await getTabManager()?.broadcastToAllTabs(async service => {
           if (service.syncSystemPrompt) await service.syncSystemPrompt();

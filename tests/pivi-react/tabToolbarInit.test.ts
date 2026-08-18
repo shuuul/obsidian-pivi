@@ -12,6 +12,8 @@ function settingsSnapshot(model: string): ChatSettingsSnapshot {
     thinkingLevel: 'medium',
     customContextLimits: {},
     enableAutoScroll: true,
+    showCacheHitRate: true,
+    showTokensPerSecond: true,
     enableAutoTitleGeneration: true,
     titleGenerationModel: '',
     userName: '',

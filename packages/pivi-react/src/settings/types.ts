@@ -28,6 +28,8 @@ export interface SettingsGeneralSnapshot {
   readonly tabBarPosition: 'input' | 'header';
   readonly enableAutoScroll: boolean;
   readonly deferMathRenderingDuringStreaming: boolean;
+  readonly showCacheHitRate: boolean;
+  readonly showTokensPerSecond: boolean;
   readonly enableAutoTitleGeneration: boolean;
   readonly userName: string;
   readonly excludedTags: readonly string[];

@@ -1,9 +1,8 @@
-import type { OpenSessionState, SessionSummary } from '@pivi/agent/foundation';
 import { getPiAgentSettings } from '@pivi/agent/foundation/agentSettings';
-import type { EditorSelectionToolbarSettings } from '@pivi/agent/foundation/settings';
-import { getSubagentRuntimeSettingsFromBag } from '@pivi/agent/foundation/settings';
 import {
+  type EditorSelectionToolbarSettings,
   getObsidianToolsSettingsFromBag,
+  getSubagentRuntimeSettingsFromBag,
   normalizeEditorSelectionToolbarSettings,
   resolveObsidianToolsSettings,
   resolveWebSearchToolsSettings,
@@ -15,32 +14,26 @@ import {
   getRuntimeEnvironmentText,
 } from '@pivi/agent/foundation/settingsAgentEnvironment';
 import { parseEnvironmentVariables } from '@pivi/agent/foundation/settingsEnv';
-import type { CapabilityApprovalPort } from '@pivi/agent/ports';
-import type { AuxQueryRunner } from '@pivi/agent/runtime/auxQueryRunner';
 import type {
   ChatPorts,
   ChatSettingsSnapshot,
 } from '@pivi/agent/runtime/chatPorts';
-import type { PiChatService } from '@pivi/agent/runtime/piChatService';
-import type { SessionMessagePage } from '@pivi/agent/session';
 import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/agent/tools';
-import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {
   SettingsGeneralSnapshot,
   SettingsSubagentsSnapshot,
 } from '@pivi/pivi-react/settings';
-import type { ChatPerfRecorder } from '@pivi/pivi-react/store';
 import { getIconIds } from 'obsidian';
 
 import { getSelectionToolbarHost } from '@/app/editorSelectionToolbarRegistration';
 import type {
-  PiviChatCompositionHost,
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
 import { isNoteToolbarTextToolbarActive } from '@/app/noteToolbarIntegration';
 
+import { type ChatUiCompositionHost } from './chatUiCompositionHost';
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
 import { createSettingsSkillsPort } from './createSettingsSkillsPort';
@@ -69,39 +62,7 @@ import {
   SETTINGS_HOTKEY_ROWS,
 } from './settingsHotkeys';
 
-/** Composition-only plugin capabilities adapted into core-owned chat ports. */
-export type ChatUiCompositionHost = PiviChatCompositionHost & {
-  getChatPerfRecorder(): ChatPerfRecorder;
-  createChatService(options?: { capabilityApproval?: CapabilityApprovalPort | null;
-    piviManagementApproval?: PiviManagementApprovalPort | null }): PiChatService;
-  createAuxQueryRunner(): AuxQueryRunner;
-  getSessionList(): SessionSummary[];
-  getOpenSessionSync(id: string): OpenSessionState | null;
-  getOpenSessionById(id: string): Promise<OpenSessionState | null>;
-  openRecentSessionMessages(id: string, limit: number): Promise<SessionMessagePage | null>;
-  readOlderSessionMessages(
-    id: string,
-    beforeEntryId: string,
-    limit: number,
-  ): Promise<SessionMessagePage | null>;
-  createOpenSession(options?: {
-    sessionId?: string;
-    sessionFile?: string;
-  }): Promise<OpenSessionState>;
-  openSessionByFile(sessionFile: string): Promise<OpenSessionState>;
-  deleteSession(id: string): Promise<void>;
-  deleteSessionFile(sessionFile: string, id?: string | null): Promise<void>;
-  renameSession(
-    id: string,
-    title: string,
-    titleSource?: OpenSessionState['titleSource'],
-  ): Promise<void>;
-  updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
-  forkSessionAt(
-    openSession: OpenSessionState,
-    atEntryId: string,
-  ): Promise<{ sessionFile: string; sessionId: string } | null>;
-};
+export type { ChatUiCompositionHost } from './chatUiCompositionHost';
 
 export function createChatUiPorts(
   host: ChatUiCompositionHost,
@@ -151,6 +112,8 @@ export function createChatUiPorts(
       thinkingLevel: projected.thinkingLevel,
       customContextLimits: { ...projected.customContextLimits },
       enableAutoScroll: projected.enableAutoScroll ?? true,
+      showCacheHitRate: projected.showCacheHitRate !== false,
+      showTokensPerSecond: projected.showTokensPerSecond !== false,
       enableAutoTitleGeneration: projected.enableAutoTitleGeneration,
       titleGenerationModel: projected.titleGenerationModel,
       userName: projected.userName,
@@ -294,6 +257,8 @@ export function createSettingsUiPorts(
         tabBarPosition: settings.tabBarPosition ?? 'input',
         enableAutoScroll: settings.enableAutoScroll ?? true,
         deferMathRenderingDuringStreaming: settings.deferMathRenderingDuringStreaming ?? true,
+        showCacheHitRate: settings.showCacheHitRate !== false,
+        showTokensPerSecond: settings.showTokensPerSecond !== false,
         enableAutoTitleGeneration: settings.enableAutoTitleGeneration,
         userName: settings.userName,
         excludedTags: settings.excludedTags,
@@ -323,6 +288,8 @@ export function createSettingsUiPorts(
     host.settings.tabBarPosition = next.tabBarPosition;
     host.settings.enableAutoScroll = next.enableAutoScroll;
     host.settings.deferMathRenderingDuringStreaming = next.deferMathRenderingDuringStreaming;
+    host.settings.showCacheHitRate = next.showCacheHitRate;
+    host.settings.showTokensPerSecond = next.showTokensPerSecond;
     host.settings.enableAutoTitleGeneration = next.enableAutoTitleGeneration;
     host.settings.userName = next.userName;
     host.settings.excludedTags = [...next.excludedTags];
@@ -335,9 +302,17 @@ export function createSettingsUiPorts(
       scrollDownKey: next.keyboardNavigation.scrollDownKey,
       focusInputKey: next.keyboardNavigation.focusInputKey,
     };
-    if (patch.tabBarPosition !== undefined) {
+    if (
+      patch.tabBarPosition !== undefined
+      || patch.showCacheHitRate !== undefined
+      || patch.showTokensPerSecond !== undefined
+    ) {
       for (const view of host.getAllViews()) {
-        view.getChatHandle()?.maintenance.refreshTabBarPosition();
+        const maintenance = view.getChatHandle()?.maintenance;
+        if (patch.tabBarPosition !== undefined) maintenance?.refreshTabBarPosition();
+        if (patch.showCacheHitRate !== undefined || patch.showTokensPerSecond !== undefined) {
+          maintenance?.refreshChatDisplaySettings();
+        }
       }
     }
     await host.saveSettings();

@@ -1,5 +1,6 @@
 import type { StreamChunk, UsageInfo } from '@pivi/agent/foundation';
 import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { preserveCacheActivity } from '@pivi/agent/foundation/usage';
 import type { SessionMessagePage } from '@pivi/agent/session';
 import { deriveTodoVisualizationModel } from '@pivi/agent/tools';
 import {
@@ -15,13 +16,15 @@ import {
   reduceChatStreamSnapshot,
 } from '@pivi/pivi-react/store';
 
-import type {
-  ChatMessage,
-  ChatStateCallbacks,
-  ChatStateData,
-  QueuedMessage,
-  TodoItem,
-  TodoVisualizationModel,
+import { TurnGenerationClock } from '../composer/TurnGenerationClock';
+import {
+  type ChatMessage,
+  type ChatStateCallbacks,
+  type ChatStateData,
+  createInitialChatStateData,
+  type QueuedMessage,
+  type TodoItem,
+  type TodoVisualizationModel,
 } from './types';
 
 const logger = new PluginLogger('ChatProjectionProtocol');
@@ -35,34 +38,6 @@ export interface ChatProjectionProducerOptions {
 export interface ChatProjectionRunScope {
   readonly childRunId?: string | null;
   readonly parentRunId?: string | null;
-}
-
-function createInitialState(): ChatStateData {
-  return {
-    messages: [],
-    hasOlderMessages: false,
-    totalMessageCount: 0,
-    olderMessageCount: 0,
-    olderUserMessageCount: 0,
-    isStreaming: false,
-    cancelRequested: false,
-    streamGeneration: 0,
-    isCreatingSession: false,
-    isSwitchingSession: false,
-    hasPendingSessionSave: false,
-    currentOpenSessionId: null,
-    queuedMessages: [],
-    currentTextContent: '',
-    usage: null,
-    ignoreUsageUpdates: false,
-    currentTodos: null,
-    currentTodoVisualizationModel: null,
-    needsAttention: false,
-    autoScrollEnabled: true, // Default; controllers will override based on settings
-    responseStartTime: null,
-    welcomeGreeting: null,
-    navigationVisible: false,
-  };
 }
 
 
@@ -86,13 +61,14 @@ export class ChatState {
   private readonly projectionNow: () => number;
   readonly uiStore: ChatUiStore;
   readonly projectionStore: ChatProjectionStore;
+  private readonly turnGenerationClock = new TurnGenerationClock();
 
   constructor(
     callbacks: ChatStateCallbacks = {},
     perfRecorder?: ChatPerfRecorder,
     projectionOptions: ChatProjectionProducerOptions = { projectionScopeId: 'unbound-chat' },
   ) {
-    this.state = createInitialState();
+    this.state = createInitialChatStateData();
     this._callbacks = callbacks;
     this.projectionScopeId = projectionOptions.projectionScopeId;
     this.getProjectionSessionFile = projectionOptions.getSessionFile ?? (() => null);
@@ -567,8 +543,9 @@ export class ChatState {
   }
 
   set usage(value: UsageInfo | null) {
-    this.state.usage = value;
-    this.uiStore.update({ usage: value });
+    const next = value === null ? null : preserveCacheActivity(this.state.usage, value);
+    this.state.usage = next;
+    this.uiStore.update({ usage: next });
   }
 
   get ignoreUsageUpdates(): boolean {
@@ -648,6 +625,32 @@ export class ChatState {
     }
   }
 
+  applyChatDisplaySettings(settings: {
+    showCacheHitRate?: boolean;
+    showTokensPerSecond?: boolean;
+  }): void {
+    const showCacheHitRate = settings.showCacheHitRate !== false;
+    const showTokensPerSecond = settings.showTokensPerSecond !== false;
+    if (
+      this.state.showCacheHitRate === showCacheHitRate
+      && this.state.showTokensPerSecond === showTokensPerSecond
+    ) {
+      return;
+    }
+    this.state.showCacheHitRate = showCacheHitRate;
+    this.state.showTokensPerSecond = showTokensPerSecond;
+    this.uiStore.update({ showCacheHitRate, showTokensPerSecond });
+  }
+
+  resetTurnGeneration(): void { this.turnGenerationClock.reset(); }
+  startTurnGeneration(now: number): void { this.turnGenerationClock.start(now); }
+  pauseTurnGeneration(now: number): void { this.turnGenerationClock.pause(now); }
+  snapshotTurnGeneration(now: number) { return this.turnGenerationClock.snapshot(now); }
+  recordTurnUsage(outputTokens: number, now: number): void {
+    this.turnGenerationClock.addOutputTokens(outputTokens);
+    this.turnGenerationClock.pause(now);
+  }
+
   get welcomeGreeting(): string | null {
     return this.state.welcomeGreeting;
   }
@@ -691,6 +694,7 @@ export class ChatState {
     this.state.isStreaming = false;
     this.state.cancelRequested = false;
     this.state.responseStartTime = null;
+    this.turnGenerationClock.reset();
     this.uiStore.update({
       thinkingIndicator: null,
       isStreaming: false,

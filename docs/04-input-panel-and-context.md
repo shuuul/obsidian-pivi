@@ -20,7 +20,7 @@ flowchart TD
   Controller -- "builds" --> Request["ChatTurnRequest"]
 ```
 
-React owns model, thinking, mode, external-context, send/queue/stop, and usage presentation. `wireComposerChrome()` adapts the active tab's model catalog, projected settings, and external selector into immutable composer snapshots and narrow actions.
+React owns model, thinking, mode, external-context, send/queue/stop, and usage presentation. `wireComposerChrome()` adapts the active tab's model catalog, projected settings, and external selector into immutable composer snapshots and narrow actions. When `showCacheHitRate` is on, a second compact ring sits left of the context usage meter and shows latest-turn prompt-cache hit rate (`cacheRead / contextTokens`). Providers that report no cache activity still show the ring at 0% whenever the usage meter is visible.
 
 `RichChatInput` is an uncontrolled contenteditable adapter with a textarea-like API. It owns mention badges, plain-text paste, cursor placement, Markdown-list continuation, and IME-safe synchronization. React must not reconcile its children. File, image, inline-context, editor, browser, and canvas adapters follow the same owner-realm rule.
 
@@ -32,6 +32,7 @@ React owns model, thinking, mode, external-context, send/queue/stop, and usage p
 | Thinking | Model capabilities and projected `thinkingLevel` or `thinkingBudget` | Selector action → settings commit → runtime sync | Stored through settings projection, not as a separate tab binding |
 | Mode/reasoning | Model catalog and projected settings | Selector action → settings commit | Settings-owned; capability-gated by the active model |
 | Usage | Active message/runtime usage plus model context metadata | Stream/model refresh → `ChatUiStore` | Rebuildable UI projection |
+| Cache hit rate | Latest-turn `cacheRead / contextTokens` beside the usage ring | Settings `showCacheHitRate` plus usage snapshot | 0% when the provider reports no cache activity; hidden only with no usage or the setting off |
 | Current note/files | `FileContextState` and host workspace events | File chips, mentions, or first-turn current-note capture | Vault-relative context enters that turn; current note is auto-sent on the first turn only, while later file cards must be added explicitly per turn |
 | Images | `ImageContextManager` | Paste/drag → send or queue snapshot | Turn attachment content; composer attachments are cleared after capture |
 | Inline context | Structured badges in `RichChatInput` | Badge extraction at send time | Structured turn context; badge token is removed from runtime prompt text |

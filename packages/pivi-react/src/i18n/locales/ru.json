@@ -163,6 +163,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
+      "cacheHit": "{percentage} % попаданий в кэш ({cached} из {prompt})",
       "unknownContextLength": "Не удалось определить длину контекста текущей модели."
     },
     "todos": {
@@ -196,6 +197,7 @@
       "thought": "Мысль",
       "defaultDurationFlavor": "Готово",
       "responseDuration": "* {flavor} за {duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "Расширенное мышление — нажмите, чтобы раскрыть",
       "writing": "Пишет…",
       "statusDone": "ГОТОВО",
@@ -492,6 +494,14 @@
     "enableAutoScroll": {
       "name": "Автопрокрутка во время потока",
       "desc": "Автоматически прокручивать вниз, пока Pi передаёт ответы. Отключите, чтобы оставаться наверху."
+    },
+    "showCacheHitRate": {
+      "name": "Показывать долю попаданий в кэш",
+      "desc": "Показывать долю попаданий в кэш промпта за последний ход рядом с кольцом использования контекста."
+    },
+    "showTokensPerSecond": {
+      "name": "Показывать токены в секунду",
+      "desc": "Показывать скорость генерации на завершённых ответах ассистента."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "Отложить рендеринг формул во время потока",

@@ -92,6 +92,8 @@ export interface ChatSettingsSnapshot {
   thinkingLevel: string;
   customContextLimits: Record<string, number>;
   enableAutoScroll: boolean;
+  showCacheHitRate: boolean;
+  showTokensPerSecond: boolean;
   enableAutoTitleGeneration: boolean;
   titleGenerationModel: string;
   userName: string;

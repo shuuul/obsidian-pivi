@@ -57,6 +57,7 @@ describe('inputProviderBoundary', () => {
         generateId: () => 'retry',
         state: {
           addMessage: (message: ChatMessage) => messages.push(message),
+          pauseTurnGeneration: jest.fn(),
         },
       } as never,
       getActiveStreamingAssistantMessage: () => active,

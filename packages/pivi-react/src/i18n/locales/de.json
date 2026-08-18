@@ -168,6 +168,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
+      "cacheHit": "{percentage} % Cache-Treffer ({cached} von {prompt})",
       "unknownContextLength": "Die Kontextlänge des aktuellen Modells konnte nicht ermittelt werden."
     },
     "todos": {
@@ -201,6 +202,7 @@
       "thought": "Gedanke",
       "defaultDurationFlavor": "Fertig",
       "responseDuration": "* {flavor} in {duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "Erweitertes Denken — zum Aufklappen klicken",
       "writing": "Schreibt…",
       "statusDone": "FERTIG",
@@ -492,6 +494,14 @@
     "enableAutoScroll": {
       "name": "Beim Streaming automatisch scrollen",
       "desc": "Automatisch nach unten scrollen, während Pi Antworten streamt. Deaktivieren, um oben zu bleiben und von Anfang an zu lesen."
+    },
+    "showCacheHitRate": {
+      "name": "Cache-Trefferquote anzeigen",
+      "desc": "Die Prompt-Cache-Trefferquote der letzten Runde neben dem Kontextnutzungsring anzeigen."
+    },
+    "showTokensPerSecond": {
+      "name": "Token pro Sekunde anzeigen",
+      "desc": "Die Generierungsgeschwindigkeit bei abgeschlossenen Assistentenantworten anzeigen."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "Mathe-Rendering während Streaming aufschieben",

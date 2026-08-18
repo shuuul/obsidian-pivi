@@ -173,6 +173,63 @@ export function calculateUsagePercentage(tokens: number, limit: number): number 
     : 0;
 }
 
+/**
+ * Latest-turn prompt-cache hit rate, matching Pi TUI `CH%`:
+ * `cacheRead / contextTokens` where `contextTokens` is uncached input + cache
+ * read + cache write. Returns 0% when the provider reported no cache activity
+ * so the composer ring stays visible next to the usage meter.
+ */
+export function calculateCacheHitPercentage(usage: UsageInfo): number | null {
+  if (!(usage.contextTokens > 0)) {
+    return null;
+  }
+  return calculateUsagePercentage(usage.cacheReadInputTokens ?? 0, usage.contextTokens);
+}
+
+/**
+ * Estimated usage omits cache fields. Keep the last provider-reported cache
+ * activity so the composer ring is not cleared by tool-result estimates.
+ */
+export function preserveCacheActivity(
+  previous: UsageInfo | null,
+  next: UsageInfo,
+): UsageInfo {
+  if (
+    next.cacheReadInputTokens !== undefined
+    || next.cacheCreationInputTokens !== undefined
+    || !previous
+  ) {
+    return next;
+  }
+  return {
+    ...next,
+    cacheCreationInputTokens: previous.cacheCreationInputTokens,
+    cacheReadInputTokens: previous.cacheReadInputTokens,
+  };
+}
+
+/** Minimum generation elapsed before a tokens/s footer is meaningful. */
+export const MIN_GENERATION_ELAPSED_MS_FOR_TPS = 50;
+
+/**
+ * Completed-turn generation speed from provider output tokens and tool-paused
+ * generation elapsed. Returns null when either side is missing or too small.
+ */
+export function calculateTokensPerSecond(
+  outputTokens: number,
+  generationElapsedMs: number,
+): number | null {
+  if (!(outputTokens > 0) || generationElapsedMs < MIN_GENERATION_ELAPSED_MS_FOR_TPS) {
+    return null;
+  }
+  return outputTokens / (generationElapsedMs / 1000);
+}
+
+/** Persist and display tokens/s at one decimal of precision. */
+export function roundTokensPerSecond(rate: number): number {
+  return Math.round(rate * 10) / 10;
+}
+
 /** Conservative complete-input pressure used for hard context-window decisions. */
 export function getContextPressureTokens(usage: UsageInfo): number {
   return usage.contextEnvelope?.pressureInputTokens ?? usage.contextTokens;

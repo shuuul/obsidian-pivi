@@ -98,6 +98,7 @@ export function createTab(options: TabCreateOptions): TabData {
     projectionScopeId: id,
     getSessionFile: () => tab.sessionFile,
   });
+  state.applyChatDisplaySettings(options.ports.settings.getSettingsSnapshot());
 
   const subagentManager = new SubagentManager(() => {});
 

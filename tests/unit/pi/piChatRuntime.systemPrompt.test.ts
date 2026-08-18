@@ -1888,6 +1888,26 @@ describe('PiChatRuntime system prompt', () => {
     expect(buildEstimatedUsageInfo([
       { role: 'user', content: 'Unknown model usage', timestamp: Date.now() },
     ], null)).toMatchObject({ contextWindow: 0, percentage: 0 });
+    expect(buildEstimatedUsageInfo([
+      {
+        role: 'assistant',
+        content: [],
+        stopReason: 'stop',
+        usage: {
+          input: 100,
+          output: 10,
+          cacheRead: 80,
+          cacheWrite: 20,
+          totalTokens: 210,
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+        },
+        timestamp: Date.now(),
+      },
+      { role: 'user', content: 'follow-up', timestamp: Date.now() },
+    ] as never, null)).toMatchObject({
+      cacheReadInputTokens: 80,
+      cacheCreationInputTokens: 20,
+    });
     expect(buildUsageInfoFromAgentMessage({
       role: 'assistant',
       content: [],

@@ -69,6 +69,7 @@ function createHandle(): PiviChatViewHandle {
       activateSession: jest.fn(async () => false),
       refreshModelPresentation: jest.fn(),
       refreshTabBarPosition: jest.fn(),
+      refreshChatDisplaySettings: jest.fn(),
       refreshRuntimePrompt: jest.fn(async () => undefined),
       reloadMcpServers: jest.fn(async () => undefined),
       refreshVaultSkills: jest.fn(async () => undefined),

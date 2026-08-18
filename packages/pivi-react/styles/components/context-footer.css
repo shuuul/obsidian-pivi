@@ -39,6 +39,13 @@
     stroke var(--pivi-duration-deliberate) var(--pivi-ease-in-out);
 }
 
+.pivi-meter-fill-cache {
+  stroke: var(--pivi-host-text-success);
+  transition:
+    stroke-dashoffset var(--pivi-duration-deliberate) var(--pivi-ease-in-out),
+    stroke var(--pivi-duration-deliberate) var(--pivi-ease-in-out);
+}
+
 /* Warning state (> 80% compaction pressure) - arc fill still follows context usage. */
 .pivi-context-meter-gauge.warning .pivi-meter-fill,
 .pivi-context-meter-gauge.warning .pivi-meter-fill-input {

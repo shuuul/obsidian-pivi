@@ -142,6 +142,8 @@ describe('React surface mounts', () => {
                 tabBarPosition: 'input',
                 enableAutoScroll: true,
                 deferMathRenderingDuringStreaming: true,
+                showCacheHitRate: true,
+                showTokensPerSecond: true,
                 enableAutoTitleGeneration: false,
                 userName: '',
                 excludedTags: [],

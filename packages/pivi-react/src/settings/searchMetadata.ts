@@ -15,6 +15,8 @@ const SETTINGS_SEARCH_KEYS = [
   'settings.tabBarPosition.name',
   'settings.chatBehavior',
   'settings.enableAutoScroll.name',
+  'settings.showCacheHitRate.name',
+  'settings.showTokensPerSecond.name',
   'settings.deferMathRenderingDuringStreaming.name',
   'settings.autoTitle.name',
   'settings.personalizationContext',

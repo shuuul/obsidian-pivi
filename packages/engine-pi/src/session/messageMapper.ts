@@ -300,6 +300,9 @@ function applyAssistantUiOverlay(
   if (ui.durationFlavorWord) {
     target.durationFlavorWord = ui.durationFlavorWord;
   }
+  if (ui.tokensPerSecond !== undefined) {
+    target.tokensPerSecond = ui.tokensPerSecond;
+  }
   if (ui.assistantMessageId) {
     target.assistantMessageId = ui.assistantMessageId;
   } else {
@@ -478,6 +481,7 @@ export function entriesToChatMessages(
       turnRequest: agentMsg.role === 'user' ? ui?.turnRequest : undefined,
       durationSeconds: ui?.durationSeconds,
       durationFlavorWord: ui?.durationFlavorWord,
+      tokensPerSecond: ui?.tokensPerSecond,
       parentEntryId: entry.parentId ?? null,
       userMessageId: agentMsg.role === 'user' ? (ui?.userMessageId ?? entry.id) : undefined,
       assistantMessageId: agentMsg.role === 'assistant' ? (ui?.assistantMessageId ?? entry.id) : undefined,

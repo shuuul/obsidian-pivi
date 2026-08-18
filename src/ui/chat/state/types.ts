@@ -81,11 +81,43 @@ export interface ChatStateData {
 
   // Auto-scroll control during streaming
   autoScrollEnabled: boolean;
+  showCacheHitRate: boolean;
+  showTokensPerSecond: boolean;
 
   // Response timer state
   responseStartTime: number | null;
   welcomeGreeting: string | null;
   navigationVisible: boolean;
+}
+
+export function createInitialChatStateData(): ChatStateData {
+  return {
+    messages: [],
+    hasOlderMessages: false,
+    totalMessageCount: 0,
+    olderMessageCount: 0,
+    olderUserMessageCount: 0,
+    isStreaming: false,
+    cancelRequested: false,
+    streamGeneration: 0,
+    isCreatingSession: false,
+    isSwitchingSession: false,
+    hasPendingSessionSave: false,
+    currentOpenSessionId: null,
+    queuedMessages: [],
+    currentTextContent: '',
+    usage: null,
+    ignoreUsageUpdates: false,
+    currentTodos: null,
+    currentTodoVisualizationModel: null,
+    needsAttention: false,
+    autoScrollEnabled: true,
+    showCacheHitRate: true,
+    showTokensPerSecond: true,
+    responseStartTime: null,
+    welcomeGreeting: null,
+    navigationVisible: false,
+  };
 }
 
 

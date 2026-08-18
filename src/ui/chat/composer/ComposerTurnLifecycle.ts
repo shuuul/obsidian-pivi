@@ -83,6 +83,7 @@ export function beginOutgoingTurn(
   state.isStreaming = true;
   state.cancelRequested = false;
   state.ignoreUsageUpdates = false;
+  state.resetTurnGeneration();
   deps.getSubagentManager().resetSpawnedCount();
   state.autoScrollEnabled = settings.getSettingsSnapshot().enableAutoScroll;
   const streamGeneration = state.bumpStreamGeneration();

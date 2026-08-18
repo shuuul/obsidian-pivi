@@ -9,7 +9,8 @@ import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 const snapshot: SettingsUiSnapshotData = {
   general: {
     locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true,
-    deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false,
+    deferMathRenderingDuringStreaming: true, showCacheHitRate: true, showTokensPerSecond: true,
+    enableAutoTitleGeneration: false,
     userName: '', excludedTags: [], deletedSessionRetentionDays: 30,
     requireCommandOrControlEnterToSend: false,
     keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
@@ -176,6 +177,12 @@ describe('React settings foundation', () => {
     fireEvent.click(autoScroll!);
     await act(async () => undefined);
     expect(saveGeneral).toHaveBeenCalledWith({ enableAutoScroll: false });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show cache hit rate' }));
+    await act(async () => undefined);
+    expect(saveGeneral).toHaveBeenCalledWith({ showCacheHitRate: false });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Show tokens per second' }));
+    await act(async () => undefined);
+    expect(saveGeneral).toHaveBeenCalledWith({ showTokensPerSecond: false });
   });
 
   it('does not expose internal compaction policy as a setting', () => {

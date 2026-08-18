@@ -941,7 +941,8 @@ describe('React ChatShell tabs', () => {
     expect(targets.composer.querySelector('path.pivi-meter-bg')?.getAttribute('d')).toBe('M 1.94 11.5 A 7 7 0 1 1 14.06 11.5');
     expect(within(targets.composer).queryByLabelText(/Output /)).toBeNull();
     expect(targets.composer.querySelector('.pivi-context-meter-gauge-output')).toBeNull();
-    expect(targets.composer.querySelectorAll('.pivi-context-meter-gauge')).toHaveLength(1);
+    expect(targets.composer.querySelectorAll('.pivi-context-meter-gauge')).toHaveLength(2);
+    expect(within(targets.composer).getByLabelText('0% cache hit (0 of 980)')).not.toBeNull();
     expect(targets.composer.querySelector('.pivi-input-action-group .pivi-context-meter')).not.toBeNull();
 
     act(() => uiStore.update({
@@ -1010,6 +1011,46 @@ describe('React ChatShell tabs', () => {
       },
     }));
     expect(within(targets.composer).getByLabelText('980 / 1K (98%)')).toHaveClass('warning');
+    expect(within(targets.composer).getByLabelText('0% cache hit (0 of 980)')).not.toBeNull();
+
+    act(() => uiStore.update({
+      usage: {
+        contextTokens: 1000,
+        contextWindow: 2000,
+        inputTokens: 400,
+        cacheReadInputTokens: 500,
+        cacheCreationInputTokens: 100,
+        outputTokenLimit: 200,
+        outputTokens: 40,
+        percentage: 50,
+      },
+    }));
+    const meters = targets.composer.querySelectorAll('.pivi-input-action-group .pivi-context-meter');
+    expect(meters).toHaveLength(2);
+    expect(meters[0]).toHaveClass('pivi-cache-meter');
+    expect(within(meters[0] as HTMLElement).getByLabelText('50% cache hit (500 of 1K)')).not.toBeNull();
+    expect(within(meters[1] as HTMLElement).getByLabelText('1K / 2K (50%)')).not.toBeNull();
+    expect(targets.composer.querySelectorAll('.pivi-context-meter-gauge')).toHaveLength(2);
+
+    act(() => uiStore.update({ showCacheHitRate: false }));
+    expect(targets.composer.querySelector('.pivi-cache-meter')).toBeNull();
+    expect(targets.composer.querySelectorAll('.pivi-context-meter-gauge')).toHaveLength(1);
+
+    act(() => uiStore.update({
+      showCacheHitRate: true,
+      usage: {
+        contextTokens: 900,
+        contextWindow: 2000,
+        inputTokens: 700,
+        cacheReadInputTokens: 0,
+        cacheCreationInputTokens: 200,
+        outputTokenLimit: 200,
+        outputTokens: 40,
+        percentage: 45,
+      },
+    }));
+    expect(within(targets.composer).getByLabelText('0% cache hit (0 of 900)')).not.toBeNull();
+    expect(targets.composer.querySelectorAll('.pivi-context-meter-gauge')).toHaveLength(2);
 
     act(() => uiStore.update({
       usage: {

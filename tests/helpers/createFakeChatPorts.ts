@@ -64,6 +64,8 @@ export function createFakeChatPorts(
         thinkingLevel: 'medium',
         customContextLimits: {},
         enableAutoScroll: true,
+        showCacheHitRate: true,
+        showTokensPerSecond: true,
         enableAutoTitleGeneration: true,
         titleGenerationModel: '',
         userName: '',

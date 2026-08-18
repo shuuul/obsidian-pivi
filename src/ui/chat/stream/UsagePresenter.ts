@@ -69,7 +69,7 @@ export class UsagePresenter {
     this.nextUsageFollowsCompaction = true;
   }
 
-  handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {
+  handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): boolean {
     const { state } = this.deps;
     const currentSessionId = this.deps.getAgentService?.()?.getSessionId() ?? null;
     const followsCompaction = this.nextUsageFollowsCompaction;
@@ -81,7 +81,7 @@ export class UsagePresenter {
       ignoreUsageUpdates: state.ignoreUsageUpdates,
       followsCompaction,
     })) {
-      return;
+      return false;
     }
     const activeModel = resolveActiveChatModel(
       this.deps.settings,
@@ -90,5 +90,6 @@ export class UsagePresenter {
     state.usage = activeModel && !chunk.usage.model
       ? { ...chunk.usage, model: activeModel }
       : chunk.usage;
+    return true;
   }
 }

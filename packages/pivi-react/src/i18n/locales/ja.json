@@ -163,6 +163,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
+      "cacheHit": "{percentage}% キャッシュヒット（{cached} / {prompt}）",
       "unknownContextLength": "現在のモデルのコンテキスト長を取得できません。"
     },
     "todos": {
@@ -196,6 +197,7 @@
       "thought": "思考",
       "defaultDurationFlavor": "完了",
       "responseDuration": "* {flavor}：{duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "拡張思考 — クリックして展開",
       "writing": "書き込み中…",
       "statusDone": "完了",
@@ -492,6 +494,14 @@
     "enableAutoScroll": {
       "name": "ストリーミング中に自動スクロール",
       "desc": "Pi が応答をストリーミングしている間、自動で下部へスクロールします。無効にすると上部に留まり、最初から読めます。"
+    },
+    "showCacheHitRate": {
+      "name": "キャッシュヒット率を表示",
+      "desc": "コンテキスト使用量リングの横に、直近ターンのプロンプトキャッシュヒット率を表示します。"
+    },
+    "showTokensPerSecond": {
+      "name": "1 秒あたりのトークン数を表示",
+      "desc": "完了したアシスタント返信に生成速度を表示します。"
     },
     "deferMathRenderingDuringStreaming": {
       "name": "ストリーミング中の数式描画を遅延",

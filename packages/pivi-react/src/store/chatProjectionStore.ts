@@ -215,6 +215,7 @@ function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessag
     }),
     durationFlavorWord: message.durationFlavorWord,
     durationSeconds: message.durationSeconds,
+    tokensPerSecond: message.tokensPerSecond,
     id: message.id,
     isInterrupt: message.isInterrupt,
     isRebuiltContext: message.isRebuiltContext,

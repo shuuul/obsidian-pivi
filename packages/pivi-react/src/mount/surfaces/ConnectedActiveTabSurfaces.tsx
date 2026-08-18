@@ -17,8 +17,8 @@ const WELCOME_SLICE_KEYS = ['welcomeGreeting'] as const;
 const QUEUE_SLICE_KEYS = ['queuedTurns'] as const;
 const TODO_SLICE_KEYS = ['currentTodoVisualizationModel'] as const;
 const NAVIGATION_SLICE_KEYS = ['autoScrollEnabled', 'navigationVisible'] as const;
-const COMPOSER_SLICE_KEYS = ['composer', 'externalContext', 'usage', 'isStreaming'] as const;
-const MESSAGES_SLICE_KEYS = ['isStreaming', 'autoScrollEnabled', 'thinkingIndicator', 'hasOlderMessages'] as const;
+const COMPOSER_SLICE_KEYS = ['composer', 'externalContext', 'usage', 'isStreaming', 'showCacheHitRate'] as const;
+const MESSAGES_SLICE_KEYS = ['isStreaming', 'autoScrollEnabled', 'thinkingIndicator', 'hasOlderMessages', 'showTokensPerSecond'] as const;
 
 function usePortalTargets(activeChat: ActiveChatUiBridge) {
   return useSyncExternalStore(
@@ -174,6 +174,7 @@ const MessagesPortal = memo(function MessagesPortal({
         scrollElement={targets.messagesViewport}
         store={projectionStore}
         thinkingIndicator={snapshot.thinkingIndicator}
+        showTokensPerSecond={snapshot.showTokensPerSecond}
       />
     </>,
     targets.messages,

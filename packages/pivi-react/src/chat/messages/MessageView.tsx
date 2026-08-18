@@ -151,11 +151,12 @@ export interface MessageViewProps {
   readonly contentAdapters?: MessageContentAdapters;
   readonly hideActions?: boolean;
   readonly isStreaming?: boolean;
+  readonly showTokensPerSecond?: boolean;
   readonly projectionStore?: ChatProjectionStore;
 }
 
 /** The sole React owner of a visible message shell and its action toolbar. */
-export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, isStreaming = false, message, projectionStore }: MessageViewProps) {
+export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, isStreaming = false, message, projectionStore, showTokensPerSecond = true }: MessageViewProps) {
   const t = useT();
   const getLatestMessage = () => (
     projectionStore?.getMessageSnapshot(message.id) as ChatMessage | null
@@ -203,7 +204,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
           ? <UserContent contentAdapters={contentAdapters} message={message} />
           : (
             <>
-              <AssistantContentView contentAdapters={contentAdapters} isStreaming={isStreaming} message={message} projectionStore={projectionStore} />
+              <AssistantContentView contentAdapters={contentAdapters} isStreaming={isStreaming} message={message} projectionStore={projectionStore} showTokensPerSecond={showTokensPerSecond} />
               {message.isInterrupt ? <InterruptIndicator /> : null}
             </>
           )}

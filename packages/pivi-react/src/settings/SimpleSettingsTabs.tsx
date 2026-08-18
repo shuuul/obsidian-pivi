@@ -345,6 +345,12 @@ export function GeneralSettingsTab({
         <SettingRow name={t('settings.enableAutoScroll.name')} description={t('settings.enableAutoScroll.desc')}>
           <Toggle checked={general.enableAutoScroll} label={t('settings.enableAutoScroll.name')} onChange={(enableAutoScroll) => { void save({ enableAutoScroll }); }} />
         </SettingRow>
+        <SettingRow name={t('settings.showCacheHitRate.name')} description={t('settings.showCacheHitRate.desc')}>
+          <Toggle checked={general.showCacheHitRate} label={t('settings.showCacheHitRate.name')} onChange={(showCacheHitRate) => { void save({ showCacheHitRate }); }} />
+        </SettingRow>
+        <SettingRow name={t('settings.showTokensPerSecond.name')} description={t('settings.showTokensPerSecond.desc')}>
+          <Toggle checked={general.showTokensPerSecond} label={t('settings.showTokensPerSecond.name')} onChange={(showTokensPerSecond) => { void save({ showTokensPerSecond }); }} />
+        </SettingRow>
         <SettingRow
           name={t('settings.deferMathRenderingDuringStreaming.name')}
           description={t('settings.deferMathRenderingDuringStreaming.desc')}

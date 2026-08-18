@@ -49,6 +49,7 @@ export interface MessageListProps {
   readonly isStreaming: boolean;
   readonly autoScrollEnabled: boolean;
   readonly thinkingIndicator: ChatUiSnapshot['thinkingIndicator'];
+  readonly showTokensPerSecond?: boolean;
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
   readonly hasOlderMessages?: boolean;
@@ -87,12 +88,14 @@ function ProjectedMessageRow({
   hideActions,
   isStreaming,
   messageId,
+  showTokensPerSecond,
   store,
 }: {
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
   readonly hideActions: boolean;
   readonly isStreaming: boolean;
+  readonly showTokensPerSecond?: boolean;
   readonly messageId: string;
   readonly store: ChatProjectionStore;
 }) {
@@ -106,6 +109,7 @@ function ProjectedMessageRow({
       isStreaming={isStreaming}
       message={message as ChatMessage}
       projectionStore={store}
+      showTokensPerSecond={showTokensPerSecond}
     />
   );
 }
@@ -120,6 +124,7 @@ export function MessageList({
   onLoadPreviousPage,
   onViewportHandle,
   scrollElement,
+  showTokensPerSecond = true,
   store,
   thinkingIndicator,
 }: MessageListProps) {
@@ -392,6 +397,7 @@ export function MessageList({
                   hideActions={virtualItem.index >= streamingRowStart}
                   isStreaming={isStreaming && virtualItem.index >= streamingRowStart}
                   messageId={messageId}
+                  showTokensPerSecond={showTokensPerSecond}
                   store={store}
                 />
               )

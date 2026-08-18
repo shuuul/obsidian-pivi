@@ -42,9 +42,13 @@ function buildMessageUiPatch(message: ChatMessage): MessageUiPatch | null {
   if (message.durationFlavorWord) {
     patch.durationFlavorWord = message.durationFlavorWord;
   }
+  if (message.tokensPerSecond !== undefined) {
+    patch.tokensPerSecond = message.tokensPerSecond;
+  }
   patch.assistantMessageId = targetEntryId;
 
-  return patch.contentBlocks || patch.toolCalls || patch.durationSeconds !== undefined || patch.durationFlavorWord
+  return patch.contentBlocks || patch.toolCalls || patch.durationSeconds !== undefined
+    || patch.durationFlavorWord || patch.tokensPerSecond !== undefined
     ? patch
     : null;
 }

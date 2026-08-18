@@ -1,11 +1,15 @@
 import type { UsageInfo } from '@pivi/agent/foundation';
 import {
+  calculateCacheHitPercentage,
   calculateContextEnvelope,
   calculateCompactionRemainingTokens,
   calculateContextUsagePercentage,
   calculateReadToolMaxChars,
+  calculateTokensPerSecond,
   calculateUsagePercentage,
   isContextOverLimit,
+  MIN_GENERATION_ELAPSED_MS_FOR_TPS,
+  preserveCacheActivity,
   READ_TOOL_MAX_CHARS_CAP,
   recalculateUsageForModel,
 } from '@pivi/agent/foundation/usage';
@@ -258,5 +262,82 @@ describe('usage projection', () => {
       contextEnvelope,
       contextTokens: 500,
     })).toBe(true);
+  });
+
+  it('returns 0% cache hit when the provider reported no cache activity', () => {
+    expect(calculateCacheHitPercentage(baseUsage)).toBe(0);
+    expect(calculateCacheHitPercentage({
+      ...baseUsage,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+    })).toBe(0);
+  });
+
+  it('returns null cache hit when there is no prompt context yet', () => {
+    expect(calculateCacheHitPercentage({
+      ...baseUsage,
+      contextTokens: 0,
+      cacheReadInputTokens: 500,
+    })).toBeNull();
+  });
+
+  it('shows 0% cache hit for a write-only first turn', () => {
+    expect(calculateCacheHitPercentage({
+      ...baseUsage,
+      cacheCreationInputTokens: 200,
+      cacheReadInputTokens: 0,
+      contextTokens: 900,
+      inputTokens: 700,
+    })).toBe(0);
+  });
+
+  it('uses Pi-style cacheRead / contextTokens for latest-turn cache hit', () => {
+    expect(calculateCacheHitPercentage({
+      ...baseUsage,
+      cacheCreationInputTokens: 100,
+      cacheReadInputTokens: 500,
+      contextTokens: 1000,
+      inputTokens: 400,
+    })).toBe(50);
+  });
+
+  it('returns null tokens/s when output or elapsed is too small', () => {
+    expect(calculateTokensPerSecond(0, 1_000)).toBeNull();
+    expect(calculateTokensPerSecond(40, MIN_GENERATION_ELAPSED_MS_FOR_TPS - 1)).toBeNull();
+  });
+
+  it('divides provider output tokens by generation seconds', () => {
+    expect(calculateTokensPerSecond(80, 2_000)).toBe(40);
+  });
+
+  it('keeps last provider cache activity when a later usage omits cache fields', () => {
+    expect(preserveCacheActivity({
+      ...baseUsage,
+      cacheCreationInputTokens: 100,
+      cacheReadInputTokens: 500,
+    }, {
+      ...baseUsage,
+      contextTokens: 1_200,
+    })).toEqual({
+      ...baseUsage,
+      contextTokens: 1_200,
+      cacheCreationInputTokens: 100,
+      cacheReadInputTokens: 500,
+    });
+  });
+
+  it('does not revive cache activity when the latest assistant reported none', () => {
+    expect(preserveCacheActivity({
+      ...baseUsage,
+      cacheReadInputTokens: 500,
+    }, {
+      ...baseUsage,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+    })).toEqual({
+      ...baseUsage,
+      cacheCreationInputTokens: 0,
+      cacheReadInputTokens: 0,
+    });
   });
 });

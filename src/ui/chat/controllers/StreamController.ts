@@ -169,11 +169,8 @@ export class StreamController {
     ) {
       msg = this.deps.state.projectStreamChunk(msg, chunk);
     }
+    this.applyForegroundGenerationClock(chunk, backgroundSubagent);
     switch (chunk.type) {
-      case 'thinking':
-      case 'text':
-        break;
-
       case 'tool_use':
         this.handleToolUseChunk(chunk, msg);
         break;
@@ -291,6 +288,17 @@ export class StreamController {
     this.hideThinkingIndicator();
   }
 
+  private applyForegroundGenerationClock(chunk: StreamChunk, backgroundSubagent: boolean): void {
+    if (backgroundSubagent) return;
+    if (chunk.type === 'thinking' || chunk.type === 'text') {
+      this.deps.state.startTurnGeneration(performance.now());
+      return;
+    }
+    if (chunk.type === 'tool_use') {
+      this.deps.state.pauseTurnGeneration(performance.now());
+    }
+  }
+
   private handleRetryChunk(
     chunk: Extract<StreamChunk, { type: 'retry_end' | 'retry_start' }>,
     backgroundSubagent: boolean,
@@ -323,7 +331,9 @@ export class StreamController {
   }
 
   private handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {
-    this.usagePresenter.handleUsageChunk(chunk);
+    if (this.usagePresenter.handleUsageChunk(chunk)) {
+      this.deps.state.recordTurnUsage(chunk.usage.outputTokens ?? 0, performance.now());
+    }
   }
 
   private async handleToolResult(

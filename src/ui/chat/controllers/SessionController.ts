@@ -111,6 +111,7 @@ export class SessionController {
       state.usage = null;
       state.currentTodos = null;
       state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
+      state.applyChatDisplaySettings(settingsSnapshot);
       state.hasPendingSessionSave = false;
 
       // Reset agent service session (no session ID for entry point)
@@ -163,6 +164,7 @@ export class SessionController {
       state.usage = null;
       state.currentTodos = null;
       state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
+      state.applyChatDisplaySettings(settingsSnapshot);
       state.hasPendingSessionSave = false;
 
       // Pass persistent paths to prevent stale external contexts
@@ -324,6 +326,7 @@ export class SessionController {
         )
       : null;
     state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
+    state.applyChatDisplaySettings(settingsSnapshot);
     state.hasPendingSessionSave = false;
 
     // Rebuild todo visualization from persisted assistant tool calls.

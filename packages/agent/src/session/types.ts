@@ -73,6 +73,7 @@ export interface PiviMessageUiData {
   toolCalls?: ChatMessage['toolCalls'];
   durationSeconds?: number;
   durationFlavorWord?: string;
+  tokensPerSecond?: number;
   userMessageId?: string;
   assistantMessageId?: string;
 }
@@ -149,6 +150,7 @@ export interface MessageUiPatch {
   toolCalls?: ChatMessage['toolCalls'];
   durationSeconds?: number;
   durationFlavorWord?: string;
+  tokensPerSecond?: number;
   userMessageId?: string;
   assistantMessageId?: string;
 }

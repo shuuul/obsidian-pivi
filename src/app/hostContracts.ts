@@ -90,6 +90,7 @@ export interface PiviChatViewMaintenance {
   activateSession(openSessionId: string): Promise<boolean>;
   refreshModelPresentation(): void;
   refreshTabBarPosition(): void;
+  refreshChatDisplaySettings(): void;
   refreshRuntimePrompt(): Promise<void>;
   reloadMcpServers(): Promise<void>;
   refreshVaultSkills(): Promise<void>;

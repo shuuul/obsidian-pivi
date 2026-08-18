@@ -560,6 +560,7 @@ describe('OpenSessionManager linear hydration', () => {
         timestamp: 1,
         assistantMessageId: 'a1',
         durationSeconds: 2,
+        tokensPerSecond: 41.2,
         contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
         toolCalls: [{
           id: 'spawn-1',
@@ -592,6 +593,7 @@ describe('OpenSessionManager linear hydration', () => {
         targetEntryId: 'a1',
         assistantMessageId: 'a1',
         durationSeconds: 2,
+        tokensPerSecond: 41.2,
         contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
         toolCalls: [expect.objectContaining({
           id: 'spawn-1',

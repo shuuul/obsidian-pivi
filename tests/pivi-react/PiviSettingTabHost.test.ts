@@ -55,6 +55,8 @@ describe('settings search metadata', () => {
       'Subagents',
       'Commands',
       'Language',
+      'Show cache hit rate',
+      'Show tokens per second',
     ]));
     expect(new Set(english).size).toBe(english.length);
 

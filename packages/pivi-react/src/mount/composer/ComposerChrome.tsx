@@ -5,6 +5,7 @@ import { PlatformIcon, QueueMessageIcon } from '../../icons';
 import { usePresentationPlatform } from '../../platform';
 import type { ChatUiSnapshot } from '../../store';
 import type { ComposerChromeActions } from '../activeChatUiBridge';
+import { CacheHitMeter } from './CacheHitMeter';
 import {
   ExternalContextControl,
   ModelSelector,
@@ -59,6 +60,7 @@ export function ComposerChrome({
         value={composer.mode}
       />
       <div className="pivi-input-action-group">
+        {snapshot.showCacheHitRate ? <CacheHitMeter usage={snapshot.usage} /> : null}
         <UsageMeter usage={snapshot.usage} />
         <div className="pivi-send-button-wrap" ref={sendWrapRef}>
           <button

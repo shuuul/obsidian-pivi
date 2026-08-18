@@ -47,6 +47,36 @@ describe('AssistantContentView', () => {
     expect(container.querySelector('.pivi-response-footer')).toHaveTextContent('Distilled for 3:22');
   });
 
+  it('appends tokens/s to the duration footer and hides it when the setting is off', () => {
+    const message = assistantMessage({
+      content: 'Done',
+      durationFlavorWord: 'Distilled',
+      durationSeconds: 202,
+      tokensPerSecond: 42,
+    });
+    const { container, rerender } = renderAssistant(message);
+
+    expect(container.querySelector('.pivi-response-footer')).toHaveTextContent('Distilled for 3:22 · 42 tok/s');
+
+    rerender(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <AssistantContentView message={message} showTokensPerSecond={false} />
+      </I18nProvider>,
+    ));
+    expect(container.querySelector('.pivi-response-footer')).toHaveTextContent('Distilled for 3:22');
+    expect(container.querySelector('.pivi-response-footer')?.textContent).not.toContain('tok/s');
+  });
+
+  it('shows a tokens/s-only footer when duration is missing', () => {
+    const { container } = renderAssistant(assistantMessage({
+      content: 'Done',
+      tokensPerSecond: 12.5,
+    }));
+
+    expect(container.querySelector('.pivi-response-footer')).toHaveTextContent('12.5 tok/s');
+    expect(container.querySelector('.pivi-response-footer')?.textContent).not.toContain('for');
+  });
+
   it('keeps content blocks ordered, resolves referenced tools by id, then renders orphan tools', () => {
     const { container } = renderAssistant(assistantMessage({
       contentBlocks: [

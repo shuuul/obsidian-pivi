@@ -103,6 +103,8 @@ export interface ChatMessage {
   durationSeconds?: number;
   /** Flavor word used for duration display (e.g., "Baked", "Cooked"). */
   durationFlavorWord?: string;
+  /** Completed-turn generation speed, excluding tool time. */
+  tokensPerSecond?: number;
   /** JSONL parent entry id used for conversation rewind checkpoints. */
   parentEntryId?: string | null;
   /** JSONL user message entry id used for fork/rewind checkpoints. */

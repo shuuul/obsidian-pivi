@@ -38,6 +38,8 @@ export interface ChatUiSnapshotData {
   currentThinkingContent: string;
   thinkingIndicator: ThinkingIndicatorSnapshot | null;
   usage: UsageInfo | null;
+  showCacheHitRate: boolean;
+  showTokensPerSecond: boolean;
   ignoreUsageUpdates: boolean;
   currentTodoVisualizationModel: TodoVisualizationModel | null;
   needsAttention: boolean;
@@ -154,6 +156,8 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
     currentThinkingContent: '',
     thinkingIndicator: null,
     usage: null,
+    showCacheHitRate: true,
+    showTokensPerSecond: true,
     ignoreUsageUpdates: false,
     currentTodoVisualizationModel: null,
     needsAttention: false,

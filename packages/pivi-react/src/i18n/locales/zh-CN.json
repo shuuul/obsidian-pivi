@@ -163,6 +163,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
+      "cacheHit": "{percentage}% 缓存命中（{cached} / {prompt}）",
       "unknownContextLength": "无法获取当前模型的上下文长度。"
     },
     "todos": {
@@ -196,6 +197,7 @@
       "thought": "思考",
       "defaultDurationFlavor": "完成",
       "responseDuration": "* {flavor} 用时 {duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "扩展思考 — 点击展开",
       "writing": "写入中…",
       "statusDone": "完成",
@@ -492,6 +494,14 @@
     "enableAutoScroll": {
       "name": "流式传输时自动滚动",
       "desc": "在 Pi 流式传输响应时自动滚动到底部。禁用后将停留在顶部，从头开始阅读。"
+    },
+    "showCacheHitRate": {
+      "name": "显示缓存命中率",
+      "desc": "在上下文用量环旁显示最近一轮的提示缓存命中率。"
+    },
+    "showTokensPerSecond": {
+      "name": "显示每秒令牌数",
+      "desc": "在已完成的助手回复上显示生成速度。"
     },
     "deferMathRenderingDuringStreaming": {
       "name": "流式传输时延迟渲染数学公式",

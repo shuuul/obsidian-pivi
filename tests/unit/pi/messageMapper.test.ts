@@ -1118,13 +1118,46 @@ describe('MessageMapper', () => {
         customType: PIVI_MESSAGE_UI,
         data: { targetEntryId: 'a1', durationSeconds: 2 },
       },
+      {
+        type: 'custom',
+        id: 'c3',
+        parentId: 'c2',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: { targetEntryId: 'a1', tokensPerSecond: 42.5 },
+      },
     ];
 
     expect(collectMessageUiMap(branch).get('a1')).toEqual({
       targetEntryId: 'a1',
       contentBlocks: [{ type: 'text', content: 'hello' }],
       durationSeconds: 2,
+      tokensPerSecond: 42.5,
     });
+  });
+
+  it('applies tokensPerSecond from a message-ui overlay onto the restored assistant message', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: { role: 'assistant', content: 'Done', timestamp: 1 } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: { targetEntryId: 'a1', tokensPerSecond: 42.5, durationSeconds: 3 },
+      },
+    ];
+
+    const message = first(entriesToChatMessages(branch, collectMessageUiMap(branch)));
+    expect(message.tokensPerSecond).toBe(42.5);
+    expect(message.durationSeconds).toBe(3);
   });
 });
 

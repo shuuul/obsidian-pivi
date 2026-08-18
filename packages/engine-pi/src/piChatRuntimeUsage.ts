@@ -65,6 +65,7 @@ export function buildEstimatedUsageInfo(
     return null;
   }
   const contextWindow = resolvedModel?.contextWindow ?? 0;
+  const latestAssistantUsage = latestUsageFromMessages(messages, resolvedModel);
   return {
     contextTokens,
     contextTokensIsAuthoritative: false,
@@ -73,6 +74,12 @@ export function buildEstimatedUsageInfo(
     inputTokens: contextTokens,
     ...(resolvedModel?.maxTokens ? { outputTokenLimit: resolvedModel.maxTokens } : {}),
     ...(typeof resolvedModel?.id === 'string' ? { model: resolvedModel.id } : {}),
+    ...(latestAssistantUsage?.cacheCreationInputTokens !== undefined
+      ? { cacheCreationInputTokens: latestAssistantUsage.cacheCreationInputTokens }
+      : {}),
+    ...(latestAssistantUsage?.cacheReadInputTokens !== undefined
+      ? { cacheReadInputTokens: latestAssistantUsage.cacheReadInputTokens }
+      : {}),
     percentage: contextWindow > 0
       ? Math.min(100, Math.max(0, Math.round((contextTokens / contextWindow) * 100)))
       : 0,

@@ -214,6 +214,8 @@ describe('UI port adapters', () => {
     const snapshot = ports.settings.getSettingsSnapshot();
     expect(snapshot).toEqual(expect.objectContaining({
       enableAutoScroll: true,
+      showCacheHitRate: true,
+      showTokensPerSecond: true,
       enableAutoTitleGeneration: true,
       environmentVariables: expect.any(String),
       externalReadDirectories: expect.any(Array),
@@ -431,6 +433,66 @@ describe('UI port adapters', () => {
     expect(saveSettings).toHaveBeenCalledTimes(1);
     expect(refreshFirst).toHaveBeenCalledTimes(1);
     expect(refreshSecond).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies cache-hit and tokens/s display settings to every mounted view', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshFirst = jest.fn();
+    const refreshSecond = jest.fn();
+    const host = {
+      settings: { ...DEFAULT_PIVI_SETTINGS } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [
+        { getChatHandle: () => ({ maintenance: { refreshChatDisplaySettings: refreshFirst } }) },
+        { getChatHandle: () => ({ maintenance: { refreshChatDisplaySettings: refreshSecond } }) },
+      ],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+
+    await ports.actions.saveGeneral({ showCacheHitRate: false });
+
+    expect(host.settings.showCacheHitRate).toBe(false);
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(refreshFirst).toHaveBeenCalledTimes(1);
+    expect(refreshSecond).toHaveBeenCalledTimes(1);
+
+    await ports.actions.saveGeneral({ showTokensPerSecond: false });
+
+    expect(host.settings.showTokensPerSecond).toBe(false);
+    expect(refreshFirst).toHaveBeenCalledTimes(2);
+    expect(refreshSecond).toHaveBeenCalledTimes(2);
+  });
+
+  it('defaults missing cache-hit and tokens/s settings to on', () => {
+    const settings = { ...DEFAULT_PIVI_SETTINGS } as PiviSettings;
+    delete (settings as { showCacheHitRate?: boolean }).showCacheHitRate;
+    delete (settings as { showTokensPerSecond?: boolean }).showTokensPerSecond;
+    const host = {
+      settings,
+      saveSettings: jest.fn(async () => undefined),
+      getAllViews: () => [],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+    const general = ports.snapshot.getSnapshot().general;
+
+    expect(general.showCacheHitRate).toBe(true);
+    expect(general.showTokensPerSecond).toBe(true);
   });
 
   it('invalidates slash catalogs when tool enablement changes', async () => {

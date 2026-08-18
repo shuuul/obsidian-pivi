@@ -437,10 +437,15 @@ export class InputTurnPipeline {
     streamController.hideThinkingIndicator();
     state.isStreaming = false;
     state.cancelRequested = false;
+    const now = performance.now();
+    const generation = state.snapshotTurnGeneration(now);
     captureResponseDurationFooter({
       message: options.finalAssistantMsg,
       responseStartTime: state.responseStartTime,
       didCancelThisTurn,
+      outputTokens: generation.outputTokens,
+      generationElapsedMs: generation.generationElapsedMs,
+      now: () => now,
     });
     state.notifyMessageChanged(options.finalAssistantMsg);
     state.completeProjectionRun();

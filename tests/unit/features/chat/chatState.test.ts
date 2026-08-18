@@ -375,6 +375,30 @@ describe('ChatState', () => {
     });
   });
 
+  describe('usage', () => {
+    it('keeps last cache activity when a later estimate omits cache fields', () => {
+      const state = new ChatState();
+      state.usage = {
+        inputTokens: 400,
+        contextWindow: 100_000,
+        contextTokens: 1_000,
+        percentage: 1,
+        cacheCreationInputTokens: 100,
+        cacheReadInputTokens: 500,
+      };
+      state.usage = {
+        inputTokens: 1_200,
+        contextWindow: 100_000,
+        contextTokens: 1_200,
+        percentage: 1,
+      };
+
+      expect(state.usage?.cacheReadInputTokens).toBe(500);
+      expect(state.usage?.cacheCreationInputTokens).toBe(100);
+      expect(state.uiStore.getSnapshot().usage?.cacheReadInputTokens).toBe(500);
+    });
+  });
+
   describe('resetForNewSession', () => {
     it('clears messages, streaming state, and usage', () => {
       const state = new ChatState();

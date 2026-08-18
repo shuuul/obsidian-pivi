@@ -178,6 +178,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage}%)",
+      "cacheHit": "{percentage}% cache hit ({cached} of {prompt})",
       "unknownContextLength": "Unable to determine the context length for the current model."
     },
     "todos": {
@@ -211,6 +212,7 @@
       "thought": "Thought",
       "defaultDurationFlavor": "Baked",
       "responseDuration": "* {flavor} for {duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "Extended thinking — click to expand",
       "writing": "Writing…",
       "statusDone": "DONE",
@@ -502,6 +504,14 @@
     "enableAutoScroll": {
       "name": "Auto-scroll during streaming",
       "desc": "Automatically scroll to the bottom as Pi streams responses. Disable to stay at the top and read from the beginning."
+    },
+    "showCacheHitRate": {
+      "name": "Show cache hit rate",
+      "desc": "Show the latest-turn prompt-cache hit rate beside the context usage ring."
+    },
+    "showTokensPerSecond": {
+      "name": "Show tokens per second",
+      "desc": "Show generation speed on completed assistant replies."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "Defer math rendering during streaming",

@@ -7,6 +7,7 @@ import {
   getChatProjectionBlockId,
   useChatProjectionBlock,
 } from '../../store';
+import { formatTokensPerSecond } from '../../usage/usageInfo';
 import { MemoryBoundary } from './MemoryBoundary';
 import { ToolCallView, ToolStepGroupView } from './ToolCallView';
 import { isGroupableToolCall, shouldRenderToolCall } from './toolPresentation';
@@ -16,6 +17,7 @@ export interface AssistantContentViewProps {
   readonly message: ChatMessage;
   readonly contentAdapters?: MessageContentAdapters;
   readonly isStreaming?: boolean;
+  readonly showTokensPerSecond?: boolean;
   readonly projectionStore?: ChatProjectionStore;
 }
 
@@ -263,7 +265,13 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
     hasOrdinaryVisibleTool = true;
   }
 
-  const hasResponseFooter = Boolean(message.durationSeconds && message.durationSeconds > 0 && !hasCompactBoundary);
+  const hasResponseFooter = Boolean(
+    !hasCompactBoundary
+    && (
+      (message.durationSeconds && message.durationSeconds > 0)
+      || (message.tokensPerSecond !== undefined && message.tokensPerSecond > 0)
+    ),
+  );
   return hasOrdinaryVisibleTool
     && !hasNonEmptyText
     && !hasThinking
@@ -273,7 +281,7 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
 }
 
 /** Ordered assistant block presentation. contentBlocks are authoritative; toolCalls are resolved by id only. */
-export function AssistantContentView({ message, contentAdapters, isStreaming = false, projectionStore }: AssistantContentViewProps) {
+export function AssistantContentView({ message, contentAdapters, isStreaming = false, projectionStore, showTokensPerSecond = true }: AssistantContentViewProps) {
   const t = useT();
   const blocks = message.contentBlocks;
   const renderedToolIds = new Set<string>();
@@ -350,11 +358,20 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
   }
 
   const hasCompactBoundary = blocks?.some(block => block.type === 'context_compacted') ?? false;
-  if (message.durationSeconds && message.durationSeconds > 0 && !hasCompactBoundary) {
+  const durationLabel = message.durationSeconds && message.durationSeconds > 0
+    ? t('chat.stream.responseDuration', {
+        flavor: message.durationFlavorWord ?? t('chat.stream.defaultDurationFlavor'),
+        duration: formatDuration(message.durationSeconds),
+      })
+    : null;
+  const speedLabel = showTokensPerSecond && message.tokensPerSecond !== undefined && message.tokensPerSecond > 0
+    ? t('chat.stream.tokensPerSecond', { rate: formatTokensPerSecond(message.tokensPerSecond) })
+    : null;
+  if ((durationLabel || speedLabel) && !hasCompactBoundary) {
     content.push(
       <div className="pivi-response-footer" key={`${message.id}:duration`}>
         <span className="pivi-baked-duration pivi-response-meta">
-          {t('chat.stream.responseDuration', { flavor: message.durationFlavorWord ?? t('chat.stream.defaultDurationFlavor'), duration: formatDuration(message.durationSeconds) })}
+          {durationLabel && speedLabel ? `${durationLabel} · ${speedLabel}` : durationLabel ?? speedLabel}
         </span>
       </div>,
     );

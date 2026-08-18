@@ -50,6 +50,8 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   tabBarPosition: "input",
   enableAutoScroll: true,
   deferMathRenderingDuringStreaming: true,
+  showCacheHitRate: true,
+  showTokensPerSecond: true,
   chatViewPlacement: "right-sidebar",
   hiddenSlashCommands: [],
   workspaceCommandOrder: [],

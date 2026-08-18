@@ -163,6 +163,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
+      "cacheHit": "{percentage} % de succès du cache ({cached} sur {prompt})",
       "unknownContextLength": "Impossible de déterminer la longueur de contexte du modèle actuel."
     },
     "todos": {
@@ -196,6 +197,7 @@
       "thought": "Réflexion",
       "defaultDurationFlavor": "Terminé",
       "responseDuration": "* {flavor} en {duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "Réflexion étendue — cliquer pour développer",
       "writing": "Écriture…",
       "statusDone": "TERMINÉ",
@@ -492,6 +494,14 @@
     "enableAutoScroll": {
       "name": "Défilement automatique pendant le streaming",
       "desc": "Défiler automatiquement vers le bas pendant que Pi diffuse les réponses. Désactiver pour rester en haut et lire depuis le début."
+    },
+    "showCacheHitRate": {
+      "name": "Afficher le taux de succès du cache",
+      "desc": "Afficher le taux de succès du cache de prompt du dernier tour à côté de l’anneau d’usage du contexte."
+    },
+    "showTokensPerSecond": {
+      "name": "Afficher les tokens par seconde",
+      "desc": "Afficher la vitesse de génération sur les réponses d’assistant terminées."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "Différer le rendu mathématique pendant le streaming",

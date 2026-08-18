@@ -692,6 +692,8 @@ export interface PiviSettings {
   tabBarPosition: TabBarPosition;
   enableAutoScroll: boolean;
   deferMathRenderingDuringStreaming: boolean;
+  showCacheHitRate: boolean;
+  showTokensPerSecond: boolean;
   chatViewPlacement: ChatViewPlacement;
 
   // Slash command visibility (names without leading /)

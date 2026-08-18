@@ -163,6 +163,7 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage}%)",
+      "cacheHit": "{percentage}% 캐시 적중 ({cached} / {prompt})",
       "unknownContextLength": "현재 모델의 컨텍스트 길이를 확인할 수 없습니다."
     },
     "todos": {
@@ -196,6 +197,7 @@
       "thought": "생각",
       "defaultDurationFlavor": "완료",
       "responseDuration": "* {flavor} {duration}",
+      "tokensPerSecond": "{rate} tok/s",
       "thinkingExpandAria": "확장 사고 — 클릭하여 펼치기",
       "writing": "쓰는 중…",
       "statusDone": "완료",
@@ -492,6 +494,14 @@
     "enableAutoScroll": {
       "name": "스트리밍 중 자동 스크롤",
       "desc": "Pi가 응답을 스트리밍하는 동안 자동으로 아래로 스크롤합니다. 끄면 맨 위에 머물러 처음부터 읽을 수 있습니다."
+    },
+    "showCacheHitRate": {
+      "name": "캐시 적중률 표시",
+      "desc": "컨텍스트 사용량 링 옆에 최근 턴의 프롬프트 캐시 적중률을 표시합니다."
+    },
+    "showTokensPerSecond": {
+      "name": "초당 토큰 수 표시",
+      "desc": "완료된 어시스턴트 응답에 생성 속도를 표시합니다."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "스트리밍 중 수식 렌더링 지연",
