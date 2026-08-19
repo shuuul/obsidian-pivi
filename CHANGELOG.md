@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.18.6](https://github.com/shuuul/obsidian-pivi/compare/0.18.5...0.18.6) (2026-08-19)
+
+
+### Features
+
+* **chat:** show cache hit rate and tokens per second ([d936ad8](https://github.com/shuuul/obsidian-pivi/commit/d936ad891b0b29a0adaad289ffa48d6651dc83f1))
+
+
+### Bug Fixes
+
+* **chat:** dedupe output tokens in local-model metadata refresh usage ([bf71711](https://github.com/shuuul/obsidian-pivi/commit/bf7171170b76174572998fd9e7c9d309a92c928f))
+* **chat:** keep tool-only compact class when tokens/s footer is hidden ([d13e00f](https://github.com/shuuul/obsidian-pivi/commit/d13e00fa91cdfb79fff4f1abd9126d89dd169a83))
+* **styles:** keep message action buttons transparent against host button styles ([25f58d1](https://github.com/shuuul/obsidian-pivi/commit/25f58d113e972fff08a5ae71eae3c9bbca95af6b))
+* **styles:** remove duplicate vertical-align on inline context badges ([06619a8](https://github.com/shuuul/obsidian-pivi/commit/06619a82210a4d76ee8ed2649f8adba4bdb7ef57))
+
+
+### Miscellaneous Chores
+
+* force patch release 0.18.6 ([077040e](https://github.com/shuuul/obsidian-pivi/commit/077040e6d63dc785c32249a605aad47dde299e29))
+
 ## [0.18.5](https://github.com/shuuul/obsidian-pivi/compare/0.18.4...0.18.5) (2026-08-18)
 
 
