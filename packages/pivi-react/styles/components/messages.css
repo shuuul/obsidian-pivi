@@ -309,7 +309,9 @@
   opacity: 1;
 }
 
-.pivi-message-action-btn {
+/* Scoped under .pivi-message-actions so these declarations beat Obsidian's
+   higher-specificity `button:not(.clickable-icon)` background/shadow rules. */
+.pivi-message-actions .pivi-message-action-btn {
   appearance: none;
   border: none;
   background: transparent;
@@ -326,6 +328,11 @@
   transition: color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
+.pivi-message-actions .pivi-message-action-btn:active {
+  background: transparent;
+  box-shadow: none;
+}
+
 .pivi-message-action-btn svg {
   width: 14px;
   height: 14px;
@@ -340,8 +347,10 @@
     opacity: 1;
   }
 
-  .pivi-message-action-btn:hover {
+  .pivi-message-actions .pivi-message-action-btn:hover {
     color: var(--pivi-host-text-normal);
+    background: transparent;
+    box-shadow: none;
   }
 }
 

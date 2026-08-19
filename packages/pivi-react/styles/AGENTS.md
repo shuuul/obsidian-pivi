@@ -53,6 +53,7 @@
 - Mention and slash dropups share an interruptible `@starting-style` plus discrete-display transition contract. Update both consumers together; do not restore a shared entry keyframe for these rapidly toggled surfaces.
 - A new CSS file that is not listed does not remain silently unused—the build fails until it is added to `manifest.mjs`.
 - Do not use `!important`. Keep editable tab titles and inline-diff actions on elements that do not inherit Obsidian's high-specificity input/button rules, and use explicit component state classes instead of relational selectors.
+- Obsidian's `button:not(.clickable-icon)` (0,1,1) beats a bare single-class selector (0,1,0) and reapplies the host button background/shadow. Compact icon buttons that must stay transparent (message actions, and similar) scope their rule beneath the owning container class (for example `.pivi-message-actions .pivi-message-action-btn`) and repeat the transparent background on `:hover`/`:active`.
 - Production CSS minification must preserve descendant whitespace before pseudo selectors such as `:is(...)`; `tests/unit/scripts/buildCss.test.ts` locks this semantic boundary. Do not work around the build with component-specific universal selectors.
 - Do not use `:has`; emit state classes from React or imperative adapters, or rely on local `focus-within` state.
 - Composer model-selector trigger and dropdown provider icons share a 12px slot, including `--icon-size` for Obsidian Lucide fallbacks. Do not size only `.pivi-model-btn` descendants: the dropdown may portal out of `.pivi-model-selector`.
