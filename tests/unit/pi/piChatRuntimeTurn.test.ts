@@ -425,4 +425,105 @@ describe('streamPiChatTurn retry lifecycle', () => {
     // the next continuation context is overlaid.
     expect(nextTurnUpdate?.context?.messages).toBeDefined();
   });
+
+  it('omits output tokens from the metadata-refresh usage push', async () => {
+    const listeners = new Set<(event: AgentEvent) => void>();
+    const resolvedModel = model();
+    const completed = assistant('stop');
+    completed.usage = {
+      input: 120,
+      output: 40,
+      cacheRead: 0,
+      cacheWrite: 0,
+      totalTokens: 120,
+      cost: {
+        input: 0,
+        output: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+        total: 0,
+      },
+    };
+    const user: AgentMessage = {
+      role: 'user',
+      content: [{ type: 'text', text: 'Hello' }],
+      timestamp: Date.now(),
+    };
+    const state = {
+      messages: [] as AgentMessage[],
+      model: resolvedModel,
+      systemPrompt: '',
+      tools: [],
+      thinkingLevel: 'medium' as const,
+    };
+    const agent = {
+      state,
+      prompt: jest.fn(async () => {
+        state.messages = [user, completed];
+        for (const listener of listeners) {
+          listener({ type: 'message_end', message: user });
+          listener({ type: 'message_end', message: completed });
+          listener({ type: 'agent_end', messages: [...state.messages] });
+        }
+      }),
+      continue: jest.fn(),
+      subscribe: (listener: (event: AgentEvent) => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+    } as unknown as Agent;
+    const activeTurn = createActiveTurn();
+    const compaction: PiChatCompactionDeps = {
+      plugin: {} as PiRuntimeHost,
+      sessionTree: null,
+      agent,
+      compactionState: {
+        autoCompactionInFlight: false,
+        failedAutoFingerprint: null,
+        foregroundController: null,
+        generation: 0,
+        prefire: null,
+      },
+      resolveModel: () => resolvedModel,
+      onLeafIdChanged: jest.fn(),
+      onAssistantMessageId: jest.fn(),
+    };
+    const turn = {
+      request: { text: 'Hello', images: [] },
+      prompt: 'Hello',
+      persistedContent: 'Hello',
+      displayContent: 'Hello',
+      isCompact: false,
+      mcpMentions: new Set<string>(),
+    } satisfies PreparedChatTurn;
+
+    const chunks: StreamChunk[] = [];
+    for await (const chunk of streamPiChatTurn({
+      activeTurn,
+      agent,
+      compaction,
+      eventAdapter: new PiAgentEventAdapter(),
+      sessionTree: null,
+      resolveModel: () => resolvedModel,
+      resolveThinkingLevel: () => 'medium',
+      authorizeAndSyncAgentModelSelection: jest.fn(async nextModel => nextModel),
+      refreshModelMetadata: async () => true,
+      syncSessionMessages: jest.fn(),
+      onUserMessagePersisted: jest.fn(),
+    }, turn)) {
+      chunks.push(chunk);
+    }
+
+    const usageChunks = chunks.filter(
+      (chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage',
+    );
+    expect(usageChunks).toHaveLength(2);
+    // message_end carries the authoritative usage, including output tokens.
+    expect(usageChunks[0]?.usage.outputTokens).toBe(40);
+    // The metadata-refresh push repeats the same assistant message's usage;
+    // re-reporting output tokens would double-count them in the UI generation
+    // clock and inflate the persisted tokens/s.
+    expect(usageChunks[1]?.usage.outputTokens).toBeUndefined();
+    expect(usageChunks[1]?.usage.contextTokens).toBe(120);
+  });
 });

@@ -326,8 +326,12 @@ async function runPromptLifecycle(
     : null;
   if (refreshedModelMetadata && usage) {
     // Replace the first turn's pre-load context estimate with the runtime
-    // window discovered after the local server loaded the model.
-    activeTurn.queue.push({ type: 'usage', usage });
+    // window discovered after the local server loaded the model. This repeats
+    // the assistant usage already emitted at message_end, so omit outputTokens:
+    // the UI accumulates every usage chunk's output tokens into the per-turn
+    // generation clock and would double-count the persisted tokens/s.
+    const { outputTokens: _alreadyEmitted, ...metadataRefreshUsage } = usage;
+    activeTurn.queue.push({ type: 'usage', usage: metadataRefreshUsage });
   }
   if (!didCompactDuringTurn && usage && shouldAutoCompactSession(deps.compaction, usage)) {
     activeTurn.queue.push({ type: 'context_compacting' });
