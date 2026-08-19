@@ -370,6 +370,19 @@ describe('AssistantContentView', () => {
     }))).toBe(false);
   });
 
+  it('keeps tool-only classification aligned with the hidden tokens/s footer', () => {
+    const toolOnlyWithSpeed = assistantMessage({
+      contentBlocks: [{ type: 'tool_use', toolId: 'bash-1' }],
+      toolCalls: [{ id: 'bash-1', name: 'Bash', input: { command: 'ls' }, status: 'completed' }],
+      tokensPerSecond: 30,
+    });
+
+    // Visible tokens/s footer: the message is not tool-only.
+    expect(isAssistantToolOnlyMessage(toolOnlyWithSpeed)).toBe(false);
+    // Hidden footer: nothing but tools renders, so the compact class applies.
+    expect(isAssistantToolOnlyMessage(toolOnlyWithSpeed, false)).toBe(true);
+  });
+
   it('renders consecutive subagents as independent imperative adapter slots', () => {
     const mounted: string[] = [];
     const subagent: NonNullable<MessageContentAdapters['subagent']> = {

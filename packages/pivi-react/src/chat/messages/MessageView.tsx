@@ -189,7 +189,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
   const roleActionsClass = message.role === 'user'
     ? 'pivi-user-msg-actions'
     : 'pivi-assistant-msg-actions';
-  const toolOnlyClass = message.role === 'assistant' && isAssistantToolOnlyMessage(message)
+  const toolOnlyClass = message.role === 'assistant' && isAssistantToolOnlyMessage(message, showTokensPerSecond)
     ? ' pivi-message-assistant-tool-only'
     : '';
 

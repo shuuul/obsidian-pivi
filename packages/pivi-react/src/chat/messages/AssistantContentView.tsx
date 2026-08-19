@@ -230,7 +230,7 @@ export function messageHasVisibleAssistantContent(message: ChatMessage): boolean
 }
 
 /** Data-plane equivalent of pre-React updateAssistantToolOnlyClass. */
-export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
+export function isAssistantToolOnlyMessage(message: ChatMessage, showTokensPerSecond = true): boolean {
   const blocks = message.contentBlocks;
   let hasOrdinaryVisibleTool = false;
   let hasNonEmptyText = Boolean(message.content?.trim());
@@ -269,7 +269,8 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
     !hasCompactBoundary
     && (
       (message.durationSeconds && message.durationSeconds > 0)
-      || (message.tokensPerSecond !== undefined && message.tokensPerSecond > 0)
+      // A hidden tokens/s footer must not suppress the tool-only class.
+      || (showTokensPerSecond && message.tokensPerSecond !== undefined && message.tokensPerSecond > 0)
     ),
   );
   return hasOrdinaryVisibleTool

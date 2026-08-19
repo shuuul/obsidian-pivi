@@ -64,12 +64,14 @@ function TestMessageList({
   isStreaming,
   messages: currentMessages,
   recorder,
+  showTokensPerSecond,
 }: {
   actions: Parameters<typeof MessageList>[0]['actions'];
   hasOlderMessages?: boolean;
   isStreaming: boolean;
   messages: ChatMessage[];
   recorder?: ChatPerfRecorder;
+  showTokensPerSecond?: boolean;
 }) {
   const store = new ChatProjectionStore(recorder);
   store.replaceAll(currentMessages);
@@ -80,6 +82,7 @@ function TestMessageList({
       hasOlderMessages={hasOlderMessages}
       isStreaming={isStreaming}
       scrollElement={scrollElement}
+      showTokensPerSecond={showTokensPerSecond}
       store={store}
       thinkingIndicator={null}
     />
@@ -773,5 +776,40 @@ describe('MessageList', () => {
     // No stored isInterrupt => React must not append a second interrupt indicator shell.
     expect(container.querySelector('[data-message-id="live-cancel"] .pivi-interrupted')).toBeNull();
     expect(container.querySelector('[data-message-id="live-cancel"]')).toHaveTextContent('Working — interrupted inline');
+  });
+
+  it('keeps the tool-only class when the tokens/s footer is hidden by settings', () => {
+    const actions = {
+      canCopy: jest.fn(() => false),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+    const toolOnlyWithSpeed: ChatMessage = {
+      id: 'tool-only-speed',
+      role: 'assistant',
+      content: '',
+      timestamp: 11,
+      contentBlocks: [{ type: 'tool_use', toolId: 'bash-1' }],
+      toolCalls: [{ id: 'bash-1', name: 'Bash', input: { command: 'ls' }, status: 'completed' }],
+      tokensPerSecond: 30,
+    };
+
+    const { container: visibleFooter } = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <TestMessageList actions={actions} isStreaming={false} messages={[toolOnlyWithSpeed]} />
+      </I18nProvider>,
+    ));
+    expect(visibleFooter.querySelector('[data-message-id="tool-only-speed"]')).not.toHaveClass('pivi-message-assistant-tool-only');
+
+    const { container: hiddenFooter } = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <TestMessageList actions={actions} isStreaming={false} messages={[toolOnlyWithSpeed]} showTokensPerSecond={false} />
+      </I18nProvider>,
+    ));
+    expect(hiddenFooter.querySelector('[data-message-id="tool-only-speed"]')).toHaveClass('pivi-message-assistant-tool-only');
   });
 });
