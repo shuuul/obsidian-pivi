@@ -71,7 +71,7 @@ Pivi uses Conventional Commits and Release Please:
 While Pivi is pre-1.0, `fix` normally produces a patch and `feat` a minor release. README badge updates come from `scripts/sync-version.js`; do not add generic Release Please README markers.
 
 The Git tag and GitHub Release tag must equal `manifest.json.version` exactly and must not have a leading `v`.
-Release Please runs with `skip-github-release: true`; publication stays separate so the release is built directly from a real `push` event at `refs/tags/x.y.z`.
+Release Please runs with `skip-github-release: true`; publication stays separate so the release is built directly from a real `push` event at `refs/tags/x.y.z`. Because Release Please never creates the GitHub release, it also never swaps the release PR's `autorelease: pending` label for `autorelease: tagged`; the `mark-release-pr-tagged` job in `release.yaml` performs that swap after a successful tag publish. A merged release PR left at `autorelease: pending` makes the next Release Please run abort with "untagged, merged release PRs outstanding"; if the job is ever bypassed, swap the label manually with `gh pr edit <n> --remove-label "autorelease: pending" --add-label "autorelease: tagged"`.
 
 ## Beta / pre-release route
 
