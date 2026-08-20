@@ -81,6 +81,39 @@ describe('reduceChatStreamSnapshot', () => {
     })]);
   });
 
+  it('drops whitespace-only thinking deltas instead of splitting a visible text run', () => {
+    let state = createChatStreamSnapshot(assistantMessage());
+    state = reduceChatStreamSnapshot(state, { type: 'text', content: '我' });
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: '\n' });
+    state = reduceChatStreamSnapshot(state, { type: 'text', content: '目前使用的是 Qwen' });
+
+    expect(state.message.contentBlocks).toEqual([
+      { type: 'text', content: '我目前使用的是 Qwen' },
+    ]);
+    expect(state.message.content).toBe('我目前使用的是 Qwen');
+    expect(state.currentThinkingContent).toBe('');
+  });
+
+  it('drops a leading whitespace-only thinking delta before any block exists', () => {
+    let state = createChatStreamSnapshot(assistantMessage());
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: '\n' });
+    state = reduceChatStreamSnapshot(state, { type: 'text', content: 'Hello' });
+
+    expect(state.message.contentBlocks).toEqual([{ type: 'text', content: 'Hello' }]);
+  });
+
+  it('still merges whitespace into an active thinking block', () => {
+    let state = createChatStreamSnapshot(assistantMessage());
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: 'Plan' });
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: '\n\n' });
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: 'More' });
+
+    expect(state.message.contentBlocks).toEqual([
+      { type: 'thinking', content: 'Plan\n\nMore' },
+    ]);
+    expect(state.currentThinkingContent).toBe('Plan\n\nMore');
+  });
+
   it('merges repeated tool_use chunks and projects output and terminal results', () => {
     let state = createChatStreamSnapshot(assistantMessage());
     state = reduceChatStreamSnapshot(state, {

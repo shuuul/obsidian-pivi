@@ -38,6 +38,7 @@ export type { ChatStreamSnapshot } from './chatStreamReducer';
 export {
   createChatStreamSnapshot,
   reduceChatStreamSnapshot,
+  shouldDropWhitespaceThinkingChunk,
 } from './chatStreamReducer';
 export * from './chatTabsStore';
 export type {

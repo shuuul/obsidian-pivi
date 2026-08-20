@@ -7,6 +7,7 @@ import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 import {
   type ChatProjectionMessageChange,
   getChatProjectionBlockId,
+  shouldDropWhitespaceThinkingChunk,
 } from '@pivi/pivi-react/store';
 
 import type { PiviChatHost } from '@/app/hostContracts';
@@ -162,6 +163,9 @@ export class StreamController {
     if (this.disposed) return;
     const backgroundSubagent = options.backgroundSubagent === true;
     this.handleRetryProgressChunk(chunk, backgroundSubagent);
+    // Dropped before projection so a leaked whitespace-only thinking delta
+    // cannot split the visible text run or emit a stray projection append.
+    if (shouldDropWhitespaceThinkingChunk(msg, chunk)) return;
     const projectionRunScope = this.projectionRunScopeForChunk(chunk);
     if (
       chunk.type !== 'tool_use'

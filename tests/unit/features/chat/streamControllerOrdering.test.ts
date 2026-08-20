@@ -1,4 +1,4 @@
-import type { StreamChunk } from '@pivi/agent/foundation';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/foundation';
 
 import { StreamController } from '@/ui/chat/controllers/StreamController';
 import { SubagentManager } from '@/ui/chat/services/SubagentManager';
@@ -66,6 +66,40 @@ describe('StreamController background ordering', () => {
     expect(state.uiStore.getSnapshot().thinkingIndicator?.text).toBe('Distilling...');
     expect(state.messages).toHaveLength(1);
     controller.resetStreamingState();
+  });
+
+  it('drops a leaked whitespace-only thinking delta instead of splitting the text run', async () => {
+    const state = new ChatState();
+    const message: ChatMessage = {
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+    };
+    state.addMessage(message);
+    const controller = new StreamController({
+      plugin: {} as never,
+      settings: { getSettingsSnapshot: () => ({}) } as never,
+      state,
+      renderer: {} as never,
+      subagentManager: new SubagentManager(() => {}),
+      getMessagesEl: () => ({ ownerDocument: { defaultView: {} } }) as HTMLElement,
+      getFileContextManager: () => null,
+      updateQueueIndicator: () => {},
+    });
+    const dispatch = jest.spyOn(state.projectionStore, 'dispatch');
+
+    await controller.handleStreamChunk({ type: 'text', content: '我' }, message);
+    await controller.handleStreamChunk({ type: 'thinking', content: '\n' }, message);
+    await controller.handleStreamChunk({ type: 'text', content: '目前使用的是 Qwen' }, message);
+
+    const appendedDeltas = dispatch.mock.calls
+      .map(([event]) => event)
+      .flatMap(event => (event.type === 'text.append' ? [event.delta] : []));
+    expect(appendedDeltas).toEqual(['我', '目前使用的是 Qwen']);
+    expect(message.contentBlocks).toEqual([
+      { type: 'text', content: '我目前使用的是 Qwen' },
+    ]);
   });
 
   it('serializes fire-and-forget background Agent chunks in arrival order', async () => {

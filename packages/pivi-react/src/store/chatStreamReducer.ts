@@ -22,6 +22,21 @@ export function createChatStreamSnapshot(message: ChatMessage): ChatStreamSnapsh
   };
 }
 
+/**
+ * Some OpenAI-compatible reasoning parsers leak a whitespace-only thinking
+ * delta after visible text has already started. Splitting the block run on
+ * that leak renders as a spurious line break mid-message, so the delta is
+ * dropped unless a thinking block is already active to absorb it.
+ */
+export function shouldDropWhitespaceThinkingChunk(
+  message: ChatMessage,
+  chunk: StreamChunk,
+): boolean {
+  return chunk.type === 'thinking'
+    && chunk.content.trim().length === 0
+    && message.contentBlocks?.at(-1)?.type !== 'thinking';
+}
+
 function resolveToolResultStatus(
   blocked: boolean | undefined,
   isError?: boolean,
@@ -127,6 +142,7 @@ export function reduceChatStreamSnapshot(
         currentThinkingContent: '',
       };
     case 'thinking':
+      if (shouldDropWhitespaceThinkingChunk(state.message, chunk)) return state;
       return {
         ...state,
         message: appendContentBlock(state.message, 'thinking', chunk.content),
