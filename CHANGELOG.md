@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.7](https://github.com/shuuul/obsidian-pivi/compare/0.18.6...0.18.7) (2026-08-20)
+
+
+### Bug Fixes
+
+* **chat:** drop leaked whitespace-only thinking deltas splitting text ([68b15e6](https://github.com/shuuul/obsidian-pivi/commit/68b15e66628e5e7070641a76a1449c23f13cac12))
+
 ## [0.18.6](https://github.com/shuuul/obsidian-pivi/compare/0.18.5...0.18.6) (2026-08-19)
 
 
