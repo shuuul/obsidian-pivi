@@ -20,6 +20,17 @@ export type CustomProviderKind =
   | 'anthropic-compatible'
   | 'openai-responses';
 
+/** Native reasoning levels advertised by a `/v1/models` card. */
+export type CustomProviderReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+
+/** Server-advertised reasoning metadata stored after fetch. */
+export interface CustomProviderReasoningMeta {
+  supportedEfforts: CustomProviderReasoningEffort[];
+  defaultEffort?: CustomProviderReasoningEffort;
+  defaultEnabled?: boolean;
+  mandatory?: boolean;
+}
+
 /** Model row stored for a custom provider after fetch or manual edit. */
 export interface CustomProviderModelDef {
   id: string;
@@ -27,6 +38,7 @@ export interface CustomProviderModelDef {
   contextWindow?: number;
   maxTokens?: number;
   reasoning?: boolean;
+  reasoningMeta?: CustomProviderReasoningMeta;
 }
 
 /** Persisted custom / local provider configuration. */
@@ -217,6 +229,73 @@ export function createDefaultCustomProviderConfig(
   };
 }
 
+const REASONING_EFFORTS = [
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
+] as const satisfies readonly CustomProviderReasoningEffort[];
+
+function isReasoningEffort(value: unknown): value is CustomProviderReasoningEffort {
+  return typeof value === 'string'
+    && (REASONING_EFFORTS as readonly string[]).includes(value);
+}
+
+function uniqueReasoningEfforts(values: readonly unknown[]): CustomProviderReasoningEffort[] {
+  const seen = new Set<CustomProviderReasoningEffort>();
+  const efforts: CustomProviderReasoningEffort[] = [];
+  for (const value of values) {
+    if (!isReasoningEffort(value) || seen.has(value)) {
+      continue;
+    }
+    seen.add(value);
+    efforts.push(value);
+  }
+  return efforts;
+}
+
+export function parseCustomProviderReasoningMeta(raw: unknown): CustomProviderReasoningMeta | undefined {
+  if (Array.isArray(raw)) {
+    const supportedEfforts = uniqueReasoningEfforts(raw);
+    return supportedEfforts.length > 0 ? { supportedEfforts } : undefined;
+  }
+  if (!isRecord(raw)) {
+    return undefined;
+  }
+
+  const supportedEfforts = uniqueReasoningEfforts(
+    Array.isArray(raw.supported_efforts)
+      ? raw.supported_efforts
+      : Array.isArray(raw.supportedEfforts)
+        ? raw.supportedEfforts
+        : [],
+  );
+  if (supportedEfforts.length === 0) {
+    return undefined;
+  }
+
+  const defaultEffort = isReasoningEffort(raw.default_effort)
+    ? raw.default_effort
+    : isReasoningEffort(raw.defaultEffort)
+      ? raw.defaultEffort
+      : undefined;
+  const defaultEnabled = typeof raw.default_enabled === 'boolean'
+    ? raw.default_enabled
+    : typeof raw.defaultEnabled === 'boolean'
+      ? raw.defaultEnabled
+      : undefined;
+  const mandatory = typeof raw.mandatory === 'boolean' ? raw.mandatory : undefined;
+
+  return {
+    supportedEfforts,
+    ...(defaultEffort && supportedEfforts.includes(defaultEffort) ? { defaultEffort } : {}),
+    ...(defaultEnabled !== undefined ? { defaultEnabled } : {}),
+    ...(mandatory !== undefined ? { mandatory } : {}),
+  };
+}
+
 export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderModelDef | null {
   if (!isRecord(raw) || typeof raw.id !== 'string' || !raw.id.trim()) {
     return null;
@@ -230,12 +309,14 @@ export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderMod
     ? Math.floor(raw.maxTokens)
     : undefined;
   const reasoning = typeof raw.reasoning === 'boolean' ? raw.reasoning : undefined;
+  const reasoningMeta = parseCustomProviderReasoningMeta(raw.reasoningMeta);
   return {
     id,
     name,
     ...(contextWindow !== undefined ? { contextWindow } : {}),
     ...(maxTokens !== undefined ? { maxTokens } : {}),
     ...(reasoning !== undefined ? { reasoning } : {}),
+    ...(reasoningMeta ? { reasoningMeta } : {}),
   };
 }
 
@@ -345,15 +426,18 @@ export function defaultModelMeta(
   contextWindow: number;
   maxTokens: number;
   reasoning: boolean;
+  reasoningMeta?: CustomProviderReasoningMeta;
 } {
   const contextWindow = model.contextWindow
     ?? (kind && isLocalCustomProviderKind(kind)
       ? DEFAULT_LOCAL_CONTEXT_WINDOW
       : DEFAULT_CONTEXT_WINDOW);
+  const reasoningMeta = model.reasoningMeta;
   return {
     contextWindow,
     maxTokens: Math.min(model.maxTokens ?? DEFAULT_MAX_TOKENS, contextWindow),
-    reasoning: model.reasoning ?? false,
+    reasoning: model.reasoning ?? (reasoningMeta !== undefined),
+    ...(reasoningMeta ? { reasoningMeta } : {}),
   };
 }
 
@@ -389,11 +473,21 @@ export function parseOpenAiStyleModelsList(payload: unknown): CustomProviderMode
       ?? row.maxTokens
       ?? row.max_output_tokens,
     );
+    const reasoningMeta = parseCustomProviderReasoningMeta(
+      isRecord(row.reasoning) ? row.reasoning : row.supported_reasoning_efforts,
+    );
+    const reasoning = reasoningMeta !== undefined
+      ? true
+      : typeof row.reasoning === 'boolean'
+        ? row.reasoning
+        : false;
     models.push({
       id,
       name,
       ...(contextWindow !== undefined ? { contextWindow } : {}),
       ...(maxTokens !== undefined ? { maxTokens } : {}),
+      ...(reasoningMeta || reasoning ? { reasoning } : {}),
+      ...(reasoningMeta ? { reasoningMeta } : {}),
     });
   }
 

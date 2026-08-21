@@ -119,5 +119,32 @@ describe('PiThinkingLevels (core)', () => {
       expect(supported).toContain(resolved);
       expect(resolved).not.toBe('bogus');
     });
+
+    it('uses a server-advertised default instead of medium', () => {
+      const model = {
+        ...reasoningFixture(),
+        thinkingLevelMap: {
+          off: 'none',
+          minimal: null,
+          high: null,
+          max: null,
+          low: 'low',
+          medium: 'medium',
+          xhigh: 'xhigh',
+        },
+        defaultThinkingLevel: 'xhigh',
+      } as Model<Api>;
+      expect(getPiThinkingLevelOptionsForModel(model).map((option) => option.value)).toEqual([
+        'off',
+        'low',
+        'medium',
+        'xhigh',
+      ]);
+      expect(getPiDefaultThinkingLevelForModel(model)).toBe('xhigh');
+    });
+
+    it('keeps the pi-ai medium default when no advertised default exists', () => {
+      expect(getPiDefaultThinkingLevelForModel(reasoningFixture())).toBe('medium');
+    });
   });
 });

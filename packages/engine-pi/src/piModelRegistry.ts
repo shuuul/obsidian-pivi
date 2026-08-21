@@ -16,6 +16,8 @@ import { formatContextLimit } from '@pivi/agent/foundation/settingsEnv';
 export type PiCachedModel = Model<Api> & {
   /** False when a custom provider is using Pivi's synthetic fallback window. */
   contextWindowIsAuthoritative?: boolean;
+  /** Server-advertised default thinking level; overrides pi-ai's `medium` fallback. */
+  defaultThinkingLevel?: 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 };
 
 export type PiResolvedModel = PiCachedModel;

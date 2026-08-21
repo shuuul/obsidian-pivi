@@ -6,6 +6,8 @@ import {
 } from '@earendil-works/pi-ai';
 import type { ChatReasoningOption } from '@pivi/agent/foundation';
 
+import type { PiCachedModel } from './piModelRegistry';
+
 /** Token budget hints aligned with pi-coding-agent TUI thinking selector. */
 const THINKING_LEVEL_DESCRIPTIONS: Record<ThinkingLevel, string> = {
   off: 'No reasoning',
@@ -44,6 +46,11 @@ export function isPiAdaptiveReasoningModelValue(model: Model<Api> | null): boole
   return options.some((option) => option.value !== 'off');
 }
 
+function advertisedDefaultThinkingLevel(model: Model<Api>): string | undefined {
+  const advertised = (model as PiCachedModel).defaultThinkingLevel;
+  return typeof advertised === 'string' ? advertised : undefined;
+}
+
 export function getPiDefaultThinkingLevelForModel(
   model: Model<Api> | null,
   currentValue?: string,
@@ -52,7 +59,9 @@ export function getPiDefaultThinkingLevelForModel(
     return 'off';
   }
 
-  const candidate = typeof currentValue === 'string' ? currentValue : 'medium';
+  const candidate = typeof currentValue === 'string'
+    ? currentValue
+    : advertisedDefaultThinkingLevel(model) ?? 'medium';
   return clampThinkingLevel(model, candidate as ThinkingLevel);
 }
 
@@ -64,5 +73,8 @@ export function resolvePiThinkingLevelForModel(
     return 'off';
   }
 
-  return clampThinkingLevel(model, (thinkingLevel ?? 'medium') as ThinkingLevel);
+  return clampThinkingLevel(
+    model,
+    (thinkingLevel ?? advertisedDefaultThinkingLevel(model) ?? 'medium') as ThinkingLevel,
+  );
 }

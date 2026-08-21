@@ -79,6 +79,37 @@ describe('customProviders foundation', () => {
     expect(config?.apiKeyRequired).toBe(false);
   });
 
+  it('preserves advertised reasoning metadata through config normalization', () => {
+    const config = normalizeCustomProviderConfig({
+      id: 'custom-openai-compatible-abc',
+      kind: 'openai-compatible',
+      name: 'vLLM',
+      baseUrl: 'http://192.168.100.177:8888/v1',
+      api: 'openai-completions',
+      models: [{
+        id: 'qwen38-nvfp4',
+        name: 'qwen38-nvfp4',
+        reasoning: true,
+        reasoningMeta: {
+          supportedEfforts: ['xhigh', 'medium', 'low'],
+          defaultEffort: 'xhigh',
+          defaultEnabled: true,
+          mandatory: false,
+        },
+      }],
+    });
+    expect(config?.models).toEqual([expect.objectContaining({
+      id: 'qwen38-nvfp4',
+      reasoning: true,
+      reasoningMeta: {
+        supportedEfforts: ['xhigh', 'medium', 'low'],
+        defaultEffort: 'xhigh',
+        defaultEnabled: true,
+        mandatory: false,
+      },
+    })]);
+  });
+
   it('normalizes configs and drops invalid entries', () => {
     const configs = normalizeCustomProviders([
       {
@@ -122,6 +153,97 @@ describe('customProviders foundation', () => {
     expect(model).toBeDefined();
     if (!model) throw new Error('Expected the first parsed model');
     expect(model.contextWindow).toBe(8192);
+  });
+
+  it('reads nested reasoning.supported_efforts from /v1/models cards', () => {
+    const models = parseOpenAiStyleModelsList({
+      data: [{
+        id: 'qwen38-nvfp4',
+        max_model_len: 262144,
+        reasoning: {
+          supported_efforts: ['xhigh', 'medium', 'low'],
+          default_effort: 'xhigh',
+          default_enabled: true,
+          mandatory: false,
+        },
+      }],
+    });
+    expect(models).toEqual([expect.objectContaining({
+      id: 'qwen38-nvfp4',
+      contextWindow: 262144,
+      reasoning: true,
+      reasoningMeta: {
+        supportedEfforts: ['xhigh', 'medium', 'low'],
+        defaultEffort: 'xhigh',
+        defaultEnabled: true,
+        mandatory: false,
+      },
+    })]);
+  });
+
+  it('reads a top-level supported_reasoning_efforts array as reasoning metadata', () => {
+    const models = parseOpenAiStyleModelsList({
+      data: [{
+        id: 'legacy-card',
+        supported_reasoning_efforts: ['low', 'medium', 'xhigh', 'xhigh', 'nope'],
+      }],
+    });
+    expect(models).toEqual([expect.objectContaining({
+      id: 'legacy-card',
+      reasoning: true,
+      reasoningMeta: { supportedEfforts: ['low', 'medium', 'xhigh'] },
+    })]);
+  });
+
+  it('keeps models without advertised efforts as non-reasoning', () => {
+    const models = parseOpenAiStyleModelsList({
+      data: [{ id: 'plain' }],
+    });
+    expect(models).toEqual([expect.objectContaining({
+      id: 'plain',
+    })]);
+    expect(models[0]?.reasoning).toBeUndefined();
+    expect(models[0]?.reasoningMeta).toBeUndefined();
+  });
+
+  it('ignores a reasoning object that has no supported_efforts', () => {
+    const models = parseOpenAiStyleModelsList({
+      data: [{
+        id: 'empty-reasoning',
+        reasoning: {
+          default_effort: 'xhigh',
+          default_enabled: true,
+          mandatory: false,
+        },
+      }],
+    });
+    expect(models[0]?.reasoning).toBeUndefined();
+    expect(models[0]?.reasoningMeta).toBeUndefined();
+  });
+
+  it('ignores empty or unknown supported_efforts values', () => {
+    expect(parseOpenAiStyleModelsList({
+      data: [{ id: 'empty-list', reasoning: { supported_efforts: [] } }],
+    })[0]?.reasoningMeta).toBeUndefined();
+    expect(parseOpenAiStyleModelsList({
+      data: [{ id: 'unknown-only', reasoning: { supported_efforts: ['nope', 'maxx'] } }],
+    })[0]?.reasoningMeta).toBeUndefined();
+  });
+
+  it('keeps a boolean reasoning flag when supported_efforts is absent', () => {
+    const models = parseOpenAiStyleModelsList({
+      data: [
+        { id: 'flag-on', reasoning: true },
+        { id: 'flag-off', reasoning: false },
+      ],
+    });
+    expect(models.find((model) => model.id === 'flag-on')).toEqual(expect.objectContaining({
+      id: 'flag-on',
+      reasoning: true,
+    }));
+    expect(models.find((model) => model.id === 'flag-on')?.reasoningMeta).toBeUndefined();
+    expect(models.find((model) => model.id === 'flag-off')?.reasoning).toBeUndefined();
+    expect(models.find((model) => model.id === 'flag-off')?.reasoningMeta).toBeUndefined();
   });
 });
 
@@ -199,6 +321,72 @@ describe('installPiCustomProviders model mapping', () => {
     });
   });
 
+  it('overrides pi-ai thinking levels from advertised supported_efforts', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen38-nvfp4',
+      name: 'qwen38-nvfp4',
+      reasoning: true,
+      reasoningMeta: {
+        supportedEfforts: ['xhigh', 'medium', 'low'],
+        defaultEffort: 'xhigh',
+        defaultEnabled: true,
+        mandatory: false,
+      },
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      id: 'qwen38-nvfp4',
+      reasoning: true,
+      defaultThinkingLevel: 'xhigh',
+      thinkingLevelMap: {
+        off: 'none',
+        minimal: null,
+        low: 'low',
+        medium: 'medium',
+        high: null,
+        xhigh: 'xhigh',
+        max: null,
+      },
+      compat: expect.objectContaining({ supportsReasoningEffort: true }),
+    });
+  });
+
+  it('keeps pi-ai defaults when fetched models omit supported_efforts', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{ id: 'plain', name: 'plain' }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      id: 'plain',
+      reasoning: false,
+      compat: expect.objectContaining({ supportsReasoningEffort: false }),
+    });
+    expect(model?.thinkingLevelMap).toBeUndefined();
+    expect((model as { defaultThinkingLevel?: string } | undefined)?.defaultThinkingLevel).toBeUndefined();
+  });
+
+  it('does not override thinking levels from a boolean reasoning flag alone', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{ id: 'flag-on', name: 'flag-on', reasoning: true }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      id: 'flag-on',
+      reasoning: true,
+      compat: expect.objectContaining({ supportsReasoningEffort: true }),
+    });
+    expect(model?.thinkingLevelMap).toBeUndefined();
+    expect((model as { defaultThinkingLevel?: string } | undefined)?.defaultThinkingLevel).toBeUndefined();
+  });
+
   it('uses a conservative context window for local models with unknown metadata', () => {
     const config = createDefaultCustomProviderConfig('ollama', []);
     config.models = [{ id: 'unknown', name: 'Unknown' }];
@@ -233,6 +421,59 @@ describe('installPiCustomProviders model mapping', () => {
       'https://anthropic.example.test/v1/models',
       expect.any(Object),
     );
+  });
+
+  it('stores /v1/models reasoning.supported_efforts on fetched OpenAI-compatible models', async () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    const request = jest.fn(async () => ({
+      status: 200,
+      body: JSON.stringify({
+        data: [{
+          id: 'qwen38-nvfp4',
+          max_model_len: 262144,
+          reasoning: {
+            supported_efforts: ['xhigh', 'medium', 'low'],
+            default_effort: 'xhigh',
+            default_enabled: true,
+            mandatory: false,
+          },
+        }],
+      }),
+    }));
+
+    const result = await fetchCustomProviderModels(config, request);
+    expect(result.models).toEqual([expect.objectContaining({
+      id: 'qwen38-nvfp4',
+      reasoning: true,
+      reasoningMeta: {
+        supportedEfforts: ['xhigh', 'medium', 'low'],
+        defaultEffort: 'xhigh',
+        defaultEnabled: true,
+        mandatory: false,
+      },
+    })]);
+  });
+
+  it('does not invent reasoning metadata when /v1/models omits the field', async () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    const request = jest.fn(async () => ({
+      status: 200,
+      body: JSON.stringify({
+        data: [{ id: 'plain', max_model_len: 8192 }],
+      }),
+    }));
+
+    const result = await fetchCustomProviderModels(config, request);
+    expect(result.models).toEqual([expect.objectContaining({
+      id: 'plain',
+      contextWindow: 8192,
+    })]);
+    expect(result.models[0]?.reasoning).toBeUndefined();
+    expect(result.models[0]?.reasoningMeta).toBeUndefined();
   });
 });
 

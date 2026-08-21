@@ -6,6 +6,7 @@ import {
   type MutableModels,
   type Provider,
   type ProviderAuth,
+  type ThinkingLevelMap,
 } from '@earendil-works/pi-ai';
 import { anthropicMessagesApi } from '@earendil-works/pi-ai/api/anthropic-messages.lazy';
 import { openAICompletionsApi } from '@earendil-works/pi-ai/api/openai-completions.lazy';
@@ -15,10 +16,12 @@ import {
   type CustomProviderApi,
   type CustomProviderConfig,
   type CustomProviderModelDef,
+  type CustomProviderReasoningEffort,
   defaultModelMeta,
   isLocalCustomProviderKind,
   modelsListUrl,
   normalizeProviderBaseUrl,
+  parseCustomProviderReasoningMeta,
   parseOpenAiStyleModelsList,
 } from '@pivi/agent/foundation/customProviders';
 
@@ -50,11 +53,40 @@ function zeroCost() {
   return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 }
 
-function openAiCompatFlags(kind: CustomProviderConfig['kind']): Model<'openai-completions'>['compat'] {
+const PI_THINKING_LEVELS = [
+  'off',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+  'max',
+] as const;
+
+function thinkingLevelMapFromEfforts(
+  efforts: readonly CustomProviderReasoningEffort[],
+  options?: { mandatory?: boolean },
+): ThinkingLevelMap {
+  const supported = new Set(efforts);
+  const map: ThinkingLevelMap = {};
+  for (const level of PI_THINKING_LEVELS) {
+    if (level === 'off') {
+      map.off = options?.mandatory ? null : 'none';
+      continue;
+    }
+    map[level] = supported.has(level) ? level : null;
+  }
+  return map;
+}
+
+function openAiCompatFlags(
+  kind: CustomProviderConfig['kind'],
+  supportsReasoningEffort: boolean,
+): Model<'openai-completions'>['compat'] {
   if (isLocalCustomProviderKind(kind) || kind === 'openai-compatible') {
     return {
       supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
+      supportsReasoningEffort,
     };
   }
   return undefined;
@@ -68,12 +100,24 @@ export function buildCustomProviderModels(
 
   return config.models.map((modelDef) => {
     const meta = defaultModelMeta(modelDef, config.kind);
+    const thinkingLevelMap = meta.reasoningMeta
+      ? thinkingLevelMapFromEfforts(meta.reasoningMeta.supportedEfforts, {
+        mandatory: meta.reasoningMeta.mandatory,
+      })
+      : undefined;
+    const defaultThinkingLevel = meta.reasoningMeta
+      ? meta.reasoningMeta.defaultEnabled === false
+        ? 'off' as const
+        : meta.reasoningMeta.defaultEffort
+      : undefined;
     const base = {
       id: modelDef.id,
       name: modelDef.name,
       provider: config.id,
       baseUrl,
       reasoning: meta.reasoning,
+      ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
+      ...(defaultThinkingLevel ? { defaultThinkingLevel } : {}),
       contextWindowIsAuthoritative: modelDef.contextWindow !== undefined,
       input: ['text'] as ('text' | 'image')[],
       cost: zeroCost(),
@@ -86,21 +130,21 @@ export function buildCustomProviderModels(
       return {
         ...base,
         api: 'anthropic-messages' as const,
-      } satisfies Model<'anthropic-messages'>;
+      };
     }
 
     if (config.api === 'openai-responses') {
       return {
         ...base,
         api: 'openai-responses' as const,
-      } satisfies Model<'openai-responses'>;
+      };
     }
 
     return {
       ...base,
       api: 'openai-completions' as const,
-      compat: openAiCompatFlags(config.kind),
-    } satisfies Model<'openai-completions'>;
+      compat: openAiCompatFlags(config.kind, meta.reasoning),
+    };
   });
 }
 
@@ -258,7 +302,21 @@ function parseLmStudioV1Models(payload: unknown): CustomProviderModelDef[] {
     const name = typeof row.display_name === 'string' && row.display_name.trim()
       ? row.display_name.trim()
       : id;
-    return [{ id, name, ...(contextWindow ? { contextWindow } : {}) }];
+    const reasoningMeta = parseCustomProviderReasoningMeta(
+      isRecord(row.reasoning) ? row.reasoning : row.supported_reasoning_efforts,
+    );
+    const reasoning = reasoningMeta !== undefined
+      ? true
+      : typeof row.reasoning === 'boolean'
+        ? row.reasoning
+        : false;
+    return [{
+      id,
+      name,
+      ...(contextWindow ? { contextWindow } : {}),
+      ...(reasoningMeta || reasoning ? { reasoning } : {}),
+      ...(reasoningMeta ? { reasoningMeta } : {}),
+    }];
   }).sort((a, b) => a.name.localeCompare(b.name));
 }
 
