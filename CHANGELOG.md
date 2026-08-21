@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.8](https://github.com/shuuul/obsidian-pivi/compare/0.18.7...0.18.8) (2026-08-21)
+
+
+### Features
+
+* **models:** read advertised reasoning levels from `/v1/models` ([43abd12](https://github.com/shuuul/obsidian-pivi/commit/43abd127))
+
 ## [0.18.7](https://github.com/shuuul/obsidian-pivi/compare/0.18.6...0.18.7) (2026-08-20)
 
 
