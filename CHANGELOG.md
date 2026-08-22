@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.9](https://github.com/shuuul/obsidian-pivi/compare/0.18.8...0.18.9) (2026-08-22)
+
+
+### Tests
+
+* **models:** lock advertised maxTokens from `/v1/models` ([9f209db](https://github.com/shuuul/obsidian-pivi/commit/9f209db6))
+
 ## [0.18.8](https://github.com/shuuul/obsidian-pivi/compare/0.18.7...0.18.8) (2026-08-21)
 
 
