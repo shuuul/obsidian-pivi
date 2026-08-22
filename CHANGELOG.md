@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/shuuul/obsidian-pivi/compare/0.18.9...0.19.0) (2026-08-22)
+
+
+### Features
+
+* **chat:** render Mermaid diagrams in sidebar ([89be1e0](https://github.com/shuuul/obsidian-pivi/commit/89be1e081323c9577f38c1af7b535689f37ec613))
+
 ## [0.18.9](https://github.com/shuuul/obsidian-pivi/compare/0.18.8...0.18.9) (2026-08-22)
 
 
