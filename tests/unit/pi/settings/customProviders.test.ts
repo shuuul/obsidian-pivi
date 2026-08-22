@@ -160,6 +160,8 @@ describe('customProviders foundation', () => {
       data: [{
         id: 'qwen38-nvfp4',
         max_model_len: 262144,
+        max_tokens: 131072,
+        max_output_tokens: 131072,
         reasoning: {
           supported_efforts: ['xhigh', 'medium', 'low'],
           default_effort: 'xhigh',
@@ -171,6 +173,7 @@ describe('customProviders foundation', () => {
     expect(models).toEqual([expect.objectContaining({
       id: 'qwen38-nvfp4',
       contextWindow: 262144,
+      maxTokens: 131072,
       reasoning: true,
       reasoningMeta: {
         supportedEfforts: ['xhigh', 'medium', 'low'],
@@ -178,6 +181,30 @@ describe('customProviders foundation', () => {
         defaultEnabled: true,
         mandatory: false,
       },
+    })]);
+  });
+
+  it('prefers max_tokens over max_output_tokens for the advertised output ceiling', () => {
+    const models = parseOpenAiStyleModelsList({
+      data: [{
+        id: 'qwen38-nvfp4',
+        max_tokens: 131072,
+        max_output_tokens: 32768,
+      }],
+    });
+    expect(models).toEqual([expect.objectContaining({
+      id: 'qwen38-nvfp4',
+      maxTokens: 131072,
+    })]);
+  });
+
+  it('reads max_output_tokens when max_tokens is absent', () => {
+    const models = parseOpenAiStyleModelsList({
+      data: [{ id: 'qwen38-nvfp4', max_output_tokens: 65536 }],
+    });
+    expect(models).toEqual([expect.objectContaining({
+      id: 'qwen38-nvfp4',
+      maxTokens: 65536,
     })]);
   });
 
@@ -355,6 +382,43 @@ describe('installPiCustomProviders model mapping', () => {
     });
   });
 
+  it('uses advertised maxTokens as the request output cap instead of the 8192 default', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen38-nvfp4',
+      name: 'qwen38-nvfp4',
+      contextWindow: 262144,
+      maxTokens: 131072,
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      id: 'qwen38-nvfp4',
+      contextWindow: 262144,
+      contextWindowIsAuthoritative: true,
+      maxTokens: 131072,
+    });
+  });
+
+  it('falls back to 8192 output tokens when a custom card omits maxTokens', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen38-nvfp4',
+      name: 'qwen38-nvfp4',
+      contextWindow: 262144,
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      contextWindow: 262144,
+      maxTokens: 8192,
+    });
+  });
+
   it('keeps pi-ai defaults when fetched models omit supported_efforts', () => {
     const config = createDefaultCustomProviderConfig('openai-compatible', [], {
       baseUrl: 'http://192.168.100.177:8888/v1',
@@ -433,6 +497,8 @@ describe('installPiCustomProviders model mapping', () => {
         data: [{
           id: 'qwen38-nvfp4',
           max_model_len: 262144,
+          max_tokens: 131072,
+          max_output_tokens: 131072,
           reasoning: {
             supported_efforts: ['xhigh', 'medium', 'low'],
             default_effort: 'xhigh',
@@ -446,6 +512,8 @@ describe('installPiCustomProviders model mapping', () => {
     const result = await fetchCustomProviderModels(config, request);
     expect(result.models).toEqual([expect.objectContaining({
       id: 'qwen38-nvfp4',
+      contextWindow: 262144,
+      maxTokens: 131072,
       reasoning: true,
       reasoningMeta: {
         supportedEfforts: ['xhigh', 'medium', 'low'],

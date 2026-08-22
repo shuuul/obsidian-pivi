@@ -468,6 +468,9 @@ export function parseOpenAiStyleModelsList(payload: unknown): CustomProviderMode
       ?? row.loaded_context_length
       ?? row.max_context_length,
     );
+    // Output ceiling, not context window. pi/Pivi discovery reads max_tokens;
+    // max_output_tokens is the Gemini-style alias. Absent both, defaultModelMeta
+    // falls back to 8192 even when max_model_len is much larger.
     const maxTokens = readPositiveNumber(
       row.max_tokens
       ?? row.maxTokens
