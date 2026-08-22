@@ -4,6 +4,7 @@ import {
   buildMentionBadgeContext,
   clampMermaidScale,
   getMermaidDiagramSize,
+  maskMermaidFences,
 } from '@/ui/chat/rendering/messageRendererMarkdown';
 import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 
@@ -43,6 +44,33 @@ describe('Mermaid chat rendering helpers', () => {
     expect(clampMermaidScale(0.01)).toBe(0.1);
     expect(clampMermaidScale(1.25)).toBe(1.25);
     expect(clampMermaidScale(5)).toBe(2);
+  });
+
+  it('masks Mermaid fences from the Obsidian trust-gated postprocessor', () => {
+    expect(maskMermaidFences([
+      '```mermaid',
+      'flowchart LR',
+      '  A --> B',
+      '```',
+      '',
+      '~~~typescript',
+      'const language = "mermaid";',
+      '~~~',
+    ].join('\n'))).toBe([
+      '```pivi-mermaid',
+      'flowchart LR',
+      '  A --> B',
+      '```',
+      '',
+      '~~~typescript',
+      'const language = "mermaid";',
+      '~~~',
+    ].join('\n'));
+  });
+
+  it('does not mask Mermaid-looking fences nested inside a longer code fence', () => {
+    const markdown = '````markdown\n```mermaid\nA --> B\n```\n````';
+    expect(maskMermaidFences(markdown)).toBe(markdown);
   });
 });
 

@@ -3,7 +3,11 @@ import type { ChatTurnRequestSnapshot } from '@pivi/agent/foundation';
 import { escapeMathDelimitersForStreaming } from '@pivi/agent/foundation/streamingMath';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import type { App, Component } from 'obsidian';
-import { MarkdownRenderer, setIcon } from 'obsidian';
+import {
+  loadMermaid,
+  MarkdownRenderer,
+  setIcon,
+} from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
@@ -66,11 +70,167 @@ const MERMAID_MIN_SCALE = 0.1;
 const MERMAID_MAX_SCALE = 2;
 const MERMAID_SCALE_STEP = 0.25;
 const MERMAID_WHEEL_SCALE_SENSITIVITY = 0.006;
+const MERMAID_CROP_PADDING = 8;
 const mermaidObservers = new WeakMap<HTMLElement, MutationObserver>();
+let mermaidRenderCounter = 0;
+let mermaidRenderQueue: Promise<void> = Promise.resolve();
 
 type MermaidWindow = Window & {
   MutationObserver?: typeof MutationObserver;
 };
+
+type MermaidApi = {
+  initialize?: (config: Record<string, unknown>) => void | Promise<void>;
+  render: (id: string, source: string) => Promise<{ svg: string } | string>;
+};
+
+function getMermaidRenderConfig(el: HTMLElement): Record<string, unknown> {
+  const styles = getActiveWindow(el).getComputedStyle(el);
+  const color = (property: string, fallback: string) => (
+    styles.getPropertyValue(property).trim() || fallback
+  );
+  const background = color('--background-secondary', '#f5f5f5');
+  const surface = color('--background-primary', '#ffffff');
+  const foreground = color('--text-normal', '#27272a');
+  const muted = color('--text-muted', '#71717a');
+  const border = color('--background-modifier-border', '#d4d4d8');
+  const accent = color('--interactive-accent', '#3b82f6');
+
+  return {
+    flowchart: {
+      curve: 'stepAfter',
+      htmlLabels: false,
+      nodeSpacing: 32,
+      padding: MERMAID_CROP_PADDING,
+      rankSpacing: 48,
+      useMaxWidth: false,
+    },
+    fontFamily: 'Charter, system-ui, sans-serif',
+    securityLevel: 'strict',
+    startOnLoad: false,
+    theme: 'base',
+    themeCSS: '.node rect,.node polygon,.node circle,.node ellipse{stroke-width:.75px}.edgePath path{stroke-width:1px}',
+    themeVariables: {
+      background,
+      lineColor: muted,
+      mainBkg: surface,
+      nodeBorder: border,
+      primaryBorderColor: border,
+      primaryColor: surface,
+      primaryTextColor: foreground,
+      secondaryColor: background,
+      tertiaryColor: background,
+      textColor: foreground,
+      titleColor: foreground,
+      xyChart: {
+        backgroundColor: background,
+        plotColorPalette: accent,
+      },
+    },
+  };
+}
+
+export function cropMermaidSvg(svg: SVGSVGElement): void {
+  if (typeof svg.getBBox !== 'function') return;
+
+  try {
+    const bounds = svg.getBBox();
+    if (bounds.width <= 0 || bounds.height <= 0) return;
+
+    const x = bounds.x - MERMAID_CROP_PADDING;
+    const y = bounds.y - MERMAID_CROP_PADDING;
+    const width = bounds.width + MERMAID_CROP_PADDING * 2;
+    const height = bounds.height + MERMAID_CROP_PADDING * 2;
+    svg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`);
+    svg.setAttribute('width', String(width));
+    svg.setAttribute('height', String(height));
+    svg.style.removeProperty('max-width');
+  } catch {
+    // Some SVG implementations expose getBBox but cannot measure detached content.
+  }
+}
+
+export function maskMermaidFences(markdown: string): string {
+  let activeFence: { marker: '`' | '~'; length: number } | null = null;
+
+  return markdown.split('\n').map((line) => {
+    const content = line.endsWith('\r') ? line.slice(0, -1) : line;
+    const carriageReturn = line.endsWith('\r') ? '\r' : '';
+
+    if (activeFence) {
+      const closing = content.match(/^ {0,3}([`~]+)[ \t]*$/);
+      if (
+        closing?.[1]?.[0] === activeFence.marker
+        && closing[1].length >= activeFence.length
+      ) {
+        activeFence = null;
+      }
+      return line;
+    }
+
+    const opening = content.match(/^( {0,3})(`{3,}|~{3,})([^`~]*)$/);
+    if (!opening?.[2]) return line;
+
+    const marker = opening[2][0] as '`' | '~';
+    activeFence = { marker, length: opening[2].length };
+    if (opening[3]?.trim().toLowerCase() !== 'mermaid') return line;
+
+    return `${opening[1]}${opening[2]}pivi-mermaid${carriageReturn}`;
+  }).join('\n');
+}
+
+async function withMermaidRenderLock<T>(render: () => Promise<T>): Promise<T> {
+  const previous = mermaidRenderQueue;
+  let release: () => void = () => {};
+  mermaidRenderQueue = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await previous;
+  try {
+    return await render();
+  } finally {
+    release();
+  }
+}
+
+async function renderMermaidBlocks(el: HTMLElement): Promise<void> {
+  const blocks = [...el.querySelectorAll<HTMLElement>('pre > code.language-pivi-mermaid')];
+  if (blocks.length === 0) return;
+
+  for (const code of blocks) {
+    const pre = code.parentElement;
+    if (!pre) continue;
+
+    try {
+      const source = code.textContent ?? '';
+      const mermaid = await loadMermaid() as MermaidApi;
+      const rendered = await withMermaidRenderLock(async () => {
+        await mermaid.initialize?.(getMermaidRenderConfig(el));
+        mermaidRenderCounter += 1;
+        return mermaid.render(`piviMermaid${mermaidRenderCounter}`, source);
+      });
+      const svgMarkup = typeof rendered === 'string' ? rendered : rendered.svg;
+      const activeDocument = getActiveDocument(el);
+      // Mermaid generated this SVG locally in strict mode. Parse it as HTML
+      // because its foreignObject labels may contain HTML-style <br> elements.
+      // eslint-disable-next-line no-unsanitized/method -- Mermaid returns locally generated strict-mode SVG markup.
+      const fragment = activeDocument.createRange().createContextualFragment(svgMarkup);
+      const svg = fragment.querySelector('svg');
+      if (!svg) throw new Error('Mermaid did not return an SVG');
+
+      const container = activeDocument.win.createDiv();
+      container.className = 'pivi-mermaid';
+      container.appendChild(svg);
+      pre.replaceWith(container);
+      cropMermaidSvg(svg);
+    } catch {
+      const error = getActiveDocument(el).win.createDiv();
+      error.className = 'pivi-render-error';
+      error.textContent = t('chat.stream.renderFailed');
+      pre.replaceWith(error);
+    }
+  }
+}
 
 export function clampMermaidScale(scale: number): number {
   return Math.min(MERMAID_MAX_SCALE, Math.max(MERMAID_MIN_SCALE, scale));
@@ -202,12 +362,16 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
   }, { passive: false });
 
   applyScale();
-  getActiveWindow(container).requestAnimationFrame(applyScale);
+  getActiveWindow(container).requestAnimationFrame(() => {
+    scale = Math.min(1, getFitToWidthScale());
+    applyScale();
+  });
 }
 
 export function enhanceMermaidDiagrams(el: HTMLElement): () => void {
   const enhanceAll = () => {
-    el.querySelectorAll<HTMLElement>('.mermaid, .block-language-mermaid').forEach(enhanceMermaidDiagram);
+    el.querySelectorAll<HTMLElement>('.pivi-mermaid, .mermaid, .block-language-mermaid')
+      .forEach(enhanceMermaidDiagram);
   };
 
   enhanceAll();
@@ -292,11 +456,13 @@ export async function renderMarkdownContent(
       : normalizedMarkdown;
     await MarkdownRenderer.render(
       host.app,
-      renderMarkdown,
+      maskMermaidFences(renderMarkdown),
       el,
       options?.sourcePath ?? getMarkdownRenderSourcePath(host),
       options?.component ?? host.component,
     );
+
+    await renderMermaidBlocks(el);
 
     el.querySelectorAll<HTMLElement>('ul.contains-task-list').forEach((list) => {
       list.classList.add('pivi-markdown-task-list');

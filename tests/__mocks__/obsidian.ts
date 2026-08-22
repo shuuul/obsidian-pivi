@@ -341,6 +341,13 @@ export const MarkdownRenderer = {
   renderMarkdown: renderMarkdownMock,
 };
 
+export const loadMermaid = jest.fn(async () => ({
+  initialize: jest.fn(),
+  render: jest.fn(async (id: string, source: string) => ({
+    svg: `<svg id="${id}" viewBox="0 0 640 320"><style>#${id} .node{fill:#f5f5f5}</style><foreignObject><div xmlns="http://www.w3.org/1999/xhtml">${source}<br>Second line</div></foreignObject></svg>`,
+  })),
+}));
+
 export const setIcon = jest.fn();
 export const getIcon = jest.fn((icon: string) => icon ? ({} as SVGSVGElement) : null);
 export const getIconIds = jest.fn(() => [

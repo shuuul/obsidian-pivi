@@ -1,4 +1,10 @@
-import { Component, MarkdownRenderer, TFile, TFolder } from 'obsidian';
+import {
+  Component,
+  loadMermaid,
+  MarkdownRenderer,
+  TFile,
+  TFolder,
+} from 'obsidian';
 
 import {
   type MessageRendererMarkdownHost,
@@ -75,6 +81,7 @@ function createVaultFolder(path: string): TFolder {
 describe('Markdown code block enhancement', () => {
   beforeEach(() => {
     jest.mocked(MarkdownRenderer.render).mockReset();
+    jest.mocked(loadMermaid).mockClear();
   });
 
   it('leaves Obsidian frontmatter placeholders hidden', async () => {
@@ -100,6 +107,81 @@ describe('Markdown code block enhancement', () => {
 
     expect(container.querySelector('.pivi-code-wrapper--language')).not.toBeNull();
     expect(container.querySelector('.pivi-code-lang-label')).toHaveTextContent('yaml');
+  });
+
+  it('renders Mermaid diagrams directly with the compact themed style', async () => {
+    jest.mocked(MarkdownRenderer.render).mockImplementation(async (_app, markdown, target) => {
+      expect(markdown).toBe('```pivi-mermaid\nflowchart LR\n  A --> B\n```');
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.className = 'language-pivi-mermaid';
+      code.textContent = `${markdown.split('\n').slice(1, -1).join('\n')}\n`;
+      pre.appendChild(code);
+      (target as HTMLElement).appendChild(pre);
+    });
+    const container = document.createElement('div');
+    const originalGetBBox = Object.getOwnPropertyDescriptor(SVGElement.prototype, 'getBBox');
+    Object.defineProperty(SVGElement.prototype, 'getBBox', {
+      configurable: true,
+      value: () => ({ height: 100, width: 300, x: 10, y: 20 }),
+    });
+
+    try {
+      await renderMarkdownContent(
+        createHost(),
+        container,
+        '```mermaid\nflowchart LR\n  A --> B\n```',
+      );
+    } finally {
+      if (originalGetBBox) {
+        Object.defineProperty(SVGElement.prototype, 'getBBox', originalGetBBox);
+      } else {
+        Reflect.deleteProperty(SVGElement.prototype, 'getBBox');
+      }
+    }
+
+    expect(loadMermaid).toHaveBeenCalledTimes(1);
+    const mermaid = await jest.mocked(loadMermaid).mock.results[0]?.value;
+    expect(mermaid?.initialize).toHaveBeenCalledWith(expect.objectContaining({
+      flowchart: expect.objectContaining({
+        curve: 'stepAfter',
+        htmlLabels: false,
+        nodeSpacing: 32,
+        padding: 8,
+        rankSpacing: 48,
+      }),
+      securityLevel: 'strict',
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: expect.objectContaining({
+        primaryTextColor: '#27272a',
+      }),
+    }));
+    const svg = container.querySelector('.pivi-mermaid-scroll svg');
+    expect(svg).toHaveAttribute('viewBox', '2 12 316 116');
+    expect(svg).toHaveAttribute('width', '316');
+    expect(svg).toHaveAttribute('height', '116');
+    expect(container.querySelector('code.language-pivi-mermaid')).toBeNull();
+  });
+
+  it('supports diagram types outside the compact flowchart family', async () => {
+    jest.mocked(MarkdownRenderer.render).mockImplementation(async (_app, markdown, target) => {
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.className = 'language-pivi-mermaid';
+      code.textContent = `${markdown.split('\n').slice(1, -1).join('\n')}\n`;
+      pre.appendChild(code);
+      (target as HTMLElement).appendChild(pre);
+    });
+    const container = document.createElement('div');
+
+    await renderMarkdownContent(createHost(), container, '```mermaid\npie\n  "A": 1\n```');
+
+    expect(loadMermaid).toHaveBeenCalledTimes(1);
+    const mermaid = await jest.mocked(loadMermaid).mock.results[0]?.value;
+    expect(mermaid?.initialize).toHaveBeenCalledWith(expect.objectContaining({ securityLevel: 'strict' }));
+    expect(container.querySelector('.pivi-mermaid-scroll svg style')).toHaveTextContent('fill:#f5f5f5');
+    expect(container.querySelector('.pivi-mermaid-scroll svg foreignObject br')).not.toBeNull();
   });
 });
 

@@ -121,6 +121,8 @@ Owner-realm tests cover active, inactive, hidden, visibility return, terminal fl
 
 Virtual-row unmount currently disposes every Obsidian `Component` scope, so returning to an old row rerenders its Markdown. A future cache may retain immutable segment metadata or safe render inputs, but must not retain live DOM or loaded Obsidian components.
 
+Chat Markdown masks Mermaid fences before Obsidian postprocessing so trusted-vault confirmation does not gate sidebar diagrams. The adapter invokes Obsidian's bundled Mermaid renderer directly in strict mode, with host theme colors and compact layout values matching the `beautiful-mermaid` presentation used by Marp Extended. It crops SVG bounds to an 8 px safety margin and initially fits wide diagrams to the message width while preserving local zoom and horizontal-pan controls.
+
 Any cache design must account for:
 
 - source-path and wikilink resolution;
