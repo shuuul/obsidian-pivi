@@ -19,6 +19,7 @@ import {
   type CustomProviderReasoningEffort,
   defaultModelMeta,
   isLocalCustomProviderKind,
+  mergeFetchedCustomProviderModelUserFields,
   modelsListUrl,
   normalizeProviderBaseUrl,
   parseCustomProviderReasoningMeta,
@@ -536,15 +537,7 @@ export async function fetchCustomProviderModels(
   if (models.length === 0) {
     throw new Error('Model list returned no models.');
   }
-  // User-authored fields never arrive from the wire; carry them over so a
-  // re-fetch does not silently drop the declared catalog mapping.
-  const previousById = new Map(config.models.map((model) => [model.id, model]));
-  models = models.map((model) => {
-    const previous = previousById.get(model.id);
-    return previous?.catalogModelId
-      ? { ...model, catalogModelId: previous.catalogModelId }
-      : model;
-  });
+  models = mergeFetchedCustomProviderModelUserFields(models, config.models);
   return { models };
 }
 

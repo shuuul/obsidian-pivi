@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@lobehub/icons-static-svg": "^1.94.0",
-    "@tanstack/react-virtual": "^3.14.9",
+    "@tanstack/react-virtual": "^3.14.10",
     "@pivi/agent": "*"
   },
   "peerDependencies": {

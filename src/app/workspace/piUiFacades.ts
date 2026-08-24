@@ -4,6 +4,7 @@ import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/agent/foundatio
 import {
   getCustomProviderById,
   getCustomProvidersFromBag,
+  mergeFetchedCustomProviderModelUserFields,
   reconcileVisibleModelsForCustomProviders,
 } from "@pivi/agent/foundation/customProviders";
 import { grantPrivateOrigins } from "@pivi/agent/network";
@@ -90,7 +91,10 @@ export function createPiUiFacades(
       const result = await fetchCustomProviderModels(runtimeConfig, httpGet, { apiKey });
       const customProviders = getCustomProvidersFromBag(settings).map((provider) =>
         provider.id === providerId
-          ? { ...provider, models: result.models }
+          ? {
+            ...provider,
+            models: mergeFetchedCustomProviderModelUserFields(result.models, provider.models),
+          }
           : provider,
       );
       const current = getPiAgentSettings(settings);

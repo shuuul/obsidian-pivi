@@ -423,6 +423,25 @@ export function getCustomProviderById(
   return getCustomProvidersFromBag(settings).find((provider) => provider.id === providerId) ?? null;
 }
 
+/**
+ * Apply the latest user-authored model fields to an authoritative fetched list.
+ * Fetched rows can contain stale values carried from the request snapshot, so
+ * absence in the current row must also clear the corresponding fetched field.
+ */
+export function mergeFetchedCustomProviderModelUserFields(
+  fetchedModels: readonly CustomProviderModelDef[],
+  currentModels: readonly CustomProviderModelDef[],
+): CustomProviderModelDef[] {
+  const currentById = new Map(currentModels.map((model) => [model.id, model]));
+  return fetchedModels.map((fetchedModel) => {
+    const { catalogModelId: _staleCatalogModelId, ...model } = fetchedModel;
+    const catalogModelId = currentById.get(fetchedModel.id)?.catalogModelId;
+    return catalogModelId
+      ? { ...model, catalogModelId }
+      : model;
+  });
+}
+
 export function isCustomProviderId(
   settings: Record<string, unknown>,
   providerId: string,

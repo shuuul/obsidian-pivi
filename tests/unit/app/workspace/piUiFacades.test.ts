@@ -1,4 +1,7 @@
-import { getPiAgentSettings } from '@pivi/agent/foundation/agentSettings';
+import {
+  getPiAgentSettings,
+  updatePiAgentSettings,
+} from '@pivi/agent/foundation/agentSettings';
 import {
   type CustomProviderConfig,
   createDefaultCustomProviderConfig,
@@ -132,5 +135,90 @@ describe('createPiUiFacades fetchCustomProviderModels', () => {
       `${DGX_PROVIDER_ID}/qwen3.8-27b`,
       'openai-codex/gpt-5.6-luna',
     ]);
+  });
+
+  it('keeps a catalog mapping saved while a model fetch is pending', async () => {
+    let resolveFetch!: (value: {
+      models: CustomProviderConfig['models'];
+    }) => void;
+    jest.mocked(fetchCustomProviderModels).mockReturnValue(new Promise((resolve) => {
+      resolveFetch = resolve;
+    }));
+    const settings = createSettings();
+    const facades = createPiUiFacades();
+
+    const pendingFetch = facades.fetchCustomProviderModels(DGX_PROVIDER_ID, settings);
+    const current = getPiAgentSettings(settings);
+    updatePiAgentSettings(settings, {
+      customProviders: current.customProviders.map((provider) => provider.id === DGX_PROVIDER_ID
+        ? {
+          ...provider,
+          models: provider.models.map((model) => ({
+            ...model,
+            catalogModelId: 'qwen/qwen3.5-27b',
+          })),
+        }
+        : provider),
+    });
+    resolveFetch({
+      models: [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b', contextWindow: 262144 }],
+    });
+
+    await pendingFetch;
+
+    const provider = getPiAgentSettings(settings).customProviders
+      .find((entry) => entry.id === DGX_PROVIDER_ID);
+    expect(provider?.models[0]?.catalogModelId).toBe('qwen/qwen3.5-27b');
+  });
+
+  it('keeps a catalog mapping cleared while a model fetch is pending', async () => {
+    let resolveFetch!: (value: {
+      models: CustomProviderConfig['models'];
+    }) => void;
+    jest.mocked(fetchCustomProviderModels).mockReturnValue(new Promise((resolve) => {
+      resolveFetch = resolve;
+    }));
+    const settings = createSettings();
+    const initial = getPiAgentSettings(settings);
+    updatePiAgentSettings(settings, {
+      customProviders: initial.customProviders.map((provider) => provider.id === DGX_PROVIDER_ID
+        ? {
+          ...provider,
+          models: provider.models.map((model) => ({
+            ...model,
+            catalogModelId: 'qwen/qwen3.5-27b',
+          })),
+        }
+        : provider),
+    });
+    const facades = createPiUiFacades();
+
+    const pendingFetch = facades.fetchCustomProviderModels(DGX_PROVIDER_ID, settings);
+    const current = getPiAgentSettings(settings);
+    updatePiAgentSettings(settings, {
+      customProviders: current.customProviders.map((provider) => provider.id === DGX_PROVIDER_ID
+        ? {
+          ...provider,
+          models: provider.models.map((model) => {
+            const { catalogModelId: _catalogModelId, ...withoutCatalogModelId } = model;
+            return withoutCatalogModelId;
+          }),
+        }
+        : provider),
+    });
+    resolveFetch({
+      models: [{
+        id: 'qwen3.8-27b',
+        name: 'qwen3.8-27b',
+        contextWindow: 262144,
+        catalogModelId: 'qwen/qwen3.5-27b',
+      }],
+    });
+
+    await pendingFetch;
+
+    const provider = getPiAgentSettings(settings).customProviders
+      .find((entry) => entry.id === DGX_PROVIDER_ID);
+    expect(provider?.models[0]?.catalogModelId).toBeUndefined();
   });
 });
