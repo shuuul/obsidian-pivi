@@ -3,6 +3,7 @@ import { getPiAgentSettings, updatePiAgentSettings } from './agentSettings';
 import {
   type CustomProviderConfig,
   normalizeCustomProviderConfig,
+  reconcileVisibleModelsForCustomProviders,
 } from './customProviders';
 import type { PersistedPiviSettings } from './persistedPiviSettings';
 import {
@@ -166,10 +167,16 @@ function normalizeProviders(raw: unknown): DeviceLocalProviderRegistration[] {
 function getCustomProviderIds(
   providers: readonly DeviceLocalProviderRegistration[],
 ): string[] {
+  return getCustomProviderConfigs(providers).map((provider) => provider.id);
+}
+
+function getCustomProviderConfigs(
+  providers: readonly DeviceLocalProviderRegistration[],
+): DeviceLocalCustomProviderConfig[] {
   return providers
     .filter((provider): provider is Extract<DeviceLocalProviderRegistration, { type: 'custom' }> =>
       provider.type === 'custom')
-    .map((provider) => provider.id);
+    .map((provider) => provider.config);
 }
 
 function getEnabledProviderIds(
@@ -185,7 +192,7 @@ function isRegisteredProviderId(
   return providers.some((provider) => provider.id === providerId);
 }
 
-function isModelAllowed(
+function isKnownEnabledModelKey(
   modelKey: string,
   enabledProviderIds: ReadonlySet<string>,
   customProviderIds: readonly string[],
@@ -198,12 +205,34 @@ function isModelAllowed(
     && isKnownPiProviderId(providerId, customProviderIds);
 }
 
+function isModelAllowed(
+  modelKey: string,
+  enabledProviderIds: ReadonlySet<string>,
+  customProviders: readonly DeviceLocalCustomProviderConfig[],
+): boolean {
+  const customProviderIds = customProviders.map((provider) => provider.id);
+  if (!isKnownEnabledModelKey(modelKey, enabledProviderIds, customProviderIds)) {
+    return false;
+  }
+  const providerId = providerIdFromModelKey(modelKey);
+  if (!providerId) {
+    return false;
+  }
+  const custom = customProviders.find((provider) => provider.id === providerId);
+  if (!custom) {
+    return true;
+  }
+  const modelId = modelKey.slice(providerId.length + 1);
+  return custom.models.some((model) => model.id === modelId);
+}
+
 function normalizeVisibleModels(
   rawVisibleModels: unknown,
   activeModel: string,
   enabledProviderIds: ReadonlySet<string>,
-  customProviderIds: readonly string[],
+  customProviders: readonly DeviceLocalCustomProviderConfig[],
 ): string[] {
+  const customProviderIds = customProviders.map((provider) => provider.id);
   const source = Array.isArray(rawVisibleModels)
     ? rawVisibleModels.filter((model): model is string => typeof model === 'string')
     : [];
@@ -214,7 +243,7 @@ function normalizeVisibleModels(
     if (!trimmed || seen.has(trimmed)) {
       return;
     }
-    if (!isModelAllowed(trimmed, enabledProviderIds, customProviderIds)) {
+    if (!isKnownEnabledModelKey(trimmed, enabledProviderIds, customProviderIds)) {
       return;
     }
     seen.add(trimmed);
@@ -227,13 +256,13 @@ function normalizeVisibleModels(
   for (const modelKey of source) {
     pushModel(modelKey);
   }
-  return ordered;
+  return reconcileVisibleModelsForCustomProviders(ordered, customProviders);
 }
 
 function normalizeOptionalModelReference(
   raw: unknown,
   enabledProviderIds: ReadonlySet<string>,
-  customProviderIds: readonly string[],
+  customProviders: readonly DeviceLocalCustomProviderConfig[],
 ): string | undefined {
   if (typeof raw !== 'string') {
     return undefined;
@@ -242,7 +271,7 @@ function normalizeOptionalModelReference(
   if (!trimmed) {
     return undefined;
   }
-  return isModelAllowed(trimmed, enabledProviderIds, customProviderIds)
+  return isModelAllowed(trimmed, enabledProviderIds, customProviders)
     ? trimmed
     : undefined;
 }
@@ -284,7 +313,7 @@ function normalizeModelPreferences(
 ): DeviceLocalProviderStateV1['modelPreferences'] {
   const record = isRecord(raw) ? raw : {};
   const enabledProviderIds = getEnabledProviderIds(providers);
-  const customProviderIds = getCustomProviderIds(providers);
+  const customProviders = getCustomProviderConfigs(providers);
 
   const requestedActiveModel = typeof record.activeModel === 'string'
     ? record.activeModel.trim()
@@ -293,7 +322,7 @@ function normalizeModelPreferences(
     record.visibleModels,
     requestedActiveModel,
     enabledProviderIds,
-    customProviderIds,
+    customProviders,
   );
 
   const firstVisibleModel = visibleModels[0];
@@ -308,14 +337,14 @@ function normalizeModelPreferences(
     ? record.titleGenerationModel.trim()
     : '';
   const titleGenerationModel = titleCandidate
-    && isModelAllowed(titleCandidate, enabledProviderIds, customProviderIds)
+    && isModelAllowed(titleCandidate, enabledProviderIds, customProviders)
     ? titleCandidate
     : '';
 
   const lastModel = normalizeOptionalModelReference(
     record.lastModel,
     enabledProviderIds,
-    customProviderIds,
+    customProviders,
   );
 
   return {

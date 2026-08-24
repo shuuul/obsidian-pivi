@@ -79,6 +79,95 @@ function thinkingLevelMapFromEfforts(
   return map;
 }
 
+/** Built-in catalog row used to inherit thinking levels onto a matching custom model id. */
+export interface KnownModelReasoningSource {
+  id: string;
+  reasoning?: boolean;
+  thinkingLevelMap?: ThinkingLevelMap;
+  defaultThinkingLevel?: (typeof PI_THINKING_LEVELS)[number];
+}
+
+export interface BuildCustomProviderModelsOptions {
+  /** Built-in models whose ids may supply thinking levels when the card omits them. */
+  knownModels?: readonly KnownModelReasoningSource[];
+}
+
+function modelIdAliases(modelId: string): string[] {
+  const trimmed = modelId.trim();
+  if (!trimmed) {
+    return [];
+  }
+  const slash = trimmed.lastIndexOf('/');
+  const bare = slash >= 0 ? trimmed.slice(slash + 1) : trimmed;
+  return bare === trimmed ? [trimmed] : [trimmed, bare];
+}
+
+function modelFamilyStem(modelId: string): string | undefined {
+  const aliases = modelIdAliases(modelId);
+  const bare = aliases.length > 0 ? aliases[aliases.length - 1]! : modelId.trim();
+  const match = bare.match(/^[a-z]+[0-9]*/i);
+  if (!match) {
+    return undefined;
+  }
+  const stem = match[0].toLowerCase();
+  return stem.length >= 5 ? stem : undefined;
+}
+
+function pickKnownModelReasoningSource(
+  pool: readonly KnownModelReasoningSource[],
+): KnownModelReasoningSource | undefined {
+  if (pool.length === 0) {
+    return undefined;
+  }
+  const withMap = pool.filter((model) => model.thinkingLevelMap);
+  const preferred = withMap.length > 0 ? withMap : pool;
+  return preferred.find((model) => model.reasoning) ?? preferred[0];
+}
+
+function findKnownModelReasoningSource(
+  modelId: string,
+  knownModels: readonly KnownModelReasoningSource[],
+): KnownModelReasoningSource | undefined {
+  const aliases = new Set(modelIdAliases(modelId));
+  if (aliases.size === 0) {
+    return undefined;
+  }
+
+  const candidates = knownModels.filter((model) => (
+    modelIdAliases(model.id).some((id) => aliases.has(id))
+  ));
+  if (candidates.length > 0) {
+    const exact = candidates.filter((model) => model.id === modelId);
+    return pickKnownModelReasoningSource(exact.length > 0 ? exact : candidates);
+  }
+
+  const stem = modelFamilyStem(modelId);
+  if (!stem) {
+    return undefined;
+  }
+  const family = knownModels.filter((model) => modelFamilyStem(model.id) === stem);
+  return pickKnownModelReasoningSource(family);
+}
+
+function collectKnownModelReasoningSources(
+  registry: MutableModels,
+  excludeProviderIds: ReadonlySet<string>,
+): KnownModelReasoningSource[] {
+  return registry.getModels().flatMap((model) => {
+    if (excludeProviderIds.has(model.provider)) {
+      return [];
+    }
+    return [{
+      id: model.id,
+      reasoning: model.reasoning,
+      ...(model.thinkingLevelMap ? { thinkingLevelMap: { ...model.thinkingLevelMap } } : {}),
+      ...((model as KnownModelReasoningSource).defaultThinkingLevel
+        ? { defaultThinkingLevel: (model as KnownModelReasoningSource).defaultThinkingLevel }
+        : {}),
+    }];
+  });
+}
+
 function openAiCompatFlags(
   kind: CustomProviderConfig['kind'],
   supportsReasoningEffort: boolean,
@@ -94,28 +183,39 @@ function openAiCompatFlags(
 
 export function buildCustomProviderModels(
   config: CustomProviderConfig,
+  options?: BuildCustomProviderModelsOptions,
 ): Model<Api>[] {
   const baseUrl = customProviderRuntimeBaseUrl(config);
   const headers = config.headers;
+  const knownModels = options?.knownModels ?? [];
 
   return config.models.map((modelDef) => {
     const meta = defaultModelMeta(modelDef, config.kind);
+    const inherited = meta.reasoningMeta
+      ? undefined
+      : findKnownModelReasoningSource(modelDef.catalogModelId ?? modelDef.id, knownModels)
+        ?? (modelDef.catalogModelId
+          ? findKnownModelReasoningSource(modelDef.id, knownModels)
+          : undefined);
     const thinkingLevelMap = meta.reasoningMeta
       ? thinkingLevelMapFromEfforts(meta.reasoningMeta.supportedEfforts, {
         mandatory: meta.reasoningMeta.mandatory,
       })
-      : undefined;
+      : inherited?.thinkingLevelMap
+        ? { ...inherited.thinkingLevelMap }
+        : undefined;
     const defaultThinkingLevel = meta.reasoningMeta
       ? meta.reasoningMeta.defaultEnabled === false
         ? 'off' as const
         : meta.reasoningMeta.defaultEffort
-      : undefined;
+      : inherited?.defaultThinkingLevel;
+    const reasoning = meta.reasoning || inherited?.reasoning === true;
     const base = {
       id: modelDef.id,
       name: modelDef.name,
       provider: config.id,
       baseUrl,
-      reasoning: meta.reasoning,
+      reasoning,
       ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
       ...(defaultThinkingLevel ? { defaultThinkingLevel } : {}),
       contextWindowIsAuthoritative: modelDef.contextWindow !== undefined,
@@ -143,7 +243,7 @@ export function buildCustomProviderModels(
     return {
       ...base,
       api: 'openai-completions' as const,
-      compat: openAiCompatFlags(config.kind, meta.reasoning),
+      compat: openAiCompatFlags(config.kind, reasoning),
     };
   });
 }
@@ -436,6 +536,15 @@ export async function fetchCustomProviderModels(
   if (models.length === 0) {
     throw new Error('Model list returned no models.');
   }
+  // User-authored fields never arrive from the wire; carry them over so a
+  // re-fetch does not silently drop the declared catalog mapping.
+  const previousById = new Map(config.models.map((model) => [model.id, model]));
+  models = models.map((model) => {
+    const previous = previousById.get(model.id);
+    return previous?.catalogModelId
+      ? { ...model, catalogModelId: previous.catalogModelId }
+      : model;
+  });
   return { models };
 }
 
@@ -444,10 +553,12 @@ export function buildCustomPiProvider(
   options?: {
     httpGet?: CustomProviderHttpGet;
     getApiKey?: () => string | undefined;
+    knownModels?: readonly KnownModelReasoningSource[];
   },
 ): Provider {
   const baseUrl = customProviderRuntimeBaseUrl(config);
-  const models = buildCustomProviderModels(config);
+  const knownModels = options?.knownModels;
+  const models = buildCustomProviderModels(config, { knownModels });
   const api = resolveApiStreams(config.api);
   const httpGet = options?.httpGet;
 
@@ -465,7 +576,7 @@ export function buildCustomPiProvider(
           const fetched = await fetchCustomProviderModels(config, httpGet, { apiKey });
           // Mutate config so callers that hold the same object see the list.
           config.models = fetched.models;
-          return buildCustomProviderModels({ ...config, models: fetched.models });
+          return buildCustomProviderModels({ ...config, models: fetched.models }, { knownModels });
         }
       : undefined,
     api,
@@ -488,6 +599,11 @@ export function installCustomProviders(
     }
   }
 
+  const knownModels = collectKnownModelReasoningSources(
+    models,
+    new Set(configs.map((config) => config.id)),
+  );
+
   for (const config of configs) {
     models.setProvider(
       buildCustomPiProvider(config, {
@@ -495,6 +611,7 @@ export function installCustomProviders(
         getApiKey: options?.getApiKey
           ? () => options.getApiKey?.(config.id)
           : undefined,
+        knownModels,
       }),
     );
   }

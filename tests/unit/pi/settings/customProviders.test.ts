@@ -6,6 +6,7 @@ import {
   normalizeCustomProviderConfig,
   normalizeCustomProviders,
   parseOpenAiStyleModelsList,
+  reconcileVisibleModelsForCustomProviders,
 } from '@pivi/agent/foundation/customProviders';
 import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import { MAX_OBSIDIAN_SECRET_ID_LENGTH } from '@pivi/agent/auth/providerSecretStorage';
@@ -274,6 +275,44 @@ describe('customProviders foundation', () => {
   });
 });
 
+describe('reconcileVisibleModelsForCustomProviders', () => {
+  const providerId = 'custom-openai-compatible-5bbe1d19934e';
+  const provider = {
+    id: providerId,
+    models: [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }],
+  };
+
+  it('replaces a stale checked key with the current config models', () => {
+    expect(reconcileVisibleModelsForCustomProviders(
+      [`${providerId}/deepseek-v4-flash-0731`],
+      [provider],
+    )).toEqual([`${providerId}/qwen3.8-27b`]);
+  });
+
+  it('keeps allowed keys and drops stale siblings without adding unchecked models', () => {
+    expect(reconcileVisibleModelsForCustomProviders(
+      [
+        `${providerId}/qwen3.8-27b`,
+        `${providerId}/deepseek-v4-flash-0731`,
+      ],
+      [{
+        id: providerId,
+        models: [
+          { id: 'qwen3.8-27b', name: 'qwen3.8-27b' },
+          { id: 'other', name: 'other' },
+        ],
+      }],
+    )).toEqual([`${providerId}/qwen3.8-27b`]);
+  });
+
+  it('leaves an intentionally empty provider slice empty', () => {
+    expect(reconcileVisibleModelsForCustomProviders(
+      ['deepseek/deepseek-chat'],
+      [provider],
+    )).toEqual(['deepseek/deepseek-chat']);
+  });
+});
+
 describe('custom providers in agent settings', () => {
   it('keeps custom provider ids in addedProviders and visible models', () => {
     const settings: Record<string, unknown> = {
@@ -451,6 +490,298 @@ describe('installPiCustomProviders model mapping', () => {
     expect((model as { defaultThinkingLevel?: string } | undefined)?.defaultThinkingLevel).toBeUndefined();
   });
 
+  it('inherits thinking levels from a matching built-in model id', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{ id: 'deepseek-v4-flash-0731', name: 'DeepSeek V4 Flash 0731' }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'deepseek-v4-flash-0731',
+        reasoning: true,
+        thinkingLevelMap: {
+          minimal: null,
+          low: null,
+          medium: null,
+          high: 'high',
+          xhigh: null,
+          max: 'max',
+        },
+      }],
+    });
+
+    expect(model).toMatchObject({
+      id: 'deepseek-v4-flash-0731',
+      reasoning: true,
+      thinkingLevelMap: {
+        minimal: null,
+        low: null,
+        medium: null,
+        high: 'high',
+        xhigh: null,
+        max: 'max',
+      },
+      compat: expect.objectContaining({ supportsReasoningEffort: true }),
+    });
+  });
+
+  it('inherits thinking levels from a family-stem catalog row when the exact id is absent', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'qwen3-235b-a22b',
+        reasoning: true,
+        thinkingLevelMap: {
+          low: 'low',
+          medium: 'medium',
+          high: 'high',
+          xhigh: null,
+          max: null,
+        },
+      }],
+    });
+
+    expect(model).toMatchObject({
+      id: 'qwen3.8-27b',
+      reasoning: true,
+      thinkingLevelMap: {
+        low: 'low',
+        medium: 'medium',
+        high: 'high',
+        xhigh: null,
+        max: null,
+      },
+      compat: expect.objectContaining({ supportsReasoningEffort: true }),
+    });
+  });
+
+  it('prefers an exact catalog id over a family-stem row', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [
+        {
+          id: 'qwen3-235b-a22b',
+          reasoning: true,
+          thinkingLevelMap: { max: 'max' },
+        },
+        {
+          id: 'qwen3.8-27b',
+          reasoning: true,
+          thinkingLevelMap: { high: 'high' },
+        },
+      ],
+    });
+
+    expect(model?.thinkingLevelMap).toEqual({ high: 'high' });
+  });
+
+  it('does not family-match a stem shorter than 5 characters', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{ id: 'gpt-4.1', name: 'gpt-4.1' }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'gpt-4o',
+        reasoning: true,
+        thinkingLevelMap: { medium: 'medium', high: 'high' },
+      }],
+    });
+
+    expect(model?.thinkingLevelMap).toBeUndefined();
+    expect(model?.reasoning).toBe(false);
+  });
+
+  it('inherits thinking levels when the custom id matches a provider-prefixed known id', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{ id: 'deepseek-v4-flash-0731', name: 'DeepSeek V4 Flash 0731' }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'deepseek/deepseek-v4-flash-0731',
+        reasoning: true,
+        thinkingLevelMap: { high: 'high', xhigh: 'xhigh', max: null },
+      }],
+    });
+
+    expect(model?.thinkingLevelMap).toEqual({
+      high: 'high',
+      xhigh: 'xhigh',
+      max: null,
+    });
+    expect(model?.reasoning).toBe(true);
+  });
+
+  it('prefers advertised supported_efforts over a matching built-in model id', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{
+      id: 'deepseek-v4-flash-0731',
+      name: 'DeepSeek V4 Flash 0731',
+      reasoning: true,
+      reasoningMeta: {
+        supportedEfforts: ['low', 'medium'],
+        defaultEffort: 'low',
+        defaultEnabled: true,
+      },
+    }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'deepseek-v4-flash-0731',
+        reasoning: true,
+        thinkingLevelMap: { high: 'high', max: 'max' },
+        defaultThinkingLevel: 'high',
+      }],
+    });
+
+    expect(model).toMatchObject({
+      defaultThinkingLevel: 'low',
+      thinkingLevelMap: {
+        off: 'none',
+        minimal: null,
+        low: 'low',
+        medium: 'medium',
+        high: null,
+        xhigh: null,
+        max: null,
+      },
+    });
+  });
+
+  it('inherits thinking levels from a declared catalog model id', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen3.8-27b',
+      name: 'qwen3.8-27b',
+      contextWindow: 262144,
+      catalogModelId: 'qwen/qwen3.5-27b',
+    }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'qwen/qwen3.5-27b',
+        reasoning: true,
+        thinkingLevelMap: { off: null, high: 'high', xhigh: 'xhigh' },
+        defaultThinkingLevel: 'high',
+      }],
+    });
+
+    expect(model).toMatchObject({
+      id: 'qwen3.8-27b',
+      reasoning: true,
+      thinkingLevelMap: { off: null, high: 'high', xhigh: 'xhigh' },
+      defaultThinkingLevel: 'high',
+      contextWindow: 262144,
+      compat: expect.objectContaining({ supportsReasoningEffort: true }),
+    });
+  });
+
+  it('inherits the reasoning flag from a catalog row without a thinking level map', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen3.8-27b',
+      name: 'qwen3.8-27b',
+      catalogModelId: 'qwen/qwen3.5-27b',
+    }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{ id: 'qwen/qwen3.5-27b', reasoning: true }],
+    });
+
+    expect(model?.reasoning).toBe(true);
+    expect(model?.thinkingLevelMap).toBeUndefined();
+    expect(model).toMatchObject({
+      compat: expect.objectContaining({ supportsReasoningEffort: true }),
+    });
+  });
+
+  it('matches a fully provider-qualified catalog id against bare known ids', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen3.8-27b',
+      name: 'qwen3.8-27b',
+      catalogModelId: 'openrouter/qwen/qwen3.5-27b',
+    }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{ id: 'qwen/qwen3.5-27b', reasoning: true }],
+    });
+
+    expect(model?.reasoning).toBe(true);
+  });
+
+  it('falls back to the server model id when the declared catalog id matches nothing', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{
+      id: 'deepseek-v4-flash-0731',
+      name: 'DeepSeek V4 Flash 0731',
+      catalogModelId: 'qwen/qwen3.5-27b',
+    }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'deepseek-v4-flash-0731',
+        reasoning: true,
+        thinkingLevelMap: { high: 'high' },
+      }],
+    });
+
+    expect(model?.thinkingLevelMap).toEqual({ high: 'high' });
+  });
+
+  it('prefers advertised supported_efforts over a declared catalog model id', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen3.8-27b',
+      name: 'qwen3.8-27b',
+      catalogModelId: 'qwen/qwen3.5-27b',
+      reasoning: true,
+      reasoningMeta: { supportedEfforts: ['low', 'medium'] },
+    }];
+
+    const [model] = buildCustomProviderModels(config, {
+      knownModels: [{
+        id: 'qwen/qwen3.5-27b',
+        reasoning: true,
+        thinkingLevelMap: { high: 'high', max: 'max' },
+      }],
+    });
+
+    expect(model?.thinkingLevelMap).toEqual({
+      off: 'none',
+      minimal: null,
+      low: 'low',
+      medium: 'medium',
+      high: null,
+      xhigh: null,
+      max: null,
+    });
+  });
+
   it('uses a conservative context window for local models with unknown metadata', () => {
     const config = createDefaultCustomProviderConfig('ollama', []);
     config.models = [{ id: 'unknown', name: 'Unknown' }];
@@ -542,6 +873,30 @@ describe('installPiCustomProviders model mapping', () => {
     })]);
     expect(result.models[0]?.reasoning).toBeUndefined();
     expect(result.models[0]?.reasoningMeta).toBeUndefined();
+  });
+
+  it('carries declared catalog model ids across a model-list fetch', async () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [
+      { id: 'qwen3.8-27b', name: 'qwen3.8-27b', catalogModelId: 'qwen/qwen3.5-27b' },
+      { id: 'retired', name: 'retired', catalogModelId: 'qwen/qwen3-32b' },
+    ];
+    const request = jest.fn(async () => ({
+      status: 200,
+      body: JSON.stringify({
+        data: [{ id: 'qwen3.8-27b', max_model_len: 262144 }],
+      }),
+    }));
+
+    const result = await fetchCustomProviderModels(config, request);
+
+    expect(result.models).toEqual([expect.objectContaining({
+      id: 'qwen3.8-27b',
+      contextWindow: 262144,
+      catalogModelId: 'qwen/qwen3.5-27b',
+    })]);
   });
 });
 

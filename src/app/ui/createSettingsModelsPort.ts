@@ -295,6 +295,32 @@ export function createSettingsModelsPort(
         view.getChatHandle()?.maintenance.refreshModelPresentation();
       }
     },
+    async patchCustomProviderModel(providerId, modelId, patch) {
+      const piSettings = getPiAgentSettings(host.settings);
+      const customProviders = piSettings.customProviders.map(provider => {
+        if (provider.id !== providerId) return provider;
+        return {
+          ...provider,
+          models: provider.models.map(model => {
+            if (model.id !== modelId) return model;
+            const next = { ...model };
+            const catalogModelId = patch.catalogModelId?.trim();
+            if (catalogModelId) {
+              next.catalogModelId = catalogModelId;
+            } else {
+              delete next.catalogModelId;
+            }
+            return next;
+          }),
+        };
+      });
+      updatePiAgentSettings(host.settings, { customProviders });
+      uiFacades.syncCustomProviders(host.settings);
+      await host.saveSettings();
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.refreshModelPresentation();
+      }
+    },
     async fetchCustomProviderModels(providerId) {
       uiFacades.syncCustomProviders(host.settings);
       const result = await uiFacades.fetchCustomProviderModels(providerId, host.settings);

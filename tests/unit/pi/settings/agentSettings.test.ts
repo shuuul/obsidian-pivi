@@ -90,6 +90,33 @@ describe('getPiAgentSettings', () => {
     expect(view.disabledProviders).toEqual(['openrouter']);
   });
 
+  it('replaces leftover custom-provider visible models with the current config ids', () => {
+    const providerId = 'custom-openai-compatible-5bbe1d19934e';
+    const settings = {
+      agentSettings: {
+        environmentVariables: '',
+        selectedMode: 'default',
+        addedProviders: [providerId],
+        visibleModels: [`${providerId}/deepseek-v4-flash-0731`],
+        customProviders: [{
+          id: providerId,
+          kind: 'openai-compatible',
+          name: 'DGX Spark',
+          baseUrl: 'http://192.168.100.114:8888/v1',
+          api: 'openai-completions',
+          models: [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }],
+        }],
+      },
+    };
+
+    expect(getPiAgentSettings(settings).visibleModels).toEqual([
+      `${providerId}/qwen3.8-27b`,
+    ]);
+    expect(normalizePiAgentSettingsRecord(settings)).toBe(true);
+    const persisted = readPersistedAgentSettings(settings);
+    expect(persisted?.visibleModels).toEqual([`${providerId}/qwen3.8-27b`]);
+  });
+
   it('falls back to default visible models when every entry is invalid', () => {
     const settings = {
       agentSettings: {

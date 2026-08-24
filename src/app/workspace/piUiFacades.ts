@@ -1,9 +1,10 @@
 import { mergeCustomProviderHeaderSecrets } from "@pivi/agent/auth/customProviderHeaderSecrets";
 import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
-import { updatePiAgentSettings } from "@pivi/agent/foundation/agentSettings";
+import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/agent/foundation/agentSettings";
 import {
   getCustomProviderById,
   getCustomProvidersFromBag,
+  reconcileVisibleModelsForCustomProviders,
 } from "@pivi/agent/foundation/customProviders";
 import { grantPrivateOrigins } from "@pivi/agent/network";
 import type { SyncSecretStore } from "@pivi/agent/ports";
@@ -30,6 +31,17 @@ function regrantProviderPrivateOrigins(
     // Network clients may not be installed during early bootstrap; the startup
     // grant pass in createPiWorkspaceServices covers the steady state.
   }
+}
+
+function readLastModelFromBag(settings: Record<string, unknown>): string | undefined {
+  const agentSettings = settings.agentSettings;
+  if (agentSettings && typeof agentSettings === "object" && !Array.isArray(agentSettings)) {
+    const lastModel = (agentSettings as Record<string, unknown>).lastModel;
+    if (typeof lastModel === "string") {
+      return lastModel;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -81,7 +93,33 @@ export function createPiUiFacades(
           ? { ...provider, models: result.models }
           : provider,
       );
-      updatePiAgentSettings(settings, { customProviders });
+      const current = getPiAgentSettings(settings);
+      const visibleModels = reconcileVisibleModelsForCustomProviders(
+        current.visibleModels,
+        customProviders,
+      );
+      const prefix = `${providerId}/`;
+      const allowedKeys = new Set(result.models.map((model) => `${providerId}/${model.id}`));
+      const firstProviderKey = visibleModels.find((key) => key.startsWith(prefix));
+      const lastModel = readLastModelFromBag(settings);
+      const lastModelUpdate = lastModel && lastModel.startsWith(prefix) && !allowedKeys.has(lastModel)
+        ? { lastModel: "" }
+        : {};
+      updatePiAgentSettings(settings, {
+        customProviders,
+        visibleModels,
+        ...lastModelUpdate,
+      });
+      if (typeof settings.model === "string" && settings.model.startsWith(prefix) && !allowedKeys.has(settings.model)) {
+        settings.model = firstProviderKey ?? "";
+      }
+      if (
+        typeof settings.titleGenerationModel === "string"
+        && settings.titleGenerationModel.startsWith(prefix)
+        && !allowedKeys.has(settings.titleGenerationModel)
+      ) {
+        settings.titleGenerationModel = "";
+      }
       syncCustomPiProviders(customProviders);
       return { count: result.models.length };
     },

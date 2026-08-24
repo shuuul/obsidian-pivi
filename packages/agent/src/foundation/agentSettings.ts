@@ -5,6 +5,7 @@ import {
 import {
   type CustomProviderConfig,
   normalizeCustomProviders,
+  reconcileVisibleModelsForCustomProviders,
 } from './customProviders';
 import type { AgentRuntimeSettings } from './settings';
 import { getAgentEnvironmentVariables } from './settingsAgentEnvironment';
@@ -20,13 +21,15 @@ import {
 
 function sanitizeVisibleModels(
   raw: string[],
-  customProviderIds: readonly string[],
+  customProviders: readonly CustomProviderConfig[],
 ): string[] {
+  const customProviderIds = customProviders.map((provider) => provider.id);
   const valid = raw.filter(
     (modelKey) => isValidModelKey(modelKey) && isSupportedPiModelKey(modelKey, customProviderIds),
   );
-  return valid.length > 0
-    ? valid
+  const reconciled = reconcileVisibleModelsForCustomProviders(valid, customProviders);
+  return reconciled.length > 0
+    ? reconciled
     : [...DEFAULT_PI_AGENT_SETTINGS.visibleModels];
 }
 
@@ -81,7 +84,7 @@ export function getPiAgentSettings(
       getAgentEnvironmentVariables(settings) ??
       DEFAULT_PI_AGENT_SETTINGS.environmentVariables,
     selectedMode: config.selectedMode ?? DEFAULT_PI_AGENT_SETTINGS.selectedMode,
-    visibleModels: sanitizeVisibleModels(rawVisibleModels, customProviderIds),
+    visibleModels: sanitizeVisibleModels(rawVisibleModels, customProviders),
   };
 }
 

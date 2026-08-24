@@ -124,6 +124,14 @@ export function ProviderCard({
     });
   };
 
+  const patchModelCatalogId = (modelId: string, catalogModelId: string): void => {
+    void models.patchCustomProviderModel(providerId, modelId, { catalogModelId })
+      .then(() => { onChanged(); })
+      .catch((cause: unknown) => {
+        onError(cause instanceof Error ? cause.message : t('common.error'));
+      });
+  };
+
   const testProvider = async (): Promise<void> => {
     setTesting(true);
     try {
@@ -220,7 +228,14 @@ export function ProviderCard({
             {!isLocalProvider ? (
               <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
             ) : null}
-            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+            <ModelChecklist
+              catalog={catalog}
+              providerId={providerId}
+              settings={settings}
+              onToggleModel={toggleModel}
+              customProvider={custom}
+              onPatchModelCatalogId={patchModelCatalogId}
+            />
           </>
         ) : isCodex ? (
           <>

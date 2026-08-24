@@ -106,6 +106,48 @@ describe('normalizeDeviceLocalProviderState', () => {
     });
   });
 
+  it('replaces leftover custom-provider visibleModels with the current config model id', () => {
+    const providerId = 'custom-openai-compatible-5bbe1d19934e';
+    const stale = `${providerId}/deepseek-v4-flash-0731`;
+    const next = `${providerId}/qwen3.8-27b`;
+    const state = normalizeDeviceLocalProviderState({
+      version: 1,
+      initialized: true,
+      providers: [
+        { id: 'deepseek', type: 'builtin', disabled: false },
+        {
+          id: providerId,
+          type: 'custom',
+          disabled: false,
+          config: {
+            id: providerId,
+            kind: 'openai-compatible',
+            name: 'DGX Spark',
+            baseUrl: 'http://192.168.100.114:8888/v1',
+            api: 'openai-completions',
+            models: [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }],
+          },
+        },
+      ],
+      modelPreferences: {
+        visibleModels: [stale],
+        activeModel: stale,
+        titleGenerationModel: stale,
+        lastModel: stale,
+        customContextLimits: {},
+      },
+      webSearchTools: {
+        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+        disabledProviders: [],
+      },
+    });
+
+    expect(state.modelPreferences.visibleModels).toEqual([next]);
+    expect(state.modelPreferences.activeModel).toBe(next);
+    expect(state.modelPreferences.titleGenerationModel).toBe('');
+    expect(state.modelPreferences.lastModel).toBeUndefined();
+  });
+
   it('clears invalid title, last, and active model references', () => {
     const state = normalizeDeviceLocalProviderState({
       version: 1,

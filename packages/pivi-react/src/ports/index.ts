@@ -98,6 +98,12 @@ export interface SettingsModelsPort {
   ensureProviderCredentials(): Promise<void>;
   testProvider(providerId: string): Promise<{ ok: boolean; detail: string }>;
   patchCustomProvider(providerId: string, patch: { name?: string; baseUrl?: string }): Promise<void>;
+  /** Patch user-authored fields of one fetched custom-provider model row. */
+  patchCustomProviderModel(
+    providerId: string,
+    modelId: string,
+    patch: { catalogModelId?: string },
+  ): Promise<void>;
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
 }
 

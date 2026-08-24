@@ -109,6 +109,44 @@ describe('createSettingsModelsPort provider removal', () => {
     expect(harness.refreshModelPresentation).toHaveBeenCalledTimes(1);
   });
 
+  it('sets and clears a custom model catalog id through the settings port', async () => {
+    const harness = createHarness();
+    harness.settings.agentSettings.addedProviders = ['custom-openai-compatible-lan'];
+    harness.settings.agentSettings.customProviders = [{
+      id: 'custom-openai-compatible-lan',
+      kind: 'openai-compatible',
+      name: 'DGX Spark',
+      baseUrl: 'http://192.168.100.114:8888/v1',
+      api: 'openai-completions',
+      models: [
+        { id: 'qwen3.8-27b', name: 'qwen3.8-27b', contextWindow: 262144 },
+        { id: 'other', name: 'other' },
+      ],
+    }];
+
+    await harness.port.patchCustomProviderModel(
+      'custom-openai-compatible-lan',
+      'qwen3.8-27b',
+      { catalogModelId: ' qwen/qwen3.5-27b ' },
+    );
+
+    let models = harness.settings.agentSettings.customProviders[0]?.models;
+    expect(models?.[0]?.catalogModelId).toBe('qwen/qwen3.5-27b');
+    expect(models?.[1]?.catalogModelId).toBeUndefined();
+    expect(harness.uiFacades.syncCustomProviders).toHaveBeenCalled();
+    expect(harness.saveSettings).toHaveBeenCalledTimes(1);
+    expect(harness.refreshModelPresentation).toHaveBeenCalledTimes(1);
+
+    await harness.port.patchCustomProviderModel(
+      'custom-openai-compatible-lan',
+      'qwen3.8-27b',
+      { catalogModelId: '' },
+    );
+
+    models = harness.settings.agentSettings.customProviders[0]?.models;
+    expect(models?.[0]?.catalogModelId).toBeUndefined();
+  });
+
   it('deletes the provider credential only when explicitly requested', async () => {
     const harness = createHarness();
 
