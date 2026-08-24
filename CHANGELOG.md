@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.20.0](https://github.com/shuuul/obsidian-pivi/compare/0.19.0...0.20.0) (2026-08-24)
+
+
+### Features
+
+* **models:** map custom models to built-in catalog ids for reasoning inheritance ([a8f6621](https://github.com/shuuul/obsidian-pivi/commit/a8f6621e1612abc81d64f346ba2f92eb6c125f9d))
+
+
+### Bug Fixes
+
+* **chat:** enforce imperative content identity ([0a35043](https://github.com/shuuul/obsidian-pivi/commit/0a35043a78d47b8798c1b15b551f79cca171f0cd))
+* **models:** preserve catalog mapping saved during concurrent model fetch ([762c266](https://github.com/shuuul/obsidian-pivi/commit/762c26684e5e45e596a80fb515a346be65f1ec4c))
+* **prompt:** retry oversized read ranges before delegation ([dcf2e44](https://github.com/shuuul/obsidian-pivi/commit/dcf2e44e01516af0652250fde07105865b00e469))
+* **settings:** refresh built-in tool toggles immediately ([21335b3](https://github.com/shuuul/obsidian-pivi/commit/21335b301dab893835cd7271217fba046ec26c70)), closes [#86](https://github.com/shuuul/obsidian-pivi/issues/86)
+
 ## [0.19.0](https://github.com/shuuul/obsidian-pivi/compare/0.18.9...0.19.0) (2026-08-22)
 
 
