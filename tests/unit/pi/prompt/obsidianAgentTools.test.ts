@@ -87,6 +87,9 @@ describe('registered tool prompt descriptors', () => {
 
     expect(section).toContain('Each of `obsidian_read` clamps `maxChars`');
     expect(section).toContain('nextStartLine');
+    expect(section).toContain('treat that as a parameter mismatch—not a reason to delegate');
+    expect(section).toContain('Immediately retry the same read with `maxChars` at least the required count');
+    expect(section).toContain('tool-call limit is separate from the model context window');
     expect(section).not.toContain('obsidian_read_external');
     expect(section).not.toContain('obsidian_markdown_structure');
   });
