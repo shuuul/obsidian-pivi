@@ -19,7 +19,8 @@
 
 ## Public API
 
-- Pi chat runtime, settings coordinator, model registry/auth helpers, and auxiliary query runner under `@pivi/engine-pi` leaf exports.
+- Production composition imports Pi capabilities only through stable responsibility-scoped `@pivi/engine-pi/application/{auth,models,oauth,oauth-flows,runtime,session}` surfaces, avoiding both implementation deep imports and one eager all-engine barrel.
+- Focused engine compatibility tests may use declared leaf exports to exercise implementation modules without widening the production composition boundary.
 - Pi JSONL session compatibility under `@pivi/engine-pi/session/*`.
 - Obsidian-safe Pi SDK shims under `@pivi/engine-pi/shims/*`.
 - Tool-registry and subagent/skill adapters under dedicated leaf exports such as `buildPiToolRegistryCore`, `createSkillTool`, and `createSubagentTool`.

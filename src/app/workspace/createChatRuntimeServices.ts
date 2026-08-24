@@ -3,14 +3,13 @@ import type { CapabilityApprovalPort, FetchCompatible, HttpClient, SyncSecretSto
 import type { AuxQueryRunner } from "@pivi/agent/runtime/auxQueryRunner";
 import type { PiChatService } from "@pivi/agent/runtime/piChatService";
 import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
-import type {
-  PiBaseToolProvider,
-  PiMainOnlyToolProvider,
-} from "@pivi/engine-pi/buildPiToolRegistryCore";
-import { createPiAuxQueryRunner } from "@pivi/engine-pi/piAuxQueryRunner";
-import { PiChatRuntime } from "@pivi/engine-pi/piChatRuntime";
-import type { PiRuntimeHost } from "@pivi/engine-pi/piRuntimeHost";
-import type { SubagentConcurrencyLimiter } from "@pivi/engine-pi/subagentConcurrencyLimiter";
+import type { PiBaseToolProvider, PiMainOnlyToolProvider } from "@pivi/engine-pi/application/runtime";
+import {
+  createPiAuxQueryRunner,
+  PiChatRuntime,
+  type PiRuntimeHost,
+  type SubagentConcurrencyLimiter,
+} from "@pivi/engine-pi/application/runtime";
 
 /**
  * App-layer factories that construct concrete Pi engine services.

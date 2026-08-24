@@ -4,6 +4,18 @@
 
 `FileContextState` tracks session-aware current-note sending, turn-scoped attached file paths, and mentioned MCP server names for the chat input UI. It owns no Obsidian objects or DOM.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  Manager["FileContextManager"] --> State["FileContextState"]
+  State --> Current["current-note sent flag"]
+  State --> Files["deduplicated attached paths"]
+  State --> MCP["deduplicated MCP names"]
+  State -- "copies only" --> Manager
+  State -. "forbidden ownership" .-> DOM["DOM · Obsidian · prompt serialization"]
+```
+
 ## Rules
 
 - Keep this state UI-facing and free of prompt serialization decisions.

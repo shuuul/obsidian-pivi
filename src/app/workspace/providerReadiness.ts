@@ -5,11 +5,11 @@ import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 import { getProviderIdFromModelValue } from '@pivi/agent/foundation/providerLogos';
 import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
 import { testEndpointConnectivity } from '@pivi/agent/runtime/connectivity';
-import { piAiModels } from '@pivi/engine-pi/piAiModels';
 import {
+  piAiModels,
   type PiResolvedModel,
   resolvePiModelFromKeyWithLookup,
-} from '@pivi/engine-pi/piModelRegistry';
+} from '@pivi/engine-pi/application/models';
 import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 
 const logger = new PluginLogger('ProviderReadiness');

@@ -7,7 +7,7 @@ import {
   isWebProviderId,
   type WebSearchToolsSettings,
 } from '@pivi/agent/foundation/settings';
-import type { LegacyProviderMembershipSnapshot } from '@pivi/engine-pi';
+import type { LegacyProviderMembershipSnapshot } from '@pivi/engine-pi/application/auth';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);

@@ -438,12 +438,33 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, dir), { recursive: true });
       writeFileSync(
         join(fixtureRoot, relativeFile),
-        "import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';",
+        "import { PiChatRuntime } from '@pivi/engine-pi/application/runtime';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
 
       expect(result.status).toBe(0);
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ['src/app/fixture.ts', 'src/app uses the stable Pi engine application surface'],
+    ['src/main.ts', 'src/main uses the stable Pi engine application surface'],
+  ])('rejects Pi engine implementation imports from composition (%s)', (relativeFile, ruleName) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, relativeFile, '..'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, relativeFile),
+        "import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(`[${ruleName}]`);
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }
@@ -853,6 +874,48 @@ describe('architecture boundary scripts', () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain('[@pivi imports use declared package exports]');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ['src/app/fixture.ts', '../../packages/core/src/internal'],
+    ['packages/presentation/src/fixture.ts', '../../core/src/internal'],
+  ])('rejects relative imports across workspace package boundaries from %s', (
+    relativeFile,
+    moduleName,
+  ) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'packages/presentation/src'), { recursive: true });
+      mkdirSync(join(fixtureRoot, relativeFile, '..'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/package.json'),
+        JSON.stringify({
+          exports: { '.': './src/index.ts' },
+          name: '@pivi/core',
+        }),
+      );
+      writeFileSync(
+        join(fixtureRoot, 'packages/presentation/package.json'),
+        JSON.stringify({
+          exports: { '.': './src/index.ts' },
+          name: '@pivi/presentation',
+        }),
+      );
+      writeFileSync(
+        join(fixtureRoot, relativeFile),
+        `import { internal } from '${moduleName}';`,
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[production cross-package imports use declared package exports]',
+      );
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }

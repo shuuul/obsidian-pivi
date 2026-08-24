@@ -9,11 +9,13 @@ import {
 } from "@pivi/agent/foundation/customProviders";
 import { grantPrivateOrigins } from "@pivi/agent/network";
 import type { SyncSecretStore } from "@pivi/agent/ports";
-import { fetchCustomProviderModels } from "@pivi/engine-pi/installPiCustomProviders";
-import { syncCustomPiProviders } from "@pivi/engine-pi/piAiModels";
-import { piChatUIConfig } from "@pivi/engine-pi/piChatUiConfig";
-import { getPiAiModelsForProvider } from "@pivi/engine-pi/piModelRegistry";
-import { PiSettingsCoordinator } from "@pivi/engine-pi/piSettingsCoordinator";
+import {
+  fetchCustomProviderModels,
+  getPiAiModelsForProvider,
+  piChatUIConfig,
+  PiSettingsCoordinator,
+  syncCustomPiProviders,
+} from "@pivi/engine-pi/application/models";
 import { getActivePiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
 
 import type { PiviUiFacades } from "@/app/hostContracts";

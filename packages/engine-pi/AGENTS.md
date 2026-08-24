@@ -12,7 +12,8 @@ This is the **only application source package where raw `@earendil-works/*` impo
 
 ```mermaid
 flowchart TD
-  App["App composition<br/>src/app"] -- "injects host ports, settings,<br/>tool provider, MCP" --> Runtime["PiChatRuntime<br/>@pivi/engine-pi"]
+  App["App composition<br/>src/app + src/main.ts"] --> Surface["stable production surfaces<br/>application/{auth, models, oauth,<br/>oauth-flows, runtime, session}"]
+  Surface -- "injects host ports, settings,<br/>tool provider, MCP" --> Runtime["PiChatRuntime<br/>@pivi/engine-pi"]
   UI["Product UI<br/>src/ui"] --> Contract["PiChatService / AuxQueryRunner<br/>@pivi/agent/runtime"]
   Runtime -- "implements" --> Contract
   Runtime -- "constructs and owns" --> Agent["Pi Agent<br/>@earendil-works/pi-agent-core"]
@@ -30,6 +31,7 @@ flowchart TD
   Models --> Providers["Built-in + custom/local providers"]
   Models --> Auth["Injected credential/auth contexts"]
   Build["esbuild.config.mjs"] -- "aliases incompatible upstream modules" --> Shims["@pivi/engine-pi/shims"]
+  App -. "forbidden implementation leaf import" .-> Runtime
 ```
 
 ## Key modules
@@ -108,13 +110,13 @@ flowchart TD
 
 - Depend on `@pivi/agent` for host-neutral contracts, ports, runtime seams, and tool protocol types. Do not create a reverse dependency from `@pivi/agent` into this package.
 - Raw `@earendil-works/*` imports belong only in this package. Do not spread Pi SDK types into `@pivi/agent`, host packages, app code, UI, tools, or React.
-- Only `src/app/**` and `src/main.ts` (and tests) may import `@pivi/engine-pi`. Product UI must depend on `PiChatService` / `AuxQueryRunner` from `@pivi/agent/runtime` and injected `ChatPorts`, not construct `PiChatRuntime` or import this package.
-- Implement against `@pivi/agent` contracts at the boundary (`PiChatService`, `AuxQueryRunner`, `ToolSpec`, `StreamChunk`, `SessionStore`, and related foundation/session types). Prefer explicit leaf exports in `package.json` over a wide barrel.
+- Production composition in `src/app/**` and `src/main.ts` may import only the responsibility-scoped `@pivi/engine-pi/application/{auth,models,oauth,oauth-flows,runtime,session}` surfaces; focused engine compatibility tests may use declared leaf exports. Product UI must depend on `PiChatService` / `AuxQueryRunner` from `@pivi/agent/runtime` and injected `ChatPorts`, not construct `PiChatRuntime` or import this package.
+- Implement against `@pivi/agent` contracts at the boundary (`PiChatService`, `AuxQueryRunner`, `ToolSpec`, `StreamChunk`, `SessionStore`, and related foundation/session types). Keep files under `application/` as explicit named-export lists rather than wildcard barrels so additions receive deliberate architecture review and unrelated responsibilities are not eagerly loaded together.
 - Do not import `obsidian`, `electron`, `@pivi/obsidian-host`, `@pivi/obsidian-tools`, `@pivi/pivi-react`, product UI, or app implementation modules here.
 - Host filesystem, secrets, HTTP, process environment, OAuth browser opening, and fetch behavior must arrive through `@pivi/agent/ports`, `PiRuntimeHost`, or explicit function arguments. Do not rely on `window.fetch`; composition passes the scoped provider client into `configurePiAiModels`, and `streamPiAiModelsSimple` forwards it explicitly to pi-ai. The esbuild inject of `@pivi/obsidian-host/bundledFetch` remains a compatibility fallback for upstream free `fetch` identifiers, but does not cover `globalThis.fetch`.
 - Keep concrete Obsidian tool construction in app composition. The registry accepts a `PiBaseToolProvider`; it does not know how host tools work.
 - Keep Pi compatibility casts and upstream-internal access narrow and documented. Do not normalize the rest of the package around Pi's types.
-- Inside this package, import with relative paths only. `@pivi/engine-pi/...` subpaths are for cross-package consumers.
+- Inside this package, import with relative paths only. Keep the production composition surfaces stable under `application/`; implementation leaf subpaths exist for focused compatibility tests, not app wiring.
 
 ## Shims
 

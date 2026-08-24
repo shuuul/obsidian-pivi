@@ -43,8 +43,14 @@ const retiredReactPackagePattern = new RegExp(
 
 const retiredAgentCorePackagePattern = /^@pivi\/pivi-agent-core(?:\/|$)/;
 const enginePiPackagePattern = /^@pivi\/engine-pi(?:\/|$)/;
+const enginePiImplementationPattern = /^@pivi\/engine-pi(?:$|\/(?!application\/(?:auth|models|oauth|oauth-flows|runtime|session)$))/;
 
 const fileBoundaryRules = [
+  {
+    name: 'src/main uses the stable Pi engine application surface',
+    file: 'src/main.ts',
+    forbidden: [enginePiImplementationPattern],
+  },
   {
     name: 'src/app/hostContracts stays structural and implementation-free',
     file: 'src/app/hostContracts.ts',
@@ -242,6 +248,11 @@ const boundaryRules = [
     forbidden: [enginePiPackagePattern],
     // Composition root (src/main.ts) and src/app may reach the Pi engine adapter.
     excludedRoots: [srcAppDir, srcMainFile],
+  },
+  {
+    name: 'src/app uses the stable Pi engine application surface',
+    root: 'src/app',
+    forbidden: [enginePiImplementationPattern],
   },
   {
     name: 'src/ui uses only approved @pivi/pivi-react presentation subpaths',
@@ -623,8 +634,32 @@ function exportedSubpathMatches(exportsField, subpath) {
 
 const workspacePackages = listWorkspacePackageManifests().map((manifestFile) => {
   const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
-  return { exports: manifest.exports, name: manifest.name };
+  return {
+    exports: manifest.exports,
+    name: manifest.name,
+    root: path.dirname(manifestFile),
+  };
 }).filter(pkg => typeof pkg.name === 'string');
+
+for (const root of sourceRoots) {
+  for (const file of listSourceFiles(path.join(rootDir, root))) {
+    const relativeFile = path.relative(rootDir, file);
+    const sourcePackage = workspacePackages.find(pkg => isPathInside(file, pkg.root));
+    for (const { moduleName, line } of collectModuleSpecifiers(file)) {
+      if (!moduleName.startsWith('.') && !moduleName.startsWith('/')) continue;
+      const resolved = resolveToSrcPath(moduleName, file);
+      if (!resolved) continue;
+      const targetPackage = workspacePackages.find(pkg => isPathInside(resolved, pkg.root));
+      if (!targetPackage || targetPackage === sourcePackage) continue;
+      failures.push({
+        rule: 'production cross-package imports use declared package exports',
+        file: relativeFile,
+        line,
+        moduleName,
+      });
+    }
+  }
+}
 
 for (const root of [...sourceRoots, 'tests']) {
   for (const file of listSourceFiles(path.join(rootDir, root))) {

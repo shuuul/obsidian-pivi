@@ -14,7 +14,7 @@ import { PIVI_MCP_CONFIG_PATH } from '@pivi/agent/mcp/paths';
 import type { FileStore, SyncSecretStore } from '@pivi/agent/ports';
 import {
   migrateMembershipAwareProviderSecrets,
-} from '@pivi/engine-pi';
+} from '@pivi/engine-pi/application/auth';
 import type { App } from 'obsidian';
 
 import {

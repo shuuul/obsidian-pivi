@@ -12,6 +12,8 @@ const baseConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@test/(.*)$': '<rootDir>/tests/$1',
+    '^@pivi/engine-pi/application/oauth-flows$':
+      '<rootDir>/tests/__mocks__/registerPiviBundledOAuthFlowLoaders.ts',
     '^@pivi/engine-pi/registerBundledPiOAuthFlows$':
       '<rootDir>/tests/__mocks__/registerPiviBundledOAuthFlowLoaders.ts',
     '^@pivi/([^/]+)$': '<rootDir>/packages/$1/src/index.ts',

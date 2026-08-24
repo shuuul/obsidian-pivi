@@ -14,8 +14,10 @@ import {
 } from "@pivi/agent/skills/vault/ensureDefaultVaultSkills";
 import {
   migrateMembershipAwareProviderSecrets,
-} from "@pivi/engine-pi";
-import { PiSettingsCoordinator } from "@pivi/engine-pi/piSettingsCoordinator";
+} from "@pivi/engine-pi/application/auth";
+import {
+  PiSettingsCoordinator,
+} from "@pivi/engine-pi/application/models";
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
 

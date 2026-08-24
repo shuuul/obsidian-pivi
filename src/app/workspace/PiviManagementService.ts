@@ -17,7 +17,7 @@ import {
   type PiviMcpInput,
   type PiviSkillsInput,
 } from "@pivi/agent/tools/piviManagement";
-import type { PiMainOnlyToolProvider } from "@pivi/engine-pi/buildPiToolRegistryCore";
+import type { PiMainOnlyToolProvider } from "@pivi/engine-pi/application/runtime";
 
 import { t } from "../i18n";
 import {

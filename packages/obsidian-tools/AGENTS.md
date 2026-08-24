@@ -6,6 +6,24 @@
 
 `@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/agent/tools` to Obsidian vault operations, CLI-backed gaps, Obsidian file-history recovery, and injected image generation that persists outputs as Obsidian attachments. The host-neutral `pivi_sessions` tool and recovery port belong to `@pivi/agent` and are composed by the app's shared base provider.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  App["src/app composition"] --> Registry["createObsidianTools"]
+  Registry --> Factories["Obsidian ToolSpec factories"]
+  Factories --> Contracts["@pivi/agent/tools + ports"]
+  Factories --> Host["@pivi/obsidian-host<br/>vault · path · CLI · process"]
+  App -. "injects" .-> Image["image generator port"]
+  Image --> Factories
+  Factories --> Results["structured / text tool results"]
+  Results --> UI["React + imperative renderers"]
+  Registry -. "forbidden" .-> Engine["@pivi/engine-pi / raw Pi SDK"]
+  Registry -. "forbidden" .-> UI
+```
+
+Tool execution depends on host adapters and host-neutral contracts only. Engine-specific image/provider wiring is injected from app composition.
+
 ## Public entrypoints
 
 - `src/index.ts` re-exports all tool creators, settings, and types. Default export is `createObsidianTools`.

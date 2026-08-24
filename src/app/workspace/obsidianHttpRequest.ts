@@ -1,5 +1,5 @@
 import type { HttpClient } from "@pivi/agent/ports";
-import type { CustomProviderHttpGet } from "@pivi/engine-pi/installPiCustomProviders";
+import type { CustomProviderHttpGet } from "@pivi/engine-pi/application/models";
 
 export function createCustomProviderHttpRequest(httpClient: HttpClient): CustomProviderHttpGet {
   return async (url, options) => {

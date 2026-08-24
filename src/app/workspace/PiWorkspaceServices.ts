@@ -38,17 +38,19 @@ import {
   TOOL_OBSIDIAN_GENERATE_IMAGE,
   type WebSearchCredentialStore,
 } from "@pivi/agent/tools";
-import type { PiBaseToolProvider } from "@pivi/engine-pi/buildPiToolRegistryCore";
-import { createCodexImageGenerator } from "@pivi/engine-pi/codexImageGenerator";
-import { configurePiAiModels } from "@pivi/engine-pi/piAiModels";
 import {
   createObsidianCredentialStore,
   ObsidianAuthContext,
   type ObsidianCredentialStore,
-} from "@pivi/engine-pi/piProviderCredentialStore";
-import { ProviderOAuthService } from "@pivi/engine-pi/piProviderOAuthService";
-import { registerBundledPiOAuthFlows } from "@pivi/engine-pi/registerBundledPiOAuthFlows";
-import { SubagentConcurrencyLimiter } from "@pivi/engine-pi/subagentConcurrencyLimiter";
+} from "@pivi/engine-pi/application/auth";
+import { configurePiAiModels } from "@pivi/engine-pi/application/models";
+import { ProviderOAuthService } from "@pivi/engine-pi/application/oauth";
+import { registerBundledPiOAuthFlows } from "@pivi/engine-pi/application/oauth-flows";
+import {
+  createCodexImageGenerator,
+  type PiBaseToolProvider,
+  SubagentConcurrencyLimiter,
+} from "@pivi/engine-pi/application/runtime";
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";

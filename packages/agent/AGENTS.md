@@ -6,6 +6,27 @@
 
 `@pivi/agent` is the host-neutral aggregate package for reusable Pivi agent capabilities. It gives software hosts one intentional import surface for contracts, tools, sessions, MCP, skills, and generic runtime seams while concrete host adapters remain outside the package. Broad package surfaces are exported as namespaces to avoid flattening conflicting contract names.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  App["src/app composition"] --> Agent["@pivi/agent"]
+  UI["src/ui orchestration"] --> Agent
+  Engine["@pivi/engine-pi"] --> Agent
+  Host["@pivi/obsidian-host"] --> Agent
+  Tools["@pivi/obsidian-tools"] --> Agent
+  ReactUI["@pivi/pivi-react"] --> Safe["presentation-safe agent subpaths"]
+  Safe --> Agent
+  Agent --> Foundation["foundation + auth + network"]
+  Agent --> Runtime["runtime + engine contracts"]
+  Agent --> Capabilities["ports + tools + MCP + skills"]
+  Agent --> Persistence["session + workspace contracts"]
+  Agent -. "forbidden reverse edge" .-> Engine
+  Agent -. "no host / UI SDKs" .-> HostSDK["Obsidian · Electron · React"]
+```
+
+Arrows are compile-time dependencies. Concrete engines and host adapters point inward to this package; `@pivi/agent` never points back to them.
+
 ## Public entrypoints
 
 - `src/tools/sessions.ts` owns the host-neutral `pivi_sessions` ToolSpec factory over the injected `SessionRecoveryPort`; app composition includes it through the shared base provider, preserving main-Agent and subagent availability.

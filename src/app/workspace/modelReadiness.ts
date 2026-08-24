@@ -6,9 +6,9 @@ import type {
   AppModelTestResult,
 } from '@pivi/agent/foundation/modelReadiness';
 import { getProviderIdFromModelValue } from '@pivi/agent/foundation/providerLogos';
-import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/piModelRegistry';
-import type { ObsidianCredentialStore } from '@pivi/engine-pi/piProviderCredentialStore';
-import type { ProviderOAuthService } from '@pivi/engine-pi/piProviderOAuthService';
+import type { ObsidianCredentialStore } from '@pivi/engine-pi/application/auth';
+import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/application/models';
+import type { ProviderOAuthService } from '@pivi/engine-pi/application/oauth';
 
 import { testModelReadiness, testProviderReadiness } from './providerReadiness';
 

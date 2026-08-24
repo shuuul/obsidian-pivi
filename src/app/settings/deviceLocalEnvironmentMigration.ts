@@ -27,7 +27,7 @@ import type { SyncSecretStore } from '@pivi/agent/ports';
 import { createWebSearchCredentialStore } from '@pivi/agent/tools/webSearch/credentialStore';
 import {
   migratePiProviderCredentialsToKeychain,
-} from '@pivi/engine-pi';
+} from '@pivi/engine-pi/application/auth';
 import type { App } from 'obsidian';
 
 import { normalizeStoredPiviSettings } from '@/app/settings/piviSettingsCodec';

@@ -16,8 +16,7 @@ import type { SessionMessagePage, SessionStore } from "@pivi/agent/session";
 import { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
-import { warmPiAiModelsCache } from "@pivi/engine-pi/piChatUiConfig";
-import { PiSettingsCoordinator } from "@pivi/engine-pi/piSettingsCoordinator";
+import { PiSettingsCoordinator, warmPiAiModelsCache } from "@pivi/engine-pi/application/models";
 import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
@@ -336,7 +335,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     this.piWorkspace = null;
     // Best-effort: drop the live journal binding. Device-local journal/source
     // state remains for deterministic startup reconciliation.
-    void import('@pivi/engine-pi/session/sessionTreeStore')
+    void import('@pivi/engine-pi/application/session')
       .then(({ bindSessionJournal }) => {
         bindSessionJournal(null);
       })

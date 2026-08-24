@@ -4,6 +4,22 @@
 
 UI internationalization runtime and catalogs live here. `createI18n()` creates isolated translator state; app composition owns the shared product instance, imperative adapters access it through `@/app/i18n`, and React surfaces receive it through `I18nProvider` / `useT()`.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  English["locales/en.json<br/>canonical keys + placeholders"] --> Types["TranslationKey inference"]
+  English --> Parity["locale parity checks"]
+  Locales["other locale catalogs"] --> Parity
+  App["src/app/i18n<br/>shared translator instance"] --> Imperative["src/ui imperative t() calls"]
+  App --> Provider["I18nProvider"]
+  Provider --> React["React useT() consumers"]
+  Platform["PresentationPlatform terminology"] --> React
+  DeadKeys["check:i18n-dead-keys"] --> English
+```
+
+Catalog keys and placeholder names are the stable boundary. Host names enter as injected interpolation values, never as React-facing identifiers.
+
 ## Entrypoints
 
 | Export | Role |

@@ -8,6 +8,23 @@
 - These modules style the sidebar chat, rendered messages and tool calls, composer toolbar, context features, modals, settings, and accessibility states.
 - The generated root `styles.css` is the release artifact; make source changes here rather than editing `styles.css` directly.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  HostTheme["obsidian-host/styles/pivi-theme.css<br/>--pivi-host-* mapping"] --> Build["scripts/build-css.mjs"]
+  Manifest["manifest.mjs<br/>inventory + cascade order"] --> Build
+  Base["base tokens + primitives"] --> Manifest
+  Components["components + toolbar"] --> Manifest
+  Features["features + modals + settings"] --> Manifest
+  A11y["accessibility.css<br/>loaded last"] --> Manifest
+  Build --> Artifact["root styles.css<br/>release artifact"]
+  React["@pivi/pivi-react DOM<br/>.pivi-* classes"] --> Artifact
+  HostSelectors["host structural classes"] -. "forbidden product selectors" .-> Manifest
+```
+
+The manifest is the sole cascade authority. Host integration stops at `--pivi-host-*` tokens; product selectors stay `.pivi-*` owned.
+
 ## Build flow
 
 - `manifest.mjs` is the authoritative module inventory and cascade order.

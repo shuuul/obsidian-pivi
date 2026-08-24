@@ -4,6 +4,22 @@
 
 `FileContextManager` coordinates turn-scoped file context, the automatically attached current-note chip, inline file/folder mentions, and MCP mention tracking. Its leaf modules split mutable UI state from the current-note chip view.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  Composer["RichChatInput + mention providers"] --> Manager["FileContextManager"]
+  Manager --> State["state/FileContextState<br/>paths + flags + MCP names"]
+  Manager --> View["view/FileChipsView<br/>automatic current-note chip"]
+  View --> Badge["shared context-badge renderer"]
+  Manager -- "turn-scoped paths" --> Submission["ComposerSubmission"]
+  Submission --> Request["host-neutral ChatTurnRequest"]
+  Request --> Prompt["@pivi/agent prompt serialization"]
+  State -. "no DOM / Obsidian objects" .-> View
+```
+
+The manager coordinates; state owns mutable values; view owns the automatic chip DOM. Final prompt serialization stays outside this module.
+
 ## Map
 
 | Path | Responsibility |

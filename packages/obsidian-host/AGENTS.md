@@ -6,6 +6,24 @@
 
 `@pivi/obsidian-host` is the Obsidian/Electron host adapter layer. It wraps vault APIs, file stores, settings persistence, shared storage, secret storage, host context, path normalization, and renderer compatibility helpers.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  App["src/app composition"] --> Host["@pivi/obsidian-host"]
+  Tools["@pivi/obsidian-tools"] --> Host
+  Host --> Ports["@pivi/agent/ports"]
+  Host --> Policy["@pivi/agent/network + foundation"]
+  Host --> Obsidian["Obsidian public API"]
+  Host --> Platform["Node / Electron adapters"]
+  Host --> Theme["pivi-theme.css<br/>--pivi-host-* tokens"]
+  Theme --> ReactStyles["@pivi/pivi-react styles build"]
+  Host -. "forbidden" .-> Engine["@pivi/engine-pi"]
+  Host -. "forbidden" .-> Product["React UI · skills · tool semantics"]
+```
+
+This package translates platform capabilities into host-neutral ports. App composition, not the engine or UI, connects those adapters to product behavior.
+
 ## Public entrypoints
 
 - `src/index.ts` re-exports the package surface. Add new intentional host APIs here.

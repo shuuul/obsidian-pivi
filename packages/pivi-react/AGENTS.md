@@ -10,6 +10,24 @@ It also owns UI internationalization under `src/i18n/` and ordered CSS sources u
 
 Source layout: `mount/` (mount APIs, `ChatShell`, `ActiveChatUiBridge`), `chat/` (message list/tool/subagent views), `settings/` (React-owned settings pages), `store/` (immutable UI/projection stores), `context-badges/` (badge view models), `ports/` (Settings presentation ports), `selectionToolbar/` (selection-toolbar surface), `i18n/` (translator + locale catalogs), `icons/` (bundled static icon/provider-logo data), `platform/` (`PresentationPlatform` contract), `reorder/` (shared sortable-list interaction), `runtime/` (mount runtime helpers), `usage/` (usage-meter presentation), and `shared/` (modal layer and shared controls).
 
+## Architecture
+
+```mermaid
+flowchart LR
+  AppUI["src/app/ui"] -- "mount + SettingsPorts + platform" --> ReactUI["@pivi/pivi-react"]
+  ProductUI["src/ui"] -- "store + context-badges only" --> ReactUI
+  Agent["presentation-safe @pivi/agent subpaths"] --> ReactUI
+  ReactUI --> Stores["immutable UI / projection stores"]
+  ReactUI --> Shells["chat + settings React roots"]
+  ReactUI --> Slots["empty imperative content slots"]
+  ProductUI -- "owns slot children" --> Slots
+  Platform["PresentationPlatform"] -- "terminology · icons · tooltips" --> Shells
+  ReactUI -. "forbidden" .-> Host["Obsidian / Electron / Node"]
+  ReactUI -. "forbidden" .-> Engine["@pivi/engine-pi / ChatPorts"]
+```
+
+React owns each mounted root and shell order; imperative adapters own only the children of explicit empty slots. Runtime/application ports do not cross into this package.
+
 ## Dependency direction
 
 - Depend only on React, ReactDOM, browser APIs, bundled static icon data, injected presentation-platform capabilities, and non-engine host-neutral `@pivi/agent` APIs/contracts/models.

@@ -10,12 +10,12 @@ import {
   type SessionJournalStore,
   SessionJournalVersionError,
 } from "@pivi/agent/session/sessionJournal";
-import { PiSessionStore } from "@pivi/engine-pi/session/piSessionStore";
-import { configureSessionJsonlIndexRoot } from "@pivi/engine-pi/session/sessionJsonlIndex";
-import { reconcileSessionJournal } from "@pivi/engine-pi/session/sessionRecovery";
 import {
   bindSessionJournal,
-} from "@pivi/engine-pi/session/sessionTreeStore";
+  configureSessionJsonlIndexRoot,
+  PiSessionStore,
+  reconcileSessionJournal,
+} from "@pivi/engine-pi/application/session";
 import {
   SharedStorageService,
 } from "@pivi/obsidian-host";

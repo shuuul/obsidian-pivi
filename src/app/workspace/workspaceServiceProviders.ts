@@ -15,8 +15,8 @@ import { getMcpServerUrl } from "@pivi/agent/mcp/types";
 import type { FetchCompatible, ProcessRunner, SyncSecretStore } from "@pivi/agent/ports";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
 import { VaultSkillsService } from "@pivi/agent/skills/vault/vaultSkillsService";
-import type { ObsidianCredentialStore } from "@pivi/engine-pi/piProviderCredentialStore";
-import type { ProviderOAuthService } from "@pivi/engine-pi/piProviderOAuthService";
+import type { ObsidianCredentialStore } from "@pivi/engine-pi/application/auth";
+import type { ProviderOAuthService } from "@pivi/engine-pi/application/oauth";
 
 import {
   derivePiModelReadinessStatus,
