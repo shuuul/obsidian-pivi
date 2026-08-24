@@ -96,6 +96,7 @@ describe('ToolCallView', () => {
               mount(_container, _toolCall, context) {
                 mountedCallbacks.push(context.beginDisclosureResize);
               },
+              update() {},
             },
           }}
           toolCall={tool}
@@ -269,6 +270,7 @@ describe('ToolCallView', () => {
         preview.textContent = 'New line';
         container.appendChild(preview);
       },
+      update() {},
     };
 
     renderTool(<ToolCallView toolCall={edit} contentAdapters={{ tool: toolAdapter }} />);

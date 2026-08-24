@@ -408,6 +408,13 @@ export class ChatProjectionStore {
   }
 
   private hasEventOwner(event: ChatProjectionEvent): boolean {
+    if ((event.type === 'message.upsert'
+      || event.type === 'text.append'
+      || event.type === 'tool.upsert'
+      || event.type === 'agent.upsert')
+      && event.message.id !== event.messageId) {
+      return false;
+    }
     if (event.type === 'text.append') {
       if (!this.hasMessageOwner(event.messageId)) return false;
       const prefix = `${event.messageId}:block:`;
@@ -418,14 +425,20 @@ export class ChatProjectionStore {
       return Number.isInteger(index) && (block?.type === 'text' || block?.type === 'thinking');
     }
     if (event.type === 'tool.upsert') {
-      return this.hasMessageOwner(event.messageId)
+      return event.tool.id === event.toolId
+        && this.hasMessageOwner(event.messageId)
         && event.message.toolCalls?.some(tool => tool.id === event.toolId) === true;
     }
     if (event.type === 'agent.upsert') {
-      return this.hasMessageOwner(event.messageId)
-        && event.message.toolCalls?.some(tool => (
-          tool.subagent?.id === event.agentId || tool.subagent?.agentId === event.agentId
-        )) === true;
+      const payloadAgentId = event.agent.agentId ?? event.agent.id;
+      if (payloadAgentId !== event.agentId || !this.hasMessageOwner(event.messageId)) {
+        return false;
+      }
+      return event.message.toolCalls?.some(tool => {
+        const subagent = tool.subagent;
+        return subagent?.id === event.agent.id
+          && (subagent.agentId ?? subagent.id) === event.agentId;
+      }) === true;
     }
     return true;
   }

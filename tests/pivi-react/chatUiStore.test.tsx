@@ -825,6 +825,101 @@ describe('ChatProjectionStore', () => {
     }));
   });
 
+  it('drops mutation events whose payload identities disagree with their envelope', () => {
+    const diagnostic = jest.fn();
+    const store = new ChatProjectionStore(undefined, diagnostic);
+    const subagent = {
+      id: 'subagent-1',
+      agentId: 'agent-1',
+      description: 'Original',
+      isExpanded: false,
+      status: 'running' as const,
+      toolCalls: [],
+    };
+    const initial: ChatMessage = {
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'original',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text', content: 'original' }],
+      toolCalls: [{
+        id: 'tool-1',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running',
+        subagent,
+      }],
+    };
+    store.dispatch(queuedMessageEvent(initial, 1));
+    store.flush();
+
+    store.dispatch({
+      ...queuedMessageEvent({ ...initial, id: 'other-message', content: 'wrong message' }, 2),
+      messageId: initial.id,
+    });
+    store.dispatch(textAppendEvent({
+      ...initial,
+      id: 'other-message',
+      content: 'wrong text',
+      contentBlocks: [{ type: 'text', content: 'wrong text' }],
+    }, 3, {
+      messageId: initial.id,
+      blockId: `${initial.id}:block:0`,
+    }));
+    store.dispatch({
+      type: 'tool.upsert',
+      projectionScopeId: 'test',
+      sessionFile: null,
+      openSessionId: null,
+      runId: 'test:run:1',
+      parentRunId: null,
+      sequence: 4,
+      timestamp: 4,
+      messageId: initial.id,
+      blockId: null,
+      toolId: 'tool-1',
+      agentId: null,
+      message: initial,
+      tool: { ...initial.toolCalls![0]!, id: 'other-tool' },
+    });
+    store.dispatch({
+      type: 'agent.upsert',
+      projectionScopeId: 'test',
+      sessionFile: null,
+      openSessionId: null,
+      runId: 'test:run:1',
+      parentRunId: null,
+      sequence: 5,
+      timestamp: 5,
+      messageId: initial.id,
+      blockId: null,
+      toolId: null,
+      agentId: 'agent-1',
+      message: initial,
+      agent: { ...subagent, agentId: 'other-agent' },
+    });
+    store.flush();
+
+    expect(store.getMessageSnapshot(initial.id)?.content).toBe('original');
+    expect(diagnostic).toHaveBeenCalledTimes(4);
+    expect(diagnostic).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      code: 'missing-owner',
+      eventType: 'message.upsert',
+    }));
+    expect(diagnostic).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      code: 'missing-owner',
+      eventType: 'text.append',
+    }));
+    expect(diagnostic).toHaveBeenNthCalledWith(3, expect.objectContaining({
+      code: 'missing-owner',
+      eventType: 'tool.upsert',
+    }));
+    expect(diagnostic).toHaveBeenNthCalledWith(4, expect.objectContaining({
+      code: 'missing-owner',
+      eventType: 'agent.upsert',
+    }));
+  });
+
   it('drops message events that arrive after their run terminal', () => {
     const diagnostic = jest.fn();
     const store = new ChatProjectionStore(undefined, diagnostic);

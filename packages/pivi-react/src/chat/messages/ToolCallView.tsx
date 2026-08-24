@@ -84,6 +84,9 @@ function ImperativeContentSlot<T extends { id: string }>({
   const mountedValueRef = useRef<T | null>(null);
   const latestValueRef = useRef(value);
   latestValueRef.current = value;
+  if (value.id !== identityKey) {
+    throw new Error(`Imperative content identity changed from ${identityKey} to ${value.id}`);
+  }
 
   useEffect(() => {
     const container = containerRef.current;
@@ -109,13 +112,13 @@ function ImperativeContentSlot<T extends { id: string }>({
     const ownerWindow = container?.ownerDocument.defaultView;
     if (!container || !ownerWindow || mountedValueRef.current === value) return;
     mountedValueRef.current = value;
-    adapter.update?.(container, value, {
+    adapter.update(container, value, {
       beginDisclosureResize,
-      generation: value.id,
+      generation: identityKey,
       ownerDocument: container.ownerDocument,
       ownerWindow,
     });
-  }, [adapter, beginDisclosureResize, value]);
+  }, [adapter, beginDisclosureResize, identityKey, value]);
 
   return <div ref={containerRef} className={className} />;
 }

@@ -20,7 +20,7 @@ flowchart LR
   Subagent --> Slot
 ```
 
-Each adapter exclusively owns the children of one empty React-provided container. Mount returns deterministic cleanup; projected Markdown, tool, and stored-subagent slots keep that mount for a stable entity generation and send reconciled snapshots through explicit update calls. An adapter does not own the container, message order, stream lifecycle, or durable state.
+Each adapter exclusively owns the children of one empty React-provided container. Mount returns deterministic cleanup; projected Markdown, user-content, tool, ask-user, and stored-subagent slots keep that mount for a stable entity generation and send every accepted replacement snapshot through their mandatory update call. Value identity must match the mounted generation. Asynchronous replacement rendering stages output and publishes only the newest completed revision. An adapter does not own the container, message order, stream lifecycle, or durable state.
 
 ## Key files
 

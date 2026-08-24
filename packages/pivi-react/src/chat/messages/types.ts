@@ -12,8 +12,8 @@ export interface MessageContentAdapter<Value> {
     value: Value,
     context: MessageContentAdapterContext,
   ): void | (() => void);
-  /** Update a mounted island in place when rebuilding it would discard UI state or async work. */
-  update?(
+  /** Reconcile every accepted snapshot into the already-mounted island. */
+  update(
     container: HTMLElement,
     value: Value,
     context: MessageContentAdapterContext,

@@ -9,9 +9,11 @@ import {
   isAssistantToolOnlyMessage,
   messageHasVisibleAssistantContent,
 } from '../../packages/pivi-react/src/chat/messages/AssistantContentView';
+import { MessageView } from '../../packages/pivi-react/src/chat/messages/MessageView';
 import type {
   MessageContentAdapter,
   MessageContentAdapters,
+  MessagePresentationActions,
   StreamingMarkdownValue,
 } from '../../packages/pivi-react/src/chat/messages/types';
 import { ChatProjectionStore } from '../../packages/pivi-react/src/store';
@@ -287,6 +289,7 @@ describe('AssistantContentView', () => {
       mount(container) {
         container.textContent = 'Interactive question';
       },
+      update() {},
     };
     const { container, getByRole, rerender } = renderAssistant(assistantMessage({
       contentBlocks: [{ type: 'tool_use', toolId: 'ask' }],
@@ -391,6 +394,7 @@ describe('AssistantContentView', () => {
         container.dataset.subagentId = value.id;
         container.textContent = value.description;
       },
+      update() {},
     };
     const message = assistantMessage({
       contentBlocks: [
@@ -493,6 +497,7 @@ describe('AssistantContentView', () => {
         activity.append(icon, label, summary);
         container.appendChild(activity);
       },
+      update() {},
     };
     const { container } = renderAssistant(assistantMessage({
       contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
@@ -560,5 +565,53 @@ describe('AssistantContentView', () => {
     expect(mount).toHaveBeenCalledTimes(1);
     expect(update).toHaveBeenCalledTimes(1);
     expect(view.container.querySelectorAll('.pivi-subagent-card')).toHaveLength(1);
+  });
+});
+
+describe('MessageView imperative user content', () => {
+  it('updates a stable user message slot without remounting', () => {
+    const mounts: string[] = [];
+    const updates: string[] = [];
+    const userContent: NonNullable<MessageContentAdapters['userContent']> = {
+      mount(container, message) {
+        mounts.push(message.id);
+        container.textContent = message.content;
+      },
+      update(container, message) {
+        updates.push(message.content);
+        container.textContent = message.content;
+      },
+    };
+    const actions: MessagePresentationActions = {
+      canCopy: () => false,
+      canFork: () => false,
+      canRedo: () => false,
+      copy: () => {},
+      fork: () => {},
+      redo: () => {},
+      scrollToRecentUser: () => {},
+    };
+    const message = (content: string): ChatMessage => ({
+      id: 'user-1',
+      role: 'user',
+      content,
+      timestamp: 1,
+    });
+    const wrap = (content: string) => withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <MessageView
+          actions={actions}
+          contentAdapters={{ userContent }}
+          message={message(content)}
+        />
+      </I18nProvider>,
+    );
+    const view = render(wrap('first'));
+
+    view.rerender(wrap('latest'));
+
+    expect(mounts).toEqual(['user-1']);
+    expect(updates).toEqual(['latest']);
+    expect(view.container.querySelector('.pivi-message-adapter-slot')).toHaveTextContent('latest');
   });
 });

@@ -1,7 +1,11 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage, ToolCallInfo } from '@pivi/agent/foundation';
 import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
-import type { MessageViewportHandle } from '@pivi/pivi-react';
+import type {
+  MessageContentAdapter,
+  MessageContentAdapterContext,
+  MessageViewportHandle,
+} from '@pivi/pivi-react';
 import type { MessagePresentationRuntime } from '@pivi/pivi-react/mount';
 
 import { createStreamingMarkdownContentAdapter } from '@/app/ui/createStreamingMarkdownContentAdapter';
@@ -16,28 +20,80 @@ import {
 import { renderToolContent } from '@/ui/chat/rendering/ToolCallRenderer';
 import type { TabData } from '@/ui/chat/tabs/types';
 
-let messageAdapterGeneration = 0;
 const logger = new PluginLogger('ImperativeChatMessagePresentation');
 
-function mountMessageContentAdapter(
+interface MountedReplacingContent {
+  readonly identity: string;
+  disposed: boolean;
+  revision: number;
+}
+
+function renderReplacingContent<Value>(
   container: HTMLElement,
-  generation: string,
-  render: (target: HTMLElement) => Promise<void> | void,
-): (() => void) {
-  const token = `${generation}:${++messageAdapterGeneration}`;
+  state: MountedReplacingContent,
+  value: Value,
+  context: MessageContentAdapterContext,
+  render: (
+    target: HTMLElement,
+    value: Value,
+    context: MessageContentAdapterContext,
+  ) => Promise<void> | void,
+): void {
+  if (context.generation !== state.identity) {
+    throw new Error(
+      `Imperative content identity changed from ${state.identity} to ${context.generation}`,
+    );
+  }
+  const revision = ++state.revision;
   const staging = container.ownerDocument.win.createDiv();
-  container.dataset.piviRenderGeneration = token;
-  let disposed = false;
-  void Promise.resolve(render(staging)).then(() => {
-    if (disposed || container.dataset.piviRenderGeneration !== token) return;
-    container.replaceChildren(...Array.from(staging.childNodes));
-  });
-  return () => {
-    disposed = true;
-    staging.replaceChildren();
-    if (container.dataset.piviRenderGeneration !== token) return;
-    delete container.dataset.piviRenderGeneration;
-    container.replaceChildren();
+  void Promise.resolve(render(staging, value, context))
+    .then(() => {
+      if (state.disposed || revision !== state.revision) {
+        staging.replaceChildren();
+        return;
+      }
+      container.replaceChildren(...Array.from(staging.childNodes));
+    })
+    .catch((error) => {
+      staging.replaceChildren();
+      logger.warn('Failed to render imperative message content', error);
+    });
+}
+
+export function createReplacingContentAdapter<Value>(
+  render: (
+    target: HTMLElement,
+    value: Value,
+    context: MessageContentAdapterContext,
+  ) => Promise<void> | void,
+): MessageContentAdapter<Value> {
+  const mounted = new WeakMap<HTMLElement, MountedReplacingContent>();
+  return {
+    mount(container, value, context) {
+      if (container.childNodes.length !== 0) {
+        throw new Error('Imperative content adapters require an empty React-owned slot');
+      }
+      const state: MountedReplacingContent = {
+        identity: context.generation,
+        disposed: false,
+        revision: 0,
+      };
+      mounted.set(container, state);
+      renderReplacingContent(container, state, value, context, render);
+      return () => {
+        state.disposed = true;
+        state.revision += 1;
+        mounted.delete(container);
+        container.replaceChildren();
+      };
+    },
+    update(container, value, context) {
+      const state = mounted.get(container);
+      if (!state) {
+        throw new Error(`Imperative content ${context.generation} is not mounted`);
+      }
+      renderReplacingContent(container, state, value, context, render);
+    },
   };
 }
 
@@ -92,6 +148,24 @@ export function createMessagePresentation(
     (target, markdown, options) => renderer.renderContent(target, markdown, options),
     tab.state.projectionStore.perfRecorder,
   );
+  const userContentAdapter = createReplacingContentAdapter<ChatMessage>(
+    (target, message) => {
+      const text = message.displayContent ?? message.content;
+      return text
+        ? tab.renderer?.renderUserMessageText(target, text, message.turnRequest)
+        : undefined;
+    },
+  );
+  const toolContentAdapter = createReplacingContentAdapter<ToolCallInfo>(
+    (target, toolCall) => renderToolContent(target, toolCall, undefined, {
+      renderMarkdown: (preview, markdown, sourcePath) => (
+        tab.renderer?.renderContent(preview, markdown, { sourcePath }) ?? Promise.resolve()
+      ),
+    }),
+  );
+  const askUserContentAdapter = createReplacingContentAdapter<ToolCallInfo>(
+    (target, toolCall) => renderToolContent(target, toolCall),
+  );
   return {
     actions: {
       canCopy: message => getMessageCopyContent(message).length > 0,
@@ -127,35 +201,9 @@ export function createMessagePresentation(
     },
     contentAdapters: {
       markdown: markdownAdapter,
-      userContent: {
-        mount: (container, message, context) => {
-          const text = message.displayContent ?? message.content;
-          return mountMessageContentAdapter(
-            container,
-            context.generation,
-            target => text
-              ? tab.renderer?.renderUserMessageText(target, text, message.turnRequest)
-              : undefined,
-          );
-        },
-      },
-      tool: {
-        mount: (container, toolCall, context) => mountMessageContentAdapter(
-          container,
-          context.generation,
-          target => renderToolContent(target, toolCall, undefined, {
-            renderMarkdown: (preview, markdown, sourcePath) => (
-              tab.renderer?.renderContent(preview, markdown, { sourcePath }) ?? Promise.resolve()
-            ),
-          }),
-        ),
-      },
-      askUser: {
-        mount: (container, toolCall) => {
-          void renderToolContent(container, toolCall);
-          return () => container.empty();
-        },
-      },
+      userContent: userContentAdapter,
+      tool: toolContentAdapter,
+      askUser: askUserContentAdapter,
       subagent: createSubagentContentAdapter(async (target, markdown, options) => {
         await tab.renderer?.renderContent(target, markdown, options);
       }),

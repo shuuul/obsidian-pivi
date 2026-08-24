@@ -8,30 +8,12 @@ import type { ChatProjectionStore } from '../../store';
 import {
   AssistantContentView,
   isAssistantToolOnlyMessage,
+  MessageContentSlot,
   messageHasVisibleAssistantContent,
 } from './AssistantContentView';
-import type { MessageContentAdapter, MessageContentAdapters, MessagePresentationActions } from './types';
+import type { MessageContentAdapters, MessagePresentationActions } from './types';
 
 const COPY_FEEDBACK_MS = 1500;
-
-function AdapterSlot({ adapter, message }: {
-  adapter: MessageContentAdapter<ChatMessage>;
-  message: ChatMessage;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const container = ref.current;
-    if (!container) return;
-    const ownerWindow = container.ownerDocument.defaultView;
-    if (!ownerWindow) return;
-    return adapter.mount(container, message, {
-      generation: message.id,
-      ownerDocument: container.ownerDocument,
-      ownerWindow,
-    });
-  }, [adapter, message]);
-  return <div className="pivi-message-adapter-slot" ref={ref} />;
-}
 
 function MessageImages({ images }: { readonly images: readonly ImageAttachment[] }) {
   const t = useT();
@@ -103,7 +85,14 @@ function UserContent({ contentAdapters, message }: { contentAdapters?: MessageCo
       {message.images?.length ? <MessageImages images={message.images} /> : null}
       {content
         ? contentAdapters?.userContent
-          ? <AdapterSlot adapter={contentAdapters.userContent} message={message} />
+          ? (
+            <MessageContentSlot
+              adapter={contentAdapters.userContent}
+              className="pivi-message-adapter-slot"
+              generation={message.id}
+              value={message}
+            />
+          )
           : <div className="pivi-text-block">{content}</div>
         : null}
     </>

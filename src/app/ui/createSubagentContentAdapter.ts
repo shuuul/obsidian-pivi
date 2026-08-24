@@ -28,7 +28,8 @@ export function createSubagentContentAdapter(
     },
     update(container, subagent) {
       const state = mounted.get(container);
-      if (state) updateStoredSubagent(state, subagent);
+      if (!state) throw new Error(`Stored subagent ${subagent.id} is not mounted`);
+      updateStoredSubagent(state, subagent);
     },
   };
 }

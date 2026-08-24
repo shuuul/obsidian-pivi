@@ -64,7 +64,7 @@ export function MessageContentSlot<Value>({
     const ownerWindow = container?.ownerDocument.defaultView;
     if (!container || !ownerWindow || mountedValueRef.current === value) return;
     mountedValueRef.current = value;
-    adapter.update?.(container, value, {
+    adapter.update(container, value, {
       generation,
       ownerDocument: container.ownerDocument,
       ownerWindow,
