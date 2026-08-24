@@ -84,9 +84,12 @@ describe('React tools settings', () => {
     const hostToolToggle = screen.getByRole('checkbox', { name: 'Host tool' });
     expect(hostToolToggle.parentElement).toHaveClass('pivi-toggle');
     expect(hostToolToggle.parentElement).not.toHaveClass('checkbox-container', 'is-enabled', 'is-disabled');
+    expect(hostToolToggle).not.toBeChecked();
     fireEvent.click(hostToolToggle);
     await act(async () => undefined);
     expect(setToolEnabled).toHaveBeenCalledWith('host_tool', true);
+    expect(screen.getByRole('checkbox', { name: 'Host tool' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Host tool' }).parentElement).toHaveClass('pivi-toggle--enabled');
   });
 
   it('groups tool toggles by implementation and ownership', () => {
@@ -132,6 +135,34 @@ describe('React tools settings', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Pivi MCP' }));
     await act(async () => undefined);
     expect(setToolEnabled).toHaveBeenCalledWith('pivi_mcp', false);
+    expect(screen.getByRole('checkbox', { name: 'Pivi MCP' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Pivi Skills' })).toBeChecked();
+  });
+
+  it('keeps sibling tool toggles enabled while one save is in flight', async () => {
+    let resolveSave: (() => void) | undefined;
+    const setToolEnabled = jest.fn(() => new Promise<void>((resolve) => {
+      resolveSave = resolve;
+    }));
+    renderTools(createPorts({
+      setToolEnabled,
+      listToolRows: () => [
+        { name: 'pivi_mcp', label: 'Pivi MCP', description: 'Manage MCP.', group: 'pivi', enabled: true, available: true },
+        { name: 'pivi_skills', label: 'Pivi Skills', description: 'Manage Skills.', group: 'pivi', enabled: true, available: true },
+      ],
+    }));
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Pivi MCP' }));
+    expect(screen.getByRole('checkbox', { name: 'Pivi MCP' })).not.toBeChecked();
+    const sibling = screen.getByRole('checkbox', { name: 'Pivi Skills' });
+    expect(sibling).toBeChecked();
+    expect(sibling).toBeEnabled();
+    expect(sibling.parentElement).not.toHaveClass('pivi-toggle--disabled');
+
+    await act(async () => {
+      resolveSave?.();
+    });
+    expect(setToolEnabled).toHaveBeenCalledWith('pivi_mcp', false);
   });
 
   it('adds, deduplicates, and removes Bash command badges', async () => {
@@ -149,6 +180,19 @@ describe('React tools settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove allowed bash command git' }));
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenLastCalledWith({ bashAllowlist: ['npm run build'] });
+  });
+
+  it('keeps a tool toggle unchanged when enabling it fails', async () => {
+    const setToolEnabled = jest.fn(async () => {
+      throw new Error('save failed');
+    });
+    renderTools(createPorts({ setToolEnabled }));
+    const hostToolToggle = screen.getByRole('checkbox', { name: 'Host tool' });
+    expect(hostToolToggle).not.toBeChecked();
+    fireEvent.click(hostToolToggle);
+    await act(async () => undefined);
+    expect(setToolEnabled).toHaveBeenCalledWith('host_tool', true);
+    expect(screen.getByRole('checkbox', { name: 'Host tool' })).not.toBeChecked();
   });
 
   it('keeps unavailable tools disabled and reports invalid external paths', async () => {

@@ -37,10 +37,12 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
   const settings = ports.complex.tools.getSettings();
   const [directories, setDirectories] = useState<readonly string[]>(settings.externalReadDirectories);
   const [bashAllowlist, setBashAllowlist] = useState<readonly string[]>(settings.bashAllowlist);
+  const [allowExternalRead, setAllowExternalRead] = useState(settings.allowExternalRead);
+  const [toolRows, setToolRows] = useState(() => ports.complex.tools.listToolRows());
   const [pending, setPending] = useState(false);
   const [directoryFeedback, setDirectoryFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const operation = useRef(false);
-  const toolRows = ports.complex.tools.listToolRows();
+  const pendingTools = useRef(new Set<string>());
 
   const persist = async (patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0]): Promise<boolean> => {
     try {
@@ -148,7 +150,18 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
       </SettingsPageDescription>
       <SettingsSection title={t('settings.externalRead.heading')} headingLevel={3}>
         <SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
-          <Toggle checked={settings.allowExternalRead} disabled={pending} label={t('settings.externalRead.allow.name')} onChange={(allowExternalRead) => { void runOperation(() => persist({ allowExternalRead })); }} />
+          <Toggle
+            checked={allowExternalRead}
+            disabled={pending}
+            label={t('settings.externalRead.allow.name')}
+            onChange={(next) => {
+              void runOperation(async () => {
+                if (!await persist({ allowExternalRead: next })) return;
+                setAllowExternalRead(next);
+                setToolRows(ports.complex.tools.listToolRows());
+              });
+            }}
+          />
         </SettingRow>
         <div className="pivi-external-directories-setting pivi-setting-stack">
           <SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}>
@@ -192,12 +205,24 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
                 <SettingRow key={row.name} name={`${row.label} (${row.name})`} description={row.description}>
                   <Toggle
                     checked={row.enabled}
-                    disabled={pending || !row.available}
+                    disabled={!row.available}
                     label={row.label}
                     onChange={(enabled) => {
-                      void ports.complex.tools.setToolEnabled(row.name, enabled).catch(() => {
-                        ports.feedback.notify(t('common.error'));
-                      });
+                      if (pendingTools.current.has(row.name)) return;
+                      pendingTools.current.add(row.name);
+                      setToolRows(rows => rows.map(entry => (
+                        entry.name === row.name ? { ...entry, enabled } : entry
+                      )));
+                      void ports.complex.tools.setToolEnabled(row.name, enabled)
+                        .catch(() => {
+                          setToolRows(rows => rows.map(entry => (
+                            entry.name === row.name ? { ...entry, enabled: !enabled } : entry
+                          )));
+                          ports.feedback.notify(t('common.error'));
+                        })
+                        .finally(() => {
+                          pendingTools.current.delete(row.name);
+                        });
                     }}
                   />
                 </SettingRow>
