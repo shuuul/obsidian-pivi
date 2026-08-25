@@ -132,6 +132,14 @@ export function ProviderCard({
       });
   };
 
+  const patchModelMaxTokensOverride = (modelId: string, maxTokensOverride: number | null): void => {
+    void models.patchCustomProviderModel(providerId, modelId, { maxTokensOverride })
+      .then(() => { onChanged(); })
+      .catch((cause: unknown) => {
+        onError(cause instanceof Error ? cause.message : t('common.error'));
+      });
+  };
+
   const testProvider = async (): Promise<void> => {
     setTesting(true);
     try {
@@ -235,6 +243,7 @@ export function ProviderCard({
               onToggleModel={toggleModel}
               customProvider={custom}
               onPatchModelCatalogId={patchModelCatalogId}
+              onPatchModelMaxTokensOverride={patchModelMaxTokensOverride}
             />
           </>
         ) : isCodex ? (

@@ -830,6 +830,53 @@ describe('React settings foundation', () => {
       { catalogModelId: 'qwen/qwen3.5-27b' },
     );
   });
+  it('edits a custom model output length from the checklist and omits the field for built-ins', async () => {
+    const patchCustomProviderModel = jest.fn(async () => undefined);
+    const customProvider = {
+      id: 'custom-openai-compatible-abc',
+      kind: 'openai-compatible',
+      name: 'DGX Spark',
+      baseUrl: 'http://192.168.100.114:8888/v1',
+      api: 'openai-completions',
+      apiKeyRequired: false,
+      models: [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b', contextWindow: 262144 }],
+    };
+    const ports = createPorts();
+    Object.assign(ports.catalog, {
+      listModelsForProvider: (providerId: string) => providerId === customProvider.id
+        ? [{ value: `${customProvider.id}/qwen3.8-27b`, label: 'qwen3.8-27b' }]
+        : [{ value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' }],
+    });
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: [customProvider.id, 'deepseek'],
+        disabledProviders: [],
+        customProviders: [customProvider],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      patchCustomProviderModel,
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+
+    fireEvent.click(screen.getByText('deepseek', { selector: '.pivi-provider-title' }));
+    expect(screen.queryByLabelText('Output length for DeepSeek Chat')).toBeNull();
+
+    fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-provider-title' }));
+    const input = screen.getByLabelText('Output length for qwen3.8-27b');
+    fireEvent.change(input, { target: { value: ' 262144 ' } });
+    fireEvent.blur(input);
+    await act(async () => undefined);
+
+    expect(patchCustomProviderModel).toHaveBeenCalledWith(
+      customProvider.id,
+      'qwen3.8-27b',
+      { maxTokensOverride: 262144 },
+    );
+  });
   it('places optional local API key directly below Base URL without an authentication section', () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {

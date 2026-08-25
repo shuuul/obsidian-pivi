@@ -169,14 +169,53 @@ function collectKnownModelReasoningSources(
   });
 }
 
+function looksLikeQwenModel(modelDef: CustomProviderModelDef): boolean {
+  return [modelDef.id, modelDef.catalogModelId, modelDef.name].some(
+    (value) => typeof value === 'string' && /qwen/i.test(value),
+  );
+}
+
+/** Qwen3.8 official levels: xhigh / medium / low. Off is enable_thinking=false. */
+const QWEN38_THINKING_LEVEL_MAP: ThinkingLevelMap = {
+  off: 'none',
+  minimal: null,
+  low: 'low',
+  medium: 'medium',
+  high: null,
+  xhigh: 'xhigh',
+  max: null,
+};
+
+function looksLikeQwen38Model(modelDef: CustomProviderModelDef): boolean {
+  return [modelDef.id, modelDef.catalogModelId, modelDef.name].some(
+    (value) => typeof value === 'string' && /qwen3(?:[._-]?8|8)/i.test(value),
+  );
+}
+
+/** Qwen-on-SGLang/vLLM: the template reads enable_thinking + reasoning_effort from chat_template_kwargs. Top-level reasoning_effort is the OpenAI field and is ignored by this SGLang autodetection. */
+const QWEN_CHAT_TEMPLATE_KWARGS = {
+  enable_thinking: { $var: 'thinking.enabled' as const },
+  reasoning_effort: { $var: 'thinking.effort' as const, omitWhenOff: true },
+  preserve_thinking: true,
+};
+
 function openAiCompatFlags(
   kind: CustomProviderConfig['kind'],
   supportsReasoningEffort: boolean,
+  options?: { qwenChatTemplate?: boolean },
 ): Model<'openai-completions'>['compat'] {
   if (isLocalCustomProviderKind(kind) || kind === 'openai-compatible') {
     return {
       supportsDeveloperRole: false,
       supportsReasoningEffort,
+      ...(kind === 'openai-compatible'
+        && supportsReasoningEffort
+        && options?.qwenChatTemplate
+        ? {
+          thinkingFormat: 'chat-template' as const,
+          chatTemplateKwargs: QWEN_CHAT_TEMPLATE_KWARGS,
+        }
+        : {}),
     };
   }
   return undefined;
@@ -198,19 +237,24 @@ export function buildCustomProviderModels(
         ?? (modelDef.catalogModelId
           ? findKnownModelReasoningSource(modelDef.id, knownModels)
           : undefined);
+    const qwen38Preset = looksLikeQwen38Model(modelDef);
     const thinkingLevelMap = meta.reasoningMeta
       ? thinkingLevelMapFromEfforts(meta.reasoningMeta.supportedEfforts, {
         mandatory: meta.reasoningMeta.mandatory,
       })
-      : inherited?.thinkingLevelMap
-        ? { ...inherited.thinkingLevelMap }
-        : undefined;
+      : qwen38Preset
+        ? { ...QWEN38_THINKING_LEVEL_MAP }
+        : inherited?.thinkingLevelMap
+          ? { ...inherited.thinkingLevelMap }
+          : undefined;
     const defaultThinkingLevel = meta.reasoningMeta
       ? meta.reasoningMeta.defaultEnabled === false
         ? 'off' as const
         : meta.reasoningMeta.defaultEffort
-      : inherited?.defaultThinkingLevel;
-    const reasoning = meta.reasoning || inherited?.reasoning === true;
+      : qwen38Preset
+        ? 'xhigh' as const
+        : inherited?.defaultThinkingLevel;
+    const reasoning = meta.reasoning || inherited?.reasoning === true || qwen38Preset;
     const base = {
       id: modelDef.id,
       name: modelDef.name,
@@ -244,7 +288,9 @@ export function buildCustomProviderModels(
     return {
       ...base,
       api: 'openai-completions' as const,
-      compat: openAiCompatFlags(config.kind, reasoning),
+      compat: openAiCompatFlags(config.kind, reasoning, {
+        qwenChatTemplate: looksLikeQwenModel(modelDef),
+      }),
     };
   });
 }

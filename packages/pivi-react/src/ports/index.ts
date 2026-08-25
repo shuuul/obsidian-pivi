@@ -102,7 +102,7 @@ export interface SettingsModelsPort {
   patchCustomProviderModel(
     providerId: string,
     modelId: string,
-    patch: { catalogModelId?: string },
+    patch: { catalogModelId?: string; maxTokensOverride?: number | null },
   ): Promise<void>;
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
 }

@@ -46,6 +46,12 @@ export interface CustomProviderModelDef {
    * or after stripping `provider/` prefixes.
    */
   catalogModelId?: string;
+  /**
+   * User-declared per-response output cap, including thinking. Survives
+   * model-list fetches and overrides a server-advertised `maxTokens` when set.
+   * Runtime still clamps this to the model context window.
+   */
+  maxTokensOverride?: number;
 }
 
 /** Persisted custom / local provider configuration. */
@@ -320,6 +326,9 @@ export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderMod
   const catalogModelId = typeof raw.catalogModelId === 'string' && raw.catalogModelId.trim()
     ? raw.catalogModelId.trim()
     : undefined;
+  const maxTokensOverride = typeof raw.maxTokensOverride === 'number' && raw.maxTokensOverride > 0
+    ? Math.floor(raw.maxTokensOverride)
+    : undefined;
   return {
     id,
     name,
@@ -328,6 +337,7 @@ export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderMod
     ...(reasoning !== undefined ? { reasoning } : {}),
     ...(reasoningMeta ? { reasoningMeta } : {}),
     ...(catalogModelId ? { catalogModelId } : {}),
+    ...(maxTokensOverride !== undefined ? { maxTokensOverride } : {}),
   };
 }
 
@@ -434,11 +444,19 @@ export function mergeFetchedCustomProviderModelUserFields(
 ): CustomProviderModelDef[] {
   const currentById = new Map(currentModels.map((model) => [model.id, model]));
   return fetchedModels.map((fetchedModel) => {
-    const { catalogModelId: _staleCatalogModelId, ...model } = fetchedModel;
-    const catalogModelId = currentById.get(fetchedModel.id)?.catalogModelId;
-    return catalogModelId
-      ? { ...model, catalogModelId }
-      : model;
+    const {
+      catalogModelId: _staleCatalogModelId,
+      maxTokensOverride: _staleMaxTokensOverride,
+      ...model
+    } = fetchedModel;
+    const current = currentById.get(fetchedModel.id);
+    const catalogModelId = current?.catalogModelId;
+    const maxTokensOverride = current?.maxTokensOverride;
+    return {
+      ...model,
+      ...(catalogModelId ? { catalogModelId } : {}),
+      ...(maxTokensOverride !== undefined ? { maxTokensOverride } : {}),
+    };
   });
 }
 
@@ -465,7 +483,10 @@ export function defaultModelMeta(
   const reasoningMeta = model.reasoningMeta;
   return {
     contextWindow,
-    maxTokens: Math.min(model.maxTokens ?? DEFAULT_MAX_TOKENS, contextWindow),
+    maxTokens: Math.min(
+      model.maxTokensOverride ?? model.maxTokens ?? DEFAULT_MAX_TOKENS,
+      contextWindow,
+    ),
     reasoning: model.reasoning ?? (reasoningMeta !== undefined),
     ...(reasoningMeta ? { reasoningMeta } : {}),
   };

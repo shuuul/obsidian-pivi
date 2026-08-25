@@ -147,6 +147,46 @@ describe('createSettingsModelsPort provider removal', () => {
     expect(models?.[0]?.catalogModelId).toBeUndefined();
   });
 
+  it('sets and clears a custom model output-length override without dropping catalog id', async () => {
+    const harness = createHarness();
+    harness.settings.agentSettings.addedProviders = ['custom-openai-compatible-lan'];
+    harness.settings.agentSettings.customProviders = [{
+      id: 'custom-openai-compatible-lan',
+      kind: 'openai-compatible',
+      name: 'DGX Spark',
+      baseUrl: 'http://192.168.100.114:8888/v1',
+      api: 'openai-completions',
+      models: [
+        {
+          id: 'qwen3.8-27b',
+          name: 'qwen3.8-27b',
+          contextWindow: 262144,
+          catalogModelId: 'qwen/qwen3.5-27b',
+        },
+      ],
+    }];
+
+    await harness.port.patchCustomProviderModel(
+      'custom-openai-compatible-lan',
+      'qwen3.8-27b',
+      { maxTokensOverride: 262144 },
+    );
+
+    let models = harness.settings.agentSettings.customProviders[0]?.models;
+    expect(models?.[0]?.catalogModelId).toBe('qwen/qwen3.5-27b');
+    expect(models?.[0]?.maxTokensOverride).toBe(262144);
+
+    await harness.port.patchCustomProviderModel(
+      'custom-openai-compatible-lan',
+      'qwen3.8-27b',
+      { maxTokensOverride: null },
+    );
+
+    models = harness.settings.agentSettings.customProviders[0]?.models;
+    expect(models?.[0]?.catalogModelId).toBe('qwen/qwen3.5-27b');
+    expect(models?.[0]?.maxTokensOverride).toBeUndefined();
+  });
+
   it('deletes the provider credential only when explicitly requested', async () => {
     const harness = createHarness();
 

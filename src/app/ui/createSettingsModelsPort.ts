@@ -304,11 +304,21 @@ export function createSettingsModelsPort(
           models: provider.models.map(model => {
             if (model.id !== modelId) return model;
             const next = { ...model };
-            const catalogModelId = patch.catalogModelId?.trim();
-            if (catalogModelId) {
-              next.catalogModelId = catalogModelId;
-            } else {
-              delete next.catalogModelId;
+            if (Object.prototype.hasOwnProperty.call(patch, 'catalogModelId')) {
+              const catalogModelId = patch.catalogModelId?.trim();
+              if (catalogModelId) {
+                next.catalogModelId = catalogModelId;
+              } else {
+                delete next.catalogModelId;
+              }
+            }
+            if (Object.prototype.hasOwnProperty.call(patch, 'maxTokensOverride')) {
+              const maxTokensOverride = patch.maxTokensOverride;
+              if (typeof maxTokensOverride === 'number' && maxTokensOverride > 0) {
+                next.maxTokensOverride = Math.floor(maxTokensOverride);
+              } else {
+                delete next.maxTokensOverride;
+              }
             }
             return next;
           }),

@@ -417,8 +417,35 @@ describe('installPiCustomProviders model mapping', () => {
         xhigh: 'xhigh',
         max: null,
       },
+      compat: expect.objectContaining({
+        supportsReasoningEffort: true,
+        thinkingFormat: 'chat-template',
+        chatTemplateKwargs: {
+          enable_thinking: { $var: 'thinking.enabled' },
+          reasoning_effort: { $var: 'thinking.effort', omitWhenOff: true },
+          preserve_thinking: true,
+        },
+      }),
+    });
+  });
+
+  it('keeps OpenAI-style reasoning_effort for non-Qwen custom openai-compatible models', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.177:8888/v1',
+    });
+    config.models = [{
+      id: 'deepseek-v4-flash-0731',
+      name: 'DeepSeek V4 Flash 0731',
+      reasoning: true,
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
       compat: expect.objectContaining({ supportsReasoningEffort: true }),
     });
+    expect(model?.compat).not.toEqual(expect.objectContaining({
+      thinkingFormat: 'chat-template',
+    }));
   });
 
   it('uses advertised maxTokens as the request output cap instead of the 8192 default', () => {
@@ -455,6 +482,42 @@ describe('installPiCustomProviders model mapping', () => {
     expect(model).toMatchObject({
       contextWindow: 262144,
       maxTokens: 8192,
+    });
+  });
+
+  it('uses a user-declared maxTokensOverride ahead of advertised maxTokens', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen3.8-27b',
+      name: 'qwen3.8-27b',
+      contextWindow: 262144,
+      maxTokens: 8192,
+      maxTokensOverride: 262144,
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      contextWindow: 262144,
+      maxTokens: 262144,
+    });
+  });
+
+  it('clamps a user-declared maxTokensOverride to the context window', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{
+      id: 'qwen3.8-27b',
+      name: 'qwen3.8-27b',
+      contextWindow: 262144,
+      maxTokensOverride: 999999,
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      maxTokens: 262144,
     });
   });
 
@@ -549,14 +612,39 @@ describe('installPiCustomProviders model mapping', () => {
     expect(model).toMatchObject({
       id: 'qwen3.8-27b',
       reasoning: true,
+      defaultThinkingLevel: 'xhigh',
       thinkingLevelMap: {
+        off: 'none',
+        minimal: null,
         low: 'low',
         medium: 'medium',
-        high: 'high',
-        xhigh: null,
+        high: null,
+        xhigh: 'xhigh',
         max: null,
       },
       compat: expect.objectContaining({ supportsReasoningEffort: true }),
+    });
+  });
+
+  it('uses the Qwen3.8 official thinking levels when no catalog row is present', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }];
+
+    const [model] = buildCustomProviderModels(config);
+    expect(model).toMatchObject({
+      reasoning: true,
+      defaultThinkingLevel: 'xhigh',
+      thinkingLevelMap: {
+        off: 'none',
+        minimal: null,
+        low: 'low',
+        medium: 'medium',
+        high: null,
+        xhigh: 'xhigh',
+        max: null,
+      },
     });
   });
 
@@ -564,7 +652,7 @@ describe('installPiCustomProviders model mapping', () => {
     const config = createDefaultCustomProviderConfig('openai-compatible', [], {
       baseUrl: 'http://192.168.100.114:8888/v1',
     });
-    config.models = [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }];
+    config.models = [{ id: 'qwen3-32b', name: 'qwen3-32b' }];
 
     const [model] = buildCustomProviderModels(config, {
       knownModels: [
@@ -574,7 +662,7 @@ describe('installPiCustomProviders model mapping', () => {
           thinkingLevelMap: { max: 'max' },
         },
         {
-          id: 'qwen3.8-27b',
+          id: 'qwen3-32b',
           reasoning: true,
           thinkingLevelMap: { high: 'high' },
         },
@@ -685,8 +773,16 @@ describe('installPiCustomProviders model mapping', () => {
     expect(model).toMatchObject({
       id: 'qwen3.8-27b',
       reasoning: true,
-      thinkingLevelMap: { off: null, high: 'high', xhigh: 'xhigh' },
-      defaultThinkingLevel: 'high',
+      thinkingLevelMap: {
+        off: 'none',
+        minimal: null,
+        low: 'low',
+        medium: 'medium',
+        high: null,
+        xhigh: 'xhigh',
+        max: null,
+      },
+      defaultThinkingLevel: 'xhigh',
       contextWindow: 262144,
       compat: expect.objectContaining({ supportsReasoningEffort: true }),
     });
@@ -697,8 +793,8 @@ describe('installPiCustomProviders model mapping', () => {
       baseUrl: 'http://192.168.100.114:8888/v1',
     });
     config.models = [{
-      id: 'qwen3.8-27b',
-      name: 'qwen3.8-27b',
+      id: 'qwen3-32b',
+      name: 'qwen3-32b',
       catalogModelId: 'qwen/qwen3.5-27b',
     }];
 
@@ -896,6 +992,36 @@ describe('installPiCustomProviders model mapping', () => {
       id: 'qwen3.8-27b',
       contextWindow: 262144,
       catalogModelId: 'qwen/qwen3.5-27b',
+    })]);
+  });
+
+  it('carries a user-declared output-length override across a model-list fetch', async () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'http://192.168.100.114:8888/v1',
+    });
+    config.models = [
+      {
+        id: 'qwen3.8-27b',
+        name: 'qwen3.8-27b',
+        catalogModelId: 'qwen/qwen3.5-27b',
+        maxTokensOverride: 262144,
+      },
+    ];
+    const request = jest.fn(async () => ({
+      status: 200,
+      body: JSON.stringify({
+        data: [{ id: 'qwen3.8-27b', max_model_len: 262144, max_tokens: 8192 }],
+      }),
+    }));
+
+    const result = await fetchCustomProviderModels(config, request);
+
+    expect(result.models).toEqual([expect.objectContaining({
+      id: 'qwen3.8-27b',
+      contextWindow: 262144,
+      maxTokens: 8192,
+      catalogModelId: 'qwen/qwen3.5-27b',
+      maxTokensOverride: 262144,
     })]);
   });
 });
