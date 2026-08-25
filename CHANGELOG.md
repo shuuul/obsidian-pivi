@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.2](https://github.com/shuuul/obsidian-pivi/compare/0.19.1...0.19.2) (2026-08-25)
+
+
+### Bug Fixes
+
+* **models:** send Qwen thinking kwargs and pin Qwen3.8 levels ([8fb0ecb](https://github.com/shuuul/obsidian-pivi/commit/8fb0ecb958c02a6fe9c5885bfbe03ffd552b4bbe))
+
+
 ## [0.19.1](https://github.com/shuuul/obsidian-pivi/compare/0.19.0...0.19.1) (2026-08-24)
 
 
