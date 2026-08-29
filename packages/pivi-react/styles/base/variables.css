@@ -109,6 +109,7 @@ settings:
 .pivi-settings,
 .pivi-selection-toolbar-overlay,
 .pivi-inline-selector-portal,
+.pivi-settings-select__options,
 .pivi-inline-edit-surface,
 .pivi-inline-edit-diff-review {
   --pivi-spacing-xs: 4px;

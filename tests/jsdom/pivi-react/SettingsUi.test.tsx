@@ -200,7 +200,8 @@ describe('React settings foundation', () => {
     const i18n = createI18n();
     render(withTestPresentationPlatform(<I18nProvider i18n={i18n}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
 
-    fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'zh-CN' } });
+    fireEvent.click(screen.getByRole('combobox', { name: 'Language' }));
+    fireEvent.click(screen.getByRole('option', { name: '简体中文' }));
 
     expect(screen.getByText('语言')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: '语言' })).toHaveClass('pivi-select');
@@ -214,12 +215,13 @@ describe('React settings foundation', () => {
     const i18n = createI18n();
     render(withTestPresentationPlatform(<I18nProvider i18n={i18n}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
 
-    fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'zh-CN' } });
+    fireEvent.click(screen.getByRole('combobox', { name: 'Language' }));
+    fireEvent.click(screen.getByRole('option', { name: '简体中文' }));
     expect(screen.getByText('语言')).toBeInTheDocument();
     await act(async () => undefined);
 
     expect(screen.getByText('Language')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Language' })).toHaveValue('en');
+    expect(screen.getByRole('combobox', { name: 'Language' })).toHaveTextContent('English');
   });
 
   it('labels permanent session deletion clearly and centers its action row', () => {
@@ -273,8 +275,9 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
     const row = screen.getByText('Tab bar position').closest('.pivi-setting-row');
     const select = within(row as HTMLElement).getByRole('combobox');
-    expect(within(select).getAllByRole('option').map(option => option.textContent)).toEqual(['Top', 'Bottom']);
-    fireEvent.change(select, { target: { value: 'header' } });
+    fireEvent.click(select);
+    expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Top', 'Bottom']);
+    fireEvent.click(screen.getByRole('option', { name: 'Top' }));
     await act(async () => undefined);
     expect(saveGeneral).toHaveBeenCalledWith({ tabBarPosition: 'header' });
   });
@@ -298,7 +301,7 @@ describe('React settings foundation', () => {
 
   it('uses the shared Settings control style without applying it to toggles', () => {
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
-    for (const control of container.querySelectorAll('input:not([type="checkbox"]):not([type="range"]), textarea, select')) {
+    for (const control of container.querySelectorAll('input:not([type="checkbox"]):not([type="range"]), textarea, .pivi-select')) {
       expect(control).toHaveClass('pivi-settings-control');
     }
     expect(container.querySelector('input[type="checkbox"]')).not.toHaveClass('pivi-settings-control');
@@ -956,12 +959,10 @@ describe('React settings foundation', () => {
     const requestFormat = screen.getByLabelText('Thinking wire format for GLM 5.3 Flash');
     expect(reasoning).toHaveClass('pivi-select');
     expect(requestFormat).toHaveClass('pivi-select');
-    fireEvent.change(reasoning, {
-      target: { value: 'enabled' },
-    });
-    fireEvent.change(requestFormat, {
-      target: { value: 'zai' },
-    });
+    fireEvent.click(reasoning);
+    fireEvent.click(screen.getByRole('option', { name: 'Enabled' }));
+    fireEvent.click(requestFormat);
+    fireEvent.click(screen.getByRole('option', { name: 'Z.AI' }));
     await act(async () => undefined);
 
     expect(patchContextWindowOverride).toHaveBeenCalledWith(modelKey, 262_144);

@@ -157,7 +157,7 @@ describe('EditorToolbarSection', () => {
 
     fireEvent.click(summary!);
     expect(details).toHaveAttribute('open');
-    expect(screen.getByRole('combobox', { name: 'Execution target for /summarize' })).toHaveValue('sidebar');
+    expect(screen.getByRole('combobox', { name: 'Execution target for /summarize' })).toHaveTextContent('Sidebar');
     expect(saveEditorSelectionToolbar).not.toHaveBeenCalled();
 
     fireEvent.click(summary!);
@@ -190,9 +190,8 @@ describe('EditorToolbarSection', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add Pivi command' }));
     await screen.findByRole('option', { name: /\/summarize/ });
-    fireEvent.change(screen.getByRole('combobox', { name: 'Execution target' }), {
-      target: { value: 'inline-edit' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: 'Execution target' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Inline edit' }));
 
     expect(screen.getByText('Summarize selection')).toBeInTheDocument();
     expect(screen.queryByText('cmd-key-1')).not.toBeInTheDocument();
@@ -219,9 +218,10 @@ describe('EditorToolbarSection', () => {
     const details = screen.getByText('/summarize').closest('details');
     expect(details).toHaveAttribute('open');
     const targetSelect = screen.getByRole('combobox', { name: 'Execution target for /summarize' });
-    expect(targetSelect).toHaveValue('inline-edit');
+    expect(targetSelect).toHaveTextContent('Inline edit');
+    fireEvent.click(targetSelect);
     await act(async () => {
-      fireEvent.change(targetSelect, { target: { value: 'sidebar' } });
+      fireEvent.click(screen.getByRole('option', { name: 'Sidebar' }));
     });
     expect(saveEditorSelectionToolbar).toHaveBeenLastCalledWith({
       enabled: true,
