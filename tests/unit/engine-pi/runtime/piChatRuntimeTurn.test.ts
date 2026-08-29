@@ -219,6 +219,90 @@ describe('streamPiChatTurn retry lifecycle', () => {
     ]));
   });
 
+  it('persists partial thinking and text when a total deadline is terminal', async () => {
+    const listeners = new Set<(event: AgentEvent) => void>();
+    const failed = assistant('error', 'Total deadline exceeded (30000ms)');
+    failed.content = [
+      { type: 'thinking', thinking: 'Partial reasoning' },
+      { type: 'text', text: 'Partial answer' },
+    ];
+    const state = {
+      messages: [] as AgentMessage[],
+      model: model(),
+      systemPrompt: '',
+      tools: [],
+      thinkingLevel: 'medium' as const,
+    };
+    const agent = {
+      state,
+      prompt: jest.fn(async () => {
+        state.messages = [failed];
+        for (const listener of listeners) {
+          listener({ type: 'message_end', message: failed });
+          listener({ type: 'agent_end', messages: [failed] });
+        }
+      }),
+      continue: jest.fn(),
+      subscribe: (listener: (event: AgentEvent) => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+    } as unknown as Agent;
+    const activeTurn = createActiveTurn();
+    const resolvedModel = model();
+    const synced: AgentMessage[][] = [];
+    const compaction: PiChatCompactionDeps = {
+      plugin: {} as PiRuntimeHost,
+      sessionTree: null,
+      agent,
+      compactionState: {
+        autoCompactionInFlight: false,
+        failedAutoFingerprint: null,
+        foregroundController: null,
+        generation: 0,
+        prefire: null,
+      },
+      resolveModel: () => resolvedModel,
+      onLeafIdChanged: jest.fn(),
+      onAssistantMessageId: jest.fn(),
+    };
+    const turn = {
+      request: { text: 'Think for a long time', images: [] },
+      prompt: 'Think for a long time',
+      persistedContent: 'Think for a long time',
+      displayContent: 'Think for a long time',
+      isCompact: false,
+      mcpMentions: new Set<string>(),
+    } satisfies PreparedChatTurn;
+
+    for await (const _chunk of streamPiChatTurn({
+      activeTurn,
+      agent,
+      compaction,
+      eventAdapter: new PiAgentEventAdapter(),
+      sessionTree: null,
+      resolveModel: () => resolvedModel,
+      resolveThinkingLevel: () => 'medium',
+      authorizeAndSyncAgentModelSelection: async nextModel => nextModel,
+      refreshModelMetadata: async () => false,
+      syncSessionMessages: messages => synced.push([...messages]),
+      onUserMessagePersisted: jest.fn(),
+    }, turn)) {
+      // Drain the terminal turn.
+    }
+
+    expect(agent.continue).not.toHaveBeenCalled();
+    expect(synced.at(-1)).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        stopReason: 'error',
+        content: [
+          { type: 'thinking', thinking: 'Partial reasoning' },
+          { type: 'text', text: 'Partial answer' },
+        ],
+      }),
+    ]));
+  });
+
   it('applies a model switch to the next request inside the active agent loop', async () => {
     const listeners = new Set<(event: AgentEvent) => void>();
     const originalModel = model();

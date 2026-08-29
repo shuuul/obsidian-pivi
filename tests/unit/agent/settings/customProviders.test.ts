@@ -387,6 +387,47 @@ describe('installPiCustomProviders model mapping', () => {
     });
   });
 
+  it('applies explicit reasoning and wire-format overrides', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'https://gateway.example.test/v1',
+    });
+    config.models = [{
+      id: 'glm-5.3-flash',
+      name: 'GLM 5.3 Flash',
+      reasoningOverride: true,
+      thinkingFormatOverride: 'zai',
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+
+    expect(model).toMatchObject({
+      reasoning: true,
+      compat: expect.objectContaining({
+        supportsReasoningEffort: true,
+        thinkingFormat: 'zai',
+      }),
+    });
+  });
+
+  it('lets an explicit disabled override win over fetched reasoning metadata', () => {
+    const config = createDefaultCustomProviderConfig('openai-compatible', [], {
+      baseUrl: 'https://gateway.example.test/v1',
+    });
+    config.models = [{
+      id: 'reasoning-model',
+      name: 'Reasoning model',
+      reasoning: true,
+      reasoningMeta: { supportedEfforts: ['low', 'high'] },
+      reasoningOverride: false,
+    }];
+
+    const [model] = buildCustomProviderModels(config);
+
+    expect(model?.reasoning).toBe(false);
+    expect(model?.thinkingLevelMap).toBeUndefined();
+    expect(model?.compat).toEqual(expect.objectContaining({ supportsReasoningEffort: false }));
+  });
+
   it('overrides pi-ai thinking levels from advertised supported_efforts', () => {
     const config = createDefaultCustomProviderConfig('openai-compatible', [], {
       baseUrl: 'http://192.168.100.177:8888/v1',

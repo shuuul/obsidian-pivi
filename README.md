@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/shuuul/obsidian-pivi/releases"><img src="https://img.shields.io/static/v1?label=version&message=0.19.3&color=blue" alt="version"></a>
+  <a href="https://github.com/shuuul/obsidian-pivi/releases"><img src="https://img.shields.io/static/v1?label=version&message=0.19.4&color=blue" alt="version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
   <a href="https://obsidian.md/plugins"><img src="https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white" alt="Obsidian plugin"></a>
 </p>
@@ -100,13 +100,18 @@ Attach vault files or explicitly allowed external folders as turn context. Selec
 ### 🧩 Map a custom model to the built-in catalog
 Self-hosted and OpenAI-compatible servers do not always advertise reasoning metadata from `/v1/models`. To give a custom model the same thinking levels as an equivalent built-in model:
 
-1. Open **Settings → Pivi → Models** and expand the custom provider.
-2. Find the custom model and enter the equivalent built-in model ID in **Catalog model ID**.
-3. Leave the field to save the value, then reselect the model if the composer is already open.
+1. Open the [Pi Model Catalog](https://pi.dev/models) and search for the model name.
+2. If several providers list it, filter by the provider whose API behavior your server mirrors.
+3. Copy the exact model ID shown under the model name — for example, `glm-5.3-flash`, not the display name `GLM-5.3-Flash`. Do not add the provider shown in the catalog filter; keep slashes that are already part of the model ID, such as `z-ai/glm-5.2` for an OpenRouter model.
+4. Open **Settings → Pivi → Models**, expand the custom provider and model, then paste the value into **Catalog model ID**. Leave the field to save it, then reselect the model if the composer is already open.
 
 For example, a self-hosted model exposed as `GLM-5.3-Flash-EXL3` can map to `glm-5.3-flash`. Pivi keeps sending the server's original model ID while inheriting the catalog model's reasoning capability, supported thinking levels, and default thinking level. The catalog ID must match an existing model ID, not a display name; an unknown value such as `GLM-5.4-Flash` cannot be inherited.
 
-This mapping does not change the provider endpoint, credentials, context window, or output-token limit. Prefer reasoning metadata advertised by the server when available; it takes precedence over the catalog mapping.
+**Recommended:** fetch the server's model list and set **Catalog model ID** first. Only enter the individual advanced compatibility fields when the server metadata or catalog mapping is missing or wrong for that endpoint. Server-advertised reasoning metadata takes precedence over the catalog mapping.
+
+Pivi's built-in catalog comes from [`pi-ai`](https://github.com/earendil-works/pi/tree/main/packages/ai). Its generated catalog uses [models.dev](https://models.dev/) as a major metadata source, but also merges provider-native sources such as OpenRouter and Vercel AI Gateway, then applies Pi-specific filtering, corrections, compatibility metadata, and static entries. The Pi Model Catalog therefore shows the effective IDs Pivi can match; do not copy a models.dev ID unless the same ID appears there.
+
+Catalog mapping does not change the provider endpoint or credentials. It currently inherits reasoning behavior, not the context window or output-token limit; those normally come from the custom server's `/v1/models` response and remain available as manual overrides.
 
 ### 🛠️ Obsidian-native tools
 Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Obsidian does not expose publicly use explicit CLI, network-provider, MCP, or allowlisted process integrations as noted below.

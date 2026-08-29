@@ -34,6 +34,10 @@ export interface SettingsGeneralSnapshot {
   readonly userName: string;
   readonly excludedTags: readonly string[];
   readonly deletedSessionRetentionDays?: number;
+  readonly providerRequestDeadlines: {
+    readonly totalMs: number;
+    readonly idleMs: number;
+  };
   readonly requireCommandOrControlEnterToSend: boolean;
   readonly keyboardNavigation: SettingsKeyboardNavigationSnapshot;
   readonly editorSelectionToolbar: SettingsEditorSelectionToolbarSnapshot;

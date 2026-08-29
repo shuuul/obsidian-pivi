@@ -17,6 +17,7 @@ import {
   type CustomProviderConfig,
   type CustomProviderModelDef,
   type CustomProviderReasoningEffort,
+  type CustomProviderThinkingFormat,
   defaultModelMeta,
   isLocalCustomProviderKind,
   mergeFetchedCustomProviderModelUserFields,
@@ -202,15 +203,22 @@ const QWEN_CHAT_TEMPLATE_KWARGS = {
 function openAiCompatFlags(
   kind: CustomProviderConfig['kind'],
   supportsReasoningEffort: boolean,
-  options?: { qwenChatTemplate?: boolean },
+  options?: {
+    qwenChatTemplate?: boolean;
+    thinkingFormat?: CustomProviderThinkingFormat;
+  },
 ): Model<'openai-completions'>['compat'] {
   if (isLocalCustomProviderKind(kind) || kind === 'openai-compatible') {
     return {
       supportsDeveloperRole: false,
       supportsReasoningEffort,
+      ...(options?.thinkingFormat
+        ? { thinkingFormat: options.thinkingFormat }
+        : {}),
       ...(kind === 'openai-compatible'
         && supportsReasoningEffort
         && options?.qwenChatTemplate
+        && !options.thinkingFormat
         ? {
           thinkingFormat: 'chat-template' as const,
           chatTemplateKwargs: QWEN_CHAT_TEMPLATE_KWARGS,
@@ -237,8 +245,8 @@ export function buildCustomProviderModels(
         ?? (modelDef.catalogModelId
           ? findKnownModelReasoningSource(modelDef.id, knownModels)
           : undefined);
-    const qwen38Preset = looksLikeQwen38Model(modelDef);
-    const thinkingLevelMap = meta.reasoningMeta
+    const qwen38Preset = modelDef.reasoningOverride !== false && looksLikeQwen38Model(modelDef);
+    const autoThinkingLevelMap = meta.reasoningMeta
       ? thinkingLevelMapFromEfforts(meta.reasoningMeta.supportedEfforts, {
         mandatory: meta.reasoningMeta.mandatory,
       })
@@ -247,14 +255,17 @@ export function buildCustomProviderModels(
         : inherited?.thinkingLevelMap
           ? { ...inherited.thinkingLevelMap }
           : undefined;
-    const defaultThinkingLevel = meta.reasoningMeta
+    const autoDefaultThinkingLevel = meta.reasoningMeta
       ? meta.reasoningMeta.defaultEnabled === false
         ? 'off' as const
         : meta.reasoningMeta.defaultEffort
       : qwen38Preset
         ? 'xhigh' as const
         : inherited?.defaultThinkingLevel;
-    const reasoning = meta.reasoning || inherited?.reasoning === true || qwen38Preset;
+    const autoReasoning = meta.reasoning || inherited?.reasoning === true || qwen38Preset;
+    const reasoning = modelDef.reasoningOverride ?? autoReasoning;
+    const thinkingLevelMap = reasoning ? autoThinkingLevelMap : undefined;
+    const defaultThinkingLevel = reasoning ? autoDefaultThinkingLevel : undefined;
     const base = {
       id: modelDef.id,
       name: modelDef.name,
@@ -290,6 +301,7 @@ export function buildCustomProviderModels(
       api: 'openai-completions' as const,
       compat: openAiCompatFlags(config.kind, reasoning, {
         qwenChatTemplate: looksLikeQwenModel(modelDef),
+        thinkingFormat: modelDef.thinkingFormatOverride,
       }),
     };
   });

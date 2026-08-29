@@ -57,6 +57,43 @@ function useMountedRef() {
   return mounted;
 }
 
+function DeadlineSecondsInput({ valueMs, label, onCommit }: {
+  readonly valueMs: number;
+  readonly label: string;
+  readonly onCommit: (valueMs: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(valueMs / 1000));
+  useEffect(() => setDraft(String(valueMs / 1000)), [valueMs]);
+  const commit = () => {
+    const seconds = Number(draft);
+    const nextMs = Number.isFinite(seconds) && seconds >= 0
+      ? Math.floor(seconds * 1000)
+      : valueMs;
+    setDraft(String(nextMs / 1000));
+    if (nextMs !== valueMs) onCommit(nextMs);
+  };
+  return (
+    <input
+      className="pivi-settings-control"
+      type="number"
+      inputMode="decimal"
+      min="0"
+      step="1"
+      aria-label={label}
+      value={draft}
+      onChange={event => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          commit();
+          event.currentTarget.blur();
+        }
+      }}
+    />
+  );
+}
+
 function environmentEntriesToSafeText(entries: readonly SettingsEnvironmentEntryView[]): string {
   return entries.map((entry) => {
     if (entry.sourceKind === 'secret') {
@@ -366,6 +403,32 @@ export function GeneralSettingsTab({
             checked={general.enableAutoTitleGeneration}
             label={t('settings.autoTitle.name')}
             onChange={(enableAutoTitleGeneration) => { void save({ enableAutoTitleGeneration }); }}
+          />
+        </SettingRow>
+      </SettingsSection>
+      <SettingsSection title={t('settings.providerRequests.title')}>
+        <SettingRow
+          name={t('settings.providerRequests.total.name')}
+          description={t('settings.providerRequests.total.desc')}
+        >
+          <DeadlineSecondsInput
+            valueMs={general.providerRequestDeadlines.totalMs}
+            label={t('settings.providerRequests.total.name')}
+            onCommit={totalMs => { void save({
+              providerRequestDeadlines: { ...general.providerRequestDeadlines, totalMs },
+            }); }}
+          />
+        </SettingRow>
+        <SettingRow
+          name={t('settings.providerRequests.idle.name')}
+          description={t('settings.providerRequests.idle.desc')}
+        >
+          <DeadlineSecondsInput
+            valueMs={general.providerRequestDeadlines.idleMs}
+            label={t('settings.providerRequests.idle.name')}
+            onCommit={idleMs => { void save({
+              providerRequestDeadlines: { ...general.providerRequestDeadlines, idleMs },
+            }); }}
           />
         </SettingRow>
       </SettingsSection>

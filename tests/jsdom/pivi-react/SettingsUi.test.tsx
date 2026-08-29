@@ -12,6 +12,7 @@ const snapshot: SettingsUiSnapshotData = {
     deferMathRenderingDuringStreaming: true, showCacheHitRate: true, showTokensPerSecond: true,
     enableAutoTitleGeneration: false,
     userName: '', excludedTags: [], deletedSessionRetentionDays: 30,
+    providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 },
     requireCommandOrControlEnterToSend: false,
     keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
     editorSelectionToolbar: { enabled: true, shortcuts: [] },
@@ -49,6 +50,8 @@ function createModelsPort() {
     testProvider: async () => ({ ok: true, detail: 'ok' }),
     patchCustomProvider: async () => undefined,
     patchCustomProviderModel: async () => undefined,
+    getContextWindowOverride: () => null,
+    patchContextWindowOverride: async () => undefined,
     fetchCustomProviderModels: async () => ({ count: 0 }),
   };
 }
@@ -239,6 +242,30 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
 
     expect(saveGeneral).toHaveBeenCalledWith({ deletedSessionRetentionDays: 14 });
+  });
+
+  it('persists zero as disabled provider request deadlines', async () => {
+    const saveGeneral = jest.fn(async () => undefined);
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot ports={createPorts({ saveGeneral })} />
+      </I18nProvider>,
+    ));
+
+    const total = screen.getByRole('spinbutton', { name: 'Total timeout (seconds)' });
+    const idle = screen.getByRole('spinbutton', { name: 'Idle timeout (seconds)' });
+    fireEvent.change(total, { target: { value: '0' } });
+    fireEvent.blur(total);
+    fireEvent.change(idle, { target: { value: '0' } });
+    fireEvent.blur(idle);
+    await act(async () => undefined);
+
+    expect(saveGeneral).toHaveBeenCalledWith({
+      providerRequestDeadlines: { totalMs: 0, idleMs: 120_000 },
+    });
+    expect(saveGeneral).toHaveBeenCalledWith({
+      providerRequestDeadlines: { totalMs: 0, idleMs: 0 },
+    });
   });
 
   it('maps Top and Bottom labels to the existing tab position values', async () => {
@@ -866,7 +893,9 @@ describe('React settings foundation', () => {
     expect(screen.queryByLabelText('Output length for DeepSeek Chat')).toBeNull();
 
     fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('Advanced model compatibility'));
     const input = screen.getByLabelText('Output length for qwen3.8-27b');
+    expect(input.closest('.pivi-model-compatibility')).not.toBeNull();
     fireEvent.change(input, { target: { value: ' 262144 ' } });
     fireEvent.blur(input);
     await act(async () => undefined);
@@ -875,6 +904,76 @@ describe('React settings foundation', () => {
       customProvider.id,
       'qwen3.8-27b',
       { maxTokensOverride: 262144 },
+    );
+  });
+  it('edits custom context, reasoning, and thinking-format overrides', async () => {
+    const patchCustomProviderModel = jest.fn(async () => undefined);
+    const patchContextWindowOverride = jest.fn(async () => undefined);
+    const customProvider = {
+      id: 'custom-openai-compatible-campus',
+      kind: 'openai-compatible',
+      name: 'Campus gateway',
+      baseUrl: 'https://gateway.example.test/v1',
+      api: 'openai-completions',
+      models: [{ id: 'glm-5.3-flash', name: 'GLM 5.3 Flash' }],
+    };
+    const modelKey = `${customProvider.id}/glm-5.3-flash`;
+    const ports = createPorts();
+    Object.assign(ports.catalog, {
+      listModelsForProvider: () => [{ value: modelKey, label: 'GLM 5.3 Flash' }],
+    });
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: [customProvider.id],
+        disabledProviders: [],
+        customProviders: [customProvider],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getContextWindowOverride: () => null,
+      patchContextWindowOverride,
+      patchCustomProviderModel,
+    });
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot ports={ports} initialTab="models" />
+      </I18nProvider>,
+    ));
+    fireEvent.click(screen.getByText('Campus gateway', { selector: '.pivi-provider-title' }));
+
+    const compatibility = screen.getByText('Advanced model compatibility');
+    expect(compatibility.closest('details')).not.toHaveAttribute('open');
+    fireEvent.click(compatibility);
+    expect(compatibility.closest('details')).toHaveAttribute('open');
+
+    const context = screen.getByLabelText('Context window for GLM 5.3 Flash');
+    fireEvent.change(context, { target: { value: '262144' } });
+    fireEvent.blur(context);
+    const reasoning = screen.getByLabelText('Reasoning support for GLM 5.3 Flash');
+    const requestFormat = screen.getByLabelText('Thinking wire format for GLM 5.3 Flash');
+    expect(reasoning).toHaveClass('pivi-select');
+    expect(requestFormat).toHaveClass('pivi-select');
+    fireEvent.change(reasoning, {
+      target: { value: 'enabled' },
+    });
+    fireEvent.change(requestFormat, {
+      target: { value: 'zai' },
+    });
+    await act(async () => undefined);
+
+    expect(patchContextWindowOverride).toHaveBeenCalledWith(modelKey, 262_144);
+    expect(patchCustomProviderModel).toHaveBeenCalledWith(
+      customProvider.id,
+      'glm-5.3-flash',
+      { reasoningOverride: true },
+    );
+    expect(patchCustomProviderModel).toHaveBeenCalledWith(
+      customProvider.id,
+      'glm-5.3-flash',
+      { thinkingFormatOverride: 'zai' },
     );
   });
   it('places optional local API key directly below Base URL without an authentication section', () => {

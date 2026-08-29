@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.19.4](https://github.com/shuuul/obsidian-pivi/compare/0.19.3...0.19.4) (2026-08-29)
+
+
+### Bug Fixes
+
+* **models:** add per-model context, output, reasoning, and thinking-format overrides for custom providers ([#90](https://github.com/shuuul/obsidian-pivi/issues/90))
+* **network:** make provider Total and Idle deadlines configurable, including disabled timers ([#89](https://github.com/shuuul/obsidian-pivi/issues/89), [#90](https://github.com/shuuul/obsidian-pivi/issues/90))
+* **sessions:** preserve partial reasoning and text when a terminal deadline interrupts a response ([#90](https://github.com/shuuul/obsidian-pivi/issues/90))
+
+
+### Documentation
+
+* explain how to find effective Catalog model IDs and recommend catalog mapping before manual overrides
+
 ## [0.19.3](https://github.com/shuuul/obsidian-pivi/compare/0.19.2...0.19.3) (2026-08-29)
 
 

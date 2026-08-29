@@ -7,6 +7,11 @@ import type { FetchCompatible, HttpClient } from '@pivi/agent/ports';
 
 import { createScopedFetch, createScopedHttpClient } from './scopedHttpClient';
 
+export interface ProviderDeadlineUpdate {
+  totalMs: number;
+  idleMs: number;
+}
+
 export interface PiviNetworkClients {
   /** Shared turn/origin grant registry for local-network exceptions. */
   grants: OriginGrantRegistry;
@@ -21,6 +26,12 @@ export interface PiviNetworkClients {
   httpClient: HttpClient;
   /** Local/custom provider discovery may need short-lived private-origin grants. */
   localProviderHttpClient: HttpClient;
+  /**
+   * Mutate live provider total/idle deadlines. Subsequent `providerFetch`
+   * calls read the updated policy without recreating clients. `0` disables
+   * that timer. Invalid values keep the current finite nonnegative integer.
+   */
+  setProviderDeadlines(deadlines: ProviderDeadlineUpdate): void;
 }
 
 let activeNetworkClients: PiviNetworkClients | null = null;
@@ -32,6 +43,9 @@ export function getActivePiviNetworkClients(): PiviNetworkClients {
   }
   return activeNetworkClients;
 }
+
+const DEFAULT_PROVIDER_TOTAL_MS = 600_000;
+const DEFAULT_PROVIDER_IDLE_MS = 120_000;
 
 function policyFor(
   purpose: NetworkPurpose,
@@ -46,21 +60,30 @@ function policyFor(
   };
 }
 
+function normalizeDeadlineMs(value: number, fallback: number): number {
+  if (!Number.isFinite(value) || value < 0) {
+    return fallback;
+  }
+  return Math.floor(value);
+}
+
 export function createPiviNetworkClients(
   grants: OriginGrantRegistry = new OriginGrantRegistry(),
 ): PiviNetworkClients {
+  const providerDeadlines = {
+    totalMs: DEFAULT_PROVIDER_TOTAL_MS,
+    idleMs: DEFAULT_PROVIDER_IDLE_MS,
+  };
+  const providerPolicy = policyFor('provider', {
+    allowedContentTypes: undefined,
+    byteLimits: {
+      maxEncodedResponseBytes: 32 * 1024 * 1024,
+      maxDecodedResponseBytes: 32 * 1024 * 1024,
+    },
+    deadlines: providerDeadlines,
+  });
   const providerFetch = createScopedFetch({
-    policy: policyFor('provider', {
-      allowedContentTypes: undefined,
-      byteLimits: {
-        maxEncodedResponseBytes: 32 * 1024 * 1024,
-        maxDecodedResponseBytes: 32 * 1024 * 1024,
-      },
-      deadlines: {
-        totalMs: 600_000,
-        idleMs: 120_000,
-      },
-    }),
+    policy: providerPolicy,
     grants,
   });
 
@@ -144,6 +167,10 @@ export function createPiviNetworkClients(
     skillsFetch,
     httpClient,
     localProviderHttpClient,
+    setProviderDeadlines({ totalMs, idleMs }) {
+      providerDeadlines.totalMs = normalizeDeadlineMs(totalMs, providerDeadlines.totalMs);
+      providerDeadlines.idleMs = normalizeDeadlineMs(idleMs, providerDeadlines.idleMs);
+    },
   };
   activeNetworkClients = clients;
   return clients;

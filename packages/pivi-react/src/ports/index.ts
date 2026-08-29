@@ -7,6 +7,7 @@ import type {
 } from '@pivi/agent/mcp/types';
 import type { ChatUIOption } from '@pivi/agent/runtime/chatUi';
 import type { PiviSettings } from '@pivi/agent/settings';
+import type { CustomProviderThinkingFormat } from '@pivi/agent/settings/customProviders';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
 import type { AppModelReadinessStatusKind } from '@pivi/agent/settings/modelReadiness';
 import type {
@@ -102,8 +103,15 @@ export interface SettingsModelsPort {
   patchCustomProviderModel(
     providerId: string,
     modelId: string,
-    patch: { catalogModelId?: string; maxTokensOverride?: number | null },
+    patch: {
+      catalogModelId?: string;
+      maxTokensOverride?: number | null;
+      reasoningOverride?: boolean | null;
+      thinkingFormatOverride?: CustomProviderThinkingFormat | null;
+    },
   ): Promise<void>;
+  getContextWindowOverride(modelKey: string): number | null;
+  patchContextWindowOverride(modelKey: string, value: number | null): Promise<void>;
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
 }
 

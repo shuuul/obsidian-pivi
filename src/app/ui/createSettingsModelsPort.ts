@@ -54,6 +54,22 @@ export function createSettingsModelsPort(
       };
     },
     getSettings: () => getPiAgentSettings(host.settings),
+    getContextWindowOverride(modelKey) {
+      return host.settings.customContextLimits[modelKey] ?? null;
+    },
+    async patchContextWindowOverride(modelKey, value) {
+      const next = { ...host.settings.customContextLimits };
+      if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        next[modelKey] = Math.floor(value);
+      } else {
+        delete next[modelKey];
+      }
+      host.settings.customContextLimits = next;
+      await host.saveSettings();
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.refreshModelPresentation();
+      }
+    },
     async saveSettings(patch) {
       updatePiAgentSettings(host.settings, patch);
       uiFacades.syncCustomProviders(host.settings);
@@ -318,6 +334,20 @@ export function createSettingsModelsPort(
                 next.maxTokensOverride = Math.floor(maxTokensOverride);
               } else {
                 delete next.maxTokensOverride;
+              }
+            }
+            if (Object.prototype.hasOwnProperty.call(patch, 'reasoningOverride')) {
+              if (typeof patch.reasoningOverride === 'boolean') {
+                next.reasoningOverride = patch.reasoningOverride;
+              } else {
+                delete next.reasoningOverride;
+              }
+            }
+            if (Object.prototype.hasOwnProperty.call(patch, 'thinkingFormatOverride')) {
+              if (patch.thinkingFormatOverride) {
+                next.thinkingFormatOverride = patch.thinkingFormatOverride;
+              } else {
+                delete next.thinkingFormatOverride;
               }
             }
             return next;

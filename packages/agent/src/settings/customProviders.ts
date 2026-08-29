@@ -23,6 +23,15 @@ export type CustomProviderKind =
 /** Native reasoning levels advertised by a `/v1/models` card. */
 export type CustomProviderReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
+export const CUSTOM_PROVIDER_THINKING_FORMATS = [
+  'openai',
+  'zai',
+  'deepseek',
+  'qwen',
+  'qwen-chat-template',
+] as const;
+export type CustomProviderThinkingFormat = (typeof CUSTOM_PROVIDER_THINKING_FORMATS)[number];
+
 /** Server-advertised reasoning metadata stored after fetch. */
 export interface CustomProviderReasoningMeta {
   supportedEfforts: CustomProviderReasoningEffort[];
@@ -52,6 +61,10 @@ export interface CustomProviderModelDef {
    * Runtime still clamps this to the model context window.
    */
   maxTokensOverride?: number;
+  /** User override for whether this model supports reasoning. Undefined means auto-detect. */
+  reasoningOverride?: boolean;
+  /** User override for the OpenAI-compatible reasoning wire format. */
+  thinkingFormatOverride?: CustomProviderThinkingFormat;
 }
 
 /** Persisted custom / local provider configuration. */
@@ -329,6 +342,13 @@ export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderMod
   const maxTokensOverride = typeof raw.maxTokensOverride === 'number' && raw.maxTokensOverride > 0
     ? Math.floor(raw.maxTokensOverride)
     : undefined;
+  const reasoningOverride = typeof raw.reasoningOverride === 'boolean'
+    ? raw.reasoningOverride
+    : undefined;
+  const thinkingFormatOverride = typeof raw.thinkingFormatOverride === 'string'
+    && (CUSTOM_PROVIDER_THINKING_FORMATS as readonly string[]).includes(raw.thinkingFormatOverride)
+    ? raw.thinkingFormatOverride as CustomProviderThinkingFormat
+    : undefined;
   return {
     id,
     name,
@@ -338,6 +358,8 @@ export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderMod
     ...(reasoningMeta ? { reasoningMeta } : {}),
     ...(catalogModelId ? { catalogModelId } : {}),
     ...(maxTokensOverride !== undefined ? { maxTokensOverride } : {}),
+    ...(reasoningOverride !== undefined ? { reasoningOverride } : {}),
+    ...(thinkingFormatOverride ? { thinkingFormatOverride } : {}),
   };
 }
 
@@ -447,15 +469,21 @@ export function mergeFetchedCustomProviderModelUserFields(
     const {
       catalogModelId: _staleCatalogModelId,
       maxTokensOverride: _staleMaxTokensOverride,
+      reasoningOverride: _staleReasoningOverride,
+      thinkingFormatOverride: _staleThinkingFormatOverride,
       ...model
     } = fetchedModel;
     const current = currentById.get(fetchedModel.id);
     const catalogModelId = current?.catalogModelId;
     const maxTokensOverride = current?.maxTokensOverride;
+    const reasoningOverride = current?.reasoningOverride;
+    const thinkingFormatOverride = current?.thinkingFormatOverride;
     return {
       ...model,
       ...(catalogModelId ? { catalogModelId } : {}),
       ...(maxTokensOverride !== undefined ? { maxTokensOverride } : {}),
+      ...(reasoningOverride !== undefined ? { reasoningOverride } : {}),
+      ...(thinkingFormatOverride ? { thinkingFormatOverride } : {}),
     };
   });
 }

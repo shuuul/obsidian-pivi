@@ -198,6 +198,56 @@ describe('scopedHttpClient', () => {
     await close();
   });
 
+  it('completes a delayed body when totalMs is 0', async () => {
+    const { port, close } = await listen((_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('first');
+      window.setTimeout(() => res.end('late'), 80);
+    });
+    try {
+      const grants = new OriginGrantRegistry();
+      const url = `http://127.0.0.1:${port}/`;
+      grants.grant(url, 60_000, 'web-fetch');
+      const fetchImpl = createScopedFetch({
+        policy: {
+          purpose: 'web-fetch',
+          deadlines: { totalMs: 0, idleMs: 1_000 },
+        },
+        grants,
+        lookup: async () => ['127.0.0.1'],
+      });
+      const response = await fetchImpl(url);
+      await expect(response.text()).resolves.toBe('firstlate');
+    } finally {
+      await close();
+    }
+  });
+
+  it('completes a delayed body when idleMs is 0', async () => {
+    const { port, close } = await listen((_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('first');
+      window.setTimeout(() => res.end('late'), 80);
+    });
+    try {
+      const grants = new OriginGrantRegistry();
+      const url = `http://127.0.0.1:${port}/`;
+      grants.grant(url, 60_000, 'web-fetch');
+      const fetchImpl = createScopedFetch({
+        policy: {
+          purpose: 'web-fetch',
+          deadlines: { totalMs: 5_000, idleMs: 0 },
+        },
+        grants,
+        lookup: async () => ['127.0.0.1'],
+      });
+      const response = await fetchImpl(url);
+      await expect(response.text()).resolves.toBe('firstlate');
+    } finally {
+      await close();
+    }
+  });
+
   it('applies one total deadline across redirects and the final body', async () => {
     const { port, close } = await listen((req, res) => {
       if (req.url === '/start') {

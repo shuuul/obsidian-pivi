@@ -71,6 +71,10 @@ Add-provider and similar picker rows are native `<button>` elements so keyboard 
 
 Provider/model/web-search settings mutations commit device-local state first, then save the stripped synced projection. Custom provider header values must never be written through `patchCustomProvider` or synced JSON; future header editing must use a dedicated SecretStorage-first settings-port path. A synced save failure after a successful local commit retains local authority and surfaces a localized Notice through app storage wiring.
 
+Custom-provider model rows keep compatibility details collapsed under **Advanced model compatibility**. Catalog model ID is the preferred reasoning setup: users find the exact effective ID in Pi's model catalog, while server-advertised reasoning metadata remains authoritative. Per-model context window, output length, reasoning support, and OpenAI Chat Completions thinking wire format are explicit overrides for thin or incorrect `/v1/models` metadata; user overrides survive model-list refreshes. Context limits are keyed by the full `providerId/modelId` in the device-local provider registry, and reasoning/request-format controls appear only for custom providers where Pivi owns that compatibility mapping.
+
+General settings expose provider Total and Idle request deadlines in seconds. Defaults remain 600 and 120 seconds, `0` disables the corresponding timer, and saves update the live provider policy used by subsequent requests without a plugin reload. Terminal deadline failures preserve already streamed reasoning and text through the normal assistant-message synchronization path.
+
 Save actions return structured feedback. App wiring converts transient results to Obsidian Notices while React retains only actionable errors beside their controls.
 
 Hot refresh is capability-specific. Tool changes refresh registries/prompts; MCP changes invalidate catalogs and reload bridges; provider/model changes update catalog/readiness and open tabs; tab-bar placement republishes presentation state; cache-hit and tokens/s Chat behavior toggles republish open chat display settings; external-root changes broadcast device-local state.

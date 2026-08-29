@@ -449,9 +449,11 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
       getStorage: () => this.storage,
       skillsHost: this,
     });
+    this.network.setProviderDeadlines(this.settings.providerRequestDeadlines);
   }
 
   async saveSettings() {
+    this.network.setProviderDeadlines(this.settings.providerRequestDeadlines);
     await this.storage.savePiviSettings(this.settings);
   }
 

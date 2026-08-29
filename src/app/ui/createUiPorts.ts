@@ -263,6 +263,7 @@ export function createSettingsUiPorts(
         userName: settings.userName,
         excludedTags: settings.excludedTags,
         deletedSessionRetentionDays: settings.deletedSessionRetentionDays ?? 30,
+        providerRequestDeadlines: { ...settings.providerRequestDeadlines },
         requireCommandOrControlEnterToSend: settings.requireCommandOrControlEnterToSend ?? false,
         keyboardNavigation: {
           scrollUpKey: host.settings.keyboardNavigation.scrollUpKey,
@@ -296,6 +297,10 @@ export function createSettingsUiPorts(
     host.settings.deletedSessionRetentionDays = Math.max(1, Math.min(
       3650, Math.trunc(next.deletedSessionRetentionDays ?? 30),
     ));
+    host.settings.providerRequestDeadlines = {
+      totalMs: Math.max(0, Math.trunc(next.providerRequestDeadlines.totalMs)),
+      idleMs: Math.max(0, Math.trunc(next.providerRequestDeadlines.idleMs)),
+    };
     host.settings.requireCommandOrControlEnterToSend = next.requireCommandOrControlEnterToSend;
     host.settings.keyboardNavigation = {
       scrollUpKey: next.keyboardNavigation.scrollUpKey,

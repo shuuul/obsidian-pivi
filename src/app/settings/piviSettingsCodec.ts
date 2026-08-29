@@ -141,6 +141,41 @@ function stripRemovedSettingsFields(settings: Record<string, unknown>): void {
   delete settings.autoCompactKeepRecentTokens;
 }
 
+function normalizeDeadlineMs(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : fallback;
+}
+
+function normalizeProviderRequestDeadlines(raw: unknown): PiviSettings['providerRequestDeadlines'] {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ...DEFAULT_PIVI_SETTINGS.providerRequestDeadlines };
+  }
+  const record = raw as Record<string, unknown>;
+  return {
+    totalMs: normalizeDeadlineMs(
+      record.totalMs,
+      DEFAULT_PIVI_SETTINGS.providerRequestDeadlines.totalMs,
+    ),
+    idleMs: normalizeDeadlineMs(
+      record.idleMs,
+      DEFAULT_PIVI_SETTINGS.providerRequestDeadlines.idleMs,
+    ),
+  };
+}
+
+function hasGeneralNormalizationChanges(
+  stored: Record<string, unknown>,
+  chatViewPlacement: PiviSettings['chatViewPlacement'],
+  deletedSessionRetentionDays: number,
+  providerRequestDeadlines: PiviSettings['providerRequestDeadlines'],
+): boolean {
+  return stored.chatViewPlacement !== chatViewPlacement
+    || stored.deletedSessionRetentionDays !== deletedSessionRetentionDays
+    || JSON.stringify(stored.providerRequestDeadlines ?? null)
+      !== JSON.stringify(providerRequestDeadlines);
+}
+
 export function normalizeStoredPiviSettings(
   stored: Record<string, unknown>,
 ): PiviSettingsNormalizationResult {
@@ -182,6 +217,9 @@ export function normalizeStoredPiviSettings(
     && retention <= 3650
     ? retention
     : DEFAULT_PIVI_SETTINGS.deletedSessionRetentionDays;
+  const providerRequestDeadlines = normalizeProviderRequestDeadlines(
+    stored.providerRequestDeadlines,
+  );
   const providerSettings = {
     ...stored,
     hiddenSlashCommands,
@@ -200,6 +238,7 @@ export function normalizeStoredPiviSettings(
     agentSettings,
     chatViewPlacement,
     deletedSessionRetentionDays,
+    providerRequestDeadlines,
   };
   stripRemovedSettingsFields(settings);
 
@@ -211,8 +250,12 @@ export function normalizeStoredPiviSettings(
   const changed =
     agentSettingsChanged ||
     modelReconciled ||
-    stored.chatViewPlacement !== chatViewPlacement ||
-    stored.deletedSessionRetentionDays !== deletedSessionRetentionDays ||
+    hasGeneralNormalizationChanges(
+      stored,
+      chatViewPlacement,
+      deletedSessionRetentionDays,
+      providerRequestDeadlines,
+    ) ||
     externalReadDirectoriesMigrated ||
     subagentsChanged ||
     webSearchToolsChanged ||

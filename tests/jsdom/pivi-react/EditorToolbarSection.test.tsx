@@ -18,6 +18,7 @@ const snapshot: SettingsUiSnapshotData = {
     enableAutoTitleGeneration: false,
     userName: '',
     excludedTags: [],
+    providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 },
     requireCommandOrControlEnterToSend: false,
     keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
     editorSelectionToolbar: { enabled: true, shortcuts: [] },

@@ -140,6 +140,33 @@ export function ProviderCard({
       });
   };
 
+  const patchContextWindowOverride = (modelKey: string, value: number | null): void => {
+    void models.patchContextWindowOverride(modelKey, value)
+      .then(() => { onChanged(); })
+      .catch((cause: unknown) => {
+        onError(cause instanceof Error ? cause.message : t('common.error'));
+      });
+  };
+
+  const patchReasoningOverride = (modelId: string, reasoningOverride: boolean | null): void => {
+    void models.patchCustomProviderModel(providerId, modelId, { reasoningOverride })
+      .then(() => { onChanged(); })
+      .catch((cause: unknown) => {
+        onError(cause instanceof Error ? cause.message : t('common.error'));
+      });
+  };
+
+  const patchThinkingFormatOverride = (
+    modelId: string,
+    thinkingFormatOverride: Parameters<SettingsModelsPort['patchCustomProviderModel']>[2]['thinkingFormatOverride'],
+  ): void => {
+    void models.patchCustomProviderModel(providerId, modelId, { thinkingFormatOverride })
+      .then(() => { onChanged(); })
+      .catch((cause: unknown) => {
+        onError(cause instanceof Error ? cause.message : t('common.error'));
+      });
+  };
+
   const testProvider = async (): Promise<void> => {
     setTesting(true);
     try {
@@ -244,6 +271,10 @@ export function ProviderCard({
               customProvider={custom}
               onPatchModelCatalogId={patchModelCatalogId}
               onPatchModelMaxTokensOverride={patchModelMaxTokensOverride}
+              getContextWindowOverride={modelKey => models.getContextWindowOverride(modelKey)}
+              onPatchContextWindowOverride={patchContextWindowOverride}
+              onPatchReasoningOverride={patchReasoningOverride}
+              onPatchThinkingFormatOverride={patchThinkingFormatOverride}
             />
           </>
         ) : isCodex ? (

@@ -39,6 +39,10 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   deletedSessionRetentionDays: 30,
   sharedEnvironmentVariables: "",
   customContextLimits: {},
+  providerRequestDeadlines: {
+    totalMs: 600_000,
+    idleMs: 120_000,
+  },
   keyboardNavigation: {
     scrollUpKey: "w",
     scrollDownKey: "s",

@@ -187,6 +187,45 @@ describe('createSettingsModelsPort provider removal', () => {
     expect(models?.[0]?.maxTokensOverride).toBeUndefined();
   });
 
+  it('sets and clears context, reasoning, and thinking-format overrides', async () => {
+    const harness = createHarness();
+    harness.settings.agentSettings.customProviders = [{
+      id: 'custom-openai-compatible-lan',
+      kind: 'openai-compatible',
+      name: 'Campus gateway',
+      baseUrl: 'https://gateway.example.test/v1',
+      api: 'openai-completions',
+      models: [{ id: 'glm-5.3-flash', name: 'GLM 5.3 Flash' }],
+    }];
+    const modelKey = 'custom-openai-compatible-lan/glm-5.3-flash';
+
+    await harness.port.patchContextWindowOverride(modelKey, 262_144);
+    await harness.port.patchCustomProviderModel(
+      'custom-openai-compatible-lan',
+      'glm-5.3-flash',
+      { reasoningOverride: true, thinkingFormatOverride: 'zai' },
+    );
+
+    expect(harness.port.getContextWindowOverride(modelKey)).toBe(262_144);
+    expect(harness.settings.agentSettings.customProviders[0]?.models[0]).toMatchObject({
+      reasoningOverride: true,
+      thinkingFormatOverride: 'zai',
+    });
+
+    await harness.port.patchContextWindowOverride(modelKey, null);
+    await harness.port.patchCustomProviderModel(
+      'custom-openai-compatible-lan',
+      'glm-5.3-flash',
+      { reasoningOverride: null, thinkingFormatOverride: null },
+    );
+
+    expect(harness.port.getContextWindowOverride(modelKey)).toBeNull();
+    expect(harness.settings.agentSettings.customProviders[0]?.models[0]?.reasoningOverride)
+      .toBeUndefined();
+    expect(harness.settings.agentSettings.customProviders[0]?.models[0]?.thinkingFormatOverride)
+      .toBeUndefined();
+  });
+
   it('deletes the provider credential only when explicitly requested', async () => {
     const harness = createHarness();
 

@@ -32,6 +32,12 @@ export interface KeyboardNavigationSettings {
   focusInputKey: string; // Key to focus input (default: 'i', like vim insert mode)
 }
 
+/** Provider request deadlines in milliseconds. A value of 0 disables that deadline. */
+export interface ProviderRequestDeadlines {
+  totalMs: number;
+  idleMs: number;
+}
+
 /** Tab bar position setting. */
 export type TabBarPosition = "input" | "header";
 
@@ -676,6 +682,7 @@ export interface PiviSettings {
   // Environment
   sharedEnvironmentVariables: string;
   customContextLimits: Record<string, number>;
+  providerRequestDeadlines: ProviderRequestDeadlines;
 
   // UI settings
   keyboardNavigation: KeyboardNavigationSettings;

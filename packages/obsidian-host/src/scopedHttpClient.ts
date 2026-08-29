@@ -106,6 +106,13 @@ function createDeadlineSignal(ms: number, label: string): {
   clear: () => void;
 } {
   const controller = new AbortController();
+  // 0 disables the timer so long-running provider streams can opt out of Total.
+  if (ms <= 0) {
+    return {
+      signal: controller.signal,
+      clear: () => undefined,
+    };
+  }
   const timer = window.setTimeout(() => {
     controller.abort(new EgressPolicyError('deadline', `${label} deadline exceeded (${ms}ms)`));
   }, ms);
@@ -223,6 +230,9 @@ function createLimitedBodyStream(
 
   const resetIdle = (fail: (error: Error) => void) => {
     if (idleTimer !== undefined) window.clearTimeout(idleTimer);
+    idleTimer = undefined;
+    // 0 disables idle so sparse SSE/token streams are not killed between chunks.
+    if (limits.idleMs <= 0) return;
     idleTimer = window.setTimeout(() => {
       fail(new EgressPolicyError('deadline', `Idle deadline exceeded (${limits.idleMs}ms)`));
     }, limits.idleMs);
