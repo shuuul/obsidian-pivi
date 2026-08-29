@@ -1,8 +1,9 @@
-import type { ChatMessage, StreamChunk, SubagentInfo } from '@pivi/agent/foundation';
-import type { ToolUseResult } from '@pivi/agent/foundation/diff';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime';
 import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import type { SubagentInfo } from '@pivi/agent/tools';
+import type { ToolUseResult } from '@pivi/agent/tools/diffTypes';
 import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 import {
   type ChatProjectionMessageChange,
@@ -30,11 +31,11 @@ import {
 } from '@/ui/chat/stream/ToolEventPresenter';
 import { UsagePresenter } from '@/ui/chat/stream/UsagePresenter';
 
+import type { FileContextManager } from '../input/FileContext';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatProjectionRunScope, ChatState } from '../state/ChatState';
-import type { FileContextManager } from '../ui/FileContext';
 
 const logger = new PluginLogger('StreamController');
 

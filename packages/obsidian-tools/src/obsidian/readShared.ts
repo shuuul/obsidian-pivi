@@ -2,12 +2,12 @@ import {
   calculateReadToolMaxChars,
   READ_TOOL_MIN_CHARS,
   type ReadAllowanceReservation,
-} from '@pivi/agent/foundation/usage';
+} from '@pivi/agent/runtime/usage';
 
 import type { LineSpan, ReadMode, ReadStats } from './readTypes';
 
 export * from './readTypes';
-export { READ_TOOL_MAX_CHARS_CAP as DEFAULT_SAFE_READ_MAX_CHARS } from '@pivi/agent/foundation/usage';
+export { READ_TOOL_MAX_CHARS_CAP as DEFAULT_SAFE_READ_MAX_CHARS } from '@pivi/agent/runtime/usage';
 
 export function getStringField(input: Record<string, unknown>, key: string): string | undefined {
   const value = input[key];

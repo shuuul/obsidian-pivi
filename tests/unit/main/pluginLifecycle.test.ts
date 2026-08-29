@@ -73,9 +73,9 @@ jest.mock("@/app/serviceGraph", () => {
   };
 });
 
-import type { OpenSessionState } from "@pivi/agent/foundation";
-import { VIEW_TYPE_PIVI } from "@pivi/agent/foundation";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/foundation/settingsDefaults";
+import type { OpenSessionState } from "@pivi/agent/runtime";
+import { VIEW_TYPE_PIVI } from "@pivi/agent/runtime";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
 import { persistOpenTabStates } from "@/app/pluginLifecycle";
 import PiviPlugin from "@/main";
 import { createMockApp } from "../../helpers/mockApp";

@@ -1,6 +1,6 @@
-import { PluginLogger } from '../../foundation/pluginLogger';
-import type { PiviSettings } from '../../foundation/settings';
+import { PluginLogger } from '../../logging/pluginLogger';
 import type { HttpClient, ProcessRunner } from '../../ports';
+import type { PiviSettings } from '../../settings/types';
 import {
   DEFAULT_VAULT_SKILLS_SLUG,
 } from './defaultVaultSkills';

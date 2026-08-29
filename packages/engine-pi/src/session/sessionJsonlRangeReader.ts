@@ -1,5 +1,5 @@
 import type { SessionEntry } from '@earendil-works/pi-coding-agent';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import {
   PIVI_MESSAGE_UI,
   SessionIndexCorruptError,

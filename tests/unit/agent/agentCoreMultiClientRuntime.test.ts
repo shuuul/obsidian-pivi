@@ -1,5 +1,5 @@
 import type { AgentEngine, AgentEngineSessionRef } from '@pivi/agent/engine';
-import type { ChatMessage, StreamChunk } from '@pivi/agent/foundation';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime';
 import { AgentCoreRuntime } from '@pivi/agent/runtime/agentCoreRuntime';
 import type { ChatTurnMetadata, PreparedChatTurn } from '@pivi/agent/runtime/types';
 import type { SessionRef, SessionStore } from '@pivi/agent/session';

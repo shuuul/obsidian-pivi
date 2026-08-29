@@ -1,5 +1,5 @@
-import { VIEW_TYPE_PIVI } from '@pivi/agent/foundation';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import { VIEW_TYPE_PIVI } from '@pivi/agent/runtime';
 import type { App } from 'obsidian';
 
 import type { PiviChatView } from '@/app/hostContracts';

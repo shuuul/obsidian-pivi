@@ -2,14 +2,9 @@ import type { EditorView } from '@codemirror/view';
 import type { BrowserSelectionContext } from '@pivi/agent/context/browser';
 import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
 import type { EditorSelectionContext } from '@pivi/agent/context/editor';
-import type {
-  ChatMessage,
-  ImageAttachment,
-  SubagentInfo,
-  ToolCallInfo,
-  UsageInfo,
-} from '@pivi/agent/foundation';
+import type { ChatMessage, ImageAttachment, UsageInfo } from '@pivi/agent/runtime';
 import type { ChatTurnRequest } from '@pivi/agent/runtime';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 import type { TodoItem, TodoVisualizationModel } from '@pivi/agent/tools';
 
 /** Queued message waiting to be sent after current streaming completes. */

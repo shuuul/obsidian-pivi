@@ -8,7 +8,7 @@ import type {
 } from "@pivi/agent/tools/piviManagement";
 
 import type { TFunction } from "./i18n";
-import type { WorkspaceCommandsPlan } from './workspace/WorkspaceCommandsCoordinator';
+import type { WorkspaceCommandsPlan } from './runtime/WorkspaceCommandsCoordinator';
 
 /** Pure app presentation boundary from normalized management data to approval-card copy. */
 export function presentMcpManagementApproval(

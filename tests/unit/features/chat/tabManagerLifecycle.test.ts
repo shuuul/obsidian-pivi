@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type { ForkContext } from '@/ui/chat/tabs/tabFork';
 import type { TabData, TabManagerCallbacks } from '@/ui/chat/tabs/types';

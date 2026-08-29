@@ -3,7 +3,7 @@ import type { App } from "obsidian";
 import { t } from "@/app/i18n";
 import { createMentionVaultLookup } from "@/ui/shared/mention/createMentionVaultLookup";
 
-import { RichChatInput } from "../ui/RichChatInput";
+import { RichChatInput } from "../input/RichChatInput";
 import type { TabDOMElements } from "./types";
 
 /**

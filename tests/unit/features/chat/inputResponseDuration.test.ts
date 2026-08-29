@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerResponseDuration';
 
 

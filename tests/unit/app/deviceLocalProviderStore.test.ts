@@ -7,7 +7,7 @@ import {
 import {
   DeviceLocalProviderStateVersionError,
   seedDefaultDeviceLocalProviderState,
-} from '@pivi/agent/foundation/deviceLocalProviderState';
+} from '@pivi/agent/settings/deviceLocalProviderState';
 
 describe('ObsidianDeviceLocalProviderStore', () => {
   it('reports absent storage as uninitialized', () => {

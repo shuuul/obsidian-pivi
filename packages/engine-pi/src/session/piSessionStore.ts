@@ -3,9 +3,9 @@ import { join } from 'node:path';
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { SessionEntry } from '@earendil-works/pi-coding-agent';
-import type { ChatMessage, UsageInfo } from '@pivi/agent/foundation';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
-import { calculateContextEnvelope } from '@pivi/agent/foundation/usage';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { ChatMessage, UsageInfo } from '@pivi/agent/runtime';
+import { calculateContextEnvelope } from '@pivi/agent/runtime/usage';
 import { sanitizeMessageUiForJsonl } from '@pivi/agent/session/messageUi';
 import {
   getPiviSessionRoot,
@@ -36,11 +36,11 @@ import {
 } from '@pivi/agent/session/types';
 import { loadRuntimeVaultSkills } from '@pivi/agent/skills/vault/loadVaultSkills';
 
-import { piAiModels } from '../piAiModels';
+import { piAiModels } from '../models/piAiModels';
 import {
   isPiModelContextWindowAuthoritative,
   resolvePiModelFromKeyWithLookup,
-} from '../piModelRegistry';
+} from '../models/piModelRegistry';
 import {
   applySkillDescriptions,
   collectMessageUiMap,

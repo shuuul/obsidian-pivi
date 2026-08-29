@@ -1,5 +1,5 @@
 import type { SubagentLifecycleAdapter } from '@pivi/agent/tools';
-import type { ToolCallInfo } from '@pivi/agent/foundation/tools';
+import type { ToolCallInfo } from '@pivi/agent/tools/types';
 import { applySubagentLifecycleToolResult } from '@/ui/chat/stream/SubagentEventPresenter';
 
 describe('applySubagentLifecycleToolResult', () => {

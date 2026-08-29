@@ -19,7 +19,7 @@ import {
 } from './check-helpers.mjs';
 
 const sourceRoots = ['packages', 'src'];
-const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
+const srcAppRuntimeDir = path.join(rootDir, 'src', 'app', 'runtime');
 const srcAppDir = path.join(rootDir, 'src', 'app');
 const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
 const srcMainFile = path.join(rootDir, 'src', 'main.ts');
@@ -56,9 +56,9 @@ const fileBoundaryRules = [
     file: 'src/app/hostContracts.ts',
     forbidden: [
       enginePiPackagePattern,
-      /^@\/app\/workspace(?:\/|$)/,
+      /^@\/app\/runtime(?:\/|$)/,
     ],
-    resolvedForbiddenRoots: [srcAppWorkspaceDir],
+    resolvedForbiddenRoots: [srcAppRuntimeDir],
   },
   {
     name: 'PiviViewHost does not import chat aggregate implementations',
@@ -108,8 +108,8 @@ const boundaryRules = [
     ],
   },
   {
-    name: '@pivi/agent/foundation stays runtime and SDK free',
-    root: 'packages/agent/src/foundation',
+    name: '`@pivi/agent/settings` and `@pivi/agent/runtime` stays runtime and SDK free',
+    root: 'packages/agent/src/settings',
     forbidden: [
       /^obsidian$/,
       /^electron$/,
@@ -263,14 +263,14 @@ const boundaryRules = [
     resolvedForbiddenRoots: [obsidianReactDir],
   },
   {
-    name: 'src/ui does not import app workspace implementation modules',
+    name: 'src/ui does not import app runtime implementation modules',
     root: 'src/ui',
-    forbidden: [/^@\/app\/workspace(?:\/|$)/],
-    resolvedForbiddenRoots: [srcAppWorkspaceDir],
+    forbidden: [/^@\/app\/runtime(?:\/|$)/],
+    resolvedForbiddenRoots: [srcAppRuntimeDir],
   },
   {
-    name: 'src/app/workspace does not import product UI modules',
-    root: 'src/app/workspace',
+    name: 'src/app/runtime does not import product UI modules',
+    root: 'src/app/runtime',
     forbidden: [/^@\/ui(?:\/|$)/],
   },
   {

@@ -1,6 +1,6 @@
 import type {
   EditorToolbarShortcut,
-} from '@pivi/agent/foundation/settings';
+} from '@pivi/agent/settings/types';
 
 export type SettingsEditorSelectionToolbarSnapshot = {
   readonly enabled: boolean;

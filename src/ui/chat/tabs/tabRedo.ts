@@ -1,5 +1,5 @@
 import { resolveUserMessageDisplayText } from '@pivi/agent/context/context';
-import type { ChatMessage, ImageAttachment } from '@pivi/agent/foundation';
+import type { ChatMessage, ImageAttachment } from '@pivi/agent/runtime';
 import {
   type ChatTurnRequest,
   chatTurnRequestFromSnapshot,

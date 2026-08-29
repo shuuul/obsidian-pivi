@@ -1,22 +1,22 @@
-import type { OpenSessionState } from '@pivi/agent/foundation';
-import { recalculateUsageForModel } from '@pivi/agent/foundation/usage';
+import type { OpenSessionState } from '@pivi/agent/runtime';
 import type {
   ChatPorts,
   ChatSettingsPort,
 } from '@pivi/agent/runtime/chatPorts';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import { recalculateUsageForModel } from '@pivi/agent/runtime/usage';
 import type { SessionMessagePage } from '@pivi/agent/session';
 import { CHAT_PROJECTION_PAGE_SIZE } from '@pivi/pivi-react/store';
 
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
 
+import type { FileContextManager } from '../input/FileContext';
+import type { ImageContextManager } from '../input/ImageContext';
+import type { InlineContextManager } from '../input/InlineContext';
+import type { RichChatInput } from '../input/RichChatInput';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { ExternalContextSelector } from '../toolbar/ExternalContextControl';
-import type { FileContextManager } from '../ui/FileContext';
-import type { ImageContextManager } from '../ui/ImageContext';
-import type { InlineContextManager } from '../ui/InlineContext';
-import type { RichChatInput } from '../ui/RichChatInput';
 import { createSessionGreeting } from './sessionWelcome';
 
 export interface SessionControllerCallbacks {

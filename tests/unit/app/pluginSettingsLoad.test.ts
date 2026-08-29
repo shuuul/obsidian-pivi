@@ -5,8 +5,8 @@ import {
 import {
   getPiAgentSettings,
   updatePiAgentSettings,
-} from '@pivi/agent/foundation/agentSettings';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
+} from '@pivi/agent/settings/agentSettings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
 
 import {
   migrateProviderSecretsToKeychain,

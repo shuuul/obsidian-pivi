@@ -1,5 +1,5 @@
-import type { ObsidianToolsSettings } from '@pivi/agent/foundation';
 import type { ProcessRunner } from '@pivi/agent/ports';
+import type { ObsidianToolsSettings } from '@pivi/agent/settings';
 
 import { augmentPathForSpawn, resolveObsidianCliBinary } from './obsidianCliPath';
 import { isOfficialObsidianCliEnabled } from './officialObsidianCli';

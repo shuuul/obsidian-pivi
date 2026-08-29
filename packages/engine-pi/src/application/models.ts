@@ -1,16 +1,16 @@
 /** Stable Pi model and settings composition surface for production app code. */
-export type { CustomProviderHttpGet } from '../installPiCustomProviders';
-export { fetchCustomProviderModels } from '../installPiCustomProviders';
+export type { CustomProviderHttpGet } from '../models/installPiCustomProviders';
+export { fetchCustomProviderModels } from '../models/installPiCustomProviders';
 export {
   configurePiAiModels,
   piAiModels,
   syncCustomPiProviders,
-} from '../piAiModels';
-export { piChatUIConfig, warmPiAiModelsCache } from '../piChatUiConfig';
+} from '../models/piAiModels';
+export { piChatUIConfig, warmPiAiModelsCache } from '../models/piChatUiConfig';
 export {
   getPiAiModelsForProvider,
   PI_AI_MODELS_CACHE,
   type PiResolvedModel,
   resolvePiModelFromKeyWithLookup,
-} from '../piModelRegistry';
-export { PiSettingsCoordinator } from '../piSettingsCoordinator';
+} from '../models/piModelRegistry';
+export { PiSettingsCoordinator } from '../models/piSettingsCoordinator';

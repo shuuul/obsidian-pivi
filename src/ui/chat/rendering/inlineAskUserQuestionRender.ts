@@ -1,4 +1,4 @@
-import type { AskUserQuestionItem, AskUserQuestionOption } from '@pivi/agent/foundation/tools';
+import type { AskUserQuestionItem, AskUserQuestionOption } from '@pivi/agent/tools/types';
 
 import { t } from '@/app/i18n';
 

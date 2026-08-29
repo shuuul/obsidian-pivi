@@ -1,4 +1,4 @@
-import type { ActivityStatus, SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
+import type { ActivityStatus, SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 import {
   isToolPresentationGroupable,
   shouldPresentToolCall,

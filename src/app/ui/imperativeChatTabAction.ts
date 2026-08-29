@@ -1,4 +1,4 @@
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';

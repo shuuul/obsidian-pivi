@@ -5,7 +5,7 @@ import type {
   SessionEntry,
   SessionMessageEntry,
 } from '@earendil-works/pi-coding-agent';
-import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType, ToolCallInfo, ToolUseResult } from '@pivi/agent/foundation';
+import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from '@pivi/agent/runtime';
 import { parsePiviCompactionDetails } from '@pivi/agent/session/continuationSchemas';
 import {
   PIVI_MESSAGE_UI,
@@ -15,6 +15,7 @@ import {
 } from '@pivi/agent/session/types';
 import { extractUserQuery } from '@pivi/agent/session/userQuery';
 import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
+import type { ToolCallInfo, ToolUseResult } from '@pivi/agent/tools';
 import {
   extractDiffData,
   extractResolvedAnswers,

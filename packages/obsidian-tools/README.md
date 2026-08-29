@@ -7,7 +7,7 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 ## Allowed dependencies
 
 - Obsidian public API for in-process tool behavior.
-- `@pivi/agent/foundation`, `@pivi/agent/ports`, `@pivi/agent/tools`, and `@pivi/obsidian-host` contracts/adapters.
+- ``@pivi/agent/settings` and `@pivi/agent/runtime``, `@pivi/agent/ports`, `@pivi/agent/tools`, and `@pivi/obsidian-host` contracts/adapters.
 - External filesystem, process, and CLI access only through `@pivi/obsidian-host` adapters where the Obsidian public API cannot satisfy a capability.
 
 ## Forbidden dependencies

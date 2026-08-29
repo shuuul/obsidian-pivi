@@ -1,4 +1,4 @@
-import type { WebProviderId } from '@pivi/agent/foundation/settings';
+import type { WebProviderId } from '@pivi/agent/settings/types';
 import {
   type CSSProperties,
   Fragment,

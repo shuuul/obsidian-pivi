@@ -1,4 +1,4 @@
-import type { SlashCommand } from '@pivi/agent/foundation';
+import type { SlashCommand } from '@pivi/agent/settings';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
 export interface DropdownMcpToolSummary {

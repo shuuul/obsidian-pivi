@@ -267,7 +267,7 @@ describe('device-local provider acceptance matrix', () => {
     const app = createMockApp();
     const adapter = createSharedSyncedAdapter();
     const { loadPluginSettings } = await import('@/app/pluginSettingsLoad');
-    const { DEFAULT_PIVI_SETTINGS } = await import('@pivi/agent/foundation/settingsDefaults');
+    const { DEFAULT_PIVI_SETTINGS } = await import('@pivi/agent/settings/defaults');
     let settings = structuredClone(DEFAULT_PIVI_SETTINGS);
 
     await loadPluginSettings({

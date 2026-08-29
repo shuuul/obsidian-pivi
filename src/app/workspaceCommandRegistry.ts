@@ -1,5 +1,5 @@
 import { createInlineContextToken } from '@pivi/agent/context/inlineContext';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import {
   requiresSelectedText,
   resolveWorkspaceCommandPrompt,
@@ -9,7 +9,7 @@ import { type App, type Command,getIcon, MarkdownView, Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';
 import { activatePiviView, ensurePiviViewOpen } from '@/app/piviViewActivation';
-import { captureEditorSelectionInlineContext } from '@/ui/chat/ui/InlineContext';
+import { captureEditorSelectionInlineContext } from '@/ui/chat/input/InlineContext';
 
 const logger = new PluginLogger('WorkspaceCommandRegistry');
 

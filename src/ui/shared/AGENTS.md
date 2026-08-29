@@ -29,7 +29,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 - `src/ui/shared/modals/`: promise-based confirmation helpers. Custom slash-command create/edit presentation is React-owned under `packages/pivi-react/src/settings/CommandsTab.tsx`.
 - `src/ui/shared/dom.ts`: popout-safe document/window lookup. Resolve globals from the owning element whenever possible.
 - `src/ui/shared/selectionToolbar/`: edit-mode selection trigger (`ViewPlugin`), `coordsAtPos` geometry helpers, interaction-state tracking, and imperative floating overlay hosts for the selection toolbar and inline edit surfaces. CM6 extension registration stays in `src/app/editorSelectionToolbarRegistration.ts`.
-- `src/ui/shared/utils/`: focused helpers for Obsidian links, editor access, external-context paths and folder picking, MCP/check/chat icons, and animation frames. `obsidianPrivateApi.ts` is the single review point for Obsidian/CodeMirror/browser private-property casts (`containerEl`, CSS Highlight, owner-window `Event`, Editor `.cm`). Provider logos are React-owned under `packages/pivi-react/src/icons/`. Pure streaming-math escaping lives in `@pivi/agent/foundation`.
+- `src/ui/shared/utils/`: focused helpers for Obsidian links, editor access, external-context paths and folder picking, MCP/check/chat icons, and animation frames. `obsidianPrivateApi.ts` is the single review point for Obsidian/CodeMirror/browser private-property casts (`containerEl`, CSS Highlight, owner-window `Event`, Editor `.cm`). Provider logos are React-owned under `packages/pivi-react/src/icons/`. Pure streaming-math escaping lives in ``@pivi/agent/settings` and `@pivi/agent/runtime``.
 
 ## Mention and command flow
 
@@ -43,7 +43,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 
 ## Patterns and constraints
 
-- Keep dependencies pointing toward host-neutral Pivi contracts (`foundation`, `context`, `skills`, etc.). Never import `@pivi/engine-pi`, raw Pi SDKs, `@pivi/obsidian-host`, or `src/app/workspace/**` here. Use injected structural providers/callbacks; use `src/app/hostPlatform.ts` only for the approved host-platform facade.
+- Keep dependencies pointing toward host-neutral Pivi contracts (`foundation`, `context`, `skills`, etc.). Never import `@pivi/engine-pi`, raw Pi SDKs, `@pivi/obsidian-host`, or `src/app/runtime/**` here. Use injected structural providers/callbacks; use `src/app/hostPlatform.ts` only for the approved host-platform facade.
 - Direct public `obsidian` imports are appropriate for UI primitives (`App`, `Modal`, `Setting`, `TFile`, `TFolder`, `setIcon`) and workspace rendering. Do not move product/runtime composition into these helpers.
 - Keep parsers, scoring, normalization, and view-model creation as pure as practical. DOM renderers consume typed tokens/view models and callbacks rather than feature state.
 - Preserve the separation between `@pivi/agent` mention token parsing, React context-badge display modeling, and imperative rendering. Add a new mention kind across `@pivi/agent` `mentionTypes.ts`, parser conversion, React `context-badges` contracts/model, and the imperative renderer together.

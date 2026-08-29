@@ -1,0 +1,185 @@
+import {
+  type Api,
+  type AssistantMessageEventStream,
+  type AuthContext,
+  type Context,
+  createModels,
+  type CredentialStore,
+  type Model,
+  type MutableModels,
+  type SimpleStreamOptions,
+} from '@earendil-works/pi-ai';
+import { anthropicProvider } from '@earendil-works/pi-ai/providers/anthropic';
+import { deepseekProvider } from '@earendil-works/pi-ai/providers/deepseek';
+import { googleProvider } from '@earendil-works/pi-ai/providers/google';
+import { kimiCodingProvider } from '@earendil-works/pi-ai/providers/kimi-coding';
+import { minimaxProvider } from '@earendil-works/pi-ai/providers/minimax';
+import { minimaxCnProvider } from '@earendil-works/pi-ai/providers/minimax-cn';
+import { moonshotaiProvider } from '@earendil-works/pi-ai/providers/moonshotai';
+import { moonshotaiCnProvider } from '@earendil-works/pi-ai/providers/moonshotai-cn';
+import { openaiProvider } from '@earendil-works/pi-ai/providers/openai';
+import { openaiCodexProvider } from '@earendil-works/pi-ai/providers/openai-codex';
+import { opencodeProvider } from '@earendil-works/pi-ai/providers/opencode';
+import { opencodeGoProvider } from '@earendil-works/pi-ai/providers/opencode-go';
+import { openrouterProvider } from '@earendil-works/pi-ai/providers/openrouter';
+import { xaiProvider } from '@earendil-works/pi-ai/providers/xai';
+import { xiaomiProvider } from '@earendil-works/pi-ai/providers/xiaomi';
+import { xiaomiTokenPlanCnProvider } from '@earendil-works/pi-ai/providers/xiaomi-token-plan-cn';
+import { zaiProvider } from '@earendil-works/pi-ai/providers/zai';
+import { zaiCodingCnProvider } from '@earendil-works/pi-ai/providers/zai-coding-cn';
+import {
+  CLAUDE_PROVIDER_ID,
+} from '@pivi/agent/auth/piProviderCredentials';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { FetchCompatible } from '@pivi/agent/ports';
+import type { CustomProviderConfig } from '@pivi/agent/settings/customProviders';
+
+import { createGrokBuildProvider } from './grokBuildProvider';
+import {
+  type CustomProviderHttpGet,
+  installCustomProviders,
+} from './installPiCustomProviders';
+import { cachePiAiRegistryModels } from './piModelRegistry';
+import { withScopedGoogleTransport } from './scopedGoogleProvider';
+import {
+  createApiKeyOnlyProvider,
+  createSubscriptionOAuthProvider,
+} from './splitProviderAuth';
+
+const logger = new PluginLogger('PiAiModels');
+
+let providerFetch: FetchCompatible | undefined;
+
+/**
+ * pi-ai's codex WebSocket transport builds `new WebSocket(url, { headers })` Node-`ws`-style.
+ * Obsidian's browser WebSocket rejects that options object as an invalid subprotocol and cannot
+ * send auth headers at all, so the codex WS transport can never succeed in-renderer. Pin codex
+ * to SSE unless the caller explicitly chose a transport.
+ */
+export function streamPiAiModelsSimple(
+  model: Model<Api>,
+  context: Context,
+  options?: SimpleStreamOptions,
+): AssistantMessageEventStream {
+  const pinned = {
+    ...options,
+    ...(options?.fetch === undefined && providerFetch ? { fetch: providerFetch } : {}),
+    ...(model.provider === 'openai-codex' && options?.transport === undefined
+      ? { transport: 'sse' as const }
+      : {}),
+  };
+  return piAiModels.streamSimple(model, context, pinned);
+}
+
+/** Shared pi-ai Models collection for the Pi engine adapter. */
+export let piAiModels: MutableModels = createModels();
+
+const customProviderRuntime = {
+  installedProviderIds: [] as string[],
+  installedConfigs: new Map<string, CustomProviderConfig>(),
+  httpGet: undefined as CustomProviderHttpGet | undefined,
+  getApiKey: undefined as ((providerId: string) => string | undefined) | undefined,
+  reset(options?: {
+    httpGet?: CustomProviderHttpGet;
+    getApiKey?: (providerId: string) => string | undefined;
+  }): void {
+    this.installedProviderIds = [];
+    this.installedConfigs = new Map();
+    this.httpGet = options?.httpGet;
+    this.getApiKey = options?.getApiKey;
+  },
+};
+
+function installSupportedProviders(models: MutableModels): void {
+  const anthropic = anthropicProvider();
+  const xai = xaiProvider();
+  models.setProvider(createApiKeyOnlyProvider(anthropic));
+  models.setProvider(createSubscriptionOAuthProvider(
+    anthropic,
+    CLAUDE_PROVIDER_ID,
+    'Claude',
+  ));
+  models.setProvider(deepseekProvider());
+  models.setProvider(withScopedGoogleTransport(googleProvider(), () => providerFetch));
+  models.setProvider(kimiCodingProvider());
+  models.setProvider(minimaxProvider());
+  models.setProvider(minimaxCnProvider());
+  models.setProvider(moonshotaiProvider());
+  models.setProvider(moonshotaiCnProvider());
+  models.setProvider(openaiProvider());
+  models.setProvider(openaiCodexProvider());
+  models.setProvider(withScopedGoogleTransport(opencodeProvider(), () => providerFetch));
+  models.setProvider(opencodeGoProvider());
+  models.setProvider(openrouterProvider());
+  models.setProvider(createApiKeyOnlyProvider(xai));
+  models.setProvider(createGrokBuildProvider(xai));
+  models.setProvider(xiaomiProvider());
+  models.setProvider(xiaomiTokenPlanCnProvider());
+  models.setProvider(zaiProvider());
+  models.setProvider(zaiCodingCnProvider());
+}
+
+installSupportedProviders(piAiModels);
+
+export function configurePiAiModels(options: {
+  credentials?: CredentialStore;
+  authContext?: AuthContext;
+  providerFetch?: FetchCompatible;
+  customProviders?: readonly CustomProviderConfig[];
+  httpGet?: CustomProviderHttpGet;
+  getApiKey?: (providerId: string) => string | undefined;
+}): void {
+  providerFetch = options.providerFetch;
+  customProviderRuntime.reset(options);
+  piAiModels = createModels({
+    credentials: options.credentials,
+    authContext: options.authContext,
+  });
+  installSupportedProviders(piAiModels);
+  if (options.customProviders) {
+    syncCustomPiProviders(options.customProviders);
+  } else {
+    cachePiAiRegistryModels(piAiModels);
+  }
+}
+
+/** Install or replace custom/local providers without recreating built-ins. */
+export function syncCustomPiProviders(
+  customProviders: readonly CustomProviderConfig[],
+): void {
+  installCustomProviders(piAiModels, customProviders, {
+    httpGet: customProviderRuntime.httpGet,
+    getApiKey: customProviderRuntime.getApiKey,
+    previousCustomIds: customProviderRuntime.installedProviderIds,
+  });
+  customProviderRuntime.installedProviderIds = customProviders.map((provider) => provider.id);
+  customProviderRuntime.installedConfigs = new Map(customProviders.map((config) => [config.id, config]));
+  try {
+    cachePiAiRegistryModels(piAiModels);
+  } catch (err) {
+    logger.error('Failed to refresh pi-ai models cache after custom providers', err);
+  }
+}
+
+export function getInstalledCustomProviderIds(): readonly string[] {
+  return customProviderRuntime.installedProviderIds;
+}
+
+/** Refresh a custom provider's runtime model metadata after it has been used. */
+export async function refreshCustomPiProviderModels(providerId: string): Promise<boolean> {
+  const provider = piAiModels.getProvider(providerId);
+  if (!provider?.refreshModels) {
+    return false;
+  }
+  const result = await piAiModels.refresh({
+    providers: [providerId],
+    allowNetwork: true,
+    force: true,
+  });
+  const error = result.errors.get(providerId);
+  if (error) {
+    throw error;
+  }
+  cachePiAiRegistryModels(piAiModels);
+  return true;
+}

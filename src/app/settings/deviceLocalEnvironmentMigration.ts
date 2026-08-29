@@ -4,7 +4,13 @@
  */
 
 import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
-import type { DeviceLocalEnvironmentStore } from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { SyncSecretStore } from '@pivi/agent/ports';
+import {
+  getAgentEnvironmentVariables,
+  getSharedEnvironmentVariables,
+} from '@pivi/agent/settings/agentEnvironment';
+import type { DeviceLocalEnvironmentStore } from '@pivi/agent/settings/deviceLocalEnvironmentState';
 import {
   buildEntriesFromLegacyText,
   clearObsoleteEnvironmentSecrets,
@@ -16,14 +22,8 @@ import {
   projectEnvironmentOntoSettings,
   stageEnvironmentSecrets,
   stripEnvironmentFieldsFromPersistedSettings,
-} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
-import type { PiviSettings } from '@pivi/agent/foundation/settings';
-import {
-  getAgentEnvironmentVariables,
-  getSharedEnvironmentVariables,
-} from '@pivi/agent/foundation/settingsAgentEnvironment';
-import type { SyncSecretStore } from '@pivi/agent/ports';
+} from '@pivi/agent/settings/deviceLocalEnvironmentState';
+import type { PiviSettings } from '@pivi/agent/settings/types';
 import { createWebSearchCredentialStore } from '@pivi/agent/tools/webSearch/credentialStore';
 import {
   migratePiProviderCredentialsToKeychain,

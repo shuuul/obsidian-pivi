@@ -2,11 +2,11 @@
 export {
   type LegacyProviderMembershipSnapshot,
   migrateMembershipAwareProviderSecrets,
-} from '../membershipAwareCredentialMigration';
+} from '../auth/membershipAwareCredentialMigration';
 export {
   createObsidianCredentialStore,
   getPiAiCredentialSecretId,
   migratePiProviderCredentialsToKeychain,
   ObsidianAuthContext,
   type ObsidianCredentialStore,
-} from '../piProviderCredentialStore';
+} from '../auth/piProviderCredentialStore';

@@ -3,8 +3,8 @@ import {
   SessionIndexStaleError,
   type SessionStore,
 } from '@pivi/agent/session';
-import type { ChatMessage, OpenSessionState, UsageInfo } from '@pivi/agent/foundation';
-import { resolveSubagentActivityStatus } from '@pivi/agent/foundation';
+import type { ChatMessage, OpenSessionState, UsageInfo } from '@pivi/agent/runtime';
+import { resolveSubagentActivityStatus } from '@pivi/agent/tools';
 import { OpenSessionManager } from '@pivi/agent/session/openSessionManager';
 
 const hydratedMessage: ChatMessage = {

@@ -1,4 +1,5 @@
-import type { ChatMessage, OpenSessionState, SessionSummary, ToolCallInfo } from '../foundation';
+import type { ChatMessage, OpenSessionState, SessionSummary } from '../runtime';
+import type { ToolCallInfo } from '../tools';
 import type { MessageUiPatch, SessionMessagePage, SessionStore } from './types';
 
 export interface OpenSessionManagerDeps {

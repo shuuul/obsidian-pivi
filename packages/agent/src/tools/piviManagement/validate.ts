@@ -1,4 +1,4 @@
-import { isSecretLikeHeaderName, isSecretLikeKey } from '../../foundation/configValueSource';
+import { isSecretLikeHeaderName, isSecretLikeKey } from '../../config/valueSource';
 import {
   assertMcpStdioExecutable,
   assertValidMcpServerName,

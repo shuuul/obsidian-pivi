@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime/chatTypes';
 import {
   measureElement as measureVirtualElement,
   observeElementRect,

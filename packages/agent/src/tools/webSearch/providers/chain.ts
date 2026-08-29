@@ -1,7 +1,7 @@
 import {
   WEB_PROVIDER_CAPABILITIES,
   type WebProviderId,
-} from '../../../foundation/settings';
+} from '../../../settings/types';
 import {
   isAbortError,
   type ProviderRunError,

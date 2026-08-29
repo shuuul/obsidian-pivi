@@ -89,8 +89,8 @@ describe('architecture boundary scripts', () => {
   });
 
   it.each([
-    "export { getUiFacades } from '@/app/workspace';",
-    "export { getUiFacades as workspace } from '@/app/workspace';",
+    "export { getUiFacades } from '@/app/runtime';",
+    "export { getUiFacades as workspace } from '@/app/runtime';",
   ])('rejects src/ui re-exports of plugin capability bypasses: %s', (source) => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {

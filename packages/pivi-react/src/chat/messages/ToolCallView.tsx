@@ -1,7 +1,4 @@
-import {
-  resolveToolActivityStatus,
-  type ToolCallInfo,
-} from '@pivi/agent/foundation';
+import { resolveToolActivityStatus, type ToolCallInfo } from '@pivi/agent/tools';
 import {
   isWriteEditTool,
   TOOL_ASK_USER_QUESTION,

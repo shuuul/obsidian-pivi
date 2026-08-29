@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import type { TaskResultInterpreter } from '@pivi/agent/tools';
 
 import { SubagentManager } from '@/ui/chat/services/SubagentManager';

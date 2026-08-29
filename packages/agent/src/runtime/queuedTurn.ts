@@ -1,5 +1,5 @@
 import type { InlineContextReference } from '../context';
-import type { ChatTurnRequestSnapshot, ImageAttachment } from '../foundation';
+import type { ChatTurnRequestSnapshot, ImageAttachment } from '../runtime';
 import type { ChatTurnRequest } from './types';
 
 export interface QueuedChatTurn {

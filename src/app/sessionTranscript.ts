@@ -1,5 +1,5 @@
 import { resolveUserMessageDisplayText } from '@pivi/agent/context';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import type { SessionStore } from '@pivi/agent/session';
 
 export async function readSessionTranscript(options: {

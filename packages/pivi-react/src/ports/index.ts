@@ -1,20 +1,20 @@
 import type { ProviderOAuthProgress } from '@pivi/agent/auth/providerOAuthProgress';
-import type { PiviSettings } from '@pivi/agent/foundation';
-import type { ChatUIOption } from '@pivi/agent/foundation/chatUi';
-import type { AppModelReadinessStatusKind } from '@pivi/agent/foundation/modelReadiness';
-import type {
-  EditorSelectionToolbarSettings,
-  EnvironmentScope,
-  WebProviderId,
-  WebSearchToolsSettings,
-} from '@pivi/agent/foundation/settings';
-import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
 import type {
   ManagedMcpServer,
   McpAuthStatus,
   McpTestResult,
   McpTool,
 } from '@pivi/agent/mcp/types';
+import type { ChatUIOption } from '@pivi/agent/runtime/chatUi';
+import type { PiviSettings } from '@pivi/agent/settings';
+import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
+import type { AppModelReadinessStatusKind } from '@pivi/agent/settings/modelReadiness';
+import type {
+  EditorSelectionToolbarSettings,
+  EnvironmentScope,
+  WebProviderId,
+  WebSearchToolsSettings,
+} from '@pivi/agent/settings/types';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
 import type {

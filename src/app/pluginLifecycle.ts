@@ -1,4 +1,4 @@
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 
 import { registerSelectionToolbarUi } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
 import type PiviPlugin from "@/main"

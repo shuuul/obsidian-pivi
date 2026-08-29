@@ -1,10 +1,10 @@
-import { getHiddenSlashCommandSet } from "@pivi/agent/foundation/settings";
 import type {
   ChatPorts,
   ChatSettingsPort,
   ChatSettingsSnapshot,
 } from '@pivi/agent/runtime/chatPorts';
 import { QueryBackedTitleGenerationService } from '@pivi/agent/runtime/queryBackedTitleGenerationService';
+import { getHiddenSlashCommandSet } from "@pivi/agent/settings/types";
 
 import { createFileContextMcpProvider } from "./tabCatalogAdapters";
 import type { TabAgentContext, TabData } from "./types";

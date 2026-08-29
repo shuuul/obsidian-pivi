@@ -4,7 +4,7 @@
  * Keeps parsing of common tool inputs consistent across services.
  */
 
-import type { AskUserAnswers } from '../foundation';
+import type { AskUserAnswers } from '../tools';
 
 export function extractResolvedAnswers(toolUseResult: unknown): AskUserAnswers | undefined {
   if (typeof toolUseResult !== 'object' || toolUseResult === null) return undefined;

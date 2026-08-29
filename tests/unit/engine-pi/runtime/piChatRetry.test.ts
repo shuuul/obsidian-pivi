@@ -1,0 +1,344 @@
+import type { Agent } from '@earendil-works/pi-agent-core';
+import type { AssistantMessage } from '@earendil-works/pi-ai';
+import type { StreamChunk } from '@pivi/agent/runtime';
+
+import {
+  isPiChatRetryableAssistantError,
+  PI_CHAT_MAX_RETRIES,
+  runPiChatPromptWithRetry,
+} from '../../../../packages/engine-pi/src/runtime/piChatRetry';
+
+function assistant(
+  stopReason: AssistantMessage['stopReason'],
+  errorMessage?: string,
+): AssistantMessage {
+  return {
+    role: 'assistant',
+    content: [],
+    api: 'openai-codex-responses',
+    provider: 'openai-codex',
+    model: 'gpt-5.3-codex-spark',
+    usage: {
+      input: 0,
+      output: 0,
+      cacheRead: 0,
+      cacheWrite: 0,
+      totalTokens: 0,
+      cost: {
+        input: 0,
+        output: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+        total: 0,
+      },
+    },
+    stopReason,
+    ...(errorMessage ? { errorMessage } : {}),
+    timestamp: Date.now(),
+  };
+}
+
+function createHarness(responses: AssistantMessage[]) {
+  let latest: AssistantMessage | undefined;
+  const state = { messages: [] as AssistantMessage[] };
+  const applyNext = (): void => {
+    latest = responses.shift();
+    if (latest) state.messages.push(latest);
+  };
+  const continuePrompt = jest.fn(async () => applyNext());
+  const agent = {
+    state,
+    continue: continuePrompt,
+  } as unknown as Agent;
+  const chunks: StreamChunk[] = [];
+  const discarded: AssistantMessage[] = [];
+  const controller = new AbortController();
+  const run = () => runPiChatPromptWithRetry({
+    agent,
+    contextWindow: 200_000,
+    discardFailedAttempt: message => discarded.push(message),
+    emit: (chunk) => chunks.push(chunk),
+    getLatestAssistantMessage: () => latest,
+    prompt: async () => applyNext(),
+    signal: controller.signal,
+  });
+  return {
+    agent,
+    chunks,
+    continuePrompt,
+    controller,
+    discarded,
+    run,
+    state,
+  };
+}
+
+describe('isPiChatRetryableAssistantError', () => {
+  it('treats Node TLS handshake disconnects and ECONNRESET as retryable', () => {
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Client network socket disconnected before secure TLS connection was established',
+    ))).toBe(true);
+    expect(isPiChatRetryableAssistantError(assistant('error', 'ECONNRESET'))).toBe(true);
+  });
+
+  it('treats premature SSE close as retryable', () => {
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Connection closed prematurely',
+    ))).toBe(true);
+  });
+
+  it('treats connect and first-byte phase deadlines as retryable', () => {
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Connect deadline exceeded (10000ms)',
+    ))).toBe(true);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'First-byte deadline exceeded (20000ms)',
+    ))).toBe(true);
+  });
+
+  it('does not retry body, total, or vaguely classified deadlines', () => {
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Idle deadline exceeded (30000ms)',
+    ))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Total deadline exceeded (120000ms)',
+    ))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'deadline exceeded',
+    ))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'wrapped: Connect deadline exceeded (10000ms)',
+    ))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'First-byte deadline exceeded (20000ms): upstream error',
+    ))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'error',
+      'Idle deadline exceeded (30000ms); cause: Connect deadline exceeded (10000ms)',
+    ))).toBe(false);
+  });
+
+  it('does not treat user-aborted stops as retryable', () => {
+    expect(isPiChatRetryableAssistantError(assistant('aborted'))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant(
+      'aborted',
+      'Connection closed prematurely',
+    ))).toBe(false);
+  });
+
+  it('still rejects non-error stops and empty error text', () => {
+    expect(isPiChatRetryableAssistantError(assistant('stop'))).toBe(false);
+    expect(isPiChatRetryableAssistantError(assistant('error'))).toBe(false);
+  });
+});
+
+describe('runPiChatPromptWithRetry', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('retries transient assistant errors with exponential backoff and succeeds', async () => {
+    const harness = createHarness([
+      assistant('error', 'socket hang up'),
+      assistant('error', '500 server error'),
+      assistant('stop'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(2_000);
+    await jest.advanceTimersByTimeAsync(4_000);
+
+    await expect(resultPromise).resolves.toMatchObject({ status: 'success' });
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(2);
+    expect(harness.discarded).toHaveLength(2);
+    expect(harness.chunks).toEqual([
+      {
+        type: 'retry_start',
+        attempt: 1,
+        maxAttempts: PI_CHAT_MAX_RETRIES,
+        delayMs: 2_000,
+        errorMessage: 'socket hang up',
+      },
+      {
+        type: 'retry_start',
+        attempt: 2,
+        maxAttempts: PI_CHAT_MAX_RETRIES,
+        delayMs: 4_000,
+        errorMessage: '500 server error',
+      },
+      {
+        type: 'retry_end',
+        success: true,
+        attempt: 2,
+      },
+    ]);
+    expect(harness.state.messages).toEqual([expect.objectContaining({ stopReason: 'stop' })]);
+  });
+
+  it('retries Codex TLS handshake disconnects that upstream classification misses', async () => {
+    const tlsError = 'Client network socket disconnected before secure TLS connection was established';
+    const harness = createHarness([
+      assistant('error', tlsError),
+      assistant('stop'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(2_000);
+
+    await expect(resultPromise).resolves.toMatchObject({ status: 'success' });
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(1);
+    expect(harness.discarded).toEqual([
+      expect.objectContaining({ errorMessage: tlsError }),
+    ]);
+    expect(harness.chunks).toEqual([
+      {
+        type: 'retry_start',
+        attempt: 1,
+        maxAttempts: PI_CHAT_MAX_RETRIES,
+        delayMs: 2_000,
+        errorMessage: tlsError,
+      },
+      {
+        type: 'retry_end',
+        success: true,
+        attempt: 1,
+      },
+    ]);
+  });
+
+  it('retries bare ECONNRESET transport failures', async () => {
+    const harness = createHarness([
+      assistant('error', 'ECONNRESET'),
+      assistant('stop'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(2_000);
+
+    await expect(resultPromise).resolves.toMatchObject({ status: 'success' });
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(1);
+    expect(harness.chunks[0]).toEqual(expect.objectContaining({
+      type: 'retry_start',
+      errorMessage: 'ECONNRESET',
+    }));
+  });
+
+  it.each([
+    'Connect deadline exceeded (10000ms)',
+    'First-byte deadline exceeded (20000ms)',
+  ])('retries a transient phase timeout: %s', async (deadlineError) => {
+    const harness = createHarness([
+      assistant('error', deadlineError),
+      assistant('stop'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(2_000);
+
+    await expect(resultPromise).resolves.toMatchObject({ status: 'success' });
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(1);
+    expect(harness.discarded).toEqual([
+      expect.objectContaining({ errorMessage: deadlineError }),
+    ]);
+  });
+
+  it('stops after three retries and keeps the final failure active', async () => {
+    const harness = createHarness([
+      assistant('error', 'socket hang up'),
+      assistant('error', '500 server error'),
+      assistant('error', 'timed out'),
+      assistant('error', 'socket hang up'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(2_000);
+    await jest.advanceTimersByTimeAsync(4_000);
+    await jest.advanceTimersByTimeAsync(8_000);
+
+    await expect(resultPromise).resolves.toMatchObject({
+      status: 'failed',
+      finalMessage: expect.objectContaining({ errorMessage: 'socket hang up' }),
+    });
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(3);
+    expect(harness.discarded).toHaveLength(3);
+    expect(harness.chunks.at(-1)).toEqual({
+      type: 'retry_end',
+      success: false,
+      attempt: 3,
+      finalError: 'socket hang up',
+    });
+    expect(harness.state.messages).toEqual([
+      expect.objectContaining({ errorMessage: 'socket hang up' }),
+    ]);
+  });
+
+  it('does not retry context overflow errors', async () => {
+    const harness = createHarness([
+      assistant('error', 'context overflow'),
+    ]);
+
+    await expect(harness.run()).resolves.toMatchObject({ status: 'failed' });
+    expect(harness.continuePrompt).not.toHaveBeenCalled();
+    expect(harness.discarded).toHaveLength(0);
+    expect(harness.chunks).toEqual([]);
+  });
+
+  it('does not mistake a rejected continuation for the previous assistant failure', async () => {
+    const harness = createHarness([
+      assistant('error', 'socket hang up'),
+    ]);
+    harness.continuePrompt.mockRejectedValueOnce(new Error('continuation setup failed'));
+
+    const resultPromise = harness.run();
+    let rejection: unknown;
+    const observedResult = resultPromise.catch((error: unknown) => {
+      rejection = error;
+    });
+    await jest.advanceTimersByTimeAsync(2_000);
+
+    await observedResult;
+    expect(rejection).toEqual(new Error('continuation setup failed'));
+    expect(harness.continuePrompt).toHaveBeenCalledTimes(1);
+    expect(harness.discarded).toHaveLength(1);
+  });
+
+  it('cancels an in-flight backoff without continuing the agent', async () => {
+    const harness = createHarness([
+      assistant('error', 'socket hang up'),
+      assistant('stop'),
+    ]);
+
+    const resultPromise = harness.run();
+    await jest.advanceTimersByTimeAsync(0);
+    expect(harness.chunks).toEqual([
+      expect.objectContaining({ type: 'retry_start', attempt: 1 }),
+    ]);
+    harness.controller.abort();
+
+    await expect(resultPromise).resolves.toMatchObject({ status: 'cancelled' });
+    expect(harness.continuePrompt).not.toHaveBeenCalled();
+    expect(harness.chunks).toEqual([
+      expect.objectContaining({ type: 'retry_start', attempt: 1 }),
+      {
+        type: 'retry_end',
+        success: false,
+        attempt: 1,
+        finalError: 'Retry cancelled',
+      },
+    ]);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+});

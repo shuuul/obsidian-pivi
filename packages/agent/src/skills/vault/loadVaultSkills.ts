@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { PluginLogger } from '../../foundation/pluginLogger';
+import { PluginLogger } from '../../logging/pluginLogger';
 import { toVaultRelativePath } from '../../session/sessionPaths';
 import { extractString, parseFrontmatter } from '../frontmatter';
 import { PIVI_SKILLS_PATH } from './paths';

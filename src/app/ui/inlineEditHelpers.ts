@@ -1,5 +1,5 @@
 import { appendContextFiles } from '@pivi/agent/context';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import type { Editor } from 'obsidian';
 
 import { INLINE_EDIT_TURN_PROTOCOL_INSTRUCTIONS } from '@/app/ui/inlineEditProtocol';

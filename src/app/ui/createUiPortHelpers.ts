@@ -1,6 +1,6 @@
-import { getObsidianToolsSettingsFromBag } from '@pivi/agent/foundation/settings';
-import { parseEnvironmentVariables } from '@pivi/agent/foundation/settingsEnv';
 import type { ChatSettingsSnapshot } from '@pivi/agent/runtime/chatPorts';
+import { parseEnvironmentVariables } from '@pivi/agent/settings/environmentText';
+import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 import type { SettingsSubagentsSnapshot } from '@pivi/pivi-react/settings';
 
 import type {

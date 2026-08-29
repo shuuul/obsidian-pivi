@@ -1,7 +1,7 @@
 import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
-import type { ChatTurnRequestSnapshot } from '@pivi/agent/foundation';
-import { escapeMathDelimitersForStreaming } from '@pivi/agent/foundation/streamingMath';
+import type { ChatTurnRequestSnapshot } from '@pivi/agent/runtime';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
+import { escapeMathDelimitersForStreaming } from '@pivi/agent/runtime/streamingMath';
 import type { App, Component } from 'obsidian';
 import {
   loadMermaid,

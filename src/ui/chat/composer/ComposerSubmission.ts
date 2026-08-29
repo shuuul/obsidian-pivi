@@ -2,14 +2,14 @@ import type { BrowserSelectionContext } from '@pivi/agent/context/browser';
 import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
 import type { EditorSelectionContext } from '@pivi/agent/context/editor';
 import { extractInlineContextTokensFromMessage } from '@pivi/agent/context/inlineContext';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import type { ChatTurnRequest } from '@pivi/agent/runtime';
 
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import type { SelectionController } from '../controllers/SelectionController';
+import type { FileContextManager } from '../input/FileContext';
 import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
-import type { FileContextManager } from '../ui/FileContext';
 
 export interface TurnSubmissionContext {
   content: string;

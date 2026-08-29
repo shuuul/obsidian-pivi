@@ -11,7 +11,7 @@ import {
   validateToolArguments,
 } from '@earendil-works/pi-ai';
 
-import { piAiModels } from '../piAiModels';
+import { piAiModels } from '../models/piAiModels';
 import { findEnvKeys, getEnvApiKey } from './piAiEnvApiKeys';
 
 type ApiProvider = {

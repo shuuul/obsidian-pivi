@@ -6,11 +6,7 @@ import {
   findCutPoint,
   sessionEntryToContextMessages,
 } from '@earendil-works/pi-coding-agent';
-import {
-  calculateContextEnvelope,
-  type CheckpointPresentation,
-  type UsageInfo,
-} from '@pivi/agent/foundation';
+import { calculateContextEnvelope, type CheckpointPresentation, type UsageInfo } from '@pivi/agent/runtime';
 import {
   type ArtifactReference,
   type Checkpoint,
@@ -21,7 +17,7 @@ import {
 
 import type { SessionTreeStore } from './sessionTreeStore';
 
-export { AUTO_COMPACTION_THRESHOLD_RATIO } from '@pivi/agent/foundation';
+export { AUTO_COMPACTION_THRESHOLD_RATIO } from '@pivi/agent/runtime';
 
 export type PiContextCompactionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
 

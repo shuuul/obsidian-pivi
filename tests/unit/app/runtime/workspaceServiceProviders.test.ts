@@ -1,0 +1,245 @@
+import type { McpServerManager } from '@pivi/agent/mcp/mcpServerManager';
+import type { McpOAuthService } from '@pivi/agent/mcp/oauth/mcpOAuthService';
+import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
+
+import { McpDiagnostics, McpToolProvider } from '@/app/runtime/workspaceServiceProviders';
+
+const listTools = jest.fn();
+const probe = jest.fn();
+const close = jest.fn(async () => {});
+const closeAll = jest.fn(async () => {});
+const dispose = jest.fn(async () => {});
+
+jest.mock('@pivi/agent/mcp/mcpConnectionPool', () => ({
+  McpConnectionPool: class MockMcpConnectionPool {
+    listTools = listTools;
+    probe = probe;
+    close = close;
+    closeAll = closeAll;
+    dispose = dispose;
+  },
+}));
+
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+} {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+  return { promise, resolve };
+}
+
+function createServer(name = 'github'): ManagedMcpServer {
+  return {
+    name,
+    config: { type: 'http', url: `https://${name}.example.com` },
+    enabled: true,
+    contextSaving: true,
+  };
+}
+
+function createStdioServer(name = 'local'): ManagedMcpServer {
+  return {
+    name,
+    config: { type: 'stdio', command: 'node', args: ['server.js'] },
+    enabled: true,
+    contextSaving: true,
+  };
+}
+
+function createProvider(servers: ManagedMcpServer[]): McpToolProvider {
+  const manager = {
+    getServers: () => servers,
+  } as Pick<McpServerManager, 'getServers'>;
+  const fetchImpl = jest.fn(async () => new Response('{}', { status: 200 }));
+  return new McpToolProvider(
+    manager as McpServerManager,
+    {} as McpOAuthService,
+    fetchImpl,
+  );
+}
+
+describe('McpToolProvider', () => {
+  beforeEach(() => {
+    listTools.mockReset();
+    probe.mockReset();
+    close.mockClear();
+    closeAll.mockClear();
+    dispose.mockClear();
+  });
+
+  it('coalesces concurrent tool-list requests for the same server', async () => {
+    const deferred = createDeferred<Array<{ name: string; description?: string }>>();
+    listTools.mockReturnValue(deferred.promise);
+    const provider = createProvider([createServer()]);
+
+    const first = provider.listTools('github');
+    const second = provider.listTools('github');
+    deferred.resolve([{ name: 'search', description: 'Search files' }]);
+
+    await expect(first).resolves.toEqual([{ name: 'search', description: 'Search files' }]);
+    await expect(second).resolves.toEqual([{ name: 'search', description: 'Search files' }]);
+    expect(listTools).toHaveBeenCalledTimes(1);
+  });
+
+  it('supports cache-only settings reads and explicit inventory imports', () => {
+    const provider = createProvider([createServer()]);
+
+    expect(provider.getCachedTools('github')).toEqual([]);
+    provider.cacheTools('github', [{ name: 'search', description: 'Search files' }]);
+
+    expect(provider.getCachedTools('github')).toEqual([{ name: 'search', description: 'Search files' }]);
+    expect(listTools).not.toHaveBeenCalled();
+  });
+
+  it('prefetches enabled remote servers without spawning stdio servers', async () => {
+    probe.mockResolvedValue([]);
+    const provider = createProvider([
+      createServer('remote'),
+      createStdioServer(),
+      { ...createServer('disabled'), enabled: false },
+    ]);
+
+    await provider.prefetchEnabledServers();
+
+    expect(probe).toHaveBeenCalledTimes(1);
+    expect(probe).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'remote' }),
+      expect.any(AbortSignal),
+    );
+    expect(listTools).not.toHaveBeenCalled();
+  });
+
+  it('uses the non-authenticating probe path for inventory and the OAuth pool for runtime listTools', async () => {
+    probe.mockResolvedValue([{ name: 'search' }]);
+    listTools.mockResolvedValue([{ name: 'search' }]);
+    const provider = createProvider([createServer('remote')]);
+
+    await expect(provider.listInventoryTools('remote')).resolves.toEqual([{ name: 'search' }]);
+    expect(probe).toHaveBeenCalledTimes(1);
+    expect(listTools).not.toHaveBeenCalled();
+    expect(provider.getCachedTools('remote')).toEqual([{ name: 'search' }]);
+
+    provider.invalidate('remote');
+    await expect(provider.listTools('remote')).resolves.toEqual([{ name: 'search' }]);
+    expect(listTools).toHaveBeenCalledTimes(1);
+    expect(probe).toHaveBeenCalledTimes(1);
+  });
+
+  it('inventory never starts stdio servers', async () => {
+    const provider = createProvider([createStdioServer('local')]);
+
+    await expect(provider.listInventoryTools('local')).resolves.toEqual([]);
+    expect(probe).not.toHaveBeenCalled();
+    expect(listTools).not.toHaveBeenCalled();
+  });
+
+  it('does not let an older request overwrite an explicitly imported inventory', async () => {
+    const stale = createDeferred<Array<{ name: string }>>();
+    listTools.mockReturnValueOnce(stale.promise);
+    const provider = createProvider([createServer()]);
+
+    const request = provider.listTools('github');
+    provider.cacheTools('github', [{ name: 'refreshed' }]);
+    stale.resolve([{ name: 'stale' }]);
+
+    await expect(request).resolves.toEqual([{ name: 'stale' }]);
+    expect(provider.getCachedTools('github')).toEqual([{ name: 'refreshed' }]);
+  });
+
+  it('does not let an invalidated request repopulate the cache', async () => {
+    const stale = createDeferred<Array<{ name: string }>>();
+    const fresh = createDeferred<Array<{ name: string }>>();
+    listTools
+      .mockReturnValueOnce(stale.promise)
+      .mockReturnValueOnce(fresh.promise);
+    const provider = createProvider([createServer()]);
+
+    const staleRequest = provider.listTools('github');
+    provider.invalidate('github');
+    expect(close).toHaveBeenCalledWith('github');
+    const freshRequest = provider.listTools('github');
+    fresh.resolve([{ name: 'fresh' }]);
+    stale.resolve([{ name: 'stale' }]);
+
+    await expect(staleRequest).resolves.toEqual([{ name: 'stale' }]);
+    await expect(freshRequest).resolves.toEqual([{ name: 'fresh' }]);
+    await expect(provider.listTools('github')).resolves.toEqual([{ name: 'fresh' }]);
+    expect(listTools).toHaveBeenCalledTimes(2);
+  });
+
+  it('invalidates all in-flight requests without cross-server cache writes', async () => {
+    const githubStale = createDeferred<Array<{ name: string }>>();
+    const linearStale = createDeferred<Array<{ name: string }>>();
+    listTools
+      .mockReturnValueOnce(githubStale.promise)
+      .mockReturnValueOnce(linearStale.promise)
+      .mockResolvedValueOnce([{ name: 'github-fresh' }])
+      .mockResolvedValueOnce([{ name: 'linear-fresh' }]);
+    const provider = createProvider([createServer('github'), createServer('linear')]);
+
+    const oldGithub = provider.listTools('github');
+    const oldLinear = provider.listTools('linear');
+    provider.invalidateAll();
+    expect(closeAll).toHaveBeenCalledTimes(1);
+    const newGithub = provider.listTools('github');
+    const newLinear = provider.listTools('linear');
+    githubStale.resolve([{ name: 'github-stale' }]);
+    linearStale.resolve([{ name: 'linear-stale' }]);
+
+    await Promise.all([oldGithub, oldLinear, newGithub, newLinear]);
+    await expect(provider.listTools('github')).resolves.toEqual([{ name: 'github-fresh' }]);
+    await expect(provider.listTools('linear')).resolves.toEqual([{ name: 'linear-fresh' }]);
+    expect(listTools).toHaveBeenCalledTimes(4);
+  });
+
+  it('disposes its connection pool', async () => {
+    const provider = createProvider([createServer()]);
+
+    await provider.dispose();
+
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('McpDiagnostics', () => {
+  beforeEach(() => {
+    listTools.mockReset();
+    close.mockClear();
+    dispose.mockClear();
+  });
+
+  it('reconnects and returns every tool regardless of disabled settings', async () => {
+    const diagnostics = new McpDiagnostics({} as McpOAuthService, jest.fn(async () => new Response('{}')));
+    const server = { ...createServer(), disabledTools: ['search'] };
+    listTools.mockResolvedValue([{ name: 'search', inputSchema: { type: 'object' } }]);
+
+    await expect(diagnostics.testConnection(server)).resolves.toEqual({
+      success: true,
+      tools: [{ name: 'search', inputSchema: { type: 'object' } }],
+    });
+
+    expect(close).toHaveBeenCalledWith('github');
+    expect(listTools).toHaveBeenCalledWith({ ...server, disabledTools: undefined });
+  });
+
+  it('preserves connection failures as diagnostic results', async () => {
+    const diagnostics = new McpDiagnostics({} as McpOAuthService, jest.fn(async () => new Response('{}')));
+    listTools.mockRejectedValue(new Error('Unauthorized'));
+
+    await expect(diagnostics.testConnection(createServer())).resolves.toEqual({
+      success: false,
+      tools: [],
+      error: 'Unauthorized',
+    });
+  });
+
+  it('disposes its connection pool', async () => {
+    const diagnostics = new McpDiagnostics({} as McpOAuthService, jest.fn(async () => new Response('{}')));
+
+    await diagnostics.dispose();
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+});

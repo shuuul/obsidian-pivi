@@ -1,4 +1,4 @@
-import type { ActivityStatus } from '@pivi/agent/foundation';
+import type { ActivityStatus } from '@pivi/agent/tools';
 import type { ReactNode } from 'react';
 import { Fragment, useEffect, useRef, useState } from 'react';
 

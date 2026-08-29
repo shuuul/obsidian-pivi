@@ -1,4 +1,5 @@
-import type { ChatMessage, OpenSessionState, StreamChunk, ToolCallInfo } from '../foundation';
+import type { ChatMessage, OpenSessionState, StreamChunk } from '../runtime';
+import type { ToolCallInfo } from '../tools';
 import type {
   ChatRewindResult,
   ChatTurnMetadata,

@@ -1,6 +1,6 @@
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
-import { recalculateUsageForModel } from "@pivi/agent/foundation/usage";
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { ChatPorts } from "@pivi/agent/runtime/chatPorts";
+import { recalculateUsageForModel } from "@pivi/agent/runtime/usage";
 import { Notice } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";
@@ -11,10 +11,10 @@ import {
   isSubmissionBlockedByContextLimit,
   notifyIfContextOverLimit,
 } from '../composer/contextOverLimitNotice';
+import { InlineContextManager } from "../input/InlineContext";
+import { autoResizeTextarea } from "../input/textareaResize";
 import { ExternalContextSelector } from "../toolbar/ExternalContextControl";
 import type { ToolbarCallbacks } from "../toolbar/ToolbarTypes";
-import { InlineContextManager } from "../ui/InlineContext";
-import { autoResizeTextarea } from "../ui/textareaResize";
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,

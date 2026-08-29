@@ -1,5 +1,5 @@
-import type { DiffStats } from '@pivi/agent/foundation/diff';
 import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '@pivi/agent/tools/diff';
+import type { DiffStats } from '@pivi/agent/tools/diffTypes';
 
 import { t } from '@/app/i18n';
 

@@ -1,5 +1,5 @@
-import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime/chatTypes';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 import type { ReactNode } from 'react';
 
 /**

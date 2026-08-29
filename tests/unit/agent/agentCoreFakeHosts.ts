@@ -1,5 +1,5 @@
 import type { AgentEngine } from '@pivi/agent/engine';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import type { ToolProvider } from '@pivi/agent/plugins';
 import type {
   HttpClient,

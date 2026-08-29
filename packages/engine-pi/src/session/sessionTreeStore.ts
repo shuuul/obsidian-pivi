@@ -6,8 +6,8 @@ import {
   type SessionEntry,
   SessionManager,
 } from '@earendil-works/pi-coding-agent';
-import type { ImageAttachment } from '@pivi/agent/foundation';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { ImageAttachment } from '@pivi/agent/runtime';
 import {
   type AgentReport,
   type Checkpoint,
@@ -44,7 +44,7 @@ import {
 } from '@pivi/agent/session/types';
 import { readFileSync } from 'fs';
 
-import { toPiImageContent } from '../piImageContent';
+import { toPiImageContent } from '../runtime/piImageContent';
 import {
   missingAgentMessages,
   type MissingAgentMessagesOptions,

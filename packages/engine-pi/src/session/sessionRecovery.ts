@@ -3,7 +3,7 @@
  * an externally changed source or discarding a locally completed turn.
  */
 
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import {
   acknowledgeJournalEntry,
   hashAppendLines,

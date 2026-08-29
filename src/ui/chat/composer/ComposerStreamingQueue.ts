@@ -1,14 +1,14 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import type { SelectionController } from '../controllers/SelectionController';
+import type { FileContextManager } from '../input/FileContext';
+import type { ImageContextManager } from '../input/ImageContext';
+import type { InlineContextManager } from '../input/InlineContext';
+import type { RichChatInput } from '../input/RichChatInput';
 import type { ChatState } from '../state/ChatState';
 import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
-import type { FileContextManager } from '../ui/FileContext';
-import type { ImageContextManager } from '../ui/ImageContext';
-import type { InlineContextManager } from '../ui/InlineContext';
-import type { RichChatInput } from '../ui/RichChatInput';
 import { createQueuedMessage } from './ComposerQueue';
 import { buildTurnSubmission } from './ComposerSubmission';
 

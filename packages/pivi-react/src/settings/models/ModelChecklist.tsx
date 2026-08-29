@@ -1,5 +1,5 @@
-import type { CustomProviderConfig } from '@pivi/agent/foundation/customProviders';
-import type { PiAgentSettingsView } from '@pivi/agent/foundation/settingsModelKey';
+import type { CustomProviderConfig } from '@pivi/agent/settings/customProviders';
+import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
 import { useState } from 'react';
 
 import { useT } from '../../i18n';

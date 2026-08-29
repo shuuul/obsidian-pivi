@@ -1,5 +1,5 @@
-import type { PiviSettings } from '@pivi/agent/foundation';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
+import type { PiviSettings } from '@pivi/agent/settings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
 import * as defaultSkillsRemote from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
 import { SkillsManagementCoordinator } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 import { VaultSkillsService } from '@pivi/agent/skills/vault/vaultSkillsService';
@@ -17,7 +17,7 @@ import {
 } from '@/app/ui/createUiPorts';
 import type { ChatUiCompositionHost } from '@/app/ui/createUiPorts';
 import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
-import { createVaultSkillsMetadataPort } from '@/app/workspace/vaultSkillsMetadataPort';
+import { createVaultSkillsMetadataPort } from '@/app/runtime/vaultSkillsMetadataPort';
 
 function createWorkspaceWithSkills(host: PiviSettingsHost, vaultPath: string) {
   return {

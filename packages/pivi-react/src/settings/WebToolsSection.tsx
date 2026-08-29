@@ -1,4 +1,4 @@
-import type { WebProviderId, WebSearchToolsSettings } from '@pivi/agent/foundation/settings';
+import type { WebProviderId, WebSearchToolsSettings } from '@pivi/agent/settings/types';
 import { useState } from 'react';
 
 import { useT } from '../i18n';

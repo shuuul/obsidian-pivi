@@ -1,5 +1,5 @@
-import type { OpenSessionState, SessionSummary } from '@pivi/agent/foundation';
 import type { CapabilityApprovalPort } from '@pivi/agent/ports';
+import type { OpenSessionState, SessionSummary } from '@pivi/agent/runtime';
 import type { AuxQueryRunner } from '@pivi/agent/runtime/auxQueryRunner';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 import type { SessionMessagePage } from '@pivi/agent/session';

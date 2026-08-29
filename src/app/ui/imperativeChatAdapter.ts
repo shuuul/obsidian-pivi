@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@pivi/agent/foundation';
+import type { SessionSummary } from '@pivi/agent/runtime';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import type { MessageViewportHandle } from '@pivi/pivi-react';
 import {

@@ -16,7 +16,7 @@ import {
   resolveConfigValue,
   type ResolveConfigValueHost,
   writeSecretAcrossIds,
-} from '../foundation/configValueSource';
+} from '../config/valueSource';
 import type { SyncSecretStore } from '../ports';
 
 export { getMcpValueSecretId };

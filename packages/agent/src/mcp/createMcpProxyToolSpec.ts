@@ -1,6 +1,6 @@
 import type { ToolSpec } from '../tools';
 import { textResult } from '../tools/toolResult';
-import type { PiMcpBridge } from './piMcpBridge';
+import type { McpToolBridge } from './mcpToolBridge';
 
 const MCP_PROXY_PARAMETERS = {
   type: 'object',
@@ -68,7 +68,7 @@ function parseArgsJson(raw: string | undefined): Record<string, unknown> {
   return parsed;
 }
 
-export function createMcpProxyToolSpec(bridge: PiMcpBridge): ToolSpec {
+export function createMcpProxyToolSpec(bridge: McpToolBridge): ToolSpec {
   return {
     name: 'mcp',
     label: 'MCP',

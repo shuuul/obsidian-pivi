@@ -1,11 +1,11 @@
 import type { BrowserSelectionContext } from '@pivi/agent/context/browser';
 import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
 import type { EditorSelectionContext } from '@pivi/agent/context/editor';
-import type { ChatMessage, StreamChunk, UsageInfo } from '@pivi/agent/foundation';
-import { resolveSubagentActivityStatus } from '@pivi/agent/foundation';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { ChatMessage, StreamChunk, UsageInfo } from '@pivi/agent/runtime';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 import type { ChatTurnRequest } from '@pivi/agent/runtime/types';
+import { resolveSubagentActivityStatus } from '@pivi/agent/tools';
 import { isSubagentToolName } from '@pivi/agent/tools/toolNames';
 import { Notice } from 'obsidian';
 
@@ -15,7 +15,7 @@ import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQue
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
 import { notifyIfContextOverLimit } from '@/ui/chat/composer/contextOverLimitNotice';
 
-import type { RichChatInput } from '../ui/RichChatInput';
+import type { RichChatInput } from '../input/RichChatInput';
 import type { InputControllerDeps } from './InputController';
 
 const logger = new PluginLogger('InputTurnPipeline');

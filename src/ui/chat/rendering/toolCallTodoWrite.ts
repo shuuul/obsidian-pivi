@@ -1,8 +1,4 @@
-import {
-  type ActivityStatus,
-  resolveToolActivityStatus,
-  type ToolCallInfo,
-} from '@pivi/agent/foundation';
+import { type ActivityStatus, resolveToolActivityStatus, type ToolCallInfo } from '@pivi/agent/tools';
 import type { TodoItem } from '@pivi/agent/tools/todo';
 import { TOOL_APPLY_PATCH } from '@pivi/agent/tools/toolNames';
 

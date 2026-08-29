@@ -4,7 +4,7 @@ import {
 } from '@modelcontextprotocol/sdk/client/auth.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
-import { PluginLogger } from '../../foundation/pluginLogger';
+import { PluginLogger } from '../../logging/pluginLogger';
 import type { ExternalOpener } from '../../ports';
 import type { McpTransportFetch } from '../ports';
 import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../types';

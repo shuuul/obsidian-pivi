@@ -1,4 +1,4 @@
-import type { ChatMessage, StreamChunk } from '@pivi/agent/foundation';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime';
 
 import { StreamController } from '@/ui/chat/controllers/StreamController';
 import { SubagentManager } from '@/ui/chat/services/SubagentManager';

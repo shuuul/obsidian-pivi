@@ -1,4 +1,4 @@
-import type { OpenSessionState } from '@pivi/agent/foundation';
+import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 import type { SlashCommandDropdownConfig } from '@pivi/agent/skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';

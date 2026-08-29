@@ -1,7 +1,8 @@
 import { getPiAiCredentialSecretId } from '@pivi/engine-pi';
-import type { OpenSessionState, PiviSettings } from '@pivi/agent/foundation';
-import { getEnvironmentSecretId } from '@pivi/agent/foundation/configValueSource';
-import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import type { OpenSessionState } from '@pivi/agent/runtime';
+import type { PiviSettings } from '@pivi/agent/settings';
+import { getEnvironmentSecretId } from '@pivi/agent/config/valueSource';
+import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/settings/deviceLocalEnvironmentState';
 import type { SyncSecretStore } from '@pivi/agent/ports';
 import { getWebSearchCredentialSecretId } from '@pivi/agent/tools/webSearch/credentialStore';
 

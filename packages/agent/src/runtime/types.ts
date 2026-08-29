@@ -2,10 +2,7 @@ import type { BrowserSelectionContext } from '../context';
 import type { CanvasSelectionContext } from '../context';
 import type { EditorSelectionContext } from '../context';
 import type { InlineContextReference } from '../context';
-import type {
-  ImageAttachment,
-  OpenSessionState,
-} from '../foundation';
+import type { ImageAttachment, OpenSessionState } from '../runtime';
 
 
 export interface ChatTurnRequest {

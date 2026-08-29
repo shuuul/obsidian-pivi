@@ -1,4 +1,4 @@
-import type { SlashCommand } from '@pivi/agent/foundation';
+import type { SlashCommand } from '@pivi/agent/settings';
 import type { SlashCommandDropdownConfig } from '@pivi/agent/skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 import { NEW_SESSION_COMMAND_ID } from '@pivi/agent/skills/commands/slashCommandIds';

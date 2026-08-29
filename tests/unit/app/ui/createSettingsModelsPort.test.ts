@@ -1,6 +1,6 @@
-import type { ChatUIOption } from '@pivi/agent/foundation/chatUi';
-import type { CustomProviderConfig } from '@pivi/agent/foundation/customProviders';
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
+import type { ChatUIOption } from '@pivi/agent/runtime/chatUi';
+import type { CustomProviderConfig } from '@pivi/agent/settings/customProviders';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
 
 import type { PiviPluginWorkspace, PiviSettingsHost, PiviUiFacades } from '@/app/hostContracts';
 import { createSettingsModelsPort } from '@/app/ui/createSettingsModelsPort';

@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import { findRedoContext, findRewindContext } from '@/ui/chat/branchContext';
 import { ChatState } from '@/ui/chat/state/ChatState';
 import { handleForkAll, handleForkRequest } from '@/ui/chat/tabs/tabFork';

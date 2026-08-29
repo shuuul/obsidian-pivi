@@ -1,11 +1,8 @@
 import type { BrowserSelectionContext } from '@pivi/agent/context/browser';
 import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
 import type { EditorSelectionContext } from '@pivi/agent/context/editor';
-import type {
-  ChatMessage,
-  StreamChunk,
-} from '@pivi/agent/foundation';
 import type { CapabilityApprovalRequest, CapabilityApprovalResult } from '@pivi/agent/ports';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime';
 import type { TitleGenerationService } from '@pivi/agent/runtime/auxTypes';
 import type {
   ChatPorts,
@@ -18,14 +15,14 @@ import type { PiviManagementApprovalDecision, PiviManagementApprovalRequest } fr
 import type { PiviChatHost } from '@/app/hostContracts';
 import { ComposerInlinePrompts } from '@/ui/chat/composer/ComposerInlinePrompts';
 
+import type { FileContextManager } from '../input/FileContext';
+import type { ImageContextManager } from '../input/ImageContext';
+import type { InlineContextManager } from '../input/InlineContext';
+import type { RichChatInput } from '../input/RichChatInput';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
-import type { FileContextManager } from '../ui/FileContext';
-import type { ImageContextManager } from '../ui/ImageContext';
-import type { InlineContextManager } from '../ui/InlineContext';
-import type { RichChatInput } from '../ui/RichChatInput';
 import type { BrowserSelectionController } from './BrowserSelectionController';
 import type { CanvasSelectionController } from './CanvasSelectionController';
 import { InputProviderBoundaryHandler } from './inputProviderBoundaries';

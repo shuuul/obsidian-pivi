@@ -1,6 +1,6 @@
-import type { SubagentInfo } from '@pivi/agent/foundation';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
+import type { SubagentInfo } from '@pivi/agent/tools';
 import type { Component } from 'obsidian';
 import { MarkdownView, Notice } from 'obsidian';
 
@@ -16,8 +16,8 @@ import { NavigationController } from '../controllers/NavigationController';
 import { SelectionController } from '../controllers/SelectionController';
 import { SessionController } from '../controllers/SessionController';
 import { StreamController } from '../controllers/StreamController';
+import { autoResizeTextarea } from '../input/textareaResize';
 import { MessageRenderer } from '../rendering/MessageRenderer';
-import { autoResizeTextarea } from '../ui/textareaResize';
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,

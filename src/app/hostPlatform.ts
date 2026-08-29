@@ -23,11 +23,6 @@ export {
 };
 
 export type {
-  AppModelReadinessProvider,
-  AppModelReadinessStatus,
-  AppModelTestResult,
-} from "@pivi/agent/foundation/modelReadiness";
-export type {
   AppMcpOAuth,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
@@ -35,6 +30,11 @@ export type {
   AppMcpToolProvider,
   AppMcpToolSummary,
 } from "@pivi/agent/mcp/ports";
+export type {
+  AppModelReadinessProvider,
+  AppModelReadinessStatus,
+  AppModelTestResult,
+} from "@pivi/agent/settings/modelReadiness";
 export type {
   AppSkillProvider,
   AppSkillSummary,

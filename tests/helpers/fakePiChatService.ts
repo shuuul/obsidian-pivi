@@ -4,7 +4,7 @@ import type {
   ChatTurnRequest,
   PreparedChatTurn,
 } from '@pivi/agent/runtime/types';
-import type { StreamChunk } from '@pivi/agent/foundation';
+import type { StreamChunk } from '@pivi/agent/runtime';
 
 export interface FakePiChatServiceSpies {
   syncSession: jest.Mock<void, [{ sessionFile: string | null; leafId?: string | null } | null, string[]?]>;

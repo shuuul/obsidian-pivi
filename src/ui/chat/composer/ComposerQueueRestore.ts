@@ -1,7 +1,7 @@
 import { appendMarkdownSnippet } from '../../shared/utils/markdown';
+import type { ImageContextManager } from '../input/ImageContext';
+import type { RichChatInput } from '../input/RichChatInput';
 import type { QueuedMessage } from '../state/types';
-import type { ImageContextManager } from '../ui/ImageContext';
-import type { RichChatInput } from '../ui/RichChatInput';
 
 export interface RestoreQueuedMessageToInputOptions {
   message: QueuedMessage | null;

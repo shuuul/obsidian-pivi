@@ -1,4 +1,4 @@
-import type { WebProviderId } from '../../foundation/settings';
+import type { WebProviderId } from '../../settings/types';
 
 export interface WebSearchSource {
   title: string;

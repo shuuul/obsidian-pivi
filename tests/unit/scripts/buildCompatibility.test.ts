@@ -246,7 +246,7 @@ describe('shared build compatibility', () => {
           contents: `
             import { googleProvider } from '@earendil-works/pi-ai/providers/google';
             import { installBundledFetch } from './packages/obsidian-host/src/bundledFetch';
-            import { withScopedGoogleTransport } from './packages/engine-pi/src/scopedGoogleProvider';
+            import { withScopedGoogleTransport } from './packages/engine-pi/src/models/scopedGoogleProvider';
 
             void (async () => {
               let ambientCalls = 0;

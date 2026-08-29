@@ -9,9 +9,9 @@ import {
   preserveCorruptArtifact,
   runSerializedSave,
   writeFileAtomically,
-} from '../foundation/configPublication';
-import { listMcpValueSecretIds as listConfigMcpValueSecretIds } from '../foundation/configValueSource';
-import { PluginLogger } from '../foundation/pluginLogger';
+} from '../config/publication';
+import { listMcpValueSecretIds as listConfigMcpValueSecretIds } from '../config/valueSource';
+import { PluginLogger } from '../logging/pluginLogger';
 import type { SyncSecretStore } from '../ports';
 import {
   assertValidMcpServerName,

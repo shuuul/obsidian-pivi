@@ -1,4 +1,4 @@
-import { isSecretLikeKey } from '../foundation/configValueSource';
+import { isSecretLikeKey } from '../config/valueSource';
 import type { SyncSecretStore } from '../ports';
 import type {
   AgentMcpSecretProjection,

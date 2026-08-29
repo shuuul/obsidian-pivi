@@ -4,12 +4,12 @@
 
 import { createWebSearchCredentialStore } from '@pivi/agent/tools/webSearch/credentialStore';
 import type { SyncSecretStore } from '@pivi/agent/ports';
-import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/settings/deviceLocalEnvironmentState';
 import {
   createEmptyDeviceLocalEnvironmentState,
   hasPersistedEnvironmentFields,
   stripEnvironmentFieldsFromPersistedSettings,
-} from '@pivi/agent/foundation/deviceLocalEnvironmentState';
+} from '@pivi/agent/settings/deviceLocalEnvironmentState';
 import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import { getWebSearchCredentialSecretId } from '@pivi/agent/tools/webSearch/credentialStore';
 

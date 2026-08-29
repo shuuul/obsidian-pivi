@@ -1,11 +1,11 @@
-import type { KeyboardNavigationSettings } from '@pivi/agent/foundation';
+import type { KeyboardNavigationSettings } from '@pivi/agent/settings';
 
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../shared/utils/animationFrame';
-import type { RichChatInput } from '../ui/RichChatInput';
+import type { RichChatInput } from '../input/RichChatInput';
 
 /** Scroll speed in pixels per frame (~60fps = 480px/sec). */
 const SCROLL_SPEED = 8;

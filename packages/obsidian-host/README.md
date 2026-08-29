@@ -8,7 +8,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 - Obsidian public API types/runtime imports.
 - Node platform modules required for filesystem, path/home, HTTP, event, process, and CLI adaptation.
-- Host-neutral contracts/defaults from `@pivi/agent/foundation`, `@pivi/agent/ports`, `@pivi/agent/session`, and `@pivi/agent/auth`.
+- Host-neutral contracts/defaults from ``@pivi/agent/settings` and `@pivi/agent/runtime``, `@pivi/agent/ports`, `@pivi/agent/session`, and `@pivi/agent/auth`.
 
 ## Forbidden dependencies
 

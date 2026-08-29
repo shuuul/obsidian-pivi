@@ -1,4 +1,5 @@
-import type { ChatIconSvg, UsageInfo } from '@pivi/agent/foundation';
+import type { UsageInfo } from '@pivi/agent/runtime/chatTypes';
+import type { ChatIconSvg } from '@pivi/agent/runtime/chatUi';
 import type { TodoVisualizationModel } from '@pivi/agent/tools';
 import { useSyncExternalStore } from 'react';
 

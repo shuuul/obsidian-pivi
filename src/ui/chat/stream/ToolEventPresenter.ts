@@ -1,6 +1,7 @@
-import type { ChatMessage, ToolCallInfo } from '@pivi/agent/foundation';
-import type { ToolUseResult } from '@pivi/agent/foundation/diff';
+import type { ChatMessage } from '@pivi/agent/runtime';
+import type { ToolCallInfo } from '@pivi/agent/tools';
 import { extractDiffData } from '@pivi/agent/tools/diff';
+import type { ToolUseResult } from '@pivi/agent/tools/diffTypes';
 import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,

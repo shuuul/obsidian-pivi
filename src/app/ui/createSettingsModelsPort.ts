@@ -10,7 +10,7 @@ import { SUPPORTED_PI_PROVIDER_IDS } from '@pivi/agent/auth/piProviderValidation
 import { getProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
 import { deriveProviderReadinessStatus } from '@pivi/agent/auth/providerReadiness';
 import { isSecretStorageAvailable, MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN } from '@pivi/agent/auth/providerSecretStorage';
-import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/agent/foundation/agentSettings';
+import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import {
   ALL_CUSTOM_PROVIDER_KINDS,
   createDefaultCustomProviderConfig,
@@ -19,12 +19,12 @@ import {
   getCustomProviderKindDisplayName,
   getCustomProvidersFromBag,
   isLocalCustomProviderKind,
-} from '@pivi/agent/foundation/customProviders';
+} from '@pivi/agent/settings/customProviders';
 import {
   getLogoSlugForCustomProviderKind,
   getProviderDisplayName,
   getProviderLogoSlug,
-} from '@pivi/agent/foundation/providerLogos';
+} from '@pivi/agent/settings/modelDisplay';
 import type { SettingsModelsPort } from '@pivi/pivi-react/ports';
 
 import type {

@@ -1,4 +1,4 @@
-import type { ChatMessage, ImageAttachment } from '@pivi/agent/foundation';
+import type { ChatMessage, ImageAttachment } from '@pivi/agent/runtime/chatTypes';
 import { memo, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';

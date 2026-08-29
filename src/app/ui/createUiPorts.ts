@@ -1,4 +1,13 @@
-import { getPiAgentSettings } from '@pivi/agent/foundation/agentSettings';
+import type {
+  ChatPorts,
+  ChatSettingsSnapshot,
+} from '@pivi/agent/runtime/chatPorts';
+import {
+  getEnvironmentReviewKeysForScope,
+  getRuntimeEnvironmentText,
+} from '@pivi/agent/settings/agentEnvironment';
+import { getPiAgentSettings } from '@pivi/agent/settings/agentSettings';
+import { parseEnvironmentVariables } from '@pivi/agent/settings/environmentText';
 import {
   type EditorSelectionToolbarSettings,
   getObsidianToolsSettingsFromBag,
@@ -8,16 +17,7 @@ import {
   resolveWebSearchToolsSettings,
   WEB_PROVIDER_CAPABILITIES,
   WEB_PROVIDER_IDS,
-} from '@pivi/agent/foundation/settings';
-import {
-  getEnvironmentReviewKeysForScope,
-  getRuntimeEnvironmentText,
-} from '@pivi/agent/foundation/settingsAgentEnvironment';
-import { parseEnvironmentVariables } from '@pivi/agent/foundation/settingsEnv';
-import type {
-  ChatPorts,
-  ChatSettingsSnapshot,
-} from '@pivi/agent/runtime/chatPorts';
+} from '@pivi/agent/settings/types';
 import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/agent/tools';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {

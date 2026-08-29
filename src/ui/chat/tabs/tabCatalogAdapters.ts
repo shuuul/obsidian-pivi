@@ -5,7 +5,7 @@ import type {
   DropdownMcpServerProvider,
   DropdownMcpToolProvider,
 } from '../../shared/components/slashCommandDropdownData';
-import type { FileContextMcpProvider } from '../ui/FileContext';
+import type { FileContextMcpProvider } from '../input/FileContext';
 
 /** Catalog-backed MCP provider for FileContext badges and mention dropdown. */
 export function createFileContextMcpProvider(

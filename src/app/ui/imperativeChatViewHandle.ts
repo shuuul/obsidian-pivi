@@ -1,5 +1,5 @@
-import { recalculateUsageForModel } from '@pivi/agent/foundation/usage';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
+import { recalculateUsageForModel } from '@pivi/agent/runtime/usage';
 import { type Editor, type MarkdownView, type TFile } from 'obsidian';
 
 import type {

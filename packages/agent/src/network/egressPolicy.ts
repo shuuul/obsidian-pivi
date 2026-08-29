@@ -3,7 +3,7 @@
  * short-lived origin grants for local/private network exceptions.
  */
 
-import { isSecretLikeHeaderName } from '../foundation/configValueSource';
+import { isSecretLikeHeaderName } from '../config/valueSource';
 import {
   canonicalizeIpAddress,
   classifyIpLiteral,

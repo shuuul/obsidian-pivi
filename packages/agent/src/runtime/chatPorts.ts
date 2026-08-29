@@ -1,18 +1,15 @@
-import type {
-  AppModelReadinessProvider,
-  OpenSessionState,
-  SessionSummary,
-} from '../foundation';
+import type { ManagedMcpServer } from '../mcp/types';
+import type { CapabilityApprovalPort } from '../ports/capabilityApproval';
+import type { OpenSessionState, SessionSummary } from '../runtime';
 import type {
   ChatModeSelectorConfig,
   ChatReasoningOption,
   ChatUIOption,
-} from '../foundation/chatUi';
-import type { CustomProviderConfig } from '../foundation/customProviders';
-import type { KeyboardNavigationSettings } from '../foundation/settings';
-import type { ManagedMcpServer } from '../mcp/types';
-import type { CapabilityApprovalPort } from '../ports/capabilityApproval';
+} from '../runtime/chatUi';
 import type { SessionMessagePage } from '../session';
+import type { AppModelReadinessProvider } from '../settings';
+import type { CustomProviderConfig } from '../settings/customProviders';
+import type { KeyboardNavigationSettings } from '../settings/types';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
 import type { PiviManagementApprovalPort } from '../tools/piviManagement/approval';

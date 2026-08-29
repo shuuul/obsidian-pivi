@@ -1,5 +1,5 @@
 import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
-import { getObsidianToolsSettingsFromBag } from '@pivi/agent/foundation/settings';
+import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 import type {
   SettingsMentionEditorCallbacks,
   SettingsMentionEditorHandle,

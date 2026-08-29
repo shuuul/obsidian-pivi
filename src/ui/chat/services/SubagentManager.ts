@@ -1,4 +1,4 @@
-import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 import type { TaskResultInterpreter } from '@pivi/agent/tools';
 import { TOOL_SPAWN_AGENT, TOOL_TASK } from '@pivi/agent/tools/toolNames';
 import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';

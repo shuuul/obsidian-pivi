@@ -2,12 +2,13 @@
  * Plugin settings load/reconcile path extracted from the Obsidian Plugin shell.
  */
 import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
-import type { OpenSessionState, PiviSettings } from "@pivi/agent/foundation";
-import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/agent/foundation/agentSettings";
-import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import type { FileStore } from "@pivi/agent/ports";
+import type { OpenSessionState } from "@pivi/agent/runtime";
 import type { SessionStore } from "@pivi/agent/session";
 import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
+import type { PiviSettings } from "@pivi/agent/settings";
+import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/agent/settings/agentSettings";
 import {
   type DefaultVaultSkillsContext,
   ensureDefaultVaultSkills,

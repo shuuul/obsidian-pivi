@@ -3,7 +3,7 @@ const createPiWorkspaceServices = jest.fn();
 
 jest.mock('@pivi/pivi-react', () => ({ assertBundledReactRuntime }));
 jest.mock('@/app/i18n', () => ({ t: (key: string) => key }));
-jest.mock('@/app/workspace/PiWorkspaceServices', () => ({ createPiWorkspaceServices }));
+jest.mock('@/app/runtime/PiWorkspaceServices', () => ({ createPiWorkspaceServices }));
 
 import { getBoundSessionJournal } from '@pivi/engine-pi/session/sessionTreeStore';
 import { SessionJournalVersionError } from '@pivi/agent/session/sessionJournal';

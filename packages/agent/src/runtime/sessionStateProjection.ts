@@ -1,4 +1,4 @@
-import type { OpenSessionState } from '../foundation';
+import type { OpenSessionState } from '../runtime';
 
 export const LEGACY_PI_SESSION_FILE_STATE_KEY = 'piSessionFile';
 

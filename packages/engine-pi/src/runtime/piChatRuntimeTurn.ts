@@ -1,0 +1,417 @@
+import type { Agent, AgentMessage, ThinkingLevel } from '@earendil-works/pi-agent-core';
+import type { AssistantMessage } from '@earendil-works/pi-ai';
+import type { StreamChunk } from '@pivi/agent/runtime';
+import { toChatTurnRequestSnapshot } from '@pivi/agent/runtime/queuedTurn';
+import type { PreparedChatTurn } from '@pivi/agent/runtime/types';
+
+import type { PiResolvedModel } from '../models/piModelRegistry';
+import type { SessionTreeStore } from '../session/sessionTreeStore';
+import type { PiAgentEventAdapter } from './piAgentEventAdapter';
+import { runPiChatPromptWithRetry } from './piChatRetry';
+import {
+  type ActiveTurn,
+  finishActiveTurnQueue,
+  trackActiveTurnSubagentTool,
+} from './piChatRuntimeActiveTurn';
+import {
+  attachContextEnvelope,
+  compactCurrentSession,
+  type PiChatCompactionDeps,
+  prepareCompactionPrefire,
+  prepareContextForTurn,
+  pushCompactionChunks,
+  shouldAutoCompactSession,
+} from './piChatRuntimeCompaction';
+import {
+  buildEstimatedUsageInfo,
+  buildUsageInfoFromAgentMessage,
+  latestUsageFromMessages,
+} from './piChatRuntimeUsage';
+import { toPiImageContent } from './piImageContent';
+
+export interface PiChatRuntimeTurnDeps {
+  activeTurn: ActiveTurn;
+  agent: Agent;
+  compaction: PiChatCompactionDeps;
+  eventAdapter: PiAgentEventAdapter;
+  sessionTree: SessionTreeStore | null;
+  resolveModel: () => PiResolvedModel | null;
+  resolveThinkingLevel: (model: PiResolvedModel) => ThinkingLevel;
+  authorizeAndSyncAgentModelSelection: (model: PiResolvedModel) => Promise<PiResolvedModel | null>;
+  refreshModelMetadata: () => Promise<boolean>;
+  syncSessionMessages: (messages: AgentMessage[]) => void;
+  onUserMessagePersisted: (result: {
+    parentEntryId: string | null;
+    userEntryId: string;
+    leafId: string | null;
+  }) => void;
+}
+
+/**
+ * Owns one prompt's Pi subscription, persistence, queue, and compaction lifecycle.
+ * The runtime retains active-turn ownership so cancellation and subagent routing
+ * remain coordinated across prompts.
+ */
+export async function* streamPiChatTurn(
+  deps: PiChatRuntimeTurnDeps,
+  turn: PreparedChatTurn,
+): AsyncGenerator<StreamChunk> {
+  const { activeTurn, agent } = deps;
+  const emittedMessages: AgentMessage[] = [];
+  const pendingPersistenceMessages: AgentMessage[] = [];
+
+  const unsubscribe = agent.subscribe((event) => {
+    if (event.type === 'message_end') {
+      emittedMessages.push(event.message);
+      pendingPersistenceMessages.push(event.message);
+      const usage = buildUsageInfoFromAgentMessage(event.message, deps.resolveModel());
+      if (usage) {
+        activeTurn.queue.push({
+          type: 'usage',
+          usage: attachContextEnvelope(
+            deps.compaction,
+            usage,
+            turn,
+            pendingPersistenceMessages,
+          ),
+        });
+      } else if ((event.message as { role?: unknown }).role === 'toolResult') {
+        const estimatedUsage = buildEstimatedUsageInfo(
+          agent.state.messages,
+          deps.resolveModel(),
+        );
+        if (estimatedUsage) {
+          activeTurn.queue.push({
+            type: 'usage',
+            usage: attachContextEnvelope(
+              deps.compaction,
+              estimatedUsage,
+              turn,
+              pendingPersistenceMessages,
+            ),
+          });
+        }
+      }
+      if (isAssistantErrorMessage(event.message)) {
+        // Retry policy owns whether this is transient or terminal. Defer the
+        // visible error until the prompt/continue cycle settles.
+        return;
+      }
+    }
+    if (event.type === 'agent_end') {
+      // Persistence is awaited at the next-request barrier and after prompt()
+      // so a failed write reaches the turn error path instead of becoming silent history loss.
+      return;
+    }
+    if (
+      event.type === 'message_update'
+      && event.assistantMessageEvent.type === 'error'
+    ) {
+      // pi-agent-core normally reports the finalized error on message_end.
+      // Suppress this safety-net event so a retryable attempt never renders as
+      // a terminal error before the retry decision.
+      return;
+    }
+    for (const chunk of deps.eventAdapter.adapt(event)) {
+      trackActiveTurnSubagentTool(activeTurn, chunk);
+      activeTurn.queue.push(chunk);
+    }
+  });
+
+  const promptPromise = runPromptLifecycle(
+    deps,
+    turn,
+    emittedMessages,
+    pendingPersistenceMessages,
+  ).catch((error: unknown) => {
+    activeTurn.queue.push({
+      type: 'error',
+      content: error instanceof Error ? error.message : String(error),
+    });
+    finishActiveTurnQueue(activeTurn);
+  });
+
+  try {
+    while (true) {
+      const chunk = await activeTurn.queue.next();
+      if (!chunk) {
+        break;
+      }
+      yield chunk;
+    }
+    await promptPromise;
+  } finally {
+    unsubscribe();
+    activeTurn.acceptingSubagentChunks = false;
+  }
+}
+
+async function runPromptLifecycle(
+  deps: PiChatRuntimeTurnDeps,
+  turn: PreparedChatTurn,
+  emittedMessages: AgentMessage[],
+  pendingPersistenceMessages: AgentMessage[],
+): Promise<void> {
+  const { activeTurn, agent } = deps;
+  const preflightCompacted = await prepareContextForTurn(
+    deps.compaction,
+    turn,
+    activeTurn.queue,
+  );
+  if (preflightCompacted === null) {
+    finishActiveTurnQueue(activeTurn);
+    return;
+  }
+  let didCompactDuringTurn = preflightCompacted;
+
+  persistUserMessage(deps, turn);
+
+  const previousPrepareNextTurn = agent.prepareNextTurnWithContext;
+  const prepareNextTurnWithContext: NonNullable<Agent['prepareNextTurnWithContext']> = async (nextTurn, signal) => {
+    if (signal?.aborted || activeTurn.abortController.signal.aborted) {
+      return undefined;
+    }
+
+    /**
+     * Overlay the live agent tools/system prompt onto the authoritative next
+     * context after tool results. Management mutations may have hot-synced
+     * `agent.state` during the tool call while prepareNextTurn still holds a
+     * stale snapshot. Preserve the chosen message array and any model/thinking
+     * selection from prior hooks.
+     */
+    const overlayCurrentToolsAndPrompt = <T extends {
+      context?: {
+        systemPrompt?: string;
+        messages?: AgentMessage[];
+        tools?: unknown[];
+      };
+      model?: unknown;
+      thinkingLevel?: unknown;
+    } | undefined>(update: T): T => {
+      if (!update) return update;
+      const baseContext = update.context ?? nextTurn.context;
+      return {
+        ...update,
+        context: {
+          ...baseContext,
+          messages: baseContext.messages ?? nextTurn.context.messages,
+          systemPrompt: agent.state.systemPrompt,
+          tools: agent.state.tools,
+        },
+      };
+    };
+
+    const mergeCurrentSelection = async (
+      update: ReturnType<NonNullable<Agent['prepareNextTurnWithContext']>>,
+    ) => {
+      const previousUpdate = await update;
+      if (signal?.aborted || activeTurn.abortController.signal.aborted) {
+        return undefined;
+      }
+      const model = deps.resolveModel();
+      if (!model) {
+        return overlayCurrentToolsAndPrompt(previousUpdate ?? { context: nextTurn.context });
+      }
+      // Continuations do not pass through PiChatRuntime.ensureReady(). Resolve
+      // credentials before moving a live Agent to a newly selected provider.
+      const authorizedModel = await deps.authorizeAndSyncAgentModelSelection(model);
+      if (
+        !authorizedModel
+        || signal?.aborted
+        || activeTurn.abortController.signal.aborted
+      ) return undefined;
+      return overlayCurrentToolsAndPrompt({
+        ...(previousUpdate ?? {}),
+        context: previousUpdate?.context ?? nextTurn.context,
+        model: authorizedModel,
+        thinkingLevel: deps.resolveThinkingLevel(authorizedModel),
+      });
+    };
+
+    flushPendingSessionMessages(deps, pendingPersistenceMessages);
+    const latestUsage = latestUsageFromMessages(
+      nextTurn.context.messages,
+      deps.resolveModel(),
+    ) ?? buildEstimatedUsageInfo(nextTurn.context.messages, deps.resolveModel());
+    const usage = latestUsage
+      ? attachContextEnvelope(deps.compaction, latestUsage, turn)
+      : null;
+    if (!usage || nextTurn.toolResults.length === 0) {
+      const previousUpdate = await previousPrepareNextTurn?.(nextTurn, signal);
+      const hasPendingSteering = activeTurn.steeredTurns.length
+        > activeTurn.persistedSteeredTurnCount;
+      if (hasPendingSteering) {
+        return mergeCurrentSelection(Promise.resolve(previousUpdate));
+      }
+      // Still overlay tools/prompt on tool-result continuations so management
+      // hot-syncs land in the very next provider request.
+      if (nextTurn.toolResults.length > 0) {
+        return overlayCurrentToolsAndPrompt(previousUpdate ?? { context: nextTurn.context });
+      }
+      return previousUpdate;
+    }
+    if (!shouldAutoCompactSession(deps.compaction, usage)) {
+      prepareCompactionPrefire(deps.compaction, usage);
+      return mergeCurrentSelection(previousPrepareNextTurn?.(nextTurn, signal));
+    }
+
+    activeTurn.queue.push({ type: 'context_compacting' });
+    const compacted = await compactCurrentSession(deps.compaction, 'threshold');
+    if (!compacted) {
+      throw new Error('Context compaction could not prepare the next model request.');
+    }
+    if (signal?.aborted || activeTurn.abortController.signal.aborted) {
+      return undefined;
+    }
+    didCompactDuringTurn = true;
+    pushCompactionChunks(activeTurn.queue, deps.compaction, compacted, turn);
+    return mergeCurrentSelection(Promise.resolve({
+      context: {
+        ...nextTurn.context,
+        messages: deps.sessionTree?.loadAgentMessages() ?? agent.state.messages,
+        systemPrompt: agent.state.systemPrompt,
+        tools: agent.state.tools,
+      },
+    }));
+  };
+  agent.prepareNextTurnWithContext = prepareNextTurnWithContext;
+
+  const promptImages = toPiImageContent(turn.request.images);
+  let retryResult: Awaited<ReturnType<typeof runPiChatPromptWithRetry>>;
+  try {
+    retryResult = await runPiChatPromptWithRetry({
+      agent,
+      contextWindow: deps.resolveModel()?.contextWindow ?? 0,
+      discardFailedAttempt: (message) => {
+        removeMessage(emittedMessages, message);
+        removeMessage(pendingPersistenceMessages, message);
+      },
+      emit: (chunk) => activeTurn.queue.push(chunk),
+      getLatestAssistantMessage: () => latestAssistantMessage(emittedMessages),
+      prompt: () => promptImages.length > 0
+        ? agent.prompt(turn.prompt, promptImages)
+        : agent.prompt(turn.prompt),
+      signal: activeTurn.abortController.signal,
+    });
+  } finally {
+    if (agent.prepareNextTurnWithContext === prepareNextTurnWithContext) {
+      agent.prepareNextTurnWithContext = previousPrepareNextTurn;
+    }
+  }
+
+  if (retryResult.status === 'failed' && retryResult.finalMessage) {
+    activeTurn.queue.push(deps.eventAdapter.adaptAssistantError(
+      retryResult.finalMessage as unknown as Record<string, unknown>,
+    ));
+  }
+  if (retryResult.status === 'cancelled') {
+    flushPendingSessionMessages(deps, pendingPersistenceMessages);
+    finishActiveTurnQueue(activeTurn);
+    return;
+  }
+
+  const refreshedModelMetadata = await deps.refreshModelMetadata();
+
+  const hadPendingMessages = pendingPersistenceMessages.length > 0;
+  flushPendingSessionMessages(deps, pendingPersistenceMessages);
+  if (!didCompactDuringTurn && !hadPendingMessages) {
+    // Retain the defensive full-state sync for SDK paths that omit a
+    // message_end event. After compaction only the pending suffix is safe:
+    // replaying the old cumulative context would resurrect compacted history.
+    deps.syncSessionMessages(agent.state.messages);
+  }
+  const latestUsage = latestUsageFromMessages(agent.state.messages, deps.resolveModel());
+  const usage = latestUsage
+    ? attachContextEnvelope(deps.compaction, latestUsage, turn)
+    : null;
+  if (refreshedModelMetadata && usage) {
+    // Replace the first turn's pre-load context estimate with the runtime
+    // window discovered after the local server loaded the model. This repeats
+    // the assistant usage already emitted at message_end, so omit outputTokens:
+    // the UI accumulates every usage chunk's output tokens into the per-turn
+    // generation clock and would double-count the persisted tokens/s.
+    const { outputTokens: _alreadyEmitted, ...metadataRefreshUsage } = usage;
+    activeTurn.queue.push({ type: 'usage', usage: metadataRefreshUsage });
+  }
+  if (!didCompactDuringTurn && usage && shouldAutoCompactSession(deps.compaction, usage)) {
+    activeTurn.queue.push({ type: 'context_compacting' });
+    try {
+      const compacted = await compactCurrentSession(deps.compaction, 'threshold');
+      if (compacted) {
+        pushCompactionChunks(activeTurn.queue, deps.compaction, compacted);
+      }
+    } catch (error) {
+      activeTurn.queue.push({
+        type: 'notice',
+        level: 'warning',
+        content: `Auto compaction failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
+  } else if (!didCompactDuringTurn && usage) {
+    prepareCompactionPrefire(deps.compaction, usage);
+  }
+  finishActiveTurnQueue(activeTurn);
+}
+
+function flushPendingSessionMessages(
+  deps: PiChatRuntimeTurnDeps,
+  pendingMessages: AgentMessage[],
+): void {
+  if (pendingMessages.length === 0) {
+    return;
+  }
+  deps.syncSessionMessages(pendingMessages);
+  pendingMessages.length = 0;
+}
+
+function removeMessage(messages: AgentMessage[], message: AgentMessage): void {
+  const index = messages.lastIndexOf(message);
+  if (index >= 0) {
+    messages.splice(index, 1);
+  }
+}
+
+function isAssistantErrorMessage(message: AgentMessage): message is AssistantMessage {
+  return message.role === 'assistant' && message.stopReason === 'error';
+}
+
+function latestAssistantMessage(
+  messages: AgentMessage[],
+): AssistantMessage | undefined {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message?.role === 'assistant') {
+      return message;
+    }
+  }
+  return undefined;
+}
+
+function persistUserMessage(
+  deps: PiChatRuntimeTurnDeps,
+  turn: PreparedChatTurn,
+): void {
+  if (!deps.sessionTree) {
+    return;
+  }
+  try {
+    const parentEntryId = deps.sessionTree.getLeafId();
+    const userEntryId = deps.sessionTree.appendUserMessage(
+      turn.persistedContent,
+      turn.request.images,
+    );
+    deps.sessionTree.appendMessageUi({
+      targetEntryId: userEntryId,
+      displayContent: turn.displayContent,
+      turnRequest: toChatTurnRequestSnapshot(turn.request),
+    });
+    deps.onUserMessagePersisted({
+      parentEntryId,
+      userEntryId,
+      leafId: deps.sessionTree.getLeafId(),
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to persist user message before prompt: ${detail}`, { cause: error });
+  }
+}

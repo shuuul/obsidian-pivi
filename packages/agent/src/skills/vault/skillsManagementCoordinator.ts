@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { PluginLogger } from '../../foundation/pluginLogger';
+import { PluginLogger } from '../../logging/pluginLogger';
 import type {
   AgentSkillSummary,
   PiviSkillsInput,

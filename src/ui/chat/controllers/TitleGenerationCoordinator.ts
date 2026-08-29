@@ -1,5 +1,5 @@
 import { resolveUserMessageDisplayText } from '@pivi/agent/context/context';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { TitleGenerationService } from '@pivi/agent/runtime/auxTypes';
 import type {
   ChatPorts,

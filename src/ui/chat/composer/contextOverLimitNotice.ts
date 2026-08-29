@@ -1,9 +1,9 @@
-import type { UsageInfo } from '@pivi/agent/foundation';
-import { formatContextLimit } from '@pivi/agent/foundation/settingsEnv';
+import type { UsageInfo } from '@pivi/agent/runtime';
 import {
   getContextPressureTokens,
   isContextOverLimit,
-} from '@pivi/agent/foundation/usage';
+} from '@pivi/agent/runtime/usage';
+import { formatContextLimit } from '@pivi/agent/settings/environmentText';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';

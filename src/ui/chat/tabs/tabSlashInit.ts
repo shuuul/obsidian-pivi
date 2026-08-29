@@ -1,5 +1,5 @@
-import type { SlashCommand } from '@pivi/agent/foundation';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
+import type { SlashCommand } from '@pivi/agent/settings';
 import type { SlashCommandDropdownConfig } from "@pivi/agent/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 

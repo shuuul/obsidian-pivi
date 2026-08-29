@@ -2,7 +2,7 @@
 
 [Back to the developer handbook](README.md)
 
-Pivi uses a layered monorepo so the Obsidian host, product UI, reusable agent foundations, and concrete Pi integration remain independently understandable. The primary design goal is one obvious owner for each behavior.
+Pivi uses a layered monorepo so the Obsidian host, product UI, reusable agent capabilities, and concrete Pi integration remain independently understandable. The primary design goal is one obvious owner for each behavior.
 
 ## Package topology
 
@@ -25,11 +25,11 @@ flowchart TD
 
 `src/app` may compose all layers. Other dependencies flow toward host-neutral contracts:
 
-- `src/ui/**` uses injected `ChatPorts`, `PiChatService`, and `AuxQueryRunner`; it does not import `@pivi/engine-pi`, app workspace implementations, or concrete host/tool packages.
+- `src/ui/**` uses injected `ChatPorts`, `PiChatService`, and `AuxQueryRunner`; it does not import `@pivi/engine-pi`, app runtime implementations, or concrete host/tool packages.
 - `@pivi/pivi-react` consumes presentation-safe `@pivi/agent` models and its own ports. It does not receive `ChatPorts`, runtime objects, Obsidian APIs, or application implementations.
 - `@pivi/obsidian-host` implements host ports and owns the canonical vault-edit occurrence matcher used by `ObsidianVaultApi`. It does not import UI, tools, or `@pivi/engine-pi`.
 - `@pivi/obsidian-tools` implements Obsidian-native and CLI-backed `ToolSpec` values using host contracts. Host-neutral `pivi_sessions` and its recovery port live in `@pivi/agent`; app composition adds that tool to the shared base provider so main Agents and subagents receive the same inventory.
-- `src/app/workspace/WorkspaceCommandsCoordinator.ts` owns workspace-command validation, revisions, persistence, and ordering. `PiSlashCommandCatalog` owns watching and catalog composition only.
+- `src/app/runtime/WorkspaceCommandsCoordinator.ts` owns workspace-command validation, revisions, persistence, and ordering. `PiSlashCommandCatalog` owns watching and catalog composition only.
 - `@pivi/agent` Skills owns skill/command frontmatter parsing; there is no parallel parser in the concrete tools package.
 - Raw `@earendil-works/*` use belongs only in `packages/engine-pi/` (`@pivi/engine-pi`).
 
@@ -108,7 +108,7 @@ Prefer the narrowest exported subpath:
 | Chat application capabilities | `@pivi/agent/runtime/chatPorts` |
 | Chat lifecycle | `@pivi/agent/runtime` |
 | Auxiliary queries | `@pivi/agent/runtime/auxQueryRunner` |
-| Messages, settings, session identities | `@pivi/agent/foundation` and `@pivi/agent/session` |
+| Messages, settings, session identities | ``@pivi/agent/settings` and `@pivi/agent/runtime`` and `@pivi/agent/session` |
 | Prompt construction | `@pivi/agent/prompt` |
 | Tool protocol, prompt-usage descriptors, display models, and host-neutral session tool | `@pivi/agent/tools` |
 | Session recovery capability | `@pivi/agent/session` |

@@ -3,7 +3,7 @@ import {
   DEFAULT_COMPACTION_RESERVE_TOKENS,
   DEFAULT_CONTEXT_SAFETY_MARGIN_TOKENS,
   DEFAULT_RESERVED_OUTPUT_TOKENS,
-} from '@pivi/agent/foundation/usage';
+} from '@pivi/agent/runtime/usage';
 
 describe('context envelope', () => {
   it('uses the conservative default budgets for a 200K context window', () => {

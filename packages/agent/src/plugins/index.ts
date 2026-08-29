@@ -2,6 +2,8 @@ import type { ManagedMcpServer } from '../mcp';
 import type { SlashCatalogEntry } from '../skills';
 import type { ToolSpec } from '../tools';
 
+export * from './types';
+
 export type PluginSourceKind = 'builtin' | 'local' | 'git' | 'npm' | 'url';
 
 export interface PluginSource {

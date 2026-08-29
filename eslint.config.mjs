@@ -215,9 +215,9 @@ export default defineConfig([
             "Host contracts must stay structural and must not name concrete Pi engine implementation types.",
         },
         {
-          group: ["@/app/workspace", "@/app/workspace/*"],
+          group: ["@/app/runtime", "@/app/runtime/*"],
           message:
-            "Host contracts must not import app workspace implementation modules. Use narrow structural interfaces instead.",
+            "Host contracts must not import app runtime implementation modules. Use narrow structural interfaces instead.",
         },
       ]),
     },
@@ -236,9 +236,9 @@ export default defineConfig([
             "Product UI must not import Pi engine implementations. Use injected PiChatService, AuxQueryRunner, and feature ports instead.",
         },
         {
-          group: ["@/app/workspace", "@/app/workspace/*"],
+          group: ["@/app/runtime", "@/app/runtime/*"],
           message:
-            "Product UI must not import app workspace modules. Use injected ChatPorts or an approved hostPlatform adapter.",
+            "Product UI must not import app runtime modules. Use injected ChatPorts or an approved hostPlatform adapter.",
         },
         {
           group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
@@ -296,14 +296,14 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/app/workspace/**/*.{ts,tsx}"],
+    files: ["src/app/runtime/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
         {
           group: ["@/ui", "@/ui/*"],
           message:
-            "src/app/workspace must not import product UI. Inject UI adapters from the composition root.",
+            "src/app/runtime must not import product UI. Inject UI adapters from the composition root.",
         },
       ]),
     },
@@ -375,17 +375,13 @@ export default defineConfig([
             "@pivi/pivi-react must not import Pi engine implementations. Use host-neutral contracts and display models.",
         },
         {
-          // Exact root only: group "@pivi/agent" would also match "@pivi/agent/foundation".
+          // Exact root only: a group would also match narrow @pivi/agent subpaths.
           regex: "^@pivi/agent$",
           message:
             "@pivi/pivi-react must not import the aggregate @pivi/agent root. Use narrow host-neutral presentation-safe subpaths.",
         },
         {
-          group: [
-            "@pivi/agent/runtime",
-            "@pivi/agent/runtime/chatPorts",
-            "@pivi/agent/runtime/chatPorts/*",
-          ],
+          regex: "^@pivi/agent/runtime(?:$|/chatPorts(?:/|$))",
           message:
             "@pivi/pivi-react must not import ChatPorts-capable runtime contracts. Receive presentation ports from app composition.",
         },
@@ -413,7 +409,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/agent/src/foundation/**/*.{ts,tsx}"],
+    files: ["packages/agent/src/settings/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -421,13 +417,13 @@ export default defineConfig([
         {
           group: ["node:*", "fs", "fs/*", "path", "path/*"],
           message:
-            "Foundation contracts must stay platform-neutral. Move Node filesystem/path access behind an adapter package.",
+            "Settings contracts must stay platform-neutral. Move Node filesystem/path access behind an adapter package.",
         },
         rawPiSdkRestriction,
         {
           group: ["@", "@/*", "src", "src/*"],
           message:
-            "@pivi/agent/foundation must not import product src code.",
+            "`@pivi/agent/settings` and `@pivi/agent/runtime` must not import product src code.",
         },
       ]),
     },

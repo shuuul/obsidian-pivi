@@ -104,5 +104,5 @@ Public presentation seams used by `src/ui` remain exactly `store` and `context-b
 
 ## Verification
 
-Run `npm run check:boundaries`, `npm run typecheck`, `npm run lint`, focused or full `npm run test`, and `npm run build`. React behavior tests belong to the `pivi-react` jsdom Jest project under `tests/pivi-react/`.
+Run `npm run check:boundaries`, `npm run typecheck`, `npm run lint`, focused or full `npm run test`, and `npm run build`. React behavior tests belong to the `jsdom` Jest project under the source-owner directory `tests/jsdom/pivi-react/`.
 - Inline-edit tests must exercise user-visible state transitions and CM widget mount/dispose with a non-default owner realm.

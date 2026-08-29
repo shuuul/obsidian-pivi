@@ -1,9 +1,5 @@
-import type {
-  ActivityStatus,
-  ChatMessage,
-  SubagentInfo,
-  ToolCallInfo,
-} from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
+import type { ActivityStatus, SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 import { TOOL_SPAWN_AGENT } from '@pivi/agent/tools';
 
 function nonEmptyString(value: unknown): string | undefined {

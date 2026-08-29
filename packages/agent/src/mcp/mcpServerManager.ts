@@ -1,4 +1,4 @@
-import type { ParseDiagnostic } from '../foundation/configPublication';
+import type { ParseDiagnostic } from '../config/publication';
 import { extractMcpMentions, transformMcpMentions } from './mcpUtils';
 import type { ManagedMcpServer, McpServerConfig } from './types';
 

@@ -2,12 +2,12 @@
 
 ## Purpose
 
-`@pivi/agent` is the host-neutral aggregate entrypoint for Pivi's reusable agent foundation. It owns runtime/application contracts such as `ChatPorts`, tool protocol helpers, session storage, MCP services, and skill metadata without importing concrete host adapter or UI code. App composition owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. Package surfaces are exported as namespaces so similarly named contracts from different layers do not collide.
+`@pivi/agent` is the host-neutral aggregate entrypoint for Pivi's reusable agent capabilities. It owns runtime/application contracts such as `ChatPorts`, tool protocol helpers, session storage, MCP services, and skill metadata without importing concrete host adapter or UI code. App composition owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. Package surfaces are exported as namespaces so similarly named contracts from different layers do not collide.
 
 ## Allowed dependencies
 
 - `auth/` for host-neutral provider credential IDs, provider environment variable names, disabled-provider checks, and structural API-key/OAuth credential extraction.
-- `foundation/` for shared contracts and defaults, including Obsidian tool gates such as external filesystem access and the Bash toggle/allowlist.
+- `settings/` for shared settings contracts and defaults, including Obsidian tool gates such as external filesystem access and the Bash toggle/allowlist.
 - `tools/` for the generic tool protocol and display models, including the `pivi_sessions` ToolSpec factory over an injected recovery port.
 - `session/` for host-neutral session contracts, the session recovery port, open-session state, paths, and metadata; Pi JSONL persistence and compatibility implementations live under `@pivi/engine-pi/session/`.
 - `mcp/` for workspace-local MCP management and proxy tools.
@@ -29,7 +29,8 @@
 - Canonical host capability contracts under `@pivi/agent/ports`.
 - Workspace context and client terminology under `@pivi/agent/workspace`.
 - Declarative plugin/resource registry contracts under `@pivi/agent/plugins`.
-- Namespaced foundation contracts/defaults under `@pivi/agent/foundation`.
+- Settings contracts/defaults under `@pivi/agent/settings` and runtime contracts/helpers under `@pivi/agent/runtime`.
+- Configuration publication/value-source helpers under `@pivi/agent/config` and logging under `@pivi/agent/logging`.
 - Namespaced tool protocol, the host-neutral `createSessionsTool` factory, and canonical presentation/summary helpers under `@pivi/agent/tools`.
 - Session contracts, recovery port, paths, metadata, and linear open-session management under `@pivi/agent/session`; application ports open complete sessions by `sessionFile`, while concrete Pi JSONL tree compatibility stays under `@pivi/engine-pi/session/*`.
 - Skill helpers, slash-command catalog contracts, and built-in slash-command IDs under `@pivi/agent/skills`.

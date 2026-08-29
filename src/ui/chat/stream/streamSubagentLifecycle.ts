@@ -1,6 +1,7 @@
-import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/agent/foundation';
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 import type { SubagentLifecycleAdapter } from '@pivi/agent/tools';
 import {
   isSubagentToolName,

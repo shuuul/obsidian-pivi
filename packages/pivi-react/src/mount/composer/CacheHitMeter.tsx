@@ -1,5 +1,5 @@
-import type { UsageInfo } from '@pivi/agent/foundation';
-import { calculateCacheHitPercentage } from '@pivi/agent/foundation/usage';
+import type { UsageInfo } from '@pivi/agent/runtime/chatTypes';
+import { calculateCacheHitPercentage } from '@pivi/agent/runtime/usage';
 
 import { useT } from '../../i18n';
 import { formatCompactTokenCount } from '../../usage/usageInfo';

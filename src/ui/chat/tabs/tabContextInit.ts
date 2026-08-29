@@ -2,9 +2,9 @@ import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 
 import type { PiviChatHost } from "@/app/hostContracts";
 
-import { FileContextManager } from "../ui/FileContext";
-import { ImageContextManager } from "../ui/ImageContext";
-import { autoResizeTextarea } from "../ui/textareaResize";
+import { FileContextManager } from "../input/FileContext";
+import { ImageContextManager } from "../input/ImageContext";
+import { autoResizeTextarea } from "../input/textareaResize";
 import { createFileContextMcpProvider } from "./tabCatalogAdapters";
 import type { TabData } from "./types";
 

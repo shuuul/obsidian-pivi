@@ -1,10 +1,10 @@
 /** Stable Pi runtime composition surface for production app code. */
+export { createCodexImageGenerator } from '../runtime/codexImageGenerator';
+export { createPiAuxQueryRunner } from '../runtime/piAuxQueryRunner';
+export { PiChatRuntime } from '../runtime/piChatRuntime';
+export type { PiRuntimeHost } from '../runtime/piRuntimeHost';
+export { SubagentConcurrencyLimiter } from '../runtime/subagentConcurrencyLimiter';
 export type {
   PiBaseToolProvider,
   PiMainOnlyToolProvider,
-} from '../buildPiToolRegistryCore';
-export { createCodexImageGenerator } from '../codexImageGenerator';
-export { createPiAuxQueryRunner } from '../piAuxQueryRunner';
-export { PiChatRuntime } from '../piChatRuntime';
-export type { PiRuntimeHost } from '../piRuntimeHost';
-export { SubagentConcurrencyLimiter } from '../subagentConcurrencyLimiter';
+} from '../tools/buildPiToolRegistryCore';

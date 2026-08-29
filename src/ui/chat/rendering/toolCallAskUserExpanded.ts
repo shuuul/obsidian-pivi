@@ -1,4 +1,4 @@
-import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/agent/foundation';
+import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/agent/tools';
 import { extractResolvedAnswersFromResultText } from '@pivi/agent/tools/toolInput';
 
 import { t } from '@/app/i18n';

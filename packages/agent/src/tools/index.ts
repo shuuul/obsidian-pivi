@@ -1,6 +1,7 @@
 export * from './bashArgv';
 export * from './bashAuthorization';
 export * from './diff';
+export * from './diffTypes';
 export * from './obsidianToolNames';
 export * from './piviManagement';
 export * from './sessions';
@@ -12,4 +13,5 @@ export * from './toolPresentation';
 export * from './toolResult';
 export * from './toolResultContent';
 export * from './toolSpec';
+export * from './types';
 export * from './webSearch/index';

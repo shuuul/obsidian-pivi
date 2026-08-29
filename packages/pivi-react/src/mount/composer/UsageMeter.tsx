@@ -1,8 +1,8 @@
-import type { UsageInfo } from '@pivi/agent/foundation';
+import type { UsageInfo } from '@pivi/agent/runtime/chatTypes';
 import {
   calculateContextUsagePercentage,
   calculateUsagePercentage,
-} from '@pivi/agent/foundation/usage';
+} from '@pivi/agent/runtime/usage';
 
 import { useT } from '../../i18n';
 import { formatCompactTokenCount } from '../../usage/usageInfo';

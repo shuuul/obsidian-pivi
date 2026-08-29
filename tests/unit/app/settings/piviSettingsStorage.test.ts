@@ -3,7 +3,7 @@ import {
   PiviSettingsStorage,
 } from '@pivi/obsidian-host/settings/piviSettingsStorage';
 import type { FileStore } from "@pivi/agent/ports";
-import type { DeviceLocalProviderStateV1 } from "@pivi/agent/foundation/deviceLocalProviderState";
+import type { DeviceLocalProviderStateV1 } from "@pivi/agent/settings/deviceLocalProviderState";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 
 function createDeviceLocalProviderStore(initialState?: DeviceLocalProviderStateV1 | null) {

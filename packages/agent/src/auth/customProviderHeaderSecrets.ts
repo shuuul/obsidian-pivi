@@ -1,5 +1,5 @@
-import type { CustomProviderConfig } from '../foundation/customProviders';
 import type { SyncSecretStore } from '../ports';
+import type { CustomProviderConfig } from '../settings/customProviders';
 import {
   encodeUtf8Hex,
   listObsidianSecretIds,

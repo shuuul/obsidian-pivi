@@ -1,4 +1,4 @@
-import type { DiffLine, DiffStats } from '@pivi/agent/foundation/diff';
+import type { DiffLine, DiffStats } from '@pivi/agent/tools/diffTypes';
 
 import { t } from '@/app/i18n';
 

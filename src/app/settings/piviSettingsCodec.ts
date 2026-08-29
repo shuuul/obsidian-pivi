@@ -1,20 +1,24 @@
-import { reconcileActiveModelFields } from "@pivi/agent/foundation/activeModel";
+import { reconcileActiveModelFields } from "@pivi/agent/settings/activeModel";
+import {
+  getSharedEnvironmentVariables,
+} from "@pivi/agent/settings/agentEnvironment";
 import {
   normalizePiAgentSettingsRecord,
   updatePiAgentSettings,
-} from "@pivi/agent/foundation/agentSettings";
-import type { DeviceLocalEnvironmentStateV1 } from "@pivi/agent/foundation/deviceLocalEnvironmentState";
+} from "@pivi/agent/settings/agentSettings";
+import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
+import type { DeviceLocalEnvironmentStateV1 } from "@pivi/agent/settings/deviceLocalEnvironmentState";
 import {
   createSecretStoreResolveHost,
   projectEnvironmentOntoSettings,
   stripEnvironmentFieldsFromPersistedSettings,
-} from "@pivi/agent/foundation/deviceLocalEnvironmentState";
-import type { DeviceLocalProviderStateV1 } from "@pivi/agent/foundation/deviceLocalProviderState";
+} from "@pivi/agent/settings/deviceLocalEnvironmentState";
+import type { DeviceLocalProviderStateV1 } from "@pivi/agent/settings/deviceLocalProviderState";
 import {
   extractDeviceLocalProviderState,
   overlayDeviceLocalProviderState,
   stripLocalizedFieldsFromRuntimeSettings,
-} from "@pivi/agent/foundation/deviceLocalProviderState";
+} from "@pivi/agent/settings/deviceLocalProviderState";
 import {
   type AgentRuntimeSettings,
   CHAT_VIEW_PLACEMENTS,
@@ -27,11 +31,7 @@ import {
   resolveObsidianToolsSettings,
   resolveSubagentRuntimeSettings,
   resolveWebSearchToolsSettings,
-} from "@pivi/agent/foundation/settings";
-import {
-  getSharedEnvironmentVariables,
-} from "@pivi/agent/foundation/settingsAgentEnvironment";
-import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/agent/foundation/settingsDefaults";
+} from "@pivi/agent/settings/types";
 import {
   normalizePathForComparison,
   normalizePathForFilesystem,

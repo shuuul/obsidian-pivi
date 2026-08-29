@@ -1,5 +1,5 @@
-import type { WebProviderId } from '../../foundation/settings';
 import type { SyncSecretStore } from '../../ports';
+import type { WebProviderId } from '../../settings/types';
 
 const WEB_SEARCH_CREDENTIAL_ID_PREFIX = 'pivi-web-search';
 

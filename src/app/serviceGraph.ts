@@ -1,6 +1,5 @@
 import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
-import { createSecretStoreResolveHost } from "@pivi/agent/foundation/deviceLocalEnvironmentState";
-import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
+import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import type { FileStore } from "@pivi/agent/ports";
 import type {
   DeviceLocalExternalContextStore,
@@ -10,6 +9,7 @@ import {
   type SessionJournalStore,
   SessionJournalVersionError,
 } from "@pivi/agent/session/sessionJournal";
+import { createSecretStoreResolveHost } from "@pivi/agent/settings/deviceLocalEnvironmentState";
 import {
   bindSessionJournal,
   configureSessionJsonlIndexRoot,
@@ -31,8 +31,8 @@ import type { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalE
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
 import { t } from "@/app/i18n";
+import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/runtime/PiWorkspaceServices"
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
-import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
 import type PiviPlugin from "@/main"
 
 const logger = new PluginLogger('ServiceGraph');

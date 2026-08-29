@@ -1,8 +1,4 @@
-import {
-  type ActivityStatus,
-  resolveToolActivityStatus,
-  type ToolCallInfo,
-} from '@pivi/agent/foundation';
+import { type ActivityStatus, resolveToolActivityStatus, type ToolCallInfo } from '@pivi/agent/tools';
 import {
   getToolStepPhraseModel,
   isToolPresentationGroupable,

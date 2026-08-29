@@ -1,9 +1,5 @@
-import type {
-  ChatMessage,
-  ContentBlock,
-  SubagentInfo,
-  ToolCallInfo,
-} from '@pivi/agent/foundation';
+import type { ChatMessage, ContentBlock } from '@pivi/agent/runtime/chatTypes';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 import {
   isToolPresentationGroupable,
   shouldPresentToolCall,

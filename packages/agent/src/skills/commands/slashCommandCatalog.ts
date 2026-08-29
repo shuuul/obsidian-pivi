@@ -1,4 +1,4 @@
-import type { SlashCommand } from '../../foundation';
+import type { SlashCommand } from '../../settings';
 import type { SlashCatalogEntry } from './slashCommandEntry';
 
 export interface SlashCommandDropdownConfig {

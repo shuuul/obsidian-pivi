@@ -1,8 +1,8 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import {
   calculateTokensPerSecond,
   roundTokensPerSecond,
-} from '@pivi/agent/foundation/usage';
+} from '@pivi/agent/runtime/usage';
 
 import { COMPLETION_FLAVOR_WORDS } from '../constants';
 

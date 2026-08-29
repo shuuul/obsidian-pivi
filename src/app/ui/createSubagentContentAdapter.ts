@@ -1,4 +1,4 @@
-import type { SubagentInfo } from '@pivi/agent/foundation';
+import type { SubagentInfo } from '@pivi/agent/tools';
 import type { MessageContentAdapter } from '@pivi/pivi-react';
 
 import type { RenderContentOptions } from '@/ui/chat/rendering/messageRendererTypes';

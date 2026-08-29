@@ -1,5 +1,5 @@
-import { VIEW_TYPE_PIVI } from "@pivi/agent/foundation";
-import type { ChatViewPlacement } from "@pivi/agent/foundation/settings";
+import { VIEW_TYPE_PIVI } from "@pivi/agent/runtime";
+import type { ChatViewPlacement } from "@pivi/agent/settings/types";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type { App, WorkspaceLeaf } from "obsidian";
 

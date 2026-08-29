@@ -1,4 +1,4 @@
-import type { ToolCallInfo } from '@pivi/agent/foundation';
+import type { ToolCallInfo } from '@pivi/agent/tools';
 
 import { t } from '@/app/i18n';
 

@@ -1,4 +1,4 @@
-import type { ActivityStatus } from '@pivi/agent/foundation';
+import type { ActivityStatus } from '@pivi/agent/tools';
 
 import type { TFunction, TranslationKey } from '../i18n/types';
 

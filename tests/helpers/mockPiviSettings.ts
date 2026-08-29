@@ -1,5 +1,5 @@
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/foundation/settingsDefaults';
-import type { PiviSettings } from '@pivi/agent/foundation/settings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
+import type { PiviSettings } from '@pivi/agent/settings/types';
 
 /** Default Pivi settings with optional overrides for tests. */
 export function createMockPiviSettings(

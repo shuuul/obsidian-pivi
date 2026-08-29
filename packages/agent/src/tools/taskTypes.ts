@@ -1,4 +1,4 @@
-import type { SubagentInfo, ToolCallInfo } from '../foundation';
+import type { SubagentInfo, ToolCallInfo } from '../tools';
 
 export type TaskTerminalStatus = Extract<
   ToolCallInfo['status'],

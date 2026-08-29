@@ -1,4 +1,4 @@
-import type { CheckpointPresentation } from '@pivi/agent/foundation';
+import type { CheckpointPresentation } from '@pivi/agent/runtime/chatTypes';
 import { useId, useState } from 'react';
 
 import { useT } from '../../i18n/I18nProvider';

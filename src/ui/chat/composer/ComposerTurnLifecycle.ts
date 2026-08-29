@@ -1,7 +1,7 @@
 import type { BrowserSelectionContext } from '@pivi/agent/context/browser';
 import type { CanvasSelectionContext } from '@pivi/agent/context/canvas';
 import type { EditorSelectionContext } from '@pivi/agent/context/editor';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import {
   type ChatTurnRequest,
   cloneChatTurnRequest,
@@ -12,13 +12,13 @@ import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import type { SelectionController } from '../controllers/SelectionController';
+import type { FileContextManager } from '../input/FileContext';
+import type { ImageContextManager } from '../input/ImageContext';
+import type { InlineContextManager } from '../input/InlineContext';
+import type { RichChatInput } from '../input/RichChatInput';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
-import type { FileContextManager } from '../ui/FileContext';
-import type { ImageContextManager } from '../ui/ImageContext';
-import type { InlineContextManager } from '../ui/InlineContext';
-import type { RichChatInput } from '../ui/RichChatInput';
 import { buildTurnSubmission } from './ComposerSubmission';
 
 export interface BeginOutgoingTurnDeps {

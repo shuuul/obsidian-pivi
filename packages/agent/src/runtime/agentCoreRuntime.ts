@@ -1,5 +1,5 @@
 import type { AgentEngineSessionRef, AgentEngineTurnOptions } from '../engine';
-import type { ChatMessage, StreamChunk } from '../foundation';
+import type { ChatMessage, StreamChunk } from '../runtime';
 import type { SessionRef, StoreSessionInfo } from '../session';
 import type { ToolSpec } from '../tools';
 import type { AgentCoreHost } from './agentCoreHost';

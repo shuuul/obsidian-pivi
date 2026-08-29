@@ -1,4 +1,4 @@
-import type { SubagentInfo } from '@pivi/agent/foundation';
+import type { SubagentInfo } from '@pivi/agent/tools';
 
 export type SubagentStateChangeCallback = (subagent: SubagentInfo) => void;
 

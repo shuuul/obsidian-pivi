@@ -1,8 +1,6 @@
-import type {
-  OpenSessionState,
-  SlashCommand,
-} from '@pivi/agent/foundation';
+import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
+import type { SlashCommand } from '@pivi/agent/settings';
 import type { ChatPerfRecorder } from '@pivi/pivi-react/store';
 
 import type { PiviChatHost } from "@/app/hostContracts";

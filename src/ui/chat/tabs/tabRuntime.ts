@@ -1,4 +1,4 @@
-import type { OpenSessionState } from '@pivi/agent/foundation';
+import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { PiChatService } from '@pivi/agent/runtime';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 

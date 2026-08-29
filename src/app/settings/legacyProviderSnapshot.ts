@@ -1,12 +1,12 @@
 import {
   type CustomProviderConfig,
   normalizeCustomProviders,
-} from '@pivi/agent/foundation/customProviders';
+} from '@pivi/agent/settings/customProviders';
 import {
   DEFAULT_WEB_SEARCH_TOOLS_SETTINGS,
   isWebProviderId,
   type WebSearchToolsSettings,
-} from '@pivi/agent/foundation/settings';
+} from '@pivi/agent/settings/types';
 import type { LegacyProviderMembershipSnapshot } from '@pivi/engine-pi/application/auth';
 
 function isRecord(value: unknown): value is Record<string, unknown> {

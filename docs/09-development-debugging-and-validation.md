@@ -29,7 +29,7 @@ Always run Jest through the npm wrapper:
 
 ```bash
 npm run test -- tests/unit/features/chat/inputTurnSubmission.test.ts
-npm run test -- --runInBand tests/unit/pi/runtime/piBackgroundSubagentJobs.test.ts
+npm run test -- --runInBand tests/unit/engine-pi/runtime/piBackgroundSubagentJobs.test.ts
 npm run test -- -t "test name"
 ```
 
@@ -45,13 +45,13 @@ npm run test -- -t "test name"
 |---|---|
 | Lifecycle/composition | `tests/unit/main/pluginLifecycle.test.ts`, `tests/unit/app/ui/imperativeChatAdapter.test.ts` |
 | Input and queue | `tests/unit/features/chat/inputTurnSubmission.test.ts`, `inputStreamingQueue.test.ts`, `inputControllerLifecycle.test.ts` |
-| Prompt layers | `tests/unit/pi/runtime/buildTurnPrompt.test.ts` |
+| Prompt layers | `tests/unit/agent/runtime/buildTurnPrompt.test.ts` |
 | Tabs and restore | `tests/unit/features/chat/tabManagerLifecycle.test.ts`, `sessionControllerLifecycle.test.ts`, `sessionSwitch.test.ts` |
 | External context privacy | `tests/unit/features/chat/tabExternalContext.test.ts`, `tests/unit/app/deviceLocalExternalContextStore.test.ts`, Pi session-store tests |
-| Subagents | `tests/unit/pi/tools/createSubagentTool.test.ts`, `piBackgroundSubagentJobs.test.ts`, `subagentConcurrencyLimiter.test.ts` |
-| React chat/settings | `tests/pivi-react/ChatShell.test.tsx`, `AssistantContentView.test.tsx`, `activityPresentation.test.ts`, `chatUiStore.test.tsx`, `SettingsUi.test.tsx`, `PiviSettingTabHost.test.ts` |
-| Owner-realm DOM | `tests/pivi-react/OwnerRealmDom.test.ts`, `DefaultVaultSkillsPrompt.test.ts`, `tests/unit/app/ui/createStreamingMarkdownContentAdapter.test.ts` |
-| Tools and MCP | Relevant suites under `tests/unit/engine/tools/`, `tests/unit/pi/tools/`, `tests/unit/pi/mcp/`, `tests/unit/host/systemProcessRunner.test.ts`, plus `tests/unit/pi/piMcpBridge.test.ts` and `tests/pivi-react/McpToolsSection.test.tsx` |
+| Subagents | `tests/unit/engine-pi/tools/createSubagentTool.test.ts`, `piBackgroundSubagentJobs.test.ts`, `subagentConcurrencyLimiter.test.ts` |
+| React chat/settings | `tests/jsdom/pivi-react/ChatShell.test.tsx`, `AssistantContentView.test.tsx`, `activityPresentation.test.ts`, `chatUiStore.test.tsx`, `SettingsUi.test.tsx`, `PiviSettingTabHost.test.ts` |
+| Owner-realm DOM | `tests/jsdom/pivi-react/OwnerRealmDom.test.ts`, `DefaultVaultSkillsPrompt.test.ts`, `tests/jsdom/app-ui/createStreamingMarkdownContentAdapter.test.ts` |
+| Tools and MCP | Relevant suites under `tests/unit/agent/tools/`, `tests/unit/engine-pi/tools/`, `tests/unit/agent/mcp/`, `tests/unit/host/systemProcessRunner.test.ts`, plus `tests/unit/agent/mcp/mcpToolBridge.test.ts` and `tests/jsdom/pivi-react/McpToolsSection.test.tsx` |
 
 Use `rg --files tests | rg <feature>` to locate the current exact filename; test names move as ownership is refined.
 

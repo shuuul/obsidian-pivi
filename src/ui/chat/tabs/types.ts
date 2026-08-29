@@ -12,14 +12,14 @@ import type { NavigationController } from '../controllers/NavigationController';
 import type { SelectionController } from '../controllers/SelectionController';
 import type { SessionController } from '../controllers/SessionController';
 import type { StreamController } from '../controllers/StreamController';
+import type { FileContextManager } from '../input/FileContext';
+import type { ImageContextManager } from '../input/ImageContext';
+import type { InlineContextManager } from '../input/InlineContext';
+import type { RichChatInput } from '../input/RichChatInput';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { ExternalContextSelector } from '../toolbar/ExternalContextControl';
-import type { FileContextManager } from '../ui/FileContext';
-import type { ImageContextManager } from '../ui/ImageContext';
-import type { InlineContextManager } from '../ui/InlineContext';
-import type { RichChatInput } from '../ui/RichChatInput';
 /**
  * Minimal interface for the PiviView methods used by TabManager and Tab.
  * Extends Component for Obsidian integration (event handling, cleanup).

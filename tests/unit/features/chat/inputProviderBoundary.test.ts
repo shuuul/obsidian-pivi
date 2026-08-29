@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 import { InputProviderBoundaryHandler } from '@/ui/chat/controllers/inputProviderBoundaries';
 import {
   getProviderBoundaryChunkType,

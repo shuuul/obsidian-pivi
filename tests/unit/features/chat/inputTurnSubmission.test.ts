@@ -1,7 +1,7 @@
 import { buildTurnSubmission, type TurnSubmissionSources } from '@/ui/chat/composer/ComposerSubmission';
 import { isSubmissionBlockedByContextLimit } from '@/ui/chat/composer/contextOverLimitNotice';
 import { createInlineContextToken } from '@pivi/agent/context/inlineContext';
-import type { UsageInfo } from '@pivi/agent/foundation';
+import type { UsageInfo } from '@pivi/agent/runtime';
 
 const overLimitUsage: UsageInfo = {
   contextTokens: 1_000,

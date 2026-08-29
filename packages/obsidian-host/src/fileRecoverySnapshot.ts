@@ -1,4 +1,4 @@
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import { type App, type TFile } from 'obsidian';
 
 const logger = new PluginLogger('FileRecoverySnapshot');

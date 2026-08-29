@@ -1,7 +1,4 @@
-import {
-  resolveSubagentActivityStatus,
-  resolveToolActivityStatus,
-} from '@pivi/agent/foundation';
+import { resolveSubagentActivityStatus, resolveToolActivityStatus } from '@pivi/agent/tools';
 
 describe('activity status mapping', () => {
   it.each([

@@ -1,4 +1,4 @@
-import type { ChatIconSvg, ChatSvgChild } from '@pivi/agent/foundation';
+import type { ChatIconSvg, ChatSvgChild } from '@pivi/agent/runtime/chatUi';
 
 import { PiviBrandIcon } from './PiviBrandIcon';
 

@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 
-import { PluginLogger } from '@pivi/agent/foundation/pluginLogger';
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { ExternalOpener } from '@pivi/agent/ports';
 
 type SpawnChild = { unref: () => void };

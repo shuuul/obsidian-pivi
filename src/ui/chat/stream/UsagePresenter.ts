@@ -1,4 +1,4 @@
-import type { StreamChunk } from '@pivi/agent/foundation';
+import type { StreamChunk } from '@pivi/agent/runtime';
 import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 

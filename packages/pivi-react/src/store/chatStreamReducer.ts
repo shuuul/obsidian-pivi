@@ -1,10 +1,6 @@
-import type {
-  ChatMessage,
-  StreamChunk,
-  SubagentInfo,
-  ToolCallInfo,
-  UsageInfo,
-} from '@pivi/agent/foundation';
+import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime/chatTypes';
+import type { UsageInfo } from '@pivi/agent/runtime/chatTypes';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 
 export interface ChatStreamSnapshot {
   readonly message: ChatMessage;

@@ -2,7 +2,7 @@
  * HTTP(S) URL normalization, credential rejection, and diagnostic redaction.
  */
 
-import { isSecretLikeKey } from '../foundation/configValueSource';
+import { isSecretLikeKey } from '../config/valueSource';
 
 export class NetworkUrlError extends Error {
   readonly code: 'scheme' | 'credentials' | 'invalid' | 'empty';

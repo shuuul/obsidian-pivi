@@ -1,5 +1,5 @@
-import type { ObsidianToolsSettings } from '@pivi/agent/foundation';
 import type { CapabilityApprovalPort } from '@pivi/agent/ports';
+import type { ObsidianToolsSettings } from '@pivi/agent/settings';
 import type { ToolSpec } from '@pivi/agent/tools';
 import {
   ExternalFileApi,

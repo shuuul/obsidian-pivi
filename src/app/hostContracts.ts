@@ -4,16 +4,6 @@
  */
 import type { ProviderCredential } from "@pivi/agent/auth/piProviderCredentials";
 import type { ProviderOAuthProgress } from "@pivi/agent/auth/providerOAuthProgress";
-import type { PiviSettings } from "@pivi/agent/foundation";
-import type { ChatUIConfig, ChatUIOption } from "@pivi/agent/foundation/chatUi";
-import type {
-  DeviceLocalEnvironmentStore,
-  EnvironmentUiEntry,
-} from "@pivi/agent/foundation/deviceLocalEnvironmentState";
-import type {
-  AppModelReadinessProvider,
-} from "@pivi/agent/foundation/modelReadiness";
-import type { EnvironmentScope, WebProviderId } from "@pivi/agent/foundation/settings";
 import type { McpManagementCoordinator } from "@pivi/agent/mcp/mcpManagementCoordinator";
 import type {
   AppMcpDiagnostics,
@@ -25,6 +15,16 @@ import type {
 } from "@pivi/agent/mcp/ports";
 import type { ManagedMcpServer } from "@pivi/agent/mcp/types";
 import type { HttpClient, ProcessRunner } from "@pivi/agent/ports";
+import type { ChatUIConfig, ChatUIOption } from "@pivi/agent/runtime/chatUi";
+import type { PiviSettings } from "@pivi/agent/settings";
+import type {
+  DeviceLocalEnvironmentStore,
+  EnvironmentUiEntry,
+} from "@pivi/agent/settings/deviceLocalEnvironmentState";
+import type {
+  AppModelReadinessProvider,
+} from "@pivi/agent/settings/modelReadiness";
+import type { EnvironmentScope, WebProviderId } from "@pivi/agent/settings/types";
 import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";

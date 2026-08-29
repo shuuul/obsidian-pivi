@@ -1,11 +1,5 @@
-import type {
-  ChatMessage,
-  ChatTurnRequestSnapshot,
-  ImageAttachment,
-  SessionTitleSource,
-  UsageInfo,
-} from '../foundation';
 import type { WorkspaceFileStore } from '../ports';
+import type { ChatMessage, ChatTurnRequestSnapshot, ImageAttachment, SessionTitleSource, UsageInfo } from '../runtime';
 
 export type { SessionTitleSource };
 

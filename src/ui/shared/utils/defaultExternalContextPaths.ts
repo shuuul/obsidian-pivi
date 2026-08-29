@@ -1,6 +1,6 @@
 import {
   getObsidianToolsSettingsFromBag,
-} from '@pivi/agent/foundation/settings';
+} from '@pivi/agent/settings/types';
 
 /**
  * Pinned external context roots for a new session. Availability is deliberately

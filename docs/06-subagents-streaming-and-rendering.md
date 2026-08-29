@@ -122,6 +122,6 @@ The strict parser also protects terminal presentation. Persisted structured repo
 - Keep active-turn and late-turn event routing separate.
 - Persist structured UI overlays without replacing Pi-compatible message history.
 - Keep compact parent reports separate from complete terminal trace persistence and preserve text fallback.
-- Keep the `spawn_agent` schema and system prompt in sync: the schema in `packages/engine-pi/src/createSubagentTool.ts` marks `run_in_background` as required, so the registered-tools prompt in `packages/agent/src/prompt/obsidianAgentTools.ts` must list `run_in_background` in its `Required parameters` sentence. A mismatch causes weaker models to omit the field and burn a turn on tool-validation retries before recovering.
+- Keep the `spawn_agent` schema and system prompt in sync: the schema in `packages/engine-pi/src/tools/createSubagentTool.ts` marks `run_in_background` as required, so the registered-tools prompt in `packages/agent/src/prompt/obsidianAgentTools.ts` must list `run_in_background` in its `Required parameters` sentence. A mismatch causes weaker models to omit the field and burn a turn on tool-validation retries before recovering.
 - Test queued abort, running abort, capacity changes, construction failure, late events, hydrate retries, session orphaning, and restore when changing this feature.
 - Test turn interrupt terminalizes in-flight subagent presentation as Cancelled (not left Running).

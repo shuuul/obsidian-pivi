@@ -1,5 +1,5 @@
 import { resolveUserMessageDisplayText } from '@pivi/agent/context/context';
-import type { ChatMessage } from '@pivi/agent/foundation';
+import type { ChatMessage } from '@pivi/agent/runtime';
 
 import { normalizeObsidianAppLinksInMarkdown } from '../../shared/utils/fileLink';
 

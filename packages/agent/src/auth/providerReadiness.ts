@@ -1,4 +1,4 @@
-import { parseEnvironmentVariables } from '../foundation/settingsEnv';
+import { parseEnvironmentVariables } from '../settings/environmentText';
 import type { ProviderCredential } from './piProviderCredentials';
 import {
   isInteractiveOAuthProvider,

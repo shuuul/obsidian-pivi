@@ -1,4 +1,4 @@
-import type { DiffLine, DiffStats, StructuredPatchHunk, ToolCallInfo, ToolDiffData } from '../foundation';
+import type { DiffLine, DiffStats, StructuredPatchHunk, ToolCallInfo, ToolDiffData } from '../tools';
 import { TOOL_OBSIDIAN_EDIT } from './obsidianToolNames';
 import { TOOL_EDIT } from './toolNames';
 

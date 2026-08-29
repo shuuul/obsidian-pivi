@@ -2,18 +2,15 @@
 import { patchSetMaxListenersForElectron } from "@pivi/obsidian-host/electronCompat";
 patchSetMaxListenersForElectron();
 
-import type {
-  OpenSessionState,
-  PiviSettings,
-  SessionSummary,
-} from "@pivi/agent/foundation";
-import { PluginLogger } from "@pivi/agent/foundation/pluginLogger";
-import type { EnvironmentScope } from "@pivi/agent/foundation/settings";
-import { getObsidianToolsSettingsFromBag } from "@pivi/agent/foundation/settings";
+import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import { OriginGrantRegistry } from "@pivi/agent/network";
 import type { CapabilityApprovalPort } from "@pivi/agent/ports";
+import type { OpenSessionState, SessionSummary } from "@pivi/agent/runtime";
 import type { SessionMessagePage, SessionStore } from "@pivi/agent/session";
 import { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
+import type { PiviSettings } from "@pivi/agent/settings";
+import type { EnvironmentScope } from "@pivi/agent/settings/types";
+import { getObsidianToolsSettingsFromBag } from "@pivi/agent/settings/types";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
 import { PiSettingsCoordinator, warmPiAiModelsCache } from "@pivi/engine-pi/application/models";
@@ -64,6 +61,8 @@ import {
 import { initializePiviPlugin, persistOpenTabStates } from "@/app/pluginLifecycle";
 import * as sessionApi from "@/app/pluginSessionApi";
 import { loadPluginSettings } from "@/app/pluginSettingsLoad";
+import { createPiUiFacades } from "@/app/runtime/piUiFacades";
+import type { PiWorkspaceServices } from "@/app/runtime/PiWorkspaceServices";
 import {
   createPluginServiceGraph,
   createSessionStore,
@@ -84,8 +83,6 @@ import {
   refreshPiviManagementViews,
   refreshVaultSkillsViews,
 } from "@/app/viewAccess";
-import { createPiUiFacades } from "@/app/workspace/piUiFacades";
-import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
 import {
   getWorkspaceCommandFullId,
   WorkspaceCommandRegistry,

@@ -1,4 +1,4 @@
-import type { ChatMessage, StreamChunk } from '../foundation';
+import type { ChatMessage, StreamChunk } from '../runtime';
 import type { ChatRewindResult, ChatTurnMetadata, PreparedChatTurn } from '../runtime/types';
 
 export interface AgentEngineTurnOptions {

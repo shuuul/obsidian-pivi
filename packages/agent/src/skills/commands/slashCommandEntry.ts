@@ -1,4 +1,4 @@
-import type { SlashCommandSource } from '../../foundation/settings';
+import type { SlashCommandSource } from '../../settings/types';
 
 export type SlashCommandKind = 'command' | 'skill' | 'tool';
 export type SlashCommandScope = 'builtin' | 'workspace' | 'user' | 'system' | 'runtime';

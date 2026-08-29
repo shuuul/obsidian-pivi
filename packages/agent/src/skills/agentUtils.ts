@@ -1,4 +1,4 @@
-import type { AgentDefinition } from '../foundation';
+import type { AgentDefinition } from '../skills';
 import { validateSlugName } from './frontmatter';
 import { yamlString } from './slashCommand';
 

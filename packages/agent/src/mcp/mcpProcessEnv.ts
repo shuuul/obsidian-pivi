@@ -1,5 +1,5 @@
-import type { ResolveConfigValueHost } from '../foundation/configValueSource';
-import { readSecretAcrossIds } from '../foundation/configValueSource';
+import type { ResolveConfigValueHost } from '../config/valueSource';
+import { readSecretAcrossIds } from '../config/valueSource';
 import type { SyncSecretStore } from '../ports';
 import { getEnhancedPath } from './env';
 import {

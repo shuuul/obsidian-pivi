@@ -1,5 +1,5 @@
-import { WEB_PROVIDER_CAPABILITIES } from '../../foundation/settings';
 import { classifyHostnameOrAddress, isDeniedIpClass, redactUrl } from '../../network';
+import { WEB_PROVIDER_CAPABILITIES } from '../../settings/types';
 import { TOOL_WEB_FETCH } from '../toolNames';
 import type { ToolSpec } from '../toolSpec';
 import { formatFetchResponse } from './format';

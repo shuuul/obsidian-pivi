@@ -6,7 +6,7 @@ import {
   type ChatPerfRecorder,
   type ChatTabSnapshotItem,
 } from '@pivi/pivi-react/store';
-import type { ChatMessage, SessionSummary } from '@pivi/agent/foundation';
+import type { ChatMessage, SessionSummary } from '@pivi/agent/runtime';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { Component, type Editor, type MarkdownView } from 'obsidian';
 

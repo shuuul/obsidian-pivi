@@ -2,7 +2,7 @@ import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 
 import { getActiveWindow } from "@/ui/shared/dom";
 
-import { autoResizeTextarea } from "../ui/textareaResize";
+import { autoResizeTextarea } from "../input/textareaResize";
 import { shouldSendMessageFromEnterKey } from "./tabAgentContext";
 import type { TabData } from "./types";
 

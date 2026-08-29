@@ -1,4 +1,4 @@
-import { getObsidianToolsSettingsFromBag } from '@pivi/agent/foundation/settings';
+import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 import type { MountInlineEditSurfaceChromeOptions } from '@pivi/pivi-react/mount';
 import type { App } from 'obsidian';
 import { type Component, Platform } from 'obsidian';

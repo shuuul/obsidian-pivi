@@ -1,4 +1,4 @@
-import type { StreamChunk } from '../foundation';
+import type { StreamChunk } from '../runtime';
 
 export class StreamChunkQueue {
   private closed = false;

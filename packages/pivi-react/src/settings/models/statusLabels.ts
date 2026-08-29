@@ -1,4 +1,4 @@
-import type { AppModelReadinessStatusKind } from '@pivi/agent/foundation/modelReadiness';
+import type { AppModelReadinessStatusKind } from '@pivi/agent/settings/modelReadiness';
 
 import type { TranslationKey } from '../../i18n';
 
