@@ -2,7 +2,7 @@
 
 [Back to the developer handbook](README.md)
 
-Pivi is an npm-workspace TypeScript project that builds one Obsidian desktop-plugin bundle. Node.js 24 or newer is required; CI uses Node 24.x.
+Pivi is an npm-workspace TypeScript project that builds one Obsidian desktop-plugin bundle. Node.js 24.x is required; local installs, CI, and releases use that major.
 
 ## Prepare the checkout
 
@@ -11,7 +11,7 @@ nvm use
 npm ci
 ```
 
-`npm ci` installs the exact lockfile. The repository `.npmrc` enables `legacy-peer-deps=true`, and `postinstall` creates `.env.local` from the example outside CI when it is missing. Do not switch package managers or relax peer-dependency handling as part of an unrelated change.
+`npm ci` installs the exact lockfile. The repository `.npmrc` enables `legacy-peer-deps=true` and rejects installs outside Node 24.x; `postinstall` creates `.env.local` from the example outside CI when it is missing. Do not switch package managers or relax peer-dependency handling as part of an unrelated change.
 
 Editors should use the project TypeScript version. TypeScript 6 compatibility packages support ESLint and ts-jest, while `typescript-native` (TypeScript 7) is the authoritative command-line checker invoked by `npm run typecheck`.
 
