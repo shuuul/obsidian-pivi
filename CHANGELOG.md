@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.19.3](https://github.com/shuuul/obsidian-pivi/compare/0.19.2...0.19.3) (2026-08-29)
+
+
+### Code Refactoring
+
+* align repository directories and modules with their ownership boundaries ([0025fa7](https://github.com/shuuul/obsidian-pivi/commit/0025fa76259f2cffd19d04dff8a6497ea9cb653d))
+
+
+### Miscellaneous Chores
+
+* **deps:** update Pi packages to 0.84.4 ([9419c24](https://github.com/shuuul/obsidian-pivi/commit/9419c24060e4b55b93ea31b1304ebd39f91ba6da))
+* **deps:** update development tooling and align the repository on Node.js 24 ([b4172ac](https://github.com/shuuul/obsidian-pivi/commit/b4172ac141439cdf27d8e17c60bcc9b68f98c16d))
+
+
+### Documentation
+
+* explain how custom models inherit capabilities from an existing catalog model ([8425594](https://github.com/shuuul/obsidian-pivi/commit/8425594e50980971025a7042f38622780c159056))
+
 ## [0.19.2](https://github.com/shuuul/obsidian-pivi/compare/0.19.1...0.19.2) (2026-08-25)
 
 
