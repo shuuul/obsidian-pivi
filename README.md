@@ -97,6 +97,17 @@ Multi-tab conversational AI with streaming, file context, slash commands, and mo
 
 Attach vault files or explicitly allowed external folders as turn context. Select text in an open note to add its exact range to the input panel as a removable context badge. External folders require external read access and can be pinned on this device without syncing their absolute paths into settings or session history.
 
+### 🧩 Map a custom model to the built-in catalog
+Self-hosted and OpenAI-compatible servers do not always advertise reasoning metadata from `/v1/models`. To give a custom model the same thinking levels as an equivalent built-in model:
+
+1. Open **Settings → Pivi → Models** and expand the custom provider.
+2. Find the custom model and enter the equivalent built-in model ID in **Catalog model ID**.
+3. Leave the field to save the value, then reselect the model if the composer is already open.
+
+For example, a self-hosted model exposed as `GLM-5.3-Flash-EXL3` can map to `glm-5.3-flash`. Pivi keeps sending the server's original model ID while inheriting the catalog model's reasoning capability, supported thinking levels, and default thinking level. The catalog ID must match an existing model ID, not a display name; an unknown value such as `GLM-5.4-Flash` cannot be inherited.
+
+This mapping does not change the provider endpoint, credentials, context window, or output-token limit. Prefer reasoning metadata advertised by the server when available; it takes precedence over the catalog mapping.
+
 ### 🛠️ Obsidian-native tools
 Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Obsidian does not expose publicly use explicit CLI, network-provider, MCP, or allowlisted process integrations as noted below.
 
