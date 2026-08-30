@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.20.0](https://github.com/shuuul/obsidian-pivi/compare/0.19.4...0.20.0) (2026-08-30)
+
+
+### Features
+
+* **settings:** add provider setup links and about page ([a9c0a9f](https://github.com/shuuul/obsidian-pivi/commit/a9c0a9f8ce13567f9f8705e1c72efafaba4213e3))
+* **settings:** clarify provider setup links ([ccb9df3](https://github.com/shuuul/obsidian-pivi/commit/ccb9df3d6d71e9a764758129314327db810d3213))
+* **settings:** suggest catalog models for custom providers ([1905421](https://github.com/shuuul/obsidian-pivi/commit/190542183b807dee51da7ad8b923ec2b81039227))
+* **settings:** unify select control styling ([328f8d0](https://github.com/shuuul/obsidian-pivi/commit/328f8d08fb27e67cadc4e350ca34f44c5a02a2da))
+
+
+### Bug Fixes
+
+* **settings:** correct provider setup link styling ([9810f6f](https://github.com/shuuul/obsidian-pivi/commit/9810f6f9ee1916fa47cfdcd53864d1162fa504ae))
+* **settings:** show effective model context limits ([60482b0](https://github.com/shuuul/obsidian-pivi/commit/60482b0c54658a039a3c63e7252bb4fd015b854e))
+
 ## [0.19.4](https://github.com/shuuul/obsidian-pivi/compare/0.19.3...0.19.4) (2026-08-29)
 
 
