@@ -337,7 +337,6 @@ export interface SettingsMentionEditorPort {
 export interface SettingsAboutSnapshot {
   readonly version: string;
   readonly releasedAt: string;
-  readonly minHostVersion: string;
   readonly githubUrl: string;
   readonly issuesUrl: string;
 }

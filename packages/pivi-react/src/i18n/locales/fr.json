@@ -356,8 +356,6 @@
       "intro": "Pivi est un plugin communautaire open source. Signalez les bugs ou proposez des idées sur GitHub.",
       "version": "Version",
       "released": "Publié le {date}.",
-      "minHost": "{hostName} minimum",
-      "minHostDesc": "Nécessite {hostName} {version} ou plus récent.",
       "github": "GitHub",
       "githubDesc": "Code source, versions et documentation.",
       "issues": "Issues",

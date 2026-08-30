@@ -42,6 +42,8 @@ export interface BuildPiModelOptionsInput {
   disabledProviders?: readonly string[];
   addedProviders?: readonly string[];
   defaultModelKey?: string;
+  /** Model key → user-configured context window used by runtime and UI. */
+  customContextLimits?: Readonly<Record<string, number>>;
   /** Custom provider id → Settings display name for composer group labels. */
   providerDisplayNames?: Readonly<Record<string, string>>;
   /** Custom provider id → bundled logo slug (kind-based; ids are not in PROVIDER_ID_TO_SLUG). */
@@ -52,8 +54,8 @@ const DEFAULT_PI_MODEL_KEY = DEFAULT_MODEL_KEY;
 const DEFAULT_PI_MODEL_LABEL = 'DeepSeek Chat';
 const DEFAULT_PI_MODEL_PROVIDER = 'deepseek';
 
-function formatPiModelDescription(model: PiCachedModel): string {
-  return `${model.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(model.contextWindow)})`;
+function formatPiModelDescription(model: PiCachedModel, contextWindow = model.contextWindow): string {
+  return `${model.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(contextWindow)})`;
 }
 
 function isProviderDisabled(disabledProviders: readonly string[] | undefined, providerId: string): boolean {
@@ -76,7 +78,10 @@ function titleizeModelId(modelValue: string): string {
 function optionFromModelKey(
   modelKey: string,
   cached: PiCachedModel | undefined,
-  input: Pick<BuildPiModelOptionsInput, 'providerDisplayNames' | 'providerLogoSlugs'>,
+  input: Pick<
+    BuildPiModelOptionsInput,
+    'customContextLimits' | 'providerDisplayNames' | 'providerLogoSlugs'
+  >,
 ): ChatUIOption {
   const label = cached?.name ?? titleizeModelId(modelKey);
   const providerId = getProviderIdFromModelValue(modelKey);
@@ -84,7 +89,9 @@ function optionFromModelKey(
   return {
     value: modelKey,
     label,
-    description: cached ? formatPiModelDescription(cached) : 'Pi-supported model',
+    description: cached
+      ? formatPiModelDescription(cached, input.customContextLimits?.[modelKey] ?? cached.contextWindow)
+      : 'Pi-supported model',
     group: providerId ? getProviderDisplayName(providerId, input.providerDisplayNames) : undefined,
     providerLogoSlug:
       getModelFamilyLogoSlug(modelId, label)
@@ -149,7 +156,10 @@ export function isPiModelContextWindowAuthoritative(
   return Boolean(model?.contextWindow) && model?.contextWindowIsAuthoritative !== false;
 }
 
-export function getPiAiModelsForProvider(providerId: string): PiModelOption[] {
+export function getPiAiModelsForProvider(
+  providerId: string,
+  customContextLimits?: Readonly<Record<string, number>>,
+): PiModelOption[] {
   const result: PiModelOption[] = [];
 
   for (const [key, model] of PI_AI_MODELS_CACHE.entries()) {
@@ -157,7 +167,7 @@ export function getPiAiModelsForProvider(providerId: string): PiModelOption[] {
       result.push({
         value: key,
         label: model.name,
-        description: `${model.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(model.contextWindow)})`,
+        description: formatPiModelDescription(model, customContextLimits?.[key] ?? model.contextWindow),
       });
     }
   }

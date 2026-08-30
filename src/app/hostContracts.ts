@@ -205,7 +205,10 @@ export interface PiviUiFacades {
   ): void;
 
   /** List catalog models for one provider (settings checklist). */
-  listModelsForProvider(providerId: string): ChatUIOption[];
+  listModelsForProvider(
+    providerId: string,
+    customContextLimits?: Readonly<Record<string, number>>,
+  ): ChatUIOption[];
 
   /** Reinstall custom/local providers from settings into the pi-ai registry. */
   syncCustomProviders(settings: Record<string, unknown>): void;

@@ -124,7 +124,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
     mentionEditor: { mount: () => ({ getValue: () => '', setValue: () => undefined, focus: () => undefined, setDisabled: () => undefined, destroy: () => undefined }) },
-    about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', minHostVersion: '1.12.0', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
+    about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
   };
 }
 
@@ -1128,6 +1128,7 @@ describe('React settings foundation', () => {
 
     expect(screen.getByText('0.19.4')).toBeInTheDocument();
     expect(screen.getByText('Released 2026-08-29.')).toBeInTheDocument();
+    expect(screen.queryByText(/Minimum/)).toBeNull();
     expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/shuuul/obsidian-pivi');
     expect(screen.getByRole('link', { name: 'Report an issue' })).toHaveAttribute(
       'href',

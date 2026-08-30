@@ -1,12 +1,10 @@
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
-import { useHostTerminology } from '../platform';
 import type { SettingsAboutPort } from '../ports';
 import { SettingRow, SettingsSection } from './controls';
 
 export function AboutSettingsTab({ about }: { readonly about: SettingsAboutPort }) {
   const t = useT();
-  const { hostName } = useHostTerminology();
   const snapshot = about.getSnapshot();
 
   return (
@@ -17,15 +15,6 @@ export function AboutSettingsTab({ about }: { readonly about: SettingsAboutPort 
         description={t('settings.about.released', { date: snapshot.releasedAt })}
       >
         <span className="pivi-about-version">{snapshot.version}</span>
-      </SettingRow>
-      <SettingRow
-        name={t('settings.about.minHost')}
-        description={t('settings.about.minHostDesc', {
-          hostName,
-          version: snapshot.minHostVersion,
-        })}
-      >
-        <span className="pivi-about-version">{snapshot.minHostVersion}</span>
       </SettingRow>
       <SettingRow
         name={t('settings.about.github')}

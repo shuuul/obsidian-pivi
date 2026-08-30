@@ -43,6 +43,7 @@ export const piChatUIConfig: ChatUIConfig = {
       visibleModels: piSettings.visibleModels,
       disabledProviders: piSettings.disabledProviders,
       addedProviders: piSettings.addedProviders,
+      customContextLimits: settings.customContextLimits as Record<string, number> | undefined,
       providerDisplayNames,
       providerLogoSlugs,
     });

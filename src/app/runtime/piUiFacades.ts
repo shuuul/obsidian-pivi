@@ -71,8 +71,8 @@ export function createPiUiFacades(
     commitSettingsSnapshot(settings, snapshot) {
       PiSettingsCoordinator.commitSettingsSnapshot(settings, snapshot);
     },
-    listModelsForProvider(providerId) {
-      return getPiAiModelsForProvider(providerId);
+    listModelsForProvider(providerId, customContextLimits) {
+      return getPiAiModelsForProvider(providerId, customContextLimits);
     },
     syncCustomProviders(settings) {
       const configs = withRuntimeHeaders(settings);

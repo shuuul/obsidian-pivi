@@ -248,14 +248,22 @@ describe('UI port adapters', () => {
 
   it('projects settings persistence and environment actions', async () => {
     const applyEnvironmentVariables = jest.fn(async () => {});
+    const listModelsForProvider = jest.fn(() => []);
+    const uiFacades = {
+      ...createUiFacades(),
+      listModelsForProvider,
+    };
     const getPiWorkspace = jest.fn(() => {
       throw new Error('Settings ports must use the injected workspace.');
     });
     const host = {
-      settings: {} as PiviSettings,
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        customContextLimits: { 'custom/glm': 1_000_000 },
+      } as PiviSettings,
       saveSettings: async () => {},
       notify: jest.fn(),
-      getUiFacades: () => createUiFacades(),
+      getUiFacades: () => uiFacades,
       getPiWorkspace,
       getActiveEnvironmentVariables: () => 'ACTIVE=1',
       getEnvironmentVariablesForScope: () => 'SCOPE=1',
@@ -285,7 +293,11 @@ describe('UI port adapters', () => {
     const ports = createSettingsUiPorts(host, workspace as never);
 
     ports.feedback.notify('Settings saved.');
+    ports.catalog.listModelsForProvider('custom');
     expect(host.notify).toHaveBeenCalledWith('Settings saved.');
+    expect(listModelsForProvider).toHaveBeenCalledWith('custom', {
+      'custom/glm': 1_000_000,
+    });
     expect(ports.environment.getActiveEnvironmentVariables()).toBe('ACTIVE=1');
     expect(ports.environment.getEnvironmentVariables('agent')).toBe('SCOPE=1');
     await ports.environment.applyEnvironmentVariables('agent', 'NEXT=1');
@@ -309,7 +321,6 @@ describe('UI port adapters', () => {
     expect(ports.about.getSnapshot()).toEqual({
       version: expect.any(String),
       releasedAt: expect.any(String),
-      minHostVersion: expect.any(String),
       githubUrl: 'https://github.com/shuuul/obsidian-pivi',
       issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues',
     });

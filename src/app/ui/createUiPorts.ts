@@ -35,7 +35,6 @@ import { isNoteToolbarTextToolbarActive } from '@/app/noteToolbarIntegration';
 import {
   PIVI_GITHUB_URL,
   PIVI_ISSUES_URL,
-  PIVI_MIN_HOST_VERSION,
   PIVI_RELEASED_AT,
   PIVI_VERSION,
 } from '@/app/pluginIdentity';
@@ -573,7 +572,10 @@ export function createSettingsUiPorts(
       isNoteToolbarTextToolbarActive: () => isNoteToolbarTextToolbarActive(host.app),
     },
     catalog: {
-      listModelsForProvider: (providerId) => uiFacades.listModelsForProvider(providerId),
+      listModelsForProvider: (providerId) => uiFacades.listModelsForProvider(
+        providerId,
+        host.settings.customContextLimits,
+      ),
       syncCustomProviders: (snapshot) => uiFacades.syncCustomProviders(snapshot),
       fetchCustomProviderModels: (providerId, snapshot) => (
         uiFacades.fetchCustomProviderModels(providerId, snapshot)
@@ -590,7 +592,6 @@ export function createSettingsUiPorts(
       getSnapshot: () => ({
         version: PIVI_VERSION,
         releasedAt: PIVI_RELEASED_AT,
-        minHostVersion: PIVI_MIN_HOST_VERSION,
         githubUrl: PIVI_GITHUB_URL,
         issuesUrl: PIVI_ISSUES_URL,
       }),

@@ -124,6 +124,20 @@ describe('PiModelRegistry (core)', () => {
 
       expect(getPiAiModelsForProvider('anthropic')).toEqual([]);
     });
+
+    it('describes the effective context-window override instead of cached metadata', () => {
+      PI_AI_MODELS_CACHE.set(
+        'custom/glm',
+        modelFixture({ provider: 'custom', id: 'glm', name: 'GLM', contextWindow: 128_000 }),
+      );
+
+      expect(getPiAiModelsForProvider('custom', { 'custom/glm': 1_000_000 })).toEqual([
+        expect.objectContaining({
+          value: 'custom/glm',
+          description: 'Standard model (context: 1M)',
+        }),
+      ]);
+    });
   });
 
   describe('buildPiModelOptions', () => {
@@ -149,6 +163,20 @@ describe('PiModelRegistry (core)', () => {
           fallbackIcon: 'music',
         },
       ]);
+    });
+
+    it('describes the effective context-window override in composer options', () => {
+      PI_AI_MODELS_CACHE.set(
+        'custom/glm',
+        modelFixture({ provider: 'custom', id: 'glm', name: 'GLM', contextWindow: 128_000 }),
+      );
+
+      const options = buildPiModelOptions({
+        visibleModels: ['custom/glm'],
+        customContextLimits: { 'custom/glm': 1_000_000 },
+      });
+
+      expect(options[0]?.description).toBe('Standard model (context: 1M)');
     });
 
     it('omits visible models whose provider is disabled', () => {

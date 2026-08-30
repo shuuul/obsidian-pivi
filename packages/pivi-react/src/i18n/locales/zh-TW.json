@@ -356,8 +356,6 @@
       "intro": "Pivi 是開源社群外掛。如有問題或功能建議，請到 GitHub 提交 issue。",
       "version": "版本",
       "released": "發佈於 {date}。",
-      "minHost": "最低 {hostName} 版本",
-      "minHostDesc": "需要 {hostName} {version} 或更高版本。",
       "github": "GitHub",
       "githubDesc": "原始碼、發佈紀錄與文件。",
       "issues": "問題回報",

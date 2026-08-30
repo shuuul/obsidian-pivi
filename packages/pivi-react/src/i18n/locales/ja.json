@@ -356,8 +356,6 @@
       "intro": "Pivi はオープンソースのコミュニティプラグインです。不具合や機能要望は GitHub で報告してください。",
       "version": "バージョン",
       "released": "{date} リリース。",
-      "minHost": "最低 {hostName}",
-      "minHostDesc": "{hostName} {version} 以降が必要です。",
       "github": "GitHub",
       "githubDesc": "ソースコード、リリース、ドキュメント。",
       "issues": "Issues",
