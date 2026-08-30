@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.2](https://github.com/shuuul/obsidian-pivi/compare/0.20.1...0.20.2) (2026-08-30)
+
+
+### Bug Fixes
+
+* **review:** allow the Obsidian community scanner to install dependencies before type-aware linting
+
 ## [0.20.1](https://github.com/shuuul/obsidian-pivi/compare/0.20.0...0.20.1) (2026-08-30)
 
 

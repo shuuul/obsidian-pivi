@@ -11,7 +11,7 @@ nvm use
 npm ci
 ```
 
-`npm ci` installs the exact lockfile. The repository `.npmrc` enables `legacy-peer-deps=true` and rejects installs outside Node 24.x; `postinstall` creates `.env.local` from the example outside CI when it is missing. Do not switch package managers or relax peer-dependency handling as part of an unrelated change.
+`npm ci` installs the exact lockfile. The repository `.npmrc` enables `legacy-peer-deps=true`; use Node 24.x for local development, but do not enable npm's `engine-strict` because Obsidian's community scanner installs dependencies under its own Node version before linting. `postinstall` creates `.env.local` from the example outside CI when it is missing. Do not switch package managers or relax peer-dependency handling as part of an unrelated change.
 
 Editors should use the project TypeScript version. TypeScript 6 compatibility packages support ESLint and ts-jest, while `typescript-native` (TypeScript 7) is the authoritative command-line checker invoked by `npm run typecheck`.
 
