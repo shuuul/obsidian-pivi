@@ -300,6 +300,7 @@ export interface SettingsEditorToolbarPort {
 
 export interface SettingsCatalogPort {
   listModelsForProvider(providerId: string): ChatUIOption[];
+  listCatalogModels(): ChatUIOption[];
   syncCustomProviders(snapshot: PiviSettings): void;
   fetchCustomProviderModels(
     providerId: string,

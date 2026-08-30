@@ -175,6 +175,26 @@ export function getPiAiModelsForProvider(
   return result.sort((a, b) => a.label.localeCompare(b.label));
 }
 
+/** Built-in catalog rows available for custom-model compatibility matching. */
+export function getPiAiCatalogModels(
+  excludedProviderIds: ReadonlySet<string>,
+): PiModelOption[] {
+  const result: PiModelOption[] = [];
+
+  for (const [key, model] of PI_AI_MODELS_CACHE.entries()) {
+    if (excludedProviderIds.has(model.provider)) {
+      continue;
+    }
+    result.push({
+      value: key,
+      label: model.name,
+      description: formatPiModelDescription(model),
+    });
+  }
+
+  return result.sort((a, b) => a.value.localeCompare(b.value));
+}
+
 export function buildPiModelOptions(input: BuildPiModelOptionsInput): ChatUIOption[] {
   const options: ChatUIOption[] = [];
   const providerOrder = new Map(

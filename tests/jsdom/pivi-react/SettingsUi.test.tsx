@@ -121,7 +121,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       listIconNames: () => [],
       isNoteToolbarTextToolbarActive: () => false,
     },
-    catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
+    catalog: { listModelsForProvider: () => [], listCatalogModels: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
     mentionEditor: { mount: () => ({ getValue: () => '', setValue: () => undefined, focus: () => undefined, setDisabled: () => undefined, destroy: () => undefined }) },
     about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
@@ -829,6 +829,14 @@ describe('React settings foundation', () => {
       listModelsForProvider: (providerId: string) => providerId === customProvider.id
         ? [{ value: `${customProvider.id}/qwen3.8-27b`, label: 'qwen3.8-27b' }]
         : [{ value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' }],
+      listCatalogModels: () => [
+        { value: 'openrouter/qwen/qwen3.8-27b', label: 'Qwen 3.8 27B' },
+        { value: 'qwen/qwen3.5-27b', label: 'Qwen 3.5 27B' },
+        { value: 'openrouter/qwen/qwen3-32b', label: 'Qwen 3 32B' },
+        { value: 'openrouter/qwen/qwen3-235b', label: 'Qwen 3 235B' },
+        { value: 'nvidia/qwen3-next', label: 'Qwen 3 Next' },
+        { value: 'openai/gpt-5', label: 'GPT-5' },
+      ],
     });
     Object.assign(ports.complex.models, {
       getSettings: () => ({
@@ -851,14 +859,27 @@ describe('React settings foundation', () => {
 
     fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-provider-title' }));
     const input = screen.getByLabelText('Catalog model ID for qwen3.8-27b');
-    fireEvent.change(input, { target: { value: ' qwen/qwen3.5-27b ' } });
+    fireEvent.focus(input);
+    const suggestedOptions = screen.getAllByRole('option');
+    expect(suggestedOptions).toHaveLength(5);
+    expect(suggestedOptions[0]).toHaveTextContent('openrouter/qwen/qwen3.8-27b');
+    fireEvent.click(suggestedOptions[1]!);
+    await act(async () => undefined);
+    expect(patchCustomProviderModel).toHaveBeenCalledWith(
+      customProvider.id,
+      'qwen3.8-27b',
+      { catalogModelId: 'qwen/qwen3.5-27b' },
+    );
+
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: ' vendor/private-model ' } });
     fireEvent.blur(input);
     await act(async () => undefined);
 
     expect(patchCustomProviderModel).toHaveBeenCalledWith(
       customProvider.id,
       'qwen3.8-27b',
-      { catalogModelId: 'qwen/qwen3.5-27b' },
+      { catalogModelId: 'vendor/private-model' },
     );
   });
   it('edits a custom model output length from the checklist and omits the field for built-ins', async () => {

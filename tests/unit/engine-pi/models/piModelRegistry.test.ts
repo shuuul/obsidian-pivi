@@ -3,6 +3,7 @@ import type { Api, Model } from '@earendil-works/pi-ai';
 import {
   buildPiModelOptions,
   cachePiAiRegistryModels,
+  getPiAiCatalogModels,
   getPiAiModelsForProvider,
   PI_AI_MODELS_CACHE,
   type PiModelLookup,
@@ -135,6 +136,26 @@ describe('PiModelRegistry (core)', () => {
         expect.objectContaining({
           value: 'custom/glm',
           description: 'Standard model (context: 1M)',
+        }),
+      ]);
+    });
+  });
+
+  describe('getPiAiCatalogModels', () => {
+    it('returns canonical catalog keys while excluding custom providers', () => {
+      PI_AI_MODELS_CACHE.set(
+        'openrouter/qwen/qwen3.5-27b',
+        modelFixture({ provider: 'openrouter', id: 'qwen/qwen3.5-27b', name: 'Qwen 3.5 27B' }),
+      );
+      PI_AI_MODELS_CACHE.set(
+        'custom-local/qwen3.5-27b',
+        modelFixture({ provider: 'custom-local', id: 'qwen3.5-27b', name: 'Local Qwen' }),
+      );
+
+      expect(getPiAiCatalogModels(new Set(['custom-local']))).toEqual([
+        expect.objectContaining({
+          value: 'openrouter/qwen/qwen3.5-27b',
+          label: 'Qwen 3.5 27B',
         }),
       ]);
     });

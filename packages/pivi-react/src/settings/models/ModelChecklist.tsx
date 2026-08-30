@@ -1,13 +1,15 @@
+import type { ChatUIOption } from '@pivi/agent/runtime/chatUi';
 import type {
   CustomProviderConfig,
   CustomProviderThinkingFormat,
 } from '@pivi/agent/settings/customProviders';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
-import { useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsCatalogPort } from '../../ports';
 import { Select, SettingsSectionHeading } from '../controls';
+import { matchCatalogModels } from './catalogModelMatching';
 
 export interface ModelChecklistProps {
   readonly catalog: SettingsCatalogPort;
@@ -29,6 +31,8 @@ export interface ModelChecklistProps {
 
 interface ModelCatalogIdInputProps {
   readonly value: string;
+  readonly providerModelName: string;
+  readonly catalogModels: readonly ChatUIOption[];
   readonly placeholder: string;
   readonly ariaLabel: string;
   readonly description: string;
@@ -38,36 +42,108 @@ interface ModelCatalogIdInputProps {
 /** Draft-commit text field for the user-declared built-in catalog model id. */
 function ModelCatalogIdInput({
   value,
+  providerModelName,
+  catalogModels,
   placeholder,
   ariaLabel,
   description,
   onCommit,
 }: ModelCatalogIdInputProps) {
   const [draft, setDraft] = useState(value);
-  const commit = (): void => {
-    const next = draft.trim();
-    if (next !== value) {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const lastCommittedRef = useRef(value);
+  const listboxId = useId();
+  const candidates = useMemo(
+    () => open ? matchCatalogModels(catalogModels, draft, providerModelName) : [],
+    [catalogModels, draft, open, providerModelName],
+  );
+  const commit = (candidate = draft): void => {
+    const next = candidate.trim();
+    if (next !== lastCommittedRef.current) {
+      lastCommittedRef.current = next;
       onCommit(next);
     }
   };
+  const choose = (index: number): void => {
+    const candidate = candidates[index];
+    if (!candidate) return;
+    setDraft(candidate.value);
+    setOpen(false);
+    setActiveIndex(-1);
+    commit(candidate.value);
+  };
   return (
-    <input
-      className="pivi-settings-control pivi-model-catalog-id-input"
-      type="text"
-      value={draft}
-      placeholder={placeholder}
-      aria-label={ariaLabel}
-      title={description}
-      onChange={event => { setDraft(event.target.value); }}
-      onBlur={commit}
-      onKeyDown={event => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
+    <div className="pivi-model-catalog-combobox">
+      <input
+        aria-activedescendant={open && activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined}
+        aria-autocomplete="list"
+        aria-controls={listboxId}
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        className="pivi-settings-control pivi-model-catalog-id-input"
+        type="text"
+        value={draft}
+        placeholder={placeholder}
+        role="combobox"
+        title={description}
+        onChange={event => {
+          setDraft(event.target.value);
+          setOpen(true);
+          setActiveIndex(-1);
+        }}
+        onFocus={() => { setOpen(true); }}
+        onBlur={() => {
           commit();
-          event.currentTarget.blur();
-        }
-      }}
-    />
+          setOpen(false);
+          setActiveIndex(-1);
+        }}
+        onKeyDown={event => {
+          if (event.key === 'ArrowDown' && candidates.length > 0) {
+            event.preventDefault();
+            setOpen(true);
+            setActiveIndex(index => Math.min(index + 1, candidates.length - 1));
+          } else if (event.key === 'ArrowUp' && candidates.length > 0) {
+            event.preventDefault();
+            setOpen(true);
+            setActiveIndex(index => index <= 0 ? candidates.length - 1 : index - 1);
+          } else if (event.key === 'Enter') {
+            event.preventDefault();
+            if (open && activeIndex >= 0) {
+              choose(activeIndex);
+            } else {
+              commit();
+              event.currentTarget.blur();
+            }
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            setOpen(false);
+            setActiveIndex(-1);
+          }
+        }}
+      />
+      {open && candidates.length > 0 ? (
+        <div className="pivi-model-catalog-options" id={listboxId} role="listbox">
+          {candidates.map((candidate, index) => (
+            <button
+              aria-selected={index === activeIndex}
+              className={`pivi-model-catalog-option${index === activeIndex ? ' is-highlighted' : ''}`}
+              id={`${listboxId}-option-${index}`}
+              key={candidate.value}
+              onClick={() => { choose(index); }}
+              onMouseDown={event => { event.preventDefault(); }}
+              onMouseEnter={() => { setActiveIndex(index); }}
+              role="option"
+              tabIndex={-1}
+              type="button"
+            >
+              <span className="pivi-model-catalog-option-name">{candidate.label}</span>
+              <span className="pivi-model-catalog-option-id">{candidate.value}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -150,6 +226,7 @@ export function ModelChecklist({
   const t = useT();
   const providerModels = catalog.listModelsForProvider(providerId);
   const showCatalogId = !!customProvider && !!onPatchModelCatalogId;
+  const catalogModels = showCatalogId ? catalog.listCatalogModels() : [];
   const showMaxTokensOverride = !!customProvider && !!onPatchModelMaxTokensOverride;
   return (
     <>
@@ -193,6 +270,8 @@ export function ModelChecklist({
                     <ModelCatalogIdInput
                       key={`${model.value} catalog ${catalogModelId}`}
                       value={catalogModelId}
+                      providerModelName={modelDef.name}
+                      catalogModels={catalogModels}
                       placeholder={t('settings.modelsTab.catalogModelIdPlaceholder')}
                       ariaLabel={t('settings.modelsTab.catalogModelIdAria', { name: model.label })}
                       description={t('settings.modelsTab.catalogModelIdDesc')}

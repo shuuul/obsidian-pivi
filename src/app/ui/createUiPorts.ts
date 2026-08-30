@@ -576,6 +576,7 @@ export function createSettingsUiPorts(
         providerId,
         host.settings.customContextLimits,
       ),
+      listCatalogModels: () => uiFacades.listCatalogModels(host.settings),
       syncCustomProviders: (snapshot) => uiFacades.syncCustomProviders(snapshot),
       fetchCustomProviderModels: (providerId, snapshot) => (
         uiFacades.fetchCustomProviderModels(providerId, snapshot)

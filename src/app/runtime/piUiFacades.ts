@@ -11,6 +11,7 @@ import {
 } from "@pivi/agent/settings/customProviders";
 import {
   fetchCustomProviderModels,
+  getPiAiCatalogModels,
   getPiAiModelsForProvider,
   piChatUIConfig,
   PiSettingsCoordinator,
@@ -73,6 +74,12 @@ export function createPiUiFacades(
     },
     listModelsForProvider(providerId, customContextLimits) {
       return getPiAiModelsForProvider(providerId, customContextLimits);
+    },
+    listCatalogModels(settings) {
+      const customProviderIds = new Set(
+        getCustomProvidersFromBag(settings).map((provider) => provider.id),
+      );
+      return getPiAiCatalogModels(customProviderIds);
     },
     syncCustomProviders(settings) {
       const configs = withRuntimeHeaders(settings);

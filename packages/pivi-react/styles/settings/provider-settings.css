@@ -570,6 +570,11 @@
   line-height: 1.3;
 }
 
+.pivi-model-catalog-combobox {
+  position: relative;
+  width: 100%;
+}
+
 .pivi-model-catalog-id-input {
   margin-top: 6px;
   width: 100%;
@@ -577,6 +582,56 @@
   padding: 4px 8px;
   font-size: var(--pivi-host-font-ui-smaller);
   cursor: text;
+}
+
+.pivi-model-catalog-options {
+  display: flex;
+  max-height: 230px;
+  overflow-y: auto;
+  flex-direction: column;
+  margin-block-start: 4px;
+  padding: 3px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
+  box-shadow: var(--pivi-shadow-md);
+}
+
+.pivi-model-catalog-option {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+  text-align: start;
+  cursor: pointer;
+}
+
+.pivi-model-catalog-option:hover,
+.pivi-model-catalog-option.is-highlighted {
+  background: var(--pivi-host-background-hover);
+}
+
+.pivi-model-catalog-option-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-weight: var(--pivi-host-font-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pivi-model-catalog-option-id {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--pivi-host-text-muted);
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-ui-smaller);
 }
 
 .pivi-model-compatibility {

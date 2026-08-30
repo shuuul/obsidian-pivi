@@ -210,6 +210,9 @@ export interface PiviUiFacades {
     customContextLimits?: Readonly<Record<string, number>>,
   ): ChatUIOption[];
 
+  /** List built-in catalog models, excluding configured custom providers. */
+  listCatalogModels(settings: Record<string, unknown>): ChatUIOption[];
+
   /** Reinstall custom/local providers from settings into the pi-ai registry. */
   syncCustomProviders(settings: Record<string, unknown>): void;
 

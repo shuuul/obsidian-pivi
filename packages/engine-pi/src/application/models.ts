@@ -8,6 +8,7 @@ export {
 } from '../models/piAiModels';
 export { piChatUIConfig, warmPiAiModelsCache } from '../models/piChatUiConfig';
 export {
+  getPiAiCatalogModels,
   getPiAiModelsForProvider,
   PI_AI_MODELS_CACHE,
   type PiResolvedModel,

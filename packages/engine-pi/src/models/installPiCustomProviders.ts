@@ -160,7 +160,7 @@ function collectKnownModelReasoningSources(
       return [];
     }
     return [{
-      id: model.id,
+      id: `${model.provider}/${model.id}`,
       reasoning: model.reasoning,
       ...(model.thinkingLevelMap ? { thinkingLevelMap: { ...model.thinkingLevelMap } } : {}),
       ...((model as KnownModelReasoningSource).defaultThinkingLevel
