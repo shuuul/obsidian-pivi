@@ -3,6 +3,8 @@
  * The upstream module uses import.meta.url at top level, which breaks when esbuild
  * bundles the package into Pivi's CJS main.js.
  */
+'use strict';
+
 import { homedir } from 'os';
 import { join } from 'path';
 

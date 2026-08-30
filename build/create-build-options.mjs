@@ -39,7 +39,11 @@ function buildEmbeddedSkillsCli() {
   if (!source) {
     throw new Error('Failed to bundle the pinned skills CLI dependency.');
   }
-  return gzipSync(source, { level: 9 }).toString('base64');
+  const compressed = gzipSync(source, { level: 9 });
+  // zlib writes the host OS into byte 9 even when the compressed payload is
+  // identical. Use gzip's "unknown" value so macOS and Linux builds match.
+  compressed[9] = 255;
+  return compressed.toString('base64');
 }
 
 const embeddedSkillsCliGzipBase64 = buildEmbeddedSkillsCli();

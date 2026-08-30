@@ -53,6 +53,7 @@ describe('shared build compatibility', () => {
         },
         embeddedSkillsCli: {
           compressedBytes: embeddedSkillsCli.byteLength,
+          operatingSystem: embeddedSkillsCli[9],
           sourceBytes: embeddedSkillsCliSource.byteLength,
           hasCreateRequireBanner: embeddedSkillsCliSource
             .toString('utf8')
@@ -86,6 +87,7 @@ describe('shared build compatibility', () => {
       };
       embeddedSkillsCli: {
         compressedBytes: number;
+        operatingSystem: number;
         sourceBytes: number;
         hasCreateRequireBanner: boolean;
       };
@@ -115,6 +117,7 @@ describe('shared build compatibility', () => {
     expect(options.analysis.plugins).toEqual(options.production.plugins);
     expect(options.embeddedSkillsCli.compressedBytes)
       .toBeLessThan(options.embeddedSkillsCli.sourceBytes);
+    expect(options.embeddedSkillsCli.operatingSystem).toBe(255);
     expect(options.embeddedSkillsCli.hasCreateRequireBanner).toBe(true);
   });
 
