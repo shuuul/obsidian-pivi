@@ -74,6 +74,7 @@ export function ProviderCard({
   const disabled = settings.disabledProviders.includes(providerId);
   const logoSlug = models.getProviderLogoSlug(providerId);
   const readiness = models.getReadiness(providerId);
+  const enableBlocked = disabled && readiness !== 'ready';
   const allowKeyless = !!custom && custom.apiKeyRequired === false;
   const isLocalProvider = !!custom && isLocalCustomProviderKind(custom.kind);
   const isInteractiveOAuth = models.interactiveOAuthProviderIds.includes(providerId);
@@ -244,7 +245,7 @@ export function ProviderCard({
         <SettingsItemActions>
           <Toggle
             checked={!disabled}
-            disabled={pending}
+            disabled={pending || enableBlocked}
             label={disabled
               ? t('settings.modelsTab.enableAria', { name: displayName })
               : t('settings.modelsTab.disableAria', { name: displayName })}

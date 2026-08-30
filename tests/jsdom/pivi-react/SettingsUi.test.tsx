@@ -631,6 +631,32 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(ensureProviderCredentials).toHaveBeenCalledTimes(3);
   });
+  it('blocks enabling a provider until it is ready', async () => {
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getReadiness: () => 'missing-credential' as const,
+      getSettings: () => ({
+        addedProviders: ['openai'],
+        disabledProviders: ['openai'],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+    });
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot ports={ports} initialTab="models" />
+      </I18nProvider>,
+    ));
+    await act(async () => undefined);
+
+    const enable = screen.getByRole('checkbox', { name: 'Enable openai provider' });
+    expect(enable).toBeDisabled();
+  });
   it('calls Grok Build OAuth connect from an expanded provider card', async () => {
     const loginProviderOAuth = jest.fn(async () => undefined);
     const ports = createPorts();

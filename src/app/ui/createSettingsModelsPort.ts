@@ -41,6 +41,28 @@ export function createSettingsModelsPort(
   uiFacades: PiviUiFacades,
   workspace: PiviPluginWorkspace,
 ): SettingsModelsPort {
+  const getProviderReadiness = (providerId: string) => {
+    const piSettings = getPiAgentSettings(host.settings);
+    const custom = piSettings.customProviders.find(provider => provider.id === providerId);
+    const allowKeyless = !!custom && custom.apiKeyRequired === false;
+    const interactiveOAuthConnected = (INTERACTIVE_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId)
+      ? (workspace.providerOAuth?.hasProviderOAuth(providerId) ?? false)
+      : false;
+    return deriveProviderReadinessStatus({
+      providerId,
+      piSettings: {
+        ...piSettings,
+        // Settings presents enablement separately. Readiness answers whether a
+        // disabled provider has enough configuration to be enabled.
+        disabledProviders: piSettings.disabledProviders.filter(id => id !== providerId),
+      },
+      credential: workspace.credentialStore?.readSync(providerId),
+      interactiveOAuthConnected,
+      modelCount: uiFacades.listModelsForProvider(providerId).length,
+      allowKeyless,
+    }).kind;
+  };
+
   return {
     codexProviderId: CODEX_OAUTH_PROVIDER_ID,
     interactiveOAuthProviderIds: INTERACTIVE_OAUTH_PROVIDER_IDS,
@@ -91,22 +113,7 @@ export function createSettingsModelsPort(
       }
       return getProviderLogoSlug(providerId);
     },
-    getReadiness(providerId) {
-      const piSettings = getPiAgentSettings(host.settings);
-      const custom = piSettings.customProviders.find(provider => provider.id === providerId);
-      const allowKeyless = !!custom && custom.apiKeyRequired === false;
-      const interactiveOAuthConnected = (INTERACTIVE_OAUTH_PROVIDER_IDS as readonly string[]).includes(providerId)
-        ? (workspace.providerOAuth?.hasProviderOAuth(providerId) ?? false)
-        : false;
-      return deriveProviderReadinessStatus({
-        providerId,
-        piSettings,
-        credential: workspace.credentialStore?.readSync(providerId),
-        interactiveOAuthConnected,
-        modelCount: uiFacades.listModelsForProvider(providerId).length,
-        allowKeyless,
-      }).kind;
-    },
+    getReadiness: getProviderReadiness,
     getCredentialKind(providerId) {
       const credential = workspace.credentialStore?.readSync(providerId);
       if (credential?.type === 'api_key') return 'api_key';
@@ -201,7 +208,10 @@ export function createSettingsModelsPort(
     async addBuiltinProvider(providerId) {
       const piSettings = getPiAgentSettings(host.settings);
       if (!providerId || piSettings.addedProviders.includes(providerId)) return;
-      updatePiAgentSettings(host.settings, { addedProviders: [...piSettings.addedProviders, providerId] });
+      updatePiAgentSettings(host.settings, {
+        addedProviders: [...piSettings.addedProviders, providerId],
+        disabledProviders: [...new Set([...piSettings.disabledProviders, providerId])],
+      });
       await host.saveSettings();
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.refreshModelPresentation();
@@ -215,6 +225,7 @@ export function createSettingsModelsPort(
         updatePiAgentSettings(host.settings, {
           customProviders: [...piSettings.customProviders, config],
           addedProviders: [...piSettings.addedProviders, config.id],
+          disabledProviders: [...new Set([...piSettings.disabledProviders, config.id])],
         });
         uiFacades.syncCustomProviders(host.settings);
         await host.saveSettings();

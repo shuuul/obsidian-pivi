@@ -73,6 +73,32 @@ describe('createSettingsModelsPort provider removal', () => {
     expect(harness.refreshModelPresentation).not.toHaveBeenCalled();
   });
 
+  it('adds built-in providers disabled until they are ready', async () => {
+    const harness = createHarness();
+
+    await harness.port.addBuiltinProvider('openai');
+
+    expect(harness.settings.agentSettings.addedProviders).toContain('openai');
+    expect(harness.settings.agentSettings.disabledProviders).toContain('openai');
+  });
+
+  it('adds custom providers disabled until they are ready', async () => {
+    const harness = createHarness();
+
+    const providerId = await harness.port.addCustomKind('openai-compatible');
+
+    expect(harness.settings.agentSettings.addedProviders).toContain(providerId);
+    expect(harness.settings.agentSettings.disabledProviders).toContain(providerId);
+  });
+
+  it('reports configuration readiness independently from disabled state', () => {
+    const harness = createHarness();
+    harness.settings.agentSettings.disabledProviders = ['deepseek'];
+    harness.settings.agentSettings.environmentVariables = 'DEEPSEEK_API_KEY=test';
+
+    expect(harness.port.getReadiness('deepseek')).toBe('ready');
+  });
+
   it('cleans provider settings and reconciles active and title models', async () => {
     const harness = createHarness();
 
