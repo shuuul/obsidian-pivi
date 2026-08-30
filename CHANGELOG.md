@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.20.1](https://github.com/shuuul/obsidian-pivi/compare/0.20.0...0.20.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* **models:** support long custom-provider responses without a default idle timeout ([b2bdc87](https://github.com/shuuul/obsidian-pivi/commit/b2bdc87a))
+* **settings:** require providers to be ready before enabling them ([95fbddc](https://github.com/shuuul/obsidian-pivi/commit/95fbddc3))
+
 ## [0.20.0](https://github.com/shuuul/obsidian-pivi/compare/0.19.4...0.20.0) (2026-08-30)
 
 
