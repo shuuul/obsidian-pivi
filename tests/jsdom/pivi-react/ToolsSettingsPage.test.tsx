@@ -388,11 +388,12 @@ describe('React tools settings', () => {
       screen.getByRole('link', { name: 'Get API key at brave.com' }),
       screen.getByRole('link', { name: 'Get API key at app.tavily.com' }),
       screen.getByRole('link', { name: 'Get API key at dashboard.exa.ai' }),
+      screen.getByRole('link', { name: 'Get API key at anysearch.com' }),
     ].map(link => link.getAttribute('href'))).toEqual([
       'https://brave.com/search/api/',
       'https://app.tavily.com/home',
       'https://dashboard.exa.ai/api-keys',
+      'https://anysearch.com/console/api-keys',
     ]);
-    expect(screen.getByRole('link', { name: 'Open docs' })).toHaveAttribute('href', 'https://anysearch.com');
   });
 });

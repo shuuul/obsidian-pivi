@@ -16,9 +16,11 @@ export function ExternalSetupLink({
   readonly kind: ProviderSetupLink['kind'];
 }) {
   const t = useT();
+  const host = kind === 'api-key' ? new URL(href).hostname : '';
   const label = kind === 'api-key'
-    ? t(LABEL_KEYS[kind], { host: new URL(href).hostname })
+    ? t(LABEL_KEYS[kind], { host })
     : t(LABEL_KEYS[kind]);
+  const hostIndex = host ? label.indexOf(host) : -1;
   return (
     <a
       className={`pivi-settings-external-link${kind === 'api-key' ? ' pivi-provider-setup-link' : ''}`}
@@ -26,7 +28,13 @@ export function ExternalSetupLink({
       rel="noopener noreferrer"
       target="_blank"
     >
-      {label}
+      {hostIndex >= 0 ? (
+        <>
+          {label.slice(0, hostIndex)}
+          <span className="pivi-provider-setup-domain">{host}</span>
+          {label.slice(hostIndex + host.length)}
+        </>
+      ) : label}
     </a>
   );
 }

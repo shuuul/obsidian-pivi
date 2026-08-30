@@ -33,7 +33,7 @@ export const WEB_PROVIDER_SETUP_LINKS: Readonly<Record<string, ProviderSetupLink
   brave: { href: 'https://brave.com/search/api/', kind: 'api-key' },
   tavily: { href: 'https://app.tavily.com/home', kind: 'api-key' },
   exa: { href: 'https://dashboard.exa.ai/api-keys', kind: 'api-key' },
-  anysearch: { href: 'https://anysearch.com', kind: 'docs' },
+  anysearch: { href: 'https://anysearch.com/console/api-keys', kind: 'api-key' },
 };
 
 export function getModelProviderSetupLink(providerId: string): ProviderSetupLink | undefined {

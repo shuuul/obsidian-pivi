@@ -702,6 +702,14 @@ textarea.pivi-settings-control {
 }
 
 .pivi-provider-setup-link {
+  text-decoration: none;
+}
+
+.pivi-provider-setup-link:hover {
+  text-decoration: none;
+}
+
+.pivi-provider-setup-domain {
   text-decoration: underline;
   text-underline-offset: 2px;
 }

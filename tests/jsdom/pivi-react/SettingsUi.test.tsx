@@ -1119,6 +1119,7 @@ describe('React settings foundation', () => {
     const apiKeyLink = screen.getByRole('link', { name: 'Get API key at platform.openai.com' });
     expect(apiKeyLink).toHaveAttribute('href', 'https://platform.openai.com/api-keys');
     expect(apiKeyLink).toHaveClass('pivi-provider-setup-link');
+    expect(apiKeyLink.querySelector('.pivi-provider-setup-domain')).toHaveTextContent('platform.openai.com');
 
     fireEvent.click(screen.getByText('Ollama'));
     expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', 'https://ollama.com/download');
