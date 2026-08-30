@@ -11,6 +11,8 @@ import { ProviderLogo } from '../../icons';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { SettingsItemActions, Toggle } from '../controls';
+import { ExternalSetupLink } from '../ExternalSetupLink';
+import { getWebProviderSetupLink } from '../providerSetupLinks';
 
 const MASKED_KEY = '••••••••';
 
@@ -56,6 +58,7 @@ export function WebProviderCard(props: WebProviderCardProps) {
   const [credentialConfigured, setCredentialConfigured] = useState(provider.credentialConfigured);
   const [savingKey, setSavingKey] = useState(false);
   const label = PROVIDER_LABELS[provider.id];
+  const setupLink = getWebProviderSetupLink(provider.id);
   const status = disabled
     ? t('settings.webSearch.status.disabled')
     : credentialConfigured
@@ -162,6 +165,12 @@ export function WebProviderCard(props: WebProviderCardProps) {
           {provider.apiKeyRequired
             ? t('settings.webSearch.providerKeyRequired', { provider: label })
             : t('settings.webSearch.providerKeyOptional', { provider: label })}
+          {setupLink ? (
+            <>
+              {' '}
+              <ExternalSetupLink href={setupLink.href} kind={setupLink.kind} />
+            </>
+          ) : null}
         </p>
         <div className="pivi-web-provider-key-row">
           <input

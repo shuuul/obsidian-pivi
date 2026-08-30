@@ -7,6 +7,8 @@ import { useState } from 'react';
 import { useT } from '../../i18n';
 import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import { SettingRow, SettingsSectionHeading } from '../controls';
+import { ExternalSetupLink } from '../ExternalSetupLink';
+import { getModelProviderSetupLink } from '../providerSetupLinks';
 import { ProviderApiKeyField } from './ProviderCredentials';
 
 export interface CustomProviderPanelProps {
@@ -23,6 +25,9 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
   const [name, setName] = useState(config.name);
   const [baseUrl, setBaseUrl] = useState(config.baseUrl);
   const [fetching, setFetching] = useState(false);
+  const setupLink = isLocalCustomProviderKind(config.kind)
+    ? getModelProviderSetupLink(config.kind)
+    : undefined;
 
   const patch = (value: { name?: string; baseUrl?: string }): void => {
     void models.patchCustomProvider(config.id, value)
@@ -49,6 +54,11 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
   return (
     <>
       <SettingsSectionHeading level={3}>{t('settings.modelsTab.endpointHeading')}</SettingsSectionHeading>
+      {setupLink ? (
+        <p className="pivi-setting-description">
+          <ExternalSetupLink href={setupLink.href} kind={setupLink.kind} />
+        </p>
+      ) : null}
       <SettingRow name={t('settings.modelsTab.displayName')} description={t('settings.modelsTab.displayNameDesc')}>
         <input
           className="pivi-settings-control"

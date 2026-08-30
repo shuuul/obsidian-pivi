@@ -343,7 +343,26 @@
       "tools": "Herramientas",
       "subagents": "Subagentes",
       "commands": "Comandos",
-      "toolbar": "Barra de herramientas"
+      "toolbar": "Barra de herramientas",
+      "about": "Acerca de"
+    },
+    "setup": {
+      "getApiKey": "Obtener API key",
+      "download": "Descargar",
+      "openDocs": "Abrir docs"
+    },
+    "about": {
+      "heading": "Acerca de",
+      "intro": "Pivi es un plugin comunitario de código abierto. Informa errores o pide funciones en GitHub.",
+      "version": "Versión",
+      "released": "Publicado el {date}.",
+      "minHost": "{hostName} mínimo",
+      "minHostDesc": "Requiere {hostName} {version} o posterior.",
+      "github": "GitHub",
+      "githubDesc": "Código fuente, versiones y documentación.",
+      "issues": "Incidencias",
+      "issuesDesc": "¿Encontraste un error o tienes una idea? Abre una incidencia en GitHub.",
+      "reportIssue": "Informar de un problema"
     },
     "integrations": {
       "heading": "Integraciones"

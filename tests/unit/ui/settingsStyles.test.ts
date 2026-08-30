@@ -11,8 +11,8 @@ describe('settings navigation styles', () => {
     expect(styles).toMatch(/:root \.pivi-settings-definition-host\.pivi-settings-definition-host\s*{[^}]*display:\s*block;[^}]*padding:\s*0;[^}]*border-top:\s*0;/s);
   });
 
-  it('keeps primary tabs on one native horizontally scrollable row', () => {
-    expect(styles).toMatch(/\.pivi-settings-tabs\s*{[^}]*overflow-x:\s*auto;/s);
+  it('keeps primary tabs wrapping so every tab stays visible', () => {
+    expect(styles).toMatch(/\.pivi-settings-tabs\s*{[^}]*flex-wrap:\s*wrap;/s);
     expect(styles).toMatch(/\.pivi-settings-tab\s*{[^}]*flex:\s*0 0 auto;[^}]*white-space:\s*nowrap;/s);
     expect(styles).toMatch(/\.pivi-settings-tab\s*{[^}]*appearance:\s*none;/s);
   });

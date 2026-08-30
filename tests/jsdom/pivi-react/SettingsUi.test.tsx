@@ -124,11 +124,12 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
     mentionEditor: { mount: () => ({ getValue: () => '', setValue: () => undefined, focus: () => undefined, setDisabled: () => undefined, destroy: () => undefined }) },
+    about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', minHostVersion: '1.12.0', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
   };
 }
 
 describe('React settings foundation', () => {
-  it('renders seven accessible primary tabs with keyboard navigation and active-tab scrolling', () => {
+  it('renders eight accessible primary tabs with keyboard navigation and active-tab scrolling', () => {
     const scrollIntoView = jest.fn();
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
 
@@ -136,13 +137,13 @@ describe('React settings foundation', () => {
       render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
       const tabs = screen.getAllByRole('tab');
       expect(tabs.map((tab) => tab.textContent)).toEqual([
-        'General', 'Models', 'Skills', 'Tools', 'Subagents', 'Commands', 'Toolbar',
+        'General', 'Models', 'Skills', 'Tools', 'Subagents', 'Commands', 'Toolbar', 'About',
       ]);
       expect(screen.queryByRole('tab', { name: 'Web' })).not.toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: 'MCPs' })).not.toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: 'Integrations' })).not.toBeInTheDocument();
       expect(screen.getByRole('tablist', { name: 'Settings sections' })).toBeInTheDocument();
-      expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1]);
+      expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1, -1]);
 
       const panel = screen.getByRole('tabpanel');
       expect(tabs[0]).toHaveAttribute('aria-controls', panel.id);
@@ -153,13 +154,13 @@ describe('React settings foundation', () => {
       expect(tabs[1]).toHaveFocus();
       expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
       fireEvent.keyDown(tabs[1]!, { key: 'End' });
-      expect(tabs[6]).toHaveFocus();
-      fireEvent.keyDown(tabs[6]!, { key: 'Home' });
+      expect(tabs[7]).toHaveFocus();
+      fireEvent.keyDown(tabs[7]!, { key: 'Home' });
       expect(tabs[0]).toHaveFocus();
       fireEvent.keyDown(tabs[0]!, { key: 'ArrowLeft' });
-      expect(tabs[6]).toHaveFocus();
-      expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, -1, -1, -1, -1, -1, 0]);
-      expect(panel).toHaveAttribute('aria-labelledby', tabs[6]?.id);
+      expect(tabs[7]).toHaveFocus();
+      expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, -1, -1, -1, -1, -1, -1, 0]);
+      expect(panel).toHaveAttribute('aria-labelledby', tabs[7]?.id);
     } finally {
       delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     }
@@ -1088,5 +1089,49 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(remove).toHaveBeenCalledWith('example');
     expect(screen.getByText('Example removed.')).toBeInTheDocument();
+  });
+
+  it('shows Get API key links for cloud providers and download links for local runtimes', () => {
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: ['openai', 'ollama'],
+        disabledProviders: [],
+        customProviders: [{
+          id: 'ollama',
+          kind: 'ollama',
+          name: 'Ollama',
+          baseUrl: 'http://localhost:11434/v1',
+          api: 'openai-completions',
+          models: [],
+        }],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      getProviderDisplayName: (id: string) => (id === 'openai' ? 'OpenAI' : id),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+
+    fireEvent.click(screen.getByText('OpenAI'));
+    const apiKeyLink = screen.getByRole('link', { name: 'Get API key' });
+    expect(apiKeyLink).toHaveAttribute('href', 'https://platform.openai.com/api-keys');
+
+    fireEvent.click(screen.getByText('Ollama'));
+    expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', 'https://ollama.com/download');
+  });
+
+  it('renders About with version, GitHub, and issue links', () => {
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} initialTab="about" /></I18nProvider>));
+
+    expect(screen.getByText('0.19.4')).toBeInTheDocument();
+    expect(screen.getByText('Released 2026-08-29.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/shuuul/obsidian-pivi');
+    expect(screen.getByRole('link', { name: 'Report an issue' })).toHaveAttribute(
+      'href',
+      'https://github.com/shuuul/obsidian-pivi/issues',
+    );
   });
 });

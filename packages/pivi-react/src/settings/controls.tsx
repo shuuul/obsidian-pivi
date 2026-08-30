@@ -74,7 +74,7 @@ function augmentSettingRowControl(
 
 export interface SettingRowProps {
   readonly name: string;
-  readonly description?: string;
+  readonly description?: ReactNode;
   readonly className?: string;
   readonly children: ReactNode;
 }

@@ -14,7 +14,8 @@ export type SettingsTabId =
   | 'skills'
   | 'tools'
   | 'subagents'
-  | 'commands';
+  | 'commands'
+  | 'about';
 
 export interface SettingsKeyboardNavigationSnapshot {
   readonly scrollUpKey: string;

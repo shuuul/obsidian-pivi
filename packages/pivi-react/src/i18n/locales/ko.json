@@ -343,7 +343,26 @@
       "tools": "도구",
       "subagents": "서브에이전트",
       "commands": "명령",
-      "toolbar": "툴바"
+      "toolbar": "툴바",
+      "about": "정보"
+    },
+    "setup": {
+      "getApiKey": "API key 받기",
+      "download": "다운로드",
+      "openDocs": "문서 열기"
+    },
+    "about": {
+      "heading": "정보",
+      "intro": "Pivi는 오픈 소스 커뮤니티 플러그인입니다. 버그 제보와 기능 요청은 GitHub에서 해주세요.",
+      "version": "버전",
+      "released": "{date} 출시.",
+      "minHost": "최소 {hostName}",
+      "minHostDesc": "{hostName} {version} 이상이 필요합니다.",
+      "github": "GitHub",
+      "githubDesc": "소스 코드, 릴리스, 문서.",
+      "issues": "이슈",
+      "issuesDesc": "버그나 기능 요청이 있으면 GitHub 이슈를 열어 주세요.",
+      "reportIssue": "이슈 등록"
     },
     "integrations": {
       "heading": "통합"

@@ -9,7 +9,15 @@ type TestWindow = typeof window & {
 const packageJson = JSON.parse(
   readFileSync(path.resolve(__dirname, '../package.json'), 'utf8'),
 ) as { version?: string };
-(globalThis as { __PIVI_RELEASE_VERSION__?: string }).__PIVI_RELEASE_VERSION__ = packageJson.version;
+const manifestJson = JSON.parse(
+  readFileSync(path.resolve(__dirname, '../manifest.json'), 'utf8'),
+) as { minAppVersion?: string };
+const releaseMetadata = globalThis as {
+  __PIVI_MIN_HOST_VERSION__?: string;
+  __PIVI_RELEASE_VERSION__?: string;
+};
+releaseMetadata.__PIVI_RELEASE_VERSION__ = packageJson.version;
+releaseMetadata.__PIVI_MIN_HOST_VERSION__ = manifestJson.minAppVersion;
 
 const testWindow = (globalThis.window ?? globalThis) as TestWindow;
 

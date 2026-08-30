@@ -343,7 +343,26 @@
       "tools": "工具",
       "subagents": "子代理",
       "commands": "指令",
-      "toolbar": "工具列"
+      "toolbar": "工具列",
+      "about": "關於"
+    },
+    "setup": {
+      "getApiKey": "取得 API key",
+      "download": "下載",
+      "openDocs": "開啟文件"
+    },
+    "about": {
+      "heading": "關於",
+      "intro": "Pivi 是開源社群外掛。如有問題或功能建議，請到 GitHub 提交 issue。",
+      "version": "版本",
+      "released": "發佈於 {date}。",
+      "minHost": "最低 {hostName} 版本",
+      "minHostDesc": "需要 {hostName} {version} 或更高版本。",
+      "github": "GitHub",
+      "githubDesc": "原始碼、發佈紀錄與文件。",
+      "issues": "問題回報",
+      "issuesDesc": "遇到問題或有功能建議？請到 GitHub 提交 issue。",
+      "reportIssue": "提交 issue"
     },
     "integrations": {
       "heading": "整合"

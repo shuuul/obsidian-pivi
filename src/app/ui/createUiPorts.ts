@@ -32,6 +32,13 @@ import type {
   PiviSettingsHost,
 } from '@/app/hostContracts';
 import { isNoteToolbarTextToolbarActive } from '@/app/noteToolbarIntegration';
+import {
+  PIVI_GITHUB_URL,
+  PIVI_ISSUES_URL,
+  PIVI_MIN_HOST_VERSION,
+  PIVI_RELEASED_AT,
+  PIVI_VERSION,
+} from '@/app/pluginIdentity';
 
 import { type ChatUiCompositionHost } from './chatUiCompositionHost';
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
@@ -579,5 +586,14 @@ export function createSettingsUiPorts(
       runAction: actionId => runObsidianIntegrationAction(host, actionId),
     },
     mentionEditor: createMentionEditorPort(host, ws),
+    about: {
+      getSnapshot: () => ({
+        version: PIVI_VERSION,
+        releasedAt: PIVI_RELEASED_AT,
+        minHostVersion: PIVI_MIN_HOST_VERSION,
+        githubUrl: PIVI_GITHUB_URL,
+        issuesUrl: PIVI_ISSUES_URL,
+      }),
+    },
   };
 }

@@ -343,7 +343,26 @@
       "tools": "Werkzeuge",
       "subagents": "Sub-Agenten",
       "commands": "Befehle",
-      "toolbar": "Werkzeugleiste"
+      "toolbar": "Werkzeugleiste",
+      "about": "Info"
+    },
+    "setup": {
+      "getApiKey": "API-Schlüssel holen",
+      "download": "Herunterladen",
+      "openDocs": "Dokumentation öffnen"
+    },
+    "about": {
+      "heading": "Info",
+      "intro": "Pivi ist ein Open-Source-Community-Plugin. Melde Fehler oder Funktionswünsche auf GitHub.",
+      "version": "Version",
+      "released": "Veröffentlicht am {date}.",
+      "minHost": "Mindestens {hostName}",
+      "minHostDesc": "Benötigt {hostName} {version} oder neuer.",
+      "github": "GitHub",
+      "githubDesc": "Quellcode, Releases und Dokumentation.",
+      "issues": "Issues",
+      "issuesDesc": "Fehler gefunden oder eine Idee? Eröffne ein GitHub-Issue.",
+      "reportIssue": "Issue erstellen"
     },
     "integrations": {
       "heading": "Integrationen"

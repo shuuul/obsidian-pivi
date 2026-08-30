@@ -4,6 +4,8 @@ import { useT } from '../../i18n';
 import { useHostTerminology } from '../../platform';
 import type { SettingsModelsPort } from '../../ports';
 import { SettingRow, SettingsSectionHeading } from '../controls';
+import { ExternalSetupLink } from '../ExternalSetupLink';
+import { getModelProviderSetupLink } from '../providerSetupLinks';
 
 export interface ProviderCredentialsProps {
   readonly models: SettingsModelsPort;
@@ -30,6 +32,7 @@ export function ProviderApiKeyField({
   const { secureStorageName } = useHostTerminology();
   const secretId = models.getSecretId(providerId);
   const apiKeyStored = models.getCredentialKind(providerId) === 'api_key';
+  const setupLink = getModelProviderSetupLink(providerId);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [pending, setPending] = useState(false);
 
@@ -49,7 +52,17 @@ export function ProviderApiKeyField({
     <div className="pivi-cred-row pivi-setting-stack">
       <SettingRow
         name={t(showOptionalLabel ? 'settings.modelsTab.apiKeyOptional' : 'settings.modelsTab.apiKey')}
-        description={t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId, secureStorageName })}
+        description={(
+          <>
+            {t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId, secureStorageName })}
+            {setupLink && setupLink.kind !== 'download' ? (
+              <>
+                {' '}
+                <ExternalSetupLink href={setupLink.href} kind={setupLink.kind} />
+              </>
+            ) : null}
+          </>
+        )}
       >
         <input
           className="pivi-settings-control"

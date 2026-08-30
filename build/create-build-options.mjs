@@ -14,7 +14,11 @@ import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
 import { shimMcpValidation } from './plugins/shim-mcp-validation.mjs';
-import { releaseArtifactBanner, releaseArtifactVersion } from './release-artifact-version.mjs';
+import {
+  releaseArtifactBanner,
+  releaseArtifactVersion,
+  releaseMinimumHostVersion,
+} from './release-artifact-version.mjs';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(rootDir, '..');
@@ -75,6 +79,7 @@ export function createBuildOptions({ production, metafile = false, write = true 
     define: {
       'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
       __PIVI_RELEASE_VERSION__: JSON.stringify(releaseArtifactVersion),
+      __PIVI_MIN_HOST_VERSION__: JSON.stringify(releaseMinimumHostVersion),
       __PIVI_EMBEDDED_SKILLS_CLI_GZIP_BASE64__: JSON.stringify(embeddedSkillsCliGzipBase64),
     },
     jsx: 'automatic',

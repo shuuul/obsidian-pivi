@@ -306,6 +306,13 @@ describe('UI port adapters', () => {
     expect(getPiWorkspace).not.toHaveBeenCalled();
     expect(ports).not.toHaveProperty('plugin');
     expect(ports).not.toHaveProperty('storage');
+    expect(ports.about.getSnapshot()).toEqual({
+      version: expect.any(String),
+      releasedAt: expect.any(String),
+      minHostVersion: expect.any(String),
+      githubUrl: 'https://github.com/shuuul/obsidian-pivi',
+      issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues',
+    });
   });
 
   it('synchronizes edited Pivi command metadata to matching toolbar shortcuts', async () => {

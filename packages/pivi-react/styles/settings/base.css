@@ -199,12 +199,10 @@ textarea.pivi-settings-control {
 
 .pivi-settings-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 2px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
   border-bottom: 1px solid var(--pivi-host-border);
   margin-bottom: var(--pivi-spacing-lg);
-  scrollbar-width: thin;
 }
 
 .pivi-settings-tab {
@@ -692,6 +690,30 @@ textarea.pivi-settings-control {
 
 .pivi-settings-section__body > .pivi-settings-action-group {
   margin-block-start: 4px;
+}
+
+.pivi-settings-external-link {
+  color: var(--pivi-host-text-accent);
+  text-decoration: none;
+}
+
+.pivi-settings-external-link:hover {
+  text-decoration: underline;
+}
+
+.pivi-about-github {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pivi-spacing-xs);
+}
+
+.pivi-about-github .pivi-platform-icon {
+  font-size: 16px;
+}
+
+.pivi-about-version {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
 }
 
 @media (max-width: 520px) {

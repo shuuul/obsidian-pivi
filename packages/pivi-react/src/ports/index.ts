@@ -334,6 +334,18 @@ export interface SettingsMentionEditorPort {
   ): SettingsMentionEditorHandle;
 }
 
+export interface SettingsAboutSnapshot {
+  readonly version: string;
+  readonly releasedAt: string;
+  readonly minHostVersion: string;
+  readonly githubUrl: string;
+  readonly issuesUrl: string;
+}
+
+export interface SettingsAboutPort {
+  getSnapshot(): SettingsAboutSnapshot;
+}
+
 export interface SettingsPorts {
   feedback: SettingsFeedbackPort;
   snapshot: SettingsSnapshotPort;
@@ -346,4 +358,5 @@ export interface SettingsPorts {
   catalog: SettingsCatalogPort;
   hostIntegrations: SettingsHostIntegrationsPort;
   mentionEditor: SettingsMentionEditorPort;
+  about: SettingsAboutPort;
 }

@@ -51,7 +51,7 @@ Applies to: settings, chat chrome, Notices, commands/ribbon, modals, aria-labels
 2. Add the same path to every other locale file (translated).
 3. Call app `t('namespace.key', { param: value })` from imperative adapters or `useT()` from React package UI.
 
-Namespaces: `common.*`, `commands.*`, `settings.*`, `chat.*`, `tools.*`, `host.*`, `editor.*`.
+Namespaces: `common.*`, `commands.*`, `settings.*`, `chat.*`, `tools.*`, `host.*`, `editor.*`. Setup-link labels live under `settings.setup.*`; About copy lives under `settings.about.*`.
 
 Context-badge tooltip and accessibility templates live under `chat.contextBadges.*`. Keep technical identifiers as interpolation values rather than translating or embedding them in catalog strings.
 

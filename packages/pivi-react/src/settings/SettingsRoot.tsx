@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import type { SettingsPorts } from '../ports';
+import { AboutSettingsTab } from './AboutSettingsTab';
 import { CommandsTab } from './CommandsTab';
 import { ModelsSettingsTab } from './ModelsSettingsTab';
 import { SettingsShell } from './SettingsShell';
@@ -47,6 +48,7 @@ export function SettingsRoot({ ports, store: suppliedStore, initialTab }: Settin
       case 'subagents': return <SubagentsSettingsTab store={store} actions={ports.actions} feedback={ports.feedback} />;
       case 'tools': return <ToolsSettingsPage ports={ports} />;
       case 'commands': return <CommandsTab ports={ports} />;
+      case 'about': return <AboutSettingsTab about={ports.about} />;
       default: return null;
     }
   }}</SettingsShell>;

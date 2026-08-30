@@ -343,7 +343,26 @@
       "tools": "ツール",
       "subagents": "サブエージェント",
       "commands": "コマンド",
-      "toolbar": "ツールバー"
+      "toolbar": "ツールバー",
+      "about": "情報"
+    },
+    "setup": {
+      "getApiKey": "API key を取得",
+      "download": "ダウンロード",
+      "openDocs": "ドキュメントを開く"
+    },
+    "about": {
+      "heading": "情報",
+      "intro": "Pivi はオープンソースのコミュニティプラグインです。不具合や機能要望は GitHub で報告してください。",
+      "version": "バージョン",
+      "released": "{date} リリース。",
+      "minHost": "最低 {hostName}",
+      "minHostDesc": "{hostName} {version} 以降が必要です。",
+      "github": "GitHub",
+      "githubDesc": "ソースコード、リリース、ドキュメント。",
+      "issues": "Issues",
+      "issuesDesc": "不具合や機能要望は GitHub の issue を開いてください。",
+      "reportIssue": "issue を作成"
     },
     "integrations": {
       "heading": "連携"

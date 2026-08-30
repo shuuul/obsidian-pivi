@@ -343,7 +343,26 @@
       "tools": "工具",
       "subagents": "子代理",
       "commands": "命令",
-      "toolbar": "工具栏"
+      "toolbar": "工具栏",
+      "about": "关于"
+    },
+    "setup": {
+      "getApiKey": "获取 API key",
+      "download": "下载",
+      "openDocs": "打开文档"
+    },
+    "about": {
+      "heading": "关于",
+      "intro": "Pivi 是开源社区插件。如有问题或功能建议，请到 GitHub 提交 issue。",
+      "version": "版本",
+      "released": "发布于 {date}。",
+      "minHost": "最低 {hostName} 版本",
+      "minHostDesc": "需要 {hostName} {version} 或更高版本。",
+      "github": "GitHub",
+      "githubDesc": "源代码、发布记录和文档。",
+      "issues": "问题反馈",
+      "issuesDesc": "遇到问题或有功能建议？请到 GitHub 提交 issue。",
+      "reportIssue": "提交 issue"
     },
     "integrations": {
       "heading": "集成"

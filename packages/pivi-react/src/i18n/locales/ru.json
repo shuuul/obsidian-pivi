@@ -343,7 +343,26 @@
       "tools": "Инструменты",
       "subagents": "Субагенты",
       "commands": "Команды",
-      "toolbar": "Панель инструментов"
+      "toolbar": "Панель инструментов",
+      "about": "О плагине"
+    },
+    "setup": {
+      "getApiKey": "Получить API key",
+      "download": "Скачать",
+      "openDocs": "Открыть документацию"
+    },
+    "about": {
+      "heading": "О плагине",
+      "intro": "Pivi — открытый community-плагин. Сообщайте об ошибках и предлагайте идеи на GitHub.",
+      "version": "Версия",
+      "released": "Выпущен {date}.",
+      "minHost": "Минимальный {hostName}",
+      "minHostDesc": "Требуется {hostName} {version} или новее.",
+      "github": "GitHub",
+      "githubDesc": "Исходный код, релизы и документация.",
+      "issues": "Issues",
+      "issuesDesc": "Нашли ошибку или есть идея? Создайте issue на GitHub.",
+      "reportIssue": "Сообщить о проблеме"
     },
     "integrations": {
       "heading": "Интеграции"
