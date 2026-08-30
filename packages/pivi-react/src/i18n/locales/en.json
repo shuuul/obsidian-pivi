@@ -673,7 +673,7 @@
       "catalogModelIdDesc": "Optional. Map this model to a built-in catalog ID (for example qwen/qwen3.5-27b) to inherit its reasoning levels when the server does not advertise them.",
       "catalogModelIdPlaceholder": "Catalog model ID (optional)",
       "maxTokensOverrideAria": "Output length for {name}",
-      "maxTokensOverrideDesc": "Optional. Per-response output cap in tokens, including thinking. Leave empty to use the server value or the 8192 default. Highest useful value is the model context window.",
+      "maxTokensOverrideDesc": "Optional. Per-response output cap in tokens, including thinking. Leave empty to use the server value or the 65536 default. Highest useful value is the model context window.",
       "maxTokensOverrideLabel": "Output length",
       "contextWindowOverrideAria": "Context window for {name}",
       "contextWindowOverrideDesc": "Optional context-window size in tokens. Leave empty to use discovered or catalog metadata.",

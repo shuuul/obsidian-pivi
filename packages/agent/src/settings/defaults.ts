@@ -41,7 +41,7 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   customContextLimits: {},
   providerRequestDeadlines: {
     totalMs: 600_000,
-    idleMs: 120_000,
+    idleMs: 0,
   },
   keyboardNavigation: {
     scrollUpKey: "w",

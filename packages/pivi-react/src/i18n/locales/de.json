@@ -663,7 +663,7 @@
       "catalogModelIdDesc": "Optional. Ordne dieses Modell einer ID aus dem integrierten Katalog zu (z. B. qwen/qwen3.5-27b), um dessen Reasoning-Stufen zu übernehmen, wenn der Server keine Reasoning-Metadaten liefert.",
       "catalogModelIdPlaceholder": "Katalog-Modell-ID (optional)",
       "maxTokensOverrideAria": "Ausgabelänge für {name}",
-      "maxTokensOverrideDesc": "Optional. Token-Obergrenze pro Antwort, inklusive Thinking. Leer lassen für den Serverwert oder den Standard 8192. Der höchste sinnvolle Wert ist das Kontextfenster des Modells.",
+      "maxTokensOverrideDesc": "Optional. Token-Obergrenze pro Antwort, inklusive Thinking. Leer lassen für den Serverwert oder den Standard 65536. Der höchste sinnvolle Wert ist das Kontextfenster des Modells.",
       "maxTokensOverrideLabel": "Ausgabelänge",
       "contextWindowOverrideAria": "Kontextfenster für {name}",
       "contextWindowOverrideDesc": "Optionale Kontextfenstergröße in Tokens. Leer lassen für erkannte oder Katalog-Metadaten.",

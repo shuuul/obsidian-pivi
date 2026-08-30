@@ -663,7 +663,7 @@
       "catalogModelIdDesc": "選用。將此模型對應到內建目錄中的模型 ID（例如 qwen/qwen3.5-27b），當伺服器未提供推理中繼資料時，繼承對應的 reasoning 層級。",
       "catalogModelIdPlaceholder": "目錄模型 ID（選用）",
       "maxTokensOverrideAria": "{name} 的輸出長度",
-      "maxTokensOverrideDesc": "選用。單次回覆的輸出上限（含思考）。留空則使用伺服器值或預設 8192。最高可用值為該模型的上下文視窗。",
+      "maxTokensOverrideDesc": "選用。單次回覆的輸出上限（含思考）。留空則使用伺服器值或預設 65536。最高可用值為該模型的上下文視窗。",
       "maxTokensOverrideLabel": "輸出長度",
       "contextWindowOverrideAria": "{name} 的上下文視窗",
       "contextWindowOverrideDesc": "選用的上下文視窗 token 數。留空則使用偵測結果或內建目錄中繼資料。",

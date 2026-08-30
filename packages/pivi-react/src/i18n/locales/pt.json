@@ -663,7 +663,7 @@
       "catalogModelIdDesc": "Opcional. Mapeie este modelo para um ID do catálogo integrado (por exemplo, qwen/qwen3.5-27b) para herdar os níveis de raciocínio correspondentes quando o servidor não os anuncia.",
       "catalogModelIdPlaceholder": "ID de modelo de catálogo (opcional)",
       "maxTokensOverrideAria": "Comprimento de saída para {name}",
-      "maxTokensOverrideDesc": "Opcional. Limite de tokens por resposta, incluindo o raciocínio. Deixe vazio para usar o valor do servidor ou o padrão 8192. O valor útil mais alto é a janela de contexto do modelo.",
+      "maxTokensOverrideDesc": "Opcional. Limite de tokens por resposta, incluindo o raciocínio. Deixe vazio para usar o valor do servidor ou o padrão 65536. O valor útil mais alto é a janela de contexto do modelo.",
       "maxTokensOverrideLabel": "Comprimento de saída",
       "contextWindowOverrideAria": "Janela de contexto para {name}",
       "contextWindowOverrideDesc": "Tamanho opcional em tokens. Deixe vazio para usar metadados detectados ou do catálogo.",

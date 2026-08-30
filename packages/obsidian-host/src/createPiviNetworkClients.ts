@@ -45,7 +45,7 @@ export function getActivePiviNetworkClients(): PiviNetworkClients {
 }
 
 const DEFAULT_PROVIDER_TOTAL_MS = 600_000;
-const DEFAULT_PROVIDER_IDLE_MS = 120_000;
+const DEFAULT_PROVIDER_IDLE_MS = 0;
 
 function policyFor(
   purpose: NetworkPurpose,

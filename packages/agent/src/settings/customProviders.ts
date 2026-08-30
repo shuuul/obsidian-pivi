@@ -138,7 +138,7 @@ const KIND_DISPLAY_NAMES: Record<CustomProviderKind, string> = {
 
 const DEFAULT_CONTEXT_WINDOW = 128_000;
 const DEFAULT_LOCAL_CONTEXT_WINDOW = 4096;
-const DEFAULT_MAX_TOKENS = 8192;
+const DEFAULT_MAX_TOKENS = 65_536;
 const MULTI_INSTANCE_SUFFIX_HEX_LENGTH = 12;
 const KEYLESS_HOST_CLASSES: ReadonlySet<IpDestinationClass> = new Set([
   'loopback',
@@ -549,7 +549,7 @@ export function parseOpenAiStyleModelsList(payload: unknown): CustomProviderMode
     );
     // Output ceiling, not context window. pi/Pivi discovery reads max_tokens;
     // max_output_tokens is the Gemini-style alias. Absent both, defaultModelMeta
-    // falls back to 8192 even when max_model_len is much larger.
+    // falls back to 65536 even when max_model_len is much larger.
     const maxTokens = readPositiveNumber(
       row.max_tokens
       ?? row.maxTokens

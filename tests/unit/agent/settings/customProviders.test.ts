@@ -489,7 +489,7 @@ describe('installPiCustomProviders model mapping', () => {
     }));
   });
 
-  it('uses advertised maxTokens as the request output cap instead of the 8192 default', () => {
+  it('uses advertised maxTokens as the request output cap instead of the 65536 default', () => {
     const config = createDefaultCustomProviderConfig('openai-compatible', [], {
       baseUrl: 'http://192.168.100.177:8888/v1',
     });
@@ -509,7 +509,7 @@ describe('installPiCustomProviders model mapping', () => {
     });
   });
 
-  it('falls back to 8192 output tokens when a custom card omits maxTokens', () => {
+  it('falls back to 65536 output tokens when a custom card omits maxTokens', () => {
     const config = createDefaultCustomProviderConfig('openai-compatible', [], {
       baseUrl: 'http://192.168.100.177:8888/v1',
     });
@@ -522,7 +522,7 @@ describe('installPiCustomProviders model mapping', () => {
     const [model] = buildCustomProviderModels(config);
     expect(model).toMatchObject({
       contextWindow: 262144,
-      maxTokens: 8192,
+      maxTokens: 65536,
     });
   });
 

@@ -663,7 +663,7 @@
       "catalogModelIdDesc": "可选。将该模型映射到内置目录中的模型 ID（例如 qwen/qwen3.5-27b），当服务器未提供推理元数据时，继承对应的 reasoning 档位。",
       "catalogModelIdPlaceholder": "目录模型 ID（可选）",
       "maxTokensOverrideAria": "{name} 的输出长度",
-      "maxTokensOverrideDesc": "可选。单次回复的输出上限（含思考）。留空则使用服务器值或默认 8192。最高可用值为该模型的上下文窗口。",
+      "maxTokensOverrideDesc": "可选。单次回复的输出上限（含思考）。留空则使用服务器值或默认 65536。最高可用值为该模型的上下文窗口。",
       "maxTokensOverrideLabel": "输出长度",
       "contextWindowOverrideAria": "{name} 的上下文窗口",
       "contextWindowOverrideDesc": "可选的上下文窗口 token 数。留空则使用探测结果或内置目录元数据。",

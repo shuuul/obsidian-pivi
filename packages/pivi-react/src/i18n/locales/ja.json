@@ -663,7 +663,7 @@
       "catalogModelIdDesc": "任意。このモデルを内蔵カタログのモデル ID（例: qwen/qwen3.5-27b）に対応付け、サーバーが推論メタデータを返さない場合にその reasoning レベルを継承します。",
       "catalogModelIdPlaceholder": "カタログモデル ID（任意）",
       "maxTokensOverrideAria": "{name} の出力長",
-      "maxTokensOverrideDesc": "任意。1回の応答の出力上限（思考を含む）。空欄ならサーバー値または既定の 8192 を使います。最大の有効値はモデルのコンテキストウィンドウです。",
+      "maxTokensOverrideDesc": "任意。1回の応答の出力上限（思考を含む）。空欄ならサーバー値または既定の 65536 を使います。最大の有効値はモデルのコンテキストウィンドウです。",
       "maxTokensOverrideLabel": "出力長",
       "contextWindowOverrideAria": "{name} のコンテキストウィンドウ",
       "contextWindowOverrideDesc": "任意のトークン数です。空欄では検出またはカタログのメタデータを使用します。",
