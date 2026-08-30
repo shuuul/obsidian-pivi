@@ -347,7 +347,7 @@
       "about": "关于"
     },
     "setup": {
-      "getApiKey": "获取 API key",
+      "getApiKeyAt": "前往 {host} 获取 API key",
       "download": "下载",
       "openDocs": "打开文档"
     },

@@ -357,7 +357,7 @@
       "about": "About"
     },
     "setup": {
-      "getApiKey": "Get API key",
+      "getApiKeyAt": "Get API key at {host}",
       "download": "Download",
       "openDocs": "Open docs"
     },

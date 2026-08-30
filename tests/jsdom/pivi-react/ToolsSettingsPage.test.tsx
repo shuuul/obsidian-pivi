@@ -384,7 +384,11 @@ describe('React tools settings', () => {
   it('links web providers to their API key or docs pages', () => {
     renderTools(createPorts());
 
-    expect(screen.getAllByRole('link', { name: 'Get API key' }).map(link => link.getAttribute('href'))).toEqual([
+    expect([
+      screen.getByRole('link', { name: 'Get API key at brave.com' }),
+      screen.getByRole('link', { name: 'Get API key at app.tavily.com' }),
+      screen.getByRole('link', { name: 'Get API key at dashboard.exa.ai' }),
+    ].map(link => link.getAttribute('href'))).toEqual([
       'https://brave.com/search/api/',
       'https://app.tavily.com/home',
       'https://dashboard.exa.ai/api-keys',

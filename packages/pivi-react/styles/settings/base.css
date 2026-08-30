@@ -701,6 +701,11 @@ textarea.pivi-settings-control {
   text-decoration: underline;
 }
 
+.pivi-provider-setup-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .pivi-about-github {
   display: inline-flex;
   align-items: center;

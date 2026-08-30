@@ -1116,8 +1116,9 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
 
     fireEvent.click(screen.getByText('OpenAI'));
-    const apiKeyLink = screen.getByRole('link', { name: 'Get API key' });
+    const apiKeyLink = screen.getByRole('link', { name: 'Get API key at platform.openai.com' });
     expect(apiKeyLink).toHaveAttribute('href', 'https://platform.openai.com/api-keys');
+    expect(apiKeyLink).toHaveClass('pivi-provider-setup-link');
 
     fireEvent.click(screen.getByText('Ollama'));
     expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', 'https://ollama.com/download');

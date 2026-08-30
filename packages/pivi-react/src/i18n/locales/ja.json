@@ -347,7 +347,7 @@
       "about": "情報"
     },
     "setup": {
-      "getApiKey": "API key を取得",
+      "getApiKeyAt": "{host} で API key を取得",
       "download": "ダウンロード",
       "openDocs": "ドキュメントを開く"
     },

@@ -347,7 +347,7 @@
       "about": "О плагине"
     },
     "setup": {
-      "getApiKey": "Получить API key",
+      "getApiKeyAt": "Получить API key на {host}",
       "download": "Скачать",
       "openDocs": "Открыть документацию"
     },

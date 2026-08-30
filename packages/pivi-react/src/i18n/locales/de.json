@@ -347,7 +347,7 @@
       "about": "Info"
     },
     "setup": {
-      "getApiKey": "API-Schlüssel holen",
+      "getApiKeyAt": "API-Schlüssel bei {host} holen",
       "download": "Herunterladen",
       "openDocs": "Dokumentation öffnen"
     },
