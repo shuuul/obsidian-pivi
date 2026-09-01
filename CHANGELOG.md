@@ -11,7 +11,10 @@
 
 ### Bug Fixes
 
+* prevent custom-model context overflow and compaction request failures ([767abba](https://github.com/shuuul/obsidian-pivi/commit/767abba48734ef1f229e52bd77ee608ffae72e90))
+* bound and filter large vault folder listings ([2769e45](https://github.com/shuuul/obsidian-pivi/commit/2769e455cb0ee2f1fb5be39089f56338101a17af))
 * harden prompt module persistence ([6a25238](https://github.com/shuuul/obsidian-pivi/commit/6a25238d0d77cf419ac17b1c385b8c293f5afe84))
+* keep unfinished Agent tasks running across work batches ([f03d7d6](https://github.com/shuuul/obsidian-pivi/commit/f03d7d63))
 
 ## [0.21.0](https://github.com/shuuul/obsidian-pivi/compare/0.20.2...0.21.0) (2026-09-01)
 
