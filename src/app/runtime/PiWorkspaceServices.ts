@@ -69,6 +69,7 @@ import {
 import { createCustomProviderHttpRequest } from "./obsidianHttpRequest";
 import { PiSlashCommandCatalog } from "./PiSlashCommandCatalog";
 import { createPiviManagementMainOnlyToolProviderFactory } from "./PiviManagementService";
+import { createPromptCompositionCoordinator } from "./PromptCompositionCoordinator";
 import type { PiviWorkspaceHost, WorkspaceInitContext } from "./serviceContracts";
 import { createVaultSkillsMetadataPort } from "./vaultSkillsMetadataPort";
 import {
@@ -246,6 +247,7 @@ export async function createPiWorkspaceServices(
     mcp: mcpManagement,
     skills: skillsManagement,
     commands: slashCommandCatalog,
+    prompt: createPromptCompositionCoordinator(host),
     refresh: {
       refreshPiviManagement: async (domain) => {
         if (!host.refreshPiviManagement) {

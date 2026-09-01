@@ -49,7 +49,7 @@ export async function refreshVaultSkillsViews(
 
 export async function refreshPiviManagementViews(
   views: readonly PiviChatView[],
-  domain: 'mcp' | 'skills' | 'commands',
+  domain: 'mcp' | 'skills' | 'commands' | 'prompt',
 ): Promise<readonly { readonly target: string; readonly message: string }[]> {
   const failures: Array<{ target: string; message: string }> = [];
   for (let index = 0; index < views.length; index++) {

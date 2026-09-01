@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [046-composable-obsidian-workflow-prompts.md](046-composable-obsidian-workflow-prompts.md) | 2026-09-01 | Modular deduplicated system-prompt registry, a Settings Prompt tab for user-composable workflow modules, and failure-driven guidance from live session evidence. |
+| [046-composable-obsidian-workflow-prompts.md](046-composable-obsidian-workflow-prompts.md) | 2026-09-01 | Modular system-prompt registry, Settings Prompt tab, failure-driven guidance, and main-Agent `pivi_prompt` management. |
 
 ## Archived specs
 

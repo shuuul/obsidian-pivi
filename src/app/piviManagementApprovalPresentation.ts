@@ -8,6 +8,7 @@ import type {
 } from "@pivi/agent/tools/piviManagement";
 
 import type { TFunction } from "./i18n";
+import type { PromptCompositionPlan } from './runtime/PromptCompositionCoordinator';
 import type { WorkspaceCommandsPlan } from './runtime/WorkspaceCommandsCoordinator';
 
 /** Pure app presentation boundary from normalized management data to approval-card copy. */
@@ -96,6 +97,68 @@ export function presentCommandsManagementApproval(
   ], fields);
 }
 
+export function presentPromptManagementApproval(
+  plan: PromptCompositionPlan,
+  t: TFunction,
+): PiviManagementApprovalRequest {
+  const mutation = plan.mutation;
+  const name = promptModuleName(mutation);
+  const fields: PiviManagementPlanField[] = [
+    field(t, "module", name),
+    field(t, "catalogRevision", mutation.catalogRevision),
+  ];
+  let title: string;
+  let change: ChangeKey;
+  switch (mutation.action) {
+    case "set_enabled":
+      title = t(mutation.enabled
+        ? "chat.piviManagementApproval.management.titles.prompt.enable"
+        : "chat.piviManagementApproval.management.titles.prompt.disable", { name });
+      change = mutation.enabled ? "promptEnable" : "promptDisable";
+      fields.push(field(t, "enabled", booleanValue(t, mutation.enabled)));
+      break;
+    case "set_body":
+      title = t("chat.piviManagementApproval.management.titles.prompt.setBody", { name });
+      change = "promptSetBody";
+      fields.push(field(t, "prompt", t("chat.piviManagementApproval.management.values.updated")));
+      break;
+    case "restore":
+      title = t("chat.piviManagementApproval.management.titles.prompt.restore", { name });
+      change = "promptRestore";
+      break;
+    case "upsert":
+      title = t(mutation.id
+        ? "chat.piviManagementApproval.management.titles.prompt.update"
+        : "chat.piviManagementApproval.management.titles.prompt.create", { name });
+      change = mutation.id ? "promptUpdate" : "promptCreate";
+      if (mutation.title !== undefined) fields.push(field(t, "title", mutation.title));
+      if (mutation.body !== undefined) {
+        fields.push(field(t, "prompt", t("chat.piviManagementApproval.management.values.updated")));
+      }
+      if (mutation.enabled !== undefined) {
+        fields.push(field(t, "enabled", booleanValue(t, mutation.enabled)));
+      }
+      break;
+    case "remove":
+      title = t("chat.piviManagementApproval.management.titles.prompt.remove", { name });
+      change = "promptRemove";
+      break;
+    case "move":
+      title = t("chat.piviManagementApproval.management.titles.prompt.move", { name });
+      change = "promptMove";
+      if (mutation.beforeId) fields.push(field(t, "before", mutation.beforeId));
+      if (mutation.afterId) fields.push(field(t, "after", mutation.afterId));
+      break;
+  }
+  return request("prompt", mutation.action, title, plan.revision, [changeLine(t, change)], fields);
+}
+
+function promptModuleName(mutation: PromptCompositionPlan["mutation"]): string {
+  if ("title" in mutation && mutation.title?.trim()) return mutation.title.trim();
+  if ("id" in mutation && mutation.id) return mutation.id;
+  return "New module";
+}
+
 function mcpServerFields(server: AgentMcpServerInput, t: TFunction): PiviManagementPlanField[] {
   const fields: PiviManagementPlanField[] = [];
   if ("command" in server) {
@@ -124,8 +187,8 @@ function mcpServerFields(server: AgentMcpServerInput, t: TFunction): PiviManagem
   return fields;
 }
 
-type FieldKey = "server" | "enabled" | "type" | "command" | "args" | "envNames" | "url" | "auth" | "headerNames" | "bearerToken" | "oauth" | "oauthGrant" | "oauthClientId" | "oauthScope" | "oauthClientSecret" | "contextSaving" | "disabledTools" | "source" | "skills" | "skill" | "catalogRevision" | "icon" | "prompt" | "before" | "after";
-type ChangeKey = "mcpUpsert" | "mcpEnable" | "mcpDisable" | "mcpRemove" | "skillsInstall" | "skillsEnable" | "skillsDisable" | "skillsUpdate" | "skillsUpdateAll" | "skillsRemove" | "commandsUpsert" | "commandsRemove" | "commandsMove";
+type FieldKey = "server" | "enabled" | "type" | "command" | "args" | "envNames" | "url" | "auth" | "headerNames" | "bearerToken" | "oauth" | "oauthGrant" | "oauthClientId" | "oauthScope" | "oauthClientSecret" | "contextSaving" | "disabledTools" | "source" | "skills" | "skill" | "catalogRevision" | "icon" | "prompt" | "before" | "after" | "module" | "title";
+type ChangeKey = "mcpUpsert" | "mcpEnable" | "mcpDisable" | "mcpRemove" | "skillsInstall" | "skillsEnable" | "skillsDisable" | "skillsUpdate" | "skillsUpdateAll" | "skillsRemove" | "commandsUpsert" | "commandsRemove" | "commandsMove" | "promptEnable" | "promptDisable" | "promptSetBody" | "promptRestore" | "promptCreate" | "promptUpdate" | "promptRemove" | "promptMove";
 
 const COMMAND_TITLE_KEYS = {
   upsert: "chat.piviManagementApproval.management.titles.commands.upsert",
@@ -136,9 +199,10 @@ const CHANGE_KEYS: Record<ChangeKey, Parameters<TFunction>[0]> = {
   mcpUpsert: "chat.piviManagementApproval.management.changes.mcpUpsert", mcpEnable: "chat.piviManagementApproval.management.changes.mcpEnable", mcpDisable: "chat.piviManagementApproval.management.changes.mcpDisable", mcpRemove: "chat.piviManagementApproval.management.changes.mcpRemove",
   skillsInstall: "chat.piviManagementApproval.management.changes.skillsInstall", skillsEnable: "chat.piviManagementApproval.management.changes.skillsEnable", skillsDisable: "chat.piviManagementApproval.management.changes.skillsDisable", skillsUpdate: "chat.piviManagementApproval.management.changes.skillsUpdate", skillsUpdateAll: "chat.piviManagementApproval.management.changes.skillsUpdateAll", skillsRemove: "chat.piviManagementApproval.management.changes.skillsRemove",
   commandsUpsert: "chat.piviManagementApproval.management.changes.commandsUpsert", commandsRemove: "chat.piviManagementApproval.management.changes.commandsRemove", commandsMove: "chat.piviManagementApproval.management.changes.commandsMove",
+  promptEnable: "chat.piviManagementApproval.management.changes.promptEnable", promptDisable: "chat.piviManagementApproval.management.changes.promptDisable", promptSetBody: "chat.piviManagementApproval.management.changes.promptSetBody", promptRestore: "chat.piviManagementApproval.management.changes.promptRestore", promptCreate: "chat.piviManagementApproval.management.changes.promptCreate", promptUpdate: "chat.piviManagementApproval.management.changes.promptUpdate", promptRemove: "chat.piviManagementApproval.management.changes.promptRemove", promptMove: "chat.piviManagementApproval.management.changes.promptMove",
 };
 const FIELD_KEYS: Record<FieldKey, Parameters<TFunction>[0]> = {
-  server: "chat.piviManagementApproval.management.fields.server", enabled: "chat.piviManagementApproval.management.fields.enabled", type: "chat.piviManagementApproval.management.fields.type", command: "chat.piviManagementApproval.management.fields.command", args: "chat.piviManagementApproval.management.fields.args", envNames: "chat.piviManagementApproval.management.fields.envNames", url: "chat.piviManagementApproval.management.fields.url", auth: "chat.piviManagementApproval.management.fields.auth", headerNames: "chat.piviManagementApproval.management.fields.headerNames", bearerToken: "chat.piviManagementApproval.management.fields.bearerToken", oauth: "chat.piviManagementApproval.management.fields.oauth", oauthGrant: "chat.piviManagementApproval.management.fields.oauthGrant", oauthClientId: "chat.piviManagementApproval.management.fields.oauthClientId", oauthScope: "chat.piviManagementApproval.management.fields.oauthScope", oauthClientSecret: "chat.piviManagementApproval.management.fields.oauthClientSecret", contextSaving: "chat.piviManagementApproval.management.fields.contextSaving", disabledTools: "chat.piviManagementApproval.management.fields.disabledTools", source: "chat.piviManagementApproval.management.fields.source", skills: "chat.piviManagementApproval.management.fields.skills", skill: "chat.piviManagementApproval.management.fields.skill", catalogRevision: "chat.piviManagementApproval.management.fields.catalogRevision", icon: "chat.piviManagementApproval.management.fields.icon", prompt: "chat.piviManagementApproval.management.fields.prompt", before: "chat.piviManagementApproval.management.fields.before", after: "chat.piviManagementApproval.management.fields.after",
+  server: "chat.piviManagementApproval.management.fields.server", enabled: "chat.piviManagementApproval.management.fields.enabled", type: "chat.piviManagementApproval.management.fields.type", command: "chat.piviManagementApproval.management.fields.command", args: "chat.piviManagementApproval.management.fields.args", envNames: "chat.piviManagementApproval.management.fields.envNames", url: "chat.piviManagementApproval.management.fields.url", auth: "chat.piviManagementApproval.management.fields.auth", headerNames: "chat.piviManagementApproval.management.fields.headerNames", bearerToken: "chat.piviManagementApproval.management.fields.bearerToken", oauth: "chat.piviManagementApproval.management.fields.oauth", oauthGrant: "chat.piviManagementApproval.management.fields.oauthGrant", oauthClientId: "chat.piviManagementApproval.management.fields.oauthClientId", oauthScope: "chat.piviManagementApproval.management.fields.oauthScope", oauthClientSecret: "chat.piviManagementApproval.management.fields.oauthClientSecret", contextSaving: "chat.piviManagementApproval.management.fields.contextSaving", disabledTools: "chat.piviManagementApproval.management.fields.disabledTools", source: "chat.piviManagementApproval.management.fields.source", skills: "chat.piviManagementApproval.management.fields.skills", skill: "chat.piviManagementApproval.management.fields.skill",   catalogRevision: "chat.piviManagementApproval.management.fields.catalogRevision", icon: "chat.piviManagementApproval.management.fields.icon", prompt: "chat.piviManagementApproval.management.fields.prompt", before: "chat.piviManagementApproval.management.fields.before", after: "chat.piviManagementApproval.management.fields.after", module: "chat.piviManagementApproval.management.fields.module", title: "chat.piviManagementApproval.management.fields.title",
 };
 
 function field(t: TFunction, key: FieldKey, value: PiviManagementPlanField["value"]): PiviManagementPlanField {
@@ -148,6 +212,6 @@ function fieldPush(fields: PiviManagementPlanField[], t: TFunction, key: FieldKe
 function changeLine(t: TFunction, key: ChangeKey): string { return t(CHANGE_KEYS[key]); }
 function booleanValue(t: TFunction, value: boolean): string { return t(value ? "chat.piviManagementApproval.management.values.yes" : "chat.piviManagementApproval.management.values.no"); }
 function capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1); }
-function request(domain: "mcp" | "skills" | "commands", action: string, title: string, revision: string | number, changeLines: string[], fields: PiviManagementPlanField[]): PiviManagementApprovalRequest {
+function request(domain: "mcp" | "skills" | "commands" | "prompt", action: string, title: string, revision: string | number, changeLines: string[], fields: PiviManagementPlanField[]): PiviManagementApprovalRequest {
   return { domain, action, title, revision, changeLines, ...(fields.length ? { fields } : {}) };
 }

@@ -5,16 +5,19 @@ import type {
 import {
   createPiviCommandsTool,
   createPiviMcpTool,
+  createPiviPromptTool,
   createPiviSkillsTool,
   type PiviCommandsInput,
   type PiviManagementApprovalPort,
   type PiviManagementApprovalRequest,
+  type PiviManagementDomain,
   PiviManagementError,
   type PiviManagementMutationResult,
   type PiviManagementPlanField,
   type PiviManagementPlanValue,
   type PiviManagementPort,
   type PiviMcpInput,
+  type PiviPromptInput,
   type PiviSkillsInput,
 } from "@pivi/agent/tools/piviManagement";
 import type { PiMainOnlyToolProvider } from "@pivi/engine-pi/application/runtime";
@@ -23,14 +26,16 @@ import { t } from "../i18n";
 import {
   presentCommandsManagementApproval,
   presentMcpManagementApproval,
+  presentPromptManagementApproval,
   presentSkillsManagementApproval,
 } from "../piviManagementApprovalPresentation";
 import {
   type PiSlashCommandCatalog,
   PiviCommandsManagementError,
 } from "./PiSlashCommandCatalog";
+import type { PromptCompositionCoordinator } from "./PromptCompositionCoordinator";
 
-export type PiviManagementDomain = "mcp" | "skills" | "commands";
+export type { PiviManagementDomain } from "@pivi/agent/tools/piviManagement";
 
 /** Bounded sanitized failure returned from a management refresh pass. */
 export interface PiviManagementRefreshFailure {
@@ -52,6 +57,7 @@ export interface PiviManagementServiceDeps {
   mcp: McpManagementCoordinator;
   skills: SkillsManagementCoordinator;
   commands: PiSlashCommandCatalog;
+  prompt: PromptCompositionCoordinator;
   refresh: PiviManagementRefreshHost;
 }
 
@@ -76,6 +82,7 @@ export function createPiviManagementPort(
     executeMcp: (input, signal) => executeMcp(deps, approval, input, signal),
     executeSkills: (input, signal) => executeSkills(deps, approval, input, signal),
     executeCommands: (input, signal) => executeCommands(deps, approval, input, signal),
+    executePrompt: (input, signal) => executePrompt(deps, approval, input, signal),
   };
 }
 
@@ -94,6 +101,7 @@ export function createPiviManagementMainOnlyToolProviderFactory(
         createPiviMcpTool(port),
         createPiviSkillsTool(port),
         createPiviCommandsTool(port),
+        createPiviPromptTool(port),
       ].filter(tool => !getDisabledTools().includes(tool.name)),
       registeredToolSummary: EMPTY_PROVIDER_SUMMARY,
     });
@@ -185,6 +193,39 @@ async function executeCommands(
   }
   const base = asMutationResult(committed);
   return finalizeMutation(deps, "commands", base);
+}
+
+async function executePrompt(
+  deps: PiviManagementServiceDeps,
+  approval: PiviManagementApprovalPort | null,
+  input: PiviPromptInput,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  if (input.action === "list") {
+    return deps.prompt.queryList();
+  }
+  if (input.action === "get") {
+    try {
+      return deps.prompt.queryGet(input.id);
+    } catch (cause) {
+      throw mapPromptError(cause);
+    }
+  }
+
+  let plan;
+  try {
+    plan = deps.prompt.plan(input);
+  } catch (cause) {
+    throw mapPromptError(cause);
+  }
+  await requireConfirm(approval, presentPromptManagementApproval(plan, t), signal);
+  let committed;
+  try {
+    committed = await deps.prompt.commit(plan, input.catalogRevision);
+  } catch (cause) {
+    throw mapPromptError(cause);
+  }
+  return finalizeMutation(deps, "prompt", committed);
 }
 
 async function requireConfirm(
@@ -310,6 +351,15 @@ function mapCommandsError(cause: unknown): PiviManagementError {
   return new PiviManagementError(
     "persistence_failed",
     cause instanceof Error ? cause.message : "Command mutation failed.",
+    { cause: cause instanceof Error ? cause : undefined },
+  );
+}
+
+function mapPromptError(cause: unknown): PiviManagementError {
+  if (cause instanceof PiviManagementError) return cause;
+  return new PiviManagementError(
+    "persistence_failed",
+    cause instanceof Error ? cause.message : "Prompt mutation failed.",
     { cause: cause instanceof Error ? cause : undefined },
   );
 }

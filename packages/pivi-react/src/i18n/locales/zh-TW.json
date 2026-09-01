@@ -65,9 +65,9 @@
       "confirm": "確認",
       "deny": "拒絕",
       "management": {
-        "titles": { "mcp": { "upsert": "更新 MCP 伺服器「{name}」", "enable": "啟用 MCP 伺服器「{name}」", "disable": "停用 MCP 伺服器「{name}」", "remove": "移除 MCP 伺服器「{name}」" }, "skills": { "install": "從「{source}」安裝 Skills", "enable": "啟用 Skill「{name}」", "disable": "停用 Skill「{name}」", "update": "更新 Skill「{name}」", "updateAll": "更新所有由套件管理的 Skills", "remove": "移除 Skill「{name}」" }, "commands": { "upsert": "儲存命令 {command}", "remove": "移除命令 {command}", "move": "移動命令 {command}" } },
-        "changes": { "mcpUpsert": "套用規劃的 MCP 伺服器設定。", "mcpEnable": "啟用此 MCP 伺服器。", "mcpDisable": "停用此 MCP 伺服器。", "mcpRemove": "移除此 MCP 伺服器及其憑證。", "skillsInstall": "透過鎖定的套件流程安裝 Skills。", "skillsEnable": "啟用此 Skill。", "skillsDisable": "停用此 Skill。", "skillsUpdate": "從套件來源更新此 Skill。", "skillsUpdateAll": "更新所有由套件管理的 Skills。", "skillsRemove": "從工作區移除此 Skill。", "commandsUpsert": "建立或更新此工作區命令。", "commandsRemove": "刪除此工作區命令。", "commandsMove": "重新排序此工作區命令。" },
-        "fields": { "server": "伺服器", "enabled": "已啟用", "type": "類型", "command": "命令", "args": "引數", "envNames": "環境變數名稱", "url": "URL", "auth": "驗證", "headerNames": "標頭名稱", "bearerToken": "Bearer 權杖", "oauth": "OAuth", "oauthGrant": "OAuth 授權", "oauthClientId": "OAuth 用戶端 ID", "oauthScope": "OAuth 範圍", "oauthClientSecret": "OAuth 用戶端密鑰", "contextSaving": "節省上下文", "disabledTools": "已停用工具", "source": "來源", "skills": "Skills", "skill": "Skill", "catalogRevision": "目錄修訂版本", "icon": "圖示", "prompt": "提示詞", "before": "之前", "after": "之後" },
+        "titles": { "mcp": { "upsert": "更新 MCP 伺服器「{name}」", "enable": "啟用 MCP 伺服器「{name}」", "disable": "停用 MCP 伺服器「{name}」", "remove": "移除 MCP 伺服器「{name}」" }, "skills": { "install": "從「{source}」安裝 Skills", "enable": "啟用 Skill「{name}」", "disable": "停用 Skill「{name}」", "update": "更新 Skill「{name}」", "updateAll": "更新所有由套件管理的 Skills", "remove": "移除 Skill「{name}」" }, "commands": { "upsert": "儲存命令 {command}", "remove": "移除命令 {command}", "move": "移動命令 {command}" }, "prompt": { "enable": "啟用提示模組「{name}」", "disable": "停用提示模組「{name}」", "setBody": "更新提示模組「{name}」", "restore": "還原提示模組「{name}」", "create": "新增提示模組「{name}」", "update": "更新提示模組「{name}」", "remove": "移除提示模組「{name}」", "move": "移動提示模組「{name}」" } },
+        "changes": { "mcpUpsert": "套用規劃的 MCP 伺服器設定。", "mcpEnable": "啟用此 MCP 伺服器。", "mcpDisable": "停用此 MCP 伺服器。", "mcpRemove": "移除此 MCP 伺服器及其憑證。", "skillsInstall": "透過鎖定的套件流程安裝 Skills。", "skillsEnable": "啟用此 Skill。", "skillsDisable": "停用此 Skill。", "skillsUpdate": "從套件來源更新此 Skill。", "skillsUpdateAll": "更新所有由套件管理的 Skills。", "skillsRemove": "從工作區移除此 Skill。", "commandsUpsert": "建立或更新此工作區命令。", "commandsRemove": "刪除此工作區命令。", "commandsMove": "重新排序此工作區命令。", "promptEnable": "啟用此提示模組。", "promptDisable": "停用此提示模組。", "promptSetBody": "替換此提示模組的正文。", "promptRestore": "將此提示模組還原為隨附預設值。", "promptCreate": "建立此自訂提示模組。", "promptUpdate": "更新此自訂提示模組。", "promptRemove": "刪除此自訂提示模組。", "promptMove": "重新排序此自訂提示模組。" },
+        "fields": { "server": "伺服器", "enabled": "已啟用", "type": "類型", "command": "命令", "args": "引數", "envNames": "環境變數名稱", "url": "URL", "auth": "驗證", "headerNames": "標頭名稱", "bearerToken": "Bearer 權杖", "oauth": "OAuth", "oauthGrant": "OAuth 授權", "oauthClientId": "OAuth 用戶端 ID", "oauthScope": "OAuth 範圍", "oauthClientSecret": "OAuth 用戶端密鑰", "contextSaving": "節省上下文", "disabledTools": "已停用工具", "source": "來源", "skills": "Skills", "skill": "Skill", "catalogRevision": "目錄修訂版本", "icon": "圖示", "prompt": "提示詞", "before": "之前", "after": "之後", "module": "模組", "title": "標題" },
         "values": { "yes": "是", "no": "否", "clear": "清除", "disabled": "已停用", "updated": "已更新" }
       }
     },
@@ -1048,6 +1048,8 @@
       "piviSkillsDesc": "經主 Agent 確認後安裝、更新、啟用、停用或移除託管 Skills。",
       "piviCommands": "Pivi Commands",
       "piviCommandsDesc": "經主 Agent 確認後管理工作區 Commands。",
+      "piviPrompt": "Pivi Prompt",
+      "piviPromptDesc": "經主 Agent 確認後管理系統提示模組。",
       "searchDesc": "搜尋筆記文字、標籤，或列出資料夾中的 Markdown 檔案。",
       "noteInfo": "筆記資訊",
       "noteInfoDesc": "讀取中繼資料、標籤、出鏈和 frontmatter。",

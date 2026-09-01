@@ -98,7 +98,7 @@ flowchart LR
 | `ui/createUiPortHelpers.ts` | Shared workspace/env/subagent helpers for UI port adapters |
 | `ui/createSettingsModelsPort.ts` | Settings models/credential port wiring; prefetches interactive OAuth credentials via `getAuth` before readiness badges render; settings-authoritative provider removal and optional single-provider credential deletion |
 | `ui/createSettingsSkillsPort.ts` | Settings Skills port wiring: default vault-skills bundle install/update/remove orchestration and change notification |
-| `ui/createSettingsPromptPort.ts` | Settings Prompt-tab port: module list, numeric usage snapshot, workflow toggle/edit/restore, and custom-module CRUD/reorder; every persist calls `refreshPrompt()` |
+| `ui/createSettingsPromptPort.ts` | Settings Prompt-tab port over `PromptCompositionCoordinator`: module list, numeric usage snapshot, workflow toggle/edit/restore, and custom-module CRUD/reorder; every persist calls `refreshPrompt()` and bumps the shared in-memory `catalogRevision` |
 | `ui/createMcpSettingsPorts.ts` | Settings MCP save/reload/auth port wiring |
 | `ui/mentionEditor/createMentionEditorPort.ts` | Implements `SettingsPorts.mentionEditor`: mounts an imperative `MentionInput` with `MentionDropdownController` + `SlashCommandDropdown` into a React-owned container for command prompt editing |
 | `ui/createSubagentContentAdapter.ts` | Bridges React message-content mount/update calls to stored subagent imperative rendering without remounting on every stream update |
@@ -113,6 +113,7 @@ flowchart LR
 | `runtime/serviceContracts.ts` | Runtime-construction host contracts (`PiviWorkspaceHost`) shared by service providers |
 | `runtime/PiSlashCommandCatalog.ts` | Vault watcher and slash catalog composition over workspace commands, skills, MCP servers/tools, and built-in tool entries |
 | `runtime/WorkspaceCommandsCoordinator.ts` | Workspace-command snapshot/revision, validated plans, CAS commits, persistence, and ordering |
+| `runtime/PromptCompositionCoordinator.ts` | Prompt-module snapshot/revision, validated plans, CAS commits, Settings Prompt persist helpers, and WeakMap `catalogRevision` shared with `pivi_prompt` |
 | `runtime/vaultSkillsMetadataPort.ts` | Default-bundle settings bookkeeping port for the skills coordinator; runs inside the publication transaction with settings compensation on save failure |
 | `runtime/obsidianHttpRequest.ts` | Adapts Obsidian HTTP into custom-provider composition without leaking host networking into the Pi engine |
 | `runtime/piUiFacades.ts` | Settings/model/auth facades for product UI |

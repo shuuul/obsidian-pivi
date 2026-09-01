@@ -1,5 +1,5 @@
 /**
- * Agent-safe DTOs for pivi_mcp / pivi_skills / pivi_commands (spec 040).
+ * Agent-safe DTOs for pivi_mcp / pivi_skills / pivi_commands / pivi_prompt.
  * Raw secrets never appear in model-visible arguments or sanitized projections.
  */
 
@@ -210,5 +210,55 @@ export interface PiviCommandsListResult {
 
 export interface PiviCommandsGetResult {
   command: AgentCommandDetail;
+  catalogRevision: number;
+}
+
+// ---------------------------------------------------------------------------
+// Prompt modules
+// ---------------------------------------------------------------------------
+
+export type PiviPromptInput =
+  | { action: 'list' }
+  | { action: 'get'; id: string }
+  | { action: 'set_enabled'; id: string; enabled: boolean; catalogRevision: number }
+  | { action: 'set_body'; id: string; body: string; catalogRevision: number }
+  | { action: 'restore'; id: string; catalogRevision: number }
+  | {
+      action: 'upsert';
+      id?: string;
+      title?: string;
+      body?: string;
+      enabled?: boolean;
+      catalogRevision: number;
+    }
+  | { action: 'remove'; id: string; catalogRevision: number }
+  | {
+      action: 'move';
+      id: string;
+      beforeId?: string;
+      afterId?: string;
+      catalogRevision: number;
+    };
+
+/** List metadata without prompt bodies. */
+export interface AgentPromptModuleSummary {
+  id: string;
+  kind: 'core' | 'workflow' | 'custom';
+  title: string;
+  enabled: boolean;
+  modified: boolean;
+}
+
+export interface AgentPromptModuleDetail extends AgentPromptModuleSummary {
+  body: string;
+}
+
+export interface PiviPromptListResult {
+  modules: AgentPromptModuleSummary[];
+  catalogRevision: number;
+}
+
+export interface PiviPromptGetResult {
+  module: AgentPromptModuleDetail;
   catalogRevision: number;
 }

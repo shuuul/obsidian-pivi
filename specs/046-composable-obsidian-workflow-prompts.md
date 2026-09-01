@@ -24,7 +24,7 @@ Evidence from the eight most recent vault sessions (2026-08-31 to 2026-09-01, al
 7. **Coordinate-system mixing**: `startChar` combined with `startLine`/`endLine` in one call, twice in one session.
 8. **Search as a read backdoor**: `obsidian_search` with `context: true` used to dump long-line content after read friction; first guesses returned `[]`.
 
-The user additionally wants Obsidian-workflow guidance (long-line normalization, transcript cleanup, wikilinks, frontmatter, daily notes) to be user-composable: a Settings **Prompt** tab where workflow modules can be toggled and their body text edited or restored to defaults, while safety-critical guidance stays locked.
+The user additionally wants Obsidian-workflow guidance (long-line normalization, transcript cleanup, wikilinks, frontmatter, daily notes) to be user-composable: a Settings **Prompt** tab where workflow modules can be toggled and their body text edited or restored to defaults, while safety-critical guidance stays locked. After the Prompt tab shipped, the Agent still could not add or edit those modules through tools: there is no `pivi_prompt`, `.pivi/settings.json` writes bypass in-memory settings and `refreshPrompt()`, and vault `AGENTS.md` / `.pivi/SYSTEM.md` remain appendix-only.
 
 Current repository evidence: `SettingsShell.tsx` has a fixed eight-tab registry over `SettingsTabId`; React settings consume `SettingsPorts` only; synced persistence lives in `.pivi/settings.json` via `@pivi/obsidian-host` settings adapters; `computeSystemPromptKey` must reflect every prompt-affecting input; prompt tests live under `tests/unit/agent/prompt/`.
 
@@ -49,6 +49,7 @@ Restructure the system prompt into owned, deduplicated modules; make Obsidian-wo
 - [ ] Failure-driven hard rules land in core/tool-owned guidance: never re-send an identical failing tool call; on an oversized-line read error switch to `startChar` continuation instead of raising `maxChars`; plan page size from `stats` and the clamp rules instead of small-step crawling; `obsidian_read` coordinate systems are mutually exclusive per call; search is for locating, never a content-read channel; `old_string` must be copied verbatim from the latest read output; rewrites must not introduce quotes/facts absent from the source; in-place restructuring must not create draft/sibling copies unless the user asks; after tool failures continue with a changed strategy instead of stopping silently.
 - [ ] The oversized-line read error hint in `packages/obsidian-tools` no longer instructs raising `maxChars` past the effective clamp; it names line-relative `startChar` continuation as the corrective action, consistent with the prompt guidance.
 - [ ] Focused tests cover module composition (defaults, disabled, custom body, unknown ids, custom-module order and lifecycle), key computation, settings persistence round-trip, usage-panel estimation and compact K formatting, Prompt tab behavior (jsdom), i18n key coverage, and the corrected read error hint.
+- [ ] Main-Agent-only `pivi_prompt` queries and mutates the same `promptModules` / `customPromptModules` composition as Settings → Prompt: list/get are unconfirmed; mutations require one sidebar confirmation, `catalogRevision` from a prior list/get, codec persist, and `refreshPrompt()`. Core modules are list/get only. Workflow modules may be enabled/disabled, body-overridden, or restored. Custom modules may be created, renamed/edited via upsert, reordered, enabled/disabled, or removed. Subagents never receive the tool. Agents must not edit `.pivi/settings.json` for this purpose.
 
 ## Scope and non-goals
 
@@ -72,6 +73,8 @@ Not in scope:
 - Provider-exact tokenization for the usage panel; estimates stay character-based and estimate-labeled.
 - Live per-turn context accounting in the Prompt tab; the panel reflects the representative startup composition, and the composer usage meter remains the live surface.
 - Sharing/importing custom modules between vaults beyond normal `.pivi/settings.json` sync.
+- Adding `.pivi/settings.json` to Pivi-managed vault-mutation namespaces (the file is mixed-purpose). `pivi_prompt` is the Agent-facing owner for prompt-composition fields only.
+- Letting subagents manage prompt composition.
 
 ## Decisions
 
@@ -90,6 +93,7 @@ Not in scope:
 | 2026-09-01 | Prompt tab sits after Toolbar; locked core modules are hidden from the card list; editable workflow/custom bodies use a reading-height editor in a centered column. | Visual QA: edge-to-edge layout felt cramped, core cards added no action, and 160px editors were too short to read. Confirmed by user. | WS-02 |
 | 2026-09-01 | Usage panel is informational: compact K/M estimates, no suggested budget, no over-budget warning. | Tools/MCP size depends on the enabled set and is not a Prompt-tab budget the user can "fix"; raw five-digit counts are hard to scan. Confirmed by user. | WS-02 |
 | 2026-09-01 | Fold About into the end of General so the strip stays eight tabs after adding Prompt. | Nine tabs wrapped to two rows; About is version/links rather than a configuration domain. Confirmed by user. | WS-02 |
+| 2026-09-01 | Add main-Agent-only `pivi_prompt` as a fourth Pivi management tool, sharing Settings persist + `refreshPrompt()` rather than vault-mutating `settings.json`. | Same confirmation/revision/refresh contract as `pivi_commands`. Settings.json is mixed-purpose so it stays writable for other fields; prompt composition is owned by the tool + Settings Prompt tab. Confirmed by user. | WS-05 |
 
 ## Workstreams
 
@@ -101,6 +105,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Synced `promptModules` + `customPromptModules` persistence, `SettingsPorts` extension, React Prompt tab with badge/restore, custom-module CRUD/reorder, usage panel, search metadata, i18n | Grok 4.6 High (WS-02) | Done | WS-01 module contract | Settings/jsdom tests; i18n dead-key scan; human visual sign-off |
 | WS-03 | Workflow module bodies (normalization default-off, transcript cleanup, wikilink, frontmatter, daily notes), failure-driven core rules, read error-hint fix | Grok 4.6 High (WS-03 bodies) | Done | WS-01 | Prompt-content tests; read-tool error tests |
 | WS-04 | Documentation sync and repository/live-host verification | Grok 4.6 High (WS-04) | Done | WS-01–WS-03 | Full gates, reload, `obsidian dev:errors` |
+| WS-05 | Main-Agent-only `pivi_prompt` over the shared prompt-composition coordinator: list/get, workflow enable/body/restore, custom upsert/remove/move, one-shot confirmation, catalogRevision, persist+refreshPrompt | Cursor | Done | WS-02 persist contract | Management tool/schema tests; coordinator CAS; approval i18n; focused prompt persist tests |
 
 ## Verification
 
@@ -116,6 +121,10 @@ Required behavioral fixtures:
 - With the normalization module enabled, the assembled prompt instructs pre-edit semantic splitting via `obsidian_edit`; disabled (default), the prompt retains only the 044/045 work-around guidance.
 - The oversized-line read error names `startLine` + `startChar` continuation and never instructs raising `maxChars` beyond the effective clamp.
 - Prompt content asserts the failure-driven rules: identical-retry ban, coordinate exclusivity, stats-first page planning, search-not-read, verbatim `old_string`, no fabricated quotes in rewrites, no draft copies, no silent stalls.
+- `pivi_prompt` is main-Agent-only and sequential; subagent registries omit it structurally. list/get skip confirmation; every mutation requires one sidebar confirmation and `catalogRevision` from a prior list/get. Stale revision fails with `state_changed` and does not write.
+- Core ids reject enable/body/restore/upsert/remove/move. Workflow ids accept set_enabled / set_body / restore. Custom ids accept set_enabled / upsert / remove / move; omitting `id` on upsert creates a generated `custom:` id.
+- Successful mutations persist through the same codec path as Settings → Prompt and refresh open-chat system prompts. Approval cards must not echo Agent-authored module bodies.
+- Settings UI mutations bump the same in-memory `catalogRevision` so a concurrent Agent commit cannot clobber an unseen Prompt-tab save.
 
 Commands:
 
@@ -140,8 +149,8 @@ Human visual sign-off (WS-02): the new Prompt settings tab — tab strip fit acr
 
 Owning handbook pages (the spec’s original `docs/06` guess is subagents; do not dump Prompt-tab docs there):
 
-- Numbered developer docs: `docs/07-tools-skills-mcp-and-integrations.md` (typed module registry, single-owner rule, synced `promptModules` / `customPromptModules`, `estimateTextTokens` home, oversized-line error hint, search-not-read) and `docs/08-presentation-and-settings.md` (nine settings tabs, Prompt tab, usage panel, `refreshPrompt`).
-- Nearest local guidance: `packages/pivi-react/AGENTS.md` and `packages/agent/AGENTS.md` already matched the code (no WS-04 patch); `packages/obsidian-tools/AGENTS.md` already names `startChar` continuation and forbids raising `maxChars` past the clamp; `src/app/AGENTS.md` now maps `createSettingsPromptPort`; `packages/pivi-react/styles/AGENTS.md` manifest count updated to 41.
+- Numbered developer docs: `docs/07-tools-skills-mcp-and-integrations.md` (typed module registry, single-owner rule, synced `promptModules` / `customPromptModules`, `pivi_prompt` management tool, `estimateTextTokens` home, oversized-line error hint, search-not-read) and `docs/08-presentation-and-settings.md` (eight settings tabs, Prompt tab, usage panel, `refreshPrompt`).
+- Nearest local guidance: `packages/pivi-react/AGENTS.md` and `packages/agent/AGENTS.md` already matched the code (no WS-04 patch); `packages/obsidian-tools/AGENTS.md` already names `startChar` continuation and forbids raising `maxChars` past the clamp; `src/app/AGENTS.md` maps `createSettingsPromptPort` and `PromptCompositionCoordinator`; `packages/pivi-react/styles/AGENTS.md` manifest count updated to 41.
 - Parent/package guidance: `packages/pivi-react/src/i18n/AGENTS.md` needed no Prompt-tab catalog-workflow change.
 - Root guidance and roadmap: `AGENTS.md` Architecture Status bullet plus glossary **Prompt module**; `docs/10-roadmap-release-and-maintenance.md` shipped-capability note.
 
@@ -230,6 +239,22 @@ Owning handbook pages (the spec’s original `docs/06` guess is subagents; do no
   - `git diff --check` — clean
 - Remaining: Human visual sign-off of the Prompt tab (tab strip across eight tabs, usage panel, module cards, toggle/editor/badge/restore, custom CRUD, light and dark). Spec stays Active.
 - Blockers: None for WS-04. Visual QA is a human gate.
+- Next action: User inspects Settings → Prompt in the reloaded plugin. Coordinating agent must not mark the Verification “Human visual sign-off” item done from this workstream. Do not Complete/archive the spec until that sign-off lands.
+
+### 2026-09-01 — Cursor — WS-05
+
+- Changed: Added main-Agent-only `pivi_prompt` as the fourth Pivi management tool. Host-neutral ToolSpec/schema/parse live in `@pivi/agent`. App `PromptCompositionCoordinator` shares in-memory `catalogRevision` (WeakMap on `host.settings`) with Settings → Prompt so UI saves and Agent CAS use the same persist + `refreshPrompt()` path. Core modules stay list/get only; workflow accepts enable/body/restore; custom accepts upsert (omit `id` to create), enable, remove, and move. Mutations require one sidebar confirmation and a matching `catalogRevision`; approval cards never echo Agent-authored bodies. `.pivi/settings.json` is not a managed vault-mutation namespace.
+- Evidence:
+  - `npm run test -- tests/unit/obsidian-tools/management/piviManagementTools.test.ts tests/unit/app/runtime/piviManagementService.test.ts tests/unit/app/runtime/promptCompositionCoordinator.test.ts tests/unit/app/piviManagementApprovalPresentation.test.ts tests/unit/agent/tools/toolPresentation.test.ts tests/unit/app/obsidianSettingsIntegration.test.ts tests/jsdom/pivi-react/ToolsSettingsPage.test.tsx tests/unit/app/ui/createUiPorts.test.ts` — 8 suites / 142 tests passed
+  - `npm run typecheck` — green
+  - `npm run lint` — ESLint: No issues found
+  - `npm run check:boundaries` — architecture, package-readmes, i18n dead-keys, specs, pi-pins passed
+  - `npm run build` — styles.css 181.9 KB; copied main.js / manifest.json / styles.css to the vault plugin folder
+  - `obsidian plugin:reload id=pivi` — Reloaded: pivi
+  - `obsidian dev:errors` — No errors captured.
+  - `git diff --check` — clean
+- Remaining: Human visual sign-off of the Prompt tab (WS-02). Spec stays Active.
+- Blockers: None.
 - Next action: User inspects Settings → Prompt in the reloaded plugin. Coordinating agent must not mark the Verification “Human visual sign-off” item done from this workstream. Do not Complete/archive the spec until that sign-off lands.
 
 ## Completion summary

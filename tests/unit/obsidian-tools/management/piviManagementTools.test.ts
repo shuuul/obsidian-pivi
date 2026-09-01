@@ -3,16 +3,20 @@ import { buildRegisteredToolsSection } from '@pivi/agent/prompt';
 import {
   createPiviCommandsTool,
   createPiviMcpTool,
+  createPiviPromptTool,
   createPiviSkillsTool,
   parsePiviCommandsInput,
   parsePiviMcpInput,
+  parsePiviPromptInput,
   parsePiviSkillsInput,
   PIVI_COMMANDS_PARAMETERS,
   PIVI_MCP_PARAMETERS,
+  PIVI_PROMPT_PARAMETERS,
   PIVI_SKILLS_PARAMETERS,
   type PiviManagementPort,
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
+  TOOL_PIVI_PROMPT,
   TOOL_PIVI_SKILLS,
 } from '@pivi/agent/tools';
 import { toPiAgentTool } from '@pivi/engine-pi/piToolAdapter';
@@ -40,11 +44,13 @@ function makePort(): {
   executeMcp: jest.MockedFunction<PiviManagementPort['executeMcp']>;
   executeSkills: jest.MockedFunction<PiviManagementPort['executeSkills']>;
   executeCommands: jest.MockedFunction<PiviManagementPort['executeCommands']>;
+  executePrompt: jest.MockedFunction<PiviManagementPort['executePrompt']>;
 } {
   return {
     executeMcp: jest.fn(async (input) => ({ ok: true, domain: 'mcp', input })),
     executeSkills: jest.fn(async (input) => ({ ok: true, domain: 'skills', input })),
     executeCommands: jest.fn(async (input) => ({ ok: true, domain: 'commands', input })),
+    executePrompt: jest.fn(async (input) => ({ ok: true, domain: 'prompt', input })),
   };
 }
 
@@ -61,6 +67,7 @@ function serializeThroughProtocol(api: ProtocolApi): Record<string, unknown>[] {
     createPiviMcpTool(port),
     createPiviSkillsTool(port),
     createPiviCommandsTool(port),
+    createPiviPromptTool(port),
   ].map(toPiAgentTool).map(({ name, label, description, parameters }) => ({
     name,
     label,
@@ -148,10 +155,13 @@ describe('pivi management tool contracts', () => {
     expect(listActionConsts(PIVI_COMMANDS_PARAMETERS)).toEqual([
       'list', 'get', 'upsert', 'remove', 'move',
     ]);
+    expect(listActionConsts(PIVI_PROMPT_PARAMETERS)).toEqual([
+      'list', 'get', 'set_enabled', 'set_body', 'restore', 'upsert', 'upsert', 'remove', 'move',
+    ]);
   });
 
   it('declares an object root for every management schema', () => {
-    for (const schema of [PIVI_MCP_PARAMETERS, PIVI_SKILLS_PARAMETERS, PIVI_COMMANDS_PARAMETERS]) {
+    for (const schema of [PIVI_MCP_PARAMETERS, PIVI_SKILLS_PARAMETERS, PIVI_COMMANDS_PARAMETERS, PIVI_PROMPT_PARAMETERS]) {
       expect(schema.type).toBe('object');
     }
   });
@@ -165,11 +175,12 @@ describe('pivi management tool contracts', () => {
   ] as const)('serializes usable object schemas through %s', (_label, api) => {
     const schemas = serializeThroughProtocol(api);
 
-    expect(schemas).toHaveLength(3);
+    expect(schemas).toHaveLength(4);
     const expectedActions = [
       listActionConsts(PIVI_MCP_PARAMETERS),
       listActionConsts(PIVI_SKILLS_PARAMETERS),
       listActionConsts(PIVI_COMMANDS_PARAMETERS),
+      [...new Set(listActionConsts(PIVI_PROMPT_PARAMETERS))],
     ];
     for (const [index, schema] of schemas.entries()) {
       expect(schema).toMatchObject({
@@ -186,11 +197,13 @@ describe('pivi management tool contracts', () => {
       createPiviMcpTool(port),
       createPiviSkillsTool(port),
       createPiviCommandsTool(port),
+      createPiviPromptTool(port),
     ];
     expect(tools.map((tool) => tool.name)).toEqual([
       TOOL_PIVI_MCP,
       TOOL_PIVI_SKILLS,
       TOOL_PIVI_COMMANDS,
+      TOOL_PIVI_PROMPT,
     ]);
     for (const tool of tools) {
       expect(tool.executionMode).toBe('sequential');
@@ -199,7 +212,7 @@ describe('pivi management tool contracts', () => {
   });
 
   it('rejects additionalProperties on every action variant', () => {
-    for (const schema of [PIVI_MCP_PARAMETERS, PIVI_SKILLS_PARAMETERS, PIVI_COMMANDS_PARAMETERS]) {
+    for (const schema of [PIVI_MCP_PARAMETERS, PIVI_SKILLS_PARAMETERS, PIVI_COMMANDS_PARAMETERS, PIVI_PROMPT_PARAMETERS]) {
       for (const variant of schema.oneOf) {
         expect((variant as { additionalProperties: boolean }).additionalProperties).toBe(false);
       }
@@ -258,6 +271,27 @@ describe('pivi management tool contracts', () => {
     expect(upsert.properties).not.toHaveProperty('integrationKey');
     expect(upsert.properties).not.toHaveProperty('revision');
   });
+
+  it('requires catalogRevision on every prompt mutation and encodes move anchor XOR', () => {
+    const schema = JSON.parse(JSON.stringify(PIVI_PROMPT_PARAMETERS)) as ConstructorParameters<typeof Validator>[0];
+    const validator = new Validator(schema);
+    const isValid = (value: unknown) => validator.validate(value).valid;
+    expect(isValid({ action: 'set_enabled', id: 'transcript-cleanup', enabled: true })).toBe(false);
+    expect(isValid({ action: 'set_body', id: 'transcript-cleanup', body: 'x' })).toBe(false);
+    expect(isValid({ action: 'restore', id: 'transcript-cleanup' })).toBe(false);
+    expect(isValid({ action: 'upsert', body: 'x' })).toBe(false);
+    expect(isValid({ action: 'remove', id: 'custom:a' })).toBe(false);
+    expect(isValid({ action: 'move', id: 'custom:a', beforeId: 'custom:b' })).toBe(false);
+    expect(isValid({ action: 'move', id: 'custom:a', catalogRevision: 1 })).toBe(false);
+    expect(isValid({
+      action: 'move', id: 'custom:a', beforeId: 'custom:b', afterId: 'custom:c', catalogRevision: 1,
+    })).toBe(false);
+    expect(isValid({ action: 'set_enabled', id: 'transcript-cleanup', enabled: false, catalogRevision: 1 })).toBe(true);
+    expect(isValid({ action: 'upsert', body: 'hello', catalogRevision: 1 })).toBe(true);
+    expect(isValid({ action: 'upsert', id: 'custom:a', title: 'Renamed', catalogRevision: 1 })).toBe(true);
+    expect(isValid({ action: 'move', id: 'custom:a', beforeId: 'custom:b', catalogRevision: 1 })).toBe(true);
+    expect(isValid({ action: 'move', id: 'custom:a', afterId: 'custom:b', catalogRevision: 1 })).toBe(true);
+  });
 });
 
 describe('pivi management runtime validation', () => {
@@ -266,15 +300,18 @@ describe('pivi management runtime validation', () => {
     const mcp = createPiviMcpTool(port);
     const skills = createPiviSkillsTool(port);
     const commands = createPiviCommandsTool(port);
+    const prompt = createPiviPromptTool(port);
 
     await expect(mcp.execute('1', null)).rejects.toThrow('must be an object');
     await expect(mcp.execute('1', { action: 'rename' })).rejects.toThrow('Unknown pivi_mcp action');
     await expect(skills.execute('1', { action: 'publish' })).rejects.toThrow('Unknown pivi_skills action');
     await expect(commands.execute('1', { action: 'reorder' })).rejects.toThrow('Unknown pivi_commands action');
+    await expect(prompt.execute('1', { action: 'reorder' })).rejects.toThrow('Unknown pivi_prompt action');
 
     expect(port.executeMcp).not.toHaveBeenCalled();
     expect(port.executeSkills).not.toHaveBeenCalled();
     expect(port.executeCommands).not.toHaveBeenCalled();
+    expect(port.executePrompt).not.toHaveBeenCalled();
   });
 
   it('rejects unsafe MCP secret inputs', () => {
@@ -410,6 +447,39 @@ describe('pivi management runtime validation', () => {
       catalogRevision: 3,
     });
   });
+
+  it('requires catalogRevision and exclusive before/after for prompt move', () => {
+    expect(() => parsePiviPromptInput({
+      action: 'move',
+      id: 'custom:a',
+      beforeId: 'custom:b',
+    })).toThrow('catalogRevision');
+
+    expect(() => parsePiviPromptInput({
+      action: 'move',
+      id: 'custom:a',
+      catalogRevision: 1,
+      beforeId: 'custom:b',
+      afterId: 'custom:c',
+    })).toThrow('exactly one of beforeId or afterId');
+
+    expect(() => parsePiviPromptInput({
+      action: 'upsert',
+      catalogRevision: 1,
+    })).toThrow('body');
+
+    expect(parsePiviPromptInput({
+      action: 'move',
+      id: 'custom:a',
+      afterId: 'custom:b',
+      catalogRevision: 3,
+    })).toEqual({
+      action: 'move',
+      id: 'custom:a',
+      afterId: 'custom:b',
+      catalogRevision: 3,
+    });
+  });
 });
 
 describe('pivi management port forwarding', () => {
@@ -436,6 +506,7 @@ describe('pivi management port forwarding', () => {
       skillNames: ['defuddle'],
     }, signal);
     await commands.execute('c1', { action: 'get', id: 'summarize' }, signal);
+    await createPiviPromptTool(port).execute('p1', { action: 'get', id: 'transcript-cleanup' }, signal);
 
     expect(port.executeSkills).toHaveBeenCalledWith({
       action: 'install',
@@ -445,6 +516,10 @@ describe('pivi management port forwarding', () => {
     expect(port.executeCommands).toHaveBeenCalledWith({
       action: 'get',
       id: 'summarize',
+    }, signal);
+    expect(port.executePrompt).toHaveBeenCalledWith({
+      action: 'get',
+      id: 'transcript-cleanup',
     }, signal);
   });
 });
@@ -466,6 +541,11 @@ describe('pivi management presentation and prompt', () => {
       icon: 'terminal',
       labelKey: 'tools.display.piviCommands',
     });
+    expect(getToolPresentationDescriptor(TOOL_PIVI_PROMPT)).toMatchObject({
+      kind: 'obsidian',
+      icon: 'file-text',
+      labelKey: 'tools.display.piviPrompt',
+    });
   });
 
   it('documents management tools in the registered-tools prompt when listed', () => {
@@ -474,6 +554,7 @@ describe('pivi management presentation and prompt', () => {
       createPiviMcpTool(port),
       createPiviSkillsTool(port),
       createPiviCommandsTool(port),
+      createPiviPromptTool(port),
     ];
     const section = buildRegisteredToolsSection({
       obsidianTools: toolSpecs.map((tool) => tool.name),
@@ -494,5 +575,7 @@ describe('pivi management presentation and prompt', () => {
     expect(section).toContain('`pivi_commands`');
     expect(section).toContain('catalogRevision');
     expect(section).toContain('beforeId');
+    expect(section).toContain('`pivi_prompt`');
+    expect(section).toContain('do not edit .pivi/settings.json');
   });
 });

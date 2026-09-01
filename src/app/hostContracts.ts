@@ -99,7 +99,7 @@ export interface PiviChatViewMaintenance {
    * Iterates initialized tabs directly and returns sanitized per-target failures
    * instead of swallowing them via best-effort broadcast.
    */
-  refreshPiviManagement(domain: 'mcp' | 'skills' | 'commands'): Promise<readonly PiviManagementRefreshFailure[]>;
+  refreshPiviManagement(domain: 'mcp' | 'skills' | 'commands' | 'prompt'): Promise<readonly PiviManagementRefreshFailure[]>;
   invalidateSlashCatalog(): void;
   warmSlashCatalog(): void;
   syncExternalReadDirectories(paths: readonly string[]): void;

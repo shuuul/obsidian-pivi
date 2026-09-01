@@ -27,6 +27,7 @@ import {
   TOOL_OBSIDIAN_WRITE,
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
+  TOOL_PIVI_PROMPT,
   TOOL_PIVI_SESSIONS,
   TOOL_PIVI_SKILLS,
 } from './obsidianToolNames';
@@ -131,6 +132,7 @@ export type ToolPresentationTranslationKey =
   | 'tools.display.piviMcp'
   | 'tools.display.piviSkills'
   | 'tools.display.piviCommands'
+  | 'tools.display.piviPrompt'
   | 'tools.display.tags'
   | 'tools.display.tasks'
   | 'tools.display.write'
@@ -335,6 +337,11 @@ export const TOOL_PRESENTATION_DESCRIPTORS: Readonly<Record<string, ToolPresenta
   [TOOL_PIVI_COMMANDS]: entry('terminal', {
     kind: 'obsidian',
     labelKey: 'tools.display.piviCommands',
+    summarize: summarizeObsidianActionTarget,
+  }),
+  [TOOL_PIVI_PROMPT]: entry('file-text', {
+    kind: 'obsidian',
+    labelKey: 'tools.display.piviPrompt',
     summarize: summarizeObsidianActionTarget,
   }),
 };

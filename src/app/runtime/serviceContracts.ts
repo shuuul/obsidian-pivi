@@ -19,7 +19,7 @@ export interface PiviWorkspaceHost {
    * Returns bounded sanitized per-target failures (never throws for partial refresh).
    */
   refreshPiviManagement?(
-    domain: 'mcp' | 'skills' | 'commands',
+    domain: 'mcp' | 'skills' | 'commands' | 'prompt',
   ): Promise<readonly { readonly target: string; readonly message: string }[]>;
 }
 

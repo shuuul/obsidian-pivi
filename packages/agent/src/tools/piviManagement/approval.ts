@@ -1,3 +1,5 @@
+export type PiviManagementDomain = 'mcp' | 'skills' | 'commands' | 'prompt';
+
 /** Pivi-owned, normalized value that is safe to show in a management plan. */
 export type PiviManagementPlanValue = string | number | boolean | null;
 
@@ -8,7 +10,7 @@ export interface PiviManagementPlanField {
 
 /** Immutable preview produced by a Pivi coordinator, never by Agent prose. */
 export interface PiviManagementApprovalRequest {
-  domain: 'mcp' | 'skills' | 'commands';
+  domain: PiviManagementDomain;
   action: string;
   title: string;
   revision: string | number;

@@ -329,3 +329,122 @@ export const PIVI_COMMANDS_PARAMETERS = {
   ],
   additionalProperties: false,
 } as const;
+
+export const PIVI_PROMPT_PARAMETERS = {
+  type: 'object',
+  properties: {
+    action: {
+      type: 'string',
+      enum: ['list', 'get', 'set_enabled', 'set_body', 'restore', 'upsert', 'remove', 'move'],
+    },
+    id: STRING,
+    title: STRING,
+    body: STRING,
+    enabled: BOOLEAN,
+    catalogRevision: { type: 'number' },
+    beforeId: STRING,
+    afterId: STRING,
+  },
+  required: ['action'],
+  oneOf: [
+    {
+      type: 'object',
+      properties: { action: { type: 'string', const: 'list' } },
+      required: ['action'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'get' },
+        id: STRING,
+      },
+      required: ['action', 'id'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'set_enabled' },
+        id: STRING,
+        enabled: BOOLEAN,
+        catalogRevision: { type: 'number' },
+      },
+      required: ['action', 'id', 'enabled', 'catalogRevision'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'set_body' },
+        id: STRING,
+        body: STRING,
+        catalogRevision: { type: 'number' },
+      },
+      required: ['action', 'id', 'body', 'catalogRevision'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'restore' },
+        id: STRING,
+        catalogRevision: { type: 'number' },
+      },
+      required: ['action', 'id', 'catalogRevision'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'upsert' },
+        title: STRING,
+        body: STRING,
+        enabled: BOOLEAN,
+        catalogRevision: { type: 'number' },
+      },
+      required: ['action', 'body', 'catalogRevision'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'upsert' },
+        id: STRING,
+        title: STRING,
+        body: STRING,
+        enabled: BOOLEAN,
+        catalogRevision: { type: 'number' },
+      },
+      required: ['action', 'id', 'catalogRevision'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'remove' },
+        id: STRING,
+        catalogRevision: { type: 'number' },
+      },
+      required: ['action', 'id', 'catalogRevision'],
+      additionalProperties: false,
+    },
+    {
+      type: 'object',
+      properties: {
+        action: { type: 'string', const: 'move' },
+        id: STRING,
+        beforeId: STRING,
+        afterId: STRING,
+        catalogRevision: { type: 'number' },
+      },
+      required: ['action', 'id', 'catalogRevision'],
+      oneOf: [
+        { required: ['beforeId'], not: { required: ['afterId'] } },
+        { required: ['afterId'], not: { required: ['beforeId'] } },
+      ],
+      additionalProperties: false,
+    },
+  ],
+  additionalProperties: false,
+} as const;

@@ -30,11 +30,13 @@ export const TOOL_PIVI_SESSIONS = 'pivi_sessions' as const;
 export const TOOL_PIVI_MCP = 'pivi_mcp' as const;
 export const TOOL_PIVI_SKILLS = 'pivi_skills' as const;
 export const TOOL_PIVI_COMMANDS = 'pivi_commands' as const;
+export const TOOL_PIVI_PROMPT = 'pivi_prompt' as const;
 
 export const PIVI_MANAGEMENT_TOOLS = [
   TOOL_PIVI_MCP,
   TOOL_PIVI_SKILLS,
   TOOL_PIVI_COMMANDS,
+  TOOL_PIVI_PROMPT,
 ] as const;
 
 export function isPiviManagementTool(name: string): boolean {

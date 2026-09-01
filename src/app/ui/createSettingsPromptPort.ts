@@ -2,15 +2,8 @@ import {
   buildMcpInventoryLines,
   buildRegisteredToolsSection,
   composePromptSections,
-  createCustomPromptModuleId,
-  type CustomPromptModule,
   estimatePromptUsageSections,
-  getShippedPromptModule,
-  isShippedPromptModuleId,
-  normalizePromptModuleSettings,
-  type PromptModuleOverride,
-  type PromptModuleSettings,
-  resolvePromptModules,
+  type ResolvedPromptModule,
 } from '@pivi/agent/prompt';
 import {
   getObsidianToolsSettingsFromBag,
@@ -38,9 +31,10 @@ import type {
 
 import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
 import { isOfficialObsidianCliEnabled } from '@/app/hostPlatform';
+import { createPromptCompositionCoordinator } from '@/app/runtime/PromptCompositionCoordinator';
 
 function toModuleView(
-  module: ReturnType<typeof resolvePromptModules>[number],
+  module: ResolvedPromptModule,
 ): SettingsPromptModuleView {
   return {
     id: module.id,
@@ -52,71 +46,21 @@ function toModuleView(
   };
 }
 
-function requireCustomModule(
-  modules: readonly CustomPromptModule[],
-  id: string,
-): CustomPromptModule {
-  const entry = modules.find((module) => module.id === id);
-  if (!entry) {
-    throw new Error(`Custom prompt module ${id} was not found.`);
-  }
-  return entry;
-}
-
-function requireWorkflowModule(id: string): void {
-  const shipped = getShippedPromptModule(id);
-  if (!shipped || shipped.kind !== 'workflow') {
-    throw new Error(`Workflow prompt module ${id} was not found.`);
-  }
-}
-
-function writeOverride(
-  current: PromptModuleSettings,
-  id: string,
-  patch: PromptModuleOverride,
-): Record<string, PromptModuleOverride> {
-  const shipped = getShippedPromptModule(id);
-  const existing = current.promptModules[id] ?? {};
-  const next: { enabled?: boolean; customBody?: string } = {};
-  const enabled = patch.enabled ?? existing.enabled;
-  const customBody = Object.hasOwn(patch, 'customBody') ? patch.customBody : existing.customBody;
-  if (enabled !== undefined && shipped && enabled !== shipped.defaultEnabled) {
-    next.enabled = enabled;
-  }
-  if (customBody !== undefined) {
-    next.customBody = customBody;
-  }
-  const overrides = { ...current.promptModules };
-  if (next.enabled === undefined && next.customBody === undefined) {
-    delete overrides[id];
-  } else {
-    overrides[id] = next;
-  }
-  return overrides;
-}
-
 export function createSettingsPromptPort(
   host: PiviSettingsHost,
   workspace: PiviPluginWorkspace,
   refreshPrompt: () => Promise<void>,
 ): SettingsPromptPort {
-  const readSettings = (): PromptModuleSettings => normalizePromptModuleSettings(
-    host.settings.promptModules,
-    host.settings.customPromptModules,
-  );
+  const composition = createPromptCompositionCoordinator(host);
 
-  const persist = async (next: PromptModuleSettings): Promise<void> => {
-    host.settings.promptModules = { ...next.promptModules };
-    host.settings.customPromptModules = next.customPromptModules.map((entry) => ({ ...entry }));
-    await host.saveSettings();
+  const persistAndRefresh = async (work: () => Promise<unknown>): Promise<void> => {
+    await work();
     await refreshPrompt();
   };
 
-  const listModules = (): readonly SettingsPromptModuleView[] => {
-    const settings = readSettings();
-    return resolvePromptModules(settings.promptModules, settings.customPromptModules)
-      .map(toModuleView);
-  };
+  const listModules = (): readonly SettingsPromptModuleView[] => (
+    composition.listModules().map(toModuleView)
+  );
 
   const collectToolSpecs = (): readonly ToolSpec[] => {
     if (!host.app) {
@@ -145,7 +89,7 @@ export function createSettingsPromptPort(
   };
 
   const getUsage = (): SettingsPromptUsageSnapshot => {
-    const settings = readSettings();
+    const settings = composition.read();
     const toolSpecs = collectToolSpecs();
     const toolsSettings = getObsidianToolsSettingsFromBag(host.settings);
     const subagents = getSubagentRuntimeSettingsFromBag(host.settings);
@@ -202,114 +146,33 @@ export function createSettingsPromptPort(
     listModules,
     getUsage,
     async setWorkflowEnabled(id, enabled) {
-      requireWorkflowModule(id);
-      const current = readSettings();
-      await persist({
-        promptModules: writeOverride(current, id, { enabled }),
-        customPromptModules: current.customPromptModules,
-      });
+      await persistAndRefresh(() => composition.setWorkflowEnabled(id, enabled));
     },
     async saveCustomBody(id, customBody) {
-      requireWorkflowModule(id);
-      const current = readSettings();
-      await persist({
-        promptModules: writeOverride(current, id, { customBody }),
-        customPromptModules: current.customPromptModules,
-      });
+      await persistAndRefresh(() => composition.saveCustomBody(id, customBody));
     },
     async restoreShipped(id) {
-      requireWorkflowModule(id);
-      const current = readSettings();
-      const existing = current.promptModules[id];
-      const overrides = { ...current.promptModules };
-      if (!existing || existing.enabled === undefined) {
-        delete overrides[id];
-      } else {
-        overrides[id] = { enabled: existing.enabled };
-      }
-      await persist({
-        promptModules: overrides,
-        customPromptModules: current.customPromptModules,
-      });
+      await persistAndRefresh(() => composition.restoreShipped(id));
     },
     async createCustomModule(input?: SettingsPromptCreateInput) {
-      const current = readSettings();
-      const id = createCustomPromptModuleId();
-      const entry: CustomPromptModule = {
-        id,
-        title: input?.title?.trim() || 'New module',
-        body: input?.body ?? '',
-        enabled: input?.enabled ?? true,
-      };
-      await persist({
-        promptModules: current.promptModules,
-        customPromptModules: [...current.customPromptModules, entry],
-      });
-      return toModuleView({
-        ...entry,
-        kind: 'custom',
-        modified: false,
-      });
+      const created = await composition.createCustomModule(input);
+      await refreshPrompt();
+      return toModuleView(created);
     },
     async renameCustomModule(id, title) {
-      const current = readSettings();
-      requireCustomModule(current.customPromptModules, id);
-      await persist({
-        promptModules: current.promptModules,
-        customPromptModules: current.customPromptModules.map((entry) => (
-          entry.id === id ? { ...entry, title } : entry
-        )),
-      });
+      await persistAndRefresh(() => composition.renameCustomModule(id, title));
     },
     async editCustomModule(id, body) {
-      const current = readSettings();
-      requireCustomModule(current.customPromptModules, id);
-      await persist({
-        promptModules: current.promptModules,
-        customPromptModules: current.customPromptModules.map((entry) => (
-          entry.id === id ? { ...entry, body } : entry
-        )),
-      });
+      await persistAndRefresh(() => composition.editCustomModule(id, body));
     },
     async reorderCustomModules(ids) {
-      const current = readSettings();
-      const byId = new Map(current.customPromptModules.map((entry) => [entry.id, entry]));
-      const next: CustomPromptModule[] = [];
-      for (const id of ids) {
-        if (isShippedPromptModuleId(id)) {
-          continue;
-        }
-        const entry = byId.get(id);
-        if (entry) {
-          next.push(entry);
-          byId.delete(id);
-        }
-      }
-      for (const entry of byId.values()) {
-        next.push(entry);
-      }
-      await persist({
-        promptModules: current.promptModules,
-        customPromptModules: next,
-      });
+      await persistAndRefresh(() => composition.reorderCustomModules(ids));
     },
     async setCustomModuleEnabled(id, enabled) {
-      const current = readSettings();
-      requireCustomModule(current.customPromptModules, id);
-      await persist({
-        promptModules: current.promptModules,
-        customPromptModules: current.customPromptModules.map((entry) => (
-          entry.id === id ? { ...entry, enabled } : entry
-        )),
-      });
+      await persistAndRefresh(() => composition.setCustomModuleEnabled(id, enabled));
     },
     async deleteCustomModule(id) {
-      const current = readSettings();
-      requireCustomModule(current.customPromptModules, id);
-      await persist({
-        promptModules: current.promptModules,
-        customPromptModules: current.customPromptModules.filter((entry) => entry.id !== id),
-      });
+      await persistAndRefresh(() => composition.deleteCustomModule(id));
     },
   };
 }

@@ -25,6 +25,7 @@ import {
   TOOL_OBSIDIAN_WRITE,
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
+  TOOL_PIVI_PROMPT,
   TOOL_PIVI_SESSIONS,
   TOOL_PIVI_SKILLS,
 } from '@pivi/agent/tools';
@@ -60,6 +61,7 @@ const TOOL_DESCRIPTORS: readonly [
   [TOOL_PIVI_MCP, 'tools.display.piviMcp', 'tools.display.piviMcpDesc'],
   [TOOL_PIVI_SKILLS, 'tools.display.piviSkills', 'tools.display.piviSkillsDesc'],
   [TOOL_PIVI_COMMANDS, 'tools.display.piviCommands', 'tools.display.piviCommandsDesc'],
+  [TOOL_PIVI_PROMPT, 'tools.display.piviPrompt', 'tools.display.piviPromptDesc'],
   [TOOL_OBSIDIAN_DAILY, 'tools.display.daily', 'tools.display.dailyDesc', 'cli'],
   [TOOL_OBSIDIAN_GRAPH, 'tools.display.graph', 'tools.display.graphDesc'],
   [TOOL_OBSIDIAN_TAGS, 'tools.display.tags', 'tools.display.tagsDesc'],

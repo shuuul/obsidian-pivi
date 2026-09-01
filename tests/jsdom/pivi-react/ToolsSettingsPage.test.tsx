@@ -138,10 +138,12 @@ describe('React tools settings', () => {
           group: 'pivi', enabled: true, available: true },
         { name: 'pivi_commands', label: 'Pivi Commands', description: 'Manage Commands.',
           group: 'pivi', enabled: true, available: true },
+        { name: 'pivi_prompt', label: 'Pivi Prompt', description: 'Manage Prompt.',
+          group: 'pivi', enabled: true, available: true },
       ],
     }));
 
-    for (const label of ['Pivi MCP', 'Pivi Skills', 'Pivi Commands']) {
+    for (const label of ['Pivi MCP', 'Pivi Skills', 'Pivi Commands', 'Pivi Prompt']) {
       const toggle = screen.getByRole('checkbox', { name: label });
       expect(toggle).toBeChecked();
       expect(toggle).toBeEnabled();

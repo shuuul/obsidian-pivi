@@ -65,9 +65,9 @@
       "confirm": "确认",
       "deny": "拒绝",
       "management": {
-        "titles": { "mcp": { "upsert": "更新 MCP 服务器“{name}”", "enable": "启用 MCP 服务器“{name}”", "disable": "停用 MCP 服务器“{name}”", "remove": "移除 MCP 服务器“{name}”" }, "skills": { "install": "从“{source}”安装 Skills", "enable": "启用 Skill“{name}”", "disable": "停用 Skill“{name}”", "update": "更新 Skill“{name}”", "updateAll": "更新所有由软件包管理的 Skills", "remove": "移除 Skill“{name}”" }, "commands": { "upsert": "保存命令 {command}", "remove": "移除命令 {command}", "move": "移动命令 {command}" } },
-        "changes": { "mcpUpsert": "应用计划的 MCP 服务器配置。", "mcpEnable": "启用此 MCP 服务器。", "mcpDisable": "停用此 MCP 服务器。", "mcpRemove": "移除此 MCP 服务器及其凭据。", "skillsInstall": "通过锁定的软件包流程安装 Skills。", "skillsEnable": "启用此 Skill。", "skillsDisable": "停用此 Skill。", "skillsUpdate": "从软件包来源更新此 Skill。", "skillsUpdateAll": "更新所有由软件包管理的 Skills。", "skillsRemove": "从工作区移除此 Skill。", "commandsUpsert": "创建或更新此工作区命令。", "commandsRemove": "删除此工作区命令。", "commandsMove": "重新排序此工作区命令。" },
-        "fields": { "server": "服务器", "enabled": "已启用", "type": "类型", "command": "命令", "args": "参数", "envNames": "环境变量名", "url": "URL", "auth": "身份验证", "headerNames": "请求头名称", "bearerToken": "Bearer 令牌", "oauth": "OAuth", "oauthGrant": "OAuth 授权", "oauthClientId": "OAuth 客户端 ID", "oauthScope": "OAuth 范围", "oauthClientSecret": "OAuth 客户端密钥", "contextSaving": "上下文节省", "disabledTools": "已停用工具", "source": "来源", "skills": "Skills", "skill": "Skill", "catalogRevision": "目录修订版本", "icon": "图标", "prompt": "提示词", "before": "之前", "after": "之后" },
+        "titles": { "mcp": { "upsert": "更新 MCP 服务器“{name}”", "enable": "启用 MCP 服务器“{name}”", "disable": "停用 MCP 服务器“{name}”", "remove": "移除 MCP 服务器“{name}”" }, "skills": { "install": "从“{source}”安装 Skills", "enable": "启用 Skill“{name}”", "disable": "停用 Skill“{name}”", "update": "更新 Skill“{name}”", "updateAll": "更新所有由软件包管理的 Skills", "remove": "移除 Skill“{name}”" }, "commands": { "upsert": "保存命令 {command}", "remove": "移除命令 {command}", "move": "移动命令 {command}" }, "prompt": { "enable": "启用提示模块“{name}”", "disable": "停用提示模块“{name}”", "setBody": "更新提示模块“{name}”", "restore": "恢复提示模块“{name}”", "create": "添加提示模块“{name}”", "update": "更新提示模块“{name}”", "remove": "移除提示模块“{name}”", "move": "移动提示模块“{name}”" } },
+        "changes": { "mcpUpsert": "应用计划的 MCP 服务器配置。", "mcpEnable": "启用此 MCP 服务器。", "mcpDisable": "停用此 MCP 服务器。", "mcpRemove": "移除此 MCP 服务器及其凭据。", "skillsInstall": "通过锁定的软件包流程安装 Skills。", "skillsEnable": "启用此 Skill。", "skillsDisable": "停用此 Skill。", "skillsUpdate": "从软件包来源更新此 Skill。", "skillsUpdateAll": "更新所有由软件包管理的 Skills。", "skillsRemove": "从工作区移除此 Skill。", "commandsUpsert": "创建或更新此工作区命令。", "commandsRemove": "删除此工作区命令。", "commandsMove": "重新排序此工作区命令。", "promptEnable": "启用此提示模块。", "promptDisable": "停用此提示模块。", "promptSetBody": "替换此提示模块的正文。", "promptRestore": "将此提示模块恢复为随附默认值。", "promptCreate": "创建此自定义提示模块。", "promptUpdate": "更新此自定义提示模块。", "promptRemove": "删除此自定义提示模块。", "promptMove": "重新排序此自定义提示模块。" },
+        "fields": { "server": "服务器", "enabled": "已启用", "type": "类型", "command": "命令", "args": "参数", "envNames": "环境变量名", "url": "URL", "auth": "身份验证", "headerNames": "请求头名称", "bearerToken": "Bearer 令牌", "oauth": "OAuth", "oauthGrant": "OAuth 授权", "oauthClientId": "OAuth 客户端 ID", "oauthScope": "OAuth 范围", "oauthClientSecret": "OAuth 客户端密钥", "contextSaving": "上下文节省", "disabledTools": "已停用工具", "source": "来源", "skills": "Skills", "skill": "Skill", "catalogRevision": "目录修订版本", "icon": "图标", "prompt": "提示词", "before": "之前", "after": "之后", "module": "模块", "title": "标题" },
         "values": { "yes": "是", "no": "否", "clear": "清除", "disabled": "已停用", "updated": "已更新" }
       }
     },
@@ -1048,6 +1048,8 @@
       "piviSkillsDesc": "经主 Agent 确认后安装、更新、启用、停用或移除托管 Skills。",
       "piviCommands": "Pivi Commands",
       "piviCommandsDesc": "经主 Agent 确认后管理工作区 Commands。",
+      "piviPrompt": "Pivi Prompt",
+      "piviPromptDesc": "经主 Agent 确认后管理系统提示模块。",
       "searchDesc": "搜索笔记文本、标签，或列出文件夹中的 Markdown 文件。",
       "noteInfo": "笔记信息",
       "noteInfoDesc": "读取元数据、标签、出链和 frontmatter。",

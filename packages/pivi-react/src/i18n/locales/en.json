@@ -73,15 +73,17 @@
         "titles": {
           "mcp": { "upsert": "Update MCP server \"{name}\"", "enable": "Enable MCP server \"{name}\"", "disable": "Disable MCP server \"{name}\"", "remove": "Remove MCP server \"{name}\"" },
           "skills": { "install": "Install Skills from \"{source}\"", "enable": "Enable Skill \"{name}\"", "disable": "Disable Skill \"{name}\"", "update": "Update Skill \"{name}\"", "updateAll": "Update all package-managed Skills", "remove": "Remove Skill \"{name}\"" },
-          "commands": { "upsert": "Save command {command}", "remove": "Remove command {command}", "move": "Move command {command}" }
+          "commands": { "upsert": "Save command {command}", "remove": "Remove command {command}", "move": "Move command {command}" },
+          "prompt": { "enable": "Enable prompt module \"{name}\"", "disable": "Disable prompt module \"{name}\"", "setBody": "Update prompt module \"{name}\"", "restore": "Restore prompt module \"{name}\"", "create": "Add prompt module \"{name}\"", "update": "Update prompt module \"{name}\"", "remove": "Remove prompt module \"{name}\"", "move": "Move prompt module \"{name}\"" }
         },
         "changes": {
           "mcpUpsert": "Apply the planned MCP server configuration.", "mcpEnable": "Enable this MCP server.", "mcpDisable": "Disable this MCP server.", "mcpRemove": "Remove this MCP server and its owned credentials.",
           "skillsInstall": "Install Skills through the pinned package workflow.", "skillsEnable": "Enable this Skill.", "skillsDisable": "Disable this Skill.", "skillsUpdate": "Update this Skill from its package provenance.", "skillsUpdateAll": "Update every package-managed Skill.", "skillsRemove": "Remove this Skill from the workspace.",
-          "commandsUpsert": "Create or update this workspace command.", "commandsRemove": "Delete this workspace command.", "commandsMove": "Reorder this workspace command."
+          "commandsUpsert": "Create or update this workspace command.", "commandsRemove": "Delete this workspace command.", "commandsMove": "Reorder this workspace command.",
+          "promptEnable": "Enable this prompt module.", "promptDisable": "Disable this prompt module.", "promptSetBody": "Replace this prompt module body.", "promptRestore": "Restore this prompt module to the shipped default.", "promptCreate": "Create this custom prompt module.", "promptUpdate": "Update this custom prompt module.", "promptRemove": "Delete this custom prompt module.", "promptMove": "Reorder this custom prompt module."
         },
         "fields": {
-          "server": "Server", "enabled": "Enabled", "type": "Type", "command": "Command", "args": "Arguments", "envNames": "Environment variable names", "url": "URL", "auth": "Authentication", "headerNames": "Header names", "bearerToken": "Bearer token", "oauth": "OAuth", "oauthGrant": "OAuth grant", "oauthClientId": "OAuth client ID", "oauthScope": "OAuth scope", "oauthClientSecret": "OAuth client secret", "contextSaving": "Context saving", "disabledTools": "Disabled tools", "source": "Source", "skills": "Skills", "skill": "Skill", "catalogRevision": "Catalog revision", "icon": "Icon", "prompt": "Prompt", "before": "Before", "after": "After"
+          "server": "Server", "enabled": "Enabled", "type": "Type", "command": "Command", "args": "Arguments", "envNames": "Environment variable names", "url": "URL", "auth": "Authentication", "headerNames": "Header names", "bearerToken": "Bearer token", "oauth": "OAuth", "oauthGrant": "OAuth grant", "oauthClientId": "OAuth client ID", "oauthScope": "OAuth scope", "oauthClientSecret": "OAuth client secret", "contextSaving": "Context saving", "disabledTools": "Disabled tools", "source": "Source", "skills": "Skills", "skill": "Skill", "catalogRevision": "Catalog revision", "icon": "Icon", "prompt": "Prompt", "before": "Before", "after": "After", "module": "Module", "title": "Title"
         },
         "values": { "yes": "Yes", "no": "No", "clear": "Clear", "disabled": "Disabled", "updated": "Updated" }
       }
@@ -1058,6 +1060,8 @@
       "piviSkillsDesc": "Install, update, enable, disable, and remove managed Skills through main-Agent confirmation.",
       "piviCommands": "Pivi Commands",
       "piviCommandsDesc": "Manage workspace Commands through main-Agent confirmation.",
+      "piviPrompt": "Pivi Prompt",
+      "piviPromptDesc": "Manage system-prompt modules through main-Agent confirmation.",
       "searchDesc": "Search note text, tags, or list markdown files in folders.",
       "noteInfo": "Note info",
       "noteInfoDesc": "Read metadata, tags, outgoing links, and frontmatter.",

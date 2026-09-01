@@ -5,6 +5,7 @@ import type { SkillsManagementPlan } from '@pivi/agent/skills/vault/skillsManage
 import {
   presentCommandsManagementApproval,
   presentMcpManagementApproval,
+  presentPromptManagementApproval,
   presentSkillsManagementApproval,
 } from '@/app/piviManagementApprovalPresentation';
 
@@ -125,11 +126,39 @@ describe('pivi management approval presentation', () => {
     expect(JSON.stringify(request)).not.toMatch(/AGENT (?:CONTENT|DESCRIPTION|HINT)/u);
   });
 
+  it.each([
+    {
+      name: 'enable',
+      mutation: { action: 'set_enabled', id: 'transcript-cleanup', enabled: true, catalogRevision: 4 },
+      values: ['transcript-cleanup', 4, `${PREFIX}chat.piviManagementApproval.management.values.yes`],
+    },
+    {
+      name: 'set body',
+      mutation: { action: 'set_body', id: 'transcript-cleanup', body: 'AGENT MODULE BODY', catalogRevision: 5 },
+      values: ['transcript-cleanup', 5, `${PREFIX}chat.piviManagementApproval.management.values.updated`],
+    },
+    {
+      name: 'create',
+      mutation: { action: 'upsert', title: 'Research', body: 'AGENT MODULE BODY', catalogRevision: 6 },
+      values: ['Research', 6, 'Research', `${PREFIX}chat.piviManagementApproval.management.values.updated`],
+    },
+    {
+      name: 'move after',
+      mutation: { action: 'move', id: 'custom:a', catalogRevision: 7, afterId: 'custom:b' },
+      values: ['custom:a', 7, 'custom:b'],
+    },
+  ] as const)('translates Prompt $name presentation without echoing bodies', ({ mutation, values }) => {
+    const request = presentPromptManagementApproval({ revision: mutation.catalogRevision, mutation }, t);
+    expectTranslatedRequest(request, { domain: 'prompt', action: mutation.action, values: [...values] });
+    expect(JSON.stringify(request)).not.toContain('AGENT MODULE BODY');
+  });
+
   it('resolves representative approval keys from every supported locale catalog', () => {
     const representativeKeys = [
       'chat.piviManagementApproval.management.titles.mcp.upsert',
       'chat.piviManagementApproval.management.titles.skills.install',
       'chat.piviManagementApproval.management.titles.commands.move',
+      'chat.piviManagementApproval.management.titles.prompt.create',
       'chat.piviManagementApproval.management.changes.mcpDisable',
       'chat.piviManagementApproval.management.fields.catalogRevision',
       'chat.piviManagementApproval.management.values.yes',

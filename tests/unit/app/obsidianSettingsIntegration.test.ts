@@ -4,6 +4,7 @@ import {
   TOOL_OBSIDIAN_TASKS,
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
+  TOOL_PIVI_PROMPT,
   TOOL_PIVI_SESSIONS,
   TOOL_PIVI_SKILLS,
 } from '@pivi/agent/tools';
@@ -52,11 +53,12 @@ describe('Obsidian settings integration adapter', () => {
       enabled: true,
       available: true,
     });
-    expect(rows.filter(row => [TOOL_PIVI_MCP, TOOL_PIVI_SKILLS, TOOL_PIVI_COMMANDS]
+    expect(rows.filter(row => [TOOL_PIVI_MCP, TOOL_PIVI_SKILLS, TOOL_PIVI_COMMANDS, TOOL_PIVI_PROMPT]
       .includes(row.name as typeof TOOL_PIVI_MCP))).toEqual([
       expect.objectContaining({ name: TOOL_PIVI_MCP, group: 'pivi', enabled: true }),
       expect.objectContaining({ name: TOOL_PIVI_SKILLS, group: 'pivi', enabled: true }),
       expect.objectContaining({ name: TOOL_PIVI_COMMANDS, group: 'pivi', enabled: true }),
+      expect.objectContaining({ name: TOOL_PIVI_PROMPT, group: 'pivi', enabled: true }),
     ]);
 
     const disabled = createObsidianToolRows({

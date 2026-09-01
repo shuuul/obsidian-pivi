@@ -159,6 +159,7 @@ const EXPECTED_DESCRIPTORS: Readonly<Record<string, ExpectedDescriptor>> = {
   pivi_mcp: expectedDescriptor(MCP_ICON_MARKER, 'mcp', { labelKey: 'tools.display.piviMcp' }),
   pivi_skills: expectedDescriptor('sparkles', 'skill', { labelKey: 'tools.display.piviSkills' }),
   pivi_commands: expectedDescriptor('terminal', 'obsidian', { labelKey: 'tools.display.piviCommands' }),
+  pivi_prompt: expectedDescriptor('file-text', 'obsidian', { labelKey: 'tools.display.piviPrompt' }),
 };
 
 describe('tool presentation registry', () => {

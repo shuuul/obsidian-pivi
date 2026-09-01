@@ -11,6 +11,7 @@ import type {
 import {
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
+  TOOL_PIVI_PROMPT,
   TOOL_PIVI_SKILLS,
 } from '@pivi/agent/tools';
 import {
@@ -55,6 +56,7 @@ function makeDeps(overrides?: {
   skillsCommit?: jest.Mock;
   commandsExecute?: jest.Mock;
   commandsCommit?: jest.Mock;
+  promptCommit?: jest.Mock;
   refresh?: jest.Mock;
 }): {
   deps: PiviManagementServiceDeps;
@@ -71,6 +73,7 @@ function makeDeps(overrides?: {
     commit: jest.Mock;
   };
   commands: { executeCommands: jest.Mock; planCommands: jest.Mock; commitCommands: jest.Mock };
+  prompt: { queryList: jest.Mock; queryGet: jest.Mock; plan: jest.Mock; commit: jest.Mock };
   refresh: jest.Mock;
   refreshHost: PiviManagementRefreshHost;
 } {
@@ -152,6 +155,29 @@ function makeDeps(overrides?: {
       effective: { id: plan.mutation.id, name: plan.mutation.id, content: 'body' },
     })),
   };
+  const prompt = {
+    queryList: jest.fn(() => ({
+      catalogRevision: 3,
+      modules: [{ id: 'transcript-cleanup', kind: 'workflow', title: 'Transcript cleanup', enabled: true, modified: false }],
+    })),
+    queryGet: jest.fn(() => ({
+      catalogRevision: 3,
+      module: {
+        id: 'transcript-cleanup',
+        kind: 'workflow',
+        title: 'Transcript cleanup',
+        enabled: true,
+        modified: false,
+        body: 'Cleanup body',
+      },
+    })),
+    plan: jest.fn((input) => ({ revision: input.catalogRevision, mutation: structuredClone(input) })),
+    commit: overrides?.promptCommit ?? jest.fn(async () => ({
+      saved: true,
+      refreshed: false,
+      effective: { catalogRevision: 4 },
+    })),
+  };
   const refresh = overrides?.refresh ?? jest.fn(async () => [] as const);
   const refreshHost: PiviManagementRefreshHost = {
     refreshPiviManagement: refresh,
@@ -161,19 +187,21 @@ function makeDeps(overrides?: {
       mcp: mcp as unknown as McpManagementCoordinator,
       skills: skills as unknown as SkillsManagementCoordinator,
       commands: commands as unknown as PiSlashCommandCatalog,
+      prompt: prompt as unknown as PiviManagementServiceDeps['prompt'],
       refresh: refreshHost,
     },
     mcp,
     skills,
     commands,
+    prompt,
     refresh,
     refreshHost,
   };
 }
 
 describe('PiviManagementService', () => {
-  it('runs MCP/Skills/Commands queries without approval or mutation', async () => {
-    const { deps, mcp, skills, commands, refresh } = makeDeps();
+  it('runs MCP/Skills/Commands/Prompt queries without approval or mutation', async () => {
+    const { deps, mcp, skills, commands, prompt, refresh } = makeDeps();
     const approval = makeApproval('confirm');
     const port = createPiviManagementPort(deps, approval.port);
 
@@ -199,6 +227,14 @@ describe('PiviManagementService', () => {
       command: { id: 'hello', content: 'Say hi' },
       catalogRevision: 7,
     });
+    await expect(port.executePrompt({ action: 'list' })).resolves.toEqual({
+      catalogRevision: 3,
+      modules: [{ id: 'transcript-cleanup', kind: 'workflow', title: 'Transcript cleanup', enabled: true, modified: false }],
+    });
+    await expect(port.executePrompt({ action: 'get', id: 'transcript-cleanup' })).resolves.toMatchObject({
+      module: { id: 'transcript-cleanup', body: 'Cleanup body' },
+      catalogRevision: 3,
+    });
 
     expect(approval.requests).toHaveLength(0);
     expect(mcp.plan).not.toHaveBeenCalled();
@@ -207,6 +243,8 @@ describe('PiviManagementService', () => {
     expect(skills.commit).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
     expect(commands.executeCommands).toHaveBeenCalledTimes(2);
+    expect(prompt.plan).not.toHaveBeenCalled();
+    expect(prompt.commit).not.toHaveBeenCalled();
   });
 
   /* The table intentionally exercises fulfilled and rejected branches. */
@@ -318,6 +356,41 @@ describe('PiviManagementService', () => {
       expect(refresh).not.toHaveBeenCalled();
     }
   });
+
+  it.each([
+    ['confirm', true],
+    ['deny', false],
+    ['cancel', false],
+  ] as const)('Prompt mutation %s approves then uses catalog revision CAS', async (decision, commits) => {
+    const { deps, prompt, refresh } = makeDeps();
+    const approval = makeApproval(decision);
+    const port = createPiviManagementPort(deps, approval.port);
+    const input = {
+      action: 'set_enabled' as const,
+      id: 'transcript-cleanup',
+      enabled: false,
+      catalogRevision: 3,
+    };
+
+    if (commits) {
+      await expect(port.executePrompt(input)).resolves.toMatchObject({
+        saved: true,
+        effective: { catalogRevision: 4 },
+      });
+      expect(prompt.plan).toHaveBeenCalledWith(input);
+      expect(prompt.commit).toHaveBeenCalledWith(
+        expect.objectContaining({ revision: 3, mutation: input }),
+        3,
+      );
+      expect(refresh).toHaveBeenCalledWith('prompt');
+    } else {
+      await expect(port.executePrompt(input)).rejects.toMatchObject({
+        code: decision === 'deny' ? 'denied' : 'cancelled',
+      });
+      expect(prompt.commit).not.toHaveBeenCalled();
+      expect(refresh).not.toHaveBeenCalled();
+    }
+  });
   /* eslint-enable jest/no-conditional-expect -- End decision matrix. */
 
   it('fails closed with unavailable when approval port is null', async () => {
@@ -327,6 +400,7 @@ describe('PiviManagementService', () => {
     await expect(port.executeMcp({ action: 'list' })).resolves.toBeDefined();
     await expect(port.executeSkills({ action: 'list' })).resolves.toBeDefined();
     await expect(port.executeCommands({ action: 'list' })).resolves.toBeDefined();
+    await expect(port.executePrompt({ action: 'list' })).resolves.toBeDefined();
 
     await expect(port.executeMcp({
       action: 'remove',
@@ -344,6 +418,11 @@ describe('PiviManagementService', () => {
       action: 'remove',
       id: 'hello',
       catalogRevision: 7,
+    })).rejects.toMatchObject({ code: 'unavailable' });
+    await expect(port.executePrompt({
+      action: 'remove',
+      id: 'custom:a',
+      catalogRevision: 3,
     })).rejects.toMatchObject({ code: 'unavailable' });
 
     expect(mcp.commit).not.toHaveBeenCalled();
@@ -394,6 +473,23 @@ describe('PiviManagementService', () => {
     expect(refresh).not.toHaveBeenCalled();
   });
 
+  it('maps prompt catalog state_changed without retry', async () => {
+    const promptCommit = jest.fn(async () => {
+      throw new PiviManagementError('state_changed', 'Prompt composition changed');
+    });
+    const { deps, refresh } = makeDeps({ promptCommit });
+    const approval = makeApproval('confirm');
+    const port = createPiviManagementPort(deps, approval.port);
+
+    await expect(port.executePrompt({
+      action: 'restore',
+      id: 'transcript-cleanup',
+      catalogRevision: 3,
+    })).rejects.toMatchObject({ code: 'state_changed' });
+    expect(promptCommit).toHaveBeenCalledTimes(1);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   it('sanitizes approval requests without raw config, secrets, prompt bodies, or Agent prose', async () => {
     const { deps } = makeDeps();
     const approval = makeApproval('deny');
@@ -424,7 +520,14 @@ describe('PiviManagementService', () => {
       argumentHint: 'AGENT ARGUMENT HINT',
     })).rejects.toMatchObject({ code: 'denied' });
 
-    expect(approval.requests).toHaveLength(2);
+    await expect(port.executePrompt({
+      action: 'upsert',
+      body: 'AGENT MODULE BODY MUST NOT APPEAR',
+      title: 'Secret module',
+      catalogRevision: 3,
+    })).rejects.toMatchObject({ code: 'denied' });
+
+    expect(approval.requests).toHaveLength(3);
     const mcpRequest = approval.requests[0]!;
     const commandsRequest = approval.requests[1]!;
 
@@ -441,6 +544,7 @@ describe('PiviManagementService', () => {
     expect(encoded).not.toContain('AGENT-PROVIDED PROSE MUST NOT APPEAR');
     expect(encoded).not.toContain('AGENT COMMAND DESCRIPTION');
     expect(encoded).not.toContain('AGENT ARGUMENT HINT');
+    expect(encoded).not.toContain('AGENT MODULE BODY MUST NOT APPEAR');
     expect(encoded).not.toMatch(/"headers"\s*:\s*\{/);
     expect(mcpRequest.fields?.some((field) => field.label === 'Header names')).toBe(true);
     expect(mcpRequest.fields?.some((field) => (
@@ -457,6 +561,17 @@ describe('PiviManagementService', () => {
       field.label === 'Prompt' && field.value === 'Updated'
     ))).toBe(true);
     expect(commandsRequest.fields?.some((field) => field.label === 'Description')).toBe(false);
+
+    const promptRequest = approval.requests[2]!;
+    expect(promptRequest).toMatchObject({
+      domain: 'prompt',
+      action: 'upsert',
+      revision: 3,
+    });
+    expect(promptRequest.fields?.some((field) => (
+      field.label === 'Prompt' && field.value === 'Updated'
+    ))).toBe(true);
+    expect(JSON.stringify(promptRequest)).not.toContain('AGENT MODULE BODY MUST NOT APPEAR');
     expect(commandsRequest.fields?.some((field) => field.label === 'Argument hint')).toBe(false);
   });
 
@@ -562,6 +677,7 @@ describe('PiviManagementService', () => {
       TOOL_PIVI_MCP,
       TOOL_PIVI_SKILLS,
       TOOL_PIVI_COMMANDS,
+      TOOL_PIVI_PROMPT,
     ]);
     for (const tool of result.toolSpecs) {
       expect(tool.executionMode).toBe('sequential');
@@ -576,6 +692,6 @@ describe('PiviManagementService', () => {
     );
     const result = factory(null)({ vaultPath: '/tmp/vault' });
 
-    expect(result.toolSpecs.map(tool => tool.name)).toEqual([TOOL_PIVI_SKILLS]);
+    expect(result.toolSpecs.map(tool => tool.name)).toEqual([TOOL_PIVI_SKILLS, TOOL_PIVI_PROMPT]);
   });
 });

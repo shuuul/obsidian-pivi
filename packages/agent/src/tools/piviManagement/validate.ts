@@ -11,6 +11,7 @@ import type {
   AgentMcpValueInput,
   PiviCommandsInput,
   PiviMcpInput,
+  PiviPromptInput,
   PiviSkillsInput,
 } from './types';
 
@@ -57,6 +58,20 @@ function assertOnlyKeys(
   if (unknown) {
     throw new Error(`${label} must not include unknown field "${unknown}".`);
   }
+}
+
+function requireCatalogRevision(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error('catalogRevision must be a finite number.');
+  }
+  return value;
+}
+
+function requireStringBody(value: unknown, field: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`${field} must be a string.`);
+  }
+  return value;
 }
 
 function requireSafeIdentity(value: unknown, field: string): string {
@@ -487,5 +502,102 @@ export function parsePiviCommandsInput(raw: unknown): PiviCommandsInput {
     }
     default:
       throw new Error(`Unknown pivi_commands action: ${action}`);
+  }
+}
+
+export function parsePiviPromptInput(raw: unknown): PiviPromptInput {
+  if (!isRecord(raw)) {
+    throw new Error('pivi_prompt params must be an object.');
+  }
+  const action = raw.action;
+  if (typeof action !== 'string') {
+    throw new Error('pivi_prompt action is required.');
+  }
+
+  switch (action) {
+    case 'list':
+      assertOnlyKeys(raw, ['action'], 'pivi_prompt');
+      return { action: 'list' };
+    case 'get':
+      assertOnlyKeys(raw, ['action', 'id'], 'pivi_prompt');
+      return { action: 'get', id: requireSafeIdentity(raw.id, 'id') };
+    case 'set_enabled':
+      assertOnlyKeys(raw, ['action', 'id', 'enabled', 'catalogRevision'], 'pivi_prompt');
+      return {
+        action: 'set_enabled',
+        id: requireSafeIdentity(raw.id, 'id'),
+        enabled: requireBoolean(raw.enabled, 'enabled'),
+        catalogRevision: requireCatalogRevision(raw.catalogRevision),
+      };
+    case 'set_body':
+      assertOnlyKeys(raw, ['action', 'id', 'body', 'catalogRevision'], 'pivi_prompt');
+      return {
+        action: 'set_body',
+        id: requireSafeIdentity(raw.id, 'id'),
+        body: requireStringBody(raw.body, 'body'),
+        catalogRevision: requireCatalogRevision(raw.catalogRevision),
+      };
+    case 'restore':
+      assertOnlyKeys(raw, ['action', 'id', 'catalogRevision'], 'pivi_prompt');
+      return {
+        action: 'restore',
+        id: requireSafeIdentity(raw.id, 'id'),
+        catalogRevision: requireCatalogRevision(raw.catalogRevision),
+      };
+    case 'upsert': {
+      assertOnlyKeys(raw, ['action', 'id', 'title', 'body', 'enabled', 'catalogRevision'], 'pivi_prompt');
+      const id = raw.id === undefined ? undefined : requireSafeIdentity(raw.id, 'id');
+      const title = optionalString(raw.title, 'title');
+      const body = raw.body === undefined ? undefined : requireStringBody(raw.body, 'body');
+      const enabled = raw.enabled === undefined ? undefined : requireBoolean(raw.enabled, 'enabled');
+      const catalogRevision = requireCatalogRevision(raw.catalogRevision);
+      if (id === undefined) {
+        if (body === undefined) {
+          throw new Error('upsert without id requires body.');
+        }
+        return {
+          action: 'upsert',
+          title,
+          body,
+          enabled,
+          catalogRevision,
+        };
+      }
+      if (title === undefined && body === undefined && enabled === undefined) {
+        throw new Error('upsert with id requires title, body, or enabled.');
+      }
+      return {
+        action: 'upsert',
+        id,
+        title,
+        body,
+        enabled,
+        catalogRevision,
+      };
+    }
+    case 'remove':
+      assertOnlyKeys(raw, ['action', 'id', 'catalogRevision'], 'pivi_prompt');
+      return {
+        action: 'remove',
+        id: requireSafeIdentity(raw.id, 'id'),
+        catalogRevision: requireCatalogRevision(raw.catalogRevision),
+      };
+    case 'move': {
+      assertOnlyKeys(raw, ['action', 'id', 'beforeId', 'afterId', 'catalogRevision'], 'pivi_prompt');
+      const beforeId = optionalString(raw.beforeId, 'beforeId');
+      const afterId = optionalString(raw.afterId, 'afterId');
+      if ((beforeId === undefined) === (afterId === undefined)) {
+        throw new Error('move requires exactly one of beforeId or afterId.');
+      }
+      return {
+        action: 'move',
+        id: requireSafeIdentity(raw.id, 'id'),
+        beforeId: beforeId === undefined ? undefined : requireSafeIdentity(beforeId, 'beforeId'),
+        afterId: afterId === undefined ? undefined : requireSafeIdentity(afterId, 'afterId'),
+        catalogRevision: requireCatalogRevision(raw.catalogRevision),
+      };
+    }
+    default:
+      throw new Error(`Unknown pivi_prompt action: ${action}`);
   }
 }

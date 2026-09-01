@@ -217,8 +217,9 @@ export function createImperativeChatViewHandle(
         const tabs = manager.getAllTabs();
         const initialized = tabs.filter((tab) => tab.serviceInitialized && tab.service);
 
-        // Always invalidate/warm slash caches for management domains that affect catalogs.
-        manager.invalidateSlashCommandCaches();
+        if (domain !== 'prompt') {
+          manager.invalidateSlashCommandCaches();
+        }
 
         for (let index = 0; index < initialized.length; index++) {
           const tab = initialized[index]!;
@@ -227,7 +228,7 @@ export function createImperativeChatViewHandle(
           try {
             if (domain === 'mcp') {
               await service.reloadMcpServers();
-            } else if (domain === 'skills') {
+            } else if (domain === 'skills' || domain === 'prompt') {
               if (service.syncSystemPrompt) await service.syncSystemPrompt();
               else await service.ensureReady({ force: true });
             }
@@ -241,7 +242,9 @@ export function createImperativeChatViewHandle(
           }
         }
 
-        failures.push(...await manager.refreshSlashCommandCachesStrict());
+        if (domain !== 'prompt') {
+          failures.push(...await manager.refreshSlashCommandCachesStrict());
+        }
         return failures;
       },
       invalidateSlashCatalog() {

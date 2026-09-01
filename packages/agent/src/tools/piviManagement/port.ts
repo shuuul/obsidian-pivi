@@ -1,6 +1,7 @@
 import type {
   PiviCommandsInput,
   PiviMcpInput,
+  PiviPromptInput,
   PiviSkillsInput,
 } from './types';
 
@@ -13,4 +14,5 @@ export interface PiviManagementPort {
   executeMcp(input: PiviMcpInput, signal?: AbortSignal): Promise<unknown>;
   executeSkills(input: PiviSkillsInput, signal?: AbortSignal): Promise<unknown>;
   executeCommands(input: PiviCommandsInput, signal?: AbortSignal): Promise<unknown>;
+  executePrompt(input: PiviPromptInput, signal?: AbortSignal): Promise<unknown>;
 }

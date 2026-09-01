@@ -624,7 +624,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
    * Aggregates strict per-target failures from every view; never throws for partial refresh.
    */
   async refreshPiviManagement(
-    domain: 'mcp' | 'skills' | 'commands',
+    domain: 'mcp' | 'skills' | 'commands' | 'prompt',
   ): Promise<readonly { readonly target: string; readonly message: string }[]> {
     return refreshPiviManagementViews(this.getAllViews(), domain);
   }
