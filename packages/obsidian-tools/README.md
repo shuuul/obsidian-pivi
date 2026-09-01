@@ -20,7 +20,8 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 
 - `createObsidianTools` and Obsidian tool settings/types.
 - `pivi_sessions` is intentionally not exported or composed here; app composition adds the `@pivi/agent`-owned factory to the shared base provider.
-- `obsidian_read` supports stats-only and line-range reads; `obsidian_markdown_structure` exposes heading line numbers and character counts so large notes can be inspected before selective reads.
+- `obsidian_read` supports stats-only, line-range, and bounded character-pagination reads. A standalone `startChar` is a 1-based file-global UTF-16 coordinate; with `startLine`, it is relative to that physical line, optional `endLine` bounds the range, and truncated reads return the exact `nextStartLine` + `nextStartChar` pair to reuse. `obsidian_markdown_structure` exposes heading line numbers and character counts so large notes can be inspected before selective reads.
+- `obsidian_edit` replaces an exact local substring, so Agents can insert `\n` or `\n\n` inside a very long physical line using the shortest unique surrounding span; `replace_all` remains explicit for intentionally identical multi-occurrence replacement.
 - `obsidian_read_external` / `obsidian_list_external` register only when external filesystem access is enabled and at least one allowed root is available.
 - `obsidian_history`, `obsidian_tasks`, and `obsidian_daily` register only when the official Obsidian CLI is available; `obsidian_base` uses the CLI only for its query action.
 - `obsidian_base` resolves a requested Base directly for view inspection, while its list action remains an explicit vault inventory operation. `obsidian_graph` enumerates files only for orphan/deadend analysis; unresolved-only analysis uses cached link metadata.

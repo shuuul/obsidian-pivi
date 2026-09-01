@@ -58,6 +58,8 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [041-tool-architecture-hardening.md](archive/041-tool-architecture-hardening.md) | 2026-08-01 | Shell-aware Bash grants, Skills transaction path protection, unified reserved command identity, Commands transaction coordinator, localized approval presentation, ToolSpec-owned prompt usage, and duplicate-ownership cleanup. |
 | [042-mobile-v1.md](archive/042-mobile-v1.md) | 2026-08-09 | **Abandoned, not shipped** — feasibility prototype preserved on the remote `mobile` branch; `main` remains Desktop-only. |
 | [043-agent-package-split.md](archive/043-agent-package-split.md) | 2026-08-10 | Renamed host-neutral package to `@pivi/agent` and extracted `@pivi/engine-pi` with package-level Pi SDK quarantine. |
+| [044-unique-boundary-newline-insertion.md](archive/044-unique-boundary-newline-insertion.md) | 2026-08-31 | Teach exact local-substring newline insertion and Markdown physical-line boundaries through `obsidian_edit`. |
+| [045-character-range-note-reads.md](archive/045-character-range-note-reads.md) | 2026-09-01 | Added bounded global or line-relative `startChar + maxChars` reads with Unicode-safe, exact line/character continuation for oversized physical lines. |
 
 ## Numbering and files
 

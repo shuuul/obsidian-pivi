@@ -23,6 +23,11 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('obsidian_markdown_structure');
       expect(prompt).toContain('startLine');
       expect(prompt).toContain('endLine');
+      expect(prompt).toContain('If one physical line is oversized');
+      expect(prompt).toContain('`startLine` with line-relative `startChar` and `maxChars`');
+      expect(prompt).toContain('exact returned `nextStartLine` + `nextStartChar` pair');
+      expect(prompt).toContain('A standalone `startChar` remains file-global');
+      expect(prompt).toContain('never calculate offsets, overlap pages, or raise the budget');
       expect(prompt).toContain('split the complete list into balanced, stable, non-overlapping batches');
       expect(prompt).toContain('Before those workers report back');
       expect(prompt).toContain('If a large file truly must be read in full and sub-agents are available');
@@ -56,10 +61,19 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('**Safety First**');
     });
 
-    it('prioritizes obsidian_edit over obsidian_write overwrite', () => {
+    it('prioritizes narrow exact mutations over full-note overwrite', () => {
       const prompt = buildSystemPrompt();
-      expect(prompt).toContain('## Vault mutations (prefer `obsidian_edit` over `obsidian_write`)');
-      expect(prompt).toContain('default to `obsidian_edit`');
+      expect(prompt).toContain('## Vault mutations (use the narrowest exact mutation)');
+      expect(prompt).toContain('`obsidian_edit` for exact local replacement, including inserting line endings');
+      expect(prompt).toContain('Do not match the whole line');
+      expect(prompt).toContain('shortest unique local span across the desired boundary');
+      expect(prompt).toContain('`sentence.Second` → `sentence.\\n\\nSecond`');
+      expect(prompt).toContain('replace `>>` with `\\n\\n` to remove it or `\\n\\n>>`');
+      expect(prompt).toContain('Use `replace_all: true` only when every exact occurrence should receive the identical replacement');
+      expect(prompt).toContain('**Markdown block boundaries with `obsidian_edit`:** Replacement is literal');
+      expect(prompt).toContain('replacing only `Target` with `### Heading` produces `>> ### Heading`, not a heading');
+      expect(prompt).toContain('put the required `\\n\\n` in `new_string`');
+      expect(prompt).toContain('read back the changed span and verify the rendered structure');
       expect(prompt).toContain('**Anti-patterns:** `obsidian_read` + `obsidian_write` `overwrite`');
       expect(prompt).toContain('curly quotes');
       expect(prompt).toContain('old_string not found');

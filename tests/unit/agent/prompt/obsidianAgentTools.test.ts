@@ -71,6 +71,24 @@ describe('registered tool prompt descriptors', () => {
     expect(section).not.toContain('Schema-owned schemaMarker');
   });
 
+  it('teaches local-substring newline insertion through the registered exact replacement tool', () => {
+    const edit = spec('obsidian_edit', 'edit');
+    edit.promptUsage = {
+      summary: 'Exact local newline marker with `replace_all: true`.',
+      parameters: '`old_string` and `new_string`',
+    };
+    const write = spec('obsidian_write', 'write');
+    const section = build([edit, write]);
+
+    expect(section).toContain('including inserting `\\n` or `\\n\\n` into a long physical line');
+    expect(section).toContain('shortest unique span around the boundary—not the whole line');
+    expect(section).toContain('Exact local newline marker with `replace_all: true`.');
+    expect(section).toContain('multi-thousand-character physical line never needs to be copied in full');
+    expect(section).toContain('**Markdown block boundaries:** `obsidian_edit` is literal');
+    expect(section).toContain('replacing only `Target` with `### Heading` yields `>> ### Heading`, not a heading');
+    expect(section).toContain('put the required `\\n\\n` in `new_string`');
+  });
+
   it('does not describe an unregistered descriptor or a name without a descriptor', () => {
     const section = build(
       [spec('obsidian_read', 'registeredMarker'), spec('obsidian_search', 'unregisteredMarker')],
@@ -87,9 +105,13 @@ describe('registered tool prompt descriptors', () => {
 
     expect(section).toContain('Each of `obsidian_read` clamps `maxChars`');
     expect(section).toContain('nextStartLine');
-    expect(section).toContain('treat that as a parameter mismatch—not a reason to delegate');
-    expect(section).toContain('Immediately retry the same read with `maxChars` at least the required count');
-    expect(section).toContain('tool-call limit is separate from the model context window');
+    expect(section).toContain('combine 1-based `startLine` with line-relative 1-based `startChar`');
+    expect(section).toContain('exact `nextStartLine` + `nextStartChar` pair');
+    expect(section).toContain('do not calculate offsets, overlap pages, or raise the budget');
+    expect(section).toContain('A standalone `startChar` is file-global');
+    expect(section).toContain('do not combine it with `endLine` unless `startLine` is also present');
+    expect(section).toContain('continuation marker counts inside `maxChars`');
+    expect(section).not.toContain('immediately retry with `maxChars` at least the required count');
     expect(section).not.toContain('obsidian_read_external');
     expect(section).not.toContain('obsidian_markdown_structure');
   });
@@ -98,6 +120,8 @@ describe('registered tool prompt descriptors', () => {
     const section = build([spec('obsidian_read_external', 'externalMarker')]);
 
     expect(section).toContain('use `obsidian_read_external` with an absolute path');
+    expect(section).toContain('immediately retry with `maxChars` at least the required count');
+    expect(section).not.toContain('nextStartChar');
     expect(section).not.toContain('obsidian_read` for absolute paths');
   });
 });

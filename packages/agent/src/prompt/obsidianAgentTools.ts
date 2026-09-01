@@ -3,6 +3,7 @@ import {
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DAILY,
+  TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
@@ -53,12 +54,13 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
   const hasNoteInfo = registeredObsidianTools.has(TOOL_OBSIDIAN_NOTE_INFO);
   const hasHistory = registeredObsidianTools.has(TOOL_OBSIDIAN_HISTORY);
+  const hasEdit = registeredObsidianTools.has(TOOL_OBSIDIAN_EDIT);
 
   lines.push(
     '',
     '### Obsidian vault',
     '',
-    '**Mutating notes:** Prefer **`obsidian_edit`** for any partial change to an existing file. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. Never use `overwrite` when `obsidian_edit` or `append`/`prepend` can do the job.',
+    '**Mutating notes:** Use **`obsidian_edit`** for any exact local change, including inserting `\\n` or `\\n\\n` into a long physical line. Match only the shortest unique span around the boundary—not the whole line—and repeat it in `new_string` with the line endings inserted. For transcript delimiters, replace `>>` with `\\n\\n` or `\\n\\n>>`; set `replace_all: true` only when every occurrence should receive the identical replacement. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`.',
     '**Vault paths:** Use `obsidian_list` for folders/files/attachments, `obsidian_mkdir` for folders, `obsidian_move` for renames/moves, and `obsidian_delete` to move items to trash.',
     '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as standard Markdown `![](...)` embeds.',
   );
@@ -150,6 +152,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     buildApiVsCliGuidance(registeredObsidianTools, obsidianCliAvailable),
     buildEditPriorityGuidance(hasRead),
     buildExactMatchGuidance(hasRead),
+    ...(hasEdit ? [buildMarkdownBlockBoundaryGuidance()] : []),
     '**Search:** `obsidian_search` is case-insensitive substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax. Do not repeat the same search with different casing.',
     hasListExternal
       ? '**Listing:** Prefer `obsidian_list` for vault folders and `obsidian_list_external` for external folders; avoid `obsidian_search query=*` for simple listing.'
@@ -178,12 +181,21 @@ function buildReadMaxCharsGuidance(params: {
     ...(params.hasRead ? ['`obsidian_read`'] : []),
     ...(params.hasReadExternal ? ['`obsidian_read_external`'] : []),
   ].join(' and ');
-  return [
+  const guidance = [
     `- Each of ${readTools} clamps \`maxChars\` to at least 1000 characters and applies a runtime default from remaining room before the output reserve, capped at 50000 characters. The 1000-character floor may cross the auto-compaction threshold so a read can still advance to the next compaction boundary instead of failing at \`maxChars=0\`. You may override this by passing \`maxChars\` explicitly, but values below 1000 are raised to the floor.`,
     '- Explicit line ranges automatically return the largest complete-line page that fits `maxChars`. When `truncated` is true, continue from the returned `nextStartLine` instead of retrying overlapping ranges or raising the budget.',
-    '- If a read is rejected because `maxChars` is smaller than the reported characters required for one indivisible line or requested range, treat that as a parameter mismatch—not a reason to delegate. Immediately retry the same read with `maxChars` at least the required count when the remaining turn read allowance can absorb it. The tool-call limit is separate from the model context window; consider sub-agent delegation only if that direct retry cannot fit or the task independently benefits from delegation.',
-    '- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, paged line ranges, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a single line or larger body truly requires it and the remaining budget can absorb it.',
   ];
+  if (params.hasRead) {
+    guidance.push(
+      '- For an oversized physical line in `obsidian_read`, combine 1-based `startLine` with line-relative 1-based `startChar` and `maxChars`; a truncated page reports the exact `nextStartLine` + `nextStartChar` pair. Continue with that pair and the same `maxChars`—do not calculate offsets, overlap pages, or raise the budget. `endLine` may bound the read. If a requested line range starts with an oversized line, the tool switches to this line-relative character continuation automatically.',
+      '- A standalone `startChar` is file-global; with `startLine`, it is relative to that physical line. Character positions use the same UTF-16 units as the reported `Characters` count. Do not use `startChar` with `mode: "stats"`, and do not combine it with `endLine` unless `startLine` is also present. The continuation marker counts inside `maxChars`, so source text may be slightly shorter than the cap.',
+    );
+  }
+  if (params.hasReadExternal) {
+    guidance.push('- If `obsidian_read_external` is rejected because `maxChars` is smaller than one indivisible line, immediately retry with `maxChars` at least the required count when the remaining turn read allowance can absorb it.');
+  }
+  guidance.push('- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, paged line or character reads, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a larger body truly requires it and the remaining budget can absorb it.');
+  return guidance;
 }
 
 function buildExternalReadGuidance(params: {
@@ -260,12 +272,16 @@ function formatBashAllowlistEntry(entry: string): string {
 
 function buildEditPriorityGuidance(hasRead: boolean): string {
   const readClause = hasRead ? ' Read with `obsidian_read` when you need exact `old_string` text.' : '';
-  return `**Priority:** \`obsidian_edit\` before \`obsidian_write\` for existing notes.${readClause} \`obsidian_write\` \`overwrite\` is last resort (new file or full rewrite only).`;
+  return `**Priority:** \`obsidian_edit\` before \`obsidian_write\` for existing notes, including local newline insertion. Match the shortest unique span around the boundary; a multi-thousand-character physical line never needs to be copied in full.${readClause} \`obsidian_write\` \`overwrite\` is last resort (new file or full rewrite only).`;
 }
 
 function buildExactMatchGuidance(hasRead: boolean): string {
   const source = hasRead ? ' from `obsidian_read`' : ' from available note context';
   return `**Exact match:** \`old_string\` must be copied verbatim${source}—Chinese notes often use curly quotes \`“\` \`”\` (U+201C/U+201D), not ASCII \`"\`. Retyping causes \`old_string not found\`; the tool error may call this out.`;
+}
+
+function buildMarkdownBlockBoundaryGuidance(): string {
+  return '**Markdown block boundaries:** `obsidian_edit` is literal and leaves text outside `old_string` adjacent to `new_string`. Before adding headings, lists, blockquotes/callouts, fences, or thematic breaks, inspect both physical-line boundaries and include required line endings. If source is `>> Target`, replacing only `Target` with `### Heading` yields `>> ### Heading`, not a heading; include the delimiter in `old_string`, put the required `\\n\\n` in `new_string`, and read back the changed span.';
 }
 
 function buildSubagentDelegationGuidance(params: {
@@ -304,12 +320,12 @@ function buildMarkdownReadGuidance(params: {
       : [];
     return [
       ...subagentFullReadGuidance,
-      '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If the whole file is truly needed, call `obsidian_read` again with an explicit `maxChars` at least to the reported `Characters` value; do this deliberately because the full file enters context.',
-      '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"` or a line range before reading the full body, unless you intentionally override `maxChars` to read the entire file.',
+      '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If one physical line is oversized, page it with `startLine` + line-relative `startChar` and the returned `nextStartLine` + `nextStartChar` pair. If the whole file is truly needed, call `obsidian_read` again with an explicit `maxChars` at least to the reported `Characters` value; do this deliberately because the full file enters context.',
+      '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"`, a line range, or `startChar` continuation before reading the full body, unless you intentionally override `maxChars` to read the entire file.',
     ];
   }
   return [
-    '- For Markdown files, use `obsidian_read` with `path: "<exact path from context_files>"`. For large notes, prefer `mode: "stats"` or a line range before reading the full body; no structure tool is registered for this turn.',
+    '- For Markdown files, use `obsidian_read` with `path: "<exact path from context_files>"`. For large notes, prefer `mode: "stats"`, a line range, or `startChar` continuation for an oversized physical line before reading the full body; no structure tool is registered for this turn.',
   ];
 }
 

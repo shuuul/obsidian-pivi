@@ -121,7 +121,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 
 | Tool | What it does |
 |------|-------------|
-| `obsidian_read` | Read note bodies with line/char limits |
+| `obsidian_read` | Read note bodies with bounded line or character pagination |
 | `obsidian_markdown_structure` | Extract headings and section sizes from a note |
 | `obsidian_search` | Substring search, tags, folder listing |
 | `obsidian_note_info` | Metadata, tags, links, frontmatter |
@@ -132,7 +132,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 | `obsidian_graph` | Analyze orphans, dead ends, and unresolved links |
 | `obsidian_tags` | List tags and inspect tagged notes |
 | `obsidian_base` | List Bases, inspect views, or run CLI-backed Base queries |
-| `obsidian_edit` | Replace text in an existing note |
+| `obsidian_edit` | Replace exact local text, including inserting Markdown line breaks |
 | `obsidian_write` | Create or overwrite notes |
 | `obsidian_properties` | List, read, set, or remove frontmatter properties |
 | `obsidian_delete` | Move files or folders to trash |

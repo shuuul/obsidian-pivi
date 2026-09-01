@@ -120,6 +120,36 @@ export interface PaginatedLineRange {
   nextStartLine?: number;
 }
 
+export class OversizedFirstLineError extends Error {
+  constructor(
+    message: string,
+    readonly startChar: number,
+  ) {
+    super(message);
+    this.name = 'OversizedFirstLineError';
+  }
+}
+
+export interface PaginatedCharacterRange {
+  content: string;
+  rawContent: string;
+  requestedStartChar: number;
+  returnedStartChar?: number;
+  returnedEndChar?: number;
+  truncated: boolean;
+  nextStartChar?: number;
+}
+
+export interface CharacterPaginationOptions {
+  endChar?: number;
+  buildContinuation?: (
+    returnedStartChar: number,
+    returnedEndChar: number,
+    nextStartChar: number,
+    maxChars: number,
+  ) => string;
+}
+
 function buildRangeContinuation(
   requestedStartLine: number,
   requestedEndLine: number,
@@ -129,6 +159,159 @@ function buildRangeContinuation(
   return `\n\n[Read truncated: returned lines ${requestedStartLine}-${returnedEndLine}`
     + ` of requested ${requestedStartLine}-${requestedEndLine}.`
     + ` Continue with startLine=${nextStartLine}, endLine=${requestedEndLine}.]`;
+}
+
+function buildCharacterContinuation(
+  returnedStartChar: number,
+  returnedEndChar: number,
+  totalCharacters: number,
+  maxChars: number,
+): string {
+  const nextStartChar = returnedEndChar + 1;
+  return `\n\n[Read truncated: returned characters ${returnedStartChar}-${returnedEndChar}`
+    + ` of ${totalCharacters}.`
+    + ` Continue with startChar=${nextStartChar}, maxChars=${maxChars}.]`;
+}
+
+function isHighSurrogate(codeUnit: number): boolean {
+  return codeUnit >= 0xD800 && codeUnit <= 0xDBFF;
+}
+
+function isLowSurrogate(codeUnit: number): boolean {
+  return codeUnit >= 0xDC00 && codeUnit <= 0xDFFF;
+}
+
+function adjustEndToSafeBoundary(content: string, endExclusive: number): number {
+  if (endExclusive <= 0 || endExclusive >= content.length) {
+    return endExclusive;
+  }
+  const previous = content.charCodeAt(endExclusive - 1);
+  const next = content.charCodeAt(endExclusive);
+  if (
+    (isHighSurrogate(previous) && isLowSurrogate(next))
+    || (previous === 0x0D && next === 0x0A)
+  ) {
+    return endExclusive - 1;
+  }
+  return endExclusive;
+}
+
+function getFirstSafeEnd(content: string, startIndex: number): number {
+  let endExclusive = startIndex + 1;
+  if (endExclusive >= content.length) {
+    return endExclusive;
+  }
+  const first = content.charCodeAt(startIndex);
+  const second = content.charCodeAt(endExclusive);
+  if (
+    (isHighSurrogate(first) && isLowSurrogate(second))
+    || (first === 0x0D && second === 0x0A)
+  ) {
+    endExclusive += 1;
+  }
+  return endExclusive;
+}
+
+function validateCharacterStart(content: string, startChar: number): void {
+  const startIndex = startChar - 1;
+  if (startIndex <= 0 || startIndex >= content.length) {
+    return;
+  }
+  const current = content.charCodeAt(startIndex);
+  const previous = content.charCodeAt(startIndex - 1);
+  if (
+    (isLowSurrogate(current) && isHighSurrogate(previous))
+    || (current === 0x0A && previous === 0x0D)
+  ) {
+    throw new Error(
+      `startChar=${startChar} splits a Unicode surrogate pair or CRLF line ending.`
+      + ` Continue from the next valid position, startChar=${startChar + 1}.`,
+    );
+  }
+}
+
+export function paginateCharacterRange(
+  content: string,
+  maxChars: number,
+  startChar: number,
+  options: CharacterPaginationOptions = {},
+): PaginatedCharacterRange {
+  validateCharacterStart(content, startChar);
+  const startIndex = startChar - 1;
+  const endExclusive = Math.min(options.endChar ?? content.length, content.length);
+  if (startIndex >= endExclusive) {
+    return {
+      content: '',
+      rawContent: '',
+      requestedStartChar: startChar,
+      truncated: false,
+    };
+  }
+
+  const makeContinuation = (returnedEndChar: number): string => {
+    const nextStartChar = returnedEndChar + 1;
+    return options.buildContinuation?.(
+      startChar,
+      returnedEndChar,
+      nextStartChar,
+      maxChars,
+    ) ?? buildCharacterContinuation(
+      startChar,
+      returnedEndChar,
+      content.length,
+      maxChars,
+    );
+  };
+  const remaining = endExclusive - startIndex;
+  if (remaining <= maxChars) {
+    const rawContent = content.slice(startIndex, endExclusive);
+    return {
+      content: rawContent,
+      rawContent,
+      requestedStartChar: startChar,
+      returnedStartChar: startChar,
+      returnedEndChar: endExclusive,
+      truncated: false,
+    };
+  }
+
+  let low = startIndex + 1;
+  let high = endExclusive - 1;
+  let bestEnd = startIndex;
+  while (low <= high) {
+    const candidateEnd = Math.floor((low + high) / 2);
+    const continuation = makeContinuation(candidateEnd);
+    if ((candidateEnd - startIndex) + continuation.length <= maxChars) {
+      bestEnd = candidateEnd;
+      low = candidateEnd + 1;
+    } else {
+      high = candidateEnd - 1;
+    }
+  }
+
+  const safeEnd = adjustEndToSafeBoundary(content, bestEnd);
+  if (safeEnd <= startIndex) {
+    const firstSafeEnd = getFirstSafeEnd(content, startIndex);
+    const minimumBudget = (firstSafeEnd - startIndex)
+      + makeContinuation(firstSafeEnd).length;
+    throw new Error(
+      `No complete character can fit within maxChars=${maxChars} with the continuation marker.`
+      + ` Raise maxChars to at least ${minimumBudget}.`,
+    );
+  }
+
+  const returnedEndChar = safeEnd;
+  const rawContent = content.slice(startIndex, safeEnd);
+  const continuation = makeContinuation(returnedEndChar);
+  return {
+    content: `${rawContent}${continuation}`,
+    rawContent,
+    requestedStartChar: startChar,
+    returnedStartChar: startChar,
+    returnedEndChar,
+    truncated: true,
+    nextStartChar: returnedEndChar + 1,
+  };
 }
 
 export function paginateLineRange(
@@ -201,9 +384,10 @@ export function paginateLineRange(
     const firstLineLength = firstSpan.end - firstSpan.start;
     const minimumBudget = firstLineLength
       + buildRangeContinuation(requestedStartLine, requestedEndLine, requestedStartLine).length;
-    throw new Error(
+    throw new OversizedFirstLineError(
       `Line ${requestedStartLine} is ${firstLineLength} characters and cannot fit within maxChars=${maxChars}`
       + ` with the continuation marker. Raise maxChars to at least ${minimumBudget}.`,
+      firstSpan.start + 1,
     );
   }
 

@@ -337,7 +337,7 @@ describe('obsidian tool input hardening', () => {
     expect(result.details).not.toHaveProperty('nextStartLine');
   });
 
-  it('reports the required budget when the first selected line cannot fit', async () => {
+  it('returns a bounded character page when the first selected line cannot fit', async () => {
     const deps = makeDeps({
       resolveReadMaxChars: () => readAllowance(50),
       vault: {
@@ -346,11 +346,22 @@ describe('obsidian tool input hardening', () => {
     });
     const tool = createReadNoteTool(deps);
 
-    await expect(tool.execute('call', {
+    const result = await tool.execute('call', {
       path: 'notes/a.md',
       startLine: 1,
       endLine: 2,
-    })).rejects.toThrow('Line 1 is 1201 characters');
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text.length).toBeLessThanOrEqual(1_000);
+    expect(result.content[0].text).toContain('Continue with startLine=1, startChar=');
+    expect(result.details).toMatchObject({
+      characterCoordinate: 'line-relative',
+      returnedStartLine: 1,
+      returnedStartChar: 1,
+      truncated: true,
+    });
+    expect(result.details).toHaveProperty('nextStartLine');
+    expect(result.details).toHaveProperty('nextStartChar');
   });
 
   it('returns an empty result for a line range beyond the end of a note', async () => {
