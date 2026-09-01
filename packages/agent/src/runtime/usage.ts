@@ -73,12 +73,14 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
       : 'estimated',
     tokens: contextWindowTokens,
   };
-  const reservedOutputTokens = cappedReserve(
-    input.reservedOutputTokens ?? input.outputTokenLimit,
-    DEFAULT_RESERVED_OUTPUT_TOKENS,
-    contextWindowTokens,
-    OUTPUT_RESERVE_WINDOW_RATIO,
-  );
+  const reservedOutputTokens = input.reservedOutputTokens !== undefined
+    ? Math.min(normalizeTokens(input.reservedOutputTokens), contextWindowTokens)
+    : cappedReserve(
+        input.outputTokenLimit,
+        DEFAULT_RESERVED_OUTPUT_TOKENS,
+        contextWindowTokens,
+        OUTPUT_RESERVE_WINDOW_RATIO,
+      );
   const compactionReserveTokens = cappedReserve(
     input.compactionReserveTokens,
     DEFAULT_COMPACTION_RESERVE_TOKENS,

@@ -1,6 +1,9 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 
-import { streamPiAiModelsSimple } from '../models/piAiModels';
+import {
+  getInstalledCustomProviderIds,
+  streamPiAiModelsSimple,
+} from '../models/piAiModels';
 import { resolvePiModel, resolvePiProviderAuth } from '../models/piModelEnv';
 import {
   COMPACTION_SYSTEM_PROMPT,
@@ -10,6 +13,18 @@ import type { PiRuntimeHost } from './piRuntimeHost';
 
 const COMPACTION_SAMPLE_TIMEOUT_MS = 120_000;
 const COMPACTION_SAMPLE_MAX_TOKENS = 8_192;
+
+function omitEmptyTools(payload: unknown): unknown {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return undefined;
+  }
+  const record = payload as Record<string, unknown>;
+  if (!Array.isArray(record.tools) || record.tools.length > 0) {
+    return undefined;
+  }
+  const { tools: _tools, ...withoutTools } = record;
+  return withoutTools;
+}
 
 /**
  * Tool-less, low-reasoning sampler over Pi's model registry and canonical
@@ -43,6 +58,8 @@ export async function sampleCompactionNote(
       COMPACTION_SAMPLE_MAX_TOKENS,
       model.maxTokens > 0 ? model.maxTokens : COMPACTION_SAMPLE_MAX_TOKENS,
     );
+    const omitUnsupportedEmptyTools = model.api === 'openai-completions'
+      && getInstalledCustomProviderIds().includes(model.provider);
     const stream = streamPiAiModelsSimple(model, {
       systemPrompt: COMPACTION_SYSTEM_PROMPT,
       messages: [
@@ -60,6 +77,7 @@ export async function sampleCompactionNote(
       headers: auth.auth.headers,
       maxRetries: 0,
       maxTokens,
+      ...(omitUnsupportedEmptyTools ? { onPayload: omitEmptyTools } : {}),
       reasoning: 'low',
       signal: controller.signal,
       timeoutMs: COMPACTION_SAMPLE_TIMEOUT_MS,

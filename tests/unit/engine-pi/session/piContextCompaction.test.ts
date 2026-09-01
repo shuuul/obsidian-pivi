@@ -92,6 +92,7 @@ describe('piContextCompaction', () => {
     expect(COMPACTION_PREFIX_RATIO).toBe(0.95);
     expect(getCompactionThresholdTokens(1_000)).toBe(600);
     expect(getCompactionThresholdTokens(200_000, true, 16_000)).toBe(164_000);
+    expect(getCompactionThresholdTokens(262_144, true, 131_072, 131_072)).toBe(111_072);
     expect(getCompactionPrefireTokens(164_000, 200_000)).toBe(144_000);
     expect(getCompactionPrefireTokens(5_000, 128_000)).toBe(0);
   });

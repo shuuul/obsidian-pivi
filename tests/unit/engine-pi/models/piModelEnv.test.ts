@@ -1,5 +1,9 @@
 import { configurePiAiModels } from '@pivi/engine-pi/piAiModels';
-import { resolvePiModel, resolvePiProviderAuth } from '@pivi/engine-pi/piModelEnv';
+import {
+  resolvePiModel,
+  resolvePiModelByKey,
+  resolvePiProviderAuth,
+} from '@pivi/engine-pi/piModelEnv';
 import {
   ObsidianAuthContext,
   ObsidianCredentialStore,
@@ -87,6 +91,34 @@ describe('piModelEnv provider auth resolution', () => {
 
     await expect(resolvePiProviderAuth(plugin, model!)).resolves.toMatchObject({
       auth: { headers: { Authorization: 'Bearer bearer-token' } },
+    });
+  });
+
+  it('applies the configured context-window override to runtime model resolution', () => {
+    const modelKey = 'anthropic/mock-model';
+    const stub = createMockPiviPluginStub({
+      settings: {
+        model: modelKey,
+        customContextLimits: { [modelKey]: 4_096 },
+        agentSettings: {
+          environmentVariables: '',
+          selectedMode: 'default',
+          visibleModels: [modelKey],
+        },
+      },
+    });
+    const plugin = asPiviPlugin(stub);
+    configurePiAiModels({});
+
+    expect(resolvePiModel(plugin)).toMatchObject({
+      contextWindow: 4_096,
+      contextWindowIsAuthoritative: true,
+      maxTokens: 4_096,
+    });
+    expect(resolvePiModelByKey(modelKey, plugin.settings.customContextLimits)).toMatchObject({
+      contextWindow: 4_096,
+      contextWindowIsAuthoritative: true,
+      maxTokens: 4_096,
     });
   });
 });

@@ -123,6 +123,10 @@ function modelKey(deps: PiChatCompactionDeps): string {
   return model ? `${model.provider}/${model.id}` : '';
 }
 
+function authoritativeReservedOutputTokens(model: PiResolvedModel | null): number | undefined {
+  return model?.outputTokenLimitIsAuthoritative ? model.maxTokens : undefined;
+}
+
 function sessionKey(deps: PiChatCompactionDeps): string {
   const tree = deps.sessionTree;
   return tree
@@ -171,6 +175,7 @@ export function attachContextEnvelope(
   const selectedContext = deps.sessionTree && turn
     ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
     : 0;
+  const resolvedModel = deps.resolveModel();
   const contextEnvelope = calculateContextEnvelope({
     checkpoints: categories.checkpoints,
     contextWindow: usage.contextWindow || DEFAULT_COMPACTION_CONTEXT_WINDOW,
@@ -180,6 +185,7 @@ export function attachContextEnvelope(
       ? usage.contextTokens
       : undefined,
     recentConversation: categories.recentConversation,
+    reservedOutputTokens: authoritativeReservedOutputTokens(resolvedModel),
     selectedContext,
     system: estimateSystemTokens(deps.agent),
     toolAndAgentResults: categories.toolAndAgentResults,
@@ -217,6 +223,7 @@ export function buildUsageAfterCompaction(
     contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
     outputTokenLimit: resolvedModel?.maxTokens,
     recentConversation: conversationTokens,
+    reservedOutputTokens: authoritativeReservedOutputTokens(resolvedModel),
     selectedContext,
     system: estimateSystemTokens(deps.agent),
     toolAndAgentResults: 0,
@@ -274,6 +281,7 @@ export function getCompactionThresholdTokens(
     contextWindow,
     isPiModelContextWindowAuthoritative(model),
     model?.maxTokens,
+    authoritativeReservedOutputTokens(model),
   );
 }
 

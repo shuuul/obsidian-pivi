@@ -16,6 +16,8 @@ import {
 export type PiCachedModel = Model<Api> & {
   /** False when a custom provider is using Pivi's synthetic fallback window. */
   contextWindowIsAuthoritative?: boolean;
+  /** True when the custom server or user explicitly supplied the request output cap. */
+  outputTokenLimitIsAuthoritative?: boolean;
   /** Server-advertised default thinking level; overrides pi-ai's `medium` fallback. */
   defaultThinkingLevel?: 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 };

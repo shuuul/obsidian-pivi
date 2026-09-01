@@ -890,6 +890,30 @@ describe('SessionTreeStore', () => {
       'compaction',
     ]);
   });
+
+  it('keeps a trailing tool result in LLM context but not the visible UI prefix', () => {
+    const store = SessionTreeStore.inMemory('/test/trailing-tool-result');
+    store.appendUserMessage('request');
+    store.syncAgentMessages([
+      { role: 'user', content: 'request', timestamp: 1 },
+      assistantToolCall,
+      toolResult,
+    ] as never[]);
+
+    expect(store.getLinearVisiblePrefix().map((entry) => entry.type)).toEqual([
+      'message',
+      'message',
+    ]);
+    expect(store.getLinearLlmContextEntries().map((entry) => entry.type)).toEqual([
+      'message',
+      'message',
+      'message',
+    ]);
+    expect(store.loadAgentMessages().at(-1)).toMatchObject({
+      role: 'toolResult',
+      toolName: 'obsidian_read',
+    });
+  });
 });
 
 describe('agentMessageHistory', () => {

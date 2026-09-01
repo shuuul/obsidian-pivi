@@ -506,6 +506,7 @@ describe('installPiCustomProviders model mapping', () => {
       contextWindow: 262144,
       contextWindowIsAuthoritative: true,
       maxTokens: 131072,
+      outputTokenLimitIsAuthoritative: true,
     });
   });
 
@@ -523,6 +524,7 @@ describe('installPiCustomProviders model mapping', () => {
     expect(model).toMatchObject({
       contextWindow: 262144,
       maxTokens: 65536,
+      outputTokenLimitIsAuthoritative: false,
     });
   });
 

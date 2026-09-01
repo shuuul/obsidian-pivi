@@ -18,25 +18,47 @@ export function resolvePiModel(plugin: PiRuntimeHost, modelKey?: string): PiReso
   const preferredKey = modelKey?.trim() || plugin.settings.model;
 
   if (preferredKey && isValidModelKey(preferredKey)) {
-    const resolved = getModelByKey(preferredKey);
+    const resolved = resolvePiModelByKey(preferredKey, plugin.settings.customContextLimits);
     if (resolved) return resolved;
   }
 
   const piSettings = getPiAgentSettings(plugin.settings);
   for (const visibleKey of piSettings.visibleModels) {
-    const resolved = getModelByKey(visibleKey);
+    const resolved = resolvePiModelByKey(visibleKey, plugin.settings.customContextLimits);
     if (resolved) return resolved;
   }
 
-  return getModelByKey(PI_FALLBACK_MODEL_KEY);
+  return resolvePiModelByKey(PI_FALLBACK_MODEL_KEY, plugin.settings.customContextLimits);
 }
 
 /**
  * Resolves a model by explicit key only (no settings fallback). Used when the
  * serving provider/model comes from a runtime message rather than settings.
  */
-export function resolvePiModelByKey(key: string): PiResolvedModel | null {
-  return isValidModelKey(key) ? getModelByKey(key) : null;
+export function resolvePiModelByKey(
+  key: string,
+  customContextLimits?: Readonly<Record<string, number>>,
+): PiResolvedModel | null {
+  if (!isValidModelKey(key)) {
+    return null;
+  }
+  const model = getModelByKey(key);
+  const configuredLimit = customContextLimits?.[key];
+  if (
+    !model
+    || typeof configuredLimit !== 'number'
+    || !Number.isFinite(configuredLimit)
+    || configuredLimit <= 0
+  ) {
+    return model;
+  }
+  const contextWindow = Math.floor(configuredLimit);
+  return {
+    ...model,
+    contextWindow,
+    contextWindowIsAuthoritative: true,
+    maxTokens: Math.min(model.maxTokens, contextWindow),
+  };
 }
 
 export function resolvePiProviderAuth(

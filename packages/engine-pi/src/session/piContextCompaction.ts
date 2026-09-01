@@ -355,11 +355,13 @@ export function getCompactionThresholdTokens(
   contextWindow = DEFAULT_COMPACTION_CONTEXT_WINDOW,
   contextWindowIsAuthoritative = false,
   outputTokenLimit?: number,
+  reservedOutputTokens?: number,
 ): number {
   return calculateContextEnvelope({
     contextWindow,
     contextWindowIsAuthoritative,
     outputTokenLimit,
+    reservedOutputTokens,
   }).compactionTriggerTokens;
 }
 

@@ -88,8 +88,8 @@ function cacheKey(vaultPath: string, sessionFile: string): string {
   return `${vaultPath}::${sessionFile}`;
 }
 
-function isLlmContextControlEntry(entry: SessionEntry): boolean {
-  return entry.type === 'compaction';
+function isLlmContextEntry(entry: SessionEntry): boolean {
+  return entry.type === 'message' || entry.type === 'compaction';
 }
 
 interface AsyncSubagentPersistedResult {
@@ -558,21 +558,17 @@ export class SessionTreeStore {
 
   /**
    * Linear model context view: Pivi restores sessions by append order, while
-   * compaction entries after the last visible message still affect the next LLM
-   * context. Include the latest visible message prefix plus trailing compaction
-   * control entries so manual compaction immediately updates the active agent.
+   * tool results and compaction entries after the last visible user/assistant
+   * still affect the next LLM request. Include every entry through the final
+   * model-context entry while excluding trailing UI metadata.
    */
   getLinearLlmContextEntries(): SessionEntry[] {
     const entries = this.getEntries();
-    const visibleLeafId = findLastVisibleConversationEntryId(entries);
-    const visibleIndex = visibleLeafId
-      ? entries.findIndex((entry) => entry.id === visibleLeafId)
-      : -1;
-    let lastContextIndex = visibleIndex;
+    let lastContextIndex = -1;
     for (let index = 0; index < entries.length; index++) {
       const entry = entries[index];
-      if (entry && isLlmContextControlEntry(entry)) {
-        lastContextIndex = Math.max(lastContextIndex, index);
+      if (entry && isLlmContextEntry(entry)) {
+        lastContextIndex = index;
       }
     }
     return lastContextIndex >= 0 ? entries.slice(0, lastContextIndex + 1) : entries;

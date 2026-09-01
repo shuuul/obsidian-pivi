@@ -1,6 +1,7 @@
 const mockResolvePiModel = jest.fn();
 const mockResolvePiProviderAuth = jest.fn();
 const mockStreamSimple = jest.fn();
+const mockGetInstalledCustomProviderIds = jest.fn();
 
 jest.mock('@pivi/engine-pi/piModelEnv', () => ({
   resolvePiModel: (...args: unknown[]) => mockResolvePiModel(...args),
@@ -8,12 +9,14 @@ jest.mock('@pivi/engine-pi/piModelEnv', () => ({
 }));
 
 jest.mock('@pivi/engine-pi/piAiModels', () => ({
+  getInstalledCustomProviderIds: () => mockGetInstalledCustomProviderIds(),
   streamPiAiModelsSimple: (...args: unknown[]) => mockStreamSimple(...args),
 }));
 
 import { sampleCompactionNote } from '../../../../packages/engine-pi/src/runtime/piCompactionSampler';
 
 const mockModel = {
+  api: 'openai-completions',
   id: 'mock-model',
   maxTokens: 16_384,
   provider: 'mock-provider',
@@ -21,6 +24,7 @@ const mockModel = {
 
 describe('sampleCompactionNote', () => {
   beforeEach(() => {
+    mockGetInstalledCustomProviderIds.mockReset().mockReturnValue(['mock-provider']);
     mockResolvePiModel.mockReset().mockReturnValue(mockModel);
     mockResolvePiProviderAuth.mockReset().mockResolvedValue({
       auth: { apiKey: 'test-key', headers: { 'x-test': 'yes' } },
@@ -81,6 +85,24 @@ describe('sampleCompactionNote', () => {
       reasoning: 'low',
       timeoutMs: 120_000,
     });
+    expect(options.onPayload({ model: 'mock-model', tools: [] })).toEqual({
+      model: 'mock-model',
+    });
+    const payloadWithTools = { model: 'mock-model', tools: [{ type: 'function' }] };
+    expect(options.onPayload(payloadWithTools)).toBeUndefined();
+  });
+
+  it('leaves built-in provider payload compatibility to pi-ai', async () => {
+    mockGetInstalledCustomProviderIds.mockReturnValue([]);
+
+    await sampleCompactionNote(
+      { settings: { model: 'mock-provider/mock-model' } } as never,
+      [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+      'Create NOTE₂.',
+    );
+
+    const options = mockStreamSimple.mock.calls[0]![2];
+    expect(options).not.toHaveProperty('onPayload');
   });
 
   it('does not start sampling when already cancelled', async () => {

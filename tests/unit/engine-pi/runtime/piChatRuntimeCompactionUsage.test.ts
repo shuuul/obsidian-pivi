@@ -55,4 +55,43 @@ describe('attachContextEnvelope', () => {
 
     expect(fromFullAgentState.contextEnvelope).toEqual(fromPendingSuffix.contextEnvelope);
   });
+
+  it('uses the full authoritative custom output cap before the provider rejects the request', () => {
+    const deps = {
+      plugin: {} as PiRuntimeHost,
+      sessionTree: null,
+      agent: null,
+      compactionState: {
+        autoCompactionInFlight: false,
+        failedAutoFingerprint: null,
+        foregroundController: null,
+        generation: 0,
+        prefire: null,
+      },
+      resolveModel: () => ({
+        contextWindow: 262_144,
+        contextWindowIsAuthoritative: true,
+        maxTokens: 131_072,
+        outputTokenLimitIsAuthoritative: true,
+      }),
+      onLeafIdChanged: jest.fn(),
+      onAssistantMessageId: jest.fn(),
+    } as never;
+
+    const result = attachContextEnvelope(deps, {
+      contextTokens: 129_692,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 262_144,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 129_692,
+      outputTokenLimit: 131_072,
+      percentage: 49,
+    });
+
+    expect(result.contextEnvelope).toMatchObject({
+      compactionTriggerTokens: 111_072,
+      pressureInputTokens: 129_692,
+      reservedOutput: { tokens: 131_072 },
+    });
+  });
 });

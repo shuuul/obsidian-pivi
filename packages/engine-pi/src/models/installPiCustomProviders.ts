@@ -275,6 +275,8 @@ export function buildCustomProviderModels(
       ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
       ...(defaultThinkingLevel ? { defaultThinkingLevel } : {}),
       contextWindowIsAuthoritative: modelDef.contextWindow !== undefined,
+      outputTokenLimitIsAuthoritative:
+        modelDef.maxTokensOverride !== undefined || modelDef.maxTokens !== undefined,
       input: ['text'] as ('text' | 'image')[],
       cost: zeroCost(),
       contextWindow: meta.contextWindow,

@@ -876,7 +876,7 @@ export class PiChatRuntime implements PiChatService {
     const provider = typeof message.provider === 'string' ? message.provider : '';
     const modelId = typeof message.model === 'string' ? message.model : '';
     const servingModel = provider && modelId
-      ? resolvePiModelByKey(`${provider}/${modelId}`)
+      ? resolvePiModelByKey(`${provider}/${modelId}`, this.plugin.settings.customContextLimits)
       : null;
     const model = servingModel ?? this.resolveModel();
     if (!model) {
