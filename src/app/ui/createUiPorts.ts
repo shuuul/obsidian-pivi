@@ -1,3 +1,4 @@
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type {
   ChatPorts,
   ChatSettingsSnapshot,
@@ -70,6 +71,8 @@ import {
 } from './settingsHotkeys';
 
 export type { ChatUiCompositionHost } from './chatUiCompositionHost';
+
+const logger = new PluginLogger('UiPorts');
 
 export function createChatUiPorts(
   host: ChatUiCompositionHost,
@@ -387,7 +390,8 @@ export function createSettingsUiPorts(
   };
   const refreshPrompt = async (): Promise<void> => {
     for (const view of host.getAllViews()) {
-      await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
+      await view.getChatHandle()?.maintenance.refreshRuntimePrompt()
+        .catch((error) => { logger.warn('Failed to refresh prompt in a Pivi view', error); });
     }
   };
   return {

@@ -376,17 +376,18 @@ export interface SettingsPromptCreateInput {
 }
 
 export interface SettingsPromptPort {
+  getCatalogRevision(): number;
   listModules(): readonly SettingsPromptModuleView[];
   getUsage(): SettingsPromptUsageSnapshot;
-  setWorkflowEnabled(id: string, enabled: boolean): Promise<void>;
-  saveCustomBody(id: string, customBody: string): Promise<void>;
-  restoreShipped(id: string): Promise<void>;
-  createCustomModule(input?: SettingsPromptCreateInput): Promise<SettingsPromptModuleView>;
-  renameCustomModule(id: string, title: string): Promise<void>;
-  editCustomModule(id: string, body: string): Promise<void>;
-  reorderCustomModules(ids: readonly string[]): Promise<void>;
-  setCustomModuleEnabled(id: string, enabled: boolean): Promise<void>;
-  deleteCustomModule(id: string): Promise<void>;
+  setWorkflowEnabled(id: string, enabled: boolean, catalogRevision: number): Promise<void>;
+  saveCustomBody(id: string, customBody: string, catalogRevision: number): Promise<void>;
+  restoreShipped(id: string, catalogRevision: number): Promise<void>;
+  createCustomModule(input: SettingsPromptCreateInput | undefined, catalogRevision: number): Promise<SettingsPromptModuleView>;
+  renameCustomModule(id: string, title: string, catalogRevision: number): Promise<void>;
+  editCustomModule(id: string, body: string, catalogRevision: number): Promise<void>;
+  reorderCustomModules(ids: readonly string[], catalogRevision: number): Promise<void>;
+  setCustomModuleEnabled(id: string, enabled: boolean, catalogRevision: number): Promise<void>;
+  deleteCustomModule(id: string, catalogRevision: number): Promise<void>;
 }
 
 export interface SettingsPorts {

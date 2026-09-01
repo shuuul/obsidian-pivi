@@ -267,6 +267,7 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
   const mounted = useMountedRef();
   const [modules, setModules] = useState<readonly SettingsPromptModuleView[]>(() => ports.prompt.listModules());
+  const [catalogRevision, setCatalogRevision] = useState(() => ports.prompt.getCatalogRevision());
   const [usage, setUsage] = useState<SettingsPromptUsageSnapshot>(() => ports.prompt.getUsage());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [draftOpen, setDraftOpen] = useState(false);
@@ -282,6 +283,7 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
     if (!mounted.current) return;
     const next = ports.prompt.listModules();
     setModules(next);
+    setCatalogRevision(ports.prompt.getCatalogRevision());
     setUsage(ports.prompt.getUsage());
     setCustomOrder(next.filter((module) => module.kind === 'custom').map((module) => module.id));
   }, [mounted, ports.prompt]);
@@ -292,6 +294,7 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
       await action();
       reload();
     } catch (cause) {
+      reload();
       ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
     } finally {
       if (mounted.current) setPending(false);
@@ -322,11 +325,12 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
     commitOrder: async (ids, originalOrder) => {
       setPending(true);
       try {
-        await ports.prompt.reorderCustomModules(ids);
+        await ports.prompt.reorderCustomModules(ids, catalogRevision);
         reload();
         return true;
       } catch (cause) {
         setCustomOrder([...originalOrder]);
+        reload();
         ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
         return false;
       } finally {
@@ -353,7 +357,7 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
         title: draftTitle.trim() || t('settings.prompt.newModule'),
         body: draftBody,
         enabled: true,
-      });
+      }, catalogRevision);
       if (mounted.current) {
         setDraftOpen(false);
         setDraftTitle('');
@@ -366,6 +370,7 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
         reload();
       }
     } catch (cause) {
+      reload();
       ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
     } finally {
       if (mounted.current) setPending(false);
@@ -389,9 +394,9 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
               expanded={expanded.has(module.id)}
               pending={pending}
               onToggleExpanded={() => toggleExpanded(module.id)}
-              onToggleEnabled={(enabled) => { void run(() => ports.prompt.setWorkflowEnabled(module.id, enabled)); }}
-              onSaveBody={(body) => run(() => ports.prompt.saveCustomBody(module.id, body))}
-              onRestore={() => { void run(() => ports.prompt.restoreShipped(module.id)); }}
+              onToggleEnabled={(enabled) => { void run(() => ports.prompt.setWorkflowEnabled(module.id, enabled, catalogRevision)); }}
+              onSaveBody={(body) => run(() => ports.prompt.saveCustomBody(module.id, body, catalogRevision))}
+              onRestore={() => { void run(() => ports.prompt.restoreShipped(module.id, catalogRevision)); }}
             />
           ))}
         </div>
@@ -416,9 +421,9 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
                   reorderHandleProps={reorder.getHandleProps(id)}
                   suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
                   onToggleExpanded={() => toggleExpanded(id)}
-                  onToggleEnabled={(enabled) => { void run(() => ports.prompt.setCustomModuleEnabled(id, enabled)); }}
-                  onSaveBody={(body) => run(() => ports.prompt.editCustomModule(id, body))}
-                  onRename={(title) => run(() => ports.prompt.renameCustomModule(id, title))}
+                  onToggleEnabled={(enabled) => { void run(() => ports.prompt.setCustomModuleEnabled(id, enabled, catalogRevision)); }}
+                  onSaveBody={(body) => run(() => ports.prompt.editCustomModule(id, body, catalogRevision))}
+                  onRename={(title) => run(() => ports.prompt.renameCustomModule(id, title, catalogRevision))}
                   onDelete={() => { setConfirmDelete(module); }}
                 />
               );
@@ -525,7 +530,7 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
                   onClick={() => {
                     const id = confirmDelete.id;
                     setConfirmDelete(null);
-                    void run(() => ports.prompt.deleteCustomModule(id));
+                    void run(() => ports.prompt.deleteCustomModule(id, catalogRevision));
                   }}
                 >
                   {t('common.delete')}

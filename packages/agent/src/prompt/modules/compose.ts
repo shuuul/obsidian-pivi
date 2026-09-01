@@ -231,12 +231,11 @@ export function computePromptCompositionKey(
   const sortedOverrides = hasOverrides
     ? Object.keys(overrides).sort().map((id) => {
       const override = overrides[id] ?? {};
-      const enabled = override.enabled === undefined ? '' : override.enabled ? '1' : '0';
-      return `${id}:${enabled}:${override.customBody ?? ''}`;
-    }).join('|')
-    : '';
+      return [id, override.enabled ?? null, override.customBody ?? null];
+    })
+    : [];
   const customPart = hasCustom
-    ? custom.map((entry) => `${entry.id}:${entry.enabled ? '1' : '0'}:${entry.title}:${entry.body}`).join('|')
-    : '';
-  return `${sortedOverrides};;${customPart}`;
+    ? custom.map((entry) => [entry.id, entry.enabled, entry.title, entry.body])
+    : [];
+  return JSON.stringify([sortedOverrides, customPart]);
 }

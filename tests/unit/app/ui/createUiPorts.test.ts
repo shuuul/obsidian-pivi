@@ -11,6 +11,7 @@ import type {
   PiviSettingsHost,
   PiviUiFacades,
 } from '@/app/hostContracts';
+import { createPromptCompositionCoordinator } from '@/app/runtime/PromptCompositionCoordinator';
 import {
   createChatUiPorts,
   createSettingsUiPorts,
@@ -456,7 +457,10 @@ describe('UI port adapters', () => {
       body: 'edited body',
     });
 
-    await ports.prompt.restoreShipped('transcript-cleanup');
+    await ports.prompt.restoreShipped(
+      'transcript-cleanup',
+      ports.prompt.getCatalogRevision(),
+    );
 
     expect(host.settings.promptModules['transcript-cleanup']).toBeUndefined();
     expect(saveSettings).toHaveBeenCalledTimes(1);
@@ -466,12 +470,87 @@ describe('UI port adapters', () => {
       modified: false,
     });
 
-    await ports.prompt.setWorkflowEnabled('transcript-cleanup', false);
+    await ports.prompt.setWorkflowEnabled(
+      'transcript-cleanup',
+      false,
+      ports.prompt.getCatalogRevision(),
+    );
 
     expect(host.settings.promptModules['transcript-cleanup']).toEqual({ enabled: false });
     expect(saveSettings).toHaveBeenCalledTimes(2);
     expect(refreshFirst).toHaveBeenCalledTimes(2);
     expect(refreshSecond).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a durable prompt save successful and refreshes sibling views after one refresh fails', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshFirst = jest.fn(async () => { throw new Error('disposed'); });
+    const refreshSecond = jest.fn(async () => undefined);
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        promptModules: {},
+        customPromptModules: [],
+      } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshFirst } }) },
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshSecond } }) },
+      ],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const ports = createSettingsUiPorts(host, {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: { getCachedTools: () => [] },
+      mcpServerManager: { getServers: () => [] },
+      slashCommandCatalog: {},
+    } as never);
+
+    await expect(ports.prompt.createCustomModule(
+      { title: 'Saved once', body: 'body' },
+      ports.prompt.getCatalogRevision(),
+    )).resolves.toMatchObject({ title: 'Saved once' });
+
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(refreshFirst).toHaveBeenCalledTimes(1);
+    expect(refreshSecond).toHaveBeenCalledTimes(1);
+    expect(host.settings.customPromptModules).toHaveLength(1);
+  });
+
+  it('rejects a stale Settings prompt edit instead of overwriting an Agent change', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        promptModules: {},
+        customPromptModules: [],
+      } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const ports = createSettingsUiPorts(host, {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: { getCachedTools: () => [] },
+      mcpServerManager: { getServers: () => [] },
+      slashCommandCatalog: {},
+    } as never);
+    const staleRevision = ports.prompt.getCatalogRevision();
+    const agent = createPromptCompositionCoordinator(host);
+    await agent.saveCustomBody('transcript-cleanup', 'Agent body');
+
+    await expect(ports.prompt.saveCustomBody(
+      'transcript-cleanup',
+      'stale Settings body',
+      staleRevision,
+    )).rejects.toThrow(/list or get again/);
+
+    expect(host.settings.promptModules['transcript-cleanup']).toEqual({ customBody: 'Agent body' });
+    expect(saveSettings).toHaveBeenCalledTimes(1);
   });
 
   it('applies tab bar position changes to every mounted view', async () => {

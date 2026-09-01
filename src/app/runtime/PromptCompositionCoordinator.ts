@@ -32,6 +32,7 @@ export interface PromptCompositionHost {
 }
 
 const CATALOG_REVISIONS = new WeakMap<object, number>();
+const MUTATION_QUEUES = new WeakMap<object, Promise<void>>();
 
 function currentRevision(settings: object): number {
   return CATALOG_REVISIONS.get(settings) ?? 1;
@@ -45,6 +46,15 @@ function bumpRevision(settings: object): number {
   const next = current + 1;
   CATALOG_REVISIONS.set(settings, next);
   return next;
+}
+
+function runSerialized<T>(settings: object, work: () => Promise<T>): Promise<T> {
+  const result = (MUTATION_QUEUES.get(settings) ?? Promise.resolve()).then(work);
+  MUTATION_QUEUES.set(settings, result.then(
+    () => undefined,
+    () => undefined,
+  ));
+  return result;
 }
 
 function toSummary(
@@ -349,11 +359,40 @@ export class PromptCompositionCoordinator {
     };
   }
 
-  async persist(next: PromptModuleSettings): Promise<void> {
+  private async persistUnlocked(next: PromptModuleSettings): Promise<void> {
+    const previousPromptModules = this.host.settings.promptModules;
+    const previousCustomPromptModules = this.host.settings.customPromptModules;
     this.host.settings.promptModules = { ...next.promptModules };
     this.host.settings.customPromptModules = next.customPromptModules.map((entry) => ({ ...entry }));
-    await this.host.saveSettings();
+    try {
+      await this.host.saveSettings();
+    } catch (cause) {
+      this.host.settings.promptModules = previousPromptModules;
+      this.host.settings.customPromptModules = previousCustomPromptModules;
+      throw cause;
+    }
     bumpRevision(this.host.settings);
+  }
+
+  private mutate(
+    transform: (current: PromptModuleSettings) => PromptModuleSettings,
+    expectedRevision?: number,
+  ): Promise<{ settings: PromptModuleSettings; catalogRevision: number }> {
+    return runSerialized(this.host.settings, async () => {
+      if (expectedRevision !== undefined && expectedRevision !== this.catalogRevision()) {
+        throw new PiviManagementError(
+          'state_changed',
+          'Prompt composition changed; list or get again and retry with the new catalogRevision.',
+        );
+      }
+      const next = transform(this.read());
+      await this.persistUnlocked(next);
+      return { settings: next, catalogRevision: this.catalogRevision() };
+    });
+  }
+
+  async persist(next: PromptModuleSettings): Promise<void> {
+    await this.mutate(() => next);
   }
 
   async apply(next: PromptModuleSettings): Promise<void> {
@@ -378,117 +417,133 @@ export class PromptCompositionCoordinator {
     plan: PromptCompositionPlan,
     expectedRevision: number,
   ): Promise<PiviManagementMutationResult<{ catalogRevision: number }>> {
-    if (expectedRevision !== this.catalogRevision()) {
+    if (plan.revision !== expectedRevision) {
       throw new PiviManagementError(
         'state_changed',
         'Prompt composition changed; list or get again and retry with the new catalogRevision.',
       );
     }
-    const next = applyMutation(this.read(), plan.mutation);
-    await this.persist(next);
+    const committed = await this.mutate(
+      (current) => applyMutation(current, plan.mutation),
+      expectedRevision,
+    );
     return {
       saved: true,
       refreshed: false,
-      effective: { catalogRevision: this.catalogRevision() },
+      effective: { catalogRevision: committed.catalogRevision },
     };
   }
 
-  async setWorkflowEnabled(id: string, enabled: boolean): Promise<void> {
-    await this.persist(applyMutation(this.read(), {
+  async setWorkflowEnabled(id: string, enabled: boolean, expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => applyMutation(current, {
       action: 'set_enabled',
       id,
       enabled,
-      catalogRevision: this.catalogRevision(),
-    }));
+      catalogRevision: expectedRevision ?? this.catalogRevision(),
+    }), expectedRevision);
   }
 
-  async saveCustomBody(id: string, customBody: string): Promise<void> {
-    await this.persist(applyMutation(this.read(), {
+  async saveCustomBody(id: string, customBody: string, expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => applyMutation(current, {
       action: 'set_body',
       id,
       body: customBody,
-      catalogRevision: this.catalogRevision(),
-    }));
+      catalogRevision: expectedRevision ?? this.catalogRevision(),
+    }), expectedRevision);
   }
 
-  async restoreShipped(id: string): Promise<void> {
-    await this.persist(applyMutation(this.read(), {
+  async restoreShipped(id: string, expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => applyMutation(current, {
       action: 'restore',
       id,
-      catalogRevision: this.catalogRevision(),
-    }));
+      catalogRevision: expectedRevision ?? this.catalogRevision(),
+    }), expectedRevision);
   }
 
-  async createCustomModule(input?: { title?: string; body?: string; enabled?: boolean }): Promise<AgentPromptModuleDetail> {
-    await this.persist(applyMutation(this.read(), {
-      action: 'upsert',
-      title: input?.title,
-      body: input?.body ?? '',
-      enabled: input?.enabled,
-      catalogRevision: this.catalogRevision(),
-    }));
-    const created = this.listModules().filter((module) => module.kind === 'custom').at(-1);
+  async createCustomModule(
+    input?: { title?: string; body?: string; enabled?: boolean },
+    expectedRevision?: number,
+  ): Promise<AgentPromptModuleDetail> {
+    let createdId: string | undefined;
+    const committed = await this.mutate((current) => {
+      const result = applyMutation(current, {
+        action: 'upsert',
+        title: input?.title,
+        body: input?.body ?? '',
+        enabled: input?.enabled,
+        catalogRevision: expectedRevision ?? this.catalogRevision(),
+      });
+      const currentIds = new Set(current.customPromptModules.map((entry) => entry.id));
+      createdId = result.customPromptModules.find((entry) => !currentIds.has(entry.id))?.id;
+      return result;
+    }, expectedRevision);
+    const created = resolvePromptModules(
+      committed.settings.promptModules,
+      committed.settings.customPromptModules,
+    )
+      .find((module) => module.id === createdId);
     if (!created) {
       throw new PiviManagementError('persistence_failed', 'Custom prompt module was not created.');
     }
     return toDetail(created);
   }
 
-  async renameCustomModule(id: string, title: string): Promise<void> {
-    await this.persist(applyMutation(this.read(), {
+  async renameCustomModule(id: string, title: string, expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => applyMutation(current, {
       action: 'upsert',
       id,
       title,
-      catalogRevision: this.catalogRevision(),
-    }));
+      catalogRevision: expectedRevision ?? this.catalogRevision(),
+    }), expectedRevision);
   }
 
-  async editCustomModule(id: string, body: string): Promise<void> {
-    await this.persist(applyMutation(this.read(), {
+  async editCustomModule(id: string, body: string, expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => applyMutation(current, {
       action: 'set_body',
       id,
       body,
-      catalogRevision: this.catalogRevision(),
-    }));
+      catalogRevision: expectedRevision ?? this.catalogRevision(),
+    }), expectedRevision);
   }
 
-  async reorderCustomModules(ids: readonly string[]): Promise<void> {
-    const current = this.read();
-    const byId = new Map(current.customPromptModules.map((entry) => [entry.id, entry]));
-    const next: CustomPromptModule[] = [];
-    for (const id of ids) {
-      if (isShippedPromptModuleId(id)) {
-        continue;
+  async reorderCustomModules(ids: readonly string[], expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => {
+      const byId = new Map(current.customPromptModules.map((entry) => [entry.id, entry]));
+      const next: CustomPromptModule[] = [];
+      for (const id of ids) {
+        if (isShippedPromptModuleId(id)) {
+          continue;
+        }
+        const entry = byId.get(id);
+        if (entry) {
+          next.push(entry);
+          byId.delete(id);
+        }
       }
-      const entry = byId.get(id);
-      if (entry) {
+      for (const entry of byId.values()) {
         next.push(entry);
-        byId.delete(id);
       }
-    }
-    for (const entry of byId.values()) {
-      next.push(entry);
-    }
-    await this.persist({
-      promptModules: current.promptModules,
-      customPromptModules: next,
-    });
+      return {
+        promptModules: current.promptModules,
+        customPromptModules: next,
+      };
+    }, expectedRevision);
   }
 
-  async setCustomModuleEnabled(id: string, enabled: boolean): Promise<void> {
-    await this.persist(applyMutation(this.read(), {
+  async setCustomModuleEnabled(id: string, enabled: boolean, expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => applyMutation(current, {
       action: 'set_enabled',
       id,
       enabled,
-      catalogRevision: this.catalogRevision(),
-    }));
+      catalogRevision: expectedRevision ?? this.catalogRevision(),
+    }), expectedRevision);
   }
 
-  async deleteCustomModule(id: string): Promise<void> {
-    await this.persist(applyMutation(this.read(), {
+  async deleteCustomModule(id: string, expectedRevision?: number): Promise<void> {
+    await this.mutate((current) => applyMutation(current, {
       action: 'remove',
       id,
-      catalogRevision: this.catalogRevision(),
-    }));
+      catalogRevision: expectedRevision ?? this.catalogRevision(),
+    }), expectedRevision);
   }
 }

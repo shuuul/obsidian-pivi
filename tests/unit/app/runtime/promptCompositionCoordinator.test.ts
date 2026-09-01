@@ -131,4 +131,64 @@ describe('PromptCompositionCoordinator', () => {
       catalogRevision: 1,
     })).toThrow(/list or get again/);
   });
+
+  it('rolls prompt settings back when persistence fails', async () => {
+    const host = makeHost({
+      promptModules: { 'transcript-cleanup': { customBody: 'before' } },
+      customPromptModules: [{ id: 'custom:before', title: 'Before', body: 'before', enabled: true }],
+    });
+    const previousOverrides = host.settings.promptModules;
+    const previousCustom = host.settings.customPromptModules;
+    host.saveSettings.mockRejectedValueOnce(new Error('disk full'));
+    const coordinator = createPromptCompositionCoordinator(host);
+
+    await expect(coordinator.saveCustomBody(
+      'transcript-cleanup',
+      'after',
+      coordinator.catalogRevision(),
+    )).rejects.toThrow('disk full');
+
+    expect(host.settings.promptModules).toBe(previousOverrides);
+    expect(host.settings.customPromptModules).toBe(previousCustom);
+    expect(coordinator.catalogRevision()).toBe(1);
+  });
+
+  it('serializes cross-coordinator commits so only one plan can commit a revision', async () => {
+    const host = makeHost();
+    let releaseSave: (() => void) | undefined;
+    host.saveSettings.mockImplementationOnce(() => new Promise<void>((resolve) => {
+      releaseSave = resolve;
+    }));
+    const first = createPromptCompositionCoordinator(host);
+    const second = createPromptCompositionCoordinator(host);
+    const revision = first.catalogRevision();
+    const firstPlan = first.plan({
+      action: 'set_enabled',
+      id: 'transcript-cleanup',
+      enabled: false,
+      catalogRevision: revision,
+    });
+    const secondPlan = second.plan({
+      action: 'set_body',
+      id: 'transcript-cleanup',
+      body: 'stale body',
+      catalogRevision: revision,
+    });
+
+    const firstCommit = first.commit(firstPlan, revision);
+    const secondCommit = second.commit(secondPlan, revision);
+    const secondResult = secondCommit.catch((cause: unknown) => cause);
+    await Promise.resolve();
+    expect(host.saveSettings).toHaveBeenCalledTimes(1);
+
+    releaseSave?.();
+    await firstCommit;
+    const secondError = await secondResult;
+
+    expect(secondError).toBeInstanceOf(PiviManagementError);
+    expect(secondError).toHaveProperty('message', expect.stringMatching(/list or get again/));
+    expect(host.settings.promptModules['transcript-cleanup']).toEqual({ enabled: false });
+    expect(host.saveSettings).toHaveBeenCalledTimes(1);
+    expect(first.catalogRevision()).toBe(2);
+  });
 });

@@ -2,6 +2,7 @@ import {
   buildPiSystemPrompt,
   buildSystemPrompt,
   composePromptSections,
+  computePromptCompositionKey,
   computePiSystemPromptKey,
   createCustomPromptModuleId,
   getShippedPromptModule,
@@ -36,6 +37,17 @@ describe('prompt module registry', () => {
 });
 
 describe('prompt module composition', () => {
+  it('uses an unambiguous cache key for user-authored delimiters', () => {
+    const bodyDelimiter = computePromptCompositionKey({}, [
+      { id: 'custom:x', enabled: true, title: 'a', body: 'b:c' },
+    ]);
+    const titleDelimiter = computePromptCompositionKey({}, [
+      { id: 'custom:x', enabled: true, title: 'a:b', body: 'c' },
+    ]);
+
+    expect(bodyDelimiter).not.toBe(titleDelimiter);
+  });
+
   it('includes default-on workflow bodies and omits default-off long-line-normalization', () => {
     const composed = composePromptSections();
     expect(composed.workflow).toContain('## Transcript cleanup');

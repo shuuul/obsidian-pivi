@@ -65,6 +65,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
     mentionEditor: createMentionEditorPort(),
     about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
     prompt: {
+      getCatalogRevision: () => 1,
       listModules: () => [],
       getUsage: () => ({ sections: [], totalEstimatedTokens: 0 }),
       setWorkflowEnabled: async () => undefined,

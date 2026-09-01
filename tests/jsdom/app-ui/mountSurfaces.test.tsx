@@ -179,7 +179,16 @@ describe('React surface mounts', () => {
             listSections: () => [],
             runAction: async () => ({}),
           },
+          about: {
+            getSnapshot: () => ({
+              version: '0.21.0',
+              releasedAt: '2026-09-01',
+              githubUrl: 'https://github.com/shuuul/obsidian-pivi',
+              issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues',
+            }),
+          },
           prompt: {
+            getCatalogRevision: () => 1,
             listModules: () => [],
             getUsage: () => ({ sections: [], totalEstimatedTokens: 0 }),
             setWorkflowEnabled: async () => undefined,

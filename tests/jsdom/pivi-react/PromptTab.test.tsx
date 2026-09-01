@@ -141,19 +141,23 @@ function createMutablePromptPort(
   usage: SettingsPromptUsageSnapshot = defaultUsage,
 ): SettingsPromptPort & { readonly calls: { restore: number; toggle: number } } {
   let modules = [...initialModules];
+  let catalogRevision = 1;
   const calls = { restore: 0, toggle: 0 };
   return {
     calls,
+    getCatalogRevision: () => catalogRevision,
     listModules: () => modules,
     getUsage: () => usage,
     setWorkflowEnabled: async (id, enabled) => {
       calls.toggle += 1;
       modules = modules.map((module) => (module.id === id ? { ...module, enabled } : module));
+      catalogRevision += 1;
     },
     saveCustomBody: async (id, customBody) => {
       modules = modules.map((module) => (
         module.id === id ? { ...module, body: customBody, modified: true } : module
       ));
+      catalogRevision += 1;
     },
     restoreShipped: async (id) => {
       calls.restore += 1;
@@ -162,6 +166,7 @@ function createMutablePromptPort(
           ? { ...module, modified: false, body: 'SHIPPED TRANSCRIPT BODY' }
           : module
       ));
+      catalogRevision += 1;
     },
     createCustomModule: async (input) => {
       const created: SettingsPromptModuleView = {
@@ -173,13 +178,16 @@ function createMutablePromptPort(
         body: input?.body ?? '',
       };
       modules = [...modules, created];
+      catalogRevision += 1;
       return created;
     },
     renameCustomModule: async (id, title) => {
       modules = modules.map((module) => (module.id === id ? { ...module, title } : module));
+      catalogRevision += 1;
     },
     editCustomModule: async (id, body) => {
       modules = modules.map((module) => (module.id === id ? { ...module, body } : module));
+      catalogRevision += 1;
     },
     reorderCustomModules: async (ids) => {
       const custom = modules.filter((module) => module.kind === 'custom');
@@ -189,12 +197,15 @@ function createMutablePromptPort(
         const entry = byId.get(id);
         return entry ? [entry] : [];
       })];
+      catalogRevision += 1;
     },
     setCustomModuleEnabled: async (id, enabled) => {
       modules = modules.map((module) => (module.id === id ? { ...module, enabled } : module));
+      catalogRevision += 1;
     },
     deleteCustomModule: async (id) => {
       modules = modules.filter((module) => module.id !== id);
+      catalogRevision += 1;
     },
   };
 }

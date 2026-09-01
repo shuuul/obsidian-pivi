@@ -1,3 +1,4 @@
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import {
   buildMcpInventoryLines,
   buildRegisteredToolsSection,
@@ -33,6 +34,8 @@ import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts'
 import { isOfficialObsidianCliEnabled } from '@/app/hostPlatform';
 import { createPromptCompositionCoordinator } from '@/app/runtime/PromptCompositionCoordinator';
 
+const logger = new PluginLogger('SettingsPromptPort');
+
 function toModuleView(
   module: ResolvedPromptModule,
 ): SettingsPromptModuleView {
@@ -53,9 +56,15 @@ export function createSettingsPromptPort(
 ): SettingsPromptPort {
   const composition = createPromptCompositionCoordinator(host);
 
-  const persistAndRefresh = async (work: () => Promise<unknown>): Promise<void> => {
-    await work();
-    await refreshPrompt();
+  const persistAndRefresh = async <T>(work: () => Promise<T>): Promise<T> => {
+    const result = await work();
+    try {
+      await refreshPrompt();
+    } catch (error) {
+      // Persistence is already durable; refresh failure must not make a retry duplicate the mutation.
+      logger.warn('Prompt settings were saved, but runtime refresh failed', error);
+    }
+    return result;
   };
 
   const listModules = (): readonly SettingsPromptModuleView[] => (
@@ -143,36 +152,38 @@ export function createSettingsPromptPort(
   };
 
   return {
+    getCatalogRevision: () => composition.catalogRevision(),
     listModules,
     getUsage,
-    async setWorkflowEnabled(id, enabled) {
-      await persistAndRefresh(() => composition.setWorkflowEnabled(id, enabled));
+    async setWorkflowEnabled(id, enabled, catalogRevision) {
+      await persistAndRefresh(() => composition.setWorkflowEnabled(id, enabled, catalogRevision));
     },
-    async saveCustomBody(id, customBody) {
-      await persistAndRefresh(() => composition.saveCustomBody(id, customBody));
+    async saveCustomBody(id, customBody, catalogRevision) {
+      await persistAndRefresh(() => composition.saveCustomBody(id, customBody, catalogRevision));
     },
-    async restoreShipped(id) {
-      await persistAndRefresh(() => composition.restoreShipped(id));
+    async restoreShipped(id, catalogRevision) {
+      await persistAndRefresh(() => composition.restoreShipped(id, catalogRevision));
     },
-    async createCustomModule(input?: SettingsPromptCreateInput) {
-      const created = await composition.createCustomModule(input);
-      await refreshPrompt();
+    async createCustomModule(input: SettingsPromptCreateInput | undefined, catalogRevision) {
+      const created = await persistAndRefresh(
+        () => composition.createCustomModule(input, catalogRevision),
+      );
       return toModuleView(created);
     },
-    async renameCustomModule(id, title) {
-      await persistAndRefresh(() => composition.renameCustomModule(id, title));
+    async renameCustomModule(id, title, catalogRevision) {
+      await persistAndRefresh(() => composition.renameCustomModule(id, title, catalogRevision));
     },
-    async editCustomModule(id, body) {
-      await persistAndRefresh(() => composition.editCustomModule(id, body));
+    async editCustomModule(id, body, catalogRevision) {
+      await persistAndRefresh(() => composition.editCustomModule(id, body, catalogRevision));
     },
-    async reorderCustomModules(ids) {
-      await persistAndRefresh(() => composition.reorderCustomModules(ids));
+    async reorderCustomModules(ids, catalogRevision) {
+      await persistAndRefresh(() => composition.reorderCustomModules(ids, catalogRevision));
     },
-    async setCustomModuleEnabled(id, enabled) {
-      await persistAndRefresh(() => composition.setCustomModuleEnabled(id, enabled));
+    async setCustomModuleEnabled(id, enabled, catalogRevision) {
+      await persistAndRefresh(() => composition.setCustomModuleEnabled(id, enabled, catalogRevision));
     },
-    async deleteCustomModule(id) {
-      await persistAndRefresh(() => composition.deleteCustomModule(id));
+    async deleteCustomModule(id, catalogRevision) {
+      await persistAndRefresh(() => composition.deleteCustomModule(id, catalogRevision));
     },
   };
 }
