@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.22.0](https://github.com/shuuul/obsidian-pivi/compare/0.21.0...0.22.0) (2026-09-01)
+
+
+### Features
+
+* add composable system-prompt modules ([3a68797](https://github.com/shuuul/obsidian-pivi/commit/3a6879771890983ad370e00f090e1fd7242c83e8))
+* add pivi_prompt for Agent-managed prompt modules ([38994f3](https://github.com/shuuul/obsidian-pivi/commit/38994f3b65b1fb8d38dced8f1e34e4c177ac1db8))
+
+
+### Bug Fixes
+
+* harden prompt module persistence ([6a25238](https://github.com/shuuul/obsidian-pivi/commit/6a25238d0d77cf419ac17b1c385b8c293f5afe84))
+
 ## [0.21.0](https://github.com/shuuul/obsidian-pivi/compare/0.20.2...0.21.0) (2026-09-01)
 
 
