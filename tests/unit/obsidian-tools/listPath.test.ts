@@ -27,14 +27,44 @@ describe('obsidian_list pagination', () => {
     expect(text.length).toBeLessThanOrEqual(50_000);
     expect(page).toMatchObject({
       offset: 0,
-      nextOffset: 100,
+      nextOffset: 50,
       total: 1_250,
     });
-    expect(page.entries).toHaveLength(100);
+    expect(page.entries).toHaveLength(50);
     expect(result.details).toMatchObject({
       count: 1_250,
-      returnedCount: 100,
-      nextOffset: 100,
+      returnedCount: 50,
+      nextOffset: 50,
+    });
+  });
+
+  it('filters direct-child names case-insensitively before pagination', async () => {
+    const entries = [
+      ...Array.from({ length: 60 }, (_, index) => ({
+        ...entry(index),
+        name: `Alpha-${index}.md`,
+      })),
+      { ...entry(60), path: 'alpha/in-path-only.md', name: 'unrelated.md' },
+    ];
+    const tool = createListPathTool({
+      vault: { listPath: jest.fn().mockReturnValue(entries) },
+    } as never);
+
+    const result = await tool.execute('call-filter', { query: 'aLpHa' }) as {
+      content: Array<{ type: string; text: string }>;
+      details: Record<string, unknown>;
+    };
+    const text = result.content[0]?.type === 'text' ? result.content[0].text : '';
+    const page = JSON.parse(text);
+
+    expect(page).toMatchObject({ offset: 0, nextOffset: 50, total: 60 });
+    expect(page.entries).toHaveLength(50);
+    expect(page.entries.every((item: { name: string }) => item.name.startsWith('Alpha-'))).toBe(true);
+    expect(result.details).toMatchObject({
+      count: 60,
+      query: 'alpha',
+      returnedCount: 50,
+      nextOffset: 50,
     });
   });
 
