@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.21.0](https://github.com/shuuul/obsidian-pivi/compare/0.20.2...0.21.0) (2026-09-01)
+
+
+### Features
+
+* improve large-note reading and editing ([22660ce](https://github.com/shuuul/obsidian-pivi/commit/22660ce0943026d2183aad34b4673d14437dd7fa))
+
+
+### Bug Fixes
+
+* **build:** make release bundle reproducible ([808f7d8](https://github.com/shuuul/obsidian-pivi/commit/808f7d85059e35008ac6b4c60f3ebb2879dd744c))
+
 ## [0.20.2](https://github.com/shuuul/obsidian-pivi/compare/0.20.1...0.20.2) (2026-08-30)
 
 
