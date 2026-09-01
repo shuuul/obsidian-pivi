@@ -79,6 +79,16 @@ describe('mainAgent system prompt', () => {
       expect(prompt).not.toContain('replacing only `Target` with `### Heading` produces `>> ### Heading`');
     });
 
+    it('keeps unfinished tool work in one continuous turn', () => {
+      const prompt = buildSystemPrompt();
+
+      expect(prompt).toContain('Treat the user\'s requested outcome as one continuous turn');
+      expect(prompt).toContain('Finishing a batch or section, reporting progress, or approaching context pressure is not task completion');
+      expect(prompt).toContain('Context compaction is managed automatically by the runtime');
+      expect(prompt).toContain('do not stop to request compaction or ask the user to say continue');
+      expect(prompt).toContain('Progress updates may accompany continued tool calls');
+    });
+
     it('requires stable and verified vault note links', () => {
       const prompt = buildSystemPrompt();
 

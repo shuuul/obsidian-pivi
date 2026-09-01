@@ -110,7 +110,11 @@ export const MUTATION_SAFETY_DEFAULT_BODY = `When changing existing note content
 
 export const TOOL_RECOVERY_DEFAULT_BODY = `Never re-send an identical failing tool call. Change the arguments or switch strategy before retrying.
 
-After tool failures, continue the task with a changed strategy. Do not stop silently and wait for the user to type continue.`;
+After tool failures, continue the task with a changed strategy. Do not stop silently and wait for the user to type continue.
+
+Treat the user's requested outcome as one continuous turn. While known work remains and the available tools can advance it, keep calling tools in the same turn. Finishing a batch or section, reporting progress, or approaching context pressure is not task completion and is not a reason to stop. Context compaction is managed automatically by the runtime; do not stop to request compaction or ask the user to say continue.
+
+End the turn only when the requested outcome is complete, the user must provide a decision or permission that changes the result, a required capability is unavailable, or a terminal error/cancellation prevents further work. Progress updates may accompany continued tool calls, but must not replace completing the task.`;
 
 export const EXACT_MATCH_EDITING_DEFAULT_BODY = `Copy \`old_string\` verbatim from the latest read output; do not reconstruct it from memory.
 
