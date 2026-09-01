@@ -424,6 +424,56 @@ describe('UI port adapters', () => {
     expect(refreshSecond).toHaveBeenCalledTimes(1);
   });
 
+  it('persists prompt-module edits and refreshes the prompt in every open tab', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshFirst = jest.fn(async () => undefined);
+    const refreshSecond = jest.fn(async () => undefined);
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        promptModules: { 'transcript-cleanup': { customBody: 'edited body' } },
+        customPromptModules: [],
+      } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshFirst } }) },
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshSecond } }) },
+      ],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: { getCachedTools: () => [] },
+      mcpServerManager: { getServers: () => [] },
+      slashCommandCatalog: {},
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+
+    expect(ports.prompt.listModules().find((module) => module.id === 'transcript-cleanup')).toMatchObject({
+      modified: true,
+      body: 'edited body',
+    });
+
+    await ports.prompt.restoreShipped('transcript-cleanup');
+
+    expect(host.settings.promptModules['transcript-cleanup']).toBeUndefined();
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(refreshFirst).toHaveBeenCalledTimes(1);
+    expect(refreshSecond).toHaveBeenCalledTimes(1);
+    expect(ports.prompt.listModules().find((module) => module.id === 'transcript-cleanup')).toMatchObject({
+      modified: false,
+    });
+
+    await ports.prompt.setWorkflowEnabled('transcript-cleanup', false);
+
+    expect(host.settings.promptModules['transcript-cleanup']).toEqual({ enabled: false });
+    expect(saveSettings).toHaveBeenCalledTimes(2);
+    expect(refreshFirst).toHaveBeenCalledTimes(2);
+    expect(refreshSecond).toHaveBeenCalledTimes(2);
+  });
+
   it('applies tab bar position changes to every mounted view', async () => {
     const saveSettings = jest.fn(async () => undefined);
     const refreshFirst = jest.fn();

@@ -343,6 +343,7 @@
       "tools": "工具",
       "subagents": "子代理",
       "commands": "指令",
+      "prompt": "提示詞",
       "toolbar": "工具列",
       "about": "關於"
     },
@@ -902,6 +903,43 @@
       "duplicate": "名為 /{name} 的自訂指令已存在。",
       "saveFailed": "儲存自訂斜線指令失敗。",
       "newCommand": "新指令"
+    },
+    "prompt": {
+      "pageDescription": "用鎖定的核心模組、可選工作流模組和自訂模組組成啟動系統提示詞。",
+      "usage": {
+        "heading": "啟動上下文",
+        "barAria": "啟動提示詞組成估算",
+        "sections": {
+          "core": "核心",
+          "workflow": "工作流",
+          "custom": "自訂",
+          "tools": "工具",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} 估算",
+        "total": "合計"
+      },
+      "workflow": { "heading": "工作流" },
+      "custom": { "heading": "自訂" },
+      "modified": "已修改",
+      "restore": "還原預設",
+      "bodyLabel": "模組正文",
+      "titleLabel": "標題",
+      "enableAria": "啟用 {title}",
+      "disableAria": "停用 {title}",
+      "add": "+ 新增模組",
+      "addAria": "新增自訂提示詞模組",
+      "deleteAria": "刪除 {title}",
+      "deleteConfirmTitle": "刪除自訂模組 {title}？",
+      "deleteConfirm": "刪除此自訂模組？其正文將從系統提示詞中移除。",
+      "empty": "尚無自訂模組。新增一個即可接在工作流模組之後。",
+      "newModule": "新模組",
+      "reorder": {
+        "handle": "重新排序 {title}，目前為第 {position} 位",
+        "position": "{title} 已移到第 {position} 位，共 {total} 項。",
+        "saved": "模組順序已儲存。",
+        "cancelled": "已取消模組重新排序。"
+      }
     },
     "mcp": {
       "empty": "尚未設定 MCP 伺服器。點擊新增以建立。",

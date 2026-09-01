@@ -11,6 +11,8 @@ import {
   appendExternalContextAvailability,
   buildPiSystemPrompt,
   computePiSystemPromptKey,
+  normalizePromptModuleSettings,
+  type PromptModuleSettings,
 } from '@pivi/agent/prompt';
 import type { ChatMessage, OpenSessionState, StreamChunk } from '@pivi/agent/runtime';
 import { extractTextContent } from '@pivi/agent/runtime/messageContent';
@@ -268,7 +270,13 @@ export class PiChatRuntime implements PiChatService {
     }
 
     const registry = this.buildToolRegistry();
-    const systemPrompt = buildPiSystemPrompt(this.getVaultPath() ?? undefined, this.plugin.settings.userName, registry);
+    const composition = this.readPromptComposition();
+    const systemPrompt = buildPiSystemPrompt(
+      this.getVaultPath() ?? undefined,
+      this.plugin.settings.userName,
+      registry,
+      composition,
+    );
     const sessionMessages = this.sessionTree?.loadAgentMessages() ?? [];
 
     this.agent = new Agent({
@@ -285,7 +293,12 @@ export class PiChatRuntime implements PiChatService {
       steeringMode: 'one-at-a-time',
     });
 
-    this.systemPromptKey = computePiSystemPromptKey(this.getVaultPath() ?? undefined, this.plugin.settings.userName, registry);
+    this.systemPromptKey = computePiSystemPromptKey(
+      this.getVaultPath() ?? undefined,
+      this.plugin.settings.userName,
+      registry,
+      composition,
+    );
     this.toolRegistryKey = registry.registeredToolsSection;
     this.setReady(true);
     return true;
@@ -744,15 +757,33 @@ export class PiChatRuntime implements PiChatService {
     this.syncAgentTools();
   }
 
+  private readPromptComposition(): PromptModuleSettings {
+    return normalizePromptModuleSettings(
+      this.plugin.settings.promptModules,
+      this.plugin.settings.customPromptModules,
+    );
+  }
+
   private applySystemPrompt(registry?: ReturnType<typeof buildPiToolRegistry>): void {
     const resolvedRegistry = registry ?? this.buildToolRegistry();
-    const nextKey = computePiSystemPromptKey(this.getVaultPath() ?? undefined, this.plugin.settings.userName, resolvedRegistry);
+    const composition = this.readPromptComposition();
+    const nextKey = computePiSystemPromptKey(
+      this.getVaultPath() ?? undefined,
+      this.plugin.settings.userName,
+      resolvedRegistry,
+      composition,
+    );
     if (this.systemPromptKey === nextKey) {
       return;
     }
 
     if (this.agent) {
-      this.agent.state.systemPrompt = buildPiSystemPrompt(this.getVaultPath() ?? undefined, this.plugin.settings.userName, resolvedRegistry);
+      this.agent.state.systemPrompt = buildPiSystemPrompt(
+        this.getVaultPath() ?? undefined,
+        this.plugin.settings.userName,
+        resolvedRegistry,
+        composition,
+      );
     }
     this.systemPromptKey = nextKey;
   }

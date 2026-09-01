@@ -125,6 +125,19 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
     mentionEditor: { mount: () => ({ getValue: () => '', setValue: () => undefined, focus: () => undefined, setDisabled: () => undefined, destroy: () => undefined }) },
     about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
+    prompt: {
+      listModules: () => [],
+      getUsage: () => ({ sections: [], totalEstimatedTokens: 0 }),
+      setWorkflowEnabled: async () => undefined,
+      saveCustomBody: async () => undefined,
+      restoreShipped: async () => undefined,
+      createCustomModule: async () => ({ id: 'custom:x', kind: 'custom', title: 'New', enabled: true, modified: false, body: '' }),
+      renameCustomModule: async () => undefined,
+      editCustomModule: async () => undefined,
+      reorderCustomModules: async () => undefined,
+      setCustomModuleEnabled: async () => undefined,
+      deleteCustomModule: async () => undefined,
+    },
   };
 }
 
@@ -137,11 +150,12 @@ describe('React settings foundation', () => {
       render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
       const tabs = screen.getAllByRole('tab');
       expect(tabs.map((tab) => tab.textContent)).toEqual([
-        'General', 'Models', 'Skills', 'Tools', 'Subagents', 'Commands', 'Toolbar', 'About',
+        'General', 'Models', 'Skills', 'Tools', 'Subagents', 'Commands', 'Toolbar', 'Prompt',
       ]);
       expect(screen.queryByRole('tab', { name: 'Web' })).not.toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: 'MCPs' })).not.toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: 'Integrations' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'About' })).not.toBeInTheDocument();
       expect(screen.getByRole('tablist', { name: 'Settings sections' })).toBeInTheDocument();
       expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1, -1, -1, -1, -1]);
 
@@ -1172,8 +1186,8 @@ describe('React settings foundation', () => {
     expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', 'https://ollama.com/download');
   });
 
-  it('renders About with version, GitHub, and issue links', () => {
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} initialTab="about" /></I18nProvider>));
+  it('renders About on General with version, GitHub, and issue links', () => {
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
 
     expect(screen.getByText('0.19.4')).toBeInTheDocument();
     expect(screen.getByText('Released 2026-08-29.')).toBeInTheDocument();

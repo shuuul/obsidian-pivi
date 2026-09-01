@@ -724,6 +724,11 @@ export interface PiviSettings {
   /** Set after the editable default workspace commands are seeded once. */
   defaultWorkspaceCommandsSeeded?: boolean;
 
+  /** Shipped prompt-module enablement and body overrides. Absent keys use shipped defaults. */
+  promptModules: Record<string, { enabled?: boolean; customBody?: string }>;
+  /** User-created prompt modules appended after shipped workflow modules in this order. */
+  customPromptModules: Array<{ id: string; title: string; body: string; enabled: boolean }>;
+
   // Allow provider-specific extension fields
   [key: string]: unknown;
 }

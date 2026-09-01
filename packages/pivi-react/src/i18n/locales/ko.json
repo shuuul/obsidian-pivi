@@ -343,6 +343,7 @@
       "tools": "도구",
       "subagents": "서브에이전트",
       "commands": "명령",
+      "prompt": "프롬프트",
       "toolbar": "툴바",
       "about": "정보"
     },
@@ -902,6 +903,43 @@
       "duplicate": "/{name} 사용자 지정 명령이 이미 있습니다.",
       "saveFailed": "사용자 지정 슬래시 명령을 저장하지 못했습니다.",
       "newCommand": "새-명령"
+    },
+    "prompt": {
+      "pageDescription": "잠긴 코어 모듈, 선택적 워크플로 모듈, 사용자 지정 모듈로 시작 시스템 프롬프트를 구성합니다.",
+      "usage": {
+        "heading": "시작 컨텍스트",
+        "barAria": "시작 프롬프트 구성 추정",
+        "sections": {
+          "core": "코어",
+          "workflow": "워크플로",
+          "custom": "사용자 지정",
+          "tools": "도구",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} 추정",
+        "total": "합계"
+      },
+      "workflow": { "heading": "워크플로" },
+      "custom": { "heading": "사용자 지정" },
+      "modified": "수정됨",
+      "restore": "기본값 복원",
+      "bodyLabel": "모듈 본문",
+      "titleLabel": "제목",
+      "enableAria": "{title} 사용",
+      "disableAria": "{title} 사용 안 함",
+      "add": "+ 모듈 추가",
+      "addAria": "사용자 지정 프롬프트 모듈 추가",
+      "deleteAria": "{title} 삭제",
+      "deleteConfirmTitle": "사용자 지정 모듈 {title}을(를) 삭제할까요?",
+      "deleteConfirm": "이 사용자 지정 모듈을 삭제할까요? 본문이 시스템 프롬프트에서 제거됩니다.",
+      "empty": "사용자 지정 모듈이 없습니다. 추가하면 워크플로 모듈 뒤에 이어집니다.",
+      "newModule": "새 모듈",
+      "reorder": {
+        "handle": "{title} 순서 변경, 현재 {position}번째",
+        "position": "{title}이(가) {total}개 중 {position}번째로 이동했습니다.",
+        "saved": "모듈 순서를 저장했습니다.",
+        "cancelled": "모듈 순서 변경을 취소했습니다."
+      }
     },
     "mcp": {
       "empty": "구성된 MCP 서버가 없습니다. 추가를 클릭하여 만드세요.",

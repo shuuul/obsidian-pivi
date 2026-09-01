@@ -65,18 +65,18 @@ describe('mainAgent system prompt', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('## Vault mutations (use the narrowest exact mutation)');
       expect(prompt).toContain('`obsidian_edit` for exact local replacement, including inserting line endings');
-      expect(prompt).toContain('Do not match the whole line');
-      expect(prompt).toContain('shortest unique local span across the desired boundary');
-      expect(prompt).toContain('`sentence.Second` → `sentence.\\n\\nSecond`');
-      expect(prompt).toContain('replace `>>` with `\\n\\n` to remove it or `\\n\\n>>`');
+      expect(prompt).toContain('Never read-then-overwrite the full file for a local edit');
       expect(prompt).toContain('Use `replace_all: true` only when every exact occurrence should receive the identical replacement');
-      expect(prompt).toContain('**Markdown block boundaries with `obsidian_edit`:** Replacement is literal');
-      expect(prompt).toContain('replacing only `Target` with `### Heading` produces `>> ### Heading`, not a heading');
-      expect(prompt).toContain('put the required `\\n\\n` in `new_string`');
+      expect(prompt).toContain('**Markdown block boundaries:** Replacement is literal');
       expect(prompt).toContain('read back the changed span and verify the rendered structure');
       expect(prompt).toContain('**Anti-patterns:** `obsidian_read` + `obsidian_write` `overwrite`');
       expect(prompt).toContain('curly quotes');
       expect(prompt).toContain('old_string not found');
+      expect(prompt).toContain('Copy `old_string` verbatim from the latest read output');
+      expect(prompt).toContain('registered `obsidian_edit` descriptor under Available Tools');
+      expect(prompt).not.toContain('`sentence.Second` → `sentence.\\n\\nSecond`');
+      expect(prompt).not.toContain('replace `>>` with `\\n\\n` to remove it or `\\n\\n>>`');
+      expect(prompt).not.toContain('replacing only `Target` with `### Heading` produces `>> ### Heading`');
     });
 
     it('requires stable and verified vault note links', () => {
@@ -161,6 +161,69 @@ describe('mainAgent system prompt', () => {
       });
 
       expect(key).toBe('::::::');
+    });
+
+    it('omits a composition suffix when new fields are absent or empty', () => {
+      expect(computeSystemPromptKey(
+        { vaultPath: '/vault', userName: 'Alice' },
+        { promptModules: {}, customPromptModules: [] },
+      )).toBe('/vault::Alice::::');
+    });
+
+    it('changes when shipped-module enablement or custom body changes', () => {
+      const base = computeSystemPromptKey(
+        { vaultPath: '/vault', userName: 'Alice' },
+        { promptModules: { 'transcript-cleanup': { enabled: true } } },
+      );
+      const disabled = computeSystemPromptKey(
+        { vaultPath: '/vault', userName: 'Alice' },
+        { promptModules: { 'transcript-cleanup': { enabled: false } } },
+      );
+      const customBody = computeSystemPromptKey(
+        { vaultPath: '/vault', userName: 'Alice' },
+        { promptModules: { 'transcript-cleanup': { customBody: 'alpha' } } },
+      );
+
+      expect(base).not.toBe('/vault::Alice::::');
+      expect(disabled).not.toBe(base);
+      expect(customBody).not.toBe(base);
+      expect(customBody).not.toBe(disabled);
+    });
+
+    it('changes when custom-module id, title, body, order, or enablement changes', () => {
+      const first = {
+        id: 'custom:one',
+        title: 'One',
+        body: 'alpha',
+        enabled: true,
+      };
+      const second = {
+        id: 'custom:two',
+        title: 'Two',
+        body: 'beta',
+        enabled: true,
+      };
+      const settings = { vaultPath: '/vault', userName: 'Alice' };
+      const ordered = computeSystemPromptKey(settings, { customPromptModules: [first, second] });
+      const reordered = computeSystemPromptKey(settings, { customPromptModules: [second, first] });
+      const renamed = computeSystemPromptKey(settings, {
+        customPromptModules: [{ ...first, title: 'Renamed' }, second],
+      });
+      const rewritten = computeSystemPromptKey(settings, {
+        customPromptModules: [{ ...first, body: 'gamma' }, second],
+      });
+      const disabled = computeSystemPromptKey(settings, {
+        customPromptModules: [{ ...first, enabled: false }, second],
+      });
+      const retitledId = computeSystemPromptKey(settings, {
+        customPromptModules: [{ ...first, id: 'custom:other' }, second],
+      });
+
+      expect(reordered).not.toBe(ordered);
+      expect(renamed).not.toBe(ordered);
+      expect(rewritten).not.toBe(ordered);
+      expect(disabled).not.toBe(ordered);
+      expect(retitledId).not.toBe(ordered);
     });
   });
 });

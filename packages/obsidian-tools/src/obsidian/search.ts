@@ -36,7 +36,7 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
       ? 'Search note contents (substring match) or list files in a folder. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. Falls back to CLI on API errors.'
       : 'Search note contents (substring match) or list files in a folder through the vault API. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. No CLI fallback is available.',
     promptUsage: {
-      summary: `Case-insensitive substring/tag/path search through the vault API; simplified syntax is not Obsidian in-app search syntax and searches should not be repeated with different casing.${obsidianCliAvailable ? ' Falls back to CLI on API errors.' : ' No CLI fallback is available.'}`,
+      summary: `Case-insensitive substring/tag/path search through the vault API; simplified syntax is not Obsidian in-app search syntax and searches should not be repeated with different casing. Use search to locate notes and match positions, never as a content-read backdoor: \`context: true\` dumps are not a substitute for reading note bodies.${obsidianCliAvailable ? ' Falls back to CLI on API errors.' : ' No CLI fallback is available.'}`,
       parameters: '`query` required plain substring, tag:name, path:folder, or *; `path?` folder prefix; `limit?`; `context?`; `format?` text|json.',
     },
     parameters: {

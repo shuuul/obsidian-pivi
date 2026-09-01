@@ -179,6 +179,26 @@ describe('React surface mounts', () => {
             listSections: () => [],
             runAction: async () => ({}),
           },
+          prompt: {
+            listModules: () => [],
+            getUsage: () => ({ sections: [], totalEstimatedTokens: 0 }),
+            setWorkflowEnabled: async () => undefined,
+            saveCustomBody: async () => undefined,
+            restoreShipped: async () => undefined,
+            createCustomModule: async () => ({
+              id: 'custom:x',
+              kind: 'custom',
+              title: 'New',
+              enabled: true,
+              modified: false,
+              body: '',
+            }),
+            renameCustomModule: async () => undefined,
+            editCustomModule: async () => undefined,
+            reorderCustomModules: async () => undefined,
+            setCustomModuleEnabled: async () => undefined,
+            deleteCustomModule: async () => undefined,
+          },
         } as unknown as SettingsPorts,
       });
     });

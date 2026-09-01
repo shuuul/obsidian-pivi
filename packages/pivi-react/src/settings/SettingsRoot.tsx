@@ -4,6 +4,7 @@ import type { SettingsPorts } from '../ports';
 import { AboutSettingsTab } from './AboutSettingsTab';
 import { CommandsTab } from './CommandsTab';
 import { ModelsSettingsTab } from './ModelsSettingsTab';
+import { PromptTab } from './PromptTab';
 import { SettingsShell } from './SettingsShell';
 import { SettingsUiStore } from './SettingsUiStore';
 import { GeneralSettingsTab, SubagentsSettingsTab, ToolbarSettingsTab } from './SimpleSettingsTabs';
@@ -25,14 +26,17 @@ export function SettingsRoot({ ports, store: suppliedStore, initialTab }: Settin
   return <SettingsShell initialTab={initialTab}>{(activeTab) => {
     switch (activeTab) {
       case 'general': return (
-        <GeneralSettingsTab
-          store={store}
-          actions={ports.actions}
-          environment={ports.environment}
-          feedback={ports.feedback}
-          hotkeys={ports.hotkeys}
-          integrations={ports.hostIntegrations}
-        />
+        <>
+          <GeneralSettingsTab
+            store={store}
+            actions={ports.actions}
+            environment={ports.environment}
+            feedback={ports.feedback}
+            hotkeys={ports.hotkeys}
+            integrations={ports.hostIntegrations}
+          />
+          <AboutSettingsTab about={ports.about} />
+        </>
       );
       case 'toolbar': return (
         <ToolbarSettingsTab
@@ -48,7 +52,7 @@ export function SettingsRoot({ ports, store: suppliedStore, initialTab }: Settin
       case 'subagents': return <SubagentsSettingsTab store={store} actions={ports.actions} feedback={ports.feedback} />;
       case 'tools': return <ToolsSettingsPage ports={ports} />;
       case 'commands': return <CommandsTab ports={ports} />;
-      case 'about': return <AboutSettingsTab about={ports.about} />;
+      case 'prompt': return <PromptTab ports={ports} />;
       default: return null;
     }
   }}</SettingsShell>;

@@ -1,3 +1,4 @@
+import { normalizePromptModuleSettings } from "@pivi/agent/prompt";
 import { reconcileActiveModelFields } from "@pivi/agent/settings/activeModel";
 import {
   getSharedEnvironmentVariables,
@@ -169,11 +170,23 @@ function hasGeneralNormalizationChanges(
   chatViewPlacement: PiviSettings['chatViewPlacement'],
   deletedSessionRetentionDays: number,
   providerRequestDeadlines: PiviSettings['providerRequestDeadlines'],
+  promptModulesChanged: boolean,
 ): boolean {
   return stored.chatViewPlacement !== chatViewPlacement
     || stored.deletedSessionRetentionDays !== deletedSessionRetentionDays
     || JSON.stringify(stored.providerRequestDeadlines ?? null)
-      !== JSON.stringify(providerRequestDeadlines);
+      !== JSON.stringify(providerRequestDeadlines)
+    || promptModulesChanged;
+}
+
+function promptModuleSettingsChanged(
+  stored: Record<string, unknown>,
+  normalized: ReturnType<typeof normalizePromptModuleSettings>,
+): boolean {
+  return JSON.stringify(stored.promptModules ?? null)
+    !== JSON.stringify(normalized.promptModules)
+    || JSON.stringify(stored.customPromptModules ?? null)
+      !== JSON.stringify(normalized.customPromptModules);
 }
 
 export function normalizeStoredPiviSettings(
@@ -194,6 +207,11 @@ export function normalizeStoredPiviSettings(
   );
   const editorSelectionToolbarChanged = JSON.stringify(storedEditorSelectionToolbar ?? null)
     !== JSON.stringify(editorSelectionToolbar);
+  const promptNormalized = normalizePromptModuleSettings(
+    stored.promptModules,
+    stored.customPromptModules,
+  );
+  const promptModulesChanged = promptModuleSettingsChanged(stored, promptNormalized);
   const agentSettings = normalizeAgentSettings(stored);
   const storedSubagents = agentSettings.subagents;
   const normalizedSubagents = resolveSubagentRuntimeSettings(storedSubagents);
@@ -239,6 +257,8 @@ export function normalizeStoredPiviSettings(
     chatViewPlacement,
     deletedSessionRetentionDays,
     providerRequestDeadlines,
+    promptModules: promptNormalized.promptModules,
+    customPromptModules: promptNormalized.customPromptModules,
   };
   stripRemovedSettingsFields(settings);
 
@@ -255,6 +275,7 @@ export function normalizeStoredPiviSettings(
       chatViewPlacement,
       deletedSessionRetentionDays,
       providerRequestDeadlines,
+      promptModulesChanged,
     ) ||
     externalReadDirectoriesMigrated ||
     subagentsChanged ||

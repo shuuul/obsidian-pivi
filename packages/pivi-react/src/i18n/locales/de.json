@@ -343,6 +343,7 @@
       "tools": "Werkzeuge",
       "subagents": "Sub-Agenten",
       "commands": "Befehle",
+      "prompt": "Prompt",
       "toolbar": "Werkzeugleiste",
       "about": "Info"
     },
@@ -902,6 +903,43 @@
       "duplicate": "Ein eigener Befehl /{name} existiert bereits.",
       "saveFailed": "Eigener Slash-Befehl konnte nicht gespeichert werden.",
       "newCommand": "neuer-befehl"
+    },
+    "prompt": {
+      "pageDescription": "Setzen Sie den Start-Systemprompt aus gesperrten Kernmodulen, optionalen Workflow-Modulen und eigenen Modulen zusammen.",
+      "usage": {
+        "heading": "Startkontext",
+        "barAria": "Geschätzte Zusammensetzung des Startprompts",
+        "sections": {
+          "core": "Kern",
+          "workflow": "Workflow",
+          "custom": "Eigene",
+          "tools": "Werkzeuge",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} Schätzung",
+        "total": "Summe"
+      },
+      "workflow": { "heading": "Workflow" },
+      "custom": { "heading": "Eigene" },
+      "modified": "Geändert",
+      "restore": "Standard wiederherstellen",
+      "bodyLabel": "Modulkörper",
+      "titleLabel": "Titel",
+      "enableAria": "{title} aktivieren",
+      "disableAria": "{title} deaktivieren",
+      "add": "+ Modul hinzufügen",
+      "addAria": "Eigenes Prompt-Modul hinzufügen",
+      "deleteAria": "{title} löschen",
+      "deleteConfirmTitle": "Eigenes Modul {title} löschen?",
+      "deleteConfirm": "Dieses eigene Modul löschen? Der Körper wird aus dem Systemprompt entfernt.",
+      "empty": "Noch keine eigenen Module. Fügen Sie eines hinzu, damit es nach den Workflow-Modulen folgt.",
+      "newModule": "Neues Modul",
+      "reorder": {
+        "handle": "{title} neu anordnen, aktuell Position {position}",
+        "position": "{title} auf Position {position} von {total} verschoben.",
+        "saved": "Modulreihenfolge gespeichert.",
+        "cancelled": "Neuanordnung der Module abgebrochen."
+      }
     },
     "mcp": {
       "empty": "Keine MCP-Server konfiguriert. Zum Hinzufügen auf Hinzufügen klicken.",

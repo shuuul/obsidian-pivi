@@ -12,7 +12,7 @@ const TABS: readonly { readonly id: SettingsTabId; readonly label: TranslationKe
   { id: 'subagents', label: 'settings.tabs.subagents' },
   { id: 'commands', label: 'settings.tabs.commands' },
   { id: 'toolbar', label: 'settings.tabs.toolbar' },
-  { id: 'about', label: 'settings.tabs.about' },
+  { id: 'prompt', label: 'settings.tabs.prompt' },
 ];
 
 export interface SettingsShellProps {

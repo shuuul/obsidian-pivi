@@ -353,6 +353,7 @@
       "tools": "Tools",
       "subagents": "Subagents",
       "commands": "Commands",
+      "prompt": "Prompt",
       "toolbar": "Toolbar",
       "about": "About"
     },
@@ -912,6 +913,43 @@
       "duplicate": "A custom command named /{name} already exists.",
       "saveFailed": "Failed to save the custom slash command.",
       "newCommand": "new-command"
+    },
+    "prompt": {
+      "pageDescription": "Compose the startup system prompt from locked core modules, optional workflow modules, and custom modules.",
+      "usage": {
+        "heading": "Startup context",
+        "barAria": "Estimated startup prompt composition",
+        "sections": {
+          "core": "Core",
+          "workflow": "Workflow",
+          "custom": "Custom",
+          "tools": "Tools",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} estimate",
+        "total": "Total"
+      },
+      "workflow": { "heading": "Workflow" },
+      "custom": { "heading": "Custom" },
+      "modified": "Modified",
+      "restore": "Restore default",
+      "bodyLabel": "Module body",
+      "titleLabel": "Title",
+      "enableAria": "Enable {title}",
+      "disableAria": "Disable {title}",
+      "add": "+ Add module",
+      "addAria": "Add custom prompt module",
+      "deleteAria": "Delete {title}",
+      "deleteConfirmTitle": "Delete custom module {title}?",
+      "deleteConfirm": "Delete this custom module? Its body will be removed from the system prompt.",
+      "empty": "No custom modules yet. Add one to append it after workflow modules.",
+      "newModule": "New module",
+      "reorder": {
+        "handle": "Reorder {title}, currently position {position}",
+        "position": "{title} moved to position {position} of {total}.",
+        "saved": "Module order saved.",
+        "cancelled": "Module reorder cancelled."
+      }
     },
     "mcp": {
       "empty": "No MCP servers configured. Click add to add one.",

@@ -54,6 +54,7 @@ describe('settings search metadata', () => {
       'Tools',
       'Subagents',
       'Commands',
+      'Prompt',
       'Language',
       'Show cache hit rate',
       'Show tokens per second',
@@ -68,6 +69,7 @@ describe('settings search metadata', () => {
       '工具',
       '子代理',
       '命令',
+      '提示词',
       '语言',
     ]));
   });

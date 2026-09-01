@@ -343,6 +343,7 @@
       "tools": "Herramientas",
       "subagents": "Subagentes",
       "commands": "Comandos",
+      "prompt": "Prompt",
       "toolbar": "Barra de herramientas",
       "about": "Acerca de"
     },
@@ -902,6 +903,43 @@
       "duplicate": "Ya existe un comando personalizado /{name}.",
       "saveFailed": "Error al guardar el comando slash personalizado.",
       "newCommand": "nuevo-comando"
+    },
+    "prompt": {
+      "pageDescription": "Compose la indicación del sistema de arranque a partir de módulos núcleo bloqueados, módulos de flujo de trabajo opcionales y módulos personalizados.",
+      "usage": {
+        "heading": "Contexto de arranque",
+        "barAria": "Composición estimada de la indicación de arranque",
+        "sections": {
+          "core": "Núcleo",
+          "workflow": "Flujo de trabajo",
+          "custom": "Personalizado",
+          "tools": "Herramientas",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} estimación",
+        "total": "Total"
+      },
+      "workflow": { "heading": "Flujo de trabajo" },
+      "custom": { "heading": "Personalizado" },
+      "modified": "Modificado",
+      "restore": "Restaurar valor predeterminado",
+      "bodyLabel": "Cuerpo del módulo",
+      "titleLabel": "Título",
+      "enableAria": "Activar {title}",
+      "disableAria": "Desactivar {title}",
+      "add": "+ Añadir módulo",
+      "addAria": "Añadir módulo de indicación personalizado",
+      "deleteAria": "Eliminar {title}",
+      "deleteConfirmTitle": "¿Eliminar el módulo personalizado {title}?",
+      "deleteConfirm": "¿Eliminar este módulo personalizado? Su cuerpo se quitará de la indicación del sistema.",
+      "empty": "Aún no hay módulos personalizados. Añade uno para colocarlo después de los módulos de flujo de trabajo.",
+      "newModule": "Nuevo módulo",
+      "reorder": {
+        "handle": "Reordenar {title}, actualmente en la posición {position}",
+        "position": "{title} se movió a la posición {position} de {total}.",
+        "saved": "Orden de módulos guardado.",
+        "cancelled": "Reordenación de módulos cancelada."
+      }
     },
     "mcp": {
       "empty": "No hay servidores MCP configurados. Haz clic en Añadir para crear uno.",

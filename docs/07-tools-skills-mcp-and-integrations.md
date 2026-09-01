@@ -23,24 +23,35 @@ Settings saves refresh the affected registries and open-runtime prompts. Disable
 
 The base system prompt keeps note-backed answers concise: when requested information already exists in vault notes, the assistant returns only verified note wikilinks instead of repeating, quoting, or summarizing the stored content.
 
-## System prompt layers
+## System prompt composition
 
-The agent system prompt is assembled in three layers under `packages/agent/src/prompt/`:
+The agent system prompt is composed by `@pivi/agent/prompt` from a typed module registry, then a capability-gated registered-tools section, then runtime appendices:
 
 ```mermaid
 flowchart LR
-  Base["mainAgent.ts<br/>identity, paths, hygiene"] -- "appended" --> Full["System prompt"]
-  Tools["obsidianAgentTools.ts<br/>buildRegisteredToolsSection"] -- "appended as Available Tools" --> Full
+  Registry["Typed module registry<br/>core locked · workflow composable · custom after workflow"] -- "joined" --> Static["Static prompt"]
+  Tools["obsidianAgentTools.ts<br/>buildRegisteredToolsSection"] -- "Available Tools" --> Full["System prompt"]
+  Static -- "appended" --> Full
+  Appendices["Runtime appendices<br/>AGENTS.md / vault system / skills XML"] -- "app-composition only" --> Full
+  Pi["buildPiSystemPrompt.ts"] -- "date + composition + tools" --> Full
   Turn["buildTurnPrompt.ts<br/>per-turn payload"] -- "sent with each request" --> Request["Provider request"]
-  Pi["buildPiSystemPrompt.ts"] -- "injects date + tool registry" --> Full
 ```
 
-- `mainAgent.ts` owns the static base prompt: Pivi identity, path conventions, vault mutation rules, Markdown hygiene, link verification, and the `<context_files>` delegation paragraph. It interpolates only `vaultPath` and `userName`.
+- **Core modules** are locked (identity, path conventions, mutation safety, exact-match editing, Markdown hygiene, response language, and related safety). They cannot be disabled or edited.
+- **Workflow modules** are user-composable: toggle, edit body, restore to default. Shipped defaults include transcript cleanup, wikilink conventions, frontmatter conventions, and daily/periodic notes (default on) plus long-line pre-edit normalization (default off).
+- **Custom modules** are user-created entries appended after shipped workflow modules in persisted order. They replace the appendix channel as the user-facing extension point.
 - `obsidianAgentTools.ts` builds the dynamic `## Available Tools` section from the actual registered `ToolSpec` values plus capability inventory. Detailed tool-specific prose and parameter guidance are owned by each factory's optional `ToolSpec.promptUsage` beside its schema; the prompt builder renders those descriptors and only falls back to schema-derived parameter text. It must not reintroduce a central tool-name switch that duplicates argument contracts.
+- Runtime `appendices` remain an app-composition mechanism only (vault `AGENTS.md`, vault system notes, skills XML). They are not a Settings surface.
 - `buildTurnPrompt.ts` builds the per-turn payload from user input and context; it is not part of the system prompt.
-- `buildPiSystemPrompt.ts` composes the base prompt with the current ISO date and the registered-tools section.
+- `buildPiSystemPrompt.ts` composes the static modules with the current ISO date, the registered-tools section, and appendices. `computeSystemPromptKey` incorporates shipped-module enablement/custom bodies and the ordered custom-module list so prompt caching invalidates on any composition change.
+
+**Single-owner rule:** every prompt rule has exactly one owning layer. Capability-gated argument contracts and concrete examples live on ToolSpec `promptUsage` and are consumed from the registered section (`obsidian_search` owns search-not-read; `obsidian_edit` owns the heading/delimiter examples). Operational, capability-gated guidance such as Vault-read paging lives in the registered-tools section. Host-neutral workflow and safety guidance lives in static modules. Do not restate the same rule in more than one layer.
 
 **Prompt/schema invariant:** A detailed usage descriptor lives with the owning factory/schema and is consumed from the registered `ToolSpec`; required fields and conditional contracts in that descriptor must agree with the schema. Schema-level and generated-prompt tests enforce this for contracts such as required `catalogRevision`, the `pivi_commands` move-anchor XOR, and `spawn_agent.run_in_background`.
+
+**Persistence:** user prompt composition persists in synced `.pivi/settings.json` as `promptModules: { [moduleId]: { enabled?, customBody? } }` for shipped modules plus an ordered `customPromptModules: [{ id, title, body, enabled }]` list. Absent entries mean shipped defaults. Unknown shipped-module ids are preserved on save and ignored at composition. Settings → Prompt is the editing surface; see [Presentation and settings](08-presentation-and-settings.md).
+
+**Token estimation:** the pure character-based estimator `estimateTextTokens` lives in `@pivi/agent/prompt`. Engine compaction re-exports it so the Prompt-tab usage panel and compaction share one implementation. Section estimation runs in app composition; React receives precomputed numbers through `SettingsPorts.prompt`.
 
 ## Obsidian tools
 
@@ -55,7 +66,9 @@ flowchart LR
 | Host execution | `obsidian_bash`, `obsidian_command`, `obsidian_eval` | Potentially mutating and disabled by default |
 | Image generation | `obsidian_generate_image` | Writes an attachment and may insert an embed |
 
-Large-note reads start with `obsidian_read` in stats mode, then use `obsidian_markdown_structure` and bounded line ranges instead of loading an entire note into context. Explicit ranges automatically stop at the largest complete-line page that fits `maxChars`; a truncated result reports `nextStartLine` for the next non-overlapping page. If one physical line cannot fit, Vault note reads switch to character pagination instead of failing. A standalone `startChar` is a file-global 1-based UTF-16 position; combined with `startLine`, it is a 1-based UTF-16 position within that physical line, and `endLine` may bound the read. Each truncated line-relative result reports the exact `nextStartLine` + `nextStartChar` pair to use with the same `maxChars`; Agents must not calculate the next coordinates themselves. The model-visible continuation marker counts inside the cap. Content reads reserve one shared allowance per Agent turn before execution, so sibling calls cannot each claim the full context headroom; subagents calculate that allowance from their own model/context rather than the parent session. Every content read clamps `maxChars` to a 1,000-character minimum so an exhausted runtime allowance or smaller explicit value can cross the compaction threshold and advance to the next Memory boundary instead of failing with `maxChars=0`.
+Large-note reads start with `obsidian_read` in stats mode, then use `obsidian_markdown_structure` and bounded line ranges instead of loading an entire note into context. Explicit ranges automatically stop at the largest complete-line page that fits `maxChars`; a truncated result reports `nextStartLine` for the next non-overlapping page. If one physical line cannot fit, Vault note reads switch to line-relative `startLine` + `startChar` pagination instead of failing. The oversized-line error names that continuation (`startLine` plus line-relative `startChar`, then the returned `nextStartLine` / `nextStartChar` pair) and must not instruct raising `maxChars` past the effective clamp. A standalone `startChar` is a file-global 1-based UTF-16 position; combined with `startLine`, it is a 1-based UTF-16 position within that physical line, and `endLine` may bound the read. Each truncated line-relative result reports the exact `nextStartLine` + `nextStartChar` pair to use with the same `maxChars`; Agents must not calculate the next coordinates themselves. The model-visible continuation marker counts inside the cap. Content reads reserve one shared allowance per Agent turn before execution, so sibling calls cannot each claim the full context headroom; subagents calculate that allowance from their own model/context rather than the parent session. Every content read clamps `maxChars` to a 1,000-character minimum so an exhausted runtime allowance or smaller explicit value can cross the compaction threshold and advance to the next Memory boundary instead of failing with `maxChars=0`.
+
+`obsidian_search` locates notes and match positions. It is not a content-read channel: `context: true` dumps are not a substitute for reading note bodies.
 
 `obsidian_edit` owns exact local replacement, including splitting a very long physical line. The Agent does not need to send the whole line: it copies the shortest unique substring spanning the intended boundary and repeats that local substring in `new_string` with `\n` or `\n\n` inserted. For example, `old_string: "sentence.Second"` with `new_string: "sentence.\n\nSecond"` splits the boundary without copying the surrounding thousands of characters. Replacement remains unique by default; `replace_all: true` is required only when every exact occurrence should receive the identical replacement.
 

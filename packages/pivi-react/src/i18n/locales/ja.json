@@ -343,6 +343,7 @@
       "tools": "ツール",
       "subagents": "サブエージェント",
       "commands": "コマンド",
+      "prompt": "プロンプト",
       "toolbar": "ツールバー",
       "about": "情報"
     },
@@ -902,6 +903,43 @@
       "duplicate": "/{name} というカスタムコマンドは既に存在します。",
       "saveFailed": "カスタムスラッシュコマンドの保存に失敗しました。",
       "newCommand": "新規コマンド"
+    },
+    "prompt": {
+      "pageDescription": "ロックされたコアモジュール、任意のワークフローモジュール、カスタムモジュールから起動時のシステムプロンプトを組み立てます。",
+      "usage": {
+        "heading": "起動コンテキスト",
+        "barAria": "起動プロンプト構成の見積もり",
+        "sections": {
+          "core": "コア",
+          "workflow": "ワークフロー",
+          "custom": "カスタム",
+          "tools": "ツール",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} 見積もり",
+        "total": "合計"
+      },
+      "workflow": { "heading": "ワークフロー" },
+      "custom": { "heading": "カスタム" },
+      "modified": "変更済み",
+      "restore": "既定に戻す",
+      "bodyLabel": "モジュール本文",
+      "titleLabel": "タイトル",
+      "enableAria": "{title} を有効にする",
+      "disableAria": "{title} を無効にする",
+      "add": "+ モジュールを追加",
+      "addAria": "カスタムプロンプトモジュールを追加",
+      "deleteAria": "{title} を削除",
+      "deleteConfirmTitle": "カスタムモジュール {title} を削除しますか？",
+      "deleteConfirm": "このカスタムモジュールを削除しますか？本文はシステムプロンプトから取り除かれます。",
+      "empty": "カスタムモジュールはまだありません。追加するとワークフローモジュールの後に続きます。",
+      "newModule": "新しいモジュール",
+      "reorder": {
+        "handle": "{title} を並べ替え、現在は {position} 番目",
+        "position": "{title} を {total} 件中 {position} 番目に移動しました。",
+        "saved": "モジュールの順序を保存しました。",
+        "cancelled": "モジュールの並べ替えをキャンセルしました。"
+      }
     },
     "mcp": {
       "empty": "MCP サーバーは未設定です。追加をクリックして作成してください。",

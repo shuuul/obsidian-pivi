@@ -30,7 +30,7 @@ function build(toolSpecs: ToolSpec[], names = toolSpecs.map((tool) => tool.name)
 describe('registered tool prompt descriptors', () => {
   const sensitiveNames = [
     'obsidian_read', 'obsidian_search', 'obsidian_bash', 'obsidian_edit',
-    'obsidian_write', 'obsidian_list', 'pivi_sessions', 'spawn_agent',
+    'obsidian_write', 'obsidian_list', 'obsidian_daily', 'pivi_sessions', 'spawn_agent',
   ];
 
   it.each([
@@ -80,13 +80,15 @@ describe('registered tool prompt descriptors', () => {
     const write = spec('obsidian_write', 'write');
     const section = build([edit, write]);
 
-    expect(section).toContain('including inserting `\\n` or `\\n\\n` into a long physical line');
+    expect(section).toContain('including inserting line endings into a long physical line');
     expect(section).toContain('shortest unique span around the boundary—not the whole line');
     expect(section).toContain('Exact local newline marker with `replace_all: true`.');
     expect(section).toContain('multi-thousand-character physical line never needs to be copied in full');
     expect(section).toContain('**Markdown block boundaries:** `obsidian_edit` is literal');
-    expect(section).toContain('replacing only `Target` with `### Heading` yields `>> ### Heading`, not a heading');
-    expect(section).toContain('put the required `\\n\\n` in `new_string`');
+    expect(section).toContain('See the registered `obsidian_edit` descriptor for the heading/delimiter example');
+    expect(section).not.toContain('replacing only `Target` with `### Heading`');
+    expect(section).not.toContain('`>>` with `\\n\\n`');
+    expect(section).not.toContain('sentence.Second');
   });
 
   it('does not describe an unregistered descriptor or a name without a descriptor', () => {
@@ -108,7 +110,12 @@ describe('registered tool prompt descriptors', () => {
     expect(section).toContain('combine 1-based `startLine` with line-relative 1-based `startChar`');
     expect(section).toContain('exact `nextStartLine` + `nextStartChar` pair');
     expect(section).toContain('do not calculate offsets, overlap pages, or raise the budget');
+    expect(section).toContain('Do not raise `maxChars` past the effective clamp');
+    expect(section).toContain('Plan page size from `mode: "stats"`');
+    expect(section).toContain('tiny `startChar` steps of around 800 characters');
     expect(section).toContain('A standalone `startChar` is file-global');
+    expect(section).toContain('These coordinate systems are mutually exclusive per call');
+    expect(section).toContain('do not mix a standalone file-global `startChar` with `startLine`/`endLine`');
     expect(section).toContain('do not combine it with `endLine` unless `startLine` is also present');
     expect(section).toContain('continuation marker counts inside `maxChars`');
     expect(section).not.toContain('immediately retry with `maxChars` at least the required count');

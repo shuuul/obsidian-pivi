@@ -343,6 +343,7 @@
       "tools": "Ferramentas",
       "subagents": "Subagentes",
       "commands": "Comandos",
+      "prompt": "Prompt",
       "toolbar": "Barra de ferramentas",
       "about": "Sobre"
     },
@@ -902,6 +903,43 @@
       "duplicate": "Ya existe um comando personalizado /{name}.",
       "saveFailed": "Erro al salvar o comando slash personalizado.",
       "newCommand": "novo-comando"
+    },
+    "prompt": {
+      "pageDescription": "Compose o prompt de sistema inicial a partir de módulos centrais bloqueados, módulos de fluxo de trabalho opcionais e módulos personalizados.",
+      "usage": {
+        "heading": "Contexto de inicialização",
+        "barAria": "Composição estimada do prompt de inicialização",
+        "sections": {
+          "core": "Núcleo",
+          "workflow": "Fluxo de trabalho",
+          "custom": "Personalizado",
+          "tools": "Ferramentas",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} estimativa",
+        "total": "Total"
+      },
+      "workflow": { "heading": "Fluxo de trabalho" },
+      "custom": { "heading": "Personalizado" },
+      "modified": "Modificado",
+      "restore": "Restaurar padrão",
+      "bodyLabel": "Corpo do módulo",
+      "titleLabel": "Título",
+      "enableAria": "Ativar {title}",
+      "disableAria": "Desativar {title}",
+      "add": "+ Adicionar módulo",
+      "addAria": "Adicionar módulo de prompt personalizado",
+      "deleteAria": "Excluir {title}",
+      "deleteConfirmTitle": "Excluir o módulo personalizado {title}?",
+      "deleteConfirm": "Excluir este módulo personalizado? O corpo será removido do prompt do sistema.",
+      "empty": "Ainda não há módulos personalizados. Adicione um para colocá-lo após os módulos de fluxo de trabalho.",
+      "newModule": "Novo módulo",
+      "reorder": {
+        "handle": "Reordenar {title}, atualmente na posição {position}",
+        "position": "{title} movido para a posição {position} de {total}.",
+        "saved": "Ordem dos módulos salva.",
+        "cancelled": "Reordenação de módulos cancelada."
+      }
     },
     "mcp": {
       "empty": "No hay servidores MCP configurados. Haz clic en Adicionar para crear uno.",

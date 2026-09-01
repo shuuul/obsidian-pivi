@@ -42,6 +42,7 @@ import {
 import { type ChatUiCompositionHost } from './chatUiCompositionHost';
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
+import { createSettingsPromptPort } from './createSettingsPromptPort';
 import { createSettingsSkillsPort } from './createSettingsSkillsPort';
 import {
   appendBashAllowlistEntry as persistBashAllowlistEntry,
@@ -384,6 +385,11 @@ export function createSettingsUiPorts(
       }
     }
   };
+  const refreshPrompt = async (): Promise<void> => {
+    for (const view of host.getAllViews()) {
+      await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
+    }
+  };
   return {
     complex: {
       models: createSettingsModelsPort(host, uiFacades, ws),
@@ -456,11 +462,7 @@ export function createSettingsUiPorts(
         },
       },
       runtime: {
-        async refreshPrompt() {
-          for (const view of host.getAllViews()) {
-            await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
-          }
-        },
+        refreshPrompt,
         refreshModelSelectors: () => {
           for (const view of host.getAllViews()) {
             view.getChatHandle()?.maintenance.refreshModelPresentation();
@@ -589,6 +591,7 @@ export function createSettingsUiPorts(
       runAction: actionId => runObsidianIntegrationAction(host, actionId),
     },
     mentionEditor: createMentionEditorPort(host, ws),
+    prompt: createSettingsPromptPort(host, ws, refreshPrompt),
     about: {
       getSnapshot: () => ({
         version: PIVI_VERSION,

@@ -471,4 +471,58 @@ describe("PiviSettingsStorage", () => {
       settings.editorSelectionToolbar,
     );
   });
+
+  it("preserves unknown prompt-module ids and drops invalid custom entries", async () => {
+    const adapter = createMemoryAdapter(JSON.stringify({
+      promptModules: {
+        "future-shipped-module": { enabled: false, customBody: "keep me" },
+        "transcript-cleanup": { customBody: "edited" },
+        garbage: "nope",
+      },
+      customPromptModules: [
+        { id: "identity", title: "Collision", body: "nope", enabled: true },
+        { id: "custom:ok", title: "Ok", body: "yes", enabled: true },
+        { id: "bad" },
+      ],
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.promptModules["future-shipped-module"]).toEqual({
+      enabled: false,
+      customBody: "keep me",
+    });
+    expect(settings.promptModules["transcript-cleanup"]).toEqual({
+      customBody: "edited",
+    });
+    expect(settings.promptModules.garbage).toBeUndefined();
+    expect(settings.customPromptModules).toEqual([
+      { id: "custom:ok", title: "Ok", body: "yes", enabled: true },
+    ]);
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? "{}");
+    expect(persisted.promptModules["future-shipped-module"]).toEqual({
+      enabled: false,
+      customBody: "keep me",
+    });
+    expect(persisted.customPromptModules).toEqual([
+      { id: "custom:ok", title: "Ok", body: "yes", enabled: true },
+    ]);
+  });
+
+  it("treats absent prompt-module keys as shipped defaults", async () => {
+    const adapter = createMemoryAdapter(JSON.stringify({}));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.promptModules).toEqual({});
+    expect(settings.customPromptModules).toEqual([]);
+  });
 });

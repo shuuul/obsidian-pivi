@@ -343,6 +343,7 @@
       "tools": "工具",
       "subagents": "子代理",
       "commands": "命令",
+      "prompt": "提示词",
       "toolbar": "工具栏",
       "about": "关于"
     },
@@ -902,6 +903,43 @@
       "duplicate": "名为 /{name} 的自定义命令已存在。",
       "saveFailed": "保存自定义斜杠命令失败。",
       "newCommand": "新命令"
+    },
+    "prompt": {
+      "pageDescription": "用锁定的核心模块、可选工作流模块和自定义模块组成启动系统提示词。",
+      "usage": {
+        "heading": "启动上下文",
+        "barAria": "启动提示词组成估算",
+        "sections": {
+          "core": "核心",
+          "workflow": "工作流",
+          "custom": "自定义",
+          "tools": "工具",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} 估算",
+        "total": "合计"
+      },
+      "workflow": { "heading": "工作流" },
+      "custom": { "heading": "自定义" },
+      "modified": "已修改",
+      "restore": "恢复默认",
+      "bodyLabel": "模块正文",
+      "titleLabel": "标题",
+      "enableAria": "启用 {title}",
+      "disableAria": "禁用 {title}",
+      "add": "+ 添加模块",
+      "addAria": "添加自定义提示词模块",
+      "deleteAria": "删除 {title}",
+      "deleteConfirmTitle": "删除自定义模块 {title}？",
+      "deleteConfirm": "删除此自定义模块？其正文将从系统提示词中移除。",
+      "empty": "还没有自定义模块。添加一个即可接在工作流模块之后。",
+      "newModule": "新模块",
+      "reorder": {
+        "handle": "重新排序 {title}，当前为第 {position} 位",
+        "position": "{title} 已移到第 {position} 位，共 {total} 项。",
+        "saved": "模块顺序已保存。",
+        "cancelled": "已取消模块重新排序。"
+      }
     },
     "mcp": {
       "empty": "尚未配置 MCP 服务器。点击添加以创建。",

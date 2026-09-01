@@ -37,6 +37,12 @@ export { createOpenPathTool } from './obsidian/openPath';
 export { createPropertiesTool } from './obsidian/properties';
 export { createReadExternalTool } from './obsidian/readExternal';
 export { createReadNoteTool } from './obsidian/readNote';
+export {
+  getLineSpans,
+  OversizedFirstLineError,
+  paginateCharacterRange,
+  paginateLineRange,
+} from './obsidian/readShared';
 export { createSearchTool } from './obsidian/search';
 export { createTagsTool } from './obsidian/tags';
 export { createTasksTool } from './obsidian/tasks';

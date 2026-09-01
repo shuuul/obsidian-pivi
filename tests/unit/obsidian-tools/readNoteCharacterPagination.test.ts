@@ -1,4 +1,11 @@
-import { createReadNoteTool, type ObsidianToolDeps } from '@pivi/obsidian-tools';
+import {
+  createReadNoteTool,
+  getLineSpans,
+  OversizedFirstLineError,
+  paginateCharacterRange,
+  paginateLineRange,
+  type ObsidianToolDeps,
+} from '@pivi/obsidian-tools';
 
 interface ReadResult {
   content: [{ text: string }];
@@ -218,6 +225,7 @@ describe('obsidian_read character pagination', () => {
     });
     expect(result.details).toHaveProperty('nextStartLine');
     expect(result.details).toHaveProperty('nextStartChar');
+    expect(result.content[0].text).not.toContain('Raise maxChars');
   });
 
   it('bypasses stats-only large-file handling and settles the complete bounded result', async () => {
@@ -242,5 +250,57 @@ describe('obsidian_read character pagination', () => {
     expect(tool.promptUsage?.summary).toContain('oversized physical line');
     expect(tool.promptUsage?.summary).toContain('nextStartLine + nextStartChar');
     expect(tool.promptUsage?.parameters).toContain('startChar');
+  });
+});
+
+describe('read pagination error hints', () => {
+  it('names startLine + startChar continuation when the first selected line cannot fit', () => {
+    const content = `${'x'.repeat(200)}\nnext\n`;
+    const spans = getLineSpans(content);
+    let thrown: unknown;
+    try {
+      paginateLineRange(content, spans, 50, 1, 2);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(OversizedFirstLineError);
+    const message = (thrown as Error).message;
+    expect(message).toContain('Line 1 is 201 characters');
+    expect(message).toContain('maxChars=50');
+    expect(message).toContain('startLine=1');
+    expect(message).toContain('startChar');
+    expect(message).toContain('nextStartLine');
+    expect(message).toContain('nextStartChar');
+    expect(message).not.toContain('Raise maxChars');
+  });
+
+  it('keeps complete-line pagination when the first line fits the budget', () => {
+    const content = Array.from({ length: 30 }, () => 'abcdefghij').join('\n') + '\n';
+    const spans = getLineSpans(content);
+    const page = paginateLineRange(content, spans, 200, 1, 30);
+
+    expect(page.truncated).toBe(true);
+    expect(page.returnedStartLine).toBe(1);
+    expect(page.rawContent.startsWith('abcdefghij\n')).toBe(true);
+    expect(page.nextStartLine).toBe((page.returnedEndLine ?? 0) + 1);
+    expect(page.content).toContain(`Continue with startLine=${String(page.nextStartLine)}, endLine=30.`);
+  });
+
+  it('tells the caller to stop when one character plus the continuation marker cannot fit', () => {
+    let thrown: unknown;
+    try {
+      paginateCharacterRange('abcdef', 1, 1);
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(Error);
+    const message = (thrown as Error).message;
+    expect(message).toContain('maxChars=1');
+    expect(message).toContain('startChar=1');
+    expect(message).toContain('Do not increase maxChars past the effective clamp');
+    expect(message).toContain('stop rather than retry the identical call');
+    expect(message).not.toContain('Raise maxChars');
   });
 });

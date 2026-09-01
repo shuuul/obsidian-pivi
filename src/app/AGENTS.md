@@ -98,6 +98,7 @@ flowchart LR
 | `ui/createUiPortHelpers.ts` | Shared workspace/env/subagent helpers for UI port adapters |
 | `ui/createSettingsModelsPort.ts` | Settings models/credential port wiring; prefetches interactive OAuth credentials via `getAuth` before readiness badges render; settings-authoritative provider removal and optional single-provider credential deletion |
 | `ui/createSettingsSkillsPort.ts` | Settings Skills port wiring: default vault-skills bundle install/update/remove orchestration and change notification |
+| `ui/createSettingsPromptPort.ts` | Settings Prompt-tab port: module list, numeric usage snapshot, workflow toggle/edit/restore, and custom-module CRUD/reorder; every persist calls `refreshPrompt()` |
 | `ui/createMcpSettingsPorts.ts` | Settings MCP save/reload/auth port wiring |
 | `ui/mentionEditor/createMentionEditorPort.ts` | Implements `SettingsPorts.mentionEditor`: mounts an imperative `MentionInput` with `MentionDropdownController` + `SlashCommandDropdown` into a React-owned container for command prompt editing |
 | `ui/createSubagentContentAdapter.ts` | Bridges React message-content mount/update calls to stored subagent imperative rendering without remounting on every stream update |

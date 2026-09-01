@@ -64,6 +64,19 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
     hostIntegrations: { listSections: async () => [], runAction: async () => ({}) },
     mentionEditor: createMentionEditorPort(),
     about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
+    prompt: {
+      listModules: () => [],
+      getUsage: () => ({ sections: [], totalEstimatedTokens: 0 }),
+      setWorkflowEnabled: async () => undefined,
+      saveCustomBody: async () => undefined,
+      restoreShipped: async () => undefined,
+      createCustomModule: async () => ({ id: 'custom:x', kind: 'custom', title: 'New', enabled: true, modified: false, body: '' }),
+      renameCustomModule: async () => undefined,
+      editCustomModule: async () => undefined,
+      reorderCustomModules: async () => undefined,
+      setCustomModuleEnabled: async () => undefined,
+      deleteCustomModule: async () => undefined,
+    },
   };
 }
 

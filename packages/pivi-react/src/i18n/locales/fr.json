@@ -343,6 +343,7 @@
       "tools": "Outils",
       "subagents": "Sous-agents",
       "commands": "Commandes",
+      "prompt": "Prompt",
       "toolbar": "Barre d’outils",
       "about": "À propos"
     },
@@ -902,6 +903,43 @@
       "duplicate": "Une commande personnalisée /{name} existe déjà.",
       "saveFailed": "Échec de l’enregistrement de la commande slash personnalisée.",
       "newCommand": "nouvelle-commande"
+    },
+    "prompt": {
+      "pageDescription": "Composez l’invite système de démarrage à partir de modules cœur verrouillés, de modules de flux de travail facultatifs et de modules personnalisés.",
+      "usage": {
+        "heading": "Contexte de démarrage",
+        "barAria": "Composition estimée de l’invite de démarrage",
+        "sections": {
+          "core": "Cœur",
+          "workflow": "Flux de travail",
+          "custom": "Personnalisé",
+          "tools": "Outils",
+          "mcp": "MCP"
+        },
+        "estimatedTokens": "{count} estimation",
+        "total": "Total"
+      },
+      "workflow": { "heading": "Flux de travail" },
+      "custom": { "heading": "Personnalisé" },
+      "modified": "Modifié",
+      "restore": "Restaurer la valeur par défaut",
+      "bodyLabel": "Corps du module",
+      "titleLabel": "Titre",
+      "enableAria": "Activer {title}",
+      "disableAria": "Désactiver {title}",
+      "add": "+ Ajouter un module",
+      "addAria": "Ajouter un module d’invite personnalisé",
+      "deleteAria": "Supprimer {title}",
+      "deleteConfirmTitle": "Supprimer le module personnalisé {title} ?",
+      "deleteConfirm": "Supprimer ce module personnalisé ? Son corps sera retiré de l’invite système.",
+      "empty": "Aucun module personnalisé pour l’instant. Ajoutez-en un pour le placer après les modules de flux de travail.",
+      "newModule": "Nouveau module",
+      "reorder": {
+        "handle": "Réordonner {title}, actuellement en position {position}",
+        "position": "{title} déplacé en position {position} sur {total}.",
+        "saved": "Ordre des modules enregistré.",
+        "cancelled": "Réordonnancement des modules annulé."
+      }
     },
     "mcp": {
       "empty": "Aucun serveur MCP configuré. Cliquez sur Ajouter pour en créer un.",

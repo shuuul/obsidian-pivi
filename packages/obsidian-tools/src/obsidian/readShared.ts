@@ -196,22 +196,6 @@ function adjustEndToSafeBoundary(content: string, endExclusive: number): number 
   return endExclusive;
 }
 
-function getFirstSafeEnd(content: string, startIndex: number): number {
-  let endExclusive = startIndex + 1;
-  if (endExclusive >= content.length) {
-    return endExclusive;
-  }
-  const first = content.charCodeAt(startIndex);
-  const second = content.charCodeAt(endExclusive);
-  if (
-    (isHighSurrogate(first) && isLowSurrogate(second))
-    || (first === 0x0D && second === 0x0A)
-  ) {
-    endExclusive += 1;
-  }
-  return endExclusive;
-}
-
 function validateCharacterStart(content: string, startChar: number): void {
   const startIndex = startChar - 1;
   if (startIndex <= 0 || startIndex >= content.length) {
@@ -291,12 +275,10 @@ export function paginateCharacterRange(
 
   const safeEnd = adjustEndToSafeBoundary(content, bestEnd);
   if (safeEnd <= startIndex) {
-    const firstSafeEnd = getFirstSafeEnd(content, startIndex);
-    const minimumBudget = (firstSafeEnd - startIndex)
-      + makeContinuation(firstSafeEnd).length;
     throw new Error(
-      `No complete character can fit within maxChars=${maxChars} with the continuation marker.`
-      + ` Raise maxChars to at least ${minimumBudget}.`,
+      `No complete character can fit within maxChars=${maxChars} with the continuation marker`
+      + ` (startChar=${startChar}). Do not increase maxChars past the effective clamp.`
+      + ` If this budget cannot fit one character plus the continuation marker, stop rather than retry the identical call.`,
     );
   }
 
@@ -382,11 +364,11 @@ export function paginateLineRange(
 
   if (returnedEndLine === undefined) {
     const firstLineLength = firstSpan.end - firstSpan.start;
-    const minimumBudget = firstLineLength
-      + buildRangeContinuation(requestedStartLine, requestedEndLine, requestedStartLine).length;
     throw new OversizedFirstLineError(
       `Line ${requestedStartLine} is ${firstLineLength} characters and cannot fit within maxChars=${maxChars}`
-      + ` with the continuation marker. Raise maxChars to at least ${minimumBudget}.`,
+      + ` with the continuation marker. Continue with startLine=${requestedStartLine}`
+      + ` and line-relative startChar=1; follow the returned nextStartLine / nextStartChar pair.`
+      + ` Do not increase maxChars past the effective clamp.`,
       firstSpan.start + 1,
     );
   }

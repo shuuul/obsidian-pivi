@@ -60,7 +60,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     '### Obsidian vault',
     '',
-    '**Mutating notes:** Use **`obsidian_edit`** for any exact local change, including inserting `\\n` or `\\n\\n` into a long physical line. Match only the shortest unique span around the boundary—not the whole line—and repeat it in `new_string` with the line endings inserted. For transcript delimiters, replace `>>` with `\\n\\n` or `\\n\\n>>`; set `replace_all: true` only when every occurrence should receive the identical replacement. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`.',
+    '**Mutating notes:** Use **`obsidian_edit`** for any exact local change, including inserting line endings into a long physical line. Match only the shortest unique span around the boundary—not the whole line. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. See the registered `obsidian_edit` descriptor for argument examples.',
     '**Vault paths:** Use `obsidian_list` for folders/files/attachments, `obsidian_mkdir` for folders, `obsidian_move` for renames/moves, and `obsidian_delete` to move items to trash.',
     '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as standard Markdown `![](...)` embeds.',
   );
@@ -188,7 +188,9 @@ function buildReadMaxCharsGuidance(params: {
   if (params.hasRead) {
     guidance.push(
       '- For an oversized physical line in `obsidian_read`, combine 1-based `startLine` with line-relative 1-based `startChar` and `maxChars`; a truncated page reports the exact `nextStartLine` + `nextStartChar` pair. Continue with that pair and the same `maxChars`—do not calculate offsets, overlap pages, or raise the budget. `endLine` may bound the read. If a requested line range starts with an oversized line, the tool switches to this line-relative character continuation automatically.',
-      '- A standalone `startChar` is file-global; with `startLine`, it is relative to that physical line. Character positions use the same UTF-16 units as the reported `Characters` count. Do not use `startChar` with `mode: "stats"`, and do not combine it with `endLine` unless `startLine` is also present. The continuation marker counts inside `maxChars`, so source text may be slightly shorter than the cap.',
+      '- If `obsidian_read` reports that a physical line cannot fit within `maxChars`, continue with `startLine` plus line-relative `startChar` at the same clamped `maxChars`. Do not raise `maxChars` past the effective clamp.',
+      '- Plan page size from `mode: "stats"` (line count and Characters) and the clamp. Do not crawl a file with tiny `startChar` steps of around 800 characters.',
+      '- A standalone `startChar` is file-global; with `startLine`, it is relative to that physical line. These coordinate systems are mutually exclusive per call: do not mix a standalone file-global `startChar` with `startLine`/`endLine`. Character positions use the same UTF-16 units as the reported `Characters` count. Do not use `startChar` with `mode: "stats"`, and do not combine it with `endLine` unless `startLine` is also present. The continuation marker counts inside `maxChars`, so source text may be slightly shorter than the cap.',
     );
   }
   if (params.hasReadExternal) {
@@ -277,11 +279,11 @@ function buildEditPriorityGuidance(hasRead: boolean): string {
 
 function buildExactMatchGuidance(hasRead: boolean): string {
   const source = hasRead ? ' from `obsidian_read`' : ' from available note context';
-  return `**Exact match:** \`old_string\` must be copied verbatim${source}—Chinese notes often use curly quotes \`“\` \`”\` (U+201C/U+201D), not ASCII \`"\`. Retyping causes \`old_string not found\`; the tool error may call this out.`;
+  return `**Exact match:** \`old_string\` must be copied verbatim${source}. Retyping causes \`old_string not found\`; the tool error may call this out.`;
 }
 
 function buildMarkdownBlockBoundaryGuidance(): string {
-  return '**Markdown block boundaries:** `obsidian_edit` is literal and leaves text outside `old_string` adjacent to `new_string`. Before adding headings, lists, blockquotes/callouts, fences, or thematic breaks, inspect both physical-line boundaries and include required line endings. If source is `>> Target`, replacing only `Target` with `### Heading` yields `>> ### Heading`, not a heading; include the delimiter in `old_string`, put the required `\\n\\n` in `new_string`, and read back the changed span.';
+  return '**Markdown block boundaries:** `obsidian_edit` is literal and leaves text outside `old_string` adjacent to `new_string`. Before adding headings, lists, blockquotes/callouts, fences, or thematic breaks, inspect both physical-line boundaries and include required line endings. See the registered `obsidian_edit` descriptor for the heading/delimiter example, then read back the changed span.';
 }
 
 function buildSubagentDelegationGuidance(params: {

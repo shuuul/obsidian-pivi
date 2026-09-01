@@ -6,6 +6,7 @@ import {
   findCutPoint,
   sessionEntryToContextMessages,
 } from '@earendil-works/pi-coding-agent';
+import { estimateTextTokens } from '@pivi/agent/prompt';
 import { calculateContextEnvelope, type CheckpointPresentation, type UsageInfo } from '@pivi/agent/runtime';
 import {
   type ArtifactReference,
@@ -17,6 +18,7 @@ import {
 
 import type { SessionTreeStore } from './sessionTreeStore';
 
+export { estimateTextTokens };
 export { AUTO_COMPACTION_THRESHOLD_RATIO } from '@pivi/agent/runtime';
 
 export type PiContextCompactionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
@@ -73,54 +75,6 @@ Use empty arrays when no supported items exist. Do not include prose outside the
 
 export const COMPACTION_SUMMARY_PREFIX = 'The earlier session history was compacted. Use this summary as authoritative context for the omitted earlier turns:';
 export const DEFAULT_COMPACTION_CONTEXT_WINDOW = 200_000;
-
-const ASCII_PROSE_CHARS_PER_TOKEN = 4;
-const ASCII_STRUCTURED_CHARS_PER_TOKEN = 3;
-
-function looksStructured(text: string): boolean {
-  const trimmed = text.trim();
-  if (trimmed.includes('```') || trimmed.includes('~~~')) {
-    return true;
-  }
-  if (!(
-    (trimmed.startsWith('{') && trimmed.endsWith('}'))
-    || (trimmed.startsWith('[') && trimmed.endsWith(']'))
-  )) {
-    return false;
-  }
-  try {
-    JSON.parse(trimmed);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Conservative tokenizer-independent estimate. CJK and other non-ASCII text
- * is charged per code point, while code/JSON uses a denser ASCII ratio than
- * prose. Provider-reported usage remains authoritative whenever available.
- */
-export function estimateTextTokens(text: string): number {
-  if (!text) {
-    return 0;
-  }
-
-  let asciiChars = 0;
-  let nonAsciiTokens = 0;
-  for (const character of text) {
-    if (character.codePointAt(0)! <= 0x7f) {
-      asciiChars += 1;
-    } else {
-      // Astral symbols commonly split into multiple model tokens.
-      nonAsciiTokens += character.length === 2 ? 2 : 1;
-    }
-  }
-  const charsPerToken = looksStructured(text)
-    ? ASCII_STRUCTURED_CHARS_PER_TOKEN
-    : ASCII_PROSE_CHARS_PER_TOKEN;
-  return Math.max(1, Math.ceil(asciiChars / charsPerToken) + nonAsciiTokens);
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

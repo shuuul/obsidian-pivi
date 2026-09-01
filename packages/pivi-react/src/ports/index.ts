@@ -346,6 +346,49 @@ export interface SettingsAboutPort {
   getSnapshot(): SettingsAboutSnapshot;
 }
 
+export type SettingsPromptModuleKind = 'core' | 'workflow' | 'custom';
+
+export type SettingsPromptUsageSectionId = 'core' | 'workflow' | 'custom' | 'tools' | 'mcp';
+
+export interface SettingsPromptModuleView {
+  readonly id: string;
+  readonly kind: SettingsPromptModuleKind;
+  readonly title: string;
+  readonly enabled: boolean;
+  readonly modified: boolean;
+  readonly body: string;
+}
+
+export interface SettingsPromptUsageSection {
+  readonly id: SettingsPromptUsageSectionId;
+  readonly estimatedTokens: number;
+}
+
+export interface SettingsPromptUsageSnapshot {
+  readonly sections: readonly SettingsPromptUsageSection[];
+  readonly totalEstimatedTokens: number;
+}
+
+export interface SettingsPromptCreateInput {
+  readonly title?: string;
+  readonly body?: string;
+  readonly enabled?: boolean;
+}
+
+export interface SettingsPromptPort {
+  listModules(): readonly SettingsPromptModuleView[];
+  getUsage(): SettingsPromptUsageSnapshot;
+  setWorkflowEnabled(id: string, enabled: boolean): Promise<void>;
+  saveCustomBody(id: string, customBody: string): Promise<void>;
+  restoreShipped(id: string): Promise<void>;
+  createCustomModule(input?: SettingsPromptCreateInput): Promise<SettingsPromptModuleView>;
+  renameCustomModule(id: string, title: string): Promise<void>;
+  editCustomModule(id: string, body: string): Promise<void>;
+  reorderCustomModules(ids: readonly string[]): Promise<void>;
+  setCustomModuleEnabled(id: string, enabled: boolean): Promise<void>;
+  deleteCustomModule(id: string): Promise<void>;
+}
+
 export interface SettingsPorts {
   feedback: SettingsFeedbackPort;
   snapshot: SettingsSnapshotPort;
@@ -359,4 +402,5 @@ export interface SettingsPorts {
   hostIntegrations: SettingsHostIntegrationsPort;
   mentionEditor: SettingsMentionEditorPort;
   about: SettingsAboutPort;
+  prompt: SettingsPromptPort;
 }
