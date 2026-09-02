@@ -160,35 +160,3 @@ jobs:
           sha256sum "$download_dir/main.js" \
             "$download_dir/manifest.json" \
             "$download_dir/styles.css"
-
-  # release-please only swaps `autorelease: pending` to `autorelease: tagged`
-  # when it creates the GitHub release itself; skip-github-release leaves the
-  # merged release PR pending, and a leftover pending merged release PR makes
-  # the next release-please run abort with "untagged, merged release PRs
-  # outstanding". Mark it once the tag release has published successfully.
-  mark-release-pr-tagged:
-    needs: release
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_REPO: ${{ github.repository }}
-    steps:
-      - name: Mark merged release PR as tagged
-        run: |
-          tag="${GITHUB_REF_NAME}"
-          pr_number="$(gh pr list \
-            --state merged \
-            --label "autorelease: pending" \
-            --search "release ${tag} in:title" \
-            --json number \
-            --jq '.[0].number // empty')"
-          if [ -z "$pr_number" ]; then
-            echo "No pending merged release PR for ${tag} (manual or prerelease path); skipping."
-            exit 0
-          fi
-          gh pr edit "$pr_number" \
-            --remove-label "autorelease: pending" \
-            --add-label "autorelease: tagged"
-          echo "Marked PR #${pr_number} as autorelease: tagged."

@@ -32,7 +32,7 @@
 - [ ] `npm run check:bundle-size` passes
 - [ ] Tested in Obsidian when UI or runtime behavior changed
 - [ ] Relevant handbook and `AGENTS.md` guidance updated when behavior or boundaries changed
-- [ ] `manifest.json` / `versions.json` updated for a release PR
+- [ ] Version metadata left unchanged unless this is a dedicated `chore(release): prepare x.y.z` commit
 
 ## Testing environment
 

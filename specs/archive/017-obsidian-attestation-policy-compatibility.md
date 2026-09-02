@@ -3,7 +3,7 @@ id: "017"
 title: "Obsidian attestation policy compatibility"
 status: Completed
 created: 2026-07-17
-updated: 2026-07-17
+updated: 2026-09-02
 coordinator: "Codex"
 ---
 
@@ -39,6 +39,7 @@ Not in scope:
 | 2026-07-17 | Do not publish another patch until the Obsidian policy difference is evidenced. | GitHub CLI verification alone did not predict automated review behavior. | WS-01, WS-02 |
 | 2026-07-17 | Superseded: make `push.tags` the only publishing trigger and use one multi-subject release attestation. | The tag-push part remains; 0.11.4 disproved the multi-subject attestation assumption in the live reviewer. | WS-01, WS-02, WS-04 |
 | 2026-07-17 | Keep Release Please for version/changelog PRs but set `skip-github-release: true`. | A tag created by the default `GITHUB_TOKEN` does not trigger another workflow; a maintainer-pushed tag preserves the required tag-push provenance identity. | WS-02, WS-04 |
+| 2026-09-02 | Remove Release Please. Maintainers bump the version, write `CHANGELOG.md`, and push the annotated tag. | Skip-github-release plus tagging after the release-PR merge raced and reopened a stale 0.18.6 PR. Current route: [docs/10](../../docs/10-roadmap-release-and-maintenance.md). | n/a |
 | 2026-07-17 | Fail publication when the matching changelog section is absent or empty. | Release notes must remain complete and auditable instead of falling back to generic text. | WS-02, WS-04 |
 | 2026-07-17 | Stop generating artifact attestations and verify published bytes directly. | 0.11.4 proves tag-push and multi-subject shape are not sufficient: its GitHub-valid bundle still fails the live directory review. Pivi's last completed scan predates attestations, and multiple plugins newly accepted on July 13–17 publish unattested assets. | WS-01, WS-02, WS-04 |
 

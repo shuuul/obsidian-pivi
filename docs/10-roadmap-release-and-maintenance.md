@@ -59,20 +59,18 @@ At the time of this 2026-07-16 evidence capture, the same validation run passed 
 
 ## Standard release route
 
-Pivi uses Conventional Commits and Release Please:
+Pivi publishes from a maintainer-pushed tag. Conventional Commits still describe the work; they do not drive an automated version PR. There is no Release Please workflow.
 
-1. Merge conventional changes to `main`.
-2. Let `.github/workflows/release-please.yaml` open or update the release PR.
-3. Review generated version and `CHANGELOG.md` changes and the Obsidian metadata synchronized by `node scripts/sync-version.js`.
-4. Merge the release PR.
-5. Pull the merged release commit and confirm its package, manifest, release manifest, and changelog version all agree.
-6. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.
-7. The tag push directly triggers `.github/workflows/release.yaml`. That workflow runs the same mandatory quality gates as CI (typecheck, lint, boundaries, coverage, build, bundle-size) for the exact tag commit, requires a non-empty matching `CHANGELOG.md` section, uses that section as the GitHub Release notes, publishes the three assets, and compares the downloaded release bytes with the tag build. Third-party Actions are pinned to reviewed full commit SHAs.
+1. Merge the work to `main`.
+2. Bump with `npm version patch|minor|major --no-git-tag-version` as appropriate. While Pivi is pre-1.0, `fix` normally produces a patch and `feat` a minor release.
+3. Run `node scripts/sync-version.js` so `manifest.json`, `versions.json`, and the README badge match `package.json`.
+4. Add the matching `CHANGELOG.md` section for `x.y.z`.
+5. Commit `chore(release): prepare x.y.z` and push `main`.
+6. Confirm package, manifest, and changelog versions all agree.
+7. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.
+8. The tag push directly triggers `.github/workflows/release.yaml`. That workflow runs the same mandatory quality gates as CI (typecheck, lint, boundaries, coverage, build, bundle-size) for the exact tag commit, requires a non-empty matching `CHANGELOG.md` section, uses that section as the GitHub Release notes, publishes the three assets, and compares the downloaded release bytes with the tag build. Third-party Actions are pinned to reviewed full commit SHAs.
 
-While Pivi is pre-1.0, `fix` normally produces a patch and `feat` a minor release. README badge updates come from `scripts/sync-version.js`; do not add generic Release Please README markers.
-
-The Git tag and GitHub Release tag must equal `manifest.json.version` exactly and must not have a leading `v`.
-Release Please runs with `skip-github-release: true`; publication stays separate so the release is built directly from a real `push` event at `refs/tags/x.y.z`. Because Release Please never creates the GitHub release, it also never swaps the release PR's `autorelease: pending` label for `autorelease: tagged`; the `mark-release-pr-tagged` job in `release.yaml` performs that swap after a successful tag publish. A merged release PR left at `autorelease: pending` makes the next Release Please run abort with "untagged, merged release PRs outstanding"; if the job is ever bypassed, swap the label manually with `gh pr edit <n> --remove-label "autorelease: pending" --add-label "autorelease: tagged"`.
+The Git tag and GitHub Release tag must equal `manifest.json.version` exactly and must not have a leading `v`. Publication stays on a real `push` event at `refs/tags/x.y.z` so the provenance identity is the maintainer-pushed tag.
 
 ## Beta / pre-release route
 
@@ -81,7 +79,7 @@ Beta builds ship as GitHub **Pre-releases** and install through [BRAT](https://t
 ### Invariants
 
 1. Tag, GitHub Release name, and the **published** `manifest.json` asset must all match (for example `0.17.0-beta.1`).
-2. Root `manifest.json`, `versions.json`, and the README version badge on `main` stay on the stable channel until a Release Please stable release lands.
+2. Root `manifest.json`, `versions.json`, and the README version badge on `main` stay on the stable channel until a stable release lands.
 3. `package.json.version` on the `next` (or `beta`) branch is the beta build/tag authority.
 4. Beta tags use the same `.github/workflows/release.yaml` path, run the full quality gates, publish a GitHub Pre-release, and fall back to a short release note when no matching `CHANGELOG.md` section exists.
 
@@ -93,28 +91,15 @@ Beta builds ship as GitHub **Pre-releases** and install through [BRAT](https://t
 4. On `next`, run `npm run version:beta` (or `node scripts/prepare-beta-release.js`). The script bumps **only** `package.json`, leaves root `manifest.json` unchanged, and prints the commit/tag commands.
 5. Commit, annotate the tag (`git tag -a 0.17.0-beta.0 -m "0.17.0-beta.0"`), and push both the branch and the tag.
 6. Confirm the GitHub Release is marked **Pre-release** and that BRAT can install it.
-7. When the beta line is ready for everyone, merge `next` into `main`, let Release Please prepare the stable release PR, and publish the stable tag from `main` as usual.
+7. When the beta line is ready for everyone, merge `next` into `main` and follow the standard stable release path above.
 
-Optional: pass `--base 0.17.0` to `prepare-beta-release.js` when the first beta should target a specific stable line instead of the default `preminor` bump from `.release-please-manifest.json`.
+Optional: pass `--base 0.17.0` to `prepare-beta-release.js` when the first beta should target a specific stable line instead of the default `preminor` bump from root `manifest.json`.
 
 ### Tester graduation
 
 Users who install through BRAT will not automatically move from `0.17.0-beta.N` to the stable `0.17.0` release through Obsidian's built-in updater. After the stable release ships, they should use BRAT's update command or remove BRAT tracking and reinstall from Community Plugins. Obsidian's updater resumes only after a later stable version is higher than the installed beta according to Obsidian's numeric version rules.
 
 See [README.md](../README.md) for end-user BRAT install steps.
-
-## Manual hotfix route
-
-Use this path only when explicitly requested:
-
-1. Run `npm version patch|minor|major --no-git-tag-version` as appropriate.
-2. Run `node scripts/sync-version.js`.
-3. Update `.release-please-manifest.json` and `CHANGELOG.md`.
-4. Commit `chore(release): prepare x.y.z`.
-5. Push `main`.
-6. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.
-
-Do not mix standard and manual routes for one version. The tag push is the only publishing trigger. The publishing workflow verifies the tag/package/manifest invariant, rejects a missing or empty changelog section, creates or updates the GitHub Release with those changelog notes, then downloads and compares the published assets byte-for-byte with the tag build.
 
 ## Release artifact invariant
 
@@ -126,7 +111,7 @@ manifest.json
 styles.css
 ```
 
-Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Both publishing routes converge on the same `push.tags` workflow with only `contents: write`. Do not generate artifact attestations while the live Obsidian automated reviewer rejects current GitHub/Sigstore bundles that pass strict GitHub CLI verification; newly accepted community plugins establish that unattested assets are supported. JavaScript and CSS builds include the package version in a leading banner, so unchanged product code still produces a version-specific asset digest.
+Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI entrypoints, source caches, credentials, or other Pi artifacts. Stable and beta tags both use the same `push.tags` workflow with only `contents: write`. Do not generate artifact attestations while the live Obsidian automated reviewer rejects current GitHub/Sigstore bundles that pass strict GitHub CLI verification; newly accepted community plugins establish that unattested assets are supported. JavaScript and CSS builds include the package version in a leading banner, so unchanged product code still produces a version-specific asset digest.
 
 ## Documentation ownership
 

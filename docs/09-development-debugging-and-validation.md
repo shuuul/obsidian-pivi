@@ -108,7 +108,7 @@ npm run build && \
 npm run check:bundle-size
 ```
 
-CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Release publication for a tag runs the same shared quality-gate action (typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
+CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Release publication is a maintainer-pushed annotated tag (`x.y.z`, no leading `v`) after a `chore(release): prepare x.y.z` commit that already contains the matching `CHANGELOG.md` section and synced Obsidian metadata; the tag workflow then runs the same shared quality-gate action (typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. See [Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md). Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
 
 Before bumping `@earendil-works/pi-*`, keep the three packages on one exact version, run `npm run test:pi-compat`, and keep `check:pi-pins` green. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
 

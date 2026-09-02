@@ -20,7 +20,7 @@ describe('prepare-beta-release', () => {
     }).toThrow('prepare-beta-release must run on next or beta');
   });
 
-  it('creates the first beta from the stable release manifest', () => {
+  it('creates the first beta from the stable plugin manifest version', () => {
     expect(
       prepareBetaVersion({
         branch: 'next',

@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const rootDir = process.cwd();
@@ -10,10 +10,6 @@ describe('release provenance workflow', () => {
   );
   const ciWorkflow = readFileSync(
     join(rootDir, '.github', 'workflows', 'ci.yaml'),
-    'utf8',
-  );
-  const releasePleaseWorkflow = readFileSync(
-    join(rootDir, '.github', 'workflows', 'release-please.yaml'),
     'utf8',
   );
   const qualityGates = readFileSync(
@@ -66,8 +62,12 @@ describe('release provenance workflow', () => {
     expect(workflow).toContain('--prerelease');
     expect(workflow).toContain('node scripts/write-release-manifest.js');
     expect(workflow).not.toContain('See CHANGELOG.md for details.');
-    expect(releasePleaseWorkflow).toContain('skip-github-release: true');
-    expect(releasePleaseWorkflow).not.toContain('gh workflow run release.yaml');
+    expect(existsSync(join(rootDir, '.github', 'workflows', 'release-please.yaml'))).toBe(false);
+    expect(existsSync(join(rootDir, 'release-please-config.json'))).toBe(false);
+    expect(existsSync(join(rootDir, '.release-please-manifest.json'))).toBe(false);
+    expect(workflow).not.toContain('release-please');
+    expect(workflow).not.toContain('autorelease');
+    expect(workflow).not.toContain('pull-requests: write');
   });
 
   it('runs the same mandatory quality gates as CI before publication', () => {
@@ -84,13 +84,11 @@ describe('release provenance workflow', () => {
   });
 
   it('pins third-party Actions to full commit SHAs and keeps Dependabot coverage', () => {
-    const pinPattern = /uses:\s+(actions\/checkout|actions\/setup-node|googleapis\/release-please-action)@[0-9a-f]{40}/g;
+    const pinPattern = /uses:\s+(actions\/checkout|actions\/setup-node)@[0-9a-f]{40}/g;
     expect(ciWorkflow.match(pinPattern)?.length).toBeGreaterThanOrEqual(2);
     expect(workflow.match(pinPattern)?.length).toBeGreaterThanOrEqual(2);
-    expect(releasePleaseWorkflow.match(pinPattern)?.length).toBeGreaterThanOrEqual(2);
     expect(ciWorkflow).not.toMatch(/uses:\s+actions\/checkout@v\d/);
     expect(workflow).not.toMatch(/uses:\s+actions\/setup-node@v\d/);
-    expect(releasePleaseWorkflow).not.toMatch(/uses:\s+googleapis\/release-please-action@v\d/);
     expect(dependabot).toContain('package-ecosystem: "github-actions"');
   });
 

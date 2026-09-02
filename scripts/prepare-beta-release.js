@@ -7,10 +7,7 @@ const { inc, prerelease, valid } = require('semver');
 
 const repoRoot = path.join(__dirname, '..');
 const packagePath = path.join(repoRoot, 'package.json');
-const releasePleaseManifestPath = path.join(
-  repoRoot,
-  '.release-please-manifest.json',
-);
+const stableManifestPath = path.join(repoRoot, 'manifest.json');
 
 const allowedBranches = new Set(['next', 'beta']);
 
@@ -93,7 +90,7 @@ function resolveNextBetaVersion(base, currentVersion, stableVersion) {
   }
 
   if (typeof stableVersion !== 'string' || stableVersion.length === 0) {
-    throw new Error('.release-please-manifest.json is missing a root version');
+    throw new Error('manifest.json is missing a version');
   }
 
   const next = inc(stableVersion, 'preminor', 'beta');
@@ -118,14 +115,12 @@ function main() {
   const { base } = parseArgs(process.argv);
   const branch = readCurrentBranch();
   const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-  const releasePleaseManifest = JSON.parse(
-    fs.readFileSync(releasePleaseManifestPath, 'utf8'),
-  );
+  const stableManifest = JSON.parse(fs.readFileSync(stableManifestPath, 'utf8'));
   const nextVersion = prepareBetaVersion({
     base,
     branch,
     currentVersion: packageJson.version,
-    stableVersion: releasePleaseManifest['.'],
+    stableVersion: stableManifest.version,
   });
 
   packageJson.version = nextVersion;
