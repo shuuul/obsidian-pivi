@@ -13,12 +13,15 @@ import { isSecretStorageAvailable, MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN } from '@pi
 import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import {
   ALL_CUSTOM_PROVIDER_KINDS,
+  applyCustomProviderModelIds,
   createDefaultCustomProviderConfig,
   type CustomProviderKind,
   FIXED_LOCAL_PROVIDER_IDS,
   getCustomProviderKindDisplayName,
   getCustomProvidersFromBag,
   isLocalCustomProviderKind,
+  reconcileVisibleModelsForCustomProviders,
+  splitCustomProviderModelIdInputs,
 } from '@pivi/agent/settings/customProviders';
 import {
   getLogoSlugForCustomProviderKind,
@@ -380,6 +383,53 @@ export function createSettingsModelsPort(
         view.getChatHandle()?.maintenance.refreshModelPresentation();
       }
       return result;
+    },
+    async setCustomProviderModelIds(providerId, modelIds) {
+      const piSettings = getPiAgentSettings(host.settings);
+      const provider = piSettings.customProviders.find(entry => entry.id === providerId);
+      if (!provider) {
+        throw new Error(`Unknown custom provider: ${providerId}`);
+      }
+      const models = applyCustomProviderModelIds(
+        provider.models,
+        splitCustomProviderModelIdInputs(modelIds),
+      );
+      const customProviders = piSettings.customProviders.map(entry =>
+        entry.id === providerId ? { ...entry, models } : entry,
+      );
+      const visibleModels = reconcileVisibleModelsForCustomProviders(
+        piSettings.visibleModels,
+        customProviders,
+      );
+      const prefix = `${providerId}/`;
+      const allowedKeys = new Set(models.map(model => `${providerId}/${model.id}`));
+      const lastModel = host.settings.agentSettings.lastModel;
+      const lastModelUpdate = typeof lastModel === 'string'
+        && lastModel.startsWith(prefix)
+        && !allowedKeys.has(lastModel)
+        ? { lastModel: '' }
+        : {};
+      updatePiAgentSettings(host.settings, {
+        customProviders,
+        visibleModels,
+        ...lastModelUpdate,
+      });
+      const firstProviderKey = visibleModels.find(key => key.startsWith(prefix));
+      if (typeof host.settings.model === 'string' && host.settings.model.startsWith(prefix) && !allowedKeys.has(host.settings.model)) {
+        host.settings.model = firstProviderKey ?? '';
+      }
+      if (
+        typeof host.settings.titleGenerationModel === 'string'
+        && host.settings.titleGenerationModel.startsWith(prefix)
+        && !allowedKeys.has(host.settings.titleGenerationModel)
+      ) {
+        host.settings.titleGenerationModel = '';
+      }
+      uiFacades.syncCustomProviders(host.settings);
+      await host.saveSettings();
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.refreshModelPresentation();
+      }
     },
   };
 }

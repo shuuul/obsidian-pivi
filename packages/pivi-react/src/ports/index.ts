@@ -113,6 +113,8 @@ export interface SettingsModelsPort {
   getContextWindowOverride(modelKey: string): number | null;
   patchContextWindowOverride(modelKey: string, value: number | null): Promise<void>;
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
+  /** Replace a custom provider's stored model IDs without calling the list endpoint. */
+  setCustomProviderModelIds(providerId: string, modelIds: readonly string[]): Promise<void>;
 }
 
 export type SettingsFeedbackKind = 'success' | 'error' | 'pending';

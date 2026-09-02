@@ -455,6 +455,46 @@ export function getCustomProviderById(
   return getCustomProvidersFromBag(settings).find((provider) => provider.id === providerId) ?? null;
 }
 
+/** Split pasted or typed model-ID inputs on commas, then trim, drop empties, and dedupe. */
+export function splitCustomProviderModelIdInputs(values: readonly string[]): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    for (const part of value.split(',')) {
+      const id = part.trim();
+      if (!id || seen.has(id)) {
+        continue;
+      }
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Replace a custom provider's model list with the given IDs.
+ * Existing rows (catalog ID, overrides, advertised metadata) are kept when the
+ * ID is still present; new IDs become `{ id, name: id }`.
+ */
+export function applyCustomProviderModelIds(
+  current: readonly CustomProviderModelDef[],
+  ids: readonly string[],
+): CustomProviderModelDef[] {
+  const currentById = new Map(current.map((model) => [model.id, model]));
+  const result: CustomProviderModelDef[] = [];
+  const seen = new Set<string>();
+  for (const raw of ids) {
+    const id = raw.trim();
+    if (!id || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    result.push(currentById.get(id) ?? { id, name: id });
+  }
+  return result;
+}
+
 /**
  * Apply the latest user-authored model fields to an authoritative fetched list.
  * Fetched rows can contain stale values carried from the request snapshot, so

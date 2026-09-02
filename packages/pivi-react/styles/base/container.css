@@ -5,6 +5,7 @@
 
 .pivi-react-settings-root {
   width: 100%;
+  min-height: 0;
 }
 
 .pivi-container {

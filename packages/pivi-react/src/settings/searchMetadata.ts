@@ -53,6 +53,7 @@ const SETTINGS_SEARCH_KEYS = [
   'settings.modelsTab.endpointHeading',
   'settings.modelsTab.displayName',
   'settings.modelsTab.baseUrl',
+  'settings.modelsTab.modelIds',
   'settings.modelsTab.apiKey',
   'settings.modelsTab.oauthToken',
   'settings.modelsTab.authHeading',

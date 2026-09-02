@@ -179,4 +179,30 @@ describe('testProviderReadiness', () => {
       method: 'GET',
     });
   });
+
+  it('probes the custom provider base URL when model IDs are already stored', async () => {
+    providerHttpFetch.mockResolvedValue(mockHttpResponse(200));
+
+    const result = await testProviderReadiness('custom-openai-compatible-lan', {
+      disabledProviders: [],
+      customProviders: [{
+        id: 'custom-openai-compatible-lan',
+        kind: 'openai-compatible',
+        name: 'vLLM',
+        baseUrl: 'http://192.168.100.177:8888/v1',
+        api: 'openai-completions',
+        apiKeyRequired: false,
+        models: [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }],
+      }],
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.detail).toContain('http://192.168.100.177:8888/v1');
+    expect(result.detail).not.toContain('/models');
+    expect(providerHttpFetch).toHaveBeenCalledWith({
+      url: 'http://192.168.100.177:8888/v1',
+      method: 'GET',
+    });
+    expect(httpFetch).not.toHaveBeenCalled();
+  });
 });

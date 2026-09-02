@@ -4,6 +4,7 @@
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-md);
   background: var(--pivi-host-background-primary);
+  /* Clip only while collapsed so the closed header keeps the card radius. */
   overflow: hidden;
   transition: border-color var(--pivi-duration-normal) var(--pivi-ease-out), box-shadow var(--pivi-duration-normal) var(--pivi-ease-out);
 }
@@ -14,7 +15,20 @@
 }
 
 .pivi-provider-card[open] {
+  /* Open <details> with overflow:hidden clips nested disclosures and becomes a
+     hidden scrollport, so the settings pane cannot reach the card footer. */
+  overflow: visible;
   border-color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-provider-card[open] > .pivi-provider-header {
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+}
+
+.pivi-provider-card[open] > .pivi-provider-body {
+  border-end-start-radius: inherit;
+  border-end-end-radius: inherit;
 }
 
 .pivi-provider-header {
@@ -405,6 +419,28 @@
   padding: var(--pivi-spacing-lg);
   background: var(--pivi-host-background-primary);
   border-top: 1px solid var(--pivi-host-border);
+}
+
+.pivi-provider-endpoint-fields > .pivi-setting-row > .pivi-setting-row__info {
+  flex: 0 1 12rem;
+  max-width: 14rem;
+}
+
+.pivi-provider-endpoint-fields > .pivi-setting-row > .pivi-setting-row__control {
+  flex: 1 1 0;
+  justify-content: flex-start;
+}
+
+.pivi-provider-endpoint-fields > .pivi-setting-row > .pivi-setting-row__control > .pivi-settings-control:not(.pivi-select) {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .pivi-provider-endpoint-fields > .pivi-setting-row > .pivi-setting-row__info {
+    flex: 0 0 auto;
+    max-width: none;
+  }
 }
 
 .pivi-provider-body h5 {

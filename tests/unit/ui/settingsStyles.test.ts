@@ -8,7 +8,7 @@ describe('settings navigation styles', () => {
   );
 
   it('resets the Obsidian 1.13 definition row before mounting the settings page', () => {
-    expect(styles).toMatch(/:root \.pivi-settings-definition-host\.pivi-settings-definition-host\s*{[^}]*display:\s*block;[^}]*padding:\s*0;[^}]*border-top:\s*0;/s);
+    expect(styles).toMatch(/:root \.pivi-settings-definition-host\.pivi-settings-definition-host\s*{[^}]*display:\s*block;[^}]*height:\s*auto;[^}]*max-height:\s*100%;[^}]*padding:\s*0;[^}]*overflow-y:\s*auto;[^}]*border-top:\s*0;/s);
   });
 
   it('keeps primary tabs wrapping so every tab stays visible', () => {
@@ -38,5 +38,21 @@ describe('settings navigation styles', () => {
     expect(styles).toMatch(/\.pivi-integration-setting \.pivi-setting-row__name\s*{[^}]*font-size:\s*var\(--pivi-host-font-ui-small\);[^}]*font-weight:\s*var\(--pivi-host-font-medium\);/s);
     expect(styles.match(/\.pivi-integration-setting \.pivi-setting-row__name\s*{/g)).toHaveLength(1);
     expect(styles).toMatch(/\.pivi-settings-list-header\s*{[^}]*padding-inline:\s*var\(--pivi-settings-gutter\);/s);
+  });
+});
+
+describe('settings disclosure card overflow', () => {
+  const providerStyles = readFileSync(
+    join(process.cwd(), 'packages/pivi-react/styles/settings/provider-settings.css'),
+    'utf8',
+  );
+
+  it('lets an open provider card grow instead of clipping nested disclosures', () => {
+    expect(providerStyles).toMatch(/\.pivi-provider-card\[open\]\s*{[^}]*overflow:\s*visible;/s);
+  });
+
+  it('gives custom-provider name and base URL fields the remaining row width', () => {
+    expect(providerStyles).toMatch(/\.pivi-provider-endpoint-fields > \.pivi-setting-row > \.pivi-setting-row__control\s*{[^}]*flex:\s*1 1 0;/s);
+    expect(providerStyles).toMatch(/\.pivi-provider-endpoint-fields > \.pivi-setting-row > \.pivi-setting-row__control > \.pivi-settings-control:not\(\.pivi-select\)\s*{[^}]*width:\s*100%;/s);
   });
 });

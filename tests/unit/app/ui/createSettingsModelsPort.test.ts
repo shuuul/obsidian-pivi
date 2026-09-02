@@ -252,6 +252,70 @@ describe('createSettingsModelsPort provider removal', () => {
       .toBeUndefined();
   });
 
+  it('writes manual custom provider model IDs without auto-checking them', async () => {
+    const harness = createHarness();
+    const providerId = 'custom-openai-compatible-lan';
+    harness.settings.agentSettings.addedProviders = [providerId];
+    harness.settings.agentSettings.visibleModels = [`${providerId}/keep`];
+    harness.settings.agentSettings.customProviders = [{
+      id: providerId,
+      kind: 'openai-compatible',
+      name: 'Campus gateway',
+      baseUrl: 'https://gateway.example.test/v1',
+      api: 'openai-completions',
+      models: [{ id: 'keep', name: 'Keep', catalogModelId: 'qwen/qwen3.5-27b' }],
+    }];
+
+    await harness.port.setCustomProviderModelIds(providerId, ['keep, extra']);
+
+    expect(harness.settings.agentSettings.customProviders[0]?.models).toEqual([
+      { id: 'keep', name: 'Keep', catalogModelId: 'qwen/qwen3.5-27b' },
+      { id: 'extra', name: 'extra' },
+    ]);
+    expect(harness.settings.agentSettings.visibleModels).toEqual([`${providerId}/keep`]);
+    expect(harness.uiFacades.syncCustomProviders).toHaveBeenCalled();
+    expect(harness.saveSettings).toHaveBeenCalledTimes(1);
+    expect(harness.refreshModelPresentation).toHaveBeenCalledTimes(1);
+  });
+
+  it('prunes visible models when a manual model ID is removed', async () => {
+    const harness = createHarness();
+    const providerId = 'custom-openai-compatible-lan';
+    harness.settings.agentSettings.addedProviders = [providerId, 'deepseek'];
+    harness.settings.agentSettings.visibleModels = [
+      `${providerId}/a`,
+      `${providerId}/b`,
+      'deepseek/deepseek-chat',
+    ];
+    harness.settings.agentSettings.customProviders = [{
+      id: providerId,
+      kind: 'openai-compatible',
+      name: 'Campus gateway',
+      baseUrl: 'https://gateway.example.test/v1',
+      api: 'openai-completions',
+      models: [{ id: 'a', name: 'a' }, { id: 'b', name: 'b' }],
+    }];
+
+    await harness.port.setCustomProviderModelIds(providerId, ['b']);
+
+    expect(harness.settings.agentSettings.customProviders[0]?.models).toEqual([
+      { id: 'b', name: 'b' },
+    ]);
+    expect(harness.settings.agentSettings.visibleModels).toEqual([
+      `${providerId}/b`,
+      'deepseek/deepseek-chat',
+    ]);
+  });
+
+  it('fails loudly for an unknown custom provider', async () => {
+    const harness = createHarness();
+
+    await expect(harness.port.setCustomProviderModelIds('missing', ['gpt-4'])).rejects.toThrow(
+      'Unknown custom provider: missing',
+    );
+    expect(harness.saveSettings).not.toHaveBeenCalled();
+  });
+
   it('deletes the provider credential only when explicitly requested', async () => {
     const harness = createHarness();
 

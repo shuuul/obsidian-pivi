@@ -1,4 +1,5 @@
 import {
+  applyCustomProviderModelIds,
   createCustomProviderId,
   createDefaultCustomProviderConfig,
   modelsListUrl,
@@ -7,6 +8,7 @@ import {
   normalizeCustomProviders,
   parseOpenAiStyleModelsList,
   reconcileVisibleModelsForCustomProviders,
+  splitCustomProviderModelIdInputs,
 } from '@pivi/agent/settings/customProviders';
 import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import { MAX_OBSIDIAN_SECRET_ID_LENGTH } from '@pivi/agent/auth/providerSecretStorage';
@@ -310,6 +312,27 @@ describe('reconcileVisibleModelsForCustomProviders', () => {
       ['deepseek/deepseek-chat'],
       [provider],
     )).toEqual(['deepseek/deepseek-chat']);
+  });
+});
+
+describe('manual custom provider model IDs', () => {
+  it('splits comma-separated inputs, trims, and drops empties and duplicates', () => {
+    expect(splitCustomProviderModelIdInputs([' gpt-4, gpt-4o ', 'gpt-4', '', ' claude '])).toEqual([
+      'gpt-4',
+      'gpt-4o',
+      'claude',
+    ]);
+  });
+
+  it('preserves existing rows, creates new defs, and drops removed IDs', () => {
+    const current = [
+      { id: 'keep', name: 'Keep', catalogModelId: 'qwen/qwen3', maxTokensOverride: 1024 },
+      { id: 'drop', name: 'Drop' },
+    ];
+    expect(applyCustomProviderModelIds(current, ['keep', ' new ', 'keep'])).toEqual([
+      { id: 'keep', name: 'Keep', catalogModelId: 'qwen/qwen3', maxTokensOverride: 1024 },
+      { id: 'new', name: 'new' },
+    ]);
   });
 });
 

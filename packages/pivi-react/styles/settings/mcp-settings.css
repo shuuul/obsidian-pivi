@@ -37,6 +37,20 @@
   transition: border-color var(--pivi-duration-normal) var(--pivi-ease-out), box-shadow var(--pivi-duration-normal) var(--pivi-ease-out);
 }
 
+.pivi-mcp-card[open] {
+  overflow: visible;
+}
+
+.pivi-mcp-card[open] > .pivi-mcp-card-header {
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+}
+
+.pivi-mcp-card[open] > .pivi-mcp-card-body {
+  border-end-start-radius: inherit;
+  border-end-end-radius: inherit;
+}
+
 .pivi-mcp-card:hover,
 .pivi-mcp-card[open] {
   border-color: var(--pivi-host-interactive-accent);

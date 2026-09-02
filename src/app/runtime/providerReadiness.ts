@@ -96,9 +96,11 @@ export async function testProviderReadiness(
       return { ok: false, detail: `No endpoint URL is configured for ${providerId}.` };
     }
     const keyless = custom.apiKeyRequired === false;
-    // vLLM and similar servers 404 HEAD on /v1 and 405 HEAD on /v1/models.
-    // GET /models is the discovery endpoint the user actually needs.
-    return testEndpointConnectivity(getProviderProbeClient(), modelsListUrl(baseUrl), {
+    // Empty configs still need GET /models (vLLM 404s HEAD on /v1). Once the
+    // user has stored model IDs, probe the chat root instead of the list
+    // endpoint so servers without /models can still pass Test.
+    const probeUrl = custom.models.length > 0 ? baseUrl : modelsListUrl(baseUrl);
+    return testEndpointConnectivity(getProviderProbeClient(), probeUrl, {
       method: 'GET',
       detailSuffix: keyless ? '; no API key required.' : '',
     });

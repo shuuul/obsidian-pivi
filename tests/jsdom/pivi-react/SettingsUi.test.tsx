@@ -53,6 +53,7 @@ function createModelsPort() {
     getContextWindowOverride: () => null,
     patchContextWindowOverride: async () => undefined,
     fetchCustomProviderModels: async () => ({ count: 0 }),
+    setCustomProviderModelIds: async () => undefined,
   };
 }
 
@@ -853,6 +854,49 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByLabelText('GPT'));
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalled();
+  });
+  it('adds and removes custom provider model IDs without fetching', async () => {
+    const customProvider = {
+      id: 'openai',
+      kind: 'openai-compatible' as const,
+      name: 'OpenAI',
+      baseUrl: 'https://example.test',
+      api: 'openai-completions' as const,
+      models: [] as Array<{ id: string; name: string }>,
+    };
+    const setCustomProviderModelIds = jest.fn(async (_providerId: string, modelIds: readonly string[]) => {
+      customProvider.models = modelIds.map(id => ({ id, name: id }));
+    });
+    const fetchCustomProviderModels = jest.fn(async () => ({ count: 0 }));
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: ['openai'],
+        disabledProviders: [],
+        customProviders: [customProvider],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      setCustomProviderModelIds,
+      fetchCustomProviderModels,
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByRole('tab', { name: 'Models' }));
+    fireEvent.click(screen.getByText('OpenAI'));
+    const input = screen.getByRole('textbox', { name: 'Add a model ID' });
+    fireEvent.change(input, { target: { value: 'gpt-4, gpt-4o' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await act(async () => undefined);
+    expect(setCustomProviderModelIds).toHaveBeenCalledWith('openai', ['gpt-4', 'gpt-4o']);
+    expect(fetchCustomProviderModels).not.toHaveBeenCalled();
+    expect(screen.getByText('gpt-4', { selector: '.pivi-settings-badge__text' })).toBeInTheDocument();
+    expect(screen.getByText('gpt-4o', { selector: '.pivi-settings-badge__text' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove model ID gpt-4' }));
+    await act(async () => undefined);
+    expect(setCustomProviderModelIds).toHaveBeenLastCalledWith('openai', ['gpt-4o']);
   });
   it('edits a custom model catalog id from the checklist and omits the field for built-ins', async () => {
     const patchCustomProviderModel = jest.fn(async () => undefined);
