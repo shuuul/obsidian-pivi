@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.23.0](https://github.com/shuuul/obsidian-pivi/compare/0.22.0...0.23.0) (2026-09-02)
+
+
+### Features
+
+* let custom providers use entered model IDs ([98363fb](https://github.com/shuuul/obsidian-pivi/commit/98363fba495ae7f755ba5202b493f4a1db295bec))
+
+
+### Bug Fixes
+
+* keep skill update status on the skill row ([17d1d69](https://github.com/shuuul/obsidian-pivi/commit/17d1d69816894448af01ef5c102401f2c5d568b4))
+
 ## [0.22.0](https://github.com/shuuul/obsidian-pivi/compare/0.21.0...0.22.0) (2026-09-01)
 
 
