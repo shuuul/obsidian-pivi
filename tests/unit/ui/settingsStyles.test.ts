@@ -39,6 +39,11 @@ describe('settings navigation styles', () => {
     expect(styles.match(/\.pivi-integration-setting \.pivi-setting-row__name\s*{/g)).toHaveLength(1);
     expect(styles).toMatch(/\.pivi-settings-list-header\s*{[^}]*padding-inline:\s*var\(--pivi-settings-gutter\);/s);
   });
+
+  it('wraps installed-skill row status onto a full-width line below the actions', () => {
+    expect(styles).toMatch(/\.pivi-sp-item\s*{[^}]*flex-wrap:\s*wrap;/s);
+    expect(styles).toMatch(/\.pivi-sp-item > \.pivi-settings-action-feedback\s*{[^}]*flex:\s*1 0 100%;/s);
+  });
 });
 
 describe('settings disclosure card overflow', () => {

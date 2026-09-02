@@ -22,6 +22,12 @@ type SkillPendingOperation =
 
 const SKILLS_SH_SECURITY_URL = 'https://skills.sh/docs/security';
 
+function isInstalledSkillRowOperation(
+  operation: SkillPendingOperation,
+): operation is Extract<SkillPendingOperation, { kind: 'update' | 'enable' | 'disable' }> {
+  return operation.kind === 'update' || operation.kind === 'enable' || operation.kind === 'disable';
+}
+
 export function SkillsSettingsTab({ skills, feedback }: {
   readonly skills: SettingsComplexPorts['skills'];
   readonly feedback: SettingsFeedbackPort;
@@ -38,6 +44,10 @@ export function SkillsSettingsTab({ skills, feedback }: {
   const [installFeedback, setInstallFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const [bundleFeedback, setBundleFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const [installedFeedback, setInstalledFeedback] = useState<SettingsFeedbackMessage | null>(null);
+  const [rowFeedback, setRowFeedback] = useState<{
+    readonly name: string;
+    readonly message: SettingsFeedbackMessage;
+  } | null>(null);
   const [removeCandidate, setRemoveCandidate] = useState<Skill | null>(null);
   const featuredBundle = skills.featuredBundle.getDescriptor();
   useEffect(() => {
@@ -107,15 +117,18 @@ export function SkillsSettingsTab({ skills, feedback }: {
     if (options.clearInstallFeedback) setInstallFeedback(null);
     setBundleFeedback(null);
     setInstalledFeedback(null);
+    setRowFeedback(null);
     try {
       await action();
       refresh();
       if (mounted.current && operation.kind !== 'listRemote') {
-        const feedback = successMessage(operation);
+        const result = successMessage(operation);
         if (operation.kind === 'installBundle' || operation.kind === 'updateBundle') {
-          setBundleFeedback(feedback);
+          setBundleFeedback(result);
+        } else if (isInstalledSkillRowOperation(operation)) {
+          setRowFeedback({ name: operation.name, message: result });
         } else {
-          setInstalledFeedback(feedback);
+          setInstalledFeedback(result);
         }
       }
     } catch (error) {
@@ -307,6 +320,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
               || (pendingOperation.kind === 'enable' && pendingOperation.name === skill.name)
               || (pendingOperation.kind === 'disable' && pendingOperation.name === skill.name)
             ) ? globalPendingFeedback : null;
+            const rowStatus = rowPending ?? (rowFeedback?.name === skill.name ? rowFeedback.message : null);
             return (
               <div className="pivi-sp-item" key={skill.folderName}>
                 <div className="pivi-sp-info">
@@ -352,7 +366,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
                     onClick={() => { setRemoveCandidate(skill); }}
                   />
                 </SettingsItemActions>
-                {rowPending ? <SettingsActionFeedback feedback={rowPending} /> : null}
+                {rowStatus ? <SettingsActionFeedback feedback={rowStatus} /> : null}
               </div>
             );
           })}

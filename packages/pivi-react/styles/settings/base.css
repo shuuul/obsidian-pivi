@@ -554,11 +554,17 @@ textarea.pivi-settings-control {
 
 .pivi-sp-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   padding: var(--pivi-spacing-md);
   background: var(--pivi-host-background-secondary);
   border-radius: var(--pivi-radius-sm);
+}
+
+.pivi-sp-item > .pivi-settings-action-feedback {
+  flex: 1 0 100%;
+  margin-block-start: var(--pivi-spacing-xs);
 }
 
 .pivi-sp-item:hover {

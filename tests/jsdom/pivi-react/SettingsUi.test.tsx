@@ -1183,6 +1183,33 @@ describe('React settings foundation', () => {
     expect(screen.getByText('Environment variables saved.')).toBeInTheDocument();
   });
 
+  it('places skill update status below the row actions', async () => {
+    let resolveUpdate!: () => void;
+    const update = jest.fn(() => new Promise<void>((resolve) => { resolveUpdate = resolve; }));
+    const ports = createPorts();
+    Object.assign(ports.complex.skills, { update });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="skills" /></I18nProvider>));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Update skill Example' }));
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Updating Example…');
+    const item = status.closest('.pivi-sp-item');
+    const actions = item?.querySelector('.pivi-sp-item-actions');
+    expect(item).not.toBeNull();
+    expect(actions).toBeTruthy();
+    expect(actions).not.toContainElement(status);
+    expect(status.compareDocumentPosition(actions!) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+
+    resolveUpdate();
+    await act(async () => undefined);
+
+    const success = screen.getByRole('status');
+    expect(success).toHaveTextContent('Example updated.');
+    expect(success.closest('.pivi-sp-item')).toContainElement(screen.getByText('Example', { selector: '.pivi-sp-item-name' }));
+    expect(screen.getByText('Installed skills').closest('.pivi-settings-list-header')
+      ?.nextElementSibling).not.toHaveClass('pivi-settings-action-feedback');
+  });
+
   it('requires confirmation before removing an installed skill', async () => {
     const remove = jest.fn(async () => undefined);
     const ports = createPorts();
