@@ -1,16 +1,15 @@
 /* ── Settings tab navigation ── */
 
 /* Match Obsidian 1.13's definition-row specificity without coupling to host class names.
-   Reset host height/overflow so a tall React page can scroll instead of clipping. */
+   Let the native settings page own scrolling so its scrollbar stays at the window edge. */
 :root .pivi-settings-definition-host.pivi-settings-definition-host {
   display: block;
   box-sizing: border-box;
   min-height: 0;
   height: auto;
-  max-height: 100%;
+  max-height: none;
   padding: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: visible;
   border-top: 0;
 }
 
@@ -20,6 +19,8 @@
   --pivi-settings-section-gap: 32px;
   --pivi-settings-section-title-gap: 8px;
   --pivi-settings-subsection-gap: 20px;
+  min-height: 100%;
+  background: var(--pivi-host-background-primary);
 }
 
 .pivi-settings-control:not(.pivi-select) {
@@ -289,6 +290,17 @@ textarea.pivi-settings-control {
   margin-block-end: var(--pivi-settings-section-title-gap);
 }
 
+.pivi-settings-section > .pivi-settings-section-heading:not(.pivi-settings-section-heading--sub) {
+  padding-block-end: 7px;
+  border-block-end: 1px solid color-mix(in srgb, var(--pivi-host-border) 65%, transparent);
+}
+
+.pivi-settings-section > .pivi-settings-section-heading:not(.pivi-settings-section-heading--sub) + .pivi-settings-section__body {
+  padding-block: 6px;
+  border-radius: var(--pivi-radius-lg);
+  background: var(--pivi-host-setting-items-background);
+}
+
 .pivi-settings-section-heading--sub {
   margin-block-start: var(--pivi-settings-subsection-gap);
   margin-block-end: var(--pivi-settings-section-title-gap);
@@ -526,7 +538,9 @@ textarea.pivi-settings-control {
   justify-content: space-between;
   align-items: center;
   margin-block: var(--pivi-settings-section-gap) var(--pivi-settings-section-title-gap);
+  padding-block-end: 7px;
   padding-inline: var(--pivi-settings-gutter);
+  border-block-end: 1px solid color-mix(in srgb, var(--pivi-host-border) 65%, transparent);
 }
 
 .pivi-settings-content > .pivi-settings-list-header:first-child {

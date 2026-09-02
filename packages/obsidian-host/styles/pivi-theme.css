@@ -4,6 +4,7 @@ body {
   --pivi-host-background-primary: var(--background-primary);
   --pivi-host-background-secondary: var(--background-secondary);
   --pivi-host-background-secondary-alt: var(--background-secondary-alt);
+  --pivi-host-setting-items-background: var(--setting-items-background, var(--background-primary-alt));
   --pivi-host-background-hover: var(--background-modifier-hover);
   --pivi-host-background-active-hover: var(--background-modifier-active-hover);
   --pivi-host-border: var(--background-modifier-border);

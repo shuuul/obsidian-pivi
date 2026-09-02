@@ -6,9 +6,13 @@ describe('settings navigation styles', () => {
     join(process.cwd(), 'packages/pivi-react/styles/settings/base.css'),
     'utf8',
   );
+  const hostTheme = readFileSync(
+    join(process.cwd(), 'packages/obsidian-host/styles/pivi-theme.css'),
+    'utf8',
+  );
 
-  it('resets the Obsidian 1.13 definition row before mounting the settings page', () => {
-    expect(styles).toMatch(/:root \.pivi-settings-definition-host\.pivi-settings-definition-host\s*{[^}]*display:\s*block;[^}]*height:\s*auto;[^}]*max-height:\s*100%;[^}]*padding:\s*0;[^}]*overflow-y:\s*auto;[^}]*border-top:\s*0;/s);
+  it('lets the Obsidian settings page own scrolling around the definition row', () => {
+    expect(styles).toMatch(/:root \.pivi-settings-definition-host\.pivi-settings-definition-host\s*{[^}]*display:\s*block;[^}]*height:\s*auto;[^}]*max-height:\s*none;[^}]*padding:\s*0;[^}]*overflow:\s*visible;[^}]*border-top:\s*0;/s);
   });
 
   it('keeps primary tabs wrapping so every tab stays visible', () => {
@@ -22,22 +26,30 @@ describe('settings navigation styles', () => {
     expect(styles).not.toContain('.pivi-tools-settings-section + .pivi-tools-settings-section');
   });
 
-  it('uses quiet section labels on the shared gutter with asymmetric spacing', () => {
+  it('uses quiet section labels with subtle dividers and grouped surfaces', () => {
     expect(styles).toMatch(/\.pivi-settings\s*{[^}]*--pivi-settings-section-gap:/s);
+    expect(styles).toMatch(/\.pivi-settings\s*{[^}]*min-height:\s*100%;[^}]*background:\s*var\(--pivi-host-background-primary\);/s);
     expect(styles).toMatch(/\.pivi-settings-section-heading\s*{[^}]*margin:\s*0;[^}]*padding-inline:\s*var\(--pivi-settings-gutter\);/s);
     expect(styles).toMatch(/\.pivi-settings-section-heading\s*{[^}]*font-size:\s*var\(--pivi-host-font-ui-small\);/s);
     expect(styles).toMatch(/\.pivi-settings-section-heading\s*{[^}]*color:\s*var\(--pivi-host-text-muted\);/s);
     expect(styles).toMatch(/\.pivi-settings-section\s*{[^}]*margin-block-start:\s*var\(--pivi-settings-section-gap\);/s);
     expect(styles).toMatch(/\.pivi-settings-section > \.pivi-settings-section-heading\s*{[^}]*margin-block-end:\s*var\(--pivi-settings-section-title-gap\);/s);
+    expect(styles).toMatch(/\.pivi-settings-section > \.pivi-settings-section-heading:not\(\.pivi-settings-section-heading--sub\)\s*{[^}]*border-block-end:\s*1px solid/s);
+    expect(styles).toMatch(/\.pivi-settings-section > \.pivi-settings-section-heading:not\(\.pivi-settings-section-heading--sub\) \+ \.pivi-settings-section__body\s*{[^}]*border-radius:\s*var\(--pivi-radius-lg\);[^}]*background:\s*var\(--pivi-host-setting-items-background\);/s);
     expect(styles).not.toContain('.pivi-settings-list-header__title');
     expect(styles).not.toContain('.pivi-tools-settings-section__title');
   });
 
-  it('groups sections with whitespace and keeps integration item titles quiet', () => {
+  it('uses the primary page surface and maps the grouped-item surface', () => {
+    expect(hostTheme).not.toContain('--pivi-host-settings-background');
+    expect(hostTheme).toMatch(/--pivi-host-setting-items-background:\s*var\(--setting-items-background, var\(--background-primary-alt\)\);/);
+  });
+
+  it('gives collection headers a divider and keeps integration item titles quiet', () => {
     expect(styles).not.toMatch(/\.pivi-settings-section-heading\s*{[^}]*border-top:/s);
     expect(styles).toMatch(/\.pivi-integration-setting \.pivi-setting-row__name\s*{[^}]*font-size:\s*var\(--pivi-host-font-ui-small\);[^}]*font-weight:\s*var\(--pivi-host-font-medium\);/s);
     expect(styles.match(/\.pivi-integration-setting \.pivi-setting-row__name\s*{/g)).toHaveLength(1);
-    expect(styles).toMatch(/\.pivi-settings-list-header\s*{[^}]*padding-inline:\s*var\(--pivi-settings-gutter\);/s);
+    expect(styles).toMatch(/\.pivi-settings-list-header\s*{[^}]*padding-inline:\s*var\(--pivi-settings-gutter\);[^}]*border-block-end:\s*1px solid/s);
   });
 
   it('wraps installed-skill row status onto a full-width line below the actions', () => {
