@@ -14,7 +14,7 @@ import {
   getStats,
   getStringField,
   paginateLineRange,
-  resolveEffectiveReadMaxChars,
+  resolveEffectiveReadBudget,
   sliceLineRange,
 } from './readShared';
 
@@ -49,7 +49,7 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
         mode: { type: 'string', enum: ['content', 'stats'], description: 'stats returns only path, line count, and character count' },
         startLine: { type: 'number', description: '1-based first line to read' },
         endLine: { type: 'number', description: '1-based last line to read, inclusive' },
-        maxChars: { type: 'number', description: 'Maximum characters to return for content reads, clamped to at least 1000. Defaults to the smaller of remaining room before the output reserve and 50000 (may cross the compaction threshold). To read a full large file, first use mode=stats, then set maxChars to at least the reported Characters value deliberately.' },
+        maxChars: { type: 'number', description: 'Maximum characters to return for content reads, clamped between 1000 and 500000. When omitted, uses Tools → Default read size. An explicit value overrides that default; context overflow is handled by compaction preflight.' },
       },
       required: ['path'],
       additionalProperties: false,
@@ -63,8 +63,9 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
       const mode = getReadMode(input);
       const startLine = getPositiveIntegerField(input, 'startLine');
       const endLine = getPositiveIntegerField(input, 'endLine');
-      const readBudget = resolveEffectiveReadMaxChars(
+      const readBudget = resolveEffectiveReadBudget(
         input,
+        deps.settings.defaultReadMaxChars,
         mode === 'stats' ? undefined : deps.resolveReadMaxChars,
       );
       const maxChars = readBudget.maxChars;
@@ -77,7 +78,10 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
         );
         const fileStat = externalFiles.stat(absolutePath);
         const isRangeRead = startLine !== undefined || endLine !== undefined;
-        if (fileStat.size > MAX_EXTERNAL_READ_BYTES && (isRangeRead || maxChars >= fileStat.size)) {
+        if (
+          fileStat.size > MAX_EXTERNAL_READ_BYTES
+          && (isRangeRead || (readBudget.requestedMaxChars ?? maxChars) >= fileStat.size)
+        ) {
           throw new Error(
             `External file is ${fileStat.size} bytes, which exceeds the hard safety limit of ${MAX_EXTERNAL_READ_BYTES} bytes. Narrow the file outside Pivi before reading it.`,
           );
@@ -145,7 +149,13 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
         }
 
         if (isRangeRead) {
-          const page = paginateLineRange(result.content, lineSpans, maxChars, startLine, endLine);
+          const page = paginateLineRange(
+            result.content,
+            lineSpans,
+            maxChars,
+            startLine,
+            endLine,
+          );
           const returnedStats = getStats(page.rawContent);
           readBudget.settle(page.content.length);
           return textResult(page.content, {

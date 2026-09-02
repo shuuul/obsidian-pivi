@@ -15,6 +15,7 @@ import {
   type PromptModuleSettings,
 } from '@pivi/agent/prompt';
 import type { ChatMessage, OpenSessionState, StreamChunk } from '@pivi/agent/runtime';
+import { getContextCalibration } from '@pivi/agent/runtime/contextAccounting';
 import { extractTextContent } from '@pivi/agent/runtime/messageContent';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 import { prepareChatTurn } from '@pivi/agent/runtime/prepareTurn';
@@ -61,7 +62,6 @@ import {
   getSubagentOwnerToolId,
 } from './piChatRuntimeActiveTurn';
 import {
-  attachContextEnvelope,
   buildUsageAfterCompaction,
   compactCurrentSession,
   invalidateCompactionState,
@@ -72,7 +72,6 @@ import { testPiChatConnectivity } from './piChatRuntimeConnectivity';
 import { streamPiChatTurn } from './piChatRuntimeTurn';
 import {
   buildEstimatedUsageInfo,
-  buildZeroUsageInfoForModel,
   latestUsageFromMessages,
 } from './piChatRuntimeUsage';
 import { toPiImageContent } from './piImageContent';
@@ -112,7 +111,7 @@ export class PiChatRuntime implements PiChatService {
   private leafId: string | null = null;
   private readonly compactionState: PiChatCompactionState = {
     autoCompactionInFlight: false,
-    failedAutoFingerprint: null,
+    failedAutoAttempts: new Map(),
     foregroundController: null,
     generation: 0,
     prefire: null,
@@ -667,13 +666,8 @@ export class PiChatRuntime implements PiChatService {
 
   private calculateReadMaxCharsForTools(): number {
     const model = this.resolveModel();
-    const messages = this.agent?.state.messages ?? [];
-    const latestUsage = latestUsageFromMessages(messages, model)
-      ?? buildEstimatedUsageInfo(messages, model)
-      ?? buildZeroUsageInfoForModel(model);
-    return calculateReadToolMaxChars(
-      attachContextEnvelope(this.compactionDeps(), latestUsage, undefined, messages),
-    );
+    const key = model ? `${model.provider}/${model.id}` : '';
+    return calculateReadToolMaxChars(getContextCalibration(key));
   }
 
   private syncSessionMessagesAfterTurn(

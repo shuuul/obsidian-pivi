@@ -7,6 +7,7 @@ export * from './chatTypes';
 export * from './chatUi';
 export * from './chatUiProjection';
 export * from './connectivity';
+export * from './contextAccounting';
 export * from './messageContent';
 export * from './piChatService';
 export * from './prepareTurn';

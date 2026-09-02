@@ -118,7 +118,8 @@
       "templateVarsFailed": "Échec de la résolution des variables de commande de modèle.",
       "unableCreateForkTab": "Impossible de créer l’onglet de bifurcation",
       "initChatService": "Échec de l’initialisation du service de chat",
-      "titlePersistenceFailed": "Impossible d’enregistrer le titre de session généré."
+      "titlePersistenceFailed": "Impossible d’enregistrer le titre de session généré.",
+      "autoCompactionRecovery": "La compaction automatique du contexte a échoué deux fois. Exécutez /compact pour récupérer cette session manuellement."
     },
     "toolbar": {
       "externalContexts": "Contextes externes",
@@ -585,6 +586,13 @@
         "additional": "Accès supplémentaire"
       },
       "intro": "Activez ou désactivez les outils {hostName} exposés à l’agent. Les changements s’appliquent aux nouveaux tours après rafraîchissement du prompt.",
+      "reading": {
+        "defaultSize": {
+          "name": "Taille de lecture par défaut",
+          "desc": "Caractères renvoyés lorsque l’agent omet maxChars. Cette valeur par défaut est indépendante du modèle. Les demandes explicites utilisent la limite calibrée du modèle, jusqu’à 500k ; la compaction gère la pression du contexte.",
+          "option": "{count}k caractères"
+        }
+      },
       "unavailableOfficialCli": "Nécessite la CLI officielle Obsidian.",
       "unavailableExternalRead": "Nécessite l’accès en lecture externe et au moins un répertoire autorisé.",
       "unavailableCodex": "Nécessite une connexion OpenAI Codex."

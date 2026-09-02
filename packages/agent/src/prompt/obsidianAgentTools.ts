@@ -182,13 +182,13 @@ function buildReadMaxCharsGuidance(params: {
     ...(params.hasReadExternal ? ['`obsidian_read_external`'] : []),
   ].join(' and ');
   const guidance = [
-    `- Each of ${readTools} clamps \`maxChars\` to at least 1000 characters and applies a runtime default from remaining room before the output reserve, capped at 50000 characters. The 1000-character floor may cross the auto-compaction threshold so a read can still advance to the next compaction boundary instead of failing at \`maxChars=0\`. You may override this by passing \`maxChars\` explicitly, but values below 1000 are raised to the floor.`,
-    '- Explicit line ranges automatically return the largest complete-line page that fits `maxChars`. When `truncated` is true, continue from the returned `nextStartLine` instead of retrying overlapping ranges or raising the budget.',
+    `- Each of ${readTools} uses the configured Tools default read size when \`maxChars\` is omitted. You may override that default explicitly; values are clamped between 1000 and the fixed 500000-character per-read ceiling. Read pages do not shrink as context pressure rises—normal compaction preflight handles overflow before the next model request.`,
+    '- Explicit line ranges automatically return the largest complete-line page that fits `maxChars`. When `truncated` is true, continue from the returned `nextStartLine` instead of retrying overlapping ranges.',
   ];
   if (params.hasRead) {
     guidance.push(
       '- For an oversized physical line in `obsidian_read`, combine 1-based `startLine` with line-relative 1-based `startChar` and `maxChars`; a truncated page reports the exact `nextStartLine` + `nextStartChar` pair. Continue with that pair and the same `maxChars`—do not calculate offsets, overlap pages, or raise the budget. `endLine` may bound the read. If a requested line range starts with an oversized line, the tool switches to this line-relative character continuation automatically.',
-      '- If `obsidian_read` reports that a physical line cannot fit within `maxChars`, continue with `startLine` plus line-relative `startChar` at the same clamped `maxChars`. Do not raise `maxChars` past the effective clamp.',
+      '- If `obsidian_read` reports that a physical line cannot fit, continue with `startLine` plus line-relative `startChar` at the same `maxChars`. Do not raise `maxChars` past the fixed ceiling.',
       '- Plan page size from `mode: "stats"` (line count and Characters) and the clamp. Do not crawl a file with tiny `startChar` steps of around 800 characters.',
       '- A standalone `startChar` is file-global; with `startLine`, it is relative to that physical line. These coordinate systems are mutually exclusive per call: do not mix a standalone file-global `startChar` with `startLine`/`endLine`. Character positions use the same UTF-16 units as the reported `Characters` count. Do not use `startChar` with `mode: "stats"`, and do not combine it with `endLine` unless `startLine` is also present. The continuation marker counts inside `maxChars`, so source text may be slightly shorter than the cap.',
     );
@@ -196,7 +196,7 @@ function buildReadMaxCharsGuidance(params: {
   if (params.hasReadExternal) {
     guidance.push('- If `obsidian_read_external` is rejected because `maxChars` is smaller than one indivisible line, immediately retry with `maxChars` at least the required count when the remaining turn read allowance can absorb it.');
   }
-  guidance.push('- Before overriding the default, estimate how much context budget remains for this turn and how much contiguous text the task truly needs. Prefer `mode: "stats"`, paged line or character reads, or sub-agent delegation when headroom is tight; raise `maxChars` deliberately only when a larger body truly requires it and the remaining budget can absorb it.');
+  guidance.push('- Before overriding the default, estimate how much contiguous text the task truly needs. Prefer `mode: "stats"`, targeted line or character reads, or sub-agent delegation when a full body is unnecessary; raise `maxChars` deliberately when the task requires one larger contiguous read.');
   return guidance;
 }
 

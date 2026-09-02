@@ -118,7 +118,8 @@
       "templateVarsFailed": "解析範本指令變數失敗。",
       "unableCreateForkTab": "無法建立分叉分頁",
       "initChatService": "初始化聊天服務失敗",
-      "titlePersistenceFailed": "無法儲存產生的工作階段標題。"
+      "titlePersistenceFailed": "無法儲存產生的工作階段標題。",
+      "autoCompactionRecovery": "自動上下文壓縮已連續失敗兩次。請執行 /compact 手動恢復此工作階段。"
     },
     "toolbar": {
       "externalContexts": "外部上下文",
@@ -585,6 +586,13 @@
         "additional": "附加存取"
       },
       "intro": "啟用或停用向代理開放的 {hostName} 工具。變更會在提示重新整理後的新回合生效。",
+      "reading": {
+        "defaultSize": {
+          "name": "預設讀取大小",
+          "desc": "Agent 未指定 maxChars 時傳回的字元數。此預設值不受模型影響；明確要求可使用經模型校準的額度，最高 500k。上下文壓力由壓縮處理。",
+          "option": "{count}k 字元"
+        }
+      },
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
       "unavailableExternalRead": "需要外部讀取權限且至少有一個允許的目錄。",
       "unavailableCodex": "需要連線 OpenAI Codex。"

@@ -245,11 +245,11 @@ export interface ContextEnvelope {
   system: ContextEnvelopeValue;
   toolAndAgentResults: ContextEnvelopeValue;
   total: ContextEnvelopeValue;
-  /** Conservative trigger after both the configured ratio and reserved headroom. */
+  /** Fixed trigger after both the configured ratio and reserved headroom. */
   compactionTriggerTokens: number;
   /** Sum of locally estimated input categories. */
   estimatedInputTokens: number;
-  /** Current pressure uses the larger of provider and local estimates. */
+  /** Provider anchor plus estimated trailing and selected context, or a full estimate without an anchor. */
   pressureInputTokens: number;
   /** Input capacity remaining after output, compaction, and safety reserves. */
   usableInputTokens: number;

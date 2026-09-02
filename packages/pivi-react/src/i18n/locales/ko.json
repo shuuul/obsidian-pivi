@@ -118,7 +118,8 @@
       "templateVarsFailed": "템플릿 명령 변수를 해석하지 못했습니다.",
       "unableCreateForkTab": "분기 탭을 만들 수 없습니다",
       "initChatService": "채팅 서비스 초기화 실패",
-      "titlePersistenceFailed": "생성된 세션 제목을 저장하지 못했습니다."
+      "titlePersistenceFailed": "생성된 세션 제목을 저장하지 못했습니다.",
+      "autoCompactionRecovery": "자동 컨텍스트 압축이 두 번 실패했습니다. /compact를 실행하여 이 세션을 수동으로 복구하세요."
     },
     "toolbar": {
       "externalContexts": "외부 컨텍스트",
@@ -585,6 +586,13 @@
         "additional": "추가 액세스"
       },
       "intro": "에이전트에 노출되는 {hostName} 도구를 켜거나 끕니다. 변경은 프롬프트 갱신 후 새 턴에 적용됩니다.",
+      "reading": {
+        "defaultSize": {
+          "name": "기본 읽기 크기",
+          "desc": "에이전트가 maxChars를 생략할 때 반환할 문자 수입니다. 이 기본값은 모델과 무관합니다. 명시적 요청은 모델 보정 한도를 최대 500k까지 사용할 수 있으며 컨텍스트 압력은 압축으로 처리합니다.",
+          "option": "{count}k자"
+        }
+      },
       "unavailableOfficialCli": "공식 Obsidian CLI가 필요합니다.",
       "unavailableExternalRead": "외부 읽기 권한과 허용된 디렉터리가 하나 이상 필요합니다.",
       "unavailableCodex": "OpenAI Codex 연결이 필요합니다."

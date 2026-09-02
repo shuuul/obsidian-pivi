@@ -315,9 +315,16 @@ textarea.pivi-settings-control {
 .pivi-settings-content > .pivi-setting-row,
 .pivi-settings-content > .pivi-setting-stack > .pivi-setting-row,
 .pivi-settings-section__body > .pivi-setting-row,
-.pivi-settings-section__body > .pivi-setting-stack > .pivi-setting-row {
+.pivi-settings-section__body > .pivi-setting-stack > .pivi-setting-row,
+.pivi-settings-section__body > .pivi-tool-setting > .pivi-setting-row,
+.pivi-tool-setting__configuration > .pivi-setting-row,
+.pivi-tool-setting__configuration > .pivi-setting-stack > .pivi-setting-row {
   box-sizing: border-box;
   padding-inline: var(--pivi-settings-gutter);
+}
+
+.pivi-tool-setting__configuration {
+  padding-inline-start: var(--pivi-spacing-lg);
 }
 
 .pivi-settings-content > .pivi-setting-description,

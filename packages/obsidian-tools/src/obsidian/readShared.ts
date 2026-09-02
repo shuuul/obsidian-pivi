@@ -1,5 +1,5 @@
 import {
-  calculateReadToolMaxChars,
+  READ_TOOL_MAX_CHARS_CAP,
   READ_TOOL_MIN_CHARS,
   type ReadAllowanceReservation,
 } from '@pivi/agent/runtime/usage';
@@ -7,7 +7,6 @@ import {
 import type { LineSpan, ReadMode, ReadStats } from './readTypes';
 
 export * from './readTypes';
-export { READ_TOOL_MAX_CHARS_CAP as DEFAULT_SAFE_READ_MAX_CHARS } from '@pivi/agent/runtime/usage';
 
 export function getStringField(input: Record<string, unknown>, key: string): string | undefined {
   const value = input[key];
@@ -25,12 +24,12 @@ export function getPositiveIntegerField(input: Record<string, unknown>, key: str
   return value;
 }
 
-export interface EffectiveReadMaxChars {
-  /** Effective cap for this read after the turn budget and the minimum floor. */
+export interface EffectiveReadBudget {
+  /** Character cap after the fixed ceiling and turn-scoped sibling allowance. */
   maxChars: number;
   /** Explicit maxChars from the tool input, when provided. */
   requestedMaxChars?: number;
-  /** Turn budget allocated to this read before the floor is applied. */
+  /** Turn character budget allocated to this read before the minimum floor. */
   availableChars: number;
   /** Reconcile the budget with the characters actually returned. */
   settle: (returnedChars: number) => void;
@@ -38,21 +37,26 @@ export interface EffectiveReadMaxChars {
 
 const noopSettle = (): void => {};
 
-export function resolveEffectiveReadMaxChars(
+export function resolveEffectiveReadBudget(
   input: Record<string, unknown>,
-  resolveDefault?: (requestedMaxChars?: number) => ReadAllowanceReservation,
-): EffectiveReadMaxChars {
+  defaultMaxChars: number,
+  resolveAllowance?: (requestedMaxChars?: number) => ReadAllowanceReservation,
+): EffectiveReadBudget {
   const explicit = getPositiveIntegerField(input, 'maxChars');
-  const requested = explicit ?? calculateReadToolMaxChars(null);
-  if (!resolveDefault) {
+  const configuredDefault = Number.isFinite(defaultMaxChars) ? defaultMaxChars : 100_000;
+  const requested = Math.min(
+    READ_TOOL_MAX_CHARS_CAP,
+    Math.max(READ_TOOL_MIN_CHARS, explicit ?? configuredDefault),
+  );
+  if (!resolveAllowance) {
     return {
-      maxChars: Math.max(READ_TOOL_MIN_CHARS, requested),
+      maxChars: requested,
       requestedMaxChars: explicit,
       availableChars: requested,
       settle: noopSettle,
     };
   }
-  const reservation = resolveDefault(explicit);
+  const reservation = resolveAllowance(requested);
   return {
     maxChars: Math.max(READ_TOOL_MIN_CHARS, Math.min(requested, reservation.maxChars)),
     requestedMaxChars: explicit,
@@ -345,21 +349,29 @@ export function paginateLineRange(
     };
   }
 
+  let low = requestedStartLine;
+  let high = actualEndLine;
   let returnedEndLine: number | undefined;
   let rawContent = '';
   let output = '';
-  for (let line = requestedStartLine; line <= actualEndLine; line++) {
+  while (low <= high) {
+    const line = Math.floor((low + high) / 2);
     const span = spans[line - 1];
-    if (!span) break;
+    if (!span) {
+      high = line - 1;
+      continue;
+    }
     const candidateRaw = content.slice(firstSpan.start, span.end);
     const continuation = buildRangeContinuation(requestedStartLine, requestedEndLine, line);
     const candidateOutput = `${candidateRaw}${continuation}`;
     if (candidateOutput.length > maxChars) {
-      break;
+      high = line - 1;
+      continue;
     }
     returnedEndLine = line;
     rawContent = candidateRaw;
     output = candidateOutput;
+    low = line + 1;
   }
 
   if (returnedEndLine === undefined) {
@@ -429,7 +441,7 @@ export function buildStatsText(params: {
       && params.requestedMaxChars > params.availableChars
     ) {
       lines.push(
-        `Requested maxChars=${params.requestedMaxChars} exceeds this turn's remaining read budget (${params.availableChars} characters), so the response is limited to ${params.maxChars} characters.`,
+        `Requested maxChars=${params.requestedMaxChars} exceeds the fixed read ceiling or this turn's sibling-read allowance (${params.availableChars} characters).`,
       );
     }
     lines.push(

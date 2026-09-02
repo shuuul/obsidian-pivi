@@ -118,7 +118,8 @@
       "templateVarsFailed": "Error al resolver las variables de la plantilla de comando.",
       "unableCreateForkTab": "No se puede crear la pestaña de bifurcación",
       "initChatService": "Error al inicializar el servicio de chat",
-      "titlePersistenceFailed": "No se pudo guardar el título de sesión generado."
+      "titlePersistenceFailed": "No se pudo guardar el título de sesión generado.",
+      "autoCompactionRecovery": "La compactación automática del contexto falló dos veces. Ejecuta /compact para recuperar esta sesión manualmente."
     },
     "toolbar": {
       "externalContexts": "Contextos externos",
@@ -585,6 +586,13 @@
         "additional": "Acceso adicional"
       },
       "intro": "Activa o desactiva las herramientas de {hostName} expuestas al agente. Los cambios se aplican en nuevos turnos tras actualizar el prompt.",
+      "reading": {
+        "defaultSize": {
+          "name": "Tamaño de lectura predeterminado",
+          "desc": "Caracteres devueltos cuando el agente omite maxChars. Este valor predeterminado no depende del modelo. Las solicitudes explícitas usan el límite calibrado del modelo, hasta 500k; la compactación gestiona la presión de contexto.",
+          "option": "{count}k caracteres"
+        }
+      },
       "unavailableOfficialCli": "Requiere la CLI oficial de Obsidian.",
       "unavailableExternalRead": "Requiere acceso de lectura externo y al menos un directorio permitido.",
       "unavailableCodex": "Requiere conexión con OpenAI Codex."

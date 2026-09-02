@@ -46,7 +46,7 @@ describe('usage projection', () => {
     expect(calculateUsagePercentage(usage.contextTokens, usage.contextWindow)).toBe(48);
   });
 
-  it('follows pressureInputTokens when authoritative contextTokens are lower', () => {
+  it('anchors pressure to authoritative provider context tokens', () => {
     const envelope = calculateContextEnvelope({
       contextWindow: 32_000,
       contextWindowIsAuthoritative: true,
@@ -65,7 +65,7 @@ describe('usage projection', () => {
       percentage: 38,
     };
 
-    expect(envelope.pressureInputTokens).toBe(22_000);
+    expect(envelope.pressureInputTokens).toBe(20_000);
     expect(calculateContextUsagePercentage(usage)).toBeGreaterThanOrEqual(80);
     expect(calculateUsagePercentage(usage.contextTokens, usage.contextWindow)).toBeLessThan(80);
   });
@@ -136,7 +136,7 @@ describe('usage projection', () => {
     });
   });
 
-  it('uses output-reserve headroom converted to characters when below the read cap', () => {
+  it('keeps the fixed read ceiling near the compaction trigger', () => {
     const envelope = calculateContextEnvelope({
       contextWindow: 200_000,
       contextWindowIsAuthoritative: true,
@@ -152,91 +152,14 @@ describe('usage projection', () => {
       percentage: 88,
     };
 
-    // Hard ceiling = 200k - 16k output reserve = 184k; remaining = 9k tokens → 9k chars.
     expect(calculateCompactionRemainingTokens(usage)).toBe(0);
-    expect(calculateReadToolMaxChars(usage)).toBe(9_000);
+    expect(calculateReadToolMaxChars()).toBe(500_000);
   });
 
-  it('uses a 1:1 token-to-char budget for CJK-safe read limits', () => {
-    const envelope = calculateContextEnvelope({
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      providerContextTokens: 180_000,
-    });
-    const usage: UsageInfo = {
-      contextEnvelope: envelope,
-      contextTokens: 180_000,
-      contextTokensIsAuthoritative: true,
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      inputTokens: 180_000,
-      percentage: 90,
-    };
-
-    expect(calculateReadToolMaxChars(usage)).toBe(4_000);
-  });
-
-  it('uses the read cap when output-reserve headroom exceeds it', () => {
-    const envelope = calculateContextEnvelope({
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      providerContextTokens: 10_000,
-    });
-    const usage: UsageInfo = {
-      contextEnvelope: envelope,
-      contextTokens: 10_000,
-      contextTokensIsAuthoritative: true,
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      inputTokens: 10_000,
-      percentage: 5,
-    };
-
-    expect(calculateReadToolMaxChars(usage)).toBe(READ_TOOL_MAX_CHARS_CAP);
-  });
-
-  it('allows a full read cap when pressure is already at the compaction trigger', () => {
-    const envelope = calculateContextEnvelope({
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      providerContextTokens: 164_000,
-    });
-    const usage: UsageInfo = {
-      contextEnvelope: envelope,
-      contextTokens: 164_000,
-      contextTokensIsAuthoritative: true,
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      inputTokens: 164_000,
-      percentage: 82,
-    };
-
-    expect(calculateCompactionRemainingTokens(usage)).toBe(0);
-    // Remaining to output-reserve ceiling: 184k - 164k = 20k tokens → 20k chars.
-    expect(calculateReadToolMaxChars(usage)).toBe(20_000);
-  });
-
-  it('returns zero read max chars when pressure reaches the output-reserve ceiling', () => {
-    const envelope = calculateContextEnvelope({
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      providerContextTokens: 184_000,
-    });
-    const usage: UsageInfo = {
-      contextEnvelope: envelope,
-      contextTokens: 184_000,
-      contextTokensIsAuthoritative: true,
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      inputTokens: 184_000,
-      percentage: 92,
-    };
-
-    expect(calculateReadToolMaxChars(usage)).toBe(0);
-  });
-
-  it('falls back to the read cap when usage is unavailable', () => {
-    expect(calculateReadToolMaxChars(null)).toBe(READ_TOOL_MAX_CHARS_CAP);
+  it('calibrates the fixed read ceiling without exceeding its hard cap', () => {
+    expect(calculateReadToolMaxChars(0.6)).toBe(300_000);
+    expect(calculateReadToolMaxChars(1)).toBe(READ_TOOL_MAX_CHARS_CAP);
+    expect(calculateReadToolMaxChars(1.5)).toBe(READ_TOOL_MAX_CHARS_CAP);
   });
 
   it('flags over-limit only when context tokens reach a known window', () => {
@@ -249,7 +172,7 @@ describe('usage projection', () => {
     expect(isContextOverLimit({ ...baseUsage, contextTokens: 147_000, contextWindow: 128_000 })).toBe(true);
   });
 
-  it('uses conservative context pressure when it exceeds stale provider usage', () => {
+  it('does not let a full local estimate override provider-anchored pressure', () => {
     const contextEnvelope = calculateContextEnvelope({
       contextWindow: 1_000,
       providerContextTokens: 500,
@@ -261,7 +184,7 @@ describe('usage projection', () => {
       ...baseUsage,
       contextEnvelope,
       contextTokens: 500,
-    })).toBe(true);
+    })).toBe(false);
   });
 
   it('returns 0% cache hit when the provider reported no cache activity', () => {

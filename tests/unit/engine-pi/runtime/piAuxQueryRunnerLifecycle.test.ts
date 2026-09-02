@@ -134,7 +134,7 @@ describe('PiAuxQueryRunner (core)', () => {
       },
     });
     await runner.query(baseConfig(), 'prompt');
-    expect(resolveChildReadMaxChars?.().maxChars).toBe(16_000);
+    expect(resolveChildReadMaxChars?.().maxChars).toBe(500_000);
   });
 
   it('throws Cancelled when abort signal is already set before query', async () => {

@@ -2,8 +2,10 @@ import { useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
-import type { SettingsFeedbackMessage, SettingsPorts } from '../ports';
-import { BadgeListInput, SettingRow, SettingsPageDescription, SettingsSection, Toggle } from './controls';
+import type { SettingsFeedbackMessage, SettingsPorts, SettingsToolRow } from '../ports';
+import { BadgeListInput, Select, SettingRow, SettingsPageDescription, SettingsSection, Toggle } from './controls';
+
+const READ_SIZE_OPTIONS = [50_000, 100_000, 200_000, 500_000] as const;
 
 const TOOL_GROUPS = [
   ['workspace-api', 'settings.tools.groups.workspace'],
@@ -38,6 +40,7 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
   const [directories, setDirectories] = useState<readonly string[]>(settings.externalReadDirectories);
   const [bashAllowlist, setBashAllowlist] = useState<readonly string[]>(settings.bashAllowlist);
   const [allowExternalRead, setAllowExternalRead] = useState(settings.allowExternalRead);
+  const [defaultReadMaxChars, setDefaultReadMaxChars] = useState(settings.defaultReadMaxChars);
   const [toolRows, setToolRows] = useState(() => ports.complex.tools.listToolRows());
   const [pending, setPending] = useState(false);
   const [directoryFeedback, setDirectoryFeedback] = useState<SettingsFeedbackMessage | null>(null);
@@ -143,45 +146,71 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
     });
   };
 
-  return (
-    <>
-      <SettingsPageDescription>
-        <p className="pivi-setting-description">{t('settings.tools.intro', { hostName })}</p>
-      </SettingsPageDescription>
-      <SettingsSection title={t('settings.externalRead.heading')} headingLevel={3}>
-        <SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
-          <Toggle
-            checked={allowExternalRead}
+  const renderToolConfiguration = (row: SettingsToolRow) => {
+    if (row.configuration === 'read') {
+      return (
+        <SettingRow
+          name={t('settings.tools.reading.defaultSize.name')}
+          description={t('settings.tools.reading.defaultSize.desc')}
+        >
+          <Select
             disabled={pending}
-            label={t('settings.externalRead.allow.name')}
-            onChange={(next) => {
+            label={t('settings.tools.reading.defaultSize.name')}
+            value={String(defaultReadMaxChars)}
+            onChange={(value) => {
+              const next = Number(value);
               void runOperation(async () => {
-                if (!await persist({ allowExternalRead: next })) return;
-                setAllowExternalRead(next);
-                setToolRows(ports.complex.tools.listToolRows());
+                if (!await persist({ defaultReadMaxChars: next })) return;
+                setDefaultReadMaxChars(next);
               });
             }}
-          />
+          >
+            {READ_SIZE_OPTIONS.map((value) => (
+              <option key={value} value={value}>{t('settings.tools.reading.defaultSize.option', { count: value / 1_000 })}</option>
+            ))}
+          </Select>
         </SettingRow>
-        <div className="pivi-external-directories-setting pivi-setting-stack">
-          <SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}>
-            <BadgeListInput
-              values={directories}
-              placeholder={t('settings.externalRead.directories.placeholder')}
-              inputLabel={t('settings.externalRead.directories.inputLabel')}
-              removeLabel={(value) => t('settings.externalRead.directories.removeAria', { value })}
+      );
+    }
+    if (row.configuration === 'external-read') {
+      return (
+        <>
+          <SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
+            <Toggle
+              checked={allowExternalRead}
               disabled={pending}
-              feedback={directoryFeedback}
-              onAdd={addDirectories}
-              onRemove={removeDirectory}
+              label={t('settings.externalRead.allow.name')}
+              onChange={(next) => {
+                void runOperation(async () => {
+                  if (!await persist({ allowExternalRead: next })) return;
+                  setAllowExternalRead(next);
+                  setToolRows(ports.complex.tools.listToolRows());
+                });
+              }}
             />
-            <button type="button" title={t('settings.externalRead.directories.browseTooltip')} disabled={pending} onMouseDown={(event) => event.preventDefault()} onClick={() => { void chooseDirectory(); }}>
-              {t('settings.externalRead.directories.browse')}
-            </button>
           </SettingRow>
-        </div>
-      </SettingsSection>
-      <SettingsSection title={t('settings.bash.heading')} headingLevel={3}>
+          <div className="pivi-external-directories-setting pivi-setting-stack">
+            <SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}>
+              <BadgeListInput
+                values={directories}
+                placeholder={t('settings.externalRead.directories.placeholder')}
+                inputLabel={t('settings.externalRead.directories.inputLabel')}
+                removeLabel={(value) => t('settings.externalRead.directories.removeAria', { value })}
+                disabled={pending}
+                feedback={directoryFeedback}
+                onAdd={addDirectories}
+                onRemove={removeDirectory}
+              />
+              <button type="button" title={t('settings.externalRead.directories.browseTooltip')} disabled={pending} onMouseDown={(event) => event.preventDefault()} onClick={() => { void chooseDirectory(); }}>
+                {t('settings.externalRead.directories.browse')}
+              </button>
+            </SettingRow>
+          </div>
+        </>
+      );
+    }
+    if (row.configuration === 'bash') {
+      return (
         <div className="pivi-setting-stack">
           <SettingRow name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}>
             <BadgeListInput
@@ -194,7 +223,16 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
             />
           </SettingRow>
         </div>
-      </SettingsSection>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <>
+      <SettingsPageDescription>
+        <p className="pivi-setting-description">{t('settings.tools.intro', { hostName })}</p>
+      </SettingsPageDescription>
       <SettingsSection title={t('settings.tools.heading')} headingLevel={3}>
         {TOOL_GROUPS.map(([group, titleKey]) => {
           const rows = toolRows.filter(row => row.group === group);
@@ -202,30 +240,37 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
           return (
             <SettingsSection key={group} title={t(titleKey, { hostName, workspaceName })} headingLevel={3}>
               {rows.map((row) => (
-                <SettingRow key={row.name} name={`${row.label} (${row.name})`} description={row.description}>
-                  <Toggle
-                    checked={row.enabled}
-                    disabled={!row.available}
-                    label={row.label}
-                    onChange={(enabled) => {
-                      if (pendingTools.current.has(row.name)) return;
-                      pendingTools.current.add(row.name);
-                      setToolRows(rows => rows.map(entry => (
-                        entry.name === row.name ? { ...entry, enabled } : entry
-                      )));
-                      void ports.complex.tools.setToolEnabled(row.name, enabled)
-                        .catch(() => {
-                          setToolRows(rows => rows.map(entry => (
-                            entry.name === row.name ? { ...entry, enabled: !enabled } : entry
-                          )));
-                          ports.feedback.notify(t('common.error'));
-                        })
-                        .finally(() => {
-                          pendingTools.current.delete(row.name);
-                        });
-                    }}
-                  />
-                </SettingRow>
+                <div key={row.name} className="pivi-tool-setting">
+                  <SettingRow name={`${row.label} (${row.name})`} description={row.description}>
+                    <Toggle
+                      checked={row.enabled}
+                      disabled={!row.available}
+                      label={row.label}
+                      onChange={(enabled) => {
+                        if (pendingTools.current.has(row.name)) return;
+                        pendingTools.current.add(row.name);
+                        setToolRows(rows => rows.map(entry => (
+                          entry.name === row.name ? { ...entry, enabled } : entry
+                        )));
+                        void ports.complex.tools.setToolEnabled(row.name, enabled)
+                          .catch(() => {
+                            setToolRows(rows => rows.map(entry => (
+                              entry.name === row.name ? { ...entry, enabled: !enabled } : entry
+                            )));
+                            ports.feedback.notify(t('common.error'));
+                          })
+                          .finally(() => {
+                            pendingTools.current.delete(row.name);
+                          });
+                      }}
+                    />
+                  </SettingRow>
+                  {row.configuration && (
+                    <div className="pivi-tool-setting__configuration">
+                      {renderToolConfiguration(row)}
+                    </div>
+                  )}
+                </div>
               ))}
             </SettingsSection>
           );

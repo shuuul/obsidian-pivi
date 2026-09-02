@@ -70,11 +70,11 @@ describe('failure-driven prompt content', () => {
       registeredToolsSection: section,
     });
 
-    expect(section).toContain('Do not raise `maxChars` past the effective clamp');
+    expect(section).toContain('Do not raise `maxChars` past the fixed ceiling');
     expect(section).toContain('Plan page size from `mode: "stats"`');
     expect(section).toContain('tiny `startChar` steps of around 800 characters');
     expect(section).toContain('These coordinate systems are mutually exclusive per call');
-    expect(prompt).toContain('Do not raise `maxChars` past the effective clamp');
+    expect(prompt).toContain('Do not raise `maxChars` past the fixed ceiling');
     expect(prompt).toContain('These coordinate systems are mutually exclusive per call');
   });
 });

@@ -11,6 +11,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | Spec | Created | Outcome |
 |---|---|---|
 | [046-composable-obsidian-workflow-prompts.md](046-composable-obsidian-workflow-prompts.md) | 2026-09-01 | Modular system-prompt registry, Settings Prompt tab, failure-driven guidance, and main-Agent `pivi_prompt` management. |
+| [047-provider-anchored-context-accounting.md](047-provider-anchored-context-accounting.md) | 2026-09-02 | Provider-anchored context pressure with bounded trailing estimates and calibration, truthful compaction timeout/retry semantics, and a fixed read ceiling (issues #98, #99). |
 
 ## Archived specs
 

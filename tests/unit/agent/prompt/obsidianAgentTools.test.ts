@@ -105,12 +105,14 @@ describe('registered tool prompt descriptors', () => {
   it('keeps read pagination guidance when external read is not registered', () => {
     const section = build([spec('obsidian_read', 'readMarker')]);
 
-    expect(section).toContain('Each of `obsidian_read` clamps `maxChars`');
+    expect(section).toContain('uses the configured Tools default read size');
+    expect(section).toContain('fixed 500000-character per-read ceiling');
+    expect(section).toContain('do not shrink as context pressure rises');
     expect(section).toContain('nextStartLine');
     expect(section).toContain('combine 1-based `startLine` with line-relative 1-based `startChar`');
     expect(section).toContain('exact `nextStartLine` + `nextStartChar` pair');
     expect(section).toContain('do not calculate offsets, overlap pages, or raise the budget');
-    expect(section).toContain('Do not raise `maxChars` past the effective clamp');
+    expect(section).toContain('Do not raise `maxChars` past the fixed ceiling');
     expect(section).toContain('Plan page size from `mode: "stats"`');
     expect(section).toContain('tiny `startChar` steps of around 800 characters');
     expect(section).toContain('A standalone `startChar` is file-global');

@@ -1,4 +1,4 @@
-import { READ_TOOL_MAX_CHARS_CAP, type ReadAllowanceReservation } from '@pivi/agent/runtime/usage';
+import type { ReadAllowanceReservation } from '@pivi/agent/runtime/usage';
 
 export interface PiReadBudget {
   reserve(requestedMaxChars?: number): ReadAllowanceReservation;
@@ -16,7 +16,7 @@ export function createPiReadBudget(resolveAvailableChars: () => number): PiReadB
       remainingChars = remainingChars === null
         ? availableChars
         : Math.min(remainingChars, availableChars);
-      const requested = requestedMaxChars ?? READ_TOOL_MAX_CHARS_CAP;
+      const requested = requestedMaxChars ?? availableChars;
       const allocation = Math.min(remainingChars, requested);
       remainingChars -= allocation;
       const reservationEpoch = epoch;

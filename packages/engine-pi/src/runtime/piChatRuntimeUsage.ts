@@ -22,7 +22,11 @@ export function buildUsageInfoFromAgentMessage(
   resolvedModel: ResolvedPiModel,
 ): UsageInfo | null {
   const msg = message as unknown as Record<string, unknown>;
-  if (msg.role !== 'assistant') {
+  if (
+    msg.role !== 'assistant'
+    || msg.stopReason === 'aborted'
+    || msg.stopReason === 'error'
+  ) {
     return null;
   }
   const usage = getRecord(msg.usage);

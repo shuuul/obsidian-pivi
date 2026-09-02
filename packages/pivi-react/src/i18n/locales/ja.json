@@ -118,7 +118,8 @@
       "templateVarsFailed": "テンプレートコマンド変数の解決に失敗しました。",
       "unableCreateForkTab": "分岐タブを作成できません",
       "initChatService": "チャットサービスの初期化に失敗しました",
-      "titlePersistenceFailed": "生成されたセッションタイトルを保存できませんでした。"
+      "titlePersistenceFailed": "生成されたセッションタイトルを保存できませんでした。",
+      "autoCompactionRecovery": "コンテキストの自動圧縮に 2 回失敗しました。/compact を実行して、このセッションを手動で復旧してください。"
     },
     "toolbar": {
       "externalContexts": "外部コンテキスト",
@@ -585,6 +586,13 @@
         "additional": "追加アクセス"
       },
       "intro": "エージェントに公開する {hostName} ツールの有効/無効。変更はプロンプト更新後の新しいターンで反映されます。",
+      "reading": {
+        "defaultSize": {
+          "name": "既定の読み取りサイズ",
+          "desc": "エージェントが maxChars を省略した場合に返す文字数です。この既定値はモデルに依存しません。明示的な要求ではモデル補正済みの上限（最大 500k）を使用でき、コンテキスト圧力は圧縮で処理します。",
+          "option": "{count}k 文字"
+        }
+      },
       "unavailableOfficialCli": "公式の Obsidian CLI が必要です。",
       "unavailableExternalRead": "外部読み取り権限と許可ディレクトリが少なくとも 1 つ必要です。",
       "unavailableCodex": "OpenAI Codex の接続が必要です。"

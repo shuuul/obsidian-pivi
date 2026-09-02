@@ -398,6 +398,8 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     return this.uiFacades;
   }
 
+  getCompactionRecoveryWarning = (): string => t('chat.errors.autoCompactionRecovery');
+
   createChatService(options?: {
     capabilityApproval?: CapabilityApprovalPort | null;
     piviManagementApproval?: PiviManagementApprovalPort | null;

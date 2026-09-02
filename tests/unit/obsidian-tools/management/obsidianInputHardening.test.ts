@@ -147,7 +147,7 @@ describe('obsidian tool input hardening', () => {
     const deps = makeDeps({
       resolveReadMaxChars: () => readAllowance(20_000),
       externalFiles: {
-        stat: jest.fn().mockReturnValue({ path: '/tmp/large.log', size: 25_000, isDirectory: false, isFile: true }),
+        stat: jest.fn().mockReturnValue({ path: '/tmp/large.log', size: 101_000, isDirectory: false, isFile: true }),
         readFile: jest.fn(),
         listPath: jest.fn(),
         isPathAllowed: jest.fn().mockReturnValue(true),
@@ -159,9 +159,9 @@ describe('obsidian tool input hardening', () => {
       path: '/tmp/large.log',
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
-    expect(result.content[0].text).toContain('Bytes: 25000');
+    expect(result.content[0].text).toContain('Bytes: 101000');
     expect(result.content[0].text).toContain('Large external file');
-    expect(result.details).toMatchObject({ path: '/tmp/large.log', bytes: 25_000, truncated: true });
+    expect(result.details).toMatchObject({ path: '/tmp/large.log', bytes: 101_000, truncated: true });
     expect(deps.externalFiles.readFile).not.toHaveBeenCalled();
   });
 
@@ -240,6 +240,7 @@ describe('obsidian tool input hardening', () => {
       path: 'notes/a.md',
       startLine: 1,
       endLine: 5,
+      maxChars: 1_000,
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
     expect(result.content[0].text).toContain('1:xxxxxxxx');
@@ -350,6 +351,7 @@ describe('obsidian tool input hardening', () => {
       path: 'notes/a.md',
       startLine: 1,
       endLine: 2,
+      maxChars: 1_000,
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
     expect(result.content[0].text.length).toBeLessThanOrEqual(1_000);
@@ -426,6 +428,7 @@ describe('obsidian tool input hardening', () => {
       path: '/tmp/a.txt',
       startLine: 1,
       endLine: 4,
+      maxChars: 1_000,
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
     expect(result.content[0].text).toContain('Continue with startLine=3, endLine=4');
@@ -486,7 +489,7 @@ describe('obsidian tool input hardening', () => {
   });
 
   it('does not return large full-note reads by default', async () => {
-    const content = `${'x'.repeat(51_000)}\nSECRET_CONTENT`;
+    const content = `${'x'.repeat(101_000)}\nSECRET_CONTENT`;
     const deps = makeDeps({
       resolveReadMaxChars: () => readAllowance(50_000),
       vault: {
@@ -828,7 +831,7 @@ describe('obsidian tool input hardening', () => {
 describe('read budget settlement', () => {
   it('refunds a stats-only large-file read so later reads keep the turn budget', async () => {
     const budget = createPiReadBudget(() => 50_000);
-    const content = Array.from({ length: 600 }, (_, index) => `${index + 1}:${'q'.repeat(97)}\n`).join('');
+    const content = Array.from({ length: 1_200 }, (_, index) => `${index + 1}:${'q'.repeat(97)}\n`).join('');
     const deps = makeDeps({
       resolveReadMaxChars: (requestedMaxChars?: number) => budget.reserve(requestedMaxChars),
       vault: {
@@ -858,7 +861,7 @@ describe('read budget settlement', () => {
     });
   });
 
-  it('explains when an explicit maxChars is clamped by the remaining turn budget', async () => {
+  it('explains when the fixed sibling allowance limits an explicit maxChars request', async () => {
     const content = 'x'.repeat(60_000);
     const deps = makeDeps({
       resolveReadMaxChars: () => readAllowance(2_000),
@@ -873,7 +876,7 @@ describe('read budget settlement', () => {
     }) as { content: [{ text: string }] };
 
     expect(result.content[0].text).toContain(
-      "Requested maxChars=50000 exceeds this turn's remaining read budget (2000 characters)",
+      'Requested maxChars=50000 exceeds the fixed read ceiling or this turn\'s sibling-read allowance (2000 characters)',
     );
   });
 });

@@ -14,7 +14,10 @@ import type { StreamChunk } from '@pivi/agent/runtime';
 import type { PreparedChatTurn } from '@pivi/agent/runtime/types';
 
 import { createActiveTurn } from '../../../../packages/engine-pi/src/runtime/piChatRuntimeActiveTurn';
-import type { PiChatCompactionDeps } from '../../../../packages/engine-pi/src/runtime/piChatRuntimeCompaction';
+import {
+  getAutoCompactionRecoveryWarning,
+  type PiChatCompactionDeps,
+} from '../../../../packages/engine-pi/src/runtime/piChatRuntimeCompaction';
 import { streamPiChatTurn } from '../../../../packages/engine-pi/src/runtime/piChatRuntimeTurn';
 
 function assistant(
@@ -150,6 +153,20 @@ describe('streamPiChatTurn retry lifecycle', () => {
     jest.useRealTimers();
   });
 
+  it('uses the host-localized manual recovery warning only after two automatic failures', () => {
+    const warning = 'Localized /compact recovery warning';
+    const compaction = {
+      plugin: { getCompactionRecoveryWarning: () => warning } as PiRuntimeHost,
+      sessionTree: null,
+      compactionState: { failedAutoAttempts: new Map<string, number>() },
+    } as PiChatCompactionDeps;
+
+    compaction.compactionState.failedAutoAttempts.set('', 1);
+    expect(getAutoCompactionRecoveryWarning(compaction)).toBeNull();
+    compaction.compactionState.failedAutoAttempts.set('', 2);
+    expect(getAutoCompactionRecoveryWarning(compaction)).toBe(warning);
+  });
+
   it('discards a transient failure from persistence before retrying', async () => {
     const { agent, continuePrompt } = createRetryingAgent();
     const activeTurn = createActiveTurn();
@@ -161,7 +178,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       agent,
       compactionState: {
         autoCompactionInFlight: false,
-        failedAutoFingerprint: null,
+        failedAutoAttempts: new Map(),
         foregroundController: null,
         generation: 0,
         prefire: null,
@@ -257,7 +274,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       agent,
       compactionState: {
         autoCompactionInFlight: false,
-        failedAutoFingerprint: null,
+        failedAutoAttempts: new Map(),
         foregroundController: null,
         generation: 0,
         prefire: null,
@@ -352,7 +369,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       agent,
       compactionState: {
         autoCompactionInFlight: false,
-        failedAutoFingerprint: null,
+        failedAutoAttempts: new Map(),
         foregroundController: null,
         generation: 0,
         prefire: null,
@@ -464,7 +481,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       agent,
       compactionState: {
         autoCompactionInFlight: false,
-        failedAutoFingerprint: null,
+        failedAutoAttempts: new Map(),
         foregroundController: null,
         generation: 0,
         prefire: null,
@@ -563,7 +580,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       agent,
       compactionState: {
         autoCompactionInFlight: false,
-        failedAutoFingerprint: null,
+        failedAutoAttempts: new Map(),
         foregroundController: null,
         generation: 0,
         prefire: null,

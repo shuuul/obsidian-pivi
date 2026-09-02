@@ -1,5 +1,9 @@
 import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
 import { calculateContextEnvelope, calculateUsagePercentage, type CheckpointPresentation, type UsageInfo } from '@pivi/agent/runtime';
+import {
+  calibrateTokenEstimate,
+  observeProviderUsage,
+} from '@pivi/agent/runtime/contextAccounting';
 import type { StreamChunkQueue } from '@pivi/agent/runtime/streamChunkQueue';
 import type { PreparedChatTurn } from '@pivi/agent/runtime/types';
 
@@ -40,7 +44,7 @@ import {
   toCheckpointPresentation,
 } from '../session/piContextCompaction';
 import type { SessionTreeStore } from '../session/sessionTreeStore';
-import { sampleCompactionNote } from './piCompactionSampler';
+import { PiCompactionTimeoutError, sampleCompactionNote } from './piCompactionSampler';
 import type { PiRuntimeHost } from './piRuntimeHost';
 
 interface PiCompactionPrefire {
@@ -55,7 +59,7 @@ interface PiCompactionPrefire {
 
 export interface PiChatCompactionState {
   autoCompactionInFlight: boolean;
-  failedAutoFingerprint: string | null;
+  failedAutoAttempts: Map<string, number>;
   foregroundController: AbortController | null;
   generation: number;
   prefire: PiCompactionPrefire | null;
@@ -123,6 +127,83 @@ function modelKey(deps: PiChatCompactionDeps): string {
   return model ? `${model.provider}/${model.id}` : '';
 }
 
+function assistantProviderTokens(message: AgentMessage): number | null {
+  const record = message as unknown as Record<string, unknown>;
+  if (
+    record.role !== 'assistant'
+    || record.stopReason === 'aborted'
+    || record.stopReason === 'error'
+  ) {
+    return null;
+  }
+  const usage = record.usage;
+  if (!usage || typeof usage !== 'object' || Array.isArray(usage)) {
+    return null;
+  }
+  const values = usage as Record<string, unknown>;
+  const total = typeof values.totalTokens === 'number' ? values.totalTokens : 0;
+  const input = typeof values.input === 'number' ? values.input : 0;
+  const output = typeof values.output === 'number' ? values.output : 0;
+  const cacheRead = typeof values.cacheRead === 'number' ? values.cacheRead : 0;
+  const cacheWrite = typeof values.cacheWrite === 'number' ? values.cacheWrite : 0;
+  const tokens = total > 0 ? total : input + output + cacheRead + cacheWrite;
+  return tokens > 0 ? tokens : null;
+}
+
+interface ProviderAnchorProjection {
+  calibration: number;
+  tokens: number;
+  trailingTokens: number;
+}
+
+function findProviderAnchor(
+  deps: PiChatCompactionDeps,
+  pendingMessages: AgentMessage[] = [],
+): ProviderAnchorProjection | null {
+  const entries = deps.sessionTree?.getLinearLlmContextEntries() ?? [];
+  const index = deps.sessionTree ? getContextTokenIndex(deps.sessionTree) : new PiContextTokenIndex();
+  index.sync(entries);
+  const pendingOnly = deps.sessionTree && pendingMessages.length > 0
+    ? missingAgentMessages(deps.sessionTree.loadAgentMessages(), pendingMessages)
+    : pendingMessages;
+  const key = modelKey(deps);
+  for (let pendingIndex = pendingOnly.length - 1; pendingIndex >= 0; pendingIndex--) {
+    const message = pendingOnly[pendingIndex];
+    if (!message) continue;
+    const tokens = assistantProviderTokens(message);
+    if (!tokens) continue;
+    const localAtAnchor = estimateSystemTokens(deps.agent)
+      + index.tokensBetween(0)
+      + estimateAgentMessagesTokens(pendingOnly.slice(0, pendingIndex + 1));
+    const calibration = observeProviderUsage(key, tokens, localAtAnchor);
+    return {
+      calibration,
+      tokens,
+      trailingTokens: calibrateTokenEstimate(
+        estimateAgentMessagesTokens(pendingOnly.slice(pendingIndex + 1)),
+        calibration,
+      ),
+    };
+  }
+  for (let entryIndex = entries.length - 1; entryIndex >= 0; entryIndex--) {
+    const entry = entries[entryIndex];
+    if (!entry || entry.type !== 'message' || !('message' in entry)) continue;
+    const tokens = assistantProviderTokens(entry.message);
+    if (!tokens) continue;
+    const localAtAnchor = estimateSystemTokens(deps.agent) + index.tokensBetween(0, entryIndex + 1);
+    const calibration = observeProviderUsage(key, tokens, localAtAnchor);
+    return {
+      calibration,
+      tokens,
+      trailingTokens: calibrateTokenEstimate(
+        index.tokensBetween(entryIndex + 1) + estimateAgentMessagesTokens(pendingOnly),
+        calibration,
+      ),
+    };
+  }
+  return null;
+}
+
 function authoritativeReservedOutputTokens(model: PiResolvedModel | null): number | undefined {
   return model?.outputTokenLimitIsAuthoritative ? model.maxTokens : undefined;
 }
@@ -146,7 +227,7 @@ export function invalidateCompactionState(state: PiChatCompactionState): void {
   state.foregroundController?.abort();
   state.prefire = null;
   state.foregroundController = null;
-  state.failedAutoFingerprint = null;
+  state.failedAutoAttempts.clear();
   state.autoCompactionInFlight = false;
 }
 
@@ -176,24 +257,29 @@ export function attachContextEnvelope(
     ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
     : 0;
   const resolvedModel = deps.resolveModel();
+  const anchor = findProviderAnchor(deps, pendingMessages);
+  const providerAnchorTokens = anchor?.tokens
+    ?? (usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined);
+  const calibratedSelectedContext = anchor
+    ? calibrateTokenEstimate(selectedContext, anchor.calibration)
+    : selectedContext;
   const contextEnvelope = calculateContextEnvelope({
     checkpoints: categories.checkpoints,
     contextWindow: usage.contextWindow || DEFAULT_COMPACTION_CONTEXT_WINDOW,
     contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
     outputTokenLimit: usage.outputTokenLimit,
-    providerContextTokens: usage.contextTokensIsAuthoritative
-      ? usage.contextTokens
-      : undefined,
+    providerContextTokens: providerAnchorTokens,
     recentConversation: categories.recentConversation,
     reservedOutputTokens: authoritativeReservedOutputTokens(resolvedModel),
-    selectedContext,
+    selectedContext: calibratedSelectedContext,
     system: estimateSystemTokens(deps.agent),
     toolAndAgentResults: categories.toolAndAgentResults,
+    trailingEstimateTokens: anchor?.trailingTokens,
   });
   if (usage.contextTokensIsAuthoritative) {
     return { ...usage, contextEnvelope };
   }
-  const contextTokens = contextEnvelope.total.tokens;
+  const contextTokens = contextEnvelope.pressureInputTokens;
   return {
     ...usage,
     contextEnvelope,
@@ -264,7 +350,9 @@ export function shouldAutoCompactSession(
   }
   return shouldAutoCompact({
     compactionInFlight: deps.compactionState.autoCompactionInFlight,
-    failedFingerprint: deps.compactionState.failedAutoFingerprint,
+    failedFingerprint: (deps.compactionState.failedAutoAttempts.get(currentFingerprint(deps)) ?? 0) >= 2
+      ? currentFingerprint(deps)
+      : null,
     providerUsage,
     sessionFingerprint: currentFingerprint(deps),
     sessionLeafId: deps.sessionTree.getLeafId(),
@@ -289,10 +377,25 @@ export function estimateStoredConversationTokens(deps: PiChatCompactionDeps): nu
   return deps.sessionTree ? estimateSessionEntriesTokens(deps.sessionTree) : 0;
 }
 
+export function getAutoCompactionRecoveryWarning(
+  deps: PiChatCompactionDeps,
+): string | null {
+  if ((deps.compactionState.failedAutoAttempts.get(currentFingerprint(deps)) ?? 0) < 2) {
+    return null;
+  }
+  return deps.plugin.getCompactionRecoveryWarning?.() ?? null;
+}
+
 export function estimateProjectedTurnTokens(
   deps: PiChatCompactionDeps,
   turn: PreparedChatTurn,
 ): number {
+  const anchor = findProviderAnchor(deps);
+  if (anchor) {
+    return anchor.tokens
+      + anchor.trailingTokens
+      + calibrateTokenEstimate(estimateTextTokens(turn.prompt), anchor.calibration);
+  }
   const sessionTokens = deps.sessionTree
     ? estimateSessionEntriesTokens(deps.sessionTree)
     : estimateAgentMessagesTokens(deps.agent?.state.messages ?? []);
@@ -345,8 +448,24 @@ export async function prepareContextForTurn(
 
   let compacted = false;
   if (canCompactCurrentSession(deps)) {
+    const fingerprint = currentFingerprint(deps);
+    if ((deps.compactionState.failedAutoAttempts.get(fingerprint) ?? 0) >= 2) {
+      const warning = getAutoCompactionRecoveryWarning(deps);
+      if (warning) queue.push({ type: 'notice', level: 'warning', content: warning });
+      return null;
+    }
     queue.push({ type: 'context_compacting' });
-    const compaction = await compactCurrentSession(deps, 'threshold');
+    let compaction: PiChatCompactionResult | null;
+    try {
+      compaction = await compactCurrentSession(deps, 'threshold');
+    } catch (error) {
+      if ((deps.compactionState.failedAutoAttempts.get(fingerprint) ?? 0) >= 2) {
+        const warning = getAutoCompactionRecoveryWarning(deps);
+        if (warning) queue.push({ type: 'notice', level: 'warning', content: warning });
+        return null;
+      }
+      throw error;
+    }
     compacted = compaction !== null;
     if (compaction) {
       pushCompactionChunks(queue, deps, compaction, turn);
@@ -496,6 +615,7 @@ async function sampleFallback(
   signal: AbortSignal,
 ): Promise<CompactionDraft> {
   let lastError: unknown;
+  let timeoutSeen = false;
   for (let attempt = 0; attempt < FALLBACK_ATTEMPTS; attempt++) {
     if (signal.aborted) {
       throw new Error('Cancelled');
@@ -517,6 +637,10 @@ async function sampleFallback(
         throw error;
       }
       lastError = error;
+      if (timeoutSeen || (error instanceof PiCompactionTimeoutError && attempt >= 1)) {
+        break;
+      }
+      timeoutSeen = error instanceof PiCompactionTimeoutError;
       if (attempt + 1 < FALLBACK_ATTEMPTS) {
         await waitForRetry(signal);
       }
@@ -587,10 +711,7 @@ async function compactUnlocked(
   const generation = deps.compactionState.generation;
   const initialModelKey = modelKey(deps);
   const initialSessionKey = sessionKey(deps);
-  if (
-    reason === 'threshold'
-    && deps.compactionState.failedAutoFingerprint === fingerprint
-  ) {
+  if (reason === 'threshold' && (deps.compactionState.failedAutoAttempts.get(fingerprint) ?? 0) >= 2) {
     return null;
   }
 
@@ -630,7 +751,7 @@ async function compactUnlocked(
     );
     deps.onLeafIdChanged(tree.getLeafId());
     deps.onAssistantMessageId(appended.compactionId);
-    deps.compactionState.failedAutoFingerprint = null;
+    deps.compactionState.failedAutoAttempts.delete(fingerprint);
     deps.compactionState.prefire = null;
     if (deps.agent) {
       deps.agent.state.messages = tree.loadAgentMessages();
@@ -651,7 +772,12 @@ async function compactUnlocked(
       && modelKey(deps) === initialModelKey
       && currentFingerprint(deps) === fingerprint
     ) {
-      deps.compactionState.failedAutoFingerprint = fingerprint;
+      const attempts = (deps.compactionState.failedAutoAttempts.get(fingerprint) ?? 0) + 1;
+      deps.compactionState.failedAutoAttempts.clear();
+      deps.compactionState.failedAutoAttempts.set(
+        fingerprint,
+        attempts,
+      );
     }
     throw error;
   } finally {

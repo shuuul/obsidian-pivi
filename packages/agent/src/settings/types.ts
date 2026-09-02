@@ -59,6 +59,8 @@ export interface ObsidianToolsSettings {
   /** Absolute path to obsidian CLI binary; auto-detected when omitted. */
   cliPath?: string | null;
   cliTimeoutMs: number;
+  /** Default character limit used when a read tool call omits maxChars. */
+  defaultReadMaxChars: number;
   /** Tool names the user has explicitly disabled in settings. */
   disabledTools?: string[];
   allowCommand: boolean;
@@ -78,6 +80,7 @@ export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = 
   cliEnabled: false,
   cliPath: null,
   cliTimeoutMs: 30_000,
+  defaultReadMaxChars: 100_000,
   disabledTools: [],
   allowCommand: false,
   commandAllowlist: [],
@@ -108,6 +111,9 @@ export function resolveObsidianToolsSettings(
     cliEnabled: raw.cliEnabled ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliEnabled,
     cliPath: raw.cliPath ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliPath,
     cliTimeoutMs: raw.cliTimeoutMs ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliTimeoutMs,
+    defaultReadMaxChars: typeof raw.defaultReadMaxChars === 'number'
+      ? Math.max(1_000, Math.floor(raw.defaultReadMaxChars))
+      : DEFAULT_OBSIDIAN_TOOLS_SETTINGS.defaultReadMaxChars,
     disabledTools: normalizeDisabledObsidianTools(raw.disabledTools),
     allowCommand: raw.allowCommand ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowCommand,
     commandAllowlist: Array.isArray(raw.commandAllowlist)
@@ -473,6 +479,7 @@ function isOptionalObsidianToolsSettings(
       value.cliPath === null ||
       value.cliPath === undefined) &&
     typeof value.cliTimeoutMs === "number" &&
+    (value.defaultReadMaxChars === undefined || typeof value.defaultReadMaxChars === "number") &&
     isOptionalStringArray(value.disabledTools) &&
     typeof value.allowCommand === "boolean" &&
     isStringArray(value.commandAllowlist) &&

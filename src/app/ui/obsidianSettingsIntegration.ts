@@ -115,6 +115,13 @@ export function createObsidianToolRows(
       label: t(labelKey),
       description: available ? t(descriptionKey) : `${t(descriptionKey)} ${t(unavailableKey)}`,
       group,
+      ...(name === TOOL_OBSIDIAN_READ
+        ? { configuration: 'read' as const }
+        : name === TOOL_OBSIDIAN_READ_EXTERNAL
+          ? { configuration: 'external-read' as const }
+          : name === TOOL_OBSIDIAN_BASH
+            ? { configuration: 'bash' as const }
+            : {}),
       enabled: available && (name === TOOL_OBSIDIAN_BASH
         ? settings.allowBash
         : !(settings.disabledTools ?? []).includes(name)),

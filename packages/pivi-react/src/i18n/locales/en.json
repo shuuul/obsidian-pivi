@@ -135,7 +135,8 @@
       "templateVarsFailed": "Failed to resolve template command variables.",
       "unableCreateForkTab": "Unable to create fork tab",
       "initChatService": "Failed to initialize chat service",
-      "titlePersistenceFailed": "Failed to save the generated session title."
+      "titlePersistenceFailed": "Failed to save the generated session title.",
+      "autoCompactionRecovery": "Automatic context compaction failed twice. Run /compact to recover this session manually."
     },
     "toolbar": {
       "externalContexts": "External contexts",
@@ -597,6 +598,13 @@
         "additional": "Additional access"
       },
       "intro": "Enable or disable {hostName} tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
+      "reading": {
+        "defaultSize": {
+          "name": "Default read size",
+          "desc": "Characters returned when the agent omits maxChars. This default is model-independent. Explicit requests can use the model-calibrated allowance, up to 500k; compaction handles context pressure.",
+          "option": "{count}k characters"
+        }
+      },
       "unavailableOfficialCli": "Requires the official Obsidian CLI.",
       "unavailableExternalRead": "Requires external read access and at least one allowed directory.",
       "unavailableCodex": "Requires OpenAI Codex connection."

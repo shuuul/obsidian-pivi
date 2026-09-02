@@ -152,12 +152,12 @@ export interface SettingsComplexPorts {
     update(skillName: string, folderName: string): Promise<void>;
   };
   tools: {
-    getSettings(): { allowBash: boolean; bashAllowlist: readonly string[]; allowExternalRead: boolean; externalReadDirectories: readonly string[] };
+    getSettings(): { allowBash: boolean; bashAllowlist: readonly string[]; allowExternalRead: boolean; externalReadDirectories: readonly string[]; defaultReadMaxChars: number };
     listToolRows(): readonly SettingsToolRow[];
     setToolEnabled(name: string, enabled: boolean): Promise<void>;
     chooseExternalDirectory(current?: string): Promise<string | null>;
     validateExternalDirectory(path: string): Promise<{ valid: boolean; error?: string }>;
-    saveSettings(patch: { allowBash?: boolean; bashAllowlist?: readonly string[]; allowExternalRead?: boolean; externalReadDirectories?: readonly string[] }): Promise<void>;
+    saveSettings(patch: { allowBash?: boolean; bashAllowlist?: readonly string[]; allowExternalRead?: boolean; externalReadDirectories?: readonly string[]; defaultReadMaxChars?: number }): Promise<void>;
   };
   webSearch: {
     getSettings(): WebSearchToolsSettings;
@@ -220,6 +220,7 @@ export interface SettingsToolRow {
   readonly label: string;
   readonly description: string;
   readonly group: 'workspace-api' | 'host-cli' | 'pivi' | 'additional';
+  readonly configuration?: 'read' | 'external-read' | 'bash';
   readonly enabled: boolean;
   readonly available: boolean;
 }

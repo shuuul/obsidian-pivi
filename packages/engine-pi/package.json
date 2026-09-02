@@ -23,6 +23,7 @@
     "./piAuxQueryRunner": "./src/runtime/piAuxQueryRunner.ts",
     "./piBackgroundSubagentJobs": "./src/runtime/piBackgroundSubagentJobs.ts",
     "./piChatRuntime": "./src/runtime/piChatRuntime.ts",
+    "./piCompactionSampler": "./src/runtime/piCompactionSampler.ts",
     "./piChatUiConfig": "./src/models/piChatUiConfig.ts",
     "./piImageContent": "./src/runtime/piImageContent.ts",
     "./piModelEnv": "./src/models/piModelEnv.ts",

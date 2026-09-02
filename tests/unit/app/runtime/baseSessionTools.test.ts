@@ -7,6 +7,7 @@ const settings = {
   cliEnabled: false,
   cliPath: null,
   cliTimeoutMs: 30_000,
+  defaultReadMaxChars: 100_000,
   disabledTools: [],
   allowCommand: false,
   commandAllowlist: [],

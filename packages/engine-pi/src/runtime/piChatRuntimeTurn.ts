@@ -16,6 +16,7 @@ import {
 import {
   attachContextEnvelope,
   compactCurrentSession,
+  getAutoCompactionRecoveryWarning,
   type PiChatCompactionDeps,
   prepareCompactionPrefire,
   prepareContextForTurn,
@@ -341,10 +342,12 @@ async function runPromptLifecycle(
         pushCompactionChunks(activeTurn.queue, deps.compaction, compacted);
       }
     } catch (error) {
+      const recoveryWarning = getAutoCompactionRecoveryWarning(deps.compaction);
       activeTurn.queue.push({
         type: 'notice',
         level: 'warning',
-        content: `Auto compaction failed: ${error instanceof Error ? error.message : String(error)}`,
+        content: recoveryWarning
+          ?? `Auto compaction failed: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
   } else if (!didCompactDuringTurn && usage) {

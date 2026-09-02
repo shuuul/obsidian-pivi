@@ -70,6 +70,7 @@ const SETTINGS_SEARCH_KEYS = [
   'settings.externalRead.directories.name',
   'settings.bash.heading',
   'settings.bash.allowlist.name',
+  'settings.tools.reading.defaultSize.name',
   'settings.tools.heading',
   'settings.subagents.enableSpawn.name',
   'settings.subagents.allowBackground.name',

@@ -14,6 +14,15 @@ import type { PiRuntimeHost } from './piRuntimeHost';
 const COMPACTION_SAMPLE_TIMEOUT_MS = 120_000;
 const COMPACTION_SAMPLE_MAX_TOKENS = 8_192;
 
+export class PiCompactionTimeoutError extends Error {
+  readonly code = 'PI_COMPACTION_TIMEOUT';
+
+  constructor() {
+    super(`Compaction sampling timed out after ${COMPACTION_SAMPLE_TIMEOUT_MS / 1_000} seconds.`);
+    this.name = 'PiCompactionTimeoutError';
+  }
+}
+
 function omitEmptyTools(payload: unknown): unknown {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return undefined;
@@ -49,9 +58,13 @@ export async function sampleCompactionNote(
   }
 
   const controller = new AbortController();
+  let timedOut = false;
   const abort = (): void => controller.abort();
   signal?.addEventListener('abort', abort, { once: true });
-  const timeout = window.setTimeout(abort, COMPACTION_SAMPLE_TIMEOUT_MS);
+  const timeout = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, COMPACTION_SAMPLE_TIMEOUT_MS);
   try {
     const conversation = convertCompactionMessages(messages);
     const maxTokens = Math.min(
@@ -87,6 +100,9 @@ export async function sampleCompactionNote(
       throw new Error('Compaction sampling ended before the provider supplied a terminal stop reason.');
     }
     if (response.stopReason === 'aborted') {
+      if (timedOut && !signal?.aborted) {
+        throw new PiCompactionTimeoutError();
+      }
       throw new Error('Cancelled');
     }
     if (response.stopReason === 'error') {

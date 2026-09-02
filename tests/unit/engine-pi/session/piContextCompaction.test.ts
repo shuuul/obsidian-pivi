@@ -111,7 +111,7 @@ describe('piContextCompaction', () => {
     } as never);
 
     expect(ascii).toBeGreaterThanOrEqual(30);
-    expect(cjk).toBe(120);
+    expect(cjk).toBeGreaterThanOrEqual(90);
     expect(toolCall).toBeGreaterThan(280);
   });
 

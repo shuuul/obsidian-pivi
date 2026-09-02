@@ -6,7 +6,7 @@ export const DEFAULT_COMPACTION_RESERVE_TOKENS = 12_000;
 export const DEFAULT_CONTEXT_SAFETY_MARGIN_TOKENS = 8_000;
 export const AUTO_COMPACTION_THRESHOLD_RATIO = 0.85;
 export const READ_TOOL_MIN_CHARS = 1_000;
-export const READ_TOOL_MAX_CHARS_CAP = 50_000;
+export const READ_TOOL_MAX_CHARS_CAP = 500_000;
 
 /**
  * One read's share of the turn read allowance. The budget charges `maxChars` up front so
@@ -29,6 +29,8 @@ export interface ContextEnvelopeInput {
   contextWindowIsAuthoritative?: boolean;
   outputTokenLimit?: number;
   providerContextTokens?: number;
+  /** Locally estimated context added after the provider-reported assistant anchor. */
+  trailingEstimateTokens?: number;
   recentConversation?: number;
   reservedOutputTokens?: number;
   safetyMarginTokens?: number;
@@ -111,6 +113,10 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
     + toolAndAgentResults.tokens
     + checkpoints.tokens;
   const providerContextTokens = normalizeTokens(input.providerContextTokens);
+  const trailingEstimateTokens = normalizeTokens(input.trailingEstimateTokens);
+  const anchoredPressure = providerContextTokens > 0
+    ? providerContextTokens + trailingEstimateTokens + selectedContext.tokens
+    : estimatedTotal;
 
   return {
     checkpoints,
@@ -118,7 +124,7 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
     compactionTriggerTokens: Math.min(usableInputTokens, ratioTriggerTokens),
     contextWindow,
     estimatedInputTokens: estimatedTotal,
-    pressureInputTokens: Math.max(providerContextTokens, estimatedTotal),
+    pressureInputTokens: anchoredPressure,
     recentConversation,
     reservedOutput: estimate(reservedOutputTokens),
     safetyMargin: estimate(safetyMarginTokens),
@@ -144,29 +150,14 @@ export function calculateCompactionRemainingTokens(usage: UsageInfo): number {
 }
 
 /**
- * Default read-tool character cap from remaining room before the output reserve,
- * capped at {@link READ_TOOL_MAX_CHARS_CAP}. This may cross the compaction
- * trigger so a large read can still force auto-compaction, while leaving
- * reserved output tokens for the next model call. Falls back to the cap when
- * usage is unknown.
+ * Fixed read ceiling. Context overflow is handled by the normal compaction
+ * preflight instead of silently shrinking pages near the trigger.
  */
-export function calculateReadToolMaxChars(usage?: UsageInfo | null): number {
-  if (!usage) {
-    return READ_TOOL_MAX_CHARS_CAP;
-  }
-  const envelope = usage.contextEnvelope ?? calculateContextEnvelope({
-    contextWindow: usage.contextWindow || DEFAULT_CONTEXT_WINDOW_TOKENS,
-    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
-    outputTokenLimit: usage.outputTokenLimit,
-    providerContextTokens: usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined,
-  });
-  const hardCeilingTokens = Math.max(
-    0,
-    envelope.contextWindow.tokens - envelope.reservedOutput.tokens,
+export function calculateReadToolMaxChars(calibrationRatio = 1): number {
+  return Math.max(
+    READ_TOOL_MIN_CHARS,
+    Math.min(READ_TOOL_MAX_CHARS_CAP, Math.round(READ_TOOL_MAX_CHARS_CAP * calibrationRatio)),
   );
-  // 1 char ≈ 1 token for CJK worst case, aligned with compaction prose estimates.
-  const remainingChars = Math.max(0, hardCeilingTokens - envelope.pressureInputTokens);
-  return Math.min(READ_TOOL_MAX_CHARS_CAP, remainingChars);
 }
 
 export function calculateUsagePercentage(tokens: number, limit: number): number {

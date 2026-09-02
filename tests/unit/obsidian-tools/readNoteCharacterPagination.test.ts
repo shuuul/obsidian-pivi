@@ -6,7 +6,6 @@ import {
   paginateLineRange,
   type ObsidianToolDeps,
 } from '@pivi/obsidian-tools';
-
 interface ReadResult {
   content: [{ text: string }];
   details: Record<string, unknown>;
@@ -16,10 +15,12 @@ function makeTool(
   content: string,
   availableChars = 50_000,
   settle: jest.Mock = jest.fn(),
+  defaultReadMaxChars = 100_000,
 ): { tool: ReturnType<typeof createReadNoteTool>; readNote: jest.Mock; settle: jest.Mock } {
   const readNote = jest.fn().mockResolvedValue({ path: 'notes/long.md', content });
   const deps = {
     vault: { readNote },
+    settings: { defaultReadMaxChars },
     resolveReadMaxChars: () => ({ maxChars: availableChars, settle }),
   } as unknown as ObsidianToolDeps;
   return { tool: createReadNoteTool(deps), readNote, settle };
@@ -37,6 +38,53 @@ function sourceText(result: ReadResult): string {
 }
 
 describe('obsidian_read character pagination', () => {
+  it('uses the same character allowance for ASCII prose and CJK', async () => {
+    const ascii = `${'word '.repeat(1_500)}\n`;
+    const asciiResult = await read(makeTool(ascii, 9_000).tool, {
+      startLine: 1,
+      endLine: 1,
+    });
+    expect(asciiResult.content[0].text).toBe(ascii);
+    expect(asciiResult.details.truncated).toBe(false);
+
+    const cjk = `${'界'.repeat(8_000)}\n`;
+    const cjkResult = await read(makeTool(cjk, 9_000).tool, {
+      startLine: 1,
+      endLine: 1,
+    });
+    expect(cjkResult.details.truncated).toBe(false);
+    expect(cjkResult.content[0].text).toBe(cjk);
+  });
+
+  it('uses the configured default unless maxChars explicitly overrides it', async () => {
+    const content = 'word '.repeat(24_000);
+    const { tool } = makeTool(content, 200_000);
+
+    const defaultRead = await read(tool, {});
+    expect(defaultRead.details.truncated).toBe(true);
+    expect(defaultRead.content[0].text).toContain('Large file:');
+
+    const explicitRead = await read(tool, { maxChars: 130_000 });
+    expect(explicitRead.details.truncated).toBe(false);
+    expect(explicitRead.content[0].text).toBe(content);
+  });
+
+  it('returns the complete issue #99 range near context pressure with a 500k configured default', async () => {
+    const lines = Array.from({ length: 300 }, (_, index) => (
+      `${String(index + 1).padStart(3, '0')}:${'x'.repeat(3_495)}\n`
+    ));
+    const content = lines.join('');
+    const { tool } = makeTool(content, 500_000, jest.fn(), 500_000);
+
+    const result = await read(tool, { startLine: 146, endLine: 209 });
+
+    expect(result.details).toMatchObject({
+      truncated: false,
+      returnedRange: { startLine: 146, endLine: 209, lines: 64 },
+    });
+    expect(result.content[0].text).toBe(lines.slice(145, 209).join(''));
+  });
+
   it('sequentially reconstructs a 50K single physical line without overlap or gaps', async () => {
     const content = Array.from({ length: 50_321 }, (_, index) => String(index % 10)).join('');
     const { tool } = makeTool(content);
@@ -228,7 +276,7 @@ describe('obsidian_read character pagination', () => {
     expect(result.content[0].text).not.toContain('Raise maxChars');
   });
 
-  it('bypasses stats-only large-file handling and settles the complete bounded result', async () => {
+  it('bypasses stats-only large-file handling and settles returned characters', async () => {
     const settle = jest.fn();
     const { tool } = makeTool('x'.repeat(60_000), 2_000, settle);
 

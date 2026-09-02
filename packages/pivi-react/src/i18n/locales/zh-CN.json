@@ -118,7 +118,8 @@
       "templateVarsFailed": "解析模板命令变量失败。",
       "unableCreateForkTab": "无法创建分叉标签页",
       "initChatService": "初始化聊天服务失败",
-      "titlePersistenceFailed": "无法保存生成的会话标题。"
+      "titlePersistenceFailed": "无法保存生成的会话标题。",
+      "autoCompactionRecovery": "自动上下文压缩已连续失败两次。请运行 /compact 手动恢复此会话。"
     },
     "toolbar": {
       "externalContexts": "外部上下文",
@@ -585,6 +586,13 @@
         "additional": "附加访问"
       },
       "intro": "启用或禁用向智能体暴露的 {hostName} 工具。更改在提示刷新后的新回合生效。",
+      "reading": {
+        "defaultSize": {
+          "name": "默认读取大小",
+          "desc": "Agent 未指定 maxChars 时返回的字符数。此默认值不受模型影响；明确请求可使用经模型校准的额度，最高 500k。上下文压力由压缩处理。",
+          "option": "{count}k 字符"
+        }
+      },
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
       "unavailableExternalRead": "需要外部读取权限且至少有一个允许的目录。",
       "unavailableCodex": "需要连接 OpenAI Codex。"

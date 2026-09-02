@@ -11,13 +11,18 @@ const snapshot: SettingsUiSnapshotData = {
 };
 
 function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {}): SettingsPorts {
-  const settings = { allowBash: false, bashAllowlist: [] as readonly string[], allowExternalRead: false, externalReadDirectories: [] as readonly string[] };
+  const settings = { allowBash: false, bashAllowlist: [] as readonly string[], allowExternalRead: false, externalReadDirectories: [] as readonly string[], defaultReadMaxChars: 100_000 };
   return {
     snapshot: { getSnapshot: () => snapshot },
     feedback: { notify: jest.fn() },
     actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, saveEditorSelectionToolbar: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
     complex: {
-      tools: { getSettings: () => settings, listToolRows: () => [{ name: 'host_tool', label: 'Host tool', description: 'Host capability', group: 'workspace-api', enabled: false, available: true }], setToolEnabled: async () => undefined, chooseExternalDirectory: async () => null, validateExternalDirectory: async () => ({ valid: true }), saveSettings: async (patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0]) => { Object.assign(settings, patch); }, ...overrides },
+      tools: { getSettings: () => settings, listToolRows: () => [
+        { name: 'obsidian_read', label: 'Read', description: 'Read notes', group: 'workspace-api', configuration: 'read', enabled: true, available: true },
+        { name: 'host_tool', label: 'Host tool', description: 'Host capability', group: 'workspace-api', enabled: false, available: true },
+        { name: 'obsidian_read_external', label: 'Read external', description: 'Read external files', group: 'additional', configuration: 'external-read', enabled: false, available: false },
+        { name: 'obsidian_bash', label: 'Bash', description: 'Run bash', group: 'additional', configuration: 'bash', enabled: false, available: true },
+      ], setToolEnabled: async () => undefined, chooseExternalDirectory: async () => null, validateExternalDirectory: async () => ({ valid: true }), saveSettings: async (patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0]) => { Object.assign(settings, patch); }, ...overrides },
       webSearch: {
         getSettings: () => ({ providerOrder: ['brave', 'tavily', 'exa', 'anysearch'], disabledProviders: [] }),
         listProviders: () => [
@@ -118,14 +123,26 @@ describe('React tools settings', () => {
     }));
 
     expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
-      'External filesystem access',
-      'Bash access',
       'Tool toggles',
       'workspace',
       'Test host CLI',
       'Pivi',
       'Additional access',
     ]);
+  });
+
+  it('persists the default read size', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    renderTools(createPorts({ saveSettings }));
+
+    const readToggle = screen.getByRole('checkbox', { name: 'Read' });
+    expect(readToggle.closest('.pivi-setting-row')?.parentElement).toHaveClass('pivi-tool-setting');
+    expect(readToggle.closest('.pivi-setting-row')?.parentElement).not.toHaveClass('pivi-setting-stack');
+    fireEvent.click(screen.getByRole('combobox', { name: 'Default read size' }));
+    fireEvent.click(screen.getByRole('option', { name: '200k characters' }));
+    await act(async () => undefined);
+
+    expect(saveSettings).toHaveBeenCalledWith({ defaultReadMaxChars: 200_000 });
   });
 
   it('allows main-Agent management tools to be toggled', async () => {
@@ -213,7 +230,10 @@ describe('React tools settings', () => {
   });
 
   it('keeps unavailable tools disabled and reports invalid external paths', async () => {
-    renderTools(createPorts({ listToolRows: () => [{ name: 'unavailable', label: 'Unavailable host tool', description: 'Requires host support', group: 'additional', enabled: false, available: false }] }));
+    renderTools(createPorts({ listToolRows: () => [
+      { name: 'unavailable', label: 'Unavailable host tool', description: 'Requires host support', group: 'additional', enabled: false, available: false },
+      { name: 'obsidian_read_external', label: 'Read external', description: 'Read external files', group: 'additional', configuration: 'external-read', enabled: false, available: false },
+    ] }));
     expect(screen.getByRole('checkbox', { name: 'Unavailable host tool' })).toBeDisabled();
     const input = screen.getByRole('textbox', { name: 'Add an allowed external directory' });
     fireEvent.change(input, { target: { value: 'relative/path' } });

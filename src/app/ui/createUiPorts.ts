@@ -350,13 +350,9 @@ export function createSettingsUiPorts(
       await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
     }
   };
-  const saveToolSettings = async (patch: {
-    allowBash?: boolean;
-    bashAllowlist?: readonly string[];
-    allowExternalRead?: boolean;
-    externalReadDirectories?: readonly string[];
-    disabledTools?: readonly string[];
-  }): Promise<void> => {
+  const saveToolSettings = async (
+    patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0] & { disabledTools?: readonly string[] },
+  ): Promise<void> => {
     const current = resolveObsidianToolsSettings(host.settings.agentSettings.obsidianTools);
     if (patch.externalReadDirectories) {
       for (const directory of patch.externalReadDirectories) {
@@ -405,6 +401,7 @@ export function createSettingsUiPorts(
             allowBash: settings.allowBash,
             allowExternalRead: settings.allowExternalRead,
             bashAllowlist: settings.bashAllowlist ?? [],
+            defaultReadMaxChars: settings.defaultReadMaxChars,
             externalReadDirectories: settings.externalReadDirectories,
           };
         },

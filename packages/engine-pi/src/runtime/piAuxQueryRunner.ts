@@ -10,11 +10,6 @@ import { streamPiAiModelsSimple } from '../models/piAiModels';
 import { resolvePiModel, resolvePiProviderAuth } from '../models/piModelEnv';
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
 import { PiBackgroundSubagentJobs } from './piBackgroundSubagentJobs';
-import {
-  buildEstimatedUsageInfo,
-  buildZeroUsageInfoForModel,
-  latestUsageFromMessages,
-} from './piChatRuntimeUsage';
 import { createPiReadBudget, type PiReadBudget } from './piReadBudget';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import type { SubagentConcurrencyLimiter } from './subagentConcurrencyLimiter';
@@ -157,13 +152,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
     }
 
     let agent: Agent | null = null;
-    const readBudget = createPiReadBudget(() => {
-      const messages = agent?.state.messages ?? [];
-      const usage = latestUsageFromMessages(messages, model)
-        ?? buildEstimatedUsageInfo(messages, model)
-        ?? buildZeroUsageInfoForModel(model);
-      return calculateReadToolMaxChars(usage);
-    });
+    const readBudget = createPiReadBudget(() => calculateReadToolMaxChars());
     agent = new Agent({
       initialState: {
         model,

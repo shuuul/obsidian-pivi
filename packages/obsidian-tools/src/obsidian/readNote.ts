@@ -15,7 +15,7 @@ import {
   OversizedFirstLineError,
   paginateCharacterRange,
   paginateLineRange,
-  resolveEffectiveReadMaxChars,
+  resolveEffectiveReadBudget,
   sliceLineRange,
 } from './readShared';
 
@@ -68,7 +68,7 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
         startLine: { type: 'number', description: '1-based first line to read' },
         endLine: { type: 'number', description: '1-based last line to read, inclusive' },
         startChar: { type: 'number', description: '1-based UTF-16 character position for a bounded sequential content page. It is file-global alone, or relative to startLine when startLine is provided; endLine may bound that line-relative read. On truncation, continue with the exact returned nextStartLine + nextStartChar pair for line-relative reads, or nextStartChar for global reads. Cannot be used with mode=stats.' },
-        maxChars: { type: 'number', description: 'Maximum characters to return for content reads, clamped to at least 1000. Defaults to the smaller of remaining room before the output reserve and 50000 (may cross the compaction threshold). To read a full large file, first use mode=stats, then set maxChars to at least the reported Characters value deliberately.' },
+        maxChars: { type: 'number', description: 'Maximum characters to return for content reads, clamped between 1000 and 500000. When omitted, uses Tools → Default read size. An explicit value overrides that default; context overflow is handled by compaction preflight.' },
       },
       additionalProperties: false,
     },
@@ -89,8 +89,9 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
       if (startChar !== undefined && mode === 'stats') {
         throw new Error('startChar cannot be used with mode="stats". Use mode="content" or omit mode.');
       }
-      const readBudget = resolveEffectiveReadMaxChars(
+      const readBudget = resolveEffectiveReadBudget(
         input,
+        deps.settings.defaultReadMaxChars,
         mode === 'stats' ? undefined : deps.resolveReadMaxChars,
       );
       const maxChars = readBudget.maxChars;
@@ -237,7 +238,13 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
         if (isRangeRead) {
           let page;
           try {
-            page = paginateLineRange(result.content, lineSpans, maxChars, startLine, endLine);
+            page = paginateLineRange(
+              result.content,
+              lineSpans,
+              maxChars,
+              startLine,
+              endLine,
+            );
           } catch (error) {
             if (error instanceof OversizedFirstLineError) {
               return returnCharacterPage(1, {

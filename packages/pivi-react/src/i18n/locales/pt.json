@@ -118,7 +118,8 @@
       "templateVarsFailed": "Falha ao resolver variáveis do comando de modelo.",
       "unableCreateForkTab": "Não foi possível criar a aba de fork",
       "initChatService": "Falha ao inicializar o serviço de chat",
-      "titlePersistenceFailed": "Não foi possível salvar o título de sessão gerado."
+      "titlePersistenceFailed": "Não foi possível salvar o título de sessão gerado.",
+      "autoCompactionRecovery": "A compactação automática do contexto falhou duas vezes. Execute /compact para recuperar esta sessão manualmente."
     },
     "toolbar": {
       "externalContexts": "Contextos externos",
@@ -585,6 +586,13 @@
         "additional": "Acesso adicional"
       },
       "intro": "Ative ou desative ferramentas {hostName} expostas ao agente. As alterações valem em novos turnos após o prompt atualizar.",
+      "reading": {
+        "defaultSize": {
+          "name": "Tamanho padrão de leitura",
+          "desc": "Caracteres retornados quando o agente omite maxChars. Esse padrão independe do modelo. Solicitações explícitas usam o limite calibrado do modelo, até 500k; a compactação gerencia a pressão de contexto.",
+          "option": "{count}k caracteres"
+        }
+      },
       "unavailableOfficialCli": "Requer a CLI oficial do Obsidian.",
       "unavailableExternalRead": "Requer leitura externa e pelo menos um diretório permitido.",
       "unavailableCodex": "Requer conexão com OpenAI Codex."

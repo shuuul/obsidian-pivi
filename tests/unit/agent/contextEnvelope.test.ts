@@ -44,16 +44,18 @@ describe('context envelope', () => {
     expect(envelope.recentConversation.source).toBe('estimated');
   });
 
-  it('keeps a newer local estimate as pressure above an older provider total', () => {
+  it('anchors pressure on provider usage plus only trailing and selected estimates', () => {
     const envelope = calculateContextEnvelope({
       contextWindow: 200_000,
       providerContextTokens: 10_000,
       recentConversation: 31_000,
+      selectedContext: 2_000,
       system: 8_000,
+      trailingEstimateTokens: 6_000,
     });
 
     expect(envelope.total).toEqual({ source: 'authoritative', tokens: 10_000 });
-    expect(envelope.pressureInputTokens).toBe(39_000);
+    expect(envelope.pressureInputTokens).toBe(18_000);
   });
 
   it('scales default reserves down for small windows', () => {

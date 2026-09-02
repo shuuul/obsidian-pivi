@@ -1,5 +1,3 @@
-export { READ_TOOL_MAX_CHARS_CAP as DEFAULT_SAFE_READ_MAX_CHARS } from '@pivi/agent/runtime/usage';
-
 export type ReadMode = 'content' | 'stats';
 
 export interface LineSpan {

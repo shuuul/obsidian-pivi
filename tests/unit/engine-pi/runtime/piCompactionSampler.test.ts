@@ -13,7 +13,10 @@ jest.mock('@pivi/engine-pi/piAiModels', () => ({
   streamPiAiModelsSimple: (...args: unknown[]) => mockStreamSimple(...args),
 }));
 
-import { sampleCompactionNote } from '../../../../packages/engine-pi/src/runtime/piCompactionSampler';
+import {
+  PiCompactionTimeoutError,
+  sampleCompactionNote,
+} from '../../../../packages/engine-pi/src/runtime/piCompactionSampler';
 
 const mockModel = {
   api: 'openai-completions',
@@ -118,6 +121,34 @@ describe('sampleCompactionNote', () => {
 
     expect(mockResolvePiModel).not.toHaveBeenCalled();
     expect(mockStreamSimple).not.toHaveBeenCalled();
+  });
+
+  it('reports the internal deadline as a distinguishable timeout', async () => {
+    jest.useFakeTimers();
+    try {
+      mockStreamSimple.mockImplementation((_model, _context, options) => ({
+        result: () => new Promise(resolve => {
+          options.signal.addEventListener('abort', () => resolve({
+            content: [],
+            stopReason: 'aborted',
+          }), { once: true });
+        }),
+      }));
+
+      const sampling = sampleCompactionNote(
+        { settings: { model: 'mock-provider/mock-model' } } as never,
+        [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+        'Create NOTE₂.',
+      );
+      const rejection = sampling.catch((error: unknown) => error);
+      await jest.advanceTimersByTimeAsync(120_000);
+
+      const error = await rejection;
+      expect(error).toBeInstanceOf(PiCompactionTimeoutError);
+      expect(error).toMatchObject({ code: 'PI_COMPACTION_TIMEOUT' });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('reports when the checkpoint output is truncated at the token limit', async () => {

@@ -275,6 +275,7 @@ ${JSON.stringify({
 const mockCompactionSample = jest.fn(async (..._args: unknown[]) => defaultCompactionSample);
 
 jest.mock('@pivi/engine-pi/piCompactionSampler', () => ({
+  PiCompactionTimeoutError: class PiCompactionTimeoutError extends Error {},
   sampleCompactionNote: (...args: unknown[]) => mockCompactionSample(...args),
 }));
 
@@ -284,6 +285,7 @@ import type { HttpClient } from '@pivi/agent/ports';
 import type { StreamChunk, UsageInfo } from '@pivi/agent/runtime';
 import * as piAiModelRegistry from '@pivi/engine-pi/piAiModels';
 import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';
+import { PiCompactionTimeoutError } from '@pivi/engine-pi/piCompactionSampler';
 import {
   buildEstimatedUsageInfo,
   buildUsageInfoFromAgentMessage,
@@ -1433,7 +1435,7 @@ describe('PiChatRuntime system prompt', () => {
       ...firstDeps,
       compactionState: {
         autoCompactionInFlight: false,
-        failedAutoFingerprint: null,
+        failedAutoAttempts: new Map(),
         foregroundController: null,
         generation: 0,
         prefire: null,
@@ -1531,7 +1533,7 @@ describe('PiChatRuntime system prompt', () => {
     await expect(compaction).rejects.toThrow(
       'Session or model changed while context compaction was running.',
     );
-    expect(deps.compactionState.failedAutoFingerprint).toBeNull();
+    expect(deps.compactionState.failedAutoAttempts.size).toBe(0);
   });
 
   it('does not append compaction when all bounded fallback attempts fail', async () => {
@@ -1569,6 +1571,31 @@ describe('PiChatRuntime system prompt', () => {
       expect(internals.sessionTree.getEntries().filter(
         (entry) => entry.type === 'compaction',
       )).toHaveLength(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('retries a timed-out fallback only once', async () => {
+    jest.useFakeTimers();
+    try {
+      const runtime = createRuntime(createMockPlugin());
+      for (const text of ['First turn', 'Second turn']) {
+        for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+          // Persist enough entries to form a regular two-pass compaction plan.
+        }
+      }
+      const internals = runtime as unknown as {
+        compactionDeps(): Parameters<typeof compactCurrentSession>[0];
+      };
+      mockCompactionSample.mockRejectedValue(new PiCompactionTimeoutError());
+
+      const handled = compactCurrentSession(internals.compactionDeps(), 'manual').catch(() => null);
+      await jest.runAllTimersAsync();
+      await handled;
+
+      // One failed Pass 1 sample, then the fallback's initial try plus one retry.
+      expect(mockCompactionSample).toHaveBeenCalledTimes(3);
     } finally {
       jest.useRealTimers();
     }
@@ -1825,7 +1852,7 @@ describe('PiChatRuntime system prompt', () => {
     expect(toolCallUsageChunk.usage.contextTokensIsAuthoritative).toBe(true);
     expect(estimatedToolResultUsageChunk.usage.contextTokens).toBeGreaterThan(0);
     expect(estimatedToolResultUsageChunk.usage.contextTokens).toBe(
-      estimatedToolResultUsageChunk.usage.contextEnvelope?.total.tokens,
+      estimatedToolResultUsageChunk.usage.contextEnvelope?.pressureInputTokens,
     );
     expect(estimatedToolResultUsageChunk.usage.contextTokens).toBeGreaterThan(
       estimatedToolResultUsageChunk.usage.contextEnvelope?.toolAndAgentResults.tokens ?? 0,
@@ -1841,7 +1868,7 @@ describe('PiChatRuntime system prompt', () => {
     expect(finalUsageChunk.usage.contextTokensIsAuthoritative).toBe(true);
     expect(finalUsageChunk.usage.contextEnvelope?.total).toEqual({
       source: 'authoritative',
-      tokens: 300,
+      tokens: 310,
     });
   });
 
