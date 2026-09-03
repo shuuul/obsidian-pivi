@@ -36,9 +36,14 @@
 }
 
 .pivi-settings-card + .pivi-settings-card,
-.pivi-settings-collection__list > .pivi-settings-card + .pivi-settings-row,
 .pivi-settings-collection__list > .pivi-settings-row + .pivi-settings-card {
   border-block-start: 1px solid var(--pivi-settings-hairline);
+}
+
+.pivi-settings-section__body > .pivi-settings-collection > .pivi-settings-text-btn,
+.pivi-settings-section__body > .pivi-settings-action-group {
+  padding-inline: var(--pivi-settings-row-padding-inline);
+  padding-block: var(--pivi-settings-row-padding-block);
 }
 
 .pivi-settings-card.is-open {
@@ -56,7 +61,8 @@
   opacity: 0.65;
 }
 
-.pivi-settings-card.is-dragging {
+.pivi-settings-card.is-dragging,
+.pivi-settings-row.is-dragging {
   position: relative;
   z-index: 1;
 }

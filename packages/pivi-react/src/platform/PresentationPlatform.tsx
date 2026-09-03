@@ -9,6 +9,7 @@ export interface PresentationTooltipOptions {
 export interface HostTerminology {
   readonly hostName: string;
   readonly workspaceName: string;
+  readonly workspaceNameTitle: string;
   readonly secureStorageName: string;
 }
 

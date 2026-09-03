@@ -615,7 +615,7 @@
       },
       "heading": "Bascules d’outils",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "Outils {workspaceNameTitle}",
         "hostCli": "CLI {hostName}",
         "pivi": "Pivi",
         "additional": "Accès supplémentaire"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "Commandes internes",
-      "heading": "Commandes personnalisées",
+      "heading": "Commandes de l’espace de travail",
       "add": "+ Ajouter une commande",
       "addAria": "Ajouter une commande personnalisée",
       "empty": "Aucune commande personnalisée. Ajoutez-en une pour le menu /.",

@@ -615,7 +615,7 @@
       },
       "heading": "ツールの切り替え",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "{workspaceNameTitle}ツール",
         "hostCli": "{hostName} CLI",
         "pivi": "Pivi",
         "additional": "追加アクセス"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "内部コマンド",
-      "heading": "カスタムコマンド",
+      "heading": "ワークスペースコマンド",
       "add": "+ コマンドを追加",
       "addAria": "カスタムコマンドを追加",
       "empty": "カスタムコマンドはまだありません。追加すると / メニューから使えます。",

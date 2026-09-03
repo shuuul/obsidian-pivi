@@ -1,0 +1,116 @@
+/* Commands page structure only. Spacing, radius, and borders stay in system CSS. */
+
+.pivi-settings-mention-editor-container {
+  position: relative;
+  width: 100%;
+}
+
+.pivi-settings-mention-editor-container .pivi-settings-mention-editor {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 180px;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.pivi-command-icon-picker {
+  position: relative;
+}
+
+.pivi-command-icon-trigger {
+  display: flex;
+  align-items: center;
+  min-width: 190px;
+  text-align: left;
+}
+
+.pivi-command-icon-picker--compact .pivi-command-icon-trigger {
+  display: inline-flex;
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
+  justify-content: center;
+}
+
+.pivi-command-icon-trigger .pivi-platform-icon {
+  flex: 0 0 auto;
+  --icon-size: 18px;
+}
+
+.pivi-command-icon-picker--compact .pivi-command-icon-trigger .pivi-platform-icon {
+  --icon-size: 16px;
+}
+
+.pivi-command-icon-popover {
+  position: absolute;
+  z-index: 3;
+  top: 100%;
+  right: 0;
+  width: min(420px, calc(100vw - 64px));
+}
+
+.pivi-command-icon-picker--compact .pivi-command-icon-popover {
+  right: auto;
+  left: 0;
+}
+
+.pivi-command-icon-popover > input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.pivi-command-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.pivi-command-icon-grid > button {
+  display: flex;
+  min-width: 0;
+  min-height: 76px;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-text-xs);
+  line-height: 1.2;
+}
+
+.pivi-command-icon-grid > button:hover,
+.pivi-command-icon-grid > button.is-selected {
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-command-icon-grid > button .pivi-platform-icon {
+  --icon-size: 32px;
+  font-size: 32px;
+}
+
+.pivi-command-icon-grid > button span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pivi-command-icon-empty {
+  color: var(--pivi-host-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .pivi-command-icon-trigger {
+    width: 100%;
+  }
+
+  .pivi-command-icon-popover {
+    right: auto;
+    left: 0;
+  }
+
+  .pivi-command-icon-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -34,6 +34,7 @@
   justify-content: flex-end;
   gap: var(--pivi-settings-control-gap);
   min-width: 0;
+  margin-inline-start: auto;
 }
 
 .pivi-settings-row__actions {

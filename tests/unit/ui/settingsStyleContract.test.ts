@@ -21,11 +21,7 @@ const STRUCTURAL_PREFIXES = [
   'pivi-provider-card',
 ] as const;
 
-// WS-05 empties this after Commands/Toolbar migrate off leftover card/list classes.
-const legacyAllowlist = [
-  'pivi-sp-',
-  'pivi-provider-card',
-] as const;
+const legacyAllowlist = [] as const;
 
 function listFiles(dir: string, suffix: string): string[] {
   if (!existsSync(dir)) return [];

@@ -615,7 +615,7 @@
       },
       "heading": "Alternâncias de ferramentas",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "Ferramentas de {workspaceNameTitle}",
         "hostCli": "CLI do {hostName}",
         "pivi": "Pivi",
         "additional": "Acesso adicional"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "Comandos internos",
-      "heading": "Comandos personalizados",
+      "heading": "Comandos do espaço de trabalho",
       "add": "+ Adicionar comando",
       "addAria": "Adicionar comando personalizado",
       "empty": "Aún no hay comandos personalizados. Añade uno para o menú /.",

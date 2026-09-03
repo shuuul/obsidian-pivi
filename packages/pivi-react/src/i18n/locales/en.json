@@ -628,7 +628,7 @@
       },
       "heading": "Tool toggles",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "{workspaceNameTitle} tools",
         "hostCli": "{hostName} CLI",
         "pivi": "Pivi",
         "additional": "Additional access"
@@ -910,7 +910,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "Internal commands",
-      "heading": "Custom commands",
+      "heading": "Workspace commands",
       "add": "+ Add command",
       "addAria": "Add custom command",
       "empty": "No custom commands yet. Add one to make it available from the / menu.",

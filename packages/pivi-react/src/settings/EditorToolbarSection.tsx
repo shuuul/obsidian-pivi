@@ -4,7 +4,7 @@ import type {
   EditorToolbarShortcut,
 } from '@pivi/agent/settings/types';
 import { EDITOR_COMMANDS } from '@pivi/agent/settings/types';
-import { type CSSProperties, type PointerEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
@@ -19,8 +19,16 @@ import {
   type SortableReorderHandleProps,
   useSortableReorder,
 } from '../reorder/useSortableReorder';
-import { CommandIconPicker } from './CommandsTab';
-import { Select, SettingRow, SettingsItemActions, SettingsRemoveButton, SettingsSection, Toggle } from './controls';
+import { CommandIconPicker } from './commands/CommandIconPicker';
+import {
+  Select,
+  SettingRow,
+  SettingsPage,
+  SettingsRemoveButton,
+  SettingsSection,
+  Toggle,
+} from './controls';
+import { DisclosureCard, SettingsCollection, SettingsInlineActions } from './primitives';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
 import type { SettingsEditorSelectionToolbarSnapshot } from './types';
@@ -400,7 +408,7 @@ function ShortcutCard({
   readonly onRemove: () => void;
 }) {
   const t = useT();
-  const compact = shortcut.kind === 'pivi-action' || shortcut.kind === 'editor-command';
+  const compact = shortcut.kind !== 'pivi-command';
   const removable = shortcut.kind !== 'pivi-action';
   const catalog = shortcut.kind === 'editor-command'
     ? EDITOR_COMMANDS.find(command => command.id === shortcut.commandId)
@@ -417,115 +425,105 @@ function ShortcutCard({
       : shortcut.kind === 'obsidian-command'
         ? t('settings.editorToolbar.kind.command')
         : t('settings.editorToolbar.kind.piviCommand');
-  const meta = shortcut.kind === 'obsidian-command' ? shortcut.commandId : description;
   const icon = shortcut.kind === 'pivi-action'
     ? (shortcut.actionId === 'inline-edit' ? 'pivi-p' : 'message-square-plus')
     : catalog?.icon ?? ('icon' in shortcut ? shortcut.icon : undefined)
       ?? (shortcut.kind === 'pivi-command' ? 'message-square' : 'terminal');
 
-  const dragStyle = dragging
-    ? { '--pivi-toolbar-drag-y': `${dragOffset}px` } as CSSProperties
-    : undefined;
-  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
-    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"], [data-toolbar-control]')) {
-      return;
-    }
-    reorderHandleProps.onPointerDown(event);
-  };
-
-  const headerContent = (
+  const handle = (
+    <button
+      type="button"
+      className="pivi-settings-action-btn"
+      aria-label={t('settings.editorToolbar.reorder.handle', { label, position })}
+      aria-pressed={dragging}
+      disabled={pending}
+      onKeyDown={reorderHandleProps.onKeyDown}
+    >
+      <span aria-hidden="true">⠿</span>
+    </button>
+  );
+  const itemActions = (
     <>
-      <button
-        type="button"
-        className="pivi-provider-drag-handle pivi-editor-toolbar-card__handle"
-        aria-label={t('settings.editorToolbar.reorder.handle', { label, position })}
-        aria-pressed={dragging}
+      <Toggle
         disabled={pending}
-        onClick={(event) => { event.preventDefault(); event.stopPropagation(); }}
-        onKeyDown={reorderHandleProps.onKeyDown}
-      ><span aria-hidden="true">⠿</span></button>
-      <span className="pivi-provider-priority" aria-hidden="true">{position}</span>
-      {shortcut.kind === 'obsidian-command' ? (
-        <span
-          className="pivi-editor-toolbar-card__icon-control"
-          data-toolbar-control
-          onClick={(event) => { event.stopPropagation(); }}
-          onPointerDown={(event) => { event.stopPropagation(); }}
-        >
+        checked={shortcut.enabled}
+        label={t('settings.editorToolbar.itemEnabledAria', { label })}
+        onChange={onToggleEnabled}
+      />
+      {removable ? (
+        <SettingsRemoveButton
+          ariaLabel={t('settings.editorToolbar.removeAria', { label })}
+          disabled={pending}
+          onClick={onRemove}
+        />
+      ) : null}
+    </>
+  );
+
+  if (compact) {
+    return (
+      <SettingRow
+        name={label}
+        description={kindLabel}
+        centered
+        className={shortcut.enabled ? undefined : 'is-disabled'}
+        sortId={shortcut.id}
+        dragging={dragging}
+        dragOffset={dragOffset}
+        sortableHandleProps={pending ? undefined : reorderHandleProps}
+        actions={(
+          <SettingsInlineActions>
+            {itemActions}
+            {handle}
+          </SettingsInlineActions>
+        )}
+      >
+        {shortcut.kind === 'obsidian-command' ? (
           <CommandIconPicker
+            compact
             disabled={pending}
             icon={icon}
             iconNames={iconNames}
             onChange={onIconChange}
           />
-        </span>
-      ) : (
-        <span className="pivi-editor-toolbar-card__fixed-icon" aria-hidden="true"><PlatformIcon name={icon} /></span>
-      )}
-      <span className="pivi-editor-toolbar-card__label">{label}</span>
-      <span className="pivi-editor-toolbar-card__badge">{kindLabel}</span>
-      <SettingsItemActions className="pivi-editor-toolbar-card__actions">
-        <Toggle disabled={pending} checked={shortcut.enabled} label={t('settings.editorToolbar.itemEnabledAria', { label })} onChange={onToggleEnabled} />
-        {removable ? (
-          <SettingsRemoveButton
-            className="pivi-editor-toolbar-card__remove"
-            ariaLabel={t('settings.editorToolbar.removeAria', { label })}
-            disabled={pending}
-            onClick={onRemove}
-          />
-        ) : null}
-      </SettingsItemActions>
-    </>
-  );
-  const pointerProps = {
-    onPointerCancel: reorderHandleProps.onPointerCancel,
-    onPointerDown: handlePointerDown,
-    onPointerMove: reorderHandleProps.onPointerMove,
-    onPointerUp: reorderHandleProps.onPointerUp,
-  };
-  if (compact) return (
-    <div className={`pivi-provider-card pivi-editor-toolbar-card pivi-sortable-toolbar-card${shortcut.enabled ? '' : ' pivi-editor-toolbar-card--disabled'}${dragging ? ' is-dragging' : ''}`} data-shortcut-sort-id={shortcut.id} style={dragStyle}>
-      <div className="pivi-provider-header pivi-editor-toolbar-card__header" {...pointerProps}>{headerContent}</div>
-    </div>
-  );
+        ) : (
+          <span className="pivi-toolbar-item-icon" aria-hidden="true">
+            <PlatformIcon name={icon} />
+          </span>
+        )}
+      </SettingRow>
+    );
+  }
 
   return (
-    <details
-      className={`pivi-provider-card pivi-editor-toolbar-card pivi-sortable-toolbar-card${shortcut.enabled ? '' : ' pivi-editor-toolbar-card--disabled'}${dragging ? ' is-dragging' : ''}`}
-      data-shortcut-sort-id={shortcut.id}
+    <DisclosureCard
+      name={label}
+      summary={description}
+      icon={<PlatformIcon name={icon} />}
+      badges={<span className="pivi-settings-chip">{kindLabel}</span>}
+      className={shortcut.enabled ? undefined : 'is-disabled'}
       open={expanded}
-      style={dragStyle}
+      onToggle={onToggleExpanded}
+      sortId={shortcut.id}
+      sortableHandleProps={pending ? undefined : reorderHandleProps}
+      consumeClickAfterDrag={suppressReorderClick}
+      dragging={dragging}
+      dragOffset={dragOffset}
+      reorderLabel={t('settings.editorToolbar.reorder.handle', { label, position })}
+      actions={itemActions}
     >
-      <summary
-        className="pivi-provider-header pivi-editor-toolbar-card__header"
-        onClick={(event) => {
-          event.preventDefault();
-          if (!suppressReorderClick()) onToggleExpanded();
-        }}
-        {...pointerProps}
-      >
-        {headerContent}
-      </summary>
-      <div className="pivi-provider-body pivi-editor-toolbar-card__body">
-        {meta ? (
-          <span className="pivi-editor-toolbar-card__meta">{meta}</span>
-        ) : null}
-        {shortcut.kind === 'pivi-command' ? (
-          <label className="pivi-editor-toolbar-card__field">
-            <span>{t('settings.editorToolbar.executionTarget.name')}</span>
-            <Select
-              label={t('settings.editorToolbar.executionTarget.forCommand', { label })}
-              disabled={pending}
-              value={shortcut.executionTarget ?? 'sidebar'}
-              onChange={(value) => { onExecutionTargetChange(value as 'inline-edit' | 'sidebar'); }}
-            >
-              <option value="sidebar">{t('settings.editorToolbar.executionTarget.sidebar')}</option>
-              <option value="inline-edit">{t('settings.editorToolbar.executionTarget.inlineEdit')}</option>
-            </Select>
-          </label>
-        ) : null}
-      </div>
-    </details>
+      <SettingRow name={t('settings.editorToolbar.executionTarget.name')}>
+        <Select
+          label={t('settings.editorToolbar.executionTarget.forCommand', { label })}
+          disabled={pending}
+          value={shortcut.executionTarget ?? 'sidebar'}
+          onChange={(value) => { onExecutionTargetChange(value as 'inline-edit' | 'sidebar'); }}
+        >
+          <option value="sidebar">{t('settings.editorToolbar.executionTarget.sidebar')}</option>
+          <option value="inline-edit">{t('settings.editorToolbar.executionTarget.inlineEdit')}</option>
+        </Select>
+      </SettingRow>
+    </DisclosureCard>
   );
 }
 
@@ -632,8 +630,8 @@ export function EditorToolbarSection({
   const reorder = useSortableReorder<string, HTMLElement>({
     order,
     disabled: pending || order.length < 2,
-    itemSelector: '[data-shortcut-sort-id]',
-    itemDataKey: 'shortcutSortId',
+    itemSelector: '[data-settings-sort-id]',
+    itemDataKey: 'settingsSortId',
     setOrder: (ids) => { setOrder(ids); },
     commitOrder: async (ids, originalOrder) => {
       const shortcuts = ids.flatMap((id) => {
@@ -662,8 +660,17 @@ export function EditorToolbarSection({
   });
 
   return (
-    <>
-      <SettingsSection title={t('settings.editorToolbar.provider.title')}>
+    <SettingsPage
+      description={(
+        <>
+          <p>{t('settings.editorToolbar.desc')}</p>
+          {noteToolbarActive ? (
+            <p>{t('settings.editorToolbar.provider.noteToolbarActive')}</p>
+          ) : null}
+        </>
+      )}
+    >
+      <SettingsSection>
         <SettingRow
           name={t('settings.editorToolbar.provider.name')}
           description={t('settings.editorToolbar.provider.desc')}
@@ -675,174 +682,165 @@ export function EditorToolbarSection({
             onChange={setEnabled}
           />
         </SettingRow>
-        {noteToolbarActive ? (
-          <p className="pivi-setting-description">
-            {t('settings.editorToolbar.provider.noteToolbarActive')}
-          </p>
+        {toolbar.enabled ? (
+          <SettingsCollection
+            listRef={reorder.listRef}
+            announcement={reorder.announcement}
+            emptyState={toolbar.shortcuts.length === 0 ? t('settings.editorToolbar.empty') : undefined}
+          >
+            {order.map((id, index) => {
+              const shortcut = shortcutById.get(id);
+              if (!shortcut) return null;
+              return (
+                <ShortcutCard
+                  iconNames={iconNames}
+                  key={shortcut.id}
+                  shortcut={shortcut}
+                  pending={pending}
+                  expanded={expanded.has(id)}
+                  position={index + 1}
+                  dragging={reorder.draggingId === id}
+                  dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
+                  reorderHandleProps={reorder.getHandleProps(id)}
+                  suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
+                  onToggleExpanded={() => { toggleExpanded(id); }}
+                  description={shortcut.kind === 'pivi-command'
+                    ? piviCommands.find(command => command.key === shortcut.piviCommandKey)?.description
+                    : undefined}
+                  editorCommandName={shortcut.kind === 'editor-command'
+                    ? editorToolbar.listHostCommands().find(command => command.id === shortcut.commandId)?.name
+                    : undefined}
+                  onIconChange={(icon) => {
+                    updateShortcuts(toolbar.shortcuts.map((entry) => (
+                      entry.id === id ? { ...entry, icon } : entry
+                    )));
+                  }}
+                  onToggleEnabled={(enabled) => {
+                    updateShortcuts(toolbar.shortcuts.map((entry) => (
+                      entry.id === id ? { ...entry, enabled } : entry
+                    )));
+                  }}
+                  onExecutionTargetChange={(executionTarget) => {
+                    updateShortcuts(toolbar.shortcuts.map((entry) => (
+                      entry.id === id ? { ...entry, executionTarget } : entry
+                    )));
+                  }}
+                  onRemove={() => {
+                    updateShortcuts(toolbar.shortcuts.filter((entry) => entry.id !== id));
+                  }}
+                />
+              );
+            })}
+          </SettingsCollection>
+        ) : null}
+        {toolbar.enabled && mode === 'editor-command' ? (
+          <EditorCommandPicker
+            editorToolbar={editorToolbar}
+            existingCommandIds={existingHostCommandIds}
+            pending={pending}
+            onSelect={(command) => {
+              const id = command.id;
+              const shortcuts: EditorToolbarShortcut[] = [
+                ...toolbar.shortcuts,
+                {
+                  id,
+                  kind: 'editor-command' as const,
+                  enabled: true,
+                  commandId: command.id as EditorCommandId,
+                },
+              ];
+              void persist({ enabled: toolbar.enabled, shortcuts }).then((saved) => {
+                if (saved) {
+                  setMode('idle');
+                }
+              });
+            }}
+            onCancel={() => { setMode('idle'); }}
+          />
+        ) : null}
+        {toolbar.enabled && mode === 'obsidian-command' ? (
+          <ObsidianCommandPicker
+            editorToolbar={editorToolbar}
+            existingCommandIds={existingHostCommandIds}
+            pending={pending}
+            onSelect={(command) => {
+              const id = createShortcutId();
+              const shortcuts: EditorToolbarShortcut[] = [
+                ...toolbar.shortcuts,
+                {
+                  id,
+                  kind: 'obsidian-command',
+                  label: command.name,
+                  enabled: true,
+                  commandId: command.id,
+                  icon: command.iconId ?? 'terminal',
+                },
+              ];
+              void persist({ enabled: toolbar.enabled, shortcuts }).then((saved) => {
+                if (saved) setMode('idle');
+              });
+            }}
+            onCancel={() => { setMode('idle'); }}
+          />
+        ) : null}
+        {toolbar.enabled && mode === 'pivi-command' ? (
+          <PiviCommandPicker
+            editorToolbar={editorToolbar}
+            existingKeys={existingPiviCommandKeys}
+            pending={pending}
+            onSelect={(command, executionTarget) => {
+              const id = createShortcutId();
+              const shortcuts = [
+                ...toolbar.shortcuts,
+                {
+                  id,
+                  kind: 'pivi-command' as const,
+                  label: `/${command.name}`,
+                  enabled: true,
+                  piviCommandKey: command.key,
+                  executionTarget,
+                  ...(command.icon ? { icon: command.icon } : {}),
+                },
+              ];
+              void persist({ enabled: toolbar.enabled, shortcuts }).then((saved) => {
+                if (saved) {
+                  setMode('idle');
+                  toggleExpanded(id, true);
+                }
+              });
+            }}
+            onCancel={() => { setMode('idle'); }}
+          />
+        ) : null}
+        {toolbar.enabled && mode === 'idle' ? (
+          <div className="pivi-settings-action-group">
+            <button
+              type="button"
+              className="pivi-settings-text-btn"
+              disabled={pending}
+              onClick={() => { setMode('editor-command'); }}
+            >
+              {t('settings.editorToolbar.addEditorCommand')}
+            </button>
+            <button
+              type="button"
+              className="pivi-settings-text-btn"
+              disabled={pending}
+              onClick={() => { setMode('obsidian-command'); }}
+            >
+              {t('settings.editorToolbar.addCommand')}
+            </button>
+            <button
+              type="button"
+              className="pivi-settings-text-btn"
+              disabled={pending}
+              onClick={() => { setMode('pivi-command'); }}
+            >
+              {t('settings.editorToolbar.addPiviCommand')}
+            </button>
+          </div>
         ) : null}
       </SettingsSection>
-      {toolbar.enabled ? (
-        <SettingsSection title={t('settings.editorToolbar.title')}>
-          <p className="pivi-setting-description">{t('settings.editorToolbar.desc')}</p>
-          {toolbar.shortcuts.length === 0 ? (
-            <p className="pivi-setting-description">{t('settings.editorToolbar.empty')}</p>
-          ) : (
-            <div className="pivi-editor-toolbar-cards" ref={reorder.listRef}>
-              {order.map((id, index) => {
-                const shortcut = shortcutById.get(id);
-                if (!shortcut) return null;
-                return (
-                  <ShortcutCard
-                    iconNames={iconNames}
-                    key={shortcut.id}
-                    shortcut={shortcut}
-                    pending={pending}
-                    expanded={expanded.has(id)}
-                    position={index + 1}
-                    dragging={reorder.draggingId === id}
-                    dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
-                    reorderHandleProps={reorder.getHandleProps(id)}
-                    suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
-                    onToggleExpanded={() => { toggleExpanded(id); }}
-                    description={shortcut.kind === 'pivi-command'
-                      ? piviCommands.find(command => command.key === shortcut.piviCommandKey)?.description
-                      : undefined}
-                    editorCommandName={shortcut.kind === 'editor-command'
-                      ? editorToolbar.listHostCommands().find(command => command.id === shortcut.commandId)?.name
-                      : undefined}
-                    onIconChange={(icon) => {
-                      updateShortcuts(toolbar.shortcuts.map((entry) => (
-                        entry.id === id ? { ...entry, icon } : entry
-                      )));
-                    }}
-                    onToggleEnabled={(enabled) => {
-                      updateShortcuts(toolbar.shortcuts.map((entry) => (
-                        entry.id === id ? { ...entry, enabled } : entry
-                      )));
-                    }}
-                    onExecutionTargetChange={(executionTarget) => {
-                      updateShortcuts(toolbar.shortcuts.map((entry) => (
-                        entry.id === id ? { ...entry, executionTarget } : entry
-                      )));
-                    }}
-                    onRemove={() => {
-                      updateShortcuts(toolbar.shortcuts.filter((entry) => entry.id !== id));
-                    }}
-                  />
-                );
-              })}
-            </div>
-          )}
-          <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
-          {mode === 'editor-command' ? (
-            <EditorCommandPicker
-              editorToolbar={editorToolbar}
-              existingCommandIds={existingHostCommandIds}
-              pending={pending}
-              onSelect={(command) => {
-                const id = command.id;
-                const shortcuts: EditorToolbarShortcut[] = [
-                  ...toolbar.shortcuts,
-                  {
-                    id,
-                    kind: 'editor-command' as const,
-                    enabled: true,
-                    commandId: command.id as EditorCommandId,
-                  },
-                ];
-                void persist({ enabled: toolbar.enabled, shortcuts }).then((saved) => {
-                  if (saved) {
-                    setMode('idle');
-                  }
-                });
-              }}
-              onCancel={() => { setMode('idle'); }}
-            />
-          ) : null}
-          {mode === 'obsidian-command' ? (
-            <ObsidianCommandPicker
-              editorToolbar={editorToolbar}
-              existingCommandIds={existingHostCommandIds}
-              pending={pending}
-              onSelect={(command) => {
-                const id = createShortcutId();
-                const shortcuts: EditorToolbarShortcut[] = [
-                  ...toolbar.shortcuts,
-                  {
-                    id,
-                    kind: 'obsidian-command',
-                    label: command.name,
-                    enabled: true,
-                    commandId: command.id,
-                    icon: command.iconId ?? 'terminal',
-                  },
-                ];
-                void persist({ enabled: toolbar.enabled, shortcuts }).then((saved) => {
-                  if (saved) setMode('idle');
-                });
-              }}
-              onCancel={() => { setMode('idle'); }}
-            />
-          ) : null}
-          {mode === 'pivi-command' ? (
-            <PiviCommandPicker
-              editorToolbar={editorToolbar}
-              existingKeys={existingPiviCommandKeys}
-              pending={pending}
-              onSelect={(command, executionTarget) => {
-                const id = createShortcutId();
-                const shortcuts = [
-                  ...toolbar.shortcuts,
-                  {
-                    id,
-                    kind: 'pivi-command' as const,
-                    label: `/${command.name}`,
-                    enabled: true,
-                    piviCommandKey: command.key,
-                    executionTarget,
-                    ...(command.icon ? { icon: command.icon } : {}),
-                  },
-                ];
-                void persist({ enabled: toolbar.enabled, shortcuts }).then((saved) => {
-                  if (saved) {
-                    setMode('idle');
-                    toggleExpanded(id, true);
-                  }
-                });
-              }}
-              onCancel={() => { setMode('idle'); }}
-            />
-          ) : null}
-          {mode === 'idle' ? (
-            <div className="pivi-settings-action-group">
-              <button
-                type="button"
-                className="pivi-settings-text-btn"
-                disabled={pending}
-                onClick={() => { setMode('editor-command'); }}
-              >
-                {t('settings.editorToolbar.addEditorCommand')}
-              </button>
-              <button
-                type="button"
-                className="pivi-settings-text-btn"
-                disabled={pending}
-                onClick={() => { setMode('obsidian-command'); }}
-              >
-                {t('settings.editorToolbar.addCommand')}
-              </button>
-              <button
-                type="button"
-                className="pivi-settings-text-btn"
-                disabled={pending}
-                onClick={() => { setMode('pivi-command'); }}
-              >
-                {t('settings.editorToolbar.addPiviCommand')}
-              </button>
-            </div>
-          ) : null}
-        </SettingsSection>
-      ) : null}
-    </>
+    </SettingsPage>
   );
 }

@@ -615,7 +615,7 @@
       },
       "heading": "工具开关",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "{workspaceNameTitle}工具",
         "hostCli": "{hostName} CLI",
         "pivi": "Pivi",
         "additional": "附加访问"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "内部命令",
-      "heading": "自定义命令",
+      "heading": "工作区命令",
       "add": "+ 添加命令",
       "addAria": "添加自定义命令",
       "empty": "尚无自定义命令。添加后即可从 / 菜单使用。",

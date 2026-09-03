@@ -615,7 +615,7 @@
       },
       "heading": "Tool-Schalter",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "{workspaceNameTitle}-Werkzeuge",
         "hostCli": "{hostName}-CLI",
         "pivi": "Pivi",
         "additional": "Zusätzlicher Zugriff"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "Interne Befehle",
-      "heading": "Eigene Befehle",
+      "heading": "Workspace-Befehle",
       "add": "+ Befehl hinzufügen",
       "addAria": "Eigenen Befehl hinzufügen",
       "empty": "Noch keine eigenen Befehle. Hinzufügen, um sie im /‑Menü zu nutzen.",

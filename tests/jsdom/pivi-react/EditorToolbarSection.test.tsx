@@ -148,24 +148,24 @@ describe('EditorToolbarSection', () => {
     ));
     await screen.findByText('Summarize selection');
 
-    const details = screen.getByText('/summarize').closest('details');
-    const summary = details?.querySelector('summary');
+    const details = screen.getByText('/summarize').closest('.pivi-settings-card');
+    const summary = details?.querySelector('.pivi-settings-card__header');
     expect(details).not.toBeNull();
     expect(summary).not.toBeNull();
-    expect(details).not.toHaveAttribute('open');
+    expect(details).not.toHaveClass('is-open');
     expect(saveEditorSelectionToolbar).not.toHaveBeenCalled();
 
-    fireEvent.click(summary!);
-    expect(details).toHaveAttribute('open');
+    fireEvent.click(screen.getByText('/summarize'));
+    expect(details).toHaveClass('is-open');
     expect(screen.getByRole('combobox', { name: 'Execution target for /summarize' })).toHaveTextContent('Sidebar');
     expect(saveEditorSelectionToolbar).not.toHaveBeenCalled();
 
-    fireEvent.click(summary!);
-    expect(details).not.toHaveAttribute('open');
+    fireEvent.click(screen.getByText('/summarize'));
+    expect(details).not.toHaveClass('is-open');
     await act(async () => {
       fireEvent.click(screen.getByRole('checkbox', { name: 'Enable /summarize' }));
     });
-    expect(details).not.toHaveAttribute('open');
+    expect(details).not.toHaveClass('is-open');
     expect(saveEditorSelectionToolbar).toHaveBeenCalledWith({
       enabled: true,
       shortcuts: [expect.objectContaining({ id: 'shortcut-1', enabled: false })],
@@ -215,8 +215,8 @@ describe('EditorToolbarSection', () => {
     });
     expect(store.getSnapshot().general.editorSelectionToolbar.shortcuts).toHaveLength(1);
 
-    const details = screen.getByText('/summarize').closest('details');
-    expect(details).toHaveAttribute('open');
+    const details = screen.getByText('/summarize').closest('.pivi-settings-card');
+    expect(details).toHaveClass('is-open');
     const targetSelect = screen.getByRole('combobox', { name: 'Execution target for /summarize' });
     expect(targetSelect).toHaveTextContent('Inline edit');
     fireEvent.click(targetSelect);
@@ -442,8 +442,8 @@ describe('EditorToolbarSection', () => {
     const editorToggle = screen.getByRole('checkbox', { name: 'Enable Bold' });
     const obsidianToggle = screen.getByRole('checkbox', { name: 'Enable Toggle pin' });
     const piviToggle = screen.getByRole('checkbox', { name: 'Enable /summarize' });
-    const obsidianDetails = screen.getByText('Toggle pin').closest('details');
-    const piviDetails = screen.getByText('/summarize').closest('details');
+    const obsidianRow = screen.getByText('Toggle pin').closest('.pivi-settings-row');
+    const piviDetails = screen.getByText('/summarize').closest('.pivi-settings-card');
 
     expect(globalToggle).toBeChecked();
     expect(inlineToggle).toBeChecked();
@@ -451,8 +451,8 @@ describe('EditorToolbarSection', () => {
     expect(editorToggle).toBeChecked();
     expect(obsidianToggle).toBeChecked();
     expect(piviToggle).toBeChecked();
-    expect(obsidianDetails).not.toHaveAttribute('open');
-    expect(piviDetails).not.toHaveAttribute('open');
+    expect(obsidianRow).not.toHaveClass('pivi-settings-card');
+    expect(piviDetails).not.toHaveClass('is-open');
 
     await act(async () => { fireEvent.click(inlineToggle); });
     await act(async () => { fireEvent.click(addToChatToggle); });
@@ -465,17 +465,17 @@ describe('EditorToolbarSection', () => {
     expect(editorToggle).not.toBeChecked();
     expect(obsidianToggle).not.toBeChecked();
     expect(piviToggle).not.toBeChecked();
-    expect(obsidianDetails).not.toHaveAttribute('open');
+    expect(piviDetails).not.toHaveClass('is-open');
 
     const iconButton = screen.getByRole('button', { name: 'Choose icon' });
-    expect(iconButton.closest('summary')).not.toBeNull();
-    expect(obsidianDetails).not.toHaveAttribute('open');
+    expect(iconButton.closest('.pivi-settings-row')).toBe(obsidianRow);
+    expect(piviDetails).not.toHaveClass('is-open');
     fireEvent.click(iconButton);
-    expect(obsidianDetails).not.toHaveAttribute('open');
+    expect(piviDetails).not.toHaveClass('is-open');
     await act(async () => {
       fireEvent.click(screen.getByRole('option', { name: 'terminal' }));
     });
-    expect(obsidianDetails).not.toHaveAttribute('open');
+    expect(piviDetails).not.toHaveClass('is-open');
     expect(saveEditorSelectionToolbar).toHaveBeenLastCalledWith({
       enabled: true,
       shortcuts: expect.arrayContaining([
@@ -515,8 +515,8 @@ describe('EditorToolbarSection', () => {
       </I18nProvider>,
     ));
 
-    expect(screen.getByText('Inline edit').closest('.pivi-editor-toolbar-card')?.tagName).toBe('DIV');
-    expect(screen.getByText('Add to chat').closest('.pivi-editor-toolbar-card')?.tagName).toBe('DIV');
+    expect(screen.getByText('Inline edit').closest('.pivi-settings-row')?.tagName).toBe('DIV');
+    expect(screen.getByText('Add to chat').closest('.pivi-settings-row')?.tagName).toBe('DIV');
     expect(screen.queryByRole('button', { name: 'Remove Inline edit' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Remove Add to chat' })).not.toBeInTheDocument();
 
@@ -580,7 +580,8 @@ describe('EditorToolbarSection', () => {
       store.getSnapshot().general.editorSelectionToolbar.shortcuts.map(shortcut => shortcut.id),
     ).toEqual(['shortcut-2', 'shortcut-1']);
     expect(screen.getByRole('button', { name: 'Reorder Toggle fold, currently position 2' })).toBeInTheDocument();
-    expect(screen.getByText('Toggle fold').closest('details')).not.toHaveAttribute('open');
+    expect(screen.getByText('Toggle fold').closest('.pivi-settings-row')).not.toBeNull();
+    expect(screen.getByText('Toggle fold').closest('.pivi-settings-card')).toBeNull();
   });
 
   it('hides shortcut controls when the toolbar is disabled', () => {

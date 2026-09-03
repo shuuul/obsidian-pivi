@@ -615,7 +615,7 @@
       },
       "heading": "Переключатели инструментов",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "Инструменты {workspaceNameTitle}",
         "hostCli": "CLI {hostName}",
         "pivi": "Pivi",
         "additional": "Дополнительный доступ"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "Внутренние команды",
-      "heading": "Пользовательские команды",
+      "heading": "Команды рабочей области",
       "add": "+ Добавить команду",
       "addAria": "Добавить пользовательскую команду",
       "empty": "Пока нет пользовательских команд. Добавьте для меню /.",

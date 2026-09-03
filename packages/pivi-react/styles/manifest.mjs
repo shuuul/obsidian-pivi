@@ -42,6 +42,8 @@ export const styleModules = [
   'settings/features/models.css',
   'settings/features/mcp.css',
   'settings/features/prompt.css',
+  'settings/features/commands.css',
+  'settings/features/toolbar.css',
   'settings/base.css',
   'settings/provider-settings.css',
   'settings/command-editor.css',

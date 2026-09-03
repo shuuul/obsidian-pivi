@@ -9,12 +9,15 @@ export function DisclosureCard({
   name,
   summary,
   icon,
+  iconInteractive = false,
   badges,
   actions,
   open,
   onToggle,
   children,
   className,
+  ariaLabel,
+  toggleAriaLabel,
   sortId,
   sortableHandleProps,
   consumeClickAfterDrag,
@@ -25,12 +28,15 @@ export function DisclosureCard({
   readonly name: string;
   readonly summary?: ReactNode;
   readonly icon?: ReactNode;
+  readonly iconInteractive?: boolean;
   readonly badges?: ReactNode;
   readonly actions?: ReactNode;
   readonly open: boolean;
   readonly onToggle: () => void;
   readonly children?: ReactNode;
   readonly className?: string;
+  readonly ariaLabel?: string;
+  readonly toggleAriaLabel?: string;
   readonly sortId?: string;
   readonly sortableHandleProps?: SortableReorderHandleProps<HTMLElement>;
   readonly consumeClickAfterDrag?: () => boolean;
@@ -49,6 +55,7 @@ export function DisclosureCard({
       className={`pivi-settings-card${open ? ' is-open' : ''}${dragging ? ' is-dragging' : ''}${className ? ` ${className}` : ''}`}
       data-settings-sort-id={sortId}
       style={style}
+      aria-label={ariaLabel}
     >
       <div
         className="pivi-settings-card__header"
@@ -57,18 +64,29 @@ export function DisclosureCard({
         onPointerUp={sortableHandleProps?.onPointerUp}
         onPointerCancel={sortableHandleProps?.onPointerCancel}
       >
+        {icon && iconInteractive ? (
+          <span
+            className="pivi-settings-card__icon"
+            data-toolbar-control=""
+            onClick={(event) => { event.stopPropagation(); }}
+            onPointerDown={(event) => { event.stopPropagation(); }}
+          >
+            {icon}
+          </span>
+        ) : null}
         <button
           type="button"
           className="pivi-settings-card__toggle"
           aria-expanded={open}
           aria-controls={bodyId}
+          aria-label={toggleAriaLabel}
           data-sortable-surface=""
           onClick={() => {
             if (consumeClickAfterDrag?.()) return;
             onToggle();
           }}
         >
-          {icon ? <span className="pivi-settings-card__icon">{icon}</span> : null}
+          {icon && !iconInteractive ? <span className="pivi-settings-card__icon">{icon}</span> : null}
           <div className="pivi-settings-card__identity">
             <span className="pivi-settings-card__name">{name}</span>
             {summary ? <span className="pivi-settings-card__summary">{summary}</span> : null}
@@ -105,7 +123,7 @@ export function DisclosureCard({
           <PlatformIcon name="chevron-down" />
         </button>
       </div>
-      {open ? (
+      {open && children != null && children !== false ? (
         <SettingsNestingContext.Provider value={nesting + 1}>
           <div id={bodyId} className="pivi-settings-card__body">
             {children}

@@ -9,6 +9,7 @@ export const testPresentationPlatform: PresentationPlatform = {
     return {
       hostName: 'Test host',
       workspaceName: 'workspace',
+      workspaceNameTitle: 'Workspace',
       secureStorageName: 'secure storage',
     };
   },

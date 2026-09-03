@@ -43,7 +43,7 @@ export function BuiltInToolsSection({
   readonly store: SettingsUiStore;
 }) {
   const t = useT();
-  const { hostName, workspaceName } = useHostTerminology();
+  const { hostName, workspaceNameTitle } = useHostTerminology();
   const { subagents } = useSettingsUiSnapshot(store);
   const settings = ports.complex.tools.getSettings();
   const [directories, setDirectories] = useState<readonly string[]>(settings.externalReadDirectories);
@@ -258,7 +258,7 @@ export function BuiltInToolsSection({
         const rows = toolRows.filter(row => row.group === group);
         if (rows.length === 0) return null;
         return (
-          <SettingsSection key={group} title={t(titleKey, { hostName, workspaceName })}>
+          <SettingsSection key={group} title={t(titleKey, { hostName, workspaceNameTitle })}>
             {rows.map((row) => (
               <Fragment key={row.name}>
                 <SettingRow name={`${row.label} (${row.name})`} description={row.description}>

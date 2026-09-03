@@ -26,11 +26,13 @@ describe('obsidianPresentationPlatform', () => {
       hostName: 'Obsidian',
       secureStorageName: 'Obsidian keychain',
       workspaceName: 'vault',
+      workspaceNameTitle: 'Vault',
     });
     expect(obsidianPresentationPlatform.getTerminology('zh-CN')).toEqual({
       hostName: 'Obsidian',
       secureStorageName: 'Obsidian 钥匙串',
       workspaceName: '库',
+      workspaceNameTitle: '库',
     });
   });
 });

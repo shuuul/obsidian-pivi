@@ -140,7 +140,7 @@ describe('React tools settings', () => {
     }));
 
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
-      'workspace',
+      'Workspace tools',
       'Test host CLI',
       'Pivi',
       'Additional access',

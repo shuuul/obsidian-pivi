@@ -615,7 +615,7 @@
       },
       "heading": "工具開關",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "{workspaceNameTitle}工具",
         "hostCli": "{hostName} CLI",
         "pivi": "Pivi",
         "additional": "附加存取"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "內部指令",
-      "heading": "自訂指令",
+      "heading": "工作區指令",
       "add": "+ 新增指令",
       "addAria": "新增自訂指令",
       "empty": "尚無自訂指令。新增後即可從 / 選單使用。",

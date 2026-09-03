@@ -99,8 +99,8 @@ describe('React commands settings', () => {
     expect(screen.getByText('/compact')).toBeInTheDocument();
     expect(screen.queryByText('/generate-image')).not.toBeInTheDocument();
     const card = getCommandCard('Edit custom slash command');
-    expect(card).toHaveClass('pivi-provider-card', 'pivi-command-card');
-    expect(card).not.toHaveAttribute('open');
+    expect(card).toHaveClass('pivi-settings-card');
+    expect(card).not.toHaveClass('is-open');
     expect(screen.getByRole('button', { name: 'Delete command review' })).toBeInTheDocument();
   });
 
@@ -137,7 +137,7 @@ describe('React commands settings', () => {
     expect(screen.getByRole('button', { name: 'Reorder /review, currently position 2' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText('Edit command review'));
-    const card = screen.getByLabelText('Edit command review').closest('details') as HTMLElement;
+    const card = screen.getByLabelText('Edit command review').closest('.pivi-settings-card') as HTMLElement;
     fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Updated after reorder' } });
     fireEvent.click(within(card).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledWith(
@@ -169,10 +169,11 @@ describe('React commands settings', () => {
 
     const addButton = screen.getByRole('button', { name: 'Add custom command' });
     expect(addButton).toHaveTextContent('+ Add command');
-    expect(addButton.closest('.pivi-slash-settings-container')?.lastElementChild).toContainElement(addButton);
+    expect(addButton).toHaveClass('pivi-settings-text-btn');
+    expect(addButton.closest('.pivi-settings-collection')).toContainElement(addButton);
     fireEvent.click(addButton);
     const draft = getCommandCard('Create custom slash command');
-    expect(draft).toHaveAttribute('open');
+    expect(draft).toHaveClass('is-open');
     const inputs = draft.querySelectorAll('input');
     fireEvent.change(inputs[0]!, { target: { value: 'My Command!' } });
     fireEvent.change(draft.querySelector('textarea')!, { target: { value: 'Use this.' } });
@@ -263,10 +264,10 @@ describe('React commands settings', () => {
     fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Updated prompt' } });
 
     fireEvent.click(within(card).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({
+    await waitFor(() =>     expect(saveWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({
       content: 'Updated prompt',
     }), 1));
-    expect(card).not.toHaveAttribute('open');
+    expect(card).not.toHaveClass('is-open');
   });
 
   it('places the prompt description below its label and keeps the editor full width', async () => {
@@ -274,15 +275,17 @@ describe('React commands settings', () => {
     await screen.findByText('/review');
     fireEvent.click(screen.getByLabelText('Edit command review'));
     const card = getCommandCard('Edit custom slash command');
-    const promptField = within(card).getByText('Prompt').closest('label');
+    const promptName = within(card).getByText('Prompt');
+    const promptRow = promptName.closest('.pivi-settings-row');
     const description = within(card).getByText('Instructions sent when the command runs.');
     const editorContainer = card.querySelector('.pivi-settings-mention-editor-container');
     const textarea = card.querySelector('textarea');
 
-    expect(promptField).not.toBeNull();
+    expect(promptRow).toHaveClass('pivi-settings-row--stacked');
     expect(textarea).toHaveClass('pivi-settings-control--fill');
-    expect(promptField?.children[1]).toBe(description);
-    expect(promptField?.children[2]).toBe(editorContainer);
+    expect(promptRow).toContainElement(description);
+    expect(promptRow).toContainElement(editorContainer as HTMLElement);
+    expect(description.compareDocumentPosition(editorContainer!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('keeps the Save button enabled', async () => {
@@ -291,6 +294,7 @@ describe('React commands settings', () => {
     fireEvent.click(screen.getByLabelText('Edit command review'));
     const card = getCommandCard('Edit custom slash command');
     expect(within(card).getByRole('button', { name: 'Save' })).not.toBeDisabled();
+    expect(within(card).getAllByText('Save')).toHaveLength(1);
   });
 
   it('shows a delete failure rather than leaving the command busy', async () => {

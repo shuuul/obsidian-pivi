@@ -1,14 +1,5 @@
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
-import {
-  type CSSProperties,
-  type MouseEvent,
-  type PointerEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
@@ -24,7 +15,15 @@ import {
   useSortableReorder,
 } from '../reorder/useSortableReorder';
 import { ModalLayer } from '../shared/ModalLayer';
-import { SettingsActionFeedback, SettingsItemActions, SettingsListHeader, SettingsPageDescription, SettingsRemoveButton } from './controls';
+import { CommandIconPicker } from './commands/CommandIconPicker';
+import {
+  SettingRow,
+  SettingsActionFeedback,
+  SettingsPage,
+  SettingsRemoveButton,
+  SettingsSection,
+} from './controls';
+import { DisclosureCard, SettingsCollection } from './primitives';
 
 function normalizeCommandName(value: string): string {
   return value.trim().toLowerCase()
@@ -41,150 +40,6 @@ function useMountedRef() {
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
   return mounted;
-}
-
-const COMMON_COMMAND_ICONS = [
-  'message-square',
-  'languages',
-  'sparkles',
-  'list-collapse',
-  'file-text',
-  'book-open',
-  'search',
-  'pencil',
-  'wand-sparkles',
-  'brain',
-  'lightbulb',
-  'globe',
-] as const;
-
-const COMMAND_ICON_PAGE_SIZE = 150;
-
-interface CommandIconPickerProps {
-  readonly disabled: boolean;
-  readonly icon: string;
-  readonly iconNames: readonly string[];
-  readonly onChange: (icon: string) => void;
-}
-
-export function CommandIconPicker({
-  disabled,
-  icon,
-  iconNames,
-  onChange,
-}: CommandIconPickerProps) {
-  const t = useT();
-  const pickerRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [visibleLimit, setVisibleLimit] = useState(COMMAND_ICON_PAGE_SIZE);
-  const filteredIcons = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (normalizedQuery) {
-      return iconNames
-        .filter(name => name.toLowerCase().includes(normalizedQuery));
-    }
-
-    const availableIcons = new Set(iconNames);
-    return [...new Set([icon, ...COMMON_COMMAND_ICONS, ...iconNames])]
-      .filter(name => availableIcons.has(name));
-  }, [icon, iconNames, query]);
-  const visibleIcons = filteredIcons.slice(0, visibleLimit);
-
-  const closePicker = useCallback(() => {
-    setOpen(false);
-    setQuery('');
-    setVisibleLimit(COMMAND_ICON_PAGE_SIZE);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const picker = pickerRef.current;
-    const ownerDocument = picker?.ownerDocument;
-    if (!picker || !ownerDocument) return;
-    const OwnerNode = ownerDocument.defaultView?.Node;
-    const handlePointerDown = (event: Event) => {
-      if (OwnerNode && event.target instanceof OwnerNode && !picker.contains(event.target)) {
-        closePicker();
-      }
-    };
-    ownerDocument.addEventListener('pointerdown', handlePointerDown);
-    return () => { ownerDocument.removeEventListener('pointerdown', handlePointerDown); };
-  }, [closePicker, open]);
-
-  const selectIcon = (name: string) => {
-    onChange(name);
-    closePicker();
-  };
-
-  return <div className="pivi-command-icon-picker" ref={pickerRef}>
-    <button
-      type="button"
-      className="pivi-command-icon-trigger"
-      aria-expanded={open}
-      aria-haspopup="dialog"
-      aria-label={t('settings.createCommand.icon.choose')}
-      disabled={disabled}
-      onClick={() => {
-        if (open) closePicker();
-        else setOpen(true);
-      }}
-    >
-      <PlatformIcon name={icon} />
-      <span>{icon}</span>
-    </button>
-    {open
-      ? <div className="pivi-command-icon-popover" role="dialog" aria-label={t('settings.createCommand.icon.pickerTitle')} onKeyDown={(event) => {
-        if (event.key === 'Escape') closePicker();
-      }}>
-        <input
-          autoFocus
-          className="pivi-settings-control pivi-settings-control--fill"
-          type="search"
-          value={query}
-          aria-label={t('settings.createCommand.icon.search')}
-          placeholder={t('settings.createCommand.icon.searchPlaceholder')}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setVisibleLimit(COMMAND_ICON_PAGE_SIZE);
-          }}
-        />
-        {visibleIcons.length > 0
-          ? <div
-            className="pivi-command-icon-grid"
-            role="listbox"
-            aria-label={t('settings.createCommand.icon.results')}
-            onScroll={(event) => {
-              const grid = event.currentTarget;
-              if (
-                grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 48
-                && visibleLimit < filteredIcons.length
-              ) {
-                setVisibleLimit(limit => Math.min(
-                  limit + COMMAND_ICON_PAGE_SIZE,
-                  filteredIcons.length,
-                ));
-              }
-            }}
-          >
-            {visibleIcons.map(name => <button
-              key={name}
-              type="button"
-              role="option"
-              aria-label={name}
-              aria-selected={name === icon}
-              className={name === icon ? 'is-selected' : undefined}
-              title={name}
-              onClick={() => selectIcon(name)}
-            >
-              <PlatformIcon name={name} />
-              <span>{name}</span>
-            </button>)}
-          </div>
-          : <div className="pivi-command-icon-empty">{t('settings.createCommand.icon.noResults')}</div>}
-      </div>
-      : null}
-  </div>;
 }
 
 interface CommandCardProps {
@@ -259,11 +114,6 @@ function CommandCard({
     editorHandleRef.current?.setDisabled(pending);
   }, [pending]);
 
-  const stop = (event: MouseEvent): void => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
   const submit = async (): Promise<void> => {
     const normalizedName = normalizeCommandName(name);
     if (!normalizedName) { setError(t('settings.createCommand.needName')); return; }
@@ -299,81 +149,110 @@ function CommandCard({
   };
 
   const displayName = normalizeCommandName(name) || t('settings.createCommand.newCommand');
-  const dragStyle = dragging
-    ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
-    : undefined;
-  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
-    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"]')) {
-      return;
-    }
-    reorderHandleProps?.onPointerDown(event);
-  };
-  return <details
-    className={`pivi-provider-card pivi-command-card${reorderHandleProps ? ' pivi-sortable-provider-card' : ''}${dragging ? ' is-dragging' : ''}`}
-    open={expanded}
-    aria-label={isDraft ? t('settings.createCommand.titleCreate') : t('settings.createCommand.titleEdit')}
-    data-command-sort-id={savedEntry?.id}
-    style={dragStyle}
-  >
-    <summary
-      className="pivi-provider-header pivi-command-card-header"
-      aria-label={!isDraft ? t('settings.slashCommandsUi.editAria', { name: displayName }) : undefined}
-      onClick={(event) => {
-        event.preventDefault();
-        if (suppressReorderClick?.()) return;
-        onToggle();
-      }}
-      onPointerCancel={(event) => reorderHandleProps?.onPointerCancel(event)}
-      onPointerDown={handlePointerDown}
-      onPointerMove={(event) => reorderHandleProps?.onPointerMove(event)}
-      onPointerUp={(event) => reorderHandleProps?.onPointerUp(event)}
-    >
-      {reorderHandleProps && position !== undefined
-        ? <button
-          type="button"
-          className="pivi-provider-drag-handle"
-          aria-label={t('settings.slashCommandsUi.reorder.handle', { name: displayName, position })}
-          aria-pressed={dragging}
-          onClick={stop}
-          onKeyDown={reorderHandleProps.onKeyDown}
-        >
-          <span aria-hidden="true">⠿</span>
-        </button>
-        : null}
-      {position !== undefined ? <span className="pivi-provider-priority" aria-hidden="true">{position}</span> : null}
-      <div className="pivi-provider-title-row">
-        <PlatformIcon name={icon} />
-        <span className="pivi-provider-title">/{displayName}</span>
-        {argumentHint ? <span className="pivi-slash-item-hint">{argumentHint}</span> : null}
-      </div>
-      <SettingsItemActions>
-        {isDraft
-          ? <button className="pivi-settings-text-btn" type="button" disabled={pending} onClick={(event) => { stop(event); onCancelDraft(); }}>{t('common.cancel')}</button>
-          : <SettingsRemoveButton
+  const summary = description.trim() || argumentHint.trim() || undefined;
+
+  return (
+    <DisclosureCard
+      name={`/${displayName}`}
+      summary={summary}
+      icon={<PlatformIcon name={icon} />}
+      ariaLabel={isDraft ? t('settings.createCommand.titleCreate') : t('settings.createCommand.titleEdit')}
+      toggleAriaLabel={!isDraft ? t('settings.slashCommandsUi.editAria', { name: displayName }) : undefined}
+      open={expanded}
+      onToggle={onToggle}
+      sortId={savedEntry?.id}
+      sortableHandleProps={isDraft ? undefined : reorderHandleProps}
+      consumeClickAfterDrag={suppressReorderClick}
+      dragging={dragging}
+      dragOffset={dragOffset}
+      reorderLabel={position !== undefined
+        ? t('settings.slashCommandsUi.reorder.handle', { name: displayName, position })
+        : undefined}
+      actions={isDraft
+        ? undefined
+        : (
+          <SettingsRemoveButton
             ariaLabel={t('settings.slashCommandsUi.deleteAria', { name: displayName })}
             disabled={pending}
-            onClick={(event) => { stop(event); onDelete(savedEntry); }}
-          />}
-      </SettingsItemActions>
-    </summary>
-    <form className="pivi-provider-body pivi-command-card-body" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.name.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.name.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" autoFocus={isDraft} value={name} placeholder={t('settings.createCommand.name.placeholder')} onChange={(event) => { setName(normalizeCommandName(event.target.value)); setError(null); }} disabled={pending} /></div></label>
-      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.description.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.description.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={description} placeholder={t('settings.createCommand.description.placeholder')} onChange={(event) => { setDescription(event.target.value); setError(null); }} disabled={pending} /></div></label>
-      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.argumentHint.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.argumentHint.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={argumentHint} onChange={(event) => { setArgumentHint(event.target.value); setError(null); }} disabled={pending} /></div></label>
-      <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.icon.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.icon.desc')}</div></div><div className="pivi-setting-row__control pivi-command-icon-control"><CommandIconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} /></div></div>
-      <label className="pivi-command-prompt-field">
-        <span className="pivi-setting-row__name">{t('settings.createCommand.template.name')}</span>
-        <span className="pivi-setting-description">{t('settings.createCommand.template.desc')}</span>
-        <div ref={editorContainerRef} className="pivi-settings-mention-editor-container" aria-label={t('settings.createCommand.template.name')} />
-      </label>
-      <div className="pivi-command-card-actions">
-        <button className="pivi-button--primary" type="submit" disabled={pending}>{t('common.save')}</button>
-        <SettingsActionFeedback feedback={error
-          ? { kind: 'error', message: error }
-          : feedback} />
-      </div>
-    </form>
-  </details>;
+            onClick={() => { onDelete(savedEntry); }}
+          />
+        )}
+    >
+      <form onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+        <SettingRow
+          name={t('settings.createCommand.name.name')}
+          description={t('settings.createCommand.name.desc')}
+        >
+          <input
+            className="pivi-settings-control"
+            autoFocus={isDraft}
+            value={name}
+            placeholder={t('settings.createCommand.name.placeholder')}
+            onChange={(event) => { setName(normalizeCommandName(event.target.value)); setError(null); }}
+            disabled={pending}
+          />
+        </SettingRow>
+        <SettingRow
+          name={t('settings.createCommand.description.name')}
+          description={t('settings.createCommand.description.desc')}
+        >
+          <input
+            className="pivi-settings-control"
+            value={description}
+            placeholder={t('settings.createCommand.description.placeholder')}
+            onChange={(event) => { setDescription(event.target.value); setError(null); }}
+            disabled={pending}
+          />
+        </SettingRow>
+        <SettingRow
+          name={t('settings.createCommand.argumentHint.name')}
+          description={t('settings.createCommand.argumentHint.desc')}
+        >
+          <input
+            className="pivi-settings-control"
+            value={argumentHint}
+            onChange={(event) => { setArgumentHint(event.target.value); setError(null); }}
+            disabled={pending}
+          />
+        </SettingRow>
+        <SettingRow
+          stacked
+          name={t('settings.createCommand.template.name')}
+          description={t('settings.createCommand.template.desc')}
+        >
+          <div
+            ref={editorContainerRef}
+            className="pivi-settings-mention-editor-container"
+            aria-label={t('settings.createCommand.template.name')}
+          />
+        </SettingRow>
+        <SettingRow
+          name={t('settings.createCommand.icon.name')}
+          description={t('settings.createCommand.icon.desc')}
+        >
+          <CommandIconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} />
+        </SettingRow>
+        <SettingRow>
+          {isDraft
+            ? (
+              <button
+                className="pivi-settings-text-btn"
+                type="button"
+                disabled={pending}
+                onClick={onCancelDraft}
+              >
+                {t('common.cancel')}
+              </button>
+            )
+            : null}
+          <button type="submit" disabled={pending}>{t('common.save')}</button>
+          <SettingsActionFeedback feedback={error
+            ? { kind: 'error', message: error }
+            : feedback} />
+        </SettingRow>
+      </form>
+    </DisclosureCard>
+  );
 }
 
 export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
@@ -490,8 +369,8 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const reorder = useSortableReorder<string, HTMLElement>({
     order,
     disabled: pending || order.length < 2,
-    itemSelector: '[data-command-sort-id]',
-    itemDataKey: 'commandSortId',
+    itemSelector: '[data-settings-sort-id]',
+    itemDataKey: 'settingsSortId',
     setOrder: (ids) => { setOrder(ids); },
     commitOrder: async (ids, originalOrder) => {
       setPending(true);
@@ -519,98 +398,100 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     failedAnnouncement: t('common.error'),
   });
 
-  return <>
-    <SettingsPageDescription>
-      <p className="pivi-setting-description">{t('settings.slashCommands.desc', { workspaceName })}</p>
-    </SettingsPageDescription>
-    {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
-    <div className="pivi-slash-settings-container">
+  return (
+    <SettingsPage description={<p>{t('settings.slashCommands.desc', { workspaceName })}</p>}>
+      {error ? <p className="pivi-setting-description" role="alert">{error}</p> : null}
       {internalEntries.length > 0
-        ? <>
-          <SettingsListHeader title={t('settings.slashCommandsUi.internalHeading')} />
-          <div className="pivi-sp-list pivi-sp-list--internal">
-            {internalEntries.map(entry => <div className="pivi-sp-item" key={`${entry.scope}:${entry.id}`}>
-              <div className="pivi-sp-info">
-                <div className="pivi-sp-item-header">
-                  {entry.icon ? <PlatformIcon name={entry.icon} /> : null}
-                  <span className="pivi-sp-item-name">/{entry.name}</span>
-                  {entry.argumentHint ? <span className="pivi-slash-item-hint">{entry.argumentHint}</span> : null}
-                </div>
-                {entry.description ? <div className="pivi-sp-item-desc">{entry.description}</div> : null}
-              </div>
-            </div>)}
-          </div>
-        </>
+        ? (
+          <SettingsSection title={t('settings.slashCommandsUi.internalHeading')}>
+            {internalEntries.map(entry => (
+              <SettingRow
+                key={`${entry.scope}:${entry.id}`}
+                name={`/${entry.name}`}
+                description={entry.description || undefined}
+              />
+            ))}
+          </SettingsSection>
+        )
         : null}
-      <SettingsListHeader
-        title={t('settings.slashCommandsUi.heading')}
-      />
-      {entries === null
-        ? <p className="pivi-sp-empty-state">{t('settings.slashCommandsUi.loading')}</p>
-        : entries.length === 0 && !draftOpen
-          ? <p className="pivi-sp-empty-state">{t('settings.slashCommandsUi.empty')}</p>
-          : <div className="pivi-providers-list pivi-command-card-list" ref={reorder.listRef}>
-            {order.map((id, index) => {
-              const entry = entryById.get(id);
-              if (!entry) return null;
-              const key = commandKey(entry);
-              return <CommandCard
-                key={key}
-                entry={entry}
-                expanded={expanded.has(key)}
-                existingIds={existingIds}
-                iconNames={iconNames}
-                pending={pending}
-                feedback={commandFeedback[key]}
-                mentionEditor={ports.mentionEditor}
-                position={index + 1}
-                dragging={reorder.draggingId === id}
-                dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
-                reorderHandleProps={reorder.getHandleProps(id)}
-                suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
-                onToggle={() => toggleExpanded(key)}
-                onCancelDraft={() => undefined}
-                onDelete={setConfirmDelete}
-                onSave={save}
-              />;
-            })}
-            {draftOpen ? <CommandCard
-              expanded
-              existingIds={existingIds}
-              iconNames={iconNames}
-              pending={pending}
-              feedback={commandFeedback.__draft__}
-              mentionEditor={ports.mentionEditor}
-              onToggle={() => undefined}
-              onCancelDraft={() => setDraftOpen(false)}
-              onDelete={() => undefined}
-              onSave={save}
-            /> : null}
-          </div>}
-      <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
-      <div className="pivi-provider-add-controls">
-        <button className="pivi-provider-add-trigger" type="button" aria-label={t('settings.slashCommandsUi.addAria')} disabled={pending || draftOpen} onClick={() => { setDraftOpen(true); }}>
-          {t('settings.slashCommandsUi.add')}
-        </button>
-      </div>
-    </div>
-    {confirmDelete
-      ? <ModalLayer
-        ariaLabel={t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
-        open
-        onClose={() => { if (!pending) setConfirmDelete(null); }}
-      >
-        <div className="pivi-modal">
-          <div className="pivi-modal__title">
-            {t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
-          </div>
-          <p>{t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}</p>
-          <div className="pivi-modal__actions">
-            <button type="button" data-modal-cancel disabled={pending} onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
-            <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void remove(confirmDelete); }}>{t('common.delete')}</button>
-          </div>
-        </div>
-      </ModalLayer>
-      : null}
-  </>;
+      <SettingsSection title={t('settings.slashCommandsUi.heading')}>
+        {entries === null
+          ? <p className="pivi-setting-description">{t('settings.slashCommandsUi.loading')}</p>
+          : (
+            <SettingsCollection
+              listRef={reorder.listRef}
+              announcement={reorder.announcement}
+              emptyState={entries.length === 0 && !draftOpen ? t('settings.slashCommandsUi.empty') : undefined}
+              addLabel={t('settings.slashCommandsUi.add')}
+              addAriaLabel={t('settings.slashCommandsUi.addAria')}
+              addDisabled={pending || draftOpen}
+              onAdd={() => { setDraftOpen(true); }}
+            >
+              {order.map((id, index) => {
+                const entry = entryById.get(id);
+                if (!entry) return null;
+                const key = commandKey(entry);
+                return (
+                  <CommandCard
+                    key={key}
+                    entry={entry}
+                    expanded={expanded.has(key)}
+                    existingIds={existingIds}
+                    iconNames={iconNames}
+                    pending={pending}
+                    feedback={commandFeedback[key]}
+                    mentionEditor={ports.mentionEditor}
+                    position={index + 1}
+                    dragging={reorder.draggingId === id}
+                    dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
+                    reorderHandleProps={reorder.getHandleProps(id)}
+                    suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
+                    onToggle={() => toggleExpanded(key)}
+                    onCancelDraft={() => undefined}
+                    onDelete={setConfirmDelete}
+                    onSave={save}
+                  />
+                );
+              })}
+              {draftOpen
+                ? (
+                  <CommandCard
+                    expanded
+                    existingIds={existingIds}
+                    iconNames={iconNames}
+                    pending={pending}
+                    feedback={commandFeedback.__draft__}
+                    mentionEditor={ports.mentionEditor}
+                    onToggle={() => undefined}
+                    onCancelDraft={() => setDraftOpen(false)}
+                    onDelete={() => undefined}
+                    onSave={save}
+                  />
+                )
+                : null}
+            </SettingsCollection>
+          )}
+      </SettingsSection>
+      {confirmDelete
+        ? (
+          <ModalLayer
+            ariaLabel={t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
+            onClose={() => { if (!pending) setConfirmDelete(null); }}
+            open
+          >
+            <div className="pivi-modal">
+              <div className="pivi-modal__title">
+                {t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
+              </div>
+              <p>{t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}</p>
+              <div className="pivi-modal__actions">
+                <button type="button" data-modal-cancel disabled={pending} onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
+                <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void remove(confirmDelete); }}>{t('common.delete')}</button>
+              </div>
+            </div>
+          </ModalLayer>
+        )
+        : null}
+    </SettingsPage>
+  );
 }

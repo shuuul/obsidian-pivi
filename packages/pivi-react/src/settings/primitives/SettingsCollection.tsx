@@ -5,6 +5,8 @@ export function SettingsCollection({
   emptyState,
   addLabel,
   onAdd,
+  addAriaLabel,
+  addDisabled = false,
   addTrigger,
   listRef,
   announcement,
@@ -14,12 +16,14 @@ export function SettingsCollection({
   readonly emptyState?: string;
   readonly addLabel?: string;
   readonly onAdd?: () => void;
+  readonly addAriaLabel?: string;
+  readonly addDisabled?: boolean;
   readonly addTrigger?: ReactNode;
   readonly listRef?: Ref<HTMLDivElement | null>;
   readonly announcement?: string;
   readonly className?: string;
 }) {
-  const isEmpty = Children.count(children) === 0;
+  const isEmpty = Children.toArray(children).length === 0;
   return (
     <div className={`pivi-settings-collection${className ? ` ${className}` : ''}`}>
       {isEmpty && emptyState ? (
@@ -33,6 +37,8 @@ export function SettingsCollection({
         <button
           type="button"
           className="pivi-settings-collection__add pivi-settings-text-btn"
+          aria-label={addAriaLabel}
+          disabled={addDisabled}
           onClick={onAdd}
         >
           {addLabel}

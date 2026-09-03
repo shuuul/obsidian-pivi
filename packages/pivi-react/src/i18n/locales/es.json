@@ -615,7 +615,7 @@
       },
       "heading": "Interruptores de herramientas",
       "groups": {
-        "workspace": "{workspaceName}",
+        "workspace": "Herramientas de {workspaceNameTitle}",
         "hostCli": "CLI de {hostName}",
         "pivi": "Pivi",
         "additional": "Acceso adicional"
@@ -897,7 +897,7 @@
     },
     "slashCommandsUi": {
       "internalHeading": "Comandos internos",
-      "heading": "Comandos personalizados",
+      "heading": "Comandos del espacio de trabajo",
       "add": "+ Añadir comando",
       "addAria": "Añadir comando personalizado",
       "empty": "Aún no hay comandos personalizados. Añade uno para el menú /.",
