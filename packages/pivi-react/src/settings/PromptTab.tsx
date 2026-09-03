@@ -1,7 +1,5 @@
 import {
-  type CSSProperties,
   type MouseEvent,
-  type PointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -25,13 +23,13 @@ import {
 import { ModalLayer } from '../shared/ModalLayer';
 import { formatCompactTokenCount } from '../usage/usageInfo';
 import {
-  SettingsItemActions,
-  SettingsListHeader,
-  SettingsPageDescription,
+  SettingRow,
+  SettingsPage,
   SettingsRemoveButton,
   SettingsSection,
   Toggle,
 } from './controls';
+import { DisclosureCard, SettingsCollection } from './primitives';
 
 const USAGE_SECTION_LABELS: Record<SettingsPromptUsageSectionId, TranslationKey> = {
   core: 'settings.prompt.usage.sections.core',
@@ -92,6 +90,70 @@ function UsageRow({ section }: { readonly section: SettingsPromptUsageSection })
   );
 }
 
+function PromptModuleEditor({
+  module,
+  pending,
+  onSaveBody,
+  onRestore,
+  onRename,
+}: {
+  readonly module: SettingsPromptModuleView;
+  readonly pending: boolean;
+  readonly onSaveBody: (body: string) => Promise<void>;
+  readonly onRestore?: () => void;
+  readonly onRename?: (title: string) => Promise<void>;
+}) {
+  const t = useT();
+  const [body, setBody] = useState(module.body);
+  const [title, setTitle] = useState(module.title);
+
+  useEffect(() => { setBody(module.body); }, [module.body]);
+  useEffect(() => { setTitle(module.title); }, [module.title]);
+
+  return (
+    <>
+      {onRename ? (
+        <SettingRow name={t('settings.prompt.titleLabel')}>
+          <input
+            className="pivi-settings-control"
+            value={title}
+            disabled={pending}
+            onChange={(event) => { setTitle(event.target.value); }}
+            onBlur={() => {
+              if (title.trim() === module.title) return;
+              void onRename(title);
+            }}
+          />
+        </SettingRow>
+      ) : null}
+      <SettingRow stacked name={t('settings.prompt.bodyLabel')}>
+        <textarea
+          className="pivi-settings-control pivi-settings-control--fill pivi-prompt-module-body"
+          rows={16}
+          value={body}
+          disabled={pending}
+          onChange={(event) => { setBody(event.target.value); }}
+          onBlur={() => {
+            if (body === module.body) return;
+            void onSaveBody(body);
+          }}
+        />
+      </SettingRow>
+      {onRestore ? (
+        <div className="pivi-settings-action-group">
+          <button
+            type="button"
+            disabled={pending || !module.modified}
+            onClick={onRestore}
+          >
+            {t('settings.prompt.restore')}
+          </button>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function PromptModuleCard({
   module,
   expanded,
@@ -124,81 +186,20 @@ function PromptModuleCard({
   readonly onDelete?: () => void;
 }) {
   const t = useT();
-  const [body, setBody] = useState(module.body);
-  const [title, setTitle] = useState(module.title);
-  const sortable = Boolean(reorderHandleProps);
-
-  useEffect(() => { setBody(module.body); }, [module.body]);
-  useEffect(() => { setTitle(module.title); }, [module.title]);
-
   const stop = (event: MouseEvent): void => {
     event.preventDefault();
     event.stopPropagation();
   };
-  const dragStyle = dragging
-    ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
-    : undefined;
-  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
-    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"]')) {
-      return;
-    }
-    reorderHandleProps?.onPointerDown(event);
-  };
 
   return (
-    <details
-      className={`pivi-provider-card pivi-prompt-module-card${sortable ? ' pivi-sortable-provider-card' : ''}${dragging ? ' is-dragging' : ''}${module.enabled ? '' : ' pivi-provider-card-disabled'}`}
-      open={expanded}
-      data-prompt-sort-id={sortable ? module.id : undefined}
-      style={dragStyle}
-    >
-      <summary
-        className="pivi-provider-header"
-        onClick={(event) => {
-          event.preventDefault();
-          if (suppressReorderClick?.()) return;
-          onToggleExpanded();
-        }}
-        onPointerCancel={(event) => reorderHandleProps?.onPointerCancel(event)}
-        onPointerDown={handlePointerDown}
-        onPointerMove={(event) => reorderHandleProps?.onPointerMove(event)}
-        onPointerUp={(event) => reorderHandleProps?.onPointerUp(event)}
-      >
-        {reorderHandleProps && position !== undefined
-          ? (
-            <button
-              type="button"
-              className="pivi-provider-drag-handle"
-              aria-label={t('settings.prompt.reorder.handle', { title: module.title, position })}
-              aria-pressed={dragging}
-              disabled={pending}
-              onClick={stop}
-              onKeyDown={reorderHandleProps.onKeyDown}
-            >
-              <span aria-hidden="true">⠿</span>
-            </button>
-          )
-          : null}
-        {position !== undefined ? <span className="pivi-provider-priority" aria-hidden="true">{position}</span> : null}
-        <div className="pivi-provider-title-row">
-          <span className="pivi-provider-title">{module.title}</span>
-          {module.modified
-            ? <span className="pivi-prompt-module-badge">{t('settings.prompt.modified')}</span>
-            : null}
-        </div>
-        <SettingsItemActions>
-          {onRestore
-            ? (
-              <button
-                className="pivi-settings-text-btn"
-                type="button"
-                disabled={pending || !module.modified}
-                onClick={(event) => { stop(event); onRestore(); }}
-              >
-                {t('settings.prompt.restore')}
-              </button>
-            )
-            : null}
+    <DisclosureCard
+      name={module.title}
+      className={module.enabled ? undefined : 'is-disabled'}
+      badges={module.modified
+        ? <span className="pivi-settings-chip">{t('settings.prompt.modified')}</span>
+        : null}
+      actions={(
+        <>
           {onToggleEnabled
             ? (
               <Toggle
@@ -220,46 +221,27 @@ function PromptModuleCard({
               />
             )
             : null}
-        </SettingsItemActions>
-      </summary>
-      <div className="pivi-provider-body">
-        {onRename
-          ? (
-            <label className="pivi-setting-row">
-              <div className="pivi-setting-row__info">
-                <div className="pivi-setting-row__name">{t('settings.prompt.titleLabel')}</div>
-              </div>
-              <div className="pivi-setting-row__control">
-                <input
-                  className="pivi-settings-control"
-                  value={title}
-                  disabled={pending}
-                  onChange={(event) => { setTitle(event.target.value); }}
-                  onBlur={() => {
-                    if (title.trim() === module.title) return;
-                    void onRename(title);
-                  }}
-                />
-              </div>
-            </label>
-          )
-          : null}
-        <label className="pivi-command-prompt-field">
-          <span className="pivi-setting-row__name">{t('settings.prompt.bodyLabel')}</span>
-          <textarea
-            className="pivi-settings-control pivi-settings-control--fill pivi-prompt-module-body"
-            rows={16}
-            value={body}
-            disabled={pending}
-            onChange={(event) => { setBody(event.target.value); }}
-            onBlur={() => {
-              if (body === module.body) return;
-              void onSaveBody(body);
-            }}
-          />
-        </label>
-      </div>
-    </details>
+        </>
+      )}
+      open={expanded}
+      onToggle={onToggleExpanded}
+      sortId={reorderHandleProps ? module.id : undefined}
+      sortableHandleProps={pending ? undefined : reorderHandleProps}
+      consumeClickAfterDrag={suppressReorderClick}
+      dragging={dragging}
+      dragOffset={dragOffset}
+      reorderLabel={position !== undefined
+        ? t('settings.prompt.reorder.handle', { title: module.title, position })
+        : undefined}
+    >
+      <PromptModuleEditor
+        module={module}
+        pending={pending}
+        onSaveBody={onSaveBody}
+        onRestore={onRestore}
+        onRename={onRename}
+      />
+    </DisclosureCard>
   );
 }
 
@@ -319,8 +301,8 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
   const reorder = useSortableReorder<string, HTMLElement>({
     order: customOrder,
     disabled: pending || customOrder.length < 2,
-    itemSelector: '[data-prompt-sort-id]',
-    itemDataKey: 'promptSortId',
+    itemSelector: '[data-settings-sort-id]',
+    itemDataKey: 'settingsSortId',
     setOrder: (ids) => { setCustomOrder(ids); },
     commitOrder: async (ids, originalOrder) => {
       setPending(true);
@@ -378,15 +360,12 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
   };
 
   return (
-    <div className="pivi-prompt-tab">
-      <SettingsPageDescription>
-        <p className="pivi-setting-description">{t('settings.prompt.pageDescription')}</p>
-      </SettingsPageDescription>
+    <SettingsPage description={<p>{t('settings.prompt.pageDescription')}</p>}>
       <SettingsSection title={t('settings.prompt.usage.heading')} headingId="pivi-prompt-usage">
         <PromptUsagePanel usage={usage} />
       </SettingsSection>
       <SettingsSection title={t('settings.prompt.workflow.heading')} headingId="pivi-prompt-workflow">
-        <div className="pivi-providers-list">
+        <SettingsCollection>
           {workflowModules.map((module) => (
             <PromptModuleCard
               key={module.id}
@@ -399,108 +378,99 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
               onRestore={() => { void run(() => ports.prompt.restoreShipped(module.id, catalogRevision)); }}
             />
           ))}
-        </div>
+        </SettingsCollection>
       </SettingsSection>
-      <SettingsListHeader title={t('settings.prompt.custom.heading')} />
-      {customOrder.length === 0 && !draftOpen
-        ? <p className="pivi-sp-empty-state">{t('settings.prompt.empty')}</p>
-        : (
-          <div className="pivi-providers-list" ref={reorder.listRef}>
-            {customOrder.map((id, index) => {
-              const module = customById.get(id);
-              if (!module) return null;
-              return (
-                <PromptModuleCard
-                  key={id}
-                  module={module}
-                  expanded={expanded.has(id)}
-                  pending={pending}
-                  position={index + 1}
-                  dragging={reorder.draggingId === id}
-                  dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
-                  reorderHandleProps={reorder.getHandleProps(id)}
-                  suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
-                  onToggleExpanded={() => toggleExpanded(id)}
-                  onToggleEnabled={(enabled) => { void run(() => ports.prompt.setCustomModuleEnabled(id, enabled, catalogRevision)); }}
-                  onSaveBody={(body) => run(() => ports.prompt.editCustomModule(id, body, catalogRevision))}
-                  onRename={(title) => run(() => ports.prompt.renameCustomModule(id, title, catalogRevision))}
-                  onDelete={() => { setConfirmDelete(module); }}
-                />
-              );
-            })}
-            {draftOpen
-              ? (
-                <details className="pivi-provider-card pivi-prompt-module-card" open>
-                  <summary className="pivi-provider-header" onClick={(event) => { event.preventDefault(); }}>
-                    <div className="pivi-provider-title-row">
-                      <span className="pivi-provider-title">{draftTitle.trim() || t('settings.prompt.newModule')}</span>
-                    </div>
-                    <SettingsItemActions>
-                      <button
-                        className="pivi-settings-text-btn"
-                        type="button"
-                        disabled={pending}
-                        onClick={() => {
-                          setDraftOpen(false);
-                          setDraftTitle('');
-                          setDraftBody('');
-                        }}
-                      >
-                        {t('common.cancel')}
-                      </button>
-                    </SettingsItemActions>
-                  </summary>
-                  <form
-                    className="pivi-provider-body"
-                    onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}
-                  >
-                    <label className="pivi-setting-row">
-                      <div className="pivi-setting-row__info">
-                        <div className="pivi-setting-row__name">{t('settings.prompt.titleLabel')}</div>
-                      </div>
-                      <div className="pivi-setting-row__control">
-                        <input
-                          className="pivi-settings-control"
-                          autoFocus
-                          value={draftTitle}
-                          disabled={pending}
-                          onChange={(event) => { setDraftTitle(event.target.value); }}
-                        />
-                      </div>
-                    </label>
-                    <label className="pivi-command-prompt-field">
-                      <span className="pivi-setting-row__name">{t('settings.prompt.bodyLabel')}</span>
-                      <textarea
-                        className="pivi-settings-control pivi-settings-control--fill pivi-prompt-module-body"
-                        rows={16}
-                        value={draftBody}
-                        disabled={pending}
-                        onChange={(event) => { setDraftBody(event.target.value); }}
-                      />
-                    </label>
-                    <div className="pivi-command-card-actions">
-                      <button className="pivi-button--primary" type="submit" disabled={pending}>
-                        {t('common.save')}
-                      </button>
-                    </div>
-                  </form>
-                </details>
-              )
-              : null}
-          </div>
-        )}
-      <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
-      <div className="pivi-provider-add-controls">
-        <button
-          className="pivi-provider-add-trigger"
-          type="button"
-          aria-label={t('settings.prompt.addAria')}
-          disabled={pending || draftOpen}
-          onClick={() => { setDraftOpen(true); }}
+      <SettingsSection title={t('settings.prompt.custom.heading')}>
+        <SettingsCollection
+          listRef={reorder.listRef}
+          announcement={reorder.announcement}
+          emptyState={customOrder.length === 0 && !draftOpen ? t('settings.prompt.empty') : undefined}
+          addTrigger={(
+            <div className="pivi-provider-add-controls">
+              <button
+                className="pivi-provider-add-trigger pivi-settings-text-btn"
+                type="button"
+                aria-label={t('settings.prompt.addAria')}
+                disabled={pending || draftOpen}
+                onClick={() => { setDraftOpen(true); }}
+              >
+                {t('settings.prompt.add')}
+              </button>
+            </div>
+          )}
         >
-          {t('settings.prompt.add')}
-        </button>
-      </div>
+          {customOrder.map((id, index) => {
+            const module = customById.get(id);
+            if (!module) return null;
+            return (
+              <PromptModuleCard
+                key={id}
+                module={module}
+                expanded={expanded.has(id)}
+                pending={pending}
+                position={index + 1}
+                dragging={reorder.draggingId === id}
+                dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
+                reorderHandleProps={reorder.getHandleProps(id)}
+                suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
+                onToggleExpanded={() => toggleExpanded(id)}
+                onToggleEnabled={(enabled) => { void run(() => ports.prompt.setCustomModuleEnabled(id, enabled, catalogRevision)); }}
+                onSaveBody={(body) => run(() => ports.prompt.editCustomModule(id, body, catalogRevision))}
+                onRename={(title) => run(() => ports.prompt.renameCustomModule(id, title, catalogRevision))}
+                onDelete={() => { setConfirmDelete(module); }}
+              />
+            );
+          })}
+          {draftOpen
+            ? (
+              <DisclosureCard
+                name={draftTitle.trim() || t('settings.prompt.newModule')}
+                open
+                onToggle={() => undefined}
+                actions={(
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => {
+                      setDraftOpen(false);
+                      setDraftTitle('');
+                      setDraftBody('');
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </button>
+                )}
+              >
+                <form onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
+                  <SettingRow name={t('settings.prompt.titleLabel')}>
+                    <input
+                      className="pivi-settings-control"
+                      autoFocus
+                      value={draftTitle}
+                      disabled={pending}
+                      onChange={(event) => { setDraftTitle(event.target.value); }}
+                    />
+                  </SettingRow>
+                  <SettingRow stacked name={t('settings.prompt.bodyLabel')}>
+                    <textarea
+                      className="pivi-settings-control pivi-settings-control--fill pivi-prompt-module-body"
+                      rows={16}
+                      value={draftBody}
+                      disabled={pending}
+                      onChange={(event) => { setDraftBody(event.target.value); }}
+                    />
+                  </SettingRow>
+                  <div className="pivi-settings-action-group">
+                    <button type="submit" disabled={pending}>
+                      {t('common.save')}
+                    </button>
+                  </div>
+                </form>
+              </DisclosureCard>
+            )
+            : null}
+        </SettingsCollection>
+      </SettingsSection>
       {confirmDelete
         ? (
           <ModalLayer
@@ -540,6 +510,6 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
           </ModalLayer>
         )
         : null}
-    </div>
+    </SettingsPage>
   );
 }

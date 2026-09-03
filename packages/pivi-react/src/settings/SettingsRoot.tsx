@@ -10,7 +10,7 @@ import type { SettingsPageId } from './navigation';
 import { SettingsPage } from './primitives';
 import { PromptTab } from './PromptTab';
 import { SettingsUiStore } from './SettingsUiStore';
-import { EnvironmentSection, GeneralSettingsTab, SubagentsSettingsTab, ToolbarSettingsTab } from './SimpleSettingsTabs';
+import { EnvironmentSection, GeneralSettingsTab, ToolbarSettingsTab } from './SimpleSettingsTabs';
 import { SkillsSettingsTab } from './SkillsSettingsTab';
 import { WebToolsSection } from './WebToolsSection';
 
@@ -44,12 +44,7 @@ export function SettingsRoot({ ports, store: suppliedStore, page }: SettingsRoot
     case 'models':
       return <ModelsSettingsTab models={ports.complex.models} catalog={ports.catalog} feedback={ports.feedback} />;
     case 'builtInTools':
-      return (
-        <>
-          <BuiltInToolsSection ports={ports} />
-          <SubagentsSettingsTab store={store} actions={ports.actions} feedback={ports.feedback} />
-        </>
-      );
+      return <BuiltInToolsSection ports={ports} store={store} />;
     case 'webTools':
       return <WebToolsSection ports={ports} />;
     case 'mcpServers':

@@ -9,9 +9,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import type { SettingsFeedbackMessage } from '../ports';
-import { SettingsItemActions, SettingsRemoveButton, Toggle } from './controls';
+import { SettingsRemoveButton, Toggle } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { McpToolInventory } from './McpToolInventory';
+import { DisclosureCard } from './primitives';
 
 const refreshError = (cause: unknown, fallback: string): McpTestResult => ({
   success: false,
@@ -76,26 +77,31 @@ export function McpServerCard({
     : undefined;
 
   return (
-    <details className={`pivi-mcp-card${!server.enabled ? ' pivi-mcp-card-disabled' : ''}`} open={expanded}>
-      <summary
-        className="pivi-mcp-card-header"
-        onClick={(event) => { event.preventDefault(); onToggleExpanded(); }}
-      >
-        <span className="pivi-mcp-card-title-row">
-          <span className="pivi-mcp-name">{server.name}</span>
-          <span className="pivi-mcp-type-badge">{getMcpServerType(server.config)}</span>
+    <DisclosureCard
+      name={server.name}
+      className={!server.enabled ? 'is-disabled' : undefined}
+      summary={(
+        <>
+          <span>{t('settings.mcp.toolCount', { count: tools.length })}</span>
+          {preview ? ` · ${preview}` : ''}
+        </>
+      )}
+      badges={(
+        <>
+          <span className="pivi-settings-chip">{getMcpServerType(server.config)}</span>
           {server.contextSaving ? (
-            <span className="pivi-mcp-context-saving-badge" title={t('settings.mcp.contextSavingTitle', { name: server.name })}>/</span>
+            <span className="pivi-settings-chip" title={t('settings.mcp.contextSavingTitle', { name: server.name })}>/</span>
           ) : null}
           {authStatus === 'authenticated' ? (
-            <span className="pivi-mcp-type-badge" title={t('settings.mcp.oauthAuthenticated')}>{t('settings.mcp.oauthBadge')}</span>
+            <span className="pivi-settings-chip is-configured" title={t('settings.mcp.oauthAuthenticated')}>{t('settings.mcp.oauthBadge')}</span>
           ) : null}
           {authStatus === 'expired' ? (
-            <span className="pivi-mcp-type-badge" title={t('settings.mcp.oauthExpiredTitle')}>{t('settings.mcp.oauthExpiredBadge')}</span>
+            <span className="pivi-settings-chip is-error" title={t('settings.mcp.oauthExpiredTitle')}>{t('settings.mcp.oauthExpiredBadge')}</span>
           ) : null}
-        </span>
-        <span className="pivi-mcp-tool-count">{t('settings.mcp.toolCount', { count: tools.length })}</span>
-        <SettingsItemActions>
+        </>
+      )}
+      actions={(
+        <>
           <Toggle
             checked={server.enabled}
             disabled={busy}
@@ -113,25 +119,29 @@ export function McpServerCard({
               onRemove();
             }}
           />
-        </SettingsItemActions>
-      </summary>
-      <div className="pivi-mcp-card-body">
-        {preview ? <p className="pivi-mcp-preview">{preview}</p> : null}
-        <McpServerEditor
-          server={server}
-          inline
-          connecting={refreshing}
-          feedback={connectFeedback}
-          onSave={connect}
-        />
-        {supportsMcpOAuth(server) && authStatus === 'authenticated'
-          ? <div className="pivi-mcp-card-actions">
-            <button type="button" disabled={busy} onClick={() => { void onLogout(); }}>{t('settings.mcp.clearOauth')}</button>
+        </>
+      )}
+      open={expanded}
+      onToggle={onToggleExpanded}
+    >
+      <McpServerEditor
+        server={server}
+        inline
+        connecting={refreshing}
+        feedback={connectFeedback}
+        onSave={connect}
+      />
+      {supportsMcpOAuth(server) && authStatus === 'authenticated'
+        ? (
+          <div className="pivi-settings-action-group">
+            <button type="button" disabled={busy} onClick={() => { void onLogout(); }}>
+              {t('settings.mcp.clearOauth')}
+            </button>
           </div>
-          : null}
-        {tools.length ? <McpToolInventory tools={tools} /> : null}
-        {refreshResult?.success && refreshResult.tools.length === 0 ? <p>{t('settings.mcp.test.noTools')}</p> : null}
-      </div>
-    </details>
+        )
+        : null}
+      {tools.length ? <McpToolInventory tools={tools} /> : null}
+      {refreshResult?.success && refreshResult.tools.length === 0 ? <p className="pivi-setting-description">{t('settings.mcp.test.noTools')}</p> : null}
+    </DisclosureCard>
   );
 }

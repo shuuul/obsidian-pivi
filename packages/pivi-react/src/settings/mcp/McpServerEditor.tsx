@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsFeedbackMessage } from '../../ports';
-import { Select, SettingsActionFeedback } from '../controls';
+import { Select, SettingRow, SettingsActionFeedback } from '../controls';
 import {
   buildMcpServer,
   type McpDraft,
@@ -65,13 +65,115 @@ export function McpServerEditor({
     }
   };
 
+  const typeSelect = (
+    <Select label={t('settings.mcp.modal.type')} value={draft.type} onChange={(value) => update('type', value as McpServerType)}>
+      <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
+      <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
+      <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
+    </Select>
+  );
+
+  const actions = (
+    <div className="pivi-settings-action-group">
+      {!inline ? (
+        <button type="button" disabled={busy} onClick={onCancel}>
+          {t('common.cancel')}
+        </button>
+      ) : null}
+      <button type="button" disabled={busy} onClick={() => { void submit(); }}>
+        {inline
+          ? connecting ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')
+          : t('common.add')}
+      </button>
+      <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : feedback} />
+    </div>
+  );
+
+  if (inline) {
+    return (
+      <div ref={editorRef} className="pivi-mcp-inline-editor">
+        <SettingRow name={t('settings.mcp.modal.serverName')} stacked>
+          <input
+            className="pivi-settings-control pivi-settings-control--fill"
+            value={draft.name}
+            placeholder={t('settings.mcp.modal.serverNamePlaceholder')}
+            onChange={(event) => update('name', event.target.value)}
+          />
+        </SettingRow>
+        <SettingRow name={t('settings.mcp.modal.type')}>{typeSelect}</SettingRow>
+        {draft.type === 'stdio' ? (
+          <>
+            <SettingRow name={t('settings.mcp.modal.executable')} stacked>
+              <input className="pivi-settings-control pivi-settings-control--fill" value={draft.executable} onChange={(event) => update('executable', event.target.value)} />
+            </SettingRow>
+            <SettingRow name={t('settings.mcp.modal.args')} stacked>
+              <textarea className="pivi-settings-control pivi-settings-control--fill" value={draft.argsText} placeholder={t('settings.mcp.modal.argsPlaceholder')} onChange={(event) => update('argsText', event.target.value)} />
+            </SettingRow>
+            <SettingRow name={t('settings.mcp.modal.env')} description={t('settings.mcp.valueStorageHint')} stacked>
+              <textarea className="pivi-settings-control pivi-settings-control--fill" value={draft.env} onChange={(event) => update('env', event.target.value)} />
+            </SettingRow>
+          </>
+        ) : (
+          <>
+            <SettingRow name={t('settings.mcp.modal.url')} stacked>
+              <input className="pivi-settings-control pivi-settings-control--fill" value={draft.url} placeholder={t('settings.mcp.modal.urlPlaceholder')} onChange={(event) => update('url', event.target.value)} />
+            </SettingRow>
+            <SettingRow name={t('settings.mcp.modal.authHeading')}>
+              <Select label={t('settings.mcp.modal.authHeading')} value={draft.auth} onChange={(value) => update('auth', value as McpDraft['auth'])}>
+                <option value="auto">{t('settings.mcp.modal.authAuto')}</option>
+                <option value="oauth">{t('settings.mcp.modal.authOauth')}</option>
+                <option value="bearer">{t('settings.mcp.modal.authBearer')}</option>
+                <option value="none">{t('settings.mcp.modal.authNone')}</option>
+              </Select>
+            </SettingRow>
+            <SettingRow name={t('settings.mcp.modal.headersName')} description={t('settings.mcp.valueStorageHint')} stacked>
+              <textarea className="pivi-settings-control pivi-settings-control--fill" value={draft.headers} onChange={(event) => update('headers', event.target.value)} />
+            </SettingRow>
+            {draft.auth === 'oauth' ? (
+              <>
+                <SettingRow name={t('settings.mcp.modal.oauthGrant')}>
+                  <Select label={t('settings.mcp.modal.oauthGrant')} value={draft.grantType} onChange={(value) => update('grantType', value as McpDraft['grantType'])}>
+                    <option value="authorization_code">{t('settings.mcp.modal.grantAuthCode')}</option>
+                    <option value="client_credentials">{t('settings.mcp.modal.grantClientCredentials')}</option>
+                  </Select>
+                </SettingRow>
+                <SettingRow name={t('settings.mcp.modal.clientId')} stacked>
+                  <input className="pivi-settings-control pivi-settings-control--fill" value={draft.clientId} onChange={(event) => update('clientId', event.target.value)} />
+                </SettingRow>
+                <SettingRow name={t('settings.mcp.modal.clientSecret')} stacked>
+                  <input className="pivi-settings-control pivi-settings-control--fill" type="password" value={draft.clientSecret} onChange={(event) => update('clientSecret', event.target.value)} />
+                </SettingRow>
+                <SettingRow name={t('settings.mcp.modal.scope')} stacked>
+                  <input className="pivi-settings-control pivi-settings-control--fill" value={draft.scope} onChange={(event) => update('scope', event.target.value)} />
+                </SettingRow>
+              </>
+            ) : null}
+            {draft.auth === 'bearer' ? (
+              <>
+                <SettingRow name={t('settings.mcp.modal.bearerToken')} stacked>
+                  <input className="pivi-settings-control pivi-settings-control--fill" type="password" value={draft.bearerToken} onChange={(event) => update('bearerToken', event.target.value)} />
+                </SettingRow>
+                <SettingRow name={t('settings.mcp.modal.bearerTokenEnv')} stacked>
+                  <input className="pivi-settings-control pivi-settings-control--fill" value={draft.bearerTokenEnv} onChange={(event) => update('bearerTokenEnv', event.target.value)} />
+                </SettingRow>
+              </>
+            ) : null}
+          </>
+        )}
+        {actions}
+      </div>
+    );
+  }
+
   return (
     <div
       ref={editorRef}
-      className={inline ? 'pivi-mcp-inline-editor' : 'pivi-mcp-modal'}
-      {...(inline ? {} : { role: 'dialog', 'aria-modal': true, 'aria-label': t('settings.mcp.modal.titleAdd') })}
+      className="pivi-mcp-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('settings.mcp.modal.titleAdd')}
     >
-      {!inline ? <h2>{t('settings.mcp.modal.titleAdd')}</h2> : null}
+      <h2>{t('settings.mcp.modal.titleAdd')}</h2>
       <div className="pivi-mcp-editor-row pivi-mcp-editor-row-primary">
         <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
           <span>{t('settings.mcp.modal.serverName')}</span>
@@ -83,11 +185,7 @@ export function McpServerEditor({
           <div className="pivi-mcp-editor-row">
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-type">
               <span>{t('settings.mcp.modal.type')}</span>
-              <Select value={draft.type} onChange={(value) => update('type', value as McpServerType)}>
-                <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
-                <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
-                <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
-              </Select>
+              {typeSelect}
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
               <span>{t('settings.mcp.modal.executable')}</span>
@@ -109,11 +207,7 @@ export function McpServerEditor({
           <div className="pivi-mcp-editor-row">
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-type">
               <span>{t('settings.mcp.modal.type')}</span>
-              <Select value={draft.type} onChange={(value) => update('type', value as McpServerType)}>
-                <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
-                <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
-                <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
-              </Select>
+              {typeSelect}
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
               <span>{t('settings.mcp.modal.url')}</span>
@@ -171,15 +265,7 @@ export function McpServerEditor({
           ) : null}
         </>
       )}
-      <div className="pivi-settings-action-group">
-        {!inline ? <button type="button" disabled={busy} onClick={onCancel}>{t('common.cancel')}</button> : null}
-        <button type="button" disabled={busy} onClick={() => { void submit(); }}>
-          {inline
-            ? connecting ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')
-            : t('common.add')}
-        </button>
-        <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : feedback} />
-      </div>
+      {actions}
     </div>
   );
 }

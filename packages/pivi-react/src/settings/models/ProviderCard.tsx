@@ -277,7 +277,6 @@ export function ProviderCard({
           </>
         )}
         <button
-          className="pivi-provider-test-btn"
           type="button"
           disabled={testing}
           onClick={() => { void testProvider(); }}

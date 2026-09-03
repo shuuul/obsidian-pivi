@@ -298,7 +298,7 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
 
 export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort) {
   const t = useT();
-  const rootRef = useRef<HTMLElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [state, dispatch] = useReducer(mcpSectionReducer, initialMcpSectionState);
 
   useEffect(() => {

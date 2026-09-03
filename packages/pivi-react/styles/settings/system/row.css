@@ -40,9 +40,16 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--pivi-settings-control-gap);
 }
 
-.pivi-settings-row__control > .pivi-settings-control:not(.pivi-select) {
+.pivi-settings-row__actions > .pivi-settings-feedback {
+  flex: 1 0 100%;
+}
+
+.pivi-settings-row:not(.pivi-settings-row--stacked) > .pivi-settings-row__control > .pivi-settings-control:not(.pivi-select) {
   flex: 0 1 var(--pivi-settings-control-width);
 }
 
@@ -57,22 +64,34 @@
 }
 
 .pivi-settings-row--stacked > .pivi-settings-row__control {
+  display: flex;
   width: 100%;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  align-items: flex-start;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-start;
+  gap: var(--pivi-settings-control-gap);
+}
+
+.pivi-settings-row--stacked > .pivi-settings-row__control > :is(
+  input:not([type='checkbox']),
+  textarea,
+  .pivi-settings-control:not(.pivi-select),
+  .pivi-settings-badge-field
+) {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.pivi-settings-row--stacked > .pivi-settings-row__control > :is(button, .pivi-settings-action-group) {
+  flex: 0 0 auto;
 }
 
 .pivi-setting-stack .pivi-settings-row__control {
   width: 100%;
   flex-wrap: wrap;
   justify-content: flex-start;
-}
-
-.pivi-settings-row--stacked .pivi-settings-control:not(.pivi-select),
-.pivi-setting-stack .pivi-settings-control:not(.pivi-select) {
-  width: 100%;
 }
 
 .pivi-settings-content > .pivi-settings-row,

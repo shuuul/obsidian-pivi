@@ -19,16 +19,12 @@ const STRUCTURAL_PREFIXES = [
   'pivi-settings-feedback',
   'pivi-sp-',
   'pivi-provider-card',
-  'pivi-mcp-card',
-  'pivi-web-provider-',
 ] as const;
 
-// WS-03–WS-06 shrink this to empty as pages migrate off legacy card/list classes.
+// WS-05 empties this after Commands/Toolbar migrate off leftover card/list classes.
 const legacyAllowlist = [
   'pivi-sp-',
   'pivi-provider-card',
-  'pivi-mcp-card',
-  'pivi-web-provider-',
 ] as const;
 
 function listFiles(dir: string, suffix: string): string[] {
@@ -115,6 +111,7 @@ describe('settings style contract', () => {
   const hostCss = readFileSync(join(stylesRoot, 'settings/system/host.css'), 'utf8');
   const layoutCss = readFileSync(join(stylesRoot, 'settings/system/layout.css'), 'utf8');
   const rowCss = readFileSync(join(stylesRoot, 'settings/system/row.css'), 'utf8');
+  const controlsCss = readFileSync(join(stylesRoot, 'settings/system/controls.css'), 'utf8');
   const cardCss = readFileSync(join(stylesRoot, 'settings/system/card.css'), 'utf8');
   const baseCss = readFileSync(join(stylesRoot, 'settings/base.css'), 'utf8');
   const providerCss = readFileSync(join(stylesRoot, 'settings/provider-settings.css'), 'utf8');
@@ -211,8 +208,7 @@ describe('settings style contract', () => {
   });
 
   it('wraps installed-skill row status onto a full-width line below the actions', () => {
-    expect(baseCss).toMatch(/\.pivi-sp-item\s*{[^}]*flex-wrap:\s*wrap;/s);
-    expect(baseCss).toMatch(/\.pivi-sp-item > \.pivi-settings-feedback\s*{[^}]*flex:\s*1 0 100%;/s);
+    expect(rowCss).toMatch(/\.pivi-settings-row__actions > \.pivi-settings-feedback\s*{[^}]*flex:\s*1 0 100%;/s);
   });
 
   it('lets an open disclosure card grow instead of clipping nested disclosures', () => {
@@ -225,5 +221,19 @@ describe('settings style contract', () => {
   it('gives custom-provider name and base URL fields the remaining row width', () => {
     expect(providerCss).toMatch(/\.pivi-provider-endpoint-fields > \.pivi-settings-row > \.pivi-settings-row__control\s*{[^}]*flex:\s*1 1 0;/s);
     expect(providerCss).toMatch(/\.pivi-provider-endpoint-fields > \.pivi-settings-row > \.pivi-settings-row__control > \.pivi-settings-control:not\(\.pivi-select\)\s*{[^}]*width:\s*100%;/s);
+  });
+
+  it('applies the 280px control basis only on inline rows', () => {
+    expect(rowCss).toMatch(/\.pivi-settings-row:not\(\.pivi-settings-row--stacked\) > \.pivi-settings-row__control > \.pivi-settings-control:not\(\.pivi-select\)\s*{[^}]*flex:\s*0 1 var\(--pivi-settings-control-width\);/s);
+    expect(rowCss).toMatch(/\.pivi-settings-row--stacked > \.pivi-settings-row__control\s*{[^}]*flex-direction:\s*row;[^}]*flex-wrap:\s*wrap;[^}]*align-items:\s*center;/s);
+    expect(rowCss).toMatch(/\.pivi-settings-row--stacked > \.pivi-settings-row__control > :is\(\s*input:not\(\[type='checkbox'\]\),\s*textarea,\s*\.pivi-settings-control:not\(\.pivi-select\),\s*\.pivi-settings-badge-field\s*\)\s*{[^}]*flex:\s*1 1 auto;[^}]*min-width:\s*0;/s);
+    expect(rowCss).toMatch(/\.pivi-settings-row--stacked > \.pivi-settings-row__control > :is\(button, \.pivi-settings-action-group\)\s*{[^}]*flex:\s*0 0 auto;/s);
+  });
+
+  it('neutralizes host button chrome only for icon and add-text triggers', () => {
+    expect(controlsCss).toMatch(/\.pivi-settings button\.pivi-settings-action-btn,/);
+    expect(controlsCss).toMatch(/\.pivi-settings button\.pivi-settings-text-btn \{/);
+    expect(controlsCss).not.toMatch(/\.pivi-settings-action-group > button:not/);
+    expect(controlsCss).not.toMatch(/\.pivi-settings-row__control > button:not/);
   });
 });

@@ -529,6 +529,7 @@
       "desc": "Gérez les commandes personnalisées du {workspaceName} dans .pivi/commands/. Déclenchées par /nom."
     },
     "subagents": {
+      "heading": "Sous-agents",
       "enableSpawn": {
         "name": "Activer spawn_agent",
         "desc": "Expose l’outil spawn_agent pour que Pi délègue des sous-tâches ciblées aux sous-agents."

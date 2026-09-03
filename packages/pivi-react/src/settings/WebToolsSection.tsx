@@ -5,7 +5,8 @@ import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
-import { SettingsPageDescription } from './controls';
+import { SettingsPage, SettingsSection } from './controls';
+import { SettingsCollection } from './primitives';
 import { WebProviderCard } from './web/WebProviderCard';
 
 export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
@@ -63,8 +64,8 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
   const reorder = useSortableReorder<WebProviderId, HTMLElement>({
     order: settings.providerOrder,
     disabled: pending,
-    itemSelector: '[data-provider-sort-id]',
-    itemDataKey: 'providerSortId',
+    itemSelector: '[data-settings-sort-id]',
+    itemDataKey: 'settingsSortId',
     setOrder: providerOrder => { setSettings(current => ({ ...current, providerOrder })); },
     commitOrder: async (providerOrder, originalOrder) => {
       return persist(
@@ -87,35 +88,37 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
     .filter((provider): provider is SettingsWebProviderSnapshot => Boolean(provider));
 
   return (
-    <>
-      <SettingsPageDescription>
-        <p className="pivi-setting-description">{t('settings.webSearch.intro')}</p>
-      </SettingsPageDescription>
-      <div className="pivi-providers-list" ref={reorder.listRef}>
-        {orderedProviders.map((provider, index) => (
-          <WebProviderCard
-            key={provider.id}
-            provider={provider}
-            position={index + 1}
-            disabled={settings.disabledProviders.includes(provider.id)}
-            expanded={expanded.has(provider.id)}
-            pending={pending}
-            dragging={reorder.draggingId === provider.id}
-            dragOffset={reorder.draggingId === provider.id ? reorder.dragOffset : 0}
-            secureStorageName={secureStorageName}
-            ports={ports}
-            onToggleExpanded={() => { toggleExpanded(provider.id); }}
-            onToggleDisabled={() => { toggleDisabled(provider.id); }}
-            reorderHandleProps={reorder.getHandleProps(provider.id)}
-            suppressReorderClick={() => reorder.consumeClickAfterDrag(provider.id)}
-            onError={() => { ports.feedback.notify(t('common.error')); }}
-          />
-        ))}
-      </div>
-      <div className="pivi-web-fallback-note">
-        <p>{t('settings.webSearch.fixedFallbacks')}</p>
-      </div>
-      <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
-    </>
+    <SettingsPage
+      description={(
+        <>
+          <p>{t('settings.webSearch.intro')}</p>
+          <p>{t('settings.webSearch.fixedFallbacks')}</p>
+        </>
+      )}
+    >
+      <SettingsSection>
+        <SettingsCollection listRef={reorder.listRef} announcement={reorder.announcement}>
+          {orderedProviders.map((provider, index) => (
+            <WebProviderCard
+              key={provider.id}
+              provider={provider}
+              position={index + 1}
+              disabled={settings.disabledProviders.includes(provider.id)}
+              expanded={expanded.has(provider.id)}
+              pending={pending}
+              dragging={reorder.draggingId === provider.id}
+              dragOffset={reorder.draggingId === provider.id ? reorder.dragOffset : 0}
+              secureStorageName={secureStorageName}
+              ports={ports}
+              onToggleExpanded={() => { toggleExpanded(provider.id); }}
+              onToggleDisabled={() => { toggleDisabled(provider.id); }}
+              reorderHandleProps={reorder.getHandleProps(provider.id)}
+              suppressReorderClick={() => reorder.consumeClickAfterDrag(provider.id)}
+              onError={() => { ports.feedback.notify(t('common.error')); }}
+            />
+          ))}
+        </SettingsCollection>
+      </SettingsSection>
+    </SettingsPage>
   );
 }

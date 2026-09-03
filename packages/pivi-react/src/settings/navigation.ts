@@ -95,6 +95,7 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
       'settings.bash.allowlist.name',
       'settings.tools.reading.defaultSize.name',
       'settings.tools.heading',
+      'settings.subagents.heading',
       'settings.subagents.enableSpawn.name',
       'settings.subagents.allowBackground.name',
       'settings.subagents.maxConcurrent.name',

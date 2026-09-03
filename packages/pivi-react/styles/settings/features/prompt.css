@@ -1,0 +1,71 @@
+/* Prompt page structure only. Spacing, radius, and borders stay in system CSS. */
+
+.pivi-prompt-usage {
+  display: flex;
+  flex-direction: column;
+}
+
+.pivi-prompt-usage__bar {
+  display: flex;
+  width: 100%;
+}
+
+.pivi-prompt-usage__segment {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  background: var(--pivi-host-interactive-accent);
+}
+
+.pivi-prompt-usage__segment--core {
+  background: var(--pivi-settings-usage-core);
+}
+
+.pivi-prompt-usage__segment--workflow {
+  background: var(--pivi-settings-usage-workflow);
+}
+
+.pivi-prompt-usage__segment--custom {
+  background: var(--pivi-settings-usage-custom);
+}
+
+.pivi-prompt-usage__segment--tools {
+  background: var(--pivi-settings-usage-tools);
+}
+
+.pivi-prompt-usage__segment--mcp {
+  background: var(--pivi-settings-usage-mcp);
+}
+
+.pivi-prompt-usage__rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.pivi-prompt-usage__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-smaller);
+}
+
+.pivi-prompt-usage__row--total {
+  color: var(--pivi-host-text-normal);
+  font-weight: var(--pivi-host-font-semibold);
+}
+
+.pivi-prompt-usage__name {
+  min-width: 0;
+}
+
+.pivi-prompt-usage__estimate {
+  white-space: nowrap;
+}
+
+.pivi-prompt-module-body {
+  min-height: max(20rem, 16lh);
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-smaller);
+  line-height: 1.5;
+}

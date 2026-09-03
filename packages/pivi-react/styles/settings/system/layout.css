@@ -146,3 +146,37 @@
   margin-block-start: 4px;
   padding-inline: var(--pivi-settings-row-padding-inline);
 }
+
+.pivi-settings-section__body > .pivi-prompt-usage {
+  padding: var(--pivi-settings-card-padding);
+}
+
+.pivi-prompt-usage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pivi-settings-control-gap);
+}
+
+.pivi-prompt-usage__bar {
+  overflow: hidden;
+  height: 8px;
+  border-radius: var(--pivi-radius-sm);
+}
+
+.pivi-prompt-usage__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pivi-mcp-tool-inventory {
+  padding-block-start: var(--pivi-settings-row-padding-block);
+}
+
+.pivi-mcp-tool-inventory-grid {
+  gap: var(--pivi-settings-row-gap);
+}
+
+.pivi-mcp-tool-card {
+  padding: var(--pivi-settings-control-gap);
+}

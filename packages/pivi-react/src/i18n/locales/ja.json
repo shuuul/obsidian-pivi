@@ -529,6 +529,7 @@
       "desc": ".pivi/commands/ に保存された {workspaceName} レベルのカスタムコマンドを管理します。/name で起動します。"
     },
     "subagents": {
+      "heading": "サブエージェント",
       "enableSpawn": {
         "name": "spawn_agent を有効化",
         "desc": "spawn_agent ツールを公開し、Pi が集中したサブタスクをサブエージェントに委任できるようにします。"

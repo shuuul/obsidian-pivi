@@ -211,16 +211,19 @@
 .pivi-provider-status {
   font-size: var(--pivi-host-font-ui-smaller);
   font-weight: var(--pivi-host-font-medium);
-  padding: 2px 8px;
-  border-radius: var(--pivi-radius-lg);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  border-radius: var(--pivi-radius-sm);
   display: inline-flex;
   align-items: center;
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-.pivi-provider-status.configured {
-  background-color: rgba(46, 125, 50, 0.1);
+.pivi-provider-status.configured,
+.pivi-provider-status.ready {
+  background: transparent;
   color: var(--pivi-host-text-success);
 }
 
@@ -244,12 +247,6 @@
 
 .pivi-sortable-provider-card.is-dragging > .pivi-provider-header {
   cursor: grabbing;
-}
-
-.pivi-web-provider-header {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
-  gap: var(--pivi-spacing-sm);
 }
 
 .pivi-provider-drag-handle {
@@ -288,51 +285,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-.pivi-web-provider-capabilities {
-  display: inline-flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.pivi-web-provider-capabilities > span {
-  padding: 1px 6px;
-  border-radius: var(--pivi-radius-lg);
-  background: var(--pivi-host-background-modifier-border);
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-host-font-ui-smaller);
-  font-weight: var(--pivi-host-font-medium);
-}
-
 .pivi-provider-status.missing,
-.pivi-provider-status.disabled {
-  background: var(--pivi-host-background-modifier-border);
+.pivi-provider-status.disabled,
+.pivi-provider-status.not-configured,
+.pivi-provider-status.checking {
+  background: transparent;
   color: var(--pivi-host-text-muted);
 }
-
-.pivi-web-provider-body {
-  display: grid;
-  gap: var(--pivi-spacing-sm);
-}
-
-.pivi-web-provider-key-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--pivi-spacing-sm);
-}
-
-.pivi-web-fallback-note {
-  margin-top: var(--pivi-spacing-md);
-  padding: 10px 12px;
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-sm);
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-host-font-ui-small);
-}
-
-.pivi-web-fallback-note p {
-  margin: 0;
-}
-
 
 @media (prefers-reduced-motion: reduce) {
   .pivi-sortable-provider-card {
@@ -345,34 +304,19 @@
 }
 
 .pivi-provider-status.ready {
-  background-color: rgba(46, 125, 50, 0.1);
+  background: transparent;
   color: var(--pivi-host-text-success);
-}
-
-.pivi-provider-status.not-configured {
-  background-color: var(--pivi-host-border);
-  color: var(--pivi-host-text-muted);
 }
 
 .pivi-provider-status.missing-credential,
 .pivi-provider-status.unavailable {
-  background-color: var(--pivi-host-border);
-  color: var(--pivi-host-text-muted);
-}
-
-.pivi-provider-status.oauth-expired {
-  background-color: rgba(var(--pivi-host-color-red-rgb), 0.12);
+  background: transparent;
   color: var(--pivi-host-text-error);
 }
 
-.pivi-provider-status.checking {
-  background-color: var(--pivi-host-border);
-  color: var(--pivi-host-text-muted);
-}
-
-.pivi-provider-status.disabled {
-  background-color: var(--pivi-host-border);
-  color: var(--pivi-host-text-muted);
+.pivi-provider-status.oauth-expired {
+  background: transparent;
+  color: var(--pivi-host-text-error);
 }
 
 .pivi-provider-card-disabled {
@@ -381,32 +325,6 @@
 
 .pivi-provider-card-disabled .pivi-provider-header {
   background: var(--pivi-host-background-primary);
-}
-
-.pivi-provider-test-btn {
-  margin-top: var(--pivi-spacing-md);
-  min-height: 32px;
-  padding: 4px 10px;
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-host-radius-small);
-  background: var(--pivi-host-background-secondary);
-  color: var(--pivi-host-text-normal);
-  cursor: pointer;
-}
-
-.pivi-provider-test-btn:hover:not(:disabled) {
-  border-color: var(--pivi-host-interactive-accent);
-  background: var(--pivi-host-background-hover);
-}
-
-.pivi-provider-test-btn:focus-visible {
-  outline: 2px solid var(--pivi-host-interactive-accent);
-  outline-offset: 2px;
-}
-
-.pivi-provider-test-btn:disabled {
-  cursor: progress;
-  opacity: 0.7;
 }
 
 .pivi-provider-body {

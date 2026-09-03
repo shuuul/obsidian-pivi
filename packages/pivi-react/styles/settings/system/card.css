@@ -45,6 +45,17 @@
   overflow: visible;
 }
 
+.pivi-settings-card.is-open,
+.pivi-settings-card:hover,
+.pivi-settings-card:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+.pivi-settings-card.is-disabled {
+  opacity: 0.65;
+}
+
 .pivi-settings-card.is-dragging {
   position: relative;
   z-index: 1;
@@ -60,7 +71,10 @@
   user-select: none;
 }
 
-.pivi-settings-card__header:hover {
+.pivi-settings-card__header:hover,
+.pivi-settings-card__header:focus-within {
+  outline: none;
+  box-shadow: none;
   background: var(--pivi-host-background-hover);
 }
 
@@ -90,7 +104,8 @@
 
 .pivi-settings-card .pivi-settings-card__toggle:focus-visible {
   outline: var(--pivi-focus-ring);
-  outline-offset: var(--pivi-focus-offset);
+  outline-offset: -2px;
+  border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-settings-card__icon {
@@ -116,6 +131,7 @@
 .pivi-settings-card__summary {
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-smaller);
+  overflow-wrap: anywhere;
 }
 
 .pivi-settings-card__badges {
@@ -153,6 +169,12 @@
   padding: var(--pivi-settings-card-padding);
   border-top: 1px solid var(--pivi-settings-hairline);
   background: transparent;
+}
+
+.pivi-settings-card__body > .pivi-setting-description,
+.pivi-settings-card__body > .pivi-settings-action-group,
+.pivi-settings-card__body > .pivi-prompt-usage {
+  margin: 0;
 }
 
 .pivi-settings-actions {

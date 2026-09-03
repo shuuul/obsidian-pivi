@@ -142,7 +142,6 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
           onRemove={removeModelId}
         />
         <button
-          className="pivi-provider-fetch-models-btn"
           type="button"
           disabled={fetching}
           onClick={() => { void fetchModels(); }}

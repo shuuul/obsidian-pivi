@@ -2,10 +2,11 @@ import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackPort } from '../ports';
 import { ModalLayer } from '../shared/ModalLayer';
-import { SettingsActionFeedback } from './controls';
+import { SettingsActionFeedback, SettingsPage, SettingsSection } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpSectionState } from './mcp/useMcpSectionState';
 import { McpServerCard } from './McpServerCard';
+import { SettingsCollection } from './primitives';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
@@ -36,92 +37,95 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
     expandedServers,
   } = state;
 
-  const content = loading ? (
-    <p>{t('settings.mcp.test.connecting')}</p>
-  ) : servers.length === 0 ? (
-    <div className="pivi-mcp-empty">{t('settings.mcp.empty')}</div>
-  ) : (
-    <div className="pivi-mcp-list">
-      {servers.map((server) => (
-        <McpServerCard
-          key={server.name}
-          server={server}
-          expanded={expandedServers.has(server.name)}
-          authStatus={auth[server.name]}
-          selectorTools={toolsByServer[server.name] ?? []}
-          busy={busy !== null}
-          onConnect={(next) => connect(next, server)}
-          onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}
-          onToggleEnabled={async () => {
-            try {
-              await commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)));
-            } catch (cause) {
-              feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
-            }
-          }}
-          onRemove={() => dispatch({ type: 'set_delete_candidate', server })}
-          onLogout={async () => {
-            try {
-              await logout(server);
-            } catch (cause) {
-              feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
-            }
-          }}
-        />
-      ))}
+  const addTrigger = (
+    <div className="pivi-provider-add-controls">
+      <div className="pivi-provider-add-container">
+        <button
+          type="button"
+          className="pivi-provider-add-trigger pivi-settings-text-btn"
+          aria-expanded={addOpen}
+          onClick={(event) => { event.stopPropagation(); dispatch({ type: 'toggle_add_open' }); }}
+        >
+          {t('settings.mcp.add')}
+        </button>
+        <div className={`pivi-provider-add-dropdown${addOpen ? ' is-visible' : ''}`}>
+          <button
+            type="button"
+            className="pivi-provider-add-option"
+            onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'stdio' } }); }}
+          >
+            <span className="pivi-mcp-add-option-icon"><PlatformIcon name="terminal" /></span>
+            <span>{t('settings.mcp.typeStdio')}</span>
+          </button>
+          <button
+            type="button"
+            className="pivi-provider-add-option"
+            onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'http' } }); }}
+          >
+            <span className="pivi-mcp-add-option-icon"><PlatformIcon name="globe" /></span>
+            <span>{t('settings.mcp.typeHttp')}</span>
+          </button>
+          <button
+            type="button"
+            className="pivi-provider-add-option"
+            onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_import_draft', draft: '' }); }}
+          >
+            <span className="pivi-mcp-add-option-icon"><PlatformIcon name="clipboard-paste" /></span>
+            <span>{t('settings.mcp.importJson')}</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <section ref={rootRef} className="pivi-mcp-container">
-      {content}
-      <div className="pivi-provider-add-controls">
-        <div className="pivi-provider-add-container">
-          <button
-            type="button"
-            className="pivi-provider-add-trigger"
-            aria-expanded={addOpen}
-            onClick={(event) => { event.stopPropagation(); dispatch({ type: 'toggle_add_open' }); }}
-          >
-            {t('settings.mcp.add')}
-          </button>
-          <div className={`pivi-provider-add-dropdown${addOpen ? ' is-visible' : ''}`}>
-            <button
-              type="button"
-              className="pivi-provider-add-option"
-              onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'stdio' } }); }}
-            >
-              <span className="pivi-mcp-add-option-icon"><PlatformIcon name="terminal" /></span>
-              <span>{t('settings.mcp.typeStdio')}</span>
-            </button>
-            <button
-              type="button"
-              className="pivi-provider-add-option"
-              onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'http' } }); }}
-            >
-              <span className="pivi-mcp-add-option-icon"><PlatformIcon name="globe" /></span>
-              <span>{t('settings.mcp.typeHttp')}</span>
-            </button>
-            <button
-              type="button"
-              className="pivi-provider-add-option"
-              onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_import_draft', draft: '' }); }}
-            >
-              <span className="pivi-mcp-add-option-icon"><PlatformIcon name="clipboard-paste" /></span>
-              <span>{t('settings.mcp.importJson')}</span>
-            </button>
-          </div>
+    <SettingsPage>
+      <SettingsSection>
+        <div ref={rootRef}>
+          {loading ? (
+            <p className="pivi-setting-description">{t('settings.mcp.test.connecting')}</p>
+          ) : (
+            <SettingsCollection emptyState={t('settings.mcp.empty')} addTrigger={addTrigger}>
+              {servers.map((server) => (
+                <McpServerCard
+                  key={server.name}
+                  server={server}
+                  expanded={expandedServers.has(server.name)}
+                  authStatus={auth[server.name]}
+                  selectorTools={toolsByServer[server.name] ?? []}
+                  busy={busy !== null}
+                  onConnect={(next) => connect(next, server)}
+                  onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}
+                  onToggleEnabled={async () => {
+                    try {
+                      await commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)));
+                    } catch (cause) {
+                      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+                    }
+                  }}
+                  onRemove={() => dispatch({ type: 'set_delete_candidate', server })}
+                  onLogout={async () => {
+                    try {
+                      await logout(server);
+                    } catch (cause) {
+                      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+                    }
+                  }}
+                />
+              ))}
+            </SettingsCollection>
+          )}
         </div>
-      </div>
-      <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
-      {editor ? (
-        <McpServerEditor
-          initial={editor.initial}
-          type={editor.type}
-          onCancel={() => dispatch({ type: 'set_editor', editor: null })}
-          onSave={(server) => save(server)}
-        />
-      ) : null}
+        <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
+        {editor ? (
+          <McpServerEditor
+            initial={editor.initial}
+            type={editor.type}
+            onCancel={() => dispatch({ type: 'set_editor', editor: null })}
+            onSave={(server) => save(server)}
+          />
+        ) : null}
+      </SettingsSection>
       <ModalLayer
         ariaLabel={t('settings.mcp.importJsonTitle')}
         initialFocus="first-field"
@@ -191,6 +195,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
           </div>
         ) : null}
       </ModalLayer>
-    </section>
+    </SettingsPage>
   );
 }

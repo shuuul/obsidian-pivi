@@ -87,7 +87,8 @@ describe('React tools settings', () => {
     const ports = createPorts();
     const builtIn = renderPage(ports, 'builtInTools');
     await act(async () => undefined);
-    expect(screen.getByRole('heading', { name: 'Tool toggles' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Tool toggles' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Subagents' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Read' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Enable spawn_agent' })).toBeInTheDocument();
     builtIn.unmount();
@@ -104,9 +105,10 @@ describe('React tools settings', () => {
   });
 
   it('stacks external directory controls below their description', () => {
-    const { container } = renderTools(createPorts());
-    const setting = container.querySelector<HTMLElement>('.pivi-external-directories-setting.pivi-setting-stack');
+    renderTools(createPorts());
+    const setting = screen.getByText('Allowed external directories').closest<HTMLElement>('.pivi-settings-row');
     expect(setting).not.toBeNull();
+    expect(setting).toHaveClass('pivi-settings-row--stacked');
     expect(within(setting!).getByText('Allowed external directories')).toBeInTheDocument();
     expect(within(setting!).getByRole('textbox')).toBeInTheDocument();
     expect(within(setting!).getByRole('button', { name: 'Browse' })).toBeInTheDocument();
@@ -137,12 +139,12 @@ describe('React tools settings', () => {
       ],
     }));
 
-    expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
-      'Tool toggles',
+    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
       'workspace',
       'Test host CLI',
       'Pivi',
       'Additional access',
+      'Subagents',
     ]);
   });
 
@@ -151,8 +153,7 @@ describe('React tools settings', () => {
     renderTools(createPorts({ saveSettings }));
 
     const readToggle = screen.getByRole('checkbox', { name: 'Read' });
-    expect(readToggle.closest('.pivi-settings-row')?.parentElement).toHaveClass('pivi-tool-setting');
-    expect(readToggle.closest('.pivi-settings-row')?.parentElement).not.toHaveClass('pivi-setting-stack');
+    expect(readToggle.closest('.pivi-settings-row')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('combobox', { name: 'Default read size' }));
     fireEvent.click(screen.getByRole('option', { name: '200k characters' }));
     await act(async () => undefined);
@@ -320,7 +321,8 @@ describe('React tools settings', () => {
     const ports = createPorts();
     ports.complex.webSearch.writeCredential = () => { throw new Error('keychain unavailable'); };
     renderWebTools(ports);
-    const input = screen.getAllByPlaceholderText('Enter API key...')[0]!;
+    fireEvent.click(screen.getByRole('button', { expanded: false, name: /Brave Search/ }));
+    const input = screen.getByPlaceholderText('Enter API key...');
     fireEvent.change(input, { target: { value: 'secret' } });
     fireEvent.blur(input);
     await act(async () => undefined);
@@ -354,12 +356,13 @@ describe('React tools settings', () => {
     ports.complex.webSearch.saveSettings = saveSettings;
     const { container } = renderWebTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ }) as HTMLButtonElement;
-    const dragSurface = handle.closest('summary') as HTMLElement;
-    const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-provider-sort-id]'));
+    const dragSurface = handle.closest('.pivi-settings-card__header') as HTMLElement;
+    const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-settings-sort-id]'));
     for (const card of cards) {
       card.getBoundingClientRect = jest.fn(() => {
         const index = Array.from(card.parentElement?.children ?? []).indexOf(card);
-        const dragOffset = Number.parseFloat(card.style.getPropertyValue('--pivi-provider-drag-y')) || 0;
+        const match = /translateY\((-?[\d.]+)px\)/.exec(card.style.transform);
+        const dragOffset = match ? Number.parseFloat(match[1] ?? '0') : 0;
         const top = index * 100 + dragOffset;
         return { top, bottom: top + 80, height: 80, left: 0, right: 300, width: 300, x: 0, y: top, toJSON: () => ({}) };
       });
@@ -428,12 +431,15 @@ describe('React tools settings', () => {
   it('renders provider brand icons and keeps reorder announcements out of visual layout', () => {
     const { container } = renderWebTools(createPorts());
 
-    expect(container.querySelectorAll('.pivi-web-provider-card .pivi-provider-logo-mask')).toHaveLength(4);
+    expect(container.querySelectorAll('.pivi-settings-card__icon .pivi-provider-logo-mask')).toHaveLength(4);
     expect(container.querySelector('[aria-live="polite"]')).toHaveClass('pivi-visually-hidden');
   });
 
   it('links web providers to their API key or docs pages', () => {
     renderWebTools(createPorts());
+    for (const name of ['Brave Search', 'Tavily', 'Exa', 'AnySearch']) {
+      fireEvent.click(screen.getByRole('button', { expanded: false, name: new RegExp(name) }));
+    }
 
     expect([
       screen.getByRole('link', { name: 'Get API key at brave.com' }),

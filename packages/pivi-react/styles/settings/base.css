@@ -69,8 +69,7 @@
   color: var(--pivi-host-text-warning);
 }
 
-.pivi-settings-action-group,
-.pivi-skills-install-actions {
+.pivi-settings-action-group {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
@@ -267,52 +266,11 @@
   flex-shrink: 0;
 }
 
-.pivi-skills-remote-host {
-  margin-top: var(--pivi-spacing-sm);
-}
-
-.pivi-skill-choice {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: var(--pivi-spacing-md);
-  background: var(--pivi-host-background-secondary);
-  border-radius: var(--pivi-radius-sm);
-  cursor: pointer;
-  transition:
-    background var(--pivi-duration-fast) var(--pivi-ease-out),
-    scale var(--pivi-press-duration) var(--pivi-ease-out);
-}
-
-.pivi-skill-choice:hover {
-  background: var(--pivi-host-background-hover);
-}
-
-.pivi-skill-choice-checkbox {
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.pivi-skill-choice-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.pivi-skills-install-selected-btn {
-  margin: 12px 12px 0;
-}
-
 .pivi-providers-list {
   display: flex;
   flex-direction: column;
   gap: var(--pivi-spacing-md);
   margin-top: var(--pivi-spacing-md);
-}
-
-.pivi-skills-remote-setting .pivi-settings-row__control > input {
-  flex: 1 1 240px;
 }
 
 .pivi-template-textarea {

@@ -87,7 +87,7 @@ export function AddProviderPicker({ models, onProviderAdded, onError }: AddProvi
     <div className="pivi-provider-add-controls">
       <div className="pivi-provider-add-container" ref={containerRef}>
         <button
-          className="pivi-provider-add-trigger"
+          className="pivi-provider-add-trigger pivi-settings-text-btn"
           type="button"
           onClick={event => { event.stopPropagation(); setOpen(value => !value); }}
         >

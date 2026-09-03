@@ -529,6 +529,7 @@
       "desc": "管理儲存在 .pivi/commands/ 中的{workspaceName}級自訂指令。由 /名稱 觸發。"
     },
     "subagents": {
+      "heading": "子代理",
       "enableSpawn": {
         "name": "啟用 spawn_agent",
         "desc": "向 Pi 暴露 spawn_agent 工具，以便將專注的子任務委派給子代理。"

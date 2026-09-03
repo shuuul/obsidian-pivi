@@ -4,7 +4,16 @@ import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackMessage, SettingsFeedbackPort } from '../ports';
 import { ModalLayer } from '../shared/ModalLayer';
-import { SettingRow, SettingsActionFeedback, SettingsItemActions, SettingsListHeader, SettingsPageDescription, SettingsRemoveButton, Toggle } from './controls';
+import {
+  SettingRow,
+  SettingsActionFeedback,
+  SettingsItemActions,
+  SettingsPage,
+  SettingsRemoveButton,
+  SettingsSection,
+  Toggle,
+} from './controls';
+import { SettingsCollection } from './primitives';
 
 type Skill = SettingsComplexPorts['skills']['list'] extends () => readonly (infer Entry)[] ? Entry : never;
 type RemoteSkill = { readonly name: string; readonly description: string };
@@ -197,34 +206,52 @@ export function SkillsSettingsTab({ skills, feedback }: {
 
   const hasDefaultBundle = skills.featuredBundle.isInstalled();
   const globalPendingFeedback = pendingMessage(pendingOperation);
+  const description = (
+    <>
+      <p>{t('settings.skills.intro')}</p>
+      <p>
+        {`${t('settings.skills.defaultBundle.label')} `}
+        <a href={featuredBundle.sourceUrl}>{featuredBundle.source}</a>
+        {`. ${t('settings.skills.defaultBundle.installMore')}`}
+      </p>
+      <p>
+        {`${t('settings.skills.remote.reviewSkillMd')} `}
+        <a href={SKILLS_SH_SECURITY_URL}>{t('settings.skills.remote.securityNotice')}</a>
+        .
+      </p>
+    </>
+  );
 
   return (
-    <>
-      <SettingsPageDescription>
-        <p className="pivi-setting-description">{t('settings.skills.intro')}</p>
-        <p className="pivi-setting-description">
-          {`${t('settings.skills.defaultBundle.label')} `}
-          <a href={featuredBundle.sourceUrl}>{featuredBundle.source}</a>
-          {`. ${t('settings.skills.defaultBundle.installMore')}`}
-        </p>
-        <p className="pivi-setting-description">
-          {`${t('settings.skills.remote.reviewSkillMd')} `}
-          <a href={SKILLS_SH_SECURITY_URL}>{t('settings.skills.remote.securityNotice')}</a>
-          .
-        </p>
-      </SettingsPageDescription>
-      <SettingRow name={featuredBundle.name} description={featuredBundle.description}>
-        <button type="button" disabled={busy} onClick={hasDefaultBundle ? updateDefault : installDefault}>
-          {hasDefaultBundle
-            ? t('settings.skills.defaultBundle.updateButton')
-            : t('settings.skills.defaultBundle.button')}
-        </button>
-        <SettingsActionFeedback feedback={pendingOperation?.kind === 'installBundle' || pendingOperation?.kind === 'updateBundle'
-          ? globalPendingFeedback
-          : bundleFeedback} />
-      </SettingRow>
-      <div className="pivi-skills-remote-setting pivi-setting-stack">
-        <SettingRow name={t('settings.skills.remote.name')} description={t('settings.skills.remote.desc')}>
+    <SettingsPage description={description}>
+      <SettingsSection>
+        <SettingRow
+          name={featuredBundle.name}
+          description={featuredBundle.description}
+          actions={(
+            <SettingsActionFeedback feedback={pendingOperation?.kind === 'installBundle' || pendingOperation?.kind === 'updateBundle'
+              ? globalPendingFeedback
+              : bundleFeedback} />
+          )}
+        >
+          <button
+            type="button"
+            disabled={busy}
+            onClick={hasDefaultBundle ? updateDefault : installDefault}
+          >
+            {hasDefaultBundle
+              ? t('settings.skills.defaultBundle.updateButton')
+              : t('settings.skills.defaultBundle.button')}
+          </button>
+        </SettingRow>
+        <SettingRow
+          stacked
+          name={t('settings.skills.remote.name')}
+          description={t('settings.skills.remote.desc')}
+          actions={(
+            <SettingsActionFeedback feedback={pendingOperation?.kind === 'listRemote' ? globalPendingFeedback : remoteFeedback} />
+          )}
+        >
           <input
             className="pivi-settings-control"
             value={source}
@@ -237,59 +264,57 @@ export function SkillsSettingsTab({ skills, feedback }: {
             }}
             placeholder={featuredBundle.source}
           />
-          <button type="button" disabled={busy || !source.trim()} onClick={listRemote}>{t('settings.skills.remote.listButton')}</button>
-          <SettingsActionFeedback feedback={pendingOperation?.kind === 'listRemote' ? globalPendingFeedback : remoteFeedback} />
+          <button
+            type="button"
+            disabled={busy || !source.trim()}
+            onClick={listRemote}
+          >
+            {t('settings.skills.remote.listButton')}
+          </button>
         </SettingRow>
-      </div>
+      </SettingsSection>
       {remote.length > 0 ? (
-        <div className="pivi-skills-remote-host">
-          <SettingsListHeader
-            title={t('settings.skills.remote.heading')}
-            actions={(
-              <button
-                type="button"
-                className="pivi-settings-text-btn"
-                disabled={busy}
-                aria-label={t('settings.skills.remote.clearSelected')}
-                onClick={() => setSelected(new Set())}
-              >
-                {t('common.clear')}
-              </button>
-            )}
-          />
-          <div className="pivi-sp-list pivi-skills-remote-list">
+        <SettingsSection
+          title={t('settings.skills.remote.heading')}
+          actions={(
+            <button
+              type="button"
+              disabled={busy}
+              aria-label={t('settings.skills.remote.clearSelected')}
+              onClick={() => setSelected(new Set())}
+            >
+              {t('common.clear')}
+            </button>
+          )}
+        >
+          <SettingsCollection>
             {remote.map((skill) => (
-              <label className="pivi-skill-choice" key={skill.name}>
+              <SettingRow key={skill.name} name={skill.name} description={skill.description || undefined}>
                 <input
                   type="checkbox"
-                  className="pivi-skill-choice-checkbox"
                   checked={selected.has(skill.name)}
                   aria-label={t('settings.skills.installed.installAria', { name: skill.name })}
                   onChange={() => { setInstallFeedback(null); toggleRemote(skill.name); }}
                 />
-                <span className="pivi-skill-choice-info">
-                  <span className="pivi-sp-item-name">{skill.name}</span>
-                  {skill.description ? <span className="pivi-sp-item-desc">{skill.description}</span> : null}
-                </span>
-              </label>
+              </SettingRow>
             ))}
-          </div>
-          <div className="pivi-skills-install-actions">
+          </SettingsCollection>
+          <SettingRow name={t('settings.skills.remote.installSelected')} actions={(
+            <SettingsActionFeedback feedback={pendingOperation?.kind === 'installSelected'
+              ? globalPendingFeedback
+              : installFeedback} />
+          )}>
             <button
               type="button"
-              className="pivi-button--primary pivi-skills-install-selected-btn"
               disabled={busy}
               onClick={installSelected}
             >
               {t('settings.skills.remote.installSelected')}
             </button>
-            <SettingsActionFeedback feedback={pendingOperation?.kind === 'installSelected'
-              ? globalPendingFeedback
-              : installFeedback} />
-          </div>
-        </div>
+          </SettingRow>
+        </SettingsSection>
       ) : null}
-      <SettingsListHeader
+      <SettingsSection
         title={t('settings.skills.installed.heading')}
         actions={(
           <button
@@ -302,17 +327,14 @@ export function SkillsSettingsTab({ skills, feedback }: {
             <PlatformIcon name="refresh-cw" />
           </button>
         )}
-      />
-      {pendingOperation?.kind === 'updateAll' ? (
-        <SettingsActionFeedback feedback={globalPendingFeedback} />
-      ) : null}
-      {!pendingOperation && installedFeedback ? (
-        <SettingsActionFeedback feedback={installedFeedback} />
-      ) : null}
-      {entries.length === 0 ? (
-        <p className="pivi-sp-empty-state">{t('settings.skills.installed.empty')}</p>
-      ) : (
-        <div className="pivi-sp-list">
+      >
+        {pendingOperation?.kind === 'updateAll' ? (
+          <SettingsActionFeedback feedback={globalPendingFeedback} />
+        ) : null}
+        {!pendingOperation && installedFeedback ? (
+          <SettingsActionFeedback feedback={installedFeedback} />
+        ) : null}
+        <SettingsCollection emptyState={t('settings.skills.installed.empty')}>
           {entries.map((skill) => {
             const rowPending = pendingOperation && (
               (pendingOperation.kind === 'update' && pendingOperation.name === skill.name)
@@ -322,56 +344,62 @@ export function SkillsSettingsTab({ skills, feedback }: {
             ) ? globalPendingFeedback : null;
             const rowStatus = rowPending ?? (rowFeedback?.name === skill.name ? rowFeedback.message : null);
             return (
-              <div className="pivi-sp-item" key={skill.folderName}>
-                <div className="pivi-sp-info">
-                  <div className="pivi-sp-item-header">
-                    <span className="pivi-sp-item-name">{skill.name}</span>
-                    <span className="pivi-sp-item-folder">{skill.folderName}</span>
-                  </div>
-                  {skill.description ? <div className="pivi-sp-item-desc">{skill.description}</div> : null}
-                </div>
-                <SettingsItemActions className="pivi-sp-item-actions" isolate={false}>
-                  <Toggle
-                    checked={!skill.disabled}
-                    disabled={busy}
-                    label={skill.disabled
-                      ? t('settings.skills.installed.enableAria', { name: skill.name })
-                      : t('settings.skills.installed.disableAria', { name: skill.name })}
-                    onChange={() => {
-                      void run(
-                        skill.disabled
-                          ? { kind: 'enable', name: skill.name }
-                          : { kind: 'disable', name: skill.name },
-                        () => skills.setDisabled(skill.folderName, !skill.disabled),
-                      );
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="pivi-settings-action-btn"
-                    disabled={busy}
-                    aria-label={t('settings.skills.installed.updateAria', { name: skill.name })}
-                    onClick={() => {
-                      void run(
-                        { kind: 'update', name: skill.name },
-                        () => skills.update(skill.name, skill.folderName),
-                      );
-                    }}
-                  >
-                    <PlatformIcon name="refresh-cw" />
-                  </button>
-                  <SettingsRemoveButton
-                    ariaLabel={t('settings.skills.installed.removeAria', { name: skill.name })}
-                    disabled={busy}
-                    onClick={() => { setRemoveCandidate(skill); }}
-                  />
-                </SettingsItemActions>
-                {rowStatus ? <SettingsActionFeedback feedback={rowStatus} /> : null}
-              </div>
+              <SettingRow
+                key={skill.folderName}
+                name={skill.name}
+                description={(
+                  <>
+                    {skill.description ? <span>{skill.description}</span> : null}
+                    {skill.description ? ' · ' : null}
+                    <span>{skill.folderName}</span>
+                  </>
+                )}
+                actions={(
+                  <>
+                    <SettingsItemActions>
+                      <Toggle
+                        checked={!skill.disabled}
+                        disabled={busy}
+                        label={skill.disabled
+                          ? t('settings.skills.installed.enableAria', { name: skill.name })
+                          : t('settings.skills.installed.disableAria', { name: skill.name })}
+                        onChange={() => {
+                          void run(
+                            skill.disabled
+                              ? { kind: 'enable', name: skill.name }
+                              : { kind: 'disable', name: skill.name },
+                            () => skills.setDisabled(skill.folderName, !skill.disabled),
+                          );
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="pivi-settings-action-btn"
+                        disabled={busy}
+                        aria-label={t('settings.skills.installed.updateAria', { name: skill.name })}
+                        onClick={() => {
+                          void run(
+                            { kind: 'update', name: skill.name },
+                            () => skills.update(skill.name, skill.folderName),
+                          );
+                        }}
+                      >
+                        <PlatformIcon name="refresh-cw" />
+                      </button>
+                      <SettingsRemoveButton
+                        ariaLabel={t('settings.skills.installed.removeAria', { name: skill.name })}
+                        disabled={busy}
+                        onClick={() => { setRemoveCandidate(skill); }}
+                      />
+                    </SettingsItemActions>
+                    {rowStatus ? <SettingsActionFeedback feedback={rowStatus} /> : null}
+                  </>
+                )}
+              />
             );
           })}
-        </div>
-      )}
+        </SettingsCollection>
+      </SettingsSection>
       <ModalLayer
         ariaLabel={t('settings.skills.installed.removeConfirmTitle', { name: removeCandidate?.name ?? '' })}
         open={removeCandidate !== null}
@@ -394,6 +422,6 @@ export function SkillsSettingsTab({ skills, feedback }: {
           </div>
         ) : null}
       </ModalLayer>
-    </>
+    </SettingsPage>
   );
 }

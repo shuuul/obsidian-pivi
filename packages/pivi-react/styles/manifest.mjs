@@ -40,6 +40,8 @@ export const styleModules = [
   'settings/system/card.css',
   'settings/system/feedback.css',
   'settings/features/models.css',
+  'settings/features/mcp.css',
+  'settings/features/prompt.css',
   'settings/base.css',
   'settings/provider-settings.css',
   'settings/command-editor.css',

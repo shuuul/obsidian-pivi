@@ -542,6 +542,7 @@
       "desc": "Manage {workspaceName}-level custom commands stored in .pivi/commands/. Triggered by /name."
     },
     "subagents": {
+      "heading": "Subagents",
       "enableSpawn": {
         "name": "Enable spawn_agent",
         "desc": "Expose the spawn_agent tool so Pi can delegate focused subtasks to subagents."

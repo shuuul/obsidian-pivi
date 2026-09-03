@@ -412,14 +412,13 @@ describe('React settings foundation', () => {
   });
 
   it('lists remote skills and installs selected skills', async () => {
-    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="skills" ports={createPorts()} /></I18nProvider>));
-    const remoteSetting = container.querySelector<HTMLElement>('.pivi-skills-remote-setting');
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="skills" ports={createPorts()} /></I18nProvider>));
+    const remoteSetting = screen.getByText('Install from remote').closest<HTMLElement>('.pivi-settings-row');
     const installedHeader = screen.getByText('Installed skills').closest('.pivi-settings-section');
     expect(remoteSetting).not.toBeNull();
     expect(installedHeader).not.toBeNull();
     expect(installedHeader).toHaveClass('pivi-settings-section');
-    expect(remoteSetting!.querySelector('.pivi-settings-row')).toBeInTheDocument();
-    expect(within(remoteSetting!).getByText('Install from remote')).toBeInTheDocument();
+    expect(remoteSetting).toHaveClass('pivi-settings-row--stacked');
     expect(within(remoteSetting!).getByRole('textbox')).toBeInTheDocument();
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'owner/repo' } });
     fireEvent.click(screen.getByRole('button', { name: 'List skills' }));
@@ -1190,8 +1189,8 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update skill Example' }));
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('Updating Example…');
-    const item = status.closest('.pivi-sp-item');
-    const actions = item?.querySelector('.pivi-sp-item-actions');
+    const item = status.closest('.pivi-settings-row');
+    const actions = item?.querySelector('.pivi-settings-actions');
     expect(item).not.toBeNull();
     expect(actions).toBeTruthy();
     expect(actions).not.toContainElement(status);
@@ -1202,9 +1201,10 @@ describe('React settings foundation', () => {
 
     const success = screen.getByRole('status');
     expect(success).toHaveTextContent('Example updated.');
-    expect(success.closest('.pivi-sp-item')).toContainElement(screen.getByText('Example', { selector: '.pivi-sp-item-name' }));
-    expect(screen.getByText('Installed skills').closest('.pivi-settings-section')
-      ?.nextElementSibling).not.toHaveClass('pivi-settings-feedback');
+    expect(success.closest('.pivi-settings-row')).toContainElement(screen.getByText('Example', { selector: '.pivi-settings-row__name' }));
+    expect(success.closest('.pivi-settings-section')).toBe(
+      screen.getByText('Installed skills').closest('.pivi-settings-section'),
+    );
   });
 
   it('requires confirmation before removing an installed skill', async () => {

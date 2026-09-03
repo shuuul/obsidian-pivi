@@ -1,30 +1,17 @@
-.pivi-mcp-modal,
-.pivi-mcp-inline-editor {
-  box-sizing: border-box;
-}
+/* Add-server modal only. Inline editors use SettingRow primitives. */
 
 .pivi-mcp-modal {
+  box-sizing: border-box;
+  display: flex;
   width: min(500px, 100%);
   margin: 12px auto;
   padding: 20px;
+  flex-direction: column;
+  gap: var(--pivi-spacing-md);
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-md);
   background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
   color: var(--pivi-host-text-normal);
-}
-
-.pivi-mcp-modal,
-.pivi-mcp-inline-editor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pivi-spacing-md);
-}
-
-.pivi-mcp-inline-editor {
-  gap: 10px;
-  margin-bottom: 14px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--pivi-host-border);
 }
 
 .pivi-mcp-editor-row {
@@ -66,18 +53,9 @@
   min-width: 120px;
 }
 
-.pivi-mcp-editor-field-type {
-  flex: 0 0 auto;
-}
-
+.pivi-mcp-editor-field-type,
 .pivi-mcp-editor-field-auth {
   flex: 0 0 auto;
-}
-
-.pivi-mcp-editor-field-type select,
-.pivi-mcp-editor-field-auth select {
-  flex: 0 0 auto;
-  min-width: 0;
 }
 
 .pivi-mcp-editor-field-area {
@@ -102,13 +80,11 @@
 }
 
 .pivi-mcp-modal > h2,
-.pivi-mcp-modal > p,
-.pivi-mcp-inline-editor > p {
+.pivi-mcp-modal > p {
   margin: 0;
 }
 
-.pivi-mcp-modal > label,
-.pivi-mcp-inline-editor > label {
+.pivi-mcp-modal > label {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -116,21 +92,18 @@
   font-size: var(--pivi-host-font-ui-small);
 }
 
-.pivi-mcp-modal :is(input:not([type='checkbox']), textarea),
-.pivi-mcp-inline-editor :is(input:not([type='checkbox']), textarea) {
+.pivi-mcp-modal :is(input:not([type='checkbox']), textarea) {
   box-sizing: border-box;
   width: 100%;
 }
 
-.pivi-mcp-modal textarea,
-.pivi-mcp-inline-editor textarea {
+.pivi-mcp-modal textarea {
   min-height: 64px;
   resize: vertical;
   font-family: var(--pivi-host-font-monospace);
 }
 
-.pivi-mcp-modal > button,
-.pivi-mcp-inline-editor > button {
+.pivi-mcp-modal > button {
   margin-top: var(--pivi-spacing-sm);
   align-self: flex-start;
 }

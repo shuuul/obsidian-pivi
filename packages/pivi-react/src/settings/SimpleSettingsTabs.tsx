@@ -37,21 +37,6 @@ async function saveGeneral(
   }
 }
 
-async function saveSubagents(
-  store: SettingsUiStore,
-  actions: SettingsActionsPort,
-  patch: Parameters<SettingsUiStore['updateSubagents']>[0],
-) {
-  const previous = store.getSnapshot().subagents;
-  store.updateSubagents(patch);
-  try {
-    await actions.saveSubagents(patch);
-  } catch (error) {
-    store.updateSubagents(previous);
-    throw error;
-  }
-}
-
 function useMountedRef() {
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
@@ -511,43 +496,6 @@ export function ToolbarSettingsTab({
         editorToolbar={editorToolbar}
         feedback={feedback}
       />
-    </>
-  );
-}
-
-export function SubagentsSettingsTab({
-  store,
-  actions,
-  feedback,
-}: {
-  readonly store: SettingsUiStore;
-  readonly actions: SettingsActionsPort;
-  readonly feedback: SettingsFeedbackPort;
-}) {
-  const { subagents } = useSettingsUiSnapshot(store);
-  const t = useT();
-  const save = (patch: Parameters<SettingsUiStore['updateSubagents']>[0]) => {
-    void saveSubagents(store, actions, patch).catch((cause: unknown) => {
-      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
-    });
-  };
-  return (
-    <>
-      <SettingRow name={t('settings.subagents.enableSpawn.name')} description={t('settings.subagents.enableSpawn.desc')}>
-        <Toggle checked={subagents.enabled} label={t('settings.subagents.enableSpawn.name')} onChange={(enabled) => save({ enabled })} />
-      </SettingRow>
-      <SettingRow name={t('settings.subagents.allowBackground.name')} description={t('settings.subagents.allowBackground.desc')}>
-        <Toggle checked={subagents.allowBackground} label={t('settings.subagents.allowBackground.name')} onChange={(allowBackground) => save({ allowBackground })} />
-      </SettingRow>
-      <SettingRow name={t('settings.subagents.maxConcurrent.name')} description={t('settings.subagents.maxConcurrent.desc')}>
-        <Select
-          label={t('settings.subagents.maxConcurrent.name')}
-          value={String(subagents.maxConcurrentSubagents)}
-          onChange={(value) => save({ maxConcurrentSubagents: Number(value) as typeof subagents.maxConcurrentSubagents })}
-        >
-          {[1, 2, 3, 4, 8].map((value) => <option key={value} value={value}>{value}</option>)}
-        </Select>
-      </SettingRow>
     </>
   );
 }

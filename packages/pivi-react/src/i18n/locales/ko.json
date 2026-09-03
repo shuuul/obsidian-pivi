@@ -529,6 +529,7 @@
       "desc": ".pivi/commands/에 저장된 {workspaceName} 수준 사용자 지정 명령을 관리합니다. /이름으로 실행됩니다."
     },
     "subagents": {
+      "heading": "서브에이전트",
       "enableSpawn": {
         "name": "spawn_agent 사용",
         "desc": "spawn_agent 도구를 노출하여 집중된 하위 작업을 서브에이전트에 위임합니다."

@@ -32,16 +32,19 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
 
     const addButton = screen.getByRole('button', { name: '+ Add MCP' });
-    expect(document.querySelector('.pivi-mcp-container')?.lastElementChild).toContainElement(addButton);
+    expect(addButton.closest('.pivi-settings-collection')).toContainElement(addButton);
     expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('/');
-    expect(document.querySelector('.pivi-mcp-context-saving-badge')).not.toHaveTextContent('@');
-    expect(screen.getByText('2 tools')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
+    expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).not.toHaveTextContent('@');
+    const summary = screen.getByText('2 tools').closest('.pivi-settings-card__summary');
+    expect(summary).toHaveTextContent('2 tools');
+    expect(summary).toHaveTextContent('https://example.test/mcp');
+    fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' }));
     await act(async () => undefined);
     expect(screen.getByText('read', { selector: '.pivi-mcp-tool-name' })).toBeInTheDocument();
     expect(screen.getByText('search', { selector: '.pivi-mcp-tool-name' })).toBeInTheDocument();
-    const cardBody = document.querySelector('.pivi-mcp-card-body');
+    const cardBody = document.querySelector('.pivi-settings-card__body');
     expect(cardBody).not.toBeNull();
+    expect(within(cardBody as HTMLElement).queryByText('https://example.test/mcp', { selector: 'p' })).not.toBeInTheDocument();
     expect(within(cardBody as HTMLElement).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(mcp.connect).not.toHaveBeenCalled();
     expect(mcp.listTools).toHaveBeenCalledWith('remote');
@@ -53,14 +56,14 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     await act(async () => undefined);
 
-    const card = document.querySelector('.pivi-mcp-card') as HTMLDetailsElement;
-    const header = card.querySelector('.pivi-mcp-card-header');
+    const card = document.querySelector('.pivi-settings-card') as HTMLElement;
+    const header = card.querySelector('.pivi-settings-card__header');
     expect(header).toContainElement(screen.getByRole('checkbox', { name: 'Disable MCP server remote' }));
     expect(header).toContainElement(screen.getByRole('button', { name: 'Remove MCP server remote' }));
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Disable MCP server remote' }));
     await act(async () => undefined);
-    expect(card).not.toHaveAttribute('open');
+    expect(card).not.toHaveClass('is-open');
     expect(getServers()[0]?.enabled).toBe(false);
     expect(screen.getByRole('checkbox', { name: 'Enable MCP server remote' })).toBeInTheDocument();
   });
@@ -70,7 +73,7 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' })); fireEvent.click(screen.getByText('stdio (local command)')); fireEvent.click(screen.getByRole('button', { name: 'Add' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Please enter a server name');
     fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'local' } }); fireEvent.change(screen.getByLabelText('Executable'), { target: { value: 'npx' } }); fireEvent.change(screen.getByLabelText('Arguments'), { target: { value: 'mcp-server' } }); fireEvent.click(screen.getByRole('button', { name: 'Add' })); await act(async () => undefined); expect(getServers()).toHaveLength(1);
-    fireEvent.click(screen.getByText('local', { selector: '.pivi-mcp-name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument(); const inlineEditor = document.querySelector('.pivi-mcp-inline-editor'); expect(inlineEditor).toContainElement(screen.getByRole('button', { name: 'Connect / refresh tools' })); expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'renamed' } }); fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' })); await act(async () => undefined); expect(getServers()[0]?.name).toBe('renamed'); expect(mcp.connect).toHaveBeenCalledWith(expect.objectContaining({ name: 'renamed' }));
+    fireEvent.click(screen.getByText('local', { selector: '.pivi-settings-card__name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument(); const inlineEditor = document.querySelector('.pivi-mcp-inline-editor'); expect(inlineEditor).toContainElement(screen.getByRole('button', { name: 'Connect / refresh tools' })); expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'renamed' } }); fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' })); await act(async () => undefined); expect(getServers()[0]?.name).toBe('renamed'); expect(mcp.connect).toHaveBeenCalledWith(expect.objectContaining({ name: 'renamed' }));
     fireEvent.click(screen.getByRole('button', { name: 'Remove MCP server renamed' }));
     const deleteDialog = screen.getByRole('dialog', { name: 'Delete MCP server "renamed"?' });
     fireEvent.click(within(deleteDialog).getByRole('button', { name: 'Delete' })); await act(async () => undefined); expect(getServers()).toHaveLength(0);
@@ -169,13 +172,13 @@ describe('React MCP settings', () => {
   });
   it('saves and connects an OAuth server from one primary action', async () => {
     const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: false, auth: 'oauth', oauth: { grantType: 'authorization_code' } }; const { ports, mcp } = makePorts([server]); await openMcp(ports); await act(async () => undefined);
-    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'OAuth' })).not.toBeInTheDocument(); fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' })); await act(async () => undefined); expect(mcp.save).toHaveBeenCalled(); expect(mcp.connect).toHaveBeenCalledWith(server);
+    fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'OAuth' })).not.toBeInTheDocument(); fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' })); await act(async () => undefined); expect(mcp.save).toHaveBeenCalled(); expect(mcp.connect).toHaveBeenCalledWith(server);
   });
   it('refreshes the read-only tool inventory only when requested', async () => {
     const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: false };
     const { ports, mcp } = makePorts([server]);
     await openMcp(ports);
-    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
+    fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' }));
     await act(async () => undefined);
 
     expect(mcp.connect).not.toHaveBeenCalled();
@@ -183,7 +186,7 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
     expect(mcp.connect).toHaveBeenCalledWith(server);
     expect(screen.getByText('Tools refreshed')).toBeInTheDocument();
-    const cardBody = document.querySelector('.pivi-mcp-card-body');
+    const cardBody = document.querySelector('.pivi-settings-card__body');
     expect(cardBody).not.toBeNull();
     expect(within(cardBody as HTMLElement).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enable all' })).not.toBeInTheDocument();
@@ -195,7 +198,7 @@ describe('React MCP settings', () => {
     mcp.connect.mockRejectedValueOnce(new Error('OAuth denied'));
     await openMcp(ports);
     await act(async () => undefined);
-    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
+    fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' }));
     await act(async () => undefined);
     expect(screen.getByRole('alert')).toHaveTextContent('OAuth denied');
@@ -208,7 +211,7 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     await act(async () => undefined);
 
-    fireEvent.click(screen.getByText('deepwiki', { selector: '.pivi-mcp-name' }));
+    fireEvent.click(screen.getByText('deepwiki', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' }));
     await act(async () => undefined);
 
@@ -222,7 +225,7 @@ describe('React MCP settings', () => {
     mcp.connect.mockRejectedValueOnce(new Error(''));
     await openMcp(ports);
     await act(async () => undefined);
-    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
+    fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' }));
     await act(async () => undefined);
     expect(screen.getByRole('alert')).toHaveTextContent('Auth failed for "remote"');
@@ -235,7 +238,7 @@ describe('React MCP settings', () => {
     mcp.logout.mockRejectedValueOnce(new Error('logout failed'));
     await openMcp(ports);
     await act(async () => undefined);
-    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
+    fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Clear OAuth credentials' }));
     await act(async () => undefined);
     expect(ports.feedback.notify).toHaveBeenCalledWith('logout failed');

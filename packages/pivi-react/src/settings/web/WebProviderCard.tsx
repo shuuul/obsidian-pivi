@@ -1,17 +1,13 @@
 import type { WebProviderId } from '@pivi/agent/settings/types';
-import {
-  type CSSProperties,
-  Fragment,
-  type PointerEvent,
-  useState,
-} from 'react';
+import { Fragment, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
-import { SettingsItemActions, Toggle } from '../controls';
+import { SettingRow, Toggle } from '../controls';
 import { ExternalSetupLink } from '../ExternalSetupLink';
+import { DisclosureCard } from '../primitives';
 import { getWebProviderSetupLink } from '../providerSetupLinks';
 
 const MASKED_KEY = '••••••••';
@@ -66,6 +62,13 @@ export function WebProviderCard(props: WebProviderCardProps) {
       : provider.apiKeyRequired
         ? t('settings.webSearch.status.missingKey')
         : t('settings.webSearch.status.anonymous');
+  const statusKind = disabled
+    ? undefined
+    : credentialConfigured
+      ? 'is-configured'
+      : provider.apiKeyRequired
+        ? 'is-error'
+        : undefined;
 
   const saveKey = async (): Promise<void> => {
     const value = key.trim();
@@ -99,102 +102,82 @@ export function WebProviderCard(props: WebProviderCardProps) {
     }
   };
 
-  const style = dragging
-    ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
-    : undefined;
-  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
-    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"]')) {
-      return;
-    }
-    props.reorderHandleProps.onPointerDown(event);
-  };
-
   return <Fragment>
-    <details
-      className={`pivi-provider-card pivi-sortable-provider-card pivi-web-provider-card${disabled ? ' pivi-provider-card-disabled' : ''}${dragging ? ' is-dragging' : ''}`}
-      data-provider-sort-id={provider.id}
+    <DisclosureCard
+      name={label}
+      icon={<ProviderLogo slug={provider.id} size={18} />}
+      className={disabled ? 'is-disabled' : undefined}
+      badges={(
+        <>
+          {provider.search ? <span className="pivi-settings-chip">{t('settings.webSearch.capability.search')}</span> : null}
+          {provider.fetch ? <span className="pivi-settings-chip">{t('settings.webSearch.capability.fetch')}</span> : null}
+          <span className={`pivi-settings-chip${statusKind ? ` ${statusKind}` : ''}`}>{status}</span>
+        </>
+      )}
+      actions={(
+        <Toggle
+          checked={!disabled}
+          disabled={pending}
+          label={disabled
+            ? t('settings.webSearch.enableAria', { provider: label })
+            : t('settings.webSearch.disableAria', { provider: label })}
+          onChange={() => { props.onToggleDisabled(); }}
+        />
+      )}
       open={expanded}
-      style={style}
+      onToggle={() => { props.onToggleExpanded(); }}
+      sortId={provider.id}
+      sortableHandleProps={pending ? undefined : props.reorderHandleProps}
+      consumeClickAfterDrag={props.suppressReorderClick}
+      dragging={dragging}
+      dragOffset={dragOffset}
+      reorderLabel={t('settings.webSearch.reorder.handle', { provider: label, position })}
     >
-      <summary
-        className="pivi-provider-header pivi-web-provider-header"
-        onClick={(event) => {
-          event.preventDefault();
-          if (!props.suppressReorderClick()) props.onToggleExpanded();
-        }}
-        onPointerCancel={props.reorderHandleProps.onPointerCancel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={props.reorderHandleProps.onPointerMove}
-        onPointerUp={props.reorderHandleProps.onPointerUp}
+      <SettingRow
+        stacked
+        name={t('settings.webSearch.apiKeyName', { provider: label })}
+        description={(
+          <>
+            {provider.apiKeyRequired
+              ? t('settings.webSearch.providerKeyRequired', { provider: label })
+              : t('settings.webSearch.providerKeyOptional', { provider: label })}
+            {setupLink ? (
+              <>
+                {' '}
+                <ExternalSetupLink href={setupLink.href} kind={setupLink.kind} />
+              </>
+            ) : null}
+          </>
+        )}
       >
+        <input
+          className="pivi-settings-control pivi-settings-control--fill"
+          type="password"
+          value={key}
+          placeholder={key === MASKED_KEY
+            ? t('settings.webSearch.apiKeySavedPlaceholder', { secureStorageName })
+            : t('settings.webSearch.apiKeyPlaceholder')}
+          disabled={savingKey}
+          aria-label={t('settings.webSearch.apiKeyName', { provider: label })}
+          onFocus={() => { if (key === MASKED_KEY) setKey(''); }}
+          onChange={event => { setKey(event.currentTarget.value); }}
+          onBlur={() => { void saveKey(); }}
+        />
         <button
           type="button"
-          className="pivi-provider-drag-handle"
-          aria-label={t('settings.webSearch.reorder.handle', { provider: label, position })}
-          aria-pressed={dragging}
-          onClick={event => { event.preventDefault(); event.stopPropagation(); }}
-          onKeyDown={props.reorderHandleProps.onKeyDown}
+          disabled={savingKey || (!key.trim() || key === MASKED_KEY)}
+          onClick={() => { void saveKey(); }}
         >
-          <span aria-hidden="true">⠿</span>
+          {t('common.save')}
         </button>
-        <span className="pivi-provider-priority" aria-hidden="true">{position}</span>
-        <div className="pivi-provider-title-row">
-          <ProviderLogo slug={provider.id} size={18} className="pivi-provider-card-logo" />
-          <span className="pivi-provider-title">{label}</span>
-          <span className="pivi-web-provider-capabilities">
-            {provider.search ? <span>{t('settings.webSearch.capability.search')}</span> : null}
-            {provider.fetch ? <span>{t('settings.webSearch.capability.fetch')}</span> : null}
-          </span>
-        </div>
-        <span className={`pivi-provider-status ${disabled ? 'disabled' : credentialConfigured ? 'configured' : 'missing'}`}>
-          {status}
-        </span>
-        <SettingsItemActions>
-          <Toggle
-            checked={!disabled}
-            disabled={pending}
-            label={disabled
-              ? t('settings.webSearch.enableAria', { provider: label })
-              : t('settings.webSearch.disableAria', { provider: label })}
-            onChange={() => { props.onToggleDisabled(); }}
-          />
-        </SettingsItemActions>
-      </summary>
-      <div className="pivi-provider-body pivi-web-provider-body">
-        <p className="pivi-setting-description">
-          {provider.apiKeyRequired
-            ? t('settings.webSearch.providerKeyRequired', { provider: label })
-            : t('settings.webSearch.providerKeyOptional', { provider: label })}
-          {setupLink ? (
-            <>
-              {' '}
-              <ExternalSetupLink href={setupLink.href} kind={setupLink.kind} />
-            </>
-          ) : null}
-        </p>
-        <div className="pivi-web-provider-key-row">
-          <input
-            className="pivi-settings-control pivi-settings-control--fill"
-            type="password"
-            value={key}
-            placeholder={key === MASKED_KEY
-              ? t('settings.webSearch.apiKeySavedPlaceholder', { secureStorageName })
-              : t('settings.webSearch.apiKeyPlaceholder')}
-            disabled={savingKey}
-            aria-label={t('settings.webSearch.apiKeyName', { provider: label })}
-            onFocus={() => { if (key === MASKED_KEY) setKey(''); }}
-            onChange={event => { setKey(event.currentTarget.value); }}
-            onBlur={() => { void saveKey(); }}
-          />
-          <button
-            type="button"
-            disabled={savingKey || !storedCredential}
-            onClick={() => { void clearKey(); }}
-          >
-            {t('settings.webSearch.removeKey')}
-          </button>
-        </div>
-      </div>
-    </details>
+        <button
+          type="button"
+          disabled={savingKey || !storedCredential}
+          onClick={() => { void clearKey(); }}
+        >
+          {t('settings.webSearch.removeKey')}
+        </button>
+      </SettingRow>
+    </DisclosureCard>
   </Fragment>;
 }

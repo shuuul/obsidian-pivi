@@ -224,28 +224,28 @@ describe('React prompt settings', () => {
     expect(screen.queryByText('Identity & Role')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Core' })).not.toBeInTheDocument();
     expect(screen.getByText('Transcript cleanup')).toBeInTheDocument();
-    expect(document.querySelector('.pivi-prompt-tab')).not.toBeNull();
+    expect(document.querySelector('.pivi-settings-card')).not.toBeNull();
   });
 
   it('toggles workflow modules, shows a modified badge, and restores the shipped body', async () => {
     const prompt = createMutablePromptPort([coreModule, workflowModule]);
     renderPrompt(createPorts(prompt));
 
-    const card = screen.getByText('Transcript cleanup').closest('details') as HTMLElement;
+    const card = screen.getByText('Transcript cleanup').closest('.pivi-settings-card') as HTMLElement;
     expect(within(card).getByText('Modified')).toBeInTheDocument();
-    const restore = within(card).getByRole('button', { name: 'Restore default' });
-    expect(restore).not.toBeDisabled();
 
     fireEvent.click(within(card).getByRole('checkbox', { name: 'Disable Transcript cleanup' }));
     await act(async () => undefined);
     expect(prompt.calls.toggle).toBe(1);
     expect(within(card).getByRole('checkbox', { name: 'Enable Transcript cleanup' })).not.toBeChecked();
 
+    fireEvent.click(within(card).getByRole('button', { expanded: false, name: /Transcript cleanup/ }));
+    const restore = within(card).getByRole('button', { name: 'Restore default' });
+    expect(restore).not.toBeDisabled();
     fireEvent.click(restore);
     await act(async () => undefined);
     expect(prompt.calls.restore).toBe(1);
     expect(within(card).queryByText('Modified')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Transcript cleanup'));
     const editor = within(card).getByRole('textbox');
     expect(editor).toHaveValue('SHIPPED TRANSCRIPT BODY');
     expect(editor).toHaveAttribute('rows', '16');
@@ -258,8 +258,8 @@ describe('React prompt settings', () => {
     const add = screen.getByRole('button', { name: 'Add custom prompt module' });
     expect(add).toHaveTextContent('+ Add module');
     fireEvent.click(add);
-    const draftTitle = screen.getByText('New module').closest('details') as HTMLElement;
-    expect(draftTitle).toHaveAttribute('open');
+    const draftTitle = screen.getByText('New module').closest('.pivi-settings-card') as HTMLElement;
+    expect(draftTitle).toHaveClass('is-open');
     expect(screen.queryByRole('button', { name: 'Reorder New module, currently position 3' })).not.toBeInTheDocument();
 
     fireEvent.change(within(draftTitle).getAllByRole('textbox')[0]!, { target: { value: 'Gamma' } });

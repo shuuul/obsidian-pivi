@@ -25,4 +25,9 @@
   --pivi-settings-card-padding: var(--pivi-settings-row-padding-block) var(--pivi-settings-row-padding-inline);
   --pivi-settings-card-gap: var(--pivi-settings-row-gap);
   --pivi-settings-collection-gap: 0px;
+  --pivi-settings-usage-core: var(--pivi-host-interactive-accent);
+  --pivi-settings-usage-workflow: var(--pivi-host-text-accent);
+  --pivi-settings-usage-custom: var(--pivi-host-text-muted);
+  --pivi-settings-usage-tools: var(--pivi-host-text-faint);
+  --pivi-settings-usage-mcp: var(--pivi-host-text-faint);
 }

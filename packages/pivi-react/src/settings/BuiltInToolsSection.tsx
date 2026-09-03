@@ -1,9 +1,11 @@
-import { useRef, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsFeedbackMessage, SettingsPorts, SettingsToolRow } from '../ports';
-import { BadgeListInput, Select, SettingRow, SettingsPageDescription, SettingsSection, Toggle } from './controls';
+import { BadgeListInput, Select, SettingRow, SettingsPage, SettingsSection, Toggle } from './controls';
+import type { SettingsUiStore } from './SettingsUiStore';
+import { useSettingsUiSnapshot } from './SettingsUiStore';
 
 const READ_SIZE_OPTIONS = [50_000, 100_000, 200_000, 500_000] as const;
 
@@ -33,9 +35,16 @@ function parseDirectories(inputs: readonly string[]): { directories: string[]; e
   return { directories };
 }
 
-export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }) {
+export function BuiltInToolsSection({
+  ports,
+  store,
+}: {
+  readonly ports: SettingsPorts;
+  readonly store: SettingsUiStore;
+}) {
   const t = useT();
   const { hostName, workspaceName } = useHostTerminology();
+  const { subagents } = useSettingsUiSnapshot(store);
   const settings = ports.complex.tools.getSettings();
   const [directories, setDirectories] = useState<readonly string[]>(settings.externalReadDirectories);
   const [bashAllowlist, setBashAllowlist] = useState<readonly string[]>(settings.bashAllowlist);
@@ -70,6 +79,15 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
       operation.current = false;
       setPending(false);
     }
+  };
+
+  const saveSubagents = (patch: Parameters<SettingsUiStore['updateSubagents']>[0]): void => {
+    const previous = store.getSnapshot().subagents;
+    store.updateSubagents(patch);
+    void ports.actions.saveSubagents(patch).catch((cause: unknown) => {
+      store.updateSubagents(previous);
+      ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+    });
   };
 
   const addDirectories = async (entries: readonly string[]): Promise<boolean> => {
@@ -189,93 +207,107 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
               }}
             />
           </SettingRow>
-          <div className="pivi-external-directories-setting pivi-setting-stack">
-            <SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}>
-              <BadgeListInput
-                values={directories}
-                placeholder={t('settings.externalRead.directories.placeholder')}
-                inputLabel={t('settings.externalRead.directories.inputLabel')}
-                removeLabel={(value) => t('settings.externalRead.directories.removeAria', { value })}
-                disabled={pending}
-                feedback={directoryFeedback}
-                onAdd={addDirectories}
-                onRemove={removeDirectory}
-              />
-              <button type="button" title={t('settings.externalRead.directories.browseTooltip')} disabled={pending} onMouseDown={(event) => event.preventDefault()} onClick={() => { void chooseDirectory(); }}>
-                {t('settings.externalRead.directories.browse')}
-              </button>
-            </SettingRow>
-          </div>
+          <SettingRow
+            stacked
+            name={t('settings.externalRead.directories.name')}
+            description={t('settings.externalRead.directories.desc')}
+          >
+            <BadgeListInput
+              values={directories}
+              placeholder={t('settings.externalRead.directories.placeholder')}
+              inputLabel={t('settings.externalRead.directories.inputLabel')}
+              removeLabel={(value) => t('settings.externalRead.directories.removeAria', { value })}
+              disabled={pending}
+              feedback={directoryFeedback}
+              onAdd={addDirectories}
+              onRemove={removeDirectory}
+            />
+            <button
+              type="button"
+              title={t('settings.externalRead.directories.browseTooltip')}
+              disabled={pending}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => { void chooseDirectory(); }}
+            >
+              {t('settings.externalRead.directories.browse')}
+            </button>
+          </SettingRow>
         </>
       );
     }
     if (row.configuration === 'bash') {
       return (
-        <div className="pivi-setting-stack">
-          <SettingRow name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}>
-            <BadgeListInput
-              values={bashAllowlist}
-              inputLabel={t('settings.bash.allowlist.inputLabel')}
-              removeLabel={(value) => t('settings.bash.allowlist.removeAria', { value })}
-              disabled={pending}
-              onAdd={addBashCommands}
-              onRemove={removeBashCommand}
-            />
-          </SettingRow>
-        </div>
+        <SettingRow stacked name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}>
+          <BadgeListInput
+            values={bashAllowlist}
+            inputLabel={t('settings.bash.allowlist.inputLabel')}
+            removeLabel={(value) => t('settings.bash.allowlist.removeAria', { value })}
+            disabled={pending}
+            onAdd={addBashCommands}
+            onRemove={removeBashCommand}
+          />
+        </SettingRow>
       );
     }
     return null;
   };
 
   return (
-    <>
-      <SettingsPageDescription>
-        <p className="pivi-setting-description">{t('settings.tools.intro', { hostName })}</p>
-      </SettingsPageDescription>
-      <SettingsSection title={t('settings.tools.heading')} headingLevel={3}>
-        {TOOL_GROUPS.map(([group, titleKey]) => {
-          const rows = toolRows.filter(row => row.group === group);
-          if (rows.length === 0) return null;
-          return (
-            <SettingsSection key={group} title={t(titleKey, { hostName, workspaceName })} headingLevel={3}>
-              {rows.map((row) => (
-                <div key={row.name} className="pivi-tool-setting">
-                  <SettingRow name={`${row.label} (${row.name})`} description={row.description}>
-                    <Toggle
-                      checked={row.enabled}
-                      disabled={!row.available}
-                      label={row.label}
-                      onChange={(enabled) => {
-                        if (pendingTools.current.has(row.name)) return;
-                        pendingTools.current.add(row.name);
-                        setToolRows(rows => rows.map(entry => (
-                          entry.name === row.name ? { ...entry, enabled } : entry
-                        )));
-                        void ports.complex.tools.setToolEnabled(row.name, enabled)
-                          .catch(() => {
-                            setToolRows(rows => rows.map(entry => (
-                              entry.name === row.name ? { ...entry, enabled: !enabled } : entry
-                            )));
-                            ports.feedback.notify(t('common.error'));
-                          })
-                          .finally(() => {
-                            pendingTools.current.delete(row.name);
-                          });
-                      }}
-                    />
-                  </SettingRow>
-                  {row.configuration && (
-                    <div className="pivi-tool-setting__configuration">
-                      {renderToolConfiguration(row)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </SettingsSection>
-          );
-        })}
+    <SettingsPage description={<p>{t('settings.tools.intro', { hostName })}</p>}>
+      {TOOL_GROUPS.map(([group, titleKey]) => {
+        const rows = toolRows.filter(row => row.group === group);
+        if (rows.length === 0) return null;
+        return (
+          <SettingsSection key={group} title={t(titleKey, { hostName, workspaceName })}>
+            {rows.map((row) => (
+              <Fragment key={row.name}>
+                <SettingRow name={`${row.label} (${row.name})`} description={row.description}>
+                  <Toggle
+                    checked={row.enabled}
+                    disabled={!row.available}
+                    label={row.label}
+                    onChange={(enabled) => {
+                      if (pendingTools.current.has(row.name)) return;
+                      pendingTools.current.add(row.name);
+                      setToolRows(current => current.map(entry => (
+                        entry.name === row.name ? { ...entry, enabled } : entry
+                      )));
+                      void ports.complex.tools.setToolEnabled(row.name, enabled)
+                        .catch(() => {
+                          setToolRows(current => current.map(entry => (
+                            entry.name === row.name ? { ...entry, enabled: !enabled } : entry
+                          )));
+                          ports.feedback.notify(t('common.error'));
+                        })
+                        .finally(() => {
+                          pendingTools.current.delete(row.name);
+                        });
+                    }}
+                  />
+                </SettingRow>
+                {row.configuration ? renderToolConfiguration(row) : null}
+              </Fragment>
+            ))}
+          </SettingsSection>
+        );
+      })}
+      <SettingsSection title={t('settings.subagents.heading')}>
+        <SettingRow name={t('settings.subagents.enableSpawn.name')} description={t('settings.subagents.enableSpawn.desc')}>
+          <Toggle checked={subagents.enabled} label={t('settings.subagents.enableSpawn.name')} onChange={(enabled) => saveSubagents({ enabled })} />
+        </SettingRow>
+        <SettingRow name={t('settings.subagents.allowBackground.name')} description={t('settings.subagents.allowBackground.desc')}>
+          <Toggle checked={subagents.allowBackground} label={t('settings.subagents.allowBackground.name')} onChange={(allowBackground) => saveSubagents({ allowBackground })} />
+        </SettingRow>
+        <SettingRow name={t('settings.subagents.maxConcurrent.name')} description={t('settings.subagents.maxConcurrent.desc')}>
+          <Select
+            label={t('settings.subagents.maxConcurrent.name')}
+            value={String(subagents.maxConcurrentSubagents)}
+            onChange={(value) => saveSubagents({ maxConcurrentSubagents: Number(value) as typeof subagents.maxConcurrentSubagents })}
+          >
+            {[1, 2, 3, 4, 8].map((value) => <option key={value} value={value}>{value}</option>)}
+          </Select>
+        </SettingRow>
       </SettingsSection>
-    </>
+    </SettingsPage>
   );
 }

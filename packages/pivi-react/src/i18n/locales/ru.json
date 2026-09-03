@@ -529,6 +529,7 @@
       "desc": "Управление пользовательскими командами {workspaceName} в .pivi/commands/. Запуск через /имя."
     },
     "subagents": {
+      "heading": "Субагенты",
       "enableSpawn": {
         "name": "Включить spawn_agent",
         "desc": "Открывает инструмент spawn_agent, чтобы Pi делегировал сфокусированные подзадачи субагентам."

@@ -345,58 +345,140 @@ textarea.pivi-settings-control {
   cursor: inherit;
 }
 
-.pivi-settings-action-btn {
-  display: flex;
+/* Only icon/text triggers neutralize host button chrome. Regular
+   actions (Save, Apply, Connect, Fetch models, …) stay on the host
+   default. Repeat transparent backgrounds on :hover/:active so
+   Obsidian `button:not(.clickable-icon)` cannot reintroduce fill. */
+.pivi-settings button.pivi-settings-action-btn,
+.pivi-settings button.pivi-settings-card__handle,
+.pivi-settings button.pivi-settings-card__chevron,
+.pivi-settings button.pivi-settings-badge__remove {
+  appearance: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
+  margin: 0;
   padding: 0;
-  border: none;
-  background: transparent;
+  border: 0;
   border-radius: var(--pivi-radius-xs);
-  cursor: pointer;
+  background: transparent;
+  box-shadow: none;
   color: var(--pivi-host-text-muted);
+  cursor: pointer;
   transition:
-    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
     color var(--pivi-duration-fast) var(--pivi-ease-out),
     scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
-.pivi-settings-action-btn:hover {
+.pivi-settings button.pivi-settings-badge__remove {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 50%;
+}
+
+.pivi-settings button.pivi-settings-action-btn:hover:not(:disabled),
+.pivi-settings button.pivi-settings-card__handle:hover:not(:disabled),
+.pivi-settings button.pivi-settings-badge__remove:hover:not(:disabled) {
+  border: 0;
   background: var(--pivi-host-background-hover);
+  box-shadow: none;
   color: var(--pivi-host-text-normal);
 }
 
-.pivi-settings-action-btn svg {
+.pivi-settings button.pivi-settings-action-btn:active:not(:disabled),
+.pivi-settings button.pivi-settings-card__handle:active:not(:disabled),
+.pivi-settings button.pivi-settings-card__chevron:hover:not(:disabled),
+.pivi-settings button.pivi-settings-card__chevron:active:not(:disabled) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pivi-settings button.pivi-settings-card__handle {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.pivi-settings button.pivi-settings-card__handle:active,
+.pivi-settings button.pivi-settings-card__handle[aria-pressed="true"] {
+  cursor: grabbing;
+  color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-settings button.pivi-settings-action-btn svg,
+.pivi-settings button.pivi-settings-card__chevron svg {
   width: 14px;
   height: 14px;
 }
 
-.pivi-settings-text-btn {
+.pivi-settings button.pivi-settings-text-btn {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 28px;
+  margin: 0;
   padding: 4px 10px;
-  border: none;
-  background: transparent;
+  border: 0;
   border-radius: var(--pivi-radius-xs);
-  cursor: pointer;
+  background: transparent;
+  box-shadow: none;
   color: var(--pivi-host-text-muted);
+  font: inherit;
   font-size: var(--pivi-host-font-ui-smaller);
+  cursor: pointer;
   transition:
-    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
     color var(--pivi-duration-fast) var(--pivi-ease-out),
     scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
-.pivi-settings-text-btn:hover {
+.pivi-settings button.pivi-settings-text-btn:hover:not(:disabled),
+.pivi-settings button.pivi-settings-text-btn:active:not(:disabled) {
+  border: 0;
   background: var(--pivi-host-background-hover);
+  box-shadow: none;
   color: var(--pivi-host-text-normal);
 }
 
-.pivi-settings-delete-btn:hover {
+.pivi-settings button.pivi-settings-delete-btn:hover:not(:disabled) {
+  color: var(--pivi-host-text-error);
+}
+
+.pivi-settings-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border: 0;
+  border-radius: var(--pivi-radius-sm);
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-weight: var(--pivi-host-font-medium);
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.pivi-settings-chip.is-ready,
+.pivi-settings-chip.is-configured,
+.pivi-provider-status.ready,
+.pivi-provider-status.configured {
+  color: var(--pivi-host-text-success);
+}
+
+.pivi-settings-chip.is-error,
+.pivi-provider-status.oauth-expired,
+.pivi-provider-status.missing-credential,
+.pivi-provider-status.unavailable {
   color: var(--pivi-host-text-error);
 }
 

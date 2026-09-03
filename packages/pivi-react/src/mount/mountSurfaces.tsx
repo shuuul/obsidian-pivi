@@ -119,7 +119,7 @@ export async function mountSettingsPage(options: MountSettingsPageOptions): Prom
       <PresentationPlatformProvider platform={options.platform}>
         <I18nProvider i18n={options.i18n}>
           <div
-            className="pivi-react-settings-root"
+            className="pivi-react-settings-root pivi-settings"
             data-pivi-react-surface="settings"
             data-pivi-settings-page={options.page}
           >
