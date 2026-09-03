@@ -61,6 +61,9 @@
   margin-inline-start: auto;
 }
 
+/* Host `.vertical-tab-content h2/h3` (0,1,1) adds margin/padding; the parent
+   class keeps this rule ahead of it without raising specificity elsewhere. */
+.pivi-settings-section__header > .pivi-settings-section-heading,
 .pivi-settings-section-heading {
   margin: 0;
   padding: 0;
