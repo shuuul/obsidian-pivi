@@ -8,7 +8,7 @@ import { useId, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsCatalogPort } from '../../ports';
-import { Select, SettingRow, SettingsSection } from '../controls';
+import { Select, SettingRow, SettingsSection } from '../primitives';
 import { matchCatalogModels } from './catalogModelMatching';
 
 export interface ModelChecklistProps {

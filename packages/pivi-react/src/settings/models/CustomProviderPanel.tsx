@@ -7,8 +7,8 @@ import { useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
-import { BadgeListInput, SettingRow, SettingsSection } from '../controls';
 import { ExternalSetupLink } from '../ExternalSetupLink';
+import { BadgeListInput, SettingRow, SettingsSection } from '../primitives';
 import { getModelProviderSetupLink } from '../providerSetupLinks';
 import { ProviderApiKeyField } from './ProviderCredentials';
 

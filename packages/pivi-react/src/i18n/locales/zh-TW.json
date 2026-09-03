@@ -433,7 +433,8 @@
     },
     "navMappings": {
       "name": "Vim 風格導覽對應",
-      "desc": "每行一個對應。格式：\"map <鍵> <動作>\"（動作：scrollUp, scrollDown, focusInput）。"
+      "desc": "每行一個對應。格式：\"map <鍵> <動作>\"（動作：scrollUp, scrollDown, focusInput）。",
+      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "需要 Command/Ctrl+Enter 傳送",
@@ -456,6 +457,10 @@
     },
     "addSelectionHotkey": {
       "name": "將選取內容加入聊天"
+    },
+    "hotkeys": {
+      "notSet": "未設定",
+      "openHotkeys": "開啟快捷鍵設定"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -665,6 +670,12 @@
       "capability": {
         "search": "搜尋",
         "fetch": "擷取"
+      },
+      "providers": {
+        "brave": "Brave Search",
+        "tavily": "Tavily",
+        "exa": "Exa",
+        "anysearch": "AnySearch"
       },
       "status": {
         "configured": "已設定",
@@ -1007,6 +1018,7 @@
       "typeStdio": "stdio（本機命令）",
       "typeHttp": "http / sse（遠端）",
       "contextSavingTitle": "斜線徽章：/{name} 權杖會在撰寫區突顯此伺服器",
+      "mentionBadge": "斜線提及",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth 已驗證",
       "oauthExpiredBadge": "已過期",

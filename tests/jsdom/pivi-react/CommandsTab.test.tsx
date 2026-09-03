@@ -19,7 +19,7 @@ function createMentionEditorPort(): SettingsPorts['mentionEditor'] {
   return {
     mount(container, initialValue, callbacks) {
       const textarea = document.createElement('textarea');
-      textarea.className = 'pivi-settings-control pivi-settings-control--fill pivi-template-textarea';
+      textarea.className = 'pivi-settings-control pivi-settings-control--fill pivi-settings-mention-editor';
       textarea.value = initialValue;
       textarea.addEventListener('input', () => callbacks.onChange?.(textarea.value));
       textarea.addEventListener('change', () => callbacks.onChange?.(textarea.value));

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useT } from '../../i18n';
 import { useHostTerminology } from '../../platform';
 import type { SettingsModelsPort } from '../../ports';
-import { SettingRow, SettingsSection } from '../controls';
 import { ExternalSetupLink } from '../ExternalSetupLink';
+import { SettingRow, SettingsSection } from '../primitives';
 import { getModelProviderSetupLink } from '../providerSetupLinks';
 
 export interface ProviderCredentialsProps {

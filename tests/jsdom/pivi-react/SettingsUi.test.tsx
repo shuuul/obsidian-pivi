@@ -143,6 +143,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     hotkeys: {
       listHotkeys: () => [
         { commandId: 'pivi:open-view', labelKey: 'settings.openChatHotkey.name', hotkey: 'Mod+P' },
+        { commandId: 'pivi:new-tab', labelKey: 'settings.newTabHotkey.name', hotkey: null },
       ],
       openHotkeySettings: () => undefined,
     },
@@ -180,6 +181,7 @@ describe('React settings foundation', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     expect(screen.getByText('Language')).toBeInTheDocument();
     expect(screen.getByText('About')).toBeInTheDocument();
+    expect(screen.getByText('Not set')).toBeInTheDocument();
   });
 
   it('persists general and built-in-tools settings on their pages', async () => {

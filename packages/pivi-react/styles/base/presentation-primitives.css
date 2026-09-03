@@ -72,9 +72,7 @@
 .pivi-slash-item:active:not([aria-disabled='true']),
 .pivi-settings-action-btn:active:not(:disabled),
 .pivi-settings-text-btn:active:not(:disabled),
-.pivi-hotkey-item:active:not(:disabled),
-.pivi-skill-choice:active,
-.pivi-provider-header:active {
+.pivi-skill-choice:active {
   scale: var(--pivi-press-scale);
 }
 
@@ -106,9 +104,7 @@
 }
 
 /* Shared disclosure marker removal for summary-style headers. */
-.pivi-thinking-header::-webkit-details-marker,
-.pivi-provider-header::-webkit-details-marker,
-.pivi-mcp-card-header::-webkit-details-marker {
+.pivi-thinking-header::-webkit-details-marker {
   display: none;
 }
 

@@ -9,8 +9,7 @@ import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { ModalLayer } from '../../shared/ModalLayer';
-import { SettingsRemoveButton, Toggle } from '../controls';
-import { DisclosureCard } from '../primitives';
+import { DisclosureCard, SettingsRemoveButton, Toggle } from '../primitives';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
 import { ProviderApiKeyField,ProviderCredentials } from './ProviderCredentials';
@@ -225,8 +224,7 @@ export function ProviderCard({
       dragOffset={dragOffset}
       reorderLabel={t('settings.webSearch.reorder.handle', { provider: displayName, position })}
     >
-      <div className="pivi-provider-body">
-        {custom ? (
+      {custom ? (
           <>
             <CustomProviderPanel models={models} feedback={feedback} config={custom} onChanged={onChanged} onError={onError} />
             {!isLocalProvider ? (
@@ -283,7 +281,6 @@ export function ProviderCard({
         >
           {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
         </button>
-      </div>
     </DisclosureCard>
     {confirmingRemove ? (
       <ModalLayer

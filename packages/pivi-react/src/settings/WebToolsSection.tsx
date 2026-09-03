@@ -5,8 +5,7 @@ import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
-import { SettingsPage, SettingsSection } from './controls';
-import { SettingsCollection } from './primitives';
+import { SettingsCollection, SettingsPage, SettingsSection } from './primitives';
 import { WebProviderCard } from './web/WebProviderCard';
 
 export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {

@@ -29,10 +29,7 @@
   margin-block-start: var(--pivi-settings-section-gap);
 }
 
-.pivi-settings-content > .pivi-settings-section:first-child,
-.pivi-settings-content > .pivi-settings-row:first-child + .pivi-settings-section,
-.pivi-settings-page > .pivi-settings-section:first-child,
-.pivi-tools-settings-page > .pivi-settings-section:first-child {
+.pivi-settings-page > .pivi-settings-section:first-child {
   margin-block-start: 0;
 }
 
@@ -129,16 +126,9 @@
   padding: 0;
 }
 
-.pivi-settings-content > .pivi-setting-description,
-.pivi-settings-content > .pivi-setting-validation,
 .pivi-settings-section__body > .pivi-setting-description,
 .pivi-settings-section__body > .pivi-setting-validation,
 .pivi-settings-section__body > .pivi-env-review-warning {
-  padding-inline: var(--pivi-settings-row-padding-inline);
-}
-
-.pivi-settings-content > .pivi-hotkey-grid,
-.pivi-settings-section__body > .pivi-hotkey-grid {
   padding-inline: var(--pivi-settings-row-padding-inline);
 }
 

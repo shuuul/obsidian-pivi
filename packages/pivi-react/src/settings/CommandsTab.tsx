@@ -17,13 +17,14 @@ import {
 import { ModalLayer } from '../shared/ModalLayer';
 import { CommandIconPicker } from './commands/CommandIconPicker';
 import {
+  DisclosureCard,
   SettingRow,
-  SettingsActionFeedback,
+  SettingsCollection,
+  SettingsFeedback,
   SettingsPage,
   SettingsRemoveButton,
   SettingsSection,
-} from './controls';
-import { DisclosureCard, SettingsCollection } from './primitives';
+} from './primitives';
 
 function normalizeCommandName(value: string): string {
   return value.trim().toLowerCase()
@@ -246,7 +247,7 @@ function CommandCard({
             )
             : null}
           <button type="submit" disabled={pending}>{t('common.save')}</button>
-          <SettingsActionFeedback feedback={error
+          <SettingsFeedback feedback={error
             ? { kind: 'error', message: error }
             : feedback} />
         </SettingRow>

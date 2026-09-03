@@ -110,6 +110,10 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
       'settings.webSearch.intro',
       'settings.webSearch.capability.search',
       'settings.webSearch.capability.fetch',
+      'settings.webSearch.providers.brave',
+      'settings.webSearch.providers.tavily',
+      'settings.webSearch.providers.exa',
+      'settings.webSearch.providers.anysearch',
     ],
   },
   mcpServers: {

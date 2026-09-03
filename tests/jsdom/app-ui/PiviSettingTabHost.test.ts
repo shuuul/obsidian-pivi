@@ -102,6 +102,12 @@ describe('settings page search aliases', () => {
     ]));
     expect(general).not.toContain('General');
     expect(new Set(general).size).toBe(general.length);
+    expect(getSettingsPageSearchAliases(i18n, 'webTools')).toEqual(expect.arrayContaining([
+      'Brave Search',
+      'Tavily',
+      'Exa',
+      'AnySearch',
+    ]));
 
     i18n.setLocale('zh-CN');
     expect(getSettingsPageSearchAliases(i18n, 'models')).toEqual(expect.arrayContaining([

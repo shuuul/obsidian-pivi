@@ -21,14 +21,16 @@ import {
 } from '../reorder/useSortableReorder';
 import { CommandIconPicker } from './commands/CommandIconPicker';
 import {
+  DisclosureCard,
   Select,
   SettingRow,
+  SettingsCollection,
+  SettingsInlineActions,
   SettingsPage,
   SettingsRemoveButton,
   SettingsSection,
   Toggle,
-} from './controls';
-import { DisclosureCard, SettingsCollection, SettingsInlineActions } from './primitives';
+} from './primitives';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
 import type { SettingsEditorSelectionToolbarSnapshot } from './types';

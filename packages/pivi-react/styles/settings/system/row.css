@@ -76,8 +76,7 @@
 
 .pivi-settings-row--stacked > .pivi-settings-row__control > :is(
   input:not([type='checkbox']),
-  textarea,
-  .pivi-settings-control:not(.pivi-select),
+  .pivi-settings-control:not(.pivi-select):not(textarea),
   .pivi-settings-badge-field
 ) {
   flex: 1 1 auto;
@@ -85,8 +84,16 @@
   width: auto;
 }
 
+.pivi-settings-row--stacked > .pivi-settings-row__control > textarea {
+  flex: 1 1 100%;
+}
+
 .pivi-settings-row--stacked > .pivi-settings-row__control > :is(button, .pivi-settings-action-group) {
   flex: 0 0 auto;
+}
+
+.pivi-settings-row--stacked > .pivi-settings-row__control > textarea ~ :is(button, .pivi-settings-action-group) {
+  margin-inline-start: auto;
 }
 
 .pivi-setting-stack .pivi-settings-row__control {
@@ -95,21 +102,31 @@
   justify-content: flex-start;
 }
 
-.pivi-settings-content > .pivi-settings-row,
-.pivi-settings-content > .pivi-setting-stack > .pivi-settings-row,
 .pivi-settings-section__body > .pivi-settings-row,
 .pivi-settings-section__body > .pivi-setting-stack > .pivi-settings-row,
 .pivi-settings-section__body > .pivi-settings-collection > .pivi-settings-row,
-.pivi-settings-section__body > .pivi-settings-collection > .pivi-settings-collection__list > .pivi-settings-row,
-.pivi-settings-section__body > .pivi-tool-setting > .pivi-settings-row,
-.pivi-tool-setting__configuration > .pivi-settings-row,
-.pivi-tool-setting__configuration > .pivi-setting-stack > .pivi-settings-row {
+.pivi-settings-section__body > .pivi-settings-collection > .pivi-settings-collection__list > .pivi-settings-row {
   box-sizing: border-box;
   padding-inline: var(--pivi-settings-row-padding-inline);
 }
 
 .pivi-settings-card__body .pivi-settings-row {
   padding-inline: 0;
+}
+
+.pivi-provider-endpoint-fields > .pivi-settings-row > .pivi-settings-row__info {
+  flex: 0 1 12rem;
+  max-width: 14rem;
+}
+
+.pivi-provider-endpoint-fields > .pivi-settings-row > .pivi-settings-row__control {
+  flex: 1 1 0;
+  justify-content: flex-start;
+}
+
+.pivi-provider-endpoint-fields > .pivi-settings-row > .pivi-settings-row__control > .pivi-settings-control:not(.pivi-select) {
+  flex: 1 1 auto;
+  width: 100%;
 }
 
 .pivi-integration-setting .pivi-settings-row__name {
@@ -133,5 +150,10 @@
   .pivi-settings-row__control {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .pivi-provider-endpoint-fields > .pivi-settings-row > .pivi-settings-row__info {
+    flex: 0 0 auto;
+    max-width: none;
   }
 }

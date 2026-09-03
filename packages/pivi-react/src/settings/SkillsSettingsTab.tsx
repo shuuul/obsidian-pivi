@@ -6,14 +6,14 @@ import type { SettingsComplexPorts, SettingsFeedbackMessage, SettingsFeedbackPor
 import { ModalLayer } from '../shared/ModalLayer';
 import {
   SettingRow,
-  SettingsActionFeedback,
-  SettingsItemActions,
+  SettingsCollection,
+  SettingsFeedback,
+  SettingsInlineActions,
   SettingsPage,
   SettingsRemoveButton,
   SettingsSection,
   Toggle,
-} from './controls';
-import { SettingsCollection } from './primitives';
+} from './primitives';
 
 type Skill = SettingsComplexPorts['skills']['list'] extends () => readonly (infer Entry)[] ? Entry : never;
 type RemoteSkill = { readonly name: string; readonly description: string };
@@ -229,7 +229,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
           name={featuredBundle.name}
           description={featuredBundle.description}
           actions={(
-            <SettingsActionFeedback feedback={pendingOperation?.kind === 'installBundle' || pendingOperation?.kind === 'updateBundle'
+            <SettingsFeedback feedback={pendingOperation?.kind === 'installBundle' || pendingOperation?.kind === 'updateBundle'
               ? globalPendingFeedback
               : bundleFeedback} />
           )}
@@ -249,7 +249,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
           name={t('settings.skills.remote.name')}
           description={t('settings.skills.remote.desc')}
           actions={(
-            <SettingsActionFeedback feedback={pendingOperation?.kind === 'listRemote' ? globalPendingFeedback : remoteFeedback} />
+            <SettingsFeedback feedback={pendingOperation?.kind === 'listRemote' ? globalPendingFeedback : remoteFeedback} />
           )}
         >
           <input
@@ -300,7 +300,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
             ))}
           </SettingsCollection>
           <SettingRow name={t('settings.skills.remote.installSelected')} actions={(
-            <SettingsActionFeedback feedback={pendingOperation?.kind === 'installSelected'
+            <SettingsFeedback feedback={pendingOperation?.kind === 'installSelected'
               ? globalPendingFeedback
               : installFeedback} />
           )}>
@@ -329,10 +329,10 @@ export function SkillsSettingsTab({ skills, feedback }: {
         )}
       >
         {pendingOperation?.kind === 'updateAll' ? (
-          <SettingsActionFeedback feedback={globalPendingFeedback} />
+          <SettingsFeedback feedback={globalPendingFeedback} />
         ) : null}
         {!pendingOperation && installedFeedback ? (
-          <SettingsActionFeedback feedback={installedFeedback} />
+          <SettingsFeedback feedback={installedFeedback} />
         ) : null}
         <SettingsCollection emptyState={t('settings.skills.installed.empty')}>
           {entries.map((skill) => {
@@ -356,7 +356,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
                 )}
                 actions={(
                   <>
-                    <SettingsItemActions>
+                    <SettingsInlineActions>
                       <Toggle
                         checked={!skill.disabled}
                         disabled={busy}
@@ -391,8 +391,8 @@ export function SkillsSettingsTab({ skills, feedback }: {
                         disabled={busy}
                         onClick={() => { setRemoveCandidate(skill); }}
                       />
-                    </SettingsItemActions>
-                    {rowStatus ? <SettingsActionFeedback feedback={rowStatus} /> : null}
+                    </SettingsInlineActions>
+                    {rowStatus ? <SettingsFeedback feedback={rowStatus} /> : null}
                   </>
                 )}
               />

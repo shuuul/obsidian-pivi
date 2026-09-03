@@ -33,7 +33,7 @@ describe('React MCP settings', () => {
 
     const addButton = screen.getByRole('button', { name: '+ Add MCP' });
     expect(addButton.closest('.pivi-settings-collection')).toContainElement(addButton);
-    expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('/');
+    expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('Slash mention');
     expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).not.toHaveTextContent('@');
     const summary = screen.getByText('2 tools').closest('.pivi-settings-card__summary');
     expect(summary).toHaveTextContent('2 tools');

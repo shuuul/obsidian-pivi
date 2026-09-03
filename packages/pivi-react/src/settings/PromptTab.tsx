@@ -23,13 +23,14 @@ import {
 import { ModalLayer } from '../shared/ModalLayer';
 import { formatCompactTokenCount } from '../usage/usageInfo';
 import {
+  DisclosureCard,
   SettingRow,
+  SettingsCollection,
   SettingsPage,
   SettingsRemoveButton,
   SettingsSection,
   Toggle,
-} from './controls';
-import { DisclosureCard, SettingsCollection } from './primitives';
+} from './primitives';
 
 const USAGE_SECTION_LABELS: Record<SettingsPromptUsageSectionId, TranslationKey> = {
   core: 'settings.prompt.usage.sections.core',

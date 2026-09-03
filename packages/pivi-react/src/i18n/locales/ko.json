@@ -433,7 +433,8 @@
     },
     "navMappings": {
       "name": "Vim 스타일 탐색 매핑",
-      "desc": "한 줄에 매핑 하나. 형식: \"map <키> <동작>\"(동작: scrollUp, scrollDown, focusInput)."
+      "desc": "한 줄에 매핑 하나. 형식: \"map <키> <동작>\"(동작: scrollUp, scrollDown, focusInput).",
+      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "보내기에 Command/Ctrl+Enter 필요",
@@ -456,6 +457,10 @@
     },
     "addSelectionHotkey": {
       "name": "선택 영역을 채팅에 추가"
+    },
+    "hotkeys": {
+      "notSet": "설정되지 않음",
+      "openHotkeys": "단축키 설정 열기"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -665,6 +670,12 @@
       "capability": {
         "search": "검색",
         "fetch": "가져오기"
+      },
+      "providers": {
+        "brave": "Brave Search",
+        "tavily": "Tavily",
+        "exa": "Exa",
+        "anysearch": "AnySearch"
       },
       "status": {
         "configured": "구성됨",
@@ -1007,6 +1018,7 @@
       "typeStdio": "stdio(로컬 명령)",
       "typeHttp": "http / sse(원격)",
       "contextSavingTitle": "슬래시 배지: /{name} 토큰이 Composer에서 이 서버를 강조합니다",
+      "mentionBadge": "슬래시 멘션",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth 인증됨",
       "oauthExpiredBadge": "만료됨",

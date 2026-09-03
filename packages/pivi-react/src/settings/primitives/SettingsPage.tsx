@@ -1,9 +1,5 @@
 import type { ReactNode } from 'react';
 
-export function SettingsPageDescription({ children }: { readonly children: ReactNode }) {
-  return <div className="pivi-settings-page__description">{children}</div>;
-}
-
 export function SettingsPage({
   description,
   className,
@@ -15,7 +11,7 @@ export function SettingsPage({
 }) {
   return (
     <div className={`pivi-settings-page${className ? ` ${className}` : ''}`}>
-      {description ? <SettingsPageDescription>{description}</SettingsPageDescription> : null}
+      {description ? <div className="pivi-settings-page__description">{description}</div> : null}
       {children}
     </div>
   );

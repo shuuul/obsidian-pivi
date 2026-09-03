@@ -1,7 +1,6 @@
 /* Models page structure only. Spacing, radius, and borders stay in system CSS. */
 
-.pivi-settings-card__icon .pivi-provider-logo-mask,
-.pivi-settings-card__icon .pivi-provider-card-logo {
+.pivi-settings-card__icon .pivi-provider-logo-mask {
   width: 18px;
   height: 18px;
 }

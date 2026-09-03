@@ -70,8 +70,6 @@ describe('product design tokens', () => {
       '.pivi-slash-item:active:not([aria-disabled=\'true\'])',
       '.pivi-settings-action-btn:active:not(:disabled)',
       '.pivi-settings-text-btn:active:not(:disabled)',
-      '.pivi-provider-header:active',
-      '.pivi-hotkey-item:active:not(:disabled)',
       '.pivi-skill-choice:active',
       '.pivi-send-button:active:not(:disabled)',
       '.pivi-toggle:not(.pivi-toggle--disabled):active',

@@ -4,10 +4,9 @@ import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
-import { SettingsPage } from './controls';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
-import { SettingsCollection, SettingsSection } from './primitives';
+import { SettingsCollection, SettingsPage, SettingsSection } from './primitives';
 
 function buildInteractiveOAuthMembershipKey(
   addedProviders: readonly string[],

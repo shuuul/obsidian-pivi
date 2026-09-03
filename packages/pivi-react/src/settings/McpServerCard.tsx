@@ -9,10 +9,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import type { SettingsFeedbackMessage } from '../ports';
-import { SettingsRemoveButton, Toggle } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { McpToolInventory } from './McpToolInventory';
-import { DisclosureCard } from './primitives';
+import { DisclosureCard, SettingsRemoveButton, Toggle } from './primitives';
 
 const refreshError = (cause: unknown, fallback: string): McpTestResult => ({
   success: false,
@@ -90,7 +89,9 @@ export function McpServerCard({
         <>
           <span className="pivi-settings-chip">{getMcpServerType(server.config)}</span>
           {server.contextSaving ? (
-            <span className="pivi-settings-chip" title={t('settings.mcp.contextSavingTitle', { name: server.name })}>/</span>
+            <span className="pivi-settings-chip" title={t('settings.mcp.contextSavingTitle', { name: server.name })}>
+              {t('settings.mcp.mentionBadge')}
+            </span>
           ) : null}
           {authStatus === 'authenticated' ? (
             <span className="pivi-settings-chip is-configured" title={t('settings.mcp.oauthAuthenticated')}>{t('settings.mcp.oauthBadge')}</span>

@@ -44,12 +44,5 @@ export const styleModules = [
   'settings/features/prompt.css',
   'settings/features/commands.css',
   'settings/features/toolbar.css',
-  'settings/base.css',
-  'settings/provider-settings.css',
-  'settings/command-editor.css',
-  'settings/slash-settings.css',
-  'settings/mcp-settings.css',
-  'settings/prompt-settings.css',
-  'settings/agent-settings.css',
   'accessibility.css',
 ];

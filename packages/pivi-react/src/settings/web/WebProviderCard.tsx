@@ -1,22 +1,22 @@
 import type { WebProviderId } from '@pivi/agent/settings/types';
 import { Fragment, useState } from 'react';
 
+import type { TranslationKey } from '../../i18n';
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
-import { SettingRow, Toggle } from '../controls';
 import { ExternalSetupLink } from '../ExternalSetupLink';
-import { DisclosureCard } from '../primitives';
+import { DisclosureCard, SettingRow, Toggle } from '../primitives';
 import { getWebProviderSetupLink } from '../providerSetupLinks';
 
 const MASKED_KEY = '••••••••';
 
-const PROVIDER_LABELS: Record<WebProviderId, string> = {
-  brave: 'Brave Search',
-  tavily: 'Tavily',
-  exa: 'Exa',
-  anysearch: 'AnySearch',
+const PROVIDER_LABEL_KEYS: Record<WebProviderId, TranslationKey> = {
+  brave: 'settings.webSearch.providers.brave',
+  tavily: 'settings.webSearch.providers.tavily',
+  exa: 'settings.webSearch.providers.exa',
+  anysearch: 'settings.webSearch.providers.anysearch',
 };
 
 export interface WebProviderCardProps {
@@ -53,7 +53,7 @@ export function WebProviderCard(props: WebProviderCardProps) {
   const [storedCredential, setStoredCredential] = useState(provider.storedCredential);
   const [credentialConfigured, setCredentialConfigured] = useState(provider.credentialConfigured);
   const [savingKey, setSavingKey] = useState(false);
-  const label = PROVIDER_LABELS[provider.id];
+  const label = t(PROVIDER_LABEL_KEYS[provider.id]);
   const setupLink = getWebProviderSetupLink(provider.id);
   const status = disabled
     ? t('settings.webSearch.status.disabled')

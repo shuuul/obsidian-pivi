@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsFeedbackMessage } from '../../ports';
-import { Select, SettingRow, SettingsActionFeedback } from '../controls';
+import { Select, SettingRow, SettingsFeedback } from '../primitives';
 import {
   buildMcpServer,
   type McpDraft,
@@ -85,7 +85,7 @@ export function McpServerEditor({
           ? connecting ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')
           : t('common.add')}
       </button>
-      <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : feedback} />
+      <SettingsFeedback feedback={error ? { kind: 'error', message: error } : feedback} />
     </div>
   );
 

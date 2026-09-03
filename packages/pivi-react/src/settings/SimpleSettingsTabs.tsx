@@ -14,10 +14,9 @@ import type {
   SettingsHotkeysPort,
 } from '../ports';
 import { ModalLayer } from '../shared/ModalLayer';
-import { BadgeListInput, Select, SettingRow, SettingsActionFeedback, SettingsPage, SettingsSection, Toggle } from './controls';
 import { EditorToolbarSection } from './EditorToolbarSection';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
-import { SettingsCollection } from './primitives';
+import { BadgeListInput, Select, SettingRow, SettingsCollection, SettingsFeedback, SettingsPage, SettingsSection, Toggle } from './primitives';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
 import type { SettingsGeneralSnapshot } from './types';
@@ -190,7 +189,7 @@ export function EnvironmentSection({ environment, feedback }: {
             <button type="button" className="pivi-button--primary" disabled={!isDirty || applying} onClick={apply}>
               {t('settings.sharedEnvironment.apply')}
             </button>
-            <SettingsActionFeedback feedback={applyFeedback} />
+            <SettingsFeedback feedback={applyFeedback} />
           </div>
         </SettingRow>
       </SettingsSection>
@@ -206,10 +205,12 @@ function HotkeyRows({ hotkeys }: { readonly hotkeys: SettingsHotkeysPort }) {
         <SettingRow key={row.commandId} name={t(row.labelKey as TranslationKey)} centered>
           <button
             type="button"
-            className="pivi-hotkey-item"
+            aria-label={t('settings.hotkeys.openHotkeys')}
             onClick={() => hotkeys.openHotkeySettings()}
           >
-            {row.hotkey ? <span className="pivi-hotkey-badge">{row.hotkey}</span> : null}
+            {row.hotkey
+              ? <span className="pivi-hotkey-badge">{row.hotkey}</span>
+              : t('settings.hotkeys.notSet')}
           </button>
         </SettingRow>
       ))}
@@ -276,7 +277,7 @@ function NavMappingsRow({
           <textarea
             className="pivi-settings-control"
             rows={3}
-            placeholder="Map w scrollup\nmap s scrolldown\nmap i focusinput"
+            placeholder={t('settings.navMappings.placeholder')}
             value={text}
             onChange={(event) => {
               const nextText = event.currentTarget.value;
@@ -289,7 +290,7 @@ function NavMappingsRow({
             }}
             onBlur={(event) => commit(event.currentTarget.value, true)}
           />
-          <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
+          <SettingsFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
         </div>
       </SettingRow>
     </>
@@ -647,7 +648,7 @@ export function IntegrationsSettingsSection({
   if (!showOuterHeading) {
     return (
       <>
-        <SettingsActionFeedback feedback={loadFeedback} />
+        <SettingsFeedback feedback={loadFeedback} />
         {sections.map((section) => (
           <SettingRow
             key={section.id}
@@ -666,7 +667,7 @@ export function IntegrationsSettingsSection({
                 >
                   {action.label}
                 </button>
-                <SettingsActionFeedback
+                <SettingsFeedback
                   feedback={actionFeedback[action.id] ?? (
                     action.disabledReason
                       ? { kind: 'error' as const, message: action.disabledReason }
@@ -682,7 +683,7 @@ export function IntegrationsSettingsSection({
   }
   return (
     <SettingsSection title={t('settings.integrations.heading')}>
-      <SettingsActionFeedback feedback={loadFeedback} />
+      <SettingsFeedback feedback={loadFeedback} />
       {sections.map((section) => (
         <div key={section.id} className="pivi-integration-setting pivi-setting-stack">
           <SettingRow name={section.heading} description={section.description}>
@@ -700,7 +701,7 @@ export function IntegrationsSettingsSection({
                   >
                     {action.label}
                   </button>
-                  <SettingsActionFeedback feedback={actionFeedback[action.id] ?? disabledFeedback} />
+                  <SettingsFeedback feedback={actionFeedback[action.id] ?? disabledFeedback} />
                 </span>
               );
             })}

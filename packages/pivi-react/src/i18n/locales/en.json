@@ -446,7 +446,8 @@
     },
     "navMappings": {
       "name": "Vim-style navigation mappings",
-      "desc": "One mapping per line. Format: \"map <key> <action>\" (actions: scrollUp, scrollDown, focusInput)."
+      "desc": "One mapping per line. Format: \"map <key> <action>\" (actions: scrollUp, scrollDown, focusInput).",
+      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Require Command/Ctrl+Enter to send",
@@ -469,6 +470,10 @@
     },
     "addSelectionHotkey": {
       "name": "Add selection to chat"
+    },
+    "hotkeys": {
+      "notSet": "Not set",
+      "openHotkeys": "Open hotkey settings"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -678,6 +683,12 @@
       "capability": {
         "search": "Search",
         "fetch": "Fetch"
+      },
+      "providers": {
+        "brave": "Brave Search",
+        "tavily": "Tavily",
+        "exa": "Exa",
+        "anysearch": "AnySearch"
       },
       "status": {
         "configured": "Configured",
@@ -1020,6 +1031,7 @@
       "typeStdio": "stdio (local command)",
       "typeHttp": "http / sse (remote)",
       "contextSavingTitle": "Slash badges: /{name} tokens highlight this server in the composer",
+      "mentionBadge": "Slash mention",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth authenticated",
       "oauthExpiredBadge": "Expired",

@@ -605,6 +605,369 @@ textarea.pivi-settings-control {
   padding-inline: 10px;
 }
 
+.pivi-setting-validation {
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-setting-validation-error {
+  color: var(--pivi-host-text-error);
+}
+
+.pivi-setting-validation-warning {
+  color: var(--pivi-host-text-warning);
+}
+
+.pivi-settings-action-group {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-settings-control-feedback {
+  display: grid;
+  gap: var(--pivi-settings-control-gap);
+}
+
+.pivi-hotkey-badge {
+  padding: 2px 6px;
+  border-radius: var(--pivi-radius-xs);
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-muted);
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-settings-external-link {
+  color: var(--pivi-host-text-accent);
+  text-decoration: none;
+}
+
+.pivi-settings-external-link:hover {
+  text-decoration: underline;
+}
+
+.pivi-provider-setup-link {
+  text-decoration: none;
+}
+
+.pivi-provider-setup-link:hover {
+  text-decoration: none;
+}
+
+.pivi-provider-setup-domain {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pivi-about-github {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pivi-spacing-xs);
+}
+
+.pivi-about-github .pivi-platform-icon {
+  font-size: 16px;
+}
+
+.pivi-about-version {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-provider-add-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-provider-add-container {
+  position: relative;
+  width: max-content;
+  min-width: 180px;
+}
+
+.pivi-provider-add-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+  width: auto;
+  text-align: start;
+}
+
+.pivi-provider-add-dropdown {
+  display: none;
+  position: absolute;
+  z-index: var(--pivi-z-overlay);
+  top: 100%;
+  left: 0;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+  max-height: 240px;
+  margin-top: var(--pivi-spacing-xs);
+  overflow-y: auto;
+  padding: var(--pivi-spacing-xs);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-material-bg-secondary);
+  box-shadow: var(--pivi-shadow-md);
+  -webkit-backdrop-filter: var(--pivi-material-blur-lg);
+  backdrop-filter: var(--pivi-material-blur-lg);
+}
+
+.pivi-provider-add-dropdown.is-visible {
+  display: flex;
+}
+
+.pivi-provider-add-section {
+  padding: 3px 8px;
+  color: var(--pivi-host-text-faint);
+  font-size: 10px;
+  font-weight: var(--pivi-host-font-semibold, 600);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.pivi-provider-add-section:not(:first-child) {
+  margin-top: var(--pivi-spacing-xs);
+  padding-top: 6px;
+  border-top: 1px solid var(--pivi-host-border);
+}
+
+.pivi-provider-add-option {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  background: transparent;
+  box-shadow: none;
+  color: var(--pivi-host-text-muted);
+  font-family: var(--pivi-host-font-interface, inherit);
+  font-size: var(--pivi-text-sm);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pivi-provider-add-option.is-added {
+  color: var(--pivi-host-text-muted);
+  cursor: default;
+}
+
+.pivi-provider-add-option-state {
+  margin-left: auto;
+  color: var(--pivi-host-text-faint);
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-provider-add-option:not(.is-added):hover {
+  background: var(--pivi-host-background-hover);
+}
+
+.pivi-provider-add-option-logo {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  opacity: 0.85;
+}
+
+.pivi-provider-add-option-logo svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pivi-provider-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--pivi-radius-sm);
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-weight: var(--pivi-host-font-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.pivi-provider-status.missing,
+.pivi-provider-status.disabled,
+.pivi-provider-status.not-configured,
+.pivi-provider-status.checking {
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-provider-oauth-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+  width: 100%;
+}
+
+.pivi-provider-oauth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-provider-oauth-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+  margin-inline-start: auto;
+  padding: 4px 10px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-surface-raised);
+}
+
+.pivi-provider-oauth-code__label {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-provider-oauth-code__value {
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  letter-spacing: 0.04em;
+}
+
+.pivi-auth-toggle-wrapper {
+  display: flex;
+  gap: var(--pivi-spacing-sm);
+  margin-bottom: var(--pivi-spacing-md);
+}
+
+.pivi-auth-toggle-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  cursor: pointer;
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-auth-toggle-btn:hover {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-auth-toggle-btn.active {
+  border-color: var(--pivi-host-interactive-accent);
+  background: var(--pivi-host-interactive-accent);
+  color: var(--pivi-host-text-on-accent);
+}
+
+.pivi-cred-row {
+  margin-bottom: var(--pivi-spacing-sm);
+}
+
+.pivi-cred-row .pivi-settings-row__control > input {
+  flex: 1 1 240px;
+}
+
+.pivi-model-catalog-id-input {
+  width: 100%;
+  min-height: 28px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  font-size: var(--pivi-host-font-ui-smaller);
+  cursor: text;
+}
+
+.pivi-model-catalog-options {
+  max-height: 230px;
+  margin-block-start: 4px;
+  overflow-y: auto;
+  padding: 3px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+}
+
+.pivi-model-catalog-option {
+  gap: 2px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  text-align: start;
+  cursor: pointer;
+}
+
+.pivi-model-catalog-option-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-weight: var(--pivi-host-font-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pivi-model-catalog-option-id {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-family: var(--pivi-host-font-monospace);
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-model-compatibility {
+  margin-block-start: 8px;
+  border-block-start: 1px solid var(--pivi-host-border);
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-model-compatibility > summary {
+  width: fit-content;
+  padding-block: 7px 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pivi-model-compatibility-fields {
+  gap: 7px;
+  padding-block-start: 6px;
+}
+
+.pivi-model-compatibility-field {
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-model-compatibility-field .pivi-model-catalog-id-input {
+  width: 112px;
+  margin-top: 0;
+}
+
+.pivi-model-compatibility-field .pivi-select {
+  min-block-size: 28px;
+  padding-block: 3px;
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-no-models-message {
+  padding: 8px 0;
+  font-size: var(--pivi-host-font-ui-small);
+}
+
 @media (max-width: 520px) {
   .pivi-settings-control:not(.pivi-select) {
     width: 100%;

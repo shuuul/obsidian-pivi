@@ -2,11 +2,10 @@ import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackPort } from '../ports';
 import { ModalLayer } from '../shared/ModalLayer';
-import { SettingsActionFeedback, SettingsPage, SettingsSection } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpSectionState } from './mcp/useMcpSectionState';
 import { McpServerCard } from './McpServerCard';
-import { SettingsCollection } from './primitives';
+import { SettingsCollection, SettingsFeedback, SettingsPage, SettingsSection } from './primitives';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
@@ -116,7 +115,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
             </SettingsCollection>
           )}
         </div>
-        <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
+        <SettingsFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
         {editor ? (
           <McpServerEditor
             initial={editor.initial}

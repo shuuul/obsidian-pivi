@@ -1,7 +1,7 @@
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsAboutPort } from '../ports';
-import { SettingRow, SettingsSection } from './controls';
+import { SettingRow, SettingsSection } from './primitives';
 
 export function AboutSettingsTab({ about }: { readonly about: SettingsAboutPort }) {
   const t = useT();

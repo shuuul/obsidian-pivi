@@ -167,7 +167,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | CP1 | **Checkpoint 1 human visual sign-off**: root tab layout, Environment, Models, DisclosureCard states, row/section rhythm, light + dark | Human (shuuul) | Pending | WS-03 | Owner confirms direction or requests primitive adjustments before WS-04 |
 | WS-04 | Agent pages: Built-in tools (tool groups as sections + Subagents section), Web tools (sortable provider cards), MCP servers (cards with inline editor body, inventory table in `features/mcp.css`, `mcp-modal.css` reduced to the modal), Skills (default bundle + remote source rows; remote and installed skills as flat rows with inline actions), Prompt (usage section with `features/prompt.css` bar, workflow modules as cards with toggle/editor/modified/restore, custom modules collection with add trigger) | Grok 4.6 High (WS-04) | Done | CP1 | `ToolsSettingsPage`, `McpToolsSection`, `PromptTab`, `SettingsUi` (skills) tests updated; allowlist shrinks (mcp/web/sp/prompt cards removed) |
 | WS-05 | Editor pages: Commands (internal commands as flat rows; workspace commands as cards with mention editor body; icon grid in `features/commands.css`), Toolbar (required actions and curated editor commands as flat rows; removable/configurable items as cards; pickers in `features/toolbar.css`) | Grok 4.6 High (WS-05) | Done | WS-04 | `CommandsTab.test.tsx`, `EditorToolbarSection.test.tsx` updated; allowlist empty |
-| WS-06 | Delete `controls.tsx` re-exports, `SettingsListHeader`, `SettingsPageDescription`, `SettingsSectionHeading`, legacy CSS files and dead selectors; contract test at final strictness (empty allowlists, deleted-selector assertions); i18n dead-key sweep; documentation sync per section below; full gate run | Unassigned | Pending | WS-05 | `rg` for deleted selectors returns nothing; `node scripts/check-i18n-dead-keys.mjs`; full gate command |
+| WS-06 | Delete `controls.tsx` re-exports, `SettingsListHeader`, `SettingsPageDescription`, `SettingsSectionHeading`, legacy CSS files and dead selectors; contract test at final strictness (empty allowlists, deleted-selector assertions); i18n dead-key sweep; documentation sync per section below; full gate run | Grok 4.6 High (WS-06) | Done | WS-05 | `rg` for deleted selectors returns nothing; `node scripts/check-i18n-dead-keys.mjs`; full gate command |
 | CP2 | **Checkpoint 2 human visual sign-off matrix** (see Verification) | Human (shuuul) | Pending | WS-06 | Owner marks each surface; agent must not self-attest |
 
 ## Verification
@@ -335,6 +335,27 @@ Append entries rather than rewriting another agent's record.
 - Blockers: None.
 - Next action: WS-06 cleanup (delete leftover files, empty allowlists at final strictness, handbook sync).
 - Coordinator review (same day): Commands Save is a nameless trailing `SettingRow` (no duplicate “Save” label; Cancel sits on that line for drafts). Host toolbar commands are flat sortable `SettingRow`s like curated editor commands (icon picker in the row, “Obsidian command” description, toggle/remove/handle, no chevron). Pivi Commands stay `DisclosureCard`s. Screenshots overwritten at `/tmp/ws05-commands.png` and `/tmp/ws05-toolbar.png`. Gates re-run: `build:css`, `typecheck`, `lint`, `check:boundaries` pass; Jest 63 suites / 511 passed; i18n dead keys pass (997/1006); `npm run build` + reload + `app:open-settings` pass; `dev:errors` Pivi-owned none. Not a visual sign-off.
+
+### 2026-09-03 — Grok 4.6 High — WS-06
+
+- Changed: Deleted `controls.tsx` and leftover settings CSS (`base.css`, `provider-settings.css`, `command-editor.css`, `slash-settings.css`, `mcp-settings.css`, `prompt-settings.css`, `agent-settings.css`). Pages import `./primitives`. Inlined `SettingsPageDescription` / `SettingsSectionHeading`; `SettingsListHeader` gone. Live leftover rules moved into `system/controls.css` / `system/row.css`. Contract test is at final strictness (empty allowlists; deleted files/selectors/components asserted gone; feature CSS has no spacing/radius/border/shadow; `--pivi-settings-*` declared only in `tokens.css`; no `controls` adapter imports; structural `<h2>/<h3>/<ul>/<table>` allowed only with an explicit reason). Web provider display names are i18n keys and Web tools search aliases (`Brave Search`, `Tavily`, `Exa`, `AnySearch`). Docs/CHANGELOG describe the native 1.13 page/group system. `specs/README.md` still lists 048 as active.
+- Evidence:
+  - `rg` for `.pivi-sp-`, `.pivi-provider-card`, `.pivi-mcp-card`, `.pivi-web-provider-`, `.pivi-tools-settings-page`, `.pivi-settings-list-header`, `.pivi-settings-page-description` in `packages/`, `src/`, `tests/` — no product traces (contract test still names them as forbidden)
+  - `node scripts/check-i18n-dead-keys.mjs` — pass (1002 catalog keys, 1011 referenced)
+  - `npm run typecheck` — pass
+  - `npm run lint` — pass
+  - `npm run check:boundaries` — pass
+  - `npm run test:coverage` — 349 suites, 3105 passed; All files 74.71% stmts / 63.8% branch / 72.16% funcs / 76.1% lines
+  - `npm run build` — pass (`styles.css` minified 173.5 KB)
+  - `npm run check:bundle-size` — pass (`main.js` 4,203,804 bytes / 4.01 MB; 0.99 MB below 5 MB cap). Coverage run prints a pre-existing snapshot-baseline warning about 10% growth vs 3,956,976 bytes; production check is the gate.
+  - `obsidian plugin:reload id=pivi && obsidian command id=app:open-settings` — pass
+  - `obsidian dev:errors` — Pivi-owned errors none; captured `NotAllowedError` traces are `plugin:advanced-canvas` / `plugin:obsidian-style-settings` sharing constructed stylesheets into the settings popout
+  - Screenshots (owner visual sign-off only, Checkpoint 2): `/tmp/cp2-root-top.png`, `/tmp/cp2-root-general.png`, `/tmp/cp2-models.png`, `/tmp/cp2-builtin.png`, `/tmp/cp2-web.png`, `/tmp/cp2-mcp.png`, `/tmp/cp2-skills.png`, `/tmp/cp2-prompt.png`, `/tmp/cp2-commands.png`, `/tmp/cp2-toolbar.png`, `/tmp/cp2-environment.png`
+  - Search: `app.setting.searchInputEl` is undefined on 1.14; used `app.setting.searchComponent.inputEl.value = 'brave'` + `input` event. Result: Pivi **Web tools** is the first group (`pagePath: ["Web tools"]`, bestScore -0.0112); Keychain `pivi-web-search-brave-api-key` is a second hit. Visible `searchResultsEl` text includes `Web toolsPiviWeb tools` then the keychain entry.
+- Remaining: Checkpoint 2 human visual sign-off. Coordinator archives 048 after CP2. Do not commit.
+- Blockers: None.
+- Next action: Owner Checkpoint 2 matrix (light/dark, every page). Agent must not self-attest visual quality.
+- Coordinator review (same day): three CP2 screenshot fixes. Unset hotkey rows now render a host button with localized `settings.hotkeys.notSet` ("Not set") and `settings.hotkeys.openHotkeys` aria-label; `.pivi-hotkey-item*` / `.pivi-hotkey-grid` / `.pivi-hotkey-name` deleted (badge kept for the set case). Stacked `textarea` takes `flex: 1 1 100%` so Apply wraps below and right-aligns; Web tools API-key `<input>` stays `1 1 auto` on the same line as Save/Remove. MCP context-saving chip uses `settings.mcp.mentionBadge` ("Slash mention"). Recaptured `/tmp/cp2-root-general.png`, `/tmp/cp2-environment.png`, `/tmp/cp2-mcp.png`. Focused gates: typecheck/lint/boundaries pass; Jest 63 suites / 514 passed; i18n 1005/1014; `main.js` 4,204,960 bytes (4.01 MB). Not a visual sign-off.
 
 ## Completion summary
 

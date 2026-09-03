@@ -2,24 +2,6 @@ import { createContext, type ReactNode, useContext } from 'react';
 
 export const SettingsNestingContext = createContext(0);
 
-export function SettingsSectionHeading({
-  children,
-  id,
-  level = 2,
-}: {
-  readonly children: ReactNode;
-  readonly id?: string;
-  readonly level?: 2 | 3;
-}) {
-  const Heading = level === 2 ? 'h2' : 'h3';
-  const levelClass = level === 3 ? ' pivi-settings-section-heading--sub' : '';
-  return (
-    <Heading id={id} className={`pivi-settings-section-heading${levelClass}`}>
-      {children}
-    </Heading>
-  );
-}
-
 export function SettingsSection({
   title,
   headingId,
@@ -37,6 +19,8 @@ export function SettingsSection({
   const nested = depth > 0;
   const level = headingLevel ?? (nested ? 3 : 2);
   const hasHeading = title != null && title !== '';
+  const Heading = level === 2 ? 'h2' : 'h3';
+  const levelClass = level === 3 ? ' pivi-settings-section-heading--sub' : '';
   return (
     <section
       className={`pivi-settings-section${nested ? ' pivi-settings-section--nested' : ''}`}
@@ -44,9 +28,9 @@ export function SettingsSection({
     >
       {hasHeading ? (
         <div className="pivi-settings-section__header">
-          <SettingsSectionHeading id={headingId} level={level}>
+          <Heading id={headingId} className={`pivi-settings-section-heading${levelClass}`}>
             {title}
-          </SettingsSectionHeading>
+          </Heading>
           {actions ? <div className="pivi-settings-section__actions">{actions}</div> : null}
         </div>
       ) : null}

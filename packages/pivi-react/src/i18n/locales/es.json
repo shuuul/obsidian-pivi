@@ -433,7 +433,8 @@
     },
     "navMappings": {
       "name": "Asignaciones de navegación estilo Vim",
-      "desc": "Una asignación por línea. Formato: \"map <tecla> <acción>\" (acciones: scrollUp, scrollDown, focusInput)."
+      "desc": "Una asignación por línea. Formato: \"map <tecla> <acción>\" (acciones: scrollUp, scrollDown, focusInput).",
+      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Requerir Command/Ctrl+Enter para enviar",
@@ -456,6 +457,10 @@
     },
     "addSelectionHotkey": {
       "name": "Añadir selección al chat"
+    },
+    "hotkeys": {
+      "notSet": "Sin asignar",
+      "openHotkeys": "Abrir ajustes de atajos"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -665,6 +670,12 @@
       "capability": {
         "search": "Búsqueda",
         "fetch": "Obtención"
+      },
+      "providers": {
+        "brave": "Brave Search",
+        "tavily": "Tavily",
+        "exa": "Exa",
+        "anysearch": "AnySearch"
       },
       "status": {
         "configured": "Configurado",
@@ -1007,6 +1018,7 @@
       "typeStdio": "stdio (comando local)",
       "typeHttp": "http / sse (remoto)",
       "contextSavingTitle": "Insignias slash: los tokens /{name} resaltan este servidor en el compositor",
+      "mentionBadge": "Mención slash",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth autenticado",
       "oauthExpiredBadge": "Caducado",

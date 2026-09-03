@@ -3,7 +3,7 @@ import { Fragment, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsFeedbackMessage, SettingsPorts, SettingsToolRow } from '../ports';
-import { BadgeListInput, Select, SettingRow, SettingsPage, SettingsSection, Toggle } from './controls';
+import { BadgeListInput, Select, SettingRow, SettingsPage, SettingsSection, Toggle } from './primitives';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
 

@@ -7,7 +7,7 @@ import { useCallback, useState } from 'react';
 import { useT } from '../../i18n';
 import { useHostTerminology } from '../../platform';
 import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
-import { SettingRow } from '../controls';
+import { SettingRow } from '../primitives';
 import { getProviderOAuthSettingsKeys, OAUTH_COMMON_SETTINGS_KEYS } from './providerOAuthI18n';
 
 export interface ProviderOAuthSectionProps {

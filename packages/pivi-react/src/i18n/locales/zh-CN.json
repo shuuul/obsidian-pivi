@@ -433,7 +433,8 @@
     },
     "navMappings": {
       "name": "Vim 风格导航映射",
-      "desc": "每行一个映射。格式：\"map <键> <动作>\"（动作：scrollUp, scrollDown, focusInput）。"
+      "desc": "每行一个映射。格式：\"map <键> <动作>\"（动作：scrollUp, scrollDown, focusInput）。",
+      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "需要 Command/Ctrl+Enter 发送",
@@ -456,6 +457,10 @@
     },
     "addSelectionHotkey": {
       "name": "将选区添加到聊天"
+    },
+    "hotkeys": {
+      "notSet": "未设置",
+      "openHotkeys": "打开快捷键设置"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -665,6 +670,12 @@
       "capability": {
         "search": "搜索",
         "fetch": "抓取"
+      },
+      "providers": {
+        "brave": "Brave Search",
+        "tavily": "Tavily",
+        "exa": "Exa",
+        "anysearch": "AnySearch"
       },
       "status": {
         "configured": "已配置",
@@ -1007,6 +1018,7 @@
       "typeStdio": "stdio（本地命令）",
       "typeHttp": "http / sse（远程）",
       "contextSavingTitle": "斜杠徽章：/{name} 令牌会在撰写区高亮此服务器",
+      "mentionBadge": "斜杠提及",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth 已认证",
       "oauthExpiredBadge": "已过期",

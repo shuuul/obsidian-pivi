@@ -433,7 +433,8 @@
     },
     "navMappings": {
       "name": "Сопоставления навигации в стиле Vim",
-      "desc": "По одному сопоставлению в строке. Формат: \"map <ключ> <действие>\" (действия: scrollUp, scrollDown, focusInput)."
+      "desc": "По одному сопоставлению в строке. Формат: \"map <ключ> <действие>\" (действия: scrollUp, scrollDown, focusInput).",
+      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Требовать Command/Ctrl+Enter для отправки",
@@ -456,6 +457,10 @@
     },
     "addSelectionHotkey": {
       "name": "Добавить выделение в чат"
+    },
+    "hotkeys": {
+      "notSet": "Не задано",
+      "openHotkeys": "Открыть настройки горячих клавиш"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -665,6 +670,12 @@
       "capability": {
         "search": "Поиск",
         "fetch": "Загрузка"
+      },
+      "providers": {
+        "brave": "Brave Search",
+        "tavily": "Tavily",
+        "exa": "Exa",
+        "anysearch": "AnySearch"
       },
       "status": {
         "configured": "Настроен",
@@ -1007,6 +1018,7 @@
       "typeStdio": "stdio (локальная команда)",
       "typeHttp": "http / sse (удалённый)",
       "contextSavingTitle": "Slash-бейджи: токены /{name} выделяют этот сервер в композере",
+      "mentionBadge": "Slash-упоминание",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth пройден",
       "oauthExpiredBadge": "Истёк",

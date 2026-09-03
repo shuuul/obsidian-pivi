@@ -197,10 +197,6 @@
   white-space: nowrap;
 }
 
-.pivi-settings-actions.pivi-sp-item-actions {
-  margin-left: var(--pivi-spacing-lg);
-}
-
 .pivi-settings-card .pivi-settings-action-btn:hover,
 .pivi-settings-card .pivi-settings-card__handle:hover {
   background: var(--pivi-host-background-hover);

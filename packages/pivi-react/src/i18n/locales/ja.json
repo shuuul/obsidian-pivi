@@ -433,7 +433,8 @@
     },
     "navMappings": {
       "name": "Vim スタイルのナビゲーション割り当て",
-      "desc": "1 行に 1 割り当て。形式：\"map <キー> <アクション>\"（アクション：scrollUp, scrollDown, focusInput）。"
+      "desc": "1 行に 1 割り当て。形式：\"map <キー> <アクション>\"（アクション：scrollUp, scrollDown, focusInput）。",
+      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "送信に Command/Ctrl+Enter を必須にする",
@@ -456,6 +457,10 @@
     },
     "addSelectionHotkey": {
       "name": "選択範囲をチャットに追加"
+    },
+    "hotkeys": {
+      "notSet": "未設定",
+      "openHotkeys": "ホットキー設定を開く"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -665,6 +670,12 @@
       "capability": {
         "search": "検索",
         "fetch": "取得"
+      },
+      "providers": {
+        "brave": "Brave Search",
+        "tavily": "Tavily",
+        "exa": "Exa",
+        "anysearch": "AnySearch"
       },
       "status": {
         "configured": "設定済み",
@@ -1007,6 +1018,7 @@
       "typeStdio": "stdio（ローカルコマンド）",
       "typeHttp": "http / sse（リモート）",
       "contextSavingTitle": "スラッシュバッジ: /{name} トークンでこのサーバーを Composer で強調表示",
+      "mentionBadge": "スラッシュメンション",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth 認証済み",
       "oauthExpiredBadge": "期限切れ",

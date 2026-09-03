@@ -42,7 +42,21 @@ Narrative Markdown keeps Obsidian's rendered semantics, host typography, colors,
 
 `SettingsRoot` consumes package-owned `SettingsPorts` implemented by `src/app/ui/createUiPorts.ts` and focused settings-port modules. React does not import app settings types or engine facades.
 
-`PiviSettingTabHost.getSettingDefinitions()` maps `SETTINGS_ROOT_LAYOUT` to Obsidian 1.13 native settings pages and groups: Models; Agent (built-in tools, web tools, MCP servers, skills, prompt); Editor (commands, toolbar); General (environment page); then one root-level `render` item mounting the General content. Each page is a declarative `SettingDefinitionPage` whose one `items` entry is a `render` item with localized `name`, `desc`, and per-page aliases from `getSettingsPageSearchAliases`. That item mounts `mountSettingsPage` into `setting.settingEl` (the same pattern as General content on the root). Search entries come from those render items and carry a `pagePath` for the nine pages. Locale changes call `update()` so the settings search index is rebuilt. There is no `SettingPage` subclass and no `display()` fallback.
+Settings navigation is Obsidian-native (`minAppVersion` 1.13.0). `PiviSettingTabHost.getSettingDefinitions()` maps `SETTINGS_ROOT_LAYOUT` to declarative pages and groups in this order:
+
+1. page **Models**
+2. group **Agent** → Built-in tools (including Subagents) · Web tools · MCP servers · Skills · Prompt
+3. group **Editor** → Commands · Toolbar
+4. group **General** → page Environment
+5. one root-level `render` item mounting General content (Language, Layout, Chat behavior, Provider requests, Session files, Personalization, Input shortcuts, Style Settings, About)
+
+Each page is a `SettingDefinitionPage` whose single `items` entry is a `SettingDefinitionRender` with localized `name`, `desc`, and per-page aliases from `getSettingsPageSearchAliases`. That item mounts `mountSettingsPage` into `setting.settingEl`. Search indexes those render items (with a `pagePath` for the nine sub-pages and an empty path for General content) so a query such as "brave" opens Web tools. Locale changes call `update()` so the index is rebuilt. There is no `SettingPage` subclass and no `display()` fallback. Plugin unload disposes every live surface because render cleanup is not guaranteed when the settings window is destroyed.
+
+The host tags Obsidian's implicit single-item `.setting-items` wrapper (and its `.setting-group-search` sibling) with `pivi-settings-host-surface-reset` so React sections are not double-wrapped by a second native group surface. General content sits after the General group so Environment keeps its native entry surface.
+
+Pages compose chrome only through the primitives in `settings/primitives/`: `SettingsPage`, `SettingsSection`, `SettingRow`, `SettingsCollection`, `DisclosureCard`, `SettingsInlineActions`, `SettingsFeedback`, and the controls under `primitives/controls/` (`Toggle`, `Select`, `BadgeListInput`, `SettingsRemoveButton`). Collection items with an editable body are `DisclosureCard`s; items with nothing to edit are flat `SettingRow`s with `SettingsInlineActions`.
+
+Settings CSS is layered under `packages/pivi-react/styles/settings/`: `system/` owns tokens, host reset, layout, row, card, controls, and feedback; `features/` owns page-internal structure only (models checklist, MCP inventory, prompt usage bar, command icon grid, toolbar pickers). Feature files must not set spacing, radius, border, or shadow; `color` / `background*` values are a single `--pivi-settings-*` or `--pivi-host-*` token. `--pivi-settings-*` custom properties are declared only in `system/tokens.css`.
 
 ```mermaid
 flowchart LR
@@ -105,7 +119,7 @@ React uses `useT()` under `I18nProvider`; imperative app/UI code uses the app tr
 
 ## Styling and icons
 
-CSS is organized by responsibility under `packages/pivi-react/styles/` and concatenated in manifest order. `npm run build:css` validates the graph and rejects `!important`. Add a stylesheet to the owning layer and manifest rather than importing CSS ad hoc from components.
+CSS is organized by responsibility under `packages/pivi-react/styles/` and concatenated in manifest order. `npm run build:css` validates the graph and rejects `!important`. Add a stylesheet to the owning layer and manifest rather than importing CSS ad hoc from components. Settings chrome lives in `settings/system/` (tokens, host reset, layout, row, card, controls, feedback) plus `settings/features/` for page-internal structure. `tests/unit/ui/settingsStyleContract.test.ts` rejects leftover tab/card selectors, feature-file spacing/radius/border/shadow, undeclared `--pivi-settings-*` tokens, and raw structural class names outside `settings/primitives/`.
 
 Icons cross the presentation platform as product descriptors or SVG data. React does not call Obsidian icon APIs directly. Tooltips are attached through the injected platform and must be cleaned up with their owner surface.
 

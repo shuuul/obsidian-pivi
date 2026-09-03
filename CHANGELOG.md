@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+
+* move settings onto native Obsidian 1.13 pages and groups with search
+* require Obsidian 1.13.0
+* redesign settings surfaces around a shared primitive system
+
 ## [0.23.0](https://github.com/shuuul/obsidian-pivi/compare/0.22.0...0.23.0) (2026-09-02)
 
 

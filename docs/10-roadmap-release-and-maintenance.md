@@ -59,6 +59,8 @@ At the time of this 2026-07-16 evidence capture, the same validation run passed 
 
 ## Standard release route
 
+Pivi 0.24.0 requires Obsidian 1.13.0 or later (`manifest.json` `minAppVersion`). Obsidian refuses to enable a plugin below that version, so there is no runtime 1.12 guard.
+
 Pivi publishes from a maintainer-pushed tag. Conventional Commits still describe the work; they do not drive an automated version PR. There is no Release Please workflow.
 
 1. Merge the work to `main`.
