@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.24.1](https://github.com/shuuul/obsidian-pivi/compare/0.24.0...0.24.1) (2026-09-03)
 
 ### Security
 
