@@ -7,6 +7,15 @@ import {
 } from 'react';
 
 const DRAG_THRESHOLD_PX = 8;
+const INTERACTIVE_SELECTOR = 'button, input, textarea, select, [contenteditable="true"]';
+const SORTABLE_SURFACE_SELECTOR = '[data-sortable-surface]';
+
+function isExcludedPointerTarget(target: EventTarget | null, currentTarget: EventTarget): boolean {
+  if (!(target instanceof Element)) return false;
+  if (target.closest(SORTABLE_SURFACE_SELECTOR)) return false;
+  const interactive = target.closest(INTERACTIVE_SELECTOR);
+  return interactive !== null && interactive !== currentTarget;
+}
 
 interface PointerDrag<ItemId extends string> {
   readonly id: ItemId;
@@ -99,6 +108,7 @@ export function useSortableReorder<
 
   const onPointerDown = (id: ItemId, event: PointerEvent<Element>): void => {
     if (event.button !== 0 || options.disabled || keyboardDrag !== null) return;
+    if (isExcludedPointerTarget(event.target, event.currentTarget)) return;
     event.preventDefault();
     event.stopPropagation();
     const item = event.currentTarget.closest<HTMLElement>(options.itemSelector);

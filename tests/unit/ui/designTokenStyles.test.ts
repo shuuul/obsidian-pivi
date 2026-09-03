@@ -7,6 +7,7 @@ describe('product design tokens', () => {
   const variables = readFileSync(join(stylesRoot, 'base/variables.css'), 'utf8');
   const accessibility = readFileSync(join(stylesRoot, 'accessibility.css'), 'utf8');
   const primitives = readFileSync(join(stylesRoot, 'base/presentation-primitives.css'), 'utf8');
+  const settingsControls = readFileSync(join(stylesRoot, 'settings/system/controls.css'), 'utf8');
   const input = readFileSync(join(stylesRoot, 'components/input.css'), 'utf8');
   const thinkingContent = readFileSync(join(stylesRoot, 'components/thinking.css'), 'utf8');
   const modelSelector = readFileSync(join(stylesRoot, 'toolbar/model-selector.css'), 'utf8');
@@ -52,7 +53,7 @@ describe('product design tokens', () => {
     expect(accessibility).toContain('.pivi-settings-action-btn:focus-visible');
     expect(accessibility).toContain('.pivi-skill-choice:focus-within');
     expect(accessibility).not.toMatch(/focus-visible[^}]*border-radius:/s);
-    expect(primitives).toContain('.pivi-toggle:focus-within');
+    expect(settingsControls).toContain('.pivi-toggle:focus-within');
     expect(input).not.toContain('.pivi-input-wrapper:focus-within');
     expect(input).toMatch(/\.pivi-input-wrapper\s*\{[^}]*min-height:\s*210px;/s);
     expect(primitives).not.toContain(':has(');

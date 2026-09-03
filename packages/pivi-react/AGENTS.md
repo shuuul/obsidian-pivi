@@ -103,6 +103,22 @@ Public presentation seams used by `src/ui` remain exactly `store` and `context-b
 - MCP servers use provider-style disclosure cards. Toggle and trash-icon remove live in the card header exactly like model/provider settings; they do not toggle disclosure state. Opening a card shows a compact row-based configuration editor above the connection actions and a read-only responsive inventory from the shared tool cache; opening never connects. The single Connect / refresh tools action validates and saves the current editor, authenticates when needed, then imports the returned inventory into that shared cache and reports success/failure beside that action. JSON import uses a React-owned paste editor and parses only after explicit confirmation; it must never call the clipboard-read API. Existing servers have no standalone Save, OAuth, edit action, or edit modal; clearing OAuth credentials remains a separate action. Composer slash badges use the product default and are not configurable in the editor. Settings diagnostics never invoke tools. List/auth/tools/editor chrome state lives in `settings/mcp/useMcpSectionState` (reducer + port effects); `McpToolsSection.tsx` stays presentational within the Tools page.
 - React-owned DOM and CSS use `pivi-*` classes exclusively. Do not depend on host-global classes such as `setting-item*`, `modal*`, `checkbox-container`, `mod-cta`, `mod-warning`, `theme-*`, or `svg-icon`; host theme integration is limited to the `--pivi-host-*` token contract.
 
+## Settings primitives
+
+Pages compose settings chrome only through `settings/primitives/` (during WS-01–WS-05, `settings/controls.tsx` re-exports the same primitives under the previous names). Do not emit raw structural class names from page files.
+
+| Primitive | Root class |
+|-----------|------------|
+| `SettingsPage` | `pivi-settings-page` |
+| `SettingsSection` | `pivi-settings-section` |
+| `SettingRow` | `pivi-settings-row` |
+| `SettingsCollection` | `pivi-settings-collection` |
+| `DisclosureCard` | `pivi-settings-card` |
+| `SettingsInlineActions` | `pivi-settings-actions` |
+| `SettingsFeedback` | `pivi-settings-feedback` |
+
+Controls (`Toggle`, `Select`, `BadgeListInput`, `SettingsRemoveButton`) live under `settings/primitives/controls/`. Feature CSS under `styles/settings/features/` may not set spacing, radius, or borders; every `color` / `background*` value must be exactly one `var(--pivi-settings-*)` or `var(--pivi-host-*)` token. `--pivi-settings-*` custom properties are declared only in `styles/settings/system/tokens.css`.
+
 ## Verification
 
 Run `npm run check:boundaries`, `npm run typecheck`, `npm run lint`, focused or full `npm run test`, and `npm run build`. React behavior tests belong to the `jsdom` Jest project under the source-owner directory `tests/jsdom/pivi-react/`.

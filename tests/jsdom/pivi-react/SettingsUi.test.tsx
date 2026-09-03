@@ -245,8 +245,8 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
 
     expect(screen.getByRole('button', { name: 'Delete permanently' })).toBeInTheDocument();
-    expect(screen.getByText('Permanently delete removed sessions').closest('.pivi-setting-row'))
-      .toHaveClass('pivi-setting-row--centered');
+    expect(screen.getByText('Permanently delete removed sessions').closest('.pivi-settings-row'))
+      .toHaveClass('pivi-settings-row--centered');
   });
 
   it('persists the deleted-session retention period in days', async () => {
@@ -290,7 +290,7 @@ describe('React settings foundation', () => {
   it('maps Top and Bottom labels to the existing tab position values', async () => {
     const saveGeneral = jest.fn(async () => undefined);
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
-    const row = screen.getByText('Tab bar position').closest('.pivi-setting-row');
+    const row = screen.getByText('Tab bar position').closest('.pivi-settings-row');
     const select = within(row as HTMLElement).getByRole('combobox');
     fireEvent.click(select);
     expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Top', 'Bottom']);
@@ -368,9 +368,9 @@ describe('React settings foundation', () => {
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="general" /></I18nProvider>));
     const styleLabel = await screen.findByText('Style Settings');
     await screen.findByText('Connect Pivi to the note host.');
-    const integrationSetting = styleLabel.closest<HTMLElement>('.pivi-setting-row');
-    expect(integrationSetting).toHaveClass('pivi-integration-setting', 'pivi-setting-row--centered');
-    expect(integrationSetting?.querySelector('.pivi-setting-row__control'))
+    const integrationSetting = styleLabel.closest<HTMLElement>('.pivi-settings-row');
+    expect(integrationSetting).toHaveClass('pivi-integration-setting', 'pivi-settings-row--centered');
+    expect(integrationSetting?.querySelector('.pivi-settings-row__control'))
       .toContainElement(screen.getByRole('button', { name: 'Connect' }));
     expect(container.querySelector('.pivi-integration-setting.pivi-setting-stack')).toBeNull();
     expect(screen.getAllByRole('button', { name: 'Connect' })).toHaveLength(1);
@@ -415,11 +415,11 @@ describe('React settings foundation', () => {
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
     fireEvent.click(screen.getByRole('tab', { name: 'Skills' }));
     const remoteSetting = container.querySelector<HTMLElement>('.pivi-skills-remote-setting');
-    const installedHeader = screen.getByText('Installed skills').closest('.pivi-settings-list-header');
+    const installedHeader = screen.getByText('Installed skills').closest('.pivi-settings-section');
     expect(remoteSetting).not.toBeNull();
     expect(installedHeader).not.toBeNull();
-    expect(installedHeader).toHaveClass('pivi-settings-list-header');
-    expect(remoteSetting!.querySelector('.pivi-setting-row')).toBeInTheDocument();
+    expect(installedHeader).toHaveClass('pivi-settings-section');
+    expect(remoteSetting!.querySelector('.pivi-settings-row')).toBeInTheDocument();
     expect(within(remoteSetting!).getByText('Install from remote')).toBeInTheDocument();
     expect(within(remoteSetting!).getByRole('textbox')).toBeInTheDocument();
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'owner/repo' } });
@@ -1206,8 +1206,8 @@ describe('React settings foundation', () => {
     const success = screen.getByRole('status');
     expect(success).toHaveTextContent('Example updated.');
     expect(success.closest('.pivi-sp-item')).toContainElement(screen.getByText('Example', { selector: '.pivi-sp-item-name' }));
-    expect(screen.getByText('Installed skills').closest('.pivi-settings-list-header')
-      ?.nextElementSibling).not.toHaveClass('pivi-settings-action-feedback');
+    expect(screen.getByText('Installed skills').closest('.pivi-settings-section')
+      ?.nextElementSibling).not.toHaveClass('pivi-settings-feedback');
   });
 
   it('requires confirmation before removing an installed skill', async () => {

@@ -611,7 +611,7 @@ export function SessionFilesSettingsSection({ actions, feedback, general, saveGe
         />
       </SettingRow>
       <SettingRow
-        className="pivi-setting-row--centered"
+        centered
         name={t('settings.sessionFiles.deleteRemoved.name')}
         description={t('settings.sessionFiles.deleteRemoved.desc')}
       >
@@ -704,7 +704,8 @@ export function IntegrationsSettingsSection({
         {sections.map((section) => (
           <SettingRow
             key={section.id}
-            className="pivi-integration-setting pivi-setting-row--centered"
+            className="pivi-integration-setting"
+            centered
             name={section.heading}
             description={section.description}
           >

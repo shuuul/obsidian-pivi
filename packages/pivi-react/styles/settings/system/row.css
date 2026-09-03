@@ -1,0 +1,104 @@
+.pivi-settings-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pivi-spacing-lg);
+  padding-block: var(--pivi-settings-row-padding-block);
+  border-block-end: 1px solid var(--pivi-settings-hairline);
+}
+
+.pivi-settings-row:last-child {
+  border-block-end: none;
+}
+
+.pivi-settings-row--centered {
+  align-items: center;
+}
+
+.pivi-settings-row__info {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pivi-settings-row__name {
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  line-height: 1.4;
+}
+
+.pivi-settings-row__control {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--pivi-spacing-sm);
+  min-width: 0;
+}
+
+.pivi-settings-row__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.pivi-settings-row__control > .pivi-settings-control:not(.pivi-select) {
+  flex: 0 1 var(--pivi-settings-control-width);
+}
+
+.pivi-settings-row__control > :is(input:not([type='checkbox']), select, textarea) {
+  max-width: 100%;
+}
+
+.pivi-settings-row--stacked,
+.pivi-setting-stack .pivi-settings-row {
+  flex-direction: column;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-settings-row--stacked > .pivi-settings-row__control,
+.pivi-setting-stack .pivi-settings-row__control {
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.pivi-settings-row--stacked .pivi-settings-control:not(.pivi-select),
+.pivi-setting-stack .pivi-settings-control:not(.pivi-select) {
+  width: 100%;
+}
+
+.pivi-settings-content > .pivi-settings-row,
+.pivi-settings-content > .pivi-setting-stack > .pivi-settings-row,
+.pivi-settings-section__body > .pivi-settings-row,
+.pivi-settings-section__body > .pivi-setting-stack > .pivi-settings-row,
+.pivi-settings-section__body > .pivi-tool-setting > .pivi-settings-row,
+.pivi-tool-setting__configuration > .pivi-settings-row,
+.pivi-tool-setting__configuration > .pivi-setting-stack > .pivi-settings-row {
+  box-sizing: border-box;
+  padding-inline: var(--pivi-settings-gutter);
+}
+
+.pivi-integration-setting .pivi-settings-row__name {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+@media (max-width: 520px) {
+  .pivi-settings-row {
+    flex-direction: column;
+    gap: var(--pivi-spacing-sm);
+  }
+
+  .pivi-settings-row--centered {
+    align-items: flex-start;
+  }
+
+  .pivi-settings-row__control {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

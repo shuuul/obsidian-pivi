@@ -1,0 +1,411 @@
+.pivi-settings-control:not(.pivi-select) {
+  box-sizing: border-box;
+  width: min(var(--pivi-settings-control-width), 100%);
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  outline: none;
+  background: var(--pivi-host-background-primary);
+  color: var(--pivi-host-text-normal);
+  font: inherit;
+  transition:
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-settings-control:hover:not(:disabled) {
+  border-color: var(--pivi-host-border-focus);
+}
+
+.pivi-settings-control:focus-visible {
+  border-color: var(--pivi-host-interactive-accent);
+  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
+}
+
+.pivi-settings-control::placeholder {
+  color: var(--pivi-host-text-faint);
+}
+
+.pivi-settings-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+textarea.pivi-settings-control {
+  min-height: 88px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.pivi-settings-control--fill {
+  width: 100%;
+}
+
+.pivi-settings-range {
+  display: flex;
+  width: min(var(--pivi-settings-control-width), 100%);
+  align-items: center;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-settings-range input[type="range"] {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pivi-settings-range__value {
+  min-width: 3ch;
+  color: var(--pivi-host-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.pivi-settings-badge-field {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.pivi-settings-badge-list {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-primary);
+  transition:
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-settings-badge-list:focus-within {
+  border-color: var(--pivi-host-interactive-accent);
+  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
+}
+
+.pivi-settings-badge {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 26px;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 3px 2px 8px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-settings-badge__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pivi-settings-badge__remove {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pivi-host-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
+}
+
+.pivi-settings-badge__remove:hover:not(:disabled) {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-error);
+}
+
+.pivi-settings-badge__remove:focus-visible {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+.pivi-settings-badge__remove:active:not(:disabled) {
+  scale: var(--pivi-press-scale);
+}
+
+.pivi-settings-badge__remove .pivi-platform-icon {
+  --icon-size: 13px;
+}
+
+.pivi-settings-badge-input.pivi-settings-control {
+  width: 140px;
+  min-width: 120px;
+  flex: 1 1 140px;
+  padding-inline: 5px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pivi-settings-select {
+  position: relative;
+  z-index: 0;
+  max-inline-size: 100%;
+}
+
+.pivi-settings-select.is-open {
+  z-index: var(--pivi-z-settings-popover);
+}
+
+.pivi-settings-select > .pivi-settings-select__trigger {
+  display: inline-flex;
+  box-sizing: border-box;
+  inline-size: max-content;
+  max-inline-size: 100%;
+  min-block-size: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pivi-spacing-sm);
+  margin: 0;
+  padding-block: 4px;
+  padding-inline: 10px 8px;
+  appearance: none;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-primary);
+  box-shadow: none;
+  color: var(--pivi-host-text-normal);
+  font: inherit;
+  font-size: var(--pivi-host-font-ui-small);
+  line-height: 1.2;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
+}
+
+.pivi-settings-select__value {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pivi-settings-select__chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  transition: transform var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-settings-select__chevron .pivi-platform-icon,
+.pivi-settings-select__chevron svg {
+  width: 12px;
+  height: 12px;
+}
+
+.pivi-settings-select.is-open .pivi-settings-select__chevron {
+  transform: rotate(180deg);
+}
+
+.pivi-settings-select__options {
+  position: fixed;
+  z-index: var(--pivi-z-dropdown-open);
+  display: flex;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  max-height: min(280px, calc(100vh - 16px));
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  padding: var(--pivi-spacing-xs);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-material-bg-secondary);
+  -webkit-backdrop-filter: var(--pivi-material-blur-lg);
+  backdrop-filter: var(--pivi-material-blur-lg);
+  box-shadow: var(--pivi-shadow-md);
+}
+
+.pivi-settings-select__option {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--pivi-radius-xs);
+  background: transparent;
+  box-shadow: none;
+  color: var(--pivi-host-text-muted);
+  font-family: var(--pivi-host-font-interface, inherit);
+  font-size: var(--pivi-text-sm);
+  line-height: 1.3;
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--pivi-duration-instant) var(--pivi-ease-out),
+    color var(--pivi-duration-instant) var(--pivi-ease-out);
+}
+
+.pivi-settings-select__option.selected {
+  color: var(--pivi-host-text-accent);
+  font-weight: var(--pivi-host-font-medium);
+}
+
+.pivi-settings-select__option.is-highlighted {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-settings-select > .pivi-settings-select__trigger:hover:not(:disabled) {
+  border-color: var(--pivi-host-interactive-accent);
+  background: var(--pivi-host-background-hover);
+}
+
+.pivi-settings-select > .pivi-settings-select__trigger:focus-visible {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+.pivi-settings-select > .pivi-settings-select__trigger:disabled,
+.pivi-settings-select__option:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pivi-toggle {
+  position: relative;
+  box-sizing: border-box;
+  width: 36px;
+  height: 20px;
+  flex: 0 0 36px;
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-secondary-alt);
+  cursor: pointer;
+  transition:
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
+}
+
+.pivi-toggle-thumb {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pivi-host-text-on-accent);
+  box-shadow: var(--pivi-shadow-control);
+  transition: transform var(--pivi-duration-normal) var(--pivi-ease-in-out);
+}
+
+.pivi-toggle--enabled {
+  background: var(--pivi-host-interactive-accent);
+}
+
+.pivi-toggle--enabled .pivi-toggle-thumb {
+  transform: translateX(16px);
+}
+
+.pivi-toggle--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pivi-toggle:focus-within {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+.pivi-toggle > input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.pivi-settings-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--pivi-radius-xs);
+  cursor: pointer;
+  color: var(--pivi-host-text-muted);
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
+}
+
+.pivi-settings-action-btn:hover {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-settings-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-settings-text-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--pivi-radius-xs);
+  cursor: pointer;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
+}
+
+.pivi-settings-text-btn:hover {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-settings-delete-btn:hover {
+  color: var(--pivi-host-text-error);
+}
+
+@media (max-width: 520px) {
+  .pivi-settings-control:not(.pivi-select) {
+    width: 100%;
+  }
+
+  .pivi-settings-badge-input.pivi-settings-control {
+    width: 120px;
+  }
+}

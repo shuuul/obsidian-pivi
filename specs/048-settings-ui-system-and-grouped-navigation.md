@@ -156,7 +156,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | `settings/primitives/` (seven primitives + `controls/`), `styles/settings/system/*.css`, `manifest.mjs` update, `controls.tsx` re-exports so every page renders rows/sections/controls/feedback through the system, `.pivi-setting-row` rules removed from `base/presentation-primitives.css` (or justified), `tests/unit/ui/settingsStyleContract.test.ts` (feature-CSS rules, token-only declaration rule, raw-class ban with a `legacyAllowlist` of the card classes still pending migration, allowlist JSON), jsdom `SettingsPrimitives.test.tsx` (DisclosureCard toggle/remove/drag isolation, controlled open, SettingsCollection empty/add/sortable, flat-row actions) | Unassigned | Pending | None (baseline `7dcbf2a2` + archived 046/047) | `npm run test -- tests/unit/ui tests/jsdom/pivi-react`; `npm run build:css`; `npm run typecheck && npm run lint` |
+| WS-01 | `settings/primitives/` (seven primitives + `controls/`), `styles/settings/system/*.css`, `manifest.mjs` update, `controls.tsx` re-exports so every page renders rows/sections/controls/feedback through the system, `.pivi-setting-row` rules removed from `base/presentation-primitives.css` (or justified), `tests/unit/ui/settingsStyleContract.test.ts` (feature-CSS rules, token-only declaration rule, raw-class ban with a `legacyAllowlist` of the card classes still pending migration, allowlist JSON), jsdom `SettingsPrimitives.test.tsx` (DisclosureCard toggle/remove/drag isolation, controlled open, SettingsCollection empty/add/sortable, flat-row actions) | Grok 4.6 High (WS-01) | Done | None (baseline `7dcbf2a2` + archived 046/047) | `npm run test -- tests/unit/ui tests/jsdom/pivi-react`; `npm run build:css`; `npm run typecheck && npm run lint` |
 | WS-02 | `navigation.ts` (`SettingsPageId`, `SETTINGS_PAGES`, `SETTINGS_ROOT_LAYOUT`), `mountSettingsPage`, `SettingsRoot` page switch routing existing components (Built-in tools page temporarily renders `BuiltInToolsSection` + `SubagentsSettingsTab`), delete `SettingsShell.tsx` and `SettingsTabId`, `PiviSettingsPage`, `PiviSettingTabHost.getSettingDefinitions()` root layout, delete `display()`, unload disposal, `manifest.json` `minAppVersion` 1.13.0, `searchMetadata.ts` → per-page aliases, obsidian mock `SettingPage`, i18n groups/pages keys (all locales) and `settings.tabs.*` removal | Unassigned | Pending | WS-01 | `npm run test -- tests/jsdom/app-ui tests/jsdom/pivi-react tests/unit/ui`; `npm run check:boundaries`; `npm run check:i18n-dead-keys`; `npm run build && obsidian plugin:reload id=pivi && obsidian dev:errors` |
 | WS-03 | General content (Language, Layout, Chat behavior, Provider requests, Session files, Personalization, Input shortcuts with hotkey grid as a section of rows, Style Settings integration, About) on primitives; Environment page (stacked rows); Models page: providers as `DisclosureCard`s in a sortable `SettingsCollection`, Add provider picker as trailing add trigger, model checklist under `features/models.css` | Unassigned | Pending | WS-02 | `SettingsUi.test.tsx` updated; provider sorting tests green; raw-class allowlist shrinks (provider card removed) |
 | CP1 | **Checkpoint 1 human visual sign-off**: root tab layout, Environment, Models, DisclosureCard states, row/section rhythm, light + dark | Human (shuuul) | Pending | WS-03 | Owner confirms direction or requests primitive adjustments before WS-04 |
@@ -239,6 +239,21 @@ Append entries rather than rewriting another agent's record.
 - Remaining: WS-01 → WS-06 with CP1/CP2.
 - Blockers: None.
 - Next action: Create branch `feat/settings-native-navigation`; dispatch WS-01 to a Grok 4.6 High subagent.
+
+### 2026-09-03 — Grok 4.6 High — WS-01
+
+- Changed: Added `settings/primitives/` (seven primitives + `controls/`) and `styles/settings/system/*.css`. `controls.tsx` now re-exports the primitives (plus thin `SettingsListHeader` / `SettingsPageDescription` / `SettingsSectionHeading` adapters). Existing pages render rows, sections, controls, and feedback through the new system; card idioms stay legacy. `--pivi-settings-*` tokens live only in `tokens.css`. Section bodies are no longer surfaced. `.pivi-setting-row*` left `presentation-primitives.css` (no chat / inline-edit / modal consumers). Contract + jsdom primitive tests added; `settingsStyles.test.ts` replaced. Coordinator review: DisclosureCard header is a plain drag surface; a sibling toggle button owns `aria-expanded`/`aria-controls`; `useSortableReorder` skips nested interactives unless they opt in with `data-sortable-surface`.
+- Evidence:
+  - `npm run build:css` — pass
+  - `npm run typecheck` — pass
+  - `npm run lint` — pass
+  - `npm run test -- tests/unit/ui tests/jsdom/pivi-react` — 36 suites, 361 tests passed
+  - `npm run check:boundaries` — pass
+  - `npm run build` — pass
+  - `obsidian plugin:reload id=pivi && obsidian dev:errors` — `No errors captured.`
+- Remaining: WS-02–WS-06. Visual sign-off is Checkpoint 1 (owner only). `legacyAllowlist` still contains `pivi-sp-`, `pivi-provider-card`, `pivi-mcp-card`, `pivi-web-provider-`.
+- Blockers: None.
+- Next action: WS-02 (native page navigation).
 
 ## Completion summary
 

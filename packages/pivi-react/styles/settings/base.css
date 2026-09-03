@@ -1,209 +1,4 @@
-/* ── Settings tab navigation ── */
-
-/* Match Obsidian 1.13's definition-row specificity without coupling to host class names.
-   Let the native settings page own scrolling so its scrollbar stays at the window edge. */
-:root .pivi-settings-definition-host.pivi-settings-definition-host {
-  display: block;
-  box-sizing: border-box;
-  min-height: 0;
-  height: auto;
-  max-height: none;
-  padding: 0;
-  overflow: visible;
-  border-top: 0;
-}
-
-.pivi-settings {
-  --pivi-settings-gutter: 12px;
-  --pivi-settings-control-width: 280px;
-  --pivi-settings-section-gap: 32px;
-  --pivi-settings-section-title-gap: 8px;
-  --pivi-settings-subsection-gap: 20px;
-  min-height: 100%;
-  background: var(--pivi-host-background-primary);
-}
-
-.pivi-settings-control:not(.pivi-select) {
-  box-sizing: border-box;
-  width: min(var(--pivi-settings-control-width), 100%);
-  min-height: 32px;
-  padding: 6px 10px;
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-sm);
-  outline: none;
-  background: var(--pivi-host-background-primary);
-  color: var(--pivi-host-text-normal);
-  font: inherit;
-  transition:
-    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
-    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
-    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
-}
-
-.pivi-settings-control:hover:not(:disabled) {
-  border-color: var(--pivi-host-border-focus);
-}
-
-.pivi-settings-control:focus-visible {
-  border-color: var(--pivi-host-interactive-accent);
-  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
-}
-
-.pivi-settings-control::placeholder {
-  color: var(--pivi-host-text-faint);
-}
-
-.pivi-settings-control:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-textarea.pivi-settings-control {
-  min-height: 88px;
-  resize: vertical;
-  line-height: 1.45;
-}
-
-.pivi-settings-control--fill {
-  width: 100%;
-}
-
-.pivi-setting-row__control > .pivi-settings-control:not(.pivi-select) {
-  flex: 0 1 var(--pivi-settings-control-width);
-}
-
-.pivi-environment-setting > .pivi-setting-row__info {
-  flex: 1 1 0;
-}
-
-.pivi-environment-setting > .pivi-setting-row__control {
-  flex: 2 1 0;
-  align-self: stretch;
-  align-items: stretch;
-}
-
-.pivi-environment-setting > .pivi-setting-row__control > .pivi-settings-env-textarea {
-  flex: 1 1 auto;
-  align-self: stretch;
-}
-
-.pivi-environment-setting__actions {
-  margin-block-start: var(--pivi-spacing-md);
-}
-
-.pivi-settings-range {
-  display: flex;
-  width: min(var(--pivi-settings-control-width), 100%);
-  align-items: center;
-  gap: var(--pivi-spacing-sm);
-}
-
-.pivi-settings-range input[type="range"] {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.pivi-settings-range__value {
-  min-width: 3ch;
-  color: var(--pivi-host-text-muted);
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-}
-
-.pivi-settings-badge-field {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-}
-
-.pivi-settings-badge-list {
-  display: flex;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 40px;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 5px;
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-sm);
-  background: var(--pivi-host-background-primary);
-  transition:
-    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
-    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
-}
-
-.pivi-settings-badge-list:focus-within {
-  border-color: var(--pivi-host-interactive-accent);
-  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
-}
-
-.pivi-settings-badge {
-  display: inline-flex;
-  max-width: 100%;
-  min-height: 26px;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 3px 2px 8px;
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-pill);
-  background: var(--pivi-host-background-secondary);
-  color: var(--pivi-host-text-normal);
-  font-size: var(--pivi-host-font-ui-smaller);
-}
-
-.pivi-settings-badge__text {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.pivi-settings-badge__remove {
-  display: inline-flex;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: none;
-  color: var(--pivi-host-text-muted);
-  cursor: pointer;
-  transition:
-    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
-    color var(--pivi-duration-fast) var(--pivi-ease-out),
-    scale var(--pivi-press-duration) var(--pivi-ease-out);
-}
-
-.pivi-settings-badge__remove:hover:not(:disabled) {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-error);
-}
-
-.pivi-settings-badge__remove:focus-visible {
-  outline: var(--pivi-focus-ring);
-  outline-offset: var(--pivi-focus-offset);
-}
-
-.pivi-settings-badge__remove:active:not(:disabled) {
-  scale: var(--pivi-press-scale);
-}
-
-.pivi-settings-badge__remove .pivi-platform-icon {
-  --icon-size: 13px;
-}
-
-.pivi-settings-badge-input.pivi-settings-control {
-  width: 140px;
-  min-width: 120px;
-  flex: 1 1 140px;
-  padding-inline: 5px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
+/* ── Settings tab navigation (legacy shell; deleted in WS-06) ── */
 
 .pivi-settings-tabs {
   display: flex;
@@ -256,173 +51,8 @@ textarea.pivi-settings-control {
   gap: 0;
 }
 
-.pivi-settings-section {
-  margin-block-start: var(--pivi-settings-section-gap);
-}
-
-.pivi-settings-content > .pivi-settings-section:first-child,
-.pivi-settings-content > .pivi-setting-row:first-child + .pivi-settings-section,
-.pivi-tools-settings-page > .pivi-settings-section:first-child {
-  margin-block-start: 0;
-}
-
-.pivi-settings-section__body > .pivi-settings-section {
-  margin-block-start: var(--pivi-settings-subsection-gap);
-}
-
-.pivi-settings-section__body > .pivi-settings-section:first-child {
-  margin-block-start: 0;
-}
-
-.pivi-settings-section-heading {
-  margin: 0;
-  padding: 0;
-  padding-inline: var(--pivi-settings-gutter);
-  border: 0;
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-host-font-ui-small);
-  font-weight: var(--pivi-host-font-semibold);
-  letter-spacing: 0.01em;
-  line-height: 1.35;
-}
-
-.pivi-settings-section > .pivi-settings-section-heading {
-  margin-block-end: var(--pivi-settings-section-title-gap);
-}
-
-.pivi-settings-section > .pivi-settings-section-heading:not(.pivi-settings-section-heading--sub) {
-  padding-block-end: 7px;
-  border-block-end: 1px solid color-mix(in srgb, var(--pivi-host-border) 65%, transparent);
-}
-
-.pivi-settings-section > .pivi-settings-section-heading:not(.pivi-settings-section-heading--sub) + .pivi-settings-section__body {
-  padding-block: 6px;
-  border-radius: var(--pivi-radius-lg);
-  background: var(--pivi-host-setting-items-background);
-}
-
-.pivi-settings-section-heading--sub {
-  margin-block-start: var(--pivi-settings-subsection-gap);
-  margin-block-end: var(--pivi-settings-section-title-gap);
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-host-font-ui-smaller);
-  font-weight: var(--pivi-host-font-medium);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.pivi-settings-section__body > .pivi-settings-section-heading--sub:first-child {
-  margin-block-start: 0;
-}
-
-.pivi-settings-list-header > .pivi-settings-section-heading {
-  margin: 0;
-}
-
-/* Settings page - remove separator lines from setting rows */
-.pivi-settings .pivi-setting-row {
-  border-top: none;
-}
-
-.pivi-settings-content > .pivi-setting-row,
-.pivi-settings-content > .pivi-setting-stack > .pivi-setting-row,
-.pivi-settings-section__body > .pivi-setting-row,
-.pivi-settings-section__body > .pivi-setting-stack > .pivi-setting-row,
-.pivi-settings-section__body > .pivi-tool-setting > .pivi-setting-row,
-.pivi-tool-setting__configuration > .pivi-setting-row,
-.pivi-tool-setting__configuration > .pivi-setting-stack > .pivi-setting-row {
-  box-sizing: border-box;
-  padding-inline: var(--pivi-settings-gutter);
-}
-
 .pivi-tool-setting__configuration {
   padding-inline-start: var(--pivi-spacing-lg);
-}
-
-.pivi-settings-content > .pivi-setting-description,
-.pivi-settings-content > .pivi-setting-validation,
-.pivi-settings-section__body > .pivi-setting-description,
-.pivi-settings-section__body > .pivi-setting-validation,
-.pivi-settings-section__body > .pivi-env-review-warning {
-  padding-inline: var(--pivi-settings-gutter);
-}
-
-.pivi-settings-content > .pivi-hotkey-grid,
-.pivi-settings-section__body > .pivi-hotkey-grid {
-  padding-inline: var(--pivi-settings-gutter);
-}
-
-/* Page copy and list headers share the setting-row gutter. */
-.pivi-settings-page-description {
-  padding-inline: var(--pivi-settings-gutter);
-}
-
-.pivi-settings-page-description {
-  margin-bottom: var(--pivi-spacing-md);
-}
-
-.pivi-settings-page-description > :first-child {
-  margin-top: 0;
-}
-
-.pivi-settings-page-description > :last-child {
-  margin-bottom: 0;
-}
-
-/* Unified icon action buttons for settings */
-.pivi-settings-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  border-radius: var(--pivi-radius-xs);
-  cursor: pointer;
-  color: var(--pivi-host-text-muted);
-  transition:
-    background var(--pivi-duration-fast) var(--pivi-ease-out),
-    color var(--pivi-duration-fast) var(--pivi-ease-out),
-    scale var(--pivi-press-duration) var(--pivi-ease-out);
-}
-
-.pivi-settings-action-btn:hover {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-normal);
-}
-
-.pivi-settings-action-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.pivi-settings-text-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 28px;
-  padding: 4px 10px;
-  border: none;
-  background: transparent;
-  border-radius: var(--pivi-radius-xs);
-  cursor: pointer;
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-host-font-ui-smaller);
-  transition:
-    background var(--pivi-duration-fast) var(--pivi-ease-out),
-    color var(--pivi-duration-fast) var(--pivi-ease-out),
-    scale var(--pivi-press-duration) var(--pivi-ease-out);
-}
-
-.pivi-settings-text-btn:hover {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-normal);
-}
-
-.pivi-settings-delete-btn:hover {
-  color: var(--pivi-host-text-error);
 }
 
 .pivi-setting-validation {
@@ -437,31 +67,6 @@ textarea.pivi-settings-control {
 
 .pivi-setting-validation-warning {
   color: var(--pivi-host-text-warning);
-}
-
-.pivi-settings-action-feedback {
-  min-width: 0;
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-host-font-ui-smaller);
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.pivi-settings-action-feedback.is-success {
-  color: var(--pivi-host-color-green);
-}
-
-.pivi-settings-action-feedback.is-pending {
-  color: var(--pivi-host-text-muted);
-}
-
-.pivi-settings-action-feedback.is-error {
-  color: var(--pivi-host-text-error);
-}
-
-.pivi-settings-badge-field > .pivi-settings-action-feedback {
-  display: block;
-  margin-block-start: 4px;
 }
 
 .pivi-settings-action-group,
@@ -485,7 +90,6 @@ textarea.pivi-settings-control {
   border-color: var(--pivi-host-text-error);
 }
 
-/* Hotkey grid - 3 columns */
 .pivi-hotkey-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -531,26 +135,61 @@ textarea.pivi-settings-control {
   font-family: var(--pivi-host-font-monospace);
 }
 
-/* ── Shared settings panel layout (used by slash-settings + agent-settings) ── */
-
-.pivi-settings-list-header {
+/* Legacy raw row markup still used inside prompt/command/environment cards (WS-03–WS-05). */
+.pivi-setting-row {
   display: flex;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--pivi-spacing-lg);
+  padding: 12px 0;
+}
+
+.pivi-setting-row__info {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pivi-setting-row__name {
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  line-height: 1.4;
+}
+
+.pivi-setting-row__control {
+  display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  margin-block: var(--pivi-settings-section-gap) var(--pivi-settings-section-title-gap);
-  padding-block-end: 7px;
-  padding-inline: var(--pivi-settings-gutter);
-  border-block-end: 1px solid color-mix(in srgb, var(--pivi-host-border) 65%, transparent);
+  justify-content: flex-end;
+  gap: var(--pivi-spacing-sm);
+  min-width: 0;
 }
 
-.pivi-settings-content > .pivi-settings-list-header:first-child {
-  margin-block-start: 0;
-}
-
-.pivi-settings-list-header__actions {
+.pivi-environment-setting {
   display: flex;
-  gap: var(--pivi-spacing-xs);
-  margin-inline-start: auto;
+  align-items: flex-start;
+  gap: var(--pivi-spacing-lg);
+  padding-block: var(--pivi-settings-row-padding-block);
+  padding-inline: var(--pivi-settings-gutter);
+}
+
+.pivi-environment-setting > .pivi-setting-row__info {
+  flex: 1 1 0;
+}
+
+.pivi-environment-setting > .pivi-setting-row__control {
+  flex: 2 1 0;
+  align-self: stretch;
+  align-items: stretch;
+}
+
+.pivi-environment-setting > .pivi-setting-row__control > .pivi-settings-env-textarea {
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+
+.pivi-environment-setting__actions {
+  margin-block-start: var(--pivi-spacing-md);
 }
 
 .pivi-sp-empty-state {
@@ -583,7 +222,7 @@ textarea.pivi-settings-control {
   border-radius: var(--pivi-radius-sm);
 }
 
-.pivi-sp-item > .pivi-settings-action-feedback {
+.pivi-sp-item > .pivi-settings-feedback {
   flex: 1 0 100%;
   margin-block-start: var(--pivi-spacing-xs);
 }
@@ -672,42 +311,7 @@ textarea.pivi-settings-control {
   margin-top: var(--pivi-spacing-md);
 }
 
-.pivi-settings-item-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--pivi-spacing-xs);
-  justify-self: end;
-  white-space: nowrap;
-}
-
-.pivi-settings-item-actions.pivi-sp-item-actions {
-  margin-left: var(--pivi-spacing-lg);
-}
-
-.pivi-setting-stack .pivi-setting-row {
-  flex-direction: column;
-  gap: var(--pivi-spacing-sm);
-}
-
-.pivi-setting-stack .pivi-setting-row__control {
-  width: 100%;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-}
-
-.pivi-setting-stack .pivi-settings-control:not(.pivi-select) {
-  width: 100%;
-}
-
-.pivi-integration-setting .pivi-setting-row__name {
-  color: var(--pivi-host-text-muted);
-  font-size: var(--pivi-host-font-ui-small);
-  font-weight: var(--pivi-host-font-medium);
-  letter-spacing: 0.01em;
-  line-height: 1.4;
-}
-
-.pivi-skills-remote-setting .pivi-setting-row__control > input {
+.pivi-skills-remote-setting .pivi-settings-row__control > input {
   flex: 1 1 240px;
 }
 
@@ -716,14 +320,6 @@ textarea.pivi-settings-control {
   min-height: 96px;
   font-family: var(--pivi-host-font-monospace);
   font-size: var(--pivi-host-font-ui-smaller);
-}
-
-.pivi-settings-section__body > .pivi-settings-action-group {
-  padding-inline: var(--pivi-settings-gutter);
-}
-
-.pivi-settings-section__body > .pivi-settings-action-group {
-  margin-block-start: 4px;
 }
 
 .pivi-settings-external-link {
@@ -761,14 +357,4 @@ textarea.pivi-settings-control {
 .pivi-about-version {
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-small);
-}
-
-@media (max-width: 520px) {
-  .pivi-settings-control:not(.pivi-select) {
-    width: 100%;
-  }
-
-  .pivi-settings-badge-input.pivi-settings-control {
-    width: 120px;
-  }
 }

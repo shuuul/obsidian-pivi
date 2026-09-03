@@ -1,0 +1,17 @@
+/* The only file that may declare --pivi-settings-* custom properties. */
+
+.pivi-settings,
+.pivi-settings-page,
+.pivi-settings-definition-host {
+  --pivi-settings-gutter: 12px;
+  --pivi-settings-control-width: 280px;
+  --pivi-settings-section-gap: 32px;
+  --pivi-settings-section-title-gap: 8px;
+  --pivi-settings-subsection-gap: 20px;
+  --pivi-settings-row-padding-block: 12px;
+  --pivi-settings-hairline: color-mix(in srgb, var(--pivi-host-border) 65%, transparent);
+  --pivi-settings-card-radius: var(--pivi-radius-md);
+  --pivi-settings-card-padding: 14px 16px;
+  --pivi-settings-card-gap: var(--pivi-spacing-sm);
+  --pivi-settings-collection-gap: var(--pivi-spacing-md);
+}

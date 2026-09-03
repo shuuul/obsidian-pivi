@@ -1,0 +1,24 @@
+.pivi-settings-feedback {
+  min-width: 0;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.pivi-settings-feedback.is-success {
+  color: var(--pivi-host-color-green);
+}
+
+.pivi-settings-feedback.is-pending {
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-settings-feedback.is-error {
+  color: var(--pivi-host-text-error);
+}
+
+.pivi-settings-badge-field > .pivi-settings-feedback {
+  display: block;
+  margin-block-start: 4px;
+}

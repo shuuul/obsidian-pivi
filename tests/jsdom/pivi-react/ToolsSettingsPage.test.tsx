@@ -136,8 +136,8 @@ describe('React tools settings', () => {
     renderTools(createPorts({ saveSettings }));
 
     const readToggle = screen.getByRole('checkbox', { name: 'Read' });
-    expect(readToggle.closest('.pivi-setting-row')?.parentElement).toHaveClass('pivi-tool-setting');
-    expect(readToggle.closest('.pivi-setting-row')?.parentElement).not.toHaveClass('pivi-setting-stack');
+    expect(readToggle.closest('.pivi-settings-row')?.parentElement).toHaveClass('pivi-tool-setting');
+    expect(readToggle.closest('.pivi-settings-row')?.parentElement).not.toHaveClass('pivi-setting-stack');
     fireEvent.click(screen.getByRole('combobox', { name: 'Default read size' }));
     fireEvent.click(screen.getByRole('option', { name: '200k characters' }));
     await act(async () => undefined);

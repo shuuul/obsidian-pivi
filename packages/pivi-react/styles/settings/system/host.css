@@ -1,0 +1,18 @@
+/* Match Obsidian 1.13's definition-row specificity without coupling to host class names.
+   Let the native settings page own scrolling so its scrollbar stays at the window edge. */
+:root .pivi-settings-definition-host.pivi-settings-definition-host {
+  display: block;
+  box-sizing: border-box;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+  border-top: 0;
+}
+
+.pivi-settings,
+.pivi-settings-page {
+  min-height: 100%;
+  background: var(--pivi-host-background-primary);
+}

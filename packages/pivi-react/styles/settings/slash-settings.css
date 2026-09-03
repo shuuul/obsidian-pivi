@@ -38,6 +38,27 @@
   gap: var(--pivi-spacing-sm);
 }
 
+.pivi-command-card-body .pivi-setting-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pivi-spacing-lg);
+  padding: 12px 0;
+}
+
+.pivi-command-card-body .pivi-setting-row__info {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pivi-command-card-body .pivi-setting-row__control {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--pivi-spacing-sm);
+  min-width: 0;
+}
+
 .pivi-command-prompt-field {
   display: flex;
   width: 100%;
