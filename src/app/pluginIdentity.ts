@@ -13,4 +13,4 @@ export const PIVI_VERSION = __PIVI_RELEASE_VERSION__;
  * Calendar date of the currently shipped stable plugin version.
  * Keep in lockstep with the latest `CHANGELOG.md` heading when cutting a release.
  */
-export const PIVI_RELEASED_AT = '2026-08-29';
+export const PIVI_RELEASED_AT = '2026-09-03';

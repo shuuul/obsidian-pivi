@@ -1,12 +1,26 @@
 # Changelog
 
-## [Unreleased]
+## [0.24.0](https://github.com/shuuul/obsidian-pivi/compare/0.23.0...0.24.0) (2026-09-03)
 
 ### Features
 
 * move settings onto native Obsidian 1.13 pages and groups with search
-* require Obsidian 1.13.0
 * redesign settings surfaces around a shared primitive system
+
+### Bug Fixes
+
+* keep context pressure and calibration scoped to the serving model
+* avoid counting selected context twice after provider usage is available
+* use fixed per-query read budgets for large note and external-file reads
+* preserve provider disclosure and handle-only drag interactions in settings
+
+### Breaking Changes
+
+* require Obsidian 1.13.0 or later
+
+### Maintenance
+
+* replace Release Please with maintainer-pushed tag releases
 
 ## [0.23.0](https://github.com/shuuul/obsidian-pivi/compare/0.22.0...0.23.0) (2026-09-02)
 
