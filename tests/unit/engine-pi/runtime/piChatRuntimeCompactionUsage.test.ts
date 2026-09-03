@@ -1,13 +1,17 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { PiRuntimeHost } from '@pivi/engine-pi/piRuntimeHost';
 import type { UsageInfo } from '@pivi/agent/runtime';
-import { getContextCalibration } from '@pivi/agent/runtime/contextAccounting';
+import {
+  getContextCalibration,
+  resetContextCalibration,
+} from '@pivi/agent/runtime/contextAccounting';
 import { estimateTextTokens } from '@pivi/agent/prompt';
 
 import {
   attachContextEnvelope,
   estimateProjectedTurnTokens,
 } from '../../../../packages/engine-pi/src/runtime/piChatRuntimeCompaction';
+import { latestUsageFromMessages } from '../../../../packages/engine-pi/src/runtime/piChatRuntimeUsage';
 
 const usage: UsageInfo = {
   contextTokens: 1,
@@ -19,6 +23,10 @@ const usage: UsageInfo = {
 };
 
 describe('attachContextEnvelope', () => {
+  beforeEach(() => {
+    resetContextCalibration();
+  });
+
   it('counts only the pending suffix beyond the persisted session context', () => {
     const persisted = [
       { role: 'user', content: 'question', timestamp: 1 },
@@ -175,5 +183,75 @@ describe('attachContextEnvelope', () => {
     expect(withSelectedContext.contextEnvelope?.selectedContext.tokens).toBe(
       Math.round(rawSelectedContext * getContextCalibration('openai/model-a')),
     );
+
+    const afterCurrentTurn = attachContextEnvelope(
+      deps,
+      usage,
+      selectedTurn as never,
+      [],
+      { currentTurnAlreadyCounted: true },
+    );
+    expect(afterCurrentTurn.contextEnvelope?.selectedContext.tokens).toBe(0);
+    expect(afterCurrentTurn.contextEnvelope?.pressureInputTokens).toBe(
+      (withSelectedContext.contextEnvelope?.pressureInputTokens ?? 0)
+        - Math.round(rawSelectedContext * getContextCalibration('openai/model-a')),
+    );
+  });
+
+  it('does not reuse or calibrate provider usage from a different model', () => {
+    const oldModelMessage = {
+      role: 'assistant',
+      content: [{ type: 'text', text: 'old model answer' }],
+      provider: 'openai',
+      model: 'model-a',
+      stopReason: 'stop',
+      usage: { input: 119_000, output: 1_000, cacheRead: 0, cacheWrite: 0, totalTokens: 120_000 },
+      timestamp: 2,
+    } as AgentMessage;
+    const messages = [
+      { role: 'user', content: 'question', timestamp: 1 } as AgentMessage,
+      oldModelMessage,
+    ];
+    const entries = messages.map((message, index) => ({
+      id: `message-${index}`,
+      parentId: index === 0 ? null : `message-${index - 1}`,
+      timestamp: new Date(index).toISOString(),
+      type: 'message',
+      message,
+    }));
+    const currentModel = {
+      provider: 'anthropic',
+      id: 'model-b',
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      maxTokens: 16_000,
+    };
+    const deps = {
+      plugin: {} as PiRuntimeHost,
+      sessionTree: {
+        getLinearLlmContextEntries: () => entries,
+        loadAgentMessages: () => messages,
+      },
+      agent: { state: { systemPrompt: 's'.repeat(640_000), tools: [], messages } },
+      compactionState: {
+        autoCompactionInFlight: false,
+        failedAutoAttempts: new Map(),
+        foregroundController: null,
+        generation: 0,
+        prefire: null,
+      },
+      resolveModel: () => currentModel,
+      onLeafIdChanged: jest.fn(),
+      onAssistantMessageId: jest.fn(),
+    } as never;
+
+    const projected = estimateProjectedTurnTokens(deps, {
+      prompt: 'p'.repeat(13_300),
+      persistedContent: 'p'.repeat(13_300),
+    } as never);
+
+    expect(projected).toBeGreaterThan(160_000);
+    expect(getContextCalibration('anthropic/model-b')).toBe(1);
+    expect(latestUsageFromMessages(messages, currentModel as never)).toBeNull();
   });
 });

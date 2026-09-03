@@ -115,6 +115,14 @@ export function latestUsageFromMessages(
     if (!message) {
       continue;
     }
+    const record = message as unknown as Record<string, unknown>;
+    if (
+      !resolvedModel
+      || record.provider !== resolvedModel.provider
+      || record.model !== resolvedModel.id
+    ) {
+      continue;
+    }
     const usage = buildUsageInfoFromAgentMessage(message, resolvedModel);
     if (usage) {
       return usage;

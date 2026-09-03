@@ -33,10 +33,10 @@ The work spans one package, app-side host wiring, the plugin manifest, i18n cata
 
 Ship one enforced settings UI system, move navigation onto Obsidian 1.13's native settings pages, and migrate every settings page onto that system in a single release, deleting the legacy idioms and the 1.12 fallback.
 
-- [ ] `manifest.json` `minAppVersion` is `1.13.0`; `PiviSettingTabHost` has no `display()`; `getSettingDefinitions()` returns the root layout in this exact order: page **Models**; group **Agent** → Built-in tools · Web tools · MCP servers · Skills · Prompt; group **Editor** → Commands · Toolbar; group **General** → page Environment; then one root-level `render` item mounting the General content. Verified by `tests/jsdom/app-ui/PiviSettingTabHost.test.ts` over the returned structure.
+- [ ] `manifest.json` `minAppVersion` is `1.13.0`; `PiviSettingTabHost` has no `display()`; `getSettingDefinitions()` returns the root layout in this exact order: root **General** content (Language); group **General** → Appearance · Chat behavior · Personalization & context · Input & shortcuts · Session files · Environment; group **Agent** → Models · Built-in tools · Web tools · MCP servers · Skills · Prompt; group **Editor** → Commands · Toolbar; root **About** content. Verified by `tests/jsdom/app-ui/PiviSettingTabHost.test.ts` over the returned structure.
 - [ ] Each page entry carries a localized `name`, `desc`, and `aliases` derived from the labels of every row on that page, so Obsidian search opens the owning page (page-level routing; no row addressing). Verified by a unit test over `SETTINGS_PAGES` alias coverage (every former `SETTINGS_SEARCH_KEYS` key is owned by exactly one page).
-- [ ] Each page is a `PiviSettingsPage extends SettingPage` whose `display()` mounts `mountSettingsPage({ page, ports, ... })` into `containerEl` and whose `hide()` disposes the React root; plugin unload disposes any surface still mounted. The React package has no `SettingsShell`, tablist, sub-nav, or navigation memory. Verified by `PiviSettingTabHost.test.ts` (mount/dispose lifecycle, locale change → `update()`) and by `rg` in the contract test for the deleted components.
-- [ ] Built-in tools page contains a **Subagents** section (the three former Subagents rows); About remains the last section of the General content; Environment is its own page. `SettingsPageId` has exactly ten values: `general`, `environment`, `models`, `builtInTools`, `webTools`, `mcpServers`, `skills`, `prompt`, `commands`, `toolbar`. Verified by a jsdom test over `SETTINGS_PAGES` and page renders.
+- [ ] Each navigable page is a declarative `SettingDefinitionPage` whose sole `items` entry mounts `mountSettingsPage({ page, ports, ... })`; General and About use that render-item contract directly at the root. Render cleanup and plugin unload dispose mounted React roots. The React package has no `SettingsShell`, tablist, sub-nav, or navigation memory. Verified by `PiviSettingTabHost.test.ts` (mount/dispose lifecycle, locale change → `update()`) and by `rg` in the contract test for the deleted components.
+- [ ] Built-in tools contains a **Subagents** section; About is standalone root content; Environment is a General-group page. `SettingsPageId` has exactly sixteen values: `general`, `appearance`, `chat`, `personalization`, `input`, `sessions`, `about`, `environment`, `models`, `builtInTools`, `webTools`, `mcpServers`, `skills`, `prompt`, `commands`, `toolbar`. Verified by a jsdom test over `SETTINGS_PAGES` and page renders.
 - [ ] Every page composes only the approved primitives (`SettingsPage`, `SettingsSection`, `SettingRow`, `SettingsCollection`, `DisclosureCard`, `SettingsInlineActions`, `SettingsFeedback`, and the controls under `primitives/controls/`). A contract test rejects raw structural class names (`pivi-settings-page`, `pivi-settings-section`, `pivi-settings-row`, `pivi-settings-collection`, `pivi-settings-card`, `pivi-settings-actions`, `pivi-settings-feedback`, `pivi-sp-`, `pivi-provider-card`, `pivi-mcp-card`, `pivi-web-provider-`) in any settings TSX outside `settings/primitives/`.
 - [ ] Every collection item renders through `SettingsCollection` as either a `DisclosureCard` (item has an editable body: providers, web providers, MCP servers, workspace commands, removable/configurable toolbar items, workflow and custom prompt modules) or a flat `SettingRow` with `SettingsInlineActions` (item has nothing to edit: installed and remote skills, internal commands, required toolbar actions, curated editor commands; source/folder/identifier/target go in the row description). No card ever has an empty or metadata-only body. `.pivi-sp-*`, `.pivi-provider-card`, `.pivi-mcp-card`, `.pivi-web-provider-*`, `.pivi-tools-settings-page`, `.pivi-settings-tabs`, `.pivi-settings-tab`, and bespoke prompt-module card selectors no longer exist in `styles/`. Verified by the style contract test.
 - [ ] Feature CSS under `styles/settings/features/` contains no `margin*`, `padding*`, `gap`, `row-gap`, `column-gap`, `border-radius`, `border`, or `border*-color` declarations, and every `color` / `background*` value is exactly one `var(--pivi-settings-*)` or `var(--pivi-host-*)` token. `--pivi-settings-*` custom properties are declared only in `styles/settings/system/tokens.css`. Verified by `tests/unit/ui/settingsStyleContract.test.ts` parsing every feature file, with `tests/unit/ui/settingsStyleContract.allowlist.json` for reviewed `file:selector:property` exceptions (target: empty).
@@ -48,10 +48,10 @@ Ship one enforced settings UI system, move navigation onto Obsidian 1.13's nativ
 
 In scope:
 
-- `minAppVersion` 1.13.0; native page navigation through `getSettingDefinitions()`; `PiviSettingsPage` host class; deletion of `display()`, `SettingsShell`, tab CSS, and the 1.12 route.
+- `minAppVersion` 1.13.0; native page navigation through `getSettingDefinitions()`; declarative page/render items; deletion of `display()`, `SettingsShell`, tab CSS, and the 1.12 route.
 - `settings/primitives/` module with the approved primitives, a shrinking legacy allowlist during migration, and a written usage contract in `packages/pivi-react/AGENTS.md`.
 - CSS restructure: `styles/settings/system/*.css` (tokens, host reset, layout, row, controls, card, feedback) plus `styles/settings/features/*.css` limited to feature-internal structure; `manifest.mjs` updated; legacy settings CSS files deleted.
-- Migration of all ten pages onto the primitives, including splitting Tools into three pages, folding Subagents into Built-in tools, and moving Environment out of General.
+- Migration of all sixteen settings destinations onto the primitives, including splitting General into focused pages, splitting Tools into three pages, folding Subagents into Built-in tools, and separating About as root content.
 - `mountSettingsPage` mount API; location-aware `searchMetadata.ts` → `SETTINGS_PAGES` inventory with per-page aliases.
 - Contract tests (style declarations, raw-class usage, page inventory, alias ownership), jsdom behavior tests, host lifecycle tests, i18n catalog updates, documentation sync.
 
@@ -71,8 +71,8 @@ Not in scope:
 | Date | Decision | Rationale | Affected workstreams |
 |---|---|---|---|
 | 2026-09-03 | Navigation is Obsidian-native: `minAppVersion` 1.13.0, `getSettingDefinitions()` returns page/group entries, each page is an imperative `SettingPage` mounting one React page; `display()` and the React tab shell are deleted. Supersedes the earlier draft's React-owned four-tab + scrollable sub-nav design. | The draft's search fallback ("route the best-matching alias") is impossible: `render` never receives the query, so page routing requires per-page Obsidian items. Native pages give sub-page navigation, back button, keyboard navigation, and search routing with zero custom nav code, and remove the sub-nav scroll/fade/drag/roving-focus/memory surface entirely. 1.13 has been public since 2026-07-30; owner accepted dropping 1.12. | WS-02 |
-| 2026-09-03 | Root layout order: page Models (no group heading); group Agent → Built-in tools · Web tools · MCP servers · Skills · Prompt; group Editor → Commands · Toolbar; group General → page Environment, then the General content as one `render` item. | Most-used destinations sit one click from the top; General's long content does not bury the entries; a "Models" heading over a single "Models" entry is redundant. Confirmed by owner. | WS-02, WS-03 |
-| 2026-09-03 | Page inventory: Subagents (3 rows) becomes a section of Built-in tools; About (3 rows) stays at the end of General; Environment (entry list + bulk import) is a page. Ten `SettingsPageId`s. | Obsidian sub-page guidance: two or three settings stay on the parent; `spawn_agent` is a built-in tool. Confirmed by owner. | WS-02, WS-03, WS-04 |
+| 2026-09-03 | Root layout is General root content (Language); General group → Appearance · Chat behavior · Personalization & context · Input & shortcuts · Session files · Environment; Agent group → Models · Built-in tools · Web tools · MCP servers · Skills · Prompt; Editor group → Commands · Toolbar; About root content. This supersedes the initial Models-first layout. | Focused pages keep each settings surface short while Language remains immediately available and About remains outside task-oriented groups. Confirmed by owner in the final reorganization. | WS-02, WS-03, post-WS-06 polish |
+| 2026-09-03 | Page inventory has sixteen `SettingsPageId`s: fourteen navigable pages plus General and About root content. Subagents remains a section of Built-in tools; Environment is in General. This supersedes the original ten-destination inventory. | The final information architecture splits the former long General surface into coherent tasks without adding custom navigation. | WS-02, WS-03, WS-04, post-WS-06 polish |
 | 2026-09-03 | Pages are imperative React mounts (`page: () => new PiviSettingsPage(id)`), one shared `SettingsPorts`; no declarative `items` / `SettingDefinitionList` inside pages. | MCP editor, provider OAuth flows, and prompt module editors are stateful React trees; splitting them across dozens of `render` callbacks would duplicate state in two systems. Page-level search granularity is sufficient. Confirmed by owner. | WS-02 |
 | 2026-09-03 | Search aliases: each page entry's `aliases` are the localized labels of every row on that page; the former flat `SETTINGS_SEARCH_KEYS` list is partitioned by page in `SETTINGS_PAGES`. `desc` is a one-line localized page description. | Obsidian indexes page entries by name/desc/aliases; this is the only way a search for "bash" opens Built-in tools. | WS-02 |
 | 2026-09-03 | Pages are declarative `SettingDefinitionPage`s whose `items` hold exactly one `SettingDefinitionRender` (`name`, `desc`, `aliases`, `render` mounting the React page); no `page: () => SettingPage` factory and no `PiviSettingsPage` subclass. | Verified in the live app through `app.setting.searchIndex`: `SettingDefinitionPage` has no `aliases` in the 1.13 types and Obsidian does not index a page's own aliases; imperative `page` factories contribute zero search entries. Only definition items inside a page are indexed (with `pagePath`), so a single render item per page is the documented way to get page-level search routing. It also removes a class and its lifecycle races. | WS-02 |
@@ -98,7 +98,8 @@ Not in scope:
 ```ts
 // packages/pivi-react/src/settings/navigation.ts
 export type SettingsPageId =
-  | 'general' | 'environment' | 'models'
+  | 'general' | 'appearance' | 'chat' | 'personalization'
+  | 'input' | 'sessions' | 'about' | 'environment' | 'models'
   | 'builtInTools' | 'webTools' | 'mcpServers' | 'skills' | 'prompt'
   | 'commands' | 'toolbar';
 export interface SettingsPageDescriptor {
@@ -110,11 +111,12 @@ export interface SettingsPageDescriptor {
 export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescriptor>>;
 export type SettingsRootEntry =
   | { kind: 'page'; page: SettingsPageId }
-  | { kind: 'group'; labelKey: TranslationKey; items: readonly ({ kind: 'page'; page: SettingsPageId } | { kind: 'content'; page: 'general' })[] };
-export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[]; // models; agent[...]; editor[...]; general[environment]; content general
+  | { kind: 'content'; page: 'general' | 'about' }
+  | { kind: 'group'; labelKey: TranslationKey; items: readonly { kind: 'page'; page: SettingsPageId }[] };
+export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[]; // content general; general[...]; agent[...]; editor[...]; content about
 ```
 
-- `PiviSettingTabHost.getSettingDefinitions()` maps `SETTINGS_ROOT_LAYOUT` to `SettingDefinitionItem[]`: `{ kind: 'page' }` → `{ type: 'page', name, desc, items: [renderItem] }`; `{ kind: 'group' }` → `{ type: 'group', heading, items }`; `{ kind: 'content' }` → the same `renderItem` used inside pages. `renderItem` is `{ name, desc, aliases, render: (setting) => mount into setting.settingEl }` with the `.pivi-settings-definition-host` reset. Search entries come from that item (`pagePath` is empty for General content and one page name for the nine pages). It must be cheap: labels come from the in-memory translator only. Locale changes call `update()` as today. There is no `page:` factory and no `SettingPage` subclass.
+- `PiviSettingTabHost.getSettingDefinitions()` maps `SETTINGS_ROOT_LAYOUT` to `SettingDefinitionItem[]`: `{ kind: 'page' }` → `{ type: 'page', name, desc, items: [renderItem] }`; `{ kind: 'group' }` → `{ type: 'group', heading, items }`; `{ kind: 'content' }` → the same `renderItem` used inside pages. `renderItem` is `{ name, desc, aliases, render: (setting) => mount into setting.settingEl }` with the `.pivi-settings-definition-host` reset. Search entries come from that item (`pagePath` is empty for General/About root content and one page name for the fourteen navigable pages). It must be cheap: labels come from the in-memory translator only. Locale changes call `update()` as today. There is no `page:` factory and no `SettingPage` subclass.
 - The host tracks live surfaces in a `Set` and disposes them on plugin unload because render cleanup is not guaranteed on window destroy. A per-page generation guard drops a late mount that resolves after cleanup ran.
 - `mountSettingsPage({ page, ports, container, i18n, platform, ownerDocument, ownerWindow, portalContainer }): Promise<MountedSurface>` replaces `mountSettings`. `SettingsRoot` becomes a page switch over `SettingsPageId`.
 
@@ -153,7 +155,7 @@ Deleted in WS-06: `settings/base.css`, `provider-settings.css`, `command-editor.
 
 ### i18n
 
-Add `settings.groups.{agent,editor,general}`, `settings.pages.<id>.{label,description}` for the ten page ids, and any flat-row metadata labels needed by WS-03–WS-05. Remove `settings.tabs.*`. Mirror all ten locales in the same commit as the code that uses them.
+Add `settings.groups.{agent,editor,general}`, `settings.pages.<id>.{label,description}` for the settings destinations that need dedicated copy, and any flat-row metadata labels needed by WS-03–WS-05. Remove `settings.tabs.*`. Mirror all ten locales in the same commit as the code that uses them.
 
 ## Workstreams
 
@@ -198,7 +200,7 @@ Contract test requirements (`settingsStyleContract.test.ts`):
 
 jsdom / unit behavior:
 
-- `PiviSettingTabHost.getSettingDefinitions()` returns the exact root order and types; every page entry has non-empty `name`, `desc`, `aliases`; each former search key is owned by exactly one page; locale change triggers `update()`; `PiviSettingsPage.display()` mounts and `hide()` disposes; unload disposes live surfaces; no `display` method on the tab.
+- `PiviSettingTabHost.getSettingDefinitions()` returns the exact root order and types; every page entry has non-empty `name`, `desc`, `aliases`; each search key is owned by exactly one destination; locale change triggers `update()`; render callbacks mount and clean up their page; unload disposes live surfaces; no `display` method on the tab.
 - `DisclosureCard`: toggle and remove clicks do not change `open`; drag handle keyboard sorting works; header click toggles; `SettingsCollection` renders empty state, add trigger, flat rows with actions.
 - Each page renders under `mountSettingsPage({ page })` with its sections in the documented order.
 
@@ -208,8 +210,8 @@ Human visual sign-off (owner only, light and dark themes, settings window at ~48
 
 | Surface | States to inspect |
 |---|---|
-| Root tab | Models entry, Agent / Editor / General group headings, Environment entry, General content beneath; entry hover/focus; Obsidian keyboard navigation between entries |
-| General content | section heading/divider rhythm, row dividers, control alignment, hotkey grid as rows, About at the end |
+| Root tab | General content, General / Agent / Editor group headings, About content; entry hover/focus; Obsidian keyboard navigation between entries |
+| General destinations | Language content plus Appearance, Chat behavior, Personalization & context, Input & shortcuts, Session files, and Environment pages; section rhythm and control alignment |
 | Environment page | titlebar + back, stacked textarea layout |
 | Models page | provider `DisclosureCard` collapsed, hover, open, dragging, disabled toggle; toggle/remove hover emphasis glyph-sized; add trigger |
 | Search | typing a General row label or "provider" opens the right destination |
@@ -220,9 +222,9 @@ Performance/bundle: no new dependency; `check:bundle-size` must stay within the 
 
 ## Documentation sync
 
-- Numbered developer docs: `docs/08-presentation-and-settings.md` (Settings data flow: native page navigation, `PiviSettingsPage`, `mountSettingsPage`, page inventory, alias ownership, primitives; replace the "eight/nine primary tabs" paragraphs; Styling section for the `system/` vs `features/` split); `docs/10-roadmap-release-and-maintenance.md` (minimum Obsidian 1.13 note for the 0.24.0 release).
+- Numbered developer docs: `docs/08-presentation-and-settings.md` (Settings data flow: native page navigation, declarative render items, `mountSettingsPage`, page inventory, alias ownership, primitives; Styling section for the `system/` vs `features/` split); `docs/10-roadmap-release-and-maintenance.md` (minimum Obsidian 1.13 note for the 0.24.0 release).
 - Nearest local guidance: `packages/pivi-react/AGENTS.md` (replace the tablist/no-drag rule, the eight-tab rule, section/list-header rules, and every card-idiom rule with the primitive contract and page inventory); `packages/pivi-react/styles/AGENTS.md` (directory layout, settings conventions, gotchas referencing deleted files, manifest count).
-- Parent/package guidance: `src/app/AGENTS.md` (`PiviSettingTabHost` root layout, `PiviSettingsPage` lifecycle, unload disposal); `packages/pivi-react/src/i18n/AGENTS.md` only if catalog workflow changes (expected `None`); `tests/AGENTS.md` if the contract test introduces a new category (expected `None`).
+- Parent/package guidance: `src/app/AGENTS.md` (`PiviSettingTabHost` root layout, render lifecycle, unload disposal); `packages/pivi-react/src/i18n/AGENTS.md` only if catalog workflow changes (expected `None`); `tests/AGENTS.md` if the contract test introduces a new category (expected `None`).
 - Root guidance: `AGENTS.md` "Minimum Obsidian" → 1.13.0; Architecture Status "Settings search compatibility" bullet rewritten for native pages; README minimum-version text if present.
 
 ## Progress and handoff

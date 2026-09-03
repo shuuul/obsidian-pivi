@@ -74,6 +74,7 @@ export async function* streamPiChatTurn(
             usage,
             turn,
             pendingPersistenceMessages,
+            { currentTurnAlreadyCounted: true },
           ),
         });
       } else if ((event.message as { role?: unknown }).role === 'toolResult') {
@@ -89,6 +90,7 @@ export async function* streamPiChatTurn(
               estimatedUsage,
               turn,
               pendingPersistenceMessages,
+              { currentTurnAlreadyCounted: true },
             ),
           });
         }
@@ -235,7 +237,9 @@ async function runPromptLifecycle(
       deps.resolveModel(),
     ) ?? buildEstimatedUsageInfo(nextTurn.context.messages, deps.resolveModel());
     const usage = latestUsage
-      ? attachContextEnvelope(deps.compaction, latestUsage, turn)
+      ? attachContextEnvelope(deps.compaction, latestUsage, turn, [], {
+          currentTurnAlreadyCounted: true,
+        })
       : null;
     if (!usage || nextTurn.toolResults.length === 0) {
       const previousUpdate = await previousPrepareNextTurn?.(nextTurn, signal);
@@ -323,7 +327,9 @@ async function runPromptLifecycle(
   }
   const latestUsage = latestUsageFromMessages(agent.state.messages, deps.resolveModel());
   const usage = latestUsage
-    ? attachContextEnvelope(deps.compaction, latestUsage, turn)
+    ? attachContextEnvelope(deps.compaction, latestUsage, turn, [], {
+        currentTurnAlreadyCounted: true,
+      })
     : null;
   if (refreshedModelMetadata && usage) {
     // Replace the first turn's pre-load context estimate with the runtime

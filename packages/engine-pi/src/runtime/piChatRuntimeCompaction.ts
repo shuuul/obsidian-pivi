@@ -150,6 +150,11 @@ function assistantProviderTokens(message: AgentMessage): number | null {
   return tokens > 0 ? tokens : null;
 }
 
+function assistantMatchesModel(message: AgentMessage, model: PiResolvedModel): boolean {
+  const record = message as unknown as Record<string, unknown>;
+  return record.provider === model.provider && record.model === model.id;
+}
+
 interface ProviderAnchorProjection {
   calibration: number;
   tokens: number;
@@ -166,10 +171,12 @@ function findProviderAnchor(
   const pendingOnly = deps.sessionTree && pendingMessages.length > 0
     ? missingAgentMessages(deps.sessionTree.loadAgentMessages(), pendingMessages)
     : pendingMessages;
-  const key = modelKey(deps);
+  const model = deps.resolveModel();
+  if (!model) return null;
+  const key = `${model.provider}/${model.id}`;
   for (let pendingIndex = pendingOnly.length - 1; pendingIndex >= 0; pendingIndex--) {
     const message = pendingOnly[pendingIndex];
-    if (!message) continue;
+    if (!message || !assistantMatchesModel(message, model)) continue;
     const tokens = assistantProviderTokens(message);
     if (!tokens) continue;
     const localAtAnchor = estimateSystemTokens(deps.agent)
@@ -188,6 +195,7 @@ function findProviderAnchor(
   for (let entryIndex = entries.length - 1; entryIndex >= 0; entryIndex--) {
     const entry = entries[entryIndex];
     if (!entry || entry.type !== 'message' || !('message' in entry)) continue;
+    if (!assistantMatchesModel(entry.message, model)) continue;
     const tokens = assistantProviderTokens(entry.message);
     if (!tokens) continue;
     const localAtAnchor = estimateSystemTokens(deps.agent) + index.tokensBetween(0, entryIndex + 1);
@@ -236,6 +244,7 @@ export function attachContextEnvelope(
   usage: UsageInfo,
   turn?: PreparedChatTurn,
   pendingMessages: AgentMessage[] = [],
+  options: { currentTurnAlreadyCounted?: boolean } = {},
 ): UsageInfo {
   const categories = deps.sessionTree
     ? estimateActiveContextCategories(deps.sessionTree.getLinearLlmContextEntries())
@@ -253,7 +262,7 @@ export function attachContextEnvelope(
     categories.recentConversation += pending.recentConversation;
     categories.toolAndAgentResults += pending.toolAndAgentResults;
   }
-  const selectedContext = deps.sessionTree && turn
+  const selectedContext = deps.sessionTree && turn && !options.currentTurnAlreadyCounted
     ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
     : 0;
   const resolvedModel = deps.resolveModel();
