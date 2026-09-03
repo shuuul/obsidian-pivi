@@ -7,7 +7,7 @@ import { useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
-import { BadgeListInput, SettingRow, SettingsSectionHeading } from '../controls';
+import { BadgeListInput, SettingRow, SettingsSection } from '../controls';
 import { ExternalSetupLink } from '../ExternalSetupLink';
 import { getModelProviderSetupLink } from '../providerSetupLinks';
 import { ProviderApiKeyField } from './ProviderCredentials';
@@ -89,8 +89,7 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
   };
 
   return (
-    <>
-      <SettingsSectionHeading level={3}>{t('settings.modelsTab.endpointHeading')}</SettingsSectionHeading>
+    <SettingsSection title={t('settings.modelsTab.endpointHeading')}>
       {setupLink ? (
         <p className="pivi-setting-description">
           <ExternalSetupLink href={setupLink.href} kind={setupLink.kind} />
@@ -133,19 +132,15 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
           onError={onError}
         />
       ) : null}
-      <div className="pivi-setting-stack">
-        <SettingRow name={t('settings.modelsTab.modelIds')} description={t('settings.modelsTab.modelIdsDesc')}>
-          <BadgeListInput
-            values={modelIds}
-            placeholder={t('settings.modelsTab.modelIdsPlaceholder')}
-            inputLabel={t('settings.modelsTab.modelIdsInput')}
-            removeLabel={value => t('settings.modelsTab.removeModelId', { value })}
-            onAdd={addModelIds}
-            onRemove={removeModelId}
-          />
-        </SettingRow>
-      </div>
-      <div className="pivi-custom-provider-actions">
+      <SettingRow stacked name={t('settings.modelsTab.modelIds')} description={t('settings.modelsTab.modelIdsDesc')}>
+        <BadgeListInput
+          values={modelIds}
+          placeholder={t('settings.modelsTab.modelIdsPlaceholder')}
+          inputLabel={t('settings.modelsTab.modelIdsInput')}
+          removeLabel={value => t('settings.modelsTab.removeModelId', { value })}
+          onAdd={addModelIds}
+          onRemove={removeModelId}
+        />
         <button
           className="pivi-provider-fetch-models-btn"
           type="button"
@@ -154,7 +149,7 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
         >
           {fetching ? t('settings.modelsTab.fetchingModels') : t('settings.modelsTab.fetchModels')}
         </button>
-      </div>
-    </>
+      </SettingRow>
+    </SettingsSection>
   );
 }

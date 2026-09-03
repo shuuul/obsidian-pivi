@@ -340,6 +340,59 @@ describe('Settings primitives', () => {
     expect(textarea.getAttribute('aria-labelledby')).toContain(description.id);
   });
 
+  it('nests SettingsSection without a surface inside a section or disclosure body', () => {
+    renderPrimitives(
+      <SettingsSection title="Outer">
+        <SettingsSection title="Inner from section">
+          <SettingRow name="Nested row" />
+        </SettingsSection>
+      </SettingsSection>,
+    );
+    const outer = screen.getByRole('heading', { name: 'Outer' }).closest('.pivi-settings-section');
+    const inner = screen.getByRole('heading', { name: 'Inner from section' }).closest('.pivi-settings-section');
+    expect(outer).not.toHaveClass('pivi-settings-section--nested');
+    expect(inner).toHaveClass('pivi-settings-section--nested');
+
+    renderPrimitives(
+      <DisclosureCard name="Card" open onToggle={() => undefined}>
+        <SettingsSection title="Inner from card">
+          <SettingRow name="Card row" />
+        </SettingsSection>
+      </DisclosureCard>,
+    );
+    expect(screen.getByRole('heading', { name: 'Inner from card' }).closest('.pivi-settings-section'))
+      .toHaveClass('pivi-settings-section--nested');
+  });
+
+  it('omits the SettingsSection heading when title is absent', () => {
+    renderPrimitives(
+      <SettingsSection>
+        <SettingRow name="Only row" />
+      </SettingsSection>,
+    );
+    expect(document.querySelector('.pivi-settings-section__header')).toBeNull();
+    expect(document.querySelector('.pivi-settings-section-heading')).toBeNull();
+    expect(screen.getByText('Only row').closest('.pivi-settings-section__body')).not.toBeNull();
+  });
+
+  it('places DisclosureCard actions before the trailing chevron', () => {
+    renderPrimitives(
+      <DisclosureCard
+        name="Ordered card"
+        open={false}
+        onToggle={() => undefined}
+        actions={<SettingsRemoveButton ariaLabel="Remove ordered" onClick={() => undefined} />}
+      />,
+    );
+    const header = document.querySelector('.pivi-settings-card__header');
+    expect(header).not.toBeNull();
+    const children = Array.from(header?.children ?? []).map(child => child.className);
+    expect(children[0]).toContain('pivi-settings-card__toggle');
+    expect(children[1]).toContain('pivi-settings-actions');
+    expect(children[2]).toContain('pivi-settings-card__chevron');
+    expect(header?.querySelector('.pivi-settings-card__toggle .pivi-settings-card__chevron')).toBeNull();
+  });
+
   it('renders SettingsSection actions on the heading row', () => {
     renderPrimitives(
       <SettingsSection

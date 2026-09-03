@@ -8,7 +8,7 @@ import { useId, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsCatalogPort } from '../../ports';
-import { Select, SettingsSectionHeading } from '../controls';
+import { Select, SettingRow, SettingsSection } from '../controls';
 import { matchCatalogModels } from './catalogModelMatching';
 
 export interface ModelChecklistProps {
@@ -229,141 +229,136 @@ export function ModelChecklist({
   const catalogModels = showCatalogId ? catalog.listCatalogModels() : [];
   const showMaxTokensOverride = !!customProvider && !!onPatchModelMaxTokensOverride;
   return (
-    <>
-      <SettingsSectionHeading level={3}>{t('settings.modelsTab.candidateModels')}</SettingsSectionHeading>
-      <div className="pivi-models-checklist-grid">
-        {providerModels.length === 0 ? (
-          <div className="pivi-no-models-message">{t('settings.modelsTab.noModels')}</div>
-        ) : (
-          providerModels.map(model => {
-            const inputId = `checkbox-${providerId}-${model.value}`.replace(/[^a-zA-Z0-9_-]/g, '-');
-            const checked = settings.visibleModels.includes(model.value);
-            const modelDef = customProvider?.models.find(
-              def => `${customProvider.id}/${def.id}` === model.value,
-            );
-            const catalogModelId = modelDef?.catalogModelId ?? '';
-            const maxTokensOverride = modelDef?.maxTokensOverride
-              ? String(modelDef.maxTokensOverride)
-              : '';
-            const contextWindowOverride = getContextWindowOverride?.(model.value);
-            const showCompatibilityOverrides = !!modelDef && (
-              showMaxTokensOverride
-              || !!onPatchContextWindowOverride
-              || !!onPatchReasoningOverride
-              || (customProvider?.api === 'openai-completions' && !!onPatchThinkingFormatOverride)
-            );
-            return (
-              <div className="pivi-model-checkbox-wrapper" key={model.value}>
-                <input
-                  id={inputId}
-                  className="pivi-model-checkbox"
-                  type="checkbox"
-                  checked={checked}
-                  onChange={event => onToggleModel(model.value, event.target.checked)}
-                />
-                <div className="pivi-model-checkbox-content">
-                  <label className="pivi-model-checkbox-label" htmlFor={inputId}>
-                    <span className="pivi-model-checkbox-title">{model.label}</span>
-                    {model.description ? <span className="pivi-model-checkbox-desc">{model.description}</span> : null}
-                  </label>
-                  {showCatalogId && modelDef ? (
-                    <ModelCatalogIdInput
-                      key={`${model.value} catalog ${catalogModelId}`}
-                      value={catalogModelId}
-                      providerModelName={modelDef.name}
-                      catalogModels={catalogModels}
-                      placeholder={t('settings.modelsTab.catalogModelIdPlaceholder')}
-                      ariaLabel={t('settings.modelsTab.catalogModelIdAria', { name: model.label })}
-                      description={t('settings.modelsTab.catalogModelIdDesc')}
-                      onCommit={next => { onPatchModelCatalogId(modelDef.id, next); }}
-                    />
+    <SettingsSection title={t('settings.modelsTab.candidateModels')}>
+      {providerModels.length === 0 ? (
+        <p className="pivi-no-models-message">{t('settings.modelsTab.noModels')}</p>
+      ) : providerModels.map(model => {
+        const inputId = `checkbox-${providerId}-${model.value}`.replace(/[^a-zA-Z0-9_-]/g, '-');
+        const checked = settings.visibleModels.includes(model.value);
+        const modelDef = customProvider?.models.find(
+          def => `${customProvider.id}/${def.id}` === model.value,
+        );
+        const catalogModelId = modelDef?.catalogModelId ?? '';
+        const maxTokensOverride = modelDef?.maxTokensOverride
+          ? String(modelDef.maxTokensOverride)
+          : '';
+        const contextWindowOverride = getContextWindowOverride?.(model.value);
+        const showCompatibilityOverrides = !!modelDef && (
+          showMaxTokensOverride
+          || !!onPatchContextWindowOverride
+          || !!onPatchReasoningOverride
+          || (customProvider?.api === 'openai-completions' && !!onPatchThinkingFormatOverride)
+        );
+        const extras = showCatalogId || showCompatibilityOverrides;
+        return (
+          <SettingRow
+            key={model.value}
+            stacked={extras}
+            name={model.label}
+            description={model.description}
+          >
+            <input
+              id={inputId}
+              className="pivi-model-checkbox"
+              type="checkbox"
+              checked={checked}
+              onChange={event => onToggleModel(model.value, event.target.checked)}
+            />
+            {showCatalogId && modelDef ? (
+              <ModelCatalogIdInput
+                key={`${model.value} catalog ${catalogModelId}`}
+                value={catalogModelId}
+                providerModelName={modelDef.name}
+                catalogModels={catalogModels}
+                placeholder={t('settings.modelsTab.catalogModelIdPlaceholder')}
+                ariaLabel={t('settings.modelsTab.catalogModelIdAria', { name: model.label })}
+                description={t('settings.modelsTab.catalogModelIdDesc')}
+                onCommit={next => { onPatchModelCatalogId(modelDef.id, next); }}
+              />
+            ) : null}
+            {showCompatibilityOverrides ? (
+              <details className="pivi-model-compatibility">
+                <summary>{t('settings.modelsTab.advancedCompatibility')}</summary>
+                <div className="pivi-model-compatibility-fields">
+                  {modelDef && onPatchContextWindowOverride ? (
+                    <label className="pivi-model-compatibility-field">
+                      <span>{t('settings.modelsTab.contextWindowOverrideLabel')}</span>
+                      <ModelMaxTokensOverrideInput
+                        key={`${model.value} context ${contextWindowOverride ?? ''}`}
+                        value={contextWindowOverride ? String(contextWindowOverride) : ''}
+                        placeholder={t('settings.modelsTab.overrideAuto')}
+                        ariaLabel={t('settings.modelsTab.contextWindowOverrideAria', { name: model.label })}
+                        description={t('settings.modelsTab.contextWindowOverrideDesc')}
+                        onCommit={next => onPatchContextWindowOverride(model.value, next)}
+                      />
+                    </label>
                   ) : null}
-                  {showCompatibilityOverrides ? (
-                    <details className="pivi-model-compatibility">
-                      <summary>{t('settings.modelsTab.advancedCompatibility')}</summary>
-                      <div className="pivi-model-compatibility-fields">
-                        {modelDef && onPatchContextWindowOverride ? (
-                          <label className="pivi-model-compatibility-field">
-                            <span>{t('settings.modelsTab.contextWindowOverrideLabel')}</span>
-                            <ModelMaxTokensOverrideInput
-                              key={`${model.value} context ${contextWindowOverride ?? ''}`}
-                              value={contextWindowOverride ? String(contextWindowOverride) : ''}
-                              placeholder={t('settings.modelsTab.overrideAuto')}
-                              ariaLabel={t('settings.modelsTab.contextWindowOverrideAria', { name: model.label })}
-                              description={t('settings.modelsTab.contextWindowOverrideDesc')}
-                              onCommit={next => onPatchContextWindowOverride(model.value, next)}
-                            />
-                          </label>
-                        ) : null}
-                        {showMaxTokensOverride && modelDef ? (
-                          <label className="pivi-model-compatibility-field">
-                            <span>{t('settings.modelsTab.maxTokensOverrideLabel')}</span>
-                            <ModelMaxTokensOverrideInput
-                              key={`${model.value} maxTokens ${maxTokensOverride}`}
-                              value={maxTokensOverride}
-                              placeholder={t('settings.modelsTab.overrideAuto')}
-                              ariaLabel={t('settings.modelsTab.maxTokensOverrideAria', { name: model.label })}
-                              description={t('settings.modelsTab.maxTokensOverrideDesc')}
-                              onCommit={next => { onPatchModelMaxTokensOverride(modelDef.id, next); }}
-                            />
-                          </label>
-                        ) : null}
-                        {modelDef && onPatchReasoningOverride ? (
-                          <label
-                            className="pivi-model-compatibility-field"
-                            title={t('settings.modelsTab.reasoningOverrideDesc')}
-                          >
-                            <span>{t('settings.modelsTab.reasoningOverrideLabel')}</span>
-                            <Select
-                              label={t('settings.modelsTab.reasoningOverrideAria', { name: model.label })}
-                              value={modelDef.reasoningOverride === undefined
-                                ? 'auto'
-                                : modelDef.reasoningOverride ? 'enabled' : 'disabled'}
-                              onChange={value => onPatchReasoningOverride(
-                                modelDef.id,
-                                value === 'auto' ? null : value === 'enabled',
-                              )}
-                            >
-                              <option value="auto">{t('settings.modelsTab.overrideAuto')}</option>
-                              <option value="enabled">{t('settings.modelsTab.overrideEnabled')}</option>
-                              <option value="disabled">{t('settings.modelsTab.overrideDisabled')}</option>
-                            </Select>
-                          </label>
-                        ) : null}
-                        {modelDef && modelDef.reasoningOverride !== false
-                          && customProvider?.api === 'openai-completions'
-                          && onPatchThinkingFormatOverride ? (
-                            <label
-                              className="pivi-model-compatibility-field"
-                              title={t('settings.modelsTab.thinkingFormatOverrideDesc')}
-                            >
-                              <span>{t('settings.modelsTab.thinkingFormatOverrideLabel')}</span>
-                              <Select
-                                label={t('settings.modelsTab.thinkingFormatOverrideAria', { name: model.label })}
-                                value={modelDef.thinkingFormatOverride ?? 'auto'}
-                                onChange={value => onPatchThinkingFormatOverride(
-                                  modelDef.id,
-                                  value === 'auto' ? null : value as CustomProviderThinkingFormat,
-                                )}
-                              >
-                                <option value="auto">{t('settings.modelsTab.overrideAuto')}</option>
-                                <option value="openai">OpenAI</option>
-                                <option value="zai">Z.AI</option>
-                                <option value="deepseek">DeepSeek</option>
-                                <option value="qwen">Qwen</option>
-                                <option value="qwen-chat-template">Qwen chat template</option>
-                              </Select>
-                            </label>
-                          ) : null}
-                      </div>
-                    </details>
+                  {showMaxTokensOverride && modelDef ? (
+                    <label className="pivi-model-compatibility-field">
+                      <span>{t('settings.modelsTab.maxTokensOverrideLabel')}</span>
+                      <ModelMaxTokensOverrideInput
+                        key={`${model.value} maxTokens ${maxTokensOverride}`}
+                        value={maxTokensOverride}
+                        placeholder={t('settings.modelsTab.overrideAuto')}
+                        ariaLabel={t('settings.modelsTab.maxTokensOverrideAria', { name: model.label })}
+                        description={t('settings.modelsTab.maxTokensOverrideDesc')}
+                        onCommit={next => { onPatchModelMaxTokensOverride(modelDef.id, next); }}
+                      />
+                    </label>
                   ) : null}
+                  {modelDef && onPatchReasoningOverride ? (
+                    <label
+                      className="pivi-model-compatibility-field"
+                      title={t('settings.modelsTab.reasoningOverrideDesc')}
+                    >
+                      <span>{t('settings.modelsTab.reasoningOverrideLabel')}</span>
+                      <Select
+                        label={t('settings.modelsTab.reasoningOverrideAria', { name: model.label })}
+                        value={modelDef.reasoningOverride === undefined
+                          ? 'auto'
+                          : modelDef.reasoningOverride ? 'enabled' : 'disabled'}
+                        onChange={value => onPatchReasoningOverride(
+                          modelDef.id,
+                          value === 'auto' ? null : value === 'enabled',
+                        )}
+                      >
+                        <option value="auto">{t('settings.modelsTab.overrideAuto')}</option>
+                        <option value="enabled">{t('settings.modelsTab.overrideEnabled')}</option>
+                        <option value="disabled">{t('settings.modelsTab.overrideDisabled')}</option>
+                      </Select>
+                    </label>
+                  ) : null}
+                  {modelDef && modelDef.reasoningOverride !== false
+                    && customProvider?.api === 'openai-completions'
+                    && onPatchThinkingFormatOverride ? (
+                      <label
+                        className="pivi-model-compatibility-field"
+                        title={t('settings.modelsTab.thinkingFormatOverrideDesc')}
+                      >
+                        <span>{t('settings.modelsTab.thinkingFormatOverrideLabel')}</span>
+                        <Select
+                          label={t('settings.modelsTab.thinkingFormatOverrideAria', { name: model.label })}
+                          value={modelDef.thinkingFormatOverride ?? 'auto'}
+                          onChange={value => onPatchThinkingFormatOverride(
+                            modelDef.id,
+                            value === 'auto' ? null : value as CustomProviderThinkingFormat,
+                          )}
+                        >
+                          <option value="auto">{t('settings.modelsTab.overrideAuto')}</option>
+                          <option value="openai">OpenAI</option>
+                          <option value="zai">Z.AI</option>
+                          <option value="deepseek">DeepSeek</option>
+                          <option value="qwen">Qwen</option>
+                          <option value="qwen-chat-template">Qwen chat template</option>
+                        </Select>
+                      </label>
+                    ) : null}
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </>
+              </details>
+            ) : null}
+          </SettingRow>
+        );
+      })}
+    </SettingsSection>
   );
 }

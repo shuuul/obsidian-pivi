@@ -1,8 +1,9 @@
-import { type CSSProperties, type ReactNode, useId } from 'react';
+import { type CSSProperties, type ReactNode, useContext, useId } from 'react';
 
 import { PlatformIcon } from '../../icons';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { SettingsInlineActions } from './SettingsInlineActions';
+import { SettingsNestingContext } from './SettingsSection';
 
 export function DisclosureCard({
   name,
@@ -38,6 +39,7 @@ export function DisclosureCard({
   readonly reorderLabel?: string;
 }) {
   const bodyId = useId();
+  const nesting = useContext(SettingsNestingContext);
   const style: CSSProperties | undefined = dragging
     ? { transform: `translateY(${dragOffset}px)` }
     : undefined;
@@ -72,9 +74,6 @@ export function DisclosureCard({
             {summary ? <span className="pivi-settings-card__summary">{summary}</span> : null}
           </div>
           {badges ? <span className="pivi-settings-card__badges">{badges}</span> : null}
-          <span aria-hidden="true" className="pivi-settings-card__chevron">
-            <PlatformIcon name="chevron-down" />
-          </span>
         </button>
         {actions || sortableHandleProps ? (
           <SettingsInlineActions>
@@ -92,11 +91,26 @@ export function DisclosureCard({
             ) : null}
           </SettingsInlineActions>
         ) : null}
+        <button
+          type="button"
+          className="pivi-settings-card__chevron"
+          aria-hidden="true"
+          tabIndex={-1}
+          data-sortable-surface=""
+          onClick={() => {
+            if (consumeClickAfterDrag?.()) return;
+            onToggle();
+          }}
+        >
+          <PlatformIcon name="chevron-down" />
+        </button>
       </div>
       {open ? (
-        <div id={bodyId} className="pivi-settings-card__body">
-          {children}
-        </div>
+        <SettingsNestingContext.Provider value={nesting + 1}>
+          <div id={bodyId} className="pivi-settings-card__body">
+            {children}
+          </div>
+        </SettingsNestingContext.Provider>
       ) : null}
     </div>
   );

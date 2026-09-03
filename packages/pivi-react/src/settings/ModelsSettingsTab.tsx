@@ -4,9 +4,10 @@ import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
-import { SettingsPageDescription } from './controls';
+import { SettingsPage } from './controls';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
+import { SettingsCollection, SettingsSection } from './primitives';
 
 function buildInteractiveOAuthMembershipKey(
   addedProviders: readonly string[],
@@ -90,8 +91,8 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const reorder = useSortableReorder<string, HTMLElement>({
     order: settings.addedProviders,
     disabled: reorderPending,
-    itemSelector: '[data-provider-sort-id]',
-    itemDataKey: 'providerSortId',
+    itemSelector: '[data-settings-sort-id]',
+    itemDataKey: 'settingsSortId',
     setOrder: addedProviders => { setSettings(current => ({ ...current, addedProviders })); },
     commitOrder: async (addedProviders, originalOrder) => {
       setReorderPending(true);
@@ -117,48 +118,59 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
     failedAnnouncement: t('common.error'),
   });
 
-  return (
+  const description = (
     <>
       {bootstrapInfo.secureStorageAvailable ? null : (
-        <SettingsPageDescription>
-          <p className="pivi-setting-description">{t('settings.modelsTab.secureStorageRequired', {
-            hostName: terminology.hostName,
-            secureStorageName: terminology.secureStorageName,
-            version: bootstrapInfo.minimumHostVersion,
-          })}</p>
-        </SettingsPageDescription>
-      )}
-      <SettingsPageDescription>
-        <p className="pivi-setting-description">{t('settings.modelsTab.intro', {
+        <p>{t('settings.modelsTab.secureStorageRequired', {
+          hostName: terminology.hostName,
           secureStorageName: terminology.secureStorageName,
+          version: bootstrapInfo.minimumHostVersion,
         })}</p>
-      </SettingsPageDescription>
-      <div className="pivi-providers-list" ref={reorder.listRef}>
-        {settings.addedProviders.map((providerId, index) => (
-          <ProviderCard
-            key={providerId}
-            models={models}
-            feedback={feedback}
-            catalog={catalog}
-            providerId={providerId}
-            position={index + 1}
-            settings={settings}
-            expanded={expanded.has(providerId)}
-            pending={reorderPending}
-            dragging={reorder.draggingId === providerId}
-            dragOffset={reorder.draggingId === providerId ? reorder.dragOffset : 0}
-            reorderHandleProps={reorder.getHandleProps(providerId)}
-            suppressReorderClick={() => reorder.consumeClickAfterDrag(providerId)}
-            onToggleExpanded={toggleExpanded}
-            save={save}
-            onChanged={reload}
-            onError={(message) => feedback.notify(message)}
-            credentialCheckPending={credentialCheckPending}
-          />
-        ))}
-      </div>
-      <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
-      <AddProviderPicker models={models} onProviderAdded={onProviderAdded} onError={(message) => feedback.notify(message)} />
+      )}
+      <p>{t('settings.modelsTab.intro', {
+        secureStorageName: terminology.secureStorageName,
+      })}</p>
     </>
+  );
+
+  return (
+    <SettingsPage description={description}>
+      <SettingsSection>
+        <SettingsCollection
+          listRef={reorder.listRef}
+          announcement={reorder.announcement}
+          addTrigger={(
+            <AddProviderPicker
+              models={models}
+              onProviderAdded={onProviderAdded}
+              onError={(message) => feedback.notify(message)}
+            />
+          )}
+        >
+          {settings.addedProviders.map((providerId, index) => (
+            <ProviderCard
+              key={providerId}
+              models={models}
+              feedback={feedback}
+              catalog={catalog}
+              providerId={providerId}
+              position={index + 1}
+              settings={settings}
+              expanded={expanded.has(providerId)}
+              pending={reorderPending}
+              dragging={reorder.draggingId === providerId}
+              dragOffset={reorder.draggingId === providerId ? reorder.dragOffset : 0}
+              reorderHandleProps={reorder.getHandleProps(providerId)}
+              suppressReorderClick={() => reorder.consumeClickAfterDrag(providerId)}
+              onToggleExpanded={toggleExpanded}
+              save={save}
+              onChanged={reload}
+              onError={(message) => feedback.notify(message)}
+              credentialCheckPending={credentialCheckPending}
+            />
+          ))}
+        </SettingsCollection>
+      </SettingsSection>
+    </SettingsPage>
   );
 }

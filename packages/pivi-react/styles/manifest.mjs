@@ -39,6 +39,7 @@ export const styleModules = [
   'settings/system/controls.css',
   'settings/system/card.css',
   'settings/system/feedback.css',
+  'settings/features/models.css',
   'settings/base.css',
   'settings/provider-settings.css',
   'settings/command-editor.css',

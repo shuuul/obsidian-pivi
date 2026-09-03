@@ -37,11 +37,14 @@ body {
   --pivi-host-font-bold: var(--font-bold);
   --pivi-host-font-semibold: var(--font-semibold);
   --pivi-host-font-medium: var(--font-medium);
+  --pivi-host-font-normal: var(--font-normal, 400);
   --pivi-host-font-ui-medium: var(--font-ui-medium);
   --pivi-host-font-ui-small: var(--font-ui-small);
   --pivi-host-font-ui-smaller: var(--font-ui-smaller);
   --pivi-host-modal-background: var(--modal-background);
   --pivi-host-radius-small: var(--radius-s);
+  --pivi-host-radius-m: var(--radius-m);
+  --pivi-host-radius-l: var(--radius-l);
 }
 
 body.theme-dark {

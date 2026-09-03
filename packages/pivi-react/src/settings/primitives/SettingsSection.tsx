@@ -1,4 +1,6 @@
-import type { ReactNode } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
+
+export const SettingsNestingContext = createContext(0);
 
 export function SettingsSectionHeading({
   children,
@@ -21,28 +23,36 @@ export function SettingsSectionHeading({
 export function SettingsSection({
   title,
   headingId,
-  headingLevel = 2,
+  headingLevel,
   actions,
   children,
 }: {
-  readonly title: ReactNode;
+  readonly title?: ReactNode;
   readonly headingId?: string;
   readonly headingLevel?: 2 | 3;
   readonly actions?: ReactNode;
   readonly children?: ReactNode;
 }) {
+  const depth = useContext(SettingsNestingContext);
+  const nested = depth > 0;
+  const level = headingLevel ?? (nested ? 3 : 2);
+  const hasHeading = title != null && title !== '';
   return (
     <section
-      className="pivi-settings-section"
+      className={`pivi-settings-section${nested ? ' pivi-settings-section--nested' : ''}`}
       {...(headingId ? { 'aria-labelledby': headingId } : {})}
     >
-      <div className="pivi-settings-section__header">
-        <SettingsSectionHeading id={headingId} level={headingLevel}>
-          {title}
-        </SettingsSectionHeading>
-        {actions ? <div className="pivi-settings-section__actions">{actions}</div> : null}
-      </div>
-      <div className="pivi-settings-section__body">{children}</div>
+      {hasHeading ? (
+        <div className="pivi-settings-section__header">
+          <SettingsSectionHeading id={headingId} level={level}>
+            {title}
+          </SettingsSectionHeading>
+          {actions ? <div className="pivi-settings-section__actions">{actions}</div> : null}
+        </div>
+      ) : null}
+      <SettingsNestingContext.Provider value={depth + 1}>
+        <div className="pivi-settings-section__body">{children}</div>
+      </SettingsNestingContext.Provider>
     </section>
   );
 }

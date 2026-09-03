@@ -4,7 +4,9 @@ export {
   SETTINGS_ROOT_LAYOUT,
   type SettingsPageDescriptor,
   type SettingsPageId,
+  type SettingsRootContentEntry,
   type SettingsRootEntry,
+  type SettingsRootPageEntry,
 } from './navigation';
 export {
   FORMER_SETTINGS_SEARCH_KEYS,

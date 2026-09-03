@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useT } from '../../i18n';
 import { useHostTerminology } from '../../platform';
 import type { SettingsModelsPort } from '../../ports';
-import { SettingRow, SettingsSectionHeading } from '../controls';
+import { SettingRow, SettingsSection } from '../controls';
 import { ExternalSetupLink } from '../ExternalSetupLink';
 import { getModelProviderSetupLink } from '../providerSetupLinks';
 
@@ -123,10 +123,7 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
   };
 
   return (
-    <>
-      <SettingsSectionHeading level={3}>
-        {allowKeyless ? t('settings.modelsTab.authHeadingOptional') : t('settings.modelsTab.authHeading')}
-      </SettingsSectionHeading>
+    <SettingsSection title={allowKeyless ? t('settings.modelsTab.authHeadingOptional') : t('settings.modelsTab.authHeading')}>
       {showOauthToggle ? (
         <div className="pivi-auth-toggle-wrapper">
           <button
@@ -184,6 +181,6 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
           </SettingRow>
         </div>
       ) : null}
-    </>
+    </SettingsSection>
   );
 }

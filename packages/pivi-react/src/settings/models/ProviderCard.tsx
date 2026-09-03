@@ -1,13 +1,7 @@
 import { isDualAuthOAuthProviderId } from '@pivi/agent/auth/piProviderCredentials';
 import { isLocalCustomProviderKind } from '@pivi/agent/settings/customProviders';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
-import {
-  type CSSProperties,
-  Fragment,
-  type MouseEvent,
-  type PointerEvent,
-  useState,
-} from 'react';
+import { Fragment, type MouseEvent, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
@@ -15,7 +9,8 @@ import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { ModalLayer } from '../../shared/ModalLayer';
-import { SettingsItemActions, SettingsRemoveButton, Toggle } from '../controls';
+import { SettingsRemoveButton, Toggle } from '../controls';
+import { DisclosureCard } from '../primitives';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
 import { ProviderApiKeyField,ProviderCredentials } from './ProviderCredentials';
@@ -188,50 +183,12 @@ export function ProviderCard({
 
   const oauthConnected = isInteractiveOAuth && models.hasProviderOAuth(providerId);
   const showCredentialCheck = credentialCheckPending && isInteractiveOAuth;
-  const style = dragging
-    ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
-    : undefined;
-  const handlePointerDown = (event: PointerEvent<HTMLElement>): void => {
-    if ((event.target as Element).closest('button, input, textarea, select, [contenteditable="true"]')) {
-      return;
-    }
-    reorderHandleProps.onPointerDown(event);
-  };
 
   return <Fragment>
-    <details
-      className={`pivi-provider-card pivi-sortable-provider-card pivi-model-provider-card${disabled ? ' pivi-provider-card-disabled' : ''}${dragging ? ' is-dragging' : ''}`}
-      data-provider-sort-id={providerId}
-      open={expanded}
-      style={style}
-    >
-      <summary
-        className="pivi-provider-header pivi-model-provider-header"
-        onClick={(event) => {
-          event.preventDefault();
-          if (!suppressReorderClick()) onToggleExpanded(providerId);
-        }}
-        onPointerCancel={reorderHandleProps.onPointerCancel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={reorderHandleProps.onPointerMove}
-        onPointerUp={reorderHandleProps.onPointerUp}
-      >
-        <button
-          type="button"
-          className="pivi-provider-drag-handle"
-          aria-label={t('settings.webSearch.reorder.handle', { provider: displayName, position })}
-          aria-pressed={dragging}
-          disabled={pending}
-          onClick={stop}
-          onKeyDown={reorderHandleProps.onKeyDown}
-        >
-          <span aria-hidden="true">⠿</span>
-        </button>
-        <span className="pivi-provider-priority" aria-hidden="true">{position}</span>
-        <div className="pivi-provider-title-row">
-          {logoSlug ? <ProviderLogo slug={logoSlug} size={18} className="pivi-provider-card-logo" /> : null}
-          <span className="pivi-provider-title">{displayName}</span>
-        </div>
+    <DisclosureCard
+      name={displayName}
+      icon={logoSlug ? <ProviderLogo slug={logoSlug} size={18} /> : null}
+      badges={(
         <span
           className={`pivi-provider-status${showCredentialCheck ? ' checking' : ` ${readiness}`}`}
           title={showCredentialCheck
@@ -242,7 +199,9 @@ export function ProviderCard({
             ? t('settings.modelsTab.status.checking')
             : t(STATUS_LABEL_KEYS[readiness])}
         </span>
-        <SettingsItemActions>
+      )}
+      actions={(
+        <>
           <Toggle
             checked={!disabled}
             disabled={pending || enableBlocked}
@@ -255,8 +214,17 @@ export function ProviderCard({
             ariaLabel={t('settings.modelsTab.removeAria', { name: displayName })}
             onClick={remove}
           />
-        </SettingsItemActions>
-      </summary>
+        </>
+      )}
+      open={expanded}
+      onToggle={() => { onToggleExpanded(providerId); }}
+      sortId={providerId}
+      sortableHandleProps={pending ? undefined : reorderHandleProps}
+      consumeClickAfterDrag={suppressReorderClick}
+      dragging={dragging}
+      dragOffset={dragOffset}
+      reorderLabel={t('settings.webSearch.reorder.handle', { provider: displayName, position })}
+    >
       <div className="pivi-provider-body">
         {custom ? (
           <>
@@ -317,7 +285,7 @@ export function ProviderCard({
           {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
         </button>
       </div>
-    </details>
+    </DisclosureCard>
     {confirmingRemove ? (
       <ModalLayer
         ariaLabel={t('settings.modelsTab.removeConfirmTitle', { name: displayName })}

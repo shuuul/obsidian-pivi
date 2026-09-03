@@ -366,7 +366,7 @@ describe('React settings foundation', () => {
       runAction,
     };
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={ports} /></I18nProvider>));
-    const styleLabel = await screen.findByText('Style Settings');
+    const styleLabel = await screen.findByText('Style Settings', { selector: '.pivi-settings-row__name' });
     await screen.findByText('Connect Pivi to the note host.');
     const integrationSetting = styleLabel.closest<HTMLElement>('.pivi-settings-row');
     expect(integrationSetting).toHaveClass('pivi-integration-setting', 'pivi-settings-row--centered');
@@ -537,7 +537,7 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
 
     expect(saveSettings).toHaveBeenCalledWith({ addedProviders: ['anthropic', 'openai'] });
-    expect(container.querySelectorAll('.pivi-model-provider-card .pivi-provider-logo-mask')).toHaveLength(2);
+    expect(container.querySelectorAll('.pivi-settings-card__icon .pivi-provider-logo-mask')).toHaveLength(2);
     expect(screen.getByRole('button', { name: /Reorder openai, currently position 2/ })).toBeInTheDocument();
   });
   it('rolls model provider order back when persistence fails', async () => {
@@ -579,6 +579,8 @@ describe('React settings foundation', () => {
       getCredentialKind: (id: string) => (id === 'openai' ? 'api_key' : null),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByText('openai', { selector: '.pivi-settings-card__name' }));
+    fireEvent.click(screen.getByText('openai-codex', { selector: '.pivi-settings-card__name' }));
     const credentialSetting = container.querySelector<HTMLElement>('.pivi-cred-row');
     expect(credentialSetting).not.toBeNull();
     expect(within(credentialSetting!).getByText('API key')).toBeInTheDocument();
@@ -600,6 +602,7 @@ describe('React settings foundation', () => {
       getSettings: () => ({ addedProviders: ['openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByText('openai-codex', { selector: '.pivi-settings-card__name' }));
 
     const codexSetting = container.querySelector<HTMLElement>('.pivi-provider-oauth-setting');
     expect(codexSetting).not.toBeNull();
@@ -688,7 +691,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
-    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
     expect(loginProviderOAuth).toHaveBeenCalledWith('grok-build', expect.any(Function));
@@ -715,7 +718,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
-    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-settings-card__name' }));
     expect(listModelsForProvider).toHaveBeenCalledWith('grok-build');
     expect(screen.getByText('Grok 4.5')).toBeInTheDocument();
   });
@@ -761,7 +764,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'claude' ? 'Claude' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
-    fireEvent.click(screen.getByText('Claude', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('Claude', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
     expect(loginProviderOAuth).toHaveBeenCalledWith('claude', expect.any(Function));
@@ -788,7 +791,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'claude' ? 'Claude' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
-    fireEvent.click(screen.getByText('Claude', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('Claude', { selector: '.pivi-settings-card__name' }));
     expect(listModelsForProvider).toHaveBeenCalledWith('claude');
     expect(screen.getByText('Claude Sonnet 4.6')).toBeInTheDocument();
   });
@@ -817,7 +820,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
-    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => {
       progressHandler?.({ kind: 'device_code', userCode: 'WXYZ-9876' });
@@ -934,10 +937,10 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
 
     // Built-in provider cards do not offer the catalog-id field.
-    fireEvent.click(screen.getByText('deepseek', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('deepseek', { selector: '.pivi-settings-card__name' }));
     expect(screen.queryByLabelText('Catalog model ID for DeepSeek Chat')).toBeNull();
 
-    fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-settings-card__name' }));
     const input = screen.getByLabelText('Catalog model ID for qwen3.8-27b');
     fireEvent.focus(input);
     const suggestedOptions = screen.getAllByRole('option');
@@ -994,10 +997,10 @@ describe('React settings foundation', () => {
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
 
-    fireEvent.click(screen.getByText('deepseek', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('deepseek', { selector: '.pivi-settings-card__name' }));
     expect(screen.queryByLabelText('Output length for DeepSeek Chat')).toBeNull();
 
-    fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByText('Advanced model compatibility'));
     const input = screen.getByLabelText('Output length for qwen3.8-27b');
     expect(input.closest('.pivi-model-compatibility')).not.toBeNull();
@@ -1047,7 +1050,7 @@ describe('React settings foundation', () => {
         <SettingsRoot page="models" ports={ports} />
       </I18nProvider>,
     ));
-    fireEvent.click(screen.getByText('Campus gateway', { selector: '.pivi-provider-title' }));
+    fireEvent.click(screen.getByText('Campus gateway', { selector: '.pivi-settings-card__name' }));
 
     const compatibility = screen.getByText('Advanced model compatibility');
     expect(compatibility.closest('details')).not.toHaveAttribute('open');
@@ -1103,7 +1106,7 @@ describe('React settings foundation', () => {
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
     fireEvent.click(screen.getByText('Ollama'));
-    const card = screen.getByText('Ollama').closest('details');
+    const card = screen.getByText('Ollama').closest<HTMLElement>('.pivi-settings-card');
     expect(card).not.toBeNull();
     const baseUrl = within(card!).getByText('Base URL');
     const apiKey = within(card!).getByText('API key (optional)');
@@ -1165,10 +1168,9 @@ describe('React settings foundation', () => {
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="environment" ports={ports} /></I18nProvider>));
     const textarea = screen.getByLabelText('Environment variables');
-    const environmentRow = textarea.closest<HTMLElement>('.pivi-environment-setting');
-    expect(environmentRow?.querySelector('.pivi-setting-row__control')).toContainElement(textarea);
-    expect(environmentRow?.querySelector('.pivi-setting-row__info'))
-      .toContainElement(screen.getByRole('button', { name: 'Apply changes' }));
+    const environmentRow = textarea.closest<HTMLElement>('.pivi-settings-row');
+    expect(environmentRow).toContainElement(textarea);
+    expect(environmentRow).toContainElement(screen.getByRole('button', { name: 'Apply changes' }));
     fireEvent.change(textarea, { target: { value: 'FOO=changed' } });
     fireEvent.blur(textarea);
     expect(importEnvironmentText).not.toHaveBeenCalled();

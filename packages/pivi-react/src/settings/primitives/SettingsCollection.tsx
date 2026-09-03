@@ -5,6 +5,7 @@ export function SettingsCollection({
   emptyState,
   addLabel,
   onAdd,
+  addTrigger,
   listRef,
   announcement,
   className,
@@ -13,6 +14,7 @@ export function SettingsCollection({
   readonly emptyState?: string;
   readonly addLabel?: string;
   readonly onAdd?: () => void;
+  readonly addTrigger?: ReactNode;
   readonly listRef?: Ref<HTMLDivElement | null>;
   readonly announcement?: string;
   readonly className?: string;
@@ -27,7 +29,7 @@ export function SettingsCollection({
           {children}
         </div>
       )}
-      {addLabel && onAdd ? (
+      {addTrigger ?? (addLabel && onAdd ? (
         <button
           type="button"
           className="pivi-settings-collection__add pivi-settings-text-btn"
@@ -35,7 +37,7 @@ export function SettingsCollection({
         >
           {addLabel}
         </button>
-      ) : null}
+      ) : null)}
       <div className="pivi-visually-hidden" aria-live="polite">{announcement ?? ''}</div>
     </div>
   );

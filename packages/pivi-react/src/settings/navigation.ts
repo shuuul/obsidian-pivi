@@ -176,12 +176,15 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
   },
 };
 
+export type SettingsRootPageEntry = { kind: 'page'; page: SettingsPageId };
+export type SettingsRootContentEntry = { kind: 'content'; page: 'general' };
 export type SettingsRootEntry =
-  | { kind: 'page'; page: SettingsPageId }
+  | SettingsRootPageEntry
+  | SettingsRootContentEntry
   | {
     kind: 'group';
     labelKey: TranslationKey;
-    items: readonly ({ kind: 'page'; page: SettingsPageId } | { kind: 'content'; page: 'general' })[];
+    items: readonly SettingsRootPageEntry[];
   };
 
 export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[] = [
@@ -210,7 +213,7 @@ export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[] = [
     labelKey: 'settings.groups.general',
     items: [
       { kind: 'page', page: 'environment' },
-      { kind: 'content', page: 'general' },
     ],
   },
+  { kind: 'content', page: 'general' },
 ];

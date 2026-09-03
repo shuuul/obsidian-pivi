@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { Locale, TranslationKey } from '../i18n';
 import { useI18n, useT } from '../i18n';
@@ -14,9 +14,10 @@ import type {
   SettingsHotkeysPort,
 } from '../ports';
 import { ModalLayer } from '../shared/ModalLayer';
-import { BadgeListInput, Select, SettingRow, SettingsActionFeedback, SettingsSection, Toggle } from './controls';
+import { BadgeListInput, Select, SettingRow, SettingsActionFeedback, SettingsPage, SettingsSection, Toggle } from './controls';
 import { EditorToolbarSection } from './EditorToolbarSection';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
+import { SettingsCollection } from './primitives';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
 import type { SettingsGeneralSnapshot } from './types';
@@ -111,8 +112,6 @@ export function EnvironmentSection({ environment, feedback }: {
   readonly feedback: SettingsFeedbackPort;
 }) {
   const t = useT();
-  const nameId = useId();
-  const descriptionId = `${nameId}-desc`;
   const [entries, setEntries] = useState(() => environment.listEntries('shared'));
   const [value, setValue] = useState(() => environmentEntriesToSafeText(environment.listEntries('shared')));
   const [savedValue, setSavedValue] = useState(value);
@@ -156,44 +155,42 @@ export function EnvironmentSection({ environment, feedback }: {
     return t('settings.sharedEnvironment.storageDeviceLocal');
   };
 
+  const entryValue = (entry: SettingsEnvironmentEntryView): string => {
+    if (entry.sourceKind === 'secret') {
+      return entry.hasStoredSecret
+        ? t('settings.sharedEnvironment.secretStored')
+        : t('settings.sharedEnvironment.secretMissing');
+    }
+    if (entry.sourceKind === 'systemEnvironment') {
+      return `$${entry.systemName ?? entry.key}`;
+    }
+    return entry.plainValue ?? '';
+  };
+
   return (
-    <SettingsSection title={t('settings.environment')}>
-      {reviewKeys.length > 0 ? (
-        <div className="pivi-env-review-warning pivi-setting-validation pivi-setting-validation-warning">
-          {t('settings.sharedEnvironment.reviewOwnership', { keys: reviewKeys.join(', ') })}
-        </div>
-      ) : null}
-      {entries.length > 0 ? (
-        <div className="pivi-env-entry-list" role="list">
-          {entries.map((entry) => (
-            <div key={`${entry.scope}:${entry.key}`} className="pivi-env-entry-row" role="listitem">
-              <span className="pivi-env-entry-key">{entry.key}</span>
-              <span className="pivi-env-entry-source">{storageLabel(entry.storageLocation)}</span>
-              <span className="pivi-env-entry-value">
-                {entry.sourceKind === 'secret'
-                  ? (entry.hasStoredSecret
-                    ? t('settings.sharedEnvironment.secretStored')
-                    : t('settings.sharedEnvironment.secretMissing'))
-                  : entry.sourceKind === 'systemEnvironment'
-                    ? `$${entry.systemName ?? entry.key}`
-                    : (entry.plainValue ?? '')}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-      <div className="pivi-setting-row pivi-environment-setting">
-        <div className="pivi-setting-row__info">
-          <div className="pivi-setting-row__name" id={nameId}>{t('settings.sharedEnvironment.name')}</div>
-          <div className="pivi-setting-description" id={descriptionId}>{t('settings.sharedEnvironment.desc')}</div>
-          <div className="pivi-settings-action-group pivi-environment-setting__actions">
-            <button type="button" className="pivi-button--primary" disabled={!isDirty || applying} onClick={apply}>
-              {t('settings.sharedEnvironment.apply')}
-            </button>
-            <SettingsActionFeedback feedback={applyFeedback} />
+    <SettingsPage description={t('settings.pages.environment.description')}>
+      <SettingsSection>
+        {reviewKeys.length > 0 ? (
+          <div className="pivi-env-review-warning pivi-setting-validation pivi-setting-validation-warning">
+            {t('settings.sharedEnvironment.reviewOwnership', { keys: reviewKeys.join(', ') })}
           </div>
-        </div>
-        <div className="pivi-setting-row__control">
+        ) : null}
+        {entries.length > 0 ? (
+          <SettingsCollection>
+            {entries.map((entry) => (
+              <SettingRow
+                key={`${entry.scope}:${entry.key}`}
+                name={entry.key}
+                description={`${storageLabel(entry.storageLocation)} · ${entryValue(entry)}`}
+              />
+            ))}
+          </SettingsCollection>
+        ) : null}
+        <SettingRow
+          stacked
+          name={t('settings.sharedEnvironment.name')}
+          description={t('settings.sharedEnvironment.desc')}
+        >
           <textarea
             className="pivi-settings-control pivi-settings-control--fill pivi-settings-env-textarea"
             rows={6}
@@ -203,32 +200,35 @@ export function EnvironmentSection({ environment, feedback }: {
               setValue(event.target.value);
               setApplyFeedback(null);
             }}
-            aria-labelledby={nameId}
-            aria-describedby={descriptionId}
           />
-        </div>
-      </div>
-    </SettingsSection>
+          <div className="pivi-settings-action-group">
+            <button type="button" className="pivi-button--primary" disabled={!isDirty || applying} onClick={apply}>
+              {t('settings.sharedEnvironment.apply')}
+            </button>
+            <SettingsActionFeedback feedback={applyFeedback} />
+          </div>
+        </SettingRow>
+      </SettingsSection>
+    </SettingsPage>
   );
 }
 
-function HotkeyGrid({ hotkeys }: { readonly hotkeys: SettingsHotkeysPort }) {
+function HotkeyRows({ hotkeys }: { readonly hotkeys: SettingsHotkeysPort }) {
   const t = useT();
-  const rows = hotkeys.listHotkeys();
   return (
-    <div className="pivi-hotkey-grid">
-      {rows.map((row) => (
-        <button
-          key={row.commandId}
-          type="button"
-          className="pivi-hotkey-item"
-          onClick={() => hotkeys.openHotkeySettings()}
-        >
-          <span className="pivi-hotkey-name">{t(row.labelKey as TranslationKey)}</span>
-          {row.hotkey ? <span className="pivi-hotkey-badge">{row.hotkey}</span> : null}
-        </button>
+    <>
+      {hotkeys.listHotkeys().map((row) => (
+        <SettingRow key={row.commandId} name={t(row.labelKey as TranslationKey)} centered>
+          <button
+            type="button"
+            className="pivi-hotkey-item"
+            onClick={() => hotkeys.openHotkeySettings()}
+          >
+            {row.hotkey ? <span className="pivi-hotkey-badge">{row.hotkey}</span> : null}
+          </button>
+        </SettingRow>
       ))}
-    </div>
+    </>
   );
 }
 
@@ -346,13 +346,15 @@ export function GeneralSettingsTab({
   };
   return (
     <>
-      <SettingRow name={t('settings.language.name')} description={t('settings.language.desc')}>
-        <Select label={t('settings.language.name')} value={general.locale} onChange={(locale) => { void save({ locale }); }}>
-          {getAvailableLocales().map((locale) => (
-            <option key={locale} value={locale}>{getLocaleDisplayName(locale)}</option>
-          ))}
-        </Select>
-      </SettingRow>
+      <SettingsSection>
+        <SettingRow name={t('settings.language.name')} description={t('settings.language.desc')}>
+          <Select label={t('settings.language.name')} value={general.locale} onChange={(locale) => { void save({ locale }); }}>
+            {getAvailableLocales().map((locale) => (
+              <option key={locale} value={locale}>{getLocaleDisplayName(locale)}</option>
+            ))}
+          </Select>
+        </SettingRow>
+      </SettingsSection>
       <SettingsSection title={t('settings.layout')}>
         <SettingRow name={t('settings.chatViewPlacement.name')} description={t('settings.chatViewPlacement.desc')}>
           <Select
@@ -445,24 +447,22 @@ export function GeneralSettingsTab({
             onChange={(event) => { void save({ userName: event.target.value }); }}
           />
         </SettingRow>
-        <div className="pivi-setting-stack">
-          <SettingRow name={t('settings.excludedTags.name')} description={t('settings.excludedTags.desc')}>
-            <BadgeListInput
-              values={general.excludedTags}
-              placeholder={t('settings.excludedTags.placeholder')}
-              inputLabel={t('settings.excludedTags.inputLabel')}
-              removeLabel={(value) => t('settings.excludedTags.removeAria', { value })}
-              onAdd={(entries) => {
-                const normalized = entries.map(entry => entry.replace(/^#+/, '').trim()).filter(Boolean);
-                const next = [...new Set([...general.excludedTags, ...normalized])];
-                return next.length === general.excludedTags.length
-                  ? true
-                  : save({ excludedTags: next });
-              }}
-              onRemove={async (value) => { await save({ excludedTags: general.excludedTags.filter(entry => entry !== value) }); }}
-            />
-          </SettingRow>
-        </div>
+        <SettingRow stacked name={t('settings.excludedTags.name')} description={t('settings.excludedTags.desc')}>
+          <BadgeListInput
+            values={general.excludedTags}
+            placeholder={t('settings.excludedTags.placeholder')}
+            inputLabel={t('settings.excludedTags.inputLabel')}
+            removeLabel={(value) => t('settings.excludedTags.removeAria', { value })}
+            onAdd={(entries) => {
+              const normalized = entries.map(entry => entry.replace(/^#+/, '').trim()).filter(Boolean);
+              const next = [...new Set([...general.excludedTags, ...normalized])];
+              return next.length === general.excludedTags.length
+                ? true
+                : save({ excludedTags: next });
+            }}
+            onRemove={async (value) => { await save({ excludedTags: general.excludedTags.filter(entry => entry !== value) }); }}
+          />
+        </SettingRow>
       </SettingsSection>
       <SettingsSection title={t('settings.inputShortcuts')}>
         <SettingRow
@@ -476,14 +476,16 @@ export function GeneralSettingsTab({
           />
         </SettingRow>
         <NavMappingsRow store={store} actions={actions} feedback={feedback} />
-        <HotkeyGrid hotkeys={hotkeys} />
+        <HotkeyRows hotkeys={hotkeys} />
       </SettingsSection>
-      <IntegrationsSettingsSection
-        integrations={integrations}
-        feedback={feedback}
-        sectionIds={['obsidian:style-settings']}
-        showOuterHeading={false}
-      />
+      <SettingsSection title={t('settings.styleSettings.name')}>
+        <IntegrationsSettingsSection
+          integrations={integrations}
+          feedback={feedback}
+          sectionIds={['obsidian:style-settings']}
+          showOuterHeading={false}
+        />
+      </SettingsSection>
     </>
   );
 }

@@ -152,10 +152,12 @@ describe('PiviSettingTabHost', () => {
     expect(isGroup(definitions[3])).toBe(true);
     expect(definitions[3]).toMatchObject({ type: 'group', heading: 'General' });
     const generalItems = isGroup(definitions[3]) ? definitions[3].items ?? [] : [];
+    expect(generalItems).toHaveLength(1);
     expect(isPage(generalItems[0])).toBe(true);
     expect(generalItems[0]).toMatchObject({ type: 'page', name: 'Environment' });
-    expect(isRenderItem(generalItems[1])).toBe(true);
-    expect(generalItems[1]).toMatchObject({
+
+    expect(isRenderItem(definitions[4])).toBe(true);
+    expect(definitions[4]).toMatchObject({
       name: 'General',
       desc: expect.any(String),
     });
@@ -214,13 +216,49 @@ describe('PiviSettingTabHost', () => {
     expect(settingEl).toBeEmptyDOMElement();
   });
 
+  it('tags the implicit single-item host surface for CSS reset', () => {
+    mockedMountSettingsPage.mockResolvedValue({ dispose: jest.fn(async () => undefined) });
+    const { host } = createHost();
+    const models = host.getSettingDefinitions()[0];
+    if (!isPage(models) || !isRenderItem(models.items?.[0])) {
+      throw new Error('Expected Models page render item');
+    }
+    const items = document.createElement('div');
+    const search = document.createElement('div');
+    search.className = 'setting-group-search';
+    const settingEl = document.createElement('div');
+    items.append(settingEl);
+    const group = document.createElement('div');
+    group.append(search, items);
+
+    models.items[0].render({ settingEl }, {});
+
+    expect(items).toHaveClass('pivi-settings-host-surface-reset');
+    expect(search).toHaveClass('pivi-settings-host-surface-reset');
+  });
+
+  it('does not tag a host surface that already wraps multiple items', () => {
+    mockedMountSettingsPage.mockResolvedValue({ dispose: jest.fn(async () => undefined) });
+    const { host } = createHost();
+    const models = host.getSettingDefinitions()[0];
+    if (!isPage(models) || !isRenderItem(models.items?.[0])) {
+      throw new Error('Expected Models page render item');
+    }
+    const items = document.createElement('div');
+    const settingEl = document.createElement('div');
+    items.append(settingEl, document.createElement('div'));
+
+    models.items[0].render({ settingEl }, {});
+
+    expect(items).not.toHaveClass('pivi-settings-host-surface-reset');
+  });
+
   it('mounts general content through the render item and cleans it up', async () => {
     const dispose = jest.fn(async () => undefined);
     mockedMountSettingsPage.mockResolvedValue({ dispose });
     const { host, plugin, workspace } = createHost();
     const definitions = host.getSettingDefinitions();
-    const generalGroup = definitions[3];
-    const generalContent = isGroup(generalGroup) ? generalGroup.items?.[1] : undefined;
+    const generalContent = definitions[4];
     if (!isRenderItem(generalContent)) {
       throw new Error('Expected general content render definition');
     }

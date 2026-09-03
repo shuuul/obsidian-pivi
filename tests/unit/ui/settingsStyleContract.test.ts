@@ -184,22 +184,25 @@ describe('settings style contract', () => {
     expect(baseCss).not.toContain('.pivi-tools-settings-section + .pivi-tools-settings-section');
   });
 
-  it('uses quiet section labels with hairline dividers and no surfaced body', () => {
+  it('uses native heading metrics and a surfaced section body', () => {
     expect(layoutCss).toMatch(/\.pivi-settings-section\s*{[^}]*margin-block-start:\s*var\(--pivi-settings-section-gap\);/s);
-    expect(layoutCss).toMatch(/\.pivi-settings-section-heading\s*{[^}]*margin:\s*0;[^}]*font-size:\s*var\(--pivi-host-font-ui-small\);/s);
-    expect(layoutCss).toMatch(/\.pivi-settings-section-heading\s*{[^}]*color:\s*var\(--pivi-host-text-muted\);/s);
+    expect(layoutCss).toMatch(/\.pivi-settings-section-heading\s*{[^}]*font-family:\s*var\(--pivi-host-font-interface\);/s);
+    expect(layoutCss).toMatch(/\.pivi-settings-section-heading\s*{[^}]*font-size:\s*var\(--pivi-settings-heading-size\);/s);
+    expect(layoutCss).toMatch(/\.pivi-settings-section-heading\s*{[^}]*color:\s*var\(--pivi-host-text-normal\);/s);
     expect(layoutCss).toMatch(/\.pivi-settings-section__header\s*{[^}]*border-block-end:\s*1px solid\s+var\(--pivi-settings-hairline\);/s);
-    expect(layoutCss).not.toContain('--pivi-host-setting-items-background');
+    expect(layoutCss).toMatch(/\.pivi-settings-section__body\s*{[^}]*background:\s*var\(--pivi-settings-surface-background\);/s);
+    expect(layoutCss).toMatch(/\.pivi-settings-section--nested \.pivi-settings-section__body\s*{[^}]*background:\s*transparent;[^}]*border-radius:\s*0;/s);
+    expect(layoutCss).toMatch(/\.pivi-settings-section--nested \.pivi-settings-section-heading\s*{[^}]*font-size:\s*var\(--pivi-settings-heading-size-nested\);/s);
     expect(hostCss).toMatch(/\.pivi-settings(?:-page)?(?:,\s*\.pivi-settings-page)?\s*{[^}]*min-height:\s*100%;[^}]*background:\s*var\(--pivi-host-background-primary\);/s);
+    expect(hostCss).toMatch(/\.pivi-settings-host-surface-reset\s*{[^}]*background:\s*transparent;[^}]*padding:\s*0;[^}]*border-radius:\s*0;/s);
     expect(layoutCss).not.toContain('.pivi-settings-list-header__title');
     expect(baseCss).not.toContain('.pivi-tools-settings-section__title');
   });
 
-  it('maps the grouped-item host token without consuming it in settings', () => {
+  it('maps the grouped-item host token for surfaced section bodies', () => {
     expect(hostTheme).not.toContain('--pivi-host-settings-background');
     expect(hostTheme).toMatch(/--pivi-host-setting-items-background:\s*var\(--setting-items-background, var\(--background-primary-alt\)\);/);
     expect(baseCss).not.toContain('--pivi-host-setting-items-background');
-    expect(layoutCss).not.toContain('--pivi-host-setting-items-background');
   });
 
   it('keeps integration item titles quiet', () => {
@@ -213,6 +216,8 @@ describe('settings style contract', () => {
   });
 
   it('lets an open disclosure card grow instead of clipping nested disclosures', () => {
+    expect(cardCss).toMatch(/\.pivi-settings-actions\s*{[^}]*background:\s*transparent;/s);
+    expect(cardCss).toMatch(/\.pivi-settings-actions\s*{[^}]*border-radius:\s*0;/s);
     expect(cardCss).toMatch(/\.pivi-settings-card\.is-open\s*{[^}]*overflow:\s*visible;/s);
     expect(providerCss).toMatch(/\.pivi-provider-card\[open\]\s*{[^}]*overflow:\s*visible;/s);
   });

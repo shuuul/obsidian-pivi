@@ -252,12 +252,6 @@
   gap: var(--pivi-spacing-sm);
 }
 
-.pivi-model-provider-header {
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
-  gap: var(--pivi-spacing-sm);
-}
-
 .pivi-provider-drag-handle {
   display: inline-flex;
   align-items: center;
@@ -538,79 +532,6 @@
   margin-bottom: var(--pivi-spacing-sm);
 }
 
-.pivi-cred-row .pivi-settings-row {
-  padding: 8px 0;
-}
-
-/* Models Checklist Grid */
-.pivi-models-checklist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 10px;
-}
-
-.pivi-model-checkbox-wrapper {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--pivi-host-background-secondary);
-  border: 1px solid var(--pivi-host-border);
-  border-radius: var(--pivi-radius-sm);
-  cursor: pointer;
-  transition:
-    background var(--pivi-duration-fast) var(--pivi-ease-out),
-    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
-    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
-}
-
-.pivi-model-checkbox-wrapper:hover {
-  background: var(--pivi-host-background-hover);
-  border-color: var(--pivi-host-interactive-accent);
-}
-
-.pivi-model-checkbox-wrapper:focus-within {
-  border-color: var(--pivi-host-interactive-accent);
-  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
-}
-
-.pivi-model-checkbox {
-  margin-top: 3px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.pivi-model-checkbox-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  cursor: pointer;
-}
-
-.pivi-model-checkbox-content {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-}
-
-.pivi-model-checkbox-title {
-  font-size: var(--pivi-host-font-ui-small);
-  font-weight: var(--pivi-host-font-medium);
-  color: var(--pivi-host-text-normal);
-}
-
-.pivi-model-checkbox-desc {
-  font-size: var(--pivi-host-font-ui-smaller);
-  color: var(--pivi-host-text-muted);
-  line-height: 1.3;
-}
-
-.pivi-model-catalog-combobox {
-  position: relative;
-  width: 100%;
-}
-
 .pivi-model-catalog-id-input {
   margin-top: 6px;
   width: 100%;
@@ -621,36 +542,21 @@
 }
 
 .pivi-model-catalog-options {
-  display: flex;
   max-height: 230px;
   overflow-y: auto;
-  flex-direction: column;
   margin-block-start: 4px;
   padding: 3px;
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-sm);
-  background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
-  box-shadow: var(--pivi-shadow-md);
 }
 
 .pivi-model-catalog-option {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
   gap: 2px;
   padding: 6px 8px;
   border: 0;
   border-radius: var(--pivi-radius-xs);
-  background: transparent;
-  color: var(--pivi-host-text-normal);
   text-align: start;
   cursor: pointer;
-}
-
-.pivi-model-catalog-option:hover,
-.pivi-model-catalog-option.is-highlighted {
-  background: var(--pivi-host-background-hover);
 }
 
 .pivi-model-catalog-option-name {
@@ -665,7 +571,6 @@
 .pivi-model-catalog-option-id {
   max-width: 100%;
   overflow-wrap: anywhere;
-  color: var(--pivi-host-text-muted);
   font-family: var(--pivi-host-font-monospace);
   font-size: var(--pivi-host-font-ui-smaller);
 }
@@ -673,7 +578,6 @@
 .pivi-model-compatibility {
   margin-block-start: 8px;
   border-block-start: 1px solid var(--pivi-host-border);
-  color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-smaller);
 }
 
@@ -684,27 +588,13 @@
   user-select: none;
 }
 
-.pivi-model-compatibility > summary:hover {
-  color: var(--pivi-host-text-normal);
-}
-
 .pivi-model-compatibility-fields {
-  display: grid;
   gap: 7px;
   padding-block-start: 6px;
 }
 
 .pivi-model-compatibility-field {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
   gap: var(--pivi-spacing-sm);
-}
-
-.pivi-model-compatibility-field > span {
-  color: var(--pivi-host-text-muted);
-  line-height: 1.3;
 }
 
 .pivi-model-compatibility-field .pivi-model-catalog-id-input {
@@ -719,8 +609,6 @@
 }
 
 .pivi-no-models-message {
-  grid-column: 1 / -1;
-  color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-small);
   padding: 8px 0;
 }

@@ -1,0 +1,51 @@
+/* Models page structure only. Spacing, radius, and borders stay in system CSS. */
+
+.pivi-settings-card__icon .pivi-provider-logo-mask,
+.pivi-settings-card__icon .pivi-provider-card-logo {
+  width: 18px;
+  height: 18px;
+}
+
+.pivi-no-models-message {
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-model-catalog-combobox {
+  position: relative;
+  width: 100%;
+}
+
+.pivi-model-catalog-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.pivi-model-catalog-option {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pivi-model-catalog-option-name {
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-model-catalog-option-id {
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-model-compatibility-fields {
+  display: grid;
+}
+
+.pivi-model-compatibility-field {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pivi-model-compatibility-field > span {
+  color: var(--pivi-host-text-muted);
+}

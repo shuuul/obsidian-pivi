@@ -33,6 +33,19 @@ function refreshSettingDefinitions(tab: object): void {
   if (typeof update === "function") update.call(tab);
 }
 
+const HOST_SURFACE_RESET_CLASS = "pivi-settings-host-surface-reset";
+
+/** Tag Obsidian's implicit single-item group surface so product CSS can neutralize it. */
+function neutralizeImplicitHostSurface(settingEl: HTMLElement): void {
+  const items = settingEl.parentElement;
+  if (!items || items.childElementCount !== 1) return;
+  items.classList.add(HOST_SURFACE_RESET_CLASS);
+  const previous = items.previousElementSibling;
+  if (previous?.classList.contains("setting-group-search")) {
+    previous.classList.add(HOST_SURFACE_RESET_CLASS);
+  }
+}
+
 export class PiviSettingTabHost extends PluginSettingTab {
   plugin: PiviPluginHost;
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
@@ -77,12 +90,13 @@ export class PiviSettingTabHost extends PluginSettingTab {
     if (entry.kind === "page") {
       return this.mapPage(entry.page);
     }
+    if (entry.kind === "content") {
+      return this.mapRenderItem(entry.page);
+    }
     return {
       type: "group",
       heading: t(entry.labelKey),
-      items: entry.items.map((item) => (
-        item.kind === "page" ? this.mapPage(item.page) : this.mapRenderItem("general")
-      )),
+      items: entry.items.map((item) => this.mapPage(item.page)),
     };
   }
 
@@ -105,6 +119,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
       render: (setting) => {
         setting.settingEl.empty();
         setting.settingEl.addClass("pivi-settings-definition-host");
+        neutralizeImplicitHostSurface(setting.settingEl);
         return this.mountPageContent(page, setting.settingEl);
       },
     };

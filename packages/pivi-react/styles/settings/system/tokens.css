@@ -1,17 +1,28 @@
-/* The only file that may declare --pivi-settings-* custom properties. */
+/* The only file that may declare --pivi-settings-* custom properties.
+   Metrics are the Obsidian 1.13 native .setting-group computed styles
+   measured 2026-09-03 from the live settings window. */
 
 .pivi-settings,
 .pivi-settings-page,
 .pivi-settings-definition-host {
-  --pivi-settings-gutter: 12px;
+  --pivi-settings-gutter: 20px;
   --pivi-settings-control-width: 280px;
-  --pivi-settings-section-gap: 32px;
-  --pivi-settings-section-title-gap: 8px;
+  --pivi-settings-section-gap: 24px;
+  --pivi-settings-section-title-gap: 16px;
   --pivi-settings-subsection-gap: 20px;
-  --pivi-settings-row-padding-block: 12px;
-  --pivi-settings-hairline: color-mix(in srgb, var(--pivi-host-border) 65%, transparent);
-  --pivi-settings-card-radius: var(--pivi-radius-md);
-  --pivi-settings-card-padding: 14px 16px;
-  --pivi-settings-card-gap: var(--pivi-spacing-sm);
-  --pivi-settings-collection-gap: var(--pivi-spacing-md);
+  --pivi-settings-heading-size: var(--pivi-host-font-ui-medium);
+  --pivi-settings-heading-size-nested: var(--pivi-host-font-ui-small);
+  --pivi-settings-heading-weight: var(--pivi-host-font-medium);
+  --pivi-settings-surface-background: var(--pivi-host-setting-items-background);
+  --pivi-settings-surface-radius: var(--pivi-host-radius-l);
+  --pivi-settings-row-padding-block: 20px;
+  --pivi-settings-row-padding-inline: var(--pivi-settings-gutter);
+  --pivi-settings-row-gap: 12px;
+  --pivi-settings-description-gap: 4px;
+  --pivi-settings-hairline: var(--pivi-host-border);
+  --pivi-settings-control-gap: 8px;
+  --pivi-settings-card-radius: var(--pivi-settings-surface-radius);
+  --pivi-settings-card-padding: var(--pivi-settings-row-padding-block) var(--pivi-settings-row-padding-inline);
+  --pivi-settings-card-gap: var(--pivi-settings-row-gap);
+  --pivi-settings-collection-gap: 0px;
 }

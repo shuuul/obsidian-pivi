@@ -158,7 +158,7 @@ assertNoImportantRules([fixture]);`,
       'base/presentation-primitives.css',
       'base/animations.css',
     ]);
-    expect(styleModules.slice(-16)).toEqual([
+    expect(styleModules.slice(-17)).toEqual([
       'modals/mcp-modal.css',
       'settings/system/tokens.css',
       'settings/system/host.css',
@@ -167,6 +167,7 @@ assertNoImportantRules([fixture]);`,
       'settings/system/controls.css',
       'settings/system/card.css',
       'settings/system/feedback.css',
+      'settings/features/models.css',
       'settings/base.css',
       'settings/provider-settings.css',
       'settings/command-editor.css',

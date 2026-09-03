@@ -7,6 +7,7 @@ import { CommandsTab } from './CommandsTab';
 import { McpToolsSection } from './McpToolsSection';
 import { ModelsSettingsTab } from './ModelsSettingsTab';
 import type { SettingsPageId } from './navigation';
+import { SettingsPage } from './primitives';
 import { PromptTab } from './PromptTab';
 import { SettingsUiStore } from './SettingsUiStore';
 import { EnvironmentSection, GeneralSettingsTab, SubagentsSettingsTab, ToolbarSettingsTab } from './SimpleSettingsTabs';
@@ -27,7 +28,7 @@ export function SettingsRoot({ ports, store: suppliedStore, page }: SettingsRoot
   switch (page) {
     case 'general':
       return (
-        <>
+        <SettingsPage>
           <GeneralSettingsTab
             store={store}
             actions={ports.actions}
@@ -36,7 +37,7 @@ export function SettingsRoot({ ports, store: suppliedStore, page }: SettingsRoot
             integrations={ports.hostIntegrations}
           />
           <AboutSettingsTab about={ports.about} />
-        </>
+        </SettingsPage>
       );
     case 'environment':
       return <EnvironmentSection environment={ports.environment} feedback={ports.feedback} />;
