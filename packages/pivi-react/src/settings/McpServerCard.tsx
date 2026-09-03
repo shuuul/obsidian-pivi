@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import type { SettingsFeedbackMessage } from '../ports';
-import { McpServerEditor } from './mcp/McpServerEditor';
+import { McpServerEditor, type McpServerEditorHandle } from './mcp/McpServerEditor';
 import { McpToolInventory } from './McpToolInventory';
 import { DisclosureCard, SettingsRemoveButton, Toggle } from './primitives';
 
@@ -27,6 +27,7 @@ export function McpServerCard({
   busy,
   onConnect,
   onToggleExpanded,
+  onCollapseExpanded,
   onToggleEnabled,
   onRemove,
   onLogout,
@@ -38,26 +39,30 @@ export function McpServerCard({
   readonly busy: boolean;
   readonly onConnect: (server: ManagedMcpServer) => Promise<McpTestResult>;
   readonly onToggleExpanded: () => void;
+  readonly onCollapseExpanded: (name: string) => void;
   readonly onToggleEnabled: () => Promise<void>;
   readonly onRemove: () => void;
   readonly onLogout: () => Promise<void>;
 }) {
   const t = useT();
+  const editorRef = useRef<McpServerEditorHandle>(null);
   const requestGeneration = useRef(0);
   const [refreshResult, setRefreshResult] = useState<McpTestResult | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const connect = useCallback(async (next: ManagedMcpServer) => {
+  const connect = useCallback(async (next: ManagedMcpServer): Promise<boolean> => {
     const generation = ++requestGeneration.current;
     setRefreshing(true);
     setRefreshResult(null);
     try {
       const result = await onConnect(next);
       if (requestGeneration.current === generation) setRefreshResult(result);
+      return result.success;
     } catch (cause) {
       if (requestGeneration.current === generation) {
         setRefreshResult(refreshError(cause, t('settings.mcp.refreshFailed')));
       }
+      return false;
     } finally {
       if (requestGeneration.current === generation) setRefreshing(false);
     }
@@ -124,8 +129,15 @@ export function McpServerCard({
       )}
       open={expanded}
       onToggle={onToggleExpanded}
+      saveDisabled={refreshing}
+      onSave={() => {
+        void editorRef.current?.save().then((saved) => {
+          if (saved) onCollapseExpanded(saved.name);
+        });
+      }}
     >
       <McpServerEditor
+        ref={editorRef}
         server={server}
         inline
         connecting={refreshing}

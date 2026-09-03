@@ -9,6 +9,7 @@
     "loading": "加载中",
     "error": "错误",
     "confirm": "确认",
+    "confirmDelete": "确认删除",
     "line": "行",
     "lines": "行",
     "copied": "已复制！"
@@ -65,7 +66,37 @@
       "confirm": "确认",
       "deny": "拒绝",
       "management": {
-        "titles": { "mcp": { "upsert": "更新 MCP 服务器“{name}”", "enable": "启用 MCP 服务器“{name}”", "disable": "停用 MCP 服务器“{name}”", "remove": "移除 MCP 服务器“{name}”" }, "skills": { "install": "从“{source}”安装 Skills", "enable": "启用 Skill“{name}”", "disable": "停用 Skill“{name}”", "update": "更新 Skill“{name}”", "updateAll": "更新所有由软件包管理的 Skills", "remove": "移除 Skill“{name}”" }, "commands": { "upsert": "保存命令 {command}", "remove": "移除命令 {command}", "move": "移动命令 {command}" }, "prompt": { "enable": "启用提示模块“{name}”", "disable": "停用提示模块“{name}”", "setBody": "更新提示模块“{name}”", "restore": "恢复提示模块“{name}”", "create": "添加提示模块“{name}”", "update": "更新提示模块“{name}”", "remove": "移除提示模块“{name}”", "move": "移动提示模块“{name}”" } },
+        "titles": {
+          "mcp": {
+            "upsert": "更新 MCP 服务器“{name}”",
+            "enable": "启用 MCP 服务器“{name}”",
+            "disable": "停用 MCP 服务器“{name}”",
+            "remove": "移除 MCP 服务器“{name}”"
+          },
+          "skills": {
+            "install": "从“{source}”安装 Skills",
+            "enable": "启用 Skill“{name}”",
+            "disable": "停用 Skill“{name}”",
+            "update": "更新 Skill“{name}”",
+            "updateAll": "更新所有由软件包管理的 Skills",
+            "remove": "移除 Skill“{name}”"
+          },
+          "commands": {
+            "upsert": "保存命令 {command}",
+            "remove": "移除命令 {command}",
+            "move": "移动命令 {command}"
+          },
+          "prompt": {
+            "enable": "启用提示模块“{name}”",
+            "disable": "停用提示模块“{name}”",
+            "setBody": "更新提示模块“{name}”",
+            "restore": "恢复提示模块“{name}”",
+            "create": "添加提示模块“{name}”",
+            "update": "更新提示模块“{name}”",
+            "remove": "移除提示模块“{name}”",
+            "move": "移动提示模块“{name}”"
+          }
+        },
         "changes": {
           "mcpUpsert": "应用计划的 MCP 服务器配置。",
           "mcpEnable": "启用此 MCP 服务器。",
@@ -399,7 +430,19 @@
     "pages": {
       "general": {
         "label": "通用",
-        "description": "语言、布局、对话行为以及关于信息。"
+        "description": "语言、布局和集成。"
+      },
+      "chat": {
+        "description": "控制聊天行为、流式响应信息和提供商请求超时。"
+      },
+      "personalization": {
+        "description": "个性化回复，并选择哪些笔记可以自动添加为上下文。"
+      },
+      "input": {
+        "description": "配置消息发送、键盘导航和 Pivi 快捷键。"
+      },
+      "sessions": {
+        "description": "设置已移除会话的保留时长，并可永久删除其文件。"
       },
       "environment": {
         "label": "环境",
@@ -463,6 +506,7 @@
       "open": "打开 Style Settings",
       "installationOpened": "已打开 Style Settings 插件页面。安装或启用后，请返回「常规」。"
     },
+    "appearance": "外观",
     "layout": "布局",
     "chatBehavior": "聊天行为",
     "providerRequests": {
@@ -522,7 +566,8 @@
     },
     "hotkeys": {
       "notSet": "未设置",
-      "openHotkeys": "打开快捷键设置"
+      "openHotkeys": "打开快捷键设置",
+      "backToPivi": "← 返回 Pivi"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -655,9 +700,7 @@
         "desc": "删除通过“删除”操作移除的会话。已打开和已归档的会话不受影响。",
         "button": "永久删除",
         "success": "已永久删除 {count} 个已移除的会话文件。",
-        "failed": "永久删除已移除的会话失败",
-        "confirmTitle": "永久删除已移除的会话？",
-        "confirmDescription": "这将删除通过“删除”操作移除的会话。已打开和已归档的会话不会受影响。"
+        "failed": "永久删除已移除的会话失败"
       }
     },
     "sharedEnvironment": {
@@ -800,8 +843,6 @@
       "addProvider": "+ 添加提供商",
       "addProviderAdded": "已添加",
       "removedProvider": "已移除 {name} 提供商。",
-      "removeConfirmTitle": "移除 {name} 提供商？",
-      "removeConfirmDescription": "这会移除该提供商及其模型选择。默认保留已存储的凭据。",
       "removeCredential": "同时从{secureStorageName}中删除此提供商的凭据",
       "enableAria": "启用提供商 {name}",
       "disableAria": "禁用提供商 {name}",
@@ -935,9 +976,7 @@
         "disableAria": "禁用技能 {name}",
         "updateAria": "更新技能 {name}",
         "removeAria": "移除技能 {name}",
-        "installAria": "安装技能 {name}",
-        "removeConfirmTitle": "移除技能 {name}？",
-        "removeConfirm": "从 .pivi/skills/ 中移除 {name}？这将从您的设备中删除该技能文件夹。"
+        "installAria": "安装技能 {name}"
       },
       "notices": {
         "noRemote": "此来源未找到远程技能。",
@@ -978,15 +1017,13 @@
       "loadFailed": "加载自定义命令失败：{message}",
       "editAria": "编辑命令 {name}",
       "deleteAria": "删除命令 {name}",
-      "deleteConfirm": "删除自定义命令 /{name}？这不会删除已添加的 Note Toolbar 项目，请手动删除该项目。",
       "deleteFailed": "删除自定义命令失败：{message}",
       "reorder": {
         "handle": "重新排序 /{name}，当前位于第 {position} 位",
         "position": "/{name} 已移动到第 {position} 位，共 {total} 个。",
         "saved": "命令顺序已保存。",
         "cancelled": "已取消命令排序。"
-      },
-      "deleteConfirmTitle": "删除自定义命令 /{name}？"
+      }
     },
     "createCommand": {
       "titleCreate": "创建自定义斜杠命令",
@@ -1055,8 +1092,6 @@
       "add": "+ 添加模块",
       "addAria": "添加自定义提示词模块",
       "deleteAria": "删除 {title}",
-      "deleteConfirmTitle": "删除自定义模块 {title}？",
-      "deleteConfirm": "删除此自定义模块？其正文将从系统提示词中移除。",
       "empty": "还没有自定义模块。添加一个即可接在工作流模块之后。",
       "newModule": "新模块",
       "reorder": {
@@ -1093,7 +1128,6 @@
       "refreshFailed": "刷新工具失败",
       "saveFailed": "保存 MCP 服务器失败",
       "alreadyExists": "服务器「{name}」已存在",
-      "deleteConfirm": "删除 MCP 服务器「{name}」？",
       "enableAria": "启用 MCP 服务器 {name}",
       "disableAria": "禁用 MCP 服务器 {name}",
       "removeAria": "移除 MCP 服务器 {name}",
@@ -1143,8 +1177,7 @@
         "connected": "工具已刷新",
         "availableTools": "可用工具（{count}）",
         "noTools": "此服务器未返回任何工具。"
-      },
-      "deleteConfirmTitle": "删除 MCP 服务器「{name}」？"
+      }
     }
   },
   "commands": {

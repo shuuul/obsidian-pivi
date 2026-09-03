@@ -20,7 +20,6 @@ import {
   type SortableReorderHandleProps,
   useSortableReorder,
 } from '../reorder/useSortableReorder';
-import { ModalLayer } from '../shared/ModalLayer';
 import { formatCompactTokenCount } from '../usage/usageInfo';
 import {
   DisclosureCard,
@@ -95,13 +94,11 @@ function PromptModuleEditor({
   module,
   pending,
   onSaveBody,
-  onRestore,
   onRename,
 }: {
   readonly module: SettingsPromptModuleView;
   readonly pending: boolean;
   readonly onSaveBody: (body: string) => Promise<void>;
-  readonly onRestore?: () => void;
   readonly onRename?: (title: string) => Promise<void>;
 }) {
   const t = useT();
@@ -140,17 +137,6 @@ function PromptModuleEditor({
           }}
         />
       </SettingRow>
-      {onRestore ? (
-        <div className="pivi-settings-action-group">
-          <button
-            type="button"
-            disabled={pending || !module.modified}
-            onClick={onRestore}
-          >
-            {t('settings.prompt.restore')}
-          </button>
-        </div>
-      ) : null}
     </>
   );
 }
@@ -162,6 +148,7 @@ function PromptModuleCard({
   position,
   dragging = false,
   dragOffset = 0,
+  dropIndicatorEdge,
   reorderHandleProps,
   suppressReorderClick,
   onToggleExpanded,
@@ -177,6 +164,7 @@ function PromptModuleCard({
   readonly position?: number;
   readonly dragging?: boolean;
   readonly dragOffset?: number;
+  readonly dropIndicatorEdge?: 'before' | 'after';
   readonly reorderHandleProps?: SortableReorderHandleProps<HTMLElement>;
   readonly suppressReorderClick?: () => boolean;
   readonly onToggleExpanded: () => void;
@@ -231,15 +219,24 @@ function PromptModuleCard({
       consumeClickAfterDrag={suppressReorderClick}
       dragging={dragging}
       dragOffset={dragOffset}
+      dropIndicatorEdge={dropIndicatorEdge}
       reorderLabel={position !== undefined
         ? t('settings.prompt.reorder.handle', { title: module.title, position })
         : undefined}
+      footerActions={onRestore ? (
+        <button
+          type="button"
+          disabled={pending || !module.modified}
+          onClick={onRestore}
+        >
+          {t('settings.prompt.restore')}
+        </button>
+      ) : undefined}
     >
       <PromptModuleEditor
         module={module}
         pending={pending}
         onSaveBody={onSaveBody}
-        onRestore={onRestore}
         onRename={onRename}
       />
     </DisclosureCard>
@@ -256,7 +253,6 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
   const [draftOpen, setDraftOpen] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftBody, setDraftBody] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState<SettingsPromptModuleView | null>(null);
   const [pending, setPending] = useState(false);
   const [customOrder, setCustomOrder] = useState<readonly string[]>(() => (
     ports.prompt.listModules().filter((module) => module.kind === 'custom').map((module) => module.id)
@@ -412,13 +408,18 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
                 position={index + 1}
                 dragging={reorder.draggingId === id}
                 dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
+                dropIndicatorEdge={reorder.dropIndicator?.id === id
+                  ? reorder.dropIndicator.edge
+                  : undefined}
                 reorderHandleProps={reorder.getHandleProps(id)}
                 suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
                 onToggleExpanded={() => toggleExpanded(id)}
                 onToggleEnabled={(enabled) => { void run(() => ports.prompt.setCustomModuleEnabled(id, enabled, catalogRevision)); }}
                 onSaveBody={(body) => run(() => ports.prompt.editCustomModule(id, body, catalogRevision))}
                 onRename={(title) => run(() => ports.prompt.renameCustomModule(id, title, catalogRevision))}
-                onDelete={() => { setConfirmDelete(module); }}
+                onDelete={() => {
+                  void run(() => ports.prompt.deleteCustomModule(module.id, catalogRevision));
+                }}
               />
             );
           })}
@@ -428,6 +429,7 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
                 name={draftTitle.trim() || t('settings.prompt.newModule')}
                 open
                 onToggle={() => undefined}
+                showSaveAction={false}
                 actions={(
                   <button
                     type="button"
@@ -472,45 +474,6 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
             : null}
         </SettingsCollection>
       </SettingsSection>
-      {confirmDelete
-        ? (
-          <ModalLayer
-            ariaLabel={t('settings.prompt.deleteConfirmTitle', { title: confirmDelete.title })}
-            initialFocus="cancel"
-            open
-            onClose={() => { if (!pending) setConfirmDelete(null); }}
-          >
-            <div className="pivi-modal">
-              <div className="pivi-modal__title">
-                {t('settings.prompt.deleteConfirmTitle', { title: confirmDelete.title })}
-              </div>
-              <p>{t('settings.prompt.deleteConfirm', { title: confirmDelete.title })}</p>
-              <div className="pivi-modal__actions">
-                <button
-                  type="button"
-                  data-modal-cancel
-                  disabled={pending}
-                  onClick={() => setConfirmDelete(null)}
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  className="pivi-button--danger"
-                  type="button"
-                  disabled={pending}
-                  onClick={() => {
-                    const id = confirmDelete.id;
-                    setConfirmDelete(null);
-                    void run(() => ports.prompt.deleteCustomModule(id, catalogRevision));
-                  }}
-                >
-                  {t('common.delete')}
-                </button>
-              </div>
-            </div>
-          </ModalLayer>
-        )
-        : null}
     </SettingsPage>
   );
 }

@@ -107,6 +107,9 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
               pending={pending}
               dragging={reorder.draggingId === provider.id}
               dragOffset={reorder.draggingId === provider.id ? reorder.dragOffset : 0}
+              dropIndicatorEdge={reorder.dropIndicator?.id === provider.id
+                ? reorder.dropIndicator.edge
+                : undefined}
               secureStorageName={secureStorageName}
               ports={ports}
               onToggleExpanded={() => { toggleExpanded(provider.id); }}

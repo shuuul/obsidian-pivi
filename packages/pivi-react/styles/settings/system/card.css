@@ -64,7 +64,42 @@
 .pivi-settings-card.is-dragging,
 .pivi-settings-row.is-dragging {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  background: var(--pivi-host-background-hover);
+  box-shadow: var(--pivi-shadow-sm);
+  opacity: 0.94;
+  will-change: transform;
+}
+
+.pivi-settings-card.is-drop-before,
+.pivi-settings-card.is-drop-after,
+.pivi-settings-row.is-drop-before,
+.pivi-settings-row.is-drop-after {
+  position: relative;
+}
+
+.pivi-settings-card.is-drop-before::after,
+.pivi-settings-card.is-drop-after::after,
+.pivi-settings-row.is-drop-before::after,
+.pivi-settings-row.is-drop-after::after {
+  position: absolute;
+  z-index: 3;
+  inset-inline: var(--pivi-settings-row-padding-inline);
+  height: 2px;
+  border-radius: var(--pivi-radius-full);
+  background: var(--pivi-host-interactive-accent);
+  content: '';
+  pointer-events: none;
+}
+
+.pivi-settings-card.is-drop-before::after,
+.pivi-settings-row.is-drop-before::after {
+  inset-block-start: 0;
+}
+
+.pivi-settings-card.is-drop-after::after,
+.pivi-settings-row.is-drop-after::after {
+  inset-block-end: 0;
 }
 
 .pivi-settings-card__header {
@@ -118,6 +153,20 @@
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
+}
+
+.pivi-toolbar-shortcut .pivi-settings-card__icon {
+  width: 18px;
+  justify-content: center;
+}
+
+.pivi-toolbar-shortcut > .pivi-settings-card__header > .pivi-settings-actions {
+  order: 2;
+  justify-content: flex-end;
+}
+
+.pivi-toolbar-shortcut > .pivi-settings-card__header > .pivi-settings-card__chevron {
+  order: 1;
 }
 
 .pivi-settings-card__identity {
@@ -183,6 +232,15 @@
   margin: 0;
 }
 
+.pivi-settings-card__footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: var(--pivi-spacing-sm);
+  padding-block-start: var(--pivi-settings-row-padding-block);
+}
+
 .pivi-settings-actions {
   display: inline-flex;
   align-items: center;
@@ -202,7 +260,9 @@
   background: var(--pivi-host-background-hover);
 }
 
-.pivi-settings-card__handle {
+.pivi-settings-card__handle,
+.pivi-settings-row__handle {
+  flex: 0 0 auto;
   font-size: 14px;
   line-height: 1;
 }

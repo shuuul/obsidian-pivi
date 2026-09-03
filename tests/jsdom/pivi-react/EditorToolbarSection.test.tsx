@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { createI18n, I18nProvider, SettingsUiStore } from '@pivi/pivi-react';
 import { EditorToolbarSection } from '@pivi/pivi-react/settings';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
@@ -229,8 +229,9 @@ describe('EditorToolbarSection', () => {
     });
 
     const removeButton = screen.getByRole('button', { name: 'Remove /summarize' });
+    fireEvent.click(removeButton);
     await act(async () => {
-      fireEvent.click(removeButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     });
 
     expect(saveEditorSelectionToolbar).toHaveBeenLastCalledWith({
@@ -275,8 +276,9 @@ describe('EditorToolbarSection', () => {
       ],
     });
 
+    fireEvent.click(removeButton);
     await act(async () => {
-      fireEvent.click(removeButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     });
     expect(saveEditorSelectionToolbar).toHaveBeenLastCalledWith({
       enabled: true,
@@ -442,8 +444,19 @@ describe('EditorToolbarSection', () => {
     const editorToggle = screen.getByRole('checkbox', { name: 'Enable Bold' });
     const obsidianToggle = screen.getByRole('checkbox', { name: 'Enable Toggle pin' });
     const piviToggle = screen.getByRole('checkbox', { name: 'Enable /summarize' });
+    const editorRow = screen.getByText('Bold').closest('.pivi-settings-row') as HTMLElement;
     const obsidianRow = screen.getByText('Toggle pin').closest('.pivi-settings-row');
     const piviDetails = screen.getByText('/summarize').closest('.pivi-settings-card');
+
+    const editorKind = within(editorRow).getByText('Editor command');
+    const editorRemove = within(editorRow).getByRole('button', { name: 'Remove Bold' });
+    expect(editorKind.compareDocumentPosition(editorRemove) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(editorRemove.compareDocumentPosition(editorToggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    const piviKind = within(piviDetails as HTMLElement).getByText('Pivi command');
+    const piviRemove = within(piviDetails as HTMLElement).getByRole('button', { name: 'Remove /summarize' });
+    expect(piviKind.compareDocumentPosition(piviRemove) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(piviRemove.compareDocumentPosition(piviToggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     expect(globalToggle).toBeChecked();
     expect(inlineToggle).toBeChecked();
@@ -580,7 +593,9 @@ describe('EditorToolbarSection', () => {
       store.getSnapshot().general.editorSelectionToolbar.shortcuts.map(shortcut => shortcut.id),
     ).toEqual(['shortcut-2', 'shortcut-1']);
     expect(screen.getByRole('button', { name: 'Reorder Toggle fold, currently position 2' })).toBeInTheDocument();
-    expect(screen.getByText('Toggle fold').closest('.pivi-settings-row')).not.toBeNull();
+    const row = screen.getByText('Toggle fold').closest('.pivi-settings-row');
+    expect(row).not.toBeNull();
+    expect(row?.firstElementChild).toHaveClass('pivi-settings-row__handle');
     expect(screen.getByText('Toggle fold').closest('.pivi-settings-card')).toBeNull();
   });
 

@@ -9,6 +9,7 @@
     "loading": "Carregando",
     "error": "Erro",
     "confirm": "Confirmar",
+    "confirmDelete": "Confirmar exclusão",
     "line": "linha",
     "lines": "linhas",
     "copied": "Copiado!"
@@ -65,7 +66,37 @@
       "confirm": "Confirmar",
       "deny": "Recusar",
       "management": {
-        "titles": { "mcp": { "upsert": "Atualizar servidor MCP “{name}”", "enable": "Ativar servidor MCP “{name}”", "disable": "Desativar servidor MCP “{name}”", "remove": "Remover servidor MCP “{name}”" }, "skills": { "install": "Instalar Skills de “{source}”", "enable": "Ativar Skill “{name}”", "disable": "Desativar Skill “{name}”", "update": "Atualizar Skill “{name}”", "updateAll": "Atualizar todos os Skills geridos por pacotes", "remove": "Remover Skill “{name}”" }, "commands": { "upsert": "Guardar comando {command}", "remove": "Remover comando {command}", "move": "Mover comando {command}" }, "prompt": { "enable": "Ativar o módulo de prompt “{name}”", "disable": "Desativar o módulo de prompt “{name}”", "setBody": "Atualizar o módulo de prompt “{name}”", "restore": "Restaurar o módulo de prompt “{name}”", "create": "Adicionar o módulo de prompt “{name}”", "update": "Atualizar o módulo de prompt “{name}”", "remove": "Remover o módulo de prompt “{name}”", "move": "Mover o módulo de prompt “{name}”" } },
+        "titles": {
+          "mcp": {
+            "upsert": "Atualizar servidor MCP “{name}”",
+            "enable": "Ativar servidor MCP “{name}”",
+            "disable": "Desativar servidor MCP “{name}”",
+            "remove": "Remover servidor MCP “{name}”"
+          },
+          "skills": {
+            "install": "Instalar Skills de “{source}”",
+            "enable": "Ativar Skill “{name}”",
+            "disable": "Desativar Skill “{name}”",
+            "update": "Atualizar Skill “{name}”",
+            "updateAll": "Atualizar todos os Skills geridos por pacotes",
+            "remove": "Remover Skill “{name}”"
+          },
+          "commands": {
+            "upsert": "Guardar comando {command}",
+            "remove": "Remover comando {command}",
+            "move": "Mover comando {command}"
+          },
+          "prompt": {
+            "enable": "Ativar o módulo de prompt “{name}”",
+            "disable": "Desativar o módulo de prompt “{name}”",
+            "setBody": "Atualizar o módulo de prompt “{name}”",
+            "restore": "Restaurar o módulo de prompt “{name}”",
+            "create": "Adicionar o módulo de prompt “{name}”",
+            "update": "Atualizar o módulo de prompt “{name}”",
+            "remove": "Remover o módulo de prompt “{name}”",
+            "move": "Mover o módulo de prompt “{name}”"
+          }
+        },
         "changes": {
           "mcpUpsert": "Aplicar a configuração planeada do servidor MCP.",
           "mcpEnable": "Ativar este servidor MCP.",
@@ -399,7 +430,19 @@
     "pages": {
       "general": {
         "label": "Geral",
-        "description": "Idioma, disposição, comportamento do chat e Sobre."
+        "description": "Idioma, layout e integrações."
+      },
+      "chat": {
+        "description": "Controle o comportamento do chat, os detalhes da transmissão e os limites de tempo dos fornecedores."
+      },
+      "personalization": {
+        "description": "Personalize as respostas e escolha quais notas podem ser adicionadas automaticamente como contexto."
+      },
+      "input": {
+        "description": "Configure o envio de mensagens, a navegação por teclado e os atalhos do Pivi."
+      },
+      "sessions": {
+        "description": "Escolha por quanto tempo manter as sessões removidas e elimine permanentemente os seus ficheiros."
       },
       "environment": {
         "label": "Ambiente",
@@ -463,6 +506,7 @@
       "open": "Abrir Style Settings",
       "installationOpened": "A página do plugin Style Settings foi aberta. Instale ou ative-o e volte a Geral."
     },
+    "appearance": "Aparência",
     "layout": "Diseño",
     "chatBehavior": "Comportamento do chat",
     "providerRequests": {
@@ -522,7 +566,8 @@
     },
     "hotkeys": {
       "notSet": "Não definido",
-      "openHotkeys": "Abrir definições de atalhos"
+      "openHotkeys": "Abrir definições de atalhos",
+      "backToPivi": "← Voltar ao Pivi"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -655,9 +700,7 @@
         "desc": "Exclui as sessões removidas com a ação Excluir. As sessões abertas e arquivadas não são afetadas.",
         "button": "Excluir permanentemente",
         "success": "Excluído(s) permanentemente {count} arquivo(s) de sessão removido(s).",
-        "failed": "Falha ao excluir permanentemente as sessões removidas",
-        "confirmTitle": "Excluir permanentemente as sessões removidas?",
-        "confirmDescription": "Isso exclui as sessões removidas com a ação Excluir. As sessões abertas e arquivadas não serão afetadas."
+        "failed": "Falha ao excluir permanentemente as sessões removidas"
       }
     },
     "sharedEnvironment": {
@@ -800,8 +843,6 @@
       "addProvider": "+ Adicionar provedor",
       "addProviderAdded": "Adicionado",
       "removedProvider": "Provedor {name} eliminado.",
-      "removeConfirmTitle": "Remover o provedor {name}?",
-      "removeConfirmDescription": "Isto remove o provedor e suas seleções de modelos. A credencial armazenada é mantida por padrão.",
       "removeCredential": "Também excluir a credencial deste provedor de {secureStorageName}",
       "enableAria": "Ativar provedor {name}",
       "disableAria": "Desativar provedor {name}",
@@ -935,9 +976,7 @@
         "disableAria": "Desactivar habilidad {name}",
         "updateAria": "Atualizar habilidad {name}",
         "removeAria": "Quitar habilidad {name}",
-        "installAria": "Instalar habilidad {name}",
-        "removeConfirmTitle": "Remover a habilidade {name}?",
-        "removeConfirm": "Remover {name} de .pivi/skills/? Isso exclui a pasta da habilidade do seu dispositivo."
+        "installAria": "Instalar habilidad {name}"
       },
       "notices": {
         "noRemote": "No se encontraron habilidades remotas para esta fuente.",
@@ -978,15 +1017,13 @@
       "loadFailed": "Erro al cargar comandos personalizados: {message}",
       "editAria": "Editar comando {name}",
       "deleteAria": "Excluir comando {name}",
-      "deleteConfirm": "Excluir o comando personalizado /{name}? Isso não removerá o item do Note Toolbar; remova-o manualmente.",
       "deleteFailed": "Erro al excluir o comando personalizado: {message}",
       "reorder": {
         "handle": "Reordenar /{name}, atualmente na posição {position}",
         "position": "/{name} movido para a posição {position} de {total}.",
         "saved": "Ordem dos comandos salva.",
         "cancelled": "Reordenação de comando cancelada."
-      },
-      "deleteConfirmTitle": "Excluir o comando personalizado /{name}?"
+      }
     },
     "createCommand": {
       "titleCreate": "Crear comando slash personalizado",
@@ -1055,8 +1092,6 @@
       "add": "+ Adicionar módulo",
       "addAria": "Adicionar módulo de prompt personalizado",
       "deleteAria": "Excluir {title}",
-      "deleteConfirmTitle": "Excluir o módulo personalizado {title}?",
-      "deleteConfirm": "Excluir este módulo personalizado? O corpo será removido do prompt do sistema.",
       "empty": "Ainda não há módulos personalizados. Adicione um para colocá-lo após os módulos de fluxo de trabalho.",
       "newModule": "Novo módulo",
       "reorder": {
@@ -1093,7 +1128,6 @@
       "refreshFailed": "Falha ao atualizar ferramentas",
       "saveFailed": "Erro al salvar o servidor MCP",
       "alreadyExists": "El servidor «{name}» ya existe",
-      "deleteConfirm": "¿Excluir o servidor MCP «{name}»?",
       "enableAria": "Ativar servidor MCP {name}",
       "disableAria": "Desativar servidor MCP {name}",
       "removeAria": "Remover servidor MCP {name}",
@@ -1143,8 +1177,7 @@
         "connected": "Ferramentas atualizadas",
         "availableTools": "Ferramentas disponibles ({count})",
         "noTools": "Este servidor não retornou ferramentas."
-      },
-      "deleteConfirmTitle": "Excluir o servidor MCP \"{name}\"?"
+      }
     }
   },
   "commands": {

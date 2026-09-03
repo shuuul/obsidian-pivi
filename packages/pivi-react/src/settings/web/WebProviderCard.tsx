@@ -27,6 +27,7 @@ export interface WebProviderCardProps {
   readonly pending: boolean;
   readonly dragging: boolean;
   readonly dragOffset: number;
+  readonly dropIndicatorEdge?: 'before' | 'after';
   readonly secureStorageName: string;
   readonly ports: SettingsPorts;
   readonly onToggleExpanded: () => void;
@@ -70,9 +71,9 @@ export function WebProviderCard(props: WebProviderCardProps) {
         ? 'is-error'
         : undefined;
 
-  const saveKey = async (): Promise<void> => {
+  const saveKey = async (): Promise<boolean> => {
     const value = key.trim();
-    if (!value || value === MASKED_KEY) return;
+    if (!value || value === MASKED_KEY) return true;
     setSavingKey(true);
     try {
       ports.complex.webSearch.writeCredential(provider.id, value);
@@ -80,11 +81,17 @@ export function WebProviderCard(props: WebProviderCardProps) {
       setStoredCredential(true);
       setCredentialConfigured(true);
       await ports.complex.runtime.refreshPrompt();
+      return true;
     } catch {
       props.onError();
+      return false;
     } finally {
       setSavingKey(false);
     }
+  };
+
+  const saveAndClose = async (): Promise<void> => {
+    if (await saveKey()) props.onToggleExpanded();
   };
 
   const clearKey = async (): Promise<void> => {
@@ -131,7 +138,19 @@ export function WebProviderCard(props: WebProviderCardProps) {
       consumeClickAfterDrag={props.suppressReorderClick}
       dragging={dragging}
       dragOffset={dragOffset}
+      dropIndicatorEdge={props.dropIndicatorEdge}
       reorderLabel={t('settings.webSearch.reorder.handle', { provider: label, position })}
+      saveDisabled={savingKey}
+      onSave={() => { void saveAndClose(); }}
+      footerActions={(
+        <button
+          type="button"
+          disabled={savingKey || !storedCredential}
+          onClick={() => { void clearKey(); }}
+        >
+          {t('settings.webSearch.removeKey')}
+        </button>
+      )}
     >
       <SettingRow
         stacked
@@ -161,22 +180,7 @@ export function WebProviderCard(props: WebProviderCardProps) {
           aria-label={t('settings.webSearch.apiKeyName', { provider: label })}
           onFocus={() => { if (key === MASKED_KEY) setKey(''); }}
           onChange={event => { setKey(event.currentTarget.value); }}
-          onBlur={() => { void saveKey(); }}
         />
-        <button
-          type="button"
-          disabled={savingKey || (!key.trim() || key === MASKED_KEY)}
-          onClick={() => { void saveKey(); }}
-        >
-          {t('common.save')}
-        </button>
-        <button
-          type="button"
-          disabled={savingKey || !storedCredential}
-          onClick={() => { void clearKey(); }}
-        >
-          {t('settings.webSearch.removeKey')}
-        </button>
       </SettingRow>
     </DisclosureCard>
   </Fragment>;

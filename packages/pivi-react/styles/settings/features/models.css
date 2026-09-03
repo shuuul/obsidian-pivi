@@ -9,6 +9,11 @@
   color: var(--pivi-host-text-muted);
 }
 
+.pivi-models-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+
 .pivi-model-catalog-combobox {
   position: relative;
   width: 100%;

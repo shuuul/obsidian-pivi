@@ -9,6 +9,7 @@
     "loading": "로딩 중",
     "error": "오류",
     "confirm": "확인",
+    "confirmDelete": "삭제 확인",
     "line": "줄",
     "lines": "줄",
     "copied": "복사됨!"
@@ -65,7 +66,37 @@
       "confirm": "확인",
       "deny": "거부",
       "management": {
-        "titles": { "mcp": { "upsert": "MCP 서버 “{name}” 업데이트", "enable": "MCP 서버 “{name}” 활성화", "disable": "MCP 서버 “{name}” 비활성화", "remove": "MCP 서버 “{name}” 제거" }, "skills": { "install": "“{source}”에서 Skills 설치", "enable": "Skill “{name}” 활성화", "disable": "Skill “{name}” 비활성화", "update": "Skill “{name}” 업데이트", "updateAll": "패키지로 관리되는 모든 Skills 업데이트", "remove": "Skill “{name}” 제거" }, "commands": { "upsert": "명령 {command} 저장", "remove": "명령 {command} 제거", "move": "명령 {command} 이동" }, "prompt": { "enable": "프롬프트 모듈 “{name}” 활성화", "disable": "프롬프트 모듈 “{name}” 비활성화", "setBody": "프롬프트 모듈 “{name}” 업데이트", "restore": "프롬프트 모듈 “{name}” 복원", "create": "프롬프트 모듈 “{name}” 추가", "update": "프롬프트 모듈 “{name}” 업데이트", "remove": "프롬프트 모듈 “{name}” 제거", "move": "프롬프트 모듈 “{name}” 이동" } },
+        "titles": {
+          "mcp": {
+            "upsert": "MCP 서버 “{name}” 업데이트",
+            "enable": "MCP 서버 “{name}” 활성화",
+            "disable": "MCP 서버 “{name}” 비활성화",
+            "remove": "MCP 서버 “{name}” 제거"
+          },
+          "skills": {
+            "install": "“{source}”에서 Skills 설치",
+            "enable": "Skill “{name}” 활성화",
+            "disable": "Skill “{name}” 비활성화",
+            "update": "Skill “{name}” 업데이트",
+            "updateAll": "패키지로 관리되는 모든 Skills 업데이트",
+            "remove": "Skill “{name}” 제거"
+          },
+          "commands": {
+            "upsert": "명령 {command} 저장",
+            "remove": "명령 {command} 제거",
+            "move": "명령 {command} 이동"
+          },
+          "prompt": {
+            "enable": "프롬프트 모듈 “{name}” 활성화",
+            "disable": "프롬프트 모듈 “{name}” 비활성화",
+            "setBody": "프롬프트 모듈 “{name}” 업데이트",
+            "restore": "프롬프트 모듈 “{name}” 복원",
+            "create": "프롬프트 모듈 “{name}” 추가",
+            "update": "프롬프트 모듈 “{name}” 업데이트",
+            "remove": "프롬프트 모듈 “{name}” 제거",
+            "move": "프롬프트 모듈 “{name}” 이동"
+          }
+        },
         "changes": {
           "mcpUpsert": "계획된 MCP 서버 구성을 적용합니다.",
           "mcpEnable": "이 MCP 서버를 활성화합니다.",
@@ -399,7 +430,19 @@
     "pages": {
       "general": {
         "label": "일반",
-        "description": "언어, 레이아웃, 채팅 동작 및 정보."
+        "description": "언어, 레이아웃 및 통합."
+      },
+      "chat": {
+        "description": "채팅 동작, 스트리밍 정보 및 제공자 요청 시간 제한을 설정합니다."
+      },
+      "personalization": {
+        "description": "응답을 개인화하고 컨텍스트로 자동 추가할 노트를 선택합니다."
+      },
+      "input": {
+        "description": "메시지 전송, 키보드 탐색 및 Pivi 단축키를 설정합니다."
+      },
+      "sessions": {
+        "description": "삭제된 세션의 보관 기간을 설정하고 해당 파일을 영구 삭제합니다."
       },
       "environment": {
         "label": "환경",
@@ -463,6 +506,7 @@
       "open": "Style Settings 열기",
       "installationOpened": "Style Settings 플러그인 페이지가 열렸습니다. 설치하거나 사용하도록 설정한 다음 일반으로 돌아오세요."
     },
+    "appearance": "모양",
     "layout": "레이아웃",
     "chatBehavior": "채팅 동작",
     "providerRequests": {
@@ -522,7 +566,8 @@
     },
     "hotkeys": {
       "notSet": "설정되지 않음",
-      "openHotkeys": "단축키 설정 열기"
+      "openHotkeys": "단축키 설정 열기",
+      "backToPivi": "← Pivi로 돌아가기"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -655,9 +700,7 @@
         "desc": "삭제 작업으로 제거한 세션을 삭제합니다. 열려 있거나 보관된 세션에는 영향을 주지 않습니다.",
         "button": "영구 삭제",
         "success": "제거된 세션 파일 {count}개를 영구 삭제했습니다.",
-        "failed": "제거된 세션 영구 삭제 실패",
-        "confirmTitle": "제거된 세션을 영구 삭제할까요?",
-        "confirmDescription": "삭제 작업으로 제거한 세션을 삭제합니다. 열려 있거나 보관된 세션에는 영향을 주지 않습니다."
+        "failed": "제거된 세션 영구 삭제 실패"
       }
     },
     "sharedEnvironment": {
@@ -800,8 +843,6 @@
       "addProvider": "+ 제공자 추가",
       "addProviderAdded": "추가됨",
       "removedProvider": "{name} 제공자를 제거했습니다.",
-      "removeConfirmTitle": "{name} 제공자를 제거할까요?",
-      "removeConfirmDescription": "제공자와 모델 선택을 제거합니다. 저장된 자격 증명은 기본적으로 유지됩니다.",
       "removeCredential": "이 제공자의 자격 증명도 {secureStorageName}에서 삭제",
       "enableAria": "{name} 제공자 활성화",
       "disableAria": "{name} 제공자 비활성화",
@@ -935,9 +976,7 @@
         "disableAria": "스킬 {name} 사용 안 함",
         "updateAria": "스킬 {name} 업데이트",
         "removeAria": "스킬 {name} 제거",
-        "installAria": "스킬 {name} 설치",
-        "removeConfirmTitle": "스킬 {name}을(를) 제거할까요?",
-        "removeConfirm": ".pivi/skills/에서 {name}을(를) 제거할까요? 기기에서 스킬 폴더가 삭제됩니다."
+        "installAria": "스킬 {name} 설치"
       },
       "notices": {
         "noRemote": "이 소스에 대한 원격 스킬이 없습니다.",
@@ -978,15 +1017,13 @@
       "loadFailed": "사용자 지정 명령을 로드하지 못함: {message}",
       "editAria": "명령 {name} 편집",
       "deleteAria": "명령 {name} 삭제",
-      "deleteConfirm": "사용자 지정 명령 /{name}을(를) 삭제할까요? 추가된 Note Toolbar 항목은 삭제되지 않으므로 직접 삭제해야 합니다.",
       "deleteFailed": "사용자 지정 명령 삭제 실패: {message}",
       "reorder": {
         "handle": "/{name} 순서 변경, 현재 {position}번째",
         "position": "/{name}을(를) {total}개 중 {position}번째로 이동했습니다.",
         "saved": "명령 순서를 저장했습니다.",
         "cancelled": "명령 재정렬을 취소했습니다."
-      },
-      "deleteConfirmTitle": "사용자 지정 명령 /{name}을(를) 삭제할까요?"
+      }
     },
     "createCommand": {
       "titleCreate": "사용자 지정 슬래시 명령 만들기",
@@ -1055,8 +1092,6 @@
       "add": "+ 모듈 추가",
       "addAria": "사용자 지정 프롬프트 모듈 추가",
       "deleteAria": "{title} 삭제",
-      "deleteConfirmTitle": "사용자 지정 모듈 {title}을(를) 삭제할까요?",
-      "deleteConfirm": "이 사용자 지정 모듈을 삭제할까요? 본문이 시스템 프롬프트에서 제거됩니다.",
       "empty": "사용자 지정 모듈이 없습니다. 추가하면 워크플로 모듈 뒤에 이어집니다.",
       "newModule": "새 모듈",
       "reorder": {
@@ -1093,7 +1128,6 @@
       "refreshFailed": "도구 새로 고침 실패",
       "saveFailed": "MCP 서버를 저장하지 못했습니다",
       "alreadyExists": "서버 \"{name}\"이(가) 이미 있습니다",
-      "deleteConfirm": "MCP 서버 \"{name}\"을(를) 삭제할까요?",
       "enableAria": "MCP 서버 {name} 활성화",
       "disableAria": "MCP 서버 {name} 비활성화",
       "removeAria": "MCP 서버 {name} 제거",
@@ -1143,8 +1177,7 @@
         "connected": "도구를 새로 고쳤습니다",
         "availableTools": "사용 가능한 도구({count})",
         "noTools": "이 서버에서 반환된 도구가 없습니다."
-      },
-      "deleteConfirmTitle": "MCP 서버 \"{name}\"을(를) 삭제할까요?"
+      }
     }
   },
   "commands": {

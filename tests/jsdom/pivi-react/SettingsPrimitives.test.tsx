@@ -21,8 +21,10 @@ function renderPrimitives(ui: ReactElement) {
 
 function ControlledCard({
   actions,
+  footerActions,
 }: {
   readonly actions?: ReactNode;
+  readonly footerActions?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -31,6 +33,7 @@ function ControlledCard({
       open={open}
       onToggle={() => { setOpen(current => !current); }}
       actions={actions}
+      footerActions={footerActions}
     >
       Card body
     </DisclosureCard>
@@ -45,7 +48,7 @@ function activateButtonWithKey(element: HTMLElement, key: 'Enter' | ' ') {
 }
 
 function pointerEvent(type: string, clientY: number): Event {
-  const event = new Event(type, { bubbles: true });
+  const event = new Event(type, { bubbles: true, cancelable: true });
   Object.defineProperties(event, {
     button: { value: 0 },
     pointerId: { value: 1 },
@@ -136,6 +139,9 @@ function SortableCards() {
           consumeClickAfterDrag={() => sortable.consumeClickAfterDrag(id)}
           dragging={sortable.draggingId === id}
           dragOffset={sortable.draggingId === id ? sortable.dragOffset : 0}
+          dropIndicatorEdge={sortable.dropIndicator?.id === id
+            ? sortable.dropIndicator.edge
+            : undefined}
           reorderLabel={`Reorder ${id}, currently position ${index + 1}`}
           actions={<SettingsRemoveButton ariaLabel={`Remove ${id}`} onClick={() => undefined} />}
         >
@@ -191,13 +197,29 @@ describe('Settings primitives', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(document.getElementById(toggle.getAttribute('aria-controls') ?? '')).toHaveTextContent('Card body');
 
-    activateButtonWithKey(toggle, 'Enter');
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(screen.queryByText('Card body')).not.toBeInTheDocument();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
-    activateButtonWithKey(toggle, ' ');
+    activateButtonWithKey(toggle, 'Enter');
     expect(screen.getByText('Card body')).toBeInTheDocument();
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    activateButtonWithKey(toggle, ' ');
+    expect(screen.queryByText('Card body')).not.toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('places secondary footer actions before the final Save action', () => {
+    renderPrimitives(<ControlledCard footerActions={<button type="button">Test provider</button>} />);
+    fireEvent.click(screen.getByRole('button', { name: /Example card/ }));
+
+    const footer = document.querySelector('.pivi-settings-card__footer');
+    expect(footer).not.toBeNull();
+    expect(Array.from(footer!.querySelectorAll('button'), button => button.textContent)).toEqual([
+      'Test provider',
+      'Save',
+    ]);
   });
 
   it('reorders DisclosureCards from the drag handle keyboard path', async () => {
@@ -215,7 +237,7 @@ describe('Settings primitives', () => {
     expect(screen.getByRole('button', { name: /Reorder alpha, currently position 2/ })).toBeInTheDocument();
   });
 
-  it('reorders DisclosureCards from a pointer drag that starts on the toggle button', async () => {
+  it('keeps disclosure clicks separate from pointer reordering', async () => {
     const { container } = renderPrimitives(<SortableCards />);
     const toggle = screen.getByRole('button', { name: 'alpha' });
     const header = toggle.closest('.pivi-settings-card__header') as HTMLElement;
@@ -232,26 +254,49 @@ describe('Settings primitives', () => {
     await act(async () => undefined);
 
     const cards = document.querySelectorAll('.pivi-settings-card');
-    expect(cards[0]).toHaveAttribute('data-settings-sort-id', 'beta');
-    expect(cards[1]).toHaveAttribute('data-settings-sort-id', 'alpha');
-  });
-
-  it('keeps a pointer tap captured by the disclosure button so it receives the click', () => {
-    renderPrimitives(<SortableCards />);
-    const toggle = screen.getByRole('button', { name: 'alpha' });
-    const header = toggle.closest('.pivi-settings-card__header') as HTMLElement;
-    toggle.setPointerCapture = jest.fn();
-    toggle.releasePointerCapture = jest.fn();
-    toggle.hasPointerCapture = jest.fn(() => true);
-    header.setPointerCapture = jest.fn();
-
-    fireEvent(toggle, pointerEvent('pointerdown', 10));
-    fireEvent(header, pointerEvent('pointerup', 10));
-
-    expect(header.setPointerCapture).not.toHaveBeenCalled();
-    expect(toggle.setPointerCapture).toHaveBeenCalledWith(1);
+    expect(cards[0]).toHaveAttribute('data-settings-sort-id', 'alpha');
+    expect(cards[1]).toHaveAttribute('data-settings-sort-id', 'beta');
+    expect(toggle.setPointerCapture).not.toHaveBeenCalled();
     fireEvent.click(toggle);
     expect(screen.getByText('Body alpha')).toBeInTheDocument();
+  });
+
+  it('keeps pointer dragging 1:1 with a clear drop target until drop', async () => {
+    const { container } = renderPrimitives(<SortableCards />);
+    const handle = screen.getByRole('button', { name: /Reorder alpha/ });
+    mockCardRects(Array.from(container.querySelectorAll<HTMLElement>('.pivi-settings-card')));
+    handle.setPointerCapture = jest.fn();
+    handle.releasePointerCapture = jest.fn();
+    handle.hasPointerCapture = jest.fn(() => true);
+
+    fireEvent(handle, pointerEvent('pointerdown', 10));
+    fireEvent(handle, pointerEvent('pointermove', 20));
+    expect(container.querySelector<HTMLElement>('[data-settings-sort-id="alpha"]')?.style.transform)
+      .toBe('translateY(10px)');
+    fireEvent(handle, pointerEvent('pointermove', 60));
+    expect(container.querySelector<HTMLElement>('[data-settings-sort-id="alpha"]')?.style.transform)
+      .toBe('translateY(50px)');
+    fireEvent(handle, pointerEvent('pointermove', 150));
+
+    const previewCards = container.querySelectorAll<HTMLElement>('.pivi-settings-card');
+    expect(previewCards[0]).toHaveAttribute('data-settings-sort-id', 'alpha');
+    expect(previewCards[1]).toHaveAttribute('data-settings-sort-id', 'beta');
+    expect(previewCards[0]).toHaveClass('is-dragging');
+    expect(previewCards.item(0).style.transform).toBe('translateY(140px)');
+    expect(previewCards[1]).toHaveClass('is-drop-after');
+    expect(handle.setPointerCapture).toHaveBeenCalledWith(1);
+
+    fireEvent(handle, pointerEvent('pointerup', 150));
+    await act(async () => undefined);
+    expect(container.querySelectorAll('.pivi-settings-card')[0]).toHaveAttribute('data-settings-sort-id', 'beta');
+    expect(container.querySelectorAll('.pivi-settings-card')[1]).toHaveAttribute('data-settings-sort-id', 'alpha');
+  });
+
+  it('places the DisclosureCard reorder handle before its identity and actions', () => {
+    const { container } = renderPrimitives(<SortableCards />);
+    const header = container.querySelector('.pivi-settings-card__header');
+    expect(header?.firstElementChild).toHaveClass('pivi-settings-card__handle');
+    expect(header?.firstElementChild?.nextElementSibling).toHaveClass('pivi-settings-card__toggle');
   });
 
   it('does not start a pointer drag from inline action buttons', async () => {
@@ -340,6 +385,20 @@ describe('Settings primitives', () => {
     expect(row?.querySelector('.pivi-settings-row__actions')).toContainElement(
       screen.getByRole('button', { name: 'Remove skill' }),
     );
+  });
+
+  it('requires a second press on the inline delete button', () => {
+    const onRemove = jest.fn();
+    renderPrimitives(<SettingsRemoveButton ariaLabel="Remove item" onClick={onRemove} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove item' }));
+    expect(onRemove).not.toHaveBeenCalled();
+    const confirm = screen.getByRole('button', { name: 'Confirm delete' });
+    expect(confirm).toHaveClass('pivi-settings-delete-btn--confirming');
+
+    fireEvent.click(confirm);
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Remove item' })).toBeInTheDocument();
   });
 
   it('marks SettingRow stacked and wires aria-labelledby onto native controls', () => {

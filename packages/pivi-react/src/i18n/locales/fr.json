@@ -9,6 +9,7 @@
     "loading": "Chargement",
     "error": "Erreur",
     "confirm": "Confirmer",
+    "confirmDelete": "Confirmer la suppression",
     "line": "ligne",
     "lines": "lignes",
     "copied": "Copié !"
@@ -65,7 +66,37 @@
       "confirm": "Confirmer",
       "deny": "Refuser",
       "management": {
-        "titles": { "mcp": { "upsert": "Mettre à jour le serveur MCP « {name} »", "enable": "Activer le serveur MCP « {name} »", "disable": "Désactiver le serveur MCP « {name} »", "remove": "Supprimer le serveur MCP « {name} »" }, "skills": { "install": "Installer les Skills depuis « {source} »", "enable": "Activer le Skill « {name} »", "disable": "Désactiver le Skill « {name} »", "update": "Mettre à jour le Skill « {name} »", "updateAll": "Mettre à jour tous les Skills gérés par paquet", "remove": "Supprimer le Skill « {name} »" }, "commands": { "upsert": "Enregistrer la commande {command}", "remove": "Supprimer la commande {command}", "move": "Déplacer la commande {command}" }, "prompt": { "enable": "Activer le module de prompt « {name} »", "disable": "Désactiver le module de prompt « {name} »", "setBody": "Mettre à jour le module de prompt « {name} »", "restore": "Restaurer le module de prompt « {name} »", "create": "Ajouter le module de prompt « {name} »", "update": "Mettre à jour le module de prompt « {name} »", "remove": "Supprimer le module de prompt « {name} »", "move": "Déplacer le module de prompt « {name} »" } },
+        "titles": {
+          "mcp": {
+            "upsert": "Mettre à jour le serveur MCP « {name} »",
+            "enable": "Activer le serveur MCP « {name} »",
+            "disable": "Désactiver le serveur MCP « {name} »",
+            "remove": "Supprimer le serveur MCP « {name} »"
+          },
+          "skills": {
+            "install": "Installer les Skills depuis « {source} »",
+            "enable": "Activer le Skill « {name} »",
+            "disable": "Désactiver le Skill « {name} »",
+            "update": "Mettre à jour le Skill « {name} »",
+            "updateAll": "Mettre à jour tous les Skills gérés par paquet",
+            "remove": "Supprimer le Skill « {name} »"
+          },
+          "commands": {
+            "upsert": "Enregistrer la commande {command}",
+            "remove": "Supprimer la commande {command}",
+            "move": "Déplacer la commande {command}"
+          },
+          "prompt": {
+            "enable": "Activer le module de prompt « {name} »",
+            "disable": "Désactiver le module de prompt « {name} »",
+            "setBody": "Mettre à jour le module de prompt « {name} »",
+            "restore": "Restaurer le module de prompt « {name} »",
+            "create": "Ajouter le module de prompt « {name} »",
+            "update": "Mettre à jour le module de prompt « {name} »",
+            "remove": "Supprimer le module de prompt « {name} »",
+            "move": "Déplacer le module de prompt « {name} »"
+          }
+        },
         "changes": {
           "mcpUpsert": "Appliquer la configuration prévue du serveur MCP.",
           "mcpEnable": "Activer ce serveur MCP.",
@@ -399,7 +430,19 @@
     "pages": {
       "general": {
         "label": "Général",
-        "description": "Langue, disposition, comportement du chat et À propos."
+        "description": "Langue, disposition et intégrations."
+      },
+      "chat": {
+        "description": "Contrôlez le comportement du chat, les détails du streaming et les délais des requêtes fournisseur."
+      },
+      "personalization": {
+        "description": "Personnalisez les réponses et choisissez les notes pouvant être ajoutées automatiquement au contexte."
+      },
+      "input": {
+        "description": "Configurez l’envoi des messages, la navigation au clavier et les raccourcis Pivi."
+      },
+      "sessions": {
+        "description": "Choisissez la durée de conservation des sessions supprimées et effacez définitivement leurs fichiers."
       },
       "environment": {
         "label": "Environnement",
@@ -463,6 +506,7 @@
       "open": "Ouvrir Style Settings",
       "installationOpened": "La page du plugin Style Settings a été ouverte. Installez-le ou activez-le, puis revenez à Général."
     },
+    "appearance": "Apparence",
     "layout": "Mise en page",
     "chatBehavior": "Comportement du chat",
     "providerRequests": {
@@ -522,7 +566,8 @@
     },
     "hotkeys": {
       "notSet": "Non défini",
-      "openHotkeys": "Ouvrir les réglages de raccourcis"
+      "openHotkeys": "Ouvrir les réglages de raccourcis",
+      "backToPivi": "← Retour à Pivi"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -655,9 +700,7 @@
         "desc": "Supprime les sessions retirées avec l’action Supprimer. Les sessions ouvertes et archivées ne sont pas affectées.",
         "button": "Supprimer définitivement",
         "success": "{count} fichier(s) de session retiré(s) supprimé(s) définitivement.",
-        "failed": "Échec de la suppression définitive des sessions retirées",
-        "confirmTitle": "Supprimer définitivement les sessions retirées ?",
-        "confirmDescription": "Cela supprime les sessions retirées avec l’action Supprimer. Les sessions ouvertes et archivées ne seront pas affectées."
+        "failed": "Échec de la suppression définitive des sessions retirées"
       }
     },
     "sharedEnvironment": {
@@ -800,8 +843,6 @@
       "addProvider": "+ Ajouter un fournisseur",
       "addProviderAdded": "Ajouté",
       "removedProvider": "Fournisseur {name} retiré.",
-      "removeConfirmTitle": "Supprimer le fournisseur {name} ?",
-      "removeConfirmDescription": "Cela supprime le fournisseur et ses sélections de modèles. Les identifiants enregistrés sont conservés par défaut.",
       "removeCredential": "Supprimer également les identifiants de ce fournisseur de {secureStorageName}",
       "enableAria": "Activer le fournisseur {name}",
       "disableAria": "Désactiver le fournisseur {name}",
@@ -935,9 +976,7 @@
         "disableAria": "Désactiver la compétence {name}",
         "updateAria": "Mettre à jour la compétence {name}",
         "removeAria": "Retirer la compétence {name}",
-        "installAria": "Installer la compétence {name}",
-        "removeConfirmTitle": "Retirer la compétence {name} ?",
-        "removeConfirm": "Retirer {name} de .pivi/skills/ ? Cela supprime le dossier de compétence sur votre appareil."
+        "installAria": "Installer la compétence {name}"
       },
       "notices": {
         "noRemote": "Aucune compétence distante trouvée pour cette source.",
@@ -978,15 +1017,13 @@
       "loadFailed": "Échec du chargement des commandes personnalisées : {message}",
       "editAria": "Modifier la commande {name}",
       "deleteAria": "Supprimer la commande {name}",
-      "deleteConfirm": "Supprimer la commande personnalisée /{name} ? Son élément Note Toolbar ne sera pas supprimé ; supprimez-le manuellement.",
       "deleteFailed": "Échec de la suppression de la commande personnalisée : {message}",
       "reorder": {
         "handle": "Réorganiser /{name}, actuellement en position {position}",
         "position": "/{name} déplacé à la position {position} sur {total}.",
         "saved": "Ordre des commandes enregistré.",
         "cancelled": "Réorganisation de la commande annulée."
-      },
-      "deleteConfirmTitle": "Supprimer la commande personnalisée /{name} ?"
+      }
     },
     "createCommand": {
       "titleCreate": "Créer une commande slash personnalisée",
@@ -1055,8 +1092,6 @@
       "add": "+ Ajouter un module",
       "addAria": "Ajouter un module d’invite personnalisé",
       "deleteAria": "Supprimer {title}",
-      "deleteConfirmTitle": "Supprimer le module personnalisé {title} ?",
-      "deleteConfirm": "Supprimer ce module personnalisé ? Son corps sera retiré de l’invite système.",
       "empty": "Aucun module personnalisé pour l’instant. Ajoutez-en un pour le placer après les modules de flux de travail.",
       "newModule": "Nouveau module",
       "reorder": {
@@ -1093,7 +1128,6 @@
       "refreshFailed": "Échec de l’actualisation des outils",
       "saveFailed": "Échec de l’enregistrement du serveur MCP",
       "alreadyExists": "Le serveur « {name} » existe déjà",
-      "deleteConfirm": "Supprimer le serveur MCP « {name} » ?",
       "enableAria": "Activer le serveur MCP {name}",
       "disableAria": "Désactiver le serveur MCP {name}",
       "removeAria": "Supprimer le serveur MCP {name}",
@@ -1143,8 +1177,7 @@
         "connected": "Outils actualisés",
         "availableTools": "Outils disponibles ({count})",
         "noTools": "Ce serveur n’a renvoyé aucun outil."
-      },
-      "deleteConfirmTitle": "Supprimer le serveur MCP « {name} » ?"
+      }
     }
   },
   "commands": {

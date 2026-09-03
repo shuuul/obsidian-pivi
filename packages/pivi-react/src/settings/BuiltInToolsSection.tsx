@@ -168,6 +168,7 @@ export function BuiltInToolsSection({
     if (row.configuration === 'read') {
       return (
         <SettingRow
+          indented
           name={t('settings.tools.reading.defaultSize.name')}
           description={t('settings.tools.reading.defaultSize.desc')}
         >
@@ -193,7 +194,7 @@ export function BuiltInToolsSection({
     if (row.configuration === 'external-read') {
       return (
         <>
-          <SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
+          <SettingRow indented name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
             <Toggle
               checked={allowExternalRead}
               disabled={pending}
@@ -208,6 +209,7 @@ export function BuiltInToolsSection({
             />
           </SettingRow>
           <SettingRow
+            indented
             stacked
             name={t('settings.externalRead.directories.name')}
             description={t('settings.externalRead.directories.desc')}
@@ -237,7 +239,7 @@ export function BuiltInToolsSection({
     }
     if (row.configuration === 'bash') {
       return (
-        <SettingRow stacked name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}>
+        <SettingRow indented stacked name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}>
           <BadgeListInput
             values={bashAllowlist}
             inputLabel={t('settings.bash.allowlist.inputLabel')}

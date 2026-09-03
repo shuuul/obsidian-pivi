@@ -9,6 +9,7 @@
     "loading": "Lädt",
     "error": "Fehler",
     "confirm": "Bestätigen",
+    "confirmDelete": "Löschen bestätigen",
     "line": "Zeile",
     "lines": "Zeilen",
     "copied": "Kopiert!"
@@ -70,10 +71,96 @@
       "confirm": "Bestätigen",
       "deny": "Ablehnen",
       "management": {
-        "titles": { "mcp": { "upsert": "MCP-Server „{name}“ aktualisieren", "enable": "MCP-Server „{name}“ aktivieren", "disable": "MCP-Server „{name}“ deaktivieren", "remove": "MCP-Server „{name}“ entfernen" }, "skills": { "install": "Skills aus „{source}“ installieren", "enable": "Skill „{name}“ aktivieren", "disable": "Skill „{name}“ deaktivieren", "update": "Skill „{name}“ aktualisieren", "updateAll": "Alle paketverwalteten Skills aktualisieren", "remove": "Skill „{name}“ entfernen" }, "commands": { "upsert": "Befehl {command} speichern", "remove": "Befehl {command} entfernen", "move": "Befehl {command} verschieben" }, "prompt": { "enable": "Prompt-Modul „{name}“ aktivieren", "disable": "Prompt-Modul „{name}“ deaktivieren", "setBody": "Prompt-Modul „{name}“ aktualisieren", "restore": "Prompt-Modul „{name}“ wiederherstellen", "create": "Prompt-Modul „{name}“ hinzufügen", "update": "Prompt-Modul „{name}“ aktualisieren", "remove": "Prompt-Modul „{name}“ entfernen", "move": "Prompt-Modul „{name}“ verschieben" } },
-        "changes": { "mcpUpsert": "Die geplante MCP-Serverkonfiguration anwenden.", "mcpEnable": "Diesen MCP-Server aktivieren.", "mcpDisable": "Diesen MCP-Server deaktivieren.", "mcpRemove": "Diesen MCP-Server und seine Zugangsdaten entfernen.", "skillsInstall": "Skills über den festgelegten Paketablauf installieren.", "skillsEnable": "Diesen Skill aktivieren.", "skillsDisable": "Diesen Skill deaktivieren.", "skillsUpdate": "Diesen Skill aus seiner Paketquelle aktualisieren.", "skillsUpdateAll": "Alle paketverwalteten Skills aktualisieren.", "skillsRemove": "Diesen Skill aus dem Arbeitsbereich entfernen.", "commandsUpsert": "Diesen Arbeitsbereichsbefehl erstellen oder aktualisieren.", "commandsRemove": "Diesen Arbeitsbereichsbefehl löschen.", "commandsMove": "Diesen Arbeitsbereichsbefehl neu anordnen.", "promptEnable": "Dieses Prompt-Modul aktivieren.", "promptDisable": "Dieses Prompt-Modul deaktivieren.", "promptSetBody": "Den Text dieses Prompt-Moduls ersetzen.", "promptRestore": "Dieses Prompt-Modul auf die mitgelieferte Vorgabe zurücksetzen.", "promptCreate": "Dieses benutzerdefinierte Prompt-Modul erstellen.", "promptUpdate": "Dieses benutzerdefinierte Prompt-Modul aktualisieren.", "promptRemove": "Dieses benutzerdefinierte Prompt-Modul löschen.", "promptMove": "Dieses benutzerdefinierte Prompt-Modul neu anordnen." },
-        "fields": { "server": "Server", "enabled": "Aktiviert", "type": "Typ", "command": "Befehl", "args": "Argumente", "envNames": "Umgebungsvariablen", "url": "URL", "auth": "Authentifizierung", "headerNames": "Headernamen", "bearerToken": "Bearer-Token", "oauth": "OAuth", "oauthGrant": "OAuth-Grant", "oauthClientId": "OAuth-Client-ID", "oauthScope": "OAuth-Bereich", "oauthClientSecret": "OAuth-Client-Secret", "contextSaving": "Kontextspeicherung", "disabledTools": "Deaktivierte Werkzeuge", "source": "Quelle", "skills": "Skills", "skill": "Skill", "catalogRevision": "Katalogrevision", "icon": "Symbol", "prompt": "Prompt", "before": "Vor", "after": "Nach", "module": "Modul", "title": "Titel" },
-        "values": { "yes": "Ja", "no": "Nein", "clear": "Löschen", "disabled": "Deaktiviert", "updated": "Aktualisiert" }
+        "titles": {
+          "mcp": {
+            "upsert": "MCP-Server „{name}“ aktualisieren",
+            "enable": "MCP-Server „{name}“ aktivieren",
+            "disable": "MCP-Server „{name}“ deaktivieren",
+            "remove": "MCP-Server „{name}“ entfernen"
+          },
+          "skills": {
+            "install": "Skills aus „{source}“ installieren",
+            "enable": "Skill „{name}“ aktivieren",
+            "disable": "Skill „{name}“ deaktivieren",
+            "update": "Skill „{name}“ aktualisieren",
+            "updateAll": "Alle paketverwalteten Skills aktualisieren",
+            "remove": "Skill „{name}“ entfernen"
+          },
+          "commands": {
+            "upsert": "Befehl {command} speichern",
+            "remove": "Befehl {command} entfernen",
+            "move": "Befehl {command} verschieben"
+          },
+          "prompt": {
+            "enable": "Prompt-Modul „{name}“ aktivieren",
+            "disable": "Prompt-Modul „{name}“ deaktivieren",
+            "setBody": "Prompt-Modul „{name}“ aktualisieren",
+            "restore": "Prompt-Modul „{name}“ wiederherstellen",
+            "create": "Prompt-Modul „{name}“ hinzufügen",
+            "update": "Prompt-Modul „{name}“ aktualisieren",
+            "remove": "Prompt-Modul „{name}“ entfernen",
+            "move": "Prompt-Modul „{name}“ verschieben"
+          }
+        },
+        "changes": {
+          "mcpUpsert": "Die geplante MCP-Serverkonfiguration anwenden.",
+          "mcpEnable": "Diesen MCP-Server aktivieren.",
+          "mcpDisable": "Diesen MCP-Server deaktivieren.",
+          "mcpRemove": "Diesen MCP-Server und seine Zugangsdaten entfernen.",
+          "skillsInstall": "Skills über den festgelegten Paketablauf installieren.",
+          "skillsEnable": "Diesen Skill aktivieren.",
+          "skillsDisable": "Diesen Skill deaktivieren.",
+          "skillsUpdate": "Diesen Skill aus seiner Paketquelle aktualisieren.",
+          "skillsUpdateAll": "Alle paketverwalteten Skills aktualisieren.",
+          "skillsRemove": "Diesen Skill aus dem Arbeitsbereich entfernen.",
+          "commandsUpsert": "Diesen Arbeitsbereichsbefehl erstellen oder aktualisieren.",
+          "commandsRemove": "Diesen Arbeitsbereichsbefehl löschen.",
+          "commandsMove": "Diesen Arbeitsbereichsbefehl neu anordnen.",
+          "promptEnable": "Dieses Prompt-Modul aktivieren.",
+          "promptDisable": "Dieses Prompt-Modul deaktivieren.",
+          "promptSetBody": "Den Text dieses Prompt-Moduls ersetzen.",
+          "promptRestore": "Dieses Prompt-Modul auf die mitgelieferte Vorgabe zurücksetzen.",
+          "promptCreate": "Dieses benutzerdefinierte Prompt-Modul erstellen.",
+          "promptUpdate": "Dieses benutzerdefinierte Prompt-Modul aktualisieren.",
+          "promptRemove": "Dieses benutzerdefinierte Prompt-Modul löschen.",
+          "promptMove": "Dieses benutzerdefinierte Prompt-Modul neu anordnen."
+        },
+        "fields": {
+          "server": "Server",
+          "enabled": "Aktiviert",
+          "type": "Typ",
+          "command": "Befehl",
+          "args": "Argumente",
+          "envNames": "Umgebungsvariablen",
+          "url": "URL",
+          "auth": "Authentifizierung",
+          "headerNames": "Headernamen",
+          "bearerToken": "Bearer-Token",
+          "oauth": "OAuth",
+          "oauthGrant": "OAuth-Grant",
+          "oauthClientId": "OAuth-Client-ID",
+          "oauthScope": "OAuth-Bereich",
+          "oauthClientSecret": "OAuth-Client-Secret",
+          "contextSaving": "Kontextspeicherung",
+          "disabledTools": "Deaktivierte Werkzeuge",
+          "source": "Quelle",
+          "skills": "Skills",
+          "skill": "Skill",
+          "catalogRevision": "Katalogrevision",
+          "icon": "Symbol",
+          "prompt": "Prompt",
+          "before": "Vor",
+          "after": "Nach",
+          "module": "Modul",
+          "title": "Titel"
+        },
+        "values": {
+          "yes": "Ja",
+          "no": "Nein",
+          "clear": "Löschen",
+          "disabled": "Deaktiviert",
+          "updated": "Aktualisiert"
+        }
       }
     },
     "capabilityApproval": {
@@ -343,7 +430,19 @@
     "pages": {
       "general": {
         "label": "Allgemein",
-        "description": "Sprache, Layout, Chat-Verhalten und Infos."
+        "description": "Sprache, Layout und Integrationen."
+      },
+      "chat": {
+        "description": "Chatverhalten, Streamingdetails und Zeitlimits für Anbieteranfragen steuern."
+      },
+      "personalization": {
+        "description": "Antworten personalisieren und festlegen, welche Notizen automatisch als Kontext hinzugefügt werden können."
+      },
+      "input": {
+        "description": "Nachrichtenversand, Tastaturnavigation und Pivi-Tastenkürzel konfigurieren."
+      },
+      "sessions": {
+        "description": "Aufbewahrungsdauer entfernter Sitzungen festlegen und ihre Dateien dauerhaft löschen."
       },
       "environment": {
         "label": "Umgebung",
@@ -381,7 +480,8 @@
         "label": "Werkzeugleiste",
         "description": "Aktionen der Editor-Auswahlwerkzeugleiste."
       }
-    },    "setup": {
+    },
+    "setup": {
       "getApiKeyAt": "API-Schlüssel bei {host} holen",
       "download": "Herunterladen",
       "openDocs": "Dokumentation öffnen"
@@ -406,12 +506,19 @@
       "open": "Style Settings öffnen",
       "installationOpened": "Die Style-Settings-Plugin-Seite wurde geöffnet. Installieren oder aktivieren Sie es und kehren Sie dann zu Allgemein zurück."
     },
+    "appearance": "Erscheinungsbild",
     "layout": "Layout",
     "chatBehavior": "Chat-Verhalten",
     "providerRequests": {
       "title": "Anbieteranfragen",
-      "total": { "name": "Gesamt-Timeout (Sekunden)", "desc": "Maximale Zeit für eine Anbieteranfrage einschließlich Antwortstream. 0 deaktiviert das Timeout." },
-      "idle": { "name": "Leerlauf-Timeout (Sekunden)", "desc": "Maximale Zeit ohne Antwortbytes. 0 deaktiviert das Timeout." }
+      "total": {
+        "name": "Gesamt-Timeout (Sekunden)",
+        "desc": "Maximale Zeit für eine Anbieteranfrage einschließlich Antwortstream. 0 deaktiviert das Timeout."
+      },
+      "idle": {
+        "name": "Leerlauf-Timeout (Sekunden)",
+        "desc": "Maximale Zeit ohne Antwortbytes. 0 deaktiviert das Timeout."
+      }
     },
     "personalizationContext": "Personalisierung & Kontext",
     "inputShortcuts": "Eingabe & Tastenkürzel",
@@ -459,7 +566,8 @@
     },
     "hotkeys": {
       "notSet": "Nicht festgelegt",
-      "openHotkeys": "Hotkey-Einstellungen öffnen"
+      "openHotkeys": "Hotkey-Einstellungen öffnen",
+      "backToPivi": "← Zurück zu Pivi"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -592,9 +700,7 @@
         "desc": "Löscht über die Aktion „Löschen“ entfernte Sitzungen. Geöffnete und archivierte Sitzungen bleiben erhalten.",
         "button": "Endgültig löschen",
         "success": "{count} entfernte Sitzungsdatei(en) endgültig gelöscht.",
-        "failed": "Entfernte Sitzungen konnten nicht endgültig gelöscht werden",
-        "confirmTitle": "Entfernte Sitzungen endgültig löschen?",
-        "confirmDescription": "Dies löscht über die Aktion „Löschen“ entfernte Sitzungen. Geöffnete und archivierte Sitzungen bleiben erhalten."
+        "failed": "Entfernte Sitzungen konnten nicht endgültig gelöscht werden"
       }
     },
     "sharedEnvironment": {
@@ -737,8 +843,6 @@
       "addProvider": "+ Anbieter hinzufügen",
       "addProviderAdded": "Hinzugefügt",
       "removedProvider": "Anbieter {name} entfernt.",
-      "removeConfirmTitle": "Anbieter {name} entfernen?",
-      "removeConfirmDescription": "Dadurch werden der Anbieter und seine Modellauswahl entfernt. Die gespeicherten Zugangsdaten bleiben standardmäßig erhalten.",
       "removeCredential": "Zugangsdaten dieses Anbieters ebenfalls aus {secureStorageName} löschen",
       "enableAria": "{name}-Anbieter aktivieren",
       "disableAria": "{name}-Anbieter deaktivieren",
@@ -872,9 +976,7 @@
         "disableAria": "Skill {name} deaktivieren",
         "updateAria": "Skill {name} aktualisieren",
         "removeAria": "Skill {name} entfernen",
-        "installAria": "Skill {name} installieren",
-        "removeConfirmTitle": "Skill {name} entfernen?",
-        "removeConfirm": "{name} aus .pivi/skills/ entfernen? Dadurch wird der Skill-Ordner auf Ihrem Gerät gelöscht."
+        "installAria": "Skill {name} installieren"
       },
       "notices": {
         "noRemote": "Keine Remote-Skills für diese Quelle gefunden.",
@@ -915,15 +1017,13 @@
       "loadFailed": "Eigene Befehle konnten nicht geladen werden: {message}",
       "editAria": "Befehl {name} bearbeiten",
       "deleteAria": "Befehl {name} löschen",
-      "deleteConfirm": "Eigenen Befehl /{name} löschen? Das zugehörige Note-Toolbar-Element wird nicht entfernt und muss manuell gelöscht werden.",
       "deleteFailed": "Eigener Befehl konnte nicht gelöscht werden: {message}",
       "reorder": {
         "handle": "Reihenfolge von /{name} ändern, aktuell Position {position}",
         "position": "/{name} an Position {position} von {total} verschoben.",
         "saved": "Befehlsreihenfolge gespeichert.",
         "cancelled": "Neuanordnung des Befehls abgebrochen."
-      },
-      "deleteConfirmTitle": "Benutzerdefinierten Befehl /{name} löschen?"
+      }
     },
     "createCommand": {
       "titleCreate": "Eigenen Slash-Befehl erstellen",
@@ -977,8 +1077,12 @@
         "estimatedTokens": "{count} Schätzung",
         "total": "Summe"
       },
-      "workflow": { "heading": "Workflow" },
-      "custom": { "heading": "Eigene" },
+      "workflow": {
+        "heading": "Workflow"
+      },
+      "custom": {
+        "heading": "Eigene"
+      },
       "modified": "Geändert",
       "restore": "Standard wiederherstellen",
       "bodyLabel": "Modulkörper",
@@ -988,8 +1092,6 @@
       "add": "+ Modul hinzufügen",
       "addAria": "Eigenes Prompt-Modul hinzufügen",
       "deleteAria": "{title} löschen",
-      "deleteConfirmTitle": "Eigenes Modul {title} löschen?",
-      "deleteConfirm": "Dieses eigene Modul löschen? Der Körper wird aus dem Systemprompt entfernt.",
       "empty": "Noch keine eigenen Module. Fügen Sie eines hinzu, damit es nach den Workflow-Modulen folgt.",
       "newModule": "Neues Modul",
       "reorder": {
@@ -1026,7 +1128,6 @@
       "refreshFailed": "Tool-Aktualisierung fehlgeschlagen",
       "saveFailed": "MCP-Server konnte nicht gespeichert werden",
       "alreadyExists": "Server „{name}“ existiert bereits",
-      "deleteConfirm": "MCP-Server „{name}“ löschen?",
       "enableAria": "MCP-Server {name} aktivieren",
       "disableAria": "MCP-Server {name} deaktivieren",
       "removeAria": "MCP-Server {name} entfernen",
@@ -1076,8 +1177,7 @@
         "connected": "Tools aktualisiert",
         "availableTools": "Verfügbare Tools ({count})",
         "noTools": "Dieser Server hat keine Tools zurückgegeben."
-      },
-      "deleteConfirmTitle": "MCP-Server „{name}“ löschen?"
+      }
     }
   },
   "commands": {

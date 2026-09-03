@@ -22,8 +22,8 @@ interface PointerDrag<ItemId extends string> {
   readonly pointerId: number;
   readonly captureTarget: Element;
   readonly startY: number;
-  readonly grabOffset: number;
   readonly originalOrder: readonly ItemId[];
+  pendingOrder: ItemId[];
   active: boolean;
 }
 
@@ -62,6 +62,10 @@ interface SortableReorder<ItemId extends string, Element extends HTMLElement> {
   readonly listRef: RefObject<HTMLDivElement | null>;
   readonly draggingId: ItemId | null;
   readonly dragOffset: number;
+  readonly dropIndicator: {
+    readonly id: ItemId;
+    readonly edge: 'before' | 'after';
+  } | null;
   readonly announcement: string;
   readonly getHandleProps: (id: ItemId) => SortableReorderHandleProps<Element>;
   readonly consumeClickAfterDrag: (id: ItemId) => boolean;
@@ -89,12 +93,15 @@ export function useSortableReorder<
 ): SortableReorder<ItemId, Element> {
   const [draggingId, setDraggingId] = useState<ItemId | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
+  const [dropIndicator, setDropIndicator] = useState<{
+    readonly id: ItemId;
+    readonly edge: 'before' | 'after';
+  } | null>(null);
   const [keyboardDrag, setKeyboardDrag] = useState<KeyboardDrag<ItemId> | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
   const pointerDragRef = useRef<PointerDrag<ItemId> | null>(null);
   const clickSuppressionRef = useRef<ItemId | null>(null);
-  const dragOffsetRef = useRef(0);
   const orderRef = useRef(options.order);
   orderRef.current = options.order;
 
@@ -110,7 +117,6 @@ export function useSortableReorder<
   const onPointerDown = (id: ItemId, event: PointerEvent<Element>): void => {
     if (event.button !== 0 || options.disabled || keyboardDrag !== null) return;
     if (isExcludedPointerTarget(event.target, event.currentTarget)) return;
-    event.preventDefault();
     event.stopPropagation();
     const item = event.currentTarget.closest<HTMLElement>(options.itemSelector);
     if (!item) return;
@@ -123,8 +129,8 @@ export function useSortableReorder<
       pointerId: event.pointerId,
       captureTarget,
       startY: event.clientY,
-      grabOffset: event.clientY - item.getBoundingClientRect().top,
       originalOrder: [...orderRef.current],
+      pendingOrder: [...orderRef.current],
       active: false,
     };
   };
@@ -133,18 +139,12 @@ export function useSortableReorder<
     const drag = pointerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     if (!drag.active && Math.abs(event.clientY - drag.startY) < DRAG_THRESHOLD_PX) return;
+    event.preventDefault();
     if (!drag.active) {
       drag.active = true;
       setDraggingId(drag.id);
     }
-
-    const item = event.currentTarget.closest<HTMLElement>(options.itemSelector);
-    if (item) {
-      const layoutTop = item.getBoundingClientRect().top - dragOffsetRef.current;
-      const nextOffset = event.clientY - drag.grabOffset - layoutTop;
-      dragOffsetRef.current = nextOffset;
-      setDragOffset(nextOffset);
-    }
+    setDragOffset(event.clientY - drag.startY);
 
     const elements = Array.from(
       listRef.current?.querySelectorAll<HTMLElement>(options.itemSelector) ?? [],
@@ -153,13 +153,17 @@ export function useSortableReorder<
       const rect = element.getBoundingClientRect();
       return event.clientY < rect.top + rect.height / 2;
     });
-    const currentOrder = orderRef.current;
     const resolvedIndex = targetIndex < 0 ? elements.length : targetIndex;
-    const nextOrder = moveItem(currentOrder, drag.id, resolvedIndex);
-    if (nextOrder.some((id, index) => id !== currentOrder[index])) {
-      previewOrder(nextOrder);
+    const nextOrder = moveItem(drag.originalOrder, drag.id, resolvedIndex);
+    if (nextOrder.some((id, index) => id !== drag.pendingOrder[index])) {
+      drag.pendingOrder = nextOrder;
       announcePosition(drag.id, nextOrder);
     }
+    const indicatorElement = elements[resolvedIndex] ?? elements.at(-1);
+    const indicatorId = indicatorElement?.dataset[options.itemDataKey] as ItemId | undefined;
+    setDropIndicator(indicatorId
+      ? { id: indicatorId, edge: resolvedIndex < elements.length ? 'before' : 'after' }
+      : null);
   };
 
   const finishPointerDrag = (event: PointerEvent<Element>, cancel = false): void => {
@@ -171,10 +175,9 @@ export function useSortableReorder<
     }
     setDraggingId(null);
     setDragOffset(0);
-    dragOffsetRef.current = 0;
+    setDropIndicator(null);
     if (!drag.active) return;
     if (cancel) {
-      previewOrder([...drag.originalOrder]);
       setAnnouncement(options.cancelledAnnouncement);
       return;
     }
@@ -182,7 +185,8 @@ export function useSortableReorder<
     event.currentTarget.ownerDocument.defaultView?.setTimeout(() => {
       if (clickSuppressionRef.current === drag.id) clickSuppressionRef.current = null;
     }, 0);
-    void options.commitOrder([...orderRef.current], drag.originalOrder).then(
+    previewOrder([...drag.pendingOrder]);
+    void options.commitOrder([...drag.pendingOrder], drag.originalOrder).then(
       saved => { setAnnouncement(saved ? options.savedAnnouncement : options.failedAnnouncement); },
       () => { setAnnouncement(options.failedAnnouncement); },
     );
@@ -234,6 +238,7 @@ export function useSortableReorder<
     listRef,
     draggingId,
     dragOffset,
+    dropIndicator,
     announcement,
     consumeClickAfterDrag: (id) => {
       if (clickSuppressionRef.current !== id) return false;

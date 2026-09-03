@@ -7,6 +7,12 @@ import {
 
 const PAGE_IDS: readonly SettingsPageId[] = [
   'general',
+  'appearance',
+  'chat',
+  'personalization',
+  'input',
+  'sessions',
+  'about',
   'environment',
   'models',
   'builtInTools',

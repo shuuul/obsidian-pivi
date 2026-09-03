@@ -180,15 +180,13 @@ describe('React settings foundation', () => {
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     expect(screen.getByText('Language')).toBeInTheDocument();
-    expect(screen.getByText('About')).toBeInTheDocument();
-    expect(screen.getByText('Not set')).toBeInTheDocument();
+    expect(screen.queryByText('About')).not.toBeInTheDocument();
   });
 
   it('persists general and built-in-tools settings on their pages', async () => {
     const saveGeneral = jest.fn(async () => undefined);
     const saveSubagents = jest.fn(async () => undefined);
-    const general = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts({ saveGeneral, saveSubagents })} /></I18nProvider>));
-    expect(screen.getByText('Language')).toBeInTheDocument();
+    const general = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="chat" ports={createPorts({ saveGeneral, saveSubagents })} /></I18nProvider>));
     const autoScroll = screen.getByRole('checkbox', { name: 'Auto-scroll during streaming' });
     fireEvent.click(autoScroll);
     await act(async () => undefined);
@@ -210,7 +208,7 @@ describe('React settings foundation', () => {
   });
 
   it('does not expose internal compaction policy as a setting', () => {
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts()} /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="sessions" ports={createPorts()} /></I18nProvider>));
     expect(screen.queryByText('Compaction')).not.toBeInTheDocument();
     expect(screen.queryByRole('slider', { name: 'Compact threshold' })).not.toBeInTheDocument();
   });
@@ -229,6 +227,34 @@ describe('React settings foundation', () => {
     expect(screen.queryByRole('heading', { name: '通用' })).not.toBeInTheDocument();
   });
 
+  it('replaces duplicate secondary-page section headings with descriptions', () => {
+    const ports = createPorts();
+    const renderPage = (page: 'chat' | 'personalization' | 'input' | 'sessions') => withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}><SettingsRoot page={page} ports={ports} /></I18nProvider>,
+    );
+    const { rerender } = render(renderPage('input'));
+
+    expect(screen.queryByRole('heading', { name: 'Input & shortcuts' })).not.toBeInTheDocument();
+    expect(screen.getByText('Configure message sending, keyboard navigation, and Pivi hotkeys.'))
+      .toBeInTheDocument();
+
+    rerender(renderPage('chat'));
+    expect(screen.queryByRole('heading', { name: 'Chat behavior' })).not.toBeInTheDocument();
+    expect(screen.getByText('Control chat behavior, streaming details, and provider request timeouts.'))
+      .toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Provider requests' })).toBeInTheDocument();
+
+    rerender(renderPage('personalization'));
+    expect(screen.queryByRole('heading', { name: 'Personalization & context' })).not.toBeInTheDocument();
+    expect(screen.getByText('Personalize responses and choose which notes can be added automatically as context.'))
+      .toBeInTheDocument();
+
+    rerender(renderPage('sessions'));
+    expect(screen.queryByRole('heading', { name: 'Session files' })).not.toBeInTheDocument();
+    expect(screen.getByText('Choose how long removed sessions are retained and permanently delete their files.'))
+      .toBeInTheDocument();
+  });
+
   it('restores the previous language when persistence fails', async () => {
     const saveGeneral = jest.fn(async () => { throw new Error('save failed'); });
     const i18n = createI18n();
@@ -244,7 +270,7 @@ describe('React settings foundation', () => {
   });
 
   it('labels permanent session deletion clearly and centers its action row', () => {
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts()} /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="sessions" ports={createPorts()} /></I18nProvider>));
 
     expect(screen.getByRole('button', { name: 'Delete permanently' })).toBeInTheDocument();
     expect(screen.getByText('Permanently delete removed sessions').closest('.pivi-settings-row'))
@@ -253,7 +279,7 @@ describe('React settings foundation', () => {
 
   it('persists the deleted-session retention period in days', async () => {
     const saveGeneral = jest.fn(async () => undefined);
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts({ saveGeneral })} /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="sessions" ports={createPorts({ saveGeneral })} /></I18nProvider>));
 
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Keep removed sessions for' }), {
       target: { value: '14' },
@@ -269,7 +295,7 @@ describe('React settings foundation', () => {
     const saveGeneral = jest.fn(async () => undefined);
     render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <SettingsRoot page="general" ports={createPorts({ saveGeneral })} />
+        <SettingsRoot page="chat" ports={createPorts({ saveGeneral })} />
       </I18nProvider>,
     ));
 
@@ -291,7 +317,7 @@ describe('React settings foundation', () => {
 
   it('maps Top and Bottom labels to the existing tab position values', async () => {
     const saveGeneral = jest.fn(async () => undefined);
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts({ saveGeneral })} /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="appearance" ports={createPorts({ saveGeneral })} /></I18nProvider>));
     const row = screen.getByText('Tab bar position').closest('.pivi-settings-row');
     const select = within(row as HTMLElement).getByRole('combobox');
     fireEvent.click(select);
@@ -303,7 +329,7 @@ describe('React settings foundation', () => {
 
   it('normalizes excluded tags into removable badges', async () => {
     const saveGeneral = jest.fn(async () => undefined);
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts({ saveGeneral })} /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="personalization" ports={createPorts({ saveGeneral })} /></I18nProvider>));
     const input = screen.getByRole('textbox', { name: 'Add an excluded tag' });
     fireEvent.change(input, { target: { value: '##private' } });
     fireEvent.keyDown(input, { key: 'Enter' });
@@ -319,7 +345,7 @@ describe('React settings foundation', () => {
   });
 
   it('uses the shared Settings control style without applying it to toggles', () => {
-    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts()} /></I18nProvider>));
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="chat" ports={createPorts()} /></I18nProvider>));
     for (const control of container.querySelectorAll('input:not([type="checkbox"]):not([type="range"]), textarea, .pivi-select')) {
       expect(control).toHaveClass('pivi-settings-control');
     }
@@ -331,7 +357,7 @@ describe('React settings foundation', () => {
     jest.useFakeTimers();
     try {
       const saveGeneral = jest.fn(async () => undefined);
-      const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts({ saveGeneral })} /></I18nProvider>));
+      const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="input" ports={createPorts({ saveGeneral })} /></I18nProvider>));
       const textarea = Array.from(container.querySelectorAll('textarea')).find((element) => (
         element.value.includes('scrollUp')
       ));
@@ -367,7 +393,7 @@ describe('React settings foundation', () => {
       }],
       runAction,
     };
-    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={ports} /></I18nProvider>));
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="appearance" ports={ports} /></I18nProvider>));
     const styleLabel = await screen.findByText('Style Settings', { selector: '.pivi-settings-row__name' });
     await screen.findByText('Connect Pivi to the note host.');
     const integrationSetting = styleLabel.closest<HTMLElement>('.pivi-settings-row');
@@ -393,7 +419,7 @@ describe('React settings foundation', () => {
       }],
       runAction: async () => ({}),
     };
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={ports} /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="appearance" ports={ports} /></I18nProvider>));
 
     expect(await screen.findByRole('button', { name: 'Connect' })).toBeDisabled();
     expect(screen.getByText('Install the host extension first.')).toBeInTheDocument();
@@ -476,6 +502,9 @@ describe('React settings foundation', () => {
     expect(screen.getByText('openai')).toBeInTheDocument();
     fireEvent.click(screen.getByText('openai'));
     expect(screen.getByText('Candidate models pool')).toBeInTheDocument();
+    expect(document.querySelector('.pivi-models-checklist-grid')).toContainElement(
+      screen.getByLabelText('GPT').closest('.pivi-settings-row'),
+    );
     fireEvent.click(screen.getByLabelText('GPT'));
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalledWith({ visibleModels: ['openai/gpt'] });
@@ -587,7 +616,7 @@ describe('React settings foundation', () => {
     expect(within(credentialSetting!).getByText('API key')).toBeInTheDocument();
     expect(within(credentialSetting!).getByRole('textbox')).toBeInTheDocument();
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'secret' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    fireEvent.click(within(credentialSetting!).getByRole('button', { name: 'Save' }));
     await act(async () => undefined);
     expect(setApiKey).toHaveBeenCalledWith('openai', 'secret');
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
@@ -673,6 +702,37 @@ describe('React settings foundation', () => {
 
     const enable = screen.getByRole('checkbox', { name: 'Enable openai provider' });
     expect(enable).toBeDisabled();
+  });
+  it('immediately disables an enabled provider when it becomes unavailable', async () => {
+    const settings = {
+      addedProviders: ['openai'],
+      disabledProviders: [] as string[],
+      customProviders: [],
+      visibleModels: [],
+      availableModes: [],
+      discoveredModels: [],
+      environmentVariables: '',
+      selectedMode: '',
+    };
+    const saveSettings = jest.fn(async (patch: { disabledProviders?: string[] }) => {
+      if (patch.disabledProviders) settings.disabledProviders = [...patch.disabledProviders];
+    });
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getReadiness: () => 'unavailable' as const,
+      getSettings: () => ({ ...settings, disabledProviders: [...settings.disabledProviders] }),
+      saveSettings,
+    });
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot page="models" ports={ports} />
+      </I18nProvider>,
+    ));
+    await act(async () => undefined);
+
+    expect(saveSettings).toHaveBeenCalledWith({ disabledProviders: ['openai'] });
+    expect(screen.getByRole('checkbox', { name: 'Enable openai provider' })).not.toBeChecked();
   });
   it('calls Grok Build OAuth connect from an expanded provider card', async () => {
     const loginProviderOAuth = jest.fn(async () => undefined);
@@ -1121,12 +1181,12 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove openai provider' }));
-    const dialog = screen.getByRole('dialog', { name: 'Remove openai provider?' });
-    const deleteCredential = within(dialog).getByRole('checkbox', {
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const deleteCredential = screen.getByRole('checkbox', {
       name: "Also delete this provider's credential from secure storage",
     });
     expect(deleteCredential).not.toBeChecked();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     await act(async () => undefined);
 
     expect(removeProvider).toHaveBeenCalledWith('openai', false);
@@ -1138,9 +1198,10 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove openai provider' }));
-    const dialog = screen.getByRole('dialog', { name: 'Remove openai provider?' });
-    fireEvent.click(within(dialog).getByRole('checkbox'));
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    fireEvent.click(screen.getByRole('checkbox', {
+      name: "Also delete this provider's credential from secure storage",
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     await act(async () => undefined);
 
     expect(removeProvider).toHaveBeenCalledWith('openai', true);
@@ -1149,11 +1210,11 @@ describe('React settings foundation', () => {
     let resolve!: (count: number) => void;
     const purgeDeletedSessionFiles = jest.fn(() => new Promise<number>((resolvePromise) => { resolve = resolvePromise; }));
     const ports = createPorts({ purgeDeletedSessionFiles });
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={ports} /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="sessions" ports={ports} /></I18nProvider>));
     const button = screen.getByRole('button', { name: 'Delete permanently' });
     fireEvent.click(button);
-    const dialog = screen.getByRole('dialog', { name: 'Permanently delete removed sessions?' });
-    const confirmDelete = within(dialog).getByRole('button', { name: 'Delete permanently' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const confirmDelete = screen.getByRole('button', { name: 'Confirm delete' });
     fireEvent.click(confirmDelete);
     expect(confirmDelete).toBeDisabled();
     await act(async () => resolve(3));
@@ -1216,8 +1277,8 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="skills" ports={ports} /></I18nProvider>));
     fireEvent.click(screen.getByRole('button', { name: 'Remove skill Example' }));
     expect(remove).not.toHaveBeenCalled();
-    const dialog = screen.getByRole('dialog', { name: 'Remove skill Example?' });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     await act(async () => undefined);
     expect(remove).toHaveBeenCalledWith('example');
     expect(screen.getByText('Example removed.')).toBeInTheDocument();
@@ -1257,8 +1318,8 @@ describe('React settings foundation', () => {
     expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', 'https://ollama.com/download');
   });
 
-  it('renders About on General with version, GitHub, and issue links', () => {
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="general" ports={createPorts()} /></I18nProvider>));
+  it('renders About on its standalone final page with version, GitHub, and issue links', () => {
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="about" ports={createPorts()} /></I18nProvider>));
 
     expect(screen.getByText('0.19.4')).toBeInTheDocument();
     expect(screen.getByText('Released 2026-08-29.')).toBeInTheDocument();

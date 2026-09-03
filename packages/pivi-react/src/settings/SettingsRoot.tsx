@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 
+import { useT } from '../i18n';
 import type { SettingsPorts } from '../ports';
 import { AboutSettingsTab } from './AboutSettingsTab';
 import { BuiltInToolsSection } from './BuiltInToolsSection';
 import { CommandsTab } from './CommandsTab';
 import { McpToolsSection } from './McpToolsSection';
 import { ModelsSettingsTab } from './ModelsSettingsTab';
-import type { SettingsPageId } from './navigation';
+import { SETTINGS_PAGES, type SettingsPageId } from './navigation';
 import { SettingsPage } from './primitives';
 import { PromptTab } from './PromptTab';
 import { SettingsUiStore } from './SettingsUiStore';
@@ -22,23 +23,34 @@ export interface SettingsRootProps {
 
 /** React owner for one native settings page. */
 export function SettingsRoot({ ports, store: suppliedStore, page }: SettingsRootProps) {
+  const t = useT();
   const [ownedStore] = useState(() => new SettingsUiStore(ports.snapshot.getSnapshot()));
   const store = suppliedStore ?? ownedStore;
   useEffect(() => () => { if (!suppliedStore) store.dispose(); }, [store, suppliedStore]);
   switch (page) {
     case 'general':
+    case 'appearance':
+    case 'chat':
+    case 'personalization':
+    case 'input':
+    case 'sessions':
       return (
-        <SettingsPage>
+        <SettingsPage description={page === 'chat' || page === 'personalization' || page === 'input' || page === 'sessions'
+          ? <p>{t(SETTINGS_PAGES[page].descriptionKey)}</p>
+          : undefined}
+        >
           <GeneralSettingsTab
+            page={page}
             store={store}
             actions={ports.actions}
             feedback={ports.feedback}
             hotkeys={ports.hotkeys}
             integrations={ports.hostIntegrations}
           />
-          <AboutSettingsTab about={ports.about} />
         </SettingsPage>
       );
+    case 'about':
+      return <SettingsPage><AboutSettingsTab about={ports.about} /></SettingsPage>;
     case 'environment':
       return <EnvironmentSection environment={ports.environment} feedback={ports.feedback} />;
     case 'models':

@@ -46,6 +46,17 @@ function neutralizeImplicitHostSurface(settingEl: HTMLElement): void {
   }
 }
 
+function decorateNativePageHeader(settingEl: HTMLElement): void {
+  const page = settingEl.closest(".setting-page-content");
+  const titlebar = page?.querySelector<HTMLElement>(".setting-page-titlebar");
+  titlebar?.classList.add("pivi-settings-native-titlebar");
+  titlebar?.querySelector<HTMLElement>(".setting-page-title")
+    ?.classList.add("pivi-settings-native-title");
+  const back = titlebar?.querySelector<HTMLElement>(".setting-page-back-button");
+  back?.classList.add("pivi-settings-native-back");
+  back?.querySelector<HTMLElement>("svg")?.classList.add("pivi-settings-native-back-icon");
+}
+
 export class PiviSettingTabHost extends PluginSettingTab {
   plugin: PiviPluginHost;
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
@@ -91,7 +102,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
       return this.mapPage(entry.page);
     }
     if (entry.kind === "content") {
-      return this.mapRenderItem(entry.page);
+      return this.mapRenderItem(entry.page, true);
     }
     return {
       type: "group",
@@ -110,7 +121,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
     };
   }
 
-  private mapRenderItem(page: SettingsPageId): SettingGroupItem {
+  private mapRenderItem(page: SettingsPageId, inline = false): SettingGroupItem {
     const descriptor = SETTINGS_PAGES[page];
     return {
       name: t(descriptor.labelKey),
@@ -119,7 +130,9 @@ export class PiviSettingTabHost extends PluginSettingTab {
       render: (setting) => {
         setting.settingEl.empty();
         setting.settingEl.addClass("pivi-settings-definition-host");
+        if (inline) setting.settingEl.addClass("pivi-settings-definition-host--inline");
         neutralizeImplicitHostSurface(setting.settingEl);
+        decorateNativePageHeader(setting.settingEl);
         return this.mountPageContent(page, setting.settingEl);
       },
     };

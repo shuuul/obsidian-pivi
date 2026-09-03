@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
@@ -36,6 +36,7 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const [reorderPending, setReorderPending] = useState(false);
   const [credentialCheckPending, setCredentialCheckPending] = useState(true);
+  const unavailableDisableAttempts = useRef(new Set<string>());
 
   const reload = (): void => setSettings(models.getSettings());
   const interactiveOAuthMembershipKey = buildInteractiveOAuthMembershipKey(
@@ -67,6 +68,30 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
       cancelled = true;
     };
   }, [models, interactiveOAuthMembershipKey]);
+
+  useEffect(() => {
+    if (credentialCheckPending) return;
+    const disabled = new Set(settings.disabledProviders);
+    const newlyUnavailable = settings.addedProviders.filter((providerId) => {
+      if (models.getReadiness(providerId) !== 'unavailable') {
+        unavailableDisableAttempts.current.delete(providerId);
+        return false;
+      }
+      return !disabled.has(providerId) && !unavailableDisableAttempts.current.has(providerId);
+    });
+    if (newlyUnavailable.length === 0) return;
+    for (const providerId of newlyUnavailable) {
+      disabled.add(providerId);
+      unavailableDisableAttempts.current.add(providerId);
+    }
+    const disabledProviders = [...disabled];
+    setSettings(current => ({ ...current, disabledProviders }));
+    void models.saveSettings({ disabledProviders }).catch((cause: unknown) => {
+      setSettings(models.getSettings());
+      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+    });
+  }, [credentialCheckPending, feedback, models, settings.addedProviders, settings.disabledProviders, t]);
+
   const save = async (patch: Parameters<SettingsModelsPort['saveSettings']>[0]): Promise<void> => {
     await models.saveSettings(patch);
     reload();
@@ -159,6 +184,9 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
               pending={reorderPending}
               dragging={reorder.draggingId === providerId}
               dragOffset={reorder.draggingId === providerId ? reorder.dragOffset : 0}
+              dropIndicatorEdge={reorder.dropIndicator?.id === providerId
+                ? reorder.dropIndicator.edge
+                : undefined}
               reorderHandleProps={reorder.getHandleProps(providerId)}
               suppressReorderClick={() => reorder.consumeClickAfterDrag(providerId)}
               onToggleExpanded={toggleExpanded}

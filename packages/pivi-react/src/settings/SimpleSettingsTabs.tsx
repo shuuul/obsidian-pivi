@@ -13,7 +13,6 @@ import type {
   SettingsHostIntegrationsPort,
   SettingsHotkeysPort,
 } from '../ports';
-import { ModalLayer } from '../shared/ModalLayer';
 import { EditorToolbarSection } from './EditorToolbarSection';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { BadgeListInput, Select, SettingRow, SettingsCollection, SettingsFeedback, SettingsPage, SettingsSection, Toggle } from './primitives';
@@ -298,12 +297,14 @@ function NavMappingsRow({
 }
 
 export function GeneralSettingsTab({
+  page,
   store,
   actions,
   feedback,
   hotkeys,
   integrations,
 }: {
+  readonly page: 'general' | 'appearance' | 'chat' | 'personalization' | 'input' | 'sessions';
   readonly store: SettingsUiStore;
   readonly actions: SettingsActionsPort;
   readonly feedback: SettingsFeedbackPort;
@@ -332,7 +333,7 @@ export function GeneralSettingsTab({
   };
   return (
     <>
-      <SettingsSection>
+      {page === 'general' ? <SettingsSection>
         <SettingRow name={t('settings.language.name')} description={t('settings.language.desc')}>
           <Select label={t('settings.language.name')} value={general.locale} onChange={(locale) => { void save({ locale }); }}>
             {getAvailableLocales().map((locale) => (
@@ -340,8 +341,8 @@ export function GeneralSettingsTab({
             ))}
           </Select>
         </SettingRow>
-      </SettingsSection>
-      <SettingsSection title={t('settings.layout')}>
+      </SettingsSection> : null}
+      {page === 'appearance' ? <SettingsSection title={t('settings.layout')}>
         <SettingRow name={t('settings.chatViewPlacement.name')} description={t('settings.chatViewPlacement.desc')}>
           <Select
             label={t('settings.chatViewPlacement.name')}
@@ -363,8 +364,8 @@ export function GeneralSettingsTab({
             <option value="input">{t('settings.tabBarPosition.input')}</option>
           </Select>
         </SettingRow>
-      </SettingsSection>
-      <SettingsSection title={t('settings.chatBehavior')}>
+      </SettingsSection> : null}
+      {page === 'chat' ? <SettingsSection>
         <SettingRow name={t('settings.enableAutoScroll.name')} description={t('settings.enableAutoScroll.desc')}>
           <Toggle checked={general.enableAutoScroll} label={t('settings.enableAutoScroll.name')} onChange={(enableAutoScroll) => { void save({ enableAutoScroll }); }} />
         </SettingRow>
@@ -391,8 +392,8 @@ export function GeneralSettingsTab({
             onChange={(enableAutoTitleGeneration) => { void save({ enableAutoTitleGeneration }); }}
           />
         </SettingRow>
-      </SettingsSection>
-      <SettingsSection title={t('settings.providerRequests.title')}>
+      </SettingsSection> : null}
+      {page === 'chat' ? <SettingsSection title={t('settings.providerRequests.title')}>
         <SettingRow
           name={t('settings.providerRequests.total.name')}
           description={t('settings.providerRequests.total.desc')}
@@ -417,14 +418,14 @@ export function GeneralSettingsTab({
             }); }}
           />
         </SettingRow>
-      </SettingsSection>
-      <SessionFilesSettingsSection
+      </SettingsSection> : null}
+      {page === 'sessions' ? <SessionFilesSettingsSection
         actions={actions}
         feedback={feedback}
         general={general}
         saveGeneral={async (patch) => { await save(patch); }}
-      />
-      <SettingsSection title={t('settings.personalizationContext')}>
+      /> : null}
+      {page === 'personalization' ? <SettingsSection>
         <SettingRow name={t('settings.userName.name')} description={t('settings.userName.desc')}>
           <input
             className="pivi-settings-control"
@@ -449,8 +450,8 @@ export function GeneralSettingsTab({
             onRemove={async (value) => { await save({ excludedTags: general.excludedTags.filter(entry => entry !== value) }); }}
           />
         </SettingRow>
-      </SettingsSection>
-      <SettingsSection title={t('settings.inputShortcuts')}>
+      </SettingsSection> : null}
+      {page === 'input' ? <SettingsSection>
         <SettingRow
           name={t('settings.requireCommandOrControlEnterToSend.name')}
           description={t('settings.requireCommandOrControlEnterToSend.desc')}
@@ -463,15 +464,15 @@ export function GeneralSettingsTab({
         </SettingRow>
         <NavMappingsRow store={store} actions={actions} feedback={feedback} />
         <HotkeyRows hotkeys={hotkeys} />
-      </SettingsSection>
-      <SettingsSection title={t('settings.styleSettings.name')}>
+      </SettingsSection> : null}
+      {page === 'appearance' ? <SettingsSection title={t('settings.styleSettings.name')}>
         <IntegrationsSettingsSection
           integrations={integrations}
           feedback={feedback}
           sectionIds={['obsidian:style-settings']}
           showOuterHeading={false}
         />
-      </SettingsSection>
+      </SettingsSection> : null}
     </>
   );
 }
@@ -542,7 +543,7 @@ export function SessionFilesSettingsSection({ actions, feedback, general, saveGe
     }
   };
   return (
-    <SettingsSection title={t('settings.sessionFiles.heading')}>
+    <SettingsSection>
       <SettingRow name={t('settings.sessionFiles.retention.name')} description={t('settings.sessionFiles.retention.desc')}>
         <input
           className="pivi-settings-control"
@@ -563,28 +564,18 @@ export function SessionFilesSettingsSection({ actions, feedback, general, saveGe
         name={t('settings.sessionFiles.deleteRemoved.name')}
         description={t('settings.sessionFiles.deleteRemoved.desc')}
       >
-        <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => setConfirmOpen(true)}>
-          {t('settings.sessionFiles.deleteRemoved.button')}
+        <button
+          className={confirmOpen ? 'pivi-settings-confirm-delete-btn' : undefined}
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            if (confirmOpen) void clean();
+            else setConfirmOpen(true);
+          }}
+        >
+          {confirmOpen ? t('common.confirmDelete') : t('settings.sessionFiles.deleteRemoved.button')}
         </button>
       </SettingRow>
-      <ModalLayer
-        ariaLabel={t('settings.sessionFiles.deleteRemoved.confirmTitle')}
-        open={confirmOpen}
-        onClose={() => { if (!pending) setConfirmOpen(false); }}
-      >
-        <div className="pivi-modal">
-          <div className="pivi-modal__title">{t('settings.sessionFiles.deleteRemoved.confirmTitle')}</div>
-          <p>{t('settings.sessionFiles.deleteRemoved.confirmDescription')}</p>
-          <div className="pivi-modal__actions">
-            <button type="button" data-modal-cancel disabled={pending} onClick={() => setConfirmOpen(false)}>
-              {t('common.cancel')}
-            </button>
-            <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void clean(); }}>
-              {t('settings.sessionFiles.deleteRemoved.button')}
-            </button>
-          </div>
-        </div>
-      </ModalLayer>
     </SettingsSection>
   );
 }

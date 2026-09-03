@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ManagedMcpServer, McpAuthStatus } from '@pivi/agent/mcp/types';
 import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
@@ -32,7 +32,7 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
 
     const addButton = screen.getByRole('button', { name: '+ Add MCP' });
-    expect(addButton.closest('.pivi-settings-collection')).toContainElement(addButton);
+    expect(addButton.closest('.pivi-settings-collection')).toBeNull();
     expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('Slash mention');
     expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).not.toHaveTextContent('@');
     const summary = screen.getByText('2 tools').closest('.pivi-settings-card__summary');
@@ -73,19 +73,19 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' })); fireEvent.click(screen.getByText('stdio (local command)')); fireEvent.click(screen.getByRole('button', { name: 'Add' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Please enter a server name');
     fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'local' } }); fireEvent.change(screen.getByLabelText('Executable'), { target: { value: 'npx' } }); fireEvent.change(screen.getByLabelText('Arguments'), { target: { value: 'mcp-server' } }); fireEvent.click(screen.getByRole('button', { name: 'Add' })); await act(async () => undefined); expect(getServers()).toHaveLength(1);
-    fireEvent.click(screen.getByText('local', { selector: '.pivi-settings-card__name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument(); const inlineEditor = document.querySelector('.pivi-mcp-inline-editor'); expect(inlineEditor).toContainElement(screen.getByRole('button', { name: 'Connect / refresh tools' })); expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'renamed' } }); fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' })); await act(async () => undefined); expect(getServers()[0]?.name).toBe('renamed'); expect(mcp.connect).toHaveBeenCalledWith(expect.objectContaining({ name: 'renamed' }));
+    fireEvent.click(screen.getByText('local', { selector: '.pivi-settings-card__name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument(); const inlineEditor = document.querySelector('.pivi-mcp-inline-editor'); expect(inlineEditor).toContainElement(screen.getByRole('button', { name: 'Connect / refresh tools' })); expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'renamed' } }); fireEvent.click(screen.getByRole('button', { name: 'Save' })); await waitFor(() => expect(document.querySelector('.pivi-settings-card')).not.toHaveClass('is-open')); expect(getServers()[0]?.name).toBe('renamed'); expect(mcp.connect).toHaveBeenCalledWith(expect.objectContaining({ name: 'renamed' }));
     fireEvent.click(screen.getByRole('button', { name: 'Remove MCP server renamed' }));
-    const deleteDialog = screen.getByRole('dialog', { name: 'Delete MCP server "renamed"?' });
-    fireEvent.click(within(deleteDialog).getByRole('button', { name: 'Delete' })); await act(async () => undefined); expect(getServers()).toHaveLength(0);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' })); await act(async () => undefined); expect(getServers()).toHaveLength(0);
     const readText = jest.fn(async () => '{"mcpServers":{"unwanted":{"command":"node"}}}');
     Object.assign(navigator, { clipboard: { readText } });
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
     fireEvent.click(screen.getByText('Import JSON'));
-    const importDialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
-    fireEvent.change(within(importDialog).getByLabelText('MCP configuration JSON'), {
+    expect(screen.queryByRole('dialog', { name: 'Import MCP configuration' })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('MCP configuration JSON'), {
       target: { value: '{"mcpServers":{"imported":{"command":"node","args":["server.js"]}}}' },
     });
-    fireEvent.click(within(importDialog).getByRole('button', { name: 'Import' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
     await act(async () => undefined);
     expect(readText).not.toHaveBeenCalled();
     expect(screen.getByPlaceholderText('my-mcp-server')).toHaveValue('imported');
@@ -107,38 +107,36 @@ describe('React MCP settings', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
     fireEvent.click(screen.getByText('Import JSON'));
-    let dialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
-    fireEvent.change(within(dialog).getByLabelText('MCP configuration JSON'), {
+    let textarea = screen.getByLabelText('MCP configuration JSON');
+    fireEvent.change(textarea, {
       target: { value: 'not json' },
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Import' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
     await act(async () => undefined);
     expect(screen.getByRole('alert')).toHaveTextContent('No valid MCP configuration found in pasted JSON');
     expect(mcp.save).not.toHaveBeenCalled();
 
-    fireEvent.change(within(dialog).getByLabelText('MCP configuration JSON'), {
+    fireEvent.change(textarea, {
       target: {
         value: '{"mcpServers":{"existing":{"command":"node"},"added":{"type":"http","url":"https://example.test/mcp"}}}',
       },
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Import' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
     await act(async () => undefined);
     expect(getServers().map((server) => server.name)).toEqual(['existing', 'added']);
     expect(screen.queryByRole('dialog', { name: 'Import MCP configuration' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
     fireEvent.click(screen.getByText('Import JSON'));
-    dialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
-    const textarea = within(dialog).getByLabelText('MCP configuration JSON');
+    textarea = screen.getByLabelText('MCP configuration JSON');
     expect(textarea).toHaveFocus();
-    fireEvent.keyDown(textarea, { key: 'Escape' });
-    expect(screen.queryByRole('dialog', { name: 'Import MCP configuration' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByLabelText('MCP configuration JSON')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
     fireEvent.click(screen.getByText('Import JSON'));
-    dialog = screen.getByRole('dialog', { name: 'Import MCP configuration' });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('dialog', { name: 'Import MCP configuration' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByLabelText('MCP configuration JSON')).not.toBeInTheDocument();
     expect(getServers().map((server) => server.name)).toEqual(['existing', 'added']);
   });
   it('preserves HTTP auth and header editor fields', async () => {
@@ -146,26 +144,25 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
     fireEvent.click(screen.getByText('http / sse (remote)'));
-    const dialog = screen.getByRole('dialog', { name: 'Add MCP server' });
-    fireEvent.click(within(dialog).getByLabelText('Type'));
+    const editor = document.querySelector('.pivi-mcp-inline-editor') as HTMLElement;
+    fireEvent.click(within(editor).getByLabelText('Type'));
     expect(screen.getByRole('option', { name: 'Stdio' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'SSE' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'HTTP' })).toBeInTheDocument();
-    expect(within(dialog).getByLabelText('Type')).toHaveClass('pivi-select');
-    expect(within(dialog).getByLabelText('Authentication')).toHaveClass('pivi-select');
-    fireEvent.change(within(dialog).getByPlaceholderText('my-mcp-server'), { target: { value: 'remote' } });
+    expect(within(editor).getByLabelText('Type')).toHaveClass('pivi-select');
+    expect(within(editor).getByLabelText('Authentication')).toHaveClass('pivi-select');
+    fireEvent.change(within(editor).getByPlaceholderText('my-mcp-server'), { target: { value: 'remote' } });
     fireEvent.click(screen.getByRole('option', { name: 'HTTP' }));
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Please enter a URL');
-    fireEvent.change(within(dialog).getByPlaceholderText('http://localhost:3000/sse'), { target: { value: 'https://example.test/mcp' } });
-    const headersLabel = within(dialog).getByText('Headers');
-    expect(headersLabel.closest('label')).toHaveClass('pivi-mcp-editor-field-headers');
-    fireEvent.change(headersLabel.closest('label')!.querySelector('textarea')!, { target: { value: 'Authorization=Bearer token' } });
-    fireEvent.click(within(dialog).getByLabelText('Authentication'));
+    fireEvent.click(within(editor).getByRole('button', { name: 'Add' }));
+    expect(within(editor).getByRole('alert')).toHaveTextContent('Please enter a URL');
+    fireEvent.change(within(editor).getByPlaceholderText('http://localhost:3000/sse'), { target: { value: 'https://example.test/mcp' } });
+    const headersLabel = within(editor).getByText('Headers');
+    fireEvent.change(headersLabel.closest('.pivi-settings-row')!.querySelector('textarea')!, { target: { value: 'Authorization=Bearer token' } });
+    fireEvent.click(within(editor).getByLabelText('Authentication'));
     expect(screen.getByRole('option', { name: 'Auto' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('option', { name: 'OAuth' }));
-    fireEvent.change(within(dialog).getByLabelText('Client ID'), { target: { value: 'client' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
+    fireEvent.change(within(editor).getByLabelText('Client ID'), { target: { value: 'client' } });
+    fireEvent.click(within(editor).getByRole('button', { name: 'Add' }));
     await act(async () => undefined);
     expect(screen.queryByLabelText('Composer slash badges')).not.toBeInTheDocument();
     expect(getServers()[0]).toMatchObject({ name: 'remote', config: { type: 'http', url: 'https://example.test/mcp', headers: { Authorization: 'Bearer token' } }, auth: 'oauth', oauth: { clientId: 'client' }, contextSaving: true });

@@ -8,8 +8,7 @@ import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
-import { ModalLayer } from '../../shared/ModalLayer';
-import { DisclosureCard, SettingsRemoveButton, Toggle } from '../primitives';
+import { DisclosureCard, SettingRow, SettingsRemoveButton, Toggle } from '../primitives';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
 import { ProviderApiKeyField,ProviderCredentials } from './ProviderCredentials';
@@ -27,6 +26,7 @@ export interface ProviderCardProps {
   readonly pending: boolean;
   readonly dragging: boolean;
   readonly dragOffset: number;
+  readonly dropIndicatorEdge?: 'before' | 'after';
   readonly reorderHandleProps: SortableReorderHandleProps<HTMLElement>;
   readonly suppressReorderClick: () => boolean;
   readonly onToggleExpanded: (providerId: string, open?: boolean) => void;
@@ -48,6 +48,7 @@ export function ProviderCard({
   pending,
   dragging,
   dragOffset,
+  dropIndicatorEdge,
   reorderHandleProps,
   suppressReorderClick,
   onToggleExpanded,
@@ -89,12 +90,6 @@ export function ProviderCard({
     void save({ disabledProviders: [...next] }).catch((cause: unknown) => {
       onError(cause instanceof Error ? cause.message : t('common.error'));
     });
-  };
-
-  const remove = (event: MouseEvent): void => {
-    stop(event);
-    setDeleteCredential(false);
-    setConfirmingRemove(true);
   };
 
   const confirmRemove = (): void => {
@@ -211,7 +206,16 @@ export function ProviderCard({
           />
           <SettingsRemoveButton
             ariaLabel={t('settings.modelsTab.removeAria', { name: displayName })}
-            onClick={remove}
+            confirming={confirmingRemove}
+            onConfirmingChange={(next) => {
+              setDeleteCredential(false);
+              setConfirmingRemove(next);
+              if (next) onToggleExpanded(providerId, true);
+            }}
+            onClick={(event) => {
+              stop(event);
+              confirmRemove();
+            }}
           />
         </>
       )}
@@ -222,8 +226,32 @@ export function ProviderCard({
       consumeClickAfterDrag={suppressReorderClick}
       dragging={dragging}
       dragOffset={dragOffset}
+      dropIndicatorEdge={dropIndicatorEdge}
       reorderLabel={t('settings.webSearch.reorder.handle', { provider: displayName, position })}
+      footerActions={(
+        <button
+          type="button"
+          disabled={testing}
+          onClick={() => { void testProvider(); }}
+        >
+          {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
+        </button>
+      )}
     >
+      {confirmingRemove ? (
+        <SettingRow
+          name={t('settings.modelsTab.removeCredential', {
+            secureStorageName: terminology.secureStorageName,
+          })}
+        >
+          <input
+            type="checkbox"
+            checked={deleteCredential}
+            disabled={removing}
+            onChange={event => { setDeleteCredential(event.currentTarget.checked); }}
+          />
+        </SettingRow>
+      ) : null}
       {custom ? (
           <>
             <CustomProviderPanel models={models} feedback={feedback} config={custom} onChanged={onChanged} onError={onError} />
@@ -274,51 +302,6 @@ export function ProviderCard({
             <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
           </>
         )}
-        <button
-          type="button"
-          disabled={testing}
-          onClick={() => { void testProvider(); }}
-        >
-          {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
-        </button>
     </DisclosureCard>
-    {confirmingRemove ? (
-      <ModalLayer
-        ariaLabel={t('settings.modelsTab.removeConfirmTitle', { name: displayName })}
-        open
-        onClose={() => { if (!removing) setConfirmingRemove(false); }}
-      >
-        <div className="pivi-modal">
-          <div className="pivi-modal__title">
-            {t('settings.modelsTab.removeConfirmTitle', { name: displayName })}
-          </div>
-          <p>{t('settings.modelsTab.removeConfirmDescription')}</p>
-          <label>
-            <input
-              type="checkbox"
-              checked={deleteCredential}
-              disabled={removing}
-              onChange={event => { setDeleteCredential(event.currentTarget.checked); }}
-            />
-            <span>{t('settings.modelsTab.removeCredential', {
-              secureStorageName: terminology.secureStorageName,
-            })}</span>
-          </label>
-          <div className="pivi-modal__actions">
-            <button type="button" data-modal-cancel disabled={removing} onClick={() => { setConfirmingRemove(false); }}>
-              {t('common.cancel')}
-            </button>
-            <button
-              className="pivi-button--danger"
-              type="button"
-              disabled={removing}
-              onClick={confirmRemove}
-            >
-              {t('common.remove')}
-            </button>
-          </div>
-        </div>
-      </ModalLayer>
-    ) : null}
   </Fragment>;
 }

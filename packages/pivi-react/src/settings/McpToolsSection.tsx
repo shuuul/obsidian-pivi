@@ -1,11 +1,10 @@
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackPort } from '../ports';
-import { ModalLayer } from '../shared/ModalLayer';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpSectionState } from './mcp/useMcpSectionState';
 import { McpServerCard } from './McpServerCard';
-import { SettingsCollection, SettingsFeedback, SettingsPage, SettingsSection } from './primitives';
+import { SettingRow, SettingsCollection, SettingsFeedback, SettingsPage, SettingsSection } from './primitives';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
@@ -30,7 +29,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
     busy,
     auth,
     toolsByServer,
-    deleteCandidate,
     importDraft,
     addOpen,
     expandedServers,
@@ -84,7 +82,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
           {loading ? (
             <p className="pivi-setting-description">{t('settings.mcp.test.connecting')}</p>
           ) : (
-            <SettingsCollection emptyState={t('settings.mcp.empty')} addTrigger={addTrigger}>
+            <SettingsCollection emptyState={t('settings.mcp.empty')}>
               {servers.map((server) => (
                 <McpServerCard
                   key={server.name}
@@ -95,6 +93,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
                   busy={busy !== null}
                   onConnect={(next) => connect(next, server)}
                   onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}
+                  onCollapseExpanded={(name) => dispatch({ type: 'collapse_expanded', name })}
                   onToggleEnabled={async () => {
                     try {
                       await commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)));
@@ -102,7 +101,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
                       feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
                     }
                   }}
-                  onRemove={() => dispatch({ type: 'set_delete_candidate', server })}
+                  onRemove={() => { void removeServer(server.name); }}
                   onLogout={async () => {
                     try {
                       await logout(server);
@@ -118,82 +117,44 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
         <SettingsFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
         {editor ? (
           <McpServerEditor
+            inline
             initial={editor.initial}
             type={editor.type}
             onCancel={() => dispatch({ type: 'set_editor', editor: null })}
             onSave={(server) => save(server)}
           />
         ) : null}
-      </SettingsSection>
-      <ModalLayer
-        ariaLabel={t('settings.mcp.importJsonTitle')}
-        initialFocus="first-field"
-        open={importDraft !== null}
-        onClose={() => dispatch({ type: 'set_import_draft', draft: null })}
-      >
-        <div className="pivi-modal">
-          <div className="pivi-modal__title">{t('settings.mcp.importJsonTitle')}</div>
-          <p>{t('settings.mcp.importJsonDescription')}</p>
-          <label>
-            <span>{t('settings.mcp.importJsonField')}</span>
+        {importDraft !== null ? (
+          <SettingRow
+            stacked
+            name={t('settings.mcp.importJsonTitle')}
+            description={t('settings.mcp.importJsonDescription')}
+          >
             <textarea
+              autoFocus
               className="pivi-settings-control pivi-settings-control--fill"
               rows={10}
-              value={importDraft ?? ''}
+              aria-label={t('settings.mcp.importJsonField')}
+              value={importDraft}
               placeholder={t('settings.mcp.importJsonPlaceholder')}
               onChange={(event) => dispatch({ type: 'set_import_draft', draft: event.target.value })}
             />
-          </label>
-          <div className="pivi-modal__actions">
-            <button
-              type="button"
-              data-modal-cancel
-              onClick={() => dispatch({ type: 'set_import_draft', draft: null })}
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              type="button"
-              disabled={busy === 'import' || !importDraft?.trim()}
-              onClick={() => { if (importDraft) void importJson(importDraft); }}
-            >
-              {t('settings.mcp.importAction')}
-            </button>
-          </div>
-        </div>
-      </ModalLayer>
-      <ModalLayer
-        ariaLabel={t('settings.mcp.deleteConfirmTitle', { name: deleteCandidate?.name ?? '' })}
-        open={deleteCandidate !== null}
-        onClose={() => { if (busy !== 'delete') dispatch({ type: 'set_delete_candidate', server: null }); }}
-      >
-        {deleteCandidate ? (
-          <div className="pivi-modal">
-            <div className="pivi-modal__title">
-              {t('settings.mcp.deleteConfirmTitle', { name: deleteCandidate.name })}
-            </div>
-            <p>{t('settings.mcp.deleteConfirm', { name: deleteCandidate.name })}</p>
-            <div className="pivi-modal__actions">
-              <button
-                type="button"
-                data-modal-cancel
-                disabled={busy === 'delete'}
-                onClick={() => dispatch({ type: 'set_delete_candidate', server: null })}
-              >
+            <div className="pivi-settings-action-group">
+              <button type="button" onClick={() => dispatch({ type: 'set_import_draft', draft: null })}>
                 {t('common.cancel')}
               </button>
               <button
-                className="pivi-button--danger"
                 type="button"
-                disabled={busy === 'delete'}
-                onClick={() => { void removeServer(deleteCandidate.name); }}
+                disabled={busy === 'import' || !importDraft.trim()}
+                onClick={() => { void importJson(importDraft); }}
               >
-                {t('common.delete')}
+                {t('settings.mcp.importAction')}
               </button>
             </div>
-          </div>
+          </SettingRow>
         ) : null}
-      </ModalLayer>
+        {addTrigger}
+      </SettingsSection>
     </SettingsPage>
   );
 }

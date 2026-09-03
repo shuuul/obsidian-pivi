@@ -17,6 +17,11 @@
   background: var(--pivi-host-background-primary);
 }
 
+.pivi-settings-definition-host--inline .pivi-settings,
+.pivi-settings-definition-host--inline .pivi-settings-page {
+  min-height: 0;
+}
+
 .pivi-settings-host-surface-reset {
   background: transparent;
   padding: 0;
@@ -24,4 +29,30 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
+}
+
+.pivi-settings-native-titlebar {
+  background: transparent;
+}
+
+.pivi-settings-native-title {
+  display: none;
+}
+
+.pivi-settings-native-back {
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+  opacity: 1;
+}
+
+.pivi-settings-native-back:hover,
+.pivi-settings-native-back:active {
+  background: var(--pivi-host-background-hover);
+}
+
+.pivi-settings-native-back-icon {
+  width: 22px;
+  height: 22px;
 }

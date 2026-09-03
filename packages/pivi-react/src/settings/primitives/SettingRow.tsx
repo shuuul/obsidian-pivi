@@ -10,6 +10,8 @@ import {
 export interface SettingRowProps {
   readonly name?: string;
   readonly description?: ReactNode;
+  readonly leading?: ReactNode;
+  readonly indented?: boolean;
   readonly className?: string;
   readonly stacked?: boolean;
   readonly centered?: boolean;
@@ -19,11 +21,15 @@ export interface SettingRowProps {
   readonly dragging?: boolean;
   readonly dragOffset?: number;
   readonly sortableHandleProps?: SortableReorderHandleProps<HTMLElement>;
+  readonly dropIndicatorEdge?: 'before' | 'after';
+  readonly reorderLabel?: string;
 }
 
 export function SettingRow({
   name,
   description,
+  leading,
+  indented = false,
   className,
   stacked = false,
   centered = false,
@@ -33,6 +39,8 @@ export function SettingRow({
   dragging = false,
   dragOffset = 0,
   sortableHandleProps,
+  dropIndicatorEdge,
+  reorderLabel,
 }: SettingRowProps) {
   const nameId = useId();
   const descriptionId = description ? `${nameId}-desc` : undefined;
@@ -40,7 +48,9 @@ export function SettingRow({
   const modifiers = [
     stacked ? ' pivi-settings-row--stacked' : '',
     centered ? ' pivi-settings-row--centered' : '',
+    indented ? ' pivi-settings-row--indented' : '',
     dragging ? ' is-dragging' : '',
+    dropIndicatorEdge ? ` is-drop-${dropIndicatorEdge}` : '',
   ].join('');
   const style: CSSProperties | undefined = dragging
     ? { transform: `translateY(${dragOffset}px)` }
@@ -50,11 +60,19 @@ export function SettingRow({
       className={`pivi-settings-row${modifiers}${className ? ` ${className}` : ''}`}
       data-settings-sort-id={sortId}
       style={style}
-      onPointerDown={sortableHandleProps?.onPointerDown}
-      onPointerMove={sortableHandleProps?.onPointerMove}
-      onPointerUp={sortableHandleProps?.onPointerUp}
-      onPointerCancel={sortableHandleProps?.onPointerCancel}
     >
+      {sortableHandleProps ? (
+        <button
+          type="button"
+          className="pivi-settings-row__handle pivi-settings-action-btn"
+          aria-label={reorderLabel}
+          aria-pressed={dragging}
+          {...sortableHandleProps}
+        >
+          <span aria-hidden="true">⠿</span>
+        </button>
+      ) : null}
+      {leading ? <div className="pivi-settings-row__leading">{leading}</div> : null}
       {name || description ? (
         <div className="pivi-settings-row__info">
           {name ? <div className="pivi-settings-row__name" id={nameId}>{name}</div> : null}

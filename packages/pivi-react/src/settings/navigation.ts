@@ -2,6 +2,12 @@ import type { TranslationKey } from '../i18n';
 
 export type SettingsPageId =
   | 'general'
+  | 'appearance'
+  | 'chat'
+  | 'personalization'
+  | 'input'
+  | 'sessions'
+  | 'about'
   | 'environment'
   | 'models'
   | 'builtInTools'
@@ -25,13 +31,25 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
     labelKey: 'settings.pages.general.label',
     descriptionKey: 'settings.pages.general.description',
     aliasKeys: [
-      'settings.about.heading',
-      'settings.about.github',
-      'settings.about.issues',
       'settings.language.name',
+    ],
+  },
+  appearance: {
+    id: 'appearance',
+    labelKey: 'settings.appearance',
+    descriptionKey: 'settings.pages.general.description',
+    aliasKeys: [
       'settings.layout',
       'settings.chatViewPlacement.name',
       'settings.tabBarPosition.name',
+      'settings.styleSettings.name',
+    ],
+  },
+  chat: {
+    id: 'chat',
+    labelKey: 'settings.chatBehavior',
+    descriptionKey: 'settings.pages.chat.description',
+    aliasKeys: [
       'settings.chatBehavior',
       'settings.enableAutoScroll.name',
       'settings.showCacheHitRate.name',
@@ -41,16 +59,46 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
       'settings.providerRequests.title',
       'settings.providerRequests.total.name',
       'settings.providerRequests.idle.name',
+    ],
+  },
+  personalization: {
+    id: 'personalization',
+    labelKey: 'settings.personalizationContext',
+    descriptionKey: 'settings.pages.personalization.description',
+    aliasKeys: [
       'settings.personalizationContext',
       'settings.userName.name',
       'settings.excludedTags.name',
+    ],
+  },
+  input: {
+    id: 'input',
+    labelKey: 'settings.inputShortcuts',
+    descriptionKey: 'settings.pages.input.description',
+    aliasKeys: [
       'settings.inputShortcuts',
       'settings.requireCommandOrControlEnterToSend.name',
       'settings.navMappings.name',
+    ],
+  },
+  sessions: {
+    id: 'sessions',
+    labelKey: 'settings.sessionFiles.heading',
+    descriptionKey: 'settings.pages.sessions.description',
+    aliasKeys: [
       'settings.sessionFiles.heading',
       'settings.sessionFiles.retention.name',
       'settings.sessionFiles.deleteRemoved.name',
-      'settings.styleSettings.name',
+    ],
+  },
+  about: {
+    id: 'about',
+    labelKey: 'settings.about.heading',
+    descriptionKey: 'settings.about.intro',
+    aliasKeys: [
+      'settings.about.heading',
+      'settings.about.github',
+      'settings.about.issues',
     ],
   },
   environment: {
@@ -182,7 +230,7 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
 };
 
 export type SettingsRootPageEntry = { kind: 'page'; page: SettingsPageId };
-export type SettingsRootContentEntry = { kind: 'content'; page: 'general' };
+export type SettingsRootContentEntry = { kind: 'content'; page: 'general' | 'about' };
 export type SettingsRootEntry =
   | SettingsRootPageEntry
   | SettingsRootContentEntry
@@ -194,11 +242,23 @@ export type SettingsRootEntry =
 
 export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[] = [
   { kind: 'content', page: 'general' },
-  { kind: 'page', page: 'models' },
+  {
+    kind: 'group',
+    labelKey: 'settings.pages.general.label',
+    items: [
+      { kind: 'page', page: 'appearance' },
+      { kind: 'page', page: 'chat' },
+      { kind: 'page', page: 'personalization' },
+      { kind: 'page', page: 'input' },
+      { kind: 'page', page: 'sessions' },
+      { kind: 'page', page: 'environment' },
+    ],
+  },
   {
     kind: 'group',
     labelKey: 'settings.groups.agent',
     items: [
+      { kind: 'page', page: 'models' },
       { kind: 'page', page: 'builtInTools' },
       { kind: 'page', page: 'webTools' },
       { kind: 'page', page: 'mcpServers' },
@@ -214,5 +274,5 @@ export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[] = [
       { kind: 'page', page: 'toolbar' },
     ],
   },
-  { kind: 'page', page: 'environment' },
+  { kind: 'content', page: 'about' },
 ];

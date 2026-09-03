@@ -25,7 +25,6 @@ import {
   Select,
   SettingRow,
   SettingsCollection,
-  SettingsInlineActions,
   SettingsPage,
   SettingsRemoveButton,
   SettingsSection,
@@ -382,6 +381,7 @@ function ShortcutCard({
   position,
   dragging,
   dragOffset,
+  dropIndicatorEdge,
   reorderHandleProps,
   suppressReorderClick,
   onToggleExpanded,
@@ -399,6 +399,7 @@ function ShortcutCard({
   readonly position: number;
   readonly dragging: boolean;
   readonly dragOffset: number;
+  readonly dropIndicatorEdge?: 'before' | 'after';
   readonly reorderHandleProps: SortableReorderHandleProps<HTMLElement>;
   readonly suppressReorderClick: () => boolean;
   readonly onToggleExpanded: () => void;
@@ -432,26 +433,9 @@ function ShortcutCard({
     : catalog?.icon ?? ('icon' in shortcut ? shortcut.icon : undefined)
       ?? (shortcut.kind === 'pivi-command' ? 'message-square' : 'terminal');
 
-  const handle = (
-    <button
-      type="button"
-      className="pivi-settings-action-btn"
-      aria-label={t('settings.editorToolbar.reorder.handle', { label, position })}
-      aria-pressed={dragging}
-      disabled={pending}
-      onKeyDown={reorderHandleProps.onKeyDown}
-    >
-      <span aria-hidden="true">⠿</span>
-    </button>
-  );
   const itemActions = (
     <>
-      <Toggle
-        disabled={pending}
-        checked={shortcut.enabled}
-        label={t('settings.editorToolbar.itemEnabledAria', { label })}
-        onChange={onToggleEnabled}
-      />
+      <span className="pivi-settings-chip">{kindLabel}</span>
       {removable ? (
         <SettingsRemoveButton
           ariaLabel={t('settings.editorToolbar.removeAria', { label })}
@@ -459,6 +443,12 @@ function ShortcutCard({
           onClick={onRemove}
         />
       ) : null}
+      <Toggle
+        disabled={pending}
+        checked={shortcut.enabled}
+        label={t('settings.editorToolbar.itemEnabledAria', { label })}
+        onChange={onToggleEnabled}
+      />
     </>
   );
 
@@ -466,21 +456,7 @@ function ShortcutCard({
     return (
       <SettingRow
         name={label}
-        description={kindLabel}
-        centered
-        className={shortcut.enabled ? undefined : 'is-disabled'}
-        sortId={shortcut.id}
-        dragging={dragging}
-        dragOffset={dragOffset}
-        sortableHandleProps={pending ? undefined : reorderHandleProps}
-        actions={(
-          <SettingsInlineActions>
-            {itemActions}
-            {handle}
-          </SettingsInlineActions>
-        )}
-      >
-        {shortcut.kind === 'obsidian-command' ? (
+        leading={shortcut.kind === 'obsidian-command' ? (
           <CommandIconPicker
             compact
             disabled={pending}
@@ -493,7 +469,16 @@ function ShortcutCard({
             <PlatformIcon name={icon} />
           </span>
         )}
-      </SettingRow>
+        centered
+        className={`pivi-toolbar-shortcut${shortcut.enabled ? '' : ' is-disabled'}`}
+        sortId={shortcut.id}
+        dragging={dragging}
+        dragOffset={dragOffset}
+        dropIndicatorEdge={dropIndicatorEdge}
+        sortableHandleProps={pending ? undefined : reorderHandleProps}
+        reorderLabel={t('settings.editorToolbar.reorder.handle', { label, position })}
+        actions={itemActions}
+      />
     );
   }
 
@@ -502,8 +487,7 @@ function ShortcutCard({
       name={label}
       summary={description}
       icon={<PlatformIcon name={icon} />}
-      badges={<span className="pivi-settings-chip">{kindLabel}</span>}
-      className={shortcut.enabled ? undefined : 'is-disabled'}
+      className={`pivi-toolbar-shortcut${shortcut.enabled ? '' : ' is-disabled'}`}
       open={expanded}
       onToggle={onToggleExpanded}
       sortId={shortcut.id}
@@ -511,6 +495,7 @@ function ShortcutCard({
       consumeClickAfterDrag={suppressReorderClick}
       dragging={dragging}
       dragOffset={dragOffset}
+      dropIndicatorEdge={dropIndicatorEdge}
       reorderLabel={t('settings.editorToolbar.reorder.handle', { label, position })}
       actions={itemActions}
     >
@@ -703,6 +688,9 @@ export function EditorToolbarSection({
                   position={index + 1}
                   dragging={reorder.draggingId === id}
                   dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
+                  dropIndicatorEdge={reorder.dropIndicator?.id === id
+                    ? reorder.dropIndicator.edge
+                    : undefined}
                   reorderHandleProps={reorder.getHandleProps(id)}
                   suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
                   onToggleExpanded={() => { toggleExpanded(id); }}

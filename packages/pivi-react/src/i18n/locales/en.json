@@ -9,6 +9,7 @@
     "loading": "Loading",
     "error": "Error",
     "confirm": "Confirm",
+    "confirmDelete": "Confirm delete",
     "line": "line",
     "lines": "lines",
     "copied": "Copied!"
@@ -71,21 +72,95 @@
       "deny": "Deny",
       "management": {
         "titles": {
-          "mcp": { "upsert": "Update MCP server \"{name}\"", "enable": "Enable MCP server \"{name}\"", "disable": "Disable MCP server \"{name}\"", "remove": "Remove MCP server \"{name}\"" },
-          "skills": { "install": "Install Skills from \"{source}\"", "enable": "Enable Skill \"{name}\"", "disable": "Disable Skill \"{name}\"", "update": "Update Skill \"{name}\"", "updateAll": "Update all package-managed Skills", "remove": "Remove Skill \"{name}\"" },
-          "commands": { "upsert": "Save command {command}", "remove": "Remove command {command}", "move": "Move command {command}" },
-          "prompt": { "enable": "Enable prompt module \"{name}\"", "disable": "Disable prompt module \"{name}\"", "setBody": "Update prompt module \"{name}\"", "restore": "Restore prompt module \"{name}\"", "create": "Add prompt module \"{name}\"", "update": "Update prompt module \"{name}\"", "remove": "Remove prompt module \"{name}\"", "move": "Move prompt module \"{name}\"" }
+          "mcp": {
+            "upsert": "Update MCP server \"{name}\"",
+            "enable": "Enable MCP server \"{name}\"",
+            "disable": "Disable MCP server \"{name}\"",
+            "remove": "Remove MCP server \"{name}\""
+          },
+          "skills": {
+            "install": "Install Skills from \"{source}\"",
+            "enable": "Enable Skill \"{name}\"",
+            "disable": "Disable Skill \"{name}\"",
+            "update": "Update Skill \"{name}\"",
+            "updateAll": "Update all package-managed Skills",
+            "remove": "Remove Skill \"{name}\""
+          },
+          "commands": {
+            "upsert": "Save command {command}",
+            "remove": "Remove command {command}",
+            "move": "Move command {command}"
+          },
+          "prompt": {
+            "enable": "Enable prompt module \"{name}\"",
+            "disable": "Disable prompt module \"{name}\"",
+            "setBody": "Update prompt module \"{name}\"",
+            "restore": "Restore prompt module \"{name}\"",
+            "create": "Add prompt module \"{name}\"",
+            "update": "Update prompt module \"{name}\"",
+            "remove": "Remove prompt module \"{name}\"",
+            "move": "Move prompt module \"{name}\""
+          }
         },
         "changes": {
-          "mcpUpsert": "Apply the planned MCP server configuration.", "mcpEnable": "Enable this MCP server.", "mcpDisable": "Disable this MCP server.", "mcpRemove": "Remove this MCP server and its owned credentials.",
-          "skillsInstall": "Install Skills through the pinned package workflow.", "skillsEnable": "Enable this Skill.", "skillsDisable": "Disable this Skill.", "skillsUpdate": "Update this Skill from its package provenance.", "skillsUpdateAll": "Update every package-managed Skill.", "skillsRemove": "Remove this Skill from the workspace.",
-          "commandsUpsert": "Create or update this workspace command.", "commandsRemove": "Delete this workspace command.", "commandsMove": "Reorder this workspace command.",
-          "promptEnable": "Enable this prompt module.", "promptDisable": "Disable this prompt module.", "promptSetBody": "Replace this prompt module body.", "promptRestore": "Restore this prompt module to the shipped default.", "promptCreate": "Create this custom prompt module.", "promptUpdate": "Update this custom prompt module.", "promptRemove": "Delete this custom prompt module.", "promptMove": "Reorder this custom prompt module."
+          "mcpUpsert": "Apply the planned MCP server configuration.",
+          "mcpEnable": "Enable this MCP server.",
+          "mcpDisable": "Disable this MCP server.",
+          "mcpRemove": "Remove this MCP server and its owned credentials.",
+          "skillsInstall": "Install Skills through the pinned package workflow.",
+          "skillsEnable": "Enable this Skill.",
+          "skillsDisable": "Disable this Skill.",
+          "skillsUpdate": "Update this Skill from its package provenance.",
+          "skillsUpdateAll": "Update every package-managed Skill.",
+          "skillsRemove": "Remove this Skill from the workspace.",
+          "commandsUpsert": "Create or update this workspace command.",
+          "commandsRemove": "Delete this workspace command.",
+          "commandsMove": "Reorder this workspace command.",
+          "promptEnable": "Enable this prompt module.",
+          "promptDisable": "Disable this prompt module.",
+          "promptSetBody": "Replace this prompt module body.",
+          "promptRestore": "Restore this prompt module to the shipped default.",
+          "promptCreate": "Create this custom prompt module.",
+          "promptUpdate": "Update this custom prompt module.",
+          "promptRemove": "Delete this custom prompt module.",
+          "promptMove": "Reorder this custom prompt module."
         },
         "fields": {
-          "server": "Server", "enabled": "Enabled", "type": "Type", "command": "Command", "args": "Arguments", "envNames": "Environment variable names", "url": "URL", "auth": "Authentication", "headerNames": "Header names", "bearerToken": "Bearer token", "oauth": "OAuth", "oauthGrant": "OAuth grant", "oauthClientId": "OAuth client ID", "oauthScope": "OAuth scope", "oauthClientSecret": "OAuth client secret", "contextSaving": "Context saving", "disabledTools": "Disabled tools", "source": "Source", "skills": "Skills", "skill": "Skill", "catalogRevision": "Catalog revision", "icon": "Icon", "prompt": "Prompt", "before": "Before", "after": "After", "module": "Module", "title": "Title"
+          "server": "Server",
+          "enabled": "Enabled",
+          "type": "Type",
+          "command": "Command",
+          "args": "Arguments",
+          "envNames": "Environment variable names",
+          "url": "URL",
+          "auth": "Authentication",
+          "headerNames": "Header names",
+          "bearerToken": "Bearer token",
+          "oauth": "OAuth",
+          "oauthGrant": "OAuth grant",
+          "oauthClientId": "OAuth client ID",
+          "oauthScope": "OAuth scope",
+          "oauthClientSecret": "OAuth client secret",
+          "contextSaving": "Context saving",
+          "disabledTools": "Disabled tools",
+          "source": "Source",
+          "skills": "Skills",
+          "skill": "Skill",
+          "catalogRevision": "Catalog revision",
+          "icon": "Icon",
+          "prompt": "Prompt",
+          "before": "Before",
+          "after": "After",
+          "module": "Module",
+          "title": "Title"
         },
-        "values": { "yes": "Yes", "no": "No", "clear": "Clear", "disabled": "Disabled", "updated": "Updated" }
+        "values": {
+          "yes": "Yes",
+          "no": "No",
+          "clear": "Clear",
+          "disabled": "Disabled",
+          "updated": "Updated"
+        }
       }
     },
     "capabilityApproval": {
@@ -355,7 +430,19 @@
     "pages": {
       "general": {
         "label": "General",
-        "description": "Language, layout, chat behavior, and About."
+        "description": "Language, layout, and integrations."
+      },
+      "chat": {
+        "description": "Control chat behavior, streaming details, and provider request timeouts."
+      },
+      "personalization": {
+        "description": "Personalize responses and choose which notes can be added automatically as context."
+      },
+      "input": {
+        "description": "Configure message sending, keyboard navigation, and Pivi hotkeys."
+      },
+      "sessions": {
+        "description": "Choose how long removed sessions are retained and permanently delete their files."
       },
       "environment": {
         "label": "Environment",
@@ -419,12 +506,19 @@
       "open": "Open Style Settings",
       "installationOpened": "The Style Settings plugin page was opened. Install or enable it, then return to General."
     },
+    "appearance": "Appearance",
     "layout": "Layout",
     "chatBehavior": "Chat behavior",
     "providerRequests": {
       "title": "Provider requests",
-      "total": { "name": "Total timeout (seconds)", "desc": "Maximum time for one provider request, including the streamed response body. Set to 0 for no timeout." },
-      "idle": { "name": "Idle timeout (seconds)", "desc": "Maximum time without response bytes. Set to 0 for no timeout." }
+      "total": {
+        "name": "Total timeout (seconds)",
+        "desc": "Maximum time for one provider request, including the streamed response body. Set to 0 for no timeout."
+      },
+      "idle": {
+        "name": "Idle timeout (seconds)",
+        "desc": "Maximum time without response bytes. Set to 0 for no timeout."
+      }
     },
     "personalizationContext": "Personalization & context",
     "inputShortcuts": "Input & shortcuts",
@@ -472,7 +566,8 @@
     },
     "hotkeys": {
       "notSet": "Not set",
-      "openHotkeys": "Open hotkey settings"
+      "openHotkeys": "Open hotkey settings",
+      "backToPivi": "← Back to Pivi"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -604,8 +699,6 @@
         "name": "Permanently delete removed sessions",
         "desc": "Deletes sessions removed with Delete. Open and archived sessions are not affected.",
         "button": "Delete permanently",
-        "confirmTitle": "Permanently delete removed sessions?",
-        "confirmDescription": "This deletes sessions removed with Delete. Open and archived sessions will not be affected.",
         "success": "Permanently deleted {count} removed session file(s).",
         "failed": "Failed to permanently delete removed sessions"
       }
@@ -769,8 +862,6 @@
       "fetchModelsSuccess": "{name}: loaded {count} models.",
       "fetchModelsFailed": "{name}: failed to fetch models: {message}",
       "removedProvider": "Removed {name} provider.",
-      "removeConfirmTitle": "Remove {name} provider?",
-      "removeConfirmDescription": "This removes the provider and its model selections. Its stored credential is kept by default.",
       "removeCredential": "Also delete this provider's credential from {secureStorageName}",
       "enableAria": "Enable {name} provider",
       "disableAria": "Disable {name} provider",
@@ -885,9 +976,7 @@
         "disableAria": "Disable skill {name}",
         "updateAria": "Update skill {name}",
         "removeAria": "Remove skill {name}",
-        "installAria": "Install skill {name}",
-        "removeConfirmTitle": "Remove skill {name}?",
-        "removeConfirm": "Remove {name} from .pivi/skills/? This deletes the skill folder from your device."
+        "installAria": "Install skill {name}"
       },
       "feedback": {
         "pending": {
@@ -928,8 +1017,6 @@
       "loadFailed": "Failed to load custom commands: {message}",
       "editAria": "Edit command {name}",
       "deleteAria": "Delete command {name}",
-      "deleteConfirm": "Delete custom command /{name}? This will not remove its Note Toolbar item; remove that item manually.",
-      "deleteConfirmTitle": "Delete custom command /{name}?",
       "deleteFailed": "Failed to delete custom command: {message}",
       "reorder": {
         "handle": "Reorder /{name}, currently position {position}",
@@ -990,8 +1077,12 @@
         "estimatedTokens": "{count} estimate",
         "total": "Total"
       },
-      "workflow": { "heading": "Workflow" },
-      "custom": { "heading": "Custom" },
+      "workflow": {
+        "heading": "Workflow"
+      },
+      "custom": {
+        "heading": "Custom"
+      },
       "modified": "Modified",
       "restore": "Restore default",
       "bodyLabel": "Module body",
@@ -1001,8 +1092,6 @@
       "add": "+ Add module",
       "addAria": "Add custom prompt module",
       "deleteAria": "Delete {title}",
-      "deleteConfirmTitle": "Delete custom module {title}?",
-      "deleteConfirm": "Delete this custom module? Its body will be removed from the system prompt.",
       "empty": "No custom modules yet. Add one to append it after workflow modules.",
       "newModule": "New module",
       "reorder": {
@@ -1039,8 +1128,6 @@
       "refreshFailed": "Tool refresh failed",
       "saveFailed": "Failed to save MCP server",
       "alreadyExists": "Server \"{name}\" already exists",
-      "deleteConfirm": "Delete MCP server \"{name}\"?",
-      "deleteConfirmTitle": "Delete MCP server \"{name}\"?",
       "enableAria": "Enable MCP server {name}",
       "disableAria": "Disable MCP server {name}",
       "removeAria": "Remove MCP server {name}",

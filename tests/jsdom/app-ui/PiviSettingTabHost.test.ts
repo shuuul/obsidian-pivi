@@ -94,13 +94,17 @@ describe('settings page search aliases', () => {
   it('returns unique localized aliases for a page, excluding the page label', () => {
     const i18n = createI18n('en');
     const general = getSettingsPageSearchAliases(i18n, 'general');
-    expect(general).toEqual(expect.arrayContaining([
-      'Language',
-      'Show cache hit rate',
-      'Show tokens per second',
-      'About',
+    expect(general).toEqual(['Language']);
+    expect(getSettingsPageSearchAliases(i18n, 'appearance')).toEqual(expect.arrayContaining([
+      'Layout',
+      'Style Settings',
     ]));
     expect(general).not.toContain('General');
+    expect(getSettingsPageSearchAliases(i18n, 'chat')).toEqual(expect.arrayContaining([
+      'Show cache hit rate',
+      'Show tokens per second',
+    ]));
+    expect(getSettingsPageSearchAliases(i18n, 'about')).toEqual(expect.arrayContaining(['GitHub', 'Issues']));
     expect(new Set(general).size).toBe(general.length);
     expect(getSettingsPageSearchAliases(i18n, 'webTools')).toEqual(expect.arrayContaining([
       'Brave Search',
@@ -134,18 +138,25 @@ describe('PiviSettingTabHost', () => {
     expect(definitions).toHaveLength(SETTINGS_ROOT_LAYOUT.length);
 
     expect(isRenderItem(definitions[0])).toBe(true);
-    expect(definitions[0]).toMatchObject({
-      name: 'General',
-      desc: expect.any(String),
-    });
+    expect(definitions[0]).toMatchObject({ name: 'General' });
 
-    expect(isPage(definitions[1])).toBe(true);
-    expect(definitions[1]).toMatchObject({ type: 'page', name: 'Models' });
+    expect(isGroup(definitions[1])).toBe(true);
+    expect(definitions[1]).toMatchObject({ type: 'group', heading: 'General' });
+    const generalItems = isGroup(definitions[1]) ? definitions[1].items ?? [] : [];
+    expect(generalItems.map((item) => isPage(item) ? item.name : null)).toEqual([
+      'Appearance',
+      'Chat behavior',
+      'Personalization & context',
+      'Input & shortcuts',
+      'Session files',
+      'Environment',
+    ]);
 
     expect(isGroup(definitions[2])).toBe(true);
     expect(definitions[2]).toMatchObject({ type: 'group', heading: 'Agent' });
     const agentItems = isGroup(definitions[2]) ? definitions[2].items ?? [] : [];
     expect(agentItems.map((item) => isPage(item) ? item.name : null)).toEqual([
+      'Models',
       'Built-in tools',
       'Web tools',
       'MCP servers',
@@ -161,14 +172,14 @@ describe('PiviSettingTabHost', () => {
       'Toolbar',
     ]);
 
-    expect(isPage(definitions[4])).toBe(true);
-    expect(definitions[4]).toMatchObject({ type: 'page', name: 'Environment' });
+    expect(isRenderItem(definitions[4])).toBe(true);
+    expect(definitions[4]).toMatchObject({ name: 'About' });
   });
 
   it('gives every page exactly one render item with name, desc, and aliases', () => {
     const { host } = createHost();
     const pages = collectPages(host.getSettingDefinitions());
-    expect(pages.length).toBe(9);
+    expect(pages.length).toBe(14);
     for (const page of pages) {
       expect(page.name.length).toBeGreaterThan(0);
       expect(typeof page.desc === 'string' && page.desc.length > 0).toBe(true);
@@ -194,7 +205,8 @@ describe('PiviSettingTabHost', () => {
       return { dispose };
     });
     const { host, plugin, workspace } = createHost();
-    const models = host.getSettingDefinitions()[1];
+    const agent = host.getSettingDefinitions()[2];
+    const models = isGroup(agent) ? agent.items?.[0] : undefined;
     if (!isPage(models) || !isRenderItem(models.items?.[0])) {
       throw new Error('Expected Models page render item');
     }
@@ -221,7 +233,8 @@ describe('PiviSettingTabHost', () => {
   it('tags the implicit single-item host surface for CSS reset', () => {
     mockedMountSettingsPage.mockResolvedValue({ dispose: jest.fn(async () => undefined) });
     const { host } = createHost();
-    const models = host.getSettingDefinitions()[1];
+    const agent = host.getSettingDefinitions()[2];
+    const models = isGroup(agent) ? agent.items?.[0] : undefined;
     if (!isPage(models) || !isRenderItem(models.items?.[0])) {
       throw new Error('Expected Models page render item');
     }
@@ -242,7 +255,8 @@ describe('PiviSettingTabHost', () => {
   it('does not tag a host surface that already wraps multiple items', () => {
     mockedMountSettingsPage.mockResolvedValue({ dispose: jest.fn(async () => undefined) });
     const { host } = createHost();
-    const models = host.getSettingDefinitions()[1];
+    const agent = host.getSettingDefinitions()[2];
+    const models = isGroup(agent) ? agent.items?.[0] : undefined;
     if (!isPage(models) || !isRenderItem(models.items?.[0])) {
       throw new Error('Expected Models page render item');
     }
@@ -255,22 +269,23 @@ describe('PiviSettingTabHost', () => {
     expect(items).not.toHaveClass('pivi-settings-host-surface-reset');
   });
 
-  it('mounts general content through the render item and cleans it up', async () => {
+  it('mounts the General subpage through its render item and cleans it up', async () => {
     const dispose = jest.fn(async () => undefined);
     mockedMountSettingsPage.mockResolvedValue({ dispose });
     const { host, plugin, workspace } = createHost();
     const definitions = host.getSettingDefinitions();
-    const generalContent = definitions[0];
-    if (!isRenderItem(generalContent)) {
-      throw new Error('Expected general content render definition');
+    const generalGroup = definitions[1];
+    const generalPage = isGroup(generalGroup) ? generalGroup.items?.[0] : undefined;
+    if (!isPage(generalPage) || !isRenderItem(generalPage.items?.[0])) {
+      throw new Error('Expected Appearance subpage render definition');
     }
     const settingEl = document.createElement('div');
-    const cleanup = generalContent.render({ settingEl }, {});
+    const cleanup = generalPage.items[0].render({ settingEl }, {});
     await flushMount();
 
     expect(mockedCreateSettingsUiPorts).toHaveBeenCalledWith(plugin, workspace);
     expect(mockedMountSettingsPage).toHaveBeenCalledWith(expect.objectContaining({
-      page: 'general',
+      page: 'appearance',
       container: settingEl,
     }));
     expect(settingEl).toHaveClass('pivi-settings-definition-host');
@@ -278,6 +293,21 @@ describe('PiviSettingTabHost', () => {
     await flushMount();
     expect(dispose).toHaveBeenCalledTimes(1);
     expect(settingEl).toBeEmptyDOMElement();
+  });
+
+  it('keeps root content compact instead of filling a native subpage', () => {
+    mockedMountSettingsPage.mockResolvedValue({ dispose: jest.fn(async () => undefined) });
+    const { host } = createHost();
+    const general = host.getSettingDefinitions()[0];
+    if (!isRenderItem(general)) throw new Error('Expected root General content');
+    const settingEl = document.createElement('div');
+
+    general.render({ settingEl }, {});
+
+    expect(settingEl).toHaveClass(
+      'pivi-settings-definition-host',
+      'pivi-settings-definition-host--inline',
+    );
   });
 
   it('refreshes the declarative index after a locale change', () => {
@@ -288,7 +318,7 @@ describe('PiviSettingTabHost', () => {
     appI18n.setLocale('zh-CN');
     expect(update).toHaveBeenCalledTimes(1);
     const definitions = host.getSettingDefinitions();
-    expect(definitions[0]).toMatchObject({ name: '通用' });
+    expect(definitions[1]).toMatchObject({ type: 'group', heading: '通用' });
 
     cleanups.forEach((cleanup) => cleanup());
     appI18n.setLocale('en');

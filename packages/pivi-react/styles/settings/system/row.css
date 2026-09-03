@@ -14,6 +14,16 @@
   align-items: center;
 }
 
+.pivi-settings-row__leading {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  color: var(--pivi-host-text-muted);
+}
+
 .pivi-settings-row__info {
   flex: 1 1 0;
   min-width: 0;
@@ -103,11 +113,26 @@
 }
 
 .pivi-settings-section__body > .pivi-settings-row,
+.pivi-models-checklist-grid > .pivi-settings-row,
 .pivi-settings-section__body > .pivi-setting-stack > .pivi-settings-row,
 .pivi-settings-section__body > .pivi-settings-collection > .pivi-settings-row,
 .pivi-settings-section__body > .pivi-settings-collection > .pivi-settings-collection__list > .pivi-settings-row {
   box-sizing: border-box;
   padding-inline: var(--pivi-settings-row-padding-inline);
+}
+
+@media (min-width: 701px) {
+  .pivi-models-checklist-grid > .pivi-settings-row:nth-child(2) {
+    border-block-start: none;
+  }
+}
+
+.pivi-settings-section__body .pivi-settings-row.pivi-settings-row--indented {
+  margin-inline-start: 28px;
+}
+
+.pivi-toolbar-shortcut > .pivi-settings-row__actions {
+  justify-content: flex-end;
 }
 
 .pivi-settings-card__body .pivi-settings-row {

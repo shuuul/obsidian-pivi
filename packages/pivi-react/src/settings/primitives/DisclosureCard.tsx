@@ -1,5 +1,6 @@
 import { type CSSProperties, type ReactNode, useContext, useId } from 'react';
 
+import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { SettingsInlineActions } from './SettingsInlineActions';
@@ -23,7 +24,12 @@ export function DisclosureCard({
   consumeClickAfterDrag,
   dragging = false,
   dragOffset = 0,
+  dropIndicatorEdge,
   reorderLabel,
+  footerActions,
+  showSaveAction = true,
+  saveDisabled = false,
+  onSave,
 }: {
   readonly name: string;
   readonly summary?: ReactNode;
@@ -42,8 +48,14 @@ export function DisclosureCard({
   readonly consumeClickAfterDrag?: () => boolean;
   readonly dragging?: boolean;
   readonly dragOffset?: number;
+  readonly dropIndicatorEdge?: 'before' | 'after';
   readonly reorderLabel?: string;
+  readonly footerActions?: ReactNode;
+  readonly showSaveAction?: boolean;
+  readonly saveDisabled?: boolean;
+  readonly onSave?: () => void;
 }) {
+  const t = useT();
   const bodyId = useId();
   const nesting = useContext(SettingsNestingContext);
   const style: CSSProperties | undefined = dragging
@@ -52,18 +64,23 @@ export function DisclosureCard({
 
   return (
     <div
-      className={`pivi-settings-card${open ? ' is-open' : ''}${dragging ? ' is-dragging' : ''}${className ? ` ${className}` : ''}`}
+      className={`pivi-settings-card${open ? ' is-open' : ''}${dragging ? ' is-dragging' : ''}${dropIndicatorEdge ? ` is-drop-${dropIndicatorEdge}` : ''}${className ? ` ${className}` : ''}`}
       data-settings-sort-id={sortId}
       style={style}
       aria-label={ariaLabel}
     >
-      <div
-        className="pivi-settings-card__header"
-        onPointerDown={sortableHandleProps?.onPointerDown}
-        onPointerMove={sortableHandleProps?.onPointerMove}
-        onPointerUp={sortableHandleProps?.onPointerUp}
-        onPointerCancel={sortableHandleProps?.onPointerCancel}
-      >
+      <div className="pivi-settings-card__header">
+        {sortableHandleProps ? (
+          <button
+            type="button"
+            className="pivi-settings-card__handle pivi-settings-action-btn"
+            aria-label={reorderLabel}
+            aria-pressed={dragging}
+            {...sortableHandleProps}
+          >
+            <span aria-hidden="true">⠿</span>
+          </button>
+        ) : null}
         {icon && iconInteractive ? (
           <span
             className="pivi-settings-card__icon"
@@ -80,7 +97,6 @@ export function DisclosureCard({
           aria-expanded={open}
           aria-controls={bodyId}
           aria-label={toggleAriaLabel}
-          data-sortable-surface=""
           onClick={() => {
             if (consumeClickAfterDrag?.()) return;
             onToggle();
@@ -93,20 +109,9 @@ export function DisclosureCard({
           </div>
           {badges ? <span className="pivi-settings-card__badges">{badges}</span> : null}
         </button>
-        {actions || sortableHandleProps ? (
+        {actions ? (
           <SettingsInlineActions>
             {actions}
-            {sortableHandleProps ? (
-              <button
-                type="button"
-                className="pivi-settings-card__handle pivi-settings-action-btn"
-                aria-label={reorderLabel}
-                aria-pressed={dragging}
-                onKeyDown={sortableHandleProps.onKeyDown}
-              >
-                <span aria-hidden="true">⠿</span>
-              </button>
-            ) : null}
           </SettingsInlineActions>
         ) : null}
         <button
@@ -114,7 +119,6 @@ export function DisclosureCard({
           className="pivi-settings-card__chevron"
           aria-hidden="true"
           tabIndex={-1}
-          data-sortable-surface=""
           onClick={() => {
             if (consumeClickAfterDrag?.()) return;
             onToggle();
@@ -127,6 +131,14 @@ export function DisclosureCard({
         <SettingsNestingContext.Provider value={nesting + 1}>
           <div id={bodyId} className="pivi-settings-card__body">
             {children}
+            {footerActions || showSaveAction ? (
+              <div className="pivi-settings-card__footer">
+                {footerActions}
+                {showSaveAction ? (
+                  <button type="button" disabled={saveDisabled} onClick={onSave ?? onToggle}>{t('common.save')}</button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </SettingsNestingContext.Provider>
       ) : null}

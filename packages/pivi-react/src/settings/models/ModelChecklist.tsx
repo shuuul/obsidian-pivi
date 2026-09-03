@@ -232,7 +232,9 @@ export function ModelChecklist({
     <SettingsSection title={t('settings.modelsTab.candidateModels')}>
       {providerModels.length === 0 ? (
         <p className="pivi-no-models-message">{t('settings.modelsTab.noModels')}</p>
-      ) : providerModels.map(model => {
+      ) : (
+        <div className="pivi-models-checklist-grid">
+          {providerModels.map(model => {
         const inputId = `checkbox-${providerId}-${model.value}`.replace(/[^a-zA-Z0-9_-]/g, '-');
         const checked = settings.visibleModels.includes(model.value);
         const modelDef = customProvider?.models.find(
@@ -358,7 +360,9 @@ export function ModelChecklist({
             ) : null}
           </SettingRow>
         );
-      })}
+          })}
+        </div>
+      )}
     </SettingsSection>
   );
 }

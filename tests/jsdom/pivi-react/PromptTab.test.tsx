@@ -276,9 +276,8 @@ describe('React prompt settings', () => {
     expect(screen.getByRole('button', { name: 'Reorder Alpha, currently position 2' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete Beta' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Delete custom module Beta?' });
-    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus());
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     await waitFor(() => expect(screen.queryByText('Beta')).not.toBeInTheDocument());
   });
 

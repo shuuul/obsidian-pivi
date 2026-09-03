@@ -214,7 +214,6 @@ type McpSectionState = {
   busy: string | null;
   auth: Record<string, McpAuthStatus | null>;
   toolsByServer: Record<string, readonly McpTool[]>;
-  deleteCandidate: ManagedMcpServer | null;
   importDraft: string | null;
   addOpen: boolean;
   expandedServers: ReadonlySet<string>;
@@ -229,11 +228,11 @@ type McpSectionAction =
   | { type: 'set_auth'; name: string; status: McpAuthStatus | null }
   | { type: 'set_tools'; name: string; tools: readonly McpTool[] }
   | { type: 'reset_tools'; servers: readonly ManagedMcpServer[] }
-  | { type: 'set_delete_candidate'; server: ManagedMcpServer | null }
   | { type: 'set_import_draft'; draft: string | null }
   | { type: 'toggle_add_open' }
   | { type: 'set_add_open'; open: boolean }
   | { type: 'toggle_expanded'; name: string }
+  | { type: 'collapse_expanded'; name: string }
   | { type: 'rename_expanded'; from: string; to: string };
 
 const initialMcpSectionState: McpSectionState = {
@@ -244,7 +243,6 @@ const initialMcpSectionState: McpSectionState = {
   busy: null,
   auth: {},
   toolsByServer: {},
-  deleteCandidate: null,
   importDraft: null,
   addOpen: false,
   expandedServers: new Set(),
@@ -271,8 +269,6 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
         ...state,
         toolsByServer: Object.fromEntries(action.servers.map((server) => [server.name, []])),
       };
-    case 'set_delete_candidate':
-      return { ...state, deleteCandidate: action.server };
     case 'set_import_draft':
       return { ...state, importDraft: action.draft };
     case 'toggle_add_open':
@@ -285,10 +281,14 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
       else expandedServers.add(action.name);
       return { ...state, expandedServers };
     }
+    case 'collapse_expanded': {
+      const expandedServers = new Set(state.expandedServers);
+      expandedServers.delete(action.name);
+      return { ...state, expandedServers };
+    }
     case 'rename_expanded': {
       const expandedServers = new Set(state.expandedServers);
-      expandedServers.delete(action.from);
-      expandedServers.add(action.to);
+      if (expandedServers.delete(action.from)) expandedServers.add(action.to);
       return { ...state, expandedServers };
     }
     default:
@@ -452,7 +452,6 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     dispatch({ type: 'set_busy', busy: 'delete' });
     try {
       await commit(state.servers.filter((item) => item.name !== name));
-      dispatch({ type: 'set_delete_candidate', server: null });
     } catch (cause) {
       feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
     } finally {

@@ -351,6 +351,7 @@ textarea.pivi-settings-control {
    Obsidian `button:not(.clickable-icon)` cannot reintroduce fill. */
 .pivi-settings button.pivi-settings-action-btn,
 .pivi-settings button.pivi-settings-card__handle,
+.pivi-settings button.pivi-settings-row__handle,
 .pivi-settings button.pivi-settings-card__chevron,
 .pivi-settings button.pivi-settings-badge__remove {
   appearance: none;
@@ -382,6 +383,7 @@ textarea.pivi-settings-control {
 
 .pivi-settings button.pivi-settings-action-btn:hover:not(:disabled),
 .pivi-settings button.pivi-settings-card__handle:hover:not(:disabled),
+.pivi-settings button.pivi-settings-row__handle:hover:not(:disabled),
 .pivi-settings button.pivi-settings-badge__remove:hover:not(:disabled) {
   border: 0;
   background: var(--pivi-host-background-hover);
@@ -391,6 +393,7 @@ textarea.pivi-settings-control {
 
 .pivi-settings button.pivi-settings-action-btn:active:not(:disabled),
 .pivi-settings button.pivi-settings-card__handle:active:not(:disabled),
+.pivi-settings button.pivi-settings-row__handle:active:not(:disabled),
 .pivi-settings button.pivi-settings-card__chevron:hover:not(:disabled),
 .pivi-settings button.pivi-settings-card__chevron:active:not(:disabled) {
   border: 0;
@@ -398,7 +401,8 @@ textarea.pivi-settings-control {
   box-shadow: none;
 }
 
-.pivi-settings button.pivi-settings-card__handle {
+.pivi-settings button.pivi-settings-card__handle,
+.pivi-settings button.pivi-settings-row__handle {
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -407,7 +411,9 @@ textarea.pivi-settings-control {
 }
 
 .pivi-settings button.pivi-settings-card__handle:active,
-.pivi-settings button.pivi-settings-card__handle[aria-pressed="true"] {
+.pivi-settings button.pivi-settings-card__handle[aria-pressed="true"],
+.pivi-settings button.pivi-settings-row__handle:active,
+.pivi-settings button.pivi-settings-row__handle[aria-pressed="true"] {
   cursor: grabbing;
   color: var(--pivi-host-interactive-accent);
 }
@@ -449,6 +455,31 @@ textarea.pivi-settings-control {
 }
 
 .pivi-settings button.pivi-settings-delete-btn:hover:not(:disabled) {
+  color: var(--pivi-host-text-error);
+}
+
+.pivi-settings button.pivi-settings-action-btn.pivi-settings-delete-btn--confirming,
+.pivi-settings button.pivi-settings-confirm-delete-btn {
+  width: auto;
+  min-width: 28px;
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--pivi-host-text-error) 32%, transparent);
+  border-radius: var(--pivi-radius-sm);
+  background: color-mix(in srgb, var(--pivi-host-text-error) 11%, transparent);
+  box-shadow: none;
+  color: var(--pivi-host-text-error);
+  font: inherit;
+  font-size: var(--pivi-host-font-ui-smaller);
+  white-space: nowrap;
+}
+
+.pivi-settings button.pivi-settings-action-btn.pivi-settings-delete-btn--confirming:hover:not(:disabled),
+.pivi-settings button.pivi-settings-action-btn.pivi-settings-delete-btn--confirming:active:not(:disabled),
+.pivi-settings button.pivi-settings-confirm-delete-btn:hover:not(:disabled),
+.pivi-settings button.pivi-settings-confirm-delete-btn:active:not(:disabled) {
+  border: 1px solid color-mix(in srgb, var(--pivi-host-text-error) 42%, transparent);
+  background: color-mix(in srgb, var(--pivi-host-text-error) 17%, transparent);
+  box-shadow: none;
   color: var(--pivi-host-text-error);
 }
 

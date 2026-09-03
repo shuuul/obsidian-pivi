@@ -9,6 +9,7 @@
     "loading": "読み込み中",
     "error": "エラー",
     "confirm": "確認",
+    "confirmDelete": "削除を確認",
     "line": "行",
     "lines": "行",
     "copied": "コピーしました！"
@@ -65,7 +66,37 @@
       "confirm": "確認",
       "deny": "拒否",
       "management": {
-        "titles": { "mcp": { "upsert": "MCPサーバー「{name}」を更新", "enable": "MCPサーバー「{name}」を有効化", "disable": "MCPサーバー「{name}」を無効化", "remove": "MCPサーバー「{name}」を削除" }, "skills": { "install": "「{source}」からSkillsをインストール", "enable": "Skill「{name}」を有効化", "disable": "Skill「{name}」を無効化", "update": "Skill「{name}」を更新", "updateAll": "パッケージ管理の全Skillsを更新", "remove": "Skill「{name}」を削除" }, "commands": { "upsert": "コマンド {command} を保存", "remove": "コマンド {command} を削除", "move": "コマンド {command} を移動" }, "prompt": { "enable": "プロンプトモジュール「{name}」を有効化", "disable": "プロンプトモジュール「{name}」を無効化", "setBody": "プロンプトモジュール「{name}」を更新", "restore": "プロンプトモジュール「{name}」を復元", "create": "プロンプトモジュール「{name}」を追加", "update": "プロンプトモジュール「{name}」を更新", "remove": "プロンプトモジュール「{name}」を削除", "move": "プロンプトモジュール「{name}」を移動" } },
+        "titles": {
+          "mcp": {
+            "upsert": "MCPサーバー「{name}」を更新",
+            "enable": "MCPサーバー「{name}」を有効化",
+            "disable": "MCPサーバー「{name}」を無効化",
+            "remove": "MCPサーバー「{name}」を削除"
+          },
+          "skills": {
+            "install": "「{source}」からSkillsをインストール",
+            "enable": "Skill「{name}」を有効化",
+            "disable": "Skill「{name}」を無効化",
+            "update": "Skill「{name}」を更新",
+            "updateAll": "パッケージ管理の全Skillsを更新",
+            "remove": "Skill「{name}」を削除"
+          },
+          "commands": {
+            "upsert": "コマンド {command} を保存",
+            "remove": "コマンド {command} を削除",
+            "move": "コマンド {command} を移動"
+          },
+          "prompt": {
+            "enable": "プロンプトモジュール「{name}」を有効化",
+            "disable": "プロンプトモジュール「{name}」を無効化",
+            "setBody": "プロンプトモジュール「{name}」を更新",
+            "restore": "プロンプトモジュール「{name}」を復元",
+            "create": "プロンプトモジュール「{name}」を追加",
+            "update": "プロンプトモジュール「{name}」を更新",
+            "remove": "プロンプトモジュール「{name}」を削除",
+            "move": "プロンプトモジュール「{name}」を移動"
+          }
+        },
         "changes": {
           "mcpUpsert": "予定されたMCPサーバー設定を適用します。",
           "mcpEnable": "このMCPサーバーを有効にします。",
@@ -399,7 +430,19 @@
     "pages": {
       "general": {
         "label": "一般",
-        "description": "言語、レイアウト、チャット動作、およびこのプラグインについて。"
+        "description": "言語、レイアウト、連携。"
+      },
+      "chat": {
+        "description": "チャットの動作、ストリーミング情報、プロバイダー要求のタイムアウトを設定します。"
+      },
+      "personalization": {
+        "description": "応答をパーソナライズし、コンテキストとして自動追加できるノートを選択します。"
+      },
+      "input": {
+        "description": "メッセージ送信、キーボード操作、Pivi ホットキーを設定します。"
+      },
+      "sessions": {
+        "description": "削除済みセッションの保持期間を設定し、そのファイルを完全に削除します。"
       },
       "environment": {
         "label": "環境",
@@ -463,6 +506,7 @@
       "open": "Style Settings を開く",
       "installationOpened": "Style Settings プラグインのページを開きました。インストールまたは有効化したら、「一般」に戻ってください。"
     },
+    "appearance": "外観",
     "layout": "レイアウト",
     "chatBehavior": "チャットの動作",
     "providerRequests": {
@@ -522,7 +566,8 @@
     },
     "hotkeys": {
       "notSet": "未設定",
-      "openHotkeys": "ホットキー設定を開く"
+      "openHotkeys": "ホットキー設定を開く",
+      "backToPivi": "← Pivi に戻る"
     },
     "noteToolbar": {
       "heading": "Note Toolbar",
@@ -655,9 +700,7 @@
         "desc": "削除操作で削除したセッションを完全に削除します。開いているセッションとアーカイブ済みセッションには影響しません。",
         "button": "完全に削除",
         "success": "削除済みセッションファイルを {count} 件完全に削除しました。",
-        "failed": "削除済みセッションの完全な削除に失敗しました",
-        "confirmTitle": "削除済みセッションを完全に削除しますか？",
-        "confirmDescription": "削除操作で削除したセッションを完全に削除します。開いているセッションとアーカイブ済みセッションには影響しません。"
+        "failed": "削除済みセッションの完全な削除に失敗しました"
       }
     },
     "sharedEnvironment": {
@@ -800,8 +843,6 @@
       "addProvider": "+ プロバイダーを追加",
       "addProviderAdded": "追加済み",
       "removedProvider": "{name} プロバイダーを削除しました。",
-      "removeConfirmTitle": "{name} プロバイダーを削除しますか？",
-      "removeConfirmDescription": "プロバイダーとモデルの選択を削除します。保存済みの認証情報はデフォルトで保持されます。",
       "removeCredential": "このプロバイダーの認証情報も{secureStorageName}から削除する",
       "enableAria": "プロバイダー {name} を有効化",
       "disableAria": "プロバイダー {name} を無効化",
@@ -935,9 +976,7 @@
         "disableAria": "スキル {name} を無効化",
         "updateAria": "スキル {name} を更新",
         "removeAria": "スキル {name} を削除",
-        "installAria": "スキル {name} をインストール",
-        "removeConfirmTitle": "スキル {name} を削除しますか？",
-        "removeConfirm": ".pivi/skills/ から {name} を削除しますか？デバイスからスキルフォルダが削除されます。"
+        "installAria": "スキル {name} をインストール"
       },
       "notices": {
         "noRemote": "このソースのリモートスキルは見つかりません。",
@@ -978,15 +1017,13 @@
       "loadFailed": "カスタムコマンドの読み込みに失敗：{message}",
       "editAria": "コマンド {name} を編集",
       "deleteAria": "コマンド {name} を削除",
-      "deleteConfirm": "カスタムコマンド /{name} を削除しますか？追加済みの Note Toolbar 項目は削除されないため、手動で削除してください。",
       "deleteFailed": "カスタムコマンドの削除に失敗：{message}",
       "reorder": {
         "handle": "/{name} を並べ替え（現在 {position} 番目）",
         "position": "/{name} を {total} 件中 {position} 番目に移動しました。",
         "saved": "コマンドの順序を保存しました。",
         "cancelled": "コマンドの並べ替えをキャンセルしました。"
-      },
-      "deleteConfirmTitle": "カスタムコマンド /{name} を削除しますか？"
+      }
     },
     "createCommand": {
       "titleCreate": "カスタムスラッシュコマンドを作成",
@@ -1055,8 +1092,6 @@
       "add": "+ モジュールを追加",
       "addAria": "カスタムプロンプトモジュールを追加",
       "deleteAria": "{title} を削除",
-      "deleteConfirmTitle": "カスタムモジュール {title} を削除しますか？",
-      "deleteConfirm": "このカスタムモジュールを削除しますか？本文はシステムプロンプトから取り除かれます。",
       "empty": "カスタムモジュールはまだありません。追加するとワークフローモジュールの後に続きます。",
       "newModule": "新しいモジュール",
       "reorder": {
@@ -1093,7 +1128,6 @@
       "refreshFailed": "ツールの更新に失敗しました",
       "saveFailed": "MCP サーバーの保存に失敗しました",
       "alreadyExists": "サーバー「{name}」は既に存在します",
-      "deleteConfirm": "MCP サーバー「{name}」を削除しますか？",
       "enableAria": "MCP サーバー {name} を有効化",
       "disableAria": "MCP サーバー {name} を無効化",
       "removeAria": "MCP サーバー {name} を削除",
@@ -1143,8 +1177,7 @@
         "connected": "ツールを更新しました",
         "availableTools": "利用可能なツール（{count}）",
         "noTools": "このサーバーからツールが返されませんでした。"
-      },
-      "deleteConfirmTitle": "MCP サーバー「{name}」を削除しますか？"
+      }
     }
   },
   "commands": {

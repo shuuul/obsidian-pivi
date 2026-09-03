@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts, SettingsFeedbackMessage, SettingsFeedbackPort } from '../ports';
-import { ModalLayer } from '../shared/ModalLayer';
 import {
   SettingRow,
   SettingsCollection,
@@ -57,7 +56,6 @@ export function SkillsSettingsTab({ skills, feedback }: {
     readonly name: string;
     readonly message: SettingsFeedbackMessage;
   } | null>(null);
-  const [removeCandidate, setRemoveCandidate] = useState<Skill | null>(null);
   const featuredBundle = skills.featuredBundle.getDescriptor();
   useEffect(() => {
     mounted.current = true;
@@ -194,10 +192,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
     });
   };
 
-  const confirmRemove = () => {
-    if (!removeCandidate) return;
-    const candidate = removeCandidate;
-    setRemoveCandidate(null);
+  const confirmRemove = (candidate: Skill) => {
     void run(
       { kind: 'remove', name: candidate.name, folderName: candidate.folderName },
       () => skills.remove(candidate.folderName),
@@ -389,7 +384,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
                       <SettingsRemoveButton
                         ariaLabel={t('settings.skills.installed.removeAria', { name: skill.name })}
                         disabled={busy}
-                        onClick={() => { setRemoveCandidate(skill); }}
+                        onClick={() => { confirmRemove(skill); }}
                       />
                     </SettingsInlineActions>
                     {rowStatus ? <SettingsFeedback feedback={rowStatus} /> : null}
@@ -400,28 +395,6 @@ export function SkillsSettingsTab({ skills, feedback }: {
           })}
         </SettingsCollection>
       </SettingsSection>
-      <ModalLayer
-        ariaLabel={t('settings.skills.installed.removeConfirmTitle', { name: removeCandidate?.name ?? '' })}
-        open={removeCandidate !== null}
-        onClose={() => { if (!busy) setRemoveCandidate(null); }}
-      >
-        {removeCandidate ? (
-          <div className="pivi-modal">
-            <div className="pivi-modal__title">
-              {t('settings.skills.installed.removeConfirmTitle', { name: removeCandidate.name })}
-            </div>
-            <p>{t('settings.skills.installed.removeConfirm', { name: removeCandidate.name })}</p>
-            <div className="pivi-modal__actions">
-              <button type="button" data-modal-cancel disabled={busy} onClick={() => setRemoveCandidate(null)}>
-                {t('common.cancel')}
-              </button>
-              <button className="pivi-button--danger" type="button" disabled={busy} onClick={confirmRemove}>
-                {t('common.remove')}
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </ModalLayer>
     </SettingsPage>
   );
 }

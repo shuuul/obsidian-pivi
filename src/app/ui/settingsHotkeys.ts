@@ -1,12 +1,15 @@
 import type { App } from 'obsidian';
 import { Platform } from 'obsidian';
 
+import { t } from '@/app/i18n';
+
 type ObsidianHotkey = { modifiers: string[]; key: string };
 type ObsidianHotkeyManager = {
   customKeys?: Record<string, ObsidianHotkey[] | undefined>;
   defaultKeys?: Record<string, ObsidianHotkey[] | undefined>;
 };
 type ObsidianHotkeyTab = {
+  containerEl?: HTMLElement;
   searchInputEl?: HTMLInputElement;
   searchComponent?: { inputEl?: HTMLInputElement };
   updateHotkeyVisibility?: () => void;
@@ -58,6 +61,17 @@ export function openHotkeySettings(app: App): void {
   window.setTimeout(() => {
     const tab = setting.activeTab;
     if (!tab) return;
+    const container = tab.containerEl;
+    if (container && !container.querySelector('.pivi-hotkeys-return')) {
+      const returnButton = container.ownerDocument.win.createEl('button');
+      returnButton.type = 'button';
+      returnButton.className = 'pivi-hotkeys-return';
+      returnButton.textContent = t('settings.hotkeys.backToPivi');
+      returnButton.addEventListener('click', () => {
+        setting.openTabById('pivi');
+      });
+      container.prepend(returnButton);
+    }
     const searchEl = tab.searchInputEl ?? tab.searchComponent?.inputEl;
     if (!searchEl) return;
     searchEl.value = 'Pivi';

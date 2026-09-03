@@ -95,8 +95,9 @@ describe('React commands settings', () => {
       listDropdownEntries: async () => [command, compactCommand, imageTool],
     }));
 
-    expect(await screen.findByText('Internal commands')).toBeInTheDocument();
-    expect(screen.getByText('/compact')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Edit custom slash command')).toBeInTheDocument();
+    expect(screen.queryByText('Internal commands')).not.toBeInTheDocument();
+    expect(screen.queryByText('/compact')).not.toBeInTheDocument();
     expect(screen.queryByText('/generate-image')).not.toBeInTheDocument();
     const card = getCommandCard('Edit custom slash command');
     expect(card).toHaveClass('pivi-settings-card');
@@ -262,6 +263,7 @@ describe('React commands settings', () => {
     fireEvent.click(screen.getByLabelText('Edit command review'));
     const card = getCommandCard('Edit custom slash command');
     fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Updated prompt' } });
+    expect(within(card).getAllByRole('button', { name: 'Save' })).toHaveLength(1);
 
     fireEvent.click(within(card).getByRole('button', { name: 'Save' }));
     await waitFor(() =>     expect(saveWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({
@@ -293,7 +295,9 @@ describe('React commands settings', () => {
     await screen.findByText('/review');
     fireEvent.click(screen.getByLabelText('Edit command review'));
     const card = getCommandCard('Edit custom slash command');
-    expect(within(card).getByRole('button', { name: 'Save' })).not.toBeDisabled();
+    const save = within(card).getByRole('button', { name: 'Save' });
+    expect(save).not.toBeDisabled();
+    expect(save.closest('.pivi-settings-row')).toHaveClass('pivi-settings-row--stacked');
     expect(within(card).getAllByText('Save')).toHaveLength(1);
   });
 
@@ -303,12 +307,12 @@ describe('React commands settings', () => {
     renderCommands(ports);
     const remove = await screen.findByRole('button', { name: 'Delete command review' });
     fireEvent.click(remove);
-    const dialog = await screen.findByRole('dialog', { name: /Delete custom command/ });
-    const confirmDelete = within(dialog).getByRole('button', { name: 'Delete' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const confirmDelete = screen.getByRole('button', { name: 'Confirm delete' });
     fireEvent.click(confirmDelete);
     expect(confirmDelete).toBeDisabled();
     await waitFor(() => expect(ports.feedback.notify).toHaveBeenCalledWith('Failed to delete custom command: disk unavailable'));
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Confirm delete' })).toBeNull();
   });
 
   it('does not update state after the tab unmounts during its initial load', async () => {

@@ -1,5 +1,5 @@
 import type { ManagedMcpServer, McpServerType } from '@pivi/agent/mcp/types';
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsFeedbackMessage } from '../../ports';
@@ -11,16 +11,11 @@ import {
   mcpValidationMessage,
 } from './useMcpSectionState';
 
-export function McpServerEditor({
-  server,
-  initial,
-  type,
-  inline = false,
-  connecting = false,
-  feedback,
-  onCancel,
-  onSave,
-}: {
+export interface McpServerEditorHandle {
+  save: () => Promise<ManagedMcpServer | null>;
+}
+
+export const McpServerEditor = forwardRef<McpServerEditorHandle, {
   readonly server?: ManagedMcpServer;
   readonly initial?: ManagedMcpServer;
   readonly type?: McpServerType;
@@ -29,7 +24,16 @@ export function McpServerEditor({
   readonly feedback?: SettingsFeedbackMessage;
   readonly onCancel?: () => void;
   readonly onSave: (server: ManagedMcpServer) => Promise<unknown>;
-}) {
+}>(function McpServerEditor({
+  server,
+  initial,
+  type,
+  inline = false,
+  connecting = false,
+  feedback,
+  onCancel,
+  onSave,
+}, ref) {
   const t = useT();
   const editorRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState(() => mcpDraftFrom(server ?? initial, type));
@@ -52,18 +56,22 @@ export function McpServerEditor({
     firstField.scrollIntoView?.({ block: 'nearest' });
   }, [inline]);
 
-  const submit = async () => {
+  const submit = async (): Promise<ManagedMcpServer | null> => {
     setBusy(true);
     setError('');
     try {
       const next = buildMcpServer(draft, server);
-      await onSave(next);
+      const result = await onSave(next);
+      return result !== false ? next : null;
     } catch (cause) {
       setError(mcpValidationMessage(cause, t, t('settings.mcp.saveFailed')));
+      return null;
     } finally {
       setBusy(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({ save: submit }));
 
   const typeSelect = (
     <Select label={t('settings.mcp.modal.type')} value={draft.type} onChange={(value) => update('type', value as McpServerType)}>
@@ -75,13 +83,13 @@ export function McpServerEditor({
 
   const actions = (
     <div className="pivi-settings-action-group">
-      {!inline ? (
+      {!server ? (
         <button type="button" disabled={busy} onClick={onCancel}>
           {t('common.cancel')}
         </button>
       ) : null}
       <button type="button" disabled={busy} onClick={() => { void submit(); }}>
-        {inline
+        {inline && server
           ? connecting ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')
           : t('common.add')}
       </button>
@@ -268,4 +276,4 @@ export function McpServerEditor({
       {actions}
     </div>
   );
-}
+});

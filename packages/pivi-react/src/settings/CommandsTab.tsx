@@ -14,7 +14,6 @@ import {
   type SortableReorderHandleProps,
   useSortableReorder,
 } from '../reorder/useSortableReorder';
-import { ModalLayer } from '../shared/ModalLayer';
 import { CommandIconPicker } from './commands/CommandIconPicker';
 import {
   DisclosureCard,
@@ -54,6 +53,7 @@ interface CommandCardProps {
   readonly position?: number;
   readonly dragging?: boolean;
   readonly dragOffset?: number;
+  readonly dropIndicatorEdge?: 'before' | 'after';
   readonly reorderHandleProps?: SortableReorderHandleProps<HTMLElement>;
   readonly suppressReorderClick?: () => boolean;
   readonly onToggle: () => void;
@@ -73,6 +73,7 @@ function CommandCard({
   position,
   dragging = false,
   dragOffset = 0,
+  dropIndicatorEdge,
   reorderHandleProps,
   suppressReorderClick,
   onToggle,
@@ -166,6 +167,8 @@ function CommandCard({
       consumeClickAfterDrag={suppressReorderClick}
       dragging={dragging}
       dragOffset={dragOffset}
+      dropIndicatorEdge={dropIndicatorEdge}
+      showSaveAction={false}
       reorderLabel={position !== undefined
         ? t('settings.slashCommandsUi.reorder.handle', { name: displayName, position })
         : undefined}
@@ -233,7 +236,7 @@ function CommandCard({
         >
           <CommandIconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} />
         </SettingRow>
-        <SettingRow>
+        <SettingRow stacked>
           {isDraft
             ? (
               <button
@@ -262,11 +265,9 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const mounted = useMountedRef();
   const [entries, setEntries] = useState<readonly SlashCatalogEntry[] | null>(null);
   const [catalogRevision, setCatalogRevision] = useState<number | null>(null);
-  const [internalEntries, setInternalEntries] = useState<readonly SlashCatalogEntry[]>([]);
   const [existingIds, setExistingIds] = useState<ReadonlySet<string>>(new Set());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const [draftOpen, setDraftOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<SlashCatalogEntry | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [commandFeedback, setCommandFeedback] = useState<Readonly<Record<string, SettingsFeedbackMessage>>>({});
@@ -287,9 +288,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
         setCatalogRevision(snapshot.catalogRevision);
         setOrder(next.map(entry => entry.id));
         setExistingIds(new Set(catalogEntries.map(entry => entry.id)));
-        setInternalEntries(catalogEntries.filter(
-          (entry) => entry.kind === 'command' && entry.scope === 'builtin',
-        ));
       }
     } catch (cause) {
       if (mounted.current) setError(t('settings.slashCommandsUi.loadFailed', {
@@ -357,7 +355,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     } finally {
       if (mounted.current) {
         setPending(false);
-        setConfirmDelete(null);
       }
     }
   };
@@ -402,19 +399,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   return (
     <SettingsPage description={<p>{t('settings.slashCommands.desc', { workspaceName })}</p>}>
       {error ? <p className="pivi-setting-description" role="alert">{error}</p> : null}
-      {internalEntries.length > 0
-        ? (
-          <SettingsSection title={t('settings.slashCommandsUi.internalHeading')}>
-            {internalEntries.map(entry => (
-              <SettingRow
-                key={`${entry.scope}:${entry.id}`}
-                name={`/${entry.name}`}
-                description={entry.description || undefined}
-              />
-            ))}
-          </SettingsSection>
-        )
-        : null}
       <SettingsSection title={t('settings.slashCommandsUi.heading')}>
         {entries === null
           ? <p className="pivi-setting-description">{t('settings.slashCommandsUi.loading')}</p>
@@ -445,11 +429,14 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
                     position={index + 1}
                     dragging={reorder.draggingId === id}
                     dragOffset={reorder.draggingId === id ? reorder.dragOffset : 0}
+                    dropIndicatorEdge={reorder.dropIndicator?.id === id
+                      ? reorder.dropIndicator.edge
+                      : undefined}
                     reorderHandleProps={reorder.getHandleProps(id)}
                     suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
                     onToggle={() => toggleExpanded(key)}
                     onCancelDraft={() => undefined}
-                    onDelete={setConfirmDelete}
+                    onDelete={(entry) => { void remove(entry); }}
                     onSave={save}
                   />
                 );
@@ -473,26 +460,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
             </SettingsCollection>
           )}
       </SettingsSection>
-      {confirmDelete
-        ? (
-          <ModalLayer
-            ariaLabel={t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
-            onClose={() => { if (!pending) setConfirmDelete(null); }}
-            open
-          >
-            <div className="pivi-modal">
-              <div className="pivi-modal__title">
-                {t('settings.slashCommandsUi.deleteConfirmTitle', { name: confirmDelete.name })}
-              </div>
-              <p>{t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}</p>
-              <div className="pivi-modal__actions">
-                <button type="button" data-modal-cancel disabled={pending} onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
-                <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void remove(confirmDelete); }}>{t('common.delete')}</button>
-              </div>
-            </div>
-          </ModalLayer>
-        )
-        : null}
     </SettingsPage>
   );
 }
