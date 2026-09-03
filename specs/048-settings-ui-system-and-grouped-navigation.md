@@ -1,0 +1,245 @@
+---
+id: "048"
+title: "Settings UI system and Obsidian-native page navigation"
+status: Active
+created: 2026-09-03
+updated: 2026-09-03
+coordinator: "Cursor (Claude), owner shuuul"
+---
+
+# 048 — Settings UI system and Obsidian-native page navigation
+
+## Context
+
+The React settings surface (`packages/pivi-react/src/settings/`, 35 files / ~7.6k lines of TSX plus ~2.3k lines under `packages/pivi-react/styles/settings/`) grew page by page. Each page invented its own presentation idiom, so the same concept renders differently depending on which tab the user opens:
+
+- **Four competing collection idioms.** Models, MCP servers, and Web providers use provider-style disclosure cards (`.pivi-provider-card`, `.pivi-mcp-card`, `.pivi-web-provider-*`); Skills and Commands' internal list use flat `.pivi-sp-item` cards; Toolbar mixes compact sortable rows with removable disclosures; Prompt modules use their own card chrome in `prompt-settings.css`. Header layouts, toggle/remove placement, hover treatment, and body padding differ across all of them.
+- **Two competing section idioms.** `SettingsSection` (heading + divider + surfaced body) coexists with `SettingsListHeader` (heading + actions, no body) and the Tools page's own `pivi-tools-settings-page` flow wrapper.
+- **Spacing, radius, and color are set in seven feature CSS files.** `provider-settings.css` (726 lines) and `base.css` (774 lines) both define card tokens; `mcp-settings.css`, `slash-settings.css`, `command-editor.css`, and `prompt-settings.css` restate padding, gap, border, and radius values instead of consuming a shared contract. Recent commits (`7dcbf2a2 Polish settings section surfaces`) kept patching individual surfaces without a system that prevents the next divergence.
+- **Eight flat top-level tabs** (`SettingsShell.tsx`: General, Models, Skills, Tools, Subagents, Commands, Toolbar, Prompt) wrap to two rows on narrow settings panes. Tools is a long single page with three unrelated sections, while Subagents is three rows.
+- **Search cannot route.** `PiviSettingTabHost.getSettingDefinitions()` returns one `SettingDefinitionRender` item for the whole plugin. `render(setting, group)` does not receive the matched query, so Obsidian 1.13 settings search can only open the whole Pivi surface; no alias can ever land on a page or row from a single item.
+
+Platform facts verified on 2026-09-03 (`node_modules/obsidian/obsidian.d.ts` 1.13.1; [Obsidian 1.13 public changelog, 2026-07-30](https://obsidian.md/changelog/2026-07-30-desktop-v1.13.4/); [Settings developer docs](https://docs.obsidian.md/Plugins/User+interface/Settings)):
+
+- `SettingDefinitionPage` (`type: 'page'`) is a navigable entry that slides in a sub-page with a back button and titlebar; `page: () => SettingPage` renders the sub-page imperatively (`SettingPage.display()` into `containerEl`, `hide()` on navigate-away / tab switch / modal close, not guaranteed on window destroy). The factory runs each time the page is opened.
+- `SettingDefinitionGroup` (`type: 'group'`) is a heading whose `items` may contain both settings and pages.
+- `getSettingDefinitions()` is called on every `update()` and once at registration for the search index; it must stay cheap. Page entries are indexed by `name`, `desc`, and `aliases`.
+- The official migration guide recommends Path A (bump `minAppVersion` to 1.13.0, delete `display()`) whenever the plugin can drop pre-1.13 users. Obsidian refuses to enable a plugin below its `minAppVersion`, so no runtime guard is needed.
+- Obsidian guidance on sub-pages: use them only when the parent tab is too long to scan or the section has a self-contained scope; two or three settings stay on the parent.
+
+The work spans one package, app-side host wiring, the plugin manifest, i18n catalogs, style architecture, contract tests, and human visual sign-off across every settings page, so it needs a tracked spec.
+
+## Goal and success criteria
+
+Ship one enforced settings UI system, move navigation onto Obsidian 1.13's native settings pages, and migrate every settings page onto that system in a single release, deleting the legacy idioms and the 1.12 fallback.
+
+- [ ] `manifest.json` `minAppVersion` is `1.13.0`; `PiviSettingTabHost` has no `display()`; `getSettingDefinitions()` returns the root layout in this exact order: page **Models**; group **Agent** → Built-in tools · Web tools · MCP servers · Skills · Prompt; group **Editor** → Commands · Toolbar; group **General** → page Environment, then one `render` item mounting the General content. Verified by `tests/jsdom/app-ui/PiviSettingTabHost.test.ts` over the returned structure.
+- [ ] Each page entry carries a localized `name`, `desc`, and `aliases` derived from the labels of every row on that page, so Obsidian search opens the owning page (page-level routing; no row addressing). Verified by a unit test over `SETTINGS_PAGES` alias coverage (every former `SETTINGS_SEARCH_KEYS` key is owned by exactly one page).
+- [ ] Each page is a `PiviSettingsPage extends SettingPage` whose `display()` mounts `mountSettingsPage({ page, ports, ... })` into `containerEl` and whose `hide()` disposes the React root; plugin unload disposes any surface still mounted. The React package has no `SettingsShell`, tablist, sub-nav, or navigation memory. Verified by `PiviSettingTabHost.test.ts` (mount/dispose lifecycle, locale change → `update()`) and by `rg` in the contract test for the deleted components.
+- [ ] Built-in tools page contains a **Subagents** section (the three former Subagents rows); About remains the last section of the General content; Environment is its own page. `SettingsPageId` has exactly ten values: `general`, `environment`, `models`, `builtInTools`, `webTools`, `mcpServers`, `skills`, `prompt`, `commands`, `toolbar`. Verified by a jsdom test over `SETTINGS_PAGES` and page renders.
+- [ ] Every page composes only the approved primitives (`SettingsPage`, `SettingsSection`, `SettingRow`, `SettingsCollection`, `DisclosureCard`, `SettingsInlineActions`, `SettingsFeedback`, and the controls under `primitives/controls/`). A contract test rejects raw structural class names (`pivi-settings-page`, `pivi-settings-section`, `pivi-settings-row`, `pivi-settings-collection`, `pivi-settings-card`, `pivi-settings-actions`, `pivi-settings-feedback`, `pivi-sp-`, `pivi-provider-card`, `pivi-mcp-card`, `pivi-web-provider-`) in any settings TSX outside `settings/primitives/`.
+- [ ] Every collection item renders through `SettingsCollection` as either a `DisclosureCard` (item has an editable body: providers, web providers, MCP servers, workspace commands, removable/configurable toolbar items, workflow and custom prompt modules) or a flat `SettingRow` with `SettingsInlineActions` (item has nothing to edit: installed and remote skills, internal commands, required toolbar actions, curated editor commands; source/folder/identifier/target go in the row description). No card ever has an empty or metadata-only body. `.pivi-sp-*`, `.pivi-provider-card`, `.pivi-mcp-card`, `.pivi-web-provider-*`, `.pivi-tools-settings-page`, `.pivi-settings-tabs`, `.pivi-settings-tab`, and bespoke prompt-module card selectors no longer exist in `styles/`. Verified by the style contract test.
+- [ ] Feature CSS under `styles/settings/features/` contains no `margin*`, `padding*`, `gap`, `row-gap`, `column-gap`, `border-radius`, `border`, or `border*-color` declarations, and every `color` / `background*` value is exactly one `var(--pivi-settings-*)` or `var(--pivi-host-*)` token. `--pivi-settings-*` custom properties are declared only in `styles/settings/system/tokens.css`. Verified by `tests/unit/ui/settingsStyleContract.test.ts` parsing every feature file, with `tests/unit/ui/settingsStyleContract.allowlist.json` for reviewed `file:selector:property` exceptions (target: empty).
+- [ ] Visual direction is Obsidian-native: host primary background, quiet muted section headings with a hairline divider, flat rows separated by dividers, no surfaced section bodies (`--pivi-host-setting-items-background` removed); cards exist only as `DisclosureCard`. Human visual sign-off at Checkpoint 1 and Checkpoint 2 (see Verification), light and dark themes.
+- [ ] All new UI copy ships in `en.json` and every other locale in the same commit; `settings.tabs.*` keys are removed; `scripts/check-i18n-dead-keys.mjs` is green.
+- [ ] `npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build && npm run check:bundle-size && npm run check:specs` green; `obsidian plugin:reload id=pivi` then `obsidian dev:errors` reports no errors.
+
+## Scope and non-goals
+
+In scope:
+
+- `minAppVersion` 1.13.0; native page navigation through `getSettingDefinitions()`; `PiviSettingsPage` host class; deletion of `display()`, `SettingsShell`, tab CSS, and the 1.12 route.
+- `settings/primitives/` module with the approved primitives, a shrinking legacy allowlist during migration, and a written usage contract in `packages/pivi-react/AGENTS.md`.
+- CSS restructure: `styles/settings/system/*.css` (tokens, host reset, layout, row, controls, card, feedback) plus `styles/settings/features/*.css` limited to feature-internal structure; `manifest.mjs` updated; legacy settings CSS files deleted.
+- Migration of all ten pages onto the primitives, including splitting Tools into three pages, folding Subagents into Built-in tools, and moving Environment out of General.
+- `mountSettingsPage` mount API; location-aware `searchMetadata.ts` → `SETTINGS_PAGES` inventory with per-page aliases.
+- Contract tests (style declarations, raw-class usage, page inventory, alias ownership), jsdom behavior tests, host lifecycle tests, i18n catalog updates, documentation sync.
+
+Not in scope:
+
+- Changing which settings exist, their persistence, or any `SettingsPorts` action semantics. `SettingsPorts` stays one object shared by every page.
+- Row-level deep links or highlight (`rowId`). No caller exists; Obsidian search routes to pages only.
+- Navigation memory of any kind (Obsidian owns settings navigation).
+- Declarative per-row `items` / `SettingDefinitionList` for page contents; pages are imperative React mounts.
+- Chat surface CSS, composer, or transcript styling.
+- New settings features (for example a Pivi-internal search box).
+- Mobile layouts (Desktop-only remains per spec 042).
+- Version bump and `CHANGELOG.md` (release commit per SOP; this ships as **0.24.0** with a "Requires Obsidian 1.13 or later" note).
+
+## Decisions
+
+| Date | Decision | Rationale | Affected workstreams |
+|---|---|---|---|
+| 2026-09-03 | Navigation is Obsidian-native: `minAppVersion` 1.13.0, `getSettingDefinitions()` returns page/group entries, each page is an imperative `SettingPage` mounting one React page; `display()` and the React tab shell are deleted. Supersedes the earlier draft's React-owned four-tab + scrollable sub-nav design. | The draft's search fallback ("route the best-matching alias") is impossible: `render` never receives the query, so page routing requires per-page Obsidian items. Native pages give sub-page navigation, back button, keyboard navigation, and search routing with zero custom nav code, and remove the sub-nav scroll/fade/drag/roving-focus/memory surface entirely. 1.13 has been public since 2026-07-30; owner accepted dropping 1.12. | WS-02 |
+| 2026-09-03 | Root layout order: page Models (no group heading); group Agent → Built-in tools · Web tools · MCP servers · Skills · Prompt; group Editor → Commands · Toolbar; group General → page Environment, then the General content as one `render` item. | Most-used destinations sit one click from the top; General's long content does not bury the entries; a "Models" heading over a single "Models" entry is redundant. Confirmed by owner. | WS-02, WS-03 |
+| 2026-09-03 | Page inventory: Subagents (3 rows) becomes a section of Built-in tools; About (3 rows) stays at the end of General; Environment (entry list + bulk import) is a page. Ten `SettingsPageId`s. | Obsidian sub-page guidance: two or three settings stay on the parent; `spawn_agent` is a built-in tool. Confirmed by owner. | WS-02, WS-03, WS-04 |
+| 2026-09-03 | Pages are imperative React mounts (`page: () => new PiviSettingsPage(id)`), one shared `SettingsPorts`; no declarative `items` / `SettingDefinitionList` inside pages. | MCP editor, provider OAuth flows, and prompt module editors are stateful React trees; splitting them across dozens of `render` callbacks would duplicate state in two systems. Page-level search granularity is sufficient. Confirmed by owner. | WS-02 |
+| 2026-09-03 | Search aliases: each page entry's `aliases` are the localized labels of every row on that page; the former flat `SETTINGS_SEARCH_KEYS` list is partitioned by page in `SETTINGS_PAGES`. `desc` is a one-line localized page description. | Obsidian indexes page entries by name/desc/aliases; this is the only way a search for "bash" opens Built-in tools. | WS-02 |
+| 2026-09-03 | Hard primitive contract. Pages compose only the seven primitives plus `primitives/controls/`. Feature CSS may not set spacing, radius, or borders; `color` / `background*` must be a single `var(--pivi-settings-*)` or `var(--pivi-host-*)` token; a Jest contract test enforces the CSS and raw-class rules. | Guidelines alone did not prevent the divergence. Banning properties outright would force an allowlist for the Prompt usage bar and provider logo slots; constraining values to tokens expresses the real intent ("values are set in one place") and lets the allowlist stay empty. Confirmed by owner. | WS-01, WS-06 |
+| 2026-09-03 | Collection items are `DisclosureCard` only when they have an editable body; items with nothing to edit are flat `SettingRow`s with `SettingsInlineActions`. `SettingsCollection` accepts both. | A chevron that opens only metadata adds a click and is less Obsidian-native than a row whose description carries the metadata. "One idiom per situation" still holds and the contract test enforces both. Confirmed by owner. | WS-01, WS-03–WS-05 |
+| 2026-09-03 | Visual direction is Obsidian-native: page uses host primary background; sections are quiet muted labels with a hairline divider and flat rows separated by dividers; no rounded surfaced section body. Cards exist only as `DisclosureCard`. | Settings live inside Obsidian's settings window; mirroring core reduces visual noise and the token surface. | WS-01 |
+| 2026-09-03 | WS-01 swaps the row/section/control/feedback layer in place: `controls.tsx` exports become the new primitives (same import names) so every existing page renders through the system immediately; only card idioms and page wrappers stay legacy until WS-03–WS-05. Legacy CSS files stay until WS-06. | Grow in layers on a product that keeps working: Checkpoint 1 previews the row system on every page, and no intermediate commit leaves pages unstyled. | WS-01 |
+| 2026-09-03 | The uncommitted working-tree edits present at scoping time (18 tracked files toward surfaced cards) were reviewed and discarded with owner authorization. Baseline for this spec is commit `7dcbf2a2`. | The edits pushed further toward surfaced cards, which the Obsidian-native decision removes; the one reusable idea (section-owned header actions) is part of the `SettingsSection` primitive. | WS-01 |
+| 2026-09-03 | Big-bang delivery on one branch (`feat/settings-native-navigation`), two human checkpoints: **Checkpoint 1** after WS-03 (primitives, native navigation, General/Environment/Models) locks the visual direction before the remaining pages migrate; **Checkpoint 2** after WS-06 is the full matrix. Nothing merges to `main` before Checkpoint 2. | Two coexisting idioms in an incremental rollout would be more inconsistent than today; an early checkpoint bounds rework if the primitives need adjustment. Confirmed by owner. | All |
+| 2026-09-03 | Workstreams run sequentially in one working tree (WS-01 → WS-02 → WS-03 → CP1 → WS-04 → WS-05 → WS-06 → CP2). Each workstream adds its own locale keys in all ten catalogs in its own commit. | Parallel subagents in one tree race on locale JSON, `index.ts`, and `SettingsRoot`; the i18n same-commit rule needs each workstream to own its keys. | All |
+| 2026-09-03 | `DisclosureCard` header actions (toggle, remove, drag handle) keep the compact glyph-sized hover emphasis contract. | Textbook hit-box enlargement previously produced oversized emphasis blocks (Coding Standards #11). | WS-01, CP1/CP2 |
+| 2026-09-03 | Spec 046's pending Prompt-tab visual sign-off is closed as superseded by this spec; 046 and 047 archived 2026-09-03. | Signing off pre-048 visuals has no lasting value. Confirmed by owner. | — |
+
+## Design
+
+### Host navigation (`src/app/ui/`)
+
+```ts
+// packages/pivi-react/src/settings/navigation.ts
+export type SettingsPageId =
+  | 'general' | 'environment' | 'models'
+  | 'builtInTools' | 'webTools' | 'mcpServers' | 'skills' | 'prompt'
+  | 'commands' | 'toolbar';
+export interface SettingsPageDescriptor {
+  readonly id: SettingsPageId;
+  readonly labelKey: TranslationKey;        // settings.pages.<id>.label
+  readonly descriptionKey: TranslationKey;  // settings.pages.<id>.description
+  readonly aliasKeys: readonly TranslationKey[]; // labels of every row on the page
+}
+export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescriptor>>;
+export type SettingsRootEntry =
+  | { kind: 'page'; page: SettingsPageId }
+  | { kind: 'group'; labelKey: TranslationKey; items: readonly ({ kind: 'page'; page: SettingsPageId } | { kind: 'content'; page: 'general' })[] };
+export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[]; // models; agent[...]; editor[...]; general[environment, content]
+```
+
+- `PiviSettingTabHost.getSettingDefinitions()` maps `SETTINGS_ROOT_LAYOUT` to `SettingDefinitionItem[]`: `{ kind: 'page' }` → `{ type: 'page', name, desc, aliases, page: () => new PiviSettingsPage(id, deps) }`; `{ kind: 'group' }` → `{ type: 'group', heading, items }`; `{ kind: 'content' }` → `{ name, desc, aliases, render: (setting) => mount General into setting.settingEl }` (reusing the existing `.pivi-settings-definition-host` reset). It must be cheap: labels come from the in-memory translator only. Locale changes call `update()` as today.
+- `PiviSettingsPage extends SettingPage`: constructor stores `pageId` and deps (ports factory, i18n, platform, logger); `display()` sets `title`, resolves `ownerDocument` / `ownerWindow` / `portalContainer` from `containerEl` (settings may open in a separate window), and calls `mountSettingsPage`; `hide()` disposes the mounted surface if present. The host tracks live surfaces in a `Set` and disposes them on plugin unload because `hide()` is not guaranteed on window destroy.
+- `mountSettingsPage({ page, ports, container, i18n, platform, ownerDocument, ownerWindow, portalContainer }): Promise<MountedSurface>` replaces `mountSettings`. `SettingsRoot` becomes a page switch over `SettingsPageId`.
+- `tests/__mocks__/obsidian` gains a `SettingPage` base class mock (`rootEl`, `titlebarEl`, `containerEl`, `title`, `display`, `hide`).
+
+### Primitives (`packages/pivi-react/src/settings/primitives/`)
+
+| Primitive | Class root | Responsibility |
+|---|---|---|
+| `SettingsPage` | `pivi-settings-page` | Page root, optional intro copy, vertical rhythm. Replaces `pivi-tools-settings-page`, `SettingsPageDescription`. |
+| `SettingsSection` | `pivi-settings-section` | Quiet heading (h2/h3), optional header actions slot, hairline divider, children. Absorbs `SettingsListHeader`, `SettingsSectionHeading`. |
+| `SettingRow` | `pivi-settings-row` | Name/description + control slot; flat with divider; `stacked` variant for full-width editors; optional `actions` slot for flat collection items. Existing labelled-by wiring retained. |
+| `SettingsCollection` | `pivi-settings-collection` | Ordered list of `DisclosureCard`s or flat `SettingRow`s, empty state, trailing add trigger, optional `useSortableReorder` integration, live-region announcements. Replaces `pivi-sp-list`, `pivi-providers-list`, `pivi-sp-empty-state`. |
+| `DisclosureCard` | `pivi-settings-card` | Header: leading icon, name, summary, meta badges, `SettingsInlineActions`, chevron; body: children; controlled `open`/`onToggle`; header pointer drag when sortable; buttons isolated from disclosure/drag. Replaces provider/MCP/web/toolbar/prompt/sp cards. |
+| `SettingsInlineActions` | `pivi-settings-actions` | Isolated action cluster (Toggle, remove, drag handle) for card headers, section headers, and flat rows. Renamed from `SettingsItemActions`. |
+| `SettingsFeedback` | `pivi-settings-feedback` | Compact success/pending/error text beside its action. Renamed from `SettingsActionFeedback`. |
+
+Controls (`Toggle`, `Select`, `BadgeListInput`, `SettingsRemoveButton`, `.pivi-settings-control` inputs) move to `primitives/controls/` unchanged in behavior. During WS-01–WS-05 `controls.tsx` re-exports the primitives under the old names; WS-06 deletes it and pages import `primitives/` directly.
+
+### CSS layout
+
+```
+styles/settings/system/tokens.css     # --pivi-settings-* spacing/radius/surface tokens (only place values are set)
+styles/settings/system/host.css       # .pivi-settings-definition-host reset, page root on host background
+styles/settings/system/layout.css     # page, section heading, divider rhythm
+styles/settings/system/row.css        # SettingRow variants
+styles/settings/system/controls.css   # form controls, badge list, range, select
+styles/settings/system/card.css       # DisclosureCard, collection list, empty state, sortable feedback
+styles/settings/system/feedback.css   # inline feedback colors
+styles/settings/features/models.css   # model checklist grid, provider logo slot (structure only)
+styles/settings/features/commands.css # icon grid, mention editor host (structure only)
+styles/settings/features/mcp.css      # inventory table + inline editor structure
+styles/settings/features/prompt.css   # usage stacked bar structure
+styles/settings/features/toolbar.css  # picker grouping structure
+```
+
+Deleted in WS-06: `settings/base.css`, `provider-settings.css`, `command-editor.css`, `slash-settings.css`, `mcp-settings.css`, `prompt-settings.css`, `agent-settings.css`. `modals/mcp-modal.css` keeps only the modal. `base/presentation-primitives.css` loses its `.pivi-setting-row` rules in WS-01 (or they move to `system/row.css` if still needed by non-settings surfaces; WS-01 verifies which surfaces use them).
+
+### i18n
+
+Add `settings.groups.{agent,editor,general}`, `settings.pages.<id>.{label,description}` for the ten page ids, and any flat-row metadata labels needed by WS-03–WS-05. Remove `settings.tabs.*`. Mirror all ten locales in the same commit as the code that uses them.
+
+## Workstreams
+
+Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream status. Implementation agents are Grok 4.6 High subagents; the coordinator plans, reviews, and verifies.
+
+| ID | Deliverable | Agent | Status | Dependencies | Verification |
+|---|---|---|---|---|---|
+| WS-01 | `settings/primitives/` (seven primitives + `controls/`), `styles/settings/system/*.css`, `manifest.mjs` update, `controls.tsx` re-exports so every page renders rows/sections/controls/feedback through the system, `.pivi-setting-row` rules removed from `base/presentation-primitives.css` (or justified), `tests/unit/ui/settingsStyleContract.test.ts` (feature-CSS rules, token-only declaration rule, raw-class ban with a `legacyAllowlist` of the card classes still pending migration, allowlist JSON), jsdom `SettingsPrimitives.test.tsx` (DisclosureCard toggle/remove/drag isolation, controlled open, SettingsCollection empty/add/sortable, flat-row actions) | Unassigned | Pending | None (baseline `7dcbf2a2` + archived 046/047) | `npm run test -- tests/unit/ui tests/jsdom/pivi-react`; `npm run build:css`; `npm run typecheck && npm run lint` |
+| WS-02 | `navigation.ts` (`SettingsPageId`, `SETTINGS_PAGES`, `SETTINGS_ROOT_LAYOUT`), `mountSettingsPage`, `SettingsRoot` page switch routing existing components (Built-in tools page temporarily renders `BuiltInToolsSection` + `SubagentsSettingsTab`), delete `SettingsShell.tsx` and `SettingsTabId`, `PiviSettingsPage`, `PiviSettingTabHost.getSettingDefinitions()` root layout, delete `display()`, unload disposal, `manifest.json` `minAppVersion` 1.13.0, `searchMetadata.ts` → per-page aliases, obsidian mock `SettingPage`, i18n groups/pages keys (all locales) and `settings.tabs.*` removal | Unassigned | Pending | WS-01 | `npm run test -- tests/jsdom/app-ui tests/jsdom/pivi-react tests/unit/ui`; `npm run check:boundaries`; `npm run check:i18n-dead-keys`; `npm run build && obsidian plugin:reload id=pivi && obsidian dev:errors` |
+| WS-03 | General content (Language, Layout, Chat behavior, Provider requests, Session files, Personalization, Input shortcuts with hotkey grid as a section of rows, Style Settings integration, About) on primitives; Environment page (stacked rows); Models page: providers as `DisclosureCard`s in a sortable `SettingsCollection`, Add provider picker as trailing add trigger, model checklist under `features/models.css` | Unassigned | Pending | WS-02 | `SettingsUi.test.tsx` updated; provider sorting tests green; raw-class allowlist shrinks (provider card removed) |
+| CP1 | **Checkpoint 1 human visual sign-off**: root tab layout, Environment, Models, DisclosureCard states, row/section rhythm, light + dark | Human (shuuul) | Pending | WS-03 | Owner confirms direction or requests primitive adjustments before WS-04 |
+| WS-04 | Agent pages: Built-in tools (tool groups as sections + Subagents section), Web tools (sortable provider cards), MCP servers (cards with inline editor body, inventory table in `features/mcp.css`, `mcp-modal.css` reduced to the modal), Skills (default bundle + remote source rows; remote and installed skills as flat rows with inline actions), Prompt (usage section with `features/prompt.css` bar, workflow modules as cards with toggle/editor/modified/restore, custom modules collection with add trigger) | Unassigned | Pending | CP1 | `ToolsSettingsPage`, `McpToolsSection`, `PromptTab`, `SettingsUi` (skills) tests updated; allowlist shrinks (mcp/web/sp/prompt cards removed) |
+| WS-05 | Editor pages: Commands (internal commands as flat rows; workspace commands as cards with mention editor body; icon grid in `features/commands.css`), Toolbar (required actions and curated editor commands as flat rows; removable/configurable items as cards; pickers in `features/toolbar.css`) | Unassigned | Pending | WS-04 | `CommandsTab.test.tsx`, `EditorToolbarSection.test.tsx` updated; allowlist empty |
+| WS-06 | Delete `controls.tsx` re-exports, `SettingsListHeader`, `SettingsPageDescription`, `SettingsSectionHeading`, legacy CSS files and dead selectors; contract test at final strictness (empty allowlists, deleted-selector assertions); i18n dead-key sweep; documentation sync per section below; full gate run | Unassigned | Pending | WS-05 | `rg` for deleted selectors returns nothing; `node scripts/check-i18n-dead-keys.mjs`; full gate command |
+| CP2 | **Checkpoint 2 human visual sign-off matrix** (see Verification) | Human (shuuul) | Pending | WS-06 | Owner marks each surface; agent must not self-attest |
+
+## Verification
+
+Automated (run from repo root):
+
+```bash
+npm run typecheck
+npm run lint
+npm run check:boundaries
+npm run build:css
+npm run test -- tests/unit/ui/settingsStyleContract.test.ts
+npm run test -- tests/jsdom/pivi-react
+npm run test -- tests/jsdom/app-ui
+npm run test:coverage
+npm run build && npm run check:bundle-size
+node scripts/check-i18n-dead-keys.mjs
+npm run check:specs
+obsidian plugin:reload id=pivi && obsidian dev:errors
+```
+
+Contract test requirements (`settingsStyleContract.test.ts`):
+
+- Parses every file under `styles/settings/features/` and fails on any declaration of `margin*`, `padding*`, `gap`, `row-gap`, `column-gap`, `border-radius`, `border`, `border-*` shorthands, or `border*-color`, and on any `color` / `background*` value that is not exactly `var(--pivi-settings-<name>)` or `var(--pivi-host-<name>)`, unless the exact `file:selector:property` triple is listed in `settingsStyleContract.allowlist.json` (reviewed; target empty).
+- Fails if any file other than `system/tokens.css` declares a `--pivi-settings-*` custom property.
+- Fails if any `*.tsx` under `packages/pivi-react/src/settings/` outside `primitives/` contains a `className` string starting with one of the primitive class roots or a legacy card class, except entries in the in-test `legacyAllowlist` (WS-01 seeds it with the pending card classes; WS-06 empties it).
+- Final state (WS-06): fails if `styles/` contains `.pivi-sp-`, `.pivi-provider-card`, `.pivi-mcp-card`, `.pivi-web-provider-`, `.pivi-tools-settings-page`, `.pivi-settings-tabs`, `.pivi-settings-tab`, or `--pivi-host-setting-items-background`; fails if `packages/pivi-react/src/settings/` contains `SettingsShell`, `SettingsTabId`, `SettingsListHeader`, `SettingsPageDescription`, or `SettingsSectionHeading`.
+
+jsdom / unit behavior:
+
+- `PiviSettingTabHost.getSettingDefinitions()` returns the exact root order and types; every page entry has non-empty `name`, `desc`, `aliases`; each former search key is owned by exactly one page; locale change triggers `update()`; `PiviSettingsPage.display()` mounts and `hide()` disposes; unload disposes live surfaces; no `display` method on the tab.
+- `DisclosureCard`: toggle and remove clicks do not change `open`; drag handle keyboard sorting works; header click toggles; `SettingsCollection` renders empty state, add trigger, flat rows with actions.
+- Each page renders under `mountSettingsPage({ page })` with its sections in the documented order.
+
+Human visual sign-off (owner only, light and dark themes, settings window at ~480 px and ~720 px content widths, after `npm run build && obsidian plugin:reload id=pivi`):
+
+**Checkpoint 1 (after WS-03)**
+
+| Surface | States to inspect |
+|---|---|
+| Root tab | Models entry, Agent / Editor / General group headings, Environment entry, General content beneath; entry hover/focus; Obsidian keyboard navigation between entries |
+| General content | section heading/divider rhythm, row dividers, control alignment, hotkey grid as rows, About at the end |
+| Environment page | titlebar + back, stacked textarea layout |
+| Models page | provider `DisclosureCard` collapsed, hover, open, dragging, disabled toggle; toggle/remove hover emphasis glyph-sized; add trigger |
+| Search | typing a General row label or "provider" opens the right destination |
+
+**Checkpoint 2 (after WS-06)**: Checkpoint 1 surfaces plus every Agent and Editor page (cards and flat rows), MCP inline editor inside the card body, Prompt usage bar, Skills flat rows with inline actions, Toolbar pickers, Commands mention editor; `obsidian dev:errors` clean.
+
+Performance/bundle: no new dependency; `check:bundle-size` must stay within the existing ceiling.
+
+## Documentation sync
+
+- Numbered developer docs: `docs/08-presentation-and-settings.md` (Settings data flow: native page navigation, `PiviSettingsPage`, `mountSettingsPage`, page inventory, alias ownership, primitives; replace the "eight/nine primary tabs" paragraphs; Styling section for the `system/` vs `features/` split); `docs/10-roadmap-release-and-maintenance.md` (minimum Obsidian 1.13 note for the 0.24.0 release).
+- Nearest local guidance: `packages/pivi-react/AGENTS.md` (replace the tablist/no-drag rule, the eight-tab rule, section/list-header rules, and every card-idiom rule with the primitive contract and page inventory); `packages/pivi-react/styles/AGENTS.md` (directory layout, settings conventions, gotchas referencing deleted files, manifest count).
+- Parent/package guidance: `src/app/AGENTS.md` (`PiviSettingTabHost` root layout, `PiviSettingsPage` lifecycle, unload disposal); `packages/pivi-react/src/i18n/AGENTS.md` only if catalog workflow changes (expected `None`); `tests/AGENTS.md` if the contract test introduces a new category (expected `None`).
+- Root guidance: `AGENTS.md` "Minimum Obsidian" → 1.13.0; Architecture Status "Settings search compatibility" bullet rewritten for native pages; README minimum-version text if present.
+
+## Progress and handoff
+
+Append entries rather than rewriting another agent's record.
+
+### 2026-09-03 — shuuul / Droid — scoping
+
+- Changed: Spec created after a scoping interview; React-owned grouped tabs + scrollable sub-nav design recorded. Superseded working-tree edits discarded with owner authorization; tree clean at `7dcbf2a2`.
+- Evidence: `SettingsShell.tsx` (8 flat tabs), `controls.tsx`, `styles/settings/*.css` line counts; post-revert focused tests 78 passed.
+- Remaining: All workstreams pending.
+- Blockers: Multi-item `getSettingDefinitions()` behavior unverified.
+- Next action: WS-01.
+
+### 2026-09-03 — Cursor (Claude) — re-grill and redesign
+
+- Changed: Reviewed 046/047/048 with the owner. Verified against `obsidian.d.ts` 1.13.1 that `render` receives no query (draft's alias-routing fallback impossible) and that `SettingDefinitionPage` + `SettingPage` provide native sub-page navigation. Owner decisions: archive 046/047 on functional evidence (Prompt-tab sign-off superseded; 047 timeout scenario downgraded to unit fixture + logs); adopt native pages with `minAppVersion` 1.13.0 (Path A); root layout Models → Agent group → Editor group → General group (Environment page + General content); Subagents folds into Built-in tools, About stays in General, Environment is a page; imperative React page mounts with one shared `SettingsPorts`; cards only for items with editable bodies, flat rows otherwise; feature CSS bans spacing/radius/border and constrains color/background to tokens; drop `rowId` deep links and navigation memory; two human checkpoints; release as 0.24.0. Spec rewritten accordingly and set Active.
+- Evidence: `node_modules/obsidian/obsidian.d.ts` lines 6079–6260 (`SettingDefinitionGroup`, `SettingDefinitionPage`), 6461–6508 (`SettingPage`), 6265–6284 (`SettingDefinitionRender`); Obsidian 1.13 public changelog 2026-07-30; explore-agent inventory of `packages/pivi-react/src/settings/` (35 files / 7,574 lines) and `styles/settings/` (2,334 lines).
+- Remaining: WS-01 → WS-06 with CP1/CP2.
+- Blockers: None.
+- Next action: Create branch `feat/settings-native-navigation`; dispatch WS-01 to a Grok 4.6 High subagent.
+
+## Completion summary
+
+Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated. The coordinator then sets `status: Completed`, updates the date, moves the unchanged filename to `archive/`, and moves its index entry in the same change.

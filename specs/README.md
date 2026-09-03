@@ -10,8 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [046-composable-obsidian-workflow-prompts.md](046-composable-obsidian-workflow-prompts.md) | 2026-09-01 | Modular system-prompt registry, Settings Prompt tab, failure-driven guidance, and main-Agent `pivi_prompt` management. |
-| [047-provider-anchored-context-accounting.md](047-provider-anchored-context-accounting.md) | 2026-09-02 | Provider-anchored context pressure with bounded trailing estimates and calibration, truthful compaction timeout/retry semantics, and a fixed read ceiling (issues #98, #99). |
+| [048-settings-ui-system-and-grouped-navigation.md](048-settings-ui-system-and-grouped-navigation.md) | 2026-09-03 | One enforced settings primitive/CSS system, Obsidian 1.13 native page navigation (`minAppVersion` 1.13.0) with page-level search routing, and a big-bang migration of every settings page. |
 
 ## Archived specs
 
@@ -62,6 +61,8 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [043-agent-package-split.md](archive/043-agent-package-split.md) | 2026-08-10 | Renamed host-neutral package to `@pivi/agent` and extracted `@pivi/engine-pi` with package-level Pi SDK quarantine. |
 | [044-unique-boundary-newline-insertion.md](archive/044-unique-boundary-newline-insertion.md) | 2026-08-31 | Teach exact local-substring newline insertion and Markdown physical-line boundaries through `obsidian_edit`. |
 | [045-character-range-note-reads.md](archive/045-character-range-note-reads.md) | 2026-09-01 | Added bounded global or line-relative `startChar + maxChars` reads with Unicode-safe, exact line/character continuation for oversized physical lines. |
+| [046-composable-obsidian-workflow-prompts.md](archive/046-composable-obsidian-workflow-prompts.md) | 2026-09-03 | Modular system-prompt registry, Settings Prompt tab, failure-driven guidance, and main-Agent `pivi_prompt` management. |
+| [047-provider-anchored-context-accounting.md](archive/047-provider-anchored-context-accounting.md) | 2026-09-03 | Provider-anchored context pressure with bounded trailing estimates and calibration, truthful compaction timeout/retry semantics, and a fixed read ceiling (issues #98, #99). |
 
 ## Numbering and files
 

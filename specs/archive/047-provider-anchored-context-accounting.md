@@ -1,9 +1,9 @@
 ---
 id: "047"
 title: "Provider-anchored context accounting and compaction recovery"
-status: Active
+status: Completed
 created: 2026-09-02
-updated: 2026-09-02
+updated: 2026-09-03
 coordinator: "Droid (research session 2026-09-02)"
 ---
 
@@ -76,6 +76,7 @@ Not in scope:
 | 2026-09-02 | Read allowance becomes a fixed per-read ceiling (configured default or explicit `maxChars`, capped at a constant), not a function of pressure; large reads rely on the compaction preflight. | Shrinking pages near the trigger is what produces the #99 loop; Claude Code / Codex use fixed read caps and let compaction absorb pressure. Explicit `maxChars` satisfies the #99 “force complete read” request. | WS-05 |
 | 2026-09-02 | The uncommitted char→token read-budget change is paused until WS-01 lands; WS-05 decides which parts (e.g. `defaultReadMaxChars` setting) are kept. | The change makes pagination depend on per-candidate `estimateTextTokens` + `looksStructured` (`JSON.parse` in a binary search) and still bounds explicit `maxChars` by the pressure-derived allowance. | WS-05 |
 | 2026-09-02 | Consolidate estimator, calibration, and envelope under one `@pivi/agent` module (`src/runtime/contextAccounting/` or `src/tokens/`); `prompt/` re-exports `estimateTextTokens` for the Prompt-tab usage panel. | Three overlapping “authorities” exist today (`estimateTextTokens`, `estimateAgentMessageTokens = max(...)`, envelope `max(...)`). No package-boundary change; relative imports inside `@pivi/agent` only. | WS-01, WS-04 |
+| 2026-09-03 | Owner accepted the remaining real-Obsidian checks; the forced compaction-timeout manual scenario is downgraded to unit coverage plus production-log observation. | Owner inspected Settings → Tools → Read (relocated controls), the usage meter, and large ranged reads in the live plugin. Forcing a compaction timeout with a lowered constant requires a throwaway dev build for one path already covered by `tests/unit/engine-pi/runtime/piCompactionSampler.test.ts` (`reports the internal deadline as a distinguishable timeout`). | WS-03, WS-05 |
 
 ## Workstreams
 
@@ -160,6 +161,20 @@ Append entries rather than rewriting another agent's record.
 - Blockers: none.
 - Next action: build, reload Pivi, and inspect Settings → Tools → Read.
 
+### 2026-09-03 — Grok 4.6 High — closeout
+
+- Changed: Recorded owner acceptance of the live Settings → Tools → Read, usage-meter, and large ranged-read checks. Downgraded the forced compaction-timeout manual scenario to the existing sampler timeout fixture plus production-log observation. Set status Completed and archived the spec.
+- Evidence: Owner confirmation 2026-09-03. Closeout re-ran focused suites: `usageProjection` + `contextAccounting` + engine compaction/turn/sampler/read-budget/session compaction — 7 suites / 56 tests; `estimateTextTokens` — 1 suite / 11 tests; `tests/unit/obsidian-tools` — 15 suites / 213 tests; `npm run check:i18n-dead-keys` passed (983 catalog / 986 referenced). Timeout path remains `PiCompactionTimeoutError` in `piCompactionSampler.test.ts`. Prior WS-07 already recorded typecheck, lint, boundaries, coverage, production build, and bundle-size.
+- Remaining: none
+- Blockers: none
+- Next action: archived
+
 ## Completion summary
 
-Implementation and automated acceptance are complete. Awaiting real-Obsidian manual verification before archiving.
+Shipped provider-anchored context pressure (`anchor + calibrated trailing/selected estimates`), a memory-only per-model calibration ratio, segment-aware `estimateTextTokens`, truthful compaction timeout labelling with one fallback retry, retry-once automatic-compaction recovery that names `/compact`, and a fixed per-read character ceiling that no longer shrinks with pressure (issues #98 and #99).
+
+Deviation: the manual “force a compaction timeout with a lowered constant in a dev build” scenario is downgraded to the unit timeout fixture in `tests/unit/engine-pi/runtime/piCompactionSampler.test.ts` plus observation of production logs. Owner inspected and accepted Settings → Tools → Read (relocated controls), the usage meter, and large ranged reads in the live plugin.
+
+Closeout verification (2026-09-03): `npm run test -- tests/unit/agent/runtime/usageProjection.test.ts tests/unit/agent/runtime/contextAccounting.test.ts tests/unit/engine-pi/runtime/piChatRuntimeCompactionUsage.test.ts tests/unit/engine-pi/runtime/piChatRuntimeTurn.test.ts tests/unit/engine-pi/runtime/piCompactionSampler.test.ts tests/unit/engine-pi/runtime/piReadBudget.test.ts tests/unit/engine-pi/session/piContextCompaction.test.ts` — 7 suites / 56 tests passed; `npm run test -- tests/unit/agent/prompt/estimateTextTokens.test.ts` — 1 suite / 11 tests passed; `npm run test -- tests/unit/obsidian-tools` — 15 suites / 213 tests passed; `npm run check:i18n-dead-keys` — passed (983 catalog keys, 986 referenced). Skipped `test:coverage`, `build`, and `check:bundle-size`; those already have recorded WS-07 evidence.
+
+Durable documentation already synced: `docs/11-chat-ui-evolution.md`, `docs/07-tools-skills-mcp-and-integrations.md` (read-tool guidance), `docs/10-roadmap-release-and-maintenance.md`, root `AGENTS.md` Architecture Status, `packages/agent/AGENTS.md`, `packages/engine-pi/AGENTS.md`, `packages/obsidian-tools/AGENTS.md`.
