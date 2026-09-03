@@ -74,8 +74,6 @@ export class PluginSettingTab {
     this.app = app;
     this.plugin = plugin;
   }
-
-  display() {}
 }
 
 export class ItemView {

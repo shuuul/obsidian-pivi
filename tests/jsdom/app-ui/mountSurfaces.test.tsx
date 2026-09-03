@@ -4,7 +4,7 @@ import { createI18n } from '@pivi/pivi-react';
 import {
   mountChatView,
   mountInlineEditSurfaceChrome,
-  mountSettings,
+  mountSettingsPage,
   type SurfaceEnvironment,
 } from '@pivi/pivi-react/mount';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
@@ -123,10 +123,11 @@ describe('React surface mounts', () => {
 
     const hostContainer = ownerDocument.createElement('div');
     ownerDocument.body.appendChild(hostContainer);
-    let mounted: Awaited<ReturnType<typeof mountSettings>>;
+    let mounted: Awaited<ReturnType<typeof mountSettingsPage>>;
 
     await act(async () => {
-      mounted = await mountSettings({
+      mounted = await mountSettingsPage({
+        page: 'general',
         container: hostContainer,
         ownerDocument,
         ownerWindow,
@@ -214,6 +215,7 @@ describe('React surface mounts', () => {
 
     expect(hostContainer.firstElementChild?.ownerDocument).toBe(ownerDocument);
     expect(hostContainer.querySelector('[data-pivi-react-surface="settings"]')).not.toBeNull();
+    expect(hostContainer.querySelector('[data-pivi-settings-page="general"]')).not.toBeNull();
     await act(async () => mounted.dispose());
   });
 

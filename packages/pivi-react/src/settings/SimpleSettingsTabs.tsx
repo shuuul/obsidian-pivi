@@ -106,7 +106,7 @@ function environmentEntriesToSafeText(entries: readonly SettingsEnvironmentEntry
   }).join('\n');
 }
 
-function EnvironmentSection({ environment, feedback }: {
+export function EnvironmentSection({ environment, feedback }: {
   readonly environment: SettingsEnvironmentPort;
   readonly feedback: SettingsFeedbackPort;
 }) {
@@ -314,14 +314,12 @@ function NavMappingsRow({
 export function GeneralSettingsTab({
   store,
   actions,
-  environment,
   feedback,
   hotkeys,
   integrations,
 }: {
   readonly store: SettingsUiStore;
   readonly actions: SettingsActionsPort;
-  readonly environment: SettingsEnvironmentPort;
   readonly feedback: SettingsFeedbackPort;
   readonly hotkeys: SettingsHotkeysPort;
   readonly integrations: SettingsHostIntegrationsPort;
@@ -480,7 +478,6 @@ export function GeneralSettingsTab({
         <NavMappingsRow store={store} actions={actions} feedback={feedback} />
         <HotkeyGrid hotkeys={hotkeys} />
       </SettingsSection>
-      <EnvironmentSection environment={environment} feedback={feedback} />
       <IntegrationsSettingsSection
         integrations={integrations}
         feedback={feedback}

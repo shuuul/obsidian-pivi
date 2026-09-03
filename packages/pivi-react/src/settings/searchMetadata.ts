@@ -1,7 +1,11 @@
-import type { I18n, TranslationKey } from '../i18n';
+import type { I18n } from '../i18n';
+import { SETTINGS_PAGES, type SettingsPageId } from './navigation';
 
-// Keep this inventory synchronized when settings or section headings are added or renamed.
-const SETTINGS_SEARCH_KEYS = [
+export type { SettingsPageId } from './navigation';
+export { SETTINGS_PAGES } from './navigation';
+
+/** Former flat search-key inventory; each key is owned by exactly one page in `SETTINGS_PAGES`. */
+export const FORMER_SETTINGS_SEARCH_KEYS = [
   'settings.tabs.general',
   'settings.tabs.models',
   'settings.tabs.skills',
@@ -92,10 +96,25 @@ const SETTINGS_SEARCH_KEYS = [
   'settings.mcp.modal.env',
   'settings.mcp.modal.headersName',
   'settings.mcp.modal.authHeading',
-] as const satisfies readonly TranslationKey[];
+] as const;
 
-export function getSettingsSearchAliases(i18n: I18n): string[] {
-  return [...new Set(SETTINGS_SEARCH_KEYS
+/** Retired tab keys: they mapped to page labels, not row aliases. */
+export const RETIRED_SETTINGS_TAB_SEARCH_KEYS = [
+  'settings.tabs.general',
+  'settings.tabs.models',
+  'settings.tabs.skills',
+  'settings.tabs.tools',
+  'settings.tabs.subagents',
+  'settings.tabs.commands',
+  'settings.tabs.toolbar',
+  'settings.tabs.prompt',
+  'settings.tabs.about',
+] as const;
+
+export function getSettingsPageSearchAliases(i18n: I18n, page: SettingsPageId): string[] {
+  const descriptor = SETTINGS_PAGES[page];
+  const pageLabel = i18n.t(descriptor.labelKey);
+  return [...new Set(descriptor.aliasKeys
     .map((key) => i18n.t(key))
-    .filter((label) => label.length > 0 && !label.includes('{')))];
+    .filter((label) => label.length > 0 && !label.includes('{') && label !== pageLabel))];
 }

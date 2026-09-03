@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "설정 섹션",
-      "general": "일반",
-      "models": "모델",
-      "skills": "스킬",
-      "tools": "도구",
-      "subagents": "서브에이전트",
-      "commands": "명령",
-      "prompt": "프롬프트",
-      "toolbar": "툴바",
-      "about": "정보"
+    "groups": {
+      "agent": "에이전트",
+      "editor": "편집기",
+      "general": "일반"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "일반",
+        "description": "언어, 레이아웃, 채팅 동작 및 정보."
+      },
+      "environment": {
+        "label": "환경",
+        "description": "도구와 제공자가 공유하는 환경 변수."
+      },
+      "models": {
+        "label": "모델",
+        "description": "제공자, 자격 증명, 표시할 모델."
+      },
+      "builtInTools": {
+        "label": "기본 제공 도구",
+        "description": "작업 공간 도구, Bash, 외부 읽기, 서브에이전트."
+      },
+      "webTools": {
+        "label": "Web 도구",
+        "description": "검색 및 가져오기 제공자와 자격 증명."
+      },
+      "mcpServers": {
+        "label": "MCP 서버",
+        "description": "로컬 MCP 서버와 도구."
+      },
+      "skills": {
+        "label": "스킬",
+        "description": "설치된 작업 공간 스킬과 원격 스킬."
+      },
+      "prompt": {
+        "label": "프롬프트",
+        "description": "시작 컨텍스트 사용량과 프롬프트 모듈."
+      },
+      "commands": {
+        "label": "명령",
+        "description": "내부 및 작업 공간 슬래시 명령."
+      },
+      "toolbar": {
+        "label": "툴바",
+        "description": "편집기 선택 툴바 동작."
+      }
+    },    "setup": {
       "getApiKeyAt": "{host}에서 API key 받기",
       "download": "다운로드",
       "openDocs": "문서 열기"

@@ -7,16 +7,6 @@ export type SettingsEditorSelectionToolbarSnapshot = {
   readonly shortcuts: readonly EditorToolbarShortcut[];
 };
 
-export type SettingsTabId =
-  | 'general'
-  | 'toolbar'
-  | 'models'
-  | 'skills'
-  | 'tools'
-  | 'subagents'
-  | 'commands'
-  | 'prompt';
-
 export interface SettingsKeyboardNavigationSnapshot {
   readonly scrollUpKey: string;
   readonly scrollDownKey: string;

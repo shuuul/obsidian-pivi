@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "設定區段",
-      "general": "一般",
-      "models": "模型",
-      "skills": "技能",
-      "tools": "工具",
-      "subagents": "子代理",
-      "commands": "指令",
-      "prompt": "提示詞",
-      "toolbar": "工具列",
-      "about": "關於"
+    "groups": {
+      "agent": "智慧體",
+      "editor": "編輯器",
+      "general": "一般"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "一般",
+        "description": "語言、版面配置、對話行為以及關於資訊。"
+      },
+      "environment": {
+        "label": "環境",
+        "description": "供工具與供應商使用的共用環境變數。"
+      },
+      "models": {
+        "label": "模型",
+        "description": "供應商、憑證與可見模型。"
+      },
+      "builtInTools": {
+        "label": "內建工具",
+        "description": "工作區工具、Bash、外部讀取與子代理。"
+      },
+      "webTools": {
+        "label": "Web 工具",
+        "description": "搜尋與擷取供應商及其憑證。"
+      },
+      "mcpServers": {
+        "label": "MCP 伺服器",
+        "description": "本機 MCP 伺服器及其工具。"
+      },
+      "skills": {
+        "label": "技能",
+        "description": "已安裝與遠端的工作區技能。"
+      },
+      "prompt": {
+        "label": "提示詞",
+        "description": "啟動上下文用量與提示詞模組。"
+      },
+      "commands": {
+        "label": "指令",
+        "description": "內建與工作區斜線指令。"
+      },
+      "toolbar": {
+        "label": "工具列",
+        "description": "編輯器選取範圍工具列動作。"
+      }
+    },    "setup": {
       "getApiKeyAt": "前往 {host} 取得 API key",
       "download": "下載",
       "openDocs": "開啟文件"

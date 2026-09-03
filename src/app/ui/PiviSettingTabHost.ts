@@ -1,9 +1,20 @@
+import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import {
-  getSettingsSearchAliases,
+  getSettingsPageSearchAliases,
   type MountedSurface,
-  mountSettings,
+  mountSettingsPage,
 } from "@pivi/pivi-react/mount";
-import type { App, SettingDefinitionItem } from "obsidian";
+import {
+  SETTINGS_PAGES,
+  SETTINGS_ROOT_LAYOUT,
+  type SettingsPageId,
+  type SettingsRootEntry,
+} from "@pivi/pivi-react/settings";
+import type {
+  SettingDefinitionItem,
+  SettingDefinitionPage,
+  SettingGroupItem,
+} from "obsidian";
 import { Notice, PluginSettingTab } from "obsidian";
 
 import type {
@@ -15,19 +26,22 @@ import { createSettingsUiPorts } from "@/app/ui/createUiPorts";
 import { obsidianPresentationPlatform } from "@/app/ui/obsidianPresentationPlatform";
 import { getActiveWindow } from "@/ui/shared/dom";
 
+const logger = new PluginLogger("PiviSettingTabHost");
+
 function refreshSettingDefinitions(tab: object): void {
   const update: unknown = (tab as { update?: unknown }).update;
-  if (typeof update === 'function') update.call(tab);
+  if (typeof update === "function") update.call(tab);
 }
 
 export class PiviSettingTabHost extends PluginSettingTab {
   plugin: PiviPluginHost;
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
-  private mountedSurface: MountedSurface | null = null;
-  private mountGeneration = 0;
+  private readonly liveSurfaces = new Set<MountedSurface>();
+  private readonly mountGenerations = new Map<SettingsPageId, number>();
+  private readonly mountedByPage = new Map<SettingsPageId, MountedSurface>();
 
   constructor(
-    app: App,
+    app: ConstructorParameters<typeof PluginSettingTab>[0],
     plugin: PiviPluginHost,
     getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
@@ -38,62 +52,101 @@ export class PiviSettingTabHost extends PluginSettingTab {
     plugin.register(appI18n.subscribe(() => {
       refreshSettingDefinitions(this);
     }));
+    plugin.register(() => {
+      this.disposeLiveSurfaces();
+    });
   }
 
   getSettingDefinitions(): SettingDefinitionItem[] {
-    return [{
-      name: this.plugin.manifest.name,
-      desc: this.plugin.manifest.description,
-      aliases: getSettingsSearchAliases(appI18n),
+    return SETTINGS_ROOT_LAYOUT.map((entry) => this.mapRootEntry(entry));
+  }
+
+  disposeLiveSurfaces(): void {
+    for (const [page, generation] of this.mountGenerations) {
+      this.mountGenerations.set(page, generation + 1);
+    }
+    this.mountedByPage.clear();
+    const surfaces = [...this.liveSurfaces];
+    this.liveSurfaces.clear();
+    for (const surface of surfaces) {
+      void surface.dispose();
+    }
+  }
+
+  private mapRootEntry(entry: SettingsRootEntry): SettingDefinitionItem {
+    if (entry.kind === "page") {
+      return this.mapPage(entry.page);
+    }
+    return {
+      type: "group",
+      heading: t(entry.labelKey),
+      items: entry.items.map((item) => (
+        item.kind === "page" ? this.mapPage(item.page) : this.mapRenderItem("general")
+      )),
+    };
+  }
+
+  private mapPage(page: SettingsPageId): SettingDefinitionPage {
+    const descriptor = SETTINGS_PAGES[page];
+    return {
+      type: "page",
+      name: t(descriptor.labelKey),
+      desc: t(descriptor.descriptionKey),
+      items: [this.mapRenderItem(page)],
+    };
+  }
+
+  private mapRenderItem(page: SettingsPageId): SettingGroupItem {
+    const descriptor = SETTINGS_PAGES[page];
+    return {
+      name: t(descriptor.labelKey),
+      desc: t(descriptor.descriptionKey),
+      aliases: getSettingsPageSearchAliases(appI18n, page),
       render: (setting) => {
         setting.settingEl.empty();
-        setting.settingEl.addClass('pivi-settings-definition-host');
-        return this.mountReactSettingsSurface(setting.settingEl);
+        setting.settingEl.addClass("pivi-settings-definition-host");
+        return this.mountPageContent(page, setting.settingEl);
       },
-    }];
+    };
   }
 
-  display(): void {
-    this.containerEl.empty();
-    this.mountReactSettingsSurface(this.containerEl);
-  }
-
-  hide(): void {
-    this.mountGeneration++;
-    const mounted = this.mountedSurface;
-    this.mountedSurface = null;
-    if (mounted) void mounted.dispose();
-    this.containerEl.empty();
-  }
-
-  private mountReactSettingsSurface(container: HTMLElement): () => void {
-    const generation = ++this.mountGeneration;
-    void this.mountReactSettings(container, generation);
+  private mountPageContent(page: SettingsPageId, container: HTMLElement): () => void {
+    const generation = (this.mountGenerations.get(page) ?? 0) + 1;
+    this.mountGenerations.set(page, generation);
+    void this.mountPage(page, container, generation);
     return () => {
-      if (generation !== this.mountGeneration) return;
-      this.mountGeneration++;
-      const mounted = this.mountedSurface;
-      this.mountedSurface = null;
-      if (mounted) void mounted.dispose();
+      if (generation !== this.mountGenerations.get(page)) return;
+      this.mountGenerations.set(page, generation + 1);
+      const mounted = this.mountedByPage.get(page);
+      this.mountedByPage.delete(page);
+      if (mounted) {
+        this.liveSurfaces.delete(mounted);
+        void mounted.dispose();
+      }
       container.empty();
     };
   }
 
-  private async mountReactSettings(
+  private async mountPage(
+    page: SettingsPageId,
     container: HTMLElement,
     generation: number,
   ): Promise<void> {
     const ownerDocument = container.ownerDocument;
     const ownerWindow = getActiveWindow(container);
 
-    const previous = this.mountedSurface;
-    this.mountedSurface = null;
-    if (previous) await previous.dispose();
+    const previous = this.mountedByPage.get(page);
+    this.mountedByPage.delete(page);
+    if (previous) {
+      this.liveSurfaces.delete(previous);
+      await previous.dispose();
+    }
 
     try {
       const workspace = await this.getWorkspace();
-      if (generation !== this.mountGeneration) return;
-      const mounted = await mountSettings({
+      if (generation !== this.mountGenerations.get(page)) return;
+      const mounted = await mountSettingsPage({
+        page,
         container,
         ownerDocument,
         ownerWindow,
@@ -102,13 +155,15 @@ export class PiviSettingTabHost extends PluginSettingTab {
         platform: obsidianPresentationPlatform,
         ports: createSettingsUiPorts(this.plugin, workspace),
       });
-      if (generation !== this.mountGeneration) {
+      if (generation !== this.mountGenerations.get(page)) {
         await mounted.dispose();
         return;
       }
-      this.mountedSurface = mounted;
+      this.mountedByPage.set(page, mounted);
+      this.liveSurfaces.add(mounted);
     } catch (error) {
-      if (generation !== this.mountGeneration) return;
+      if (generation !== this.mountGenerations.get(page)) return;
+      logger.error("Failed to mount settings page", error);
       const detail = error instanceof Error ? error.message : String(error);
       new Notice(`${t("common.error")}: ${detail}`);
     }

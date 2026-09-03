@@ -21,7 +21,7 @@ function makePorts(initial: ManagedMcpServer[] = []) {
   return { ports, mcp, getServers: () => servers };
 }
 
-async function openMcp(ports: SettingsPorts) { render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="tools" /></I18nProvider>)); await act(async () => undefined); }
+async function openMcp(ports: SettingsPorts) { render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="mcpServers" /></I18nProvider>)); await act(async () => undefined); }
 
 describe('React MCP settings', () => {
   it('uses a slash marker and reveals tools after opening the provider-style card', async () => {
@@ -31,7 +31,6 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     await act(async () => undefined);
 
-    expect(screen.getByRole('heading', { name: 'MCP servers' })).toBeInTheDocument();
     const addButton = screen.getByRole('button', { name: '+ Add MCP' });
     expect(document.querySelector('.pivi-mcp-container')?.lastElementChild).toContainElement(addButton);
     expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('/');
@@ -244,6 +243,6 @@ describe('React MCP settings', () => {
 
   it('does not update after an unmounted asynchronous load resolves', async () => {
     // @ts-expect-error Promise.withResolvers needs ES2024 lib; runtime is Node 24+
-    const { promise, resolve } = Promise.withResolvers<readonly ManagedMcpServer[]>(); const { ports } = makePorts(); ports.complex.mcp.load = jest.fn(() => promise); const rendered = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="tools" /></I18nProvider>)); rendered.unmount(); await act(async () => resolve([{ name: 'late', config: { command: 'node' }, enabled: true, contextSaving: false }])); expect(screen.queryByText('late')).not.toBeInTheDocument();
+    const { promise, resolve } = Promise.withResolvers<readonly ManagedMcpServer[]>(); const { ports } = makePorts(); ports.complex.mcp.load = jest.fn(() => promise); const rendered = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="mcpServers" /></I18nProvider>)); rendered.unmount(); await act(async () => resolve([{ name: 'late', config: { command: 'node' }, enabled: true, contextSaving: false }])); expect(screen.queryByText('late')).not.toBeInTheDocument();
   });
 });

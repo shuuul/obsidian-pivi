@@ -9,14 +9,7 @@ const projectRoot = process.env.PIVI_I18N_PROJECT_ROOT
 const localesDir = path.join(projectRoot, 'packages/pivi-react/src/i18n/locales');
 const enPath = path.join(localesDir, 'en.json');
 
-const DYNAMIC_PREFIX_RULES = [
-  {
-    prefix: 'settings.tabs.',
-    values: [
-      'general', 'models', 'skills', 'tools', 'subagents', 'webSearch', 'commands', 'mcp', 'integrations',
-    ],
-  },
-];
+const DYNAMIC_PREFIX_RULES = [];
 
 const DYNAMIC_KEY_SOURCE_FILES = [
   {

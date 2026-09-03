@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "設定セクション",
-      "general": "一般",
-      "models": "モデル",
-      "skills": "スキル",
-      "tools": "ツール",
-      "subagents": "サブエージェント",
-      "commands": "コマンド",
-      "prompt": "プロンプト",
-      "toolbar": "ツールバー",
-      "about": "情報"
+    "groups": {
+      "agent": "エージェント",
+      "editor": "エディター",
+      "general": "一般"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "一般",
+        "description": "言語、レイアウト、チャット動作、およびこのプラグインについて。"
+      },
+      "environment": {
+        "label": "環境",
+        "description": "ツールとプロバイダーで共有する環境変数。"
+      },
+      "models": {
+        "label": "モデル",
+        "description": "プロバイダー、認証情報、表示するモデル。"
+      },
+      "builtInTools": {
+        "label": "組み込みツール",
+        "description": "ワークスペースツール、Bash、外部読み取り、サブエージェント。"
+      },
+      "webTools": {
+        "label": "Web ツール",
+        "description": "検索・取得プロバイダーとその認証情報。"
+      },
+      "mcpServers": {
+        "label": "MCP サーバー",
+        "description": "ローカル MCP サーバーとそのツール。"
+      },
+      "skills": {
+        "label": "スキル",
+        "description": "インストール済みおよびリモートのワークスペーススキル。"
+      },
+      "prompt": {
+        "label": "プロンプト",
+        "description": "起動時コンテキストの使用量とプロンプトモジュール。"
+      },
+      "commands": {
+        "label": "コマンド",
+        "description": "内部およびワークスペースのスラッシュコマンド。"
+      },
+      "toolbar": {
+        "label": "ツールバー",
+        "description": "エディター選択ツールバーの操作。"
+      }
+    },    "setup": {
       "getApiKeyAt": "{host} で API key を取得",
       "download": "ダウンロード",
       "openDocs": "ドキュメントを開く"

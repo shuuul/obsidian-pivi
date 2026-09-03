@@ -210,7 +210,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 
 ## Requirements
 
-- **Obsidian** v1.12.0+ (desktop only)
+- **Obsidian** v1.13.0+ (desktop only)
 - **macOS** (tested; Windows / Linux should work but not officially supported)
 
 ---

@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "设置分区",
-      "general": "通用",
-      "models": "模型",
-      "skills": "技能",
-      "tools": "工具",
-      "subagents": "子代理",
-      "commands": "命令",
-      "prompt": "提示词",
-      "toolbar": "工具栏",
-      "about": "关于"
+    "groups": {
+      "agent": "智能体",
+      "editor": "编辑器",
+      "general": "通用"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "通用",
+        "description": "语言、布局、对话行为以及关于信息。"
+      },
+      "environment": {
+        "label": "环境",
+        "description": "供工具和提供商使用的共享环境变量。"
+      },
+      "models": {
+        "label": "模型",
+        "description": "提供商、凭据和可见模型。"
+      },
+      "builtInTools": {
+        "label": "内置工具",
+        "description": "工作区工具、Bash、外部读取和子代理。"
+      },
+      "webTools": {
+        "label": "Web 工具",
+        "description": "搜索与抓取提供商及其凭据。"
+      },
+      "mcpServers": {
+        "label": "MCP 服务器",
+        "description": "本地 MCP 服务器及其工具。"
+      },
+      "skills": {
+        "label": "技能",
+        "description": "已安装和远程的工作区技能。"
+      },
+      "prompt": {
+        "label": "提示词",
+        "description": "启动上下文用量和提示词模块。"
+      },
+      "commands": {
+        "label": "命令",
+        "description": "内置和工作区斜杠命令。"
+      },
+      "toolbar": {
+        "label": "工具栏",
+        "description": "编辑器选区工具栏操作。"
+      }
+    },    "setup": {
       "getApiKeyAt": "前往 {host} 获取 API key",
       "download": "下载",
       "openDocs": "打开文档"

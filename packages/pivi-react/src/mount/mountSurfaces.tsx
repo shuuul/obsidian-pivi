@@ -7,6 +7,7 @@ import type { PresentationPlatform } from '../platform';
 import { PresentationPlatformProvider } from '../platform';
 import type { SettingsPorts } from '../ports';
 import { SettingsRoot } from '../settings';
+import type { SettingsPageId } from '../settings/navigation';
 import { ChatShell, type ChatShellOptions } from './ChatShell';
 
 export interface SurfaceEnvironment {
@@ -37,7 +38,8 @@ export type MountChatViewOptions = MountSurfaceOptions & {
   chatShell: ChatShellOptions;
   imperativeAdapter: ImperativeChatAdapter;
 };
-export type MountSettingsOptions = MountSurfaceOptions & {
+export type MountSettingsPageOptions = MountSurfaceOptions & {
+  page: SettingsPageId;
   ports: SettingsPorts;
 };
 
@@ -110,14 +112,18 @@ async function mountChatSurface(options: MountChatViewOptions): Promise<MountedS
   };
 }
 
-export async function mountSettings(options: MountSettingsOptions): Promise<MountedSurface> {
+export async function mountSettingsPage(options: MountSettingsPageOptions): Promise<MountedSurface> {
   const root: Root = createRoot(options.container);
   flushSync(() => {
     root.render(
       <PresentationPlatformProvider platform={options.platform}>
         <I18nProvider i18n={options.i18n}>
-          <div className="pivi-react-settings-root" data-pivi-react-surface="settings">
-            <SettingsRoot ports={options.ports} />
+          <div
+            className="pivi-react-settings-root"
+            data-pivi-react-surface="settings"
+            data-pivi-settings-page={options.page}
+          >
+            <SettingsRoot page={options.page} ports={options.ports} />
           </div>
         </I18nProvider>
       </PresentationPlatformProvider>,

@@ -1,6 +1,16 @@
 export { EditorToolbarSection } from './EditorToolbarSection';
+export {
+  SETTINGS_PAGES,
+  SETTINGS_ROOT_LAYOUT,
+  type SettingsPageDescriptor,
+  type SettingsPageId,
+  type SettingsRootEntry,
+} from './navigation';
+export {
+  FORMER_SETTINGS_SEARCH_KEYS,
+  RETIRED_SETTINGS_TAB_SEARCH_KEYS,
+} from './searchMetadata';
 export { SettingsRoot } from './SettingsRoot';
-export { SettingsShell } from './SettingsShell';
 export type {
   DeepReadonly,
   SettingsUiSnapshot,
@@ -12,6 +22,5 @@ export type {
   SettingsHotkeyRow,
   SettingsKeyboardNavigationSnapshot,
   SettingsSubagentsSnapshot,
-  SettingsTabId,
   SettingsUiSnapshotData,
 } from './types';

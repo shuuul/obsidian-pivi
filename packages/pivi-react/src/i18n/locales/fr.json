@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "Sections des paramètres",
-      "general": "Général",
-      "models": "Modèles",
-      "skills": "Compétences",
-      "tools": "Outils",
-      "subagents": "Sous-agents",
-      "commands": "Commandes",
-      "prompt": "Prompt",
-      "toolbar": "Barre d’outils",
-      "about": "À propos"
+    "groups": {
+      "agent": "Agent",
+      "editor": "Éditeur",
+      "general": "Général"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "Général",
+        "description": "Langue, disposition, comportement du chat et À propos."
+      },
+      "environment": {
+        "label": "Environnement",
+        "description": "Variables d’environnement partagées pour les outils et les fournisseurs."
+      },
+      "models": {
+        "label": "Modèles",
+        "description": "Fournisseurs, identifiants et modèles visibles."
+      },
+      "builtInTools": {
+        "label": "Outils intégrés",
+        "description": "Outils de l’espace de travail, Bash, lecture externe et sous-agents."
+      },
+      "webTools": {
+        "label": "Outils web",
+        "description": "Fournisseurs de recherche et d’extraction et leurs identifiants."
+      },
+      "mcpServers": {
+        "label": "Serveurs MCP",
+        "description": "Serveurs MCP locaux et leurs outils."
+      },
+      "skills": {
+        "label": "Compétences",
+        "description": "Skills installées et distantes de l’espace de travail."
+      },
+      "prompt": {
+        "label": "Prompt",
+        "description": "Usage du contexte de démarrage et modules de prompt."
+      },
+      "commands": {
+        "label": "Commandes",
+        "description": "Commandes slash internes et de l’espace de travail."
+      },
+      "toolbar": {
+        "label": "Barre d’outils",
+        "description": "Actions de la barre d’outils de sélection de l’éditeur."
+      }
+    },    "setup": {
       "getApiKeyAt": "Obtenir une API key sur {host}",
       "download": "Télécharger",
       "openDocs": "Ouvrir la doc"

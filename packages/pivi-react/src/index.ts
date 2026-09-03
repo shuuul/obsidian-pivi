@@ -12,15 +12,18 @@ export * from './platform';
 export { assertBundledReactRuntime } from './runtime/assertBundledReactRuntime';
 export type {
   SettingsGeneralSnapshot,
+  SettingsPageDescriptor,
+  SettingsPageId,
+  SettingsRootEntry,
   SettingsSubagentsSnapshot,
-  SettingsTabId,
   SettingsUiSnapshot,
   SettingsUiSnapshotData,
   SettingsUiStoreListener,
 } from './settings';
 export {
+  SETTINGS_PAGES,
+  SETTINGS_ROOT_LAYOUT,
   SettingsRoot,
-  SettingsShell,
   SettingsUiStore,
   useSettingsUiSnapshot,
 } from './settings';

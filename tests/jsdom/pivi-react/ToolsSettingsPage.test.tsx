@@ -70,22 +70,37 @@ function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {})
   };
 }
 
+function renderPage(ports: SettingsPorts, page: 'builtInTools' | 'webTools' | 'mcpServers' = 'builtInTools') {
+  return render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page={page} ports={ports} /></I18nProvider>));
+}
+
 function renderTools(ports: SettingsPorts) {
-  return render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="tools" /></I18nProvider>));
+  return renderPage(ports, 'builtInTools');
+}
+
+function renderWebTools(ports: SettingsPorts) {
+  return renderPage(ports, 'webTools');
 }
 
 describe('React tools settings', () => {
-  it('renders all tool sections in their fixed document order', async () => {
-    const { container } = renderTools(createPorts());
+  it('renders built-in tools, web tools, and MCP servers as separate pages', async () => {
+    const ports = createPorts();
+    const builtIn = renderPage(ports, 'builtInTools');
     await act(async () => undefined);
+    expect(screen.getByRole('heading', { name: 'Tool toggles' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Read' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Enable spawn_agent' })).toBeInTheDocument();
+    builtIn.unmount();
 
-    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
-      'Built-in tools',
-      'Web tools',
-      'MCP servers',
-    ]);
-    expect(Array.from(container.querySelectorAll('.pivi-tools-settings-page > .pivi-settings-section')).map((section) => section.getAttribute('aria-labelledby')))
-      .toEqual(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.id));
+    const web = renderPage(ports, 'webTools');
+    await act(async () => undefined);
+    expect(screen.getByRole('button', { name: /Reorder Brave Search/ })).toBeInTheDocument();
+    web.unmount();
+
+    const mcp = renderPage(ports, 'mcpServers');
+    await act(async () => undefined);
+    expect(screen.getByRole('button', { name: /Add MCP/ })).toBeInTheDocument();
+    mcp.unmount();
   });
 
   it('stacks external directory controls below their description', () => {
@@ -304,7 +319,7 @@ describe('React tools settings', () => {
   it('clears busy state when saving a web credential fails', async () => {
     const ports = createPorts();
     ports.complex.webSearch.writeCredential = () => { throw new Error('keychain unavailable'); };
-    renderTools(ports);
+    renderWebTools(ports);
     const input = screen.getAllByPlaceholderText('Enter API key...')[0]!;
     fireEvent.change(input, { target: { value: 'secret' } });
     fireEvent.blur(input);
@@ -317,7 +332,7 @@ describe('React tools settings', () => {
     const ports = createPorts();
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
-    renderTools(ports);
+    renderWebTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ });
 
     fireEvent.keyDown(handle, { key: ' ' });
@@ -337,7 +352,7 @@ describe('React tools settings', () => {
     const ports = createPorts();
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
-    const { container } = renderTools(ports);
+    const { container } = renderWebTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ }) as HTMLButtonElement;
     const dragSurface = handle.closest('summary') as HTMLElement;
     const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-provider-sort-id]'));
@@ -379,7 +394,7 @@ describe('React tools settings', () => {
     const ports = createPorts();
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
-    renderTools(ports);
+    renderWebTools(ports);
     const braveHandle = screen.getByRole('button', { name: /Reorder Brave Search/ });
 
     fireEvent.keyDown(braveHandle, { key: ' ' });
@@ -397,7 +412,7 @@ describe('React tools settings', () => {
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
     ports.complex.runtime.refreshPrompt = async () => { throw new Error('refresh failed'); };
-    renderTools(ports);
+    renderWebTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ });
 
     fireEvent.keyDown(handle, { key: ' ' });
@@ -411,14 +426,14 @@ describe('React tools settings', () => {
   });
 
   it('renders provider brand icons and keeps reorder announcements out of visual layout', () => {
-    const { container } = renderTools(createPorts());
+    const { container } = renderWebTools(createPorts());
 
     expect(container.querySelectorAll('.pivi-web-provider-card .pivi-provider-logo-mask')).toHaveLength(4);
     expect(container.querySelector('[aria-live="polite"]')).toHaveClass('pivi-visually-hidden');
   });
 
   it('links web providers to their API key or docs pages', () => {
-    renderTools(createPorts());
+    renderWebTools(createPorts());
 
     expect([
       screen.getByRole('link', { name: 'Get API key at brave.com' }),

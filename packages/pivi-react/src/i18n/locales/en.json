@@ -348,17 +348,52 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "Settings sections",
-      "general": "General",
-      "models": "Models",
-      "skills": "Skills",
-      "tools": "Tools",
-      "subagents": "Subagents",
-      "commands": "Commands",
-      "prompt": "Prompt",
-      "toolbar": "Toolbar",
-      "about": "About"
+    "groups": {
+      "agent": "Agent",
+      "editor": "Editor",
+      "general": "General"
+    },
+    "pages": {
+      "general": {
+        "label": "General",
+        "description": "Language, layout, chat behavior, and About."
+      },
+      "environment": {
+        "label": "Environment",
+        "description": "Shared environment variables for tools and providers."
+      },
+      "models": {
+        "label": "Models",
+        "description": "Providers, credentials, and visible models."
+      },
+      "builtInTools": {
+        "label": "Built-in tools",
+        "description": "Workspace tools, Bash, external read, and subagents."
+      },
+      "webTools": {
+        "label": "Web tools",
+        "description": "Search and fetch providers and their credentials."
+      },
+      "mcpServers": {
+        "label": "MCP servers",
+        "description": "Local MCP servers and their tools."
+      },
+      "skills": {
+        "label": "Skills",
+        "description": "Installed and remote workspace skills."
+      },
+      "prompt": {
+        "label": "Prompt",
+        "description": "Startup context usage and prompt modules."
+      },
+      "commands": {
+        "label": "Commands",
+        "description": "Internal and workspace slash commands."
+      },
+      "toolbar": {
+        "label": "Toolbar",
+        "description": "Editor selection toolbar actions."
+      }
     },
     "setup": {
       "getApiKeyAt": "Get API key at {host}",

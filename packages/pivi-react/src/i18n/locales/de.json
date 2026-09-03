@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "Einstellungsbereiche",
-      "general": "Allgemein",
-      "models": "Modelle",
-      "skills": "Fähigkeiten",
-      "tools": "Werkzeuge",
-      "subagents": "Sub-Agenten",
-      "commands": "Befehle",
-      "prompt": "Prompt",
-      "toolbar": "Werkzeugleiste",
-      "about": "Info"
+    "groups": {
+      "agent": "Agent",
+      "editor": "Editor",
+      "general": "Allgemein"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "Allgemein",
+        "description": "Sprache, Layout, Chat-Verhalten und Infos."
+      },
+      "environment": {
+        "label": "Umgebung",
+        "description": "Gemeinsame Umgebungsvariablen für Tools und Anbieter."
+      },
+      "models": {
+        "label": "Modelle",
+        "description": "Anbieter, Anmeldedaten und sichtbare Modelle."
+      },
+      "builtInTools": {
+        "label": "Integrierte Tools",
+        "description": "Workspace-Tools, Bash, externes Lesen und Sub-Agenten."
+      },
+      "webTools": {
+        "label": "Web-Tools",
+        "description": "Such- und Abrufanbieter sowie deren Anmeldedaten."
+      },
+      "mcpServers": {
+        "label": "MCP-Server",
+        "description": "Lokale MCP-Server und ihre Tools."
+      },
+      "skills": {
+        "label": "Fähigkeiten",
+        "description": "Installierte und Remote-Workspace-Skills."
+      },
+      "prompt": {
+        "label": "Prompt",
+        "description": "Startkontext-Nutzung und Prompt-Module."
+      },
+      "commands": {
+        "label": "Befehle",
+        "description": "Interne und Workspace-Slash-Befehle."
+      },
+      "toolbar": {
+        "label": "Werkzeugleiste",
+        "description": "Aktionen der Editor-Auswahlwerkzeugleiste."
+      }
+    },    "setup": {
       "getApiKeyAt": "API-Schlüssel bei {host} holen",
       "download": "Herunterladen",
       "openDocs": "Dokumentation öffnen"

@@ -213,7 +213,7 @@ function createMutablePromptPort(
 function renderPrompt(ports: SettingsPorts) {
   return render(withTestPresentationPlatform(
     <I18nProvider i18n={createI18n()}>
-      <SettingsRoot ports={ports} initialTab="prompt" />
+      <SettingsRoot ports={ports} page="prompt" />
     </I18nProvider>,
   ));
 }

@@ -27,7 +27,7 @@
 - `createI18n()`, `I18nProvider`, and `useT()` provide one app-owned translator to imperative and React surfaces.
 - The `/context-badges` view-model builder requires that translator; it localizes tooltip and accessibility copy while preserving tool, MCP, skill, agent, path, and range identifiers.
 - Feature-specific settings presentation ports are exported from `@pivi/pivi-react/ports`; only `src/app/ui` implements them. Application-facing chat ports come from `@pivi/agent/runtime/chatPorts`.
-- `mountChatView()` and `mountSettings()` receive a `PresentationPlatform`, create one deterministic React root per surface, and return an idempotent async `dispose()` handle. The `/mount` subpath also exports synchronous localized settings-search aliases for the Obsidian 1.13 host bridge.
+- `mountChatView()` and `mountSettingsPage()` receive a `PresentationPlatform`, create one deterministic React root per surface, and return an idempotent async `dispose()` handle. The `/mount` subpath also exports `getSettingsPageSearchAliases` for the Obsidian 1.13 host bridge.
 - Settings render host-provided tool rows and integration sections; Obsidian CLI, Note Toolbar, and Style Settings behavior stays in the embedding app adapter.
 - MCP JSON import is an explicit paste-and-confirm editor flow; presentation code does not read the system clipboard.
 - `ChatUiStore`, `useChatUiSnapshot()`, and the pure exhaustive stream reducer are exported from `@pivi/pivi-react/store`. Store snapshots are deeply immutable, structurally cloneable data and exclude DOM nodes, controllers, renderers, runtime services, subscriptions, and timer handles.

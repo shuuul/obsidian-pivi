@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "Seções de configurações",
-      "general": "Geral",
-      "models": "Modelos",
-      "skills": "Habilidades",
-      "tools": "Ferramentas",
-      "subagents": "Subagentes",
-      "commands": "Comandos",
-      "prompt": "Prompt",
-      "toolbar": "Barra de ferramentas",
-      "about": "Sobre"
+    "groups": {
+      "agent": "Agente",
+      "editor": "Editor",
+      "general": "Geral"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "Geral",
+        "description": "Idioma, disposição, comportamento do chat e Sobre."
+      },
+      "environment": {
+        "label": "Ambiente",
+        "description": "Variáveis de ambiente partilhadas para ferramentas e fornecedores."
+      },
+      "models": {
+        "label": "Modelos",
+        "description": "Fornecedores, credenciais e modelos visíveis."
+      },
+      "builtInTools": {
+        "label": "Ferramentas integradas",
+        "description": "Ferramentas do espaço de trabalho, Bash, leitura externa e subagentes."
+      },
+      "webTools": {
+        "label": "Ferramentas web",
+        "description": "Fornecedores de pesquisa e obtenção e as respetivas credenciais."
+      },
+      "mcpServers": {
+        "label": "Servidores MCP",
+        "description": "Servidores MCP locais e as respetivas ferramentas."
+      },
+      "skills": {
+        "label": "Habilidades",
+        "description": "Skills instaladas e remotas do espaço de trabalho."
+      },
+      "prompt": {
+        "label": "Prompt",
+        "description": "Utilização do contexto de arranque e módulos de prompt."
+      },
+      "commands": {
+        "label": "Comandos",
+        "description": "Comandos slash internos e do espaço de trabalho."
+      },
+      "toolbar": {
+        "label": "Barra de ferramentas",
+        "description": "Ações da barra de ferramentas de seleção do editor."
+      }
+    },    "setup": {
       "getApiKeyAt": "Obter API key em {host}",
       "download": "Baixar",
       "openDocs": "Abrir docs"

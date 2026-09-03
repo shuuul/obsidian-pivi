@@ -336,19 +336,53 @@
     }
   },
   "settings": {
-    "tabs": {
-      "ariaLabel": "Secciones de ajustes",
-      "general": "General",
-      "models": "Modelos",
-      "skills": "Habilidades",
-      "tools": "Herramientas",
-      "subagents": "Subagentes",
-      "commands": "Comandos",
-      "prompt": "Prompt",
-      "toolbar": "Barra de herramientas",
-      "about": "Acerca de"
+    "groups": {
+      "agent": "Agente",
+      "editor": "Editor",
+      "general": "General"
     },
-    "setup": {
+    "pages": {
+      "general": {
+        "label": "General",
+        "description": "Idioma, diseño, comportamiento del chat y Acerca de."
+      },
+      "environment": {
+        "label": "Entorno",
+        "description": "Variables de entorno compartidas para herramientas y proveedores."
+      },
+      "models": {
+        "label": "Modelos",
+        "description": "Proveedores, credenciales y modelos visibles."
+      },
+      "builtInTools": {
+        "label": "Herramientas integradas",
+        "description": "Herramientas del espacio de trabajo, Bash, lectura externa y subagentes."
+      },
+      "webTools": {
+        "label": "Herramientas web",
+        "description": "Proveedores de búsqueda y obtención y sus credenciales."
+      },
+      "mcpServers": {
+        "label": "Servidores MCP",
+        "description": "Servidores MCP locales y sus herramientas."
+      },
+      "skills": {
+        "label": "Habilidades",
+        "description": "Skills instaladas y remotas del espacio de trabajo."
+      },
+      "prompt": {
+        "label": "Prompt",
+        "description": "Uso del contexto de arranque y módulos de prompt."
+      },
+      "commands": {
+        "label": "Comandos",
+        "description": "Comandos slash internos y del espacio de trabajo."
+      },
+      "toolbar": {
+        "label": "Barra de herramientas",
+        "description": "Acciones de la barra de herramientas de selección del editor."
+      }
+    },    "setup": {
       "getApiKeyAt": "Obtener API key en {host}",
       "download": "Descargar",
       "openDocs": "Abrir docs"
