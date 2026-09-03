@@ -324,7 +324,7 @@ describe('React tools settings', () => {
     fireEvent.click(screen.getByRole('button', { expanded: false, name: /Brave Search/ }));
     const input = screen.getByPlaceholderText('Enter API key...');
     fireEvent.change(input, { target: { value: 'secret' } });
-    fireEvent.blur(input);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await act(async () => undefined);
     expect(ports.feedback.notify).toHaveBeenCalledWith('Error');
     expect(input).not.toBeDisabled();
@@ -356,7 +356,6 @@ describe('React tools settings', () => {
     ports.complex.webSearch.saveSettings = saveSettings;
     const { container } = renderWebTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ }) as HTMLButtonElement;
-    const dragSurface = handle.closest('.pivi-settings-card__header') as HTMLElement;
     const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-settings-sort-id]'));
     for (const card of cards) {
       card.getBoundingClientRect = jest.fn(() => {
@@ -367,9 +366,9 @@ describe('React tools settings', () => {
         return { top, bottom: top + 80, height: 80, left: 0, right: 300, width: 300, x: 0, y: top, toJSON: () => ({}) };
       });
     }
-    dragSurface.setPointerCapture = jest.fn();
-    dragSurface.releasePointerCapture = jest.fn();
-    dragSurface.hasPointerCapture = jest.fn(() => true);
+    handle.setPointerCapture = jest.fn();
+    handle.releasePointerCapture = jest.fn();
+    handle.hasPointerCapture = jest.fn(() => true);
     const pointerEvent = (type: string, clientY: number) => {
       const event = new Event(type, { bubbles: true });
       Object.defineProperties(event, {
@@ -380,11 +379,11 @@ describe('React tools settings', () => {
       return event;
     };
 
-    fireEvent(dragSurface, pointerEvent('pointerdown', 10));
+    fireEvent(handle, pointerEvent('pointerdown', 10));
     for (const clientY of [20, 60, 100, 150, 190, 250, 350]) {
-      fireEvent(dragSurface, pointerEvent('pointermove', clientY));
+      fireEvent(handle, pointerEvent('pointermove', clientY));
     }
-    fireEvent(dragSurface, pointerEvent('pointerup', 250));
+    fireEvent(handle, pointerEvent('pointerup', 250));
     await act(async () => undefined);
 
     expect(saveSettings).toHaveBeenCalledWith({

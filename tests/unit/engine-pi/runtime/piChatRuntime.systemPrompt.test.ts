@@ -675,6 +675,8 @@ describe('PiChatRuntime system prompt', () => {
     agent.state.messages = [{
       role: 'assistant',
       content: [],
+      provider: 'lmstudio',
+      model: 'model-a',
       stopReason: 'stop',
       usage: {
         input: 100,
@@ -1915,7 +1917,7 @@ describe('PiChatRuntime system prompt', () => {
     expect(buildEstimatedUsageInfo([
       { role: 'user', content: 'Unknown model usage', timestamp: Date.now() },
     ], null)).toMatchObject({ contextWindow: 0, percentage: 0 });
-    expect(buildEstimatedUsageInfo([
+    const unknownModelUsage = buildEstimatedUsageInfo([
       {
         role: 'assistant',
         content: [],
@@ -1931,10 +1933,9 @@ describe('PiChatRuntime system prompt', () => {
         timestamp: Date.now(),
       },
       { role: 'user', content: 'follow-up', timestamp: Date.now() },
-    ] as never, null)).toMatchObject({
-      cacheReadInputTokens: 80,
-      cacheCreationInputTokens: 20,
-    });
+    ] as never, null);
+    expect(unknownModelUsage).not.toHaveProperty('cacheReadInputTokens');
+    expect(unknownModelUsage).not.toHaveProperty('cacheCreationInputTokens');
     expect(buildUsageInfoFromAgentMessage({
       role: 'assistant',
       content: [],
