@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.24.2](https://github.com/shuuul/obsidian-pivi/compare/0.24.1...0.24.2) (2026-09-04)
+
+### Bug Fixes
+
+* follow provider total request deadline in compaction sampling ([#98](https://github.com/shuuul/obsidian-pivi/issues/98))
+
 ## [0.24.1](https://github.com/shuuul/obsidian-pivi/compare/0.24.0...0.24.1) (2026-09-03)
 
 ### Security
