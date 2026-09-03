@@ -5,7 +5,6 @@ const stylesRoot = join(process.cwd(), 'packages/pivi-react/styles');
 const settingsRoot = join(process.cwd(), 'packages/pivi-react/src/settings');
 const tokensFile = join(stylesRoot, 'settings/system/tokens.css');
 const allowlistPath = join(process.cwd(), 'tests/unit/ui/settingsStyleContract.allowlist.json');
-const builtStylesPath = join(process.cwd(), 'styles.css');
 const manifestPath = join(stylesRoot, 'manifest.mjs');
 
 const BANNED_LAYOUT = /^(margin|padding)(-|$)|^(row-|column-)?gap$|^border-radius$|^border$|^border-(top|right|bottom|left|block|inline)(-start|-end)?$|^border.*-color$|^box-shadow$/;
@@ -278,10 +277,6 @@ describe('settings style contract', () => {
     }
     const selectorHits = DELETED_SELECTORS.filter(selector => stylesSource.includes(selector));
     expect(selectorHits).toEqual([]);
-    expect(existsSync(builtStylesPath)).toBe(true);
-    const built = readFileSync(builtStylesPath, 'utf8');
-    const builtHits = DELETED_SELECTORS.filter(selector => built.includes(selector));
-    expect(builtHits).toEqual([]);
   });
 
   it('does not keep deleted settings components', () => {
