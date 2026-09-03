@@ -6,6 +6,7 @@ export interface PiRuntimeHost {
   settings: Record<string, unknown> & {
     customContextLimits?: Record<string, number>;
     model?: string;
+    providerRequestDeadlines?: { totalMs: number; idleMs: number };
     titleGenerationModel?: string;
     userName?: string;
   };

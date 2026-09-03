@@ -11,15 +11,34 @@ import {
 } from '../session/piContextCompaction';
 import type { PiRuntimeHost } from './piRuntimeHost';
 
-const COMPACTION_SAMPLE_TIMEOUT_MS = 120_000;
+/**
+ * Fallback ceiling for slow hosts that supply no provider deadlines. Product
+ * settings always provide `providerRequestDeadlines`, so the real budget
+ * follows the configurable provider Total deadline (issues #89, #98): slow
+ * local models can need far more than 120 seconds for a compaction sample, and
+ * the old hard cap cut off `/compact` even with the deadline raised or disabled.
+ */
+const DEFAULT_COMPACTION_SAMPLE_TIMEOUT_MS = 120_000;
 const COMPACTION_SAMPLE_MAX_TOKENS = 8_192;
+
+/** Resolved sampling budget; `null` means the deadline is disabled (`0`). */
+function resolveCompactionSampleTimeoutMs(host: PiRuntimeHost): number | null {
+  const configured = host.settings.providerRequestDeadlines?.totalMs;
+  if (typeof configured !== 'number' || !Number.isFinite(configured) || configured < 0) {
+    return DEFAULT_COMPACTION_SAMPLE_TIMEOUT_MS;
+  }
+  const truncated = Math.trunc(configured);
+  return truncated > 0 ? truncated : null;
+}
 
 export class PiCompactionTimeoutError extends Error {
   readonly code = 'PI_COMPACTION_TIMEOUT';
+  readonly timeoutMs: number;
 
-  constructor() {
-    super(`Compaction sampling timed out after ${COMPACTION_SAMPLE_TIMEOUT_MS / 1_000} seconds.`);
+  constructor(timeoutMs: number) {
+    super(`Compaction sampling timed out after ${Math.round(timeoutMs / 1_000)} seconds.`);
     this.name = 'PiCompactionTimeoutError';
+    this.timeoutMs = timeoutMs;
   }
 }
 
@@ -57,14 +76,17 @@ export async function sampleCompactionNote(
     throw new Error(`Credentials not found for provider: ${model.provider}`);
   }
 
+  const timeoutMs = resolveCompactionSampleTimeoutMs(host);
   const controller = new AbortController();
   let timedOut = false;
   const abort = (): void => controller.abort();
   signal?.addEventListener('abort', abort, { once: true });
-  const timeout = window.setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, COMPACTION_SAMPLE_TIMEOUT_MS);
+  const timeout = timeoutMs === null
+    ? undefined
+    : window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
   try {
     const conversation = convertCompactionMessages(messages);
     const maxTokens = Math.min(
@@ -93,15 +115,17 @@ export async function sampleCompactionNote(
       ...(omitUnsupportedEmptyTools ? { onPayload: omitEmptyTools } : {}),
       reasoning: 'low',
       signal: controller.signal,
-      timeoutMs: COMPACTION_SAMPLE_TIMEOUT_MS,
+      // A disabled budget omits the key so provider SDKs keep their own
+      // defaults instead of receiving a literal 0 timeout.
+      ...(timeoutMs !== null ? { timeoutMs } : {}),
     });
     const response = await stream.result();
     if (response.stopReason === 'pending') {
       throw new Error('Compaction sampling ended before the provider supplied a terminal stop reason.');
     }
     if (response.stopReason === 'aborted') {
-      if (timedOut && !signal?.aborted) {
-        throw new PiCompactionTimeoutError();
+      if (timedOut && timeoutMs !== null && !signal?.aborted) {
+        throw new PiCompactionTimeoutError(timeoutMs);
       }
       throw new Error('Cancelled');
     }
@@ -126,7 +150,9 @@ export async function sampleCompactionNote(
     }
     return text;
   } finally {
-    window.clearTimeout(timeout);
+    if (timeout !== undefined) {
+      window.clearTimeout(timeout);
+    }
     signal?.removeEventListener('abort', abort);
   }
 }

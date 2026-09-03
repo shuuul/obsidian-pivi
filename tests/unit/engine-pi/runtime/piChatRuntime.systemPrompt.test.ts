@@ -275,7 +275,15 @@ ${JSON.stringify({
 const mockCompactionSample = jest.fn(async (..._args: unknown[]) => defaultCompactionSample);
 
 jest.mock('@pivi/engine-pi/piCompactionSampler', () => ({
-  PiCompactionTimeoutError: class PiCompactionTimeoutError extends Error {},
+  PiCompactionTimeoutError: class PiCompactionTimeoutError extends Error {
+    readonly code = 'PI_COMPACTION_TIMEOUT';
+    readonly timeoutMs?: number;
+    constructor(timeoutMs = 120_000) {
+      super(`Compaction sampling timed out after ${Math.round(timeoutMs / 1_000)} seconds.`);
+      this.name = 'PiCompactionTimeoutError';
+      this.timeoutMs = timeoutMs;
+    }
+  },
   sampleCompactionNote: (...args: unknown[]) => mockCompactionSample(...args),
 }));
 
@@ -1590,7 +1598,7 @@ describe('PiChatRuntime system prompt', () => {
       const internals = runtime as unknown as {
         compactionDeps(): Parameters<typeof compactCurrentSession>[0];
       };
-      mockCompactionSample.mockRejectedValue(new PiCompactionTimeoutError());
+      mockCompactionSample.mockRejectedValue(new PiCompactionTimeoutError(120_000));
 
       const handled = compactCurrentSession(internals.compactionDeps(), 'manual').catch(() => null);
       await jest.runAllTimersAsync();

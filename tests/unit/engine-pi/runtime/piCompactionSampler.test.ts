@@ -145,10 +145,154 @@ describe('sampleCompactionNote', () => {
 
       const error = await rejection;
       expect(error).toBeInstanceOf(PiCompactionTimeoutError);
-      expect(error).toMatchObject({ code: 'PI_COMPACTION_TIMEOUT' });
+      expect(error).toMatchObject({
+        code: 'PI_COMPACTION_TIMEOUT',
+        timeoutMs: 120_000,
+      });
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('follows the configured provider total deadline', async () => {
+    jest.useFakeTimers();
+    try {
+      mockStreamSimple.mockImplementation((_model, _context, options) => ({
+        result: () => new Promise(resolve => {
+          options.signal.addEventListener('abort', () => resolve({
+            content: [],
+            stopReason: 'aborted',
+          }), { once: true });
+        }),
+      }));
+
+      const sampling = sampleCompactionNote(
+        {
+          settings: {
+            model: 'mock-provider/mock-model',
+            providerRequestDeadlines: { totalMs: 300_000, idleMs: 0 },
+          },
+        } as never,
+        [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+        'Create NOTE₂.',
+      );
+      const rejection = sampling.catch((error: unknown) => error);
+      await jest.advanceTimersByTimeAsync(120_000);
+      await jest.advanceTimersByTimeAsync(180_000);
+
+      const error = await rejection;
+      expect(error).toBeInstanceOf(PiCompactionTimeoutError);
+      expect(error).toMatchObject({
+        code: 'PI_COMPACTION_TIMEOUT',
+        timeoutMs: 300_000,
+        message: expect.stringContaining('300 seconds'),
+      });
+      expect(mockStreamSimple.mock.calls[0]![2]).toMatchObject({ timeoutMs: 300_000 });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('disables the internal timer when the total deadline is zero', async () => {
+    jest.useFakeTimers();
+    try {
+      const controller = new AbortController();
+      mockStreamSimple.mockImplementation((_model, _context, options) => ({
+        result: () => new Promise(resolve => {
+          options.signal.addEventListener('abort', () => resolve({
+            content: [],
+            stopReason: 'aborted',
+          }), { once: true });
+        }),
+      }));
+
+      const sampling = sampleCompactionNote(
+        {
+          settings: {
+            model: 'mock-provider/mock-model',
+            providerRequestDeadlines: { totalMs: 0, idleMs: 0 },
+          },
+        } as never,
+        [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+        'Create NOTE₂.',
+        controller.signal,
+      );
+      const rejection = sampling.catch((error: unknown) => error);
+      await jest.advanceTimersByTimeAsync(86_400_000);
+      expect(jest.getTimerCount()).toBe(0);
+      expect(mockStreamSimple.mock.calls[0]![2]).not.toHaveProperty('timeoutMs');
+
+      controller.abort();
+      const error = await rejection;
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toContain('Cancelled');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('disables the internal timer when the total deadline truncates to zero', async () => {
+    jest.useFakeTimers();
+    try {
+      const controller = new AbortController();
+      mockStreamSimple.mockImplementation((_model, _context, options) => ({
+        result: () => new Promise(resolve => {
+          options.signal.addEventListener('abort', () => resolve({
+            content: [],
+            stopReason: 'aborted',
+          }), { once: true });
+        }),
+      }));
+
+      const sampling = sampleCompactionNote(
+        {
+          settings: {
+            model: 'mock-provider/mock-model',
+            providerRequestDeadlines: { totalMs: 0.5, idleMs: 0 },
+          },
+        } as never,
+        [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+        'Create NOTE₂.',
+        controller.signal,
+      );
+      const rejection = sampling.catch((error: unknown) => error);
+      await jest.advanceTimersByTimeAsync(86_400_000);
+      expect(jest.getTimerCount()).toBe(0);
+      expect(mockStreamSimple.mock.calls[0]![2]).not.toHaveProperty('timeoutMs');
+
+      controller.abort();
+      const error = await rejection;
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toContain('Cancelled');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('falls back to the default deadline for invalid configured values', async () => {
+    await sampleCompactionNote(
+      {
+        settings: {
+          model: 'mock-provider/mock-model',
+          providerRequestDeadlines: { totalMs: Number.NaN, idleMs: 0 },
+        },
+      } as never,
+      [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+      'Create NOTE₂.',
+    );
+    await sampleCompactionNote(
+      {
+        settings: {
+          model: 'mock-provider/mock-model',
+          providerRequestDeadlines: { totalMs: -5, idleMs: 0 },
+        },
+      } as never,
+      [{ role: 'user', content: 'context', timestamp: 1 }] as never,
+      'Create NOTE₂.',
+    );
+
+    expect(mockStreamSimple.mock.calls[0]![2]).toMatchObject({ timeoutMs: 120_000 });
+    expect(mockStreamSimple.mock.calls[1]![2]).toMatchObject({ timeoutMs: 120_000 });
   });
 
   it('reports when the checkpoint output is truncated at the token limit', async () => {
