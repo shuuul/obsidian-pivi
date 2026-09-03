@@ -1,8 +1,12 @@
 name: Quality gates
-description: Shared typecheck, lint, boundaries, coverage, build, and bundle-size gates
+description: Shared dependency audit, typecheck, lint, boundaries, coverage, build, and bundle-size gates
 runs:
   using: composite
   steps:
+    - name: Dependency audit
+      shell: bash
+      run: npm run check:dependencies
+
     - name: Typecheck
       shell: bash
       run: npm run typecheck

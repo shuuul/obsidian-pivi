@@ -8,6 +8,7 @@
     "build:css": "node scripts/build-css.mjs",
     "dev": "npm run build:css && node esbuild.config.mjs",
     "build": "node scripts/build.mjs production",
+    "check:dependencies": "npm audit --audit-level=low",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
     "check:package-readmes": "node scripts/check-package-readmes.mjs",
     "check:specs": "node scripts/check-specs.mjs",
@@ -92,7 +93,8 @@
       "@earendil-works/pi-agent-core": "$@earendil-works/pi-agent-core",
       "@earendil-works/pi-ai": "$@earendil-works/pi-ai"
     },
-    "fast-uri": "3.1.5",
+    "fast-uri": "3.1.6",
+    "qs": "6.16.0",
     "@hono/node-server": "2.1.1"
   },
   "workspaces": [

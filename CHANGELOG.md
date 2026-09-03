@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+* upgrade `fast-uri` and `qs` to patched versions and gate releases on dependency audits
+
 ## [0.24.0](https://github.com/shuuul/obsidian-pivi/compare/0.23.0...0.24.0) (2026-09-03)
 
 ### Features

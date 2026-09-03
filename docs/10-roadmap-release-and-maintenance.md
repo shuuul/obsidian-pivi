@@ -70,7 +70,7 @@ Pivi publishes from a maintainer-pushed tag. Conventional Commits still describe
 5. Commit `chore(release): prepare x.y.z` and push `main`.
 6. Confirm package, manifest, and changelog versions all agree.
 7. Create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`.
-8. The tag push directly triggers `.github/workflows/release.yaml`. That workflow runs the same mandatory quality gates as CI (typecheck, lint, boundaries, coverage, build, bundle-size) for the exact tag commit, requires a non-empty matching `CHANGELOG.md` section, uses that section as the GitHub Release notes, publishes the three assets, and compares the downloaded release bytes with the tag build. Third-party Actions are pinned to reviewed full commit SHAs.
+8. The tag push directly triggers `.github/workflows/release.yaml`. That workflow runs the same mandatory quality gates as CI (dependency audit, typecheck, lint, boundaries, coverage, build, bundle-size) for the exact tag commit, requires a non-empty matching `CHANGELOG.md` section, uses that section as the GitHub Release notes, publishes the three assets, and compares the downloaded release bytes with the tag build. Third-party Actions are pinned to reviewed full commit SHAs.
 
 The Git tag and GitHub Release tag must equal `manifest.json.version` exactly and must not have a leading `v`. Publication stays on a real `push` event at `refs/tags/x.y.z` so the provenance identity is the maintainer-pushed tag.
 
