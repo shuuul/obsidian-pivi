@@ -220,9 +220,9 @@ describe('Settings primitives', () => {
     const toggle = screen.getByRole('button', { name: 'alpha' });
     const header = toggle.closest('.pivi-settings-card__header') as HTMLElement;
     mockCardRects(Array.from(container.querySelectorAll<HTMLElement>('.pivi-settings-card')));
-    header.setPointerCapture = jest.fn();
-    header.releasePointerCapture = jest.fn();
-    header.hasPointerCapture = jest.fn(() => true);
+    toggle.setPointerCapture = jest.fn();
+    toggle.releasePointerCapture = jest.fn();
+    toggle.hasPointerCapture = jest.fn(() => true);
 
     fireEvent(toggle, pointerEvent('pointerdown', 10));
     for (const clientY of [20, 60, 100, 150, 190, 250, 350]) {
@@ -234,6 +234,24 @@ describe('Settings primitives', () => {
     const cards = document.querySelectorAll('.pivi-settings-card');
     expect(cards[0]).toHaveAttribute('data-settings-sort-id', 'beta');
     expect(cards[1]).toHaveAttribute('data-settings-sort-id', 'alpha');
+  });
+
+  it('keeps a pointer tap captured by the disclosure button so it receives the click', () => {
+    renderPrimitives(<SortableCards />);
+    const toggle = screen.getByRole('button', { name: 'alpha' });
+    const header = toggle.closest('.pivi-settings-card__header') as HTMLElement;
+    toggle.setPointerCapture = jest.fn();
+    toggle.releasePointerCapture = jest.fn();
+    toggle.hasPointerCapture = jest.fn(() => true);
+    header.setPointerCapture = jest.fn();
+
+    fireEvent(toggle, pointerEvent('pointerdown', 10));
+    fireEvent(header, pointerEvent('pointerup', 10));
+
+    expect(header.setPointerCapture).not.toHaveBeenCalled();
+    expect(toggle.setPointerCapture).toHaveBeenCalledWith(1);
+    fireEvent.click(toggle);
+    expect(screen.getByText('Body alpha')).toBeInTheDocument();
   });
 
   it('does not start a pointer drag from inline action buttons', async () => {
@@ -262,10 +280,10 @@ describe('Settings primitives', () => {
     const items = () => Array.from(container.querySelectorAll<HTMLElement>('.hook-item'));
     const prepare = (): void => {
       mockCardRects(items());
-      for (const item of items()) {
-        item.setPointerCapture = jest.fn();
-        item.releasePointerCapture = jest.fn();
-        item.hasPointerCapture = jest.fn(() => true);
+      for (const surface of container.querySelectorAll<HTMLElement>('[data-sortable-surface]')) {
+        surface.setPointerCapture = jest.fn();
+        surface.releasePointerCapture = jest.fn();
+        surface.hasPointerCapture = jest.fn(() => true);
       }
     };
 

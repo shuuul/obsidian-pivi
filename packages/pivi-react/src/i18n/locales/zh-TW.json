@@ -66,9 +66,65 @@
       "deny": "拒絕",
       "management": {
         "titles": { "mcp": { "upsert": "更新 MCP 伺服器「{name}」", "enable": "啟用 MCP 伺服器「{name}」", "disable": "停用 MCP 伺服器「{name}」", "remove": "移除 MCP 伺服器「{name}」" }, "skills": { "install": "從「{source}」安裝 Skills", "enable": "啟用 Skill「{name}」", "disable": "停用 Skill「{name}」", "update": "更新 Skill「{name}」", "updateAll": "更新所有由套件管理的 Skills", "remove": "移除 Skill「{name}」" }, "commands": { "upsert": "儲存命令 {command}", "remove": "移除命令 {command}", "move": "移動命令 {command}" }, "prompt": { "enable": "啟用提示模組「{name}」", "disable": "停用提示模組「{name}」", "setBody": "更新提示模組「{name}」", "restore": "還原提示模組「{name}」", "create": "新增提示模組「{name}」", "update": "更新提示模組「{name}」", "remove": "移除提示模組「{name}」", "move": "移動提示模組「{name}」" } },
-        "changes": { "mcpUpsert": "套用規劃的 MCP 伺服器設定。", "mcpEnable": "啟用此 MCP 伺服器。", "mcpDisable": "停用此 MCP 伺服器。", "mcpRemove": "移除此 MCP 伺服器及其憑證。", "skillsInstall": "透過鎖定的套件流程安裝 Skills。", "skillsEnable": "啟用此 Skill。", "skillsDisable": "停用此 Skill。", "skillsUpdate": "從套件來源更新此 Skill。", "skillsUpdateAll": "更新所有由套件管理的 Skills。", "skillsRemove": "從工作區移除此 Skill。", "commandsUpsert": "建立或更新此工作區命令。", "commandsRemove": "刪除此工作區命令。", "commandsMove": "重新排序此工作區命令。", "promptEnable": "啟用此提示模組。", "promptDisable": "停用此提示模組。", "promptSetBody": "替換此提示模組的正文。", "promptRestore": "將此提示模組還原為隨附預設值。", "promptCreate": "建立此自訂提示模組。", "promptUpdate": "更新此自訂提示模組。", "promptRemove": "刪除此自訂提示模組。", "promptMove": "重新排序此自訂提示模組。" },
-        "fields": { "server": "伺服器", "enabled": "已啟用", "type": "類型", "command": "命令", "args": "引數", "envNames": "環境變數名稱", "url": "URL", "auth": "驗證", "headerNames": "標頭名稱", "bearerToken": "Bearer 權杖", "oauth": "OAuth", "oauthGrant": "OAuth 授權", "oauthClientId": "OAuth 用戶端 ID", "oauthScope": "OAuth 範圍", "oauthClientSecret": "OAuth 用戶端密鑰", "contextSaving": "節省上下文", "disabledTools": "已停用工具", "source": "來源", "skills": "Skills", "skill": "Skill", "catalogRevision": "目錄修訂版本", "icon": "圖示", "prompt": "提示詞", "before": "之前", "after": "之後", "module": "模組", "title": "標題" },
-        "values": { "yes": "是", "no": "否", "clear": "清除", "disabled": "已停用", "updated": "已更新" }
+        "changes": {
+          "mcpUpsert": "套用規劃的 MCP 伺服器設定。",
+          "mcpEnable": "啟用此 MCP 伺服器。",
+          "mcpDisable": "停用此 MCP 伺服器。",
+          "mcpRemove": "移除此 MCP 伺服器及其憑證。",
+          "skillsInstall": "透過鎖定的套件流程安裝 Skills。",
+          "skillsEnable": "啟用此 Skill。",
+          "skillsDisable": "停用此 Skill。",
+          "skillsUpdate": "從套件來源更新此 Skill。",
+          "skillsUpdateAll": "更新所有由套件管理的 Skills。",
+          "skillsRemove": "從工作區移除此 Skill。",
+          "commandsUpsert": "建立或更新此工作區命令。",
+          "commandsRemove": "刪除此工作區命令。",
+          "commandsMove": "重新排序此工作區命令。",
+          "promptEnable": "啟用此提示模組。",
+          "promptDisable": "停用此提示模組。",
+          "promptSetBody": "替換此提示模組的正文。",
+          "promptRestore": "將此提示模組還原為隨附預設值。",
+          "promptCreate": "建立此自訂提示模組。",
+          "promptUpdate": "更新此自訂提示模組。",
+          "promptRemove": "刪除此自訂提示模組。",
+          "promptMove": "重新排序此自訂提示模組。"
+        },
+        "fields": {
+          "server": "伺服器",
+          "enabled": "已啟用",
+          "type": "類型",
+          "command": "命令",
+          "args": "引數",
+          "envNames": "環境變數名稱",
+          "url": "URL",
+          "auth": "驗證",
+          "headerNames": "標頭名稱",
+          "bearerToken": "Bearer 權杖",
+          "oauth": "OAuth",
+          "oauthGrant": "OAuth 授權",
+          "oauthClientId": "OAuth 用戶端 ID",
+          "oauthScope": "OAuth 範圍",
+          "oauthClientSecret": "OAuth 用戶端密鑰",
+          "contextSaving": "節省上下文",
+          "disabledTools": "已停用工具",
+          "source": "來源",
+          "skills": "Skills",
+          "skill": "Skill",
+          "catalogRevision": "目錄修訂版本",
+          "icon": "圖示",
+          "prompt": "提示詞",
+          "before": "之前",
+          "after": "之後",
+          "module": "模組",
+          "title": "標題"
+        },
+        "values": {
+          "yes": "是",
+          "no": "否",
+          "clear": "清除",
+          "disabled": "已停用",
+          "updated": "已更新"
+        }
       }
     },
     "capabilityApproval": {
@@ -338,8 +394,7 @@
   "settings": {
     "groups": {
       "agent": "智慧體",
-      "editor": "編輯器",
-      "general": "一般"
+      "editor": "編輯器"
     },
     "pages": {
       "general": {
@@ -382,7 +437,8 @@
         "label": "工具列",
         "description": "編輯器選取範圍工具列動作。"
       }
-    },    "setup": {
+    },
+    "setup": {
       "getApiKeyAt": "前往 {host} 取得 API key",
       "download": "下載",
       "openDocs": "開啟文件"
@@ -411,8 +467,14 @@
     "chatBehavior": "聊天行為",
     "providerRequests": {
       "title": "供應商請求",
-      "total": { "name": "總逾時（秒）", "desc": "一次供應商請求（含串流回應本文）的最長時間。設為 0 表示永不逾時。" },
-      "idle": { "name": "閒置逾時（秒）", "desc": "未收到回應位元組的最長時間。設為 0 表示永不逾時。" }
+      "total": {
+        "name": "總逾時（秒）",
+        "desc": "一次供應商請求（含串流回應本文）的最長時間。設為 0 表示永不逾時。"
+      },
+      "idle": {
+        "name": "閒置逾時（秒）",
+        "desc": "未收到回應位元組的最長時間。設為 0 表示永不逾時。"
+      }
     },
     "personalizationContext": "個人化與上下文",
     "inputShortcuts": "輸入與快捷鍵",
@@ -978,8 +1040,12 @@
         "estimatedTokens": "{count} 估算",
         "total": "合計"
       },
-      "workflow": { "heading": "工作流" },
-      "custom": { "heading": "自訂" },
+      "workflow": {
+        "heading": "工作流"
+      },
+      "custom": {
+        "heading": "自訂"
+      },
       "modified": "已修改",
       "restore": "還原預設",
       "bodyLabel": "模組正文",

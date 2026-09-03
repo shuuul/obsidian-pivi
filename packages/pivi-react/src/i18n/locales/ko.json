@@ -66,9 +66,65 @@
       "deny": "거부",
       "management": {
         "titles": { "mcp": { "upsert": "MCP 서버 “{name}” 업데이트", "enable": "MCP 서버 “{name}” 활성화", "disable": "MCP 서버 “{name}” 비활성화", "remove": "MCP 서버 “{name}” 제거" }, "skills": { "install": "“{source}”에서 Skills 설치", "enable": "Skill “{name}” 활성화", "disable": "Skill “{name}” 비활성화", "update": "Skill “{name}” 업데이트", "updateAll": "패키지로 관리되는 모든 Skills 업데이트", "remove": "Skill “{name}” 제거" }, "commands": { "upsert": "명령 {command} 저장", "remove": "명령 {command} 제거", "move": "명령 {command} 이동" }, "prompt": { "enable": "프롬프트 모듈 “{name}” 활성화", "disable": "프롬프트 모듈 “{name}” 비활성화", "setBody": "프롬프트 모듈 “{name}” 업데이트", "restore": "프롬프트 모듈 “{name}” 복원", "create": "프롬프트 모듈 “{name}” 추가", "update": "프롬프트 모듈 “{name}” 업데이트", "remove": "프롬프트 모듈 “{name}” 제거", "move": "프롬프트 모듈 “{name}” 이동" } },
-        "changes": { "mcpUpsert": "계획된 MCP 서버 구성을 적용합니다.", "mcpEnable": "이 MCP 서버를 활성화합니다.", "mcpDisable": "이 MCP 서버를 비활성화합니다.", "mcpRemove": "이 MCP 서버와 자격 증명을 제거합니다.", "skillsInstall": "고정된 패키지 절차로 Skills를 설치합니다.", "skillsEnable": "이 Skill을 활성화합니다.", "skillsDisable": "이 Skill을 비활성화합니다.", "skillsUpdate": "패키지 출처에서 이 Skill을 업데이트합니다.", "skillsUpdateAll": "패키지로 관리되는 모든 Skills를 업데이트합니다.", "skillsRemove": "워크스페이스에서 이 Skill을 제거합니다.", "commandsUpsert": "이 워크스페이스 명령을 만들거나 업데이트합니다.", "commandsRemove": "이 워크스페이스 명령을 삭제합니다.", "commandsMove": "이 워크스페이스 명령의 순서를 바꿉니다.", "promptEnable": "이 프롬프트 모듈을 활성화합니다.", "promptDisable": "이 프롬프트 모듈을 비활성화합니다.", "promptSetBody": "이 프롬프트 모듈의 본문을 교체합니다.", "promptRestore": "이 프롬프트 모듈을 제공된 기본값으로 복원합니다.", "promptCreate": "이 사용자 지정 프롬프트 모듈을 만듭니다.", "promptUpdate": "이 사용자 지정 프롬프트 모듈을 업데이트합니다.", "promptRemove": "이 사용자 지정 프롬프트 모듈을 삭제합니다.", "promptMove": "이 사용자 지정 프롬프트 모듈의 순서를 바꿉니다." },
-        "fields": { "server": "서버", "enabled": "활성화", "type": "유형", "command": "명령", "args": "인수", "envNames": "환경 변수 이름", "url": "URL", "auth": "인증", "headerNames": "헤더 이름", "bearerToken": "Bearer 토큰", "oauth": "OAuth", "oauthGrant": "OAuth 권한 부여", "oauthClientId": "OAuth 클라이언트 ID", "oauthScope": "OAuth 범위", "oauthClientSecret": "OAuth 클라이언트 비밀", "contextSaving": "컨텍스트 절약", "disabledTools": "비활성화된 도구", "source": "소스", "skills": "Skills", "skill": "Skill", "catalogRevision": "카탈로그 리비전", "icon": "아이콘", "prompt": "프롬프트", "before": "앞", "after": "뒤", "module": "모듈", "title": "제목" },
-        "values": { "yes": "예", "no": "아니요", "clear": "지우기", "disabled": "비활성화", "updated": "업데이트됨" }
+        "changes": {
+          "mcpUpsert": "계획된 MCP 서버 구성을 적용합니다.",
+          "mcpEnable": "이 MCP 서버를 활성화합니다.",
+          "mcpDisable": "이 MCP 서버를 비활성화합니다.",
+          "mcpRemove": "이 MCP 서버와 자격 증명을 제거합니다.",
+          "skillsInstall": "고정된 패키지 절차로 Skills를 설치합니다.",
+          "skillsEnable": "이 Skill을 활성화합니다.",
+          "skillsDisable": "이 Skill을 비활성화합니다.",
+          "skillsUpdate": "패키지 출처에서 이 Skill을 업데이트합니다.",
+          "skillsUpdateAll": "패키지로 관리되는 모든 Skills를 업데이트합니다.",
+          "skillsRemove": "워크스페이스에서 이 Skill을 제거합니다.",
+          "commandsUpsert": "이 워크스페이스 명령을 만들거나 업데이트합니다.",
+          "commandsRemove": "이 워크스페이스 명령을 삭제합니다.",
+          "commandsMove": "이 워크스페이스 명령의 순서를 바꿉니다.",
+          "promptEnable": "이 프롬프트 모듈을 활성화합니다.",
+          "promptDisable": "이 프롬프트 모듈을 비활성화합니다.",
+          "promptSetBody": "이 프롬프트 모듈의 본문을 교체합니다.",
+          "promptRestore": "이 프롬프트 모듈을 제공된 기본값으로 복원합니다.",
+          "promptCreate": "이 사용자 지정 프롬프트 모듈을 만듭니다.",
+          "promptUpdate": "이 사용자 지정 프롬프트 모듈을 업데이트합니다.",
+          "promptRemove": "이 사용자 지정 프롬프트 모듈을 삭제합니다.",
+          "promptMove": "이 사용자 지정 프롬프트 모듈의 순서를 바꿉니다."
+        },
+        "fields": {
+          "server": "서버",
+          "enabled": "활성화",
+          "type": "유형",
+          "command": "명령",
+          "args": "인수",
+          "envNames": "환경 변수 이름",
+          "url": "URL",
+          "auth": "인증",
+          "headerNames": "헤더 이름",
+          "bearerToken": "Bearer 토큰",
+          "oauth": "OAuth",
+          "oauthGrant": "OAuth 권한 부여",
+          "oauthClientId": "OAuth 클라이언트 ID",
+          "oauthScope": "OAuth 범위",
+          "oauthClientSecret": "OAuth 클라이언트 비밀",
+          "contextSaving": "컨텍스트 절약",
+          "disabledTools": "비활성화된 도구",
+          "source": "소스",
+          "skills": "Skills",
+          "skill": "Skill",
+          "catalogRevision": "카탈로그 리비전",
+          "icon": "아이콘",
+          "prompt": "프롬프트",
+          "before": "앞",
+          "after": "뒤",
+          "module": "모듈",
+          "title": "제목"
+        },
+        "values": {
+          "yes": "예",
+          "no": "아니요",
+          "clear": "지우기",
+          "disabled": "비활성화",
+          "updated": "업데이트됨"
+        }
       }
     },
     "capabilityApproval": {
@@ -338,8 +394,7 @@
   "settings": {
     "groups": {
       "agent": "에이전트",
-      "editor": "편집기",
-      "general": "일반"
+      "editor": "편집기"
     },
     "pages": {
       "general": {
@@ -382,7 +437,8 @@
         "label": "툴바",
         "description": "편집기 선택 툴바 동작."
       }
-    },    "setup": {
+    },
+    "setup": {
       "getApiKeyAt": "{host}에서 API key 받기",
       "download": "다운로드",
       "openDocs": "문서 열기"
@@ -411,8 +467,14 @@
     "chatBehavior": "채팅 동작",
     "providerRequests": {
       "title": "공급자 요청",
-      "total": { "name": "전체 제한 시간(초)", "desc": "스트리밍 응답을 포함한 요청의 최대 시간입니다. 0이면 비활성화됩니다." },
-      "idle": { "name": "유휴 제한 시간(초)", "desc": "응답 바이트가 없는 최대 시간입니다. 0이면 비활성화됩니다." }
+      "total": {
+        "name": "전체 제한 시간(초)",
+        "desc": "스트리밍 응답을 포함한 요청의 최대 시간입니다. 0이면 비활성화됩니다."
+      },
+      "idle": {
+        "name": "유휴 제한 시간(초)",
+        "desc": "응답 바이트가 없는 최대 시간입니다. 0이면 비활성화됩니다."
+      }
     },
     "personalizationContext": "개인화 및 컨텍스트",
     "inputShortcuts": "입력 및 단축키",
@@ -978,8 +1040,12 @@
         "estimatedTokens": "{count} 추정",
         "total": "합계"
       },
-      "workflow": { "heading": "워크플로" },
-      "custom": { "heading": "사용자 지정" },
+      "workflow": {
+        "heading": "워크플로"
+      },
+      "custom": {
+        "heading": "사용자 지정"
+      },
       "modified": "수정됨",
       "restore": "기본값 복원",
       "bodyLabel": "모듈 본문",

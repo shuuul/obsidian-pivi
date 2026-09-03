@@ -66,9 +66,65 @@
       "deny": "Отклонить",
       "management": {
         "titles": { "mcp": { "upsert": "Обновить MCP-сервер «{name}»", "enable": "Включить MCP-сервер «{name}»", "disable": "Отключить MCP-сервер «{name}»", "remove": "Удалить MCP-сервер «{name}»" }, "skills": { "install": "Установить Skills из «{source}»", "enable": "Включить Skill «{name}»", "disable": "Отключить Skill «{name}»", "update": "Обновить Skill «{name}»", "updateAll": "Обновить все Skills из пакетов", "remove": "Удалить Skill «{name}»" }, "commands": { "upsert": "Сохранить команду {command}", "remove": "Удалить команду {command}", "move": "Переместить команду {command}" }, "prompt": { "enable": "Включить модуль промпта «{name}»", "disable": "Отключить модуль промпта «{name}»", "setBody": "Обновить модуль промпта «{name}»", "restore": "Восстановить модуль промпта «{name}»", "create": "Добавить модуль промпта «{name}»", "update": "Обновить модуль промпта «{name}»", "remove": "Удалить модуль промпта «{name}»", "move": "Переместить модуль промпта «{name}»" } },
-        "changes": { "mcpUpsert": "Применить запланированную конфигурацию MCP-сервера.", "mcpEnable": "Включить этот MCP-сервер.", "mcpDisable": "Отключить этот MCP-сервер.", "mcpRemove": "Удалить этот MCP-сервер и его учётные данные.", "skillsInstall": "Установить Skills через закреплённый пакетный процесс.", "skillsEnable": "Включить этот Skill.", "skillsDisable": "Отключить этот Skill.", "skillsUpdate": "Обновить этот Skill из исходного пакета.", "skillsUpdateAll": "Обновить все Skills из пакетов.", "skillsRemove": "Удалить этот Skill из рабочего пространства.", "commandsUpsert": "Создать или обновить эту команду рабочего пространства.", "commandsRemove": "Удалить эту команду рабочего пространства.", "commandsMove": "Изменить порядок этой команды рабочего пространства.", "promptEnable": "Включить этот модуль промпта.", "promptDisable": "Отключить этот модуль промпта.", "promptSetBody": "Заменить текст этого модуля промпта.", "promptRestore": "Восстановить этот модуль промпта до поставленного значения.", "promptCreate": "Создать этот пользовательский модуль промпта.", "promptUpdate": "Обновить этот пользовательский модуль промпта.", "promptRemove": "Удалить этот пользовательский модуль промпта.", "promptMove": "Изменить порядок этого пользовательского модуля промпта." },
-        "fields": { "server": "Сервер", "enabled": "Включён", "type": "Тип", "command": "Команда", "args": "Аргументы", "envNames": "Переменные окружения", "url": "URL", "auth": "Аутентификация", "headerNames": "Имена заголовков", "bearerToken": "Bearer-токен", "oauth": "OAuth", "oauthGrant": "Разрешение OAuth", "oauthClientId": "ID клиента OAuth", "oauthScope": "Область OAuth", "oauthClientSecret": "Секрет клиента OAuth", "contextSaving": "Экономия контекста", "disabledTools": "Отключённые инструменты", "source": "Источник", "skills": "Skills", "skill": "Skill", "catalogRevision": "Ревизия каталога", "icon": "Значок", "prompt": "Промпт", "before": "Перед", "after": "После", "module": "Модуль", "title": "Название" },
-        "values": { "yes": "Да", "no": "Нет", "clear": "Очистить", "disabled": "Отключено", "updated": "Обновлено" }
+        "changes": {
+          "mcpUpsert": "Применить запланированную конфигурацию MCP-сервера.",
+          "mcpEnable": "Включить этот MCP-сервер.",
+          "mcpDisable": "Отключить этот MCP-сервер.",
+          "mcpRemove": "Удалить этот MCP-сервер и его учётные данные.",
+          "skillsInstall": "Установить Skills через закреплённый пакетный процесс.",
+          "skillsEnable": "Включить этот Skill.",
+          "skillsDisable": "Отключить этот Skill.",
+          "skillsUpdate": "Обновить этот Skill из исходного пакета.",
+          "skillsUpdateAll": "Обновить все Skills из пакетов.",
+          "skillsRemove": "Удалить этот Skill из рабочего пространства.",
+          "commandsUpsert": "Создать или обновить эту команду рабочего пространства.",
+          "commandsRemove": "Удалить эту команду рабочего пространства.",
+          "commandsMove": "Изменить порядок этой команды рабочего пространства.",
+          "promptEnable": "Включить этот модуль промпта.",
+          "promptDisable": "Отключить этот модуль промпта.",
+          "promptSetBody": "Заменить текст этого модуля промпта.",
+          "promptRestore": "Восстановить этот модуль промпта до поставленного значения.",
+          "promptCreate": "Создать этот пользовательский модуль промпта.",
+          "promptUpdate": "Обновить этот пользовательский модуль промпта.",
+          "promptRemove": "Удалить этот пользовательский модуль промпта.",
+          "promptMove": "Изменить порядок этого пользовательского модуля промпта."
+        },
+        "fields": {
+          "server": "Сервер",
+          "enabled": "Включён",
+          "type": "Тип",
+          "command": "Команда",
+          "args": "Аргументы",
+          "envNames": "Переменные окружения",
+          "url": "URL",
+          "auth": "Аутентификация",
+          "headerNames": "Имена заголовков",
+          "bearerToken": "Bearer-токен",
+          "oauth": "OAuth",
+          "oauthGrant": "Разрешение OAuth",
+          "oauthClientId": "ID клиента OAuth",
+          "oauthScope": "Область OAuth",
+          "oauthClientSecret": "Секрет клиента OAuth",
+          "contextSaving": "Экономия контекста",
+          "disabledTools": "Отключённые инструменты",
+          "source": "Источник",
+          "skills": "Skills",
+          "skill": "Skill",
+          "catalogRevision": "Ревизия каталога",
+          "icon": "Значок",
+          "prompt": "Промпт",
+          "before": "Перед",
+          "after": "После",
+          "module": "Модуль",
+          "title": "Название"
+        },
+        "values": {
+          "yes": "Да",
+          "no": "Нет",
+          "clear": "Очистить",
+          "disabled": "Отключено",
+          "updated": "Обновлено"
+        }
       }
     },
     "capabilityApproval": {
@@ -338,8 +394,7 @@
   "settings": {
     "groups": {
       "agent": "Агент",
-      "editor": "Редактор",
-      "general": "Общие"
+      "editor": "Редактор"
     },
     "pages": {
       "general": {
@@ -382,7 +437,8 @@
         "label": "Панель инструментов",
         "description": "Действия панели выделения в редакторе."
       }
-    },    "setup": {
+    },
+    "setup": {
       "getApiKeyAt": "Получить API key на {host}",
       "download": "Скачать",
       "openDocs": "Открыть документацию"
@@ -411,8 +467,14 @@
     "chatBehavior": "Поведение чата",
     "providerRequests": {
       "title": "Запросы к провайдеру",
-      "total": { "name": "Общий тайм-аут (секунды)", "desc": "Максимальное время запроса, включая потоковый ответ. 0 отключает тайм-аут." },
-      "idle": { "name": "Тайм-аут простоя (секунды)", "desc": "Максимальное время без байтов ответа. 0 отключает тайм-аут." }
+      "total": {
+        "name": "Общий тайм-аут (секунды)",
+        "desc": "Максимальное время запроса, включая потоковый ответ. 0 отключает тайм-аут."
+      },
+      "idle": {
+        "name": "Тайм-аут простоя (секунды)",
+        "desc": "Максимальное время без байтов ответа. 0 отключает тайм-аут."
+      }
     },
     "personalizationContext": "Персонализация и контекст",
     "inputShortcuts": "Ввод и сочетания клавиш",
@@ -978,8 +1040,12 @@
         "estimatedTokens": "{count} оценка",
         "total": "Итого"
       },
-      "workflow": { "heading": "Рабочий процесс" },
-      "custom": { "heading": "Пользовательские" },
+      "workflow": {
+        "heading": "Рабочий процесс"
+      },
+      "custom": {
+        "heading": "Пользовательские"
+      },
       "modified": "Изменено",
       "restore": "Восстановить по умолчанию",
       "bodyLabel": "Текст модуля",

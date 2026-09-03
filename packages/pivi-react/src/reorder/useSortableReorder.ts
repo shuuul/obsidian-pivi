@@ -20,6 +20,7 @@ function isExcludedPointerTarget(target: EventTarget | null, currentTarget: Even
 interface PointerDrag<ItemId extends string> {
   readonly id: ItemId;
   readonly pointerId: number;
+  readonly captureTarget: Element;
   readonly startY: number;
   readonly grabOffset: number;
   readonly originalOrder: readonly ItemId[];
@@ -113,10 +114,14 @@ export function useSortableReorder<
     event.stopPropagation();
     const item = event.currentTarget.closest<HTMLElement>(options.itemSelector);
     if (!item) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    const captureTarget = event.target instanceof Element
+      ? event.target.closest(SORTABLE_SURFACE_SELECTOR) ?? event.currentTarget
+      : event.currentTarget;
+    captureTarget.setPointerCapture(event.pointerId);
     pointerDragRef.current = {
       id,
       pointerId: event.pointerId,
+      captureTarget,
       startY: event.clientY,
       grabOffset: event.clientY - item.getBoundingClientRect().top,
       originalOrder: [...orderRef.current],
@@ -161,8 +166,8 @@ export function useSortableReorder<
     const drag = pointerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     pointerDragRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+    if (drag.captureTarget.hasPointerCapture(event.pointerId)) {
+      drag.captureTarget.releasePointerCapture(event.pointerId);
     }
     setDraggingId(null);
     setDragOffset(0);

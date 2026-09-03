@@ -350,8 +350,7 @@
   "settings": {
     "groups": {
       "agent": "Agent",
-      "editor": "Editor",
-      "general": "General"
+      "editor": "Editor"
     },
     "pages": {
       "general": {

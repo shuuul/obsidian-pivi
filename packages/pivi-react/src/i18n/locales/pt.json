@@ -66,9 +66,65 @@
       "deny": "Recusar",
       "management": {
         "titles": { "mcp": { "upsert": "Atualizar servidor MCP “{name}”", "enable": "Ativar servidor MCP “{name}”", "disable": "Desativar servidor MCP “{name}”", "remove": "Remover servidor MCP “{name}”" }, "skills": { "install": "Instalar Skills de “{source}”", "enable": "Ativar Skill “{name}”", "disable": "Desativar Skill “{name}”", "update": "Atualizar Skill “{name}”", "updateAll": "Atualizar todos os Skills geridos por pacotes", "remove": "Remover Skill “{name}”" }, "commands": { "upsert": "Guardar comando {command}", "remove": "Remover comando {command}", "move": "Mover comando {command}" }, "prompt": { "enable": "Ativar o módulo de prompt “{name}”", "disable": "Desativar o módulo de prompt “{name}”", "setBody": "Atualizar o módulo de prompt “{name}”", "restore": "Restaurar o módulo de prompt “{name}”", "create": "Adicionar o módulo de prompt “{name}”", "update": "Atualizar o módulo de prompt “{name}”", "remove": "Remover o módulo de prompt “{name}”", "move": "Mover o módulo de prompt “{name}”" } },
-        "changes": { "mcpUpsert": "Aplicar a configuração planeada do servidor MCP.", "mcpEnable": "Ativar este servidor MCP.", "mcpDisable": "Desativar este servidor MCP.", "mcpRemove": "Remover este servidor MCP e as suas credenciais.", "skillsInstall": "Instalar Skills pelo fluxo de pacotes fixado.", "skillsEnable": "Ativar este Skill.", "skillsDisable": "Desativar este Skill.", "skillsUpdate": "Atualizar este Skill a partir do pacote de origem.", "skillsUpdateAll": "Atualizar todos os Skills geridos por pacotes.", "skillsRemove": "Remover este Skill do espaço de trabalho.", "commandsUpsert": "Criar ou atualizar este comando do espaço de trabalho.", "commandsRemove": "Eliminar este comando do espaço de trabalho.", "commandsMove": "Reordenar este comando do espaço de trabalho.", "promptEnable": "Ativar este módulo de prompt.", "promptDisable": "Desativar este módulo de prompt.", "promptSetBody": "Substituir o corpo deste módulo de prompt.", "promptRestore": "Restaurar este módulo de prompt para o valor enviado.", "promptCreate": "Criar este módulo de prompt personalizado.", "promptUpdate": "Atualizar este módulo de prompt personalizado.", "promptRemove": "Eliminar este módulo de prompt personalizado.", "promptMove": "Reordenar este módulo de prompt personalizado." },
-        "fields": { "server": "Servidor", "enabled": "Ativado", "type": "Tipo", "command": "Comando", "args": "Argumentos", "envNames": "Variáveis de ambiente", "url": "URL", "auth": "Autenticação", "headerNames": "Nomes de cabeçalhos", "bearerToken": "Token Bearer", "oauth": "OAuth", "oauthGrant": "Concessão OAuth", "oauthClientId": "ID de cliente OAuth", "oauthScope": "Âmbito OAuth", "oauthClientSecret": "Segredo de cliente OAuth", "contextSaving": "Poupança de contexto", "disabledTools": "Ferramentas desativadas", "source": "Origem", "skills": "Skills", "skill": "Skill", "catalogRevision": "Revisão do catálogo", "icon": "Ícone", "prompt": "Prompt", "before": "Antes", "after": "Depois", "module": "Módulo", "title": "Título" },
-        "values": { "yes": "Sim", "no": "Não", "clear": "Limpar", "disabled": "Desativado", "updated": "Atualizado" }
+        "changes": {
+          "mcpUpsert": "Aplicar a configuração planeada do servidor MCP.",
+          "mcpEnable": "Ativar este servidor MCP.",
+          "mcpDisable": "Desativar este servidor MCP.",
+          "mcpRemove": "Remover este servidor MCP e as suas credenciais.",
+          "skillsInstall": "Instalar Skills pelo fluxo de pacotes fixado.",
+          "skillsEnable": "Ativar este Skill.",
+          "skillsDisable": "Desativar este Skill.",
+          "skillsUpdate": "Atualizar este Skill a partir do pacote de origem.",
+          "skillsUpdateAll": "Atualizar todos os Skills geridos por pacotes.",
+          "skillsRemove": "Remover este Skill do espaço de trabalho.",
+          "commandsUpsert": "Criar ou atualizar este comando do espaço de trabalho.",
+          "commandsRemove": "Eliminar este comando do espaço de trabalho.",
+          "commandsMove": "Reordenar este comando do espaço de trabalho.",
+          "promptEnable": "Ativar este módulo de prompt.",
+          "promptDisable": "Desativar este módulo de prompt.",
+          "promptSetBody": "Substituir o corpo deste módulo de prompt.",
+          "promptRestore": "Restaurar este módulo de prompt para o valor enviado.",
+          "promptCreate": "Criar este módulo de prompt personalizado.",
+          "promptUpdate": "Atualizar este módulo de prompt personalizado.",
+          "promptRemove": "Eliminar este módulo de prompt personalizado.",
+          "promptMove": "Reordenar este módulo de prompt personalizado."
+        },
+        "fields": {
+          "server": "Servidor",
+          "enabled": "Ativado",
+          "type": "Tipo",
+          "command": "Comando",
+          "args": "Argumentos",
+          "envNames": "Variáveis de ambiente",
+          "url": "URL",
+          "auth": "Autenticação",
+          "headerNames": "Nomes de cabeçalhos",
+          "bearerToken": "Token Bearer",
+          "oauth": "OAuth",
+          "oauthGrant": "Concessão OAuth",
+          "oauthClientId": "ID de cliente OAuth",
+          "oauthScope": "Âmbito OAuth",
+          "oauthClientSecret": "Segredo de cliente OAuth",
+          "contextSaving": "Poupança de contexto",
+          "disabledTools": "Ferramentas desativadas",
+          "source": "Origem",
+          "skills": "Skills",
+          "skill": "Skill",
+          "catalogRevision": "Revisão do catálogo",
+          "icon": "Ícone",
+          "prompt": "Prompt",
+          "before": "Antes",
+          "after": "Depois",
+          "module": "Módulo",
+          "title": "Título"
+        },
+        "values": {
+          "yes": "Sim",
+          "no": "Não",
+          "clear": "Limpar",
+          "disabled": "Desativado",
+          "updated": "Atualizado"
+        }
       }
     },
     "capabilityApproval": {
@@ -338,8 +394,7 @@
   "settings": {
     "groups": {
       "agent": "Agente",
-      "editor": "Editor",
-      "general": "Geral"
+      "editor": "Editor"
     },
     "pages": {
       "general": {
@@ -382,7 +437,8 @@
         "label": "Barra de ferramentas",
         "description": "Ações da barra de ferramentas de seleção do editor."
       }
-    },    "setup": {
+    },
+    "setup": {
       "getApiKeyAt": "Obter API key em {host}",
       "download": "Baixar",
       "openDocs": "Abrir docs"
@@ -411,8 +467,14 @@
     "chatBehavior": "Comportamento do chat",
     "providerRequests": {
       "title": "Solicitações ao provedor",
-      "total": { "name": "Tempo total (segundos)", "desc": "Tempo máximo de uma solicitação, incluindo a resposta transmitida. Use 0 para desativar." },
-      "idle": { "name": "Tempo ocioso (segundos)", "desc": "Tempo máximo sem receber bytes. Use 0 para desativar." }
+      "total": {
+        "name": "Tempo total (segundos)",
+        "desc": "Tempo máximo de uma solicitação, incluindo a resposta transmitida. Use 0 para desativar."
+      },
+      "idle": {
+        "name": "Tempo ocioso (segundos)",
+        "desc": "Tempo máximo sem receber bytes. Use 0 para desativar."
+      }
     },
     "personalizationContext": "Personalização e contexto",
     "inputShortcuts": "Entrada e atalhos",
@@ -978,8 +1040,12 @@
         "estimatedTokens": "{count} estimativa",
         "total": "Total"
       },
-      "workflow": { "heading": "Fluxo de trabalho" },
-      "custom": { "heading": "Personalizado" },
+      "workflow": {
+        "heading": "Fluxo de trabalho"
+      },
+      "custom": {
+        "heading": "Personalizado"
+      },
       "modified": "Modificado",
       "restore": "Restaurar padrão",
       "bodyLabel": "Corpo do módulo",

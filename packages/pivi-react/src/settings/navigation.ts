@@ -193,6 +193,7 @@ export type SettingsRootEntry =
   };
 
 export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[] = [
+  { kind: 'content', page: 'general' },
   { kind: 'page', page: 'models' },
   {
     kind: 'group',
@@ -213,12 +214,5 @@ export const SETTINGS_ROOT_LAYOUT: readonly SettingsRootEntry[] = [
       { kind: 'page', page: 'toolbar' },
     ],
   },
-  {
-    kind: 'group',
-    labelKey: 'settings.groups.general',
-    items: [
-      { kind: 'page', page: 'environment' },
-    ],
-  },
-  { kind: 'content', page: 'general' },
+  { kind: 'page', page: 'environment' },
 ];

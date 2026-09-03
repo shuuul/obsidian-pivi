@@ -66,9 +66,65 @@
       "deny": "拒否",
       "management": {
         "titles": { "mcp": { "upsert": "MCPサーバー「{name}」を更新", "enable": "MCPサーバー「{name}」を有効化", "disable": "MCPサーバー「{name}」を無効化", "remove": "MCPサーバー「{name}」を削除" }, "skills": { "install": "「{source}」からSkillsをインストール", "enable": "Skill「{name}」を有効化", "disable": "Skill「{name}」を無効化", "update": "Skill「{name}」を更新", "updateAll": "パッケージ管理の全Skillsを更新", "remove": "Skill「{name}」を削除" }, "commands": { "upsert": "コマンド {command} を保存", "remove": "コマンド {command} を削除", "move": "コマンド {command} を移動" }, "prompt": { "enable": "プロンプトモジュール「{name}」を有効化", "disable": "プロンプトモジュール「{name}」を無効化", "setBody": "プロンプトモジュール「{name}」を更新", "restore": "プロンプトモジュール「{name}」を復元", "create": "プロンプトモジュール「{name}」を追加", "update": "プロンプトモジュール「{name}」を更新", "remove": "プロンプトモジュール「{name}」を削除", "move": "プロンプトモジュール「{name}」を移動" } },
-        "changes": { "mcpUpsert": "予定されたMCPサーバー設定を適用します。", "mcpEnable": "このMCPサーバーを有効にします。", "mcpDisable": "このMCPサーバーを無効にします。", "mcpRemove": "このMCPサーバーと認証情報を削除します。", "skillsInstall": "固定されたパッケージ手順でSkillsをインストールします。", "skillsEnable": "このSkillを有効にします。", "skillsDisable": "このSkillを無効にします。", "skillsUpdate": "パッケージの出所からこのSkillを更新します。", "skillsUpdateAll": "パッケージ管理の全Skillsを更新します。", "skillsRemove": "このSkillをワークスペースから削除します。", "commandsUpsert": "このワークスペースコマンドを作成または更新します。", "commandsRemove": "このワークスペースコマンドを削除します。", "commandsMove": "このワークスペースコマンドを並べ替えます。", "promptEnable": "このプロンプトモジュールを有効にします。", "promptDisable": "このプロンプトモジュールを無効にします。", "promptSetBody": "このプロンプトモジュールの本文を置き換えます。", "promptRestore": "このプロンプトモジュールを同梱の既定値に復元します。", "promptCreate": "このカスタムプロンプトモジュールを作成します。", "promptUpdate": "このカスタムプロンプトモジュールを更新します。", "promptRemove": "このカスタムプロンプトモジュールを削除します。", "promptMove": "このカスタムプロンプトモジュールを並べ替えます。" },
-        "fields": { "server": "サーバー", "enabled": "有効", "type": "種類", "command": "コマンド", "args": "引数", "envNames": "環境変数名", "url": "URL", "auth": "認証", "headerNames": "ヘッダー名", "bearerToken": "Bearerトークン", "oauth": "OAuth", "oauthGrant": "OAuthグラント", "oauthClientId": "OAuthクライアントID", "oauthScope": "OAuthスコープ", "oauthClientSecret": "OAuthクライアントシークレット", "contextSaving": "コンテキスト節約", "disabledTools": "無効なツール", "source": "ソース", "skills": "Skills", "skill": "Skill", "catalogRevision": "カタログリビジョン", "icon": "アイコン", "prompt": "プロンプト", "before": "前", "after": "後", "module": "モジュール", "title": "タイトル" },
-        "values": { "yes": "はい", "no": "いいえ", "clear": "消去", "disabled": "無効", "updated": "更新済み" }
+        "changes": {
+          "mcpUpsert": "予定されたMCPサーバー設定を適用します。",
+          "mcpEnable": "このMCPサーバーを有効にします。",
+          "mcpDisable": "このMCPサーバーを無効にします。",
+          "mcpRemove": "このMCPサーバーと認証情報を削除します。",
+          "skillsInstall": "固定されたパッケージ手順でSkillsをインストールします。",
+          "skillsEnable": "このSkillを有効にします。",
+          "skillsDisable": "このSkillを無効にします。",
+          "skillsUpdate": "パッケージの出所からこのSkillを更新します。",
+          "skillsUpdateAll": "パッケージ管理の全Skillsを更新します。",
+          "skillsRemove": "このSkillをワークスペースから削除します。",
+          "commandsUpsert": "このワークスペースコマンドを作成または更新します。",
+          "commandsRemove": "このワークスペースコマンドを削除します。",
+          "commandsMove": "このワークスペースコマンドを並べ替えます。",
+          "promptEnable": "このプロンプトモジュールを有効にします。",
+          "promptDisable": "このプロンプトモジュールを無効にします。",
+          "promptSetBody": "このプロンプトモジュールの本文を置き換えます。",
+          "promptRestore": "このプロンプトモジュールを同梱の既定値に復元します。",
+          "promptCreate": "このカスタムプロンプトモジュールを作成します。",
+          "promptUpdate": "このカスタムプロンプトモジュールを更新します。",
+          "promptRemove": "このカスタムプロンプトモジュールを削除します。",
+          "promptMove": "このカスタムプロンプトモジュールを並べ替えます。"
+        },
+        "fields": {
+          "server": "サーバー",
+          "enabled": "有効",
+          "type": "種類",
+          "command": "コマンド",
+          "args": "引数",
+          "envNames": "環境変数名",
+          "url": "URL",
+          "auth": "認証",
+          "headerNames": "ヘッダー名",
+          "bearerToken": "Bearerトークン",
+          "oauth": "OAuth",
+          "oauthGrant": "OAuthグラント",
+          "oauthClientId": "OAuthクライアントID",
+          "oauthScope": "OAuthスコープ",
+          "oauthClientSecret": "OAuthクライアントシークレット",
+          "contextSaving": "コンテキスト節約",
+          "disabledTools": "無効なツール",
+          "source": "ソース",
+          "skills": "Skills",
+          "skill": "Skill",
+          "catalogRevision": "カタログリビジョン",
+          "icon": "アイコン",
+          "prompt": "プロンプト",
+          "before": "前",
+          "after": "後",
+          "module": "モジュール",
+          "title": "タイトル"
+        },
+        "values": {
+          "yes": "はい",
+          "no": "いいえ",
+          "clear": "消去",
+          "disabled": "無効",
+          "updated": "更新済み"
+        }
       }
     },
     "capabilityApproval": {
@@ -338,8 +394,7 @@
   "settings": {
     "groups": {
       "agent": "エージェント",
-      "editor": "エディター",
-      "general": "一般"
+      "editor": "エディター"
     },
     "pages": {
       "general": {
@@ -382,7 +437,8 @@
         "label": "ツールバー",
         "description": "エディター選択ツールバーの操作。"
       }
-    },    "setup": {
+    },
+    "setup": {
       "getApiKeyAt": "{host} で API key を取得",
       "download": "ダウンロード",
       "openDocs": "ドキュメントを開く"
@@ -411,8 +467,14 @@
     "chatBehavior": "チャットの動作",
     "providerRequests": {
       "title": "プロバイダーリクエスト",
-      "total": { "name": "合計タイムアウト（秒）", "desc": "ストリーミング応答を含むリクエスト全体の上限時間です。0 で無効になります。" },
-      "idle": { "name": "アイドルタイムアウト（秒）", "desc": "応答バイトを受信しない最大時間です。0 で無効になります。" }
+      "total": {
+        "name": "合計タイムアウト（秒）",
+        "desc": "ストリーミング応答を含むリクエスト全体の上限時間です。0 で無効になります。"
+      },
+      "idle": {
+        "name": "アイドルタイムアウト（秒）",
+        "desc": "応答バイトを受信しない最大時間です。0 で無効になります。"
+      }
     },
     "personalizationContext": "パーソナライズとコンテキスト",
     "inputShortcuts": "入力とショートカット",
@@ -978,8 +1040,12 @@
         "estimatedTokens": "{count} 見積もり",
         "total": "合計"
       },
-      "workflow": { "heading": "ワークフロー" },
-      "custom": { "heading": "カスタム" },
+      "workflow": {
+        "heading": "ワークフロー"
+      },
+      "custom": {
+        "heading": "カスタム"
+      },
       "modified": "変更済み",
       "restore": "既定に戻す",
       "bodyLabel": "モジュール本文",
