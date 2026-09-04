@@ -1,7 +1,7 @@
 ---
 id: "049"
 title: "Post-review contracts architecture and community execution"
-status: Active
+status: Completed
 created: 2026-09-04
 updated: 2026-09-04
 coordinator: "Amp"
@@ -250,6 +250,14 @@ Append entries rather than rewriting another worker's record.
 - Blockers: Final archival still depends on PRs #109, #110, #112, #114, and #116 landing.
 - Next action: Validate the funding configuration and documentation, commit the update to PR #116, and rerun its required checks.
 
+### 2026-09-04 — Amp — Final default-branch acceptance
+
+- Changed: Merged [PR #109](https://github.com/shuuul/obsidian-pivi/pull/109), [PR #110](https://github.com/shuuul/obsidian-pivi/pull/110), [PR #112](https://github.com/shuuul/obsidian-pivi/pull/112), [PR #114](https://github.com/shuuul/obsidian-pivi/pull/114), and [PR #116](https://github.com/shuuul/obsidian-pivi/pull/116) in dependency order. Issues #103, #104, #111, #113, and #115 closed through their owning merges.
+- Evidence: Final `main` commit [`f916eca6`](https://github.com/shuuul/obsidian-pivi/commit/f916eca6de79982be8d02b5cb08205454f8420e7) passed [quality, macOS, and Windows checks](https://github.com/shuuul/obsidian-pivi/actions/runs/33892310967). The default branch serves `.github/FUNDING.yml` with `patreon: shuuul` and the Afdian URL, and its SUPPORT page records the US$3/month Patreon contract without paid-priority promises.
+- Remaining: Archive this completed spec and merge the archival-only change.
+- Blockers: None.
+- Next action: Run the spec validator, archive spec 049, and submit the archival-only pull request.
+
 ## Completion summary
 
-All nine implementation workstreams are complete. PR #108 and the P0 contract are on `main`; the architecture, exports, factory, compatibility, quality-signal, and funding-route changes remain in the protected stacked PRs. Archive only after those changes land and final default-branch checks pass.
+Completed all nine workstreams without a rewrite, new workspace, or general DI container. Active documentation now enforces the remote-only MCP contract; repository rules protect `main` and release tags; the plugin shell delegates to responsibility-scoped application facades; package exports are explicit; chat and settings UI factories have separate ownership; Pi compatibility entries have lifecycle metadata and one canary; bundle/test regressions produce actionable signals; and contribution, recipe, platform-support, Discussion, Patreon, and Afdian routes are live. All owning pull requests are merged, their issues are closed, and the final default-branch quality and platform checks passed.

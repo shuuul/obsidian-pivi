@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [049 — Post-review contracts architecture and community execution](049-post-review-contracts-architecture-and-community-execution.md) | Active | P0-gated execution of documentation contracts, bounded architecture improvements, compatibility maintenance, and community entry points. |
 
 ## Archived specs
 
@@ -64,6 +63,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [046-composable-obsidian-workflow-prompts.md](archive/046-composable-obsidian-workflow-prompts.md) | 2026-09-03 | Modular system-prompt registry, Settings Prompt tab, failure-driven guidance, and main-Agent `pivi_prompt` management. |
 | [047-provider-anchored-context-accounting.md](archive/047-provider-anchored-context-accounting.md) | 2026-09-03 | Provider-anchored context pressure with bounded trailing estimates and calibration, truthful compaction timeout/retry semantics, and a fixed read ceiling (issues #98, #99). |
 | [048 — Settings UI system and Obsidian-native page navigation](archive/048-settings-ui-system-and-grouped-navigation.md) | 2026-09-03 | Delivered one enforced settings primitive/CSS system with Obsidian 1.13 native grouped navigation, indexed search routing, and all settings pages migrated. |
+| [049 — Post-review contracts architecture and community execution](archive/049-post-review-contracts-architecture-and-community-execution.md) | 2026-09-04 | Aligned active MCP docs, protected repository boundaries, reduced composition/API friction, added compatibility and quality signals, and launched community and funding routes. |
 
 ## Numbering and files
 
