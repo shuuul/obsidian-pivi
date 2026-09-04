@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.25.1](https://github.com/shuuul/obsidian-pivi/compare/0.25.0...0.25.1) (2026-09-05)
+
+### Maintenance
+
+* split UI port factories by feature ([#112](https://github.com/shuuul/obsidian-pivi/issues/112))
+* curate workspace package exports ([#110](https://github.com/shuuul/obsidian-pivi/issues/110))
+* extract Pivi application facades ([#109](https://github.com/shuuul/obsidian-pivi/issues/109))
+* track Pi compatibility lifecycle ([#114](https://github.com/shuuul/obsidian-pivi/issues/114))
+* make bundle and test regressions explainable ([#116](https://github.com/shuuul/obsidian-pivi/issues/116))
+* add community contribution paths ([#108](https://github.com/shuuul/obsidian-pivi/issues/108))
+* enforce remote-only MCP contract in docs ([#101](https://github.com/shuuul/obsidian-pivi/issues/101))
+
 ## [0.25.0](https://github.com/shuuul/obsidian-pivi/compare/0.24.2...0.25.0) (2026-09-04)
 
 ### Breaking Changes
