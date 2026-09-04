@@ -217,11 +217,13 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
       return { ...state, auth: { ...state.auth, [action.name]: action.status } };
     case 'set_tools':
       return { ...state, toolsByServer: { ...state.toolsByServer, [action.name]: action.tools } };
-    case 'reset_tools':
-      return {
-        ...state,
-        toolsByServer: Object.fromEntries(action.servers.map((server) => [server.name, []])),
-      };
+    case 'reset_tools': {
+      const nextTools: Record<string, readonly McpTool[]> = {};
+      for (const server of action.servers) {
+        nextTools[server.name] = state.toolsByServer[server.name] ?? [];
+      }
+      return { ...state, toolsByServer: nextTools };
+    }
     case 'toggle_expanded': {
       const expandedServers = new Set(state.expandedServers);
       if (expandedServers.has(action.name)) expandedServers.delete(action.name);
@@ -346,7 +348,7 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
   }, [mcp, t]);
 
   const removeServer = useCallback(async (name: string) => {
-    dispatch({ type: 'set_busy', busy: 'delete' });
+    dispatch({ type: 'set_busy', busy: `delete:${name}` });
     try {
       await commit(state.servers.filter((item) => item.name !== name));
     } catch (cause) {

@@ -36,6 +36,7 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const [reorderPending, setReorderPending] = useState(false);
   const [credentialCheckPending, setCredentialCheckPending] = useState(true);
+  const initialCredentialCheck = useRef(true);
   const unavailableDisableAttempts = useRef(new Set<string>());
 
   const reload = (): void => setSettings(models.getSettings());
@@ -47,7 +48,8 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
 
   useEffect(() => {
     let cancelled = false;
-    setCredentialCheckPending(true);
+    const showChecking = initialCredentialCheck.current;
+    if (showChecking) setCredentialCheckPending(true);
     void models.ensureProviderCredentials()
       .then(() => {
         if (!cancelled) {
@@ -61,7 +63,8 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
       })
       .finally(() => {
         if (!cancelled) {
-          setCredentialCheckPending(false);
+          initialCredentialCheck.current = false;
+          if (showChecking) setCredentialCheckPending(false);
         }
       });
     return () => {
@@ -192,6 +195,13 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
               onToggleExpanded={toggleExpanded}
               save={save}
               onChanged={reload}
+              onRemoved={() => {
+                setSettings(current => ({
+                  ...current,
+                  addedProviders: current.addedProviders.filter(id => id !== providerId),
+                  disabledProviders: current.disabledProviders.filter(id => id !== providerId),
+                }));
+              }}
               onError={(message) => feedback.notify(message)}
               credentialCheckPending={credentialCheckPending}
             />

@@ -62,7 +62,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
                   expanded={expandedServers.has(server.name)}
                   authStatus={auth[server.name]}
                   selectorTools={toolsByServer[server.name] ?? []}
-                  busy={busy !== null}
+                  busy={busy === `connect:${server.name}` || busy === `logout:${server.name}` || busy === `delete:${server.name}`}
                   feedback={feedback}
                   onConnect={(next) => connect(next, server)}
                   onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}

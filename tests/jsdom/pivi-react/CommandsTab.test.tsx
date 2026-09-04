@@ -301,6 +301,27 @@ describe('React commands settings', () => {
     expect(within(card).getAllByText('Save')).toHaveLength(1);
   });
 
+  it('deletes a command without swapping the collection for a loading state', async () => {
+    const second: SlashCatalogEntry = {
+      ...command,
+      id: 'explain',
+      name: 'explain',
+      integrationKey: 'explain-key',
+      persistenceKey: 'commands/explain.md',
+    };
+    const deleteWorkspaceEntry = jest.fn(async () => ({ saved: true as const, refreshed: true }));
+    renderCommands(createPorts([command, second], { deleteWorkspaceEntry }));
+    await screen.findByText('/review');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete command review' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+
+    expect(screen.queryByText('Loading custom commands…')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('/review')).not.toBeInTheDocument());
+    expect(screen.getByText('/explain')).toBeInTheDocument();
+    expect(deleteWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({ id: 'review' }), 1);
+  });
+
   it('shows a delete failure rather than leaving the command busy', async () => {
     const deleteWorkspaceEntry = jest.fn(async () => { throw new Error('disk unavailable'); });
     const ports = createPorts([command], { deleteWorkspaceEntry });

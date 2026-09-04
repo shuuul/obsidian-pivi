@@ -338,8 +338,27 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
         if (previous && commandKey(previous) !== commandKey(saved)) next.delete(commandKey(previous));
         return next;
       });
-      await load();
-      setPending(false);
+      setEntries(current => {
+        const list = current ?? [];
+        if (!previous) return [...list, saved];
+        return list.map(item => item.id === previous.id ? saved : item);
+      });
+      setOrder(current => previous
+        ? current.map(id => id === previous.id ? saved.id : id)
+        : [...current, saved.id]);
+      setExistingIds(current => {
+        const next = new Set(current);
+        if (previous && previous.id !== saved.id) next.delete(previous.id);
+        next.add(saved.id);
+        return next;
+      });
+      try {
+        const snapshot = await ports.complex.commands.loadWorkspaceCatalog();
+        if (mounted.current) setCatalogRevision(snapshot.catalogRevision);
+      } catch {
+        if (mounted.current) setCatalogRevision(current => current === null ? current : current + 1);
+      }
+      if (mounted.current) setPending(false);
     }
     return saved;
   };
@@ -349,8 +368,26 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     try {
       if (catalogRevision === null) throw new Error('Command catalog is not loaded.');
       const outcome = await ports.complex.commands.deleteWorkspaceEntry(entry, catalogRevision);
-      await ports.complex.commands.refresh();
-      if (mounted.current) await load();
+      if (mounted.current) {
+        setEntries(current => (current ?? []).filter(item => item.id !== entry.id));
+        setOrder(current => current.filter(id => id !== entry.id));
+        setExistingIds(current => {
+          const next = new Set(current);
+          next.delete(entry.id);
+          return next;
+        });
+        setExpanded(current => {
+          const next = new Set(current);
+          next.delete(commandKey(entry));
+          return next;
+        });
+      }
+      try {
+        const snapshot = await ports.complex.commands.loadWorkspaceCatalog();
+        if (mounted.current) setCatalogRevision(snapshot.catalogRevision);
+      } catch {
+        if (mounted.current) setCatalogRevision(current => current === null ? current : current + 1);
+      }
       if (outcome.warnings?.length) ports.feedback.notify(outcome.warnings.join(' '));
     } catch (cause) {
       ports.feedback.notify(t('settings.slashCommandsUi.deleteFailed', { message: cause instanceof Error ? cause.message : String(cause) }));

@@ -260,22 +260,28 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
     ports.prompt.listModules().filter((module) => module.kind === 'custom').map((module) => module.id)
   ));
 
-  const reload = useCallback(() => {
+  const syncCatalogMeta = useCallback(() => {
     if (!mounted.current) return;
-    const next = ports.prompt.listModules();
-    setModules(next);
     setCatalogRevision(ports.prompt.getCatalogRevision());
     setUsage(ports.prompt.getUsage());
-    setCustomOrder(next.filter((module) => module.kind === 'custom').map((module) => module.id));
   }, [mounted, ports.prompt]);
 
-  const run = async (action: () => Promise<void>): Promise<void> => {
+  const replaceModule = (id: string): void => {
+    const next = ports.prompt.listModules().find((module) => module.id === id);
+    if (!next) return;
+    setModules((current) => current.map((module) => (module.id === id ? next : module)));
+  };
+
+  const run = async (action: () => Promise<void>, apply: () => void): Promise<void> => {
     setPending(true);
     try {
       await action();
-      reload();
+      if (mounted.current) {
+        apply();
+        syncCatalogMeta();
+      }
     } catch (cause) {
-      reload();
+      if (mounted.current) syncCatalogMeta();
       ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
     } finally {
       if (mounted.current) setPending(false);
@@ -307,11 +313,10 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
       setPending(true);
       try {
         await ports.prompt.reorderCustomModules(ids, catalogRevision);
-        reload();
+        syncCatalogMeta();
         return true;
       } catch (cause) {
         setCustomOrder([...originalOrder]);
-        reload();
         ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
         return false;
       } finally {
@@ -348,10 +353,11 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
           next.add(created.id);
           return next;
         });
-        reload();
+        setModules((current) => [...current, created]);
+        setCustomOrder((current) => [...current, created.id]);
+        syncCatalogMeta();
       }
     } catch (cause) {
-      reload();
       ports.feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
     } finally {
       if (mounted.current) setPending(false);
@@ -372,9 +378,9 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
               expanded={expanded.has(module.id)}
               pending={pending}
               onToggleExpanded={() => toggleExpanded(module.id)}
-              onToggleEnabled={(enabled) => { void run(() => ports.prompt.setWorkflowEnabled(module.id, enabled, catalogRevision)); }}
-              onSaveBody={(body) => run(() => ports.prompt.saveCustomBody(module.id, body, catalogRevision))}
-              onRestore={() => { void run(() => ports.prompt.restoreShipped(module.id, catalogRevision)); }}
+              onToggleEnabled={(enabled) => { void run(() => ports.prompt.setWorkflowEnabled(module.id, enabled, catalogRevision), () => replaceModule(module.id)); }}
+              onSaveBody={(body) => run(() => ports.prompt.saveCustomBody(module.id, body, catalogRevision), () => replaceModule(module.id))}
+              onRestore={() => { void run(() => ports.prompt.restoreShipped(module.id, catalogRevision), () => replaceModule(module.id)); }}
             />
           ))}
         </SettingsCollection>
@@ -416,11 +422,19 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
                 reorderHandleProps={reorder.getHandleProps(id)}
                 suppressReorderClick={() => reorder.consumeClickAfterDrag(id)}
                 onToggleExpanded={() => toggleExpanded(id)}
-                onToggleEnabled={(enabled) => { void run(() => ports.prompt.setCustomModuleEnabled(id, enabled, catalogRevision)); }}
-                onSaveBody={(body) => run(() => ports.prompt.editCustomModule(id, body, catalogRevision))}
-                onRename={(title) => run(() => ports.prompt.renameCustomModule(id, title, catalogRevision))}
+                onToggleEnabled={(enabled) => { void run(() => ports.prompt.setCustomModuleEnabled(id, enabled, catalogRevision), () => replaceModule(id)); }}
+                onSaveBody={(body) => run(() => ports.prompt.editCustomModule(id, body, catalogRevision), () => replaceModule(id))}
+                onRename={(title) => run(() => ports.prompt.renameCustomModule(id, title, catalogRevision), () => replaceModule(id))}
                 onDelete={() => {
-                  void run(() => ports.prompt.deleteCustomModule(module.id, catalogRevision));
+                  void run(() => ports.prompt.deleteCustomModule(module.id, catalogRevision), () => {
+                    setModules((current) => current.filter((item) => item.id !== module.id));
+                    setCustomOrder((current) => current.filter((item) => item !== module.id));
+                    setExpanded((current) => {
+                      const next = new Set(current);
+                      next.delete(module.id);
+                      return next;
+                    });
+                  });
                 }}
               />
             );

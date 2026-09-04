@@ -80,6 +80,23 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' })); await act(async () => undefined); expect(getServers()).toHaveLength(0);
   });
 
+  it('deletes one MCP server without clearing remaining tool summaries', async () => {
+    const remote: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: true };
+    const other: ManagedMcpServer = { name: 'other', config: { type: 'http', url: 'https://other.test/mcp' }, enabled: true, contextSaving: true };
+    const { ports } = makePorts([remote, other]);
+    await openMcp(ports);
+    await act(async () => undefined);
+    expect(screen.getAllByText('2 tools')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove MCP server remote' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+    await act(async () => undefined);
+
+    expect(screen.queryByText('remote', { selector: '.pivi-settings-card__name' })).not.toBeInTheDocument();
+    expect(screen.getByText('other', { selector: '.pivi-settings-card__name' })).toBeInTheDocument();
+    expect(screen.getByText('2 tools')).toBeInTheDocument();
+  });
+
   it('preserves HTTP auth and header editor fields', async () => {
     const { ports, getServers } = makePorts();
     await openMcp(ports);

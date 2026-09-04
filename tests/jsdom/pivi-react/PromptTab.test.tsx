@@ -275,10 +275,14 @@ describe('React prompt settings', () => {
     await act(async () => undefined);
     expect(screen.getByRole('button', { name: 'Reorder Alpha, currently position 2' })).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { expanded: false, name: /Alpha/ }));
+    expect(screen.getByText('Alpha').closest('.pivi-settings-card')).toHaveClass('is-open');
+
     fireEvent.click(screen.getByRole('button', { name: 'Delete Beta' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     await waitFor(() => expect(screen.queryByText('Beta')).not.toBeInTheDocument());
+    expect(screen.getByText('Alpha').closest('.pivi-settings-card')).toHaveClass('is-open');
   });
 
   it('renders compact usage estimates without a suggested-budget warning', () => {

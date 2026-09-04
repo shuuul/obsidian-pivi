@@ -32,6 +32,7 @@ export interface ProviderCardProps {
   readonly onToggleExpanded: (providerId: string, open?: boolean) => void;
   readonly save: (patch: Parameters<SettingsModelsPort['saveSettings']>[0]) => Promise<void>;
   readonly onChanged: () => void;
+  readonly onRemoved?: () => void;
   readonly onError: (message: string) => void;
   readonly credentialCheckPending?: boolean;
 }
@@ -54,6 +55,7 @@ export function ProviderCard({
   onToggleExpanded,
   save,
   onChanged,
+  onRemoved,
   onError,
   credentialCheckPending = false,
 }: ProviderCardProps) {
@@ -98,7 +100,7 @@ export function ProviderCard({
       .then(() => {
         setConfirmingRemove(false);
         onToggleExpanded(providerId, false);
-        onChanged();
+        onRemoved?.();
         feedback.notify(t('settings.modelsTab.removedProvider', { name: displayName }));
       })
       .catch((cause: unknown) => { onError(cause instanceof Error ? cause.message : t('common.error')); })

@@ -107,7 +107,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
     try {
       await action();
       progress?.hide();
-      refresh();
+      if (operation.kind !== 'remove') refresh();
       if (mounted.current && operation.kind !== 'listRemote') {
         feedback.notify(successMessage(operation));
       }
@@ -164,7 +164,12 @@ export function SkillsSettingsTab({ skills, feedback }: {
   const confirmRemove = (candidate: Skill) => {
     void run(
       { kind: 'remove', name: candidate.name, folderName: candidate.folderName },
-      () => skills.remove(candidate.folderName),
+      async () => {
+        await skills.remove(candidate.folderName);
+        if (mounted.current) {
+          setEntries((current) => current.filter((skill) => skill.folderName !== candidate.folderName));
+        }
+      },
     );
   };
 
