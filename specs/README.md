@@ -10,6 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
+| [049 — Post-review contracts architecture and community execution](049-post-review-contracts-architecture-and-community-execution.md) | Active | P0-gated execution of documentation contracts, bounded architecture improvements, compatibility maintenance, and community entry points. |
 
 ## Archived specs
 

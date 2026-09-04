@@ -157,7 +157,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 
 ### 🔌 Skills & MCP
 - **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. When the pinned Skills CLI is needed, Pivi temporarily materializes its bundled code in the operating system's temporary directory and removes it after the command finishes.
-- **MCP servers**: Configure in `.pivi/mcp.json` — remote HTTP/SSE servers with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings. Stdio MCP is not supported.
+- **MCP servers**: Configure in `.pivi/mcp.json` with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings. Pivi supports only remote MCP servers over Streamable HTTP or SSE. Stdio MCP is not supported; this remote-only contract was introduced in v0.25.0.
 - **`/server` slash tokens**: Type `/server` or `/server/tool` in chat to emphasize an MCP server or tool; settings-enabled servers are already available to the agent.
 - **`/generate-image` tool token**: When Codex image generation is connected and `obsidian_generate_image` is enabled under Tools, the slash selector inserts this durable token. Pivi expands it only in the API prompt; the composer and session keep `/generate-image` unchanged.
 
@@ -231,7 +231,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **API keys** | Required for hosted AI providers. Stored via Obsidian `secretStorage` (Electron `safeStorage`), not in plugin JSON or `.pivi/mcp.json`. Environment and MCP secret values use the same store (`pivi-env-*`, `pivi-mcp-v-*`). |
 | **Network use** | Prompts, vault context, attachments, tool results, and MCP results may be sent to the selected model provider. |
 | **Image generation** | Available only with `openai-codex` credentials. Prompts go to ChatGPT / Codex backend. Images saved as vault attachments. |
-| **MCP** | User-provided servers. Enabled remote HTTP/SSE servers may receive inventory requests during startup/settings refresh. Stdio processes start only after explicit **Connect / refresh tools** or the agent's first search/list/call. |
+| **MCP** | User-provided remote servers may receive inventory requests during startup/settings refresh. See the canonical transport contract above. |
 | **Skills** | Listing, installing, or updating remote skills uses the host process runner. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
 | **External file access** | Disabled by default. Allowed absolute roots come from this device's vault-local overlay or folders attached for the current turn; they are not synced through `.pivi/settings.json` or session JSONL. |
 | **Bash access** | Disabled by default. Exact-command or shell-safe argv-prefix grants; runs through user login shell; vault cwd only. |

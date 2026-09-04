@@ -118,7 +118,7 @@ MCP configuration lives only in `.pivi/mcp.json`; OAuth material lives under `.p
 
 The Pi registry exposes one proxy tool named `mcp` rather than one top-level Pi tool per server tool. The proxy searches and calls enabled vault servers. Settings own server/tool availability. `/server` and `/server/tool` composer tokens are optional emphasis: enabled servers are already available, and prompt finalization changes only the provider prompt.
 
-MCP settings save/reload invalidates slash caches, authenticates or diagnoses as requested, warms enabled HTTP/SSE tool inventories, and reloads open runtime bridges. Stdio MCP is not supported. Servers are added through the HTTP/SSE editor. Anonymous remote probes can report authentication as not applicable; explicitly OAuth-configured servers always enter the OAuth flow.
+MCP settings save/reload invalidates slash caches, authenticates or diagnoses as requested, warms enabled tool inventories, and reloads open runtime bridges. Pivi supports only remote MCP servers over Streamable HTTP or SSE. Stdio MCP is not supported; this remote-only contract was introduced in v0.25.0. Servers are added through the HTTP/SSE editor. Anonymous remote probes can report authentication as not applicable; explicitly OAuth-configured servers always enter the OAuth flow.
 
 Remote MCP transports and OAuth use injected scoped `fetch` clients from composition, not a global renderer fetch patch. Configured private MCP origins receive session-scoped origin grants re-issued on settings save and cleared on unload; WebFetch rejects local/private targets before any extractor or direct attempt.
 

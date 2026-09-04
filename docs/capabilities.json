@@ -1,0 +1,24 @@
+{
+  "contractVersion": 1,
+  "mcp": {
+    "remoteOnlySince": "0.25.0",
+    "supportedTransports": [
+      "streamable-http",
+      "sse"
+    ]
+  },
+  "removedCapabilities": [
+    {
+      "id": "stdio-mcp",
+      "removedIn": "0.25.0"
+    },
+    {
+      "id": "mcp-json-import",
+      "removedIn": "0.25.0"
+    },
+    {
+      "id": "vim-mappings",
+      "removedIn": "0.25.0"
+    }
+  ]
+}

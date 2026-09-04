@@ -13,7 +13,8 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Build CSS | `npm run build:css` |
 | Typecheck source and tests | `npm run typecheck` |
 | Lint with zero warnings | `npm run lint` |
-| Architecture/package/i18n/spec/Pi-pin guards | `npm run check:boundaries` |
+| Documentation capability contracts | `npm run check:docs-contracts` |
+| Architecture/docs/package/i18n/spec/Pi-pin guards | `npm run check:boundaries` |
 | Exact synchronized Pi pins | `npm run check:pi-pins` |
 | All Jest projects | `npm run test` |
 | Coverage and thresholds (global + security-module branches) | `npm run test:coverage` |
@@ -35,7 +36,7 @@ npm run test -- -t "test name"
 
 `scripts/run-jest.js` supplies the Node local-storage file and repository setup. Direct Jest invocation can produce misleading failures.
 
-`check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and the existing package dependency rules prevent `@pivi/agent` from depending on `@pivi/engine-pi` or concrete host/tool adapters. `check:package-readmes` keeps package API claims aligned with those exports.
+`check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and the existing package dependency rules prevent `@pivi/agent` from depending on `@pivi/engine-pi` or concrete host/tool adapters. `check:docs-contracts` keeps current capability claims aligned with `docs/capabilities.json` while allowing historical records and negative compatibility statements. `check:package-readmes` keeps package API claims aligned with those exports.
 
 `audit:sessions` is read-only. It separates `perf-*` fixtures from real behavior and reports aggregate tool errors, Bash policy retries, malformed JSONL, oversized results/sessions, and message-UI overlay amplification. Add `--json` for machine-readable output. Reports intentionally omit user text, tool arguments, target entry IDs, and JSONL content; findings are diagnostic and do not cause a failing exit status.
 
@@ -69,7 +70,7 @@ Use a configured development vault (`.env.local` `OBSIDIAN_VAULT`). Official CLI
 
 ### Deterministic host smoke
 
-`npm run smoke:obsidian` requires the Obsidian CLI and `OBSIDIAN_VAULT`. It reloads Pivi, opens the chat view, creates and mutates a disposable note, writes and re-reads a disposable session JSONL, starts and stops a fake stdio listener (failing on a leaked PID), asserts `window.fetch` identity is unchanged, and requires `obsidian dev:errors` to report no captured errors. It does not claim full product certification on every OS.
+`npm run smoke:obsidian` requires the Obsidian CLI and `OBSIDIAN_VAULT`. It reloads Pivi, opens the chat view, creates and mutates a disposable note, writes and re-reads a disposable session JSONL, asserts `window.fetch` identity is unchanged, and requires `obsidian dev:errors` to report no captured errors. It does not claim full product certification on every OS.
 
 Useful symptom routes:
 
