@@ -95,7 +95,7 @@ module.exports = {
       branches: 80,
     },
     './packages/agent/src/mcp/mcpProcessEnv.ts': {
-      branches: 55,
+      branches: 90,
     },
     './packages/agent/src/mcp/mcpValidation.ts': {
       branches: 70,
