@@ -45,6 +45,7 @@ describe('SkillsManagementCoordinator', () => {
   });
 
   it('skips malformed skills-lock entries while projecting valid provenance', () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     fs.writeFileSync(path.join(vaultPath, '.pivi', 'skills-lock.json'), JSON.stringify({
       skills: {
         valid: { source: 'owner/repo', skillPath: 'skills/demo/SKILL.md' },
@@ -69,6 +70,7 @@ describe('SkillsManagementCoordinator', () => {
       enabled: true,
       packageSource: 'owner/repo',
     }]);
+    expect(warning).toHaveBeenCalledTimes(2);
   });
 
   it('keeps snapshots available when a managed skill file is temporarily unreadable', () => {

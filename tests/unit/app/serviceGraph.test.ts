@@ -20,6 +20,7 @@ describe('createPluginServiceGraph', () => {
   });
 
   it('disables an unsupported journal without blocking startup recovery', () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const journalStore = {
       load: jest.fn(() => { throw new SessionJournalVersionError(2); }),
       save: jest.fn(),
@@ -37,6 +38,7 @@ describe('createPluginServiceGraph', () => {
       journalStore,
     )).not.toThrow();
     expect(getBoundSessionJournal()).toBeNull();
+    expect(warning).toHaveBeenCalledTimes(2);
   });
 
   it('passes only explicit workspace construction capabilities', async () => {

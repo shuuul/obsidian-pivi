@@ -48,7 +48,7 @@ npm run test -- -t "prefetches enabled remote servers"
 
 ## Layout
 
-- `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist.
+- `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist, and fails the owning test after an unexpected `console.warn` or `console.error`. Tests that intentionally exercise logging must replace the guard and assert the expected call.
 - `setupObsidianUi.ts` — installs Testing Library DOM matchers, Obsidian DOM helpers, and active owner-realm globals for the jsdom project.
 - `jsdom/pivi-react/` — `@pivi/pivi-react` React, store, usage, and disclosure behavior.
 - `jsdom/app-ui/` — app-owned UI hosts, adapters, and surfaces.
@@ -78,5 +78,6 @@ npm run test -- -t "prefetches enabled remote servers"
 - Pi and feature tests should import Pivi-owned package APIs (`@pivi/*`) or the app shell package; keep low-level external SDK mocks centralized.
 - Keep mocks centralized in `__mocks__/` or `helpers/`; avoid ad hoc large inline mocks in each test.
 - Existing unit and integration tests run together in the Node `unit` project. Every `tests/jsdom/**` test runs only in the `jsdom` project; classify it by source owner rather than environment.
+- Do not globally allow console patterns. Mock `console.warn` or `console.error` only in the test that expects the signal and assert the call; await React effects inside `act` instead of suppressing React warnings.
 - Chat performance tests assert deterministic invariants rather than speculative speedups: one projection commit per fake animation frame, at most 20 mounted rows in the fixed 5K jsdom viewport, 100-message projection pages, at most 67 projection commits for the exact 102,400-byte / 64-chunk development stream, persistence-free 10-tab / 20-switch cleanup, isolated 20-subagent fixture restoration/cleanup, stable entity identity, safe Markdown sealing, and synchronous lifecycle flushes. Record timing/heap claims only from the three-run real-Obsidian protocol and budgets in `docs/11-chat-ui-evolution.md`.
 - Architecture fixtures lock the four ownership seams: `@pivi/agent` owns runtime/application ports, app owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. React portability fixtures additionally reject host DOM classes, host-specific public port identifiers, host-specific locale keys, and unparameterized credential/workspace copy while proving that `pivi-*` classes and app-owned host adapters remain valid.

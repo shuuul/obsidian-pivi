@@ -28,7 +28,7 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] Cross-package imports are restricted to curated exports and architecture checks reject undeclared or internal package paths without adding another workspace.
 - [x] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
 - [x] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
-- [ ] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
+- [x] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
 - [ ] Public contribution, discussion, recipe, platform-support, and funding paths exist and have named recurring owners/cadences before the spec closes.
 
 ## Scope and non-goals
@@ -68,6 +68,8 @@ Not in scope:
 | 2026-09-04 | Curate the existing package contract without rewriting imports: replace `@pivi/agent` wildcard exports with the namespace and focused leaves already consumed, remove every workspace wildcard TypeScript path, and make both patterns fail architecture checks. | Existing checks already reject undeclared imports and cross-package relative paths. Explicitly listing current leaves closes accidental future exposure while preserving presentation-safe and compatibility-test entrypoints without introducing barrel side effects. | WS-04 |
 | 2026-09-04 | Treat only upstream-shape-dependent replacements and overrides as Pi compatibility entries; keep ordinary engine adapters, retry policy, and product OAuth behavior out of the manifest. | A lifecycle manifest is useful only when each entry can be removed after a concrete upstream contract changes; cataloging all Pi-facing code would create permanent noise. | WS-06 |
 | 2026-09-04 | Keep the next-version canary informational, mutate only its ephemeral checkout, and update one marker-backed comment on issue #113. | Dependency upgrades still require review; one stable issue comment provides a current signal without duplicate alert issues or required-check noise. | WS-06 |
+| 2026-09-04 | Compare production metafiles from the exact PR base/head, warn above 100 KiB or 2% without failing, and keep the 5 MiB artifact ceiling as the hard gate. | Relative growth needs current evidence instead of a stale recorded baseline; a soft signal supports review without blocking intentional measured growth or changing release policy. | WS-07 |
+| 2026-09-04 | Make shared Jest setup fail the owning test after unexpected warning/error output; expected recovery logs must be locally mocked and asserted, and React warnings must be fixed with `act`. | Deferred failure preserves test attribution for asynchronous React diagnostics while rejecting global allowlists and silent console noise. | WS-07 |
 
 ## Workstreams
 
@@ -81,7 +83,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 | WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Amp | Done | WS-03 application/facade boundary settled | Export contract fixtures, architecture check, typecheck, build |
 | WS-05 | Issue #111: split oversized UI/runtime factories and coordinators only at measured feature ownership seams | Amp | Done | WS-03 application boundary settled; dedicated issue required | Feature suites plus file-size and changed-slice evidence recorded in spec/issue |
 | WS-06 | Issue #113: add Pi compatibility manifest and one issue-updating next-version canary | Amp | Done | Current shim inventory and tracking-issue decision complete | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
-| WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Pending | Refreshed bundle baseline and CI-summary design | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
+| WS-07 | Issue #115: add PR bundle delta/top-input reporting and improve warning/error test signal | Amp | Done | Exact base/head analysis and CI-summary design complete | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
 | WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, issue-template, funding, and public roadmap entry points | Amp | In progress | Maintainer authorized continued execution; funding destination unavailable | Link checks, template rendering review, effective Discussions categories/settings query |
 | WS-09 | Publish three starter recipes, desktop support matrix, showcase, and monthly maintenance/funding report cadence | Amp | In progress | WS-08 repository entry points in review; funding destination unavailable | Recipe walkthroughs, platform smoke evidence, published links and named cadence owner |
 
@@ -222,6 +224,14 @@ Append entries rather than rewriting another worker's record.
 - Remaining: Do not add a local dependency workaround. The scheduled route should retest the newest synchronized stable release after this workflow reaches `main`; an actual Pi bump remains a reviewed dependency change.
 - Blockers: None for WS-06. Pi 0.85.0 itself is currently blocked by its published dependency graph.
 - Next action: Open the verified WS-06 pull request, then inventory WS-07's existing bundle metadata and console-noise ownership.
+
+### 2026-09-04 — Amp — WS-07 explainable bundle and test signals
+
+- Changed: Created issue [#115](https://github.com/shuuul/obsidian-pivi/issues/115); replaced the stale bundle snapshot warning with an exact PR base/head metafile report; added total and per-input deltas, the top 20 current inputs, exact embedded Skills CLI gzip size, and a non-blocking 100 KiB / 2% soft warning while preserving the 5 MiB hard gate. Shared Jest setup now fails the owning test on unexpected warning/error output.
+- Evidence: A real comparison against the WS-06 base reported 4,169,496 bytes on both sides, zero delta, and a 148,457-byte embedded Skills CLI. The first full console-guard run exposed 23 noisy tests across 15 suites: expected degradation paths now assert their logs, eight Models settings tests and three Editor Toolbar tests await effects in `act`, and three settings/lifecycle fixtures mock unrelated first-run Skills orchestration. The clean full coverage run passed 354 suites / 3,151 tests; dependency audit, typecheck, lint, all boundary/spec/docs/Pi checks, production build, 5 MiB bundle gate, focused report/workflow/setup tests, and `git diff --check` passed. The postprocessed bundle is 4,169,460 bytes with 1,073,420 bytes headroom.
+- Remaining: Commit and open the stacked pull request against `chore/pi-compatibility-lifecycle`; keep the spec Active for WS-08/WS-09 closeout.
+- Blockers: None.
+- Next action: Review and commit the verified WS-07 diff, then open its stacked pull request.
 
 ## Completion summary
 

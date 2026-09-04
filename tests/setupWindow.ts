@@ -16,6 +16,38 @@ releaseMetadata.__PIVI_RELEASE_VERSION__ = packageJson.version;
 
 const testWindow = (globalThis.window ?? globalThis) as TestWindow;
 
+export function formatUnexpectedConsole(method: 'warn' | 'error', values: unknown[]): string {
+  const rendered = values.map((value) => {
+    if (value instanceof Error) return value.stack ?? value.message;
+    if (typeof value === 'string') return value;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }).join(' ');
+  return `Unexpected console.${method}: ${rendered}`;
+}
+
+let unexpectedConsole: string[] = [];
+
+beforeEach(() => {
+  unexpectedConsole = [];
+  jest.spyOn(console, 'warn').mockImplementation((...values: unknown[]) => {
+    unexpectedConsole.push(formatUnexpectedConsole('warn', values));
+  });
+  jest.spyOn(console, 'error').mockImplementation((...values: unknown[]) => {
+    unexpectedConsole.push(formatUnexpectedConsole('error', values));
+  });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  if (unexpectedConsole.length > 0) {
+    throw new Error(unexpectedConsole.join('\n\n'));
+  }
+});
+
 if (!globalThis.window) {
   Object.defineProperty(globalThis, 'window', {
     configurable: true,

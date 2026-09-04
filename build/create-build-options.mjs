@@ -47,6 +47,10 @@ function buildEmbeddedSkillsCli() {
 }
 
 const embeddedSkillsCliGzipBase64 = buildEmbeddedSkillsCli();
+export const embeddedSkillsCliGzipBytes = Buffer.byteLength(
+  embeddedSkillsCliGzipBase64,
+  'base64',
+);
 
 /**
  * Returns the common production/development build configuration without deployment side effects.

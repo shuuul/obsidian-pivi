@@ -7,13 +7,30 @@
 
 import esbuild from 'esbuild';
 import { writeFileSync } from 'fs';
-import { createBuildOptions } from '../build/create-build-options.mjs';
+import path from 'path';
+import { pathToFileURL } from 'url';
 
-const result = await esbuild.build(createBuildOptions({
+function option(name) {
+  const index = process.argv.indexOf(name);
+  if (index < 0) return undefined;
+  if (!process.argv[index + 1]) throw new Error(`${name} requires a value.`);
+  return process.argv[index + 1];
+}
+
+const projectRoot = path.resolve(option('--project') ?? '.');
+const outputPath = path.resolve(option('--output') ?? 'metafile.json');
+const buildOptionsUrl = pathToFileURL(
+  path.join(projectRoot, 'build/create-build-options.mjs'),
+).href;
+// eslint-disable-next-line no-unsanitized/method -- PR CI supplies a trusted checkout path so each revision uses its own build contract.
+const { createBuildOptions } = await import(buildOptionsUrl);
+
+const buildOptions = createBuildOptions({
   production: true,
   metafile: true,
   write: false,
-}));
+});
+const result = await esbuild.build({ ...buildOptions, absWorkingDir: projectRoot });
 
-writeFileSync('metafile.json', JSON.stringify(result.metafile));
-console.log('Wrote metafile.json — open at https://esbuild.github.io/analyze/');
+writeFileSync(outputPath, JSON.stringify(result.metafile));
+console.log(`Wrote ${outputPath} — open at https://esbuild.github.io/analyze/`);

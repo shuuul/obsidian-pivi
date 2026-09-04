@@ -34,7 +34,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 - Decide whether direct sends should capture ambient editor selections like queued turns; today only queued turns capture them automatically, while direct sends require explicit inline context.
 - Harden session/lifecycle edges: delete a newly forked session when tab creation returns `null`, and coordinate unload snapshot persistence with workspace disposal.
 - Pass the file-indicator root into current-note context badge creation and add a pop-out owner-realm regression test.
-- Update bundle-analysis and bundle-size script messages to reference the durable quality gates instead of the removed quality snapshot.
+
 ### Later
 
 - Evolve long-session paging, context checkpoints, and the Narrative / Activity / Memory visual language according to [Chat UI evolution](11-chat-ui-evolution.md), promoting only measured and accepted slices into Now or Next.

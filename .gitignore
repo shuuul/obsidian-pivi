@@ -97,6 +97,7 @@ plans/
 
 # Git Worktrees
 .worktrees/
+/.bundle-base/
 
 # Skills
 .agents/skills/

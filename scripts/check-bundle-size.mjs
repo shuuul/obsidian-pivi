@@ -12,9 +12,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const MAIN_JS = join(ROOT, 'main.js');
 const MAX_BYTES = 5 * 1024 * 1024;
-const SOFT_GROWTH_RATIO = 1.1;
-// Soft regression signal only: refresh after intentional, measured production-bundle growth.
-const RECORDED_BASELINE_BYTES = 3_956_976;
 
 function formatBytes(bytes) {
   const mb = bytes / (1024 * 1024);
@@ -34,12 +31,6 @@ function checkBundleSizeAtPath(bundlePath) {
   const headroomMb = headroom / (1024 * 1024);
   console.log(`main.js size: ${formatBytes(size)}`);
   console.log(`Obsidian limit headroom: ${formatBytes(Math.max(0, headroom))} (${headroomMb.toFixed(2)} MB below 5 MB cap)`);
-
-  if (size > RECORDED_BASELINE_BYTES * SOFT_GROWTH_RATIO) {
-    console.warn(
-      `Warning: main.js grew more than 10% vs the AGENTS quality snapshot baseline (${formatBytes(RECORDED_BASELINE_BYTES)}).`,
-    );
-  }
 
   if (size > MAX_BYTES) {
     console.error(`Bundle size check failed: main.js exceeds the 5 MB Obsidian community-plugin limit.`);

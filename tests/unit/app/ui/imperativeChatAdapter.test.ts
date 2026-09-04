@@ -1347,6 +1347,7 @@ describe('imperative chat semantic view handle', () => {
   });
 
   it('strict management refresh surfaces one tab failure while refreshing siblings', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { handle, manager, mount } = createHarness();
     await mount();
 
@@ -1400,6 +1401,7 @@ describe('imperative chat semantic view handle', () => {
     expect(commandFailures).toEqual([
       { target: 'tab:ok-tab', message: 'Cache refresh failed.' },
     ]);
+    expect(warning).toHaveBeenCalledTimes(2);
   });
 
   it('resets model-changed runtimes and force-readies other environment changes', async () => {

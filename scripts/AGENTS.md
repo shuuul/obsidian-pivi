@@ -11,6 +11,7 @@ flowchart LR
   CSS["build-css.mjs<br/>UI style manifest + release version -> styles.css"] -- "then" --> Build["build.mjs<br/>production orchestration"]
   Build -- "runs" --> Esbuild["esbuild.config.mjs<br/>main.js bundle"]
   Analyze["analyze-bundle.mjs"] -- "writes" --> Meta["metafile.json"]
+  Meta --> Report["bundle-report.mjs<br/>base/head delta + top 20 + Skills CLI"]
   BundleSize["check-bundle-size.mjs"] -- "checks" --> Bundle["main.js<br/>5 MB hard ceiling"]
   Jest["run-jest.js"] -- "sets localStorage file" --> Tests["Jest unit project (includes integration)<br/>+ jsdom project"]
   Version["sync-version.js"] -- "stable only" --> Manifest["manifest.json + versions.json + README badge"]
@@ -27,8 +28,9 @@ flowchart LR
 
 - `build-css.mjs` — Prepends the release-version banner and Obsidian host theme-token mapping, concatenates the ordered `packages/pivi-react/styles/manifest.mjs` modules into root `styles.css`, validates missing/unlisted CSS modules, and rejects `!important` in every host/React CSS input. Production mode minifies while preserving the Style Settings metadata block and selector-significant whitespace before pseudo classes.
 - `build.mjs` — Production build orchestrator: CSS first, then esbuild bundle.
-- `analyze-bundle.mjs` — Uses the shared `build/create-build-options.mjs` configuration and generates the pre-postprocess esbuild `metafile.json` without writing a separate bundle.
-- `check-bundle-size.mjs` — Checks a built root `main.js` against the 5 MB hard ceiling and emits a warning when it grows more than 10% over the recorded soft baseline. Run after `npm run build` via `npm run check:bundle-size`.
+- `analyze-bundle.mjs` — Uses the selected checkout's shared `build/create-build-options.mjs` configuration and generates pre-postprocess esbuild metadata without writing a separate bundle. `--project` selects another checkout and `--output` selects the metadata path; PR CI uses both to compare base and head under identical conditions.
+- `bundle-report.mjs` — Compares base/head metafiles and emits the PR Markdown summary: total bytes and delta, 20 largest current inputs with per-input deltas, and the exact embedded Skills CLI gzip bytes. Growth above 100 KiB or 2% is a visible review warning, not a failing gate.
+- `check-bundle-size.mjs` — Checks a built root `main.js` against the 5 MB hard ceiling. Run after `npm run build` via `npm run check:bundle-size`; relative-growth review belongs to `bundle-report.mjs`, not a stale recorded baseline.
 - `run-jest.js` — Required Jest wrapper; supplies the Node `--localstorage-file` backing file expected by tests.
 - `sync-version.js` — Syncs **stable** `package.json` versions into `manifest.json`, `versions.json`, and the root README version badge. Skips those files for semver prerelease versions so the community-plugin channel stays on the last stable release.
 - `versionMetadata.js` — Shared stable/prerelease version helpers used by the sync and release scripts.

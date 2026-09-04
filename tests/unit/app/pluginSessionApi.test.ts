@@ -269,6 +269,7 @@ describe('plugin session API semantic view maintenance', () => {
   });
 
   it('retains invalid queued paths instead of passing them to physical deletion', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const invalid = 'notes/important.md';
     const deleteSessionFile = jest.fn(async () => undefined);
     const storage = createQueueStorage([{ sessionFile: invalid, deletedAt: 1 }]);
@@ -281,6 +282,9 @@ describe('plugin session API semantic view maintenance', () => {
     expect(deleteSessionFile).not.toHaveBeenCalled();
     expect(storage.updateDeletedSessionFiles).not.toHaveBeenCalled();
     expect(storage.snapshot()).toEqual([{ sessionFile: invalid, deletedAt: 1 }]);
+    expect(warning).toHaveBeenCalledWith(
+      '[Pivi:PluginSessionApi] Refusing to purge invalid session path notes/important.md',
+    );
   });
 
   it('keeps both concurrent delete marks when each starts from an empty queue', async () => {

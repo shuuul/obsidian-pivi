@@ -26,14 +26,20 @@ describe("VaultFileAdapter", () => {
   }
 
   it("rejects append write failures", async () => {
+    const warning = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     const { adapter, writeMock } = createAdapter({ "log.jsonl": "before\n" });
     const failure = new Error("disk full");
     writeMock.mockRejectedValueOnce(failure);
 
     await expect(adapter.append("log.jsonl", "after\n")).rejects.toBe(failure);
+    expect(warning).toHaveBeenCalledWith(
+      "[Pivi:ObsidianVaultFileAdapter] Vault append failed for log.jsonl",
+      failure,
+    );
   });
 
   it("allows later appends after a failed append", async () => {
+    const warning = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     const { adapter, files, writeMock } = createAdapter({
       "log.jsonl": "before\n",
     });
@@ -47,6 +53,7 @@ describe("VaultFileAdapter", () => {
     ).resolves.toBeUndefined();
 
     expect(files.get("log.jsonl")).toBe("before\nafter\n");
+    expect(warning).toHaveBeenCalledTimes(1);
   });
 });
 

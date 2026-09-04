@@ -629,6 +629,7 @@ describe('ObsidianVaultApi', () => {
   });
 
   it('editNote still mutates when File Recovery snapshot capture fails', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
       fileRecoveryEnabled: true,
       failForceAdd: true,
@@ -642,6 +643,10 @@ describe('ObsidianVaultApi', () => {
     });
 
     expect(app.getContent('notes/a.md')).toBe('hello vault');
+    expect(warning).toHaveBeenCalledWith(
+      '[Pivi:FileRecoverySnapshot] File Recovery pre-write snapshot skipped',
+      expect.objectContaining({ path: 'notes/a.md', reason: 'capture_failed' }),
+    );
   });
 
   it('editNote still mutates when File Recovery is unavailable', async () => {

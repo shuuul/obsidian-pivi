@@ -282,6 +282,7 @@ describe("McpStorage", () => {
   });
 
   it("preserves corrupt JSON and throws a typed load error", async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const corrupt = "{ not-json";
     const adapter = new MemoryVaultAdapter({
       [PIVI_MCP_CONFIG_PATH]: corrupt,
@@ -291,6 +292,7 @@ describe("McpStorage", () => {
     await expect(storage.load()).rejects.toBeInstanceOf(McpConfigLoadError);
     expect(adapter.readSync(PIVI_MCP_CONFIG_PATH)).toBe(corrupt);
     expect(adapter.listPaths().some((path) => path.includes(".corrupt-"))).toBe(true);
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining('Preserved corrupt config'));
   });
 
   it("does not delete obsolete secrets when config publication fails", async () => {
@@ -372,6 +374,7 @@ describe("McpStorage", () => {
   });
 
   it("isolates staged-secret rollback failures and preserves the publication error", async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const adapter = new MemoryVaultAdapter();
     const values = new Map<string, string>();
     let failRollbackId: string | undefined;
@@ -399,6 +402,10 @@ describe("McpStorage", () => {
 
     expect(values.get(goodId)).toBeUndefined();
     expect(values.get(badId)).toBe("bad-token");
+    expect(warning).toHaveBeenCalledWith(
+      '[Pivi:McpStorage] MCP secret rollback had failures',
+      expect.any(Array),
+    );
   });
 
   it("cleans old header secrets after publishing a replacement header map", async () => {
