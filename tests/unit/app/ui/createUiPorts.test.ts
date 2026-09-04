@@ -12,13 +12,11 @@ import type {
   PiviUiFacades,
 } from '@/app/hostContracts';
 import { createPromptCompositionCoordinator } from '@/app/runtime/PromptCompositionCoordinator';
-import {
-  createChatUiPorts,
-  createSettingsUiPorts,
-} from '@/app/ui/createUiPorts';
+import { createVaultSkillsMetadataPort } from '@/app/runtime/vaultSkillsMetadataPort';
+import { createSettingsUiPorts } from '@/app/ui/createSettingsUiPorts';
+import { createChatUiPorts } from '@/app/ui/createUiPorts';
 import type { ChatUiCompositionHost } from '@/app/ui/createUiPorts';
 import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
-import { createVaultSkillsMetadataPort } from '@/app/runtime/vaultSkillsMetadataPort';
 
 function createWorkspaceWithSkills(host: PiviSettingsHost, vaultPath: string) {
   return {

@@ -40,7 +40,7 @@ Narrative Markdown keeps Obsidian's rendered semantics, host typography, colors,
 
 ## Settings data flow
 
-`SettingsRoot` consumes package-owned `SettingsPorts` implemented by `src/app/ui/createUiPorts.ts` and focused settings-port modules. React does not import app settings types or engine facades.
+`SettingsRoot` consumes package-owned `SettingsPorts` implemented by `src/app/ui/createSettingsUiPorts.ts` and focused settings-port modules. Chat port adaptation remains separately owned by `src/app/ui/createUiPorts.ts`. React does not import app settings types or engine facades.
 
 Settings navigation is Obsidian-native (`minAppVersion` 1.13.0). `PiviSettingTabHost.getSettingDefinitions()` maps `SETTINGS_ROOT_LAYOUT` to declarative pages and groups in this order:
 

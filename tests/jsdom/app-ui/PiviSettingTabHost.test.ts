@@ -5,9 +5,9 @@ import { SETTINGS_ROOT_LAYOUT } from '@pivi/pivi-react/settings';
 import type { PiviPluginWorkspace, SettingsFacade } from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
 import { PiviSettingTabHost } from '@/app/ui/PiviSettingTabHost';
-import { createSettingsUiPorts } from '@/app/ui/createUiPorts';
+import { createSettingsUiPorts } from '@/app/ui/createSettingsUiPorts';
 
-jest.mock('@/app/ui/createUiPorts', () => ({
+jest.mock('@/app/ui/createSettingsUiPorts', () => ({
   createSettingsUiPorts: jest.fn(() => ({})),
 }));
 

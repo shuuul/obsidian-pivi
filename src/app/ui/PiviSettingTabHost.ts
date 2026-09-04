@@ -22,7 +22,7 @@ import type {
   SettingsFacade,
 } from "@/app/hostContracts";
 import { appI18n, type Locale, setLocale, t } from "@/app/i18n";
-import { createSettingsUiPorts } from "@/app/ui/createUiPorts";
+import { createSettingsUiPorts } from "@/app/ui/createSettingsUiPorts";
 import { obsidianPresentationPlatform } from "@/app/ui/obsidianPresentationPlatform";
 import { getActiveWindow } from "@/ui/shared/dom";
 
