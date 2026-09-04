@@ -296,7 +296,7 @@ describe('UI port adapters', () => {
 
     ports.feedback.notify('Settings saved.');
     ports.catalog.listModelsForProvider('custom');
-    expect(host.notify).toHaveBeenCalledWith('Settings saved.');
+    expect(host.notify).toHaveBeenCalledWith('Settings saved.', undefined);
     expect(listModelsForProvider).toHaveBeenCalledWith('custom', {
       'custom/glm': 1_000_000,
     });

@@ -713,9 +713,7 @@
       "storageSystem": "Ambiente do sistema",
       "secretStored": "Armazenado com segurança",
       "secretMissing": "Valor seguro ausente",
-      "apply": "Aplicar alterações",
-      "pending": "Salvando variáveis de ambiente…",
-      "success": "Variáveis de ambiente salvas."
+      "apply": "Aplicar alterações"
     },
     "tools": {
       "sections": {
@@ -983,28 +981,28 @@
         "selectOne": "Selecciona al menos uma habilidad para instalar."
       },
       "feedback": {
+        "success": {
+          "installBundle": "Habilidades oficiais instaladas.",
+          "updateBundle": "Habilidades oficiais atualizadas.",
+          "installSelected": "Habilidades selecionadas instaladas.",
+          "updateAll": "Todas as habilidades atualizadas.",
+          "update": "Habilidade {name} atualizada.",
+          "remove": "Habilidade {name} removida.",
+          "enable": "Habilidade {name} ativada.",
+          "disable": "Habilidade {name} desativada."
+        },
+        "partialFailure": "As skills foram salvas, mas algumas tarefas posteriores falharam.",
         "pending": {
           "installBundle": "Instalando habilidades oficiais…",
           "updateBundle": "Atualizando habilidades oficiais…",
           "listRemote": "Listando habilidades remotas…",
           "installSelected": "Instalando habilidades selecionadas…",
           "updateAll": "Atualizando todas as habilidades…",
-          "update": "Atualizando {name}…",
-          "remove": "Removendo {name}…",
-          "enable": "Ativando {name}…",
-          "disable": "Desativando {name}…"
-        },
-        "success": {
-          "installBundle": "Habilidades oficiais instaladas.",
-          "updateBundle": "Habilidades oficiais atualizadas.",
-          "installSelected": "Habilidades selecionadas instaladas.",
-          "updateAll": "Todas as habilidades atualizadas.",
-          "update": "{name} atualizada.",
-          "remove": "{name} removida.",
-          "enable": "{name} ativada.",
-          "disable": "{name} desativada."
-        },
-        "partialFailure": "As skills foram salvas, mas algumas tarefas posteriores falharam."
+          "update": "Atualizando habilidade {name}…",
+          "remove": "Removendo habilidade {name}…",
+          "enable": "Ativando habilidade {name}…",
+          "disable": "Desativando habilidade {name}…"
+        }
       }
     },
     "slashCommandsUi": {

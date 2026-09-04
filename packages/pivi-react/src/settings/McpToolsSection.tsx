@@ -4,7 +4,7 @@ import type { SettingsComplexPorts, SettingsFeedbackPort } from '../ports';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpSectionState } from './mcp/useMcpSectionState';
 import { McpServerCard } from './McpServerCard';
-import { SettingRow, SettingsCollection, SettingsFeedback, SettingsPage, SettingsSection } from './primitives';
+import { SettingRow, SettingsCollection, SettingsPage, SettingsSection } from './primitives';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
@@ -24,7 +24,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
   const {
     servers,
     loading,
-    error,
     editor,
     busy,
     auth,
@@ -91,6 +90,7 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
                   authStatus={auth[server.name]}
                   selectorTools={toolsByServer[server.name] ?? []}
                   busy={busy !== null}
+                  feedback={feedback}
                   onConnect={(next) => connect(next, server)}
                   onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}
                   onCollapseExpanded={(name) => dispatch({ type: 'collapse_expanded', name })}
@@ -114,7 +114,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
             </SettingsCollection>
           )}
         </div>
-        <SettingsFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
         {editor ? (
           <McpServerEditor
             inline

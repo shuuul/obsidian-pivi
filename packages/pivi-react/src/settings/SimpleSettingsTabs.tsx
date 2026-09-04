@@ -99,7 +99,6 @@ export function EnvironmentSection({ environment, feedback }: {
   const [value, setValue] = useState(() => environmentEntriesToSafeText(environment.listEntries('shared')));
   const [savedValue, setSavedValue] = useState(value);
   const [applying, setApplying] = useState(false);
-  const [applyFeedback, setApplyFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const reviewKeys = environment.getReviewKeys('shared', value);
   const isDirty = value !== savedValue;
 
@@ -113,14 +112,11 @@ export function EnvironmentSection({ environment, feedback }: {
 
   const apply = () => {
     setApplying(true);
-    setApplyFeedback({ kind: 'pending', message: t('settings.sharedEnvironment.pending') });
     void environment.importEnvironmentText('shared', value)
       .then(() => {
         refreshEntries();
-        setApplyFeedback({ kind: 'success', message: t('settings.sharedEnvironment.success') });
       })
       .catch((cause: unknown) => {
-        setApplyFeedback(null);
         feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
       })
       .finally(() => {
@@ -181,14 +177,12 @@ export function EnvironmentSection({ environment, feedback }: {
             value={value}
             onChange={(event) => {
               setValue(event.target.value);
-              setApplyFeedback(null);
             }}
           />
           <div className="pivi-settings-action-group">
             <button type="button" className="pivi-button--primary" disabled={!isDirty || applying} onClick={apply}>
               {t('settings.sharedEnvironment.apply')}
             </button>
-            <SettingsFeedback feedback={applyFeedback} />
           </div>
         </SettingRow>
       </SettingsSection>

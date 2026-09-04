@@ -713,9 +713,7 @@
       "storageSystem": "Systemumgebung",
       "secretStored": "Sicher gespeichert",
       "secretMissing": "Fehlender sicherer Wert",
-      "apply": "Änderungen anwenden",
-      "pending": "Umgebungsvariablen werden gespeichert…",
-      "success": "Umgebungsvariablen gespeichert."
+      "apply": "Änderungen anwenden"
     },
     "tools": {
       "sections": {
@@ -983,28 +981,28 @@
         "selectOne": "Mindestens einen Skill zum Installieren auswählen."
       },
       "feedback": {
+        "success": {
+          "installBundle": "Offizielle Skills installiert.",
+          "updateBundle": "Offizielle Skills aktualisiert.",
+          "installSelected": "Ausgewählte Skills installiert.",
+          "updateAll": "Alle Skills aktualisiert.",
+          "update": "{name}-Skill aktualisiert.",
+          "remove": "{name}-Skill entfernt.",
+          "enable": "{name}-Skill aktiviert.",
+          "disable": "{name}-Skill deaktiviert."
+        },
+        "partialFailure": "Skills wurden gespeichert, aber einige Folgearbeiten sind fehlgeschlagen.",
         "pending": {
           "installBundle": "Offizielle Skills werden installiert…",
           "updateBundle": "Offizielle Skills werden aktualisiert…",
           "listRemote": "Remote-Skills werden aufgelistet…",
           "installSelected": "Ausgewählte Skills werden installiert…",
           "updateAll": "Alle Skills werden aktualisiert…",
-          "update": "{name} wird aktualisiert…",
-          "remove": "{name} wird entfernt…",
-          "enable": "{name} wird aktiviert…",
-          "disable": "{name} wird deaktiviert…"
-        },
-        "success": {
-          "installBundle": "Offizielle Skills installiert.",
-          "updateBundle": "Offizielle Skills aktualisiert.",
-          "installSelected": "Ausgewählte Skills installiert.",
-          "updateAll": "Alle Skills aktualisiert.",
-          "update": "{name} aktualisiert.",
-          "remove": "{name} entfernt.",
-          "enable": "{name} aktiviert.",
-          "disable": "{name} deaktiviert."
-        },
-        "partialFailure": "Skills wurden gespeichert, aber einige Folgearbeiten sind fehlgeschlagen."
+          "update": "{name}-Skill wird aktualisiert…",
+          "remove": "{name}-Skill wird entfernt…",
+          "enable": "{name}-Skill wird aktiviert…",
+          "disable": "{name}-Skill wird deaktiviert…"
+        }
       }
     },
     "slashCommandsUi": {

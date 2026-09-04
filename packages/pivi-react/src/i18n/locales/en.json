@@ -713,9 +713,7 @@
       "storageSystem": "System environment",
       "secretStored": "Stored securely",
       "secretMissing": "Missing secure value",
-      "apply": "Apply changes",
-      "pending": "Saving environment variables…",
-      "success": "Environment variables saved."
+      "apply": "Apply changes"
     },
     "tools": {
       "sections": {
@@ -979,28 +977,28 @@
         "installAria": "Install skill {name}"
       },
       "feedback": {
+        "success": {
+          "installBundle": "Official skills installed.",
+          "updateBundle": "Official skills updated.",
+          "installSelected": "Selected skills installed.",
+          "updateAll": "All skills updated.",
+          "update": "{name} skill updated.",
+          "remove": "{name} skill removed.",
+          "enable": "{name} skill enabled.",
+          "disable": "{name} skill disabled."
+        },
+        "partialFailure": "Skills were saved, but some follow-up work failed.",
         "pending": {
           "installBundle": "Installing official skills…",
           "updateBundle": "Updating official skills…",
           "listRemote": "Listing remote skills…",
           "installSelected": "Installing selected skills…",
           "updateAll": "Updating all skills…",
-          "update": "Updating {name}…",
-          "remove": "Removing {name}…",
-          "enable": "Enabling {name}…",
-          "disable": "Disabling {name}…"
-        },
-        "success": {
-          "installBundle": "Official skills installed.",
-          "updateBundle": "Official skills updated.",
-          "installSelected": "Selected skills installed.",
-          "updateAll": "All skills updated.",
-          "update": "{name} updated.",
-          "remove": "{name} removed.",
-          "enable": "{name} enabled.",
-          "disable": "{name} disabled."
-        },
-        "partialFailure": "Skills were saved, but some follow-up work failed."
+          "update": "Updating {name} skill…",
+          "remove": "Removing {name} skill…",
+          "enable": "Enabling {name} skill…",
+          "disable": "Disabling {name} skill…"
+        }
       },
       "notices": {
         "noRemote": "No remote skills found for this source.",

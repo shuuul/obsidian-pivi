@@ -713,9 +713,7 @@
       "storageSystem": "システム環境",
       "secretStored": "安全に保存済み",
       "secretMissing": "セキュア値がありません",
-      "apply": "変更を適用",
-      "pending": "環境変数を保存しています…",
-      "success": "環境変数を保存しました。"
+      "apply": "変更を適用"
     },
     "tools": {
       "sections": {
@@ -983,28 +981,28 @@
         "selectOne": "インストールするスキルを少なくとも 1 つ選択してください。"
       },
       "feedback": {
+        "success": {
+          "installBundle": "公式スキルをインストールしました。",
+          "updateBundle": "公式スキルを更新しました。",
+          "installSelected": "選択したスキルをインストールしました。",
+          "updateAll": "すべてのスキルを更新しました。",
+          "update": "{name} スキルを更新しました。",
+          "remove": "{name} スキルを削除しました。",
+          "enable": "{name} スキルを有効にしました。",
+          "disable": "{name} スキルを無効にしました。"
+        },
+        "partialFailure": "スキルは保存されましたが、一部の後続処理に失敗しました。",
         "pending": {
           "installBundle": "公式スキルをインストールしています…",
           "updateBundle": "公式スキルを更新しています…",
           "listRemote": "リモートスキルを一覧表示しています…",
           "installSelected": "選択したスキルをインストールしています…",
           "updateAll": "すべてのスキルを更新しています…",
-          "update": "{name} を更新しています…",
-          "remove": "{name} を削除しています…",
-          "enable": "{name} を有効にしています…",
-          "disable": "{name} を無効にしています…"
-        },
-        "success": {
-          "installBundle": "公式スキルをインストールしました。",
-          "updateBundle": "公式スキルを更新しました。",
-          "installSelected": "選択したスキルをインストールしました。",
-          "updateAll": "すべてのスキルを更新しました。",
-          "update": "{name} を更新しました。",
-          "remove": "{name} を削除しました。",
-          "enable": "{name} を有効にしました。",
-          "disable": "{name} を無効にしました。"
-        },
-        "partialFailure": "スキルは保存されましたが、一部の後続処理に失敗しました。"
+          "update": "{name} スキルを更新しています…",
+          "remove": "{name} スキルを削除しています…",
+          "enable": "{name} スキルを有効にしています…",
+          "disable": "{name} スキルを無効にしています…"
+        }
       }
     },
     "slashCommandsUi": {

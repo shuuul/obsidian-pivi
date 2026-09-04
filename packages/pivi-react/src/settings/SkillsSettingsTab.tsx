@@ -30,12 +30,6 @@ type SkillPendingOperation =
 
 const SKILLS_SH_SECURITY_URL = 'https://skills.sh/docs/security';
 
-function isInstalledSkillRowOperation(
-  operation: SkillPendingOperation,
-): operation is Extract<SkillPendingOperation, { kind: 'update' | 'enable' | 'disable' }> {
-  return operation.kind === 'update' || operation.kind === 'enable' || operation.kind === 'disable';
-}
-
 export function SkillsSettingsTab({ skills, feedback }: {
   readonly skills: SettingsComplexPorts['skills'];
   readonly feedback: SettingsFeedbackPort;
@@ -47,15 +41,7 @@ export function SkillsSettingsTab({ skills, feedback }: {
   const [remote, setRemote] = useState<readonly RemoteSkill[]>([]);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = useState(false);
-  const [pendingOperation, setPendingOperation] = useState<SkillPendingOperation | null>(null);
-  const [remoteFeedback, setRemoteFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const [installFeedback, setInstallFeedback] = useState<SettingsFeedbackMessage | null>(null);
-  const [bundleFeedback, setBundleFeedback] = useState<SettingsFeedbackMessage | null>(null);
-  const [installedFeedback, setInstalledFeedback] = useState<SettingsFeedbackMessage | null>(null);
-  const [rowFeedback, setRowFeedback] = useState<{
-    readonly name: string;
-    readonly message: SettingsFeedbackMessage;
-  } | null>(null);
   const featuredBundle = skills.featuredBundle.getDescriptor();
   useEffect(() => {
     mounted.current = true;
@@ -64,100 +50,83 @@ export function SkillsSettingsTab({ skills, feedback }: {
 
   const refresh = () => { if (mounted.current) setEntries(skills.list()); };
 
-  const pendingMessage = (operation: SkillPendingOperation | null): SettingsFeedbackMessage | null => {
-    if (!operation) return null;
+  const pendingMessage = (operation: SkillPendingOperation): string => {
     switch (operation.kind) {
       case 'installBundle':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.installBundle') };
+        return t('settings.skills.feedback.pending.installBundle');
       case 'updateBundle':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.updateBundle') };
+        return t('settings.skills.feedback.pending.updateBundle');
       case 'listRemote':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.listRemote') };
+        return t('settings.skills.feedback.pending.listRemote');
       case 'installSelected':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.installSelected') };
+        return t('settings.skills.feedback.pending.installSelected');
       case 'updateAll':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.updateAll') };
+        return t('settings.skills.feedback.pending.updateAll');
       case 'update':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.update', { name: operation.name }) };
+        return t('settings.skills.feedback.pending.update', { name: operation.name });
       case 'remove':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.remove', { name: operation.name }) };
+        return t('settings.skills.feedback.pending.remove', { name: operation.name });
       case 'enable':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.enable', { name: operation.name }) };
+        return t('settings.skills.feedback.pending.enable', { name: operation.name });
       case 'disable':
-        return { kind: 'pending', message: t('settings.skills.feedback.pending.disable', { name: operation.name }) };
-      default:
-        return null;
+        return t('settings.skills.feedback.pending.disable', { name: operation.name });
     }
   };
 
-  const successMessage = (operation: SkillPendingOperation): SettingsFeedbackMessage => {
+  const successMessage = (operation: SkillPendingOperation): string => {
     switch (operation.kind) {
       case 'installBundle':
-        return { kind: 'success', message: t('settings.skills.feedback.success.installBundle') };
+        return t('settings.skills.feedback.success.installBundle');
       case 'updateBundle':
-        return { kind: 'success', message: t('settings.skills.feedback.success.updateBundle') };
+        return t('settings.skills.feedback.success.updateBundle');
       case 'installSelected':
-        return { kind: 'success', message: t('settings.skills.feedback.success.installSelected') };
+        return t('settings.skills.feedback.success.installSelected');
       case 'updateAll':
-        return { kind: 'success', message: t('settings.skills.feedback.success.updateAll') };
+        return t('settings.skills.feedback.success.updateAll');
       case 'update':
-        return { kind: 'success', message: t('settings.skills.feedback.success.update', { name: operation.name }) };
+        return t('settings.skills.feedback.success.update', { name: operation.name });
       case 'remove':
-        return { kind: 'success', message: t('settings.skills.feedback.success.remove', { name: operation.name }) };
+        return t('settings.skills.feedback.success.remove', { name: operation.name });
       case 'enable':
-        return { kind: 'success', message: t('settings.skills.feedback.success.enable', { name: operation.name }) };
+        return t('settings.skills.feedback.success.enable', { name: operation.name });
       case 'disable':
-        return { kind: 'success', message: t('settings.skills.feedback.success.disable', { name: operation.name }) };
+        return t('settings.skills.feedback.success.disable', { name: operation.name });
       default:
-        return { kind: 'success', message: t('common.confirm') };
+        return t('common.confirm');
     }
   };
 
   const run = async (
     operation: SkillPendingOperation,
     action: () => Promise<void>,
-    options: { readonly clearRemoteFeedback?: boolean; readonly clearInstallFeedback?: boolean } = {},
+    options: { readonly clearInstallFeedback?: boolean } = {},
   ) => {
     setBusy(true);
-    setPendingOperation(operation);
-    if (options.clearRemoteFeedback) setRemoteFeedback(null);
     if (options.clearInstallFeedback) setInstallFeedback(null);
-    setBundleFeedback(null);
-    setInstalledFeedback(null);
-    setRowFeedback(null);
+    const progress = feedback.notify(pendingMessage(operation), 0);
     try {
       await action();
+      progress?.hide();
       refresh();
       if (mounted.current && operation.kind !== 'listRemote') {
-        const result = successMessage(operation);
-        if (operation.kind === 'installBundle' || operation.kind === 'updateBundle') {
-          setBundleFeedback(result);
-        } else if (isInstalledSkillRowOperation(operation)) {
-          setRowFeedback({ name: operation.name, message: result });
-        } else {
-          setInstalledFeedback(result);
-        }
+        feedback.notify(successMessage(operation));
       }
     } catch (error) {
+      progress?.hide();
       if (mounted.current) feedback.notify(error instanceof Error ? error.message : t('common.error'));
     } finally {
-      if (mounted.current) {
-        setBusy(false);
-        setPendingOperation(null);
-      }
+      progress?.hide();
+      if (mounted.current) setBusy(false);
     }
   };
 
   const listRemote = () => {
-    setRemoteFeedback(null);
     void run({ kind: 'listRemote' }, async () => {
       const listed = await skills.listRemote(source);
       if (mounted.current) {
         setRemote(listed);
         setSelected(new Set());
-        setRemoteFeedback(listed.length === 0
-          ? { kind: 'error', message: t('settings.skills.notices.noRemote') }
-          : null);
+        if (listed.length === 0) feedback.notify(t('settings.skills.notices.noRemote'));
       }
     });
   };
@@ -200,7 +169,6 @@ export function SkillsSettingsTab({ skills, feedback }: {
   };
 
   const hasDefaultBundle = skills.featuredBundle.isInstalled();
-  const globalPendingFeedback = pendingMessage(pendingOperation);
   const description = (
     <>
       <p>{t('settings.skills.intro')}</p>
@@ -223,11 +191,6 @@ export function SkillsSettingsTab({ skills, feedback }: {
         <SettingRow
           name={featuredBundle.name}
           description={featuredBundle.description}
-          actions={(
-            <SettingsFeedback feedback={pendingOperation?.kind === 'installBundle' || pendingOperation?.kind === 'updateBundle'
-              ? globalPendingFeedback
-              : bundleFeedback} />
-          )}
         >
           <button
             type="button"
@@ -243,9 +206,6 @@ export function SkillsSettingsTab({ skills, feedback }: {
           stacked
           name={t('settings.skills.remote.name')}
           description={t('settings.skills.remote.desc')}
-          actions={(
-            <SettingsFeedback feedback={pendingOperation?.kind === 'listRemote' ? globalPendingFeedback : remoteFeedback} />
-          )}
         >
           <input
             className="pivi-settings-control"
@@ -254,7 +214,6 @@ export function SkillsSettingsTab({ skills, feedback }: {
               setSource(event.target.value);
               setRemote([]);
               setSelected(new Set());
-              setRemoteFeedback(null);
               setInstallFeedback(null);
             }}
             placeholder={featuredBundle.source}
@@ -294,11 +253,10 @@ export function SkillsSettingsTab({ skills, feedback }: {
               </SettingRow>
             ))}
           </SettingsCollection>
-          <SettingRow name={t('settings.skills.remote.installSelected')} actions={(
-            <SettingsFeedback feedback={pendingOperation?.kind === 'installSelected'
-              ? globalPendingFeedback
-              : installFeedback} />
-          )}>
+          <SettingRow
+            name={t('settings.skills.remote.installSelected')}
+            actions={installFeedback ? <SettingsFeedback feedback={installFeedback} /> : undefined}
+          >
             <button
               type="button"
               disabled={busy}
@@ -323,76 +281,58 @@ export function SkillsSettingsTab({ skills, feedback }: {
           </button>
         )}
       >
-        {pendingOperation?.kind === 'updateAll' ? (
-          <SettingsFeedback feedback={globalPendingFeedback} />
-        ) : null}
-        {!pendingOperation && installedFeedback ? (
-          <SettingsFeedback feedback={installedFeedback} />
-        ) : null}
         <SettingsCollection emptyState={t('settings.skills.installed.empty')}>
-          {entries.map((skill) => {
-            const rowPending = pendingOperation && (
-              (pendingOperation.kind === 'update' && pendingOperation.name === skill.name)
-              || (pendingOperation.kind === 'remove' && pendingOperation.folderName === skill.folderName)
-              || (pendingOperation.kind === 'enable' && pendingOperation.name === skill.name)
-              || (pendingOperation.kind === 'disable' && pendingOperation.name === skill.name)
-            ) ? globalPendingFeedback : null;
-            const rowStatus = rowPending ?? (rowFeedback?.name === skill.name ? rowFeedback.message : null);
-            return (
-              <SettingRow
-                key={skill.folderName}
-                name={skill.name}
-                description={(
-                  <>
-                    {skill.description ? <span>{skill.description}</span> : null}
-                    {skill.description ? ' · ' : null}
-                    <span>{skill.folderName}</span>
-                  </>
-                )}
-                actions={(
-                  <>
-                    <SettingsInlineActions>
-                      <Toggle
-                        checked={!skill.disabled}
-                        disabled={busy}
-                        label={skill.disabled
-                          ? t('settings.skills.installed.enableAria', { name: skill.name })
-                          : t('settings.skills.installed.disableAria', { name: skill.name })}
-                        onChange={() => {
-                          void run(
-                            skill.disabled
-                              ? { kind: 'enable', name: skill.name }
-                              : { kind: 'disable', name: skill.name },
-                            () => skills.setDisabled(skill.folderName, !skill.disabled),
-                          );
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="pivi-settings-action-btn"
-                        disabled={busy}
-                        aria-label={t('settings.skills.installed.updateAria', { name: skill.name })}
-                        onClick={() => {
-                          void run(
-                            { kind: 'update', name: skill.name },
-                            () => skills.update(skill.name, skill.folderName),
-                          );
-                        }}
-                      >
-                        <PlatformIcon name="refresh-cw" />
-                      </button>
-                      <SettingsRemoveButton
-                        ariaLabel={t('settings.skills.installed.removeAria', { name: skill.name })}
-                        disabled={busy}
-                        onClick={() => { confirmRemove(skill); }}
-                      />
-                    </SettingsInlineActions>
-                    {rowStatus ? <SettingsFeedback feedback={rowStatus} /> : null}
-                  </>
-                )}
-              />
-            );
-          })}
+          {entries.map((skill) => (
+            <SettingRow
+              key={skill.folderName}
+              name={skill.name}
+              description={(
+                <>
+                  {skill.description ? <span>{skill.description}</span> : null}
+                  {skill.description ? ' · ' : null}
+                  <span>{skill.folderName}</span>
+                </>
+              )}
+              actions={(
+                <SettingsInlineActions>
+                  <Toggle
+                    checked={!skill.disabled}
+                    disabled={busy}
+                    label={skill.disabled
+                      ? t('settings.skills.installed.enableAria', { name: skill.name })
+                      : t('settings.skills.installed.disableAria', { name: skill.name })}
+                    onChange={() => {
+                      void run(
+                        skill.disabled
+                          ? { kind: 'enable', name: skill.name }
+                          : { kind: 'disable', name: skill.name },
+                        () => skills.setDisabled(skill.folderName, !skill.disabled),
+                      );
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="pivi-settings-action-btn"
+                    disabled={busy}
+                    aria-label={t('settings.skills.installed.updateAria', { name: skill.name })}
+                    onClick={() => {
+                      void run(
+                        { kind: 'update', name: skill.name },
+                        () => skills.update(skill.name, skill.folderName),
+                      );
+                    }}
+                  >
+                    <PlatformIcon name="refresh-cw" />
+                  </button>
+                  <SettingsRemoveButton
+                    ariaLabel={t('settings.skills.installed.removeAria', { name: skill.name })}
+                    disabled={busy}
+                    onClick={() => { confirmRemove(skill); }}
+                  />
+                </SettingsInlineActions>
+              )}
+            />
+          ))}
         </SettingsCollection>
       </SettingsSection>
     </SettingsPage>

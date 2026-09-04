@@ -312,12 +312,12 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
       })
       .catch((cause) => {
         if (alive) {
-          dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveFailed')) });
+          feedback.notify(mcpErrorText(cause, t('settings.mcp.saveFailed')));
           dispatch({ type: 'set_loading', loading: false });
         }
       });
     return () => { alive = false; };
-  }, [mcp, t]);
+  }, [feedback, mcp, t]);
 
   useEffect(() => {
     let alive = true;
@@ -410,11 +410,11 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
       await commit([...state.servers, ...added]);
       dispatch({ type: 'set_import_draft', draft: null });
     } catch (cause) {
-      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.importFailed')) });
+      feedback.notify(mcpErrorText(cause, t('settings.mcp.importFailed')));
     } finally {
       dispatch({ type: 'set_busy', busy: null });
     }
-  }, [commit, state.servers, t]);
+  }, [commit, feedback, state.servers, t]);
 
   const connect = useCallback(async (
     server: ManagedMcpServer,

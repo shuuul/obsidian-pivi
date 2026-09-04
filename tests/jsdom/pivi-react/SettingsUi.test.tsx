@@ -1239,40 +1239,35 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
     await act(async () => undefined);
     expect(importEnvironmentText).toHaveBeenCalledWith('shared', 'FOO=changed');
-    expect(screen.getByText('Environment variables saved.')).toBeInTheDocument();
+    expect(screen.queryByText('Environment variables saved.')).not.toBeInTheDocument();
   });
 
-  it('places skill update status below the row actions', async () => {
+  it('notifies through the host channel when a skill update completes', async () => {
     let resolveUpdate!: () => void;
     const update = jest.fn(() => new Promise<void>((resolve) => { resolveUpdate = resolve; }));
+    const hide = jest.fn();
     const ports = createPorts();
+    ports.feedback.notify = jest.fn(() => ({ hide }));
     Object.assign(ports.complex.skills, { update });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="skills" ports={ports} /></I18nProvider>));
 
     fireEvent.click(screen.getByRole('button', { name: 'Update skill Example' }));
-    const status = screen.getByRole('status');
-    expect(status).toHaveTextContent('Updating Example…');
-    const item = status.closest('.pivi-settings-row');
-    const actions = item?.querySelector('.pivi-settings-actions');
-    expect(item).not.toBeNull();
-    expect(actions).toBeTruthy();
-    expect(actions).not.toContainElement(status);
-    expect(status.compareDocumentPosition(actions!) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Updating Example skill…', 0);
+    expect(hide).not.toHaveBeenCalled();
 
     resolveUpdate();
     await act(async () => undefined);
 
-    const success = screen.getByRole('status');
-    expect(success).toHaveTextContent('Example updated.');
-    expect(success.closest('.pivi-settings-row')).toContainElement(screen.getByText('Example', { selector: '.pivi-settings-row__name' }));
-    expect(success.closest('.pivi-settings-section')).toBe(
-      screen.getByText('Installed skills').closest('.pivi-settings-section'),
-    );
+    expect(hide).toHaveBeenCalled();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Example skill updated.');
+    expect(screen.queryByText('Example skill updated.')).not.toBeInTheDocument();
   });
 
   it('requires confirmation before removing an installed skill', async () => {
     const remove = jest.fn(async () => undefined);
+    const hide = jest.fn();
     const ports = createPorts();
+    ports.feedback.notify = jest.fn(() => ({ hide }));
     Object.assign(ports.complex.skills, { remove });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="skills" ports={ports} /></I18nProvider>));
     fireEvent.click(screen.getByRole('button', { name: 'Remove skill Example' }));
@@ -1281,7 +1276,9 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
     await act(async () => undefined);
     expect(remove).toHaveBeenCalledWith('example');
-    expect(screen.getByText('Example removed.')).toBeInTheDocument();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Removing Example skill…', 0);
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Example skill removed.');
+    expect(screen.queryByText('Example skill removed.')).not.toBeInTheDocument();
   });
 
   it('shows Get API key links for cloud providers and download links for local runtimes', () => {

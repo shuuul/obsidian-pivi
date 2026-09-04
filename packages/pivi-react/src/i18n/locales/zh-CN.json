@@ -713,9 +713,7 @@
       "storageSystem": "系统环境",
       "secretStored": "已安全存储",
       "secretMissing": "缺少安全值",
-      "apply": "应用更改",
-      "pending": "正在保存环境变量…",
-      "success": "环境变量已保存。"
+      "apply": "应用更改"
     },
     "tools": {
       "sections": {
@@ -983,28 +981,28 @@
         "selectOne": "请至少选择一个要安装的技能。"
       },
       "feedback": {
+        "success": {
+          "installBundle": "官方技能已安装。",
+          "updateBundle": "官方技能已更新。",
+          "installSelected": "所选技能已安装。",
+          "updateAll": "所有技能已更新。",
+          "update": "{name} 技能已更新。",
+          "remove": "{name} 技能已移除。",
+          "enable": "{name} 技能已启用。",
+          "disable": "{name} 技能已禁用。"
+        },
+        "partialFailure": "技能已保存，但部分后续操作失败。",
         "pending": {
           "installBundle": "正在安装官方技能…",
           "updateBundle": "正在更新官方技能…",
           "listRemote": "正在列出远程技能…",
           "installSelected": "正在安装所选技能…",
           "updateAll": "正在更新所有技能…",
-          "update": "正在更新 {name}…",
-          "remove": "正在移除 {name}…",
-          "enable": "正在启用 {name}…",
-          "disable": "正在禁用 {name}…"
-        },
-        "success": {
-          "installBundle": "官方技能已安装。",
-          "updateBundle": "官方技能已更新。",
-          "installSelected": "所选技能已安装。",
-          "updateAll": "所有技能已更新。",
-          "update": "{name} 已更新。",
-          "remove": "{name} 已移除。",
-          "enable": "{name} 已启用。",
-          "disable": "{name} 已禁用。"
-        },
-        "partialFailure": "技能已保存，但部分后续操作失败。"
+          "update": "正在更新 {name} 技能…",
+          "remove": "正在移除 {name} 技能…",
+          "enable": "正在启用 {name} 技能…",
+          "disable": "正在禁用 {name} 技能…"
+        }
       }
     },
     "slashCommandsUi": {

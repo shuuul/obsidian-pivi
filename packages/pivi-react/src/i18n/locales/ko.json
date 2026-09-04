@@ -713,9 +713,7 @@
       "storageSystem": "시스템 환경",
       "secretStored": "안전하게 저장됨",
       "secretMissing": "보안 값 없음",
-      "apply": "변경 사항 적용",
-      "pending": "환경 변수를 저장하는 중…",
-      "success": "환경 변수를 저장했습니다."
+      "apply": "변경 사항 적용"
     },
     "tools": {
       "sections": {
@@ -983,28 +981,28 @@
         "selectOne": "설치할 스킬을 하나 이상 선택하세요."
       },
       "feedback": {
+        "success": {
+          "installBundle": "공식 스킬을 설치했습니다.",
+          "updateBundle": "공식 스킬을 업데이트했습니다.",
+          "installSelected": "선택한 스킬을 설치했습니다.",
+          "updateAll": "모든 스킬을 업데이트했습니다.",
+          "update": "{name} 스킬을 업데이트했습니다.",
+          "remove": "{name} 스킬을 제거했습니다.",
+          "enable": "{name} 스킬을 사용 설정했습니다.",
+          "disable": "{name} 스킬을 사용 중지했습니다."
+        },
+        "partialFailure": "스킬은 저장되었지만 일부 후속 작업에 실패했습니다.",
         "pending": {
           "installBundle": "공식 스킬을 설치하는 중…",
           "updateBundle": "공식 스킬을 업데이트하는 중…",
           "listRemote": "원격 스킬을 나열하는 중…",
           "installSelected": "선택한 스킬을 설치하는 중…",
           "updateAll": "모든 스킬을 업데이트하는 중…",
-          "update": "{name} 업데이트 중…",
-          "remove": "{name} 제거 중…",
-          "enable": "{name} 사용 설정 중…",
-          "disable": "{name} 사용 중지 중…"
-        },
-        "success": {
-          "installBundle": "공식 스킬을 설치했습니다.",
-          "updateBundle": "공식 스킬을 업데이트했습니다.",
-          "installSelected": "선택한 스킬을 설치했습니다.",
-          "updateAll": "모든 스킬을 업데이트했습니다.",
-          "update": "{name}을(를) 업데이트했습니다.",
-          "remove": "{name}을(를) 제거했습니다.",
-          "enable": "{name}을(를) 사용 설정했습니다.",
-          "disable": "{name}을(를) 사용 중지했습니다."
-        },
-        "partialFailure": "스킬은 저장되었지만 일부 후속 작업에 실패했습니다."
+          "update": "{name} 스킬 업데이트 중…",
+          "remove": "{name} 스킬 제거 중…",
+          "enable": "{name} 스킬 사용 설정 중…",
+          "disable": "{name} 스킬 사용 중지 중…"
+        }
       }
     },
     "slashCommandsUi": {

@@ -8,7 +8,7 @@ import { getMcpServerType, supportsMcpOAuth } from '@pivi/agent/mcp/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
-import type { SettingsFeedbackMessage } from '../ports';
+import type { SettingsFeedbackPort } from '../ports';
 import { McpServerEditor, type McpServerEditorHandle } from './mcp/McpServerEditor';
 import { McpToolInventory } from './McpToolInventory';
 import { DisclosureCard, SettingsRemoveButton, Toggle } from './primitives';
@@ -25,6 +25,7 @@ export function McpServerCard({
   authStatus,
   selectorTools,
   busy,
+  feedback,
   onConnect,
   onToggleExpanded,
   onCollapseExpanded,
@@ -37,6 +38,7 @@ export function McpServerCard({
   readonly authStatus: McpAuthStatus | null | undefined;
   readonly selectorTools: readonly McpTool[];
   readonly busy: boolean;
+  readonly feedback: SettingsFeedbackPort;
   readonly onConnect: (server: ManagedMcpServer) => Promise<McpTestResult>;
   readonly onToggleExpanded: () => void;
   readonly onCollapseExpanded: (name: string) => void;
@@ -56,17 +58,26 @@ export function McpServerCard({
     setRefreshResult(null);
     try {
       const result = await onConnect(next);
-      if (requestGeneration.current === generation) setRefreshResult(result);
+      if (requestGeneration.current === generation) {
+        setRefreshResult(result);
+        if (result.success) {
+          feedback.notify(t('settings.mcp.test.connected'));
+        } else {
+          feedback.notify(result.error ?? t('settings.mcp.test.failed'));
+        }
+      }
       return result.success;
     } catch (cause) {
+      const failed = refreshError(cause, t('settings.mcp.refreshFailed'));
       if (requestGeneration.current === generation) {
-        setRefreshResult(refreshError(cause, t('settings.mcp.refreshFailed')));
+        setRefreshResult(failed);
+        feedback.notify(failed.error ?? t('settings.mcp.test.failed'));
       }
       return false;
     } finally {
       if (requestGeneration.current === generation) setRefreshing(false);
     }
-  }, [onConnect, t]);
+  }, [feedback, onConnect, t]);
 
   useEffect(() => () => { requestGeneration.current += 1; }, []);
 
@@ -74,11 +85,6 @@ export function McpServerCard({
   const preview = server.description
     ?? (previewConfig.url ?? [previewConfig.command, ...(previewConfig.args ?? [])].filter(Boolean).join(' '));
   const tools = refreshResult?.success ? refreshResult.tools : selectorTools;
-  const connectFeedback: SettingsFeedbackMessage | undefined = refreshResult
-    ? refreshResult.success
-      ? { kind: 'success', message: t('settings.mcp.test.connected') }
-      : { kind: 'error', message: refreshResult.error ?? t('settings.mcp.test.failed') }
-    : undefined;
 
   return (
     <DisclosureCard
@@ -141,7 +147,6 @@ export function McpServerCard({
         server={server}
         inline
         connecting={refreshing}
-        feedback={connectFeedback}
         onSave={connect}
       />
       {supportsMcpOAuth(server) && authStatus === 'authenticated'

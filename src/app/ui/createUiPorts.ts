@@ -69,11 +69,8 @@ import {
   openHotkeySettings,
   SETTINGS_HOTKEY_ROWS,
 } from './settingsHotkeys';
-
 export type { ChatUiCompositionHost } from './chatUiCompositionHost';
-
 const logger = new PluginLogger('UiPorts');
-
 export function createChatUiPorts(
   host: ChatUiCompositionHost,
   workspace: PiviPluginWorkspace | null,
@@ -250,7 +247,6 @@ export function createChatUiPorts(
     },
   };
 }
-
 export function createSettingsUiPorts(
   host: PiviSettingsHost,
   workspace: PiviPluginWorkspace | null,
@@ -449,8 +445,7 @@ export function createSettingsUiPorts(
             ...patch,
           });
           host.settings.agentSettings.webSearchTools = next;
-          // webSearchTools lives in device-local provider state and commits before
-          // the vault write; keep runtime aligned with local authority on failure.
+          // Device-local webSearchTools commits before the vault write; keep runtime aligned on failure.
           await host.saveSettings();
         },
         writeCredential(providerId, key) {
@@ -526,7 +521,7 @@ export function createSettingsUiPorts(
       },
       mcp: createMcpSettingsPort(host, ws),
     },
-    feedback: { notify: message => { host.notify(message); } },
+    feedback: { notify: (message, timeout) => { const notice = host.notify(message, timeout); return notice ? { hide: () => notice.hide() } : undefined; } },
     snapshot: { getSnapshot: snapshot },
     actions: {
       saveGeneral,

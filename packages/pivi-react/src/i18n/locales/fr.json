@@ -713,9 +713,7 @@
       "storageSystem": "Environnement système",
       "secretStored": "Stocké de manière sécurisée",
       "secretMissing": "Valeur sécurisée manquante",
-      "apply": "Appliquer les modifications",
-      "pending": "Enregistrement des variables d’environnement…",
-      "success": "Variables d’environnement enregistrées."
+      "apply": "Appliquer les modifications"
     },
     "tools": {
       "sections": {
@@ -983,28 +981,28 @@
         "selectOne": "Sélectionnez au moins une compétence à installer."
       },
       "feedback": {
+        "success": {
+          "installBundle": "Compétences officielles installées.",
+          "updateBundle": "Compétences officielles mises à jour.",
+          "installSelected": "Compétences sélectionnées installées.",
+          "updateAll": "Toutes les compétences mises à jour.",
+          "update": "Compétence {name} mise à jour.",
+          "remove": "Compétence {name} supprimée.",
+          "enable": "Compétence {name} activée.",
+          "disable": "Compétence {name} désactivée."
+        },
+        "partialFailure": "Les skills ont été enregistrées, mais certaines opérations de suivi ont échoué.",
         "pending": {
           "installBundle": "Installation des compétences officielles…",
           "updateBundle": "Mise à jour des compétences officielles…",
           "listRemote": "Liste des compétences distantes…",
           "installSelected": "Installation des compétences sélectionnées…",
           "updateAll": "Mise à jour de toutes les compétences…",
-          "update": "Mise à jour de {name}…",
-          "remove": "Suppression de {name}…",
-          "enable": "Activation de {name}…",
-          "disable": "Désactivation de {name}…"
-        },
-        "success": {
-          "installBundle": "Compétences officielles installées.",
-          "updateBundle": "Compétences officielles mises à jour.",
-          "installSelected": "Compétences sélectionnées installées.",
-          "updateAll": "Toutes les compétences mises à jour.",
-          "update": "{name} mise à jour.",
-          "remove": "{name} supprimée.",
-          "enable": "{name} activée.",
-          "disable": "{name} désactivée."
-        },
-        "partialFailure": "Les skills ont été enregistrées, mais certaines opérations de suivi ont échoué."
+          "update": "Mise à jour de la compétence {name}…",
+          "remove": "Suppression de la compétence {name}…",
+          "enable": "Activation de la compétence {name}…",
+          "disable": "Désactivation de la compétence {name}…"
+        }
       }
     },
     "slashCommandsUi": {

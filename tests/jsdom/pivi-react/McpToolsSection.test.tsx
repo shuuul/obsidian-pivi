@@ -113,7 +113,8 @@ describe('React MCP settings', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Import' }));
     await act(async () => undefined);
-    expect(screen.getByRole('alert')).toHaveTextContent('No valid MCP configuration found in pasted JSON');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('No valid MCP configuration found in pasted JSON');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(mcp.save).not.toHaveBeenCalled();
 
     fireEvent.change(textarea, {
@@ -182,7 +183,8 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' }));
     await act(async () => undefined);
     expect(mcp.connect).toHaveBeenCalledWith(server);
-    expect(screen.getByText('Tools refreshed')).toBeInTheDocument();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Tools refreshed');
+    expect(screen.queryByText('Tools refreshed')).not.toBeInTheDocument();
     const cardBody = document.querySelector('.pivi-settings-card__body');
     expect(cardBody).not.toBeNull();
     expect(within(cardBody as HTMLElement).queryByRole('checkbox')).not.toBeInTheDocument();
@@ -198,7 +200,8 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' }));
     await act(async () => undefined);
-    expect(screen.getByRole('alert')).toHaveTextContent('OAuth denied');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('OAuth denied');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('does not report an auth error when a public MCP needs no OAuth', async () => {
@@ -225,7 +228,8 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Connect / refresh tools' }));
     await act(async () => undefined);
-    expect(screen.getByRole('alert')).toHaveTextContent('Auth failed for "remote"');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Auth failed for "remote"');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows alert when OAuth logout fails', async () => {
