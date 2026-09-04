@@ -1,0 +1,74 @@
+name: Bug report
+description: Report a reproducible problem with Pivi
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. For usage questions, use Discussions Q&A. Do not post vulnerabilities or secrets here; use the private Security Advisory link in the issue chooser.
+  - type: input
+    id: pivi-version
+    attributes:
+      label: Pivi version
+      description: Find this in Community Plugins or manifest.json.
+      placeholder: 0.25.0
+    validations:
+      required: true
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian version
+      placeholder: 1.13.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - iOS (not supported)
+        - Android (not supported)
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Use a minimal test vault when possible and remove private vault content and credentials.
+      placeholder: |
+        1. Open …
+        2. Run …
+        3. Observe …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result and logs
+      description: Include relevant errors or screenshots after removing secrets and personal note content.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Relevant provider/model, enabled integration, theme, or conflicting plugin.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and Discussions.
+          required: true
+        - label: This report contains no secrets or undisclosed security vulnerability.
+          required: true

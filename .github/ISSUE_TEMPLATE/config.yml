@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Usage questions
+    url: https://github.com/shuuul/obsidian-pivi/discussions/categories/q-a
+    about: Ask for setup and workflow help in Discussions Q&A.
+  - name: Ideas and early proposals
+    url: https://github.com/shuuul/obsidian-pivi/discussions/categories/ideas
+    about: Discuss an idea before turning it into focused repository work.
+  - name: Report a security vulnerability
+    url: https://github.com/shuuul/obsidian-pivi/security/advisories/new
+    about: Privately report vulnerabilities; do not open a public issue.

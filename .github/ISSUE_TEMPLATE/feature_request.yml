@@ -1,0 +1,56 @@
+name: Feature request
+description: Propose a focused improvement to Pivi
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: For open-ended workflow discussion, start in Discussions Ideas. Do not post security concerns here.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Describe the knowledge-work problem, not only a proposed control.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the smallest useful outcome and how it fits an Obsidian workflow.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Relevant platform
+      options:
+        - All desktop platforms
+        - macOS
+        - Windows
+        - Linux
+        - Not platform-specific
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Pivi and Obsidian versions
+      placeholder: Pivi 0.25.0; Obsidian 1.13.0
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and Discussions.
+          required: true
+        - label: This request contains no secrets or undisclosed security vulnerability.
+          required: true
