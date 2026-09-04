@@ -16,7 +16,7 @@ import { MarkdownView, Notice } from 'obsidian';
 import {
   getSelectionToolbarHost,
 } from '@/app/editorSelectionToolbarRegistration';
-import type { PiviPluginHost } from '@/app/hostContracts';
+import type { IntegrationsFacade } from '@/app/hostContracts';
 import { appI18n, t } from '@/app/i18n';
 import { ensurePiviViewOpen } from '@/app/piviViewActivation';
 import { buildInlineEditTurnContent } from '@/app/ui/inlineEditHelpers';
@@ -31,7 +31,6 @@ import type { InlineEditSurfaceSendPayload } from '@/app/ui/inlineEditSurface/ty
 import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
 import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getWorkspaceCommandFullId } from '@/app/workspaceCommandRegistry';
-import type PiviPlugin from '@/main';
 import { captureEditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/selectionToolbarPlugin';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
@@ -57,11 +56,11 @@ interface OriginatingMarkdownContext {
   readonly file: MarkdownView['file'];
 }
 
-function getEnabledShortcuts(settings: PiviPluginHost['settings']): EditorToolbarShortcut[] {
+function getEnabledShortcuts(settings: IntegrationsFacade['settings']): EditorToolbarShortcut[] {
   return settings.editorSelectionToolbar.shortcuts.filter(shortcut => shortcut.enabled);
 }
 
-function getComposerDefaults(plugin: PiviPluginHost): ComposerDefaults {
+function getComposerDefaults(plugin: IntegrationsFacade): ComposerDefaults {
   const uiFacades = plugin.getUiFacades();
   const settings = uiFacades.getSettingsSnapshot(plugin.settings);
   const chatConfig = uiFacades.chatUIConfig;
@@ -80,12 +79,12 @@ function getComposerDefaults(plugin: PiviPluginHost): ComposerDefaults {
   };
 }
 
-function resolveActiveMarkdownView(plugin: PiviPluginHost): MarkdownView | null {
+function resolveActiveMarkdownView(plugin: IntegrationsFacade): MarkdownView | null {
   return plugin.app.workspace.getActiveViewOfType(MarkdownView);
 }
 
 function captureOriginatingMarkdownContext(
-  plugin: PiviPluginHost,
+  plugin: IntegrationsFacade,
   snapshot: EditorSelectionSnapshot,
 ): OriginatingMarkdownContext | null {
   const editor = snapshot.editor;
@@ -102,7 +101,7 @@ function captureOriginatingMarkdownContext(
 }
 
 function stillOwnsSnapshot(
-  plugin: PiviPluginHost,
+  plugin: IntegrationsFacade,
   snapshot: EditorSelectionSnapshot,
   origin: OriginatingMarkdownContext,
 ): boolean {
@@ -111,8 +110,8 @@ function stillOwnsSnapshot(
     && plugin.app.workspace.getLeavesOfType('markdown').some(leaf => leaf.view === origin.view);
 }
 
-function executeObsidianCommand(plugin: PiviPluginHost, commandId: string): void {
-  const commands = (plugin.app as PiviPluginHost['app'] & {
+function executeObsidianCommand(plugin: IntegrationsFacade, commandId: string): void {
+  const commands = (plugin.app as IntegrationsFacade['app'] & {
     commands?: { executeCommandById?: (id: string) => boolean };
   }).commands;
   if (typeof commands?.executeCommandById !== 'function') {
@@ -132,7 +131,10 @@ export class SelectionToolbarSurfaceController {
   private readonly inlineEditSessions = new Map<string, InlineEditRecord>();
   private readonly unsubscribers: Array<() => void> = [];
 
-  constructor(private readonly plugin: PiviPlugin) {}
+  constructor(
+    private readonly plugin: IntegrationsFacade,
+    private readonly registerCleanup: (cleanup: () => void) => void,
+  ) {}
 
   register(): void {
     const host = getSelectionToolbarHost();
@@ -152,7 +154,7 @@ export class SelectionToolbarSurfaceController {
       }),
     );
 
-    this.plugin.register(() => {
+    this.registerCleanup(() => {
       this.destroy();
     });
   }
@@ -557,11 +559,14 @@ export function openInlineEditForEditorSelection(editor: Editor): boolean {
   return registeredSelectionToolbarController?.openInlineEditForSelection(editor) ?? false;
 }
 
-export function registerSelectionToolbarUi(plugin: PiviPlugin): void {
-  const controller = new SelectionToolbarSurfaceController(plugin);
+export function registerSelectionToolbarUi(
+  plugin: IntegrationsFacade,
+  registerCleanup: (cleanup: () => void) => void,
+): void {
+  const controller = new SelectionToolbarSurfaceController(plugin, registerCleanup);
   registeredSelectionToolbarController = controller;
   controller.register();
-  plugin.register(() => {
+  registerCleanup(() => {
     if (registeredSelectionToolbarController === controller) {
       registeredSelectionToolbarController = null;
     }

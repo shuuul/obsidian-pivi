@@ -10,12 +10,14 @@ Pivi registers visible Obsidian surfaces before performing workspace I/O. Expens
 sequenceDiagram
   participant O as Obsidian
   participant P as PiviPlugin
+  participant A as PiviApplication
   participant R as Registrations
   participant W as Workspace services
   participant V as View/settings host
   O->>P: onload()
-  P->>P: load required settings
-  P->>R: register views, commands, settings
+  P->>A: create and delegate onload()
+  A->>A: load required settings
+  A->>R: register views, commands, settings via real Plugin
   R-->>O: visible surfaces available
   O->>P: layout ready or surface opened
   P->>W: ensureWorkspaceServices()
@@ -24,9 +26,9 @@ sequenceDiagram
   V->>V: mount ports and presentation
 ```
 
-`initializePiviPlugin()` loads required settings, registers commands/views/settings, registers the editor selection toolbar (`registerEditorExtension` + overlay host) and its React surface controller, and then starts the retryable single-flight workspace promise from `workspace.onLayoutReady` or the first visible surface. `PiviViewHost` and `PiviSettingTabHost` receive a lazy `getWorkspace` callback, so registration never captures a partially initialized service graph.
+`src/main.ts` contains only the Obsidian `Plugin` subclass and holds the lifecycle interface returned by `createPiviApplication`. `PiviApplication` owns concrete delegating `ChatFacade`, `SessionsFacade`, `WorkspaceFacade`, `IntegrationsFacade`, and `SettingsFacade` objects. Registrations receive the real Plugin for Obsidian APIs plus only their scoped facades: views get chat/session/workspace, commands get chat, settings get settings/workspace, and editor integrations get integrations. `initializePiviPlugin()` preserves settings-first registration and retryable lazy workspace initialization.
 
-`PiviPlugin` constructs purpose-scoped network clients at composition (`createPiviNetworkClients`) and passes them through `WorkspaceInitContext.network` into MCP/OAuth, web tools, image generation, custom providers, and connectivity. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` shim for upstream SDK identifiers only. The shared `systemProcessRunner` is injected into Obsidian tools, Skills, and CLI transport so one-shot process work and vault mutation containment stay on host primitives rather than ad hoc `spawn` calls.
+`PiviApplication` constructs purpose-scoped network clients at composition (`createPiviNetworkClients`) and passes them through `WorkspaceInitContext.network` into MCP/OAuth, web tools, image generation, custom providers, and connectivity. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` shim for upstream SDK identifiers only.
 
 Generation guards invalidate late initialization after a view closes or the plugin unloads. A failed workspace initialization clears the single-flight state so a later visible action can retry.
 
@@ -34,6 +36,8 @@ Generation guards invalidate late initialization after a view closes or the plug
 
 | Contract | Owner and purpose |
 |---|---|
+| `PiviPlugin` | Lifecycle-only Obsidian inheritance shell; it exposes no application service locator |
+| `PiviApplication` | Product state, assembly, lifecycle ordering, and scoped facade owner |
 | `PiviChatHost` | App-only runtime host containing the Obsidian `app`; used by `src/ui/chat` for UI context |
 | `PiviChatCompositionHost` | Wider app composition surface for settings, facades, view enumeration, and tab-state persistence |
 | `ChatPorts` | `@pivi/agent`-owned runtime, session, catalog, models, and settings capabilities injected into `TabManager` |
@@ -42,7 +46,7 @@ Generation guards invalidate late initialization after a view closes or the plug
 | `PiWorkspaceServices` | Plugin-wide service graph: stores, tools, MCP, skills, providers, runtime factories, and subagent limiter |
 | `WorkspaceCommandsCoordinator` | App-owned workspace-command plans, revisions, persistence, and ordering shared by Settings and Agent management |
 
-`createChatUiPorts(host, workspace)` adapts app facades and workspace services into `ChatPorts`. The app-owned imperative adapter closure captures those ports and constructs `TabManager`; the React mount contract never receives or forwards them.
+`createChatUiPorts(chat, sessions, workspace)` keeps runtime/model/settings chat concerns separate from session CRUD while adapting both into `ChatPorts`. The app-owned imperative adapter closure captures those ports and constructs `TabManager`; the React mount contract never receives or forwards them.
 
 App callers control a mounted chat through behavior-named operations such as creating a chat, persisting state, refreshing models, synchronizing external roots, or submitting an inline-edit turn. Only the `imperativeChat*.ts` adapter family may inspect the internal `TabManager`, `TabData`, controller, runtime, UI, or DOM graph.
 

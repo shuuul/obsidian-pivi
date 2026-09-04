@@ -30,32 +30,51 @@ describe('initializePiviPlugin', () => {
           }),
         },
       },
-      loadSettings: jest.fn(async () => undefined),
-      ensureWorkspaceServices: jest.fn(() => neverReady),
+      register: jest.fn(),
+    };
+    const loadSettings = jest.fn(async () => undefined);
+    const facades = {
+      chat: { boundary: 'chat' },
+      sessions: { boundary: 'sessions' },
+      workspace: { boundary: 'workspace', ensureWorkspaceServices: jest.fn(() => neverReady) },
+      integrations: {
+        boundary: 'integrations',
+        settings: {
+          editorSelectionToolbar: { enabled: true, shortcuts: [{ enabled: true }] },
+        },
+      },
+      settings: { boundary: 'settings' },
     };
 
-    await initializePiviPlugin(plugin as never);
+    await initializePiviPlugin(plugin as never, facades as never, loadSettings);
 
-    expect(registerPiviViews).toHaveBeenCalledWith(plugin);
-    expect(registerPiviCommands).toHaveBeenCalledWith(plugin);
-    expect(registerPiviSettings).toHaveBeenCalledWith(plugin);
+    expect(registerPiviViews).toHaveBeenCalledWith(
+      plugin, facades.chat, facades.sessions, facades.workspace,
+    );
+    expect(registerPiviCommands).toHaveBeenCalledWith(plugin, facades.chat);
+    expect(registerPiviSettings).toHaveBeenCalledWith(
+      plugin, facades.settings, facades.workspace,
+    );
     expect(registerEditorSelectionToolbar).toHaveBeenCalledWith(plugin, {
       isToolbarEnabled: expect.any(Function),
       shouldYieldToNoteToolbar: expect.any(Function),
     });
-    expect(registerSelectionToolbarUi).toHaveBeenCalledWith(plugin);
-    expect(plugin.ensureWorkspaceServices).not.toHaveBeenCalled();
+    expect(registerSelectionToolbarUi).toHaveBeenCalledWith(
+      facades.integrations,
+      expect.any(Function),
+    );
+    expect(facades.workspace.ensureWorkspaceServices).not.toHaveBeenCalled();
 
     const toolbarOptions = (registerEditorSelectionToolbar as jest.Mock).mock.calls[0]?.[1] as {
       isToolbarEnabled: () => boolean;
     };
-    (plugin as typeof plugin & { settings: unknown }).settings = {
+    facades.integrations.settings = {
       editorSelectionToolbar: { enabled: true, shortcuts: [{ enabled: false }, { enabled: false }] },
     };
     expect(toolbarOptions.isToolbarEnabled()).toBe(false);
 
     expect(onLayoutReady).not.toBeNull();
     (onLayoutReady as unknown as () => void)();
-    expect(plugin.ensureWorkspaceServices).toHaveBeenCalledTimes(1);
+    expect(facades.workspace.ensureWorkspaceServices).toHaveBeenCalledTimes(1);
   });
 });

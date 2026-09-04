@@ -24,12 +24,12 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] P0 issue #100 is merged with one machine-readable v0.25.0 capability contract, aligned active docs, a focused regression suite, and the docs check in shared quality gates.
 - [x] No post-P0 workstream starts until GitHub reports the issue #100 pull request as merged; the merge URL and commit are recorded in Progress and handoff.
 - [x] Repository rules protect `main` and SemVer release tags without requiring a second reviewer while Pivi remains single-maintainer.
-- [ ] `PiviPlugin` becomes a lifecycle-focused composition root, feature consumers receive narrow facades, and existing behavior/configuration remain compatible under lifecycle and feature tests.
+- [x] `PiviPlugin` becomes a lifecycle-focused composition root, feature consumers receive narrow facades, and existing behavior/configuration remain compatible under lifecycle and feature tests.
 - [ ] Cross-package imports are restricted to curated exports and architecture checks reject undeclared or internal package paths without adding another workspace.
 - [ ] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
 - [ ] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
 - [ ] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
-- [ ] Public contribution, discussion, recipe, and platform-support paths exist; optional update templates are available without creating an unsupported publication or funding commitment.
+- [x] Public contribution, discussion, recipe, and platform-support paths exist; optional update templates are available without creating an unsupported publication or funding commitment.
 
 ## Scope and non-goals
 
@@ -64,6 +64,7 @@ Not in scope:
 | 2026-09-04 | Treat later workstream acceptance details as provisional until each is re-inspected and linked to its own issue after the P0 merge. | The report is static review input; implementation facts can change while WS-01 is under review. | WS-02–WS-09 |
 | 2026-09-04 | Continue post-P0 work after the maintainer approved the merge, using protected-branch pull requests for repository changes. | Supersedes the earlier stop-after-PR execution limit without weakening the now-active repository rules. | WS-02–WS-09 |
 | 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml`, and do not make a recurring publication cadence a completion requirement. | The maintainer is not applying for GitHub Sponsors now and prefers optional update templates over a schedule that may not be sustained. Funding can return as independent work after a valid destination exists. | WS-08–WS-09 |
+| 2026-09-04 | Make `PiviPlugin` a lifecycle-only shell and move product ownership to `PiviApplication`; pass the real Plugin separately where Obsidian requires it. | Removes the service locator from the framework subclass without changing lifecycle ordering or adding a container/workspace. | WS-03 |
 
 ## Workstreams
 
@@ -73,13 +74,13 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 | --- | --- | --- | --- | --- | --- |
 | WS-01 | Issue #100: remote-only MCP capability manifest, aligned active docs, obsolete smoke cleanup, contract checker, and PR | Amp | Done | None | Focused Jest; `check:docs-contracts`; `check:boundaries`; typecheck; lint; diff check; PR CI |
 | WS-02 | Issue #102: protect `main` and SemVer tags with required quality/platform checks and conversation resolution | Amp | Done | WS-01 done; maintainer authorized continued execution | Query effective GitHub rules; verify force-push/delete restrictions and required checks without a reviewer requirement |
-| WS-03 | Issue #103: reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Unassigned | Pending | Fresh ownership/call-graph inspection | Lifecycle tests, feature contract tests, architecture check, full quality gates |
-| WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Unassigned | Blocked | WS-03 boundary decision where imports overlap | Export contract fixtures, architecture check, typecheck, build |
-| WS-05 | Split oversized UI/runtime factories and coordinators along verified chat/session/workspace/integration/settings use-case seams | Unassigned | Blocked | WS-01 PR merged; WS-03 application boundary settled; dedicated issue | Feature suites plus dependency-count and changed-slice evidence recorded in issue |
+| WS-03 | Issue #103: reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Amp | Done | Fresh ownership/call-graph inspection complete | Lifecycle tests, feature contract tests, architecture check, full quality gates |
+| WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Unassigned | Pending | WS-03 application/facade boundary settled | Export contract fixtures, architecture check, typecheck, build |
+| WS-05 | Split oversized UI/runtime factories and coordinators along verified chat/session/workspace/integration/settings use-case seams | Unassigned | Pending | WS-03 application boundary settled; dedicated issue required | Feature suites plus dependency-count and changed-slice evidence recorded in issue |
 | WS-06 | Add Pi compatibility manifest and one issue-updating next-version canary | Unassigned | Pending | Current shim inventory and tracking-issue decision | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
 | WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Pending | Refreshed bundle baseline and CI-summary design | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
-| WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, and issue-template entry points | Amp | In progress | Maintainer authorized continued execution | Link checks, template rendering review, effective Discussions categories/settings query |
-| WS-09 | Publish three starter recipes, desktop support matrix, showcase route, and optional update/report templates | Amp | In progress | WS-08 repository entry points in review | Recipe walkthroughs, platform evidence, published links, and template review |
+| WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, and issue-template entry points | Amp | Done | Maintainer authorized continued execution | Default-branch community profile, issue-form files/contact routes, and effective Discussions categories verified |
+| WS-09 | Publish three starter recipes, desktop support matrix, showcase route, and optional update/report templates | Amp | Done | WS-08 merged | Default-branch recipe index, platform matrix, README routes, templates, and newcomer issues verified |
 
 ## Verification
 
@@ -167,17 +168,33 @@ Append entries rather than rewriting another worker's record.
 
 - Changed: Enabled Discussions; applied branch ruleset [22270940](https://github.com/shuuul/obsidian-pivi/rules/22270940) and tag ruleset [22270941](https://github.com/shuuul/obsidian-pivi/rules/22270941); closed issue #102 with effective-rule evidence; drafted contribution, conduct, support, issue-form, platform-support, reporting-template, and three starter-recipe files; created newcomer-sized recipe issues [#106](https://github.com/shuuul/obsidian-pivi/issues/106) and [#107](https://github.com/shuuul/obsidian-pivi/issues/107) with the `good first issue` label.
 - Evidence: Effective `main` rules require strict quality/macOS/Windows checks and conversation resolution, require a pull request with zero approvals, and block deletion/non-fast-forward updates; SemVer tags block updates and deletion. GitHub exposes Announcements, Q&A, Show and tell, and Ideas Discussion categories.
-- Remaining: Merge the repository community files and inspect the default-branch community profile and rendered issue forms.
+- Remaining: None. PR #108 is merged and the effective default-branch surfaces are verified.
 - Blockers: None. Funding and a recurring Discussion cadence were explicitly removed from this spec's completion criteria; the templates remain optional.
-- Next action: Merge the green community pull request, verify GitHub's effective surfaces, and record completion evidence.
+- Next action: Keep the verified community surfaces stable while the architecture stack proceeds.
+
+### 2026-09-04 — Amp — WS-03 application shell refactor
+
+- Changed: Reduced `src/main.ts` to a lifecycle-only Obsidian shell holding only `PiviApplicationLifecycle`; `PiviApplication` now owns concrete Chat, Sessions, Workspace, Integrations, and Settings facade values. Registrations receive the real Plugin plus only their scoped facades; chat UI composition receives chat and session facades separately; service-graph construction receives a narrow runtime composition host; and open-tab persistence receives only the Obsidian app.
+- Evidence: Focused application/main lifecycle suites passed (4 suites / 19 tests); focused `src`/`tests` lint, `check:architecture`, `check:specs`, and `git diff --check` passed.
+- Remaining: Run authoritative source/test typecheck and full lint in a worktree-local dependency install; the secondary worktree has no `node_modules`, while borrowing the parent install produces duplicate-worktree package identities and is missing the pinned Pi OAuth declaration leaves.
+- Blockers: WS-03 remains In progress and must not be marked Done until the requested authoritative verification passes.
+- Next action: Install dependencies in this worktree, run all requested gates, and address any genuine (non-environment) failures.
+
+### 2026-09-04 — Amp — WS-03 verification complete
+
+- Changed: Replaced the first-pass broad application handoff with explicit `ChatFacade`, `SessionsFacade`, `WorkspaceFacade`, `IntegrationsFacade`, and `SettingsFacade` objects. Registrations receive the real Obsidian Plugin plus only their required facades; chat-port construction receives chat and session behavior separately; `PiviPluginHost` was removed.
+- Evidence: `src/main.ts` is 26 lines; production `src/app` has no `@/main` import; focused facade/lifecycle/registration suites passed (10 suites / 78 tests); full coverage passed (350 suites / 3,133 tests); dependency audit, source/test typecheck, lint, all boundary checks, production build, bundle-size check, and `git diff --check` passed. Built `main.js` is 4,169,451 bytes against the 5 MiB ceiling.
+- Remaining: Open the architecture pull request after reconciling its stacked community-docs base; continue WS-04 and WS-05 only as separate bounded changes.
+- Blockers: The architecture branch currently includes PR #108 as its base commit. It must be rebased onto protected `main` after #108 is merged or otherwise restacked before review.
+- Next action: Commit the verified WS-03 change, then inspect issue #104's current package-export evidence without widening this pull request.
 
 ### 2026-09-04 — Maintainer decisions for WS-08/WS-09 closeout
 
 - Changed: The maintainer authorized merging [PR #108](https://github.com/shuuul/obsidian-pivi/pull/108), chose to keep weekly/monthly templates without committing to a publication cadence, and chose not to apply for GitHub Sponsors now.
-- Evidence: GitHub Sponsors setup would require a supported region, 2FA, payout/tax onboarding, profile and tiers, and approval; no valid `shuuul` Sponsors profile currently exists. PR #108 remains mergeable with all three required checks successful.
-- Remaining: Merge PR #108 and validate the resulting default-branch contribution and issue surfaces.
+- Evidence: GitHub Sponsors setup would require a supported region, 2FA, payout/tax onboarding, profile and tiers, and approval; no valid `shuuul` Sponsors profile currently exists. PR #108 passed all three required checks and merged as [`f66d234e`](https://github.com/shuuul/obsidian-pivi/commit/f66d234ec51309eafc609e1b24f96a76a7ed4e97). GitHub reports 100% community health and serves the contribution files, contact routes, recipe index, and platform matrix from `main`.
+- Remaining: None for WS-08/WS-09; issue #105 is closed.
 - Blockers: None.
-- Next action: Push this decision sync to PR #108, wait for its required checks, then merge it.
+- Next action: Reconcile the remaining stacked PRs with `main` and preserve this evidence through final archival.
 
 ## Completion summary
 

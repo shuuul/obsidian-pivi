@@ -19,9 +19,12 @@ import {
 import {
   SharedStorageService,
 } from "@pivi/obsidian-host";
+import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
+import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
 import { assertBundledReactRuntime } from "@pivi/pivi-react";
 import { createHash } from 'crypto';
 import type { App } from "obsidian";
+import type { Plugin } from "obsidian";
 import { Notice } from "obsidian";
 import { homedir } from 'os';
 import { join } from 'path';
@@ -32,8 +35,8 @@ import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
 import { t } from "@/app/i18n";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/runtime/PiWorkspaceServices"
+import type { PiviWorkspaceHost } from "@/app/runtime/serviceContracts";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
-import type PiviPlugin from "@/main"
 
 const logger = new PluginLogger('ServiceGraph');
 
@@ -42,7 +45,7 @@ export interface PiviServiceGraph {
 }
 
 export function createSharedStorage(
-  plugin: PiviPlugin,
+  plugin: Plugin,
   externalContexts: ObsidianDeviceLocalExternalContextStore,
 ): SharedStorageService {
   const environmentStore = new ObsidianDeviceLocalEnvironmentStore(plugin.app);
@@ -132,14 +135,18 @@ export function reconcileSessionCloudRecovery(
 }
 
 export async function createPluginServiceGraph(
-  plugin: PiviPlugin,
+  composition: {
+    host: PiviWorkspaceHost;
+    storage: SharedAppStorage;
+    network: PiviNetworkClients;
+  },
 ): Promise<PiviServiceGraph> {
   assertBundledReactRuntime();
-  const vaultAdapter = plugin.storage.getAdapter();
+  const vaultAdapter = composition.storage.getAdapter();
   const piWorkspace = await createPiWorkspaceServices({
-    host: plugin,
+    host: composition.host,
     vaultAdapter,
-    network: plugin.network,
+    network: composition.network,
   });
 
   return { piWorkspace };

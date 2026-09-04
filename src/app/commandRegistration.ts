@@ -1,9 +1,9 @@
-import type { Editor } from "obsidian";
+import type { Editor, Plugin } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
+import type { ChatFacade } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 import { openInlineEditForEditorSelection } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
-import type PiviPlugin from "@/main"
 import { getActiveWindow } from "@/ui/shared/dom";
 
 import { findPiviView } from "./viewAccess";
@@ -13,13 +13,13 @@ export const ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID =
 export const INLINE_EDIT_SELECTION_COMMAND_ID = "inline-edit-selection";
 const CHAT_PERF_SCENARIO_PATH = '.pivi/perf-scenario.txt';
 
-export function registerPiviCommands(plugin: PiviPlugin): void {
-  if (process.env.NODE_ENV !== 'production') registerChatPerfCommands(plugin);
+export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
+  if (process.env.NODE_ENV !== 'production') registerChatPerfCommands(plugin, chat);
   plugin.addCommand({
     id: "open-view",
     name: t("commands.openChatView"),
     callback: () => {
-      void plugin.activateView();
+      void chat.activateView();
     },
   });
 
@@ -54,7 +54,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
         return;
       }
 
-      void plugin.addEditorSelectionToChatInput(editor, view);
+      void chat.addEditorSelectionToChatInput(editor, view);
     },
   });
 
@@ -78,7 +78,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
           .setTitle(t("chat.inlineContext.addSelectionToChatInput"))
           .setIcon("text-select")
           .onClick(() => {
-            void plugin.addEditorSelectionToChatInput(editor, view);
+            void chat.addEditorSelectionToChatInput(editor, view);
           });
       });
     }),
@@ -88,10 +88,10 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     id: "new-tab",
     name: t("commands.newTab"),
     checkCallback: (checking: boolean) => {
-      if (!plugin.canCreateNewTab()) return false;
+      if (!chat.canCreateNewTab()) return false;
 
       if (!checking) {
-        void plugin.openNewTab();
+        void chat.openNewTab();
       }
       return true;
     },
@@ -132,14 +132,14 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
   });
 }
 
-function registerChatPerfCommands(plugin: PiviPlugin): void {
+function registerChatPerfCommands(plugin: Plugin, chat: ChatFacade): void {
   plugin.addCommand({
     id: 'debug-start-chat-performance-trace',
     name: 'Debug: start chat performance trace',
     callback: () => {
       const ownerWindow = getActiveWindow();
-      void resolveChatPerfScenario(plugin).then((scenario) => {
-        plugin.getChatPerfController().start(scenario, ownerWindow);
+      void resolveChatPerfScenario(chat).then((scenario) => {
+        chat.getChatPerfController().start(scenario, ownerWindow);
         new Notice(`Chat performance trace started: ${scenario}`);
       }).catch((error: unknown) => {
         new Notice(error instanceof Error ? error.message : String(error));
@@ -152,7 +152,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     name: 'Debug: sample chat performance heap',
     callback: () => {
       try {
-        plugin.getChatPerfController().sampleHeap('manual', getActiveWindow());
+        chat.getChatPerfController().sampleHeap('manual', getActiveWindow());
         new Notice('Chat performance heap sample recorded.');
       } catch (error) {
         new Notice(error instanceof Error ? error.message : String(error));
@@ -164,8 +164,8 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     id: 'debug-run-20-subagents-workload',
     name: 'Debug: run isolated 20-subagent workload',
     callback: () => {
-      const controller = plugin.getChatPerfController();
-      const development = findPiviView(plugin.app)?.getChatHandle()?.development;
+      const controller = chat.getChatPerfController();
+      const development = findPiviView(chat.app)?.getChatHandle()?.development;
       const ownerWindow = getActiveWindow();
       if (controller.enabled) {
         new Notice('Stop the active chat performance trace before running 20 subagents.');
@@ -196,8 +196,8 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     id: 'debug-run-indexed-session-paging-workload',
     name: 'Debug: run isolated indexed session paging workload',
     callback: () => {
-      const controller = plugin.getChatPerfController();
-      const development = findPiviView(plugin.app)?.getChatHandle()?.development;
+      const controller = chat.getChatPerfController();
+      const development = findPiviView(chat.app)?.getChatHandle()?.development;
       const ownerWindow = getActiveWindow();
       if (controller.enabled) {
         new Notice('Stop the active chat performance trace before running indexed paging.');
@@ -233,8 +233,8 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     id: 'debug-run-100kb-markdown-stream',
     name: 'Debug: run large Markdown performance stream',
     callback: () => {
-      const controller = plugin.getChatPerfController();
-      const development = findPiviView(plugin.app)?.getChatHandle()?.development;
+      const controller = chat.getChatPerfController();
+      const development = findPiviView(chat.app)?.getChatHandle()?.development;
       if (!controller.enabled) {
         new Notice('Start a chat performance trace before running the Markdown stream.');
         return;
@@ -255,8 +255,8 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     id: 'debug-run-tab-switching-workload',
     name: 'Debug: run isolated tab switching workload',
     callback: () => {
-      const controller = plugin.getChatPerfController();
-      const development = findPiviView(plugin.app)?.getChatHandle()?.development;
+      const controller = chat.getChatPerfController();
+      const development = findPiviView(chat.app)?.getChatHandle()?.development;
       if (!controller.enabled) {
         new Notice('Start a chat performance trace before running the tab switching workload.');
         return;
@@ -277,7 +277,7 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
     id: 'debug-stop-chat-performance-trace',
     name: 'Debug: stop and export chat performance trace',
     callback: () => {
-      void plugin.getChatPerfController().stopAndExport(getActiveWindow()).then((path) => {
+      void chat.getChatPerfController().stopAndExport(getActiveWindow()).then((path) => {
         new Notice(`Chat performance trace exported to ${path}`);
       }).catch((error: unknown) => {
         new Notice(error instanceof Error ? error.message : String(error));
@@ -286,8 +286,8 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
   });
 }
 
-async function resolveChatPerfScenario(plugin: PiviPlugin): Promise<string> {
-  const adapter = plugin.app.vault.adapter;
+async function resolveChatPerfScenario(chat: ChatFacade): Promise<string> {
+  const adapter = chat.app.vault.adapter;
   if (!(await adapter.exists(CHAT_PERF_SCENARIO_PATH))) return 'manual';
   const scenario = (await adapter.read(CHAT_PERF_SCENARIO_PATH)).trim();
   if (!scenario) throw new Error(`${CHAT_PERF_SCENARIO_PATH} is empty.`);
