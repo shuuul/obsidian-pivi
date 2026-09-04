@@ -8,15 +8,14 @@
  * - A recent `npm run build` deploy into that vault's plugin folder
  *
  * Proves: plugin load/reload, open view, disposable session create/restore,
- * disposable note mutation, fake stdio server start/stop with no leaked child,
- * unchanged window.fetch identity, and zero captured Obsidian runtime errors.
+ * disposable note mutation, unchanged window.fetch identity, and zero captured
+ * Obsidian runtime errors.
  */
 
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { setTimeout as delay, clearTimeout as clearDelay } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -72,57 +71,6 @@ function evalInObsidian(code) {
     fail(`obsidian eval missing result marker:\n${output}`);
   }
   return output.slice(idx + marker.length).trim();
-}
-
-function isProcessAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false;
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function startFakeStdioServer() {
-  const script = `
-const net = require('node:net');
-const server = net.createServer((socket) => {
-  socket.on('data', () => {});
-});
-server.listen(0, '127.0.0.1', () => {
-  process.stdout.write(JSON.stringify({ pid: process.pid, port: server.address().port }) + '\\n');
-});
-process.on('SIGTERM', () => { server.close(() => process.exit(0)); });
-process.on('SIGINT', () => { server.close(() => process.exit(0)); });
-`;
-  const child = spawn(process.execPath, ['-e', script], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    detached: process.platform !== 'win32',
-  });
-  return new Promise((resolve, reject) => {
-    let buffer = '';
-    const timer = delay(() => {
-      child.kill('SIGTERM');
-      reject(new Error('fake stdio server did not publish listen metadata'));
-    }, 10_000);
-    child.stdout.on('data', (chunk) => {
-      buffer += chunk.toString('utf8');
-      const line = buffer.split(/\r?\n/).find((entry) => entry.trim().startsWith('{'));
-      if (!line) return;
-      clearDelay(timer);
-      try {
-        const meta = JSON.parse(line);
-        resolve({ child, pid: meta.pid, port: meta.port });
-      } catch (error) {
-        reject(error);
-      }
-    });
-    child.on('error', (error) => {
-      clearDelay(timer);
-      reject(error);
-    });
-  });
 }
 
 async function main() {
@@ -221,30 +169,8 @@ async function main() {
     fail(`disposable session create/restore probe failed: ${sessionWrite}`);
   }
 
-  const fake = await startFakeStdioServer();
-  if (!isProcessAlive(fake.pid)) {
-    fail(`fake stdio server exited early (pid ${fake.pid})`);
-  }
-
   runObsidian(['plugin:reload', 'id=pivi']);
   runObsidian(['command', 'id=pivi:open-view']);
-
-  try {
-    fake.child.kill('SIGTERM');
-  } catch {
-    // best-effort; leak check below is authoritative
-  }
-  await new Promise((resolve) => {
-    delay(resolve, 500);
-  });
-  if (isProcessAlive(fake.pid)) {
-    try {
-      process.kill(fake.pid, 'SIGKILL');
-    } catch {
-      // ignore
-    }
-    fail(`fake stdio server leaked after stop (pid ${fake.pid})`);
-  }
 
   const fetchAfter = evalInObsidian(
     'JSON.stringify({ fetchName: String(window.fetch && window.fetch.name), fetchSame: window.fetch === fetch })',
@@ -274,8 +200,6 @@ async function main() {
     vaultPath,
     notePath,
     sessionRelative,
-    fakeStdioPid: fake.pid,
-    fakeStdioPort: fake.port,
     fetchName: fetchAfterJson.fetchName,
     host: os.platform(),
   }, null, 2));

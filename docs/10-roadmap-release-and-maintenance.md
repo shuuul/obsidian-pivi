@@ -10,6 +10,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
+- Complete the P0 remote-only MCP documentation contract in issue [#100](https://github.com/shuuul/obsidian-pivi/issues/100). Spec [049](../specs/049-post-review-contracts-architecture-and-community-execution.md) blocks broader architecture and community work until that change is merged.
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
@@ -120,7 +121,8 @@ Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI e
 | Source | Owns |
 |---|---|
 | Root `README.md` | User-facing product overview, installation, capability summary, and links |
-| `docs/` | New-developer architecture, technology choices, end-to-end flows, development/release routes, and roadmap |
+| `docs/capabilities.json` | Machine-readable current and removed capability contract used by active documentation checks |
+| Other `docs/` files | New-developer architecture, technology choices, end-to-end flows, development/release routes, and roadmap |
 | `specs/` | Long-running execution decisions, workstreams, handoffs, verification evidence, and completion records |
 | Root `AGENTS.md` | Repo-wide commands, cross-cutting constraints, commit discipline, release invariants, and durable quality gates |
 | Nested `AGENTS.md` | Package/feature ownership, local seams, gotchas, and focused verification |
@@ -144,6 +146,8 @@ Update the nearest nested `AGENTS.md` when its module map, seam rule, invariant,
 When work has an active spec, update its decisions, workstreams, evidence, and handoff in the same change. A spec may move to `specs/archive/` only after its success criteria pass, durable conclusions are reflected in the relevant numbered docs, and the nearest affected `AGENTS.md` files remain accurate up through their parent guidance.
 
 Documentation freshness is a review responsibility. Structural checks can find broken links, invalid numbering, and missing files, but they cannot prove that prose matches behavior.
+
+`npm run check:docs-contracts` covers the narrower capability contract: canonical MCP transport statements in README, SECURITY, and the MCP handbook plus precise stale current-feature claims in active Markdown. Changelogs and archived specs remain historical records.
 
 ## Documentation review checklist
 

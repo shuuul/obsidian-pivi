@@ -78,7 +78,7 @@ Pivi does not claim reliable automatic detection or neutralization of all prompt
 
 Installing a Skill or enabling an MCP server is an explicit trust decision:
 
-- Remote MCP servers receive prompts and tool arguments over the network. Stdio MCP is not supported.
+- Remote MCP servers receive prompts and tool arguments over the network. Pivi supports only remote MCP servers over Streamable HTTP or SSE. Stdio MCP is not supported; this remote-only contract was introduced in v0.25.0.
 - Pivi does **not** audit Skill or MCP server source code for malice and does **not** isolate their filesystem or network beyond the shared host policies above.
 - Users remain responsible for reviewing Skill and MCP provenance before enablement.
 

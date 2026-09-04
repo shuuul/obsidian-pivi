@@ -79,6 +79,7 @@ flowchart LR
 ## Sources of truth
 
 - Root `README.md` is the user-facing product overview.
+- `docs/capabilities.json` is the machine-readable contract for current and removed product capabilities checked across active documentation.
 - `docs/` is the canonical developer narrative for architecture, technology choices, end-to-end flows, development routes, and the technical roadmap.
 - `specs/` contains tracked execution records for active and completed long-running work. Specs do not override stable code, handbook, or guidance contracts.
 - Root `AGENTS.md` is the repo-wide operational contract: commands, cross-cutting rules, release invariants, and commit discipline.
