@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP サーバー",
-        "description": "ローカル MCP サーバーとそのツール。"
+        "description": "HTTP / SSE の MCP サーバーとそのツール。"
       },
       "skills": {
         "label": "スキル",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "会話タイトルを自動生成",
       "desc": "最初のユーザーメッセージ送信後に会話タイトルを自動生成します。"
-    },
-    "navMappings": {
-      "name": "Vim スタイルのナビゲーション割り当て",
-      "desc": "1 行に 1 割り当て。形式：\"map <キー> <アクション>\"（アクション：scrollUp, scrollDown, focusInput）。",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "送信に Command/Ctrl+Enter を必須にする",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "MCP サーバーは未設定です。追加をクリックして作成してください。",
       "add": "+ MCP を追加",
-      "importJson": "JSON をインポート",
-      "importJsonTitle": "MCP 設定をインポート",
-      "importJsonDescription": "下に MCP 設定の JSON を貼り付けてください。Pivi は「インポート」を選択した後にのみ読み取ります。",
-      "importJsonField": "MCP 設定 JSON",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "インポート",
-      "importFailed": "MCP 設定をインポートできませんでした",
-      "noValidConfig": "貼り付けた JSON に有効な MCP 設定が見つかりません",
-      "importedNone": "新しい MCP サーバーはインポートされませんでした",
       "clearOauth": "OAuth 資格情報をクリア",
       "refreshTools": "接続 / ツールを更新",
       "toolCount": "{count} 個のツール",
-      "typeStdio": "stdio（ローカルコマンド）",
-      "typeHttp": "http / sse（リモート）",
       "contextSavingTitle": "スラッシュバッジ: /{name} トークンでこのサーバーを Composer で強調表示",
       "mentionBadge": "スラッシュメンション",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth 認証済み",
       "oauthExpiredBadge": "期限切れ",
       "oauthExpiredTitle": "OAuth トークンの期限切れ",
-      "valueStorageHint": "ヘッダーと環境のシークレットらしい値はセキュアストレージに保存されます。",
+      "valueStorageHint": "ヘッダーのシークレットらしい値はセキュアストレージに保存されます。",
       "refreshFailed": "ツールの更新に失敗しました",
       "saveFailed": "MCP サーバーの保存に失敗しました",
       "alreadyExists": "サーバー「{name}」は既に存在します",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "サーバー名に使えるのは英数字、ドット、ハイフン、アンダースコアのみです",
         "needName": "サーバー名を入力してください",
         "type": "種類",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "コマンド",
-        "needCommand": "実行ファイルを入力してください",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "URL を入力してください",
-        "env": "環境変数",
         "headersName": "ヘッダー",
         "authHeading": "認証",
         "authAuto": "自動",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Bearer トークン環境変数",
         "scope": "スコープ",
         "serverNameReserved": "そのサーバー名は予約されており使用できません",
-        "executable": "実行ファイル",
-        "args": "引数",
-        "argsPlaceholder": "1 行に 1 つの引数",
         "urlInvalid": "有効な URL を入力してください",
         "urlScheme": "MCP URL は http または https を使用する必要があります",
-        "urlPlainHttp": "平文 HTTP はループバックホストのみ許可されます",
-        "commandShellSyntax": "実行ファイルにシェル制御構文を含めないでください"
+        "urlPlainHttp": "平文 HTTP はループバックホストのみ許可されます"
       },
       "test": {
         "connecting": "ツールを更新中…",

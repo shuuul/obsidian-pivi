@@ -9,9 +9,8 @@ describe('NavigationController', () => {
     jest.restoreAllMocks();
   });
 
-  it('switches between input and message navigation and scrolls with mapped keys', () => {
+  it('moves focus from input to the messages panel on Escape', () => {
     const messagesEl = document.body.createDiv();
-    messagesEl.scrollTop = 100;
     const richInput = new RichChatInput(document.body.createDiv(), {
       app: {} as App,
       getMentionContext: () => ({
@@ -24,20 +23,9 @@ describe('NavigationController', () => {
         mcpServerNames: new Set(),
       }),
     });
-    const requestAnimationFrame = jest
-      .spyOn(window, 'requestAnimationFrame')
-      .mockReturnValue(1);
-    const cancelAnimationFrame = jest
-      .spyOn(window, 'cancelAnimationFrame')
-      .mockImplementation(() => undefined);
     const controller = new NavigationController({
       getMessagesEl: () => messagesEl,
       getInputEl: () => richInput,
-      getSettings: () => ({
-        scrollUpKey: 'k',
-        scrollDownKey: 'j',
-        focusInputKey: 'i',
-      }),
       isStreaming: () => false,
     });
 
@@ -55,27 +43,9 @@ describe('NavigationController', () => {
     messagesEl.dispatchEvent(new KeyboardEvent('keydown', {
       bubbles: true,
       cancelable: true,
-      key: 'k',
+      key: 'w',
     }));
-    expect(messagesEl.scrollTop).toBe(92);
-    expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
-
-    document.dispatchEvent(new KeyboardEvent('keyup', { key: 'k' }));
-    expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
-
-    messagesEl.dispatchEvent(new KeyboardEvent('keydown', {
-      bubbles: true,
-      cancelable: true,
-      key: 'j',
-    }));
-    expect(messagesEl.scrollTop).toBe(100);
-
-    messagesEl.dispatchEvent(new KeyboardEvent('keydown', {
-      bubbles: true,
-      cancelable: true,
-      key: 'i',
-    }));
-    expect(document.activeElement).toBe(richInput.el);
+    expect(document.activeElement).toBe(messagesEl);
 
     controller.dispose();
   });

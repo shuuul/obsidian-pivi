@@ -140,6 +140,7 @@ function stripRemovedSettingsFields(settings: Record<string, unknown>): void {
   delete settings.enableAutoCompact;
   delete settings.autoCompactThresholdRatio;
   delete settings.autoCompactKeepRecentTokens;
+  delete settings.keyboardNavigation;
 }
 
 function normalizeDeadlineMs(value: unknown, fallback: number): number {

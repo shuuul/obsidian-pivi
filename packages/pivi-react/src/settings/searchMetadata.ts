@@ -36,7 +36,6 @@ export const FORMER_SETTINGS_SEARCH_KEYS = [
   'settings.excludedTags.name',
   'settings.inputShortcuts',
   'settings.requireCommandOrControlEnterToSend.name',
-  'settings.navMappings.name',
   'settings.environment',
   'settings.sharedEnvironment.name',
   'settings.sessionFiles.heading',
@@ -91,9 +90,7 @@ export const FORMER_SETTINGS_SEARCH_KEYS = [
   'settings.prompt.usage.heading',
   'settings.mcp.modal.serverName',
   'settings.mcp.modal.type',
-  'settings.mcp.modal.command',
   'settings.mcp.modal.url',
-  'settings.mcp.modal.env',
   'settings.mcp.modal.headersName',
   'settings.mcp.modal.authHeading',
 ] as const;

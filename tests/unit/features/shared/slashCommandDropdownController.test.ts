@@ -407,7 +407,7 @@ describe('SlashCommandDropdown controller', () => {
         getMcpManager: () => ({
           getServers: () => [
             { name: 'remote', enabled: true, type: 'http' as const },
-            { name: 'local', enabled: true, type: 'stdio' as const },
+            { name: 'events', enabled: true, type: 'sse' as const },
           ],
         }),
         getMcpToolProvider: () => ({ listTools }),
@@ -416,15 +416,15 @@ describe('SlashCommandDropdown controller', () => {
 
     await dropdown.prefetchCachesStrict();
     expect(getCatalogEntries).toHaveBeenCalledTimes(1);
-    expect(listTools).toHaveBeenCalledTimes(1);
+    expect(listTools).toHaveBeenCalledTimes(2);
     expect(listTools).toHaveBeenCalledWith('remote');
-    expect(listTools).not.toHaveBeenCalledWith('local');
+    expect(listTools).toHaveBeenCalledWith('events');
 
     setInput(input, '/');
     dropdown.handleInputChange();
     await flushAsyncDropdown();
     expect(getCatalogEntries).toHaveBeenCalledTimes(1);
-    expect(listTools).toHaveBeenCalledTimes(1);
+    expect(listTools).toHaveBeenCalledTimes(2);
     expect(container.querySelectorAll('.pivi-slash-icon--mcp').length).toBeGreaterThan(0);
     dropdown.destroy();
   });

@@ -125,7 +125,6 @@ export function createChatUiPorts(
       titleGenerationModel: projected.titleGenerationModel,
       userName: projected.userName,
       excludedTags: [...projected.excludedTags],
-      keyboardNavigation: { ...projected.keyboardNavigation },
       requireCommandOrControlEnterToSend:
         projected.requireCommandOrControlEnterToSend ?? false,
       environmentVariables: getRuntimeEnvironmentText(projected),
@@ -271,11 +270,6 @@ export function createSettingsUiPorts(
         deletedSessionRetentionDays: settings.deletedSessionRetentionDays ?? 30,
         providerRequestDeadlines: { ...settings.providerRequestDeadlines },
         requireCommandOrControlEnterToSend: settings.requireCommandOrControlEnterToSend ?? false,
-        keyboardNavigation: {
-          scrollUpKey: host.settings.keyboardNavigation.scrollUpKey,
-          scrollDownKey: host.settings.keyboardNavigation.scrollDownKey,
-          focusInputKey: host.settings.keyboardNavigation.focusInputKey,
-        },
         editorSelectionToolbar: normalizeEditorSelectionToolbarSettings(
           host.settings.editorSelectionToolbar,
         ),
@@ -308,11 +302,6 @@ export function createSettingsUiPorts(
       idleMs: Math.max(0, Math.trunc(next.providerRequestDeadlines.idleMs)),
     };
     host.settings.requireCommandOrControlEnterToSend = next.requireCommandOrControlEnterToSend;
-    host.settings.keyboardNavigation = {
-      scrollUpKey: next.keyboardNavigation.scrollUpKey,
-      scrollDownKey: next.keyboardNavigation.scrollDownKey,
-      focusInputKey: next.keyboardNavigation.focusInputKey,
-    };
     if (
       patch.tabBarPosition !== undefined
       || patch.showCacheHitRate !== undefined

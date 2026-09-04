@@ -15,9 +15,6 @@ jest.mock('@modelcontextprotocol/sdk/client', () => ({
 jest.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
   StreamableHTTPClientTransport: jest.fn().mockImplementation(() => ({})),
 }));
-jest.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
-  StdioClientTransport: jest.fn().mockImplementation(() => ({})),
-}));
 
 import { testMcpServer } from '@pivi/agent/mcp/mcpServerTester';
 
@@ -71,7 +68,7 @@ describe('testMcpServer Agent-safe logging', () => {
     controller.abort();
 
     await expect(
-      testMcpServer(server, jest.fn(), {}, undefined, undefined, controller.signal),
+      testMcpServer(server, jest.fn(), {}, undefined, controller.signal),
     ).resolves.toMatchObject({
       success: false,
       error: 'Connection aborted',

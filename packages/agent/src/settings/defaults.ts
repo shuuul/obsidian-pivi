@@ -43,11 +43,6 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
     totalMs: 600_000,
     idleMs: 0,
   },
-  keyboardNavigation: {
-    scrollUpKey: "w",
-    scrollDownKey: "s",
-    focusInputKey: "i",
-  },
   requireCommandOrControlEnterToSend: false,
   locale: "en",
   agentSettings: { ...DEFAULT_AGENT_SETTINGS },

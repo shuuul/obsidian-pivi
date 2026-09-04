@@ -12,9 +12,5 @@ export function createMockPiviSettings(
       ...DEFAULT_PIVI_SETTINGS.agentSettings,
       ...overrides.agentSettings,
     },
-    keyboardNavigation: {
-      ...DEFAULT_PIVI_SETTINGS.keyboardNavigation,
-      ...overrides.keyboardNavigation,
-    },
   };
 }

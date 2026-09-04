@@ -40,11 +40,11 @@ function createServer(name = 'github'): ManagedMcpServer {
   };
 }
 
-function createStdioServer(name = 'local'): ManagedMcpServer {
+function createDisabledServer(name = 'disabled'): ManagedMcpServer {
   return {
     name,
-    config: { type: 'stdio', command: 'node', args: ['server.js'] },
-    enabled: true,
+    config: { type: 'http', url: `https://${name}.example.com` },
+    enabled: false,
     contextSaving: true,
   };
 }
@@ -94,12 +94,11 @@ describe('McpToolProvider', () => {
     expect(listTools).not.toHaveBeenCalled();
   });
 
-  it('prefetches enabled remote servers without spawning stdio servers', async () => {
+  it('prefetches enabled remote servers', async () => {
     probe.mockResolvedValue([]);
     const provider = createProvider([
       createServer('remote'),
-      createStdioServer(),
-      { ...createServer('disabled'), enabled: false },
+      createDisabledServer(),
     ]);
 
     await provider.prefetchEnabledServers();
@@ -128,10 +127,10 @@ describe('McpToolProvider', () => {
     expect(probe).toHaveBeenCalledTimes(1);
   });
 
-  it('inventory never starts stdio servers', async () => {
-    const provider = createProvider([createStdioServer('local')]);
+  it('inventory skips unknown servers', async () => {
+    const provider = createProvider([createServer('remote')]);
 
-    await expect(provider.listInventoryTools('local')).resolves.toEqual([]);
+    await expect(provider.listInventoryTools('missing')).resolves.toEqual([]);
     expect(probe).not.toHaveBeenCalled();
     expect(listTools).not.toHaveBeenCalled();
   });

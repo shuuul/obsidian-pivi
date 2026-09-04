@@ -36,9 +36,8 @@ export class McpToolBridge {
     fetch: McpTransportFetch,
     processEnv: McpProcessEnv,
     secretStorage?: SyncSecretStore,
-    stdioCwd?: string,
   ) {
-    this.pool = new McpConnectionPool(oauth, fetch, processEnv, secretStorage, stdioCwd);
+    this.pool = new McpConnectionPool(oauth, fetch, processEnv, secretStorage);
   }
 
   hasServers(): boolean {
@@ -83,7 +82,7 @@ export class McpToolBridge {
     await this.pool.dispose();
   }
 
-  /** Warm enabled remote tool caches without spawning local stdio processes. */
+  /** Warm enabled remote tool caches. */
   async prefetchEnabledTools(): Promise<void> {
     const enabled = this.mcpManager
       .getServers()

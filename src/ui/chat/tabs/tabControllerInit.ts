@@ -286,7 +286,6 @@ export function initializeTabControllers(
   tab.controllers.navigationController = new NavigationController({
     getMessagesEl: () => dom.messagesEl,
     getInputEl: () => dom.richInput,
-    getSettings: () => ports.settings.getSettingsSnapshot().keyboardNavigation,
     isStreaming: () => state.isStreaming,
     shouldSkipEscapeHandling: () => {
       if (ui.slashCommandDropdown?.isVisible()) return true;

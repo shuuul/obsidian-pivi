@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Breaking Changes
+
+* drop stdio MCP; keep HTTP/SSE only and ignore existing stdio entries on load
+* remove MCP JSON import from settings
+* remove vim-style message-panel key mappings (`w`/`s`/`i`)
+
 ## [0.24.2](https://github.com/shuuul/obsidian-pivi/compare/0.24.1...0.24.2) (2026-09-04)
 
 ### Bug Fixes

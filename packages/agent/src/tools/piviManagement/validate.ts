@@ -1,6 +1,5 @@
 import { isSecretLikeHeaderName, isSecretLikeKey } from '../../config/valueSource';
 import {
-  assertMcpStdioExecutable,
   assertValidMcpServerName,
   validateMcpRemoteUrl,
 } from '../../mcp/mcpValidation';
@@ -283,35 +282,7 @@ function parseServerInput(value: unknown): AgentMcpServerInput {
     };
   }
 
-  if (type !== undefined && type !== 'stdio') {
-    throw new Error('server.type must be http, sse, or stdio.');
-  }
-
-  assertOnlyKeys(value, [
-    'type',
-    'command',
-    'args',
-    'env',
-    'enabled',
-    'contextSaving',
-    'disabledTools',
-    'description',
-  ], 'server');
-
-  return {
-    type: type === 'stdio' ? 'stdio' : undefined,
-    command: assertMcpStdioExecutable(requireNonEmptyString(value.command, 'server.command')),
-    args: value.args === undefined ? undefined : requireStringArray(value.args, 'server.args'),
-    env: parseAgentMcpValueMap(value.env, 'server.env', 'env'),
-    enabled: value.enabled === undefined ? undefined : requireBoolean(value.enabled, 'server.enabled'),
-    contextSaving: value.contextSaving === undefined
-      ? undefined
-      : requireBoolean(value.contextSaving, 'server.contextSaving'),
-    disabledTools: value.disabledTools === undefined
-      ? undefined
-      : requireStringArray(value.disabledTools, 'server.disabledTools'),
-    description: optionalString(value.description, 'server.description'),
-  };
+  throw new Error('server.type must be http or sse.');
 }
 
 export function parsePiviMcpInput(raw: unknown): PiviMcpInput {

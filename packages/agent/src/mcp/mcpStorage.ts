@@ -142,22 +142,14 @@ function getExistingServerNames(
 
 function getPreviousStoredMap(
   previous: McpServerConfig | undefined,
-  channel: 'env' | 'headers',
 ): McpStoredValueMap | undefined {
   if (!previous) {
     return undefined;
   }
-  const raw = channel === 'env'
-    ? (previous as { env?: unknown }).env
-    : (previous as { headers?: unknown }).headers;
-  return normalizeMcpStoredValueMap(raw);
+  return normalizeMcpStoredValueMap((previous as { headers?: unknown }).headers);
 }
 
 function needsStructuredMigration(config: McpServerConfig): boolean {
-  if (getMcpServerType(config) === 'stdio') {
-    const env = (config as { env?: unknown }).env;
-    return env !== undefined && isLegacyPlainStringMap(env);
-  }
   const headers = (config as { headers?: unknown }).headers;
   return headers !== undefined && isLegacyPlainStringMap(headers);
 }
@@ -516,32 +508,9 @@ export class McpStorage {
     }
 
     const obsoleteSecretIds: string[] = [];
-    if (getMcpServerType(config) === 'stdio') {
-      const stdio = config as { command: string; args?: string[]; env?: unknown };
-      const previousEnv = getPreviousStoredMap(previousConfig, 'env');
-      const envDrafts = inputMapToDrafts(
-        stdio.env as McpStoredValueMap | Record<string, string> | undefined,
-        'env',
-      );
-      const staged = stageMcpValueSecrets(
-        secretStorage,
-        serverName,
-        'env',
-        envDrafts,
-        previousEnv,
-      );
-      obsoleteSecretIds.push(...staged.obsoleteSecretIds);
-      const next: McpServerConfig = {
-        command: stdio.command,
-        ...(stdio.args && stdio.args.length > 0 ? { args: stdio.args } : {}),
-        ...(Object.keys(staged.stored).length > 0 ? { env: staged.stored } : {}),
-      };
-      return { config: next, obsoleteSecretIds };
-    }
-
     const remote = config as { url: string; type?: 'sse' | 'http'; headers?: unknown };
     const url = validateMcpRemoteUrl(remote.url);
-    const previousHeaders = getPreviousStoredMap(previousConfig, 'headers');
+    const previousHeaders = getPreviousStoredMap(previousConfig);
     const headerDrafts = inputMapToDrafts(
       remote.headers as McpStoredValueMap | Record<string, string> | undefined,
       'header',
@@ -662,17 +631,6 @@ export class McpStorage {
       return [];
     }
     const ids: string[] = [];
-    if (getMcpServerType(config) === 'stdio') {
-      const env = normalizeMcpStoredValueMap((config as { env?: unknown }).env);
-      if (env) {
-        for (const [key, ref] of Object.entries(env)) {
-          if (ref.kind === 'secret') {
-            ids.push(...listConfigMcpValueSecretIds(serverName, 'env', key));
-          }
-        }
-      }
-      return ids;
-    }
     const headers = normalizeMcpStoredValueMap((config as { headers?: unknown }).headers);
     if (headers) {
       for (const [key, ref] of Object.entries(headers)) {
@@ -809,15 +767,6 @@ export class McpStorage {
 }
 
 function normalizeManagedServerConfig(config: McpServerConfig): McpServerConfig {
-  if (getMcpServerType(config) === 'stdio') {
-    const stdio = config as { command: string; args?: string[]; env?: unknown };
-    const env = normalizeMcpStoredValueMap(stdio.env);
-    return {
-      command: stdio.command,
-      ...(stdio.args && stdio.args.length > 0 ? { args: stdio.args } : {}),
-      ...(env ? { env } : {}),
-    };
-  }
   const remote = config as { url: string; type?: 'sse' | 'http'; headers?: unknown };
   const url = validateMcpRemoteUrl(remote.url);
   const headers = normalizeMcpStoredValueMap(remote.headers);

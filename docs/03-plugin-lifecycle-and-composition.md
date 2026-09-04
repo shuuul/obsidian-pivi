@@ -26,7 +26,7 @@ sequenceDiagram
 
 `initializePiviPlugin()` loads required settings, registers commands/views/settings, registers the editor selection toolbar (`registerEditorExtension` + overlay host) and its React surface controller, and then starts the retryable single-flight workspace promise from `workspace.onLayoutReady` or the first visible surface. `PiviViewHost` and `PiviSettingTabHost` receive a lazy `getWorkspace` callback, so registration never captures a partially initialized service graph.
 
-`PiviPlugin` constructs purpose-scoped network clients at composition (`createPiviNetworkClients`) and passes them through `WorkspaceInitContext.network` into MCP/OAuth, web tools, image generation, custom providers, and connectivity. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` shim for upstream SDK identifiers only. The shared `systemProcessRunner` is injected into Obsidian tools, Skills, CLI transport, and MCP stdio cwd policy so one-shot process work and vault mutation containment stay on host primitives rather than ad hoc `spawn` calls.
+`PiviPlugin` constructs purpose-scoped network clients at composition (`createPiviNetworkClients`) and passes them through `WorkspaceInitContext.network` into MCP/OAuth, web tools, image generation, custom providers, and connectivity. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` shim for upstream SDK identifiers only. The shared `systemProcessRunner` is injected into Obsidian tools, Skills, and CLI transport so one-shot process work and vault mutation containment stay on host primitives rather than ad hoc `spawn` calls.
 
 Generation guards invalidate late initialization after a view closes or the plugin unloads. A failed workspace initialization clears the single-flight state so a later visible action can retry.
 
@@ -77,7 +77,7 @@ Blank and cold tabs do not create `PiChatService`. `src/ui/chat/tabs/tabRuntime.
 Settings saves use explicit refresh paths:
 
 - tool, MCP, skill, prompt, and model changes refresh the affected registries or open runtimes;
-- MCP save/reload invalidates slash catalogs and warms enabled remote tool inventories without starting stdio servers;
+- MCP save/reload invalidates slash catalogs and warms enabled HTTP/SSE tool inventories;
 - external-root pinning is broadcast to all open views and tabs;
 - environment changes restart affected runtimes through semantic maintenance operations;
 - tab-bar position republishes snapshots and moves the portal without reloading the plugin.

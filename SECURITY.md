@@ -22,7 +22,7 @@ Maintainers triage advisory reports and coordinate disclosure. There is no separ
 | Synced `.pivi/` JSON | May sync across devices; treat as non-secret configuration and session history | Secrets, absolute host paths, and environment values must not be written here |
 | Device-local storage / `SecretStorage` | Per-device; secrets and path caches stay off synced JSON | Loss of device storage loses those secrets/paths; cloud sync of the vault does not restore them |
 | Model providers / MCP remotes | Third-party services receive prompts, tool results, and configured headers | Prompt injection and malicious tool output are expected adversarial inputs |
-| Skills / stdio MCP | User-installed code and executables run with the Obsidian process privileges | Pivi does not sandbox third-party skill or MCP code; treat installs as trusted by the vault owner |
+| Skills | User-installed code runs with the Obsidian process privileges | Pivi does not sandbox third-party skill code; treat installs as trusted by the vault owner |
 
 Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, silent secret sync). It does **not** claim to stop a determined local attacker who already controls the Obsidian process, the vault filesystem, or the user's OS account.
 
@@ -32,10 +32,9 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 |---|---|---|---|
 | Provider API keys / OAuth | Off until configured | Obsidian `SecretStorage` (`pivi-*` ids); device-local provider registry | Synced settings never store credentials or custom header values |
 | Environment variables | Empty registry | Device-local `pivi.environment.v1`; secrets in `SecretStorage` (`pivi-env-*`) | Synced `.pivi/settings.json` must not persist environment maps |
-| MCP remote headers / stdio env | Structured `ConfigValueRef` | Secret values in `SecretStorage` (`pivi-mcp-v-*`); config in `.pivi/mcp.json` | Names may appear in config; secret values do not |
+| MCP remote headers | Structured `ConfigValueRef` | Secret values in `SecretStorage` (`pivi-mcp-v-*`); config in `.pivi/mcp.json` | Names may appear in config; secret values do not |
 | External absolute-path reads | Off (`allowExternalRead`) | Device-local allowed directories / turn folders | Absolute paths never enter synced settings or session JSONL |
 | Bash tool | Off (`allowBash`) | Command prefix allowlist | User login shell (`$SHELL -lc`, fish `-c`, or Windows `cmd.exe /d /s /c`); prefix matching is shell-specific |
-| MCP stdio servers | Settings-enabled, lazy connect | Vault-local `.pivi/mcp.json` | Connects on diagnostics or first agent search/list/call; no turn-scoped launch gate |
 
 ## Network flows
 
@@ -79,7 +78,7 @@ Pivi does not claim reliable automatic detection or neutralization of all prompt
 
 Installing a Skill or enabling an MCP server is an explicit trust decision:
 
-- MCP stdio executables run as child processes of Obsidian with the configured args, cwd, and resolved environment. Remote MCP servers receive prompts and tool arguments over the network.
+- Remote MCP servers receive prompts and tool arguments over the network. Stdio MCP is not supported.
 - Pivi does **not** audit Skill or MCP server source code for malice and does **not** isolate their filesystem or network beyond the shared host policies above.
 - Users remain responsible for reviewing Skill and MCP provenance before enablement.
 
@@ -93,7 +92,7 @@ One-shot process work (CLI, Bash, Skills tooling) uses the host `ProcessRunner` 
 - Timeout and abort terminate the owned process tree (POSIX process group or Windows `taskkill /T`), escalate to forced kill when needed, wait for close, and never double-resolve.
 - Results distinguish exit, signal, timeout, abort, spawn error, and forced-kill escalation.
 
-Bash allowlists match an exact command or required prefix. Commands run through the user's login shell and load shell startup configuration. MCP stdio uses a structured executable/args pair with vault cwd and rejects shell-control characters in the executable field.
+Bash allowlists match an exact command or required prefix. Commands run through the user's login shell and load shell startup configuration.
 
 Cross-platform process and path behavior is covered by focused Ubuntu, macOS, and Windows CI jobs for the security-sensitive suites. That coverage does **not** certify full product support on every OS; support claims follow tested behavior only.
 

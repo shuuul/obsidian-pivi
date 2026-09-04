@@ -43,7 +43,7 @@ npm run test -- tests/unit/agent/mcp/mcpToolBridge.test.ts
 npm run test -- --runInBand tests/unit/agent/mcp/mcpToolBridge.test.ts
 
 # By test name
-npm run test -- -t "prefetches enabled remote servers but leaves stdio lazy"
+npm run test -- -t "prefetches enabled remote servers"
 ```
 
 ## Layout

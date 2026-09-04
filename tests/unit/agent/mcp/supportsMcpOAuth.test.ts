@@ -16,15 +16,6 @@ describe('supportsMcpOAuth', () => {
     expect(supportsMcpOAuth(remoteServer())).toBe(true);
   });
 
-  it('returns false for stdio servers', () => {
-    expect(supportsMcpOAuth({
-      name: 'local',
-      config: { command: 'node', args: ['server.js'] },
-      enabled: true,
-      contextSaving: false,
-    })).toBe(false);
-  });
-
   it('returns false when oauth is disabled', () => {
     expect(supportsMcpOAuth(remoteServer({ oauth: false, auth: 'none' }))).toBe(false);
   });

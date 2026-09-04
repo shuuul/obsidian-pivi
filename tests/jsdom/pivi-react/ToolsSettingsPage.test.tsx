@@ -6,7 +6,7 @@ import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
 import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
 
 const snapshot: SettingsUiSnapshotData = {
-  general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, showCacheHitRate: true, showTokensPerSecond: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 }, requireCommandOrControlEnterToSend: false, keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' }, editorSelectionToolbar: { enabled: true, shortcuts: [] } },
+  general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, showCacheHitRate: true, showTokensPerSecond: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 }, requireCommandOrControlEnterToSend: false, editorSelectionToolbar: { enabled: true, shortcuts: [] } },
   subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
 };
 

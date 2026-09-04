@@ -1,6 +1,5 @@
 export * from './createMcpProxyToolSpec';
 export * from './legacySseTransport';
-export * from './mcpConfigParser';
 export * from './mcpConnectionPool';
 export * from './mcpManagementCoordinator';
 export * from './mcpManagementPersistence';

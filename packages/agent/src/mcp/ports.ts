@@ -24,7 +24,6 @@ export interface AppMcpOAuth {
 export interface AppMcpStorage {
   load(): Promise<ManagedMcpServer[]>;
   save(servers: ManagedMcpServer[]): Promise<void>;
-  tryParseClipboardConfig?(text: string): unknown;
 }
 
 export interface AppMcpToolSummary {
@@ -36,7 +35,7 @@ export interface AppMcpToolProvider {
   listTools(serverName: string): Promise<AppMcpToolSummary[]>;
   /**
    * Read-only inventory for automatic slash/settings warmup.
-   * Must not start stdio, must not create/refresh/persist OAuth, and may only
+   * Must not create/refresh/persist OAuth, and may only
    * use already-configured non-interactive credentials (headers/bearer).
    * Explicit Settings auth remains the interactive OAuth path.
    */

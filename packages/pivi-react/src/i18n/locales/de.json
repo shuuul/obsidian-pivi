@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP-Server",
-        "description": "Lokale MCP-Server und ihre Tools."
+        "description": "HTTP- und SSE-MCP-Server und ihre Tools."
       },
       "skills": {
         "label": "Fähigkeiten",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "Konversationstitel automatisch generieren",
       "desc": "Generiert automatisch Konversationstitel nach der ersten Nutzernachricht."
-    },
-    "navMappings": {
-      "name": "Vim-Style Navigationszuordnungen",
-      "desc": "Eine Zuordnung pro Zeile. Format: \"map <Taste> <Aktion>\" (Aktionen: scrollUp, scrollDown, focusInput).",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Command/Ctrl+Enter zum Senden erfordern",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "Keine MCP-Server konfiguriert. Zum Hinzufügen auf Hinzufügen klicken.",
       "add": "+ MCP hinzufügen",
-      "importJson": "JSON importieren",
-      "importJsonTitle": "MCP-Konfiguration importieren",
-      "importJsonDescription": "Füge unten die MCP-Konfiguration als JSON ein. Pivi liest sie erst, wenn du Importieren auswählst.",
-      "importJsonField": "MCP-Konfigurations-JSON",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "Importieren",
-      "importFailed": "MCP-Konfiguration konnte nicht importiert werden",
-      "noValidConfig": "Im eingefügten JSON wurde keine gültige MCP-Konfiguration gefunden",
-      "importedNone": "Keine neuen MCP-Server importiert",
       "clearOauth": "OAuth-Anmeldedaten löschen",
       "refreshTools": "Verbinden / Tools aktualisieren",
       "toolCount": "{count} Tools",
-      "typeStdio": "stdio (lokaler Befehl)",
-      "typeHttp": "http / sse (remote)",
       "contextSavingTitle": "Slash-Badges: /{name}-Tokens markieren diesen Server im Composer",
       "mentionBadge": "Slash-Erwähnung",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth authentifiziert",
       "oauthExpiredBadge": "Abgelaufen",
       "oauthExpiredTitle": "OAuth-Token abgelaufen",
-      "valueStorageHint": "Header- und Umgebungswerte mit geheimem Charakter werden im sicheren Speicher gespeichert.",
+      "valueStorageHint": "Header-Werte mit geheimem Charakter werden im sicheren Speicher gespeichert.",
       "refreshFailed": "Tool-Aktualisierung fehlgeschlagen",
       "saveFailed": "MCP-Server konnte nicht gespeichert werden",
       "alreadyExists": "Server „{name}“ existiert bereits",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "Servername darf nur Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche enthalten",
         "needName": "Bitte einen Servernamen eingeben",
         "type": "Typ",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "Befehl",
-        "needCommand": "Bitte eine ausführbare Datei eingeben",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Bitte eine URL eingeben",
-        "env": "Umgebungsvariablen",
         "headersName": "Header",
         "authHeading": "Authentifizierung",
         "authAuto": "Auto",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Bearer-Token-Umgebungsvariable",
         "scope": "Scope",
         "serverNameReserved": "Dieser Servername ist reserviert und kann nicht verwendet werden",
-        "executable": "Ausführbare Datei",
-        "args": "Argumente",
-        "argsPlaceholder": "Ein Argument pro Zeile",
         "urlInvalid": "Gib eine gültige URL ein",
         "urlScheme": "MCP-URLs müssen http oder https verwenden",
-        "urlPlainHttp": "Unverschlüsseltes HTTP ist nur für Loopback-Hosts erlaubt",
-        "commandShellSyntax": "Die ausführbare Datei darf keine Shell-Steuerzeichen enthalten"
+        "urlPlainHttp": "Unverschlüsseltes HTTP ist nur für Loopback-Hosts erlaubt"
       },
       "test": {
         "connecting": "Tools werden aktualisiert…",

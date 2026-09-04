@@ -222,7 +222,6 @@ describe('UI port adapters', () => {
       environmentVariables: expect.any(String),
       externalReadDirectories: expect.any(Array),
       hiddenSlashCommands: expect.any(Array),
-      keyboardNavigation: expect.any(Object),
       modelCatalog: expect.objectContaining({
         addedProviders: expect.any(Array),
         disabledProviders: expect.any(Array),

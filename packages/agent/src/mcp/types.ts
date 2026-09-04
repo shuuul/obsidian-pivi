@@ -9,14 +9,6 @@ import {
 /** Persisted structured map; UI drafts may supply legacy plain strings until save. */
 export type McpConfigValueMap = McpStoredValueMap | Record<string, string>;
 
-/** Stdio server configuration (local command-line programs). */
-export interface McpStdioServerConfig {
-  type?: 'stdio';
-  command: string;
-  args?: string[];
-  env?: McpConfigValueMap;
-}
-
 /** Server-Sent Events remote server configuration. */
 export interface McpSSEServerConfig {
   type: 'sse';
@@ -47,12 +39,11 @@ export type McpRemoteAuthMode = 'none' | 'bearer' | 'oauth';
 
 /** Union type for all MCP server configurations. */
 export type McpServerConfig =
-  | McpStdioServerConfig
   | McpSSEServerConfig
   | McpHttpServerConfig;
 
 /** Server type identifier. */
-export type McpServerType = 'stdio' | 'sse' | 'http';
+export type McpServerType = 'sse' | 'http';
 
 /** Managed MCP server configuration with UI/runtime metadata. */
 export interface ManagedMcpServer {
@@ -124,25 +115,13 @@ export function supportsMcpOAuth(server: ManagedMcpServer): boolean {
   return server.auth === 'oauth' || server.oauth !== undefined || server.auth === undefined;
 }
 
-/** Result of parsing clipboard config. */
-export interface ParsedMcpConfig {
-  servers: Array<{ name: string; config: McpServerConfig }>;
-  needsName: boolean;
-}
-
 export function getMcpServerType(config: McpServerConfig): McpServerType {
   if (config.type === 'sse') return 'sse';
-  if (config.type === 'http') return 'http';
-  if ('url' in config) return 'http'; // URL without explicit type defaults to http
-  return 'stdio';
+  return 'http';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
 function isMcpConfigValueMap(value: unknown): value is McpConfigValueMap {
@@ -151,17 +130,6 @@ function isMcpConfigValueMap(value: unknown): value is McpConfigValueMap {
 
 function hasOptionalMcpConfigValueMap(value: Record<string, unknown>, key: string): boolean {
   return value[key] === undefined || isMcpConfigValueMap(value[key]);
-}
-
-export function isMcpStdioServerConfig(obj: unknown): obj is McpStdioServerConfig {
-  if (!isRecord(obj)) {
-    return false;
-  }
-
-  return (obj.type === undefined || obj.type === 'stdio')
-    && typeof obj.command === 'string'
-    && (obj.args === undefined || isStringArray(obj.args))
-    && hasOptionalMcpConfigValueMap(obj, 'env');
 }
 
 export function isMcpSseServerConfig(obj: unknown): obj is McpSSEServerConfig {
@@ -185,8 +153,7 @@ export function isMcpHttpServerConfig(obj: unknown): obj is McpHttpServerConfig 
 }
 
 export function isValidMcpServerConfig(obj: unknown): obj is McpServerConfig {
-  return isMcpStdioServerConfig(obj)
-    || isMcpSseServerConfig(obj)
+  return isMcpSseServerConfig(obj)
     || isMcpHttpServerConfig(obj);
 }
 

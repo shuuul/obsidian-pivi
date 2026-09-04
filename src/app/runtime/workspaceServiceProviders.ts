@@ -42,9 +42,8 @@ export class McpToolProvider implements AppMcpToolProvider {
     mcpOAuth: McpOAuthService,
     mcpFetch: FetchCompatible,
     secretStorage?: SyncSecretStore,
-    stdioCwd?: string,
   ) {
-    this.pool = new McpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage, stdioCwd);
+    this.pool = new McpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage);
   }
 
   invalidate(serverName?: string): void {
@@ -89,7 +88,7 @@ export class McpToolProvider implements AppMcpToolProvider {
 
   /**
    * Automatic slash/settings inventory: remote-only, non-authenticating probe.
-   * Never starts stdio and never creates/refreshes/persists OAuth material.
+   * Never creates/refreshes/persists OAuth material.
    */
   async listInventoryTools(serverName: string, signal?: AbortSignal): Promise<AppMcpToolSummary[]> {
     return this.loadToolsCached(serverName, 'inventory', signal);
@@ -196,9 +195,8 @@ export class McpDiagnostics implements AppMcpDiagnostics {
     mcpOAuth: McpOAuthService,
     mcpFetch: FetchCompatible,
     secretStorage?: SyncSecretStore,
-    stdioCwd?: string,
   ) {
-    this.pool = new McpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage, stdioCwd);
+    this.pool = new McpConnectionPool(mcpOAuth, mcpFetch, process.env, secretStorage);
   }
 
   async testConnection(server: Parameters<AppMcpDiagnostics["testConnection"]>[0], signal?: AbortSignal) {
@@ -227,11 +225,10 @@ export class McpServerTester implements AppMcpServerTester {
   constructor(
     private readonly mcpFetch: FetchCompatible,
     private readonly secretStorage?: SyncSecretStore,
-    private readonly stdioCwd?: string,
   ) {}
 
   async testServer(server: Parameters<AppMcpServerTester["testServer"]>[0], signal?: AbortSignal) {
-    return testMcpServer(server, this.mcpFetch, process.env, this.secretStorage, this.stdioCwd, signal);
+    return testMcpServer(server, this.mcpFetch, process.env, this.secretStorage, signal);
   }
 }
 

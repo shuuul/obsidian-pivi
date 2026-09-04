@@ -18,11 +18,6 @@ function settingsSnapshot(model: string): ChatSettingsSnapshot {
     titleGenerationModel: '',
     userName: '',
     excludedTags: [],
-    keyboardNavigation: {
-      scrollUpKey: 'w',
-      scrollDownKey: 's',
-      focusInputKey: 'i',
-    },
     requireCommandOrControlEnterToSend: false,
     environmentVariables: '',
     externalReadDirectories: [],

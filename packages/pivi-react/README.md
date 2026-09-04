@@ -29,7 +29,7 @@
 - Feature-specific settings presentation ports are exported from `@pivi/pivi-react/ports`; only `src/app/ui` implements them. Application-facing chat ports come from `@pivi/agent/runtime/chatPorts`.
 - `mountChatView()` and `mountSettingsPage()` receive a `PresentationPlatform`, create one deterministic React root per surface, and return an idempotent async `dispose()` handle. The `/mount` subpath also exports `getSettingsPageSearchAliases` for the Obsidian 1.13 host bridge.
 - Settings render host-provided tool rows and integration sections; Obsidian CLI, Note Toolbar, and Style Settings behavior stays in the embedding app adapter.
-- MCP JSON import is an explicit paste-and-confirm editor flow; presentation code does not read the system clipboard.
+- MCP servers are added through the HTTP/SSE editor; presentation code does not import JSON or read the system clipboard.
 - `ChatUiStore`, `useChatUiSnapshot()`, and the pure exhaustive stream reducer are exported from `@pivi/pivi-react/store`. Store snapshots are deeply immutable, structurally cloneable data and exclude DOM nodes, controllers, renderers, runtime services, subscriptions, and timer handles.
 - `ChatTabsStore` drives the React-owned chat header, logo, and tab switcher. Input-position rendering uses one stable app-owned portal container so active-tab switches do not remount the React subtree or cancel pending interactions.
 - The package root exports general presentation components and i18n. Public subpaths are `/context-badges`, `/mount`, `/ports`, `/settings`, and `/store`; `src/ui` is limited to the store and context-badges presentation seams.

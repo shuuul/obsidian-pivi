@@ -157,7 +157,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 
 ### 🔌 Skills & MCP
 - **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. When the pinned Skills CLI is needed, Pivi temporarily materializes its bundled code in the operating system's temporary directory and removes it after the command finishes.
-- **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings.
+- **MCP servers**: Configure in `.pivi/mcp.json` — remote HTTP/SSE servers with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings. Stdio MCP is not supported.
 - **`/server` slash tokens**: Type `/server` or `/server/tool` in chat to emphasize an MCP server or tool; settings-enabled servers are already available to the agent.
 - **`/generate-image` tool token**: When Codex image generation is connected and `obsidian_generate_image` is enabled under Tools, the slash selector inserts this durable token. Pivi expands it only in the API prompt; the composer and session keep `/generate-image` unchanged.
 
@@ -237,8 +237,8 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **Bash access** | Disabled by default. Exact-command or shell-safe argv-prefix grants; runs through user login shell; vault cwd only. |
 | **Obsidian CLI** | Disabled by default. When enabled, Pivi starts the configured official Obsidian CLI for the specific CLI-backed tools listed above. |
 | **Vault index** | File mentions, search, graph, tags, and properties enumerate vault metadata and file paths locally; Pivi does not send an index to its author. |
-| **System environment** | Read only at desktop integration boundaries for configured provider credentials, MCP authentication/stdio variables, the official CLI, and Skills tooling. Pivi does not transmit machine identity to its author. |
-| **Clipboard** | MCP import accepts JSON pasted into an editor and never invokes the clipboard-read API. Writes occur only after explicit copy actions. |
+| **System environment** | Read only at desktop integration boundaries for configured provider credentials, MCP authentication variables, the official CLI, and Skills tooling. Pivi does not transmit machine identity to its author. |
+| **Clipboard** | Writes occur only after explicit copy actions. MCP settings do not read the clipboard. |
 | **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
 | **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |
 | **File recovery** | Mutating note tools snapshot the current content into Obsidian File Recovery (when enabled) before `edit` / `write` / `properties` changes; deletes go to trash; `obsidian_history` can list/read/restore retained snapshots. |

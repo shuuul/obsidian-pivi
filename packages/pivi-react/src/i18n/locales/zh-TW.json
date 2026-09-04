@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP 伺服器",
-        "description": "本機 MCP 伺服器及其工具。"
+        "description": "HTTP / SSE MCP 伺服器及其工具。"
       },
       "skills": {
         "label": "技能",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "自動產生對話標題",
       "desc": "在使用者傳送首則訊息後自動產生對話標題。"
-    },
-    "navMappings": {
-      "name": "Vim 風格導覽對應",
-      "desc": "每行一個對應。格式：\"map <鍵> <動作>\"（動作：scrollUp, scrollDown, focusInput）。",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "需要 Command/Ctrl+Enter 傳送",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "尚未設定 MCP 伺服器。點擊新增以建立。",
       "add": "+ 新增 MCP",
-      "importJson": "匯入 JSON",
-      "importJsonTitle": "匯入 MCP 設定",
-      "importJsonDescription": "請在下方貼上 MCP 設定 JSON。只有選擇「匯入」後，Pivi 才會讀取它。",
-      "importJsonField": "MCP 設定 JSON",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "匯入",
-      "importFailed": "匯入 MCP 設定失敗",
-      "noValidConfig": "貼上的 JSON 中找不到有效的 MCP 設定",
-      "importedNone": "未匯入新的 MCP 伺服器",
       "clearOauth": "清除 OAuth 憑證",
       "refreshTools": "連線 / 重新整理工具",
       "toolCount": "{count} 個工具",
-      "typeStdio": "stdio（本機命令）",
-      "typeHttp": "http / sse（遠端）",
       "contextSavingTitle": "斜線徽章：/{name} 權杖會在撰寫區突顯此伺服器",
       "mentionBadge": "斜線提及",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth 已驗證",
       "oauthExpiredBadge": "已過期",
       "oauthExpiredTitle": "OAuth 權杖已過期",
-      "valueStorageHint": "標頭與環境中類似密鑰的值會存入安全儲存。",
+      "valueStorageHint": "標頭中類似密鑰的值會存入安全儲存。",
       "refreshFailed": "重新整理工具失敗",
       "saveFailed": "儲存 MCP 伺服器失敗",
       "alreadyExists": "伺服器「{name}」已存在",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "伺服器名稱只能包含字母、數字、點、連字號和底線",
         "needName": "請輸入伺服器名稱",
         "type": "類型",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "命令",
-        "needCommand": "請輸入可執行檔",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "請輸入 URL",
-        "env": "環境變數",
         "headersName": "標頭",
         "authHeading": "驗證",
         "authAuto": "自動",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Bearer 權杖環境變數",
         "scope": "範圍",
         "serverNameReserved": "該伺服器名稱已保留，無法使用",
-        "executable": "可執行檔",
-        "args": "參數",
-        "argsPlaceholder": "每行一個參數",
         "urlInvalid": "請輸入有效的 URL",
         "urlScheme": "MCP URL 必須使用 http 或 https",
-        "urlPlainHttp": "僅允許對回環主機使用明文 HTTP",
-        "commandShellSyntax": "可執行檔不得包含 shell 控制語法"
+        "urlPlainHttp": "僅允許對回環主機使用明文 HTTP"
       },
       "test": {
         "connecting": "正在重新整理工具…",

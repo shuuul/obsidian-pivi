@@ -48,16 +48,6 @@ export function redactMcpServer(
     ...(server.disabledTools ? { disabledTools: [...server.disabledTools] } : {}),
     ...(tools.length ? { tools: tools.map((tool) => ({ ...tool })) } : {}),
   };
-  if (type === 'stdio') {
-    const config = server.config as { command: string; args?: string[]; env?: unknown };
-    const env = projectMap(config.env);
-    return {
-      ...common,
-      command: config.command,
-      ...(config.args ? { args: [...config.args] } : {}),
-      ...(env ? { env } : {}),
-    };
-  }
   const config = server.config as { url: string; headers?: unknown };
   const oauth = server.oauth === false
     ? false

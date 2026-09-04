@@ -161,25 +161,18 @@ function promptModuleName(mutation: PromptCompositionPlan["mutation"]): string {
 
 function mcpServerFields(server: AgentMcpServerInput, t: TFunction): PiviManagementPlanField[] {
   const fields: PiviManagementPlanField[] = [];
-  if ("command" in server) {
-    fields.push(field(t, "type", "stdio"), field(t, "command", server.command));
-    if (server.args?.length) fields.push(field(t, "args", [...server.args]));
-    const names = server.env ? Object.keys(server.env).sort() : [];
-    if (names.length) fields.push(field(t, "envNames", names));
-  } else {
-    fields.push(field(t, "type", server.type), field(t, "url", server.url));
-    if (server.auth) fields.push(field(t, "auth", server.auth));
-    const names = server.headers ? Object.keys(server.headers).sort() : [];
-    if (names.length) fields.push(field(t, "headerNames", names));
-    if (server.bearerToken?.source === "systemEnvironment") fieldPush(fields, t, "bearerToken", `env:${server.bearerToken.variable}`);
-    else if (server.bearerToken?.source === "clear") fieldPush(fields, t, "bearerToken", t("chat.piviManagementApproval.management.values.clear"));
-    if (server.oauth === false) fieldPush(fields, t, "oauth", t("chat.piviManagementApproval.management.values.disabled"));
-    else if (server.oauth) {
-      if (server.oauth.grantType) fieldPush(fields, t, "oauthGrant", server.oauth.grantType);
-      if (server.oauth.clientId) fieldPush(fields, t, "oauthClientId", server.oauth.clientId);
-      if (server.oauth.scope) fieldPush(fields, t, "oauthScope", server.oauth.scope);
-      if (server.oauth.clearClientSecret) fieldPush(fields, t, "oauthClientSecret", t("chat.piviManagementApproval.management.values.clear"));
-    }
+  fields.push(field(t, "type", server.type), field(t, "url", server.url));
+  if (server.auth) fields.push(field(t, "auth", server.auth));
+  const names = server.headers ? Object.keys(server.headers).sort() : [];
+  if (names.length) fields.push(field(t, "headerNames", names));
+  if (server.bearerToken?.source === "systemEnvironment") fieldPush(fields, t, "bearerToken", `env:${server.bearerToken.variable}`);
+  else if (server.bearerToken?.source === "clear") fieldPush(fields, t, "bearerToken", t("chat.piviManagementApproval.management.values.clear"));
+  if (server.oauth === false) fieldPush(fields, t, "oauth", t("chat.piviManagementApproval.management.values.disabled"));
+  else if (server.oauth) {
+    if (server.oauth.grantType) fieldPush(fields, t, "oauthGrant", server.oauth.grantType);
+    if (server.oauth.clientId) fieldPush(fields, t, "oauthClientId", server.oauth.clientId);
+    if (server.oauth.scope) fieldPush(fields, t, "oauthScope", server.oauth.scope);
+    if (server.oauth.clearClientSecret) fieldPush(fields, t, "oauthClientSecret", t("chat.piviManagementApproval.management.values.clear"));
   }
   if (server.enabled !== undefined) fields.push(field(t, "enabled", booleanValue(t, server.enabled)));
   if (server.contextSaving !== undefined) fields.push(field(t, "contextSaving", booleanValue(t, server.contextSaving)));

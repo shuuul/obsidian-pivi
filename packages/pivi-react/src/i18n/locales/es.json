@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Servidores MCP",
-        "description": "Servidores MCP locales y sus herramientas."
+        "description": "Servidores MCP HTTP y SSE y sus herramientas."
       },
       "skills": {
         "label": "Habilidades",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "Generar títulos de conversación automáticamente",
       "desc": "Genera títulos de conversación automáticamente tras el primer mensaje del usuario."
-    },
-    "navMappings": {
-      "name": "Asignaciones de navegación estilo Vim",
-      "desc": "Una asignación por línea. Formato: \"map <tecla> <acción>\" (acciones: scrollUp, scrollDown, focusInput).",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Requerir Command/Ctrl+Enter para enviar",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "No hay servidores MCP configurados. Haz clic en Añadir para crear uno.",
       "add": "+ Añadir MCP",
-      "importJson": "Importar JSON",
-      "importJsonTitle": "Importar configuración MCP",
-      "importJsonDescription": "Pega abajo la configuración MCP en JSON. Pivi solo la leerá cuando selecciones Importar.",
-      "importJsonField": "JSON de configuración MCP",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "Importar",
-      "importFailed": "No se pudo importar la configuración MCP",
-      "noValidConfig": "No se encontró una configuración MCP válida en el JSON pegado",
-      "importedNone": "No se importaron servidores MCP nuevos",
       "clearOauth": "Borrar credenciales OAuth",
       "refreshTools": "Conectar / actualizar herramientas",
       "toolCount": "{count} herramientas",
-      "typeStdio": "stdio (comando local)",
-      "typeHttp": "http / sse (remoto)",
       "contextSavingTitle": "Insignias slash: los tokens /{name} resaltan este servidor en el compositor",
       "mentionBadge": "Mención slash",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth autenticado",
       "oauthExpiredBadge": "Caducado",
       "oauthExpiredTitle": "Token OAuth caducado",
-      "valueStorageHint": "Los valores de encabezado y entorno con aspecto de secreto se almacenan en almacenamiento seguro.",
+      "valueStorageHint": "Los valores de encabezado con aspecto de secreto se almacenan en almacenamiento seguro.",
       "refreshFailed": "Error al actualizar las herramientas",
       "saveFailed": "Error al guardar el servidor MCP",
       "alreadyExists": "El servidor «{name}» ya existe",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "El nombre del servidor solo puede contener letras, números, puntos, guiones y guiones bajos",
         "needName": "Introduce un nombre de servidor",
         "type": "Tipo",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "Comando",
-        "needCommand": "Introduce un ejecutable",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Introduce una URL",
-        "env": "Variables de entorno",
         "headersName": "Cabeceras",
         "authHeading": "Autenticación",
         "authAuto": "Auto",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Variable de entorno del token Bearer",
         "scope": "Ámbito",
         "serverNameReserved": "Ese nombre de servidor está reservado y no se puede usar",
-        "executable": "Ejecutable",
-        "args": "Argumentos",
-        "argsPlaceholder": "Un argumento por línea",
         "urlInvalid": "Introduce una URL válida",
         "urlScheme": "Las URL de MCP deben usar http o https",
-        "urlPlainHttp": "HTTP sin cifrar solo está permitido en hosts loopback",
-        "commandShellSyntax": "El ejecutable no debe contener sintaxis de control del shell"
+        "urlPlainHttp": "HTTP sin cifrar solo está permitido en hosts loopback"
       },
       "test": {
         "connecting": "Actualizando herramientas…",

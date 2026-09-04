@@ -173,19 +173,16 @@ export async function createPiWorkspaceServices(
     mcpOAuth,
     network.mcpFetch,
     host.app.secretStorage,
-    vaultPath ?? undefined,
   );
   const mcpDiagnostics = new McpDiagnostics(
     mcpOAuth,
     network.mcpFetch,
     host.app.secretStorage,
-    vaultPath ?? undefined,
   );
   const mcpServerProbeProvider = new McpServerProbeProvider(mcpToolProvider);
   const mcpServerTester = new McpServerTester(
     network.mcpFetch,
     host.app.secretStorage,
-    vaultPath ?? undefined,
   );
   const mcpManagement = new McpManagementCoordinator({
     storage: mcpStorage,

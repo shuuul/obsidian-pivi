@@ -15,7 +15,7 @@ import {
 import { normalizeMcpStoredValueMap } from './mcpValueSources';
 import { listMcpAuthEntrySecretIds } from './oauth/mcpSecretAuthStore';
 import type { ManagedMcpServer } from './types';
-import { DEFAULT_MCP_SERVER, getMcpServerType } from './types';
+import { DEFAULT_MCP_SERVER } from './types';
 
 export interface McpManagementPersistenceOptions {
   storage: McpStorage;
@@ -105,21 +105,7 @@ function materializeUpsert(
     disabledTools: input.disabledTools ?? previous?.disabledTools,
     description: input.description ?? previous?.description,
   };
-  if ('command' in input) {
-    const oldEnv = previous && getMcpServerType(previous.config) === 'stdio'
-      ? (previous.config as { env?: unknown }).env
-      : undefined;
-    const env = mergeValueMap(oldEnv, input.env);
-    return {
-      ...common,
-      config: {
-        command: input.command,
-        ...(input.args ? { args: [...input.args] } : {}),
-        ...(env ? { env } : {}),
-      },
-    };
-  }
-  const oldHeaders = previous && getMcpServerType(previous.config) !== 'stdio'
+  const oldHeaders = previous
     ? (previous.config as { headers?: unknown }).headers
     : undefined;
   const headers = mergeValueMap(oldHeaders, input.headers);
@@ -267,16 +253,10 @@ export class McpManagementPersistence {
     effective: ManagedMcpServer | undefined,
     failures: Array<{ target: string; message: string }>,
   ): Promise<void> {
-    const changedFromRemoteToStdio = !!previous
-      && getMcpServerType(previous.config) !== 'stdio'
-      && !!effective
-      && getMcpServerType(effective.config) === 'stdio';
     const shouldRemoveOAuth = mutation.action === 'remove' || (
       mutation.action === 'upsert'
-      && (
-        changedFromRemoteToStdio
-        || ('url' in mutation.server && mutation.server.oauth === false)
-      )
+      && 'url' in mutation.server
+      && mutation.server.oauth === false
     );
     if (shouldRemoveOAuth) {
       try {
@@ -292,7 +272,7 @@ export class McpManagementPersistence {
     }
 
     const directSecretIds = new Set<string>();
-    if (mutation.action === 'remove' || changedFromRemoteToStdio) {
+    if (mutation.action === 'remove') {
       for (const kind of ['bearer-token', 'client-secret'] as const) {
         listMcpServerSecretIds(mutation.name, kind).forEach(id => directSecretIds.add(id));
       }

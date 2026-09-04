@@ -1,6 +1,5 @@
 import { Client } from "@modelcontextprotocol/sdk/client";
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
@@ -8,17 +7,11 @@ import { PluginLogger } from '../logging/pluginLogger';
 import type { SyncSecretStore } from '../ports';
 import { createLegacySseTransport } from "./legacySseTransport";
 import {
-  buildMcpStdioEnv,
   createMcpResolveHost,
-  resolveAndBuildMcpStdioEnv,
   resolveMcpBearerToken,
   resolveMcpHeaders,
 } from "./mcpProcessEnv";
 import { testMcpServer } from "./mcpServerTester";
-import { parseCommand } from "./mcpUtils";
-import {
-  assertMcpStdioExecutable,
-} from "./mcpValidation";
 import {
   isLegacyPlainStringMap,
   normalizeMcpStoredValueMap,
@@ -98,50 +91,15 @@ function resolveStoredHeaders(
   return Object.keys(resolved).length > 0 ? resolved : undefined;
 }
 
-function resolveStoredEnv(
-  serverName: string,
-  env: unknown,
-  processEnv: McpProcessEnv,
-  secretStorage: SyncSecretStore | undefined,
-): Record<string, string> {
-  if (isLegacyPlainStringMap(env)) {
-    return buildMcpStdioEnv(processEnv, env);
-  }
-  const stored = normalizeMcpStoredValueMap(env);
-  const host = createMcpResolveHost(processEnv, secretStorage);
-  return resolveAndBuildMcpStdioEnv(serverName, processEnv, stored, host, secretStorage);
-}
-
 function createTransport(
   server: ManagedMcpServer,
   oauth: McpOAuthService | null,
   fetch: McpTransportFetch,
   processEnv: McpProcessEnv,
   secretStorage: SyncSecretStore | undefined,
-  stdioCwd: string | undefined,
 ): Transport {
   const config = server.config;
   const type = getMcpServerType(config);
-
-  if (type === "stdio") {
-    const stdio = config as {
-      command: string;
-      args?: string[];
-      env?: unknown;
-    };
-    const { cmd, args } = parseCommand(stdio.command, stdio.args);
-    if (!cmd) {
-      throw new Error("MCP stdio server is missing command");
-    }
-    assertMcpStdioExecutable(cmd);
-    return new StdioClientTransport({
-      command: cmd,
-      args,
-      env: resolveStoredEnv(server.name, stdio.env, processEnv, secretStorage),
-      stderr: "ignore",
-      ...(stdioCwd ? { cwd: stdioCwd } : {}),
-    });
-  }
 
   const urlConfig = config as UrlServerConfig;
   const url = new URL(urlConfig.url);
@@ -191,7 +149,6 @@ export class McpConnectionPool {
     private readonly fetch: McpTransportFetch,
     private readonly processEnv: McpProcessEnv,
     private readonly secretStorage?: SyncSecretStore,
-    private readonly stdioCwd?: string,
   ) {}
 
   private readonly connections = new Map<string, ServerConnection>();
@@ -283,7 +240,6 @@ export class McpConnectionPool {
           this.fetch,
           this.processEnv,
           this.secretStorage,
-          this.stdioCwd,
           combined.signal,
         );
         if (!result.success) {
@@ -483,7 +439,6 @@ export class McpConnectionPool {
       this.fetch,
       this.processEnv,
       this.secretStorage,
-      this.stdioCwd,
     );
     const client = new Client({ name: "pivi-mcp", version: "0.1.0" });
     await client.connect(transport, signal ? { signal } : undefined);

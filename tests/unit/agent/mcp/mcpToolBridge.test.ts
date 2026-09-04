@@ -32,19 +32,19 @@ describe('McpToolBridge', () => {
         name: 'ctx',
         enabled: true,
         contextSaving: true,
-        config: { command: 'echo', args: ['mcp'] },
+        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
       },
       {
         name: 'always',
         enabled: true,
         contextSaving: false,
-        config: { command: 'echo', args: ['mcp'] },
+        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
       },
       {
         name: 'disabled',
         enabled: false,
         contextSaving: false,
-        config: { command: 'echo', args: ['mcp'] },
+        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
       },
     ];
     const manager = new McpServerManager(createStorage(servers));
@@ -58,7 +58,7 @@ describe('McpToolBridge', () => {
     });
   });
 
-  it('prefetches enabled remote servers but leaves stdio lazy', async () => {
+  it('prefetches enabled remote servers', async () => {
     const servers: ManagedMcpServer[] = [
       {
         name: 'remote',
@@ -67,10 +67,10 @@ describe('McpToolBridge', () => {
         config: { type: 'http', url: 'https://remote.example.com/mcp' },
       },
       {
-        name: 'local',
-        enabled: true,
+        name: 'disabled',
+        enabled: false,
         contextSaving: true,
-        config: { type: 'stdio', command: 'node', args: ['server.js'] },
+        config: { type: 'http', url: 'https://disabled.example.com/mcp' },
       },
     ];
     const manager = new McpServerManager(createStorage(servers));
@@ -84,9 +84,6 @@ describe('McpToolBridge', () => {
 
     expect(listTools).toHaveBeenCalledTimes(1);
     expect(listTools).toHaveBeenCalledWith(expect.objectContaining({ name: 'remote' }));
-
-    await bridge.listCachedTools('local');
-    expect(listTools).toHaveBeenCalledWith(expect.objectContaining({ name: 'local' }));
     listTools.mockRestore();
   });
 
@@ -96,19 +93,19 @@ describe('McpToolBridge', () => {
         name: 'ctx',
         enabled: true,
         contextSaving: true,
-        config: { command: 'echo', args: ['mcp'] },
+        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
       },
       {
         name: 'always',
         enabled: true,
         contextSaving: false,
-        config: { command: 'echo', args: ['mcp'] },
+        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
       },
       {
         name: 'disabled',
         enabled: false,
         contextSaving: false,
-        config: { command: 'echo', args: ['mcp'] },
+        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
       },
     ];
     const manager = new McpServerManager(createStorage(servers));

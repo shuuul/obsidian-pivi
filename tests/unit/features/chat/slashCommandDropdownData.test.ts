@@ -107,14 +107,14 @@ describe('slashCommandDropdownData prefetch helpers', () => {
     expect(listTools).toHaveBeenCalledWith('offline');
   });
 
-  it('omits stdio servers from tool discovery', async () => {
+  it('discovers tools for every enabled remote server', async () => {
     const listTools = jest.fn(async () => [{ name: 'search' }]);
     const result = await fetchMcpToolEntries(
       false,
       () => ({
         getServers: () => [
           { name: 'remote', enabled: true, type: 'http' as const },
-          { name: 'local', enabled: true, type: 'stdio' as const },
+          { name: 'events', enabled: true, type: 'sse' as const },
         ],
       }),
       () => ({ listTools }),
@@ -122,13 +122,14 @@ describe('slashCommandDropdownData prefetch helpers', () => {
 
     expect(result.kind).toBe('ok');
     if (result.kind !== 'ok') return;
-    expect(listTools).toHaveBeenCalledTimes(1);
+    expect(listTools).toHaveBeenCalledTimes(2);
     expect(listTools).toHaveBeenCalledWith('remote');
-    expect(listTools).not.toHaveBeenCalledWith('local');
+    expect(listTools).toHaveBeenCalledWith('events');
     expect(result.entries.map((entry) => entry.identity)).toEqual([
       '/remote',
-      '/local',
+      '/events',
       '/remote/search',
+      '/events/search',
     ]);
   });
 

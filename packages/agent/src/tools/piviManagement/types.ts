@@ -53,18 +53,7 @@ export interface AgentMcpRemoteServerInput {
   bearerToken?: AgentMcpBearerInput;
 }
 
-export interface AgentMcpStdioServerInput {
-  type?: 'stdio';
-  command: string;
-  args?: string[];
-  env?: Record<string, AgentMcpValueInput>;
-  enabled?: boolean;
-  contextSaving?: boolean;
-  disabledTools?: string[];
-  description?: string;
-}
-
-export type AgentMcpServerInput = AgentMcpRemoteServerInput | AgentMcpStdioServerInput;
+export type AgentMcpServerInput = AgentMcpRemoteServerInput;
 
 export type PiviMcpInput =
   | { action: 'list' }
@@ -87,19 +76,15 @@ export interface AgentMcpToolInventoryEntry {
 
 export interface AgentMcpServerSummary {
   name: string;
-  type: 'stdio' | 'http' | 'sse';
+  type: 'http' | 'sse';
   enabled: boolean;
   contextSaving: boolean;
   description?: string;
   disabledTools?: string[];
   url?: string;
-  command?: string;
-  args?: string[];
   auth?: 'none' | 'bearer' | 'oauth';
   /** Header names with source/configured metadata only. */
   headers?: Record<string, AgentMcpSecretProjection>;
-  /** Env names with source/configured metadata only. */
-  env?: Record<string, AgentMcpSecretProjection>;
   bearerToken?: AgentMcpSecretProjection;
   oauth?: {
     grantType?: 'authorization_code' | 'client_credentials';

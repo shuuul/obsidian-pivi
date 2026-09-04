@@ -241,7 +241,7 @@ describe("McpStorage", () => {
     expect(raw).not.toContain("legacy-bearer-secret");
   });
 
-  it("migrates secret-like headers and stdio env into SecretStorage on load", async () => {
+  it("migrates secret-like headers into SecretStorage on load", async () => {
     const adapter = new MemoryVaultAdapter({
       [PIVI_MCP_CONFIG_PATH]: `${JSON.stringify(
         {
@@ -252,13 +252,6 @@ describe("McpStorage", () => {
               headers: {
                 Authorization: "Bearer legacy-token",
                 "X-Custom": "plain-value",
-              },
-            },
-            local: {
-              command: "node",
-              env: {
-                PLAIN_VAR: "visible",
-                API_KEY: "secret-env",
               },
             },
           },
@@ -275,27 +268,17 @@ describe("McpStorage", () => {
 
     const loaded = await storage.load();
     const remote = loaded.find((server) => server.name === "remote");
-    const local = loaded.find((server) => server.name === "local");
     expect(remote?.config).toMatchObject({
       headers: {
         Authorization: { kind: "secret" },
         "X-Custom": { kind: "plain", value: "plain-value" },
       },
     });
-    expect(local?.config).toMatchObject({
-      env: {
-        PLAIN_VAR: { kind: "plain", value: "visible" },
-        API_KEY: { kind: "secret" },
-      },
-    });
 
     const raw = adapter.readSync(PIVI_MCP_CONFIG_PATH);
     expect(raw).not.toContain("legacy-token");
-    expect(raw).not.toContain("secret-env");
     expect(secretStorage.getSecret(getMcpValueSecretId("remote", "header", "Authorization")))
       .toBe("Bearer legacy-token");
-    expect(secretStorage.getSecret(getMcpValueSecretId("local", "env", "API_KEY")))
-      .toBe("secret-env");
   });
 
   it("preserves corrupt JSON and throws a typed load error", async () => {
@@ -418,40 +401,24 @@ describe("McpStorage", () => {
     expect(values.get(badId)).toBe("bad-token");
   });
 
-  it.each([
-    {
-      label: "remote headers to stdio env",
-      initial: remoteServer({
-        config: {
-          type: "http",
-          url: "https://mcp.example.com",
-          headers: { Authorization: { kind: "secret" } },
-        },
-      }),
-      next: remoteServer({
-        config: { command: "node", env: { API_KEY: { kind: "secret" } } },
-      }),
-      oldId: getMcpValueSecretId("remote", "header", "Authorization"),
-      oldValue: "old-header",
-      nextId: getMcpValueSecretId("remote", "env", "API_KEY"),
-    },
-    {
-      label: "stdio env to remote headers",
-      initial: remoteServer({
-        config: { command: "node", env: { API_KEY: { kind: "secret" } } },
-      }),
-      next: remoteServer({
-        config: {
-          type: "http",
-          url: "https://mcp.example.com",
-          headers: { Authorization: { kind: "secret" } },
-        },
-      }),
-      oldId: getMcpValueSecretId("remote", "env", "API_KEY"),
-      oldValue: "old-env",
-      nextId: getMcpValueSecretId("remote", "header", "Authorization"),
-    },
-  ])("cleans every old channel secret after publishing $label", async ({ initial, next, oldId, oldValue, nextId }) => {
+  it("cleans old header secrets after publishing a replacement header map", async () => {
+    const initial = remoteServer({
+      config: {
+        type: "http",
+        url: "https://mcp.example.com",
+        headers: { Authorization: { kind: "secret" } },
+      },
+    });
+    const next = remoteServer({
+      config: {
+        type: "http",
+        url: "https://mcp.example.com",
+        headers: { "X-Api-Key": { kind: "secret" } },
+      },
+    });
+    const oldId = getMcpValueSecretId("remote", "header", "Authorization");
+    const oldValue = "old-header";
+    const nextId = getMcpValueSecretId("remote", "header", "X-Api-Key");
     const adapter = new MemoryVaultAdapter();
     const secretStorage = new SecretStorage();
     const storage = new McpStorage(adapter as unknown as FileStore, secretStorage);

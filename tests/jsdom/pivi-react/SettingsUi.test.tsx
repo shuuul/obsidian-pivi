@@ -14,7 +14,7 @@ const snapshot: SettingsUiSnapshotData = {
     userName: '', excludedTags: [], deletedSessionRetentionDays: 30,
     providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 },
     requireCommandOrControlEnterToSend: false,
-    keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' },
+    
     editorSelectionToolbar: { enabled: true, shortcuts: [] },
   },
   subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
@@ -351,34 +351,6 @@ describe('React settings foundation', () => {
     }
     expect(container.querySelector('input[type="checkbox"]')).not.toHaveClass('pivi-settings-control');
     expect(container.querySelector('input[type="range"]')).not.toBeInTheDocument();
-  });
-
-  it('debounces the latest keyboard navigation text', async () => {
-    jest.useFakeTimers();
-    try {
-      const saveGeneral = jest.fn(async () => undefined);
-      const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="input" ports={createPorts({ saveGeneral })} /></I18nProvider>));
-      const textarea = Array.from(container.querySelectorAll('textarea')).find((element) => (
-        element.value.includes('scrollUp')
-      ));
-      expect(textarea).toBeDefined();
-      if (!textarea) throw new Error('Expected keyboard navigation mappings textarea.');
-
-      fireEvent.change(textarea, {
-        target: { value: 'map k scrollUp\nmap j scrollDown\nmap f focusInput' },
-      });
-      await act(async () => { jest.advanceTimersByTime(500); });
-
-      expect(saveGeneral).toHaveBeenCalledWith({
-        keyboardNavigation: {
-          scrollUpKey: 'k',
-          scrollDownKey: 'j',
-          focusInputKey: 'f',
-        },
-      });
-    } finally {
-      jest.useRealTimers();
-    }
   });
 
   it('renders and runs host-provided integration sections', async () => {

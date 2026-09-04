@@ -14,7 +14,6 @@ import type {
   SettingsHotkeysPort,
 } from '../ports';
 import { EditorToolbarSection } from './EditorToolbarSection';
-import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { BadgeListInput, Select, SettingRow, SettingsCollection, SettingsFeedback, SettingsPage, SettingsSection, Toggle } from './primitives';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
@@ -211,85 +210,6 @@ function HotkeyRows({ hotkeys }: { readonly hotkeys: SettingsHotkeysPort }) {
   );
 }
 
-function NavMappingsRow({
-  store,
-  actions,
-  feedback,
-}: {
-  readonly store: SettingsUiStore;
-  readonly actions: SettingsActionsPort;
-  readonly feedback: SettingsFeedbackPort;
-}) {
-  const { general } = useSettingsUiSnapshot(store);
-  const t = useT();
-  const [text, setText] = useState(() => buildNavMappingText(general.keyboardNavigation));
-  const [error, setError] = useState<string | null>(null);
-  const saveTimeout = useRef<number | null>(null);
-  const saveWindow = useRef<Window | null>(null);
-
-  useEffect(() => {
-    setText(buildNavMappingText(general.keyboardNavigation));
-  }, [general.keyboardNavigation]);
-
-  useEffect(() => () => {
-    if (saveTimeout.current !== null) {
-      saveWindow.current?.clearTimeout(saveTimeout.current);
-      saveTimeout.current = null;
-    }
-  }, []);
-
-  const commit = (nextText: string, showError: boolean) => {
-    if (saveTimeout.current !== null) {
-      saveWindow.current?.clearTimeout(saveTimeout.current);
-      saveTimeout.current = null;
-    }
-    const result = parseNavMappings(nextText);
-    if (!result.settings) {
-      if (showError) {
-        setError(result.error ?? t('common.error'));
-        setText(buildNavMappingText(general.keyboardNavigation));
-      }
-      return;
-    }
-    setError(null);
-    void saveGeneral(store, actions, {
-      keyboardNavigation: {
-        scrollUpKey: result.settings.scrollUp,
-        scrollDownKey: result.settings.scrollDown,
-        focusInputKey: result.settings.focusInput,
-      },
-    }).catch((cause: unknown) => {
-      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
-    });
-  };
-
-  return (
-    <>
-      <SettingRow name={t('settings.navMappings.name')} description={t('settings.navMappings.desc')}>
-        <div className="pivi-settings-control-feedback">
-          <textarea
-            className="pivi-settings-control"
-            rows={3}
-            placeholder={t('settings.navMappings.placeholder')}
-            value={text}
-            onChange={(event) => {
-              const nextText = event.currentTarget.value;
-              const ownerWindow = event.currentTarget.ownerDocument.defaultView;
-              setText(nextText);
-              setError(null);
-              if (saveTimeout.current !== null) saveWindow.current?.clearTimeout(saveTimeout.current);
-              saveWindow.current = ownerWindow;
-              saveTimeout.current = ownerWindow?.setTimeout(() => commit(nextText, false), 500) ?? null;
-            }}
-            onBlur={(event) => commit(event.currentTarget.value, true)}
-          />
-          <SettingsFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
-        </div>
-      </SettingRow>
-    </>
-  );
-}
-
 export function GeneralSettingsTab({
   page,
   store,
@@ -456,7 +376,6 @@ export function GeneralSettingsTab({
             onChange={(requireCommandOrControlEnterToSend) => { void save({ requireCommandOrControlEnterToSend }); }}
           />
         </SettingRow>
-        <NavMappingsRow store={store} actions={actions} feedback={feedback} />
         <HotkeyRows hotkeys={hotkeys} />
       </SettingsSection> : null}
       {page === 'appearance' ? <SettingsSection title={t('settings.styleSettings.name')}>

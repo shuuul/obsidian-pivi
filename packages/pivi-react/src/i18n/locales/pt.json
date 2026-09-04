@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Servidores MCP",
-        "description": "Servidores MCP locais e as respetivas ferramentas."
+        "description": "Servidores MCP HTTP e SSE e as respetivas ferramentas."
       },
       "skills": {
         "label": "Habilidades",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "Gerar automaticamente títulos de conversa",
       "desc": "Gera automaticamente títulos de conversa após a primeira mensagem do usuário."
-    },
-    "navMappings": {
-      "name": "Mapeamentos de navegação estilo Vim",
-      "desc": "Um mapeamento por linha. Formato: \"map <tecla> <ação>\" (ações: scrollUp, scrollDown, focusInput).",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Exigir Command/Ctrl+Enter para enviar",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "No hay servidores MCP configurados. Haz clic en Adicionar para crear uno.",
       "add": "+ Adicionar MCP",
-      "importJson": "Importar JSON",
-      "importJsonTitle": "Importar configuração MCP",
-      "importJsonDescription": "Cole abaixo a configuração MCP em JSON. O Pivi só a lê depois de escolher Importar.",
-      "importJsonField": "JSON da configuração MCP",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "Importar",
-      "importFailed": "Falha ao importar a configuração MCP",
-      "noValidConfig": "Nenhuma configuração MCP válida foi encontrada no JSON colado",
-      "importedNone": "No se importaron servidores MCP nuevos",
       "clearOauth": "Borrar credenciales OAuth",
       "refreshTools": "Conectar / atualizar ferramentas",
       "toolCount": "{count} ferramentas",
-      "typeStdio": "stdio (comando local)",
-      "typeHttp": "http / sse (remoto)",
       "contextSavingTitle": "Badges slash: tokens /{name} destacam este servidor no compositor",
       "mentionBadge": "Menção slash",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth autenticado",
       "oauthExpiredBadge": "Caducado",
       "oauthExpiredTitle": "Token OAuth caducado",
-      "valueStorageHint": "Valores de cabeçalho e ambiente com aspecto de segredo são armazenados em armazenamento seguro.",
+      "valueStorageHint": "Valores de cabeçalho com aspecto de segredo são armazenados em armazenamento seguro.",
       "refreshFailed": "Falha ao atualizar ferramentas",
       "saveFailed": "Erro al salvar o servidor MCP",
       "alreadyExists": "El servidor «{name}» ya existe",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "El nome do servidor solo puede contener letras, números, puntos, guiones e guiones bajos",
         "needName": "Introduce um nome de servidor",
         "type": "Tipo",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "Comando",
-        "needCommand": "Introduza um executável",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Introduce uma URL",
-        "env": "Variables de entorno",
         "headersName": "Cabeceras",
         "authHeading": "Autenticación",
         "authAuto": "Auto",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Variable de entorno do token Bearer",
         "scope": "Ámbito",
         "serverNameReserved": "Esse nome de servidor é reservado e não pode ser usado",
-        "executable": "Executável",
-        "args": "Argumentos",
-        "argsPlaceholder": "Um argumento por linha",
         "urlInvalid": "Introduza um URL válido",
         "urlScheme": "Os URLs MCP devem usar http ou https",
-        "urlPlainHttp": "HTTP simples só é permitido para hosts loopback",
-        "commandShellSyntax": "O executável não deve conter sintaxe de controlo do shell"
+        "urlPlainHttp": "HTTP simples só é permitido para hosts loopback"
       },
       "test": {
         "connecting": "Atualizando ferramentas…",

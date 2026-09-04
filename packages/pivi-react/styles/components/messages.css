@@ -67,7 +67,7 @@
   margin-block-start: var(--pivi-spacing-sm);
 }
 
-/* Focusable messages panel for vim-style navigation */
+/* Focusable messages panel for Escape-from-input navigation */
 .pivi-messages-focusable:focus {
   outline: none;
 }

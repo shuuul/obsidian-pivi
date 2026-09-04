@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP servers",
-        "description": "Local MCP servers and their tools."
+        "description": "HTTP and SSE MCP servers and their tools."
       },
       "skills": {
         "label": "Skills",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "Auto-generate conversation titles",
       "desc": "Automatically generate conversation titles after the first user message is sent."
-    },
-    "navMappings": {
-      "name": "Vim-style navigation mappings",
-      "desc": "One mapping per line. Format: \"map <key> <action>\" (actions: scrollUp, scrollDown, focusInput).",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Require Command/Ctrl+Enter to send",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "No MCP servers configured. Click add to add one.",
       "add": "+ Add MCP",
-      "importJson": "Import JSON",
-      "importJsonTitle": "Import MCP configuration",
-      "importJsonDescription": "Paste MCP configuration JSON below. Pivi reads it only after you choose Import.",
-      "importJsonField": "MCP configuration JSON",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "Import",
-      "importFailed": "Failed to import MCP configuration",
-      "noValidConfig": "No valid MCP configuration found in pasted JSON",
-      "importedNone": "No new MCP servers imported",
       "clearOauth": "Clear OAuth credentials",
       "refreshTools": "Connect / refresh tools",
       "toolCount": "{count} tools",
-      "typeStdio": "stdio (local command)",
-      "typeHttp": "http / sse (remote)",
       "contextSavingTitle": "Slash badges: /{name} tokens highlight this server in the composer",
       "mentionBadge": "Slash mention",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth authenticated",
       "oauthExpiredBadge": "Expired",
       "oauthExpiredTitle": "OAuth token expired",
-      "valueStorageHint": "Header and environment secret-like values are stored in secure storage.",
+      "valueStorageHint": "Header secret-like values are stored in secure storage.",
       "refreshFailed": "Tool refresh failed",
       "saveFailed": "Failed to save MCP server",
       "alreadyExists": "Server \"{name}\" already exists",
@@ -1138,22 +1122,14 @@
         "serverNameReserved": "That server name is reserved and cannot be used",
         "needName": "Please enter a server name",
         "type": "Type",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "executable": "Executable",
-        "command": "Command",
-        "needCommand": "Please enter an executable",
-        "commandShellSyntax": "Executable must not contain shell control syntax",
-        "args": "Arguments",
-        "argsPlaceholder": "One argument per line",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Please enter a URL",
         "urlInvalid": "Enter a valid URL",
         "urlScheme": "MCP URLs must use http or https",
         "urlPlainHttp": "Plain HTTP is allowed only for loopback hosts",
-        "env": "Environment variables",
         "headersName": "Headers",
         "authHeading": "Authentication",
         "authAuto": "Auto",

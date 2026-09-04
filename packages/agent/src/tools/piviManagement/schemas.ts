@@ -99,25 +99,7 @@ const AGENT_MCP_REMOTE_SERVER = {
   additionalProperties: false,
 } as const;
 
-const AGENT_MCP_STDIO_SERVER = {
-  type: 'object',
-  properties: {
-    type: { type: 'string', const: 'stdio' },
-    command: STRING,
-    args: STRING_ARRAY,
-    env: AGENT_MCP_VALUE_MAP,
-    enabled: BOOLEAN,
-    contextSaving: BOOLEAN,
-    disabledTools: STRING_ARRAY,
-    description: STRING,
-  },
-  required: ['command'],
-  additionalProperties: false,
-} as const;
-
-const AGENT_MCP_SERVER = {
-  oneOf: [AGENT_MCP_REMOTE_SERVER, AGENT_MCP_STDIO_SERVER],
-} as const;
+const AGENT_MCP_SERVER = AGENT_MCP_REMOTE_SERVER;
 
 export const PIVI_MCP_PARAMETERS = {
   type: 'object',

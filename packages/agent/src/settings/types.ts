@@ -25,13 +25,6 @@ export interface SlashCommand {
   hooks?: Record<string, unknown>; // Pass-through to SDK
 }
 
-/** Keyboard navigation settings for vim-style scrolling. */
-export interface KeyboardNavigationSettings {
-  scrollUpKey: string; // Key to scroll up when focused on messages (default: 'w')
-  scrollDownKey: string; // Key to scroll down when focused on messages (default: 's')
-  focusInputKey: string; // Key to focus input (default: 'i', like vim insert mode)
-}
-
 /** Provider request deadlines in milliseconds. A value of 0 disables that deadline. */
 export interface ProviderRequestDeadlines {
   totalMs: number;
@@ -692,7 +685,6 @@ export interface PiviSettings {
   providerRequestDeadlines: ProviderRequestDeadlines;
 
   // UI settings
-  keyboardNavigation: KeyboardNavigationSettings;
   requireCommandOrControlEnterToSend: boolean;
 
   // Internationalization

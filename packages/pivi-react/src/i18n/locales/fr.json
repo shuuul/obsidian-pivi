@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Serveurs MCP",
-        "description": "Serveurs MCP locaux et leurs outils."
+        "description": "Serveurs MCP HTTP et SSE et leurs outils."
       },
       "skills": {
         "label": "Compétences",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "Générer automatiquement les titres de conversation",
       "desc": "Génère automatiquement les titres après le premier message de l’utilisateur."
-    },
-    "navMappings": {
-      "name": "Mappages de navigation style Vim",
-      "desc": "Un mappage par ligne. Format : \"map <touche> <action>\" (actions : scrollUp, scrollDown, focusInput).",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Exiger Command/Ctrl+Entrée pour envoyer",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "Aucun serveur MCP configuré. Cliquez sur Ajouter pour en créer un.",
       "add": "+ Ajouter un MCP",
-      "importJson": "Importer du JSON",
-      "importJsonTitle": "Importer une configuration MCP",
-      "importJsonDescription": "Collez ci-dessous la configuration MCP au format JSON. Pivi ne la lit qu’après avoir choisi Importer.",
-      "importJsonField": "Configuration MCP en JSON",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "Importer",
-      "importFailed": "Échec de l’importation de la configuration MCP",
-      "noValidConfig": "Aucune configuration MCP valide dans le JSON collé",
-      "importedNone": "Aucun nouveau serveur MCP importé",
       "clearOauth": "Effacer les identifiants OAuth",
       "refreshTools": "Connecter / actualiser les outils",
       "toolCount": "{count} outils",
-      "typeStdio": "stdio (commande locale)",
-      "typeHttp": "http / sse (distant)",
       "contextSavingTitle": "Badges slash : les jetons /{name} mettent ce serveur en évidence dans le compositeur",
       "mentionBadge": "Mention slash",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth authentifié",
       "oauthExpiredBadge": "Expiré",
       "oauthExpiredTitle": "Jeton OAuth expiré",
-      "valueStorageHint": "Les valeurs d’en-tête et d’environnement de type secret sont stockées dans le stockage sécurisé.",
+      "valueStorageHint": "Les valeurs d’en-tête de type secret sont stockées dans le stockage sécurisé.",
       "refreshFailed": "Échec de l’actualisation des outils",
       "saveFailed": "Échec de l’enregistrement du serveur MCP",
       "alreadyExists": "Le serveur « {name} » existe déjà",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "Le nom du serveur ne peut contenir que des lettres, chiffres, points, tirets et underscores",
         "needName": "Veuillez saisir un nom de serveur",
         "type": "Type",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "Commande",
-        "needCommand": "Veuillez saisir un exécutable",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Veuillez saisir une URL",
-        "env": "Variables d’environnement",
         "headersName": "En-têtes",
         "authHeading": "Authentification",
         "authAuto": "Auto",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Variable d’env. du jeton Bearer",
         "scope": "Portée",
         "serverNameReserved": "Ce nom de serveur est réservé et ne peut pas être utilisé",
-        "executable": "Exécutable",
-        "args": "Arguments",
-        "argsPlaceholder": "Un argument par ligne",
         "urlInvalid": "Saisissez une URL valide",
         "urlScheme": "Les URL MCP doivent utiliser http ou https",
-        "urlPlainHttp": "HTTP non chiffré est autorisé uniquement pour les hôtes loopback",
-        "commandShellSyntax": "L’exécutable ne doit pas contenir de syntaxe de contrôle du shell"
+        "urlPlainHttp": "HTTP non chiffré est autorisé uniquement pour les hôtes loopback"
       },
       "test": {
         "connecting": "Actualisation des outils…",

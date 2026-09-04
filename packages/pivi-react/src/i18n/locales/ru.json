@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Серверы MCP",
-        "description": "Локальные серверы MCP и их инструменты."
+        "description": "HTTP- и SSE-серверы MCP и их инструменты."
       },
       "skills": {
         "label": "Навыки",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "Автоматически генерировать заголовки бесед",
       "desc": "Автоматически генерировать заголовки после первого сообщения пользователя."
-    },
-    "navMappings": {
-      "name": "Сопоставления навигации в стиле Vim",
-      "desc": "По одному сопоставлению в строке. Формат: \"map <ключ> <действие>\" (действия: scrollUp, scrollDown, focusInput).",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Требовать Command/Ctrl+Enter для отправки",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "MCP-серверы не настроены. Нажмите «Добавить».",
       "add": "+ Добавить MCP",
-      "importJson": "Импорт JSON",
-      "importJsonTitle": "Импорт конфигурации MCP",
-      "importJsonDescription": "Вставьте JSON конфигурации MCP ниже. Pivi прочитает его только после выбора команды «Импортировать».",
-      "importJsonField": "JSON конфигурации MCP",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "Импортировать",
-      "importFailed": "Не удалось импортировать конфигурацию MCP",
-      "noValidConfig": "Во вставленном JSON нет допустимой конфигурации MCP",
-      "importedNone": "Новые MCP-серверы не импортированы",
       "clearOauth": "Очистить OAuth-данные",
       "refreshTools": "Подключить / обновить инструменты",
       "toolCount": "Инструментов: {count}",
-      "typeStdio": "stdio (локальная команда)",
-      "typeHttp": "http / sse (удалённый)",
       "contextSavingTitle": "Slash-бейджи: токены /{name} выделяют этот сервер в композере",
       "mentionBadge": "Slash-упоминание",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth пройден",
       "oauthExpiredBadge": "Истёк",
       "oauthExpiredTitle": "Срок OAuth-токена истёк",
-      "valueStorageHint": "Значения заголовков и окружения, похожие на секреты, хранятся в защищённом хранилище.",
+      "valueStorageHint": "Значения заголовков, похожие на секреты, хранятся в защищённом хранилище.",
       "refreshFailed": "Не удалось обновить инструменты",
       "saveFailed": "Не удалось сохранить MCP-сервер",
       "alreadyExists": "Сервер «{name}» уже существует",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "Имя сервера может содержать только буквы, цифры, точки, дефисы и подчёркивания",
         "needName": "Введите имя сервера",
         "type": "Тип",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "Команда",
-        "needCommand": "Введите исполняемый файл",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "Введите URL",
-        "env": "Переменные окружения",
         "headersName": "Заголовки",
         "authHeading": "Аутентификация",
         "authAuto": "Авто",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Переменная окружения Bearer-токена",
         "scope": "Область",
         "serverNameReserved": "Это имя сервера зарезервировано и не может использоваться",
-        "executable": "Исполняемый файл",
-        "args": "Аргументы",
-        "argsPlaceholder": "Один аргумент на строку",
         "urlInvalid": "Введите корректный URL",
         "urlScheme": "URL MCP должны использовать http или https",
-        "urlPlainHttp": "Незашифрованный HTTP разрешён только для loopback-хостов",
-        "commandShellSyntax": "Исполняемый файл не должен содержать управляющий синтаксис оболочки"
+        "urlPlainHttp": "Незашифрованный HTTP разрешён только для loopback-хостов"
       },
       "test": {
         "connecting": "Обновление инструментов…",

@@ -15,7 +15,7 @@ export interface DropdownMcpServerProvider {
     name: string;
     enabled: boolean;
     description?: string;
-    type?: 'stdio' | 'http' | 'sse';
+    type?: 'http' | 'sse';
   }>;
 }
 
@@ -106,10 +106,8 @@ export async function fetchMcpToolEntries(
     };
   }
 
-  // Automatic slash inventory never starts stdio; remote-only discovery.
-  const remoteServers = servers.filter((server) => server.type !== 'stdio');
   const perServerTools = await Promise.allSettled(
-    remoteServers.map(async (server) => ({
+    servers.map(async (server) => ({
       serverName: server.name,
       tools: await toolProvider.listTools(server.name),
     })),

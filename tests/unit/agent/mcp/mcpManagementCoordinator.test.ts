@@ -48,7 +48,7 @@ describe('McpManagementCoordinator', () => {
     expect(JSON.stringify(result)).not.toContain(sentinel);
   });
 
-  it('cleans remote OAuth state and direct secrets after a remote-to-stdio publication', async () => {
+  it('cleans remote OAuth state and direct secrets after oauth is disabled', async () => {
     const remote: ManagedMcpServer = {
       ...server,
       auth: 'oauth',
@@ -86,20 +86,22 @@ describe('McpManagementCoordinator', () => {
     const plan = await coordinator.plan({
       action: 'upsert',
       name: server.name,
-      server: { command: 'node', env: { API_KEY: { source: 'systemEnvironment', variable: 'MCP_KEY' } } },
+      server: { type: 'http', url: 'https://safe.example.test/mcp', oauth: false },
     });
 
     await coordinator.commit(plan);
 
     expect(saveIfRevision).toHaveBeenCalledWith([
-      expect.objectContaining({ name: server.name, config: expect.objectContaining({ command: 'node' }) }),
+      expect.objectContaining({ name: server.name, oauth: false }),
     ], 'revision');
     expect(removeOAuthArtifacts).toHaveBeenCalledWith(server.name);
     for (const id of [
       ...listMcpAuthEntrySecretIds(server.name),
-      ...listMcpServerSecretIds(server.name, 'bearer-token'),
       ...listMcpServerSecretIds(server.name, 'client-secret'),
     ]) expect(values.get(id)).toBe('');
+    for (const id of listMcpServerSecretIds(server.name, 'bearer-token')) {
+      expect(values.get(id)).toBe('old-secret');
+    }
     expect(saveIfRevision.mock.invocationCallOrder[0]).toBeLessThan(removeOAuthArtifacts.mock.invocationCallOrder[0]!);
   });
 

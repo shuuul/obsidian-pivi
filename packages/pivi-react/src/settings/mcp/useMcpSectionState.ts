@@ -1,12 +1,5 @@
-import { tryParseClipboardConfig } from '@pivi/agent/mcp/mcpConfigParser';
 import {
-  formatMcpArgsLines,
-  parseMcpArgsLines,
-} from '@pivi/agent/mcp/mcpUtils';
-import {
-  assertMcpStdioExecutable,
   assertValidMcpServerName,
-  isValidMcpServerName,
   MCP_SERVER_NAME_PATTERN,
   McpValidationError,
   validateMcpRemoteUrl,
@@ -19,11 +12,8 @@ import type {
   ManagedMcpServer,
   McpAuthStatus,
   McpConfigValueMap,
-  McpHttpServerConfig,
   McpServerConfig,
   McpServerType,
-  McpSSEServerConfig,
-  McpStdioServerConfig,
   McpTool,
 } from '@pivi/agent/mcp/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/agent/mcp/types';
@@ -38,9 +28,6 @@ export type McpPorts = SettingsComplexPorts['mcp'];
 export type McpDraft = {
   name: string;
   type: McpServerType;
-  executable: string;
-  argsText: string;
-  env: string;
   url: string;
   headers: string;
   auth: 'auto' | 'oauth' | 'bearer' | 'none';
@@ -53,9 +40,6 @@ export type McpDraft = {
 };
 
 export { MCP_SERVER_NAME_PATTERN };
-
-export const parseMcpArgsText = parseMcpArgsLines;
-export const formatMcpArgsText = formatMcpArgsLines;
 
 export function mcpValidationMessage(
   error: unknown,
@@ -78,10 +62,6 @@ export function mcpValidationMessage(
         return t('settings.mcp.modal.urlScheme');
       case 'urlPlainHttp':
         return t('settings.mcp.modal.urlPlainHttp');
-      case 'commandRequired':
-        return t('settings.mcp.modal.needCommand');
-      case 'commandShellSyntax':
-        return t('settings.mcp.modal.commandShellSyntax');
       default:
         return error.message;
     }
@@ -127,18 +107,16 @@ export function mcpDraftFromLines(value: string): Record<string, string> {
   return result;
 }
 
-export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 'stdio'): McpDraft {
+export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 'http'): McpDraft {
   const config = server?.config;
   const serverType = config ? getMcpServerType(config) : type;
-  const remote = config && serverType !== 'stdio' ? config as McpSSEServerConfig | McpHttpServerConfig : undefined;
-  const stdio = config && serverType === 'stdio' ? config as McpStdioServerConfig : undefined;
+  const remote = config && (serverType === 'http' || serverType === 'sse')
+    ? config
+    : undefined;
   const oauth = server?.oauth && typeof server.oauth === 'object' ? server.oauth : undefined;
   return {
     name: server?.name ?? '',
     type: serverType,
-    executable: stdio?.command ?? '',
-    argsText: formatMcpArgsText(stdio?.args),
-    env: mcpDraftToLines(stdio?.env),
     url: remote?.url ?? '',
     headers: mcpDraftToLines(remote?.headers),
     auth: server?.auth === 'none' || server?.oauth === false
@@ -159,49 +137,31 @@ export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 's
 
 export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): ManagedMcpServer {
   const name = assertValidMcpServerName(draft.name);
-  let config: McpServerConfig;
-  if (draft.type === 'stdio') {
-    const command = draft.executable.trim();
-    if (!command) {
-      throw new McpValidationError('commandRequired', 'MCP stdio executable is required');
-    }
-    assertMcpStdioExecutable(command);
-    const args = parseMcpArgsText(draft.argsText);
-    const env = mcpDraftFromLines(draft.env);
-    config = {
-      command,
-      ...(args.length > 0 ? { args } : {}),
-      ...(Object.keys(env).length > 0 ? { env } : {}),
-    };
-  } else {
-    const url = validateMcpRemoteUrl(draft.url);
-    const headers = mcpDraftFromLines(draft.headers);
-    config = draft.type === 'sse'
-      ? { type: 'sse', url, ...(Object.keys(headers).length ? { headers } : {}) }
-      : { type: 'http', url, ...(Object.keys(headers).length ? { headers } : {}) };
-  }
+  const url = validateMcpRemoteUrl(draft.url);
+  const headers = mcpDraftFromLines(draft.headers);
+  const config: McpServerConfig = draft.type === 'sse'
+    ? { type: 'sse', url, ...(Object.keys(headers).length ? { headers } : {}) }
+    : { type: 'http', url, ...(Object.keys(headers).length ? { headers } : {}) };
   const server: ManagedMcpServer = {
     name,
     config,
     enabled: existing?.enabled ?? DEFAULT_MCP_SERVER.enabled,
     contextSaving: existing?.contextSaving ?? DEFAULT_MCP_SERVER.contextSaving,
   };
-  if (draft.type !== 'stdio') {
-    if (draft.auth === 'none') { server.auth = 'none'; server.oauth = false; }
-    if (draft.auth === 'bearer') {
-      server.auth = 'bearer';
-      if (draft.bearerToken.trim()) server.bearerToken = draft.bearerToken.trim();
-      if (draft.bearerTokenEnv.trim()) server.bearerTokenEnv = draft.bearerTokenEnv.trim();
-    }
-    if (draft.auth === 'oauth') {
-      server.auth = 'oauth';
-      server.oauth = {
-        grantType: draft.grantType,
-        ...(draft.clientId.trim() ? { clientId: draft.clientId.trim() } : {}),
-        ...(draft.clientSecret.trim() ? { clientSecret: draft.clientSecret.trim() } : {}),
-        ...(draft.scope.trim() ? { scope: draft.scope.trim() } : {}),
-      };
-    }
+  if (draft.auth === 'none') { server.auth = 'none'; server.oauth = false; }
+  if (draft.auth === 'bearer') {
+    server.auth = 'bearer';
+    if (draft.bearerToken.trim()) server.bearerToken = draft.bearerToken.trim();
+    if (draft.bearerTokenEnv.trim()) server.bearerTokenEnv = draft.bearerTokenEnv.trim();
+  }
+  if (draft.auth === 'oauth') {
+    server.auth = 'oauth';
+    server.oauth = {
+      grantType: draft.grantType,
+      ...(draft.clientId.trim() ? { clientId: draft.clientId.trim() } : {}),
+      ...(draft.clientSecret.trim() ? { clientSecret: draft.clientSecret.trim() } : {}),
+      ...(draft.scope.trim() ? { scope: draft.scope.trim() } : {}),
+    };
   }
   return server;
 }
@@ -214,8 +174,6 @@ type McpSectionState = {
   busy: string | null;
   auth: Record<string, McpAuthStatus | null>;
   toolsByServer: Record<string, readonly McpTool[]>;
-  importDraft: string | null;
-  addOpen: boolean;
   expandedServers: ReadonlySet<string>;
 };
 
@@ -228,9 +186,6 @@ type McpSectionAction =
   | { type: 'set_auth'; name: string; status: McpAuthStatus | null }
   | { type: 'set_tools'; name: string; tools: readonly McpTool[] }
   | { type: 'reset_tools'; servers: readonly ManagedMcpServer[] }
-  | { type: 'set_import_draft'; draft: string | null }
-  | { type: 'toggle_add_open' }
-  | { type: 'set_add_open'; open: boolean }
   | { type: 'toggle_expanded'; name: string }
   | { type: 'collapse_expanded'; name: string }
   | { type: 'rename_expanded'; from: string; to: string };
@@ -243,8 +198,6 @@ const initialMcpSectionState: McpSectionState = {
   busy: null,
   auth: {},
   toolsByServer: {},
-  importDraft: null,
-  addOpen: false,
   expandedServers: new Set(),
 };
 
@@ -269,12 +222,6 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
         ...state,
         toolsByServer: Object.fromEntries(action.servers.map((server) => [server.name, []])),
       };
-    case 'set_import_draft':
-      return { ...state, importDraft: action.draft };
-    case 'toggle_add_open':
-      return { ...state, addOpen: !state.addOpen };
-    case 'set_add_open':
-      return { ...state, addOpen: action.open };
     case 'toggle_expanded': {
       const expandedServers = new Set(state.expandedServers);
       if (expandedServers.has(action.name)) expandedServers.delete(action.name);
@@ -348,13 +295,6 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     return () => { alive = false; };
   }, [mcp, state.servers]);
 
-  useEffect(() => {
-    const close = () => dispatch({ type: 'set_add_open', open: false });
-    const ownerDocument = rootRef.current?.ownerDocument;
-    ownerDocument?.addEventListener('click', close);
-    return () => ownerDocument?.removeEventListener('click', close);
-  }, []);
-
   const commit = useCallback(async (next: readonly ManagedMcpServer[]) => {
     await mcp.save(next);
     dispatch({ type: 'set_servers', servers: next });
@@ -372,49 +312,6 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     }
     dispatch({ type: 'set_editor', editor: null });
   }, [commit, state.servers, t]);
-
-  const importJson = useCallback(async (text: string) => {
-    dispatch({ type: 'set_busy', busy: 'import' });
-    dispatch({ type: 'set_error', error: '' });
-    try {
-      const parsed = tryParseClipboardConfig(text);
-      if (!parsed?.servers.length) throw new Error(t('settings.mcp.noValidConfig'));
-      if (parsed.needsName || parsed.servers.length === 1) {
-        const first = parsed.servers[0];
-        if (first) {
-          dispatch({ type: 'set_import_draft', draft: null });
-          dispatch({
-            type: 'set_editor',
-            editor: {
-              initial: {
-                name: first.name,
-                config: first.config,
-                enabled: DEFAULT_MCP_SERVER.enabled,
-                contextSaving: DEFAULT_MCP_SERVER.contextSaving,
-              },
-            },
-          });
-        }
-        return;
-      }
-      const names = new Set(state.servers.map((server) => server.name));
-      const added = parsed.servers
-        .filter((server) => isValidMcpServerName(server.name.trim()) && !names.has(server.name.trim()))
-        .map((server) => ({
-          name: server.name.trim(),
-          config: server.config,
-          enabled: DEFAULT_MCP_SERVER.enabled,
-          contextSaving: DEFAULT_MCP_SERVER.contextSaving,
-        }));
-      if (!added.length) throw new Error(t('settings.mcp.importedNone'));
-      await commit([...state.servers, ...added]);
-      dispatch({ type: 'set_import_draft', draft: null });
-    } catch (cause) {
-      feedback.notify(mcpErrorText(cause, t('settings.mcp.importFailed')));
-    } finally {
-      dispatch({ type: 'set_busy', busy: null });
-    }
-  }, [commit, feedback, state.servers, t]);
 
   const connect = useCallback(async (
     server: ManagedMcpServer,
@@ -465,7 +362,6 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
     dispatch,
     commit,
     save,
-    importJson,
     connect,
     logout,
     removeServer,

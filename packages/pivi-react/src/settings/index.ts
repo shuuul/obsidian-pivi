@@ -22,7 +22,6 @@ export { SettingsUiStore, useSettingsUiSnapshot } from './SettingsUiStore';
 export type {
   SettingsGeneralSnapshot,
   SettingsHotkeyRow,
-  SettingsKeyboardNavigationSnapshot,
   SettingsSubagentsSnapshot,
   SettingsUiSnapshotData,
 } from './types';

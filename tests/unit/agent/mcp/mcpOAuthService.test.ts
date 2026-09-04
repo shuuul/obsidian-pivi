@@ -16,12 +16,14 @@ function oauthServer(name: string, url: string): ManagedMcpServer {
   };
 }
 
-function stdioServer(name = "local"): ManagedMcpServer {
+function bearerServer(name = "local"): ManagedMcpServer {
   return {
     name,
-    config: { type: "stdio", command: "echo" },
+    config: { type: "http", url: "https://mcp.example.com" },
     enabled: true,
     contextSaving: true,
+    auth: "bearer",
+    bearerToken: "token",
   };
 }
 
@@ -34,7 +36,7 @@ describe("McpOAuthService", () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
     const app = createMockApp();
     const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
-    const server = stdioServer();
+    const server = bearerServer();
 
     await expect(service.getAuthStatus(server)).resolves.toBe("not_applicable");
     await expect(service.authenticate(server)).resolves.toBe("not_applicable");

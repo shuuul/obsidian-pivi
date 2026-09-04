@@ -9,7 +9,6 @@ import type {
 import type { SessionMessagePage } from '../session';
 import type { AppModelReadinessProvider } from '../settings';
 import type { CustomProviderConfig } from '../settings/customProviders';
-import type { KeyboardNavigationSettings } from '../settings/types';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
 import type { PiviManagementApprovalPort } from '../tools/piviManagement/approval';
@@ -61,8 +60,8 @@ export interface ChatCatalogPort {
   listMcpTools(serverName: string): Promise<Array<{ name: string; description?: string }>>;
   /**
    * Automatic slash-cache inventory path. Prefer a non-authenticating provider
-   * seam that cannot start stdio or persist OAuth; falls back to listMcpTools
-   * only when the host has not wired a dedicated inventory method.
+   * seam that cannot persist OAuth; falls back to listMcpTools only when the
+   * host has not wired a dedicated inventory method.
    */
   listMcpInventoryTools?(serverName: string): Promise<Array<{ name: string; description?: string }>>;
   listSkills(): Array<{ name: string; description?: string }>;
@@ -95,7 +94,6 @@ export interface ChatSettingsSnapshot {
   titleGenerationModel: string;
   userName: string;
   excludedTags: string[];
-  keyboardNavigation: KeyboardNavigationSettings;
   requireCommandOrControlEnterToSend: boolean;
   environmentVariables: string;
   externalReadDirectories: string[];

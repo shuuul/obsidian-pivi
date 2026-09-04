@@ -82,7 +82,7 @@ Useful symptom routes:
 | A stream updates the wrong tab/turn | stream generation, active-turn ownership, late chunk listener |
 | Tab restores without messages/title | layout `sessionFile`, open-session hydration, JSONL metadata |
 | Subagent card stalls | limiter/job state, ID correlation, terminal hydration retries |
-| MCP slash entry is stale | settings save/reload invalidation, remote-only prefetch, lazy stdio connection, catalog refresh |
+| MCP slash entry is stale | settings save/reload invalidation, HTTP/SSE prefetch, catalog refresh |
 | UI works in main window only | owner document/window lookup and global timer/listener use |
 
 Prefer the shared `PluginLogger` to console output. Preserve the original failure signal and log only enough structured context to diagnose ownership or lifecycle divergence.

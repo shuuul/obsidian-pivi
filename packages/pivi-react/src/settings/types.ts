@@ -7,12 +7,6 @@ export type SettingsEditorSelectionToolbarSnapshot = {
   readonly shortcuts: readonly EditorToolbarShortcut[];
 };
 
-export interface SettingsKeyboardNavigationSnapshot {
-  readonly scrollUpKey: string;
-  readonly scrollDownKey: string;
-  readonly focusInputKey: string;
-}
-
 export interface SettingsGeneralSnapshot {
   readonly locale: string;
   readonly chatViewPlacement: 'right-sidebar' | 'left-sidebar' | 'main-tab';
@@ -30,7 +24,6 @@ export interface SettingsGeneralSnapshot {
     readonly idleMs: number;
   };
   readonly requireCommandOrControlEnterToSend: boolean;
-  readonly keyboardNavigation: SettingsKeyboardNavigationSnapshot;
   readonly editorSelectionToolbar: SettingsEditorSelectionToolbarSnapshot;
 }
 

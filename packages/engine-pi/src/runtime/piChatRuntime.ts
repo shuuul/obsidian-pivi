@@ -152,7 +152,6 @@ export class PiChatRuntime implements PiChatService {
         network.mcpFetch,
         network.mcpProcessEnv,
         network.mcpSecretStorage,
-        this.getVaultPath() ?? undefined,
       )
       : null;
     this.subagentRunner = createPiAuxQueryRunner(plugin, {

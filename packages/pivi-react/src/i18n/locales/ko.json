@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP 서버",
-        "description": "로컬 MCP 서버와 도구."
+        "description": "HTTP 및 SSE MCP 서버와 도구."
       },
       "skills": {
         "label": "스킬",
@@ -536,11 +536,6 @@
     "autoTitle": {
       "name": "대화 제목 자동 생성",
       "desc": "첫 사용자 메시지를 보낸 후 대화 제목을 자동으로 생성합니다."
-    },
-    "navMappings": {
-      "name": "Vim 스타일 탐색 매핑",
-      "desc": "한 줄에 매핑 하나. 형식: \"map <키> <동작>\"(동작: scrollUp, scrollDown, focusInput).",
-      "placeholder": "Map w scrollup\nmap s scrolldown\nmap i focusinput"
     },
     "requireCommandOrControlEnterToSend": {
       "name": "보내기에 Command/Ctrl+Enter 필요",
@@ -1102,27 +1097,16 @@
     "mcp": {
       "empty": "구성된 MCP 서버가 없습니다. 추가를 클릭하여 만드세요.",
       "add": "+ MCP 추가",
-      "importJson": "JSON 가져오기",
-      "importJsonTitle": "MCP 구성 가져오기",
-      "importJsonDescription": "아래에 MCP 구성 JSON을 붙여 넣으세요. Pivi는 가져오기를 선택한 후에만 내용을 읽습니다.",
-      "importJsonField": "MCP 구성 JSON",
-      "importJsonPlaceholder": "{\"mcpServers\":{\"example\":{\"type\":\"http\",\"url\":\"https://example.com/mcp\"}}}",
-      "importAction": "가져오기",
-      "importFailed": "MCP 구성을 가져오지 못했습니다",
-      "noValidConfig": "붙여 넣은 JSON에서 유효한 MCP 구성을 찾지 못했습니다",
-      "importedNone": "가져온 새 MCP 서버가 없습니다",
       "clearOauth": "OAuth 자격 증명 지우기",
       "refreshTools": "연결 / 도구 새로 고침",
       "toolCount": "도구 {count}개",
-      "typeStdio": "stdio(로컬 명령)",
-      "typeHttp": "http / sse(원격)",
       "contextSavingTitle": "슬래시 배지: /{name} 토큰이 Composer에서 이 서버를 강조합니다",
       "mentionBadge": "슬래시 멘션",
       "oauthBadge": "OAuth",
       "oauthAuthenticated": "OAuth 인증됨",
       "oauthExpiredBadge": "만료됨",
       "oauthExpiredTitle": "OAuth 토큰 만료",
-      "valueStorageHint": "헤더 및 환경의 비밀처럼 보이는 값은 보안 저장소에 저장됩니다.",
+      "valueStorageHint": "헤더의 비밀처럼 보이는 값은 보안 저장소에 저장됩니다.",
       "refreshFailed": "도구 새로 고침 실패",
       "saveFailed": "MCP 서버를 저장하지 못했습니다",
       "alreadyExists": "서버 \"{name}\"이(가) 이미 있습니다",
@@ -1137,15 +1121,11 @@
         "serverNameInvalid": "서버 이름은 문자, 숫자, 점, 하이픈, 밑줄만 사용할 수 있습니다",
         "needName": "서버 이름을 입력하세요",
         "type": "유형",
-        "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
-        "command": "명령",
-        "needCommand": "실행 파일을 입력하세요",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
         "needUrl": "URL을 입력하세요",
-        "env": "환경 변수",
         "headersName": "헤더",
         "authHeading": "인증",
         "authAuto": "자동",
@@ -1161,13 +1141,9 @@
         "bearerTokenEnv": "Bearer 토큰 환경 변수",
         "scope": "범위",
         "serverNameReserved": "해당 서버 이름은 예약되어 있어 사용할 수 없습니다",
-        "executable": "실행 파일",
-        "args": "인수",
-        "argsPlaceholder": "한 줄에 인수 하나",
         "urlInvalid": "유효한 URL을 입력하세요",
         "urlScheme": "MCP URL은 http 또는 https를 사용해야 합니다",
-        "urlPlainHttp": "평문 HTTP는 루프백 호스트에서만 허용됩니다",
-        "commandShellSyntax": "실행 파일에 셸 제어 구문을 포함할 수 없습니다"
+        "urlPlainHttp": "평문 HTTP는 루프백 호스트에서만 허용됩니다"
       },
       "test": {
         "connecting": "도구 새로 고침 중…",
