@@ -21,9 +21,9 @@ The broader review's repository popularity and download figures were externally 
 
 Preserve Pivi's existing package architecture while making active documentation mechanically truthful, reducing composition and public-API friction in bounded slices, and establishing visible contribution, support, compatibility, and maintenance loops.
 
-- [ ] P0 issue #100 is merged with one machine-readable v0.25.0 capability contract, aligned active docs, a focused regression suite, and the docs check in shared quality gates.
-- [ ] No post-P0 workstream starts until GitHub reports the issue #100 pull request as merged; the merge URL and commit are recorded in Progress and handoff.
-- [ ] Repository rules protect `main` and SemVer release tags without requiring a second reviewer while Pivi remains single-maintainer.
+- [x] P0 issue #100 is merged with one machine-readable v0.25.0 capability contract, aligned active docs, a focused regression suite, and the docs check in shared quality gates.
+- [x] No post-P0 workstream starts until GitHub reports the issue #100 pull request as merged; the merge URL and commit are recorded in Progress and handoff.
+- [x] Repository rules protect `main` and SemVer release tags without requiring a second reviewer while Pivi remains single-maintainer.
 - [ ] `PiviPlugin` becomes a lifecycle-focused composition root, feature consumers receive narrow facades, and existing behavior/configuration remain compatible under lifecycle and feature tests.
 - [ ] Cross-package imports are restricted to curated exports and architecture checks reject undeclared or internal package paths without adding another workspace.
 - [ ] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
@@ -62,6 +62,8 @@ Not in scope:
 | 2026-09-04 | Integrate `check:docs-contracts` through `check:boundaries`, not a duplicate workflow step. | Shared quality gates already run `check:boundaries` in PR and release workflows. | WS-01 |
 | 2026-09-04 | Delete the stale standalone marketing draft from Git and the working tree in the P0 change. | The maintainer explicitly retired it; no tracked document referenced it, and future community work is represented by gated WS-08/WS-09 instead. | WS-01 |
 | 2026-09-04 | Treat later workstream acceptance details as provisional until each is re-inspected and linked to its own issue after the P0 merge. | The report is static review input; implementation facts can change while WS-01 is under review. | WS-02–WS-09 |
+| 2026-09-04 | Continue post-P0 work after the maintainer approved the merge, using protected-branch pull requests for repository changes. | Supersedes the earlier stop-after-PR execution limit without weakening the now-active repository rules. | WS-02–WS-09 |
+| 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml` until a valid funding destination exists. | `github.com/sponsors/shuuul` currently redirects to the ordinary profile; a broken funding route would be less trustworthy than an explicit blocked item. | WS-08–WS-09 |
 
 ## Workstreams
 
@@ -69,15 +71,15 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 
 | ID | Deliverable | Owner | Status | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- |
-| WS-01 | Issue #100: remote-only MCP capability manifest, aligned active docs, obsolete smoke cleanup, contract checker, and PR | Amp | Blocked | PR #101 must pass CI and be merged by the maintainer | Focused Jest; `check:docs-contracts`; `check:boundaries`; typecheck; lint; diff check; PR CI |
-| WS-02 | Protect `main` and SemVer tags with required quality/platform checks and conversation resolution | Unassigned | Blocked | WS-01 PR merged; explicit approval before changing repository rules | Query effective GitHub rules; demonstrate force-push/delete denial and required checks without a reviewer requirement |
-| WS-03 | Reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Unassigned | Blocked | WS-01 PR merged; fresh ownership/call-graph inspection; dedicated issue | Lifecycle tests, feature contract tests, architecture check, full quality gates |
-| WS-04 | Curate package exports and reject undeclared/internal cross-package imports | Unassigned | Blocked | WS-01 PR merged; WS-03 boundary decision where imports overlap; dedicated issue | Export contract fixtures, architecture check, typecheck, build |
+| WS-01 | Issue #100: remote-only MCP capability manifest, aligned active docs, obsolete smoke cleanup, contract checker, and PR | Amp | Done | None | Focused Jest; `check:docs-contracts`; `check:boundaries`; typecheck; lint; diff check; PR CI |
+| WS-02 | Issue #102: protect `main` and SemVer tags with required quality/platform checks and conversation resolution | Amp | Done | WS-01 done; maintainer authorized continued execution | Query effective GitHub rules; verify force-push/delete restrictions and required checks without a reviewer requirement |
+| WS-03 | Issue #103: reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Unassigned | Pending | Fresh ownership/call-graph inspection | Lifecycle tests, feature contract tests, architecture check, full quality gates |
+| WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Unassigned | Blocked | WS-03 boundary decision where imports overlap | Export contract fixtures, architecture check, typecheck, build |
 | WS-05 | Split oversized UI/runtime factories and coordinators along verified chat/session/workspace/integration/settings use-case seams | Unassigned | Blocked | WS-01 PR merged; WS-03 application boundary settled; dedicated issue | Feature suites plus dependency-count and changed-slice evidence recorded in issue |
-| WS-06 | Add Pi compatibility manifest and one issue-updating next-version canary | Unassigned | Blocked | WS-01 PR merged; current shim inventory; dedicated issue | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
-| WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Blocked | WS-01 PR merged; refreshed bundle baseline; dedicated issue | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
-| WS-08 | Enable Discussions and add contributor, conduct, support, issue-template, funding, and public roadmap entry points | Unassigned | Blocked | WS-01 PR merged; explicit approval for repository settings; community issue | Link checks, template rendering review, effective Discussions categories/settings query |
-| WS-09 | Publish three starter recipes, desktop support matrix, showcase, and monthly maintenance/funding report cadence | Unassigned | Blocked | WS-01 PR merged; WS-08 entry points; refreshed platform evidence | Recipe walkthroughs, platform smoke evidence, published links and named cadence owner |
+| WS-06 | Add Pi compatibility manifest and one issue-updating next-version canary | Unassigned | Pending | Current shim inventory and tracking-issue decision | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
+| WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Pending | Refreshed bundle baseline and CI-summary design | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
+| WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, issue-template, funding, and public roadmap entry points | Amp | In progress | Maintainer authorized continued execution; funding destination unavailable | Link checks, template rendering review, effective Discussions categories/settings query |
+| WS-09 | Publish three starter recipes, desktop support matrix, showcase, and monthly maintenance/funding report cadence | Amp | In progress | WS-08 repository entry points in review; funding destination unavailable | Recipe walkthroughs, platform smoke evidence, published links and named cadence owner |
 
 ## Verification
 
@@ -145,6 +147,30 @@ Append entries rather than rewriting another worker's record.
 - Blockers: WS-01 and every later workstream are blocked on PR #101 merging.
 - Next action: Maintainer reviews PR #101; no broader refactor starts before merge.
 
+### 2026-09-04 — Amp — P0 merge gate satisfied
+
+- Changed: Maintainer authorized merge after all checks passed; [PR #101](https://github.com/shuuul/obsidian-pivi/pull/101) was squash-merged into `main`, automatically closing issue #100 and deleting the remote branch.
+- Evidence: GitHub reports merge commit [`6545cc4e`](https://github.com/shuuul/obsidian-pivi/commit/6545cc4ee09f399245ee93cad74f9f91463fe0a8); `quality-gates`, macOS platform security, and Windows platform security all completed successfully.
+- Remaining: Execute the now-unblocked workstreams in dependency order.
+- Blockers: WS-04/WS-05 retain their WS-03 dependency; other workstreams require their own decision-complete implementation slices.
+- Next action: Apply and verify the repository rules in issue #102, then begin the fresh WS-03 call-graph inspection.
+
+### 2026-09-04 — Amp — Public issue backlog
+
+- Changed: Created [#102](https://github.com/shuuul/obsidian-pivi/issues/102) for repository rules, [#103](https://github.com/shuuul/obsidian-pivi/issues/103) for the lifecycle-only composition root, [#104](https://github.com/shuuul/obsidian-pivi/issues/104) for curated package exports, and [#105](https://github.com/shuuul/obsidian-pivi/issues/105) for community entry points and recipes.
+- Evidence: GitHub reports all four issues open with the report's requested titles and bounded acceptance criteria.
+- Remaining: Implement and verify each workstream; create narrower follow-up issues only when WS-06/WS-07 inventory proves they cannot remain contained workstreams.
+- Blockers: As listed in the workstream table.
+- Next action: Complete WS-02 against effective GitHub repository rules.
+
+### 2026-09-04 — Amp — Repository protection and community entry points
+
+- Changed: Enabled Discussions; applied branch ruleset [22270940](https://github.com/shuuul/obsidian-pivi/rules/22270940) and tag ruleset [22270941](https://github.com/shuuul/obsidian-pivi/rules/22270941); closed issue #102 with effective-rule evidence; drafted contribution, conduct, support, issue-form, platform-support, reporting-template, and three starter-recipe files; created newcomer-sized recipe issues [#106](https://github.com/shuuul/obsidian-pivi/issues/106) and [#107](https://github.com/shuuul/obsidian-pivi/issues/107) with the `good first issue` label.
+- Evidence: Effective `main` rules require strict quality/macOS/Windows checks and conversation resolution, require a pull request with zero approvals, and block deletion/non-fast-forward updates; SemVer tags block updates and deletion. GitHub exposes Announcements, Q&A, Show and tell, and Ideas Discussion categories.
+- Remaining: Validate and merge the repository community files; inspect rendered issue forms after merge. Add `.github/FUNDING.yml` only after a valid funding destination exists; `https://github.com/sponsors/shuuul` currently redirects to the ordinary profile and is not a usable destination.
+- Blockers: Funding and Sponsor links are blocked on the maintainer configuring a valid destination. Publication of recurring Discussion updates remains a maintainer-owned cadence rather than repository code.
+- Next action: Open the WS-08 repository changes as a protected-branch pull request, then make WS-03 decision-complete on a separate branch.
+
 ## Completion summary
 
-Pending. This spec remains Active after the WS-01 PR opens; opening or passing CI does not authorize archival or unblock broader refactoring.
+Pending. The WS-01 merge gate is satisfied. This spec remains Active until the remaining workstreams are either completed with evidence or explicitly deferred with an owner and reason.

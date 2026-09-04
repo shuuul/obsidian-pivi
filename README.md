@@ -211,12 +211,13 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 ## Requirements
 
 - **Obsidian** v1.13.0+ (desktop only)
-- **macOS** (tested; Windows / Linux should work but not officially supported)
+- **Platforms:** macOS Supported; Windows and Linux Preview; iOS and Android Not supported. See the [support matrix](docs/platform-support.md) for current CI and smoke-test scope.
 
 ---
 
 ## Documentation
 
+- [Recipes](docs/recipes/README.md) — review-first prompts for literature triage, weekly review, and vault cleanup
 - [Developer handbook](docs/README.md) — architecture, technology choices, feature flows, and contribution routes
 - [Input panel and context](docs/04-input-panel-and-context.md) — composer, selectors, context indicators, and prompt construction
 - [Tabs, sessions, and history](docs/05-tabs-sessions-and-history.md) — tab switcher, persistence, restore, and fork
@@ -248,6 +249,12 @@ Full trust-boundary, disclosure, credential matrix, network, prompt-injection, a
 
 </details>
 
+## Community
+
+- [Contribute](CONTRIBUTING.md) — development setup, validation, and pull request flow
+- [Discussions](https://github.com/shuuul/obsidian-pivi/discussions) — questions and ideas
+- [Show and tell](https://github.com/shuuul/obsidian-pivi/discussions/categories/show-and-tell) — share recipes and vault workflows
+- [Support](SUPPORT.md) — choose the right route for help, bugs, features, or security reports
 
 
 ## Acknowledgments
