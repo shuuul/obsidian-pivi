@@ -1,12 +1,19 @@
 # Changelog
 
-## Unreleased
+## [0.25.0](https://github.com/shuuul/obsidian-pivi/compare/0.24.2...0.25.0) (2026-09-04)
 
 ### Breaking Changes
 
 * drop stdio MCP; keep HTTP/SSE only and ignore existing stdio entries on load
 * remove MCP JSON import from settings
 * remove vim-style message-panel key mappings (`w`/`s`/`i`)
+
+### Bug Fixes
+
+* route settings action status through Obsidian Notice
+* nest open settings cards on an inset surface and share card footers
+* keep collection cards mounted after delete
+* cancel newly added provider drafts from the footer
 
 ## [0.24.2](https://github.com/shuuul/obsidian-pivi/compare/0.24.1...0.24.2) (2026-09-04)
 
