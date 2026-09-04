@@ -39,7 +39,7 @@
 - Runtime/application contracts, including `ChatPorts`, `PiChatService`, and `AuxQueryRunner`, under `@pivi/agent/runtime`.
 - Generic AgentEngine contracts under `@pivi/agent/engine`.
 
-Concrete Pi SDK adapters and JSONL compatibility live in `@pivi/engine-pi`, not this package.
+Every public namespace and focused leaf is listed explicitly in `package.json`; wildcard subpath exports are not part of the contract. Concrete Pi SDK adapters and JSONL compatibility live in `@pivi/engine-pi`, not this package.
 
 ## See also
 

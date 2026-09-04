@@ -25,7 +25,7 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] No post-P0 workstream starts until GitHub reports the issue #100 pull request as merged; the merge URL and commit are recorded in Progress and handoff.
 - [x] Repository rules protect `main` and SemVer release tags without requiring a second reviewer while Pivi remains single-maintainer.
 - [x] `PiviPlugin` becomes a lifecycle-focused composition root, feature consumers receive narrow facades, and existing behavior/configuration remain compatible under lifecycle and feature tests.
-- [ ] Cross-package imports are restricted to curated exports and architecture checks reject undeclared or internal package paths without adding another workspace.
+- [x] Cross-package imports are restricted to curated exports and architecture checks reject undeclared or internal package paths without adding another workspace.
 - [ ] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
 - [ ] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
 - [ ] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
@@ -65,6 +65,7 @@ Not in scope:
 | 2026-09-04 | Continue post-P0 work after the maintainer approved the merge, using protected-branch pull requests for repository changes. | Supersedes the earlier stop-after-PR execution limit without weakening the now-active repository rules. | WS-02–WS-09 |
 | 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml`, and do not make a recurring publication cadence a completion requirement. | The maintainer is not applying for GitHub Sponsors now and prefers optional update templates over a schedule that may not be sustained. Funding can return as independent work after a valid destination exists. | WS-08–WS-09 |
 | 2026-09-04 | Make `PiviPlugin` a lifecycle-only shell and move product ownership to `PiviApplication`; pass the real Plugin separately where Obsidian requires it. | Removes the service locator from the framework subclass without changing lifecycle ordering or adding a container/workspace. | WS-03 |
+| 2026-09-04 | Curate the existing package contract without rewriting imports: replace `@pivi/agent` wildcard exports with the namespace and focused leaves already consumed, remove every workspace wildcard TypeScript path, and make both patterns fail architecture checks. | Existing checks already reject undeclared imports and cross-package relative paths. Explicitly listing current leaves closes accidental future exposure while preserving presentation-safe and compatibility-test entrypoints without introducing barrel side effects. | WS-04 |
 
 ## Workstreams
 
@@ -75,7 +76,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 | WS-01 | Issue #100: remote-only MCP capability manifest, aligned active docs, obsolete smoke cleanup, contract checker, and PR | Amp | Done | None | Focused Jest; `check:docs-contracts`; `check:boundaries`; typecheck; lint; diff check; PR CI |
 | WS-02 | Issue #102: protect `main` and SemVer tags with required quality/platform checks and conversation resolution | Amp | Done | WS-01 done; maintainer authorized continued execution | Query effective GitHub rules; verify force-push/delete restrictions and required checks without a reviewer requirement |
 | WS-03 | Issue #103: reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Amp | Done | Fresh ownership/call-graph inspection complete | Lifecycle tests, feature contract tests, architecture check, full quality gates |
-| WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Unassigned | Pending | WS-03 application/facade boundary settled | Export contract fixtures, architecture check, typecheck, build |
+| WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Amp | Done | WS-03 application/facade boundary settled | Export contract fixtures, architecture check, typecheck, build |
 | WS-05 | Split oversized UI/runtime factories and coordinators along verified chat/session/workspace/integration/settings use-case seams | Unassigned | Pending | WS-03 application boundary settled; dedicated issue required | Feature suites plus dependency-count and changed-slice evidence recorded in issue |
 | WS-06 | Add Pi compatibility manifest and one issue-updating next-version canary | Unassigned | Pending | Current shim inventory and tracking-issue decision | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
 | WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Pending | Refreshed bundle baseline and CI-summary design | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
@@ -103,8 +104,8 @@ Before final closeout, run all repository quality gates appropriate to every acc
 
 ## Documentation sync
 
-- Durable product/developer docs: WS-01 updates `README.md`, `SECURITY.md`, `docs/03-plugin-lifecycle-and-composition.md`, `docs/07-tools-skills-mcp-and-integrations.md`, `docs/09-development-debugging-and-validation.md`, and the command/maintenance references that own the new check. Later workstreams must name their own durable targets before starting.
-- Nearest local `AGENTS.md`: update `scripts/AGENTS.md` for the docs checker and changed host smoke; update later feature/package guidance only with the workstream that changes it.
+- Durable product/developer docs: WS-01 updates `README.md`, `SECURITY.md`, `docs/03-plugin-lifecycle-and-composition.md`, `docs/07-tools-skills-mcp-and-integrations.md`, `docs/09-development-debugging-and-validation.md`, and the command/maintenance references that own the new check. WS-04 updates `docs/02-architecture-and-technology.md` and `packages/agent/README.md` for the explicit package-resolution contract. Later workstreams must name their own durable targets before starting.
+- Nearest local `AGENTS.md`: update `scripts/AGENTS.md` for docs/export boundary checks and changed host smoke; update `packages/agent/AGENTS.md` for its explicit public surface. Update later feature/package guidance only with the workstream that changes it.
 - Parent/package guidance: none for WS-01; no package implementation contract changes.
 - Root guidance and roadmap: update root `AGENTS.md` only if its gate list is stale; update `docs/10-roadmap-release-and-maintenance.md` with the durable sequence and refreshed priorities, not transient progress.
 
@@ -187,6 +188,22 @@ Append entries rather than rewriting another worker's record.
 - Remaining: Open the architecture pull request after reconciling its stacked community-docs base; continue WS-04 and WS-05 only as separate bounded changes.
 - Blockers: The architecture branch currently includes PR #108 as its base commit. It must be rebased onto protected `main` after #108 is merged or otherwise restacked before review.
 - Next action: Commit the verified WS-03 change, then inspect issue #104's current package-export evidence without widening this pull request.
+
+### 2026-09-04 — Amp — WS-04 package export inventory
+
+- Changed: Inventoried package manifests and all source/test import specifiers. Replaced `@pivi/agent` wildcard exports with explicit currently consumed namespace and focused-leaf entries, removed workspace-package wildcard aliases from root TypeScript paths, and added architecture failures for either wildcard pattern.
+- Evidence: Existing architecture fixtures already reject undeclared package paths, nested internal paths, and production relative imports across package roots. New fixtures reject wildcard package exports and wildcard TypeScript paths. All other workspace packages already used explicit exports.
+- Remaining: Run focused fixture tests, authoritative source/test typecheck, package README checks, lint, boundaries, and production build; then record exact results and mark WS-04 Done only if all pass.
+- Blockers: None. This branch is intentionally stacked on WS-03 until the earlier protected-branch pull requests merge.
+- Next action: Complete the worktree-local dependency install and run the WS-04 verification commands.
+
+### 2026-09-04 — Amp — WS-04 verification complete
+
+- Changed: Completed the explicit `@pivi/agent` export manifest, root TypeScript path cleanup, architecture policy/fixtures, and durable package/module-resolution documentation without adding a workspace, project references, or import rewrite.
+- Evidence: Focused architecture suite passed (1 suite / 100 tests); full coverage passed (350 suites / 3,136 tests); dependency audit, source/test typecheck, lint, all boundary and package README checks, production build, bundle-size check, and `git diff --check` passed. Built `main.js` remained 4,169,451 bytes.
+- Remaining: Commit and open the stacked WS-04 pull request. Continue WS-05 only after a measured ownership/dependency inventory and dedicated issue make its slice decision-complete.
+- Blockers: The change remains stacked on PR #109, which itself is stacked on PR #108; retarget in order after earlier pull requests merge.
+- Next action: Review the WS-04 diff, commit it, push the branch, and open a pull request targeting `refactor/pivi-application`.
 
 ### 2026-09-04 — Maintainer decisions for WS-08/WS-09 closeout
 
