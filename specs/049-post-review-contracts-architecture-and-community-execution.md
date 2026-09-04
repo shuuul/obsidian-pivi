@@ -69,7 +69,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 
 | ID | Deliverable | Owner | Status | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- |
-| WS-01 | Issue #100: remote-only MCP capability manifest, aligned active docs, obsolete smoke cleanup, contract checker, and PR | Amp | In progress | None | Focused Jest; `check:docs-contracts`; `check:boundaries`; typecheck; lint; diff check; PR CI |
+| WS-01 | Issue #100: remote-only MCP capability manifest, aligned active docs, obsolete smoke cleanup, contract checker, and PR | Amp | Blocked | PR #101 must pass CI and be merged by the maintainer | Focused Jest; `check:docs-contracts`; `check:boundaries`; typecheck; lint; diff check; PR CI |
 | WS-02 | Protect `main` and SemVer tags with required quality/platform checks and conversation resolution | Unassigned | Blocked | WS-01 PR merged; explicit approval before changing repository rules | Query effective GitHub rules; demonstrate force-push/delete denial and required checks without a reviewer requirement |
 | WS-03 | Reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Unassigned | Blocked | WS-01 PR merged; fresh ownership/call-graph inspection; dedicated issue | Lifecycle tests, feature contract tests, architecture check, full quality gates |
 | WS-04 | Curate package exports and reject undeclared/internal cross-package imports | Unassigned | Blocked | WS-01 PR merged; WS-03 boundary decision where imports overlap; dedicated issue | Export contract fixtures, architecture check, typecheck, build |
@@ -136,6 +136,14 @@ Append entries rather than rewriting another worker's record.
 - Remaining: Include the deletion in the P0 commit and PR.
 - Blockers: None beyond the existing P0 review/merge gate.
 - Next action: Re-run docs/spec checks after deletion and stage the final diff.
+
+### 2026-09-04 — Amp — WS-01 pull request handoff
+
+- Changed: Committed the verified P0 implementation as `258f08d0`, pushed `docs/remote-only-mcp-contract`, and opened [PR #101](https://github.com/shuuul/obsidian-pivi/pull/101) with `Fixes #100`.
+- Evidence: The remote PR targets `main` and explicitly repeats the merge gate for WS-02–WS-09.
+- Remaining: Wait for required PR checks and maintainer merge; after merge, record the merge URL/commit before unblocking any later workstream.
+- Blockers: WS-01 and every later workstream are blocked on PR #101 merging.
+- Next action: Maintainer reviews PR #101; no broader refactor starts before merge.
 
 ## Completion summary
 
