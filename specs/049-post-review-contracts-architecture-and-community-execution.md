@@ -29,7 +29,7 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
 - [x] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
 - [x] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
-- [ ] Public contribution, discussion, recipe, platform-support, and funding paths exist and have named recurring owners/cadences before the spec closes.
+- [x] Public contribution, discussion, recipe, and platform-support paths exist; optional update templates are available without creating an unsupported publication or funding commitment.
 
 ## Scope and non-goals
 
@@ -39,7 +39,7 @@ In scope:
 - GitHub branch/tag protection and community entry points after the P0 merge gate.
 - Bounded composition-root, feature-facade, export-surface, and vertical-factory improvements after re-inspection.
 - Pi compatibility lifecycle, bundle-delta reporting, and test-signal improvements.
-- Starter recipes, desktop support tiers, and transparent maintenance/funding reporting.
+- Starter recipes, desktop support tiers, and optional transparent maintenance/support reporting templates.
 
 Not in scope:
 
@@ -63,7 +63,7 @@ Not in scope:
 | 2026-09-04 | Delete the stale standalone marketing draft from Git and the working tree in the P0 change. | The maintainer explicitly retired it; no tracked document referenced it, and future community work is represented by gated WS-08/WS-09 instead. | WS-01 |
 | 2026-09-04 | Treat later workstream acceptance details as provisional until each is re-inspected and linked to its own issue after the P0 merge. | The report is static review input; implementation facts can change while WS-01 is under review. | WS-02–WS-09 |
 | 2026-09-04 | Continue post-P0 work after the maintainer approved the merge, using protected-branch pull requests for repository changes. | Supersedes the earlier stop-after-PR execution limit without weakening the now-active repository rules. | WS-02–WS-09 |
-| 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml` until a valid funding destination exists. | `github.com/sponsors/shuuul` currently redirects to the ordinary profile; a broken funding route would be less trustworthy than an explicit blocked item. | WS-08–WS-09 |
+| 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml`, and do not make a recurring publication cadence a completion requirement. | The maintainer is not applying for GitHub Sponsors now and prefers optional update templates over a schedule that may not be sustained. Funding can return as independent work after a valid destination exists. | WS-08–WS-09 |
 | 2026-09-04 | Make `PiviPlugin` a lifecycle-only shell and move product ownership to `PiviApplication`; pass the real Plugin separately where Obsidian requires it. | Removes the service locator from the framework subclass without changing lifecycle ordering or adding a container/workspace. | WS-03 |
 | 2026-09-04 | Curate the existing package contract without rewriting imports: replace `@pivi/agent` wildcard exports with the namespace and focused leaves already consumed, remove every workspace wildcard TypeScript path, and make both patterns fail architecture checks. | Existing checks already reject undeclared imports and cross-package relative paths. Explicitly listing current leaves closes accidental future exposure while preserving presentation-safe and compatibility-test entrypoints without introducing barrel side effects. | WS-04 |
 | 2026-09-04 | Treat only upstream-shape-dependent replacements and overrides as Pi compatibility entries; keep ordinary engine adapters, retry policy, and product OAuth behavior out of the manifest. | A lifecycle manifest is useful only when each entry can be removed after a concrete upstream contract changes; cataloging all Pi-facing code would create permanent noise. | WS-06 |
@@ -84,8 +84,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 | WS-05 | Issue #111: split oversized UI/runtime factories and coordinators only at measured feature ownership seams | Amp | Done | WS-03 application boundary settled; dedicated issue required | Feature suites plus file-size and changed-slice evidence recorded in spec/issue |
 | WS-06 | Issue #113: add Pi compatibility manifest and one issue-updating next-version canary | Amp | Done | Current shim inventory and tracking-issue decision complete | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
 | WS-07 | Issue #115: add PR bundle delta/top-input reporting and improve warning/error test signal | Amp | Done | Exact base/head analysis and CI-summary design complete | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
-| WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, issue-template, funding, and public roadmap entry points | Amp | In progress | Maintainer authorized continued execution; funding destination unavailable | Link checks, template rendering review, effective Discussions categories/settings query |
-| WS-09 | Publish three starter recipes, desktop support matrix, showcase, and monthly maintenance/funding report cadence | Amp | In progress | WS-08 repository entry points in review; funding destination unavailable | Recipe walkthroughs, platform smoke evidence, published links and named cadence owner |
+| WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, and issue-template entry points | Amp | Done | Maintainer authorized continued execution | Default-branch community profile, issue-form files/contact routes, and effective Discussions categories verified |
+| WS-09 | Publish three starter recipes, desktop support matrix, showcase route, and optional update/report templates | Amp | Done | WS-08 merged | Default-branch recipe index, platform matrix, README routes, templates, and newcomer issues verified |
 
 ## Verification
 
@@ -233,6 +233,14 @@ Append entries rather than rewriting another worker's record.
 - Blockers: None.
 - Next action: Review and commit the verified WS-07 diff, then open its stacked pull request.
 
+### 2026-09-04 — Amp — WS-07 pull request and community closeout
+
+- Changed: Opened [PR #116](https://github.com/shuuul/obsidian-pivi/pull/116) for WS-07. After a focused maintainer decision round, synchronized the community scope, merged [PR #108](https://github.com/shuuul/obsidian-pivi/pull/108), and closed [issue #105](https://github.com/shuuul/obsidian-pivi/issues/105). Funding and recurring publication were explicitly removed from this spec's acceptance contract; the update templates remain optional.
+- Evidence: PR #108 passed quality, macOS, and Windows checks before merge as [`f66d234e`](https://github.com/shuuul/obsidian-pivi/commit/f66d234ec51309eafc609e1b24f96a76a7ed4e97). GitHub reports 100% community health; the default branch exposes CONTRIBUTING, CODE_OF_CONDUCT, SUPPORT, two issue forms, all three configured contact routes, three indexed starter recipes, the platform matrix, and weekly/monthly templates. Discussions exposes Announcements, Q&A, Show and tell, and Ideas; issues #106/#107 remain open with `good first issue`.
+- Remaining: Keep this spec Active while PRs #109, #110, #112, #114, and #116 remain stacked and unmerged; after they land, synchronize final default-branch evidence and archive the completed spec.
+- Blockers: Final archival depends on the protected pull-request stack landing. No implementation workstream remains.
+- Next action: Let PR #116 finish CI, then present the verified stack for a separate merge decision.
+
 ## Completion summary
 
-Pending. The WS-01 merge gate is satisfied. This spec remains Active until the remaining workstreams are either completed with evidence or explicitly deferred with an owner and reason.
+All nine implementation workstreams are complete. PR #108 and the P0 contract are on `main`; the architecture, exports, factory, compatibility, and quality-signal changes remain in the protected stacked PRs. Archive only after those changes land and final default-branch checks pass.
