@@ -34,11 +34,11 @@ describe('createPiviNetworkClients', () => {
       clients.grants.grant(url, 60_000, 'provider');
 
       clients.setProviderDeadlines({ totalMs: 30, idleMs: 1_000 });
-      await expect((await clients.providerFetch(url)).text())
+      await expect(clients.providerFetch(url).then((response) => response.text()))
         .rejects.toThrow(/Total deadline exceeded/i);
 
       clients.setProviderDeadlines({ totalMs: Number.NaN, idleMs: -1 });
-      await expect((await clients.providerFetch(url)).text())
+      await expect(clients.providerFetch(url).then((response) => response.text()))
         .rejects.toThrow(/Total deadline exceeded/i);
 
       clients.setProviderDeadlines({ totalMs: 0, idleMs: 1_000 });
