@@ -26,7 +26,7 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] Repository rules protect `main` and SemVer release tags without requiring a second reviewer while Pivi remains single-maintainer.
 - [x] `PiviPlugin` becomes a lifecycle-focused composition root, feature consumers receive narrow facades, and existing behavior/configuration remain compatible under lifecycle and feature tests.
 - [x] Cross-package imports are restricted to curated exports and architecture checks reject undeclared or internal package paths without adding another workspace.
-- [ ] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
+- [x] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
 - [ ] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
 - [ ] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
 - [ ] Public contribution, discussion, recipe, platform-support, and funding paths exist and have named recurring owners/cadences before the spec closes.
@@ -77,7 +77,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 | WS-02 | Issue #102: protect `main` and SemVer tags with required quality/platform checks and conversation resolution | Amp | Done | WS-01 done; maintainer authorized continued execution | Query effective GitHub rules; verify force-push/delete restrictions and required checks without a reviewer requirement |
 | WS-03 | Issue #103: reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Amp | Done | Fresh ownership/call-graph inspection complete | Lifecycle tests, feature contract tests, architecture check, full quality gates |
 | WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Amp | Done | WS-03 application/facade boundary settled | Export contract fixtures, architecture check, typecheck, build |
-| WS-05 | Split oversized UI/runtime factories and coordinators along verified chat/session/workspace/integration/settings use-case seams | Unassigned | Pending | WS-03 application boundary settled; dedicated issue required | Feature suites plus dependency-count and changed-slice evidence recorded in issue |
+| WS-05 | Issue #111: split oversized UI/runtime factories and coordinators only at measured feature ownership seams | Amp | Done | WS-03 application boundary settled; dedicated issue required | Feature suites plus file-size and changed-slice evidence recorded in spec/issue |
 | WS-06 | Add Pi compatibility manifest and one issue-updating next-version canary | Unassigned | Pending | Current shim inventory and tracking-issue decision | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
 | WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Pending | Refreshed bundle baseline and CI-summary design | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
 | WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, issue-template, funding, and public roadmap entry points | Amp | In progress | Maintainer authorized continued execution; funding destination unavailable | Link checks, template rendering review, effective Discussions categories/settings query |
@@ -104,8 +104,8 @@ Before final closeout, run all repository quality gates appropriate to every acc
 
 ## Documentation sync
 
-- Durable product/developer docs: WS-01 updates `README.md`, `SECURITY.md`, `docs/03-plugin-lifecycle-and-composition.md`, `docs/07-tools-skills-mcp-and-integrations.md`, `docs/09-development-debugging-and-validation.md`, and the command/maintenance references that own the new check. WS-04 updates `docs/02-architecture-and-technology.md` and `packages/agent/README.md` for the explicit package-resolution contract. Later workstreams must name their own durable targets before starting.
-- Nearest local `AGENTS.md`: update `scripts/AGENTS.md` for docs/export boundary checks and changed host smoke; update `packages/agent/AGENTS.md` for its explicit public surface. Update later feature/package guidance only with the workstream that changes it.
+- Durable product/developer docs: WS-01 updates `README.md`, `SECURITY.md`, `docs/03-plugin-lifecycle-and-composition.md`, `docs/07-tools-skills-mcp-and-integrations.md`, `docs/09-development-debugging-and-validation.md`, and the command/maintenance references that own the new check. WS-04 updates `docs/02-architecture-and-technology.md` and `packages/agent/README.md` for the explicit package-resolution contract. WS-05 updates `docs/08-presentation-and-settings.md` for the separate chat/settings port-adapter ownership. Later workstreams must name their own durable targets before starting.
+- Nearest local `AGENTS.md`: update `scripts/AGENTS.md` for docs/export boundary checks and changed host smoke; update `packages/agent/AGENTS.md` for its explicit public surface; update `src/app/AGENTS.md` for the WS-05 adapter split. Update later feature/package guidance only with the workstream that changes it.
 - Parent/package guidance: none for WS-01; no package implementation contract changes.
 - Root guidance and roadmap: update root `AGENTS.md` only if its gate list is stale; update `docs/10-roadmap-release-and-maintenance.md` with the durable sequence and refreshed priorities, not transient progress.
 
@@ -204,6 +204,14 @@ Append entries rather than rewriting another worker's record.
 - Remaining: Commit and open the stacked WS-04 pull request. Continue WS-05 only after a measured ownership/dependency inventory and dedicated issue make its slice decision-complete.
 - Blockers: The change remains stacked on PR #109, which itself is stacked on PR #108; retarget in order after earlier pull requests merge.
 - Next action: Review the WS-04 diff, commit it, push the branch, and open a pull request targeting `refactor/pivi-application`.
+
+### 2026-09-04 — Amp — WS-05 UI port factory split
+
+- Changed: Linked issue [#111](https://github.com/shuuul/obsidian-pivi/issues/111) and moved `createSettingsUiPorts` into `src/app/ui/createSettingsUiPorts.ts` as a behavior-preserving extraction from `createUiPorts.ts`. `PiviSettingTabHost` and settings-factory tests now import the settings entrypoint; chat tests remain on `createUiPorts`. Other large files remain unsplit because each still owns one use-case family.
+- Evidence: The original 590-line / 25,991-byte mixed factory became a 194-line / 8,610-byte chat adapter plus a 401-line / 17,637-byte settings adapter, with extracted function bodies byte-identical. Focused Jest passed (2 suites / 29 tests); full coverage passed (350 suites / 3,136 tests). Dependency audit, source/test typecheck, lint, all boundary checks, production build, bundle-size check, and `git diff --check` passed. Built `main.js` remained 4,169,451 bytes.
+- Remaining: Do not split additional factories until a measured ownership seam exists; no additional current candidate justified a split.
+- Blockers: None for this mechanical extraction.
+- Next action: Commit the verified WS-05 change, push it, and open a stacked pull request targeting `refactor/curate-package-exports`.
 
 ## Completion summary
 
