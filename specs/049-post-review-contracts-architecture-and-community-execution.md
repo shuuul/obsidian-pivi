@@ -173,9 +173,9 @@ Append entries rather than rewriting another worker's record.
 
 - Changed: Enabled Discussions; applied branch ruleset [22270940](https://github.com/shuuul/obsidian-pivi/rules/22270940) and tag ruleset [22270941](https://github.com/shuuul/obsidian-pivi/rules/22270941); closed issue #102 with effective-rule evidence; drafted contribution, conduct, support, issue-form, platform-support, reporting-template, and three starter-recipe files; created newcomer-sized recipe issues [#106](https://github.com/shuuul/obsidian-pivi/issues/106) and [#107](https://github.com/shuuul/obsidian-pivi/issues/107) with the `good first issue` label.
 - Evidence: Effective `main` rules require strict quality/macOS/Windows checks and conversation resolution, require a pull request with zero approvals, and block deletion/non-fast-forward updates; SemVer tags block updates and deletion. GitHub exposes Announcements, Q&A, Show and tell, and Ideas Discussion categories.
-- Remaining: Validate and merge the repository community files; inspect rendered issue forms after merge. Add `.github/FUNDING.yml` only after a valid funding destination exists; `https://github.com/sponsors/shuuul` currently redirects to the ordinary profile and is not a usable destination.
-- Blockers: Funding and Sponsor links are blocked on the maintainer configuring a valid destination. Publication of recurring Discussion updates remains a maintainer-owned cadence rather than repository code.
-- Next action: Open the WS-08 repository changes as a protected-branch pull request, then make WS-03 decision-complete on a separate branch.
+- Remaining: None. PR #108 is merged and the effective default-branch surfaces are verified.
+- Blockers: None. Funding and a recurring Discussion cadence were explicitly removed from this spec's completion criteria; the templates remain optional.
+- Next action: Keep the verified community surfaces stable while the architecture stack proceeds.
 
 ### 2026-09-04 — Amp — WS-03 application shell refactor
 
