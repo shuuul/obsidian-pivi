@@ -21,7 +21,7 @@ Post in **Discussions → Announcements**. Report only verifiable repository act
 
 ## Funding
 
-- Sponsor destination: Not configured / link
+- Support destinations: [Patreon](https://www.patreon.com/shuuul) and [Afdian](https://afdian.com/a/shuuul)
 - Funds received and project expenses, if any: Not reported / summary
 
 ## Next month

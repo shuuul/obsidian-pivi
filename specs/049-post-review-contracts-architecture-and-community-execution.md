@@ -29,7 +29,7 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
 - [x] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
 - [x] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
-- [x] Public contribution, discussion, recipe, and platform-support paths exist; optional update templates are available without creating an unsupported publication or funding commitment.
+- [x] Public contribution, discussion, recipe, platform-support, and verified funding paths exist; optional update templates are available without creating a recurring publication or paid-priority commitment.
 
 ## Scope and non-goals
 
@@ -64,6 +64,7 @@ Not in scope:
 | 2026-09-04 | Treat later workstream acceptance details as provisional until each is re-inspected and linked to its own issue after the P0 merge. | The report is static review input; implementation facts can change while WS-01 is under review. | WS-02–WS-09 |
 | 2026-09-04 | Continue post-P0 work after the maintainer approved the merge, using protected-branch pull requests for repository changes. | Supersedes the earlier stop-after-PR execution limit without weakening the now-active repository rules. | WS-02–WS-09 |
 | 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml`, and do not make a recurring publication cadence a completion requirement. | The maintainer is not applying for GitHub Sponsors now and prefers optional update templates over a schedule that may not be sustained. Funding can return as independent work after a valid destination exists. | WS-08–WS-09 |
+| 2026-09-04 | Publish Patreon and Afdian as the funding destinations without applying for GitHub Sponsors or promising paid priority. | Supersedes only the funding portion of the earlier decision now that the maintainer supplied valid destinations. The public Patreon page starts at US$3/month; custom recurring increases are member-controlled rather than a creator-side arbitrary-tip tier. | WS-08–WS-09 |
 | 2026-09-04 | Make `PiviPlugin` a lifecycle-only shell and move product ownership to `PiviApplication`; pass the real Plugin separately where Obsidian requires it. | Removes the service locator from the framework subclass without changing lifecycle ordering or adding a container/workspace. | WS-03 |
 | 2026-09-04 | Curate the existing package contract without rewriting imports: replace `@pivi/agent` wildcard exports with the namespace and focused leaves already consumed, remove every workspace wildcard TypeScript path, and make both patterns fail architecture checks. | Existing checks already reject undeclared imports and cross-package relative paths. Explicitly listing current leaves closes accidental future exposure while preserving presentation-safe and compatibility-test entrypoints without introducing barrel side effects. | WS-04 |
 | 2026-09-04 | Treat only upstream-shape-dependent replacements and overrides as Pi compatibility entries; keep ordinary engine adapters, retry policy, and product OAuth behavior out of the manifest. | A lifecycle manifest is useful only when each entry can be removed after a concrete upstream contract changes; cataloging all Pi-facing code would create permanent noise. | WS-06 |
@@ -241,6 +242,14 @@ Append entries rather than rewriting another worker's record.
 - Blockers: Final archival depends on the protected pull-request stack landing. No implementation workstream remains.
 - Next action: Let PR #116 finish CI, then present the verified stack for a separate merge decision.
 
+### 2026-09-04 — Maintainer-enabled funding routes — WS-08/WS-09
+
+- Changed: Added GitHub's funding configuration for Patreon and Afdian, linked both routes from README and SUPPORT, and replaced the maintenance template's unconfigured placeholder. The support contract explicitly excludes paid feature priority and guaranteed response times.
+- Evidence: The public Patreon page for `shuuul` advertises paid membership from US$3/month. Patreon custom amounts are existing-member recurring-payment adjustments, so the documentation does not present Patreon as an arbitrary one-time tip flow.
+- Remaining: Land this documentation with the existing protected pull-request stack, then verify GitHub renders both funding destinations on the default branch.
+- Blockers: Final archival still depends on PRs #109, #110, #112, #114, and #116 landing.
+- Next action: Validate the funding configuration and documentation, commit the update to PR #116, and rerun its required checks.
+
 ## Completion summary
 
-All nine implementation workstreams are complete. PR #108 and the P0 contract are on `main`; the architecture, exports, factory, compatibility, and quality-signal changes remain in the protected stacked PRs. Archive only after those changes land and final default-branch checks pass.
+All nine implementation workstreams are complete. PR #108 and the P0 contract are on `main`; the architecture, exports, factory, compatibility, quality-signal, and funding-route changes remain in the protected stacked PRs. Archive only after those changes land and final default-branch checks pass.

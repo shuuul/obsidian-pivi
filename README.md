@@ -255,6 +255,7 @@ Full trust-boundary, disclosure, credential matrix, network, prompt-injection, a
 - [Discussions](https://github.com/shuuul/obsidian-pivi/discussions) — questions and ideas
 - [Show and tell](https://github.com/shuuul/obsidian-pivi/discussions/categories/show-and-tell) — share recipes and vault workflows
 - [Support](SUPPORT.md) — choose the right route for help, bugs, features, or security reports
+- [Fund development](SUPPORT.md#support-development) — recurring support through Patreon or support through Afdian
 
 
 ## Acknowledgments
