@@ -2,6 +2,7 @@ import {
   type MouseEvent,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -245,6 +246,7 @@ function PromptModuleCard({
 
 export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
+  const draftFormId = useId();
   const mounted = useMountedRef();
   const [modules, setModules] = useState<readonly SettingsPromptModuleView[]>(() => ports.prompt.listModules());
   const [catalogRevision, setCatalogRevision] = useState(() => ports.prompt.getCatalogRevision());
@@ -430,21 +432,26 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
                 open
                 onToggle={() => undefined}
                 showSaveAction={false}
-                actions={(
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => {
-                      setDraftOpen(false);
-                      setDraftTitle('');
-                      setDraftBody('');
-                    }}
-                  >
-                    {t('common.cancel')}
-                  </button>
+                footerActions={(
+                  <>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => {
+                        setDraftOpen(false);
+                        setDraftTitle('');
+                        setDraftBody('');
+                      }}
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button type="submit" form={draftFormId} disabled={pending}>
+                      {t('common.save')}
+                    </button>
+                  </>
                 )}
               >
-                <form onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
+                <form id={draftFormId} onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
                   <SettingRow name={t('settings.prompt.titleLabel')}>
                     <input
                       className="pivi-settings-control"
@@ -463,11 +470,6 @@ export function PromptTab({ ports }: { readonly ports: SettingsPorts }) {
                       onChange={(event) => { setDraftBody(event.target.value); }}
                     />
                   </SettingRow>
-                  <div className="pivi-settings-action-group">
-                    <button type="submit" disabled={pending}>
-                      {t('common.save')}
-                    </button>
-                  </div>
                 </form>
               </DisclosureCard>
             )

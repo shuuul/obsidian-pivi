@@ -297,7 +297,7 @@ describe('React commands settings', () => {
     const card = getCommandCard('Edit custom slash command');
     const save = within(card).getByRole('button', { name: 'Save' });
     expect(save).not.toBeDisabled();
-    expect(save.closest('.pivi-settings-row')).toHaveClass('pivi-settings-row--stacked');
+    expect(save.closest('.pivi-settings-card__footer')).not.toBeNull();
     expect(within(card).getAllByText('Save')).toHaveLength(1);
   });
 

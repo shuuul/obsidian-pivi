@@ -331,6 +331,19 @@ describe('settings style contract', () => {
     expect(cardCss).toMatch(/\.pivi-settings-card\.is-open\s*{[^}]*overflow:\s*visible;/s);
   });
 
+  it('keeps disclosure footers flush with the last field instead of stacking extra body space', () => {
+    expect(cardCss).toMatch(/\.pivi-settings-card__body > form,\s*\.pivi-settings-card__body > \.pivi-mcp-inline-editor \{\s*margin:\s*0;/s);
+    expect(cardCss).toMatch(/\.pivi-settings-card__footer\s*\{[^}]*padding-block-start:\s*var\(--pivi-settings-row-padding-block\);/s);
+  });
+
+  it('puts expanded configuration on a nested surface distinct from the list', () => {
+    expect(tokensCss).toMatch(/--pivi-settings-inset-surface-background:\s*var\(--pivi-host-background-secondary\);/);
+    expect(tokensCss).toMatch(/--pivi-settings-nested-surface-background:\s*var\(--pivi-host-background-primary\);/);
+    expect(cardCss).toMatch(/\.pivi-settings-card__body\s*{[^}]*background:\s*var\(--pivi-settings-inset-surface-background\);/s);
+    expect(controlsCss).toMatch(/\.pivi-editor-toolbar-picker\s*{[^}]*background:\s*var\(--pivi-settings-inset-surface-background\);/s);
+    expect(controlsCss).toMatch(/\.pivi-editor-toolbar-picker__list\s*{[^}]*background:\s*var\(--pivi-settings-nested-surface-background\);/s);
+  });
+
   it('gives custom-provider name and base URL fields the remaining row width', () => {
     expect(rowCss).toMatch(/\.pivi-provider-endpoint-fields > \.pivi-settings-row > \.pivi-settings-row__control\s*{[^}]*flex:\s*1 1 0;/s);
     expect(rowCss).toMatch(/\.pivi-provider-endpoint-fields > \.pivi-settings-row > \.pivi-settings-row__control > \.pivi-settings-control:not\(\.pivi-select\)\s*{[^}]*width:\s*100%;/s);

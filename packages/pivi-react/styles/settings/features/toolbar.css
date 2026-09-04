@@ -53,7 +53,7 @@
   position: sticky;
   z-index: 1;
   top: 0;
-  background: var(--pivi-host-background-secondary);
+  background: var(--pivi-settings-nested-surface-background);
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-smaller);
   font-weight: var(--pivi-host-font-semibold);

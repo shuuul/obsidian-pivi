@@ -583,7 +583,7 @@ textarea.pivi-settings-control {
   padding: 12px;
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-md);
-  background: var(--pivi-host-background-secondary);
+  background: var(--pivi-settings-inset-surface-background);
 }
 
 .pivi-editor-toolbar-picker__target {
@@ -597,7 +597,7 @@ textarea.pivi-settings-control {
   padding: 0;
   border: 1px solid var(--pivi-host-border);
   border-radius: var(--pivi-radius-sm);
-  background: var(--pivi-host-background-primary);
+  background: var(--pivi-settings-nested-surface-background);
 }
 
 .pivi-editor-toolbar-picker__group + .pivi-editor-toolbar-picker__group {

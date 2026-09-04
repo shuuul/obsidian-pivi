@@ -1,5 +1,5 @@
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
@@ -82,6 +82,7 @@ function CommandCard({
   onSave,
 }: CommandCardProps) {
   const t = useT();
+  const formId = useId();
   const [savedEntry, setSavedEntry] = useState(initialEntry);
   const [name, setName] = useState(initialEntry?.name ?? '');
   const [description, setDescription] = useState(initialEntry?.description ?? '');
@@ -169,6 +170,25 @@ function CommandCard({
       dragOffset={dragOffset}
       dropIndicatorEdge={dropIndicatorEdge}
       showSaveAction={false}
+      footerActions={(
+        <>
+          {isDraft
+            ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={onCancelDraft}
+              >
+                {t('common.cancel')}
+              </button>
+            )
+            : null}
+          <button type="submit" form={formId} disabled={pending}>{t('common.save')}</button>
+          <SettingsFeedback feedback={error
+            ? { kind: 'error', message: error }
+            : feedback} />
+        </>
+      )}
       reorderLabel={position !== undefined
         ? t('settings.slashCommandsUi.reorder.handle', { name: displayName, position })
         : undefined}
@@ -182,7 +202,7 @@ function CommandCard({
           />
         )}
     >
-      <form onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+      <form id={formId} onSubmit={(event) => { event.preventDefault(); void submit(); }}>
         <SettingRow
           name={t('settings.createCommand.name.name')}
           description={t('settings.createCommand.name.desc')}
@@ -235,24 +255,6 @@ function CommandCard({
           description={t('settings.createCommand.icon.desc')}
         >
           <CommandIconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} />
-        </SettingRow>
-        <SettingRow stacked>
-          {isDraft
-            ? (
-              <button
-                className="pivi-settings-text-btn"
-                type="button"
-                disabled={pending}
-                onClick={onCancelDraft}
-              >
-                {t('common.cancel')}
-              </button>
-            )
-            : null}
-          <button type="submit" disabled={pending}>{t('common.save')}</button>
-          <SettingsFeedback feedback={error
-            ? { kind: 'error', message: error }
-            : feedback} />
         </SettingRow>
       </form>
     </DisclosureCard>

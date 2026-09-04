@@ -223,12 +223,14 @@
 .pivi-settings-card__body {
   padding: var(--pivi-settings-card-padding);
   border-top: 1px solid var(--pivi-settings-hairline);
-  background: transparent;
+  background: var(--pivi-settings-inset-surface-background);
 }
 
 .pivi-settings-card__body > .pivi-setting-description,
 .pivi-settings-card__body > .pivi-settings-action-group,
-.pivi-settings-card__body > .pivi-prompt-usage {
+.pivi-settings-card__body > .pivi-prompt-usage,
+.pivi-settings-card__body > form,
+.pivi-settings-card__body > .pivi-mcp-inline-editor {
   margin: 0;
 }
 

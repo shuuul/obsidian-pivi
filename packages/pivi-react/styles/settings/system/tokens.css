@@ -14,6 +14,8 @@
   --pivi-settings-heading-size-nested: var(--pivi-host-font-ui-small);
   --pivi-settings-heading-weight: var(--pivi-host-font-medium);
   --pivi-settings-surface-background: var(--pivi-host-setting-items-background);
+  --pivi-settings-inset-surface-background: var(--pivi-host-background-secondary);
+  --pivi-settings-nested-surface-background: var(--pivi-host-background-primary);
   --pivi-settings-surface-radius: var(--pivi-host-radius-l);
   --pivi-settings-row-padding-block: 20px;
   --pivi-settings-row-padding-inline: var(--pivi-settings-gutter);
