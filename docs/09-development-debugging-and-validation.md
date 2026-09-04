@@ -16,6 +16,7 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Documentation capability contracts | `npm run check:docs-contracts` |
 | Architecture/docs/package/i18n/spec/Pi-pin guards | `npm run check:boundaries` |
 | Exact synchronized Pi pins | `npm run check:pi-pins` |
+| Pi compatibility manifest lifecycle | `npm run check:pi-compatibility` |
 | All Jest projects | `npm run test` |
 | Coverage and thresholds (global + security-module branches) | `npm run test:coverage` |
 | Pi upgrade compatibility gate | `npm run test:pi-compat` |
@@ -112,7 +113,7 @@ npm run check:bundle-size
 
 CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Release publication is a maintainer-pushed annotated tag (`x.y.z`, no leading `v`) after a `chore(release): prepare x.y.z` commit that already contains the matching `CHANGELOG.md` section and synced Obsidian metadata; the tag workflow then runs the same shared quality-gate action (dependency audit, typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. See [Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md). Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
 
-Before bumping `@earendil-works/pi-*`, keep the three packages on one exact version, run `npm run test:pi-compat`, and keep `check:pi-pins` green. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
+Before bumping `@earendil-works/pi-*`, keep the three packages on one exact version, update every `upstreamVersion` in `packages/engine-pi/compatibility-manifest.json`, run `npm run test:pi-compat`, and keep both Pi checks green. The manifest records why each upstream-shape-dependent adaptation exists, its tests, its removal condition, and issue [#113](https://github.com/shuuul/obsidian-pivi/issues/113). A weekly informational canary tests the newest synchronized stable Pi release in an ephemeral runner and updates one marker-backed comment on that issue; it never changes the repository or replaces review of an actual dependency bump. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
 
 ## Bundle and CSS analysis
 

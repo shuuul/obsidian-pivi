@@ -1,0 +1,84 @@
+name: Pi compatibility canary
+
+on:
+  schedule:
+    - cron: "17 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "24.19.0"
+          cache: "npm"
+
+      - name: Install pinned dependencies
+        run: npm ci
+
+      - name: Resolve next synchronized Pi version
+        id: resolve
+        continue-on-error: true
+        run: |
+          pinned="$(node -p "require('./package.json').dependencies['@earendil-works/pi-agent-core']")"
+          target="$(node scripts/prepare-pi-canary.mjs --resolve)"
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Test next synchronized Pi version
+        id: compatibility
+        if: steps.resolve.outcome == 'success' && steps.resolve.outputs.target != ''
+        continue-on-error: true
+        env:
+          TARGET_VERSION: ${{ steps.resolve.outputs.target }}
+        run: |
+          node scripts/prepare-pi-canary.mjs --apply "$TARGET_VERSION"
+          npm install --package-lock-only --ignore-scripts
+          npm ci
+          npm run check:pi-pins
+          npm run check:pi-compatibility
+          npm run test:pi-compat
+          npm run build
+
+      - name: Update tracking issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESOLVE_OUTCOME: ${{ steps.resolve.outcome }}
+          CANARY_OUTCOME: ${{ steps.compatibility.outcome }}
+          PINNED_VERSION: ${{ steps.resolve.outputs.pinned }}
+          TARGET_VERSION: ${{ steps.resolve.outputs.target }}
+          TRACKING_ISSUE: "113"
+        run: |
+          marker='<!-- pivi-pi-compatibility-canary -->'
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          if [ "$RESOLVE_OUTCOME" != "success" ]; then
+            result="⚠️ Registry resolution failed"
+          elif [ -z "$TARGET_VERSION" ]; then
+            result="✅ No newer synchronized stable Pi version is available"
+          elif [ "$CANARY_OUTCOME" = "success" ]; then
+            result="✅ Compatibility checks and production build passed for ${TARGET_VERSION}"
+          else
+            result="❌ Compatibility checks failed for ${TARGET_VERSION}"
+          fi
+          body_file="${RUNNER_TEMP}/pi-canary-comment.md"
+          printf '%s\n\n## Latest canary\n\n- Pinned version: `%s`\n- Target version: `%s`\n- Result: %s\n- Run: %s\n\n_Last updated: %s_\n' \
+            "$marker" "${PINNED_VERSION:-unknown}" "${TARGET_VERSION:-none}" "$result" "$run_url" "$(date -u +'%Y-%m-%d %H:%M UTC')" > "$body_file"
+          comment_id="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${TRACKING_ISSUE}/comments" \
+            --jq ".[] | select(.body | contains(\"$marker\")) | .id" | head -n 1)"
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
+              --raw-field "body=$(cat "$body_file")" >/dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${TRACKING_ISSUE}/comments" \
+              --raw-field "body=$(cat "$body_file")" >/dev/null
+          fi

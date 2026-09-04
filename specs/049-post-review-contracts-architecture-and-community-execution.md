@@ -27,7 +27,7 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] `PiviPlugin` becomes a lifecycle-focused composition root, feature consumers receive narrow facades, and existing behavior/configuration remain compatible under lifecycle and feature tests.
 - [x] Cross-package imports are restricted to curated exports and architecture checks reject undeclared or internal package paths without adding another workspace.
 - [x] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
-- [ ] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
+- [x] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
 - [ ] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
 - [ ] Public contribution, discussion, recipe, platform-support, and funding paths exist and have named recurring owners/cadences before the spec closes.
 
@@ -66,6 +66,8 @@ Not in scope:
 | 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml` until a valid funding destination exists. | `github.com/sponsors/shuuul` currently redirects to the ordinary profile; a broken funding route would be less trustworthy than an explicit blocked item. | WS-08–WS-09 |
 | 2026-09-04 | Make `PiviPlugin` a lifecycle-only shell and move product ownership to `PiviApplication`; pass the real Plugin separately where Obsidian requires it. | Removes the service locator from the framework subclass without changing lifecycle ordering or adding a container/workspace. | WS-03 |
 | 2026-09-04 | Curate the existing package contract without rewriting imports: replace `@pivi/agent` wildcard exports with the namespace and focused leaves already consumed, remove every workspace wildcard TypeScript path, and make both patterns fail architecture checks. | Existing checks already reject undeclared imports and cross-package relative paths. Explicitly listing current leaves closes accidental future exposure while preserving presentation-safe and compatibility-test entrypoints without introducing barrel side effects. | WS-04 |
+| 2026-09-04 | Treat only upstream-shape-dependent replacements and overrides as Pi compatibility entries; keep ordinary engine adapters, retry policy, and product OAuth behavior out of the manifest. | A lifecycle manifest is useful only when each entry can be removed after a concrete upstream contract changes; cataloging all Pi-facing code would create permanent noise. | WS-06 |
+| 2026-09-04 | Keep the next-version canary informational, mutate only its ephemeral checkout, and update one marker-backed comment on issue #113. | Dependency upgrades still require review; one stable issue comment provides a current signal without duplicate alert issues or required-check noise. | WS-06 |
 
 ## Workstreams
 
@@ -78,7 +80,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 | WS-03 | Issue #103: reduce `PiviPlugin` to lifecycle composition and introduce responsibility-scoped application/feature facades | Amp | Done | Fresh ownership/call-graph inspection complete | Lifecycle tests, feature contract tests, architecture check, full quality gates |
 | WS-04 | Issue #104: curate package exports and reject undeclared/internal cross-package imports | Amp | Done | WS-03 application/facade boundary settled | Export contract fixtures, architecture check, typecheck, build |
 | WS-05 | Issue #111: split oversized UI/runtime factories and coordinators only at measured feature ownership seams | Amp | Done | WS-03 application boundary settled; dedicated issue required | Feature suites plus file-size and changed-slice evidence recorded in spec/issue |
-| WS-06 | Add Pi compatibility manifest and one issue-updating next-version canary | Unassigned | Pending | Current shim inventory and tracking-issue decision | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
+| WS-06 | Issue #113: add Pi compatibility manifest and one issue-updating next-version canary | Amp | Done | Current shim inventory and tracking-issue decision complete | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
 | WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Pending | Refreshed bundle baseline and CI-summary design | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
 | WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, issue-template, funding, and public roadmap entry points | Amp | In progress | Maintainer authorized continued execution; funding destination unavailable | Link checks, template rendering review, effective Discussions categories/settings query |
 | WS-09 | Publish three starter recipes, desktop support matrix, showcase, and monthly maintenance/funding report cadence | Amp | In progress | WS-08 repository entry points in review; funding destination unavailable | Recipe walkthroughs, platform smoke evidence, published links and named cadence owner |
@@ -104,8 +106,8 @@ Before final closeout, run all repository quality gates appropriate to every acc
 
 ## Documentation sync
 
-- Durable product/developer docs: WS-01 updates `README.md`, `SECURITY.md`, `docs/03-plugin-lifecycle-and-composition.md`, `docs/07-tools-skills-mcp-and-integrations.md`, `docs/09-development-debugging-and-validation.md`, and the command/maintenance references that own the new check. WS-04 updates `docs/02-architecture-and-technology.md` and `packages/agent/README.md` for the explicit package-resolution contract. WS-05 updates `docs/08-presentation-and-settings.md` for the separate chat/settings port-adapter ownership. Later workstreams must name their own durable targets before starting.
-- Nearest local `AGENTS.md`: update `scripts/AGENTS.md` for docs/export boundary checks and changed host smoke; update `packages/agent/AGENTS.md` for its explicit public surface; update `src/app/AGENTS.md` for the WS-05 adapter split. Update later feature/package guidance only with the workstream that changes it.
+- Durable product/developer docs: WS-01 updates `README.md`, `SECURITY.md`, `docs/03-plugin-lifecycle-and-composition.md`, `docs/07-tools-skills-mcp-and-integrations.md`, `docs/09-development-debugging-and-validation.md`, and the command/maintenance references that own the new check. WS-04 updates `docs/02-architecture-and-technology.md` and `packages/agent/README.md` for the explicit package-resolution contract. WS-05 updates `docs/08-presentation-and-settings.md` for the separate chat/settings port-adapter ownership. WS-06 updates `docs/09-development-debugging-and-validation.md` and `docs/10-roadmap-release-and-maintenance.md` for the manifest/canary route. Later workstreams must name their own durable targets before starting.
+- Nearest local `AGENTS.md`: update `scripts/AGENTS.md` for repository checks and canary preparation; update `packages/agent/AGENTS.md` for its explicit public surface; update `src/app/AGENTS.md` for the WS-05 adapter split; update `packages/engine-pi/AGENTS.md` for the compatibility lifecycle. Update later feature/package guidance only with the workstream that changes it.
 - Parent/package guidance: none for WS-01; no package implementation contract changes.
 - Root guidance and roadmap: update root `AGENTS.md` only if its gate list is stale; update `docs/10-roadmap-release-and-maintenance.md` with the durable sequence and refreshed priorities, not transient progress.
 
@@ -212,6 +214,14 @@ Append entries rather than rewriting another worker's record.
 - Remaining: Do not split additional factories until a measured ownership seam exists; no additional current candidate justified a split.
 - Blockers: None for this mechanical extraction.
 - Next action: Commit the verified WS-05 change, push it, and open a stacked pull request targeting `refactor/curate-package-exports`.
+
+### 2026-09-04 — Amp — WS-06 Pi compatibility lifecycle
+
+- Changed: Created issue [#113](https://github.com/shuuul/obsidian-pivi/issues/113); cataloged ten upstream-shape-dependent Pi adaptations in `packages/engine-pi/compatibility-manifest.json`; added a manifest completeness/exact-pin gate; expanded `test:pi-compat` to cover the manifested shim, build, session, fetch, and transport contracts; and added a weekly/manual informational canary that updates one marker-backed issue comment.
+- Evidence: Focused checker/workflow/build suites passed (3 suites / 13 tests); expanded pinned compatibility passed (11 suites / 44 tests); full coverage passed (352 suites / 3,143 tests); dependency audit, source/test typecheck, lint, all boundary checks, production build, bundle-size check, and `git diff --check` passed. The pinned build is 4,169,460 bytes. An isolated 0.85.0 dry run correctly failed four real session suites because upstream `pi-coding-agent` imports missing `@earendil-works/pi-server`; the stable issue comment records the blocker without modifying the pin.
+- Remaining: Do not add a local dependency workaround. The scheduled route should retest the newest synchronized stable release after this workflow reaches `main`; an actual Pi bump remains a reviewed dependency change.
+- Blockers: None for WS-06. Pi 0.85.0 itself is currently blocked by its published dependency graph.
+- Next action: Open the verified WS-06 pull request, then inventory WS-07's existing bundle metadata and console-noise ownership.
 
 ## Completion summary
 

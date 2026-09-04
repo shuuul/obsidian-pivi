@@ -237,6 +237,22 @@ describe('shared build compatibility', () => {
     expect(output).toBe('ok');
   });
 
+  it('provides the callable CommonJS signal-exit shape expected by proper-lockfile', () => {
+    const output = runBuildContract(`
+      import { createRequire } from 'node:module';
+      const require = createRequire(import.meta.url);
+      const signalExit = require('./packages/engine-pi/src/shims/signalExit.cjs');
+      const unregister = signalExit(() => {});
+      process.stdout.write(JSON.stringify({
+        callable: typeof signalExit === 'function',
+        unregister: typeof unregister === 'function',
+        signals: signalExit.signals,
+      }));
+    `);
+
+    expect(JSON.parse(output)).toEqual({ callable: true, unregister: true, signals: [] });
+  });
+
   it('routes the real Google SDK through the bundled scoped fetch', () => {
     const tempDir = mkdtempSync(join(tmpdir(), 'pivi-google-fetch-'));
     const outfile = join(tempDir, 'google-fetch.cjs');

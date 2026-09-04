@@ -10,7 +10,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
-- Complete the P0 remote-only MCP documentation contract in issue [#100](https://github.com/shuuul/obsidian-pivi/issues/100). Spec [049](../specs/049-post-review-contracts-architecture-and-community-execution.md) blocks broader architecture and community work until that change is merged.
+- Complete the remaining bounded maintenance and community work in spec [049](../specs/049-post-review-contracts-architecture-and-community-execution.md). The P0 remote-only MCP contract is merged; current work is compatibility lifecycle, explainable bundle/test signals, and publication of the prepared contribution routes.
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
