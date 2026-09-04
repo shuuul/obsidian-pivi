@@ -29,7 +29,7 @@ Preserve Pivi's existing package architecture while making active documentation 
 - [x] Large UI/runtime factories and coordinators are split by user-facing feature only where a measured ownership seam exists; no generic DI container is introduced.
 - [ ] Every Pivi-owned Pi compatibility shim records its upstream version, reason, verification test, removal condition, and tracking issue, with one non-duplicating canary route.
 - [ ] Pull requests report explainable bundle change data and focused test suites fail on unexpected warning/error noise without replacing correctness assertions with global coverage targets.
-- [ ] Public contribution, discussion, recipe, platform-support, and funding paths exist and have named recurring owners/cadences before the spec closes.
+- [x] Public contribution, discussion, recipe, and platform-support paths exist; optional update templates are available without creating an unsupported publication or funding commitment.
 
 ## Scope and non-goals
 
@@ -39,7 +39,7 @@ In scope:
 - GitHub branch/tag protection and community entry points after the P0 merge gate.
 - Bounded composition-root, feature-facade, export-surface, and vertical-factory improvements after re-inspection.
 - Pi compatibility lifecycle, bundle-delta reporting, and test-signal improvements.
-- Starter recipes, desktop support tiers, and transparent maintenance/funding reporting.
+- Starter recipes, desktop support tiers, and optional transparent maintenance/support reporting templates.
 
 Not in scope:
 
@@ -63,7 +63,7 @@ Not in scope:
 | 2026-09-04 | Delete the stale standalone marketing draft from Git and the working tree in the P0 change. | The maintainer explicitly retired it; no tracked document referenced it, and future community work is represented by gated WS-08/WS-09 instead. | WS-01 |
 | 2026-09-04 | Treat later workstream acceptance details as provisional until each is re-inspected and linked to its own issue after the P0 merge. | The report is static review input; implementation facts can change while WS-01 is under review. | WS-02–WS-09 |
 | 2026-09-04 | Continue post-P0 work after the maintainer approved the merge, using protected-branch pull requests for repository changes. | Supersedes the earlier stop-after-PR execution limit without weakening the now-active repository rules. | WS-02–WS-09 |
-| 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml` until a valid funding destination exists. | `github.com/sponsors/shuuul` currently redirects to the ordinary profile; a broken funding route would be less trustworthy than an explicit blocked item. | WS-08–WS-09 |
+| 2026-09-04 | Do not add a Sponsor link or `.github/FUNDING.yml`, and do not make a recurring publication cadence a completion requirement. | The maintainer is not applying for GitHub Sponsors now and prefers optional update templates over a schedule that may not be sustained. Funding can return as independent work after a valid destination exists. | WS-08–WS-09 |
 | 2026-09-04 | Make `PiviPlugin` a lifecycle-only shell and move product ownership to `PiviApplication`; pass the real Plugin separately where Obsidian requires it. | Removes the service locator from the framework subclass without changing lifecycle ordering or adding a container/workspace. | WS-03 |
 | 2026-09-04 | Curate the existing package contract without rewriting imports: replace `@pivi/agent` wildcard exports with the namespace and focused leaves already consumed, remove every workspace wildcard TypeScript path, and make both patterns fail architecture checks. | Existing checks already reject undeclared imports and cross-package relative paths. Explicitly listing current leaves closes accidental future exposure while preserving presentation-safe and compatibility-test entrypoints without introducing barrel side effects. | WS-04 |
 
@@ -80,8 +80,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`.
 | WS-05 | Issue #111: split oversized UI/runtime factories and coordinators only at measured feature ownership seams | Amp | Done | WS-03 application boundary settled; dedicated issue required | Feature suites plus file-size and changed-slice evidence recorded in spec/issue |
 | WS-06 | Add Pi compatibility manifest and one issue-updating next-version canary | Unassigned | Pending | Current shim inventory and tracking-issue decision | Manifest completeness check, `test:pi-compat`, scheduled canary dry run |
 | WS-07 | Add PR bundle delta/top-input reporting and improve warning/error test signal | Unassigned | Pending | Refreshed bundle baseline and CI-summary design | Metafile comparison fixture, CI summary fixture, focused noisy-console tests, bundle gate |
-| WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, issue-template, funding, and public roadmap entry points | Amp | In progress | Maintainer authorized continued execution; funding destination unavailable | Link checks, template rendering review, effective Discussions categories/settings query |
-| WS-09 | Publish three starter recipes, desktop support matrix, showcase, and monthly maintenance/funding report cadence | Amp | In progress | WS-08 repository entry points in review; funding destination unavailable | Recipe walkthroughs, platform smoke evidence, published links and named cadence owner |
+| WS-08 | Issue #105: enable Discussions and add contributor, conduct, support, and issue-template entry points | Amp | Done | Maintainer authorized continued execution | Default-branch community profile, issue-form files/contact routes, and effective Discussions categories verified |
+| WS-09 | Publish three starter recipes, desktop support matrix, showcase route, and optional update/report templates | Amp | Done | WS-08 merged | Default-branch recipe index, platform matrix, README routes, templates, and newcomer issues verified |
 
 ## Verification
 
@@ -169,9 +169,9 @@ Append entries rather than rewriting another worker's record.
 
 - Changed: Enabled Discussions; applied branch ruleset [22270940](https://github.com/shuuul/obsidian-pivi/rules/22270940) and tag ruleset [22270941](https://github.com/shuuul/obsidian-pivi/rules/22270941); closed issue #102 with effective-rule evidence; drafted contribution, conduct, support, issue-form, platform-support, reporting-template, and three starter-recipe files; created newcomer-sized recipe issues [#106](https://github.com/shuuul/obsidian-pivi/issues/106) and [#107](https://github.com/shuuul/obsidian-pivi/issues/107) with the `good first issue` label.
 - Evidence: Effective `main` rules require strict quality/macOS/Windows checks and conversation resolution, require a pull request with zero approvals, and block deletion/non-fast-forward updates; SemVer tags block updates and deletion. GitHub exposes Announcements, Q&A, Show and tell, and Ideas Discussion categories.
-- Remaining: Validate and merge the repository community files; inspect rendered issue forms after merge. Add `.github/FUNDING.yml` only after a valid funding destination exists; `https://github.com/sponsors/shuuul` currently redirects to the ordinary profile and is not a usable destination.
-- Blockers: Funding and Sponsor links are blocked on the maintainer configuring a valid destination. Publication of recurring Discussion updates remains a maintainer-owned cadence rather than repository code.
-- Next action: Open the WS-08 repository changes as a protected-branch pull request, then make WS-03 decision-complete on a separate branch.
+- Remaining: None. PR #108 is merged and the effective default-branch surfaces are verified.
+- Blockers: None. Funding and a recurring Discussion cadence were explicitly removed from this spec's completion criteria; the templates remain optional.
+- Next action: Keep the verified community surfaces stable while the architecture stack proceeds.
 
 ### 2026-09-04 — Amp — WS-03 application shell refactor
 
@@ -212,6 +212,14 @@ Append entries rather than rewriting another worker's record.
 - Remaining: Do not split additional factories until a measured ownership seam exists; no additional current candidate justified a split.
 - Blockers: None for this mechanical extraction.
 - Next action: Commit the verified WS-05 change, push it, and open a stacked pull request targeting `refactor/curate-package-exports`.
+
+### 2026-09-04 — Maintainer decisions for WS-08/WS-09 closeout
+
+- Changed: The maintainer authorized merging [PR #108](https://github.com/shuuul/obsidian-pivi/pull/108), chose to keep weekly/monthly templates without committing to a publication cadence, and chose not to apply for GitHub Sponsors now.
+- Evidence: GitHub Sponsors setup would require a supported region, 2FA, payout/tax onboarding, profile and tiers, and approval; no valid `shuuul` Sponsors profile currently exists. PR #108 passed all three required checks and merged as [`f66d234e`](https://github.com/shuuul/obsidian-pivi/commit/f66d234ec51309eafc609e1b24f96a76a7ed4e97). GitHub reports 100% community health and serves the contribution files, contact routes, recipe index, and platform matrix from `main`.
+- Remaining: None for WS-08/WS-09; issue #105 is closed.
+- Blockers: None.
+- Next action: Reconcile the remaining stacked PRs with `main` and preserve this evidence through final archival.
 
 ## Completion summary
 
