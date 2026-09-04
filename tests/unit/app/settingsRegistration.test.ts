@@ -16,11 +16,13 @@ describe('registerPiviSettings', () => {
       addSettingTab,
       ensureWorkspaceServices,
     };
+    const settings = { boundary: 'settings' };
+    const workspace = { ensureWorkspaceServices };
 
-    registerPiviSettings(plugin as never);
+    registerPiviSettings(plugin as never, settings as never, workspace as never);
 
     expect(PiviSettingTabHost).toHaveBeenCalledTimes(1);
-    const getWorkspace = jest.mocked(PiviSettingTabHost).mock.calls[0]?.[2];
+    const getWorkspace = jest.mocked(PiviSettingTabHost).mock.calls[0]?.[3];
     expect(getWorkspace).toEqual(expect.any(Function));
     expect(ensureWorkspaceServices).not.toHaveBeenCalled();
     await expect(getWorkspace?.()).resolves.toBe(firstWorkspace);

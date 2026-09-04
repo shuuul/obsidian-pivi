@@ -76,17 +76,23 @@ jest.mock("@/app/serviceGraph", () => {
 import type { OpenSessionState } from "@pivi/agent/runtime";
 import { VIEW_TYPE_PIVI } from "@pivi/agent/runtime";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
+import { PiviApplication } from "@/app/PiviApplication";
 import { persistOpenTabStates } from "@/app/pluginLifecycle";
-import PiviPlugin from "@/main";
+import { Plugin } from "obsidian";
 import { createMockApp } from "../../helpers/mockApp";
 
-function createPlugin(): PiviPlugin {
+function createPlugin(): PiviApplication {
   const app = createMockApp();
-  return new PiviPlugin(app, {
+  const ConcretePlugin = Plugin as unknown as new (
+    app: ReturnType<typeof createMockApp>,
+    manifest: object,
+  ) => Plugin;
+  const plugin = new ConcretePlugin(app, {
     id: "pivi",
     name: "Pivi",
     version: "0.0.0",
   } as never);
+  return new PiviApplication(plugin);
 }
 
 function createWorkspace() {
@@ -113,7 +119,7 @@ function openSession(
   };
 }
 
-describe("PiviPlugin lifecycle", () => {
+describe("PiviApplication lifecycle", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -287,7 +293,7 @@ describe("PiviPlugin lifecycle", () => {
         },
       ]);
 
-      const persistence = persistOpenTabStates(plugin);
+      const persistence = persistOpenTabStates(plugin.app);
 
       expect(firstPersist).toHaveBeenCalledTimes(1);
       expect(secondPersist).toHaveBeenCalledTimes(1);

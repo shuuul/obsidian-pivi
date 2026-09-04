@@ -1,7 +1,7 @@
 import type { OpenSessionState } from "@pivi/agent/runtime";
 import type { PiviSettings } from "@pivi/agent/settings/types";
 import type { PiviUiFacades } from "@/app/hostContracts";
-import type PiviPlugin from "@/main";
+import type { PiviApplication as PiviPlugin } from "@/app/PiviApplication";
 import { createMockApp, type MockAppOptions } from "./mockApp";
 import { createMockPiviSettings } from "./mockPiviSettings";
 

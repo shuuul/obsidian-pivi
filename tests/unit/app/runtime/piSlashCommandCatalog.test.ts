@@ -2,7 +2,7 @@ import { parseSlashCommandContent } from '@pivi/agent/skills/slashCommand';
 import { RESERVED_COMMAND_IDS } from '@pivi/agent/skills/commands/slashCommandIds';
 import { PiSlashCommandCatalog } from '@/app/runtime/PiSlashCommandCatalog';
 import type { FileStore } from "@pivi/agent/ports";
-import type PiviPlugin from "@/main";
+import type { PiviApplication as PiviPlugin } from "@/app/PiviApplication";
 import { TAbstractFile } from "obsidian";
 
 describe("parseSlashCommandContent", () => {

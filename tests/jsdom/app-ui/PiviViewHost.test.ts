@@ -139,7 +139,7 @@ function createHarness() {
   const containerEl = document.createElement('div');
   containerEl.append(document.createElement('header'), contentEl);
 
-  const view = new PiviViewHost(leaf, plugin as never, getWorkspace);
+  const view = new PiviViewHost(leaf, plugin as never, plugin as never, getWorkspace);
   const registerEvent = jest.fn();
   const registerDomEvent = jest.fn();
   Object.assign(view, {
@@ -213,7 +213,11 @@ describe('PiviViewHost shell lifecycle', () => {
 
     await harness.view.onOpen();
 
-    expect(createChatUiPorts).toHaveBeenCalledWith(harness.plugin, harness.workspace);
+    expect(createChatUiPorts).toHaveBeenCalledWith(
+      harness.plugin,
+      harness.plugin,
+      harness.workspace,
+    );
     expect(harness.getWorkspace).toHaveBeenCalledTimes(1);
     expect(createImperativeChatAdapter).toHaveBeenCalledWith(expect.objectContaining({
       plugin: harness.plugin,

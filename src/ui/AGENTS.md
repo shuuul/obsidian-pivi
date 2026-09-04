@@ -42,7 +42,7 @@ Read the applicable child `AGENTS.md` before changing a subdirectory.
 - Never import `@/app/runtime` or its subpaths, including via relative paths. Chat runtime/session/model/catalog/settings capabilities arrive through `ChatPorts` injected into `TabManager`; do not reach back into composition hosts for them.
 - Never import `@/app/ui` or its subpaths from `src/ui/**`. App composition mounts React and creates adapters; this layer is imperative adapters + runtime orchestration only. Import application-facing `ChatPorts` from `@pivi/agent/runtime/chatPorts`, never from the React package.
 - Import `@pivi/pivi-react` only through the exact `store` or `context-badges` presentation subpath. Root-barrel, `mount`, `ports`, deep-internal, and relative-path package imports are forbidden; pure parsing, matching, markdown transforms, and usage projection come from `@pivi/agent` domain subpaths.
-- `PiviChatHost` intentionally contains only `app`. Never type product UI against `PiviChatCompositionHost`, `PiviSettingsHost`, or `PiviPluginHost`; those wide contracts belong to app composition.
+- `PiviChatHost` intentionally contains only `app`. Never type product UI against app composition facades; `ChatFacade` and `SessionsFacade` terminate at `createChatUiPorts`, which adapts them into `ChatPorts`.
 - UI may import host-neutral APIs from non-engine `@pivi/agent/*` subpaths, public Obsidian APIs, narrowly scoped Node platform modules required by imperative adapters, the two approved React presentation subpaths, `@/app/i18n`, and `@/app/hostPlatform`; host-contract imports remain type-only. Keep app/UI composition one-way: app mounts UI and owns concrete wiring; UI never imports app runtime or app UI implementations.
 
 ## Key conventions

@@ -74,7 +74,7 @@ describe('UI port adapters', () => {
       getUiFacades: () => createUiFacades(),
     } as unknown as ChatUiCompositionHost;
 
-    const ports = createChatUiPorts(host, null);
+    const ports = createChatUiPorts(host, host as never, null);
 
     expect(() => ports.catalog.listMcpServers()).toThrow(
       'Pivi workspace services are not initialized.',
@@ -182,7 +182,7 @@ describe('UI port adapters', () => {
       forkSessionAt: async () => null,
     } as unknown as ChatUiCompositionHost;
 
-    const ports = createChatUiPorts(host, workspace as never);
+    const ports = createChatUiPorts(host, host as never, workspace as never);
 
     expect(ports.runtime.createChatService()).toBe(chatService);
     await expect(ports.sessions.openRecent('open-session', 100)).resolves.toMatchObject({

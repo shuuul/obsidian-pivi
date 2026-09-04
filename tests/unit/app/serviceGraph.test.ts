@@ -50,12 +50,18 @@ describe('createPluginServiceGraph', () => {
     };
     createPiWorkspaceServices.mockResolvedValue(workspace);
 
-    const result = await createPluginServiceGraph(plugin as never);
+    const network = { providerFetch: jest.fn() };
+    const result = await createPluginServiceGraph({
+      host: plugin as never,
+      storage: plugin.storage as never,
+      network: network as never,
+    });
 
     expect(assertBundledReactRuntime).toHaveBeenCalledTimes(1);
     expect(createPiWorkspaceServices).toHaveBeenCalledWith({
       host: plugin,
       vaultAdapter,
+      network,
     });
     expect(result).toEqual({ piWorkspace: workspace });
     expect(result).not.toHaveProperty('obsidianHost');

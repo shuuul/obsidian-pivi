@@ -3,7 +3,7 @@ import type { MountInlineEditSurfaceChromeOptions } from '@pivi/pivi-react/mount
 import type { App } from 'obsidian';
 import { type Component, Platform } from 'obsidian';
 
-import type { PiviPluginHost } from '@/app/hostContracts';
+import type { IntegrationsFacade } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
 import { createStreamingMarkdownContentAdapter } from '@/app/ui/createStreamingMarkdownContentAdapter';
@@ -230,6 +230,6 @@ export function getInlineEditActiveVaultFilePath(app: App): string | null {
   return normalizePathForVault(activePath, getVaultPath(app));
 }
 
-export function getInlineEditExternalContexts(host: PiviPluginHost): string[] {
+export function getInlineEditExternalContexts(host: IntegrationsFacade): string[] {
   return getObsidianToolsSettingsFromBag(host.settings).externalReadDirectories;
 }

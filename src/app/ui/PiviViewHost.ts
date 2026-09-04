@@ -16,6 +16,7 @@ import { appI18n } from '@/app/i18n';
 import { activateOpenSessionElsewhere } from '@/app/ui/activateOpenSessionElsewhere';
 import {
   type ChatUiCompositionHost,
+  type ChatUiSessionHost,
   createChatUiPorts,
 } from '@/app/ui/createUiPorts';
 import {
@@ -35,6 +36,7 @@ type LoadableView = {
 
 export class PiviViewHost extends ItemView {
   private plugin: ChatUiCompositionHost;
+  private readonly sessions: ChatUiSessionHost;
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
@@ -46,10 +48,12 @@ export class PiviViewHost extends ItemView {
   constructor(
     leaf: WorkspaceLeaf,
     plugin: ChatUiCompositionHost,
+    sessions: ChatUiSessionHost,
     getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
     super(leaf);
     this.plugin = plugin;
+    this.sessions = sessions;
     this.getWorkspace = getWorkspace;
 
     // Hover Editor compatibility: Define load as an instance method that can't be
@@ -117,7 +121,7 @@ export class PiviViewHost extends ItemView {
 
     const workspace = await this.getWorkspace();
     if (generation !== this.mountGeneration) return;
-    const ports = createChatUiPorts(this.plugin, workspace);
+    const ports = createChatUiPorts(this.plugin, this.sessions, workspace);
     container.empty();
     const chatAdapter = createImperativeChatAdapter({
       plugin: this.plugin,

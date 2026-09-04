@@ -15,7 +15,12 @@ import type {
 } from "@pivi/agent/mcp/ports";
 import type { ManagedMcpServer } from "@pivi/agent/mcp/types";
 import type { HttpClient, ProcessRunner } from "@pivi/agent/ports";
+import type { CapabilityApprovalPort } from "@pivi/agent/ports";
+import type { OpenSessionState, SessionSummary } from "@pivi/agent/runtime";
+import type { AuxQueryRunner } from "@pivi/agent/runtime/auxQueryRunner";
 import type { ChatUIConfig, ChatUIOption } from "@pivi/agent/runtime/chatUi";
+import type { PiChatService } from "@pivi/agent/runtime/piChatService";
+import type { SessionMessagePage, SessionRecoveryPort } from "@pivi/agent/session";
 import type { PiviSettings } from "@pivi/agent/settings";
 import type {
   DeviceLocalEnvironmentStore,
@@ -29,18 +34,20 @@ import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashComma
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
 import type { SkillsManagementCoordinator } from "@pivi/agent/skills/vault/skillsManagementCoordinator";
+import type { PiviManagementApprovalPort } from "@pivi/agent/tools/piviManagement";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
+import type { ChatPerfRecorder } from "@pivi/pivi-react/store";
 import type {
   App,
   Editor,
   MarkdownView,
-  Plugin,
   TFile,
   WorkspaceLeaf,
 } from "obsidian";
 
+import type { ChatPerfController } from "@/app/chatPerformanceController";
 import type {
   NoteToolbarItemStyle,
   NoteToolbarSetupResult,
@@ -312,15 +319,61 @@ export interface PiviSettingsHost extends PiviHostCore {
   ): { noticeEl: HTMLElement; hide(): void } | null;
 }
 
-/**
- * Full plugin host surface (chat + settings). Implemented by the Obsidian
- * Plugin class. `settings` is Pivi-typed and overrides Plugin's looser field.
- */
-export interface PiviPluginHost
-  extends Omit<Plugin, "settings">,
-    PiviChatCompositionHost,
-    PiviSettingsHost {
-  settings: PiviSettings;
+/** Chat behavior consumed by command registration and chat-view composition. */
+export interface ChatFacade extends PiviChatCompositionHost {
+  getChatPerfController(): ChatPerfController;
+  getChatPerfRecorder(): ChatPerfRecorder;
+  createChatService(options?: {
+    capabilityApproval?: CapabilityApprovalPort | null;
+    piviManagementApproval?: PiviManagementApprovalPort | null;
+  }): PiChatService;
+  createAuxQueryRunner(): AuxQueryRunner;
+  activateView(): Promise<void>;
+  canCreateNewTab(): boolean;
+  openNewTab(): Promise<void>;
+  addEditorSelectionToChatInput(editor: Editor, markdownView: MarkdownView): Promise<void>;
 }
 
-export type { PiviPluginHost as default, PiviPluginHost as PiviPlugin };
+export interface SessionsFacade {
+  getSessionList(): SessionSummary[];
+  getOpenSessionSync(id: string): OpenSessionState | null;
+  getOpenSessionById(id: string): Promise<OpenSessionState | null>;
+  openRecentSessionMessages(id: string, limit: number): Promise<SessionMessagePage | null>;
+  readOlderSessionMessages(id: string, beforeEntryId: string, limit: number): Promise<SessionMessagePage | null>;
+  createOpenSession(options?: { sessionId?: string; sessionFile?: string }): Promise<OpenSessionState>;
+  openSessionByFile(sessionFile: string): Promise<OpenSessionState>;
+  deleteSession(id: string): Promise<void>;
+  deleteSessionFile(sessionFile: string, id?: string | null): Promise<void>;
+  renameSession(id: string, title: string, titleSource?: OpenSessionState['titleSource']): Promise<void>;
+  updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
+  forkSessionAt(openSession: OpenSessionState, atEntryId: string): Promise<{ sessionFile: string; sessionId: string } | null>;
+  purgeDeletedSessionFiles(): Promise<number>;
+  purgeExpiredDeletedSessionFiles(): Promise<number>;
+  readonly sessionRecovery: SessionRecoveryPort;
+}
+
+export interface WorkspaceFacade {
+  app: App;
+  ensureWorkspaceServices(): Promise<PiviPluginWorkspace>;
+  getAllViews(): PiviChatView[];
+  refreshPiviManagement(domain: 'mcp' | 'skills' | 'commands' | 'prompt'): Promise<readonly PiviManagementRefreshFailure[]>;
+}
+
+export interface IntegrationsFacade {
+  app: App;
+  settings: PiviSettings;
+  readonly manifest: { readonly id: string };
+  getUiFacades(): PiviUiFacades;
+  ensureWorkspaceServices(): Promise<PiviPluginWorkspace>;
+  addEditorSelectionToChatInput(editor: Editor, markdownView: MarkdownView): Promise<void>;
+}
+
+export type SettingsFacade = PiviSettingsHost;
+
+export interface PiviApplicationFacades {
+  chat: ChatFacade;
+  sessions: SessionsFacade;
+  workspace: WorkspaceFacade;
+  integrations: IntegrationsFacade;
+  settings: SettingsFacade;
+}

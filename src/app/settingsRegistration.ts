@@ -1,8 +1,14 @@
-import { PiviSettingTabHost } from "@/app/ui/PiviSettingTabHost";
-import type PiviPlugin from "@/main"
+import type { Plugin } from "obsidian";
 
-export function registerPiviSettings(plugin: PiviPlugin): void {
+import type { SettingsFacade, WorkspaceFacade } from "@/app/hostContracts";
+import { PiviSettingTabHost } from "@/app/ui/PiviSettingTabHost";
+
+export function registerPiviSettings(
+  plugin: Plugin,
+  settings: SettingsFacade,
+  workspace: WorkspaceFacade,
+): void {
   plugin.addSettingTab(
-    new PiviSettingTabHost(plugin.app, plugin, () => plugin.ensureWorkspaceServices()),
+    new PiviSettingTabHost(plugin.app, plugin, settings, () => workspace.ensureWorkspaceServices()),
   );
 }

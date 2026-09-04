@@ -90,7 +90,7 @@ describe('chat command registration', () => {
     } as unknown as PiviChatViewCommands));
     const { commands, plugin } = createPlugin();
 
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
     const newSession = commands.find(command => command.id === 'new-session');
     const closeTab = commands.find(command => command.id === 'close-current-tab');
 
@@ -108,7 +108,7 @@ describe('chat command registration', () => {
   it('disables session commands when there is no mounted capable view', () => {
     const { commands, plugin } = createPlugin();
     jest.mocked(findPiviView).mockReturnValue(null);
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     expect(commands.find(command => command.id === 'new-session')
       ?.checkCallback?.(true)).toBe(false);
@@ -119,7 +119,7 @@ describe('chat command registration', () => {
   it('registers selection-based chat and inline edit commands', () => {
     const { commands, plugin } = createPlugin();
 
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     expect(commands.map(command => command.id)).toContain(
       'add-selection-to-chat-input',
@@ -144,7 +144,7 @@ describe('chat command registration', () => {
   it('registers explicit development trace lifecycle commands', () => {
     const { commands, plugin } = createPlugin();
 
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     expect(commands.map(command => command.id)).toEqual(expect.arrayContaining([
       'debug-start-chat-performance-trace',
@@ -177,7 +177,7 @@ describe('chat command registration', () => {
       }),
     });
     const { commands, plugin } = createPlugin();
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     commands.find(command => command.id === 'debug-run-100kb-markdown-stream')?.callback?.();
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -208,7 +208,7 @@ describe('chat command registration', () => {
     });
     const { commands, perfController, plugin } = createPlugin();
     perfController.enabled = false;
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     commands.find(command => command.id === 'debug-run-20-subagents-workload')
       ?.callback?.();
@@ -242,7 +242,7 @@ describe('chat command registration', () => {
       }),
     });
     const { commands, plugin } = createPlugin();
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     commands.find(command => command.id === 'debug-run-tab-switching-workload')?.callback?.();
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -277,7 +277,7 @@ describe('chat command registration', () => {
     perfController.stopAndExport
       .mockResolvedValueOnce('.pivi/perf-traces/cold.json')
       .mockResolvedValueOnce('.pivi/perf-traces/older.json');
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     commands.find(command => command.id === 'debug-run-indexed-session-paging-workload')
       ?.callback?.();
@@ -301,7 +301,7 @@ describe('chat command registration', () => {
     const { commands, perfController, plugin } = createPlugin();
     plugin.app.vault.adapter.exists.mockResolvedValue(true);
     plugin.app.vault.adapter.read.mockResolvedValue('5k-cold-open\n');
-    registerPiviCommands(plugin as never);
+    registerPiviCommands(plugin as never, plugin as never);
 
     commands.find(command => command.id === 'debug-start-chat-performance-trace')?.callback?.();
     await new Promise(resolve => setTimeout(resolve, 0));

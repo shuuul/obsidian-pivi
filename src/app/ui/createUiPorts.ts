@@ -40,7 +40,7 @@ import {
   PIVI_VERSION,
 } from '@/app/pluginIdentity';
 
-import { type ChatUiCompositionHost } from './chatUiCompositionHost';
+import { type ChatUiCompositionHost, type ChatUiSessionHost } from './chatUiCompositionHost';
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
 import { createSettingsPromptPort } from './createSettingsPromptPort';
@@ -69,10 +69,11 @@ import {
   openHotkeySettings,
   SETTINGS_HOTKEY_ROWS,
 } from './settingsHotkeys';
-export type { ChatUiCompositionHost } from './chatUiCompositionHost';
+export type { ChatUiCompositionHost, ChatUiSessionHost } from './chatUiCompositionHost';
 const logger = new PluginLogger('UiPorts');
 export function createChatUiPorts(
   host: ChatUiCompositionHost,
+  sessions: ChatUiSessionHost,
   workspace: PiviPluginWorkspace | null,
 ): ChatPorts {
   const ws = () => requireWorkspace(workspace);
@@ -144,20 +145,20 @@ export function createChatUiPorts(
       createAuxQueryRunner: () => host.createAuxQueryRunner(),
     },
     sessions: {
-      listSessions: () => host.getSessionList(),
-      findOpenSession: (id) => host.getOpenSessionSync(id),
-      getOpenSession: (id) => host.getOpenSessionById(id),
-      openRecent: (id, limit) => host.openRecentSessionMessages(id, limit),
+      listSessions: () => sessions.getSessionList(),
+      findOpenSession: (id) => sessions.getOpenSessionSync(id),
+      getOpenSession: (id) => sessions.getOpenSessionById(id),
+      openRecent: (id, limit) => sessions.openRecentSessionMessages(id, limit),
       readOlder: (id, beforeEntryId, limit) => (
-        host.readOlderSessionMessages(id, beforeEntryId, limit)
+        sessions.readOlderSessionMessages(id, beforeEntryId, limit)
       ),
-      createSession: (options) => host.createOpenSession(options),
-      openSessionFile: (sessionFile) => host.openSessionByFile(sessionFile),
-      deleteSession: (id) => host.deleteSession(id),
-      deleteSessionFile: (file, id) => host.deleteSessionFile(file, id),
-      renameSession: (id, title, titleSource) => host.renameSession(id, title, titleSource),
-      updateSession: (id, updates) => host.updateSession(id, updates),
-      forkSession: (openSession, atEntryId) => host.forkSessionAt(openSession, atEntryId),
+      createSession: (options) => sessions.createOpenSession(options),
+      openSessionFile: (sessionFile) => sessions.openSessionByFile(sessionFile),
+      deleteSession: (id) => sessions.deleteSession(id),
+      deleteSessionFile: (file, id) => sessions.deleteSessionFile(file, id),
+      renameSession: (id, title, titleSource) => sessions.renameSession(id, title, titleSource),
+      updateSession: (id, updates) => sessions.updateSession(id, updates),
+      forkSession: (openSession, atEntryId) => sessions.forkSessionAt(openSession, atEntryId),
     },
     catalog: {
       listMcpServers: () => ws().mcpServerManager.getServers(),

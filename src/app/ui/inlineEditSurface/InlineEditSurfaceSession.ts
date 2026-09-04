@@ -8,7 +8,7 @@ import {
 import type { ComposerOptionSnapshot } from '@pivi/pivi-react/store';
 import { Component, type Editor } from 'obsidian';
 
-import type { PiviPluginHost, PiviPluginWorkspace } from '@/app/hostContracts';
+import type { IntegrationsFacade, PiviPluginWorkspace } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
 import { applyInlineEditAcceptance } from '@/app/ui/inlineEditHelpers';
@@ -63,7 +63,7 @@ import type {
 let nextInlineEditSurfaceSessionId = 1;
 
 export interface InlineEditSurfaceSessionDeps {
-  plugin: PiviPluginHost;
+  plugin: IntegrationsFacade;
   i18n: MountInlineEditSurfaceChromeOptions['i18n'];
   platform: MountInlineEditSurfaceChromeOptions['platform'];
   composerDefaults: InlineEditComposerDefaults;

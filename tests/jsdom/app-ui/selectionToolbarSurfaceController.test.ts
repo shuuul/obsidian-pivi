@@ -194,7 +194,7 @@ function createController({
     })),
   };
 
-  return new SelectionToolbarSurfaceController(plugin as never);
+  return new SelectionToolbarSurfaceController(plugin as never, jest.fn());
 }
 
 describe('SelectionToolbarSurfaceController inline edit guards', () => {
