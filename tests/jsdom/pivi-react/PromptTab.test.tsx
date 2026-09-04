@@ -261,10 +261,17 @@ describe('React prompt settings', () => {
     const draftTitle = screen.getByText('New module').closest('.pivi-settings-card') as HTMLElement;
     expect(draftTitle).toHaveClass('is-open');
     expect(screen.queryByRole('button', { name: 'Reorder New module, currently position 3' })).not.toBeInTheDocument();
+    const cancel = within(draftTitle).getByRole('button', { name: 'Cancel' });
+    const save = within(draftTitle).getByRole('button', { name: 'Save' });
+    expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(cancel);
+    expect(screen.queryByText('New module')).not.toBeInTheDocument();
 
-    fireEvent.change(within(draftTitle).getAllByRole('textbox')[0]!, { target: { value: 'Gamma' } });
-    fireEvent.change(within(draftTitle).getAllByRole('textbox')[1]!, { target: { value: 'Gamma body' } });
-    fireEvent.click(within(draftTitle).getByRole('button', { name: 'Save' }));
+    fireEvent.click(add);
+    const reopened = screen.getByText('New module').closest('.pivi-settings-card') as HTMLElement;
+    fireEvent.change(within(reopened).getAllByRole('textbox')[0]!, { target: { value: 'Gamma' } });
+    fireEvent.change(within(reopened).getAllByRole('textbox')[1]!, { target: { value: 'Gamma body' } });
+    fireEvent.click(within(reopened).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(screen.getByText('Gamma')).toBeInTheDocument());
     expect(screen.queryByText('No custom modules yet. Add one to append it after workflow modules.')).not.toBeInTheDocument();
 

@@ -34,6 +34,7 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const [bootstrapInfo] = useState(() => models.bootstrap());
   const [settings, setSettings] = useState(() => models.getSettings());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
+  const [draftProviderIds, setDraftProviderIds] = useState<ReadonlySet<string>>(() => new Set());
   const [reorderPending, setReorderPending] = useState(false);
   const [credentialCheckPending, setCredentialCheckPending] = useState(true);
   const initialCredentialCheck = useRef(true);
@@ -111,24 +112,64 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   };
 
   const onProviderAdded = (providerId: string): void => {
+    setDraftProviderIds(current => new Set(current).add(providerId));
     toggleExpanded(providerId, true);
     reload();
   };
 
+  const confirmDraft = (providerId: string): void => {
+    setDraftProviderIds(current => {
+      const next = new Set(current);
+      next.delete(providerId);
+      return next;
+    });
+  };
+
+  const cancelDraft = (providerId: string): void => {
+    void models.removeProvider(providerId, false)
+      .then(() => {
+        confirmDraft(providerId);
+        setExpanded(current => {
+          const next = new Set(current);
+          next.delete(providerId);
+          return next;
+        });
+        setSettings(current => ({
+          ...current,
+          addedProviders: current.addedProviders.filter(id => id !== providerId),
+          disabledProviders: current.disabledProviders.filter(id => id !== providerId),
+        }));
+      })
+      .catch((cause: unknown) => {
+        feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+      });
+  };
+
+  const committedProviders = settings.addedProviders.filter(id => !draftProviderIds.has(id));
   const reorder = useSortableReorder<string, HTMLElement>({
-    order: settings.addedProviders,
-    disabled: reorderPending,
+    order: committedProviders,
+    disabled: reorderPending || committedProviders.length < 2,
     itemSelector: '[data-settings-sort-id]',
     itemDataKey: 'settingsSortId',
-    setOrder: addedProviders => { setSettings(current => ({ ...current, addedProviders })); },
+    setOrder: addedProviders => {
+      setSettings(current => ({
+        ...current,
+        addedProviders: [
+          ...addedProviders,
+          ...current.addedProviders.filter(id => draftProviderIds.has(id)),
+        ],
+      }));
+    },
     commitOrder: async (addedProviders, originalOrder) => {
+      const drafts = settings.addedProviders.filter(id => draftProviderIds.has(id));
+      const next = [...addedProviders, ...drafts];
       setReorderPending(true);
       try {
-        await models.saveSettings({ addedProviders });
+        await models.saveSettings({ addedProviders: next });
         reload();
         return true;
       } catch (cause) {
-        setSettings(current => ({ ...current, addedProviders: [...originalOrder] }));
+        setSettings(current => ({ ...current, addedProviders: [...originalOrder, ...drafts] }));
         feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
         return false;
       } finally {
@@ -174,20 +215,23 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
             />
           )}
         >
-          {settings.addedProviders.map((providerId, index) => (
+          {settings.addedProviders.map((providerId, index) => {
+            const isDraft = draftProviderIds.has(providerId);
+            const committedIndex = committedProviders.indexOf(providerId);
+            return (
             <ProviderCard
               key={providerId}
               models={models}
               feedback={feedback}
               catalog={catalog}
               providerId={providerId}
-              position={index + 1}
+              position={committedIndex >= 0 ? committedIndex + 1 : index + 1}
               settings={settings}
               expanded={expanded.has(providerId)}
               pending={reorderPending}
-              dragging={reorder.draggingId === providerId}
-              dragOffset={reorder.draggingId === providerId ? reorder.dragOffset : 0}
-              dropIndicatorEdge={reorder.dropIndicator?.id === providerId
+              dragging={!isDraft && reorder.draggingId === providerId}
+              dragOffset={!isDraft && reorder.draggingId === providerId ? reorder.dragOffset : 0}
+              dropIndicatorEdge={!isDraft && reorder.dropIndicator?.id === providerId
                 ? reorder.dropIndicator.edge
                 : undefined}
               reorderHandleProps={reorder.getHandleProps(providerId)}
@@ -196,16 +240,21 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
               save={save}
               onChanged={reload}
               onRemoved={() => {
+                confirmDraft(providerId);
                 setSettings(current => ({
                   ...current,
                   addedProviders: current.addedProviders.filter(id => id !== providerId),
                   disabledProviders: current.disabledProviders.filter(id => id !== providerId),
                 }));
               }}
+              isDraft={draftProviderIds.has(providerId)}
+              onCancelDraft={() => { cancelDraft(providerId); }}
+              onConfirmDraft={() => { confirmDraft(providerId); }}
               onError={(message) => feedback.notify(message)}
               credentialCheckPending={credentialCheckPending}
             />
-          ))}
+            );
+          })}
         </SettingsCollection>
       </SettingsSection>
     </SettingsPage>

@@ -33,6 +33,9 @@ export interface ProviderCardProps {
   readonly save: (patch: Parameters<SettingsModelsPort['saveSettings']>[0]) => Promise<void>;
   readonly onChanged: () => void;
   readonly onRemoved?: () => void;
+  readonly onCancelDraft?: () => void;
+  readonly onConfirmDraft?: () => void;
+  readonly isDraft?: boolean;
   readonly onError: (message: string) => void;
   readonly credentialCheckPending?: boolean;
 }
@@ -56,6 +59,9 @@ export function ProviderCard({
   save,
   onChanged,
   onRemoved,
+  onCancelDraft,
+  onConfirmDraft,
+  isDraft = false,
   onError,
   credentialCheckPending = false,
 }: ProviderCardProps) {
@@ -206,38 +212,60 @@ export function ProviderCard({
               : t('settings.modelsTab.disableAria', { name: displayName })}
             onChange={toggleDisabled}
           />
-          <SettingsRemoveButton
-            ariaLabel={t('settings.modelsTab.removeAria', { name: displayName })}
-            confirming={confirmingRemove}
-            onConfirmingChange={(next) => {
-              setDeleteCredential(false);
-              setConfirmingRemove(next);
-              if (next) onToggleExpanded(providerId, true);
-            }}
-            onClick={(event) => {
-              stop(event);
-              confirmRemove();
-            }}
-          />
+          {isDraft
+            ? null
+            : (
+              <SettingsRemoveButton
+                ariaLabel={t('settings.modelsTab.removeAria', { name: displayName })}
+                confirming={confirmingRemove}
+                onConfirmingChange={(next) => {
+                  setDeleteCredential(false);
+                  setConfirmingRemove(next);
+                  if (next) onToggleExpanded(providerId, true);
+                }}
+                onClick={(event) => {
+                  stop(event);
+                  confirmRemove();
+                }}
+              />
+            )}
         </>
       )}
-      open={expanded}
-      onToggle={() => { onToggleExpanded(providerId); }}
-      sortId={providerId}
-      sortableHandleProps={pending ? undefined : reorderHandleProps}
+      open={isDraft || expanded}
+      onToggle={() => { if (!isDraft) onToggleExpanded(providerId); }}
+      sortId={isDraft ? undefined : providerId}
+      sortableHandleProps={pending || isDraft ? undefined : reorderHandleProps}
       consumeClickAfterDrag={suppressReorderClick}
       dragging={dragging}
       dragOffset={dragOffset}
       dropIndicatorEdge={dropIndicatorEdge}
-      reorderLabel={t('settings.webSearch.reorder.handle', { provider: displayName, position })}
+      reorderLabel={isDraft ? undefined : t('settings.webSearch.reorder.handle', { provider: displayName, position })}
+      onSave={() => {
+        onConfirmDraft?.();
+        onToggleExpanded(providerId, false);
+      }}
       footerActions={(
-        <button
-          type="button"
-          disabled={testing}
-          onClick={() => { void testProvider(); }}
-        >
-          {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
-        </button>
+        <>
+          {isDraft && onCancelDraft
+            ? (
+              <button
+                type="button"
+                disabled={testing || removing}
+                onClick={onCancelDraft}
+              >
+                {t('common.cancel')}
+              </button>
+            )
+            : (
+              <button
+                type="button"
+                disabled={testing}
+                onClick={() => { void testProvider(); }}
+              >
+                {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
+              </button>
+            )}
+        </>
       )}
     >
       {confirmingRemove ? (

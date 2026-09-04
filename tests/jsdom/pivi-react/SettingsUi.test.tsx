@@ -510,6 +510,54 @@ describe('React settings foundation', () => {
     expect(screen.getAllByText('Added')).toHaveLength(2);
     expect(screen.getByText('API').nextElementSibling).toHaveTextContent('Anthropic');
   });
+  it('cancels a newly added provider draft from the footer without leaving it in the list', async () => {
+    const modelSettings = {
+      addedProviders: [] as string[],
+      disabledProviders: [] as string[],
+      customProviders: [] as never[],
+      visibleModels: [] as never[],
+      availableModes: [] as never[],
+      discoveredModels: [] as never[],
+      environmentVariables: '',
+      selectedMode: '',
+    };
+    const addBuiltinProvider = jest.fn(async (providerId: string) => {
+      modelSettings.addedProviders = [...modelSettings.addedProviders, providerId];
+      modelSettings.disabledProviders = [...modelSettings.disabledProviders, providerId];
+    });
+    const removeProvider = jest.fn(async (providerId: string) => {
+      modelSettings.addedProviders = modelSettings.addedProviders.filter(id => id !== providerId);
+      modelSettings.disabledProviders = modelSettings.disabledProviders.filter(id => id !== providerId);
+    });
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        ...modelSettings,
+        addedProviders: [...modelSettings.addedProviders],
+        disabledProviders: [...modelSettings.disabledProviders],
+      }),
+      listAddableBuiltinProviders: () => [{ id: 'anthropic', name: 'Anthropic', logoSlug: null }],
+      addBuiltinProvider,
+      removeProvider,
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByRole('button', { name: '+ Add provider' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Anthropic' }));
+    await act(async () => undefined);
+
+    const draft = screen.getByText('anthropic', { selector: '.pivi-settings-card__name' }).closest('.pivi-settings-card') as HTMLElement;
+    expect(draft).toHaveClass('is-open');
+    expect(within(draft).queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument();
+    const footer = draft.querySelector('.pivi-settings-card__footer') as HTMLElement;
+    const cancel = within(footer).getByRole('button', { name: 'Cancel' });
+    const save = within(footer).getByRole('button', { name: 'Save' });
+    expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(cancel);
+    await act(async () => undefined);
+
+    expect(removeProvider).toHaveBeenCalledWith('anthropic', false);
+    expect(screen.queryByText('anthropic', { selector: '.pivi-settings-card__name' })).not.toBeInTheDocument();
+  });
   it('reorders model providers with the keyboard while retaining provider icons', async () => {
     const modelSettings = {
       addedProviders: ['openai', 'anthropic'],

@@ -69,6 +69,19 @@ describe('React MCP settings', () => {
     expect(screen.getByRole('checkbox', { name: 'Enable MCP server remote' })).toBeInTheDocument();
   });
 
+  it('cancels an MCP draft from the footer without saving', async () => {
+    const { ports, getServers } = makePorts();
+    await openMcp(ports);
+    fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' }));
+    const draft = screen.getByText('Add MCP server').closest('.pivi-settings-card') as HTMLElement;
+    const cancel = within(draft).getByRole('button', { name: 'Cancel' });
+    const save = within(draft).getByRole('button', { name: 'Save' });
+    expect(cancel.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(cancel);
+    expect(screen.queryByText('Add MCP server')).not.toBeInTheDocument();
+    expect(getServers()).toHaveLength(0);
+  });
+
   it('validates, creates, edits, and deletes MCP servers', async () => {
     const { ports, mcp, getServers } = makePorts(); await openMcp(ports);
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' })); fireEvent.click(screen.getByRole('button', { name: 'Save' }));
