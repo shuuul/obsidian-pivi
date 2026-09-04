@@ -287,7 +287,7 @@ describe('EditorToolbarSection', () => {
     expect(store.getSnapshot().general.editorSelectionToolbar.shortcuts).toHaveLength(0);
   });
 
-  it('shows the complete curated catalog and disables unavailable commands', () => {
+  it('shows the complete curated catalog and disables unavailable commands', async () => {
     const store = new SettingsUiStore({
       ...snapshot,
       general: {
@@ -315,6 +315,7 @@ describe('EditorToolbarSection', () => {
         />
       </I18nProvider>,
     ));
+    await act(async () => undefined);
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add editor command' }));
 
@@ -325,7 +326,7 @@ describe('EditorToolbarSection', () => {
     expect(screen.getByRole('option', { name: /editor:toggle-italics.*Command not registered/ })).toBeDisabled();
   });
 
-  it('announces when the Obsidian command picker truncates results', () => {
+  it('announces when the Obsidian command picker truncates results', async () => {
     const store = new SettingsUiStore(snapshot);
     const hostCommands = Array.from({ length: 120 }, (_, index) => ({
       id: `workspace:command-${index}`,
@@ -345,6 +346,7 @@ describe('EditorToolbarSection', () => {
         />
       </I18nProvider>,
     ));
+    await act(async () => undefined);
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add Obsidian command' }));
 
@@ -599,7 +601,7 @@ describe('EditorToolbarSection', () => {
     expect(screen.getByText('Toggle fold').closest('.pivi-settings-card')).toBeNull();
   });
 
-  it('hides shortcut controls when the toolbar is disabled', () => {
+  it('hides shortcut controls when the toolbar is disabled', async () => {
     const saveEditorSelectionToolbar = jest.fn(async () => undefined);
     const store = new SettingsUiStore({
       ...snapshot,
@@ -620,6 +622,7 @@ describe('EditorToolbarSection', () => {
         />
       </I18nProvider>,
     ));
+    await act(async () => undefined);
 
     expect(screen.queryByRole('button', { name: '+ Add Pivi command' })).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Enable selection toolbar' })).not.toBeChecked();

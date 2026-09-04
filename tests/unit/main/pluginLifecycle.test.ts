@@ -11,6 +11,10 @@ const mockListSessions = jest.fn();
 const mockSetupNoteToolbarIntegration = jest.fn();
 const mockCreatePluginServiceGraph = jest.fn();
 
+jest.mock("@pivi/agent/skills/vault/ensureDefaultVaultSkills", () => ({
+  ensureDefaultVaultSkills: jest.fn(async () => undefined),
+}));
+
 jest.mock("@pivi/obsidian-host", () => {
   const actual = jest.requireActual<typeof import("@pivi/obsidian-host")>(
     "@pivi/obsidian-host",

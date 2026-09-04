@@ -9,3 +9,10 @@ Choose the route that matches the request:
 - **Security vulnerabilities:** report privately through [GitHub Security Advisories](https://github.com/shuuul/obsidian-pivi/security/advisories/new), as described in [SECURITY.md](SECURITY.md). Never include secrets or unfixed vulnerability details in a public issue.
 
 Support is community-maintained and response times are not guaranteed. Check the [platform support matrix](docs/platform-support.md) before reporting a platform-specific problem.
+
+## Support development
+
+Financial support is optional and does not buy feature priority or guaranteed support:
+
+- [Patreon](https://www.patreon.com/shuuul) offers recurring membership from US$3 per month. Existing members can increase their recurring payment to a custom amount in their Patreon membership settings.
+- [Afdian](https://afdian.com/a/shuuul) provides an additional support route.

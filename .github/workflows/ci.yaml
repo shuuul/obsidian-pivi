@@ -24,6 +24,25 @@ jobs:
       - name: Quality gates
         uses: ./.github/actions/quality-gates
 
+      - name: Check out pull request base for bundle comparison
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .bundle-base
+
+      - name: Install pull request base dependencies
+        if: github.event_name == 'pull_request'
+        working-directory: .bundle-base
+        run: npm ci
+
+      - name: Generate pull request bundle report
+        if: github.event_name == 'pull_request'
+        run: |
+          npm run analyze:bundle -- --project .bundle-base --output metafile-base.json
+          npm run analyze:bundle -- --output metafile-current.json
+          node scripts/bundle-report.mjs --base metafile-base.json --current metafile-current.json >> "$GITHUB_STEP_SUMMARY"
+
   platform-security:
     name: Platform security (${{ matrix.os }})
     runs-on: ${{ matrix.os }}

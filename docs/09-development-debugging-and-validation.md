@@ -35,7 +35,7 @@ npm run test -- --runInBand tests/unit/engine-pi/runtime/piBackgroundSubagentJob
 npm run test -- -t "test name"
 ```
 
-`scripts/run-jest.js` supplies the Node local-storage file and repository setup. Direct Jest invocation can produce misleading failures.
+`scripts/run-jest.js` supplies the Node local-storage file and repository setup. Direct Jest invocation can produce misleading failures. Shared setup fails the owning test on unexpected `console.warn` or `console.error`; tests for intentional recovery/degradation logs must mock and assert that call locally. React tests must await state-producing effects inside `act` rather than suppressing the warning.
 
 `check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and the existing package dependency rules prevent `@pivi/agent` from depending on `@pivi/engine-pi` or concrete host/tool adapters. `check:docs-contracts` keeps current capability claims aligned with `docs/capabilities.json` while allowing historical records and negative compatibility statements. `check:package-readmes` keeps package API claims aligned with those exports.
 
@@ -111,13 +111,13 @@ npm run build && \
 npm run check:bundle-size
 ```
 
-CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Release publication is a maintainer-pushed annotated tag (`x.y.z`, no leading `v`) after a `chore(release): prepare x.y.z` commit that already contains the matching `CHANGELOG.md` section and synced Obsidian metadata; the tag workflow then runs the same shared quality-gate action (dependency audit, typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. See [Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md). Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
+CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Pull requests also build production metafiles from their exact base and head, then append a non-blocking bundle report to the job summary. Release publication is a maintainer-pushed annotated tag (`x.y.z`, no leading `v`) after a `chore(release): prepare x.y.z` commit that already contains the matching `CHANGELOG.md` section and synced Obsidian metadata; the tag workflow then runs the same shared quality-gate action (dependency audit, typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. See [Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md). Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
 
 Before bumping `@earendil-works/pi-*`, keep the three packages on one exact version, update every `upstreamVersion` in `packages/engine-pi/compatibility-manifest.json`, run `npm run test:pi-compat`, and keep both Pi checks green. The manifest records why each upstream-shape-dependent adaptation exists, its tests, its removal condition, and issue [#113](https://github.com/shuuul/obsidian-pivi/issues/113). A weekly informational canary tests the newest synchronized stable Pi release in an ephemeral runner and updates one marker-backed comment on that issue; it never changes the repository or replaces review of an actual dependency bump. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
 
 ## Bundle and CSS analysis
 
-`npm run analyze:bundle` writes `metafile.json` from the same shared build options used for production. Compare measured inputs and `bytesInOutput` before making bundle-size claims. Keep benchmark/build conditions and dependency versions in the conclusion.
+`npm run analyze:bundle` writes `metafile.json` from the same shared build options used for production. PR CI uses `--project` and `--output` to compare the exact base/head checkouts and reports total delta, the 20 largest current inputs with their deltas, and the embedded Skills CLI gzip bytes. Growth above 100 KiB or 2% produces a review warning without failing CI; `npm run check:bundle-size` independently enforces the 5 MiB hard ceiling. Compare measured inputs and `bytesInOutput` before making bundle-size claims. Keep benchmark/build conditions and dependency versions in the conclusion.
 
 `npm run build:css` concatenates the explicit style manifest and validates missing imports and forbidden declarations. Do not rely on component import order or `!important` to fix ownership conflicts.
 

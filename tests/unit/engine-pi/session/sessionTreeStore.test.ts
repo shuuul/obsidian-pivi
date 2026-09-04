@@ -42,6 +42,7 @@ const toolResult = {
 
 describe('SessionTreeStore', () => {
   it('skips an oversized journal intent without blocking the authoritative append path', () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-large-journal-intent-'));
     const sessionFile = path.join(root, '.pivi', 'sessions', 'session.jsonl');
     fs.mkdirSync(path.dirname(sessionFile), { recursive: true });
@@ -79,6 +80,7 @@ describe('SessionTreeStore', () => {
         .toBe('user-1');
       expect(manager.appendMessage).toHaveBeenCalledTimes(1);
       expect(journalState.entries).toHaveLength(0);
+      expect(warning).toHaveBeenCalledTimes(2);
     } finally {
       bindSessionJournal(null);
       fs.rmSync(root, { recursive: true, force: true });
@@ -86,6 +88,7 @@ describe('SessionTreeStore', () => {
   });
 
   it('continues the authoritative append when journal storage fails', () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-failed-journal-intent-'));
     const sessionFile = path.join(root, '.pivi', 'sessions', 'session.jsonl');
     fs.mkdirSync(path.dirname(sessionFile), { recursive: true });
@@ -120,6 +123,7 @@ describe('SessionTreeStore', () => {
     try {
       expect(store.appendUserMessage('still append')).toBe('user-1');
       expect(manager.appendMessage).toHaveBeenCalledTimes(1);
+      expect(warning).toHaveBeenCalledTimes(2);
     } finally {
       bindSessionJournal(null);
       fs.rmSync(root, { recursive: true, force: true });

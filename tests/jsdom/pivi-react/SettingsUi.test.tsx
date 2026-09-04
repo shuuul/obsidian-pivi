@@ -481,7 +481,7 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalledWith({ visibleModels: ['openai/gpt'] });
   });
-  it('orders Local, OAuth, API, and Custom API groups and keeps added OAuth providers visible', () => {
+  it('orders Local, OAuth, API, and Custom API groups and keeps added OAuth providers visible', async () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       getSettings: () => ({ addedProviders: ['openai-codex', 'grok-build'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
@@ -498,6 +498,7 @@ describe('React settings foundation', () => {
       }[id] ?? id),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add provider' }));
 
@@ -607,12 +608,13 @@ describe('React settings foundation', () => {
     expect(screen.getByRole('button', { name: /Reorder openai, currently position 1/ })).toBeInTheDocument();
     expect(ports.feedback.notify).toHaveBeenCalledWith('Unable to save provider order');
   });
-  it('renders credential guidance with injected host terminology', () => {
+  it('renders credential guidance with injected host terminology', async () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       bootstrap: () => ({ minimumHostVersion: '2.0.0', secureStorageAvailable: false }),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
     expect(screen.getByText(/Test host 2\.0\.0 or newer with secure storage/)).toBeInTheDocument();
     expect(screen.getByText(/stored in secure storage/)).toBeInTheDocument();
   });
@@ -645,13 +647,14 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(loginProviderOAuth).toHaveBeenCalledWith('openai-codex', expect.any(Function));
   });
-  it('keeps Codex actions below the sign-in guidance', () => {
+  it('keeps Codex actions below the sign-in guidance', async () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       hasProviderOAuth: () => true,
       getSettings: () => ({ addedProviders: ['openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
     fireEvent.click(screen.getByText('openai-codex', { selector: '.pivi-settings-card__name' }));
 
     const codexSetting = container.querySelector<HTMLElement>('.pivi-provider-oauth-setting');
@@ -777,7 +780,7 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(loginProviderOAuth).toHaveBeenCalledWith('grok-build', expect.any(Function));
   });
-  it('lists Grok Build models under the Grok Build provider identity', () => {
+  it('lists Grok Build models under the Grok Build provider identity', async () => {
     const listModelsForProvider = jest.fn((providerId: string) => (
       providerId === 'grok-build'
         ? [{ value: 'grok-build/grok-4.5', label: 'Grok 4.5', description: 'Standard model' }]
@@ -799,6 +802,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
     fireEvent.click(screen.getByText('Grok Build', { selector: '.pivi-settings-card__name' }));
     expect(listModelsForProvider).toHaveBeenCalledWith('grok-build');
     expect(screen.getByText('Grok 4.5')).toBeInTheDocument();
@@ -822,6 +826,7 @@ describe('React settings foundation', () => {
       getProviderEnvInfo: () => ({ apiKeyVar: 'ANTHROPIC_API_KEY', oauthVar: 'ANTHROPIC_OAUTH_TOKEN' }),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
     fireEvent.click(screen.getByText('Anthropic'));
     expect(container.querySelector('.pivi-cred-row')).not.toBeNull();
     expect(screen.queryByText('OAuth token')).toBeNull();
@@ -850,7 +855,7 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(loginProviderOAuth).toHaveBeenCalledWith('claude', expect.any(Function));
   });
-  it('lists Claude models under the Claude provider identity', () => {
+  it('lists Claude models under the Claude provider identity', async () => {
     const listModelsForProvider = jest.fn((providerId: string) => (
       providerId === 'claude'
         ? [{ value: 'claude/claude-sonnet-4-6', label: 'Claude Sonnet 4.6', description: 'Standard model' }]
@@ -872,6 +877,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'claude' ? 'Claude' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
     fireEvent.click(screen.getByText('Claude', { selector: '.pivi-settings-card__name' }));
     expect(listModelsForProvider).toHaveBeenCalledWith('claude');
     expect(screen.getByText('Claude Sonnet 4.6')).toBeInTheDocument();
@@ -1163,7 +1169,7 @@ describe('React settings foundation', () => {
       { thinkingFormatOverride: 'zai' },
     );
   });
-  it('places optional local API key directly below Base URL without an authentication section', () => {
+  it('places optional local API key directly below Base URL without an authentication section', async () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       getSettings: () => ({
@@ -1186,6 +1192,7 @@ describe('React settings foundation', () => {
       }),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
     fireEvent.click(screen.getByText('Ollama'));
     const card = screen.getByText('Ollama').closest<HTMLElement>('.pivi-settings-card');
     expect(card).not.toBeNull();
@@ -1301,7 +1308,7 @@ describe('React settings foundation', () => {
     expect(screen.queryByText('Example skill removed.')).not.toBeInTheDocument();
   });
 
-  it('shows Get API key links for cloud providers and download links for local runtimes', () => {
+  it('shows Get API key links for cloud providers and download links for local runtimes', async () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       getSettings: () => ({
@@ -1324,6 +1331,7 @@ describe('React settings foundation', () => {
       getProviderDisplayName: (id: string) => (id === 'openai' ? 'OpenAI' : id),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
 
     fireEvent.click(screen.getByText('OpenAI'));
     const apiKeyLink = screen.getByRole('link', { name: 'Get API key at platform.openai.com' });

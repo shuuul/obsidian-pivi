@@ -293,6 +293,7 @@ Explain this: {{selected_text}}`,
   });
 
   it('shadows reserved workspace files without reading or mutating their bytes', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const reservedBytes = new Map([...RESERVED_COMMAND_IDS].map(id => [
       `.pivi/commands/${id}.md`,
       `legacy bytes for ${id}`,
@@ -310,6 +311,7 @@ Explain this: {{selected_text}}`,
       expect(store.files.get(path)).toBe(bytes);
       expect(dropdown.filter(entry => entry.id === commandId(path))).toHaveLength(1);
     }
+    expect(warning).toHaveBeenCalledTimes(RESERVED_COMMAND_IDS.size);
   });
 
   it.each([...RESERVED_COMMAND_IDS])('rejects reserved /%s from Settings and Agent writes', async (id) => {
@@ -672,6 +674,7 @@ Explain this: {{selected_text}}`,
   });
 
   it("does not load removal artifacts as commands and ignores them in the vault watcher", async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const handlers = new Map<string, (...args: unknown[]) => void>();
     (mockPlugin.app.vault.on as jest.Mock).mockImplementation((event: string, handler: (...args: unknown[]) => void) => {
       handlers.set(event, handler);
@@ -697,6 +700,7 @@ Explain this: {{selected_text}}`,
     createHandler?.({ path: ".pivi/commands/explain.md.remove-stale" });
     await Promise.resolve();
     expect((store.adapter.listFiles as jest.Mock).mock.calls.length).toBe(listCallsBefore);
+    expect(error).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -9,6 +9,10 @@ import {
 import { runDeviceLocalProviderMigration } from '@/app/settings/deviceLocalProviderMigration';
 import { createMockApp } from '../../../helpers/mockApp';
 
+jest.mock('@pivi/agent/skills/vault/ensureDefaultVaultSkills', () => ({
+  ensureDefaultVaultSkills: jest.fn(async () => undefined),
+}));
+
 function createMemoryAdapter(initialContent?: string): FileStore & { writes: string[] } {
   let content = initialContent;
   const adapter = {
@@ -189,6 +193,7 @@ describe('device local provider migration coordinator', () => {
   });
 
   it('retains local state when synced strip save fails after local commit', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const app = createMockApp();
     const adapter = createMemoryAdapter();
     const store = new ObsidianDeviceLocalProviderStore(app);
@@ -208,6 +213,10 @@ describe('device local provider migration coordinator', () => {
     expect(store.isInitialized()).toBe(true);
     expect(result.settings.model).toBe('deepseek/deepseek-chat');
     expect(adapter.writes).toHaveLength(0);
+    expect(warning).toHaveBeenCalledWith(
+      '[Pivi:DeviceLocalProviderMigration] Device-local provider state committed, but synced settings save failed',
+      'synced save failed',
+    );
   });
 
   it('aborts cutover when local state write fails', async () => {

@@ -14,6 +14,10 @@ import {
 import { runDeviceLocalProviderMigration } from '@/app/settings/deviceLocalProviderMigration';
 import { createMockApp } from '../../../helpers/mockApp';
 
+jest.mock('@pivi/agent/skills/vault/ensureDefaultVaultSkills', () => ({
+  ensureDefaultVaultSkills: jest.fn(async () => undefined),
+}));
+
 function createSharedSyncedAdapter(): FileStore & { writes: string[]; content: string | undefined } {
   let content: string | undefined;
   const adapter = {
@@ -264,6 +268,7 @@ describe('device-local provider acceptance matrix', () => {
   });
 
   it('surfaces a localized notice when synced settings save fails after local commit', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const app = createMockApp();
     const adapter = createSharedSyncedAdapter();
     const { loadPluginSettings } = await import('@/app/pluginSettingsLoad');
@@ -301,5 +306,6 @@ describe('device-local provider acceptance matrix', () => {
 
     expect(Notice).toHaveBeenCalled();
     expect(settings.agentSettings.addedProviders).toEqual(['deepseek']);
+    expect(warning).toHaveBeenCalledTimes(2);
   });
 });

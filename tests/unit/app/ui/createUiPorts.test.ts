@@ -480,6 +480,7 @@ describe('UI port adapters', () => {
   });
 
   it('keeps a durable prompt save successful and refreshes sibling views after one refresh fails', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const saveSettings = jest.fn(async () => undefined);
     const refreshFirst = jest.fn(async () => { throw new Error('disposed'); });
     const refreshSecond = jest.fn(async () => undefined);
@@ -514,6 +515,10 @@ describe('UI port adapters', () => {
     expect(refreshFirst).toHaveBeenCalledTimes(1);
     expect(refreshSecond).toHaveBeenCalledTimes(1);
     expect(host.settings.customPromptModules).toHaveLength(1);
+    expect(warning).toHaveBeenCalledWith(
+      '[Pivi:UiPorts] Failed to refresh prompt in a Pivi view',
+      expect.any(Error),
+    );
   });
 
   it('rejects a stale Settings prompt edit instead of overwriting an Agent change', async () => {

@@ -208,14 +208,17 @@ describe('loadContextLayers', () => {
   });
 
   it('skips a skill whose markdown is temporarily unreadable', () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     fs.mkdirSync(path.join(vaultPath, '.pivi', 'skills', 'broken-skill', 'SKILL.md'), { recursive: true });
 
     const inventory = loadVaultSkills(vaultPath);
 
     expect(inventory.skills).toEqual([]);
+    expect(warning).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the last inventory when the skills directory is temporarily unreadable', () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     seedSkill(vaultPath, 'demo-skill', 'demo-skill', 'A demo skill');
     const first = loadVaultSkills(vaultPath);
     expect(first.skills.map((skill) => skill.name)).toEqual(['demo-skill']);
@@ -228,6 +231,7 @@ describe('loadContextLayers', () => {
     const runtime = loadRuntimeVaultSkills(vaultPath);
     expect(inventory.skills.map((skill) => skill.name)).toEqual(['demo-skill']);
     expect(runtime.skills.map((skill) => skill.name)).toEqual(['demo-skill']);
+    expect(warning).toHaveBeenCalledTimes(2);
   });
 
   it('ignores AGENTS.md outside the vault for escaped active note paths', () => {

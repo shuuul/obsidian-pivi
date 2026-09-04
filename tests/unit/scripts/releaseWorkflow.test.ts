@@ -97,4 +97,14 @@ describe('release provenance workflow', () => {
     expect(ciWorkflow).toContain('windows-latest');
     expect(ciWorkflow).toContain('npm run test:platform-security');
   });
+
+  it('reports pull request bundle deltas without adding a release gate', () => {
+    expect(ciWorkflow).toContain("if: github.event_name == 'pull_request'");
+    expect(ciWorkflow).toContain('ref: ${{ github.event.pull_request.base.sha }}');
+    expect(ciWorkflow).toContain('npm run analyze:bundle -- --project .bundle-base');
+    expect(ciWorkflow).toContain('node scripts/bundle-report.mjs');
+    expect(ciWorkflow).toContain('$GITHUB_STEP_SUMMARY');
+    expect(workflow).not.toContain('bundle-report.mjs');
+    expect(qualityGates).not.toContain('bundle-report.mjs');
+  });
 });
