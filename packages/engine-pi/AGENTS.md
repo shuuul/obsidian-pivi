@@ -120,11 +120,13 @@ flowchart TD
 
 ## Shims
 
+- `compatibility-manifest.json` is the canonical lifecycle inventory for upstream-shape-dependent Pi adaptations. Every entry carries the exact current Pi version, reason, implementation paths, verification tests, removal condition, and issue `#113`; `npm run check:pi-compatibility` validates metadata/path coverage and is part of `check:boundaries`. Ordinary Pi adapters and Pivi product behavior do not belong in this manifest.
 - `src/shims/piCodingAgentConfig.ts` replaces upstream coding-agent config because its top-level `import.meta.url` is incompatible with Pivi's bundled CommonJS `main.js`. Its version/constants must stay aligned with the installed Pi package.
 - `src/shims/piAiCompat.ts` provides the compatibility API expected by upstream code while routing model lookup and streaming through Pivi's shared `piAiModels` registry. It also supports dynamically registered API providers and Pivi's environment-key shim.
 - `src/shims/piAiEnvApiKeys.ts` replaces upstream dynamic `import("node:" + "fs")` behavior, which Electron's renderer can treat as a URL fetch. It uses synchronous Node modules behind a configurable environment host.
 - `src/shims/signalExit.cjs` supplies the callable CommonJS shape expected by `proper-lockfile`. Exit cleanup is intentionally a no-op inside Obsidian.
 - These files are activated by shared aliases/plugins under `build/create-build-options.mjs` and `build/plugins/`, used by both production and bundle analysis. A shim file alone has no effect.
+- `.github/workflows/pi-compatibility-canary.yaml` runs weekly or manually against the newest synchronized stable Pi version newer than the pin. It mutates only its ephemeral checkout, runs the expanded `test:pi-compat` suite plus a production build, and updates one marker-backed comment on issue `#113`; failures are informational rather than required `main` checks.
 
 ## Gotchas
 

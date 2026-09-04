@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "upstreamPackages": [
+    "@earendil-works/pi-agent-core",
+    "@earendil-works/pi-ai",
+    "@earendil-works/pi-coding-agent"
+  ],
+  "entries": [
+    {
+      "id": "pi-ai-compat-shim",
+      "upstreamVersion": "0.84.4",
+      "reason": "The upstream compat entrypoint bundles every provider, while Pivi needs the same API over its supported-provider registry and injected environment keys.",
+      "implementationPaths": [
+        "build/plugins/shim-pi-ai.mjs",
+        "packages/engine-pi/src/shims/piAiCompat.ts"
+      ],
+      "verificationTests": [
+        "tests/unit/engine-pi/shims/piAiCompat.test.ts",
+        "tests/unit/scripts/buildCompatibility.test.ts"
+      ],
+      "removalCondition": "Upstream exposes an Obsidian-safe compat surface that accepts Pivi's provider registry and environment resolver without bundling unsupported providers.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "pi-ai-env-api-keys-shim",
+      "upstreamVersion": "0.84.4",
+      "reason": "The upstream environment-key module dynamically imports node:fs in a form Electron's renderer resolves as a URL fetch during plugin load.",
+      "implementationPaths": [
+        "build/plugins/shim-pi-ai.mjs",
+        "packages/engine-pi/src/shims/piAiEnvApiKeys.ts"
+      ],
+      "verificationTests": [
+        "tests/unit/engine-pi/shims/piAiEnvApiKeys.test.ts",
+        "tests/unit/scripts/buildCompatibility.test.ts"
+      ],
+      "removalCondition": "Upstream environment-key resolution no longer emits renderer-hostile dynamic node imports and supports an injected host environment.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "pi-coding-agent-public-facade",
+      "upstreamVersion": "0.84.4",
+      "reason": "The upstream root entrypoint statically exports CLI and TUI modules that Pivi neither uses nor can safely load in Obsidian, so the build exposes only consumed public session, compaction, and message exports.",
+      "implementationPaths": [
+        "build/plugins/shim-pi-coding-agent-config.mjs"
+      ],
+      "verificationTests": [
+        "tests/unit/scripts/buildCompatibility.test.ts",
+        "tests/integration/piUpgradeCompatibility.test.ts"
+      ],
+      "removalCondition": "Upstream provides stable lightweight public entrypoints for every consumed session, compaction, and message export without loading its CLI or TUI graph.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "pi-coding-agent-config-shim",
+      "upstreamVersion": "0.84.4",
+      "reason": "The upstream config module uses import.meta.url at module scope, which cannot execute in Pivi's bundled CommonJS main.js.",
+      "implementationPaths": [
+        "build/plugins/shim-pi-coding-agent-config.mjs",
+        "packages/engine-pi/src/shims/piCodingAgentConfig.ts"
+      ],
+      "verificationTests": [
+        "tests/unit/engine-pi/shims/piCodingAgentConfig.test.ts",
+        "tests/unit/scripts/buildCompatibility.test.ts"
+      ],
+      "removalCondition": "The consumed upstream config path is CommonJS-bundle-safe and exposes the required constants and directory helpers without import.meta.url.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "pi-coding-agent-nested-dependency-dedupe",
+      "upstreamVersion": "0.84.4",
+      "reason": "The upstream npm shrinkwrap installs duplicate nested Pi and provider dependencies that esbuild would otherwise include beside equivalent root copies.",
+      "implementationPaths": [
+        "build/plugins/dedupe-pi-dependencies.mjs"
+      ],
+      "verificationTests": [
+        "tests/unit/scripts/buildCompatibility.test.ts"
+      ],
+      "removalCondition": "The upstream package no longer ships the duplicate shrinkwrapped graph, or its package layout lets the standard resolver produce one copy without breaking package-import aliases.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "signal-exit-commonjs-shim",
+      "upstreamVersion": "0.84.4",
+      "reason": "proper-lockfile in the Pi dependency graph calls signal-exit as a CommonJS function, while the bundled module is otherwise wrapped as an incompatible ESM namespace object.",
+      "implementationPaths": [
+        "build/plugins/shim-signal-exit.mjs",
+        "packages/engine-pi/src/shims/signalExit.cjs"
+      ],
+      "verificationTests": [
+        "tests/unit/scripts/buildCompatibility.test.ts"
+      ],
+      "removalCondition": "The upstream lockfile dependency graph consumes a signal-exit version/API that bundles to the callable shape, or removes process-exit cleanup from the renderer path.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "dynamic-node-import-rewrite",
+      "upstreamVersion": "0.84.4",
+      "reason": "Some Pi/provider paths leave dynamic node: imports in the CommonJS bundle, which Electron's renderer attempts to fetch as URLs.",
+      "implementationPaths": [
+        "build/postprocess/rewrite-node-imports.mjs"
+      ],
+      "verificationTests": [
+        "tests/unit/scripts/buildCompatibility.test.ts"
+      ],
+      "removalCondition": "A production bundle of the supported Pi/provider graph contains no dynamic node imports or renderer-hostile node: requires before postprocessing.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "session-manager-private-surface",
+      "upstreamVersion": "0.84.4",
+      "reason": "Upstream SessionManager has no public eager-header-flush or truncate/rewind API, so Pivi isolates and validates the four private capabilities needed for those operations.",
+      "implementationPaths": [
+        "packages/engine-pi/src/session/piSessionManagerPrivateAdapter.ts"
+      ],
+      "verificationTests": [
+        "tests/unit/engine-pi/session/piSessionManagerPrivateAdapter.test.ts",
+        "tests/integration/piUpgradeCompatibility.test.ts",
+        "tests/integration/piSessionAppendCompatibility.test.ts"
+      ],
+      "removalCondition": "Upstream exposes public eager persistence and truncate/rewind APIs that preserve Pivi's append and recovery invariants.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "scoped-provider-fetch-fallback",
+      "upstreamVersion": "0.84.4",
+      "reason": "Upstream provider SDK paths can use free or global fetch identifiers, so Pivi injects and explicitly forwards its purpose-scoped provider transport instead of allowing ambient network access.",
+      "implementationPaths": [
+        "packages/obsidian-host/src/bundledFetch.ts",
+        "packages/engine-pi/src/models/piAiModels.ts"
+      ],
+      "verificationTests": [
+        "tests/unit/scripts/buildCompatibility.test.ts",
+        "tests/unit/engine-pi/models/streamPiAiModelsSimple.test.ts"
+      ],
+      "removalCondition": "Every supported upstream provider accepts and exclusively uses the explicitly supplied fetch transport, with no free or global fetch fallback in the production graph.",
+      "trackingIssue": 113
+    },
+    {
+      "id": "openai-codex-sse-transport",
+      "upstreamVersion": "0.84.4",
+      "reason": "The upstream Codex WebSocket path passes a Node ws-style headers object that browser WebSocket rejects and cannot represent in Obsidian's renderer.",
+      "implementationPaths": [
+        "packages/engine-pi/src/models/piAiModels.ts"
+      ],
+      "verificationTests": [
+        "tests/unit/engine-pi/models/streamPiAiModelsSimple.test.ts"
+      ],
+      "removalCondition": "Upstream Codex WebSocket transport supports browser WebSocket authentication in Electron, or a renderer-safe authenticated transport replaces the current path.",
+      "trackingIssue": 113
+    }
+  ]
+}
