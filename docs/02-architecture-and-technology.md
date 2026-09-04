@@ -83,7 +83,7 @@ Built-in model `customContextLimits` entries remain synced; custom-provider cont
 
 ### TypeScript and module resolution
 
-The repository is strict TypeScript targeting ES2022 with bundler resolution, isolated modules, no implicit returns, and unchecked-index protection. npm workspaces expose small package subpaths rather than relying on internal relative imports. TypeScript 6 compatibility supports current lint/test tooling; TypeScript 7's native CLI is the authoritative source and test checker.
+The repository is strict TypeScript targeting ES2022 with bundler resolution, isolated modules, no implicit returns, and unchecked-index protection. npm workspaces expose explicit package subpaths rather than relying on internal relative imports. Workspace package manifests and TypeScript package resolution share that contract: root path aliases cover package roots only, while subpaths must resolve through a declared package export. Architecture checks reject wildcard workspace exports, wildcard workspace path aliases, undeclared package imports, and cross-package relative imports. TypeScript 6 compatibility supports current lint/test tooling; TypeScript 7's native CLI is the authoritative source and test checker.
 
 ### esbuild and runtime compatibility
 

@@ -10,32 +10,17 @@
       "@pivi/agent": [
         "./packages/agent/src/index.ts"
       ],
-      "@pivi/agent/*": [
-        "./packages/agent/src/*"
-      ],
       "@pivi/engine-pi": [
         "./packages/engine-pi/src/index.ts"
-      ],
-      "@pivi/engine-pi/*": [
-        "./packages/engine-pi/src/*"
       ],
       "@pivi/obsidian-host": [
         "./packages/obsidian-host/src/index.ts"
       ],
-      "@pivi/obsidian-host/*": [
-        "./packages/obsidian-host/src/*"
-      ],
       "@pivi/obsidian-tools": [
         "./packages/obsidian-tools/src/index.ts"
       ],
-      "@pivi/obsidian-tools/*": [
-        "./packages/obsidian-tools/src/*"
-      ],
       "@pivi/pivi-react": [
         "./packages/pivi-react/src/index.ts"
-      ],
-      "@pivi/pivi-react/*": [
-        "./packages/pivi-react/src/*"
       ],
       "@earendil-works/pi-ai/dist/*": [
         "./node_modules/@earendil-works/pi-ai/dist/*"

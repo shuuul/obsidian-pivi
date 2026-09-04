@@ -636,10 +636,46 @@ const workspacePackages = listWorkspacePackageManifests().map((manifestFile) => 
   const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
   return {
     exports: manifest.exports,
+    manifestFile,
     name: manifest.name,
     root: path.dirname(manifestFile),
   };
 }).filter(pkg => typeof pkg.name === 'string');
+
+for (const pkg of workspacePackages) {
+  if (
+    pkg.exports
+    && typeof pkg.exports === 'object'
+    && !Array.isArray(pkg.exports)
+    && Object.keys(pkg.exports).some(key => key.includes('*'))
+  ) {
+    failures.push({
+      rule: 'workspace package exports are explicit',
+      file: path.relative(rootDir, pkg.manifestFile),
+      line: 1,
+      detail: 'declares a wildcard package export',
+    });
+  }
+}
+
+const tsconfigFile = path.join(rootDir, 'tsconfig.json');
+const tsconfig = fs.existsSync(tsconfigFile)
+  ? ts.parseConfigFileTextToJson(tsconfigFile, fs.readFileSync(tsconfigFile, 'utf8')).config
+  : null;
+const tsconfigPaths = tsconfig?.compilerOptions?.paths;
+if (tsconfigPaths && typeof tsconfigPaths === 'object') {
+  for (const pkg of workspacePackages) {
+    const wildcardAlias = `${pkg.name}/*`;
+    if (Object.hasOwn(tsconfigPaths, wildcardAlias)) {
+      failures.push({
+        rule: 'workspace package TypeScript paths do not expose wildcard internals',
+        file: 'tsconfig.json',
+        line: 1,
+        detail: `declares wildcard path alias "${wildcardAlias}"`,
+      });
+    }
+  }
+}
 
 for (const root of sourceRoots) {
   for (const file of listSourceFiles(path.join(rootDir, root))) {

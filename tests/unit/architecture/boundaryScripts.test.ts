@@ -879,6 +879,53 @@ describe('architecture boundary scripts', () => {
     }
   });
 
+  it('rejects wildcard workspace package exports', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/package.json'),
+        JSON.stringify({
+          exports: { '.': './src/index.ts', './internal/*': './src/internal/*.ts' },
+          name: '@pivi/core',
+        }),
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[workspace package exports are explicit]');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects wildcard TypeScript paths into workspace packages', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/package.json'),
+        JSON.stringify({ exports: { '.': './src/index.ts' }, name: '@pivi/core' }),
+      );
+      writeFileSync(
+        join(fixtureRoot, 'tsconfig.json'),
+        JSON.stringify({
+          compilerOptions: { paths: { '@pivi/core/*': ['./packages/core/src/*'] } },
+        }),
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[workspace package TypeScript paths do not expose wildcard internals]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     ['src/app/fixture.ts', '../../packages/core/src/internal'],
     ['packages/presentation/src/fixture.ts', '../../core/src/internal'],
@@ -959,6 +1006,24 @@ describe('architecture boundary scripts', () => {
       '--eval',
       `try {
         import.meta.resolve('@pivi/engine-pi/piChatRuntimeUsage');
+        process.exitCode = 2;
+      } catch (error) {
+        if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
+      }`,
+    ], {
+      cwd: rootDir,
+      encoding: 'utf8',
+    });
+
+    expect(result.status).toBe(0);
+  });
+
+  it('does not resolve undeclared agent source leaves through package exports', () => {
+    const result = spawnSync(process.execPath, [
+      '--input-type=module',
+      '--eval',
+      `try {
+        import.meta.resolve('@pivi/agent/mcp/mcpUtils');
         process.exitCode = 2;
       } catch (error) {
         if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
