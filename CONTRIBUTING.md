@@ -45,7 +45,7 @@ Run the narrowest relevant test while iterating, for example:
 npm run test -- tests/unit/path/to/test.ts
 ```
 
-Before opening a pull request, run the checks relevant to the files changed. The complete CI-equivalent suite is:
+Do not open a pull request until the complete CI-equivalent suite is green locally. GitHub Actions confirms that suite; it is not the first place to discover a failure:
 
 ```bash
 npm run check:dependencies
@@ -61,4 +61,4 @@ UI or runtime changes also need testing in Obsidian. Record the Obsidian version
 
 ## Open a pull request
 
-Complete the pull request template, link the issue, describe user-visible and architectural effects, and list exact validation performed. Add screenshots for visual changes. Review feedback may request a smaller scope or documentation/test updates before merge.
+Open the pull request only after the CI-equivalent suite above is green. Complete the pull request template, link the issue, describe user-visible and architectural effects, and list exact validation performed. Add screenshots for visual changes. Review feedback may request a smaller scope or documentation/test updates before merge.

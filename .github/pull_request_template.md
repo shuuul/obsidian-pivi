@@ -24,6 +24,7 @@
 
 ## Checklist
 
+- [ ] `npm run check:dependencies` passes
 - [ ] `npm run typecheck` passes
 - [ ] `npm run lint` passes with zero warnings
 - [ ] `npm run check:boundaries` passes
