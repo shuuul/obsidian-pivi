@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.26.1](https://github.com/shuuul/obsidian-pivi/compare/0.26.0...0.26.1) (2026-09-05)
+
+### Bug Fixes
+
+* expand installed skill supporting-file paths to absolute locations and resolve vault-relative external reads
+
 ## [0.26.0](https://github.com/shuuul/obsidian-pivi/compare/0.25.1...0.26.0) (2026-09-05)
 
 ### Features

@@ -1,4 +1,5 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
+import { formatSkillToolBlock } from '@pivi/agent/skills/vault/expandSkillSupportingPaths';
 import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
 import { textResult } from '@pivi/agent/tools/toolResult';
 
@@ -18,7 +19,7 @@ export function createSkillTool(skills: Skill[]): AgentTool {
     name: 'skill',
     label: 'Skill',
     description:
-      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description. Supporting files live on disk under the absolute skill directory returned by this tool; they are not vault notes.',
+      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description. The result expands existing supporting-file paths to absolute paths for obsidian_read_external; they are not vault notes.',
     parameters: {
       type: 'object',
       properties: {
@@ -35,14 +36,12 @@ export function createSkillTool(skills: Skill[]): AgentTool {
         const available = skills.map((s) => s.name).join(', ') || '(none installed)';
         throw new Error(`Unknown skill "${name}". Available: ${available}`);
       }
-      const body = stripFrontmatter(skill.content);
-      const location = skill.absoluteFilePath;
-      const root = skill.absoluteBaseDir;
-      const skillBlock = `<skill name="${skill.name}" location="${location}">
-Supporting files are absolute paths under ${root}. Read them with obsidian_read_external using those absolute paths; do not use obsidian_read.
-
-${body}
-</skill>`;
+      const skillBlock = formatSkillToolBlock({
+        name: skill.name,
+        location: skill.absoluteFilePath,
+        body: stripFrontmatter(skill.content),
+        absoluteBaseDir: skill.absoluteBaseDir,
+      });
       const text = args?.trim() ? `${skillBlock}\n\n${args.trim()}` : skillBlock;
       return Promise.resolve(
         textResult(text, {

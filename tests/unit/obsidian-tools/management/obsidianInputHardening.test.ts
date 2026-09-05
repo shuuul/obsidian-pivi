@@ -1,9 +1,12 @@
+import * as path from 'node:path';
+
 import { createAttachmentTool } from '@pivi/obsidian-tools';
 import { createBaseTool } from '@pivi/obsidian-tools';
 import { createDailyTool } from '@pivi/obsidian-tools';
 import { createDeletePathTool } from '@pivi/obsidian-tools';
 import { createEditNoteTool } from '@pivi/obsidian-tools';
 import { createGraphTool } from '@pivi/obsidian-tools';
+import { createListExternalTool } from '@pivi/obsidian-tools';
 import { createMarkdownStructureTool } from '@pivi/obsidian-tools';
 import { createMkdirTool } from '@pivi/obsidian-tools';
 import { createMovePathTool } from '@pivi/obsidian-tools';
@@ -141,6 +144,52 @@ describe('obsidian tool input hardening', () => {
       path: { nested: '/tmp/bad.txt' },
     })).rejects.toThrow('path must be an absolute string');
     expect(deps.externalFiles.readFile).not.toHaveBeenCalled();
+  });
+
+  it('resolves vault-relative external read paths against the vault root', async () => {
+    const deps = makeDeps({
+      externalFiles: {
+        stat: jest.fn().mockReturnValue({
+          path: '/vault/.pivi/skills/demo/SKILL.md',
+          size: 12,
+          isDirectory: false,
+          isFile: true,
+        }),
+        readFile: jest.fn().mockResolvedValue({
+          path: '/vault/.pivi/skills/demo/SKILL.md',
+          content: '# Skill\n',
+        }),
+        listPath: jest.fn(),
+        isPathAllowed: jest.fn().mockReturnValue(true),
+      },
+    });
+    const tool = createReadExternalTool(deps);
+    const expectedPath = path.resolve('/vault', '.pivi/skills/demo/SKILL.md');
+
+    await tool.execute('call', {
+      path: '.pivi/skills/demo/SKILL.md',
+      mode: 'stats',
+    });
+
+    expect(deps.externalFiles.stat).toHaveBeenCalledWith(expectedPath);
+    expect(deps.externalFiles.readFile).toHaveBeenCalledWith(expectedPath);
+  });
+
+  it('resolves vault-relative external list paths against the vault root', async () => {
+    const deps = makeDeps({
+      externalFiles: {
+        stat: jest.fn(),
+        readFile: jest.fn(),
+        listPath: jest.fn().mockReturnValue([]),
+        isPathAllowed: jest.fn().mockReturnValue(true),
+      },
+    });
+    const tool = createListExternalTool(deps);
+    const expectedPath = path.resolve('/vault', '.pivi/skills/demo');
+
+    await tool.execute('call', { path: '.pivi/skills/demo' });
+
+    expect(deps.externalFiles.listPath).toHaveBeenCalledWith(expectedPath);
   });
 
   it('returns external file byte stats without reading large files by default', async () => {
