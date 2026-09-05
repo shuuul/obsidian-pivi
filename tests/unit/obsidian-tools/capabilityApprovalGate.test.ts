@@ -9,6 +9,7 @@ import {
   createCapabilityApprovalPort,
   CapabilityPersistentGrantCache,
 } from '@pivi/agent/runtime/capabilitySessionGrants';
+import type { PersistentBashPermission } from '@pivi/agent/tools';
 import {
   ensureBashCommandAllowed,
   ensureExternalDirectoryAccess,
@@ -193,5 +194,52 @@ describe('ensureBashCommandAllowed', () => {
     await expect(
       ensureBashCommandAllowed(createDeps(createPort({ decision: 'deny' })), 'git status', false),
     ).rejects.toThrow(/denied by user/i);
+  });
+
+  it('skips later same-family commands after Always and still asks for a different family', async () => {
+    const stored: PersistentBashPermission[] = [];
+    const present = jest.fn()
+      .mockResolvedValueOnce({
+        decision: 'allow-always',
+        bashPermissions: [{
+          kind: 'subcommand',
+          executable: { kind: 'name', value: 'uv' },
+          subcommand: 'python',
+          enabled: true,
+        }],
+      })
+      .mockResolvedValue({ decision: 'deny' });
+    const port = createCapabilityApprovalPort({
+      cache: new CapabilityPersistentGrantCache(),
+      persistence: {
+        persistBashPermissions: async (permissions) => {
+          stored.push(...permissions);
+        },
+        getBashPermissions: () => stored,
+      },
+      present,
+    });
+    const deps = createDeps(port);
+
+    await ensureBashCommandAllowed(deps, 'uv python list', false);
+    await ensureBashCommandAllowed(deps, 'uv python install 3.12', false);
+    expect(present).toHaveBeenCalledTimes(1);
+
+    await expect(ensureBashCommandAllowed(deps, 'uv run script.py', false))
+      .rejects.toThrow(/denied by user/i);
+    expect(present).toHaveBeenCalledTimes(2);
+  });
+
+  it('still asks after Allow once for the same command', async () => {
+    const present = jest.fn().mockResolvedValue({ decision: 'allow-once' });
+    const port = createCapabilityApprovalPort({
+      cache: new CapabilityPersistentGrantCache(),
+      present,
+    });
+    const deps = createDeps(port);
+
+    await ensureBashCommandAllowed(deps, 'git status --short', false);
+    await ensureBashCommandAllowed(deps, 'git status --short', false);
+    expect(present).toHaveBeenCalledTimes(2);
   });
 });

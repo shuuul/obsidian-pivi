@@ -24,6 +24,26 @@ import {
 
 export { BASH_CLASSIFIER_VERSION };
 
+/**
+ * Persistent Bash scope standard.
+ *
+ * Factory Auto-run uses Off/Low/Medium/High plus glob allow/deny/block lists
+ * (`npm *`) and resolves the invoked program before matching. Pivi keeps the
+ * resolve-then-match rule and a hard Allow-once path for unresolved syntax, but
+ * does not import autonomy levels or glob prefixes.
+ *
+ * Durable grants are structured identities, never invocation data:
+ * 1. Resolve the invoked executable after stripping reviewed wrappers (`env`,
+ *    `command`). Unrecognized wrappers, `shell -c` bodies, redirects, and
+ *    substitutions are Allow once only.
+ * 2. Persist `[exe]` or `[exe, token]`. Paths, URLs, package names, patterns,
+ *    and script bodies never enter storage.
+ * 3. The second token is a durable family verb from this registry
+ *    (`git status`, `uv python`, `pixi global`), not a third-level operand
+ *    (`uv python install`, `pixi global install cowsay`).
+ * 4. Risk is a warning (and migration disable), not a fourth duration.
+ */
+
 const UNRECOGNIZED_WRAPPERS = new Set([
   'sudo', 'doas', 'nice', 'nohup', 'timeout', 'time', 'stdbuf', 'unbuffer',
   'watch', 'xargs', 'strace', 'lldb', 'gdb', 'script', 'su', 'pkexec',
@@ -81,6 +101,18 @@ const GO_SUBCOMMANDS = new Set([
   'build', 'run', 'test', 'mod', 'get', 'install', 'fmt', 'vet', 'env', 'list',
 ]);
 
+const UV_SUBCOMMANDS = new Set([
+  'run', 'x', 'pip', 'tool', 'python', 'add', 'remove', 'sync', 'lock', 'tree',
+  'init', 'venv', 'build', 'publish', 'version', 'export', 'cache', 'clean',
+  'self', 'format',
+]);
+
+const PIXI_SUBCOMMANDS = new Set([
+  'add', 'auth', 'build', 'clean', 'config', 'exec', 'global', 'info', 'init',
+  'install', 'list', 'lock', 'project', 'remove', 'run', 'search', 'self-update',
+  'shell', 'shell-hook', 'task', 'tree', 'update', 'upgrade', 'upload', 'workspace',
+]);
+
 const MULTI_COMMANDS: Record<string, ReadonlySet<string>> = {
   git: GIT_SUBCOMMANDS,
   obsidian: OBSIDIAN_SUBCOMMANDS,
@@ -89,6 +121,8 @@ const MULTI_COMMANDS: Record<string, ReadonlySet<string>> = {
   pnpm: PNPM_SUBCOMMANDS,
   cargo: CARGO_SUBCOMMANDS,
   go: GO_SUBCOMMANDS,
+  uv: UV_SUBCOMMANDS,
+  pixi: PIXI_SUBCOMMANDS,
 };
 
 const INTERPRETER_FLAGS: Record<string, readonly string[]> = {
@@ -120,9 +154,8 @@ const SHELL_FLAGS: Record<string, readonly string[]> = {
   powershell: ['-Command', '-c', '-EncodedCommand'],
 };
 
-const PACKAGE_RUNNER_TARGETS = new Set(['npx', 'pnpx', 'bunx']);
+const PACKAGE_RUNNER_TARGETS = new Set(['npx', 'pnpx', 'bunx', 'uvx']);
 const PACKAGE_RUNNER_OPERATIONS: Record<string, ReadonlySet<string>> = {
-  uv: new Set(['run', 'x', 'pip', 'tool']),
   pipx: new Set(['run']),
 };
 
@@ -131,11 +164,18 @@ const HIGH_RISK_NAMES = new Set([
   ...Object.keys(SHELL_FLAGS),
   ...PACKAGE_RUNNER_TARGETS,
   ...Object.keys(PACKAGE_RUNNER_OPERATIONS),
+  'uv',
+  'pixi',
   'cmd',
 ]);
 
 const EVALUATOR_SUBCOMMANDS: Record<string, ReadonlySet<string>> = {
   obsidian: new Set(['eval']),
+};
+
+const EXECUTOR_SUBCOMMANDS: Record<string, ReadonlySet<string>> = {
+  uv: new Set(['run', 'x', 'tool']),
+  pixi: new Set(['run', 'exec', 'shell']),
 };
 
 export function looksLikeLegacyBashEncoding(input: string): boolean {
@@ -276,12 +316,9 @@ function classifyComponent(
     const sub = firstNonFlag(rest);
     if (sub && subcommands.has(normalizeSubcommand(sub, true)) && !looksLikeInvocationData(sub)) {
       const normalizedSub = normalizeSubcommand(sub, caseInsensitive);
-      const risk: BashScopeRisk = EVALUATOR_SUBCOMMANDS[name]?.has(normalizedSub.toLowerCase())
-        ? 'high'
-        : 'none';
-      return componentFor(resolved, normalizedSub, risk, true);
+      return componentFor(resolved, normalizedSub, subcommandRisk(name, normalizedSub), true);
     }
-    return componentFor(resolved, null, 'none', false);
+    return componentFor(resolved, null, familyRisk(name), false);
   }
 
   if (SINGLE_PURPOSE.has(name)) {
@@ -289,6 +326,17 @@ function classifyComponent(
   }
 
   return componentFor(resolved, null, 'high', false);
+}
+
+function subcommandRisk(name: string, subcommand: string): BashScopeRisk {
+  const normalized = subcommand.toLowerCase();
+  if (EVALUATOR_SUBCOMMANDS[name]?.has(normalized)) return 'high';
+  if (EXECUTOR_SUBCOMMANDS[name]?.has(normalized)) return 'executor';
+  return familyRisk(name);
+}
+
+function familyRisk(name: string): BashScopeRisk {
+  return HIGH_RISK_NAMES.has(name) ? 'high' : 'none';
 }
 
 function componentFor(

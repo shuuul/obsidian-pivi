@@ -96,6 +96,7 @@ Not in scope:
 | 2026-09-05 | Bash and external-directory prompts use only Deny / Allow once / Always. The selected permanent scope is visible and editable inline in the same surface. | Removes ambiguous session duration and the current two-step Always flow without hiding what becomes permanent. | WS-02 |
 | 2026-09-05 | Permanent Bash scope is either one executable or executable + one reliable semantic command token. Invocation data—paths, filenames, URLs, patterns, expressions, and bodies—is never persisted. | Stable scopes stop argument churn from causing repeated prompts and are understandable in Settings. | WS-01, WS-02, WS-03 |
 | 2026-09-05 | Single-purpose and unknown CLIs default to executable scope. Recognized multi-command CLIs use a semantic second token (`git status`, `obsidian eval`, `npm run`). Recognized executors use their stable operation/target token (`python3 -c`, `sh -c`, `npx marp`, `uv run`). | A versioned classifier can distinguish durable command identity from changing operands; unknown commands still have a deterministic fallback. | WS-01 |
+| 2026-09-05 | Factory Auto-run is a reference for resolve-then-match and Allow-once for unresolved syntax, not for Off/Low/Medium/High autonomy or glob prefixes such as `npm *`. Pivi persistent grants remain `[exe]` or `[exe, family-verb]`. Nested CLIs persist the second-level family (`uv python`, `pixi global`), never a third-level operand or package name. | Glob allowlists collapse a whole toolchain; family verbs keep Always scoped to the capability the user saw. | WS-01 |
 | 2026-09-05 | Transparent wrappers resolve to the real executable/command before classification. The initial reviewed set includes `env` (including leading assignments) and `command`; unrecognized wrapper/control forms are Allow-once only until deliberately classified. | Avoid permissions for a wrapper that conceal the invoked capability without guessing through arbitrary shell syntax. | WS-01 |
 | 2026-09-05 | Safe POSIX/cmd tokenization may split plain commands joined by `&&` or pipelines into independent scopes and approve them together. Redirects, command/process substitution, dynamic variable/glob expansion that changes executable identity, here-docs, backgrounding, `||`, and unsupported controls are not persistable. | Component rules are reusable; expressions with shell-dependent data flow are not reliably reducible to stable capabilities. | WS-01, WS-02 |
 | 2026-09-05 | The classifier recommendation is advisory. The user may select a broader classifier-generated executable scope after an inline warning, with no second confirmation screen. Arbitrary raw prefixes are not offered. | Preserves user control while making widening explicit and bounded to representable scopes. | WS-02 |
@@ -175,6 +176,9 @@ Required classifier examples:
 | `sh -c '...'` | `sh -c` with high-risk warning |
 | `npx marp slides.md` | `npx marp` with executor warning |
 | `uv run script.py` | `uv run` with executor warning |
+| `uv python install 3.12` | `uv python` with high-risk warning |
+| `pixi global install ripgrep` | `pixi global` with high-risk warning |
+| `pixi run test` | `pixi run` with executor warning |
 | `env FOO=1 git status` | `git status` |
 | `./bin/tool input.txt` | isolated realpath for `./bin/tool`, or no Always when resolution fails |
 | `/opt/a/tool input` | canonical realpath `/opt/a/tool`, never bare `tool` |

@@ -67,6 +67,22 @@ describe('createCapabilityApprovalPort', () => {
     expect(persistBashPermissions).toHaveBeenCalledWith([gitStatus()]);
     expect(cache.hasPersistentGrant(bashRequest)).toBe(true);
     expect(port.hasPersistentGrant(bashRequest)).toBe(true);
+    expect(port.hasPersistentGrant({ ...bashRequest, command: 'git status --short' })).toBe(true);
+    expect(port.hasPersistentGrant({ ...bashRequest, command: 'git log' })).toBe(false);
+  });
+
+  it('does not prompt again for later commands covered by the Always scope', async () => {
+    const cache = new CapabilityPersistentGrantCache();
+    const present = jest.fn().mockResolvedValue({
+      decision: 'allow-always',
+      bashPermissions: [gitStatus()],
+    });
+    const port = createCapabilityApprovalPort({ cache, present });
+
+    await port.requestApproval(bashRequest);
+    expect(present).toHaveBeenCalledTimes(1);
+    expect(port.hasPersistentGrant({ ...bashRequest, command: 'git status --short' })).toBe(true);
+    expect(port.hasPersistentGrant({ ...bashRequest, command: 'git log' })).toBe(false);
   });
 
   it('does not persist Allow once', async () => {

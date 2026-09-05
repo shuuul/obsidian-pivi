@@ -43,6 +43,27 @@ describe('classifyBashCommand', () => {
     expect(riskOf('uv run script.py')).toEqual(['executor']);
   });
 
+  it('recommends durable second-level family verbs, not third-level operands', () => {
+    expect(labelOf('uv python install 3.12')).toEqual(['uv python']);
+    expect(riskOf('uv python install 3.12')).toEqual(['high']);
+    expect(labelOf('pixi global install ripgrep')).toEqual(['pixi global']);
+    expect(riskOf('pixi global install ripgrep')).toEqual(['high']);
+    expect(labelOf('pixi run test')).toEqual(['pixi run']);
+    expect(riskOf('pixi run test')).toEqual(['executor']);
+    expect(matchBashPermissions('uv python list', [{
+      kind: 'subcommand',
+      executable: { kind: 'name', value: 'uv' },
+      subcommand: 'python',
+      enabled: true,
+    }])).toBe(true);
+    expect(matchBashPermissions('uv run script.py', [{
+      kind: 'subcommand',
+      executable: { kind: 'name', value: 'uv' },
+      subcommand: 'python',
+      enabled: true,
+    }])).toBe(false);
+  });
+
   it('strips reviewed transparent wrappers', () => {
     expect(labelOf('env FOO=1 git status')).toEqual(['git status']);
     expect(labelOf('command git status')).toEqual(['git status']);

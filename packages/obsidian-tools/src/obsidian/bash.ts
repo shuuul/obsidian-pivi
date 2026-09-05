@@ -34,7 +34,7 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
       + 'Never use Bash to read, search, list, or modify vault files; use Obsidian tools and sub-agents for vault work. '
       + 'After the user denies or validation rejects a command, do not retry Bash during the same turn.',
     promptUsage: {
-      summary: 'Lowest-priority host diagnostic only; never use it for vault file operations. Persistent Bash permissions grant an executable or a semantic command token, never filenames or script bodies. A user-explicit ungranted command receives sidebar approval; do not retry after denial or validation failure.',
+      summary: 'Lowest-priority host diagnostic only; never use it for vault file operations. Persistent Bash permissions grant an executable or a semantic family verb (`git status`, `uv python`, `pixi global`), never filenames, package names, or script bodies. A user-explicit ungranted command receives sidebar approval; do not retry after denial or validation failure.',
       parameters: '`command` required single-line shell command; `cwd?` must remain inside the vault.',
     },
     parameters: {

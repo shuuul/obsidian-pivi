@@ -54,6 +54,18 @@ describe('bash permission matching', () => {
     expect(matchBashCommandAllowlist('npm install', [sub('npm', 'run')])).toBe(false);
   });
 
+  it('skips later commands in the same Always family without covering sibling families', () => {
+    expect(matchBashCommandAllowlist('uv python install 3.12', [sub('uv', 'python')])).toBe(true);
+    expect(matchBashCommandAllowlist('uv python list', [sub('uv', 'python')])).toBe(true);
+    expect(matchBashCommandAllowlist('uv run script.py', [sub('uv', 'python')])).toBe(false);
+    expect(matchBashCommandAllowlist('pixi global list', [sub('pixi', 'global')])).toBe(true);
+    expect(matchBashCommandAllowlist('pixi global install ripgrep', [sub('pixi', 'global')])).toBe(true);
+    expect(matchBashCommandAllowlist('pixi run test', [sub('pixi', 'global')])).toBe(false);
+    expect(matchBashCommandAllowlist('git status --short', [sub('git', 'status')])).toBe(true);
+    expect(matchBashCommandAllowlist('git log', [sub('git', 'status')])).toBe(false);
+    expect(matchBashCommandAllowlist('grep other notes/b.md', [exe('grep')])).toBe(true);
+  });
+
   it.each([
     'git status; rm -rf .',
     'git status || rm -rf .',

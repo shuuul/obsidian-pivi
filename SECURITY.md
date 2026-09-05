@@ -34,7 +34,7 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 | Environment variables | Empty registry | Device-local `pivi.environment.v1`; secrets in `SecretStorage` (`pivi-env-*`) | Synced `.pivi/settings.json` must not persist environment maps |
 | MCP remote headers | Structured `ConfigValueRef` | Secret values in `SecretStorage` (`pivi-mcp-v-*`); config in `.pivi/mcp.json` | Names may appear in config; secret values do not |
 | External absolute-path reads | Vault always; outside vault off (`allowExternalRead`) | Device-local allowed directories / turn folders for paths outside the vault | Vault-contained paths skip grants. Absolute paths never enter synced settings or session JSONL |
-| Bash tool | Off (`allowBash`) | Command prefix allowlist | User login shell (`$SHELL -lc`, fish `-c`, or Windows `cmd.exe /d /s /c`); prefix matching is shell-specific |
+| Bash tool | Off (`allowBash`) | Device-local structured scopes (`pivi.capability-permissions.v1`) | User login shell; Always persists `[exe]` or `[exe, family-verb]` after resolving the invoked program |
 
 ## Network flows
 
@@ -92,7 +92,7 @@ One-shot process work (CLI, Bash, Skills tooling) uses the host `ProcessRunner` 
 - Timeout and abort terminate the owned process tree (POSIX process group or Windows `taskkill /T`), escalate to forced kill when needed, wait for close, and never double-resolve.
 - Results distinguish exit, signal, timeout, abort, spawn error, and forced-kill escalation.
 
-Bash allowlists match an exact command or required prefix. Commands run through the user's login shell and load shell startup configuration.
+Bash persistent grants match an executable identity or a classified family verb after resolving the invoked program. Commands run through the user's login shell and load shell startup configuration.
 
 Cross-platform process and path behavior is covered by focused Ubuntu, macOS, and Windows CI jobs for the security-sensitive suites. That coverage does **not** certify full product support on every OS; support claims follow tested behavior only.
 
