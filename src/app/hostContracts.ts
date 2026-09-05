@@ -170,6 +170,28 @@ export interface PiviChatDevelopmentCommands {
     initialMessages: number;
     messagesAfterPrepend: number;
   }>;
+  runProjectionWorkload?(
+    workload: 'nested-subagent' | 'small-text' | 'tool-heavy',
+    hooks: {
+      beforeMeasurement(result: {
+        workload: 'nested-subagent' | 'small-text' | 'tool-heavy';
+        fixtureSha256: string;
+        warmupEvents: number;
+        sampleEvents: number;
+      }): Promise<void>;
+      afterMeasurement(result: {
+        workload: 'nested-subagent' | 'small-text' | 'tool-heavy';
+        fixtureSha256: string;
+        warmupEvents: number;
+        sampleEvents: number;
+      }): Promise<void>;
+    },
+  ): Promise<{
+    workload: 'nested-subagent' | 'small-text' | 'tool-heavy';
+    fixtureSha256: string;
+    warmupEvents: number;
+    sampleEvents: number;
+  }>;
   run100KbMarkdownStream(): Promise<{
     bytes: number;
     chunks: number;

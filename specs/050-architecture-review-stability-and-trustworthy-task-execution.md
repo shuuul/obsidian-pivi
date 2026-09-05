@@ -29,7 +29,7 @@ Important failure paths are handled, a new user can finish one clearly bounded t
 
 - [x] WS-01: Real Obsidian smoke exercises a deterministic Pivi turn/tool mutation and semantic session restoration after reload, preserves fetch identity, and cleans only its own resources on success/failure. Candidate/environment evidence is recorded.
 - [x] WS-02: Fork failure injection covers every side-effect boundary; delayed/repeated/early shutdown preserves save dependencies and never clears a newer owner's journal. Source sessions remain unchanged.
-- [ ] WS-03: Reproducible ingest/snapshot/entity-commit/render baselines exist for three workloads; any retained optimization demonstrates improvement with immutable snapshots and event ordering intact. A measured no-change conclusion is acceptable, not an invented speedup.
+- [x] WS-03: Reproducible ingest/snapshot/entity-commit/render baselines exist for three workloads; any retained optimization demonstrates improvement with immutable snapshots and event ordering intact. A measured no-change conclusion is acceptable, not an invented speedup.
 - [ ] WS-04: A user can run literature triage under an execution-enforced read-only mode; main/subagent/bypass attempts cannot mutate user files or external systems. Mutation recovery information distinguishes captured, unavailable, failed, and unsupported states without promising universal undo.
 - [ ] WS-05: Owning packages declare third-party contracts, consumer resolution and active local-link checks reject regressions, and the contributor handoff identifies files, fixtures, and commands. Full local gates and final branch evidence pass before merge.
 
@@ -78,7 +78,7 @@ Coordinator owns this file and the index. Claim a row before implementation or d
 | --- | --- | --- | --- | --- | --- |
 | WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Amp | Done | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
 | WS-02 | P1 complete fork compensation and ordered instance shutdown | Amp | Done | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
-| WS-03 | P2 projection cost baselines and justified local optimization | Unassigned | Pending | P1 accepted | Fixed workloads, ownership/immutability regressions, before/after traces |
+| WS-03 | P2 projection cost baselines and justified local optimization | Amp | Done | P1 accepted | Fixed workloads, ownership/immutability regressions, three-run real-host traces |
 | WS-04 | P2 execution read-only task and recovery visibility | Unassigned | Blocked | Grill decisions; P1 accepted | Adversarial tool matrix, recipe walkthrough, recovery states, UI/i18n checks |
 | WS-05 | P2 package/docs gates, contributor slice, final integration | Unassigned | Pending | P1 first; final integration depends on all retained scope | Consumer resolution and link fixtures; full local quality gates |
 
@@ -231,6 +231,23 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Failure contract: successful cleanup rethrows the original error object. Cleanup refusal/failure retains the exact owned path in an `AggregateError`; a source reopen failure is also aggregated instead of replacing the fork error.
 - Evidence: temporary-filesystem fault injection writes partial bytes before throwing, asserts byte-for-byte unchanged source content, candidate absence, primary-error identity, and source-manager restoration. Separate cases prove pre-mutation failures do not delete/reopen the source and cleanup failure leaves a diagnosed residual. Node 24 focused tests, typecheck, lint, boundaries, and diff checks passed.
 - State: WS-02 accepted. WS-03 is the next unblocked workstream; WS-04 remains blocked on product decisions.
+
+### 2026-09-05 — Amp — WS-03 granular measurement harness
+
+- Changed: development trace schema v2 adds separate accepted/rejected dispatch validation, inclusive dispatch, snapshot construction, and entity-commit events while preserving commit/paint, Markdown, rows, long-task, and heap evidence. Snapshot events record one call plus recursively visited/cloned entity counts as allocation proxies, not bytes.
+- Fixtures: checked-in small-text, 12-tool, and one-subagent/eight-nested-tool messages have pinned SHA-256 values. Each isolated main-window workload performs 5 unrecorded warmups, then 50 measured accepted events at one event per visible animation frame and stops tracing before cleanup. One command exports all three; the summarizer reports per-trace and cross-run median/p95/ranges.
+- Semantics: inclusive spans and nesting are documented so snapshot or entity time is not double-counted. Existing ownership tests retain accepted frozen snapshots after producer mutation, preserve unchanged entity identities, reject stale/cross-owner events, and flush terminal state across visible, hidden, and migrated owner realms.
+- Remaining at this checkpoint: deploy the development candidate to the designated vault, run the suite three times, summarize nine traces, and use the measured dominant phase to decide whether a local structural-sharing optimization is justified.
+
+### 2026-09-05 — Amp — WS-03 measured no-change acceptance
+
+- Candidate: local worktree atop `0ca951368aca3c21ef081808b65da8421b048537`; byte-identical root/designated-vault development artifact SHA-256 `d25454eddd9384004ae73ed75512442bd3b9b9e25674d9c01431bf2243f37219`; Pivi 0.25.1; Obsidian CLI `1.14.0 (installer 1.13.7)`; Electron 43.3.0; renderer Node 24.18.1; Chrome 150.0.7871.212; macOS arm64.
+- Measurement: three visible main-window runs produced nine corrected traces (`2026-09-05T07-10-06-845Z` through `07-10-17-372Z`). Every trace records the pinned fixture hash, 5 excluded warmups, and exactly 50 accepted fixture dispatch/snapshot/entity-commit/projection-commit/paint events. Obsidian captured no errors.
+- Results: small text event-to-paint median/p95 15.20/16.10 ms with per-run median range 15.00–15.40 ms; tool-heavy 16.20/17.00 ms and 16.10–16.20 ms; nested subagent 15.70/16.80 ms and 15.70–15.70 ms. Every dispatch-validation, inclusive-dispatch, snapshot, and entity-commit p95 is ≤0.10 ms. Snapshot proxies are stable at 9/3, 142/40, and 98/25 visited/cloned values per event. Small-text Markdown render is the largest local phase at 0.70/0.90 ms median/p95.
+- Correction: an earlier nine-trace attempt exposed that wall-clock trace start could be ahead of Chromium's monotonic epoch, clamping relative/paint spans to zero. Those traces are excluded. The recorder now anchors elapsed spans to the owner window's `performance.timeOrigin + performance.now()`, and a regression asserts a 25 ms synthetic monotonic interval.
+- Decision: retain no structural-sharing/delta optimization. Projection ownership phases are below the 0.10 ms clock resolution at p95, end-to-end behavior is one frame, and the dominant Markdown phase is outside snapshot ownership. Adding mutable-event risk would invent a speedup rather than respond to a measured bottleneck. Instrumentation remains for future comparisons; WS-03 is accepted.
+- Production exclusion: the Node 24 production artifact is 4,140,651 bytes and contains none of the trace schema, trace directory, trace-start copy, or projection-suite command ID. The bundle-size gate retains 1,102,229 bytes of headroom.
+- Verification: Node 24 source/test typecheck, zero-warning ESLint, all architecture/docs/package/i18n/spec/Pi boundaries, production build/size checks, and the full 357-suite / 3,191-test in-band Jest run passed. One first full run had the expected architecture source-contract fixture mismatch plus a load-sensitive 30 ms HTTP timing failure; the fixture was updated, the HTTP test passed without parallel gate contention, and the complete isolated rerun was green.
 
 ## Completion summary
 

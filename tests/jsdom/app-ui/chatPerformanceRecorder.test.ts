@@ -19,7 +19,16 @@ describe('chat performance recorder', () => {
     const app = { vault: { adapter } } as unknown as App;
     const recorder = createChatPerfController(app, '0.9.0', '1.13.2', window);
 
-    recorder.start('5K cold open', window);
+    const projectionWorkload = {
+      workload: 'tool-heavy' as const,
+      fixtureSha256: 'fixture-sha',
+      warmupEvents: 5,
+      sampleEvents: 50,
+    };
+    recorder.start('5K cold open', window, projectionWorkload);
+    recorder.onProjectionDispatch('message.upsert', true, 0.25, 2, window);
+    recorder.onProjectionSnapshot('message.upsert', 'assistant-1', 1, 12, 4, window);
+    recorder.onProjectionEntityCommit('assistant-1', 0.75, window);
     recorder.onProjectionEvent('message.upsert', 'assistant-1', window);
     recorder.onProjectionEvent('message.upsert', 'assistant-1', window);
     recorder.onProjectionCommit('animation-frame', ['assistant-1'], 1.25, window);
@@ -36,15 +45,33 @@ describe('chat performance recorder', () => {
     expect(adapter.write).toHaveBeenCalledWith(path, expect.any(String));
     const trace = JSON.parse(adapter.write.mock.calls[0]?.[1] ?? '') as ChatPerfTrace;
     expect(trace).toMatchObject({
-      schema: 'pivi-chat-perf-v1',
+      schema: 'pivi-chat-perf-v2',
       scenario: '5K cold open',
       environment: {
         obsidianVersion: '1.13.2',
         piviVersion: '0.9.0',
         windowTypes: ['main'],
       },
+      projectionWorkload,
     });
     expect(trace.events.filter(event => event.type === 'heap.sample')).toHaveLength(2);
+    expect(trace.events.every(event => event.atMs >= 0)).toBe(true);
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      type: 'projection.dispatch',
+      accepted: true,
+      validationDurationMs: 0.25,
+      totalDurationMs: 2,
+    }));
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      type: 'projection.snapshot',
+      snapshotCalls: 1,
+      visitedEntities: 12,
+      clonedEntities: 4,
+    }));
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      type: 'projection.entity-commit',
+      durationMs: 0.75,
+    }));
     expect(trace.events).toContainEqual(expect.objectContaining({
       type: 'projection.commit',
       queuedEventCount: 2,
@@ -73,5 +100,33 @@ describe('chat performance recorder', () => {
     expect(() => recorder.start('second', window)).toThrow('already active');
     recorder.dispose();
     expect(recorder.enabled).toBe(false);
+  });
+
+  it('anchors elapsed time to the owner window monotonic clock', async () => {
+    const adapter = createAdapter();
+    let monotonicNow = 100;
+    const ownerWindow = {
+      performance: {
+        timeOrigin: 1_000,
+        now: () => monotonicNow,
+      },
+    } as unknown as Window;
+    const recorder = createChatPerfController(
+      { vault: { adapter } } as unknown as App,
+      '0.9.0',
+      '1.13.2',
+      ownerWindow,
+    );
+    recorder.start('monotonic', ownerWindow);
+    monotonicNow = 125;
+    recorder.onProjectionDispatch('text.append', true, 1, 2, ownerWindow);
+
+    await recorder.stopAndExport(ownerWindow);
+
+    const trace = JSON.parse(adapter.write.mock.calls[0]?.[1] ?? '') as ChatPerfTrace;
+    expect(trace.events).toContainEqual(expect.objectContaining({
+      type: 'projection.dispatch',
+      atMs: 25,
+    }));
   });
 });

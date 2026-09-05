@@ -8,6 +8,7 @@ import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import {
   type ChatPerfProjectionCommitReason,
+  type ChatPerfProjectionEventType,
   type ChatPerfRecorder,
   NOOP_CHAT_PERF_RECORDER,
 } from './chatPerfRecorder';
@@ -132,12 +133,24 @@ interface MessageEntityKeys {
   toolIds: string[];
 }
 
-function cloneSerializableValue(value: unknown): unknown {
+interface SnapshotAllocationProxies {
+  clonedEntities: number;
+  visitedEntities: number;
+}
+
+function cloneSerializableValue(
+  value: unknown,
+  allocationProxies?: SnapshotAllocationProxies,
+): unknown {
+  if (allocationProxies) allocationProxies.visitedEntities += 1;
   if (value === null || value === undefined) return value;
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return value;
   }
-  if (Array.isArray(value)) return value.map(cloneSerializableValue);
+  if (Array.isArray(value)) {
+    if (allocationProxies) allocationProxies.clonedEntities += 1;
+    return value.map(child => cloneSerializableValue(child, allocationProxies));
+  }
   if (typeof value !== 'object') {
     throw new TypeError(`Chat projection snapshots cannot contain ${typeof value} values`);
   }
@@ -146,8 +159,12 @@ function cloneSerializableValue(value: unknown): unknown {
   if (prototype !== null && prototype !== Object.prototype && constructorName !== 'Object') {
     throw new TypeError(`Chat projection snapshots can contain only plain objects and arrays, received ${constructorName ?? 'unknown object'}`);
   }
+  if (allocationProxies) allocationProxies.clonedEntities += 1;
   return Object.fromEntries(
-    Object.entries(value).map(([key, child]) => [key, cloneSerializableValue(child)]),
+    Object.entries(value).map(([key, child]) => [
+      key,
+      cloneSerializableValue(child, allocationProxies),
+    ]),
   );
 }
 
@@ -160,8 +177,32 @@ function deepFreeze<T>(value: T): DeepReadonly<T> {
   return value as DeepReadonly<T>;
 }
 
-function snapshotMessage(message: ChatMessage): ProjectionMessage {
-  return deepFreeze(cloneSerializableValue(message) as ChatMessage);
+function snapshotMessage(
+  message: ChatMessage,
+  recorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
+  eventType: ChatPerfProjectionEventType = 'message.upsert',
+  ownerWindow: Window | null = null,
+): ProjectionMessage {
+  if (!recorder.enabled) {
+    return deepFreeze(cloneSerializableValue(message) as ChatMessage);
+  }
+  const startedAt = recorder.now(ownerWindow);
+  const allocationProxies: SnapshotAllocationProxies = {
+    clonedEntities: 0,
+    visitedEntities: 0,
+  };
+  const snapshot = deepFreeze(
+    cloneSerializableValue(message, allocationProxies) as ChatMessage,
+  );
+  recorder.onProjectionSnapshot(
+    eventType,
+    message.id,
+    Math.max(0, recorder.now(ownerWindow) - startedAt),
+    allocationProxies.visitedEntities,
+    allocationProxies.clonedEntities,
+    ownerWindow,
+  );
+  return snapshot;
 }
 
 function structurallyEqual(left: unknown, right: unknown): boolean {
@@ -329,36 +370,52 @@ export class ChatProjectionStore {
 
   /** The sole production ingestion boundary for message projection changes. */
   dispatch(event: ChatProjectionEvent): boolean {
-    if (!this.acceptEvent(event)) return false;
-    switch (event.type) {
-      case 'messages.replace':
-        this.replaceAll(event.messages);
-        break;
-      case 'message.upsert':
-        if (event.delivery === 'immediate') this.upsertNow(event.message);
-        else this.queueUpsert(event.message);
-        break;
-      case 'text.append':
-      case 'tool.upsert':
-      case 'agent.upsert':
-        this.queueUpsert(event.message);
-        break;
-      case 'messages.truncate':
-        this.truncate(event.messageIds);
-        break;
-      case 'messages.reveal-previous-page':
-        return this.prependPreviousPage();
-      case 'messages.prepend-page':
-        return this.prependPage(event.messages);
-      case 'projection.flush':
-        this.flush();
-        break;
-      case 'run.terminal':
-        this.flush();
-        this.terminalRuns.add(this.runKey(this.ownerKey(event), event.runId));
-        break;
+    const recorderEnabled = this.perfRecorder.enabled;
+    const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
+    const accepted = this.acceptEvent(event);
+    const validatedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
+    try {
+      if (!accepted) return false;
+      switch (event.type) {
+        case 'messages.replace':
+          this.replaceAll(event.messages, event.type);
+          break;
+        case 'message.upsert':
+          if (event.delivery === 'immediate') this.upsertNow(event.message, event.type);
+          else this.queueUpsert(event.message, event.type);
+          break;
+        case 'text.append':
+        case 'tool.upsert':
+        case 'agent.upsert':
+          this.queueUpsert(event.message, event.type);
+          break;
+        case 'messages.truncate':
+          this.truncate(event.messageIds);
+          break;
+        case 'messages.reveal-previous-page':
+          return this.prependPreviousPage();
+        case 'messages.prepend-page':
+          return this.prependPage(event.messages);
+        case 'projection.flush':
+          this.flush();
+          break;
+        case 'run.terminal':
+          this.flush();
+          this.terminalRuns.add(this.runKey(this.ownerKey(event), event.runId));
+          break;
+      }
+      return true;
+    } finally {
+      if (recorderEnabled) {
+        this.perfRecorder.onProjectionDispatch(
+          event.type,
+          accepted,
+          Math.max(0, validatedAt - startedAt),
+          Math.max(0, this.perfRecorder.now(this.ownerWindow) - startedAt),
+          this.ownerWindow,
+        );
+      }
     }
-    return true;
   }
 
   private acceptEvent(event: ChatProjectionEvent): boolean {
@@ -476,7 +533,10 @@ export class ChatProjectionStore {
     });
   }
 
-  replaceAll(messages: readonly ChatMessage[]): void {
+  replaceAll(
+    messages: readonly ChatMessage[],
+    eventType: ChatPerfProjectionEventType = 'messages.replace',
+  ): void {
     const recorderEnabled = this.perfRecorder.enabled;
     if (recorderEnabled) {
       this.perfRecorder.onProjectionEvent('messages.replace', null, this.ownerWindow);
@@ -499,11 +559,20 @@ export class ChatProjectionStore {
       }
     }
     for (const message of projected) {
-      const snapshot = snapshotMessage(message);
+      const snapshot = snapshotMessage(
+        message,
+        this.perfRecorder,
+        eventType,
+        this.ownerWindow,
+      );
+      const entityStartedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
       this.messages.set(message.id, snapshot);
       this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
       changedIds.add(message.id);
+      if (recorderEnabled) {
+        this.recordEntityCommit(message.id, entityStartedAt);
+      }
     }
     this.order = Object.freeze(projected.map(message => message.id));
     this.notifyOrder();
@@ -520,11 +589,22 @@ export class ChatProjectionStore {
     const prepended = this.sourceMessages.slice(nextStart, this.projectedStart);
     this.projectedStart = nextStart;
     for (const message of prepended) {
-      const snapshot = snapshotMessage(message);
+      const snapshot = snapshotMessage(
+        message,
+        this.perfRecorder,
+        'messages.reveal-previous-page',
+        this.ownerWindow,
+      );
+      const entityStartedAt = this.perfRecorder.enabled
+        ? this.perfRecorder.now(this.ownerWindow)
+        : 0;
       this.messages.set(message.id, snapshot);
       this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
       this.notifyMessage(message.id);
+      if (this.perfRecorder.enabled) {
+        this.recordEntityCommit(message.id, entityStartedAt);
+      }
     }
     this.order = Object.freeze([
       ...prepended.map(message => message.id),
@@ -548,11 +628,22 @@ export class ChatProjectionStore {
     if (prepended.length === 0) return false;
     this.sourceMessages = [...prepended, ...this.sourceMessages];
     for (const message of prepended) {
-      const snapshot = snapshotMessage(message);
+      const snapshot = snapshotMessage(
+        message,
+        this.perfRecorder,
+        'messages.prepend-page',
+        this.ownerWindow,
+      );
+      const entityStartedAt = this.perfRecorder.enabled
+        ? this.perfRecorder.now(this.ownerWindow)
+        : 0;
       this.messages.set(message.id, snapshot);
       this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
       this.notifyMessage(message.id);
+      if (this.perfRecorder.enabled) {
+        this.recordEntityCommit(message.id, entityStartedAt);
+      }
     }
     this.order = Object.freeze([
       ...prepended.map(message => message.id),
@@ -562,17 +653,27 @@ export class ChatProjectionStore {
     return true;
   }
 
-  upsertNow(message: ChatMessage): void {
+  upsertNow(
+    message: ChatMessage,
+    eventType: ChatPerfProjectionEventType = 'message.upsert',
+  ): void {
     const recorderEnabled = this.perfRecorder.enabled;
     if (recorderEnabled) {
       this.perfRecorder.onProjectionEvent('message.upsert', message.id, this.ownerWindow);
     }
     const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
-    this.commitSnapshot(snapshotMessage(message));
+    this.commitSnapshot(snapshotMessage(
+      message,
+      this.perfRecorder,
+      eventType,
+      this.ownerWindow,
+    ));
     if (recorderEnabled) this.recordCommit('immediate', [message.id], startedAt);
   }
 
   private commitSnapshot(snapshot: ProjectionMessage): void {
+    const recorderEnabled = this.perfRecorder.enabled;
+    const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
     const isNew = !this.messages.has(snapshot.id);
     this.messages.set(snapshot.id, snapshot);
     this.reconcileMessageStructure(snapshot);
@@ -582,13 +683,19 @@ export class ChatProjectionStore {
       this.order = Object.freeze([...this.order, snapshot.id]);
       this.notifyOrder();
     }
+    if (recorderEnabled) this.recordEntityCommit(snapshot.id, startedAt);
   }
 
-  private queueUpsert(message: ChatMessage): void {
+  private queueUpsert(message: ChatMessage, eventType: ChatPerfProjectionEventType): void {
     if (this.perfRecorder.enabled) {
       this.perfRecorder.onProjectionEvent('message.upsert', message.id, this.ownerWindow);
     }
-    this.pendingMessages.set(message.id, snapshotMessage(message));
+    this.pendingMessages.set(message.id, snapshotMessage(
+      message,
+      this.perfRecorder,
+      eventType,
+      this.ownerWindow,
+    ));
     this.schedulePendingPublication();
   }
 
@@ -724,6 +831,14 @@ export class ChatProjectionStore {
       this.pendingPaintFrame = null;
       this.perfRecorder.onProjectionPaint(reason, messageIds, ownerWindow);
     });
+  }
+
+  private recordEntityCommit(messageId: string, startedAt: number): void {
+    this.perfRecorder.onProjectionEntityCommit(
+      messageId,
+      Math.max(0, this.perfRecorder.now(this.ownerWindow) - startedAt),
+      this.ownerWindow,
+    );
   }
 
   private notifyOrder(): void {

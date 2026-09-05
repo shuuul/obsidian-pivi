@@ -293,8 +293,11 @@ describe('ChatProjectionStore', () => {
       }),
       onMarkdownRender: jest.fn(),
       onProjectionCommit: jest.fn(),
+      onProjectionDispatch: jest.fn(),
+      onProjectionEntityCommit: jest.fn(),
       onProjectionEvent: jest.fn(),
       onProjectionPaint: jest.fn(),
+      onProjectionSnapshot: jest.fn(),
       onScrollAnchor: jest.fn(),
       onVirtualRows: jest.fn(),
     };
@@ -316,7 +319,7 @@ describe('ChatProjectionStore', () => {
     expect(recorder.onProjectionCommit).toHaveBeenCalledWith(
       'animation-frame',
       ['assistant-1'],
-      2,
+      6,
       ownerWindow,
     );
     expect(recorder.onProjectionPaint).not.toHaveBeenCalled();

@@ -10,6 +10,7 @@ import {
   runDevelopment20Subagents,
   runDevelopmentIndexedSessionPaging,
   runDevelopmentMarkdownStreamInIsolatedTab,
+  runDevelopmentProjectionWorkload,
   runDevelopmentTabSwitching,
 } from '@/app/ui/imperativeChatDevelopment';
 import { submitInlineEditTurn as runSubmitInlineEditTurn } from '@/app/ui/imperativeChatInlineEdit';
@@ -366,6 +367,15 @@ export function createImperativeChatViewHandle(
           }
           return runWithoutTabPersistence(
             () => runDevelopmentIndexedSessionPaging(manager, ownerWindow, plugin, hooks),
+          );
+        },
+        async runProjectionWorkload(workload, hooks) {
+          const manager = getTabManager();
+          if (!manager?.getActiveTab()) {
+            throw new Error('A mounted active chat is required for the projection workload.');
+          }
+          return runWithoutTabPersistence(
+            () => runDevelopmentProjectionWorkload(manager, workload, hooks),
           );
         },
         async run100KbMarkdownStream() {

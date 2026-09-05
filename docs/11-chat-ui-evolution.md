@@ -152,7 +152,9 @@ Use fixed scenarios for 1K/5K messages, 100KB Markdown, 20 subagents, scrolling 
 
 #### Real-Obsidian measurement protocol
 
-The development build exposes explicit trace lifecycle commands. Traces use schema `pivi-chat-perf-v1` and are written under `.pivi/perf-traces/`; production builds contain none of these commands or recorder wiring.
+The development build exposes explicit trace lifecycle commands. New traces use schema `pivi-chat-perf-v2` and are written under `.pivi/perf-traces/`; production builds contain none of these commands or recorder wiring. Historical `pivi-chat-perf-v1` traces remain valid for their original metrics but do not contain the granular projection phases added in v2.
+
+V2 records these phases separately. `projection.dispatch.totalDurationMs` is inclusive: it contains validation and, for accepted queued message events, snapshot construction plus queue/scheduling work. `projection.snapshot` is therefore nested inside dispatch and must not be added to the dispatch total. `projection.entity-commit` measures reconciliation and subscriber publication when the queued snapshot is flushed; it is nested inside `projection.commit.commitDurationMs`, which also includes batch publication bookkeeping. React/host Markdown render and the following paint occur after projection commit. Snapshot call counts and recursively visited/cloned entity counts are allocation proxies, not measured bytes.
 
 1. Generate or refresh the four fixed session files with `node scripts/generate-perf-sessions.mjs <vault>`.
 2. Start the development build, run `obsidian dev:debug on`, clear captured console output, reload Pivi, and confirm `obsidian dev:errors` is clean.
@@ -172,6 +174,29 @@ The fixed scenario shapes are:
 | Scroll-away / late background | Scroll the 1K transcript away from the end, then run the deterministic stream while auto-follow remains disabled. |
 | Session switching | Run the isolated development command: ten in-memory tabs, 100 messages each, two passes / 20 switches. The command suspends tab persistence, restores the original active tab, and removes every synthetic tab. |
 | Indexed 5K cold open + older page | Run the isolated indexed-session paging command. It copies the fixed 5K fixture to a unique temporary session id, records cold open, scrolls the real virtual viewport backward to fetch one 100-message page, restores the original tab, and deletes the temporary JSONL/index while tab persistence is suspended. |
+| Projection ownership suite | Run `Pivi: Debug: run projection performance workload suite` three times in a development main window. Each run exports small-text, tool-heavy, and nested-subagent traces. Every fixture gets 5 unrecorded warmup events followed by 50 measured events at exactly one accepted event per visible animation frame; the trace stops before the disposable unbound tab is removed. Summarize all nine traces with `node scripts/summarize-projection-traces.mjs <trace.json> [...]`. |
+
+The projection fixtures are source-controlled in `src/app/ui/imperativeChatDevelopment.ts` and pinned as follows:
+
+| Fixture | Accepted measured event | Shape | SHA-256 |
+|---|---|---|---|
+| Small text | `text.append` | One assistant text block with fixed-width sample suffix | `8c7e161e1c431ad5f5479a35cc9ac6ea0ae0da3222562cbaff3cb78981d26334` |
+| Tool-heavy | `tool.upsert` | One assistant message, one text block, 12 tool blocks/calls | `8dd0b9f55e255124b89e9c621bace9635489d55f4458ab658217c9a7cf9d7b65` |
+| Nested subagent | `agent.upsert` | One spawn tool, one async subagent, 8 nested tool calls | `26657f173f9bcdad0727d4db6971d7e7dc57a7462a6197ff676174e99e53ac6c` |
+
+Hash input is the canonical JSON serialization of each checked-in base `ChatMessage`; the per-run message-id suffix is excluded. Run all samples in a development build, main window, visible document, with no active model turn. Report aggregate median/p95 plus the min–max range of the three per-trace medians. Timing values remain evidence, not Jest thresholds; deterministic tests enforce event counts, hashes, immutable accepted snapshots, stable unchanged entities, stale/cross-owner rejection, and terminal flush behavior.
+
+#### 2026-09-05 projection baseline
+
+Three main-window development runs on Obsidian CLI `1.14.0 (installer 1.13.7)`, Electron 43.3.0, renderer Node 24.18.1, Chrome 150.0.7871.212, macOS arm64, and Pivi 0.25.1 used artifact SHA-256 `d25454eddd9384004ae73ed75512442bd3b9b9e25674d9c01431bf2243f37219`. Each of the nine corrected traces contains exactly 50 accepted fixture dispatches, snapshots, entity commits, projection commits, and paints. The first attempted batch is excluded because a wall-clock/monotonic-clock mismatch clamped trace-relative and paint spans to zero; v2 now anchors elapsed time to the owning window's monotonic epoch, with a regression test.
+
+| Fixture | Event → paint median / p95 | Per-run median range | Dominant local phase median / p95 | Snapshot proxies per event (visited / cloned) |
+|---|---:|---:|---:|---:|
+| Small text | 15.20 / 16.10 ms | 15.00–15.40 ms | Markdown render 0.70 / 0.90 ms | 9 / 3 |
+| Tool-heavy | 16.20 / 17.00 ms | 16.10–16.20 ms | Projection commit 0.10 / 0.10 ms | 142 / 40 |
+| Nested subagent | 15.70 / 16.80 ms | 15.70–15.70 ms | All measured projection phases 0 / ≤0.10 ms | 98 / 25 |
+
+No snapshot-ownership optimization is retained from this baseline. Every ingest/snapshot/entity phase has a p95 at or below the renderer clock's 0.10 ms resolution, all three end-to-end medians remain one visible frame, and the only larger local phase is the required small-text host Markdown render outside snapshot ownership. Structural sharing here would add mutable-event ownership risk without a measurable target; instrumentation and immutable acceptance snapshots remain in place for future evidence.
 
 Append cost uses a filesystem-only companion benchmark so no real session is mutated: `node --import tsx scripts/benchmark-session-append.mjs <vault>`. It runs five trials of twenty user appends per mode on fresh temporary copies of the 5K fixture, comparing the former append-then-full-rewrite behavior with the indexed true-append path.
 

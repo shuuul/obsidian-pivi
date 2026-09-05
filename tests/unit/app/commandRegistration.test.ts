@@ -149,12 +149,77 @@ describe('chat command registration', () => {
     expect(commands.map(command => command.id)).toEqual(expect.arrayContaining([
       'debug-start-chat-performance-trace',
       'debug-sample-chat-performance-heap',
+      'debug-run-projection-workload-suite',
       'debug-run-20-subagents-workload',
       'debug-run-indexed-session-paging-workload',
       'debug-run-100kb-markdown-stream',
       'debug-run-tab-switching-workload',
       'debug-stop-chat-performance-trace',
     ]));
+  });
+
+  it('exports the three fixed projection workloads with fixture metadata', async () => {
+    const runProjectionWorkload = jest.fn(async (
+      workload: 'nested-subagent' | 'small-text' | 'tool-heavy',
+      hooks: {
+        beforeMeasurement(result: {
+          workload: typeof workload;
+          fixtureSha256: string;
+          warmupEvents: number;
+          sampleEvents: number;
+        }): Promise<void>;
+        afterMeasurement(): Promise<void>;
+      },
+    ) => {
+      const result = {
+        workload,
+        fixtureSha256: `${workload}-sha`,
+        warmupEvents: 5,
+        sampleEvents: 50,
+      };
+      await hooks.beforeMeasurement(result);
+      await hooks.afterMeasurement();
+      return result;
+    });
+    jest.mocked(findPiviView).mockReturnValue({
+      leaf: {} as never,
+      getChatHandle: () => ({
+        commands: {} as PiviChatViewCommands,
+        maintenance: {} as never,
+        development: {
+          runProjectionWorkload,
+          run20SubagentsWorkload: jest.fn(),
+          runIndexedSessionPagingWorkload: jest.fn(),
+          run100KbMarkdownStream: jest.fn(),
+          runTabSwitchingWorkload: jest.fn(),
+        },
+      }),
+    });
+    const { commands, perfController, plugin } = createPlugin();
+    perfController.enabled = false;
+    registerPiviCommands(plugin as never, plugin as never);
+
+    commands.find(command => command.id === 'debug-run-projection-workload-suite')
+      ?.callback?.();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(runProjectionWorkload.mock.calls.map(([workload]) => workload)).toEqual([
+      'small-text',
+      'tool-heavy',
+      'nested-subagent',
+    ]);
+    expect(perfController.start).toHaveBeenNthCalledWith(
+      1,
+      'projection-small-text-50-events-main',
+      expect.anything(),
+      {
+        workload: 'small-text',
+        fixtureSha256: 'small-text-sha',
+        warmupEvents: 5,
+        sampleEvents: 50,
+      },
+    );
+    expect(perfController.stopAndExport).toHaveBeenCalledTimes(3);
   });
 
   it('runs the deterministic Markdown stream through the mounted view', async () => {
