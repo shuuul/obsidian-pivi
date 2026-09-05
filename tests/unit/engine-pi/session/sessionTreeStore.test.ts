@@ -1,4 +1,5 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
+import { SessionManager } from '@earendil-works/pi-coding-agent';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -20,6 +21,7 @@ import {
   SESSION_JOURNAL_MAX_ENTRY_BYTES,
   type SessionJournalStateV1,
 } from '@pivi/agent/session/sessionJournal';
+import { getPiviSessionDir } from '@pivi/agent/session/sessionPaths';
 
 const assistantToolCall = {
   role: 'assistant',
@@ -329,6 +331,146 @@ describe('SessionTreeStore', () => {
     expect(manager.createBranchedSession).not.toHaveBeenCalled();
     expect(fs.existsSync(path.join(root, 'fork.jsonl'))).toBe(false);
     fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  it('removes a partial fork, preserves the primary error, and reopens the source', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-partial-fork-'));
+    const sessionDir = getPiviSessionDir(root);
+    const source = path.join(sessionDir, 'source.jsonl');
+    const candidate = path.join(sessionDir, 'partial.jsonl');
+    const sourceBytes = Buffer.from('{"source":"unchanged"}\n');
+    const primary = new Error('injected fork write failure');
+    fs.mkdirSync(sessionDir, { recursive: true });
+    fs.writeFileSync(source, sourceBytes);
+    let current = source;
+    const manager = {
+      createBranchedSession: jest.fn(() => {
+        current = candidate;
+        fs.writeFileSync(candidate, '{"partial":');
+        throw primary;
+      }),
+      getSessionFile: () => current,
+      isPersisted: () => true,
+    };
+    const restoredManager = {
+      getSessionFile: () => source,
+    };
+    const open = jest.spyOn(SessionManager, 'open').mockReturnValue(
+      restoredManager as unknown as SessionManager,
+    );
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(source);
+
+    try {
+      let thrown: unknown;
+      try {
+        store.forkToNewFile('user-1');
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBe(primary);
+      expect(fs.readFileSync(source)).toEqual(sourceBytes);
+      expect(fs.existsSync(candidate)).toBe(false);
+      expect(open).toHaveBeenCalledWith(source, sessionDir, root);
+      expect(store.getVaultRelativeSessionFile())
+        .toBe(path.relative(root, source).split(path.sep).join('/'));
+    } finally {
+      open.mockRestore();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('reports an owned residual when partial fork cleanup fails', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-partial-fork-residual-'));
+    const sessionDir = getPiviSessionDir(root);
+    const source = path.join(sessionDir, 'source.jsonl');
+    const candidate = path.join(sessionDir, 'partial.jsonl');
+    const sourceBytes = Buffer.from('{"source":"unchanged"}\n');
+    const primary = new Error('injected fork write failure');
+    fs.mkdirSync(sessionDir, { recursive: true });
+    fs.writeFileSync(source, sourceBytes);
+    let current = source;
+    const manager = {
+      createBranchedSession: jest.fn(() => {
+        current = candidate;
+        fs.mkdirSync(candidate);
+        throw primary;
+      }),
+      getSessionFile: () => current,
+      isPersisted: () => true,
+    };
+    const open = jest.spyOn(SessionManager, 'open').mockReturnValue({
+      getSessionFile: () => source,
+    } as unknown as SessionManager);
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(source);
+
+    try {
+      let thrown: unknown;
+      try {
+        store.forkToNewFile('user-1');
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBeInstanceOf(AggregateError);
+      const aggregate = thrown as AggregateError;
+      expect(aggregate.errors[0]).toBe(primary);
+      expect(aggregate.message).toContain(candidate);
+      expect(fs.readFileSync(source)).toEqual(sourceBytes);
+      expect(fs.statSync(candidate).isDirectory()).toBe(true);
+      expect(open).toHaveBeenCalledWith(source, sessionDir, root);
+    } finally {
+      open.mockRestore();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('does not remove or reopen the source when fork fails before changing files', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-early-fork-failure-'));
+    const sessionDir = getPiviSessionDir(root);
+    const source = path.join(sessionDir, 'source.jsonl');
+    const sourceBytes = Buffer.from('{"source":"unchanged"}\n');
+    const primary = new Error('injected pre-mutation failure');
+    fs.mkdirSync(sessionDir, { recursive: true });
+    fs.writeFileSync(source, sourceBytes);
+    const manager = {
+      createBranchedSession: jest.fn(() => { throw primary; }),
+      getSessionFile: () => source,
+      isPersisted: () => true,
+    };
+    const open = jest.spyOn(SessionManager, 'open');
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(source);
+
+    try {
+      let thrown: unknown;
+      try {
+        store.forkToNewFile('user-1');
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBe(primary);
+      expect(fs.readFileSync(source)).toEqual(sourceBytes);
+      expect(open).not.toHaveBeenCalled();
+    } finally {
+      open.mockRestore();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('ignores invalid leafId when opening a session', () => {

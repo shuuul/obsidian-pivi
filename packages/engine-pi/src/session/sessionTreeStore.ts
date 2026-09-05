@@ -42,7 +42,8 @@ import {
   type PiviUiContextData,
   SessionIndexStaleError,
 } from '@pivi/agent/session/types';
-import { readFileSync } from 'fs';
+import { readFileSync, rmSync } from 'fs';
+import { basename, dirname, resolve } from 'path';
 
 import { toPiImageContent } from '../runtime/piImageContent';
 import {
@@ -100,6 +101,41 @@ export function getBoundSessionJournal(): SessionJournalStore | null {
 
 function cacheKey(vaultPath: string, sessionFile: string): string {
   return `${vaultPath}::${sessionFile}`;
+}
+
+function removePartialFork(vaultPath: string, candidate: string): void {
+  const absoluteCandidate = resolve(candidate);
+  const sessionDirectory = resolve(getPiviSessionDir(vaultPath));
+  if (
+    dirname(absoluteCandidate) !== sessionDirectory
+    || !basename(absoluteCandidate).endsWith('.jsonl')
+  ) {
+    throw new Error(`Refusing to remove unexpected partial fork path: ${candidate}`);
+  }
+  rmSync(absoluteCandidate, { force: true });
+}
+
+function createBranchedSessionWithCompensation(
+  vaultPath: string,
+  manager: SessionManager,
+  atEntryId: string,
+): string | null {
+  const source = manager.getSessionFile();
+  try {
+    return manager.createBranchedSession(atEntryId) ?? null;
+  } catch (primaryError) {
+    const candidate = manager.getSessionFile();
+    if (!candidate || (source && resolve(candidate) === resolve(source))) throw primaryError;
+    try {
+      removePartialFork(vaultPath, candidate);
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [primaryError, cleanupError],
+        `Session fork failed and left a partial file at ${candidate}`,
+      );
+    }
+    throw primaryError;
+  }
 }
 
 function isLlmContextEntry(entry: SessionEntry): boolean {
@@ -462,7 +498,7 @@ export class SessionTreeStore {
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
     const source = captureSessionJsonlSource(absolute);
     assertSessionJsonlSourceUnchanged(absolute, source);
-    const newPath = manager.createBranchedSession(atEntryId);
+    const newPath = createBranchedSessionWithCompensation(vaultPath, manager, atEntryId);
     if (!newPath) {
       return null;
     }
@@ -751,7 +787,31 @@ export class SessionTreeStore {
   /** Fork to a new JSONL file at `atEntryId`; returns vault-relative path. */
   forkToNewFile(atEntryId: string): string | null {
     this.assertWritableSource();
-    const newPath = this.manager.createBranchedSession(atEntryId);
+    const source = this.manager.getSessionFile();
+    let newPath: string | null;
+    try {
+      newPath = createBranchedSessionWithCompensation(
+        this.vaultPath,
+        this.manager,
+        atEntryId,
+      );
+    } catch (error) {
+      if (source && this.manager.getSessionFile() !== source) {
+        try {
+          this.manager = SessionManager.open(
+            source,
+            getPiviSessionDir(this.vaultPath),
+            this.vaultPath,
+          );
+        } catch (restoreError) {
+          throw new AggregateError(
+            [error, restoreError],
+            `Session fork failed and the source session could not be reopened: ${source}`,
+          );
+        }
+      }
+      throw error;
+    }
     if (!newPath) {
       return null;
     }

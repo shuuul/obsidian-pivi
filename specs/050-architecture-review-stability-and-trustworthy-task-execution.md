@@ -28,7 +28,7 @@ Keep Pi pins/compatibility checks, JSONL/journal recovery, device-local credenti
 Important failure paths are handled, a new user can finish one clearly bounded task, and a contributor can take one independently testable maintenance slice.
 
 - [x] WS-01: Real Obsidian smoke exercises a deterministic Pivi turn/tool mutation and semantic session restoration after reload, preserves fetch identity, and cleans only its own resources on success/failure. Candidate/environment evidence is recorded.
-- [ ] WS-02: Fork failure injection covers every side-effect boundary; delayed/repeated/early shutdown preserves save dependencies and never clears a newer owner's journal. Source sessions remain unchanged.
+- [x] WS-02: Fork failure injection covers every side-effect boundary; delayed/repeated/early shutdown preserves save dependencies and never clears a newer owner's journal. Source sessions remain unchanged.
 - [ ] WS-03: Reproducible ingest/snapshot/entity-commit/render baselines exist for three workloads; any retained optimization demonstrates improvement with immutable snapshots and event ordering intact. A measured no-change conclusion is acceptable, not an invented speedup.
 - [ ] WS-04: A user can run literature triage under an execution-enforced read-only mode; main/subagent/bypass attempts cannot mutate user files or external systems. Mutation recovery information distinguishes captured, unavailable, failed, and unsupported states without promising universal undo.
 - [ ] WS-05: Owning packages declare third-party contracts, consumer resolution and active local-link checks reject regressions, and the contributor handoff identifies files, fixtures, and commands. Full local gates and final branch evidence pass before merge.
@@ -77,7 +77,7 @@ Coordinator owns this file and the index. Claim a row before implementation or d
 | ID | Deliverable | Owner | Status | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- |
 | WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Amp | Done | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
-| WS-02 | P1 complete fork compensation and ordered instance shutdown | Amp | In progress | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
+| WS-02 | P1 complete fork compensation and ordered instance shutdown | Amp | Done | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
 | WS-03 | P2 projection cost baselines and justified local optimization | Unassigned | Pending | P1 accepted | Fixed workloads, ownership/immutability regressions, before/after traces |
 | WS-04 | P2 execution read-only task and recovery visibility | Unassigned | Blocked | Grill decisions; P1 accepted | Adversarial tool matrix, recipe walkthrough, recovery states, UI/i18n checks |
 | WS-05 | P2 package/docs gates, contributor slice, final integration | Unassigned | Pending | P1 first; final integration depends on all retained scope | Consumer resolution and link fixtures; full local quality gates |
@@ -163,7 +163,7 @@ The repaired smoke command must explicitly target and verify the designated test
 | Evidence row | Required evidence | Current state |
 |---|---|---|
 | Deterministic real-host chain | Fresh candidate/build identity, restored session/tool/note assertions, original fetch reference, success/failure cleanup | Passed 2026-09-05 14:33 CST; development artifact SHA-256 `f57920262198cced59e1eb0ae1699707f19bc619a735248b0181762a653cc524` |
-| Fork and shutdown | Fault matrix results, original bytes, deferred-save event order, reload ownership | Local fault/lifecycle matrix passed; real-host reload/restore passed; partial fork-creation fault ownership remains |
+| Fork and shutdown | Fault matrix results, original bytes, deferred-save event order, reload ownership | Passed: local fault/lifecycle matrix, temporary-filesystem partial-write cleanup/residual diagnosis, exact source bytes, and real-host reload/restore |
 | Performance | Fixed workload definitions and comparable before/after spans with variability | Not measured |
 | Read-only and recovery | Adversarial matrix, new-user walkthrough, recovery status assertions, all-locale checks | Awaiting decisions |
 | Final candidate | Full gates, inspected UI artifacts where applicable, docs sync, final CI for the merge candidate | Not run |
@@ -224,6 +224,13 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Live result: `npm run dev` deployed byte-identical root/Vault artifacts, then `npm run smoke:obsidian` passed the deterministic Pi turn, registered `obsidian_write`, semantic role/content/tool-result checks, two plugin reloads, durable reopen, exact note bytes, and original `window.fetch` reference checks. `obsidian dev:errors` reported no captured errors.
 - Cleanup: the UUID note, ownership ledger, JSONL session, and retained fetch key were all absent after the run. No pre-existing `.pivi-smoke` files or shared directories were removed.
 - State: WS-01 accepted. WS-02 retains one explicit gap: storage-owned diagnosis/cleanup for a fork API that fails after partially creating a file; do not claim that boundary from downstream compensation tests.
+
+### 2026-09-05 — Amp — WS-02 partial-fork closure
+
+- Changed: both production fork entry points now compensate a pinned Pi `SessionManager` failure that changes its session path before completing the new JSONL. Cleanup accepts only that exact same-session-directory `.jsonl` candidate, never scans sibling sessions, and reopens the unchanged source manager for a live store.
+- Failure contract: successful cleanup rethrows the original error object. Cleanup refusal/failure retains the exact owned path in an `AggregateError`; a source reopen failure is also aggregated instead of replacing the fork error.
+- Evidence: temporary-filesystem fault injection writes partial bytes before throwing, asserts byte-for-byte unchanged source content, candidate absence, primary-error identity, and source-manager restoration. Separate cases prove pre-mutation failures do not delete/reopen the source and cleanup failure leaves a diagnosed residual. Node 24 focused tests, typecheck, lint, boundaries, and diff checks passed.
+- State: WS-02 accepted. WS-03 is the next unblocked workstream; WS-04 remains blocked on product decisions.
 
 ## Completion summary
 
