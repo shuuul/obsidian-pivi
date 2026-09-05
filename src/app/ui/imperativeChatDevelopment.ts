@@ -49,7 +49,7 @@ export const DEVELOPMENT_PROJECTION_WORKLOADS: Readonly<
   },
   'tool-heavy': {
     eventType: 'tool.upsert',
-    fixtureSha256: '8dd0b9f55e255124b89e9c621bace9635489d55f4458ab658217c9a7cf9d7b65',
+    fixtureSha256: '7759fc1ffd9b6e6f98fbe443bfee9f9bb7f9d93853972ae5f66ddd043caccd33',
     message: {
       id: 'pivi-development-projection-tool-heavy',
       role: 'assistant',
@@ -63,7 +63,7 @@ export const DEVELOPMENT_PROJECTION_WORKLOADS: Readonly<
       ],
       toolCalls: Array.from({ length: 12 }, (_, index) => ({
         id: `projection-tool-${String(index + 1).padStart(2, '0')}`,
-        name: 'obsidian_read',
+        name: 'read',
         input: { path: `Reading/Fixture-${String(index + 1).padStart(2, '0')}.md` },
         status: 'running' as const,
         result: 'Deterministic tool result 000.',
@@ -74,7 +74,7 @@ export const DEVELOPMENT_PROJECTION_WORKLOADS: Readonly<
   },
   'nested-subagent': {
     eventType: 'agent.upsert',
-    fixtureSha256: '26657f173f9bcdad0727d4db6971d7e7dc57a7462a6197ff676174e99e53ac6c',
+    fixtureSha256: '8b544991742990d71bc446db5ef7d290caf0bf3e433da6ef8f88484b933448f3',
     message: {
       id: 'pivi-development-projection-nested-subagent',
       role: 'assistant',
@@ -105,7 +105,7 @@ export const DEVELOPMENT_PROJECTION_WORKLOADS: Readonly<
           asyncStatus: 'running',
           toolCalls: Array.from({ length: 8 }, (_, index) => ({
             id: `projection-nested-tool-${String(index + 1).padStart(2, '0')}`,
-            name: 'obsidian_read',
+            name: 'read',
             input: { path: `Research/Nested-${String(index + 1).padStart(2, '0')}.md` },
             status: 'completed' as const,
             result: `Nested deterministic result ${String(index + 1).padStart(2, '0')}.`,

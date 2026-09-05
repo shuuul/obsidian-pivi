@@ -131,7 +131,7 @@ export class ExternalFileApi {
     }
 
     if (stat.isDirectory()) {
-      throw new Error(`External path is a directory; use obsidian_list_external for folders: ${normalized}`);
+      throw new Error(`External path is a directory; use \`ls\` for folders: ${normalized}`);
     }
     if (!stat.isFile()) {
       throw new Error(`External path is not a readable file: ${normalized}`);

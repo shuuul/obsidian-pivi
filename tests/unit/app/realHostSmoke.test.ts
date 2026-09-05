@@ -60,7 +60,7 @@ function createDeps(options: { chunks?: StreamChunk[]; cleanupNoteFailure?: bool
       timestamp: 2,
       toolCalls: [{
         id: 'pivi-smoke-tool-run-123',
-        name: 'obsidian_write',
+        name: 'write',
         input: { path: request.notePath },
         status: 'completed',
         result: 'Wrote .pivi-smoke/smoke-note-run-123.md',

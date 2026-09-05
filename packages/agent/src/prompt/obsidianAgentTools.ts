@@ -7,11 +7,9 @@ import {
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LIST,
-  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_NOTE_INFO,
   TOOL_OBSIDIAN_READ,
-  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
 } from '../tools';
@@ -20,13 +18,14 @@ import {
   buildMcpInventoryLines,
   type McpInventoryServer,
 } from './mcpInventory';
+import { filterUnavailableToolGuidance } from './modules/compose';
 
 export interface RegisteredToolSummary {
   obsidianTools: readonly string[];
   /** Actual registered specs. Their factories own detailed prompt usage. */
   toolSpecs?: readonly Pick<ToolSpec, 'name' | 'description' | 'parameters' | 'promptUsage'>[];
   obsidianCliAvailable: boolean;
-  /** Effective Bash allowlist entries when `obsidian_bash` is registered for this turn. */
+  /** Effective Bash allowlist entries when `bash` is registered for this turn. */
   bashAllowlist?: readonly string[];
   includeMcp: boolean;
   /** Cached inventory of settings-enabled MCP servers/tools for prompt injection. */
@@ -44,14 +43,11 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     'Use only the tools listed below. Do not invent tool names, unregistered capabilities, or shell commands.',
     'If the request cannot be completed with the registered tools available for this turn, stop and explain what is missing.',
-    ...(registeredObsidianTools.has(TOOL_OBSIDIAN_BASH) ? ['For Bash, prefer pre-approved persistent permission commands; when the user explicitly asks you to run a specific shell command that is not already approved, you may call `obsidian_bash` and Pivi will ask the user to approve it in the sidebar.'] : []),
+    ...(registeredObsidianTools.has(TOOL_OBSIDIAN_BASH) ? ['For Bash, prefer pre-approved persistent permission commands; when the user explicitly asks you to run a specific shell command that is not already approved, you may call `bash` and Pivi will ask the user to approve it in the sidebar.'] : []),
   ];
   const obsidianCliAvailable = summary.obsidianCliAvailable;
   const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
-  const hasReadExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_READ_EXTERNAL);
   const hasList = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST);
-  const hasListExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST_EXTERNAL);
-  const hasExternalRead = hasReadExternal || hasListExternal;
   const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
   const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
   const hasNoteInfo = registeredObsidianTools.has(TOOL_OBSIDIAN_NOTE_INFO);
@@ -62,12 +58,12 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     '### Obsidian vault',
     '',
-    '**Mutating notes:** Use **`obsidian_edit`** for any exact local change, including inserting line endings into a long physical line. Match only the shortest unique span around the boundary—not the whole line. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. See the registered `obsidian_edit` descriptor for argument examples.',
-    '**Vault paths:** Use `obsidian_list` for folders/files/attachments, `obsidian_mkdir` for folders, `obsidian_move` for renames/moves, and `obsidian_delete` to move items to trash.',
+    '**Mutating notes:** Use **`edit`** for any exact local change, including inserting line endings into a long physical line. Match only the shortest unique span around the boundary—not the whole line. Use **`write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. See the registered `edit` descriptor for argument examples.',
+    '**Vault paths:** Use `ls` for folders/files/attachments, `mkdir` for folders, `move` for renames/moves, and `delete` to move items to trash.',
     '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as standard Markdown `![](...)` embeds.',
   );
   if (hasHistory && obsidianCliAvailable) {
-    lines.push('**History recovery:** Use `obsidian_history` before giving up on a deleted, overwritten, or accidentally changed vault note. Use `action: "files"` when the path is unknown or the file may have been deleted and needs discovery through Obsidian’s history index. Use `action: "list"` first when the path is known, then pick a version number from the output. Use `action: "read"` to inspect candidate content before restoring when practical. Use `action: "restore"` to restore the chosen version in place. To restore content to a different path, use `read` first, then `obsidian_write`. History restore depends on Obsidian’s stored history; if no version exists, surface the CLI error instead of claiming recovery.');
+    lines.push('**History recovery:** Use `obsidian_history` before giving up on a deleted, overwritten, or accidentally changed vault note. Use `action: "files"` when the path is unknown or the file may have been deleted and needs discovery through Obsidian’s history index. Use `action: "list"` first when the path is known, then pick a version number from the output. Use `action: "read"` to inspect candidate content before restoring when practical. Use `action: "restore"` to restore the chosen version in place. To restore content to a different path, use `read` first, then `write`. History restore depends on Obsidian’s stored history; if no version exists, surface the CLI error instead of claiming recovery.');
   }
   const registeredSpecs = new Map(summary.toolSpecs?.map((spec) => [spec.name, spec]));
   for (const name of summary.obsidianTools) {
@@ -94,10 +90,12 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeSkill) {
-    const skillLine = hasReadExternal
-      ? `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; read them with \`obsidian_read_external\` using the absolute paths returned by the skill tool. Do not join relative names onto the skill directory.`
-      : `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; the skill tool returns absolute paths for files that exist in the installed skill.`;
-    lines.push('', '### Skills', skillLine);
+    const supporting = hasRead && hasList
+      ? ' Supporting files are not vault notes; read them with `read` using the absolute paths returned by the skill tool. List the skill directory with `ls`. Do not join relative names onto the skill directory.'
+      : hasRead
+        ? ' Supporting files are not vault notes; read them with `read` using the absolute paths returned by the skill tool. Do not join relative names onto the skill directory.'
+        : ' Supporting files are not vault notes; the skill tool returns absolute paths for files that exist in the installed skill.';
+    lines.push('', '### Skills', `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/.${supporting}`);
   }
 
   if (summary.includeSubagent) {
@@ -142,89 +140,74 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
       '- **Automatic delegation for complex multi-context tasks:** When multiple attached context groups need the same substantive analysis, comparison, extraction, or transformation, prefer spawning sub-agents automatically instead of reading every group in the main session. Use direct main-agent reads only for simple lookups, tiny context, or when the task clearly needs one shared reading pass.',
     ] : []),
     '- The list is **exhaustive for this turn**: for `@folder/` mentions it already includes every file under that folder. Counting or listing folder contents does not require extra search tools—use the paths given.',
-    ...(hasRead || hasReadExternal ? buildReadMaxCharsGuidance({ hasRead, hasReadExternal }) : []),
+    ...(hasRead ? buildReadMaxCharsGuidance() : []),
     ...buildMarkdownReadGuidance({ hasRead, hasMarkdownStructure, hasSubagent: summary.includeSubagent }),
-    '- Do **not** use a leading `/` or the vault absolute path for vault files.',
+    '- Prefer vault-relative `path` for indexed notes. Do not invent a leading `/` for a vault-relative path.',
     ...(hasRead ? [
-      '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
-      hasReadExternal
-        ? '- If `obsidian_read` returns "Note not found", the path may be a file Obsidian does not index (for example under `.pivi/`). Retry with `obsidian_read_external` using the absolute path. If it is a missing vault note, retry with the other parameter (`path` vs `file`) or verify `<context_files>`.'
-        : '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
+      '- Use `file` (wikilink title) only when you have a note title and no path in `<context_files>`. Pass the same string as `path` when it looks like a vault path; the tool tries both forms internally.',
+      '- `read` routes internally: indexed vault notes use the vault API; unindexed vault files such as `.pivi/` and allowed absolute paths use the filesystem. Pass the path you have—do not retry a sibling tool.',
     ] : []),
-    ...(hasExternalRead ? [
+    ...(hasRead || hasList ? [
       '',
-      buildExternalReadGuidance({ hasRead, hasReadExternal, hasListExternal }),
+      buildInternalRoutingGuidance({ hasRead, hasList }),
     ] : []),
     '',
     buildApiVsCliGuidance(registeredObsidianTools, obsidianCliAvailable),
     buildEditPriorityGuidance(hasRead),
     buildExactMatchGuidance(hasRead),
     ...(hasEdit ? [buildMarkdownBlockBoundaryGuidance()] : []),
-    '**Search:** `obsidian_search` is case-insensitive substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax. Do not repeat the same search with different casing.',
-    hasList && hasListExternal
-      ? '**Listing:** Prefer `obsidian_list` for Obsidian-indexed vault folders. If `obsidian_list` returns "Vault path not found", the folder may exist on disk but not in Obsidian’s index (for example `.pivi/`); retry with `obsidian_list_external` and the absolute path. Use `obsidian_list_external` for folders outside the vault.'
-      : hasListExternal
-        ? '**Listing:** Prefer `obsidian_list_external` for folders Obsidian does not index and folders outside the vault.'
-        : '**Listing:** Prefer `obsidian_list` when you need non-Markdown files or folders.',
-    '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise' + (hasExternalRead ? '; registered external tools use absolute paths under allowed external directories.' : '.'),
+    ...(hasSearch ? [
+      hasList
+        ? '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. It is not regex and not Obsidian in-app search. Do not use `*`, `**`, empty, or `path:`-only queries for listing—use `ls`. Do not repeat the same search with different casing.'
+        : '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. It is not regex and not Obsidian in-app search. Do not repeat the same search with different casing.',
+    ] : []),
+    ...(hasList ? [
+      '**Listing:** Prefer `ls` for folders, including non-Markdown files. `offset` is a 0-based entry index, not a line number. Unindexed vault folders such as `.pivi/` and allowed absolute paths work on the same tool.',
+    ] : []),
+    hasRead && hasList
+      ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `read` and `ls` accept unindexed vault-relative paths and allowed absolute paths.'
+      : hasRead
+        ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `read` accepts unindexed vault-relative paths and allowed absolute paths.'
+        : hasList
+          ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `ls` accepts unindexed vault-relative paths and allowed absolute paths.'
+          : '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths.',
     '**Compact UI:** Vault tool cards show paths and match counts in the tool header. Do not repeat the same file list in the next message—add interpretation or the next action only.',
   );
 
-  const availableNames = new Set([
+  const availableNames = [
     ...summary.obsidianTools,
     ...(summary.includeMcp ? ['mcp'] : []),
     ...(summary.includeSkill ? [TOOL_SKILL] : []),
     ...(summary.includeSubagent ? [TOOL_SPAWN_AGENT] : []),
-  ]);
-  return lines.filter((line) => {
-    const mentioned = line.match(/\b(?:obsidian_[a-z0-9_]+|pivi_[a-z0-9_]+|spawn_agent)\b/g) ?? [];
-    return mentioned.every((name) => availableNames.has(name));
-  }).join('\n');
-}
-
-function buildReadMaxCharsGuidance(params: {
-  hasRead: boolean;
-  hasReadExternal: boolean;
-}): string[] {
-  const readTools = [
-    ...(params.hasRead ? ['`obsidian_read`'] : []),
-    ...(params.hasReadExternal ? ['`obsidian_read_external`'] : []),
-  ].join(' and ');
-  const guidance = [
-    `- Each of ${readTools} uses the configured Tools default read size when \`maxChars\` is omitted. You may override that default explicitly; values are clamped between 1000 and the fixed 500000-character per-read ceiling. Read pages do not shrink as context pressure rises—normal compaction preflight handles overflow before the next model request.`,
-    '- Explicit line ranges automatically return the largest complete-line page that fits `maxChars`. When `truncated` is true, continue from the returned `nextStartLine` instead of retrying overlapping ranges.',
   ];
-  if (params.hasRead) {
-    guidance.push(
-      '- For an oversized physical line in `obsidian_read`, combine 1-based `startLine` with line-relative 1-based `startChar` and `maxChars`; a truncated page reports the exact `nextStartLine` + `nextStartChar` pair. Continue with that pair and the same `maxChars`—do not calculate offsets, overlap pages, or raise the budget. `endLine` may bound the read. If a requested line range starts with an oversized line, the tool switches to this line-relative character continuation automatically.',
-      '- If `obsidian_read` reports that a physical line cannot fit, continue with `startLine` plus line-relative `startChar` at the same `maxChars`. Do not raise `maxChars` past the fixed ceiling.',
-      '- Plan page size from `mode: "stats"` (line count and Characters) and the clamp. Do not crawl a file with tiny `startChar` steps of around 800 characters.',
-      '- A standalone `startChar` is file-global; with `startLine`, it is relative to that physical line. These coordinate systems are mutually exclusive per call: do not mix a standalone file-global `startChar` with `startLine`/`endLine`. Character positions use the same UTF-16 units as the reported `Characters` count. Do not use `startChar` with `mode: "stats"`, and do not combine it with `endLine` unless `startLine` is also present. The continuation marker counts inside `maxChars`, so source text may be slightly shorter than the cap.',
-    );
-  }
-  if (params.hasReadExternal) {
-    guidance.push('- If `obsidian_read_external` is rejected because `maxChars` is smaller than one indivisible line, immediately retry with `maxChars` at least the required count when the remaining turn read allowance can absorb it.');
-  }
-  guidance.push('- Before overriding the default, estimate how much contiguous text the task truly needs. Prefer `mode: "stats"`, targeted line or character reads, or sub-agent delegation when a full body is unnecessary; raise `maxChars` deliberately when the task requires one larger contiguous read.');
-  return guidance;
+  return filterUnavailableToolGuidance(lines.join('\n'), availableNames);
 }
 
-function buildExternalReadGuidance(params: {
+function buildReadMaxCharsGuidance(): string[] {
+  return [
+    '- `read` uses the configured Tools default read size when `maxChars` is omitted. You may override that default explicitly; values are clamped between 1000 and the fixed 500000-character per-read ceiling. Read pages do not shrink as context pressure rises—normal compaction preflight handles overflow before the next model request.',
+    '- Explicit 1-indexed `offset`/`limit` line pages automatically return the largest complete-line page that fits `maxChars`. When `truncated` is true, continue from the returned `nextOffset` instead of retrying overlapping ranges.',
+    '- For an oversized physical line in `read`, combine 1-indexed `offset` with line-relative 1-based `startChar` and `maxChars`; a truncated page reports the exact `nextStartLine` + `nextStartChar` pair. Continue with that pair and the same `maxChars`—do not calculate offsets, overlap pages, or raise the budget. If a requested line range starts with an oversized line, the tool switches to this line-relative character continuation automatically.',
+    '- If `read` reports that a physical line cannot fit, continue with `offset` plus line-relative `startChar` at the same `maxChars`. Do not raise `maxChars` past the fixed ceiling.',
+    '- Plan page size from `mode: "stats"` (line count and Characters) and the clamp. Do not crawl a file with tiny `startChar` steps of around 800 characters.',
+    '- A standalone `startChar` is file-global; with `offset`, it is relative to that physical line. These coordinate systems are mutually exclusive per call: do not mix a standalone file-global `startChar` with `offset`/`limit`. Character positions use the same UTF-16 units as the reported `Characters` count. Do not use `startChar` with `mode: "stats"`. The continuation marker counts inside `maxChars`, so source text may be slightly shorter than the cap.',
+    '- If `read` is rejected because `maxChars` is smaller than one indivisible line, immediately retry with `maxChars` at least the required count when the remaining turn read allowance can absorb it.',
+    '- Before overriding the default, estimate how much contiguous text the task truly needs. Prefer `mode: "stats"`, targeted line or character reads, or sub-agent delegation when a full body is unnecessary; raise `maxChars` deliberately when the task requires one larger contiguous read.',
+  ];
+}
+
+function buildInternalRoutingGuidance(params: {
   hasRead: boolean;
-  hasReadExternal: boolean;
-  hasListExternal: boolean;
+  hasList: boolean;
 }): string {
   const clauses: string[] = [];
-  if (params.hasReadExternal) {
-    clauses.push('use `obsidian_read_external` with an absolute path (`path: "/Users/me/Workspace/file.ts"`), or a vault-relative path that exists in the current vault. Use it for files Obsidian does not index (including `.pivi/`) and for files outside the vault. It supports `mode: "stats"` and line ranges');
+  if (params.hasRead) {
+    clauses.push('use `read` with a vault-relative path, an unindexed vault path such as `.pivi/`, or an allowed absolute path (`path: "/Users/me/Workspace/file.ts"`). It supports `mode: "stats"` and 1-indexed `offset`/`limit`');
   }
-  if (params.hasListExternal) {
-    clauses.push('use `obsidian_list_external` to list a folder Obsidian does not index or a folder outside the vault');
+  if (params.hasList) {
+    clauses.push('use `ls` to list an indexed vault folder, an unindexed vault folder, or an allowed folder outside the vault');
   }
-  const vaultReadWarning = params.hasRead
-    ? ', and do not use `obsidian_read` for absolute paths'
-    : '';
-  return `**External files:** ${clauses.join('; ')}. Prefer the absolute paths returned by tools; vault-relative paths are resolved against the current vault${vaultReadWarning}.`;
+  return `**Unindexed and external files:** ${clauses.join('; ')}. Prefer the absolute paths returned by tools; vault-relative paths are resolved against the current vault.`;
 }
 
 function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCliAvailable: boolean): string {
@@ -264,12 +247,12 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
 
 function buildBashAllowlistGuidance(allowlist: readonly string[]): string[] {
   return [
-    '**Bash permissions (this turn):** These commands are pre-approved for `obsidian_bash`:',
+    '**Bash permissions (this turn):** These commands are pre-approved for `bash`:',
     ...allowlist.map((entry) => `- ${formatBashAllowlistEntry(entry)}`),
     `Commands not on this list are not pre-approved. Do not run them on your own initiative.`,
-    `When the user explicitly asks you to run a specific shell command that is not on this list, you may call \`obsidian_bash\` with that command; Pivi shows a sidebar prompt (Deny / Allow once / Always) before executing.`,
+    `When the user explicitly asks you to run a specific shell command that is not on this list, you may call \`bash\` with that command; Pivi shows a sidebar prompt (Deny / Allow once / Always) before executing.`,
     `Commands run through the user login shell, so pipes, redirects, and other shell syntax are allowed. Redirects and substitutions still require Allow once.`,
-    `After the user denies a command or Bash validation rejects it, do not call \`obsidian_bash\` again during the same turn with a different command.`,
+    `After the user denies a command or Bash validation rejects it, do not call \`bash\` again during the same turn with a different command.`,
     `Missing Bash capability never justifies using shell commands for vault files.`,
   ];
 }
@@ -282,17 +265,17 @@ function formatBashAllowlistEntry(entry: string): string {
 }
 
 function buildEditPriorityGuidance(hasRead: boolean): string {
-  const readClause = hasRead ? ' Read with `obsidian_read` when you need exact `old_string` text.' : '';
-  return `**Priority:** \`obsidian_edit\` before \`obsidian_write\` for existing notes, including local newline insertion. Match the shortest unique span around the boundary; a multi-thousand-character physical line never needs to be copied in full.${readClause} \`obsidian_write\` \`overwrite\` is last resort (new file or full rewrite only).`;
+  const readClause = hasRead ? ' Read with `read` when you need exact `oldText`.' : '';
+  return `**Priority:** \`edit\` before \`write\` for existing notes, including local newline insertion. Match the shortest unique span around the boundary; a multi-thousand-character physical line never needs to be copied in full.${readClause} \`write\` \`overwrite\` is last resort (new file or full rewrite only).`;
 }
 
 function buildExactMatchGuidance(hasRead: boolean): string {
-  const source = hasRead ? ' from `obsidian_read`' : ' from available note context';
-  return `**Exact match:** \`old_string\` must be copied verbatim${source}. Retyping causes \`old_string not found\`; the tool error may call this out.`;
+  const source = hasRead ? ' from `read`' : ' from available note context';
+  return `**Exact match:** \`oldText\` must be copied verbatim${source}. Retyping causes \`oldText not found\`; the tool error may call this out.`;
 }
 
 function buildMarkdownBlockBoundaryGuidance(): string {
-  return '**Markdown block boundaries:** `obsidian_edit` is literal and leaves text outside `old_string` adjacent to `new_string`. Before adding headings, lists, blockquotes/callouts, fences, or thematic breaks, inspect both physical-line boundaries and include required line endings. See the registered `obsidian_edit` descriptor for the heading/delimiter example, then read back the changed span.';
+  return '**Markdown block boundaries:** `edit` is literal and leaves text outside `oldText` adjacent to `newText`. Before adding headings, lists, blockquotes/callouts, fences, or thematic breaks, inspect both physical-line boundaries and include required line endings. See the registered `edit` descriptor for the heading/delimiter example, then read back the changed span.';
 }
 
 function buildSubagentDelegationGuidance(params: {
@@ -302,9 +285,9 @@ function buildSubagentDelegationGuidance(params: {
   hasNoteInfo: boolean;
 }): string {
   const directReadTools = [
-    ...(params.hasRead ? ['`obsidian_read`'] : []),
+    ...(params.hasRead ? ['`read`'] : []),
     ...(params.hasMarkdownStructure ? ['`obsidian_markdown_structure`'] : []),
-    ...(params.hasSearch ? ['`obsidian_search`'] : []),
+    ...(params.hasSearch ? ['`search`'] : []),
     ...(params.hasNoteInfo ? ['`obsidian_note_info`'] : []),
   ];
   const blockedActions = directReadTools.length > 0
@@ -331,12 +314,12 @@ function buildMarkdownReadGuidance(params: {
       : [];
     return [
       ...subagentFullReadGuidance,
-      '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If one physical line is oversized, page it with `startLine` + line-relative `startChar` and the returned `nextStartLine` + `nextStartChar` pair. If the whole file is truly needed, call `obsidian_read` again with an explicit `maxChars` at least to the reported `Characters` value; do this deliberately because the full file enters context.',
-      '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"`, a line range, or `startChar` continuation before reading the full body, unless you intentionally override `maxChars` to read the entire file.',
+      '- For Markdown files, call `read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `read` with 1-indexed `offset` / `limit` for only the needed section. If one physical line is oversized, page it with `offset` + line-relative `startChar` and the returned `nextStartLine` + `nextStartChar` pair. If the whole file is truly needed, call `read` again with an explicit `maxChars` at least to the reported `Characters` value; do this deliberately because the full file enters context.',
+      '- **Prefer** `read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"`, a line range, or `startChar` continuation before reading the full body, unless you intentionally override `maxChars` to read the entire file.',
     ];
   }
   return [
-    '- For Markdown files, use `obsidian_read` with `path: "<exact path from context_files>"`. For large notes, prefer `mode: "stats"`, a line range, or `startChar` continuation for an oversized physical line before reading the full body; no structure tool is registered for this turn.',
+    '- For Markdown files, use `read` with `path: "<exact path from context_files>"`. For large notes, prefer `mode: "stats"`, a line range, or `startChar` continuation for an oversized physical line before reading the full body; no structure tool is registered for this turn.',
   ];
 }
 

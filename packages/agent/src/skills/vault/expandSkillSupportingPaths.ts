@@ -174,7 +174,7 @@ export function formatSkillToolBlock(params: {
     absoluteBaseDir: params.absoluteBaseDir,
   });
   const preamble = [
-    'Read supporting files with obsidian_read_external using the absolute paths in this result. You may list the skill directory with obsidian_list_external. Do not join relative names onto that directory, and do not use obsidian_read.',
+    'Read supporting files with `read` using the absolute paths in this result. You may list the skill directory with `ls`. Do not join relative names onto that directory.',
     '',
     `Skill directory: ${params.absoluteBaseDir}`,
     ...withBlankLine(formatBulletList(

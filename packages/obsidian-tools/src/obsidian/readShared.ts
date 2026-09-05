@@ -430,7 +430,7 @@ export function buildStatsText(params: {
     );
   }
   if (params.large) {
-    const readTool = params.readExternal ? 'obsidian_read_external' : 'obsidian_read';
+    const readTool = params.readExternal ? 'read' : 'read';
     lines.push(
       '',
       `Large file: content was not returned because it exceeds ${params.maxChars} characters.`,
@@ -445,7 +445,7 @@ export function buildStatsText(params: {
       );
     }
     lines.push(
-      `Call ${readTool} with startLine/endLine for the needed section.`,
+      `Call ${readTool} with 1-indexed offset/limit for the needed section.`,
       `If you truly need the entire file, call ${readTool} again with maxChars set to at least ${params.wholeFile.characters}; do this deliberately because the full file will be added to context.`,
     );
   }

@@ -158,7 +158,7 @@ describe('AgentCoreRuntime multi-client hosts', () => {
 
     const vaultTools = await vaultRuntime.listToolSpecs({ workspaceKind: 'obsidian-vault' });
     const cliTools = await cliRuntime.listToolSpecs({ cwd: '/Users/dev/pivi-cli' });
-    expect(vaultTools.map((t) => t.name)).toEqual(['obsidian_search']);
+    expect(vaultTools.map((t) => t.name)).toEqual(['search']);
     expect(cliTools.map((t) => t.name)).toEqual(['bash']);
 
     const vaultHistory = await vaultRuntime.loadHistory();

@@ -21,6 +21,7 @@ import {
   extractResolvedAnswers,
   extractResolvedAnswersFromResultText,
   isWriteEditTool,
+  resolveLiveToolName,
   TOOL_ASK_USER_QUESTION,
   TOOL_SKILL,
 } from '@pivi/agent/tools';
@@ -91,7 +92,7 @@ function toolCallsFromAssistantContent(content: unknown): ToolCallInfo[] | undef
     }
     toolCalls.push({
       id: part.id,
-      name: part.name,
+      name: resolveLiveToolName(part.name),
       input: normalizeToolCallInput(part.arguments),
       status: 'running',
       isExpanded: false,

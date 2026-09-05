@@ -1,7 +1,6 @@
 import {
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_READ,
-  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_TASKS,
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
@@ -49,12 +48,10 @@ describe('Obsidian settings integration adapter', () => {
       enabled: true,
       available: true,
     });
-    expect(rows.find((row) => row.name === TOOL_OBSIDIAN_READ_EXTERNAL)).toMatchObject({
-      configuration: 'external-read',
-      group: 'additional',
-      enabled: true,
-      available: true,
+    expect(rows.find((row) => row.name === TOOL_OBSIDIAN_READ)).toMatchObject({
+      configuration: 'read',
     });
+    expect(rows.some((row) => row.configuration === 'external-read')).toBe(false);
     expect(rows.find((row) => row.name === TOOL_PIVI_SESSIONS)).toMatchObject({
       label: 'Pivi Sessions',
       description: 'Read durable sessions, list recoverable deleted sessions, or restore one in a visible Pivi tab.',

@@ -24,18 +24,18 @@ export function buildOldStringNotFoundMessage(
   oldString: string,
 ): string {
   const base = `old_string not found in ${filePath}. `
-    + 'Copy the exact substring from obsidian_read (same quotes, spaces, and line breaks).';
+    + 'Copy the exact substring from read (same quotes, spaces, and line breaks).';
 
   const curlyCandidate = asciiDoubleQuotesToCurly(oldString);
   if (curlyCandidate !== oldString && content.includes(curlyCandidate)) {
     return `${base} old_string uses ASCII straight quotes (") but the note uses curly quotes (“ ”). `
-      + 'Copy old_string verbatim from the latest obsidian_read output.';
+      + 'Copy old_string verbatim from the latest read output.';
   }
 
   const asciiCandidate = curlyDoubleQuotesToAscii(oldString);
   if (asciiCandidate !== oldString && content.includes(asciiCandidate)) {
     return `${base} old_string uses curly quotes (“ ”) but the note uses ASCII straight quotes ("). `
-      + 'Copy old_string verbatim from the latest obsidian_read output.';
+      + 'Copy old_string verbatim from the latest read output.';
   }
 
   return base;

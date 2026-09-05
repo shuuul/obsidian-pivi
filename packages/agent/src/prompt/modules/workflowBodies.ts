@@ -1,4 +1,4 @@
-export const LONG_LINE_NORMALIZATION_DEFAULT_BODY = `Before further work on a note with oversized physical lines, split those lines at semantic boundaries with \`obsidian_edit\`. Use the shortest unique local span plus \`\\n\` or \`\\n\\n\`. This inverts the default work-around-the-line strategy in Available Tools; do not copy a whole oversized line into \`old_string\`.`;
+export const LONG_LINE_NORMALIZATION_DEFAULT_BODY = `Before further work on a note with oversized physical lines, split those lines at semantic boundaries with \`edit\`. Use the shortest unique local span plus \`\\n\` or \`\\n\\n\`. This inverts the default work-around-the-line strategy in Available Tools; do not copy a whole oversized line into \`oldText\`.`;
 
 export const TRANSCRIPT_CLEANUP_DEFAULT_BODY = `Obsidian LLM-transcript notes use \`>>\` as the turn delimiter. Keep speaker turns as distinct blocks. Collapse noise (fillers, false starts, repeated acknowledgements). Keep verbatim quotes exactly. Do not invent, merge, or reattribute utterances.`;
 

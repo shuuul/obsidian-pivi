@@ -157,7 +157,7 @@ describe('obsidian_read character pagination', () => {
       details: { characterCoordinate: 'line-relative' },
     });
     await expect(read(tool, { startChar: 1, endLine: 1 })).rejects.toThrow(
-      'endLine with startChar requires startLine',
+      'endLine with startChar requires offset',
     );
     await expect(read(tool, { startChar: 1, mode: 'stats' })).rejects.toThrow(
       'startChar cannot be used with mode="stats"',
@@ -293,10 +293,10 @@ describe('obsidian_read character pagination', () => {
     const properties = tool.parameters.properties as Record<string, { description?: string }>;
 
     expect(properties.startChar?.description).toContain('1-based UTF-16');
-    expect(properties.startChar?.description).toContain('relative to startLine');
+    expect(properties.startChar?.description).toContain('relative to offset');
     expect(properties.startChar?.description).toContain('nextStartLine + nextStartChar');
     expect(tool.promptUsage?.summary).toContain('oversized physical line');
-    expect(tool.promptUsage?.summary).toContain('nextStartLine + nextStartChar');
+    expect(tool.promptUsage?.summary).toContain('`nextStartLine` + `nextStartChar`');
     expect(tool.promptUsage?.parameters).toContain('startChar');
   });
 });

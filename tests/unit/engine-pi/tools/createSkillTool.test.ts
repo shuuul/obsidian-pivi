@@ -51,7 +51,7 @@ Follow these steps.`,
     const text = textOf(result);
 
     expect(text).toContain(`<skill name="demo-skill" location="${absoluteFilePath}">`);
-    expect(text).toContain('Do not join relative names onto that directory, and do not use obsidian_read.');
+    expect(text).toContain('Do not join relative names onto that directory.');
     expect(text).toContain(`Skill directory: ${absoluteBaseDir}`);
     expect(text).toContain('# Do the thing');
     expect(text).toContain('Follow these steps.');

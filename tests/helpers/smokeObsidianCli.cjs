@@ -105,7 +105,7 @@ async function runHarness(request, state, base, scenario) {
           content: assistant,
           toolCalls: [{
             id: `pivi-smoke-tool-${request.runId}`,
-            name: 'obsidian_write',
+            name: 'write',
             status: 'completed',
             result: `Wrote ${request.notePath}`,
           }],

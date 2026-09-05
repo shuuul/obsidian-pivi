@@ -31,6 +31,12 @@ describe('unmanaged vault path errors', () => {
       },
       settings: { defaultReadMaxChars: 100_000 },
       vaultPath,
+      externalFiles: {
+        isPathAllowed: () => false,
+        readFile: jest.fn(),
+        listPath: jest.fn(),
+        stat: jest.fn(),
+      },
       ...overrides,
     } as unknown as ObsidianToolDeps;
   }
@@ -44,16 +50,27 @@ describe('unmanaged vault path errors', () => {
       },
       settings: {},
       vaultPath,
+      externalFiles: {
+        isPathAllowed: () => false,
+        readFile: jest.fn(),
+        listPath: jest.fn(),
+        stat: jest.fn(),
+      },
       ...overrides,
     } as unknown as ObsidianToolDeps;
   }
 
-  it('tells obsidian_read to retry with obsidian_read_external for an on-disk unindexed file', async () => {
-    const tool = createReadNoteTool(readDeps());
+  it('routes an on-disk unindexed file through ExternalFileApi instead of retrying a sibling tool', async () => {
+    const readFile = jest.fn().mockResolvedValue({ path: skillFile, content: '# skill' });
+    const tool = createReadNoteTool(readDeps({
+      externalFiles: { isPathAllowed: () => true, readFile, listPath: jest.fn(), stat: jest.fn() },
+    }));
 
-    await expect(tool.execute('call', { path: '.pivi/skills/guide.md' })).rejects.toThrow(
-      `${NOTE_NOT_FOUND} This file exists on disk but is not an Obsidian-indexed vault file. Retry with \`obsidian_read_external\` using the absolute path \`${skillFile}\`.`,
-    );
+    const result = await tool.execute('call', { path: '.pivi/skills/guide.md' }) as {
+      content: Array<{ type: string; text: string }>;
+    };
+    expect(readFile).toHaveBeenCalledWith(skillFile);
+    expect(result.content[0]?.text).toContain('# skill');
   });
 
   it('keeps the original obsidian_read miss when the path is not on disk', async () => {
@@ -63,21 +80,26 @@ describe('unmanaged vault path errors', () => {
     await expect(tool.execute('call', { path: '.pivi/skills/missing.md' })).rejects.not.toThrow('obsidian_read_external');
   });
 
-  it('does not mention obsidian_read_external when that tool is disabled', async () => {
+  it('keeps the original read miss when read itself is disabled from routing', async () => {
     const deps = readDeps();
-    deps.settings.disabledTools = ['obsidian_read_external'];
+    deps.settings.disabledTools = ['read'];
     const tool = createReadNoteTool(deps);
 
     await expect(tool.execute('call', { path: '.pivi/skills/guide.md' })).rejects.toThrow(NOTE_NOT_FOUND);
     await expect(tool.execute('call', { path: '.pivi/skills/guide.md' })).rejects.not.toThrow('obsidian_read_external');
   });
 
-  it('tells obsidian_list to retry with obsidian_list_external for an on-disk unindexed folder', async () => {
-    const tool = createListPathTool(listDeps());
+  it('routes an on-disk unindexed folder through ExternalFileApi instead of retrying a sibling tool', async () => {
+    const listPath = jest.fn().mockResolvedValue([{ name: 'guide.md', kind: 'file' }]);
+    const tool = createListPathTool(listDeps({
+      externalFiles: { isPathAllowed: () => true, readFile: jest.fn(), listPath, stat: jest.fn() },
+    }));
 
-    await expect(tool.execute('call', { path: '.pivi/skills' })).rejects.toThrow(
-      `${VAULT_PATH_NOT_FOUND} This folder exists on disk but is not an Obsidian-indexed vault folder. Retry with \`obsidian_list_external\` using the absolute path \`${skillDir}\`.`,
-    );
+    const result = await tool.execute('call', { path: '.pivi/skills' }) as {
+      content: Array<{ type: string; text: string }>;
+    };
+    expect(listPath).toHaveBeenCalledWith(skillDir);
+    expect(result.content[0]?.text).toContain('guide.md');
   });
 
   it('keeps the original obsidian_list miss when the folder is not on disk', async () => {

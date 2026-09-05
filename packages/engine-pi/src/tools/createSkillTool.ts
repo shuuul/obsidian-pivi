@@ -19,7 +19,7 @@ export function createSkillTool(skills: Skill[]): AgentTool {
     name: 'skill',
     label: 'Skill',
     description:
-      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description. The result expands existing supporting-file paths to absolute paths for obsidian_read_external; they are not vault notes.',
+      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description. The result expands existing supporting-file paths to absolute paths for read; they are not vault notes.',
     parameters: {
       type: 'object',
       properties: {

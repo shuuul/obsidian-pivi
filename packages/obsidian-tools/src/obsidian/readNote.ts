@@ -1,9 +1,12 @@
+import * as path from 'node:path';
+
 import {
   textResult,
   TOOL_OBSIDIAN_READ,
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { CAPABILITY_TOOL_NAMES, ensureExternalDirectoryAccess } from '../capabilityApprovalGate';
 import type { ObsidianToolDeps } from './deps';
 import {
   buildStatsText,
@@ -18,7 +21,8 @@ import {
   resolveEffectiveReadBudget,
   sliceLineRange,
 } from './readShared';
-import { rethrowIfUnmanagedVaultPath } from './unmanagedVaultPath';
+import { resolveExternalToolPath } from './resolveExternalToolPath';
+import { resolveUnmanagedAbsolutePath } from './unmanagedVaultPath';
 
 interface LineCharacterPosition {
   line: number;
@@ -54,22 +58,22 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_READ,
     executionMode: 'sequential',
-    label: 'Read note',
-    description: 'Read a note body via vault API. Defaults to stats-only for large files; use line ranges for complete lines or startChar for bounded sequential slices of oversized physical lines. With startLine, startChar is relative to that physical line.',
+    label: 'Read',
+    description: 'Read a file. Vault-indexed notes use the vault API; unindexed vault files such as `.pivi/` and absolute paths use the filesystem. Defaults to stats-only for large files. Use 1-indexed offset/limit for complete lines, or startChar for oversized physical lines.',
     promptUsage: {
-      summary: 'Read a note through the vault API. For potentially large files use stats first, then line ranges. For an oversized physical line, combine startLine with line-relative startChar and continue with the exact nextStartLine + nextStartChar pair returned by each truncated page.',
-      parameters: '`file?` note title or `path?` exact vault-relative path (one required); `mode?` content|stats; `startLine?`/`endLine?` inclusive; 1-based UTF-16 `startChar?` is file-global alone or relative to `startLine` when combined; `maxChars?` total result cap.',
+      summary: 'Read a file. For potentially large files use stats first, then 1-indexed `offset`/`limit` line pages. For an oversized physical line, combine `offset` with line-relative `startChar` and continue with the exact `nextStartLine` + `nextStartChar` pair. Line-page truncation also returns `nextOffset`. Use `file` only when you have a note title and no path.',
+      parameters: '`path?` vault-relative, unindexed, or absolute path, or `file?` wikilink title (one required); `mode?` content|stats; `offset?` 1-indexed start line; `limit?` line count; 1-based UTF-16 `startChar?` is file-global alone or relative to `offset` when combined; `maxChars?` total result cap.',
     },
     parameters: {
       type: 'object',
       properties: {
-        file: { type: 'string', description: 'Note title / wikilink name (not a folder path)' },
-        path: { type: 'string', description: 'Vault-relative path, e.g. folder/note.md' },
+        file: { type: 'string', description: 'Note title / wikilink name when you have no path' },
+        path: { type: 'string', description: 'Vault-relative path, unindexed vault path, or absolute filesystem path' },
         mode: { type: 'string', enum: ['content', 'stats'], description: 'stats returns only path, line count, and character count' },
-        startLine: { type: 'number', description: '1-based first line to read' },
-        endLine: { type: 'number', description: '1-based last line to read, inclusive' },
-        startChar: { type: 'number', description: '1-based UTF-16 character position for a bounded sequential content page. It is file-global alone, or relative to startLine when startLine is provided; endLine may bound that line-relative read. On truncation, continue with the exact returned nextStartLine + nextStartChar pair for line-relative reads, or nextStartChar for global reads. Cannot be used with mode=stats.' },
-        maxChars: { type: 'number', description: 'Maximum characters to return for content reads, clamped between 1000 and 500000. When omitted, uses Tools → Default read size. An explicit value overrides that default; context overflow is handled by compaction preflight.' },
+        offset: { type: 'number', description: '1-indexed first line to read' },
+        limit: { type: 'number', description: 'Number of lines to read from offset' },
+        startChar: { type: 'number', description: '1-based UTF-16 character position for a bounded sequential content page. It is file-global alone, or relative to offset when offset is provided. On truncation, continue with the exact returned nextStartLine + nextStartChar pair. Cannot be used with mode=stats.' },
+        maxChars: { type: 'number', description: 'Maximum characters to return for content reads, clamped between 1000 and 500000. When omitted, uses Tools → Default read size.' },
       },
       additionalProperties: false,
     },
@@ -78,14 +82,18 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
       const file = getStringField(input, 'file');
       const notePath = getStringField(input, 'path');
       if (!file && !notePath) {
-        throw new Error('Invalid read note input: file or path must be a string.');
+        throw new Error('Invalid read input: path or file must be a string.');
       }
       const mode = getReadMode(input);
-      const startLine = getPositiveIntegerField(input, 'startLine');
-      const endLine = getPositiveIntegerField(input, 'endLine');
+      const offset = getPositiveIntegerField(input, 'offset');
+      const limit = getPositiveIntegerField(input, 'limit');
+      const startLine = offset ?? getPositiveIntegerField(input, 'startLine');
+      const explicitEndLine = getPositiveIntegerField(input, 'endLine');
+      const endLine = explicitEndLine
+        ?? (startLine !== undefined && limit !== undefined ? startLine + limit - 1 : undefined);
       const startChar = getPositiveIntegerField(input, 'startChar');
       if (startChar !== undefined && endLine !== undefined && startLine === undefined) {
-        throw new Error('endLine with startChar requires startLine so startChar has an unambiguous line-relative origin.');
+        throw new Error('endLine with startChar requires offset so startChar has an unambiguous line-relative origin.');
       }
       if (startChar !== undefined && mode === 'stats') {
         throw new Error('startChar cannot be used with mode="stats". Use mode="content" or omit mode.');
@@ -96,8 +104,39 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
         mode === 'stats' ? undefined : deps.resolveReadMaxChars,
       );
       const maxChars = readBudget.maxChars;
+      const readVaultNote = async (): Promise<{ path: string; content: string }> => {
+        try {
+          return await vault.readNote(file, notePath);
+        } catch (error) {
+          const absolute = resolveUnmanagedAbsolutePath(deps, { file, path: notePath }, error, 'file');
+          if (!absolute) {
+            throw error;
+          }
+          const externalFiles = await ensureExternalDirectoryAccess(
+            deps,
+            absolute,
+            false,
+            CAPABILITY_TOOL_NAMES.readExternal,
+          );
+          return externalFiles.readFile(absolute);
+        }
+      };
+      const readAbsolutePath = async (requested: string): Promise<{ path: string; content: string }> => {
+        const absolutePath = path.isAbsolute(requested)
+          ? requested
+          : resolveExternalToolPath(deps, requested);
+        const externalFiles = await ensureExternalDirectoryAccess(
+          deps,
+          absolutePath,
+          false,
+          CAPABILITY_TOOL_NAMES.readExternal,
+        );
+        return externalFiles.readFile(absolutePath);
+      };
       try {
-        const result = await vault.readNote(file, notePath);
+        const result = notePath && path.isAbsolute(notePath)
+          ? await readAbsolutePath(notePath)
+          : await readVaultNote();
         const characters = result.content.length;
         const lineSpans = getLineSpans(result.content);
         const lines = lineSpans.length;
@@ -268,13 +307,14 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
             } : {}),
             truncated: page.truncated,
             ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
+            ...(page.nextStartLine !== undefined ? { nextOffset: page.nextStartLine } : {}),
           });
         }
         readBudget.settle(selectedContent.length);
         return textResult(selectedContent, details);
       } catch (error) {
         readBudget.settle(0);
-        rethrowIfUnmanagedVaultPath(deps, { file, path: notePath }, error, 'file');
+        throw error;
       }
     },
   };

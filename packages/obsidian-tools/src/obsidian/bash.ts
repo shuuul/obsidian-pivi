@@ -31,7 +31,7 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
     description:
       'Lowest-priority host diagnostic: run a single-line shell command through the user login shell when no registered tool can do the job. '
       + 'Prefer pre-approved persistent permissions; when the user explicitly requests a specific command, call this tool even if it is not granted—Pivi shows a sidebar approval prompt first. '
-      + 'Never use Bash to read, search, list, or modify vault files; use Obsidian tools and sub-agents for vault work. '
+      + 'Never use Bash to read, search, list, or modify vault files; use read/ls/search/write/edit and sub-agents for vault work. '
       + 'After the user denies or validation rejects a command, do not retry Bash during the same turn.',
     promptUsage: {
       summary: 'Lowest-priority host diagnostic only; never use it for vault file operations. Persistent Bash permissions grant an executable or a semantic family verb (`git status`, `uv python`, `pixi global`), never filenames, package names, or script bodies. A user-explicit ungranted command receives sidebar approval; do not retry after denial or validation failure.',

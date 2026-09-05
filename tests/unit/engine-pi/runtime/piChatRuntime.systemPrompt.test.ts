@@ -104,7 +104,7 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
             { role: 'user', content: input },
             {
               role: 'assistant',
-              content: [{ type: 'toolCall', id: 'call-1', name: 'obsidian_read', arguments: { path: 'A.md' } }],
+              content: [{ type: 'toolCall', id: 'call-1', name: 'read', arguments: { path: 'A.md' } }],
               usage: { input: 200, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 210 },
               provider: 'opencode-go',
               model: 'deepseek-v4-flash',
@@ -153,7 +153,7 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
             { role: 'user', content: input },
             {
               role: 'assistant',
-              content: [{ type: 'toolCall', id: 'call-compact', name: 'obsidian_read', arguments: { path: 'Large.md' } }],
+              content: [{ type: 'toolCall', id: 'call-compact', name: 'read', arguments: { path: 'Large.md' } }],
               usage: { input: 180_000, output: 100, cacheRead: 0, cacheWrite: 0, totalTokens: 180_100 },
               provider: 'opencode-go',
               model: 'deepseek-v4-flash',
@@ -477,7 +477,8 @@ describe('PiChatRuntime system prompt', () => {
 
     expect(mockAgentInstances).toHaveLength(1);
     expect(mockAgentInstances[0]?.initialState.model).toBe(model);
-    expect(mockAgentInstances[0]?.options.streamFn).toBe(streamFn);
+    expect(typeof mockAgentInstances[0]?.options.streamFn).toBe('function');
+    expect(mockAgentInstances[0]?.options.streamFn).not.toBe(streamFn);
   });
 
   it('does not pass spawn_agent to child subagents even if a provider exposes it', async () => {
@@ -493,7 +494,7 @@ describe('PiChatRuntime system prompt', () => {
           },
         } satisfies ToolSpec,
         {
-          name: 'obsidian_read',
+          name: 'read',
           description: 'Allowed base tool',
           parameters: { type: 'object', properties: {}, additionalProperties: false },
           async execute() {
@@ -514,7 +515,7 @@ describe('PiChatRuntime system prompt', () => {
     new PiChatRuntime(plugin, testNetwork, null, null, providerWithSpawnAgent);
 
     const childTools = mockCapturedSubagentToolProvider?.(() => ({ maxChars: 12_345, settle: () => {} })) ?? [];
-    expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['obsidian_read']);
+    expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['read']);
   });
 
   it('never requests mainOnlyToolProvider when building subagent inventory', async () => {
@@ -522,7 +523,7 @@ describe('PiChatRuntime system prompt', () => {
     const baseProvider: PiBaseToolProvider = () => ({
       toolSpecs: [
         {
-          name: 'obsidian_read',
+          name: 'read',
           description: 'Allowed base tool',
           parameters: { type: 'object', properties: {}, additionalProperties: false },
           async execute() {
@@ -531,7 +532,7 @@ describe('PiChatRuntime system prompt', () => {
         } satisfies ToolSpec,
       ],
       registeredToolSummary: {
-        obsidianTools: ['obsidian_read'],
+        obsidianTools: ['read'],
         obsidianCliAvailable: true,
         includeMcp: false,
         includeSkill: false,
@@ -581,7 +582,7 @@ describe('PiChatRuntime system prompt', () => {
       (tool) => (tool as { name?: string }).name,
     );
     expect(mainNames).toContain('fixture_main_only');
-    expect(mainNames).toContain('obsidian_read');
+    expect(mainNames).toContain('read');
     expect(mainOnlyProvider).toHaveBeenCalled();
 
     mainOnlyProvider.mockClear();
@@ -589,7 +590,7 @@ describe('PiChatRuntime system prompt', () => {
       () => ({ maxChars: 12_345, settle: () => {} }),
     ) ?? [];
     expect(mainOnlyProvider).not.toHaveBeenCalled();
-    expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['obsidian_read']);
+    expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['read']);
     expect(childTools.map((tool) => (tool as { name: string }).name))
       .not.toContain('fixture_main_only');
   });

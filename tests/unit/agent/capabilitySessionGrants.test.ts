@@ -10,7 +10,7 @@ import type { PersistentBashPermission } from '@pivi/agent/tools';
 
 const bashRequest: CapabilityApprovalRequest = {
   kind: 'bash',
-  toolName: 'obsidian_bash',
+  toolName: 'bash',
   command: 'git status',
   shellPath: '/bin/sh',
   blockedPath: 'git status',
@@ -20,7 +20,7 @@ const bashRequest: CapabilityApprovalRequest = {
 
 const externalRequest: CapabilityApprovalRequest = {
   kind: 'external-directory',
-  toolName: 'obsidian_read_external',
+  toolName: 'read',
   directoryRoot: '/tmp/notes',
   blockedPath: '/tmp/notes/a.md',
   reason: 'Path is outside allowed external directories.',

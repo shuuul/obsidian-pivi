@@ -52,7 +52,7 @@ describe('AgentCoreHost contract', () => {
     expect(toolProvider).toBeDefined();
     if (!toolProvider) throw new Error('Expected the Obsidian tool provider');
     const tools = await toolProvider.listTools({ workspaceKind: host.workspace.kind });
-    expect(tools.map((tool) => tool.name)).toEqual(['obsidian_search']);
+    expect(tools.map((tool) => tool.name)).toEqual(['search']);
 
     await host.secrets!.setSecret('api/token', 'vault-secret');
     expect(await host.secrets!.getSecret('api/token')).toBe('vault-secret');

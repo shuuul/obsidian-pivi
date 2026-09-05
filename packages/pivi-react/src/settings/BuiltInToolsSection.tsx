@@ -69,50 +69,55 @@ export function BuiltInToolsSection({
     });
   };
 
+  const renderExternalReadToggle = () => (
+    <SettingRow indented name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
+      <Toggle
+        checked={allowExternalRead}
+        disabled={pending}
+        label={t('settings.externalRead.allow.name')}
+        onChange={(next) => {
+          void runOperation(async () => {
+            if (!await persist({ allowExternalRead: next })) return;
+            setAllowExternalRead(next);
+            setToolRows(ports.complex.tools.listToolRows());
+          });
+        }}
+      />
+    </SettingRow>
+  );
+
   const renderToolConfiguration = (row: SettingsToolRow) => {
     if (row.configuration === 'read') {
       return (
-        <SettingRow
-          indented
-          name={t('settings.tools.reading.defaultSize.name')}
-          description={t('settings.tools.reading.defaultSize.desc')}
-        >
-          <Select
-            disabled={pending}
-            label={t('settings.tools.reading.defaultSize.name')}
-            value={String(defaultReadMaxChars)}
-            onChange={(value) => {
-              const next = Number(value);
-              void runOperation(async () => {
-                if (!await persist({ defaultReadMaxChars: next })) return;
-                setDefaultReadMaxChars(next);
-              });
-            }}
+        <>
+          <SettingRow
+            indented
+            name={t('settings.tools.reading.defaultSize.name')}
+            description={t('settings.tools.reading.defaultSize.desc')}
           >
-            {READ_SIZE_OPTIONS.map((value) => (
-              <option key={value} value={value}>{t('settings.tools.reading.defaultSize.option', { count: value / 1_000 })}</option>
-            ))}
-          </Select>
-        </SettingRow>
+            <Select
+              disabled={pending}
+              label={t('settings.tools.reading.defaultSize.name')}
+              value={String(defaultReadMaxChars)}
+              onChange={(value) => {
+                const next = Number(value);
+                void runOperation(async () => {
+                  if (!await persist({ defaultReadMaxChars: next })) return;
+                  setDefaultReadMaxChars(next);
+                });
+              }}
+            >
+              {READ_SIZE_OPTIONS.map((value) => (
+                <option key={value} value={value}>{t('settings.tools.reading.defaultSize.option', { count: value / 1_000 })}</option>
+              ))}
+            </Select>
+          </SettingRow>
+          {renderExternalReadToggle()}
+        </>
       );
     }
     if (row.configuration === 'external-read') {
-      return (
-        <SettingRow indented name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
-          <Toggle
-            checked={allowExternalRead}
-            disabled={pending}
-            label={t('settings.externalRead.allow.name')}
-            onChange={(next) => {
-              void runOperation(async () => {
-                if (!await persist({ allowExternalRead: next })) return;
-                setAllowExternalRead(next);
-                setToolRows(ports.complex.tools.listToolRows());
-              });
-            }}
-          />
-        </SettingRow>
-      );
+      return renderExternalReadToggle();
     }
     return null;
   };

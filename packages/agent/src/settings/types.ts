@@ -1,5 +1,6 @@
 
 import type { PersistentBashPermission, PersistentExternalDirectoryPermission } from '../tools/capabilityPermissions';
+import { migrateDisabledToolNames } from '../tools/toolAliases';
 import type { CustomProviderConfig } from "./customProviders";
 
 /** Source of a slash command. */
@@ -73,8 +74,6 @@ export interface ObsidianToolsSettings {
   externalDirectoryPermissions: PersistentExternalDirectoryPermission[];
 }
 
-const TOOL_OBSIDIAN_BASH_NAME = "obsidian_bash";
-
 export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
   cliEnabled: false,
   cliPath: null,
@@ -96,10 +95,7 @@ function normalizeDisabledObsidianTools(value: readonly unknown[] | undefined): 
   if (!Array.isArray(value)) {
     return [...(DEFAULT_OBSIDIAN_TOOLS_SETTINGS.disabledTools ?? [])];
   }
-  return value.filter((tool): tool is string => (
-    typeof tool === "string" &&
-    tool !== TOOL_OBSIDIAN_BASH_NAME
-  ));
+  return migrateDisabledToolNames(value);
 }
 
 export function resolveObsidianToolsSettings(

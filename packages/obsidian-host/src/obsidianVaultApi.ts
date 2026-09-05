@@ -197,7 +197,7 @@ export class ObsidianVaultApi {
     }
     const resolved = this.resolveFile(file, undefined);
     if (!resolved) {
-      throw new Error('Note not found. Provide file= (wikilink name) or path= (vault-relative).');
+      throw new Error('Note not found.');
     }
     // file= aliases resolve outside requireMutationPath; enforce policy on the real path.
     this.assertResolvedMutationPath(resolved.path, options);
@@ -205,16 +205,37 @@ export class ObsidianVaultApi {
   }
 
   resolveFile(file?: string, path?: string): TFile | null {
-    if (path?.trim()) {
-      const normalized = normalizePathForVault(path.trim(), this.vaultPath());
+    const byVaultPath = (value?: string): TFile | null => {
+      if (!value?.trim()) {
+        return null;
+      }
+      const normalized = normalizePathForVault(value.trim(), this.vaultPath());
       if (!normalized) {
         return null;
       }
       return this.asFile(this.app.vault.getAbstractFileByPath(normalized));
+    };
+    const byWikilink = (value?: string): TFile | null => {
+      if (!value?.trim()) {
+        return null;
+      }
+      return this.app.metadataCache.getFirstLinkpathDest(value.trim(), '') ?? null;
+    };
+
+    if (path?.trim()) {
+      const fromPath = byVaultPath(path) ?? byWikilink(path);
+      if (fromPath) {
+        return fromPath;
+      }
     }
     if (file?.trim()) {
-      const dest = this.app.metadataCache.getFirstLinkpathDest(file.trim(), '');
-      return dest ?? null;
+      const fromFile = byWikilink(file) ?? byVaultPath(file);
+      if (fromFile) {
+        return fromFile;
+      }
+    }
+    if (path?.trim() || file?.trim()) {
+      return null;
     }
     const active = this.app.workspace.getActiveFile();
     return active ?? null;
@@ -258,7 +279,7 @@ export class ObsidianVaultApi {
   async readNote(file?: string, path?: string): Promise<{ path: string; content: string }> {
     const resolved = this.resolveFile(file, path);
     if (!resolved) {
-      throw new Error('Note not found. Provide file= (wikilink name) or path= (vault-relative).');
+      throw new Error('Note not found.');
     }
     const content = await this.app.vault.read(resolved);
     return { path: resolved.path, content };
@@ -443,7 +464,7 @@ export class ObsidianVaultApi {
     }
     const resolved = this.resolveFile(file, path);
     if (!resolved) {
-      throw new Error('Note not found. Provide file= or path=.');
+      throw new Error('Note not found.');
     }
     const properties = this.app.metadataCache.getFileCache(resolved)?.frontmatter ?? {};
     if (name) {
@@ -529,7 +550,7 @@ export class ObsidianVaultApi {
     return base ? base.split('/').filter(Boolean).pop() ?? 'vault' : 'vault';
   }
 
-  /** In-process vault search (no CLI). Supports plain text, tag:, path: prefixes, and folder listing. */
+  /** In-process vault search (no CLI). Case-insensitive literal substring plus tag:. Listing queries error toward `ls`. */
   async searchNotes(params: {
     query: string;
     path?: string;
@@ -552,7 +573,10 @@ export class ObsidianVaultApi {
     const listAllInScope = textQuery === '*'
       || textQuery === ''
       || textQuery === '**';
-    const needle = listAllInScope ? '' : textQuery.toLowerCase();
+    if (listAllInScope && !tagFilter) {
+      throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
+    }
+    const needle = textQuery.toLowerCase();
     const hits: VaultSearchHit[] = [];
 
     for (const file of this.app.vault.getMarkdownFiles()) {
@@ -601,7 +625,7 @@ export class ObsidianVaultApi {
   async getNoteInfo(file?: string, path?: string): Promise<VaultNoteInfo> {
     const resolved = this.resolveFile(file, path);
     if (!resolved) {
-      throw new Error('Note not found. Provide file= or path=.');
+      throw new Error('Note not found.');
     }
     const cache = this.app.metadataCache.getFileCache(resolved);
     const content = await this.app.vault.cachedRead(resolved);
@@ -767,7 +791,7 @@ export class ObsidianVaultApi {
   ): { path: string; links: VaultLinkEntry[] } {
     const resolved = this.resolveFile(file, path);
     if (!resolved) {
-      throw new Error('Note not found. Provide file= or path=.');
+      throw new Error('Note not found.');
     }
 
     if (direction === 'backlinks') {

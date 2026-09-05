@@ -86,7 +86,7 @@ describe('createGenerateImageTool', () => {
       cliPath: null,
       cliTimeoutMs: 30_000,
       defaultReadMaxChars: 100_000,
-      disabledTools: ['obsidian_read', 'obsidian_generate_image'],
+      disabledTools: ['read', 'obsidian_generate_image'],
       allowCommand: false,
       commandAllowlist: [],
       allowBash: false,
@@ -102,12 +102,12 @@ describe('createGenerateImageTool', () => {
       },
     }).map((tool) => tool.name);
 
-    expect(tools).not.toContain('obsidian_read');
+    expect(tools).not.toContain('read');
     expect(tools).not.toContain('obsidian_generate_image');
-    expect(tools).toContain('obsidian_edit');
+    expect(tools).toContain('edit');
   });
 
-  it('registers external read tools when the vault path is known, even if outside-vault access is off', () => {
+  it('does not register top-level external twins; read and ls stay live names', () => {
     const app = {
       vault: { getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
@@ -129,43 +129,24 @@ describe('createGenerateImageTool', () => {
       externalDirectoryPermissions: [],
     };
 
-    expect(createObsidianTools(app as never, baseSettings).map((tool) => tool.name))
-      .not.toContain('obsidian_read_external');
-    expect(createObsidianTools(app as never, {
-      ...baseSettings,
-      allowExternalRead: true,
-      externalReadDirectories: [],
-      externalDirectoryPermissions: [],
-    }).map((tool) => tool.name)).toEqual(expect.arrayContaining([
-      'obsidian_read_external',
-      'obsidian_list_external',
-    ]));
+    const namesWithoutVault = createObsidianTools(app as never, baseSettings).map((tool) => tool.name);
+    expect(namesWithoutVault).toContain('read');
+    expect(namesWithoutVault).toContain('ls');
+    expect(namesWithoutVault).not.toContain('obsidian_read_external');
+    expect(namesWithoutVault).not.toContain('obsidian_list_external');
     expect(createObsidianTools(app as never, {
       ...baseSettings,
       allowExternalRead: true,
       externalReadDirectories: ['/tmp'],
-    }).map((tool) => tool.name)).toEqual(expect.arrayContaining([
-      'obsidian_read_external',
-      'obsidian_list_external',
-    ]));
-    expect(createObsidianTools(app as never, {
-      ...baseSettings,
-      allowExternalRead: false,
-      externalReadDirectories: ['/tmp'],
-    }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+    }).map((tool) => tool.name)).toEqual(expect.arrayContaining(['read', 'ls']));
     expect(createObsidianTools({
       vault: { adapter: { basePath: '/vault' }, getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
-    } as never, baseSettings).map((tool) => tool.name)).toEqual(expect.arrayContaining([
-      'obsidian_read_external',
-      'obsidian_list_external',
-    ]));
+    } as never, baseSettings).map((tool) => tool.name)).toEqual(expect.arrayContaining(['read', 'ls']));
     expect(createObsidianTools(app as never, {
       ...baseSettings,
-      allowExternalRead: true,
-      externalReadDirectories: ['/tmp'],
       disabledTools: ['obsidian_read_external'],
-    }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+    }).map((tool) => tool.name)).not.toContain('read');
   });
 
   it('allows reading and listing vault files through external tools without a Settings grant', async () => {
@@ -194,15 +175,16 @@ describe('createGenerateImageTool', () => {
         externalReadDirectories: [],
         externalDirectoryPermissions: [],
       });
-      const readExternal = tools.find((tool) => tool.name === 'obsidian_read_external');
-      const listExternal = tools.find((tool) => tool.name === 'obsidian_list_external');
-      expect(readExternal).toBeDefined();
-      expect(listExternal).toBeDefined();
-      const readResult = await readExternal!.execute('call-1', { path: skillFile, mode: 'content' }) as {
+      const readTool = tools.find((tool) => tool.name === 'read');
+      const listTool = tools.find((tool) => tool.name === 'ls');
+      expect(readTool).toBeDefined();
+      expect(listTool).toBeDefined();
+      expect(tools.map((tool) => tool.name)).not.toContain('obsidian_read_external');
+      const readResult = await readTool!.execute('call-1', { path: skillFile, mode: 'content' }) as {
         content: Array<{ type: string; text: string }>;
       };
       expect(readResult.content[0]?.text).toContain('extended syntax');
-      const listResult = await listExternal!.execute('call-2', { path: skillDir }) as {
+      const listResult = await listTool!.execute('call-2', { path: skillDir }) as {
         content: Array<{ type: string; text: string }>;
       };
       expect(listResult.content[0]?.text).toContain('syntax.md');
@@ -374,9 +356,9 @@ describe('createBashTool', () => {
     };
 
     expect(createObsidianTools(makeApp() as never, baseSettings).map((tool) => tool.name))
-      .not.toContain('obsidian_bash');
+      .not.toContain('bash');
     expect(createObsidianTools(makeApp() as never, { ...baseSettings, allowBash: true }).map((tool) => tool.name))
-      .toContain('obsidian_bash');
+      .toContain('bash');
   });
 
   it('runs allowlisted commands through the user login shell', async () => {

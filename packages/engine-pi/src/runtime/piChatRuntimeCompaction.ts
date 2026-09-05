@@ -485,7 +485,7 @@ export async function prepareContextForTurn(
   }
   queue.push({
     type: 'error',
-    content: 'This turn is too large to send safely within the fixed context budget. Reduce attached context or use obsidian_read with narrower line ranges.',
+    content: 'This turn is too large to send safely within the fixed context budget. Reduce attached context or use read with narrower line ranges.',
   });
   return null;
 }

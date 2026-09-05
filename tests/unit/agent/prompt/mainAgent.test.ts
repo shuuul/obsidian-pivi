@@ -21,10 +21,10 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('<context_files>');
       expect(prompt).toContain('mode: "stats"');
       expect(prompt).toContain('obsidian_markdown_structure');
-      expect(prompt).toContain('startLine');
-      expect(prompt).toContain('endLine');
+      expect(prompt).toContain('offset');
+      expect(prompt).toContain('limit');
       expect(prompt).toContain('If one physical line is oversized');
-      expect(prompt).toContain('`startLine` with line-relative `startChar` and `maxChars`');
+      expect(prompt).toContain('`offset` with line-relative `startChar` and `maxChars`');
       expect(prompt).toContain('exact returned `nextStartLine` + `nextStartChar` pair');
       expect(prompt).toContain('A standalone `startChar` remains file-global');
       expect(prompt).toContain('never calculate offsets, overlap pages, or raise the budget');
@@ -49,12 +49,12 @@ describe('mainAgent system prompt', () => {
 
     it('composes capability-aware registered guidance without weakening general principles', () => {
       const prompt = buildSystemPrompt({}, {
-        registeredToolNames: ['obsidian_read'],
-        registeredToolsSection: '## Available Tools\n- `obsidian_read` — read marker',
+        registeredToolNames: ['read'],
+        registeredToolsSection: '## Available Tools\n- `read` — read marker',
       });
 
-      expect(prompt).toContain('`obsidian_read` — read marker');
-      expect(prompt).not.toContain('obsidian_edit');
+      expect(prompt).toContain('`read` — read marker');
+      expect(prompt).not.toContain('`edit`');
       expect(prompt).not.toContain('pivi_sessions');
       expect(prompt).not.toContain('spawn_agent');
       expect(prompt).toContain('## Obsidian Markdown Hygiene');
@@ -64,16 +64,16 @@ describe('mainAgent system prompt', () => {
     it('prioritizes narrow exact mutations over full-note overwrite', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('## Vault mutations (use the narrowest exact mutation)');
-      expect(prompt).toContain('`obsidian_edit` for exact local replacement, including inserting line endings');
+      expect(prompt).toContain('`edit` for exact local replacement, including inserting line endings');
       expect(prompt).toContain('Never read-then-overwrite the full file for a local edit');
-      expect(prompt).toContain('Use `replace_all: true` only when every exact occurrence should receive the identical replacement');
+      expect(prompt).toContain('Use `replaceAll: true` only when every exact occurrence should receive the identical replacement');
       expect(prompt).toContain('**Markdown block boundaries:** Replacement is literal');
       expect(prompt).toContain('read back the changed span and verify the rendered structure');
-      expect(prompt).toContain('**Anti-patterns:** `obsidian_read` + `obsidian_write` `overwrite`');
+      expect(prompt).toContain('**Anti-patterns:** `read` + `write` `overwrite`');
       expect(prompt).toContain('curly quotes');
-      expect(prompt).toContain('old_string not found');
-      expect(prompt).toContain('Copy `old_string` verbatim from the latest read output');
-      expect(prompt).toContain('registered `obsidian_edit` descriptor under Available Tools');
+      expect(prompt).toContain('oldText not found');
+      expect(prompt).toContain('Copy `oldText` verbatim from the latest read output');
+      expect(prompt).toContain('registered `edit` descriptor under Available Tools');
       expect(prompt).not.toContain('`sentence.Second` → `sentence.\\n\\nSecond`');
       expect(prompt).not.toContain('replace `>>` with `\\n\\n` to remove it or `\\n\\n>>`');
       expect(prompt).not.toContain('replacing only `Target` with `### Heading` produces `>> ### Heading`');
@@ -136,8 +136,8 @@ describe('mainAgent system prompt', () => {
       const prompt = buildSystemPrompt({ vaultPath: '/vault/path' });
       expect(prompt).not.toContain('Vault absolute path:');
       expect(prompt).not.toContain('/vault/path');
-      expect(prompt).toContain('/absolute/device/path/file.md');
-      expect(prompt).toContain('never use external-path tools for files inside the vault');
+      expect(prompt).toContain('/Users/me/Workspace/file.ts');
+      expect(prompt).toContain('Absolute paths are valid on `read` / `ls`');
     });
   });
 

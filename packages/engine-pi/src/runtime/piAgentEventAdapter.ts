@@ -3,7 +3,7 @@ import { type AssistantMessage, type AssistantMessageEvent, isContextOverflow } 
 import type { StreamChunk } from '@pivi/agent/runtime';
 import { extractTextContent } from '@pivi/agent/runtime/messageContent';
 import { formatContextLimit } from '@pivi/agent/settings/environmentText';
-import type { ToolUseResult } from '@pivi/agent/tools';
+import { resolveLiveToolName, type ToolUseResult } from '@pivi/agent/tools';
 
 function extractUserMessageText(content: unknown): string {
   if (typeof content === 'string') {
@@ -71,7 +71,7 @@ export class PiAgentEventAdapter {
         return [{
           type: 'tool_use',
           id: event.toolCallId,
-          name: event.toolName,
+          name: resolveLiveToolName(event.toolName),
           input: event.args as Record<string, unknown>,
         }];
 

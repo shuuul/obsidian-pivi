@@ -9,7 +9,7 @@ import {
 import type { ExternalContextAvailability } from '@pivi/agent/prompt/types';
 import type { ReadAllowanceReservation } from '@pivi/agent/runtime/usage';
 import { getSubagentRuntimeSettingsFromBag } from '@pivi/agent/settings/types';
-import type { ToolSpec } from '@pivi/agent/tools';
+import { assertUniqueLiveToolNames, type ToolSpec } from '@pivi/agent/tools';
 
 import { createPiAuxQueryRunner } from '../runtime/piAuxQueryRunner';
 import type { PiRuntimeHost } from '../runtime/piRuntimeHost';
@@ -18,7 +18,7 @@ import {
   createSubagentTool,
   type PiSubagentQueryRunner,
 } from './createSubagentTool';
-import { toPiAgentTool } from './piToolAdapter';
+import { expandPiToolsWithSilentAliases, toPiAgentTool } from './piToolAdapter';
 
 export interface PiToolRegistry {
   tools: AgentTool[];
@@ -80,13 +80,15 @@ export function buildPiToolRegistryCore(options: {
   const mainOnlyToolSpecs = options.mainOnlyToolSpecs ?? [];
   const mainOnlyTools = mainOnlyToolSpecs.map(toPiAgentTool);
 
-  const tools: AgentTool[] = [
+  const liveTools: AgentTool[] = [
     ...baseTools,
     ...mainOnlyTools,
     skillTool,
     ...(subagentTool ? [subagentTool] : []),
     ...mcpTools,
   ];
+  assertUniqueLiveToolNames(liveTools.map((tool) => tool.name));
+  const tools = expandPiToolsWithSilentAliases(liveTools);
 
   const contextAppendices: string[] = [];
   if (layers.agentsMd) {
@@ -113,7 +115,7 @@ export function buildPiToolRegistryCore(options: {
 
   return {
     tools,
-    registeredToolNames: tools.map((tool) => tool.name),
+    registeredToolNames: liveTools.map((tool) => tool.name),
     registeredToolsSection: buildRegisteredToolsSection({
       ...registeredToolSummary,
       toolSpecs: registeredSpecs,

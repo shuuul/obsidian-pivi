@@ -1,4 +1,5 @@
 import {
+  isDisabledToolName,
   isPiviManagementTool,
   TOOL_OBSIDIAN_ATTACHMENT,
   TOOL_OBSIDIAN_BASE,
@@ -11,14 +12,12 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
-  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
   TOOL_OBSIDIAN_OPEN,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_READ,
-  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TAGS,
   TOOL_OBSIDIAN_TASKS,
@@ -69,8 +68,6 @@ const TOOL_DESCRIPTORS: readonly [
   [TOOL_OBSIDIAN_DELETE, 'tools.display.delete', 'tools.display.deleteDesc'],
   [TOOL_OBSIDIAN_MOVE, 'tools.display.move', 'tools.display.moveDesc'],
   [TOOL_OBSIDIAN_LIST, 'tools.display.list', 'tools.display.listDesc'],
-  [TOOL_OBSIDIAN_READ_EXTERNAL, 'tools.display.readExternal', 'tools.display.readExternalDesc', 'external'],
-  [TOOL_OBSIDIAN_LIST_EXTERNAL, 'tools.display.listExternal', 'tools.display.listExternalDesc', 'external'],
   [TOOL_OBSIDIAN_MKDIR, 'tools.display.mkdir', 'tools.display.mkdirDesc'],
   [TOOL_OBSIDIAN_OPEN, 'tools.display.open', 'tools.display.openDesc'],
   [TOOL_OBSIDIAN_ATTACHMENT, 'tools.display.attachment', 'tools.display.attachmentDesc'],
@@ -113,14 +110,12 @@ export function createObsidianToolRows(
       group,
       ...(name === TOOL_OBSIDIAN_READ
         ? { configuration: 'read' as const }
-        : name === TOOL_OBSIDIAN_READ_EXTERNAL
-          ? { configuration: 'external-read' as const }
-          : name === TOOL_OBSIDIAN_BASH
-            ? { configuration: 'bash' as const }
-            : {}),
+        : name === TOOL_OBSIDIAN_BASH
+          ? { configuration: 'bash' as const }
+          : {}),
       enabled: available && (name === TOOL_OBSIDIAN_BASH
         ? settings.allowBash
-        : !(settings.disabledTools ?? []).includes(name)),
+        : !isDisabledToolName(settings.disabledTools, name)),
       available,
     };
   });

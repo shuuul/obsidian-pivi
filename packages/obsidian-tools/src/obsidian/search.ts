@@ -33,18 +33,18 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
     name: TOOL_OBSIDIAN_SEARCH,
     label: 'Search vault',
     description: obsidianCliAvailable
-      ? 'Search note contents (substring match) or list files in a folder. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. Falls back to CLI on API errors.'
-      : 'Search note contents (substring match) or list files in a folder through the vault API. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. No CLI fallback is available.',
+      ? 'Search note contents with a case-insensitive literal substring, or tag:name. Not regex and not Obsidian in-app search. Use ls for folder listing. Falls back to CLI on API errors.'
+      : 'Search note contents with a case-insensitive literal substring, or tag:name. Not regex and not Obsidian in-app search. Use ls for folder listing. No CLI fallback is available.',
     promptUsage: {
-      summary: `Case-insensitive substring/tag/path search through the vault API; simplified syntax is not Obsidian in-app search syntax and searches should not be repeated with different casing. Use search to locate notes and match positions, never as a content-read backdoor: \`context: true\` dumps are not a substitute for reading note bodies.${obsidianCliAvailable ? ' Falls back to CLI on API errors.' : ' No CLI fallback is available.'}`,
-      parameters: '`query` required plain substring, tag:name, path:folder, or *; `path?` folder prefix; `limit?`; `context?`; `format?` text|json.',
+      summary: `Case-insensitive literal substring plus optional \`tag:name\`. Not regex and not Obsidian in-app search. Use search to locate notes and match positions, never as a content-read backdoor: \`context: true\` dumps are not a substitute for reading note bodies. Empty, \`*\`, \`**\`, and \`path:\`-only listing queries error toward \`ls\`.${obsidianCliAvailable ? ' Falls back to CLI on API errors.' : ' No CLI fallback is available.'}`,
+      parameters: '`query` required plain substring or tag:name; `path?` folder prefix; `limit?`; `context?`; `format?` text|json.',
     },
     parameters: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'Plain text substring, tag:name, path:folder, or * / path:folder to list .md files in scope',
+          description: 'Plain text substring or tag:name. Not regex. Not * / ** / path: listing.',
         },
         path: { type: 'string', description: 'Optional folder prefix (combines with query path:)' },
         limit: { type: 'number' },
@@ -59,6 +59,15 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
       const query = getStringField(input, 'query');
       if (!query) {
         throw new Error('Invalid search input: query must be a string.');
+      }
+      const trimmed = query.trim();
+      if (
+        trimmed === ''
+        || trimmed === '*'
+        || trimmed === '**'
+        || trimmed.toLowerCase().startsWith('path:')
+      ) {
+        throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
       }
       const folder = getStringField(input, 'path');
       const limit = getNumberField(input, 'limit');

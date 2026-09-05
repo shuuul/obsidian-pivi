@@ -31,7 +31,7 @@ export function structuredPatchToDiffLines(hunks: StructuredPatchHunk[]): DiffLi
   return result;
 }
 
-/** Build a single hunk from old/new substrings (obsidian_edit / Edit tool display). */
+/** Build a single hunk from old/new substrings (`edit` / Edit tool display). */
 export function buildSubstringPatchHunks(oldString: string, newString: string): StructuredPatchHunk[] {
   const oldLines = oldString.split('\n');
   const newLines = newString.split('\n');
@@ -233,8 +233,23 @@ function diffFromOldNewStrings(filePath: string, oldStr: string, newStr: string)
 
 export function diffFromToolInput(toolCall: ToolCallInfo, filePath: string): ToolDiffData | undefined {
   if (toolCall.name === TOOL_EDIT || toolCall.name === TOOL_OBSIDIAN_EDIT) {
-    const oldStr = toolCall.input.old_string;
-    const newStr = toolCall.input.new_string;
+    const firstEdit = Array.isArray(toolCall.input.edits)
+      ? toolCall.input.edits[0] as Record<string, unknown> | undefined
+      : undefined;
+    const oldStr = typeof toolCall.input.old_string === 'string'
+      ? toolCall.input.old_string
+      : typeof firstEdit?.oldText === 'string'
+        ? firstEdit.oldText
+        : typeof firstEdit?.old_string === 'string'
+          ? firstEdit.old_string
+          : undefined;
+    const newStr = typeof toolCall.input.new_string === 'string'
+      ? toolCall.input.new_string
+      : typeof firstEdit?.newText === 'string'
+        ? firstEdit.newText
+        : typeof firstEdit?.new_string === 'string'
+          ? firstEdit.new_string
+          : undefined;
     if (typeof oldStr === 'string' && typeof newStr === 'string') {
       const resolvedPath = toolCall.name === TOOL_OBSIDIAN_EDIT
         ? (typeof toolCall.input.path === 'string' && toolCall.input.path.trim()

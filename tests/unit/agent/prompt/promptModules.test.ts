@@ -146,10 +146,10 @@ describe('prompt module composition', () => {
 
   it('drops the daily-notes tool line when that tool is unregistered', () => {
     const withDaily = composePromptSections({
-      registeredToolNames: ['obsidian_daily', 'obsidian_read'],
+      registeredToolNames: ['obsidian_daily', 'read'],
     });
     const withoutDaily = composePromptSections({
-      registeredToolNames: ['obsidian_read'],
+      registeredToolNames: ['read'],
     });
 
     expect(withDaily.workflow).toContain('Prefer `obsidian_daily` for daily notes');
@@ -200,13 +200,13 @@ describe('long-line-normalization workflow module', () => {
 
     expect(enabled).toContain('## Long-line normalization');
     expect(enabled).toContain('Before further work on a note with oversized physical lines');
-    expect(enabled).toContain('split those lines at semantic boundaries with `obsidian_edit`');
+    expect(enabled).toContain('split those lines at semantic boundaries with `edit`');
     expect(enabled).not.toContain('When this module is enabled');
     expect(disabled).not.toContain('## Long-line normalization');
     expect(disabled).not.toContain('Before further work on a note with oversized physical lines');
     expect(disabled).not.toContain('split those lines at semantic boundaries');
     expect(disabled).toContain('If one physical line is oversized');
-    expect(disabled).toContain('`obsidian_edit` for exact local replacement, including inserting line endings');
+    expect(disabled).toContain('`edit` for exact local replacement, including inserting line endings');
   });
 });
 

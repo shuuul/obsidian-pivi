@@ -17,4 +17,14 @@ describe('createSearchTool promptUsage', () => {
     expect(tool.promptUsage?.summary).toContain('`context: true` dumps are not a substitute for reading note bodies');
     expect(tool.promptUsage?.summary).not.toContain('obsidian_read');
   });
+
+  it('rejects listing queries toward ls', async () => {
+    const deps = makeDeps();
+    const tool = createSearchTool(deps);
+
+    await expect(tool.execute('call', { query: '*' })).rejects.toThrow('Use `ls` with `path` instead');
+    await expect(tool.execute('call', { query: '**' })).rejects.toThrow('Use `ls` with `path` instead');
+    await expect(tool.execute('call', { query: 'path:notes' })).rejects.toThrow('Use `ls` with `path` instead');
+    expect(deps.vault.searchNotes).not.toHaveBeenCalled();
+  });
 });

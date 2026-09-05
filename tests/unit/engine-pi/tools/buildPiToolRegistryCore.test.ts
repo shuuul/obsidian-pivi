@@ -71,7 +71,7 @@ describe('buildPiToolRegistryCore', () => {
   let vaultPath: string;
 
   const registeredToolSummary: RegisteredToolSummary = {
-    obsidianTools: ['obsidian_read'],
+    obsidianTools: ['read'],
     obsidianCliAvailable: true,
     includeMcp: false,
     includeSkill: false,
@@ -258,17 +258,17 @@ describe('buildPiToolRegistryCore', () => {
       mainOnlyToolSpecs: [mainOnly],
       registeredToolSummary: {
         ...registeredToolSummary,
-        obsidianTools: ['obsidian_read'],
+        obsidianTools: ['read'],
       },
     });
 
-    expect(registry.registeredToolsSection).toContain('`obsidian_read`');
+    expect(registry.registeredToolsSection).toContain('`read`');
     expect(registry.registeredToolsSection).toContain('`fixture_main_only`');
   });
 
   it('builds detailed guidance from actual registered ToolSpecs only', () => {
-    const registered = createGuidedToolSpec('obsidian_read', 'factoryMarker');
-    const unregistered = createGuidedToolSpec('obsidian_search', 'missingMarker');
+    const registered = createGuidedToolSpec('read', 'factoryMarker');
+    const unregistered = createGuidedToolSpec('search', 'missingMarker');
 
     const registry = buildPiToolRegistryCore({
       subagentQueryRunner: { query: async () => 'unused' },
@@ -285,7 +285,7 @@ describe('buildPiToolRegistryCore', () => {
     expect(registry.registeredToolsSection).toContain('Factory-owned factoryMarker summary');
     expect(registry.registeredToolsSection).toContain('`factoryMarker` required');
     expect(registry.registeredToolsSection).not.toContain('missingMarker');
-    expect(registry.registeredToolsSection).not.toContain('`obsidian_search` —');
+    expect(registry.registeredToolsSection).not.toContain('`search` —');
   });
 
   it.each([true, false])(

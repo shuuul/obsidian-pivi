@@ -32,7 +32,7 @@ function buildExternalByteStatsText(params: {
     `Bytes: ${params.bytes}`,
     '',
     `Large external file: content was not returned because it exceeds ${params.maxChars} characters/bytes.`,
-    'Use obsidian_read_external with startLine/endLine for smaller files, or inspect the file with a more specialized external tool.',
+    'Use `read` with 1-indexed `offset`/`limit` for smaller files, or inspect the file with a more specialized tool.',
     `External reads have a hard safety limit of ${params.hardLimitBytes} bytes.`,
   ].join('\n');
 }

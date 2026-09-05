@@ -29,31 +29,31 @@ function build(toolSpecs: ToolSpec[], names = toolSpecs.map((tool) => tool.name)
 
 describe('registered tool prompt descriptors', () => {
   const sensitiveNames = [
-    'obsidian_read', 'obsidian_search', 'obsidian_bash', 'obsidian_edit',
-    'obsidian_write', 'obsidian_list', 'obsidian_daily', 'pivi_sessions', 'spawn_agent',
+    'read', 'search', 'bash', 'edit',
+    'write', 'ls', 'obsidian_daily', 'pivi_sessions', 'spawn_agent',
   ];
 
   it.each([
     ['empty', []],
-    ['read-only', ['obsidian_read']],
-    ['search-only', ['obsidian_search']],
-    ['Bash-disabled', ['obsidian_read', 'obsidian_search']],
-    ['sessions-disabled', ['obsidian_read']],
+    ['read-only', ['read']],
+    ['search-only', ['search']],
+    ['Bash-disabled', ['read', 'search']],
+    ['sessions-disabled', ['read']],
   ])('does not recommend absent tools in the complete %s prompt', (_label, names) => {
-    const specs = names.filter((name) => name.startsWith('obsidian_')).map((name) => spec(name, `${name}Marker`));
+    const specs = names.filter((name) => name !== 'spawn_agent' && name !== 'pivi_sessions').map((name) => spec(name, `${name}Marker`));
     const section = build(specs, names);
     const prompt = buildSystemPrompt({}, { registeredToolNames: names, registeredToolsSection: section });
 
     for (const absent of sensitiveNames.filter((name) => !names.includes(name))) {
-      expect(prompt).not.toContain(absent);
+      expect(prompt).not.toContain(`\`${absent}\``);
     }
-    for (const present of names) expect(prompt).toContain(present);
+    for (const present of names) expect(prompt).toContain(`\`${present}\``);
   });
 
   it('uses the registered spec description and schema', () => {
-    const section = build([spec('obsidian_read', 'schemaMarker')]);
+    const section = build([spec('read', 'schemaMarker')]);
 
-    expect(section).toContain('`obsidian_read` — Schema-owned schemaMarker description');
+    expect(section).toContain('`read` — Schema-owned schemaMarker description');
     expect(section).toContain('Parameters: `schemaMarker`');
   });
 
@@ -72,20 +72,20 @@ describe('registered tool prompt descriptors', () => {
   });
 
   it('teaches local-substring newline insertion through the registered exact replacement tool', () => {
-    const edit = spec('obsidian_edit', 'edit');
+    const edit = spec('edit', 'edit');
     edit.promptUsage = {
-      summary: 'Exact local newline marker with `replace_all: true`.',
-      parameters: '`old_string` and `new_string`',
+      summary: 'Exact local newline marker with `replaceAll: true`.',
+      parameters: '`oldText` and `newText`',
     };
-    const write = spec('obsidian_write', 'write');
+    const write = spec('write', 'write');
     const section = build([edit, write]);
 
     expect(section).toContain('including inserting line endings into a long physical line');
     expect(section).toContain('shortest unique span around the boundary—not the whole line');
-    expect(section).toContain('Exact local newline marker with `replace_all: true`.');
+    expect(section).toContain('Exact local newline marker with `replaceAll: true`.');
     expect(section).toContain('multi-thousand-character physical line never needs to be copied in full');
-    expect(section).toContain('**Markdown block boundaries:** `obsidian_edit` is literal');
-    expect(section).toContain('See the registered `obsidian_edit` descriptor for the heading/delimiter example');
+    expect(section).toContain('**Markdown block boundaries:** `edit` is literal');
+    expect(section).toContain('See the registered `edit` descriptor for the heading/delimiter example');
     expect(section).not.toContain('replacing only `Target` with `### Heading`');
     expect(section).not.toContain('`>>` with `\\n\\n`');
     expect(section).not.toContain('sentence.Second');
@@ -93,8 +93,8 @@ describe('registered tool prompt descriptors', () => {
 
   it('does not describe an unregistered descriptor or a name without a descriptor', () => {
     const section = build(
-      [spec('obsidian_read', 'registeredMarker'), spec('obsidian_search', 'unregisteredMarker')],
-      ['obsidian_read', 'obsidian_missing'],
+      [spec('read', 'registeredMarker'), spec('search', 'unregisteredMarker')],
+      ['read', 'obsidian_missing'],
     );
 
     expect(section).toContain('registeredMarker');
@@ -102,14 +102,14 @@ describe('registered tool prompt descriptors', () => {
     expect(section).not.toContain('`obsidian_missing` —');
   });
 
-  it('keeps read pagination guidance when external read is not registered', () => {
-    const section = build([spec('obsidian_read', 'readMarker')]);
+  it('keeps unified read pagination and internal routing on `read`', () => {
+    const section = build([spec('read', 'readMarker')]);
 
     expect(section).toContain('uses the configured Tools default read size');
     expect(section).toContain('fixed 500000-character per-read ceiling');
     expect(section).toContain('do not shrink as context pressure rises');
-    expect(section).toContain('nextStartLine');
-    expect(section).toContain('combine 1-based `startLine` with line-relative 1-based `startChar`');
+    expect(section).toContain('nextOffset');
+    expect(section).toContain('combine 1-indexed `offset` with line-relative 1-based `startChar`');
     expect(section).toContain('exact `nextStartLine` + `nextStartChar` pair');
     expect(section).toContain('do not calculate offsets, overlap pages, or raise the budget');
     expect(section).toContain('Do not raise `maxChars` past the fixed ceiling');
@@ -117,66 +117,57 @@ describe('registered tool prompt descriptors', () => {
     expect(section).toContain('tiny `startChar` steps of around 800 characters');
     expect(section).toContain('A standalone `startChar` is file-global');
     expect(section).toContain('These coordinate systems are mutually exclusive per call');
-    expect(section).toContain('do not mix a standalone file-global `startChar` with `startLine`/`endLine`');
-    expect(section).toContain('do not combine it with `endLine` unless `startLine` is also present');
+    expect(section).toContain('do not mix a standalone file-global `startChar` with `offset`/`limit`');
     expect(section).toContain('continuation marker counts inside `maxChars`');
-    expect(section).not.toContain('immediately retry with `maxChars` at least the required count');
-    expect(section).not.toContain('obsidian_read_external');
-    expect(section).not.toContain('obsidian_markdown_structure');
-  });
-
-  it('keeps external path guidance when vault read is not registered', () => {
-    const section = build([spec('obsidian_read_external', 'externalMarker')]);
-
-    expect(section).toContain('use `obsidian_read_external` with an absolute path');
     expect(section).toContain('immediately retry with `maxChars` at least the required count');
-    expect(section).not.toContain('nextStartChar');
-    expect(section).not.toContain('obsidian_read` for absolute paths');
+    expect(section).toContain('unindexed vault files such as `.pivi/`');
+    expect(section).toContain('do not retry a sibling tool');
+    expect(section).not.toContain('obsidian_read_external');
+    expect(section).not.toContain('startLine');
+    expect(section).not.toContain('obsidian_markdown_structure');
+    expect(section).not.toContain('retry with the other parameter');
   });
 
-  it('reminds skill supporting files to use obsidian_read_external only when that tool is registered', () => {
-    const withExternal = buildRegisteredToolsSection({
-      obsidianTools: ['obsidian_read_external'],
-      toolSpecs: [spec('obsidian_read_external', 'externalMarker')],
+  it('teaches skill supporting files to use `read` / `ls` when those tools are registered', () => {
+    const withRead = buildRegisteredToolsSection({
+      obsidianTools: ['read', 'ls'],
+      toolSpecs: [spec('read', 'readMarker'), spec('ls', 'listMarker')],
       obsidianCliAvailable: true,
       includeMcp: false,
       includeSkill: true,
       includeSubagent: false,
       includeWebSearch: false,
     });
-    expect(withExternal).toContain('### Skills');
-    expect(withExternal).toContain('read them with `obsidian_read_external` using the absolute paths returned by the skill tool');
+    expect(withRead).toContain('### Skills');
+    expect(withRead).toContain('read them with `read` using the absolute paths returned by the skill tool');
+    expect(withRead).toContain('List the skill directory with `ls`');
+    expect(withRead).not.toContain('obsidian_read_external');
 
-    const withoutExternal = buildRegisteredToolsSection({
-      obsidianTools: ['obsidian_read'],
-      toolSpecs: [spec('obsidian_read', 'readMarker')],
+    const withoutRead = buildRegisteredToolsSection({
+      obsidianTools: ['search'],
+      toolSpecs: [spec('search', 'searchMarker')],
       obsidianCliAvailable: true,
       includeMcp: false,
       includeSkill: true,
       includeSubagent: false,
       includeWebSearch: false,
     });
-    expect(withoutExternal).toContain('### Skills');
-    expect(withoutExternal).toContain('`skill` — Load a vault skill by name from .pivi/skills/');
-    expect(withoutExternal).not.toContain('obsidian_read_external');
+    expect(withoutRead).toContain('### Skills');
+    expect(withoutRead).toContain('`skill` — Load a vault skill by name from .pivi/skills/');
+    expect(withoutRead).not.toContain('read them with `read`');
   });
 
-  it('routes unindexed vault files to external tools only when those tools are registered', () => {
-    const withExternal = build([
-      spec('obsidian_read', 'readMarker'),
-      spec('obsidian_list', 'listMarker'),
-      spec('obsidian_read_external', 'readExternalMarker'),
-      spec('obsidian_list_external', 'listExternalMarker'),
+  it('routes unindexed vault files through unified `read` / `ls`', () => {
+    const section = build([
+      spec('read', 'readMarker'),
+      spec('ls', 'listMarker'),
     ]);
-    expect(withExternal).toContain('Retry with `obsidian_read_external` using the absolute path');
-    expect(withExternal).toContain('If `obsidian_list` returns "Vault path not found"');
-    expect(withExternal).toContain('retry with `obsidian_list_external` and the absolute path');
-    expect(withExternal).toContain('files Obsidian does not index (including `.pivi/`)');
-
-    const withoutExternal = build([spec('obsidian_read', 'readMarker'), spec('obsidian_list', 'listMarker')]);
-    expect(withoutExternal).toContain('If `obsidian_read` returns "Note not found", retry with the other parameter');
-    expect(withoutExternal).not.toContain('obsidian_read_external');
-    expect(withoutExternal).not.toContain('obsidian_list_external');
-    expect(withoutExternal).toContain('Prefer `obsidian_list` when you need non-Markdown files or folders');
+    expect(section).toContain('unindexed vault files such as `.pivi/`');
+    expect(section).toContain('Unindexed vault folders such as `.pivi/`');
+    expect(section).toContain('do not retry a sibling tool');
+    expect(section).not.toContain('obsidian_read_external');
+    expect(section).not.toContain('obsidian_list_external');
+    expect(section).not.toContain('retry with the other parameter');
+    expect(section).toContain('Prefer `ls` for folders, including non-Markdown files');
   });
 });

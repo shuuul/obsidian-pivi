@@ -74,7 +74,7 @@ describe('obsidian tool input hardening', () => {
       path: 'notes/a.md',
       content: { text: 'bad' },
       mode: 'overwrite',
-    })).rejects.toThrow('content and mode are required strings');
+    })).rejects.toThrow('Invalid write input: content is required.');
     expect(deps.vault.writeNote).not.toHaveBeenCalled();
   });
 
@@ -132,7 +132,7 @@ describe('obsidian tool input hardening', () => {
 
     await expect(tool.execute('call', {
       path: { nested: 'bad.md' },
-    })).rejects.toThrow('file or path must be a string');
+    })).rejects.toThrow('Invalid read input: path or file must be a string.');
     expect(deps.vault.readNote).not.toHaveBeenCalled();
   });
 
@@ -656,7 +656,7 @@ describe('obsidian tool input hardening', () => {
       path: { nested: 'bad.md' },
       old_string: 'a',
       new_string: 'b',
-    })).rejects.toThrow('file or path must be a string');
+    })).rejects.toThrow('Invalid edit input: path or file must be a string.');
     expect(deps.vault.editNote).not.toHaveBeenCalled();
   });
 

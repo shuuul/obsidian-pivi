@@ -66,6 +66,6 @@ describe('vaultEditMatch', () => {
       '来自联系松散的"弱关系"。',
     );
     expect(message).toContain('curly quotes');
-    expect(message).toContain('obsidian_read');
+    expect(message).toContain('read');
   });
 });

@@ -11,6 +11,7 @@ export * from './piviManagement';
 export * from './sessions';
 export * from './taskTypes';
 export * from './todo';
+export * from './toolAliases';
 export * from './toolInput';
 export * from './toolNames';
 export * from './toolPresentation';

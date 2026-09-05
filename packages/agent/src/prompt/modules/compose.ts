@@ -1,3 +1,4 @@
+import { resolveLiveToolName } from '../../tools/toolAliases';
 import {
   IDENTITY_PROMPT_MODULE_ID,
   isShippedPromptModuleId,
@@ -11,7 +12,36 @@ import type {
   ResolvedPromptModule,
 } from './types';
 
-const TOOL_IDENTIFIER_PATTERN = /\b(?:obsidian_[a-z0-9_]+|pivi_[a-z0-9_]+|spawn_agent)\b/g;
+const PREFIXED_TOOL_PATTERN = /\b(?:obsidian_[a-z0-9_]+|pivi_[a-z0-9_]+|spawn_agent)\b/g;
+const LIVE_GENERIC_TOOL_PATTERN = /`(?:read|write|edit|ls|search|bash|mkdir|move|delete)`/g;
+
+/** Prefixed tool ids plus backtick-wrapped live generic names. */
+export function mentionedToolNames(line: string): string[] {
+  const names: string[] = [];
+  for (const match of line.matchAll(PREFIXED_TOOL_PATTERN)) {
+    names.push(match[0]);
+  }
+  for (const match of line.matchAll(LIVE_GENERIC_TOOL_PATTERN)) {
+    names.push(match[0].slice(1, -1));
+  }
+  return names;
+}
+
+function isRegisteredToolMention(registered: Set<string>, name: string): boolean {
+  if (registered.has(name)) {
+    return true;
+  }
+  const live = resolveLiveToolName(name);
+  if (registered.has(live)) {
+    return true;
+  }
+  for (const entry of registered) {
+    if (resolveLiveToolName(entry) === live) {
+      return true;
+    }
+  }
+  return false;
+}
 
 export function filterUnavailableToolGuidance(
   prompt: string,
@@ -20,8 +50,7 @@ export function filterUnavailableToolGuidance(
   if (!registeredToolNames) return prompt;
   const registered = new Set(registeredToolNames);
   return prompt.split('\n').filter((line) => {
-    const mentioned = line.match(TOOL_IDENTIFIER_PATTERN) ?? [];
-    return mentioned.every((name) => registered.has(name));
+    return mentionedToolNames(line).every((name) => isRegisteredToolMention(registered, name));
   }).join('\n');
 }
 

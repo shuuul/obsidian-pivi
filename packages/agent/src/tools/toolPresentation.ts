@@ -31,6 +31,7 @@ import {
   TOOL_PIVI_SESSIONS,
   TOOL_PIVI_SKILLS,
 } from './obsidianToolNames';
+import { resolveLiveToolName } from './toolAliases';
 import {
   TOOL_AGENT_OUTPUT,
   TOOL_APPLY_PATCH,
@@ -298,7 +299,7 @@ export const TOOL_PRESENTATION_DESCRIPTORS: Readonly<Record<string, ToolPresenta
   custom_tool_call_output: entry('wrench', { visibility: 'hidden' }),
 
   [TOOL_OBSIDIAN_READ]: obsidian('file-text', 'tools.display.read', summarizeObsidianTarget),
-  [TOOL_OBSIDIAN_READ_EXTERNAL]: obsidian('file-text', 'tools.display.readExternal', summarizeObsidianTarget),
+  [TOOL_OBSIDIAN_READ_EXTERNAL]: obsidian('file-text', 'tools.display.read', summarizeObsidianTarget),
   [TOOL_OBSIDIAN_MARKDOWN_STRUCTURE]: obsidian('list-tree', 'tools.display.outline', summarizeObsidianTarget),
   [TOOL_OBSIDIAN_EDIT]: obsidian('file-pen', 'tools.display.edit', summarizeObsidianEdit),
   [TOOL_OBSIDIAN_WRITE]: obsidian('file-plus', 'tools.display.write', summarizeObsidianWrite),
@@ -311,7 +312,7 @@ export const TOOL_PRESENTATION_DESCRIPTORS: Readonly<Record<string, ToolPresenta
   [TOOL_OBSIDIAN_DELETE]: obsidian('trash-2', 'tools.display.delete', summarizeObsidianTarget),
   [TOOL_OBSIDIAN_MOVE]: obsidian('file-input', 'tools.display.move', summarizeObsidianMove),
   [TOOL_OBSIDIAN_LIST]: obsidian('list', 'tools.display.list', summarizeObsidianTarget),
-  [TOOL_OBSIDIAN_LIST_EXTERNAL]: obsidian('list', 'tools.display.listExternal', summarizeObsidianTarget),
+  [TOOL_OBSIDIAN_LIST_EXTERNAL]: obsidian('list', 'tools.display.list', summarizeObsidianTarget),
   [TOOL_OBSIDIAN_MKDIR]: obsidian('folder-plus', 'tools.display.mkdir', summarizeObsidianTarget),
   [TOOL_OBSIDIAN_OPEN]: obsidian('external-link', 'tools.display.open', summarizeObsidianTarget),
   [TOOL_OBSIDIAN_ATTACHMENT]: obsidian('paperclip', 'tools.display.attachment', summarizeObsidianAttachment),
@@ -356,12 +357,16 @@ function resolveTodoProgress(input: Record<string, unknown>) {
   return { completed, total: input.todos.length };
 }
 
-export function getToolPresentationDescriptor(name: string): ToolPresentationDescriptor {
-  return name.startsWith('mcp__') ? MCP_ENTRY : (TOOL_PRESENTATION_DESCRIPTORS[name] ?? DEFAULT_ENTRY);
+function getEntry(name: string): ToolPresentationEntry {
+  if (name.startsWith('mcp__')) return MCP_ENTRY;
+  const exact = TOOL_PRESENTATION_DESCRIPTORS[name];
+  if (exact) return exact;
+  const live = resolveLiveToolName(name);
+  return TOOL_PRESENTATION_DESCRIPTORS[live] ?? DEFAULT_ENTRY;
 }
 
-function getEntry(name: string): ToolPresentationEntry {
-  return name.startsWith('mcp__') ? MCP_ENTRY : (TOOL_PRESENTATION_DESCRIPTORS[name] ?? DEFAULT_ENTRY);
+export function getToolPresentationDescriptor(name: string): ToolPresentationDescriptor {
+  return getEntry(name);
 }
 
 export function resolveToolPresentation(

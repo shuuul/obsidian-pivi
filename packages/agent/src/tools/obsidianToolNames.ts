@@ -1,25 +1,27 @@
-/** Obsidian-native agent tools (ADR-0009). */
-export const TOOL_OBSIDIAN_READ = 'obsidian_read' as const;
+/** Obsidian-native agent tools (ADR-0009). Live names for the generic family are Pi-lowercase. */
+export const TOOL_OBSIDIAN_READ = 'read' as const;
+/** Silent alias of {@link TOOL_OBSIDIAN_READ}. Not registered; kept for old JSONL and presentation. */
 export const TOOL_OBSIDIAN_READ_EXTERNAL = 'obsidian_read_external' as const;
 export const TOOL_OBSIDIAN_MARKDOWN_STRUCTURE = 'obsidian_markdown_structure' as const;
-export const TOOL_OBSIDIAN_EDIT = 'obsidian_edit' as const;
-export const TOOL_OBSIDIAN_WRITE = 'obsidian_write' as const;
-export const TOOL_OBSIDIAN_SEARCH = 'obsidian_search' as const;
+export const TOOL_OBSIDIAN_EDIT = 'edit' as const;
+export const TOOL_OBSIDIAN_WRITE = 'write' as const;
+export const TOOL_OBSIDIAN_SEARCH = 'search' as const;
 export const TOOL_OBSIDIAN_NOTE_INFO = 'obsidian_note_info' as const;
 export const TOOL_OBSIDIAN_LINKS = 'obsidian_links' as const;
 export const TOOL_OBSIDIAN_PROPERTIES = 'obsidian_properties' as const;
 export const TOOL_OBSIDIAN_TASKS = 'obsidian_tasks' as const;
 export const TOOL_OBSIDIAN_HISTORY = 'obsidian_history' as const;
-export const TOOL_OBSIDIAN_DELETE = 'obsidian_delete' as const;
-export const TOOL_OBSIDIAN_MOVE = 'obsidian_move' as const;
-export const TOOL_OBSIDIAN_LIST = 'obsidian_list' as const;
+export const TOOL_OBSIDIAN_DELETE = 'delete' as const;
+export const TOOL_OBSIDIAN_MOVE = 'move' as const;
+export const TOOL_OBSIDIAN_LIST = 'ls' as const;
+/** Silent alias of {@link TOOL_OBSIDIAN_LIST}. Not registered; kept for old JSONL and presentation. */
 export const TOOL_OBSIDIAN_LIST_EXTERNAL = 'obsidian_list_external' as const;
-export const TOOL_OBSIDIAN_MKDIR = 'obsidian_mkdir' as const;
+export const TOOL_OBSIDIAN_MKDIR = 'mkdir' as const;
 export const TOOL_OBSIDIAN_OPEN = 'obsidian_open' as const;
 export const TOOL_OBSIDIAN_ATTACHMENT = 'obsidian_attachment' as const;
 export const TOOL_OBSIDIAN_GENERATE_IMAGE = 'obsidian_generate_image' as const;
 export const TOOL_OBSIDIAN_COMMAND = 'obsidian_command' as const;
-export const TOOL_OBSIDIAN_BASH = 'obsidian_bash' as const;
+export const TOOL_OBSIDIAN_BASH = 'bash' as const;
 export const TOOL_OBSIDIAN_EVAL = 'obsidian_eval' as const;
 export const TOOL_OBSIDIAN_DAILY = 'obsidian_daily' as const;
 export const TOOL_OBSIDIAN_GRAPH = 'obsidian_graph' as const;
@@ -69,8 +71,6 @@ export const OBSIDIAN_AGENT_TOOLS = [
 ] as const;
 
 export const OBSIDIAN_OPTIONAL_TOOLS = [
-  TOOL_OBSIDIAN_READ_EXTERNAL,
-  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_EVAL,

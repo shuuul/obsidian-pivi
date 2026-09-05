@@ -42,7 +42,7 @@ export function createDeterministicSmokeChatService(deps: {
   });
   faux.setResponses([
     fauxAssistantMessage(
-      fauxToolCall('obsidian_write', {
+      fauxToolCall('write', {
         path: deps.turn.notePath,
         content: deps.turn.noteContent,
         mode: 'create',

@@ -121,29 +121,28 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 
 | Tool | What it does |
 |------|-------------|
-| `obsidian_read` | Read note bodies with bounded line or character pagination |
+| `read` | Read vault notes, unindexed vault files such as `.pivi/`, and authorized absolute paths with bounded line or character pagination |
 | `obsidian_markdown_structure` | Extract headings and section sizes from a note |
-| `obsidian_search` | Substring search, tags, folder listing |
+| `search` | Case-insensitive literal substring and `tag:` search (not folder listing) |
 | `obsidian_note_info` | Metadata, tags, links, frontmatter |
 | `obsidian_links` | Outgoing links and backlinks for a note |
-| `obsidian_list` | List vault folder contents |
+| `ls` | List vault, unindexed, or authorized absolute folders |
 | `obsidian_attachment` | Attachment metadata and paths |
 | `obsidian_daily` | Read, append to, or open the daily note (requires the official Obsidian CLI) |
 | `obsidian_graph` | Analyze orphans, dead ends, and unresolved links |
 | `obsidian_tags` | List tags and inspect tagged notes |
 | `obsidian_base` | List Bases, inspect views, or run CLI-backed Base queries |
-| `obsidian_edit` | Replace exact local text, including inserting Markdown line breaks |
-| `obsidian_write` | Create or overwrite notes |
+| `edit` | Replace exact local text, including inserting Markdown line breaks |
+| `write` | Create or overwrite notes |
 | `obsidian_properties` | List, read, set, or remove frontmatter properties |
-| `obsidian_delete` | Move files or folders to trash |
-| `obsidian_move` | Rename or move files, update links |
-| `obsidian_mkdir` | Create a vault folder |
+| `delete` | Move files or folders to trash |
+| `move` | Rename or move files, update links |
+| `mkdir` | Create a vault folder |
 | `obsidian_history` | List, read, and restore file-history snapshots (requires the official Obsidian CLI) |
 | `obsidian_tasks` | List or update Markdown task status (requires the official Obsidian CLI) |
 | `obsidian_open` | Open a file in the Obsidian workspace |
-| `obsidian_read_external` | Read files outside the vault (off by default; sidebar prompt on unlisted roots) |
-| `obsidian_list_external` | List external directories (off by default; sidebar prompt on unlisted roots) |
-| `obsidian_bash` | Run an allowlisted shell command via login shell (off by default; sidebar prompt on unlisted commands) |
+| `read` / `ls` (external paths) | Absolute paths outside the vault stay off by default; sidebar prompt on unlisted roots |
+| `bash` | Run an allowlisted shell command via login shell (off by default; sidebar prompt on unlisted commands) |
 | `obsidian_command` | Execute an Obsidian command by id (off by default) |
 | `obsidian_eval` | Run JavaScript in Obsidian context (off by default) |
 | `obsidian_generate_image` | Generate images with Codex, save as attachments |

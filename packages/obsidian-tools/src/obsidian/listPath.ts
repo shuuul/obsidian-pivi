@@ -1,11 +1,14 @@
+import * as path from 'node:path';
+
 import {
   textResult,
   TOOL_OBSIDIAN_LIST,
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { CAPABILITY_TOOL_NAMES, ensureExternalDirectoryAccess } from '../capabilityApprovalGate';
 import type { ObsidianToolDeps } from './deps';
-import { rethrowIfUnmanagedVaultPath } from './unmanagedVaultPath';
+import { resolveUnmanagedAbsolutePath } from './unmanagedVaultPath';
 
 const DEFAULT_LIST_LIMIT = 50;
 const MAX_LIST_LIMIT = 200;
@@ -50,7 +53,7 @@ function buildListPage(entries: unknown[], offset: number, requestedLimit: numbe
     total,
   };
   if (JSON.stringify(candidate, null, 2).length > MAX_LIST_RESULT_CHARS) {
-    throw new Error('One folder entry exceeds the safe list output limit. Use obsidian_search to locate the specific path instead.');
+    throw new Error('One folder entry exceeds the safe list output limit. Use `search` to locate the specific path instead.');
   }
   return candidate;
 }
@@ -60,17 +63,17 @@ export function createListPathTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_LIST,
     label: 'List folder',
-    description: 'List a bounded page of direct children of a vault folder, including files, folders, and attachments. Optionally filter direct-child names with a case-insensitive query. Use path="" for vault root and nextOffset to continue.',
+    description: 'List a bounded page of direct children of a folder. Vault-indexed folders use the vault API; unindexed vault folders such as `.pivi/` and absolute paths use the filesystem. Optionally filter direct-child names with a case-insensitive query. offset is a 0-based entry index, not a line number.',
     promptUsage: {
-      summary: 'List a bounded page of direct children of a vault folder, including non-Markdown files, folders, and attachments; prefer this over search query=* for simple folder listing.',
-      parameters: '`path?` vault-relative folder (empty means root); `query?` case-insensitive substring filter over direct-child names only; `offset?` zero-based continuation from `nextOffset`; `limit?` 1–200, default 50.',
+      summary: 'List a bounded page of direct children of a folder, including non-Markdown files. `offset` is a 0-based entry index (not a `read` line number). Prefer this over `search` for folder listing.',
+      parameters: '`path?` vault-relative, unindexed, or absolute folder (empty means vault root); `query?` case-insensitive substring filter over direct-child names only; `offset?` 0-based continuation from `nextOffset`; `limit?` 1–200, default 50.',
     },
     parameters: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'Vault-relative folder path; empty or omitted means root' },
-        query: { type: 'string', description: 'Optional case-insensitive substring filter over direct-child names; use obsidian_search for note contents' },
-        offset: { type: 'number', minimum: 0, description: 'Zero-based item offset; use the previous response nextOffset to continue' },
+        path: { type: 'string', description: 'Vault-relative, unindexed, or absolute folder path; empty or omitted means vault root' },
+        query: { type: 'string', description: 'Optional case-insensitive substring filter over direct-child names; use search for note contents' },
+        offset: { type: 'number', minimum: 0, description: '0-based entry offset, not a line number; use the previous response nextOffset to continue' },
         limit: { type: 'number', minimum: 1, maximum: MAX_LIST_LIMIT, description: 'Maximum entries to return (1-200, default 50)' },
       },
       additionalProperties: false,
@@ -78,11 +81,28 @@ export function createListPathTool(deps: ObsidianToolDeps): ToolSpec {
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
       const requestedPath = getStringField(input, 'path') ?? '';
+      const listAbsolute = async (absolutePath: string) => {
+        const externalFiles = await ensureExternalDirectoryAccess(
+          deps,
+          absolutePath,
+          true,
+          CAPABILITY_TOOL_NAMES.listExternal,
+        );
+        return externalFiles.listPath(absolutePath);
+      };
       let result;
-      try {
-        result = await Promise.resolve(vault.listPath(requestedPath));
-      } catch (error) {
-        rethrowIfUnmanagedVaultPath(deps, { path: requestedPath }, error, 'directory');
+      if (requestedPath && path.isAbsolute(requestedPath)) {
+        result = await listAbsolute(requestedPath);
+      } else {
+        try {
+          result = await Promise.resolve(vault.listPath(requestedPath));
+        } catch (error) {
+          const absolute = resolveUnmanagedAbsolutePath(deps, { path: requestedPath }, error, 'directory');
+          if (!absolute) {
+            throw error;
+          }
+          result = await listAbsolute(absolute);
+        }
       }
       const query = getStringField(input, 'query')?.trim().toLowerCase();
       const filtered = query

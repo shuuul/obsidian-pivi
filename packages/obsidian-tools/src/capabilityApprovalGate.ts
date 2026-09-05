@@ -8,8 +8,8 @@ import type {
 import {
   classifyBashCommand,
   TOOL_OBSIDIAN_BASH,
-  TOOL_OBSIDIAN_LIST_EXTERNAL,
-  TOOL_OBSIDIAN_READ_EXTERNAL,
+  TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_READ,
 } from '@pivi/agent/tools';
 import { ExternalFileApi } from '@pivi/obsidian-host/externalFileApi';
 import { isPathWithinVault, normalizePathForFilesystem } from '@pivi/obsidian-host/path';
@@ -151,7 +151,7 @@ export async function ensureBashCommandAllowed(
 }
 
 export const CAPABILITY_TOOL_NAMES = {
-  readExternal: TOOL_OBSIDIAN_READ_EXTERNAL,
-  listExternal: TOOL_OBSIDIAN_LIST_EXTERNAL,
+  readExternal: TOOL_OBSIDIAN_READ,
+  listExternal: TOOL_OBSIDIAN_LIST,
   bash: TOOL_OBSIDIAN_BASH,
 } as const;

@@ -24,7 +24,11 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_WRITE,
     label: 'Write note',
-    description: 'Create, overwrite, append, or prepend note content via vault API. path= or file= required for create/overwrite.',
+    description: 'Create, overwrite, append, or prepend note content via vault API. path= or file= required for create/overwrite. mode defaults to overwrite.',
+    promptUsage: {
+      summary: 'Write note content. Omit `mode` to overwrite. Keep `append`/`prepend`/`create`. `create` still needs `overwrite: true` to clobber an existing file.',
+      parameters: '`path` or `file`, `content`, optional `mode` (overwrite|append|prepend|create, default overwrite), optional `overwrite` for create.',
+    },
     parameters: {
       type: 'object',
       properties: {
@@ -34,19 +38,19 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
         mode: {
           type: 'string',
           enum: ['create', 'overwrite', 'append', 'prepend'],
-          description: 'Write mode',
+          description: 'Write mode; omit to overwrite',
         },
         overwrite: { type: 'boolean', description: 'Allow overwrite when mode=create' },
       },
-      required: ['content', 'mode'],
+      required: ['content'],
       additionalProperties: false,
     },
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
       const content = getStringField(input, 'content');
-      const mode = getWriteMode(input.mode);
-      if (content === undefined || !mode) {
-        throw new Error('Invalid write note input: content and mode are required strings.');
+      const mode = getWriteMode(input.mode) ?? 'overwrite';
+      if (content === undefined) {
+        throw new Error('Invalid write input: content is required.');
       }
       const result = await vault.writeNote({
         file: getStringField(input, 'file'),

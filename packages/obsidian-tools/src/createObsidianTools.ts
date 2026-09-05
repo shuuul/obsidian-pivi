@@ -1,6 +1,6 @@
 import type { CapabilityApprovalPort } from '@pivi/agent/ports';
 import type { ObsidianToolsSettings } from '@pivi/agent/settings';
-import type { ToolSpec } from '@pivi/agent/tools';
+import { isDisabledToolName, type ToolSpec } from '@pivi/agent/tools';
 import {
   ExternalFileApi,
   getVaultPath,
@@ -24,7 +24,6 @@ import { createGenerateImageTool } from './obsidian/generateImage';
 import { createGraphTool } from './obsidian/graph';
 import { createHistoryTool } from './obsidian/history';
 import { createLinksTool } from './obsidian/links';
-import { createListExternalTool } from './obsidian/listExternal';
 import { createListPathTool } from './obsidian/listPath';
 import { createMarkdownStructureTool } from './obsidian/markdownStructure';
 import { createMkdirTool } from './obsidian/mkdir';
@@ -32,7 +31,6 @@ import { createMovePathTool } from './obsidian/movePath';
 import { createNoteInfoTool } from './obsidian/noteInfo';
 import { createOpenPathTool } from './obsidian/openPath';
 import { createPropertiesTool } from './obsidian/properties';
-import { createReadExternalTool } from './obsidian/readExternal';
 import { createReadNoteTool } from './obsidian/readNote';
 import { createSearchTool } from './obsidian/search';
 import { createTagsTool } from './obsidian/tags';
@@ -52,7 +50,7 @@ export function createObsidianTools(
     getBashPermissions?: ObsidianToolDeps['getBashPermissions'];
   } = {},
 ): ToolSpec[] {
-  const disabledTools = new Set(settings.disabledTools ?? []);
+  const disabledTools = settings.disabledTools ?? [];
   const vault = new ObsidianVaultApi(app);
   const vaultPath = getVaultPath(app);
   const cli = new ObsidianCliTransport(settings, {
@@ -113,11 +111,6 @@ export function createObsidianTools(
     tools.push(createGenerateImageTool(deps));
   }
 
-  if (settings.allowExternalRead || vaultPath) {
-    tools.push(createReadExternalTool(deps));
-    tools.push(createListExternalTool(deps));
-  }
-
   if (settings.allowCommand && obsidianCliAvailable) {
     tools.push(createCommandTool(deps));
   }
@@ -128,5 +121,5 @@ export function createObsidianTools(
     tools.push(createEvalTool(deps));
   }
 
-  return tools.filter((tool) => !disabledTools.has(tool.name));
+  return tools.filter((tool) => !isDisabledToolName(disabledTools, tool.name));
 }

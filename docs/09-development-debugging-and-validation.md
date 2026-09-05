@@ -73,7 +73,7 @@ Use a configured development vault (`.env.local` `OBSIDIAN_VAULT`). Official CLI
 
 `npm run smoke:obsidian` requires the Obsidian CLI, `OBSIDIAN_VAULT`, an existing `.pivi-smoke/` directory, and a current development artifact deployed with `npm run dev`. A production or stale artifact has no harness and fails before fixture mutation. The production build intentionally omits the harness and deterministic provider.
 
-The runner uses the configured vault as its working directory, passes an explicit vault selector, and checks the host's canonical vault path before every renderer operation, including cleanup. CLI calls time out after 30 seconds. It retains the original `window.fetch` object across both plugin reloads, opens Pivi through its registered command, and invokes the version-1 development command on the semantic chat-view handle. App composition creates an ordinary durable session and a Pi runtime with the normal registered tool provider; only model/auth/stream are replaced by pi-ai's deterministic faux provider. The scripted Agent loop calls the real `obsidian_write` ToolSpec, then the runner reopens the JSONL through Pivi and compares user/assistant roles, content, tool result, note bytes, and fetch identity.
+The runner uses the configured vault as its working directory, passes an explicit vault selector, and checks the host's canonical vault path before every renderer operation, including cleanup. CLI calls time out after 30 seconds. It retains the original `window.fetch` object across both plugin reloads, opens Pivi through its registered command, and invokes the version-1 development command on the semantic chat-view handle. App composition creates an ordinary durable session and a Pi runtime with the normal registered tool provider; only model/auth/stream are replaced by pi-ai's deterministic faux provider. The scripted Agent loop calls the real `write` ToolSpec, then the runner reopens the JSONL through Pivi and compares user/assistant roles, content, tool result, note bytes, and fetch identity.
 
 Each request is limited to its exact UUID note/ledger paths and a safe `.pivi/sessions/**/*.jsonl` path. The harness creates an exclusive ownership ledger after session creation. Cleanup verifies that complete ledger before deleting through the session store and vault adapter, attempts sibling cleanup after failures, retains the ledger when cleanup is incomplete, and never deletes shared directories. Turn failure performs app-owned rollback before returning an error. A timed-out renderer operation has unknown outcome, so the runner does not race it with cleanup; it reports the retained ledger for an ownership-checked retry and does not claim success.
 
@@ -105,7 +105,9 @@ For a focused behavior change:
 4. Run the broader affected Jest directory or full `npm run test`.
 5. Build and inspect in Obsidian for user-visible UI/runtime work.
 
-Before pushing, the CI-equivalent local route is:
+Do not open a pull request until the CI-equivalent local suite below is green. GitHub Actions confirms that suite; it is not the first place to discover a failure.
+
+Before pushing or opening a pull request, the CI-equivalent local route is:
 
 ```bash
 npm run check:dependencies && \

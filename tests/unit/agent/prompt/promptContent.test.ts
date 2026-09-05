@@ -27,7 +27,7 @@ describe('failure-driven prompt content', () => {
     expect(prompt).toContain('## Tool failure recovery');
     expect(prompt).toContain('Never re-send an identical failing tool call');
     expect(prompt).toContain('Do not stop silently and wait for the user to type continue');
-    expect(prompt).toContain('Copy `old_string` verbatim from the latest read output');
+    expect(prompt).toContain('Copy `oldText` verbatim from the latest read output');
     expect(prompt).toContain('do not reconstruct it from memory');
     expect(prompt).toContain('Do not introduce quotes or facts that are absent from the source');
     expect(prompt).toContain('do not create draft or sibling copies such as ` (draft).md`');
@@ -36,12 +36,12 @@ describe('failure-driven prompt content', () => {
   });
 
   it('keeps search-not-read on the search promptUsage owner', () => {
-    const search = spec('obsidian_search', {
+    const search = spec('search', {
       summary: 'Use search to locate notes and match positions, never as a content-read backdoor: `context: true` dumps are not a substitute for reading note bodies.',
       parameters: '`query`',
     });
     const section = buildRegisteredToolsSection({
-      obsidianTools: ['obsidian_search'],
+      obsidianTools: ['search'],
       toolSpecs: [search],
       obsidianCliAvailable: true,
       includeMcp: false,
@@ -57,8 +57,8 @@ describe('failure-driven prompt content', () => {
 
   it('keeps stats-first paging, clamp continuation, and coordinate exclusivity on registered read guidance', () => {
     const section = buildRegisteredToolsSection({
-      obsidianTools: ['obsidian_read'],
-      toolSpecs: [spec('obsidian_read')],
+      obsidianTools: ['read'],
+      toolSpecs: [spec('read')],
       obsidianCliAvailable: true,
       includeMcp: false,
       includeSkill: false,
@@ -66,7 +66,7 @@ describe('failure-driven prompt content', () => {
       includeWebSearch: false,
     });
     const prompt = buildSystemPrompt({}, {
-      registeredToolNames: ['obsidian_read'],
+      registeredToolNames: ['read'],
       registeredToolsSection: section,
     });
 

@@ -31,7 +31,9 @@ function inputText(input: Record<string, unknown>, key: string): string {
 }
 
 function vaultTarget(input: Record<string, unknown>): string {
-  const path = inputText(input, 'path');
+  const path = inputText(input, 'path')
+    || inputText(input, 'file_path')
+    || inputText(input, 'target_file');
   if (path) return shortenPath(path);
   const file = inputText(input, 'file');
   return file ? truncateToolText(file, 40) : '';

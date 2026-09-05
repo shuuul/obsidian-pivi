@@ -11,6 +11,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | Spec | Created | Outcome |
 |---|---|---|
 | [051 — Permission scopes and chat lifecycle cleanup](051-permission-scopes-and-chat-lifecycle-cleanup.md) | Active | Stable device-local permission scopes plus safe empty-session and Archive/Delete lifecycle cleanup. |
+| [052 — Hide remaining agent tool routing](052-hide-remaining-agent-tool-routing.md) | Active | Hide remaining `file`/`path` retry, search-as-listing, and leftover sibling-tool routing after unified read/list. |
 
 ## Archived specs
 
@@ -104,3 +105,4 @@ Before moving a spec to `archive/`:
 5. Set `status: Completed`, update the date, move the file without renaming it, and move its README entry to Archived specs.
 
 Run `npm run check:specs` before committing. The check validates filenames, numbering, flat frontmatter, required sections, lifecycle placement, and index coverage; it cannot prove that prose matches the implementation.
+

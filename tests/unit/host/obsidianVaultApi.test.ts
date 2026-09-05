@@ -343,24 +343,16 @@ describe('ObsidianVaultApi', () => {
     expect(getMarkdownFiles).not.toHaveBeenCalled();
   });
 
-  it('searchNotes lists files when query is * with path scope', async () => {
+  it('searchNotes rejects listing queries toward ls', async () => {
     const api = new ObsidianVaultApi(makeApp([
       { path: 'month/2026-2.md', content: 'journal entry' },
       { path: 'other/note.md', content: 'elsewhere' },
     ]) as never);
 
-    const hits = await api.searchNotes({ query: '*', path: 'month', limit: 10 });
-    expect(hits).toEqual([{ path: 'month/2026-2.md' }]);
-  });
-
-  it('searchNotes lists files for path: prefix without text needle', async () => {
-    const api = new ObsidianVaultApi(makeApp([
-      { path: 'month/2026-2.md', content: 'x' },
-      { path: 'month/extra.md', content: 'y' },
-    ]) as never);
-
-    const hits = await api.searchNotes({ query: 'path:month', limit: 10 });
-    expect(hits.map((h) => h.path).sort()).toEqual(['month/2026-2.md', 'month/extra.md']);
+    await expect(api.searchNotes({ query: '*', path: 'month', limit: 10 }))
+      .rejects.toThrow('Use `ls` with `path` instead');
+    await expect(api.searchNotes({ query: 'path:month', limit: 10 }))
+      .rejects.toThrow('Use `ls` with `path` instead');
   });
 
   it('getLinks returns backlinks from resolvedLinks', () => {

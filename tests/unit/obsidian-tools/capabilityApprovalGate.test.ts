@@ -83,7 +83,7 @@ describe('ensureExternalDirectoryAccess', () => {
       deps,
       nestedFile,
       false,
-      'obsidian_read_external',
+      'read',
     );
     expect(api).toBe(deps.externalFiles);
   });
@@ -91,17 +91,17 @@ describe('ensureExternalDirectoryAccess', () => {
   it('denies when the port is missing', async () => {
     const deps = createDeps(null);
     await expect(
-      ensureExternalDirectoryAccess(deps, nestedFile, false, 'obsidian_read_external'),
+      ensureExternalDirectoryAccess(deps, nestedFile, false, 'read'),
     ).rejects.toThrow(/denied by user/i);
   });
 
   it('allows once without remembering a persistent grant', async () => {
     const port = createPort({ decision: 'allow-once' });
     const deps = createDeps(port);
-    await ensureExternalDirectoryAccess(deps, nestedFile, false, 'obsidian_read_external');
+    await ensureExternalDirectoryAccess(deps, nestedFile, false, 'read');
     expect(port.hasPersistentGrant({
       kind: 'external-directory',
-      toolName: 'obsidian_read_external',
+      toolName: 'read',
       blockedPath: nestedFile,
       directoryRoot: rootDir,
       reason: '',
@@ -116,15 +116,15 @@ describe('ensureExternalDirectoryAccess', () => {
     const port = createCapabilityApprovalPort({ cache, present });
     const deps = createDeps(port);
 
-    await ensureExternalDirectoryAccess(deps, nestedFile, false, 'obsidian_read_external');
-    await ensureExternalDirectoryAccess(deps, nestedFile, false, 'obsidian_read_external');
+    await ensureExternalDirectoryAccess(deps, nestedFile, false, 'read');
+    await ensureExternalDirectoryAccess(deps, nestedFile, false, 'read');
     expect(present).not.toHaveBeenCalled();
   });
 
   it('rejects user denial', async () => {
     const deps = createDeps(createPort({ decision: 'deny' }));
     await expect(
-      ensureExternalDirectoryAccess(deps, nestedFile, false, 'obsidian_read_external'),
+      ensureExternalDirectoryAccess(deps, nestedFile, false, 'read'),
     ).rejects.toThrow(/denied by user/i);
   });
 
@@ -134,7 +134,7 @@ describe('ensureExternalDirectoryAccess', () => {
       deps,
       nestedFile,
       false,
-      'obsidian_read_external',
+      'read',
     );
     expect(api.isPathAllowed?.(nestedFile)).toBe(true);
   });
@@ -151,7 +151,7 @@ describe('ensureExternalDirectoryAccess', () => {
       fs.writeFileSync(outsideFile, 'nope');
       const deps = createDeps(port, [], { vaultPath: rootDir, allowExternalRead: false });
       await expect(
-        ensureExternalDirectoryAccess(deps, outsideFile, false, 'obsidian_read_external'),
+        ensureExternalDirectoryAccess(deps, outsideFile, false, 'read'),
       ).rejects.toThrow(/outside the vault/i);
       expect(present).not.toHaveBeenCalled();
     } finally {
@@ -182,7 +182,7 @@ describe('ensureBashCommandAllowed', () => {
     await ensureBashCommandAllowed(createDeps(port), 'git status', false);
     expect(port.hasPersistentGrant({
       kind: 'bash',
-      toolName: 'obsidian_bash',
+      toolName: 'bash',
       command: 'git status',
       blockedPath: 'git status',
       reason: '',

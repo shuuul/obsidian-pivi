@@ -186,7 +186,7 @@ export function createObsidianLikeHost(overrides?: FakeHostPortOverrides): Agent
     files,
     sessions: overrides?.sessions ?? createTrackingSessionStore('vault'),
     engine: overrides?.engine ?? createTrackingEngine('vault'),
-    tools: [createToolProvider('obsidian-tools', 'obsidian_search')],
+    tools: [createToolProvider('obsidian-tools', 'search')],
     contextProviders: [],
     secrets,
     ui,
