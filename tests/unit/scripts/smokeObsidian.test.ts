@@ -42,6 +42,12 @@ function runFixture(scenario: string) {
 }
 
 describe('real-host smoke safety (CLI double, not real-host acceptance)', () => {
+  it('looks up the registered Pivi view type', () => {
+    const source = readFileSync(script, 'utf8');
+    expect(source).toContain("getLeavesOfType('pivi-view')");
+    expect(source).not.toContain("getLeavesOfType('pivi-chat')");
+  });
+
   it('rejects a wrong vault before reload or fixture mutation', () => {
     const result = runFixture('wrong-vault');
     expect(result.status).toBe(1);

@@ -162,7 +162,7 @@ function runHarness(request) {
     const deadline = Date.now() + 10000;
     let handle;
     while (Date.now() < deadline) {
-      const view = app.workspace.getLeavesOfType('pivi-chat')[0]?.view;
+      const view = app.workspace.getLeavesOfType('pivi-view')[0]?.view;
       handle = view?.getChatHandle?.();
       if (handle?.development?.runRealHostSmoke) break;
       await new Promise(resolve => setTimeout(resolve, 25));

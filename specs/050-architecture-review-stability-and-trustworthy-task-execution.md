@@ -27,7 +27,7 @@ Keep Pi pins/compatibility checks, JSONL/journal recovery, device-local credenti
 
 Important failure paths are handled, a new user can finish one clearly bounded task, and a contributor can take one independently testable maintenance slice.
 
-- [ ] WS-01: Real Obsidian smoke exercises a deterministic Pivi turn/tool mutation and semantic session restoration after reload, preserves fetch identity, and cleans only its own resources on success/failure. Candidate/environment evidence is recorded.
+- [x] WS-01: Real Obsidian smoke exercises a deterministic Pivi turn/tool mutation and semantic session restoration after reload, preserves fetch identity, and cleans only its own resources on success/failure. Candidate/environment evidence is recorded.
 - [ ] WS-02: Fork failure injection covers every side-effect boundary; delayed/repeated/early shutdown preserves save dependencies and never clears a newer owner's journal. Source sessions remain unchanged.
 - [ ] WS-03: Reproducible ingest/snapshot/entity-commit/render baselines exist for three workloads; any retained optimization demonstrates improvement with immutable snapshots and event ordering intact. A measured no-change conclusion is acceptable, not an invented speedup.
 - [ ] WS-04: A user can run literature triage under an execution-enforced read-only mode; main/subagent/bypass attempts cannot mutate user files or external systems. Mutation recovery information distinguishes captured, unavailable, failed, and unsupported states without promising universal undo.
@@ -76,7 +76,7 @@ Coordinator owns this file and the index. Claim a row before implementation or d
 
 | ID | Deliverable | Owner | Status | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- |
-| WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Amp | In progress | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
+| WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Amp | Done | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
 | WS-02 | P1 complete fork compensation and ordered instance shutdown | Amp | In progress | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
 | WS-03 | P2 projection cost baselines and justified local optimization | Unassigned | Pending | P1 accepted | Fixed workloads, ownership/immutability regressions, before/after traces |
 | WS-04 | P2 execution read-only task and recovery visibility | Unassigned | Blocked | Grill decisions; P1 accepted | Adversarial tool matrix, recipe walkthrough, recovery states, UI/i18n checks |
@@ -162,8 +162,8 @@ The repaired smoke command must explicitly target and verify the designated test
 
 | Evidence row | Required evidence | Current state |
 |---|---|---|
-| Deterministic real-host chain | Fresh candidate/build identity, restored session/tool/note assertions, original fetch reference, success/failure cleanup | Not run |
-| Fork and shutdown | Fault matrix results, original bytes, deferred-save event order, reload ownership | Not run |
+| Deterministic real-host chain | Fresh candidate/build identity, restored session/tool/note assertions, original fetch reference, success/failure cleanup | Passed 2026-09-05 14:33 CST; development artifact SHA-256 `f57920262198cced59e1eb0ae1699707f19bc619a735248b0181762a653cc524` |
+| Fork and shutdown | Fault matrix results, original bytes, deferred-save event order, reload ownership | Local fault/lifecycle matrix passed; real-host reload/restore passed; partial fork-creation fault ownership remains |
 | Performance | Fixed workload definitions and comparable before/after spans with variability | Not measured |
 | Read-only and recovery | Adversarial matrix, new-user walkthrough, recovery status assertions, all-locale checks | Awaiting decisions |
 | Final candidate | Full gates, inspected UI artifacts where applicable, docs sync, final CI for the merge candidate | Not run |
@@ -215,7 +215,15 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Changed: fork ownership now begins at the new JSONL and compensates registration, metadata update, null-tab, and thrown-tab failures through a dedicated physical-discard session-owner port. Open-registration and file cleanup continue independently, while compensation logging preserves the primary failure.
 - Shutdown: `PiviApplication.shutdown()` is a single-flight promise. It rejects new work synchronously, starts all semantic view shutdowns, captures tab bindings once, cancels active turns, attempts every session save and tab teardown, releases an owner-token journal binding, then disposes workspace resources. A later host close cannot overwrite captured bindings with an empty manager, and an old instance cannot clear a newer journal owner.
 - Evidence: Node 24 source/test typecheck; focused zero-warning ESLint; architecture/docs/spec/package/i18n/Pi boundaries; 7 focused suites / 134 tests covering fork fault boundaries, cleanup continuation, deferred save order, save-failure teardown, repeated shutdown, late initialization disposal, and stale journal release. The full Jest run passed 355 suites / 3,173 tests; one build-compatibility worker was externally terminated by `SIGSEGV`, and its 7 tests passed immediately in an isolated in-band run. Existing engine tests exercise production-path source fingerprint rejection and real temporary JSONL bytes; a designated-vault restore remains unrun.
-- Remaining: obtain explicit authorization before deploying/running the development real-host smoke. Record live reload/restore and cleanup evidence before marking WS-01 or WS-02 Done.
+- Remaining: live smoke authorization was granted and evidence follows below. WS-02 still needs storage-owned handling for a fork API that fails after partial file creation.
+
+### 2026-09-05 — Amp — WS-01 live acceptance
+
+- Candidate: local commit `37c939d76ba04ee320f12167b3eef170dd0abef0`; development `main.js` SHA-256 `f57920262198cced59e1eb0ae1699707f19bc619a735248b0181762a653cc524`; Pivi 0.25.1; Obsidian 1.13.7 / installer 1.14.0; Electron 43.3.0; renderer Node 24.18.1; Chrome 150.0.7871.212; macOS 27.0 arm64; 2026-09-05 14:33 CST.
+- First run: failed safely before note/session creation because the runner still looked up the retired `pivi-chat` view type while the registered constant is `pivi-view`. Corrected the lookup and added a source-contract regression; the 11-case CLI safety suite and focused ESLint passed.
+- Live result: `npm run dev` deployed byte-identical root/Vault artifacts, then `npm run smoke:obsidian` passed the deterministic Pi turn, registered `obsidian_write`, semantic role/content/tool-result checks, two plugin reloads, durable reopen, exact note bytes, and original `window.fetch` reference checks. `obsidian dev:errors` reported no captured errors.
+- Cleanup: the UUID note, ownership ledger, JSONL session, and retained fetch key were all absent after the run. No pre-existing `.pivi-smoke` files or shared directories were removed.
+- State: WS-01 accepted. WS-02 retains one explicit gap: storage-owned diagnosis/cleanup for a fork API that fails after partially creating a file; do not claim that boundary from downstream compensation tests.
 
 ## Completion summary
 
