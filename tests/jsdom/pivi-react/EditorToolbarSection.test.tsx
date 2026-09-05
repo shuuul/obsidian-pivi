@@ -36,6 +36,8 @@ function createPorts(
       saveSubagents: async () => undefined,
       saveEditorSelectionToolbar,
       purgeDeletedSessionFiles: async () => 0,
+      loadSessionMaintenance: async () => ({ archivedCount: 0, deletedCount: 0 }),
+      deleteAllArchivedChats: async () => ({ moved: 0, skippedActive: 0, failed: 0 }),
     },
     editorToolbar: {
       listHostCommands: () => [

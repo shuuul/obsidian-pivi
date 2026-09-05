@@ -187,6 +187,8 @@ describe('loadContextLayers', () => {
     expect(layers.skills.map((skill) => skill.name)).toEqual(['enabled-skill']);
     expect(layers.skills[0]?.filePath).toBe('.pivi/skills/enabled-skill/SKILL.md');
     expect(layers.skills[0]?.baseDir).toBe('.pivi/skills/enabled-skill');
+    expect(layers.skills[0]?.absoluteFilePath).toBe(path.join(vaultPath, '.pivi', 'skills', 'enabled-skill', 'SKILL.md'));
+    expect(layers.skills[0]?.absoluteBaseDir).toBe(path.join(vaultPath, '.pivi', 'skills', 'enabled-skill'));
     expect(layers.skillsXml).toContain('enabled-skill');
     expect(layers.skillsXml).not.toContain('disabled-skill');
     expect(runtime.skills.map((skill) => skill.name)).toEqual(['enabled-skill']);

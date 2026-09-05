@@ -1,4 +1,5 @@
 import type { OpenSessionState } from '@pivi/agent/runtime';
+import type { AppTabManagerState } from '@pivi/obsidian-host/bootstrap/types';
 
 import type { PiviChatView } from '@/app/hostContracts';
 import {
@@ -8,12 +9,17 @@ import {
   purgeExpiredDeletedSessionFiles,
   purgeDeletedSessionFiles,
   restoreDeletedSession,
+  getSessionMaintenanceSnapshot,
+  deleteAllArchivedChats,
+  abandonEmptyOwnedSession,
 } from '@/app/pluginSessionApi';
 import { readSessionTranscript } from '@/app/sessionTranscript';
 
 function createView(overrides: {
   resetSession?: jest.Mock<Promise<void>, [string]>;
   boundSessionFiles?: string[];
+  sessionBindings?: Array<{ sessionFile: string; archived: boolean }>;
+  removeArchivedBindings?: jest.Mock<Promise<void>, [string]>;
 } = {}): PiviChatView {
   const resetSession = overrides.resetSession ?? jest.fn(async () => undefined);
   return {
@@ -23,44 +29,55 @@ function createView(overrides: {
       maintenance: {
         resetSession,
         getBoundSessionFiles: () => [...(overrides.boundSessionFiles ?? [])],
+        getSessionBindings: () => [...(overrides.sessionBindings ?? [])],
+        removeArchivedBindings: overrides.removeArchivedBindings ?? jest.fn(async () => undefined),
       } as never,
     }),
   };
 }
 
-function createQueueStorage(initial: Array<{ sessionFile: string; deletedAt: number }> = []) {
-  let records = [...initial];
-  const getDeletedSessionFiles = jest.fn(async () => [...records]);
-  const setDeletedSessionFiles = jest.fn(async (next: typeof records) => {
-    records = [...next];
-  });
-  const updateDeletedSessionFiles = jest.fn(async (
-    update: (current: readonly typeof records[number][]) => typeof records,
-  ) => {
-    records = update(records);
-  });
+function createTabStorage(tabState: AppTabManagerState | null = null) {
   return {
-    getDeletedSessionFiles,
-    setDeletedSessionFiles,
-    updateDeletedSessionFiles,
-    getTabManagerState: jest.fn(async () => null),
-    snapshot: () => [...records],
+    getTabManagerState: jest.fn(async (): Promise<AppTabManagerState | null> => tabState),
+    setTabManagerState: jest.fn(async () => undefined),
+  };
+}
+
+function createTrashStore(initial: Array<{ sessionFile: string; deletedAt: number }> = []) {
+  const trashed = new Map(initial.map((record) => [record.sessionFile, record.deletedAt]));
+  return {
+    trashSession: jest.fn(async (sessionFile: string) => {
+      if (!trashed.has(sessionFile)) {
+        trashed.set(sessionFile, Date.now());
+      }
+    }),
+    listTrashedSessions: jest.fn(async () => (
+      [...trashed.entries()].map(([sessionFile, deletedAt]) => ({ sessionFile, deletedAt }))
+    )),
+    restoreTrashedSession: jest.fn(async (sessionFile: string) => {
+      if (!trashed.delete(sessionFile)) {
+        throw new Error(`Deleted session file is missing: ${sessionFile}`);
+      }
+    }),
+    purgeTrashedSession: jest.fn(async (sessionFile: string) => {
+      trashed.delete(sessionFile);
+    }),
+    deleteSession: jest.fn(async () => undefined),
+    snapshot: () => [...trashed.entries()].map(([sessionFile, deletedAt]) => ({ sessionFile, deletedAt })),
   };
 }
 
 function createContext(overrides: Partial<PluginSessionContext> = {}): PluginSessionContext {
+  const trashStore = createTrashStore();
   return {
     sessionManager: {
       delete: jest.fn(async () => null),
       getSync: jest.fn(() => null),
     } as never,
-    requireSessionStore: () => ({
-      deleteSession: jest.fn(async () => undefined),
-    }) as never,
-    storage: createQueueStorage(),
+    requireSessionStore: () => trashStore as never,
+    storage: createTabStorage(),
     getSessionList: () => [],
     getAllViews: () => [],
-    setSessions: jest.fn(),
     getSessions: () => [],
     ...overrides,
   };
@@ -128,13 +145,13 @@ describe('plugin session API semantic view maintenance', () => {
       id: 'session-1',
       sessionFile: '.pivi/sessions/deleted.jsonl',
     } as OpenSessionState;
-    const storage = createQueueStorage();
+    const trashStore = createTrashStore();
     const context = createContext({
       sessionManager: {
         getSync: jest.fn(() => deleted),
         delete: jest.fn(async () => deleted),
       } as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
       getAllViews: () => [
         createView({ resetSession: firstReset }),
         createView({ resetSession: secondReset }),
@@ -143,31 +160,31 @@ describe('plugin session API semantic view maintenance', () => {
 
     await deleteSession(context, 'session-1');
 
-    expect(storage.updateDeletedSessionFiles).toHaveBeenCalled();
-    expect(storage.snapshot()).toEqual([
+    expect(trashStore.trashSession).toHaveBeenCalledWith('.pivi/sessions/deleted.jsonl');
+    expect(trashStore.snapshot()).toEqual([
       expect.objectContaining({ sessionFile: '.pivi/sessions/deleted.jsonl' }),
     ]);
     expect(firstReset).toHaveBeenCalledWith('session-1');
     expect(secondReset).toHaveBeenCalledWith('session-1');
   });
 
-  it('does not remove an open session when its recovery record cannot be saved', async () => {
+  it('does not remove an open session when its file cannot be moved to trash', async () => {
     const session = {
       id: 'session-1',
       sessionFile: '.pivi/sessions/deleted.jsonl',
     } as OpenSessionState;
     const remove = jest.fn(async () => session);
-    const storage = createQueueStorage();
-    storage.updateDeletedSessionFiles.mockRejectedValue(new Error('save failed'));
+    const trashStore = createTrashStore();
+    trashStore.trashSession.mockRejectedValue(new Error('rename failed'));
     const context = createContext({
       sessionManager: {
         getSync: jest.fn(() => session),
         delete: remove,
       } as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
     });
 
-    await expect(deleteSession(context, session.id)).rejects.toThrow('save failed');
+    await expect(deleteSession(context, session.id)).rejects.toThrow('rename failed');
     expect(remove).not.toHaveBeenCalled();
   });
 
@@ -191,7 +208,6 @@ describe('plugin session API semantic view maintenance', () => {
     await discardSessionFile(context, sessionFile, 'fork-open');
 
     expect(events).toEqual(['registration', 'file']);
-    expect(context.storage.updateDeletedSessionFiles).not.toHaveBeenCalled();
   });
 
   it('continues failed-fork file cleanup when registration cleanup fails', async () => {
@@ -213,23 +229,21 @@ describe('plugin session API semantic view maintenance', () => {
   });
 
   it('protects session files bound by a live semantic view handle during purge', async () => {
-    const deleteSessionFile = jest.fn(async () => undefined);
     const boundFile = '.pivi/sessions/bound.jsonl';
     const staleFile = '.pivi/sessions/stale.jsonl';
-    const storage = createQueueStorage([
+    const trashStore = createTrashStore([
       { sessionFile: boundFile, deletedAt: 1 },
       { sessionFile: staleFile, deletedAt: 1 },
     ]);
     const context = createContext({
-      requireSessionStore: () => ({ deleteSession: deleteSessionFile }) as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
       getAllViews: () => [createView({ boundSessionFiles: [boundFile] })],
     });
 
     await expect(purgeDeletedSessionFiles(context)).resolves.toBe(1);
-    expect(deleteSessionFile).toHaveBeenCalledTimes(1);
-    expect(deleteSessionFile).toHaveBeenCalledWith(staleFile);
-    expect(storage.snapshot()).toEqual([
+    expect(trashStore.purgeTrashedSession).toHaveBeenCalledTimes(1);
+    expect(trashStore.purgeTrashedSession).toHaveBeenCalledWith(staleFile);
+    expect(trashStore.snapshot()).toEqual([
       { sessionFile: boundFile, deletedAt: 1 },
     ]);
   });
@@ -239,24 +253,22 @@ describe('plugin session API semantic view maintenance', () => {
     const now = 40 * day;
     const expiredFile = '.pivi/sessions/expired.jsonl';
     const recentFile = '.pivi/sessions/recent.jsonl';
-    const deleteSessionFile = jest.fn(async () => undefined);
-    const storage = createQueueStorage([
+    const trashStore = createTrashStore([
       { sessionFile: expiredFile, deletedAt: now - 30 * day },
       { sessionFile: recentFile, deletedAt: now - 30 * day + 1 },
     ]);
     const context = createContext({
-      requireSessionStore: () => ({ deleteSession: deleteSessionFile }) as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
     });
 
     await expect(purgeExpiredDeletedSessionFiles(context, 30, now)).resolves.toBe(1);
-    expect(deleteSessionFile).toHaveBeenCalledWith(expiredFile);
-    expect(storage.snapshot()).toEqual([
+    expect(trashStore.purgeTrashedSession).toHaveBeenCalledWith(expiredFile);
+    expect(trashStore.snapshot()).toEqual([
       { sessionFile: recentFile, deletedAt: now - 30 * day + 1 },
     ]);
   });
 
-  it('restores a queued JSONL before removing its deletion record', async () => {
+  it('restores a trashed JSONL before opening it', async () => {
     const sessionFile = '.pivi/sessions/recoverable.jsonl';
     const restored = {
       id: 'session-restored',
@@ -264,72 +276,70 @@ describe('plugin session API semantic view maintenance', () => {
       sessionFile,
     } as OpenSessionState;
     const openByFile = jest.fn(async () => restored);
-    const storage = createQueueStorage([
+    const trashStore = createTrashStore([
       { sessionFile, deletedAt: 123 },
       { sessionFile: '.pivi/sessions/other.jsonl', deletedAt: 456 },
     ]);
     const context = createContext({
       sessionManager: { openByFile } as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
     });
 
     await expect(restoreDeletedSession(context, sessionFile)).resolves.toBe(restored);
+    expect(trashStore.restoreTrashedSession).toHaveBeenCalledWith(sessionFile);
     expect(openByFile).toHaveBeenCalledWith(sessionFile);
-    expect(storage.snapshot()).toEqual([
+    expect(trashStore.snapshot()).toEqual([
       { sessionFile: '.pivi/sessions/other.jsonl', deletedAt: 456 },
     ]);
-    expect(openByFile.mock.invocationCallOrder[0]).toBeLessThan(
-      storage.updateDeletedSessionFiles.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+    expect(trashStore.restoreTrashedSession.mock.invocationCallOrder[0]).toBeLessThan(
+      openByFile.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
     );
   });
 
-  it('does not open a session that is not queued for recovery', async () => {
+  it('does not open a session that is not in trash', async () => {
     const openByFile = jest.fn();
     const context = createContext({
       sessionManager: { openByFile } as never,
     });
 
     await expect(restoreDeletedSession(context, '.pivi/sessions/not-deleted.jsonl'))
-      .rejects.toThrow('Session is not queued for recovery');
+      .rejects.toThrow('Session is not in trash');
     expect(openByFile).not.toHaveBeenCalled();
   });
 
-  it('commits recovery before attempting to open the visible tab', async () => {
+  it('keeps the restored file out of trash even if the visible tab fails to open', async () => {
     const sessionFile = '.pivi/sessions/recoverable.jsonl';
-    const storage = createQueueStorage([{ sessionFile, deletedAt: 123 }]);
+    const trashStore = createTrashStore([{ sessionFile, deletedAt: 123 }]);
     const context = createContext({
       sessionManager: {
         openByFile: jest.fn(async () => ({ id: 'session-1', sessionFile }) as OpenSessionState),
       } as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
     });
 
     await expect(restoreDeletedSession(context, sessionFile, async () => {
       throw new Error('view unavailable');
     })).rejects.toThrow('view unavailable');
-    expect(storage.snapshot()).toEqual([]);
+    expect(trashStore.snapshot()).toEqual([]);
   });
 
-  it('retains invalid queued paths instead of passing them to physical deletion', async () => {
+  it('retains invalid trash identities instead of passing them to physical deletion', async () => {
     const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const invalid = 'notes/important.md';
-    const deleteSessionFile = jest.fn(async () => undefined);
-    const storage = createQueueStorage([{ sessionFile: invalid, deletedAt: 1 }]);
+    const trashStore = createTrashStore([{ sessionFile: invalid, deletedAt: 1 }]);
     const context = createContext({
-      requireSessionStore: () => ({ deleteSession: deleteSessionFile }) as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
     });
 
     await expect(purgeDeletedSessionFiles(context)).resolves.toBe(0);
-    expect(deleteSessionFile).not.toHaveBeenCalled();
-    expect(storage.updateDeletedSessionFiles).not.toHaveBeenCalled();
-    expect(storage.snapshot()).toEqual([{ sessionFile: invalid, deletedAt: 1 }]);
+    expect(trashStore.purgeTrashedSession).not.toHaveBeenCalled();
+    expect(trashStore.snapshot()).toEqual([{ sessionFile: invalid, deletedAt: 1 }]);
     expect(warning).toHaveBeenCalledWith(
       '[Pivi:PluginSessionApi] Refusing to purge invalid session path notes/important.md',
     );
   });
 
-  it('keeps both concurrent delete marks when each starts from an empty queue', async () => {
+  it('trashes concurrent deletes independently', async () => {
     const first = {
       id: 'session-a',
       sessionFile: '.pivi/sessions/a.jsonl',
@@ -338,48 +348,108 @@ describe('plugin session API semantic view maintenance', () => {
       id: 'session-b',
       sessionFile: '.pivi/sessions/b.jsonl',
     } as OpenSessionState;
-    const storage = createQueueStorage();
-    // Simulate the pre-fix lost-update race: two callers read empty, then write.
-    // The atomic updater always sees the latest committed queue.
-    let gate: (() => void) | undefined;
-    const release = new Promise<void>((resolve) => { gate = resolve; });
-    let inFlight = 0;
-    storage.updateDeletedSessionFiles.mockImplementation(async (update) => {
-      inFlight += 1;
-      if (inFlight === 1) {
-        await release;
-      }
-      const current = storage.snapshot();
-      const next = update(current);
-      await storage.setDeletedSessionFiles(next);
-    });
-
+    const trashStore = createTrashStore();
     const contextA = createContext({
       sessionManager: {
         getSync: jest.fn(() => first),
         delete: jest.fn(async () => first),
       } as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
     });
     const contextB = createContext({
       sessionManager: {
         getSync: jest.fn(() => second),
         delete: jest.fn(async () => second),
       } as never,
-      storage,
+      requireSessionStore: () => trashStore as never,
     });
 
-    const pendingA = deleteSession(contextA, first.id);
-    await Promise.resolve();
-    const pendingB = deleteSession(contextB, second.id);
-    await Promise.resolve();
-    gate?.();
-    await Promise.all([pendingA, pendingB]);
+    await Promise.all([
+      deleteSession(contextA, first.id),
+      deleteSession(contextB, second.id),
+    ]);
 
-    const files = storage.snapshot().map((record) => record.sessionFile).sort();
-    expect(files).toEqual([
+    expect(trashStore.snapshot().map((record) => record.sessionFile).sort()).toEqual([
       '.pivi/sessions/a.jsonl',
       '.pivi/sessions/b.jsonl',
     ]);
+  });
+});
+
+describe('session maintenance inventory', () => {
+  it('counts unique archived files and deleted records', async () => {
+    const trashStore = createTrashStore([
+      { sessionFile: '.pivi/sessions/deleted.jsonl', deletedAt: 1 },
+    ]);
+    const storage = createTabStorage({
+      openTabs: [
+        { tabId: 'a', sessionFile: '.pivi/sessions/one.jsonl', isArchived: true },
+        { tabId: 'b', sessionFile: '.pivi/sessions/one.jsonl', isArchived: true },
+        { tabId: 'c', sessionFile: '.pivi/sessions/open.jsonl', isArchived: false },
+      ],
+      activeTabId: 'c',
+    });
+    const snapshot = await getSessionMaintenanceSnapshot(createContext({
+      storage,
+      requireSessionStore: () => trashStore as never,
+      getAllViews: () => [createView({
+        sessionBindings: [{ sessionFile: '.pivi/sessions/two.jsonl', archived: true }],
+      })],
+    }));
+    expect(snapshot).toEqual({ archivedCount: 2, deletedCount: 1 });
+  });
+
+  it('moves unique archived files to trash and skips files still open', async () => {
+    const removeArchivedBindings = jest.fn(async (_sessionFile: string) => undefined);
+    const trashStore = createTrashStore();
+    const storage = createTabStorage({
+      openTabs: [
+        { tabId: 'archived', sessionFile: '.pivi/sessions/old.jsonl', isArchived: true },
+        { tabId: 'open', sessionFile: '.pivi/sessions/live.jsonl', isArchived: false },
+        { tabId: 'also-archived-live', sessionFile: '.pivi/sessions/live.jsonl', isArchived: true },
+      ],
+      activeTabId: 'open',
+    });
+    const result = await deleteAllArchivedChats(createContext({
+      storage,
+      requireSessionStore: () => trashStore as never,
+      getAllViews: () => [createView({
+        sessionBindings: [
+          { sessionFile: '.pivi/sessions/old.jsonl', archived: true },
+          { sessionFile: '.pivi/sessions/live.jsonl', archived: false },
+        ],
+        removeArchivedBindings,
+      })],
+    }));
+    expect(result).toEqual({ moved: 1, skippedActive: 1, failed: 0 });
+    expect(removeArchivedBindings).toHaveBeenCalledWith('.pivi/sessions/old.jsonl');
+    expect(trashStore.snapshot()).toEqual([
+      expect.objectContaining({ sessionFile: '.pivi/sessions/old.jsonl' }),
+    ]);
+  });
+
+  it('abandons only owned empty sessions', async () => {
+    const deleteSessionFile = jest.fn(async () => undefined);
+    const unowned = createContext({
+      sessionManager: {
+        ownsEmptySessionFile: jest.fn(() => false),
+        delete: jest.fn(),
+        getSync: jest.fn(() => null),
+      } as never,
+      requireSessionStore: () => ({ deleteSession: deleteSessionFile }) as never,
+    });
+    expect(await abandonEmptyOwnedSession(unowned, '.pivi/sessions/other.jsonl')).toBe(false);
+    expect(deleteSessionFile).not.toHaveBeenCalled();
+
+    const owned = createContext({
+      sessionManager: {
+        ownsEmptySessionFile: jest.fn(() => true),
+        delete: jest.fn(async () => null),
+        getSync: jest.fn(() => null),
+      } as never,
+      requireSessionStore: () => ({ deleteSession: deleteSessionFile }) as never,
+    });
+    expect(await abandonEmptyOwnedSession(owned, '.pivi/sessions/owned.jsonl')).toBe(true);
+    expect(deleteSessionFile).toHaveBeenCalledWith('.pivi/sessions/owned.jsonl');
   });
 });

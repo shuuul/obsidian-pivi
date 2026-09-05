@@ -32,28 +32,36 @@ function createPlugin() {
 }
 
 describe('SharedStorageService tab manager state', () => {
-  it('migrates legacy deleted-session paths with a fresh recovery window', async () => {
+  it('consumes leftover deleted-session marks from plugin data once', async () => {
     const { plugin } = createPlugin();
-    const deletedSessionFiles = ['.pivi/sessions/legacy.jsonl'];
-    plugin.loadData.mockResolvedValue({ deletedSessionFiles });
+    const pluginData: Record<string, unknown> = {
+      deletedSessionFiles: [
+        '.pivi/sessions/legacy.jsonl',
+        { sessionFile: '.pivi/sessions/record.jsonl', deletedAt: 1 },
+        '.pivi/sessions/legacy.jsonl',
+      ],
+    };
+    plugin.loadData.mockImplementation(async () => ({ ...pluginData }));
+    plugin.saveData.mockImplementation(async (data: Record<string, unknown>) => {
+      Object.keys(pluginData).forEach((key) => delete pluginData[key]);
+      Object.assign(pluginData, data);
+    });
     const storage = new SharedStorageService(plugin as never);
-    const before = Date.now();
 
-    const records = await storage.getDeletedSessionFiles();
-
-    expect(records).toHaveLength(1);
-    expect(records[0]?.sessionFile).toBe(deletedSessionFiles[0]);
-    expect(records[0]?.deletedAt).toBeGreaterThanOrEqual(before);
-    expect(records[0]?.deletedAt).toBeLessThanOrEqual(Date.now());
-    expect(plugin.saveData).toHaveBeenCalledWith({ deletedSessionFiles: records });
+    await expect(storage.takeDeletedSessionFileQueue()).resolves.toEqual([
+      '.pivi/sessions/legacy.jsonl',
+      '.pivi/sessions/record.jsonl',
+    ]);
+    expect(pluginData).not.toHaveProperty('deletedSessionFiles');
+    await expect(storage.takeDeletedSessionFileQueue()).resolves.toEqual([]);
   });
 
-  it('does not treat a deleted-session queue read failure as an empty queue', async () => {
+  it('does not treat a leftover-queue read failure as an empty list', async () => {
     const { plugin } = createPlugin();
     plugin.loadData.mockRejectedValue(new Error('read failed'));
     const storage = new SharedStorageService(plugin as never);
 
-    await expect(storage.getDeletedSessionFiles()).rejects.toThrow('read failed');
+    await expect(storage.takeDeletedSessionFileQueue()).rejects.toThrow('read failed');
   });
 
   it('surfaces tab layout write failures', async () => {
@@ -120,81 +128,5 @@ describe('SharedStorageService tab manager state', () => {
     const saved = plugin.saveData.mock.calls.at(-1)?.[0] as Record<string, unknown>;
     expect(saved).not.toHaveProperty('tabManagerState');
     expect(saved.deletedSessionFiles).toEqual(['.pivi/sessions/old.jsonl']);
-  });
-
-  it('retains both concurrent deleted-session queue marks', async () => {
-    const { plugin } = createPlugin();
-    const pluginData: Record<string, unknown> = { deletedSessionFiles: [] };
-    let loadDelay: Promise<void> = Promise.resolve();
-    plugin.loadData.mockImplementation(async () => {
-      await loadDelay;
-      return {
-        ...pluginData,
-        deletedSessionFiles: Array.isArray(pluginData.deletedSessionFiles)
-          ? [...(pluginData.deletedSessionFiles as unknown[])]
-          : [],
-      };
-    });
-    plugin.saveData.mockImplementation(async (data: Record<string, unknown>) => {
-      Object.keys(pluginData).forEach((key) => delete pluginData[key]);
-      Object.assign(pluginData, structuredClone(data));
-    });
-    const storage = new SharedStorageService(plugin as never);
-
-    let releaseFirstLoad: (() => void) | undefined;
-    loadDelay = new Promise<void>((resolve) => { releaseFirstLoad = resolve; });
-
-    const markA = storage.updateDeletedSessionFiles((records) => [
-      ...records,
-      { sessionFile: '.pivi/sessions/a.jsonl', deletedAt: 1 },
-    ]);
-    // Let the first op enter loadData and park on the gate.
-    await Promise.resolve();
-    const markB = storage.updateDeletedSessionFiles((records) => [
-      ...records,
-      { sessionFile: '.pivi/sessions/b.jsonl', deletedAt: 2 },
-    ]);
-    releaseFirstLoad?.();
-    loadDelay = Promise.resolve();
-    await Promise.all([markA, markB]);
-
-    const records = await storage.getDeletedSessionFiles();
-    expect(records.map((record) => record.sessionFile).sort()).toEqual([
-      '.pivi/sessions/a.jsonl',
-      '.pivi/sessions/b.jsonl',
-    ]);
-  });
-
-  it('does not drop concurrent marks when separated get+set would lose the first write', async () => {
-    const { plugin } = createPlugin();
-    const pluginData: Record<string, unknown> = { deletedSessionFiles: [] };
-    plugin.loadData.mockImplementation(async () => ({
-      ...pluginData,
-      deletedSessionFiles: Array.isArray(pluginData.deletedSessionFiles)
-        ? structuredClone(pluginData.deletedSessionFiles)
-        : [],
-    }));
-    plugin.saveData.mockImplementation(async (data: Record<string, unknown>) => {
-      Object.keys(pluginData).forEach((key) => delete pluginData[key]);
-      Object.assign(pluginData, structuredClone(data));
-    });
-    const storage = new SharedStorageService(plugin as never);
-
-    await Promise.all([
-      storage.updateDeletedSessionFiles((records) => [
-        ...records,
-        { sessionFile: '.pivi/sessions/one.jsonl', deletedAt: 10 },
-      ]),
-      storage.updateDeletedSessionFiles((records) => [
-        ...records,
-        { sessionFile: '.pivi/sessions/two.jsonl', deletedAt: 20 },
-      ]),
-    ]);
-
-    await expect(storage.getDeletedSessionFiles()).resolves.toEqual(expect.arrayContaining([
-      { sessionFile: '.pivi/sessions/one.jsonl', deletedAt: 10 },
-      { sessionFile: '.pivi/sessions/two.jsonl', deletedAt: 20 },
-    ]));
-    expect((pluginData.deletedSessionFiles as unknown[]).length).toBe(2);
   });
 });

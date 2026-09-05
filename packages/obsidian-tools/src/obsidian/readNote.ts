@@ -18,6 +18,7 @@ import {
   resolveEffectiveReadBudget,
   sliceLineRange,
 } from './readShared';
+import { rethrowIfUnmanagedVaultPath } from './unmanagedVaultPath';
 
 interface LineCharacterPosition {
   line: number;
@@ -273,7 +274,7 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
         return textResult(selectedContent, details);
       } catch (error) {
         readBudget.settle(0);
-        throw error;
+        rethrowIfUnmanagedVaultPath(deps, { file, path: notePath }, error, 'file');
       }
     },
   };

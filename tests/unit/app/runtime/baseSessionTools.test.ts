@@ -13,9 +13,11 @@ const settings = {
   commandAllowlist: [],
   allowBash: false,
   bashAllowlist: [],
+  bashPermissions: [],
   allowEval: false,
   allowExternalRead: false,
   externalReadDirectories: [],
+  externalDirectoryPermissions: [],
 };
 
 const recovery = {

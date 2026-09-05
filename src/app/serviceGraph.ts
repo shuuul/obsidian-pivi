@@ -30,6 +30,7 @@ import { Notice } from "obsidian";
 import { homedir } from 'os';
 import { join } from 'path';
 
+import { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalCapabilityPermissionStore";
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import type { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
@@ -48,6 +49,7 @@ export interface PiviServiceGraph {
 export function createSharedStorage(
   plugin: Plugin,
   externalContexts: ObsidianDeviceLocalExternalContextStore,
+  capabilityPermissions = new ObsidianDeviceLocalCapabilityPermissionStore(plugin.app),
 ): SharedStorageService {
   const environmentStore = new ObsidianDeviceLocalEnvironmentStore(plugin.app);
   return new SharedStorageService(plugin, createPiviSettingsCodec(
@@ -68,9 +70,9 @@ export function createSharedStorage(
         },
       ),
     },
+    capabilityPermissions,
   ), {
     failedSaveTabLayout: t("host.failedSaveTabLayout"),
-    failedSaveDeletedSessions: t("host.failedSaveDeletedSessions"),
     failedSaveSyncedSettings: t("host.failedSaveSyncedSettings"),
   });
 }

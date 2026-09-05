@@ -133,4 +133,50 @@ describe('registered tool prompt descriptors', () => {
     expect(section).not.toContain('nextStartChar');
     expect(section).not.toContain('obsidian_read` for absolute paths');
   });
+
+  it('reminds skill supporting files to use obsidian_read_external only when that tool is registered', () => {
+    const withExternal = buildRegisteredToolsSection({
+      obsidianTools: ['obsidian_read_external'],
+      toolSpecs: [spec('obsidian_read_external', 'externalMarker')],
+      obsidianCliAvailable: true,
+      includeMcp: false,
+      includeSkill: true,
+      includeSubagent: false,
+      includeWebSearch: false,
+    });
+    expect(withExternal).toContain('### Skills');
+    expect(withExternal).toContain('read them with `obsidian_read_external` using the absolute skill directory');
+
+    const withoutExternal = buildRegisteredToolsSection({
+      obsidianTools: ['obsidian_read'],
+      toolSpecs: [spec('obsidian_read', 'readMarker')],
+      obsidianCliAvailable: true,
+      includeMcp: false,
+      includeSkill: true,
+      includeSubagent: false,
+      includeWebSearch: false,
+    });
+    expect(withoutExternal).toContain('### Skills');
+    expect(withoutExternal).toContain('`skill` — Load a vault skill by name from .pivi/skills/');
+    expect(withoutExternal).not.toContain('obsidian_read_external');
+  });
+
+  it('routes unindexed vault files to external tools only when those tools are registered', () => {
+    const withExternal = build([
+      spec('obsidian_read', 'readMarker'),
+      spec('obsidian_list', 'listMarker'),
+      spec('obsidian_read_external', 'readExternalMarker'),
+      spec('obsidian_list_external', 'listExternalMarker'),
+    ]);
+    expect(withExternal).toContain('Retry with `obsidian_read_external` using the absolute path');
+    expect(withExternal).toContain('If `obsidian_list` returns "Vault path not found"');
+    expect(withExternal).toContain('retry with `obsidian_list_external` and the absolute path');
+    expect(withExternal).toContain('files Obsidian does not index (including `.pivi/`)');
+
+    const withoutExternal = build([spec('obsidian_read', 'readMarker'), spec('obsidian_list', 'listMarker')]);
+    expect(withoutExternal).toContain('If `obsidian_read` returns "Note not found", retry with the other parameter');
+    expect(withoutExternal).not.toContain('obsidian_read_external');
+    expect(withoutExternal).not.toContain('obsidian_list_external');
+    expect(withoutExternal).toContain('Prefer `obsidian_list` when you need non-Markdown files or folders');
+  });
 });

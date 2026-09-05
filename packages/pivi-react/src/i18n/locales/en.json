@@ -164,18 +164,17 @@
     },
     "capabilityApproval": {
       "title": "Permission required",
-      "scopeQuestion": "How long should Pivi allow this?",
+      "scopeQuestion": "How should Pivi allow this?",
       "deny": "Deny",
       "allowOnce": "Allow once",
-      "allowSession": "Allow for this session",
       "allowAlways": "Always allow",
-      "allowAlwaysDescription": "Save to Settings (you will choose the scope next)",
-      "bashPersistTitle": "Always allow which commands?",
-      "bashPersistQuestion": "Add to the Bash allowlist in Settings as:",
-      "bashPersistFull": "This command only",
-      "bashPersistFullDescription": "Only `{command}`",
-      "bashPersistPrefix": "Commands with this prefix",
-      "bashPersistPrefixDescription": "All commands starting with `{prefix}`"
+      "allowAlwaysDescription": "Save the selected persistent scope to Settings",
+      "persistentScopes": "Persistent scope",
+      "scopeSelector": "Choose persistent scope",
+      "executableScope": "Any {executable} command",
+      "broaderWarning": "This grants every command for that executable, not just the classified command.",
+      "highRiskWarning": "This executable class can run arbitrary code or install packages. Review the scope before Always.",
+      "alwaysUnavailable": "Always is unavailable for this command because its shell syntax cannot be reduced to a stable permission."
     },
     "tabs": {
       "startNewChat": "Start new chat",
@@ -441,7 +440,7 @@
         "description": "Configure message sending, keyboard navigation, and Pivi hotkeys."
       },
       "sessions": {
-        "description": "Choose how long removed sessions are retained and permanently delete their files."
+        "description": "See archived and recently deleted chat counts, move archived chats to recently deleted, and permanently delete recovered files."
       },
       "environment": {
         "label": "Environment",
@@ -685,16 +684,34 @@
     },
     "sessionFiles": {
       "heading": "Session files",
+      "archived": {
+        "name": "Archived chats",
+        "count": "{count} archived chat(s)",
+        "empty": "No archived chats"
+      },
+      "deleted": {
+        "name": "Recently deleted chats",
+        "count": "{count} recently deleted chat(s)",
+        "empty": "No recently deleted chats",
+        "recovery": "Ask Pivi to list or restore recently deleted chats with the pivi_sessions tool. Settings does not list individual deleted chats."
+      },
+      "deleteArchived": {
+        "name": "Delete all archived chats",
+        "desc": "Moves every archived chat into recently deleted. Open chats stay put. Duplicate archived rows for the same file are counted once.",
+        "button": "Delete archived",
+        "success": "Moved {moved} archived chat(s) to recently deleted. Skipped {skippedActive} still open. Failed {failed}.",
+        "failed": "Failed to delete archived chats"
+      },
       "retention": {
-        "name": "Keep removed sessions for",
-        "desc": "Days before removed session files are permanently deleted."
+        "name": "Keep recently deleted chats for",
+        "desc": "Days before recently deleted chat files are permanently deleted. Open and archived chats are not affected."
       },
       "deleteRemoved": {
-        "name": "Permanently delete removed sessions",
-        "desc": "Deletes sessions removed with Delete. Open and archived sessions are not affected.",
+        "name": "Permanently delete recently deleted chats",
+        "desc": "Destroys chats already in recently deleted. Open and archived chats are not affected. After this, chats cannot be restored.",
         "button": "Delete permanently",
-        "success": "Permanently deleted {count} removed session file(s).",
-        "failed": "Failed to permanently delete removed sessions"
+        "success": "Permanently deleted {count} recently deleted chat file(s).",
+        "failed": "Failed to permanently delete recently deleted chats"
       }
     },
     "sharedEnvironment": {
@@ -708,6 +725,24 @@
       "secretStored": "Stored securely",
       "secretMissing": "Missing secure value",
       "apply": "Apply changes"
+    },
+    "permissions": {
+      "heading": "Persistent permissions",
+      "intro": "These device-local grants survive across chats. Turning a tool off keeps the records. Always decisions and directory access are listed here.",
+      "revoke": "Revoke {label}",
+      "bash": {
+        "name": "Bash",
+        "desc": "Stable command scopes. Filenames, URLs, and script bodies are never stored. Basic lookup commands such as which, type, and pwd are always allowed.",
+        "inputLabel": "Add a classified bash command",
+        "legacyEncoding": "Do not enter exact: or prefix: values. Type a real command such as git status.",
+        "unsafeSyntax": "This command cannot be saved as a persistent permission. Use Allow once in chat instead.",
+        "unresolvedRelative": "This relative executable cannot be saved until it resolves to a real path."
+      },
+      "external": {
+        "name": "External directories",
+        "desc": "Canonical directory roots outside the workspace. Workspace paths do not need a grant.",
+        "insideWorkspace": "This path is inside the workspace and does not need a persistent grant."
+      }
     },
     "tools": {
       "sections": {
@@ -731,30 +766,21 @@
         }
       },
       "unavailableOfficialCli": "Requires the official Obsidian CLI.",
-      "unavailableExternalRead": "Requires external read access and at least one allowed directory.",
       "unavailableCodex": "Requires OpenAI Codex connection."
     },
     "bash": {
-      "heading": "Bash access",
-      "allowlist": {
-        "name": "Allowed bash commands",
-        "desc": "Turn the bash tool on or off with the bash toggle under tool toggles. Allowlist entries match an exact command or a required prefix (for example git, or npm run build). Commands run through your login shell, so tools on your terminal PATH (such as pixi or Homebrew) are available. Basic lookup commands such as which, type, and pwd are always allowed. Shell syntax such as pipes is allowed inside an allowlisted command, and the working directory must stay inside the vault.",
-        "inputLabel": "Add an allowed bash command",
-        "removeAria": "Remove allowed bash command {value}"
-      }
+      "heading": "Bash access"
     },
     "externalRead": {
       "heading": "External filesystem access",
       "allow": {
         "name": "Allow external file read/list",
-        "desc": "Allows Pivi to read and list files under the allowed external directories below, plus external context folders selected for the current chat session."
+        "desc": "Workspace files are always readable and listable. Turn this on to also read folders outside the workspace after confirmation."
       },
       "directories": {
         "name": "Allowed external directories",
-        "desc": "External read/list tools can only access paths inside these absolute directories, plus external context folders selected for the current chat session.",
         "placeholder": "/Users/me/workspace",
         "inputLabel": "Add an allowed external directory",
-        "removeAria": "Remove allowed external directory {value}",
         "browse": "Browse",
         "browseTooltip": "Open a system folder picker and append the selected path",
         "pickerFailed": "Unable to open folder picker."
@@ -1277,7 +1303,6 @@
   },
   "host": {
     "failedSaveTabLayout": "Failed to save tab layout",
-    "failedSaveDeletedSessions": "Failed to save deleted session list",
     "failedSaveSyncedSettings": "Provider settings were saved on this device, but portable settings could not be written to the vault file.",
     "sessionRecovery": {
       "recoveredTitle": "Recovered session",

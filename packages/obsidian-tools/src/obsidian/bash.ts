@@ -6,7 +6,6 @@ import {
 import { getVaultPath } from '@pivi/obsidian-host/path';
 
 import {
-  buildEffectiveBashAllowlist,
   matchBashCommandAllowlist,
 } from '../bashAllowlist';
 import { ensureBashCommandAllowed } from '../capabilityApprovalGate';
@@ -31,11 +30,11 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
     label: 'Bash',
     description:
       'Lowest-priority host diagnostic: run a single-line shell command through the user login shell when no registered tool can do the job. '
-      + 'Prefer pre-approved allowlist commands; when the user explicitly requests a specific command, call this tool even if it is not allowlisted—Pivi shows a sidebar approval prompt first. '
+      + 'Prefer pre-approved persistent permissions; when the user explicitly requests a specific command, call this tool even if it is not granted—Pivi shows a sidebar approval prompt first. '
       + 'Never use Bash to read, search, list, or modify vault files; use Obsidian tools and sub-agents for vault work. '
       + 'After the user denies or validation rejects a command, do not retry Bash during the same turn.',
     promptUsage: {
-      summary: 'Lowest-priority host diagnostic only; never use it for vault file operations. Allowlist authorization is shell-safe: an exact command is pre-approved, while a prefix authorizes only a safe argv prefix and never control operators, substitutions, pipelines, redirects, or extra commands. A user-explicit non-allowlisted command receives sidebar approval; do not retry after denial or validation failure.',
+      summary: 'Lowest-priority host diagnostic only; never use it for vault file operations. Persistent Bash permissions grant an executable or a semantic command token, never filenames or script bodies. A user-explicit ungranted command receives sidebar approval; do not retry after denial or validation failure.',
       parameters: '`command` required single-line shell command; `cwd?` must remain inside the vault.',
     },
     parameters: {
@@ -64,8 +63,8 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
       }
 
       const invocation = buildLoginShellInvocation(normalizedCommand);
-      const effectiveAllowlist = buildEffectiveBashAllowlist(settings.bashAllowlist, invocation.executable);
-      if (!matchBashCommandAllowlist(normalizedCommand, effectiveAllowlist, invocation.executable)) {
+      const livePermissions = deps.getBashPermissions?.() ?? settings.bashPermissions ?? [];
+      if (!matchBashCommandAllowlist(normalizedCommand, livePermissions, invocation.executable)) {
         await ensureBashCommandAllowed(deps, normalizedCommand, false, invocation.executable);
       }
 

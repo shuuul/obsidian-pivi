@@ -6,37 +6,28 @@ import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import type { OpenSessionState, SessionSummary } from "@pivi/agent/runtime";
 import type { SessionMessagePage, SessionStore } from "@pivi/agent/session";
 import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
-import type { DeletedSessionFileRecord } from "@pivi/obsidian-host/bootstrap/storage";
+import { isVaultSessionFile } from "@pivi/agent/session/sessionPaths";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 
 import type { PiviChatView } from "./hostContracts";
 
 const logger = new PluginLogger('PluginSessionApi');
 const DAY_MS = 24 * 60 * 60 * 1000;
-const SESSION_FILE_PREFIX = '.pivi/sessions/';
 
-function isSafeSessionFile(sessionFile: string): boolean {
-  return sessionFile.startsWith(SESSION_FILE_PREFIX)
-    && sessionFile.endsWith('.jsonl')
-    && !sessionFile.includes('\\')
-    && !sessionFile.includes('\0')
-    && !sessionFile.split('/').includes('..');
+export interface DeletedSessionFileRecord {
+  sessionFile: string;
+  deletedAt: number;
 }
 
 export interface PluginSessionContext {
   sessionManager: OpenSessionManager;
   requireSessionStore(): SessionStore;
   storage: {
-    getDeletedSessionFiles(): Promise<DeletedSessionFileRecord[]>;
-    setDeletedSessionFiles(records: DeletedSessionFileRecord[]): Promise<void>;
-    updateDeletedSessionFiles(
-      update: (records: readonly DeletedSessionFileRecord[]) => DeletedSessionFileRecord[],
-    ): Promise<void>;
     getTabManagerState(): Promise<AppTabManagerState | null>;
+    setTabManagerState(state: AppTabManagerState): Promise<void>;
   };
   getSessionList(): SessionSummary[];
   getAllViews(): PiviChatView[];
-  setSessions(sessions: OpenSessionState[]): void;
   getSessions(): OpenSessionState[];
 }
 
@@ -82,7 +73,7 @@ export async function deleteSession(
   if (!session) return;
 
   if (session.sessionFile) {
-    await markSessionFileDeleted(ctx, session.sessionFile);
+    await ctx.requireSessionStore().trashSession(session.sessionFile);
   }
   await ctx.sessionManager.delete(id);
 
@@ -96,10 +87,10 @@ export async function deleteSessionFile(
   sessionFile: string,
   openSessionId?: string | null,
 ): Promise<void> {
-  if (!isSafeSessionFile(sessionFile)) {
+  if (!isVaultSessionFile(sessionFile)) {
     throw new Error(`Invalid deleted session path: ${sessionFile}`);
   }
-  await markSessionFileDeleted(ctx, sessionFile);
+  await ctx.requireSessionStore().trashSession(sessionFile);
   if (!openSessionId) return;
   await ctx.sessionManager.delete(openSessionId);
   for (const view of ctx.getAllViews()) {
@@ -113,7 +104,7 @@ export async function discardSessionFile(
   sessionFile: string,
   openSessionId?: string | null,
 ): Promise<void> {
-  if (!isSafeSessionFile(sessionFile)) {
+  if (!isVaultSessionFile(sessionFile)) {
     throw new Error(`Invalid discarded session path: ${sessionFile}`);
   }
 
@@ -143,6 +134,18 @@ export async function discardSessionFile(
   }
 }
 
+export async function abandonEmptyOwnedSession(
+  ctx: PluginSessionContext,
+  sessionFile: string,
+  openSessionId?: string | null,
+): Promise<boolean> {
+  if (!ctx.sessionManager.ownsEmptySessionFile(sessionFile)) {
+    return false;
+  }
+  await discardSessionFile(ctx, sessionFile, openSessionId);
+  return true;
+}
+
 export async function purgeDeletedSessionFiles(
   ctx: PluginSessionContext,
 ): Promise<number> {
@@ -164,16 +167,12 @@ async function purgeDeletedSessionRecords(
   ctx: PluginSessionContext,
   shouldPurge: (record: DeletedSessionFileRecord) => boolean,
 ): Promise<number> {
-  // Physical deletes must finish before the queue write so a failed disk delete
-  // keeps the recovery record. Queue membership itself is still committed
-  // atomically so concurrent mark/restore cannot clobber surviving entries.
-  const records = await ctx.storage.getDeletedSessionFiles();
+  const records = await ctx.requireSessionStore().listTrashedSessions();
   if (records.length === 0) {
     return 0;
   }
 
   const protectedSessionFiles = await getProtectedSessionFiles(ctx);
-  const purgedFiles = new Set<string>();
   let deletedCount = 0;
 
   for (const record of records) {
@@ -181,25 +180,19 @@ async function purgeDeletedSessionRecords(
     if (!shouldPurge(record) || protectedSessionFiles.has(sessionFile)) {
       continue;
     }
-    if (!isSafeSessionFile(sessionFile)) {
+    if (!isVaultSessionFile(sessionFile)) {
       logger.warn(`Refusing to purge invalid session path ${sessionFile}`);
       continue;
     }
 
     try {
-      await ctx.requireSessionStore().deleteSession(sessionFile);
-      purgedFiles.add(sessionFile);
+      await ctx.requireSessionStore().purgeTrashedSession(sessionFile);
       deletedCount++;
     } catch (error) {
       logger.warn(`Failed to purge deleted session ${sessionFile}`, error);
     }
   }
 
-  if (purgedFiles.size > 0) {
-    await ctx.storage.updateDeletedSessionFiles((current) => (
-      current.filter((record) => !purgedFiles.has(record.sessionFile))
-    ));
-  }
   return deletedCount;
 }
 
@@ -207,7 +200,7 @@ export async function listDeletedSessions(
   ctx: PluginSessionContext,
   retentionDays: number,
 ): Promise<Array<DeletedSessionFileRecord & { expiresAt: number; retentionDays: number }>> {
-  return (await ctx.storage.getDeletedSessionFiles()).map((record) => ({
+  return (await ctx.requireSessionStore().listTrashedSessions()).map((record) => ({
     ...record,
     expiresAt: record.deletedAt + retentionDays * DAY_MS,
     retentionDays,
@@ -219,49 +212,43 @@ export async function restoreDeletedSession(
   sessionFile: string,
   openVisibleSession?: (restored: OpenSessionState) => Promise<void>,
 ): Promise<OpenSessionState> {
-  if (!isSafeSessionFile(sessionFile)) {
+  if (!isVaultSessionFile(sessionFile)) {
     throw new Error(`Invalid deleted session path: ${sessionFile}`);
   }
-  const records = await ctx.storage.getDeletedSessionFiles();
+  const store = ctx.requireSessionStore();
+  const records = await store.listTrashedSessions();
   if (!records.some((record) => record.sessionFile === sessionFile)) {
-    throw new Error(`Session is not queued for recovery: ${sessionFile}`);
+    throw new Error(`Session is not in trash: ${sessionFile}`);
   }
-  const wasOpen = ctx.getSessionList().some((session) => session.sessionFile === sessionFile);
+  await store.restoreTrashedSession(sessionFile);
   let restored: OpenSessionState;
   try {
     restored = await ctx.sessionManager.openByFile(sessionFile);
   } catch (error) {
+    await store.trashSession(sessionFile).catch((trashError) => {
+      logger.warn(`Failed to re-trash after restore open failure: ${sessionFile}`, trashError);
+    });
     throw new Error(`Deleted session file is missing or unreadable: ${sessionFile}`, { cause: error });
-  }
-  try {
-    // Open succeeds first; only then drop the recovery record. Removal is
-    // atomic against concurrent queue mutations so sibling entries stay put.
-    await ctx.storage.updateDeletedSessionFiles((current) => (
-      current.filter((record) => record.sessionFile !== sessionFile)
-    ));
-  } catch (error) {
-    if (!wasOpen) await ctx.sessionManager.delete(restored.id);
-    throw error;
   }
   await openVisibleSession?.(restored);
   return restored;
 }
 
-export async function hideDeletedSessionSummaries(
-  ctx: PluginSessionContext,
+export async function relocateQueuedDeletedSessions(
+  takeQueue: () => Promise<string[]>,
+  sessionStore: SessionStore,
 ): Promise<void> {
-  const deletedSessionFiles = new Set(
-    (await ctx.storage.getDeletedSessionFiles()).map((record) => record.sessionFile),
-  );
-  if (deletedSessionFiles.size === 0) {
-    return;
+  const files = await takeQueue();
+  for (const sessionFile of files) {
+    if (!isVaultSessionFile(sessionFile)) {
+      continue;
+    }
+    try {
+      await sessionStore.trashSession(sessionFile);
+    } catch (error) {
+      logger.warn(`Failed to relocate queued deleted session ${sessionFile}`, error);
+    }
   }
-
-  ctx.setSessions(
-    ctx.getSessions().filter(
-      (session) => !session.sessionFile || !deletedSessionFiles.has(session.sessionFile),
-    ),
-  );
 }
 
 export async function renameSession(
@@ -320,18 +307,6 @@ export function getSessionList(ctx: PluginSessionContext): SessionSummary[] {
   return ctx.sessionManager.list();
 }
 
-async function markSessionFileDeleted(
-  ctx: PluginSessionContext,
-  sessionFile: string,
-): Promise<void> {
-  await ctx.storage.updateDeletedSessionFiles((current) => {
-    if (current.some((record) => record.sessionFile === sessionFile)) {
-      return [...current];
-    }
-    return [...current, { sessionFile, deletedAt: Date.now() }];
-  });
-}
-
 async function getProtectedSessionFiles(
   ctx: PluginSessionContext,
 ): Promise<Set<string>> {
@@ -357,4 +332,83 @@ async function getProtectedSessionFiles(
   }
 
   return protectedSessionFiles;
+}
+
+export async function getSessionMaintenanceSnapshot(
+  ctx: PluginSessionContext,
+): Promise<{ archivedCount: number; deletedCount: number }> {
+  const archived = new Set<string>();
+  const persistedState = await ctx.storage.getTabManagerState();
+  for (const tab of persistedState?.openTabs ?? []) {
+    if (tab.sessionFile && tab.isArchived === true) {
+      archived.add(tab.sessionFile);
+    }
+  }
+  for (const view of ctx.getAllViews()) {
+    for (const binding of view.getChatHandle()?.maintenance.getSessionBindings() ?? []) {
+      if (binding.archived) archived.add(binding.sessionFile);
+    }
+  }
+  const deleted = new Set(
+    (await ctx.requireSessionStore().listTrashedSessions()).map((record) => record.sessionFile),
+  );
+  return { archivedCount: archived.size, deletedCount: deleted.size };
+}
+
+export async function deleteAllArchivedChats(
+  ctx: PluginSessionContext,
+): Promise<{ moved: number; skippedActive: number; failed: number }> {
+  const persistedState = await ctx.storage.getTabManagerState();
+  const archived = new Set<string>();
+  const protectedFiles = new Set<string>();
+
+  for (const tab of persistedState?.openTabs ?? []) {
+    if (!tab.sessionFile) continue;
+    if (tab.isArchived === true) archived.add(tab.sessionFile);
+    else protectedFiles.add(tab.sessionFile);
+  }
+  for (const view of ctx.getAllViews()) {
+    for (const binding of view.getChatHandle()?.maintenance.getSessionBindings() ?? []) {
+      if (binding.archived) archived.add(binding.sessionFile);
+      else protectedFiles.add(binding.sessionFile);
+    }
+  }
+
+  let moved = 0;
+  let skippedActive = 0;
+  let failed = 0;
+
+  for (const sessionFile of archived) {
+    if (protectedFiles.has(sessionFile)) {
+      skippedActive += 1;
+      continue;
+    }
+    try {
+      for (const view of ctx.getAllViews()) {
+        await view.getChatHandle()?.maintenance.removeArchivedBindings(sessionFile);
+      }
+      const nextState = await ctx.storage.getTabManagerState();
+      if (nextState) {
+        const openTabs = nextState.openTabs.filter((tab) => !(
+          tab.isArchived === true && tab.sessionFile === sessionFile
+        ));
+        if (openTabs.length !== nextState.openTabs.length) {
+          const activeTabId = openTabs.some((tab) => tab.tabId === nextState.activeTabId)
+            ? nextState.activeTabId
+            : (openTabs.find((tab) => tab.isArchived !== true)?.tabId ?? openTabs[0]?.tabId ?? null);
+          await ctx.storage.setTabManagerState({ openTabs, activeTabId });
+        }
+      }
+      await ctx.requireSessionStore().trashSession(sessionFile);
+      const openSession = ctx.getSessions().find((session) => session.sessionFile === sessionFile);
+      if (openSession) {
+        await ctx.sessionManager.delete(openSession.id);
+      }
+      moved += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  return { moved, skippedActive, failed };
 }

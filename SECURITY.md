@@ -33,7 +33,7 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 | Provider API keys / OAuth | Off until configured | Obsidian `SecretStorage` (`pivi-*` ids); device-local provider registry | Synced settings never store credentials or custom header values |
 | Environment variables | Empty registry | Device-local `pivi.environment.v1`; secrets in `SecretStorage` (`pivi-env-*`) | Synced `.pivi/settings.json` must not persist environment maps |
 | MCP remote headers | Structured `ConfigValueRef` | Secret values in `SecretStorage` (`pivi-mcp-v-*`); config in `.pivi/mcp.json` | Names may appear in config; secret values do not |
-| External absolute-path reads | Off (`allowExternalRead`) | Device-local allowed directories / turn folders | Absolute paths never enter synced settings or session JSONL |
+| External absolute-path reads | Vault always; outside vault off (`allowExternalRead`) | Device-local allowed directories / turn folders for paths outside the vault | Vault-contained paths skip grants. Absolute paths never enter synced settings or session JSONL |
 | Bash tool | Off (`allowBash`) | Command prefix allowlist | User login shell (`$SHELL -lc`, fish `-c`, or Windows `cmd.exe /d /s /c`); prefix matching is shell-specific |
 
 ## Network flows

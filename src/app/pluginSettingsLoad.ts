@@ -19,14 +19,17 @@ import {
 import {
   PiSettingsCoordinator,
 } from "@pivi/engine-pi/application/models";
+import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
 
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
+import { cleanupEmptySessionsAtStartup } from "@/app/emptySessionCleanup";
 import type { Locale } from "@/app/i18n";
 import { setLocale, t } from "@/app/i18n";
+import { relocateQueuedDeletedSessions } from "@/app/pluginSessionApi";
 import { reconcileSessionCloudRecovery } from "@/app/serviceGraph";
 import { runDeviceLocalEnvironmentMigration } from "@/app/settings/deviceLocalEnvironmentMigration";
 import { runDeviceLocalProviderMigration } from "@/app/settings/deviceLocalProviderMigration";
@@ -42,10 +45,10 @@ export interface PluginSettingsLoadContext {
     loadRawPiviSettings(): Promise<Record<string, unknown> | null>;
     saveRawPiviSettings(stored: Record<string, unknown>): Promise<void>;
     getAdapter(): FileStore;
+    takeDeletedSessionFileQueue(): Promise<string[]>;
   };
   sessionManager: OpenSessionManager;
   createSessionStore(vaultAdapter: FileStore, vaultPath: string): SessionStore;
-  hideDeletedSessionSummaries(): Promise<void>;
   persistSessionSummary(openSession: OpenSessionState): Promise<void>;
   saveSettings(): Promise<void>;
   setSettings(settings: PiviSettings): void;
@@ -53,7 +56,10 @@ export interface PluginSettingsLoadContext {
   getSettings(): PiviSettings;
   getSessions(): OpenSessionState[];
   setLastKnownTabManagerState(state: unknown): void;
-  getStorage(): { getTabManagerState(): Promise<unknown> };
+  getStorage(): {
+    getTabManagerState(): Promise<unknown>;
+    setTabManagerState?(state: unknown): Promise<void>;
+  };
   /** Host used for default vault skills install prompt and notification. */
   skillsHost: DefaultVaultSkillsContext;
 }
@@ -109,13 +115,28 @@ export async function loadPluginSettings(
       throw new Error('Session store does not support device-local external context migration');
     }
     await sessionStore.migrateDeviceLocalExternalContexts();
+    await relocateQueuedDeletedSessions(
+      () => ctx.storage.takeDeletedSessionFileQueue(),
+      sessionStore,
+    );
+    await cleanupEmptySessionsAtStartup({
+      sessionStore,
+      vaultPath,
+      journalStore,
+      getTabManagerState: async () => (
+        await ctx.getStorage().getTabManagerState() as AppTabManagerState | null
+      ),
+      setTabManagerState: async (state) => {
+        await ctx.getStorage().setTabManagerState?.(state);
+        ctx.setLastKnownTabManagerState(state);
+      },
+    });
     ctx.setSessionStore(sessionStore);
   } else {
     ctx.setSessionStore(null);
   }
 
   await ctx.sessionManager.loadSummaries();
-  await ctx.hideDeletedSessionSummaries();
   setLocale(migration.settings.locale as Locale);
 
   const backfilledSessions = ctx.sessionManager.backfillSessionResponseTimestamps();

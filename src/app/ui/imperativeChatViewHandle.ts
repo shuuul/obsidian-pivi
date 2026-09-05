@@ -198,6 +198,20 @@ export function createImperativeChatViewHandle(
           ),
         ];
       },
+      getSessionBindings() {
+        return (getTabManager()?.getAllTabs() ?? []).flatMap((tab) => (
+          tab.sessionFile
+            ? [{ sessionFile: tab.sessionFile, archived: tab.isArchived === true }]
+            : []
+        ));
+      },
+      async removeArchivedBindings(sessionFile) {
+        const manager = getTabManager();
+        if (!manager) return;
+        await manager.removeArchivedTabsForSession(sessionFile);
+        await persistTabStateImmediate(manager.getPersistedState());
+        publishTabSnapshot();
+      },
       hasSession(openSessionId) {
         return (getTabManager()?.getAllTabs() ?? [])
           .some(tab => tab.openSessionId === openSessionId);

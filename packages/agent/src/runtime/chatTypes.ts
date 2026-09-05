@@ -150,6 +150,8 @@ export interface OpenSessionState {
   titleSource?: SessionTitleSource;
   /** UI-enabled MCP servers for this session (context-saving servers activated via selector). */
   enabledMcpServers?: string[];
+  /** True when durable JSONL contains at least one persisted user message. */
+  hasPersistedUserMessage?: boolean;
 }
 
 /** Lightweight session metadata for history/session lists. */

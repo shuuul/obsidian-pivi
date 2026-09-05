@@ -11,6 +11,7 @@ import type { AppModelReadinessProvider } from '../settings';
 import type { CustomProviderConfig } from '../settings/customProviders';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
+import type { PersistentBashPermission } from '../tools/capabilityPermissions';
 import type { PiviManagementApprovalPort } from '../tools/piviManagement/approval';
 import type { AuxQueryRunner } from './auxQueryRunner';
 import type { PiChatService } from './piChatService';
@@ -44,6 +45,8 @@ export interface ChatSessionPort {
   deleteSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void>;
   /** Permanently removes a newly-created session that never became user-visible. */
   discardSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void>;
+  /** Discards an owned empty session created by this lifecycle; no-ops otherwise. */
+  abandonEmptyOwnedSession?(sessionFile: string, openSessionId?: string | null): Promise<boolean>;
   renameSession(
     id: string,
     title: string,
@@ -99,6 +102,7 @@ export interface ChatSettingsSnapshot {
   requireCommandOrControlEnterToSend: boolean;
   environmentVariables: string;
   externalReadDirectories: string[];
+  bashPermissions?: PersistentBashPermission[];
   hiddenSlashCommands: string[];
   modelCatalog: ChatModelCatalogSnapshot;
 }
@@ -125,7 +129,7 @@ export interface ChatSettingsPort {
   getSettingsSnapshot(): ChatSettingsSnapshot;
   commitSettingsSnapshot(snapshot: ChatSettingsSnapshot): Promise<void>;
   setPinnedExternalReadDirectories(paths: string[]): Promise<void>;
-  appendBashAllowlistEntry?(command: string): Promise<void>;
+  appendBashPermissions?(permissions: readonly PersistentBashPermission[]): Promise<void>;
   appendExternalReadDirectory?(directory: string): Promise<void>;
 }
 

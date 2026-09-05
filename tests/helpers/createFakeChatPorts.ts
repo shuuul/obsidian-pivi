@@ -27,6 +27,7 @@ export function createFakeChatPorts(
       deleteSession: async () => undefined,
       deleteSessionFile: async () => undefined,
       discardSessionFile: jest.fn(async () => undefined),
+      abandonEmptyOwnedSession: jest.fn(async () => false),
       renameSession: async () => undefined,
       updateSession: async () => undefined,
       forkSession: async () => null,

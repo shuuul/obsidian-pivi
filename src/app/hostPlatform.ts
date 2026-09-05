@@ -7,6 +7,7 @@ import { isOfficialObsidianCliEnabled, ObsidianVaultApi } from "@pivi/obsidian-h
 import {
   expandHomePath,
   getVaultPath,
+  isPathWithinVault,
   normalizePathForComparison,
   normalizePathForFilesystem,
   normalizePathForVault,
@@ -17,6 +18,7 @@ export {
   expandHomePath,
   getVaultPath,
   isOfficialObsidianCliEnabled,
+  isPathWithinVault,
   normalizePathForComparison,
   normalizePathForFilesystem,
   normalizePathForVault,

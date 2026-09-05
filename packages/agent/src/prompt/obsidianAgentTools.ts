@@ -6,6 +6,7 @@ import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_HISTORY,
+  TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_NOTE_INFO,
@@ -43,11 +44,12 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     'Use only the tools listed below. Do not invent tool names, unregistered capabilities, or shell commands.',
     'If the request cannot be completed with the registered tools available for this turn, stop and explain what is missing.',
-    ...(registeredObsidianTools.has(TOOL_OBSIDIAN_BASH) ? ['For Bash, prefer pre-approved allowlist commands; when the user explicitly asks you to run a specific shell command that is not allowlisted, you may call `obsidian_bash` and Pivi will ask the user to approve it in the sidebar.'] : []),
+    ...(registeredObsidianTools.has(TOOL_OBSIDIAN_BASH) ? ['For Bash, prefer pre-approved persistent permission commands; when the user explicitly asks you to run a specific shell command that is not already approved, you may call `obsidian_bash` and Pivi will ask the user to approve it in the sidebar.'] : []),
   ];
   const obsidianCliAvailable = summary.obsidianCliAvailable;
   const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
   const hasReadExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_READ_EXTERNAL);
+  const hasList = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST);
   const hasListExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST_EXTERNAL);
   const hasExternalRead = hasReadExternal || hasListExternal;
   const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
@@ -92,7 +94,10 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeSkill) {
-    lines.push('', '### Skills', `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/`);
+    const skillLine = hasReadExternal
+      ? `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; read them with \`obsidian_read_external\` using the absolute skill directory returned by the skill tool.`
+      : `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; they live on disk under the absolute skill directory returned by the skill tool.`;
+    lines.push('', '### Skills', skillLine);
   }
 
   if (summary.includeSubagent) {
@@ -142,7 +147,9 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '- Do **not** use a leading `/` or the vault absolute path for vault files.',
     ...(hasRead ? [
       '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
-      '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
+      hasReadExternal
+        ? '- If `obsidian_read` returns "Note not found", the path may be a file Obsidian does not index (for example under `.pivi/`). Retry with `obsidian_read_external` using the absolute path. If it is a missing vault note, retry with the other parameter (`path` vs `file`) or verify `<context_files>`.'
+        : '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
     ] : []),
     ...(hasExternalRead ? [
       '',
@@ -154,9 +161,11 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     buildExactMatchGuidance(hasRead),
     ...(hasEdit ? [buildMarkdownBlockBoundaryGuidance()] : []),
     '**Search:** `obsidian_search` is case-insensitive substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax. Do not repeat the same search with different casing.',
-    hasListExternal
-      ? '**Listing:** Prefer `obsidian_list` for vault folders and `obsidian_list_external` for external folders; avoid `obsidian_search query=*` for simple listing.'
-      : '**Listing:** Prefer `obsidian_list` over `obsidian_search query=*` when you need non-Markdown files or folders.',
+    hasList && hasListExternal
+      ? '**Listing:** Prefer `obsidian_list` for Obsidian-indexed vault folders. If `obsidian_list` returns "Vault path not found", the folder may exist on disk but not in Obsidian’s index (for example `.pivi/`); retry with `obsidian_list_external` and the absolute path. Use `obsidian_list_external` for folders outside the vault.'
+      : hasListExternal
+        ? '**Listing:** Prefer `obsidian_list_external` for folders Obsidian does not index and folders outside the vault.'
+        : '**Listing:** Prefer `obsidian_list` when you need non-Markdown files or folders.',
     '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise' + (hasExternalRead ? '; registered external tools use absolute paths under allowed external directories.' : '.'),
     '**Compact UI:** Vault tool cards show paths and match counts in the tool header. Do not repeat the same file list in the next message—add interpretation or the next action only.',
   );
@@ -207,10 +216,10 @@ function buildExternalReadGuidance(params: {
 }): string {
   const clauses: string[] = [];
   if (params.hasReadExternal) {
-    clauses.push('use `obsidian_read_external` with an absolute path under an allowed external directory (`path: "/Users/me/Workspace/file.ts"`). It supports `mode: "stats"` and line ranges');
+    clauses.push('use `obsidian_read_external` with an absolute path (`path: "/Users/me/Workspace/file.ts"`). Use it for files Obsidian does not index (including `.pivi/`) and for files outside the vault. It supports `mode: "stats"` and line ranges');
   }
   if (params.hasListExternal) {
-    clauses.push('use `obsidian_list_external` to list an allowed external folder');
+    clauses.push('use `obsidian_list_external` to list a folder Obsidian does not index or a folder outside the vault');
   }
   const vaultReadWarning = params.hasRead
     ? ', and do not use `obsidian_read` for absolute paths'
@@ -248,18 +257,18 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
       : `\`${TOOL_OBSIDIAN_BASE}\` can list base files/views through the vault API; its query action is unavailable without Obsidian CLI.`);
   }
   if (shellTools.length > 0) {
-    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs single-line commands through the user login shell; see the Bash allowlist above for pre-approved commands. Bash is the lowest-priority tool and is never a vault file tool: do not use it to read, search, list, or modify vault files. Use Obsidian-specific tools instead, and use sub-agents for multi-file vault work.`);
+    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs single-line commands through the user login shell; see the Bash permissions above for pre-approved commands. Bash is the lowest-priority tool and is never a vault file tool: do not use it to read, search, list, or modify vault files. Use Obsidian-specific tools instead, and use sub-agents for multi-file vault work.`);
   }
   return notes.join(' ');
 }
 
 function buildBashAllowlistGuidance(allowlist: readonly string[]): string[] {
   return [
-    '**Bash allowlist (this turn):** These commands are pre-approved for `obsidian_bash`:',
+    '**Bash permissions (this turn):** These commands are pre-approved for `obsidian_bash`:',
     ...allowlist.map((entry) => `- ${formatBashAllowlistEntry(entry)}`),
     `Commands not on this list are not pre-approved. Do not run them on your own initiative.`,
-    `When the user explicitly asks you to run a specific shell command that is not on this list, you may call \`obsidian_bash\` with that command; Pivi shows a sidebar prompt (Deny / once / session / always) before executing.`,
-    `Commands run through the user login shell, so pipes, redirects, and other shell syntax are allowed.`,
+    `When the user explicitly asks you to run a specific shell command that is not on this list, you may call \`obsidian_bash\` with that command; Pivi shows a sidebar prompt (Deny / Allow once / Always) before executing.`,
+    `Commands run through the user login shell, so pipes, redirects, and other shell syntax are allowed. Redirects and substitutions still require Allow once.`,
     `After the user denies a command or Bash validation rejects it, do not call \`obsidian_bash\` again during the same turn with a different command.`,
     `Missing Bash capability never justifies using shell commands for vault files.`,
   ];

@@ -159,18 +159,17 @@
     },
     "capabilityApproval": {
       "title": "需要权限",
-      "scopeQuestion": "允许多长时间？",
+      "scopeQuestion": "Pivi 应如何允许此项？",
       "deny": "拒绝",
       "allowOnce": "仅本次允许",
-      "allowSession": "本会话内允许",
       "allowAlways": "始终允许",
-      "allowAlwaysDescription": "写入设置（下一步选择范围）",
-      "bashPersistTitle": "永久允许哪些命令？",
-      "bashPersistQuestion": "在设置的 Bash 白名单中添加为：",
-      "bashPersistFull": "仅此命令",
-      "bashPersistFullDescription": "仅 `{command}`",
-      "bashPersistPrefix": "以此开头的命令",
-      "bashPersistPrefixDescription": "所有以 `{prefix}` 开头的命令"
+      "allowAlwaysDescription": "将所选持久范围保存到设置",
+      "persistentScopes": "持久范围",
+      "scopeSelector": "选择持久范围",
+      "executableScope": "任何 {executable} 命令",
+      "broaderWarning": "这会授权该可执行文件的全部命令，而不仅是已分类的命令。",
+      "highRiskWarning": "此类可执行文件可以运行任意代码或安装软件包。在选择始终允许前请核对范围。",
+      "alwaysUnavailable": "此命令的 shell 语法无法归纳为稳定权限，因此无法使用始终允许。"
     },
     "tabs": {
       "startNewChat": "开始新聊天",
@@ -441,7 +440,7 @@
         "description": "配置消息发送、键盘导航和 Pivi 快捷键。"
       },
       "sessions": {
-        "description": "设置已移除会话的保留时长，并可永久删除其文件。"
+        "description": "查看已归档和最近删除的聊天数量，将已归档聊天移入最近删除，并永久删除已恢复的文件。"
       },
       "environment": {
         "label": "环境",
@@ -685,16 +684,34 @@
     },
     "sessionFiles": {
       "heading": "会话文件",
+      "archived": {
+        "name": "已归档聊天",
+        "count": "{count} 个已归档聊天",
+        "empty": "没有已归档聊天"
+      },
+      "deleted": {
+        "name": "最近删除的聊天",
+        "count": "{count} 个最近删除的聊天",
+        "empty": "没有最近删除的聊天",
+        "recovery": "请让 Pivi 使用 pivi_sessions 工具列出或恢复最近删除的聊天。设置中不会列出单条已删除聊天。"
+      },
+      "deleteArchived": {
+        "name": "删除全部已归档聊天",
+        "desc": "将每个已归档聊天移入最近删除。已打开的聊天不受影响。同一文件的重复归档行只计一次。",
+        "button": "删除已归档",
+        "success": "已将 {moved} 个已归档聊天移入最近删除。跳过 {skippedActive} 个仍在打开的聊天。失败 {failed} 个。",
+        "failed": "删除已归档聊天失败"
+      },
       "retention": {
-        "name": "保留已移除会话",
-        "desc": "永久删除会话文件前保留的天数。"
+        "name": "保留最近删除的聊天",
+        "desc": "永久删除最近删除的聊天文件前保留的天数。已打开和已归档的聊天不受影响。"
       },
       "deleteRemoved": {
-        "name": "永久删除已移除的会话",
-        "desc": "删除通过“删除”操作移除的会话。已打开和已归档的会话不受影响。",
+        "name": "永久删除最近删除的聊天",
+        "desc": "销毁已进入最近删除的聊天。已打开和已归档的聊天不受影响。此后无法恢复。",
         "button": "永久删除",
-        "success": "已永久删除 {count} 个已移除的会话文件。",
-        "failed": "永久删除已移除的会话失败"
+        "success": "已永久删除 {count} 个最近删除的聊天文件。",
+        "failed": "永久删除最近删除的聊天失败"
       }
     },
     "sharedEnvironment": {
@@ -731,30 +748,21 @@
         }
       },
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
-      "unavailableExternalRead": "需要外部读取权限且至少有一个允许的目录。",
       "unavailableCodex": "需要连接 OpenAI Codex。"
     },
     "bash": {
-      "heading": "Bash 访问",
-      "allowlist": {
-        "name": "允许的 bash 命令",
-        "desc": "通过工具开关启用或关闭 Bash。允许列表匹配完整命令或所需前缀（例如 git，或 npm run build）。命令通过你的登录 shell 运行，因此终端 PATH 中的工具（如 pixi、Homebrew）可用。which、type、pwd 始终允许。已允许的命令内可使用管道等 shell 语法，工作目录必须位于仓库内。",
-        "inputLabel": "添加允许的 bash 命令",
-        "removeAria": "移除允许的 bash 命令 {value}"
-      }
+      "heading": "Bash 访问"
     },
     "externalRead": {
       "heading": "外部文件系统访问",
       "allow": {
         "name": "允许外部文件读取/列出",
-        "desc": "允许 Pivi 读取并列出下方允许的外部目录中的文件，以及当前聊天会话所选的外部上下文文件夹。"
+        "desc": "工作区内的文件始终可读取和列出。打开此项可在确认后读取工作区外的文件夹。"
       },
       "directories": {
         "name": "允许的外部目录",
-        "desc": "外部读取/列出工具只能访问这些绝对路径目录内的路径，以及当前聊天会话所选的外部上下文文件夹。",
         "placeholder": "/Users/me/workspace",
         "inputLabel": "添加允许的外部目录",
-        "removeAria": "移除允许的外部目录 {value}",
         "browse": "浏览",
         "browseTooltip": "打开系统文件夹选择器，并将所选路径追加到列表",
         "pickerFailed": "无法打开文件夹选择器。"
@@ -1151,6 +1159,24 @@
         "availableTools": "可用工具（{count}）",
         "noTools": "此服务器未返回任何工具。"
       }
+    },
+    "permissions": {
+      "heading": "持久权限",
+      "intro": "这些设备本地授权会跨聊天保留。关闭工具不会删除记录。始终允许的决定和目录访问都列在这里。",
+      "revoke": "撤销 {label}",
+      "bash": {
+        "name": "Bash",
+        "desc": "稳定的命令范围。文件名、URL 和脚本正文不会被保存。which、type、pwd 等基本查询命令始终允许。",
+        "inputLabel": "添加一条可分类的 bash 命令",
+        "legacyEncoding": "请不要输入 exact: 或 prefix: 值。请输入真实命令，例如 git status。",
+        "unsafeSyntax": "此命令无法保存为持久权限。请在聊天中使用仅本次允许。",
+        "unresolvedRelative": "此相对可执行文件在解析为真实路径之前无法保存。"
+      },
+      "external": {
+        "name": "外部目录",
+        "desc": "工作区外的规范目录根。工作区内的路径不需要授权。",
+        "insideWorkspace": "此路径位于工作区内，不需要持久授权。"
+      }
     }
   },
   "commands": {
@@ -1277,7 +1303,6 @@
   },
   "host": {
     "failedSaveTabLayout": "保存标签页布局失败",
-    "failedSaveDeletedSessions": "保存已删除会话列表失败",
     "failedSaveSyncedSettings": "提供商设置已保存在此设备上，但无法将可移植设置写入库文件。",
     "sessionRecovery": {
       "recoveredTitle": "已恢复的会话",

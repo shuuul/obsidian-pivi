@@ -55,7 +55,7 @@ flowchart TD
 
 ## Subdirectory map
 
-Pivi management confirmation is a dedicated per-tab, one-shot bridge under `composer/`. Session switches, cancellation, and disposal settle it as cancel; it never exposes capability session/always grants.
+Pivi management confirmation is a dedicated per-tab, one-shot bridge under `composer/`. Session switches, cancellation, and disposal settle it as cancel; it never exposes capability session/always grants. Capability approval prompts (`capabilityApprovalPrompt.ts`) present Deny / Allow once / Always in one surface; Always persists classifier-produced scopes and never creates a session-duration grant.
 
 | Directory | Responsibility | Local guidance |
 |---|---|---|
@@ -126,10 +126,10 @@ Pivi management confirmation is a dedicated per-tab, one-shot bridge under `comp
 - `tab.id`, `openSessionId`, runtime session ID, JSONL header ID, `sessionFile`, and legacy `leafId` are distinct identifiers.
 - Persist tab binding with `sessionFile` plus draft UI state. Do not treat `openSessionId`, tab ID, runtime ID, or `leafId` as durable session identity.
 - Bound-session titles are durable JSONL session metadata. A restored tab resolves its title from the session store; do not copy titles into tab bindings or plugin data as a second source of truth.
-- Session switching must save current state, dismiss inline prompts, clear capability session grants, orphan/clear active subagents, reset queued/transient UI, sync the service, and re-publish stored messages into the React snapshot.
+- Session switching must save current state, dismiss inline prompts, refresh persistent capability grants from settings, orphan/clear active subagents, reset queued/transient UI, sync the service, and re-publish stored messages into the React snapshot.
 - Archiving hides a tab without destroying its runtime/session state. Closing destroys it. Do not collapse these behaviors.
 - Fork and redo operations require persisted user/assistant entry IDs. Preserve `userMessageId`, `assistantMessageId`, and `parentEntryId` through rendering and hydration.
-- A fork owns its new JSONL as soon as storage creates it. Registration, metadata update, and tab creation are one compensated use case: every later failure permanently discards only that new file through `ChatPorts.sessions`, and cleanup failure never replaces the primary error.
+- A fork owns its new JSONL as soon as storage creates it. Registration, metadata update, and tab creation are one compensated use case: every later failure permanently discards only that new file through `ChatPorts.sessions`, and cleanup failure never replaces the primary error. The same ownership compensation permanently discards a newly created session that is abandoned without a persisted user message.
 
 ### Controllers, streaming, and rendering
 

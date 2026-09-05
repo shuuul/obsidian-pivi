@@ -17,6 +17,7 @@ import type {
   WebSearchToolsSettings,
 } from '@pivi/agent/settings/types';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
+import type { PersistentBashPermission, PersistentExternalDirectoryPermission } from '@pivi/agent/tools';
 
 import type {
   SettingsGeneralSnapshot,
@@ -157,12 +158,24 @@ export interface SettingsComplexPorts {
     update(skillName: string, folderName: string): Promise<void>;
   };
   tools: {
-    getSettings(): { allowBash: boolean; bashAllowlist: readonly string[]; allowExternalRead: boolean; externalReadDirectories: readonly string[]; defaultReadMaxChars: number };
+    getSettings(): {
+      allowBash: boolean;
+      allowExternalRead: boolean;
+      defaultReadMaxChars: number;
+      bashPermissions: readonly PersistentBashPermission[];
+      externalDirectories: readonly PersistentExternalDirectoryPermission[];
+    };
     listToolRows(): readonly SettingsToolRow[];
     setToolEnabled(name: string, enabled: boolean): Promise<void>;
     chooseExternalDirectory(current?: string): Promise<string | null>;
     validateExternalDirectory(path: string): Promise<{ valid: boolean; error?: string }>;
-    saveSettings(patch: { allowBash?: boolean; bashAllowlist?: readonly string[]; allowExternalRead?: boolean; externalReadDirectories?: readonly string[]; defaultReadMaxChars?: number }): Promise<void>;
+    saveSettings(patch: {
+      allowBash?: boolean;
+      allowExternalRead?: boolean;
+      defaultReadMaxChars?: number;
+      bashPermissions?: readonly PersistentBashPermission[];
+      externalDirectories?: readonly PersistentExternalDirectoryPermission[];
+    }): Promise<void>;
   };
   webSearch: {
     getSettings(): WebSearchToolsSettings;
@@ -213,10 +226,23 @@ export interface SettingsSnapshotPort {
   getSnapshot(): SettingsUiSnapshotData;
 }
 
+export interface SessionMaintenanceSnapshot {
+  readonly archivedCount: number;
+  readonly deletedCount: number;
+}
+
+export interface DeleteArchivedResult {
+  readonly moved: number;
+  readonly skippedActive: number;
+  readonly failed: number;
+}
+
 export interface SettingsActionsPort {
   saveGeneral(patch: Partial<SettingsGeneralSnapshot>): Promise<void>;
   saveSubagents(patch: Partial<SettingsSubagentsSnapshot>): Promise<void>;
   saveEditorSelectionToolbar(settings: EditorSelectionToolbarSettings): Promise<void>;
+  loadSessionMaintenance(): Promise<SessionMaintenanceSnapshot>;
+  deleteAllArchivedChats(): Promise<DeleteArchivedResult>;
   purgeDeletedSessionFiles(): Promise<number>;
 }
 

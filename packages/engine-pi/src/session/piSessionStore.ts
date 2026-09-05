@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
@@ -9,7 +9,10 @@ import { calculateContextEnvelope } from '@pivi/agent/runtime/usage';
 import { sanitizeMessageUiForJsonl } from '@pivi/agent/session/messageUi';
 import {
   getPiviSessionRoot,
+  getPiviSessionTrashRoot,
   toAbsoluteSessionPath,
+  toLiveSessionFile,
+  toTrashedSessionFile,
   toVaultRelativePath,
 } from '@pivi/agent/session/sessionPaths';
 import type {
@@ -124,25 +127,24 @@ function arraysEqual(a: readonly string[] | undefined, b: readonly string[] | un
   return true;
 }
 
-function listVaultSessionJsonlFiles(vaultPath: string): string[] {
-  const sessionRoot = getPiviSessionRoot(vaultPath);
+function listJsonlFilesUnder(root: string): string[] {
   const files: string[] = [];
   let entries;
   try {
-    entries = readdirSync(sessionRoot, { withFileTypes: true });
+    entries = readdirSync(root, { withFileTypes: true });
   } catch {
     return files;
   }
 
   for (const entry of entries) {
     if (entry.isFile() && entry.name.endsWith('.jsonl')) {
-      files.push(join(sessionRoot, entry.name));
+      files.push(join(root, entry.name));
       continue;
     }
     if (!entry.isDirectory()) {
       continue;
     }
-    const directory = join(sessionRoot, entry.name);
+    const directory = join(root, entry.name);
     try {
       files.push(...readdirSync(directory)
         .filter(file => file.endsWith('.jsonl'))
@@ -152,6 +154,15 @@ function listVaultSessionJsonlFiles(vaultPath: string): string[] {
     }
   }
   return files;
+}
+
+function listVaultSessionJsonlFiles(vaultPath: string): string[] {
+  return listJsonlFilesUnder(getPiviSessionRoot(vaultPath));
+}
+
+function parentVaultRelativePath(file: string): string {
+  const index = file.lastIndexOf('/');
+  return index <= 0 ? '' : file.slice(0, index);
 }
 
 interface ExternalContextJsonlMigration {
@@ -373,6 +384,23 @@ export class PiSessionStore implements SessionStore {
     };
   }
 
+  /** Live path if present, otherwise the mirrored trash copy used for recovery reads. */
+  private readableSessionFile(sessionFile: string): string {
+    const relative = toVaultRelativePath(this.vaultPath, sessionFile);
+    if (existsSync(toAbsoluteSessionPath(this.vaultPath, relative))) {
+      return relative;
+    }
+    try {
+      const trashed = toTrashedSessionFile(relative);
+      if (existsSync(toAbsoluteSessionPath(this.vaultPath, trashed))) {
+        return trashed;
+      }
+    } catch {
+      // Not a vault session identity; callers still use the original relative path.
+    }
+    return relative;
+  }
+
   private refFromStore(store: SessionTreeStore): SessionRef {
     const sessionFile = store.getVaultRelativeSessionFile();
     if (!sessionFile) {
@@ -406,7 +434,9 @@ export class PiSessionStore implements SessionStore {
           ? (readSessionJsonlIndexedLine(index, metaLine).data as PiviSessionMetaData | undefined)
           : undefined;
         const range = openRecentSessionJsonlMessages(absoluteFile, 1);
-        const updatedAt = meta?.lastResponseAt ?? statSync(absoluteFile).mtimeMs;
+        const stat = statSync(absoluteFile);
+        const updatedAt = meta?.lastResponseAt ?? stat.mtimeMs;
+        const hasPersistedUserMessage = !!firstUserLine;
         summaries.push({
           sessionFile,
           sessionId: index.header.id,
@@ -416,6 +446,8 @@ export class PiSessionStore implements SessionStore {
           leafCount: 1,
           messagePreview,
           messageCount: range.totalMessageCount,
+          hasPersistedUserMessage,
+          mtimeMs: stat.mtimeMs,
         });
       } catch {
         // Ignore malformed or concurrently removed session files.
@@ -444,7 +476,9 @@ export class PiSessionStore implements SessionStore {
   async open(sessionFile: string): Promise<SessionRef> {
     await this.migrateSessionFileIfPresent(sessionFile);
     const relativeFile = toVaultRelativePath(this.vaultPath, sessionFile);
-    const index = readSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, relativeFile));
+    const index = readSessionJsonlIndex(
+      toAbsoluteSessionPath(this.vaultPath, this.readableSessionFile(relativeFile)),
+    );
     return {
       sessionFile: relativeFile,
       sessionId: index.header.id,
@@ -455,7 +489,7 @@ export class PiSessionStore implements SessionStore {
     await this.migrateSessionFileIfPresent(ref.sessionFile);
     const store = SessionTreeStore.openSnapshot(
       this.vaultPath,
-      ref.sessionFile,
+      this.readableSessionFile(ref.sessionFile),
     );
     const prefix = store.getLinearVisiblePrefix();
     const uiMap = collectMessageUiMap(store.getEntries());
@@ -466,7 +500,7 @@ export class PiSessionStore implements SessionStore {
   async openRecent(ref: SessionRef, limit: number): Promise<SessionMessagePage> {
     await this.migrateSessionFileIfPresent(ref.sessionFile);
     const result = openRecentSessionJsonlMessages(
-      toAbsoluteSessionPath(this.vaultPath, ref.sessionFile),
+      toAbsoluteSessionPath(this.vaultPath, this.readableSessionFile(ref.sessionFile)),
       limit,
     );
     return {
@@ -485,7 +519,7 @@ export class PiSessionStore implements SessionStore {
   ): Promise<SessionMessagePage> {
     await this.migrateSessionFileIfPresent(ref.sessionFile);
     const result = readOlderSessionJsonlMessages(
-      toAbsoluteSessionPath(this.vaultPath, ref.sessionFile),
+      toAbsoluteSessionPath(this.vaultPath, this.readableSessionFile(ref.sessionFile)),
       beforeEntryId,
       limit,
     );
@@ -678,6 +712,74 @@ export class PiSessionStore implements SessionStore {
     await this.adapter.delete(relativePath);
     invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, relativePath));
     this.externalContexts.deleteSession(relativePath);
+  }
+
+  async trashSession(sessionFile: string): Promise<void> {
+    const live = toVaultRelativePath(this.vaultPath, sessionFile);
+    const trashed = toTrashedSessionFile(live);
+    const liveExists = await this.adapter.exists(live);
+    const trashExists = await this.adapter.exists(trashed);
+    if (!liveExists) {
+      if (trashExists) {
+        return;
+      }
+      throw new Error(`Session file is missing: ${live}`);
+    }
+    if (trashExists) {
+      await this.adapter.delete(trashed);
+    }
+    const parent = parentVaultRelativePath(trashed);
+    if (parent) {
+      await this.adapter.ensureFolder(parent);
+    }
+    await this.adapter.rename(live, trashed);
+    const now = new Date();
+    utimesSync(toAbsoluteSessionPath(this.vaultPath, trashed), now, now);
+    invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, live));
+    invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, trashed));
+  }
+
+  async listTrashedSessions(): Promise<Array<{ sessionFile: string; deletedAt: number }>> {
+    const records: Array<{ sessionFile: string; deletedAt: number }> = [];
+    for (const absoluteFile of listJsonlFilesUnder(getPiviSessionTrashRoot(this.vaultPath))) {
+      try {
+        const sessionFile = toLiveSessionFile(toVaultRelativePath(this.vaultPath, absoluteFile));
+        records.push({
+          sessionFile,
+          deletedAt: statSync(absoluteFile).mtimeMs,
+        });
+      } catch {
+        // Ignore malformed or concurrently removed trash files.
+      }
+    }
+    return records.sort((left, right) => right.deletedAt - left.deletedAt);
+  }
+
+  async restoreTrashedSession(sessionFile: string): Promise<void> {
+    const live = toVaultRelativePath(this.vaultPath, sessionFile);
+    const trashed = toTrashedSessionFile(live);
+    if (await this.adapter.exists(live)) {
+      throw new Error(`Cannot restore over an existing session file: ${live}`);
+    }
+    if (!(await this.adapter.exists(trashed))) {
+      throw new Error(`Deleted session file is missing: ${live}`);
+    }
+    const parent = parentVaultRelativePath(live);
+    if (parent) {
+      await this.adapter.ensureFolder(parent);
+    }
+    await this.adapter.rename(trashed, live);
+    invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, trashed));
+    invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, live));
+  }
+
+  async purgeTrashedSession(sessionFile: string): Promise<void> {
+    const live = toVaultRelativePath(this.vaultPath, sessionFile);
+    const trashed = toTrashedSessionFile(live);
+    await this.adapter.delete(trashed);
+    invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, live));
+    invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, trashed));
+    this.externalContexts.deleteSession(live);
   }
 
   readUiContext(ref: SessionRef): Promise<SessionUiContext> {

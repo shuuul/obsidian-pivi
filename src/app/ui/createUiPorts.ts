@@ -10,7 +10,7 @@ import type { PiviPluginWorkspace } from '@/app/hostContracts';
 
 import { type ChatUiCompositionHost, type ChatUiSessionHost } from './chatUiCompositionHost';
 import {
-  appendBashAllowlistEntry as persistBashAllowlistEntry,
+  appendBashPermissions as persistBashPermissions,
   appendExternalReadDirectory as persistExternalReadDirectory,
   cloneChatCustomProviders,
   requireWorkspace,
@@ -75,6 +75,7 @@ export function createChatUiPorts(
         projected.requireCommandOrControlEnterToSend ?? false,
       environmentVariables: getRuntimeEnvironmentText(projected),
       externalReadDirectories: [...tools.externalReadDirectories],
+      bashPermissions: [...tools.bashPermissions],
       hiddenSlashCommands: [...projected.hiddenSlashCommands],
       modelCatalog: {
         addedProviders: [...modelCatalog.addedProviders],
@@ -102,6 +103,7 @@ export function createChatUiPorts(
       deleteSession: (id) => sessions.deleteSession(id),
       deleteSessionFile: (file, id) => sessions.deleteSessionFile(file, id),
       discardSessionFile: (file, id) => sessions.discardSessionFile(file, id),
+      abandonEmptyOwnedSession: (file, id) => sessions.abandonEmptyOwnedSession(file, id),
       renameSession: (id, title, titleSource) => sessions.renameSession(id, title, titleSource),
       updateSession: (id, updates) => sessions.updateSession(id, updates),
       forkSession: (openSession, atEntryId) => sessions.forkSessionAt(openSession, atEntryId),
@@ -184,8 +186,8 @@ export function createChatUiPorts(
           view.getChatHandle()?.maintenance.syncExternalReadDirectories(paths);
         }
       },
-      async appendBashAllowlistEntry(command) {
-        await persistBashAllowlistEntry(host, command);
+      async appendBashPermissions(permissions) {
+        await persistBashPermissions(host, permissions);
       },
       async appendExternalReadDirectory(directory) {
         await persistExternalReadDirectory(host, directory);

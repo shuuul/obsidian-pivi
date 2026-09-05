@@ -30,6 +30,7 @@ import {
   NOOP_CHAT_PERF_CONTROLLER,
 } from "@/app/chatPerformanceController";
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
+import { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalCapabilityPermissionStore";
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
@@ -107,6 +108,7 @@ export class PiviApplication {
   constructor(plugin: Plugin) {
     this.plugin = plugin;
     this.deviceLocalExternalContexts = new ObsidianDeviceLocalExternalContextStore(plugin.app);
+    this.deviceLocalCapabilityPermissions = new ObsidianDeviceLocalCapabilityPermissionStore(plugin.app);
     this.deviceLocalEnvironmentStore = new ObsidianDeviceLocalEnvironmentStore(plugin.app);
     this.sessionManager = new OpenSessionManager({
       getVaultPath: () => getVaultPath(plugin.app),
@@ -188,6 +190,7 @@ export class PiviApplication {
       deleteSession: id => this.deleteSession(id),
       deleteSessionFile: (file, id) => this.deleteSessionFile(file, id),
       discardSessionFile: (file, id) => this.discardSessionFile(file, id),
+      abandonEmptyOwnedSession: (file, id) => this.abandonEmptyOwnedSession(file, id),
       renameSession: (id, title, source) => this.renameSession(id, title, source),
       updateSession: (id, updates) => this.updateSession(id, updates),
       forkSessionAt: (session, entry) => this.forkSessionAt(session, entry),
@@ -228,6 +231,8 @@ export class PiviApplication {
       reconcileWorkspaceCommands: () => this.reconcileWorkspaceCommands(),
       purgeDeletedSessionFiles: () => this.purgeDeletedSessionFiles(),
       purgeExpiredDeletedSessionFiles: () => this.purgeExpiredDeletedSessionFiles(),
+      loadSessionMaintenance: () => this.loadSessionMaintenance(),
+      deleteAllArchivedChats: () => this.deleteAllArchivedChats(),
       getActiveEnvironmentVariables: () => this.getActiveEnvironmentVariables(),
       getEnvironmentVariablesForScope: scope => this.getEnvironmentVariablesForScope(scope),
       applyEnvironmentVariables: (scope, text) => this.applyEnvironmentVariables(scope, text),
@@ -265,6 +270,7 @@ export class PiviApplication {
   readonly processRunner = systemProcessRunner;
   storage!: SharedAppStorage;
   private readonly deviceLocalExternalContexts: ObsidianDeviceLocalExternalContextStore;
+  private readonly deviceLocalCapabilityPermissions: ObsidianDeviceLocalCapabilityPermissionStore;
   private readonly deviceLocalEnvironmentStore: ObsidianDeviceLocalEnvironmentStore;
   private readonly sessionManager: OpenSessionManager;
   private deletedSessionOperationTail: Promise<void> = Promise.resolve();
@@ -441,9 +447,6 @@ export class PiviApplication {
       storage: this.storage,
       getSessionList: () => this.getSessionList(),
       getAllViews: () => this.getAllViews(),
-      setSessions: (sessions) => {
-        this.sessions = sessions;
-      },
       getSessions: () => this.sessions,
     };
   }
@@ -596,7 +599,11 @@ export class PiviApplication {
   }
 
   async loadSettings() {
-    this.storage = createSharedStorage(this.plugin, this.deviceLocalExternalContexts);
+    this.storage = createSharedStorage(
+      this.plugin,
+      this.deviceLocalExternalContexts,
+      this.deviceLocalCapabilityPermissions,
+    );
     await loadPluginSettings({
       app: this.app,
       storage: this.storage,
@@ -612,8 +619,6 @@ export class PiviApplication {
             this.releaseSessionJournal = () => binding.release();
           },
         ),
-      hideDeletedSessionSummaries: () =>
-        sessionApi.hideDeletedSessionSummaries(this.sessionContext()),
       persistSessionSummary: (openSession) =>
         this.sessionManager.persistSessionSummary(openSession),
       saveSettings: () => this.saveSettings(),
@@ -728,6 +733,14 @@ export class PiviApplication {
     ));
   }
 
+  async abandonEmptyOwnedSession(sessionFile: string, openSessionId?: string | null): Promise<boolean> {
+    return this.runDeletedSessionOperation(() => sessionApi.abandonEmptyOwnedSession(
+      this.sessionContext(),
+      sessionFile,
+      openSessionId,
+    ));
+  }
+
   async purgeDeletedSessionFiles(): Promise<number> {
     return this.runDeletedSessionOperation(() => (
       sessionApi.purgeDeletedSessionFiles(this.sessionContext())
@@ -739,6 +752,14 @@ export class PiviApplication {
       this.sessionContext(),
       this.settings.deletedSessionRetentionDays,
     ));
+  }
+
+  async loadSessionMaintenance(): Promise<{ archivedCount: number; deletedCount: number }> {
+    return sessionApi.getSessionMaintenanceSnapshot(this.sessionContext());
+  }
+
+  async deleteAllArchivedChats(): Promise<{ moved: number; skippedActive: number; failed: number }> {
+    return this.runDeletedSessionOperation(() => sessionApi.deleteAllArchivedChats(this.sessionContext()));
   }
 
   async renameSession(

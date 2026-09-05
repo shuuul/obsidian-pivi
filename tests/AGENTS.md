@@ -66,7 +66,7 @@ npm run test -- -t "prefetches enabled remote servers"
 - `unit/host/` — Obsidian host adapter tests: scoped HTTP client, process runner, vault mutation paths, and `window.fetch` identity.
 - `unit/main/` — plugin lifecycle tests.
 - `unit/network/` — host-neutral egress, IP classification, and URL policy tests.
-- `unit/obsidian-tools/` — concrete tool helper tests: bash allowlist, capability approval gate, and login shell.
+- `unit/obsidian-tools/` — concrete tool helper tests: bash permission matching, capability approval gate, and login shell.
 - `unit/agent/` — `@pivi/agent` auth, config, context, logging, MCP, plugin, prompt, runtime, session, settings, skills, and tool tests.
 - `unit/scripts/` — build compatibility, CSS manifest, Jest project-discovery, and repository spec-validation tests.
 - `unit/ui/` — Node-safe response/tool/subagent CSS contract tests; DOM behavior belongs under `jsdom/`.

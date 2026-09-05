@@ -159,18 +159,17 @@
     },
     "capabilityApproval": {
       "title": "需要權限",
-      "scopeQuestion": "允許多長時間？",
+      "scopeQuestion": "Pivi 應如何允許此項？",
       "deny": "拒絕",
       "allowOnce": "僅本次允許",
-      "allowSession": "本工作階段內允許",
-      "allowAlways": "始終允許",
-      "allowAlwaysDescription": "寫入設定（下一步選擇範圍）",
-      "bashPersistTitle": "永久允許哪些命令？",
-      "bashPersistQuestion": "在設定的 Bash 白名單中新增為：",
-      "bashPersistFull": "僅此命令",
-      "bashPersistFullDescription": "僅 `{command}`",
-      "bashPersistPrefix": "以此開頭的命令",
-      "bashPersistPrefixDescription": "所有以 `{prefix}` 開頭的命令"
+      "allowAlways": "一律允許",
+      "allowAlwaysDescription": "將所選持久範圍儲存到設定",
+      "persistentScopes": "持久範圍",
+      "scopeSelector": "選擇持久範圍",
+      "executableScope": "任何 {executable} 命令",
+      "broaderWarning": "這會授權該可執行檔的全部命令，而不只是已分類的命令。",
+      "highRiskWarning": "此類可執行檔可以執行任意程式碼或安裝套件。在選擇一律允許前請核對範圍。",
+      "alwaysUnavailable": "此命令的 shell 語法無法歸納為穩定權限，因此無法使用一律允許。"
     },
     "tabs": {
       "startNewChat": "開始新聊天",
@@ -441,7 +440,7 @@
         "description": "設定訊息傳送、鍵盤導覽與 Pivi 快捷鍵。"
       },
       "sessions": {
-        "description": "設定已移除工作階段的保留時間，並可永久刪除其檔案。"
+        "description": "查看已封存與最近刪除的聊天數量，將已封存聊天移入最近刪除，並永久刪除已復原的檔案。"
       },
       "environment": {
         "label": "環境",
@@ -685,16 +684,34 @@
     },
     "sessionFiles": {
       "heading": "工作階段檔案",
+      "archived": {
+        "name": "已封存聊天",
+        "count": "{count} 個已封存聊天",
+        "empty": "沒有已封存聊天"
+      },
+      "deleted": {
+        "name": "最近刪除的聊天",
+        "count": "{count} 個最近刪除的聊天",
+        "empty": "沒有最近刪除的聊天",
+        "recovery": "請讓 Pivi 使用 pivi_sessions 工具列出或還原最近刪除的聊天。設定中不會列出個別已刪除聊天。"
+      },
+      "deleteArchived": {
+        "name": "刪除全部已封存聊天",
+        "desc": "將每個已封存聊天移入最近刪除。已開啟的聊天不受影響。同一個檔案的重複封存列只計一次。",
+        "button": "刪除已封存",
+        "success": "已將 {moved} 個已封存聊天移入最近刪除。略過 {skippedActive} 個仍在開啟的聊天。失敗 {failed} 個。",
+        "failed": "刪除已封存聊天失敗"
+      },
       "retention": {
-        "name": "保留已移除工作階段",
-        "desc": "永久刪除工作階段檔案前保留的天數。"
+        "name": "保留最近刪除的聊天",
+        "desc": "永久刪除最近刪除的聊天檔案前保留的天數。已開啟和已封存的聊天不受影響。"
       },
       "deleteRemoved": {
-        "name": "永久刪除已移除的工作階段",
-        "desc": "刪除透過「刪除」操作移除的工作階段。已開啟和已封存的工作階段不受影響。",
+        "name": "永久刪除最近刪除的聊天",
+        "desc": "銷毀已進入最近刪除的聊天。已開啟和已封存的聊天不受影響。此後無法還原。",
         "button": "永久刪除",
-        "success": "已永久刪除 {count} 個已移除的工作階段檔案。",
-        "failed": "永久刪除已移除的工作階段失敗"
+        "success": "已永久刪除 {count} 個最近刪除的聊天檔案。",
+        "failed": "永久刪除最近刪除的聊天失敗"
       }
     },
     "sharedEnvironment": {
@@ -731,30 +748,21 @@
         }
       },
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
-      "unavailableExternalRead": "需要外部讀取權限且至少有一個允許的目錄。",
       "unavailableCodex": "需要連線 OpenAI Codex。"
     },
     "bash": {
-      "heading": "Bash 存取",
-      "allowlist": {
-        "name": "允許的 bash 命令",
-        "desc": "透過工具開關啟用或關閉 Bash。允許清單比對完整命令或所需前綴（例如 git，或 npm run build）。命令透過你的登入 shell 執行，因此終端 PATH 中的工具（如 pixi、Homebrew）可用。which、type、pwd 一律允許。已允許的命令內可使用管道等 shell 語法，工作目錄必須位於保管庫內。",
-        "inputLabel": "新增允許的 bash 命令",
-        "removeAria": "移除允許的 bash 命令 {value}"
-      }
+      "heading": "Bash 存取"
     },
     "externalRead": {
       "heading": "外部檔案系統存取",
       "allow": {
         "name": "允許外部檔案讀取/列出",
-        "desc": "允許 Pivi 讀取並列出下方允許的外部目錄中的檔案，以及目前聊天工作階段所選的外部上下文資料夾。"
+        "desc": "工作區內的檔案一律可讀取與列出。開啟此項可在確認後讀取工作區外的資料夾。"
       },
       "directories": {
         "name": "允許的外部目錄",
-        "desc": "外部讀取/列出工具只能存取這些絕對路徑目錄內的路徑，以及目前聊天工作階段所選的外部上下文資料夾。",
         "placeholder": "/Users/me/workspace",
         "inputLabel": "新增允許的外部目錄",
-        "removeAria": "移除允許的外部目錄 {value}",
         "browse": "瀏覽",
         "browseTooltip": "開啟系統資料夾選擇器，並將所選路徑附加到列表",
         "pickerFailed": "無法開啟資料夾選擇器。"
@@ -1151,6 +1159,24 @@
         "availableTools": "可用工具（{count}）",
         "noTools": "此伺服器未回傳任何工具。"
       }
+    },
+    "permissions": {
+      "heading": "持久權限",
+      "intro": "這些裝置本機授權會跨聊天保留。關閉工具不會刪除紀錄。一律允許的決定和目錄存取都列在這裡。",
+      "revoke": "撤銷 {label}",
+      "bash": {
+        "name": "Bash",
+        "desc": "穩定的命令範圍。檔名、URL 和指令碼本文不會被儲存。which、type、pwd 等基本查詢命令一律允許。",
+        "inputLabel": "新增一條可分類的 bash 命令",
+        "legacyEncoding": "請不要輸入 exact: 或 prefix: 值。請輸入真實命令，例如 git status。",
+        "unsafeSyntax": "此命令無法儲存為持久權限。請在聊天中使用僅本次允許。",
+        "unresolvedRelative": "此相對可執行檔在解析為真實路徑之前無法儲存。"
+      },
+      "external": {
+        "name": "外部目錄",
+        "desc": "工作區外的正規目錄根。工作區內的路徑不需要授權。",
+        "insideWorkspace": "此路徑位於工作區內，不需要持久授權。"
+      }
     }
   },
   "commands": {
@@ -1277,7 +1303,6 @@
   },
   "host": {
     "failedSaveTabLayout": "儲存分頁配置失敗",
-    "failedSaveDeletedSessions": "儲存已刪除工作階段清單失敗",
     "failedSaveSyncedSettings": "提供者設定已儲存在此裝置上，但無法將可攜式設定寫入庫檔案。",
     "sessionRecovery": {
       "recoveredTitle": "已復原的工作階段",

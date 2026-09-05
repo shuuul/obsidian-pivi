@@ -164,18 +164,17 @@
     },
     "capabilityApproval": {
       "title": "Berechtigung erforderlich",
-      "scopeQuestion": "Wie lange soll Pivi dies erlauben?",
+      "scopeQuestion": "Wie soll Pivi dies erlauben?",
       "deny": "Ablehnen",
       "allowOnce": "Einmal erlauben",
-      "allowSession": "Für diese Sitzung erlauben",
       "allowAlways": "Immer erlauben",
-      "allowAlwaysDescription": "In Einstellungen speichern (Umfang im nächsten Schritt)",
-      "bashPersistTitle": "Welche Befehle dauerhaft erlauben?",
-      "bashPersistQuestion": "Zur Bash-Allowlist in den Einstellungen hinzufügen als:",
-      "bashPersistFull": "Nur dieser Befehl",
-      "bashPersistFullDescription": "Nur `{command}`",
-      "bashPersistPrefix": "Befehle mit diesem Präfix",
-      "bashPersistPrefixDescription": "Alle Befehle, die mit `{prefix}` beginnen"
+      "allowAlwaysDescription": "Den gewählten dauerhaften Geltungsbereich in den Einstellungen speichern",
+      "persistentScopes": "Dauerhafter Geltungsbereich",
+      "scopeSelector": "Dauerhaften Geltungsbereich wählen",
+      "executableScope": "Jeder {executable}-Befehl",
+      "broaderWarning": "Damit werden alle Befehle dieses ausführbaren Programms erlaubt, nicht nur der klassifizierte Befehl.",
+      "highRiskWarning": "Diese Klasse ausführbarer Programme kann beliebigen Code ausführen oder Pakete installieren. Prüfen Sie den Geltungsbereich vor Immer erlauben.",
+      "alwaysUnavailable": "Immer erlauben ist für diesen Befehl nicht verfügbar, weil sich die Shell-Syntax nicht auf eine stabile Berechtigung reduzieren lässt."
     },
     "tabs": {
       "startNewChat": "Neuen Chat starten",
@@ -441,7 +440,7 @@
         "description": "Nachrichtenversand, Tastaturnavigation und Pivi-Tastenkürzel konfigurieren."
       },
       "sessions": {
-        "description": "Aufbewahrungsdauer entfernter Sitzungen festlegen und ihre Dateien dauerhaft löschen."
+        "description": "Archivierte und kürzlich gelöschte Chats zählen, archivierte Chats in kürzlich gelöscht verschieben und wiederhergestellte Dateien dauerhaft löschen."
       },
       "environment": {
         "label": "Umgebung",
@@ -685,16 +684,34 @@
     },
     "sessionFiles": {
       "heading": "Sitzungsdateien",
+      "archived": {
+        "name": "Archivierte Chats",
+        "count": "{count} archivierte(r) Chat(s)",
+        "empty": "Keine archivierten Chats"
+      },
+      "deleted": {
+        "name": "Kürzlich gelöschte Chats",
+        "count": "{count} kürzlich gelöschte(r) Chat(s)",
+        "empty": "Keine kürzlich gelöschten Chats",
+        "recovery": "Bitten Sie Pivi, kürzlich gelöschte Chats mit dem Tool pivi_sessions aufzulisten oder wiederherzustellen. Die Einstellungen listen einzelne gelöschte Chats nicht auf."
+      },
+      "deleteArchived": {
+        "name": "Alle archivierten Chats löschen",
+        "desc": "Verschiebt jeden archivierten Chat nach kürzlich gelöscht. Offene Chats bleiben. Doppelte archivierte Zeilen derselben Datei zählen einmal.",
+        "button": "Archivierte löschen",
+        "success": "{moved} archivierte(r) Chat(s) nach kürzlich gelöscht verschoben. {skippedActive} noch geöffnete übersprungen. {failed} fehlgeschlagen.",
+        "failed": "Archivierte Chats konnten nicht gelöscht werden"
+      },
       "retention": {
-        "name": "Entfernte Sitzungen aufbewahren für",
-        "desc": "Tage bis entfernte Sitzungsdateien endgültig gelöscht werden."
+        "name": "Kürzlich gelöschte Chats behalten für",
+        "desc": "Tage, bevor kürzlich gelöschte Chat-Dateien dauerhaft gelöscht werden. Offene und archivierte Chats sind nicht betroffen."
       },
       "deleteRemoved": {
-        "name": "Entfernte Sitzungen endgültig löschen",
-        "desc": "Löscht über die Aktion „Löschen“ entfernte Sitzungen. Geöffnete und archivierte Sitzungen bleiben erhalten.",
-        "button": "Endgültig löschen",
-        "success": "{count} entfernte Sitzungsdatei(en) endgültig gelöscht.",
-        "failed": "Entfernte Sitzungen konnten nicht endgültig gelöscht werden"
+        "name": "Kürzlich gelöschte Chats dauerhaft löschen",
+        "desc": "Zerstört Chats, die bereits unter kürzlich gelöscht liegen. Offene und archivierte Chats sind nicht betroffen. Danach können Chats nicht wiederhergestellt werden.",
+        "button": "Dauerhaft löschen",
+        "success": "{count} kürzlich gelöschte Chat-Datei(en) dauerhaft gelöscht.",
+        "failed": "Kürzlich gelöschte Chats konnten nicht dauerhaft gelöscht werden"
       }
     },
     "sharedEnvironment": {
@@ -731,30 +748,21 @@
         }
       },
       "unavailableOfficialCli": "Erfordert die offizielle Obsidian-CLI.",
-      "unavailableExternalRead": "Erfordert externen Lesezugriff und mindestens ein erlaubtes Verzeichnis.",
       "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung."
     },
     "bash": {
-      "heading": "Bash-Zugriff",
-      "allowlist": {
-        "name": "Erlaubte Bash-Befehle",
-        "desc": "Bash-Werkzeug über den Schalter unter Werkzeugschalter ein- oder ausschalten. Allowlist-Einträge entsprechen einem exakten Befehl oder erforderlichen Präfix (z. B. git oder npm run build). Befehle laufen über deine Login-Shell, daher sind Terminal-PATH-Tools (z. B. pixi, Homebrew) verfügbar. which, type und pwd sind immer erlaubt. Shell-Syntax wie Pipes ist in erlaubten Befehlen erlaubt; das Arbeitsverzeichnis muss im Vault bleiben.",
-        "inputLabel": "Erlaubten Bash-Befehl hinzufügen",
-        "removeAria": "Erlaubten Bash-Befehl {value} entfernen"
-      }
+      "heading": "Bash-Zugriff"
     },
     "externalRead": {
       "heading": "Externer Dateisystemzugriff",
       "allow": {
         "name": "Externes Lesen/Auflisten erlauben",
-        "desc": "Erlaubt Pivi, Dateien unter den erlaubten externen Verzeichnissen unten sowie unter für die aktuelle Chat-Sitzung gewählten externen Kontextordnern zu lesen und aufzulisten."
+        "desc": "Dateien im Workspace sind immer lesbar und listbar. Aktivieren Sie dies, um nach Bestätigung auch Ordner außerhalb des Workspace zu lesen."
       },
       "directories": {
         "name": "Erlaubte externe Verzeichnisse",
-        "desc": "Externe Lese-/List-Tools greifen nur auf Pfade in diesen absoluten Verzeichnissen und in den externen Kontextordnern der aktuellen Sitzung zu.",
         "placeholder": "/Users/me/workspace",
         "inputLabel": "Erlaubtes externes Verzeichnis hinzufügen",
-        "removeAria": "Erlaubtes externes Verzeichnis {value} entfernen",
         "browse": "Durchsuchen",
         "browseTooltip": "System-Ordnerauswahl öffnen und den gewählten Pfad anhängen",
         "pickerFailed": "Ordnerauswahl konnte nicht geöffnet werden."
@@ -1151,6 +1159,24 @@
         "availableTools": "Verfügbare Tools ({count})",
         "noTools": "Dieser Server hat keine Tools zurückgegeben."
       }
+    },
+    "permissions": {
+      "heading": "Dauerhafte Berechtigungen",
+      "intro": "Diese gerätelokalen Freigaben gelten über Chats hinweg. Das Ausschalten eines Tools behält die Einträge. Immer-erlauben-Entscheidungen und Verzeichniszugriff stehen hier.",
+      "revoke": "{label} widerrufen",
+      "bash": {
+        "name": "Bash",
+        "desc": "Stabile Befehlsbereiche. Dateinamen, URLs und Skriptkörper werden nie gespeichert. Grundlegende Nachschlagebefehle wie which, type und pwd sind immer erlaubt.",
+        "inputLabel": "Klassifizierten Bash-Befehl hinzufügen",
+        "legacyEncoding": "Geben Sie keine exact:- oder prefix:-Werte ein. Tippen Sie einen echten Befehl wie git status.",
+        "unsafeSyntax": "Dieser Befehl kann nicht als dauerhafte Berechtigung gespeichert werden. Verwenden Sie stattdessen Einmal erlauben im Chat.",
+        "unresolvedRelative": "Diese relative ausführbare Datei kann erst gespeichert werden, wenn sie zu einem echten Pfad aufgelöst wird."
+      },
+      "external": {
+        "name": "Externe Verzeichnisse",
+        "desc": "Kanonische Verzeichniswurzeln außerhalb des Workspace. Workspace-Pfade brauchen keine Freigabe.",
+        "insideWorkspace": "Dieser Pfad liegt im Workspace und braucht keine dauerhafte Freigabe."
+      }
     }
   },
   "commands": {
@@ -1277,7 +1303,6 @@
   },
   "host": {
     "failedSaveTabLayout": "Tab-Layout konnte nicht gespeichert werden",
-    "failedSaveDeletedSessions": "Liste gelöschter Sitzungen konnte nicht gespeichert werden",
     "failedSaveSyncedSettings": "Anbieter-Einstellungen wurden auf diesem Gerät gespeichert, aber portierbare Einstellungen konnten nicht in die Vault-Datei geschrieben werden.",
     "sessionRecovery": {
       "recoveredTitle": "Wiederhergestellte Sitzung",

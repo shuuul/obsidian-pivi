@@ -11,11 +11,11 @@ const snapshot: SettingsUiSnapshotData = {
 };
 
 function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {}): SettingsPorts {
-  const settings = { allowBash: false, bashAllowlist: [] as readonly string[], allowExternalRead: false, externalReadDirectories: [] as readonly string[], defaultReadMaxChars: 100_000 };
+  const settings = { allowBash: false, bashPermissions: [] as const, allowExternalRead: false, externalDirectories: [] as const, defaultReadMaxChars: 100_000 };
   return {
     snapshot: { getSnapshot: () => snapshot },
     feedback: { notify: jest.fn() },
-    actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, saveEditorSelectionToolbar: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
+    actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, saveEditorSelectionToolbar: async () => undefined, loadSessionMaintenance: async () => ({ archivedCount: 0, deletedCount: 0 }), deleteAllArchivedChats: async () => ({ moved: 0, skippedActive: 0, failed: 0 }), purgeDeletedSessionFiles: async () => 0 },
     complex: {
       tools: { getSettings: () => settings, listToolRows: () => [
         { name: 'obsidian_read', label: 'Read', description: 'Read notes', group: 'workspace-api', configuration: 'read', enabled: true, available: true },
@@ -106,10 +106,10 @@ describe('React tools settings', () => {
 
   it('stacks external directory controls below their description', () => {
     renderTools(createPorts());
-    const setting = screen.getByText('Allowed external directories').closest<HTMLElement>('.pivi-settings-row');
+    const setting = screen.getByText('External directories').closest<HTMLElement>('.pivi-settings-row');
     expect(setting).not.toBeNull();
     expect(setting).toHaveClass('pivi-settings-row--stacked');
-    expect(within(setting!).getByText('Allowed external directories')).toBeInTheDocument();
+    expect(within(setting!).getByText('External directories')).toBeInTheDocument();
     expect(within(setting!).getByRole('textbox')).toBeInTheDocument();
     expect(within(setting!).getByRole('button', { name: 'Browse' })).toBeInTheDocument();
   });
@@ -144,6 +144,7 @@ describe('React tools settings', () => {
       'Test host CLI',
       'Pivi',
       'Additional access',
+      'Persistent permissions',
       'Subagents',
     ]);
   });
@@ -215,21 +216,25 @@ describe('React tools settings', () => {
     expect(setToolEnabled).toHaveBeenCalledWith('pivi_mcp', false);
   });
 
-  it('adds, deduplicates, and removes Bash command badges', async () => {
+  it('adds classified Bash permissions and rejects legacy encoding', async () => {
     const saveSettings = jest.fn(async () => undefined);
     renderTools(createPorts({ saveSettings }));
-    const input = screen.getByRole('textbox', { name: 'Add an allowed bash command' });
-    fireEvent.change(input, { target: { value: 'git' } });
+    const input = screen.getByRole('textbox', { name: 'Add a classified bash command' });
+    fireEvent.change(input, { target: { value: 'git status' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     await act(async () => undefined);
-    fireEvent.change(input, { target: { value: 'npm run build' } });
-    fireEvent.blur(input);
-    await act(async () => undefined);
-    expect(saveSettings).toHaveBeenLastCalledWith({ bashAllowlist: ['git', 'npm run build'] });
-    expect(screen.getByText('npm run build', { selector: '.pivi-settings-badge__text' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Remove allowed bash command git' }));
-    await act(async () => undefined);
-    expect(saveSettings).toHaveBeenLastCalledWith({ bashAllowlist: ['npm run build'] });
+    expect(saveSettings).toHaveBeenLastCalledWith({
+      bashPermissions: [{
+        kind: 'subcommand',
+        executable: { kind: 'name', value: 'git' },
+        subcommand: 'status',
+        enabled: true,
+      }],
+    });
+    expect(screen.getByRole('button', { name: 'Revoke git status' })).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: 'exact: rm -rf /' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Do not enter exact:');
   });
 
   it('keeps a tool toggle unchanged when enabling it fails', async () => {
@@ -278,8 +283,34 @@ describe('React tools settings', () => {
     renderTools(ports);
     fireEvent.click(screen.getByRole('button', { name: 'Browse' }));
     await act(async () => undefined);
-    expect(saveSettings).toHaveBeenCalledWith({ externalReadDirectories: ['/Users/me/workspace'] });
+    expect(saveSettings).toHaveBeenCalledWith({
+      externalDirectories: [{ realpath: '/Users/me/workspace', enabled: true }],
+    });
     expect(saveSettings).toHaveBeenCalledTimes(1);
+  });
+  it('renders persistent grants as badges inside the input fields', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const ports = createPorts({ saveSettings });
+    ports.complex.tools.getSettings = () => ({
+      allowBash: false,
+      bashPermissions: [{
+        kind: 'subcommand',
+        executable: { kind: 'name', value: 'git' },
+        subcommand: 'status',
+        enabled: true,
+      }],
+      allowExternalRead: false,
+      externalDirectories: [{ realpath: '/Users/me/workspace', enabled: true }],
+      defaultReadMaxChars: 100_000,
+    });
+    renderTools(ports);
+    const permissions = screen.getByRole('heading', { name: 'Persistent permissions' }).closest('section');
+    expect(permissions).not.toBeNull();
+    expect(within(permissions!).getByRole('button', { name: 'Revoke git status' })).toBeInTheDocument();
+    expect(within(permissions!).getByRole('button', { name: 'Revoke /Users/me/workspace' })).toBeInTheDocument();
+    fireEvent.click(within(permissions!).getByRole('button', { name: 'Revoke git status' }));
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenCalledWith({ bashPermissions: [] });
   });
   it('preserves Unix and Windows filesystem roots', async () => {
     const saveSettings = jest.fn(async () => undefined);
@@ -291,7 +322,12 @@ describe('React tools settings', () => {
     fireEvent.change(input, { target: { value: 'C:\\' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     await act(async () => undefined);
-    expect(saveSettings).toHaveBeenLastCalledWith({ externalReadDirectories: ['/', 'C:/'] });
+    expect(saveSettings).toHaveBeenLastCalledWith({
+      externalDirectories: [
+        { realpath: '/', enabled: true },
+        { realpath: 'C:/', enabled: true },
+      ],
+    });
   });
   it('keeps an unfinished directory draft when Browse is clicked', async () => {
     const saveSettings = jest.fn(async () => undefined);
@@ -304,7 +340,9 @@ describe('React tools settings', () => {
     expect(fireEvent.mouseDown(browse)).toBe(false);
     fireEvent.click(browse);
     await act(async () => undefined);
-    expect(saveSettings).toHaveBeenCalledWith({ externalReadDirectories: ['/picked'] });
+    expect(saveSettings).toHaveBeenCalledWith({
+      externalDirectories: [{ realpath: '/picked', enabled: true }],
+    });
     expect(input).toHaveValue('/manual');
   });
   it('reports a directory picker failure and restores the button', async () => {

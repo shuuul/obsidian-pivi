@@ -2,7 +2,7 @@ import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { Plugin } from "obsidian";
 import { Notice } from "obsidian";
 
-import type { DeletedSessionFileRecord, SharedAppStorage } from "../bootstrap/storage";
+import type { SharedAppStorage } from "../bootstrap/storage";
 import type { AppTabManagerState } from "../bootstrap/types";
 import {
   type PiviSettingsCodec,
@@ -20,54 +20,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function dedupeDeletedSessionRecords(
-  records: readonly DeletedSessionFileRecord[],
-): DeletedSessionFileRecord[] {
-  return Array.from(
-    new Map(records.map((record) => [record.sessionFile, record])).values(),
-  );
-}
-
-function normalizeDeletedSessionFiles(
-  value: unknown,
-): { records: DeletedSessionFileRecord[]; changed: boolean } {
-  if (!Array.isArray(value)) {
-    return { records: [], changed: false };
-  }
-  const migratedAt = Date.now();
-  let changed = false;
-  const records = value.flatMap((entry): DeletedSessionFileRecord[] => {
-    if (typeof entry === "string") {
-      changed = true;
-      return [{ sessionFile: entry, deletedAt: migratedAt }];
-    }
-    if (
-      isRecord(entry)
-      && typeof entry.sessionFile === "string"
-      && typeof entry.deletedAt === "number"
-      && Number.isFinite(entry.deletedAt)
-    ) {
-      return [{ sessionFile: entry.sessionFile, deletedAt: entry.deletedAt }];
-    }
-    changed = true;
-    return [];
-  });
-  const normalized = dedupeDeletedSessionRecords(records);
-  if (normalized.length !== records.length) {
-    changed = true;
-  }
-  return { records: normalized, changed };
-}
-
 export type SharedStorageNoticeMessages = {
   failedSaveTabLayout: string;
-  failedSaveDeletedSessions: string;
   failedSaveSyncedSettings: string;
 };
 
 const DEFAULT_STORAGE_NOTICES: SharedStorageNoticeMessages = {
   failedSaveTabLayout: "Failed to save tab layout",
-  failedSaveDeletedSessions: "Failed to save deleted session list",
   failedSaveSyncedSettings:
     "Provider settings were saved on this device, but portable settings could not be written to the vault file.",
 };
@@ -140,7 +99,7 @@ export class SharedStorageService implements SharedAppStorage {
         try {
           await this.writeTabManagerStateFile(legacyState);
           // Strip legacy key after successful vault write to avoid RMW races
-          // with deletedSessionFiles on data.json.
+          // with other plugin-data keys on data.json.
           await this.clearLegacyTabManagerState();
         } catch (error) {
           // Legacy state still restores locally even if migration fails.
@@ -165,58 +124,25 @@ export class SharedStorageService implements SharedAppStorage {
     }
   }
 
-  async setDeletedSessionFiles(records: DeletedSessionFileRecord[]): Promise<void> {
-    try {
-      await this.updatePluginData((data) => {
-        data.deletedSessionFiles = dedupeDeletedSessionRecords(records);
-      });
-    } catch (error) {
-      new Notice(this.notices.failedSaveDeletedSessions);
-      throw error;
-    }
-  }
-
-  async updateDeletedSessionFiles(
-    update: (records: readonly DeletedSessionFileRecord[]) => DeletedSessionFileRecord[],
-  ): Promise<void> {
-    try {
-      await this.runPluginDataOperation(async () => {
-        const loaded: unknown = await this.plugin.loadData();
-        const data = isRecord(loaded) ? loaded : {};
-        const { records, changed } = normalizeDeletedSessionFiles(data.deletedSessionFiles);
-        const next = dedupeDeletedSessionRecords(update(records));
-        if (
-          changed
-          || next.length !== records.length
-          || next.some((record, index) => {
-            const previous = records[index];
-            return !previous
-              || previous.sessionFile !== record.sessionFile
-              || previous.deletedAt !== record.deletedAt;
-          })
-        ) {
-          data.deletedSessionFiles = next;
-          await this.plugin.saveData(data);
-        }
-      });
-    } catch (error) {
-      new Notice(this.notices.failedSaveDeletedSessions);
-      throw error;
-    }
-  }
-
-  async getDeletedSessionFiles(): Promise<DeletedSessionFileRecord[]> {
+  async takeDeletedSessionFileQueue(): Promise<string[]> {
     return this.runPluginDataOperation(async () => {
-      const data: unknown = await this.plugin.loadData();
-      if (!isRecord(data) || !Array.isArray(data.deletedSessionFiles)) {
-        return [];
-      }
-      const { records, changed } = normalizeDeletedSessionFiles(data.deletedSessionFiles);
-      if (changed) {
-        data.deletedSessionFiles = records;
+      const loaded: unknown = await this.plugin.loadData();
+      const data = isRecord(loaded) ? loaded : {};
+      const queued = data.deletedSessionFiles;
+      const files = Array.isArray(queued)
+        ? queued.flatMap((entry) => {
+          if (typeof entry === 'string') return [entry];
+          if (isRecord(entry) && typeof (entry as { sessionFile?: unknown }).sessionFile === 'string') {
+            return [(entry as { sessionFile: string }).sessionFile];
+          }
+          return [];
+        })
+        : [];
+      if ('deletedSessionFiles' in data) {
+        delete data.deletedSessionFiles;
         await this.plugin.saveData(data);
       }
-      return records;
+      return [...new Set(files)];
     });
   }
 
@@ -242,6 +168,7 @@ export class SharedStorageService implements SharedAppStorage {
   private async ensureDirectories(): Promise<void> {
     await this.adapter.ensureFolder(PIVI_STORAGE_PATH);
     await this.adapter.ensureFolder(`${PIVI_STORAGE_PATH}/sessions`);
+    await this.adapter.ensureFolder(`${PIVI_STORAGE_PATH}/trash/sessions`);
   }
 
   private async writeTabManagerStateFile(state: AppTabManagerState): Promise<void> {

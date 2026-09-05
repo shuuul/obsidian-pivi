@@ -11,6 +11,7 @@ import {
   getSubagentRuntimeSettingsFromBag,
 } from '@pivi/agent/settings/types';
 import {
+  formatBashPermissionLabel,
   isObsidianAgentTool,
   TOOL_MCP,
   TOOL_OBSIDIAN_BASH,
@@ -19,7 +20,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 import {
-  buildEffectiveBashAllowlist,
+  buildEffectiveBashPermissions,
   createObsidianTools,
   resolveLoginShellPath,
 } from '@pivi/obsidian-tools';
@@ -123,7 +124,12 @@ export function createSettingsPromptPort(
       toolSpecs,
       obsidianCliAvailable: toolsSettings.cliEnabled && isOfficialObsidianCliEnabled(),
       ...(obsidianTools.includes(TOOL_OBSIDIAN_BASH)
-        ? { bashAllowlist: buildEffectiveBashAllowlist(toolsSettings.bashAllowlist, resolveLoginShellPath()) }
+        ? {
+          bashAllowlist: buildEffectiveBashPermissions(
+            toolsSettings.bashPermissions,
+            resolveLoginShellPath(),
+          ).map(formatBashPermissionLabel),
+        }
         : {}),
       includeMcp: false,
       includeSkill: true,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Locale, TranslationKey } from '../i18n';
 import { useI18n, useT } from '../i18n';
@@ -423,12 +423,24 @@ export function SessionFilesSettingsSection({ actions, feedback, general, saveGe
 }) {
   const t = useT();
   const [pending, setPending] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState<'archived' | 'deleted' | null>(null);
+  const [archivedCount, setArchivedCount] = useState(0);
+  const [deletedCount, setDeletedCount] = useState(0);
   const [retentionText, setRetentionText] = useState(String(general.deletedSessionRetentionDays ?? 30));
   const mounted = useMountedRef();
+  const refreshCounts = useCallback(async () => {
+    const snapshot = await actions.loadSessionMaintenance();
+    if (mounted.current) {
+      setArchivedCount(snapshot.archivedCount);
+      setDeletedCount(snapshot.deletedCount);
+    }
+  }, [actions, mounted]);
   useEffect(() => {
     setRetentionText(String(general.deletedSessionRetentionDays ?? 30));
   }, [general.deletedSessionRetentionDays]);
+  useEffect(() => {
+    void refreshCounts().catch(() => undefined);
+  }, [refreshCounts]);
   const commitRetention = () => {
     const parsed = Number(retentionText.trim());
     if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
@@ -441,22 +453,56 @@ export function SessionFilesSettingsSection({ actions, feedback, general, saveGe
       void saveGeneral({ deletedSessionRetentionDays: value });
     }
   };
+  const deleteArchived = async () => {
+    setPending(true);
+    try {
+      const result = await actions.deleteAllArchivedChats();
+      await refreshCounts();
+      if (mounted.current) {
+        feedback.notify(t('settings.sessionFiles.deleteArchived.success', {
+          moved: result.moved,
+          skippedActive: result.skippedActive,
+          failed: result.failed,
+        }));
+      }
+    } catch {
+      if (mounted.current) feedback.notify(t('settings.sessionFiles.deleteArchived.failed'));
+    } finally {
+      if (mounted.current) {
+        setPending(false);
+        setConfirmOpen(null);
+      }
+    }
+  };
   const clean = async () => {
     setPending(true);
     try {
       const count = await actions.purgeDeletedSessionFiles();
+      await refreshCounts();
       if (mounted.current) feedback.notify(t('settings.sessionFiles.deleteRemoved.success', { count }));
     } catch {
       if (mounted.current) feedback.notify(t('settings.sessionFiles.deleteRemoved.failed'));
     } finally {
       if (mounted.current) {
         setPending(false);
-        setConfirmOpen(false);
+        setConfirmOpen(null);
       }
     }
   };
   return (
     <SettingsSection>
+      <SettingRow
+        name={t('settings.sessionFiles.archived.name')}
+        description={archivedCount > 0
+          ? t('settings.sessionFiles.archived.count', { count: archivedCount })
+          : t('settings.sessionFiles.archived.empty')}
+      />
+      <SettingRow
+        name={t('settings.sessionFiles.deleted.name')}
+        description={deletedCount > 0
+          ? `${t('settings.sessionFiles.deleted.count', { count: deletedCount })} ${t('settings.sessionFiles.deleted.recovery')}`
+          : t('settings.sessionFiles.deleted.empty')}
+      />
       <SettingRow name={t('settings.sessionFiles.retention.name')} description={t('settings.sessionFiles.retention.desc')}>
         <input
           className="pivi-settings-control"
@@ -474,19 +520,36 @@ export function SessionFilesSettingsSection({ actions, feedback, general, saveGe
       </SettingRow>
       <SettingRow
         centered
+        name={t('settings.sessionFiles.deleteArchived.name')}
+        description={t('settings.sessionFiles.deleteArchived.desc')}
+      >
+        <button
+          className={confirmOpen === 'archived' ? 'pivi-settings-confirm-delete-btn' : undefined}
+          type="button"
+          disabled={pending || archivedCount === 0}
+          onClick={() => {
+            if (confirmOpen === 'archived') void deleteArchived();
+            else setConfirmOpen('archived');
+          }}
+        >
+          {confirmOpen === 'archived' ? t('common.confirmDelete') : t('settings.sessionFiles.deleteArchived.button')}
+        </button>
+      </SettingRow>
+      <SettingRow
+        centered
         name={t('settings.sessionFiles.deleteRemoved.name')}
         description={t('settings.sessionFiles.deleteRemoved.desc')}
       >
         <button
-          className={confirmOpen ? 'pivi-settings-confirm-delete-btn' : undefined}
+          className={confirmOpen === 'deleted' ? 'pivi-settings-confirm-delete-btn' : undefined}
           type="button"
-          disabled={pending}
+          disabled={pending || deletedCount === 0}
           onClick={() => {
-            if (confirmOpen) void clean();
-            else setConfirmOpen(true);
+            if (confirmOpen === 'deleted') void clean();
+            else setConfirmOpen('deleted');
           }}
         >
-          {confirmOpen ? t('common.confirmDelete') : t('settings.sessionFiles.deleteRemoved.button')}
+          {confirmOpen === 'deleted' ? t('common.confirmDelete') : t('settings.sessionFiles.deleteRemoved.button')}
         </button>
       </SettingRow>
     </SettingsSection>

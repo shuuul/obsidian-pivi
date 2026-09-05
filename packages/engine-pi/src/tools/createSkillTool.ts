@@ -18,7 +18,7 @@ export function createSkillTool(skills: Skill[]): AgentTool {
     name: 'skill',
     label: 'Skill',
     description:
-      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description. Skill location and references are vault-relative paths; read them with vault tools, not external-path tools.',
+      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description. Supporting files live on disk under the absolute skill directory returned by this tool; they are not vault notes.',
     parameters: {
       type: 'object',
       properties: {
@@ -36,8 +36,10 @@ export function createSkillTool(skills: Skill[]): AgentTool {
         throw new Error(`Unknown skill "${name}". Available: ${available}`);
       }
       const body = stripFrontmatter(skill.content);
-      const skillBlock = `<skill name="${skill.name}" location="${skill.filePath}">
-References are relative to ${skill.baseDir}.
+      const location = skill.absoluteFilePath;
+      const root = skill.absoluteBaseDir;
+      const skillBlock = `<skill name="${skill.name}" location="${location}">
+Supporting files are absolute paths under ${root}. Read them with obsidian_read_external using those absolute paths; do not use obsidian_read.
 
 ${body}
 </skill>`;

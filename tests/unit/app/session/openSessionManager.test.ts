@@ -500,6 +500,7 @@ describe('OpenSessionManager linear hydration', () => {
       leafCount: 1,
       messagePreview: 'hello',
       messageCount: 12,
+      hasPersistedUserMessage: true,
     }]);
     const manager = new OpenSessionManager({
       getVaultPath: () => '/vault',
@@ -520,6 +521,7 @@ describe('OpenSessionManager linear hydration', () => {
       totalMessageCount: 12,
       olderMessageCount: 12,
       messagePreview: 'hello',
+      hasPersistedUserMessage: true,
     }));
     expect(store.writeSessionMeta).not.toHaveBeenCalled();
     expect(store.writeUiContext).not.toHaveBeenCalled();
@@ -667,5 +669,39 @@ describe('OpenSessionManager linear hydration', () => {
     expect(original.messages).toEqual([hydratedMessage]);
     expect(original.totalMessageCount).toBe(101);
     expect(original.olderMessageCount).toBe(100);
+  });
+
+  it('treats sessions without a persisted user message as empty', () => {
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => createStore(),
+    });
+    manager.replaceAll([
+      createOpenSession({ id: 'meta-only', messages: [], hasPersistedUserMessage: false }),
+      createOpenSession({
+        id: 'user-only',
+        messages: [hydratedMessage],
+        hasPersistedUserMessage: true,
+      }),
+    ]);
+    expect(manager.findEmpty()?.id).toBe('meta-only');
+  });
+
+  it('permanently discards only an owned empty create when metadata write fails', async () => {
+    const store = createStore();
+    jest.mocked(store.create).mockResolvedValue({
+      sessionFile: '.pivi/sessions/owned.jsonl',
+      sessionId: 'sdk-owned',
+    });
+    jest.mocked(store.writeSessionMeta).mockRejectedValue(new Error('meta failed'));
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+
+    await expect(manager.create()).rejects.toThrow('meta failed');
+    expect(store.deleteSession).toHaveBeenCalledWith('.pivi/sessions/owned.jsonl');
+    expect(manager.getAll()).toEqual([]);
+    expect(manager.ownsEmptySessionFile('.pivi/sessions/owned.jsonl')).toBe(false);
   });
 });

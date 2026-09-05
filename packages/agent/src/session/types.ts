@@ -115,6 +115,10 @@ export interface StoreSessionInfo {
   leafCount: number;
   messagePreview: string;
   messageCount?: number;
+  /** True when the durable JSONL contains at least one persisted user message. */
+  hasPersistedUserMessage?: boolean;
+  /** Filesystem mtime in milliseconds; used by empty-session startup cleanup. */
+  mtimeMs?: number;
 }
 
 export interface SessionUiContext {
@@ -168,6 +172,11 @@ export interface SessionStore {
   appendMessageUiPatches?(ref: SessionRef, patches: MessageUiPatch[]): Promise<SessionRef>;
   fork(ref: SessionRef, atEntryId: string): Promise<SessionRef>;
   deleteSession(sessionFile: string): Promise<void>;
+  /** Move a live JSONL into `.pivi/trash/sessions/` and stamp delete time on mtime. */
+  trashSession(sessionFile: string): Promise<void>;
+  listTrashedSessions(): Promise<Array<{ sessionFile: string; deletedAt: number }>>;
+  restoreTrashedSession(sessionFile: string): Promise<void>;
+  purgeTrashedSession(sessionFile: string): Promise<void>;
   readUiContext(ref: SessionRef): Promise<SessionUiContext>;
   writeUiContext(ref: SessionRef, patch: Partial<SessionUiContext>): Promise<void>;
   writeSessionMeta(ref: SessionRef, patch: SessionMetaPatch): Promise<void>;

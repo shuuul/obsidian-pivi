@@ -5,6 +5,7 @@ import {
 } from '@pivi/agent/tools';
 
 import type { ObsidianToolDeps } from './deps';
+import { rethrowIfUnmanagedVaultPath } from './unmanagedVaultPath';
 
 const DEFAULT_LIST_LIMIT = 50;
 const MAX_LIST_LIMIT = 200;
@@ -76,7 +77,13 @@ export function createListPathTool(deps: ObsidianToolDeps): ToolSpec {
     },
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
-      const result = await Promise.resolve(vault.listPath(getStringField(input, 'path') ?? ''));
+      const requestedPath = getStringField(input, 'path') ?? '';
+      let result;
+      try {
+        result = await Promise.resolve(vault.listPath(requestedPath));
+      } catch (error) {
+        rethrowIfUnmanagedVaultPath(deps, { path: requestedPath }, error, 'directory');
+      }
       const query = getStringField(input, 'query')?.trim().toLowerCase();
       const filtered = query
         ? result.filter(entry => entry.name.toLowerCase().includes(query))

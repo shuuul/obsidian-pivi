@@ -284,13 +284,17 @@ describe('device-local provider acceptance matrix', () => {
           throw new Error('synced save failed');
         },
         getAdapter: () => adapter,
+        takeDeletedSessionFileQueue: async () => [],
       },
       sessionManager: {
         loadSummaries: async () => undefined,
         backfillSessionResponseTimestamps: () => [],
       } as never,
-      createSessionStore: () => ({ migrateDeviceLocalExternalContexts: async () => 0 }) as never,
-      hideDeletedSessionSummaries: async () => undefined,
+      createSessionStore: () => ({
+        migrateDeviceLocalExternalContexts: async () => 0,
+        listSessions: async () => [],
+        deleteSession: async () => undefined,
+      }) as never,
       persistSessionSummary: async () => undefined,
       saveSettings: async () => undefined,
       setSettings: (next) => {
