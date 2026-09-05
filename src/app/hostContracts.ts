@@ -61,6 +61,42 @@ export interface PiviChatViewCommandState {
   canCloseActiveTab: boolean;
 }
 
+export interface PiviRealHostSmokeRequest {
+  version: 1;
+  operation: 'run' | 'inspect' | 'cleanup';
+  runId: string;
+  notePath: string;
+  ledgerPath: string;
+  sessionFile?: string;
+  openSessionId?: string;
+}
+
+export interface PiviRealHostSmokeSnapshot {
+  version: 1;
+  runId: string;
+  notePath: string;
+  ledgerPath: string;
+  sessionFile: string;
+  openSessionId: string;
+  noteContent: string;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    toolCalls: Array<{
+      id: string;
+      name: string;
+      status: string;
+      result: string;
+    }>;
+  }>;
+}
+
+export type PiviRealHostSmokeResult = PiviRealHostSmokeSnapshot | {
+  version: 1;
+  runId: string;
+  cleaned: true;
+};
+
 /** User-command capabilities. No tab, controller, runtime, or DOM graph escapes. */
 export interface PiviChatViewCommands {
   getState(): PiviChatViewCommandState;
@@ -91,6 +127,8 @@ export interface PiviManagementRefreshFailure {
 /** App-owned maintenance operations over all tabs in one mounted view. */
 export interface PiviChatViewMaintenance {
   persistState(): Promise<void>;
+  /** Persists bindings, cancels active work, saves sessions, and releases view runtimes. */
+  shutdown(): Promise<void>;
   resetSession(openSessionId: string): Promise<void>;
   getBoundSessionFiles(): string[];
   hasSession(openSessionId: string): boolean;
@@ -118,6 +156,7 @@ export interface PiviChatViewMaintenance {
 
 /** Development-only deterministic workload controls, absent from production bundles. */
 export interface PiviChatDevelopmentCommands {
+  runRealHostSmoke?(request: PiviRealHostSmokeRequest): Promise<PiviRealHostSmokeResult>;
   run20SubagentsWorkload(hooks: {
     afterRender(result: { subagents: number; messages: number }): Promise<void>;
   }): Promise<{
@@ -130,6 +169,28 @@ export interface PiviChatDevelopmentCommands {
   }): Promise<{
     initialMessages: number;
     messagesAfterPrepend: number;
+  }>;
+  runProjectionWorkload?(
+    workload: 'nested-subagent' | 'small-text' | 'tool-heavy',
+    hooks: {
+      beforeMeasurement(result: {
+        workload: 'nested-subagent' | 'small-text' | 'tool-heavy';
+        fixtureSha256: string;
+        warmupEvents: number;
+        sampleEvents: number;
+      }): Promise<void>;
+      afterMeasurement(result: {
+        workload: 'nested-subagent' | 'small-text' | 'tool-heavy';
+        fixtureSha256: string;
+        warmupEvents: number;
+        sampleEvents: number;
+      }): Promise<void>;
+    },
+  ): Promise<{
+    workload: 'nested-subagent' | 'small-text' | 'tool-heavy';
+    fixtureSha256: string;
+    warmupEvents: number;
+    sampleEvents: number;
   }>;
   run100KbMarkdownStream(): Promise<{
     bytes: number;
@@ -275,6 +336,9 @@ export interface PiviChatCompositionHost extends PiviHostCore {
   getAllViews(): PiviChatView[];
   loadTabManagerState(): Promise<AppTabManagerState | null>;
   persistTabManagerState(state: AppTabManagerState): Promise<void>;
+  runDevelopmentRealHostSmoke?(
+    request: PiviRealHostSmokeRequest,
+  ): Promise<PiviRealHostSmokeResult>;
 }
 
 /**
@@ -344,6 +408,7 @@ export interface SessionsFacade {
   openSessionByFile(sessionFile: string): Promise<OpenSessionState>;
   deleteSession(id: string): Promise<void>;
   deleteSessionFile(sessionFile: string, id?: string | null): Promise<void>;
+  discardSessionFile(sessionFile: string, id?: string | null): Promise<void>;
   renameSession(id: string, title: string, titleSource?: OpenSessionState['titleSource']): Promise<void>;
   updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
   forkSessionAt(openSession: OpenSessionState, atEntryId: string): Promise<{ sessionFile: string; sessionId: string } | null>;

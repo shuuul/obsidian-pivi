@@ -144,5 +144,8 @@
     "./tools/webSearch": "./src/tools/webSearch/index.ts",
     "./tools/webSearch/credentialStore": "./src/tools/webSearch/credentialStore.ts",
     "./workspace": "./src/workspace/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "~1.30.0"
   }
 }

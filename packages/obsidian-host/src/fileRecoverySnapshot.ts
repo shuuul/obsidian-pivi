@@ -1,7 +1,4 @@
-import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import { type App, type TFile } from 'obsidian';
-
-const logger = new PluginLogger('FileRecoverySnapshot');
 
 const RECOVERABLE_EXTENSIONS = new Set(['md', 'canvas']);
 
@@ -28,8 +25,8 @@ function getFileRecoveryPlugin(app: App): FileRecoveryInternalPlugin | null {
 }
 
 /**
- * Best-effort pre-write snapshot into Obsidian File Recovery via the internal
- * `forceAdd` API. Mutations must continue when File Recovery is unavailable.
+ * Capture a required pre-mutation snapshot through Obsidian File Recovery's
+ * private `forceAdd` API. Unsupported file types have no File Recovery history.
  */
 export async function captureFileRecoverySnapshot(app: App, file: TFile): Promise<void> {
   if (!RECOVERABLE_EXTENSIONS.has(file.extension)) {
@@ -38,18 +35,19 @@ export async function captureFileRecoverySnapshot(app: App, file: TFile): Promis
 
   const fileRecovery = getFileRecoveryPlugin(app);
   if (!fileRecovery) {
-    // File Recovery disabled/unavailable is expected; do not warn per write.
-    return;
+    throw new Error(
+      `Cannot modify ${file.path}: Obsidian File Recovery is disabled, unavailable, or missing the required snapshot API. Enable File Recovery and retry.`,
+    );
   }
 
   try {
     const content = await app.vault.cachedRead(file);
     await fileRecovery.forceAdd(file.path, content);
   } catch (error) {
-    logger.warn('File Recovery pre-write snapshot skipped', {
-      path: file.path,
-      reason: 'capture_failed',
-      error,
-    });
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Cannot modify ${file.path}: required File Recovery snapshot failed (${reason}).`,
+      { cause: error },
+    );
   }
 }

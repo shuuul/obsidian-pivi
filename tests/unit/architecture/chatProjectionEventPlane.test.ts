@@ -34,7 +34,9 @@ describe('chat projection event plane', () => {
       'utf8',
     );
 
-    expect(source).toMatch(/private queueUpsert\(message: ChatMessage\): void/);
+    expect(source).toMatch(
+      /private queueUpsert\(message: ChatMessage, eventType: ChatPerfProjectionEventType\): void/,
+    );
     expect(source).not.toContain('type ChatUiEvent');
   });
 });

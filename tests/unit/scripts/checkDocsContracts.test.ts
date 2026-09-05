@@ -107,10 +107,80 @@ describe('check-docs-contracts', () => {
       );
       writeFileSync(
         join(fixtureRoot, 'specs/archive/001-history.md'),
-        'Import MCP JSON from the settings page. Pivi supports Vim mappings.',
+        'Import MCP JSON from the settings page. Pivi supports Vim mappings. [Historical](missing.md)',
       );
 
       expect(runCheck(fixtureRoot).status).toBe(0);
+    });
+  });
+
+  it('validates inline, image, reference, encoded, fragment, and archived-spec targets', () => {
+    withFixture((fixtureRoot) => {
+      mkdirSync(join(fixtureRoot, 'specs/archive'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'docs/guide.md'), '# Target / heading\n');
+      writeFileSync(join(fixtureRoot, 'docs/diagram image.png'), 'image');
+      writeFileSync(join(fixtureRoot, 'specs/archive/001-history.md'), '# Historical evidence\n');
+      writeFileSync(
+        join(fixtureRoot, 'docs/current.md'),
+        [
+          '[Guide](guide.md#target--heading)',
+          '![Diagram](diagram%20image.png)',
+          '[Evidence][history]',
+          '[history]: ../specs/archive/001-history.md#historical-evidence',
+          '`[Inline example](missing-inline.md)`',
+          '```md',
+          '[Fenced example](missing-fenced.md)',
+          '```',
+        ].join('\n'),
+      );
+
+      expect(runCheck(fixtureRoot).status).toBe(0);
+    });
+  });
+
+  it.each([
+    ['missing target', '[Broken](missing.md)', 'link target does not exist'],
+    ['missing fragment', '[Broken](guide.md#missing)', 'Markdown fragment does not exist'],
+  ])('rejects an active Markdown %s', (_label, link, diagnostic) => {
+    withFixture((fixtureRoot) => {
+      writeFileSync(join(fixtureRoot, 'docs/guide.md'), '# Existing\n');
+      writeFileSync(join(fixtureRoot, 'docs/current.md'), link);
+
+      const result = runCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(`docs/current.md:1 ${diagnostic}`);
+    });
+  });
+
+  it('checks active specs while allowing links from active docs into the archive', () => {
+    withFixture((fixtureRoot) => {
+      mkdirSync(join(fixtureRoot, 'specs/archive'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'specs/archive/001-history.md'), '# Evidence\n');
+      writeFileSync(join(fixtureRoot, 'docs/current.md'), '[Evidence](../specs/archive/001-history.md)');
+      writeFileSync(join(fixtureRoot, 'specs/002-active.md'), '[Broken](missing.md)');
+
+      const result = runCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('specs/002-active.md:1 link target does not exist');
+      expect(result.stderr).not.toContain('specs/archive/001-history.md:');
+    });
+  });
+
+  it('rejects an active link to a missing archived spec', () => {
+    withFixture((fixtureRoot) => {
+      writeFileSync(
+        join(fixtureRoot, 'docs/current.md'),
+        '[Missing evidence](../specs/archive/999-missing.md)',
+      );
+
+      const result = runCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        'docs/current.md:1 link target does not exist: "../specs/archive/999-missing.md"',
+      );
     });
   });
 

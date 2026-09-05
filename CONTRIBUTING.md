@@ -26,6 +26,17 @@ Read the root and nearest nested `AGENTS.md`, the [architecture overview](docs/0
 
 Use a short branch and keep the pull request to one concern. Do not include release/version changes unless the change is specifically a release preparation.
 
+### Bounded documentation-checker contribution
+
+A focused contribution to Markdown link validation belongs in `scripts/check-docs-contracts.mjs`, with fixtures in `tests/unit/scripts/checkDocsContracts.test.ts`. The checker scans root and `.github` community Markdown, `docs/` handbook and recipes, package README/guidance files, and active specs. `CHANGELOG.md` and `specs/archive/` are excluded as historical source text, but links from active documents into archived specs must still resolve.
+
+Start behavior changes with a failing fixture. For the archive boundary, create an active document linking to a nonexistent `specs/archive/NNN-*.md` target and require exit status 1 plus a `link target does not exist` diagnostic containing the active source path and line. Preserve inline, reference, and image links; fragments and URL-encoded paths; and fenced/inline code exclusions. Verify with:
+
+```bash
+npm run test -- --runInBand tests/unit/scripts/checkDocsContracts.test.ts
+npm run check:docs-contracts
+```
+
 ## Validate
 
 Run the narrowest relevant test while iterating, for example:

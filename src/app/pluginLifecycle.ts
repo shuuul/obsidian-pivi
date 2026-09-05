@@ -69,3 +69,27 @@ export async function persistOpenTabStates(
     throw new AggregateError(errors, 'Failed to persist open Pivi tab states.');
   }
 }
+
+export async function shutdownOpenChatViews(app: App): Promise<void> {
+  const operations: Promise<void>[] = [];
+  const errors: unknown[] = [];
+  for (const view of findAllPiviViews(app)) {
+    try {
+      const maintenance = view.getChatHandle()?.maintenance;
+      const operation = maintenance?.shutdown
+        ? maintenance.shutdown()
+        : maintenance?.persistState();
+      if (operation) operations.push(operation);
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  const results = await Promise.allSettled(operations);
+  for (const result of results) {
+    if (result.status === 'rejected') errors.push(result.reason);
+  }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) {
+    throw new AggregateError(errors, 'Failed to shut down open Pivi chat views.');
+  }
+}

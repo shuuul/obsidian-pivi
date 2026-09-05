@@ -107,6 +107,42 @@ export async function deleteSessionFile(
   }
 }
 
+/** Permanently compensates a session file created by a failed fork transaction. */
+export async function discardSessionFile(
+  ctx: PluginSessionContext,
+  sessionFile: string,
+  openSessionId?: string | null,
+): Promise<void> {
+  if (!isSafeSessionFile(sessionFile)) {
+    throw new Error(`Invalid discarded session path: ${sessionFile}`);
+  }
+
+  const errors: unknown[] = [];
+  if (openSessionId) {
+    try {
+      await ctx.sessionManager.delete(openSessionId);
+    } catch (error) {
+      errors.push(error);
+    }
+    for (const view of ctx.getAllViews()) {
+      try {
+        await view.getChatHandle()?.maintenance.resetSession(openSessionId);
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+  }
+  try {
+    await ctx.requireSessionStore().deleteSession(sessionFile);
+  } catch (error) {
+    errors.push(error);
+  }
+
+  if (errors.length > 0) {
+    throw new AggregateError(errors, `Failed to discard session ${sessionFile}`);
+  }
+}
+
 export async function purgeDeletedSessionFiles(
   ctx: PluginSessionContext,
 ): Promise<number> {

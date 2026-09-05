@@ -10,6 +10,7 @@ import {
   runDevelopment20Subagents,
   runDevelopmentIndexedSessionPaging,
   runDevelopmentMarkdownStreamInIsolatedTab,
+  runDevelopmentProjectionWorkload,
   runDevelopmentTabSwitching,
 } from '@/app/ui/imperativeChatDevelopment';
 import { submitInlineEditTurn as runSubmitInlineEditTurn } from '@/app/ui/imperativeChatInlineEdit';
@@ -64,6 +65,32 @@ export function createImperativeChatViewHandle(
       tab.ui.composerActions?.refresh();
     }
     getTabManager()?.prefetchSlashCommandCaches();
+  };
+
+  let shutdownPromise: Promise<void> | null = null;
+  const shutdown = (): Promise<void> => {
+    if (shutdownPromise) return shutdownPromise;
+    const tabManager = getTabManager();
+    if (!tabManager) return Promise.resolve();
+    const state = tabManager.getPersistedState();
+    shutdownPromise = (async () => {
+      const errors: unknown[] = [];
+      try {
+        await persistTabStateImmediate(state);
+      } catch (error) {
+        errors.push(error);
+      }
+      try {
+        await tabManager.destroy();
+      } catch (error) {
+        errors.push(error);
+      }
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1) {
+        throw new AggregateError(errors, 'Pivi chat shutdown failed.');
+      }
+    })();
+    return shutdownPromise;
   };
 
   return {
@@ -144,10 +171,15 @@ export function createImperativeChatViewHandle(
     },
     maintenance: {
       async persistState() {
+        if (shutdownPromise) {
+          await shutdownPromise;
+          return;
+        }
         const tabManager = getTabManager();
         if (!tabManager) return;
         await persistTabStateImmediate(tabManager.getPersistedState());
       },
+      shutdown,
       async resetSession(openSessionId) {
         for (const tab of getTabManager()?.getAllTabs() ?? []) {
           if (tab.openSessionId !== openSessionId) continue;
@@ -309,6 +341,12 @@ export function createImperativeChatViewHandle(
     },
     ...(process.env.NODE_ENV !== 'production' ? {
       development: {
+        async runRealHostSmoke(request) {
+          if (!plugin.runDevelopmentRealHostSmoke) {
+            throw new Error('The real-host smoke harness is unavailable.');
+          }
+          return plugin.runDevelopmentRealHostSmoke(request);
+        },
         async run20SubagentsWorkload(hooks) {
           const manager = getTabManager();
           const activeTab = manager?.getActiveTab();
@@ -329,6 +367,15 @@ export function createImperativeChatViewHandle(
           }
           return runWithoutTabPersistence(
             () => runDevelopmentIndexedSessionPaging(manager, ownerWindow, plugin, hooks),
+          );
+        },
+        async runProjectionWorkload(workload, hooks) {
+          const manager = getTabManager();
+          if (!manager?.getActiveTab()) {
+            throw new Error('A mounted active chat is required for the projection workload.');
+          }
+          return runWithoutTabPersistence(
+            () => runDevelopmentProjectionWorkload(manager, workload, hooks),
           );
         },
         async run100KbMarkdownStream() {

@@ -20,6 +20,7 @@
 ## Public API
 
 - Production composition imports Pi capabilities only through stable responsibility-scoped `@pivi/engine-pi/application/{auth,models,oauth,oauth-flows,runtime,session}` surfaces, avoiding both implementation deep imports and one eager all-engine barrel.
+- Development app composition may dynamically import `@pivi/engine-pi/application/development` for the deterministic real-host smoke provider; production tree-shaking removes that surface from the bundle.
 - Focused engine compatibility tests may use declared leaf exports to exercise implementation modules without widening the production composition boundary.
 - Pi JSONL session compatibility under `@pivi/engine-pi/session/*`.
 - Obsidian-safe Pi SDK shims under `@pivi/engine-pi/shims/*`.

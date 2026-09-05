@@ -331,7 +331,7 @@ describe("PiviApplication lifecycle", () => {
       expect(mockSetTabManagerState).toHaveBeenCalledWith(tabState);
     });
 
-    it("starts every tab snapshot before workspace disposal", async () => {
+    it("settles every tab snapshot before journal unbind and workspace disposal", async () => {
       const events: string[] = [];
       let finishFirst!: () => void;
       const firstPersist = jest.fn(() => {
@@ -349,6 +349,10 @@ describe("PiviApplication lifecycle", () => {
         }),
       };
       const plugin = createPlugin();
+      (plugin as unknown as { releaseSessionJournal: () => boolean }).releaseSessionJournal = () => {
+        events.push("unbind-journal");
+        return true;
+      };
       plugin.app.workspace.getLeavesOfType = jest.fn().mockReturnValue([
         {
           view: {
@@ -376,12 +380,64 @@ describe("PiviApplication lifecycle", () => {
       expect(events).toEqual([
         "persist-first",
         "persist-second",
-        "dispose-workspace",
       ]);
       expect(firstPersist).toHaveBeenCalledTimes(1);
       expect(secondPersist).toHaveBeenCalledTimes(1);
       finishFirst();
-      await Promise.resolve();
+      await plugin.shutdown();
+      expect(events).toEqual([
+        "persist-first",
+        "persist-second",
+        "unbind-journal",
+        "dispose-workspace",
+      ]);
+    });
+
+    it("continues ordered cleanup after tab persistence fails", async () => {
+      const events: string[] = [];
+      const persistenceError = new Error("persist failed");
+      const plugin = createPlugin();
+      plugin.app.workspace.getLeavesOfType = jest.fn().mockReturnValue([{
+        view: {
+          leaf: {},
+          getChatHandle: () => ({
+            commands: {},
+            maintenance: {
+              persistState: jest.fn(async () => { throw persistenceError; }),
+            },
+          }),
+        },
+      }]);
+      const workspace = {
+        dispose: jest.fn(async () => {
+          events.push("dispose-workspace");
+        }),
+      };
+      (plugin as unknown as { piWorkspace: typeof workspace }).piWorkspace = workspace;
+      (plugin as unknown as { releaseSessionJournal: () => boolean }).releaseSessionJournal = () => {
+        events.push("unbind-journal");
+        return true;
+      };
+
+      await expect(plugin.shutdown()).rejects.toBe(persistenceError);
+      expect(events).toEqual(["unbind-journal", "dispose-workspace"]);
+    });
+
+    it("coalesces repeated shutdown requests", async () => {
+      const workspace = createWorkspace();
+      const plugin = createPlugin();
+      const releaseSessionJournal = jest.fn(() => true);
+      (plugin as unknown as { piWorkspace: typeof workspace }).piWorkspace = workspace;
+      (plugin as unknown as { releaseSessionJournal: typeof releaseSessionJournal })
+        .releaseSessionJournal = releaseSessionJournal;
+
+      const first = plugin.shutdown();
+      const second = plugin.shutdown();
+
+      expect(first).toBe(second);
+      await first;
+      expect(releaseSessionJournal).toHaveBeenCalledTimes(1);
+      expect(workspace.dispose).toHaveBeenCalledTimes(1);
     });
   });
 

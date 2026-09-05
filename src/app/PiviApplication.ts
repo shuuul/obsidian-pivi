@@ -63,7 +63,7 @@ import {
   ensurePiviViewOpen,
   openPiviNewTab,
 } from "@/app/piviViewActivation";
-import { initializePiviPlugin, persistOpenTabStates } from "@/app/pluginLifecycle";
+import { initializePiviPlugin, shutdownOpenChatViews } from "@/app/pluginLifecycle";
 import * as sessionApi from "@/app/pluginSessionApi";
 import { loadPluginSettings } from "@/app/pluginSettingsLoad";
 import { createPiUiFacades } from "@/app/runtime/piUiFacades";
@@ -142,6 +142,40 @@ export class PiviApplication {
       canCreateNewTab: () => this.canCreateNewTab(),
       openNewTab: () => this.openNewTab(),
       addEditorSelectionToChatInput: (editor, view) => this.addEditorSelectionToChatInput(editor, view),
+      ...(process.env.NODE_ENV !== 'production' ? {
+        runDevelopmentRealHostSmoke: async (request) => {
+          const { runDevelopmentRealHostSmoke } = await import('@/app/realHostSmoke');
+          return runDevelopmentRealHostSmoke({
+            createChatService: async turn => {
+              const development = (await this.ensureWorkspaceServices()).development;
+              if (!development) {
+                throw new Error('The deterministic smoke provider is unavailable.');
+              }
+              return development.createDeterministicSmokeChatService(
+                this,
+                this.httpClient,
+                turn,
+              );
+            },
+            createOpenSession: options => this.createOpenSession(options),
+            openSessionByFile: sessionFile => this.openSessionByFile(sessionFile),
+            hydrateOpenSession: session => this.sessionManager.hydrate(session),
+            updateSession: (id, updates) => this.updateSession(id, updates),
+            removeOpenSession: id => this.sessionManager.delete(id),
+            deleteSessionFile: sessionFile => this.requireSessionStore().deleteSession(sessionFile),
+            vaultFileExists: path => this.app.vault.adapter.exists(path),
+            readVaultFile: path => this.app.vault.adapter.read(path),
+            writeVaultFile: async (path, content) => {
+              await this.app.vault.create(path, content);
+            },
+            removeVaultFile: async path => {
+              if (await this.app.vault.adapter.exists(path)) {
+                await this.app.vault.adapter.remove(path);
+              }
+            },
+          }, request);
+        },
+      } : {}),
     };
     const sessions: SessionsFacade = {
       getSessionList: () => this.getSessionList(),
@@ -153,6 +187,7 @@ export class PiviApplication {
       openSessionByFile: file => this.openSessionByFile(file),
       deleteSession: id => this.deleteSession(id),
       deleteSessionFile: (file, id) => this.deleteSessionFile(file, id),
+      discardSessionFile: (file, id) => this.discardSessionFile(file, id),
       renameSession: (id, title, source) => this.renameSession(id, title, source),
       updateSession: (id, updates) => this.updateSession(id, updates),
       forkSessionAt: (session, entry) => this.forkSessionAt(session, entry),
@@ -238,6 +273,8 @@ export class PiviApplication {
   private workspaceInitialization: Promise<PiWorkspaceServices> | null = null;
   private workspaceGeneration = 0;
   private isUnloading = false;
+  private shutdownPromise: Promise<void> | null = null;
+  private releaseSessionJournal: (() => boolean) | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
   private readonly noteToolbarSetupQueue: NoteToolbarSetupQueue = { active: null };
   private readonly workspaceCommandRegistry: WorkspaceCommandRegistry;
@@ -433,28 +470,57 @@ export class PiviApplication {
   }
 
   onunload(): void {
+    void this.shutdown().catch((error: unknown) => {
+      logger.error('Failed to shut down Pivi application', error);
+    });
+  }
+
+  shutdown(): Promise<void> {
+    if (this.shutdownPromise) {
+      return this.shutdownPromise;
+    }
+
     this.isUnloading = true;
     this.chatPerfController.dispose();
     this.workspaceGeneration += 1;
     this.workspaceCommandRegistry.clear();
-    const persistence = persistOpenTabStates(this.app);
+    const persistence = shutdownOpenChatViews(this.app);
     const workspace = this.piWorkspace;
+    const pendingInitialization = workspace ? null : this.workspaceInitialization;
     this.piWorkspace = null;
-    // Best-effort: drop the live journal binding. Device-local journal/source
-    // state remains for deterministic startup reconciliation.
-    void import('@pivi/engine-pi/application/session')
-      .then(({ bindSessionJournal }) => {
-        bindSessionJournal(null);
-      })
-      .catch(() => undefined);
-    if (workspace) {
-      void workspace.dispose().catch((error: unknown) => {
-        logger.error('Failed to dispose workspace services', error);
-      });
+    this.shutdownPromise = this.finishShutdown(persistence, workspace, pendingInitialization);
+    return this.shutdownPromise;
+  }
+
+  private async finishShutdown(
+    persistence: Promise<void>,
+    workspace: PiWorkspaceServices | null,
+    pendingInitialization: Promise<PiWorkspaceServices> | null,
+  ): Promise<void> {
+    const errors: unknown[] = [];
+    try {
+      await persistence;
+    } catch (error) {
+      errors.push(error);
     }
-    void persistence.catch((error: unknown) => {
-      logger.error('Failed to persist open tab states on unload', error);
-    });
+
+    this.releaseSessionJournal?.();
+    this.releaseSessionJournal = null;
+
+    if (workspace) {
+      try {
+        await workspace.dispose();
+      } catch (error) {
+        errors.push(error);
+      }
+    } else if (pendingInitialization) {
+      await pendingInitialization.catch(() => undefined);
+    }
+
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1) {
+      throw new AggregateError(errors, 'Pivi application shutdown failed.');
+    }
   }
 
   async activateView() {
@@ -541,6 +607,10 @@ export class PiviApplication {
           vaultPath,
           this.deviceLocalExternalContexts,
           new ObsidianDeviceLocalSessionJournalStore(this.app),
+          (binding) => {
+            this.releaseSessionJournal?.();
+            this.releaseSessionJournal = () => binding.release();
+          },
         ),
       hideDeletedSessionSummaries: () =>
         sessionApi.hideDeletedSessionSummaries(this.sessionContext()),
@@ -644,6 +714,14 @@ export class PiviApplication {
 
   async deleteSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void> {
     await this.runDeletedSessionOperation(() => sessionApi.deleteSessionFile(
+      this.sessionContext(),
+      sessionFile,
+      openSessionId,
+    ));
+  }
+
+  async discardSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void> {
+    await this.runDeletedSessionOperation(() => sessionApi.discardSessionFile(
       this.sessionContext(),
       sessionFile,
       openSessionId,
@@ -808,6 +886,8 @@ export class PiviApplication {
 export interface PiviApplicationLifecycle {
   onload(): Promise<void>;
   onunload(): void;
+  /** Awaitable completion hook for deterministic harnesses and lifecycle tests. */
+  shutdown(): Promise<void>;
 }
 
 export function createPiviApplication(plugin: Plugin): PiviApplicationLifecycle {

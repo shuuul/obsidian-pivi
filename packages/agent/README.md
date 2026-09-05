@@ -10,7 +10,7 @@
 - `settings/` for shared settings contracts and defaults, including Obsidian tool gates such as external filesystem access and the Bash toggle/allowlist.
 - `tools/` for the generic tool protocol and display models, including the `pivi_sessions` ToolSpec factory over an injected recovery port.
 - `session/` for host-neutral session contracts, the session recovery port, open-session state, paths, and metadata; Pi JSONL persistence and compatibility implementations live under `@pivi/engine-pi/session/`.
-- `mcp/` for workspace-local MCP management and proxy tools.
+- `mcp/` for workspace-local MCP management and proxy tools; this package directly declares the MCP SDK used by those runtime transports and OAuth flows.
 - `context/` and `prompt/` for host-neutral XML context formatting, runtime skill filtering, and registered-tool prompt assembly.
 - `skills/` for skill and slash-command metadata helpers; runtime loaders exclude disabled vault skills while inventory loaders include them for settings and install prompts. A missing or locked skill entry is skipped, and a locked skills directory keeps the last successful inventory so a concurrent copy cannot blank the surface. Remote/default skill orchestration receives `HttpClient` and `ProcessRunner` ports from the host, and first-run confirmation is rendered through an injected host prompt callback rather than rendering confirmation DOM in this package.
 - `runtime/` and `engine/` for host-neutral chat/runtime contracts, application-facing `ChatPorts`, auxiliary query services, queued-turn helpers, and the generic AgentEngine seam. Concrete Pi SDK adapters live in `@pivi/engine-pi`.

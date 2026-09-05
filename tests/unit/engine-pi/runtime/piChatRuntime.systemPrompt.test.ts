@@ -442,6 +442,44 @@ describe('PiChatRuntime system prompt', () => {
     expect(agent.options).not.toHaveProperty('getApiKey');
   });
 
+  it('uses an injected provider model, auth gate, and stream without consulting settings', async () => {
+    const streamFn = jest.fn();
+    const plugin = createMockPlugin({ model: 'missing/model', visibleModels: [] });
+    const model = {
+      id: 'faux-1',
+      name: 'Deterministic model',
+      provider: 'pivi-smoke',
+      api: 'faux',
+      baseUrl: 'http://localhost:0',
+      reasoning: false,
+      input: ['text'],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: 128_000,
+      maxTokens: 16_384,
+    } as PiCachedModel;
+    const runtime = new PiChatRuntime(
+      plugin,
+      testNetwork,
+      null,
+      null,
+      testBaseToolProvider,
+      undefined,
+      null,
+      null,
+      {
+        model,
+        streamFn,
+        auth: { auth: { apiKey: 'smoke' }, source: 'test' },
+      },
+    );
+
+    await expect(runtime.ensureReady()).resolves.toBe(true);
+
+    expect(mockAgentInstances).toHaveLength(1);
+    expect(mockAgentInstances[0]?.initialState.model).toBe(model);
+    expect(mockAgentInstances[0]?.options.streamFn).toBe(streamFn);
+  });
+
   it('does not pass spawn_agent to child subagents even if a provider exposes it', async () => {
     const plugin = createMockPlugin();
     const providerWithSpawnAgent: PiBaseToolProvider = () => ({

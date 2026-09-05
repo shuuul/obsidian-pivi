@@ -15,6 +15,7 @@ import {
   configureSessionJsonlIndexRoot,
   PiSessionStore,
   reconcileSessionJournal,
+  type SessionJournalBinding,
 } from "@pivi/engine-pi/application/session";
 import {
   SharedStorageService,
@@ -85,12 +86,14 @@ export function createSessionStore(
   vaultPath: string,
   externalContexts: DeviceLocalExternalContextStore,
   journalStore?: SessionJournalStore | null,
+  onJournalBinding?: (binding: SessionJournalBinding) => void,
 ): SessionStore {
   configureSessionJsonlIndexRoot(resolveDeviceLocalSessionIndexRoot(vaultPath));
   if (journalStore) {
     try {
       journalStore.load();
-      bindSessionJournal(journalStore);
+      const binding = bindSessionJournal(journalStore);
+      onJournalBinding?.(binding);
     } catch (error) {
       if (!(error instanceof SessionJournalVersionError)) {
         throw error;

@@ -10,6 +10,7 @@ export {
 export type {
   ChatPerfProjectionCommitReason,
   ChatPerfProjectionEventKind,
+  ChatPerfProjectionEventType,
   ChatPerfRecorder,
 } from './chatPerfRecorder';
 export { NOOP_CHAT_PERF_RECORDER } from './chatPerfRecorder';

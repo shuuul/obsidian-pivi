@@ -7,8 +7,10 @@ function makeApp(
   folders: string[] = [],
   options: {
     fileRecoveryEnabled?: boolean;
+    fileRecoveryApiAvailable?: boolean;
     forceAdd?: jest.Mock;
     failForceAdd?: boolean;
+    failCachedRead?: boolean;
   } = {},
 ) {
   const byPath = new Map(files.map((f) => [f.path, { ...f }]));
@@ -18,6 +20,12 @@ function makeApp(
   const listed: string[] = [];
   const modified: string[] = [];
   const binaries = new Map<string, ArrayBuffer>();
+  const trashFile = jest.fn(async (file: { path: string }) => {
+    trashed.push(file.path);
+  });
+  const renameFile = jest.fn(async (file: { path: string }, newPath: string) => {
+    moved.push({ path: file.path, newPath });
+  });
 
   function makeFile(path: string): TFile {
     const file = new TFile();
@@ -63,12 +71,8 @@ function makeApp(
       return [...modified];
     },
     fileManager: {
-      trashFile: async (file: { path: string }) => {
-        trashed.push(file.path);
-      },
-      renameFile: async (file: { path: string }, newPath: string) => {
-        moved.push({ path: file.path, newPath });
-      },
+      trashFile,
+      renameFile,
       processFrontMatter: async (file: { path: string }, fn: (frontmatter: Record<string, unknown>) => void) => {
         const entry = byPath.get(file.path);
         const stored = entry as typeof entry & { frontmatter?: Record<string, unknown> };
@@ -124,7 +128,12 @@ function makeApp(
         return root;
       },
       getResourcePath: (file: { path: string }) => `app://resource/${file.path}`,
-      cachedRead: async (file: { path: string }) => byPath.get(file.path)?.content ?? '',
+      cachedRead: async (file: { path: string }) => {
+        if (options.failCachedRead) {
+          throw new Error('read failed');
+        }
+        return byPath.get(file.path)?.content ?? '';
+      },
       getAbstractFileByPath: (path: string) => {
         if (folders.includes(path)) {
           const folder = makeFolder(path);
@@ -191,7 +200,7 @@ function makeApp(
       getEnabledPluginById: (id: string) => (
         options.fileRecoveryEnabled === false || id !== 'file-recovery'
           ? null
-          : { forceAdd }
+          : options.fileRecoveryApiAvailable === false ? {} : { forceAdd }
       ),
     },
   };
@@ -201,6 +210,12 @@ function makeApp(
     },
     getForceAdd(): jest.Mock {
       return forceAdd;
+    },
+    getTrashFile(): jest.Mock {
+      return trashFile;
+    },
+    getRenameFile(): jest.Mock {
+      return renameFile;
     },
   });
 }
@@ -455,6 +470,7 @@ describe('ObsidianVaultApi', () => {
     const result = await api.trashPath({ path: 'notes/a.md' });
 
     expect(result).toEqual({ path: 'notes/a.md', kind: 'file' });
+    expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'x');
     expect(app.getTrashed()).toEqual(['notes/a.md']);
   });
 
@@ -474,7 +490,97 @@ describe('ObsidianVaultApi', () => {
 
     await api.movePath({ path: 'notes/a.md', newPath: 'archive/a.md' });
 
+    expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'x');
     expect(app.getMoved()).toEqual([{ path: 'notes/a.md', newPath: 'archive/a.md' }]);
+  });
+
+  it('trashPath snapshots every recoverable folder child before deleting the folder', async () => {
+    const app = makeApp([
+      { path: 'notes/archive/a.md', content: 'a' },
+      { path: 'notes/archive/map.canvas', content: '{}' },
+      { path: 'notes/archive/image.png', content: '<binary>' },
+    ], ['notes/archive']);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.trashPath({ path: 'notes/archive' });
+
+    expect(app.getForceAdd().mock.calls).toEqual([
+      ['notes/archive/a.md', 'a'],
+      ['notes/archive/map.canvas', '{}'],
+    ]);
+    expect(app.getTrashed()).toEqual(['notes/archive']);
+  });
+
+  it('trashPath aborts the whole folder deletion when any required snapshot fails', async () => {
+    const forceAdd = jest.fn(async (path: string) => {
+      if (path.endsWith('b.md')) {
+        throw new Error('disk full');
+      }
+    });
+    const app = makeApp([
+      { path: 'notes/archive/a.md', content: 'a' },
+      { path: 'notes/archive/b.md', content: 'b' },
+    ], ['notes/archive'], { forceAdd });
+    const api = new ObsidianVaultApi(app as never);
+
+    await expect(api.trashPath({ path: 'notes/archive' }))
+      .rejects.toThrow('required File Recovery snapshot failed (disk full)');
+
+    expect(app.getTrashFile()).not.toHaveBeenCalled();
+    expect(app.getTrashed()).toEqual([]);
+  });
+
+  it('movePath aborts before rename when its required snapshot fails', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'x' }], [], {
+      fileRecoveryEnabled: false,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await expect(api.movePath({ path: 'notes/a.md', newPath: 'archive/a.md' }))
+      .rejects.toThrow('File Recovery is disabled');
+
+    expect(app.getRenameFile()).not.toHaveBeenCalled();
+    expect(app.getMoved()).toEqual([]);
+  });
+
+  it('movePath snapshots supported folder descendants before renaming the folder', async () => {
+    const app = makeApp([
+      { path: 'notes/archive/a.md', content: 'a' },
+      { path: 'notes/archive/map.canvas', content: '{}' },
+    ], ['notes/archive']);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.movePath({ path: 'notes/archive', newPath: 'moved/archive' });
+
+    expect(app.getForceAdd().mock.calls).toEqual([
+      ['notes/archive/a.md', 'a'],
+      ['notes/archive/map.canvas', '{}'],
+    ]);
+    expect(app.getMoved()).toEqual([
+      { path: 'notes/archive', newPath: 'moved/archive' },
+    ]);
+  });
+
+  it('keeps unsupported attachment move and trash outside File Recovery snapshots', async () => {
+    const moveApp = makeApp([{ path: 'assets/image.png', content: '<binary>' }], [], {
+      fileRecoveryEnabled: false,
+    });
+    const deleteApp = makeApp([{ path: 'assets/image.png', content: '<binary>' }], [], {
+      fileRecoveryEnabled: false,
+    });
+
+    await new ObsidianVaultApi(moveApp as never).movePath({
+      path: 'assets/image.png',
+      newPath: 'archive/image.png',
+    });
+    await new ObsidianVaultApi(deleteApp as never).trashPath({ path: 'assets/image.png' });
+
+    expect(moveApp.getForceAdd()).not.toHaveBeenCalled();
+    expect(moveApp.getMoved()).toEqual([
+      { path: 'assets/image.png', newPath: 'archive/image.png' },
+    ]);
+    expect(deleteApp.getForceAdd()).not.toHaveBeenCalled();
+    expect(deleteApp.getTrashed()).toEqual(['assets/image.png']);
   });
 
   it('createFolder uses vault.createFolder', async () => {
@@ -628,42 +734,76 @@ describe('ObsidianVaultApi', () => {
     expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'body');
   });
 
-  it('editNote still mutates when File Recovery snapshot capture fails', async () => {
-    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  it('editNote blocks mutation when File Recovery snapshot capture fails', async () => {
     const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
       fileRecoveryEnabled: true,
       failForceAdd: true,
     });
     const api = new ObsidianVaultApi(app as never);
 
-    await api.editNote({
+    await expect(api.editNote({
       path: 'notes/a.md',
       old_string: 'world',
       new_string: 'vault',
-    });
+    })).rejects.toThrow('required File Recovery snapshot failed (forceAdd failed)');
 
-    expect(app.getContent('notes/a.md')).toBe('hello vault');
-    expect(warning).toHaveBeenCalledWith(
-      '[Pivi:FileRecoverySnapshot] File Recovery pre-write snapshot skipped',
-      expect.objectContaining({ path: 'notes/a.md', reason: 'capture_failed' }),
-    );
+    expect(app.getContent('notes/a.md')).toBe('hello world');
   });
 
-  it('editNote still mutates when File Recovery is unavailable', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  it('editNote blocks mutation when reading current content for the snapshot fails', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
+      failCachedRead: true,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await expect(api.editNote({
+      path: 'notes/a.md',
+      old_string: 'world',
+      new_string: 'vault',
+    })).rejects.toThrow('required File Recovery snapshot failed (read failed)');
+
+    expect(app.getForceAdd()).not.toHaveBeenCalled();
+    expect(app.getContent('notes/a.md')).toBe('hello world');
+  });
+
+  it('editNote blocks mutation when File Recovery is unavailable', async () => {
     const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
       fileRecoveryEnabled: false,
     });
     const api = new ObsidianVaultApi(app as never);
 
-    await api.editNote({
+    await expect(api.editNote({
       path: 'notes/a.md',
       old_string: 'world',
       new_string: 'vault',
-    });
+    })).rejects.toThrow('File Recovery is disabled');
 
-    expect(app.getContent('notes/a.md')).toBe('hello vault');
-    expect(warnSpy).not.toHaveBeenCalled();
-    warnSpy.mockRestore();
+    expect(app.getContent('notes/a.md')).toBe('hello world');
+  });
+
+  it('editNote blocks mutation when the private File Recovery API is missing', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }], [], {
+      fileRecoveryApiAvailable: false,
+    });
+    const api = new ObsidianVaultApi(app as never);
+
+    await expect(api.editNote({
+      path: 'notes/a.md',
+      old_string: 'world',
+      new_string: 'vault',
+    })).rejects.toThrow('missing the required snapshot API');
+
+    expect(app.getContent('notes/a.md')).toBe('hello world');
+  });
+
+  it('captureSnapshotBeforeRestore snapshots an existing note and skips a deleted path', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'current' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.captureSnapshotBeforeRestore('notes/a.md');
+    await api.captureSnapshotBeforeRestore('notes/deleted.md');
+
+    expect(app.getForceAdd()).toHaveBeenCalledTimes(1);
+    expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'current');
   });
 });

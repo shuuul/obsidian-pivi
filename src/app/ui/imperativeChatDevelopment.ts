@@ -1,4 +1,5 @@
 import type { ChatMessage } from '@pivi/agent/runtime';
+import type { ChatProjectionMessageChange } from '@pivi/pivi-react/store';
 
 import type {
   PiviChatCompositionHost,
@@ -14,9 +15,108 @@ const DEVELOPMENT_SUBAGENTS_FIXTURE = '.pivi/sessions/perf-004-20-subagents.json
 const DEVELOPMENT_SUBAGENTS_SETTLE_MS = 750;
 const DEVELOPMENT_PAGING_FIXTURE = '.pivi/sessions/perf-002-5k-messages.jsonl';
 const DEVELOPMENT_PAGING_SETTLE_MS = 750;
+const DEVELOPMENT_PROJECTION_SETTLE_MS = 250;
 const DEVELOPMENT_SWITCHING_MESSAGE_COUNT = 100;
 const DEVELOPMENT_SWITCHING_PASSES = 2;
 const DEVELOPMENT_SWITCHING_TAB_COUNT = 10;
+export const DEVELOPMENT_PROJECTION_WARMUP_EVENTS = 5;
+export const DEVELOPMENT_PROJECTION_SAMPLE_EVENTS = 50;
+
+export type DevelopmentProjectionWorkload =
+  | 'nested-subagent'
+  | 'small-text'
+  | 'tool-heavy';
+
+interface DevelopmentProjectionWorkloadFixture {
+  readonly eventType: ChatProjectionMessageChange['type'];
+  readonly fixtureSha256: string;
+  readonly message: ChatMessage;
+}
+
+export const DEVELOPMENT_PROJECTION_WORKLOADS: Readonly<
+  Record<DevelopmentProjectionWorkload, DevelopmentProjectionWorkloadFixture>
+> = Object.freeze({
+  'small-text': {
+    eventType: 'text.append',
+    fixtureSha256: '8c7e161e1c431ad5f5479a35cc9ac6ea0ae0da3222562cbaff3cb78981d26334',
+    message: {
+      id: 'pivi-development-projection-small-text',
+      role: 'assistant',
+      content: 'Deterministic small text sample 000.',
+      contentBlocks: [{ type: 'text', content: 'Deterministic small text sample 000.' }],
+      timestamp: 1,
+    },
+  },
+  'tool-heavy': {
+    eventType: 'tool.upsert',
+    fixtureSha256: '8dd0b9f55e255124b89e9c621bace9635489d55f4458ab658217c9a7cf9d7b65',
+    message: {
+      id: 'pivi-development-projection-tool-heavy',
+      role: 'assistant',
+      content: 'Twelve deterministic tool calls.',
+      contentBlocks: [
+        { type: 'text', content: 'Twelve deterministic tool calls.' },
+        ...Array.from({ length: 12 }, (_, index) => ({
+          type: 'tool_use' as const,
+          toolId: `projection-tool-${String(index + 1).padStart(2, '0')}`,
+        })),
+      ],
+      toolCalls: Array.from({ length: 12 }, (_, index) => ({
+        id: `projection-tool-${String(index + 1).padStart(2, '0')}`,
+        name: 'obsidian_read',
+        input: { path: `Reading/Fixture-${String(index + 1).padStart(2, '0')}.md` },
+        status: 'running' as const,
+        result: 'Deterministic tool result 000.',
+        isExpanded: false,
+      })),
+      timestamp: 1,
+    },
+  },
+  'nested-subagent': {
+    eventType: 'agent.upsert',
+    fixtureSha256: '26657f173f9bcdad0727d4db6971d7e7dc57a7462a6197ff676174e99e53ac6c',
+    message: {
+      id: 'pivi-development-projection-nested-subagent',
+      role: 'assistant',
+      content: 'One deterministic nested subagent.',
+      contentBlocks: [
+        { type: 'text', content: 'One deterministic nested subagent.' },
+        { type: 'subagent', subagentId: 'projection-subagent-01', mode: 'async' },
+      ],
+      toolCalls: [{
+        id: 'projection-spawn-01',
+        name: 'spawn_agent',
+        input: {
+          label: 'Projection fixture',
+          message: 'Inspect deterministic fixture notes.',
+          run_in_background: true,
+        },
+        status: 'running',
+        isExpanded: false,
+        subagent: {
+          id: 'projection-subagent-01',
+          agentId: 'projection-agent-01',
+          description: 'Inspect deterministic fixture notes',
+          prompt: 'Inspect deterministic fixture notes.',
+          mode: 'async',
+          isExpanded: false,
+          result: 'Deterministic subagent result 000.',
+          status: 'running',
+          asyncStatus: 'running',
+          toolCalls: Array.from({ length: 8 }, (_, index) => ({
+            id: `projection-nested-tool-${String(index + 1).padStart(2, '0')}`,
+            name: 'obsidian_read',
+            input: { path: `Research/Nested-${String(index + 1).padStart(2, '0')}.md` },
+            status: 'completed' as const,
+            result: `Nested deterministic result ${String(index + 1).padStart(2, '0')}.`,
+            isExpanded: false,
+          })),
+        },
+      }],
+      timestamp: 1,
+    },
+  },
+});
 
 type DevelopmentMarkdownStreamState = {
   messages: ChatMessage[];
@@ -24,6 +124,16 @@ type DevelopmentMarkdownStreamState = {
   addMessage(message: ChatMessage): void;
   notifyMessageChanged(message: ChatMessage): void;
   flushProjection(): void;
+};
+
+type DevelopmentProjectionState = Pick<
+  DevelopmentMarkdownStreamState,
+  'addMessage' | 'isStreaming' | 'messages'
+> & {
+  notifyMessageChanged(
+    message: ChatMessage,
+    change: ChatProjectionMessageChange,
+  ): void;
 };
 
 type DevelopmentMarkdownTabManager = Pick<
@@ -43,6 +153,65 @@ function createDevelopmentMarkdown(): string {
     markdown += paragraph;
   }
   return markdown.padEnd(DEVELOPMENT_MARKDOWN_BYTES, 'x');
+}
+
+function cloneProjectionWorkloadMessage(workload: DevelopmentProjectionWorkload): ChatMessage {
+  return JSON.parse(
+    JSON.stringify(DEVELOPMENT_PROJECTION_WORKLOADS[workload].message),
+  ) as ChatMessage;
+}
+
+function applyProjectionWorkloadEvent(
+  workload: DevelopmentProjectionWorkload,
+  state: DevelopmentProjectionState,
+  message: ChatMessage,
+  eventIndex: number,
+): void {
+  const suffix = String(eventIndex).padStart(3, '0');
+  switch (workload) {
+    case 'small-text': {
+      message.content = `Deterministic small text sample ${suffix}.`;
+      const block = message.contentBlocks?.[0];
+      if (!block || block.type !== 'text') throw new Error('Small-text fixture lost its text block.');
+      block.content = message.content;
+      state.notifyMessageChanged(message, {
+        type: 'text.append',
+        blockId: `${message.id}:block:0`,
+        delta: suffix,
+      });
+      break;
+    }
+    case 'tool-heavy': {
+      const tool = message.toolCalls?.[eventIndex % 12];
+      if (!tool) throw new Error('Tool-heavy fixture lost a tool call.');
+      tool.result = `Deterministic tool result ${suffix}.`;
+      state.notifyMessageChanged(message, { type: 'tool.upsert', tool });
+      break;
+    }
+    case 'nested-subagent': {
+      const subagent = message.toolCalls?.[0]?.subagent;
+      if (!subagent) throw new Error('Nested-subagent fixture lost its subagent.');
+      subagent.result = `Deterministic subagent result ${suffix}.`;
+      state.notifyMessageChanged(message, { type: 'agent.upsert', agent: subagent });
+      break;
+    }
+  }
+}
+
+async function runProjectionEvents(
+  workload: DevelopmentProjectionWorkload,
+  state: DevelopmentProjectionState,
+  message: ChatMessage,
+  ownerWindow: Window,
+  firstEvent: number,
+  count: number,
+): Promise<void> {
+  for (let index = firstEvent; index < firstEvent + count; index += 1) {
+    applyProjectionWorkloadEvent(workload, state, message, index);
+    await nextAnimationFrame(ownerWindow);
+  }
+  await nextAnimationFrame(ownerWindow);
+  await nextAnimationFrame(ownerWindow);
 }
 
 function nextAnimationFrame(ownerWindow: Window): Promise<void> {
@@ -341,6 +510,71 @@ export async function runDevelopmentMarkdownStreamInIsolatedTab(
       throw new Error('Failed to create the isolated Markdown performance tab.');
     }
     return await runDevelopmentMarkdownStream(tab.state, ownerWindow);
+  } finally {
+    if (manager.getTab(originalTabId)) {
+      await manager.switchToTab(originalTabId);
+    }
+    if (manager.getTab(tabId)) {
+      await manager.closeTab(tabId, true);
+    }
+  }
+}
+
+/** Runs one fixed projection shape through a disposable tab's real React surface. */
+export async function runDevelopmentProjectionWorkload(
+  manager: DevelopmentMarkdownTabManager,
+  workload: DevelopmentProjectionWorkload,
+  hooks: Parameters<NonNullable<PiviChatDevelopmentCommands['runProjectionWorkload']>>[1],
+): Promise<Awaited<ReturnType<NonNullable<PiviChatDevelopmentCommands['runProjectionWorkload']>>>> {
+  const originalTabId = manager.getActiveTabId();
+  if (!originalTabId) {
+    throw new Error('An active chat tab is required for the projection workload.');
+  }
+  const fixture = DEVELOPMENT_PROJECTION_WORKLOADS[workload];
+  const tabId = `pivi-development-projection-${workload}-${Date.now()}`;
+  try {
+    const tab = await manager.createTab(undefined, tabId);
+    const ownerWindow = tab?.dom.messagesEl.ownerDocument.defaultView;
+    if (!tab || tab.id !== tabId || !ownerWindow) {
+      throw new Error(`Failed to create the isolated ${workload} projection tab.`);
+    }
+    const state = tab.state as DevelopmentProjectionState;
+    const message = cloneProjectionWorkloadMessage(workload);
+    message.id = `${message.id}-${Date.now()}`;
+    state.isStreaming = true;
+    state.addMessage(message);
+    await nextAnimationFrame(ownerWindow);
+    await runProjectionEvents(
+      workload,
+      state,
+      message,
+      ownerWindow,
+      1,
+      DEVELOPMENT_PROJECTION_WARMUP_EVENTS,
+    );
+
+    const result = {
+      workload,
+      fixtureSha256: fixture.fixtureSha256,
+      warmupEvents: DEVELOPMENT_PROJECTION_WARMUP_EVENTS,
+      sampleEvents: DEVELOPMENT_PROJECTION_SAMPLE_EVENTS,
+    };
+    await hooks.beforeMeasurement(result);
+    await runProjectionEvents(
+      workload,
+      state,
+      message,
+      ownerWindow,
+      DEVELOPMENT_PROJECTION_WARMUP_EVENTS + 1,
+      DEVELOPMENT_PROJECTION_SAMPLE_EVENTS,
+    );
+    await new Promise(resolve => ownerWindow.setTimeout(
+      resolve,
+      DEVELOPMENT_PROJECTION_SETTLE_MS,
+    ));
+    state.isStreaming = false;
+    await hooks.afterMeasurement(result);
+    return result;
   } finally {
     if (manager.getTab(originalTabId)) {
       await manager.switchToTab(originalTabId);

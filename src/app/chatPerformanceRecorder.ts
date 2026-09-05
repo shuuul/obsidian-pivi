@@ -1,13 +1,17 @@
 import type {
   ChatPerfProjectionCommitReason,
   ChatPerfProjectionEventKind,
+  ChatPerfProjectionEventType,
 } from '@pivi/pivi-react/store';
 import type { App, DataAdapter } from 'obsidian';
 
-import type { ChatPerfController } from '@/app/chatPerformanceController';
+import type {
+  ChatPerfController,
+  ChatPerfProjectionWorkloadMetadata,
+} from '@/app/chatPerformanceController';
 
 const CHAT_PERF_TRACE_DIRECTORY = '.pivi/perf-traces';
-const CHAT_PERF_TRACE_SCHEMA = 'pivi-chat-perf-v1';
+const CHAT_PERF_TRACE_SCHEMA = 'pivi-chat-perf-v2';
 
 type ChatPerfWindowType = 'main' | 'pop-out';
 
@@ -30,7 +34,47 @@ interface PendingPaint {
   eventAtMs: number | null;
 }
 
+/**
+ * Trace metric contract:
+ * - dispatch validation measures schema/invariant checks; total dispatch includes validation,
+ *   snapshot construction, and entity-store mutation before projection scheduling;
+ * - snapshot duration measures one immutable message projection, while visited/cloned entities
+ *   are deterministic allocation proxies rather than byte counts;
+ * - entity commit measures the normalized-store write only; projection commit measures the
+ *   externally visible snapshot publication only;
+ * - event-to-commit starts at the first queued source mutation, commit-to-paint spans publication
+ *   to the following animation frame, and event-to-paint spans both. Missing correlation is null;
+ * - Markdown duration measures one app-owned render/update invocation.
+ * All durations are milliseconds from the owning window's monotonic performance clock.
+ */
 export type ChatPerfTraceEvent =
+  | {
+      type: 'projection.dispatch';
+      atMs: number;
+      windowType: ChatPerfWindowType;
+      eventType: ChatPerfProjectionEventType;
+      accepted: boolean;
+      validationDurationMs: number;
+      totalDurationMs: number;
+    }
+  | {
+      type: 'projection.snapshot';
+      atMs: number;
+      windowType: ChatPerfWindowType;
+      eventType: ChatPerfProjectionEventType;
+      messageId: string;
+      durationMs: number;
+      snapshotCalls: 1;
+      visitedEntities: number;
+      clonedEntities: number;
+    }
+  | {
+      type: 'projection.entity-commit';
+      atMs: number;
+      windowType: ChatPerfWindowType;
+      messageId: string;
+      durationMs: number;
+    }
   | {
       type: 'projection.commit';
       atMs: number;
@@ -102,13 +146,16 @@ export interface ChatPerfTrace {
     readonly windowTypes: readonly ChatPerfWindowType[];
     readonly longTaskWindowTypes: readonly ChatPerfWindowType[];
   };
+  /** Present only for a fixed projection workload trace; hashes JSON.stringify(fixture.message). */
+  readonly projectionWorkload: ChatPerfProjectionWorkloadMetadata | null;
   readonly events: readonly ChatPerfTraceEvent[];
 }
 
 interface ActiveTrace {
   scenario: string;
+  projectionWorkload: ChatPerfProjectionWorkloadMetadata | null;
   startedAt: string;
-  startedAtEpochMs: number;
+  startedAtPerformanceEpochMs: number;
   events: ChatPerfTraceEvent[];
   pendingProjectionEvents: Map<string, PendingProjectionEvent>;
   pendingPaints: Map<string, PendingPaint>;
@@ -171,15 +218,21 @@ class ObsidianChatPerfRecorder implements ChatPerfController {
     return (ownerWindow ?? this.mainWindow).performance.now();
   }
 
-  start(scenario: string, ownerWindow: Window): void {
+  start(
+    scenario: string,
+    ownerWindow: Window,
+    projectionWorkload?: ChatPerfProjectionWorkloadMetadata,
+  ): void {
     if (this.activeTrace) throw new Error('A chat performance trace is already active.');
     const normalizedScenario = scenario.trim();
     if (!normalizedScenario) throw new Error('A chat performance scenario is required.');
     const now = new Date();
     this.activeTrace = {
       scenario: normalizedScenario,
+      projectionWorkload: projectionWorkload ?? null,
       startedAt: now.toISOString(),
-      startedAtEpochMs: now.getTime(),
+      startedAtPerformanceEpochMs:
+        ownerWindow.performance.timeOrigin + ownerWindow.performance.now(),
       events: [],
       pendingProjectionEvents: new Map(),
       pendingPaints: new Map(),
@@ -221,6 +274,7 @@ class ObsidianChatPerfRecorder implements ChatPerfController {
         windowTypes: [...trace.windowTypes].sort(),
         longTaskWindowTypes: [...trace.longTaskWindowTypes].sort(),
       },
+      projectionWorkload: trace.projectionWorkload,
       events: trace.events,
     };
     const timestamp = endedAt.replace(/[:.]/g, '-');
@@ -253,6 +307,71 @@ class ObsidianChatPerfRecorder implements ChatPerfController {
     } else {
       trace.pendingProjectionEvents.set(key, { count: 1, firstAtMs: atMs, lastAtMs: atMs });
     }
+  }
+
+  onProjectionDispatch(
+    eventType: ChatPerfProjectionEventType,
+    accepted: boolean,
+    validationDurationMs: number,
+    totalDurationMs: number,
+    ownerWindow: Window | null,
+  ): void {
+    const trace = this.activeTrace;
+    if (!trace) return;
+    const targetWindow = ownerWindow ?? this.mainWindow;
+    this.observeWindow(targetWindow);
+    trace.events.push({
+      type: 'projection.dispatch',
+      atMs: this.elapsedMs(targetWindow),
+      windowType: this.windowType(targetWindow),
+      eventType,
+      accepted,
+      validationDurationMs,
+      totalDurationMs,
+    });
+  }
+
+  onProjectionSnapshot(
+    eventType: ChatPerfProjectionEventType,
+    messageId: string,
+    durationMs: number,
+    visitedEntities: number,
+    clonedEntities: number,
+    ownerWindow: Window | null,
+  ): void {
+    const trace = this.activeTrace;
+    if (!trace) return;
+    const targetWindow = ownerWindow ?? this.mainWindow;
+    this.observeWindow(targetWindow);
+    trace.events.push({
+      type: 'projection.snapshot',
+      atMs: this.elapsedMs(targetWindow),
+      windowType: this.windowType(targetWindow),
+      eventType,
+      messageId,
+      durationMs,
+      snapshotCalls: 1,
+      visitedEntities,
+      clonedEntities,
+    });
+  }
+
+  onProjectionEntityCommit(
+    messageId: string,
+    durationMs: number,
+    ownerWindow: Window | null,
+  ): void {
+    const trace = this.activeTrace;
+    if (!trace) return;
+    const targetWindow = ownerWindow ?? this.mainWindow;
+    this.observeWindow(targetWindow);
+    trace.events.push({
+      type: 'projection.entity-commit',
+      atMs: this.elapsedMs(targetWindow),
+      windowType: this.windowType(targetWindow),
+      messageId,
+      durationMs,
+    });
   }
 
   onProjectionCommit(
@@ -378,7 +497,9 @@ class ObsidianChatPerfRecorder implements ChatPerfController {
     const trace = this.requireActiveTrace();
     return Math.max(
       0,
-      ownerWindow.performance.timeOrigin + ownerWindow.performance.now() - trace.startedAtEpochMs,
+      ownerWindow.performance.timeOrigin
+        + ownerWindow.performance.now()
+        - trace.startedAtPerformanceEpochMs,
     );
   }
 
@@ -403,7 +524,9 @@ class ObsidianChatPerfRecorder implements ChatPerfController {
           type: 'longtask',
           atMs: Math.max(
             0,
-            ownerWindow.performance.timeOrigin + entry.startTime - active.startedAtEpochMs,
+            ownerWindow.performance.timeOrigin
+              + entry.startTime
+              - active.startedAtPerformanceEpochMs,
           ),
           windowType: type,
           durationMs: entry.duration,

@@ -39,23 +39,30 @@ export async function forkToNewTab(
   deps: TabManagerForkDeps,
   context: ForkContext,
 ): Promise<TabData | null> {
-  const openSessionId = await createForkSession(deps, context);
+  const fork = await createForkSession(deps, context);
   try {
-    const tab = await deps.createTab(openSessionId);
+    const tab = await deps.createTab(fork.openSessionId);
+    if (!tab) {
+      await compensateFork(deps.sessions, fork);
+      return null;
+    }
     restoreForkPreviewIfEmpty(tab, context);
     return tab;
   } catch (error) {
-    await deps.sessions.deleteSession(openSessionId).catch((err) => {
-      logger.warn(`Failed to delete session ${openSessionId} after tab creation failure`, err);
-    });
+    await compensateFork(deps.sessions, fork);
     throw error;
   }
 }
 
+type CreatedFork = {
+  openSessionId: string;
+  sessionFile: string;
+};
+
 async function createForkSession(
   deps: TabManagerForkDeps,
   context: ForkContext,
-): Promise<string> {
+): Promise<CreatedFork> {
   const activeTab = deps.getActiveTab();
   const sourceOpenSession = activeTab?.openSessionId
     ? deps.sessions.findOpenSession(activeTab.openSessionId)
@@ -77,16 +84,35 @@ async function createForkSession(
     throw new Error('Session fork failed');
   }
 
-  const openSession = await deps.sessions.createSession({
-    sessionFile: forked.sessionFile,
-    sessionId: forked.sessionId,
+  let openSessionId: string | null = null;
+  try {
+    const openSession = await deps.sessions.createSession({
+      sessionFile: forked.sessionFile,
+      sessionId: forked.sessionId,
+    });
+    openSessionId = openSession.id;
+    await deps.sessions.updateSession(openSession.id, {
+      ...(title && { title }),
+      ...(context.currentNote && { currentNote: context.currentNote }),
+      messages: context.messages,
+    });
+    return { openSessionId: openSession.id, sessionFile: forked.sessionFile };
+  } catch (error) {
+    await compensateFork(deps.sessions, {
+      openSessionId,
+      sessionFile: forked.sessionFile,
+    });
+    throw error;
+  }
+}
+
+async function compensateFork(
+  sessions: ChatPorts['sessions'],
+  fork: { openSessionId: string | null; sessionFile: string },
+): Promise<void> {
+  await sessions.discardSessionFile(fork.sessionFile, fork.openSessionId).catch((error) => {
+    logger.warn(`Failed to discard forked session ${fork.sessionFile}`, error);
   });
-  await deps.sessions.updateSession(openSession.id, {
-    ...(title && { title }),
-    ...(context.currentNote && { currentNote: context.currentNote }),
-    messages: context.messages,
-  });
-  return openSession.id;
 }
 
 function restoreForkPreviewIfEmpty(tab: TabData | null, context: ForkContext): void {

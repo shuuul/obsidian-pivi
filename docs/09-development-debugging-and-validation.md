@@ -13,7 +13,7 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Build CSS | `npm run build:css` |
 | Typecheck source and tests | `npm run typecheck` |
 | Lint with zero warnings | `npm run lint` |
-| Documentation capability contracts | `npm run check:docs-contracts` |
+| Documentation capability and local-link contracts | `npm run check:docs-contracts` |
 | Architecture/docs/package/i18n/spec/Pi-pin guards | `npm run check:boundaries` |
 | Exact synchronized Pi pins | `npm run check:pi-pins` |
 | Pi compatibility manifest lifecycle | `npm run check:pi-compatibility` |
@@ -37,7 +37,7 @@ npm run test -- -t "test name"
 
 `scripts/run-jest.js` supplies the Node local-storage file and repository setup. Direct Jest invocation can produce misleading failures. Shared setup fails the owning test on unexpected `console.warn` or `console.error`; tests for intentional recovery/degradation logs must mock and assert that call locally. React tests must await state-producing effects inside `act` rather than suppressing the warning.
 
-`check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and the existing package dependency rules prevent `@pivi/agent` from depending on `@pivi/engine-pi` or concrete host/tool adapters. `check:docs-contracts` keeps current capability claims aligned with `docs/capabilities.json` while allowing historical records and negative compatibility statements. `check:package-readmes` keeps package API claims aligned with those exports.
+`check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and package source cannot rely on root-hoisted dependencies or undeclared exports. Runtime imports/re-exports (including literal dynamic imports) require a runtime or peer declaration, type-only imports may use a development declaration, host runtimes remain peers, and every public export resolves through its active local npm workspace link. `check:docs-contracts` keeps current capability claims aligned with `docs/capabilities.json` and validates relative links and Markdown fragments in root/community docs, handbook/recipe docs, package docs/guidance, and active specs. Changelog and archived-spec source text is historical and excluded, while links from active docs into archived evidence are checked. Inline/reference/image links and URL-encoded paths are supported; fenced and inline code examples are ignored. `check:package-readmes` keeps package API claims aligned with those exports.
 
 `audit:sessions` is read-only. It separates `perf-*` fixtures from real behavior and reports aggregate tool errors, Bash policy retries, malformed JSONL, oversized results/sessions, and message-UI overlay amplification. Add `--json` for machine-readable output. Reports intentionally omit user text, tool arguments, target entry IDs, and JSONL content; findings are diagnostic and do not cause a failing exit status.
 
@@ -71,7 +71,13 @@ Use a configured development vault (`.env.local` `OBSIDIAN_VAULT`). Official CLI
 
 ### Deterministic host smoke
 
-`npm run smoke:obsidian` requires the Obsidian CLI and `OBSIDIAN_VAULT`. It reloads Pivi, opens the chat view, creates and mutates a disposable note, writes and re-reads a disposable session JSONL, asserts `window.fetch` identity is unchanged, and requires `obsidian dev:errors` to report no captured errors. It does not claim full product certification on every OS.
+`npm run smoke:obsidian` requires the Obsidian CLI, `OBSIDIAN_VAULT`, an existing `.pivi-smoke/` directory, and a current development artifact deployed with `npm run dev`. A production or stale artifact has no harness and fails before fixture mutation. The production build intentionally omits the harness and deterministic provider.
+
+The runner uses the configured vault as its working directory, passes an explicit vault selector, and checks the host's canonical vault path before every renderer operation, including cleanup. CLI calls time out after 30 seconds. It retains the original `window.fetch` object across both plugin reloads, opens Pivi through its registered command, and invokes the version-1 development command on the semantic chat-view handle. App composition creates an ordinary durable session and a Pi runtime with the normal registered tool provider; only model/auth/stream are replaced by pi-ai's deterministic faux provider. The scripted Agent loop calls the real `obsidian_write` ToolSpec, then the runner reopens the JSONL through Pivi and compares user/assistant roles, content, tool result, note bytes, and fetch identity.
+
+Each request is limited to its exact UUID note/ledger paths and a safe `.pivi/sessions/**/*.jsonl` path. The harness creates an exclusive ownership ledger after session creation. Cleanup verifies that complete ledger before deleting through the session store and vault adapter, attempts sibling cleanup after failures, retains the ledger when cleanup is incomplete, and never deletes shared directories. Turn failure performs app-owned rollback before returning an error. A timed-out renderer operation has unknown outcome, so the runner does not race it with cleanup; it reports the retained ledger for an ownership-checked retry and does not claim success.
+
+`npm run test -- --runInBand tests/unit/app/realHostSmoke.test.ts tests/unit/scripts/smokeObsidian.test.ts` covers the typed harness and CLI safety paths. The CLI double is not real-host acceptance; record a designated-vault run separately under spec 050.
 
 Useful symptom routes:
 

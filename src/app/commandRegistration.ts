@@ -161,6 +161,48 @@ function registerChatPerfCommands(plugin: Plugin, chat: ChatFacade): void {
   });
 
   plugin.addCommand({
+    id: 'debug-run-projection-workload-suite',
+    name: 'Debug: run projection performance workload suite',
+    callback: () => {
+      const controller = chat.getChatPerfController();
+      const development = findPiviView(chat.app)?.getChatHandle()?.development;
+      const runProjectionWorkload = development?.runProjectionWorkload?.bind(development);
+      if (controller.enabled) {
+        new Notice('Stop the active chat performance trace before running projection workloads.');
+        return;
+      }
+      if (!runProjectionWorkload) {
+        new Notice('A mounted Pivi chat view is required.');
+        return;
+      }
+
+      const paths: string[] = [];
+      const workloads = ['small-text', 'tool-heavy', 'nested-subagent'] as const;
+      void (async () => {
+        for (const workload of workloads) {
+          await runProjectionWorkload(workload, {
+            beforeMeasurement(result) {
+              controller.start(
+                `projection-${result.workload}-${result.sampleEvents}-events-main`,
+                getActiveWindow(),
+                result,
+              );
+              return Promise.resolve();
+            },
+            async afterMeasurement() {
+              paths.push(await controller.stopAndExport(getActiveWindow()));
+            },
+          });
+        }
+        new Notice(`Projection workload traces exported: ${paths.join(', ')}`);
+      })().catch((error: unknown) => {
+        controller.dispose();
+        new Notice(error instanceof Error ? error.message : String(error));
+      });
+    },
+  });
+
+  plugin.addCommand({
     id: 'debug-run-20-subagents-workload',
     name: 'Debug: run isolated 20-subagent workload',
     callback: () => {

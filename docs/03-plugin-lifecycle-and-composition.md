@@ -98,16 +98,18 @@ sequenceDiagram
   participant T as TabManager
   participant W as Workspace services
   O->>P: onunload()
-  P->>V: collect immediate persist promises
+  P->>P: reject new work + invalidate initialization
+  P->>V: collect semantic shutdown promises
   V->>T: snapshot tab bindings
-  P->>P: invalidate initialization generation
+  T->>T: cancel turns, save sessions, destroy tabs
+  P->>P: release owned journal binding
   P->>W: dispose()
   W->>W: reject queued subagents
   W->>W: stop runtimes, MCP, providers, pools
-  P->>P: settle persistence and disposal
+  P->>P: settle all failures
 ```
 
-View close persists before adapter disposal. Adapter disposal destroys tabs and releases bridges, stores, portals, listeners, and render adapters even when cleanup fails. Plugin unload starts persistence for every mounted view before invalidating workspace services, then disposes instance-owned MCP OAuth, provider, connection-pool, runtime, and subagent resources. Unload persistence remains best-effort: the device-local session journal and source fingerprints are left so the next startup can reconcile deterministically even when a final asynchronous flush does not complete. The deterministic `npm run smoke:obsidian` host check reloads Pivi, opens the view, exercises disposable note/session artifacts, and asserts `window.fetch` identity plus zero captured runtime errors.
+View close persists before adapter disposal. Adapter disposal destroys tabs and releases bridges, stores, portals, listeners, and render adapters even when cleanup fails. Plugin unload starts every mounted view shutdown synchronously, waits for captured tab bindings plus active-turn cancellation/session saves, releases only that application instance's journal binding, and then disposes instance-owned MCP OAuth, provider, connection-pool, runtime, and subagent resources. A slow or failed sibling save cannot skip another view or prevent later cleanup. Repeated shutdown calls share one promise, and an old instance's compare-and-release journal token cannot clear a newer reload's binding. Obsidian's shell callback remains void, so force-quit durability still relies on the device-local journal and source fingerprints. The deterministic `npm run smoke:obsidian` host check reloads Pivi, opens the view, exercises disposable note/session artifacts, and asserts `window.fetch` identity plus zero captured runtime errors.
 
 Cleanup must tolerate partial initialization and repeated calls. Connections or agents that finish construction during shutdown must still be disposed. Failures that can cause state divergence are logged or propagated; best-effort cleanup is narrow and documented.
 

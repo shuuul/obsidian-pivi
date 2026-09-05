@@ -239,8 +239,11 @@ describe('MessageList', () => {
       now: jest.fn(() => 0),
       onMarkdownRender: jest.fn(),
       onProjectionCommit: jest.fn(),
+      onProjectionDispatch: jest.fn(),
+      onProjectionEntityCommit: jest.fn(),
       onProjectionEvent: jest.fn(),
       onProjectionPaint: jest.fn(),
+      onProjectionSnapshot: jest.fn(),
       onScrollAnchor: jest.fn(),
       onVirtualRows: jest.fn(),
     };

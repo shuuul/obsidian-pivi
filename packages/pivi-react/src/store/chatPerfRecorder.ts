@@ -3,6 +3,16 @@ export type ChatPerfProjectionEventKind =
   | 'messages.replace'
   | 'messages.truncate';
 
+export type ChatPerfProjectionEventType =
+  | ChatPerfProjectionEventKind
+  | 'agent.upsert'
+  | 'messages.prepend-page'
+  | 'messages.reveal-previous-page'
+  | 'projection.flush'
+  | 'run.terminal'
+  | 'text.append'
+  | 'tool.upsert';
+
 export type ChatPerfProjectionCommitReason =
   | 'animation-frame'
   | 'explicit-flush'
@@ -19,6 +29,26 @@ export interface ChatPerfRecorder {
   onProjectionEvent(
     kind: ChatPerfProjectionEventKind,
     entityId: string | null,
+    ownerWindow: Window | null,
+  ): void;
+  onProjectionDispatch(
+    eventType: ChatPerfProjectionEventType,
+    accepted: boolean,
+    validationDurationMs: number,
+    totalDurationMs: number,
+    ownerWindow: Window | null,
+  ): void;
+  onProjectionSnapshot(
+    eventType: ChatPerfProjectionEventType,
+    messageId: string,
+    durationMs: number,
+    visitedEntities: number,
+    clonedEntities: number,
+    ownerWindow: Window | null,
+  ): void;
+  onProjectionEntityCommit(
+    messageId: string,
+    durationMs: number,
     ownerWindow: Window | null,
   ): void;
   onProjectionCommit(
@@ -56,8 +86,11 @@ export const NOOP_CHAT_PERF_RECORDER: ChatPerfRecorder = Object.freeze({
   now: () => 0,
   onMarkdownRender: () => undefined,
   onProjectionCommit: () => undefined,
+  onProjectionDispatch: () => undefined,
+  onProjectionEntityCommit: () => undefined,
   onProjectionEvent: () => undefined,
   onProjectionPaint: () => undefined,
+  onProjectionSnapshot: () => undefined,
   onScrollAnchor: () => undefined,
   onVirtualRows: () => undefined,
 });

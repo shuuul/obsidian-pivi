@@ -1,4 +1,5 @@
-import { Agent, type AgentMessage, type AgentTool, type ThinkingLevel } from '@earendil-works/pi-agent-core';
+import { Agent, type AgentMessage, type AgentTool, type StreamFn, type ThinkingLevel } from '@earendil-works/pi-agent-core';
+import type { AuthResult } from '@earendil-works/pi-ai';
 import { getProviderAuthFailureHint } from '@pivi/agent/auth/providerAuthFailureHint';
 import { getProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
@@ -87,6 +88,13 @@ export interface PiChatRuntimeNetwork {
   mcpSecretStorage?: SyncSecretStore;
 }
 
+/** Engine-local provider seam used by development harnesses and focused tests. */
+export interface PiChatRuntimeProviderOverride {
+  model: PiResolvedModel;
+  streamFn: StreamFn;
+  auth: AuthResult;
+}
+
 const POST_LOAD_MODEL_METADATA_PROVIDER_IDS = new Set([
   'ollama',
   'lmstudio',
@@ -142,6 +150,7 @@ export class PiChatRuntime implements PiChatService {
      * Never requested by {@link buildSubagentTools} — structural exclusion, not filtering.
      */
     private readonly mainOnlyToolProvider: PiMainOnlyToolProvider | null = null,
+    private readonly providerOverride: PiChatRuntimeProviderOverride | null = null,
   ) {
     this.capabilityApproval = capabilityApproval;
     this.mcpManager = mcpManager;
@@ -286,7 +295,8 @@ export class PiChatRuntime implements PiChatService {
         thinkingLevel: this.resolveThinkingLevelForModel(model),
       },
       convertToLlm: (messages) => sanitizeAgentMessagesForLlm(messages),
-      streamFn: (streamModel, context, options) => streamPiAiModelsSimple(streamModel, context, options),
+      streamFn: this.providerOverride?.streamFn
+        ?? ((streamModel, context, options) => streamPiAiModelsSimple(streamModel, context, options)),
       sessionId: this.sessionId ?? undefined,
       steeringMode: 'one-at-a-time',
     });
@@ -839,7 +849,7 @@ export class PiChatRuntime implements PiChatService {
    * Settings store models as "<provider>/<modelId>".
    */
   private resolveModel(): PiResolvedModel | null {
-    return resolvePiModel(this.plugin);
+    return this.providerOverride?.model ?? resolvePiModel(this.plugin);
   }
 
   /**
@@ -886,6 +896,9 @@ export class PiChatRuntime implements PiChatService {
   }
 
   private async resolveAuth(model: NonNullable<ReturnType<typeof resolvePiModel>>) {
+    if (this.providerOverride) {
+      return this.providerOverride.auth;
+    }
     try {
       return await resolvePiProviderAuth(this.plugin, model);
     } catch (error) {

@@ -17,9 +17,9 @@ const excludedDirectories = new Set([
   'build',
   'coverage',
   'node_modules',
-  'specs',
 ]);
 const excludedFiles = new Set(['CHANGELOG.md']);
+const excludedSourcePrefixes = ['specs/archive/'];
 const transportLabels = new Map([
   ['streamable-http', 'Streamable HTTP'],
   ['sse', 'SSE'],
@@ -116,12 +116,131 @@ function listActiveMarkdown(directory = rootDir) {
     if (entry.isDirectory()) return listActiveMarkdown(fullPath);
     if (!entry.isFile() || !entry.name.endsWith('.md')) return [];
     const relativePath = path.relative(rootDir, fullPath).split(path.sep).join('/');
-    return excludedFiles.has(relativePath) ? [] : [fullPath];
+    return excludedFiles.has(relativePath)
+      || excludedSourcePrefixes.some(prefix => relativePath.startsWith(prefix))
+      ? []
+      : [fullPath];
   });
 }
 
 function lineNumberAt(contents, index) {
   return contents.slice(0, index).split('\n').length;
+}
+
+function withoutFencedCode(contents) {
+  const lines = contents.split('\n');
+  let fence = null;
+  return lines.map((line) => {
+    const match = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+    if (!fence && match) {
+      fence = { character: match[1][0], length: match[1].length };
+      return '';
+    }
+    if (
+      fence
+      && new RegExp(`^ {0,3}${fence.character}{${fence.length},}\\s*$`).test(line)
+    ) {
+      fence = null;
+      return '';
+    }
+    return fence ? '' : line;
+  }).join('\n');
+}
+
+function withoutMarkdownCode(contents) {
+  return withoutFencedCode(contents).replace(/(`+)([^`\n]*?)\1/g, match => ' '.repeat(match.length));
+}
+
+function markdownHeadingAnchors(contents) {
+  const anchors = new Set();
+  const duplicateCounts = new Map();
+  for (const line of withoutFencedCode(contents).split('\n')) {
+    const heading = /^ {0,3}#{1,6}\s+(.+?)\s*#*\s*$/.exec(line);
+    if (!heading) continue;
+    const base = heading[1]
+      .replace(/<[^>]*>/g, '')
+      .replace(/[^\p{L}\p{N}\p{M}\s_-]/gu, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s/g, '-');
+    const duplicate = duplicateCounts.get(base) ?? 0;
+    duplicateCounts.set(base, duplicate + 1);
+    anchors.add(duplicate === 0 ? base : `${base}-${duplicate}`);
+  }
+  for (const match of contents.matchAll(/<(?:a|[A-Za-z][\w:-]*)\s+[^>]*\bid=["']([^"']+)["'][^>]*>/g)) {
+    anchors.add(match[1]);
+  }
+  return anchors;
+}
+
+function decodeLinkPart(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+}
+
+function validateMarkdownLinks(filePath, contents) {
+  const relativeSource = path.relative(rootDir, filePath).split(path.sep).join('/');
+  const searchable = withoutMarkdownCode(contents);
+  const references = new Map();
+  for (const match of searchable.matchAll(
+    /^ {0,3}\[([^\]]+)\]:\s*(?:<([^>\n]+)>|([^\s]+))(?:\s+.*)?$/gm,
+  )) {
+    references.set(match[1].trim().toLowerCase(), match[2] ?? match[3]);
+  }
+
+  const links = [];
+  for (const match of searchable.matchAll(
+    /!?\[[^\]\n]*\]\(\s*(?:<([^>\n]+)>|([^\s)\n]+))(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/g,
+  )) {
+    links.push({ destination: match[1] ?? match[2], index: match.index });
+  }
+  for (const match of searchable.matchAll(/!?\[([^\]\n]+)\]\[([^\]\n]*)\]/g)) {
+    const key = (match[2] || match[1]).trim().toLowerCase();
+    const destination = references.get(key);
+    if (destination) links.push({ destination, index: match.index });
+  }
+
+  const linkFailures = [];
+  for (const { destination, index } of links) {
+    if (/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(destination)) continue;
+    const hashIndex = destination.indexOf('#');
+    const rawPathAndQuery = hashIndex < 0 ? destination : destination.slice(0, hashIndex);
+    const rawFragment = hashIndex < 0 ? '' : destination.slice(hashIndex + 1);
+    const rawPath = rawPathAndQuery.split('?')[0];
+    const decodedPath = decodeLinkPart(rawPath);
+    const decodedFragment = decodeLinkPart(rawFragment);
+    const line = lineNumberAt(searchable, index);
+    if (decodedPath === null || decodedFragment === null) {
+      linkFailures.push(`${relativeSource}:${line} contains invalid URL encoding in link ${JSON.stringify(destination)}`);
+      continue;
+    }
+    const target = decodedPath.length === 0
+      ? filePath
+      : decodedPath.startsWith('/')
+        ? path.resolve(rootDir, decodedPath.slice(1))
+        : path.resolve(path.dirname(filePath), decodedPath);
+    const relativeTarget = path.relative(rootDir, target);
+    if (relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
+      linkFailures.push(`${relativeSource}:${line} link escapes the repository: ${JSON.stringify(destination)}`);
+      continue;
+    }
+    if (!fs.existsSync(target)) {
+      linkFailures.push(`${relativeSource}:${line} link target does not exist: ${JSON.stringify(destination)}`);
+      continue;
+    }
+    if (
+      decodedFragment
+      && fs.statSync(target).isFile()
+      && path.extname(target).toLowerCase() === '.md'
+      && !markdownHeadingAnchors(fs.readFileSync(target, 'utf8')).has(decodedFragment.toLowerCase())
+    ) {
+      linkFailures.push(`${relativeSource}:${line} Markdown fragment does not exist: ${JSON.stringify(destination)}`);
+    }
+  }
+  return linkFailures;
 }
 
 const manifest = readManifest();
@@ -146,17 +265,19 @@ if (failures.length === 0) {
 
   for (const filePath of listActiveMarkdown()) {
     const contents = fs.readFileSync(filePath, 'utf8');
+    const searchable = withoutMarkdownCode(contents);
     const relativePath = path.relative(rootDir, filePath).split(path.sep).join('/');
     for (const entry of manifest.removedCapabilities) {
       for (const pattern of removedCapabilityPatterns.get(entry.id)) {
-        const match = pattern.exec(contents);
+        const match = pattern.exec(searchable);
         if (match) {
           failures.push(
-            `${relativePath}:${lineNumberAt(contents, match.index)} presents removed capability ${entry.id} as current`,
+            `${relativePath}:${lineNumberAt(searchable, match.index)} presents removed capability ${entry.id} as current`,
           );
         }
       }
     }
+    failures.push(...validateMarkdownLinks(filePath, contents));
   }
 }
 
@@ -168,4 +289,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('Docs capability contracts passed.');
+console.log('Docs contracts passed.');

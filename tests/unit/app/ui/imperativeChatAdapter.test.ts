@@ -9,12 +9,17 @@ import {
 import type { ChatMessage, SessionSummary } from '@pivi/agent/runtime';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { Component, type Editor, type MarkdownView } from 'obsidian';
+import { createHash } from 'crypto';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import { createImperativeChatAdapter } from '@/app/ui/imperativeChatAdapter';
 import {
+  DEVELOPMENT_PROJECTION_SAMPLE_EVENTS,
+  DEVELOPMENT_PROJECTION_WARMUP_EVENTS,
+  DEVELOPMENT_PROJECTION_WORKLOADS,
   runDevelopmentMarkdownStream,
   runDevelopmentMarkdownStreamInIsolatedTab,
+  runDevelopmentProjectionWorkload,
   runDevelopmentTabSwitching,
 } from '@/app/ui/imperativeChatDevelopment';
 import { ChatState } from '@/ui/chat/state/ChatState';
@@ -471,8 +476,11 @@ describe('imperative chat semantic view handle', () => {
       now: () => now,
       onMarkdownRender: jest.fn(),
       onProjectionCommit: jest.fn(),
+      onProjectionDispatch: jest.fn(),
+      onProjectionEntityCommit: jest.fn(),
       onProjectionEvent: jest.fn(),
       onProjectionPaint: jest.fn(),
+      onProjectionSnapshot: jest.fn(),
       onScrollAnchor: jest.fn(),
       onVirtualRows: jest.fn(),
     };
@@ -553,6 +561,131 @@ describe('imperative chat semantic view handle', () => {
     expect(manager.switchToTab).toHaveBeenLastCalledWith('original');
     expect(manager.closeTab).toHaveBeenCalledWith(synthetic.id, true);
     expect([...tabs.keys()]).toEqual(['original']);
+  });
+
+  it.each(Object.keys(DEVELOPMENT_PROJECTION_WORKLOADS) as Array<
+    keyof typeof DEVELOPMENT_PROJECTION_WORKLOADS
+  >)('runs the fixed %s projection workload and preserves its fixture hash', async (workload) => {
+    let now = 0;
+    let frameId = 0;
+    const ownerWindow = {
+      document: {
+        visibilityState: 'visible',
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      },
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        const id = ++frameId;
+        queueMicrotask(() => {
+          now += 16;
+          callback(now);
+        });
+        return id;
+      },
+      cancelAnimationFrame: jest.fn(),
+      setTimeout: (callback: TimerHandler, delay?: number) => {
+        const id = ++frameId;
+        queueMicrotask(() => {
+          now += delay ?? 0;
+          if (typeof callback === 'function') callback();
+        });
+        return id;
+      },
+      clearTimeout: jest.fn(),
+    } as unknown as Window;
+    let recording = false;
+    const recorder: ChatPerfRecorder = {
+      get enabled() {
+        return recording;
+      },
+      now: () => now,
+      onMarkdownRender: jest.fn(),
+      onProjectionCommit: jest.fn(),
+      onProjectionDispatch: jest.fn(),
+      onProjectionEntityCommit: jest.fn(),
+      onProjectionEvent: jest.fn(),
+      onProjectionPaint: jest.fn(),
+      onProjectionSnapshot: jest.fn(),
+      onScrollAnchor: jest.fn(),
+      onVirtualRows: jest.fn(),
+    };
+    const original = createTab({ id: 'original' });
+    const state = new ChatState({}, recorder, { projectionScopeId: `fixture-${workload}` });
+    state.projectionStore.setOwnerWindow(ownerWindow);
+    const synthetic = createTab({
+      id: 'synthetic',
+      openSessionId: null,
+      sessionFile: null,
+      state,
+      dom: {
+        welcomePortalEl: createPortalElement(),
+        queuePortalEl: createPortalElement(),
+        todoPortalEl: createPortalElement(),
+        navigationPortalEl: createPortalElement(),
+        messagesPortalEl: createPortalElement(),
+        composerPortalEl: createPortalElement(),
+        messagesBottomControlsEl: createPortalElement(),
+        messagesEl: { ownerDocument: { defaultView: ownerWindow } } as unknown as HTMLElement,
+      },
+    });
+    const tabs = new Map<string, TestTab>([[original.id, original]]);
+    const manager = createManager();
+    let activeTabId = original.id;
+    manager.getActiveTabId.mockImplementation(() => activeTabId);
+    manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
+    manager.createTab.mockImplementation(async (_openSessionId, tabId) => {
+      synthetic.id = tabId!;
+      tabs.set(synthetic.id, synthetic);
+      activeTabId = synthetic.id;
+      return synthetic;
+    });
+    manager.switchToTab.mockImplementation(async (tabId: string) => {
+      activeTabId = tabId;
+    });
+    manager.closeTab.mockImplementation(async (tabId: string) => tabs.delete(tabId));
+    const beforeMeasurement = jest.fn(async () => {
+      recording = true;
+    });
+    const afterMeasurement = jest.fn(async () => {
+      recording = false;
+    });
+
+    const result = await runDevelopmentProjectionWorkload(
+      manager as unknown as TabManager,
+      workload,
+      { beforeMeasurement, afterMeasurement },
+    );
+
+    const fixture = DEVELOPMENT_PROJECTION_WORKLOADS[workload];
+    expect(createHash('sha256').update(JSON.stringify(fixture.message)).digest('hex'))
+      .toBe(fixture.fixtureSha256);
+    expect(result).toEqual({
+      workload,
+      fixtureSha256: fixture.fixtureSha256,
+      warmupEvents: DEVELOPMENT_PROJECTION_WARMUP_EVENTS,
+      sampleEvents: DEVELOPMENT_PROJECTION_SAMPLE_EVENTS,
+    });
+    expect(beforeMeasurement).toHaveBeenCalledTimes(1);
+    expect(afterMeasurement).toHaveBeenCalledTimes(1);
+    expect(recorder.onProjectionSnapshot).toHaveBeenCalledTimes(
+      DEVELOPMENT_PROJECTION_SAMPLE_EVENTS,
+    );
+    expect(recorder.onProjectionDispatch).toHaveBeenCalledTimes(
+      DEVELOPMENT_PROJECTION_SAMPLE_EVENTS,
+    );
+    expect(recorder.onProjectionSnapshot).toHaveBeenLastCalledWith(
+      fixture.eventType,
+      expect.any(String),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
+      ownerWindow,
+    );
+    expect(manager.switchToTab).toHaveBeenLastCalledWith('original');
+    expect(manager.closeTab).toHaveBeenCalledWith(synthetic.id, true);
+    expect([...tabs.keys()]).toEqual(['original']);
+    state.projectionStore.dispose();
   });
 
   it('creates and removes a deterministic ten-tab switching workload', async () => {
@@ -1482,5 +1615,23 @@ describe('imperative chat semantic view handle', () => {
       openTabs: [],
       activeTabId: null,
     });
+  });
+
+  it('persists before destroying the view runtime during shutdown', async () => {
+    const events: string[] = [];
+    const { handle, manager, mount, persistTabStateImmediate } = createHarness();
+    persistTabStateImmediate.mockImplementation(async () => {
+      events.push('persist');
+    });
+    manager.destroy.mockImplementation(async () => {
+      events.push('destroy');
+    });
+    await mount();
+
+    await handle.maintenance.shutdown();
+    await handle.maintenance.persistState();
+
+    expect(events).toEqual(['persist', 'destroy']);
+    expect(persistTabStateImmediate).toHaveBeenCalledTimes(1);
   });
 });

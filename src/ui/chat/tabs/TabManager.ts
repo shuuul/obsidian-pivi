@@ -676,17 +676,25 @@ export class TabManager {
 
   /** Destroys all tabs and cleans up resources. */
   async destroy(): Promise<void> {
-    // Save all sessions in parallel (independent per-tab)
-    await Promise.all(
-      Array.from(this.tabs.values()).map(
-        tab => tab.controllers.openSessionController?.save() ?? Promise.resolve()
-      )
-    );
-
-    // Destroy all tabs in parallel (independent per-tab, must run after saves complete)
-    await Promise.all(Array.from(this.tabs.values()).map(tab => destroyTab(tab)));
+    const tabs = Array.from(this.tabs.values());
+    for (const tab of tabs) {
+      tab.controllers.inputController?.cancelStreaming();
+    }
+    const results = await Promise.allSettled([
+      ...tabs.map(tab => tab.controllers.openSessionController?.save() ?? Promise.resolve()),
+    ]);
+    results.push(...await Promise.allSettled(tabs.map(tab => destroyTab(tab))));
 
     this.tabs.clear();
     this.activeTabId = null;
+
+    const errors: unknown[] = [];
+    for (const result of results) {
+      if (result.status === 'rejected') errors.push(result.reason);
+    }
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1) {
+      throw new AggregateError(errors, 'Failed to save and destroy chat tabs.');
+    }
   }
 }
