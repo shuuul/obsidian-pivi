@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.26.0](https://github.com/shuuul/obsidian-pivi/compare/0.25.1...0.26.0) (2026-09-05)
+
+### Features
+
+* persist Bash and external-directory grants as device-local structured scopes, including nested family verbs such as `uv python` and `pixi global` ([#120](https://github.com/shuuul/obsidian-pivi/issues/120))
+* move deleted chats into `.pivi/trash/sessions/` and reclaim empty sessions without putting them in Recently deleted ([#120](https://github.com/shuuul/obsidian-pivi/issues/120))
+
+### Bug Fixes
+
+* harden trustworthy task execution ([#119](https://github.com/shuuul/obsidian-pivi/issues/119))
+
 ## [0.25.1](https://github.com/shuuul/obsidian-pivi/compare/0.25.0...0.25.1) (2026-09-05)
 
 ### Maintenance
