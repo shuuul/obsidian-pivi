@@ -55,7 +55,7 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
       isPathAllowed: jest.fn().mockReturnValue(true),
     },
     cli: { run: jest.fn().mockResolvedValue('ok') } as never,
-    settings: { cliEnabled: true } as never,
+    settings: { cliEnabled: true, allowExternalRead: true } as never,
     vaultName: 'vault',
     processRunner: { run: jest.fn() },
     ...overrides,
