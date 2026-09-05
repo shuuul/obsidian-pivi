@@ -66,6 +66,32 @@ export function createImperativeChatViewHandle(
     getTabManager()?.prefetchSlashCommandCaches();
   };
 
+  let shutdownPromise: Promise<void> | null = null;
+  const shutdown = (): Promise<void> => {
+    if (shutdownPromise) return shutdownPromise;
+    const tabManager = getTabManager();
+    if (!tabManager) return Promise.resolve();
+    const state = tabManager.getPersistedState();
+    shutdownPromise = (async () => {
+      const errors: unknown[] = [];
+      try {
+        await persistTabStateImmediate(state);
+      } catch (error) {
+        errors.push(error);
+      }
+      try {
+        await tabManager.destroy();
+      } catch (error) {
+        errors.push(error);
+      }
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1) {
+        throw new AggregateError(errors, 'Pivi chat shutdown failed.');
+      }
+    })();
+    return shutdownPromise;
+  };
+
   return {
     commands: {
       getState: () => {
@@ -144,10 +170,15 @@ export function createImperativeChatViewHandle(
     },
     maintenance: {
       async persistState() {
+        if (shutdownPromise) {
+          await shutdownPromise;
+          return;
+        }
         const tabManager = getTabManager();
         if (!tabManager) return;
         await persistTabStateImmediate(tabManager.getPersistedState());
       },
+      shutdown,
       async resetSession(openSessionId) {
         for (const tab of getTabManager()?.getAllTabs() ?? []) {
           if (tab.openSessionId !== openSessionId) continue;

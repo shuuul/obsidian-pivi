@@ -68,16 +68,30 @@ const logger = new PluginLogger('SessionTreeStore');
 interface BoundSessionJournal {
   store: SessionJournalStore;
   now: () => number;
+  owner: symbol;
 }
 
 let boundJournal: BoundSessionJournal | null = null;
+
+export interface SessionJournalBinding {
+  /** Releases only this binding; returns false after replacement or prior release. */
+  release(): boolean;
+}
 
 /** Bind the vault-scoped device-local session journal used by live appends. */
 export function bindSessionJournal(
   store: SessionJournalStore | null,
   now: () => number = () => Date.now(),
-): void {
-  boundJournal = store ? { store, now } : null;
+): SessionJournalBinding {
+  const owner = Symbol('session-journal-owner');
+  boundJournal = store ? { store, now, owner } : null;
+  return {
+    release() {
+      if (boundJournal?.owner !== owner) return false;
+      boundJournal = null;
+      return true;
+    },
+  };
 }
 
 export function getBoundSessionJournal(): SessionJournalStore | null {

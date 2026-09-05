@@ -3,6 +3,7 @@ import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { PiviChatView } from '@/app/hostContracts';
 import {
   deleteSession,
+  discardSessionFile,
   type PluginSessionContext,
   purgeExpiredDeletedSessionFiles,
   purgeDeletedSessionFiles,
@@ -168,6 +169,47 @@ describe('plugin session API semantic view maintenance', () => {
 
     await expect(deleteSession(context, session.id)).rejects.toThrow('save failed');
     expect(remove).not.toHaveBeenCalled();
+  });
+
+  it('physically discards a failed fork after removing its open registration', async () => {
+    const events: string[] = [];
+    const sessionFile = '.pivi/sessions/failed-fork.jsonl';
+    const context = createContext({
+      sessionManager: {
+        delete: jest.fn(async () => {
+          events.push('registration');
+          return null;
+        }),
+      } as never,
+      requireSessionStore: () => ({
+        deleteSession: jest.fn(async () => {
+          events.push('file');
+        }),
+      }) as never,
+    });
+
+    await discardSessionFile(context, sessionFile, 'fork-open');
+
+    expect(events).toEqual(['registration', 'file']);
+    expect(context.storage.updateDeletedSessionFiles).not.toHaveBeenCalled();
+  });
+
+  it('continues failed-fork file cleanup when registration cleanup fails', async () => {
+    const removeFile = jest.fn(async () => undefined);
+    const registrationError = new Error('registration failed');
+    const context = createContext({
+      sessionManager: {
+        delete: jest.fn(async () => { throw registrationError; }),
+      } as never,
+      requireSessionStore: () => ({ deleteSession: removeFile }) as never,
+    });
+
+    await expect(discardSessionFile(
+      context,
+      '.pivi/sessions/failed-fork.jsonl',
+      'fork-open',
+    )).rejects.toMatchObject({ errors: [registrationError] });
+    expect(removeFile).toHaveBeenCalledTimes(1);
   });
 
   it('protects session files bound by a live semantic view handle during purge', async () => {

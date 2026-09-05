@@ -77,7 +77,7 @@ Coordinator owns this file and the index. Claim a row before implementation or d
 | ID | Deliverable | Owner | Status | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- |
 | WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Amp | In progress | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
-| WS-02 | P1 complete fork compensation and ordered instance shutdown | Unassigned | Pending | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
+| WS-02 | P1 complete fork compensation and ordered instance shutdown | Amp | In progress | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
 | WS-03 | P2 projection cost baselines and justified local optimization | Unassigned | Pending | P1 accepted | Fixed workloads, ownership/immutability regressions, before/after traces |
 | WS-04 | P2 execution read-only task and recovery visibility | Unassigned | Blocked | Grill decisions; P1 accepted | Adversarial tool matrix, recipe walkthrough, recovery states, UI/i18n checks |
 | WS-05 | P2 package/docs gates, contributor slice, final integration | Unassigned | Pending | P1 first; final integration depends on all retained scope | Consumer resolution and link fixtures; full local quality gates |
@@ -209,6 +209,13 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Safety: requests accept only exact UUID-derived smoke note/ledger paths and safe session paths. An exclusive ledger records session ownership before the turn; failed turns roll back, explicit cleanup verifies the complete ledger and continues sibling cleanup, and incomplete/unknown cleanup retains it for retry. The CLI compares semantic roles/content/tool result/note bytes after reload and retains the original fetch object across both reloads.
 - Evidence: Node 24 source/test typecheck passed; focused harness, CLI-double, and injected-provider tests passed; an in-memory production build was 4,170,384 bytes and contained none of `Pivi deterministic smoke`, `pivi-smoke-tool-`, `runRealHostSmoke`, `createFauxCore`, or `Pivi smoke harness`. No artifact was deployed and no designated vault was mutated.
 - Remaining: run architecture/docs/spec gates after final review, then obtain authorization to deploy a development artifact to the designated disposable vault and record the required real-host environment/digest/cleanup evidence. Production lifecycle sanity remains a separate evidence row.
+
+### 2026-09-05 — Amp — WS-02 local implementation
+
+- Changed: fork ownership now begins at the new JSONL and compensates registration, metadata update, null-tab, and thrown-tab failures through a dedicated physical-discard session-owner port. Open-registration and file cleanup continue independently, while compensation logging preserves the primary failure.
+- Shutdown: `PiviApplication.shutdown()` is a single-flight promise. It rejects new work synchronously, starts all semantic view shutdowns, captures tab bindings once, cancels active turns, attempts every session save and tab teardown, releases an owner-token journal binding, then disposes workspace resources. A later host close cannot overwrite captured bindings with an empty manager, and an old instance cannot clear a newer journal owner.
+- Evidence: Node 24 source/test typecheck; focused zero-warning ESLint; architecture/docs/spec/package/i18n/Pi boundaries; 7 focused suites / 134 tests covering fork fault boundaries, cleanup continuation, deferred save order, save-failure teardown, repeated shutdown, late initialization disposal, and stale journal release. The full Jest run passed 355 suites / 3,173 tests; one build-compatibility worker was externally terminated by `SIGSEGV`, and its 7 tests passed immediately in an isolated in-band run. Existing engine tests exercise production-path source fingerprint rejection and real temporary JSONL bytes; a designated-vault restore remains unrun.
+- Remaining: obtain explicit authorization before deploying/running the development real-host smoke. Record live reload/restore and cleanup evidence before marking WS-01 or WS-02 Done.
 
 ## Completion summary
 

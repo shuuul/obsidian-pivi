@@ -127,6 +127,8 @@ export interface PiviManagementRefreshFailure {
 /** App-owned maintenance operations over all tabs in one mounted view. */
 export interface PiviChatViewMaintenance {
   persistState(): Promise<void>;
+  /** Persists bindings, cancels active work, saves sessions, and releases view runtimes. */
+  shutdown(): Promise<void>;
   resetSession(openSessionId: string): Promise<void>;
   getBoundSessionFiles(): string[];
   hasSession(openSessionId: string): boolean;
@@ -384,6 +386,7 @@ export interface SessionsFacade {
   openSessionByFile(sessionFile: string): Promise<OpenSessionState>;
   deleteSession(id: string): Promise<void>;
   deleteSessionFile(sessionFile: string, id?: string | null): Promise<void>;
+  discardSessionFile(sessionFile: string, id?: string | null): Promise<void>;
   renameSession(id: string, title: string, titleSource?: OpenSessionState['titleSource']): Promise<void>;
   updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
   forkSessionAt(openSession: OpenSessionState, atEntryId: string): Promise<{ sessionFile: string; sessionId: string } | null>;

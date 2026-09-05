@@ -129,6 +129,7 @@ Pivi management confirmation is a dedicated per-tab, one-shot bridge under `comp
 - Session switching must save current state, dismiss inline prompts, clear capability session grants, orphan/clear active subagents, reset queued/transient UI, sync the service, and re-publish stored messages into the React snapshot.
 - Archiving hides a tab without destroying its runtime/session state. Closing destroys it. Do not collapse these behaviors.
 - Fork and redo operations require persisted user/assistant entry IDs. Preserve `userMessageId`, `assistantMessageId`, and `parentEntryId` through rendering and hydration.
+- A fork owns its new JSONL as soon as storage creates it. Registration, metadata update, and tab creation are one compensated use case: every later failure permanently discards only that new file through `ChatPorts.sessions`, and cleanup failure never replaces the primary error.
 
 ### Controllers, streaming, and rendering
 
@@ -161,6 +162,7 @@ Pivi management confirmation is a dedicated per-tab, one-shot bridge under `comp
 ### Ownership and cleanup
 
 - Every tab owns its controllers, renderer, state, subagent manager, UI adapters, service, subscriptions, and event cleanup callbacks.
+- View shutdown captures persisted bindings once, cancels active turns, attempts every session save and tab teardown even after sibling failure, and must not persist the resulting empty manager state during a later host `onClose()`.
 - Register manual DOM listeners in `tab.dom.eventCleanups` or an Obsidian `Component`; remove vault event refs and timers on destroy.
 - Do not retain tab DOM references after close. Cleanup must tolerate partially initialized tabs and repeated calls.
 - `services/` manages presentation correlation only; it must not execute subagents or become a second runtime.

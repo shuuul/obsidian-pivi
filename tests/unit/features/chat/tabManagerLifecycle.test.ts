@@ -1,6 +1,7 @@
 import type { ChatMessage } from '@pivi/agent/runtime';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type { ForkContext } from '@/ui/chat/tabs/tabFork';
+import { forkToNewTab } from '@/ui/chat/tabs/tabManagerFork';
 import type { TabData, TabManagerCallbacks } from '@/ui/chat/tabs/types';
 import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
@@ -456,6 +457,140 @@ describe('TabManager lifecycle guards', () => {
       title: 'Fork: Source title (#1)',
     }));
     expect(tab?.state.messages).toEqual(forkMessages);
+  });
+
+  it.each([
+    ['open-session registration', 'createSession', null],
+    ['fork metadata update', 'updateSession', 'fork-open'],
+  ] as const)('discards the fork when %s fails', async (_label, failingStep, expectedOpenId) => {
+    const primary = new Error(`${failingStep} failed`);
+    const { manager, ports } = makeManager();
+    await manager.createTab('source', 'source-tab');
+    (ports.sessions[failingStep] as jest.Mock).mockRejectedValueOnce(primary);
+
+    await expect(manager.forkToNewTab({
+      messages: [],
+      sourceSessionId: 'source-session',
+      forkAtEntryId: 'user-1',
+      resumeAt: 'assistant-1',
+    })).rejects.toBe(primary);
+
+    expect(ports.sessions.discardSessionFile).toHaveBeenCalledWith(
+      'fork.jsonl',
+      expectedOpenId,
+    );
+  });
+
+  function createForkDeps(createTab: () => Promise<TabData | null>) {
+    const ports = createFakeChatPorts({
+      sessions: {
+        findOpenSession: jest.fn(() => ({
+          id: 'source',
+          sessionFile: 'source.jsonl',
+        }) as never),
+        forkSession: jest.fn(async () => ({
+          sessionFile: 'fork.jsonl',
+          sessionId: 'fork-session',
+        })),
+        createSession: jest.fn(async () => ({ id: 'fork-open' }) as never),
+      },
+    });
+    return {
+      ports,
+      deps: {
+        sessions: ports.sessions,
+        getActiveTab: () => makeTab('source-tab', 'source'),
+        createTab,
+      },
+    };
+  }
+
+  const forkContext: ForkContext = {
+    messages: [],
+    sourceSessionId: 'source-session',
+    forkAtEntryId: 'user-1',
+    resumeAt: 'assistant-1',
+  };
+
+  it('discards the fork when tab creation returns null', async () => {
+    const { deps, ports } = createForkDeps(async () => null);
+
+    await expect(forkToNewTab(deps, forkContext)).resolves.toBeNull();
+    expect(ports.sessions.discardSessionFile).toHaveBeenCalledWith(
+      'fork.jsonl',
+      'fork-open',
+    );
+  });
+
+  it('discards the fork and preserves an error thrown by tab creation', async () => {
+    const primary = new Error('tab failed');
+    const { deps, ports } = createForkDeps(async () => { throw primary; });
+
+    await expect(forkToNewTab(deps, forkContext)).rejects.toBe(primary);
+    expect(ports.sessions.discardSessionFile).toHaveBeenCalledWith(
+      'fork.jsonl',
+      'fork-open',
+    );
+  });
+
+  it('preserves the primary fork error when compensation fails', async () => {
+    const primary = new Error('update failed');
+    const cleanup = new Error('discard failed');
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { manager, ports } = makeManager();
+    await manager.createTab('source', 'source-tab');
+    (ports.sessions.updateSession as jest.Mock).mockRejectedValueOnce(primary);
+    (ports.sessions.discardSessionFile as jest.Mock).mockRejectedValueOnce(cleanup);
+
+    await expect(manager.forkToNewTab({
+      messages: [],
+      sourceSessionId: 'source-session',
+      forkAtEntryId: 'user-1',
+      resumeAt: 'assistant-1',
+    })).rejects.toBe(primary);
+
+    expect(warn).toHaveBeenCalledWith(
+      '[Pivi:TabManager] Failed to discard forked session fork.jsonl',
+      cleanup,
+    );
+    warn.mockRestore();
+  });
+
+  it('cancels active work and destroys every tab even when a shutdown save fails', async () => {
+    const events: string[] = [];
+    const saveError = new Error('save failed');
+    const { manager } = makeManager();
+    const first = await manager.createTab('session-1', 'first');
+    const second = await manager.createTab('session-2', 'second');
+    if (!first || !second) throw new Error('Expected tabs');
+    first.controllers.inputController = {
+      cancelStreaming: jest.fn(() => events.push('cancel-first')),
+    } as never;
+    second.controllers.inputController = {
+      cancelStreaming: jest.fn(() => events.push('cancel-second')),
+    } as never;
+    first.controllers.openSessionController!.save = jest.fn(async () => {
+      events.push('save-first');
+      throw saveError;
+    });
+    second.controllers.openSessionController!.save = jest.fn(async () => {
+      events.push('save-second');
+    });
+    tabMocks.destroyTab.mockImplementation(async (tab: TabData) => {
+      events.push(`destroy-${tab.id}`);
+      tab.lifecycleState = 'closing';
+    });
+
+    await expect(manager.destroy()).rejects.toBe(saveError);
+
+    expect(events.slice(0, 2)).toEqual(['cancel-first', 'cancel-second']);
+    expect(events).toEqual(expect.arrayContaining([
+      'save-first',
+      'save-second',
+      'destroy-first',
+      'destroy-second',
+    ]));
+    expect(manager.getAllTabs()).toEqual([]);
   });
 
   it('activates fallback before destroying the active tab when closing it', async () => {

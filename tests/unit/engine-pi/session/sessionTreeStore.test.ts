@@ -6,6 +6,7 @@ import path from 'path';
 import { captureSessionJsonlSource } from '@pivi/engine-pi/session/sessionJsonlIndex';
 import {
   bindSessionJournal,
+  getBoundSessionJournal,
   SessionTreeStore,
 } from '@pivi/engine-pi/session/sessionTreeStore';
 import {
@@ -41,6 +42,19 @@ const toolResult = {
 };
 
 describe('SessionTreeStore', () => {
+  it('does not let an old owner release a newer journal binding', () => {
+    const firstStore = { load: jest.fn(), save: jest.fn() };
+    const secondStore = { load: jest.fn(), save: jest.fn() };
+    const first = bindSessionJournal(firstStore);
+    const second = bindSessionJournal(secondStore);
+
+    expect(first.release()).toBe(false);
+    expect(getBoundSessionJournal()).toBe(secondStore);
+    expect(second.release()).toBe(true);
+    expect(getBoundSessionJournal()).toBeNull();
+    expect(second.release()).toBe(false);
+  });
+
   it('skips an oversized journal intent without blocking the authoritative append path', () => {
     const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-large-journal-intent-'));

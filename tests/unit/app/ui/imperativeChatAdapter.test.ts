@@ -1483,4 +1483,22 @@ describe('imperative chat semantic view handle', () => {
       activeTabId: null,
     });
   });
+
+  it('persists before destroying the view runtime during shutdown', async () => {
+    const events: string[] = [];
+    const { handle, manager, mount, persistTabStateImmediate } = createHarness();
+    persistTabStateImmediate.mockImplementation(async () => {
+      events.push('persist');
+    });
+    manager.destroy.mockImplementation(async () => {
+      events.push('destroy');
+    });
+    await mount();
+
+    await handle.maintenance.shutdown();
+    await handle.maintenance.persistState();
+
+    expect(events).toEqual(['persist', 'destroy']);
+    expect(persistTabStateImmediate).toHaveBeenCalledTimes(1);
+  });
 });

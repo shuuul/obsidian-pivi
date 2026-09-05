@@ -101,6 +101,7 @@ export function createChatUiPorts(
       openSessionFile: (sessionFile) => sessions.openSessionByFile(sessionFile),
       deleteSession: (id) => sessions.deleteSession(id),
       deleteSessionFile: (file, id) => sessions.deleteSessionFile(file, id),
+      discardSessionFile: (file, id) => sessions.discardSessionFile(file, id),
       renameSession: (id, title, titleSource) => sessions.renameSession(id, title, titleSource),
       updateSession: (id, updates) => sessions.updateSession(id, updates),
       forkSession: (openSession, atEntryId) => sessions.forkSessionAt(openSession, atEntryId),

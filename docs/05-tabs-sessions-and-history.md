@@ -94,13 +94,13 @@ Saving, switching, truncating, and disposing synchronously flush pending project
 
 Restore creates tabs inactive, isolates individual failures, and activates the persisted target only after construction finishes. This avoids accidentally warming the first restored tab. If every entry fails, Pivi creates a blank tab.
 
-Closing an active tab selects the visually adjacent open tab or creates a blank tab before destruction, avoiding an empty-shell flash. If creating the new tab for a fork throws, Pivi deletes the newly created session; cleanup failures are logged without hiding the original error.
+Closing an active tab selects the visually adjacent open tab or creates a blank tab before destruction, avoiding an empty-shell flash. Fork ownership starts when the new JSONL is created: registration, metadata update, and tab creation are compensated together. Registration/update failure, a null tab, or a thrown tab error permanently removes only the new fork file (and its registration when present); cleanup failures identify that owned file without hiding the primary error.
 
 Late stream chunks are guarded by generation and session ownership. Runtime state is never treated as the durable source of truth.
 
 ## Layout persistence triggers
 
-Tab creation, switching, close/archive, attention/streaming changes, and session binding changes schedule a debounced layout snapshot. View close cancels the debounce and persists immediately before disposal. Plugin unload starts immediate snapshot persistence for every mounted view while workspace disposal proceeds.
+Tab creation, switching, close/archive, attention/streaming changes, and session binding changes schedule a debounced layout snapshot. View close cancels the debounce and persists immediately before disposal. Plugin unload captures every mounted view, persists each binding once, cancels active turns, attempts all session saves and tab teardown, then releases journal ownership before workspace disposal. A later view-close callback does not overwrite the captured layout with the emptied shutdown manager.
 
 Multiple views share the same layout file, so callers must use the provided semantic persistence path rather than inventing view-local storage.
 

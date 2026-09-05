@@ -42,6 +42,8 @@ export interface ChatSessionPort {
   openSessionFile(sessionFile: string): Promise<OpenSessionState>;
   deleteSession(id: string): Promise<void>;
   deleteSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void>;
+  /** Permanently removes a newly-created session that never became user-visible. */
+  discardSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void>;
   renameSession(
     id: string,
     title: string,
