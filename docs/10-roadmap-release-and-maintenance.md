@@ -10,12 +10,12 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
-- Repair real-host smoke contracts first, then complete fork compensation and coordinate shutdown persistence/disposal under spec [050](../specs/050-architecture-review-stability-and-trustworthy-task-execution.md). The plan keeps the five-package architecture and uses small local commits on one integration branch before final merge; P2 task-policy choices remain explicit decision gates.
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
 ### Recently completed
 
+- **Architecture stability and trustworthy task execution** (spec [050](../specs/archive/050-architecture-review-stability-and-trustworthy-task-execution.md)): repaired deterministic real-host smoke, made fork/shutdown cleanup transactional, measured projection ownership without retaining an unjustified optimization, required File Recovery before supported Trusted-automation mutations, and enforced package dependency/export plus active Markdown-link contracts.
 - **Post-review contracts and community execution** (spec [049](../specs/archive/049-post-review-contracts-architecture-and-community-execution.md)): aligned active MCP docs, protected repository boundaries, narrowed composition/API surfaces, added compatibility and quality signals, and established contribution and funding routes. Archived on 2026-09-04; further stability work belongs to spec 050.
 - **Composable workflow prompts** (spec `046`): typed prompt-module registry (core locked, workflow composable including default-off long-line normalization, custom modules after workflow), Settings Prompt tab with compact estimated-token usage, main-Agent `pivi_prompt`, synced `.pivi/settings.json` composition, and `estimateTextTokens` owned by `@pivi/agent/prompt` (engine compaction re-exports it).
 - **Self-healing session index** (spec `039`): a stale, corrupt, or missing JSONL index during post-append refresh is rebuilt from the authoritative JSONL instead of aborting an already-validated turn; the rebuilt tail is verified against the exact appended entry IDs, so cloud file replacement cannot silently lose a locally completed turn.
@@ -33,7 +33,6 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 - Add direct focused coverage for `ExternalContextSelector` validation: duplicates, parent/child overlap, unavailable roots, pinning, and removal.
 - Expand settings hotkey and port-wiring interaction coverage.
 - Decide whether direct sends should capture ambient editor selections like queued turns; today only queued turns capture them automatically, while direct sends require explicit inline context.
-- After the P1 acceptance gate in spec [050](../specs/050-architecture-review-stability-and-trustworthy-task-execution.md), measure projection snapshot costs, enforce strict File Recovery pre-mutation snapshots for Trusted automation, and enforce package dependency and active documentation-link correctness.
 - Pass the file-indicator root into current-note context badge creation and add a pop-out owner-realm regression test.
 
 ### Later

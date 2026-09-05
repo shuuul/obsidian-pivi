@@ -1,7 +1,7 @@
 ---
 id: "050"
 title: "Architecture review stability and trustworthy task execution"
-status: Active
+status: Completed
 created: 2026-09-05
 updated: 2026-09-05
 coordinator: "Amp"
@@ -31,7 +31,7 @@ Important failure paths are handled, a new user can finish one clearly bounded t
 - [x] WS-02: Fork failure injection covers every side-effect boundary; delayed/repeated/early shutdown preserves save dependencies and never clears a newer owner's journal. Source sessions remain unchanged.
 - [x] WS-03: Reproducible ingest/snapshot/entity-commit/render baselines exist for three workloads; any retained optimization demonstrates improvement with immutable snapshots and event ordering intact. A measured no-change conclusion is acceptable, not an invented speedup.
 - [x] WS-04: Trusted automation blocks every supported existing-file mutation unless Obsidian File Recovery first captures the current version; move/delete cover folder descendants atomically and history restore snapshots the current destination before replacement.
-- [ ] WS-05: Owning packages declare third-party contracts, consumer resolution and active local-link checks reject regressions, and the contributor handoff identifies files, fixtures, and commands. Full local gates and final branch evidence pass before merge.
+- [x] WS-05: Owning packages declare third-party contracts, consumer resolution and active local-link checks reject regressions, and the contributor handoff identifies files, fixtures, and commands. Full local gates and final branch evidence pass before merge.
 
 ## Scope and non-goals
 
@@ -71,7 +71,7 @@ Coordinator owns this file and the index. Claim a row before implementation or d
 | WS-02 | P1 complete fork compensation and ordered instance shutdown | Amp | Done | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
 | WS-03 | P2 projection cost baselines and justified local optimization | Amp | Done | P1 accepted | Fixed workloads, ownership/immutability regressions, three-run real-host traces |
 | WS-04 | P2 strict File Recovery for Trusted automation | Amp | Done | Product decisions settled; P1 accepted | Host/tool failure matrix, recursive preflight, restore ordering, docs/contracts |
-| WS-05 | P2 package/docs gates, contributor slice, final integration | Unassigned | Pending | P1 first; final integration depends on all retained scope | Consumer resolution and link fixtures; full local quality gates |
+| WS-05 | P2 package/docs gates, contributor slice, final integration | Amp | Done | P1 first; final integration depends on all retained scope | Consumer resolution and link fixtures; full local quality gates |
 
 ### WS-01 — Real-host behavior rather than shell probes
 
@@ -155,7 +155,7 @@ The repaired smoke command must explicitly target and verify the designated test
 | Fork and shutdown | Fault matrix results, original bytes, deferred-save event order, reload ownership | Passed: local fault/lifecycle matrix, temporary-filesystem partial-write cleanup/residual diagnosis, exact source bytes, and real-host reload/restore |
 | Performance | Fixed workload definitions and comparable before/after spans with variability | Passed: nine corrected real-host traces; projection ownership p95 ≤0.10 ms; no optimization retained |
 | Trusted automation recovery | Required-snapshot failure matrix, recursive preflight, restore ordering, unsupported-file boundary | Passed: 50 focused tests; full 357-suite / 3,200-test Jest run; typecheck, lint, boundaries, docs/spec, production build, bundle-size gates, and designated-vault production smoke |
-| Final candidate | Full gates, inspected UI artifacts where applicable, docs sync, final CI for the merge candidate | Not run |
+| Final candidate | Full gates, inspected UI artifacts where applicable, docs sync, final CI for the merge candidate | Passed locally: dependency audit, typecheck, lint, boundaries, 357-suite coverage, platform/Pi compatibility, production build/size, deterministic Obsidian smoke, production reload |
 
 WS-04 has no visual surface: no mode selector, recovery disclosure, locale copy, or CSS is added. Visual sign-off is therefore not applicable. If a later slice changes rendered UI, it must follow the repository's render-and-inspect requirement.
 
@@ -254,6 +254,15 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Safety and cleanup: an initial hidden-directory fixture was not indexed by Obsidian, so Pivi rejected it as missing before snapshot or mutation; the fixture was removed. The successful root fixture was permanently removed and verified absent from both adapter storage and the Vault index. Its File Recovery versions intentionally remain subject to Obsidian retention so the recovery assertion is durable.
 - Result: `obsidian dev:errors` reported no captured errors after reload, mutation, history reads, restore, and cleanup. Together with the focused tool-ordering tests, this accepts the production strict-recovery path without adding a mode or UI.
 
+### 2026-09-05 — Amp — WS-05 contracts and final integration
+
+- Package ownership: `@pivi/agent` now directly declares its `@modelcontextprotocol/sdk` runtime dependency and the lockfile records the workspace declaration. The architecture gate classifies static imports, re-exports, and literal dynamic imports; distinguishes runtime from type-only declarations; requires Obsidian/Electron/React host runtimes as peers; and rejects root-hoist reliance.
+- Resolution: every explicit workspace export must resolve through an installed npm workspace link targeting the local package. Positive consumer fixtures cover stable application/package leaves; negative fixtures cover undeclared dependencies, runtime-only dev declarations, host peer drift, missing local links, and unexported internals.
+- Documentation: the existing docs contract gate now validates inline, reference, and image relative links plus URL-encoded paths and Markdown fragments across root/community docs, handbook/recipes, package docs/guidance, and active specs. Fenced/inline code, changelog, and archived-spec source history are excluded, while active links into archived evidence remain checked. `CONTRIBUTING.md` records the exact owner, archive-link fixture, diagnostic, and focused commands.
+- Local gates: Node 24 dependency audit, source/test typecheck, zero-warning lint, all architecture/docs/package/i18n/spec/Pi boundaries, 357-suite / 3,212-test coverage, 12-suite / 197-test platform-security, and 11-suite / 44-test Pi compatibility passed. Focused architecture/docs fixtures passed 123 tests.
+- Host/build: the final development artifact SHA-256 `5ef51b92dbbd7e3ffd027e6dd4051cdad32d2c8e060458a4ebfbd3a8695c75cc` passed the canonical-vault deterministic Pi turn/reload/restore smoke and removed its note/session fixtures. The production build is 4,141,383 bytes; root and designated-vault SHA-256 are `554ba2ff8d1377f5a1b7e7d2363bfc2da9f66f9a6e6ac80832a560a40e898d13`. Production reload succeeded and Obsidian captured no errors.
+- Visual scope: no rendered UI, CSS, locale, or interaction changed in WS-05, so visual inspection is not applicable. No push, PR, merge, tag, release, or publication was performed.
+
 ## Completion summary
 
-Not completed. Spec creation is not implementation acceptance. Before archival, close or explicitly revise every criterion through a decision, record candidate evidence, sync durable docs, set Completed/update the date, archive the unchanged filename, update incoming links and the index, and run `npm run check:specs` before and after archival.
+Completed all five workstreams: deterministic real-host verification, transactional fork/shutdown handling, measured projection baselines with no unjustified optimization, strict File Recovery for Trusted automation, and enforceable package/documentation contracts. Final local quality gates and both development/production Obsidian lifecycle checks passed; run remote CI through the user's chosen merge route before merging.
