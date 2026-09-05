@@ -142,6 +142,40 @@ export class PiviApplication {
       canCreateNewTab: () => this.canCreateNewTab(),
       openNewTab: () => this.openNewTab(),
       addEditorSelectionToChatInput: (editor, view) => this.addEditorSelectionToChatInput(editor, view),
+      ...(process.env.NODE_ENV !== 'production' ? {
+        runDevelopmentRealHostSmoke: async (request) => {
+          const { runDevelopmentRealHostSmoke } = await import('@/app/realHostSmoke');
+          return runDevelopmentRealHostSmoke({
+            createChatService: async turn => {
+              const development = (await this.ensureWorkspaceServices()).development;
+              if (!development) {
+                throw new Error('The deterministic smoke provider is unavailable.');
+              }
+              return development.createDeterministicSmokeChatService(
+                this,
+                this.httpClient,
+                turn,
+              );
+            },
+            createOpenSession: options => this.createOpenSession(options),
+            openSessionByFile: sessionFile => this.openSessionByFile(sessionFile),
+            hydrateOpenSession: session => this.sessionManager.hydrate(session),
+            updateSession: (id, updates) => this.updateSession(id, updates),
+            removeOpenSession: id => this.sessionManager.delete(id),
+            deleteSessionFile: sessionFile => this.requireSessionStore().deleteSession(sessionFile),
+            vaultFileExists: path => this.app.vault.adapter.exists(path),
+            readVaultFile: path => this.app.vault.adapter.read(path),
+            writeVaultFile: async (path, content) => {
+              await this.app.vault.create(path, content);
+            },
+            removeVaultFile: async path => {
+              if (await this.app.vault.adapter.exists(path)) {
+                await this.app.vault.adapter.remove(path);
+              }
+            },
+          }, request);
+        },
+      } : {}),
     };
     const sessions: SessionsFacade = {
       getSessionList: () => this.getSessionList(),

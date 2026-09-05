@@ -61,6 +61,42 @@ export interface PiviChatViewCommandState {
   canCloseActiveTab: boolean;
 }
 
+export interface PiviRealHostSmokeRequest {
+  version: 1;
+  operation: 'run' | 'inspect' | 'cleanup';
+  runId: string;
+  notePath: string;
+  ledgerPath: string;
+  sessionFile?: string;
+  openSessionId?: string;
+}
+
+export interface PiviRealHostSmokeSnapshot {
+  version: 1;
+  runId: string;
+  notePath: string;
+  ledgerPath: string;
+  sessionFile: string;
+  openSessionId: string;
+  noteContent: string;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    toolCalls: Array<{
+      id: string;
+      name: string;
+      status: string;
+      result: string;
+    }>;
+  }>;
+}
+
+export type PiviRealHostSmokeResult = PiviRealHostSmokeSnapshot | {
+  version: 1;
+  runId: string;
+  cleaned: true;
+};
+
 /** User-command capabilities. No tab, controller, runtime, or DOM graph escapes. */
 export interface PiviChatViewCommands {
   getState(): PiviChatViewCommandState;
@@ -118,6 +154,7 @@ export interface PiviChatViewMaintenance {
 
 /** Development-only deterministic workload controls, absent from production bundles. */
 export interface PiviChatDevelopmentCommands {
+  runRealHostSmoke?(request: PiviRealHostSmokeRequest): Promise<PiviRealHostSmokeResult>;
   run20SubagentsWorkload(hooks: {
     afterRender(result: { subagents: number; messages: number }): Promise<void>;
   }): Promise<{
@@ -275,6 +312,9 @@ export interface PiviChatCompositionHost extends PiviHostCore {
   getAllViews(): PiviChatView[];
   loadTabManagerState(): Promise<AppTabManagerState | null>;
   persistTabManagerState(state: AppTabManagerState): Promise<void>;
+  runDevelopmentRealHostSmoke?(
+    request: PiviRealHostSmokeRequest,
+  ): Promise<PiviRealHostSmokeResult>;
 }
 
 /**

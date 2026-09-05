@@ -309,6 +309,12 @@ export function createImperativeChatViewHandle(
     },
     ...(process.env.NODE_ENV !== 'production' ? {
       development: {
+        async runRealHostSmoke(request) {
+          if (!plugin.runDevelopmentRealHostSmoke) {
+            throw new Error('The real-host smoke harness is unavailable.');
+          }
+          return plugin.runDevelopmentRealHostSmoke(request);
+        },
         async run20SubagentsWorkload(hooks) {
           const manager = getTabManager();
           const activeTab = manager?.getActiveTab();

@@ -449,6 +449,23 @@ describe('architecture boundary scripts', () => {
     }
   });
 
+  it('allows the explicit development Pi surface only from app composition', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'src/app/fixture.ts'),
+        "void import('@pivi/engine-pi/application/development');",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(0);
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     ['src/app/fixture.ts', 'src/app uses the stable Pi engine application surface'],
     ['src/main.ts', 'src/main uses the stable Pi engine application surface'],

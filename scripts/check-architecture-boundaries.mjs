@@ -44,6 +44,7 @@ const retiredReactPackagePattern = new RegExp(
 const retiredAgentCorePackagePattern = /^@pivi\/pivi-agent-core(?:\/|$)/;
 const enginePiPackagePattern = /^@pivi\/engine-pi(?:\/|$)/;
 const enginePiImplementationPattern = /^@pivi\/engine-pi(?:$|\/(?!application\/(?:auth|models|oauth|oauth-flows|runtime|session)$))/;
+const appEnginePiImplementationPattern = /^@pivi\/engine-pi(?:$|\/(?!application\/(?:auth|development|models|oauth|oauth-flows|runtime|session)$))/;
 
 const fileBoundaryRules = [
   {
@@ -252,7 +253,7 @@ const boundaryRules = [
   {
     name: 'src/app uses the stable Pi engine application surface',
     root: 'src/app',
-    forbidden: [enginePiImplementationPattern],
+    forbidden: [appEnginePiImplementationPattern],
   },
   {
     name: 'src/ui uses only approved @pivi/pivi-react presentation subpaths',

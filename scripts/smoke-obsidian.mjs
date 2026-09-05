@@ -5,11 +5,11 @@
  * Requires:
  * - `obsidian` CLI on PATH
  * - `.env.local` with OBSIDIAN_VAULT pointing at a development vault
- * - A recent `npm run build` deploy into that vault's plugin folder
+ * - A current `npm run dev` development build deployed into that vault
  *
- * Transitional probe: the legacy service contract is checked before fixture
- * writes. Current lifecycle-only builds fail that check until spec 050's typed
- * harness replaces it. Raw fixture checks do not prove Pivi session recovery.
+ * The development build exposes a versioned semantic harness through the
+ * mounted Pivi view. The harness drives the real runtime, session store, tool
+ * registry, and Obsidian vault adapter with a deterministic local provider.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -22,12 +22,12 @@ import { fileURLToPath } from 'node:url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const stamp = randomUUID();
 const notePath = `.pivi-smoke/smoke-note-${stamp}.md`;
-const sessionMarker = `pivi-smoke-session-${stamp}`;
-const sessionRelative = `.pivi/sessions/smoke-${stamp}.jsonl`;
+const ledgerPath = `.pivi-smoke/smoke-ledger-${stamp}.json`;
 const fetchKey = `pivi-smoke-fetch-${stamp}`;
 let targetVault;
 let fetchReferenceAttempted = false;
-const ownedFiles = [];
+let smokeSnapshot;
+let rendererOutcomeUnknown = false;
 
 function loadEnvLocal() {
   const envPath = path.join(rootDir, '.env.local');
@@ -57,6 +57,7 @@ function runObsidian(args) {
     timeout: 30_000,
   });
   if (result.error) {
+    rendererOutcomeUnknown = true;
     fail(`obsidian ${args.join(' ')}: ${result.error.message}`);
   }
   if (result.status !== 0) {
@@ -97,31 +98,17 @@ async function main() {
 
   targetVault = fs.realpathSync(vaultPath);
   if (!fs.statSync(targetVault).isDirectory()) fail('OBSIDIAN_VAULT must be a directory');
+  const fixtureDirectory = path.join(targetVault, '.pivi-smoke');
+  if (!fs.existsSync(fixtureDirectory) || !fs.statSync(fixtureDirectory).isDirectory()) {
+    fail('Missing fixture directory: .pivi-smoke');
+  }
+  if (fs.realpathSync(fixtureDirectory) !== fixtureDirectory) {
+    fail('Fixture directory must not be a symlink');
+  }
   runObsidian(['help']);
   evalInObsidian('true');
 
   console.log(`smoke:obsidian vault=${targetVault}`);
-
-  const sessionProbe = evalInObsidian(`(() => {
-    const plugin = app.plugins.plugins.pivi;
-    if (!plugin) return JSON.stringify({ ok: false, error: 'pivi missing' });
-    return JSON.stringify({
-      ok: true,
-      enabled: !!plugin._loaded,
-      hasSessionStore: !!plugin.sessionStore,
-      hasProcessRunner: !!plugin.processRunner,
-      fetchSame: window.fetch === fetch,
-      fetchName: String(window.fetch && window.fetch.name),
-      marker: ${JSON.stringify(sessionMarker)},
-    });
-  })()`);
-  const sessionJson = JSON.parse(sessionProbe);
-  if (!sessionJson.ok || !sessionJson.enabled) {
-    fail(`plugin load probe failed: ${sessionProbe}`);
-  }
-  if (!sessionJson.hasSessionStore || !sessionJson.hasProcessRunner) {
-    fail('Legacy smoke contract unavailable; the replacement typed harness is pending in spec 050. No fixtures were written.');
-  }
 
   fetchReferenceAttempted = true;
   evalInObsidian(`(() => {
@@ -131,63 +118,30 @@ async function main() {
   evalInObsidian('true');
   runObsidian(['plugin:reload', 'id=pivi']);
   assertFetchIdentity();
-
-  // Existing fixture directories are prerequisites, never owned by this run.
-  // Creating shared directories and recursively deleting them on failure can
-  // destroy files created by the user or another concurrent smoke run.
-  for (const relative of [notePath, sessionRelative]) {
-    const directory = path.join(targetVault, path.dirname(relative));
-    if (!fs.statSync(directory).isDirectory()) {
-      fail(`Missing fixture directory: ${path.dirname(relative)}`);
-    }
-    if (fs.realpathSync(directory) !== directory) fail('Fixture directory must not be a symlink');
-    // Exclusive reservation establishes ownership before a renderer write can
-    // partially fail. A collision must never be overwritten or cleaned up.
-    fs.writeFileSync(path.join(targetVault, relative), '', { flag: 'wx' });
-    ownedFiles.push(relative);
-  }
-  const noteMutation = evalInObsidian(`(async () => {
-    const path = ${JSON.stringify(notePath)};
-    await app.vault.adapter.write(path, "# Pivi smoke\\n\\ncreated=${stamp}\\n");
-    await app.vault.adapter.append(path, "mutated=${stamp}\\n");
-    const text = await app.vault.adapter.read(path);
-    return JSON.stringify({ ok: text.includes("mutated=${stamp}"), path, bytes: text.length });
-  })()`);
-  if (!JSON.parse(noteMutation).ok) fail('Disposable note mutation did not persist');
-
-  const sessionWrite = evalInObsidian(`(async () => {
-    const relative = ${JSON.stringify(sessionRelative)};
-    const header = {
-      type: "session",
-      version: 3,
-      id: ${JSON.stringify(sessionMarker)},
-      timestamp: new Date().toISOString(),
-      cwd: app.vault.adapter.getBasePath(),
-    };
-    const userEntry = {
-      type: "message",
-      id: ${JSON.stringify(`user-${stamp}`)},
-      parentId: null,
-      timestamp: new Date().toISOString(),
-      message: { role: "user", content: ${JSON.stringify(`smoke ${stamp}`)}, timestamp: Date.now() },
-    };
-    const body = JSON.stringify(header) + "\\n" + JSON.stringify(userEntry) + "\\n";
-    await app.vault.adapter.write(relative, body);
-    const text = await app.vault.adapter.read(relative);
-    return JSON.stringify({
-      ok: text.includes(${JSON.stringify(sessionMarker)}),
-      bytes: text.length,
-      fetchSame: window.fetch === fetch,
-    });
-  })()`);
-  const restoreJson = JSON.parse(sessionWrite);
-  if (!restoreJson.ok) {
-    fail(`disposable session create/restore probe failed: ${sessionWrite}`);
-  }
+  smokeSnapshot = runHarness({
+    version: 1,
+    operation: 'run',
+    runId: stamp,
+    notePath,
+    ledgerPath,
+  });
+  assertSmokeSnapshot(smokeSnapshot);
 
   evalInObsidian('true');
   runObsidian(['plugin:reload', 'id=pivi']);
   assertFetchIdentity();
+  const restored = runHarness({
+    version: 1,
+    operation: 'inspect',
+    runId: stamp,
+    notePath,
+    ledgerPath,
+    sessionFile: smokeSnapshot.sessionFile,
+  });
+  assertSmokeSnapshot(restored);
+  if (JSON.stringify(restored.messages) !== JSON.stringify(smokeSnapshot.messages)) {
+    fail('Durable session semantics changed across plugin reload');
+  }
 
   const errors = runObsidian(['dev:errors']);
   if (!/No errors captured/i.test(errors)) {
@@ -197,9 +151,47 @@ async function main() {
   return {
     vaultPath,
     notePath,
-    sessionRelative,
+    sessionFile: smokeSnapshot.sessionFile,
     host: os.platform(),
   };
+}
+
+function runHarness(request) {
+  const output = evalInObsidian(`(async () => {
+    await app.commands.executeCommandById('pivi:open-view');
+    const deadline = Date.now() + 10000;
+    let handle;
+    while (Date.now() < deadline) {
+      const view = app.workspace.getLeavesOfType('pivi-chat')[0]?.view;
+      handle = view?.getChatHandle?.();
+      if (handle?.development?.runRealHostSmoke) break;
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    if (!handle?.development?.runRealHostSmoke) {
+      throw new Error('Development smoke harness unavailable; deploy a development build.');
+    }
+    return JSON.stringify(await handle.development.runRealHostSmoke(${JSON.stringify(request)}));
+  })()`);
+  return JSON.parse(output);
+}
+
+function assertSmokeSnapshot(snapshot) {
+  const expectedUser = `Pivi deterministic smoke turn: ${stamp}`;
+  const expectedAssistant = `Pivi smoke completed: ${stamp}`;
+  const expectedNote = `# Pivi deterministic smoke\n\nrun=${stamp}\n`;
+  if (snapshot.version !== 1 || snapshot.runId !== stamp || snapshot.noteContent !== expectedNote) {
+    fail(`Smoke snapshot identity or note mismatch: ${JSON.stringify(snapshot)}`);
+  }
+  if (snapshot.messages.map(message => message.role).join(',') !== 'user,assistant') {
+    fail(`Smoke session roles mismatch: ${JSON.stringify(snapshot.messages)}`);
+  }
+  if (snapshot.messages[0]?.content !== expectedUser || snapshot.messages[1]?.content !== expectedAssistant) {
+    fail(`Smoke session content mismatch: ${JSON.stringify(snapshot.messages)}`);
+  }
+  const tool = snapshot.messages[1]?.toolCalls?.find(call => call.name === 'obsidian_write');
+  if (!tool || tool.status !== 'completed' || !tool.result.includes(`Wrote ${notePath}`)) {
+    fail(`Smoke tool result mismatch: ${JSON.stringify(snapshot.messages)}`);
+  }
 }
 
 function assertFetchIdentity() {
@@ -215,20 +207,26 @@ try {
 } catch (error) {
   failures.push(error);
 } finally {
-  for (const relative of ownedFiles) {
+  if (smokeSnapshot?.sessionFile && !rendererOutcomeUnknown) {
     try {
-      evalInObsidian(`(async () => {
-        const path = ${JSON.stringify(relative)};
-        if (await app.vault.adapter.exists(path)) await app.vault.adapter.remove(path);
-        return true;
-      })()`);
+      runHarness({
+        version: 1,
+        operation: 'cleanup',
+        runId: stamp,
+        notePath,
+        ledgerPath,
+        sessionFile: smokeSnapshot.sessionFile,
+        openSessionId: smokeSnapshot.openSessionId,
+      });
     } catch (error) {
-      failures.push(new Error(`Cleanup failed for owned fixture ${relative}`, { cause: error }));
+      failures.push(new Error('Cleanup failed for real-host smoke resources', { cause: error }));
     }
+  } else if (rendererOutcomeUnknown && targetVault && fs.existsSync(path.join(targetVault, ledgerPath))) {
+    console.error(`smoke:obsidian retained ownership ledger for retry: ${ledgerPath}`);
   }
   // No cleanup call to an unverified/missing host is needed before a reference
   // was installed; the key is unique and never contains user data.
-  if (fetchReferenceAttempted) {
+  if (fetchReferenceAttempted && !rendererOutcomeUnknown) {
     try {
       evalInObsidian(`delete window[${JSON.stringify(fetchKey)}]`);
     } catch (error) {
@@ -240,6 +238,6 @@ if (failures.length > 0) {
   for (const error of failures) console.error('smoke:obsidian FAILED:', error);
   process.exitCode = 1;
 } else {
-  console.log('smoke:obsidian legacy fixture probes OK (not Pivi recovery evidence)');
+  console.log('smoke:obsidian deterministic Pivi turn/reload/restore OK');
   console.log(JSON.stringify(result, null, 2));
 }

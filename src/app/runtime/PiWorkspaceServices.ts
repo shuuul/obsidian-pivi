@@ -42,6 +42,7 @@ import { registerBundledPiOAuthFlows } from "@pivi/engine-pi/application/oauth-f
 import {
   createCodexImageGenerator,
   type PiBaseToolProvider,
+  type PiRuntimeHost,
   SubagentConcurrencyLimiter,
 } from "@pivi/engine-pi/application/runtime";
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
@@ -98,6 +99,18 @@ export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
   providerOAuth: ProviderOAuthService;
   slashCommandCatalog: SlashCommandCatalog;
   network: PiviNetworkClients;
+  development?: {
+    createDeterministicSmokeChatService(
+      host: PiRuntimeHost,
+      httpClient: Parameters<ChatRuntimeServiceFactories['createChatService']>[1],
+      turn: {
+        notePath: string;
+        noteContent: string;
+        assistantText: string;
+        toolCallId: string;
+      },
+    ): Promise<ReturnType<ChatRuntimeServiceFactories['createChatService']>>;
+  };
   dispose(): Promise<void>;
 }
 
@@ -293,6 +306,26 @@ export async function createPiWorkspaceServices(
     providerOAuth,
     slashCommandCatalog,
     network,
+    ...(process.env.NODE_ENV !== 'production' ? {
+      development: {
+        async createDeterministicSmokeChatService(runtimeHost, httpClient, turn) {
+          const { createDeterministicSmokeChatService } = await import(
+            '@pivi/engine-pi/application/development'
+          );
+          return createDeterministicSmokeChatService({
+            host: runtimeHost,
+            httpClient,
+            mcpFetch: network.mcpFetch,
+            mcpSecretStorage: host.app.secretStorage,
+            mcpServerManager,
+            mcpOAuth,
+            baseToolProvider,
+            subagentConcurrencyLimiter,
+            turn,
+          });
+        },
+      },
+    } : {}),
     dispose: async () => {
       network.grants.clear();
       subagentConcurrencyLimiter.dispose();

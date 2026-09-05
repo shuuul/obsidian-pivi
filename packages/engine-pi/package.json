@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./application/auth": "./src/application/auth.ts",
+    "./application/development": "./src/application/development.ts",
     "./application/models": "./src/application/models.ts",
     "./application/oauth": "./src/application/oauth.ts",
     "./application/oauth-flows": "./src/application/oauthFlows.ts",

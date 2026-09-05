@@ -42,18 +42,27 @@ function runFixture(scenario: string) {
 }
 
 describe('real-host smoke safety (CLI double, not real-host acceptance)', () => {
-  it.each(['wrong-vault', 'current-shell'])('rejects %s before reload or fixture mutation', scenario => {
-    const result = runFixture(scenario);
+  it('rejects a wrong vault before reload or fixture mutation', () => {
+    const result = runFixture('wrong-vault');
     expect(result.status).toBe(1);
     expect(result.calls.some(call => call.args.includes('plugin:reload'))).toBe(false);
     expect(result.notes).toEqual(['user.md']);
     expect(result.sessions).toEqual([]);
     expect(result.other).toEqual([]);
-    expect(result.stderr).toContain(scenario === 'wrong-vault' ? 'Smoke vault mismatch' : 'Legacy smoke contract unavailable');
+    expect(result.stderr).toContain('Smoke vault mismatch');
+  });
+
+  it('rejects a production or stale build before fixture mutation', () => {
+    const result = runFixture('current-shell');
+    expect(result.status).toBe(1);
+    expect(result.notes).toEqual(['user.md']);
+    expect(result.sessions).toEqual([]);
+    expect(result.other).toEqual([]);
+    expect(result.stderr).toContain('Development smoke harness unavailable');
   });
 
   it('targets the configured vault and applies a finite CLI timeout', () => {
-    const result = runFixture('current-shell');
+    const result = runFixture('success');
     expect(result.calls[0]?.args).toEqual(['vault=vault', 'help']);
     for (const call of result.calls) {
       expect(call.cwd).toBe(result.vault);
@@ -70,7 +79,7 @@ describe('real-host smoke safety (CLI double, not real-host acceptance)', () => 
     expect(result.notes).toEqual(['user.md']);
   });
 
-  it.each(['success', 'write-failure'])('cleans owned fixtures on %s without deleting user data', scenario => {
+  it.each(['success', 'write-failure', 'restore-failure'])('cleans owned fixtures on %s without deleting user data', scenario => {
     const result = runFixture(scenario);
     expect(result.status).toBe(scenario === 'success' ? 0 : 1);
     expect(result.notes).toEqual(['user.md']);
@@ -82,9 +91,10 @@ describe('real-host smoke safety (CLI double, not real-host acceptance)', () => 
   it('reports the primary failure and continues sibling cleanup after remove fails', () => {
     const result = runFixture('cleanup-failure');
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('injected write failure');
-    expect(result.stderr).toContain('Cleanup failed for owned fixture');
+    expect(result.stderr).toContain('injected cleanup failure');
+    expect(result.stderr).toContain('Cleanup failed for real-host smoke resources');
     expect(result.sessions).toEqual([]);
+    expect(result.notes).toHaveLength(3);
     expect(result.user).toBe('user-owned');
   });
 
@@ -94,5 +104,15 @@ describe('real-host smoke safety (CLI double, not real-host acceptance)', () => 
     expect(result.stderr).toContain('ETIMEDOUT');
     expect(result.calls).toHaveLength(1);
     expect(result.notes).toEqual(['user.md']);
+  });
+
+  it('retains an ownership ledger instead of racing cleanup after a turn timeout', () => {
+    const result = runFixture('turn-timeout');
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('ETIMEDOUT');
+    expect(result.stderr).toContain('retained ownership ledger for retry');
+    expect(result.notes).toHaveLength(3);
+    expect(result.sessions).toHaveLength(1);
+    expect(result.user).toBe('user-owned');
   });
 });

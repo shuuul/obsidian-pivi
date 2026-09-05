@@ -203,6 +203,13 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Limit: the CLI double is not real-host evidence. The legacy success branch still writes raw files and is explicitly non-acceptance; current lifecycle-only production builds stop before that branch. No designated vault was mutated.
 - Next action: replace the legacy probe/raw fixtures with the versioned app-composition harness and deterministic provider path, then add stale-bundle/readiness/tool/restore failure coverage before any live run.
 
+### 2026-09-05 — Amp — WS-01 typed harness slice
+
+- Changed: added the version-1 semantic view command, app-owned run/inspect/cleanup orchestration, and an engine-local model/auth/stream override used only by a development application surface. The deterministic pi-ai faux stream requests the registered `obsidian_write` ToolSpec; ordinary Pi Agent execution, tool policy, JSONL persistence, semantic hydration, and Obsidian vault mutation remain real.
+- Safety: requests accept only exact UUID-derived smoke note/ledger paths and safe session paths. An exclusive ledger records session ownership before the turn; failed turns roll back, explicit cleanup verifies the complete ledger and continues sibling cleanup, and incomplete/unknown cleanup retains it for retry. The CLI compares semantic roles/content/tool result/note bytes after reload and retains the original fetch object across both reloads.
+- Evidence: Node 24 source/test typecheck passed; focused harness, CLI-double, and injected-provider tests passed; an in-memory production build was 4,170,384 bytes and contained none of `Pivi deterministic smoke`, `pivi-smoke-tool-`, `runRealHostSmoke`, `createFauxCore`, or `Pivi smoke harness`. No artifact was deployed and no designated vault was mutated.
+- Remaining: run architecture/docs/spec gates after final review, then obtain authorization to deploy a development artifact to the designated disposable vault and record the required real-host environment/digest/cleanup evidence. Production lifecycle sanity remains a separate evidence row.
+
 ## Completion summary
 
 Not completed. Spec creation is not implementation acceptance. Before archival, close or explicitly revise every criterion through a decision, record candidate evidence, sync durable docs, set Completed/update the date, archive the unchanged filename, update incoming links and the index, and run `npm run check:specs` before and after archival.
