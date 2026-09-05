@@ -10,6 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
+| [050 — Architecture review stability and trustworthy task execution](050-architecture-review-stability-and-trustworthy-task-execution.md) | 2026-09-05 | Draft: repair real-host smoke and session lifecycle failures first, then measured projection, trustworthy task execution, and package/docs contracts on one integration branch. |
 
 ## Archived specs
 
