@@ -76,7 +76,7 @@ Coordinator owns this file and the index. Claim a row before implementation or d
 
 | ID | Deliverable | Owner | Status | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- |
-| WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Unassigned | Pending | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
+| WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Amp | In progress | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
 | WS-02 | P1 complete fork compensation and ordered instance shutdown | Unassigned | Pending | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
 | WS-03 | P2 projection cost baselines and justified local optimization | Unassigned | Pending | P1 accepted | Fixed workloads, ownership/immutability regressions, before/after traces |
 | WS-04 | P2 execution read-only task and recovery visibility | Unassigned | Blocked | Grill decisions; P1 accepted | Adversarial tool matrix, recipe walkthrough, recovery states, UI/i18n checks |
@@ -195,6 +195,13 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Passed: `mise exec node@24.19.0 -- npm run check:specs`, `mise exec node@24.19.0 -- npm run check:docs-contracts`, and `git diff --check`.
 - Synced: the spec index and roadmap now point to spec 050; spec 049 links to its archived path and is no longer described as current work.
 - State: documentation changes only, not committed or pushed; no PR, merge, deployment, or release was performed. All implementation acceptance remains open.
+
+### 2026-09-05 — Amp — WS-01 smoke safety slice
+
+- Changed: the transitional runner now targets `OBSIDIAN_VAULT` explicitly, verifies its canonical host path before every renderer operation, uses a finite CLI timeout, rejects the unavailable legacy service contract before reload or fixture mutation, retains the original fetch object across reloads, reserves UUID fixture files exclusively, and attempts all run-owned cleanup without deleting shared directories.
+- Evidence: Node 24 focused Jest passed 8 safety cases covering vault mismatch, absent harness, targeting/timeout, same-name fetch replacement, success/failure cleanup, sibling cleanup continuation, and CLI timeout. `typecheck:tests`, focused zero-warning ESLint, `check:specs`, `check:docs-contracts`, and `git diff --check` passed.
+- Limit: the CLI double is not real-host evidence. The legacy success branch still writes raw files and is explicitly non-acceptance; current lifecycle-only production builds stop before that branch. No designated vault was mutated.
+- Next action: replace the legacy probe/raw fixtures with the versioned app-composition harness and deterministic provider path, then add stale-bundle/readiness/tool/restore failure coverage before any live run.
 
 ## Completion summary
 

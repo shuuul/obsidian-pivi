@@ -71,7 +71,11 @@ Use a configured development vault (`.env.local` `OBSIDIAN_VAULT`). Official CLI
 
 ### Deterministic host smoke
 
-`npm run smoke:obsidian` requires the Obsidian CLI and `OBSIDIAN_VAULT`. It reloads Pivi, opens the chat view, creates and mutates a disposable note, writes and re-reads a disposable session JSONL, asserts `window.fetch` identity is unchanged, and requires `obsidian dev:errors` to report no captured errors. It does not claim full product certification on every OS.
+`npm run smoke:obsidian` requires the Obsidian CLI and `OBSIDIAN_VAULT`. **The current lifecycle-only build does not satisfy the script's legacy service probe.** It now fails before reload or fixture writes instead of leaving a note behind. The typed application harness and genuine Pivi turn/restore assertions are still being implemented under spec 050; do not use the legacy probe as candidate-release evidence.
+
+The runner uses the configured vault as its working directory, passes an explicit vault selector, and checks the host's canonical vault path before renderer operations, including cleanup. CLI calls time out after 30 seconds. Legacy fixture runs require existing `.pivi-smoke/` and `.pivi/sessions/` directories, reserve UUID-named files exclusively, retain the original fetch function object across reloads, and attempt all owned-file/reference cleanup in `finally`. They neither open extra chat tabs nor delete shared directories. Cleanup errors fail the run while preserving the primary error; host loss or a timed-out renderer operation can leave residual resources and is not a successful cleanup guarantee.
+
+`npm run test -- --runInBand tests/unit/scripts/smokeObsidian.test.ts` exercises these safety paths with a CLI double and temporary disk vaults. It is not a real Obsidian test and does not validate Pivi tools, JSONL restoration, or deterministic provider assembly. Even successful legacy raw-file checks do not prove those behaviors.
 
 Useful symptom routes:
 
