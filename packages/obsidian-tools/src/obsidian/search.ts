@@ -33,11 +33,11 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
     name: TOOL_OBSIDIAN_SEARCH,
     label: 'Search vault',
     description: obsidianCliAvailable
-      ? 'Search note contents with a case-insensitive literal substring, or tag:name. Not regex and not Obsidian in-app search. Use ls for folder listing. Falls back to CLI on API errors.'
-      : 'Search note contents with a case-insensitive literal substring, or tag:name. Not regex and not Obsidian in-app search. Use ls for folder listing. No CLI fallback is available.',
+      ? 'Search Markdown note contents with a case-insensitive literal substring, or tag:name. Scope with path to one note or folder; omit path only for a vault-wide search. Not regex and not Obsidian in-app search. Use ls for folder listing. Falls back to CLI on API errors.'
+      : 'Search Markdown note contents with a case-insensitive literal substring, or tag:name. Scope with path to one note or folder; omit path only for a vault-wide search. Not regex and not Obsidian in-app search. Use ls for folder listing. No CLI fallback is available.',
     promptUsage: {
-      summary: `Case-insensitive literal substring plus optional \`tag:name\`. Not regex and not Obsidian in-app search. Use search to locate notes and match positions, never as a content-read backdoor: \`context: true\` dumps are not a substitute for reading note bodies. Empty, \`*\`, \`**\`, and \`path:\`-only listing queries error toward \`ls\`.${obsidianCliAvailable ? ' Falls back to CLI on API errors.' : ' No CLI fallback is available.'}`,
-      parameters: '`query` required plain substring or tag:name; `path?` folder prefix; `limit?`; `context?`; `format?` text|json.',
+      summary: `Case-insensitive literal substring plus optional \`tag:name\`. Pass \`path\` for one Markdown note or a folder; omit \`path\` only when the whole vault must be scanned. Not regex and not Obsidian in-app search. Use search to locate notes and match positions, never as a content-read backdoor: \`context: true\` dumps are not a substitute for reading note bodies. Empty, \`*\`, \`**\`, and \`path:\`-only listing queries error toward \`ls\`.${obsidianCliAvailable ? ' Falls back to CLI on API errors.' : ' No CLI fallback is available.'}`,
+      parameters: '`query` required plain substring or tag:name; `path?` one Markdown note or folder; `limit?`; `context?`; `format?` text|json.',
     },
     parameters: {
       type: 'object',
@@ -46,7 +46,7 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
           type: 'string',
           description: 'Plain text substring or tag:name. Not regex. Not * / ** / path: listing.',
         },
-        path: { type: 'string', description: 'Optional folder prefix (combines with query path:)' },
+        path: { type: 'string', description: 'Limit to one Markdown note or folder. Omit only for a vault-wide search.' },
         limit: { type: 'number' },
         context: { type: 'boolean', description: 'Include ±2 context lines per match (API). CLI fallback uses search:context.' },
         format: { type: 'string', enum: ['text', 'json'] },

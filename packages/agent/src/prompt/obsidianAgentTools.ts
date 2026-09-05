@@ -158,8 +158,8 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     ...(hasEdit ? [buildMarkdownBlockBoundaryGuidance()] : []),
     ...(hasSearch ? [
       hasList
-        ? '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. It is not regex and not Obsidian in-app search. Do not use `*`, `**`, empty, or `path:`-only queries for listing—use `ls`. Do not repeat the same search with different casing.'
-        : '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. It is not regex and not Obsidian in-app search. Do not repeat the same search with different casing.',
+        ? '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. Pass `path` for one Markdown note or a folder; omit `path` only for a vault-wide scan. It is not regex and not Obsidian in-app search. Do not use `*`, `**`, empty, or `path:`-only queries for listing—use `ls`. Do not repeat the same search with different casing.'
+        : '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. Pass `path` for one Markdown note or a folder; omit `path` only for a vault-wide scan. It is not regex and not Obsidian in-app search. Do not repeat the same search with different casing.',
     ] : []),
     ...(hasList ? [
       '**Listing:** Prefer `ls` for folders, including non-Markdown files. `offset` is a 0-based entry index, not a line number. Unindexed vault folders such as `.pivi/` and allowed absolute paths work on the same tool.',

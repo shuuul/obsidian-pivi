@@ -550,6 +550,30 @@ export class ObsidianVaultApi {
     return base ? base.split('/').filter(Boolean).pop() ?? 'vault' : 'vault';
   }
 
+  private resolveSearchFiles(scopePath: string): TFile[] {
+    if (!scopePath) {
+      return this.app.vault.getMarkdownFiles();
+    }
+    const normalized = normalizePathForVault(scopePath, this.vaultPath());
+    if (!normalized) {
+      throw new Error(`Search path not found: ${scopePath}`);
+    }
+    const resolved = this.app.vault.getAbstractFileByPath(normalized);
+    if (resolved instanceof TFile) {
+      if (resolved.extension !== 'md') {
+        throw new Error(`search only reads Markdown notes. Use \`read\` for ${resolved.path}.`);
+      }
+      return [resolved];
+    }
+    if (resolved instanceof TFolder) {
+      const prefix = resolved.path ? `${resolved.path}/` : '';
+      return this.app.vault.getMarkdownFiles().filter((file) => (
+        prefix ? file.path.startsWith(prefix) : true
+      ));
+    }
+    throw new Error(`Search path not found: ${scopePath}`);
+  }
+
   /** In-process vault search (no CLI). Case-insensitive literal substring plus tag:. Listing queries error toward `ls`. */
   async searchNotes(params: {
     query: string;
@@ -558,7 +582,7 @@ export class ObsidianVaultApi {
     context?: boolean;
   }): Promise<VaultSearchHit[]> {
     const limit = params.limit ?? 50;
-    let folderPrefix = params.path?.trim().replace(/\/+$/, '') ?? '';
+    let scopePath = params.path?.trim().replace(/\/+$/, '') ?? '';
     let textQuery = params.query.trim();
     let tagFilter: string | null = null;
 
@@ -566,7 +590,7 @@ export class ObsidianVaultApi {
       tagFilter = textQuery.slice(4).trim().replace(/^#/, '');
       textQuery = '';
     } else if (textQuery.startsWith('path:')) {
-      folderPrefix = textQuery.slice(5).trim().replace(/\/+$/, '');
+      scopePath = textQuery.slice(5).trim().replace(/\/+$/, '');
       textQuery = '';
     }
 
@@ -578,11 +602,9 @@ export class ObsidianVaultApi {
     }
     const needle = textQuery.toLowerCase();
     const hits: VaultSearchHit[] = [];
+    const files = this.resolveSearchFiles(scopePath);
 
-    for (const file of this.app.vault.getMarkdownFiles()) {
-      if (folderPrefix && !file.path.startsWith(`${folderPrefix}/`) && file.path !== folderPrefix) {
-        continue;
-      }
+    for (const file of files) {
 
       if (tagFilter) {
         const cache = this.app.metadataCache.getFileCache(file);

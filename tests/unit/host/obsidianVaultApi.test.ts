@@ -355,6 +355,24 @@ describe('ObsidianVaultApi', () => {
       .rejects.toThrow('Use `ls` with `path` instead');
   });
 
+  it('searchNotes scopes to one Markdown file or a folder', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'hello world' },
+      { path: 'notes/b.md', content: 'hello again' },
+      { path: 'other/c.md', content: 'hello elsewhere' },
+    ], ['notes']) as never);
+
+    await expect(api.searchNotes({ query: 'hello', path: 'notes/a.md', limit: 10 }))
+      .resolves.toEqual([{ path: 'notes/a.md', line: 1 }]);
+    await expect(api.searchNotes({ query: 'hello', path: 'notes', limit: 10 }))
+      .resolves.toEqual([
+        { path: 'notes/a.md', line: 1 },
+        { path: 'notes/b.md', line: 1 },
+      ]);
+    await expect(api.searchNotes({ query: 'hello', path: 'missing.md', limit: 10 }))
+      .rejects.toThrow('Search path not found: missing.md');
+  });
+
   it('getLinks returns backlinks from resolvedLinks', () => {
     const api = new ObsidianVaultApi(makeApp([
       { path: 'target.md', content: '' },

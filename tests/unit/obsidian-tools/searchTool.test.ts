@@ -15,6 +15,8 @@ describe('createSearchTool promptUsage', () => {
 
     expect(tool.promptUsage?.summary).toContain('never as a content-read backdoor');
     expect(tool.promptUsage?.summary).toContain('`context: true` dumps are not a substitute for reading note bodies');
+    expect(tool.promptUsage?.summary).toContain('Pass `path` for one Markdown note or a folder');
+    expect(tool.promptUsage?.parameters).toContain('one Markdown note or folder');
     expect(tool.promptUsage?.summary).not.toContain('obsidian_read');
   });
 
