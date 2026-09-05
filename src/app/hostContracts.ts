@@ -131,6 +131,8 @@ export interface PiviChatViewMaintenance {
   shutdown(): Promise<void>;
   resetSession(openSessionId: string): Promise<void>;
   getBoundSessionFiles(): string[];
+  getSessionBindings(): readonly { sessionFile: string; archived: boolean }[];
+  removeArchivedBindings(sessionFile: string): Promise<void>;
   hasSession(openSessionId: string): boolean;
   activateSession(openSessionId: string): Promise<boolean>;
   refreshModelPresentation(): void;
@@ -364,6 +366,8 @@ export interface PiviSettingsHost extends PiviHostCore {
   /** Session-file cleanup action exposed from the session-files settings section. */
   purgeDeletedSessionFiles(): Promise<number>;
   purgeExpiredDeletedSessionFiles(): Promise<number>;
+  loadSessionMaintenance(): Promise<{ archivedCount: number; deletedCount: number }>;
+  deleteAllArchivedChats(): Promise<{ moved: number; skippedActive: number; failed: number }>;
   getActiveEnvironmentVariables(): string;
   getEnvironmentVariablesForScope(scope: EnvironmentScope): string;
   applyEnvironmentVariables(
@@ -409,6 +413,7 @@ export interface SessionsFacade {
   deleteSession(id: string): Promise<void>;
   deleteSessionFile(sessionFile: string, id?: string | null): Promise<void>;
   discardSessionFile(sessionFile: string, id?: string | null): Promise<void>;
+  abandonEmptyOwnedSession(sessionFile: string, id?: string | null): Promise<boolean>;
   renameSession(id: string, title: string, titleSource?: OpenSessionState['titleSource']): Promise<void>;
   updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
   forkSessionAt(openSession: OpenSessionState, atEntryId: string): Promise<{ sessionFile: string; sessionId: string } | null>;

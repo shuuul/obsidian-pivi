@@ -609,3 +609,66 @@ describe('PiSessionStore device-local external contexts', () => {
       .toEqual(['/device/root']);
   });
 });
+
+describe('PiSessionStore session trash', () => {
+  function createFsAdapter(vaultPath: string): FileStore {
+    const toAbs = (file: string) => path.join(vaultPath, ...file.split('/'));
+    return {
+      exists: async (file: string) => fs.existsSync(toAbs(file)),
+      delete: async (file: string) => {
+        const absolute = toAbs(file);
+        if (fs.existsSync(absolute)) fs.unlinkSync(absolute);
+      },
+      ensureFolder: async (folder: string) => {
+        fs.mkdirSync(toAbs(folder), { recursive: true });
+      },
+      rename: async (from: string, to: string) => {
+        fs.mkdirSync(path.dirname(toAbs(to)), { recursive: true });
+        fs.renameSync(toAbs(from), toAbs(to));
+      },
+    } as unknown as FileStore;
+  }
+
+  it('moves live JSONL into trash, lists it, restores it, and purges it', async () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-trash-'));
+    const sessionFile = '.pivi/sessions/--device--/chat.jsonl';
+    const liveAbs = path.join(vaultPath, ...sessionFile.split('/'));
+    fs.mkdirSync(path.dirname(liveAbs), { recursive: true });
+    fs.writeFileSync(liveAbs, `${JSON.stringify({
+      type: 'session',
+      version: 3,
+      id: 'session-trash',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      cwd: vaultPath,
+    })}\n`);
+    const store = new PiSessionStore(createFsAdapter(vaultPath), vaultPath);
+
+    try {
+      await store.trashSession(sessionFile);
+      expect(fs.existsSync(liveAbs)).toBe(false);
+      const listed = await store.listTrashedSessions();
+      expect(listed).toEqual([
+        expect.objectContaining({ sessionFile }),
+      ]);
+      expect(await store.listSessions(vaultPath)).toEqual([]);
+
+      const opened = await store.open(sessionFile);
+      expect(opened.sessionId).toBe('session-trash');
+
+      await store.restoreTrashedSession(sessionFile);
+      expect(fs.existsSync(liveAbs)).toBe(true);
+      expect(await store.listTrashedSessions()).toEqual([]);
+      expect((await store.listSessions(vaultPath)).map((item) => item.sessionFile)).toEqual([
+        sessionFile,
+      ]);
+
+      await store.trashSession(sessionFile);
+      await store.purgeTrashedSession(sessionFile);
+      expect(await store.listTrashedSessions()).toEqual([]);
+      expect(fs.existsSync(liveAbs)).toBe(false);
+    } finally {
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
+  });
+});
+

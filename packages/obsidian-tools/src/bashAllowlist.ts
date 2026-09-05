@@ -1,41 +1,42 @@
-import { isWindowsCmdShell, matchEncodedBashAllowlist } from '@pivi/agent/tools';
+import {
+  canonicalizeBashPermissions,
+  defaultCaseInsensitiveExecutables,
+  defaultSafeBashPermissions,
+  isWindowsCmdShell,
+  matchBashPermissions,
+  type PersistentBashPermission,
+} from '@pivi/agent/tools';
 
 export const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'pwd'] as const;
 export const DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST = ['where', 'cd'] as const;
 
-function normalizeAllowlist(value: readonly string[] | undefined): string[] {
-  const seen = new Set<string>();
-  const normalized: string[] = [];
-  for (const entry of value ?? []) {
-    const command = entry.trim();
-    if (!command || seen.has(command)) {
-      continue;
-    }
-    seen.add(command);
-    normalized.push(command);
-  }
-  return normalized;
-}
-
-export function buildEffectiveBashAllowlist(
-  userAllowlist?: readonly string[],
+export function buildEffectiveBashPermissions(
+  userPermissions?: readonly PersistentBashPermission[],
   shellPath = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
-): readonly string[] {
-  const defaults = isWindowsCmdShell(shellPath)
-    ? DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST
-    : DEFAULT_SAFE_BASH_ALLOWLIST;
-  return normalizeAllowlist([...defaults, ...(userAllowlist ?? [])]);
+): readonly PersistentBashPermission[] {
+  return canonicalizeBashPermissions(
+    [...defaultSafeBashPermissions(shellPath), ...(userPermissions ?? [])],
+    defaultCaseInsensitiveExecutables(shellPath),
+  );
 }
 
 /**
- * Match one shell-safe command against exact argv or argv-prefix entries.
- * Shell control, substitution, redirects, and additional commands are rejected
- * before matching because execution uses the resolved login shell.
+ * Match one command against structured persistent Bash permissions plus safe defaults.
  */
 export function matchBashCommandAllowlist(
   command: string,
-  allowlist: readonly string[],
+  permissions: readonly PersistentBashPermission[],
   shellPath = '/bin/sh',
 ): boolean {
-  return matchEncodedBashAllowlist(command, shellPath, allowlist);
+  return matchBashPermissions(
+    command,
+    buildEffectiveBashPermissions(permissions, shellPath),
+    { shellPath },
+  );
+}
+
+export function defaultSafeBashAllowlistNames(shellPath: string): readonly string[] {
+  return isWindowsCmdShell(shellPath)
+    ? DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST
+    : DEFAULT_SAFE_BASH_ALLOWLIST;
 }

@@ -52,6 +52,8 @@ describe('Obsidian settings integration adapter', () => {
     expect(rows.find((row) => row.name === TOOL_OBSIDIAN_READ_EXTERNAL)).toMatchObject({
       configuration: 'external-read',
       group: 'additional',
+      enabled: true,
+      available: true,
     });
     expect(rows.find((row) => row.name === TOOL_PIVI_SESSIONS)).toMatchObject({
       label: 'Pivi Sessions',

@@ -271,6 +271,63 @@ describe("PiviSettingsStorage", () => {
     expect(adapter.write).toHaveBeenCalledWith(PIVI_SETTINGS_PATH, expect.any(String));
   });
 
+  it('migrates legacy bashAllowlist into device-local permissions and strips synced fields', async () => {
+    let snapshot = {
+      version: 1 as const,
+      bash: [] as Array<{
+        kind: 'executable';
+        executable: { kind: 'name'; value: string };
+        enabled: boolean;
+      }>,
+      externalDirectories: [] as Array<{ realpath: string; enabled: boolean }>,
+    };
+    const capabilities = {
+      hasRecord: () => snapshot.bash.length > 0 || snapshot.externalDirectories.length > 0,
+      getSnapshot: () => snapshot,
+      save: (next: typeof snapshot) => {
+        snapshot = next;
+        return next;
+      },
+    };
+    const adapter = createMemoryAdapter(JSON.stringify({
+      agentSettings: {
+        obsidianTools: {
+          bashAllowlist: ['git', 'ls'],
+          externalReadDirectories: [externalFixturePath('/synced/legacy')],
+        },
+      },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
+    );
+
+    const settings = await storage.load();
+    expect(settings.agentSettings.obsidianTools?.bashPermissions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'executable',
+          executable: { kind: 'name', value: 'git' },
+          enabled: true,
+        }),
+        expect.objectContaining({
+          kind: 'executable',
+          executable: { kind: 'name', value: 'ls' },
+          enabled: true,
+        }),
+      ]),
+    );
+    expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
+      externalFixturePath('/synced/legacy'),
+    ]);
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
+      agentSettings?: { obsidianTools?: Record<string, unknown> };
+    };
+    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('bashAllowlist');
+    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('bashPermissions');
+    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('externalReadDirectories');
+  });
+
   it('moves external roots into device-local storage and strips them from synced settings', async () => {
     const localDirectories = [externalFixturePath('/device/root')];
     const localStore = {

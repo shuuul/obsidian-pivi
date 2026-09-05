@@ -11,7 +11,14 @@ import {
   WEB_PROVIDER_CAPABILITIES,
   WEB_PROVIDER_IDS,
 } from '@pivi/agent/settings/types';
-import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/agent/tools';
+import {
+  canonicalizeBashPermissions,
+  canonicalizeExternalDirectories,
+  defaultCaseInsensitiveExecutables,
+  enabledExternalDirectories,
+  providerApiKeyEnvVar,
+  TOOL_OBSIDIAN_BASH,
+} from '@pivi/agent/tools';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {
   SettingsGeneralSnapshot,
@@ -24,6 +31,8 @@ import type {
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
+import { isPathWithinVault } from '@/app/hostPlatform';
+import { t } from '@/app/i18n';
 import { isNoteToolbarTextToolbarActive } from '@/app/noteToolbarIntegration';
 import {
   PIVI_GITHUB_URL,
@@ -151,20 +160,32 @@ export function createSettingsUiPorts(
     patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0] & { disabledTools?: readonly string[] },
   ): Promise<void> => {
     const current = resolveObsidianToolsSettings(host.settings.agentSettings.obsidianTools);
-    if (patch.externalReadDirectories) {
-      for (const directory of patch.externalReadDirectories) {
-        const validation = validateDirectoryPath(directory);
+    if (patch.externalDirectories) {
+      for (const directory of patch.externalDirectories) {
+        const validation = validateDirectoryPath(directory.realpath);
         if (!validation.valid) throw new Error(validation.error ?? 'Invalid external directory.');
       }
     }
-    const bashAllowlist = patch.bashAllowlist
-      ? [...new Set(patch.bashAllowlist.map(entry => entry.trim()).filter(Boolean))]
-      : [...current.bashAllowlist];
+    const vaultPath = host.getVaultPath?.() ?? null;
+    const bashPermissions = patch.bashPermissions
+      ? canonicalizeBashPermissions(patch.bashPermissions, defaultCaseInsensitiveExecutables())
+      : [...current.bashPermissions];
+    const requestedExternal = patch.externalDirectories
+      ? canonicalizeExternalDirectories(patch.externalDirectories)
+      : [...current.externalDirectoryPermissions];
+    const externalDirectoryPermissions = vaultPath
+      ? requestedExternal.filter((directory) => !isPathWithinVault(directory.realpath, vaultPath))
+      : requestedExternal;
+    const externalReadDirectories = enabledExternalDirectories(externalDirectoryPermissions);
     host.settings.agentSettings.obsidianTools = {
       ...current,
-      ...patch,
-      externalReadDirectories: patch.externalReadDirectories ? [...patch.externalReadDirectories] : current.externalReadDirectories,
-      bashAllowlist,
+      ...(patch.allowBash !== undefined ? { allowBash: patch.allowBash } : {}),
+      ...(patch.allowExternalRead !== undefined ? { allowExternalRead: patch.allowExternalRead } : {}),
+      ...(patch.defaultReadMaxChars !== undefined ? { defaultReadMaxChars: patch.defaultReadMaxChars } : {}),
+      bashPermissions,
+      bashAllowlist: [],
+      externalDirectoryPermissions,
+      externalReadDirectories,
       disabledTools: patch.disabledTools ? [...patch.disabledTools] : current.disabledTools,
     };
     await host.saveSettings();
@@ -174,10 +195,10 @@ export function createSettingsUiPorts(
       }
       await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
     }
-    if (patch.externalReadDirectories) {
+    if (patch.externalDirectories) {
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance
-          .syncExternalReadDirectories(patch.externalReadDirectories);
+          .syncExternalReadDirectories(externalReadDirectories);
       }
     }
   };
@@ -194,12 +215,17 @@ export function createSettingsUiPorts(
       tools: {
         getSettings: () => {
           const settings = getObsidianToolsSettingsFromBag(host.settings);
+          const vaultPath = host.getVaultPath?.() ?? null;
           return {
             allowBash: settings.allowBash,
             allowExternalRead: settings.allowExternalRead,
-            bashAllowlist: settings.bashAllowlist ?? [],
+            bashPermissions: settings.bashPermissions ?? [],
             defaultReadMaxChars: settings.defaultReadMaxChars,
-            externalReadDirectories: settings.externalReadDirectories,
+            externalDirectories: vaultPath
+              ? (settings.externalDirectoryPermissions ?? []).filter(
+                (directory) => !isPathWithinVault(directory.realpath, vaultPath),
+              )
+              : settings.externalDirectoryPermissions ?? [],
           };
         },
         listToolRows: () => {
@@ -218,7 +244,18 @@ export function createSettingsUiPorts(
           await saveToolSettings({ disabledTools: [...disabledTools].sort() });
         },
         chooseExternalDirectory: () => pickDirectoryPath(),
-        validateExternalDirectory: path => Promise.resolve(validateDirectoryPath(path)),
+        validateExternalDirectory: (path) => {
+          const validation = validateDirectoryPath(path);
+          if (!validation.valid) return Promise.resolve(validation);
+          const vaultPath = host.getVaultPath?.() ?? null;
+          if (vaultPath && isPathWithinVault(path, vaultPath)) {
+            return Promise.resolve({
+              valid: false,
+              error: t('settings.permissions.external.insideWorkspace'),
+            });
+          }
+          return Promise.resolve(validation);
+        },
         saveSettings: saveToolSettings,
       },
       webSearch: {
@@ -328,6 +365,8 @@ export function createSettingsUiPorts(
       saveGeneral,
       saveEditorSelectionToolbar,
       saveSubagents,
+      loadSessionMaintenance: () => host.loadSessionMaintenance(),
+      deleteAllArchivedChats: () => host.deleteAllArchivedChats(),
       purgeDeletedSessionFiles: () => host.purgeDeletedSessionFiles(),
     },
     persistence: {

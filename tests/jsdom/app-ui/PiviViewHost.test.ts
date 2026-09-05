@@ -66,6 +66,8 @@ function createHandle(): PiviChatViewHandle {
       shutdown: jest.fn(async () => undefined),
       resetSession: jest.fn(async () => undefined),
       getBoundSessionFiles: jest.fn(() => []),
+      getSessionBindings: jest.fn(() => []),
+      removeArchivedBindings: jest.fn(async () => undefined),
       hasSession: jest.fn(() => false),
       activateSession: jest.fn(async () => false),
       refreshModelPresentation: jest.fn(),

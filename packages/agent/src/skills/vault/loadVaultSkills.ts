@@ -9,9 +9,15 @@ import { PIVI_SKILLS_PATH } from './paths';
 export interface Skill {
   name: string;
   description: string;
+  /** Vault-relative SKILL.md path for UI/restore matching. */
   filePath: string;
   content: string;
+  /** Vault-relative skill directory for UI/restore matching. */
   baseDir: string;
+  /** Absolute SKILL.md path for on-disk reads. */
+  absoluteFilePath: string;
+  /** Absolute skill directory for on-disk reads of supporting files. */
+  absoluteBaseDir: string;
   disabled?: boolean;
 }
 
@@ -50,6 +56,8 @@ function loadSkillFromDir(vaultPath: string, baseDir: string): Skill | null {
       description,
       filePath: toVaultRelativePath(vaultPath, absoluteFilePath),
       baseDir: toVaultRelativePath(vaultPath, baseDir),
+      absoluteFilePath,
+      absoluteBaseDir: baseDir,
       content: raw,
       disabled,
     };

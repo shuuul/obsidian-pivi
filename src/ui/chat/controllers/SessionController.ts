@@ -42,7 +42,7 @@ export interface SessionControllerDeps {
   getAgentService?: () => PiChatService | null;
   ensureServiceForSession?: (openSession: OpenSessionState | null) => Promise<void> | void;
   dismissPendingInlinePrompts?: () => void;
-  clearCapabilitySessionGrants?: () => void;
+  refreshCapabilityGrants?: () => void;
 }
 
 export class SessionController {
@@ -83,7 +83,7 @@ export class SessionController {
 
     try {
       this.deps.dismissPendingInlinePrompts?.();
-      this.deps.clearCapabilitySessionGrants?.();
+      this.deps.refreshCapabilityGrants?.();
       this.deps.resetStreamingState();
       state.flushProjection();
 
@@ -215,7 +215,7 @@ export class SessionController {
 
     try {
       this.deps.dismissPendingInlinePrompts?.();
-      this.deps.clearCapabilitySessionGrants?.();
+      this.deps.refreshCapabilityGrants?.();
       this.deps.resetStreamingState();
       state.flushProjection();
       await this.save();

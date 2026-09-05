@@ -52,12 +52,14 @@ export function initializeTabControllers(
   const { dom, state, services, ui } = tab;
 
   tab.capabilityApproval = new TabCapabilityApprovalBridge({
-    persistBashAllowlistEntry: async (command) => {
-      await ports.settings.appendBashAllowlistEntry?.(command);
+    persistBashPermissions: async (permissions) => {
+      await ports.settings.appendBashPermissions?.(permissions);
     },
     persistExternalDirectory: async (directory) => {
       await ports.settings.appendExternalReadDirectory?.(directory);
     },
+    getBashPermissions: () => ports.settings.getSettingsSnapshot().bashPermissions ?? [],
+    getExternalDirectories: () => ports.settings.getSettingsSnapshot().externalReadDirectories ?? [],
     onExternalDirectoryAllowed: (directory) => {
       tab.ui.externalContextSelector?.addExternalContext(directory);
       syncTabSessionExternalContext(
@@ -148,10 +150,11 @@ export function initializeTabControllers(
       resetStreamingState: () => tab.controllers.streamController?.resetStreamingState(),
       getAgentService: () => tab.service,
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingInlinePrompts(),
-      clearCapabilitySessionGrants: () => tab.capabilityApproval?.clearSessionGrants(),
+      refreshCapabilityGrants: () => {
+        tab.capabilityApproval?.refreshFromSettings();
+      },
       ensureServiceForSession: (openSession) => {
         tab.piviManagementApproval?.cancelPending();
-        tab.capabilityApproval?.clearSessionGrants();
         tab.openSessionId = openSession?.id ?? null;
         tab.sessionFile = openSession?.sessionFile ?? null;
         tab.leafId = null;
@@ -183,7 +186,6 @@ export function initializeTabControllers(
     {
       onNewSession: () => {
         tab.piviManagementApproval?.cancelPending();
-        tab.capabilityApproval?.clearSessionGrants();
         cleanupTabRuntime(tab);
         tab.lifecycleState = 'blank';
         tab.draftModel = resolveBlankTabModel(ports);
@@ -198,7 +200,6 @@ export function initializeTabControllers(
       onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
       onSessionSwitched: () => {
         tab.piviManagementApproval?.cancelPending();
-        tab.capabilityApproval?.clearSessionGrants();
         ui.slashCommandDropdown?.resetRuntimeSkillsCache();
       },
     },

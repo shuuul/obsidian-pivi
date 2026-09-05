@@ -1,54 +1,74 @@
 import {
-  buildEffectiveBashAllowlist,
+  buildEffectiveBashPermissions,
   matchBashCommandAllowlist,
   resolveLoginShellPath,
 } from '@pivi/obsidian-tools';
 import {
-  createPrefixBashGrant,
-  decodeBashGrant,
-  encodeBashGrant,
+  formatBashPermissionLabel,
   isWindowsCmdShell,
   tokenizeBashArgv,
   tokenizeCmdArgv,
+  type PersistentBashPermission,
 } from '@pivi/agent/tools';
 
-describe('bashAllowlist shell-aware matching', () => {
+function exe(name: string): PersistentBashPermission {
+  return { kind: 'executable', executable: { kind: 'name', value: name }, enabled: true };
+}
+
+function sub(name: string, command: string): PersistentBashPermission {
+  return {
+    kind: 'subcommand',
+    executable: { kind: 'name', value: name },
+    subcommand: command,
+    enabled: true,
+  };
+}
+
+describe('bash permission matching', () => {
   it('uses cmd.exe lookup defaults on Windows', () => {
-    expect(buildEffectiveBashAllowlist([], 'cmd.exe')).toEqual(['where', 'cd']);
-    expect(buildEffectiveBashAllowlist([], '/bin/sh')).toEqual(['which', 'type', 'pwd']);
-    expect(buildEffectiveBashAllowlist([], String.raw`C:\Program Files\Git\bin\bash.exe`)).toEqual(['which', 'type', 'pwd']);
-    expect(buildEffectiveBashAllowlist([], resolveLoginShellPath({ SHELL: String.raw`C:\Windows\System32\cmd.exe` }))).toEqual(['where', 'cd']);
-    expect(buildEffectiveBashAllowlist([], resolveLoginShellPath({ SHELL: String.raw`C:\Program Files\Git\bin\bash.exe` }))).toEqual(['which', 'type', 'pwd']);
+    expect(buildEffectiveBashPermissions([], 'cmd.exe').map(formatBashPermissionLabel)).toEqual(['where', 'cd']);
+    expect(buildEffectiveBashPermissions([], '/bin/sh').map(formatBashPermissionLabel)).toEqual(['which', 'type', 'pwd']);
+    expect(buildEffectiveBashPermissions([], String.raw`C:\Program Files\Git\bin\bash.exe`).map(formatBashPermissionLabel))
+      .toEqual(['which', 'type', 'pwd']);
+    expect(buildEffectiveBashPermissions([], resolveLoginShellPath({ SHELL: String.raw`C:\Windows\System32\cmd.exe` }))
+      .map(formatBashPermissionLabel)).toEqual(['where', 'cd']);
+    expect(buildEffectiveBashPermissions([], resolveLoginShellPath({ SHELL: String.raw`C:\Program Files\Git\bin\bash.exe` }))
+      .map(formatBashPermissionLabel)).toEqual(['which', 'type', 'pwd']);
   });
 
   it('does not treat command.com as cmd.exe', () => {
     expect(isWindowsCmdShell('command.com')).toBe(false);
     expect(isWindowsCmdShell(String.raw`C:\Windows\System32\command.com`)).toBe(false);
     expect(isWindowsCmdShell('cmd.exe')).toBe(true);
-    expect(createPrefixBashGrant('git status', 'command.com')).toBeNull();
-    expect(matchBashCommandAllowlist('git status', ['git'], 'command.com')).toBe(false);
+    expect(matchBashCommandAllowlist('git status', [exe('git')], 'command.com')).toBe(false);
   });
 
   it('tokenizes quoted argv literally', () => {
     expect(tokenizeBashArgv(`echo "a b" 'c d'`)).toEqual(['echo', 'a b', 'c d']);
   });
 
-  it('matches exact commands and argument prefixes', () => {
-    expect(matchBashCommandAllowlist('git status', ['git'])).toBe(true);
-    expect(matchBashCommandAllowlist('git', ['git'])).toBe(true);
-    expect(matchBashCommandAllowlist('npm run build --silent', ['npm run build'])).toBe(true);
+  it('matches executable and semantic subcommand scopes', () => {
+    expect(matchBashCommandAllowlist('git status', [exe('git')])).toBe(true);
+    expect(matchBashCommandAllowlist('git', [exe('git')])).toBe(true);
+    expect(matchBashCommandAllowlist('npm run build --silent', [sub('npm', 'run')])).toBe(true);
+    expect(matchBashCommandAllowlist('npm install', [sub('npm', 'run')])).toBe(false);
   });
 
-  it('rejects commands outside the allowlist prefix', () => {
-    expect(matchBashCommandAllowlist('npm install', ['npm run build'])).toBe(false);
-    expect(matchBashCommandAllowlist('npm run build:evil', ['npm run build'])).toBe(false);
+  it('skips later commands in the same Always family without covering sibling families', () => {
+    expect(matchBashCommandAllowlist('uv python install 3.12', [sub('uv', 'python')])).toBe(true);
+    expect(matchBashCommandAllowlist('uv python list', [sub('uv', 'python')])).toBe(true);
+    expect(matchBashCommandAllowlist('uv run script.py', [sub('uv', 'python')])).toBe(false);
+    expect(matchBashCommandAllowlist('pixi global list', [sub('pixi', 'global')])).toBe(true);
+    expect(matchBashCommandAllowlist('pixi global install ripgrep', [sub('pixi', 'global')])).toBe(true);
+    expect(matchBashCommandAllowlist('pixi run test', [sub('pixi', 'global')])).toBe(false);
+    expect(matchBashCommandAllowlist('git status --short', [sub('git', 'status')])).toBe(true);
+    expect(matchBashCommandAllowlist('git log', [sub('git', 'status')])).toBe(false);
+    expect(matchBashCommandAllowlist('grep other notes/b.md', [exe('grep')])).toBe(true);
   });
 
   it.each([
     'git status; rm -rf .',
-    'git status && rm -rf .',
     'git status || rm -rf .',
-    'git status | cat',
     'git status < input',
     'git status > output',
     'git status 2>> output',
@@ -57,57 +77,38 @@ describe('bashAllowlist shell-aware matching', () => {
     'git status\nrm -rf .',
     'git status\r rm -rf .',
     'git status\u0000rm',
-  ])('rejects active shell syntax in %p', (command) => {
-    expect(matchBashCommandAllowlist(command, ['git'])).toBe(false);
+  ])('rejects unsafe shell syntax in %p', (command) => {
+    expect(matchBashCommandAllowlist(command, [exe('git')])).toBe(false);
+  });
+
+  it('matches persistable pipelines only when every component is granted', () => {
+    expect(matchBashCommandAllowlist('git status && rm -rf .', [exe('git')])).toBe(false);
+    expect(matchBashCommandAllowlist('git status && rm -rf .', [exe('git'), exe('rm')])).toBe(true);
+    expect(matchBashCommandAllowlist('cat x | grep a', [exe('cat'), exe('grep')])).toBe(true);
   });
 
   it('allows shell metacharacters only when single-quoted as literal argv', () => {
-    expect(matchBashCommandAllowlist("git show ';'", ['git show'])).toBe(true);
+    expect(matchBashCommandAllowlist("git show ';'", [sub('git', 'show')])).toBe(true);
   });
 
   it('rejects cmd.exe control syntax and unknown shells', () => {
-    expect(matchBashCommandAllowlist('type \\& whoami', ['type'], String.raw`C:\Windows\System32\cmd.exe`)).toBe(false);
-    expect(matchBashCommandAllowlist('echo %PATH%', ['echo'], 'cmd.exe')).toBe(false);
-    expect(matchBashCommandAllowlist('echo foo ^& whoami', ['echo'], 'cmd.exe')).toBe(false);
-    expect(matchBashCommandAllowlist('git status', ['git'], '/opt/custom-shell')).toBe(false);
+    expect(matchBashCommandAllowlist('type \\& whoami', [exe('type')], String.raw`C:\Windows\System32\cmd.exe`)).toBe(false);
+    expect(matchBashCommandAllowlist('echo %PATH%', [exe('echo')], 'cmd.exe')).toBe(false);
+    expect(matchBashCommandAllowlist('echo foo ^& whoami', [exe('echo')], 'cmd.exe')).toBe(false);
+    expect(matchBashCommandAllowlist('git status', [exe('git')], '/opt/custom-shell')).toBe(false);
   });
 
-  it('matches safe argv prefixes through cmd.exe without enabling control syntax', () => {
+  it('matches safe argv through cmd.exe without enabling control syntax', () => {
     const shell = String.raw`C:\Windows\System32\cmd.exe`;
     expect(tokenizeCmdArgv(String.raw`where "Program Files\app.exe"`)).toEqual(['where', String.raw`Program Files\app.exe`]);
-    expect(matchBashCommandAllowlist('git status', ['git'], shell)).toBe(true);
-    expect(matchBashCommandAllowlist('npm run build --silent', ['npm run build'], shell)).toBe(true);
-    expect(matchBashCommandAllowlist(String.raw`where "Program Files\app.exe"`, ['where'], shell)).toBe(true);
-    expect(matchBashCommandAllowlist('git status & whoami', ['git'], shell)).toBe(false);
-    expect(matchBashCommandAllowlist('"git & whoami"', ['git'], shell)).toBe(false);
-    expect(matchBashCommandAllowlist('echo %PATH%', ['echo'], shell)).toBe(false);
-    expect(matchBashCommandAllowlist('echo "%PATH%"', ['echo'], shell)).toBe(false);
-  });
-
-  it('distinguishes tagged exact grants from prefixes, including unsafe exact commands', () => {
-    expect(matchBashCommandAllowlist('printf x | cat', ['exact: printf x | cat'], '/bin/zsh')).toBe(true);
-    expect(matchBashCommandAllowlist('printf x | wc', ['exact: printf x | cat'], '/bin/zsh')).toBe(false);
-    expect(matchBashCommandAllowlist('git status', ['exact: git'], '/bin/zsh')).toBe(false);
-    expect(matchBashCommandAllowlist('git status', ['prefix: "git"'], '/bin/zsh')).toBe(true);
-    expect(matchBashCommandAllowlist('printf x | cat', ['exact: printf x | cat'], 'cmd.exe')).toBe(true);
+    expect(matchBashCommandAllowlist('git status', [exe('git')], shell)).toBe(true);
+    expect(matchBashCommandAllowlist('npm run build --silent', [sub('npm', 'run')], shell)).toBe(true);
+    expect(matchBashCommandAllowlist(String.raw`where "Program Files\app.exe"`, [exe('where')], shell)).toBe(true);
+    expect(matchBashCommandAllowlist('git status & whoami', [exe('git')], shell)).toBe(false);
   });
 
   it('preserves POSIX double-quote backslashes instead of over-unescaping', () => {
     expect(tokenizeBashArgv('printf "a\\qb"')).toEqual(['printf', 'a\\qb']);
     expect(tokenizeBashArgv('printf "a\\\\b"')).toEqual(['printf', 'a\\b']);
-  });
-
-  it('round-trips prefix grants with shell-literal JSON-sensitive argv', () => {
-    const command = "printf '$VAR' '`tick`' 'a\\\\b' 'json \"quote\"'";
-    const grant = createPrefixBashGrant(command, '/bin/sh');
-    expect(grant).toEqual({
-      kind: 'argv-prefix',
-      argv: ['printf', '$VAR', '`tick`', 'a\\\\b', 'json "quote"'],
-    });
-    if (!grant) throw new Error('Expected a prefix grant');
-
-    const encoded = encodeBashGrant(grant);
-    expect(decodeBashGrant(encoded, '/bin/sh')).toEqual(grant);
-    expect(matchBashCommandAllowlist(command, [encoded], '/bin/sh')).toBe(true);
   });
 });

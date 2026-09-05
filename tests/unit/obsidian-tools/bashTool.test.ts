@@ -17,14 +17,13 @@ describe('createBashTool', () => {
     }));
     const deps = {
       app: { vault: { adapter: { basePath: '/vault' } } },
-      settings: { bashAllowlist: [], cliTimeoutMs: 30_000 },
+      settings: { bashPermissions: [], cliTimeoutMs: 30_000 },
       processRunner: { run },
       capabilityApproval: {
-        hasSessionGrant: () => false,
-        clearSessionGrants: () => undefined,
+        hasPersistentGrant: () => false,
         requestApproval: async () => {
           process.env.SHELL = '/bin/fish';
-          return { decision: 'allow' as const };
+          return { decision: 'allow-once' as const };
         },
       },
     } as unknown as ObsidianToolDeps;

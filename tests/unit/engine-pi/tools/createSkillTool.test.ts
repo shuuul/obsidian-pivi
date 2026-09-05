@@ -4,12 +4,16 @@ import { createSkillTool } from '@pivi/engine-pi/createSkillTool';
 describe('createSkillTool', () => {
   const skillDir = '.pivi/skills/demo-skill';
   const skillFilePath = `${skillDir}/SKILL.md`;
+  const absoluteBaseDir = '/vault/.pivi/skills/demo-skill';
+  const absoluteFilePath = `${absoluteBaseDir}/SKILL.md`;
   const skills: Skill[] = [
     {
       name: 'demo-skill',
       description: 'Demo',
       filePath: skillFilePath,
       baseDir: skillDir,
+      absoluteFilePath,
+      absoluteBaseDir,
       content: `---
 name: demo-skill
 description: Demo
@@ -23,6 +27,8 @@ Follow these steps.`,
       description: 'Other',
       filePath: '.pivi/skills/other/SKILL.md',
       baseDir: '.pivi/skills/other',
+      absoluteFilePath: '/vault/.pivi/skills/other/SKILL.md',
+      absoluteBaseDir: '/vault/.pivi/skills/other',
       content: '# Other skill',
     },
   ];
@@ -34,8 +40,8 @@ Follow these steps.`,
     expect(result.content).toEqual([
       {
         type: 'text',
-        text: `<skill name="demo-skill" location="${skillFilePath}">
-References are relative to ${skillDir}.
+        text: `<skill name="demo-skill" location="${absoluteFilePath}">
+Supporting files are absolute paths under ${absoluteBaseDir}. Read them with obsidian_read_external using those absolute paths; do not use obsidian_read.
 
 # Do the thing
 

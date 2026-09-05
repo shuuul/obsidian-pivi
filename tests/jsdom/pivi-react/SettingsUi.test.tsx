@@ -66,6 +66,8 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       saveSubagents: async () => undefined,
       saveEditorSelectionToolbar: async () => undefined,
       purgeDeletedSessionFiles: async () => 0,
+      loadSessionMaintenance: async () => ({ archivedCount: 0, deletedCount: 0 }),
+      deleteAllArchivedChats: async () => ({ moved: 0, skippedActive: 0, failed: 0 }),
       ...overrides,
     },
     complex: {
@@ -73,9 +75,9 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       tools: {
         getSettings: () => ({
           allowBash: false,
-          bashAllowlist: [] as readonly string[],
+          bashPermissions: [] as const,
           allowExternalRead: false,
-          externalReadDirectories: [] as readonly string[],
+          externalDirectories: [] as const,
           defaultReadMaxChars: 100_000,
         }),
         listToolRows: () => [],
@@ -251,7 +253,7 @@ describe('React settings foundation', () => {
 
     rerender(renderPage('sessions'));
     expect(screen.queryByRole('heading', { name: 'Session files' })).not.toBeInTheDocument();
-    expect(screen.getByText('Choose how long removed sessions are retained and permanently delete their files.'))
+    expect(screen.getByText('See archived and recently deleted chat counts, move archived chats to recently deleted, and permanently delete recovered files.'))
       .toBeInTheDocument();
   });
 
@@ -273,7 +275,7 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="sessions" ports={createPorts()} /></I18nProvider>));
 
     expect(screen.getByRole('button', { name: 'Delete permanently' })).toBeInTheDocument();
-    expect(screen.getByText('Permanently delete removed sessions').closest('.pivi-settings-row'))
+    expect(screen.getByText('Permanently delete recently deleted chats').closest('.pivi-settings-row'))
       .toHaveClass('pivi-settings-row--centered');
   });
 
@@ -281,11 +283,11 @@ describe('React settings foundation', () => {
     const saveGeneral = jest.fn(async () => undefined);
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="sessions" ports={createPorts({ saveGeneral })} /></I18nProvider>));
 
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Keep removed sessions for' }), {
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Keep recently deleted chats for' }), {
       target: { value: '14' },
     });
     expect(saveGeneral).not.toHaveBeenCalled();
-    fireEvent.blur(screen.getByRole('spinbutton', { name: 'Keep removed sessions for' }));
+    fireEvent.blur(screen.getByRole('spinbutton', { name: 'Keep recently deleted chats for' }));
     await act(async () => undefined);
 
     expect(saveGeneral).toHaveBeenCalledWith({ deletedSessionRetentionDays: 14 });
@@ -1236,8 +1238,12 @@ describe('React settings foundation', () => {
   it('disables the cleanup action while its async port action is pending', async () => {
     let resolve!: (count: number) => void;
     const purgeDeletedSessionFiles = jest.fn(() => new Promise<number>((resolvePromise) => { resolve = resolvePromise; }));
-    const ports = createPorts({ purgeDeletedSessionFiles });
+    const ports = createPorts({
+      purgeDeletedSessionFiles,
+      loadSessionMaintenance: async () => ({ archivedCount: 0, deletedCount: 2 }),
+    });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="sessions" ports={ports} /></I18nProvider>));
+    await act(async () => undefined);
     const button = screen.getByRole('button', { name: 'Delete permanently' });
     fireEvent.click(button);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -1245,7 +1251,7 @@ describe('React settings foundation', () => {
     fireEvent.click(confirmDelete);
     expect(confirmDelete).toBeDisabled();
     await act(async () => resolve(3));
-    expect(ports.feedback.notify).toHaveBeenCalledWith('Permanently deleted 3 removed session file(s).');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Permanently deleted 3 recently deleted chat file(s).');
   });
 
   it('requires Apply before environment changes are persisted', async () => {

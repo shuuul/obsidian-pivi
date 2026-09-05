@@ -267,6 +267,7 @@ describe('plugin settings load ordering', () => {
           order.push('raw-save');
         },
         getAdapter: () => adapter,
+        takeDeletedSessionFileQueue: async () => [],
       },
       sessionManager: {
         loadSummaries: async () => {
@@ -276,9 +277,12 @@ describe('plugin settings load ordering', () => {
       } as never,
       createSessionStore: () => {
         order.push('session-store');
-        return { migrateDeviceLocalExternalContexts: async () => 0 } as never;
+        return {
+          migrateDeviceLocalExternalContexts: async () => 0,
+          listSessions: async () => [],
+          deleteSession: async () => undefined,
+        } as never;
       },
-      hideDeletedSessionSummaries: async () => undefined,
       persistSessionSummary: async () => undefined,
       saveSettings: async () => undefined,
       setSettings: (next) => {

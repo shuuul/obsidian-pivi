@@ -368,6 +368,8 @@ describe('VaultSkillsService sync', () => {
       description: 'Demo skill',
       filePath: skillMd,
       baseDir: path.dirname(skillMd),
+      absoluteFilePath: skillMd,
+      absoluteBaseDir: path.dirname(skillMd),
       content: '# Demo skill',
       sourceInfo: {
         source: 'pivi-vault',

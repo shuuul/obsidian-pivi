@@ -26,6 +26,7 @@ import {
   createWebFetchTool,
   createWebSearchCredentialStore,
   createWebSearchTool,
+  formatBashPermissionLabel,
   isObsidianAgentTool,
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
@@ -54,7 +55,7 @@ import { getVaultPath } from "@pivi/obsidian-host/path";
 import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
-  buildEffectiveBashAllowlist,
+  buildEffectiveBashPermissions,
   createObsidianTools,
   getObsidianToolsSettingsFromBag,
   resolveLoginShellPath,
@@ -372,6 +373,7 @@ function createObsidianBaseToolProvider(
       obsidianCliAvailable,
       resolveReadMaxChars,
       capabilityApproval: capabilityApproval ?? null,
+      getBashPermissions: () => getObsidianToolsSettingsFromBag(host.settings).bashPermissions,
     });
 
     toolSpecs.push(...createBaseSessionTools(host.sessionRecovery, settings.disabledTools));
@@ -411,7 +413,12 @@ function createObsidianBaseToolProvider(
       registeredToolSummary: {
         obsidianTools,
         obsidianCliAvailable,
-        ...(bashEnabled ? { bashAllowlist: buildEffectiveBashAllowlist(settings.bashAllowlist, resolveLoginShellPath()) } : {}),
+        ...(bashEnabled ? {
+          bashAllowlist: buildEffectiveBashPermissions(
+            settings.bashPermissions,
+            resolveLoginShellPath(),
+          ).map(formatBashPermissionLabel),
+        } : {}),
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,

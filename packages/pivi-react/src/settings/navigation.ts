@@ -88,6 +88,7 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
       'settings.sessionFiles.heading',
       'settings.sessionFiles.retention.name',
       'settings.sessionFiles.deleteRemoved.name',
+      'settings.sessionFiles.deleteArchived.name',
     ],
   },
   about: {
@@ -139,7 +140,8 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
       'settings.externalRead.allow.name',
       'settings.externalRead.directories.name',
       'settings.bash.heading',
-      'settings.bash.allowlist.name',
+      'settings.permissions.heading',
+      'settings.permissions.bash.name',
       'settings.tools.reading.defaultSize.name',
       'settings.tools.heading',
       'settings.subagents.heading',

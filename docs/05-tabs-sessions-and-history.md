@@ -66,7 +66,8 @@ Pi-compatible session directories encode the absolute vault path, which can diff
 | Open history | Reuses the same-view binding, then reveals another view's binding, then creates/rebinds a tab |
 | Rename | Updates `draftTitle` for blank tabs or JSONL session metadata for bound tabs |
 | Archive | Hides the tab without destroying its runtime or session; selecting it restores it |
-| Close | Saves, selects or creates a fallback, then destroys the tab; the sole empty blank tab cannot close |
+| Delete | Moves the JSONL from `.pivi/sessions/` to `.pivi/trash/sessions/`, preserving the same relative identity. Inventory is the trash folder, not plugin `data.json` and not Obsidian `.trash` (which may be the system trash and is not listable for recovery). Recoverable through `pivi_sessions` until retention expiry or explicit purge, which then deletes the trashed JSONL |
+| Close | Saves, selects or creates a fallback, then destroys the tab; the sole empty blank tab cannot close. Closing an owned session that never received a persisted user message permanently discards that JSONL instead of archiving it |
 | Fork | Requires persisted source entry IDs and creates a new session file opened in a new tab |
 | Redo | Uses persisted entry ancestry and may require lazy runtime activation |
 
@@ -76,7 +77,11 @@ The React switcher groups open tabs before archived tabs, supports title editing
 
 ## Session switching and recovery
 
-Switching a bound tab saves the current session, dismisses inline prompts, invalidates queued/stream state, orphans active subagent presentation, resets transient state, synchronizes the runtime if present, hydrates messages/usage/todo/current-note projections, and resets session-only external roots to current pinned roots.
+Switching a bound tab saves the current session, dismisses inline prompts, invalidates queued/stream state, orphans active subagent presentation, resets transient state, synchronizes the runtime if present, hydrates messages/usage/todo/current-note projections, and resets session-only external roots to current pinned roots. Persistent Bash and external-directory grants are vault-scoped device-local rules; they are not session-duration authorities and are not cleared on tab switch.
+
+A durable session is empty when its valid JSONL contains no `message` entry whose role is `user`. Assistant-only, tool, custom, and UI-context entries do not make it history. Lifecycle compensation permanently deletes only an empty file owned by the create/fork transaction that abandoned it. Startup cleanup runs after session-journal/cloud recovery and before tab reconciliation: it permanently discards successfully parsed empty files whose mtime is at least one hour old, that are not journal-owned, and that are not bound by a live non-archived tab. Eligible empty archived bindings are removed with those files; they never enter Recently deleted.
+
+Settings → Session files shows unique Archived and Deleted counts. **Delete all archived chats** moves each unique archived JSONL into `.pivi/trash/sessions/`, skips any file still bound by a non-archived tab, and reports moved/skipped/failed counts. Permanent purge destroys the JSONL files in that trash folder; it does not send them through Obsidian File Recovery or vault `.trash`. Recover deleted chats by asking Pivi with `pivi_sessions`; Settings does not list individual deleted rows.
 
 ### Long-session projection
 
@@ -108,7 +113,8 @@ Multiple views share the same layout file, so callers must use the provided sema
 
 - Keep session identity on `sessionFile`, not tab/runtime/open-session IDs.
 - Preserve lazy runtime creation and the four lifecycle states.
-- Keep archive and close semantically distinct.
+- Keep archive, delete, and permanent purge semantically distinct.
+- Treat a session as empty only when valid JSONL has no persisted user message; never auto-delete corrupt JSONL.
 - Preserve persisted user/assistant entry IDs through hydration for fork/redo.
 - Keep checkpoint fields additive to the Pi compaction entry and artifact paths vault-relative.
 - Isolate restore failures and always leave a usable blank fallback.

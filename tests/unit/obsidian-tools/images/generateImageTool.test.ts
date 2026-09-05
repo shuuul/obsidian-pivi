@@ -46,9 +46,11 @@ describe('createGenerateImageTool', () => {
       commandAllowlist: [],
       allowBash: false,
       bashAllowlist: [],
+      bashPermissions: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
+      externalDirectoryPermissions: [],
     }).map((tool) => tool.name))
       .not.toContain('obsidian_generate_image');
     expect(createObsidianTools(app as never, {
@@ -61,9 +63,11 @@ describe('createGenerateImageTool', () => {
       commandAllowlist: [],
       allowBash: false,
       bashAllowlist: [],
+      bashPermissions: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
+      externalDirectoryPermissions: [],
     }, {
       imageGenerator: {
         generateImage: jest.fn(),
@@ -87,9 +91,11 @@ describe('createGenerateImageTool', () => {
       commandAllowlist: [],
       allowBash: false,
       bashAllowlist: [],
+      bashPermissions: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
+      externalDirectoryPermissions: [],
     }, {
       imageGenerator: {
         generateImage: jest.fn(),
@@ -101,7 +107,7 @@ describe('createGenerateImageTool', () => {
     expect(tools).toContain('obsidian_edit');
   });
 
-  it('registers external read tools only when allowExternalRead is enabled and directories are configured', () => {
+  it('registers external read tools when the vault path is known, even if outside-vault access is off', () => {
     const app = {
       vault: { getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
@@ -116,9 +122,11 @@ describe('createGenerateImageTool', () => {
       commandAllowlist: [],
       allowBash: false,
       bashAllowlist: [],
+      bashPermissions: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
+      externalDirectoryPermissions: [],
     };
 
     expect(createObsidianTools(app as never, baseSettings).map((tool) => tool.name))
@@ -127,6 +135,7 @@ describe('createGenerateImageTool', () => {
       ...baseSettings,
       allowExternalRead: true,
       externalReadDirectories: [],
+      externalDirectoryPermissions: [],
     }).map((tool) => tool.name)).toEqual(expect.arrayContaining([
       'obsidian_read_external',
       'obsidian_list_external',
@@ -144,12 +153,62 @@ describe('createGenerateImageTool', () => {
       allowExternalRead: false,
       externalReadDirectories: ['/tmp'],
     }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+    expect(createObsidianTools({
+      vault: { adapter: { basePath: '/vault' }, getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+    } as never, baseSettings).map((tool) => tool.name)).toEqual(expect.arrayContaining([
+      'obsidian_read_external',
+      'obsidian_list_external',
+    ]));
     expect(createObsidianTools(app as never, {
       ...baseSettings,
       allowExternalRead: true,
       externalReadDirectories: ['/tmp'],
       disabledTools: ['obsidian_read_external'],
     }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+  });
+
+  it('allows reading and listing vault files through external tools without a Settings grant', async () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-skills-root-'));
+    try {
+      const skillDir = path.join(vaultPath, '.pivi', 'skills', 'demo-skill', 'references');
+      const skillFile = path.join(skillDir, 'syntax.md');
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.writeFileSync(skillFile, 'extended syntax\n', 'utf8');
+      const tools = createObsidianTools({
+        vault: { adapter: { basePath: vaultPath }, getName: () => 'vault' },
+        workspace: { getActiveFile: () => null },
+      } as never, {
+        cliEnabled: true,
+        cliPath: null,
+        cliTimeoutMs: 30_000,
+        defaultReadMaxChars: 100_000,
+        disabledTools: [],
+        allowCommand: false,
+        commandAllowlist: [],
+        allowBash: false,
+        bashAllowlist: [],
+        bashPermissions: [],
+        allowEval: false,
+        allowExternalRead: false,
+        externalReadDirectories: [],
+        externalDirectoryPermissions: [],
+      });
+      const readExternal = tools.find((tool) => tool.name === 'obsidian_read_external');
+      const listExternal = tools.find((tool) => tool.name === 'obsidian_list_external');
+      expect(readExternal).toBeDefined();
+      expect(listExternal).toBeDefined();
+      const readResult = await readExternal!.execute('call-1', { path: skillFile, mode: 'content' }) as {
+        content: Array<{ type: string; text: string }>;
+      };
+      expect(readResult.content[0]?.text).toContain('extended syntax');
+      const listResult = await listExternal!.execute('call-2', { path: skillDir }) as {
+        content: Array<{ type: string; text: string }>;
+      };
+      expect(listResult.content[0]?.text).toContain('syntax.md');
+    } finally {
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
   });
 
   it('registers CLI-backed tools and optional CLI tools only when Obsidian CLI is available', () => {
@@ -167,9 +226,11 @@ describe('createGenerateImageTool', () => {
       commandAllowlist: [],
       allowBash: false,
       bashAllowlist: [],
+      bashPermissions: [],
       allowEval: true,
       allowExternalRead: false,
       externalReadDirectories: [],
+      externalDirectoryPermissions: [],
     };
 
     expect(createObsidianTools(app as never, baseSettings, { obsidianCliAvailable: false }).map((tool) => tool.name))
@@ -245,7 +306,18 @@ describe('createBashTool', () => {
     };
   }
 
-  function makeDeps(processRunner: { run: jest.Mock }, bashAllowlist: string[] = ['git', 'npm run build']) {
+  function makeDeps(
+    processRunner: { run: jest.Mock },
+    bashPermissions: Array<{
+      kind: 'executable' | 'subcommand';
+      executable: { kind: 'name'; value: string };
+      subcommand?: string;
+      enabled: boolean;
+    }> = [
+      { kind: 'executable', executable: { kind: 'name', value: 'git' }, enabled: true },
+      { kind: 'subcommand', executable: { kind: 'name', value: 'npm' }, subcommand: 'run', enabled: true },
+    ],
+  ) {
     return {
       app: makeApp() as never,
       vault: {} as never,
@@ -253,7 +325,7 @@ describe('createBashTool', () => {
       externalFiles: {} as never,
       settings: {
         cliTimeoutMs: 12_000,
-        bashAllowlist,
+        bashPermissions,
       } as never,
       vaultName: 'vault',
       vaultPath: vaultDir,
@@ -294,9 +366,11 @@ describe('createBashTool', () => {
       commandAllowlist: [],
       allowBash: false,
       bashAllowlist: ['git'],
+      bashPermissions: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
+      externalDirectoryPermissions: [],
     };
 
     expect(createObsidianTools(makeApp() as never, baseSettings).map((tool) => tool.name))
@@ -324,7 +398,7 @@ describe('createBashTool', () => {
       .resolves.toEqual(expect.objectContaining({ content: [expect.objectContaining({ text: expect.stringContaining('ok') })] }));
     await expect(tool.execute('call-2', { command: 'npm run build' }))
       .resolves.toBeDefined();
-    await expect(tool.execute('call-3', { command: 'npm run build:css' }))
+    await expect(tool.execute('call-3', { command: 'npm install' }))
       .rejects.toThrow('not in allowlist');
     await expect(tool.execute('call-4', { command: 'git status; whoami' }))
       .rejects.toThrow('not in allowlist');
@@ -395,7 +469,11 @@ describe('createBashTool', () => {
 
   it('rejects multi-line or non-allowlisted Bash commands', async () => {
     const processRunner = { run: jest.fn() };
-    const tool = createBashTool(makeDeps(processRunner, ['git']));
+    const tool = createBashTool(makeDeps(processRunner, [{
+      kind: 'executable',
+      executable: { kind: 'name', value: 'git' },
+      enabled: true,
+    }]));
 
     await expect(tool.execute('call-1', { command: 'git status\npwd' })).rejects.toThrow('single line');
     await expect(tool.execute('call-2', { command: 'rm -rf tmp' })).rejects.toThrow('not in allowlist');
@@ -404,7 +482,10 @@ describe('createBashTool', () => {
 
   it('does not inherit prefix authority across shell control syntax', async () => {
     const processRunner = { run: jest.fn() };
-    const tool = createBashTool(makeDeps(processRunner, ['git', 'pwd']));
+    const tool = createBashTool(makeDeps(processRunner, [
+      { kind: 'executable', executable: { kind: 'name', value: 'git' }, enabled: true },
+      { kind: 'executable', executable: { kind: 'name', value: 'pwd' }, enabled: true },
+    ]));
 
     await expect(tool.execute('call-1', { command: 'pwd | wc -l' }))
       .rejects.toThrow('not in allowlist');

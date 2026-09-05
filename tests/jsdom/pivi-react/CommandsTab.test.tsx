@@ -39,7 +39,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
   return {
     snapshot: { getSnapshot: () => snapshot },
     feedback: { notify: jest.fn() },
-    actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, saveEditorSelectionToolbar: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
+    actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, saveEditorSelectionToolbar: async () => undefined, loadSessionMaintenance: async () => ({ archivedCount: 0, deletedCount: 0 }), deleteAllArchivedChats: async () => ({ moved: 0, skippedActive: 0, failed: 0 }), purgeDeletedSessionFiles: async () => 0 },
     complex: {
       commands: {
         refresh: async () => undefined,

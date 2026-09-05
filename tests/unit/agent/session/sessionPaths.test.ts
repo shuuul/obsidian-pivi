@@ -6,7 +6,10 @@ import {
   encodeSessionCwd,
   getPiviSessionDir,
   getPiviSessionRoot,
+  getPiviSessionTrashRoot,
   toAbsoluteSessionPath,
+  toLiveSessionFile,
+  toTrashedSessionFile,
   toVaultRelativePath,
 } from '@pivi/agent/session/sessionPaths';
 
@@ -53,6 +56,16 @@ describe('sessionPaths', () => {
 
     expect(toAbsoluteSessionPath(vaultPath, '.pivi/sessions/session.jsonl')).toBe(
       path.join(vaultPath, '.pivi', 'sessions', 'session.jsonl'),
+    );
+  });
+
+  it('mirrors live session files into the trash tree and back', () => {
+    const live = '.pivi/sessions/--Users-me-Vault--/chat.jsonl';
+    const trashed = toTrashedSessionFile(live);
+    expect(trashed).toBe('.pivi/trash/sessions/--Users-me-Vault--/chat.jsonl');
+    expect(toLiveSessionFile(trashed)).toBe(live);
+    expect(getPiviSessionTrashRoot('/tmp/vault')).toBe(
+      path.join('/tmp/vault', '.pivi', 'trash', 'sessions'),
     );
   });
 });

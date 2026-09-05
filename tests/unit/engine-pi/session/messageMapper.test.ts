@@ -1169,6 +1169,8 @@ describe('applySkillDescriptions', () => {
     description: 'Extract clean article text from web pages.',
     filePath: defuddleFilePath,
     baseDir: defuddleDir,
+    absoluteFilePath: defuddleFilePath,
+    absoluteBaseDir: defuddleDir,
     content: '# Defuddle instructions',
   };
 

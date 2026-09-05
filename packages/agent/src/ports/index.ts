@@ -192,7 +192,6 @@ export interface RuntimeUiCallbacks {
 }
 
 export type {
-  BashAllowlistPersistScope,
   CapabilityApprovalDecision,
   CapabilityApprovalKind,
   CapabilityApprovalPort,

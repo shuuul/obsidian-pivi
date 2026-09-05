@@ -79,6 +79,8 @@ function createPorts(prompt: SettingsPromptPort): SettingsPorts {
       saveSubagents: async () => undefined,
       saveEditorSelectionToolbar: async () => undefined,
       purgeDeletedSessionFiles: async () => 0,
+      loadSessionMaintenance: async () => ({ archivedCount: 0, deletedCount: 0 }),
+      deleteAllArchivedChats: async () => ({ moved: 0, skippedActive: 0, failed: 0 }),
     },
     complex: {
       commands: {

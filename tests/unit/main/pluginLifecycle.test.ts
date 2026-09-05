@@ -4,9 +4,7 @@ const mockGetTabManagerState = jest.fn();
 const mockSavePiviSettings = jest.fn();
 const mockGetAdapter = jest.fn();
 const mockSetTabManagerState = jest.fn();
-const mockGetDeletedSessionFiles = jest.fn();
-const mockSetDeletedSessionFiles = jest.fn();
-const mockUpdateDeletedSessionFiles = jest.fn();
+const mockTakeDeletedSessionFileQueue = jest.fn();
 const mockListSessions = jest.fn();
 const mockSetupNoteToolbarIntegration = jest.fn();
 const mockCreatePluginServiceGraph = jest.fn();
@@ -26,11 +24,9 @@ jest.mock("@pivi/obsidian-host", () => {
     loadRawPiviSettings: mockLoadRawPiviSettings,
     saveRawPiviSettings: jest.fn().mockResolvedValue(undefined),
     getTabManagerState: mockGetTabManagerState,
-    getDeletedSessionFiles: mockGetDeletedSessionFiles,
     savePiviSettings: mockSavePiviSettings,
     setTabManagerState: mockSetTabManagerState,
-    setDeletedSessionFiles: mockSetDeletedSessionFiles,
-    updateDeletedSessionFiles: mockUpdateDeletedSessionFiles,
+    takeDeletedSessionFileQueue: mockTakeDeletedSessionFileQueue,
     getAdapter: mockGetAdapter,
   })),
   };
@@ -40,6 +36,10 @@ jest.mock("@pivi/engine-pi/session/piSessionStore", () => ({
   PiSessionStore: jest.fn().mockImplementation(() => ({
     migrateDeviceLocalExternalContexts: jest.fn().mockResolvedValue(0),
     listSessions: mockListSessions,
+    listTrashedSessions: jest.fn().mockResolvedValue([]),
+    trashSession: jest.fn().mockResolvedValue(undefined),
+    restoreTrashedSession: jest.fn().mockResolvedValue(undefined),
+    purgeTrashedSession: jest.fn().mockResolvedValue(undefined),
     open: jest.fn(),
     writeSessionMeta: jest.fn(),
     writeUiContext: jest.fn(),
@@ -130,7 +130,7 @@ describe("PiviApplication lifecycle", () => {
     mockSharedStorageInitialize.mockResolvedValue({ pivi: {} });
     mockLoadRawPiviSettings.mockResolvedValue(null);
     mockGetTabManagerState.mockResolvedValue(null);
-    mockGetDeletedSessionFiles.mockResolvedValue([]);
+    mockTakeDeletedSessionFileQueue.mockResolvedValue([]);
     mockListSessions.mockResolvedValue([]);
     mockGetAdapter.mockReturnValue({});
     mockSetupNoteToolbarIntegration.mockReset();

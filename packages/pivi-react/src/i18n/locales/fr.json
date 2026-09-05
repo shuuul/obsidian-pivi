@@ -159,18 +159,17 @@
     },
     "capabilityApproval": {
       "title": "Autorisation requise",
-      "scopeQuestion": "Pendant combien de temps Pivi doit-il autoriser ceci ?",
+      "scopeQuestion": "Comment Pivi doit-il l’autoriser ?",
       "deny": "Refuser",
       "allowOnce": "Autoriser une fois",
-      "allowSession": "Autoriser pour cette session",
       "allowAlways": "Toujours autoriser",
-      "allowAlwaysDescription": "Enregistrer dans les paramètres (choisissez la portée à l'étape suivante)",
-      "bashPersistTitle": "Quelles commandes autoriser en permanence ?",
-      "bashPersistQuestion": "Ajouter à la liste Bash des paramètres en tant que :",
-      "bashPersistFull": "Cette commande seulement",
-      "bashPersistFullDescription": "Uniquement `{command}`",
-      "bashPersistPrefix": "Commandes avec ce préfixe",
-      "bashPersistPrefixDescription": "Toutes les commandes commençant par `{prefix}`"
+      "allowAlwaysDescription": "Enregistrer la portée persistante sélectionnée dans les paramètres",
+      "persistentScopes": "Portée persistante",
+      "scopeSelector": "Choisir la portée persistante",
+      "executableScope": "Toute commande {executable}",
+      "broaderWarning": "Cela accorde toutes les commandes de cet exécutable, pas seulement la commande classée.",
+      "highRiskWarning": "Cette classe d’exécutable peut exécuter du code arbitraire ou installer des paquets. Vérifiez la portée avant Toujours autoriser.",
+      "alwaysUnavailable": "Toujours autoriser est indisponible pour cette commande, car sa syntaxe shell ne peut pas être réduite à une autorisation stable."
     },
     "tabs": {
       "startNewChat": "Démarrer un nouveau chat",
@@ -441,7 +440,7 @@
         "description": "Configurez l’envoi des messages, la navigation au clavier et les raccourcis Pivi."
       },
       "sessions": {
-        "description": "Choisissez la durée de conservation des sessions supprimées et effacez définitivement leurs fichiers."
+        "description": "Voir les comptes des discussions archivées et récemment supprimées, déplacer les discussions archivées vers récemment supprimées, et supprimer définitivement les fichiers récupérés."
       },
       "environment": {
         "label": "Environnement",
@@ -685,16 +684,34 @@
     },
     "sessionFiles": {
       "heading": "Fichiers de session",
+      "archived": {
+        "name": "Discussions archivées",
+        "count": "{count} discussion(s) archivée(s)",
+        "empty": "Aucune discussion archivée"
+      },
+      "deleted": {
+        "name": "Discussions récemment supprimées",
+        "count": "{count} discussion(s) récemment supprimée(s)",
+        "empty": "Aucune discussion récemment supprimée",
+        "recovery": "Demandez à Pivi de lister ou de restaurer les discussions récemment supprimées avec l’outil pivi_sessions. Les paramètres ne listent pas les discussions supprimées une par une."
+      },
+      "deleteArchived": {
+        "name": "Supprimer toutes les discussions archivées",
+        "desc": "Déplace chaque discussion archivée vers récemment supprimées. Les discussions ouvertes restent en place. Les lignes archivées dupliquées du même fichier ne comptent qu’une fois.",
+        "button": "Supprimer les archivées",
+        "success": "{moved} discussion(s) archivée(s) déplacée(s) vers récemment supprimées. {skippedActive} encore ouverte(s) ignorée(s). {failed} échec(s).",
+        "failed": "Échec de la suppression des discussions archivées"
+      },
       "retention": {
-        "name": "Conserver les sessions supprimées pendant",
-        "desc": "Nombre de jours avant leur suppression définitive."
+        "name": "Conserver les discussions récemment supprimées pendant",
+        "desc": "Jours avant la suppression définitive des fichiers de discussion récemment supprimés. Les discussions ouvertes et archivées ne sont pas concernées."
       },
       "deleteRemoved": {
-        "name": "Supprimer définitivement les sessions retirées",
-        "desc": "Supprime les sessions retirées avec l’action Supprimer. Les sessions ouvertes et archivées ne sont pas affectées.",
+        "name": "Supprimer définitivement les discussions récemment supprimées",
+        "desc": "Détruit les discussions déjà dans récemment supprimées. Les discussions ouvertes et archivées ne sont pas concernées. Ensuite, elles ne peuvent plus être restaurées.",
         "button": "Supprimer définitivement",
-        "success": "{count} fichier(s) de session retiré(s) supprimé(s) définitivement.",
-        "failed": "Échec de la suppression définitive des sessions retirées"
+        "success": "{count} fichier(s) de discussion récemment supprimé(s) définitivement.",
+        "failed": "Échec de la suppression définitive des discussions récemment supprimées"
       }
     },
     "sharedEnvironment": {
@@ -731,30 +748,21 @@
         }
       },
       "unavailableOfficialCli": "Nécessite la CLI officielle Obsidian.",
-      "unavailableExternalRead": "Nécessite l’accès en lecture externe et au moins un répertoire autorisé.",
       "unavailableCodex": "Nécessite une connexion OpenAI Codex."
     },
     "bash": {
-      "heading": "Accès Bash",
-      "allowlist": {
-        "name": "Commandes bash autorisées",
-        "desc": "Activez ou désactivez Bash via le bascule des outils. Les entrées correspondent à une commande exacte ou à un préfixe requis (par exemple git, ou npm run build). Les commandes passent par votre shell de connexion, donc les outils du PATH du terminal (pixi, Homebrew, etc.) sont disponibles. which, type et pwd sont toujours autorisés. La syntaxe shell comme les pipes est autorisée dans une commande autorisée ; le répertoire de travail doit rester dans le coffre.",
-        "inputLabel": "Ajouter une commande bash autorisée",
-        "removeAria": "Supprimer la commande bash autorisée {value}"
-      }
+      "heading": "Accès Bash"
     },
     "externalRead": {
       "heading": "Accès au système de fichiers externe",
       "allow": {
         "name": "Autoriser la lecture/liste de fichiers externes",
-        "desc": "Permet à Pivi de lire et lister les fichiers sous les répertoires externes autorisés ci-dessous, plus les dossiers de contexte externe de la session de chat actuelle."
+        "desc": "Les fichiers de l’espace de travail sont toujours lisibles et listables. Activez cette option pour lire aussi des dossiers hors de l’espace de travail après confirmation."
       },
       "directories": {
         "name": "Répertoires externes autorisés",
-        "desc": "Les outils de lecture/liste externes n’accèdent qu’aux chemins dans ces répertoires absolus et aux dossiers de contexte externe de la session.",
         "placeholder": "/Users/me/workspace",
         "inputLabel": "Ajouter un répertoire externe autorisé",
-        "removeAria": "Supprimer le répertoire externe autorisé {value}",
         "browse": "Parcourir",
         "browseTooltip": "Ouvrir le sélecteur de dossier système et ajouter le chemin sélectionné",
         "pickerFailed": "Impossible d’ouvrir le sélecteur de dossier."
@@ -1151,6 +1159,24 @@
         "availableTools": "Outils disponibles ({count})",
         "noTools": "Ce serveur n’a renvoyé aucun outil."
       }
+    },
+    "permissions": {
+      "heading": "Autorisations persistantes",
+      "intro": "Ces autorisations locales à l’appareil survivent d’une discussion à l’autre. Désactiver un outil conserve les enregistrements. Les décisions Toujours autoriser et l’accès aux répertoires figurent ici.",
+      "revoke": "Révoquer {label}",
+      "bash": {
+        "name": "Bash",
+        "desc": "Portées de commande stables. Les noms de fichiers, URL et corps de script ne sont jamais stockés. Les commandes de recherche de base comme which, type et pwd sont toujours autorisées.",
+        "inputLabel": "Ajouter une commande bash classée",
+        "legacyEncoding": "N’entrez pas de valeurs exact: ou prefix:. Saisissez une vraie commande comme git status.",
+        "unsafeSyntax": "Cette commande ne peut pas être enregistrée comme autorisation persistante. Utilisez Autoriser une fois dans la discussion.",
+        "unresolvedRelative": "Cet exécutable relatif ne peut pas être enregistré tant qu’il n’est pas résolu vers un chemin réel."
+      },
+      "external": {
+        "name": "Répertoires externes",
+        "desc": "Racines de répertoire canoniques hors de l’espace de travail. Les chemins de l’espace de travail n’ont pas besoin d’autorisation.",
+        "insideWorkspace": "Ce chemin est dans l’espace de travail et n’a pas besoin d’une autorisation persistante."
+      }
     }
   },
   "commands": {
@@ -1277,7 +1303,6 @@
   },
   "host": {
     "failedSaveTabLayout": "Échec de l’enregistrement de la disposition des onglets",
-    "failedSaveDeletedSessions": "Échec de l’enregistrement de la liste des sessions supprimées",
     "failedSaveSyncedSettings": "Les paramètres du fournisseur ont été enregistrés sur cet appareil, mais les paramètres portables n’ont pas pu être écrits dans le fichier du coffre.",
     "sessionRecovery": {
       "recoveredTitle": "Session récupérée",

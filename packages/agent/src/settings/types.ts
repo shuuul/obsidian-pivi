@@ -1,4 +1,5 @@
 
+import type { PersistentBashPermission, PersistentExternalDirectoryPermission } from '../tools/capabilityPermissions';
 import type { CustomProviderConfig } from "./customProviders";
 
 /** Source of a slash command. */
@@ -59,12 +60,17 @@ export interface ObsidianToolsSettings {
   allowCommand: boolean;
   commandAllowlist: string[];
   allowBash: boolean;
+  /** Legacy encoded allowlist; empty after device-local permission migration. */
   bashAllowlist: string[];
+  /** Structured persistent Bash grants overlaid from device-local storage. */
+  bashPermissions: PersistentBashPermission[];
   allowEval: boolean;
   /** Allow reading external files and folders under explicitly allowed directories. */
   allowExternalRead: boolean;
   /** Absolute directory roots that external read/list tools may access. */
   externalReadDirectories: string[];
+  /** Full device-local external-directory grants, including disabled records. */
+  externalDirectoryPermissions: PersistentExternalDirectoryPermission[];
 }
 
 const TOOL_OBSIDIAN_BASH_NAME = "obsidian_bash";
@@ -79,9 +85,11 @@ export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = 
   commandAllowlist: [],
   allowBash: false,
   bashAllowlist: [],
+  bashPermissions: [],
   allowEval: false,
   allowExternalRead: false,
   externalReadDirectories: [],
+  externalDirectoryPermissions: [],
 });
 
 function normalizeDisabledObsidianTools(value: readonly unknown[] | undefined): string[] {
@@ -116,11 +124,17 @@ export function resolveObsidianToolsSettings(
     bashAllowlist: Array.isArray(raw.bashAllowlist)
       ? [...raw.bashAllowlist]
       : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.bashAllowlist],
+    bashPermissions: Array.isArray(raw.bashPermissions)
+      ? [...raw.bashPermissions]
+      : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.bashPermissions],
     allowEval: raw.allowEval ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowEval,
     allowExternalRead: raw.allowExternalRead ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowExternalRead,
     externalReadDirectories: Array.isArray(raw.externalReadDirectories)
       ? raw.externalReadDirectories.filter((directory): directory is string => typeof directory === "string")
       : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.externalReadDirectories],
+    externalDirectoryPermissions: Array.isArray(raw.externalDirectoryPermissions)
+      ? [...raw.externalDirectoryPermissions]
+      : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.externalDirectoryPermissions],
   };
 }
 
@@ -478,9 +492,11 @@ function isOptionalObsidianToolsSettings(
     isStringArray(value.commandAllowlist) &&
     (value.allowBash === undefined || typeof value.allowBash === "boolean") &&
     isOptionalStringArray(value.bashAllowlist) &&
+    (value.bashPermissions === undefined || Array.isArray(value.bashPermissions)) &&
     typeof value.allowEval === "boolean" &&
     typeof value.allowExternalRead === "boolean" &&
-    isOptionalStringArray(value.externalReadDirectories)
+    isOptionalStringArray(value.externalReadDirectories) &&
+    (value.externalDirectoryPermissions === undefined || Array.isArray(value.externalDirectoryPermissions))
   );
 }
 

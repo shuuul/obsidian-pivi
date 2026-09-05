@@ -1,6 +1,12 @@
 import type { ChatSettingsSnapshot } from '@pivi/agent/runtime/chatPorts';
 import { parseEnvironmentVariables } from '@pivi/agent/settings/environmentText';
 import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
+import {
+  canonicalizeBashPermissions,
+  canonicalizeExternalDirectories,
+  defaultCaseInsensitiveExecutables,
+  type PersistentBashPermission,
+} from '@pivi/agent/tools';
 import type { SettingsSubagentsSnapshot } from '@pivi/pivi-react/settings';
 
 import type {
@@ -8,6 +14,7 @@ import type {
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
+import { isPathWithinVault } from '@/app/hostPlatform';
 
 import { validateDirectoryPath } from './externalDirectory';
 
@@ -45,19 +52,21 @@ export function normalizeMaxConcurrentSubagents(
   }
 }
 
-export async function appendBashAllowlistEntry(
+export async function appendBashPermissions(
   host: PiviChatCompositionHost,
-  command: string,
+  permissions: readonly PersistentBashPermission[],
 ): Promise<void> {
-  const trimmed = command.trim();
-  if (!trimmed) {
+  if (permissions.length === 0) {
     return;
   }
   const current = getObsidianToolsSettingsFromBag(host.settings);
-  const bashAllowlist = [...new Set([...(current.bashAllowlist ?? []), trimmed])];
   host.settings.agentSettings.obsidianTools = {
     ...current,
-    bashAllowlist,
+    bashPermissions: canonicalizeBashPermissions(
+      [...current.bashPermissions, ...permissions],
+      defaultCaseInsensitiveExecutables(),
+    ),
+    bashAllowlist: [],
   };
   await host.saveSettings();
   for (const view of host.getAllViews()) {
@@ -69,6 +78,10 @@ export async function appendExternalReadDirectory(
   host: PiviChatCompositionHost,
   directory: string,
 ): Promise<void> {
+  const vaultPath = host.getVaultPath();
+  if (vaultPath && isPathWithinVault(directory, vaultPath)) {
+    return;
+  }
   const validation = validateDirectoryPath(directory);
   if (!validation.valid) {
     throw new Error(validation.error ?? 'Invalid external directory.');
@@ -80,6 +93,10 @@ export async function appendExternalReadDirectory(
   host.settings.agentSettings.obsidianTools = {
     ...current,
     externalReadDirectories,
+    externalDirectoryPermissions: canonicalizeExternalDirectories([
+      ...current.externalDirectoryPermissions,
+      { realpath: directory, enabled: true },
+    ]),
   };
   await host.saveSettings();
   for (const view of host.getAllViews()) {

@@ -100,16 +100,12 @@ export function createObsidianToolRows(
           : 'workspace-api';
     const available = requirement === 'cli'
       ? officialCliEnabled
-      : requirement === 'external'
-        ? settings.allowExternalRead
-        : requirement === 'codex'
-          ? hasCodexAuth
-          : true;
+      : requirement === 'codex'
+        ? hasCodexAuth
+        : true;
     const unavailableKey = requirement === 'cli'
       ? 'settings.tools.unavailableOfficialCli'
-      : requirement === 'external'
-        ? 'settings.tools.unavailableExternalRead'
-        : 'settings.tools.unavailableCodex';
+      : 'settings.tools.unavailableCodex';
     return {
       name,
       label: t(labelKey),

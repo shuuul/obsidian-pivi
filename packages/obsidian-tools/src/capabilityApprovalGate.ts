@@ -6,12 +6,13 @@ import type {
   CapabilityApprovalResult,
 } from '@pivi/agent/ports';
 import {
+  classifyBashCommand,
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_READ_EXTERNAL,
 } from '@pivi/agent/tools';
 import { ExternalFileApi } from '@pivi/obsidian-host/externalFileApi';
-import { normalizePathForFilesystem } from '@pivi/obsidian-host/path';
+import { isPathWithinVault, normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 
 import type { ExternalFileApiLike, ObsidianToolDeps } from './obsidian/deps';
 
@@ -63,8 +64,9 @@ function buildBashApprovalRequest(command: string, shellPath: string): Capabilit
     toolName: TOOL_OBSIDIAN_BASH,
     command,
     shellPath,
+    bashClassification: classifyBashCommand(command, { shellPath }),
     blockedPath: command,
-    reason: 'Command is not on the Bash allowlist.',
+    reason: 'Command is not on the persistent permission list.',
     description: `Run command: ${command}`,
   };
 }
@@ -88,8 +90,8 @@ async function resolveExternalApproval(
   if (!port) {
     return { decision: 'deny' };
   }
-  if (port.hasSessionGrant(request)) {
-    return { decision: 'allow-session' };
+  if (port.hasPersistentGrant(request)) {
+    return { decision: 'allow-once' };
   }
   return port.requestApproval(request);
 }
@@ -100,13 +102,22 @@ export async function ensureExternalDirectoryAccess(
   expectDirectory: boolean,
   toolName: string,
 ): Promise<ExternalFileApiLike> {
+  if (deps.vaultPath && isPathWithinVault(absolutePath, deps.vaultPath)) {
+    if (deps.externalFiles.isPathAllowed?.(absolutePath)) {
+      return deps.externalFiles;
+    }
+    return externalFilesWithExtraRoot(deps, deps.vaultPath);
+  }
+  if (!deps.settings.allowExternalRead) {
+    throw new Error(`External path is outside the vault: ${absolutePath}`);
+  }
   const directoryRoot = resolveExternalDirectoryRoot(absolutePath, expectDirectory);
   if (deps.externalFiles.isPathAllowed?.(absolutePath) ?? false) {
     return deps.externalFiles;
   }
   const request = buildExternalApprovalRequest(toolName, absolutePath, directoryRoot);
   const port = deps.capabilityApproval;
-  if (port?.hasSessionGrant(request)) {
+  if (port?.hasPersistentGrant(request)) {
     return externalFilesWithExtraRoot(deps, directoryRoot);
   }
   const result = await resolveExternalApproval(deps, request);
@@ -130,7 +141,7 @@ export async function ensureBashCommandAllowed(
   if (!port) {
     throw new Error(`Bash command not in allowlist: ${normalizedCommand.split(/\s+/)[0]}`);
   }
-  if (port.hasSessionGrant(request)) {
+  if (port.hasPersistentGrant(request)) {
     return;
   }
   const result = await port.requestApproval(request);

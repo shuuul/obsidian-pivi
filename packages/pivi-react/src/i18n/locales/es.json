@@ -159,18 +159,17 @@
     },
     "capabilityApproval": {
       "title": "Permiso requerido",
-      "scopeQuestion": "¿Durante cuánto tiempo debe permitirlo Pivi?",
+      "scopeQuestion": "¿Cómo debe permitir esto Pivi?",
       "deny": "Denegar",
       "allowOnce": "Permitir una vez",
-      "allowSession": "Permitir en esta sesión",
       "allowAlways": "Permitir siempre",
-      "allowAlwaysDescription": "Guardar en Ajustes (elige el alcance en el siguiente paso)",
-      "bashPersistTitle": "¿Qué comandos permitir siempre?",
-      "bashPersistQuestion": "Añadir a la lista de Bash en Ajustes como:",
-      "bashPersistFull": "Solo este comando",
-      "bashPersistFullDescription": "Solo `{command}`",
-      "bashPersistPrefix": "Comandos con este prefijo",
-      "bashPersistPrefixDescription": "Todos los comandos que empiecen por `{prefix}`"
+      "allowAlwaysDescription": "Guardar el alcance persistente seleccionado en Ajustes",
+      "persistentScopes": "Alcance persistente",
+      "scopeSelector": "Elegir alcance persistente",
+      "executableScope": "Cualquier comando de {executable}",
+      "broaderWarning": "Esto concede todos los comandos de ese ejecutable, no solo el comando clasificado.",
+      "highRiskWarning": "Esta clase de ejecutable puede ejecutar código arbitrario o instalar paquetes. Revise el alcance antes de Permitir siempre.",
+      "alwaysUnavailable": "Permitir siempre no está disponible para este comando porque su sintaxis de shell no se puede reducir a un permiso estable."
     },
     "tabs": {
       "startNewChat": "Iniciar chat nuevo",
@@ -441,7 +440,7 @@
         "description": "Configura el envío de mensajes, la navegación por teclado y los atajos de Pivi."
       },
       "sessions": {
-        "description": "Elige cuánto tiempo conservar las sesiones eliminadas y borra permanentemente sus archivos."
+        "description": "Ver recuentos de chats archivados y eliminados recientemente, mover chats archivados a eliminados recientemente y eliminar de forma permanente los archivos recuperados."
       },
       "environment": {
         "label": "Entorno",
@@ -685,16 +684,34 @@
     },
     "sessionFiles": {
       "heading": "Archivos de sesión",
+      "archived": {
+        "name": "Chats archivados",
+        "count": "{count} chat(s) archivado(s)",
+        "empty": "No hay chats archivados"
+      },
+      "deleted": {
+        "name": "Chats eliminados recientemente",
+        "count": "{count} chat(s) eliminado(s) recientemente",
+        "empty": "No hay chats eliminados recientemente",
+        "recovery": "Pida a Pivi que liste o restaure chats eliminados recientemente con la herramienta pivi_sessions. Ajustes no lista chats eliminados individuales."
+      },
+      "deleteArchived": {
+        "name": "Eliminar todos los chats archivados",
+        "desc": "Mueve cada chat archivado a eliminados recientemente. Los chats abiertos no se mueven. Las filas archivadas duplicadas del mismo archivo se cuentan una vez.",
+        "button": "Eliminar archivados",
+        "success": "Se movieron {moved} chat(s) archivado(s) a eliminados recientemente. Se omitieron {skippedActive} aún abiertos. Fallaron {failed}.",
+        "failed": "No se pudieron eliminar los chats archivados"
+      },
       "retention": {
-        "name": "Conservar sesiones eliminadas durante",
-        "desc": "Días antes de eliminar permanentemente los archivos de sesión."
+        "name": "Conservar chats eliminados recientemente durante",
+        "desc": "Días antes de que los archivos de chat eliminados recientemente se borren de forma permanente. Los chats abiertos y archivados no se ven afectados."
       },
       "deleteRemoved": {
-        "name": "Eliminar permanentemente las sesiones quitadas",
-        "desc": "Elimina las sesiones quitadas mediante Eliminar. Las sesiones abiertas y archivadas no se ven afectadas.",
-        "button": "Eliminar permanentemente",
-        "success": "Se eliminaron permanentemente {count} archivo(s) de sesión quitado(s).",
-        "failed": "Error al eliminar permanentemente las sesiones quitadas"
+        "name": "Eliminar de forma permanente los chats eliminados recientemente",
+        "desc": "Destruye los chats que ya están en eliminados recientemente. Los chats abiertos y archivados no se ven afectados. Después de esto, los chats no se pueden restaurar.",
+        "button": "Eliminar de forma permanente",
+        "success": "Se eliminaron de forma permanente {count} archivo(s) de chat eliminado(s) recientemente.",
+        "failed": "No se pudieron eliminar de forma permanente los chats eliminados recientemente"
       }
     },
     "sharedEnvironment": {
@@ -731,30 +748,21 @@
         }
       },
       "unavailableOfficialCli": "Requiere la CLI oficial de Obsidian.",
-      "unavailableExternalRead": "Requiere acceso de lectura externo y al menos un directorio permitido.",
       "unavailableCodex": "Requiere conexión con OpenAI Codex."
     },
     "bash": {
-      "heading": "Acceso a Bash",
-      "allowlist": {
-        "name": "Comandos bash permitidos",
-        "desc": "Activa o desactiva Bash con el interruptor de herramientas. Las entradas coinciden con un comando exacto o un prefijo requerido (por ejemplo git, o npm run build). Los comandos se ejecutan mediante tu shell de inicio de sesión, por lo que las herramientas del PATH del terminal (como pixi o Homebrew) están disponibles. which, type y pwd siempre están permitidos. La sintaxis del shell como tuberías está permitida dentro de un comando autorizado; el directorio de trabajo debe permanecer en el vault.",
-        "inputLabel": "Añadir un comando bash permitido",
-        "removeAria": "Eliminar el comando bash permitido {value}"
-      }
+      "heading": "Acceso a Bash"
     },
     "externalRead": {
       "heading": "Acceso al sistema de archivos externo",
       "allow": {
         "name": "Permitir lectura/listado de archivos externos",
-        "desc": "Permite a Pivi leer y listar archivos en los directorios externos permitidos de abajo, más las carpetas de contexto externo de la sesión de chat actual."
+        "desc": "Los archivos del espacio de trabajo siempre se pueden leer y listar. Actívalo para leer también carpetas fuera del espacio de trabajo tras confirmación."
       },
       "directories": {
         "name": "Directorios externos permitidos",
-        "desc": "Las herramientas de lectura/listado externas solo acceden a rutas dentro de estos directorios absolutos y a las carpetas de contexto externo de la sesión.",
         "placeholder": "/Users/me/workspace",
         "inputLabel": "Añadir un directorio externo permitido",
-        "removeAria": "Eliminar el directorio externo permitido {value}",
         "browse": "Examinar",
         "browseTooltip": "Abrir el selector de carpetas del sistema y añadir la ruta seleccionada",
         "pickerFailed": "No se pudo abrir el selector de carpetas."
@@ -1151,6 +1159,24 @@
         "availableTools": "Herramientas disponibles ({count})",
         "noTools": "Este servidor no devolvió herramientas."
       }
+    },
+    "permissions": {
+      "heading": "Permisos persistentes",
+      "intro": "Estas concesiones locales del dispositivo sobreviven entre chats. Desactivar una herramienta conserva los registros. Las decisiones de Permitir siempre y el acceso a directorios aparecen aquí.",
+      "revoke": "Revocar {label}",
+      "bash": {
+        "name": "Bash",
+        "desc": "Alcances de comando estables. Nunca se almacenan nombres de archivo, URL ni cuerpos de script. Los comandos básicos de consulta como which, type y pwd siempre están permitidos.",
+        "inputLabel": "Añadir un comando bash clasificado",
+        "legacyEncoding": "No introduzca valores exact: o prefix:. Escriba un comando real como git status.",
+        "unsafeSyntax": "Este comando no se puede guardar como permiso persistente. Use Permitir una vez en el chat.",
+        "unresolvedRelative": "Este ejecutable relativo no se puede guardar hasta que se resuelva a una ruta real."
+      },
+      "external": {
+        "name": "Directorios externos",
+        "desc": "Raíces de directorio canónicas fuera del espacio de trabajo. Las rutas del espacio de trabajo no necesitan un permiso.",
+        "insideWorkspace": "Esta ruta está dentro del espacio de trabajo y no necesita un permiso persistente."
+      }
     }
   },
   "commands": {
@@ -1277,7 +1303,6 @@
   },
   "host": {
     "failedSaveTabLayout": "Error al guardar el diseño de pestañas",
-    "failedSaveDeletedSessions": "Error al guardar la lista de sesiones eliminadas",
     "failedSaveSyncedSettings": "La configuración del proveedor se guardó en este dispositivo, pero no se pudo escribir la configuración portable en el archivo del vault.",
     "sessionRecovery": {
       "recoveredTitle": "Sesión recuperada",

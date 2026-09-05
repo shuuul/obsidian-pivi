@@ -349,6 +349,7 @@ export class TabManager {
 
     // Save openSession before closing.
     await tab.controllers.openSessionController?.save();
+    await this.discardEmptyOwnedTabSession(tab);
 
     if (wasActive) {
       const fallback = await this.ensureFallbackTabForActiveRemoval(tabId);
@@ -383,6 +384,12 @@ export class TabManager {
     if (this.activeTabId !== tabId) {
       tab.isArchived = true;
       this.callbacks.onTabArchived?.(tabId, true);
+      await this.discardEmptyOwnedTabSession(tab);
+      if (!tab.sessionFile) {
+        await destroyTab(tab);
+        this.tabs.delete(tabId);
+        this.callbacks.onTabClosed?.(tabId);
+      }
       return;
     }
 
@@ -393,6 +400,16 @@ export class TabManager {
 
     tab.isArchived = true;
     this.callbacks.onTabArchived?.(tabId, true);
+
+    await this.discardEmptyOwnedTabSession(tab);
+    if (!tab.sessionFile) {
+      await this.switchToTab(fallback.id);
+      await destroyTab(tab);
+      this.tabs.delete(tabId);
+      this.callbacks.onTabClosed?.(tabId);
+      return;
+    }
+
     await this.switchToTab(fallback.id);
 
     if (this.activeTabId === tabId) {
@@ -472,6 +489,18 @@ export class TabManager {
     return this.getFallbackTabForRemoval(tabId)
       ?? this.createTab(undefined, undefined, { activate: false });
   }
+  private async discardEmptyOwnedTabSession(tab: TabData): Promise<void> {
+    const sessionFile = tab.sessionFile;
+    if (!sessionFile) return;
+    const hasUserMessage = tab.state.messages.some((message) => message.role === 'user');
+    if (hasUserMessage) return;
+    const abandoned = await this.ports.sessions.abandonEmptyOwnedSession?.(sessionFile, tab.openSessionId);
+    if (abandoned) {
+      tab.openSessionId = null;
+      tab.sessionFile = null;
+    }
+  }
+
   private unarchiveTabForActivation(tab: TabData): void {
     if (!tab.isArchived) {
       return;
@@ -632,6 +661,17 @@ export class TabManager {
   // ============================================
   // Persistence
   // ============================================
+
+  async removeArchivedTabsForSession(sessionFile: string): Promise<void> {
+    const targets = this.getAllTabs().filter((tab) => (
+      tab.isArchived && tab.sessionFile === sessionFile
+    ));
+    for (const tab of targets) {
+      await destroyTab(tab);
+      this.tabs.delete(tab.id);
+      this.callbacks.onTabClosed?.(tab.id);
+    }
+  }
 
   /** Gets the state to persist. */
   getPersistedState(): PersistedTabManagerState {

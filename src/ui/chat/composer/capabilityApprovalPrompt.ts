@@ -2,10 +2,7 @@ import type {
   CapabilityApprovalRequest,
   CapabilityApprovalResult,
 } from '@pivi/agent/ports';
-import {
-  bashAllowlistPersistScopesDiffer,
-} from '@pivi/agent/runtime/capabilitySessionGrants';
-import { createPrefixBashGrant } from '@pivi/agent/tools';
+import type { PersistentBashPermission } from '@pivi/agent/tools';
 
 import { t } from '@/app/i18n';
 
@@ -15,12 +12,16 @@ import type { ComposerInlinePromptsDeps } from './ComposerInlinePrompts';
 
 const SCOPE_BY_OPTION: Record<string, CapabilityApprovalResult['decision']> = {
   deny: 'deny',
-  once: 'allow',
-  session: 'allow-session',
+  once: 'allow-once',
   always: 'allow-always',
 };
 
-function buildApprovalHeader(parentEl: HTMLElement, request: CapabilityApprovalRequest): HTMLElement {
+function buildApprovalHeader(
+  parentEl: HTMLElement,
+  request: CapabilityApprovalRequest,
+  selectedPermissions: PersistentBashPermission[],
+  onSelect: (permissions: PersistentBashPermission[]) => void,
+): HTMLElement {
   const headerEl = parentEl.createDiv({ cls: 'pivi-ask-approval-info' });
   headerEl.remove();
 
@@ -31,10 +32,62 @@ function buildApprovalHeader(parentEl: HTMLElement, request: CapabilityApprovalR
   toolEl.createSpan({ text: request.toolName, cls: 'pivi-ask-approval-tool-name' });
 
   headerEl.createDiv({ text: request.reason, cls: 'pivi-ask-approval-reason' });
-  if (request.blockedPath) {
+  if (request.kind === 'external-directory' && request.directoryRoot) {
+    headerEl.createDiv({ text: request.directoryRoot, cls: 'pivi-ask-approval-blocked-path' });
+  } else if (request.blockedPath) {
     headerEl.createDiv({ text: request.blockedPath, cls: 'pivi-ask-approval-blocked-path' });
   }
   headerEl.createDiv({ text: request.description, cls: 'pivi-ask-approval-desc' });
+
+  const classification = request.bashClassification;
+  if (request.kind === 'bash' && classification?.persistable) {
+    const scopesEl = headerEl.createDiv({ cls: 'pivi-ask-approval-scopes' });
+    scopesEl.createDiv({
+      text: t('chat.capabilityApproval.persistentScopes'),
+      cls: 'pivi-ask-approval-scopes-label',
+    });
+    const selected = [...selectedPermissions];
+    classification.components.forEach((component, index) => {
+      const row = scopesEl.createDiv({ cls: 'pivi-ask-approval-scope-row' });
+      const candidates = component.broader
+        ? [component.recommended, component.broader]
+        : [component.recommended];
+      if (candidates.length === 1) {
+        row.createSpan({ text: component.displayLabel });
+        return;
+      }
+      const selectEl = row.createEl('select', { cls: 'pivi-ask-approval-scope-select' });
+      selectEl.setAttribute('aria-label', t('chat.capabilityApproval.scopeSelector'));
+      for (const candidate of candidates) {
+        const option = selectEl.createEl('option');
+        option.value = candidate.kind;
+        option.textContent = candidate.kind === 'subcommand'
+          ? `${candidate.executable.value} ${candidate.subcommand}`
+          : t('chat.capabilityApproval.executableScope', { executable: candidate.executable.value });
+      }
+      const warningEl = row.createDiv({
+        text: t('chat.capabilityApproval.broaderWarning'),
+        cls: 'pivi-ask-approval-warning pivi-hidden',
+      });
+      selectEl.addEventListener('change', () => {
+        const next = candidates.find(candidate => candidate.kind === selectEl.value) ?? component.recommended;
+        selected[index] = next;
+        onSelect([...selected]);
+        warningEl.toggleClass('pivi-hidden', next.kind !== 'executable' || !component.broader);
+      });
+    });
+    if (classification.components.some(component => component.risk !== 'none')) {
+      scopesEl.createDiv({
+        text: t('chat.capabilityApproval.highRiskWarning'),
+        cls: 'pivi-ask-approval-warning',
+      });
+    }
+  } else if (request.kind === 'bash' && classification && !classification.persistable) {
+    headerEl.createDiv({
+      text: t('chat.capabilityApproval.alwaysUnavailable'),
+      cls: 'pivi-ask-approval-warning',
+    });
+  }
 
   return headerEl;
 }
@@ -92,10 +145,29 @@ export async function showCapabilityApprovalPrompt(
     throw new Error('Input container is detached from DOM');
   }
 
-  const headerEl = buildApprovalHeader(parentEl, request);
+  const persistable = request.kind !== 'bash'
+    || request.bashClassification?.persistable === true;
+  let selectedPermissions: PersistentBashPermission[] = request.bashClassification?.persistable
+    ? request.bashClassification.components.map(component => component.recommended)
+    : [];
+
+  const headerEl = buildApprovalHeader(parentEl, request, selectedPermissions, (next) => {
+    selectedPermissions = next;
+  });
   hideInputContainer(inputContainerEl);
 
   try {
+    const alwaysOption = persistable
+      ? {
+          label: t('chat.capabilityApproval.allowAlways'),
+          description: t('chat.capabilityApproval.allowAlwaysDescription'),
+          value: 'always',
+        }
+      : {
+          label: t('chat.capabilityApproval.allowAlways'),
+          description: t('chat.capabilityApproval.alwaysUnavailable'),
+          value: 'always-disabled',
+        };
     const scopeResult = await askApprovalStep(
       deps,
       parentEl,
@@ -106,12 +178,7 @@ export async function showCapabilityApprovalPrompt(
           options: [
             { label: t('chat.capabilityApproval.deny'), description: '', value: 'deny' },
             { label: t('chat.capabilityApproval.allowOnce'), description: '', value: 'once' },
-            { label: t('chat.capabilityApproval.allowSession'), description: '', value: 'session' },
-            {
-              label: t('chat.capabilityApproval.allowAlways'),
-              description: t('chat.capabilityApproval.allowAlwaysDescription'),
-              value: 'always',
-            },
+            alwaysOption,
           ],
           isOther: false,
           isSecret: false,
@@ -126,64 +193,17 @@ export async function showCapabilityApprovalPrompt(
     );
 
     const scopeOption = readSelectedOption(scopeResult);
-    if (!scopeOption) {
-      return { decision: 'cancel' };
+    if (!scopeOption || scopeOption === 'always-disabled') {
+      return { decision: scopeOption === 'always-disabled' ? 'cancel' : 'cancel' };
     }
     const decision = SCOPE_BY_OPTION[scopeOption];
     if (!decision || decision === 'deny') {
       return { decision: decision ?? 'cancel' };
     }
-    if (decision !== 'allow-always') {
-      return { decision };
+    if (decision === 'allow-always') {
+      return { decision, bashPermissions: selectedPermissions };
     }
-
-    const command = request.command?.trim() ?? '';
-    if (request.kind !== 'bash' || !command || !bashAllowlistPersistScopesDiffer(command, request.shellPath)) {
-      return { decision: 'allow-always', bashAllowlistScope: 'full' };
-    }
-
-    const prefixGrant = createPrefixBashGrant(command, request.shellPath ?? '/bin/sh');
-    const prefix = prefixGrant?.kind === 'argv-prefix' ? (prefixGrant.argv[0] ?? command) : command;
-    const persistResult = await askApprovalStep(
-      deps,
-      parentEl,
-      setPending,
-      {
-        questions: [{
-          question: t('chat.capabilityApproval.bashPersistQuestion'),
-          options: [
-            {
-              label: t('chat.capabilityApproval.bashPersistFull'),
-              description: t('chat.capabilityApproval.bashPersistFullDescription', { command }),
-              value: 'full',
-            },
-            {
-              label: t('chat.capabilityApproval.bashPersistPrefix'),
-              description: t('chat.capabilityApproval.bashPersistPrefixDescription', { prefix }),
-              value: 'prefix',
-            },
-            { label: t('chat.capabilityApproval.deny'), description: '', value: 'deny' },
-          ],
-          isOther: false,
-          isSecret: false,
-        }],
-      },
-      {
-        title: t('chat.capabilityApproval.bashPersistTitle'),
-        headerEl,
-        showCustomInput: false,
-        immediateSelect: true,
-      },
-    );
-
-    const persistOption = readSelectedOption(persistResult);
-    if (!persistOption || persistOption === 'deny') {
-      return { decision: persistOption === 'deny' ? 'deny' : 'cancel' };
-    }
-    if (persistOption !== 'full' && persistOption !== 'prefix') {
-      return { decision: 'cancel' };
-    }
-    return { decision: 'allow-always', bashAllowlistScope: persistOption };
+    return { decision };
   } finally {
     restoreInputContainer(inputContainerEl);
   }

@@ -258,7 +258,13 @@ export function createImperativeChatAdapter(
         // by the 300 ms debounced tab-state write.
         await persistTabStateImmediate(manager.getPersistedState());
         if (deletedSessionFile) {
-          await mountedPorts?.sessions.deleteSessionFile(deletedSessionFile, deletedSessionId);
+          const abandoned = await mountedPorts?.sessions.abandonEmptyOwnedSession?.(
+            deletedSessionFile,
+            deletedSessionId,
+          );
+          if (!abandoned) {
+            await mountedPorts?.sessions.deleteSessionFile(deletedSessionFile, deletedSessionId);
+          }
         } else if (deletedSessionId) {
           await mountedPorts?.sessions.deleteSession(deletedSessionId);
         }

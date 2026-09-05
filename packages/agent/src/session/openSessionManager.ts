@@ -88,8 +88,14 @@ function markRestoredRunningAsyncSubagentsOrphaned(messages: ChatMessage[]): boo
   return changed;
 }
 
+function sessionHasPersistedUserMessage(openSession: OpenSessionState): boolean {
+  if (openSession.hasPersistedUserMessage === true) return true;
+  return openSession.messages.some((message) => message.role === 'user');
+}
+
 export class OpenSessionManager {
   private sessions: OpenSessionState[] = [];
+  private ownedEmptySessionFiles = new Set<string>();
 
   constructor(private readonly deps: OpenSessionManagerDeps) {}
 
@@ -118,6 +124,7 @@ export class OpenSessionManager {
       sessionId: summary.sessionId,
       sessionFile: summary.sessionFile,
       leafId: null,
+      hasPersistedUserMessage: summary.hasPersistedUserMessage === true,
       leafCount: 1,
       messages: [],
       hasOlderMessages: (summary.messageCount ?? 0) > 0,
@@ -243,16 +250,23 @@ export class OpenSessionManager {
     let updatedAt = createdAt;
     let messageCount = 0;
     let messagePreview = 'New session';
+    let hasPersistedUserMessage = false;
 
     if (!sessionFile) {
       const ref = await this.deps.getStore().create(vaultPath);
       sessionFile = ref.sessionFile;
       sessionId = ref.sessionId;
-      await this.deps.getStore().writeSessionMeta(ref, {
-        title,
-        titleSource: 'timestamp',
-        createdAt,
-      });
+      this.ownedEmptySessionFiles.add(sessionFile);
+      try {
+        await this.deps.getStore().writeSessionMeta(ref, {
+          title,
+          titleSource: 'timestamp',
+          createdAt,
+        });
+      } catch (error) {
+        await this.abandonOwnedEmptySession(sessionFile);
+        throw error;
+      }
     }
 
     const existing = this.sessions.find((candidate) => candidate.sessionFile === sessionFile);
@@ -274,6 +288,7 @@ export class OpenSessionManager {
           sessionId = sessionId ?? match.sessionId;
           messageCount = match.messageCount ?? 0;
           messagePreview = match.messagePreview;
+          hasPersistedUserMessage = match.hasPersistedUserMessage === true;
         }
       } catch {
         // Fall back to in-memory defaults; still avoid overwriting disk meta below.
@@ -297,11 +312,17 @@ export class OpenSessionManager {
       olderUserMessageCount: 0,
       messagePreview,
       titleSource,
+      hasPersistedUserMessage,
     };
 
     this.sessions.unshift(openSession);
     if (!attachingExistingFile) {
-      await this.persistSessionSummary(openSession);
+      try {
+        await this.persistSessionSummary(openSession);
+      } catch (error) {
+        await this.abandonOwnedEmptySession(sessionFile);
+        throw error;
+      }
     }
 
     return openSession;
@@ -362,6 +383,10 @@ export class OpenSessionManager {
     const next = { ...openSession, ...updates, updatedAt: Date.now() };
     if (updates.messages && (next.olderMessageCount ?? 0) === 0) {
       next.messagePreview = this.getPreview(next);
+    }
+    if (sessionHasPersistedUserMessage(next) && next.sessionFile) {
+      next.hasPersistedUserMessage = true;
+      this.ownedEmptySessionFiles.delete(next.sessionFile);
     }
     await this.persistSessionSummary(next);
     if (updates.messages) {
@@ -453,9 +478,20 @@ export class OpenSessionManager {
   }
 
   findEmpty(): OpenSessionState | null {
-    return this.sessions.find((candidate) => (
-      (candidate.totalMessageCount ?? candidate.messages.length) === 0
-    )) || null;
+    return this.sessions.find((candidate) => !sessionHasPersistedUserMessage(candidate)) || null;
+  }
+
+  ownsEmptySessionFile(sessionFile: string): boolean {
+    return this.ownedEmptySessionFiles.has(sessionFile);
+  }
+
+  async abandonOwnedEmptySession(sessionFile: string): Promise<boolean> {
+    if (!this.ownedEmptySessionFiles.delete(sessionFile)) {
+      return false;
+    }
+    this.sessions = this.sessions.filter((session) => session.sessionFile !== sessionFile);
+    await this.deps.getStore().deleteSession(sessionFile);
+    return true;
   }
 
   list(): SessionSummary[] {

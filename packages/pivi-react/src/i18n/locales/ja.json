@@ -158,19 +158,18 @@
       }
     },
     "capabilityApproval": {
-      "title": "権限が必要です",
-      "scopeQuestion": "どのくらいの期間許可しますか？",
+      "title": "許可が必要です",
+      "scopeQuestion": "Pivi はこの操作をどのように許可しますか？",
       "deny": "拒否",
       "allowOnce": "今回のみ許可",
-      "allowSession": "このセッションで許可",
       "allowAlways": "常に許可",
-      "allowAlwaysDescription": "設定に保存（次の手順で範囲を選択）",
-      "bashPersistTitle": "常に許可するコマンドは？",
-      "bashPersistQuestion": "設定の Bash 許可リストに次の形式で追加:",
-      "bashPersistFull": "このコマンドのみ",
-      "bashPersistFullDescription": "`{command}` のみ",
-      "bashPersistPrefix": "このプレフィックスのコマンド",
-      "bashPersistPrefixDescription": "`{prefix}` で始まるすべてのコマンド"
+      "allowAlwaysDescription": "選択した永続スコープを設定に保存します",
+      "persistentScopes": "永続スコープ",
+      "scopeSelector": "永続スコープを選択",
+      "executableScope": "{executable} のすべてのコマンド",
+      "broaderWarning": "分類されたコマンドだけでなく、その実行ファイルのすべてのコマンドを許可します。",
+      "highRiskWarning": "この実行ファイルは任意コードの実行やパッケージのインストールができます。常に許可する前に範囲を確認してください。",
+      "alwaysUnavailable": "このコマンドのシェル構文は安定した権限に還元できないため、常に許可は使えません。"
     },
     "tabs": {
       "startNewChat": "新しいチャットを開始",
@@ -441,7 +440,7 @@
         "description": "メッセージ送信、キーボード操作、Pivi ホットキーを設定します。"
       },
       "sessions": {
-        "description": "削除済みセッションの保持期間を設定し、そのファイルを完全に削除します。"
+        "description": "アーカイブ済みと最近削除したチャットの件数を確認し、アーカイブ済みを最近削除へ移し、復元済みファイルを完全に削除します。"
       },
       "environment": {
         "label": "環境",
@@ -685,16 +684,34 @@
     },
     "sessionFiles": {
       "heading": "セッションファイル",
+      "archived": {
+        "name": "アーカイブ済みチャット",
+        "count": "アーカイブ済みチャット {count} 件",
+        "empty": "アーカイブ済みチャットはありません"
+      },
+      "deleted": {
+        "name": "最近削除したチャット",
+        "count": "最近削除したチャット {count} 件",
+        "empty": "最近削除したチャットはありません",
+        "recovery": "最近削除したチャットの一覧表示や復元は、Pivi に pivi_sessions ツールで依頼してください。設定には個別の削除チャットは表示されません。"
+      },
+      "deleteArchived": {
+        "name": "アーカイブ済みチャットをすべて削除",
+        "desc": "アーカイブ済みチャットを最近削除へ移します。開いているチャットはそのままです。同じファイルの重複行は 1 件として数えます。",
+        "button": "アーカイブを削除",
+        "success": "アーカイブ済みチャット {moved} 件を最近削除へ移しました。開いている {skippedActive} 件をスキップ。失敗 {failed} 件。",
+        "failed": "アーカイブ済みチャットの削除に失敗しました"
+      },
       "retention": {
-        "name": "削除したセッションの保持期間",
-        "desc": "完全に削除するまでの日数。"
+        "name": "最近削除したチャットの保持日数",
+        "desc": "最近削除したチャットファイルを完全削除するまでの日数です。開いているチャットとアーカイブ済みチャットは対象外です。"
       },
       "deleteRemoved": {
-        "name": "削除済みセッションを完全に削除",
-        "desc": "削除操作で削除したセッションを完全に削除します。開いているセッションとアーカイブ済みセッションには影響しません。",
-        "button": "完全に削除",
-        "success": "削除済みセッションファイルを {count} 件完全に削除しました。",
-        "failed": "削除済みセッションの完全な削除に失敗しました"
+        "name": "最近削除したチャットを完全削除",
+        "desc": "すでに最近削除にあるチャットを破棄します。開いているチャットとアーカイブ済みチャットは対象外です。この後は復元できません。",
+        "button": "完全削除",
+        "success": "最近削除したチャットファイル {count} 件を完全削除しました。",
+        "failed": "最近削除したチャットの完全削除に失敗しました"
       }
     },
     "sharedEnvironment": {
@@ -731,30 +748,21 @@
         }
       },
       "unavailableOfficialCli": "公式の Obsidian CLI が必要です。",
-      "unavailableExternalRead": "外部読み取り権限と許可ディレクトリが少なくとも 1 つ必要です。",
       "unavailableCodex": "OpenAI Codex の接続が必要です。"
     },
     "bash": {
-      "heading": "Bash アクセス",
-      "allowlist": {
-        "name": "許可する bash コマンド",
-        "desc": "ツール切替の Bash トグルでオン/オフします。許可リストは完全一致または必要なプレフィックス（例: git、npm run build）に一致します。コマンドはログインシェル経由で実行されるため、ターミナルの PATH（pixi、Homebrew など）が使えます。which、type、pwd は常に許可。許可されたコマンド内ではパイプなどのシェル構文も可。作業ディレクトリは保管庫内に限られます。",
-        "inputLabel": "許可する bash コマンドを追加",
-        "removeAria": "許可する bash コマンド {value} を削除"
-      }
+      "heading": "Bash アクセス"
     },
     "externalRead": {
       "heading": "外部ファイルシステムアクセス",
       "allow": {
         "name": "外部ファイルの読み取り/一覧を許可",
-        "desc": "下記の許可外部ディレクトリ、および現在のチャットセッションで選んだ外部コンテキストフォルダー内のファイルを Pivi が読み取り・一覧できるようにします。"
+        "desc": "ワークスペース内のファイルは常に読み取り・一覧できます。確認後にワークスペース外のフォルダも読む場合はオンにしてください。"
       },
       "directories": {
         "name": "許可する外部ディレクトリ",
-        "desc": "外部読み取り/一覧ツールはこれらの絶対パスディレクトリ内のパスと、現在のチャットセッションの外部コンテキストフォルダーのみにアクセスできます。",
         "placeholder": "/Users/me/workspace",
         "inputLabel": "許可する外部ディレクトリを追加",
-        "removeAria": "許可する外部ディレクトリ {value} を削除",
         "browse": "参照",
         "browseTooltip": "システムフォルダ選択を開き、選択したパスを追記します",
         "pickerFailed": "フォルダ選択を開けません。"
@@ -1151,6 +1159,24 @@
         "availableTools": "利用可能なツール（{count}）",
         "noTools": "このサーバーからツールが返されませんでした。"
       }
+    },
+    "permissions": {
+      "heading": "永続権限",
+      "intro": "これらの端末ローカル権限はチャットをまたいで残ります。ツールをオフにしても記録は消えません。常に許可の決定とディレクトリアクセスはここに表示されます。",
+      "revoke": "{label} を取り消す",
+      "bash": {
+        "name": "Bash",
+        "desc": "安定したコマンドスコープです。ファイル名、URL、スクリプト本文は保存しません。which、type、pwd などの基本照会コマンドは常に許可されます。",
+        "inputLabel": "分類可能な bash コマンドを追加",
+        "legacyEncoding": "exact: や prefix: は入力しないでください。git status のような実際のコマンドを入力します。",
+        "unsafeSyntax": "このコマンドは永続権限として保存できません。チャットで今回のみ許可を使ってください。",
+        "unresolvedRelative": "この相対実行ファイルは実パスに解決されるまで保存できません。"
+      },
+      "external": {
+        "name": "外部ディレクトリ",
+        "desc": "ワークスペース外の正規ディレクトリルートです。ワークスペース内のパスに許可は不要です。",
+        "insideWorkspace": "このパスはワークスペース内にあるため、永続的な許可は不要です。"
+      }
     }
   },
   "commands": {
@@ -1277,7 +1303,6 @@
   },
   "host": {
     "failedSaveTabLayout": "タブレイアウトの保存に失敗しました",
-    "failedSaveDeletedSessions": "削除済みセッション一覧の保存に失敗しました",
     "failedSaveSyncedSettings": "プロバイダー設定はこのデバイスに保存されましたが、ポータブル設定をボールトファイルに書き込めませんでした。",
     "sessionRecovery": {
       "recoveredTitle": "復旧したセッション",

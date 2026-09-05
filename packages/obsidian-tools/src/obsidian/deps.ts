@@ -1,7 +1,7 @@
-import type { CapabilityApprovalPort } from '@pivi/agent/ports';
-import type { ProcessRunner } from '@pivi/agent/ports';
+import type { CapabilityApprovalPort, ProcessRunner } from '@pivi/agent/ports';
 import type { ReadAllowanceReservation } from '@pivi/agent/runtime/usage';
 import type { ObsidianToolsSettings } from '@pivi/agent/settings';
+import type { PersistentBashPermission } from '@pivi/agent/tools';
 import type {
   ExternalFileEntry,
   ExternalFileReadResult,
@@ -52,4 +52,5 @@ export interface ObsidianToolDeps {
   imageGenerator?: ObsidianImageGenerator;
   resolveReadMaxChars?: (requestedMaxChars?: number) => ReadAllowanceReservation;
   capabilityApproval?: CapabilityApprovalPort | null;
+  getBashPermissions?: () => readonly PersistentBashPermission[];
 }

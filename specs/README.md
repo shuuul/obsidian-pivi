@@ -10,6 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
+| [051 — Permission scopes and chat lifecycle cleanup](051-permission-scopes-and-chat-lifecycle-cleanup.md) | Active | Stable device-local permission scopes plus safe empty-session and Archive/Delete lifecycle cleanup. |
 
 ## Archived specs
 
