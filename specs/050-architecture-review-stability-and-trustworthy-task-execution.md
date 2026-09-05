@@ -154,7 +154,7 @@ The repaired smoke command must explicitly target and verify the designated test
 | Deterministic real-host chain | Fresh candidate/build identity, restored session/tool/note assertions, original fetch reference, success/failure cleanup | Passed 2026-09-05 14:33 CST; development artifact SHA-256 `f57920262198cced59e1eb0ae1699707f19bc619a735248b0181762a653cc524` |
 | Fork and shutdown | Fault matrix results, original bytes, deferred-save event order, reload ownership | Passed: local fault/lifecycle matrix, temporary-filesystem partial-write cleanup/residual diagnosis, exact source bytes, and real-host reload/restore |
 | Performance | Fixed workload definitions and comparable before/after spans with variability | Passed: nine corrected real-host traces; projection ownership p95 ≤0.10 ms; no optimization retained |
-| Trusted automation recovery | Required-snapshot failure matrix, recursive preflight, restore ordering, unsupported-file boundary | Passed: 50 focused tests; full 357-suite / 3,200-test Jest run; typecheck, lint, boundaries, docs/spec, production build, and bundle-size gates |
+| Trusted automation recovery | Required-snapshot failure matrix, recursive preflight, restore ordering, unsupported-file boundary | Passed: 50 focused tests; full 357-suite / 3,200-test Jest run; typecheck, lint, boundaries, docs/spec, production build, bundle-size gates, and designated-vault production smoke |
 | Final candidate | Full gates, inspected UI artifacts where applicable, docs sync, final CI for the merge candidate | Not run |
 
 WS-04 has no visual surface: no mode selector, recovery disclosure, locale copy, or CSS is added. Visual sign-off is therefore not applicable. If a later slice changes rendered UI, it must follow the repository's render-and-inspect requirement.
@@ -245,6 +245,14 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Restore: `obsidian_history restore` validates the path, snapshots a current destination through the host, then invokes the CLI. Deleted destinations proceed because no current version exists; failed required capture prevents the CLI call.
 - Runtime compatibility: read-only inspection of designated-vault Obsidian 1.13.7 confirmed the enabled `file-recovery` instance exposes `forceAdd` as a function. No plugin reload or mutating smoke was run for this slice.
 - Evidence: focused Node 24 host/history suites passed 50 tests. Full 357-suite / 3,200-test Jest, source/test typecheck, zero-warning lint, dependency audit, architecture/docs/package/i18n/spec/Pi boundaries, production build, and 4,141,383-byte bundle-size gate passed. WS-04 is accepted locally.
+
+### 2026-09-05 — Amp — WS-04 production smoke
+
+- Candidate: local commit `6f794440`; production root and designated-vault `main.js` SHA-256 `554ba2ff8d1377f5a1b7e7d2363bfc2da9f66f9a6e6ac80832a560a40e898d13`; Obsidian CLI 1.14.0 / installer 1.13.7; smoke completed 2026-09-05 15:44 CST.
+- Reload: the production plugin reloaded successfully in the canonical `/Users/shuuul/obsidian/Base` vault, and every renderer operation guarded that exact real path. The loaded application exposed the production `createVaultApi()` host boundary.
+- Mutation and history: production `ObsidianVaultApi.editNote()` changed one UUID root note from `before-*` to `after-*`; File Recovery immediately exposed the exact `before-*` bytes as history. Production `captureSnapshotBeforeRestore()` then captured the current `after-*` bytes, and the real CLI restore boundary restored the earlier version to exact `before-*` content.
+- Safety and cleanup: an initial hidden-directory fixture was not indexed by Obsidian, so Pivi rejected it as missing before snapshot or mutation; the fixture was removed. The successful root fixture was permanently removed and verified absent from both adapter storage and the Vault index. Its File Recovery versions intentionally remain subject to Obsidian retention so the recovery assertion is durable.
+- Result: `obsidian dev:errors` reported no captured errors after reload, mutation, history reads, restore, and cleanup. Together with the focused tool-ordering tests, this accepts the production strict-recovery path without adding a mode or UI.
 
 ## Completion summary
 
