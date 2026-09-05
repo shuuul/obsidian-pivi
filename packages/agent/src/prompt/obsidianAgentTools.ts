@@ -95,8 +95,8 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 
   if (summary.includeSkill) {
     const skillLine = hasReadExternal
-      ? `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; read them with \`obsidian_read_external\` using the absolute skill directory returned by the skill tool.`
-      : `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; they live on disk under the absolute skill directory returned by the skill tool.`;
+      ? `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; read them with \`obsidian_read_external\` using the absolute paths returned by the skill tool. Do not join relative names onto the skill directory.`
+      : `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/. Supporting files are not vault notes; the skill tool returns absolute paths for files that exist in the installed skill.`;
     lines.push('', '### Skills', skillLine);
   }
 
@@ -216,7 +216,7 @@ function buildExternalReadGuidance(params: {
 }): string {
   const clauses: string[] = [];
   if (params.hasReadExternal) {
-    clauses.push('use `obsidian_read_external` with an absolute path (`path: "/Users/me/Workspace/file.ts"`). Use it for files Obsidian does not index (including `.pivi/`) and for files outside the vault. It supports `mode: "stats"` and line ranges');
+    clauses.push('use `obsidian_read_external` with an absolute path (`path: "/Users/me/Workspace/file.ts"`), or a vault-relative path that exists in the current vault. Use it for files Obsidian does not index (including `.pivi/`) and for files outside the vault. It supports `mode: "stats"` and line ranges');
   }
   if (params.hasListExternal) {
     clauses.push('use `obsidian_list_external` to list a folder Obsidian does not index or a folder outside the vault');
@@ -224,7 +224,7 @@ function buildExternalReadGuidance(params: {
   const vaultReadWarning = params.hasRead
     ? ', and do not use `obsidian_read` for absolute paths'
     : '';
-  return `**External files:** ${clauses.join('; ')}. Do not use vault-relative paths for external files${vaultReadWarning}.`;
+  return `**External files:** ${clauses.join('; ')}. Prefer the absolute paths returned by tools; vault-relative paths are resolved against the current vault${vaultReadWarning}.`;
 }
 
 function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCliAvailable: boolean): string {

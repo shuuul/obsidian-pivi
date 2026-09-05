@@ -10,6 +10,7 @@ export * from './skillProvider';
 export * from './slashCommand';
 export * from './vault/defaultVaultSkills';
 export * from './vault/ensureDefaultVaultSkills';
+export * from './vault/expandSkillSupportingPaths';
 export * from './vault/fetchDefaultVaultSkillsRemoteSha';
 export * from './vault/loadVaultSkills';
 export * from './vault/notifyVaultSkillsChanged';

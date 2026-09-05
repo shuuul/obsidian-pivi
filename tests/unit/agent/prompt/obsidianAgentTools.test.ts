@@ -145,7 +145,7 @@ describe('registered tool prompt descriptors', () => {
       includeWebSearch: false,
     });
     expect(withExternal).toContain('### Skills');
-    expect(withExternal).toContain('read them with `obsidian_read_external` using the absolute skill directory');
+    expect(withExternal).toContain('read them with `obsidian_read_external` using the absolute paths returned by the skill tool');
 
     const withoutExternal = buildRegisteredToolsSection({
       obsidianTools: ['obsidian_read'],

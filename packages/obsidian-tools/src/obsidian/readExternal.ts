@@ -17,6 +17,7 @@ import {
   resolveEffectiveReadBudget,
   sliceLineRange,
 } from './readShared';
+import { resolveExternalToolPath } from './resolveExternalToolPath';
 
 const MAX_EXTERNAL_READ_BYTES = 10_000_000;
 
@@ -41,11 +42,11 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
     name: TOOL_OBSIDIAN_READ_EXTERNAL,
     executionMode: 'sequential',
     label: 'Read external file',
-    description: 'Read an external file by absolute path. Defaults to stats-only for large files; explicit line ranges automatically return the largest complete-line page that fits maxChars and provide nextStartLine when more remains.',
+    description: 'Read an external file by absolute path, or by a vault-relative path that is resolved against the current vault. Defaults to stats-only for large files; explicit line ranges automatically return the largest complete-line page that fits maxChars and provide nextStartLine when more remains.',
     parameters: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'Absolute filesystem path, e.g. /Users/me/Workspace/file.ts' },
+        path: { type: 'string', description: 'Absolute filesystem path, or a vault-relative path such as .pivi/skills/demo/SKILL.md' },
         mode: { type: 'string', enum: ['content', 'stats'], description: 'stats returns only path, line count, and character count' },
         startLine: { type: 'number', description: '1-based first line to read' },
         endLine: { type: 'number', description: '1-based last line to read, inclusive' },
@@ -56,10 +57,11 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
     },
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
-      const absolutePath = getStringField(input, 'path');
-      if (!absolutePath) {
+      const requestedPath = getStringField(input, 'path');
+      if (!requestedPath) {
         throw new Error('Invalid read external input: path must be an absolute string.');
       }
+      const absolutePath = resolveExternalToolPath(deps, requestedPath);
       const mode = getReadMode(input);
       const startLine = getPositiveIntegerField(input, 'startLine');
       const endLine = getPositiveIntegerField(input, 'endLine');

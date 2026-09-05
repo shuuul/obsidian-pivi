@@ -1,5 +1,17 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
 import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
 import { createSkillTool } from '@pivi/engine-pi/createSkillTool';
+
+function textOf(result: { content: Array<{ type: string; text?: string }> }): string {
+  const firstContent = result.content[0];
+  if (!firstContent || firstContent.type !== 'text' || typeof firstContent.text !== 'string') {
+    throw new Error('Expected the skill result to contain text');
+  }
+  return firstContent.text;
+}
 
 describe('createSkillTool', () => {
   const skillDir = '.pivi/skills/demo-skill';
@@ -36,32 +48,22 @@ Follow these steps.`,
   it('loads skill body without YAML frontmatter and returns text details', async () => {
     const tool = createSkillTool(skills);
     const result = await tool.execute('call-1', { name: 'demo-skill' });
+    const text = textOf(result);
 
-    expect(result.content).toEqual([
-      {
-        type: 'text',
-        text: `<skill name="demo-skill" location="${absoluteFilePath}">
-Supporting files are absolute paths under ${absoluteBaseDir}. Read them with obsidian_read_external using those absolute paths; do not use obsidian_read.
-
-# Do the thing
-
-Follow these steps.
-</skill>`,
-      },
-    ]);
+    expect(text).toContain(`<skill name="demo-skill" location="${absoluteFilePath}">`);
+    expect(text).toContain('Do not join relative names onto that directory, and do not use obsidian_read.');
+    expect(text).toContain(`Skill directory: ${absoluteBaseDir}`);
+    expect(text).toContain('# Do the thing');
+    expect(text).toContain('Follow these steps.');
+    expect(text).toContain('</skill>');
+    expect(text).not.toContain('name: demo-skill');
     expect(result.details).toEqual({ baseDir: skillDir, filePath: skillFilePath, description: 'Demo' });
   });
 
   it('appends trimmed optional args after the skill block', async () => {
     const tool = createSkillTool(skills);
     const result = await tool.execute('call-2', { name: 'demo-skill', args: '  focus on edge cases  ' });
-
-    const firstContent = result.content[0];
-    expect(firstContent).toBeDefined();
-    if (!firstContent || firstContent.type !== 'text') {
-      throw new Error('Expected the skill result to contain text');
-    }
-    const text = firstContent.text;
+    const text = textOf(result);
     expect(text).toContain('</skill>');
     expect(text.endsWith('focus on edge cases')).toBe(true);
     expect(text).toContain('# Do the thing');
@@ -86,5 +88,39 @@ Follow these steps.
         await tool.execute('call-4', { name: 'any' });
       })(),
     ).rejects.toThrow('Unknown skill "any". Available: (none installed)');
+  });
+
+  it('expands existing supporting files and refuses to join missing relative names', async () => {
+    const installedDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-skill-tool-'));
+    try {
+      fs.writeFileSync(path.join(installedDir, 'SKILL.md'), '# Skill\n');
+      fs.mkdirSync(path.join(installedDir, 'references'));
+      const syntaxPath = path.join(installedDir, 'references', 'syntax.md');
+      fs.writeFileSync(syntaxPath, '# Syntax\n');
+      const tool = createSkillTool([
+        {
+          name: 'obsidian-marp',
+          description: 'Marp',
+          filePath: '.pivi/skills/obsidian-marp/SKILL.md',
+          baseDir: '.pivi/skills/obsidian-marp',
+          absoluteFilePath: path.join(installedDir, 'SKILL.md'),
+          absoluteBaseDir: installedDir,
+          content: `---
+name: obsidian-marp
+---
+Read \`docs/marp-extended-syntax.md\` then \`references/syntax.md\`.
+`,
+        },
+      ]);
+
+      const text = textOf(await tool.execute('call-5', { name: 'obsidian-marp' }));
+      expect(text).toContain(`\`${syntaxPath}\``);
+      expect(text).toContain('docs/marp-extended-syntax.md (not in this skill; do not read)');
+      expect(text).not.toContain('`docs/marp-extended-syntax.md`');
+      expect(text).toContain('Not present in this skill (do not read):');
+      expect(text).toContain('- docs/marp-extended-syntax.md');
+    } finally {
+      fs.rmSync(installedDir, { recursive: true, force: true });
+    }
   });
 });

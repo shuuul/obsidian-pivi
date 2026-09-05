@@ -7,26 +7,28 @@ import {
 import { CAPABILITY_TOOL_NAMES, ensureExternalDirectoryAccess } from '../capabilityApprovalGate';
 import type { ObsidianToolDeps } from './deps';
 import { getStringField } from './readShared';
+import { resolveExternalToolPath } from './resolveExternalToolPath';
 
 export function createListExternalTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_LIST_EXTERNAL,
     label: 'List external folder',
-    description: 'List direct children of an external folder by absolute path.',
+    description: 'List direct children of an external folder by absolute path, or by a vault-relative path that is resolved against the current vault.',
     parameters: {
       type: 'object',
       properties: {
-        path: { type: 'string', description: 'Absolute filesystem path to a folder, e.g. /Users/me/Workspace' },
+        path: { type: 'string', description: 'Absolute filesystem path, or a vault-relative path such as .pivi/skills/demo' },
       },
       required: ['path'],
       additionalProperties: false,
     },
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
-      const absolutePath = getStringField(input, 'path');
-      if (!absolutePath) {
+      const requestedPath = getStringField(input, 'path');
+      if (!requestedPath) {
         throw new Error('Invalid list external input: path must be an absolute string.');
       }
+      const absolutePath = resolveExternalToolPath(deps, requestedPath);
       const externalFiles = await ensureExternalDirectoryAccess(
         deps,
         absolutePath,

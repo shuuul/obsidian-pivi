@@ -120,6 +120,7 @@
     "./skills/vault/defaultVaultSkills": "./src/skills/vault/defaultVaultSkills.ts",
     "./skills/vault/ensureDefaultVaultSkills": "./src/skills/vault/ensureDefaultVaultSkills.ts",
     "./skills/vault/env": "./src/skills/vault/env.ts",
+    "./skills/vault/expandSkillSupportingPaths": "./src/skills/vault/expandSkillSupportingPaths.ts",
     "./skills/vault/fetchDefaultVaultSkillsRemoteSha": "./src/skills/vault/fetchDefaultVaultSkillsRemoteSha.ts",
     "./skills/vault/loadVaultSkills": "./src/skills/vault/loadVaultSkills.ts",
     "./skills/vault/notifyVaultSkillsChanged": "./src/skills/vault/notifyVaultSkillsChanged.ts",
