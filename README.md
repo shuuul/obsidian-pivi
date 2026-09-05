@@ -217,7 +217,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 
 ## Documentation
 
-- [Recipes](docs/recipes/README.md) — review-first prompts for literature triage, weekly review, and vault cleanup
+- [Recipes](docs/recipes/README.md) — review-first prompts for literature triage, weekly review, vault cleanup, meeting follow-up, and project kickoff
 - [Developer handbook](docs/README.md) — architecture, technology choices, feature flows, and contribution routes
 - [Input panel and context](docs/04-input-panel-and-context.md) — composer, selectors, context indicators, and prompt construction
 - [Tabs, sessions, and history](docs/05-tabs-sessions-and-history.md) — tab switcher, persistence, restore, and fork
