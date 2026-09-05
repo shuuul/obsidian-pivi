@@ -6,13 +6,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function makeDeps(): { deps: ObsidianToolDeps; cliRun: CliRun; vaultGetNote: jest.Mock } {
+function makeDeps(): {
+  deps: ObsidianToolDeps;
+  cliRun: CliRun;
+  captureSnapshotBeforeRestore: jest.Mock;
+} {
   const cliRun: CliRun = jest.fn(async (_request: { vaultName: string; args: string[] }) => 'cli output');
-  const vaultGetNote = jest.fn();
+  const captureSnapshotBeforeRestore = jest.fn(async () => undefined);
   const deps: ObsidianToolDeps = {
     app: { vault: { adapter: { basePath: '/vault' } } } as unknown as ObsidianToolDeps['app'],
     vault: {
-      getNote: vaultGetNote,
+      captureSnapshotBeforeRestore,
     } as unknown as ObsidianToolDeps['vault'],
     cli: {
       run: cliRun,
@@ -23,7 +27,7 @@ function makeDeps(): { deps: ObsidianToolDeps; cliRun: CliRun; vaultGetNote: jes
     vaultPath: '/vault',
     processRunner: { run: jest.fn() },
   };
-  return { deps, cliRun, vaultGetNote };
+  return { deps, cliRun, captureSnapshotBeforeRestore };
 }
 
 function getText(result: unknown): string {
@@ -102,7 +106,7 @@ describe('createHistoryTool', () => {
   });
 
   it('restores a deleted path without prechecking the vault', async () => {
-    const { deps, cliRun, vaultGetNote } = makeDeps();
+    const { deps, cliRun, captureSnapshotBeforeRestore } = makeDeps();
 
     const result = await createHistoryTool(deps).execute('call-1', {
       action: 'restore',
@@ -110,10 +114,23 @@ describe('createHistoryTool', () => {
       version: 3,
     });
 
-    expect(vaultGetNote).not.toHaveBeenCalled();
+    expect(captureSnapshotBeforeRestore).toHaveBeenCalledWith('deleted/a.md');
     expect(cliRun).toHaveBeenCalledWith({ vaultName: 'Test Vault', args: ['history:restore', 'path=deleted/a.md', 'version=3'] });
     expect(getText(result)).toBe('Restored deleted/a.md from history version 3.');
     expect(getDetails(result)).toEqual({ action: 'restore', path: 'deleted/a.md', version: 3 });
+  });
+
+  it('blocks restore before the CLI when the current snapshot fails', async () => {
+    const { deps, cliRun, captureSnapshotBeforeRestore } = makeDeps();
+    captureSnapshotBeforeRestore.mockRejectedValueOnce(new Error('snapshot failed'));
+
+    await expect(createHistoryTool(deps).execute('call-1', {
+      action: 'restore',
+      path: 'notes/a.md',
+      version: 3,
+    })).rejects.toThrow('snapshot failed');
+
+    expect(cliRun).not.toHaveBeenCalled();
   });
 
   it('rejects restoring Pivi-managed paths before invoking the CLI', async () => {

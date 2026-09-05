@@ -142,6 +142,18 @@ export class ObsidianVaultApi {
     await captureFileRecoverySnapshot(this.app, file);
   }
 
+  private async captureMutationSnapshots(target: TAbstractFile): Promise<void> {
+    if (target instanceof TFile) {
+      await this.capturePreWriteSnapshot(target);
+      return;
+    }
+    if (target instanceof TFolder) {
+      for (const child of target.children) {
+        await this.captureMutationSnapshots(child);
+      }
+    }
+  }
+
   private resolveAbstract(path: string): TAbstractFile | null {
     const normalized = normalizePathForVault(path.trim(), this.vaultPath());
     if (!normalized) {
@@ -346,6 +358,7 @@ export class ObsidianVaultApi {
       throw new Error('File or folder not found. Provide path= (vault-relative) or file= (note title).');
     }
 
+    await this.captureMutationSnapshots(target);
     await this.app.fileManager.trashFile(target);
     return {
       path: target.path,
@@ -357,8 +370,22 @@ export class ObsidianVaultApi {
     // Source move can recurse into managed trees; destination is a direct write target.
     const target = this.requireMutationAbstract(params.path, { mode: 'recursive' });
     const normalizedNewPath = this.requireMutationPath(params.newPath.trim(), { mode: 'direct' });
+    await this.captureMutationSnapshots(target);
     await this.app.fileManager.renameFile(target, normalizedNewPath);
     return { path: target.path, newPath: normalizedNewPath };
+  }
+
+  /** Snapshot current recoverable content before a history restore; deleted paths have no current state. */
+  async captureSnapshotBeforeRestore(path: string): Promise<void> {
+    const normalized = this.requireMutationPath(path);
+    const current = this.app.vault.getAbstractFileByPath(normalized);
+    if (!current) {
+      return;
+    }
+    if (!(current instanceof TFile)) {
+      throw new Error(`Vault path is not a file: ${path}`);
+    }
+    await this.capturePreWriteSnapshot(current);
   }
 
   async createFolder(path: string): Promise<{ path: string }> {

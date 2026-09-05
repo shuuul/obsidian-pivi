@@ -162,7 +162,7 @@ The attached selection payload and editor-mode limits are documented in [Input p
 
 ## Recovery and safety
 
-Pivi does not add per-edit permission prompts. Mutating tools must preserve explicit failure signals. Before changing an existing `.md` or `.canvas` note, Pivi best-effort captures the current content into Obsidian File Recovery via the internal `forceAdd` API when that core plugin is enabled; snapshot failure does not block the write. Deletes use Obsidian trash behavior. `obsidian_history` can restore a retained snapshot when the CLI and a matching history entry exist, but recovery still depends on File Recovery being enabled and the snapshot succeeding.
+Pivi uses Trusted automation rather than read-only or review-before-write modes, and does not add per-edit permission prompts. Before editing, overwriting, appending, prepending, changing properties, moving, deleting, or restoring an existing `.md` or `.canvas` file, Pivi must capture its current content into Obsidian File Recovery through the private `forceAdd` API. If File Recovery is disabled/unavailable, the API is missing, or capture fails, Pivi blocks the operation with an explicit error. Folder move/delete snapshots every supported descendant before mutating anything; one failed capture aborts the whole operation. New files and folders have no prior version and need no snapshot. Other attachments do not receive File Recovery snapshots; move remains available and delete uses Obsidian trash. `obsidian_history` can list/read/restore retained snapshots, and restoring an existing supported file first snapshots its current state so the restore itself can be undone.
 
 When adding a tool:
 

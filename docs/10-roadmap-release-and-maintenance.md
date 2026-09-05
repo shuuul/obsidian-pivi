@@ -33,7 +33,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 - Add direct focused coverage for `ExternalContextSelector` validation: duplicates, parent/child overlap, unavailable roots, pinning, and removal.
 - Expand settings hotkey and port-wiring interaction coverage.
 - Decide whether direct sends should capture ambient editor selections like queued turns; today only queued turns capture them automatically, while direct sends require explicit inline context.
-- After the P1 acceptance gate in spec [050](../specs/050-architecture-review-stability-and-trustworthy-task-execution.md), measure projection snapshot costs, settle the execution-enforced read-only/recovery presentation contract, and enforce package dependency and active documentation-link correctness.
+- After the P1 acceptance gate in spec [050](../specs/050-architecture-review-stability-and-trustworthy-task-execution.md), measure projection snapshot costs, enforce strict File Recovery pre-mutation snapshots for Trusted automation, and enforce package dependency and active documentation-link correctness.
 - Pass the file-indicator root into current-note context badge creation and add a pop-out owner-realm regression test.
 
 ### Later

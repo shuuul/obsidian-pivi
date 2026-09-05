@@ -1,7 +1,7 @@
 ---
 id: "050"
 title: "Architecture review stability and trustworthy task execution"
-status: Draft
+status: Active
 created: 2026-09-05
 updated: 2026-09-05
 coordinator: "Amp"
@@ -18,7 +18,7 @@ Turn the 2026-09-05 architecture review into bounded implementation slices witho
 | Real-host smoke | `scripts/smoke-obsidian.mjs` expects `plugin.sessionStore/processRunner`; `src/main.ts` exposes neither. Notes bypass Pivi tools; JSONL is handwritten; fetch checks compare names/current aliases; cleanup is success-only. | No live run yet. Also, the configured vault is checked on disk but is not explicitly targeted by CLI calls; `obsidian --help` contradicts repository CLI guidance. |
 | Fork and shutdown | `src/ui/chat/tabs/tabManagerFork.ts` creates/registers/updates before the outer catch and returns null tabs without rollback. `PiviApplication.onunload()` starts persistence, journal unbinding, and disposal independently. | Failure exits and ordering are statically visible; final disk residue/data loss is not reproduced. `persistOpenTabStates()` already uses `Promise.allSettled`; preserve it. |
 | Projection | `dispatch()` remains the sole production ingress; text/tool/agent events call private `queueUpsert()`, which snapshots before replacing a pending item. `flushPendingMessages()` starts timing later. | Dispatch does not remove per-event snapshot cost. No measured latency, allocation reduction, or quadratic string-copy claim. |
-| Read-only and recovery | `createObsidianTools.ts` registers mutation tools subject to settings; the literature recipe only requests no edits. `fileRecoverySnapshot.ts` is best-effort for md/canvas using existing internal `forceAdd`. | This is a product capability gap, not proof of an exploitable vulnerability. Existing recovery and approvals are not missing. |
+| Trusted automation recovery | `createObsidianTools.ts` executes enabled mutations directly. `fileRecoverySnapshot.ts` used internal `forceAdd` for md/canvas but silently continued when recovery was unavailable or failed; move, delete, and history restore bypassed it. | Trusted automation remains the sole execution model. The gap is fail-open recovery coverage, not a missing permission mode. |
 | Package/docs contracts | `packages/agent/package.json` has no dependencies despite SDK imports in `mcpConnectionPool.ts`. Roadmap Now points to the pre-archive path for spec 049. | Root dependency installation can work; no standalone build failure is claimed. |
 
 Keep Pi pins/compatibility checks, JSONL/journal recovery, device-local credentials, scoped network clients, entity subscriptions, imperative Markdown islands, quality gates, and community routes. Historical context: specs 035, 036, and 049 in `archive/`; do not reopen their completed scope wholesale.
@@ -30,7 +30,7 @@ Important failure paths are handled, a new user can finish one clearly bounded t
 - [x] WS-01: Real Obsidian smoke exercises a deterministic Pivi turn/tool mutation and semantic session restoration after reload, preserves fetch identity, and cleans only its own resources on success/failure. Candidate/environment evidence is recorded.
 - [x] WS-02: Fork failure injection covers every side-effect boundary; delayed/repeated/early shutdown preserves save dependencies and never clears a newer owner's journal. Source sessions remain unchanged.
 - [x] WS-03: Reproducible ingest/snapshot/entity-commit/render baselines exist for three workloads; any retained optimization demonstrates improvement with immutable snapshots and event ordering intact. A measured no-change conclusion is acceptable, not an invented speedup.
-- [ ] WS-04: A user can run literature triage under an execution-enforced read-only mode; main/subagent/bypass attempts cannot mutate user files or external systems. Mutation recovery information distinguishes captured, unavailable, failed, and unsupported states without promising universal undo.
+- [x] WS-04: Trusted automation blocks every supported existing-file mutation unless Obsidian File Recovery first captures the current version; move/delete cover folder descendants atomically and history restore snapshots the current destination before replacement.
 - [ ] WS-05: Owning packages declare third-party contracts, consumer resolution and active local-link checks reject regressions, and the contributor handoff identifies files, fixtures, and commands. Full local gates and final branch evidence pass before merge.
 
 ## Scope and non-goals
@@ -38,7 +38,7 @@ Important failure paths are handled, a new user can finish one clearly bounded t
 In scope:
 
 - P1: repair real-host verification first, then fork compensation and instance-owned shutdown coordination.
-- P2: measured projection improvement, a narrow read-only task flow and truthful recovery visibility, dependency/export/documentation contract checks.
+- P2: measured projection baselines, strict File Recovery for Trusted automation, dependency/export/documentation contract checks.
 - One integration branch, reviewable local commits, shared final verification, and durable handbook synchronization.
 - Adjacent defects encountered during implementation may be fixed in separate bounded commits after recording a reproduction, owner, regression test, and scope impact here.
 
@@ -54,21 +54,12 @@ Not in scope:
 | Date | Decision | Rationale | Affected workstreams |
 | --- | --- | --- | --- |
 | 2026-09-05 | Work on `improve/architecture-review-followup`; keep intermediate commits local, open at most one final PR if the merge route requires it. | User requested small steps on one branch with a final merge, not a PR for each slice. Current CI runs on PR updates and pushes to main; a draft PR still incurs CI. | All |
-| 2026-09-05 | P1 precedes P2. This umbrella remains Draft until WS-04 product choices below are settled; P1 contracts below are ready for implementation. | Do not pretend unresolved product semantics are decision-complete; a later decision must not prevent fixing known failure paths. | All |
+| 2026-09-05 | P1 precedes P2. The umbrella became Active once WS-04 product choices were settled. | Keep implementation ordered while recording product semantics before changing the recovery contract. | All |
 | 2026-09-05 | Use a typed, explicit development/test harness in app composition, with deterministic provider injection only at the engine/provider boundary. Never re-expose services on `PiviPlugin`. | Exercise real assembly, tool policy, persistence, and presentation without a paid/network-dependent model or another lifecycle-shell contract. Production artifacts must exclude the harness/provider. | WS-01 |
-| 2026-09-05 | Preserve current behavior outside the selected task mode; read-only enforcement must be deny-by-default for unclassified capabilities. | Prompt instructions and MCP read-only annotations alone do not establish execution safety. Existing approvals remain authoritative where applicable. | WS-04 |
-| 2026-09-05 | Existing internal File Recovery integration stays best-effort; do not expand undocumented APIs without explicit permission. Any CSS change requires human visual sign-off before commit. | Avoid false recovery promises and visually regressive hit-box/layout changes. | WS-04 |
-
-### Grill decision gate (before WS-04 implementation)
-
-Use a focused interview only for choices code cannot settle. Record answers in Decisions before marking this spec Active; do not silently ship the recommendations as user-approved policy.
-
-| Decision | Recommendation | Consequence requiring confirmation |
-|---|---|---|
-| Read-only scope and persistence | User selects it for a session; each turn captures the policy, children inherit it, restore/fork retain it, and mode changes apply only when idle. Existing sessions keep existing behavior. | Changing defaults or allowing mid-turn upgrades changes user expectations and safety. Define queued-turn handling explicitly. |
-| Other presets | Ship only read-only research first; leave “review before modification” and “trusted automation” as named follow-ups, not misleading aliases for current grants. | A true review-before-write mode needs a separate confirmation/diff contract; spec 034 was reverted and must not be revived incidentally. |
-| Read-only egress | Keep separately authorized model traffic and safe built-in reads; disable Bash, CLI command/eval, MCP calls, installers, configuration mutation, and unclassified extensions in this mode. | Read-only means no task-triggered user-content/external mutation, not zero Pivi session/journal writes or zero disclosure to the chosen provider. |
-| Recovery presentation | Add per-tool affected-file and capture-status information plus instructions for the existing host recovery entry; do not implement automated restore yet. | If automated restore is required, first design version/conflict checks and an actually available restore API. |
+| 2026-09-05 | Pivi has one execution model: Trusted automation. Do not add Read-only, Review-before-write, a mode selector, or recovery UI. | The user explicitly rejected execution presets and per-write review; reliability comes from recoverable mutations rather than interaction gates. | WS-04 |
+| 2026-09-05 | Strict scheme B: before modifying, overwriting, appending, prepending, changing properties, moving, deleting, or restoring an existing `.md` / `.canvas`, private File Recovery `forceAdd` must succeed or the operation is blocked. | A failed or unavailable snapshot must never be presented as recoverable. New files/folders have no prior version. | WS-04 |
+| 2026-09-05 | Folder move/delete recursively snapshots all supported descendants before any host mutation; one failure aborts the whole operation. Unsupported attachments retain existing rename/trash behavior and are not claimed as File Recovery history. | This preserves atomic preflight for recoverable content without treating binary data as text; Obsidian Trash remains the delete recovery path for attachments. | WS-04 |
+| 2026-09-05 | Keep `obsidian_history` list/read/restore. Restoring over an existing supported file snapshots its current state first; restoring a deleted path has no current state to capture. | The Agent can undo a restore through history without adding another UI or recovery store. | WS-04 |
 
 ## Workstreams
 
@@ -79,7 +70,7 @@ Coordinator owns this file and the index. Claim a row before implementation or d
 | WS-01 | P1 typed real-host smoke, safety/cleanup regression tests, candidate evidence | Amp | Done | None | Node 24 script tests; harness typecheck; designated-vault live smoke |
 | WS-02 | P1 complete fork compensation and ordered instance shutdown | Amp | Done | WS-01 harness available; final reload evidence rerun afterward | Fork fault matrix; lifecycle deferred promises; real-filesystem integration; live restore |
 | WS-03 | P2 projection cost baselines and justified local optimization | Amp | Done | P1 accepted | Fixed workloads, ownership/immutability regressions, three-run real-host traces |
-| WS-04 | P2 execution read-only task and recovery visibility | Unassigned | Blocked | Grill decisions; P1 accepted | Adversarial tool matrix, recipe walkthrough, recovery states, UI/i18n checks |
+| WS-04 | P2 strict File Recovery for Trusted automation | Amp | Done | Product decisions settled; P1 accepted | Host/tool failure matrix, recursive preflight, restore ordering, docs/contracts |
 | WS-05 | P2 package/docs gates, contributor slice, final integration | Unassigned | Pending | P1 first; final integration depends on all retained scope | Consumer resolution and link fixtures; full local quality gates |
 
 ### WS-01 — Real-host behavior rather than shell probes
@@ -116,15 +107,13 @@ Use three checked-in fixed workloads: small text-only message, tool-heavy messag
 
 Optimize the measured dominant path with local delta application/structural sharing only after tracing mutable event ownership. Never store a live mutable message until the next frame without proving ownership. Tests must mutate producer input after dispatch, preserve historical frozen snapshots and unchanged entity identities, reject cross-session/stale sequences, and immediately flush terminal state in visible/hidden/pop-out realms. Retain an optimization only if the same workload demonstrates repeatable improvement without regression in the other fixtures; otherwise retain instrumentation and document why no behavior change is justified.
 
-### WS-04 — One trustworthy task, truthful recovery
+### WS-04 — Strict File Recovery for Trusted automation
 
-After the decision gate, implement policy in the existing capability/tool execution ownership path as well as registry filtering. Direct calls to previously registered tools, queued turns, subagents, and capability refresh must not bypass the selected restriction. No assistant/management tool may lift its own policy. Do not rely on names, prompts, or untrusted MCP annotations to classify side effects.
+Keep direct Trusted automation and enforce recovery at the host mutation boundary rather than through registry filtering, prompt advice, approval modes, or UI. `fileRecoverySnapshot.ts` must fail closed for supported files when the core plugin is disabled/unavailable, private `forceAdd` is missing, content read fails, or capture rejects. Errors must identify the blocked path and recovery requirement. New files/folders skip capture because there is no prior version; unsupported attachments remain outside the File Recovery guarantee.
 
-Acceptance matrix covers write/edit/delete/rename/property mutation, Bash, CLI command/eval, MCP calls with misleading read-only annotations, installation/configuration changes, child-tool calls, and restored/forked/queued sessions. Assert denied execution causes no file/process/network mutation; separately permit necessary Pivi session/journal bookkeeping. Existing external-read and network disclosure controls still apply.
+Cover every existing supported mutation path: exact edit, overwrite, append/prepend, property set/remove, move, delete, and history restore. File and folder move/delete must finish all recursive `.md` / `.canvas` captures before calling `renameFile` or `trashFile`; a partial set of successful snapshots is harmless, but no vault mutation may occur after any preflight failure. Moving an unsupported file remains available; deleting it still goes through Obsidian Trash.
 
-Use the literature-triage recipe as the first task: a new user selects the mode, chooses three disposable reading notes, receives a linked table with missing-metadata flags, and can resume the result. Hash user-content fixtures before/after. Deterministic provider evidence tests wiring; a genuine model walkthrough, if authorized, is separately labeled and does not promise summary accuracy.
-
-Expose structured capture outcomes from the existing File Recovery boundary and carry them to tool presentation without importing UI into host/tools. Show affected files and captured/unavailable/failed/unsupported states; do not label best-effort snapshots as guaranteed undo. Cover md/canvas, other extensions, disabled host recovery, capture rejection, and tool failure after capture. Bash/MCP effects explicitly have no general rollback promise. If restore is added by a recorded scope decision, reject stale versions rather than silently overwriting intervening user edits. UI copy and accessibility labels ship in all locales with the same commit.
+Keep `obsidian_history` as the Agent recovery surface. Before CLI restore, validate the mutation path and ask the host to snapshot a current supported destination. If the path is currently deleted, proceed without pre-capture. A failed required snapshot prevents the CLI call. No recovery status presentation, mode selector, locale work, CSS, or new recovery UI belongs in this slice.
 
 ### WS-05 — Enforce actual contracts and leave a contribution-ready slice
 
@@ -164,18 +153,18 @@ The repaired smoke command must explicitly target and verify the designated test
 |---|---|---|
 | Deterministic real-host chain | Fresh candidate/build identity, restored session/tool/note assertions, original fetch reference, success/failure cleanup | Passed 2026-09-05 14:33 CST; development artifact SHA-256 `f57920262198cced59e1eb0ae1699707f19bc619a735248b0181762a653cc524` |
 | Fork and shutdown | Fault matrix results, original bytes, deferred-save event order, reload ownership | Passed: local fault/lifecycle matrix, temporary-filesystem partial-write cleanup/residual diagnosis, exact source bytes, and real-host reload/restore |
-| Performance | Fixed workload definitions and comparable before/after spans with variability | Not measured |
-| Read-only and recovery | Adversarial matrix, new-user walkthrough, recovery status assertions, all-locale checks | Awaiting decisions |
+| Performance | Fixed workload definitions and comparable before/after spans with variability | Passed: nine corrected real-host traces; projection ownership p95 ≤0.10 ms; no optimization retained |
+| Trusted automation recovery | Required-snapshot failure matrix, recursive preflight, restore ordering, unsupported-file boundary | Passed: 50 focused tests; full 357-suite / 3,200-test Jest run; typecheck, lint, boundaries, docs/spec, production build, and bundle-size gates |
 | Final candidate | Full gates, inspected UI artifacts where applicable, docs sync, final CI for the merge candidate | Not run |
 
-Human visual sign-off: if rendered CSS changes, the user must inspect the mode selector and affected-file/recovery disclosures, including hover/focus, all recovery states, light/dark themes, and a narrow sidebar after reload before commit. Agent rendering inspection/screenshots are additional evidence, not a substitute for that sign-off. Interaction-only changes require DOM/accessibility checks. No visual change is part of the initial spec-writing slice.
+WS-04 has no visual surface: no mode selector, recovery disclosure, locale copy, or CSS is added. Visual sign-off is therefore not applicable. If a later slice changes rendered UI, it must follow the repository's render-and-inspect requirement.
 
 Execution sequence: local spec commit → WS-01 harness/script/test commits → WS-02 fork and shutdown commits → WS-03 measured slice → WS-04 agreed product slice → WS-05 contract checks/final integration. Each commit preserves relevant checks and evidence. Do not open/update intermediate PRs or bypass hooks; run full gates once the combined candidate is ready, then use the user's final merge route. If a P2 decision materially expands the batch, agree on deferral explicitly rather than hold P1 indefinitely. No release tag is part of this merge.
 
 ## Documentation sync
 
 - Durable product/developer docs: `docs/03-plugin-lifecycle-and-composition.md`, `docs/05-tabs-sessions-and-history.md`, `docs/09-development-debugging-and-validation.md`, and `docs/11-chat-ui-evolution.md` for lifecycle/session/smoke/performance changes.
-- Task/policy/recovery docs: `docs/07-tools-skills-mcp-and-integrations.md`, `docs/08-presentation-and-settings.md`, `docs/recipes/literature-triage.md`, and `SECURITY.md` only as actual behavior changes. Never advertise planned policy as shipped.
+- Task/policy/recovery docs: `README.md` and `docs/07-tools-skills-mcp-and-integrations.md` describe Trusted automation and strict File Recovery only after implementation. No mode, presentation, recipe, locale, or security-boundary docs change for WS-04.
 - Nearest local guidance: `scripts/AGENTS.md`, `src/app/AGENTS.md`, `src/ui/chat/AGENTS.md`, and `tests/AGENTS.md` when commands/maps/invariants change.
 - Package guidance: affected `packages/*/AGENTS.md`, package READMEs, and locale/style guidance only where the implementation invalidates them; keep stable API/dependency ownership there.
 - Root guidance and roadmap: repair `docs/10-roadmap-release-and-maintenance.md` now; synchronize `AGENTS.md` for changed enforceable contracts and `CONTRIBUTING.md` for the bounded handoff. No version/changelog churn for this planning slice.
@@ -248,6 +237,14 @@ Execution sequence: local spec commit → WS-01 harness/script/test commits → 
 - Decision: retain no structural-sharing/delta optimization. Projection ownership phases are below the 0.10 ms clock resolution at p95, end-to-end behavior is one frame, and the dominant Markdown phase is outside snapshot ownership. Adding mutable-event risk would invent a speedup rather than respond to a measured bottleneck. Instrumentation remains for future comparisons; WS-03 is accepted.
 - Production exclusion: the Node 24 production artifact is 4,140,651 bytes and contains none of the trace schema, trace directory, trace-start copy, or projection-suite command ID. The bundle-size gate retains 1,102,229 bytes of headroom.
 - Verification: Node 24 source/test typecheck, zero-warning ESLint, all architecture/docs/package/i18n/spec/Pi boundaries, production build/size checks, and the full 357-suite / 3,191-test in-band Jest run passed. One first full run had the expected architecture source-contract fixture mismatch plus a load-sensitive 30 ms HTTP timing failure; the fixture was updated, the HTTP test passed without parallel gate contention, and the complete isolated rerun was green.
+
+### 2026-09-05 — Amp — WS-04 strict recovery decision and implementation
+
+- Decision: Pivi remains Trusted automation only. Read-only, Review-before-write, mode selection, recovery presentation, and per-write confirmation are removed from this spec. The user authorized the private File Recovery API and selected strict scheme B.
+- Changed: existing `.md` / `.canvas` edit/write/property/move/delete paths now require successful `forceAdd`; disabled/unavailable recovery, a missing private API, or capture failure blocks the host mutation. Folder move/delete recursively captures supported descendants before calling Obsidian. New files/folders skip capture; unsupported attachments retain rename/trash behavior without a File Recovery claim.
+- Restore: `obsidian_history restore` validates the path, snapshots a current destination through the host, then invokes the CLI. Deleted destinations proceed because no current version exists; failed required capture prevents the CLI call.
+- Runtime compatibility: read-only inspection of designated-vault Obsidian 1.13.7 confirmed the enabled `file-recovery` instance exposes `forceAdd` as a function. No plugin reload or mutating smoke was run for this slice.
+- Evidence: focused Node 24 host/history suites passed 50 tests. Full 357-suite / 3,200-test Jest, source/test typecheck, zero-warning lint, dependency audit, architecture/docs/package/i18n/spec/Pi boundaries, production build, and 4,141,383-byte bundle-size gate passed. WS-04 is accepted locally.
 
 ## Completion summary
 

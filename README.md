@@ -81,7 +81,7 @@ Work from the note already open in Obsidian, then bring in linked notes, vault t
 
 ✦ **Obsidian-native tools** — Read, search, edit, link, and manage notes through tools that understand wikilinks, frontmatter, backlinks — not file paths.
 
-✦ **No plan mode** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Changes are recoverable through Obsidian trash and file history when File Recovery is enabled.
+✦ **Trusted automation** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Existing Markdown and Canvas content is snapshotted through Obsidian File Recovery before Pivi mutates it; if that snapshot cannot be created, the mutation is blocked.
 
 ✦ **Vault skills** — Install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` to teach the agent your workflows.
 
@@ -242,7 +242,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **Clipboard** | Writes occur only after explicit copy actions. MCP settings do not read the clipboard. |
 | **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
 | **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |
-| **File recovery** | Mutating note tools snapshot the current content into Obsidian File Recovery (when enabled) before `edit` / `write` / `properties` changes; deletes go to trash; `obsidian_history` can list/read/restore retained snapshots. |
+| **File recovery** | Before Pivi edits, overwrites, moves, deletes, or restores existing `.md` / `.canvas` files, it must snapshot their current content into Obsidian File Recovery. A missing/disabled recovery plugin or failed private `forceAdd` call blocks the operation. Folder move/delete snapshots every supported descendant before mutation; new files need no prior snapshot. Deletes also go to trash, and `obsidian_history` can list/read/restore retained snapshots. |
 | **Telemetry** | Pivi sends none to the plugin author or this project. |
 
 Full trust-boundary, disclosure, credential matrix, network, prompt-injection, and Skills/MCP responsibility details: [SECURITY.md](SECURITY.md).
