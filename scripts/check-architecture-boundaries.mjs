@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { builtinModules, createRequire } from 'node:module';
 import path from 'node:path';
 import ts from 'typescript';
 
@@ -636,12 +637,81 @@ function exportedSubpathMatches(exportsField, subpath) {
 const workspacePackages = listWorkspacePackageManifests().map((manifestFile) => {
   const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
   return {
+    dependencies: manifest.dependencies ?? {},
+    devDependencies: manifest.devDependencies ?? {},
     exports: manifest.exports,
     manifestFile,
     name: manifest.name,
+    optionalDependencies: manifest.optionalDependencies ?? {},
+    peerDependencies: manifest.peerDependencies ?? {},
     root: path.dirname(manifestFile),
   };
 }).filter(pkg => typeof pkg.name === 'string');
+
+const builtinPackageNames = new Set(
+  builtinModules.flatMap(moduleName => [moduleName, moduleName.replace(/^node:/, '')]),
+);
+const hostPeerPackageNames = new Set(['electron', 'obsidian', 'react', 'react-dom']);
+
+function importedPackageName(moduleName) {
+  if (
+    moduleName.startsWith('.')
+    || moduleName.startsWith('/')
+    || moduleName.startsWith('#')
+    || moduleName.startsWith('node:')
+    || builtinPackageNames.has(moduleName)
+  ) {
+    return null;
+  }
+  if (moduleName.startsWith('@')) {
+    return moduleName.split('/').slice(0, 2).join('/');
+  }
+  return moduleName.split('/')[0];
+}
+
+function hasDeclaredDependency(pkg, dependencyName, isTypeOnly) {
+  if (
+    Object.hasOwn(pkg.dependencies, dependencyName)
+    || Object.hasOwn(pkg.optionalDependencies, dependencyName)
+    || Object.hasOwn(pkg.peerDependencies, dependencyName)
+  ) {
+    return true;
+  }
+  return isTypeOnly && Object.hasOwn(pkg.devDependencies, dependencyName);
+}
+
+for (const pkg of workspacePackages) {
+  for (const file of listSourceFiles(pkg.root)) {
+    const relativeFile = path.relative(rootDir, file);
+    for (const { moduleName, line, isTypeOnly } of collectModuleSpecifiers(file)) {
+      const dependencyName = importedPackageName(moduleName);
+      if (!dependencyName || dependencyName === pkg.name) continue;
+      if (!hasDeclaredDependency(pkg, dependencyName, isTypeOnly)) {
+        failures.push({
+          rule: 'workspace package imports use declared dependencies',
+          file: relativeFile,
+          line,
+          moduleName,
+          detail: isTypeOnly
+            ? `type-only package "${dependencyName}" is undeclared`
+            : `runtime package "${dependencyName}" is absent from dependencies, optionalDependencies, or peerDependencies`,
+        });
+      }
+      if (
+        hostPeerPackageNames.has(dependencyName)
+        && !Object.hasOwn(pkg.peerDependencies, dependencyName)
+      ) {
+        failures.push({
+          rule: 'host-provided workspace dependencies are explicit peers',
+          file: relativeFile,
+          line,
+          moduleName,
+          detail: `host package "${dependencyName}" is absent from peerDependencies`,
+        });
+      }
+    }
+  }
+}
 
 for (const pkg of workspacePackages) {
   if (
@@ -715,6 +785,59 @@ for (const root of [...sourceRoots, 'tests']) {
           line,
           moduleName,
         });
+      }
+    }
+  }
+}
+
+const rootManifestFile = path.join(rootDir, 'package.json');
+if (fs.existsSync(rootManifestFile)) {
+  const rootManifest = JSON.parse(fs.readFileSync(rootManifestFile, 'utf8'));
+  if (Array.isArray(rootManifest.workspaces)) {
+    const workspaceRequire = createRequire(rootManifestFile);
+    for (const pkg of workspacePackages) {
+      const linkPath = path.join(rootDir, 'node_modules', ...pkg.name.split('/'));
+      let linkedRoot = null;
+      try {
+        linkedRoot = fs.realpathSync(linkPath);
+      } catch {
+        // Report the absent or unreadable active workspace link below.
+      }
+      if (linkedRoot !== fs.realpathSync(pkg.root)) {
+        failures.push({
+          rule: 'installed workspace links target their local packages',
+          file: path.relative(rootDir, pkg.manifestFile),
+          line: 1,
+          detail: linkedRoot
+            ? `active link resolves to "${path.relative(rootDir, linkedRoot).split(path.sep).join('/')}"`
+            : `active link "${path.relative(rootDir, linkPath).split(path.sep).join('/')}" is missing`,
+        });
+        continue;
+      }
+      const rawExportKeys = pkg.exports && typeof pkg.exports === 'object'
+        ? Object.keys(pkg.exports)
+        : [];
+      const exportKeys = typeof pkg.exports === 'string'
+        || Array.isArray(pkg.exports)
+        || rawExportKeys.every(key => !key.startsWith('.'))
+        ? ['.']
+        : rawExportKeys;
+      for (const exportKey of exportKeys) {
+        if (exportKey.includes('*')) continue;
+        const specifier = exportKey === '.'
+          ? pkg.name
+          : `${pkg.name}/${exportKey.slice(2)}`;
+        try {
+          workspaceRequire.resolve(specifier);
+        } catch (error) {
+          failures.push({
+            rule: 'declared workspace exports resolve for consumers',
+            file: path.relative(rootDir, pkg.manifestFile),
+            line: 1,
+            moduleName: specifier,
+            detail: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
     }
   }

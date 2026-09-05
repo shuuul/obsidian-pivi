@@ -896,6 +896,111 @@ describe('architecture boundary scripts', () => {
     }
   });
 
+  it.each([
+    ['static import', "import { value } from 'runtime-lib/subpath';"],
+    ['re-export', "export { value } from 'runtime-lib/subpath';"],
+    ['literal dynamic import', "export const load = () => import('runtime-lib/subpath');"],
+  ])('rejects an undeclared workspace-package %s', (_label, source) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/package.json'),
+        JSON.stringify({ exports: './src/index.ts', name: '@pivi/core' }),
+      );
+      writeFileSync(join(fixtureRoot, 'packages/core/src/index.ts'), source);
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[workspace package imports use declared dependencies]');
+      expect(result.stderr).toContain('runtime package "runtime-lib"');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('allows type-only dev dependencies but rejects runtime imports from them', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/package.json'),
+        JSON.stringify({
+          devDependencies: { 'type-lib': '^1.0.0' },
+          exports: './src/index.ts',
+          name: '@pivi/core',
+        }),
+      );
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/src/index.ts'),
+        "import type { Shape } from 'type-lib'; export type PublicShape = Shape;",
+      );
+      expect(runArchitectureCheck(fixtureRoot).status).toBe(0);
+
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/src/index.ts'),
+        "import { value } from 'type-lib'; export { value };",
+      );
+      const result = runArchitectureCheck(fixtureRoot);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('runtime package "type-lib"');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('requires host-provided package imports to be peer dependencies', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/host/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/host/package.json'),
+        JSON.stringify({
+          dependencies: { obsidian: '^1.13.0' },
+          exports: './src/index.ts',
+          name: '@pivi/host',
+        }),
+      );
+      writeFileSync(
+        join(fixtureRoot, 'packages/host/src/index.ts'),
+        "export { Notice } from 'obsidian';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[host-provided workspace dependencies are explicit peers]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a missing active npm workspace link', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'package.json'),
+        JSON.stringify({ name: 'fixture', private: true, workspaces: ['packages/*'] }),
+      );
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/package.json'),
+        JSON.stringify({ exports: './src/index.ts', name: '@pivi/core' }),
+      );
+      writeFileSync(join(fixtureRoot, 'packages/core/src/index.ts'), 'export const value = 1;');
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[installed workspace links target their local packages]');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
   it('rejects wildcard workspace package exports', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -1044,6 +1149,28 @@ describe('architecture boundary scripts', () => {
         process.exitCode = 2;
       } catch (error) {
         if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
+      }`,
+    ], {
+      cwd: rootDir,
+      encoding: 'utf8',
+    });
+
+    expect(result.status).toBe(0);
+  });
+
+  it('resolves stable public leaves through the active workspace packages', () => {
+    const result = spawnSync(process.execPath, [
+      '--input-type=module',
+      '--eval',
+      `for (const specifier of [
+        '@pivi/agent/mcp',
+        '@pivi/engine-pi/application/runtime',
+        '@pivi/obsidian-host',
+        '@pivi/obsidian-tools',
+        '@pivi/pivi-react/store',
+      ]) {
+        const resolved = import.meta.resolve(specifier);
+        if (!resolved.startsWith('file:')) throw new Error(specifier + ' did not resolve locally');
       }`,
     ], {
       cwd: rootDir,

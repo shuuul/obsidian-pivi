@@ -13,7 +13,7 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Build CSS | `npm run build:css` |
 | Typecheck source and tests | `npm run typecheck` |
 | Lint with zero warnings | `npm run lint` |
-| Documentation capability contracts | `npm run check:docs-contracts` |
+| Documentation capability and local-link contracts | `npm run check:docs-contracts` |
 | Architecture/docs/package/i18n/spec/Pi-pin guards | `npm run check:boundaries` |
 | Exact synchronized Pi pins | `npm run check:pi-pins` |
 | Pi compatibility manifest lifecycle | `npm run check:pi-compatibility` |
@@ -37,7 +37,7 @@ npm run test -- -t "test name"
 
 `scripts/run-jest.js` supplies the Node local-storage file and repository setup. Direct Jest invocation can produce misleading failures. Shared setup fails the owning test on unexpected `console.warn` or `console.error`; tests for intentional recovery/degradation logs must mock and assert that call locally. React tests must await state-producing effects inside `act` rather than suppressing the warning.
 
-`check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and the existing package dependency rules prevent `@pivi/agent` from depending on `@pivi/engine-pi` or concrete host/tool adapters. `check:docs-contracts` keeps current capability claims aligned with `docs/capabilities.json` while allowing historical records and negative compatibility statements. `check:package-readmes` keeps package API claims aligned with those exports.
+`check:architecture` also guards the hardened tool ownership seams: `@pivi/agent`-owned `pivi_sessions` factory/recovery identifiers may not reappear under `@pivi/obsidian-tools`, and package source cannot rely on root-hoisted dependencies or undeclared exports. Runtime imports/re-exports (including literal dynamic imports) require a runtime or peer declaration, type-only imports may use a development declaration, host runtimes remain peers, and every public export resolves through its active local npm workspace link. `check:docs-contracts` keeps current capability claims aligned with `docs/capabilities.json` and validates relative links and Markdown fragments in root/community docs, handbook/recipe docs, package docs/guidance, and active specs. Changelog and archived-spec source text is historical and excluded, while links from active docs into archived evidence are checked. Inline/reference/image links and URL-encoded paths are supported; fenced and inline code examples are ignored. `check:package-readmes` keeps package API claims aligned with those exports.
 
 `audit:sessions` is read-only. It separates `perf-*` fixtures from real behavior and reports aggregate tool errors, Bash policy retries, malformed JSONL, oversized results/sessions, and message-UI overlay amplification. Add `--json` for machine-readable output. Reports intentionally omit user text, tool arguments, target entry IDs, and JSONL content; findings are diagnostic and do not cause a failing exit status.
 
