@@ -88,6 +88,7 @@ describe('release provenance workflow', () => {
     expect(workflow).toMatch(/build:[\s\S]*?permissions:\s*\n\s+contents: read/);
     expect(workflow).toMatch(/publish:[\s\S]*?permissions:\s*\n\s+contents: write/);
     expect(workflow).toContain('persist-credentials: false');
+    expect(workflow).toContain('GH_REPO: ${{ github.repository }}');
   });
 
   it('keeps every CI checkout read-only without persisted credentials', () => {
