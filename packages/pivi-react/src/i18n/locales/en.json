@@ -767,7 +767,20 @@
         }
       },
       "unavailableOfficialCli": "Requires the official Obsidian CLI.",
-      "unavailableCodex": "Requires OpenAI Codex connection."
+      "unavailableCorePlugin": "Requires its owning core plugin to be enabled.",
+      "unavailableCodex": "Requires OpenAI Codex connection.",
+      "cli": {
+        "heading": "Official {hostName} CLI",
+        "enabled": { "name": "Enable official CLI tools", "desc": "Allow Pivi to register tools backed by the official {hostName} CLI." },
+        "unavailable": "The official {hostName} CLI is not registered. CLI-backed tools cannot be enabled.",
+        "path": { "name": "CLI executable path", "desc": "Optional executable override. Leave blank to detect it automatically.", "placeholder": "Auto-detect" },
+        "timeout": { "name": "CLI timeout", "desc": "Maximum time for each official CLI request.", "option": "{seconds} seconds" },
+        "actionsUnavailable": "CLI-backed query and create actions are currently unavailable."
+      },
+      "command": {
+        "execution": { "name": "Allow command execution", "desc": "Permit execution only for command IDs explicitly listed below. Discovery remains read-only." },
+        "allowlist": { "name": "Allowed command IDs", "desc": "An empty list denies all command execution.", "add": "Add an allowed command ID", "placeholder": "Command ID", "remove": "Remove {id}" }
+      }
     },
     "bash": {
       "heading": "Bash access"
@@ -1237,7 +1250,9 @@
       "bash": "Bash",
       "bashDesc": "Run one allowlisted single-line shell command through your login shell when Bash is enabled. The working directory must stay inside the vault.",
       "outline": "Outline",
+      "outlineDesc": "Inspect Markdown headings, line numbers, and section sizes before reading a large note.",
       "command": "Command",
+      "commandDesc": "Discover commands and hotkeys, or execute an explicitly allowed command ID.",
       "eval": "Eval",
       "daily": "Daily note",
       "dailyDesc": "Read, append, or prepend to the daily note, or resolve the daily note path. Requires daily-notes core plugin.",

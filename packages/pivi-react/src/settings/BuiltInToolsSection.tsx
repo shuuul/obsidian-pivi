@@ -4,11 +4,12 @@ import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsPorts, SettingsToolRow } from '../ports';
 import { PersistentPermissionsSection } from './PersistentPermissionsSection';
-import { Select, SettingRow, SettingsPage, SettingsSection, Toggle } from './primitives';
+import { BadgeListInput, Select, SettingRow, SettingsPage, SettingsSection, Toggle } from './primitives';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
 
 const READ_SIZE_OPTIONS = [50_000, 100_000, 200_000, 500_000] as const;
+const CLI_TIMEOUT_OPTIONS = [10_000, 30_000, 60_000, 120_000, 300_000] as const;
 
 const TOOL_GROUPS = [
   ['workspace-api', 'settings.tools.groups.workspace'],
@@ -28,6 +29,12 @@ export function BuiltInToolsSection({
   const { hostName, workspaceNameTitle } = useHostTerminology();
   const { subagents } = useSettingsUiSnapshot(store);
   const settings = ports.complex.tools.getSettings();
+  const [cliEnabled, setCliEnabled] = useState(settings.cliEnabled);
+  const [cliPath, setCliPath] = useState(settings.cliPath ?? '');
+  const savedCliPath = useRef(settings.cliPath ?? '');
+  const [cliTimeoutMs, setCliTimeoutMs] = useState(settings.cliTimeoutMs);
+  const [allowCommand, setAllowCommand] = useState(settings.allowCommand);
+  const [commandAllowlist, setCommandAllowlist] = useState([...settings.commandAllowlist]);
   const [allowExternalRead, setAllowExternalRead] = useState(settings.allowExternalRead);
   const [defaultReadMaxChars, setDefaultReadMaxChars] = useState(settings.defaultReadMaxChars);
   const [toolRows, setToolRows] = useState(() => ports.complex.tools.listToolRows());
@@ -119,11 +126,110 @@ export function BuiltInToolsSection({
     if (row.configuration === 'external-read') {
       return renderExternalReadToggle();
     }
+    if (row.configuration === 'command') {
+      const saveCommandPatch = async (
+        patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0],
+        apply: () => void,
+      ) => {
+        if (await persist(patch)) apply();
+      };
+      return (
+        <>
+          <SettingRow indented name={t('settings.tools.command.execution.name')} description={t('settings.tools.command.execution.desc')}>
+            <Toggle
+              checked={allowCommand}
+              disabled={pending || !row.available}
+              label={t('settings.tools.command.execution.name')}
+              onChange={(next) => { void runOperation(() => saveCommandPatch({ allowCommand: next }, () => setAllowCommand(next))); }}
+            />
+          </SettingRow>
+          <SettingRow indented stacked name={t('settings.tools.command.allowlist.name')} description={t('settings.tools.command.allowlist.desc')}>
+            <BadgeListInput
+              values={commandAllowlist}
+              disabled={pending || !row.available}
+              inputLabel={t('settings.tools.command.allowlist.add')}
+              placeholder={t('settings.tools.command.allowlist.placeholder')}
+              removeLabel={(id) => t('settings.tools.command.allowlist.remove', { id })}
+              onAdd={async (ids) => {
+                const next = [...new Set([...commandAllowlist, ...ids.map(id => id.trim()).filter(Boolean)])];
+                const saved = await persist({ commandAllowlist: next });
+                if (saved) setCommandAllowlist(next);
+                return saved;
+              }}
+              onRemove={async (id) => {
+                const next = commandAllowlist.filter(entry => entry !== id);
+                if (await persist({ commandAllowlist: next })) setCommandAllowlist(next);
+              }}
+            />
+          </SettingRow>
+        </>
+      );
+    }
     return null;
   };
 
   return (
     <SettingsPage description={<p>{t('settings.tools.intro', { hostName })}</p>}>
+      <SettingsSection title={t('settings.tools.cli.heading', { hostName })}>
+        <SettingRow
+          name={t('settings.tools.cli.enabled.name')}
+          description={settings.cliAvailable
+            ? t('settings.tools.cli.enabled.desc', { hostName })
+            : t('settings.tools.cli.unavailable', { hostName })}
+        >
+          <Toggle
+            checked={cliEnabled}
+            disabled={pending || !settings.cliAvailable}
+            label={t('settings.tools.cli.enabled.name')}
+            onChange={(next) => {
+              void runOperation(async () => {
+                if (!await persist({ cliEnabled: next })) return;
+                setCliEnabled(next);
+                setToolRows(ports.complex.tools.listToolRows());
+              });
+            }}
+          />
+        </SettingRow>
+        <SettingRow indented name={t('settings.tools.cli.path.name')} description={t('settings.tools.cli.path.desc')}>
+          <input
+            className="pivi-settings-control"
+            aria-label={t('settings.tools.cli.path.name')}
+            value={cliPath}
+            disabled={pending || !settings.cliAvailable}
+            placeholder={t('settings.tools.cli.path.placeholder')}
+            onChange={(event) => setCliPath(event.target.value)}
+            onBlur={() => {
+              const next = cliPath.trim();
+              void runOperation(async () => {
+                if (!await persist({ cliPath: next || null })) {
+                  setCliPath(savedCliPath.current);
+                  return;
+                }
+                savedCliPath.current = next;
+                setCliPath(next);
+              });
+            }}
+          />
+        </SettingRow>
+        <SettingRow indented name={t('settings.tools.cli.timeout.name')} description={t('settings.tools.cli.timeout.desc')}>
+          <Select
+            label={t('settings.tools.cli.timeout.name')}
+            value={String(cliTimeoutMs)}
+            disabled={pending || !settings.cliAvailable}
+            onChange={(value) => {
+              const next = Number(value);
+              void runOperation(async () => {
+                if (!await persist({ cliTimeoutMs: next })) return;
+                setCliTimeoutMs(next);
+              });
+            }}
+          >
+            {CLI_TIMEOUT_OPTIONS.map(value => (
+              <option key={value} value={value}>{t('settings.tools.cli.timeout.option', { seconds: value / 1_000 })}</option>
+            ))}
+          </Select>
+        </SettingRow>
+      </SettingsSection>
       {TOOL_GROUPS.map(([group, titleKey]) => {
         const rows = toolRows.filter(row => row.group === group);
         if (rows.length === 0) return null;

@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_BASE,
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_BOOKMARKS,
+  TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DAILY,
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
@@ -13,6 +14,7 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
@@ -50,6 +52,7 @@ const TOOL_DESCRIPTORS: readonly [
   requirement?: ToolRequirement,
 ][] = [
   [TOOL_OBSIDIAN_READ, 'tools.display.read', 'tools.display.readDesc'],
+  [TOOL_OBSIDIAN_MARKDOWN_STRUCTURE, 'tools.display.outline', 'tools.display.outlineDesc'],
   [TOOL_OBSIDIAN_EDIT, 'tools.display.edit', 'tools.display.editDesc'],
   [TOOL_OBSIDIAN_WRITE, 'tools.display.write', 'tools.display.writeDesc'],
   [TOOL_OBSIDIAN_SEARCH, 'tools.display.search', 'tools.display.searchDesc'],
@@ -60,6 +63,7 @@ const TOOL_DESCRIPTORS: readonly [
   [TOOL_OBSIDIAN_HISTORY, 'tools.display.history', 'tools.display.historyDesc', 'cli'],
   [TOOL_OBSIDIAN_TEMPLATES, 'tools.display.templates', 'tools.display.templatesDesc', 'cli'],
   [TOOL_OBSIDIAN_BOOKMARKS, 'tools.display.bookmarks', 'tools.display.bookmarksDesc', 'cli'],
+  [TOOL_OBSIDIAN_COMMAND, 'tools.display.command', 'tools.display.commandDesc', 'cli'],
   [TOOL_PIVI_SESSIONS, 'tools.display.sessions', 'tools.display.sessionsDesc'],
   [TOOL_PIVI_MCP, 'tools.display.piviMcp', 'tools.display.piviMcpDesc'],
   [TOOL_PIVI_SKILLS, 'tools.display.piviSkills', 'tools.display.piviSkillsDesc'],
@@ -82,14 +86,22 @@ const TOOL_DESCRIPTORS: readonly [
 interface ObsidianToolSettingsView {
   readonly allowBash: boolean;
   readonly allowExternalRead: boolean;
+  readonly cliEnabled: boolean;
   readonly disabledTools?: readonly string[];
+}
+
+interface ObsidianToolAvailability {
+  readonly cliRegistered?: boolean;
+  readonly corePluginEnabled?: (id: string) => boolean;
 }
 
 export function createObsidianToolRows(
   settings: ObsidianToolSettingsView,
   hasCodexAuth: boolean,
+  availability: ObsidianToolAvailability = {},
 ): readonly SettingsToolRow[] {
-  const officialCliEnabled = isOfficialObsidianCliEnabled();
+  const officialCliRegistered = availability.cliRegistered ?? isOfficialObsidianCliEnabled();
+  const officialCliEnabled = settings.cliEnabled && officialCliRegistered;
   return TOOL_DESCRIPTORS.map(([name, labelKey, descriptionKey, requirement]) => {
     const managementTool = isPiviManagementTool(name);
     const group = name === TOOL_PIVI_SESSIONS || managementTool
@@ -99,21 +111,36 @@ export function createObsidianToolRows(
         : requirement === 'external' || requirement === 'codex' || name === TOOL_OBSIDIAN_BASH
           ? 'additional'
           : 'workspace-api';
+    const owningCorePlugin = name === TOOL_OBSIDIAN_DAILY
+      ? 'daily-notes'
+      : name === TOOL_OBSIDIAN_TEMPLATES
+        ? 'templates'
+        : name === TOOL_OBSIDIAN_BOOKMARKS
+          ? 'bookmarks'
+          : null;
+    const corePluginAvailable = !owningCorePlugin
+      || availability.corePluginEnabled?.(owningCorePlugin) !== false;
     const available = requirement === 'cli'
-      ? officialCliEnabled
+      ? officialCliEnabled && corePluginAvailable
       : requirement === 'codex'
         ? hasCodexAuth
         : true;
-    const unavailableKey = requirement === 'cli'
-      ? 'settings.tools.unavailableOfficialCli'
-      : 'settings.tools.unavailableCodex';
+    const unavailableKey = !corePluginAvailable
+      ? 'settings.tools.unavailableCorePlugin'
+      : requirement === 'cli'
+        ? 'settings.tools.unavailableOfficialCli'
+        : 'settings.tools.unavailableCodex';
     return {
       name,
       label: t(labelKey),
-      description: available ? t(descriptionKey) : `${t(descriptionKey)} ${t(unavailableKey)}`,
+      description: name === TOOL_OBSIDIAN_BASE && !officialCliEnabled
+        ? `${t(descriptionKey)} ${t('settings.tools.cli.actionsUnavailable')}`
+        : available ? t(descriptionKey) : `${t(descriptionKey)} ${t(unavailableKey)}`,
       group,
       ...(name === TOOL_OBSIDIAN_READ
         ? { configuration: 'read' as const }
+        : name === TOOL_OBSIDIAN_COMMAND
+          ? { configuration: 'command' as const }
         : name === TOOL_OBSIDIAN_BASH
           ? { configuration: 'bash' as const }
           : {}),

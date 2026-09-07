@@ -73,13 +73,12 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('Vault path is unavailable for Bash cwd containment');
       }
 
-      const timeoutMs = settings.cliTimeoutMs || DEFAULT_BASH_TIMEOUT_MS;
       const result = await processRunner.run({
         executable: invocation.executable,
         args: [...invocation.args],
         cwdPolicy: { mode: 'vault', vaultRoot },
         ...(typeof cwd === 'string' && cwd.trim() ? { cwd: cwd.trim() } : {}),
-        timeoutMs,
+        timeoutMs: DEFAULT_BASH_TIMEOUT_MS,
         stdoutByteLimit: DEFAULT_BASH_OUTPUT_BYTE_LIMIT,
         stderrByteLimit: DEFAULT_BASH_OUTPUT_BYTE_LIMIT,
         shell: { mode: 'forbidden' },

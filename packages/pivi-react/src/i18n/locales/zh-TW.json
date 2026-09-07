@@ -749,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
-      "unavailableCodex": "需要連線 OpenAI Codex。"
+      "unavailableCorePlugin": "需要啟用對應的核心外掛。",
+      "unavailableCodex": "需要連線 OpenAI Codex。",
+      "cli": {
+        "heading": "官方 {hostName} CLI",
+        "enabled": { "name": "啟用官方 CLI 工具", "desc": "允許 Pivi 註冊由官方 {hostName} CLI 支援的工具。" },
+        "unavailable": "官方 {hostName} CLI 尚未註冊，無法啟用 CLI 工具。",
+        "path": { "name": "CLI 執行檔路徑", "desc": "選用的執行檔替代路徑。留白表示自動偵測。", "placeholder": "自動偵測" },
+        "timeout": { "name": "CLI 逾時", "desc": "每個官方 CLI 請求的最長時間。", "option": "{seconds} 秒" },
+        "actionsUnavailable": "CLI 支援的查詢與建立動作目前無法使用。"
+      },
+      "command": {
+        "execution": { "name": "允許執行命令", "desc": "僅允許執行下方明確列出的命令 ID。探索功能仍為唯讀。" },
+        "allowlist": { "name": "允許的命令 ID", "desc": "清單為空時拒絕執行所有命令。", "add": "新增允許的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
+      }
     },
     "bash": {
       "heading": "Bash 存取"
@@ -1237,7 +1250,9 @@
       "bash": "Bash",
       "bashDesc": "啟用 Bash 時，透過登入 shell 執行已允許的單行 shell 命令。工作目錄必須位於保管庫內。",
       "outline": "大綱",
+      "outlineDesc": "在讀取大型筆記前檢查 Markdown 標題、行號與章節大小。",
       "command": "命令",
+      "commandDesc": "探索命令與快捷鍵，或執行明確允許的命令 ID。",
       "eval": "求值",
       "daily": "日記",
       "dailyDesc": "讀取、附加或前置到日記中，或解析日記路徑。需要日記核心外掛。",

@@ -226,7 +226,7 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
 
   const notes = ['**API vs CLI:** Most vault tools use the in-process Obsidian API.'];
   if (!obsidianCliAvailable) {
-    notes.push('Obsidian CLI is not available for this turn (disabled in Pivi settings or not enabled in Obsidian). Do not use CLI-only tools or CLI-only actions; use API-backed actions when listed. If the user’s request cannot be completed without a CLI-only tool/action (for example history restore, daily-note commands, command/eval, tasks, or base query), stop and ask the user to enable Pivi’s Obsidian CLI setting and Obsidian Settings → General → Command line interface, then retry.');
+    notes.push('Obsidian CLI is not available for this turn (disabled in Pivi settings or not enabled in Obsidian). Do not use CLI-only tools or CLI-only actions; use API-backed actions when listed. If the user’s request cannot be completed without a CLI-only tool/action (for example history restore, daily-note commands, command, tasks, or base query), stop and ask the user to enable Pivi’s Obsidian CLI setting and Obsidian Settings → General → Command line interface, then retry.');
   }
   if (cliRequiredTools.length > 0 && obsidianCliAvailable) {
     notes.push(`${cliRequiredTools.map((name) => `\`${name}\``).join(' / ')} require Obsidian CLI (\`cliEnabled\`).`);

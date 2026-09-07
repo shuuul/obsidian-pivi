@@ -23,7 +23,6 @@ export { createDailyTool } from './obsidian/daily';
 export { createDeletePathTool } from './obsidian/deletePath';
 export type { ObsidianToolDeps } from './obsidian/deps';
 export { createEditNoteTool } from './obsidian/editNote';
-export { createEvalTool } from './obsidian/eval';
 export { createGenerateImageTool } from './obsidian/generateImage';
 export { createGraphTool } from './obsidian/graph';
 export { createHistoryTool } from './obsidian/history';

@@ -1,27 +1,34 @@
 import { createCommandTool, type ObsidianToolDeps } from '@pivi/obsidian-tools';
 
-function makeDeps(commandAllowlist: string[] = []): ObsidianToolDeps {
+function makeDeps(commandAllowlist: string[] = [], allowCommand = false): ObsidianToolDeps {
   return {
     cli: { run: jest.fn().mockResolvedValue('ok') },
-    settings: { commandAllowlist },
+    settings: { commandAllowlist, allowCommand },
     vaultName: 'vault',
   } as never;
 }
 
 describe('createCommandTool', () => {
   it('preserves id-only execution and enforces the execution allowlist', async () => {
-    const deps = makeDeps(['workspace:split']);
+    const deps = makeDeps(['workspace:split'], true);
     const tool = createCommandTool(deps);
 
     await tool.execute('call', { id: 'workspace:split' });
     await expect(tool.execute('call', { action: 'execute', id: 'unsafe' }))
-      .rejects.toThrow('Command not in allowlist');
+      .rejects.toThrow('not explicitly allowed');
 
     expect(deps.cli.run).toHaveBeenCalledTimes(1);
     expect(deps.cli.run).toHaveBeenCalledWith({
       vaultName: 'vault',
       args: ['command', 'id=workspace:split'],
     });
+  });
+
+  it('denies execution when disabled or when the allowlist is empty', async () => {
+    await expect(createCommandTool(makeDeps(['workspace:split'])).execute('call', { id: 'workspace:split' }))
+      .rejects.toThrow('Command execution is disabled');
+    await expect(createCommandTool(makeDeps([], true)).execute('call', { id: 'workspace:split' }))
+      .rejects.toThrow('not explicitly allowed');
   });
 
   it('discovers command ids with an optional prefix filter', async () => {

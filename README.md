@@ -144,7 +144,6 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 | `read` / `ls` (external paths) | Absolute paths outside the vault stay off by default; sidebar prompt on unlisted roots |
 | `bash` | Run an allowlisted shell command via login shell (off by default; sidebar prompt on unlisted commands) |
 | `obsidian_command` | Execute an Obsidian command by id (off by default) |
-| `obsidian_eval` | Run JavaScript in Obsidian context (off by default) |
 | `obsidian_generate_image` | Generate images with Codex, save as attachments |
 | `WebSearch` | Search the web (Brave, Tavily, Exa, AnySearch) |
 | `WebFetch` | Fetch readable content from a URL |
@@ -179,10 +178,10 @@ With the [Style Settings](https://github.com/obsidian-community/obsidian-style-s
 Add the current editor selection or a custom Pivi command to an installed [Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) selected-text toolbar. Pivi can add commands through the official Obsidian CLI, or guide you through manual setup.
 
 ### ⚙️ Obsidian CLI integration
-Optional integration with the official Obsidian CLI powers history, tasks, daily notes, Base queries, command execution, JavaScript evaluation, and Note Toolbar command-item setup. The binary path and timeout are configurable in settings; individual command/eval capabilities remain separately gated.
+Optional integration with the official Obsidian CLI powers history, tasks, daily notes, Base queries, command discovery and allowlisted execution, and Note Toolbar command-item setup. The binary path and timeout are configurable in Built-in Tools settings; command execution remains separately gated and an empty allowlist denies all execution.
 
 > [!NOTE]
-> Upgrade note: installations that never saved an Obsidian CLI preference now treat the integration as disabled. Re-enable it in Pivi settings to restore CLI-backed history, tasks, daily-note, Base-query, command, and evaluation features.
+> Upgrade note: installations that never saved an Obsidian CLI preference now treat the integration as disabled. Re-enable it in Pivi settings to restore CLI-backed history, tasks, daily-note, Base-query, and command features.
 
 ---
 

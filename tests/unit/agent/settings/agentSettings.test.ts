@@ -5,6 +5,7 @@ import {
 } from '@pivi/agent/settings/defaults';
 import {
   getObsidianToolsSettingsFromBag,
+  isAgentRuntimeSettings,
   resolveObsidianToolsSettings,
 } from '@pivi/agent/settings/types';
 import { isValidModelKey } from '@pivi/agent/settings/modelKey';
@@ -52,6 +53,24 @@ describe('Obsidian tool settings', () => {
 
   it('preserves an explicitly enabled official CLI setting', () => {
     expect(resolveObsidianToolsSettings({ cliEnabled: true } as never).cliEnabled).toBe(true);
+  });
+
+  it('normalizes CLI configuration and tolerates removed legacy fields', () => {
+    const resolved = resolveObsidianToolsSettings({
+      cliEnabled: true,
+      cliPath: '  /opt/bin/obsidian  ',
+      cliTimeoutMs: 999_999,
+      allowEval: true,
+    } as never);
+    expect(resolved.cliPath).toBe('/opt/bin/obsidian');
+    expect(resolved.cliTimeoutMs).toBe(300_000);
+    expect(resolved).not.toHaveProperty('allowEval');
+    expect(isAgentRuntimeSettings({
+      environmentVariables: '',
+      selectedMode: 'default',
+      visibleModels: [],
+      obsidianTools: { ...resolved, allowEval: true },
+    })).toBe(true);
   });
 });
 

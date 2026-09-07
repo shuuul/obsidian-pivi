@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Concrete Obsidian-native tool specifications and execution helpers for note search/read/write, safe large-Markdown inspection, file operations, links, properties, tasks, guarded external filesystem reads, gated Bash, commands, eval, image generation, and Obsidian file-history recovery. Host-neutral Pivi session recovery tooling is owned by `@pivi/agent`.
+Concrete Obsidian-native tool specifications and execution helpers for note search/read/write, safe large-Markdown inspection, file operations, links, properties, tasks, guarded external filesystem reads, gated Bash, commands, image generation, and Obsidian file-history recovery. Host-neutral Pivi session recovery tooling is owned by `@pivi/agent`.
 
 ## Allowed dependencies
 
@@ -25,7 +25,7 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 - `read` and `ls` route unindexed vault paths and authorized absolute paths through ExternalFileApi. Outside-vault access still requires `allowExternalRead` and allowed roots.
 - `obsidian_history` and `obsidian_tasks` register only when the official Obsidian CLI is available. `obsidian_daily`, `obsidian_templates`, and `obsidian_bookmarks` additionally require their owning core plugin when its state is available; `obsidian_base` uses the CLI for query and create.
 - `obsidian_base` resolves a requested Base directly for view inspection, while its list action remains an explicit vault inventory operation. `obsidian_graph` enumerates files only for orphan/deadend analysis; unresolved-only analysis uses cached link metadata.
-- `obsidian_command` / `obsidian_eval` additionally require their settings gates and CLI availability. `obsidian_command` supports command discovery and hotkey inspection as well as allowlisted execution. Image generation requires an injected generator.
+- `obsidian_command` is registered whenever the official CLI is active. Command and hotkey discovery is read-only; execution additionally requires `allowCommand` and explicit membership in the non-empty allowlist. Image generation requires an injected generator.
 - `bash` registers only when the Bash tool toggle is enabled. New grants are tagged `exact:` complete commands or `prefix:` shell-safe argv prefixes; prefix authority never extends across control operators, substitutions, pipelines, redirects, expansion, or extra commands. Prefix matching uses a shell-specific safe argv parser for POSIX shells and Windows `cmd.exe`. Legacy untagged entries retain prefix behavior only for those known shells and do not authorize commands on unsupported or unknown shell dialects. Execution uses the resolved login shell (`$SHELL -lc`, fish `-c`, or `cmd.exe /d /s /c`) and the injected bounded process runner.
 - Exported through `@pivi/obsidian-tools`.
 

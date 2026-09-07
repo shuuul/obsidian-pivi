@@ -113,7 +113,7 @@ Status as of 2026-09-07. “LLM context” means the tool result (and for write/
 |---|---|---|
 | `obsidian_tags` | None | Vault-wide tag JSON |
 | `obsidian_links` | Per-note, but CLI fallback is raw stdout | Large backlink notes + CLI |
-| `obsidian_history` / `obsidian_tasks` / `obsidian_base` / `obsidian_command` / `obsidian_eval` | CLI/process stdout, no tool-level char cap (eval/command especially) | Same class as pre-cap bash |
+| `obsidian_history` / `obsidian_tasks` / `obsidian_base` / `obsidian_command` | CLI/process stdout capped through the shared CLI output helper | Bounded CLI result text |
 | `WebSearch` | Max 20 results; only first 5 snippets formatted; snippet length uncapped | Usually small; not the live bug |
 | `obsidian_graph` | Default 200 per action | Count-capped; watch serialized size |
 | `obsidian_markdown_structure` | Default 200 headings | Heading titles only; low risk |

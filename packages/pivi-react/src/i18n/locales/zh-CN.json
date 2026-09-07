@@ -749,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
-      "unavailableCodex": "需要连接 OpenAI Codex。"
+      "unavailableCorePlugin": "需要启用对应的核心插件。",
+      "unavailableCodex": "需要连接 OpenAI Codex。",
+      "cli": {
+        "heading": "官方 {hostName} CLI",
+        "enabled": { "name": "启用官方 CLI 工具", "desc": "允许 Pivi 注册由官方 {hostName} CLI 支持的工具。" },
+        "unavailable": "官方 {hostName} CLI 未注册，无法启用 CLI 工具。",
+        "path": { "name": "CLI 可执行文件路径", "desc": "可选的可执行文件替代路径。留空表示自动检测。", "placeholder": "自动检测" },
+        "timeout": { "name": "CLI 超时", "desc": "每个官方 CLI 请求的最长时间。", "option": "{seconds} 秒" },
+        "actionsUnavailable": "CLI 支持的查询和创建操作当前不可用。"
+      },
+      "command": {
+        "execution": { "name": "允许执行命令", "desc": "仅允许执行下方明确列出的命令 ID。发现功能仍为只读。" },
+        "allowlist": { "name": "允许的命令 ID", "desc": "列表为空时拒绝执行所有命令。", "add": "添加允许的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
+      }
     },
     "bash": {
       "heading": "Bash 访问"
@@ -1237,7 +1250,9 @@
       "bash": "Bash",
       "bashDesc": "启用 Bash 时，通过登录 shell 运行已允许的单行 shell 命令。工作目录必须位于仓库内。",
       "outline": "大纲",
+      "outlineDesc": "在读取大型笔记前检查 Markdown 标题、行号和章节大小。",
       "command": "命令",
+      "commandDesc": "发现命令和快捷键，或执行明确允许的命令 ID。",
       "eval": "求值",
       "daily": "日记",
       "dailyDesc": "读取、追加或前置到日记中，或解析日记路径。需要日记核心插件。",

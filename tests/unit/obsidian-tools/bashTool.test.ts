@@ -17,7 +17,7 @@ describe('createBashTool', () => {
     }));
     const deps = {
       app: { vault: { adapter: { basePath: '/vault' } } },
-      settings: { bashPermissions: [], cliTimeoutMs: 30_000 },
+      settings: { bashPermissions: [], cliTimeoutMs: 999_999 },
       processRunner: { run },
       capabilityApproval: {
         hasPersistentGrant: () => false,
@@ -33,6 +33,7 @@ describe('createBashTool', () => {
       expect(run).toHaveBeenCalledWith(expect.objectContaining({
         executable: '/bin/bash',
         args: ['-lc', 'git status'],
+        timeoutMs: 30_000,
       }));
     } finally {
       if (originalShell === undefined) {

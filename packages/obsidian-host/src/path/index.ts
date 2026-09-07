@@ -575,7 +575,7 @@ function findManagedPathConflict(
  * - `recursive`: also ancestors that would recursively alter managed content
  *   (delete/move source/mkdir of a parent that owns managed children).
  *
- * Call after `requireVaultRelativeMutationPath`. Does not claim Bash/eval containment.
+ * Call after `requireVaultRelativeMutationPath`. Does not claim Bash containment.
  */
 export function assertAgentManagedPathMutationAllowed(
   vaultRelativePath: string,

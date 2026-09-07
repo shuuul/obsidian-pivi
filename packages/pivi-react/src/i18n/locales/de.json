@@ -749,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "Erfordert die offizielle Obsidian-CLI.",
-      "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung."
+      "unavailableCorePlugin": "Das zugehörige Kern-Plugin muss aktiviert sein.",
+      "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung.",
+      "cli": {
+        "heading": "Offizielle {hostName}-CLI",
+        "enabled": { "name": "Offizielle CLI-Werkzeuge aktivieren", "desc": "Pivi darf Werkzeuge registrieren, die auf der offiziellen {hostName}-CLI basieren." },
+        "unavailable": "Die offizielle {hostName}-CLI ist nicht registriert. CLI-Werkzeuge können nicht aktiviert werden.",
+        "path": { "name": "Pfad zur CLI-Datei", "desc": "Optionaler Pfad zur ausführbaren Datei. Leer lassen für automatische Erkennung.", "placeholder": "Automatisch erkennen" },
+        "timeout": { "name": "CLI-Zeitlimit", "desc": "Maximale Zeit für jede offizielle CLI-Anfrage.", "option": "{seconds} Sekunden" },
+        "actionsUnavailable": "CLI-basierte Abfrage- und Erstellaktionen sind derzeit nicht verfügbar."
+      },
+      "command": {
+        "execution": { "name": "Befehlsausführung erlauben", "desc": "Nur die unten ausdrücklich aufgeführten Befehls-IDs dürfen ausgeführt werden. Die Suche bleibt schreibgeschützt." },
+        "allowlist": { "name": "Erlaubte Befehls-IDs", "desc": "Eine leere Liste verweigert jede Befehlsausführung.", "add": "Erlaubte Befehls-ID hinzufügen", "placeholder": "Befehls-ID", "remove": "{id} entfernen" }
+      }
     },
     "bash": {
       "heading": "Bash-Zugriff"
@@ -1237,7 +1250,9 @@
       "bash": "Bash",
       "bashDesc": "Einen erlaubten einzeiligen Shell-Befehl über die Login-Shell ausführen, wenn Bash aktiv ist. Das Arbeitsverzeichnis muss im Vault bleiben.",
       "outline": "Gliederung",
+      "outlineDesc": "Markdown-Überschriften, Zeilennummern und Abschnittsgrößen vor dem Lesen einer großen Notiz prüfen.",
       "command": "Befehl",
+      "commandDesc": "Befehle und Tastenkürzel finden oder eine ausdrücklich erlaubte Befehls-ID ausführen.",
       "eval": "Auswerten",
       "daily": "Tägliche Notiz",
       "dailyDesc": "Tägliche Notiz lesen, anhängen oder voranstellen bzw. den Pfad auflösen. Erfordert das Daily-Notes-Core-Plugin.",

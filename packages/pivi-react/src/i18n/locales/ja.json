@@ -749,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "公式の Obsidian CLI が必要です。",
-      "unavailableCodex": "OpenAI Codex の接続が必要です。"
+      "unavailableCorePlugin": "対応するコアプラグインを有効にする必要があります。",
+      "unavailableCodex": "OpenAI Codex の接続が必要です。",
+      "cli": {
+        "heading": "公式 {hostName} CLI",
+        "enabled": { "name": "公式 CLI ツールを有効化", "desc": "公式 {hostName} CLI を使うツールを Pivi が登録できるようにします。" },
+        "unavailable": "公式 {hostName} CLI が登録されていません。CLI ツールは有効化できません。",
+        "path": { "name": "CLI 実行ファイルのパス", "desc": "任意の実行ファイル指定です。空欄の場合は自動検出します。", "placeholder": "自動検出" },
+        "timeout": { "name": "CLI タイムアウト", "desc": "公式 CLI リクエストごとの最大待機時間です。", "option": "{seconds} 秒" },
+        "actionsUnavailable": "CLI を使うクエリと作成アクションは現在利用できません。"
+      },
+      "command": {
+        "execution": { "name": "コマンド実行を許可", "desc": "下に明示したコマンド ID のみ実行を許可します。検出は読み取り専用のままです。" },
+        "allowlist": { "name": "許可するコマンド ID", "desc": "リストが空の場合、すべてのコマンド実行を拒否します。", "add": "許可するコマンド ID を追加", "placeholder": "コマンド ID", "remove": "{id} を削除" }
+      }
     },
     "bash": {
       "heading": "Bash アクセス"
@@ -1237,7 +1250,9 @@
       "bash": "Bash",
       "bashDesc": "Bash が有効なとき、許可された単一行シェルコマンドをログインシェル経由で実行します。作業ディレクトリは保管庫内に限定されます。",
       "outline": "アウトライン",
+      "outlineDesc": "大きなノートを読む前に Markdown 見出し、行番号、セクションサイズを確認します。",
       "command": "コマンド",
+      "commandDesc": "コマンドとホットキーを検出するか、明示的に許可されたコマンド ID を実行します。",
       "eval": "評価",
       "daily": "デイリーノート",
       "dailyDesc": "デイリーノートを読む・追加する・先頭に追加する、またはパスを解決します。デイリーノートコアプラグインが必要です。",

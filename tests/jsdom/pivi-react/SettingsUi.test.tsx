@@ -74,6 +74,12 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       models: createModelsPort(),
       tools: {
         getSettings: () => ({
+          cliEnabled: false,
+          cliAvailable: true,
+          cliPath: null,
+          cliTimeoutMs: 30_000,
+          allowCommand: false,
+          commandAllowlist: [] as const,
           allowBash: false,
           bashPermissions: [] as const,
           allowExternalRead: false,

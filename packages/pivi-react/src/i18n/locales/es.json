@@ -749,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "Requiere la CLI oficial de Obsidian.",
-      "unavailableCodex": "Requiere conexión con OpenAI Codex."
+      "unavailableCorePlugin": "Requiere que el complemento principal correspondiente esté activado.",
+      "unavailableCodex": "Requiere conexión con OpenAI Codex.",
+      "cli": {
+        "heading": "CLI oficial de {hostName}",
+        "enabled": { "name": "Activar herramientas de la CLI oficial", "desc": "Permite que Pivi registre herramientas basadas en la CLI oficial de {hostName}." },
+        "unavailable": "La CLI oficial de {hostName} no está registrada. No se pueden activar las herramientas de CLI.",
+        "path": { "name": "Ruta del ejecutable CLI", "desc": "Ejecutable alternativo opcional. Déjalo vacío para detectarlo automáticamente.", "placeholder": "Detectar automáticamente" },
+        "timeout": { "name": "Tiempo límite de CLI", "desc": "Tiempo máximo para cada solicitud de la CLI oficial.", "option": "{seconds} segundos" },
+        "actionsUnavailable": "Las acciones de consulta y creación mediante CLI no están disponibles actualmente."
+      },
+      "command": {
+        "execution": { "name": "Permitir ejecución de comandos", "desc": "Permite ejecutar solo los ID de comando indicados abajo. La detección sigue siendo de solo lectura." },
+        "allowlist": { "name": "ID de comando permitidos", "desc": "Una lista vacía deniega toda ejecución de comandos.", "add": "Añadir un ID de comando permitido", "placeholder": "ID de comando", "remove": "Quitar {id}" }
+      }
     },
     "bash": {
       "heading": "Acceso a Bash"
@@ -1237,7 +1250,9 @@
       "bash": "Bash",
       "bashDesc": "Ejecutar un comando shell de una línea permitido mediante tu shell de inicio de sesión cuando Bash está activo. El directorio de trabajo debe permanecer en el vault.",
       "outline": "Esquema",
+      "outlineDesc": "Inspecciona encabezados Markdown, números de línea y tamaños de sección antes de leer una nota grande.",
       "command": "Comando",
+      "commandDesc": "Descubre comandos y atajos, o ejecuta un ID de comando permitido explícitamente.",
       "eval": "Evaluar",
       "daily": "Nota diaria",
       "dailyDesc": "Leer, agregar o anteponer a la nota diaria, o resolver la ruta de la nota diaria. Requiere el plugin Daily Notes.",

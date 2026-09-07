@@ -159,6 +159,12 @@ export interface SettingsComplexPorts {
   };
   tools: {
     getSettings(): {
+      cliEnabled: boolean;
+      cliAvailable: boolean;
+      cliPath: string | null;
+      cliTimeoutMs: number;
+      allowCommand: boolean;
+      commandAllowlist: readonly string[];
       allowBash: boolean;
       allowExternalRead: boolean;
       defaultReadMaxChars: number;
@@ -171,6 +177,11 @@ export interface SettingsComplexPorts {
     validateExternalDirectory(path: string): Promise<{ valid: boolean; error?: string }>;
     saveSettings(patch: {
       allowBash?: boolean;
+      cliEnabled?: boolean;
+      cliPath?: string | null;
+      cliTimeoutMs?: number;
+      allowCommand?: boolean;
+      commandAllowlist?: readonly string[];
       allowExternalRead?: boolean;
       defaultReadMaxChars?: number;
       bashPermissions?: readonly PersistentBashPermission[];
@@ -251,7 +262,7 @@ export interface SettingsToolRow {
   readonly label: string;
   readonly description: string;
   readonly group: 'workspace-api' | 'host-cli' | 'pivi' | 'additional';
-  readonly configuration?: 'read' | 'external-read' | 'bash';
+  readonly configuration?: 'read' | 'external-read' | 'bash' | 'command';
   readonly enabled: boolean;
   readonly available: boolean;
 }

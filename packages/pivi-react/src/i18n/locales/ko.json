@@ -749,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "공식 Obsidian CLI가 필요합니다.",
-      "unavailableCodex": "OpenAI Codex 연결이 필요합니다."
+      "unavailableCorePlugin": "관련 코어 플러그인을 활성화해야 합니다.",
+      "unavailableCodex": "OpenAI Codex 연결이 필요합니다.",
+      "cli": {
+        "heading": "공식 {hostName} CLI",
+        "enabled": { "name": "공식 CLI 도구 활성화", "desc": "Pivi가 공식 {hostName} CLI 기반 도구를 등록하도록 허용합니다." },
+        "unavailable": "공식 {hostName} CLI가 등록되지 않았습니다. CLI 도구를 활성화할 수 없습니다.",
+        "path": { "name": "CLI 실행 파일 경로", "desc": "선택적 실행 파일 재정의입니다. 자동 감지하려면 비워 두세요.", "placeholder": "자동 감지" },
+        "timeout": { "name": "CLI 시간 제한", "desc": "각 공식 CLI 요청의 최대 시간입니다.", "option": "{seconds}초" },
+        "actionsUnavailable": "CLI 기반 쿼리 및 생성 작업은 현재 사용할 수 없습니다."
+      },
+      "command": {
+        "execution": { "name": "명령 실행 허용", "desc": "아래에 명시적으로 나열된 명령 ID만 실행합니다. 검색은 읽기 전용입니다." },
+        "allowlist": { "name": "허용된 명령 ID", "desc": "목록이 비어 있으면 모든 명령 실행을 거부합니다.", "add": "허용된 명령 ID 추가", "placeholder": "명령 ID", "remove": "{id} 제거" }
+      }
     },
     "bash": {
       "heading": "Bash 접근"
@@ -1237,7 +1250,9 @@
       "bash": "Bash",
       "bashDesc": "Bash가 켜져 있을 때 허용된 한 줄 셸 명령을 로그인 셸로 실행합니다. 작업 디렉터리는 보관함 안이어야 합니다.",
       "outline": "개요",
+      "outlineDesc": "큰 노트를 읽기 전에 Markdown 제목, 줄 번호 및 섹션 크기를 검사합니다.",
       "command": "명령",
+      "commandDesc": "명령과 단축키를 검색하거나 명시적으로 허용된 명령 ID를 실행합니다.",
       "eval": "평가",
       "daily": "데일리 노트",
       "dailyDesc": "데일리 노트를 읽거나, 덧붙이거나, 앞에 추가하거나, 경로를 확인합니다. Daily Notes 코어 플러그인이 필요합니다.",

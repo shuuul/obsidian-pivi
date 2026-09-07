@@ -20,7 +20,6 @@ import { createDailyTool } from './obsidian/daily';
 import { createDeletePathTool } from './obsidian/deletePath';
 import type { ObsidianToolDeps } from './obsidian/deps';
 import { createEditNoteTool } from './obsidian/editNote';
-import { createEvalTool } from './obsidian/eval';
 import { createGenerateImageTool } from './obsidian/generateImage';
 import { createGraphTool } from './obsidian/graph';
 import { createHistoryTool } from './obsidian/history';
@@ -131,15 +130,11 @@ export function createObsidianTools(
     tools.push(createGenerateImageTool(deps));
   }
 
-  if (settings.allowCommand && obsidianCliAvailable) {
+  if (obsidianCliAvailable) {
     tools.push(createCommandTool(deps));
   }
   if (settings.allowBash) {
     tools.push(createBashTool(deps));
   }
-  if (settings.allowEval && obsidianCliAvailable) {
-    tools.push(createEvalTool(deps));
-  }
-
   return tools.filter((tool) => !isDisabledToolName(disabledTools, tool.name));
 }
