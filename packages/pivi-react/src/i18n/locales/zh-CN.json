@@ -204,7 +204,8 @@
       "unableCreateForkTab": "无法创建分叉标签页",
       "initChatService": "初始化聊天服务失败",
       "titlePersistenceFailed": "无法保存生成的会话标题。",
-      "autoCompactionRecovery": "自动上下文压缩已连续失败两次。请运行 /compact 手动恢复此会话。"
+      "autoCompactionRecovery": "自动上下文压缩已连续失败两次。请运行 /compact 手动恢复此会话。",
+      "continuationBlocked": "这条工具结果过大，无法发送。已拦截下一次模型请求。请运行 /compact，或开始新会话。"
     },
     "toolbar": {
       "externalContexts": "外部上下文",

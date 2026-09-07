@@ -204,7 +204,8 @@
       "unableCreateForkTab": "분기 탭을 만들 수 없습니다",
       "initChatService": "채팅 서비스 초기화 실패",
       "titlePersistenceFailed": "생성된 세션 제목을 저장하지 못했습니다.",
-      "autoCompactionRecovery": "자동 컨텍스트 압축이 두 번 실패했습니다. /compact를 실행하여 이 세션을 수동으로 복구하세요."
+      "autoCompactionRecovery": "자동 컨텍스트 압축이 두 번 실패했습니다. /compact를 실행하여 이 세션을 수동으로 복구하세요.",
+      "continuationBlocked": "이 도구 결과가 너무 커서 보낼 수 없습니다. 다음 모델 요청이 차단되었습니다. /compact를 실행하거나 새 세션을 시작하세요."
     },
     "toolbar": {
       "externalContexts": "외부 컨텍스트",

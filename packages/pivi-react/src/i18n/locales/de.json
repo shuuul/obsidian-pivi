@@ -209,7 +209,8 @@
       "unableCreateForkTab": "Verzweigungs-Tab kann nicht erstellt werden",
       "initChatService": "Chat-Dienst konnte nicht initialisiert werden",
       "titlePersistenceFailed": "Der generierte Sitzungstitel konnte nicht gespeichert werden.",
-      "autoCompactionRecovery": "Die automatische Kontextkomprimierung ist zweimal fehlgeschlagen. Führe /compact aus, um diese Sitzung manuell wiederherzustellen."
+      "autoCompactionRecovery": "Die automatische Kontextkomprimierung ist zweimal fehlgeschlagen. Führe /compact aus, um diese Sitzung manuell wiederherzustellen.",
+      "continuationBlocked": "Dieses Tool-Ergebnis ist zu groß zum Senden. Die nächste Modellanfrage wurde blockiert. Führe /compact aus oder starte eine neue Sitzung."
     },
     "toolbar": {
       "externalContexts": "Externe Kontexte",

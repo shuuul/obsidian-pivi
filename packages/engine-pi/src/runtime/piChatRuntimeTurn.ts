@@ -17,6 +17,7 @@ import {
   attachContextEnvelope,
   compactCurrentSession,
   getAutoCompactionRecoveryWarning,
+  getContinuationBlockedWarning,
   type PiChatCompactionDeps,
   prepareCompactionPrefire,
   prepareContextForTurn,
@@ -29,6 +30,15 @@ import {
   latestUsageFromMessages,
 } from './piChatRuntimeUsage';
 import { toPiImageContent } from './piImageContent';
+
+class ContinuationBlockedError extends Error {
+  readonly code = 'PIVI_CONTINUATION_BLOCKED';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'ContinuationBlockedError';
+  }
+}
 
 export interface PiChatRuntimeTurnDeps {
   activeTurn: ActiveTurn;
@@ -127,10 +137,12 @@ export async function* streamPiChatTurn(
     emittedMessages,
     pendingPersistenceMessages,
   ).catch((error: unknown) => {
-    activeTurn.queue.push({
-      type: 'error',
-      content: error instanceof Error ? error.message : String(error),
-    });
+    if (!(error instanceof ContinuationBlockedError)) {
+      activeTurn.queue.push({
+        type: 'error',
+        content: error instanceof Error ? error.message : String(error),
+      });
+    }
     finishActiveTurnQueue(activeTurn);
   });
 
@@ -237,10 +249,17 @@ async function runPromptLifecycle(
       deps.resolveModel(),
     ) ?? buildEstimatedUsageInfo(nextTurn.context.messages, deps.resolveModel());
     const usage = latestUsage
-      ? attachContextEnvelope(deps.compaction, latestUsage, turn, [], {
-          currentTurnAlreadyCounted: true,
-        })
+      ? attachContextEnvelope(
+        deps.compaction,
+        latestUsage,
+        turn,
+        nextTurn.context.messages,
+        { currentTurnAlreadyCounted: true },
+      )
       : null;
+    if (usage && nextTurn.toolResults.length > 0) {
+      activeTurn.queue.push({ type: 'usage', usage });
+    }
     if (!usage || nextTurn.toolResults.length === 0) {
       const previousUpdate = await previousPrepareNextTurn?.(nextTurn, signal);
       const hasPendingSteering = activeTurn.steeredTurns.length
@@ -261,23 +280,40 @@ async function runPromptLifecycle(
     }
 
     activeTurn.queue.push({ type: 'context_compacting' });
-    const compacted = await compactCurrentSession(deps.compaction, 'threshold');
-    if (!compacted) {
-      throw new Error('Context compaction could not prepare the next model request.');
+    let compacted: Awaited<ReturnType<typeof compactCurrentSession>> = null;
+    try {
+      compacted = await compactCurrentSession(deps.compaction, 'threshold');
+    } catch (error) {
+      const recoveryWarning = getAutoCompactionRecoveryWarning(deps.compaction);
+      activeTurn.queue.push({
+        type: 'notice',
+        level: 'warning',
+        content: recoveryWarning
+          ?? `Auto compaction failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
     }
     if (signal?.aborted || activeTurn.abortController.signal.aborted) {
       return undefined;
     }
-    didCompactDuringTurn = true;
-    pushCompactionChunks(activeTurn.queue, deps.compaction, compacted, turn);
-    return mergeCurrentSelection(Promise.resolve({
-      context: {
-        ...nextTurn.context,
-        messages: deps.sessionTree?.loadAgentMessages() ?? agent.state.messages,
-        systemPrompt: agent.state.systemPrompt,
-        tools: agent.state.tools,
-      },
-    }));
+    if (compacted) {
+      didCompactDuringTurn = true;
+      pushCompactionChunks(activeTurn.queue, deps.compaction, compacted, turn);
+      return mergeCurrentSelection(Promise.resolve({
+        context: {
+          ...nextTurn.context,
+          messages: deps.sessionTree?.loadAgentMessages() ?? agent.state.messages,
+          systemPrompt: agent.state.systemPrompt,
+          tools: agent.state.tools,
+        },
+      }));
+    }
+    const blockedWarning = getContinuationBlockedWarning(deps.compaction);
+    activeTurn.queue.push({
+      type: 'notice',
+      level: 'warning',
+      content: blockedWarning,
+    });
+    throw new ContinuationBlockedError(blockedWarning);
   };
   agent.prepareNextTurnWithContext = prepareNextTurnWithContext;
 

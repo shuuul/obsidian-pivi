@@ -204,7 +204,8 @@
       "unableCreateForkTab": "Impossible de créer l’onglet de bifurcation",
       "initChatService": "Échec de l’initialisation du service de chat",
       "titlePersistenceFailed": "Impossible d’enregistrer le titre de session généré.",
-      "autoCompactionRecovery": "La compaction automatique du contexte a échoué deux fois. Exécutez /compact pour récupérer cette session manuellement."
+      "autoCompactionRecovery": "La compaction automatique du contexte a échoué deux fois. Exécutez /compact pour récupérer cette session manuellement.",
+      "continuationBlocked": "Ce résultat d’outil est trop volumineux pour être envoyé. La prochaine requête au modèle a été bloquée. Exécutez /compact ou démarrez une nouvelle session."
     },
     "toolbar": {
       "externalContexts": "Contextes externes",

@@ -106,6 +106,86 @@ describe('attachContextEnvelope', () => {
       pressureInputTokens: 129_692,
       reservedOutput: { tokens: 131_072 },
     });
+    expect(result.contextTokens).toBe(129_692);
+  });
+
+  it('moves displayed context tokens off the provider anchor when a trailing tool result is pending', () => {
+    const anchor = {
+      role: 'assistant',
+      content: [{ type: 'text', text: 'searching' }],
+      provider: 'custom-openai-compatible-5bbe1d19934e',
+      model: 'qwen3.8-flash-next',
+      stopReason: 'toolUse',
+      usage: {
+        input: 70_963,
+        output: 440,
+        cacheRead: 0,
+        cacheWrite: 0,
+        totalTokens: 71_403,
+      },
+      timestamp: 2,
+    } as AgentMessage;
+    const persisted = [
+      { role: 'user', content: 'search transcripts', timestamp: 1 } as AgentMessage,
+      anchor,
+    ];
+    const toolResult = {
+      role: 'toolResult',
+      toolCallId: 'search-1',
+      toolName: 'search',
+      content: [{ type: 'text', text: 'x'.repeat(1_340_014) }],
+      isError: false,
+      timestamp: 3,
+    } as AgentMessage;
+    const entries = persisted.map((message, index) => ({
+      id: `message-${index}`,
+      parentId: index === 0 ? null : `message-${index - 1}`,
+      timestamp: new Date(index).toISOString(),
+      type: 'message',
+      message,
+    }));
+    const deps = {
+      plugin: {} as PiRuntimeHost,
+      sessionTree: {
+        getLinearLlmContextEntries: () => entries,
+        loadAgentMessages: () => persisted,
+      },
+      agent: { state: { systemPrompt: 'prompt', tools: [], messages: persisted } },
+      compactionState: {
+        autoCompactionInFlight: false,
+        failedAutoAttempts: new Map(),
+        foregroundController: null,
+        generation: 0,
+        prefire: null,
+      },
+      resolveModel: () => ({
+        provider: 'custom-openai-compatible-5bbe1d19934e',
+        id: 'qwen3.8-flash-next',
+        contextWindow: 262_144,
+        contextWindowIsAuthoritative: true,
+        maxTokens: 65_536,
+      }),
+      onLeafIdChanged: jest.fn(),
+      onAssistantMessageId: jest.fn(),
+    } as never;
+
+    const result = attachContextEnvelope(
+      deps,
+      {
+        contextTokens: 71_403,
+        contextTokensIsAuthoritative: true,
+        contextWindow: 262_144,
+        contextWindowIsAuthoritative: true,
+        inputTokens: 70_963,
+        percentage: 27,
+      },
+      undefined,
+      [...persisted, toolResult],
+    );
+
+    expect(result.contextEnvelope?.pressureInputTokens).toBeGreaterThan(222_822);
+    expect(result.contextTokens).toBe(result.contextEnvelope?.pressureInputTokens);
+    expect(result.contextTokens).toBeGreaterThan(71_403);
   });
 
   it('projects issue #98 from the provider anchor instead of the full local estimate', () => {

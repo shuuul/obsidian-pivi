@@ -204,7 +204,8 @@
       "unableCreateForkTab": "分岐タブを作成できません",
       "initChatService": "チャットサービスの初期化に失敗しました",
       "titlePersistenceFailed": "生成されたセッションタイトルを保存できませんでした。",
-      "autoCompactionRecovery": "コンテキストの自動圧縮に 2 回失敗しました。/compact を実行して、このセッションを手動で復旧してください。"
+      "autoCompactionRecovery": "コンテキストの自動圧縮に 2 回失敗しました。/compact を実行して、このセッションを手動で復旧してください。",
+      "continuationBlocked": "このツール結果は大きすぎて送信できません。次のモデルリクエストはブロックされました。/compact を実行するか、新しいセッションを開始してください。"
     },
     "toolbar": {
       "externalContexts": "外部コンテキスト",

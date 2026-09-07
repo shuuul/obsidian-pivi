@@ -204,7 +204,8 @@
       "unableCreateForkTab": "Não foi possível criar a aba de fork",
       "initChatService": "Falha ao inicializar o serviço de chat",
       "titlePersistenceFailed": "Não foi possível salvar o título de sessão gerado.",
-      "autoCompactionRecovery": "A compactação automática do contexto falhou duas vezes. Execute /compact para recuperar esta sessão manualmente."
+      "autoCompactionRecovery": "A compactação automática do contexto falhou duas vezes. Execute /compact para recuperar esta sessão manualmente.",
+      "continuationBlocked": "Este resultado de ferramenta é grande demais para enviar. A próxima solicitação ao modelo foi bloqueada. Execute /compact ou inicie uma nova sessão."
     },
     "toolbar": {
       "externalContexts": "Contextos externos",
