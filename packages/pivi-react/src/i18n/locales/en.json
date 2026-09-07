@@ -778,8 +778,8 @@
         "actionsUnavailable": "CLI-backed query and create actions are currently unavailable."
       },
       "command": {
-        "execution": { "name": "Allow command execution", "desc": "Permit execution only for command IDs explicitly listed below. Discovery remains read-only." },
-        "allowlist": { "name": "Allowed command IDs", "desc": "An empty list denies all command execution.", "add": "Add an allowed command ID", "placeholder": "Command ID", "remove": "Remove {id}" }
+        "execution": { "name": "Allow command execution", "desc": "Allow command execution after an existing grant or an interactive permission request. Discovery remains read-only." },
+        "allowlist": { "name": "Allowed command IDs", "desc": "Commands not listed here ask for permission before execution.", "add": "Add an allowed command ID", "placeholder": "Command ID", "remove": "Remove {id}" }
       }
     },
     "bash": {

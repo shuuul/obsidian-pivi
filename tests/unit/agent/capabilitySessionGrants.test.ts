@@ -6,7 +6,10 @@ import {
   CapabilityPersistentGrantCache,
   createCapabilityApprovalPort,
 } from '@pivi/agent/runtime/capabilitySessionGrants';
-import type { PersistentBashPermission } from '@pivi/agent/tools';
+import {
+  decodeCapabilityPermissions,
+  type PersistentBashPermission,
+} from '@pivi/agent/tools';
 
 const bashRequest: CapabilityApprovalRequest = {
   kind: 'bash',
@@ -25,6 +28,15 @@ const externalRequest: CapabilityApprovalRequest = {
   blockedPath: '/tmp/notes/a.md',
   reason: 'Path is outside allowed external directories.',
   description: 'Access external path',
+};
+
+const commandRequest: CapabilityApprovalRequest = {
+  kind: 'obsidian-command',
+  toolName: 'obsidian_command',
+  commandId: 'workspace:split',
+  blockedPath: 'workspace:split',
+  reason: 'Command is not on the persistent permission list.',
+  description: 'Execute Obsidian command: workspace:split',
 };
 
 function gitStatus(): PersistentBashPermission {
@@ -46,8 +58,27 @@ describe('CapabilityPersistentGrantCache', () => {
     expect(cache.hasPersistentGrant({ ...bashRequest, command: 'git log' })).toBe(false);
     cache.rememberExternal('/tmp/notes');
     expect(cache.hasPersistentGrant(externalRequest)).toBe(true);
+    cache.rememberObsidianCommand('workspace:split');
+    expect(cache.hasPersistentGrant(commandRequest)).toBe(true);
+    expect(cache.hasPersistentGrant({ ...commandRequest, commandId: 'workspace:split-right' })).toBe(false);
     cache.clear();
     expect(cache.hasPersistentGrant(bashRequest)).toBe(false);
+  });
+});
+
+describe('device-local capability permission decoding', () => {
+  it('loads older v1 records without command grants and canonicalizes exact ids', () => {
+    expect(decodeCapabilityPermissions({
+      version: 1,
+      bash: [],
+      externalDirectories: [],
+    }).obsidianCommands).toEqual([]);
+    expect(decodeCapabilityPermissions({
+      version: 1,
+      bash: [],
+      externalDirectories: [],
+      obsidianCommands: [' workspace:split ', '', 'workspace:split'],
+    }).obsidianCommands).toEqual(['workspace:split']);
   });
 });
 
@@ -96,6 +127,28 @@ describe('createCapabilityApprovalPort', () => {
     await expect(port.requestApproval(bashRequest)).resolves.toEqual({ decision: 'allow-once' });
     expect(persistBashPermissions).not.toHaveBeenCalled();
     expect(cache.hasPersistentGrant(bashRequest)).toBe(false);
+  });
+
+  it('persists an exact Obsidian command grant before remembering it', async () => {
+    const cache = new CapabilityPersistentGrantCache();
+    const stored: string[] = [];
+    const persistObsidianCommand = jest.fn(async (commandId: string) => {
+      expect(cache.hasPersistentGrant(commandRequest)).toBe(false);
+      stored.push(commandId);
+    });
+    const port = createCapabilityApprovalPort({
+      cache,
+      persistence: {
+        persistObsidianCommand,
+        getObsidianCommands: () => stored,
+      },
+      present: async () => ({ decision: 'allow-always' }),
+    });
+
+    await expect(port.requestApproval(commandRequest)).resolves.toEqual({ decision: 'allow-always' });
+    expect(persistObsidianCommand).toHaveBeenCalledWith('workspace:split');
+    expect(port.hasPersistentGrant(commandRequest)).toBe(true);
+    expect(port.hasPersistentGrant({ ...commandRequest, commandId: 'workspace:split-right' })).toBe(false);
   });
 
   it('cancels Always when persistence is requested without scopes', async () => {

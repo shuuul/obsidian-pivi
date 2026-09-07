@@ -760,8 +760,8 @@
         "actionsUnavailable": "CLI 支持的查询和创建操作当前不可用。"
       },
       "command": {
-        "execution": { "name": "允许执行命令", "desc": "仅允许执行下方明确列出的命令 ID。发现功能仍为只读。" },
-        "allowlist": { "name": "允许的命令 ID", "desc": "列表为空时拒绝执行所有命令。", "add": "添加允许的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
+        "execution": { "name": "允许执行命令", "desc": "已有授权时直接执行，否则交互式请求权限。发现功能仍为只读。" },
+        "allowlist": { "name": "允许的命令 ID", "desc": "未列出的命令会在执行前请求权限。", "add": "添加允许的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
       }
     },
     "bash": {

@@ -2,7 +2,7 @@ import type { BashClassification } from '../tools/capabilityPermissions';
 import type { PersistentBashPermission } from '../tools/capabilityPermissions';
 
 /** Capability kinds that may show sidebar inline approval in Pivi. */
-export type CapabilityApprovalKind = 'bash' | 'external-directory';
+export type CapabilityApprovalKind = 'bash' | 'external-directory' | 'obsidian-command';
 
 export type CapabilityApprovalDecision =
   | 'deny'
@@ -20,6 +20,8 @@ export interface CapabilityApprovalRequest {
   toolName: string;
   /** Normalized bash command string for matching. */
   command?: string;
+  /** Exact Obsidian command ID requested for execution. */
+  commandId?: string;
   /** Exact shell executable resolved before Bash authorization. */
   shellPath?: string;
   /** Classifier result used to render persistable scopes. */

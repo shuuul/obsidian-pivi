@@ -200,7 +200,7 @@ export async function showCapabilityApprovalPrompt(
     if (!decision || decision === 'deny') {
       return { decision: decision ?? 'cancel' };
     }
-    if (decision === 'allow-always') {
+    if (decision === 'allow-always' && request.kind === 'bash') {
       return { decision, bashPermissions: selectedPermissions };
     }
     return { decision };

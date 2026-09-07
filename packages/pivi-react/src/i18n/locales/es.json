@@ -760,8 +760,8 @@
         "actionsUnavailable": "Las acciones de consulta y creación mediante CLI no están disponibles actualmente."
       },
       "command": {
-        "execution": { "name": "Permitir ejecución de comandos", "desc": "Permite ejecutar solo los ID de comando indicados abajo. La detección sigue siendo de solo lectura." },
-        "allowlist": { "name": "ID de comando permitidos", "desc": "Una lista vacía deniega toda ejecución de comandos.", "add": "Añadir un ID de comando permitido", "placeholder": "ID de comando", "remove": "Quitar {id}" }
+        "execution": { "name": "Permitir ejecución de comandos", "desc": "Permite ejecutar comandos con una autorización existente o una solicitud interactiva. La detección sigue siendo de solo lectura." },
+        "allowlist": { "name": "ID de comando permitidos", "desc": "Los comandos que no aparecen aquí solicitan permiso antes de ejecutarse.", "add": "Añadir un ID de comando permitido", "placeholder": "ID de comando", "remove": "Quitar {id}" }
       }
     },
     "bash": {

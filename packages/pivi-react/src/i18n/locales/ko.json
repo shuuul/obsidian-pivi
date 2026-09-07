@@ -760,8 +760,8 @@
         "actionsUnavailable": "CLI 기반 쿼리 및 생성 작업은 현재 사용할 수 없습니다."
       },
       "command": {
-        "execution": { "name": "명령 실행 허용", "desc": "아래에 명시적으로 나열된 명령 ID만 실행합니다. 검색은 읽기 전용입니다." },
-        "allowlist": { "name": "허용된 명령 ID", "desc": "목록이 비어 있으면 모든 명령 실행을 거부합니다.", "add": "허용된 명령 ID 추가", "placeholder": "명령 ID", "remove": "{id} 제거" }
+        "execution": { "name": "명령 실행 허용", "desc": "기존 권한 또는 대화형 권한 요청 후 명령을 실행합니다. 검색은 읽기 전용입니다." },
+        "allowlist": { "name": "허용된 명령 ID", "desc": "여기에 없는 명령은 실행 전에 권한을 요청합니다.", "add": "허용된 명령 ID 추가", "placeholder": "명령 ID", "remove": "{id} 제거" }
       }
     },
     "bash": {

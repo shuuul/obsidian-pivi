@@ -760,8 +760,8 @@
         "actionsUnavailable": "CLI-basierte Abfrage- und Erstellaktionen sind derzeit nicht verfügbar."
       },
       "command": {
-        "execution": { "name": "Befehlsausführung erlauben", "desc": "Nur die unten ausdrücklich aufgeführten Befehls-IDs dürfen ausgeführt werden. Die Suche bleibt schreibgeschützt." },
-        "allowlist": { "name": "Erlaubte Befehls-IDs", "desc": "Eine leere Liste verweigert jede Befehlsausführung.", "add": "Erlaubte Befehls-ID hinzufügen", "placeholder": "Befehls-ID", "remove": "{id} entfernen" }
+        "execution": { "name": "Befehlsausführung erlauben", "desc": "Befehle nach einer bestehenden Freigabe oder einer interaktiven Berechtigungsanfrage ausführen. Die Suche bleibt schreibgeschützt." },
+        "allowlist": { "name": "Erlaubte Befehls-IDs", "desc": "Nicht aufgeführte Befehle fragen vor der Ausführung nach Erlaubnis.", "add": "Erlaubte Befehls-ID hinzufügen", "placeholder": "Befehls-ID", "remove": "{id} entfernen" }
       }
     },
     "bash": {

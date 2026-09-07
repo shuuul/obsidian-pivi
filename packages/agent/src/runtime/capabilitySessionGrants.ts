@@ -16,9 +16,11 @@ export interface CapabilityApprovalPresenter {
 export interface CapabilityApprovalPersistence {
   persistBashPermissions?(permissions: readonly PersistentBashPermission[]): Promise<void>;
   persistExternalDirectory?(directory: string): Promise<void>;
+  persistObsidianCommand?(commandId: string): Promise<void>;
   onExternalDirectoryAllowed?(directory: string): Promise<void>;
   getBashPermissions?(): readonly PersistentBashPermission[];
   getExternalDirectories?(): readonly string[];
+  getObsidianCommands?(): readonly string[];
 }
 
 /**
@@ -28,10 +30,16 @@ export interface CapabilityApprovalPersistence {
 export class CapabilityPersistentGrantCache {
   private bash: PersistentBashPermission[] = [];
   private externalRoots = new Set<string>();
+  private obsidianCommands = new Set<string>();
 
-  replace(bash: readonly PersistentBashPermission[], externalRoots: readonly string[]): void {
+  replace(
+    bash: readonly PersistentBashPermission[],
+    externalRoots: readonly string[],
+    obsidianCommands: readonly string[] = [],
+  ): void {
     this.bash = [...bash];
     this.externalRoots = new Set(externalRoots.filter(Boolean));
+    this.obsidianCommands = new Set(obsidianCommands.map(id => id.trim()).filter(Boolean));
   }
 
   rememberBash(permissions: readonly PersistentBashPermission[]): void {
@@ -41,6 +49,11 @@ export class CapabilityPersistentGrantCache {
   rememberExternal(root: string): void {
     const trimmed = root.trim();
     if (trimmed) this.externalRoots.add(trimmed);
+  }
+
+  rememberObsidianCommand(commandId: string): void {
+    const trimmed = commandId.trim();
+    if (trimmed) this.obsidianCommands.add(trimmed);
   }
 
   hasPersistentGrant(request: CapabilityApprovalRequest): boolean {
@@ -56,12 +69,17 @@ export class CapabilityPersistentGrantCache {
         { shellPath },
       );
     }
+    if (request.kind === 'obsidian-command') {
+      const commandId = request.commandId?.trim();
+      return !!commandId && this.obsidianCommands.has(commandId);
+    }
     return false;
   }
 
   clear(): void {
     this.bash = [];
     this.externalRoots.clear();
+    this.obsidianCommands.clear();
   }
 }
 
@@ -84,6 +102,10 @@ export function createCapabilityApprovalPort(options: {
       if (request.kind === 'external-directory' && persistence?.getExternalDirectories) {
         const root = request.directoryRoot?.trim();
         return !!root && persistence.getExternalDirectories().includes(root);
+      }
+      if (request.kind === 'obsidian-command' && persistence?.getObsidianCommands) {
+        const commandId = request.commandId?.trim();
+        return !!commandId && persistence.getObsidianCommands().includes(commandId);
       }
       return cache.hasPersistentGrant(request);
     },
@@ -109,6 +131,12 @@ export function createCapabilityApprovalPort(options: {
         }
         await persistence?.onExternalDirectoryAllowed?.(request.directoryRoot);
         cache.rememberExternal(request.directoryRoot);
+      }
+      if (request.kind === 'obsidian-command' && request.commandId) {
+        if (persistence?.persistObsidianCommand) {
+          await persistence.persistObsidianCommand(request.commandId);
+        }
+        cache.rememberObsidianCommand(request.commandId);
       }
       return result;
     },

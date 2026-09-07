@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { ensureObsidianCommandAllowed } from '../capabilityApprovalGate';
 import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
@@ -29,7 +30,7 @@ export function createCommandTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_COMMAND,
     label: 'Obsidian command',
-    description: 'Discover Obsidian commands and hotkeys, or execute an explicitly allowlisted palette command by id when command execution is enabled.',
+    description: 'Discover Obsidian commands and hotkeys, or execute a palette command by id with user approval when command execution is enabled.',
     promptUsage: {
       summary: 'Discover command IDs with `list`, inspect one binding with `hotkey`, list bindings with `hotkeys`, then use `execute` only when a UI command is required. Omitted `action` remains execute for compatibility.',
       parameters: '`action?` execute|list|hotkey|hotkeys; `id` required for execute/hotkey; `filter` for list; `verbose` for hotkey/hotkeys; `total` and `all` for hotkeys.',
@@ -80,10 +81,7 @@ export function createCommandTool(deps: ObsidianToolDeps): ToolSpec {
       if (!settings.allowCommand) {
         throw new Error('Command execution is disabled. Enable command execution in Built-in Tools settings.');
       }
-      const allowlist = settings.commandAllowlist;
-      if (!allowlist.includes(id)) {
-        throw new Error(`Command id is not explicitly allowed: ${id}. Add it to the command allowlist in Built-in Tools settings.`);
-      }
+      await ensureObsidianCommandAllowed(deps, id, settings.commandAllowlist.includes(id));
       const out = await cli.run({ vaultName, args: ['command', `id=${id}`] });
       return textResult(capCliToolOutput(out || `Executed command ${id}`), { action, id });
     },

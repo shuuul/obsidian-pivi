@@ -219,6 +219,7 @@ describe('UI port adapters', () => {
       enableAutoTitleGeneration: true,
       environmentVariables: expect.any(String),
       externalReadDirectories: expect.any(Array),
+      obsidianCommandPermissions: expect.any(Array),
       hiddenSlashCommands: expect.any(Array),
       modelCatalog: expect.objectContaining({
         addedProviders: expect.any(Array),

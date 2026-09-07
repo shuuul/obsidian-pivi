@@ -1,5 +1,5 @@
 /**
- * Host-neutral persistent Bash and external-directory permission records.
+ * Host-neutral persistent Bash, Obsidian-command, and external-directory permission records.
  * Rule identity is the normalized content; there is no independent mutable ID.
  */
 
@@ -30,6 +30,7 @@ export interface DeviceLocalCapabilityPermissionsV1 {
   version: typeof DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
   bash: PersistentBashPermission[];
   externalDirectories: PersistentExternalDirectoryPermission[];
+  obsidianCommands: string[];
 }
 
 export type BashScopeRisk = 'none' | 'high' | 'executor';
@@ -56,7 +57,12 @@ export interface BashClassificationOptions {
 }
 
 export function emptyCapabilityPermissions(): DeviceLocalCapabilityPermissionsV1 {
-  return { version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION, bash: [], externalDirectories: [] };
+  return {
+    version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
+    bash: [],
+    externalDirectories: [],
+    obsidianCommands: [],
+  };
 }
 
 export function isAbsoluteExecutablePath(token: string): boolean {
@@ -249,6 +255,7 @@ export function canonicalizeCapabilityPermissions(
     version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
     bash: canonicalizeBashPermissions(stored.bash, caseInsensitive),
     externalDirectories: canonicalizeExternalDirectories(stored.externalDirectories),
+    obsidianCommands: [...new Set(stored.obsidianCommands.map(id => id.trim()).filter(Boolean))],
   };
 }
 
@@ -295,7 +302,13 @@ export function decodeCapabilityPermissions(raw: unknown): DeviceLocalCapability
     version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
     bash: decodeBashPermissionList(record.bash),
     externalDirectories: decodeExternalDirectoryList(record.externalDirectories),
+    obsidianCommands: decodeStringList(record.obsidianCommands),
   });
+}
+
+function decodeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === 'string');
 }
 
 function decodeBashPermissionList(value: unknown): PersistentBashPermission[] {

@@ -760,8 +760,8 @@
         "actionsUnavailable": "Les actions de requête et de création par CLI sont actuellement indisponibles."
       },
       "command": {
-        "execution": { "name": "Autoriser l’exécution des commandes", "desc": "Autoriser uniquement les identifiants de commande explicitement listés ci-dessous. La découverte reste en lecture seule." },
-        "allowlist": { "name": "Identifiants de commande autorisés", "desc": "Une liste vide interdit toute exécution de commande.", "add": "Ajouter un identifiant autorisé", "placeholder": "Identifiant de commande", "remove": "Retirer {id}" }
+        "execution": { "name": "Autoriser l’exécution des commandes", "desc": "Autoriser l’exécution après une permission existante ou une demande interactive. La découverte reste en lecture seule." },
+        "allowlist": { "name": "Identifiants de commande autorisés", "desc": "Les commandes absentes de cette liste demandent une autorisation avant leur exécution.", "add": "Ajouter un identifiant autorisé", "placeholder": "Identifiant de commande", "remove": "Retirer {id}" }
       }
     },
     "bash": {

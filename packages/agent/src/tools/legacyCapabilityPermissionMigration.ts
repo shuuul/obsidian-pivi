@@ -62,6 +62,7 @@ export function migrateLegacyCapabilityPermissions(
       version: 1,
       bash: canonicalizeBashPermissions(bash, caseInsensitive),
       externalDirectories: canonicalizeExternalDirectories(externalDirectories),
+      obsidianCommands: [],
     }, caseInsensitive),
     migratedBashCount: (input.bashAllowlist ?? []).length,
     migratedExternalCount: (input.externalReadDirectories ?? []).length,

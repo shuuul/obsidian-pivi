@@ -377,6 +377,7 @@ function setCapabilityOverlay(
       ...resolveObsidianToolsSettings(settings.agentSettings.obsidianTools),
       bashPermissions: [...snapshot.bash],
       bashAllowlist: [],
+      commandAllowlist: [...snapshot.obsidianCommands],
       externalReadDirectories: enabledExternalDirectories(snapshot.externalDirectories),
       externalDirectoryPermissions: [...snapshot.externalDirectories],
     },
@@ -420,8 +421,21 @@ function stripDeviceLocalSettings(settings: PiviSettings): PiviSettings {
   Reflect.deleteProperty(syncedObsidianTools, 'externalDirectoryPermissions');
   Reflect.deleteProperty(syncedObsidianTools, 'bashAllowlist');
   Reflect.deleteProperty(syncedObsidianTools, 'bashPermissions');
+  Reflect.deleteProperty(syncedObsidianTools, 'commandAllowlist');
   agentSettings.obsidianTools = syncedObsidianTools;
   return { ...settings, agentSettings };
+}
+
+function hasSyncedCommandAllowlist(stored: Record<string, unknown>): boolean {
+  const agentSettings = stored.agentSettings;
+  if (!agentSettings || typeof agentSettings !== 'object' || Array.isArray(agentSettings)) {
+    return false;
+  }
+  const obsidianTools = (agentSettings as Record<string, unknown>).obsidianTools;
+  return !!obsidianTools
+    && typeof obsidianTools === 'object'
+    && !Array.isArray(obsidianTools)
+    && Object.hasOwn(obsidianTools, 'commandAllowlist');
 }
 
 function hasSyncedExternalReadDirectories(stored: Record<string, unknown>): boolean {
@@ -491,14 +505,24 @@ export function createPiviSettingsCodec(
             bashAllowlist: tools.bashAllowlist,
             externalReadDirectories: legacyDirectories,
           });
-          deviceLocalCapabilities.save(migrated.permissions);
+          deviceLocalCapabilities.save({
+            ...migrated.permissions,
+            obsidianCommands: [...tools.commandAllowlist],
+          });
           deviceLocalExternalContexts?.setExternalReadDirectories([]);
           changed = true;
+        } else if (hasSyncedCommandAllowlist(stored) && tools.commandAllowlist.length > 0) {
+          const current = deviceLocalCapabilities.getSnapshot();
+          deviceLocalCapabilities.save({
+            ...current,
+            obsidianCommands: [...current.obsidianCommands, ...tools.commandAllowlist],
+          });
         }
         setCapabilityOverlay(result.settings, deviceLocalCapabilities.getSnapshot());
         changed = changed
           || hasSyncedExternalReadDirectories(stored)
-          || hasSyncedBashAllowlist(stored);
+          || hasSyncedBashAllowlist(stored)
+          || hasSyncedCommandAllowlist(stored);
       } else if (deviceLocalExternalContexts) {
         const syncedDirectories = getObsidianToolsSettingsFromBag(result.settings)
           .externalReadDirectories;
@@ -557,6 +581,7 @@ export function createPiviSettingsCodec(
         deviceLocalCapabilities.save(canonicalizeCapabilityPermissions({
           version: 1,
           bash: tools.bashPermissions,
+          obsidianCommands: tools.commandAllowlist,
           externalDirectories: tools.externalDirectoryPermissions.length > 0
             ? tools.externalDirectoryPermissions
             : mergeExternalDirectoriesForSave(

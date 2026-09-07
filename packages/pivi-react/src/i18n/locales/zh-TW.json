@@ -760,8 +760,8 @@
         "actionsUnavailable": "CLI 支援的查詢與建立動作目前無法使用。"
       },
       "command": {
-        "execution": { "name": "允許執行命令", "desc": "僅允許執行下方明確列出的命令 ID。探索功能仍為唯讀。" },
-        "allowlist": { "name": "允許的命令 ID", "desc": "清單為空時拒絕執行所有命令。", "add": "新增允許的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
+        "execution": { "name": "允許執行命令", "desc": "已有授權時直接執行，否則以互動方式請求權限。探索功能仍為唯讀。" },
+        "allowlist": { "name": "允許的命令 ID", "desc": "未列出的命令會在執行前請求權限。", "add": "新增允許的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
       }
     },
     "bash": {
