@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 type BaseAction = 'list' | 'views' | 'query';
@@ -103,7 +104,7 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
       if (path) { args.push(`path=${path}`); }
       if (view) { args.push(`view=${view}`); }
       const out = await cli.run({ vaultName, args });
-      return textResult(out, { action: 'query', format });
+      return textResult(capCliToolOutput(out), { action: 'query', format });
     },
   };
 }

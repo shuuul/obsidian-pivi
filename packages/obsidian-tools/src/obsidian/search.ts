@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 const DEFAULT_SEARCH_LIMIT = 50;
@@ -123,15 +124,6 @@ function serializeSearchPage(
   return { payload: emptyPayload, returnedCount: 0 };
 }
 
-function capCliOutput(output: string): string {
-  if (output.length <= MAX_SEARCH_RESULT_CHARS) {
-    return output;
-  }
-  const marker = `\n\n[search truncated to ${MAX_SEARCH_RESULT_CHARS} characters]`;
-  const budget = Math.max(0, MAX_SEARCH_RESULT_CHARS - marker.length);
-  return `${output.slice(0, budget)}${marker}`;
-}
-
 export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
   const { vault, cli, settings, vaultName } = deps;
   const obsidianCliAvailable = deps.obsidianCliAvailable ?? settings.cliEnabled;
@@ -228,7 +220,7 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
           `limit=${limit}`,
         ];
         const out = await cli.run({ vaultName, args });
-        return textResult(capCliOutput(out));
+        return textResult(capCliToolOutput(out));
       }
     },
   };

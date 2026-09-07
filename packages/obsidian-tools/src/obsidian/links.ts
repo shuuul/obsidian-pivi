@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
@@ -49,7 +50,7 @@ export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
           args.push(`path=${JSON.stringify(notePath)}`);
         }
         const out = await cli.run({ vaultName, args });
-        return textResult(out);
+        return textResult(capCliToolOutput(out));
       }
     },
   };

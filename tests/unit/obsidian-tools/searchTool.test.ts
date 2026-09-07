@@ -108,7 +108,7 @@ describe('createSearchTool promptUsage', () => {
     const text = result.content[0]?.type === 'text' ? result.content[0].text : '';
 
     expect(text.length).toBeLessThanOrEqual(50_000);
-    expect(text).toContain('[search truncated to 50000 characters]');
+    expect(text).toContain('[cli output truncated to 50000 characters]');
   });
 
   it('rejects an oversize limit before searchNotes', async () => {

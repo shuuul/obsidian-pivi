@@ -43,4 +43,20 @@ describe('createMcpProxyToolSpec', () => {
     expect(text).toContain('- limit: Max results');
     expect(text).not.toContain('[object Object]');
   });
+
+  it('caps MCP call results before they become model-visible text', async () => {
+    const bridge = makeBridge();
+    (bridge as unknown as { callTool: jest.Mock }).callTool = jest.fn().mockResolvedValue('x'.repeat(80_000));
+    const tool = createMcpProxyToolSpec(bridge);
+
+    const result = await tool.execute('call', {
+      server: 'vault',
+      tool: 'lookup',
+      args: '{}',
+    }) as { content: Array<{ type: string; text: string }> };
+    const text = result.content[0]?.text ?? '';
+
+    expect(text.length).toBeLessThanOrEqual(50_000);
+    expect(text).toContain('[mcp call truncated to 50000 characters]');
+  });
 });

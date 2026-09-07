@@ -5,6 +5,7 @@ import {
 } from '@pivi/agent/tools';
 import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 type DailyAction = 'read' | 'append' | 'prepend' | 'path';
@@ -66,7 +67,7 @@ export function createDailyTool(deps: ObsidianToolDeps): ToolSpec {
 
       if (action === 'path') {
         const out = await cli.run({ vaultName, args: ['daily:path'] });
-        return textResult(out);
+        return textResult(capCliToolOutput(out));
       }
 
       if ((action === 'append' || action === 'prepend') && !content) {
@@ -92,7 +93,7 @@ export function createDailyTool(deps: ObsidianToolDeps): ToolSpec {
         args.push('inline');
       }
       const out = await cli.run({ vaultName, args });
-      return textResult(out, { action });
+      return textResult(capCliToolOutput(out), { action });
     },
   };
 }

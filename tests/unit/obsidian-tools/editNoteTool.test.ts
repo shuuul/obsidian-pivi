@@ -29,6 +29,17 @@ describe('createEditNoteTool', () => {
     expect(tool.promptUsage?.summary).toContain('receive the identical replacement');
   });
 
+  it('rejects oversized oldText or newText before vault access', async () => {
+    const deps = makeDeps();
+    const tool = createEditNoteTool(deps);
+
+    await expect(tool.execute('call', {
+      path: 'notes/a.md',
+      edits: [{ oldText: 'x'.repeat(50_001), newText: 'ok' }],
+    })).rejects.toThrow('at most 50000 characters');
+    expect(deps.vault.editNote).not.toHaveBeenCalled();
+  });
+
   it('passes a local newline insertion through without requiring a whole line', async () => {
     const deps = makeDeps();
     const tool = createEditNoteTool(deps);

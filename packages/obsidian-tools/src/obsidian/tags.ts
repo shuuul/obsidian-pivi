@@ -1,4 +1,5 @@
 import {
+  capToolResultText,
   textResult,
   TOOL_OBSIDIAN_TAGS,
   type ToolSpec,
@@ -78,10 +79,15 @@ export function createTagsTool(deps: ObsidianToolDeps): ToolSpec {
       if (action === 'list') {
         const sort = getSortField(input['sort']);
         const tags = vault.getTags(sort);
-        return textResult(JSON.stringify({ tags, total: tags.length }, null, 2), {
-          action: 'list',
-          total: tags.length,
-        });
+        return textResult(
+          capToolResultText(JSON.stringify({ tags, total: tags.length }, null, 2), {
+            label: 'tags list',
+          }),
+          {
+            action: 'list',
+            total: tags.length,
+          },
+        );
       }
 
       const name = getStringField(input, 'name');
@@ -90,7 +96,10 @@ export function createTagsTool(deps: ObsidianToolDeps): ToolSpec {
       }
       const verbose = getBooleanField(input, 'verbose') ?? false;
       const info = vault.getTagInfo(name, verbose);
-      return textResult(JSON.stringify(info, null, 2), { action: 'info', name: info.name });
+      return textResult(
+        capToolResultText(JSON.stringify(info, null, 2), { label: 'tag info' }),
+        { action: 'info', name: info.name },
+      );
     },
   };
 }

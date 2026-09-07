@@ -59,6 +59,21 @@ describe('createSubagentTool', () => {
     });
   });
 
+  it('caps parent-visible spawn_agent text when the child dumps a large body', async () => {
+    const { runner } = createRunner(async () => 'x'.repeat(80_000));
+    const tool = createSubagentTool(runner);
+
+    const result = await tool.execute('huge-child', {
+      label: 'Dump',
+      message: 'return everything',
+      run_in_background: false,
+    }) as { content: Array<{ type: string; text: string }> };
+    const text = result.content[0]?.text ?? '';
+
+    expect(text.length).toBeLessThanOrEqual(50_000);
+    expect(text).toContain('[spawn_agent parent text truncated to 50000 characters]');
+  });
+
   it('returns a compact structured report to the parent while preserving blocking terminal text', async () => {
     const report = {
       schemaVersion: 1 as const,

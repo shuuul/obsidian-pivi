@@ -8,7 +8,7 @@ import {
   withAgentReportOutcome,
 } from '@pivi/agent/session/continuationSchemas';
 import { TOOL_SPAWN_AGENT } from '@pivi/agent/tools';
-import { textResult } from '@pivi/agent/tools/toolResult';
+import { capToolResultText, textResult } from '@pivi/agent/tools/toolResult';
 
 export interface PiSubagentQueryRunner {
   query(options: { abortController?: AbortController; systemPrompt: string }, prompt: string): Promise<string>;
@@ -21,6 +21,10 @@ export interface PiSubagentQueryRunner {
     runningAtStart: number;
   }>;
   waitForResult?(agentId: string): Promise<{ status: 'completed' | 'error'; result: string }>;
+}
+
+function parentVisibleText(text: string): string {
+  return capToolResultText(text, { label: 'spawn_agent parent text' });
 }
 
 function formatBackgroundResult(
@@ -153,10 +157,10 @@ export function createSubagentTool(
             runningAtRequest: launch.runningAtRequest,
             runningAtStart: launch.runningAtStart,
           };
-          return textResult(formatBackgroundResult(launch.agentId, {
+          return textResult(parentVisibleText(formatBackgroundResult(launch.agentId, {
             ...completion,
             result: report ? formatAgentReportForParent(report) : completion.result,
-          }, concurrency), {
+          }, concurrency)), {
             agent_id: launch.agentId,
             concurrency: {
               max_concurrent_subagents: launch.maxConcurrentSubagents,
@@ -185,11 +189,11 @@ export function createSubagentTool(
         const result = await runner.query({ abortController, systemPrompt }, prompt);
         const report = extractRuntimeAgentReport(result, 'completed');
         return report
-          ? textResult(formatAgentReportForParent(report), {
+          ? textResult(parentVisibleText(formatAgentReportForParent(report)), {
             agent_report: report,
             terminal_result: result,
           })
-          : textResult(result);
+          : textResult(parentVisibleText(result));
       } finally {
         signal?.removeEventListener('abort', abortHandler);
       }

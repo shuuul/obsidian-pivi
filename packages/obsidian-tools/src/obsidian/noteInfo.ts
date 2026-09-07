@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 function getOptionalStringField(input: Record<string, unknown>, key: string, message: string): string | undefined {
@@ -91,7 +92,7 @@ export function createNoteInfoTool(deps: ObsidianToolDeps): ToolSpec {
           args.push(`path=${JSON.stringify(notePath)}`);
         }
         const out = await cli.run({ vaultName, args });
-        return textResult(out);
+        return textResult(capCliToolOutput(out));
       }
     },
   };

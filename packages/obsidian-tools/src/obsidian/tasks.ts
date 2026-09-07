@@ -5,6 +5,7 @@ import {
 } from '@pivi/agent/tools';
 import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 type TasksAction = 'list' | 'toggle' | 'done' | 'todo';
@@ -73,7 +74,7 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
         if (input.daily) {
           args.push('daily');
         }
-        return textResult(await cli.run({ vaultName, args }));
+        return textResult(capCliToolOutput(await cli.run({ vaultName, args })));
       }
 
       let targetFile: string | undefined;
@@ -109,7 +110,7 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
       } else if (action === 'todo') {
         args.push('todo');
       }
-      return textResult(await cli.run({ vaultName, args }));
+      return textResult(capCliToolOutput(await cli.run({ vaultName, args })));
     },
   };
 }

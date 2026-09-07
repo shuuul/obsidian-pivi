@@ -5,6 +5,7 @@ import {
 } from '@pivi/agent/tools';
 import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 type HistoryAction = 'files' | 'list' | 'read' | 'restore';
@@ -82,19 +83,19 @@ export function createHistoryTool(deps: ObsidianToolDeps): ToolSpec {
 
       if (action === 'files') {
         const output = await cli.run({ vaultName, args: ['history:list'] });
-        return textResult(output, { action });
+        return textResult(capCliToolOutput(output), { action });
       }
 
       const path = requirePath(input);
       if (action === 'list') {
         const output = await cli.run({ vaultName, args: ['history', `path=${path}`] });
-        return textResult(output, { action, path });
+        return textResult(capCliToolOutput(output), { action, path });
       }
 
       const version = requireVersion(input);
       if (action === 'read') {
         const output = await cli.run({ vaultName, args: ['history:read', `path=${path}`, `version=${version}`] });
-        return textResult(output, { action, path, version });
+        return textResult(capCliToolOutput(output), { action, path, version });
       }
 
       const mutationPath = requireAgentVaultMutationPath(path, vaultPath);

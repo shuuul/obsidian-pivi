@@ -7,6 +7,8 @@ import {
 
 import type { ObsidianToolDeps } from './deps';
 
+const MAX_EDIT_TEXT_CHARS = 50_000;
+
 function requireStringParam(value: unknown, name: string): string {
   if (typeof value !== 'string') {
     throw new Error(`${name} must be a string.`);
@@ -48,7 +50,8 @@ export function createEditNoteTool(deps: ObsidianToolDeps): ToolSpec {
       parameters:
         '`path` or `file`, plus `edits: [{ oldText, newText, replaceAll? }]`. '
         + 'Optional `replaceAll: true` on an item replaces every occurrence; otherwise an ambiguous match fails. '
-        + 'Every item is matched against the original file.',
+        + 'Every item is matched against the original file. '
+        + '`oldText` and `newText` are each capped at 50,000 characters; copy the shortest unique span.',
     },
     parameters: {
       type: 'object',
@@ -92,9 +95,16 @@ export function createEditNoteTool(deps: ObsidianToolDeps): ToolSpec {
           throw new Error(`Invalid edit input: edits[${index}] must be { oldText, newText }.`);
         }
         const record = item as Record<string, unknown>;
+        const oldText = requireStringParam(record.oldText, index === 0 ? 'oldText' : `edits[${index}].oldText`);
+        const newText = requireStringParam(record.newText, index === 0 ? 'newText' : `edits[${index}].newText`);
+        if (oldText.length > MAX_EDIT_TEXT_CHARS || newText.length > MAX_EDIT_TEXT_CHARS) {
+          throw new Error(
+            `Invalid edit input: oldText and newText must each be at most ${MAX_EDIT_TEXT_CHARS} characters. Copy the shortest unique span.`,
+          );
+        }
         return {
-          oldText: requireStringParam(record.oldText, index === 0 ? 'oldText' : `edits[${index}].oldText`),
-          newText: requireStringParam(record.newText, index === 0 ? 'newText' : `edits[${index}].newText`),
+          oldText,
+          newText,
           replaceAll: record.replaceAll === true,
         };
       });

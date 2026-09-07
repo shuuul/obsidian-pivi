@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 export function createCommandTool(deps: ObsidianToolDeps): ToolSpec {
@@ -27,7 +28,7 @@ export function createCommandTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error(`Command not in allowlist: ${id}`);
       }
       const out = await cli.run({ vaultName, args: ['command', `id=${id}`] });
-      return textResult(out || `Executed command ${id}`);
+      return textResult(capCliToolOutput(out || `Executed command ${id}`));
     },
   };
 }

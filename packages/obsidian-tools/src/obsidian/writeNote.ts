@@ -6,6 +6,8 @@ import {
 
 import type { ObsidianToolDeps } from './deps';
 
+const MAX_WRITE_CONTENT_CHARS = 50_000;
+
 type WriteNoteMode = 'create' | 'overwrite' | 'append' | 'prepend';
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
@@ -26,15 +28,15 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
     label: 'Write note',
     description: 'Create, overwrite, append, or prepend note content via vault API. path= or file= required for create/overwrite. mode defaults to overwrite.',
     promptUsage: {
-      summary: 'Write note content. Omit `mode` to overwrite. Keep `append`/`prepend`/`create`. `create` still needs `overwrite: true` to clobber an existing file.',
-      parameters: '`path` or `file`, `content`, optional `mode` (overwrite|append|prepend|create, default overwrite), optional `overwrite` for create.',
+      summary: 'Write note content. Omit `mode` to overwrite. Keep `append`/`prepend`/`create`. `create` still needs `overwrite: true` to clobber an existing file. `content` is capped at 50,000 characters; use `edit` or smaller appends for larger notes.',
+      parameters: '`path` or `file`, `content` (max 50,000 characters), optional `mode` (overwrite|append|prepend|create, default overwrite), optional `overwrite` for create.',
     },
     parameters: {
       type: 'object',
       properties: {
         file: { type: 'string' },
         path: { type: 'string' },
-        content: { type: 'string', description: 'Content to write' },
+        content: { type: 'string', description: 'Content to write (max 50,000 characters)' },
         mode: {
           type: 'string',
           enum: ['create', 'overwrite', 'append', 'prepend'],
@@ -51,6 +53,11 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
       const mode = getWriteMode(input.mode) ?? 'overwrite';
       if (content === undefined) {
         throw new Error('Invalid write input: content is required.');
+      }
+      if (content.length > MAX_WRITE_CONTENT_CHARS) {
+        throw new Error(
+          `Invalid write input: content exceeds ${MAX_WRITE_CONTENT_CHARS} characters. Use edit or smaller appends.`,
+        );
       }
       const result = await vault.writeNote({
         file: getStringField(input, 'file'),

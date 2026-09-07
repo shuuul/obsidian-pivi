@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 export function createEvalTool(deps: ObsidianToolDeps): ToolSpec {
@@ -26,7 +27,7 @@ export function createEvalTool(deps: ObsidianToolDeps): ToolSpec {
         vaultName,
         args: ['eval', `code=${JSON.stringify(code)}`],
       });
-      return textResult(out);
+      return textResult(capCliToolOutput(out));
     },
   };
 }
