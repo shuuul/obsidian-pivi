@@ -90,6 +90,14 @@ describe('release provenance workflow', () => {
     expect(workflow).toContain('persist-credentials: false');
   });
 
+  it('keeps every CI checkout read-only without persisted credentials', () => {
+    expect(ciWorkflow).toMatch(/permissions:\s*\n\s+contents: read/);
+    const checkouts = ciWorkflow.match(/uses:\s+actions\/checkout@[0-9a-f]{40}/g) ?? [];
+    const disabledCredentials = ciWorkflow.match(/persist-credentials: false/g) ?? [];
+    expect(checkouts).toHaveLength(3);
+    expect(disabledCredentials).toHaveLength(checkouts.length);
+  });
+
   it('pins third-party Actions to full commit SHAs and keeps Dependabot coverage', () => {
     const pinPattern = /uses:\s+(actions\/checkout|actions\/setup-node)@[0-9a-f]{40}/g;
     expect(ciWorkflow.match(pinPattern)?.length).toBeGreaterThanOrEqual(2);

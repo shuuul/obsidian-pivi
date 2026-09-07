@@ -28,4 +28,14 @@ describe('Pi compatibility canary workflow', () => {
     expect(workflow).toMatch(/actions\/checkout@[0-9a-f]{40}/);
     expect(workflow).toMatch(/actions\/setup-node@[0-9a-f]{40}/);
   });
+
+  it('isolates read-only compatibility checks from issue-write authority', () => {
+    expect(workflow).toMatch(/permissions:\s*\n\s+contents: read/);
+    expect(workflow).toMatch(/canary:[\s\S]*?outputs:[\s\S]*?persist-credentials: false/);
+    expect(workflow).toMatch(/update-issue:[\s\S]*?permissions:\s*\n\s+issues: write/);
+    const canaryJob = workflow.slice(workflow.indexOf('  canary:'), workflow.indexOf('  update-issue:'));
+    expect(canaryJob).not.toContain('issues: write');
+    const updateIssueJob = workflow.slice(workflow.indexOf('  update-issue:'));
+    expect(updateIssueJob).not.toContain('actions/checkout@');
+  });
 });
