@@ -93,7 +93,8 @@ export function createTemplatesTool(deps: ObsidianToolDeps): ToolSpec {
       if (!activePath) {
         throw new Error('No active file.');
       }
-      requireAgentVaultMutationPath(activePath, vaultPath);
+      const mutationPath = requireAgentVaultMutationPath(activePath, vaultPath);
+      await vault.captureSnapshotBeforeCliMutation(mutationPath);
       const out = await cli.run({ vaultName, args: ['template:insert', `name=${name}`] });
       return textResult(capCliToolOutput(out) || `Inserted template ${name} into ${activePath}`, {
         action,

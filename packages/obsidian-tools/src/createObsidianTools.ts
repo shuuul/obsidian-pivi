@@ -39,6 +39,17 @@ import { createTasksTool } from './obsidian/tasks';
 import { createTemplatesTool } from './obsidian/templates';
 import { createWriteNoteTool } from './obsidian/writeNote';
 
+function isCorePluginEnabled(app: App, id: string): boolean {
+  const internalPlugins = (app as App & {
+    internalPlugins?: {
+      getPluginById?: (pluginId: string) => { enabled?: boolean } | null;
+    };
+  }).internalPlugins;
+  if (typeof internalPlugins?.getPluginById !== 'function') {
+    return true;
+  }
+  return internalPlugins.getPluginById(id)?.enabled !== false;
+}
 
 export function createObsidianTools(
   app: App,
@@ -97,7 +108,12 @@ export function createObsidianTools(
     createLinksTool(deps),
     createPropertiesTool(deps),
     ...(obsidianCliAvailable
-      ? [createHistoryTool(deps), createTasksTool(deps), createTemplatesTool(deps), createBookmarksTool(deps)]
+      ? [
+        createHistoryTool(deps),
+        createTasksTool(deps),
+        ...(isCorePluginEnabled(app, 'templates') ? [createTemplatesTool(deps)] : []),
+        ...(isCorePluginEnabled(app, 'bookmarks') ? [createBookmarksTool(deps)] : []),
+      ]
       : []),
     createDeletePathTool(deps),
     createMovePathTool(deps),
@@ -105,7 +121,7 @@ export function createObsidianTools(
     createMkdirTool(deps),
     createOpenPathTool(deps),
     createAttachmentTool(deps),
-    ...(obsidianCliAvailable ? [createDailyTool(deps)] : []),
+    ...(obsidianCliAvailable && isCorePluginEnabled(app, 'daily-notes') ? [createDailyTool(deps)] : []),
     createGraphTool(deps),
     createTagsTool(deps),
     createBaseTool(deps),

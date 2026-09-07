@@ -170,7 +170,7 @@ export function createHistoryTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('file or path is required.');
       }
       const mutationPath = requireAgentVaultMutationPath(restorePath, vaultPath);
-      await deps.vault.captureSnapshotBeforeRestore(mutationPath);
+      await deps.vault.captureSnapshotBeforeCliMutation(mutationPath);
       await cli.run({
         vaultName,
         args: ['history:restore', `path=${mutationPath}`, `version=${version}`],

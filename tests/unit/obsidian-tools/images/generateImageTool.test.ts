@@ -238,6 +238,73 @@ describe('createGenerateImageTool', () => {
       ]));
   });
 
+  it('omits CLI tools whose required core plugin is disabled', () => {
+    const enabled = new Map([
+      ['templates', { enabled: true }],
+      ['bookmarks', { enabled: false }],
+      ['daily-notes', { enabled: false }],
+    ]);
+    const app = {
+      vault: { getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+      internalPlugins: { getPluginById: (id: string) => enabled.get(id) ?? null },
+    };
+    const settings = {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      defaultReadMaxChars: 100_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
+      bashPermissions: [],
+      allowEval: false,
+      allowExternalRead: false,
+      externalReadDirectories: [],
+      externalDirectoryPermissions: [],
+    };
+
+    const names = createObsidianTools(app as never, settings, { obsidianCliAvailable: true })
+      .map((tool) => tool.name);
+    expect(names).toContain('obsidian_templates');
+    expect(names).not.toContain('obsidian_bookmarks');
+    expect(names).not.toContain('obsidian_daily');
+  });
+
+  it('keeps CLI tools when the private core-plugin registry cannot resolve their ids', () => {
+    const app = {
+      vault: { getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+      internalPlugins: { getPluginById: () => null },
+    };
+    const settings = {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      defaultReadMaxChars: 100_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
+      bashPermissions: [],
+      allowEval: false,
+      allowExternalRead: false,
+      externalReadDirectories: [],
+      externalDirectoryPermissions: [],
+    };
+
+    const names = createObsidianTools(app as never, settings, { obsidianCliAvailable: true })
+      .map((tool) => tool.name);
+    expect(names).toEqual(expect.arrayContaining([
+      'obsidian_templates',
+      'obsidian_bookmarks',
+      'obsidian_daily',
+    ]));
+  });
+
   it('generates an image, saves it as an attachment, and appends the embed', async () => {
     const vault = makeVault();
     const tool = createGenerateImageTool({

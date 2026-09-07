@@ -239,6 +239,23 @@ describe('ObsidianVaultApi', () => {
     expect(hits).toEqual([{ path: 'notes/a.md', line: 1 }]);
   });
 
+  it('searchNotes supports explicit case-sensitive matching', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'Hello world\nhello again' },
+    ]) as never);
+
+    await expect(api.searchNotes({
+      query: 'Hello',
+      path: 'notes/a.md',
+      caseSensitive: true,
+    })).resolves.toEqual([{ path: 'notes/a.md', line: 1 }]);
+    await expect(api.searchNotes({
+      query: 'HELLO',
+      path: 'notes/a.md',
+      caseSensitive: true,
+    })).resolves.toEqual([]);
+  });
+
   it('getNoteInfo returns metadata from cache', async () => {
     const api = new ObsidianVaultApi(makeApp([
       {
@@ -868,12 +885,12 @@ describe('ObsidianVaultApi', () => {
     expect(app.getContent('notes/a.md')).toBe('hello world');
   });
 
-  it('captureSnapshotBeforeRestore snapshots an existing note and skips a deleted path', async () => {
+  it('captureSnapshotBeforeCliMutation snapshots an existing note and skips a missing path', async () => {
     const app = makeApp([{ path: 'notes/a.md', content: 'current' }]);
     const api = new ObsidianVaultApi(app as never);
 
-    await api.captureSnapshotBeforeRestore('notes/a.md');
-    await api.captureSnapshotBeforeRestore('notes/deleted.md');
+    await api.captureSnapshotBeforeCliMutation('notes/a.md');
+    await api.captureSnapshotBeforeCliMutation('notes/deleted.md');
 
     expect(app.getForceAdd()).toHaveBeenCalledTimes(1);
     expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'current');

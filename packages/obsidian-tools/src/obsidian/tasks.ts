@@ -114,9 +114,10 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
       if (!resolved) {
         throw new Error('Task mutation target could not be resolved to an exact Vault path.');
       }
-      requireAgentVaultMutationPath(resolved.path, vaultPath);
+      const mutationPath = requireAgentVaultMutationPath(resolved.path, vaultPath);
+      await vault.captureSnapshotBeforeCliMutation(mutationPath);
 
-      const args = ['task', `path=${JSON.stringify(resolved.path)}`];
+      const args = ['task', `path=${JSON.stringify(mutationPath)}`];
       if (targetLine !== undefined) {
         args.push(`line=${targetLine}`);
       }

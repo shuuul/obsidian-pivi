@@ -81,7 +81,8 @@ export function createDailyTool(deps: ObsidianToolDeps): ToolSpec {
         }
         // The daily CLI can create the note during append/prepend, so the path
         // must be validated independently of the file's current existence.
-        requireAgentVaultMutationPath(dailyPath, vaultPath);
+        const mutationPath = requireAgentVaultMutationPath(dailyPath, vaultPath);
+        await deps.vault.captureSnapshotBeforeCliMutation(mutationPath);
       }
 
       const subcommand = action === 'read' ? 'daily:read' : action === 'append' ? 'daily:append' : 'daily:prepend';

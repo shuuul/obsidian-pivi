@@ -4,6 +4,7 @@ function makeDeps(): ObsidianToolDeps {
   return {
     vault: {
       writeNote: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
+      captureSnapshotBeforeCliMutation: jest.fn().mockResolvedValue(undefined),
     },
     cli: {
       run: jest.fn().mockResolvedValue('created'),
@@ -58,9 +59,38 @@ describe('createWriteNoteTool', () => {
     });
 
     expect(deps.vault.writeNote).not.toHaveBeenCalled();
+    expect(deps.vault.captureSnapshotBeforeCliMutation).not.toHaveBeenCalled();
     expect(deps.cli.run).toHaveBeenCalledWith({
       vaultName: 'vault',
       args: ['create', 'template=Travel', 'path=notes/trip.md'],
     });
+  });
+
+  it('snapshots an existing destination before template overwrite', async () => {
+    const deps = makeDeps();
+    const tool = createWriteNoteTool(deps);
+
+    await tool.execute('call', {
+      path: 'notes/trip.md',
+      mode: 'create',
+      template: 'Travel',
+      overwrite: true,
+    });
+
+    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/trip.md');
+    expect((deps.vault.captureSnapshotBeforeCliMutation as jest.Mock).mock.invocationCallOrder[0])
+      .toBeLessThan((deps.cli.run as jest.Mock).mock.invocationCallOrder[0]!);
+  });
+
+  it('blocks template overwrite when the snapshot fails', async () => {
+    const deps = makeDeps();
+    (deps.vault.captureSnapshotBeforeCliMutation as jest.Mock).mockRejectedValueOnce(new Error('snapshot failed'));
+
+    await expect(createWriteNoteTool(deps).execute('call', {
+      path: 'notes/trip.md',
+      template: 'Travel',
+      overwrite: true,
+    })).rejects.toThrow('snapshot failed');
+    expect(deps.cli.run).not.toHaveBeenCalled();
   });
 });

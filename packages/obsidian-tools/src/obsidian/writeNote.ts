@@ -80,11 +80,14 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
             `Invalid write input: content exceeds ${MAX_WRITE_CONTENT_CHARS} characters. Use edit or smaller appends.`,
           );
         }
-        const mutationPath = path?.trim() || (file?.endsWith('.md') ? file : `${file}.md`);
-        requireAgentVaultMutationPath(mutationPath, vaultPath);
+        const requestedPath = path?.trim() || (file?.endsWith('.md') ? file : `${file}.md`);
+        const mutationPath = requireAgentVaultMutationPath(requestedPath, vaultPath);
+        if (input.overwrite === true) {
+          await vault.captureSnapshotBeforeCliMutation(mutationPath);
+        }
         const args = ['create', `template=${template}`];
         if (path) {
-          args.push(`path=${path}`);
+          args.push(`path=${mutationPath}`);
         } else if (file) {
           args.push(`name=${file}`);
         }

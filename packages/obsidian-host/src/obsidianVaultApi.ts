@@ -439,8 +439,8 @@ export class ObsidianVaultApi {
     return { path: target.path, newPath: normalizedNewPath };
   }
 
-  /** Snapshot current recoverable content before a history restore; deleted paths have no current state. */
-  async captureSnapshotBeforeRestore(path: string): Promise<void> {
+  /** Snapshot current recoverable content before an out-of-process mutation; new/deleted paths have no current state. */
+  async captureSnapshotBeforeCliMutation(path: string): Promise<void> {
     const normalized = this.requireMutationPath(path);
     const current = this.app.vault.getAbstractFileByPath(normalized);
     if (!current) {
@@ -672,13 +672,14 @@ export class ObsidianVaultApi {
     throw new Error(`Search path not found: ${scopePath}`);
   }
 
-  /** In-process vault search (no CLI). Case-insensitive literal substring plus tag:. Listing queries error toward `ls`. */
+  /** In-process vault search (no CLI). Literal substring plus tag:. Listing queries error toward `ls`. */
   async searchNotes(params: {
     query: string;
     path: string;
     limit?: number;
     offset?: number;
     context?: boolean;
+    caseSensitive?: boolean;
   }): Promise<VaultSearchHit[]> {
     const limit = params.limit ?? 50;
     const offset = params.offset ?? 0;
@@ -717,7 +718,7 @@ export class ObsidianVaultApi {
       throw new Error('search requires a vault-relative path to one Markdown note or a non-root folder. Vault-wide search is not allowed.');
     }
     const scopePath = requestedPath.replace(/\/+$/, '');
-    const needle = textQuery.toLowerCase();
+    const needle = params.caseSensitive ? textQuery : textQuery.toLowerCase();
     const hits: VaultSearchHit[] = [];
     const files = this.resolveSearchFiles(scopePath);
     let skipped = 0;
@@ -751,7 +752,8 @@ export class ObsidianVaultApi {
       const content = await this.app.vault.cachedRead(file);
       const lines = content.split('\n');
       for (const [lineIndex, line] of lines.entries()) {
-        if (!line.toLowerCase().includes(needle)) {
+        const searchableLine = params.caseSensitive ? line : line.toLowerCase();
+        if (!searchableLine.includes(needle)) {
           continue;
         }
         const hit: VaultSearchHit = { path: file.path, line: lineIndex + 1 };

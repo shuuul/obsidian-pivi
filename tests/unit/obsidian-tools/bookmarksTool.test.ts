@@ -29,7 +29,7 @@ describe('createBookmarksTool', () => {
     expect(deps.vault.resolveFile).toHaveBeenCalledWith('Recipe', undefined);
     expect(deps.cli.run).toHaveBeenCalledWith({
       vaultName: 'vault',
-      args: ['bookmark', 'path=notes/a.md'],
+      args: ['bookmark', 'file=notes/a.md'],
     });
   });
 

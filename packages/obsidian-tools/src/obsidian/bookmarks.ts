@@ -107,7 +107,7 @@ export function createBookmarksTool(deps: ObsidianToolDeps): ToolSpec {
         if (!resolved) {
           throw new Error('File not found.');
         }
-        args.push(`path=${resolved.path}`);
+        args.push(`file=${resolved.path}`);
       }
       if (folder) {
         args.push(`folder=${folder}`);

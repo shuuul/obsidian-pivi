@@ -84,7 +84,7 @@ export function createNoteInfoTool(deps: ObsidianToolDeps): ToolSpec {
         if (!obsidianCliAvailable) {
           throw apiError;
         }
-        const args = ['file', 'format=json'];
+        const args = ['file'];
         if (file) {
           args.push(`file=${file}`);
         }

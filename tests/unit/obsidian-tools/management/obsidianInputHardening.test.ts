@@ -34,6 +34,7 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
     vaultPath: '/vault',
     vault: {
       createFolder: jest.fn().mockResolvedValue({ path: 'notes/new' }),
+      captureSnapshotBeforeCliMutation: jest.fn().mockResolvedValue(undefined),
       editNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', replacements: 1 }),
       getBaseFiles: jest.fn().mockReturnValue([]),
       getBaseViews: jest.fn().mockResolvedValue({ path: 'bases/a.base', views: [] }),
@@ -104,6 +105,7 @@ describe('obsidian tool input hardening', () => {
     await expect(tool.execute('call', {
       action: 'done', file: 'alias', line: 1,
     })).resolves.toBeDefined();
+    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/a.md');
     (deps.vault.resolveFile as jest.Mock).mockReturnValueOnce({ path: '.pivi/commands/unsafe.md' });
     await expect(tool.execute('call', {
       action: 'toggle', file: 'alias', line: 1,
@@ -684,6 +686,15 @@ describe('obsidian tool input hardening', () => {
     expect(deps.vault.trashPath).not.toHaveBeenCalled();
   });
 
+  it('exposes trash-only deletion without a permanent-delete parameter', async () => {
+    const deps = makeDeps();
+    const tool = createDeletePathTool(deps);
+
+    expect(tool.parameters.properties).not.toHaveProperty('permanent');
+    await tool.execute('call', { path: 'notes/a.md' });
+    expect(deps.vault.trashPath).toHaveBeenCalledWith({ file: undefined, path: 'notes/a.md' });
+  });
+
   it('rejects object-valued move paths before vault access', async () => {
     const deps = makeDeps();
     const tool = createMovePathTool(deps);
@@ -800,6 +811,7 @@ describe('obsidian tool input hardening', () => {
     (deps.cli.run as jest.Mock).mockResolvedValueOnce('notes/daily.md').mockResolvedValueOnce('ok');
     const tool = createDailyTool(deps);
     await expect(tool.execute('call', { action: 'append', content: 'safe' })).resolves.toBeDefined();
+    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/daily.md');
 
     (deps.cli.run as jest.Mock).mockResolvedValueOnce('.pivi/skills/daily.md');
     (deps.vault.resolveFile as jest.Mock).mockReturnValueOnce({ path: '.pivi/skills/daily.md' });
@@ -822,6 +834,7 @@ describe('obsidian tool input hardening', () => {
       details: { action: 'append' },
     });
     expect(deps.vault.resolveFile).not.toHaveBeenCalled();
+    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/new-daily.md');
     expect(deps.cli.run).toHaveBeenNthCalledWith(2, {
       vaultName: 'vault',
       args: ['daily:append', 'content=first entry'],

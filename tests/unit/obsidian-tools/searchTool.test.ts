@@ -4,6 +4,7 @@ function makeDeps(cliEnabled = true): ObsidianToolDeps {
   return {
     vault: {
       searchNotes: jest.fn().mockResolvedValue([]),
+      resolveFile: jest.fn().mockReturnValue(null),
     },
     settings: { cliEnabled },
   } as never;
@@ -90,7 +91,58 @@ describe('createSearchTool promptUsage', () => {
       limit: 50,
       offset: 0,
       context: true,
+      caseSensitive: false,
     });
+  });
+
+  it('passes case sensitivity through API and CLI fallback', async () => {
+    const deps = makeDeps();
+    const tool = createSearchTool(deps);
+
+    await tool.execute('call', {
+      query: 'Hello',
+      path: 'notes',
+      caseSensitive: true,
+    });
+    expect(deps.vault.searchNotes).toHaveBeenCalledWith(expect.objectContaining({ caseSensitive: true }));
+
+    (deps.vault.searchNotes as jest.Mock).mockRejectedValueOnce(new Error('api failed'));
+    Object.assign(deps, { cli: { run: jest.fn().mockResolvedValue('[]') } });
+    await createSearchTool(deps).execute('call', {
+      query: 'Hello',
+      path: 'notes',
+      caseSensitive: true,
+    });
+    expect(deps.cli.run).toHaveBeenCalledWith({
+      vaultName: undefined,
+      args: ['search', 'query="Hello"', 'path="notes"', 'format=json', 'limit=50', 'case'],
+    });
+  });
+
+  it('rejects a CLI fallback that cannot honor a nonzero offset', async () => {
+    const deps = makeDeps();
+    (deps.vault.searchNotes as jest.Mock).mockRejectedValue(new Error('api failed'));
+    Object.assign(deps, { cli: { run: jest.fn() } });
+
+    await expect(createSearchTool(deps).execute('call', {
+      query: 'hello',
+      path: 'notes',
+      offset: 25,
+    })).rejects.toThrow('cannot honor offset=25');
+    expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects a CLI fallback that cannot constrain search to one note', async () => {
+    const deps = makeDeps();
+    (deps.vault.searchNotes as jest.Mock).mockRejectedValue(new Error('api failed'));
+    (deps.vault.resolveFile as jest.Mock).mockReturnValue({ path: 'notes/a.md' });
+    Object.assign(deps, { cli: { run: jest.fn() } });
+
+    await expect(createSearchTool(deps).execute('call', {
+      query: 'hello',
+      path: 'notes/a.md',
+    })).rejects.toThrow('cannot constrain search to the note notes/a.md');
+    expect(deps.cli.run).not.toHaveBeenCalled();
   });
 
   it('caps CLI fallback stdout', async () => {

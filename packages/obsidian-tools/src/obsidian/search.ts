@@ -131,11 +131,11 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
     name: TOOL_OBSIDIAN_SEARCH,
     label: 'Search vault',
     description: obsidianCliAvailable
-      ? 'Search Markdown note contents with a case-insensitive literal substring, or tag:name. Path is required and must be one Markdown note or a non-root folder. Not regex and not Obsidian in-app search. Use ls for folder listing. Falls back to CLI on API errors.'
-      : 'Search Markdown note contents with a case-insensitive literal substring, or tag:name. Path is required and must be one Markdown note or a non-root folder. Not regex and not Obsidian in-app search. Use ls for folder listing. No CLI fallback is available.',
+      ? 'Search Markdown note contents with a literal substring, or tag:name. Search is case-insensitive unless caseSensitive is true. Path is required and must be one Markdown note or a non-root folder. Not regex and not Obsidian in-app search. Use ls for folder listing. Folder searches fall back to CLI on API errors.'
+      : 'Search Markdown note contents with a literal substring, or tag:name. Search is case-insensitive unless caseSensitive is true. Path is required and must be one Markdown note or a non-root folder. Not regex and not Obsidian in-app search. Use ls for folder listing. No CLI fallback is available.',
     promptUsage: {
-      summary: `Case-insensitive literal substring plus optional \`tag:name\`. \`path\` is required: one Markdown note or a non-root folder. Vault-wide scans (omitted, empty, \`/\`, or vault-root \`path\`) are rejected. Not regex and not Obsidian in-app search. Use search to locate notes and match positions, never as a content-read backdoor: \`context: true\` dumps are not a substitute for reading note bodies. Empty, \`*\`, \`**\`, and \`path:\`-only listing queries error toward \`ls\`.${obsidianCliAvailable ? ' Falls back to CLI on API errors.' : ' No CLI fallback is available.'}`,
-      parameters: '`query` required plain substring or tag:name; `path` required Markdown note or non-root folder; `limit?` 1–200, default 50; `offset?` 0-based continuation from `nextOffset`; `context?`; `format?` text|json.',
+      summary: `Literal substring plus optional \`tag:name\`; matching is case-insensitive unless \`caseSensitive\` is true. \`path\` is required: one Markdown note or a non-root folder. Vault-wide scans (omitted, empty, \`/\`, or vault-root \`path\`) are rejected. Not regex and not Obsidian in-app search. Use search to locate notes and match positions, never as a content-read backdoor: \`context: true\` dumps are not a substitute for reading note bodies. Empty, \`*\`, \`**\`, and \`path:\`-only listing queries error toward \`ls\`.${obsidianCliAvailable ? ' Folder searches fall back to CLI on API errors. Single-note searches and nonzero offsets never fall back because the CLI cannot preserve those scopes.' : ' No CLI fallback is available.'}`,
+      parameters: '`query` required plain substring or tag:name; `path` required Markdown note or non-root folder; `limit?` 1–200, default 50; `offset?` 0-based continuation from `nextOffset`; `context?`; `caseSensitive?`; `format?` text|json.',
     },
     parameters: {
       type: 'object',
@@ -160,6 +160,7 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
           description: '0-based hit offset; use the previous response nextOffset to continue',
         },
         context: { type: 'boolean', description: 'Include ±2 truncated context lines per match (API). CLI fallback uses search:context.' },
+        caseSensitive: { type: 'boolean', description: 'Use case-sensitive matching (default false).' },
         format: { type: 'string', enum: ['text', 'json'] },
       },
       required: ['query', 'path'],
@@ -184,6 +185,7 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
       const limit = getIntegerField(input, 'limit') ?? DEFAULT_SEARCH_LIMIT;
       const offset = getIntegerField(input, 'offset') ?? 0;
       const context = getBooleanField(input, 'context');
+      const caseSensitive = getBooleanField(input, 'caseSensitive') ?? false;
       const format = getSearchFormat(input) ?? 'json';
       if (offset < 0) {
         throw new Error('Invalid search input: offset must be a non-negative integer.');
@@ -199,6 +201,7 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
           limit,
           offset,
           context,
+          caseSensitive,
         }) as SearchHit[];
         const page = serializeSearchPage(hits, offset, limit, format);
         return textResult(page.payload, {
@@ -211,6 +214,18 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
         if (!obsidianCliAvailable) {
           throw apiError;
         }
+        if (vault.resolveFile(undefined, folder)) {
+          throw new Error(
+            `Vault API search failed and the Obsidian CLI fallback cannot constrain search to the note ${folder}. Retry the note search or use read.`,
+            { cause: apiError },
+          );
+        }
+        if (offset > 0) {
+          throw new Error(
+            `Vault API search failed and the Obsidian CLI fallback cannot honor offset=${offset}. Retry with offset=0 or narrow path.`,
+            { cause: apiError },
+          );
+        }
         const sub = context ? 'search:context' : 'search';
         const args = [
           `${sub}`,
@@ -219,6 +234,9 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
           `format=${format === 'text' ? 'text' : 'json'}`,
           `limit=${limit}`,
         ];
+        if (caseSensitive) {
+          args.push('case');
+        }
         const out = await cli.run({ vaultName, args });
         return textResult(capCliToolOutput(out));
       }
