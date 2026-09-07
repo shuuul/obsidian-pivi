@@ -12,6 +12,7 @@ import { type ChatUiCompositionHost, type ChatUiSessionHost } from './chatUiComp
 import {
   appendBashPermissions as persistBashPermissions,
   appendExternalReadDirectory as persistExternalReadDirectory,
+  appendObsidianCommandPermission as persistObsidianCommandPermission,
   cloneChatCustomProviders,
   requireWorkspace,
 } from './createUiPortHelpers';
@@ -76,6 +77,7 @@ export function createChatUiPorts(
       environmentVariables: getRuntimeEnvironmentText(projected),
       externalReadDirectories: [...tools.externalReadDirectories],
       bashPermissions: [...tools.bashPermissions],
+      obsidianCommandPermissions: [...tools.commandAllowlist],
       hiddenSlashCommands: [...projected.hiddenSlashCommands],
       modelCatalog: {
         addedProviders: [...modelCatalog.addedProviders],
@@ -191,6 +193,9 @@ export function createChatUiPorts(
       },
       async appendExternalReadDirectory(directory) {
         await persistExternalReadDirectory(host, directory);
+      },
+      async appendObsidianCommandPermission(commandId) {
+        await persistObsidianCommandPermission(host, commandId);
       },
     },
   };

@@ -14,12 +14,12 @@ import type { App } from 'obsidian';
 import { createAttachmentTool } from './obsidian/attachment';
 import { createBaseTool } from './obsidian/base';
 import { createBashTool } from './obsidian/bash';
+import { createBookmarksTool } from './obsidian/bookmarks';
 import { createCommandTool } from './obsidian/command';
 import { createDailyTool } from './obsidian/daily';
 import { createDeletePathTool } from './obsidian/deletePath';
 import type { ObsidianToolDeps } from './obsidian/deps';
 import { createEditNoteTool } from './obsidian/editNote';
-import { createEvalTool } from './obsidian/eval';
 import { createGenerateImageTool } from './obsidian/generateImage';
 import { createGraphTool } from './obsidian/graph';
 import { createHistoryTool } from './obsidian/history';
@@ -35,8 +35,20 @@ import { createReadNoteTool } from './obsidian/readNote';
 import { createSearchTool } from './obsidian/search';
 import { createTagsTool } from './obsidian/tags';
 import { createTasksTool } from './obsidian/tasks';
+import { createTemplatesTool } from './obsidian/templates';
 import { createWriteNoteTool } from './obsidian/writeNote';
 
+function isCorePluginEnabled(app: App, id: string): boolean {
+  const internalPlugins = (app as App & {
+    internalPlugins?: {
+      getPluginById?: (pluginId: string) => { enabled?: boolean } | null;
+    };
+  }).internalPlugins;
+  if (typeof internalPlugins?.getPluginById !== 'function') {
+    return true;
+  }
+  return internalPlugins.getPluginById(id)?.enabled !== false;
+}
 
 export function createObsidianTools(
   app: App,
@@ -94,14 +106,21 @@ export function createObsidianTools(
     createNoteInfoTool(deps),
     createLinksTool(deps),
     createPropertiesTool(deps),
-    ...(obsidianCliAvailable ? [createHistoryTool(deps), createTasksTool(deps)] : []),
+    ...(obsidianCliAvailable
+      ? [
+        createHistoryTool(deps),
+        createTasksTool(deps),
+        ...(isCorePluginEnabled(app, 'templates') ? [createTemplatesTool(deps)] : []),
+        ...(isCorePluginEnabled(app, 'bookmarks') ? [createBookmarksTool(deps)] : []),
+      ]
+      : []),
     createDeletePathTool(deps),
     createMovePathTool(deps),
     createListPathTool(deps),
     createMkdirTool(deps),
     createOpenPathTool(deps),
     createAttachmentTool(deps),
-    ...(obsidianCliAvailable ? [createDailyTool(deps)] : []),
+    ...(obsidianCliAvailable && isCorePluginEnabled(app, 'daily-notes') ? [createDailyTool(deps)] : []),
     createGraphTool(deps),
     createTagsTool(deps),
     createBaseTool(deps),
@@ -111,15 +130,11 @@ export function createObsidianTools(
     tools.push(createGenerateImageTool(deps));
   }
 
-  if (settings.allowCommand && obsidianCliAvailable) {
+  if (obsidianCliAvailable) {
     tools.push(createCommandTool(deps));
   }
   if (settings.allowBash) {
     tools.push(createBashTool(deps));
   }
-  if (settings.allowEval && obsidianCliAvailable) {
-    tools.push(createEvalTool(deps));
-  }
-
   return tools.filter((tool) => !isDisabledToolName(disabledTools, tool.name));
 }

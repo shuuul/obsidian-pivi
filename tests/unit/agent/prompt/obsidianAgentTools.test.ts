@@ -57,6 +57,21 @@ describe('registered tool prompt descriptors', () => {
     expect(section).toContain('Parameters: `schemaMarker`');
   });
 
+  it.each([true, false])('describes the CLI-dependent Base query action when CLI availability is %s', (available) => {
+    const section = buildRegisteredToolsSection({
+      obsidianTools: ['obsidian_base'],
+      toolSpecs: [spec('obsidian_base', 'baseMarker')],
+      obsidianCliAvailable: available,
+      includeMcp: false,
+      includeSkill: false,
+      includeSubagent: false,
+      includeWebSearch: false,
+    });
+    expect(section).toContain(available
+      ? 'query action requires Obsidian CLI'
+      : 'query action is unavailable without Obsidian CLI');
+  });
+
   it('uses a factory-owned usage override when present', () => {
     const guided = spec('pivi_commands', 'schemaMarker');
     guided.promptUsage = {

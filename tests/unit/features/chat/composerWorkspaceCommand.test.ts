@@ -48,7 +48,7 @@ describe('resolveComposerWorkspaceCommand', () => {
 
     const token = createInlineContextToken(selectedTextContext);
     expect(result).toEqual({
-      displayContent: `Review this:\n${token}\nFile: example focus on naming`,
+      displayContent: '/review focus on naming',
       promptContent: `Review this:\n${token}\nFile: example focus on naming`,
       missingSelectedText: false,
     });
@@ -72,7 +72,7 @@ describe('resolveComposerWorkspaceCommand', () => {
 
     await expect(resolveComposerWorkspaceCommand('/review', [reviewCommand], getContext))
       .resolves.toEqual({
-        displayContent: 'Review this:\n\nFile: ',
+        displayContent: '/review',
         promptContent: 'Review this:\n\nFile: ',
         missingSelectedText: true,
       });

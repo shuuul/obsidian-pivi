@@ -14,7 +14,6 @@ const settings = {
   allowBash: false,
   bashAllowlist: [],
   bashPermissions: [],
-  allowEval: false,
   allowExternalRead: false,
   externalReadDirectories: [],
   externalDirectoryPermissions: [],

@@ -39,7 +39,7 @@ describe('release provenance workflow', () => {
   it('verifies that the uploaded bytes match the tag build', () => {
     expect(workflow).toContain('gh release download "$RELEASE_TAG_RESOLVED"');
     expect(workflow).toContain(
-      'cmp --silent "$file" "$download_dir/$file"',
+      'cmp --silent "release-bundle/$file" "$download_dir/$file"',
     );
     expect(workflow).toContain('sha256sum "$download_dir/main.js"');
     expect(workflow).not.toContain('gh attestation verify');
@@ -58,7 +58,8 @@ describe('release provenance workflow', () => {
     expect(workflow).toContain('"$GITHUB_REPOSITORY"');
     expect(workflow).toContain('Release notes are empty for $RELEASE_TAG_RESOLVED.');
     expect(workflow).not.toContain('Pivi Obsidian plugin v%s');
-    expect(workflow).toContain('IS_PRERELEASE=true');
+    expect(workflow).toContain('echo "is-prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"');
+    expect(workflow).toContain('IS_PRERELEASE: ${{ needs.build.outputs.is-prerelease }}');
     expect(workflow).toContain('--prerelease');
     expect(workflow).toContain('node scripts/write-release-manifest.js');
     expect(workflow).not.toContain('See CHANGELOG.md for details.');
@@ -81,6 +82,20 @@ describe('release provenance workflow', () => {
     expect(workflow).toContain('uses: ./.github/actions/quality-gates');
     expect(workflow.indexOf('uses: ./.github/actions/quality-gates'))
       .toBeLessThan(workflow.indexOf('Create or update GitHub release'));
+  });
+
+  it('keeps checkout/build read-only and grants write access only to publishing', () => {
+    expect(workflow).toMatch(/build:[\s\S]*?permissions:\s*\n\s+contents: read/);
+    expect(workflow).toMatch(/publish:[\s\S]*?permissions:\s*\n\s+contents: write/);
+    expect(workflow).toContain('persist-credentials: false');
+  });
+
+  it('keeps every CI checkout read-only without persisted credentials', () => {
+    expect(ciWorkflow).toMatch(/permissions:\s*\n\s+contents: read/);
+    const checkouts = ciWorkflow.match(/uses:\s+actions\/checkout@[0-9a-f]{40}/g) ?? [];
+    const disabledCredentials = ciWorkflow.match(/persist-credentials: false/g) ?? [];
+    expect(checkouts).toHaveLength(3);
+    expect(disabledCredentials).toHaveLength(checkouts.length);
   });
 
   it('pins third-party Actions to full commit SHAs and keeps Dependabot coverage', () => {

@@ -27,6 +27,8 @@ export const TOOL_OBSIDIAN_DAILY = 'obsidian_daily' as const;
 export const TOOL_OBSIDIAN_GRAPH = 'obsidian_graph' as const;
 export const TOOL_OBSIDIAN_TAGS = 'obsidian_tags' as const;
 export const TOOL_OBSIDIAN_BASE = 'obsidian_base' as const;
+export const TOOL_OBSIDIAN_TEMPLATES = 'obsidian_templates' as const;
+export const TOOL_OBSIDIAN_BOOKMARKS = 'obsidian_bookmarks' as const;
 export const TOOL_PIVI_SESSIONS = 'pivi_sessions' as const;
 /** Main-Agent-only capability management (spec 040); not part of OBSIDIAN_AGENT_TOOLS. */
 export const TOOL_PIVI_MCP = 'pivi_mcp' as const;
@@ -67,6 +69,8 @@ export const OBSIDIAN_AGENT_TOOLS = [
   TOOL_OBSIDIAN_GRAPH,
   TOOL_OBSIDIAN_TAGS,
   TOOL_OBSIDIAN_BASE,
+  TOOL_OBSIDIAN_TEMPLATES,
+  TOOL_OBSIDIAN_BOOKMARKS,
   TOOL_PIVI_SESSIONS,
 ] as const;
 

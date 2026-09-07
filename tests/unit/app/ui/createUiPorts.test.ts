@@ -219,6 +219,7 @@ describe('UI port adapters', () => {
       enableAutoTitleGeneration: true,
       environmentVariables: expect.any(String),
       externalReadDirectories: expect.any(Array),
+      obsidianCommandPermissions: expect.any(Array),
       hiddenSlashCommands: expect.any(Array),
       modelCatalog: expect.objectContaining({
         addedProviders: expect.any(Array),
@@ -675,6 +676,45 @@ describe('UI port adapters', () => {
     );
     expect(invalidateSlashCatalog).toHaveBeenCalledTimes(1);
     expect(refreshRuntimePrompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists normalized CLI and command settings through the host adapter', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const host = {
+      app: {},
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        agentSettings: { ...DEFAULT_PIVI_SETTINGS.agentSettings },
+      } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+
+    await ports.complex.tools.saveSettings({
+      cliEnabled: true,
+      cliPath: '  /opt/bin/obsidian  ',
+      cliTimeoutMs: 999_999,
+      allowCommand: true,
+      commandAllowlist: [' workspace:split ', '', 'workspace:split'],
+    });
+
+    expect(host.settings.agentSettings.obsidianTools).toMatchObject({
+      cliEnabled: true,
+      cliPath: '/opt/bin/obsidian',
+      cliTimeoutMs: 300_000,
+      allowCommand: true,
+      commandAllowlist: ['workspace:split'],
+    });
+    expect(saveSettings).toHaveBeenCalledTimes(1);
   });
 
   it('installs official skills and records successful bundle metadata', async () => {

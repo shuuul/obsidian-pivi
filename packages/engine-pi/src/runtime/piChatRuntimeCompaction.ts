@@ -395,6 +395,13 @@ export function getAutoCompactionRecoveryWarning(
   return deps.plugin.getCompactionRecoveryWarning?.() ?? null;
 }
 
+const DEFAULT_CONTINUATION_BLOCKED_WARNING = 'This tool result is too large to send. The next model request was blocked. Run /compact or start a new session.';
+
+/** Localized notice when in-turn compaction cannot make the next request safe. */
+export function getContinuationBlockedWarning(deps: PiChatCompactionDeps): string {
+  return deps.plugin.getContinuationBlockedWarning?.() ?? DEFAULT_CONTINUATION_BLOCKED_WARNING;
+}
+
 export function estimateProjectedTurnTokens(
   deps: PiChatCompactionDeps,
   turn: PreparedChatTurn,

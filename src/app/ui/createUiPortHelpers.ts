@@ -105,6 +105,23 @@ export async function appendExternalReadDirectory(
   }
 }
 
+export async function appendObsidianCommandPermission(
+  host: PiviChatCompositionHost,
+  commandId: string,
+): Promise<void> {
+  const trimmed = commandId.trim();
+  if (!trimmed) return;
+  const current = getObsidianToolsSettingsFromBag(host.settings);
+  host.settings.agentSettings.obsidianTools = {
+    ...current,
+    commandAllowlist: [...new Set([...current.commandAllowlist, trimmed])],
+  };
+  await host.saveSettings();
+  for (const view of host.getAllViews()) {
+    await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
+  }
+}
+
 export function cloneChatCustomProviders(
   providers: ChatSettingsSnapshot['modelCatalog']['customProviders'],
 ): ChatSettingsSnapshot['modelCatalog']['customProviders'] {

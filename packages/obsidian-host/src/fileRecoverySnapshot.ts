@@ -28,7 +28,7 @@ function getFileRecoveryPlugin(app: App): FileRecoveryInternalPlugin | null {
  * Capture a required pre-mutation snapshot through Obsidian File Recovery's
  * private `forceAdd` API. Unsupported file types have no File Recovery history.
  */
-export async function captureFileRecoverySnapshot(app: App, file: TFile): Promise<void> {
+export async function captureFileRecoverySnapshot(app: App, file: TFile, editorContent?: string): Promise<void> {
   if (!RECOVERABLE_EXTENSIONS.has(file.extension)) {
     return;
   }
@@ -41,7 +41,7 @@ export async function captureFileRecoverySnapshot(app: App, file: TFile): Promis
   }
 
   try {
-    const content = await app.vault.cachedRead(file);
+    const content = editorContent ?? await app.vault.cachedRead(file);
     await fileRecovery.forceAdd(file.path, content);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

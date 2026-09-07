@@ -188,6 +188,7 @@ function makeApp(
     },
     workspace: {
       getActiveFile: () => null,
+      getActiveViewOfType: jest.fn(),
       getLastOpenFiles: () => [...opened],
       getLeaf: () => ({
         openFile: async (file: { path: string }) => {
@@ -235,8 +236,25 @@ describe('ObsidianVaultApi', () => {
       { path: 'notes/b.md', content: 'nothing here' },
     ]) as never);
 
-    const hits = await api.searchNotes({ query: 'hello', limit: 10 });
+    const hits = await api.searchNotes({ query: 'hello', path: 'notes/a.md', limit: 10 });
     expect(hits).toEqual([{ path: 'notes/a.md', line: 1 }]);
+  });
+
+  it('searchNotes supports explicit case-sensitive matching', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'Hello world\nhello again' },
+    ]) as never);
+
+    await expect(api.searchNotes({
+      query: 'Hello',
+      path: 'notes/a.md',
+      caseSensitive: true,
+    })).resolves.toEqual([{ path: 'notes/a.md', line: 1 }]);
+    await expect(api.searchNotes({
+      query: 'HELLO',
+      path: 'notes/a.md',
+      caseSensitive: true,
+    })).resolves.toEqual([]);
   });
 
   it('getNoteInfo returns metadata from cache', async () => {
@@ -310,6 +328,10 @@ describe('ObsidianVaultApi', () => {
       count: 2,
       files: ['notes/a.md', 'notes/b.md'],
     });
+    expect(api.getTags('name', { path: 'notes/a.md' })).toEqual([
+      { name: 'area', count: 1 },
+      { name: 'project', count: 1 },
+    ]);
   });
 
   it('analyzes graph metadata without shelling out to the CLI', () => {
@@ -351,7 +373,7 @@ describe('ObsidianVaultApi', () => {
 
     await expect(api.searchNotes({ query: '*', path: 'month', limit: 10 }))
       .rejects.toThrow('Use `ls` with `path` instead');
-    await expect(api.searchNotes({ query: 'path:month', limit: 10 }))
+    await expect(api.searchNotes({ query: 'path:month', path: 'month', limit: 10 }))
       .rejects.toThrow('Use `ls` with `path` instead');
   });
 
@@ -371,6 +393,17 @@ describe('ObsidianVaultApi', () => {
       ]);
     await expect(api.searchNotes({ query: 'hello', path: 'missing.md', limit: 10 }))
       .rejects.toThrow('Search path not found: missing.md');
+  });
+
+  it('searchNotes rejects vault-wide and vault-root paths', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'hello world' },
+    ], ['notes']) as never);
+
+    await expect(api.searchNotes({ query: 'hello', path: '', limit: 10 }))
+      .rejects.toThrow('Vault-wide search is not allowed');
+    await expect(api.searchNotes({ query: 'hello', path: '/', limit: 10 }))
+      .rejects.toThrow('Vault-wide search is not allowed');
   });
 
   it('getLinks returns backlinks from resolvedLinks', () => {
@@ -487,6 +520,117 @@ describe('ObsidianVaultApi', () => {
     });
 
     expect(app.getContent('notes/a.md')).toBe('line1\nline2\n');
+  });
+
+  it('writeNote prepend inserts after YAML frontmatter', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: '---\ntitle: a\n---\nbody\n' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.writeNote({
+      path: 'notes/a.md',
+      content: 'head\n',
+      mode: 'prepend',
+    });
+
+    expect(app.getContent('notes/a.md')).toBe('---\ntitle: a\n---\nhead\nbody\n');
+  });
+
+  it('writeNote prepend inline concatenates after frontmatter without a newline', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: '---\ntitle: a\n---\nbody' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.writeNote({
+      path: 'notes/a.md',
+      content: 'HEAD',
+      mode: 'prepend',
+      inline: true,
+    });
+
+    expect(app.getContent('notes/a.md')).toBe('---\ntitle: a\n---\nHEADbody');
+  });
+
+  it.each(['\n', '\r\n'])('preserves empty frontmatter with %j line endings', async (newline) => {
+    const frontmatter = `---${newline}---${newline}`;
+    const app = makeApp([{ path: 'notes/a.md', content: `${frontmatter}body` }]);
+    await new ObsidianVaultApi(app as never).writeNote({
+      path: 'notes/a.md', content: 'HEAD', mode: 'prepend', inline: true,
+    });
+    expect(app.getContent('notes/a.md')).toBe(`${frontmatter}HEADbody`);
+  });
+
+  it.each(['---\n---', '---\ntitle: a\n---', '---\r\ntitle: a\r\n---'])(
+    'keeps the closing YAML delimiter on its own line for %j', async (content) => {
+      const app = makeApp([{ path: 'notes/a.md', content }]);
+      await new ObsidianVaultApi(app as never).writeNote({
+        path: 'notes/a.md', content: 'HEAD', mode: 'prepend', inline: true,
+      });
+      expect(app.getContent('notes/a.md')).toBe(`${content}\nHEAD`);
+    },
+  );
+
+  describe('bound editor insertion', () => {
+    function setup() {
+      const app = makeApp([{ path: 'notes/a.md', content: 'saved' }]);
+      const editor = {
+        getValue: jest.fn().mockReturnValue('unsaved content'),
+        listSelections: jest.fn().mockReturnValue([{ anchor: { line: 0, ch: 2 }, head: { line: 0, ch: 4 } }]),
+        replaceSelection: jest.fn(),
+      };
+      const view = { app, file: app.vault.getAbstractFileByPath('notes/a.md'), editor };
+      app.workspace.getActiveViewOfType.mockReturnValue(view);
+      const api = new ObsidianVaultApi(app as never);
+      return { app, editor, view, api };
+    }
+
+    it('snapshots unsaved content before replacing the bound selection', async () => {
+      const { app, editor, api } = setup();
+      const target = api.prepareActiveNoteInsertion();
+      expect(target.path).toBe('notes/a.md');
+      expect(target.title).toBe('a');
+      await target.insert('template');
+      expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'unsaved content');
+      expect(editor.replaceSelection).toHaveBeenCalledWith('template');
+      expect(app.getForceAdd().mock.invocationCallOrder[0])
+        .toBeLessThan(editor.replaceSelection.mock.invocationCallOrder[0]!);
+    });
+
+    it.each(['before snapshot', 'during snapshot'])('rejects a switched view %s', async (when) => {
+      const { app, editor, api } = setup();
+      const target = api.prepareActiveNoteInsertion();
+      const switchView = (): void => { app.workspace.getActiveViewOfType.mockReturnValue({}); };
+      if (when === 'before snapshot') switchView();
+      else app.getForceAdd().mockImplementationOnce(async () => { switchView(); });
+      await expect(target.insert('template')).rejects.toThrow('target editor changed');
+      expect(editor.replaceSelection).not.toHaveBeenCalled();
+    });
+
+    it.each(['content', 'selection', 'file'])('rejects changed %s during snapshot', async (change) => {
+      const { app, editor, view, api } = setup();
+      const target = api.prepareActiveNoteInsertion();
+      app.getForceAdd().mockImplementationOnce(async () => {
+        if (change === 'content') editor.getValue.mockReturnValue('edited');
+        if (change === 'selection') editor.listSelections.mockReturnValue([]);
+        if (change === 'file') view.file = null;
+      });
+      await expect(target.insert('template')).rejects.toThrow('target editor changed');
+      expect(editor.replaceSelection).not.toHaveBeenCalled();
+    });
+
+    it('blocks insertion when recovery fails', async () => {
+      const { app, editor, api } = setup();
+      app.getForceAdd().mockRejectedValueOnce(new Error('snapshot failed'));
+      await expect(api.prepareActiveNoteInsertion().insert('template')).rejects.toThrow('snapshot failed');
+      expect(editor.replaceSelection).not.toHaveBeenCalled();
+    });
+
+    it('rejects a managed target and missing editor before preparing insertion', () => {
+      const { app, view, api } = setup();
+      view.file!.path = '.pivi/commands/unsafe.md';
+      expect(() => api.prepareActiveNoteInsertion()).toThrow(/pivi_commands/);
+      app.workspace.getActiveViewOfType.mockReturnValue(null);
+      expect(() => api.prepareActiveNoteInsertion()).toThrow('No active Markdown editor');
+      expect(app.getForceAdd()).not.toHaveBeenCalled();
+    });
   });
 
   it('trashPath moves a file to trash through FileManager', async () => {
@@ -687,6 +831,10 @@ describe('ObsidianVaultApi', () => {
 
     await api.setProperty(undefined, 'notes/a.md', 'status', 'draft');
     expect(api.getProperties(undefined, 'notes/a.md', 'status').value).toBe('draft');
+    expect(api.getProperties().properties).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'status', count: 1 }),
+    ]));
+    expect(api.getAliases(undefined, 'notes/a.md').aliases).toEqual([]);
 
     await api.removeProperty(undefined, 'notes/a.md', 'status');
     expect(api.getProperties(undefined, 'notes/a.md', 'status').value).toBeUndefined();
@@ -822,14 +970,57 @@ describe('ObsidianVaultApi', () => {
     expect(app.getContent('notes/a.md')).toBe('hello world');
   });
 
-  it('captureSnapshotBeforeRestore snapshots an existing note and skips a deleted path', async () => {
+  it('runCliMutation snapshots an existing note and skips a missing path', async () => {
     const app = makeApp([{ path: 'notes/a.md', content: 'current' }]);
     const api = new ObsidianVaultApi(app as never);
+    const mutate = jest.fn(async () => 'done');
 
-    await api.captureSnapshotBeforeRestore('notes/a.md');
-    await api.captureSnapshotBeforeRestore('notes/deleted.md');
+    await expect(api.runCliMutation('notes/a.md', mutate)).resolves.toBe('done');
+    await api.runCliMutation('notes/deleted.md', mutate);
 
     expect(app.getForceAdd()).toHaveBeenCalledTimes(1);
     expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'current');
+    expect(mutate).toHaveBeenCalledTimes(2);
+  });
+
+  it('runCliMutation blocks an active editor with unsaved content', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'saved' }]);
+    const file = app.vault.getAbstractFileByPath('notes/a.md');
+    app.vault.getAbstractFileByPath = () => file;
+    app.workspace.getActiveViewOfType.mockReturnValue({
+      file,
+      editor: { getValue: () => 'unsaved' },
+    });
+    const mutate = jest.fn(async () => undefined);
+
+    await expect(new ObsidianVaultApi(app as never).runCliMutation('notes/a.md', mutate))
+      .rejects.toThrow('active editor has unsaved changes');
+
+    expect(app.getForceAdd()).not.toHaveBeenCalled();
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it('runCliMutation serializes mutations of the same exact path', async () => {
+    const app = makeApp([]);
+    const api = new ObsidianVaultApi(app as never);
+    const events: string[] = [];
+    let releaseFirst!: () => void;
+    const firstBlocked = new Promise<void>((resolve) => { releaseFirst = resolve; });
+
+    const first = api.runCliMutation('notes/new.md', async () => {
+      events.push('first:start');
+      await firstBlocked;
+      events.push('first:end');
+    });
+    const second = api.runCliMutation('notes/new.md', async () => {
+      events.push('second');
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(events).toEqual(['first:start']);
+
+    releaseFirst();
+    await Promise.all([first, second]);
+    expect(events).toEqual(['first:start', 'first:end', 'second']);
   });
 });

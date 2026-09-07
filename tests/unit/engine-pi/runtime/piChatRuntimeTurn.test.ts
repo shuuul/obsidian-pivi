@@ -527,7 +527,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
     expect(nextTurnUpdate?.context?.messages).toBeDefined();
   });
 
-  it('omits output tokens from the metadata-refresh usage push', async () => {
+  it.each(['metadata refresh', 'tool continuation'] as const)('omits duplicate output tokens from the %s usage push', async (refreshKind) => {
     const listeners = new Set<(event: AgentEvent) => void>();
     const resolvedModel = model();
     const completed = assistant('stop');
@@ -550,6 +550,20 @@ describe('streamPiChatTurn retry lifecycle', () => {
       content: [{ type: 'text', text: 'Hello' }],
       timestamp: Date.now(),
     };
+    const continuation = assistant('stop');
+    continuation.usage = { ...completed.usage, output: 25, totalTokens: 145 };
+    const toolResult: AgentMessage = {
+      role: 'toolResult',
+      toolCallId: 'call-1',
+      toolName: 'search',
+      content: [{ type: 'text', text: 'Found a note' }],
+      isError: false,
+      timestamp: Date.now(),
+    };
+    if (refreshKind === 'tool continuation') {
+      completed.stopReason = 'toolUse';
+      completed.content = [{ type: 'toolCall', id: 'call-1', name: 'search', arguments: {} }];
+    }
     const state = {
       messages: [] as AgentMessage[],
       model: resolvedModel,
@@ -564,6 +578,24 @@ describe('streamPiChatTurn retry lifecycle', () => {
         for (const listener of listeners) {
           listener({ type: 'message_end', message: user });
           listener({ type: 'message_end', message: completed });
+        }
+        if (refreshKind === 'tool continuation') {
+          state.messages.push(toolResult);
+          for (const listener of listeners) {
+            listener({ type: 'message_end', message: toolResult });
+          }
+          await agent.prepareNextTurnWithContext?.({
+            context: { messages: [...state.messages], systemPrompt: '', tools: [] },
+            message: completed,
+            newMessages: [completed, toolResult],
+            toolResults: [toolResult],
+          });
+          state.messages.push(continuation);
+          for (const listener of listeners) {
+            listener({ type: 'message_end', message: continuation });
+          }
+        }
+        for (const listener of listeners) {
           listener({ type: 'agent_end', messages: [...state.messages] });
         }
       }),
@@ -608,7 +640,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       resolveModel: () => resolvedModel,
       resolveThinkingLevel: () => 'medium',
       authorizeAndSyncAgentModelSelection: jest.fn(async nextModel => nextModel),
-      refreshModelMetadata: async () => true,
+      refreshModelMetadata: async () => refreshKind === 'metadata refresh',
       syncSessionMessages: jest.fn(),
       onUserMessagePersisted: jest.fn(),
     }, turn)) {
@@ -618,13 +650,162 @@ describe('streamPiChatTurn retry lifecycle', () => {
     const usageChunks = chunks.filter(
       (chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage',
     );
-    expect(usageChunks).toHaveLength(2);
+    expect(usageChunks).toHaveLength(refreshKind === 'tool continuation' ? 4 : 2);
     // message_end carries the authoritative usage, including output tokens.
     expect(usageChunks[0]?.usage.outputTokens).toBe(40);
-    // The metadata-refresh push repeats the same assistant message's usage;
-    // re-reporting output tokens would double-count them in the UI generation
-    // clock and inflate the persisted tokens/s.
+    // Pressure/metadata updates must not add to the UI generation clock.
     expect(usageChunks[1]?.usage.outputTokens).toBeUndefined();
-    expect(usageChunks[1]?.usage.contextTokens).toBe(120);
+    expect(usageChunks[1]?.usage.contextTokens).toBeGreaterThanOrEqual(120);
+    const refreshUsage = usageChunks[refreshKind === 'tool continuation' ? 2 : 1]?.usage;
+    expect(refreshUsage).not.toHaveProperty('outputTokens');
+    expect(refreshUsage?.contextTokens).toBeGreaterThanOrEqual(120);
+    expect(usageChunks.map(chunk => chunk.usage.outputTokens)).toEqual(
+      refreshKind === 'tool continuation' ? [40, undefined, undefined, 25] : [40, undefined],
+    );
+    expect(usageChunks.reduce((sum, chunk) => sum + (chunk.usage.outputTokens ?? 0), 0))
+      .toBe(refreshKind === 'tool continuation' ? 65 : 40);
+  });
+
+  it('blocks the next provider request when a trailing tool result overflows the window', async () => {
+    const listeners = new Set<(event: AgentEvent) => void>();
+    const resolvedModel: PiResolvedModel = {
+      ...model(),
+      id: 'qwen3.8-flash-next',
+      name: 'qwen3.8-flash-next',
+      provider: 'custom-openai-compatible-5bbe1d19934e',
+      api: 'openai-completions',
+      contextWindow: 262_144,
+      contextWindowIsAuthoritative: true,
+      maxTokens: 65_536,
+    };
+    const toolAssistant = {
+      ...assistant('toolUse'),
+      provider: resolvedModel.provider,
+      model: resolvedModel.id,
+      api: resolvedModel.api,
+      content: [{ type: 'toolCall', id: 'search-1', name: 'search', arguments: { query: 'nerve' } }],
+      usage: {
+        input: 70_963,
+        output: 440,
+        cacheRead: 0,
+        cacheWrite: 0,
+        totalTokens: 71_403,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+      },
+    } as AssistantMessage;
+    const toolResult = {
+      role: 'toolResult',
+      toolCallId: 'search-1',
+      toolName: 'search',
+      content: [{ type: 'text', text: 'x'.repeat(1_340_014) }],
+      isError: false,
+      timestamp: Date.now(),
+    } as AgentMessage;
+    const persisted = [
+      { role: 'user', content: [{ type: 'text', text: 'search transcripts' }], timestamp: Date.now() } as AgentMessage,
+      toolAssistant,
+    ];
+    const entries = persisted.map((message, index) => ({
+      id: `message-${index}`,
+      parentId: index === 0 ? null : `message-${index - 1}`,
+      timestamp: new Date(index).toISOString(),
+      type: 'message' as const,
+      message,
+    }));
+    const sessionTree = {
+      getLeafId: () => 'leaf-1',
+      getLinearLlmContextEntries: () => entries,
+      getActiveLlmContextEntries: () => entries,
+      loadAgentMessages: () => persisted,
+      getSessionId: () => 'session-1',
+      getVaultRelativeSessionFile: () => '.pivi/sessions/overflow.jsonl',
+      appendUserMessage: jest.fn(() => 'user-1'),
+      appendMessageUi: jest.fn(),
+    };
+    const state = {
+      messages: persisted,
+      model: resolvedModel,
+      systemPrompt: 'prompt',
+      tools: [],
+      thinkingLevel: 'medium' as const,
+    };
+    const agent = {
+      state,
+      prompt: jest.fn(async () => {
+        await agent.prepareNextTurnWithContext?.({
+          context: {
+            messages: [...persisted, toolResult],
+            systemPrompt: 'prompt',
+            tools: [],
+          },
+          message: toolAssistant,
+          newMessages: [...persisted, toolResult],
+          toolResults: [toolResult as never],
+        });
+        throw new Error('provider continuation must not run');
+      }),
+      continue: jest.fn(),
+      subscribe: (listener: (event: AgentEvent) => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      prepareNextTurnWithContext: undefined,
+    } as unknown as Agent;
+    const activeTurn = createActiveTurn();
+    const compaction: PiChatCompactionDeps = {
+      plugin: {
+        getContinuationBlockedWarning: () => 'blocked-continuation',
+      } as PiRuntimeHost,
+      sessionTree: sessionTree as never,
+      agent,
+      compactionState: {
+        autoCompactionInFlight: false,
+        failedAutoAttempts: new Map(),
+        foregroundController: null,
+        generation: 0,
+        prefire: null,
+      },
+      resolveModel: () => resolvedModel,
+      onLeafIdChanged: jest.fn(),
+      onAssistantMessageId: jest.fn(),
+    };
+    const turn = {
+      request: { text: 'search transcripts', images: [] },
+      prompt: 'search transcripts',
+      persistedContent: 'search transcripts',
+      displayContent: 'search transcripts',
+      isCompact: false,
+      mcpMentions: new Set<string>(),
+    } satisfies PreparedChatTurn;
+
+    const chunks: StreamChunk[] = [];
+    for await (const chunk of streamPiChatTurn({
+      activeTurn,
+      agent,
+      compaction,
+      eventAdapter: new PiAgentEventAdapter(),
+      sessionTree: sessionTree as never,
+      resolveModel: () => resolvedModel,
+      resolveThinkingLevel: () => 'medium',
+      authorizeAndSyncAgentModelSelection: async nextModel => nextModel,
+      refreshModelMetadata: async () => false,
+      syncSessionMessages: jest.fn(),
+      onUserMessagePersisted: jest.fn(),
+    }, turn)) {
+      chunks.push(chunk);
+    }
+
+    const usageChunks = chunks.filter(
+      (chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage',
+    );
+    const lastUsage = usageChunks.at(-1)?.usage;
+    expect(lastUsage?.contextTokens).toBe(70_963);
+    expect(lastUsage?.contextTokensIsAuthoritative).toBe(true);
+    expect(lastUsage?.contextEnvelope?.pressureInputTokens).toBeGreaterThan(71_403);
+    expect(chunks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: 'notice', content: 'blocked-continuation' }),
+    ]));
+    expect(chunks.some(chunk => chunk.type === 'error')).toBe(false);
+    expect(agent.continue).not.toHaveBeenCalled();
   });
 });

@@ -28,7 +28,8 @@ export class TabCapabilityApprovalBridge {
     });
     const bash = persistence.getBashPermissions?.() ?? [];
     const external = persistence.getExternalDirectories?.() ?? [];
-    this.cache.replace(bash, external);
+    const commands = persistence.getObsidianCommands?.() ?? [];
+    this.cache.replace(bash, external, commands);
   }
 
   bindInputController(controller: InputController): void {
@@ -38,7 +39,8 @@ export class TabCapabilityApprovalBridge {
   refreshFromSettings(): void {
     const bash = this.persistence.getBashPermissions?.() ?? [];
     const external = this.persistence.getExternalDirectories?.() ?? [];
-    this.cache.replace(bash, external);
+    const commands = this.persistence.getObsidianCommands?.() ?? [];
+    this.cache.replace(bash, external, commands);
   }
 
   getPort(): CapabilityApprovalPort {

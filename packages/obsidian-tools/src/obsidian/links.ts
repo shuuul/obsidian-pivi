@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
@@ -22,26 +23,38 @@ export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
         path: { type: 'string', description: 'Vault-relative path' },
         direction: { type: 'string', enum: ['outgoing', 'backlinks'] },
         format: { type: 'string', enum: ['json', 'tsv', 'csv'], description: 'CLI fallback only; API path always returns JSON' },
+        counts: { type: 'boolean', description: 'Backlinks CLI fallback: include link counts.' },
+        total: { type: 'boolean', description: 'Return only the link count.' },
       },
       additionalProperties: false,
     },
     async execute(_id, params) {
-      const { file, path: notePath, direction, format } = params as {
+      const { file, path: notePath, direction, format, counts, total } = params as {
         file?: string;
         path?: string;
         direction?: string;
         format?: string;
+        counts?: boolean;
+        total?: boolean;
       };
       const dir = direction === 'backlinks' ? 'backlinks' : 'outgoing';
       try {
         const result = vault.getLinks(file, notePath, dir);
+        if (total === true) {
+          return textResult(String(result.links.length), { direction: dir, total: result.links.length });
+        }
         return textResult(JSON.stringify(result, null, 2));
       } catch (apiError) {
         if (!obsidianCliAvailable) {
           throw apiError;
         }
         const sub = dir === 'backlinks' ? 'backlinks' : 'links';
-        const args = [sub, `format=${format ?? 'json'}`];
+        const args = [sub];
+        if (dir === 'backlinks') {
+          args.push(`format=${format ?? 'json'}`);
+          if (counts === true) { args.push('counts'); }
+        }
+        if (total === true) { args.push('total'); }
         if (file) {
           args.push(`file=${file}`);
         }
@@ -49,7 +62,7 @@ export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
           args.push(`path=${JSON.stringify(notePath)}`);
         }
         const out = await cli.run({ vaultName, args });
-        return textResult(out);
+        return textResult(capCliToolOutput(out));
       }
     },
   };

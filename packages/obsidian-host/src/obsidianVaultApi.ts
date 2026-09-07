@@ -4,6 +4,7 @@ import {
   type BasesConfigFileView,
   type CachedMetadata,
   getAllTags,
+  MarkdownView,
   parseFrontMatterAliases,
   parseYaml,
   type TAbstractFile,
@@ -44,6 +45,17 @@ export interface VaultNoteInfo {
 export interface VaultTagEntry {
   name: string;
   count: number;
+}
+
+export interface VaultPropertyIndexEntry {
+  name: string;
+  count: number;
+}
+
+export interface VaultAliasEntry {
+  alias: string;
+  count: number;
+  files?: string[];
 }
 
 export interface VaultGraphResult {
@@ -108,6 +120,8 @@ export interface VaultWriteAttachmentResult {
 }
 
 export class ObsidianVaultApi {
+  private readonly cliMutationTails = new Map<string, Promise<void>>();
+
   constructor(private readonly app: App) {}
 
   private vaultPath(): string | null {
@@ -180,6 +194,29 @@ export class ObsidianVaultApi {
       throw new Error(`Vault path not found: ${path}`);
     }
     return resolved;
+  }
+
+  private resolveOptionalMarkdownFile(file?: string, path?: string, active?: boolean): TFile | null {
+    if (file?.trim() || path?.trim()) {
+      const resolved = this.resolveFile(file, path);
+      if (!resolved) {
+        throw new Error('Note not found.');
+      }
+      return resolved;
+    }
+    if (active === true) {
+      const resolved = this.resolveFile();
+      if (!resolved) {
+        throw new Error('No active file.');
+      }
+      return resolved;
+    }
+    return null;
+  }
+
+  private resolveTagFiles(scope?: { file?: string; path?: string; active?: boolean }): TFile[] {
+    const resolved = this.resolveOptionalMarkdownFile(scope?.file, scope?.path, scope?.active);
+    return resolved ? [resolved] : this.app.vault.getMarkdownFiles();
   }
 
   private resolveMutationFile(
@@ -334,14 +371,18 @@ export class ObsidianVaultApi {
     content: string;
     mode: 'create' | 'overwrite' | 'append' | 'prepend';
     overwrite?: boolean;
+    inline?: boolean;
   }): Promise<{ path: string }> {
     const { content, mode } = params;
+    const inline = params.inline === true;
     if (mode === 'append' || mode === 'prepend') {
       const resolved = this.resolveMutationFile(params.file, params.path);
       await this.capturePreWriteSnapshot(resolved);
-      await this.app.vault.process(resolved, (data) =>
-        mode === 'append' ? `${data}${content}` : `${content}${data}`,
-      );
+      await this.app.vault.process(resolved, (data) => (
+        mode === 'append'
+          ? joinNoteContent(data, content, inline, 'append')
+          : prependAfterFrontmatter(data, content, inline)
+      ));
       return { path: resolved.path };
     }
 
@@ -401,17 +442,82 @@ export class ObsidianVaultApi {
     return { path: target.path, newPath: normalizedNewPath };
   }
 
-  /** Snapshot current recoverable content before a history restore; deleted paths have no current state. */
-  async captureSnapshotBeforeRestore(path: string): Promise<void> {
+  prepareActiveNoteInsertion(): { path: string; title: string; insert: (content: string) => Promise<void> } {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view?.file;
+    if (!view || !file || file.extension !== 'md') {
+      throw new Error('No active Markdown editor.');
+    }
+    const path = this.requireMutationPath(file.path);
+    const editor = view.editor;
+    const original = editor.getValue();
+    const selections = JSON.stringify(editor.listSelections());
+    const requireUnchangedEditor = (): void => {
+      if (this.app.workspace.getActiveViewOfType(MarkdownView) !== view
+        || view.file !== file || file.path !== path || view.editor !== editor
+        || editor.getValue() !== original || JSON.stringify(editor.listSelections()) !== selections) {
+        throw new Error('The target editor changed while preparing insertion. Retry on the intended note.');
+      }
+      this.requireMutationPath(file.path);
+    };
+    return {
+      path,
+      title: file.basename,
+      async insert(content) {
+        requireUnchangedEditor();
+        // Capture unsaved editor content, not an older on-disk copy. No await
+        // may separate the final identity check from the bound editor write.
+        await captureFileRecoverySnapshot(view.app, file, original);
+        requireUnchangedEditor();
+        editor.replaceSelection(content);
+      },
+    };
+  }
+
+  /**
+   * Validate, snapshot, and serialize an out-of-process mutation for one exact
+   * path. Unsaved active-editor content blocks the CLI rather than being lost.
+   */
+  async runCliMutation<T>(path: string, mutate: () => Promise<T>): Promise<T> {
     const normalized = this.requireMutationPath(path);
-    const current = this.app.vault.getAbstractFileByPath(normalized);
-    if (!current) {
-      return;
+    const previous = this.cliMutationTails.get(normalized) ?? Promise.resolve();
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    const tail = previous.catch(() => undefined).then(() => pending);
+    this.cliMutationTails.set(normalized, tail);
+
+    await previous.catch(() => undefined);
+    try {
+      const current = this.app.vault.getAbstractFileByPath(normalized);
+      if (current && !(current instanceof TFile)) {
+        throw new Error(`Vault path is not a file: ${path}`);
+      }
+      if (current) {
+        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (view?.file === current) {
+          const editorContent = view.editor.getValue();
+          const storedContent = await this.app.vault.cachedRead(current);
+          if (editorContent !== storedContent) {
+            throw new Error(
+              `Cannot modify ${normalized} through Obsidian CLI while its active editor has unsaved changes. Save the note and retry.`,
+            );
+          }
+          await captureFileRecoverySnapshot(this.app, current, editorContent);
+          if (this.app.workspace.getActiveViewOfType(MarkdownView) !== view
+            || view.file !== current || view.editor.getValue() !== editorContent) {
+            throw new Error(`The target editor changed while preparing the CLI mutation for ${normalized}. Retry.`);
+          }
+        } else {
+          await this.capturePreWriteSnapshot(current);
+        }
+      }
+      return await mutate();
+    } finally {
+      release();
+      if (this.cliMutationTails.get(normalized) === tail) {
+        this.cliMutationTails.delete(normalized);
+      }
     }
-    if (!(current instanceof TFile)) {
-      throw new Error(`Vault path is not a file: ${path}`);
-    }
-    await this.capturePreWriteSnapshot(current);
   }
 
   async createFolder(path: string): Promise<{ path: string }> {
@@ -456,20 +562,38 @@ export class ObsidianVaultApi {
     return { path: target.path };
   }
 
-  getProperties(file?: string, path?: string, name?: string): { path?: string; properties: Record<string, unknown> | string[]; value?: unknown } {
-    if (!file && !path) {
-      const names = new Set<string>();
+  getProperties(file?: string, path?: string, name?: string, options?: {
+    active?: boolean;
+    sort?: 'name' | 'count';
+  }): {
+    path?: string;
+    properties: Record<string, unknown> | VaultPropertyIndexEntry[] | string[];
+    value?: unknown;
+    total?: number;
+  } {
+    const resolved = this.resolveOptionalMarkdownFile(file, path, options?.active);
+    if (!resolved) {
+      const counts = new Map<string, number>();
       for (const markdownFile of this.app.vault.getMarkdownFiles()) {
         const frontmatter = this.app.metadataCache.getFileCache(markdownFile)?.frontmatter;
         for (const key of Object.keys(frontmatter ?? {})) {
-          names.add(key);
+          counts.set(key, (counts.get(key) ?? 0) + 1);
         }
       }
-      return { properties: [...names].sort() };
-    }
-    const resolved = this.resolveFile(file, path);
-    if (!resolved) {
-      throw new Error('Note not found.');
+      if (name) {
+        return { properties: [], value: counts.get(name) ?? 0, total: counts.get(name) ?? 0 };
+      }
+      const entries: VaultPropertyIndexEntry[] = [...counts.entries()].map(([propertyName, count]) => ({
+        name: propertyName,
+        count,
+      }));
+      const sort = options?.sort ?? 'name';
+      entries.sort((a, b) => (
+        sort === 'count'
+          ? b.count - a.count || a.name.localeCompare(b.name)
+          : a.name.localeCompare(b.name)
+      ));
+      return { properties: entries, total: entries.length };
     }
     const properties = this.app.metadataCache.getFileCache(resolved)?.frontmatter ?? {};
     if (name) {
@@ -478,7 +602,46 @@ export class ObsidianVaultApi {
     return { path: resolved.path, properties };
   }
 
-  async setProperty(file: string | undefined, path: string | undefined, name: string, value: string): Promise<{ path: string; name: string }> {
+  getAliases(file?: string, path?: string, options?: {
+    active?: boolean;
+    verbose?: boolean;
+  }): { path?: string; aliases: VaultAliasEntry[] | string[]; total: number } {
+    const resolved = this.resolveOptionalMarkdownFile(file, path, options?.active);
+    if (resolved) {
+      const aliases = parseFrontMatterAliases(
+        this.app.metadataCache.getFileCache(resolved)?.frontmatter ?? null,
+      ) ?? [];
+      return { path: resolved.path, aliases, total: aliases.length };
+    }
+
+    const byAlias = new Map<string, string[]>();
+    for (const markdownFile of this.app.vault.getMarkdownFiles()) {
+      const aliases = parseFrontMatterAliases(
+        this.app.metadataCache.getFileCache(markdownFile)?.frontmatter ?? null,
+      ) ?? [];
+      for (const alias of aliases) {
+        const files = byAlias.get(alias) ?? [];
+        files.push(markdownFile.path);
+        byAlias.set(alias, files);
+      }
+    }
+    const verbose = options?.verbose === true;
+    const aliases: VaultAliasEntry[] = [...byAlias.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([alias, files]) => ({
+        alias,
+        count: files.length,
+        ...(verbose ? { files } : {}),
+      }));
+    return { aliases, total: aliases.length };
+  }
+
+  async setProperty(
+    file: string | undefined,
+    path: string | undefined,
+    name: string,
+    value: unknown,
+  ): Promise<{ path: string; name: string }> {
     const resolved = this.resolveMutationFile(file, path);
     await this.capturePreWriteSnapshot(resolved);
     await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
@@ -556,9 +719,6 @@ export class ObsidianVaultApi {
   }
 
   private resolveSearchFiles(scopePath: string): TFile[] {
-    if (!scopePath) {
-      return this.app.vault.getMarkdownFiles();
-    }
     const normalized = normalizePathForVault(scopePath, this.vaultPath());
     if (!normalized) {
       throw new Error(`Search path not found: ${scopePath}`);
@@ -571,23 +731,32 @@ export class ObsidianVaultApi {
       return [resolved];
     }
     if (resolved instanceof TFolder) {
-      const prefix = resolved.path ? `${resolved.path}/` : '';
-      return this.app.vault.getMarkdownFiles().filter((file) => (
-        prefix ? file.path.startsWith(prefix) : true
-      ));
+      if (!resolved.path) {
+        throw new Error('search requires a vault-relative path to one Markdown note or a non-root folder. Vault-wide search is not allowed.');
+      }
+      const prefix = `${resolved.path}/`;
+      return this.app.vault.getMarkdownFiles().filter((file) => file.path.startsWith(prefix));
     }
     throw new Error(`Search path not found: ${scopePath}`);
   }
 
-  /** In-process vault search (no CLI). Case-insensitive literal substring plus tag:. Listing queries error toward `ls`. */
+  /** In-process vault search (no CLI). Literal substring plus tag:. Listing queries error toward `ls`. */
   async searchNotes(params: {
     query: string;
-    path?: string;
+    path: string;
     limit?: number;
+    offset?: number;
     context?: boolean;
+    caseSensitive?: boolean;
   }): Promise<VaultSearchHit[]> {
     const limit = params.limit ?? 50;
-    let scopePath = params.path?.trim().replace(/\/+$/, '') ?? '';
+    const offset = params.offset ?? 0;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+      throw new Error('Invalid search input: limit must be an integer from 1 to 200.');
+    }
+    if (!Number.isInteger(offset) || offset < 0) {
+      throw new Error('Invalid search input: offset must be a non-negative integer.');
+    }
     let textQuery = params.query.trim();
     let tagFilter: string | null = null;
 
@@ -595,8 +764,7 @@ export class ObsidianVaultApi {
       tagFilter = textQuery.slice(4).trim().replace(/^#/, '');
       textQuery = '';
     } else if (textQuery.startsWith('path:')) {
-      scopePath = textQuery.slice(5).trim().replace(/\/+$/, '');
-      textQuery = '';
+      throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
     }
 
     const listAllInScope = textQuery === '*'
@@ -605,9 +773,32 @@ export class ObsidianVaultApi {
     if (listAllInScope && !tagFilter) {
       throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
     }
-    const needle = textQuery.toLowerCase();
+
+    const requestedPath = params.path?.trim() ?? '';
+    if (
+      !requestedPath
+      || requestedPath === '/'
+      || requestedPath === '.'
+      || requestedPath === './'
+      || requestedPath === '.\\'
+      || /^\/+$/.test(requestedPath)
+    ) {
+      throw new Error('search requires a vault-relative path to one Markdown note or a non-root folder. Vault-wide search is not allowed.');
+    }
+    const scopePath = requestedPath.replace(/\/+$/, '');
+    const needle = params.caseSensitive ? textQuery : textQuery.toLowerCase();
     const hits: VaultSearchHit[] = [];
     const files = this.resolveSearchFiles(scopePath);
+    let skipped = 0;
+
+    const takeHit = (hit: VaultSearchHit): boolean => {
+      if (skipped < offset) {
+        skipped += 1;
+        return false;
+      }
+      hits.push(hit);
+      return hits.length >= limit;
+    };
 
     for (const file of files) {
 
@@ -620,8 +811,7 @@ export class ObsidianVaultApi {
       }
 
       if (!needle) {
-        hits.push({ path: file.path });
-        if (hits.length >= limit) {
+        if (takeHit({ path: file.path })) {
           break;
         }
         continue;
@@ -630,7 +820,8 @@ export class ObsidianVaultApi {
       const content = await this.app.vault.cachedRead(file);
       const lines = content.split('\n');
       for (const [lineIndex, line] of lines.entries()) {
-        if (!line.toLowerCase().includes(needle)) {
+        const searchableLine = params.caseSensitive ? line : line.toLowerCase();
+        if (!searchableLine.includes(needle)) {
           continue;
         }
         const hit: VaultSearchHit = { path: file.path, line: lineIndex + 1 };
@@ -639,8 +830,7 @@ export class ObsidianVaultApi {
           const end = Math.min(lines.length, lineIndex + 3);
           hit.matches = lines.slice(start, end);
         }
-        hits.push(hit);
-        if (hits.length >= limit) {
+        if (takeHit(hit)) {
           return hits;
         }
       }
@@ -710,10 +900,14 @@ export class ObsidianVaultApi {
     return { path: resolved.path, views };
   }
 
-  /** List all tags in the vault with occurrence counts. */
-  getTags(sort: 'name' | 'count' = 'name'): VaultTagEntry[] {
+  /** List tags in the vault, or in one note when file/path/active is set. */
+  getTags(sort: 'name' | 'count' = 'name', scope?: {
+    file?: string;
+    path?: string;
+    active?: boolean;
+  }): VaultTagEntry[] {
     const counts = new Map<string, number>();
-    for (const file of this.app.vault.getMarkdownFiles()) {
+    for (const file of this.resolveTagFiles(scope)) {
       const cache = this.app.metadataCache.getFileCache(file);
       const tags = cache ? getAllTags(cache) : null;
       if (!tags) { continue; }
@@ -902,4 +1096,68 @@ export class ObsidianVaultApi {
       this.app.vault.adapter.list(parentDir).catch(() => {});
     }
   }
+}
+
+function joinNoteContent(
+  existing: string,
+  addition: string,
+  inline: boolean,
+  mode: 'append' | 'prepend',
+): string {
+  if (addition.length === 0) {
+    return existing;
+  }
+  if (existing.length === 0) {
+    return addition;
+  }
+  if (inline) {
+    return mode === 'append' ? `${existing}${addition}` : `${addition}${existing}`;
+  }
+  if (mode === 'append') {
+    const separator = existing.endsWith('\n') ? '' : '\n';
+    return `${existing}${separator}${addition}`;
+  }
+  const separator = addition.endsWith('\n') ? '' : '\n';
+  return `${addition}${separator}${existing}`;
+}
+
+function prependAfterFrontmatter(existing: string, addition: string, inline: boolean): string {
+  const split = splitFrontmatter(existing);
+  const joined = joinNoteContent(split.body, addition, inline, 'prepend');
+  if (!split.frontmatter) {
+    return joined;
+  }
+  if (joined.length === 0 || split.frontmatter.endsWith('\n') || joined.startsWith('\n')) {
+    return `${split.frontmatter}${joined}`;
+  }
+  return `${split.frontmatter}\n${joined}`;
+}
+
+function splitFrontmatter(content: string): { frontmatter: string | null; body: string } {
+  if (!content.startsWith('---')) {
+    return { frontmatter: null, body: content };
+  }
+  const afterOpen = content.startsWith('---\n')
+    ? 4
+    : content.startsWith('---\r\n')
+      ? 5
+      : -1;
+  if (afterOpen < 0) {
+    return { frontmatter: null, body: content };
+  }
+  const closeLf = content.indexOf('\n---', afterOpen - 1);
+  if (closeLf < 0) {
+    return { frontmatter: null, body: content };
+  }
+  const afterClose = closeLf + 4;
+  if (content.startsWith('\r\n', afterClose)) {
+    return { frontmatter: content.slice(0, afterClose + 2), body: content.slice(afterClose + 2) };
+  }
+  if (content.startsWith('\n', afterClose)) {
+    return { frontmatter: content.slice(0, afterClose + 1), body: content.slice(afterClose + 1) };
+  }
+  if (afterClose === content.length) {
+    return { frontmatter: content, body: '' };
+  }
+  return { frontmatter: null, body: content };
 }

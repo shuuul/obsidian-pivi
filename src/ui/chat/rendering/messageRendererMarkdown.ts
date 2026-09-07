@@ -13,6 +13,7 @@ import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 import { createContextBadgeElement } from '@/ui/shared/context-badge/ContextBadgeRenderer';
 import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
+import { getMentionBadgeNavigation } from '@/ui/shared/mention/mentionBadgeNavigation';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
 
 import { getActiveDocument, getActiveWindow } from '../../shared/dom';
@@ -422,7 +423,9 @@ export async function renderUserMessageText(
       { kind: 'file', token: `[[${autoAttachedNotePath}]]`, path: autoAttachedNotePath },
       {
         inline: true,
-        onClick: () => { void host.app.workspace.openLinkText(autoAttachedNotePath, ''); },
+        onClick: getMentionBadgeNavigation(host.app, {
+          kind: 'file', token: `[[${autoAttachedNotePath}]]`, path: autoAttachedNotePath,
+        }),
       },
     ));
     el.append(badges, textTarget);

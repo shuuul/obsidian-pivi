@@ -1,5 +1,7 @@
 import {
   TOOL_OBSIDIAN_BASH,
+  TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_TASKS,
   TOOL_PIVI_COMMANDS,
@@ -28,8 +30,9 @@ describe('Obsidian settings integration adapter', () => {
     const rows = createObsidianToolRows({
       allowBash: true,
       allowExternalRead: false,
+      cliEnabled: true,
       disabledTools: [TOOL_OBSIDIAN_READ],
-    }, false);
+    }, false, { cliRegistered: false });
 
     expect(rows.find((row) => row.name === TOOL_OBSIDIAN_READ)).toMatchObject({
       configuration: 'read',
@@ -52,6 +55,12 @@ describe('Obsidian settings integration adapter', () => {
       configuration: 'read',
     });
     expect(rows.some((row) => row.configuration === 'external-read')).toBe(false);
+    expect(rows.find((row) => row.name === TOOL_OBSIDIAN_MARKDOWN_STRUCTURE)).toMatchObject({
+      label: 'Outline', available: true,
+    });
+    expect(rows.find((row) => row.name === TOOL_OBSIDIAN_COMMAND)).toMatchObject({
+      configuration: 'command', available: false, enabled: false,
+    });
     expect(rows.find((row) => row.name === TOOL_PIVI_SESSIONS)).toMatchObject({
       label: 'Pivi Sessions',
       description: 'Read durable sessions, list recoverable deleted sessions, or restore one in a visible Pivi tab.',
@@ -70,8 +79,9 @@ describe('Obsidian settings integration adapter', () => {
     const disabled = createObsidianToolRows({
       allowBash: true,
       allowExternalRead: false,
+      cliEnabled: true,
       disabledTools: [TOOL_PIVI_MCP],
-    }, false);
+    }, false, { cliRegistered: false });
     expect(disabled.find(row => row.name === TOOL_PIVI_MCP)?.enabled).toBe(false);
   });
 
@@ -97,6 +107,32 @@ describe('Obsidian settings integration adapter', () => {
       sections[1]!.actions[0]!.id,
     )).resolves.toEqual({ feedback: { kind: 'success', message: 'Added Pivi to the selected-text toolbar.' } });
     expect(setupNoteToolbarIntegration).toHaveBeenCalledWith('label-and-icon');
+  });
+
+  it('uses both Pivi CLI state and known core-plugin state for availability', () => {
+    const rows = createObsidianToolRows({
+      allowBash: false,
+      allowExternalRead: false,
+      cliEnabled: true,
+      disabledTools: [],
+    }, false, {
+      cliRegistered: true,
+      corePluginEnabled: id => id !== 'daily-notes',
+    });
+    expect(rows.find(row => row.name === TOOL_OBSIDIAN_COMMAND)).toMatchObject({ available: true, enabled: true });
+    expect(rows.find(row => row.name === TOOL_OBSIDIAN_TASKS)).toMatchObject({ available: true, enabled: true });
+    expect(rows.find(row => row.name === 'obsidian_daily')).toMatchObject({ available: false, enabled: false });
+    expect(rows.find(row => row.name === 'obsidian_daily')?.description)
+      .toContain('owning core plugin to be enabled');
+
+    const cliOff = createObsidianToolRows({
+      allowBash: false,
+      allowExternalRead: false,
+      cliEnabled: false,
+      disabledTools: [],
+    }, false, { cliRegistered: true });
+    expect(cliOff.find(row => row.name === TOOL_OBSIDIAN_COMMAND)).toMatchObject({ available: false, enabled: false });
+    expect(cliOff.find(row => row.name === 'obsidian_base')?.description).toContain('currently unavailable');
   });
 
   it('disables only Note Toolbar actions when the plugin is not installed', () => {

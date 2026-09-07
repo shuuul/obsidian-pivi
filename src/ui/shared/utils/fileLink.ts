@@ -234,12 +234,16 @@ function readLinkTargetFromElement(element: Element): string {
 
 function getLeafFilePath(leaf: WorkspaceLeaf): string | null {
   const view = leaf.view as { file?: { path?: string } | null } | undefined;
-  return view?.file?.path ?? null;
+  const path = view?.file?.path ?? leaf.getViewState?.().state?.file;
+  return typeof path === 'string' ? path : null;
 }
 
 function findOpenLeafForFile(app: App, file: TFile): WorkspaceLeaf | null {
   let found: WorkspaceLeaf | null = null;
   const visit = (leaf: WorkspaceLeaf): void => {
+    // Deferred backlinks/outline panes also persist state.file, but are not document tabs.
+    const root = leaf.getRoot?.();
+    if (root && (root === app.workspace.leftSplit || root === app.workspace.rightSplit)) return;
     if (!found && getLeafFilePath(leaf) === file.path) {
       found = leaf;
     }
@@ -272,17 +276,15 @@ async function revealExistingLinkTarget(
   }
 }
 
-function openLinkTarget(app: App, linkTarget: string): void {
+export async function openLinkTarget(app: App, linkTarget: string): Promise<void> {
   if (!linkTarget) return;
   const file = resolveFileInVault(app, extractLinkPathFromTarget(linkTarget));
   const openLeaf = file ? findOpenLeafForFile(app, file) : null;
   if (file && openLeaf) {
-    void revealExistingLinkTarget(app, openLeaf, file, linkTarget).catch(() => {
-      void app.workspace.openLinkText(linkTarget, '', 'tab');
-    });
+    await revealExistingLinkTarget(app, openLeaf, file, linkTarget);
     return;
   }
-  void app.workspace.openLinkText(linkTarget, '', 'tab');
+  await app.workspace.openLinkText(linkTarget, '', 'tab');
 }
 
 function repairRenderedInternalLink(app: App, link: HTMLAnchorElement): void {
@@ -334,7 +336,7 @@ export function registerFileLinkHandler(
 
     if (link) {
       event.preventDefault();
-      openLinkTarget(app, readLinkTargetFromElement(link));
+      void openLinkTarget(app, readLinkTargetFromElement(link));
     }
   });
 
@@ -347,7 +349,7 @@ export function registerFileLinkHandler(
     const link = target.closest<HTMLElement>('.pivi-clickable-embed');
     if (link) {
       event.preventDefault();
-      openLinkTarget(app, readLinkTargetFromElement(link));
+      void openLinkTarget(app, readLinkTargetFromElement(link));
     }
   });
 }

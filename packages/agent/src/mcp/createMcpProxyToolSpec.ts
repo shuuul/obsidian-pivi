@@ -1,5 +1,5 @@
 import type { ToolSpec } from '../tools';
-import { textResult } from '../tools/toolResult';
+import { capToolResultText, textResult } from '../tools/toolResult';
 import type { McpToolBridge } from './mcpToolBridge';
 
 const MCP_PROXY_PARAMETERS = {
@@ -110,7 +110,10 @@ export function createMcpProxyToolSpec(bridge: McpToolBridge): ToolSpec {
         }
         const args = parseArgsJson(argsParam);
         const text = await bridge.callTool(serverName, toolParam, args, signal);
-        return textResult(text, { server: serverName, tool: toolParam });
+        return textResult(capToolResultText(text, { label: 'mcp call' }), {
+          server: serverName,
+          tool: toolParam,
+        });
       }
 
       if (search) {
@@ -132,7 +135,10 @@ export function createMcpProxyToolSpec(bridge: McpToolBridge): ToolSpec {
         if (tools.length === 0) {
           return textResult(`No tools available for server "${serverParam}".`, { server: serverParam, count: 0 });
         }
-        const text = tools.map((tool) => formatToolEntry(serverParam, tool)).join('\n\n');
+        const text = capToolResultText(
+          tools.map((tool) => formatToolEntry(serverParam, tool)).join('\n\n'),
+          { label: 'mcp list' },
+        );
         return textResult(text, { server: serverParam, count: tools.length });
       }
 

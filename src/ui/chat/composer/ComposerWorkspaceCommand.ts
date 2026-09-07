@@ -68,7 +68,7 @@ export async function resolveComposerWorkspaceCommand(
     + resolvedCommand
     + content.slice(commandEnd);
   return {
-    displayContent: resolvedContent,
+    displayContent: content,
     promptContent: resolvedContent,
     missingSelectedText: requiresSelectedText(command.content) && !selectedTextToken,
   };

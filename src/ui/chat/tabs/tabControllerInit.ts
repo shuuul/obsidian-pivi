@@ -58,8 +58,12 @@ export function initializeTabControllers(
     persistExternalDirectory: async (directory) => {
       await ports.settings.appendExternalReadDirectory?.(directory);
     },
+    persistObsidianCommand: async (commandId) => {
+      await ports.settings.appendObsidianCommandPermission?.(commandId);
+    },
     getBashPermissions: () => ports.settings.getSettingsSnapshot().bashPermissions ?? [],
     getExternalDirectories: () => ports.settings.getSettingsSnapshot().externalReadDirectories ?? [],
+    getObsidianCommands: () => ports.settings.getSettingsSnapshot().obsidianCommandPermissions ?? [],
     onExternalDirectoryAllowed: (directory) => {
       tab.ui.externalContextSelector?.addExternalContext(directory);
       syncTabSessionExternalContext(

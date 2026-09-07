@@ -6,6 +6,7 @@ import {
   getObsidianToolsSettingsFromBag,
   getSubagentRuntimeSettingsFromBag,
   normalizeEditorSelectionToolbarSettings,
+  type ObsidianToolsSettings,
   resolveObsidianToolsSettings,
   resolveWebSearchToolsSettings,
   WEB_PROVIDER_CAPABILITIES,
@@ -31,7 +32,7 @@ import type {
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
-import { isPathWithinVault } from '@/app/hostPlatform';
+import { isOfficialObsidianCliEnabled, isPathWithinVault } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
 import { isNoteToolbarTextToolbarActive } from '@/app/noteToolbarIntegration';
 import {
@@ -67,6 +68,36 @@ import {
   SETTINGS_HOTKEY_ROWS,
 } from './settingsHotkeys';
 const logger = new PluginLogger('UiPorts');
+
+function isCorePluginEnabled(host: PiviSettingsHost, id: string): boolean {
+  const registry = (host.app as typeof host.app & {
+    internalPlugins?: { getPluginById?: (pluginId: string) => { enabled?: boolean } | null };
+  }).internalPlugins;
+  return typeof registry?.getPluginById !== 'function'
+    || registry.getPluginById(id)?.enabled !== false;
+}
+
+type ToolSettingsPatch = Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0];
+
+function normalizeCliToolSettingsPatch(
+  current: ObsidianToolsSettings,
+  patch: ToolSettingsPatch,
+): Partial<ObsidianToolsSettings> {
+  return {
+    ...(patch.cliEnabled !== undefined ? { cliEnabled: patch.cliEnabled } : {}),
+    ...(patch.cliPath !== undefined ? { cliPath: patch.cliPath?.trim() || null } : {}),
+    ...(patch.cliTimeoutMs !== undefined
+      ? { cliTimeoutMs: Number.isFinite(patch.cliTimeoutMs)
+        ? Math.max(1_000, Math.min(300_000, Math.trunc(patch.cliTimeoutMs)))
+        : current.cliTimeoutMs }
+      : {}),
+    ...(patch.allowCommand !== undefined ? { allowCommand: patch.allowCommand } : {}),
+    ...(patch.commandAllowlist
+      ? { commandAllowlist: [...new Set(patch.commandAllowlist.map(id => id.trim()).filter(Boolean))] }
+      : {}),
+  };
+}
+
 export function createSettingsUiPorts(
   host: PiviSettingsHost,
   workspace: PiviPluginWorkspace | null,
@@ -179,6 +210,7 @@ export function createSettingsUiPorts(
     const externalReadDirectories = enabledExternalDirectories(externalDirectoryPermissions);
     host.settings.agentSettings.obsidianTools = {
       ...current,
+      ...normalizeCliToolSettingsPatch(current, patch),
       ...(patch.allowBash !== undefined ? { allowBash: patch.allowBash } : {}),
       ...(patch.allowExternalRead !== undefined ? { allowExternalRead: patch.allowExternalRead } : {}),
       ...(patch.defaultReadMaxChars !== undefined ? { defaultReadMaxChars: patch.defaultReadMaxChars } : {}),
@@ -217,6 +249,12 @@ export function createSettingsUiPorts(
           const settings = getObsidianToolsSettingsFromBag(host.settings);
           const vaultPath = host.getVaultPath?.() ?? null;
           return {
+            cliEnabled: settings.cliEnabled,
+            cliAvailable: isOfficialObsidianCliEnabled(),
+            cliPath: settings.cliPath ?? null,
+            cliTimeoutMs: settings.cliTimeoutMs,
+            allowCommand: settings.allowCommand,
+            commandAllowlist: settings.commandAllowlist,
             allowBash: settings.allowBash,
             allowExternalRead: settings.allowExternalRead,
             bashPermissions: settings.bashPermissions ?? [],
@@ -230,7 +268,10 @@ export function createSettingsUiPorts(
         },
         listToolRows: () => {
           const settings = getObsidianToolsSettingsFromBag(host.settings);
-          return createObsidianToolRows(settings, ws.providerOAuth?.hasCodexAuth() ?? false);
+          return createObsidianToolRows(settings, ws.providerOAuth?.hasCodexAuth() ?? false, {
+            cliRegistered: isOfficialObsidianCliEnabled(),
+            corePluginEnabled: id => isCorePluginEnabled(host, id),
+          });
         },
         async setToolEnabled(name, enabled) {
           if (name === TOOL_OBSIDIAN_BASH) {

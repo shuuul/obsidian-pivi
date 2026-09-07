@@ -579,6 +579,8 @@ export class PiviApplication {
 
   getCompactionRecoveryWarning = (): string => t('chat.errors.autoCompactionRecovery');
 
+  getContinuationBlockedWarning = (): string => t('chat.errors.continuationBlocked');
+
   createChatService(options?: {
     capabilityApproval?: CapabilityApprovalPort | null;
     piviManagementApproval?: PiviManagementApprovalPort | null;

@@ -204,7 +204,8 @@
       "unableCreateForkTab": "분기 탭을 만들 수 없습니다",
       "initChatService": "채팅 서비스 초기화 실패",
       "titlePersistenceFailed": "생성된 세션 제목을 저장하지 못했습니다.",
-      "autoCompactionRecovery": "자동 컨텍스트 압축이 두 번 실패했습니다. /compact를 실행하여 이 세션을 수동으로 복구하세요."
+      "autoCompactionRecovery": "자동 컨텍스트 압축이 두 번 실패했습니다. /compact를 실행하여 이 세션을 수동으로 복구하세요.",
+      "continuationBlocked": "이 도구 결과가 너무 커서 보낼 수 없습니다. 다음 모델 요청이 차단되었습니다. /compact를 실행하거나 새 세션을 시작하세요."
     },
     "toolbar": {
       "externalContexts": "외부 컨텍스트",
@@ -748,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "공식 Obsidian CLI가 필요합니다.",
-      "unavailableCodex": "OpenAI Codex 연결이 필요합니다."
+      "unavailableCorePlugin": "관련 코어 플러그인을 활성화해야 합니다.",
+      "unavailableCodex": "OpenAI Codex 연결이 필요합니다.",
+      "cli": {
+        "heading": "공식 {hostName} CLI",
+        "enabled": { "name": "공식 CLI 도구 활성화", "desc": "Pivi가 공식 {hostName} CLI 기반 도구를 등록하도록 허용합니다." },
+        "unavailable": "공식 {hostName} CLI가 등록되지 않았습니다. CLI 도구를 활성화할 수 없습니다.",
+        "path": { "name": "CLI 실행 파일 경로", "desc": "선택적 실행 파일 재정의입니다. 자동 감지하려면 비워 두세요.", "placeholder": "자동 감지" },
+        "timeout": { "name": "CLI 시간 제한", "desc": "각 공식 CLI 요청의 최대 시간입니다.", "option": "{seconds}초" },
+        "actionsUnavailable": "CLI 기반 쿼리 및 생성 작업은 현재 사용할 수 없습니다."
+      },
+      "command": {
+        "execution": { "name": "명령 실행 허용", "desc": "기존 권한 또는 대화형 권한 요청 후 명령을 실행합니다. 검색은 읽기 전용입니다." },
+        "allowlist": { "name": "허용된 명령 ID", "desc": "여기에 없는 명령은 실행 전에 권한을 요청합니다.", "add": "허용된 명령 ID 추가", "placeholder": "명령 ID", "remove": "{id} 제거" }
+      }
     },
     "bash": {
       "heading": "Bash 접근"
@@ -1196,7 +1210,7 @@
       "edit": "편집",
       "editDesc": "기존 노트의 정확한 텍스트를 바꿉니다. 부분 편집에 적합합니다.",
       "write": "쓰기",
-      "writeDesc": "노트 만들기, 앞/뒤 추가, 또는 의도적 전체 덮어쓰기.",
+      "writeDesc": "노트 생성, 추가/앞에 삽입, 또는 의도적 전체 덮어쓰기. 앞 삽입은 YAML frontmatter 뒤. template=는 템플릿으로 생성(CLI 필요).",
       "search": "검색",
       "sessions": "Pivi Sessions",
       "sessionsDesc": "영구 세션을 읽고 복구 가능한 삭제된 세션을 나열하거나 표시된 Pivi 탭에서 복원합니다.",
@@ -1214,11 +1228,11 @@
       "links": "링크",
       "linksDesc": "노트의 나가는 링크 또는 백링크를 읽습니다.",
       "properties": "속성",
-      "propertiesDesc": "YAML frontmatter 속성을 나열·읽기·설정·제거합니다.",
+      "propertiesDesc": "YAML frontmatter 속성 나열, 읽기, 설정, 제거. 볼트 전체 횟수, 형식 값, 별칭 포함.",
       "tasks": "작업",
-      "tasksDesc": "마크다운 작업을 나열하거나 전환합니다.",
+      "tasksDesc": "Markdown 작업 나열 또는 업데이트. 사용자 지정 체크박스 상태 포함.",
       "history": "기록",
-      "historyDesc": "Obsidian 파일 기록 버전을 나열·읽기·복원합니다.",
+      "historyDesc": "Obsidian 파일 기록 나열, 읽기, 복원 또는 비교.",
       "delete": "삭제",
       "deleteDesc": "Vault 파일 또는 폴더를 휴지통으로 이동합니다.",
       "move": "이동",
@@ -1228,7 +1242,7 @@
       "mkdir": "Mkdir",
       "mkdirDesc": "Vault에 폴더를 만듭니다.",
       "open": "열기",
-      "openDesc": "Obsidian 작업 공간에서 Vault 파일을 엽니다.",
+      "openDesc": "경로 또는 노트 이름으로 작업 공간에서 파일을 엽니다. newtab은 새 탭.",
       "attachment": "첨부",
       "attachmentDesc": "첨부 메타데이터/리소스 URL 또는 사용 가능한 첨부 경로를 해석합니다.",
       "generateImage": "이미지 생성",
@@ -1236,16 +1250,22 @@
       "bash": "Bash",
       "bashDesc": "Bash가 켜져 있을 때 허용된 한 줄 셸 명령을 로그인 셸로 실행합니다. 작업 디렉터리는 보관함 안이어야 합니다.",
       "outline": "개요",
+      "outlineDesc": "큰 노트를 읽기 전에 Markdown 제목, 줄 번호 및 섹션 크기를 검사합니다.",
       "command": "명령",
+      "commandDesc": "명령과 단축키를 검색하거나 명시적으로 허용된 명령 ID를 실행합니다.",
       "eval": "평가",
       "daily": "데일리 노트",
       "dailyDesc": "데일리 노트를 읽거나, 덧붙이거나, 앞에 추가하거나, 경로를 확인합니다. Daily Notes 코어 플러그인이 필요합니다.",
       "graph": "그래프 분석",
       "graphDesc": "Vault 그래프 분석: 고아 노트(역링크 없음), 막다른 노트(나가는 링크 없음), 확인되지 않은 링크(깨진 위키링크).",
       "tags": "태그",
-      "tagsDesc": "Vault의 모든 태그를 개수와 함께 나열하거나, 단일 태그의 세부 정보를 가져옵니다.",
+      "tagsDesc": "볼트 또는 한 노트의 태그와 횟수를 나열하거나 단일 태그 상세를 가져옵니다.",
       "base": "베이스",
-      "baseDesc": "Obsidian Bases(내장 데이터베이스) 쿼리: 베이스 파일을 나열하고, 보기를 확인하거나 쿼리 결과를 가져옵니다. 쿼리에만 공식 Obsidian CLI가 필요합니다."
+      "baseDesc": "Obsidian Bases 조회: 파일 목록, 보기 검사, 쿼리, 항목 생성. 쿼리와 생성은 공식 CLI 필요.",
+      "templates": "템플릿",
+      "templatesDesc": "Obsidian 템플릿 나열, 읽기, 삽입. 템플릿으로 새 노트를 만들려면 write의 template=를 사용. 공식 CLI 필요.",
+      "bookmarks": "북마크",
+      "bookmarksDesc": "Obsidian 북마크 나열, 또는 파일/폴더/검색/URL 북마크 추가. 공식 CLI 필요."
     },
     "steps": {
       "readFile": "파일 읽기",

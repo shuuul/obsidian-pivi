@@ -204,7 +204,8 @@
       "unableCreateForkTab": "分岐タブを作成できません",
       "initChatService": "チャットサービスの初期化に失敗しました",
       "titlePersistenceFailed": "生成されたセッションタイトルを保存できませんでした。",
-      "autoCompactionRecovery": "コンテキストの自動圧縮に 2 回失敗しました。/compact を実行して、このセッションを手動で復旧してください。"
+      "autoCompactionRecovery": "コンテキストの自動圧縮に 2 回失敗しました。/compact を実行して、このセッションを手動で復旧してください。",
+      "continuationBlocked": "このツール結果は大きすぎて送信できません。次のモデルリクエストはブロックされました。/compact を実行するか、新しいセッションを開始してください。"
     },
     "toolbar": {
       "externalContexts": "外部コンテキスト",
@@ -748,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "公式の Obsidian CLI が必要です。",
-      "unavailableCodex": "OpenAI Codex の接続が必要です。"
+      "unavailableCorePlugin": "対応するコアプラグインを有効にする必要があります。",
+      "unavailableCodex": "OpenAI Codex の接続が必要です。",
+      "cli": {
+        "heading": "公式 {hostName} CLI",
+        "enabled": { "name": "公式 CLI ツールを有効化", "desc": "公式 {hostName} CLI を使うツールを Pivi が登録できるようにします。" },
+        "unavailable": "公式 {hostName} CLI が登録されていません。CLI ツールは有効化できません。",
+        "path": { "name": "CLI 実行ファイルのパス", "desc": "任意の実行ファイル指定です。空欄の場合は自動検出します。", "placeholder": "自動検出" },
+        "timeout": { "name": "CLI タイムアウト", "desc": "公式 CLI リクエストごとの最大待機時間です。", "option": "{seconds} 秒" },
+        "actionsUnavailable": "CLI を使うクエリと作成アクションは現在利用できません。"
+      },
+      "command": {
+        "execution": { "name": "コマンド実行を許可", "desc": "既存の許可または対話式の権限リクエスト後にコマンドを実行します。検出は読み取り専用のままです。" },
+        "allowlist": { "name": "許可するコマンド ID", "desc": "ここにないコマンドは実行前に許可を求めます。", "add": "許可するコマンド ID を追加", "placeholder": "コマンド ID", "remove": "{id} を削除" }
+      }
     },
     "bash": {
       "heading": "Bash アクセス"
@@ -1196,7 +1210,7 @@
       "edit": "編集",
       "editDesc": "既存ノート内の正確なテキストを置換します。部分編集に適しています。",
       "write": "書き込み",
-      "writeDesc": "ノートの作成、追記/先頭挿入、または意図的な全文上書き。",
+      "writeDesc": "ノートの作成、追記/先頭挿入、または意図的な全文上書き。先頭挿入は YAML frontmatter の後。template= はテンプレートから作成（CLI 必須）。",
       "search": "検索",
       "sessions": "Pivi Sessions",
       "sessionsDesc": "永続セッションを読み取り、復元可能な削除済みセッションを一覧表示するか、表示中の Pivi タブに復元します。",
@@ -1214,11 +1228,11 @@
       "links": "リンク",
       "linksDesc": "ノートの出リンクまたはバックリンクを読み取ります。",
       "properties": "プロパティ",
-      "propertiesDesc": "YAML frontmatter プロパティの一覧・読み取り・設定・削除。",
+      "propertiesDesc": "YAML frontmatter プロパティの一覧・読み取り・設定・削除。Vault 全体の件数、型付き値、エイリアスを含む。",
       "tasks": "タスク",
-      "tasksDesc": "Markdown タスクの一覧または切り替え。",
+      "tasksDesc": "Markdown タスクの一覧または更新。カスタムチェックボックス状態を含む。",
       "history": "履歴",
-      "historyDesc": "Obsidian ファイル履歴バージョンの一覧・読み取り・復元。",
+      "historyDesc": "Obsidian のファイル履歴を一覧、読み取り、復元、または差分表示。",
       "delete": "削除",
       "deleteDesc": "Vault のファイルまたはフォルダーをゴミ箱へ移動。",
       "move": "移動",
@@ -1228,7 +1242,7 @@
       "mkdir": "Mkdir",
       "mkdirDesc": "Vault 内にフォルダーを作成します。",
       "open": "開く",
-      "openDesc": "Obsidian ワークスペースで Vault ファイルを開きます。",
+      "openDesc": "パスまたはノート名でワークスペースにファイルを開く。newtab は新しいタブ。",
       "attachment": "添付",
       "attachmentDesc": "添付のメタデータ/リソース URL または利用可能な添付パスを解決します。",
       "generateImage": "画像を生成",
@@ -1236,16 +1250,22 @@
       "bash": "Bash",
       "bashDesc": "Bash が有効なとき、許可された単一行シェルコマンドをログインシェル経由で実行します。作業ディレクトリは保管庫内に限定されます。",
       "outline": "アウトライン",
+      "outlineDesc": "大きなノートを読む前に Markdown 見出し、行番号、セクションサイズを確認します。",
       "command": "コマンド",
+      "commandDesc": "コマンドとホットキーを検出するか、明示的に許可されたコマンド ID を実行します。",
       "eval": "評価",
       "daily": "デイリーノート",
       "dailyDesc": "デイリーノートを読む・追加する・先頭に追加する、またはパスを解決します。デイリーノートコアプラグインが必要です。",
       "graph": "グラフ分析",
       "graphDesc": "Vault グラフを分析：孤立ノート（バックリンクなし）、行き止まり（出力リンクなし）、未解決リンク（壊れた Wikilink）。",
       "tags": "タグ",
-      "tagsDesc": "Vault 内のすべてのタグを件数付きで一覧表示、または単一タグの詳細を取得します。",
+      "tagsDesc": "Vault または 1 件のノートのタグと件数を一覧、または 1 つのタグの詳細を取得。",
       "base": "ベース",
-      "baseDesc": "Obsidian Bases（組み込みデータベース）をクエリ：ベースファイルを一覧し、ビューを確認し、クエリ結果を取得します。クエリのみ公式 Obsidian CLI が必要です。"
+      "baseDesc": "Obsidian Bases を照会：ファイル一覧、ビュー確認、クエリ、項目作成。クエリと作成には公式 CLI が必要。",
+      "templates": "テンプレート",
+      "templatesDesc": "Obsidian テンプレートの一覧、読み取り、挿入。テンプレートから新規ノートを作るには write の template= を使う。公式 CLI が必要。",
+      "bookmarks": "ブックマーク",
+      "bookmarksDesc": "Obsidian ブックマークの一覧、またはファイル/フォルダ/検索/URL の追加。公式 CLI が必要。"
     },
     "steps": {
       "readFile": "ファイルを読み取り",

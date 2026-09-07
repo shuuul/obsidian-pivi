@@ -204,7 +204,8 @@
       "unableCreateForkTab": "No se puede crear la pestaña de bifurcación",
       "initChatService": "Error al inicializar el servicio de chat",
       "titlePersistenceFailed": "No se pudo guardar el título de sesión generado.",
-      "autoCompactionRecovery": "La compactación automática del contexto falló dos veces. Ejecuta /compact para recuperar esta sesión manualmente."
+      "autoCompactionRecovery": "La compactación automática del contexto falló dos veces. Ejecuta /compact para recuperar esta sesión manualmente.",
+      "continuationBlocked": "Este resultado de herramienta es demasiado grande para enviarse. Se bloqueó la siguiente solicitud al modelo. Ejecuta /compact o inicia una sesión nueva."
     },
     "toolbar": {
       "externalContexts": "Contextos externos",
@@ -748,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "Requiere la CLI oficial de Obsidian.",
-      "unavailableCodex": "Requiere conexión con OpenAI Codex."
+      "unavailableCorePlugin": "Requiere que el complemento principal correspondiente esté activado.",
+      "unavailableCodex": "Requiere conexión con OpenAI Codex.",
+      "cli": {
+        "heading": "CLI oficial de {hostName}",
+        "enabled": { "name": "Activar herramientas de la CLI oficial", "desc": "Permite que Pivi registre herramientas basadas en la CLI oficial de {hostName}." },
+        "unavailable": "La CLI oficial de {hostName} no está registrada. No se pueden activar las herramientas de CLI.",
+        "path": { "name": "Ruta del ejecutable CLI", "desc": "Ejecutable alternativo opcional. Déjalo vacío para detectarlo automáticamente.", "placeholder": "Detectar automáticamente" },
+        "timeout": { "name": "Tiempo límite de CLI", "desc": "Tiempo máximo para cada solicitud de la CLI oficial.", "option": "{seconds} segundos" },
+        "actionsUnavailable": "Las acciones de consulta y creación mediante CLI no están disponibles actualmente."
+      },
+      "command": {
+        "execution": { "name": "Permitir ejecución de comandos", "desc": "Permite ejecutar comandos con una autorización existente o una solicitud interactiva. La detección sigue siendo de solo lectura." },
+        "allowlist": { "name": "ID de comando permitidos", "desc": "Los comandos que no aparecen aquí solicitan permiso antes de ejecutarse.", "add": "Añadir un ID de comando permitido", "placeholder": "ID de comando", "remove": "Quitar {id}" }
+      }
     },
     "bash": {
       "heading": "Acceso a Bash"
@@ -1196,7 +1210,7 @@
       "edit": "Editar",
       "editDesc": "Reemplazar texto exacto en notas existentes. Preferido para ediciones parciales.",
       "write": "Escribir",
-      "writeDesc": "Crear notas, añadir al inicio/final o sobrescribir notas completas a propósito.",
+      "writeDesc": "Crear notas, añadir/anteponer contenido o sobrescribir notas completas. Anteponer inserta tras el YAML frontmatter; template= crea desde una plantilla (CLI).",
       "search": "Buscar",
       "sessions": "Pivi Sessions",
       "sessionsDesc": "Leer sesiones persistentes, enumerar sesiones eliminadas recuperables o restaurar una en una pestaña visible de Pivi.",
@@ -1214,11 +1228,11 @@
       "links": "Enlaces",
       "linksDesc": "Leer enlaces salientes o retroenlaces de una nota.",
       "properties": "Propiedades",
-      "propertiesDesc": "Listar, leer, establecer o quitar propiedades YAML del frontmatter.",
+      "propertiesDesc": "Listar, leer, establecer o quitar propiedades YAML, con recuentos del vault, valores tipados y alias.",
       "tasks": "Tareas",
-      "tasksDesc": "Listar o alternar tareas markdown.",
+      "tasksDesc": "Listar o actualizar tareas Markdown, incluido el estado personalizado de casilla.",
       "history": "Historial",
-      "historyDesc": "Listar, leer y restaurar versiones del historial de archivos de Obsidian.",
+      "historyDesc": "Listar, leer, restaurar o comparar versiones del historial de archivos de Obsidian.",
       "delete": "Eliminar",
       "deleteDesc": "Mover archivos o carpetas del vault a la papelera.",
       "move": "Mover",
@@ -1228,7 +1242,7 @@
       "mkdir": "Mkdir",
       "mkdirDesc": "Crear carpetas en el vault.",
       "open": "Abrir",
-      "openDesc": "Abrir un archivo del vault en el espacio de trabajo de Obsidian.",
+      "openDesc": "Abrir un archivo del vault en el espacio de trabajo por ruta o nombre. newtab abre en una pestaña nueva.",
       "attachment": "Adjunto",
       "attachmentDesc": "Resolver metadatos/URL de recursos de adjuntos o rutas de adjuntos disponibles.",
       "generateImage": "Generar imagen",
@@ -1236,16 +1250,22 @@
       "bash": "Bash",
       "bashDesc": "Ejecutar un comando shell de una línea permitido mediante tu shell de inicio de sesión cuando Bash está activo. El directorio de trabajo debe permanecer en el vault.",
       "outline": "Esquema",
+      "outlineDesc": "Inspecciona encabezados Markdown, números de línea y tamaños de sección antes de leer una nota grande.",
       "command": "Comando",
+      "commandDesc": "Descubre comandos y atajos, o ejecuta un ID de comando permitido explícitamente.",
       "eval": "Evaluar",
       "daily": "Nota diaria",
       "dailyDesc": "Leer, agregar o anteponer a la nota diaria, o resolver la ruta de la nota diaria. Requiere el plugin Daily Notes.",
       "graph": "Análisis de grafos",
       "graphDesc": "Analizar el grafo del vault: huérfanos (sin enlaces de retroceso), callejones sin salida (sin enlaces salientes) y no resueltos (wikilinks rotos).",
       "tags": "Etiquetas",
-      "tagsDesc": "Listar todas las etiquetas del vault con recuentos, u obtener detalles de una sola etiqueta.",
+      "tagsDesc": "Listar etiquetas con recuentos del vault o de una nota, o obtener detalles de una etiqueta.",
       "base": "Bases",
-      "baseDesc": "Consultar Obsidian Bases (bases de datos integradas): listar archivos de bases, inspeccionar vistas u obtener resultados de consultas. Solo las consultas requieren la CLI oficial de Obsidian."
+      "baseDesc": "Consultar Obsidian Bases: listar archivos, inspeccionar vistas, consultar resultados o crear un elemento. Consulta y creación requieren la CLI oficial.",
+      "templates": "Plantillas",
+      "templatesDesc": "Listar, leer o insertar plantillas de Obsidian. Para crear una nota desde plantilla use write con template=. Requiere la CLI oficial.",
+      "bookmarks": "Marcadores",
+      "bookmarksDesc": "Listar marcadores de Obsidian o añadir un archivo, carpeta, búsqueda o URL. Requiere la CLI oficial."
     },
     "steps": {
       "readFile": "Leer archivo",

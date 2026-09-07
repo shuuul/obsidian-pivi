@@ -151,19 +151,28 @@ export interface ObsidianSearchHitLike {
   readonly line?: number;
 }
 
+function collectObsidianSearchHits(entries: unknown[]): ObsidianSearchHitLike[] {
+  return entries.flatMap((entry): ObsidianSearchHitLike[] => {
+    if (!entry || typeof entry !== 'object') return [];
+    const record = entry as Record<string, unknown>;
+    const path = stringValue(record.path).trim();
+    if (!path) return [];
+    return typeof record.line === 'number'
+      ? [{ path, line: record.line }]
+      : [{ path }];
+  });
+}
+
 export function parseObsidianSearchHits(result: string): ObsidianSearchHitLike[] {
   try {
     const parsed = JSON.parse(result) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.flatMap((entry): ObsidianSearchHitLike[] => {
-      if (!entry || typeof entry !== 'object') return [];
-      const record = entry as Record<string, unknown>;
-      const path = stringValue(record.path).trim();
-      if (!path) return [];
-      return typeof record.line === 'number'
-        ? [{ path, line: record.line }]
-        : [{ path }];
-    });
+    if (Array.isArray(parsed)) {
+      return collectObsidianSearchHits(parsed);
+    }
+    if (parsed && typeof parsed === 'object' && Array.isArray((parsed as { hits?: unknown }).hits)) {
+      return collectObsidianSearchHits((parsed as { hits: unknown[] }).hits);
+    }
+    return [];
   } catch {
     return [];
   }

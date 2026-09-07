@@ -209,7 +209,8 @@
       "unableCreateForkTab": "Verzweigungs-Tab kann nicht erstellt werden",
       "initChatService": "Chat-Dienst konnte nicht initialisiert werden",
       "titlePersistenceFailed": "Der generierte Sitzungstitel konnte nicht gespeichert werden.",
-      "autoCompactionRecovery": "Die automatische Kontextkomprimierung ist zweimal fehlgeschlagen. Führe /compact aus, um diese Sitzung manuell wiederherzustellen."
+      "autoCompactionRecovery": "Die automatische Kontextkomprimierung ist zweimal fehlgeschlagen. Führe /compact aus, um diese Sitzung manuell wiederherzustellen.",
+      "continuationBlocked": "Dieses Tool-Ergebnis ist zu groß zum Senden. Die nächste Modellanfrage wurde blockiert. Führe /compact aus oder starte eine neue Sitzung."
     },
     "toolbar": {
       "externalContexts": "Externe Kontexte",
@@ -748,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "Erfordert die offizielle Obsidian-CLI.",
-      "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung."
+      "unavailableCorePlugin": "Das zugehörige Kern-Plugin muss aktiviert sein.",
+      "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung.",
+      "cli": {
+        "heading": "Offizielle {hostName}-CLI",
+        "enabled": { "name": "Offizielle CLI-Werkzeuge aktivieren", "desc": "Pivi darf Werkzeuge registrieren, die auf der offiziellen {hostName}-CLI basieren." },
+        "unavailable": "Die offizielle {hostName}-CLI ist nicht registriert. CLI-Werkzeuge können nicht aktiviert werden.",
+        "path": { "name": "Pfad zur CLI-Datei", "desc": "Optionaler Pfad zur ausführbaren Datei. Leer lassen für automatische Erkennung.", "placeholder": "Automatisch erkennen" },
+        "timeout": { "name": "CLI-Zeitlimit", "desc": "Maximale Zeit für jede offizielle CLI-Anfrage.", "option": "{seconds} Sekunden" },
+        "actionsUnavailable": "CLI-basierte Abfrage- und Erstellaktionen sind derzeit nicht verfügbar."
+      },
+      "command": {
+        "execution": { "name": "Befehlsausführung erlauben", "desc": "Befehle nach einer bestehenden Freigabe oder einer interaktiven Berechtigungsanfrage ausführen. Die Suche bleibt schreibgeschützt." },
+        "allowlist": { "name": "Erlaubte Befehls-IDs", "desc": "Nicht aufgeführte Befehle fragen vor der Ausführung nach Erlaubnis.", "add": "Erlaubte Befehls-ID hinzufügen", "placeholder": "Befehls-ID", "remove": "{id} entfernen" }
+      }
     },
     "bash": {
       "heading": "Bash-Zugriff"
@@ -1196,7 +1210,7 @@
       "edit": "Bearbeiten",
       "editDesc": "Exakten Text in bestehenden Notizen ersetzen. Bevorzugt für Teilbearbeitungen.",
       "write": "Schreiben",
-      "writeDesc": "Notizen erstellen, anhängen/voranstellen oder absichtlich vollständig überschreiben.",
+      "writeDesc": "Notizen erstellen, anhängen/voranstellen oder absichtlich überschreiben. Voranstellen erfolgt nach YAML-Frontmatter; template= erstellt aus einer Vorlage (CLI).",
       "search": "Suchen",
       "sessions": "Pivi Sessions",
       "sessionsDesc": "Dauerhafte Sitzungen lesen, wiederherstellbare gelöschte Sitzungen auflisten oder eine in einem sichtbaren Pivi-Tab wiederherstellen.",
@@ -1214,11 +1228,11 @@
       "links": "Links",
       "linksDesc": "Ausgehende Links oder Backlinks einer Notiz lesen.",
       "properties": "Eigenschaften",
-      "propertiesDesc": "YAML-Frontmatter-Eigenschaften auflisten, lesen, setzen oder entfernen.",
+      "propertiesDesc": "YAML-Frontmatter-Eigenschaften auflisten, lesen, setzen oder entfernen, inkl. Vault-weiter Zählungen, typisierter Werte und Aliase.",
       "tasks": "Aufgaben",
-      "tasksDesc": "Markdown-Aufgaben auflisten oder umschalten.",
+      "tasksDesc": "Markdown-Aufgaben auflisten oder aktualisieren, inkl. benutzerdefiniertem Checkbox-Status.",
       "history": "Verlauf",
-      "historyDesc": "Obsidian-Dateiverlaufsversionen auflisten, lesen und wiederherstellen.",
+      "historyDesc": "Obsidian-Dateiversionen auflisten, lesen, wiederherstellen oder vergleichen.",
       "delete": "Löschen",
       "deleteDesc": "Vault-Dateien oder -Ordner in den Papierkorb verschieben.",
       "move": "Verschieben",
@@ -1228,7 +1242,7 @@
       "mkdir": "Mkdir",
       "mkdirDesc": "Ordner im Vault erstellen.",
       "open": "Öffnen",
-      "openDesc": "Vault-Datei im Obsidian-Arbeitsbereich öffnen.",
+      "openDesc": "Eine Vault-Datei im Arbeitsbereich nach Pfad oder Notizname öffnen. newtab öffnet in einem neuen Tab.",
       "attachment": "Anhang",
       "attachmentDesc": "Anhangs-Metadaten/Ressourcen-URLs oder verfügbare Anhangspfade auflösen.",
       "generateImage": "Bild erzeugen",
@@ -1236,16 +1250,22 @@
       "bash": "Bash",
       "bashDesc": "Einen erlaubten einzeiligen Shell-Befehl über die Login-Shell ausführen, wenn Bash aktiv ist. Das Arbeitsverzeichnis muss im Vault bleiben.",
       "outline": "Gliederung",
+      "outlineDesc": "Markdown-Überschriften, Zeilennummern und Abschnittsgrößen vor dem Lesen einer großen Notiz prüfen.",
       "command": "Befehl",
+      "commandDesc": "Befehle und Tastenkürzel finden oder eine ausdrücklich erlaubte Befehls-ID ausführen.",
       "eval": "Auswerten",
       "daily": "Tägliche Notiz",
       "dailyDesc": "Tägliche Notiz lesen, anhängen oder voranstellen bzw. den Pfad auflösen. Erfordert das Daily-Notes-Core-Plugin.",
       "graph": "Graph-Analyse",
       "graphDesc": "Vault-Graph analysieren: verwaiste (ohne Rücklinks), Sackgassen (ohne ausgehende Links) und unaufgelöste (kaputte Wikilinks).",
       "tags": "Tags",
-      "tagsDesc": "Alle Tags im Vault mit Anzahl auflisten oder Details zu einem einzelnen Tag anzeigen.",
+      "tagsDesc": "Tags mit Zählungen für den Vault oder eine Notiz auflisten oder Details zu einem Tag abrufen.",
       "base": "Basen",
-      "baseDesc": "Obsidian Bases (integrierte Datenbanken) abfragen: Base-Dateien auflisten, Ansichten prüfen oder Abfrageergebnisse abrufen. Nur Abfragen erfordern die offizielle Obsidian-CLI."
+      "baseDesc": "Obsidian Bases abfragen: Dateien auflisten, Ansichten prüfen, Ergebnisse abfragen oder ein Element erstellen. Abfrage und Erstellung brauchen die offizielle CLI.",
+      "templates": "Vorlagen",
+      "templatesDesc": "Obsidian-Vorlagen auflisten, lesen oder einfügen. Neue Notizen aus Vorlagen mit write und template=. Offizielle CLI erforderlich.",
+      "bookmarks": "Lesezeichen",
+      "bookmarksDesc": "Obsidian-Lesezeichen auflisten oder Datei-, Ordner-, Such- oder URL-Lesezeichen hinzufügen. Offizielle CLI erforderlich."
     },
     "steps": {
       "readFile": "Datei lesen",

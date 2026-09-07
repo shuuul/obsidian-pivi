@@ -155,6 +155,8 @@ const EXPECTED_DESCRIPTORS: Readonly<Record<string, ExpectedDescriptor>> = {
   obsidian_graph: expectedDescriptor('share-2', 'obsidian', { labelKey: 'tools.display.graph' }),
   obsidian_tags: expectedDescriptor('tag', 'obsidian', { labelKey: 'tools.display.tags' }),
   obsidian_base: expectedDescriptor('database', 'obsidian', { labelKey: 'tools.display.base' }),
+  obsidian_templates: expectedDescriptor('file-plus', 'obsidian', { labelKey: 'tools.display.templates' }),
+  obsidian_bookmarks: expectedDescriptor('bookmark', 'obsidian', { labelKey: 'tools.display.bookmarks' }),
   pivi_sessions: expectedDescriptor('history', 'obsidian', { labelKey: 'tools.display.sessions' }),
   pivi_mcp: expectedDescriptor(MCP_ICON_MARKER, 'mcp', { labelKey: 'tools.display.piviMcp' }),
   pivi_skills: expectedDescriptor('sparkles', 'skill', { labelKey: 'tools.display.piviSkills' }),
@@ -181,7 +183,7 @@ describe('tool presentation registry', () => {
 
   it('owns label keys for all registered Obsidian tools', () => {
     const obsidianTools = [...OBSIDIAN_AGENT_TOOLS, ...OBSIDIAN_OPTIONAL_TOOLS];
-    expect(obsidianTools).toHaveLength(25);
+    expect(obsidianTools).toHaveLength(27);
     expect(obsidianTools.map(name => getToolPresentationDescriptor(name).labelKey)).toEqual([
       'tools.display.read',
       'tools.display.outline',
@@ -204,6 +206,8 @@ describe('tool presentation registry', () => {
       'tools.display.graph',
       'tools.display.tags',
       'tools.display.base',
+      'tools.display.templates',
+      'tools.display.bookmarks',
       'tools.display.sessions',
       'tools.display.command',
       'tools.display.bash',
@@ -395,6 +399,10 @@ describe('tool presentation registry', () => {
     ]));
     expect(hits).toEqual([{ path: 'one.md', line: 3 }, { path: 'two.md' }]);
     expect(summarizeObsidianSearchHits(hits)).toBe('one.md:3, two.md');
+    expect(parseObsidianSearchHits(JSON.stringify({
+      hits: [{ path: 'one.md', line: 3 }, { path: 'two.md' }],
+      offset: 0,
+    }))).toEqual([{ path: 'one.md', line: 3 }, { path: 'two.md' }]);
     expect(parseObsidianSearchHits('not json')).toEqual([]);
   });
 

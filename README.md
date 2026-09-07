@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/shuuul/obsidian-pivi/releases"><img src="https://img.shields.io/static/v1?label=version&message=0.27.0&color=blue" alt="version"></a>
+  <a href="https://github.com/shuuul/obsidian-pivi/releases"><img src="https://img.shields.io/static/v1?label=version&message=0.28.0&color=blue" alt="version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
   <a href="https://obsidian.md/plugins"><img src="https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white" alt="Obsidian plugin"></a>
 </p>
@@ -81,7 +81,7 @@ Work from the note already open in Obsidian, then bring in linked notes, vault t
 
 ✦ **Obsidian-native tools** — Read, search, edit, link, and manage notes through tools that understand wikilinks, frontmatter, backlinks — not file paths.
 
-✦ **Trusted automation** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Existing Markdown and Canvas content is snapshotted through Obsidian File Recovery before Pivi mutates it; if that snapshot cannot be created, the mutation is blocked.
+✦ **Trusted automation** — Routine vault-native work does not require coding-agent plan approvals. Higher-risk capabilities are explicit: external reads, Bash commands, and Obsidian command execution show Deny / Allow once / Always approval when no matching grant exists, and Bash and command execution are off by default. Persistent grants stay on this device; command grants match an exact Obsidian command ID. Existing Markdown and Canvas content is snapshotted through Obsidian File Recovery before Pivi mutates it; if that snapshot cannot be created, the mutation is blocked.
 
 ✦ **Vault skills** — Install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` to teach the agent your workflows.
 
@@ -123,7 +123,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 |------|-------------|
 | `read` | Read vault notes, unindexed vault files such as `.pivi/`, and authorized absolute paths with bounded line or character pagination |
 | `obsidian_markdown_structure` | Extract headings and section sizes from a note |
-| `search` | Case-insensitive literal substring and `tag:` search (not folder listing) |
+| `search` | Literal substring and `tag:` search within a required note or non-root folder; optional case-sensitive matching |
 | `obsidian_note_info` | Metadata, tags, links, frontmatter |
 | `obsidian_links` | Outgoing links and backlinks for a note |
 | `ls` | List vault, unindexed, or authorized absolute folders |
@@ -131,20 +131,21 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 | `obsidian_daily` | Read, append to, or open the daily note (requires the official Obsidian CLI) |
 | `obsidian_graph` | Analyze orphans, dead ends, and unresolved links |
 | `obsidian_tags` | List tags and inspect tagged notes |
-| `obsidian_base` | List Bases, inspect views, or run CLI-backed Base queries |
+| `obsidian_base` | List Bases, inspect views, or query views through the official CLI |
+| `obsidian_templates` | List/read templates through CLI; insert into a bound Markdown editor after a recovery snapshot |
+| `obsidian_bookmarks` | List bookmarks or add file, folder, search, and URL bookmarks through the official CLI |
 | `edit` | Replace exact local text, including inserting Markdown line breaks |
-| `write` | Create or overwrite notes |
-| `obsidian_properties` | List, read, set, or remove frontmatter properties |
+| `write` | Create, overwrite, append, or prepend notes; template-based creation requires CLI |
+| `obsidian_properties` | List, read, set typed values, or remove frontmatter properties; inspect aliases with bounded output |
 | `delete` | Move files or folders to trash |
 | `move` | Rename or move files, update links |
 | `mkdir` | Create a vault folder |
-| `obsidian_history` | List, read, and restore file-history snapshots (requires the official Obsidian CLI) |
+| `obsidian_history` | List, read, compare, and restore file-history snapshots (requires the official Obsidian CLI) |
 | `obsidian_tasks` | List or update Markdown task status (requires the official Obsidian CLI) |
 | `obsidian_open` | Open a file in the Obsidian workspace |
 | `read` / `ls` (external paths) | Absolute paths outside the vault stay off by default; sidebar prompt on unlisted roots |
 | `bash` | Run an allowlisted shell command via login shell (off by default; sidebar prompt on unlisted commands) |
-| `obsidian_command` | Execute an Obsidian command by id (off by default) |
-| `obsidian_eval` | Run JavaScript in Obsidian context (off by default) |
+| `obsidian_command` | Discover commands/hotkeys through CLI; execution is separately off by default and requires an exact-ID grant or sidebar approval |
 | `obsidian_generate_image` | Generate images with Codex, save as attachments |
 | `WebSearch` | Search the web (Brave, Tavily, Exa, AnySearch) |
 | `WebFetch` | Fetch readable content from a URL |
@@ -179,10 +180,10 @@ With the [Style Settings](https://github.com/obsidian-community/obsidian-style-s
 Add the current editor selection or a custom Pivi command to an installed [Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) selected-text toolbar. Pivi can add commands through the official Obsidian CLI, or guide you through manual setup.
 
 ### ⚙️ Obsidian CLI integration
-Optional integration with the official Obsidian CLI powers history, tasks, daily notes, Base queries, command execution, JavaScript evaluation, and Note Toolbar command-item setup. The binary path and timeout are configurable in settings; individual command/eval capabilities remain separately gated.
+Optional integration with the official Obsidian CLI powers history, tasks, daily-note resolution/reads, templates, bookmarks, Base queries, command discovery and approved execution, and Note Toolbar command-item setup. Daily append/prepend resolves the exact daily path through CLI, then writes through the Vault API. The binary path and timeout are configurable in Built-in Tools settings. Command execution remains separately gated: exact-ID grants execute immediately; missing grants, including an empty allowlist, trigger Deny / Allow once / Always approval. Always grants are device-local. Daily notes, templates, and bookmarks also require their owning core plugin.
 
 > [!NOTE]
-> Upgrade note: installations that never saved an Obsidian CLI preference now treat the integration as disabled. Re-enable it in Pivi settings to restore CLI-backed history, tasks, daily-note, Base-query, command, and evaluation features.
+> Upgrade note: installations that never saved an Obsidian CLI preference now treat the integration as disabled. Re-enable it in Pivi settings to restore CLI-backed history, tasks, daily-note, Base-query, and command features.
 
 ---
 

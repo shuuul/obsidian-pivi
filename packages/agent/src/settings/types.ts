@@ -65,7 +65,6 @@ export interface ObsidianToolsSettings {
   bashAllowlist: string[];
   /** Structured persistent Bash grants overlaid from device-local storage. */
   bashPermissions: PersistentBashPermission[];
-  allowEval: boolean;
   /** Allow reading external files and folders under explicitly allowed directories. */
   allowExternalRead: boolean;
   /** Absolute directory roots that external read/list tools may access. */
@@ -85,7 +84,6 @@ export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = 
   allowBash: false,
   bashAllowlist: [],
   bashPermissions: [],
-  allowEval: false,
   allowExternalRead: false,
   externalReadDirectories: [],
   externalDirectoryPermissions: [],
@@ -106,8 +104,10 @@ export function resolveObsidianToolsSettings(
   }
   return {
     cliEnabled: raw.cliEnabled ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliEnabled,
-    cliPath: raw.cliPath ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliPath,
-    cliTimeoutMs: raw.cliTimeoutMs ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliTimeoutMs,
+    cliPath: typeof raw.cliPath === 'string' ? raw.cliPath.trim() || null : DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliPath,
+    cliTimeoutMs: typeof raw.cliTimeoutMs === 'number' && Number.isFinite(raw.cliTimeoutMs)
+      ? Math.max(1_000, Math.min(300_000, Math.floor(raw.cliTimeoutMs)))
+      : DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliTimeoutMs,
     defaultReadMaxChars: typeof raw.defaultReadMaxChars === 'number'
       ? Math.max(1_000, Math.floor(raw.defaultReadMaxChars))
       : DEFAULT_OBSIDIAN_TOOLS_SETTINGS.defaultReadMaxChars,
@@ -123,7 +123,6 @@ export function resolveObsidianToolsSettings(
     bashPermissions: Array.isArray(raw.bashPermissions)
       ? [...raw.bashPermissions]
       : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.bashPermissions],
-    allowEval: raw.allowEval ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowEval,
     allowExternalRead: raw.allowExternalRead ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowExternalRead,
     externalReadDirectories: Array.isArray(raw.externalReadDirectories)
       ? raw.externalReadDirectories.filter((directory): directory is string => typeof directory === "string")
@@ -481,7 +480,7 @@ function isOptionalObsidianToolsSettings(
     (typeof value.cliPath === "string" ||
       value.cliPath === null ||
       value.cliPath === undefined) &&
-    typeof value.cliTimeoutMs === "number" &&
+    typeof value.cliTimeoutMs === "number" && Number.isFinite(value.cliTimeoutMs) &&
     (value.defaultReadMaxChars === undefined || typeof value.defaultReadMaxChars === "number") &&
     isOptionalStringArray(value.disabledTools) &&
     typeof value.allowCommand === "boolean" &&
@@ -489,7 +488,6 @@ function isOptionalObsidianToolsSettings(
     (value.allowBash === undefined || typeof value.allowBash === "boolean") &&
     isOptionalStringArray(value.bashAllowlist) &&
     (value.bashPermissions === undefined || Array.isArray(value.bashPermissions)) &&
-    typeof value.allowEval === "boolean" &&
     typeof value.allowExternalRead === "boolean" &&
     isOptionalStringArray(value.externalReadDirectories) &&
     (value.externalDirectoryPermissions === undefined || Array.isArray(value.externalDirectoryPermissions))

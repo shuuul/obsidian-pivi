@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.28.0](https://github.com/shuuul/obsidian-pivi/compare/0.27.0...0.28.0) (2026-09-07)
+
+### Features
+
+* add CLI-backed history, task, daily-note, template, bookmark, and Base-query capabilities where the public Obsidian API has gaps
+* add exact-ID approval for Obsidian command execution with device-local persistent grants
+* clamp composer context badges and preserve their copy/paste round trip
+
+### Bug Fixes
+
+* count trailing tool results before provider continuations without overwriting authoritative provider usage
+* cap model-visible tool output and require scoped, bounded vault searches
+* bind CLI mutations to validated exact paths, serialize same-path writes, and block unsaved-editor overwrite
+* route daily-note writes through the Vault API and remove unsafe Base item creation
+* align CLI availability, settings, and execution contracts across tools and prompts
+* stabilize context-badge layout and shared navigation behavior
+
+### Security
+
+* prevent synced command allowlists from repeatedly elevating device-local execution authority
+* minimize GitHub Actions permissions and disable persisted checkout credentials
+
+### Maintenance
+
+* pin the development and CI runtime to Node 24.19.0
+* update the local Skills lockfile
+
 ## [0.27.0](https://github.com/shuuul/obsidian-pivi/compare/0.26.1...0.27.0) (2026-09-06)
 
 ### Features

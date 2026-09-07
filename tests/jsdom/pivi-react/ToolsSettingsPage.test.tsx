@@ -11,7 +11,19 @@ const snapshot: SettingsUiSnapshotData = {
 };
 
 function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {}): SettingsPorts {
-  const settings = { allowBash: false, bashPermissions: [] as const, allowExternalRead: false, externalDirectories: [] as const, defaultReadMaxChars: 100_000 };
+  const settings = {
+    cliEnabled: true,
+    cliAvailable: true,
+    cliPath: null,
+    cliTimeoutMs: 30_000,
+    allowCommand: false,
+    commandAllowlist: [] as string[],
+    allowBash: false,
+    bashPermissions: [] as const,
+    allowExternalRead: false,
+    externalDirectories: [] as const,
+    defaultReadMaxChars: 100_000,
+  };
   return {
     snapshot: { getSnapshot: () => snapshot },
     feedback: { notify: jest.fn() },
@@ -140,6 +152,7 @@ describe('React tools settings', () => {
     }));
 
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      'Official Test host CLI',
       'Workspace tools',
       'Test host CLI',
       'Pivi',
@@ -147,6 +160,76 @@ describe('React tools settings', () => {
       'Persistent permissions',
       'Subagents',
     ]);
+  });
+
+  it('persists official CLI and command execution configuration', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    renderTools(createPorts({
+      saveSettings,
+      listToolRows: () => [{
+        name: 'obsidian_command', label: 'Command', description: 'Discover commands', group: 'host-cli',
+        configuration: 'command', enabled: true, available: true,
+      }],
+    }));
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Enable official CLI tools' }));
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenCalledWith({ cliEnabled: false });
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'CLI executable path' }), {
+      target: { value: '  /opt/bin/obsidian  ' },
+    });
+    fireEvent.blur(screen.getByRole('textbox', { name: 'CLI executable path' }));
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenCalledWith({ cliPath: '/opt/bin/obsidian' });
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Allow command execution' }));
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenCalledWith({ allowCommand: true });
+    const commandId = screen.getByRole('textbox', { name: 'Add an allowed command ID' });
+    fireEvent.change(commandId, { target: { value: 'workspace:split' } });
+    fireEvent.keyDown(commandId, { key: 'Enter' });
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenCalledWith({ commandAllowlist: ['workspace:split'] });
+  });
+
+  it('prevents CLI activation when the host has no official CLI registration', () => {
+    const ports = createPorts();
+    const current = ports.complex.tools.getSettings();
+    ports.complex.tools.getSettings = () => ({ ...current, cliAvailable: false });
+    renderTools(ports);
+    expect(screen.getByRole('checkbox', { name: 'Enable official CLI tools' })).toBeDisabled();
+    expect(screen.getByText(/official Test host CLI is not registered/)).toBeInTheDocument();
+  });
+
+  it('keeps CLI state unchanged when persistence fails', async () => {
+    const saveSettings = jest.fn(async () => { throw new Error('save failed'); });
+    const ports = createPorts({ saveSettings });
+    renderTools(ports);
+    const toggle = screen.getByRole('checkbox', { name: 'Enable official CLI tools' });
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    await act(async () => undefined);
+    expect(toggle).toBeChecked();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Error');
+  });
+
+  it('rolls a failed CLI path edit back to the latest saved path', async () => {
+    const saveSettings = jest.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('save failed'));
+    renderTools(createPorts({ saveSettings }));
+    const path = screen.getByRole('textbox', { name: 'CLI executable path' });
+
+    fireEvent.change(path, { target: { value: '/opt/bin/obsidian' } });
+    fireEvent.blur(path);
+    await act(async () => undefined);
+    expect(path).toHaveValue('/opt/bin/obsidian');
+
+    fireEvent.change(path, { target: { value: '/broken/obsidian' } });
+    fireEvent.blur(path);
+    await act(async () => undefined);
+    expect(path).toHaveValue('/opt/bin/obsidian');
   });
 
   it('persists the default read size', async () => {
@@ -292,6 +375,12 @@ describe('React tools settings', () => {
     const saveSettings = jest.fn(async () => undefined);
     const ports = createPorts({ saveSettings });
     ports.complex.tools.getSettings = () => ({
+      cliEnabled: true,
+      cliAvailable: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      allowCommand: false,
+      commandAllowlist: [],
       allowBash: false,
       bashPermissions: [{
         kind: 'subcommand',

@@ -1,10 +1,10 @@
 import {
   TOOL_OBSIDIAN_BASE,
   TOOL_OBSIDIAN_BASH,
+  TOOL_OBSIDIAN_BOOKMARKS,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DAILY,
   TOOL_OBSIDIAN_EDIT,
-  TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
@@ -12,6 +12,7 @@ import {
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_TEMPLATES,
 } from '../tools';
 import { TOOL_SKILL, TOOL_SPAWN_AGENT, type ToolSpec } from '../tools';
 import {
@@ -158,8 +159,8 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     ...(hasEdit ? [buildMarkdownBlockBoundaryGuidance()] : []),
     ...(hasSearch ? [
       hasList
-        ? '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. Pass `path` for one Markdown note or a folder; omit `path` only for a vault-wide scan. It is not regex and not Obsidian in-app search. Do not use `*`, `**`, empty, or `path:`-only queries for listing—use `ls`. Do not repeat the same search with different casing.'
-        : '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. Pass `path` for one Markdown note or a folder; omit `path` only for a vault-wide scan. It is not regex and not Obsidian in-app search. Do not repeat the same search with different casing.',
+        ? '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. `path` is required and must be one Markdown note or a non-root folder; vault-wide scans are rejected. It is not regex and not Obsidian in-app search. Do not use `*`, `**`, empty, or `path:`-only queries for listing—use `ls`. Do not repeat the same search with different casing.'
+        : '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. `path` is required and must be one Markdown note or a non-root folder; vault-wide scans are rejected. It is not regex and not Obsidian in-app search. Do not repeat the same search with different casing.',
     ] : []),
     ...(hasList ? [
       '**Listing:** Prefer `ls` for folders, including non-Markdown files. `offset` is a 0-based entry index, not a line number. Unindexed vault folders such as `.pivi/` and allowed absolute paths work on the same tool.',
@@ -215,10 +216,11 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
     TOOL_OBSIDIAN_TASKS,
     TOOL_OBSIDIAN_HISTORY,
     TOOL_OBSIDIAN_DAILY,
+    TOOL_OBSIDIAN_TEMPLATES,
+    TOOL_OBSIDIAN_BOOKMARKS,
   ].filter((name) => registeredObsidianTools.has(name));
   const cliOnlyTools = [
     TOOL_OBSIDIAN_COMMAND,
-    TOOL_OBSIDIAN_EVAL,
   ].filter((name) => registeredObsidianTools.has(name));
   const shellTools = [
     TOOL_OBSIDIAN_BASH,
@@ -226,7 +228,7 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
 
   const notes = ['**API vs CLI:** Most vault tools use the in-process Obsidian API.'];
   if (!obsidianCliAvailable) {
-    notes.push('Obsidian CLI is not available for this turn (disabled in Pivi settings or not enabled in Obsidian). Do not use CLI-only tools or CLI-only actions; use API-backed actions when listed. If the user’s request cannot be completed without a CLI-only tool/action (for example history restore, daily-note commands, command/eval, tasks, or base query), stop and ask the user to enable Pivi’s Obsidian CLI setting and Obsidian Settings → General → Command line interface, then retry.');
+    notes.push('Obsidian CLI is not available for this turn (disabled in Pivi settings or not enabled in Obsidian). Do not use CLI-only tools or CLI-only actions; use API-backed actions when listed. If the user’s request cannot be completed without a CLI-only tool/action (for example history restore, daily-note commands, command, tasks, or base query), stop and ask the user to enable Pivi’s Obsidian CLI setting and Obsidian Settings → General → Command line interface, then retry.');
   }
   if (cliRequiredTools.length > 0 && obsidianCliAvailable) {
     notes.push(`${cliRequiredTools.map((name) => `\`${name}\``).join(' / ')} require Obsidian CLI (\`cliEnabled\`).`);
@@ -236,7 +238,7 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
   }
   if (registeredObsidianTools.has(TOOL_OBSIDIAN_BASE)) {
     notes.push(obsidianCliAvailable
-      ? `\`${TOOL_OBSIDIAN_BASE}\` lists base files/views through the vault API; only its query action requires Obsidian CLI.`
+      ? `\`${TOOL_OBSIDIAN_BASE}\` lists base files/views through the vault API; its query action requires Obsidian CLI.`
       : `\`${TOOL_OBSIDIAN_BASE}\` can list base files/views through the vault API; its query action is unavailable without Obsidian CLI.`);
   }
   if (shellTools.length > 0) {

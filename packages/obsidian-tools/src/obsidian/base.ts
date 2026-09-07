@@ -4,6 +4,7 @@ import {
   type ToolSpec,
 } from '@pivi/agent/tools';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
 type BaseAction = 'list' | 'views' | 'query';
@@ -43,8 +44,8 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
     label: 'Bases',
     description:
       queryAvailable
-        ? 'Query Obsidian Bases (built-in databases). List base files, list views in a base, or query a base view and return results. Query action requires the official Obsidian CLI.'
-        : 'Inspect Obsidian Bases (built-in databases). List base files or list views in a base. Query action is unavailable because Obsidian CLI is not available.',
+        ? 'Query Obsidian Bases (built-in databases). List base files, list views in a base, or query a base view. Query requires the official Obsidian CLI.'
+        : 'Inspect Obsidian Bases (built-in databases). List base files or list views in a base. Query is unavailable because Obsidian CLI is not available.',
     parameters: {
       type: 'object',
       properties: {
@@ -53,7 +54,7 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
           enum: actionEnum,
           description: queryAvailable
             ? 'list: all base files. views: views in a base. query: query a base view.'
-            : 'list: all base files. views: views in a base. Query is unavailable because Obsidian CLI is not available.',
+            : 'list: all base files. views: views in a base. Query requires Obsidian CLI.',
         },
         file: { type: 'string', description: 'Base file name (for views/query).' },
         path: { type: 'string', description: 'Base file vault-relative path (for views/query).' },
@@ -95,7 +96,6 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
         });
       }
 
-      // query
       const view = getStringField(input, 'view');
       const format = getBaseFormat(input['format']);
       const args = ['base:query', `format=${format}`];
@@ -103,7 +103,7 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
       if (path) { args.push(`path=${path}`); }
       if (view) { args.push(`view=${view}`); }
       const out = await cli.run({ vaultName, args });
-      return textResult(out, { action: 'query', format });
+      return textResult(capCliToolOutput(out), { action: 'query', format });
     },
   };
 }

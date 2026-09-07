@@ -17,12 +17,12 @@ export { buildLoginShellInvocation, resolveLoginShellPath } from './loginShell';
 export { createAttachmentTool } from './obsidian/attachment';
 export { createBaseTool } from './obsidian/base';
 export { createBashTool } from './obsidian/bash';
+export { createBookmarksTool } from './obsidian/bookmarks';
 export { createCommandTool } from './obsidian/command';
 export { createDailyTool } from './obsidian/daily';
 export { createDeletePathTool } from './obsidian/deletePath';
 export type { ObsidianToolDeps } from './obsidian/deps';
 export { createEditNoteTool } from './obsidian/editNote';
-export { createEvalTool } from './obsidian/eval';
 export { createGenerateImageTool } from './obsidian/generateImage';
 export { createGraphTool } from './obsidian/graph';
 export { createHistoryTool } from './obsidian/history';
@@ -46,6 +46,7 @@ export {
 export { createSearchTool } from './obsidian/search';
 export { createTagsTool } from './obsidian/tags';
 export { createTasksTool } from './obsidian/tasks';
+export { createTemplatesTool } from './obsidian/templates';
 export { createWriteNoteTool } from './obsidian/writeNote';
 export * from './settings';
 

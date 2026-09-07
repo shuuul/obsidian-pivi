@@ -273,16 +273,20 @@ describe("PiviSettingsStorage", () => {
 
   it('migrates legacy bashAllowlist into device-local permissions and strips synced fields', async () => {
     let snapshot = {
-      version: 1 as const,
+      version: 2 as const,
       bash: [] as Array<{
         kind: 'executable';
         executable: { kind: 'name'; value: string };
         enabled: boolean;
       }>,
       externalDirectories: [] as Array<{ realpath: string; enabled: boolean }>,
+      obsidianCommands: [] as string[],
     };
     const capabilities = {
-      hasRecord: () => snapshot.bash.length > 0 || snapshot.externalDirectories.length > 0,
+      hasRecord: () => snapshot.bash.length > 0
+        || snapshot.externalDirectories.length > 0
+        || snapshot.obsidianCommands.length > 0,
+      needsLegacyCommandGrantMigration: () => false,
       getSnapshot: () => snapshot,
       save: (next: typeof snapshot) => {
         snapshot = next;
@@ -293,6 +297,7 @@ describe("PiviSettingsStorage", () => {
       agentSettings: {
         obsidianTools: {
           bashAllowlist: ['git', 'ls'],
+          commandAllowlist: ['workspace:split'],
           externalReadDirectories: [externalFixturePath('/synced/legacy')],
         },
       },
@@ -320,12 +325,150 @@ describe("PiviSettingsStorage", () => {
     expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
       externalFixturePath('/synced/legacy'),
     ]);
+    expect(settings.agentSettings.obsidianTools?.commandAllowlist).toEqual(['workspace:split']);
+    expect(snapshot.obsidianCommands).toEqual(['workspace:split']);
     const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
       agentSettings?: { obsidianTools?: Record<string, unknown> };
     };
     expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('bashAllowlist');
     expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('bashPermissions');
     expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('externalReadDirectories');
+    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('commandAllowlist');
+  });
+
+  it('migrates synced command grants exactly once from a v1 capability record', async () => {
+    let sourceVersion: 1 | 2 = 1;
+    let snapshot = {
+      version: 2 as const,
+      bash: [{
+        kind: 'executable' as const,
+        executable: { kind: 'name' as const, value: 'git' },
+        enabled: true,
+      }],
+      externalDirectories: [] as Array<{ realpath: string; enabled: boolean }>,
+      obsidianCommands: ['editor:toggle-bold'],
+    };
+    const capabilities = {
+      hasRecord: () => true,
+      needsLegacyCommandGrantMigration: () => sourceVersion === 1,
+      getSnapshot: () => snapshot,
+      save: (next: typeof snapshot) => {
+        snapshot = next;
+        sourceVersion = 2;
+        return next;
+      },
+    };
+    const adapter = createMemoryAdapter(JSON.stringify({
+      agentSettings: {
+        obsidianTools: { commandAllowlist: ['workspace:split'] },
+      },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
+    );
+
+    const settings = await storage.load();
+
+    expect(snapshot.obsidianCommands).toEqual(['editor:toggle-bold', 'workspace:split']);
+    expect(settings.agentSettings.obsidianTools?.commandAllowlist).toEqual([
+      'editor:toggle-bold',
+      'workspace:split',
+    ]);
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
+      agentSettings?: { obsidianTools?: Record<string, unknown> };
+    };
+    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('commandAllowlist');
+  });
+
+  it('does not elevate a synced command allowlist when a v2 local record exists', async () => {
+    let snapshot = {
+      version: 2 as const,
+      bash: [{
+        kind: 'executable' as const,
+        executable: { kind: 'name' as const, value: 'git' },
+        enabled: true,
+      }],
+      externalDirectories: [] as Array<{ realpath: string; enabled: boolean }>,
+      obsidianCommands: ['editor:toggle-bold'],
+    };
+    const capabilities = {
+      hasRecord: () => true,
+      needsLegacyCommandGrantMigration: () => false,
+      getSnapshot: () => snapshot,
+      save: (next: typeof snapshot) => {
+        snapshot = next;
+        return next;
+      },
+    };
+    const adapter = createMemoryAdapter(JSON.stringify({
+      agentSettings: {
+        obsidianTools: { commandAllowlist: ['workspace:split'] },
+      },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
+    );
+
+    const settings = await storage.load();
+
+    expect(snapshot.obsidianCommands).toEqual(['editor:toggle-bold']);
+    expect(settings.agentSettings.obsidianTools?.commandAllowlist).toEqual([
+      'editor:toggle-bold',
+    ]);
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
+      agentSettings?: { obsidianTools?: Record<string, unknown> };
+    };
+    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('commandAllowlist');
+  });
+
+  it('consumes the v1 command migration even when the synced field is absent', async () => {
+    let sourceVersion: 1 | 2 = 1;
+    let snapshot = {
+      version: 2 as const,
+      bash: [{
+        kind: 'executable' as const,
+        executable: { kind: 'name' as const, value: 'git' },
+        enabled: true,
+      }],
+      externalDirectories: [{ realpath: externalFixturePath('/device/root'), enabled: true }],
+      obsidianCommands: [] as string[],
+    };
+    const capabilities = {
+      hasRecord: () => true,
+      needsLegacyCommandGrantMigration: () => sourceVersion === 1,
+      getSnapshot: () => snapshot,
+      save: (next: typeof snapshot) => {
+        snapshot = next;
+        sourceVersion = 2;
+        return next;
+      },
+    };
+    const firstStorage = new PiviSettingsStorage(
+      createMemoryAdapter(JSON.stringify({})) as unknown as FileStore,
+      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
+    );
+
+    await firstStorage.load();
+    expect(sourceVersion).toBe(2);
+    expect(snapshot.bash).toHaveLength(1);
+    expect(snapshot.externalDirectories).toEqual([
+      { realpath: externalFixturePath('/device/root'), enabled: true },
+    ]);
+
+    const conflictedStorage = new PiviSettingsStorage(
+      createMemoryAdapter(JSON.stringify({
+        agentSettings: {
+          obsidianTools: { commandAllowlist: ['workspace:split'] },
+        },
+      })) as unknown as FileStore,
+      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
+    );
+    const reloaded = await conflictedStorage.load();
+
+    expect(snapshot.obsidianCommands).toEqual([]);
+    expect(reloaded.agentSettings.obsidianTools?.commandAllowlist).toEqual([]);
   });
 
   it('moves external roots into device-local storage and strips them from synced settings', async () => {

@@ -47,7 +47,6 @@ describe('createGenerateImageTool', () => {
       allowBash: false,
       bashAllowlist: [],
       bashPermissions: [],
-      allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
       externalDirectoryPermissions: [],
@@ -64,7 +63,6 @@ describe('createGenerateImageTool', () => {
       allowBash: false,
       bashAllowlist: [],
       bashPermissions: [],
-      allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
       externalDirectoryPermissions: [],
@@ -92,7 +90,6 @@ describe('createGenerateImageTool', () => {
       allowBash: false,
       bashAllowlist: [],
       bashPermissions: [],
-      allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
       externalDirectoryPermissions: [],
@@ -123,7 +120,6 @@ describe('createGenerateImageTool', () => {
       allowBash: false,
       bashAllowlist: [],
       bashPermissions: [],
-      allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
       externalDirectoryPermissions: [],
@@ -170,7 +166,6 @@ describe('createGenerateImageTool', () => {
         allowBash: false,
         bashAllowlist: [],
         bashPermissions: [],
-        allowEval: false,
         allowExternalRead: false,
         externalReadDirectories: [],
         externalDirectoryPermissions: [],
@@ -193,7 +188,7 @@ describe('createGenerateImageTool', () => {
     }
   });
 
-  it('registers CLI-backed tools and optional CLI tools only when Obsidian CLI is available', () => {
+  it('registers CLI-backed tools, including command discovery, only when Obsidian CLI is available', () => {
     const app = {
       vault: { getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
@@ -204,12 +199,11 @@ describe('createGenerateImageTool', () => {
       cliTimeoutMs: 30_000,
       defaultReadMaxChars: 100_000,
       disabledTools: [],
-      allowCommand: true,
+      allowCommand: false,
       commandAllowlist: [],
       allowBash: false,
       bashAllowlist: [],
       bashPermissions: [],
-      allowEval: true,
       allowExternalRead: false,
       externalReadDirectories: [],
       externalDirectoryPermissions: [],
@@ -220,8 +214,9 @@ describe('createGenerateImageTool', () => {
         'obsidian_history',
         'obsidian_tasks',
         'obsidian_daily',
+        'obsidian_templates',
+        'obsidian_bookmarks',
         'obsidian_command',
-        'obsidian_eval',
       ]));
 
     expect(createObsidianTools(app as never, baseSettings, { obsidianCliAvailable: true }).map((tool) => tool.name))
@@ -229,9 +224,75 @@ describe('createGenerateImageTool', () => {
         'obsidian_history',
         'obsidian_tasks',
         'obsidian_daily',
+        'obsidian_templates',
+        'obsidian_bookmarks',
         'obsidian_command',
-        'obsidian_eval',
       ]));
+  });
+
+  it('omits CLI tools whose required core plugin is disabled', () => {
+    const enabled = new Map([
+      ['templates', { enabled: true }],
+      ['bookmarks', { enabled: false }],
+      ['daily-notes', { enabled: false }],
+    ]);
+    const app = {
+      vault: { getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+      internalPlugins: { getPluginById: (id: string) => enabled.get(id) ?? null },
+    };
+    const settings = {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      defaultReadMaxChars: 100_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
+      bashPermissions: [],
+      allowExternalRead: false,
+      externalReadDirectories: [],
+      externalDirectoryPermissions: [],
+    };
+
+    const names = createObsidianTools(app as never, settings, { obsidianCliAvailable: true })
+      .map((tool) => tool.name);
+    expect(names).toContain('obsidian_templates');
+    expect(names).not.toContain('obsidian_bookmarks');
+    expect(names).not.toContain('obsidian_daily');
+  });
+
+  it('keeps CLI tools when the private core-plugin registry cannot resolve their ids', () => {
+    const app = {
+      vault: { getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+      internalPlugins: { getPluginById: () => null },
+    };
+    const settings = {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      defaultReadMaxChars: 100_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
+      bashPermissions: [],
+      allowExternalRead: false,
+      externalReadDirectories: [],
+      externalDirectoryPermissions: [],
+    };
+
+    const names = createObsidianTools(app as never, settings, { obsidianCliAvailable: true })
+      .map((tool) => tool.name);
+    expect(names).toEqual(expect.arrayContaining([
+      'obsidian_templates',
+      'obsidian_bookmarks',
+      'obsidian_daily',
+    ]));
   });
 
   it('generates an image, saves it as an attachment, and appends the embed', async () => {
@@ -349,7 +410,6 @@ describe('createBashTool', () => {
       allowBash: false,
       bashAllowlist: ['git'],
       bashPermissions: [],
-      allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
       externalDirectoryPermissions: [],
@@ -391,7 +451,7 @@ describe('createBashTool', () => {
         ? ['/d', '/s', '/c', 'git status']
         : ['-lc', 'git status'],
       cwdPolicy: { mode: 'vault', vaultRoot: vaultDir },
-      timeoutMs: 12_000,
+      timeoutMs: 30_000,
       shell: { mode: 'forbidden' },
     }));
   });

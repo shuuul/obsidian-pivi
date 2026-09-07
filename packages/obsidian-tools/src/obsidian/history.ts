@@ -5,14 +5,26 @@ import {
 } from '@pivi/agent/tools';
 import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 
+import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
-type HistoryAction = 'files' | 'list' | 'read' | 'restore';
+type HistoryAction = 'files' | 'list' | 'read' | 'restore' | 'diff';
+type HistoryFilter = 'local' | 'sync';
 
 function getHistoryAction(value: unknown): HistoryAction | undefined {
-  return value === 'files' || value === 'list' || value === 'read' || value === 'restore'
+  return value === 'files' || value === 'list' || value === 'read' || value === 'restore' || value === 'diff'
     ? value
     : undefined;
+}
+
+function getHistoryFilter(value: unknown): HistoryFilter | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === 'local' || value === 'sync') {
+    return value;
+  }
+  throw new Error('Invalid history filter: must be local or sync.');
 }
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
@@ -27,12 +39,24 @@ function getVersionField(input: Record<string, unknown>): number | undefined {
     : undefined;
 }
 
-function requirePath(input: Record<string, unknown>): string {
+function pushTargetArgs(args: string[], input: Record<string, unknown>): void {
+  const file = getStringField(input, 'file')?.trim();
   const path = getStringField(input, 'path')?.trim();
-  if (!path) {
-    throw new Error('path is required.');
+  if (file) {
+    args.push(`file=${file}`);
   }
-  return path;
+  if (path) {
+    args.push(`path=${path}`);
+  }
+}
+
+function requireHistoryTarget(input: Record<string, unknown>): { file?: string; path?: string } {
+  const file = getStringField(input, 'file')?.trim();
+  const path = getStringField(input, 'path')?.trim();
+  if (!file && !path) {
+    throw new Error('file or path is required.');
+  }
+  return { file, path };
 }
 
 function requireVersion(input: Record<string, unknown>): number {
@@ -50,24 +74,41 @@ export function createHistoryTool(deps: ObsidianToolDeps): ToolSpec {
     label: 'History',
     description: 'List, read, or restore Obsidian file history versions through the Obsidian CLI.',
     promptUsage: {
-      summary: 'Recover changed, overwritten, or deleted notes from Obsidian history: discover with files when the path is unknown, list versions for a known path, inspect with read when practical, then restore in place.',
-      parameters: '`action` required files|list|read|restore; `path` required except for files; `version` required for read and restore.',
+      summary: 'Recover changed, overwritten, or deleted notes from Obsidian history: discover with files when the path is unknown, list versions for a known path, inspect with read when practical, then restore in place. `diff` compares File Recovery or Sync versions.',
+      parameters: '`action` required files|list|read|restore|diff; `file` or `path` required except for files; `version` required for read and restore; `from`/`to`/`filter` for diff.',
     },
     parameters: {
       type: 'object',
       properties: {
         action: {
           type: 'string',
-          enum: ['files', 'list', 'read', 'restore'],
+          enum: ['files', 'list', 'read', 'restore', 'diff'],
           description: 'History action to run.',
+        },
+        file: {
+          type: 'string',
+          description: 'Wikilink-style note name. Use with list, read, restore, or diff.',
         },
         path: {
           type: 'string',
-          description: 'Vault-relative path. Required for list, read, and restore.',
+          description: 'Vault-relative path. Required for list, read, restore, and diff unless file is set.',
         },
         version: {
           type: 'number',
           description: 'Integer history version number. Required for read and restore.',
+        },
+        from: {
+          type: 'number',
+          description: 'Diff: version number to compare from (newest is 1).',
+        },
+        to: {
+          type: 'number',
+          description: 'Diff: version number to compare to.',
+        },
+        filter: {
+          type: 'string',
+          enum: ['local', 'sync'],
+          description: 'Diff: limit versions to File Recovery or Sync.',
         },
       },
       required: ['action'],
@@ -82,27 +123,60 @@ export function createHistoryTool(deps: ObsidianToolDeps): ToolSpec {
 
       if (action === 'files') {
         const output = await cli.run({ vaultName, args: ['history:list'] });
-        return textResult(output, { action });
+        return textResult(capCliToolOutput(output), { action });
       }
 
-      const path = requirePath(input);
+      if (action === 'diff') {
+        const target = requireHistoryTarget(input);
+        const args = ['diff'];
+        pushTargetArgs(args, input);
+        const from = getVersionField({ version: input.from });
+        const to = getVersionField({ version: input.to });
+        const filter = getHistoryFilter(input.filter);
+        if (from !== undefined) {
+          args.push(`from=${from}`);
+        }
+        if (to !== undefined) {
+          args.push(`to=${to}`);
+        }
+        if (filter) {
+          args.push(`filter=${filter}`);
+        }
+        const output = await cli.run({ vaultName, args });
+        return textResult(capCliToolOutput(output), { action, ...target, from, to, filter });
+      }
+
+      const target = requireHistoryTarget(input);
       if (action === 'list') {
-        const output = await cli.run({ vaultName, args: ['history', `path=${path}`] });
-        return textResult(output, { action, path });
+        const args = ['history'];
+        pushTargetArgs(args, input);
+        const output = await cli.run({ vaultName, args });
+        return textResult(capCliToolOutput(output), { action, ...target });
       }
 
       const version = requireVersion(input);
       if (action === 'read') {
-        const output = await cli.run({ vaultName, args: ['history:read', `path=${path}`, `version=${version}`] });
-        return textResult(output, { action, path, version });
+        const args = ['history:read'];
+        pushTargetArgs(args, input);
+        args.push(`version=${version}`);
+        const output = await cli.run({ vaultName, args });
+        return textResult(capCliToolOutput(output), { action, ...target, version });
       }
 
-      const mutationPath = requireAgentVaultMutationPath(path, vaultPath);
-      await deps.vault.captureSnapshotBeforeRestore(mutationPath);
-      await cli.run({
-        vaultName,
-        args: ['history:restore', `path=${mutationPath}`, `version=${version}`],
-      });
+      const restorePath = target.path
+        ?? deps.vault.resolveFile(target.file, undefined)?.path
+        ?? target.file;
+      if (!restorePath) {
+        throw new Error('file or path is required.');
+      }
+      const mutationPath = requireAgentVaultMutationPath(restorePath, vaultPath);
+      await deps.vault.runCliMutation(
+        mutationPath,
+        () => cli.run({
+          vaultName,
+          args: ['history:restore', `path=${mutationPath}`, `version=${version}`],
+        }),
+      );
       return textResult(
         `Restored ${mutationPath} from history version ${version}.`,
         { action, path: mutationPath, version },

@@ -82,6 +82,8 @@ describe('revealInlineContext', () => {
     };
     const view = { file: { path: 'notes/readme.md' }, editor };
     const app = {
+      metadataCache: { getFirstLinkpathDest: () => null },
+      vault: { getAbstractFileByPath: () => null },
       workspace: {
         openLinkText: jest.fn().mockResolvedValue(undefined),
         getActiveViewOfType: jest.fn().mockReturnValue(view),
@@ -98,7 +100,7 @@ describe('revealInlineContext', () => {
 
     await revealInlineContext(app as never, context);
 
-    expect(app.workspace.openLinkText).toHaveBeenCalledWith('notes/readme.md', '');
+    expect(app.workspace.openLinkText).toHaveBeenCalledWith('notes/readme.md', '', 'tab');
     expect(editor.setSelection).toHaveBeenCalledWith(
       { line: 1, ch: 2 },
       { line: 3, ch: 7 },
@@ -120,6 +122,8 @@ describe('revealInlineContext', () => {
       focus: jest.fn(),
     };
     const app = {
+      metadataCache: { getFirstLinkpathDest: () => null },
+      vault: { getAbstractFileByPath: () => null },
       workspace: {
         openLinkText: jest.fn().mockResolvedValue(undefined),
         getActiveViewOfType: jest.fn().mockReturnValue({

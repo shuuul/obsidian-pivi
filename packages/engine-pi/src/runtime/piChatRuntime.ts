@@ -63,6 +63,7 @@ import {
   getSubagentOwnerToolId,
 } from './piChatRuntimeActiveTurn';
 import {
+  attachContextEnvelope,
   buildUsageAfterCompaction,
   compactCurrentSession,
   invalidateCompactionState,
@@ -891,10 +892,14 @@ export class PiChatRuntime implements PiChatService {
     const messages = this.agent?.state.messages ?? [];
     const usage = latestUsageFromMessages(messages, model)
       ?? buildEstimatedUsageInfo(messages, model);
+    const projected = usage
+      ? attachContextEnvelope(this.compactionDeps(), usage, undefined, messages)
+      : null;
+    const contextTokens = projected?.contextTokens ?? usage?.contextTokens ?? 0;
     return {
       model: `${model.provider}/${model.id}`,
       contextWindow: model.contextWindow ?? 0,
-      ...(usage && usage.contextTokens > 0 ? { contextTokens: usage.contextTokens } : {}),
+      ...(contextTokens > 0 ? { contextTokens } : {}),
     };
   }
 

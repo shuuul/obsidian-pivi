@@ -1,8 +1,9 @@
 import {
   canonicalizeCapabilityPermissions,
+  capabilityPermissionsSourceVersion,
   decodeCapabilityPermissions,
   defaultCaseInsensitiveExecutables,
-  type DeviceLocalCapabilityPermissionsV1,
+  type DeviceLocalCapabilityPermissions,
   emptyCapabilityPermissions,
   enabledBashPermissions,
   enabledExternalDirectories,
@@ -22,7 +23,13 @@ export class ObsidianDeviceLocalCapabilityPermissionStore {
     return this.app.loadLocalStorage(DEVICE_LOCAL_CAPABILITY_PERMISSIONS_STORAGE_KEY) != null;
   }
 
-  getSnapshot(): DeviceLocalCapabilityPermissionsV1 {
+  needsLegacyCommandGrantMigration(): boolean {
+    return capabilityPermissionsSourceVersion(
+      this.app.loadLocalStorage(DEVICE_LOCAL_CAPABILITY_PERMISSIONS_STORAGE_KEY),
+    ) === 1;
+  }
+
+  getSnapshot(): DeviceLocalCapabilityPermissions {
     return decodeCapabilityPermissions(
       this.app.loadLocalStorage(DEVICE_LOCAL_CAPABILITY_PERMISSIONS_STORAGE_KEY),
     );
@@ -40,7 +47,7 @@ export class ObsidianDeviceLocalCapabilityPermissionStore {
     return enabledExternalDirectories(this.getSnapshot().externalDirectories);
   }
 
-  save(next: DeviceLocalCapabilityPermissionsV1): DeviceLocalCapabilityPermissionsV1 {
+  save(next: DeviceLocalCapabilityPermissions): DeviceLocalCapabilityPermissions {
     const normalized = canonicalizeCapabilityPermissions(
       next,
       defaultCaseInsensitiveExecutables(),
@@ -50,16 +57,16 @@ export class ObsidianDeviceLocalCapabilityPermissionStore {
     return normalized;
   }
 
-  replaceBash(bash: readonly PersistentBashPermission[]): DeviceLocalCapabilityPermissionsV1 {
+  replaceBash(bash: readonly PersistentBashPermission[]): DeviceLocalCapabilityPermissions {
     return this.save({ ...this.getSnapshot(), bash: [...bash] });
   }
 
-  upsertBash(permission: PersistentBashPermission): DeviceLocalCapabilityPermissionsV1 {
+  upsertBash(permission: PersistentBashPermission): DeviceLocalCapabilityPermissions {
     const snapshot = this.getSnapshot();
     return this.save({ ...snapshot, bash: [...snapshot.bash, permission] });
   }
 
-  upsertExternalDirectory(directory: PersistentExternalDirectoryPermission): DeviceLocalCapabilityPermissionsV1 {
+  upsertExternalDirectory(directory: PersistentExternalDirectoryPermission): DeviceLocalCapabilityPermissions {
     const snapshot = this.getSnapshot();
     return this.save({
       ...snapshot,
@@ -67,7 +74,7 @@ export class ObsidianDeviceLocalCapabilityPermissionStore {
     });
   }
 
-  initializeEmpty(): DeviceLocalCapabilityPermissionsV1 {
+  initializeEmpty(): DeviceLocalCapabilityPermissions {
     if (this.hasRecord()) return this.getSnapshot();
     return this.save(emptyCapabilityPermissions());
   }

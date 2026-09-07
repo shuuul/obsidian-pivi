@@ -209,7 +209,8 @@
       "unableCreateForkTab": "Unable to create fork tab",
       "initChatService": "Failed to initialize chat service",
       "titlePersistenceFailed": "Failed to save the generated session title.",
-      "autoCompactionRecovery": "Automatic context compaction failed twice. Run /compact to recover this session manually."
+      "autoCompactionRecovery": "Automatic context compaction failed twice. Run /compact to recover this session manually.",
+      "continuationBlocked": "This tool result is too large to send. The next model request was blocked. Run /compact or start a new session."
     },
     "toolbar": {
       "externalContexts": "External contexts",
@@ -766,7 +767,20 @@
         }
       },
       "unavailableOfficialCli": "Requires the official Obsidian CLI.",
-      "unavailableCodex": "Requires OpenAI Codex connection."
+      "unavailableCorePlugin": "Requires its owning core plugin to be enabled.",
+      "unavailableCodex": "Requires OpenAI Codex connection.",
+      "cli": {
+        "heading": "Official {hostName} CLI",
+        "enabled": { "name": "Enable official CLI tools", "desc": "Allow Pivi to register tools backed by the official {hostName} CLI." },
+        "unavailable": "The official {hostName} CLI is not registered. CLI-backed tools cannot be enabled.",
+        "path": { "name": "CLI executable path", "desc": "Optional executable override. Leave blank to detect it automatically.", "placeholder": "Auto-detect" },
+        "timeout": { "name": "CLI timeout", "desc": "Maximum time for each official CLI request.", "option": "{seconds} seconds" },
+        "actionsUnavailable": "CLI-backed query and create actions are currently unavailable."
+      },
+      "command": {
+        "execution": { "name": "Allow command execution", "desc": "Allow command execution after an existing grant or an interactive permission request. Discovery remains read-only." },
+        "allowlist": { "name": "Allowed command IDs", "desc": "Commands not listed here ask for permission before execution.", "add": "Add an allowed command ID", "placeholder": "Command ID", "remove": "Remove {id}" }
+      }
     },
     "bash": {
       "heading": "Bash access"
@@ -1196,7 +1210,7 @@
       "edit": "Edit",
       "editDesc": "Replace exact text in existing notes. Preferred for partial edits.",
       "write": "Write",
-      "writeDesc": "Create notes, append/prepend content, or intentionally overwrite full notes.",
+      "writeDesc": "Create notes, append/prepend content, or intentionally overwrite full notes. prepend inserts after YAML frontmatter; template= creates from an Obsidian template (CLI).",
       "search": "Search",
       "sessions": "Pivi Sessions",
       "sessionsDesc": "Read durable sessions, list recoverable deleted sessions, or restore one in a visible Pivi tab.",
@@ -1214,11 +1228,11 @@
       "links": "Links",
       "linksDesc": "Read outgoing links or backlinks for a note.",
       "properties": "Properties",
-      "propertiesDesc": "List, read, set, or remove YAML frontmatter properties.",
+      "propertiesDesc": "List, read, set, or remove YAML frontmatter properties, including vault-wide counts, typed values, and aliases.",
       "tasks": "Tasks",
-      "tasksDesc": "List or toggle markdown tasks.",
+      "tasksDesc": "List or update markdown tasks, including custom checkbox status.",
       "history": "History",
-      "historyDesc": "List, read, and restore Obsidian file history versions.",
+      "historyDesc": "List, read, restore, or diff Obsidian file history versions.",
       "delete": "Delete",
       "deleteDesc": "Move vault files or folders to trash.",
       "move": "Move",
@@ -1228,7 +1242,7 @@
       "mkdir": "Mkdir",
       "mkdirDesc": "Create folders in the vault.",
       "open": "Open",
-      "openDesc": "Open a vault file in the Obsidian workspace.",
+      "openDesc": "Open a vault file in the workspace by path or note name. newtab opens in a new tab.",
       "attachment": "Attachment",
       "attachmentDesc": "Resolve attachment metadata/resource URLs or available attachment paths.",
       "generateImage": "Generate image",
@@ -1236,16 +1250,22 @@
       "bash": "Bash",
       "bashDesc": "Run one allowlisted single-line shell command through your login shell when Bash is enabled. The working directory must stay inside the vault.",
       "outline": "Outline",
+      "outlineDesc": "Inspect Markdown headings, line numbers, and section sizes before reading a large note.",
       "command": "Command",
+      "commandDesc": "Discover commands and hotkeys, or execute an explicitly allowed command ID.",
       "eval": "Eval",
       "daily": "Daily note",
       "dailyDesc": "Read, append, or prepend to the daily note, or resolve the daily note path. Requires daily-notes core plugin.",
       "graph": "Graph analysis",
       "graphDesc": "Analyze vault graph: orphans (no backlinks), deadends (no outgoing links), and unresolved (broken wikilinks).",
       "tags": "Tags",
-      "tagsDesc": "List all tags in the vault with counts, or get details for a single tag.",
+      "tagsDesc": "List tags with counts for the vault or one note, or get details for a single tag.",
       "base": "Bases",
-      "baseDesc": "Query Obsidian Bases (built-in databases): list base files, inspect views, or query results. Only queries require the official Obsidian CLI."
+      "baseDesc": "Query Obsidian Bases: list files, inspect views, query results, or create an item. Query and create require the official Obsidian CLI.",
+      "templates": "Templates",
+      "templatesDesc": "List, read, or insert Obsidian templates. Creating a note from a template uses write with template=. Requires official CLI.",
+      "bookmarks": "Bookmarks",
+      "bookmarksDesc": "List Obsidian bookmarks or add a file, folder, search, or URL bookmark. Requires official CLI."
     },
     "steps": {
       "readFile": "Read file",

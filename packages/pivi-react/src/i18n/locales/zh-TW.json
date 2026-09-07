@@ -204,7 +204,8 @@
       "unableCreateForkTab": "無法建立分叉分頁",
       "initChatService": "初始化聊天服務失敗",
       "titlePersistenceFailed": "無法儲存產生的工作階段標題。",
-      "autoCompactionRecovery": "自動上下文壓縮已連續失敗兩次。請執行 /compact 手動恢復此工作階段。"
+      "autoCompactionRecovery": "自動上下文壓縮已連續失敗兩次。請執行 /compact 手動恢復此工作階段。",
+      "continuationBlocked": "這條工具結果過大，無法傳送。已攔截下一次模型請求。請執行 /compact，或開始新工作階段。"
     },
     "toolbar": {
       "externalContexts": "外部上下文",
@@ -748,7 +749,20 @@
         }
       },
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
-      "unavailableCodex": "需要連線 OpenAI Codex。"
+      "unavailableCorePlugin": "需要啟用對應的核心外掛。",
+      "unavailableCodex": "需要連線 OpenAI Codex。",
+      "cli": {
+        "heading": "官方 {hostName} CLI",
+        "enabled": { "name": "啟用官方 CLI 工具", "desc": "允許 Pivi 註冊由官方 {hostName} CLI 支援的工具。" },
+        "unavailable": "官方 {hostName} CLI 尚未註冊，無法啟用 CLI 工具。",
+        "path": { "name": "CLI 執行檔路徑", "desc": "選用的執行檔替代路徑。留白表示自動偵測。", "placeholder": "自動偵測" },
+        "timeout": { "name": "CLI 逾時", "desc": "每個官方 CLI 請求的最長時間。", "option": "{seconds} 秒" },
+        "actionsUnavailable": "CLI 支援的查詢與建立動作目前無法使用。"
+      },
+      "command": {
+        "execution": { "name": "允許執行命令", "desc": "已有授權時直接執行，否則以互動方式請求權限。探索功能仍為唯讀。" },
+        "allowlist": { "name": "允許的命令 ID", "desc": "未列出的命令會在執行前請求權限。", "add": "新增允許的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
+      }
     },
     "bash": {
       "heading": "Bash 存取"
@@ -1196,7 +1210,7 @@
       "edit": "編輯",
       "editDesc": "在現有筆記中替換精確文字。適合局部編輯。",
       "write": "寫入",
-      "writeDesc": "建立筆記、附加/前置內容，或有意覆寫整篇筆記。",
+      "writeDesc": "建立筆記、附加/前置內容，或刻意覆寫整篇筆記。前置插在 YAML frontmatter 之後；template= 以模板建立（需 CLI）。",
       "search": "搜尋",
       "sessions": "Pivi Sessions",
       "sessionsDesc": "讀取持久化工作階段、列出可復原的已刪除工作階段，或將其復原到可見的 Pivi 分頁。",
@@ -1214,11 +1228,11 @@
       "links": "連結",
       "linksDesc": "讀取筆記的出鏈或反向連結。",
       "properties": "屬性",
-      "propertiesDesc": "列出、讀取、設定或移除 YAML frontmatter 屬性。",
+      "propertiesDesc": "列出、讀取、設定或移除 YAML frontmatter 屬性，包含庫級計數、型別化取值和別名。",
       "tasks": "任務",
-      "tasksDesc": "列出或切換 Markdown 任務。",
+      "tasksDesc": "列出或更新 Markdown 任務，包含自訂核取方塊狀態。",
       "history": "歷史",
-      "historyDesc": "列出、讀取並還原 Obsidian 檔案歷史版本。",
+      "historyDesc": "列出、讀取、還原或比對 Obsidian 檔案歷史版本。",
       "delete": "刪除",
       "deleteDesc": "將庫中的檔案或資料夾移到垃圾桶。",
       "move": "移動",
@@ -1228,7 +1242,7 @@
       "mkdir": "Mkdir",
       "mkdirDesc": "在庫中建立資料夾。",
       "open": "開啟",
-      "openDesc": "在 Obsidian 工作區中開啟庫檔案。",
+      "openDesc": "依路徑或筆記名稱在工作區開啟庫檔案。newtab 在新分頁開啟。",
       "attachment": "附件",
       "attachmentDesc": "解析附件中繼資料/資源 URL 或可用的附件路徑。",
       "generateImage": "產生圖片",
@@ -1236,16 +1250,22 @@
       "bash": "Bash",
       "bashDesc": "啟用 Bash 時，透過登入 shell 執行已允許的單行 shell 命令。工作目錄必須位於保管庫內。",
       "outline": "大綱",
+      "outlineDesc": "在讀取大型筆記前檢查 Markdown 標題、行號與章節大小。",
       "command": "命令",
+      "commandDesc": "探索命令與快捷鍵，或執行明確允許的命令 ID。",
       "eval": "求值",
       "daily": "日記",
       "dailyDesc": "讀取、附加或前置到日記中，或解析日記路徑。需要日記核心外掛。",
       "graph": "圖譜分析",
       "graphDesc": "分析庫圖譜：孤立筆記（無反向連結）、死胡同（無輸出連結）和未解析連結（損壞的 Wiki 連結）。",
       "tags": "標籤",
-      "tagsDesc": "列出庫中所有標籤及其計數，或取得單一標籤的詳細資訊。",
+      "tagsDesc": "列出庫或單篇筆記的標籤及計數，或取得單一標籤的詳情。",
       "base": "資料庫",
-      "baseDesc": "查詢 Obsidian Bases（內建資料庫）：列出 base 檔案、檢查檢視或查詢結果。只有查詢需要官方 Obsidian CLI。"
+      "baseDesc": "查詢 Obsidian Bases：列出檔案、檢查檢視、查詢結果或建立項目。查詢與建立需要官方 Obsidian CLI。",
+      "templates": "範本",
+      "templatesDesc": "列出、讀取或插入 Obsidian 範本。以範本建立筆記請使用 write 的 template=。需要官方 CLI。",
+      "bookmarks": "書籤",
+      "bookmarksDesc": "列出 Obsidian 書籤，或新增檔案、資料夾、搜尋、URL 書籤。需要官方 CLI。"
     },
     "steps": {
       "readFile": "讀取檔案",

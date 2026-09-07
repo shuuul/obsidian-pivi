@@ -103,6 +103,7 @@ export interface ChatSettingsSnapshot {
   environmentVariables: string;
   externalReadDirectories: string[];
   bashPermissions?: PersistentBashPermission[];
+  obsidianCommandPermissions?: string[];
   hiddenSlashCommands: string[];
   modelCatalog: ChatModelCatalogSnapshot;
 }
@@ -131,6 +132,7 @@ export interface ChatSettingsPort {
   setPinnedExternalReadDirectories(paths: string[]): Promise<void>;
   appendBashPermissions?(permissions: readonly PersistentBashPermission[]): Promise<void>;
   appendExternalReadDirectory?(directory: string): Promise<void>;
+  appendObsidianCommandPermission?(commandId: string): Promise<void>;
 }
 
 export interface ChatPorts {

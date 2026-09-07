@@ -9,14 +9,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function makeDeps(): {
   deps: ObsidianToolDeps;
   cliRun: CliRun;
-  captureSnapshotBeforeRestore: jest.Mock;
+  runCliMutation: jest.Mock;
 } {
   const cliRun: CliRun = jest.fn(async (_request: { vaultName: string; args: string[] }) => 'cli output');
-  const captureSnapshotBeforeRestore = jest.fn(async () => undefined);
+  const runCliMutation = jest.fn(async (_path: string, mutate: () => Promise<unknown>) => mutate());
   const deps: ObsidianToolDeps = {
     app: { vault: { adapter: { basePath: '/vault' } } } as unknown as ObsidianToolDeps['app'],
     vault: {
-      captureSnapshotBeforeRestore,
+      runCliMutation,
     } as unknown as ObsidianToolDeps['vault'],
     cli: {
       run: cliRun,
@@ -27,7 +27,7 @@ function makeDeps(): {
     vaultPath: '/vault',
     processRunner: { run: jest.fn() },
   };
-  return { deps, cliRun, captureSnapshotBeforeRestore };
+  return { deps, cliRun, runCliMutation };
 }
 
 function getText(result: unknown): string {
@@ -106,7 +106,7 @@ describe('createHistoryTool', () => {
   });
 
   it('restores a deleted path without prechecking the vault', async () => {
-    const { deps, cliRun, captureSnapshotBeforeRestore } = makeDeps();
+    const { deps, cliRun, runCliMutation } = makeDeps();
 
     const result = await createHistoryTool(deps).execute('call-1', {
       action: 'restore',
@@ -114,15 +114,15 @@ describe('createHistoryTool', () => {
       version: 3,
     });
 
-    expect(captureSnapshotBeforeRestore).toHaveBeenCalledWith('deleted/a.md');
+    expect(runCliMutation).toHaveBeenCalledWith('deleted/a.md', expect.any(Function));
     expect(cliRun).toHaveBeenCalledWith({ vaultName: 'Test Vault', args: ['history:restore', 'path=deleted/a.md', 'version=3'] });
     expect(getText(result)).toBe('Restored deleted/a.md from history version 3.');
     expect(getDetails(result)).toEqual({ action: 'restore', path: 'deleted/a.md', version: 3 });
   });
 
   it('blocks restore before the CLI when the current snapshot fails', async () => {
-    const { deps, cliRun, captureSnapshotBeforeRestore } = makeDeps();
-    captureSnapshotBeforeRestore.mockRejectedValueOnce(new Error('snapshot failed'));
+    const { deps, cliRun, runCliMutation } = makeDeps();
+    runCliMutation.mockRejectedValueOnce(new Error('snapshot failed'));
 
     await expect(createHistoryTool(deps).execute('call-1', {
       action: 'restore',
@@ -150,6 +150,45 @@ describe('createHistoryTool', () => {
     const tool = createHistoryTool(deps);
 
     await expect(tool.execute('call-1', { action: 'missing' })).rejects.toThrow('Invalid history action.');
-    await expect(tool.execute('call-1', { action: 'list', path: '   ' })).rejects.toThrow('path is required.');
+    await expect(tool.execute('call-1', { action: 'list', path: '   ' })).rejects.toThrow('file or path is required.');
+  });
+
+  it('diffs versions for a known path', async () => {
+    const { deps, cliRun } = makeDeps();
+
+    const result = await createHistoryTool(deps).execute('call-1', {
+      action: 'diff',
+      path: 'notes/a.md',
+      from: 2,
+      to: 1,
+      filter: 'local',
+    });
+
+    expect(cliRun).toHaveBeenCalledWith({
+      vaultName: 'Test Vault',
+      args: ['diff', 'path=notes/a.md', 'from=2', 'to=1', 'filter=local'],
+    });
+    expect(getText(result)).toBe('cli output');
+    expect(getDetails(result)).toEqual({
+      action: 'diff',
+      path: 'notes/a.md',
+      from: 2,
+      to: 1,
+      filter: 'local',
+    });
+  });
+
+  it('lists versions with file= instead of path=', async () => {
+    const { deps, cliRun } = makeDeps();
+
+    await createHistoryTool(deps).execute('call-1', {
+      action: 'list',
+      file: 'Recipe',
+    });
+
+    expect(cliRun).toHaveBeenCalledWith({
+      vaultName: 'Test Vault',
+      args: ['history', 'file=Recipe'],
+    });
   });
 });

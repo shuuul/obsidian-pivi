@@ -8,6 +8,7 @@ import type {
 import {
   classifyBashCommand,
   TOOL_OBSIDIAN_BASH,
+  TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_READ,
 } from '@pivi/agent/tools';
@@ -68,6 +69,17 @@ function buildBashApprovalRequest(command: string, shellPath: string): Capabilit
     blockedPath: command,
     reason: 'Command is not on the persistent permission list.',
     description: `Run command: ${command}`,
+  };
+}
+
+function buildObsidianCommandApprovalRequest(commandId: string): CapabilityApprovalRequest {
+  return {
+    kind: 'obsidian-command',
+    toolName: TOOL_OBSIDIAN_COMMAND,
+    commandId,
+    blockedPath: commandId,
+    reason: 'Obsidian command is not on the persistent permission list.',
+    description: `Execute Obsidian command: ${commandId}`,
   };
 }
 
@@ -150,8 +162,31 @@ export async function ensureBashCommandAllowed(
   }
 }
 
+export async function ensureObsidianCommandAllowed(
+  deps: ObsidianToolDeps,
+  commandId: string,
+  isAllowlisted: boolean,
+): Promise<void> {
+  if (isAllowlisted) {
+    return;
+  }
+  const request = buildObsidianCommandApprovalRequest(commandId);
+  const port = deps.capabilityApproval;
+  if (!port) {
+    throw new Error(`Obsidian command is not allowed: ${commandId}`);
+  }
+  if (port.hasPersistentGrant(request)) {
+    return;
+  }
+  const result = await port.requestApproval(request);
+  if (result.decision === 'deny' || result.decision === 'cancel') {
+    throw new Error(`Obsidian command denied by user: ${commandId}`);
+  }
+}
+
 export const CAPABILITY_TOOL_NAMES = {
   readExternal: TOOL_OBSIDIAN_READ,
   listExternal: TOOL_OBSIDIAN_LIST,
   bash: TOOL_OBSIDIAN_BASH,
+  command: TOOL_OBSIDIAN_COMMAND,
 } as const;
