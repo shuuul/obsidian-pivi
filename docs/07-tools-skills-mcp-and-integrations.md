@@ -59,8 +59,8 @@ flowchart LR
 |---|---|---|
 | Read and explore | `read`, `obsidian_markdown_structure`, `search`, `obsidian_note_info`, `obsidian_links`, `ls`, `obsidian_attachment` | Read-only |
 | Edit and organize | `edit`, `write`, `obsidian_properties`, `delete`, `move`, `mkdir` | Mutating; delete follows Obsidian trash settings |
-| History and tasks | `obsidian_history`, `obsidian_tasks` | List/read operations are read-only; restore/toggle operations mutate; require enabled official CLI integration |
-| Daily, graph, tags, Bases | `obsidian_daily`, `obsidian_graph`, `obsidian_tags`, `obsidian_base` | Depends on operation; daily and Base query use the official CLI where required |
+| History and tasks | `obsidian_history`, `obsidian_tasks` | List/read/diff operations are read-only; restore/toggle/status operations mutate; require enabled official CLI integration |
+| Daily, graph, tags, Bases, templates, bookmarks | `obsidian_daily`, `obsidian_graph`, `obsidian_tags`, `obsidian_base`, `obsidian_templates`, `obsidian_bookmarks` | Depends on operation; daily, templates, bookmarks, and Base query/create use the official CLI where required |
 | Navigation | `obsidian_open` | Changes workspace navigation, not vault content |
 | External access | `read` / `ls` on absolute paths | Read-only outside the vault; disabled by default and restricted to explicit roots |
 | Host execution | `bash`, `obsidian_command`, `obsidian_eval` | Potentially mutating and disabled by default |

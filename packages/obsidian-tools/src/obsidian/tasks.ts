@@ -8,7 +8,7 @@ import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
-type TasksAction = 'list' | 'toggle' | 'done' | 'todo';
+type TasksAction = 'list' | 'toggle' | 'done' | 'todo' | 'status';
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
   const value = input[key];
@@ -21,7 +21,7 @@ function getNumberField(input: Record<string, unknown>, key: string): number | u
 }
 
 function getTasksAction(value: unknown): TasksAction | undefined {
-  return value === 'list' || value === 'toggle' || value === 'done' || value === 'todo'
+  return value === 'list' || value === 'toggle' || value === 'done' || value === 'todo' || value === 'status'
     ? value
     : undefined;
 }
@@ -35,7 +35,7 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
     parameters: {
       type: 'object',
       properties: {
-        action: { type: 'string', enum: ['list', 'toggle', 'done', 'todo'] },
+        action: { type: 'string', enum: ['list', 'toggle', 'done', 'todo', 'status'] },
         file: { type: 'string' },
         path: { type: 'string' },
         line: { type: 'number' },
@@ -43,6 +43,10 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
         daily: { type: 'boolean' },
         todo: { type: 'boolean' },
         done: { type: 'boolean' },
+        status: { type: 'string', description: 'Custom checkbox status character, e.g. -, /, or ?' },
+        verbose: { type: 'boolean', description: 'List: group by file with line numbers' },
+        total: { type: 'boolean', description: 'List: return a count instead of task rows' },
+        active: { type: 'boolean', description: 'List: limit to the active file' },
       },
       required: ['action'],
       additionalProperties: false,
@@ -65,14 +69,27 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
         if (notePath) {
           args.push(`path=${JSON.stringify(notePath)}`);
         }
-        if (input.todo) {
+        if (input.todo === true) {
           args.push('todo');
         }
-        if (input.done) {
+        if (input.done === true) {
           args.push('done');
         }
-        if (input.daily) {
+        if (input.daily === true) {
           args.push('daily');
+        }
+        if (input.verbose === true) {
+          args.push('verbose');
+        }
+        if (input.total === true) {
+          args.push('total');
+        }
+        if (input.active === true) {
+          args.push('active');
+        }
+        const statusFilter = getStringField(input, 'status')?.trim();
+        if (statusFilter) {
+          args.push(`status=${JSON.stringify(statusFilter)}`);
         }
         return textResult(capCliToolOutput(await cli.run({ vaultName, args })));
       }
@@ -109,6 +126,12 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
         args.push('done');
       } else if (action === 'todo') {
         args.push('todo');
+      } else if (action === 'status') {
+        const status = getStringField(input, 'status')?.trim();
+        if (!status) {
+          throw new Error('status is required for status action.');
+        }
+        args.push(`status=${JSON.stringify(status)}`);
       }
       return textResult(capCliToolOutput(await cli.run({ vaultName, args })));
     },

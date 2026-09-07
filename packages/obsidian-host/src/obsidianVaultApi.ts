@@ -46,6 +46,17 @@ export interface VaultTagEntry {
   count: number;
 }
 
+export interface VaultPropertyIndexEntry {
+  name: string;
+  count: number;
+}
+
+export interface VaultAliasEntry {
+  alias: string;
+  count: number;
+  files?: string[];
+}
+
 export interface VaultGraphResult {
   orphans: string[];
   deadends: string[];
@@ -180,6 +191,29 @@ export class ObsidianVaultApi {
       throw new Error(`Vault path not found: ${path}`);
     }
     return resolved;
+  }
+
+  private resolveOptionalMarkdownFile(file?: string, path?: string, active?: boolean): TFile | null {
+    if (file?.trim() || path?.trim()) {
+      const resolved = this.resolveFile(file, path);
+      if (!resolved) {
+        throw new Error('Note not found.');
+      }
+      return resolved;
+    }
+    if (active === true) {
+      const resolved = this.resolveFile();
+      if (!resolved) {
+        throw new Error('No active file.');
+      }
+      return resolved;
+    }
+    return null;
+  }
+
+  private resolveTagFiles(scope?: { file?: string; path?: string; active?: boolean }): TFile[] {
+    const resolved = this.resolveOptionalMarkdownFile(scope?.file, scope?.path, scope?.active);
+    return resolved ? [resolved] : this.app.vault.getMarkdownFiles();
   }
 
   private resolveMutationFile(
@@ -334,14 +368,18 @@ export class ObsidianVaultApi {
     content: string;
     mode: 'create' | 'overwrite' | 'append' | 'prepend';
     overwrite?: boolean;
+    inline?: boolean;
   }): Promise<{ path: string }> {
     const { content, mode } = params;
+    const inline = params.inline === true;
     if (mode === 'append' || mode === 'prepend') {
       const resolved = this.resolveMutationFile(params.file, params.path);
       await this.capturePreWriteSnapshot(resolved);
-      await this.app.vault.process(resolved, (data) =>
-        mode === 'append' ? `${data}${content}` : `${content}${data}`,
-      );
+      await this.app.vault.process(resolved, (data) => (
+        mode === 'append'
+          ? joinNoteContent(data, content, inline, 'append')
+          : prependAfterFrontmatter(data, content, inline)
+      ));
       return { path: resolved.path };
     }
 
@@ -456,20 +494,38 @@ export class ObsidianVaultApi {
     return { path: target.path };
   }
 
-  getProperties(file?: string, path?: string, name?: string): { path?: string; properties: Record<string, unknown> | string[]; value?: unknown } {
-    if (!file && !path) {
-      const names = new Set<string>();
+  getProperties(file?: string, path?: string, name?: string, options?: {
+    active?: boolean;
+    sort?: 'name' | 'count';
+  }): {
+    path?: string;
+    properties: Record<string, unknown> | VaultPropertyIndexEntry[] | string[];
+    value?: unknown;
+    total?: number;
+  } {
+    const resolved = this.resolveOptionalMarkdownFile(file, path, options?.active);
+    if (!resolved) {
+      const counts = new Map<string, number>();
       for (const markdownFile of this.app.vault.getMarkdownFiles()) {
         const frontmatter = this.app.metadataCache.getFileCache(markdownFile)?.frontmatter;
         for (const key of Object.keys(frontmatter ?? {})) {
-          names.add(key);
+          counts.set(key, (counts.get(key) ?? 0) + 1);
         }
       }
-      return { properties: [...names].sort() };
-    }
-    const resolved = this.resolveFile(file, path);
-    if (!resolved) {
-      throw new Error('Note not found.');
+      if (name) {
+        return { properties: [], value: counts.get(name) ?? 0, total: counts.get(name) ?? 0 };
+      }
+      const entries: VaultPropertyIndexEntry[] = [...counts.entries()].map(([propertyName, count]) => ({
+        name: propertyName,
+        count,
+      }));
+      const sort = options?.sort ?? 'name';
+      entries.sort((a, b) => (
+        sort === 'count'
+          ? b.count - a.count || a.name.localeCompare(b.name)
+          : a.name.localeCompare(b.name)
+      ));
+      return { properties: entries, total: entries.length };
     }
     const properties = this.app.metadataCache.getFileCache(resolved)?.frontmatter ?? {};
     if (name) {
@@ -478,7 +534,46 @@ export class ObsidianVaultApi {
     return { path: resolved.path, properties };
   }
 
-  async setProperty(file: string | undefined, path: string | undefined, name: string, value: string): Promise<{ path: string; name: string }> {
+  getAliases(file?: string, path?: string, options?: {
+    active?: boolean;
+    verbose?: boolean;
+  }): { path?: string; aliases: VaultAliasEntry[] | string[]; total: number } {
+    const resolved = this.resolveOptionalMarkdownFile(file, path, options?.active);
+    if (resolved) {
+      const aliases = parseFrontMatterAliases(
+        this.app.metadataCache.getFileCache(resolved)?.frontmatter ?? null,
+      ) ?? [];
+      return { path: resolved.path, aliases, total: aliases.length };
+    }
+
+    const byAlias = new Map<string, string[]>();
+    for (const markdownFile of this.app.vault.getMarkdownFiles()) {
+      const aliases = parseFrontMatterAliases(
+        this.app.metadataCache.getFileCache(markdownFile)?.frontmatter ?? null,
+      ) ?? [];
+      for (const alias of aliases) {
+        const files = byAlias.get(alias) ?? [];
+        files.push(markdownFile.path);
+        byAlias.set(alias, files);
+      }
+    }
+    const verbose = options?.verbose === true;
+    const aliases: VaultAliasEntry[] = [...byAlias.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([alias, files]) => ({
+        alias,
+        count: files.length,
+        ...(verbose ? { files } : {}),
+      }));
+    return { aliases, total: aliases.length };
+  }
+
+  async setProperty(
+    file: string | undefined,
+    path: string | undefined,
+    name: string,
+    value: unknown,
+  ): Promise<{ path: string; name: string }> {
     const resolved = this.resolveMutationFile(file, path);
     await this.capturePreWriteSnapshot(resolved);
     await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
@@ -735,10 +830,14 @@ export class ObsidianVaultApi {
     return { path: resolved.path, views };
   }
 
-  /** List all tags in the vault with occurrence counts. */
-  getTags(sort: 'name' | 'count' = 'name'): VaultTagEntry[] {
+  /** List tags in the vault, or in one note when file/path/active is set. */
+  getTags(sort: 'name' | 'count' = 'name', scope?: {
+    file?: string;
+    path?: string;
+    active?: boolean;
+  }): VaultTagEntry[] {
     const counts = new Map<string, number>();
-    for (const file of this.app.vault.getMarkdownFiles()) {
+    for (const file of this.resolveTagFiles(scope)) {
       const cache = this.app.metadataCache.getFileCache(file);
       const tags = cache ? getAllTags(cache) : null;
       if (!tags) { continue; }
@@ -927,4 +1026,68 @@ export class ObsidianVaultApi {
       this.app.vault.adapter.list(parentDir).catch(() => {});
     }
   }
+}
+
+function joinNoteContent(
+  existing: string,
+  addition: string,
+  inline: boolean,
+  mode: 'append' | 'prepend',
+): string {
+  if (addition.length === 0) {
+    return existing;
+  }
+  if (existing.length === 0) {
+    return addition;
+  }
+  if (inline) {
+    return mode === 'append' ? `${existing}${addition}` : `${addition}${existing}`;
+  }
+  if (mode === 'append') {
+    const separator = existing.endsWith('\n') ? '' : '\n';
+    return `${existing}${separator}${addition}`;
+  }
+  const separator = addition.endsWith('\n') ? '' : '\n';
+  return `${addition}${separator}${existing}`;
+}
+
+function prependAfterFrontmatter(existing: string, addition: string, inline: boolean): string {
+  const split = splitFrontmatter(existing);
+  const joined = joinNoteContent(split.body, addition, inline, 'prepend');
+  if (!split.frontmatter) {
+    return joined;
+  }
+  if (inline || joined.length === 0 || split.frontmatter.endsWith('\n') || joined.startsWith('\n')) {
+    return `${split.frontmatter}${joined}`;
+  }
+  return `${split.frontmatter}\n${joined}`;
+}
+
+function splitFrontmatter(content: string): { frontmatter: string | null; body: string } {
+  if (!content.startsWith('---')) {
+    return { frontmatter: null, body: content };
+  }
+  const afterOpen = content.startsWith('---\n')
+    ? 4
+    : content.startsWith('---\r\n')
+      ? 5
+      : -1;
+  if (afterOpen < 0) {
+    return { frontmatter: null, body: content };
+  }
+  const closeLf = content.indexOf('\n---', afterOpen);
+  if (closeLf < 0) {
+    return { frontmatter: null, body: content };
+  }
+  const afterClose = closeLf + 4;
+  if (content.startsWith('\r\n', afterClose)) {
+    return { frontmatter: content.slice(0, afterClose + 2), body: content.slice(afterClose + 2) };
+  }
+  if (content.startsWith('\n', afterClose)) {
+    return { frontmatter: content.slice(0, afterClose + 1), body: content.slice(afterClose + 1) };
+  }
+  if (afterClose === content.length) {
+    return { frontmatter: content, body: '' };
+  }
+  return { frontmatter: null, body: content };
 }

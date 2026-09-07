@@ -2,6 +2,7 @@ import {
   TOOL_OBSIDIAN_ATTACHMENT,
   TOOL_OBSIDIAN_BASE,
   TOOL_OBSIDIAN_BASH,
+  TOOL_OBSIDIAN_BOOKMARKS,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DAILY,
   TOOL_OBSIDIAN_DELETE,
@@ -24,6 +25,7 @@ import {
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TAGS,
   TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_TEMPLATES,
   TOOL_OBSIDIAN_WRITE,
   TOOL_PIVI_COMMANDS,
   TOOL_PIVI_MCP,
@@ -108,6 +110,7 @@ export {
 export type ToolPresentationTranslationKey =
   | 'tools.display.attachment'
   | 'tools.display.base'
+  | 'tools.display.bookmarks'
   | 'tools.display.bash'
   | 'tools.display.command'
   | 'tools.display.daily'
@@ -134,6 +137,7 @@ export type ToolPresentationTranslationKey =
   | 'tools.display.piviPrompt'
   | 'tools.display.tags'
   | 'tools.display.tasks'
+  | 'tools.display.templates'
   | 'tools.display.write'
   | 'tools.steps.applyPatch'
   | 'tools.steps.callMcp'
@@ -322,6 +326,8 @@ export const TOOL_PRESENTATION_DESCRIPTORS: Readonly<Record<string, ToolPresenta
   [TOOL_OBSIDIAN_GRAPH]: obsidian('share-2', 'tools.display.graph', summarizeObsidianGraph),
   [TOOL_OBSIDIAN_TAGS]: obsidian('tag', 'tools.display.tags', summarizeObsidianTags),
   [TOOL_OBSIDIAN_BASE]: obsidian('database', 'tools.display.base', summarizeObsidianBase),
+  [TOOL_OBSIDIAN_TEMPLATES]: obsidian('file-plus', 'tools.display.templates', summarizeObsidianActionTarget),
+  [TOOL_OBSIDIAN_BOOKMARKS]: obsidian('bookmark', 'tools.display.bookmarks', summarizeObsidianActionTarget),
   [TOOL_PIVI_SESSIONS]: obsidian('history', 'tools.display.sessions', summarizeObsidianActionTarget),
   [TOOL_PIVI_MCP]: entry(MCP_ICON_MARKER, {
     kind: 'mcp',

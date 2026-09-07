@@ -310,6 +310,10 @@ describe('ObsidianVaultApi', () => {
       count: 2,
       files: ['notes/a.md', 'notes/b.md'],
     });
+    expect(api.getTags('name', { path: 'notes/a.md' })).toEqual([
+      { name: 'area', count: 1 },
+      { name: 'project', count: 1 },
+    ]);
   });
 
   it('analyzes graph metadata without shelling out to the CLI', () => {
@@ -498,6 +502,33 @@ describe('ObsidianVaultApi', () => {
     });
 
     expect(app.getContent('notes/a.md')).toBe('line1\nline2\n');
+  });
+
+  it('writeNote prepend inserts after YAML frontmatter', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: '---\ntitle: a\n---\nbody\n' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.writeNote({
+      path: 'notes/a.md',
+      content: 'head\n',
+      mode: 'prepend',
+    });
+
+    expect(app.getContent('notes/a.md')).toBe('---\ntitle: a\n---\nhead\nbody\n');
+  });
+
+  it('writeNote prepend inline concatenates after frontmatter without a newline', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: '---\ntitle: a\n---\nbody' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.writeNote({
+      path: 'notes/a.md',
+      content: 'HEAD',
+      mode: 'prepend',
+      inline: true,
+    });
+
+    expect(app.getContent('notes/a.md')).toBe('---\ntitle: a\n---\nHEADbody');
   });
 
   it('trashPath moves a file to trash through FileManager', async () => {
@@ -698,6 +729,10 @@ describe('ObsidianVaultApi', () => {
 
     await api.setProperty(undefined, 'notes/a.md', 'status', 'draft');
     expect(api.getProperties(undefined, 'notes/a.md', 'status').value).toBe('draft');
+    expect(api.getProperties().properties).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'status', count: 1 }),
+    ]));
+    expect(api.getAliases(undefined, 'notes/a.md').aliases).toEqual([]);
 
     await api.removeProperty(undefined, 'notes/a.md', 'status');
     expect(api.getProperties(undefined, 'notes/a.md', 'status').value).toBeUndefined();

@@ -41,6 +41,8 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
       getAttachmentInfo: jest.fn().mockResolvedValue({ availablePath: 'assets/a.png' }),
       getNoteInfo: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
       getRecentFiles: jest.fn().mockReturnValue([]),
+      getAliases: jest.fn().mockReturnValue({ aliases: [], total: 0 }),
+      getProperties: jest.fn().mockReturnValue({ properties: {}, total: 0 }),
       getTagInfo: jest.fn().mockReturnValue({ name: 'project', count: 0 }),
       getTags: jest.fn().mockReturnValue([]),
       movePath: jest.fn().mockResolvedValue({ path: 'notes/a.md', newPath: 'notes/b.md' }),
@@ -748,6 +750,12 @@ describe('obsidian tool input hardening', () => {
       vaultName: 'vault',
       args: ['base:query', 'format=paths', 'path=bases/a.base'],
     });
+
+    await tool.execute('call', { action: 'create', path: 'bases/a.base', name: 'New', open: true });
+    expect(deps.cli.run).toHaveBeenCalledWith({
+      vaultName: 'vault',
+      args: ['base:create', 'path=bases/a.base', 'name=New', 'open'],
+    });
   });
 
   it('removes base query from schema and rejects it when Obsidian CLI is unavailable', async () => {
@@ -762,7 +770,7 @@ describe('obsidian tool input hardening', () => {
     await expect(tool.execute('call', {
       action: 'query',
       path: 'bases/a.base',
-    })).rejects.toThrow('Query requires Obsidian CLI');
+    })).rejects.toThrow('Query and create require Obsidian CLI');
     expect(deps.cli.run).not.toHaveBeenCalled();
   });
 

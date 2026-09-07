@@ -14,6 +14,7 @@ import type { App } from 'obsidian';
 import { createAttachmentTool } from './obsidian/attachment';
 import { createBaseTool } from './obsidian/base';
 import { createBashTool } from './obsidian/bash';
+import { createBookmarksTool } from './obsidian/bookmarks';
 import { createCommandTool } from './obsidian/command';
 import { createDailyTool } from './obsidian/daily';
 import { createDeletePathTool } from './obsidian/deletePath';
@@ -35,6 +36,7 @@ import { createReadNoteTool } from './obsidian/readNote';
 import { createSearchTool } from './obsidian/search';
 import { createTagsTool } from './obsidian/tags';
 import { createTasksTool } from './obsidian/tasks';
+import { createTemplatesTool } from './obsidian/templates';
 import { createWriteNoteTool } from './obsidian/writeNote';
 
 
@@ -94,7 +96,9 @@ export function createObsidianTools(
     createNoteInfoTool(deps),
     createLinksTool(deps),
     createPropertiesTool(deps),
-    ...(obsidianCliAvailable ? [createHistoryTool(deps), createTasksTool(deps)] : []),
+    ...(obsidianCliAvailable
+      ? [createHistoryTool(deps), createTasksTool(deps), createTemplatesTool(deps), createBookmarksTool(deps)]
+      : []),
     createDeletePathTool(deps),
     createMovePathTool(deps),
     createListPathTool(deps),

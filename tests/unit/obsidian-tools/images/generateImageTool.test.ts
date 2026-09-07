@@ -220,6 +220,8 @@ describe('createGenerateImageTool', () => {
         'obsidian_history',
         'obsidian_tasks',
         'obsidian_daily',
+        'obsidian_templates',
+        'obsidian_bookmarks',
         'obsidian_command',
         'obsidian_eval',
       ]));
@@ -229,6 +231,8 @@ describe('createGenerateImageTool', () => {
         'obsidian_history',
         'obsidian_tasks',
         'obsidian_daily',
+        'obsidian_templates',
+        'obsidian_bookmarks',
         'obsidian_command',
         'obsidian_eval',
       ]));

@@ -150,6 +150,45 @@ describe('createHistoryTool', () => {
     const tool = createHistoryTool(deps);
 
     await expect(tool.execute('call-1', { action: 'missing' })).rejects.toThrow('Invalid history action.');
-    await expect(tool.execute('call-1', { action: 'list', path: '   ' })).rejects.toThrow('path is required.');
+    await expect(tool.execute('call-1', { action: 'list', path: '   ' })).rejects.toThrow('file or path is required.');
+  });
+
+  it('diffs versions for a known path', async () => {
+    const { deps, cliRun } = makeDeps();
+
+    const result = await createHistoryTool(deps).execute('call-1', {
+      action: 'diff',
+      path: 'notes/a.md',
+      from: 2,
+      to: 1,
+      filter: 'local',
+    });
+
+    expect(cliRun).toHaveBeenCalledWith({
+      vaultName: 'Test Vault',
+      args: ['diff', 'path=notes/a.md', 'from=2', 'to=1', 'filter=local'],
+    });
+    expect(getText(result)).toBe('cli output');
+    expect(getDetails(result)).toEqual({
+      action: 'diff',
+      path: 'notes/a.md',
+      from: 2,
+      to: 1,
+      filter: 'local',
+    });
+  });
+
+  it('lists versions with file= instead of path=', async () => {
+    const { deps, cliRun } = makeDeps();
+
+    await createHistoryTool(deps).execute('call-1', {
+      action: 'list',
+      file: 'Recipe',
+    });
+
+    expect(cliRun).toHaveBeenCalledWith({
+      vaultName: 'Test Vault',
+      args: ['history', 'file=Recipe'],
+    });
   });
 });
