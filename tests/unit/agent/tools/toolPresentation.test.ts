@@ -395,6 +395,10 @@ describe('tool presentation registry', () => {
     ]));
     expect(hits).toEqual([{ path: 'one.md', line: 3 }, { path: 'two.md' }]);
     expect(summarizeObsidianSearchHits(hits)).toBe('one.md:3, two.md');
+    expect(parseObsidianSearchHits(JSON.stringify({
+      hits: [{ path: 'one.md', line: 3 }, { path: 'two.md' }],
+      offset: 0,
+    }))).toEqual([{ path: 'one.md', line: 3 }, { path: 'two.md' }]);
     expect(parseObsidianSearchHits('not json')).toEqual([]);
   });
 

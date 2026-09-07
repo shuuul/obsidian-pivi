@@ -235,7 +235,7 @@ describe('ObsidianVaultApi', () => {
       { path: 'notes/b.md', content: 'nothing here' },
     ]) as never);
 
-    const hits = await api.searchNotes({ query: 'hello', limit: 10 });
+    const hits = await api.searchNotes({ query: 'hello', path: 'notes/a.md', limit: 10 });
     expect(hits).toEqual([{ path: 'notes/a.md', line: 1 }]);
   });
 
@@ -351,7 +351,7 @@ describe('ObsidianVaultApi', () => {
 
     await expect(api.searchNotes({ query: '*', path: 'month', limit: 10 }))
       .rejects.toThrow('Use `ls` with `path` instead');
-    await expect(api.searchNotes({ query: 'path:month', limit: 10 }))
+    await expect(api.searchNotes({ query: 'path:month', path: 'month', limit: 10 }))
       .rejects.toThrow('Use `ls` with `path` instead');
   });
 
@@ -371,6 +371,17 @@ describe('ObsidianVaultApi', () => {
       ]);
     await expect(api.searchNotes({ query: 'hello', path: 'missing.md', limit: 10 }))
       .rejects.toThrow('Search path not found: missing.md');
+  });
+
+  it('searchNotes rejects vault-wide and vault-root paths', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'hello world' },
+    ], ['notes']) as never);
+
+    await expect(api.searchNotes({ query: 'hello', path: '', limit: 10 }))
+      .rejects.toThrow('Vault-wide search is not allowed');
+    await expect(api.searchNotes({ query: 'hello', path: '/', limit: 10 }))
+      .rejects.toThrow('Vault-wide search is not allowed');
   });
 
   it('getLinks returns backlinks from resolvedLinks', () => {

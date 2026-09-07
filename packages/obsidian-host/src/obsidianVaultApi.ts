@@ -556,9 +556,6 @@ export class ObsidianVaultApi {
   }
 
   private resolveSearchFiles(scopePath: string): TFile[] {
-    if (!scopePath) {
-      return this.app.vault.getMarkdownFiles();
-    }
     const normalized = normalizePathForVault(scopePath, this.vaultPath());
     if (!normalized) {
       throw new Error(`Search path not found: ${scopePath}`);
@@ -571,10 +568,11 @@ export class ObsidianVaultApi {
       return [resolved];
     }
     if (resolved instanceof TFolder) {
-      const prefix = resolved.path ? `${resolved.path}/` : '';
-      return this.app.vault.getMarkdownFiles().filter((file) => (
-        prefix ? file.path.startsWith(prefix) : true
-      ));
+      if (!resolved.path) {
+        throw new Error('search requires a vault-relative path to one Markdown note or a non-root folder. Vault-wide search is not allowed.');
+      }
+      const prefix = `${resolved.path}/`;
+      return this.app.vault.getMarkdownFiles().filter((file) => file.path.startsWith(prefix));
     }
     throw new Error(`Search path not found: ${scopePath}`);
   }
@@ -582,12 +580,19 @@ export class ObsidianVaultApi {
   /** In-process vault search (no CLI). Case-insensitive literal substring plus tag:. Listing queries error toward `ls`. */
   async searchNotes(params: {
     query: string;
-    path?: string;
+    path: string;
     limit?: number;
+    offset?: number;
     context?: boolean;
   }): Promise<VaultSearchHit[]> {
     const limit = params.limit ?? 50;
-    let scopePath = params.path?.trim().replace(/\/+$/, '') ?? '';
+    const offset = params.offset ?? 0;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+      throw new Error('Invalid search input: limit must be an integer from 1 to 200.');
+    }
+    if (!Number.isInteger(offset) || offset < 0) {
+      throw new Error('Invalid search input: offset must be a non-negative integer.');
+    }
     let textQuery = params.query.trim();
     let tagFilter: string | null = null;
 
@@ -595,8 +600,7 @@ export class ObsidianVaultApi {
       tagFilter = textQuery.slice(4).trim().replace(/^#/, '');
       textQuery = '';
     } else if (textQuery.startsWith('path:')) {
-      scopePath = textQuery.slice(5).trim().replace(/\/+$/, '');
-      textQuery = '';
+      throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
     }
 
     const listAllInScope = textQuery === '*'
@@ -605,9 +609,32 @@ export class ObsidianVaultApi {
     if (listAllInScope && !tagFilter) {
       throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
     }
+
+    const requestedPath = params.path?.trim() ?? '';
+    if (
+      !requestedPath
+      || requestedPath === '/'
+      || requestedPath === '.'
+      || requestedPath === './'
+      || requestedPath === '.\\'
+      || /^\/+$/.test(requestedPath)
+    ) {
+      throw new Error('search requires a vault-relative path to one Markdown note or a non-root folder. Vault-wide search is not allowed.');
+    }
+    const scopePath = requestedPath.replace(/\/+$/, '');
     const needle = textQuery.toLowerCase();
     const hits: VaultSearchHit[] = [];
     const files = this.resolveSearchFiles(scopePath);
+    let skipped = 0;
+
+    const takeHit = (hit: VaultSearchHit): boolean => {
+      if (skipped < offset) {
+        skipped += 1;
+        return false;
+      }
+      hits.push(hit);
+      return hits.length >= limit;
+    };
 
     for (const file of files) {
 
@@ -620,8 +647,7 @@ export class ObsidianVaultApi {
       }
 
       if (!needle) {
-        hits.push({ path: file.path });
-        if (hits.length >= limit) {
+        if (takeHit({ path: file.path })) {
           break;
         }
         continue;
@@ -639,8 +665,7 @@ export class ObsidianVaultApi {
           const end = Math.min(lines.length, lineIndex + 3);
           hit.matches = lines.slice(start, end);
         }
-        hits.push(hit);
-        if (hits.length >= limit) {
+        if (takeHit(hit)) {
           return hits;
         }
       }

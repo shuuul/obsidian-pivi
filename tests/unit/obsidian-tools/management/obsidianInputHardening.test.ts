@@ -871,7 +871,7 @@ describe('obsidian tool input hardening', () => {
 
     await expect(createNoteInfoTool(deps).execute('call', { path: 'notes/a.md' }))
       .rejects.toThrow('api failed');
-    await expect(createSearchTool(deps).execute('call', { query: 'project' }))
+    await expect(createSearchTool(deps).execute('call', { query: 'project', path: 'notes' }))
       .rejects.toThrow('api failed');
     expect(deps.cli.run).not.toHaveBeenCalled();
   });
