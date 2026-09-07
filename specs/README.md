@@ -12,6 +12,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 |---|---|---|
 | [051 — Permission scopes and chat lifecycle cleanup](051-permission-scopes-and-chat-lifecycle-cleanup.md) | Active | Stable device-local permission scopes plus safe empty-session and Archive/Delete lifecycle cleanup. |
 | [053 — Composer mention badge clamp and copy-paste round trip](053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | Active | Composer mention badge clamp and copy-paste round trip |
+| [054 — Tool-result context overflow and in-turn pressure](054-tool-result-context-overflow-and-in-turn-pressure.md) | Active | Stop over-window continuations after giant tool results; require scoped `search` path plus payload caps. |
 
 ## Archived specs
 
