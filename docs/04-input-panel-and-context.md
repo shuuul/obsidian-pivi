@@ -22,7 +22,7 @@ flowchart TD
 
 React owns model, thinking, mode, external-context, send/queue/stop, and usage presentation. `wireComposerChrome()` adapts the active tab's model catalog, projected settings, and external selector into immutable composer snapshots and narrow actions. When `showCacheHitRate` is on, a second compact ring sits left of the context usage meter and shows latest-turn prompt-cache hit rate (`cacheRead / contextTokens`). Providers that report no cache activity still show the ring at 0% whenever the usage meter is visible.
 
-`RichChatInput` is an uncontrolled contenteditable adapter with a textarea-like API. It owns mention badges, plain-text paste, cursor placement, Markdown-list continuation, and IME-safe synchronization. React must not reconcile its children. File, image, inline-context, editor, browser, and canvas adapters follow the same owner-realm rule.
+`RichChatInput` is an uncontrolled contenteditable adapter with a textarea-like API. It owns mention badges, copy/cut of canonical `data-mention-token` text, plain-text paste that rebuilds recognized badges, cursor placement, Markdown-list continuation, and IME-safe synchronization. React must not reconcile its children. File, image, inline-context, editor, browser, and canvas adapters follow the same owner-realm rule. Inline mention badges cap at `min(100%, 24ch)` with label ellipsis; the full path or token stays on the badge `title`. Copying a selection that intersects a badge writes the whole canonical token (`@path`, `/skill`, `/generate-image`) rather than the visible label, so a later paste in a mention input can rebuild the badge.
 
 ## State and persistence
 

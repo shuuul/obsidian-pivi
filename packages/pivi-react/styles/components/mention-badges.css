@@ -76,6 +76,7 @@ button.pivi-context-badge {
   --pivi-inline-context-accent-rgb: 167, 139, 250;
   display: inline-block;
   vertical-align: -0.1em;
+  max-width: min(100%, 24ch);
   min-height: 18px;
   padding: 1px 5px 1px 4px;
   border-radius: var(--pivi-radius-md);
@@ -95,8 +96,11 @@ button.pivi-context-badge {
   display: flex;
   align-items: center;
   gap: var(--pivi-spacing-xs);
+  box-sizing: border-box;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
 }
 
 .pivi-context-badge-icon {

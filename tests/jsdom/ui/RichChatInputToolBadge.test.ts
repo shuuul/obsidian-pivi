@@ -209,4 +209,143 @@ describe('RichChatInput tool badges', () => {
     }, true);
     expect(editor.focus).toHaveBeenCalled();
   });
+
+  function createClipboardEvent(
+    type: 'copy' | 'cut' | 'paste',
+    initialText = '',
+  ): { event: ClipboardEvent; data: Record<string, string> } {
+    const data: Record<string, string> = {};
+    if (initialText) {
+      data['text/plain'] = initialText;
+    }
+    const clipboardData = {
+      getData: (format: string) => data[format] ?? '',
+      setData: (format: string, value: string) => {
+        data[format] = value;
+      },
+    };
+    const event = new Event(type, { bubbles: true, cancelable: true }) as ClipboardEvent;
+    Object.defineProperty(event, 'clipboardData', { value: clipboardData });
+    return { event, data };
+  }
+
+  function selectEditorContents(editor: HTMLElement): void {
+    const range = editor.ownerDocument.createRange();
+    range.selectNodeContents(editor);
+    const selection = editor.ownerDocument.defaultView?.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+
+  function placeCaretAtStart(editor: HTMLElement): void {
+    editor.focus();
+    const range = editor.ownerDocument.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(true);
+    const selection = editor.ownerDocument.defaultView?.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+
+  it('copies the canonical mention token instead of the visible badge label', () => {
+    const input = new RichChatInput(document.body.createDiv(), {
+      app: {} as App,
+      getMentionContext: () => ({
+        vault: {
+          getFiles: () => [],
+          getFolders: () => [],
+          getByPath: () => null,
+          resolveWikilink: () => null,
+        },
+        mcpServerNames: new Set(),
+      }),
+    });
+    input.value = '/generate-image a moonlit lake';
+    selectEditorContents(input.el);
+
+    const { event, data } = createClipboardEvent('copy');
+    input.el.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(data['text/plain']).toBe('/generate-image a moonlit lake');
+  });
+
+  it('pastes a canonical token back into an inline badge', () => {
+    const input = new RichChatInput(document.body.createDiv(), {
+      app: {} as App,
+      getMentionContext: () => ({
+        vault: {
+          getFiles: () => [{ path: 'notes/long-note.md', basename: 'long-note.md' }],
+          getFolders: () => [],
+          getByPath: (path: string) => (
+            path === 'notes/long-note.md'
+              ? { kind: 'file' as const, path, basename: 'long-note.md' }
+              : null
+          ),
+          resolveWikilink: () => null,
+        },
+        mcpServerNames: new Set(),
+      }),
+    });
+    placeCaretAtStart(input.el);
+    const { event } = createClipboardEvent('paste', '@notes/long-note.md please summarize');
+    input.handlePaste(event);
+
+    const badge = input.el.querySelector<HTMLElement>('[data-mention-token="@notes/long-note.md"]');
+    expect(badge).toHaveClass('pivi-context-badge--inline');
+    expect(badge).toHaveTextContent('long-note.md');
+    expect(input.value).toBe('@notes/long-note.md please summarize');
+  });
+
+  it('leaves pasted visible badge labels as plain text', () => {
+    const input = new RichChatInput(document.body.createDiv(), {
+      app: {} as App,
+      getMentionContext: () => ({
+        vault: {
+          getFiles: () => [],
+          getFolders: () => [],
+          getByPath: () => null,
+          resolveWikilink: () => null,
+        },
+        mcpServerNames: new Set(),
+      }),
+    });
+    placeCaretAtStart(input.el);
+    const { event } = createClipboardEvent('paste', 'generate image a moonlit lake');
+    input.handlePaste(event);
+
+    expect(input.el.querySelector('[data-mention-token]')).toBeNull();
+    expect(input.value).toBe('generate image a moonlit lake');
+  });
+
+  it('cuts a mention badge as the canonical token and rebuilds the remaining text', () => {
+    const input = new RichChatInput(document.body.createDiv(), {
+      app: {} as App,
+      getMentionContext: () => ({
+        vault: {
+          getFiles: () => [],
+          getFolders: () => [],
+          getByPath: () => null,
+          resolveWikilink: () => null,
+        },
+        mcpServerNames: new Set(),
+      }),
+    });
+    input.value = '/generate-image a moonlit lake';
+    const badge = input.el.querySelector<HTMLElement>('[data-mention-token="/generate-image"]');
+    expect(badge).not.toBeNull();
+    const range = input.el.ownerDocument.createRange();
+    range.selectNode(badge!);
+    const selection = input.el.ownerDocument.defaultView?.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    const { event, data } = createClipboardEvent('cut');
+    input.el.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(data['text/plain']).toBe('/generate-image');
+    expect(input.el.querySelector('[data-mention-token]')).toBeNull();
+    expect(input.value).toBe(' a moonlit lake');
+  });
 });

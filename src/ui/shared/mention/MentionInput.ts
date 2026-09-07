@@ -6,6 +6,7 @@ import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';
 import {
   buildComposerFromText,
   extractComposerContent,
+  extractComposerSelection,
   findNodeAtPlainTextOffset,
   insertPlainTextAtSelection,
   setComposerCursor,
@@ -57,6 +58,8 @@ export class MentionInput implements ComposerInput {
 
     this.el.appendChild(this.el.ownerDocument.createTextNode(''));
     this.el.addEventListener('input', () => this.onEditorInput());
+    this.el.addEventListener('copy', (event) => this.handleCopy(event));
+    this.el.addEventListener('cut', (event) => this.handleCut(event));
     this.el.addEventListener('compositionstart', () => {
       this.isComposing = true;
       this.clearCompositionSyncTimer();
@@ -169,7 +172,54 @@ export class MentionInput implements ComposerInput {
     }
   }
 
-  /** Paste handler: plain text only. */
+  /** Copy handler: canonical mention tokens, not visible badge labels. */
+  handleCopy(event: ClipboardEvent): void {
+    if (!event.clipboardData) {
+      return;
+    }
+    const selection = extractComposerSelection(this.el);
+    if (!selection) {
+      return;
+    }
+    event.preventDefault();
+    event.clipboardData.setData(
+      'text/plain',
+      selection.text.slice(selection.start, selection.end),
+    );
+  }
+
+  /** Cut handler: same canonical serialization as copy, then rebuild without the selection. */
+  handleCut(event: ClipboardEvent): void {
+    if (!event.clipboardData) {
+      return;
+    }
+    const selection = extractComposerSelection(this.el);
+    if (!selection) {
+      return;
+    }
+    event.preventDefault();
+    event.clipboardData.setData(
+      'text/plain',
+      selection.text.slice(selection.start, selection.end),
+    );
+    const nextText = selection.text.slice(0, selection.start) + selection.text.slice(selection.end);
+    this.isSyncing = true;
+    try {
+      buildComposerFromText(
+        this.el,
+        nextText,
+        this.getMentionContext(),
+        this.app,
+        selection.start,
+      );
+      this.updateEmptyState();
+    } finally {
+      this.isSyncing = false;
+    }
+    this.dispatchInputEvent();
+  }
+
+  /** Paste handler: plain text only, then rebuild recognized mention badges. */
   handlePaste(event: ClipboardEvent): void {
     const text = event.clipboardData?.getData('text/plain');
     if (!text) {

@@ -46,6 +46,162 @@ export function createInlineMentionBadge(
   });
 }
 
+function isHtmlElement(node: Node): node is HTMLElement {
+  return node.instanceOf(HTMLElement);
+}
+
+function mentionTokenOf(node: HTMLElement): string | undefined {
+  return node.dataset.mentionToken;
+}
+
+function canonicalNodeLength(node: Node): number {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent?.length ?? 0;
+  }
+  if (!isHtmlElement(node)) {
+    return 0;
+  }
+  const token = mentionTokenOf(node);
+  if (token) {
+    return token.length;
+  }
+  if (node.tagName === 'BR') {
+    return 1;
+  }
+  let length = 0;
+  for (const child of node.childNodes) {
+    length += canonicalNodeLength(child);
+  }
+  return length;
+}
+
+function canonicalOffsetBefore(editor: HTMLElement, target: Node): number {
+  let offset = 0;
+
+  function walk(node: Node): boolean {
+    if (node === target) {
+      return true;
+    }
+    if (node.nodeType === Node.TEXT_NODE) {
+      offset += node.textContent?.length ?? 0;
+      return false;
+    }
+    if (!isHtmlElement(node)) {
+      return false;
+    }
+    const token = mentionTokenOf(node);
+    if (token) {
+      offset += token.length;
+      return false;
+    }
+    if (node.tagName === 'BR') {
+      offset += 1;
+      return false;
+    }
+    for (const child of node.childNodes) {
+      if (walk(child)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  for (const child of editor.childNodes) {
+    if (walk(child)) {
+      break;
+    }
+  }
+  return offset;
+}
+
+function enclosingMentionBadge(editor: HTMLElement, node: Node): HTMLElement | null {
+  if (node === editor) {
+    return null;
+  }
+  const start = isHtmlElement(node) ? node : node.parentElement;
+  const badge = start?.closest('[data-mention-token]');
+  if (badge?.instanceOf(HTMLElement) && editor.contains(badge)) {
+    return badge;
+  }
+  return null;
+}
+
+function canonicalPoint(
+  editor: HTMLElement,
+  container: Node,
+  offset: number,
+  snap: 'start' | 'end',
+): number {
+  const badge = enclosingMentionBadge(editor, container);
+  if (badge) {
+    const prefix = canonicalOffsetBefore(editor, badge);
+    const tokenLength = mentionTokenOf(badge)?.length ?? 0;
+    return snap === 'start' ? prefix : prefix + tokenLength;
+  }
+
+  if (container === editor) {
+    let accumulated = 0;
+    const limit = Math.min(offset, editor.childNodes.length);
+    for (let index = 0; index < limit; index++) {
+      accumulated += canonicalNodeLength(editor.childNodes[index]!);
+    }
+    return accumulated;
+  }
+
+  if (container.nodeType === Node.TEXT_NODE) {
+    return canonicalOffsetBefore(editor, container) + offset;
+  }
+
+  if (isHtmlElement(container)) {
+    let accumulated = canonicalOffsetBefore(editor, container);
+    const limit = Math.min(offset, container.childNodes.length);
+    for (let index = 0; index < limit; index++) {
+      accumulated += canonicalNodeLength(container.childNodes[index]!);
+    }
+    return accumulated;
+  }
+
+  return canonicalOffsetBefore(editor, container);
+}
+
+/**
+ * Canonical composer text for the current selection.
+ * A range that intersects an inline badge copies the whole `data-mention-token`.
+ * Returns null when the selection is collapsed or outside the editor.
+ */
+export function extractComposerSelection(editor: HTMLElement): {
+  text: string;
+  start: number;
+  end: number;
+} | null {
+  const selection = getActiveWindow(editor).getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    return null;
+  }
+
+  const range = selection.getRangeAt(0);
+  const ancestor = range.commonAncestorContainer;
+  if (ancestor !== editor && !editor.contains(ancestor)) {
+    return null;
+  }
+
+  const { text } = extractComposerContent(editor);
+  const start = Math.max(0, Math.min(
+    canonicalPoint(editor, range.startContainer, range.startOffset, 'start'),
+    text.length,
+  ));
+  const end = Math.max(0, Math.min(
+    canonicalPoint(editor, range.endContainer, range.endOffset, 'end'),
+    text.length,
+  ));
+  const from = Math.min(start, end);
+  const to = Math.max(start, end);
+  if (from === to) {
+    return null;
+  }
+  return { text, start: from, end: to };
+}
+
 export function extractComposerContent(editor: HTMLElement): {
   text: string;
   cursorPos: number;
