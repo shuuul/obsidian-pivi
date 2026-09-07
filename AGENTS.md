@@ -251,7 +251,7 @@ flowchart TD
 
 ## 🛠️ Development & Build Commands
 
-**Node.js:** `24.x` (see `package.json` `engines` and `.nvmrc`). CI and release workflows use Node 24.x; local development must use the same major.
+**Node.js:** `24.x` (see `package.json` `engines`, `.nvmrc`, and `mise.toml`). CI and release workflows use Node 24.x; local development must use the same major. With [mise](https://mise.jdx.dev/) installed, `mise install` in the repo root activates `node@24.19.0`.
 
 Use `npm ci` for a clean install. `.npmrc` enables `legacy-peer-deps=true`; do not enable `engine-strict`, because Obsidian's community scanner installs dependencies under its own Node version before linting. `postinstall` creates `.env.local` from `.env.local.example` outside CI when missing.
 

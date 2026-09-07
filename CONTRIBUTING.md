@@ -4,7 +4,7 @@ Thanks for helping improve Pivi. By participating, you agree to the [Code of Con
 
 ## Set up
 
-Pivi requires Node.js 24.x. Fork and clone the repository, then run:
+Pivi requires Node.js 24.x. Fork and clone the repository. If you use [mise](https://mise.jdx.dev/), run `mise install` first so the repo `mise.toml` pin (`node@24.19.0`) is active. Then run:
 
 ```bash
 npm ci
