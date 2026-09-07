@@ -13,6 +13,13 @@
       "skillPath": "skills/apple-design/SKILL.md",
       "computedHash": "8b94db67cb9edaad5f1501010804caa610131f1d2dfda0a27664b2e858deade3"
     },
+    "defuddle": {
+      "source": "git@github.com:kepano/obsidian-skills.git",
+      "sourceUrl": "git@github.com:kepano/obsidian-skills.git",
+      "sourceType": "git",
+      "skillPath": "skills/defuddle/SKILL.md",
+      "computedHash": "0ed68bc3e818ba0e6b8d192357ea3daaf552a3893f8854e7fd43c06831f91323"
+    },
     "emil-design-eng": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
@@ -31,12 +38,40 @@
       "skillPath": "skills/improve-animations/SKILL.md",
       "computedHash": "eeb219a407e325b687af88db25771cc3018e3148245604112f5ac6990b6fd79c"
     },
+    "json-canvas": {
+      "source": "git@github.com:kepano/obsidian-skills.git",
+      "sourceUrl": "git@github.com:kepano/obsidian-skills.git",
+      "sourceType": "git",
+      "skillPath": "skills/json-canvas/SKILL.md",
+      "computedHash": "56cbac74a93e4fba97f4d44bccfdeaae89e545b223f47df392c7705e01e6c543"
+    },
+    "obsidian-bases": {
+      "source": "git@github.com:kepano/obsidian-skills.git",
+      "sourceUrl": "git@github.com:kepano/obsidian-skills.git",
+      "sourceType": "git",
+      "skillPath": "skills/obsidian-bases/SKILL.md",
+      "computedHash": "65db029661f38daadc8b8eb755bd7b96011336f49bdc11e966ec7fd157d8f125"
+    },
+    "obsidian-cli": {
+      "source": "git@github.com:kepano/obsidian-skills.git",
+      "sourceUrl": "git@github.com:kepano/obsidian-skills.git",
+      "sourceType": "git",
+      "skillPath": "skills/obsidian-cli/SKILL.md",
+      "computedHash": "f46ae626875f7e47c410c2ee93896c4526024ebe127719e8fb430261b5677edc"
+    },
     "obsidian-dev": {
       "source": "git@github.com:shuuul/shuuul-skills.git",
       "sourceUrl": "git@github.com:shuuul/shuuul-skills.git",
       "sourceType": "git",
-      "skillPath": "skills/obsidian-dev/SKILL.md",
-      "computedHash": "bf29c47de279dd74337d7087bfa69997a5dafd9c39f5cdf9070adcb14b7ad516"
+      "skillPath": "skills/plugin-dev/obsidian-dev/SKILL.md",
+      "computedHash": "cc16bfb78d300b5875d19cde797a00e18a7f6fc561588ea635ff8d4016ecd322"
+    },
+    "obsidian-markdown": {
+      "source": "git@github.com:kepano/obsidian-skills.git",
+      "sourceUrl": "git@github.com:kepano/obsidian-skills.git",
+      "sourceType": "git",
+      "skillPath": "skills/obsidian-markdown/SKILL.md",
+      "computedHash": "0f47297035d7824e7bf0f1984e8145a59a123e2258b5d54c9ac9642f9f77e177"
     },
     "pick-ui-library": {
       "source": "emilkowalski/skills",
