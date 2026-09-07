@@ -70,30 +70,27 @@ export function createDailyTool(deps: ObsidianToolDeps): ToolSpec {
         return textResult(capCliToolOutput(out));
       }
 
-      if ((action === 'append' || action === 'prepend') && !content) {
-        throw new Error(`content is required for ${action}.`);
-      }
-
       if (action === 'append' || action === 'prepend') {
+        if (!content) {
+          throw new Error(`content is required for ${action}.`);
+        }
         const dailyPath = (await cli.run({ vaultName, args: ['daily:path'] })).trim();
         if (!dailyPath) {
           throw new Error('Daily note could not be resolved to an exact Vault path.');
         }
-        // The daily CLI can create the note during append/prepend, so the path
-        // must be validated independently of the file's current existence.
         const mutationPath = requireAgentVaultMutationPath(dailyPath, vaultPath);
-        await deps.vault.captureSnapshotBeforeCliMutation(mutationPath);
+        const existing = deps.vault.resolveFile(undefined, mutationPath);
+        const result = await deps.vault.writeNote({
+          path: mutationPath,
+          content,
+          mode: existing ? action : 'create',
+          overwrite: false,
+          inline,
+        });
+        return textResult(`Wrote ${result.path}`, { action, path: result.path });
       }
 
-      const subcommand = action === 'read' ? 'daily:read' : action === 'append' ? 'daily:append' : 'daily:prepend';
-      const args = [subcommand];
-      if (content) {
-        args.push(`content=${content}`);
-      }
-      if (inline) {
-        args.push('inline');
-      }
-      const out = await cli.run({ vaultName, args });
+      const out = await cli.run({ vaultName, args: ['daily:read'] });
       return textResult(capCliToolOutput(out), { action });
     },
   };

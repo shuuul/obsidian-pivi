@@ -799,7 +799,9 @@ describe('streamPiChatTurn retry lifecycle', () => {
       (chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage',
     );
     const lastUsage = usageChunks.at(-1)?.usage;
-    expect(lastUsage?.contextTokens).toBeGreaterThan(71_403);
+    expect(lastUsage?.contextTokens).toBe(70_963);
+    expect(lastUsage?.contextTokensIsAuthoritative).toBe(true);
+    expect(lastUsage?.contextEnvelope?.pressureInputTokens).toBeGreaterThan(71_403);
     expect(chunks).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: 'notice', content: 'blocked-continuation' }),
     ]));

@@ -970,14 +970,57 @@ describe('ObsidianVaultApi', () => {
     expect(app.getContent('notes/a.md')).toBe('hello world');
   });
 
-  it('captureSnapshotBeforeCliMutation snapshots an existing note and skips a missing path', async () => {
+  it('runCliMutation snapshots an existing note and skips a missing path', async () => {
     const app = makeApp([{ path: 'notes/a.md', content: 'current' }]);
     const api = new ObsidianVaultApi(app as never);
+    const mutate = jest.fn(async () => 'done');
 
-    await api.captureSnapshotBeforeCliMutation('notes/a.md');
-    await api.captureSnapshotBeforeCliMutation('notes/deleted.md');
+    await expect(api.runCliMutation('notes/a.md', mutate)).resolves.toBe('done');
+    await api.runCliMutation('notes/deleted.md', mutate);
 
     expect(app.getForceAdd()).toHaveBeenCalledTimes(1);
     expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'current');
+    expect(mutate).toHaveBeenCalledTimes(2);
+  });
+
+  it('runCliMutation blocks an active editor with unsaved content', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'saved' }]);
+    const file = app.vault.getAbstractFileByPath('notes/a.md');
+    app.vault.getAbstractFileByPath = () => file;
+    app.workspace.getActiveViewOfType.mockReturnValue({
+      file,
+      editor: { getValue: () => 'unsaved' },
+    });
+    const mutate = jest.fn(async () => undefined);
+
+    await expect(new ObsidianVaultApi(app as never).runCliMutation('notes/a.md', mutate))
+      .rejects.toThrow('active editor has unsaved changes');
+
+    expect(app.getForceAdd()).not.toHaveBeenCalled();
+    expect(mutate).not.toHaveBeenCalled();
+  });
+
+  it('runCliMutation serializes mutations of the same exact path', async () => {
+    const app = makeApp([]);
+    const api = new ObsidianVaultApi(app as never);
+    const events: string[] = [];
+    let releaseFirst!: () => void;
+    const firstBlocked = new Promise<void>((resolve) => { releaseFirst = resolve; });
+
+    const first = api.runCliMutation('notes/new.md', async () => {
+      events.push('first:start');
+      await firstBlocked;
+      events.push('first:end');
+    });
+    const second = api.runCliMutation('notes/new.md', async () => {
+      events.push('second');
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(events).toEqual(['first:start']);
+
+    releaseFirst();
+    await Promise.all([first, second]);
+    expect(events).toEqual(['first:start', 'first:end', 'second']);
   });
 });

@@ -6,32 +6,33 @@ on:
       - "*"
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      is-prerelease: ${{ steps.metadata.outputs.is-prerelease }}
+      release-tag: ${{ steps.metadata.outputs.release-tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: Use Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: "24.19.0"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Resolve release metadata
+      - name: Verify tag checkout
         run: |
           tag="${GITHUB_REF_NAME}"
-
           expected_ref="refs/tags/${tag}"
           if [ "${GITHUB_REF}" != "$expected_ref" ]; then
             echo "Release workflow must run from $expected_ref, not ${GITHUB_REF}."
+            exit 1
+          fi
+
+          tag_commit="$(git rev-parse --verify "refs/tags/${tag}^{commit}")"
+          checked_out_commit="$(git rev-parse HEAD)"
+          if [ "$tag_commit" != "$GITHUB_SHA" ] || [ "$checked_out_commit" != "$GITHUB_SHA" ]; then
+            echo "Tag, event, and checkout must resolve to the same commit."
             exit 1
           fi
 
@@ -45,14 +46,31 @@ jobs:
             exit 1
           fi
 
+      - name: Use Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "24.19.0"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve release metadata
+        id: metadata
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          package_version="$(node -p "require('./package.json').version")"
+
           if node -e "process.exit(require('semver').prerelease('$package_version') ? 0 : 1)"; then
-            echo "IS_PRERELEASE=true" >> "$GITHUB_ENV"
+            is_prerelease=true
           else
-            echo "IS_PRERELEASE=false" >> "$GITHUB_ENV"
+            is_prerelease=false
           fi
 
+          echo "is-prerelease=$is_prerelease" >> "$GITHUB_OUTPUT"
+          echo "release-tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "IS_PRERELEASE=$is_prerelease" >> "$GITHUB_ENV"
           echo "RELEASE_TAG_RESOLVED=${tag}" >> "$GITHUB_ENV"
-          echo "PACKAGE_VERSION_RESOLVED=${package_version}" >> "$GITHUB_ENV"
 
       # Publication depends on the same mandatory gates as CI for this exact tag commit.
       - name: Quality gates
@@ -112,9 +130,37 @@ jobs:
 
           echo "RELEASE_NOTES_FILE=${notes_file}" >> "$GITHUB_ENV"
 
+      - name: Stage release bundle
+        run: |
+          mkdir release-bundle
+          cp main.js manifest.json styles.css "$RELEASE_NOTES_FILE" release-bundle/
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-${{ steps.metadata.outputs.release-tag }}
+          path: release-bundle/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release bundle
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release-${{ needs.build.outputs.release-tag }}
+          path: release-bundle
+
       - name: Create or update GitHub release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          IS_PRERELEASE: ${{ needs.build.outputs.is-prerelease }}
+          RELEASE_NOTES_FILE: release-bundle/release-notes.md
+          RELEASE_TAG_RESOLVED: ${{ needs.build.outputs.release-tag }}
         run: |
           prerelease_flag=""
           if [ "$IS_PRERELEASE" = "true" ]; then
@@ -127,19 +173,20 @@ jobs:
               --notes-file "$RELEASE_NOTES_FILE" \
               $prerelease_flag
             gh release upload "$RELEASE_TAG_RESOLVED" \
-              main.js manifest.json styles.css \
+              release-bundle/main.js release-bundle/manifest.json release-bundle/styles.css \
               --clobber
           else
             gh release create "$RELEASE_TAG_RESOLVED" \
               --title="$RELEASE_TAG_RESOLVED" \
               --notes-file "$RELEASE_NOTES_FILE" \
               $prerelease_flag \
-              main.js manifest.json styles.css
+              release-bundle/main.js release-bundle/manifest.json release-bundle/styles.css
           fi
 
       - name: Verify published release assets
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG_RESOLVED: ${{ needs.build.outputs.release-tag }}
         run: |
           download_dir="${RUNNER_TEMP}/published-release-assets"
           mkdir -p "$download_dir"
@@ -151,7 +198,7 @@ jobs:
             --pattern styles.css
 
           for file in main.js manifest.json styles.css; do
-            if ! cmp --silent "$file" "$download_dir/$file"; then
+            if ! cmp --silent "release-bundle/$file" "$download_dir/$file"; then
               echo "Published asset differs from the tag build: $file"
               exit 1
             fi

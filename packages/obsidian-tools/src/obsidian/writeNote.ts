@@ -82,22 +82,17 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
         }
         const requestedPath = path?.trim() || (file?.endsWith('.md') ? file : `${file}.md`);
         const mutationPath = requireAgentVaultMutationPath(requestedPath, vaultPath);
-        if (input.overwrite === true) {
-          await vault.captureSnapshotBeforeCliMutation(mutationPath);
-        }
-        const args = ['create', `template=${template}`];
-        if (path) {
-          args.push(`path=${mutationPath}`);
-        } else if (file) {
-          args.push(`name=${file}`);
-        }
+        const args = ['create', `template=${template}`, `path=${mutationPath}`];
         if (content !== undefined) {
           args.push(`content=${content}`);
         }
         if (input.overwrite === true) {
           args.push('overwrite');
         }
-        const output = await cli.run({ vaultName, args });
+        const runCreate = () => cli.run({ vaultName, args });
+        const output = input.overwrite === true
+          ? await vault.runCliMutation(mutationPath, runCreate)
+          : await runCreate();
         return textResult(
           capCliToolOutput(output.trim() || `Created from template ${template}`),
           { path: mutationPath, file, template },

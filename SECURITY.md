@@ -6,7 +6,7 @@ Pivi is an Obsidian community plugin that runs inside the desktop renderer with 
 
 Security fixes are applied to the current published Obsidian community-plugin release line and to `main`. Older Git tags and privately rebuilt forks are not separately maintained.
 
-Report issues against a concrete Pivi version (`manifest.json` / GitHub Release tag) and Obsidian version so maintainers can reproduce on a supported desktop build (minimum Obsidian `1.12.0`).
+Report issues against a concrete Pivi version (`manifest.json` / GitHub Release tag) and Obsidian version so maintainers can reproduce on a supported desktop build (minimum Obsidian `1.13.0`).
 
 ## Reporting a vulnerability
 
@@ -35,6 +35,7 @@ Pivi reduces accidental foot-guns (SSRF, path escape, unbounded process output, 
 | MCP remote headers | Structured `ConfigValueRef` | Secret values in `SecretStorage` (`pivi-mcp-v-*`); config in `.pivi/mcp.json` | Names may appear in config; secret values do not |
 | External absolute-path reads | Vault always; outside vault off (`allowExternalRead`) | Device-local allowed directories / turn folders for paths outside the vault | Vault-contained paths skip grants. Absolute paths never enter synced settings or session JSONL |
 | Bash tool | Off (`allowBash`) | Device-local structured scopes (`pivi.capability-permissions.v1`) | User login shell; Always persists `[exe]` or `[exe, family-verb]` after resolving the invoked program |
+| Obsidian command execution | Off (`allowCommand`) | Device-local exact command-ID grants (`pivi.capability-permissions.v1`) | Discovery is separate; an ungranted exact ID requires Deny / Allow once / Always approval before execution |
 
 ## Network flows
 

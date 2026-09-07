@@ -57,7 +57,7 @@ describe('registered tool prompt descriptors', () => {
     expect(section).toContain('Parameters: `schemaMarker`');
   });
 
-  it.each([true, false])('describes both CLI-dependent Base actions when CLI availability is %s', (available) => {
+  it.each([true, false])('describes the CLI-dependent Base query action when CLI availability is %s', (available) => {
     const section = buildRegisteredToolsSection({
       obsidianTools: ['obsidian_base'],
       toolSpecs: [spec('obsidian_base', 'baseMarker')],
@@ -68,8 +68,8 @@ describe('registered tool prompt descriptors', () => {
       includeWebSearch: false,
     });
     expect(section).toContain(available
-      ? 'query and create actions require Obsidian CLI'
-      : 'query and create actions are unavailable without Obsidian CLI');
+      ? 'query action requires Obsidian CLI'
+      : 'query action is unavailable without Obsidian CLI');
   });
 
   it('uses a factory-owned usage override when present', () => {

@@ -4,7 +4,7 @@ function makeDeps(): ObsidianToolDeps {
   return {
     vault: {
       writeNote: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
-      captureSnapshotBeforeCliMutation: jest.fn().mockResolvedValue(undefined),
+      runCliMutation: jest.fn(async (_path: string, mutate: () => Promise<unknown>) => mutate()),
     },
     cli: {
       run: jest.fn().mockResolvedValue('created'),
@@ -59,14 +59,29 @@ describe('createWriteNoteTool', () => {
     });
 
     expect(deps.vault.writeNote).not.toHaveBeenCalled();
-    expect(deps.vault.captureSnapshotBeforeCliMutation).not.toHaveBeenCalled();
+    expect(deps.vault.runCliMutation).not.toHaveBeenCalled();
     expect(deps.cli.run).toHaveBeenCalledWith({
       vaultName: 'vault',
       args: ['create', 'template=Travel', 'path=notes/trip.md'],
     });
   });
 
-  it('snapshots an existing destination before template overwrite', async () => {
+  it('binds template file input to the validated exact path', async () => {
+    const deps = makeDeps();
+
+    await createWriteNoteTool(deps).execute('call', {
+      file: 'notes/trip',
+      mode: 'create',
+      template: 'Travel',
+    });
+
+    expect(deps.cli.run).toHaveBeenCalledWith({
+      vaultName: 'vault',
+      args: ['create', 'template=Travel', 'path=notes/trip.md'],
+    });
+  });
+
+  it('runs template overwrite inside an exact-path CLI mutation transaction', async () => {
     const deps = makeDeps();
     const tool = createWriteNoteTool(deps);
 
@@ -77,14 +92,16 @@ describe('createWriteNoteTool', () => {
       overwrite: true,
     });
 
-    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/trip.md');
-    expect((deps.vault.captureSnapshotBeforeCliMutation as jest.Mock).mock.invocationCallOrder[0])
-      .toBeLessThan((deps.cli.run as jest.Mock).mock.invocationCallOrder[0]!);
+    expect(deps.vault.runCliMutation).toHaveBeenCalledWith('notes/trip.md', expect.any(Function));
+    expect(deps.cli.run).toHaveBeenCalledWith({
+      vaultName: 'vault',
+      args: ['create', 'template=Travel', 'path=notes/trip.md', 'overwrite'],
+    });
   });
 
-  it('blocks template overwrite when the snapshot fails', async () => {
+  it('blocks template overwrite when the CLI mutation transaction fails', async () => {
     const deps = makeDeps();
-    (deps.vault.captureSnapshotBeforeCliMutation as jest.Mock).mockRejectedValueOnce(new Error('snapshot failed'));
+    (deps.vault.runCliMutation as jest.Mock).mockRejectedValueOnce(new Error('snapshot failed'));
 
     await expect(createWriteNoteTool(deps).execute('call', {
       path: 'notes/trip.md',

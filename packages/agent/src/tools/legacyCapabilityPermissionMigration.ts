@@ -11,7 +11,8 @@ import {
   canonicalizeExternalDirectories,
   createBareNameResolver,
   defaultCaseInsensitiveExecutables,
-  type DeviceLocalCapabilityPermissionsV1,
+  DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
+  type DeviceLocalCapabilityPermissions,
   isPathExecutableToken,
   type PersistentBashPermission,
   type PersistentExternalDirectoryPermission,
@@ -27,7 +28,7 @@ export interface LegacyCapabilityPermissionInput {
 }
 
 export interface LegacyCapabilityPermissionMigration {
-  permissions: DeviceLocalCapabilityPermissionsV1;
+  permissions: DeviceLocalCapabilityPermissions;
   migratedBashCount: number;
   migratedExternalCount: number;
 }
@@ -59,7 +60,7 @@ export function migrateLegacyCapabilityPermissions(
 
   return {
     permissions: canonicalizeCapabilityPermissions({
-      version: 1,
+      version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
       bash: canonicalizeBashPermissions(bash, caseInsensitive),
       externalDirectories: canonicalizeExternalDirectories(externalDirectories),
       obsidianCommands: [],

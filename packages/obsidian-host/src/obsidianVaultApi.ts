@@ -120,6 +120,8 @@ export interface VaultWriteAttachmentResult {
 }
 
 export class ObsidianVaultApi {
+  private readonly cliMutationTails = new Map<string, Promise<void>>();
+
   constructor(private readonly app: App) {}
 
   private vaultPath(): string | null {
@@ -472,17 +474,50 @@ export class ObsidianVaultApi {
     };
   }
 
-  /** Snapshot current recoverable content before an out-of-process mutation; new/deleted paths have no current state. */
-  async captureSnapshotBeforeCliMutation(path: string): Promise<void> {
+  /**
+   * Validate, snapshot, and serialize an out-of-process mutation for one exact
+   * path. Unsaved active-editor content blocks the CLI rather than being lost.
+   */
+  async runCliMutation<T>(path: string, mutate: () => Promise<T>): Promise<T> {
     const normalized = this.requireMutationPath(path);
-    const current = this.app.vault.getAbstractFileByPath(normalized);
-    if (!current) {
-      return;
+    const previous = this.cliMutationTails.get(normalized) ?? Promise.resolve();
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    const tail = previous.catch(() => undefined).then(() => pending);
+    this.cliMutationTails.set(normalized, tail);
+
+    await previous.catch(() => undefined);
+    try {
+      const current = this.app.vault.getAbstractFileByPath(normalized);
+      if (current && !(current instanceof TFile)) {
+        throw new Error(`Vault path is not a file: ${path}`);
+      }
+      if (current) {
+        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (view?.file === current) {
+          const editorContent = view.editor.getValue();
+          const storedContent = await this.app.vault.cachedRead(current);
+          if (editorContent !== storedContent) {
+            throw new Error(
+              `Cannot modify ${normalized} through Obsidian CLI while its active editor has unsaved changes. Save the note and retry.`,
+            );
+          }
+          await captureFileRecoverySnapshot(this.app, current, editorContent);
+          if (this.app.workspace.getActiveViewOfType(MarkdownView) !== view
+            || view.file !== current || view.editor.getValue() !== editorContent) {
+            throw new Error(`The target editor changed while preparing the CLI mutation for ${normalized}. Retry.`);
+          }
+        } else {
+          await this.capturePreWriteSnapshot(current);
+        }
+      }
+      return await mutate();
+    } finally {
+      release();
+      if (this.cliMutationTails.get(normalized) === tail) {
+        this.cliMutationTails.delete(normalized);
+      }
     }
-    if (!(current instanceof TFile)) {
-      throw new Error(`Vault path is not a file: ${path}`);
-    }
-    await this.capturePreWriteSnapshot(current);
   }
 
   async createFolder(path: string): Promise<{ path: string }> {

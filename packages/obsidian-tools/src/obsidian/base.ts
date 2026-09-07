@@ -7,22 +7,17 @@ import {
 import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
 
-type BaseAction = 'list' | 'views' | 'query' | 'create';
-const VALID_ACTIONS: readonly BaseAction[] = ['list', 'views', 'query', 'create'];
+type BaseAction = 'list' | 'views' | 'query';
+const VALID_ACTIONS: readonly BaseAction[] = ['list', 'views', 'query'];
 type BaseFormat = 'json' | 'csv' | 'tsv' | 'md' | 'paths';
 const VALID_FORMATS: readonly BaseFormat[] = ['json', 'csv', 'tsv', 'md', 'paths'];
 
 function getBaseAction(value: unknown, queryAvailable: boolean): BaseAction | undefined {
   return typeof value === 'string'
     && (VALID_ACTIONS as readonly string[]).includes(value)
-    && (queryAvailable || (value !== 'query' && value !== 'create'))
+    && (queryAvailable || value !== 'query')
     ? (value as BaseAction)
     : undefined;
-}
-
-function getBooleanField(input: Record<string, unknown>, key: string): boolean | undefined {
-  const value = input[key];
-  return typeof value === 'boolean' ? value : undefined;
 }
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
@@ -43,14 +38,14 @@ function getBaseFormat(value: unknown): BaseFormat {
 export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
   const { cli, vault, vaultName } = deps;
   const queryAvailable = deps.obsidianCliAvailable ?? deps.settings.cliEnabled;
-  const actionEnum = queryAvailable ? ['list', 'views', 'query', 'create'] : ['list', 'views'];
+  const actionEnum = queryAvailable ? ['list', 'views', 'query'] : ['list', 'views'];
   return {
     name: TOOL_OBSIDIAN_BASE,
     label: 'Bases',
     description:
       queryAvailable
-        ? 'Query Obsidian Bases (built-in databases). List base files, list views in a base, query a base view, or create an item in a base. Query and create require the official Obsidian CLI.'
-        : 'Inspect Obsidian Bases (built-in databases). List base files or list views in a base. Query and create are unavailable because Obsidian CLI is not available.',
+        ? 'Query Obsidian Bases (built-in databases). List base files, list views in a base, or query a base view. Query requires the official Obsidian CLI.'
+        : 'Inspect Obsidian Bases (built-in databases). List base files or list views in a base. Query is unavailable because Obsidian CLI is not available.',
     parameters: {
       type: 'object',
       properties: {
@@ -58,17 +53,13 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
           type: 'string',
           enum: actionEnum,
           description: queryAvailable
-            ? 'list: all base files. views: views in a base. query: query a base view. create: create an item in a base.'
-            : 'list: all base files. views: views in a base. Query and create require Obsidian CLI.',
+            ? 'list: all base files. views: views in a base. query: query a base view.'
+            : 'list: all base files. views: views in a base. Query requires Obsidian CLI.',
         },
-        file: { type: 'string', description: 'Base file name (for views/query/create).' },
-        path: { type: 'string', description: 'Base file vault-relative path (for views/query/create).' },
-        view: { type: 'string', description: 'View name (for query/create).' },
+        file: { type: 'string', description: 'Base file name (for views/query).' },
+        path: { type: 'string', description: 'Base file vault-relative path (for views/query).' },
+        view: { type: 'string', description: 'View name (for query).' },
         format: { type: 'string', enum: ['json', 'csv', 'tsv', 'md', 'paths'], description: 'Output format for query (default json).' },
-        name: { type: 'string', description: 'New item name (for create).' },
-        content: { type: 'string', description: 'Initial content (for create).' },
-        open: { type: 'boolean', description: 'Open the created item (for create).' },
-        newtab: { type: 'boolean', description: 'Open the created item in a new tab (for create).' },
       },
       required: ['action'],
       additionalProperties: false,
@@ -78,8 +69,8 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
       const action = getBaseAction(input['action'], queryAvailable);
       if (!action) {
         throw new Error(queryAvailable
-          ? 'Invalid base action: must be list, views, query, or create.'
-          : 'Invalid base action: must be list or views. Query and create require Obsidian CLI.');
+          ? 'Invalid base action: must be list, views, or query.'
+          : 'Invalid base action: must be list or views. Query requires Obsidian CLI.');
       }
 
       if (action === 'list') {
@@ -92,7 +83,7 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
 
       const file = getStringField(input, 'file');
       const path = getStringField(input, 'path');
-      if (action !== 'create' && !file && !path) {
+      if (!file && !path) {
         throw new Error('file or path is required for views and query actions.');
       }
 
@@ -103,22 +94,6 @@ export function createBaseTool(deps: ObsidianToolDeps): ToolSpec {
           path: result.path,
           total: result.views.length,
         });
-      }
-
-      if (action === 'create') {
-        const args = ['base:create'];
-        if (file) { args.push(`file=${file}`); }
-        if (path) { args.push(`path=${path}`); }
-        const view = getStringField(input, 'view');
-        const name = getStringField(input, 'name');
-        const content = getStringField(input, 'content');
-        if (view) { args.push(`view=${view}`); }
-        if (name) { args.push(`name=${name}`); }
-        if (content) { args.push(`content=${content}`); }
-        if (getBooleanField(input, 'open') === true) { args.push('open'); }
-        if (getBooleanField(input, 'newtab') === true) { args.push('newtab'); }
-        const out = await cli.run({ vaultName, args });
-        return textResult(capCliToolOutput(out), { action: 'create' });
       }
 
       const view = getStringField(input, 'view');

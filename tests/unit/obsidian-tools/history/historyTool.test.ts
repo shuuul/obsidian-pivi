@@ -9,14 +9,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function makeDeps(): {
   deps: ObsidianToolDeps;
   cliRun: CliRun;
-  captureSnapshotBeforeCliMutation: jest.Mock;
+  runCliMutation: jest.Mock;
 } {
   const cliRun: CliRun = jest.fn(async (_request: { vaultName: string; args: string[] }) => 'cli output');
-  const captureSnapshotBeforeCliMutation = jest.fn(async () => undefined);
+  const runCliMutation = jest.fn(async (_path: string, mutate: () => Promise<unknown>) => mutate());
   const deps: ObsidianToolDeps = {
     app: { vault: { adapter: { basePath: '/vault' } } } as unknown as ObsidianToolDeps['app'],
     vault: {
-      captureSnapshotBeforeCliMutation,
+      runCliMutation,
     } as unknown as ObsidianToolDeps['vault'],
     cli: {
       run: cliRun,
@@ -27,7 +27,7 @@ function makeDeps(): {
     vaultPath: '/vault',
     processRunner: { run: jest.fn() },
   };
-  return { deps, cliRun, captureSnapshotBeforeCliMutation };
+  return { deps, cliRun, runCliMutation };
 }
 
 function getText(result: unknown): string {
@@ -106,7 +106,7 @@ describe('createHistoryTool', () => {
   });
 
   it('restores a deleted path without prechecking the vault', async () => {
-    const { deps, cliRun, captureSnapshotBeforeCliMutation } = makeDeps();
+    const { deps, cliRun, runCliMutation } = makeDeps();
 
     const result = await createHistoryTool(deps).execute('call-1', {
       action: 'restore',
@@ -114,15 +114,15 @@ describe('createHistoryTool', () => {
       version: 3,
     });
 
-    expect(captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('deleted/a.md');
+    expect(runCliMutation).toHaveBeenCalledWith('deleted/a.md', expect.any(Function));
     expect(cliRun).toHaveBeenCalledWith({ vaultName: 'Test Vault', args: ['history:restore', 'path=deleted/a.md', 'version=3'] });
     expect(getText(result)).toBe('Restored deleted/a.md from history version 3.');
     expect(getDetails(result)).toEqual({ action: 'restore', path: 'deleted/a.md', version: 3 });
   });
 
   it('blocks restore before the CLI when the current snapshot fails', async () => {
-    const { deps, cliRun, captureSnapshotBeforeCliMutation } = makeDeps();
-    captureSnapshotBeforeCliMutation.mockRejectedValueOnce(new Error('snapshot failed'));
+    const { deps, cliRun, runCliMutation } = makeDeps();
+    runCliMutation.mockRejectedValueOnce(new Error('snapshot failed'));
 
     await expect(createHistoryTool(deps).execute('call-1', {
       action: 'restore',

@@ -6,7 +6,8 @@
 import { isPosixCompatibleShell, isWindowsCmdShell } from './bashAuthorization';
 
 export const BASH_CLASSIFIER_VERSION = 1;
-export const DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION = 1 as const;
+export const LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION = 1 as const;
+export const DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION = 2 as const;
 
 export type ExecutableIdentity =
   | { kind: 'name'; value: string }
@@ -27,11 +28,28 @@ export interface PersistentExternalDirectoryPermission {
 }
 
 export interface DeviceLocalCapabilityPermissionsV1 {
+  version: typeof LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
+  bash: PersistentBashPermission[];
+  externalDirectories: PersistentExternalDirectoryPermission[];
+  obsidianCommands?: string[];
+}
+
+export interface DeviceLocalCapabilityPermissionsV2 {
   version: typeof DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
   bash: PersistentBashPermission[];
   externalDirectories: PersistentExternalDirectoryPermission[];
   obsidianCommands: string[];
 }
+
+export type DeviceLocalCapabilityPermissions = DeviceLocalCapabilityPermissionsV2;
+
+type CapabilityPermissionsRecord = {
+  version: typeof LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION
+    | typeof DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
+  bash: PersistentBashPermission[];
+  externalDirectories: PersistentExternalDirectoryPermission[];
+  obsidianCommands?: string[];
+};
 
 export type BashScopeRisk = 'none' | 'high' | 'executor';
 
@@ -56,7 +74,7 @@ export interface BashClassificationOptions {
   caseInsensitive?: boolean;
 }
 
-export function emptyCapabilityPermissions(): DeviceLocalCapabilityPermissionsV1 {
+export function emptyCapabilityPermissions(): DeviceLocalCapabilityPermissions {
   return {
     version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
     bash: [],
@@ -248,14 +266,14 @@ export function canonicalizeExternalDirectories(
 }
 
 export function canonicalizeCapabilityPermissions(
-  stored: DeviceLocalCapabilityPermissionsV1,
+  stored: CapabilityPermissionsRecord,
   caseInsensitive = false,
-): DeviceLocalCapabilityPermissionsV1 {
+): DeviceLocalCapabilityPermissions {
   return {
     version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
     bash: canonicalizeBashPermissions(stored.bash, caseInsensitive),
     externalDirectories: canonicalizeExternalDirectories(stored.externalDirectories),
-    obsidianCommands: [...new Set(stored.obsidianCommands.map(id => id.trim()).filter(Boolean))],
+    obsidianCommands: [...new Set((stored.obsidianCommands ?? []).map(id => id.trim()).filter(Boolean))],
   };
 }
 
@@ -290,16 +308,26 @@ export function matchPersistentBashPermissions(
   ));
 }
 
-export function decodeCapabilityPermissions(raw: unknown): DeviceLocalCapabilityPermissionsV1 {
+export function capabilityPermissionsSourceVersion(raw: unknown): 1 | 2 | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const version = (raw as Record<string, unknown>).version;
+  return version === LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION
+    || version === DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION
+    ? version
+    : null;
+}
+
+export function decodeCapabilityPermissions(raw: unknown): DeviceLocalCapabilityPermissions {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return emptyCapabilityPermissions();
   }
   const record = raw as Record<string, unknown>;
-  if (record.version !== DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION) {
+  const sourceVersion = capabilityPermissionsSourceVersion(record);
+  if (sourceVersion === null) {
     return emptyCapabilityPermissions();
   }
   return canonicalizeCapabilityPermissions({
-    version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
+    version: sourceVersion,
     bash: decodeBashPermissionList(record.bash),
     externalDirectories: decodeExternalDirectoryList(record.externalDirectories),
     obsidianCommands: decodeStringList(record.obsidianCommands),

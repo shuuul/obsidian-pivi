@@ -109,7 +109,7 @@ describe('attachContextEnvelope', () => {
     expect(result.contextTokens).toBe(129_692);
   });
 
-  it('moves displayed context tokens off the provider anchor when a trailing tool result is pending', () => {
+  it('keeps provider usage authoritative while trailing tool results raise pressure', () => {
     const anchor = {
       role: 'assistant',
       content: [{ type: 'text', text: 'searching' }],
@@ -184,8 +184,9 @@ describe('attachContextEnvelope', () => {
     );
 
     expect(result.contextEnvelope?.pressureInputTokens).toBeGreaterThan(222_822);
-    expect(result.contextTokens).toBe(result.contextEnvelope?.pressureInputTokens);
-    expect(result.contextTokens).toBeGreaterThan(71_403);
+    expect(result.contextTokens).toBe(71_403);
+    expect(result.inputTokens).toBe(70_963);
+    expect(result.contextTokensIsAuthoritative).toBe(true);
   });
 
   it('projects issue #98 from the provider anchor instead of the full local estimate', () => {

@@ -34,7 +34,7 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
     vaultPath: '/vault',
     vault: {
       createFolder: jest.fn().mockResolvedValue({ path: 'notes/new' }),
-      captureSnapshotBeforeCliMutation: jest.fn().mockResolvedValue(undefined),
+      runCliMutation: jest.fn(async (_path: string, mutate: () => Promise<unknown>) => mutate()),
       editNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', replacements: 1 }),
       getBaseFiles: jest.fn().mockReturnValue([]),
       getBaseViews: jest.fn().mockResolvedValue({ path: 'bases/a.base', views: [] }),
@@ -105,7 +105,7 @@ describe('obsidian tool input hardening', () => {
     await expect(tool.execute('call', {
       action: 'done', file: 'alias', line: 1,
     })).resolves.toBeDefined();
-    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/a.md');
+    expect(deps.vault.runCliMutation).toHaveBeenCalledWith('notes/a.md', expect.any(Function));
     (deps.vault.resolveFile as jest.Mock).mockReturnValueOnce({ path: '.pivi/commands/unsafe.md' });
     await expect(tool.execute('call', {
       action: 'toggle', file: 'alias', line: 1,
@@ -773,11 +773,10 @@ describe('obsidian tool input hardening', () => {
       args: ['base:query', 'format=paths', 'path=bases/a.base'],
     });
 
-    await tool.execute('call', { action: 'create', path: 'bases/a.base', name: 'New', open: true });
-    expect(deps.cli.run).toHaveBeenCalledWith({
-      vaultName: 'vault',
-      args: ['base:create', 'path=bases/a.base', 'name=New', 'open'],
-    });
+    const actionSchema = (tool.parameters.properties as Record<string, { enum?: string[] }>).action;
+    expect(actionSchema?.enum).toEqual(['list', 'views', 'query']);
+    await expect(tool.execute('call', { action: 'create', path: 'bases/a.base' }))
+      .rejects.toThrow('must be list, views, or query');
   });
 
   it('removes base query from schema and rejects it when Obsidian CLI is unavailable', async () => {
@@ -792,7 +791,7 @@ describe('obsidian tool input hardening', () => {
     await expect(tool.execute('call', {
       action: 'query',
       path: 'bases/a.base',
-    })).rejects.toThrow('Query and create require Obsidian CLI');
+    })).rejects.toThrow('Query requires Obsidian CLI');
     expect(deps.cli.run).not.toHaveBeenCalled();
   });
 
@@ -819,13 +818,18 @@ describe('obsidian tool input hardening', () => {
 
   it('guards the exact daily-note path before append and permits normal notes', async () => {
     const deps = makeDeps();
-    (deps.cli.run as jest.Mock).mockResolvedValueOnce('notes/daily.md').mockResolvedValueOnce('ok');
+    (deps.cli.run as jest.Mock).mockResolvedValueOnce('notes/daily.md');
     const tool = createDailyTool(deps);
     await expect(tool.execute('call', { action: 'append', content: 'safe' })).resolves.toBeDefined();
-    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/daily.md');
+    expect(deps.vault.writeNote).toHaveBeenCalledWith({
+      path: 'notes/daily.md',
+      content: 'safe',
+      mode: 'append',
+      overwrite: false,
+      inline: false,
+    });
 
     (deps.cli.run as jest.Mock).mockResolvedValueOnce('.pivi/skills/daily.md');
-    (deps.vault.resolveFile as jest.Mock).mockReturnValueOnce({ path: '.pivi/skills/daily.md' });
     await expect(tool.execute('call', { action: 'prepend', content: 'unsafe' }))
       .rejects.toThrow('pivi_skills');
   });
@@ -833,23 +837,24 @@ describe('obsidian tool input hardening', () => {
   it('allows append to create a daily note that does not exist yet', async () => {
     const deps = makeDeps();
     (deps.vault.resolveFile as jest.Mock).mockReturnValue(null);
-    (deps.cli.run as jest.Mock)
-      .mockResolvedValueOnce('notes/new-daily.md')
-      .mockResolvedValueOnce('created');
+    (deps.cli.run as jest.Mock).mockResolvedValueOnce('notes/new-daily.md');
     const tool = createDailyTool(deps);
 
     await expect(tool.execute('call', {
       action: 'append',
       content: 'first entry',
     })).resolves.toMatchObject({
-      details: { action: 'append' },
+      details: { action: 'append', path: 'notes/a.md' },
     });
-    expect(deps.vault.resolveFile).not.toHaveBeenCalled();
-    expect(deps.vault.captureSnapshotBeforeCliMutation).toHaveBeenCalledWith('notes/new-daily.md');
-    expect(deps.cli.run).toHaveBeenNthCalledWith(2, {
-      vaultName: 'vault',
-      args: ['daily:append', 'content=first entry'],
+    expect(deps.vault.resolveFile).toHaveBeenCalledWith(undefined, 'notes/new-daily.md');
+    expect(deps.vault.writeNote).toHaveBeenCalledWith({
+      path: 'notes/new-daily.md',
+      content: 'first entry',
+      mode: 'create',
+      overwrite: false,
+      inline: false,
     });
+    expect(deps.cli.run).toHaveBeenCalledTimes(1);
   });
 
   it('rejects invalid graph actions and limits before metadata access', async () => {

@@ -285,6 +285,9 @@ export function attachContextEnvelope(
     toolAndAgentResults: categories.toolAndAgentResults,
     trailingEstimateTokens: anchor?.trailingTokens,
   });
+  if (usage.contextTokensIsAuthoritative) {
+    return { ...usage, contextEnvelope };
+  }
   const contextTokens = contextEnvelope.pressureInputTokens;
   return {
     ...usage,

@@ -7,6 +7,7 @@ import {
   createCapabilityApprovalPort,
 } from '@pivi/agent/runtime/capabilitySessionGrants';
 import {
+  capabilityPermissionsSourceVersion,
   decodeCapabilityPermissions,
   type PersistentBashPermission,
 } from '@pivi/agent/tools';
@@ -67,18 +68,27 @@ describe('CapabilityPersistentGrantCache', () => {
 });
 
 describe('device-local capability permission decoding', () => {
-  it('loads older v1 records without command grants and canonicalizes exact ids', () => {
-    expect(decodeCapabilityPermissions({
+  it('upgrades v1 records to v2 without losing pre-command permissions', () => {
+    const decoded = decodeCapabilityPermissions({
       version: 1,
-      bash: [],
-      externalDirectories: [],
-    }).obsidianCommands).toEqual([]);
-    expect(decodeCapabilityPermissions({
-      version: 1,
-      bash: [],
-      externalDirectories: [],
+      bash: [gitStatus()],
+      externalDirectories: [{ realpath: '/tmp/notes', enabled: true }],
       obsidianCommands: [' workspace:split ', '', 'workspace:split'],
-    }).obsidianCommands).toEqual(['workspace:split']);
+    });
+
+    expect(decoded).toEqual({
+      version: 2,
+      bash: [gitStatus()],
+      externalDirectories: [{ realpath: '/tmp/notes', enabled: true }],
+      obsidianCommands: ['workspace:split'],
+    });
+    expect(capabilityPermissionsSourceVersion(decoded)).toBe(2);
+  });
+
+  it('identifies only v1 as the legacy migration source', () => {
+    expect(capabilityPermissionsSourceVersion({ version: 1 })).toBe(1);
+    expect(capabilityPermissionsSourceVersion({ version: 2 })).toBe(2);
+    expect(capabilityPermissionsSourceVersion({ version: 3 })).toBeNull();
   });
 });
 

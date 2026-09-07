@@ -81,7 +81,7 @@ Work from the note already open in Obsidian, then bring in linked notes, vault t
 
 ✦ **Obsidian-native tools** — Read, search, edit, link, and manage notes through tools that understand wikilinks, frontmatter, backlinks — not file paths.
 
-✦ **Trusted automation** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Existing Markdown and Canvas content is snapshotted through Obsidian File Recovery before Pivi mutates it; if that snapshot cannot be created, the mutation is blocked.
+✦ **Trusted automation** — Routine vault-native work does not require coding-agent plan approvals. Higher-risk capabilities are explicit: external reads, Bash commands, and Obsidian command execution show Deny / Allow once / Always approval when no matching grant exists, and Bash and command execution are off by default. Persistent grants stay on this device; command grants match an exact Obsidian command ID. Existing Markdown and Canvas content is snapshotted through Obsidian File Recovery before Pivi mutates it; if that snapshot cannot be created, the mutation is blocked.
 
 ✦ **Vault skills** — Install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` to teach the agent your workflows.
 
@@ -131,7 +131,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 | `obsidian_daily` | Read, append to, or open the daily note (requires the official Obsidian CLI) |
 | `obsidian_graph` | Analyze orphans, dead ends, and unresolved links |
 | `obsidian_tags` | List tags and inspect tagged notes |
-| `obsidian_base` | List Bases, inspect views, or query/create items through the official CLI |
+| `obsidian_base` | List Bases, inspect views, or query views through the official CLI |
 | `obsidian_templates` | List/read templates through CLI; insert into a bound Markdown editor after a recovery snapshot |
 | `obsidian_bookmarks` | List bookmarks or add file, folder, search, and URL bookmarks through the official CLI |
 | `edit` | Replace exact local text, including inserting Markdown line breaks |
@@ -180,7 +180,7 @@ With the [Style Settings](https://github.com/obsidian-community/obsidian-style-s
 Add the current editor selection or a custom Pivi command to an installed [Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) selected-text toolbar. Pivi can add commands through the official Obsidian CLI, or guide you through manual setup.
 
 ### ⚙️ Obsidian CLI integration
-Optional integration with the official Obsidian CLI powers history, tasks, daily notes, templates, bookmarks, Base queries/item creation, command discovery and approved execution, and Note Toolbar command-item setup. The binary path and timeout are configurable in Built-in Tools settings. Command execution remains separately gated: exact-ID grants execute immediately; missing grants, including an empty allowlist, trigger Deny / Allow once / Always approval. Always grants are device-local. Daily notes, templates, and bookmarks also require their owning core plugin.
+Optional integration with the official Obsidian CLI powers history, tasks, daily-note resolution/reads, templates, bookmarks, Base queries, command discovery and approved execution, and Note Toolbar command-item setup. Daily append/prepend resolves the exact daily path through CLI, then writes through the Vault API. The binary path and timeout are configurable in Built-in Tools settings. Command execution remains separately gated: exact-ID grants execute immediately; missing grants, including an empty allowlist, trigger Deny / Allow once / Always approval. Always grants are device-local. Daily notes, templates, and bookmarks also require their owning core plugin.
 
 > [!NOTE]
 > Upgrade note: installations that never saved an Obsidian CLI preference now treat the integration as disabled. Re-enable it in Pivi settings to restore CLI-backed history, tasks, daily-note, Base-query, and command features.

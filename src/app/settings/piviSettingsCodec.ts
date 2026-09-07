@@ -35,7 +35,8 @@ import {
 } from "@pivi/agent/settings/types";
 import {
   canonicalizeCapabilityPermissions,
-  type DeviceLocalCapabilityPermissionsV1,
+  DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
+  type DeviceLocalCapabilityPermissions as DeviceLocalCapabilityPermissionState,
   enabledExternalDirectories,
   migrateLegacyCapabilityPermissions,
 } from "@pivi/agent/tools";
@@ -369,7 +370,7 @@ function setExternalReadDirectories(
 
 function setCapabilityOverlay(
   settings: PiviSettings,
-  snapshot: DeviceLocalCapabilityPermissionsV1,
+  snapshot: DeviceLocalCapabilityPermissionState,
 ): void {
   settings.agentSettings = {
     ...settings.agentSettings,
@@ -385,9 +386,9 @@ function setCapabilityOverlay(
 }
 
 function mergeExternalDirectoriesForSave(
-  stored: DeviceLocalCapabilityPermissionsV1['externalDirectories'],
+  stored: DeviceLocalCapabilityPermissionState['externalDirectories'],
   enabledPaths: readonly string[],
-): DeviceLocalCapabilityPermissionsV1['externalDirectories'] {
+): DeviceLocalCapabilityPermissionState['externalDirectories'] {
   const enabled = new Set(enabledPaths);
   const next = stored.map(directory => ({
     ...directory,
@@ -455,8 +456,9 @@ function hasSyncedExternalReadDirectories(stored: Record<string, unknown>): bool
 
 export interface DeviceLocalCapabilityPermissions {
   hasRecord(): boolean;
-  getSnapshot(): DeviceLocalCapabilityPermissionsV1;
-  save(next: DeviceLocalCapabilityPermissionsV1): DeviceLocalCapabilityPermissionsV1;
+  needsLegacyCommandGrantMigration(): boolean;
+  getSnapshot(): DeviceLocalCapabilityPermissionState;
+  save(next: DeviceLocalCapabilityPermissionState): DeviceLocalCapabilityPermissionState;
 }
 
 export function createPiviSettingsCodec(
@@ -511,7 +513,7 @@ export function createPiviSettingsCodec(
           });
           deviceLocalExternalContexts?.setExternalReadDirectories([]);
           changed = true;
-        } else if (hasSyncedCommandAllowlist(stored) && tools.commandAllowlist.length > 0) {
+        } else if (deviceLocalCapabilities.needsLegacyCommandGrantMigration()) {
           const current = deviceLocalCapabilities.getSnapshot();
           deviceLocalCapabilities.save({
             ...current,
@@ -579,7 +581,7 @@ export function createPiviSettingsCodec(
       if (deviceLocalCapabilities) {
         const current = deviceLocalCapabilities.getSnapshot();
         deviceLocalCapabilities.save(canonicalizeCapabilityPermissions({
-          version: 1,
+          version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
           bash: tools.bashPermissions,
           obsidianCommands: tools.commandAllowlist,
           externalDirectories: tools.externalDirectoryPermissions.length > 0
