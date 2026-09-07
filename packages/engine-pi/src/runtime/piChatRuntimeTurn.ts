@@ -258,7 +258,10 @@ async function runPromptLifecycle(
       )
       : null;
     if (usage && nextTurn.toolResults.length > 0) {
-      activeTurn.queue.push({ type: 'usage', usage });
+      // This refreshes context pressure, not generation: message_end already
+      // emitted the assistant's output tokens for the UI's additive clock.
+      const { outputTokens: _alreadyEmitted, ...continuationPressureUsage } = usage;
+      activeTurn.queue.push({ type: 'usage', usage: continuationPressureUsage });
     }
     if (!usage || nextTurn.toolResults.length === 0) {
       const previousUpdate = await previousPrepareNextTurn?.(nextTurn, signal);

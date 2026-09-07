@@ -3,7 +3,6 @@ import {
   TOOL_OBSIDIAN_TEMPLATES,
   type ToolSpec,
 } from '@pivi/agent/tools';
-import { requireAgentVaultMutationPath } from '@pivi/obsidian-host/path';
 
 import { capCliToolOutput } from './cliOutput';
 import type { ObsidianToolDeps } from './deps';
@@ -28,7 +27,7 @@ function getBooleanField(input: Record<string, unknown>, key: string): boolean |
 }
 
 export function createTemplatesTool(deps: ObsidianToolDeps): ToolSpec {
-  const { cli, vault, vaultName, vaultPath } = deps;
+  const { cli, vault, vaultName } = deps;
   return {
     name: TOOL_OBSIDIAN_TEMPLATES,
     label: 'Templates',
@@ -36,7 +35,7 @@ export function createTemplatesTool(deps: ObsidianToolDeps): ToolSpec {
       'List Obsidian templates, read one, or insert one into the active file. '
       + 'Requires the official Obsidian CLI. Use write with template= to create a new note from a template.',
     promptUsage: {
-      summary: 'Inspect or insert Templates core-plugin templates. `list` returns template names. `read` returns template body; `resolve: true` expands {{date}}/{{time}}/{{title}}. `insert` writes into the active file. Create a new note from a template with `write` `mode=create` `template=`.',
+      summary: 'Inspect or insert Templates core-plugin templates. `list` returns template names. `read` returns template body; `resolve: true` expands {{date}}/{{time}}/{{title}}. `insert` resolves the template through CLI and replaces the active Markdown editor selection through the editor API after a File Recovery snapshot; switching notes or changing content/selection while waiting aborts insertion. Create a new note from a template with `write` `mode=create` `template=`.',
       parameters: '`action` required list|read|insert; `name` required for read/insert; optional `title` and `resolve` for read; optional `total` for list.',
     },
     parameters: {
@@ -89,17 +88,16 @@ export function createTemplatesTool(deps: ObsidianToolDeps): ToolSpec {
         return textResult(capCliToolOutput(out), { action, name });
       }
 
-      const activePath = vault.getActiveFilePath();
-      if (!activePath) {
-        throw new Error('No active file.');
-      }
-      const mutationPath = requireAgentVaultMutationPath(activePath, vaultPath);
-      await vault.captureSnapshotBeforeCliMutation(mutationPath);
-      const out = await cli.run({ vaultName, args: ['template:insert', `name=${name}`] });
-      return textResult(capCliToolOutput(out) || `Inserted template ${name} into ${activePath}`, {
+      const target = vault.prepareActiveNoteInsertion();
+      const content = await cli.run({
+        vaultName,
+        args: ['template:read', `name=${name}`, `title=${target.title}`, 'resolve'],
+      });
+      await target.insert(content);
+      return textResult(`Inserted template ${name} into ${target.path}`, {
         action,
         name,
-        path: activePath,
+        path: target.path,
       });
     },
   };

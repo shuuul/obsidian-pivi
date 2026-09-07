@@ -1,10 +1,10 @@
 import {
   TOOL_OBSIDIAN_BASE,
   TOOL_OBSIDIAN_BASH,
+  TOOL_OBSIDIAN_BOOKMARKS,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DAILY,
   TOOL_OBSIDIAN_EDIT,
-  TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
@@ -12,6 +12,7 @@ import {
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_TEMPLATES,
 } from '../tools';
 import { TOOL_SKILL, TOOL_SPAWN_AGENT, type ToolSpec } from '../tools';
 import {
@@ -215,10 +216,11 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
     TOOL_OBSIDIAN_TASKS,
     TOOL_OBSIDIAN_HISTORY,
     TOOL_OBSIDIAN_DAILY,
+    TOOL_OBSIDIAN_TEMPLATES,
+    TOOL_OBSIDIAN_BOOKMARKS,
   ].filter((name) => registeredObsidianTools.has(name));
   const cliOnlyTools = [
     TOOL_OBSIDIAN_COMMAND,
-    TOOL_OBSIDIAN_EVAL,
   ].filter((name) => registeredObsidianTools.has(name));
   const shellTools = [
     TOOL_OBSIDIAN_BASH,
@@ -236,8 +238,8 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCli
   }
   if (registeredObsidianTools.has(TOOL_OBSIDIAN_BASE)) {
     notes.push(obsidianCliAvailable
-      ? `\`${TOOL_OBSIDIAN_BASE}\` lists base files/views through the vault API; only its query action requires Obsidian CLI.`
-      : `\`${TOOL_OBSIDIAN_BASE}\` can list base files/views through the vault API; its query action is unavailable without Obsidian CLI.`);
+      ? `\`${TOOL_OBSIDIAN_BASE}\` lists base files/views through the vault API; its query and create actions require Obsidian CLI.`
+      : `\`${TOOL_OBSIDIAN_BASE}\` can list base files/views through the vault API; its query and create actions are unavailable without Obsidian CLI.`);
   }
   if (shellTools.length > 0) {
     notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs single-line commands through the user login shell; see the Bash permissions above for pre-approved commands. Bash is the lowest-priority tool and is never a vault file tool: do not use it to read, search, list, or modify vault files. Use Obsidian-specific tools instead, and use sub-agents for multi-file vault work.`);

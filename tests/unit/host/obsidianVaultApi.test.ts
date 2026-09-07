@@ -188,6 +188,7 @@ function makeApp(
     },
     workspace: {
       getActiveFile: () => null,
+      getActiveViewOfType: jest.fn(),
       getLastOpenFiles: () => [...opened],
       getLeaf: () => ({
         openFile: async (file: { path: string }) => {
@@ -546,6 +547,90 @@ describe('ObsidianVaultApi', () => {
     });
 
     expect(app.getContent('notes/a.md')).toBe('---\ntitle: a\n---\nHEADbody');
+  });
+
+  it.each(['\n', '\r\n'])('preserves empty frontmatter with %j line endings', async (newline) => {
+    const frontmatter = `---${newline}---${newline}`;
+    const app = makeApp([{ path: 'notes/a.md', content: `${frontmatter}body` }]);
+    await new ObsidianVaultApi(app as never).writeNote({
+      path: 'notes/a.md', content: 'HEAD', mode: 'prepend', inline: true,
+    });
+    expect(app.getContent('notes/a.md')).toBe(`${frontmatter}HEADbody`);
+  });
+
+  it.each(['---\n---', '---\ntitle: a\n---', '---\r\ntitle: a\r\n---'])(
+    'keeps the closing YAML delimiter on its own line for %j', async (content) => {
+      const app = makeApp([{ path: 'notes/a.md', content }]);
+      await new ObsidianVaultApi(app as never).writeNote({
+        path: 'notes/a.md', content: 'HEAD', mode: 'prepend', inline: true,
+      });
+      expect(app.getContent('notes/a.md')).toBe(`${content}\nHEAD`);
+    },
+  );
+
+  describe('bound editor insertion', () => {
+    function setup() {
+      const app = makeApp([{ path: 'notes/a.md', content: 'saved' }]);
+      const editor = {
+        getValue: jest.fn().mockReturnValue('unsaved content'),
+        listSelections: jest.fn().mockReturnValue([{ anchor: { line: 0, ch: 2 }, head: { line: 0, ch: 4 } }]),
+        replaceSelection: jest.fn(),
+      };
+      const view = { app, file: app.vault.getAbstractFileByPath('notes/a.md'), editor };
+      app.workspace.getActiveViewOfType.mockReturnValue(view);
+      const api = new ObsidianVaultApi(app as never);
+      return { app, editor, view, api };
+    }
+
+    it('snapshots unsaved content before replacing the bound selection', async () => {
+      const { app, editor, api } = setup();
+      const target = api.prepareActiveNoteInsertion();
+      expect(target.path).toBe('notes/a.md');
+      expect(target.title).toBe('a');
+      await target.insert('template');
+      expect(app.getForceAdd()).toHaveBeenCalledWith('notes/a.md', 'unsaved content');
+      expect(editor.replaceSelection).toHaveBeenCalledWith('template');
+      expect(app.getForceAdd().mock.invocationCallOrder[0])
+        .toBeLessThan(editor.replaceSelection.mock.invocationCallOrder[0]!);
+    });
+
+    it.each(['before snapshot', 'during snapshot'])('rejects a switched view %s', async (when) => {
+      const { app, editor, api } = setup();
+      const target = api.prepareActiveNoteInsertion();
+      const switchView = (): void => { app.workspace.getActiveViewOfType.mockReturnValue({}); };
+      if (when === 'before snapshot') switchView();
+      else app.getForceAdd().mockImplementationOnce(async () => { switchView(); });
+      await expect(target.insert('template')).rejects.toThrow('target editor changed');
+      expect(editor.replaceSelection).not.toHaveBeenCalled();
+    });
+
+    it.each(['content', 'selection', 'file'])('rejects changed %s during snapshot', async (change) => {
+      const { app, editor, view, api } = setup();
+      const target = api.prepareActiveNoteInsertion();
+      app.getForceAdd().mockImplementationOnce(async () => {
+        if (change === 'content') editor.getValue.mockReturnValue('edited');
+        if (change === 'selection') editor.listSelections.mockReturnValue([]);
+        if (change === 'file') view.file = null;
+      });
+      await expect(target.insert('template')).rejects.toThrow('target editor changed');
+      expect(editor.replaceSelection).not.toHaveBeenCalled();
+    });
+
+    it('blocks insertion when recovery fails', async () => {
+      const { app, editor, api } = setup();
+      app.getForceAdd().mockRejectedValueOnce(new Error('snapshot failed'));
+      await expect(api.prepareActiveNoteInsertion().insert('template')).rejects.toThrow('snapshot failed');
+      expect(editor.replaceSelection).not.toHaveBeenCalled();
+    });
+
+    it('rejects a managed target and missing editor before preparing insertion', () => {
+      const { app, view, api } = setup();
+      view.file!.path = '.pivi/commands/unsafe.md';
+      expect(() => api.prepareActiveNoteInsertion()).toThrow(/pivi_commands/);
+      app.workspace.getActiveViewOfType.mockReturnValue(null);
+      expect(() => api.prepareActiveNoteInsertion()).toThrow('No active Markdown editor');
+      expect(app.getForceAdd()).not.toHaveBeenCalled();
+    });
   });
 
   it('trashPath moves a file to trash through FileManager', async () => {

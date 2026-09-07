@@ -465,7 +465,7 @@ The maintainer chooses the next version, writes the matching `CHANGELOG.md` sect
 
 ### Obsidian Plugin API reference
 
-Pivi-native agent tools (`packages/obsidian-tools/`) prefer the **in-process Obsidian Plugin API**. The official CLI is used only where the public API cannot satisfy the operation: history, tasks, daily notes, Base queries, command discovery, and explicitly allowlisted command execution.
+Pivi-native agent tools (`packages/obsidian-tools/`) prefer the **in-process Obsidian Plugin API**. The official CLI is used only where the public API cannot satisfy the operation: history, tasks, daily notes, template resolution/creation, bookmarks, Base queries/item creation, command discovery, and command execution with an exact-ID grant or sidebar approval. Template insertion binds and snapshots the Markdown editor before replacing its selection in-process.
 
 | Resource | URL |
 |----------|-----|

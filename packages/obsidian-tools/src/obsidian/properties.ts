@@ -1,4 +1,5 @@
 import {
+  capToolResultText,
   textResult,
   TOOL_OBSIDIAN_PROPERTIES,
   type ToolSpec,
@@ -91,7 +92,7 @@ export function createPropertiesTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_PROPERTIES,
     label: 'Properties',
-    description: 'List, read, set, or remove frontmatter properties via Obsidian FileManager.processFrontMatter and MetadataCache. aliases lists note aliases.',
+    description: 'List, read, set, or remove frontmatter properties via Obsidian FileManager.processFrontMatter and MetadataCache. aliases lists note aliases. Results are capped at 50,000 characters; narrow to file/path or omit verbose if truncated.',
     parameters: {
       type: 'object',
       properties: {
@@ -127,18 +128,18 @@ export function createPropertiesTool(deps: ObsidianToolDeps): ToolSpec {
           active,
           sort: getSortField(input.sort),
         });
-        return textResult(JSON.stringify(result, null, 2), { action, total: result.total });
+        return textResult(capToolResultText(JSON.stringify(result, null, 2)), { action, total: result.total });
       }
       if (action === 'aliases') {
         const result = vault.getAliases(file, notePath, {
           active,
           verbose: getBooleanField(input, 'verbose'),
         });
-        return textResult(JSON.stringify(result, null, 2), { action, total: result.total });
+        return textResult(capToolResultText(JSON.stringify(result, null, 2)), { action, total: result.total });
       }
       if (action === 'read' && propName) {
         const result = vault.getProperties(file, notePath, propName, { active });
-        return textResult(JSON.stringify(result, null, 2), { action, name: propName });
+        return textResult(capToolResultText(JSON.stringify(result, null, 2)), { action, name: propName });
       }
       if (action === 'set' && propName) {
         const type = getPropertyType(input.type);

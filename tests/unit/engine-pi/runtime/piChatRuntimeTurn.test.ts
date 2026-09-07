@@ -527,7 +527,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
     expect(nextTurnUpdate?.context?.messages).toBeDefined();
   });
 
-  it('omits output tokens from the metadata-refresh usage push', async () => {
+  it.each(['metadata refresh', 'tool continuation'] as const)('omits duplicate output tokens from the %s usage push', async (refreshKind) => {
     const listeners = new Set<(event: AgentEvent) => void>();
     const resolvedModel = model();
     const completed = assistant('stop');
@@ -550,6 +550,20 @@ describe('streamPiChatTurn retry lifecycle', () => {
       content: [{ type: 'text', text: 'Hello' }],
       timestamp: Date.now(),
     };
+    const continuation = assistant('stop');
+    continuation.usage = { ...completed.usage, output: 25, totalTokens: 145 };
+    const toolResult: AgentMessage = {
+      role: 'toolResult',
+      toolCallId: 'call-1',
+      toolName: 'search',
+      content: [{ type: 'text', text: 'Found a note' }],
+      isError: false,
+      timestamp: Date.now(),
+    };
+    if (refreshKind === 'tool continuation') {
+      completed.stopReason = 'toolUse';
+      completed.content = [{ type: 'toolCall', id: 'call-1', name: 'search', arguments: {} }];
+    }
     const state = {
       messages: [] as AgentMessage[],
       model: resolvedModel,
@@ -564,6 +578,24 @@ describe('streamPiChatTurn retry lifecycle', () => {
         for (const listener of listeners) {
           listener({ type: 'message_end', message: user });
           listener({ type: 'message_end', message: completed });
+        }
+        if (refreshKind === 'tool continuation') {
+          state.messages.push(toolResult);
+          for (const listener of listeners) {
+            listener({ type: 'message_end', message: toolResult });
+          }
+          await agent.prepareNextTurnWithContext?.({
+            context: { messages: [...state.messages], systemPrompt: '', tools: [] },
+            message: completed,
+            newMessages: [completed, toolResult],
+            toolResults: [toolResult],
+          });
+          state.messages.push(continuation);
+          for (const listener of listeners) {
+            listener({ type: 'message_end', message: continuation });
+          }
+        }
+        for (const listener of listeners) {
           listener({ type: 'agent_end', messages: [...state.messages] });
         }
       }),
@@ -608,7 +640,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       resolveModel: () => resolvedModel,
       resolveThinkingLevel: () => 'medium',
       authorizeAndSyncAgentModelSelection: jest.fn(async nextModel => nextModel),
-      refreshModelMetadata: async () => true,
+      refreshModelMetadata: async () => refreshKind === 'metadata refresh',
       syncSessionMessages: jest.fn(),
       onUserMessagePersisted: jest.fn(),
     }, turn)) {
@@ -618,14 +650,20 @@ describe('streamPiChatTurn retry lifecycle', () => {
     const usageChunks = chunks.filter(
       (chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage',
     );
-    expect(usageChunks).toHaveLength(2);
+    expect(usageChunks).toHaveLength(refreshKind === 'tool continuation' ? 4 : 2);
     // message_end carries the authoritative usage, including output tokens.
     expect(usageChunks[0]?.usage.outputTokens).toBe(40);
-    // The metadata-refresh push repeats the same assistant message's usage;
-    // re-reporting output tokens would double-count them in the UI generation
-    // clock and inflate the persisted tokens/s.
+    // Pressure/metadata updates must not add to the UI generation clock.
     expect(usageChunks[1]?.usage.outputTokens).toBeUndefined();
-    expect(usageChunks[1]?.usage.contextTokens).toBe(120);
+    expect(usageChunks[1]?.usage.contextTokens).toBeGreaterThanOrEqual(120);
+    const refreshUsage = usageChunks[refreshKind === 'tool continuation' ? 2 : 1]?.usage;
+    expect(refreshUsage).not.toHaveProperty('outputTokens');
+    expect(refreshUsage?.contextTokens).toBeGreaterThanOrEqual(120);
+    expect(usageChunks.map(chunk => chunk.usage.outputTokens)).toEqual(
+      refreshKind === 'tool continuation' ? [40, undefined, undefined, 25] : [40, undefined],
+    );
+    expect(usageChunks.reduce((sum, chunk) => sum + (chunk.usage.outputTokens ?? 0), 0))
+      .toBe(refreshKind === 'tool continuation' ? 65 : 40);
   });
 
   it('blocks the next provider request when a trailing tool result overflows the window', async () => {

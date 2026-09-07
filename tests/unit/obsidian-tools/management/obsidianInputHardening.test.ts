@@ -736,6 +736,17 @@ describe('obsidian tool input hardening', () => {
     expect(deps.vault.getAttachmentInfo).not.toHaveBeenCalled();
   });
 
+  it.each(['list', 'read', 'aliases'])('caps large properties %s output', async (action) => {
+    const deps = makeDeps();
+    const large = { aliases: ['x'.repeat(60_000)], properties: { title: 'x'.repeat(60_000) }, total: 1 };
+    (deps.vault.getAliases as jest.Mock).mockReturnValue(large);
+    (deps.vault.getProperties as jest.Mock).mockReturnValue(large);
+    const result = await createPropertiesTool(deps).execute('call', { action, name: 'title', verbose: true }) as { content: { text: string }[] };
+    const text = result.content[0]!.text;
+    expect(text.length).toBeLessThanOrEqual(50_000);
+    expect(text).toContain('truncated');
+  });
+
   it('uses the vault API for base list/views and reserves CLI for base queries', async () => {
     const deps = makeDeps({
       vault: {

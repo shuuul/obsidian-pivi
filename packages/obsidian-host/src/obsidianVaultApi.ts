@@ -4,6 +4,7 @@ import {
   type BasesConfigFileView,
   type CachedMetadata,
   getAllTags,
+  MarkdownView,
   parseFrontMatterAliases,
   parseYaml,
   type TAbstractFile,
@@ -437,6 +438,38 @@ export class ObsidianVaultApi {
     await this.captureMutationSnapshots(target);
     await this.app.fileManager.renameFile(target, normalizedNewPath);
     return { path: target.path, newPath: normalizedNewPath };
+  }
+
+  prepareActiveNoteInsertion(): { path: string; title: string; insert: (content: string) => Promise<void> } {
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view?.file;
+    if (!view || !file || file.extension !== 'md') {
+      throw new Error('No active Markdown editor.');
+    }
+    const path = this.requireMutationPath(file.path);
+    const editor = view.editor;
+    const original = editor.getValue();
+    const selections = JSON.stringify(editor.listSelections());
+    const requireUnchangedEditor = (): void => {
+      if (this.app.workspace.getActiveViewOfType(MarkdownView) !== view
+        || view.file !== file || file.path !== path || view.editor !== editor
+        || editor.getValue() !== original || JSON.stringify(editor.listSelections()) !== selections) {
+        throw new Error('The target editor changed while preparing insertion. Retry on the intended note.');
+      }
+      this.requireMutationPath(file.path);
+    };
+    return {
+      path,
+      title: file.basename,
+      async insert(content) {
+        requireUnchangedEditor();
+        // Capture unsaved editor content, not an older on-disk copy. No await
+        // may separate the final identity check from the bound editor write.
+        await captureFileRecoverySnapshot(view.app, file, original);
+        requireUnchangedEditor();
+        editor.replaceSelection(content);
+      },
+    };
   }
 
   /** Snapshot current recoverable content before an out-of-process mutation; new/deleted paths have no current state. */
@@ -1059,7 +1092,7 @@ function prependAfterFrontmatter(existing: string, addition: string, inline: boo
   if (!split.frontmatter) {
     return joined;
   }
-  if (inline || joined.length === 0 || split.frontmatter.endsWith('\n') || joined.startsWith('\n')) {
+  if (joined.length === 0 || split.frontmatter.endsWith('\n') || joined.startsWith('\n')) {
     return `${split.frontmatter}${joined}`;
   }
   return `${split.frontmatter}\n${joined}`;
@@ -1077,7 +1110,7 @@ function splitFrontmatter(content: string): { frontmatter: string | null; body: 
   if (afterOpen < 0) {
     return { frontmatter: null, body: content };
   }
-  const closeLf = content.indexOf('\n---', afterOpen);
+  const closeLf = content.indexOf('\n---', afterOpen - 1);
   if (closeLf < 0) {
     return { frontmatter: null, body: content };
   }
