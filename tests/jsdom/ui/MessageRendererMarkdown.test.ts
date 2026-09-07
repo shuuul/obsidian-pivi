@@ -7,10 +7,13 @@ import {
 } from 'obsidian';
 
 import {
+  buildMentionBadgeContext,
   type MessageRendererMarkdownHost,
   renderMarkdownContent,
   renderUserMessageText,
 } from '@/ui/chat/rendering/messageRendererMarkdown';
+import { resolveComposerWorkspaceCommand } from '@/ui/chat/composer/ComposerWorkspaceCommand';
+import { RichChatInput } from '@/ui/chat/input/RichChatInput';
 
 function createHost(
   openLinkText = jest.fn(),
@@ -18,6 +21,7 @@ function createHost(
 ): MessageRendererMarkdownHost {
   return {
     app: {
+      metadataCache: { getFirstLinkpathDest: () => null },
       vault: {
         getAbstractFileByPath: (path: string) => (
           vaultEntries.find((entry) => entry.path === path) ?? null
@@ -27,6 +31,7 @@ function createHost(
       },
       workspace: {
         getActiveFile: () => null,
+        getLeavesOfType: () => [],
         openLinkText,
       },
     },
@@ -186,6 +191,37 @@ describe('Markdown code block enhancement', () => {
 });
 
 describe('restored user message context', () => {
+  it('preserves composer file and command badges in live and restored history without exposing template expansion', async () => {
+    const host = createHost(jest.fn(), [createVaultFile('notes/example.md')]);
+    const input = new RichChatInput(document.body.createDiv(), {
+      app: host.app,
+      getMentionContext: () => buildMentionBadgeContext(host),
+    });
+    input.value = '@notes/example.md /review /generate-image';
+    const tokens = (element: HTMLElement) => Array.from(element.querySelectorAll<HTMLElement>('[data-mention-token]'))
+      .map(badge => badge.dataset.mentionToken);
+    const expected = tokens(input.el);
+    expect(expected).toEqual(['@notes/example.md', '/review', '/generate-image']);
+    const resolved = await resolveComposerWorkspaceCommand(input.value, [{
+      id: 'review', name: 'review', kind: 'command', source: 'user', scope: 'workspace',
+      description: 'Review', content: 'Expanded review instructions',
+      isEditable: true, isDeletable: true, displayPrefix: '/', insertPrefix: '/',
+    }], async () => ({ selectedText: '', currentNote: '', currentNoteName: '', date: '2026-09-07' }));
+    expect(resolved.promptContent).toContain('Expanded review instructions');
+    const snapshot = { text: resolved.promptContent, attachedFilePaths: ['notes/example.md'] };
+    for (const turnRequest of [snapshot, JSON.parse(JSON.stringify(snapshot))]) {
+      const container = document.body.createDiv();
+      await renderUserMessageText(host, container, resolved.displayContent, turnRequest, jest.fn());
+      expect(tokens(container)).toEqual(expected);
+      expect(container).not.toHaveTextContent('Expanded review instructions');
+      const fileBadge = container.querySelector<HTMLElement>('.pivi-context-badge-kind-file')!;
+      expect(fileBadge).toHaveAttribute('title', 'notes/example.md');
+      fileBadge.click();
+      expect(host.app.workspace.openLinkText).toHaveBeenCalledWith('notes/example.md', '', 'tab');
+    }
+    input.destroy();
+  });
+
   it('supplements only the first-turn auto-attached current-note badge', async () => {
     const openLinkText = jest.fn();
     const host = createHost(openLinkText);
@@ -205,8 +241,9 @@ describe('restored user message context', () => {
     expect(badges.map(badge => badge.textContent)).toEqual(['Han Lee.md']);
     expect(container).toHaveTextContent('Inspect these notes');
 
+    expect(badges[0]).toHaveAttribute('title', 'wiki/Han Lee.md');
     badges[0]?.click();
-    expect(openLinkText).toHaveBeenCalledWith('wiki/Han Lee.md', '');
+    expect(openLinkText).toHaveBeenCalledWith('wiki/Han Lee.md', '', 'tab');
   });
 
   it('renders a folder from the input without listing its expanded context files', async () => {

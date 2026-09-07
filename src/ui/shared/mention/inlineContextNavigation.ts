@@ -4,6 +4,7 @@ import { MarkdownView } from 'obsidian';
 
 import { flashSelectionHighlight } from '../components/SelectionHighlight';
 import { getEditorView } from '../utils/editor';
+import { openLinkTarget } from '../utils/fileLink';
 
 function clampEditorPosition(editor: Editor, position: InlineContextPosition): EditorPosition {
   const line = Math.max(0, Math.min(position.line, editor.lastLine()));
@@ -18,7 +19,7 @@ export async function revealInlineContext(
   app: App,
   context: InlineContextReference,
 ): Promise<void> {
-  await app.workspace.openLinkText(context.notePath, '');
+  await openLinkTarget(app, context.notePath);
 
   const view = app.workspace.getActiveViewOfType(MarkdownView);
   if (!view || view.file?.path !== context.notePath) return;

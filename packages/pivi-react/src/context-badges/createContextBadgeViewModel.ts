@@ -81,7 +81,7 @@ export function createContextBadgeViewModel(
         tooltip: token.path,
         icon: iconForToken(token),
         tone: 'context',
-        clickable: false,
+        clickable: token.source !== 'external',
         removable: false,
         disabled: true,
       };
@@ -113,7 +113,7 @@ export function createContextBadgeViewModel(
         tooltip: t('chat.contextBadges.skillTooltip', { skill: label }),
         icon: iconForToken(token),
         tone: 'tool',
-        clickable: false,
+        clickable: true,
         removable: false,
         disabled: true,
       };

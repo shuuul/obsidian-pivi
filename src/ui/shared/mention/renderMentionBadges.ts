@@ -4,11 +4,7 @@ import type { App } from 'obsidian';
 
 import { mentionPartToContextBadgeToken } from '../context-badge/ContextBadgeParser';
 import { createContextBadgeElement } from '../context-badge/ContextBadgeRenderer';
-import { revealInlineContext } from './inlineContextNavigation';
-
-function openVaultPath(app: App, path: string): void {
-  void app.workspace.openLinkText(path, '');
-}
+import { getMentionBadgeNavigation } from './mentionBadgeNavigation';
 
 function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App): void {
   if (part.kind === 'plain') return;
@@ -17,11 +13,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
 
   parent.appendChild(createContextBadgeElement(token, {
     inline: true,
-    onClick: token.kind === 'file'
-      ? () => openVaultPath(app, token.path)
-      : token.kind === 'inline-context'
-        ? () => { void revealInlineContext(app, token.context); }
-        : undefined,
+    onClick: getMentionBadgeNavigation(app, token),
   }));
 }
 

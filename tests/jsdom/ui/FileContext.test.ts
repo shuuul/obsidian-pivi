@@ -2,6 +2,7 @@ import { TFile } from 'obsidian';
 
 import { buildTurnSubmission } from '@/ui/chat/composer/ComposerSubmission';
 import { FileContextManager } from '@/ui/chat/input/FileContext';
+import { FileChipsView } from '@/ui/chat/input/file-context/view/FileChipsView';
 
 jest.mock('@/ui/shared/mention/VaultMentionDataProvider', () => ({
   VaultMentionDataProvider: class {
@@ -70,6 +71,24 @@ function buildRequest(manager: FileContextManager) {
 }
 
 describe('FileContextManager turn-scoped cards', () => {
+  it('keeps the full auto-attached filename on hover and separates open from remove', () => {
+    const path = 'notes/A very long automatically attached filename.md';
+    const container = document.body.createDiv();
+    const onOpenFile = jest.fn();
+    const onRemoveAttachment = jest.fn();
+    const view = new FileChipsView(container, { onOpenFile, onRemoveAttachment });
+    view.renderCurrentNote(path);
+    const badge = container.querySelector<HTMLElement>('.pivi-context-badge--auto-attach')!;
+    expect(badge).toHaveAttribute('title', path);
+    badge.click();
+    expect(onOpenFile).toHaveBeenCalledWith(path);
+    badge.querySelector<HTMLElement>('.pivi-context-badge-remove')!.click();
+    expect(onRemoveAttachment).toHaveBeenCalledWith(path);
+    expect(onOpenFile).toHaveBeenCalledTimes(1);
+    view.destroy();
+    container.remove();
+  });
+
   it('auto-attaches the current note only to the first turn', () => {
     const manager = createManager();
     manager.autoAttachActiveFile();

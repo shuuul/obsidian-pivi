@@ -45,7 +45,7 @@ describe('ContextBadge model and parser', () => {
       tooltip: 'Skill: compact',
       icon: { name: 'sparkles' },
       tone: 'tool',
-      clickable: false,
+      clickable: true,
       removable: false,
     });
 

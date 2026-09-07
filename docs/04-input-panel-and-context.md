@@ -49,9 +49,15 @@ The context indicator is a row of tab-owned adapters rather than one React compo
 
 File cards are consumed when a user submission—or a queued user submission—snapshots its request. A new session may show one automatically attached current-note card before the first turn; after that send, the card is cleared and is not restored for an already-started session. Explicit file cards are likewise per-turn and never leak into the next prompt. Programmatic redo/replay uses its captured request without clearing an unrelated composer draft.
 
+The auto-attached note badge uses the same `min(100%, 24ch)` width cap as inline badges. Its filename truncates with an ellipsis while the full path remains in the tooltip and the remove control keeps its width.
+
+Badge navigation is shared by composer and history. File badges (including auto-attached notes and inline-selection sources) reveal an existing matching document tab, including a deferred tab, or open a new tab; they never replace the current note. Vault-folder badges reveal and expand the directory in Files without opening a document. External folders remain non-navigable because they are not part of the vault explorer. Command badges open Pivi's native Commands settings page, while catalogued skills open Skills; clicking never executes a command. Command sources remain under the hidden `.pivi/commands/` directory, not ordinary indexed notes. Settings navigation is registered by app composition and removed on unload; native settings-page and Files adapters guard their undocumented host APIs and report unavailable navigation.
+
 File and folder mentions are resolved at send time. Folder mentions expand to the eligible paths used by prompt construction, but visible user-message history continues to render the single folder token from `displayContent` rather than enumerating those expanded files. The only request metadata supplemented as a historical badge is the first-turn auto-attached current note; every other visible file/folder badge comes from what the user entered. Inline contexts are structured tokens embedded in the input. Explicit selected-text contexts preserve exact source positions, complete touched lines, and selection markers. Ambient editor polling records selected text with note and available line metadata; browser and canvas controllers capture their host-specific structured context.
 
 IME composition is a correctness boundary. Key handling and badge rebuilding must not mutate the contenteditable tree while `isComposing` is true; synchronization happens after composition ends.
+
+Browser-created `div`/`p` lines must retain their newline boundaries when the composer serializes canonical tokens. Text extraction, copy/cut ranges, and cursor restoration use the same coordinates, including empty lines and element-level selections around noneditable badges. Returning focus from a mention/slash dropdown preserves the newly placed selection. These invariants prevent consecutive file/command insertions from joining tokens, dropping badges during reparsing, or moving the next insertion to the wrong location.
 
 ## External context
 
@@ -108,6 +114,8 @@ There are three content layers:
 - The provider prompt additionally applies API-only transformations: MCP emphasis, `/generate-image` instructions, and live external-capability availability. These transformations must never leak into visible history.
 
 `/compact [instructions]` is a special pass-through command and does not attach normal turn context. Without a matching background draft it synchronously runs both compaction passes; its optional instructions affect only the final `NOTE₂`. Workspace-command tokens stay visible but resolve their templates and variables into runtime text at capture time.
+
+`resolveComposerWorkspaceCommand` preserves the original composer text as `displayContent`; only `promptContent` contains template expansion. Live and restored user messages therefore re-render the same file/tool/command tokens as badges. Existing historical messages that already stored only an expanded template cannot reconstruct the discarded command token.
 
 ## Note Toolbar selection capture
 

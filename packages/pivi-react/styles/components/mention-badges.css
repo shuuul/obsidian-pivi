@@ -48,6 +48,14 @@ button.pivi-context-badge {
   cursor: pointer;
 }
 
+.pivi-context-badge--auto-attach {
+  max-width: min(100%, 24ch);
+}
+
+.pivi-context-badge--auto-attach .pivi-context-badge-remove {
+  flex-shrink: 0;
+}
+
 .pivi-context-badge--context,
 .pivi-context-badge--attachment {
   border-color: var(--pivi-host-border);

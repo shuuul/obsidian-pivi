@@ -1,11 +1,34 @@
 jest.mock('@/app/ui/PiviSettingTabHost', () => ({
   PiviSettingTabHost: jest.fn(),
 }));
+jest.mock('@/ui/shared/utils/obsidianPrivateApi', () => ({
+  openNativeSettingsPage: jest.fn(() => true),
+}));
 
+import type { App } from 'obsidian';
+
+import { navigateSlashBadge } from '@/app/hostPlatform';
 import { registerPiviSettings } from '@/app/settingsRegistration';
 import { PiviSettingTabHost } from '@/app/ui/PiviSettingTabHost';
+import { openNativeSettingsPage } from '@/ui/shared/utils/obsidianPrivateApi';
 
 describe('registerPiviSettings', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it.each([['command', 'Commands'], ['skill', 'Skills']])('routes a %s badge to %s and unregisters on unload', async (kind, title) => {
+    const app = {} as App;
+    const cleanups: Array<() => void> = [];
+    const plugin = { app, addSettingTab: jest.fn(), register: (cleanup: () => void) => cleanups.push(cleanup) };
+    const listDropdownEntries = jest.fn(async () => [{ kind, name: 'review' }]);
+    const workspace = { ensureWorkspaceServices: async () => ({ slashCommandCatalog: { listDropdownEntries } }) };
+    registerPiviSettings(plugin as never, {} as never, workspace as never);
+    await navigateSlashBadge(app, 'review');
+    expect(openNativeSettingsPage).toHaveBeenCalledWith(app, 'pivi', title);
+    cleanups.forEach(cleanup => cleanup());
+    await navigateSlashBadge(app, 'review');
+    expect(openNativeSettingsPage).toHaveBeenCalledTimes(1);
+  });
+
   it('injects the shared asynchronous workspace readiness callback', async () => {
     const firstWorkspace = { id: 'first' };
     const secondWorkspace = { id: 'second' };
@@ -14,6 +37,7 @@ describe('registerPiviSettings', () => {
     const plugin = {
       app: { id: 'app' },
       addSettingTab,
+      register: jest.fn(),
       ensureWorkspaceServices,
     };
     const settings = { boundary: 'settings' };

@@ -4,7 +4,7 @@
  */
 
 import type { EditorView } from '@codemirror/view';
-import type { Editor, ItemView } from 'obsidian';
+import type { App, Editor, ItemView, TAbstractFile } from 'obsidian';
 
 export type CustomHighlightRegistry = {
   delete: (name: string) => boolean;
@@ -57,4 +57,46 @@ export function getItemViewUrlRecord(view: ItemView): Record<string, unknown> {
 /** Resolves Event from a specific owner window for pop-out-safe DOM events. */
 export function getOwnerWindowEventConstructor(ownerWindow: Window): typeof Event {
   return (ownerWindow as unknown as { Event: typeof Event }).Event;
+}
+
+/** Obsidian 1.13 native page links have no public programmatic navigation API. */
+export function openNativeSettingsPage(app: App, tabId: string, pageName: string): boolean {
+  type Item = { def?: { type?: string; name?: string }; settingEl?: HTMLElement; children?: Item[] };
+  const setting = (app as App & { setting?: {
+    open?: () => void;
+    openTabById?: (id: string) => void;
+    clearPageStack?: () => void;
+    activeTab?: { renderedItems?: Item[] };
+  } }).setting;
+  if (!setting?.open || !setting.openTabById) return false;
+  setting.open();
+  setting.clearPageStack?.();
+  setting.openTabById(tabId);
+  const find = (items: Item[]): HTMLElement | undefined => {
+    for (const item of items) {
+      if (item.def?.type === 'page' && item.def.name === pageName) return item.settingEl;
+      const nested = item.children && find(item.children);
+      if (nested) return nested;
+    }
+    return undefined;
+  };
+  const entry = find(setting.activeTab?.renderedItems ?? []);
+  if (!entry) return false;
+  entry.click();
+  return true;
+}
+
+/** Reveal/expand a folder without opening or replacing a document leaf. */
+export async function revealFolderInExplorer(app: App, folder: TAbstractFile): Promise<boolean> {
+  const leaf = app.workspace.getLeavesOfType('file-explorer')[0];
+  if (!leaf) return false;
+  await app.workspace.revealLeaf(leaf);
+  const view = leaf.view as unknown as {
+    revealInFolder?: (file: TAbstractFile) => void;
+    fileItems?: Record<string, { setCollapsed?: (collapsed: boolean) => void }>;
+  };
+  if (!view.revealInFolder) return false;
+  view.revealInFolder(folder);
+  view.fileItems?.[folder.path]?.setCollapsed?.(false);
+  return true;
 }

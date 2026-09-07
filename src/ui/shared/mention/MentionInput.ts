@@ -106,7 +106,17 @@ export class MentionInput implements ComposerInput {
   }
 
   focus(): void {
+    const selection = this.el.ownerDocument.defaultView?.getSelection();
+    const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+    const preserved = range && this.el.contains(range.commonAncestorContainer)
+      ? range.cloneRange() : null;
     this.el.focus();
+    // Dropdown selection sets the caret before returning focus. Focusing a
+    // previously blurred contenteditable must not reset that caret to the start.
+    if (preserved && selection) {
+      selection.removeAllRanges();
+      selection.addRange(preserved);
+    }
   }
 
   contains(node: Node | null): boolean {

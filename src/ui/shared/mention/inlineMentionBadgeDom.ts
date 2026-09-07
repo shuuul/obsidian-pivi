@@ -9,7 +9,7 @@ import {
   getActiveDocument,
   getActiveWindow,
 } from '../dom';
-import { revealInlineContext } from './inlineContextNavigation';
+import { getMentionBadgeNavigation } from './mentionBadgeNavigation';
 
 export function createInlineMentionBadge(
   part: MentionBadgePart,
@@ -25,15 +25,7 @@ export function createInlineMentionBadge(
   return createContextBadgeElement(token, {
     root,
     inline: true,
-    onClick: token.kind === 'file'
-      ? () => {
-        void app.workspace.openLinkText(token.path, '');
-      }
-      : token.kind === 'inline-context'
-        ? () => {
-          void revealInlineContext(app, token.context);
-        }
-        : undefined,
+    onClick: getMentionBadgeNavigation(app, token),
     onRemove: token.kind === 'inline-context' || token.kind === 'selected-text-template'
       ? (_token, event) => {
         if (!(event.currentTarget instanceof HTMLElement)) return;
@@ -54,21 +46,37 @@ function mentionTokenOf(node: HTMLElement): string | undefined {
   return node.dataset.mentionToken;
 }
 
+function isComposerLine(node: Node | null): boolean {
+  return !!node && isHtmlElement(node) && (node.tagName === 'DIV' || node.tagName === 'P');
+}
+
+// Enter in Chromium creates block wrappers, not necessarily <br> nodes.
+// These boundaries must count identically in text and selection coordinates.
+function lineBreakBefore(node: Node): number {
+  return node.previousSibling && (isComposerLine(node) || isComposerLine(node.previousSibling)) ? 1 : 0;
+}
+
+function isEmptyLinePlaceholder(node: Node): boolean {
+  return isHtmlElement(node) && node.tagName === 'BR'
+    && isComposerLine(node.parentNode) && node.parentNode?.childNodes.length === 1;
+}
+
 function canonicalNodeLength(node: Node): number {
+  const boundary = lineBreakBefore(node);
   if (node.nodeType === Node.TEXT_NODE) {
-    return node.textContent?.length ?? 0;
+    return boundary + (node.textContent?.length ?? 0);
   }
   if (!isHtmlElement(node)) {
     return 0;
   }
   const token = mentionTokenOf(node);
   if (token) {
-    return token.length;
+    return boundary + token.length;
   }
   if (node.tagName === 'BR') {
-    return 1;
+    return boundary + (isEmptyLinePlaceholder(node) ? 0 : 1);
   }
-  let length = 0;
+  let length = boundary;
   for (const child of node.childNodes) {
     length += canonicalNodeLength(child);
   }
@@ -79,6 +87,7 @@ function canonicalOffsetBefore(editor: HTMLElement, target: Node): number {
   let offset = 0;
 
   function walk(node: Node): boolean {
+    offset += lineBreakBefore(node);
     if (node === target) {
       return true;
     }
@@ -95,7 +104,7 @@ function canonicalOffsetBefore(editor: HTMLElement, target: Node): number {
       return false;
     }
     if (node.tagName === 'BR') {
-      offset += 1;
+      offset += isEmptyLinePlaceholder(node) ? 0 : 1;
       return false;
     }
     for (const child of node.childNodes) {
@@ -211,17 +220,11 @@ export function extractComposerContent(editor: HTMLElement): {
   const focusOffset = selection?.focusOffset ?? 0;
 
   let text = '';
-  let cursorPos = 0;
-  let foundCursor = false;
 
   function walk(node: Node): void {
+    if (lineBreakBefore(node)) text += '\n';
     if (node.nodeType === Node.TEXT_NODE) {
-      const content = node.textContent ?? '';
-      if (!foundCursor && node === focusNode) {
-        cursorPos = text.length + focusOffset;
-        foundCursor = true;
-      }
-      text += content;
+      text += node.textContent ?? '';
       return;
     }
 
@@ -231,20 +234,12 @@ export function extractComposerContent(editor: HTMLElement): {
 
     const token = node.dataset.mentionToken;
     if (token) {
-      if (!foundCursor && (node === focusNode || node.contains(focusNode))) {
-        cursorPos = text.length + token.length;
-        foundCursor = true;
-      }
       text += token;
       return;
     }
 
     if (node.tagName === 'BR') {
-      if (!foundCursor && node === focusNode) {
-        cursorPos = text.length;
-        foundCursor = true;
-      }
-      text += '\n';
+      if (!isEmptyLinePlaceholder(node)) text += '\n';
       return;
     }
 
@@ -257,10 +252,9 @@ export function extractComposerContent(editor: HTMLElement): {
     walk(child);
   }
 
-  if (!foundCursor) {
-    cursorPos = text.length;
-  }
-
+  const cursorPos = focusNode && (focusNode === editor || editor.contains(focusNode))
+    ? canonicalPoint(editor, focusNode, focusOffset, 'end')
+    : text.length;
   return { text, cursorPos };
 }
 
@@ -269,47 +263,34 @@ export function findNodeAtPlainTextOffset(
   targetOffset: number,
 ): { node: Node; offset: number } | null {
   let accumulated = 0;
+  const target = Math.max(0, targetOffset);
 
-  for (const child of editor.childNodes) {
-    if (child.nodeType === Node.TEXT_NODE) {
-      const len = child.textContent?.length ?? 0;
-      if (accumulated + len >= targetOffset) {
-        return { node: child, offset: targetOffset - accumulated };
-      }
-      accumulated += len;
-      continue;
-    }
-
-    if (child.instanceOf(HTMLElement) && child.dataset.mentionToken) {
-      const tokenLen = child.dataset.mentionToken.length;
-      if (accumulated + tokenLen >= targetOffset) {
-        const next = child.nextSibling;
-        if (next) {
-          return { node: next, offset: 0 };
+  function walk(parent: Node): { node: Node; offset: number } | null {
+    for (let index = 0; index < parent.childNodes.length; index++) {
+      const child = parent.childNodes[index]!;
+      if (target <= accumulated) return { node: parent, offset: index };
+      accumulated += lineBreakBefore(child);
+      if (child.nodeType === Node.TEXT_NODE) {
+        const len = child.textContent?.length ?? 0;
+        if (target <= accumulated + len) {
+          return { node: child, offset: Math.max(0, target - accumulated) };
         }
-        return null;
-      }
-      accumulated += tokenLen;
-      continue;
-    }
-
-    if (child.instanceOf(HTMLElement) && child.tagName === 'BR') {
-      if (accumulated + 1 >= targetOffset) {
-        const next = child.nextSibling;
-        if (next) {
-          return { node: next, offset: 0 };
+        accumulated += len;
+      } else if (isHtmlElement(child)) {
+        const token = mentionTokenOf(child);
+        if (token || child.tagName === 'BR') {
+          accumulated += token?.length ?? (isEmptyLinePlaceholder(child) ? 0 : 1);
+          if (target <= accumulated) return { node: parent, offset: index + 1 };
+        } else {
+          const found = walk(child);
+          if (found) return found;
         }
-        return null;
       }
-      accumulated += 1;
     }
+    return null;
   }
 
-  const last = editor.lastChild;
-  if (last?.nodeType === Node.TEXT_NODE) {
-    return { node: last, offset: last.textContent?.length ?? 0 };
-  }
-  return null;
+  return walk(editor) ?? { node: editor, offset: editor.childNodes.length };
 }
 
 export function setComposerCursor(editor: HTMLElement, cursorPos: number): void {

@@ -24,6 +24,7 @@ import { getVaultFileAliases as getVaultFileAliasesFromMetadata } from '@/ui/sha
 import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataProvider';
 
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
+import { openLinkTarget } from '../../shared/utils/fileLink';
 import { FileContextState } from './file-context/state/FileContextState';
 import { FileChipsView } from './file-context/view/FileChipsView';
 import type { RichChatInput } from './RichChatInput';
@@ -96,7 +97,7 @@ export class FileContextManager {
             return;
           }
           try {
-            await this.app.workspace.getLeaf().openFile(file);
+            await openLinkTarget(this.app, file.path);
           } catch (error) {
             new Notice(
               t('chat.file.openError', {
