@@ -821,6 +821,10 @@
     "modelsTab": {
       "intro": "API-ключи и OAuth-токены хранятся в {secureStorageName}. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
       "secureStorageRequired": "API-ключи провайдеров требуют {hostName} {version} или новее с {secureStorageName}. Обновите {hostName} для безопасного хранения учётных данных.",
+      "cliSectionTitle": "Командная строка",
+      "cliDefaultModel": "Модель по умолчанию для запусков CLI",
+      "cliDefaultModelDesc": "Модель, используемая командой pivi:run, если параметр model не задан. Пусто — следовать текущей модели чата.",
+      "cliDefaultModelFollowActive": "Следовать текущей модели чата",
       "authHeading": "Аутентификация и учётные данные",
       "apiKey": "API-ключ",
       "apiKeyOptional": "API-ключ (необязательно)",
@@ -1201,7 +1205,21 @@
     "newTab": "Новая вкладка",
     "newSession": "Новый сеанс (в текущей вкладке)",
     "closeCurrentTab": "Закрыть текущую вкладку",
-    "openPiviRibbon": "Открыть Pivi"
+    "openPiviRibbon": "Открыть Pivi",
+    "cli": {
+      "runDescription": "Выполняет команду рабочего пространства Pivi для заметки и выводит результат модели.",
+      "flagFile": "Имя заметки, разрешается как вики-ссылка",
+      "flagPath": "Точный путь от корня хранилища (vault)",
+      "flagCommand": "Имя команды рабочего пространства",
+      "flagModel": "Ключ модели в формате provider/model; по умолчанию — настройка модели CLI по умолчанию",
+      "flagSelection": "Текст для {selectedTextToken}",
+      "errorNoCommand": "Отсутствует параметр command=. Укажите имя команды рабочего пространства Pivi, например command=summary.",
+      "errorUnknownCommand": "Неизвестная команда рабочего пространства: {name}. Доступные команды: {names}",
+      "errorNoteNotFound": "Заметка не найдена. Проверьте значение file= или path=.",
+      "errorSelectionRequired": "Эта команда требует выделенный текст. Укажите selection=\"...\".",
+      "errorEmptyPrompt": "У этой команды пустой промпт — выполнять нечего.",
+      "errorInvalidModel": "Недопустимое значение model=. Используйте формат provider/model, например deepseek/deepseek-chat."
+    }
   },
   "tools": {
     "display": {

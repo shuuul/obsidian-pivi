@@ -821,6 +821,10 @@
     "modelsTab": {
       "intro": "API 密钥和 OAuth 令牌保存在{secureStorageName}中。已禁用的提供商仍会保存，但会在模型选择器中隐藏。",
       "secureStorageRequired": "提供商 API 密钥需要支持{secureStorageName}的 {hostName} {version} 或更高版本。请升级 {hostName}。",
+      "cliSectionTitle": "命令行",
+      "cliDefaultModel": "CLI 运行默认模型",
+      "cliDefaultModelDesc": "pivi:run 命令在未提供 model 参数时使用的模型。留空则跟随当前聊天模型。",
+      "cliDefaultModelFollowActive": "跟随当前聊天模型",
       "authHeading": "认证与凭据",
       "apiKey": "API 密钥",
       "apiKeyOptional": "API 密钥（可选）",
@@ -1201,7 +1205,21 @@
     "newTab": "新建标签页",
     "newSession": "新建会话（当前标签页）",
     "closeCurrentTab": "关闭当前标签页",
-    "openPiviRibbon": "打开 Pivi"
+    "openPiviRibbon": "打开 Pivi",
+    "cli": {
+      "runDescription": "对指定笔记执行 Pivi 工作区命令，并输出模型结果。",
+      "flagFile": "笔记名称，按 wikilink 规则解析",
+      "flagPath": "从 vault 根目录算起的精确路径",
+      "flagCommand": "工作区命令名称",
+      "flagModel": "模型键，格式为 provider/model；默认使用 CLI 默认模型设置",
+      "flagSelection": "用于 {selectedTextToken} 的文本",
+      "errorNoCommand": "缺少 command= 参数。请传入 Pivi 工作区命令名称，例如 command=summary。",
+      "errorUnknownCommand": "未知的工作区命令：{name}。可用命令：{names}",
+      "errorNoteNotFound": "未找到笔记。请检查 file= 或 path= 的值。",
+      "errorSelectionRequired": "该命令需要选中文本。请传入 selection=\"...\"。",
+      "errorEmptyPrompt": "该命令的提示内容为空，没有可执行的任务。",
+      "errorInvalidModel": "model= 值无效。请使用 provider/model 形式，例如 deepseek/deepseek-chat。"
+    }
   },
   "tools": {
     "display": {

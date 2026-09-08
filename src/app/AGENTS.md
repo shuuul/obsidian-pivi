@@ -126,3 +126,4 @@ flowchart LR
 | `runtime/obsidianHttpRequest.ts` | Adapts Obsidian HTTP into custom-provider composition without leaking host networking into the Pi engine |
 | `runtime/piUiFacades.ts` | Settings/model/auth facades for product UI |
 | `commandRegistration.ts` / `viewRegistration.ts` / `settingsRegistration.ts` | App → UI mount points |
+| `cliRegistration.ts` | Official Obsidian CLI handler registration (`pivi:run`): resolves the note through `ObsidianVaultApi.readNote`, resolves the workspace-command prompt headlessly, and runs it through a fresh `AuxQueryRunner` with `model=` or the device-local `cliDefaultModel` preference; wired in `pluginLifecycle.ts` after command registration |

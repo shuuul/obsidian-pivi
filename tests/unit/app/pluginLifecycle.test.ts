@@ -1,4 +1,5 @@
 jest.mock('@/app/commandRegistration', () => ({ registerPiviCommands: jest.fn() }));
+jest.mock('@/app/cliRegistration', () => ({ registerPiviCli: jest.fn() }));
 jest.mock('@/app/settingsRegistration', () => ({ registerPiviSettings: jest.fn() }));
 jest.mock('@/app/viewRegistration', () => ({ registerPiviViews: jest.fn() }));
 jest.mock('@/app/editorSelectionToolbarRegistration', () => ({
@@ -12,6 +13,7 @@ jest.mock('@/app/ui/selectionToolbar/SelectionToolbarSurfaceController', () => (
 }));
 
 import { registerPiviCommands } from '@/app/commandRegistration';
+import { registerPiviCli } from '@/app/cliRegistration';
 import { registerEditorSelectionToolbar } from '@/app/editorSelectionToolbarRegistration';
 import { initializePiviPlugin } from '@/app/pluginLifecycle';
 import { registerPiviSettings } from '@/app/settingsRegistration';
@@ -52,6 +54,13 @@ describe('initializePiviPlugin', () => {
       plugin, facades.chat, facades.sessions, facades.workspace,
     );
     expect(registerPiviCommands).toHaveBeenCalledWith(plugin, facades.chat);
+    expect(registerPiviCli).toHaveBeenCalledWith(plugin, {
+      readNote: expect.any(Function),
+      listWorkspaceEntries: expect.any(Function),
+      createAuxQueryRunner: expect.any(Function),
+      getCliDefaultModel: expect.any(Function),
+      today: expect.any(Function),
+    });
     expect(registerPiviSettings).toHaveBeenCalledWith(
       plugin, facades.settings, facades.workspace,
     );

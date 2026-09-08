@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
-import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort } from '../ports';
+import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort, SettingsPersistencePort } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
-import { SettingsCollection, SettingsPage, SettingsSection } from './primitives';
+import { SettingRow, SettingsCollection, SettingsPage, SettingsSection } from './primitives';
+import { Select } from './primitives/controls';
 
 function buildInteractiveOAuthMembershipKey(
   addedProviders: readonly string[],
@@ -25,10 +26,11 @@ export interface ModelsSettingsTabProps {
   readonly models: SettingsComplexPorts['models'];
   readonly catalog: SettingsCatalogPort;
   readonly feedback: SettingsFeedbackPort;
+  readonly persistence: SettingsPersistencePort;
 }
 
 /** Provider-card model settings: credentials, custom endpoints, and visible models. */
-export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsTabProps) {
+export function ModelsSettingsTab({ models, catalog, feedback, persistence }: ModelsSettingsTabProps) {
   const t = useT();
   const terminology = useHostTerminology();
   const [bootstrapInfo] = useState(() => models.bootstrap());
@@ -39,6 +41,23 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
   const [credentialCheckPending, setCredentialCheckPending] = useState(true);
   const initialCredentialCheck = useRef(true);
   const unavailableDisableAttempts = useRef(new Set<string>());
+  const [cliDefaultModel, setCliDefaultModel] = useState(
+    () => persistence.getSettingsSnapshot().cliDefaultModel,
+  );
+
+  const saveCliDefaultModel = async (value: string): Promise<void> => {
+    const previous = cliDefaultModel;
+    setCliDefaultModel(value);
+    try {
+      await persistence.commitSettingsSnapshot({
+        ...persistence.getSettingsSnapshot(),
+        cliDefaultModel: value,
+      });
+    } catch (cause) {
+      setCliDefaultModel(previous);
+      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+    }
+  };
 
   const reload = (): void => setSettings(models.getSettings());
   const interactiveOAuthMembershipKey = buildInteractiveOAuthMembershipKey(
@@ -201,6 +220,8 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
     </>
   );
 
+  const catalogModels = catalog.listCatalogModels();
+
   return (
     <SettingsPage description={description}>
       <SettingsSection>
@@ -256,6 +277,22 @@ export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsT
             );
           })}
         </SettingsCollection>
+      </SettingsSection>
+      <SettingsSection title={t('settings.modelsTab.cliSectionTitle')}>
+        <SettingRow
+          name={t('settings.modelsTab.cliDefaultModel')}
+          description={t('settings.modelsTab.cliDefaultModelDesc')}
+        >
+          <Select
+            value={cliDefaultModel}
+            onChange={(value) => { void saveCliDefaultModel(value); }}
+          >
+            <option value="">{t('settings.modelsTab.cliDefaultModelFollowActive')}</option>
+            {catalogModels.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </Select>
+        </SettingRow>
       </SettingsSection>
     </SettingsPage>
   );

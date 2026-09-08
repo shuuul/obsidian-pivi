@@ -20,6 +20,7 @@ export type PersistedPiviSettings = Omit<
   PiviSettings,
   | 'model'
   | 'titleGenerationModel'
+  | 'cliDefaultModel'
   | 'customContextLimits'
   | 'agentSettings'
   | 'sharedEnvironmentVariables'

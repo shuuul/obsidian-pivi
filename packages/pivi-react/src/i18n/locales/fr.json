@@ -821,6 +821,10 @@
     "modelsTab": {
       "intro": "Les clés API et jetons OAuth sont stockés dans le {secureStorageName}. Les fournisseurs désactivés restent enregistrés mais sont masqués dans le sélecteur de modèles.",
       "secureStorageRequired": "Les clés API des fournisseurs nécessitent {hostName} {version} ou plus récent avec {secureStorageName}. Mettez à jour {hostName} pour stocker les identifiants en toute sécurité.",
+      "cliSectionTitle": "Ligne de commande",
+      "cliDefaultModel": "Modèle par défaut pour les exécutions CLI",
+      "cliDefaultModelDesc": "Modèle utilisé par la commande pivi:run quand aucun paramètre model n'est fourni. Vide suit le modèle de chat actuel.",
+      "cliDefaultModelFollowActive": "Suivre le modèle de chat actuel",
       "authHeading": "Authentification et identifiants",
       "apiKey": "Clé API",
       "apiKeyOptional": "Clé API (facultative)",
@@ -1201,7 +1205,21 @@
     "newTab": "Nouvel onglet",
     "newSession": "Nouvelle session (onglet actuel)",
     "closeCurrentTab": "Fermer l’onglet actuel",
-    "openPiviRibbon": "Ouvrir Pivi"
+    "openPiviRibbon": "Ouvrir Pivi",
+    "cli": {
+      "runDescription": "Exécute une commande d'espace de travail Pivi sur une note et affiche le résultat du modèle.",
+      "flagFile": "Nom de la note, résolu comme un wikilink",
+      "flagPath": "Chemin exact depuis la racine du vault",
+      "flagCommand": "Nom de la commande d'espace de travail",
+      "flagModel": "Clé du modèle sous la forme provider/model ; par défaut, utilise le réglage du modèle par défaut de la CLI",
+      "flagSelection": "Texte utilisé pour {selectedTextToken}",
+      "errorNoCommand": "Paramètre command= manquant. Indiquez le nom d'une commande d'espace de travail Pivi, par exemple command=summary.",
+      "errorUnknownCommand": "Commande d'espace de travail inconnue : {name}. Commandes disponibles : {names}",
+      "errorNoteNotFound": "Note introuvable. Vérifiez la valeur de file= ou path=.",
+      "errorSelectionRequired": "Cette commande nécessite du texte sélectionné. Fournissez selection=\"...\".",
+      "errorEmptyPrompt": "Cette commande a un prompt vide et rien à exécuter.",
+      "errorInvalidModel": "Valeur model= invalide. Utilisez la forme provider/model, par exemple deepseek/deepseek-chat."
+    }
   },
   "tools": {
     "display": {

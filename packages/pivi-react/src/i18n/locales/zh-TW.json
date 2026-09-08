@@ -821,6 +821,10 @@
     "modelsTab": {
       "intro": "API 金鑰和 OAuth 權杖儲存在{secureStorageName}中。已停用的提供者仍會儲存，但會在模型選擇器中隱藏。",
       "secureStorageRequired": "提供者 API 金鑰需要支援{secureStorageName}的 {hostName} {version} 或更高版本。請升級 {hostName}。",
+      "cliSectionTitle": "命令列",
+      "cliDefaultModel": "CLI 執行預設模型",
+      "cliDefaultModelDesc": "pivi:run 命令在未提供 model 參數時使用的模型。留空則跟隨目前聊天模型。",
+      "cliDefaultModelFollowActive": "跟隨目前聊天模型",
       "authHeading": "驗證與憑證",
       "apiKey": "API 金鑰",
       "apiKeyOptional": "API 金鑰（選填）",
@@ -1201,7 +1205,21 @@
     "newTab": "新分頁",
     "newSession": "新工作階段（目前分頁）",
     "closeCurrentTab": "關閉目前分頁",
-    "openPiviRibbon": "開啟 Pivi"
+    "openPiviRibbon": "開啟 Pivi",
+    "cli": {
+      "runDescription": "對指定筆記執行 Pivi 工作區命令，並輸出模型結果。",
+      "flagFile": "筆記名稱，依 wikilink 規則解析",
+      "flagPath": "從 vault 根目錄起算的精確路徑",
+      "flagCommand": "工作區命令名稱",
+      "flagModel": "模型鍵，格式為 provider/model；預設使用 CLI 預設模型設定",
+      "flagSelection": "用於 {selectedTextToken} 的文字",
+      "errorNoCommand": "缺少 command= 參數。請傳入 Pivi 工作區命令名稱，例如 command=summary。",
+      "errorUnknownCommand": "未知的工作區命令：{name}。可用命令：{names}",
+      "errorNoteNotFound": "找不到筆記。請檢查 file= 或 path= 的值。",
+      "errorSelectionRequired": "此命令需要選取文字。請傳入 selection=\"...\"。",
+      "errorEmptyPrompt": "此命令的提示內容為空，沒有可執行的任務。",
+      "errorInvalidModel": "model= 值無效。請使用 provider/model 形式，例如 deepseek/deepseek-chat。"
+    }
   },
   "tools": {
     "display": {

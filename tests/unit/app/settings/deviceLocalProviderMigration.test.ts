@@ -118,6 +118,7 @@ describe('device local provider migration coordinator', () => {
         visibleModels: ['deepseek/deepseek-chat'],
         activeModel: 'deepseek/deepseek-chat',
         titleGenerationModel: '',
+        cliDefaultModel: '',
         customContextLimits: {},
       },
       webSearchTools: {
@@ -168,6 +169,7 @@ describe('device local provider migration coordinator', () => {
         visibleModels: ['deepseek/deepseek-chat'],
         activeModel: 'deepseek/deepseek-chat',
         titleGenerationModel: '',
+        cliDefaultModel: '',
         customContextLimits: {},
       },
       webSearchTools: {

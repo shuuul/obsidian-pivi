@@ -821,6 +821,10 @@
     "modelsTab": {
       "intro": "API キーと OAuth トークンは {secureStorageName} に保存されます。無効なプロバイダーは保存されたままモデル選択から非表示になります。",
       "secureStorageRequired": "プロバイダー API キーには {secureStorageName} を備えた {hostName} {version} 以上が必要です。{hostName} をアップグレードしてください。",
+      "cliSectionTitle": "コマンドライン",
+      "cliDefaultModel": "CLI 実行の既定モデル",
+      "cliDefaultModelDesc": "model パラメーターを指定しない場合に pivi:run コマンドが使用するモデル。空の場合は現在のチャットモデルに従います。",
+      "cliDefaultModelFollowActive": "現在のチャットモデルに従う",
       "authHeading": "認証と資格情報",
       "apiKey": "API キー",
       "apiKeyOptional": "API キー（任意）",
@@ -1201,7 +1205,21 @@
     "newTab": "新しいタブ",
     "newSession": "新しいセッション（現在のタブ）",
     "closeCurrentTab": "現在のタブを閉じる",
-    "openPiviRibbon": "Pivi を開く"
+    "openPiviRibbon": "Pivi を開く",
+    "cli": {
+      "runDescription": "ノートに対して Pivi ワークスペースコマンドを実行し、モデルの結果を出力します。",
+      "flagFile": "ノート名（ウィキリンクと同様に解決）",
+      "flagPath": "vault ルートからの正確なパス",
+      "flagCommand": "ワークスペースコマンド名",
+      "flagModel": "provider/model 形式のモデルキー。未指定時は CLI 既定モデル設定を使用",
+      "flagSelection": "{selectedTextToken} に使用するテキスト",
+      "errorNoCommand": "command= パラメーターがありません。Pivi ワークスペースコマンド名を指定してください。例: command=summary",
+      "errorUnknownCommand": "不明なワークスペースコマンド: {name}。利用可能なコマンド: {names}",
+      "errorNoteNotFound": "ノートが見つかりません。file= または path= の値を確認してください。",
+      "errorSelectionRequired": "このコマンドには選択テキストが必要です。selection=\"...\" を指定してください。",
+      "errorEmptyPrompt": "このコマンドのプロンプトは空で、実行する内容がありません。",
+      "errorInvalidModel": "model= の値が無効です。provider/model 形式で指定してください（例: deepseek/deepseek-chat）。"
+    }
   },
   "tools": {
     "display": {

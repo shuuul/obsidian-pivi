@@ -281,6 +281,12 @@ export function createSettingsModelsPort(
       ) {
         host.settings.titleGenerationModel = '';
       }
+      if (
+        typeof host.settings.cliDefaultModel === 'string'
+        && host.settings.cliDefaultModel.startsWith(`${providerId}/`)
+      ) {
+        host.settings.cliDefaultModel = '';
+      }
 
       if (enabledProviders.length > 0) {
         uiFacades.commitSettingsSnapshot(
@@ -424,6 +430,13 @@ export function createSettingsModelsPort(
         && !allowedKeys.has(host.settings.titleGenerationModel)
       ) {
         host.settings.titleGenerationModel = '';
+      }
+      if (
+        typeof host.settings.cliDefaultModel === 'string'
+        && host.settings.cliDefaultModel.startsWith(prefix)
+        && !allowedKeys.has(host.settings.cliDefaultModel)
+      ) {
+        host.settings.cliDefaultModel = '';
       }
       uiFacades.syncCustomProviders(host.settings);
       await host.saveSettings();

@@ -35,6 +35,7 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   thinkingLevel: "medium",
   enableAutoTitleGeneration: true,
   titleGenerationModel: "",
+  cliDefaultModel: "",
   excludedTags: [],
   deletedSessionRetentionDays: 30,
   sharedEnvironmentVariables: "",

@@ -128,6 +128,7 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
       'settings.modelsTab.oauthToken',
       'settings.modelsTab.authHeading',
       'settings.modelsTab.testProvider',
+      'settings.modelsTab.cliDefaultModel',
     ],
   },
   builtInTools: {

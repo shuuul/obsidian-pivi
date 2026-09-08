@@ -84,6 +84,14 @@ CLI mutations of existing note content run inside an exact-path host transaction
 
 Main-Agent-only management tools (`pivi_mcp`, `pivi_skills`, `pivi_commands`, `pivi_prompt`) are sequential and structurally absent from subagent registries. Queries skip confirmation; mutations use one sidebar confirmation and coordinator compare-and-swap. `pivi_prompt` list/get omit or return bodies respectively; core modules are read-only; workflow modules accept enable/body/restore; custom modules accept upsert (omit `id` to create), enable, remove, and move. Do not add `.pivi/settings.json` to managed vault-mutation namespaces: that file is mixed-purpose, and prompt composition is owned by Settings → Prompt plus `pivi_prompt`.
 
+## Exposed CLI commands
+
+Pivi registers handlers for the official Obsidian CLI through `Plugin.registerCliHandler` (Obsidian API 1.12.2+), so terminal automations can compose a note, a workspace command, and a model. Registration happens in `src/app/cliRegistration.ts` during plugin registration; handlers resolve lazily through the single-flight workspace-services promise, so CLI calls never block startup.
+
+- `obsidian pivi:run command=<name>` runs one Pivi workspace command (`.pivi/commands/`) headlessly and prints the model result. `file=<name>` resolves a note like a wikilink and `path=<path>` takes an exact vault path; the resolved content feeds the command's `{{current_note}}`, `{{current_note_name}}`, and `{{date}}` variables. `selection="<text>"` supplies `{{selected_text}}` for commands that require a selection. The `model=provider/model_id` parameter overrides the CLI default model from Settings → Models; when both are unset the run follows the current chat model. Results reuse the shared 50,000-character cap with an explicit truncation marker, and failures surface as CLI errors naming the fix (missing `command=`, unknown command plus available names, unresolvable note, missing selection, or an invalid `model=` shape).
+- The default model is the device-local `cliDefaultModel` model preference (same storage family as the active and title models, never synced in `.pivi/settings.json`), selected on the Models page under Command line. Provider removal and model-list refresh prune it exactly like the title model.
+- Existing Pivi and workspace commands remain executable as plain Obsidian commands via `obsidian command id=...`; those UI paths still require an active editor, which is why the headless `pivi:run` handler owns note-targeted composition.
+
 ## External access and process execution
 
 External reads of paths inside the current vault are always allowed. Reads outside the vault require `allowExternalRead` and at least one allowed directory from device-local pinned settings or current-turn context. Host-side realpath containment rejects traversal outside those roots. Absolute paths are stripped from synchronized settings and JSONL.
