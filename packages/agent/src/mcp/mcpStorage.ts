@@ -1,7 +1,8 @@
 import {
   clearSyncSecret,
   encodeUtf8Hex,
-  listObsidianSecretIds,
+  isObsidianSecretId,
+  resolveObsidianSecretId,
   stableProviderIdDigest,
 } from '../auth/providerSecretStorage';
 import {
@@ -93,6 +94,10 @@ function encodeSecretName(name: string): string {
 }
 
 function directMcpSecretId(serverName: string, kind: McpSecretKind): string {
+  return `pivi-mcp-${serverName}-${kind}`;
+}
+
+function legacyEncodedMcpSecretId(serverName: string, kind: McpSecretKind): string {
   return `pivi-mcp-${encodeSecretName(serverName)}-${kind}`;
 }
 
@@ -100,11 +105,21 @@ function digestMcpSecretId(serverName: string, kind: McpSecretKind): string {
   return `pivi-mcp-d-${stableProviderIdDigest(serverName)}-${kind}`;
 }
 
+/**
+ * Canonical first, then the legacy hex-encoded name, then the digest fallback.
+ * Plain server names replaced the hex encoding; existing vaults migrate on the
+ * next load and removals clear every generation.
+ */
 function listMcpSecretIds(serverName: string, kind: McpSecretKind): readonly string[] {
-  return listObsidianSecretIds(
-    directMcpSecretId(serverName, kind),
-    digestMcpSecretId(serverName, kind),
-  );
+  const plain = directMcpSecretId(serverName, kind);
+  const digest = digestMcpSecretId(serverName, kind);
+  const canonical = resolveObsidianSecretId(plain, digest);
+  return [...new Set([
+    canonical,
+    ...(isObsidianSecretId(plain) ? [plain] : []),
+    legacyEncodedMcpSecretId(serverName, kind),
+    digest,
+  ])];
 }
 
 /** Canonical direct/digested SecretStorage IDs owned by one MCP server field. */
@@ -569,26 +584,44 @@ export class McpStorage {
     return null;
   }
 
+  private findStoredSecret(
+    serverName: string,
+    kind: McpSecretKind,
+  ): { secretId: string; value: string } | undefined {
+    if (!isSecretStorageAvailable(this.secretStorage)) {
+      return undefined;
+    }
+    for (const secretId of listMcpSecretIds(serverName, kind)) {
+      const value = this.secretStorage.getSecret(secretId);
+      if (typeof value === 'string' && value.length > 0) {
+        return { secretId, value };
+      }
+    }
+    return undefined;
+  }
+
   private getStoredSecret(
     serverName: string,
     kind: McpSecretKind,
   ): string | undefined {
-    if (!isSecretStorageAvailable(this.secretStorage)) {
-      return undefined;
+    return this.findStoredSecret(serverName, kind)?.value;
+  }
+
+  /** Move a legacy-format secret onto the canonical id; no-op when current. */
+  private migrateStoredSecretId(
+    serverName: string,
+    kind: McpSecretKind,
+    found: { secretId: string; value: string } | undefined,
+  ): void {
+    if (!found || !isSecretStorageAvailable(this.secretStorage)) {
+      return;
     }
-    const value = this.secretStorage.getSecret(
-      getMcpSecretId(serverName, kind),
-    );
-    if (typeof value === 'string' && value.length > 0) {
-      return value;
+    const canonical = getMcpSecretId(serverName, kind);
+    if (found.secretId === canonical) {
+      return;
     }
-    for (const secretId of listMcpSecretIds(serverName, kind).slice(1)) {
-      const fallback = this.secretStorage.getSecret(secretId);
-      if (typeof fallback === 'string' && fallback.length > 0) {
-        return fallback;
-      }
-    }
-    return undefined;
+    this.secretStorage.setSecret(canonical, found.value);
+    clearSyncSecret(this.secretStorage, found.secretId);
   }
 
   private setStoredSecret(
@@ -678,6 +711,11 @@ export class McpStorage {
         this.setStoredSecret(server.name, 'bearer-token', legacyBearerToken);
         migratedLegacyPlaintext = true;
       }
+      this.migrateStoredSecretId(
+        server.name,
+        'bearer-token',
+        this.findStoredSecret(server.name, 'bearer-token'),
+      );
       const storedBearerToken = this.getStoredSecret(
         server.name,
         'bearer-token',
@@ -696,6 +734,11 @@ export class McpStorage {
           );
           migratedLegacyPlaintext = true;
         }
+        this.migrateStoredSecretId(
+          server.name,
+          'client-secret',
+          this.findStoredSecret(server.name, 'client-secret'),
+        );
         const storedClientSecret = this.getStoredSecret(
           server.name,
           'client-secret',

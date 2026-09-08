@@ -1,7 +1,8 @@
 import {
   clearSyncSecret,
   encodeUtf8Hex,
-  listObsidianSecretIds,
+  isObsidianSecretId,
+  resolveObsidianSecretId,
   stableProviderIdDigest,
 } from '../../auth/providerSecretStorage';
 import type { SyncSecretStore } from '../../ports';
@@ -27,6 +28,10 @@ function encodeServerName(serverName: string): string {
 }
 
 function directMcpAuthEntrySecretId(serverName: string): string {
+  return `pivi-mcp-${serverName}-oauth-v${MCP_AUTH_ENTRY_SECRET_VERSION}`;
+}
+
+function legacyEncodedMcpAuthEntrySecretId(serverName: string): string {
   return `${MCP_AUTH_SECRET_PREFIX}-${encodeServerName(serverName)}-auth-v${MCP_AUTH_ENTRY_SECRET_VERSION}`;
 }
 
@@ -34,11 +39,21 @@ function digestMcpAuthEntrySecretId(serverName: string): string {
   return `${MCP_AUTH_SECRET_DIGEST_PREFIX}-${stableProviderIdDigest(serverName)}-auth-v${MCP_AUTH_ENTRY_SECRET_VERSION}`;
 }
 
+/**
+ * Canonical first, then the legacy hex-encoded name, then the digest fallback.
+ * Plain server names replaced the hex encoding; existing vaults migrate on the
+ * next read and removals clear every generation.
+ */
 export function listMcpAuthEntrySecretIds(serverName: string): readonly string[] {
-  return listObsidianSecretIds(
-    directMcpAuthEntrySecretId(serverName),
-    digestMcpAuthEntrySecretId(serverName),
-  );
+  const plain = directMcpAuthEntrySecretId(serverName);
+  const digest = digestMcpAuthEntrySecretId(serverName);
+  const canonical = resolveObsidianSecretId(plain, digest);
+  return [...new Set([
+    canonical,
+    ...(isObsidianSecretId(plain) ? [plain] : []),
+    legacyEncodedMcpAuthEntrySecretId(serverName),
+    digest,
+  ])];
 }
 
 export function getMcpAuthEntrySecretId(serverName: string): string {
@@ -48,11 +63,12 @@ export function getMcpAuthEntrySecretId(serverName: string): string {
 function readStoredMcpAuthEntry(
   secretStorage: SyncSecretStore,
   serverName: string,
-): AuthEntry | undefined {
+): { entry: AuthEntry; secretId: string; raw: string } | undefined {
   for (const secretId of listMcpAuthEntrySecretIds(serverName)) {
-    const entry = parseStoredEntry(secretStorage.getSecret(secretId));
+    const raw = secretStorage.getSecret(secretId);
+    const entry = parseStoredEntry(raw);
     if (entry) {
-      return entry;
+      return { entry, secretId, raw: raw! };
     }
   }
   return undefined;
@@ -94,7 +110,17 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
   constructor(private readonly secretStorage: SyncSecretStore) {}
 
   async getEntry(serverName: string): Promise<AuthEntry | undefined> {
-    return readStoredMcpAuthEntry(this.secretStorage, serverName);
+    const found = readStoredMcpAuthEntry(this.secretStorage, serverName);
+    if (!found) {
+      return undefined;
+    }
+    // Lazily move legacy hex-encoded entries onto the canonical plain id.
+    const canonical = getMcpAuthEntrySecretId(serverName);
+    if (found.secretId !== canonical) {
+      this.secretStorage.setSecret(canonical, found.raw);
+      clearSyncSecret(this.secretStorage, found.secretId);
+    }
+    return found.entry;
   }
 
   async getAuthForUrl(
@@ -117,10 +143,14 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
     if (serverUrl) {
       next.serverUrl = serverUrl;
     }
-    this.secretStorage.setSecret(
-      getMcpAuthEntrySecretId(serverName),
-      serializeStoredEntry(next),
-    );
+    const canonical = getMcpAuthEntrySecretId(serverName);
+    this.secretStorage.setSecret(canonical, serializeStoredEntry(next));
+    // A save is also a migration point: retire legacy-format ids for this server.
+    for (const secretId of listMcpAuthEntrySecretIds(serverName)) {
+      if (secretId !== canonical) {
+        clearSyncSecret(this.secretStorage, secretId);
+      }
+    }
   }
 
   async removeEntry(serverName: string): Promise<void> {
