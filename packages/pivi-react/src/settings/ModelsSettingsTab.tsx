@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
+import { ModelSelector } from '../mount/composer/ComposerSelectors';
 import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort, SettingsPersistencePort } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
 import { SettingRow, SettingsCollection, SettingsPage, SettingsSection } from './primitives';
-import { Select } from './primitives/controls';
 
 function buildInteractiveOAuthMembershipKey(
   addedProviders: readonly string[],
@@ -41,20 +41,20 @@ export function ModelsSettingsTab({ models, catalog, feedback, persistence }: Mo
   const [credentialCheckPending, setCredentialCheckPending] = useState(true);
   const initialCredentialCheck = useRef(true);
   const unavailableDisableAttempts = useRef(new Set<string>());
-  const [cliDefaultModel, setCliDefaultModel] = useState(
-    () => persistence.getSettingsSnapshot().cliDefaultModel,
+  const [defaultModel, setDefaultModel] = useState(
+    () => persistence.getSettingsSnapshot().model,
   );
 
-  const saveCliDefaultModel = async (value: string): Promise<void> => {
-    const previous = cliDefaultModel;
-    setCliDefaultModel(value);
+  const saveDefaultModel = async (value: string): Promise<void> => {
+    const previous = defaultModel;
+    setDefaultModel(value);
     try {
       await persistence.commitSettingsSnapshot({
         ...persistence.getSettingsSnapshot(),
-        cliDefaultModel: value,
+        model: value,
       });
     } catch (cause) {
-      setCliDefaultModel(previous);
+      setDefaultModel(previous);
       feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
     }
   };
@@ -220,7 +220,7 @@ export function ModelsSettingsTab({ models, catalog, feedback, persistence }: Mo
     </>
   );
 
-  const catalogModels = catalog.listCatalogModels();
+  const composerModelOptions = catalog.listComposerModelOptions();
 
   return (
     <SettingsPage description={description}>
@@ -278,20 +278,16 @@ export function ModelsSettingsTab({ models, catalog, feedback, persistence }: Mo
           })}
         </SettingsCollection>
       </SettingsSection>
-      <SettingsSection title={t('settings.modelsTab.cliSectionTitle')}>
+      <SettingsSection title={t('settings.modelsTab.defaultModelSectionTitle')}>
         <SettingRow
-          name={t('settings.modelsTab.cliDefaultModel')}
-          description={t('settings.modelsTab.cliDefaultModelDesc')}
+          name={t('settings.modelsTab.defaultModel')}
+          description={t('settings.modelsTab.defaultModelDesc')}
         >
-          <Select
-            value={cliDefaultModel}
-            onChange={(value) => { void saveCliDefaultModel(value); }}
-          >
-            <option value="">{t('settings.modelsTab.cliDefaultModelFollowActive')}</option>
-            {catalogModels.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </Select>
+          <ModelSelector
+            options={composerModelOptions}
+            value={defaultModel}
+            onChange={(value) => { void saveDefaultModel(value); }}
+          />
         </SettingRow>
       </SettingsSection>
     </SettingsPage>

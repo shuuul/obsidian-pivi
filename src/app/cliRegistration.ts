@@ -38,7 +38,7 @@ export interface PiviCliHost {
   ): Promise<PiviCliNote | null>;
   listWorkspaceEntries(): Promise<readonly SlashCatalogEntry[]>;
   createAuxQueryRunner(): AuxQueryRunner;
-  getCliDefaultModel(): string;
+  getDefaultModel(): string;
   today(): string;
 }
 
@@ -78,7 +78,7 @@ export async function runPiviCliCommand(
   }
 
   const modelParam = param(params.model).trim();
-  const modelKey = modelParam || host.getCliDefaultModel().trim();
+  const modelKey = modelParam || host.getDefaultModel().trim();
   if (modelKey && !isValidModelKey(modelKey)) {
     throw new Error(t('commands.cli.errorInvalidModel'));
   }

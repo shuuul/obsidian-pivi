@@ -2,6 +2,7 @@ import {
   applyCustomProviderModelIds,
   createCustomProviderId,
   createDefaultCustomProviderConfig,
+  getMaxCustomProviderIdLength,
   modelsListUrl,
   MULTI_INSTANCE_CUSTOM_PROVIDER_KINDS,
   normalizeCustomProviderConfig,
@@ -9,6 +10,7 @@ import {
   parseOpenAiStyleModelsList,
   reconcileVisibleModelsForCustomProviders,
   splitCustomProviderModelIdInputs,
+  validateCustomProviderId,
 } from '@pivi/agent/settings/customProviders';
 import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import { MAX_OBSIDIAN_SECRET_ID_LENGTH } from '@pivi/agent/auth/providerSecretStorage';
@@ -45,6 +47,20 @@ describe('customProviders foundation', () => {
       const providerId = createCustomProviderId(kind, []);
       expect(getPiAiCredentialSecretId(providerId).length).toBeLessThanOrEqual(MAX_OBSIDIAN_SECRET_ID_LENGTH);
     }
+  });
+
+  it('validates user-authored provider ids against keychain-safe rules', () => {
+    expect(getMaxCustomProviderIdLength()).toBe(48);
+    expect(validateCustomProviderId('dgx-spark', [])).toBeNull();
+    expect(validateCustomProviderId('  DGX-Spark  ', [])).toBeNull();
+    expect(validateCustomProviderId('', [])).toBe('empty');
+    expect(validateCustomProviderId('DGX Spark', [])).toBe('pattern');
+    expect(validateCustomProviderId('dgx_spark', [])).toBe('pattern');
+    expect(validateCustomProviderId('dgx/spark', [])).toBe('pattern');
+    expect(validateCustomProviderId('d'.repeat(49), [])).toBe('length');
+    expect(validateCustomProviderId('d'.repeat(48), [])).toBeNull();
+    expect(validateCustomProviderId('dgx-spark', ['dgx-spark'])).toBe('taken');
+    expect(validateCustomProviderId('dgx-spark', ['DGX-SPARK'])).toBe('taken');
   });
 
   it('creates defaults for ollama', () => {

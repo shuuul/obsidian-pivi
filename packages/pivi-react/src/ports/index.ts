@@ -96,6 +96,11 @@ export interface SettingsModelsPort {
   /** Add a custom/local provider kind and return the new provider id. */
   addCustomKind(kind: string): Promise<string>;
   removeProvider(providerId: string, deleteCredential: boolean): Promise<void>;
+  /**
+   * Rename a custom provider id and migrate model keys, credentials, and
+   * header secrets. Returns the applied id.
+   */
+  renameCustomProvider(providerId: string, newId: string): Promise<string>;
   /** Refresh interactive OAuth credentials before readiness badges render. */
   ensureProviderCredentials(): Promise<void>;
   testProvider(providerId: string): Promise<{ ok: boolean; detail: string }>;
@@ -346,6 +351,8 @@ export interface SettingsEditorToolbarPort {
 export interface SettingsCatalogPort {
   listModelsForProvider(providerId: string): ChatUIOption[];
   listCatalogModels(): ChatUIOption[];
+  /** Composer model options: checked models of enabled providers, grouped like the input channel. */
+  listComposerModelOptions(): ChatUIOption[];
   syncCustomProviders(snapshot: PiviSettings): void;
   fetchCustomProviderModels(
     providerId: string,

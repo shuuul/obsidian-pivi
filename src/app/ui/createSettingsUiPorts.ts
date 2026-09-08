@@ -456,6 +456,7 @@ export function createSettingsUiPorts(
         host.settings.customContextLimits,
       ),
       listCatalogModels: () => uiFacades.listCatalogModels(host.settings),
+      listComposerModelOptions: () => uiFacades.chatUIConfig.getModelOptions(host.settings),
       syncCustomProviders: (snapshot) => uiFacades.syncCustomProviders(snapshot),
       fetchCustomProviderModels: (providerId, snapshot) => (
         uiFacades.fetchCustomProviderModels(providerId, snapshot)

@@ -31,7 +31,7 @@ interface RecordedQuery {
 function createHost(options: {
   entries?: SlashCatalogEntry[];
   notes?: Record<string, string>;
-  cliDefaultModel?: string;
+  defaultModel?: string;
   result?: string;
 } = {}): { host: PiviCliHost; queries: RecordedQuery[]; runnerResets: () => number } {
   const queries: RecordedQuery[] = [];
@@ -59,7 +59,7 @@ function createHost(options: {
       },
       listWorkspaceEntries: async () => entries,
       createAuxQueryRunner: () => runner,
-      getCliDefaultModel: () => options.cliDefaultModel ?? '',
+      getDefaultModel: () => options.defaultModel ?? '',
       today: () => '2026-09-08',
     } satisfies PiviCliHost,
     queries,
@@ -103,8 +103,8 @@ describe('runPiviCliCommand', () => {
     expect(queries[0]!.config.systemPrompt).toContain('Pivi workspace command');
   });
 
-  it('falls back to the CLI default model setting and then undefined', async () => {
-    const withSetting = createHost({ cliDefaultModel: 'openai/gpt-4.1' });
+  it('falls back to the default model setting and then undefined', async () => {
+    const withSetting = createHost({ defaultModel: 'openai/gpt-4.1' });
     await runPiviCliCommand(withSetting.host, { command: 'summary' });
     expect(withSetting.queries[0]!.config.model).toBe('openai/gpt-4.1');
 

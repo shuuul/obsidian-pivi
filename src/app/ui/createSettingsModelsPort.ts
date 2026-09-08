@@ -1,4 +1,8 @@
-import { deleteCustomProviderHeaders } from '@pivi/agent/auth/customProviderHeaderSecrets';
+import {
+  deleteCustomProviderHeaders,
+  readCustomProviderHeaders,
+  writeCustomProviderHeaders,
+} from '@pivi/agent/auth/customProviderHeaderSecrets';
 import {
   CODEX_OAUTH_PROVIDER_ID,
   getPiAiCredentialSecretId,
@@ -15,6 +19,7 @@ import {
   ALL_CUSTOM_PROVIDER_KINDS,
   applyCustomProviderModelIds,
   createDefaultCustomProviderConfig,
+  type CustomProviderIdError,
   type CustomProviderKind,
   FIXED_LOCAL_PROVIDER_IDS,
   getCustomProviderKindDisplayName,
@@ -22,6 +27,7 @@ import {
   isLocalCustomProviderKind,
   reconcileVisibleModelsForCustomProviders,
   splitCustomProviderModelIdInputs,
+  validateCustomProviderId,
 } from '@pivi/agent/settings/customProviders';
 import {
   getLogoSlugForCustomProviderKind,
@@ -38,6 +44,14 @@ import type {
 import { t as appT } from '@/app/i18n';
 
 import { removeEnvVar } from './createUiPortHelpers';
+
+/** Map shared provider-id validation codes onto localized port error messages. */
+const PROVIDER_ID_ERROR_KEYS: Record<CustomProviderIdError, Parameters<typeof appT>[0]> = {
+  empty: 'settings.modelsTab.providerIdInvalid',
+  pattern: 'settings.modelsTab.providerIdInvalid',
+  length: 'settings.modelsTab.providerIdInvalid',
+  taken: 'settings.modelsTab.providerIdTaken',
+};
 
 export function createSettingsModelsPort(
   host: PiviSettingsHost,
@@ -281,12 +295,6 @@ export function createSettingsModelsPort(
       ) {
         host.settings.titleGenerationModel = '';
       }
-      if (
-        typeof host.settings.cliDefaultModel === 'string'
-        && host.settings.cliDefaultModel.startsWith(`${providerId}/`)
-      ) {
-        host.settings.cliDefaultModel = '';
-      }
 
       if (enabledProviders.length > 0) {
         uiFacades.commitSettingsSnapshot(
@@ -304,6 +312,78 @@ export function createSettingsModelsPort(
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.refreshModelPresentation();
       }
+    },
+    async renameCustomProvider(providerId, rawNewId) {
+      const piSettings = getPiAgentSettings(host.settings);
+      if (!piSettings.customProviders.some(provider => provider.id === providerId)) {
+        throw new Error(`Unknown custom provider: ${providerId}`);
+      }
+      const newId = rawNewId.trim().toLowerCase();
+      if (newId === providerId) return newId;
+      const reservedIds = [
+        ...SUPPORTED_PI_PROVIDER_IDS,
+        ...INTERACTIVE_OAUTH_PROVIDER_IDS,
+        ...Object.values(FIXED_LOCAL_PROVIDER_IDS),
+        ...piSettings.addedProviders,
+        // Duplicate ids must be rejected even for orphaned custom entries that
+        // are not currently registered in addedProviders.
+        ...piSettings.customProviders.map(provider => provider.id),
+      ];
+      const validationError = validateCustomProviderId(newId, reservedIds);
+      if (validationError) {
+        throw new Error(appT(PROVIDER_ID_ERROR_KEYS[validationError]));
+      }
+
+      // Model keys reference the provider id everywhere, so the rename migrates
+      // every derived key together with the provider registration itself.
+      const renameModelKey = (modelKey: string): string =>
+        modelKey.startsWith(`${providerId}/`)
+          ? `${newId}/${modelKey.slice(providerId.length + 1)}`
+          : modelKey;
+      updatePiAgentSettings(host.settings, {
+        addedProviders: piSettings.addedProviders.map(id => (id === providerId ? newId : id)),
+        disabledProviders: piSettings.disabledProviders.map(id => (id === providerId ? newId : id)),
+        customProviders: piSettings.customProviders.map(provider =>
+          provider.id === providerId ? { ...provider, id: newId } : provider),
+        visibleModels: piSettings.visibleModels.map(renameModelKey),
+      });
+      const nextContextLimits: Record<string, number> = {};
+      for (const [modelKey, value] of Object.entries(host.settings.customContextLimits)) {
+        nextContextLimits[renameModelKey(modelKey)] = value;
+      }
+      host.settings.customContextLimits = nextContextLimits;
+      if (typeof host.settings.model === 'string') {
+        host.settings.model = renameModelKey(host.settings.model);
+      }
+      if (typeof host.settings.titleGenerationModel === 'string') {
+        host.settings.titleGenerationModel = renameModelKey(host.settings.titleGenerationModel);
+      }
+      if (typeof host.settings.agentSettings.lastModel === 'string') {
+        host.settings.agentSettings.lastModel = renameModelKey(host.settings.agentSettings.lastModel);
+      }
+
+      // Credentials and custom headers live under provider-derived secret ids;
+      // move them before the settings save so the renamed provider stays usable.
+      const credentialStore = workspace.credentialStore;
+      const credential = credentialStore?.readSync(providerId);
+      if (credentialStore && credential) {
+        await credentialStore.modify(newId, () => Promise.resolve(credential));
+        await credentialStore.delete(providerId);
+      }
+      if (isSecretStorageAvailable(host.app.secretStorage)) {
+        const headers = readCustomProviderHeaders(host.app.secretStorage, providerId);
+        if (headers) {
+          writeCustomProviderHeaders(host.app.secretStorage, newId, headers);
+          deleteCustomProviderHeaders(host.app.secretStorage, providerId);
+        }
+      }
+
+      uiFacades.syncCustomProviders(host.settings);
+      await host.saveSettings();
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.refreshModelPresentation();
+      }
+      return newId;
     },
     async testProvider(providerId) {
       const readiness = workspace.modelReadinessProvider;
@@ -430,13 +510,6 @@ export function createSettingsModelsPort(
         && !allowedKeys.has(host.settings.titleGenerationModel)
       ) {
         host.settings.titleGenerationModel = '';
-      }
-      if (
-        typeof host.settings.cliDefaultModel === 'string'
-        && host.settings.cliDefaultModel.startsWith(prefix)
-        && !allowedKeys.has(host.settings.cliDefaultModel)
-      ) {
-        host.settings.cliDefaultModel = '';
       }
       uiFacades.syncCustomProviders(host.settings);
       await host.saveSettings();

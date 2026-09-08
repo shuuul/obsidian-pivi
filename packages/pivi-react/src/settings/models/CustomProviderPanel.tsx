@@ -6,9 +6,9 @@ import {
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
-import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
+import type { SettingsFeedbackMessage, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import { ExternalSetupLink } from '../ExternalSetupLink';
-import { BadgeListInput, SettingRow, SettingsSection } from '../primitives';
+import { BadgeListInput, SettingRow, SettingsFeedback, SettingsSection } from '../primitives';
 import { getModelProviderSetupLink } from '../providerSetupLinks';
 import { ProviderApiKeyField } from './ProviderCredentials';
 
@@ -16,12 +16,25 @@ export interface CustomProviderPanelProps {
   readonly models: SettingsModelsPort;
   readonly feedback: SettingsFeedbackPort;
   readonly config: CustomProviderConfig;
+  /** Draft provider id owned by the card; the card footer Save commits the rename. */
+  readonly providerIdDraft: string;
+  readonly onProviderIdDraftChange: (value: string) => void;
+  readonly providerIdFeedback: SettingsFeedbackMessage | null;
   readonly onChanged: () => void;
   readonly onError: (message: string) => void;
 }
 
-/** Display-name / base-URL / fetch-models controls for a custom or local endpoint. */
-export function CustomProviderPanel({ models, feedback, config, onChanged, onError }: CustomProviderPanelProps) {
+/** Display-name / provider-ID / base-URL / fetch-models controls for a custom or local endpoint. */
+export function CustomProviderPanel({
+  models,
+  feedback,
+  config,
+  providerIdDraft,
+  onProviderIdDraftChange,
+  providerIdFeedback,
+  onChanged,
+  onError,
+}: CustomProviderPanelProps) {
   const t = useT();
   const [name, setName] = useState(config.name);
   const [baseUrl, setBaseUrl] = useState(config.baseUrl);
@@ -108,6 +121,20 @@ export function CustomProviderPanel({ models, feedback, config, onChanged, onErr
             }}
           />
         </SettingRow>
+        {!isLocalCustomProviderKind(config.kind) ? (
+          <SettingRow name={t('settings.modelsTab.providerId')} description={t('settings.modelsTab.providerIdDesc')}>
+            <span className="pivi-settings-action-group">
+              <input
+                className="pivi-settings-control"
+                type="text"
+                value={providerIdDraft}
+                aria-label={t('settings.modelsTab.providerId')}
+                onChange={event => onProviderIdDraftChange(event.target.value)}
+              />
+              <SettingsFeedback feedback={providerIdFeedback} />
+            </span>
+          </SettingRow>
+        ) : null}
         <SettingRow name={t('settings.modelsTab.baseUrl')} description={t('settings.modelsTab.baseUrlDesc')}>
           <input
             className="pivi-settings-control pivi-settings-control--fill"

@@ -42,7 +42,7 @@ export async function initializePiviPlugin(
     listWorkspaceEntries: async () => (
       await facades.workspace.ensureWorkspaceServices()).slashCommandCatalog.listWorkspaceEntries(),
     createAuxQueryRunner: () => facades.chat.createAuxQueryRunner(),
-    getCliDefaultModel: () => facades.chat.settings.cliDefaultModel,
+    getDefaultModel: () => facades.chat.settings.model,
     today: () => new Date().toLocaleDateString(),
   });
   registerPiviSettings(plugin, facades.settings, facades.workspace);

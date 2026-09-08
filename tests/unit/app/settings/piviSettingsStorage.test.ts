@@ -521,7 +521,6 @@ describe("PiviSettingsStorage", () => {
         visibleModels: ['deepseek/deepseek-chat'],
         activeModel: 'deepseek/deepseek-chat',
         titleGenerationModel: '',
-        cliDefaultModel: '',
         customContextLimits: {},
       },
       webSearchTools: {
@@ -581,7 +580,6 @@ describe("PiviSettingsStorage", () => {
         visibleModels: ['deepseek/deepseek-chat'],
         activeModel: 'deepseek/deepseek-chat',
         titleGenerationModel: '',
-        cliDefaultModel: '',
         customContextLimits: {},
       },
       webSearchTools: {

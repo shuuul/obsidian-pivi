@@ -133,13 +133,6 @@ export function createPiUiFacades(
       ) {
         settings.titleGenerationModel = "";
       }
-      if (
-        typeof settings.cliDefaultModel === "string"
-        && settings.cliDefaultModel.startsWith(prefix)
-        && !allowedKeys.has(settings.cliDefaultModel)
-      ) {
-        settings.cliDefaultModel = "";
-      }
       syncCustomPiProviders(customProviders);
       return { count: result.models.length };
     },

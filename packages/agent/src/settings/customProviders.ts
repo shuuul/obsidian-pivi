@@ -152,6 +152,41 @@ function randomHexSuffix(hexLength: number): string {
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+/** Provider ids embed into Obsidian keychain secret ids: lowercase letters, digits, and dashes. */
+export const CUSTOM_PROVIDER_ID_PATTERN = /^[a-z0-9-]+$/;
+
+/** Maximum provider id length so `pivi-{id}-credential` stays a valid Obsidian secret id. */
+export function getMaxCustomProviderIdLength(): number {
+  return getMaxProviderIdLengthForPiCredentialSecret();
+}
+
+export type CustomProviderIdError = 'empty' | 'pattern' | 'length' | 'taken';
+
+/**
+ * Validate a user-authored custom provider id before it participates in model
+ * keys and credential secret ids. `existingIds` must already include every
+ * reserved id (built-in providers, local kinds, and added providers).
+ */
+export function validateCustomProviderId(
+  value: string,
+  existingIds: readonly string[],
+): CustomProviderIdError | null {
+  const id = value.trim().toLowerCase();
+  if (!id) {
+    return 'empty';
+  }
+  if (!CUSTOM_PROVIDER_ID_PATTERN.test(id)) {
+    return 'pattern';
+  }
+  if (id.length > getMaxCustomProviderIdLength()) {
+    return 'length';
+  }
+  if (existingIds.some(existing => existing.toLowerCase() === id)) {
+    return 'taken';
+  }
+  return null;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }

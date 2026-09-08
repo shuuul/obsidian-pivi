@@ -334,7 +334,6 @@ function hasSyncedLocalizedProviderFields(stored: Record<string, unknown>): bool
   if (
     Object.hasOwn(stored, 'model')
     || Object.hasOwn(stored, 'titleGenerationModel')
-    || Object.hasOwn(stored, 'cliDefaultModel')
   ) {
     return true;
   }

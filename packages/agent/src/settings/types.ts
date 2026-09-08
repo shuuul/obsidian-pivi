@@ -684,7 +684,6 @@ export interface PiviSettings {
   thinkingLevel: string;
   enableAutoTitleGeneration: boolean;
   titleGenerationModel: string;
-  cliDefaultModel: string;
 
   // Content settings
   excludedTags: string[];

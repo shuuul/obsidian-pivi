@@ -68,6 +68,20 @@ export function isSecretStorageAvailable(
     && typeof secretStorage.listSecrets === 'function';
 }
 
+/**
+ * Remove a secret entry when the host store supports real deletion. Obsidian's
+ * `setSecret(id, '')` clear convention only stores an empty value — the secret
+ * ID stays in the vault's secret store forever — so delete-capable stores must
+ * delete, and empty-string writes remain only as the legacy fallback.
+ */
+export function clearSyncSecret(secretStorage: SyncSecretStore, secretId: string): void {
+  if (secretStorage.deleteSecret) {
+    secretStorage.deleteSecret(secretId);
+    return;
+  }
+  secretStorage.setSecret(secretId, '');
+}
+
 export function getProviderCredentialSecretId(
   providerId: string,
   kind: ProviderCredentialKind,

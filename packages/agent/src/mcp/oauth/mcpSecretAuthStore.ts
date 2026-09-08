@@ -1,4 +1,5 @@
 import {
+  clearSyncSecret,
   encodeUtf8Hex,
   listObsidianSecretIds,
   stableProviderIdDigest,
@@ -124,7 +125,7 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
 
   async removeEntry(serverName: string): Promise<void> {
     for (const secretId of listMcpAuthEntrySecretIds(serverName)) {
-      this.secretStorage.setSecret(secretId, '');
+      clearSyncSecret(this.secretStorage, secretId);
     }
   }
 

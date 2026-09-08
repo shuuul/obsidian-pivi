@@ -144,11 +144,9 @@ export const requestUrl = jest.fn().mockResolvedValue({ status: 200 });
 export class SecretStorage {
   private secrets = new Map<string, string>();
 
+  // Mirrors the real app: setting an empty value stores an empty entry and
+  // keeps the ID; only deleteSecret removes an entry.
   setSecret(id: string, secret: string): void {
-    if (secret.length === 0) {
-      this.secrets.delete(id);
-      return;
-    }
     this.secrets.set(id, secret);
   }
 
@@ -158,6 +156,10 @@ export class SecretStorage {
 
   listSecrets(): string[] {
     return [...this.secrets.keys()];
+  }
+
+  deleteSecret(id: string): boolean {
+    return this.secrets.delete(id);
   }
 }
 

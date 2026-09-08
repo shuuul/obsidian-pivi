@@ -45,7 +45,6 @@ export interface DeviceLocalProviderStateV1 {
     visibleModels: string[];
     activeModel: string;
     titleGenerationModel: string;
-    cliDefaultModel: string;
     lastModel?: string;
     customContextLimits: Record<string, number>;
   };
@@ -342,14 +341,6 @@ function normalizeModelPreferences(
     ? titleCandidate
     : '';
 
-  const cliCandidate = typeof record.cliDefaultModel === 'string'
-    ? record.cliDefaultModel.trim()
-    : '';
-  const cliDefaultModel = cliCandidate
-    && isModelAllowed(cliCandidate, enabledProviderIds, customProviders)
-    ? cliCandidate
-    : '';
-
   const lastModel = normalizeOptionalModelReference(
     record.lastModel,
     enabledProviderIds,
@@ -362,7 +353,6 @@ function normalizeModelPreferences(
       : visibleModels,
     activeModel,
     titleGenerationModel,
-    cliDefaultModel,
     ...(lastModel ? { lastModel } : {}),
     customContextLimits: normalizeCustomContextLimits(record.customContextLimits, providers),
   };
@@ -406,7 +396,6 @@ export function seedDefaultDeviceLocalProviderState(): DeviceLocalProviderStateV
       visibleModels: [DEFAULT_MODEL_KEY],
       activeModel: DEFAULT_MODEL_KEY,
       titleGenerationModel: '',
-      cliDefaultModel: '',
       customContextLimits: {},
     },
     webSearchTools: {
@@ -478,9 +467,6 @@ export function extractDeviceLocalProviderState(
   const titleGenerationModel = typeof settings.titleGenerationModel === 'string'
     ? settings.titleGenerationModel
     : '';
-  const cliDefaultModel = typeof settings.cliDefaultModel === 'string'
-    ? settings.cliDefaultModel
-    : '';
   const lastModel = settings.agentSettings.lastModel;
 
   return normalizeDeviceLocalProviderState({
@@ -491,7 +477,6 @@ export function extractDeviceLocalProviderState(
       visibleModels: view.visibleModels,
       activeModel,
       titleGenerationModel,
-      cliDefaultModel,
       ...(typeof lastModel === 'string' ? { lastModel } : {}),
       customContextLimits,
     },
@@ -530,7 +515,6 @@ export function stripLocalizedFieldsFromRuntimeSettings(
   const {
     model: _model,
     titleGenerationModel: _titleGenerationModel,
-    cliDefaultModel: _cliDefaultModel,
     customContextLimits: _customContextLimits,
     agentSettings: _agentSettings,
     sharedEnvironmentVariables: _sharedEnvironmentVariables,
@@ -576,7 +560,6 @@ export function overlayDeviceLocalProviderState(
   settings.agentSettings.webSearchTools = normalized.webSearchTools;
   settings.model = normalized.modelPreferences.activeModel;
   settings.titleGenerationModel = normalized.modelPreferences.titleGenerationModel;
-  settings.cliDefaultModel = normalized.modelPreferences.cliDefaultModel;
 
   const customProviderIds = new Set(projected.customProviders.map((provider) => provider.id));
   const syncedContextLimits: Record<string, number> = {};

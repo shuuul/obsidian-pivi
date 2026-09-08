@@ -1,4 +1,5 @@
 import {
+  clearSyncSecret,
   encodeUtf8Hex,
   listObsidianSecretIds,
   stableProviderIdDigest,
@@ -612,7 +613,7 @@ export class McpStorage {
       return;
     }
     for (const secretId of listMcpSecretIds(serverName, kind)) {
-      this.secretStorage.setSecret(secretId, '');
+      clearSyncSecret(this.secretStorage, secretId);
     }
   }
 

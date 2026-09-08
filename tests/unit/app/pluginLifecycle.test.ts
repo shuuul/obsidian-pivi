@@ -58,7 +58,7 @@ describe('initializePiviPlugin', () => {
       readNote: expect.any(Function),
       listWorkspaceEntries: expect.any(Function),
       createAuxQueryRunner: expect.any(Function),
-      getCliDefaultModel: expect.any(Function),
+      getDefaultModel: expect.any(Function),
       today: expect.any(Function),
     });
     expect(registerPiviSettings).toHaveBeenCalledWith(

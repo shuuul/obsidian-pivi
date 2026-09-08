@@ -37,7 +37,6 @@ describe('seedDefaultDeviceLocalProviderState', () => {
     expect(state.modelPreferences.visibleModels).toEqual([DEFAULT_MODEL_KEY]);
     expect(state.modelPreferences.activeModel).toBe(DEFAULT_MODEL_KEY);
     expect(state.modelPreferences.titleGenerationModel).toBe('');
-    expect(state.modelPreferences.cliDefaultModel).toBe('');
     expect(DEFAULT_PI_PROVIDER_IDS).toEqual(['deepseek']);
     expect(DEFAULT_MODEL_KEY).toBe('deepseek/deepseek-chat');
   });
@@ -171,12 +170,11 @@ describe('normalizeDeviceLocalProviderState', () => {
     expect(state.modelPreferences.visibleModels).toEqual([]);
     expect(state.modelPreferences.activeModel).toBe('');
     expect(state.modelPreferences.titleGenerationModel).toBe('');
-    expect(state.modelPreferences.cliDefaultModel).toBe('');
     expect(state.modelPreferences.lastModel).toBeUndefined();
   });
 
-  it('keeps an enabled cliDefaultModel and prunes a stale one', () => {
-    const enabled = normalizeDeviceLocalProviderState({
+  it('drops unknown model preference fields during normalization', () => {
+    const state = normalizeDeviceLocalProviderState({
       version: 1,
       initialized: true,
       providers: [
@@ -193,26 +191,12 @@ describe('normalizeDeviceLocalProviderState', () => {
         disabledProviders: [],
       },
     });
-    expect(enabled.modelPreferences.cliDefaultModel).toBe('deepseek/deepseek-chat');
-
-    const stale = normalizeDeviceLocalProviderState({
-      version: 1,
-      initialized: true,
-      providers: [
-        { id: 'deepseek', type: 'builtin', disabled: true },
-      ],
-      modelPreferences: {
-        visibleModels: [],
-        activeModel: '',
-        titleGenerationModel: '',
-        cliDefaultModel: 'deepseek/deepseek-chat',
-      },
-      webSearchTools: {
-        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
-        disabledProviders: [],
-      },
-    });
-    expect(stale.modelPreferences.cliDefaultModel).toBe('');
+    expect(Object.keys(state.modelPreferences)).toEqual([
+      'visibleModels',
+      'activeModel',
+      'titleGenerationModel',
+      'customContextLimits',
+    ]);
   });
 
   it('returns defensive copies that isolate mutation', () => {

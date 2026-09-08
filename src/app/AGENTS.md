@@ -104,7 +104,7 @@ flowchart LR
 | `ui/createSettingsUiPorts.ts` | Explicit-workspace `createSettingsUiPorts(host, workspace)` public entry for React-owned `SettingsPorts`; About snapshot comes from `pluginIdentity.ts` |
 | `ui/chatUiCompositionHost.ts` | Composition-only host type consumed by `createChatUiPorts` |
 | `ui/createUiPortHelpers.ts` | Shared workspace/env/subagent helpers for UI port adapters |
-| `ui/createSettingsModelsPort.ts` | Settings models/credential port wiring; prefetches interactive OAuth credentials via `getAuth` before readiness badges render; settings-authoritative provider removal and optional single-provider credential deletion |
+| `ui/createSettingsModelsPort.ts` | Settings models/credential port wiring; prefetches interactive OAuth credentials via `getAuth` before readiness badges render; settings-authoritative provider removal and optional single-provider credential deletion; `renameCustomProvider` migrates model keys, credentials, and header secrets to the new id, deletes the old secret entries, and rejects duplicate provider ids |
 | `ui/createSettingsSkillsPort.ts` | Settings Skills port wiring: default vault-skills bundle install/update/remove orchestration and change notification |
 | `ui/createSettingsPromptPort.ts` | Settings Prompt-tab port over `PromptCompositionCoordinator`: module list, numeric usage snapshot, workflow toggle/edit/restore, and custom-module CRUD/reorder; every persist calls `refreshPrompt()` and bumps the shared in-memory `catalogRevision` |
 | `ui/createMcpSettingsPorts.ts` | Settings MCP save/reload/auth port wiring |
@@ -126,4 +126,4 @@ flowchart LR
 | `runtime/obsidianHttpRequest.ts` | Adapts Obsidian HTTP into custom-provider composition without leaking host networking into the Pi engine |
 | `runtime/piUiFacades.ts` | Settings/model/auth facades for product UI |
 | `commandRegistration.ts` / `viewRegistration.ts` / `settingsRegistration.ts` | App → UI mount points |
-| `cliRegistration.ts` | Official Obsidian CLI handler registration (`pivi:run`): resolves the note through `ObsidianVaultApi.readNote`, resolves the workspace-command prompt headlessly, and runs it through a fresh `AuxQueryRunner` with `model=` or the device-local `cliDefaultModel` preference; wired in `pluginLifecycle.ts` after command registration |
+| `cliRegistration.ts` | Official Obsidian CLI handler registration (`pivi:run`): resolves the note through `ObsidianVaultApi.readNote`, resolves the workspace-command prompt headlessly, and runs it through a fresh `AuxQueryRunner` with `model=` or the shared default model; wired in `pluginLifecycle.ts` after command registration |

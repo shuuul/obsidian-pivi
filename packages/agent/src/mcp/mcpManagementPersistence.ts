@@ -1,3 +1,4 @@
+import { clearSyncSecret } from '../auth/providerSecretStorage';
 import type { SyncSecretStore } from '../ports';
 import type {
   AgentMcpBearerInput,
@@ -323,7 +324,9 @@ export class McpManagementPersistence {
 
   private clearSecret(id: string, failures: Array<{ target: string; message: string }>): void {
     try {
-      this.options.secretStorage?.setSecret(id, '');
+      if (this.options.secretStorage) {
+        clearSyncSecret(this.options.secretStorage, id);
+      }
     } catch (cause) {
       addFailure(failures, id, cause);
     }
