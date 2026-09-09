@@ -19,6 +19,7 @@ import {
 import { isSupportedPiProviderId } from '@pivi/agent/auth/piProviderValidation';
 import { getProviderEnvVarNames, type ProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
 import {
+  clearSyncSecret,
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
   isSecretStorageAvailable,
@@ -125,7 +126,7 @@ function clearSecretIfPresent(secretStorage: SyncSecretStore, secretId: string):
   if (!secretStorage.getSecret(secretId)) {
     return false;
   }
-  secretStorage.setSecret(secretId, '');
+  clearSyncSecret(secretStorage, secretId);
   return true;
 }
 
@@ -230,7 +231,7 @@ export function migrateSplitSubscriptionOAuthCredentials(
           serializeProviderCredential(mainCredential),
         );
       }
-      secretStorage.setSecret(getPiAiCredentialSecretId(piProviderId), '');
+      clearSyncSecret(secretStorage, getPiAiCredentialSecretId(piProviderId));
       changed = true;
     }
 
@@ -312,7 +313,7 @@ export class ObsidianCredentialStore implements CredentialStore {
 
   clearSync(providerId: string): void {
     for (const secretId of listPiAiCredentialSecretIds(providerId)) {
-      this.secretStorage.setSecret(secretId, '');
+      clearSyncSecret(this.secretStorage, secretId);
     }
   }
 

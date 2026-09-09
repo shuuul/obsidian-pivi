@@ -821,6 +821,14 @@
     "modelsTab": {
       "intro": "API-ключи и OAuth-токены хранятся в {secureStorageName}. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
       "secureStorageRequired": "API-ключи провайдеров требуют {hostName} {version} или новее с {secureStorageName}. Обновите {hostName} для безопасного хранения учётных данных.",
+      "defaultModelSectionTitle": "Модель по умолчанию",
+      "defaultModel": "Модель по умолчанию",
+      "defaultModelDesc": "Используется для новых бесед и запусков pivi:run через CLI. Выбор модели в композере обновляет её.",
+      "providerId": "ID провайдера",
+      "providerIdDesc": "Идентификатор в ключах моделей (provider/model). Переименование переносит сохранённые выборы моделей и учётные данные.",
+      "providerIdInvalid": "Используйте только строчные буквы, цифры и дефисы, до {max} символов.",
+      "providerIdTaken": "Этот ID уже используется.",
+      "providerIdRenamed": "ID провайдера переименован в {id}.",
       "authHeading": "Аутентификация и учётные данные",
       "apiKey": "API-ключ",
       "apiKeyOptional": "API-ключ (необязательно)",
@@ -1201,7 +1209,21 @@
     "newTab": "Новая вкладка",
     "newSession": "Новый сеанс (в текущей вкладке)",
     "closeCurrentTab": "Закрыть текущую вкладку",
-    "openPiviRibbon": "Открыть Pivi"
+    "openPiviRibbon": "Открыть Pivi",
+    "cli": {
+      "runDescription": "Выполняет команду рабочего пространства Pivi для заметки и выводит результат модели.",
+      "flagFile": "Имя заметки, разрешается как вики-ссылка",
+      "flagPath": "Точный путь от корня хранилища (vault)",
+      "flagCommand": "Имя команды рабочего пространства",
+      "flagModel": "Ключ модели в формате provider/model; по умолчанию — настройка модели CLI по умолчанию",
+      "flagSelection": "Текст для {selectedTextToken}",
+      "errorNoCommand": "Отсутствует параметр command=. Укажите имя команды рабочего пространства Pivi, например command=summary.",
+      "errorUnknownCommand": "Неизвестная команда рабочего пространства: {name}. Доступные команды: {names}",
+      "errorNoteNotFound": "Заметка не найдена. Проверьте значение file= или path=.",
+      "errorSelectionRequired": "Эта команда требует выделенный текст. Укажите selection=\"...\".",
+      "errorEmptyPrompt": "У этой команды пустой промпт — выполнять нечего.",
+      "errorInvalidModel": "Недопустимое значение model=. Используйте формат provider/model, например deepseek/deepseek-chat."
+    }
   },
   "tools": {
     "display": {

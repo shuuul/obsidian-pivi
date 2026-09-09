@@ -1,6 +1,7 @@
 import type { SyncSecretStore } from '../ports';
 import type { CustomProviderConfig } from '../settings/customProviders';
 import {
+  clearSyncSecret,
   encodeUtf8Hex,
   listObsidianSecretIds,
   stableProviderIdDigest,
@@ -119,7 +120,7 @@ export function writeCustomProviderHeaders(
   const normalized = normalizeHeaderMap(headers);
   const secretId = getCustomProviderHeaderSecretId(providerId);
   if (Object.keys(normalized).length === 0) {
-    secretStorage.setSecret(secretId, '');
+    clearSyncSecret(secretStorage, secretId);
     return;
   }
   secretStorage.setSecret(secretId, serializeCustomProviderHeaderSecret(normalized));
@@ -130,7 +131,7 @@ export function deleteCustomProviderHeaders(
   providerId: string,
 ): void {
   for (const secretId of listCustomProviderHeaderSecretIds(providerId)) {
-    secretStorage.setSecret(secretId, '');
+    clearSyncSecret(secretStorage, secretId);
   }
 }
 

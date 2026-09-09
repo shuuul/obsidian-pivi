@@ -5,7 +5,9 @@ import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
 import type { PiviPluginWorkspace, PiviSettingsHost, PiviUiFacades } from '@/app/hostContracts';
 import { createSettingsModelsPort } from '@/app/ui/createSettingsModelsPort';
 
-function createHarness() {
+function createHarness(
+  credentialReadSync: (providerId: string) => unknown = () => undefined,
+) {
   const settings = {
     ...DEFAULT_PIVI_SETTINGS,
     model: 'anthropic/claude-test',
@@ -21,6 +23,7 @@ function createHarness() {
   const saveSettings = jest.fn(async () => undefined);
   const refreshModelPresentation = jest.fn();
   const deleteCredential = jest.fn(async () => undefined);
+  const modifyCredential = jest.fn(async () => undefined);
   const deepseekModel: ChatUIOption = {
     value: 'deepseek/deepseek-chat',
     label: 'DeepSeek Chat',
@@ -43,8 +46,8 @@ function createHarness() {
   } as unknown as PiviUiFacades;
   const workspace = {
     credentialStore: {
-      readSync: () => undefined,
-      modify: async () => undefined,
+      readSync: credentialReadSync,
+      modify: modifyCredential,
       delete: deleteCredential,
     },
   } as unknown as PiviPluginWorkspace;
@@ -52,6 +55,7 @@ function createHarness() {
   return {
     deleteCredential,
     host,
+    modifyCredential,
     port: createSettingsModelsPort(host, uiFacades, workspace),
     refreshModelPresentation,
     saveSettings,
@@ -348,5 +352,85 @@ describe('createSettingsModelsPort provider removal', () => {
       'Provider credential storage is unavailable.',
     );
     expect(harness.settings.agentSettings.addedProviders).toContain('anthropic');
+  });
+});
+
+describe('createSettingsModelsPort provider rename', () => {
+  const providerId = 'custom-openai-compatible-lan';
+  const modelKey = `${providerId}/qwen3.8-27b`;
+
+  function createRenameHarness() {
+    const harness = createHarness(id => id === providerId
+      ? { type: 'api_key', key: 'sk-test' }
+      : undefined);
+    harness.settings.agentSettings.addedProviders = [providerId, 'deepseek'];
+    harness.settings.agentSettings.customProviders = [{
+      id: providerId,
+      kind: 'openai-compatible',
+      name: 'DGX Spark',
+      baseUrl: 'http://192.168.100.114:8888/v1',
+      api: 'openai-completions',
+      models: [{ id: 'qwen3.8-27b', name: 'qwen3.8-27b' }],
+    }];
+    harness.settings.model = modelKey;
+    harness.settings.titleGenerationModel = modelKey;
+    harness.settings.agentSettings.lastModel = modelKey;
+    harness.settings.agentSettings.visibleModels = [modelKey];
+    harness.settings.customContextLimits = { [modelKey]: 262_144 };
+    return harness;
+  }
+
+  it('renames the provider and migrates every derived model key together', async () => {
+    const harness = createRenameHarness();
+
+    const renamed = await harness.port.renameCustomProvider(providerId, ' DGX-Spark ');
+
+    expect(renamed).toBe('dgx-spark');
+    expect(harness.settings.agentSettings.customProviders[0]?.id).toBe('dgx-spark');
+    expect(harness.settings.agentSettings.addedProviders).toEqual(['dgx-spark', 'deepseek']);
+    expect(harness.settings.model).toBe('dgx-spark/qwen3.8-27b');
+    expect(harness.settings.titleGenerationModel).toBe('dgx-spark/qwen3.8-27b');
+    expect(harness.settings.agentSettings.lastModel).toBe('dgx-spark/qwen3.8-27b');
+    expect(harness.settings.agentSettings.visibleModels).toEqual(['dgx-spark/qwen3.8-27b']);
+    expect(harness.settings.customContextLimits).toEqual({ 'dgx-spark/qwen3.8-27b': 262_144 });
+    expect(harness.modifyCredential).toHaveBeenCalledWith('dgx-spark', expect.any(Function));
+    expect(harness.deleteCredential).toHaveBeenCalledWith(providerId);
+    expect(harness.saveSettings).toHaveBeenCalledTimes(1);
+    expect(harness.refreshModelPresentation).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects duplicate ids against registered and orphaned providers without saving', async () => {
+    const harness = createRenameHarness();
+    // An orphaned entry that is not registered in addedProviders must still
+    // block the rename.
+    harness.settings.agentSettings.customProviders.push({
+      id: 'dgx-spark',
+      kind: 'openai-compatible',
+      name: 'Spark duplicate',
+      baseUrl: 'http://192.168.100.115:8888/v1',
+      api: 'openai-completions',
+      models: [],
+    });
+
+    await expect(harness.port.renameCustomProvider(providerId, 'dgx-spark')).rejects.toThrow(
+      'This ID is already in use.',
+    );
+    await expect(harness.port.renameCustomProvider(providerId, 'deepseek')).rejects.toThrow(
+      'This ID is already in use.',
+    );
+    expect(harness.settings.agentSettings.customProviders[0]?.id).toBe(providerId);
+    expect(harness.settings.model).toBe(modelKey);
+    expect(harness.saveSettings).not.toHaveBeenCalled();
+    expect(harness.modifyCredential).not.toHaveBeenCalled();
+    expect(harness.deleteCredential).not.toHaveBeenCalled();
+  });
+
+  it('treats a rename to the unchanged id as a no-op', async () => {
+    const harness = createRenameHarness();
+
+    const renamed = await harness.port.renameCustomProvider(providerId, providerId.toUpperCase());
+
+    expect(renamed).toBe(providerId);
+    expect(harness.saveSettings).not.toHaveBeenCalled();
   });
 });

@@ -172,7 +172,7 @@ describe("McpStorage", () => {
     expect(loaded.find(server => server.name === "oauth")?.oauth).not.toHaveProperty("clientSecret");
   });
 
-  it("stores bearer tokens for long MCP server names using digest secret ids", async () => {
+  it("stores bearer tokens under name-tagged ids that fit the keychain limit", async () => {
     const adapter = new MemoryVaultAdapter();
     const secretStorage = new SecretStorage();
     const storage = new McpStorage(
@@ -191,11 +191,100 @@ describe("McpStorage", () => {
 
     const secretIds = secretStorage.listSecrets().filter((id) => id.startsWith("pivi-mcp"));
     expect(secretIds).toHaveLength(1);
+    expect(secretIds[0]).toBe(`pivi-mcp-name-${serverName}-bearer-token`);
+    expect(secretIds[0]!.length).toBeLessThanOrEqual(64);
+
+    const loaded = await storage.load();
+    expect(loaded[0]?.bearerToken).toBe("bearer-secret");
+  });
+
+  it("stores bearer tokens for over-limit MCP server names using digest secret ids", async () => {
+    const adapter = new MemoryVaultAdapter();
+    const secretStorage = new SecretStorage();
+    const storage = new McpStorage(
+      adapter as unknown as FileStore,
+      secretStorage,
+    );
+    const serverName = "mcp-server-name-that-is-far-too-long-for-the-keychain-limit";
+
+    await storage.save([
+      remoteServer({
+        name: serverName,
+        auth: "bearer",
+        bearerToken: "bearer-secret",
+      }),
+    ]);
+
+    const secretIds = secretStorage.listSecrets().filter((id) => id.startsWith("pivi-mcp"));
+    expect(secretIds).toHaveLength(1);
     expect(secretIds[0]).toMatch(/^pivi-mcp-d-[0-9a-f]{16}-bearer-token$/);
     expect(secretIds[0]!.length).toBeLessThanOrEqual(64);
 
     const loaded = await storage.load();
     expect(loaded[0]?.bearerToken).toBe("bearer-secret");
+  });
+
+  it("migrates legacy hex-encoded secret ids onto name-tagged ids on load", async () => {
+    const legacySecretId = "pivi-mcp-72656d6f7465-bearer-token";
+    const adapter = new MemoryVaultAdapter({
+      [PIVI_MCP_CONFIG_PATH]: `${JSON.stringify(
+        {
+          mcpServers: {
+            remote: { type: "http", url: "https://mcp.example.com" },
+          },
+          _pivi: {
+            servers: {
+              remote: { auth: "bearer" },
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    });
+    const secretStorage = new SecretStorage();
+    secretStorage.setSecret(legacySecretId, "legacy-bearer-secret");
+    const storage = new McpStorage(
+      adapter as unknown as FileStore,
+      secretStorage,
+    );
+
+    const loaded = await storage.load();
+    expect(loaded[0]?.bearerToken).toBe("legacy-bearer-secret");
+
+    const canonicalId = listMcpServerSecretIds("remote", "bearer-token")[0]!;
+    expect(canonicalId).toBe("pivi-mcp-name-remote-bearer-token");
+    expect(secretStorage.getSecret(canonicalId)).toBe("legacy-bearer-secret");
+    expect(secretStorage.getSecret(legacySecretId)).toBeNull();
+  });
+
+  it("does not expose a legacy secret to a server named after another server's hex encoding", async () => {
+    const encodedRemote = "72656d6f7465";
+    const legacySecretId = `pivi-mcp-${encodedRemote}-bearer-token`;
+    const adapter = new MemoryVaultAdapter({
+      [PIVI_MCP_CONFIG_PATH]: `${JSON.stringify({
+        mcpServers: {
+          [encodedRemote]: { type: "http", url: "https://encoded.example.com" },
+          remote: { type: "http", url: "https://remote.example.com" },
+        },
+        _pivi: {
+          servers: {
+            [encodedRemote]: { auth: "bearer" },
+            remote: { auth: "bearer" },
+          },
+        },
+      }, null, 2)}\n`,
+    });
+    const secretStorage = new SecretStorage();
+    secretStorage.setSecret(legacySecretId, "remote-secret");
+    const storage = new McpStorage(adapter as unknown as FileStore, secretStorage);
+
+    const loaded = await storage.load();
+
+    expect(loaded.find(server => server.name === encodedRemote)?.bearerToken).toBeUndefined();
+    expect(loaded.find(server => server.name === "remote")?.bearerToken).toBe("remote-secret");
+    expect(secretStorage.getSecret("pivi-mcp-name-remote-bearer-token")).toBe("remote-secret");
+    expect(secretStorage.getSecret(legacySecretId)).toBeNull();
   });
 
   it("migrates legacy plaintext MCP secrets out of mcp.json on load", async () => {

@@ -14,7 +14,7 @@ const snapshot: SettingsUiSnapshotData = {
     userName: '', excludedTags: [], deletedSessionRetentionDays: 30,
     providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 },
     requireCommandOrControlEnterToSend: false,
-    
+
     editorSelectionToolbar: { enabled: true, shortcuts: [] },
   },
   subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
@@ -46,6 +46,7 @@ function createModelsPort() {
     addBuiltinProvider: async () => undefined,
     addCustomKind: async () => 'custom-openai-compatible',
     removeProvider: async () => undefined,
+    renameCustomProvider: async (_providerId: string, newId: string) => newId,
     ensureProviderCredentials: async () => undefined,
     testProvider: async () => ({ ok: true, detail: 'ok' }),
     patchCustomProvider: async () => undefined,
@@ -161,7 +162,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       listIconNames: () => [],
       isNoteToolbarTextToolbarActive: () => false,
     },
-    catalog: { listModelsForProvider: () => [], listCatalogModels: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
+    catalog: { listModelsForProvider: () => [], listCatalogModels: () => [], listComposerModelOptions: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
     hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
     mentionEditor: { mount: () => ({ getValue: () => '', setValue: () => undefined, focus: () => undefined, setDisabled: () => undefined, destroy: () => undefined }) },
     about: { getSnapshot: () => ({ version: '0.19.4', releasedAt: '2026-08-29', githubUrl: 'https://github.com/shuuul/obsidian-pivi', issuesUrl: 'https://github.com/shuuul/obsidian-pivi/issues' }) },
@@ -1208,6 +1209,137 @@ describe('React settings foundation', () => {
     const apiKey = within(card!).getByText('API key (optional)');
     expect(baseUrl.compareDocumentPosition(apiKey) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(card!).queryByText('Authentication (optional)')).toBeNull();
+  });
+  it('renames a custom provider id through the card save action', async () => {
+    const renameCustomProvider = jest.fn(async (_providerId: string, newId: string) => newId);
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: ['custom-openai-compatible-abc'],
+        disabledProviders: [],
+        customProviders: [{
+          id: 'custom-openai-compatible-abc',
+          kind: 'openai-compatible',
+          name: 'vLLM',
+          baseUrl: 'http://localhost:8888/v1',
+          api: 'openai-completions',
+          models: [],
+          apiKeyRequired: false,
+        }],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      renameCustomProvider,
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByText('vLLM'));
+    const card = screen.getByText('vLLM').closest<HTMLElement>('.pivi-settings-card');
+    expect(card).not.toBeNull();
+    const idInput = within(card!).getByLabelText('Provider ID');
+    fireEvent.change(idInput, { target: { value: 'dgx-spark' } });
+    const footer = card!.querySelector('.pivi-settings-card__footer') as HTMLElement;
+    fireEvent.click(within(footer).getByRole('button', { name: 'Save' }));
+    await act(async () => undefined);
+    expect(renameCustomProvider).toHaveBeenCalledWith('custom-openai-compatible-abc', 'dgx-spark');
+  });
+  it('keeps the default-model selector on the renamed provider model', async () => {
+    const oldProviderId = 'custom-openai-compatible-abc';
+    const newProviderId = 'dgx-spark';
+    const modelId = 'qwen3.8-27b';
+    let renamed = false;
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => {
+        const providerId = renamed ? newProviderId : oldProviderId;
+        return {
+          addedProviders: [providerId, 'deepseek'],
+          disabledProviders: [],
+          customProviders: [{
+            id: providerId,
+            kind: 'openai-compatible',
+            name: 'vLLM',
+            baseUrl: 'http://localhost:8888/v1',
+            api: 'openai-completions',
+            models: [{ id: modelId, name: modelId }],
+            apiKeyRequired: false,
+          }],
+          visibleModels: [`${providerId}/${modelId}`, 'deepseek/deepseek-chat'],
+          availableModes: [],
+          discoveredModels: [],
+          environmentVariables: '',
+          selectedMode: '',
+        };
+      },
+      renameCustomProvider: async () => {
+        renamed = true;
+        return newProviderId;
+      },
+    });
+    Object.assign(ports.catalog, {
+      listComposerModelOptions: () => [
+        { value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' },
+        {
+          value: `${renamed ? newProviderId : oldProviderId}/${modelId}`,
+          label: renamed ? 'Renamed Qwen' : 'Original Qwen',
+        },
+      ],
+    });
+    Object.assign(ports.persistence, {
+      getSettingsSnapshot: () => ({ model: `${oldProviderId}/${modelId}` }),
+    });
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot page="models" ports={ports} />
+      </I18nProvider>,
+    ));
+    await act(async () => undefined);
+    expect(screen.getByRole('button', { name: 'Model' })).toHaveTextContent('Original Qwen');
+
+    fireEvent.click(screen.getByText('vLLM'));
+    const card = screen.getByText('vLLM').closest<HTMLElement>('.pivi-settings-card');
+    fireEvent.change(within(card!).getByLabelText('Provider ID'), { target: { value: newProviderId } });
+    const footer = card!.querySelector('.pivi-settings-card__footer') as HTMLElement;
+    fireEvent.click(within(footer).getByRole('button', { name: 'Save' }));
+    await act(async () => undefined);
+
+    expect(screen.getByRole('button', { name: 'Model' })).toHaveTextContent('Renamed Qwen');
+  });
+  it('blocks card save with inline feedback when the provider id is invalid', async () => {
+    const renameCustomProvider = jest.fn(async (_providerId: string, newId: string) => newId);
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({
+        addedProviders: ['custom-openai-compatible-abc'],
+        disabledProviders: [],
+        customProviders: [{
+          id: 'custom-openai-compatible-abc',
+          kind: 'openai-compatible',
+          name: 'vLLM',
+          baseUrl: 'http://localhost:8888/v1',
+          api: 'openai-completions',
+          models: [],
+          apiKeyRequired: false,
+        }],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+      renameCustomProvider,
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByText('vLLM'));
+    const card = screen.getByText('vLLM').closest<HTMLElement>('.pivi-settings-card');
+    fireEvent.change(within(card!).getByLabelText('Provider ID'), { target: { value: 'DGX Spark' } });
+    const footer = card!.querySelector('.pivi-settings-card__footer') as HTMLElement;
+    fireEvent.click(within(footer).getByRole('button', { name: 'Save' }));
+    await act(async () => undefined);
+    expect(renameCustomProvider).not.toHaveBeenCalled();
+    expect(within(card!).getByRole('alert')).toBeInTheDocument();
   });
   it('confirms provider removal and keeps credentials by default', async () => {
     const removeProvider = jest.fn(async () => undefined);

@@ -331,7 +331,10 @@ function hasSyncedEnvironmentFields(stored: Record<string, unknown>): boolean {
 }
 
 function hasSyncedLocalizedProviderFields(stored: Record<string, unknown>): boolean {
-  if (Object.hasOwn(stored, 'model') || Object.hasOwn(stored, 'titleGenerationModel')) {
+  if (
+    Object.hasOwn(stored, 'model')
+    || Object.hasOwn(stored, 'titleGenerationModel')
+  ) {
     return true;
   }
   if (Object.hasOwn(stored, 'customContextLimits')) {

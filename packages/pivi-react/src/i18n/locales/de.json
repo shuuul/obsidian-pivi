@@ -821,6 +821,14 @@
     "modelsTab": {
       "intro": "API-Schlüssel und OAuth-Token liegen im {secureStorageName}. Deaktivierte Anbieter bleiben gespeichert, sind aber im Modellwähler ausgeblendet.",
       "secureStorageRequired": "Anbieter-API-Schlüssel erfordern {hostName} {version} oder neuer mit {secureStorageName}. Aktualisieren Sie {hostName}, um Anmeldedaten sicher zu speichern.",
+      "defaultModelSectionTitle": "Standardmodell",
+      "defaultModel": "Standardmodell",
+      "defaultModelDesc": "Wird für neue Unterhaltungen und pivi:run-CLI-Läufe verwendet. Die Modellauswahl im Composer aktualisiert es.",
+      "providerId": "Provider-ID",
+      "providerIdDesc": "Kennung innerhalb von Modellschlüsseln (provider/model). Eine Umbenennung überträgt gespeicherte Modellauswahlen und hinterlegte Zugangsdaten.",
+      "providerIdInvalid": "Nur Kleinbuchstaben, Ziffern und Bindestriche verwenden, bis zu {max} Zeichen.",
+      "providerIdTaken": "Diese ID ist bereits in Verwendung.",
+      "providerIdRenamed": "Provider-ID umbenannt in {id}.",
       "authHeading": "Authentifizierung & Anmeldedaten",
       "apiKey": "API-Schlüssel",
       "apiKeyOptional": "API-Schlüssel (optional)",
@@ -1201,7 +1209,21 @@
     "newTab": "Neuer Tab",
     "newSession": "Neue Sitzung (im aktuellen Tab)",
     "closeCurrentTab": "Aktuellen Tab schließen",
-    "openPiviRibbon": "Pivi öffnen"
+    "openPiviRibbon": "Pivi öffnen",
+    "cli": {
+      "runDescription": "Führt einen Pivi-Arbeitsbereichsbefehl für eine Notiz aus und gibt das Modellergebnis aus.",
+      "flagFile": "Notizname, wie ein Wikilink aufgelöst",
+      "flagPath": "Exakter Pfad vom Vault-Stamm",
+      "flagCommand": "Name des Arbeitsbereichsbefehls",
+      "flagModel": "Modellschlüssel als provider/model; Standard ist die CLI-Standardmodelleinstellung",
+      "flagSelection": "Text für {selectedTextToken}",
+      "errorNoCommand": "Parameter command= fehlt. Geben Sie den Namen eines Pivi-Arbeitsbereichsbefehls an, z. B. command=summary.",
+      "errorUnknownCommand": "Unbekannter Arbeitsbereichsbefehl: {name}. Verfügbare Befehle: {names}",
+      "errorNoteNotFound": "Notiz nicht gefunden. Überprüfen Sie den Wert von file= oder path=.",
+      "errorSelectionRequired": "Dieser Befehl erfordert ausgewählten Text. Geben Sie selection=\"...\" an.",
+      "errorEmptyPrompt": "Dieser Befehl hat einen leeren Prompt und nichts auszuführen.",
+      "errorInvalidModel": "Ungültiger model=-Wert. Verwenden Sie das Format provider/model, z. B. deepseek/deepseek-chat."
+    }
   },
   "tools": {
     "display": {

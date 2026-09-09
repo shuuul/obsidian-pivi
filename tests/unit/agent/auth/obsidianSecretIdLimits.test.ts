@@ -22,6 +22,7 @@ import { getWebSearchCredentialSecretId } from '@pivi/agent/tools';
 
 const LONG_CUSTOM_PROVIDER_ID = 'custom-openai-compatible-369e807a-7e24-4204-a86d-3abbaaa3d1e2';
 const LONG_MCP_SERVER_NAME = 'my-very-long-mcp-server-name-example';
+const OVER_LIMIT_MCP_SERVER_NAME = 'mcp-server-name-that-is-far-too-long-for-the-keychain-limit';
 
 describe('Obsidian secret ID limits', () => {
   it('keeps built-in provider credential ids within the keychain limit', () => {
@@ -80,8 +81,15 @@ describe('Obsidian secret ID limits', () => {
     expect(secretId.length).toBeLessThanOrEqual(MAX_OBSIDIAN_SECRET_ID_LENGTH);
   });
 
-  it('uses digest MCP OAuth ids for long server names', () => {
+  it('keeps long-but-fitting MCP server names on plain OAuth secret ids', () => {
     const secretId = getMcpAuthEntrySecretId(LONG_MCP_SERVER_NAME);
+    expect(secretId).toBe(`pivi-mcp-${LONG_MCP_SERVER_NAME}-oauth-v1`);
+    expect(secretId.length).toBeLessThanOrEqual(MAX_OBSIDIAN_SECRET_ID_LENGTH);
+    expect(isObsidianSecretId(secretId)).toBe(true);
+  });
+
+  it('uses digest MCP OAuth ids for over-limit server names', () => {
+    const secretId = getMcpAuthEntrySecretId(OVER_LIMIT_MCP_SERVER_NAME);
     expect(secretId).toMatch(/^pivi-mcp-oauth-d-[0-9a-f]{16}-auth-v1$/);
     expect(secretId.length).toBeLessThanOrEqual(MAX_OBSIDIAN_SECRET_ID_LENGTH);
   });

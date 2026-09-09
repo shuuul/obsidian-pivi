@@ -1,17 +1,17 @@
 import { isDualAuthOAuthProviderId } from '@pivi/agent/auth/piProviderCredentials';
-import { isLocalCustomProviderKind } from '@pivi/agent/settings/customProviders';
+import { getMaxCustomProviderIdLength, isLocalCustomProviderKind, validateCustomProviderId } from '@pivi/agent/settings/customProviders';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
-import { Fragment, type MouseEvent, useState } from 'react';
+import { Fragment, type MouseEvent, useEffect, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
-import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
+import type { SettingsCatalogPort, SettingsFeedbackMessage, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { DisclosureCard, SettingRow, SettingsRemoveButton, Toggle } from '../primitives';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
-import { ProviderApiKeyField,ProviderCredentials } from './ProviderCredentials';
+import { ProviderApiKeyField, ProviderCredentials } from './ProviderCredentials';
 import { ProviderOAuthSection } from './ProviderOAuthSection';
 import { STATUS_DESC_KEYS, STATUS_LABEL_KEYS } from './statusLabels';
 
@@ -32,6 +32,8 @@ export interface ProviderCardProps {
   readonly onToggleExpanded: (providerId: string, open?: boolean) => void;
   readonly save: (patch: Parameters<SettingsModelsPort['saveSettings']>[0]) => Promise<void>;
   readonly onChanged: () => void;
+  /** Called after a custom provider id rename so identity-keyed UI state can follow. */
+  readonly onProviderRenamed?: (oldId: string, newId: string) => void;
   readonly onRemoved?: () => void;
   readonly onCancelDraft?: () => void;
   readonly onConfirmDraft?: () => void;
@@ -58,6 +60,7 @@ export function ProviderCard({
   onToggleExpanded,
   save,
   onChanged,
+  onProviderRenamed,
   onRemoved,
   onCancelDraft,
   onConfirmDraft,
@@ -71,6 +74,8 @@ export function ProviderCard({
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [deleteCredential, setDeleteCredential] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [providerIdDraft, setProviderIdDraft] = useState(providerId);
+  const [providerIdFeedback, setProviderIdFeedback] = useState<SettingsFeedbackMessage | null>(null);
 
   const custom = settings.customProviders.find(entry => entry.id === providerId);
   const displayName = custom?.name ?? models.getProviderDisplayName(providerId);
@@ -89,6 +94,48 @@ export function ProviderCard({
   const stop = (event: MouseEvent): void => {
     event.preventDefault();
     event.stopPropagation();
+  };
+
+  // Closing the card without saving discards the provider-id draft.
+  useEffect(() => {
+    if (!expanded) {
+      setProviderIdDraft(providerId);
+      setProviderIdFeedback(null);
+    }
+  }, [expanded, providerId]);
+
+  /** Footer Save commits a pending provider-id rename before collapsing the card. */
+  const saveProviderCard = async (): Promise<void> => {
+    onConfirmDraft?.();
+    const nextId = providerIdDraft.trim().toLowerCase();
+    if (!custom || isLocalProvider || nextId === providerId) {
+      onToggleExpanded(providerId, false);
+      return;
+    }
+    const validationError = validateCustomProviderId(nextId, settings.addedProviders);
+    if (validationError) {
+      setProviderIdFeedback({
+        kind: 'error',
+        message: validationError === 'taken'
+          ? t('settings.modelsTab.providerIdTaken')
+          : t('settings.modelsTab.providerIdInvalid', {
+            max: String(getMaxCustomProviderIdLength()),
+          }),
+      });
+      return;
+    }
+    try {
+      const renamedId = await models.renameCustomProvider(providerId, nextId);
+      onProviderRenamed?.(providerId, renamedId);
+      onChanged();
+      feedback.notify(t('settings.modelsTab.providerIdRenamed', { id: renamedId }));
+      onToggleExpanded(renamedId, false);
+    } catch (cause) {
+      setProviderIdFeedback({
+        kind: 'error',
+        message: cause instanceof Error ? cause.message : t('common.error'),
+      });
+    }
   };
 
   const toggleDisabled = (checked: boolean): void => {
@@ -240,10 +287,7 @@ export function ProviderCard({
       dragOffset={dragOffset}
       dropIndicatorEdge={dropIndicatorEdge}
       reorderLabel={isDraft ? undefined : t('settings.webSearch.reorder.handle', { provider: displayName, position })}
-      onSave={() => {
-        onConfirmDraft?.();
-        onToggleExpanded(providerId, false);
-      }}
+      onSave={() => { void saveProviderCard(); }}
       footerActions={(
         <>
           {isDraft && onCancelDraft
@@ -284,7 +328,16 @@ export function ProviderCard({
       ) : null}
       {custom ? (
           <>
-            <CustomProviderPanel models={models} feedback={feedback} config={custom} onChanged={onChanged} onError={onError} />
+            <CustomProviderPanel
+              models={models}
+              feedback={feedback}
+              config={custom}
+              providerIdDraft={providerIdDraft}
+              onProviderIdDraftChange={setProviderIdDraft}
+              providerIdFeedback={providerIdFeedback}
+              onChanged={onChanged}
+              onError={onError}
+            />
             {!isLocalProvider ? (
               <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
             ) : null}

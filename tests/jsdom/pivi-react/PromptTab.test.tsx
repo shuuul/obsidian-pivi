@@ -112,7 +112,7 @@ function createPorts(prompt: SettingsPromptPort): SettingsPorts {
     },
     catalog: {
       listModelsForProvider: () => [],
-      listCatalogModels: () => [],
+      listCatalogModels: () => [], listComposerModelOptions: () => [],
       syncCustomProviders: () => undefined,
       fetchCustomProviderModels: async () => ({ count: 0 }),
     },

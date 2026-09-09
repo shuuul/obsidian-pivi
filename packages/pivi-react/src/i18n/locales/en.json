@@ -839,6 +839,14 @@
     "modelsTab": {
       "intro": "API keys and OAuth tokens are stored in {secureStorageName}. Disabled providers stay saved but are hidden from the model picker.",
       "secureStorageRequired": "Provider API keys require {hostName} {version} or newer with {secureStorageName}. Upgrade {hostName} to store credentials securely.",
+      "defaultModelSectionTitle": "Default model",
+      "defaultModel": "Default model",
+      "defaultModelDesc": "Used for new conversations and pivi:run CLI runs. Selecting a model in the composer updates it.",
+      "providerId": "Provider ID",
+      "providerIdDesc": "Identifier inside model keys (provider/model). Renaming migrates saved model selections and stored credentials.",
+      "providerIdInvalid": "Use lowercase letters, digits, and dashes only, up to {max} characters.",
+      "providerIdTaken": "This ID is already in use.",
+      "providerIdRenamed": "Provider ID renamed to {id}.",
       "authHeading": "Authentication & credentials",
       "apiKey": "API key",
       "apiKeyOptional": "API key (optional)",
@@ -1201,7 +1209,21 @@
     "newTab": "New tab",
     "newSession": "New session (in current tab)",
     "closeCurrentTab": "Close current tab",
-    "openPiviRibbon": "Open Pivi"
+    "openPiviRibbon": "Open Pivi",
+    "cli": {
+      "runDescription": "Run a Pivi workspace command against a note and print the model result.",
+      "flagFile": "Note name, resolved like a wikilink",
+      "flagPath": "Exact path from the vault root",
+      "flagCommand": "Workspace command name",
+      "flagModel": "Model key as provider/model; defaults to the CLI default model setting",
+      "flagSelection": "Text used for {selectedTextToken}",
+      "errorNoCommand": "Missing command= parameter. Pass the name of a Pivi workspace command, for example command=summary.",
+      "errorUnknownCommand": "Unknown workspace command: {name}. Available commands: {names}",
+      "errorNoteNotFound": "Note not found. Check the file= or path= value.",
+      "errorSelectionRequired": "This command requires selected text. Pass selection=\"...\".",
+      "errorEmptyPrompt": "This command has an empty prompt and nothing to run.",
+      "errorInvalidModel": "Invalid model= value. Use the provider/model form, for example deepseek/deepseek-chat."
+    }
   },
   "tools": {
     "display": {

@@ -173,6 +173,32 @@ describe('normalizeDeviceLocalProviderState', () => {
     expect(state.modelPreferences.lastModel).toBeUndefined();
   });
 
+  it('drops unknown model preference fields during normalization', () => {
+    const state = normalizeDeviceLocalProviderState({
+      version: 1,
+      initialized: true,
+      providers: [
+        { id: 'deepseek', type: 'builtin', disabled: false },
+      ],
+      modelPreferences: {
+        visibleModels: ['deepseek/deepseek-chat'],
+        activeModel: 'deepseek/deepseek-chat',
+        titleGenerationModel: '',
+        cliDefaultModel: 'deepseek/deepseek-chat',
+      },
+      webSearchTools: {
+        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+        disabledProviders: [],
+      },
+    });
+    expect(Object.keys(state.modelPreferences)).toEqual([
+      'visibleModels',
+      'activeModel',
+      'titleGenerationModel',
+      'customContextLimits',
+    ]);
+  });
+
   it('returns defensive copies that isolate mutation', () => {
     const state = seedDefaultDeviceLocalProviderState();
     state.providers.push({

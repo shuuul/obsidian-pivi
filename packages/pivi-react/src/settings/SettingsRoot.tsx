@@ -54,7 +54,7 @@ export function SettingsRoot({ ports, store: suppliedStore, page }: SettingsRoot
     case 'environment':
       return <EnvironmentSection environment={ports.environment} feedback={ports.feedback} />;
     case 'models':
-      return <ModelsSettingsTab models={ports.complex.models} catalog={ports.catalog} feedback={ports.feedback} />;
+      return <ModelsSettingsTab models={ports.complex.models} catalog={ports.catalog} feedback={ports.feedback} persistence={ports.persistence} />;
     case 'builtInTools':
       return <BuiltInToolsSection ports={ports} store={store} />;
     case 'webTools':

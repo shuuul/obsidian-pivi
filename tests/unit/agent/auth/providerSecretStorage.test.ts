@@ -357,6 +357,33 @@ describe('ObsidianCredentialStore over SyncSecretStore', () => {
     expect(store.readSync('openai')).toEqual({ type: 'api_key', key: 'sk-openai' });
   });
 
+  it('clearSync deletes keys instead of leaving empty secret entries', async () => {
+    const canonicalId = getPiAiCredentialSecretId('anthropic');
+    const secrets = new Map<string, string>([
+      [canonicalId, JSON.stringify({ type: 'api_key', key: 'sk-test' })],
+    ]);
+    const deletes: string[] = [];
+    const writes: Array<[string, string]> = [];
+    const store = new ObsidianCredentialStore({
+      getSecret: key => secrets.get(key) ?? null,
+      setSecret: (key, value) => {
+        writes.push([key, value]);
+        secrets.set(key, value);
+      },
+      listSecrets: () => [...secrets.keys()],
+      deleteSecret: key => {
+        deletes.push(key);
+        return secrets.delete(key);
+      },
+    });
+
+    await store.delete('anthropic');
+
+    expect(deletes).toEqual([canonicalId]);
+    expect(writes).toEqual([]);
+    expect(store.readSync('anthropic')).toBeUndefined();
+  });
+
   it('createObsidianCredentialStore accepts a SyncSecretStore port implementation', () => {
     const secretStorage = createInMemorySyncSecretStore();
     const store = createObsidianCredentialStore(secretStorage);

@@ -1,9 +1,11 @@
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { App, Plugin } from "obsidian";
 
 import type { PiviApplicationFacades } from "@/app/hostContracts";
 import { registerSelectionToolbarUi } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
 
+import { registerPiviCli } from "./cliRegistration";
 import { registerPiviCommands } from "./commandRegistration";
 import { registerEditorSelectionToolbar } from "./editorSelectionToolbarRegistration";
 import { isNoteToolbarTextToolbarActive } from "./noteToolbarIntegration";
@@ -14,6 +16,9 @@ import { registerPiviViews } from "./viewRegistration";
 
 const logger = new PluginLogger('PluginLifecycle');
 
+/** One-shot vault adapter per operation, matching the hostPlatform pattern. */
+const vaultApi = (app: App): ObsidianVaultApi => new ObsidianVaultApi(app);
+
 export async function initializePiviPlugin(
   plugin: Plugin,
   facades: PiviApplicationFacades,
@@ -22,6 +27,24 @@ export async function initializePiviPlugin(
   await measureStartupPhase('settings', loadSettings);
   registerPiviViews(plugin, facades.chat, facades.sessions, facades.workspace);
   registerPiviCommands(plugin, facades.chat);
+  registerPiviCli(plugin, {
+    readNote: async (file, path) => {
+      try {
+        const result = await vaultApi(facades.chat.app).readNote(file, path);
+        return {
+          basename: result.path.split('/').pop()?.replace(/\.md$/i, '') ?? result.path,
+          content: result.content,
+        };
+      } catch {
+        return null;
+      }
+    },
+    listWorkspaceEntries: async () => (
+      await facades.workspace.ensureWorkspaceServices()).slashCommandCatalog.listWorkspaceEntries(),
+    createAuxQueryRunner: () => facades.chat.createAuxQueryRunner(),
+    getDefaultModel: () => facades.chat.settings.model,
+    today: () => new Date().toLocaleDateString(),
+  });
   registerPiviSettings(plugin, facades.settings, facades.workspace);
   registerEditorSelectionToolbar(plugin, {
     isToolbarEnabled: () => (
