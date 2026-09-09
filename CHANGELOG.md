@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.29.0](https://github.com/shuuul/obsidian-pivi/compare/0.28.0...0.29.0) (2026-09-09)
+
+### Features
+
+* expose `pivi:run` so the official Obsidian CLI can execute a workspace command headlessly against an optional note, selection, and model
+* add a Default model setting shared by new conversations and `pivi:run`, and let custom provider IDs be renamed with their model keys and credentials
+
+### Bug Fixes
+
+* keep the default-model selector on a renamed provider
+* use name-tagged MCP bearer and client-secret ids so a server named after another server's hex encoding cannot inherit that secret
+
+### Maintenance
+
+* update dependencies, including the pinned Skills CLI to 1.5.25
+
 ## [0.28.0](https://github.com/shuuul/obsidian-pivi/compare/0.27.0...0.28.0) (2026-09-07)
 
 ### Features
