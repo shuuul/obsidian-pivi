@@ -136,6 +136,28 @@ export function ModelsSettingsTab({ models, catalog, feedback, persistence }: Mo
     reload();
   };
 
+  const onProviderRenamed = (oldId: string, newId: string): void => {
+    const renameModelKey = (modelKey: string): string =>
+      modelKey.startsWith(`${oldId}/`)
+        ? `${newId}/${modelKey.slice(oldId.length + 1)}`
+        : modelKey;
+    setDefaultModel(current => typeof current === 'string' ? renameModelKey(current) : current);
+    setExpanded(current => {
+      if (!current.has(oldId)) return current;
+      const next = new Set(current);
+      next.delete(oldId);
+      next.add(newId);
+      return next;
+    });
+    setDraftProviderIds(current => {
+      if (!current.has(oldId)) return current;
+      const next = new Set(current);
+      next.delete(oldId);
+      next.add(newId);
+      return next;
+    });
+  };
+
   const confirmDraft = (providerId: string): void => {
     setDraftProviderIds(current => {
       const next = new Set(current);
@@ -260,6 +282,7 @@ export function ModelsSettingsTab({ models, catalog, feedback, persistence }: Mo
               onToggleExpanded={toggleExpanded}
               save={save}
               onChanged={reload}
+              onProviderRenamed={onProviderRenamed}
               onRemoved={() => {
                 confirmDraft(providerId);
                 setSettings(current => ({

@@ -11,7 +11,7 @@ import type { SortableReorderHandleProps } from '../../reorder/useSortableReorde
 import { DisclosureCard, SettingRow, SettingsRemoveButton, Toggle } from '../primitives';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
-import { ProviderApiKeyField,ProviderCredentials } from './ProviderCredentials';
+import { ProviderApiKeyField, ProviderCredentials } from './ProviderCredentials';
 import { ProviderOAuthSection } from './ProviderOAuthSection';
 import { STATUS_DESC_KEYS, STATUS_LABEL_KEYS } from './statusLabels';
 

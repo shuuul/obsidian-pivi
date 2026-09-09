@@ -94,7 +94,7 @@ function encodeSecretName(name: string): string {
 }
 
 function directMcpSecretId(serverName: string, kind: McpSecretKind): string {
-  return `pivi-mcp-${serverName}-${kind}`;
+  return `pivi-mcp-name-${serverName}-${kind}`;
 }
 
 function legacyEncodedMcpSecretId(serverName: string, kind: McpSecretKind): string {
@@ -107,8 +107,8 @@ function digestMcpSecretId(serverName: string, kind: McpSecretKind): string {
 
 /**
  * Canonical first, then the legacy hex-encoded name, then the digest fallback.
- * Plain server names replaced the hex encoding; existing vaults migrate on the
- * next load and removals clear every generation.
+ * The explicit `name` segment prevents a plain server name from colliding with
+ * another server's legacy hex encoding.
  */
 function listMcpSecretIds(serverName: string, kind: McpSecretKind): readonly string[] {
   const plain = directMcpSecretId(serverName, kind);

@@ -49,7 +49,7 @@ function createUiFacades(): PiviUiFacades {
     getSettingsSnapshot: settings => ({ ...settings }),
     commitSettingsSnapshot: (settings, snapshot) => Object.assign(settings, snapshot),
     listModelsForProvider: () => [],
-    listCatalogModels: () => [], 
+    listCatalogModels: () => [],
     syncCustomProviders: () => {},
     fetchCustomProviderModels: async () => ({ count: 0 }),
   };
