@@ -33,7 +33,8 @@
       "unavailableStreaming": "Impossible de refaire pendant le streaming",
       "unavailableNoTurn": "Impossible de refaire : tour utilisateur correspondant introuvable",
       "unavailableRuntime": "Impossible de refaire : runtime de chat indisponible",
-      "unavailableRewind": "Point de retour indisponible"
+      "unavailableRewind": "Point de retour indisponible",
+      "unavailableMissingImage": "Impossible de refaire : les données d’image d’origine ne sont plus disponibles"
     },
     "messageActions": {
       "copyAriaLabel": "Copier le message",

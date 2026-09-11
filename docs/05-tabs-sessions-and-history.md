@@ -69,7 +69,7 @@ Pi-compatible session directories encode the absolute vault path, which can diff
 | Delete | Moves the JSONL from `.pivi/sessions/` to `.pivi/trash/sessions/`, preserving the same relative identity. Inventory is the trash folder, not plugin `data.json` and not Obsidian `.trash` (which may be the system trash and is not listable for recovery). Recoverable through `pivi_sessions` until retention expiry or explicit purge, which then deletes the trashed JSONL |
 | Close | Saves, selects or creates a fallback, then destroys the tab; the sole empty blank tab cannot close. Closing an owned session that never received a persisted user message permanently discards that JSONL instead of archiving it |
 | Fork | Requires persisted source entry IDs and creates a new session file opened in a new tab |
-| Redo | Uses persisted entry ancestry and may require lazy runtime activation |
+| Redo | Uses persisted entry ancestry and may require lazy runtime activation. Session save strips image bytes from the open-session cache only; live chat messages keep their payloads. Redo blocks when a user turn still lists an image whose Base64 data is empty instead of sending an invalid data URI |
 
 Switches are single-flight. A concurrent second request waits for the active switch; it is not a queued request to a later target. Code that adds switch callers must not assume otherwise.
 

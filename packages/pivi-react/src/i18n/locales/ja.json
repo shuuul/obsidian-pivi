@@ -33,7 +33,8 @@
       "unavailableStreaming": "ストリーミング中はやり直せません",
       "unavailableNoTurn": "やり直せません：対応するユーザーターンが見つかりません",
       "unavailableRuntime": "やり直せません：チャットランタイムを利用できません",
-      "unavailableRewind": "巻き戻しチェックポイントを利用できません"
+      "unavailableRewind": "巻き戻しチェックポイントを利用できません",
+      "unavailableMissingImage": "やり直しできません。元の画像データが利用できません"
     },
     "messageActions": {
       "copyAriaLabel": "メッセージをコピー",

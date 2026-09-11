@@ -33,7 +33,8 @@
       "unavailableStreaming": "流式响应中无法重做",
       "unavailableNoTurn": "无法重做：未找到匹配的用户回合",
       "unavailableRuntime": "无法重做：聊天运行时不可用",
-      "unavailableRewind": "回退检查点不可用"
+      "unavailableRewind": "回退检查点不可用",
+      "unavailableMissingImage": "无法重做：原始图片数据已不可用"
     },
     "messageActions": {
       "copyAriaLabel": "复制消息",

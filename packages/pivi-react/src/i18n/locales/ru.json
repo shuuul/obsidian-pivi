@@ -33,7 +33,8 @@
       "unavailableStreaming": "Нельзя повторить во время потока",
       "unavailableNoTurn": "Нельзя повторить: соответствующий ход пользователя не найден",
       "unavailableRuntime": "Нельзя повторить: среда чата недоступна",
-      "unavailableRewind": "Контрольная точка отката недоступна"
+      "unavailableRewind": "Контрольная точка отката недоступна",
+      "unavailableMissingImage": "Нельзя повторить: исходные данные изображения больше недоступны"
     },
     "messageActions": {
       "copyAriaLabel": "Копировать сообщение",

@@ -60,4 +60,16 @@ describe('toPiImageContent (core)', () => {
     expect(mapped[0]).not.toHaveProperty('height');
     expect(mapped[0]).not.toHaveProperty('mediaType');
   });
+
+  it('omits attachments whose base64 payload is empty', () => {
+    const images: ImageAttachment[] = [
+      attachmentFixture({ id: 'empty', data: '', mediaType: 'image/png' }),
+      attachmentFixture({ id: 'kept', data: 'payload', mediaType: 'image/jpeg' }),
+      attachmentFixture({ id: 'blank', data: '   ', mediaType: 'image/webp' }),
+    ];
+
+    expect(toPiImageContent(images)).toEqual([
+      { type: 'image', data: 'payload', mimeType: 'image/jpeg' },
+    ]);
+  });
 });

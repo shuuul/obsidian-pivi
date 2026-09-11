@@ -33,7 +33,8 @@
       "unavailableStreaming": "Wiederholen während des Streamings nicht möglich",
       "unavailableNoTurn": "Wiederholen nicht möglich: passender Benutzer-Turn nicht gefunden",
       "unavailableRuntime": "Wiederholen nicht möglich: Chat-Laufzeit nicht verfügbar",
-      "unavailableRewind": "Rücksetz-Prüfpunkt nicht verfügbar"
+      "unavailableRewind": "Rücksetz-Prüfpunkt nicht verfügbar",
+      "unavailableMissingImage": "Wiederholen nicht möglich: Originalbilddaten sind nicht mehr verfügbar"
     },
     "messageActions": {
       "copyAriaLabel": "Nachricht kopieren",

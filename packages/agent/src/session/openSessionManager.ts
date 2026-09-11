@@ -11,6 +11,19 @@ function cloneToolCallForUi(toolCall: ToolCallInfo): ToolCallInfo {
   return JSON.parse(JSON.stringify(toolCall)) as ToolCallInfo;
 }
 
+/** Drop in-memory image bytes from the session cache without mutating caller-owned messages. */
+function stripCachedImagePayloads(messages: ChatMessage[]): ChatMessage[] {
+  return messages.map((message) => {
+    if (!message.images?.length) {
+      return message;
+    }
+    return {
+      ...message,
+      images: message.images.map((image) => ({ ...image, data: '' })),
+    };
+  });
+}
+
 function buildMessageUiPatch(message: ChatMessage): MessageUiPatch | null {
   const targetEntryId = message.role === 'assistant'
     ? message.assistantMessageId
@@ -393,14 +406,7 @@ export class OpenSessionManager {
       await this.persistMessageUiPatches(next);
     }
     Object.assign(openSession, next);
-
-    for (const msg of openSession.messages) {
-      if (msg.images) {
-        for (const img of msg.images) {
-          img.data = '';
-        }
-      }
-    }
+    openSession.messages = stripCachedImagePayloads(openSession.messages);
   }
 
   async getById(id: string): Promise<OpenSessionState | null> {

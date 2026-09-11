@@ -440,4 +440,34 @@ describe('redo handling', () => {
     expect(tab.controllers.inputController?.sendMessage).not.toHaveBeenCalled();
     expect(Notice).toHaveBeenCalledWith('Cannot redo while streaming');
   });
+
+  it('blocks redo when the original image payload is empty', async () => {
+    const messages: ChatMessage[] = [
+      {
+        id: 'u1',
+        role: 'user',
+        content: 'see this',
+        timestamp: 1,
+        parentEntryId: null,
+        userMessageId: 'entry-u1',
+        images: [{
+          id: 'img-1',
+          name: 'shot.png',
+          mediaType: 'image/png',
+          data: '',
+          size: 0,
+          source: 'paste',
+        }],
+      },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' },
+    ];
+    const service = { rewind: jest.fn() };
+    const tab = makeRedoTab(messages, service);
+
+    await handleRedoRequest(tab, makePlugin(), makePorts(), 'a1');
+
+    expect(service.rewind).not.toHaveBeenCalled();
+    expect(tab.controllers.inputController?.sendMessage).not.toHaveBeenCalled();
+    expect(Notice).toHaveBeenCalledWith('Cannot redo: original image data is no longer available');
+  });
 });
