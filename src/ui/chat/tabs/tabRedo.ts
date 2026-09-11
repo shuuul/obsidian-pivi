@@ -3,6 +3,8 @@ import type { ChatMessage, ImageAttachment } from '@pivi/agent/runtime';
 import {
   type ChatTurnRequest,
   chatTurnRequestFromSnapshot,
+  cloneImages,
+  hasMissingImagePayload,
 } from '@pivi/agent/runtime';
 import type { ChatPorts } from '@pivi/agent/runtime/chatPorts';
 import { Notice } from 'obsidian';
@@ -23,10 +25,6 @@ export interface RedoTurnContext {
   displayContent: string;
   turnRequest: ChatTurnRequest;
   images?: ImageAttachment[];
-}
-
-function cloneImages(images: ImageAttachment[] | undefined): ImageAttachment[] | undefined {
-  return images && images.length > 0 ? [...images] : undefined;
 }
 
 function buildRedoTurnRequest(userMessage: ChatMessage): ChatTurnRequest {
@@ -102,6 +100,15 @@ export async function handleRedoRequest(
 
   if (!tab.controllers.inputController || !tab.controllers.openSessionController) {
     new Notice(t('chat.redo.unavailableRuntime'));
+    return;
+  }
+
+  const userMessage = state.messages[redoTurn.userIndex];
+  if (
+    hasMissingImagePayload(userMessage?.images)
+    || hasMissingImagePayload(userMessage?.turnRequest?.images)
+  ) {
+    new Notice(t('chat.redo.unavailableMissingImage'));
     return;
   }
 

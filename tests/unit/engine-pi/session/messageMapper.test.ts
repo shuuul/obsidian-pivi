@@ -55,6 +55,38 @@ describe('MessageMapper', () => {
     expect(secondMessage.content).toBe('world');
   });
 
+  it('skips empty image payloads when mapping user attachments', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'u1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'see this' },
+            { type: 'image', mimeType: 'image/png', data: '' },
+            { type: 'image', mimeType: 'image/jpeg', data: 'abc123' },
+          ],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, new Map());
+    expect(first(messages).images).toEqual([
+      {
+        id: 'img-0',
+        name: 'attachment',
+        mediaType: 'image/jpeg',
+        data: 'abc123',
+        size: 6,
+        source: 'paste',
+      },
+    ]);
+  });
+
   it('derives displayContent from persisted XML when message-ui overlay is missing', () => {
     const persisted = [
       '',

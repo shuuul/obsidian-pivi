@@ -71,8 +71,18 @@ export function chatTurnRequestFromSnapshot(
   };
 }
 
-function cloneImages(images: ImageAttachment[] | undefined): ImageAttachment[] | undefined {
-  return images && images.length > 0 ? [...images] : undefined;
+export function hasMissingImagePayload(images: ImageAttachment[] | undefined): boolean {
+  return (images ?? []).some((image) => image.data.trim().length === 0);
+}
+
+export function cloneImages(images: ImageAttachment[] | undefined): ImageAttachment[] | undefined {
+  if (!images || images.length === 0) {
+    return undefined;
+  }
+  const cloned = images
+    .filter((image) => image.data.trim().length > 0)
+    .map((image) => ({ ...image }));
+  return cloned.length > 0 ? cloned : undefined;
 }
 
 function cloneSerializable<T>(value: T): T {

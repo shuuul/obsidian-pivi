@@ -33,7 +33,8 @@
       "unavailableStreaming": "Não é possível refazer durante a transmissão",
       "unavailableNoTurn": "Não é possível refazer: turno de usuário correspondente não encontrado",
       "unavailableRuntime": "Não é possível refazer: runtime do chat indisponível",
-      "unavailableRewind": "Ponto de retorno indisponível"
+      "unavailableRewind": "Ponto de retorno indisponível",
+      "unavailableMissingImage": "Não é possível refazer: os dados originais da imagem não estão mais disponíveis"
     },
     "messageActions": {
       "copyAriaLabel": "Copiar mensagem",

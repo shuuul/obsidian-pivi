@@ -357,6 +357,9 @@ function extractImagesFromAgentContent(content: unknown): ImageAttachment[] | un
       continue;
     }
     const data = part.data;
+    if (data.trim().length === 0) {
+      continue;
+    }
     images.push({
       id: `img-${images.length}`,
       name: 'attachment',

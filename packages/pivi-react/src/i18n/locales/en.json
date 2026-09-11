@@ -33,7 +33,8 @@
       "unavailableStreaming": "Cannot redo while streaming",
       "unavailableNoTurn": "Cannot redo: matching user turn not found",
       "unavailableRuntime": "Cannot redo: chat runtime unavailable",
-      "unavailableRewind": "rewind checkpoint unavailable"
+      "unavailableRewind": "rewind checkpoint unavailable",
+      "unavailableMissingImage": "Cannot redo: original image data is no longer available"
     },
     "messageActions": {
       "copyAriaLabel": "Copy message",

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.29.1](https://github.com/shuuul/obsidian-pivi/compare/0.29.0...0.29.1) (2026-09-11)
+
+### Bug Fixes
+
+* keep Redo from resending image attachments with empty Base64 payloads ([#134](https://github.com/shuuul/obsidian-pivi/issues/134))
+
 ## [0.29.0](https://github.com/shuuul/obsidian-pivi/compare/0.28.0...0.29.0) (2026-09-09)
 
 ### Features

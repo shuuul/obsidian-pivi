@@ -614,6 +614,41 @@ describe('OpenSessionManager linear hydration', () => {
     }));
   });
 
+  it('strips cached image bytes without mutating caller-owned message attachments', async () => {
+    const store = createStore();
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+    const liveImage = {
+      id: 'img-1',
+      name: 'shot.png',
+      mediaType: 'image/png' as const,
+      data: 'abc123',
+      size: 6,
+      source: 'paste' as const,
+    };
+    const liveMessage: ChatMessage = {
+      id: 'u1',
+      role: 'user',
+      content: 'see this',
+      timestamp: 1,
+      userMessageId: 'u1',
+      images: [liveImage],
+    };
+
+    await manager.update('conv-1', { messages: [liveMessage] });
+
+    expect(liveImage.data).toBe('abc123');
+    expect(liveMessage.images?.[0]?.data).toBe('abc123');
+    expect(manager.getSync('conv-1')?.messages[0]?.images?.[0]).toEqual(expect.objectContaining({
+      id: 'img-1',
+      data: '',
+    }));
+    expect(manager.getSync('conv-1')?.messages[0]?.images?.[0]).not.toBe(liveImage);
+  });
+
   it('propagates a stale partial save without committing in-memory updates', async () => {
     const store = createStore();
     const stale = new SessionIndexStaleError(

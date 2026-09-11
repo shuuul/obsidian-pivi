@@ -33,7 +33,8 @@
       "unavailableStreaming": "No se puede rehacer durante el streaming",
       "unavailableNoTurn": "No se puede rehacer: no se encontró el turno de usuario correspondiente",
       "unavailableRuntime": "No se puede rehacer: el runtime de chat no está disponible",
-      "unavailableRewind": "Punto de restauración no disponible"
+      "unavailableRewind": "Punto de restauración no disponible",
+      "unavailableMissingImage": "No se puede rehacer: los datos originales de la imagen ya no están disponibles"
     },
     "messageActions": {
       "copyAriaLabel": "Copiar mensaje",
