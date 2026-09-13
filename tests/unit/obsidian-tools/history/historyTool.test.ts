@@ -17,6 +17,7 @@ function makeDeps(): {
     app: { vault: { adapter: { basePath: '/vault' } } } as unknown as ObsidianToolDeps['app'],
     vault: {
       runCliMutation,
+      resolveFile: jest.fn(() => null),
     } as unknown as ObsidianToolDeps['vault'],
     cli: {
       run: cliRun,
@@ -105,32 +106,58 @@ describe('createHistoryTool', () => {
     expect(getDetails(result)).toEqual({ action: 'read', path: 'notes/a.md', version: 2 });
   });
 
-  it('restores a deleted path without prechecking the vault', async () => {
+  it('restores a deleted path without requiring the file to exist', async () => {
     const { deps, cliRun, runCliMutation } = makeDeps();
+    // File Recovery retains versions after deletion, and a deleted destination
+    // has no current state to snapshot, so nothing shifts the numbering.
+    cliRun.mockImplementation(async ({ args }: { args: string[] }) => {
+      if (args[0] === 'history') {
+        return [
+          'deleted/a.md',
+          '1\t2026-09-13 14:01\t9.58 KB',
+          '2\t2026-09-13 13:56\t9.58 KB',
+        ].join('\n');
+      }
+      return 'restored output';
+    });
 
     const result = await createHistoryTool(deps).execute('call-1', {
       action: 'restore',
       path: 'deleted/a.md',
-      version: 3,
+      version: 2,
     });
 
     expect(runCliMutation).toHaveBeenCalledWith('deleted/a.md', expect.any(Function));
-    expect(cliRun).toHaveBeenCalledWith({ vaultName: 'Test Vault', args: ['history:restore', 'path=deleted/a.md', 'version=3'] });
-    expect(getText(result)).toBe('Restored deleted/a.md from history version 3.');
-    expect(getDetails(result)).toEqual({ action: 'restore', path: 'deleted/a.md', version: 3 });
+    expect(cliRun).toHaveBeenCalledWith({ vaultName: 'Test Vault', args: ['history:restore', 'path=deleted/a.md', 'version=2'] });
+    expect(getText(result)).toBe('Restored deleted/a.md from history version 2.');
+    expect(getDetails(result)).toEqual({
+      action: 'restore',
+      path: 'deleted/a.md',
+      version: 2,
+      resolvedVersion: 2,
+      output: 'restored output',
+    });
   });
 
   it('blocks restore before the CLI when the current snapshot fails', async () => {
     const { deps, cliRun, runCliMutation } = makeDeps();
+    cliRun.mockImplementation(async ({ args }: { args: string[] }) => {
+      if (args[0] === 'history') {
+        return ['notes/a.md', '1\t2026-09-13 14:01\t9.58 KB'].join('\n');
+      }
+      return 'cli output';
+    });
     runCliMutation.mockRejectedValueOnce(new Error('snapshot failed'));
 
     await expect(createHistoryTool(deps).execute('call-1', {
       action: 'restore',
       path: 'notes/a.md',
-      version: 3,
+      version: 1,
     })).rejects.toThrow('snapshot failed');
 
-    expect(cliRun).not.toHaveBeenCalled();
+    // The read-only anchor list may run first, but the mutating restore
+    // command must never reach the CLI once the snapshot has failed.
+    expect(cliRun.mock.calls.map((call) => call[0].args[0])).not.toContain('history:restore');
   });
 
   it('rejects restoring Pivi-managed paths before invoking the CLI', async () => {
