@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.29.2](https://github.com/shuuul/obsidian-pivi/compare/0.29.1...0.29.2) (2026-09-13)
+
+### Bug Fixes
+
+* restore the selected Obsidian history version when the mandatory pre-restore snapshot shifts File Recovery numbering, and verify the restore applied instead of reporting an unverified success ([#138](https://github.com/shuuul/obsidian-pivi/issues/138))
+
 ## [0.29.1](https://github.com/shuuul/obsidian-pivi/compare/0.29.0...0.29.1) (2026-09-11)
 
 ### Bug Fixes
