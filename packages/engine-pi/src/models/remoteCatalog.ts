@@ -250,9 +250,13 @@ export function withPiviRemoteCatalog<T extends Provider>(
       return emptyResult('skipped');
     }
     const current = deps.store?.read(providerId);
+    // A cached entry fetched under a different Pi pin is unusable by design
+    // (its overlay carries foreign engine-shape assumptions), so it must not
+    // satisfy the freshness window or back a validator: re-probe it instead.
+    const cacheUsable = current !== undefined && current.piVersion === PIVI_PI_VERSION;
     if (
       !options?.force
-      && current
+      && cacheUsable
       && Number.isFinite(current.checkedAt)
       && now() - current.checkedAt < refreshIntervalMs
     ) {
@@ -260,10 +264,11 @@ export function withPiviRemoteCatalog<T extends Provider>(
     }
 
     const url = new URL(`/api/models/providers/${encodeURIComponent(providerId)}`, baseUrl).toString();
-    // Only revalidate when a cached body backs the validator, so a 304 can
-    // never leave the overlay empty.
+    // Only revalidate when a version-matched cached body backs the validator,
+    // so a 304 can never leave the overlay empty nor resurrect a stale-pin
+    // body that init just discarded.
     const headers: Record<string, string> = { accept: 'application/json' };
-    if (current?.etag && current.models.length > 0) {
+    if (cacheUsable && current.models.length > 0 && current.etag) {
       headers['if-none-match'] = current.etag;
     }
     const controller = new AbortController();
@@ -274,7 +279,7 @@ export function withPiviRemoteCatalog<T extends Provider>(
     try {
       const response = await deps.fetch(url, { headers, signal });
       const checkedAt = now();
-      if (response.status === 304 && current) {
+      if (response.status === 304 && cacheUsable) {
         deps.store?.write(providerId, { ...current, checkedAt });
         return emptyResult('current');
       }
@@ -292,8 +297,10 @@ export function withPiviRemoteCatalog<T extends Provider>(
       }
       if (!response.ok) {
         // Transient failure: the cached overlay and validator stay valid, so
-        // keep the etag and only move the freshness window.
-        if (current) deps.store?.write(providerId, { ...current, checkedAt });
+        // keep the etag and only move the freshness window. A stale-pin entry
+        // has nothing worth preserving; leaving it unwritten forces the next
+        // boot to re-probe instead of perpetuating the discarded overlay.
+        if (cacheUsable) deps.store?.write(providerId, { ...current, checkedAt });
         throw new Error(`Model catalog request failed for ${providerId}: ${response.status}`);
       }
       const payload: unknown = await response.json();

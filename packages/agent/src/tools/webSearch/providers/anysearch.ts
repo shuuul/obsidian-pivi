@@ -2,6 +2,7 @@ import {
   asArray,
   asJson,
   asString,
+  boundFetchTitle,
   type WebFetchInput,
   type WebFetchResponse,
   type WebFetchToolDeps,
@@ -97,7 +98,7 @@ export async function fetchAnySearch(
     .slice(0, input.maxChars)
     .trim();
   if (!content) throw new Error('AnySearch extract returned no readable content.');
-  const title = /^#{1,3}\s+(.+)$/m.exec(content)?.[1]?.trim();
+  const title = boundFetchTitle(/^#{1,3}\s+(.+)$/m.exec(content)?.[1]);
   return title
     ? { provider: 'anysearch', url: input.url, title, content }
     : { provider: 'anysearch', url: input.url, content };

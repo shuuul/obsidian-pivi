@@ -234,6 +234,48 @@ describe('PiAuxQueryRunner (core)', () => {
     expect(mockAgentInstances[1]).not.toBe(firstInstance);
   });
 
+  it('reset survives the real Agent in-flight reset guard and still clears every agent', async () => {
+    let resolveFirst!: () => void;
+    const firstGate = new Promise<void>((resolve) => { resolveFirst = resolve; });
+    let notifyFirstStarted!: () => void;
+    const firstStarted = new Promise<void>((resolve) => { notifyFirstStarted = resolve; });
+    let notifySecondStarted!: () => void;
+    const secondStarted = new Promise<void>((resolve) => { notifySecondStarted = resolve; });
+    promptBehavior = async (instance, input) => {
+      if (input === 'first') {
+        notifyFirstStarted();
+        await firstGate;
+      } else if (input === 'second') {
+        notifySecondStarted();
+      }
+      for (const listener of [...instance.listeners]) {
+        listener({ type: 'message_update', message: {}, assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: `${input}-late`, partial: {} } });
+      }
+    };
+    const runner = createRunner();
+    const firstPromise = runner.query(baseConfig(), 'first');
+    await firstStarted;
+    const secondPromise = runner.query(baseConfig(), 'second');
+    await secondStarted;
+    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
+    const first = mockAgentInstances[0];
+    const second = mockAgentInstances[1];
+    expectDefined(first);
+    expectDefined(second);
+    // Mirror the pinned Agent: reset() throws while the aborted run settles.
+    first.reset.mockImplementation(() => {
+      throw new Error('Agent is already processing. Wait for completion before resetting.');
+    });
+    expect(() => runner.reset()).not.toThrow();
+    expect(first.abort).toHaveBeenCalled();
+    expect(second.abort).toHaveBeenCalled();
+    expect(second.reset).toHaveBeenCalled();
+    resolveFirst();
+    await Promise.allSettled([firstPromise, secondPromise]);
+    await runner.query(baseConfig(), 'third');
+    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(3);
+  });
+
   it('gives sequential queries with the same config isolated empty histories', async () => {
     promptBehavior = async (instance, input) => {
       instance.state.messages.push({ role: 'user', content: input });

@@ -49,7 +49,15 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
   reset(): void {
     for (const agent of this.inFlightQueryAgents) {
       agent.abort();
-      agent.reset();
+      // The pinned Agent.reset() throws while a run is still settling after
+      // abort() (abort completes asynchronously). These agents are discarded
+      // below either way, so the best-effort reset must not skip aborting the
+      // remaining agents or clearing the set.
+      try {
+        agent.reset();
+      } catch {
+        // Deliberately swallowed: the agent leaves the set and is never reused.
+      }
     }
     this.inFlightQueryAgents.clear();
   }

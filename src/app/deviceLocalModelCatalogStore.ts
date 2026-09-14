@@ -33,7 +33,11 @@ function sanitizeStoredEntry(value: unknown): RemoteCatalogEntry | undefined {
   if (!isRecord(value) || !Array.isArray(value.models)) return undefined;
   if (typeof value.piVersion !== 'string' || !value.piVersion) return undefined;
   const models = value.models.filter(isValidCachedModel);
-  if (models.length === 0) return undefined;
+  // The engine persists `models: []` as an availability marker for providers
+  // with no remote catalog, so an empty array must survive sanitization or
+  // every boot re-probes those providers. A non-empty array whose rows all
+  // fail validation is corruption instead and resets per the store contract.
+  if (value.models.length > 0 && models.length === 0) return undefined;
   const checkedAt = isFiniteNumber(value.checkedAt) ? value.checkedAt : 0;
   const lastModified = isFiniteNumber(value.lastModified) ? value.lastModified : 0;
   return {

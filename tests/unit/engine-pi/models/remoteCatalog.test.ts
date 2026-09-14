@@ -187,6 +187,33 @@ describe('withPiviRemoteCatalog', () => {
     expect(calls[1]?.init?.headers).toMatchObject({ 'if-none-match': '"v1"' });
   });
 
+  it('re-probes a stale-pin entry after a Pi pin bump instead of revalidating it', async () => {
+    const baseline = [fakeModel('m1')];
+    const store = new FakeStore();
+    store.write('fakep', {
+      models: [fakeModel('stale-overlay')],
+      checkedAt: Date.now(),
+      lastModified: 0,
+      etag: '"old-pin"',
+      piVersion: '0.0.1-test',
+    });
+    const { fetch, calls } = createFakeFetch([
+      jsonResponse([fakeModel('fresh-overlay')], { etag: '"new-pin"' }),
+    ]);
+    const wrapped = withPiviRemoteCatalog(createFakeProvider(baseline), { fetch, store });
+
+    // The stale-pin entry must not satisfy the freshness window, and its
+    // etag must not back a 304 revalidation of a body init just discarded.
+    const result = await wrapped.refresh({});
+
+    expect(result.status).toBe('updated');
+    const headers = calls[0]?.init?.headers as Record<string, string>;
+    expect(headers['if-none-match']).toBeUndefined();
+    expect(wrapped.provider.getModels().some((model) => model.id === 'fresh-overlay')).toBe(true);
+    expect(store.read('fakep')?.piVersion).toBe(PIVI_PI_VERSION);
+    expect(store.read('fakep')?.etag).toBe('"new-pin"');
+  });
+
   it('skips network inside the freshness window unless forced', async () => {
     const baseline = [fakeModel('m1')];
     const store = new FakeStore();

@@ -53,6 +53,31 @@ describe('ObsidianDeviceLocalModelCatalogStore', () => {
     expect(store.read('openai')?.models).toEqual([validModel]);
   });
 
+  it('keeps an empty models array as the no-remote-catalog availability marker', () => {
+    const app = new App();
+    const marker = { models: [], checkedAt: 1, lastModified: 0, piVersion: '0.83.0' };
+    app.saveLocalStorage(DEVICE_LOCAL_MODEL_CATALOG_STORAGE_KEY, {
+      version: 1,
+      entries: { openai: marker },
+    });
+    const store = new ObsidianDeviceLocalModelCatalogStore(app);
+
+    expect(store.read('openai')).toEqual(marker);
+  });
+
+  it('resets an entry whose model rows all fail validation', () => {
+    const app = new App();
+    app.saveLocalStorage(DEVICE_LOCAL_MODEL_CATALOG_STORAGE_KEY, {
+      version: 1,
+      entries: {
+        openai: { ...validEntry, models: [{ id: 'broken' }, { id: '' }] },
+      },
+    });
+    const store = new ObsidianDeviceLocalModelCatalogStore(app);
+
+    expect(store.read('openai')).toBeUndefined();
+  });
+
   it('resets to empty and warns when the stored schema version is not 1', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => { /* swallow */ });
     const app = new App();

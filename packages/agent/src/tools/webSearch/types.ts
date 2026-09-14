@@ -35,6 +35,16 @@ export interface WebFetchResponse {
   content: string;
 }
 
+// Provider-returned page titles are metadata, not content, but a hostile page
+// can publish an arbitrarily large <title>; bound it so the model-visible
+// response keeps the tool's maxChars contract approximately intact.
+export const MAX_FETCH_TITLE_CHARS = 200;
+
+export function boundFetchTitle(title: string | undefined): string | undefined {
+  const trimmed = title?.trim();
+  return trimmed ? trimmed.slice(0, MAX_FETCH_TITLE_CHARS) : undefined;
+}
+
 export type Recency = 'day' | 'week' | 'month' | 'year';
 export const RECENCY_VALUES: readonly Recency[] = ['day', 'week', 'month', 'year'];
 

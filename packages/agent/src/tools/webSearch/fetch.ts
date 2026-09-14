@@ -8,6 +8,7 @@ import {
   asArray,
   asJson,
   asString,
+  boundFetchTitle,
   isAbortError,
   resolveApiKey,
   type WebFetchInput,
@@ -170,8 +171,9 @@ async function fetchExa(
   const title = record ? asString(record.title) : undefined;
   const url = record ? asString(record.url) ?? input.url : input.url;
   const truncated = content.slice(0, input.maxChars);
-  return title
-    ? { provider: 'exa', url, title, content: truncated }
+  const boundedTitle = boundFetchTitle(title);
+  return boundedTitle
+    ? { provider: 'exa', url, title: boundedTitle, content: truncated }
     : { provider: 'exa', url, content: truncated };
 }
 
