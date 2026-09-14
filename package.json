@@ -55,7 +55,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
+    "@types/react-dom": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.70.0",
     "@typescript-eslint/parser": "^8.70.0",
     "esbuild": "^0.28.2",
@@ -86,7 +86,7 @@
     "@modelcontextprotocol/sdk": "~1.30.0",
     "@tanstack/react-virtual": "^3.14.11",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react-dom": "^19.3.0",
     "skills": "1.5.25",
     "tslib": "^2.8.1"
   },
