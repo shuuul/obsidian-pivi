@@ -1,7 +1,11 @@
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { DeviceLocalExternalContextStore } from '@pivi/agent/session';
 import type { App } from 'obsidian';
 
 export const DEVICE_LOCAL_EXTERNAL_CONTEXT_STORAGE_KEY = 'pivi.external-contexts.v1';
+const DEVICE_LOCAL_EXTERNAL_CONTEXT_VERSION = 1;
+
+const logger = new PluginLogger('ExternalContextStore');
 
 interface StoredSessionExternalContexts {
   selectedPaths?: string[];
@@ -24,13 +28,29 @@ function stringList(value: unknown): string[] {
     .filter(Boolean))];
 }
 
+function emptyStored(): StoredExternalContexts {
+  return {
+    version: DEVICE_LOCAL_EXTERNAL_CONTEXT_VERSION,
+    externalReadDirectories: [],
+    sessions: {},
+  };
+}
+
 function readStored(app: App): StoredExternalContexts {
   const raw: unknown = app.loadLocalStorage(DEVICE_LOCAL_EXTERNAL_CONTEXT_STORAGE_KEY);
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { version: 1, externalReadDirectories: [], sessions: {} };
+  if (!raw) {
+    return emptyStored();
+  }
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    logger.warn('External context storage was corrupt; resetting to empty.');
+    return emptyStored();
   }
 
   const record = raw as Record<string, unknown>;
+  if (record.version !== DEVICE_LOCAL_EXTERNAL_CONTEXT_VERSION) {
+    logger.warn('External context storage was corrupt; resetting to empty.');
+    return emptyStored();
+  }
   const rawSessions = record.sessions;
   const sessions: Record<string, StoredSessionExternalContexts> = {};
   if (rawSessions && typeof rawSessions === 'object' && !Array.isArray(rawSessions)) {
@@ -59,7 +79,7 @@ function readStored(app: App): StoredExternalContexts {
   }
 
   return {
-    version: 1,
+    version: DEVICE_LOCAL_EXTERNAL_CONTEXT_VERSION,
     externalReadDirectories: stringList(record.externalReadDirectories),
     sessions,
   };

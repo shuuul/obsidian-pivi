@@ -23,8 +23,12 @@ describe('mcpValidation', () => {
 
   it('allows plain HTTP only for loopback hosts', () => {
     expect(validateMcpRemoteUrl('http://127.0.0.1:3000/sse')).toContain('127.0.0.1');
+    expect(validateMcpRemoteUrl('http://127.0.0.2/sse')).toContain('127.0.0.2');
     expect(validateMcpRemoteUrl('http://localhost:3000/sse')).toContain('localhost');
+    expect(validateMcpRemoteUrl('http://[::1]/sse')).toContain('[::1]');
     expect(() => validateMcpRemoteUrl('http://example.test/mcp')).toThrow('loopback');
+    expect(() => validateMcpRemoteUrl('http://127.evil/mcp')).toThrow('loopback');
+    expect(() => validateMcpRemoteUrl('http://127.0.0.1.evil/mcp')).toThrow('loopback');
   });
 
   it('stores entries on null-prototype maps without polluting Object.prototype', () => {

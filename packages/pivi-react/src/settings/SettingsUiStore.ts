@@ -40,6 +40,10 @@ function snapshot(data: SettingsUiSnapshotData): SettingsUiSnapshot {
   return freeze(cloneSerializableValue(data) as SettingsUiSnapshotData);
 }
 
+function hasChangedPatch<T extends object>(current: T, patch: Partial<T>): boolean {
+  return (Object.keys(patch) as Array<keyof T>).some(key => !Object.is(current[key], patch[key]));
+}
+
 /** Immutable external-store boundary for the React settings root. */
 export class SettingsUiStore {
   private current: SettingsUiSnapshot;
@@ -59,10 +63,14 @@ export class SettingsUiStore {
   };
 
   updateGeneral(patch: Partial<SettingsGeneralSnapshot>): SettingsUiSnapshot {
+    if (this.disposed) return this.current;
+    if (!hasChangedPatch(this.current.general, patch)) return this.current;
     return this.replace({ ...this.current, general: { ...this.current.general, ...patch } });
   }
 
   updateSubagents(patch: Partial<SettingsSubagentsSnapshot>): SettingsUiSnapshot {
+    if (this.disposed) return this.current;
+    if (!hasChangedPatch(this.current.subagents, patch)) return this.current;
     return this.replace({ ...this.current, subagents: { ...this.current.subagents, ...patch } });
   }
 

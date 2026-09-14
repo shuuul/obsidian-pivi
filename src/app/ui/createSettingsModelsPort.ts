@@ -470,6 +470,13 @@ export function createSettingsModelsPort(
       }
       return result;
     },
+    async refreshProviderCatalog(providerId) {
+      const result = await uiFacades.refreshProviderCatalog(providerId);
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.refreshModelPresentation();
+      }
+      return result;
+    },
     async setCustomProviderModelIds(providerId, modelIds) {
       const piSettings = getPiAgentSettings(host.settings);
       const provider = piSettings.customProviders.find(entry => entry.id === providerId);

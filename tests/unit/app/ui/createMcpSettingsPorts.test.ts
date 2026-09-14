@@ -144,4 +144,59 @@ describe('createMcpSettingsPort snapshots', () => {
 
     expect(replaceAll).toHaveBeenCalledWith([first], 'revision-a');
   });
+
+  it('continues reloading sibling views after one view is disposed', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const firstReload = jest.fn(async () => { throw new Error('disposed'); });
+    const secondReload = jest.fn(async () => undefined);
+    const firstWarm = jest.fn();
+    const secondWarm = jest.fn();
+    const first = {
+      getChatHandle: () => ({
+        maintenance: {
+          reloadMcpServers: firstReload,
+          warmSlashCatalog: firstWarm,
+          invalidateSlashCatalog: jest.fn(),
+        },
+      }),
+    };
+    const second = {
+      getChatHandle: () => ({
+        maintenance: {
+          reloadMcpServers: secondReload,
+          warmSlashCatalog: secondWarm,
+          invalidateSlashCatalog: jest.fn(),
+        },
+      }),
+    };
+    const replaceAll = jest.fn(async () => ({
+      revision: 'revision-b',
+      saved: true,
+      refreshed: true,
+    }));
+    const host = {
+      getAllViews: () => [first, second],
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      mcpManagement: {
+        getRevision: jest.fn(async () => 'revision-a'),
+        replaceAll,
+      },
+      mcpToolProvider: {
+        getCachedTools: () => [],
+        invalidateAll: jest.fn(),
+      },
+    } as unknown as PiviPluginWorkspace;
+    const port = createMcpSettingsPort(host, workspace);
+
+    await expect(port.save([])).resolves.toBeUndefined();
+
+    expect(replaceAll).toHaveBeenCalledWith([], 'revision-a');
+    expect(firstReload).toHaveBeenCalledTimes(1);
+    expect(secondReload).toHaveBeenCalledTimes(1);
+    expect(warning).toHaveBeenCalledWith(
+      '[Pivi:McpSettingsPorts] Failed to reload MCP in a Pivi view',
+      expect.any(Error),
+    );
+  });
 });

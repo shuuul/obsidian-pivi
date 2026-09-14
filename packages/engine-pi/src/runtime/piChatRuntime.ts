@@ -499,7 +499,9 @@ export class PiChatRuntime implements PiChatService {
     invalidateCompactionState(this.compactionState);
     this.agent?.reset();
     this.agent = null;
-    void this.mcpBridge?.dispose();
+    void this.mcpBridge?.dispose()?.catch((error: unknown) => {
+      logger.warn('MCP bridge dispose failed', error);
+    });
     this.systemPromptKey = null;
     this.setReady(false);
   }

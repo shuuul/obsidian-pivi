@@ -89,6 +89,11 @@ const compactionLocks = new WeakMap<
   SessionTreeStore,
   Promise<PiChatCompactionResult | null>
 >();
+const systemTokenEstimateCache = new WeakMap<Agent, {
+  systemPrompt: string;
+  tokens: number;
+  tools: unknown;
+}>();
 
 function getContextTokenIndex(sessionTree: SessionTreeStore): PiContextTokenIndex {
   let index = contextTokenIndexes.get(sessionTree);
@@ -111,15 +116,24 @@ function estimateSessionEntriesTokens(sessionTree: SessionTreeStore): number {
 }
 
 function estimateSystemTokens(agent: Agent | null): number {
-  const systemPromptTokens = estimateTextTokens(agent?.state.systemPrompt ?? '');
-  const toolSchemaTokens = estimateTextTokens(JSON.stringify(
-    (agent?.state.tools ?? []).map((tool) => ({
+  if (!agent) {
+    return estimateTextTokens('') + estimateTextTokens(JSON.stringify([]));
+  }
+  const systemPrompt = agent.state.systemPrompt ?? '';
+  const tools = agent.state.tools ?? [];
+  const cached = systemTokenEstimateCache.get(agent);
+  if (cached && cached.tools === tools && cached.systemPrompt === systemPrompt) {
+    return cached.tokens;
+  }
+  const tokens = estimateTextTokens(systemPrompt) + estimateTextTokens(JSON.stringify(
+    tools.map((tool) => ({
       description: tool.description,
       name: tool.name,
       parameters: (tool as { parameters?: unknown }).parameters,
     })),
   ));
-  return systemPromptTokens + toolSchemaTokens;
+  systemTokenEstimateCache.set(agent, { systemPrompt, tokens, tools });
+  return tokens;
 }
 
 function modelKey(deps: PiChatCompactionDeps): string {

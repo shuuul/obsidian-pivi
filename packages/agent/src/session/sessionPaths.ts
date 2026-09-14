@@ -19,12 +19,30 @@ export function getPiviSessionTrashRoot(vaultPath: string): string {
   return path.join(vaultPath, '.pivi', 'trash', 'sessions');
 }
 
-export function isVaultSessionFile(sessionFile: string): boolean {
-  return sessionFile.startsWith(PIVI_SESSIONS_PREFIX)
+/**
+ * True when `sessionFile` is a vault-relative `.jsonl` path that cannot escape
+ * the vault via absolute form, backslashes, NUL, or `..` segments.
+ */
+export function isCanonicalVaultRelativeJsonl(sessionFile: string): boolean {
+  return sessionFile.length > 0
     && sessionFile.endsWith('.jsonl')
+    && !path.isAbsolute(sessionFile)
     && !sessionFile.includes('\\')
     && !sessionFile.includes('\0')
     && !sessionFile.split('/').includes('..');
+}
+
+/** Restored or persisted session identity that cannot be opened as a vault JSONL file. */
+export class InvalidSessionFileError extends Error {
+  constructor(readonly sessionFile: string) {
+    super(`Invalid session file: ${sessionFile}`);
+    this.name = 'InvalidSessionFileError';
+  }
+}
+
+export function isVaultSessionFile(sessionFile: string): boolean {
+  return sessionFile.startsWith(PIVI_SESSIONS_PREFIX)
+    && isCanonicalVaultRelativeJsonl(sessionFile);
 }
 
 /** Map a live session path onto the mirrored trash path. */

@@ -29,6 +29,8 @@ import { getIconIds } from 'obsidian';
 
 import { getSelectionToolbarHost } from '@/app/editorSelectionToolbarRegistration';
 import type {
+  PiviChatView,
+  PiviChatViewMaintenance,
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
@@ -68,6 +70,24 @@ import {
   SETTINGS_HOTKEY_ROWS,
 } from './settingsHotkeys';
 const logger = new PluginLogger('UiPorts');
+
+// Settle every view independently (sequential, mirroring refreshPrompt below) so
+// one disposed or failing view cannot abort the loop and leave later views stale.
+async function settleViewOperations(
+  views: readonly PiviChatView[],
+  operation: (maintenance: PiviChatViewMaintenance) => Promise<void> | void,
+  failureMessage: string,
+): Promise<void> {
+  for (const view of views) {
+    const maintenance = view.getChatHandle()?.maintenance;
+    if (!maintenance) continue;
+    try {
+      await operation(maintenance);
+    } catch (error) {
+      logger.warn(failureMessage, error);
+    }
+  }
+}
 
 function isCorePluginEnabled(host: PiviSettingsHost, id: string): boolean {
   const registry = (host.app as typeof host.app & {
@@ -159,13 +179,16 @@ export function createSettingsUiPorts(
       || patch.showCacheHitRate !== undefined
       || patch.showTokensPerSecond !== undefined
     ) {
-      for (const view of host.getAllViews()) {
-        const maintenance = view.getChatHandle()?.maintenance;
-        if (patch.tabBarPosition !== undefined) maintenance?.refreshTabBarPosition();
-        if (patch.showCacheHitRate !== undefined || patch.showTokensPerSecond !== undefined) {
-          maintenance?.refreshChatDisplaySettings();
-        }
-      }
+      await settleViewOperations(
+        host.getAllViews(),
+        (maintenance) => {
+          if (patch.tabBarPosition !== undefined) maintenance.refreshTabBarPosition();
+          if (patch.showCacheHitRate !== undefined || patch.showTokensPerSecond !== undefined) {
+            maintenance.refreshChatDisplaySettings();
+          }
+        },
+        'Failed to refresh general settings in a Pivi view',
+      );
     }
     await host.saveSettings();
     if (patch.deletedSessionRetentionDays !== undefined) await host.purgeExpiredDeletedSessionFiles();
@@ -183,9 +206,11 @@ export function createSettingsUiPorts(
     const current = getSubagentRuntimeSettingsFromBag(host.settings);
     host.settings.agentSettings.subagents = { ...current, ...patch };
     await host.saveSettings();
-    for (const view of host.getAllViews()) {
-      await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
-    }
+    await settleViewOperations(
+      host.getAllViews(),
+      maintenance => maintenance.refreshRuntimePrompt(),
+      'Failed to refresh prompt in a Pivi view',
+    );
   };
   const saveToolSettings = async (
     patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0] & { disabledTools?: readonly string[] },
@@ -221,17 +246,22 @@ export function createSettingsUiPorts(
       disabledTools: patch.disabledTools ? [...patch.disabledTools] : current.disabledTools,
     };
     await host.saveSettings();
-    for (const view of host.getAllViews()) {
-      if (patch.disabledTools) {
-        view.getChatHandle()?.maintenance.invalidateSlashCatalog();
-      }
-      await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
-    }
+    await settleViewOperations(
+      host.getAllViews(),
+      (maintenance) => {
+        if (patch.disabledTools) {
+          maintenance.invalidateSlashCatalog();
+        }
+        return maintenance.refreshRuntimePrompt();
+      },
+      'Failed to refresh tools in a Pivi view',
+    );
     if (patch.externalDirectories) {
-      for (const view of host.getAllViews()) {
-        view.getChatHandle()?.maintenance
-          .syncExternalReadDirectories(externalReadDirectories);
-      }
+      await settleViewOperations(
+        host.getAllViews(),
+        maintenance => maintenance.syncExternalReadDirectories(externalReadDirectories),
+        'Failed to sync external directories in a Pivi view',
+      );
     }
   };
   const refreshPrompt = async (): Promise<void> => {

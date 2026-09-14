@@ -359,12 +359,19 @@ export class PromptCompositionCoordinator {
     };
   }
 
-  private async persistUnlocked(next: PromptModuleSettings): Promise<void> {
+  private async persistUnlocked(
+    next: PromptModuleSettings,
+    signal?: AbortSignal,
+  ): Promise<void> {
     const previousPromptModules = this.host.settings.promptModules;
     const previousCustomPromptModules = this.host.settings.customPromptModules;
-    this.host.settings.promptModules = { ...next.promptModules };
-    this.host.settings.customPromptModules = next.customPromptModules.map((entry) => ({ ...entry }));
     try {
+      throwIfAborted(signal);
+      this.host.settings.promptModules = { ...next.promptModules };
+      this.host.settings.customPromptModules = next.customPromptModules.map((entry) => ({ ...entry }));
+      // Abort can arrive while the mutation waits behind another prompt write.
+      // Check again immediately before starting the non-cancellable settings write.
+      throwIfAborted(signal);
       await this.host.saveSettings();
     } catch (cause) {
       this.host.settings.promptModules = previousPromptModules;
@@ -377,8 +384,10 @@ export class PromptCompositionCoordinator {
   private mutate(
     transform: (current: PromptModuleSettings) => PromptModuleSettings,
     expectedRevision?: number,
+    signal?: AbortSignal,
   ): Promise<{ settings: PromptModuleSettings; catalogRevision: number }> {
     return runSerialized(this.host.settings, async () => {
+      throwIfAborted(signal);
       if (expectedRevision !== undefined && expectedRevision !== this.catalogRevision()) {
         throw new PiviManagementError(
           'state_changed',
@@ -386,7 +395,7 @@ export class PromptCompositionCoordinator {
         );
       }
       const next = transform(this.read());
-      await this.persistUnlocked(next);
+      await this.persistUnlocked(next, signal);
       return { settings: next, catalogRevision: this.catalogRevision() };
     });
   }
@@ -416,7 +425,9 @@ export class PromptCompositionCoordinator {
   async commit(
     plan: PromptCompositionPlan,
     expectedRevision: number,
+    signal?: AbortSignal,
   ): Promise<PiviManagementMutationResult<{ catalogRevision: number }>> {
+    throwIfAborted(signal);
     if (plan.revision !== expectedRevision) {
       throw new PiviManagementError(
         'state_changed',
@@ -426,6 +437,7 @@ export class PromptCompositionCoordinator {
     const committed = await this.mutate(
       (current) => applyMutation(current, plan.mutation),
       expectedRevision,
+      signal,
     );
     return {
       saved: true,
@@ -545,5 +557,11 @@ export class PromptCompositionCoordinator {
       id,
       catalogRevision: expectedRevision ?? this.catalogRevision(),
     }), expectedRevision);
+  }
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new PiviManagementError('cancelled', 'Prompt composition mutation was cancelled.');
   }
 }

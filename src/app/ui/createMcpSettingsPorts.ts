@@ -1,3 +1,4 @@
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import {
   getMcpServerUrl,
   type ManagedMcpServer,
@@ -7,9 +8,33 @@ import { grantPrivateOrigins } from '@pivi/agent/network';
 import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 import type { SettingsComplexPorts } from '@pivi/pivi-react/ports';
 
-import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
+import type {
+  PiviChatView,
+  PiviChatViewMaintenance,
+  PiviPluginWorkspace,
+  PiviSettingsHost,
+} from '@/app/hostContracts';
 
 type SettingsMcpPort = SettingsComplexPorts['mcp'];
+const logger = new PluginLogger('McpSettingsPorts');
+
+// Settle every view independently so one disposed or failing view cannot abort
+// the reload loop and leave later views stale; keeps per-view failures logged.
+async function settleViewOperations(
+  views: readonly PiviChatView[],
+  operation: (maintenance: PiviChatViewMaintenance) => Promise<void> | void,
+  failureMessage: string,
+): Promise<void> {
+  for (const view of views) {
+    const maintenance = view.getChatHandle()?.maintenance;
+    if (!maintenance) continue;
+    try {
+      await operation(maintenance);
+    } catch (error) {
+      logger.warn(failureMessage, error);
+    }
+  }
+}
 
 /** Re-grant MCP private origins from the freshly saved server set. */
 function regrantMcpPrivateOrigins(servers: readonly ManagedMcpServer[]): void {
@@ -35,9 +60,11 @@ function warmMcpCaches(host: PiviSettingsHost, workspace: PiviPluginWorkspace): 
     } catch {
       // Best-effort warmup; first slash open or turn will retry.
     }
-    for (const view of host.getAllViews()) {
-      view.getChatHandle()?.maintenance.warmSlashCatalog();
-    }
+    await settleViewOperations(
+      host.getAllViews(),
+      maintenance => maintenance.warmSlashCatalog(),
+      'Failed to warm MCP slash catalog in a Pivi view',
+    );
   })();
 }
 
@@ -46,11 +73,14 @@ async function reloadMcpAcrossViews(
   workspace: PiviPluginWorkspace,
 ): Promise<void> {
   workspace.mcpToolProvider.invalidateAll?.();
-  for (const view of host.getAllViews()) {
-    const maintenance = view.getChatHandle()?.maintenance;
-    await maintenance?.reloadMcpServers();
-    maintenance?.invalidateSlashCatalog();
-  }
+  await settleViewOperations(
+    host.getAllViews(),
+    async (maintenance) => {
+      await maintenance.reloadMcpServers();
+      maintenance.invalidateSlashCatalog();
+    },
+    'Failed to reload MCP in a Pivi view',
+  );
   warmMcpCaches(host, workspace);
 }
 
@@ -92,11 +122,14 @@ export function createMcpSettingsPort(
       const result = await workspace.mcpDiagnostics.testConnection(server);
       if (result.success) {
         workspace.mcpToolProvider.cacheTools(server.name, result.tools);
-        for (const view of host.getAllViews()) {
-          const maintenance = view.getChatHandle()?.maintenance;
-          maintenance?.invalidateSlashCatalog();
-          maintenance?.warmSlashCatalog();
-        }
+        await settleViewOperations(
+          host.getAllViews(),
+          (maintenance) => {
+            maintenance.invalidateSlashCatalog();
+            maintenance.warmSlashCatalog();
+          },
+          'Failed to refresh MCP tools in a Pivi view',
+        );
       }
       return { authStatus, result };
     },

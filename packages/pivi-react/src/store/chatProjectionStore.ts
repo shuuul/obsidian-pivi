@@ -672,9 +672,12 @@ export class ChatProjectionStore {
   }
 
   private commitSnapshot(snapshot: ProjectionMessage): void {
+    const current = this.messages.get(snapshot.id);
+    // Accepted events can republish an unchanged post-effect message (usage/done/notice).
+    if (current && structurallyEqual(current, snapshot)) return;
     const recorderEnabled = this.perfRecorder.enabled;
     const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
-    const isNew = !this.messages.has(snapshot.id);
+    const isNew = current === undefined;
     this.messages.set(snapshot.id, snapshot);
     this.reconcileMessageStructure(snapshot);
     this.indexMessageEntities(snapshot);

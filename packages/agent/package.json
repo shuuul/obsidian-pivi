@@ -103,6 +103,7 @@
     "./settings/deviceLocalProviderState": "./src/settings/deviceLocalProviderState.ts",
     "./settings/environmentText": "./src/settings/environmentText.ts",
     "./settings/modelDisplay": "./src/settings/modelDisplay.ts",
+    "./settings/modelCatalog": "./src/settings/modelCatalog.ts",
     "./settings/modelKey": "./src/settings/modelKey.ts",
     "./settings/modelReadiness": "./src/settings/modelReadiness.ts",
     "./settings/persistedPiviSettings": "./src/settings/persistedPiviSettings.ts",

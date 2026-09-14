@@ -26,6 +26,7 @@ import type {
   DeviceLocalEnvironmentStore,
   EnvironmentUiEntry,
 } from "@pivi/agent/settings/deviceLocalEnvironmentState";
+import type { ModelCatalogRefreshResult } from "@pivi/agent/settings/modelCatalog";
 import type {
   AppModelReadinessProvider,
 } from "@pivi/agent/settings/modelReadiness";
@@ -291,6 +292,9 @@ export interface PiviUiFacades {
     providerId: string,
     settings: Record<string, unknown>,
   ): Promise<{ count: number }>;
+
+  /** Refresh one built-in provider's remote model catalog into the registry. */
+  refreshProviderCatalog(providerId: string): Promise<ModelCatalogRefreshResult>;
 
 }
 

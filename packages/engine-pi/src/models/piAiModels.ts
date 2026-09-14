@@ -7,6 +7,7 @@ import {
   type CredentialStore,
   type Model,
   type MutableModels,
+  type Provider,
   type SimpleStreamOptions,
 } from '@earendil-works/pi-ai';
 import { anthropicProvider } from '@earendil-works/pi-ai/providers/anthropic';
@@ -27,12 +28,11 @@ import { xiaomiProvider } from '@earendil-works/pi-ai/providers/xiaomi';
 import { xiaomiTokenPlanCnProvider } from '@earendil-works/pi-ai/providers/xiaomi-token-plan-cn';
 import { zaiProvider } from '@earendil-works/pi-ai/providers/zai';
 import { zaiCodingCnProvider } from '@earendil-works/pi-ai/providers/zai-coding-cn';
-import {
-  CLAUDE_PROVIDER_ID,
-} from '@pivi/agent/auth/piProviderCredentials';
+import { CLAUDE_PROVIDER_ID } from '@pivi/agent/auth/piProviderCredentials';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { FetchCompatible } from '@pivi/agent/ports';
 import type { CustomProviderConfig } from '@pivi/agent/settings/customProviders';
+import type { ModelCatalogRefreshResult } from '@pivi/agent/settings/modelCatalog';
 
 import { createGrokBuildProvider } from './grokBuildProvider';
 import {
@@ -40,6 +40,11 @@ import {
   installCustomProviders,
 } from './installPiCustomProviders';
 import { cachePiAiRegistryModels } from './piModelRegistry';
+import {
+  type RemoteCatalogDeps,
+  type RemoteCatalogProvider,
+  withPiviRemoteCatalog,
+} from './remoteCatalog';
 import { withScopedGoogleTransport } from './scopedGoogleProvider';
 import {
   createApiKeyOnlyProvider,
@@ -49,6 +54,9 @@ import {
 const logger = new PluginLogger('PiAiModels');
 
 let providerFetch: FetchCompatible | undefined;
+
+/** Remote-catalog-wrapped builtin providers installed into the current registry. */
+const remoteCatalogProviders: RemoteCatalogProvider[] = [];
 
 /**
  * pi-ai's codex WebSocket transport builds `new WebSocket(url, { headers })` Node-`ws`-style.
@@ -90,36 +98,47 @@ const customProviderRuntime = {
   },
 };
 
-function installSupportedProviders(models: MutableModels): void {
+function installSupportedProviders(models: MutableModels, catalogDeps: RemoteCatalogDeps): void {
+  remoteCatalogProviders.length = 0;
+  // Wrap every composed builtin provider so the remote catalog overlay sees
+  // the final model list (split-auth and scoped-transport variants included).
+  const withCatalog = <T extends Provider>(provider: T): T => {
+    const wrapped = withPiviRemoteCatalog(provider, catalogDeps);
+    remoteCatalogProviders.push(wrapped);
+    return wrapped.provider;
+  };
+
   const anthropic = anthropicProvider();
   const xai = xaiProvider();
-  models.setProvider(createApiKeyOnlyProvider(anthropic));
-  models.setProvider(createSubscriptionOAuthProvider(
+  models.setProvider(withCatalog(createApiKeyOnlyProvider(anthropic)));
+  models.setProvider(withCatalog(createSubscriptionOAuthProvider(
     anthropic,
     CLAUDE_PROVIDER_ID,
     'Claude',
-  ));
-  models.setProvider(deepseekProvider());
-  models.setProvider(withScopedGoogleTransport(googleProvider(), () => providerFetch));
-  models.setProvider(kimiCodingProvider());
-  models.setProvider(minimaxProvider());
-  models.setProvider(minimaxCnProvider());
-  models.setProvider(moonshotaiProvider());
-  models.setProvider(moonshotaiCnProvider());
-  models.setProvider(openaiProvider());
-  models.setProvider(openaiCodexProvider());
-  models.setProvider(withScopedGoogleTransport(opencodeProvider(), () => providerFetch));
-  models.setProvider(opencodeGoProvider());
-  models.setProvider(openrouterProvider());
-  models.setProvider(createApiKeyOnlyProvider(xai));
-  models.setProvider(createGrokBuildProvider(xai));
-  models.setProvider(xiaomiProvider());
-  models.setProvider(xiaomiTokenPlanCnProvider());
-  models.setProvider(zaiProvider());
-  models.setProvider(zaiCodingCnProvider());
+  )));
+  models.setProvider(withCatalog(deepseekProvider()));
+  models.setProvider(withCatalog(withScopedGoogleTransport(googleProvider(), () => providerFetch)));
+  models.setProvider(withCatalog(kimiCodingProvider()));
+  models.setProvider(withCatalog(minimaxProvider()));
+  models.setProvider(withCatalog(minimaxCnProvider()));
+  models.setProvider(withCatalog(moonshotaiProvider()));
+  models.setProvider(withCatalog(moonshotaiCnProvider()));
+  models.setProvider(withCatalog(openaiProvider()));
+  models.setProvider(withCatalog(openaiCodexProvider()));
+  models.setProvider(withCatalog(withScopedGoogleTransport(opencodeProvider(), () => providerFetch)));
+  models.setProvider(withCatalog(opencodeGoProvider()));
+  models.setProvider(withCatalog(openrouterProvider()));
+  models.setProvider(withCatalog(createApiKeyOnlyProvider(xai)));
+  models.setProvider(withCatalog(createGrokBuildProvider(xai)));
+  models.setProvider(withCatalog(xiaomiProvider()));
+  models.setProvider(withCatalog(xiaomiTokenPlanCnProvider()));
+  models.setProvider(withCatalog(zaiProvider()));
+  models.setProvider(withCatalog(zaiCodingCnProvider()));
 }
 
-installSupportedProviders(piAiModels);
+// Default registry before composition configures credentials and the
+// device-local catalog store; refresh reports `skipped` until then.
+installSupportedProviders(piAiModels, {});
 
 export function configurePiAiModels(options: {
   credentials?: CredentialStore;
@@ -128,6 +147,8 @@ export function configurePiAiModels(options: {
   customProviders?: readonly CustomProviderConfig[];
   httpGet?: CustomProviderHttpGet;
   getApiKey?: (providerId: string) => string | undefined;
+  /** Device-local persistence for builtin remote-catalog overlays. */
+  catalogStore?: RemoteCatalogDeps['store'];
 }): void {
   providerFetch = options.providerFetch;
   customProviderRuntime.reset(options);
@@ -135,7 +156,10 @@ export function configurePiAiModels(options: {
     credentials: options.credentials,
     authContext: options.authContext,
   });
-  installSupportedProviders(piAiModels);
+  installSupportedProviders(piAiModels, {
+    fetch: options.providerFetch,
+    store: options.catalogStore,
+  });
   if (options.customProviders) {
     syncCustomPiProviders(options.customProviders);
   } else {
@@ -182,4 +206,63 @@ export async function refreshCustomPiProviderModels(providerId: string): Promise
   }
   cachePiAiRegistryModels(piAiModels);
   return true;
+}
+
+/** One provider's remote-catalog refresh outcome, with its id attached. */
+export type PiCatalogRefreshResult = ModelCatalogRefreshResult & { providerId: string };
+
+export interface PiCatalogRefreshFailure {
+  readonly providerId: string;
+  readonly message: string;
+}
+
+export interface PiCatalogRefreshSummary {
+  readonly results: readonly PiCatalogRefreshResult[];
+  readonly failures: readonly PiCatalogRefreshFailure[];
+}
+
+/**
+ * Refresh remote model catalogs for catalog-wrapped builtin providers,
+ * bypassing pi-ai's credential-gated refresh path: the shared Pi catalog is
+ * public, while `Models.refresh` only reaches the network phase for providers
+ * with a resolvable credential. Refreshes run concurrently; the registry
+ * cache is rebuilt once when any overlay changed.
+ */
+export async function refreshPiCatalogModels(options: {
+  providerIds?: readonly string[];
+  force?: boolean;
+  signal?: AbortSignal;
+} = {}): Promise<PiCatalogRefreshSummary> {
+  const targets = remoteCatalogProviders.filter((target) => (
+    !options.providerIds || options.providerIds.includes(target.provider.id)
+  ));
+  const results: PiCatalogRefreshResult[] = [];
+  const failures: PiCatalogRefreshFailure[] = [];
+  await Promise.all(targets.map(async (target) => {
+    try {
+      const result = await target.refresh({ force: options.force, signal: options.signal });
+      // `skipped` (no fetch configured) is an engine-test-only state; the
+      // shared settings contract surfaces the three user-displayable states.
+      results.push({
+        providerId: target.provider.id,
+        status: result.status === 'skipped' ? 'current' : result.status,
+        addedModels: result.addedModels,
+        updatedModels: result.updatedModels,
+        totalModels: result.totalModels,
+      });
+    } catch (cause) {
+      failures.push({
+        providerId: target.provider.id,
+        message: cause instanceof Error ? cause.message : String(cause),
+      });
+    }
+  }));
+  if (results.some((result) => result.status === 'updated')) {
+    try {
+      cachePiAiRegistryModels(piAiModels);
+    } catch (err) {
+      logger.error('Failed to refresh pi-ai models cache after catalog refresh', err);
+    }
+  }
+  return { results, failures };
 }

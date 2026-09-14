@@ -2,17 +2,40 @@ import {
   getPiAiCredentialSecretId,
   serializeProviderCredential,
 } from '@pivi/agent/auth/piProviderCredentials';
+import type { FileStore } from '@pivi/agent/ports';
 import {
   getPiAgentSettings,
   updatePiAgentSettings,
 } from '@pivi/agent/settings/agentSettings';
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
+import { seedDefaultDeviceLocalProviderState } from '@pivi/agent/settings/deviceLocalProviderState';
 
+import { ObsidianDeviceLocalProviderStore } from '@/app/deviceLocalProviderStore';
 import {
+  loadPluginSettings,
   migrateProviderSecretsToKeychain,
   type PluginSettingsLoadContext,
 } from '@/app/pluginSettingsLoad';
 import { createMockApp } from '../../helpers/mockApp';
+
+jest.mock('@pivi/agent/skills/vault/ensureDefaultVaultSkills', () => ({
+  ensureDefaultVaultSkills: jest.fn(async () => undefined),
+}));
+
+function createMemoryAdapter(): FileStore {
+  let content: string | undefined;
+  return {
+    exists: jest.fn(async () => content !== undefined),
+    read: jest.fn(async () => content ?? ''),
+    write: jest.fn(async (_path: string, nextContent: string) => {
+      content = nextContent;
+    }),
+    delete: jest.fn(),
+    deleteFolder: jest.fn(),
+    listFolders: jest.fn(async () => []),
+    ensureFolder: jest.fn(),
+  } as unknown as FileStore;
+}
 
 describe('plugin settings provider credential migration', () => {
   it('eagerly moves legacy OAuth selections into the independent subscription namespace', () => {
@@ -107,5 +130,57 @@ describe('plugin settings provider credential migration', () => {
     expect(migrated.disabledProviders).toEqual(['xai', 'anthropic']);
     expect(settings.model).toBe('xai/grok-3');
     expect(settings.titleGenerationModel).toBe('anthropic/claude-sonnet-4');
+  });
+});
+
+describe('plugin settings load reconciliation', () => {
+  it('repairs an invalid title model on the installed settings snapshot and persists it', async () => {
+    const app = createMockApp();
+    const providerStore = new ObsidianDeviceLocalProviderStore(app);
+    const seeded = seedDefaultDeviceLocalProviderState();
+    providerStore.save({
+      ...seeded,
+      modelPreferences: {
+        ...seeded.modelPreferences,
+        titleGenerationModel: 'deepseek/stale-title',
+      },
+    });
+
+    let settings = structuredClone(DEFAULT_PIVI_SETTINGS);
+    const saveSettings = jest.fn(async () => undefined);
+
+    await loadPluginSettings({
+      app,
+      storage: {
+        initialize: async () => undefined,
+        loadRawPiviSettings: async () => null,
+        saveRawPiviSettings: async () => undefined,
+        getAdapter: () => createMemoryAdapter(),
+        takeDeletedSessionFileQueue: async () => [],
+      },
+      sessionManager: {
+        loadSummaries: async () => undefined,
+        backfillSessionResponseTimestamps: () => [],
+      } as never,
+      createSessionStore: () => ({
+        migrateDeviceLocalExternalContexts: async () => 0,
+        listSessions: async () => [],
+        deleteSession: async () => undefined,
+      }) as never,
+      persistSessionSummary: async () => undefined,
+      saveSettings,
+      setSettings: (next) => {
+        settings = next;
+      },
+      setSessionStore: () => undefined,
+      getSettings: () => settings,
+      getSessions: () => [],
+      setLastKnownTabManagerState: () => undefined,
+      getStorage: () => ({ getTabManagerState: async () => null }),
+      skillsHost: { app } as never,
+    });
+
+    expect(settings.titleGenerationModel).toBe('');
+    expect(saveSettings).toHaveBeenCalled();
   });
 });

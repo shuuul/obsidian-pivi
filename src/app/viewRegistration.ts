@@ -4,6 +4,7 @@ import { addIcon, removeIcon } from "obsidian";
 
 import type { ChatFacade, SessionsFacade, WorkspaceFacade } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
+import { runAppAction } from "@/app/runAppAction";
 import { PiviViewHost } from "@/app/ui/PiviViewHost";
 
 import piviIconSvg from "../../assets/icons/pivi-p.svg";
@@ -23,6 +24,10 @@ export function registerPiviViews(
   );
 
   plugin.addRibbonIcon("pivi-p", t("commands.openPiviRibbon"), () => {
-    void chat.activateView();
+    runAppAction(
+      () => chat.activateView(),
+      "editor.selectionToolbar.commandUnavailable",
+      "Failed to open Pivi from the ribbon",
+    );
   });
 }

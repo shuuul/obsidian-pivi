@@ -59,4 +59,46 @@ describe('createMcpProxyToolSpec', () => {
     expect(text.length).toBeLessThanOrEqual(50_000);
     expect(text).toContain('[mcp call truncated to 50000 characters]');
   });
+
+  it('caps MCP describe results before they become model-visible text', async () => {
+    const bridge = makeBridge();
+    (bridge.listCachedTools as jest.Mock).mockResolvedValue([
+      {
+        name: 'lookup',
+        description: 'y'.repeat(80_000),
+      },
+    ]);
+    const tool = createMcpProxyToolSpec(bridge);
+
+    const result = await tool.execute('call', {
+      describe: 'vault/lookup',
+    }) as { content: Array<{ type: string; text: string }> };
+    const text = result.content[0]?.text ?? '';
+
+    expect(text.length).toBeLessThanOrEqual(50_000);
+    expect(text).toContain('[mcp describe truncated to 50000 characters]');
+  });
+
+  it('caps MCP search results before they become model-visible text', async () => {
+    const bridge = makeBridge();
+    (bridge.getActiveServers as jest.Mock).mockReturnValue([{ name: 'vault' }]);
+    (bridge.searchTools as jest.Mock).mockReturnValue([
+      {
+        server: 'vault',
+        tool: {
+          name: 'lookup',
+          description: 'z'.repeat(80_000),
+        },
+      },
+    ]);
+    const tool = createMcpProxyToolSpec(bridge);
+
+    const result = await tool.execute('call', {
+      search: 'lookup',
+    }) as { content: Array<{ type: string; text: string }> };
+    const text = result.content[0]?.text ?? '';
+
+    expect(text.length).toBeLessThanOrEqual(50_000);
+    expect(text).toContain('[mcp search truncated to 50000 characters]');
+  });
 });

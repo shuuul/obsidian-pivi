@@ -37,7 +37,7 @@ import {
   ObsidianAuthContext,
   type ObsidianCredentialStore,
 } from "@pivi/engine-pi/application/auth";
-import { configurePiAiModels } from "@pivi/engine-pi/application/models";
+import { configurePiAiModels, refreshPiCatalogModels } from "@pivi/engine-pi/application/models";
 import { ProviderOAuthService } from "@pivi/engine-pi/application/oauth";
 import { registerBundledPiOAuthFlows } from "@pivi/engine-pi/application/oauth-flows";
 import {
@@ -61,6 +61,7 @@ import {
   resolveLoginShellPath,
 } from "@pivi/obsidian-tools";
 
+import { ObsidianDeviceLocalModelCatalogStore } from "@/app/deviceLocalModelCatalogStore";
 import { requestOAuthManualCode } from "@/app/oauthManualCodePrompt";
 
 import { createBaseSessionTools } from "./baseSessionTools";
@@ -172,6 +173,14 @@ export async function createPiWorkspaceServices(
       const credential = credentialStore?.readSync(providerId);
       return credentialToApiKey(credential) ?? undefined;
     },
+    catalogStore: new ObsidianDeviceLocalModelCatalogStore(host.app),
+  });
+  // Best-effort remote model catalog refresh for builtin providers. The
+  // device-local 4h freshness window keeps this cheap; failures never block
+  // workspace boot and the Models settings action retries with force.
+  void refreshPiCatalogModels().catch(() => {
+    // Refresh results are already collected and logged in the engine; the
+    // per-provider settings action surfaces outcomes on demand.
   });
   const vaultPath = getVaultPath(host.app);
   const providerOAuth = new ProviderOAuthService(

@@ -174,6 +174,8 @@ export function EnvironmentSection({ environment, feedback }: {
             rows={6}
             placeholder={t('settings.sharedEnvironment.placeholder')}
             value={value}
+            // Disable the draft while apply is pending so a completion refresh cannot overwrite a newer edit.
+            disabled={applying}
             onChange={(event) => {
               setValue(event.target.value);
             }}

@@ -241,6 +241,35 @@ describe('ChatUiStore', () => {
     store.update({ thinkingIndicator: null });
     expect(store.getSnapshot().thinkingIndicator).toBeNull();
   });
+
+  it('returns the same snapshot and skips subscribers when patched values are unchanged', () => {
+    const store = new ChatUiStore();
+    store.update({ currentThinkingContent: 'thinking', isStreaming: true });
+    const snapshot = store.getSnapshot();
+    const listener = jest.fn();
+    store.subscribe(listener);
+
+    store.update({ currentThinkingContent: 'thinking', isStreaming: true });
+
+    expect(store.getSnapshot()).toBe(snapshot);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('still publishes when at least one patched value changes', () => {
+    const store = new ChatUiStore();
+    store.update({ currentThinkingContent: 'thinking' });
+    const snapshot = store.getSnapshot();
+    const listener = jest.fn();
+    store.subscribe(listener);
+
+    store.update({ currentThinkingContent: 'thinking', isStreaming: true });
+
+    expect(store.getSnapshot()).not.toBe(snapshot);
+    expect(store.getSnapshot().isStreaming).toBe(true);
+    expect(store.getSnapshot().currentThinkingContent).toBe('thinking');
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect([...listener.mock.calls[0][0]]).toEqual(['isStreaming']);
+  });
 });
 
 describe('ChatProjectionStore', () => {
@@ -561,6 +590,37 @@ describe('ChatProjectionStore', () => {
     expect(store.getToolSnapshot('tool-1')).not.toBe(tool);
     expect(store.getToolSnapshot('tool-1')?.tool.subagent?.description).toBe('Updated research');
     expect(toolListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the existing message snapshot identity when an accepted upsert is structurally identical', () => {
+    const store = new ChatProjectionStore();
+    const message = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: 'one',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text' as const, content: 'one' }],
+    };
+    store.replaceAll([message]);
+    const before = store.getMessageSnapshot(message.id);
+    const structure = store.getMessageStructureSnapshot(message.id);
+    const block = store.getBlockSnapshot('assistant-1:block:0');
+    const messageListener = jest.fn();
+    const structureListener = jest.fn();
+    const blockListener = jest.fn();
+    store.subscribeMessage(message.id, messageListener);
+    store.subscribeMessageStructure(message.id, structureListener);
+    store.subscribeBlock('assistant-1:block:0', blockListener);
+
+    store.dispatch(queuedMessageEvent({ ...message }, 1));
+    store.flush();
+
+    expect(store.getMessageSnapshot(message.id)).toBe(before);
+    expect(store.getMessageStructureSnapshot(message.id)).toBe(structure);
+    expect(store.getBlockSnapshot('assistant-1:block:0')).toBe(block);
+    expect(messageListener).not.toHaveBeenCalled();
+    expect(structureListener).not.toHaveBeenCalled();
+    expect(blockListener).not.toHaveBeenCalled();
   });
 
   it('preserves message structure snapshots across content deltas and publishes shape changes', () => {

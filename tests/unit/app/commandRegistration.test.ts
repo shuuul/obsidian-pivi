@@ -1,5 +1,8 @@
+import { Notice } from 'obsidian';
+
 import { registerPiviCommands } from '@/app/commandRegistration';
 import type { PiviChatView, PiviChatViewCommands } from '@/app/hostContracts';
+import { t } from '@/app/i18n';
 import { findPiviView } from '@/app/viewAccess';
 
 jest.mock('@/app/viewAccess', () => ({
@@ -360,6 +363,23 @@ describe('chat command registration', () => {
       expect.anything(),
     );
     expect(perfController.stopAndExport).toHaveBeenCalledTimes(2);
+  });
+
+  it('catches a rejected open-view command without leaving an unhandled rejection', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => { /* swallow */ });
+    const { commands, plugin } = createPlugin();
+    plugin.activateView.mockRejectedValue(new Error('leaf failed'));
+    registerPiviCommands(plugin as never, plugin as never);
+
+    expect(commands.find(command => command.id === 'open-view')?.callback?.()).toBeUndefined();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to open the Pivi chat view'),
+      expect.any(Error),
+    );
+    expect(Notice).toHaveBeenCalledWith(t('editor.selectionToolbar.commandUnavailable'));
+    warn.mockRestore();
   });
 
   it('starts a CLI-safe trace from the optional vault scenario file', async () => {

@@ -5,7 +5,6 @@ import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import { useHostTerminology } from '../platform';
 import type {
-  SettingsFeedbackMessage,
   SettingsMentionEditorHandle,
   SettingsMentionEditorPort,
   SettingsPorts,
@@ -48,7 +47,6 @@ interface CommandCardProps {
   readonly existingIds: ReadonlySet<string>;
   readonly iconNames: readonly string[];
   readonly pending: boolean;
-  readonly feedback?: SettingsFeedbackMessage;
   readonly mentionEditor: SettingsMentionEditorPort;
   readonly position?: number;
   readonly dragging?: boolean;
@@ -68,7 +66,6 @@ function CommandCard({
   existingIds,
   iconNames,
   pending,
-  feedback,
   mentionEditor,
   position,
   dragging = false,
@@ -186,7 +183,7 @@ function CommandCard({
           <button type="submit" form={formId} disabled={pending}>{t('common.save')}</button>
           <SettingsFeedback feedback={error
             ? { kind: 'error', message: error }
-            : feedback} />
+            : undefined} />
         </>
       )}
       reorderLabel={position !== undefined
@@ -272,7 +269,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const [draftOpen, setDraftOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [commandFeedback, setCommandFeedback] = useState<Readonly<Record<string, SettingsFeedbackMessage>>>({});
   const [order, setOrder] = useState<readonly string[]>([]);
   const iconNames = ports.complex.commands.listIconNames();
 
@@ -310,12 +306,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
 
   const save = async (entry: SlashCatalogEntry, previous: SlashCatalogEntry | undefined): Promise<SlashCatalogEntry> => {
     setPending(true);
-    const previousKey = previous ? commandKey(previous) : '__draft__';
-    setCommandFeedback(current => {
-      const next = { ...current };
-      delete next[previousKey];
-      return next;
-    });
     let saved: SlashCatalogEntry;
     try {
       if (catalogRevision === null) throw new Error('Command catalog is not loaded.');
@@ -463,7 +453,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
                     existingIds={existingIds}
                     iconNames={iconNames}
                     pending={pending}
-                    feedback={commandFeedback[key]}
                     mentionEditor={ports.mentionEditor}
                     position={index + 1}
                     dragging={reorder.draggingId === id}
@@ -487,7 +476,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
                     existingIds={existingIds}
                     iconNames={iconNames}
                     pending={pending}
-                    feedback={commandFeedback.__draft__}
                     mentionEditor={ports.mentionEditor}
                     onToggle={() => undefined}
                     onCancelDraft={() => setDraftOpen(false)}

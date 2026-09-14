@@ -20,7 +20,7 @@ const baseConfig = {
       '<rootDir>/packages/engine-pi/src/runtime/$1',
     '^@pivi/engine-pi/(buildPiToolRegistryCore|createSkillTool|createSubagentTool|piToolAdapter)$':
       '<rootDir>/packages/engine-pi/src/tools/$1',
-    '^@pivi/engine-pi/(piAiModels|installPiCustomProviders|piModelEnv|piModelRegistry|piThinkingLevels|piChatUiConfig|piSettingsCoordinator|grokBuildProvider|scopedGoogleProvider|splitProviderAuth)$':
+    '^@pivi/engine-pi/(piAiModels|installPiCustomProviders|piModelEnv|piModelRegistry|piThinkingLevels|piChatUiConfig|piSettingsCoordinator|grokBuildProvider|remoteCatalog|scopedGoogleProvider|splitProviderAuth)$':
       '<rootDir>/packages/engine-pi/src/models/$1',
     '^@pivi/engine-pi/(membershipAwareCredentialMigration|piProviderCredentialStore|piProviderOAuthService|piAuthInteraction|deviceVerificationUri|piviOpenRouterOAuth|piviXaiOAuthDeviceFlow|registerPiviBundledOAuthFlowLoaders)$':
       '<rootDir>/packages/engine-pi/src/auth/$1',

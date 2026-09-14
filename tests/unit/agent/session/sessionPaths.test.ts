@@ -7,6 +7,7 @@ import {
   getPiviSessionDir,
   getPiviSessionRoot,
   getPiviSessionTrashRoot,
+  isCanonicalVaultRelativeJsonl,
   toAbsoluteSessionPath,
   toLiveSessionFile,
   toTrashedSessionFile,
@@ -67,5 +68,28 @@ describe('sessionPaths', () => {
     expect(getPiviSessionTrashRoot('/tmp/vault')).toBe(
       path.join('/tmp/vault', '.pivi', 'trash', 'sessions'),
     );
+  });
+
+  it('accepts canonical vault-relative JSONL identities, including the trash mirror', () => {
+    expect(isCanonicalVaultRelativeJsonl('.pivi/sessions/--V--/chat.jsonl')).toBe(true);
+    expect(isCanonicalVaultRelativeJsonl('.pivi/trash/sessions/--V--/chat.jsonl')).toBe(true);
+  });
+
+  it('rejects restored session paths that escape the vault shape', () => {
+    const invalidPaths = [
+      '',
+      '/etc/passwd',
+      '/vault/.pivi/sessions/session.jsonl',
+      'C:\\vault\\.pivi\\sessions\\session.jsonl',
+      '.pivi/sessions/../../../etc/passwd.jsonl',
+      '..\\..\\escape.jsonl',
+      '.pivi/sessions/session.md',
+      '.pivi/sessions/no-extension',
+      '.pivi/sessions/nul\0.jsonl',
+    ];
+
+    for (const sessionFile of invalidPaths) {
+      expect(isCanonicalVaultRelativeJsonl(sessionFile)).toBe(false);
+    }
   });
 });

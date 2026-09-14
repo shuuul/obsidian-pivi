@@ -100,7 +100,10 @@ export function createMcpProxyToolSpec(bridge: McpToolBridge): ToolSpec {
         if (!match) {
           throw new Error(`Tool not found: ${describe}`);
         }
-        return textResult(formatToolEntry(serverName, match), { server: serverName, tool: toolName });
+        return textResult(
+          capToolResultText(formatToolEntry(serverName, match), { label: 'mcp describe' }),
+          { server: serverName, tool: toolName },
+        );
       }
 
       if (toolParam) {
@@ -123,10 +126,13 @@ export function createMcpProxyToolSpec(bridge: McpToolBridge): ToolSpec {
         if (matches.length === 0) {
           return textResult(`No MCP tools matched "${search}".`, { count: 0 });
         }
-        const text = matches
-          .slice(0, 40)
-          .map(({ server, tool }) => formatToolEntry(server, tool))
-          .join('\n\n');
+        const text = capToolResultText(
+          matches
+            .slice(0, 40)
+            .map(({ server, tool }) => formatToolEntry(server, tool))
+            .join('\n\n'),
+          { label: 'mcp search' },
+        );
         return textResult(text, { count: matches.length });
       }
 

@@ -38,7 +38,7 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
     const listeners: Array<(event: unknown) => void> = [];
     const instance: (typeof mockAgentInstances)[number] = {
       options,
-      state: { messages: options.initialState.messages ?? [] },
+      state: { messages: [...(options.initialState.messages ?? [])] },
       listeners,
       subscribe: jest.fn((listener: (event: unknown) => void) => {
         listeners.push(listener);
@@ -205,44 +205,160 @@ describe('PiAuxQueryRunner (core)', () => {
     await expect(runner.query(baseConfig(), 'prompt')).rejects.toThrow('rate limited');
   });
 
-  it('reset aborts and clears the cached agent so the next query constructs a new one', async () => {
+  it('reset aborts an in-flight query agent so the next query constructs a new one', async () => {
+    let resolvePrompt!: () => void;
+    const promptGate = new Promise<void>((resolve) => { resolvePrompt = resolve; });
+    let notifyPromptStarted!: () => void;
+    const promptStarted = new Promise<void>((resolve) => { notifyPromptStarted = resolve; });
+    promptBehavior = async (instance) => {
+      notifyPromptStarted();
+      await promptGate;
+      for (const listener of [...instance.listeners]) {
+        listener({ type: 'message_update', message: {}, assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: 'late', partial: {} } });
+      }
+    };
     const runner = createRunner();
-    await runner.query(baseConfig(), 'first');
+    const queryPromise = runner.query(baseConfig(), 'first');
+    await promptStarted;
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(1);
     const firstInstance = mockAgentInstances[0];
     expectDefined(firstInstance);
     runner.reset();
     expect(firstInstance.abort).toHaveBeenCalled();
     expect(firstInstance.reset).toHaveBeenCalled();
+    resolvePrompt();
+    await queryPromise;
     await runner.query(baseConfig(), 'second');
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
     expectDefined(mockAgentInstances[1]);
     expect(mockAgentInstances[1]).not.toBe(firstInstance);
   });
 
-  it('reuses the same agent when system prompt and model key are unchanged', async () => {
+  it('reset survives the real Agent in-flight reset guard and still clears every agent', async () => {
+    let resolveFirst!: () => void;
+    const firstGate = new Promise<void>((resolve) => { resolveFirst = resolve; });
+    let notifyFirstStarted!: () => void;
+    const firstStarted = new Promise<void>((resolve) => { notifyFirstStarted = resolve; });
+    let notifySecondStarted!: () => void;
+    const secondStarted = new Promise<void>((resolve) => { notifySecondStarted = resolve; });
+    promptBehavior = async (instance, input) => {
+      if (input === 'first') {
+        notifyFirstStarted();
+        await firstGate;
+      } else if (input === 'second') {
+        notifySecondStarted();
+      }
+      for (const listener of [...instance.listeners]) {
+        listener({ type: 'message_update', message: {}, assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: `${input}-late`, partial: {} } });
+      }
+    };
+    const runner = createRunner();
+    const firstPromise = runner.query(baseConfig(), 'first');
+    await firstStarted;
+    const secondPromise = runner.query(baseConfig(), 'second');
+    await secondStarted;
+    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
+    const first = mockAgentInstances[0];
+    const second = mockAgentInstances[1];
+    expectDefined(first);
+    expectDefined(second);
+    // Mirror the pinned Agent: reset() throws while the aborted run settles.
+    first.reset.mockImplementation(() => {
+      throw new Error('Agent is already processing. Wait for completion before resetting.');
+    });
+    expect(() => runner.reset()).not.toThrow();
+    expect(first.abort).toHaveBeenCalled();
+    expect(second.abort).toHaveBeenCalled();
+    expect(second.reset).toHaveBeenCalled();
+    resolveFirst();
+    await Promise.allSettled([firstPromise, secondPromise]);
+    await runner.query(baseConfig(), 'third');
+    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(3);
+  });
+
+  it('gives sequential queries with the same config isolated empty histories', async () => {
+    promptBehavior = async (instance, input) => {
+      instance.state.messages.push({ role: 'user', content: input });
+      for (const listener of [...instance.listeners]) {
+        listener({ type: 'message_update', message: {}, assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: 'aux-response', partial: {} } });
+      }
+    };
     const runner = createRunner();
     const config = baseConfig({ model: 'anthropic/mock-model' });
     await runner.query(config, 'one');
     await runner.query(config, 'two');
-    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(1);
-    expect(mockResolveModel).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
+    expect(mockResolveModel).toHaveBeenCalledTimes(2);
     expect(mockResolveModel).toHaveBeenCalledWith('anthropic/mock-model');
-    expectDefined(mockAgentInstances[0]);
-    expect(mockAgentInstances[0].prompt).toHaveBeenNthCalledWith(1, 'one');
-    expect(mockAgentInstances[0].prompt).toHaveBeenNthCalledWith(2, 'two');
+    const first = mockAgentInstances[0];
+    const second = mockAgentInstances[1];
+    expectDefined(first);
+    expectDefined(second);
+    expect(second).not.toBe(first);
+    const firstCall = jest.mocked(Agent).mock.calls[0];
+    const secondCall = jest.mocked(Agent).mock.calls[1];
+    expectDefined(firstCall);
+    expectDefined(secondCall);
+    const firstOptions = firstCall[0];
+    const secondOptions = secondCall[0];
+    expectDefined(firstOptions);
+    expectDefined(secondOptions);
+    expectDefined(firstOptions.initialState);
+    expectDefined(secondOptions.initialState);
+    expect(firstOptions.initialState.messages).toEqual([]);
+    expect(secondOptions.initialState.messages).toEqual([]);
+    expect(first.prompt).toHaveBeenCalledTimes(1);
+    expect(first.prompt).toHaveBeenCalledWith('one');
+    expect(second.prompt).toHaveBeenCalledTimes(1);
+    expect(second.prompt).toHaveBeenCalledWith('two');
+    expect(second.state.messages).toEqual([{ role: 'user', content: 'two' }]);
+    expect(first.abort).not.toHaveBeenCalled();
   });
 
-  it('creates a new agent when system prompt or model key changes', async () => {
+  it('does not abort an in-flight query when a later query uses a different config', async () => {
+    let resolveFirst!: () => void;
+    const firstGate = new Promise<void>((resolve) => { resolveFirst = resolve; });
+    let notifyFirstStarted!: () => void;
+    const firstStarted = new Promise<void>((resolve) => { notifyFirstStarted = resolve; });
+    promptBehavior = async (instance, input) => {
+      if (input === 'first') {
+        notifyFirstStarted();
+        await firstGate;
+      }
+      for (const listener of [...instance.listeners]) {
+        listener({
+          type: 'message_update',
+          message: {},
+          assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: `${input}-done`, partial: {} },
+        });
+      }
+    };
     const runner = createRunner();
-    await runner.query(baseConfig({ systemPrompt: 'prompt-a' }), 'first');
+    const firstPromise = runner.query(baseConfig({ systemPrompt: 'prompt-a' }), 'first');
+    await firstStarted;
     const first = mockAgentInstances[0];
     expectDefined(first);
-    await runner.query(baseConfig({ systemPrompt: 'prompt-b' }), 'second');
+    let notifySecondStarted!: () => void;
+    const secondStarted = new Promise<void>((resolve) => { notifySecondStarted = resolve; });
+    const previousPromptBehavior = promptBehavior;
+    promptBehavior = async (instance, input) => {
+      if (input === 'second') {
+        notifySecondStarted();
+      }
+      await previousPromptBehavior(instance, input);
+    };
+    const secondPromise = runner.query(baseConfig({ systemPrompt: 'prompt-b' }), 'second');
+    await secondStarted;
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
-    expect(first.abort).toHaveBeenCalled();
-    expect(first.reset).toHaveBeenCalled();
-    expectDefined(mockAgentInstances[1]);
-    expect(mockAgentInstances[1].options.initialState.systemPrompt).toBe('prompt-b');
+    expect(first.abort).not.toHaveBeenCalled();
+    const second = mockAgentInstances[1];
+    expectDefined(second);
+    expect(second).not.toBe(first);
+    expect(second.options.initialState.systemPrompt).toBe('prompt-b');
+    resolveFirst();
+    await expect(firstPromise).resolves.toBe('first-done');
+    await expect(secondPromise).resolves.toBe('second-done');
+    expect(first.prompt).toHaveBeenCalledTimes(1);
+    expect(second.prompt).toHaveBeenCalledTimes(1);
   });
 });

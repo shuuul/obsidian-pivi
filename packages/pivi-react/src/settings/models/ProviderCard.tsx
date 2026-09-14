@@ -353,17 +353,34 @@ export function ProviderCard({
               onPatchContextWindowOverride={patchContextWindowOverride}
               onPatchReasoningOverride={patchReasoningOverride}
               onPatchThinkingFormatOverride={patchThinkingFormatOverride}
+              feedback={feedback}
             />
           </>
         ) : isCodex ? (
           <>
             <ProviderOAuthSection models={models} feedback={feedback} providerId={providerId} connected={oauthConnected} onChanged={onChanged} />
-            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+            <ModelChecklist
+              catalog={catalog}
+              providerId={providerId}
+              settings={settings}
+              onToggleModel={toggleModel}
+              onRefreshCatalog={() => models.refreshProviderCatalog(providerId)}
+              onCatalogChanged={onChanged}
+              feedback={feedback}
+            />
           </>
         ) : isAccountOAuth ? (
           <>
             <ProviderOAuthSection models={models} feedback={feedback} providerId={providerId} connected={oauthConnected} onChanged={onChanged} />
-            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+            <ModelChecklist
+              catalog={catalog}
+              providerId={providerId}
+              settings={settings}
+              onToggleModel={toggleModel}
+              onRefreshCatalog={() => models.refreshProviderCatalog(providerId)}
+              onCatalogChanged={onChanged}
+              feedback={feedback}
+            />
           </>
         ) : isDualAuthOAuth ? (
           <>
@@ -377,12 +394,28 @@ export function ProviderCard({
                 onError={onError}
               />
             ) : null}
-            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+            <ModelChecklist
+              catalog={catalog}
+              providerId={providerId}
+              settings={settings}
+              onToggleModel={toggleModel}
+              onRefreshCatalog={() => models.refreshProviderCatalog(providerId)}
+              onCatalogChanged={onChanged}
+              feedback={feedback}
+            />
           </>
         ) : (
           <>
             <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
-            <ModelChecklist catalog={catalog} providerId={providerId} settings={settings} onToggleModel={toggleModel} />
+            <ModelChecklist
+              catalog={catalog}
+              providerId={providerId}
+              settings={settings}
+              onToggleModel={toggleModel}
+              onRefreshCatalog={custom ? undefined : () => models.refreshProviderCatalog(providerId)}
+              onCatalogChanged={onChanged}
+              feedback={feedback}
+            />
           </>
         )}
     </DisclosureCard>

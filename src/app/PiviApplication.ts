@@ -880,13 +880,18 @@ export class PiviApplication {
   }
 
   async reconcileWorkspaceCommands(): Promise<void> {
+    if (this.isUnloading) return;
+    // Generation-checked around the awaits: shutdown bumps the generation and
+    // clears the registry, so a stale reconcile must not re-register commands.
+    const generation = this.workspaceGeneration;
     const workspace = await this.ensureWorkspaceServices();
-    this.workspaceCommandRegistry.reconcile(
-      await workspace.slashCommandCatalog.listWorkspaceEntries(),
-    );
+    const entries = await workspace.slashCommandCatalog.listWorkspaceEntries();
+    if (this.isUnloading || generation !== this.workspaceGeneration) return;
+    this.workspaceCommandRegistry.reconcile(entries);
   }
 
   reconcileWorkspaceCommandEntries(entries: readonly SlashCatalogEntry[]): void {
+    if (this.isUnloading) return;
     this.workspaceCommandRegistry.reconcile(entries);
   }
 

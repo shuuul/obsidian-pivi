@@ -1,5 +1,7 @@
 /** MCP server name, URL, and map-key validation shared by storage, import, and UI. */
 
+import { classifyHostnameOrAddress } from '../network';
+
 export const RESERVED_MCP_SERVER_NAMES = new Set(['__proto__', 'prototype', 'constructor']);
 
 export const MCP_SERVER_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
@@ -55,14 +57,9 @@ export function assertValidMcpServerName(name: string): string {
 }
 
 function isLoopbackHostname(hostname: string): boolean {
-  const lowered = hostname.toLowerCase();
-  if (lowered === 'localhost' || lowered === '::1') {
-    return true;
-  }
-  if (lowered === '127.0.0.1' || lowered.startsWith('127.')) {
-    return true;
-  }
-  return false;
+  // WHATWG hostname is bracketed for IPv6 (`[::1]`), and a `127.` prefix also
+  // matches names like `127.evil`. Classify the parsed host instead.
+  return classifyHostnameOrAddress(hostname) === 'loopback';
 }
 
 /** Returns a normalized remote MCP URL or throws `McpValidationError`. */
