@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.30.0](https://github.com/shuuul/obsidian-pivi/compare/0.29.2...0.30.0) (2026-09-14)
+
+### Features
+
+* keep built-in provider model catalogs current between Pi pin bumps by overlaying a device-local cached remote catalog, with a refresh action on the Models settings page
+
+### Bug Fixes
+
+* stop auxiliary queries (titles, refine, blocking subagents) from carrying the previous run's conversation into the next one
+* prevent stale React surfaces, command re-registrations, and settings saves after view close, cancellation, or plugin shutdown
+* repair invalid title and active-model selections before settings load so the repair actually persists
+* keep a tampered synced tab state from opening session files outside the vault
+* validate MCP loopback targets by canonical IP address, accepting `[::1]` and rejecting look-alike hosts such as `127.evil`
+* cap MCP proxy and WebFetch result lengths, including provider-returned page titles
+* validate device-local model catalog and external-context caches before use, resetting corrupt blobs with a warning
+* keep keyboard tab reordering from being reverted by drag cleanup, and stop an in-flight environment Apply from overwriting the editing draft
+* skip redundant UI store notifications for unchanged updates and duplicate message commits
+
+### Performance
+
+* seal session journal entries from the appended byte range instead of re-reading the whole JSONL file
+* cache compaction tool-schema serialization and serialize each message once during session sync
+
 ## [0.29.2](https://github.com/shuuul/obsidian-pivi/compare/0.29.1...0.29.2) (2026-09-13)
 
 ### Bug Fixes
