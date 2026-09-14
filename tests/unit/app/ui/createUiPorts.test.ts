@@ -528,6 +528,44 @@ describe('UI port adapters', () => {
     );
   });
 
+  it('continues refreshing subagent settings after a disposed view rejects', async () => {
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshFirst = jest.fn(async () => { throw new Error('disposed'); });
+    const refreshSecond = jest.fn(async () => undefined);
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        agentSettings: {
+          ...DEFAULT_PIVI_SETTINGS.agentSettings,
+          subagents: { allowBackground: true, enabled: true, maxConcurrentSubagents: 3 },
+        },
+      } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshFirst } }) },
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshSecond } }) },
+      ],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const ports = createSettingsUiPorts(host, {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    } as never);
+
+    await expect(ports.actions.saveSubagents({ maxConcurrentSubagents: 8 })).resolves.toBeUndefined();
+
+    expect(refreshFirst).toHaveBeenCalledTimes(1);
+    expect(refreshSecond).toHaveBeenCalledTimes(1);
+    expect(warning).toHaveBeenCalledWith(
+      '[Pivi:UiPorts] Failed to refresh prompt in a Pivi view',
+      expect.any(Error),
+    );
+  });
+
   it('rejects a stale Settings prompt edit instead of overwriting an Agent change', async () => {
     const saveSettings = jest.fn(async () => undefined);
     const host = {

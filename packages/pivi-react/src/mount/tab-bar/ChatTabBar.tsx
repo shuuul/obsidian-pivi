@@ -110,9 +110,15 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
     .filter((item): item is ChatTabSnapshotItem => item !== undefined);
   const openItemsRef = useRef(openItems);
   openItemsRef.current = openItems;
+  const draggingIdRef = useRef(reorder.draggingId);
+  draggingIdRef.current = reorder.draggingId;
   useEffect(() => {
-    if (reorder.draggingId === null) setTabOrder(buildTabOrder(snapshot.items));
-  }, [reorder.draggingId, snapshot.items]);
+    // Sync from the external snapshot, not from drag-end. Rebuilding on
+    // draggingId === null reverts a just-committed keyboard reorder before
+    // persistence republishes snapshot.items.
+    if (draggingIdRef.current !== null) return;
+    setTabOrder(buildTabOrder(snapshot.items));
+  }, [snapshot.items]);
 
   useEffect(() => {
     if (reorder.draggingId !== null) setIsArchivedRevealed(true);

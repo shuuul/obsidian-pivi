@@ -191,4 +191,39 @@ describe('PromptCompositionCoordinator', () => {
     expect(host.saveSettings).toHaveBeenCalledTimes(1);
     expect(first.catalogRevision()).toBe(2);
   });
+
+  it('does not commit a queued mutation after its signal is aborted', async () => {
+    const host = makeHost();
+    let releaseSave!: () => void;
+    host.saveSettings.mockImplementationOnce(() => new Promise<void>((resolve) => {
+      releaseSave = resolve;
+    }));
+    const coordinator = createPromptCompositionCoordinator(host);
+    const revision = coordinator.catalogRevision();
+    const first = coordinator.commit(coordinator.plan({
+      action: 'set_enabled',
+      id: 'transcript-cleanup',
+      enabled: false,
+      catalogRevision: revision,
+    }), revision);
+    const controller = new AbortController();
+    const second = coordinator.commit(coordinator.plan({
+      action: 'set_body',
+      id: 'transcript-cleanup',
+      body: 'must not save',
+      catalogRevision: revision,
+    }), revision, controller.signal);
+
+    await Promise.resolve();
+    expect(host.saveSettings).toHaveBeenCalledTimes(1);
+    controller.abort();
+    releaseSave();
+
+    await first;
+    await expect(second).rejects.toMatchObject({
+      code: 'cancelled',
+    });
+    expect(host.saveSettings).toHaveBeenCalledTimes(1);
+    expect(host.settings.promptModules['transcript-cleanup']).toEqual({ enabled: false });
+  });
 });

@@ -5,8 +5,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function messageKey(message: AgentMessage): string {
-  return JSON.stringify(message);
+interface PreparedAgentMessage {
+  isUser: boolean;
+  key: string | null;
+  userText: string;
+}
+
+function prepareAgentMessage(message: AgentMessage): PreparedAgentMessage {
+  if (isRecord(message) && message.role === 'user') {
+    return {
+      isUser: true,
+      key: null,
+      userText: textFromContent(message.content),
+    };
+  }
+  return {
+    isUser: false,
+    key: JSON.stringify(message),
+    userText: '',
+  };
 }
 
 function textFromContent(content: unknown): string {
@@ -58,20 +75,20 @@ function userMessagesEqual(
   )) ?? false;
 }
 
-function messagesEqual(
-  left: AgentMessage,
-  right: AgentMessage,
+function preparedMessagesEqual(
+  left: PreparedAgentMessage,
+  right: PreparedAgentMessage,
   options: MissingAgentMessagesOptions,
 ): boolean {
-  if (isRecord(left) && isRecord(right) && left.role === 'user' && right.role === 'user') {
-    return userMessagesEqual(textFromContent(left.content), textFromContent(right.content), options);
+  if (left.isUser && right.isUser) {
+    return userMessagesEqual(left.userText, right.userText, options);
   }
-  return messageKey(left) === messageKey(right);
+  return left.key === right.key;
 }
 
 function hasMatchingSuffixPrefix(
-  existing: AgentMessage[],
-  incoming: AgentMessage[],
+  existing: PreparedAgentMessage[],
+  incoming: PreparedAgentMessage[],
   length: number,
   options: MissingAgentMessagesOptions,
 ): boolean {
@@ -79,7 +96,7 @@ function hasMatchingSuffixPrefix(
   for (let i = 0; i < length; i++) {
     const existingMessage = existing[offset + i];
     const incomingMessage = incoming[i];
-    if (!existingMessage || !incomingMessage || !messagesEqual(existingMessage, incomingMessage, options)) {
+    if (!existingMessage || !incomingMessage || !preparedMessagesEqual(existingMessage, incomingMessage, options)) {
       return false;
     }
   }
@@ -164,9 +181,11 @@ export function missingAgentMessages(
   incomingMessages: AgentMessage[],
   options: MissingAgentMessagesOptions = {},
 ): AgentMessage[] {
-  const maxOverlap = Math.min(existingContext.length, incomingMessages.length);
+  const existingPrepared = existingContext.map(prepareAgentMessage);
+  const incomingPrepared = incomingMessages.map(prepareAgentMessage);
+  const maxOverlap = Math.min(existingPrepared.length, incomingPrepared.length);
   for (let overlap = maxOverlap; overlap > 0; overlap--) {
-    if (hasMatchingSuffixPrefix(existingContext, incomingMessages, overlap, options)) {
+    if (hasMatchingSuffixPrefix(existingPrepared, incomingPrepared, overlap, options)) {
       return incomingMessages.slice(overlap).filter(message => !isPendingAssistantMessage(message));
     }
   }

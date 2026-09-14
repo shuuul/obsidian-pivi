@@ -39,4 +39,22 @@ describe('ObsidianDeviceLocalExternalContextStore', () => {
 
     expect(store.getTurnPaths('fork.jsonl', 'user-1')).toEqual(['/source']);
   });
+
+  it('resets to empty and warns when the stored schema version is not 1', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => { /* swallow */ });
+    const app = new App();
+    app.saveLocalStorage(DEVICE_LOCAL_EXTERNAL_CONTEXT_STORAGE_KEY, {
+      version: 2,
+      externalReadDirectories: ['/outside/root'],
+      sessions: {
+        'a.jsonl': { selectedPaths: ['/outside/root'] },
+      },
+    });
+    const store = new ObsidianDeviceLocalExternalContextStore(app);
+
+    expect(store.getExternalReadDirectories()).toEqual([]);
+    expect(store.getSessionPaths('a.jsonl')).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/corrupt/i));
+    warn.mockRestore();
+  });
 });

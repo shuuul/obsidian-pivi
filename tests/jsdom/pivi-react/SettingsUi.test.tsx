@@ -426,6 +426,29 @@ describe('React settings foundation', () => {
     expect(store.getSnapshot()).toBe(first);
   });
 
+  it('returns the same snapshot and skips subscribers when patched values are unchanged', () => {
+    const store = new SettingsUiStore(snapshot);
+    const first = store.updateGeneral({ userName: 'Ada' });
+    const listener = jest.fn();
+    store.subscribe(listener);
+
+    expect(store.updateGeneral({ userName: 'Ada' })).toBe(first);
+    expect(store.updateSubagents({ enabled: true })).toBe(first);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('still publishes when a patched settings value changes', () => {
+    const store = new SettingsUiStore(snapshot);
+    const first = store.getSnapshot();
+    const listener = jest.fn();
+    store.subscribe(listener);
+
+    const next = store.updateGeneral({ userName: 'Ada' });
+    expect(next).not.toBe(first);
+    expect(next.general.userName).toBe('Ada');
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it('lists remote skills and installs selected skills', async () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="skills" ports={createPorts()} /></I18nProvider>));
     const remoteSetting = screen.getByText('Install from remote').closest<HTMLElement>('.pivi-settings-row');
@@ -1451,6 +1474,39 @@ describe('React settings foundation', () => {
     expect(screen.queryByText('Environment variables saved.')).not.toBeInTheDocument();
   });
 
+  it('disables the environment draft while apply is pending', async () => {
+    let resolveImport!: () => void;
+    const importEnvironmentText = jest.fn(() => new Promise<void>((resolve) => {
+      resolveImport = resolve;
+    }));
+    const ports = createPorts();
+    Object.assign(ports.environment, {
+      listEntries: () => [{
+        key: 'FOO',
+        scope: 'shared',
+        sourceKind: 'plain',
+        plainValue: 'bar',
+        storageLocation: 'deviceLocal',
+        hasStoredSecret: false,
+      }],
+      importEnvironmentText,
+    });
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot page="environment" ports={ports} />
+      </I18nProvider>,
+    ));
+    const textarea = screen.getByLabelText('Environment variables');
+    fireEvent.change(textarea, { target: { value: 'FOO=changed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+
+    expect(textarea).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+
+    await act(async () => { resolveImport(); });
+    expect(screen.getByLabelText('Environment variables')).toBeEnabled();
+  });
+
   it('notifies through the host channel when a skill update completes', async () => {
     let resolveUpdate!: () => void;
     const update = jest.fn(() => new Promise<void>((resolve) => { resolveUpdate = resolve; }));
@@ -1523,6 +1579,46 @@ describe('React settings foundation', () => {
 
     fireEvent.click(screen.getByText('Ollama'));
     expect(screen.getByRole('link', { name: 'Download' })).toHaveAttribute('href', 'https://ollama.com/download');
+  });
+
+  it('does not notify catalog refresh results after the models page unmounts', async () => {
+    let resolveRefresh!: (result: {
+      status: 'updated';
+      addedModels: number;
+      updatedModels: number;
+      totalModels: number;
+    }) => void;
+    const refreshProviderCatalog = jest.fn(() => new Promise<Parameters<typeof resolveRefresh>[0]>((resolve) => {
+      resolveRefresh = resolve;
+    }));
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      refreshProviderCatalog,
+      getSettings: () => ({
+        addedProviders: ['openai'],
+        disabledProviders: [],
+        customProviders: [],
+        visibleModels: [],
+        availableModes: [],
+        discoveredModels: [],
+        environmentVariables: '',
+        selectedMode: '',
+      }),
+    });
+    const view = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <SettingsRoot page="models" ports={ports} />
+      </I18nProvider>,
+    ));
+    await act(async () => undefined);
+    fireEvent.click(screen.getByText('openai', { selector: '.pivi-settings-card__name' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh catalog' }));
+    view.unmount();
+
+    await act(async () => {
+      resolveRefresh({ status: 'updated', addedModels: 1, updatedModels: 0, totalModels: 1 });
+    });
+    expect(ports.feedback.notify).not.toHaveBeenCalled();
   });
 
   it('renders About on its standalone final page with version, GitHub, and issue links', () => {

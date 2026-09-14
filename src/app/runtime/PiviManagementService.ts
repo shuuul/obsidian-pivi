@@ -221,7 +221,7 @@ async function executePrompt(
   await requireConfirm(approval, presentPromptManagementApproval(plan, t), signal);
   let committed;
   try {
-    committed = await deps.prompt.commit(plan, input.catalogRevision);
+    committed = await deps.prompt.commit(plan, input.catalogRevision, signal);
   } catch (cause) {
     throw mapPromptError(cause);
   }

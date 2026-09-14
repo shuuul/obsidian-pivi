@@ -40,6 +40,10 @@ export class PiviViewHost extends ItemView {
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
+  private readonly adapterDisposals = new WeakMap<
+    CreatedImperativeChatAdapter,
+    Promise<void>
+  >();
   private mountGeneration = 0;
 
   // Debouncing for tab state persistence
@@ -142,13 +146,16 @@ export class PiviViewHost extends ItemView {
     const imperativeAdapter: ImperativeChatAdapter = {
       mount: async (adapterContainer, environment) => {
         await chatAdapter.mount(adapterContainer, environment, ports);
+        if (generation !== this.mountGeneration || this.chatAdapter !== chatAdapter) {
+          return;
+        }
         this.wireEventHandlers();
       },
-      dispose: () => this.disposeChatRuntimeSurface(),
+      dispose: () => this.disposeChatRuntimeSurface(chatAdapter),
     };
 
     try {
-      this.mountedSurface = await mountChatView({
+      const mountedSurface = await mountChatView({
         container,
         ownerDocument,
         ownerWindow,
@@ -165,9 +172,14 @@ export class PiviViewHost extends ItemView {
         },
         imperativeAdapter,
       });
+      if (generation !== this.mountGeneration || this.chatAdapter !== chatAdapter) {
+        await mountedSurface.dispose();
+        return;
+      }
+      this.mountedSurface = mountedSurface;
     } catch (mountError) {
       try {
-        await this.disposeChatRuntimeSurface();
+        await this.disposeChatRuntimeSurface(chatAdapter);
       } catch (cleanupError) {
         throw new AggregateError(
           [mountError, cleanupError],
@@ -189,31 +201,45 @@ export class PiviViewHost extends ItemView {
     await this.disposeChatRuntimeSurface();
   }
 
-  private async disposeChatRuntimeSurface(): Promise<void> {
-    if (this.pendingPersist !== null) {
+  private async disposeChatRuntimeSurface(
+    targetAdapter: CreatedImperativeChatAdapter | null = this.chatAdapter,
+  ): Promise<void> {
+    const isCurrentAdapter = targetAdapter !== null && targetAdapter === this.chatAdapter;
+    if (isCurrentAdapter && this.pendingPersist !== null) {
       getActiveWindow(this.containerEl).clearTimeout(this.pendingPersist);
       this.pendingPersist = null;
     }
-    const adapter = this.chatAdapter;
-    this.chatAdapter = null;
-    this.scope = null;
-
-    const errors: unknown[] = [];
-    try {
-      await adapter?.getViewHandle().maintenance.persistState();
-    } catch (error) {
-      errors.push(error);
+    if (isCurrentAdapter) {
+      this.chatAdapter = null;
+      this.scope = null;
     }
-    try {
-      await adapter?.dispose();
-    } catch (error) {
-      errors.push(error);
+    if (!targetAdapter) return;
+    const existingDisposal = this.adapterDisposals.get(targetAdapter);
+    if (existingDisposal) {
+      await existingDisposal;
+      return;
     }
 
-    if (errors.length === 1) throw errors[0];
-    if (errors.length > 1) {
-      throw new AggregateError(errors, 'Pivi chat persistence and disposal both failed.');
-    }
+    const disposal = (async () => {
+      const errors: unknown[] = [];
+      try {
+        await targetAdapter.getViewHandle().maintenance.persistState();
+      } catch (error) {
+        errors.push(error);
+      }
+      try {
+        await targetAdapter.dispose();
+      } catch (error) {
+        errors.push(error);
+      }
+
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1) {
+        throw new AggregateError(errors, 'Pivi chat persistence and disposal both failed.');
+      }
+    })();
+    this.adapterDisposals.set(targetAdapter, disposal);
+    await disposal;
   }
 
   // ============================================

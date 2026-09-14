@@ -18,10 +18,14 @@ import { PIVI_MESSAGE_UI } from '@pivi/agent/session';
 import { SessionIndexStaleError } from '@pivi/agent/session';
 import {
   emptySessionJournalState,
+  hashAppendLines,
   SESSION_JOURNAL_MAX_ENTRY_BYTES,
   type SessionJournalStateV1,
 } from '@pivi/agent/session/sessionJournal';
-import { getPiviSessionDir } from '@pivi/agent/session/sessionPaths';
+import {
+  getPiviSessionDir,
+  InvalidSessionFileError,
+} from '@pivi/agent/session/sessionPaths';
 
 const assistantToolCall = {
   role: 'assistant',
@@ -140,6 +144,85 @@ describe('SessionTreeStore', () => {
       expect(store.appendUserMessage('still append')).toBe('user-1');
       expect(manager.appendMessage).toHaveBeenCalledTimes(1);
       expect(warning).toHaveBeenCalledTimes(2);
+    } finally {
+      bindSessionJournal(null);
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('seals journal continuation bytes identical to the legacy whole-file slice', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-journal-slice-'));
+    const sessionFile = path.join(root, 'session.jsonl');
+    fs.mkdirSync(path.dirname(sessionFile), { recursive: true });
+    // A long multi-byte prefix makes the seal read a large multi-line session
+    // while still exercising UTF-8 boundaries inside the appended range.
+    const prefixLines = Array.from({ length: 500 }, (_, index) => `${JSON.stringify({
+      type: 'message',
+      id: `old-${index}`,
+      parentId: null,
+      timestamp: new Date(index).toISOString(),
+      message: { role: 'user', content: `历史行 ${index} 🌊` },
+    })}\n`);
+    fs.writeFileSync(sessionFile, `${JSON.stringify({
+      type: 'session', version: 3, id: 'session-1', timestamp: new Date(0).toISOString(), cwd: root,
+    })}\n${prefixLines.join('')}`);
+    let journalState: SessionJournalStateV1 = emptySessionJournalState();
+    bindSessionJournal({
+      load: () => structuredClone(journalState),
+      save: next => { journalState = structuredClone(next); },
+    });
+    let appendCount = 0;
+    const manager = {
+      appendMessage: jest.fn(() => {
+        appendCount += 1;
+        fs.appendFileSync(sessionFile, `${JSON.stringify({
+          type: 'message',
+          id: `user-${appendCount}`,
+          parentId: null,
+          timestamp: new Date(appendCount).toISOString(),
+          message: { role: 'user', content: `新的 turn ${appendCount} 🌊` },
+        })}\n`);
+        return `user-${appendCount}`;
+      }),
+      getSessionFile: () => sessionFile,
+      isPersisted: () => true,
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(sessionFile);
+
+    try {
+      const firstBaseSize = fs.statSync(sessionFile).size;
+      expect(store.appendUserMessage('first turn')).toBe('user-1');
+      expect(store.appendUserMessage('second turn')).toBe('user-2');
+
+      expect(journalState.entries).toHaveLength(2);
+      const [first, second] = journalState.entries;
+      expect(first?.status).toBe('confirmed');
+      expect(second?.status).toBe('confirmed');
+      expect(first?.baseFingerprint.size).toBe(firstBaseSize);
+      expect(first?.resultFingerprint?.size).toBeDefined();
+      expect(second?.baseFingerprint.size).toBe(first?.resultFingerprint?.size);
+
+      // The legacy seal read the whole file and sliced from the base size; the
+      // journal payload must stay byte-identical to that behavior.
+      const secondBaseSize = second?.baseFingerprint.size ?? 0;
+      for (const [entry, baseSize] of [[first, firstBaseSize], [second, secondBaseSize]] as const) {
+        const endSize = entry?.resultFingerprint?.size ?? 0;
+        const legacyAppended = fs.readFileSync(sessionFile)
+          .subarray(baseSize, endSize)
+          .toString('utf8');
+        const legacyLines = legacyAppended.endsWith('\n')
+          ? legacyAppended.slice(0, -1).split('\n')
+          : legacyAppended.split('\n');
+        expect(entry?.appendLines).toEqual(legacyLines);
+        expect(entry?.appendSha256).toBe(hashAppendLines(legacyLines));
+      }
+      expect(first?.entryIds).toEqual(['user-1']);
+      expect(second?.entryIds).toEqual(['user-2']);
     } finally {
       bindSessionJournal(null);
       fs.rmSync(root, { recursive: true, force: true });
@@ -496,6 +579,60 @@ describe('SessionTreeStore', () => {
     const reopened = SessionTreeStore.open('/test/vault', sessionFile!, 'missing-leaf');
     expect(reopened).toBe(store);
     expect(reopened.getLeafId()).toBe(store.getLeafId());
+  });
+
+  it('rejects restored session paths that escape the vault before opening', () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    delete process.env.NODE_ENV;
+    const open = jest.spyOn(SessionManager, 'open');
+    try {
+      const escapedPaths = [
+        '/etc/passwd/.pivi/sessions/evil.jsonl',
+        'C:\\vault\\.pivi\\sessions\\evil.jsonl',
+        '../outside.jsonl',
+        '.pivi/sessions/../../../etc/passwd.jsonl',
+        '.pivi/sessions/evil.md',
+        'notes/no-extension',
+        '',
+      ];
+      for (const sessionFile of escapedPaths) {
+        expect(() => SessionTreeStore.open('/real-vault', sessionFile))
+          .toThrow(InvalidSessionFileError);
+        expect(() => SessionTreeStore.openSnapshot('/real-vault', sessionFile))
+          .toThrow(InvalidSessionFileError);
+        expect(() => SessionTreeStore.forkFile('/real-vault', sessionFile, 'entry-1'))
+          .toThrow(InvalidSessionFileError);
+      }
+      expect(open).not.toHaveBeenCalled();
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+      open.mockRestore();
+    }
+  });
+
+  it('opens canonical vault-relative session paths through the normal open path', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-open-relative-'));
+    const absoluteFile = path.join(root, '.pivi', 'sessions', 'session.jsonl');
+    fs.mkdirSync(path.dirname(absoluteFile), { recursive: true });
+    fs.writeFileSync(absoluteFile, `${JSON.stringify({
+      type: 'session', version: 3, id: 'session-1', timestamp: new Date(0).toISOString(), cwd: root,
+    })}\n`);
+    const previousNodeEnv = process.env.NODE_ENV;
+    delete process.env.NODE_ENV;
+    const open = jest.spyOn(SessionManager, 'open').mockImplementation(() => ({
+      getSessionFile: () => absoluteFile,
+      isPersisted: () => true,
+    } as unknown as SessionManager));
+    try {
+      const store = SessionTreeStore.open(root, '.pivi/sessions/session.jsonl');
+
+      expect(open).toHaveBeenCalledWith(absoluteFile, getPiviSessionDir(root), root);
+      expect(store.getVaultRelativeSessionFile()).toBe('.pivi/sessions/session.jsonl');
+    } finally {
+      process.env.NODE_ENV = previousNodeEnv;
+      open.mockRestore();
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('keeps Pivi custom entries out of agent message context', () => {

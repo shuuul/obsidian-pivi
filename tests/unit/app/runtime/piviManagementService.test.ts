@@ -381,6 +381,7 @@ describe('PiviManagementService', () => {
       expect(prompt.commit).toHaveBeenCalledWith(
         expect.objectContaining({ revision: 3, mutation: input }),
         3,
+        undefined,
       );
       expect(refresh).toHaveBeenCalledWith('prompt');
     } else {
@@ -392,6 +393,27 @@ describe('PiviManagementService', () => {
     }
   });
   /* eslint-enable jest/no-conditional-expect -- End decision matrix. */
+
+  it('passes prompt cancellation into the serialized commit', async () => {
+    const { deps, prompt } = makeDeps();
+    const approval = makeApproval('confirm');
+    const controller = new AbortController();
+    const port = createPiviManagementPort(deps, approval.port);
+    const input = {
+      action: 'set_enabled' as const,
+      id: 'transcript-cleanup',
+      enabled: false,
+      catalogRevision: 3,
+    };
+
+    await port.executePrompt(input, controller.signal);
+
+    expect(prompt.commit).toHaveBeenCalledWith(
+      expect.objectContaining({ revision: 3, mutation: input }),
+      3,
+      controller.signal,
+    );
+  });
 
   it('fails closed with unavailable when approval port is null', async () => {
     const { deps, mcp, skills, commands, refresh } = makeDeps();

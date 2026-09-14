@@ -205,10 +205,17 @@ export class ChatUiStore {
   };
 
   update(patch: ChatUiSnapshotPatch): void {
-    const changedKeys = new Set(Object.keys(patch) as ChatUiSnapshotKey[]);
+    const changedKeys = new Set<ChatUiSnapshotKey>();
+    for (const key of Object.keys(patch) as ChatUiSnapshotKey[]) {
+      if (Object.is(this.snapshot[key], patch[key])) continue;
+      changedKeys.add(key);
+    }
     if (changedKeys.size === 0) return;
 
-    const clonedPatch = deepFreeze(cloneSerializable(patch));
+    const changedPatch = Object.fromEntries(
+      [...changedKeys].map(key => [key, patch[key]]),
+    ) as ChatUiSnapshotPatch;
+    const clonedPatch = deepFreeze(cloneSerializable(changedPatch));
     this.snapshot = freezeSnapshot({
       ...(this.snapshot as ChatUiSnapshotData),
       ...(clonedPatch as ChatUiSnapshotPatch),

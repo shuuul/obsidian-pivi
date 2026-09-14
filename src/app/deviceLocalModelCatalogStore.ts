@@ -1,25 +1,43 @@
+import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { RemoteCatalogEntry, RemoteCatalogStore } from '@pivi/engine-pi/application/models';
 import type { App } from 'obsidian';
 
-const DEVICE_LOCAL_MODEL_CATALOG_STORAGE_KEY = 'pivi.model-catalog.v1';
+export const DEVICE_LOCAL_MODEL_CATALOG_STORAGE_KEY = 'pivi.model-catalog.v1';
+const DEVICE_LOCAL_MODEL_CATALOG_VERSION = 1;
+
+const logger = new PluginLogger('ModelCatalogStore');
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isValidCachedModel(value: unknown): value is RemoteCatalogEntry['models'][number] {
+  if (!isRecord(value)) return false;
+  if (typeof value.id !== 'string' || !value.id.trim()) return false;
+  if (typeof value.api !== 'string' || !value.api.trim()) return false;
+  if (typeof value.provider !== 'string' || !value.provider.trim()) return false;
+  if (typeof value.baseUrl !== 'string' || !value.baseUrl.trim()) return false;
+  if (!isFiniteNumber(value.contextWindow) || value.contextWindow <= 0) return false;
+  if (!isFiniteNumber(value.maxTokens) || value.maxTokens <= 0) return false;
+  if (!isRecord(value.cost)) return false;
+  if (!isFiniteNumber(value.cost.input) || value.cost.input < 0) return false;
+  if (!isFiniteNumber(value.cost.output) || value.cost.output < 0) return false;
+  return true;
+}
+
 function sanitizeStoredEntry(value: unknown): RemoteCatalogEntry | undefined {
   if (!isRecord(value) || !Array.isArray(value.models)) return undefined;
   if (typeof value.piVersion !== 'string' || !value.piVersion) return undefined;
-  const checkedAt = typeof value.checkedAt === 'number' && Number.isFinite(value.checkedAt)
-    ? value.checkedAt
-    : 0;
-  const lastModified = typeof value.lastModified === 'number' && Number.isFinite(value.lastModified)
-    ? value.lastModified
-    : 0;
-  // Model entries were validated by the engine before persisting; the cache
-  // keeps the stored body verbatim so the engine applies its own version guard.
+  const models = value.models.filter(isValidCachedModel);
+  if (models.length === 0) return undefined;
+  const checkedAt = isFiniteNumber(value.checkedAt) ? value.checkedAt : 0;
+  const lastModified = isFiniteNumber(value.lastModified) ? value.lastModified : 0;
   return {
-    models: value.models as RemoteCatalogEntry['models'],
+    models,
     checkedAt,
     lastModified,
     ...(typeof value.etag === 'string' ? { etag: value.etag } : {}),
@@ -29,7 +47,11 @@ function sanitizeStoredEntry(value: unknown): RemoteCatalogEntry | undefined {
 
 function readStoredEntries(app: App): Record<string, unknown> {
   const raw: unknown = app.loadLocalStorage(DEVICE_LOCAL_MODEL_CATALOG_STORAGE_KEY);
-  if (!isRecord(raw) || !isRecord(raw.entries)) {
+  if (!raw) {
+    return {};
+  }
+  if (!isRecord(raw) || raw.version !== DEVICE_LOCAL_MODEL_CATALOG_VERSION || !isRecord(raw.entries)) {
+    logger.warn('Model catalog storage was corrupt; resetting to empty.');
     return {};
   }
   return raw.entries;
@@ -51,7 +73,7 @@ export class ObsidianDeviceLocalModelCatalogStore implements RemoteCatalogStore 
     const entries = readStoredEntries(this.app);
     const next = { ...entries, [providerId]: entry };
     this.app.saveLocalStorage(DEVICE_LOCAL_MODEL_CATALOG_STORAGE_KEY, {
-      version: 1,
+      version: DEVICE_LOCAL_MODEL_CATALOG_VERSION,
       entries: next,
     });
   }

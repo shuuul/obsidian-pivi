@@ -373,6 +373,28 @@ describe('React ChatShell tabs', () => {
     await act(async () => mounted.mounted.dispose());
   });
 
+  it('keeps a keyboard reorder visible until the persisted snapshot arrives', async () => {
+    let resolveReorder!: (saved: boolean) => void;
+    const mounted = await mountShell({ position: 'header' });
+    mounted.tabActions.reorderTabs.mockImplementation(() => new Promise((resolve) => {
+      resolveReorder = resolve;
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Active chat' }));
+    const attentionRow = screen.getByRole('menuitem', { name: 'Needs attention' });
+
+    fireEvent.keyDown(attentionRow, { key: ' ' });
+    fireEvent.keyDown(attentionRow, { key: 'ArrowDown' });
+    fireEvent.keyDown(attentionRow, { key: ' ' });
+    await act(async () => {});
+
+    const sortIds = () => [...document.querySelectorAll('[data-tab-sort-id]')]
+      .map(item => item.getAttribute('data-tab-sort-id'));
+    expect(sortIds()).toEqual(['active', '__pivi_archived_tabs_boundary__', 'attention', 'archived']);
+    await act(async () => { resolveReorder(true); });
+    expect(sortIds()).toEqual(['active', '__pivi_archived_tabs_boundary__', 'attention', 'archived']);
+    await act(async () => mounted.mounted.dispose());
+  });
+
   it('caps the switcher at ten rows and opens around the active tab', async () => {
     const mounted = await mountShell({ position: 'header' });
     const items = Array.from({ length: 14 }, (_, index) => ({

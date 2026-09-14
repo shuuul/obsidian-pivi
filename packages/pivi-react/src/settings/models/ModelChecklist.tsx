@@ -5,7 +5,7 @@ import type {
 } from '@pivi/agent/settings/customProviders';
 import type { ModelCatalogRefreshResult } from '@pivi/agent/settings/modelCatalog';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
-import { useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsCatalogPort, SettingsFeedbackPort } from '../../ports';
@@ -239,12 +239,18 @@ export function ModelChecklist({
   const catalogModels = showCatalogId ? catalog.listCatalogModels() : [];
   const showMaxTokensOverride = !!customProvider && !!onPatchModelMaxTokensOverride;
   const [catalogRefreshing, setCatalogRefreshing] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const refreshCatalog = (): void => {
     if (catalogRefreshing || !onRefreshCatalog) return;
     setCatalogRefreshing(true);
     onRefreshCatalog()
       .then(result => {
+        if (!mountedRef.current) return;
         // Refresh outcomes are transient action results, so they surface
         // through the host notice channel instead of persisting inline.
         feedback.notify(result.status === 'updated'
@@ -259,9 +265,12 @@ export function ModelChecklist({
         onCatalogChanged?.();
       })
       .catch((cause: unknown) => {
+        if (!mountedRef.current) return;
         feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
       })
-      .finally(() => setCatalogRefreshing(false));
+      .finally(() => {
+        if (mountedRef.current) setCatalogRefreshing(false);
+      });
   };
 
   return (

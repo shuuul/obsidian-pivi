@@ -29,6 +29,8 @@ import {
 } from '@pivi/agent/session/sessionJournal';
 import {
   getPiviSessionDir,
+  InvalidSessionFileError,
+  isCanonicalVaultRelativeJsonl,
   toAbsoluteSessionPath,
   toVaultRelativePath,
 } from '@pivi/agent/session/sessionPaths';
@@ -42,7 +44,7 @@ import {
   type PiviUiContextData,
   SessionIndexStaleError,
 } from '@pivi/agent/session/types';
-import { readFileSync, rmSync } from 'fs';
+import { closeSync, openSync, readSync, rmSync, statSync } from 'fs';
 import { basename, dirname, resolve } from 'path';
 
 import { toPiImageContent } from '../runtime/piImageContent';
@@ -101,6 +103,41 @@ export function getBoundSessionJournal(): SessionJournalStore | null {
 
 function cacheKey(vaultPath: string, sessionFile: string): string {
   return `${vaultPath}::${sessionFile}`;
+}
+
+/**
+ * Restored tab/session identity must be a canonical vault-relative `.jsonl`
+ * path. The trash mirror is still relative, so the prefix is not required here;
+ * absolute, traversal, and non-JSONL shapes are rejected before any open.
+ */
+function requireVaultSessionFile(sessionFile: string): void {
+  if (!isCanonicalVaultRelativeJsonl(sessionFile)) {
+    throw new InvalidSessionFileError(sessionFile);
+  }
+}
+
+/**
+ * Read `[offset, offset+length)` by byte offset. Journal seals are UTF-8 JSONL
+ * continuations, so this must return the exact bytes rather than a string slice.
+ */
+function readFileRangeSync(file: string, offset: number, length: number): Buffer {
+  if (length === 0) {
+    return Buffer.alloc(0);
+  }
+  const buffer = Buffer.allocUnsafe(length);
+  let descriptor: number | undefined;
+  try {
+    descriptor = openSync(file, 'r');
+    const read = readSync(descriptor, buffer, 0, length, offset);
+    if (read !== length) {
+      throw new Error(`Session continuation ended early at byte ${offset + read}`);
+    }
+    return buffer;
+  } finally {
+    if (descriptor !== undefined) {
+      closeSync(descriptor);
+    }
+  }
 }
 
 function removePartialFork(vaultPath: string, candidate: string): void {
@@ -321,11 +358,17 @@ export class SessionTreeStore {
     }
     try {
       const baseSize = baseFingerprint.size;
-      const content = readFileSync(absoluteSessionFile);
-      if (content.length < baseSize) {
+      const currentSize = statSync(absoluteSessionFile).size;
+      if (currentSize < baseSize) {
         return;
       }
-      const appended = content.subarray(baseSize).toString('utf8');
+      // Read only the continuation. Re-reading the whole JSONL on every append
+      // copies megabytes that the journal never stores.
+      const appended = readFileRangeSync(
+        absoluteSessionFile,
+        baseSize,
+        currentSize - baseSize,
+      ).toString('utf8');
       if (!appended) {
         return;
       }
@@ -446,6 +489,7 @@ export class SessionTreeStore {
       return store;
     }
 
+    requireVaultSessionFile(sessionFile);
     const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
     const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
@@ -472,6 +516,7 @@ export class SessionTreeStore {
       return store;
     }
 
+    requireVaultSessionFile(sessionFile);
     const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
     const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
@@ -493,6 +538,7 @@ export class SessionTreeStore {
       return source.forkToNewFile(atEntryId);
     }
 
+    requireVaultSessionFile(sessionFile);
     const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
     const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);

@@ -3,6 +3,7 @@ import { MarkdownView, Notice } from "obsidian";
 
 import type { ChatFacade } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
+import { runAppAction } from "@/app/runAppAction";
 import { openInlineEditForEditorSelection } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
 import { getActiveWindow } from "@/ui/shared/dom";
 
@@ -19,7 +20,11 @@ export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
     id: "open-view",
     name: t("commands.openChatView"),
     callback: () => {
-      void chat.activateView();
+      runAppAction(
+        () => chat.activateView(),
+        "editor.selectionToolbar.commandUnavailable",
+        "Failed to open the Pivi chat view",
+      );
     },
   });
 
@@ -54,7 +59,11 @@ export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
         return;
       }
 
-      void chat.addEditorSelectionToChatInput(editor, view);
+      runAppAction(
+        () => chat.addEditorSelectionToChatInput(editor, view),
+        "chat.inlineContext.noActiveChatInput",
+        "Failed to add the editor selection to chat",
+      );
     },
   });
 
@@ -78,7 +87,11 @@ export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
           .setTitle(t("chat.inlineContext.addSelectionToChatInput"))
           .setIcon("text-select")
           .onClick(() => {
-            void chat.addEditorSelectionToChatInput(editor, view);
+            runAppAction(
+              () => chat.addEditorSelectionToChatInput(editor, view),
+              "chat.inlineContext.noActiveChatInput",
+              "Failed to add the editor selection to chat",
+            );
           });
       });
     }),
@@ -91,7 +104,11 @@ export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
       if (!chat.canCreateNewTab()) return false;
 
       if (!checking) {
-        void chat.openNewTab();
+        runAppAction(
+          () => chat.openNewTab(),
+          "chat.tabs.failedCreateChat",
+          "Failed to open a new Pivi tab",
+        );
       }
       return true;
     },
@@ -108,7 +125,11 @@ export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
       if (!commands?.getState().canStartNewSession) return false;
 
       if (!checking) {
-        void commands.startNewSession();
+        runAppAction(
+          () => commands.startNewSession(),
+          "chat.tabs.failedCreateChat",
+          "Failed to start a new Pivi session",
+        );
       }
       return true;
     },
@@ -125,7 +146,11 @@ export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
       if (!commands?.getState().canCloseActiveTab) return false;
 
       if (!checking) {
-        void commands.closeActiveTab();
+        runAppAction(
+          () => commands.closeActiveTab(),
+          "chat.tabs.failedCloseTab",
+          "Failed to close the active Pivi tab",
+        );
       }
       return true;
     },

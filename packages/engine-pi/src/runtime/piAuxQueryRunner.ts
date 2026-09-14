@@ -32,8 +32,7 @@ export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = P
 }
 
 export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> implements AuxQueryRunner {
-  private agent: Agent | null = null;
-  private configKey: string | null = null;
+  private readonly inFlightQueryAgents = new Set<Agent>();
   private readonly eventAdapter = new PiAgentEventAdapter();
   private readonly backgroundJobs: PiBackgroundSubagentJobs;
   private readonly readBudgets = new WeakMap<Agent, PiReadBudget>();
@@ -48,10 +47,11 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
   }
 
   reset(): void {
-    this.agent?.abort();
-    this.agent?.reset();
-    this.agent = null;
-    this.configKey = null;
+    for (const agent of this.inFlightQueryAgents) {
+      agent.abort();
+      agent.reset();
+    }
+    this.inFlightQueryAgents.clear();
   }
 
   abortAllSubagents(): void {
@@ -63,7 +63,11 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
       throw new Error('Cancelled');
     }
 
-    const agent = await this.ensureAgent(config);
+    // Each query owns a fresh Agent. Reuse would append to the previous
+    // conversation, and swapping a cached Agent on a config change would abort
+    // an in-flight prompt. Construction is cheap for these one-shot runs.
+    const agent = await this.createAgent(config);
+    this.inFlightQueryAgents.add(agent);
     let accumulatedText = '';
     let errorMessage: string | null = null;
 
@@ -98,6 +102,8 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
     } finally {
       config.abortController?.signal.removeEventListener('abort', abortHandler);
       unsubscribe();
+      this.inFlightQueryAgents.delete(agent);
+      agent.reset();
     }
   }
 
@@ -126,19 +132,6 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
 
   waitForResult(agentId: string): Promise<{ status: 'completed' | 'error'; result: string }> {
     return this.backgroundJobs.waitForResult(agentId);
-  }
-
-  private async ensureAgent(config: AuxQueryConfig): Promise<Agent> {
-    const nextKey = `${config.systemPrompt}::${config.model ?? ''}`;
-    if (this.agent && this.configKey === nextKey) {
-      return this.agent;
-    }
-
-    this.reset();
-
-    this.agent = await this.createAgent(config);
-    this.configKey = nextKey;
-    return this.agent;
   }
 
   private async createAgent(config: AuxQueryConfig): Promise<Agent> {

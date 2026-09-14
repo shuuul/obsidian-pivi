@@ -84,14 +84,19 @@ export async function loadPluginSettings(
     vaultAdapter: ctx.storage.getAdapter(),
     savePersistedSettings: (stored) => ctx.storage.saveRawPiviSettings(stored),
   });
-  ctx.setSettings({
+  // Reconcile on the same object that is installed and later saved. Spreading
+  // into setSettings first left title/active-model repairs on a discarded copy.
+  const settings: PiviSettings = {
     ...migration.settings,
     sharedEnvironmentVariables: environmentMigration.settings.sharedEnvironmentVariables,
     agentSettings: {
       ...migration.settings.agentSettings,
       environmentVariables: environmentMigration.settings.agentSettings.environmentVariables,
     },
-  });
+  };
+  const didReconcileModelSelections =
+    PiSettingsCoordinator.reconcileTitleGenerationModelSelection(settings);
+  ctx.setSettings(settings);
   if (migration.syncedSaveFailed || environmentMigration.syncedSaveFailed) {
     logger.warn(
       'Device-local state committed, but synced settings save failed during migration',
@@ -100,8 +105,6 @@ export async function loadPluginSettings(
   }
   ctx.setLastKnownTabManagerState(await ctx.getStorage().getTabManagerState());
 
-  const didReconcileModelSelections =
-    PiSettingsCoordinator.reconcileTitleGenerationModelSelection(migration.settings);
   const didMigrateProviderSecrets = migration.credentialsMigrated
     || environmentMigration.credentialsMigrated
     || migrateProviderSecretsToKeychain(ctx);
@@ -137,17 +140,25 @@ export async function loadPluginSettings(
   }
 
   await ctx.sessionManager.loadSummaries();
-  setLocale(migration.settings.locale as Locale);
+  setLocale(settings.locale as Locale);
 
+  const installed = ctx.getSettings();
   const backfilledSessions = ctx.sessionManager.backfillSessionResponseTimestamps();
   const { changed, invalidatedSessions } = PiSettingsCoordinator.reconcileSettings(
-    migration.settings,
+    installed,
     ctx.getSessions(),
   );
 
-  PiSettingsCoordinator.projectActivePiState(migration.settings);
+  const modelBeforeProject = installed.model;
+  PiSettingsCoordinator.projectActivePiState(installed);
+  const didRepairActiveModel = installed.model !== modelBeforeProject;
 
-  if (changed || didReconcileModelSelections || didMigrateProviderSecrets) {
+  if (
+    changed
+    || didReconcileModelSelections
+    || didMigrateProviderSecrets
+    || didRepairActiveModel
+  ) {
     await ctx.saveSettings();
   }
 
