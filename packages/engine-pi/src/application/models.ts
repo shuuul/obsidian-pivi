@@ -4,6 +4,10 @@ export { fetchCustomProviderModels } from '../models/installPiCustomProviders';
 export {
   configurePiAiModels,
   piAiModels,
+  type PiCatalogRefreshFailure,
+  type PiCatalogRefreshResult,
+  type PiCatalogRefreshSummary,
+  refreshPiCatalogModels,
   syncCustomPiProviders,
 } from '../models/piAiModels';
 export { piChatUIConfig, warmPiAiModelsCache } from '../models/piChatUiConfig';
@@ -15,3 +19,7 @@ export {
   resolvePiModelFromKeyWithLookup,
 } from '../models/piModelRegistry';
 export { PiSettingsCoordinator } from '../models/piSettingsCoordinator';
+export {
+  type RemoteCatalogEntry,
+  type RemoteCatalogStore,
+} from '../models/remoteCatalog';

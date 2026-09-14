@@ -8,6 +8,7 @@ import type {
 import type { ChatUIOption } from '@pivi/agent/runtime/chatUi';
 import type { PiviSettings } from '@pivi/agent/settings';
 import type { CustomProviderThinkingFormat } from '@pivi/agent/settings/customProviders';
+import type { ModelCatalogRefreshResult } from '@pivi/agent/settings/modelCatalog';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
 import type { AppModelReadinessStatusKind } from '@pivi/agent/settings/modelReadiness';
 import type {
@@ -121,6 +122,8 @@ export interface SettingsModelsPort {
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
   /** Replace a custom provider's stored model IDs without calling the list endpoint. */
   setCustomProviderModelIds(providerId: string, modelIds: readonly string[]): Promise<void>;
+  /** Refresh one built-in provider's remote model catalog into the registry. */
+  refreshProviderCatalog(providerId: string): Promise<ModelCatalogRefreshResult>;
 }
 
 export type SettingsFeedbackKind = 'success' | 'error' | 'pending';

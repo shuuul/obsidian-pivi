@@ -3,11 +3,12 @@ import type {
   CustomProviderConfig,
   CustomProviderThinkingFormat,
 } from '@pivi/agent/settings/customProviders';
+import type { ModelCatalogRefreshResult } from '@pivi/agent/settings/modelCatalog';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
 import { useId, useMemo, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
-import type { SettingsCatalogPort } from '../../ports';
+import type { SettingsCatalogPort, SettingsFeedbackPort } from '../../ports';
 import { Select, SettingRow, SettingsSection } from '../primitives';
 import { matchCatalogModels } from './catalogModelMatching';
 
@@ -18,6 +19,12 @@ export interface ModelChecklistProps {
   readonly onToggleModel: (modelValue: string, checked: boolean) => void;
   /** Present for custom/local providers; enables the per-model catalog-id field. */
   readonly customProvider?: CustomProviderConfig;
+  /** Present for built-in providers; refreshes the remote model catalog overlay. */
+  readonly onRefreshCatalog?: () => Promise<ModelCatalogRefreshResult>;
+  /** Called after a catalog refresh so parent option lists re-render. */
+  readonly onCatalogChanged?: () => void;
+  /** Host-neutral notification channel; catalog refresh outcomes surface as host notices. */
+  readonly feedback: SettingsFeedbackPort;
   readonly onPatchModelCatalogId?: (modelId: string, catalogModelId: string) => void;
   readonly onPatchModelMaxTokensOverride?: (modelId: string, maxTokensOverride: number | null) => void;
   readonly getContextWindowOverride?: (modelKey: string) => number | null;
@@ -216,6 +223,9 @@ export function ModelChecklist({
   settings,
   onToggleModel,
   customProvider,
+  onRefreshCatalog,
+  onCatalogChanged,
+  feedback,
   onPatchModelCatalogId,
   onPatchModelMaxTokensOverride,
   getContextWindowOverride,
@@ -228,8 +238,50 @@ export function ModelChecklist({
   const showCatalogId = !!customProvider && !!onPatchModelCatalogId;
   const catalogModels = showCatalogId ? catalog.listCatalogModels() : [];
   const showMaxTokensOverride = !!customProvider && !!onPatchModelMaxTokensOverride;
+  const [catalogRefreshing, setCatalogRefreshing] = useState(false);
+
+  const refreshCatalog = (): void => {
+    if (catalogRefreshing || !onRefreshCatalog) return;
+    setCatalogRefreshing(true);
+    onRefreshCatalog()
+      .then(result => {
+        // Refresh outcomes are transient action results, so they surface
+        // through the host notice channel instead of persisting inline.
+        feedback.notify(result.status === 'updated'
+          ? t('settings.modelsTab.catalogRefreshUpdated', {
+            added: result.addedModels,
+            updated: result.updatedModels,
+            total: result.totalModels,
+          })
+          : result.status === 'unavailable'
+            ? t('settings.modelsTab.catalogRefreshUnavailable')
+            : t('settings.modelsTab.catalogRefreshCurrent'));
+        onCatalogChanged?.();
+      })
+      .catch((cause: unknown) => {
+        feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+      })
+      .finally(() => setCatalogRefreshing(false));
+  };
+
   return (
     <SettingsSection title={t('settings.modelsTab.candidateModels')}>
+      {onRefreshCatalog ? (
+        <SettingRow
+          name={t('settings.modelsTab.catalogRefreshTitle')}
+          description={t('settings.modelsTab.catalogRefreshDesc')}
+        >
+          <button
+            type="button"
+            disabled={catalogRefreshing}
+            onClick={refreshCatalog}
+          >
+            {catalogRefreshing
+              ? t('settings.modelsTab.catalogRefreshing')
+              : t('settings.modelsTab.catalogRefreshAction')}
+          </button>
+        </SettingRow>
+      ) : null}
       {providerModels.length === 0 ? (
         <p className="pivi-no-models-message">{t('settings.modelsTab.noModels')}</p>
       ) : (

@@ -15,6 +15,7 @@ import {
   getPiAiModelsForProvider,
   piChatUIConfig,
   PiSettingsCoordinator,
+  refreshPiCatalogModels,
   syncCustomPiProviders,
 } from "@pivi/engine-pi/application/models";
 import { getActivePiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
@@ -135,6 +136,21 @@ export function createPiUiFacades(
       }
       syncCustomPiProviders(customProviders);
       return { count: result.models.length };
+    },
+    async refreshProviderCatalog(providerId) {
+      const summary = await refreshPiCatalogModels({
+        providerIds: [providerId],
+        force: true,
+      });
+      const failure = summary.failures[0];
+      if (failure) {
+        throw new Error(failure.message);
+      }
+      const result = summary.results[0];
+      if (!result) {
+        throw new Error(`Unknown provider catalog: ${providerId}`);
+      }
+      return result;
     },
   };
 }

@@ -55,6 +55,12 @@ function createModelsPort() {
     patchContextWindowOverride: async () => undefined,
     fetchCustomProviderModels: async () => ({ count: 0 }),
     setCustomProviderModelIds: async () => undefined,
+    refreshProviderCatalog: async () => ({
+      status: 'current' as const,
+      addedModels: 0,
+      updatedModels: 0,
+      totalModels: 0,
+    }),
   };
 }
 
@@ -473,6 +479,38 @@ describe('React settings foundation', () => {
 
     expect(install).toHaveBeenCalledTimes(1);
     expect(button).toBeEnabled();
+  });
+  it('refreshes a built-in provider model catalog from the card action', async () => {
+    const refreshProviderCatalog = jest.fn(async () => ({
+      status: 'updated' as const,
+      addedModels: 2,
+      updatedModels: 1,
+      totalModels: 40,
+    }));
+    const ports = createPorts();
+    Object.assign(ports.complex.models, { refreshProviderCatalog });
+    Object.assign(ports.catalog, { listModelsForProvider: () => [{ value: 'openai/gpt', label: 'GPT' }] });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByText('openai'));
+    expect(screen.getByText('Model catalog')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh catalog' }));
+    expect(refreshProviderCatalog).toHaveBeenCalledWith('openai');
+    await act(async () => undefined);
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Catalog updated: 2 added, 1 refreshed, 40 total');
+    expect(screen.queryByText('Catalog updated: 2 added, 1 refreshed, 40 total')).not.toBeInTheDocument();
+  });
+  it('notifies a built-in provider catalog refresh failure through the host channel', async () => {
+    const refreshProviderCatalog = jest.fn(async () => {
+      throw new Error('catalog endpoint unreachable');
+    });
+    const ports = createPorts();
+    Object.assign(ports.complex.models, { refreshProviderCatalog });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
+    fireEvent.click(screen.getByText('openai'));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh catalog' }));
+    await act(async () => undefined);
+    expect(ports.feedback.notify).toHaveBeenCalledWith('catalog endpoint unreachable');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
   it('expands a provider card and persists visible model selection', async () => {
     const saveSettings = jest.fn(async () => undefined);

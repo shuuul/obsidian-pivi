@@ -52,6 +52,12 @@ function createUiFacades(): PiviUiFacades {
     listCatalogModels: () => [],
     syncCustomProviders: () => {},
     fetchCustomProviderModels: async () => ({ count: 0 }),
+    refreshProviderCatalog: async () => ({
+      status: 'current',
+      addedModels: 0,
+      updatedModels: 0,
+      totalModels: 0,
+    }),
   };
 }
 

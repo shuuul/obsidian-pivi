@@ -33,6 +33,7 @@
     "./piProviderOAuthService": "./src/auth/piProviderOAuthService.ts",
     "./piviOpenRouterOAuth": "./src/auth/piviOpenRouterOAuth.ts",
     "./registerBundledPiOAuthFlows": "./src/auth/registerBundledPiOAuthFlows.ts",
+    "./remoteCatalog": "./src/models/remoteCatalog.ts",
     "./piRuntimeHost": "./src/runtime/piRuntimeHost.ts",
     "./piSettingsCoordinator": "./src/models/piSettingsCoordinator.ts",
     "./piThinkingLevels": "./src/models/piThinkingLevels.ts",
