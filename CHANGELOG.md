@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.30.1](https://github.com/shuuul/obsidian-pivi/compare/0.30.0...0.30.1) (2026-09-19)
+
+### Maintenance
+
+* update dependencies, including the pinned Skills CLI to 1.7.0
+
 ## [0.30.0](https://github.com/shuuul/obsidian-pivi/compare/0.29.2...0.30.0) (2026-09-14)
 
 ### Features
