@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.2](https://github.com/shuuul/obsidian-pivi/compare/0.30.1...0.30.2) (2026-09-20)
+
+### Maintenance
+
+* update the pinned Pi runtime to 0.86.0, migrating the engine to the upstream transcript-based streaming contract (tool declarations and the system prompt now flow through transcript system messages)
+* update `@types/node` and eslint dev dependencies
+
 ## [0.30.1](https://github.com/shuuul/obsidian-pivi/compare/0.30.0...0.30.1) (2026-09-19)
 
 ### Maintenance
