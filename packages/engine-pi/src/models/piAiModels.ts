@@ -7,6 +7,7 @@ import {
   type CredentialStore,
   type Model,
   type MutableModels,
+  normalizeContext,
   type Provider,
   type SimpleStreamOptions,
 } from '@earendil-works/pi-ai';
@@ -76,7 +77,9 @@ export function streamPiAiModelsSimple(
       ? { transport: 'sse' as const }
       : {}),
   };
-  return piAiModels.streamSimple(model, context, pinned);
+  // Pi 0.86 moved the prompt/tool declarations into transcript system messages;
+  // normalizeContext folds a legacy Context and passes branded transcripts through.
+  return piAiModels.streamSimple(model, normalizeContext(context), pinned);
 }
 
 /** Shared pi-ai Models collection for the Pi engine adapter. */

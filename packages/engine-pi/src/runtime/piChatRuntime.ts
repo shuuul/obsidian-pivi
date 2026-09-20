@@ -1,5 +1,10 @@
 import { Agent, type AgentMessage, type AgentTool, type StreamFn, type ThinkingLevel } from '@earendil-works/pi-agent-core';
-import type { AuthResult } from '@earendil-works/pi-ai';
+import {
+  type AuthResult,
+  createInitialSystemMessage,
+  getInitialSystemMessage,
+  type SystemMessage,
+} from '@earendil-works/pi-ai';
 import { getProviderAuthFailureHint } from '@pivi/agent/auth/providerAuthFailureHint';
 import { getProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
@@ -787,12 +792,25 @@ export class PiChatRuntime implements PiChatService {
     }
 
     if (this.agent) {
-      this.agent.state.systemPrompt = buildPiSystemPrompt(
+      const nextPrompt = buildPiSystemPrompt(
         this.getVaultPath() ?? undefined,
         this.plugin.settings.userName,
         resolvedRegistry,
         composition,
       );
+      // Pi 0.86 derives AgentState.systemPrompt by replaying the transcript's
+      // system messages, so a prompt change replaces the leading system message
+      // in place (keeping its tool declarations) instead of assigning the
+      // now-read-only state field.
+      const messages = [...this.agent.state.messages];
+      const initial = getInitialSystemMessage(messages);
+      if (initial) {
+        const replacement: SystemMessage = { ...initial, content: nextPrompt };
+        this.agent.state.messages = [replacement, ...messages.slice(1)];
+      } else {
+        const seeded = createInitialSystemMessage(nextPrompt, undefined);
+        this.agent.state.messages = seeded ? [seeded, ...messages] : messages;
+      }
     }
     this.systemPromptKey = nextKey;
   }
