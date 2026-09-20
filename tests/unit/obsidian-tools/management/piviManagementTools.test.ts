@@ -76,6 +76,7 @@ function serializeThroughProtocol(api: ProtocolApi): Record<string, unknown>[] {
   }));
   const script = String.raw`
     import fs from 'node:fs';
+    const piAi = await import('@earendil-works/pi-ai');
 
     const api = process.argv[1];
     const tools = JSON.parse(fs.readFileSync(0, 'utf8'));
@@ -106,7 +107,10 @@ function serializeThroughProtocol(api: ProtocolApi): Record<string, unknown>[] {
       'https://api.openai.com/auth': { chatgpt_account_id: 'pivi-fixture' },
     })).toString('base64url');
     let payload;
-    const stream = provider().stream(model, { messages: [], tools }, {
+    // Pi 0.86 reads tool declarations from transcript system messages, not
+    // Context.tools, so the fixture declares them through normalizeContext.
+    const context = piAi.normalizeContext({ systemPrompt: 'Pivi schema fixture.', messages: [], tools });
+    const stream = provider().stream(model, context, {
       apiKey: api === 'openai-codex-responses'
         ? 'header.' + tokenPayload + '.signature'
         : 'pivi-test-key',

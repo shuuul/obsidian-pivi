@@ -1,8 +1,21 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { Message } from '@earendil-works/pi-ai';
+import type { Message, ToolCall } from '@earendil-works/pi-ai';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+/**
+ * Read the message role without union narrowing. Pi 0.86 made ToolResultMessage
+ * a conditional type, which breaks discriminant narrowing once AgentMessage is
+ * intersected with Record; role comparisons here stay runtime-tolerant instead.
+ */
+function agentRole(message: AgentMessage): unknown {
+  return isRecord(message) ? (message as Record<string, unknown>).role : undefined;
+}
+
+function recordValue(message: AgentMessage, key: string): unknown {
+  return isRecord(message) ? (message as Record<string, unknown>)[key] : undefined;
 }
 
 interface PreparedAgentMessage {
@@ -12,11 +25,11 @@ interface PreparedAgentMessage {
 }
 
 function prepareAgentMessage(message: AgentMessage): PreparedAgentMessage {
-  if (isRecord(message) && message.role === 'user') {
+  if (agentRole(message) === 'user') {
     return {
       isUser: true,
       key: null,
-      userText: textFromContent(message.content),
+      userText: textFromContent(recordValue(message, 'content')),
     };
   }
   return {
@@ -103,57 +116,62 @@ function hasMatchingSuffixPrefix(
   return true;
 }
 
-function isToolResultMessage(message: AgentMessage): message is Message & { role: 'toolResult' } {
-  return isRecord(message) && message.role === 'toolResult' && typeof message.toolCallId === 'string';
+function isToolResultMessage(message: AgentMessage): message is AgentMessage & { role: 'toolResult' } {
+  return agentRole(message) === 'toolResult' && typeof recordValue(message, 'toolCallId') === 'string';
 }
 
-function isAssistantMessage(message: AgentMessage): message is Message & { role: 'assistant' } {
-  return isRecord(message) && message.role === 'assistant' && Array.isArray(message.content);
+function isAssistantMessage(message: AgentMessage): message is AgentMessage & { role: 'assistant' } {
+  return agentRole(message) === 'assistant' && Array.isArray(recordValue(message, 'content'));
 }
 
 function isPendingAssistantMessage(message: AgentMessage): boolean {
-  return isAssistantMessage(message) && message.stopReason === 'pending';
+  return isAssistantMessage(message) && recordValue(message, 'stopReason') === 'pending';
 }
 
-function isLlmMessage(message: AgentMessage): message is Message {
-  if (!isRecord(message)) {
-    return false;
-  }
-  return message.role === 'user' || message.role === 'assistant' || message.role === 'toolResult';
+function isLlmMessage(message: AgentMessage): boolean {
+  const role = agentRole(message);
+  return role === 'user' || role === 'assistant' || role === 'toolResult';
 }
 
 function convertContextSummaryMessage(message: AgentMessage): Message | null {
   if (!isRecord(message)) {
     return null;
   }
-  if (message.role === 'compactionSummary' && typeof message.summary === 'string') {
+  const role = agentRole(message);
+  const timestamp = () => {
+    const value = recordValue(message, 'timestamp');
+    return typeof value === 'number' ? value : Date.now();
+  };
+  const summary = recordValue(message, 'summary');
+  if (role === 'compactionSummary' && typeof summary === 'string') {
     return {
       role: 'user',
       content: [{
         type: 'text',
-        text: `<context_compaction_summary>\n${message.summary}\n</context_compaction_summary>`,
+        text: `<context_compaction_summary>\n${summary}\n</context_compaction_summary>`,
       }],
-      timestamp: typeof message.timestamp === 'number' ? message.timestamp : Date.now(),
-    } as Message;
+      timestamp: timestamp(),
+    };
   }
-  if (message.role === 'branchSummary' && typeof message.summary === 'string') {
+  if (role === 'branchSummary' && typeof summary === 'string') {
     return {
       role: 'user',
       content: [{
         type: 'text',
-        text: `<branch_summary>\n${message.summary}\n</branch_summary>`,
+        text: `<branch_summary>\n${summary}\n</branch_summary>`,
       }],
-      timestamp: typeof message.timestamp === 'number' ? message.timestamp : Date.now(),
-    } as Message;
+      timestamp: timestamp(),
+    };
   }
-  if (message.role === 'custom' && 'content' in message) {
-    const content = typeof message.content === 'string'
-      ? [{ type: 'text' as const, text: message.content }]
-      : message.content;
+  if (role === 'custom' && 'content' in message) {
+    const rawContent = recordValue(message, 'content');
+    const content = typeof rawContent === 'string'
+      ? [{ type: 'text' as const, text: rawContent }]
+      : rawContent;
     return {
       role: 'user',
       content,
-      timestamp: typeof message.timestamp === 'number' ? message.timestamp : Date.now(),
+      timestamp: timestamp(),
     } as Message;
   }
   return null;
@@ -163,8 +181,12 @@ function assistantToolCallIds(message: AgentMessage): string[] {
   if (!isAssistantMessage(message)) {
     return [];
   }
-  return message.content
-    .filter((block): block is { type: 'toolCall'; id: string; name: string; arguments: Record<string, unknown> } => (
+  const content = recordValue(message, 'content');
+  if (!Array.isArray(content)) {
+    return [];
+  }
+  return content
+    .filter((block): block is ToolCall => (
       isRecord(block) && block.type === 'toolCall' && typeof block.id === 'string'
       && typeof block.name === 'string' && isRecord(block.arguments)
     ))
@@ -205,12 +227,22 @@ export function sanitizeAgentMessagesForLlm(messages: AgentMessage[]): Message[]
       continue;
     }
 
+    if (agentRole(message) === 'system') {
+      // Pi 0.86 carries the system prompt and tool declarations as transcript
+      // system messages, and the agent loop normalizes only convertToLlm
+      // output, so system messages must survive LLM replay. Tool-pair state is
+      // untouched: a synced tool delta may interleave between paired calls.
+      sanitized.push(message as Message);
+      continue;
+    }
+
     if (!isLlmMessage(message)) {
       continue;
     }
 
-    if (message.role === 'assistant') {
-      if (message.stopReason === 'error' || message.stopReason === 'pending') {
+    if (isAssistantMessage(message)) {
+      const stopReason = recordValue(message, 'stopReason');
+      if (stopReason === 'error' || stopReason === 'pending') {
         pendingToolCallIds = new Set();
         continue;
       }
@@ -229,7 +261,7 @@ export function sanitizeAgentMessagesForLlm(messages: AgentMessage[]): Message[]
     }
 
     pendingToolCallIds = new Set();
-    sanitized.push(message);
+    sanitized.push(message as Message);
   }
 
   return sanitized;

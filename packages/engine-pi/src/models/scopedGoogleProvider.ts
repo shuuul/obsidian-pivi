@@ -1,11 +1,11 @@
 import type {
   Api,
   ApiStreamOptions,
-  Context,
   Model,
   Provider,
   SimpleStreamOptions,
   StreamOptions,
+  TranscriptContext,
 } from '@earendil-works/pi-ai';
 import type { FetchCompatible } from '@pivi/agent/ports';
 
@@ -42,14 +42,14 @@ export function withScopedGoogleTransport<TApi extends Api>(
 ): Provider<TApi> {
   return {
     ...provider,
-    stream<T extends TApi>(model: Model<T>, context: Context, options?: ApiStreamOptions<T>) {
+    stream<T extends TApi>(model: Model<T>, context: TranscriptContext, options?: ApiStreamOptions<T>) {
       return provider.stream(
         model,
         context,
         withoutScopedFetch(model, options, getConfiguredFetch()),
       );
     },
-    streamSimple(model: Model<TApi>, context: Context, options?: SimpleStreamOptions) {
+    streamSimple(model: Model<TApi>, context: TranscriptContext, options?: SimpleStreamOptions) {
       return provider.streamSimple(
         model,
         context,

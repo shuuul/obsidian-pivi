@@ -17,10 +17,52 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
     [key: string]: unknown;
   }) => {
     const listeners: Array<(event: any) => void> = [];
+    // Mirror pi-agent-core 0.86 state semantics: the leading system message is
+    // seeded from initialState.systemPrompt, and state.systemPrompt is a
+    // read-only getter replaying that message.
+    const stateMessages: unknown[] = [...(options.initialState?.messages ?? [])];
+    const stateTools: unknown[] = [...(options.initialState?.tools ?? [])];
+    if (
+      options.initialState?.systemPrompt
+      && (stateMessages[0] as { role?: unknown } | undefined)?.role !== 'system'
+    ) {
+      stateMessages.unshift({
+        role: 'system',
+        content: options.initialState.systemPrompt,
+        timestamp: 0,
+      });
+    }
+    const currentSystemPrompt = (messages: unknown[]): string => {
+      const first = messages[0] as { role?: unknown; content?: unknown } | undefined;
+      return first && first.role === 'system' && typeof first.content === 'string'
+        ? first.content
+        : '';
+    };
     const instance = {
       initialState: options.initialState,
       options,
-      state: { ...options.initialState },
+      state: {
+        get systemPrompt(): string {
+          return currentSystemPrompt(stateMessages);
+        },
+        model: options.initialState?.model,
+        get tools(): unknown[] {
+          return stateTools;
+        },
+        set tools(nextTools: unknown[]) {
+          stateTools.length = 0;
+          stateTools.push(...nextTools);
+        },
+        get messages(): unknown[] {
+          return stateMessages;
+        },
+        set messages(nextMessages: unknown[]) {
+          stateMessages.length = 0;
+          stateMessages.push(...nextMessages);
+        },
+        isStreaming: false,
+        streamingMessage: undefined,
+      },
       listeners,
       subscribe: jest.fn((listener: (event: any) => void) => {
         listeners.push(listener);
@@ -610,7 +652,13 @@ describe('PiChatRuntime system prompt', () => {
     await runtime.syncSystemPrompt();
 
     expect(mockAgentInstances).toHaveLength(1);
-    expect(firstAgent.state.messages).toBe(initialMessages);
+    // Pi 0.86 replaces the leading system message in place, so the user turn
+    // must survive structurally rather than by array identity.
+    expect(firstAgent.state.messages[0]).toMatchObject({
+      role: 'system',
+      content: expect.stringContaining('**Alice**'),
+    });
+    expect(firstAgent.state.messages[1]).toEqual({ role: 'user', content: 'hello' });
     expect(firstAgent.state.systemPrompt).toContain('**Alice**');
   });
 

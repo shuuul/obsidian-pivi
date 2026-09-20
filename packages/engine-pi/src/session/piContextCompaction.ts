@@ -462,7 +462,7 @@ export function sanitizeCompactionMessage(message: AgentMessage): AgentMessage {
 
 function messageForEntry(entry: PiContextCompactionEntry): AgentMessage | null {
   const projected = sessionEntryToContextMessages(entry);
-  const message = projected[0] as AgentMessage | undefined;
+  const message = projected[0];
   return message ? sanitizeCompactionMessage(message) : null;
 }
 

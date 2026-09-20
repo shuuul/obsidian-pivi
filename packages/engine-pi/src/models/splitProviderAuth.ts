@@ -1,10 +1,10 @@
 import type {
   Api,
   ApiStreamOptions,
-  Context,
   Model,
   Provider,
   SimpleStreamOptions,
+  TranscriptContext,
 } from '@earendil-works/pi-ai';
 
 function requireApiKeyAuth<TApi extends Api>(provider: Provider<TApi>) {
@@ -55,10 +55,10 @@ export function createSubscriptionOAuthProvider<TApi extends Api>(
     ...(provider.headers ? { headers: provider.headers } : {}),
     auth: { oauth: requireOAuthAuth(provider) },
     getModels: () => provider.getModels().map(toSubscriptionModel),
-    stream<T extends TApi>(model: Model<T>, context: Context, options?: ApiStreamOptions<T>) {
+    stream<T extends TApi>(model: Model<T>, context: TranscriptContext, options?: ApiStreamOptions<T>) {
       return provider.stream(toBackingModel(model), context, options);
     },
-    streamSimple(model: Model<TApi>, context: Context, options?: SimpleStreamOptions) {
+    streamSimple(model: Model<TApi>, context: TranscriptContext, options?: SimpleStreamOptions) {
       return provider.streamSimple(toBackingModel(model), context, options);
     },
   };

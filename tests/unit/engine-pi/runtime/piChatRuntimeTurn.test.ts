@@ -344,7 +344,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
       prompt: jest.fn(async () => {
         resolvedModel = selectedModel;
         nextTurnUpdate = await agent.prepareNextTurnWithContext?.({
-          context: { messages: [completed], systemPrompt: '', tools: [] },
+          context: { messages: [completed], tools: [] },
           message: completed,
           newMessages: [completed],
           toolResults: [{} as never],
@@ -415,19 +415,17 @@ describe('streamPiChatTurn retry lifecycle', () => {
     expect(state.model).toBe(selectedModel);
   });
 
-  it('overlays live tools and system prompt onto the next tool-result continuation', async () => {
+  it('overlays live tools onto the next tool-result continuation', async () => {
     const listeners = new Set<(event: AgentEvent) => void>();
     const originalTools = [{ name: 'legacy_tool' }] as unknown as AgentTool[];
     const refreshedTools = [
       { name: 'pivi_mcp' },
       { name: 'pivi_skills' },
     ] as unknown as AgentTool[];
-    const stalePrompt = 'stale system prompt';
-    const livePrompt = 'refreshed system prompt after management commit';
     const state = {
       messages: [] as AgentMessage[],
       model: model(),
-      systemPrompt: stalePrompt,
+      systemPrompt: '',
       tools: originalTools as unknown[],
       thinkingLevel: 'medium' as const,
     };
@@ -447,12 +445,10 @@ describe('streamPiChatTurn retry lifecycle', () => {
       state,
       prompt: jest.fn(async () => {
         // Simulate a management tool hot-sync during the tool call.
-        state.systemPrompt = livePrompt;
         state.tools = refreshedTools;
         nextTurnUpdate = await agent.prepareNextTurnWithContext?.({
           context: {
             messages: [toolAssistant, toolResult],
-            systemPrompt: stalePrompt,
             tools: originalTools,
           },
           message: toolAssistant,
@@ -517,7 +513,6 @@ describe('streamPiChatTurn retry lifecycle', () => {
 
     expect(nextTurnUpdate).toMatchObject({
       context: {
-        systemPrompt: livePrompt,
         tools: refreshedTools,
         messages: [toolAssistant, toolResult],
       },
@@ -585,7 +580,7 @@ describe('streamPiChatTurn retry lifecycle', () => {
             listener({ type: 'message_end', message: toolResult });
           }
           await agent.prepareNextTurnWithContext?.({
-            context: { messages: [...state.messages], systemPrompt: '', tools: [] },
+            context: { messages: [...state.messages], tools: [] },
             message: completed,
             newMessages: [completed, toolResult],
             toolResults: [toolResult],
@@ -735,7 +730,6 @@ describe('streamPiChatTurn retry lifecycle', () => {
         await agent.prepareNextTurnWithContext?.({
           context: {
             messages: [...persisted, toolResult],
-            systemPrompt: 'prompt',
             tools: [],
           },
           message: toolAssistant,

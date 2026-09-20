@@ -6,6 +6,7 @@ import {
   type Context,
   EventStream,
   type Model,
+  normalizeContext,
   type ProviderStreams,
   type SimpleStreamOptions,
   validateToolArguments,
@@ -46,10 +47,10 @@ export function streamSimple(
 ): AssistantMessageEventStream {
   const registeredProvider = resolveRegisteredApiProvider(model.api);
   if (registeredProvider) {
-    return registeredProvider.streamSimple(model, context, withEnvApiKey(options, model.provider));
+    return registeredProvider.streamSimple(model, normalizeContext(context), withEnvApiKey(options, model.provider));
   }
 
-  return piAiModels.streamSimple(model, context, withEnvApiKey(options, model.provider));
+  return piAiModels.streamSimple(model, normalizeContext(context), withEnvApiKey(options, model.provider));
 }
 
 export async function completeSimple(
@@ -67,10 +68,10 @@ export function stream(
 ): AssistantMessageEventStream {
   const registeredProvider = resolveRegisteredApiProvider(model.api);
   if (registeredProvider) {
-    return registeredProvider.stream(model, context, withEnvApiKey(options, model.provider));
+    return registeredProvider.stream(model, normalizeContext(context), withEnvApiKey(options, model.provider));
   }
 
-  return piAiModels.stream(model, context, withEnvApiKey(options, model.provider));
+  return piAiModels.stream(model, normalizeContext(context), withEnvApiKey(options, model.provider));
 }
 
 export async function complete(

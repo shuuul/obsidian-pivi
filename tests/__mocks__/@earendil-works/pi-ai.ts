@@ -70,6 +70,60 @@ export function streamSimple(): any {
   return createMockStream();
 }
 
+// Mirror upstream pi-ai transcript helpers (dist/utils/transcript.js): Pi 0.86
+// carries the prompt and tool declarations as transcript system messages.
+export function createInitialSystemMessage(systemPrompt?: string, tools?: any[]): any {
+  const hasSystemPrompt = systemPrompt !== undefined && systemPrompt.length > 0;
+  const hasTools = tools !== undefined && tools.length > 0;
+  if (!hasSystemPrompt && !hasTools) {
+    return undefined;
+  }
+  return {
+    role: 'system',
+    content: systemPrompt ?? '',
+    ...(hasTools ? { toolsAdded: tools } : {}),
+    timestamp: 0,
+  };
+}
+
+function isMockSystemMessage(message: any): boolean {
+  return message?.role === 'system';
+}
+
+export function getInitialSystemMessage(messages: any[]): any {
+  const first = messages[0];
+  return first && isMockSystemMessage(first) ? first : undefined;
+}
+
+export function withoutInitialSystemMessage(messages: any[]): any[] {
+  return getInitialSystemMessage(messages) ? messages.slice(1) : messages;
+}
+
+export function getCurrentTools(messages: any[]): any[] {
+  const tools = new Map<string, any>();
+  for (const message of messages) {
+    if (!isMockSystemMessage(message)) continue;
+    for (const removed of message.toolsRemoved ?? []) {
+      tools.delete(removed.name);
+    }
+    for (const added of message.toolsAdded ?? []) {
+      tools.set(added.name, added);
+    }
+  }
+  return [...tools.values()];
+}
+
+export function getCurrentSystemPrompt(messages: any[]): string {
+  const initial = getInitialSystemMessage(messages);
+  return initial && typeof initial.content === 'string' ? initial.content : '';
+}
+
+export function normalizeContext(context: any): any {
+  const initialMessage = createInitialSystemMessage(context?.systemPrompt, context?.tools);
+  const messages = initialMessage ? [initialMessage, ...context.messages] : context.messages;
+  return { messages };
+}
+
 // Mirror upstream pi-ai: error-based overflow detection pattern-matches the
 // provider error text (see dist/utils/overflow.js OVERFLOW_PATTERNS).
 const MOCK_OVERFLOW_PATTERN =

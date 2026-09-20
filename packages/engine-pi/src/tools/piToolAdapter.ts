@@ -6,6 +6,12 @@ import type {
   StreamFn,
 } from '@earendil-works/pi-agent-core';
 import {
+  getCurrentSystemPrompt,
+  getCurrentTools,
+  normalizeContext,
+  withoutInitialSystemMessage,
+} from '@earendil-works/pi-ai';
+import {
   appendToolResultReminder,
   buildAliasReminder,
   isSilentToolNameAlias,
@@ -94,9 +100,23 @@ export function filterPromptFacingPiTools<T extends { name: string }>(tools: T[]
 
 export function wrapStreamFnToHideAliasTools(streamFn: StreamFn): StreamFn {
   return (model, context, options) => {
-    if (!context.tools) {
+    // Pi 0.86 declares tools through transcript system messages instead of
+    // Context.tools. Resolve the replayed declarations, and when silent aliases
+    // are present, rebuild the transcript with a collapsed leading system
+    // message that declares only the live tools.
+    const declared = getCurrentTools(context.messages);
+    if (declared.length === 0) {
       return streamFn(model, context, options);
     }
-    return streamFn(model, { ...context, tools: filterPromptFacingPiTools(context.tools) }, options);
+    const filtered = filterPromptFacingPiTools(declared);
+    if (filtered.length === declared.length) {
+      return streamFn(model, context, options);
+    }
+    const rebuilt = normalizeContext({
+      systemPrompt: getCurrentSystemPrompt(context.messages),
+      messages: withoutInitialSystemMessage([...context.messages]),
+      tools: filtered,
+    });
+    return streamFn(model, rebuilt, options);
   };
 }

@@ -113,8 +113,9 @@ describe('createPiAuxQueryRunner', () => {
     const streamFn = jest.mocked(Agent).mock.calls[0]![0]!.streamFn as (
       ...args: [unknown, unknown]
     ) => unknown;
-    streamFn('model-arg', 'request-arg');
-    expect(mockStreamSimple).toHaveBeenCalledWith('model-arg', 'request-arg', undefined);
+    const transcriptContext = { messages: [] };
+    streamFn('model-arg', transcriptContext);
+    expect(mockStreamSimple).toHaveBeenCalledWith('model-arg', transcriptContext, undefined);
   });
 
   it('creates isolated jobs for repeated same-purpose background subagents', async () => {

@@ -188,15 +188,15 @@ async function runPromptLifecycle(
     }
 
     /**
-     * Overlay the live agent tools/system prompt onto the authoritative next
-     * context after tool results. Management mutations may have hot-synced
-     * `agent.state` during the tool call while prepareNextTurn still holds a
-     * stale snapshot. Preserve the chosen message array and any model/thinking
-     * selection from prior hooks.
+     * Overlay the live agent tools onto the authoritative next context after
+     * tool results. Management mutations may have hot-synced `agent.state`
+     * during the tool call while prepareNextTurn still holds a stale snapshot.
+     * (The system prompt is no longer part of the loop context: Pi 0.86 replays
+     * it from the transcript's system messages.) Preserve the chosen message
+     * array and any model/thinking selection from prior hooks.
      */
-    const overlayCurrentToolsAndPrompt = <T extends {
+    const overlayCurrentTools = <T extends {
       context?: {
-        systemPrompt?: string;
         messages?: AgentMessage[];
         tools?: unknown[];
       };
@@ -210,7 +210,6 @@ async function runPromptLifecycle(
         context: {
           ...baseContext,
           messages: baseContext.messages ?? nextTurn.context.messages,
-          systemPrompt: agent.state.systemPrompt,
           tools: agent.state.tools,
         },
       };
@@ -225,7 +224,7 @@ async function runPromptLifecycle(
       }
       const model = deps.resolveModel();
       if (!model) {
-        return overlayCurrentToolsAndPrompt(previousUpdate ?? { context: nextTurn.context });
+        return overlayCurrentTools(previousUpdate ?? { context: nextTurn.context });
       }
       // Continuations do not pass through PiChatRuntime.ensureReady(). Resolve
       // credentials before moving a live Agent to a newly selected provider.
@@ -235,7 +234,7 @@ async function runPromptLifecycle(
         || signal?.aborted
         || activeTurn.abortController.signal.aborted
       ) return undefined;
-      return overlayCurrentToolsAndPrompt({
+      return overlayCurrentTools({
         ...(previousUpdate ?? {}),
         context: previousUpdate?.context ?? nextTurn.context,
         model: authorizedModel,
@@ -270,10 +269,10 @@ async function runPromptLifecycle(
       if (hasPendingSteering) {
         return mergeCurrentSelection(Promise.resolve(previousUpdate));
       }
-      // Still overlay tools/prompt on tool-result continuations so management
+      // Still overlay tools on tool-result continuations so management
       // hot-syncs land in the very next provider request.
       if (nextTurn.toolResults.length > 0) {
-        return overlayCurrentToolsAndPrompt(previousUpdate ?? { context: nextTurn.context });
+        return overlayCurrentTools(previousUpdate ?? { context: nextTurn.context });
       }
       return previousUpdate;
     }
@@ -305,7 +304,6 @@ async function runPromptLifecycle(
         context: {
           ...nextTurn.context,
           messages: deps.sessionTree?.loadAgentMessages() ?? agent.state.messages,
-          systemPrompt: agent.state.systemPrompt,
           tools: agent.state.tools,
         },
       }));
