@@ -55,6 +55,44 @@ describe('MessageMapper', () => {
     expect(secondMessage.content).toBe('world');
   });
 
+  it('merges reasoning-leak fragments in assistant overlays back into the thinking run', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: { role: 'assistant', content: '内容已读完', timestamp: 1 } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: {
+          targetEntryId: 'a1',
+          assistantMessageId: 'a1',
+          // Persisted from arrival-order UI projection: the reasoning run was
+          // split around the first text delta.
+          contentBlocks: [
+            { type: 'thinking', content: 'Keep clean title' },
+            { type: 'text', content: '内容' },
+            { type: 'thinking', content: ' without hashtags.' },
+            { type: 'text', content: '已读完' },
+          ],
+        },
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
+
+    expect(first(messages).contentBlocks).toEqual([
+      { type: 'thinking', content: 'Keep clean title without hashtags.' },
+      { type: 'text', content: '内容已读完' },
+    ]);
+  });
+
   it('skips empty image payloads when mapping user attachments', () => {
     const branch: SessionEntry[] = [
       {

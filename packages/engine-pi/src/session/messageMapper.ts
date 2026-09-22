@@ -6,6 +6,7 @@ import type {
   SessionMessageEntry,
 } from '@earendil-works/pi-coding-agent';
 import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from '@pivi/agent/runtime';
+import { mergePostTextThinkingRuns } from '@pivi/agent/runtime/chatTypes';
 import { parsePiviCompactionDetails } from '@pivi/agent/session/continuationSchemas';
 import {
   PIVI_MESSAGE_UI,
@@ -288,9 +289,12 @@ function applyAssistantUiOverlay(
     return;
   }
   if (ui.contentBlocks) {
+    // Overlay blocks were captured from arrival-order UI projection, so a
+    // reasoning leak can persist a thinking run split around the first text
+    // delta; merge it back to match pi-native channel-merged content blocks.
     target.contentBlocks = reconcileAssistantContentBlocks(
       target.contentBlocks,
-      ui.contentBlocks as ContentBlock[],
+      mergePostTextThinkingRuns(ui.contentBlocks as ContentBlock[]),
     );
   }
   if (ui.toolCalls) {
@@ -478,7 +482,9 @@ export function entriesToChatMessages(
         ? mergeToolCallOverlay(reconstructedToolCalls, ui?.toolCalls)
         : undefined,
       contentBlocks: agentMsg.role === 'assistant'
-        ? ((ui?.contentBlocks as ContentBlock[] | undefined) ?? reconstructedContentBlocks)
+        ? ((ui?.contentBlocks
+          ? mergePostTextThinkingRuns(ui.contentBlocks as ContentBlock[])
+          : undefined) ?? reconstructedContentBlocks)
         : undefined,
       images: agentMsg.role === 'user'
         ? extractImagesFromAgentContent(agentMsg.content)

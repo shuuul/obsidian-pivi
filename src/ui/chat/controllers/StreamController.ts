@@ -44,13 +44,24 @@ function projectionChangeForChunk(
   chunk: StreamChunk,
 ): ChatProjectionMessageChange {
   switch (chunk.type) {
-    case 'text':
-    case 'thinking': {
+    case 'text': {
       const index = (message.contentBlocks?.length ?? 0) - 1;
       if (index < 0) return { type: 'message.upsert' };
       return {
         type: 'text.append',
         blockId: getChatProjectionBlockId(message.id, index),
+        delta: chunk.content,
+      };
+    }
+    case 'thinking': {
+      const blocks = message.contentBlocks ?? [];
+      const last = blocks.at(-1);
+      // A reasoning-leak delta merges back into the segment's open thinking
+      // run (chatStreamReducer), so the last block is not the delta's target.
+      if (last?.type !== 'thinking') return { type: 'message.upsert' };
+      return {
+        type: 'text.append',
+        blockId: getChatProjectionBlockId(message.id, blocks.length - 1),
         delta: chunk.content,
       };
     }
