@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.30.3](https://github.com/shuuul/obsidian-pivi/compare/0.30.2...0.30.3) (2026-09-28)
+
+### Bug Fixes
+
+* merge reasoning-leak thinking fragments into the open thinking run so post-text reasoning deltas stop splitting the rendered stream and persisted overlays
+
+### Maintenance
+
+* update the pinned Pi runtime to 0.87.1, adding the newest model catalogs (Claude Opus 5.5, GPT-6 Sol and Luna, Grok 4.7 as the xAI default) plus the meta OAuth loader and compatibility fixes from 0.87.0
+* update `@modelcontextprotocol/sdk`, CodeMirror, `ts-jest`, and `@types/node` patch dependencies
+
 ## [0.30.2](https://github.com/shuuul/obsidian-pivi/compare/0.30.1...0.30.2) (2026-09-20)
 
 ### Maintenance
