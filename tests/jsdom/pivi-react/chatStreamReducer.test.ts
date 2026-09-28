@@ -114,6 +114,38 @@ describe('reduceChatStreamSnapshot', () => {
     expect(state.currentThinkingContent).toBe('Plan\n\nMore');
   });
 
+  it('merges a word-carrying reasoning leak back into the open thinking run', () => {
+    let state = createChatStreamSnapshot(assistantMessage());
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: 'Keep clean title' });
+    state = reduceChatStreamSnapshot(state, { type: 'text', content: '内容' });
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: ' without hashtags.' });
+    state = reduceChatStreamSnapshot(state, { type: 'text', content: '已读完' });
+
+    expect(state.message.contentBlocks).toEqual([
+      { type: 'thinking', content: 'Keep clean title without hashtags.' },
+      { type: 'text', content: '内容已读完' },
+    ]);
+    expect(state.currentTextContent).toBe('已读完');
+    // Mutually exclusive streaming accumulators: the final text chunk cleared
+    // the thinking accumulator even though the merged block keeps every word.
+    expect(state.currentThinkingContent).toBe('');
+  });
+
+  it('keeps a post-text thinking block after a tool segment boundary', () => {
+    let state = createChatStreamSnapshot(assistantMessage());
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: 'First' });
+    state = reduceChatStreamSnapshot(state, { type: 'text', content: 'Answer' });
+    state = reduceChatStreamSnapshot(state, { type: 'tool_use', id: 'read-1', name: 'Read', input: {} });
+    state = reduceChatStreamSnapshot(state, { type: 'thinking', content: 'Next segment' });
+
+    expect(state.message.contentBlocks).toEqual([
+      { type: 'thinking', content: 'First' },
+      { type: 'text', content: 'Answer' },
+      { type: 'tool_use', toolId: 'read-1' },
+      { type: 'thinking', content: 'Next segment' },
+    ]);
+  });
+
   it('merges repeated tool_use chunks and projects output and terminal results', () => {
     let state = createChatStreamSnapshot(assistantMessage());
     state = reduceChatStreamSnapshot(state, {

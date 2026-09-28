@@ -75,6 +75,49 @@ export type ContentBlock =
       tokensAfter?: number;
     };
 
+/**
+ * Merge reasoning-run fragments that leaked after visible text back into the
+ * open thinking run of the same provider segment, restoring the pi-native
+ * thinking-then-text run shape. pi-ai assembles assistant content per channel
+ * (`ensureThinkingBlock` routes every reasoning delta to the open thinking
+ * block), but StreamChunk flattens that channel away, so arrival-order
+ * projection splits the thinking run around the first text delta and words
+ * appear cut off by the visible output. Text runs that became adjacent
+ * through a merged fragment coalesce, while tool/subagent/compaction blocks
+ * end the segment and are never crossed.
+ */
+export function mergePostTextThinkingRuns(blocks: readonly ContentBlock[]): ContentBlock[] {
+  const result: ContentBlock[] = [];
+  let openThinkingIndex: number | null = null;
+  for (const block of blocks) {
+    const previous = result.at(-1);
+    if (block.type === 'thinking') {
+      const targetIndex = openThinkingIndex;
+      if (targetIndex !== null) {
+        const target = result[targetIndex];
+        if (target?.type === 'thinking') {
+          const merged: ContentBlock = { type: 'thinking', content: target.content + block.content };
+          if (target.durationSeconds !== undefined || block.durationSeconds !== undefined) {
+            merged.durationSeconds = (target.durationSeconds ?? 0) + (block.durationSeconds ?? 0);
+          }
+          result[targetIndex] = merged;
+          continue;
+        }
+      }
+      result.push(block);
+      openThinkingIndex = result.length - 1;
+      continue;
+    }
+    if (block.type === 'text' && previous?.type === 'text') {
+      result[result.length - 1] = { type: 'text', content: previous.content + block.content };
+      continue;
+    }
+    result.push(block);
+    if (block.type !== 'text') openThinkingIndex = null;
+  }
+  return result;
+}
+
 /** Source that last set a session's visible title. */
 export type SessionTitleSource = 'timestamp' | 'firstPrompt' | 'model' | 'custom';
 

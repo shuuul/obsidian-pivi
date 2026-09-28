@@ -102,6 +102,45 @@ describe('StreamController background ordering', () => {
     ]);
   });
 
+  it('merges a word-carrying reasoning leak into the open thinking run', async () => {
+    const state = new ChatState();
+    const message: ChatMessage = {
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+    };
+    state.addMessage(message);
+    const controller = new StreamController({
+      plugin: {} as never,
+      settings: { getSettingsSnapshot: () => ({}) } as never,
+      state,
+      renderer: {} as never,
+      subagentManager: new SubagentManager(() => {}),
+      getMessagesEl: () => ({ ownerDocument: { defaultView: {} } }) as HTMLElement,
+      getFileContextManager: () => null,
+      updateQueueIndicator: () => {},
+    });
+    const dispatch = jest.spyOn(state.projectionStore, 'dispatch');
+
+    await controller.handleStreamChunk({ type: 'thinking', content: 'Keep clean title' }, message);
+    await controller.handleStreamChunk({ type: 'text', content: '内容' }, message);
+    await controller.handleStreamChunk({ type: 'thinking', content: ' without hashtags.' }, message);
+    await controller.handleStreamChunk({ type: 'text', content: '已读完' }, message);
+
+    expect(message.contentBlocks).toEqual([
+      { type: 'thinking', content: 'Keep clean title without hashtags.' },
+      { type: 'text', content: '内容已读完' },
+    ]);
+    // The merged leak publishes a whole-message upsert instead of a wrongly
+    // targeted text append against the visible text block.
+    const publishedThinkingAppends = dispatch.mock.calls
+      .map(([event]) => event)
+      .filter(event => event.type === 'text.append' && event.delta === ' without hashtags.');
+    expect(publishedThinkingAppends).toHaveLength(0);
+    controller.resetStreamingState();
+  });
+
   it('serializes fire-and-forget background Agent chunks in arrival order', async () => {
     const state = new ChatState();
     state.addMessage({

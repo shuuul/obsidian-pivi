@@ -1,5 +1,6 @@
 import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime/chatTypes';
 import type { UsageInfo } from '@pivi/agent/runtime/chatTypes';
+import { mergePostTextThinkingRuns } from '@pivi/agent/runtime/chatTypes';
 import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
 
 export interface ChatStreamSnapshot {
@@ -22,7 +23,9 @@ export function createChatStreamSnapshot(message: ChatMessage): ChatStreamSnapsh
  * Some OpenAI-compatible reasoning parsers leak a whitespace-only thinking
  * delta after visible text has already started. Splitting the block run on
  * that leak renders as a spurious line break mid-message, so the delta is
- * dropped unless a thinking block is already active to absorb it.
+ * dropped unless a thinking block is already active to absorb it. Leaks
+ * carrying real words are merged back into the segment's open thinking run by
+ * `mergePostTextThinkingRuns` so no content is lost either.
  */
 export function shouldDropWhitespaceThinkingChunk(
   message: ChatMessage,
@@ -137,14 +140,19 @@ export function reduceChatStreamSnapshot(
         currentTextContent: state.currentTextContent + chunk.content,
         currentThinkingContent: '',
       };
-    case 'thinking':
+    case 'thinking': {
       if (shouldDropWhitespaceThinkingChunk(state.message, chunk)) return state;
+      const appended = appendContentBlock(state.message, 'thinking', chunk.content);
       return {
         ...state,
-        message: appendContentBlock(state.message, 'thinking', chunk.content),
+        message: {
+          ...appended,
+          contentBlocks: mergePostTextThinkingRuns(appended.contentBlocks ?? []),
+        },
         currentThinkingContent: state.currentThinkingContent + chunk.content,
         currentTextContent: '',
       };
+    }
     case 'tool_use':
       return { ...state, message: reduceToolUse(state.message, chunk), currentTextContent: '' };
     case 'tool_result':
