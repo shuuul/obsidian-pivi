@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.30.4](https://github.com/shuuul/obsidian-pivi/compare/0.30.3...0.30.4) (2026-09-29)
+
+### Maintenance
+
+* patch the `fast-uri` (via the MCP SDK's JSON-schema validator) and `ip-address` dependency advisories
+* track every Pi SDK import that bypasses the upstream package export map, so a Pi upgrade that moves a bundled OAuth flow fails the compatibility check instead of the production build
+* extend size, complexity, and type-safety lint rules to all workspace packages, with pre-existing violations recorded as a shrink-only baseline
+* split the application composition root, the vault API, and the settings port contracts into smaller focused modules with no behavior change
+
 ## [0.30.3](https://github.com/shuuul/obsidian-pivi/compare/0.30.2...0.30.3) (2026-09-28)
 
 ### Bug Fixes

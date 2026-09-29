@@ -1,6 +1,6 @@
 {
   "name": "pivi",
-  "version": "0.30.3",
+  "version": "0.30.4",
   "description": "Pivi - Pi agent embedded in Obsidian sidebar",
   "main": "main.js",
   "scripts": {
