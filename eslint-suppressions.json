@@ -122,14 +122,6 @@
       "count": 1
     }
   },
-  "packages/obsidian-host/src/obsidianVaultApi.ts": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    }
-  },
   "packages/obsidian-host/src/path/index.ts": {
     "complexity": {
       "count": 1
