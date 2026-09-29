@@ -58,7 +58,7 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
   }),
 }));
 
-import { PiAuxQueryRunner } from '@pivi/engine-pi/piAuxQueryRunner';
+import { PiAuxQueryRunner } from '@pivi/engine-pi/runtime/piAuxQueryRunner';
 
 const mockModel = { provider: 'anthropic', id: 'mock-model' };
 const mockResolveModel = jest.fn();

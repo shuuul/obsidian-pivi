@@ -9,7 +9,7 @@ import {
   type PiModelLookup,
   type PiModelRegistryProvider,
   resolvePiModelFromKeyWithLookup,
-} from '@pivi/engine-pi/piModelRegistry';
+} from '@pivi/engine-pi/models/piModelRegistry';
 
 function modelFixture(overrides: Partial<Model<Api>> & Pick<Model<Api>, 'provider' | 'id'>): Model<Api> {
   return {

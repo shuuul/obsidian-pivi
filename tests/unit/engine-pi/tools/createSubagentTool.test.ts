@@ -1,5 +1,5 @@
-import type { PiSubagentQueryRunner } from '@pivi/engine-pi/createSubagentTool';
-import { createSubagentTool } from '@pivi/engine-pi/createSubagentTool';
+import type { PiSubagentQueryRunner } from '@pivi/engine-pi/tools/createSubagentTool';
+import { createSubagentTool } from '@pivi/engine-pi/tools/createSubagentTool';
 import { AGENT_REPORT_BLOCK_LANGUAGE } from '@pivi/agent/session/continuationSchemas';
 
 import { createAgentReportBlock } from '../../../helpers/agentReport';

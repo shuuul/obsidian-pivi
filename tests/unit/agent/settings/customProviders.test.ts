@@ -22,15 +22,15 @@ import {
   buildCustomPiProvider,
   buildCustomProviderModels,
   fetchCustomProviderModels,
-} from '@pivi/engine-pi/installPiCustomProviders';
+} from '@pivi/engine-pi/models/installPiCustomProviders';
 import {
   configurePiAiModels,
   getInstalledCustomProviderIds,
   piAiModels,
   refreshCustomPiProviderModels,
   syncCustomPiProviders,
-} from '@pivi/engine-pi/piAiModels';
-import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/piModelRegistry';
+} from '@pivi/engine-pi/models/piAiModels';
+import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/models/piModelRegistry';
 
 describe('customProviders foundation', () => {
   it('creates fixed ids for local presets and collision-resistant ids for multi-instance kinds', () => {

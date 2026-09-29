@@ -1,5 +1,5 @@
 import { isKnownPiProviderId } from '@pivi/agent/auth/piProviderValidation';
-import { migratePiProviderCredentialsToKeychain } from '@pivi/engine-pi/piProviderCredentialStore';
+import { migratePiProviderCredentialsToKeychain } from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import { updatePiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import { createDefaultCustomProviderConfig } from '@pivi/agent/settings/customProviders';
 

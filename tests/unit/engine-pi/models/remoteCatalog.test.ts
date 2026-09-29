@@ -1,11 +1,11 @@
-import { configurePiAiModels } from '@pivi/engine-pi/piAiModels';
-import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/piModelRegistry';
-import { refreshPiCatalogModels } from '@pivi/engine-pi/piAiModels';
+import { configurePiAiModels } from '@pivi/engine-pi/models/piAiModels';
+import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/models/piModelRegistry';
+import { refreshPiCatalogModels } from '@pivi/engine-pi/models/piAiModels';
 import {
   type RemoteCatalogEntry,
   type RemoteCatalogStore,
   withPiviRemoteCatalog,
-} from '@pivi/engine-pi/remoteCatalog';
+} from '@pivi/engine-pi/models/remoteCatalog';
 import { VERSION as PIVI_PI_VERSION } from '@pivi/engine-pi/shims/piCodingAgentConfig';
 import type { Api, Model, Provider } from '@earendil-works/pi-ai';
 

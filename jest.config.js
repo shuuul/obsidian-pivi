@@ -14,16 +14,6 @@ const baseConfig = {
     '^@test/(.*)$': '<rootDir>/tests/$1',
     '^@pivi/engine-pi/application/oauth-flows$':
       '<rootDir>/tests/__mocks__/registerPiviBundledOAuthFlowLoaders.ts',
-    '^@pivi/engine-pi/registerBundledPiOAuthFlows$':
-      '<rootDir>/tests/__mocks__/registerPiviBundledOAuthFlowLoaders.ts',
-    '^@pivi/engine-pi/(piChatRuntime|piChatRuntimeActiveTurn|piChatRuntimeCompaction|piChatRuntimeConnectivity|piChatRuntimeTurn|piChatRuntimeUsage|piChatRetry|piAgentEventAdapter|piAuxQueryRunner|piBackgroundSubagentJobs|piCompactionSampler|piReadBudget|piRuntimeHost|piImageContent|codexImageGenerator|subagentConcurrencyLimiter)$':
-      '<rootDir>/packages/engine-pi/src/runtime/$1',
-    '^@pivi/engine-pi/(buildPiToolRegistryCore|createSkillTool|createSubagentTool|piToolAdapter)$':
-      '<rootDir>/packages/engine-pi/src/tools/$1',
-    '^@pivi/engine-pi/(piAiModels|installPiCustomProviders|piModelEnv|piModelRegistry|piThinkingLevels|piChatUiConfig|piSettingsCoordinator|grokBuildProvider|remoteCatalog|scopedGoogleProvider|splitProviderAuth)$':
-      '<rootDir>/packages/engine-pi/src/models/$1',
-    '^@pivi/engine-pi/(membershipAwareCredentialMigration|piProviderCredentialStore|piProviderOAuthService|piAuthInteraction|deviceVerificationUri|piviOpenRouterOAuth|piviXaiOAuthDeviceFlow|registerPiviBundledOAuthFlowLoaders)$':
-      '<rootDir>/packages/engine-pi/src/auth/$1',
     '^@pivi/([^/]+)$': '<rootDir>/packages/$1/src/index.ts',
     '^@pivi/([^/]+)/(.*)$': '<rootDir>/packages/$1/src/$2',
     '^obsidian$': '<rootDir>/tests/__mocks__/obsidian.ts',

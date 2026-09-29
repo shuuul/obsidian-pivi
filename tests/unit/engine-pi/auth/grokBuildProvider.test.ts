@@ -2,7 +2,7 @@ import {
   createGrokBuildProvider,
   GROK_BUILD_BASE_URL,
   sanitizeGrokBuildPayload,
-} from '@pivi/engine-pi/grokBuildProvider';
+} from '@pivi/engine-pi/models/grokBuildProvider';
 import type { Provider } from '@earendil-works/pi-ai';
 
 describe('Grok Build subscription provider', () => {

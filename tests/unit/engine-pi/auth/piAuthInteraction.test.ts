@@ -1,4 +1,4 @@
-import { createPiAuthInteraction } from '@pivi/engine-pi/piAuthInteraction';
+import { createPiAuthInteraction } from '@pivi/engine-pi/auth/piAuthInteraction';
 
 describe('createPiAuthInteraction', () => {
   it('delegates manual-code input to the OAuth host', async () => {

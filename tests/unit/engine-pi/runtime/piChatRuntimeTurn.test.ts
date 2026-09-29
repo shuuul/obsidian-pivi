@@ -7,9 +7,9 @@ import type {
 import {
   type AssistantMessage,
 } from '@earendil-works/pi-ai';
-import { PiAgentEventAdapter } from '@pivi/engine-pi/piAgentEventAdapter';
-import type { PiResolvedModel } from '@pivi/engine-pi/piModelRegistry';
-import type { PiRuntimeHost } from '@pivi/engine-pi/piRuntimeHost';
+import { PiAgentEventAdapter } from '@pivi/engine-pi/runtime/piAgentEventAdapter';
+import type { PiResolvedModel } from '@pivi/engine-pi/models/piModelRegistry';
+import type { PiRuntimeHost } from '@pivi/engine-pi/runtime/piRuntimeHost';
 import type { StreamChunk } from '@pivi/agent/runtime';
 import type { PreparedChatTurn } from '@pivi/agent/runtime/types';
 

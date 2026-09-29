@@ -7,22 +7,22 @@ import {
   createDefaultCustomProviderConfig,
 } from '@pivi/agent/settings/customProviders';
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
-import { fetchCustomProviderModels } from '@pivi/engine-pi/installPiCustomProviders';
-import { syncCustomPiProviders } from '@pivi/engine-pi/piAiModels';
+import { fetchCustomProviderModels } from '@pivi/engine-pi/models/installPiCustomProviders';
+import { syncCustomPiProviders } from '@pivi/engine-pi/models/piAiModels';
 
 import { createPiUiFacades } from '@/app/runtime/piUiFacades';
 
-jest.mock('@pivi/engine-pi/installPiCustomProviders', () => ({
+jest.mock('@pivi/engine-pi/models/installPiCustomProviders', () => ({
   fetchCustomProviderModels: jest.fn(),
 }));
-jest.mock('@pivi/engine-pi/piAiModels', () => ({
+jest.mock('@pivi/engine-pi/models/piAiModels', () => ({
   syncCustomPiProviders: jest.fn(),
 }));
-jest.mock('@pivi/engine-pi/piChatUiConfig', () => ({ piChatUIConfig: {} }));
-jest.mock('@pivi/engine-pi/piModelRegistry', () => ({
+jest.mock('@pivi/engine-pi/models/piChatUiConfig', () => ({ piChatUIConfig: {} }));
+jest.mock('@pivi/engine-pi/models/piModelRegistry', () => ({
   getPiAiModelsForProvider: () => [],
 }));
-jest.mock('@pivi/engine-pi/piSettingsCoordinator', () => ({
+jest.mock('@pivi/engine-pi/models/piSettingsCoordinator', () => ({
   PiSettingsCoordinator: {
     getSettingsSnapshot: (value: unknown) => value,
     commitSettingsSnapshot: () => {},

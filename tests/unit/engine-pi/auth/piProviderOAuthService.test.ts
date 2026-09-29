@@ -14,12 +14,12 @@ import {
   GROK_BUILD_PROVIDER_ID,
   XAI_PROVIDER_ID,
 } from '@pivi/agent/auth/piProviderCredentials';
-import { configurePiAiModels } from '@pivi/engine-pi/piAiModels';
-import { ObsidianCredentialStore } from '@pivi/engine-pi/piProviderCredentialStore';
+import { configurePiAiModels } from '@pivi/engine-pi/models/piAiModels';
+import { ObsidianCredentialStore } from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import {
   normalizeCodexBrowserAuthUrl,
   ProviderOAuthService,
-} from '@pivi/engine-pi/piProviderOAuthService';
+} from '@pivi/engine-pi/auth/piProviderOAuthService';
 import { createMockApp } from '../../../helpers/mockApp';
 
 function createMockOAuthFlowHost(): OAuthFlowHost & { openAuthUrl: jest.Mock } {

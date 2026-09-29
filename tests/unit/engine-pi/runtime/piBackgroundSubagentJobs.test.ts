@@ -1,6 +1,6 @@
 import type { Agent } from '@earendil-works/pi-agent-core';
-import { PiBackgroundSubagentJobs } from '@pivi/engine-pi/piBackgroundSubagentJobs';
-import { SubagentConcurrencyLimiter } from '@pivi/engine-pi/subagentConcurrencyLimiter';
+import { PiBackgroundSubagentJobs } from '@pivi/engine-pi/runtime/piBackgroundSubagentJobs';
+import { SubagentConcurrencyLimiter } from '@pivi/engine-pi/runtime/subagentConcurrencyLimiter';
 
 interface Deferred {
   resolve(): void;

@@ -117,7 +117,7 @@ flowchart TD
 - Host filesystem, secrets, HTTP, process environment, OAuth browser opening, and fetch behavior must arrive through `@pivi/agent/ports`, `PiRuntimeHost`, or explicit function arguments. Do not rely on `window.fetch`; composition passes the scoped provider client into `configurePiAiModels`, and `streamPiAiModelsSimple` forwards it explicitly to pi-ai. The esbuild inject of `@pivi/obsidian-host/bundledFetch` remains a compatibility fallback for upstream free `fetch` identifiers, but does not cover `globalThis.fetch`.
 - Keep concrete Obsidian tool construction in app composition. The registry accepts a `PiBaseToolProvider`; it does not know how host tools work.
 - Keep Pi compatibility casts and upstream-internal access narrow and documented. Do not normalize the rest of the package around Pi's types.
-- Inside this package, import with relative paths only. Keep the production composition surfaces stable under `application/`; implementation leaf subpaths exist for focused compatibility tests, not app wiring.
+- Inside this package, import with relative paths only. Keep the production composition surfaces stable under `application/`; implementation leaf subpaths exist for focused compatibility tests, not app wiring. Leaf export keys mirror the source directory (`./runtime/piChatRuntime` → `src/runtime/piChatRuntime.ts`) so Jest's generic `@pivi/<pkg>/<path>` mapper resolves them without per-module aliases; do not add engine-specific Jest mappers. Collaborators without a declared export stay internal, and tests reach them through relative source paths.
 
 ## Shims
 

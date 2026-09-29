@@ -294,7 +294,7 @@ let mockCapturedSubagentToolProvider: ((
 ) => unknown[]) | undefined;
 let mockCapturedSubagentChunkSink: ((chunk: StreamChunk) => void) | undefined;
 
-jest.mock('@pivi/engine-pi/piAuxQueryRunner', () => ({
+jest.mock('@pivi/engine-pi/runtime/piAuxQueryRunner', () => ({
   createPiAuxQueryRunner: jest.fn((_plugin, options) => {
     mockCapturedSubagentChunkSink = options?.onSubagentChunk;
     mockCapturedSubagentToolProvider = options?.getTools;
@@ -316,7 +316,7 @@ ${JSON.stringify({
 \`\`\``;
 const mockCompactionSample = jest.fn(async (..._args: unknown[]) => defaultCompactionSample);
 
-jest.mock('@pivi/engine-pi/piCompactionSampler', () => ({
+jest.mock('@pivi/engine-pi/runtime/piCompactionSampler', () => ({
   PiCompactionTimeoutError: class PiCompactionTimeoutError extends Error {
     readonly code = 'PI_COMPACTION_TIMEOUT';
     readonly timeoutMs?: number;
@@ -333,9 +333,9 @@ import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { McpTransportFetch } from '@pivi/agent/mcp/ports';
 import type { HttpClient } from '@pivi/agent/ports';
 import type { StreamChunk, UsageInfo } from '@pivi/agent/runtime';
-import * as piAiModelRegistry from '@pivi/engine-pi/piAiModels';
-import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';
-import { PiCompactionTimeoutError } from '@pivi/engine-pi/piCompactionSampler';
+import * as piAiModelRegistry from '@pivi/engine-pi/models/piAiModels';
+import { PiChatRuntime } from '@pivi/engine-pi/runtime/piChatRuntime';
+import { PiCompactionTimeoutError } from '@pivi/engine-pi/runtime/piCompactionSampler';
 import {
   buildEstimatedUsageInfo,
   buildUsageInfoFromAgentMessage,
@@ -347,11 +347,11 @@ import {
 import {
   type PiCachedModel,
   PI_AI_MODELS_CACHE,
-} from '@pivi/engine-pi/piModelRegistry';
+} from '@pivi/engine-pi/models/piModelRegistry';
 import type {
   PiBaseToolProvider,
   PiMainOnlyToolProvider,
-} from '@pivi/engine-pi/buildPiToolRegistryCore';
+} from '@pivi/engine-pi/tools/buildPiToolRegistryCore';
 import { SessionTreeStore } from '@pivi/engine-pi/session/sessionTreeStore';
 import { PIVI_MESSAGE_UI } from '@pivi/agent/session';
 import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/agent/tools';

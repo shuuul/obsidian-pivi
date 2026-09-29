@@ -1,5 +1,5 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { PiRuntimeHost } from '@pivi/engine-pi/piRuntimeHost';
+import type { PiRuntimeHost } from '@pivi/engine-pi/runtime/piRuntimeHost';
 import type { UsageInfo } from '@pivi/agent/runtime';
 import {
   getContextCalibration,

@@ -1,4 +1,4 @@
-import { configurePiAiModels, piAiModels } from '@pivi/engine-pi/piAiModels';
+import { configurePiAiModels, piAiModels } from '@pivi/engine-pi/models/piAiModels';
 import type { HttpClient, HttpResponse } from '@pivi/agent/ports';
 import { testProviderReadiness } from '@/app/runtime/providerReadiness';
 

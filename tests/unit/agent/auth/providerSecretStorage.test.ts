@@ -3,7 +3,7 @@ import {
   createObsidianCredentialStore,
   migratePiProviderCredentialsToKeychain,
   ObsidianCredentialStore,
-} from '@pivi/engine-pi/piProviderCredentialStore';
+} from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
