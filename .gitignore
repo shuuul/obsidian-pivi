@@ -20,6 +20,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Agent worktrees
+.claude/worktrees/
+
 # IDE
 .idea/
 .vscode/
