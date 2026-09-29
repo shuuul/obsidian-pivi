@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.30.5](https://github.com/shuuul/obsidian-pivi/compare/0.30.4...0.30.5) (2026-09-29)
+
+### Bug Fixes
+
+* move the ESLint bulk-suppressions baseline out of the repository root so the Obsidian community review scan no longer aborts with a fatal source-code review error
+
 ## [0.30.4](https://github.com/shuuul/obsidian-pivi/compare/0.30.3...0.30.4) (2026-09-29)
 
 ### Maintenance
