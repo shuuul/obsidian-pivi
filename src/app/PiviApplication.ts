@@ -1,13 +1,11 @@
-/* eslint-disable max-lines -- Application composition remains cohesive; feature behavior stays in scoped collaborators. */
 import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import { OriginGrantRegistry } from "@pivi/agent/network";
 import type { CapabilityApprovalPort } from "@pivi/agent/ports";
-import type { OpenSessionState, SessionSummary } from "@pivi/agent/runtime";
-import type { SessionMessagePage, SessionStore } from "@pivi/agent/session";
+import type { OpenSessionState } from "@pivi/agent/runtime";
+import type { SessionStore } from "@pivi/agent/session";
 import { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import type { PiviSettings } from "@pivi/agent/settings";
 import type { EnvironmentScope } from "@pivi/agent/settings/types";
-import { getObsidianToolsSettingsFromBag } from "@pivi/agent/settings/types";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
 import { PiSettingsCoordinator, warmPiAiModelsCache } from "@pivi/engine-pi/application/models";
@@ -16,47 +14,27 @@ import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import { installBundledFetch } from "@pivi/obsidian-host/bundledFetch";
-import { ObsidianCliTransport } from "@pivi/obsidian-host/cli/obsidianCliTransport";
-import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import { createPiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
-import { openExternalUrl } from "@pivi/obsidian-host/openExternalUrl";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import type { ChatPerfRecorder } from "@pivi/pivi-react/store";
-import type { Editor, MarkdownView, Plugin } from "obsidian";
-import { apiVersion, getIcon, Notice } from "obsidian";
+import type {
+  Editor,
+  MarkdownView,
+  Plugin,
+} from "obsidian";
+import { apiVersion, Notice } from "obsidian";
 
-import {
-  type ChatPerfController,
-  NOOP_CHAT_PERF_CONTROLLER,
-} from "@/app/chatPerformanceController";
-import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
+import { createApplicationFacades } from "@/app/applicationFacades";
+import { ApplicationNoteToolbar } from "@/app/applicationNoteToolbar";
+import { ApplicationSessions } from "@/app/applicationSessions";
+import { type ChatPerfController, NOOP_CHAT_PERF_CONTROLLER } from "@/app/chatPerformanceController";
 import { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalCapabilityPermissionStore";
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
-import type {
-  ChatFacade,
-  IntegrationsFacade,
-  PiviApplicationFacades,
-  PiviChatView,
-  SessionsFacade,
-  SettingsFacade,
-  WorkspaceFacade,
-} from "@/app/hostContracts";
+import type { PiviApplicationFacades, PiviChatView } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
-import {
-  getInstalledPluginVersion,
-  isNoteToolbarInstalled,
-  isPluginEnabled,
-  type NoteToolbarItemApi,
-  type NoteToolbarItemStyle,
-  type NoteToolbarSetupQueue,
-  type NoteToolbarSetupResult,
-  runQueuedNoteToolbarRequest,
-  runQueuedNoteToolbarSetup,
-  setupNoteToolbarIntegration as setupNoteToolbar,
-} from "@/app/noteToolbarIntegration";
 import { openStyleSettingsOrMarketplace } from "@/app/openStyleSettings";
 import {
   activatePiviView,
@@ -65,7 +43,6 @@ import {
   openPiviNewTab,
 } from "@/app/piviViewActivation";
 import { initializePiviPlugin, shutdownOpenChatViews } from "@/app/pluginLifecycle";
-import * as sessionApi from "@/app/pluginSessionApi";
 import { loadPluginSettings } from "@/app/pluginSettingsLoad";
 import { createPiUiFacades } from "@/app/runtime/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/runtime/PiWorkspaceServices";
@@ -74,7 +51,6 @@ import {
   createSessionStore,
   createSharedStorage,
 } from "@/app/serviceGraph";
-import { readSessionTranscript } from "@/app/sessionTranscript";
 import {
   applyEnvironmentVariablesBatch as applyEnvironmentVariablesBatchForPlugin,
   getActiveEnvironmentVariables as getActiveEnvironmentVariablesFromSettings,
@@ -89,10 +65,7 @@ import {
   refreshPiviManagementViews,
   refreshVaultSkillsViews,
 } from "@/app/viewAccess";
-import {
-  getWorkspaceCommandFullId,
-  WorkspaceCommandRegistry,
-} from "@/app/workspaceCommandRegistry";
+import { WorkspaceCommandRegistry } from "@/app/workspaceCommandRegistry";
 
 const logger = new PluginLogger('PiviPlugin');
 const DELETED_SESSION_PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -125,125 +98,25 @@ export class PiviApplication {
       },
       plugin.app.secretStorage,
     );
-    const getSettings = () => this.settings;
-    const chat: ChatFacade = {
-      app: this.app,
-      get settings() { return getSettings(); },
-      saveSettings: () => this.saveSettings(),
-      getAgentHostContext: () => this.getAgentHostContext(),
-      getVaultPath: () => this.getVaultPath(),
-      getUiFacades: () => this.getUiFacades(),
+    this.sessionOperations = new ApplicationSessions({
+      app: plugin.app,
+      sessionManager: this.sessionManager,
+      requireSessionStore: () => this.requireSessionStore(),
+      getStorage: () => this.storage,
+      getSettings: () => this.settings,
       getAllViews: () => this.getAllViews(),
-      loadTabManagerState: () => this.loadTabManagerState(),
-      persistTabManagerState: state => this.persistTabManagerState(state),
-      getChatPerfController: () => this.getChatPerfController(),
-      getChatPerfRecorder: () => this.getChatPerfRecorder(),
-      createChatService: options => this.createChatService(options),
-      createAuxQueryRunner: () => this.createAuxQueryRunner(),
-      activateView: () => this.activateView(),
-      canCreateNewTab: () => this.canCreateNewTab(),
-      openNewTab: () => this.openNewTab(),
-      addEditorSelectionToChatInput: (editor, view) => this.addEditorSelectionToChatInput(editor, view),
-      ...(process.env.NODE_ENV !== 'production' ? {
-        runDevelopmentRealHostSmoke: async (request) => {
-          const { runDevelopmentRealHostSmoke } = await import('@/app/realHostSmoke');
-          return runDevelopmentRealHostSmoke({
-            createChatService: async turn => {
-              const development = (await this.ensureWorkspaceServices()).development;
-              if (!development) {
-                throw new Error('The deterministic smoke provider is unavailable.');
-              }
-              return development.createDeterministicSmokeChatService(
-                this,
-                this.httpClient,
-                turn,
-              );
-            },
-            createOpenSession: options => this.createOpenSession(options),
-            openSessionByFile: sessionFile => this.openSessionByFile(sessionFile),
-            hydrateOpenSession: session => this.sessionManager.hydrate(session),
-            updateSession: (id, updates) => this.updateSession(id, updates),
-            removeOpenSession: id => this.sessionManager.delete(id),
-            deleteSessionFile: sessionFile => this.requireSessionStore().deleteSession(sessionFile),
-            vaultFileExists: path => this.app.vault.adapter.exists(path),
-            readVaultFile: path => this.app.vault.adapter.read(path),
-            writeVaultFile: async (path, content) => {
-              await this.app.vault.create(path, content);
-            },
-            removeVaultFile: async path => {
-              if (await this.app.vault.adapter.exists(path)) {
-                await this.app.vault.adapter.remove(path);
-              }
-            },
-          }, request);
-        },
-      } : {}),
-    };
-    const sessions: SessionsFacade = {
-      getSessionList: () => this.getSessionList(),
-      getOpenSessionSync: id => this.getOpenSessionSync(id),
-      getOpenSessionById: id => this.getOpenSessionById(id),
-      openRecentSessionMessages: (id, limit) => this.openRecentSessionMessages(id, limit),
-      readOlderSessionMessages: (id, before, limit) => this.readOlderSessionMessages(id, before, limit),
-      createOpenSession: options => this.createOpenSession(options),
-      openSessionByFile: file => this.openSessionByFile(file),
-      deleteSession: id => this.deleteSession(id),
-      deleteSessionFile: (file, id) => this.deleteSessionFile(file, id),
-      discardSessionFile: (file, id) => this.discardSessionFile(file, id),
-      abandonEmptyOwnedSession: (file, id) => this.abandonEmptyOwnedSession(file, id),
-      renameSession: (id, title, source) => this.renameSession(id, title, source),
-      updateSession: (id, updates) => this.updateSession(id, updates),
-      forkSessionAt: (session, entry) => this.forkSessionAt(session, entry),
-      purgeDeletedSessionFiles: () => this.purgeDeletedSessionFiles(),
-      purgeExpiredDeletedSessionFiles: () => this.purgeExpiredDeletedSessionFiles(),
-      sessionRecovery: this.sessionRecovery,
-    };
-    const workspace: WorkspaceFacade = {
-      app: this.app,
-      ensureWorkspaceServices: () => this.ensureWorkspaceServices(),
-      getAllViews: () => this.getAllViews(),
-      refreshPiviManagement: domain => this.refreshPiviManagement(domain),
-    };
-    const integrations: IntegrationsFacade = {
-      app: this.app,
-      get settings() { return getSettings(); },
-      manifest: this.manifest,
-      getUiFacades: () => this.getUiFacades(),
-      ensureWorkspaceServices: () => this.ensureWorkspaceServices(),
-      addEditorSelectionToChatInput: (editor, view) => this.addEditorSelectionToChatInput(editor, view),
-    };
-    const settings: SettingsFacade = {
-      app: this.app,
-      get settings() { return getSettings(); },
-      saveSettings: () => this.saveSettings(),
-      getAgentHostContext: () => this.getAgentHostContext(),
-      getVaultPath: () => this.getVaultPath(),
-      getUiFacades: () => this.getUiFacades(),
-      get storage() { return getStorage(); },
-      httpClient: this.httpClient,
+    });
+    this.noteToolbar = new ApplicationNoteToolbar({
+      app: plugin.app,
+      pluginId: plugin.manifest.id,
       processRunner: this.processRunner,
-      getAllViews: () => this.getAllViews(),
-      refreshVaultSkills: () => this.refreshVaultSkills(),
-      openStyleSettings: () => this.openStyleSettings(),
-      isNoteToolbarInstalled: () => this.isNoteToolbarInstalled(),
-      setupNoteToolbarIntegration: style => this.setupNoteToolbarIntegration(style),
-      setupWorkspaceCommandNoteToolbar: entry => this.setupWorkspaceCommandNoteToolbar(entry),
+      getSettings: () => this.settings,
       reconcileWorkspaceCommands: () => this.reconcileWorkspaceCommands(),
-      purgeDeletedSessionFiles: () => this.purgeDeletedSessionFiles(),
-      purgeExpiredDeletedSessionFiles: () => this.purgeExpiredDeletedSessionFiles(),
-      loadSessionMaintenance: () => this.loadSessionMaintenance(),
-      deleteAllArchivedChats: () => this.deleteAllArchivedChats(),
-      getActiveEnvironmentVariables: () => this.getActiveEnvironmentVariables(),
-      getEnvironmentVariablesForScope: scope => this.getEnvironmentVariablesForScope(scope),
-      applyEnvironmentVariables: (scope, text) => this.applyEnvironmentVariables(scope, text),
-      applyEnvironmentVariablesBatch: updates => this.applyEnvironmentVariablesBatch(updates),
-      importEnvironmentText: (scope, text) => this.importEnvironmentText(scope, text),
-      listEnvironmentEntries: scope => this.listEnvironmentEntries(scope),
-      getEnvironmentStore: () => this.getEnvironmentStore(),
-      notify: (message, timeout) => this.notify(message, timeout),
-    };
-    const getStorage = () => this.storage;
-    this.facades = { chat, sessions, workspace, integrations, settings };
+    });
+    this.facades = createApplicationFacades(this, {
+      sessionManager: this.sessionManager,
+      requireSessionStore: () => this.requireSessionStore(),
+    });
   }
 
   get app() { return this.plugin.app; }
@@ -273,7 +146,6 @@ export class PiviApplication {
   private readonly deviceLocalCapabilityPermissions: ObsidianDeviceLocalCapabilityPermissionStore;
   private readonly deviceLocalEnvironmentStore: ObsidianDeviceLocalEnvironmentStore;
   private readonly sessionManager: OpenSessionManager;
-  private deletedSessionOperationTail: Promise<void> = Promise.resolve();
   private sessionStore: SessionStore | null = null;
   private piWorkspace: PiWorkspaceServices | null = null;
   private workspaceInitialization: Promise<PiWorkspaceServices> | null = null;
@@ -282,47 +154,11 @@ export class PiviApplication {
   private shutdownPromise: Promise<void> | null = null;
   private releaseSessionJournal: (() => boolean) | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
-  private readonly noteToolbarSetupQueue: NoteToolbarSetupQueue = { active: null };
   private readonly workspaceCommandRegistry: WorkspaceCommandRegistry;
   private chatPerfController: ChatPerfController = NOOP_CHAT_PERF_CONTROLLER;
   private readonly uiFacades: ReturnType<typeof createPiUiFacades>;
-  readonly sessionRecovery = {
-    read: async (sessionFile: string) => {
-      const summary = this.sessions.find((session) => session.sessionFile === sessionFile);
-      if (!summary) throw new Error(`Session not found: ${sessionFile}`);
-      return readSessionTranscript({
-        sessionFile,
-        store: this.requireSessionStore(),
-      });
-    },
-    listDeleted: () => this.runDeletedSessionOperation(() => sessionApi.listDeletedSessions(
-      this.sessionContext(),
-      this.settings.deletedSessionRetentionDays,
-    )),
-    restore: (sessionFile: string) => this.runDeletedSessionOperation(async () => {
-      const restored = await sessionApi.restoreDeletedSession(
-        this.sessionContext(),
-        sessionFile,
-        async (openSession) => {
-          const view = await ensurePiviViewOpen(this.app, this.settings.chatViewPlacement);
-          const opened = await view?.getChatHandle()?.commands.openSession(openSession.id) ?? false;
-          if (!opened) throw new Error('Restored session could not be opened in a Pivi tab.');
-        },
-      );
-      return {
-        sessionId: restored.id,
-        title: restored.title,
-        sessionFile: restored.sessionFile ?? sessionFile,
-      };
-    }),
-  };
-
-  private runDeletedSessionOperation<T>(operation: () => Promise<T>): Promise<T> {
-    const result = this.deletedSessionOperationTail.then(operation, operation);
-    this.deletedSessionOperationTail = result.then(() => undefined, () => undefined);
-    return result;
-  }
-
+  readonly sessionOperations: ApplicationSessions;
+  readonly noteToolbar: ApplicationNoteToolbar;
   getVaultPath(): string | null {
     return getVaultPath(this.app);
   }
@@ -350,107 +186,6 @@ export class PiviApplication {
     return openStyleSettingsOrMarketplace(this.app);
   }
 
-  async setupNoteToolbarIntegration(
-    itemStyle: NoteToolbarItemStyle,
-  ): Promise<NoteToolbarSetupResult> {
-    return runQueuedNoteToolbarSetup(
-      this.noteToolbarSetupQueue,
-      itemStyle,
-      async (style) => {
-        const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
-        const cli = new ObsidianCliTransport(toolSettings, {
-          processRunner: this.processRunner,
-          vaultPath: getVaultPath(this.app),
-        });
-        return setupNoteToolbar({
-          adapter: this.app.vault.adapter,
-          apiVersion,
-          cliAvailable:
-            toolSettings.cliEnabled && isOfficialObsidianCliEnabled(),
-          commandId: `${this.manifest.id}:${ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID}`,
-          configDir: this.app.vault.configDir,
-          itemStyle: style,
-          itemTooltip: t("settings.noteToolbar.itemTooltip"),
-          getItemApi: (itemId) => this.getNoteToolbarItemApi(itemId),
-          getInstalledPluginVersion: (pluginId) =>
-            getInstalledPluginVersion(this.app, pluginId),
-          isPluginEnabled: (pluginId) => isPluginEnabled(this.app, pluginId),
-          openUri: openExternalUrl,
-          runCli: (args) =>
-            cli.run({ vaultName: this.app.vault.getName(), args }),
-        });
-      },
-    );
-  }
-
-  isNoteToolbarInstalled(): Promise<boolean> {
-    return Promise.resolve(
-      isNoteToolbarInstalled((pluginId) =>
-        getInstalledPluginVersion(this.app, pluginId),
-      ),
-    );
-  }
-
-  async setupWorkspaceCommandNoteToolbar(
-    entry: SlashCatalogEntry,
-  ): Promise<NoteToolbarSetupResult> {
-    if (!entry.integrationKey) {
-      throw new Error(`Workspace command /${entry.name} has no integration key`);
-    }
-    await this.reconcileWorkspaceCommands();
-    const icon = entry.icon && getIcon(entry.icon) ? entry.icon : 'message-square';
-    const key = `${entry.integrationKey}:${icon}`;
-    return runQueuedNoteToolbarRequest(this.noteToolbarSetupQueue, key, async () => {
-      const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
-      const cli = new ObsidianCliTransport(toolSettings, {
-        processRunner: this.processRunner,
-        vaultPath: getVaultPath(this.app),
-      });
-      return setupNoteToolbar({
-        adapter: this.app.vault.adapter,
-        apiVersion,
-        cliAvailable: toolSettings.cliEnabled && isOfficialObsidianCliEnabled(),
-        commandId: getWorkspaceCommandFullId(this.manifest.id, entry.integrationKey!),
-        configDir: this.app.vault.configDir,
-        itemStyle: 'icon-only',
-        itemIcon: icon,
-        itemTooltip: t('settings.noteToolbar.commandTooltip', { name: entry.name }),
-        getItemApi: (itemId) => this.getNoteToolbarItemApi(itemId),
-        getInstalledPluginVersion: (pluginId) =>
-          getInstalledPluginVersion(this.app, pluginId),
-        isPluginEnabled: (pluginId) => isPluginEnabled(this.app, pluginId),
-        openUri: openExternalUrl,
-        runCli: (args) => cli.run({ vaultName: this.app.vault.getName(), args }),
-      });
-    });
-  }
-
-  private getNoteToolbarItemApi(itemId: string) {
-    const api = (window as Window & {
-      ntb?: { getItem?: (id: string) => NoteToolbarItemApi | undefined };
-    }).ntb?.getItem?.(itemId);
-    return api ?? null;
-  }
-
-  private get sessions(): OpenSessionState[] {
-    return this.sessionManager.getAll();
-  }
-
-  private set sessions(value: OpenSessionState[]) {
-    this.sessionManager.replaceAll(value);
-  }
-
-  private sessionContext(): sessionApi.PluginSessionContext {
-    return {
-      sessionManager: this.sessionManager,
-      requireSessionStore: () => this.requireSessionStore(),
-      storage: this.storage,
-      getSessionList: () => this.getSessionList(),
-      getAllViews: () => this.getAllViews(),
-      getSessions: () => this.sessions,
-    };
-  }
-
   async onload() {
     if (process.env.NODE_ENV !== 'production') {
       const { createChatPerfController } = await import('@/app/chatPerformanceRecorder');
@@ -462,11 +197,11 @@ export class PiviApplication {
       );
     }
     await initializePiviPlugin(this.plugin, this.facades, () => this.loadSettings());
-    await this.purgeExpiredDeletedSessionFiles().catch((error: unknown) => {
+    await this.sessionOperations.purgeExpiredDeletedSessionFiles().catch((error: unknown) => {
       logger.warn('Failed to purge expired deleted sessions during startup', error);
     });
     this.registerInterval(window.setInterval(() => {
-      void this.purgeExpiredDeletedSessionFiles().catch((error: unknown) => {
+      void this.sessionOperations.purgeExpiredDeletedSessionFiles().catch((error: unknown) => {
         logger.warn('Failed to purge expired deleted sessions', error);
       });
     }, DELETED_SESSION_PURGE_INTERVAL_MS));
@@ -631,7 +366,7 @@ export class PiviApplication {
         this.sessionStore = store;
       },
       getSettings: () => this.settings,
-      getSessions: () => this.sessions,
+      getSessions: () => this.sessionManager.getAll(),
       setLastKnownTabManagerState: (state) => {
         this.lastKnownTabManagerState = state as AppTabManagerState | null;
       },
@@ -694,125 +429,7 @@ export class PiviApplication {
     changed: boolean;
     invalidatedSessions: OpenSessionState[];
   } {
-    return PiSettingsCoordinator.reconcileSettings(this.settings, this.sessions);
-  }
-
-  async forkSessionAt(
-    openSession: OpenSessionState,
-    atEntryId: string,
-  ): Promise<{ sessionFile: string; sessionId: string } | null> {
-    return sessionApi.forkSessionAt(this.sessionContext(), openSession, atEntryId);
-  }
-
-  async createOpenSession(options?: {
-    sessionId?: string;
-    sessionFile?: string;
-  }): Promise<OpenSessionState> {
-    return sessionApi.createOpenSession(this.sessionContext(), options);
-  }
-
-  async openSessionByFile(sessionFile: string): Promise<OpenSessionState> {
-    return sessionApi.openSessionByFile(this.sessionContext(), sessionFile);
-  }
-
-  async deleteSession(id: string): Promise<void> {
-    await this.runDeletedSessionOperation(() => sessionApi.deleteSession(this.sessionContext(), id));
-  }
-
-  async deleteSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void> {
-    await this.runDeletedSessionOperation(() => sessionApi.deleteSessionFile(
-      this.sessionContext(),
-      sessionFile,
-      openSessionId,
-    ));
-  }
-
-  async discardSessionFile(sessionFile: string, openSessionId?: string | null): Promise<void> {
-    await this.runDeletedSessionOperation(() => sessionApi.discardSessionFile(
-      this.sessionContext(),
-      sessionFile,
-      openSessionId,
-    ));
-  }
-
-  async abandonEmptyOwnedSession(sessionFile: string, openSessionId?: string | null): Promise<boolean> {
-    return this.runDeletedSessionOperation(() => sessionApi.abandonEmptyOwnedSession(
-      this.sessionContext(),
-      sessionFile,
-      openSessionId,
-    ));
-  }
-
-  async purgeDeletedSessionFiles(): Promise<number> {
-    return this.runDeletedSessionOperation(() => (
-      sessionApi.purgeDeletedSessionFiles(this.sessionContext())
-    ));
-  }
-
-  async purgeExpiredDeletedSessionFiles(): Promise<number> {
-    return this.runDeletedSessionOperation(() => sessionApi.purgeExpiredDeletedSessionFiles(
-      this.sessionContext(),
-      this.settings.deletedSessionRetentionDays,
-    ));
-  }
-
-  async loadSessionMaintenance(): Promise<{ archivedCount: number; deletedCount: number }> {
-    return sessionApi.getSessionMaintenanceSnapshot(this.sessionContext());
-  }
-
-  async deleteAllArchivedChats(): Promise<{ moved: number; skippedActive: number; failed: number }> {
-    return this.runDeletedSessionOperation(() => sessionApi.deleteAllArchivedChats(this.sessionContext()));
-  }
-
-  async renameSession(
-    id: string,
-    title: string,
-    titleSource?: OpenSessionState['titleSource'],
-  ): Promise<void> {
-    await sessionApi.renameSession(this.sessionContext(), id, title, titleSource);
-  }
-
-  async updateSession(
-    id: string,
-    updates: Partial<OpenSessionState>,
-  ): Promise<void> {
-    await sessionApi.updateSession(this.sessionContext(), id, updates);
-  }
-
-  async getOpenSessionById(id: string): Promise<OpenSessionState | null> {
-    return sessionApi.getOpenSessionById(this.sessionContext(), id);
-  }
-
-  async openRecentSessionMessages(
-    id: string,
-    limit: number,
-  ): Promise<SessionMessagePage | null> {
-    return sessionApi.openRecentSessionMessages(this.sessionContext(), id, limit);
-  }
-
-  async readOlderSessionMessages(
-    id: string,
-    beforeEntryId: string,
-    limit: number,
-  ): Promise<SessionMessagePage | null> {
-    return sessionApi.readOlderSessionMessages(
-      this.sessionContext(),
-      id,
-      beforeEntryId,
-      limit,
-    );
-  }
-
-  getOpenSessionSync(id: string): OpenSessionState | null {
-    return sessionApi.getOpenSessionSync(this.sessionContext(), id);
-  }
-
-  findEmptySession(): OpenSessionState | null {
-    return sessionApi.findEmptySession(this.sessionContext());
-  }
-
-  getSessionList(): SessionSummary[] {
-    return sessionApi.getSessionList(this.sessionContext());
+    return PiSettingsCoordinator.reconcileSettings(this.settings, this.sessionManager.getAll());
   }
 
   async loadTabManagerState(): Promise<AppTabManagerState | null> {
@@ -904,7 +521,7 @@ export class PiviApplication {
       saveSettings: () => this.saveSettings(),
       reconcileWorkspaceCommandEntries: (entries: readonly SlashCatalogEntry[]) =>
         this.reconcileWorkspaceCommandEntries(entries),
-      sessionRecovery: this.sessionRecovery,
+      sessionRecovery: this.sessionOperations.sessionRecovery,
       refreshPiviManagement: (domain: 'mcp' | 'skills' | 'commands' | 'prompt') =>
         this.refreshPiviManagement(domain),
     };
@@ -921,5 +538,3 @@ export interface PiviApplicationLifecycle {
 export function createPiviApplication(plugin: Plugin): PiviApplicationLifecycle {
   return new PiviApplication(plugin);
 }
-
-/* eslint-enable max-lines -- End application composition exemption. */

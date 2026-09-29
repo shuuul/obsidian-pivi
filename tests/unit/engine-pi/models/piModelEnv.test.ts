@@ -1,13 +1,13 @@
-import { configurePiAiModels } from '@pivi/engine-pi/piAiModels';
+import { configurePiAiModels } from '@pivi/engine-pi/models/piAiModels';
 import {
   resolvePiModel,
   resolvePiModelByKey,
   resolvePiProviderAuth,
-} from '@pivi/engine-pi/piModelEnv';
+} from '@pivi/engine-pi/models/piModelEnv';
 import {
   ObsidianAuthContext,
   ObsidianCredentialStore,
-} from '@pivi/engine-pi/piProviderCredentialStore';
+} from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import { createMockPiviPluginStub, asPiviPlugin } from '../../../helpers/mockPiviPlugin';
 
 describe('piModelEnv provider auth resolution', () => {

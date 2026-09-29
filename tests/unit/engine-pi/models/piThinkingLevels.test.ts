@@ -7,7 +7,7 @@ import {
   resolvePiModelFromKeyWithLookup,
   resolvePiThinkingLevelForModel,
 } from '@pivi/engine-pi';
-import { piAiModels } from '@pivi/engine-pi/piAiModels';
+import { piAiModels } from '@pivi/engine-pi/models/piAiModels';
 
 function resolveTestModel(modelKey: string): PiCachedModel | null {
   return resolvePiModelFromKeyWithLookup(modelKey, piAiModels);

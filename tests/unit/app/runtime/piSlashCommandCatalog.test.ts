@@ -1,8 +1,8 @@
 import { parseSlashCommandContent } from '@pivi/agent/skills/slashCommand';
 import { RESERVED_COMMAND_IDS } from '@pivi/agent/skills/commands/slashCommandIds';
 import { PiSlashCommandCatalog } from '@/app/runtime/PiSlashCommandCatalog';
+import type { PiviWorkspaceHost } from '@/app/runtime/serviceContracts';
 import type { FileStore } from "@pivi/agent/ports";
-import type { PiviApplication as PiviPlugin } from "@/app/PiviApplication";
 import { TAbstractFile } from "obsidian";
 
 describe("parseSlashCommandContent", () => {
@@ -40,7 +40,7 @@ Review: {{selected_text}}`;
 });
 
 describe("PiSlashCommandCatalog", () => {
-  let mockPlugin: jest.Mocked<PiviPlugin>;
+  let mockPlugin: jest.Mocked<PiviWorkspaceHost>;
   let mockAdapter: jest.Mocked<FileStore>;
   let catalog: PiSlashCommandCatalog;
 
@@ -53,7 +53,7 @@ describe("PiSlashCommandCatalog", () => {
           on: jest.fn(),
         },
       },
-    } as unknown as jest.Mocked<PiviPlugin>;
+    } as unknown as jest.Mocked<PiviWorkspaceHost>;
 
     mockAdapter = {
       ensureFolder: jest.fn().mockResolvedValue(undefined),

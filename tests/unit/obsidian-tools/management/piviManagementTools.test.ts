@@ -19,7 +19,7 @@ import {
   TOOL_PIVI_PROMPT,
   TOOL_PIVI_SKILLS,
 } from '@pivi/agent/tools';
-import { toPiAgentTool } from '@pivi/engine-pi/piToolAdapter';
+import { toPiAgentTool } from '@pivi/engine-pi/tools/piToolAdapter';
 import {
   getToolPresentationDescriptor,
   MCP_ICON_MARKER,

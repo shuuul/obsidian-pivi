@@ -1,4 +1,4 @@
-import { createCodexImageGenerator } from '@pivi/engine-pi/codexImageGenerator';
+import { createCodexImageGenerator } from '@pivi/engine-pi/runtime/codexImageGenerator';
 
 function jwtWithAccount(accountId: string): string {
   const payload = {

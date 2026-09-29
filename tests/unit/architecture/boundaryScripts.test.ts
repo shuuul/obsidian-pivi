@@ -375,7 +375,7 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, 'packages/obsidian-tools/src'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, 'packages/obsidian-tools/src/fixture.ts'),
-        "import { piAiModels } from '@pivi/engine-pi/piAiModels';",
+        "import { piAiModels } from '@pivi/engine-pi/models/piAiModels';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
@@ -415,7 +415,7 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, 'src/ui'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, 'src/ui/fixture.ts'),
-        "import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';",
+        "import { PiChatRuntime } from '@pivi/engine-pi/runtime/piChatRuntime';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
@@ -475,7 +475,7 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, relativeFile, '..'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, relativeFile),
-        "import { PiChatRuntime } from '@pivi/engine-pi/piChatRuntime';",
+        "import { PiChatRuntime } from '@pivi/engine-pi/runtime/piChatRuntime';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
@@ -493,7 +493,7 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, 'packages/agent/src'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, 'packages/agent/src/fixture.ts'),
-        "import { piAiModels } from '@pivi/engine-pi/piAiModels';",
+        "import { piAiModels } from '@pivi/engine-pi/models/piAiModels';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
@@ -1127,7 +1127,7 @@ describe('architecture boundary scripts', () => {
       '--input-type=module',
       '--eval',
       `try {
-        import.meta.resolve('@pivi/engine-pi/piChatRuntimeUsage');
+        import.meta.resolve('@pivi/engine-pi/runtime/piChatRuntimeUsage');
         process.exitCode = 2;
       } catch (error) {
         if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;

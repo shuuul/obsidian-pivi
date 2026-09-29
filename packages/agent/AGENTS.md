@@ -60,7 +60,7 @@ Arrows are compile-time dependencies. Concrete engines and host adapters point i
 - Product UI should depend on `runtime/chatPorts`, `runtime/PiChatService`, and `runtime/AuxQueryRunner`, not import `@pivi/engine-pi` or construct runtimes itself. React presentation packages must not own runtime/session application contracts.
 - Prefer explicit subpath exports when a source package contains both core and host-specific helpers.
 - Inside this package, import with relative paths only. `@pivi/agent/...` subpaths are for cross-package consumers; ESLint `no-restricted-imports` forbids self-referencing package imports under `src/**`.
-- Engine custom-provider *installation* lives in `@pivi/engine-pi/installPiCustomProviders`. Settings `customProviders.ts` owns config types/normalization only — do not conflate the two modules.
+- Engine custom-provider *installation* lives in `@pivi/engine-pi/models/installPiCustomProviders`. Settings `customProviders.ts` owns config types/normalization only — do not conflate the two modules.
 
 ## Package map
 

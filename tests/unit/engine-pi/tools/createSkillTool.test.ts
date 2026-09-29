@@ -3,7 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
-import { createSkillTool } from '@pivi/engine-pi/createSkillTool';
+import { createSkillTool } from '@pivi/engine-pi/tools/createSkillTool';
 
 function textOf(result: { content: Array<{ type: string; text?: string }> }): string {
   const firstContent = result.content[0];

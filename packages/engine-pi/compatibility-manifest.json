@@ -147,6 +147,33 @@
       ],
       "removalCondition": "Upstream Codex WebSocket transport supports browser WebSocket authentication in Electron, or a renderer-safe authenticated transport replaces the current path.",
       "trackingIssue": 113
+    },
+    {
+      "id": "pi-ai-bundled-oauth-deep-imports",
+      "upstreamVersion": "0.87.1",
+      "reason": "pi-ai does not export its individual OAuth flow modules or the bundled-loader registry, while Pivi must register every bundled flow and substitute renderer-safe OpenRouter and xAI device flows; the specifiers resolve through the TypeScript path and Jest mapper aliases for pi-ai/dist.",
+      "implementationPaths": [
+        "packages/engine-pi/src/auth/registerPiviBundledOAuthFlowLoaders.ts",
+        "packages/engine-pi/src/auth/piviXaiOAuthDeviceFlow.ts",
+        "tsconfig.json",
+        "jest.config.js"
+      ],
+      "deepImports": [
+        "@earendil-works/pi-ai/dist/auth/oauth/anthropic.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/github-copilot.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/kimi-coding.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/load.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/meta.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/openai-codex.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/radius.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/device-code.js",
+        "@earendil-works/pi-ai/dist/auth/oauth/xai.js"
+      ],
+      "verificationTests": [
+        "tests/unit/scripts/checkPiCompatibility.test.ts"
+      ],
+      "removalCondition": "pi-ai exports the bundled OAuth flow modules and loader registry (or an injectable registration API) through its package export map.",
+      "trackingIssue": 113
     }
   ]
 }

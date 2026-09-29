@@ -1,4 +1,4 @@
-import { remindCanonicalToolForm, toPiAgentTool } from '@pivi/engine-pi/piToolAdapter';
+import { remindCanonicalToolForm, toPiAgentTool } from '@pivi/engine-pi/tools/piToolAdapter';
 import type { ToolSpec } from '@pivi/agent/tools';
 
 describe('remindCanonicalToolForm', () => {

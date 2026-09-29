@@ -1,123 +1,71 @@
 import {
   type App,
-  type BasesConfigFile,
-  type BasesConfigFileView,
-  type CachedMetadata,
-  getAllTags,
   MarkdownView,
   parseFrontMatterAliases,
-  parseYaml,
   type TAbstractFile,
   TFile,
   TFolder,
 } from 'obsidian';
 
 import { captureFileRecoverySnapshot } from './fileRecoverySnapshot';
+import { joinNoteContent, prependAfterFrontmatter } from './noteContentJoin';
 import {
   type AgentManagedPathMutationMode,
   getVaultPath,
   normalizePathForVault,
   requireAgentVaultMutationPath,
 } from './path';
+import type {
+  VaultAliasEntry,
+  VaultAttachmentInfo,
+  VaultBaseFile,
+  VaultBaseView,
+  VaultDeleteResult,
+  VaultGraphResult,
+  VaultLinkEntry,
+  VaultNoteInfo,
+  VaultPathEntry,
+  VaultPropertyIndexEntry,
+  VaultRecentFile,
+  VaultSearchHit,
+  VaultTagEntry,
+  VaultWriteAttachmentResult,
+} from './vaultApiTypes';
 import { applyVaultEdits, type VaultEditItem } from './vaultEditMatch';
+import {
+  collectBacklinks,
+  collectOutgoingLinks,
+  collectTags,
+  describeAttachment,
+  describeNote,
+  getBaseFiles,
+  getGraphAnalysis,
+  getRecentFiles,
+  getTagInfo,
+  getVaultAliasIndex,
+  getVaultPropertyIndex,
+  listFolderEntries,
+  parseBaseViews,
+  resolveBaseFile,
+} from './vaultMetadataQueries';
+import { searchVaultNotes, type VaultSearchParams } from './vaultSearch';
 
-export interface VaultSearchHit {
-  path: string;
-  line?: number;
-  matches?: string[];
-}
-
-export interface VaultNoteInfo {
-  path: string;
-  basename: string;
-  extension: string;
-  size: number;
-  ctime: number;
-  mtime: number;
-  tags: string[];
-  links: string[];
-  frontmatter: Record<string, unknown> | null;
-  wordCount: number;
-  characterCount: number;
-  aliases: string[];
-}
-
-export interface VaultTagEntry {
-  name: string;
-  count: number;
-}
-
-export interface VaultPropertyIndexEntry {
-  name: string;
-  count: number;
-}
-
-export interface VaultAliasEntry {
-  alias: string;
-  count: number;
-  files?: string[];
-}
-
-export interface VaultGraphResult {
-  orphans: string[];
-  deadends: string[];
-  unresolved: { source: string; target: string; count: number }[];
-}
-
-export interface VaultRecentFile {
-  path: string;
-  basename: string;
-  mtime: number | null;
-}
-
-export interface VaultBaseFile {
-  path: string;
-  basename: string;
-  size: number;
-  mtime: number;
-}
-
-export interface VaultBaseView {
-  name: string;
-  type: string;
-  columns: string[];
-}
-
-export interface VaultLinkEntry {
-  path: string;
-  count: number;
-  display?: string;
-}
-
-export interface VaultDeleteResult {
-  path: string;
-  kind: 'file' | 'folder';
-}
-
-export interface VaultPathEntry {
-  path: string;
-  kind: 'file' | 'folder';
-  name: string;
-  extension?: string;
-  size?: number;
-}
-
-export interface VaultAttachmentInfo {
-  path?: string;
-  availablePath?: string;
-  markdown?: string;
-  resourcePath?: string;
-  size?: number;
-  extension?: string;
-}
-
-export interface VaultWriteAttachmentResult {
-  path: string;
-  markdown: string;
-  resourcePath: string;
-  size: number;
-  extension: string;
-}
+export type {
+  VaultAliasEntry,
+  VaultAttachmentInfo,
+  VaultBaseFile,
+  VaultBaseView,
+  VaultDeleteResult,
+  VaultGraphResult,
+  VaultLinkEntry,
+  VaultNoteInfo,
+  VaultPathEntry,
+  VaultPropertyIndexEntry,
+  VaultRecentFile,
+  VaultSearchHit,
+  VaultTagEntry,
+  VaultWriteAttachmentResult,
+} from './vaultApiTypes';
 
 export class ObsidianVaultApi {
   private readonly cliMutationTails = new Map<string, Promise<void>>();
@@ -276,37 +224,6 @@ export class ObsidianVaultApi {
     }
     const active = this.app.workspace.getActiveFile();
     return active ?? null;
-  }
-
-  private resolveBaseFile(file?: string, path?: string): TFile | null {
-    if (path?.trim()) {
-      const normalized = normalizePathForVault(path.trim(), this.vaultPath());
-      if (!normalized) {
-        return null;
-      }
-      const resolved = this.asFile(this.app.vault.getAbstractFileByPath(normalized));
-      return resolved?.extension === 'base' ? resolved : null;
-    }
-
-    if (file?.trim()) {
-      const query = file.trim();
-      const normalized = normalizePathForVault(query, this.vaultPath());
-      const directPaths = normalized
-        ? new Set([normalized, normalized.endsWith('.base') ? normalized : `${normalized}.base`])
-        : new Set<string>();
-      for (const candidate of directPaths) {
-        const resolved = this.asFile(this.app.vault.getAbstractFileByPath(candidate));
-        if (resolved?.extension === 'base') {
-          return resolved;
-        }
-      }
-
-      const linkpath = query.endsWith('.base') ? query : `${query}.base`;
-      const linked = this.app.metadataCache.getFirstLinkpathDest(linkpath, '');
-      return linked?.extension === 'base' ? linked : null;
-    }
-
-    return null;
   }
 
   getActiveFilePath(): string | null {
@@ -533,22 +450,7 @@ export class ObsidianVaultApi {
     if (!(target instanceof TFolder)) {
       throw new Error(`Vault path is not a folder: ${path}`);
     }
-    return target.children.map((child) => {
-      if (child instanceof TFolder) {
-        return { path: child.path, kind: 'folder', name: child.name };
-      }
-      if (!(child instanceof TFile)) {
-        throw new Error(`Unsupported vault entry: ${child.path}`);
-      }
-      const file = child;
-      return {
-        path: file.path,
-        kind: 'file',
-        name: file.name,
-        extension: file.extension,
-        size: file.stat.size,
-      };
-    });
+    return listFolderEntries(target);
   }
 
   async openPath(path: string, newLeaf: boolean | 'tab' | 'split' | 'window' = false): Promise<{ path: string }> {
@@ -573,27 +475,7 @@ export class ObsidianVaultApi {
   } {
     const resolved = this.resolveOptionalMarkdownFile(file, path, options?.active);
     if (!resolved) {
-      const counts = new Map<string, number>();
-      for (const markdownFile of this.app.vault.getMarkdownFiles()) {
-        const frontmatter = this.app.metadataCache.getFileCache(markdownFile)?.frontmatter;
-        for (const key of Object.keys(frontmatter ?? {})) {
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-        }
-      }
-      if (name) {
-        return { properties: [], value: counts.get(name) ?? 0, total: counts.get(name) ?? 0 };
-      }
-      const entries: VaultPropertyIndexEntry[] = [...counts.entries()].map(([propertyName, count]) => ({
-        name: propertyName,
-        count,
-      }));
-      const sort = options?.sort ?? 'name';
-      entries.sort((a, b) => (
-        sort === 'count'
-          ? b.count - a.count || a.name.localeCompare(b.name)
-          : a.name.localeCompare(b.name)
-      ));
-      return { properties: entries, total: entries.length };
+      return getVaultPropertyIndex(this.app, name, options?.sort ?? 'name');
     }
     const properties = this.app.metadataCache.getFileCache(resolved)?.frontmatter ?? {};
     if (name) {
@@ -614,25 +496,7 @@ export class ObsidianVaultApi {
       return { path: resolved.path, aliases, total: aliases.length };
     }
 
-    const byAlias = new Map<string, string[]>();
-    for (const markdownFile of this.app.vault.getMarkdownFiles()) {
-      const aliases = parseFrontMatterAliases(
-        this.app.metadataCache.getFileCache(markdownFile)?.frontmatter ?? null,
-      ) ?? [];
-      for (const alias of aliases) {
-        const files = byAlias.get(alias) ?? [];
-        files.push(markdownFile.path);
-        byAlias.set(alias, files);
-      }
-    }
-    const verbose = options?.verbose === true;
-    const aliases: VaultAliasEntry[] = [...byAlias.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([alias, files]) => ({
-        alias,
-        count: files.length,
-        ...(verbose ? { files } : {}),
-      }));
+    const aliases = getVaultAliasIndex(this.app, options?.verbose === true);
     return { aliases, total: aliases.length };
   }
 
@@ -665,13 +529,7 @@ export class ObsidianVaultApi {
       if (!(target instanceof TFile)) {
         throw new Error(`Vault path is not a file: ${params.path}`);
       }
-      return {
-        path: target.path,
-        markdown: this.app.fileManager.generateMarkdownLink(target, params.sourcePath ?? ''),
-        resourcePath: this.app.vault.getResourcePath(target),
-        size: target.stat.size,
-        extension: target.extension,
-      };
+      return describeAttachment(this.app, target, params.sourcePath);
     }
     if (!params.filename?.trim()) {
       throw new Error('filename= or path= is required.');
@@ -700,13 +558,7 @@ export class ObsidianVaultApi {
     const normalized = this.requireMutationPath(availablePath);
 
     const file = await this.app.vault.createBinary(normalized, params.data);
-    return {
-      path: file.path,
-      markdown: this.app.fileManager.generateMarkdownLink(file, params.sourcePath ?? ''),
-      resourcePath: this.app.vault.getResourcePath(file),
-      size: file.stat.size,
-      extension: file.extension,
-    };
+    return describeAttachment(this.app, file, params.sourcePath);
   }
 
   getVaultName(): string {
@@ -718,125 +570,9 @@ export class ObsidianVaultApi {
     return base ? base.split('/').filter(Boolean).pop() ?? 'vault' : 'vault';
   }
 
-  private resolveSearchFiles(scopePath: string): TFile[] {
-    const normalized = normalizePathForVault(scopePath, this.vaultPath());
-    if (!normalized) {
-      throw new Error(`Search path not found: ${scopePath}`);
-    }
-    const resolved = this.app.vault.getAbstractFileByPath(normalized);
-    if (resolved instanceof TFile) {
-      if (resolved.extension !== 'md') {
-        throw new Error(`search only reads Markdown notes. Use \`read\` for ${resolved.path}.`);
-      }
-      return [resolved];
-    }
-    if (resolved instanceof TFolder) {
-      if (!resolved.path) {
-        throw new Error('search requires a vault-relative path to one Markdown note or a non-root folder. Vault-wide search is not allowed.');
-      }
-      const prefix = `${resolved.path}/`;
-      return this.app.vault.getMarkdownFiles().filter((file) => file.path.startsWith(prefix));
-    }
-    throw new Error(`Search path not found: ${scopePath}`);
-  }
-
   /** In-process vault search (no CLI). Literal substring plus tag:. Listing queries error toward `ls`. */
-  async searchNotes(params: {
-    query: string;
-    path: string;
-    limit?: number;
-    offset?: number;
-    context?: boolean;
-    caseSensitive?: boolean;
-  }): Promise<VaultSearchHit[]> {
-    const limit = params.limit ?? 50;
-    const offset = params.offset ?? 0;
-    if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
-      throw new Error('Invalid search input: limit must be an integer from 1 to 200.');
-    }
-    if (!Number.isInteger(offset) || offset < 0) {
-      throw new Error('Invalid search input: offset must be a non-negative integer.');
-    }
-    let textQuery = params.query.trim();
-    let tagFilter: string | null = null;
-
-    if (textQuery.startsWith('tag:')) {
-      tagFilter = textQuery.slice(4).trim().replace(/^#/, '');
-      textQuery = '';
-    } else if (textQuery.startsWith('path:')) {
-      throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
-    }
-
-    const listAllInScope = textQuery === '*'
-      || textQuery === ''
-      || textQuery === '**';
-    if (listAllInScope && !tagFilter) {
-      throw new Error('search is for note contents and tags, not folder listing. Use `ls` with `path` instead.');
-    }
-
-    const requestedPath = params.path?.trim() ?? '';
-    if (
-      !requestedPath
-      || requestedPath === '/'
-      || requestedPath === '.'
-      || requestedPath === './'
-      || requestedPath === '.\\'
-      || /^\/+$/.test(requestedPath)
-    ) {
-      throw new Error('search requires a vault-relative path to one Markdown note or a non-root folder. Vault-wide search is not allowed.');
-    }
-    const scopePath = requestedPath.replace(/\/+$/, '');
-    const needle = params.caseSensitive ? textQuery : textQuery.toLowerCase();
-    const hits: VaultSearchHit[] = [];
-    const files = this.resolveSearchFiles(scopePath);
-    let skipped = 0;
-
-    const takeHit = (hit: VaultSearchHit): boolean => {
-      if (skipped < offset) {
-        skipped += 1;
-        return false;
-      }
-      hits.push(hit);
-      return hits.length >= limit;
-    };
-
-    for (const file of files) {
-
-      if (tagFilter) {
-        const cache = this.app.metadataCache.getFileCache(file);
-        const tags = cache ? getAllTags(cache) : null;
-        if (!tags?.some((t) => t === tagFilter || t === `#${tagFilter}`)) {
-          continue;
-        }
-      }
-
-      if (!needle) {
-        if (takeHit({ path: file.path })) {
-          break;
-        }
-        continue;
-      }
-
-      const content = await this.app.vault.cachedRead(file);
-      const lines = content.split('\n');
-      for (const [lineIndex, line] of lines.entries()) {
-        const searchableLine = params.caseSensitive ? line : line.toLowerCase();
-        if (!searchableLine.includes(needle)) {
-          continue;
-        }
-        const hit: VaultSearchHit = { path: file.path, line: lineIndex + 1 };
-        if (params.context) {
-          const start = Math.max(0, lineIndex - 2);
-          const end = Math.min(lines.length, lineIndex + 3);
-          hit.matches = lines.slice(start, end);
-        }
-        if (takeHit(hit)) {
-          return hits;
-        }
-      }
-    }
-
-    return hits;
+  async searchNotes(params: VaultSearchParams): Promise<VaultSearchHit[]> {
+    return searchVaultNotes(this.app, this.vaultPath(), params);
   }
 
   async getNoteInfo(file?: string, path?: string): Promise<VaultNoteInfo> {
@@ -844,60 +580,22 @@ export class ObsidianVaultApi {
     if (!resolved) {
       throw new Error('Note not found.');
     }
-    const cache = this.app.metadataCache.getFileCache(resolved);
-    const content = await this.app.vault.cachedRead(resolved);
-    const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-    return {
-      path: resolved.path,
-      basename: resolved.basename,
-      extension: resolved.extension,
-      size: resolved.stat.size,
-      ctime: resolved.stat.ctime,
-      mtime: resolved.stat.mtime,
-      tags: cache ? (getAllTags(cache) ?? []) : [],
-      links: this.outgoingLinkPaths(resolved, cache),
-      frontmatter: cache?.frontmatter ?? null,
-      wordCount,
-      characterCount: content.length,
-      aliases: parseFrontMatterAliases(cache?.frontmatter ?? null) ?? [],
-    };
+    return describeNote(this.app, resolved);
   }
 
   /** List Bases config files in the vault using the public vault API. */
   getBaseFiles(): VaultBaseFile[] {
-    return this.app.vault.getFiles()
-      .filter((file) => file.extension === 'base')
-      .map((file) => ({
-        path: file.path,
-        basename: file.basename,
-        size: file.stat.size,
-        mtime: file.stat.mtime,
-      }))
-      .sort((a, b) => a.path.localeCompare(b.path));
+    return getBaseFiles(this.app);
   }
 
   /** Read configured Bases views from a `.base` file without relying on active-file CLI state. */
   async getBaseViews(file?: string, path?: string): Promise<{ path: string; views: VaultBaseView[] }> {
-    const resolved = this.resolveBaseFile(file, path);
+    const resolved = resolveBaseFile(this.app, this.vaultPath(), file, path);
     if (!resolved) {
       throw new Error('Base file not found. Provide file= or path= for a .base file.');
     }
-
     const content = await this.app.vault.cachedRead(resolved);
-    let config: Partial<BasesConfigFile> | null;
-    try {
-      config = parseYaml(content) as Partial<BasesConfigFile> | null;
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to parse base file ${resolved.path}: ${detail}`, { cause: error });
-    }
-
-    const views = Array.isArray(config?.views)
-      ? config.views
-        .map((view) => this.toVaultBaseView(view))
-        .filter((view): view is VaultBaseView => view !== null)
-      : [];
-    return { path: resolved.path, views };
+    return { path: resolved.path, views: parseBaseViews(content, resolved.path) };
   }
 
   /** List tags in the vault, or in one note when file/path/active is set. */
@@ -906,38 +604,12 @@ export class ObsidianVaultApi {
     path?: string;
     active?: boolean;
   }): VaultTagEntry[] {
-    const counts = new Map<string, number>();
-    for (const file of this.resolveTagFiles(scope)) {
-      const cache = this.app.metadataCache.getFileCache(file);
-      const tags = cache ? getAllTags(cache) : null;
-      if (!tags) { continue; }
-      for (const tag of tags) {
-        const name = tag.startsWith('#') ? tag.slice(1) : tag;
-        counts.set(name, (counts.get(name) ?? 0) + 1);
-      }
-    }
-    const entries: VaultTagEntry[] = [...counts.entries()].map(([name, count]) => ({ name, count }));
-    entries.sort((a, b) =>
-      sort === 'count' ? b.count - a.count || a.name.localeCompare(b.name) : a.name.localeCompare(b.name),
-    );
-    return entries;
+    return collectTags(this.app, this.resolveTagFiles(scope), sort);
   }
 
   /** Get details for a single tag: count and list of files containing it. */
   getTagInfo(tag: string, verbose?: boolean): { name: string; count: number; files?: string[] } {
-    const normalized = tag.replace(/^#/, '').trim();
-    let count = 0;
-    const files: string[] = [];
-    for (const file of this.app.vault.getMarkdownFiles()) {
-      const cache = this.app.metadataCache.getFileCache(file);
-      const tags = cache ? getAllTags(cache) : null;
-      if (!tags) { continue; }
-      if (tags.some((t) => (t.startsWith('#') ? t.slice(1) : t) === normalized)) {
-        count++;
-        if (verbose) { files.push(file.path); }
-      }
-    }
-    return { name: normalized, count, ...(verbose ? { files } : {}) };
+    return getTagInfo(this.app, tag, verbose);
   }
 
   /** Graph analysis: orphans (no backlinks), deadends (no outgoing links), and unresolved wikilinks. */
@@ -945,64 +617,12 @@ export class ObsidianVaultApi {
     actions: ('orphans' | 'deadends' | 'unresolved')[],
     options?: { includeNonMarkdown?: boolean; limit?: number },
   ): VaultGraphResult {
-    const limit = options?.limit ?? 200;
-    const includeNonMarkdown = options?.includeNonMarkdown ?? false;
-
-    const result: VaultGraphResult = { orphans: [], deadends: [], unresolved: [] };
-
-    // Collect all files that appear as a link destination (for orphans)
-    const linkedDestinations = new Set<string>();
-    if (actions.includes('orphans')) {
-      for (const destinations of Object.values(this.app.metadataCache.resolvedLinks)) {
-        for (const dest of Object.keys(destinations)) {
-          linkedDestinations.add(dest);
-        }
-      }
-    }
-
-    if (actions.includes('orphans') || actions.includes('deadends')) {
-      const allFiles = includeNonMarkdown ? this.app.vault.getFiles() : this.app.vault.getMarkdownFiles();
-
-      if (actions.includes('orphans')) {
-        result.orphans = allFiles
-          .map((file) => file.path)
-          .filter((path) => !linkedDestinations.has(path))
-          .sort((a, b) => a.localeCompare(b))
-          .slice(0, limit);
-      }
-
-      if (actions.includes('deadends')) {
-        result.deadends = allFiles
-          .filter((file) => (this.app.metadataCache.getFileCache(file)?.links?.length ?? 0) === 0)
-          .map((file) => file.path)
-          .sort((a, b) => a.localeCompare(b))
-          .slice(0, limit);
-      }
-    }
-
-    if (actions.includes('unresolved')) {
-      for (const [source, targets] of Object.entries(this.app.metadataCache.unresolvedLinks)) {
-        for (const [target, count] of Object.entries(targets)) {
-          result.unresolved.push({ source, target, count });
-          if (result.unresolved.length >= limit) { break; }
-        }
-        if (result.unresolved.length >= limit) { break; }
-      }
-    }
-
-    return result;
+    return getGraphAnalysis(this.app, actions, options);
   }
 
   /** List recently opened files. */
   getRecentFiles(limit?: number): VaultRecentFile[] {
-    const max = limit && limit > 0 ? limit : 20;
-    const recentPaths = this.app.workspace.getLastOpenFiles().slice(0, max);
-    return recentPaths.map((p) => {
-      const file = this.app.vault.getAbstractFileByPath(p);
-      return file instanceof TFile
-        ? { path: p, basename: file.basename, mtime: file.stat.mtime }
-        : { path: p, basename: p.split('/').pop() ?? p, mtime: null };
-    });
+    return getRecentFiles(this.app, limit);
   }
 
   getLinks(
@@ -1014,73 +634,12 @@ export class ObsidianVaultApi {
     if (!resolved) {
       throw new Error('Note not found.');
     }
-
-    if (direction === 'backlinks') {
-      return {
-        path: resolved.path,
-        links: this.collectBacklinks(resolved.path),
-      };
-    }
-
-    const cache = this.app.metadataCache.getFileCache(resolved);
-    const links: VaultLinkEntry[] = [];
-    const seen = new Map<string, VaultLinkEntry>();
-
-    for (const link of cache?.links ?? []) {
-      const dest = this.app.metadataCache.getFirstLinkpathDest(link.link, resolved.path);
-      const destPath = dest?.path ?? link.link;
-      const existing = seen.get(destPath);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        const entry: VaultLinkEntry = {
-          path: destPath,
-          count: 1,
-          ...(link.displayText ? { display: link.displayText } : {}),
-        };
-        seen.set(destPath, entry);
-        links.push(entry);
-      }
-    }
-
-    return { path: resolved.path, links };
-  }
-
-  private outgoingLinkPaths(file: TFile, cache: CachedMetadata | null): string[] {
-    const paths = new Set<string>();
-    for (const link of cache?.links ?? []) {
-      const dest = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path);
-      paths.add(dest?.path ?? link.link);
-    }
-    return [...paths];
-  }
-
-  private toVaultBaseView(view: unknown): VaultBaseView | null {
-    if (!view || typeof view !== 'object') {
-      return null;
-    }
-    const record = view as Partial<BasesConfigFileView>;
-    if (typeof record.name !== 'string' || typeof record.type !== 'string') {
-      return null;
-    }
     return {
-      name: record.name,
-      type: record.type,
-      columns: Array.isArray(record.order)
-        ? record.order.filter((column): column is string => typeof column === 'string')
-        : [],
+      path: resolved.path,
+      links: direction === 'backlinks'
+        ? collectBacklinks(this.app, resolved.path)
+        : collectOutgoingLinks(this.app, resolved),
     };
-  }
-
-  private collectBacklinks(targetPath: string): VaultLinkEntry[] {
-    const links: VaultLinkEntry[] = [];
-    for (const [sourcePath, destinations] of Object.entries(this.app.metadataCache.resolvedLinks)) {
-      const count = destinations[targetPath];
-      if (count) {
-        links.push({ path: sourcePath, count });
-      }
-    }
-    return links.sort((a, b) => a.path.localeCompare(b.path));
   }
 
   public triggerVaultModify(path: string): void {
@@ -1096,68 +655,4 @@ export class ObsidianVaultApi {
       this.app.vault.adapter.list(parentDir).catch(() => {});
     }
   }
-}
-
-function joinNoteContent(
-  existing: string,
-  addition: string,
-  inline: boolean,
-  mode: 'append' | 'prepend',
-): string {
-  if (addition.length === 0) {
-    return existing;
-  }
-  if (existing.length === 0) {
-    return addition;
-  }
-  if (inline) {
-    return mode === 'append' ? `${existing}${addition}` : `${addition}${existing}`;
-  }
-  if (mode === 'append') {
-    const separator = existing.endsWith('\n') ? '' : '\n';
-    return `${existing}${separator}${addition}`;
-  }
-  const separator = addition.endsWith('\n') ? '' : '\n';
-  return `${addition}${separator}${existing}`;
-}
-
-function prependAfterFrontmatter(existing: string, addition: string, inline: boolean): string {
-  const split = splitFrontmatter(existing);
-  const joined = joinNoteContent(split.body, addition, inline, 'prepend');
-  if (!split.frontmatter) {
-    return joined;
-  }
-  if (joined.length === 0 || split.frontmatter.endsWith('\n') || joined.startsWith('\n')) {
-    return `${split.frontmatter}${joined}`;
-  }
-  return `${split.frontmatter}\n${joined}`;
-}
-
-function splitFrontmatter(content: string): { frontmatter: string | null; body: string } {
-  if (!content.startsWith('---')) {
-    return { frontmatter: null, body: content };
-  }
-  const afterOpen = content.startsWith('---\n')
-    ? 4
-    : content.startsWith('---\r\n')
-      ? 5
-      : -1;
-  if (afterOpen < 0) {
-    return { frontmatter: null, body: content };
-  }
-  const closeLf = content.indexOf('\n---', afterOpen - 1);
-  if (closeLf < 0) {
-    return { frontmatter: null, body: content };
-  }
-  const afterClose = closeLf + 4;
-  if (content.startsWith('\r\n', afterClose)) {
-    return { frontmatter: content.slice(0, afterClose + 2), body: content.slice(afterClose + 2) };
-  }
-  if (content.startsWith('\n', afterClose)) {
-    return { frontmatter: content.slice(0, afterClose + 1), body: content.slice(afterClose + 1) };
-  }
-  if (afterClose === content.length) {
-    return { frontmatter: content, body: '' };
-  }
-  return { frontmatter: null, body: content };
 }

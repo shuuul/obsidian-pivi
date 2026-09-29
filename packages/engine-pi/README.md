@@ -24,7 +24,7 @@
 - Focused engine compatibility tests may use declared leaf exports to exercise implementation modules without widening the production composition boundary.
 - Pi JSONL session compatibility under `@pivi/engine-pi/session/*`.
 - Obsidian-safe Pi SDK shims under `@pivi/engine-pi/shims/*`.
-- Tool-registry and subagent/skill adapters under dedicated leaf exports such as `buildPiToolRegistryCore`, `createSkillTool`, and `createSubagentTool`.
+- Tool-registry and subagent/skill adapters under dedicated leaf exports such as `tools/buildPiToolRegistryCore`, `tools/createSkillTool`, and `tools/createSubagentTool`.
 
 ## See also
 

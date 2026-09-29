@@ -7,7 +7,7 @@ import {
 import {
   configurePiAiModels,
   piAiModels,
-} from '@pivi/engine-pi/piAiModels';
+} from '@pivi/engine-pi/models/piAiModels';
 
 describe('split subscription provider identities', () => {
   afterEach(() => {

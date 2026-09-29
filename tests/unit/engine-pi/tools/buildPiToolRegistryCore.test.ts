@@ -1,4 +1,4 @@
-import type { PiSubagentQueryRunner } from '@pivi/engine-pi/createSubagentTool';
+import type { PiSubagentQueryRunner } from '@pivi/engine-pi/tools/createSubagentTool';
 import type { McpToolBridge } from '@pivi/agent/mcp';
 import type { RegisteredToolSummary } from '@pivi/agent/prompt';
 import {
@@ -7,7 +7,7 @@ import {
   TOOL_SPAWN_AGENT,
   type ToolSpec,
 } from '@pivi/agent/tools';
-import { buildPiToolRegistryCore } from '@pivi/engine-pi/buildPiToolRegistryCore';
+import { buildPiToolRegistryCore } from '@pivi/engine-pi/tools/buildPiToolRegistryCore';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';

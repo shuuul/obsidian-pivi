@@ -5,7 +5,7 @@ import {
   getPiThinkingLevelOptionsForModel,
   isPiAdaptiveReasoningModelValue,
   resolvePiThinkingLevelForModel,
-} from '@pivi/engine-pi/piThinkingLevels';
+} from '@pivi/engine-pi/models/piThinkingLevels';
 
 function reasoningFixture(): Model<Api> {
   return { provider: 'anthropic', id: 'claude-reasoning-fixture', reasoning: true, thinkingLevelMap: {} } as Model<Api>;

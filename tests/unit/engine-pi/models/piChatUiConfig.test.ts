@@ -1,8 +1,8 @@
-import { piChatUIConfig } from '@pivi/engine-pi/piChatUiConfig';
+import { piChatUIConfig } from '@pivi/engine-pi/models/piChatUiConfig';
 import {
   PI_AI_MODELS_CACHE,
   type PiCachedModel,
-} from '@pivi/engine-pi/piModelRegistry';
+} from '@pivi/engine-pi/models/piModelRegistry';
 
 const MODEL_KEY = 'test-provider/large-model';
 

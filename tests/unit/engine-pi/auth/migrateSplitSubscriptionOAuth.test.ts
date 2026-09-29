@@ -6,7 +6,7 @@ import {
   getPiAiCredentialSecretId,
   serializeProviderCredential,
 } from '@pivi/agent/auth/piProviderCredentials';
-import { migrateSplitSubscriptionOAuthCredentials } from '@pivi/engine-pi/piProviderCredentialStore';
+import { migrateSplitSubscriptionOAuthCredentials } from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import { createMockApp } from '../../../helpers/mockApp';
 
 describe('migrateSplitSubscriptionOAuthCredentials', () => {

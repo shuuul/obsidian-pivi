@@ -1,4 +1,4 @@
-import { ObsidianAuthContext } from '@pivi/engine-pi/piProviderCredentialStore';
+import { ObsidianAuthContext } from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import { createMockPiviPluginStub, asPiviPlugin } from '../../../helpers/mockPiviPlugin';
 
 describe('ObsidianAuthContext.env', () => {

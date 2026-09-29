@@ -1,5 +1,5 @@
 import type { ImageAttachment } from '@pivi/agent/runtime';
-import { toPiImageContent } from '@pivi/engine-pi/piImageContent';
+import { toPiImageContent } from '@pivi/engine-pi/runtime/piImageContent';
 
 function attachmentFixture(
   overrides: Partial<ImageAttachment> & Pick<ImageAttachment, 'id' | 'data' | 'mediaType'>,
