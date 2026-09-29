@@ -192,7 +192,7 @@ export default defineConfig([
   },
   {
     // Size/complexity limits are errors so pre-existing package debt can be
-    // ratcheted through eslint-suppressions.json (bulk suppressions only
+    // ratcheted through .config/eslint-suppressions.json (bulk suppressions only
     // record errors). Fixing a suppressed violation requires pruning it.
     files: ["src/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
     rules: {
