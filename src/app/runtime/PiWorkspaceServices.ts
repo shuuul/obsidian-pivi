@@ -61,6 +61,7 @@ import {
   resolveLoginShellPath,
 } from "@pivi/obsidian-tools";
 
+import { getOrCreateDeviceInstallationId } from "@/app/deviceInstallationId";
 import { ObsidianDeviceLocalModelCatalogStore } from "@/app/deviceLocalModelCatalogStore";
 import { requestOAuthManualCode } from "@/app/oauthManualCodePrompt";
 
@@ -190,6 +191,7 @@ export async function createPiWorkspaceServices(
       requestManualCode: (message, signal) => requestOAuthManualCode(host.app, message, signal),
     },
     createFileProviderLegacyAuthStore(vaultPath ? `${vaultPath}/.pivi/auth.json` : null),
+    () => getOrCreateDeviceInstallationId(host.app),
   );
   const mcpToolProvider = new McpToolProvider(
     mcpServerManager,

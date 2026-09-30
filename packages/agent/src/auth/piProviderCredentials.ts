@@ -35,10 +35,14 @@ export const XAI_PROVIDER_ID = 'xai';
 export const ANTHROPIC_PROVIDER_ID = 'anthropic';
 export const GROK_BUILD_PROVIDER_ID = 'grok-build';
 export const CLAUDE_PROVIDER_ID = 'claude';
+export const OPENAI_PROVIDER_ID = 'openai';
+export const CHATGPT_PROVIDER_ID = 'chatgpt';
 export const OPENROUTER_PROVIDER_ID = 'openrouter';
 export const KIMI_CODING_PROVIDER_ID = 'kimi-coding';
 
 export const SUBSCRIPTION_OAUTH_PROVIDER_IDS = [
+  // ChatGPT follows OpenAI Codex in the OAuth picker so both OpenAI sign-ins sit together.
+  CHATGPT_PROVIDER_ID,
   GROK_BUILD_PROVIDER_ID,
   CLAUDE_PROVIDER_ID,
 ] as const;

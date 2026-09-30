@@ -952,6 +952,16 @@
         "disconnected": "Claude déconnecté.",
         "loginFailed": "Échec de la connexion Claude : {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Connectez-vous avec votre abonnement ChatGPT dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "connected": "ChatGPT connecté.",
+        "disconnected": "ChatGPT déconnecté.",
+        "loginFailed": "Échec de la connexion ChatGPT : {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Connectez-vous à OpenRouter dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",

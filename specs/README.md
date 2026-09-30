@@ -14,6 +14,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [053 — Composer mention badge clamp and copy-paste round trip](053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | Active | Composer mention badge clamp and copy-paste round trip |
 | [054 — Tool-result context overflow and in-turn pressure](054-tool-result-context-overflow-and-in-turn-pressure.md) | Active | Stop over-window continuations after giant tool results; require scoped `search` path plus payload caps. |
 | [055 — Pi AgentHarness migration spike](055-pi-agent-harness-migration-spike.md) | Active | Evidence-backed go/wait/no-go on moving sessions from the pi-coding-agent v3 SessionManager to the pi-agent-core AgentHarness over a vault FileSystem. |
+| [056 — Pi 0.99 upgrade and pi-mcp client migration](056-pi-099-upgrade-and-pi-mcp-client.md) | Active | Pi 0.99.1 pins with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` without legacy SSE. |
 
 ## Archived specs
 

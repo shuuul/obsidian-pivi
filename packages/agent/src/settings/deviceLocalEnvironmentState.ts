@@ -212,6 +212,7 @@ export function getCanonicalProviderEnvironmentKeys(): ReadonlySet<string> {
     'xai',
     'grok-build',
     'claude',
+    'chatgpt',
     'openrouter',
     'groq',
     'cerebras',

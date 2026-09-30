@@ -952,6 +952,16 @@
         "disconnected": "Claude を切断しました。",
         "loginFailed": "Claude ログインに失敗：{message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "ブラウザで ChatGPT サブスクリプションにサインインします。認証情報は {secureStorageName} に保存されます。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "ChatGPT に接続しました。",
+        "disconnected": "ChatGPT を切断しました。",
+        "loginFailed": "ChatGPT ログインに失敗：{message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "ブラウザで OpenRouter にサインインします。認証情報は {secureStorageName} に保存されます。",

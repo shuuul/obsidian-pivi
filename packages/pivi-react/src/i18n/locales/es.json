@@ -952,6 +952,16 @@
         "disconnected": "Claude desconectado.",
         "loginFailed": "Error de inicio de sesión de Claude: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Inicia sesión con tu suscripción ChatGPT en el navegador. Las credenciales se guardan en {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "ChatGPT conectado.",
+        "disconnected": "ChatGPT desconectado.",
+        "loginFailed": "Error de inicio de sesión de ChatGPT: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Inicia sesión en OpenRouter en el navegador. Las credenciales se guardan en {secureStorageName}.",

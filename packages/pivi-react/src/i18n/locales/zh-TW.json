@@ -952,6 +952,16 @@
         "disconnected": "Claude 已中斷連線。",
         "loginFailed": "Claude 登入失敗：{message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "在瀏覽器中使用 ChatGPT 訂閱登入。憑證儲存在 {secureStorageName}。",
+        "connect": "連線",
+        "reconnect": "重新連線",
+        "disconnect": "中斷連線",
+        "connected": "ChatGPT 已連線。",
+        "disconnected": "ChatGPT 已中斷連線。",
+        "loginFailed": "ChatGPT 登入失敗：{message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "在瀏覽器中登入 OpenRouter。憑證儲存在 {secureStorageName}。",

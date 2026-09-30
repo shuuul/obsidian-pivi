@@ -966,6 +966,16 @@
         "disconnected": "Claude disconnected.",
         "loginFailed": "Claude login failed: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Sign in with your ChatGPT subscription in the browser. Credentials are stored in {secureStorageName}.",
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect",
+        "connected": "ChatGPT connected.",
+        "disconnected": "ChatGPT disconnected.",
+        "loginFailed": "ChatGPT login failed: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Sign in with OpenRouter in your browser. Credentials are stored in {secureStorageName}.",

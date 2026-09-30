@@ -952,6 +952,16 @@
         "disconnected": "Claude getrennt.",
         "loginFailed": "Claude-Anmeldung fehlgeschlagen: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Mit ChatGPT im Browser anmelden. Anmeldedaten im {secureStorageName}.",
+        "connect": "Verbinden",
+        "reconnect": "Erneut verbinden",
+        "disconnect": "Trennen",
+        "connected": "ChatGPT verbunden.",
+        "disconnected": "ChatGPT getrennt.",
+        "loginFailed": "ChatGPT-Anmeldung fehlgeschlagen: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Im Browser bei OpenRouter anmelden. Anmeldedaten im {secureStorageName}.",

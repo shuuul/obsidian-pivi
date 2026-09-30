@@ -5,6 +5,7 @@ import { registerBundledOAuthFlowLoaders } from '@earendil-works/pi-ai/dist/auth
 // pi-ai 0.87.0 requires a complete bundled-loader map; meta joined the
 // upstream registry alongside anthropic/github-copilot/kimi-coding.
 import { metaOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/meta.js';
+import { openaiChatGPTOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/openai-chatgpt.js';
 import { openaiCodexOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/openai-codex.js';
 import { createRadiusOAuth } from '@earendil-works/pi-ai/dist/auth/oauth/radius.js';
 
@@ -19,6 +20,7 @@ export function registerPiviBundledOAuthFlowLoaders(request: ProviderOAuthFetch)
   registerBundledOAuthFlowLoaders({
     anthropic: () => anthropicOAuth,
     openaiCodex: () => openaiCodexOAuth,
+    openaiChatGPT: () => openaiChatGPTOAuth,
     githubCopilot: () => githubCopilotOAuth,
     openrouter: () => createPiviOpenRouterOAuth(request),
     kimiCoding: () => kimiCodingOAuth,

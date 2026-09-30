@@ -29,7 +29,7 @@ import { xiaomiProvider } from '@earendil-works/pi-ai/providers/xiaomi';
 import { xiaomiTokenPlanCnProvider } from '@earendil-works/pi-ai/providers/xiaomi-token-plan-cn';
 import { zaiProvider } from '@earendil-works/pi-ai/providers/zai';
 import { zaiCodingCnProvider } from '@earendil-works/pi-ai/providers/zai-coding-cn';
-import { CLAUDE_PROVIDER_ID } from '@pivi/agent/auth/piProviderCredentials';
+import { CHATGPT_PROVIDER_ID, CLAUDE_PROVIDER_ID } from '@pivi/agent/auth/piProviderCredentials';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { FetchCompatible } from '@pivi/agent/ports';
 import type { CustomProviderConfig } from '@pivi/agent/settings/customProviders';
@@ -112,6 +112,7 @@ function installSupportedProviders(models: MutableModels, catalogDeps: RemoteCat
   };
 
   const anthropic = anthropicProvider();
+  const openai = openaiProvider();
   const xai = xaiProvider();
   models.setProvider(withCatalog(createApiKeyOnlyProvider(anthropic)));
   models.setProvider(withCatalog(createSubscriptionOAuthProvider(
@@ -126,7 +127,12 @@ function installSupportedProviders(models: MutableModels, catalogDeps: RemoteCat
   models.setProvider(withCatalog(minimaxCnProvider()));
   models.setProvider(withCatalog(moonshotaiProvider()));
   models.setProvider(withCatalog(moonshotaiCnProvider()));
-  models.setProvider(withCatalog(openaiProvider()));
+  models.setProvider(withCatalog(createApiKeyOnlyProvider(openai)));
+  models.setProvider(withCatalog(createSubscriptionOAuthProvider(
+    openai,
+    CHATGPT_PROVIDER_ID,
+    'ChatGPT',
+  )));
   models.setProvider(withCatalog(openaiCodexProvider()));
   models.setProvider(withCatalog(withScopedGoogleTransport(opencodeProvider(), () => providerFetch)));
   models.setProvider(withCatalog(opencodeGoProvider()));

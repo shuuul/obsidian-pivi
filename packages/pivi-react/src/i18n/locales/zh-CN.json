@@ -952,6 +952,16 @@
         "disconnected": "Claude 已断开。",
         "loginFailed": "Claude 登录失败：{message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "在浏览器中使用 ChatGPT 订阅登录。凭据保存在 {secureStorageName}。",
+        "connect": "连接",
+        "reconnect": "重新连接",
+        "disconnect": "断开连接",
+        "connected": "ChatGPT 已连接。",
+        "disconnected": "ChatGPT 已断开。",
+        "loginFailed": "ChatGPT 登录失败：{message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "在浏览器中登录 OpenRouter。凭据保存在 {secureStorageName}。",

@@ -239,7 +239,15 @@ function mockProvider(id: string): any {
             ? {
                 login: async (interaction: any) => mockOAuthLogin(interaction, 'https://claude.ai/oauth/authorize?client_id=test'),
               }
-            : undefined,
+            : id === 'openai'
+              ? {
+                  login: async (interaction: any, loginOptions?: any) => {
+                    // Sign in with ChatGPT registers the installation as an OpenAI agent host.
+                    if (!loginOptions?.getDeviceId?.()) throw new Error('Sign in with ChatGPT requires a device ID');
+                    return mockOAuthLogin(interaction, 'https://auth.openai.com/api/accounts/authorize');
+                  },
+                }
+              : undefined,
     },
     getModels: () => getModels(id),
   };
@@ -315,13 +323,13 @@ export function createModels(options?: any): any {
       const value = await options?.authContext?.env?.(envVar) ?? process.env[envVar];
       return value ? { auth: { apiKey: value }, source: envVar } : undefined;
     },
-    login: async (providerId: string, type: string, interaction: any) => {
+    login: async (providerId: string, type: string, interaction: any, loginOptions?: any) => {
       const provider = providers.get(providerId);
       const method = type === 'oauth' ? provider?.auth?.oauth : provider?.auth?.apiKey;
       if (!method?.login) {
         throw new Error(`${providerId} does not support ${type} login`);
       }
-      const credential = await method.login(interaction);
+      const credential = await method.login(interaction, loginOptions);
       await options?.credentials?.modify?.(providerId, async () => credential);
       return credential;
     },

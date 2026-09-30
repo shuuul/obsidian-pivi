@@ -952,6 +952,16 @@
         "disconnected": "Claude отключён.",
         "loginFailed": "Ошибка входа Claude: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Войдите через подписку ChatGPT в браузере. Учётные данные сохраняются в {secureStorageName}.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "ChatGPT подключён.",
+        "disconnected": "ChatGPT отключён.",
+        "loginFailed": "Ошибка входа ChatGPT: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Войдите в OpenRouter в браузере. Учётные данные сохраняются в {secureStorageName}.",
