@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.31.0](https://github.com/shuuul/obsidian-pivi/compare/0.30.5...0.31.0) (2026-09-30)
+
+### Features
+
+* add Sign in with ChatGPT as a subscription OAuth provider alongside the existing OpenAI Codex login
+* update the pinned Pi runtime to 0.99.1 with its latest model catalogs
+* move the vault MCP client to the standalone Pi MCP client; legacy HTTP+SSE servers are converted once to disabled Streamable HTTP entries that keep their URL, headers, and secrets, with a notice to update the endpoint
+
+### Bug Fixes
+
+* keep OAuth providers with a stored refresh token ready after the access token lapses, so ChatGPT no longer shows "OAuth expired" shortly after sign-in
+* hide saved models that a provider catalog no longer lists instead of showing them with a made-up name, and default new vaults to DeepSeek V4.1 Flash
+* stop restored interrupted turns from repeating their last thinking block after the "Interrupted" marker
+* remove the leftover SSE wording from the MCP servers page
+
+### Maintenance
+
+* patch the `moment` and `brace-expansion` dependency advisories; the dependency audit now accepts only exact-path, expiring allowlist entries for pins npm cannot override
+
 ## [0.30.5](https://github.com/shuuul/obsidian-pivi/compare/0.30.4...0.30.5) (2026-09-29)
 
 ### Bug Fixes
