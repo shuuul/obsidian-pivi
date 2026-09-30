@@ -8,7 +8,7 @@
     "build:css": "node scripts/build-css.mjs",
     "dev": "npm run build:css && node esbuild.config.mjs",
     "build": "node scripts/build.mjs production",
-    "check:dependencies": "npm audit --audit-level=low",
+    "check:dependencies": "node scripts/check-dependency-audit.mjs",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
     "check:docs-contracts": "node scripts/check-docs-contracts.mjs",
     "check:package-readmes": "node scripts/check-package-readmes.mjs",
@@ -97,7 +97,8 @@
       "@earendil-works/pi-ai": "$@earendil-works/pi-ai",
       "@earendil-works/pi-mcp": "$@earendil-works/pi-mcp"
     },
-    "fast-uri": "3.1.8"
+    "fast-uri": "3.1.8",
+    "moment": "^2.31.0"
   },
   "workspaces": [
     "packages/*"
