@@ -13,7 +13,6 @@ import {
 import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
-import { shimMcpValidation } from './plugins/shim-mcp-validation.mjs';
 import {
   releaseArtifactBanner,
   releaseArtifactVersion,
@@ -71,7 +70,6 @@ export function createBuildOptions({ production, metafile = false, write = true 
       shimPiAiEnvApiKeys,
       shimSignalExit,
       shimDebug,
-      shimMcpValidation,
       stripReactHoistableScripts,
       ...(production ? [assertCommunityAudit] : []),
     ],

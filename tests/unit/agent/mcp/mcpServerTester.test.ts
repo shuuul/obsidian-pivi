@@ -1,19 +1,15 @@
 import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
 
-const connect = jest.fn();
 const listTools = jest.fn();
 const close = jest.fn();
 
-jest.mock('@modelcontextprotocol/sdk/client', () => ({
-  Client: jest.fn().mockImplementation(() => ({
-    connect,
+jest.mock('@earendil-works/pi-mcp', () => ({
+  McpClient: jest.fn().mockImplementation(() => ({
+    connect: async () => ({ serverInfo: { name: 'safe-server', version: '1.0.0' } }),
     listTools,
     close,
-    getServerVersion: () => ({ name: 'safe-server', version: '1.0.0' }),
   })),
-}));
-jest.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
-  StreamableHTTPClientTransport: jest.fn().mockImplementation(() => ({})),
+  StreamableHttpTransport: jest.fn().mockImplementation(() => ({ close: jest.fn(async () => {}) })),
 }));
 
 import { testMcpServer } from '@pivi/agent/mcp/mcpServerTester';
@@ -31,8 +27,7 @@ function serializedWarnings(spy: jest.SpiedFunction<typeof console.warn>): strin
 
 describe('testMcpServer Agent-safe logging', () => {
   beforeEach(() => {
-    connect.mockReset().mockResolvedValue(undefined);
-    listTools.mockReset().mockResolvedValue({ tools: [] });
+    listTools.mockReset().mockResolvedValue([]);
     close.mockReset().mockResolvedValue(undefined);
   });
 
@@ -62,8 +57,18 @@ describe('testMcpServer Agent-safe logging', () => {
     warnings.mockRestore();
   });
 
-  it('reports an aborted listTools request as a failed test', async () => {
-    listTools.mockRejectedValue(new Error('aborted list request'));
+  it('reports the server identity and tools on success', async () => {
+    listTools.mockResolvedValue([{ name: 'search', description: 'Search', inputSchema: { type: 'object' } }]);
+
+    await expect(testMcpServer(server, jest.fn(), {}, undefined)).resolves.toEqual({
+      success: true,
+      serverName: 'safe-server',
+      serverVersion: '1.0.0',
+      tools: [{ name: 'search', description: 'Search', inputSchema: { type: 'object' } }],
+    });
+  });
+
+  it('reports an aborted connection as a failed test', async () => {
     const controller = new AbortController();
     controller.abort();
 

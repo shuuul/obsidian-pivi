@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP サーバー",
-        "description": "HTTP / SSE の MCP サーバーとそのツール。"
+        "description": "Streamable HTTP の MCP サーバーとそのツール。"
       },
       "skills": {
         "label": "スキル",
@@ -952,6 +952,16 @@
         "disconnected": "Claude を切断しました。",
         "loginFailed": "Claude ログインに失敗：{message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "ブラウザで ChatGPT サブスクリプションにサインインします。認証情報は {secureStorageName} に保存されます。",
+        "connect": "接続",
+        "reconnect": "再接続",
+        "disconnect": "切断",
+        "connected": "ChatGPT に接続しました。",
+        "disconnected": "ChatGPT を切断しました。",
+        "loginFailed": "ChatGPT ログインに失敗：{message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "ブラウザで OpenRouter にサインインします。認証情報は {secureStorageName} に保存されます。",
@@ -1132,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "従来の SSE トランスポートを使う MCP サーバーを無効にしました：{servers}。設定で URL を Streamable HTTP エンドポイント（多くは /sse ではなく /mcp）に変更してから有効にしてください。",
       "empty": "MCP サーバーは未設定です。追加をクリックして作成してください。",
       "add": "+ MCP を追加",
       "clearOauth": "OAuth 資格情報をクリア",
@@ -1157,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "サーバー名に使えるのは英数字、ドット、ハイフン、アンダースコアのみです",
         "needName": "サーバー名を入力してください",
-        "type": "種類",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "URL を入力してください",
         "headersName": "ヘッダー",
         "authHeading": "認証",

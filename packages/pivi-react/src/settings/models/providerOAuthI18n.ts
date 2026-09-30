@@ -33,6 +33,17 @@ export const CLAUDE_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.claude.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
+export const CHATGPT_OAUTH_SETTINGS_KEYS = {
+  name: 'settings.modelsTab.chatgpt.name',
+  desc: 'settings.modelsTab.chatgpt.desc',
+  connect: 'settings.modelsTab.chatgpt.connect',
+  reconnect: 'settings.modelsTab.chatgpt.reconnect',
+  disconnect: 'settings.modelsTab.chatgpt.disconnect',
+  connected: 'settings.modelsTab.chatgpt.connected',
+  disconnected: 'settings.modelsTab.chatgpt.disconnected',
+  loginFailed: 'settings.modelsTab.chatgpt.loginFailed',
+} as const satisfies Record<string, TranslationKey>;
+
 export const OPENROUTER_OAUTH_SETTINGS_KEYS = {
   name: 'settings.modelsTab.openrouter.name',
   desc: 'settings.modelsTab.openrouter.desc',
@@ -65,6 +76,7 @@ const PROVIDER_OAUTH_SETTINGS_KEYS = {
   'openai-codex': CODEX_OAUTH_SETTINGS_KEYS,
   'grok-build': GROK_BUILD_OAUTH_SETTINGS_KEYS,
   claude: CLAUDE_OAUTH_SETTINGS_KEYS,
+  chatgpt: CHATGPT_OAUTH_SETTINGS_KEYS,
   openrouter: OPENROUTER_OAUTH_SETTINGS_KEYS,
   'kimi-coding': KIMI_CODING_OAUTH_SETTINGS_KEYS,
 } as const;

@@ -1,9 +1,10 @@
 /**
  * Fail when declared or locked Pi package versions are ranged or desynchronized.
  *
- * The three @earendil-works/pi-* packages must share one exact version across
- * root package.json, packages/engine-pi/package.json, package-lock.json,
- * and the engine shim VERSION constant.
+ * The four @earendil-works/pi-* packages must share one exact version across
+ * root package.json, their owning workspace package.json (engine-pi for the
+ * SDK trio, agent for the MCP client), package-lock.json, and the engine shim
+ * VERSION constant.
  */
 
 import fs from 'node:fs';
@@ -13,9 +14,10 @@ import { fileURLToPath } from 'node:url';
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const PI_PACKAGES = [
-  '@earendil-works/pi-agent-core',
-  '@earendil-works/pi-ai',
-  '@earendil-works/pi-coding-agent',
+  { name: '@earendil-works/pi-agent-core', workspace: 'packages/engine-pi' },
+  { name: '@earendil-works/pi-ai', workspace: 'packages/engine-pi' },
+  { name: '@earendil-works/pi-coding-agent', workspace: 'packages/engine-pi' },
+  { name: '@earendil-works/pi-mcp', workspace: 'packages/agent' },
 ];
 
 function readJson(filePath) {
@@ -29,7 +31,12 @@ function isExactVersion(value) {
 function collectErrors() {
   const errors = [];
   const rootPackage = readJson(path.join(rootDir, 'package.json'));
-  const enginePackage = readJson(path.join(rootDir, 'packages', 'engine-pi', 'package.json'));
+  const workspacePackages = new Map(
+    [...new Set(PI_PACKAGES.map(({ workspace }) => workspace))].map((workspace) => [
+      workspace,
+      readJson(path.join(rootDir, workspace, 'package.json')),
+    ]),
+  );
   const lockfile = readJson(path.join(rootDir, 'package-lock.json'));
   const shimSource = fs.readFileSync(
     path.join(
@@ -52,12 +59,11 @@ function collectErrors() {
   const rootVersions = [];
   const engineVersions = [];
   const rootLockDeps = lockfile.packages?.['']?.dependencies ?? {};
-  const workspaceLockDeps =
-    lockfile.packages?.['packages/engine-pi']?.dependencies ?? {};
 
-  for (const name of PI_PACKAGES) {
+  for (const { name, workspace } of PI_PACKAGES) {
+    const workspaceLockDeps = lockfile.packages?.[workspace]?.dependencies ?? {};
     const rootVersion = rootPackage.dependencies?.[name];
-    const engineVersion = enginePackage.dependencies?.[name];
+    const engineVersion = workspacePackages.get(workspace).dependencies?.[name];
     if (!isExactVersion(rootVersion)) {
       errors.push(
         `Root package.json must pin ${name} to an exact version; found ${JSON.stringify(rootVersion)}`,
@@ -67,7 +73,7 @@ function collectErrors() {
     }
     if (!isExactVersion(engineVersion)) {
       errors.push(
-        `packages/engine-pi/package.json must pin ${name} to an exact version; found ${JSON.stringify(engineVersion)}`,
+        `${workspace}/package.json must pin ${name} to an exact version; found ${JSON.stringify(engineVersion)}`,
       );
     } else {
       engineVersions.push(engineVersion);
@@ -115,14 +121,14 @@ function collectErrors() {
   }
   if (uniqueEngine.length > 1) {
     errors.push(
-      `engine-pi Pi package versions must match exactly; found ${uniqueEngine.join(', ')}`,
+      `Workspace Pi package versions must match exactly; found ${uniqueEngine.join(', ')}`,
     );
   }
   const expected = uniqueRoot[0] ?? uniqueEngine[0];
   if (expected) {
     if (uniqueEngine.some((version) => version !== expected)) {
       errors.push(
-        `Root and engine-pi Pi pins must match; root=${expected} engine-pi=${uniqueEngine.join(',')}`,
+        `Root and workspace Pi pins must match; root=${expected} workspaces=${uniqueEngine.join(',')}`,
       );
     }
     if (shimVersion !== expected) {

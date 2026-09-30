@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Серверы MCP",
-        "description": "HTTP- и SSE-серверы MCP и их инструменты."
+        "description": "Серверы MCP Streamable HTTP и их инструменты."
       },
       "skills": {
         "label": "Навыки",
@@ -952,6 +952,16 @@
         "disconnected": "Claude отключён.",
         "loginFailed": "Ошибка входа Claude: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Войдите через подписку ChatGPT в браузере. Учётные данные сохраняются в {secureStorageName}.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "connected": "ChatGPT подключён.",
+        "disconnected": "ChatGPT отключён.",
+        "loginFailed": "Ошибка входа ChatGPT: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Войдите в OpenRouter в браузере. Учётные данные сохраняются в {secureStorageName}.",
@@ -1132,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "Серверы MCP со старым транспортом SSE отключены: {servers}. Укажите в настройках адрес Streamable HTTP (обычно /mcp вместо /sse) и снова включите их.",
       "empty": "MCP-серверы не настроены. Нажмите «Добавить».",
       "add": "+ Добавить MCP",
       "clearOauth": "Очистить OAuth-данные",
@@ -1157,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "Имя сервера может содержать только буквы, цифры, точки, дефисы и подчёркивания",
         "needName": "Введите имя сервера",
-        "type": "Тип",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "Введите URL",
         "headersName": "Заголовки",
         "authHeading": "Аутентификация",

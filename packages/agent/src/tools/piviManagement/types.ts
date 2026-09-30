@@ -41,7 +41,7 @@ export interface AgentMcpOAuthInput {
 }
 
 export interface AgentMcpRemoteServerInput {
-  type: 'http' | 'sse';
+  type: 'http';
   url: string;
   headers?: Record<string, AgentMcpValueInput>;
   enabled?: boolean;
@@ -76,7 +76,7 @@ export interface AgentMcpToolInventoryEntry {
 
 export interface AgentMcpServerSummary {
   name: string;
-  type: 'http' | 'sse';
+  type: 'http';
   enabled: boolean;
   contextSaving: boolean;
   description?: string;

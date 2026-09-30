@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Servidores MCP",
-        "description": "Servidores MCP HTTP y SSE y sus herramientas."
+        "description": "Servidores MCP Streamable HTTP y sus herramientas."
       },
       "skills": {
         "label": "Habilidades",
@@ -952,6 +952,16 @@
         "disconnected": "Claude desconectado.",
         "loginFailed": "Error de inicio de sesión de Claude: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Inicia sesión con tu suscripción ChatGPT en el navegador. Las credenciales se guardan en {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "ChatGPT conectado.",
+        "disconnected": "ChatGPT desconectado.",
+        "loginFailed": "Error de inicio de sesión de ChatGPT: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Inicia sesión en OpenRouter en el navegador. Las credenciales se guardan en {secureStorageName}.",
@@ -1132,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "Se desactivaron los servidores MCP que usan el transporte SSE heredado: {servers}. Cambia cada URL a su endpoint Streamable HTTP (a menudo /mcp en lugar de /sse) en Ajustes y vuelve a activarlo.",
       "empty": "No hay servidores MCP configurados. Haz clic en Añadir para crear uno.",
       "add": "+ Añadir MCP",
       "clearOauth": "Borrar credenciales OAuth",
@@ -1157,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "El nombre del servidor solo puede contener letras, números, puntos, guiones y guiones bajos",
         "needName": "Introduce un nombre de servidor",
-        "type": "Tipo",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "Introduce una URL",
         "headersName": "Cabeceras",
         "authHeading": "Autenticación",

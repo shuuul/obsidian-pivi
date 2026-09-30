@@ -79,7 +79,7 @@ Pivi does not claim reliable automatic detection or neutralization of all prompt
 
 Installing a Skill or enabling an MCP server is an explicit trust decision:
 
-- Remote MCP servers receive prompts and tool arguments over the network. Pivi supports only remote MCP servers over Streamable HTTP or SSE. Stdio MCP is not supported; this remote-only contract was introduced in v0.25.0.
+- Remote MCP servers receive prompts and tool arguments over the network. Pivi supports only remote MCP servers over Streamable HTTP. Stdio MCP is not supported; this remote-only contract was introduced in v0.25.0.
 - Pivi does **not** audit Skill or MCP server source code for malice and does **not** isolate their filesystem or network beyond the shared host policies above.
 - Users remain responsible for reviewing Skill and MCP provenance before enablement.
 
@@ -103,7 +103,7 @@ Read/display path helpers (`normalizePathForVault`) must not be used as mutation
 
 ## Pi dependency compatibility
 
-The three `@earendil-works/pi-*` packages are pinned to one exact synchronized version. Private SessionManager members used for eager header flush and truncate/rewind are isolated behind a single adapter with startup/use assertions that fail with an actionable compatibility error before session mutation. Upgrade the three packages as one unit only after `npm run test:pi-compat` passes.
+The four `@earendil-works/pi-*` packages (including the standalone `pi-mcp` client) are pinned to one exact synchronized version. Private SessionManager members used for eager header flush and truncate/rewind are isolated behind a single adapter with startup/use assertions that fail with an actionable compatibility error before session mutation. Upgrade the packages as one unit only after `npm run test:pi-compat` passes.
 
 ## Related guidance
 

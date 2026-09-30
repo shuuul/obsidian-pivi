@@ -53,15 +53,6 @@ describe('pivi management approval presentation', () => {
         `${PREFIX}chat.piviManagementApproval.management.values.yes`, ['optional-long-tool-name']],
     },
     {
-      name: 'upsert SSE',
-      plan: { revision: 'm2', mutation: { action: 'upsert', name: 'events', server: {
-        type: 'sse', url: 'https://events.example.test/sse', enabled: true,
-      } } },
-      action: 'upsert',
-      values: ['events', 'sse', 'https://events.example.test/sse',
-        `${PREFIX}chat.piviManagementApproval.management.values.yes`],
-    },
-    {
       name: 'enable',
       plan: { revision: 'm3', mutation: { action: 'set_enabled', name: 'server', enabled: true } },
       action: 'set_enabled',

@@ -157,7 +157,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 
 ### 🔌 Skills & MCP
 - **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. When the pinned Skills CLI is needed, Pivi temporarily materializes its bundled code in the operating system's temporary directory and removes it after the command finishes.
-- **MCP servers**: Configure in `.pivi/mcp.json` with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings. Pivi supports only remote MCP servers over Streamable HTTP or SSE. Stdio MCP is not supported; this remote-only contract was introduced in v0.25.0.
+- **MCP servers**: Configure in `.pivi/mcp.json` with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings. Pivi supports only remote MCP servers over Streamable HTTP. Stdio MCP is not supported; this remote-only contract was introduced in v0.25.0.
 - **`/server` slash tokens**: Type `/server` or `/server/tool` in chat to emphasize an MCP server or tool; settings-enabled servers are already available to the agent.
 - **`/generate-image` tool token**: When Codex image generation is connected and `obsidian_generate_image` is enabled under Tools, the slash selector inserts this durable token. Pivi expands it only in the API prompt; the composer and session keep `/generate-image` unchanged.
 

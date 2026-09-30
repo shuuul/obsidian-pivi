@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP servers",
-        "description": "HTTP and SSE MCP servers and their tools."
+        "description": "Streamable HTTP MCP servers and their tools."
       },
       "skills": {
         "label": "Skills",
@@ -966,6 +966,16 @@
         "disconnected": "Claude disconnected.",
         "loginFailed": "Claude login failed: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Sign in with your ChatGPT subscription in the browser. Credentials are stored in {secureStorageName}.",
+        "connect": "Connect",
+        "reconnect": "Reconnect",
+        "disconnect": "Disconnect",
+        "connected": "ChatGPT connected.",
+        "disconnected": "ChatGPT disconnected.",
+        "loginFailed": "ChatGPT login failed: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Sign in with OpenRouter in your browser. Credentials are stored in {secureStorageName}.",
@@ -1150,6 +1160,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "MCP servers using the legacy SSE transport were disabled: {servers}. Update each URL to its streamable HTTP endpoint (often /mcp instead of /sse) in Settings, then enable it.",
       "empty": "No MCP servers configured. Click add to add one.",
       "add": "+ Add MCP",
       "clearOauth": "Clear OAuth credentials",
@@ -1176,11 +1187,8 @@
         "serverNameInvalid": "Server name can only contain letters, numbers, dots, hyphens, and underscores",
         "serverNameReserved": "That server name is reserved and cannot be used",
         "needName": "Please enter a server name",
-        "type": "Type",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "Please enter a URL",
         "urlInvalid": "Enter a valid URL",
         "urlScheme": "MCP URLs must use http or https",

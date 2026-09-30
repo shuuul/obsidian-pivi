@@ -40,7 +40,9 @@ import type {
 import {
   DEFAULT_MCP_SERVER,
   getMcpServerType,
+  isMcpLegacySseServerConfig,
   isValidMcpServerConfig,
+  upgradeLegacySseServerConfig,
 } from './types';
 
 export { PIVI_MCP_CONFIG_PATH } from './paths';
@@ -51,6 +53,18 @@ export interface McpLoadResult {
   servers: ManagedMcpServer[];
   diagnostics: ParseDiagnostic[];
   corruptPath?: string;
+  /** Legacy SSE servers rewritten to disabled Streamable HTTP entries during this load. */
+  legacySseServers?: string[];
+}
+
+/** Accept a persisted config, upgrading legacy SSE entries to Streamable HTTP. */
+function readPersistedServerConfig(
+  config: unknown,
+): { config: McpServerConfig; legacySse: boolean } | null {
+  if (isMcpLegacySseServerConfig(config)) {
+    return { config: upgradeLegacySseServerConfig(config), legacySse: true };
+  }
+  return isValidMcpServerConfig(config) ? { config, legacySse: false } : null;
 }
 
 export interface McpSaveResult {
@@ -199,9 +213,14 @@ export class McpStorage {
     }
 
     const file = parsed.value as unknown as ManagedMcpConfigFile;
-    const servers = this.parseServers(file);
-    const migrated = await this.migrateLoadedServers(servers);
-    return { servers: migrated, diagnostics: [] };
+    const legacySseServers: string[] = [];
+    const servers = this.parseServers(file, legacySseServers);
+    const migrated = await this.migrateLoadedServers(servers, legacySseServers.length > 0);
+    return {
+      servers: migrated,
+      diagnostics: [],
+      ...(legacySseServers.length > 0 ? { legacySseServers } : {}),
+    };
   }
 
   async load(): Promise<ManagedMcpServer[]> {
@@ -503,8 +522,9 @@ export class McpStorage {
       return map;
     }
     for (const [name, config] of Object.entries(raw)) {
-      if (isValidMcpServerName(name) && isValidMcpServerConfig(config)) {
-        map.set(name, config);
+      const persisted = isValidMcpServerName(name) ? readPersistedServerConfig(config) : null;
+      if (persisted) {
+        map.set(name, persisted.config);
       }
     }
     return map;
@@ -524,7 +544,7 @@ export class McpStorage {
     }
 
     const obsoleteSecretIds: string[] = [];
-    const remote = config as { url: string; type?: 'sse' | 'http'; headers?: unknown };
+    const remote = config as { url: string; headers?: unknown };
     const url = validateMcpRemoteUrl(remote.url);
     const previousHeaders = getPreviousStoredMap(previousConfig);
     const headerDrafts = inputMapToDrafts(
@@ -540,27 +560,25 @@ export class McpStorage {
     );
     obsoleteSecretIds.push(...staged.obsoleteSecretIds);
     const headers = Object.keys(staged.stored).length > 0 ? staged.stored : undefined;
-    if (remote.type === 'sse') {
-      return {
-        config: { type: 'sse', url, ...(headers ? { headers } : {}) },
-        obsoleteSecretIds,
-      };
-    }
     return {
       config: { type: 'http', url, ...(headers ? { headers } : {}) },
       obsoleteSecretIds,
     };
   }
 
-  private async migrateLoadedServers(servers: ManagedMcpServer[]): Promise<ManagedMcpServer[]> {
+  private async migrateLoadedServers(
+    servers: ManagedMcpServer[],
+    upgradedLegacySse: boolean,
+  ): Promise<ManagedMcpServer[]> {
     await this.hydrateBearerAndOAuthSecrets(servers);
 
     const needsRewrite = servers.some((server) => needsStructuredMigration(server.config));
-    if (!needsRewrite) {
-      return servers;
-    }
-
-    if (!isSecretStorageAvailable(this.secretStorage)) {
+    if (!needsRewrite || !isSecretStorageAvailable(this.secretStorage)) {
+      // Persist the SSE → HTTP rewrite so the migration notice appears once.
+      if (upgradedLegacySse) {
+        await this.saveInternal(servers);
+        await this.hydrateBearerAndOAuthSecrets(servers);
+      }
       return servers;
     }
 
@@ -772,7 +790,7 @@ export class McpStorage {
     }
   }
 
-  private parseServers(file: ManagedMcpConfigFile): ManagedMcpServer[] {
+  private parseServers(file: ManagedMcpConfigFile, legacySseServers?: string[]): ManagedMcpServer[] {
     if (!file.mcpServers || typeof file.mcpServers !== 'object') {
       return [];
     }
@@ -780,9 +798,14 @@ export class McpStorage {
     const piviMeta = file._pivi?.servers ?? {};
     const servers: ManagedMcpServer[] = [];
 
-    for (const [name, config] of Object.entries(file.mcpServers)) {
-      if (!isValidMcpServerName(name) || !isValidMcpServerConfig(config)) {
+    for (const [name, rawConfig] of Object.entries(file.mcpServers)) {
+      const persisted = isValidMcpServerName(name) ? readPersistedServerConfig(rawConfig) : null;
+      if (!persisted) {
         continue;
+      }
+      const { config, legacySse } = persisted;
+      if (legacySse) {
+        legacySseServers?.push(name);
       }
 
       const meta = piviMeta[name] ?? {};
@@ -795,7 +818,8 @@ export class McpStorage {
       servers.push({
         name,
         config,
-        enabled: meta.enabled ?? DEFAULT_MCP_SERVER.enabled,
+        // The old SSE endpoint rarely serves Streamable HTTP, so keep it off until the user updates it.
+        enabled: legacySse ? false : meta.enabled ?? DEFAULT_MCP_SERVER.enabled,
         contextSaving: meta.contextSaving ?? DEFAULT_MCP_SERVER.contextSaving,
         disabledTools: normalizedDisabledTools,
         description: meta.description,
@@ -811,11 +835,8 @@ export class McpStorage {
 }
 
 function normalizeManagedServerConfig(config: McpServerConfig): McpServerConfig {
-  const remote = config as { url: string; type?: 'sse' | 'http'; headers?: unknown };
+  const remote = config as { url: string; headers?: unknown };
   const url = validateMcpRemoteUrl(remote.url);
   const headers = normalizeMcpStoredValueMap(remote.headers);
-  if (remote.type === 'sse') {
-    return { type: 'sse', url, ...(headers ? { headers } : {}) };
-  }
   return { type: 'http', url, ...(headers ? { headers } : {}) };
 }

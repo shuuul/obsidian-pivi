@@ -9,14 +9,18 @@ import {
 /** Persisted structured map; UI drafts may supply legacy plain strings until save. */
 export type McpConfigValueMap = McpStoredValueMap | Record<string, string>;
 
-/** Server-Sent Events remote server configuration. */
-export interface McpSSEServerConfig {
+/**
+ * Legacy HTTP+SSE remote server configuration. Pivi's MCP client speaks only
+ * Streamable HTTP, so storage rewrites these entries to disabled `http`
+ * servers on load and the user updates the endpoint.
+ */
+export interface McpLegacySseServerConfig {
   type: 'sse';
   url: string;
   headers?: McpConfigValueMap;
 }
 
-/** HTTP remote server configuration. */
+/** Streamable HTTP remote server configuration. */
 export interface McpHttpServerConfig {
   type: 'http';
   url: string;
@@ -38,12 +42,10 @@ export type StoredMcpOAuthConfig = Omit<McpOAuthConfig, 'clientSecret'>;
 export type McpRemoteAuthMode = 'none' | 'bearer' | 'oauth';
 
 /** Union type for all MCP server configurations. */
-export type McpServerConfig =
-  | McpSSEServerConfig
-  | McpHttpServerConfig;
+export type McpServerConfig = McpHttpServerConfig;
 
 /** Server type identifier. */
-export type McpServerType = 'sse' | 'http';
+export type McpServerType = 'http';
 
 /** Managed MCP server configuration with UI/runtime metadata. */
 export interface ManagedMcpServer {
@@ -56,7 +58,7 @@ export interface ManagedMcpServer {
   /** Tool names disabled for this server. */
   disabledTools?: string[];
   description?: string;
-  /** Remote auth mode (http/sse only). */
+  /** Remote auth mode. */
   auth?: McpRemoteAuthMode;
   /** OAuth client settings; `false` disables OAuth for this server. */
   oauth?: McpOAuthConfig | false;
@@ -115,8 +117,7 @@ export function supportsMcpOAuth(server: ManagedMcpServer): boolean {
   return server.auth === 'oauth' || server.oauth !== undefined || server.auth === undefined;
 }
 
-export function getMcpServerType(config: McpServerConfig): McpServerType {
-  if (config.type === 'sse') return 'sse';
+export function getMcpServerType(_config: McpServerConfig): McpServerType {
   return 'http';
 }
 
@@ -132,7 +133,7 @@ function hasOptionalMcpConfigValueMap(value: Record<string, unknown>, key: strin
   return value[key] === undefined || isMcpConfigValueMap(value[key]);
 }
 
-export function isMcpSseServerConfig(obj: unknown): obj is McpSSEServerConfig {
+export function isMcpLegacySseServerConfig(obj: unknown): obj is McpLegacySseServerConfig {
   if (!isRecord(obj)) {
     return false;
   }
@@ -153,8 +154,16 @@ export function isMcpHttpServerConfig(obj: unknown): obj is McpHttpServerConfig 
 }
 
 export function isValidMcpServerConfig(obj: unknown): obj is McpServerConfig {
-  return isMcpSseServerConfig(obj)
-    || isMcpHttpServerConfig(obj);
+  return isMcpHttpServerConfig(obj);
+}
+
+/** Map a legacy SSE entry onto the Streamable HTTP config that replaces it, keeping URL and headers. */
+export function upgradeLegacySseServerConfig(config: McpLegacySseServerConfig): McpHttpServerConfig {
+  return {
+    type: 'http',
+    url: config.url,
+    ...(config.headers ? { headers: config.headers } : {}),
+  };
 }
 
 export const DEFAULT_MCP_SERVER: Readonly<Omit<ManagedMcpServer, 'name' | 'config'>> = {

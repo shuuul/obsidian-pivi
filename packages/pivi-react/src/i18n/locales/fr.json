@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Serveurs MCP",
-        "description": "Serveurs MCP HTTP et SSE et leurs outils."
+        "description": "Serveurs MCP Streamable HTTP et leurs outils."
       },
       "skills": {
         "label": "Compétences",
@@ -952,6 +952,16 @@
         "disconnected": "Claude déconnecté.",
         "loginFailed": "Échec de la connexion Claude : {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Connectez-vous avec votre abonnement ChatGPT dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
+        "connect": "Connecter",
+        "reconnect": "Reconnecter",
+        "disconnect": "Déconnecter",
+        "connected": "ChatGPT connecté.",
+        "disconnected": "ChatGPT déconnecté.",
+        "loginFailed": "Échec de la connexion ChatGPT : {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Connectez-vous à OpenRouter dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
@@ -1132,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "Les serveurs MCP utilisant l’ancien transport SSE ont été désactivés : {servers}. Remplacez chaque URL par son point de terminaison Streamable HTTP (souvent /mcp au lieu de /sse) dans les paramètres, puis réactivez-le.",
       "empty": "Aucun serveur MCP configuré. Cliquez sur Ajouter pour en créer un.",
       "add": "+ Ajouter un MCP",
       "clearOauth": "Effacer les identifiants OAuth",
@@ -1157,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "Le nom du serveur ne peut contenir que des lettres, chiffres, points, tirets et underscores",
         "needName": "Veuillez saisir un nom de serveur",
-        "type": "Type",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "Veuillez saisir une URL",
         "headersName": "En-têtes",
         "authHeading": "Authentification",

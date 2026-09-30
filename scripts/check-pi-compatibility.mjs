@@ -10,6 +10,7 @@ const expectedPackages = [
   '@earendil-works/pi-agent-core',
   '@earendil-works/pi-ai',
   '@earendil-works/pi-coding-agent',
+  '@earendil-works/pi-mcp',
 ];
 const knownCompatibilityPaths = [
   'build/plugins/shim-pi-ai.mjs',

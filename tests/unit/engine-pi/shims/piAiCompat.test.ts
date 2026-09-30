@@ -75,6 +75,7 @@ describe('piAiCompat shim', () => {
       'zai',
       'zai-coding-cn',
       'claude',
+      'chatgpt',
       'grok-build',
     ]);
     expect(getModels('deepseek')).toEqual([

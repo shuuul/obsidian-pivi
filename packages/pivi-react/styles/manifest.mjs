@@ -31,7 +31,6 @@ export const styleModules = [
   'features/todo.css',
   'features/selection-toolbar.css',
   'features/inline-edit-surface.css',
-  'modals/mcp-modal.css',
   'settings/system/tokens.css',
   'settings/system/host.css',
   'settings/system/layout.css',

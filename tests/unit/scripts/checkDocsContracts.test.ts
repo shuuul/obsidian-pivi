@@ -16,7 +16,7 @@ const manifest = JSON.parse(
 ) as {
   mcp: { remoteOnlySince: string; supportedTransports: string[] };
 };
-const canonicalStatement = `Pivi supports only remote MCP servers over Streamable HTTP or SSE. Stdio MCP is not supported; this remote-only contract was introduced in v${manifest.mcp.remoteOnlySince}.`;
+const canonicalStatement = `Pivi supports only remote MCP servers over Streamable HTTP. Stdio MCP is not supported; this remote-only contract was introduced in v${manifest.mcp.remoteOnlySince}.`;
 const canonicalDocs = [
   'README.md',
   'SECURITY.md',
@@ -74,6 +74,7 @@ describe('check-docs-contracts', () => {
 
   it.each([
     ['stdio-mcp', 'Stdio processes start after the first tool call.'],
+    ['sse-mcp', 'Pivi supports legacy SSE MCP servers.'],
     ['mcp-json-import', 'Import MCP JSON from the settings page.'],
     ['vim-mappings', 'Pivi supports Vim key mappings in the composer.'],
   ])('rejects a current claim for removed capability %s', (capability, claim) => {

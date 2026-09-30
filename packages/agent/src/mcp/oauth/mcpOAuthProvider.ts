@@ -1,11 +1,11 @@
-import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
-import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js';
-import type {
-  OAuthClientInformation,
-  OAuthClientInformationFull,
-  OAuthClientMetadata,
-  OAuthTokens,
-} from '@modelcontextprotocol/sdk/shared/auth.js';
+import {
+  McpOAuthAuthorizationRequiredError,
+  type OAuthClientInformation,
+  type OAuthClientInformationMixed,
+  type OAuthClientMetadata,
+  type OAuthClientProvider,
+  type OAuthTokens,
+} from '@earendil-works/pi-mcp/oauth';
 
 import type { McpOAuthConfig } from '../types';
 import type { McpAuthEntryStore, StoredClientInfo, StoredTokens } from './mcpVaultAuthStore';
@@ -18,6 +18,14 @@ export function validateOAuthCallbackPort(port: number | undefined = DEFAULT_OAU
     throw new Error(`Invalid OAuth callback port: ${String(port)}`);
   }
   return port;
+}
+
+/** No interactive sign-in is in progress, so the user must authenticate from Settings. */
+export class McpServerReauthenticationRequiredError extends McpOAuthAuthorizationRequiredError {
+  constructor(serverName: string) {
+    super();
+    this.message = `Re-authentication required for MCP server: ${serverName}`;
+  }
 }
 
 export interface McpOAuthCallbacks {
@@ -38,10 +46,8 @@ export class McpOAuthProvider implements OAuthClientProvider {
     return this.config.grantType === 'client_credentials';
   }
 
-  get redirectUrl(): string | undefined {
-    if (this.usesClientCredentials) {
-      return undefined;
-    }
+  /** Unused by the client-credentials grant, which never redirects. */
+  get redirectUrl(): string {
     return `http://localhost:${this.callbackPort}${OAUTH_CALLBACK_PATH}`;
   }
 
@@ -55,13 +61,8 @@ export class McpOAuthProvider implements OAuthClientProvider {
       };
     }
 
-    const redirectUrl = this.redirectUrl;
-    if (!redirectUrl) {
-      throw new Error('redirectUrl is required for authorization_code flow');
-    }
-
     return {
-      redirect_uris: [redirectUrl],
+      redirect_uris: [this.redirectUrl],
       client_name: 'Pivi',
       client_uri: 'https://github.com/shuuul/obsidian-pivi',
       grant_types: ['authorization_code', 'refresh_token'],
@@ -93,7 +94,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
     return undefined;
   }
 
-  async saveClientInformation(info: OAuthClientInformationFull): Promise<void> {
+  async saveClientInformation(info: OAuthClientInformationMixed): Promise<void> {
     const clientInfo: StoredClientInfo = {
       clientId: info.client_id,
       clientSecret: info.client_secret,
@@ -136,9 +137,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
     }
     const entry = await this.store.getAuthForUrl(this.serverName, this.serverUrl);
     if (!entry?.oauthState) {
-      throw new UnauthorizedError(
-        `Re-authentication required for MCP server: ${this.serverName}`,
-      );
+      throw new McpServerReauthenticationRequiredError(this.serverName);
     }
     await this.callbacks.onRedirect(authorizationUrl);
   }
@@ -168,14 +167,14 @@ export class McpOAuthProvider implements OAuthClientProvider {
     }
     const entry = await this.store.getAuthForUrl(this.serverName, this.serverUrl);
     if (!entry?.oauthState) {
-      throw new UnauthorizedError(
-        `Re-authentication required for MCP server: ${this.serverName}`,
-      );
+      throw new McpServerReauthenticationRequiredError(this.serverName);
     }
     return entry.oauthState;
   }
 
-  async invalidateCredentials(scope: 'all' | 'client' | 'tokens'): Promise<void> {
+  async invalidateCredentials(
+    scope: 'all' | 'client' | 'tokens' | 'verifier' | 'discovery',
+  ): Promise<void> {
     switch (scope) {
       case 'all':
         await this.store.removeEntry(this.serverName);
@@ -186,20 +185,11 @@ export class McpOAuthProvider implements OAuthClientProvider {
       case 'tokens':
         await this.store.clearTokens(this.serverName);
         break;
+      case 'verifier':
+        await this.store.clearCodeVerifier(this.serverName);
+        break;
       default:
         break;
     }
-  }
-
-  prepareTokenRequest(scope?: string): URLSearchParams | undefined {
-    if (!this.usesClientCredentials) {
-      return undefined;
-    }
-    const params = new URLSearchParams({ grant_type: 'client_credentials' });
-    const requestedScope = scope ?? this.config.scope;
-    if (requestedScope) {
-      params.set('scope', requestedScope);
-    }
-    return params;
   }
 }

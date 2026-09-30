@@ -10,7 +10,7 @@
 - `settings/` for shared settings contracts and defaults, including Obsidian tool gates such as external filesystem access and the Bash toggle/allowlist.
 - `tools/` for the generic tool protocol and display models, including the `pivi_sessions` ToolSpec factory over an injected recovery port.
 - `session/` for host-neutral session contracts, the session recovery port, open-session state, paths, and metadata; Pi JSONL persistence and compatibility implementations live under `@pivi/engine-pi/session/`.
-- `mcp/` for workspace-local MCP management and proxy tools; this package directly declares the MCP SDK used by those runtime transports and OAuth flows.
+- `mcp/` for workspace-local MCP management and proxy tools; this package directly declares the standalone `@earendil-works/pi-mcp` client used by those runtime transports and OAuth flows.
 - `context/` and `prompt/` for host-neutral XML context formatting, runtime skill filtering, and registered-tool prompt assembly.
 - `skills/` for skill and slash-command metadata helpers; runtime loaders exclude disabled vault skills while inventory loaders include them for settings and install prompts. A missing or locked skill entry is skipped, and a locked skills directory keeps the last successful inventory so a concurrent copy cannot blank the surface. Remote/default skill orchestration receives `HttpClient` and `ProcessRunner` ports from the host, and first-run confirmation is rendered through an injected host prompt callback rather than rendering confirmation DOM in this package.
 - `runtime/` and `engine/` for host-neutral chat/runtime contracts, application-facing `ChatPorts`, auxiliary query services, queued-turn helpers, and the generic AgentEngine seam. Concrete Pi SDK adapters live in `@pivi/engine-pi`.
@@ -34,7 +34,7 @@
 - Namespaced tool protocol, the host-neutral `createSessionsTool` factory, and canonical presentation/summary helpers under `@pivi/agent/tools`.
 - Session contracts, recovery port, paths, metadata, and linear open-session management under `@pivi/agent/session`; application ports open complete sessions by `sessionFile`, while concrete Pi JSONL tree compatibility stays under `@pivi/engine-pi/session/*`.
 - Skill helpers, slash-command catalog contracts, and built-in slash-command IDs under `@pivi/agent/skills`.
-- MCP config, OAuth, server management, and proxy tools under `@pivi/agent/mcp`. Automatic prefetch warms enabled HTTP/SSE servers. Stdio MCP is not supported.
+- MCP config, OAuth, server management, and proxy tools under `@pivi/agent/mcp`. Automatic prefetch warms enabled Streamable HTTP servers. Stdio MCP is not supported.
 - Prompt context formatting, host-neutral mention parsing, and prompt builders under `@pivi/agent/context`, `@pivi/agent/context/mentions`, and `@pivi/agent/prompt`. MCP prompt inventory reflects settings-enabled servers and cached tool names.
 - Runtime/application contracts, including `ChatPorts`, `PiChatService`, and `AuxQueryRunner`, under `@pivi/agent/runtime`.
 - Generic AgentEngine contracts under `@pivi/agent/engine`.

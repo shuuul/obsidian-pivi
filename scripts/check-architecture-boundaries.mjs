@@ -134,7 +134,8 @@ const boundaryRules = [
     forbidden: [
       /^obsidian$/,
       /^electron$/,
-      /^@earendil-works\//,
+      // @pivi/agent/mcp owns the standalone pi-mcp client; other Pi packages stay in engine-pi.
+      /^@earendil-works\/(?!pi-mcp(?:\/|$))/,
       enginePiPackagePattern,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
@@ -179,7 +180,7 @@ const boundaryRules = [
   {
     name: '@pivi/agent mcp has no raw Pi SDK imports',
     root: 'packages/agent/src/mcp',
-    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
+    forbidden: [/^@earendil-works\/(?!pi-mcp(?:\/|$))/, enginePiPackagePattern],
   },
   {
     name: '@pivi/agent plugins has no raw Pi SDK imports',

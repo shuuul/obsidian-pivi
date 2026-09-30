@@ -31,6 +31,11 @@ const removedCapabilityPatterns = new Map([
     /\b(?:supports?|enables?|configures?|connects? to|runs?) (?:local )?Stdio MCP\b/i,
     /\bStdio MCP (?:is|remains) (?:supported|available|enabled)\b/i,
   ]],
+  ['sse-mcp', [
+    /\b(?:supports?|enables?|configures?|connects? to) (?:legacy )?(?:HTTP\+)?SSE MCP\b/i,
+    /\b(?:HTTP\+)?SSE MCP (?:is|remains) (?:supported|available|enabled)\b/i,
+    /\bover Streamable HTTP or SSE\b/i,
+  ]],
   ['mcp-json-import', [
     /\b(?:import|paste|load) (?:an? )?MCP JSON\b/i,
     /\bMCP JSON import (?:is|remains) (?:supported|available|enabled)\b/i,

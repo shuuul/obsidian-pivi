@@ -1,6 +1,6 @@
 export * from './createMcpProxyToolSpec';
-export * from './legacySseTransport';
 export * from './mcpConnectionPool';
+export * from './mcpHttpClient';
 export * from './mcpManagementCoordinator';
 export * from './mcpManagementPersistence';
 export * from './mcpManagementProjection';
@@ -14,6 +14,7 @@ export * from './mcpValueSources';
 export * from './oauth/mcpAuthEntryMigration';
 export * from './oauth/mcpAuthFlow';
 export * from './oauth/mcpCallbackServer';
+export * from './oauth/mcpClientCredentials';
 export * from './oauth/mcpOAuthProvider';
 export * from './oauth/mcpOAuthService';
 export * from './oauth/mcpSecretAuthStore';

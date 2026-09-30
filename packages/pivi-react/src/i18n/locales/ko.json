@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP 서버",
-        "description": "HTTP 및 SSE MCP 서버와 도구."
+        "description": "Streamable HTTP MCP 서버와 도구."
       },
       "skills": {
         "label": "스킬",
@@ -952,6 +952,16 @@
         "disconnected": "Claude 연결이 해제되었습니다.",
         "loginFailed": "Claude 로그인 실패: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "브라우저에서 ChatGPT 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
+        "connect": "연결",
+        "reconnect": "다시 연결",
+        "disconnect": "연결 해제",
+        "connected": "ChatGPT가 연결되었습니다.",
+        "disconnected": "ChatGPT 연결이 해제되었습니다.",
+        "loginFailed": "ChatGPT 로그인 실패: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "브라우저에서 OpenRouter에 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
@@ -1132,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "기존 SSE 전송을 사용하는 MCP 서버를 비활성화했습니다: {servers}. 설정에서 URL을 Streamable HTTP 엔드포인트(보통 /sse 대신 /mcp)로 바꾼 뒤 다시 활성화하세요.",
       "empty": "구성된 MCP 서버가 없습니다. 추가를 클릭하여 만드세요.",
       "add": "+ MCP 추가",
       "clearOauth": "OAuth 자격 증명 지우기",
@@ -1157,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "서버 이름은 문자, 숫자, 점, 하이픈, 밑줄만 사용할 수 있습니다",
         "needName": "서버 이름을 입력하세요",
-        "type": "유형",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "URL을 입력하세요",
         "headersName": "헤더",
         "authHeading": "인증",

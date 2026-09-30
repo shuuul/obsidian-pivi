@@ -16,6 +16,7 @@ export interface McpStorageAdapter {
     servers: ManagedMcpServer[];
     diagnostics: ParseDiagnostic[];
     corruptPath?: string;
+    legacySseServers?: string[];
   }>;
 }
 
@@ -26,6 +27,7 @@ export class McpServerManager {
     corruptPath?: string;
   } | null = null;
   private storage: McpStorageAdapter;
+  private pendingLegacySseServers: string[] = [];
 
   constructor(storage: McpStorageAdapter) {
     this.storage = storage;
@@ -35,6 +37,7 @@ export class McpServerManager {
     if (this.storage.loadWithDiagnostics) {
       const result = await this.storage.loadWithDiagnostics();
       this.servers = result.servers;
+      this.pendingLegacySseServers.push(...(result.legacySseServers ?? []));
       this.loadDiagnostics = result.diagnostics.length > 0 || result.corruptPath
         ? { diagnostics: result.diagnostics, corruptPath: result.corruptPath }
         : null;
@@ -42,6 +45,13 @@ export class McpServerManager {
     }
     this.servers = await this.storage.load();
     this.loadDiagnostics = null;
+  }
+
+  /** Legacy SSE servers disabled by the last loads; returned once so the host can notify. */
+  takeLegacySseServers(): string[] {
+    const names = [...new Set(this.pendingLegacySseServers)];
+    this.pendingLegacySseServers = [];
+    return names;
   }
 
   getServers(): ManagedMcpServer[] {

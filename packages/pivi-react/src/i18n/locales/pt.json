@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "Servidores MCP",
-        "description": "Servidores MCP HTTP e SSE e as respetivas ferramentas."
+        "description": "Servidores MCP Streamable HTTP e as respetivas ferramentas."
       },
       "skills": {
         "label": "Habilidades",
@@ -952,6 +952,16 @@
         "disconnected": "Claude desconectado.",
         "loginFailed": "Erro de inicio de sessão do Claude: {message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "Entre com sua assinatura ChatGPT no navegador. As credenciais ficam em {secureStorageName}.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "connected": "ChatGPT conectado.",
+        "disconnected": "ChatGPT desconectado.",
+        "loginFailed": "Erro de inicio de sessão do ChatGPT: {message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "Entre no OpenRouter no navegador. As credenciais ficam em {secureStorageName}.",
@@ -1132,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "Servidores MCP que usam o transporte SSE legado foram desativados: {servers}. Altere cada URL para o endpoint Streamable HTTP (geralmente /mcp em vez de /sse) nas configurações e ative-o novamente.",
       "empty": "No hay servidores MCP configurados. Haz clic en Adicionar para crear uno.",
       "add": "+ Adicionar MCP",
       "clearOauth": "Borrar credenciales OAuth",
@@ -1157,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "El nome do servidor solo puede contener letras, números, puntos, guiones e guiones bajos",
         "needName": "Introduce um nome de servidor",
-        "type": "Tipo",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "Introduce uma URL",
         "headersName": "Cabeceras",
         "authHeading": "Autenticación",

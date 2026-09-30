@@ -1,10 +1,8 @@
-import { Client } from "@modelcontextprotocol/sdk/client";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
+import type { McpClient } from "@earendil-works/pi-mcp";
 
 import { PluginLogger } from '../logging/pluginLogger';
 import type { SyncSecretStore } from '../ports';
-import { createLegacySseTransport } from "./legacySseTransport";
+import { connectMcpHttpClient, type McpHttpConnectionOptions } from "./mcpHttpClient";
 import {
   createMcpResolveHost,
   resolveMcpHeaders,
@@ -16,7 +14,6 @@ import {
 import type { McpProcessEnv, McpTransportFetch } from "./ports";
 import type { McpTestResult, McpTool } from "./types";
 import type { ManagedMcpServer } from "./types";
-import { isMcpSseServerConfig } from "./types";
 
 const logger = new PluginLogger('McpServerTester');
 
@@ -28,7 +25,7 @@ export async function testMcpServer(
   signal?: AbortSignal,
 ): Promise<McpTestResult> {
   const resolveHost = createMcpResolveHost(processEnv, secretStorage);
-  let transport: Transport;
+  let options: McpHttpConnectionOptions;
   try {
     const config = server.config;
     const url = new URL(config.url);
@@ -40,15 +37,13 @@ export async function testMcpServer(
         resolveHost,
         secretStorage,
       );
-    const options = {
+    options = {
+      url: url.href,
       fetch,
-      requestInit: resolvedHeaders && Object.keys(resolvedHeaders).length > 0
+      ...(resolvedHeaders && Object.keys(resolvedHeaders).length > 0
         ? { headers: resolvedHeaders }
-        : undefined,
+        : {}),
     };
-    transport = isMcpSseServerConfig(config)
-      ? createLegacySseTransport(url, options)
-      : new StreamableHTTPClientTransport(url, options);
   } catch (error) {
     return {
       success: false,
@@ -58,7 +53,7 @@ export async function testMcpServer(
     };
   }
 
-  const client = new Client({ name: "pivi-tester", version: "1.0.0" });
+  let client: McpClient | undefined;
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
   signal?.addEventListener('abort', abort, { once: true });
@@ -66,15 +61,16 @@ export async function testMcpServer(
   const timeout = window.setTimeout(() => controller.abort(), 10000);
 
   try {
-    await client.connect(transport, { signal: controller.signal });
+    const connection = await connectMcpHttpClient("pivi-tester", options, controller.signal);
+    client = connection.client;
 
-    const serverVersion = client.getServerVersion();
+    const serverVersion = connection.initialize.serverInfo;
     let tools: McpTool[] = [];
     try {
-      const result = await client.listTools(undefined, {
+      const result = await client.listTools({
         signal: controller.signal,
       });
-      tools = result.tools.map(
+      tools = result.map(
         (t: {
           name: string;
           description?: string;
@@ -111,10 +107,10 @@ export async function testMcpServer(
       tools,
     };
   } catch (error) {
-    logger.warn('MCP test connection failed');
     if (controller.signal.aborted) {
       return { success: false, tools: [], error: signal?.aborted ? "Connection aborted" : "Connection timeout (10s)" };
     }
+    logger.warn('MCP test connection failed');
     return {
       success: false,
       tools: [],
@@ -124,7 +120,7 @@ export async function testMcpServer(
     window.clearTimeout(timeout);
     signal?.removeEventListener('abort', abort);
     try {
-      await client.close();
+      await client?.close();
     } catch {
       logger.warn('MCP test client close failed');
     }

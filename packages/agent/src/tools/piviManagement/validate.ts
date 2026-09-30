@@ -247,7 +247,7 @@ function parseServerInput(value: unknown): AgentMcpServerInput {
   }
 
   const type = value.type;
-  if (type === 'http' || type === 'sse') {
+  if (type === 'http') {
     assertOnlyKeys(value, [
       'type',
       'url',
@@ -282,7 +282,7 @@ function parseServerInput(value: unknown): AgentMcpServerInput {
     };
   }
 
-  throw new Error('server.type must be http or sse.');
+  throw new Error('server.type must be http; legacy SSE servers are not supported.');
 }
 
 export function parsePiviMcpInput(raw: unknown): PiviMcpInput {

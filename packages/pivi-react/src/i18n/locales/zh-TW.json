@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP 伺服器",
-        "description": "HTTP / SSE MCP 伺服器及其工具。"
+        "description": "Streamable HTTP MCP 伺服器及其工具。"
       },
       "skills": {
         "label": "技能",
@@ -952,6 +952,16 @@
         "disconnected": "Claude 已中斷連線。",
         "loginFailed": "Claude 登入失敗：{message}"
       },
+      "chatgpt": {
+        "name": "ChatGPT",
+        "desc": "在瀏覽器中使用 ChatGPT 訂閱登入。憑證儲存在 {secureStorageName}。",
+        "connect": "連線",
+        "reconnect": "重新連線",
+        "disconnect": "中斷連線",
+        "connected": "ChatGPT 已連線。",
+        "disconnected": "ChatGPT 已中斷連線。",
+        "loginFailed": "ChatGPT 登入失敗：{message}"
+      },
       "openrouter": {
         "name": "OpenRouter",
         "desc": "在瀏覽器中登入 OpenRouter。憑證儲存在 {secureStorageName}。",
@@ -1132,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "以下 MCP 伺服器使用舊版 SSE 傳輸，已停用：{servers}。請在設定中將網址改為 Streamable HTTP 端點（通常是 /mcp 而非 /sse），再重新啟用。",
       "empty": "尚未設定 MCP 伺服器。點擊新增以建立。",
       "add": "+ 新增 MCP",
       "clearOauth": "清除 OAuth 憑證",
@@ -1157,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "伺服器名稱只能包含字母、數字、點、連字號和底線",
         "needName": "請輸入伺服器名稱",
-        "type": "類型",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "請輸入 URL",
         "headersName": "標頭",
         "authHeading": "驗證",

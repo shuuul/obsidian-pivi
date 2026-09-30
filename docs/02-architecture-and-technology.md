@@ -51,7 +51,7 @@ Network egress is enforced at a shared transport boundary. Host-neutral policy l
 
 Local process execution and vault mutation are similarly explicit host primitives. `ProcessRunRequest` requires byte limits, timeout, cwd policy, shell policy (forbidden by default), and optional abort; the host runner terminates owned process trees and reports termination kinds without double-resolve. Vault writes use `requireVaultRelativeMutationPath` separately from display/read normalization so absolute/UNC/traversal/symlink-parent escapes fail before Obsidian APIs run. Focused macOS/Windows CI covers path/process/MCP/Skills suites; support claims do not exceed that tested behavior. See [SECURITY.md](../SECURITY.md).
 
-The three `@earendil-works/pi-*` packages share one exact pin. Private SessionManager members used for eager header flush and truncate stay behind `piSessionManagerPrivateAdapter` with actionable capability failures; bump them only after `npm run test:pi-compat`.
+The four `@earendil-works/pi-*` packages share one exact pin; `@pivi/agent/mcp` owns the standalone `pi-mcp` client and `@pivi/engine-pi` owns the rest. Private SessionManager members used for eager header flush and truncate stay behind `piSessionManagerPrivateAdapter` with actionable capability failures; bump them only after `npm run test:pi-compat`.
 
 ### React 19 with imperative islands
 

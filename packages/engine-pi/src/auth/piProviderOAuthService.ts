@@ -33,6 +33,8 @@ export class ProviderOAuthService {
     private readonly credentialStore: ObsidianCredentialStore | null,
     private readonly oauthHost: OAuthFlowHost,
     private readonly legacyAuthStore: ProviderLegacyAuthStore | null = null,
+    /** Stable per-installation id; Sign in with ChatGPT registers it as the OpenAI agent host. */
+    private readonly getDeviceId?: () => string,
   ) {}
 
   hasProviderOAuth(providerId: string): boolean {
@@ -125,6 +127,7 @@ export class ProviderOAuthService {
             ? normalizeCodexBrowserAuthUrl
             : undefined,
         }),
+        this.getDeviceId ? { getDeviceId: this.getDeviceId } : undefined,
       );
       if (providerId === CODEX_OAUTH_PROVIDER_ID) {
         this.clearLegacyCodexCredential();

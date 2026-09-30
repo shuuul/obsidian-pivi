@@ -90,7 +90,7 @@ Useful symptom routes:
 | A stream updates the wrong tab/turn | stream generation, active-turn ownership, late chunk listener |
 | Tab restores without messages/title | layout `sessionFile`, open-session hydration, JSONL metadata |
 | Subagent card stalls | limiter/job state, ID correlation, terminal hydration retries |
-| MCP slash entry is stale | settings save/reload invalidation, HTTP/SSE prefetch, catalog refresh |
+| MCP slash entry is stale | settings save/reload invalidation, HTTP prefetch, catalog refresh |
 | UI works in main window only | owner document/window lookup and global timer/listener use |
 
 Prefer the shared `PluginLogger` to console output. Preserve the original failure signal and log only enough structured context to diagnose ownership or lifecycle divergence.
@@ -121,7 +121,7 @@ npm run check:bundle-size
 
 CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Pull requests also build production metafiles from their exact base and head, then append a non-blocking bundle report to the job summary. Release publication is a maintainer-pushed annotated tag (`x.y.z`, no leading `v`) after a `chore(release): prepare x.y.z` commit that already contains the matching `CHANGELOG.md` section and synced Obsidian metadata; the tag workflow then runs the same shared quality-gate action (dependency audit, typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. See [Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md). Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
 
-Before bumping `@earendil-works/pi-*`, keep the three packages on one exact version, update every `upstreamVersion` in `packages/engine-pi/compatibility-manifest.json`, run `npm run test:pi-compat`, and keep both Pi checks green. The manifest records why each upstream-shape-dependent adaptation exists, its tests, its removal condition, and issue [#113](https://github.com/shuuul/obsidian-pivi/issues/113). A weekly informational canary tests the newest synchronized stable Pi release in an ephemeral runner and updates one marker-backed comment on that issue; it never changes the repository or replaces review of an actual dependency bump. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
+Before bumping `@earendil-works/pi-*`, keep the four packages (`pi-agent-core`, `pi-ai`, `pi-coding-agent`, `pi-mcp`) on one exact version, update every `upstreamVersion` in `packages/engine-pi/compatibility-manifest.json`, run `npm run test:pi-compat`, and keep both Pi checks green. The manifest records why each upstream-shape-dependent adaptation exists, its tests, its removal condition, and issue [#113](https://github.com/shuuul/obsidian-pivi/issues/113). A weekly informational canary tests the newest synchronized stable Pi release in an ephemeral runner and updates one marker-backed comment on that issue; it never changes the repository or replaces review of an actual dependency bump. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
 
 ## Bundle and CSS analysis
 

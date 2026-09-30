@@ -49,6 +49,7 @@
     "node": ">=24.0.0 <25"
   },
   "devDependencies": {
+    "@cfworker/json-schema": "^4.1.1",
     "@eslint/js": "^10.0.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
@@ -77,14 +78,13 @@
     "typescript-native": "npm:typescript@^7.0.2"
   },
   "dependencies": {
-    "@cfworker/json-schema": "^4.1.1",
     "@codemirror/state": "^6.7.5",
     "@codemirror/view": "^6.43.12",
-    "@earendil-works/pi-agent-core": "0.87.1",
-    "@earendil-works/pi-ai": "0.87.1",
-    "@earendil-works/pi-coding-agent": "0.87.1",
+    "@earendil-works/pi-agent-core": "0.99.1",
+    "@earendil-works/pi-ai": "0.99.1",
+    "@earendil-works/pi-coding-agent": "0.99.1",
+    "@earendil-works/pi-mcp": "0.99.1",
     "@lobehub/icons-static-svg": "^1.95.0",
-    "@modelcontextprotocol/sdk": "~1.30.0",
     "@tanstack/react-virtual": "^3.14.13",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -94,11 +94,10 @@
   "overrides": {
     "@earendil-works/pi-coding-agent": {
       "@earendil-works/pi-agent-core": "$@earendil-works/pi-agent-core",
-      "@earendil-works/pi-ai": "$@earendil-works/pi-ai"
+      "@earendil-works/pi-ai": "$@earendil-works/pi-ai",
+      "@earendil-works/pi-mcp": "$@earendil-works/pi-mcp"
     },
-    "fast-uri": "3.1.8",
-    "qs": "6.16.0",
-    "@hono/node-server": "2.1.1"
+    "fast-uri": "3.1.8"
   },
   "workspaces": [
     "packages/*"
