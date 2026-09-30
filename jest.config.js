@@ -7,12 +7,13 @@ const baseConfig = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
     // pi-mcp ships ESM only; tests run the real client against in-memory transports.
-    '^.+/node_modules/@earendil-works/pi-mcp/.+\\.js$': ['ts-jest', {
+    '^.+[\\\\/]node_modules[\\\\/]@earendil-works[\\\\/]pi-mcp[\\\\/].+\\.js$': ['ts-jest', {
       isolatedModules: true,
       tsconfig: { allowJs: true, module: 'CommonJS', target: 'ES2022', esModuleInterop: true },
     }],
   },
-  transformIgnorePatterns: ['/node_modules/(?!@earendil-works/pi-mcp/)'],
+  // Separator-agnostic so Windows paths also route pi-mcp through the transform.
+  transformIgnorePatterns: ['[\\\\/]node_modules[\\\\/](?!@earendil-works[\\\\/]pi-mcp[\\\\/])'],
   roots: ['<rootDir>/src', '<rootDir>/packages', '<rootDir>/tests'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
