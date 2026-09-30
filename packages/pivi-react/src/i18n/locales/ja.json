@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP サーバー",
-        "description": "HTTP / SSE の MCP サーバーとそのツール。"
+        "description": "Streamable HTTP の MCP サーバーとそのツール。"
       },
       "skills": {
         "label": "スキル",

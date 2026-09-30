@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP servers",
-        "description": "HTTP and SSE MCP servers and their tools."
+        "description": "Streamable HTTP MCP servers and their tools."
       },
       "skills": {
         "label": "Skills",

@@ -145,7 +145,6 @@ export function McpServerCard({
       <McpServerEditor
         ref={editorRef}
         server={server}
-        inline
         connecting={refreshing}
         onSave={connect}
       />

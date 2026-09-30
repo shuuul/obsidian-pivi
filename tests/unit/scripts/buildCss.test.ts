@@ -158,8 +158,7 @@ assertNoImportantRules([fixture]);`,
       'base/presentation-primitives.css',
       'base/animations.css',
     ]);
-    expect(styleModules.slice(-14)).toEqual([
-      'modals/mcp-modal.css',
+    expect(styleModules.slice(-13)).toEqual([
       'settings/system/tokens.css',
       'settings/system/host.css',
       'settings/system/layout.css',

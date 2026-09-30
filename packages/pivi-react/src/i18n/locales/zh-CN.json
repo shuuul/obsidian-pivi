@@ -462,7 +462,7 @@
       },
       "mcpServers": {
         "label": "MCP 服务器",
-        "description": "HTTP / SSE MCP 服务器及其工具。"
+        "description": "Streamable HTTP MCP 服务器及其工具。"
       },
       "skills": {
         "label": "技能",
