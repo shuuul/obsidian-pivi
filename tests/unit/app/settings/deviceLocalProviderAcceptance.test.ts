@@ -104,8 +104,8 @@ describe('device-local provider acceptance matrix', () => {
         { id: 'anthropic', type: 'builtin', disabled: false },
       ],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
         customContextLimits: {},
       },
@@ -163,7 +163,7 @@ describe('device-local provider acceptance matrix', () => {
 
     expect(resultB.cutoverPerformed).toBe(true);
     expect(resultB.settings.agentSettings.addedProviders).toEqual(['deepseek']);
-    expect(resultB.settings.model).toBe('deepseek/deepseek-chat');
+    expect(resultB.settings.model).toBe('deepseek/deepseek-flash');
     expect(parseSyncedSettings(adapter).agentSettings).not.toHaveProperty('addedProviders');
   });
 
@@ -238,12 +238,12 @@ describe('device-local provider acceptance matrix', () => {
     const adapter = createSharedSyncedAdapter();
     await migrateOnDevice(app, adapter, {
       customContextLimits: {
-        'deepseek/deepseek-chat': 64000,
+        'deepseek/deepseek-flash': 64000,
         'my-openai/gpt-4.1': 32000,
       },
       agentSettings: {
         addedProviders: ['deepseek', 'my-openai'],
-        visibleModels: ['deepseek/deepseek-chat', 'my-openai/gpt-4.1'],
+        visibleModels: ['deepseek/deepseek-flash', 'my-openai/gpt-4.1'],
         customProviders: [{
           id: 'my-openai',
           kind: 'openai-compatible',
@@ -253,7 +253,7 @@ describe('device-local provider acceptance matrix', () => {
           models: [{ id: 'gpt-4.1', name: 'GPT 4.1' }],
         }],
       },
-      model: 'deepseek/deepseek-chat',
+      model: 'deepseek/deepseek-flash',
     });
 
     const synced = parseSyncedSettings(adapter);
@@ -261,7 +261,7 @@ describe('device-local provider acceptance matrix', () => {
       modelPreferences: { customContextLimits: Record<string, number> };
     };
 
-    expect(synced.customContextLimits).toEqual({ 'deepseek/deepseek-chat': 64000 });
+    expect(synced.customContextLimits).toEqual({ 'deepseek/deepseek-flash': 64000 });
     expect(local.modelPreferences.customContextLimits).toEqual({
       'my-openai/gpt-4.1': 32000,
     });

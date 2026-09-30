@@ -3,7 +3,7 @@ import { PiSettingsCoordinator } from '@pivi/engine-pi/models/piSettingsCoordina
 import { updatePiAgentSettings } from '@pivi/agent/settings/agentSettings';
 
 const REASONING_MODEL = 'anthropic/claude-reasoning';
-const STANDARD_MODEL = 'deepseek/deepseek-chat';
+const STANDARD_MODEL = 'deepseek/deepseek-flash';
 
 function cachedModel(
   provider: string,
@@ -21,7 +21,7 @@ function cachedModel(
 
 function seedModelCache(): void {
   PI_AI_MODELS_CACHE.set(REASONING_MODEL, cachedModel('anthropic', 'claude-reasoning', true));
-  PI_AI_MODELS_CACHE.set(STANDARD_MODEL, cachedModel('deepseek', 'deepseek-chat', false));
+  PI_AI_MODELS_CACHE.set(STANDARD_MODEL, cachedModel('deepseek', 'deepseek-flash', false));
 }
 
 function clearModelCache(): void {

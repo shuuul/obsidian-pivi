@@ -1238,7 +1238,7 @@
       "errorNoteNotFound": "Note introuvable. Vérifiez la valeur de file= ou path=.",
       "errorSelectionRequired": "Cette commande nécessite du texte sélectionné. Fournissez selection=\"...\".",
       "errorEmptyPrompt": "Cette commande a un prompt vide et rien à exécuter.",
-      "errorInvalidModel": "Valeur model= invalide. Utilisez la forme provider/model, par exemple deepseek/deepseek-chat."
+      "errorInvalidModel": "Valeur model= invalide. Utilisez la forme provider/model, par exemple deepseek/deepseek-flash."
     }
   },
   "tools": {

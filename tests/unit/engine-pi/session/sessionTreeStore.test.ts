@@ -32,7 +32,7 @@ const assistantToolCall = {
   content: [{ type: 'toolCall', id: 'call-1', name: 'obsidian_read', arguments: { path: 'A.md' } }],
   api: 'openai',
   provider: 'deepseek',
-  model: 'deepseek-chat',
+  model: 'deepseek-flash',
   usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
   stopReason: 'toolUse',
   timestamp: 2,

@@ -35,8 +35,8 @@ describe('ObsidianDeviceLocalProviderStore', () => {
       initialized: true,
       providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
         customContextLimits: {},
       },

@@ -38,7 +38,7 @@ describe('seedDefaultDeviceLocalProviderState', () => {
     expect(state.modelPreferences.activeModel).toBe(DEFAULT_MODEL_KEY);
     expect(state.modelPreferences.titleGenerationModel).toBe('');
     expect(DEFAULT_PI_PROVIDER_IDS).toEqual(['deepseek']);
-    expect(DEFAULT_MODEL_KEY).toBe('deepseek/deepseek-chat');
+    expect(DEFAULT_MODEL_KEY).toBe('deepseek/deepseek-flash');
   });
 });
 
@@ -67,12 +67,12 @@ describe('normalizeDeviceLocalProviderState', () => {
       ],
       modelPreferences: {
         visibleModels: [
-          'deepseek/deepseek-chat',
-          'deepseek/deepseek-chat',
+          'deepseek/deepseek-flash',
+          'deepseek/deepseek-flash',
           'disabled/model',
         ],
-        activeModel: 'deepseek/deepseek-chat',
-        titleGenerationModel: 'deepseek/deepseek-chat',
+        activeModel: 'deepseek/deepseek-flash',
+        titleGenerationModel: 'deepseek/deepseek-flash',
         customContextLimits: {
           'custom-openai-compatible/local-model': 32000,
           'anthropic/claude-3': 200000,
@@ -96,7 +96,7 @@ describe('normalizeDeviceLocalProviderState', () => {
       type: 'custom',
       config: expect.not.objectContaining({ headers: expect.anything() }),
     });
-    expect(state.modelPreferences.visibleModels).toEqual(['deepseek/deepseek-chat']);
+    expect(state.modelPreferences.visibleModels).toEqual(['deepseek/deepseek-flash']);
     expect(state.modelPreferences.customContextLimits).toEqual({
       'custom-openai-compatible/local-model': 32000,
     });
@@ -156,10 +156,10 @@ describe('normalizeDeviceLocalProviderState', () => {
         { id: 'deepseek', type: 'builtin', disabled: true },
       ],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
-        titleGenerationModel: 'deepseek/deepseek-chat',
-        lastModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
+        titleGenerationModel: 'deepseek/deepseek-flash',
+        lastModel: 'deepseek/deepseek-flash',
       },
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
@@ -181,10 +181,10 @@ describe('normalizeDeviceLocalProviderState', () => {
         { id: 'deepseek', type: 'builtin', disabled: false },
       ],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
-        cliDefaultModel: 'deepseek/deepseek-chat',
+        cliDefaultModel: 'deepseek/deepseek-flash',
       },
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
@@ -245,8 +245,8 @@ describe('projectProviderState', () => {
         },
       ],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
         customContextLimits: {},
       },
@@ -261,7 +261,7 @@ describe('projectProviderState', () => {
     expect(projected.customProviders).toEqual([
       expect.objectContaining({ id: 'custom-openai-compatible' }),
     ]);
-    expect(projected.visibleModels).toEqual(['deepseek/deepseek-chat']);
+    expect(projected.visibleModels).toEqual(['deepseek/deepseek-flash']);
     projected.visibleModels.push('anthropic/claude-3');
     expect(projectProviderState(seedDefaultDeviceLocalProviderState()).visibleModels)
       .toEqual([DEFAULT_MODEL_KEY]);
@@ -271,18 +271,18 @@ describe('projectProviderState', () => {
 describe('extractDeviceLocalProviderState', () => {
   it('extracts runtime provider and model preferences without headers', () => {
     const settings = runtimeSettings({
-      model: 'deepseek/deepseek-chat',
-      titleGenerationModel: 'deepseek/deepseek-chat',
+      model: 'deepseek/deepseek-flash',
+      titleGenerationModel: 'deepseek/deepseek-flash',
       customContextLimits: {
-        'deepseek/deepseek-chat': 64000,
+        'deepseek/deepseek-flash': 64000,
         'custom-openai-compatible/local-model': 32000,
       },
       agentSettings: {
         ...DEFAULT_PIVI_SETTINGS.agentSettings,
         addedProviders: ['deepseek', 'custom-openai-compatible'],
         disabledProviders: ['custom-openai-compatible'],
-        visibleModels: ['deepseek/deepseek-chat'],
-        lastModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        lastModel: 'deepseek/deepseek-flash',
         customProviders: [{
           id: 'custom-openai-compatible',
           kind: 'openai-compatible',
@@ -326,18 +326,18 @@ describe('extractDeviceLocalProviderState', () => {
 describe('stripLocalizedFieldsFromRuntimeSettings', () => {
   it('removes provider, model, webSearchTools, and custom-provider context limits', () => {
     const settings = runtimeSettings({
-      model: 'deepseek/deepseek-chat',
-      titleGenerationModel: 'deepseek/deepseek-chat',
+      model: 'deepseek/deepseek-flash',
+      titleGenerationModel: 'deepseek/deepseek-flash',
       customContextLimits: {
-        'deepseek/deepseek-chat': 64000,
+        'deepseek/deepseek-flash': 64000,
         'custom-openai-compatible/local-model': 32000,
       },
       agentSettings: {
         ...DEFAULT_PIVI_SETTINGS.agentSettings,
         addedProviders: ['deepseek', 'custom-openai-compatible'],
         disabledProviders: ['custom-openai-compatible'],
-        visibleModels: ['deepseek/deepseek-chat'],
-        lastModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        lastModel: 'deepseek/deepseek-flash',
         customProviders: [{
           id: 'custom-openai-compatible',
           kind: 'openai-compatible',
@@ -357,7 +357,7 @@ describe('stripLocalizedFieldsFromRuntimeSettings', () => {
     expect(stripped).not.toHaveProperty('model');
     expect(stripped).not.toHaveProperty('titleGenerationModel');
     expect(stripped.customContextLimits).toEqual({
-      'deepseek/deepseek-chat': 64000,
+      'deepseek/deepseek-flash': 64000,
     });
     expect(stripped.agentSettings).not.toHaveProperty('addedProviders');
     expect(stripped.agentSettings).not.toHaveProperty('disabledProviders');

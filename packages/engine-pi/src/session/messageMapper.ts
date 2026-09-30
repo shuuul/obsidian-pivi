@@ -170,6 +170,27 @@ function appendAssistantContentBlocks(
   target.content = appendAssistantText(target.content, content);
 }
 
+/**
+ * An interrupted turn finalizes its UI overlay before the runtime persists the
+ * aborted provider segment, so the overlay lands on an earlier assistant entry
+ * while already holding the whole turn. Replaying that later segment would
+ * duplicate its blocks after the "Interrupted" marker.
+ */
+function isSegmentCoveredByOverlay(
+  target: ChatMessage,
+  blocks: ContentBlock[] | undefined,
+  ui: PiviMessageUiData | undefined,
+): boolean {
+  if (ui?.contentBlocks || !blocks?.length || !target.contentBlocks?.length) return false;
+  const existing = target.contentBlocks;
+  return blocks.every((block) => {
+    const toolId = contentBlockToolId(block);
+    return toolId
+      ? existing.some((candidate) => contentBlockToolId(candidate) === toolId)
+      : existing.some((candidate) => sameNonToolBlock(candidate, block));
+  });
+}
+
 function mergeAssistantMessageSegment(
   target: ChatMessage,
   segment: {
@@ -179,7 +200,12 @@ function mergeAssistantMessageSegment(
     toolCalls: ToolCallInfo[] | undefined;
     ui: PiviMessageUiData | undefined;
   },
+  overlayCovered: boolean,
 ): void {
+  if (overlayCovered && isSegmentCoveredByOverlay(target, segment.contentBlocks, segment.ui)) {
+    applyAssistantUiOverlay(target, segment.ui, segment.entryId);
+    return;
+  }
   appendAssistantContentBlocks(target, segment.contentBlocks, segment.content);
   if (!segment.contentBlocks?.length && segment.content) {
     target.content = appendAssistantText(target.content, segment.content);
@@ -340,11 +366,12 @@ function tryMergeAssistantMessageSegment(
     toolCalls: ToolCallInfo[] | undefined;
     ui: PiviMessageUiData | undefined;
   },
+  overlayCovered: boolean,
 ): boolean {
   if (role !== 'assistant' || !target) {
     return false;
   }
-  mergeAssistantMessageSegment(target, segment);
+  mergeAssistantMessageSegment(target, segment, overlayCovered);
   return true;
 }
 
@@ -401,6 +428,8 @@ export function entriesToChatMessages(
 ): ChatMessage[] {
   const messages: ChatMessage[] = [];
   let lastAssistantMessage: ChatMessage | null = null;
+  // Assistant messages whose blocks came from a turn-level UI overlay.
+  const overlayMessages = new WeakSet<ChatMessage>();
 
   for (let entryIndex = 0; entryIndex < branch.length; entryIndex += 1) {
     const entry = branch[entryIndex];
@@ -467,6 +496,7 @@ export function entriesToChatMessages(
           toolCalls: reconstructedToolCalls,
           ui,
         },
+        !!lastAssistantMessage && overlayMessages.has(lastAssistantMessage),
       )
     ) {
       continue;
@@ -505,6 +535,7 @@ export function entriesToChatMessages(
       continue;
     }
 
+    if (agentMsg.role === 'assistant' && ui?.contentBlocks) overlayMessages.add(message);
     messages.push(message);
     lastAssistantMessage = agentMsg.role === 'assistant' ? message : null;
   }

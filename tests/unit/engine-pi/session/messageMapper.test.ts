@@ -55,6 +55,81 @@ describe('MessageMapper', () => {
     expect(secondMessage.content).toBe('world');
   });
 
+  it('does not replay an aborted segment the interrupted turn overlay already covers', () => {
+    const interruption = '\n\n<span class="pivi-interrupted">Interrupted</span>';
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            { type: 'thinking', thinking: 'Read the file first.' },
+            { type: 'toolCall', id: 'tool-1', name: 'read', arguments: { path: 'note.md' } },
+          ],
+          stopReason: 'toolUse',
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 't1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'tool-1',
+          content: [{ type: 'text', text: 'body' }],
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 'a2',
+        parentId: 't1',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        message: {
+          role: 'assistant',
+          content: [{ type: 'thinking', thinking: 'Plan the reformat.' }],
+          stopReason: 'aborted',
+          timestamp: 3,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 'a2',
+        timestamp: '2026-01-01T00:00:03.000Z',
+        customType: PIVI_MESSAGE_UI,
+        // The overlay is finalized before the aborted segment is persisted, so
+        // it targets the first assistant entry while holding the whole turn.
+        data: {
+          targetEntryId: 'a1',
+          assistantMessageId: 'a1',
+          contentBlocks: [
+            { type: 'thinking', content: 'Read the file first.' },
+            { type: 'tool_use', toolId: 'tool-1' },
+            { type: 'thinking', content: 'Plan the reformat.' },
+            { type: 'text', content: interruption },
+          ],
+        },
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
+
+    expect(messages).toHaveLength(1);
+    expect(first(messages).contentBlocks).toEqual([
+      { type: 'thinking', content: 'Read the file first.' },
+      { type: 'tool_use', toolId: 'tool-1' },
+      { type: 'thinking', content: 'Plan the reformat.' },
+      { type: 'text', content: interruption },
+    ]);
+    expect(first(messages).toolCalls).toHaveLength(1);
+  });
+
   it('merges reasoning-leak fragments in assistant overlays back into the thinking run', () => {
     const branch: SessionEntry[] = [
       {

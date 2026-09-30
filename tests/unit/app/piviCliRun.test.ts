@@ -95,11 +95,11 @@ describe('runPiviCliCommand', () => {
     await runPiviCliCommand(host, {
       command: 'summary',
       path: 'Notes/Recipe.md',
-      model: 'deepseek/deepseek-chat',
+      model: 'deepseek/deepseek-flash',
     });
     expect(queries).toHaveLength(1);
     expect(queries[0]!.prompt).toBe('Summarize Recipe: # Recipe');
-    expect(queries[0]!.config.model).toBe('deepseek/deepseek-chat');
+    expect(queries[0]!.config.model).toBe('deepseek/deepseek-flash');
     expect(queries[0]!.config.systemPrompt).toContain('Pivi workspace command');
   });
 

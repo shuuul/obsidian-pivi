@@ -1068,7 +1068,7 @@ describe('React settings foundation', () => {
     Object.assign(ports.catalog, {
       listModelsForProvider: (providerId: string) => providerId === customProvider.id
         ? [{ value: `${customProvider.id}/qwen3.8-27b`, label: 'qwen3.8-27b' }]
-        : [{ value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' }],
+        : [{ value: 'deepseek/deepseek-flash', label: 'DeepSeek V4.1 Flash' }],
       listCatalogModels: () => [
         { value: 'openrouter/qwen/qwen3.8-27b', label: 'Qwen 3.8 27B' },
         { value: 'qwen/qwen3.5-27b', label: 'Qwen 3.5 27B' },
@@ -1095,7 +1095,7 @@ describe('React settings foundation', () => {
 
     // Built-in provider cards do not offer the catalog-id field.
     fireEvent.click(screen.getByText('deepseek', { selector: '.pivi-settings-card__name' }));
-    expect(screen.queryByLabelText('Catalog model ID for DeepSeek Chat')).toBeNull();
+    expect(screen.queryByLabelText('Catalog model ID for DeepSeek V4.1 Flash')).toBeNull();
 
     fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-settings-card__name' }));
     const input = screen.getByLabelText('Catalog model ID for qwen3.8-27b');
@@ -1137,7 +1137,7 @@ describe('React settings foundation', () => {
     Object.assign(ports.catalog, {
       listModelsForProvider: (providerId: string) => providerId === customProvider.id
         ? [{ value: `${customProvider.id}/qwen3.8-27b`, label: 'qwen3.8-27b' }]
-        : [{ value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' }],
+        : [{ value: 'deepseek/deepseek-flash', label: 'DeepSeek V4.1 Flash' }],
     });
     Object.assign(ports.complex.models, {
       getSettings: () => ({
@@ -1155,7 +1155,7 @@ describe('React settings foundation', () => {
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
 
     fireEvent.click(screen.getByText('deepseek', { selector: '.pivi-settings-card__name' }));
-    expect(screen.queryByLabelText('Output length for DeepSeek Chat')).toBeNull();
+    expect(screen.queryByLabelText('Output length for DeepSeek V4.1 Flash')).toBeNull();
 
     fireEvent.click(screen.getByText('DGX Spark', { selector: '.pivi-settings-card__name' }));
     fireEvent.click(screen.getByText('Advanced model compatibility'));
@@ -1327,7 +1327,7 @@ describe('React settings foundation', () => {
             models: [{ id: modelId, name: modelId }],
             apiKeyRequired: false,
           }],
-          visibleModels: [`${providerId}/${modelId}`, 'deepseek/deepseek-chat'],
+          visibleModels: [`${providerId}/${modelId}`, 'deepseek/deepseek-flash'],
           availableModes: [],
           discoveredModels: [],
           environmentVariables: '',
@@ -1341,7 +1341,7 @@ describe('React settings foundation', () => {
     });
     Object.assign(ports.catalog, {
       listComposerModelOptions: () => [
-        { value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' },
+        { value: 'deepseek/deepseek-flash', label: 'DeepSeek V4.1 Flash' },
         {
           value: `${renamed ? newProviderId : oldProviderId}/${modelId}`,
           label: renamed ? 'Renamed Qwen' : 'Original Qwen',

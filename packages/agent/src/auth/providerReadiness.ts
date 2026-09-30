@@ -43,11 +43,17 @@ function hasEnvironmentCredential(providerId: string, environmentVariables: stri
     || !!(names.authTokenVar && env[names.authTokenVar]?.trim());
 }
 
+/**
+ * `expires` is the access-token deadline, not the session's. pi-ai refreshes
+ * an expired access token on the next request whenever a refresh token is
+ * stored, so only a credential that cannot refresh is actually expired.
+ * Short-lived access tokens (Sign in with ChatGPT) otherwise read as expired
+ * minutes after a successful login.
+ */
 function isExpiredOAuth(credential: ProviderCredential | undefined, now: number): boolean {
-  return credential?.type === 'oauth'
-    && 'expires' in credential
-    && typeof credential.expires === 'number'
-    && credential.expires <= now;
+  if (!isOAuthCredential(credential)) return false;
+  if (typeof credential.refresh === 'string' && credential.refresh.trim()) return false;
+  return typeof credential.expires === 'number' && credential.expires <= now;
 }
 
 export function deriveProviderReadinessStatus(

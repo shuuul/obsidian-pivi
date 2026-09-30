@@ -25,8 +25,8 @@ function createHarness(
   const deleteCredential = jest.fn(async () => undefined);
   const modifyCredential = jest.fn(async () => undefined);
   const deepseekModel: ChatUIOption = {
-    value: 'deepseek/deepseek-chat',
-    label: 'DeepSeek Chat',
+    value: 'deepseek/deepseek-flash',
+    label: 'DeepSeek V4.1 Flash',
   };
   const host = {
     app: { secretStorage: undefined },
@@ -111,10 +111,10 @@ describe('createSettingsModelsPort provider removal', () => {
     expect(harness.settings.agentSettings).toMatchObject({
       addedProviders: ['deepseek'],
       disabledProviders: [],
-      visibleModels: ['deepseek/deepseek-chat'],
+      visibleModels: ['deepseek/deepseek-flash'],
       customProviders: [],
     });
-    expect(harness.settings.model).toBe('deepseek/deepseek-chat');
+    expect(harness.settings.model).toBe('deepseek/deepseek-flash');
     expect(harness.settings.titleGenerationModel).toBe('');
     expect(harness.deleteCredential).not.toHaveBeenCalled();
     expect(harness.saveSettings).toHaveBeenCalledTimes(1);
@@ -289,7 +289,7 @@ describe('createSettingsModelsPort provider removal', () => {
     harness.settings.agentSettings.visibleModels = [
       `${providerId}/a`,
       `${providerId}/b`,
-      'deepseek/deepseek-chat',
+      'deepseek/deepseek-flash',
     ];
     harness.settings.agentSettings.customProviders = [{
       id: providerId,
@@ -307,7 +307,7 @@ describe('createSettingsModelsPort provider removal', () => {
     ]);
     expect(harness.settings.agentSettings.visibleModels).toEqual([
       `${providerId}/b`,
-      'deepseek/deepseek-chat',
+      'deepseek/deepseek-flash',
     ]);
   });
 
