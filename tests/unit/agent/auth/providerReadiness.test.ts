@@ -82,6 +82,24 @@ describe('deriveProviderReadinessStatus (@pivi/agent/auth)', () => {
     expect(status.kind).toBe('oauth-expired');
   });
 
+  it('treats a lapsed access token with a refresh token as ready', () => {
+    const credential: ProviderCredential = {
+      type: 'oauth',
+      access: 'token',
+      refresh: 'refresh-token',
+      expires: 99,
+    };
+    const status = deriveProviderReadinessStatus({
+      providerId: 'chatgpt',
+      piSettings: basePiSettings,
+      credential,
+      modelCount: 1,
+      now: 100,
+    });
+
+    expect(status.kind).toBe('ready');
+  });
+
   it('marks providers without local model metadata as unavailable', () => {
     const status = deriveProviderReadinessStatus({
       providerId: 'anthropic',
