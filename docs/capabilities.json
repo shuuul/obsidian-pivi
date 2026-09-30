@@ -3,8 +3,7 @@
   "mcp": {
     "remoteOnlySince": "0.25.0",
     "supportedTransports": [
-      "streamable-http",
-      "sse"
+      "streamable-http"
     ]
   },
   "removedCapabilities": [
@@ -15,6 +14,10 @@
     {
       "id": "mcp-json-import",
       "removedIn": "0.25.0"
+    },
+    {
+      "id": "sse-mcp",
+      "removedIn": "0.31.0"
     },
     {
       "id": "vim-mappings",

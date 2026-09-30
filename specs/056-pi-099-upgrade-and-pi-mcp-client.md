@@ -20,10 +20,10 @@ Pivi pinned `@earendil-works/pi-*` at `0.87.1`. Upstream `0.99.0` added MCP supp
 
 ## Goal and success criteria
 
-- [ ] All four Pi packages (`pi-agent-core`, `pi-ai`, `pi-coding-agent`, `pi-mcp`) pinned at one exact version; `check:pi-pins` and `check:pi-compatibility` green.
+- [x] All four Pi packages (`pi-agent-core`, `pi-ai`, `pi-coding-agent`, `pi-mcp`) pinned at one exact version; `check:pi-pins` and `check:pi-compatibility` green.
 - [x] ChatGPT sign-in is available as its own OAuth provider (`chatgpt/*`) with the OpenAI icon; OpenAI Codex stays unchanged.
-- [ ] `@pivi/agent/mcp` uses `@earendil-works/pi-mcp`; `@modelcontextprotocol/sdk` and `build/plugins/shim-mcp-validation.mjs` are removed.
-- [ ] Legacy `type: "sse"` MCP entries are rejected on load with a localized notice pointing at the Streamable HTTP endpoint.
+- [x] `@pivi/agent/mcp` uses `@earendil-works/pi-mcp`; `@modelcontextprotocol/sdk` and `build/plugins/shim-mcp-validation.mjs` are removed.
+- [x] Legacy `type: "sse"` MCP entries are rewritten on load to disabled Streamable HTTP entries (URL, headers, and secrets kept) with a one-time localized notice pointing at the Streamable HTTP endpoint.
 - [ ] Local CI-equivalent suite green, including `check:bundle-size`.
 
 ## Scope and non-goals
@@ -44,6 +44,9 @@ Not in scope:
 | 2026-09-30 | Drop legacy SSE MCP support. | pi-mcp does not implement HTTP+SSE; keeping the official SDK for SSE alone would forfeit the bundle savings and maintain two clients. | WS-02 |
 | 2026-09-30 | Pin `pi-mcp` together with the other Pi packages. | One upstream release train; one compatibility canary. | WS-01, WS-02 |
 | 2026-09-30 | Model ChatGPT sign-in as an OAuth-only `chatgpt` provider over pi-ai's `openai` provider; `openai` becomes API-key only. | Mirrors the `claude`/`anthropic` split so credentials, readiness, and model namespaces stay isolated. The device id is stored device-locally (`pivi.device-id.v1`). | WS-01 |
+| 2026-09-30 | Rewrite legacy SSE entries to disabled `http` entries instead of dropping them. | Dropping would delete the entry and orphan header secrets on the next save; a disabled entry keeps URL/headers/secrets visible and editable in Settings. | WS-02 |
+| 2026-09-30 | Pivi owns the OAuth client-credentials grant (`mcpClientCredentials.ts`). | pi-mcp implements only the authorization-code flow; the official SDK previously provided client credentials. | WS-02 |
+| 2026-09-30 | Remove the MCP editor's transport selector. | Streamable HTTP is the only transport; the row would offer a single option. Needs human visual sign-off of the MCP editor layout. | WS-02 |
 | 2026-09-30 | Accept the ~210 KiB bundle growth from pi 0.99.1. | Upstream moved pi-ai to `openai@7` (+143 KiB) and grew the OpenRouter catalog (+37 KiB); WS-02 removes the MCP SDK, zod, and cfworker validator. | WS-01, WS-02 |
 
 ## Workstreams
@@ -51,13 +54,14 @@ Not in scope:
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-01 | Pi 0.87.1 → 0.99.1, ChatGPT OAuth provider | Claude Code | Done | None | typecheck, lint, `check:boundaries`, `npm run test`, `test:pi-compat` |
-| WS-02 | MCP client migration to pi-mcp; SSE removal | Claude Code | In progress | WS-01 | MCP unit tests, full suite, bundle size, live Obsidian MCP connect/OAuth |
+| WS-02 | MCP client migration to pi-mcp; SSE removal | Claude Code | Done | WS-01 | MCP unit tests, full suite, bundle size, live Obsidian MCP connect/OAuth |
 
 ## Verification
 
 - `npm run check:dependencies && npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build && npm run check:bundle-size`
 - `npm run test:pi-compat`
 - `npm run check:specs`
+- Human visual sign-off: Settings > MCP servers add/edit editor (inline and modal) without the Type row, in light and dark themes; Settings > Models Add provider picker shows ChatGPT next to OpenAI Codex with the OpenAI icon.
 - Manual in Obsidian: ChatGPT sign-in and a chat turn on a `chatgpt/*` model; OpenAI Codex sign-in unchanged; connect an HTTP MCP server (with and without OAuth) and call a tool; a legacy SSE entry shows the migration notice.
 
 ## Documentation sync
@@ -75,6 +79,14 @@ Not in scope:
 - Remaining: live Obsidian sign-in check.
 - Blockers: None.
 - Next action: WS-02.
+
+### 2026-09-30 — Claude Code — WS-02
+
+- Changed: `@modelcontextprotocol/sdk`, `legacySseTransport.ts`, and `shim-mcp-validation.mjs` removed; `mcpHttpClient.ts` and `oauth/mcpClientCredentials.ts` added; pool, tester, OAuth provider/flow/service moved to pi-mcp; legacy SSE upgrade in `McpStorage` plus notice in composition; MCP editor transport selector and its locale keys removed; `check:pi-pins`, `check:pi-compatibility`, the Pi canary, ESLint, and `check:architecture` extended to `pi-mcp` (allowed only in `@pivi/agent/src/mcp`); zod/SDK-only overrides dropped; `@cfworker/json-schema` moved to devDependencies.
+- Evidence: typecheck, lint, boundaries, coverage suite, build, and bundle size green; `main.js` 4.90 MB after WS-01 → 4.75 MB (pi-mcp contributes ~32 KB; stdio transport and callback server are tree-shaken).
+- Remaining: live Obsidian checks (ChatGPT sign-in, MCP connect with and without OAuth, legacy SSE notice) and the human visual sign-off above.
+- Blockers: None.
+- Next action: user verification in the reloaded plugin.
 
 ## Completion summary
 

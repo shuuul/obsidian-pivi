@@ -76,10 +76,10 @@ describe("McpOAuthService", () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
     const app = createMockApp();
     const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
-    const originalProvider = service.createAuthProvider(
+    const originalProvider = service.createOAuthClientProvider(
       oauthServer("github", "https://mcp.example.com"),
     );
-    const movedProvider = service.createAuthProvider(
+    const movedProvider = service.createOAuthClientProvider(
       oauthServer("github", "https://other.example.com"),
     );
 
@@ -100,6 +100,9 @@ describe("McpOAuthService", () => {
       scope: "repo",
     });
     await expect(movedProvider!.tokens()).resolves.toBeUndefined();
+    await expect(
+      service.createAuthProvider(oauthServer("github", "https://mcp.example.com"))!.token(),
+    ).resolves.toBe("mcp-token");
   });
 
   it("uses the injected callback port for auth provider redirect URLs", () => {
@@ -112,9 +115,9 @@ describe("McpOAuthService", () => {
       { callbackPort: 34567 },
     );
 
-    const provider = service.createAuthProvider(
+    const provider = service.createOAuthClientProvider(
       oauthServer("github", "https://mcp.example.com"),
-    ) as { redirectUrl: string | undefined } | null;
+    );
 
     expect(provider?.redirectUrl).toBe("http://localhost:34567/callback");
   });

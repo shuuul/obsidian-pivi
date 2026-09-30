@@ -84,7 +84,7 @@ const AGENT_MCP_VALUE_MAP = {
 const AGENT_MCP_REMOTE_SERVER = {
   type: 'object',
   properties: {
-    type: { type: 'string', enum: ['http', 'sse'] },
+    type: { type: 'string', enum: ['http'] },
     url: STRING,
     headers: AGENT_MCP_VALUE_MAP,
     enabled: BOOLEAN,

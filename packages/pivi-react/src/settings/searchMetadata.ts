@@ -95,7 +95,6 @@ export const FORMER_SETTINGS_SEARCH_KEYS = [
   'settings.prompt.custom.heading',
   'settings.prompt.usage.heading',
   'settings.mcp.modal.serverName',
-  'settings.mcp.modal.type',
   'settings.mcp.modal.url',
   'settings.mcp.modal.headersName',
   'settings.mcp.modal.authHeading',

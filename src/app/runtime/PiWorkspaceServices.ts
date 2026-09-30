@@ -60,9 +60,11 @@ import {
   getObsidianToolsSettingsFromBag,
   resolveLoginShellPath,
 } from "@pivi/obsidian-tools";
+import { Notice } from "obsidian";
 
 import { getOrCreateDeviceInstallationId } from "@/app/deviceInstallationId";
 import { ObsidianDeviceLocalModelCatalogStore } from "@/app/deviceLocalModelCatalogStore";
+import { t } from "@/app/i18n";
 import { requestOAuthManualCode } from "@/app/oauthManualCodePrompt";
 
 import { createBaseSessionTools } from "./baseSessionTools";
@@ -117,6 +119,11 @@ export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
   dispose(): Promise<void>;
 }
 
+
+function notifyLegacySseMcpServers(serverNames: readonly string[]): void {
+  if (serverNames.length === 0) return;
+  new Notice(t('settings.mcp.legacySseDisabled', { servers: serverNames.join(', ') }), 15000);
+}
 
 function readMcpOAuthCallbackPort(): number | undefined {
   const rawPort = process.env.MCP_OAUTH_CALLBACK_PORT;
@@ -289,6 +296,7 @@ export async function createPiWorkspaceServices(
     mcpFetch: network.mcpFetch,
   });
   await mcpServerManager.loadServers();
+  notifyLegacySseMcpServers(mcpServerManager.takeLegacySseServers());
   grantPrivateOrigins(
     network.grants,
     mcpServerManager

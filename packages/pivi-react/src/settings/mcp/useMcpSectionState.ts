@@ -110,9 +110,7 @@ export function mcpDraftFromLines(value: string): Record<string, string> {
 export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 'http'): McpDraft {
   const config = server?.config;
   const serverType = config ? getMcpServerType(config) : type;
-  const remote = config && (serverType === 'http' || serverType === 'sse')
-    ? config
-    : undefined;
+  const remote = config;
   const oauth = server?.oauth && typeof server.oauth === 'object' ? server.oauth : undefined;
   return {
     name: server?.name ?? '',
@@ -139,9 +137,7 @@ export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): Ma
   const name = assertValidMcpServerName(draft.name);
   const url = validateMcpRemoteUrl(draft.url);
   const headers = mcpDraftFromLines(draft.headers);
-  const config: McpServerConfig = draft.type === 'sse'
-    ? { type: 'sse', url, ...(Object.keys(headers).length ? { headers } : {}) }
-    : { type: 'http', url, ...(Object.keys(headers).length ? { headers } : {}) };
+  const config: McpServerConfig = { type: 'http', url, ...(Object.keys(headers).length ? { headers } : {}) };
   const server: ManagedMcpServer = {
     name,
     config,

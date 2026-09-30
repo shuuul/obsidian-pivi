@@ -15,7 +15,7 @@ export interface DropdownMcpServerProvider {
     name: string;
     enabled: boolean;
     description?: string;
-    type?: 'http' | 'sse';
+    type?: 'http';
   }>;
 }
 

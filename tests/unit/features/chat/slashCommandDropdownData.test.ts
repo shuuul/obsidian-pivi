@@ -114,7 +114,7 @@ describe('slashCommandDropdownData prefetch helpers', () => {
       () => ({
         getServers: () => [
           { name: 'remote', enabled: true, type: 'http' as const },
-          { name: 'events', enabled: true, type: 'sse' as const },
+          { name: 'events', enabled: true, type: 'http' as const },
         ],
       }),
       () => ({ listTools }),

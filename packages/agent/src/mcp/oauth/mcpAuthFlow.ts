@@ -1,26 +1,23 @@
-import {
-  auth as runSdkAuth,
-  UnauthorizedError,
-} from '@modelcontextprotocol/sdk/client/auth.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { authorizeMcp } from '@earendil-works/pi-mcp/oauth';
 
-import { PluginLogger } from '../../logging/pluginLogger';
 import type { ExternalOpener } from '../../ports';
 import type { McpTransportFetch } from '../ports';
 import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../types';
 import { getMcpServerUrl } from '../types';
 import { McpCallbackServer } from './mcpCallbackServer';
+import { authorizeMcpClientCredentials } from './mcpClientCredentials';
 import { McpOAuthProvider } from './mcpOAuthProvider';
 import type { McpAuthEntryStore } from './mcpVaultAuthStore';
 import { openAuthUrl } from './openAuthUrl';
 
-const logger = new PluginLogger('McpAuthFlow');
-
 type OperationId = symbol;
 
-interface PendingTransport {
+/** An authorization-code flow waiting for the browser callback. */
+interface PendingAuthorization {
   operationId: OperationId;
-  transport: StreamableHTTPClientTransport;
+  provider: McpOAuthProvider;
+  serverUrl: string;
+  fetch: McpTransportFetch;
 }
 
 interface PendingAuthentication {
@@ -62,7 +59,7 @@ export async function getAuthStatusForServer(
 }
 
 export class McpAuthFlow {
-  private readonly pendingTransports = new Map<string, PendingTransport>();
+  private readonly pendingAuthorizations = new Map<string, PendingAuthorization>();
   private readonly pendingAuthentications = new Map<string, PendingAuthentication>();
   private lifecycleGeneration = 0;
   readonly callbackServer: McpCallbackServer;
@@ -111,11 +108,8 @@ export class McpAuthFlow {
         },
         this.callbackServer.port,
       );
-      const result = await runSdkAuth(authProvider, { serverUrl });
+      await authorizeMcpClientCredentials(authProvider, { serverUrl, scope: config.scope, fetch });
       this.assertActive(lifecycleGeneration);
-      if (result !== 'AUTHORIZED') {
-        throw new UnauthorizedError('Failed to authorize');
-      }
       return { authorizationUrl: '', operationId };
     }
 
@@ -141,25 +135,20 @@ export class McpAuthFlow {
     );
 
     try {
-      const result = await runSdkAuth(authProvider, { serverUrl });
+      const result = await authorizeMcp(authProvider, {
+        serverUrl,
+        fetch,
+        ...(config.scope ? { scope: config.scope } : {}),
+      });
       this.assertActive(lifecycleGeneration);
       if (result === 'AUTHORIZED') {
         await this.clearMatchingOAuthState(serverName, oauthState, store);
         return { authorizationUrl: '', operationId };
       }
       if (!capturedUrl) {
-        throw new UnauthorizedError('OAuth authorization URL was not provided');
+        throw new Error('OAuth authorization URL was not provided');
       }
-      this.pendingTransports.set(
-        serverName,
-        {
-          operationId,
-          transport: new StreamableHTTPClientTransport(new URL(serverUrl), {
-            authProvider,
-            fetch,
-          }),
-        },
-      );
+      this.pendingAuthorizations.set(serverName, { operationId, provider: authProvider, serverUrl, fetch });
       return { authorizationUrl: capturedUrl.toString(), operationId };
     } catch (error) {
       await this.clearMatchingOAuthState(serverName, oauthState, store);
@@ -172,19 +161,22 @@ export class McpAuthFlow {
     authorizationCode: string,
     operationId: OperationId,
   ): Promise<McpAuthStatus> {
-    const pending = this.pendingTransports.get(serverName);
+    const pending = this.pendingAuthorizations.get(serverName);
     if (!pending || pending.operationId !== operationId) {
       throw new Error(`No pending OAuth flow for server: ${serverName}`);
     }
 
     try {
-      await pending.transport.finishAuth(authorizationCode);
+      await authorizeMcp(pending.provider, {
+        serverUrl: pending.serverUrl,
+        authorizationCode,
+        fetch: pending.fetch,
+      });
       return 'authenticated';
     } finally {
-      if (this.pendingTransports.get(serverName) === pending) {
-        this.pendingTransports.delete(serverName);
+      if (this.pendingAuthorizations.get(serverName) === pending) {
+        this.pendingAuthorizations.delete(serverName);
       }
-      await pending.transport.close().catch(() => {});
     }
   }
 
@@ -232,7 +224,7 @@ export class McpAuthFlow {
       } catch (error) {
         this.callbackServer.cancelPendingCallback(oauthState);
         await this.clearMatchingOAuthState(server.name, oauthState, store);
-        await this.closePendingTransport(server.name, operationId);
+        this.clearPendingAuthorization(server.name, operationId);
         throw error;
       }
     })();
@@ -254,13 +246,7 @@ export class McpAuthFlow {
     if (oauthState) {
       this.callbackServer.cancelPendingCallback(oauthState);
     }
-    const pendingTransport = this.pendingTransports.get(serverName);
-    if (pendingTransport) {
-      this.pendingTransports.delete(serverName);
-      await pendingTransport.transport.close().catch((error) => {
-        logger.warn(`Failed to close OAuth transport for ${serverName}`, error);
-      });
-    }
+    this.pendingAuthorizations.delete(serverName);
     await store.removeEntry(serverName);
     await store.clearOAuthState(serverName);
   }
@@ -269,25 +255,13 @@ export class McpAuthFlow {
     this.lifecycleGeneration += 1;
     this.pendingAuthentications.clear();
     await this.callbackServer.stop();
-
-    const transports = Array.from(this.pendingTransports.entries());
-    this.pendingTransports.clear();
-    await Promise.all(transports.map(async ([serverName, pending]) => {
-      await pending.transport.close().catch((error) => {
-        logger.warn(`Failed to close OAuth transport for ${serverName}`, error);
-      });
-    }));
+    this.pendingAuthorizations.clear();
   }
 
-  private async closePendingTransport(serverName: string, operationId: OperationId): Promise<void> {
-    const pending = this.pendingTransports.get(serverName);
-    if (!pending || pending.operationId !== operationId) {
-      return;
+  private clearPendingAuthorization(serverName: string, operationId: OperationId): void {
+    if (this.pendingAuthorizations.get(serverName)?.operationId === operationId) {
+      this.pendingAuthorizations.delete(serverName);
     }
-    this.pendingTransports.delete(serverName);
-    await pending.transport.close().catch((closeError) => {
-      logger.warn(`Failed to close OAuth transport for ${serverName}`, closeError);
-    });
   }
 
   private async clearMatchingOAuthState(

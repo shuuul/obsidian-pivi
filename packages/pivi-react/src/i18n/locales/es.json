@@ -1142,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "Se desactivaron los servidores MCP que usan el transporte SSE heredado: {servers}. Cambia cada URL a su endpoint Streamable HTTP (a menudo /mcp en lugar de /sse) en Ajustes y vuelve a activarlo.",
       "empty": "No hay servidores MCP configurados. Haz clic en Añadir para crear uno.",
       "add": "+ Añadir MCP",
       "clearOauth": "Borrar credenciales OAuth",
@@ -1167,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "El nombre del servidor solo puede contener letras, números, puntos, guiones y guiones bajos",
         "needName": "Introduce un nombre de servidor",
-        "type": "Tipo",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "Introduce una URL",
         "headersName": "Cabeceras",
         "authHeading": "Autenticación",

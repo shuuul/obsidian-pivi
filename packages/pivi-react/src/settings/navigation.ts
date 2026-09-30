@@ -180,7 +180,6 @@ export const SETTINGS_PAGES: Readonly<Record<SettingsPageId, SettingsPageDescrip
     aliasKeys: [
       'settings.tools.sections.mcp',
       'settings.mcp.modal.serverName',
-      'settings.mcp.modal.type',
       'settings.mcp.modal.url',
       'settings.mcp.modal.headersName',
       'settings.mcp.modal.authHeading',

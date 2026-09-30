@@ -6,7 +6,7 @@
 
 `@pivi/engine-pi` (`packages/engine-pi/`) is Pivi's Pi SDK adapter package around `@earendil-works/pi-agent-core`, `@earendil-works/pi-ai`, and the Pi coding-agent session implementation. It constructs in-process Pi agents, adapts Pivi tools and sessions to Pi SDK types, configures providers/authentication, and implements host-neutral `PiChatService` / `AuxQueryRunner` contracts owned by `@pivi/agent`.
 
-This is the **only application source package where raw `@earendil-works/*` imports are allowed**. It owns the three exact synchronized Pi pins. Only `src/app/**` and `src/main.ts` (and tests) may import `@pivi/engine-pi`; product UI, host, tools, and React consume `@pivi/agent` contracts instead.
+This is the **only application source package where raw Pi SDK (`@earendil-works/*`) imports are allowed**; the sole exception is the standalone `@earendil-works/pi-mcp` client inside `@pivi/agent/src/mcp`. It owns the three exact Pi SDK pins, synchronized with `pi-mcp` by `check:pi-pins`. Only `src/app/**` and `src/main.ts` (and tests) may import `@pivi/engine-pi`; product UI, host, tools, and React consume `@pivi/agent` contracts instead.
 
 ## Architecture
 

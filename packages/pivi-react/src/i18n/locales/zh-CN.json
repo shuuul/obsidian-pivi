@@ -1142,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "以下 MCP 服务器使用旧版 SSE 传输，已被停用：{servers}。请在设置中把地址改为 Streamable HTTP 端点（通常是 /mcp 而不是 /sse），然后重新启用。",
       "empty": "尚未配置 MCP 服务器。点击添加以创建。",
       "add": "+ 添加 MCP",
       "clearOauth": "清除 OAuth 凭据",
@@ -1167,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "服务器名称只能包含字母、数字、点、连字符和下划线",
         "needName": "请输入服务器名称",
-        "type": "类型",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "请输入 URL",
         "headersName": "标头",
         "authHeading": "认证",

@@ -3,7 +3,8 @@
   "upstreamPackages": [
     "@earendil-works/pi-agent-core",
     "@earendil-works/pi-ai",
-    "@earendil-works/pi-coding-agent"
+    "@earendil-works/pi-coding-agent",
+    "@earendil-works/pi-mcp"
   ],
   "entries": [
     {

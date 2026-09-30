@@ -1,11 +1,8 @@
-import { Client } from "@modelcontextprotocol/sdk/client";
-import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
+import type { McpClient } from "@earendil-works/pi-mcp";
 
 import { PluginLogger } from '../logging/pluginLogger';
 import type { SyncSecretStore } from '../ports';
-import { createLegacySseTransport } from "./legacySseTransport";
+import { connectMcpHttpClient, type McpHttpConnectionOptions } from "./mcpHttpClient";
 import {
   createMcpResolveHost,
   resolveMcpBearerToken,
@@ -20,16 +17,10 @@ import type { McpOAuthService } from "./oauth/mcpOAuthService";
 import type { McpProcessEnv, McpTransportFetch } from "./ports";
 import type { McpTool } from "./types";
 import type { ManagedMcpServer } from "./types";
-import { getMcpServerType, supportsMcpOAuth } from "./types";
-
-interface UrlServerConfig {
-  url: string;
-  headers?: Record<string, string>;
-}
+import { supportsMcpOAuth } from "./types";
 
 interface ServerConnection {
-  client: Client;
-  transport: Transport;
+  client: McpClient;
   tools: McpTool[];
   activeCalls: number;
   retired: boolean;
@@ -91,32 +82,21 @@ function resolveStoredHeaders(
   return Object.keys(resolved).length > 0 ? resolved : undefined;
 }
 
-function createTransport(
+function createConnectionOptions(
   server: ManagedMcpServer,
   oauth: McpOAuthService | null,
   fetch: McpTransportFetch,
   processEnv: McpProcessEnv,
   secretStorage: SyncSecretStore | undefined,
-): Transport {
+): McpHttpConnectionOptions {
   const config = server.config;
-  const type = getMcpServerType(config);
-
-  const urlConfig = config as UrlServerConfig;
-  const url = new URL(urlConfig.url);
-  const resolvedHeaders = resolveStoredHeaders(
+  let headers = resolveStoredHeaders(
     server.name,
-    urlConfig.headers,
+    config.headers,
     processEnv,
     secretStorage,
   );
-  const options: {
-    fetch: typeof fetch;
-    requestInit?: RequestInit;
-    authProvider?: OAuthClientProvider;
-  } = {
-    fetch,
-    requestInit: resolvedHeaders ? { headers: resolvedHeaders } : undefined,
-  };
+  const options: McpHttpConnectionOptions = { url: config.url, fetch };
 
   if (supportsMcpOAuth(server) && oauth) {
     const authProvider = oauth.createAuthProvider(server);
@@ -126,19 +106,11 @@ function createTransport(
   } else if (server.auth === "bearer") {
     const bearerToken = resolveMcpBearerToken(server, processEnv);
     if (bearerToken) {
-      options.requestInit = {
-        ...options.requestInit,
-        headers: mergeBearerHeaders(
-          options.requestInit?.headers as Record<string, string> | undefined,
-          bearerToken,
-        ),
-      };
+      headers = mergeBearerHeaders(headers, bearerToken);
     }
   }
 
-  return type === "sse"
-    ? createLegacySseTransport(url, options)
-    : new StreamableHTTPClientTransport(url, options);
+  return headers ? { ...options, headers } : options;
 }
 
 const logger = new PluginLogger('McpConnectionPool');
@@ -184,8 +156,8 @@ export class McpConnectionPool {
     const combined = combineAbortSignals([signal, connection.abortController.signal]);
     try {
       const result = await connection.client.callTool(
-        { name: toolName, arguments: args },
-        undefined,
+        toolName,
+        args,
         combined.signal ? { signal: combined.signal } : undefined,
       );
 
@@ -416,16 +388,11 @@ export class McpConnectionPool {
   }
 
   private async closeConnectionOnce(connection: ServerConnection): Promise<void> {
-    const results = await Promise.allSettled([
-      connection.client.close(),
-      connection.transport.close?.() ?? Promise.resolve(),
-    ]);
-    const [clientResult, transportResult] = results;
-    if (clientResult?.status === "rejected") {
-      logger.warn('MCP client close failed', clientResult.reason);
-    }
-    if (transportResult?.status === "rejected") {
-      logger.warn('MCP transport close failed', transportResult.reason);
+    try {
+      // Closing the client also closes its transport.
+      await connection.client.close();
+    } catch (error) {
+      logger.warn('MCP client close failed', error);
     }
   }
 
@@ -433,23 +400,22 @@ export class McpConnectionPool {
     server: ManagedMcpServer,
     signal?: AbortSignal,
   ): Promise<ServerConnection> {
-    const transport = createTransport(
-      server,
-      this.oauth,
-      this.fetch,
-      this.processEnv,
-      this.secretStorage,
+    const { client } = await connectMcpHttpClient(
+      "pivi-mcp",
+      createConnectionOptions(
+        server,
+        this.oauth,
+        this.fetch,
+        this.processEnv,
+        this.secretStorage,
+      ),
+      signal,
     );
-    const client = new Client({ name: "pivi-mcp", version: "0.1.0" });
-    await client.connect(transport, signal ? { signal } : undefined);
 
     let tools: McpTool[];
     try {
-      const listed = await client.listTools(
-        undefined,
-        signal ? { signal } : undefined,
-      );
-      tools = listed.tools.map((tool) => ({
+      const listed = await client.listTools(signal ? { signal } : undefined);
+      tools = listed.map((tool) => ({
         name: tool.name,
         description: tool.description,
         inputSchema: tool.inputSchema,
@@ -464,7 +430,6 @@ export class McpConnectionPool {
 
     return {
       client,
-      transport,
       tools,
       activeCalls: 0,
       retired: false,

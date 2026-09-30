@@ -79,6 +79,36 @@ function remoteServer(
 }
 
 describe("McpStorage", () => {
+  it("rewrites legacy SSE servers to disabled Streamable HTTP entries once", async () => {
+    const adapter = new MemoryVaultAdapter({
+      [PIVI_MCP_CONFIG_PATH]: JSON.stringify({
+        mcpServers: {
+          events: { type: "sse", url: "https://events.example.test/sse" },
+          remote: { type: "http", url: "https://mcp.example.com" },
+        },
+        _pivi: { servers: { events: { description: "Event feed" } } },
+      }),
+    });
+    const storage = new McpStorage(adapter as unknown as FileStore, new SecretStorage());
+
+    const first = await storage.loadWithDiagnostics();
+
+    expect(first.legacySseServers).toEqual(["events"]);
+    expect(first.servers.find((server) => server.name === "events")).toMatchObject({
+      config: { type: "http", url: "https://events.example.test/sse" },
+      enabled: false,
+      description: "Event feed",
+    });
+    expect(first.servers.find((server) => server.name === "remote")?.enabled).toBe(true);
+    const persisted = JSON.parse(adapter.readSync(PIVI_MCP_CONFIG_PATH));
+    expect(persisted.mcpServers.events).toEqual({ type: "http", url: "https://events.example.test/sse" });
+    expect(persisted._pivi.servers.events).toMatchObject({ enabled: false, description: "Event feed" });
+
+    const second = await storage.loadWithDiagnostics();
+    expect(second.legacySseServers).toBeUndefined();
+    expect(second.servers.find((server) => server.name === "events")?.enabled).toBe(false);
+  });
+
   it("stores static MCP bearer tokens in SecretStorage instead of mcp.json", async () => {
     const adapter = new MemoryVaultAdapter();
     const secretStorage = new SecretStorage();

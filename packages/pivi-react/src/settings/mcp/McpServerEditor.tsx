@@ -73,13 +73,6 @@ export const McpServerEditor = forwardRef<McpServerEditorHandle, {
 
   useImperativeHandle(ref, () => ({ save: submit }));
 
-  const typeSelect = (
-    <Select label={t('settings.mcp.modal.type')} value={draft.type} onChange={(value) => update('type', value as McpServerType)}>
-      <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
-      <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
-    </Select>
-  );
-
   const actions = (
     <div className="pivi-settings-action-group">
       {server ? (
@@ -103,7 +96,6 @@ export const McpServerEditor = forwardRef<McpServerEditorHandle, {
               onChange={(event) => update('name', event.target.value)}
             />
           </SettingRow>
-          <SettingRow name={t('settings.mcp.modal.type')}>{typeSelect}</SettingRow>
           <SettingRow name={t('settings.mcp.modal.url')}>
             <input className="pivi-settings-control pivi-settings-control--fill" value={draft.url} placeholder={t('settings.mcp.modal.urlPlaceholder')} onChange={(event) => update('url', event.target.value)} />
           </SettingRow>
@@ -169,10 +161,6 @@ export const McpServerEditor = forwardRef<McpServerEditorHandle, {
         </label>
       </div>
       <div className="pivi-mcp-editor-row">
-        <label className="pivi-mcp-editor-field pivi-mcp-editor-field-type">
-          <span>{t('settings.mcp.modal.type')}</span>
-          {typeSelect}
-        </label>
         <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
           <span>{t('settings.mcp.modal.url')}</span>
           <input className="pivi-settings-control" value={draft.url} placeholder={t('settings.mcp.modal.urlPlaceholder')} onChange={(event) => update('url', event.target.value)} />

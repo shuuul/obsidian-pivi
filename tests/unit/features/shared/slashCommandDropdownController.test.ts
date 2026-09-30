@@ -407,7 +407,7 @@ describe('SlashCommandDropdown controller', () => {
         getMcpManager: () => ({
           getServers: () => [
             { name: 'remote', enabled: true, type: 'http' as const },
-            { name: 'events', enabled: true, type: 'sse' as const },
+            { name: 'events', enabled: true, type: 'http' as const },
           ],
         }),
         getMcpToolProvider: () => ({ listTools }),

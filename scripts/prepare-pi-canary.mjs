@@ -10,7 +10,11 @@ const piPackages = [
   '@earendil-works/pi-agent-core',
   '@earendil-works/pi-ai',
   '@earendil-works/pi-coding-agent',
+  '@earendil-works/pi-mcp',
 ];
+const PI_PACKAGE_WORKSPACES = {
+  '@earendil-works/pi-mcp': 'packages/agent/package.json',
+};
 
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(rootDir, relativePath), 'utf8'));
@@ -49,15 +53,17 @@ function resolveTarget() {
 function applyTarget(target) {
   if (!semver.valid(target)) throw new Error(`Invalid Pi canary target: ${target}`);
   const rootPackage = readJson('package.json');
-  const enginePackage = readJson('packages/engine-pi/package.json');
   const current = rootPackage.dependencies[piPackages[0]];
   if (!semver.gt(target, current)) throw new Error(`Pi canary target ${target} must be newer than ${current}`);
+  const workspacePackages = new Map();
   for (const packageName of piPackages) {
+    const workspacePath = PI_PACKAGE_WORKSPACES[packageName] ?? 'packages/engine-pi/package.json';
+    if (!workspacePackages.has(workspacePath)) workspacePackages.set(workspacePath, readJson(workspacePath));
     rootPackage.dependencies[packageName] = target;
-    enginePackage.dependencies[packageName] = target;
+    workspacePackages.get(workspacePath).dependencies[packageName] = target;
   }
   writeJson('package.json', rootPackage);
-  writeJson('packages/engine-pi/package.json', enginePackage);
+  for (const [workspacePath, workspacePackage] of workspacePackages) writeJson(workspacePath, workspacePackage);
 
   const shimPath = path.join(rootDir, 'packages/engine-pi/src/shims/piCodingAgentConfig.ts');
   const shim = fs.readFileSync(shimPath, 'utf8').replace(

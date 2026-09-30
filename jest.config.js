@@ -6,7 +6,13 @@ const baseConfig = {
   setupFilesAfterEnv: ['<rootDir>/tests/setupWindow.ts'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
+    // pi-mcp ships ESM only; tests run the real client against in-memory transports.
+    '^.+/node_modules/@earendil-works/pi-mcp/.+\\.js$': ['ts-jest', {
+      isolatedModules: true,
+      tsconfig: { allowJs: true, module: 'CommonJS', target: 'ES2022', esModuleInterop: true },
+    }],
   },
+  transformIgnorePatterns: ['/node_modules/(?!@earendil-works/pi-mcp/)'],
   roots: ['<rootDir>/src', '<rootDir>/packages', '<rootDir>/tests'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
@@ -24,6 +30,8 @@ const baseConfig = {
     '^@earendil-works/pi-ai/providers/all$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-ai/providers/.*$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
+    '^@earendil-works/pi-mcp$': '<rootDir>/node_modules/@earendil-works/pi-mcp/dist/index.js',
+    '^@earendil-works/pi-mcp/(oauth|testing)$': '<rootDir>/node_modules/@earendil-works/pi-mcp/dist/$1/index.js',
     '^@earendil-works/pi-coding-agent$': '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
     '^@earendil-works/pi-ai/api/(.*)$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-api.ts',
     '\\.svg$': '<rootDir>/tests/__mocks__/svg.ts',

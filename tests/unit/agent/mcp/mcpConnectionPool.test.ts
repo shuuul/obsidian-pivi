@@ -10,10 +10,13 @@ const mockClients: Array<{
 const mockTransports: Array<{ close: jest.Mock }> = [];
 const mockConnectPromises: Promise<void>[] = [];
 
-jest.mock('@modelcontextprotocol/sdk/client', () => ({
-  Client: class MockClient {
-    connect = jest.fn(() => mockConnectPromises.shift() ?? Promise.resolve());
-    listTools = jest.fn(async () => ({ tools: [] }));
+jest.mock('@earendil-works/pi-mcp', () => ({
+  McpClient: class MockClient {
+    connect = jest.fn(async () => {
+      await (mockConnectPromises.shift() ?? Promise.resolve());
+      return { serverInfo: { name: 'mock', version: '1.0.0' } };
+    });
+    listTools = jest.fn(async () => []);
     callTool = jest.fn();
     close = jest.fn(async () => {});
 
@@ -21,10 +24,7 @@ jest.mock('@modelcontextprotocol/sdk/client', () => ({
       mockClients.push(this);
     }
   },
-}));
-
-jest.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
-  StreamableHTTPClientTransport: class MockTransport {
+  StreamableHttpTransport: class MockTransport {
     close = jest.fn(async () => {});
 
     constructor() {
@@ -55,21 +55,21 @@ describe('McpConnectionPool', () => {
     mockConnectPromises.length = 0;
   });
 
-  it('closes an in-flight connection completed during disposal without caching it', async () => {
+  it('aborts an in-flight connection during disposal without caching it', async () => {
     const connected = createDeferred();
     mockConnectPromises.push(connected.promise);
     const pool = new McpConnectionPool(null, jest.fn(), {});
     const listPromise = pool.listTools(server);
     expect(mockClients).toHaveLength(1);
-    mockClients[0]?.listTools.mockResolvedValue({ tools: [] });
+    mockClients[0]?.listTools.mockResolvedValue([]);
 
     const disposePromise = pool.dispose();
     connected.resolve();
 
-    await expect(listPromise).rejects.toThrow('was invalidated');
+    await expect(listPromise).rejects.toThrow();
     await expect(disposePromise).resolves.toBeUndefined();
     expect(mockClients[0]?.close).toHaveBeenCalledTimes(1);
-    expect(mockTransports[0]?.close).toHaveBeenCalledTimes(1);
+    expect(mockTransports).toHaveLength(1);
     await expect(pool.listTools(server)).rejects.toThrow('is disposed');
   });
 

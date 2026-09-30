@@ -86,7 +86,7 @@ describe('React MCP settings', () => {
     const { ports, mcp, getServers } = makePorts(); await openMcp(ports);
     fireEvent.click(screen.getByRole('button', { name: '+ Add MCP' })); fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Please enter a server name');
-    fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'remote' } }); fireEvent.change(screen.getByPlaceholderText('http://localhost:3000/sse'), { target: { value: 'https://example.test/mcp' } }); fireEvent.click(screen.getByRole('button', { name: 'Save' })); await act(async () => undefined); expect(getServers()).toHaveLength(1);
+    fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'remote' } }); fireEvent.change(screen.getByPlaceholderText('http://localhost:3000/mcp'), { target: { value: 'https://example.test/mcp' } }); fireEvent.click(screen.getByRole('button', { name: 'Save' })); await act(async () => undefined); expect(getServers()).toHaveLength(1);
     fireEvent.click(screen.getByText('remote', { selector: '.pivi-settings-card__name' })); await act(async () => undefined); expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument(); const inlineEditor = document.querySelector('.pivi-mcp-inline-editor'); expect(inlineEditor).toContainElement(screen.getByRole('button', { name: 'Connect / refresh tools' })); expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'renamed' } }); fireEvent.click(screen.getByRole('button', { name: 'Save' })); await waitFor(() => expect(document.querySelector('.pivi-settings-card')).not.toHaveClass('is-open')); expect(getServers()[0]?.name).toBe('renamed'); expect(mcp.connect).toHaveBeenCalledWith(expect.objectContaining({ name: 'renamed' }));
     fireEvent.click(screen.getByRole('button', { name: 'Remove MCP server renamed' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -117,17 +117,13 @@ describe('React MCP settings', () => {
     const editor = document.querySelector('.pivi-mcp-inline-editor') as HTMLElement;
     expect(editor.closest('.pivi-settings-card')).toHaveClass('is-open');
     expect(editor.closest('.pivi-settings-card__body')).not.toBeNull();
-    fireEvent.click(within(editor).getByLabelText('Type'));
-    expect(screen.queryByRole('option', { name: 'Stdio' })).not.toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'SSE' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'HTTP' })).toBeInTheDocument();
-    expect(within(editor).getByLabelText('Type')).toHaveClass('pivi-select');
+    // Streamable HTTP is the only transport, so there is no transport selector.
+    expect(within(editor).queryByLabelText('Type')).not.toBeInTheDocument();
     expect(within(editor).getByLabelText('Authentication')).toHaveClass('pivi-select');
     fireEvent.change(within(editor).getByPlaceholderText('my-mcp-server'), { target: { value: 'remote' } });
-    fireEvent.click(screen.getByRole('option', { name: 'HTTP' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(within(editor).getByRole('alert')).toHaveTextContent('Please enter a URL');
-    fireEvent.change(within(editor).getByPlaceholderText('http://localhost:3000/sse'), { target: { value: 'https://example.test/mcp' } });
+    fireEvent.change(within(editor).getByPlaceholderText('http://localhost:3000/mcp'), { target: { value: 'https://example.test/mcp' } });
     const headersLabel = within(editor).getByText('Headers');
     fireEvent.change(headersLabel.closest('.pivi-settings-row')!.querySelector('textarea')!, { target: { value: 'Authorization=Bearer token' } });
     fireEvent.click(within(editor).getByLabelText('Authentication'));

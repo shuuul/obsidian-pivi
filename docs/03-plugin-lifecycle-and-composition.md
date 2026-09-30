@@ -81,7 +81,7 @@ Blank and cold tabs do not create `PiChatService`. `src/ui/chat/tabs/tabRuntime.
 Settings saves use explicit refresh paths:
 
 - tool, MCP, skill, prompt, and model changes refresh the affected registries or open runtimes;
-- MCP save/reload invalidates slash catalogs and warms enabled HTTP/SSE tool inventories;
+- MCP save/reload invalidates slash catalogs and warms enabled HTTP tool inventories;
 - external-root pinning is broadcast to all open views and tabs;
 - environment changes restart affected runtimes through semantic maintenance operations;
 - tab-bar position republishes snapshots and moves the portal without reloading the plugin.

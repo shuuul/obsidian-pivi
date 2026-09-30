@@ -26,12 +26,15 @@ describe('Pi upgrade compatibility gate', () => {
     expect(result.stdout).toContain('exact and synchronized');
   });
 
-  it('documents the three Pi packages at one exact version in package manifests', () => {
+  it('documents the four Pi packages at one exact version in package manifests', () => {
     const root = JSON.parse(readFileSync(join(rootDir, 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
     };
     const engine = JSON.parse(
       readFileSync(join(rootDir, 'packages', 'engine-pi', 'package.json'), 'utf8'),
+    ) as { dependencies: Record<string, string> };
+    const agent = JSON.parse(
+      readFileSync(join(rootDir, 'packages', 'agent', 'package.json'), 'utf8'),
     ) as { dependencies: Record<string, string> };
     const names = [
       '@earendil-works/pi-agent-core',
@@ -49,6 +52,8 @@ describe('Pi upgrade compatibility gate', () => {
       expect(root.dependencies[name]).toBe(version);
       expect(engine.dependencies[name]).toBe(version);
     }
+    expect(root.dependencies['@earendil-works/pi-mcp']).toBe(version);
+    expect(agent.dependencies['@earendil-works/pi-mcp']).toBe(version);
   });
 
   it.each(PI_SESSION_MANAGER_PRIVATE_CAPABILITIES)(

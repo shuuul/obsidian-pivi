@@ -31,8 +31,8 @@
     "./context/mentions": "./src/context/mentions/index.ts",
     "./mcp": "./src/mcp/index.ts",
     "./mcp/createMcpProxyToolSpec": "./src/mcp/createMcpProxyToolSpec.ts",
-    "./mcp/legacySseTransport": "./src/mcp/legacySseTransport.ts",
     "./mcp/mcpConnectionPool": "./src/mcp/mcpConnectionPool.ts",
+    "./mcp/mcpHttpClient": "./src/mcp/mcpHttpClient.ts",
     "./mcp/mcpManagementCoordinator": "./src/mcp/mcpManagementCoordinator.ts",
     "./mcp/mcpProcessEnv": "./src/mcp/mcpProcessEnv.ts",
     "./mcp/mcpServerManager": "./src/mcp/mcpServerManager.ts",
@@ -44,6 +44,7 @@
     "./mcp/oauth/mcpAuthEntryMigration": "./src/mcp/oauth/mcpAuthEntryMigration.ts",
     "./mcp/oauth/mcpAuthFlow": "./src/mcp/oauth/mcpAuthFlow.ts",
     "./mcp/oauth/mcpCallbackServer": "./src/mcp/oauth/mcpCallbackServer.ts",
+    "./mcp/oauth/mcpClientCredentials": "./src/mcp/oauth/mcpClientCredentials.ts",
     "./mcp/oauth/mcpOAuthProvider": "./src/mcp/oauth/mcpOAuthProvider.ts",
     "./mcp/oauth/mcpOAuthService": "./src/mcp/oauth/mcpOAuthService.ts",
     "./mcp/oauth/mcpSecretAuthStore": "./src/mcp/oauth/mcpSecretAuthStore.ts",
@@ -148,6 +149,6 @@
     "./workspace": "./src/workspace/index.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "~1.30.0"
+    "@earendil-works/pi-mcp": "0.99.1"
   }
 }

@@ -1142,6 +1142,7 @@
       }
     },
     "mcp": {
+      "legacySseDisabled": "Серверы MCP со старым транспортом SSE отключены: {servers}. Укажите в настройках адрес Streamable HTTP (обычно /mcp вместо /sse) и снова включите их.",
       "empty": "MCP-серверы не настроены. Нажмите «Добавить».",
       "add": "+ Добавить MCP",
       "clearOauth": "Очистить OAuth-данные",
@@ -1167,11 +1168,8 @@
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "Имя сервера может содержать только буквы, цифры, точки, дефисы и подчёркивания",
         "needName": "Введите имя сервера",
-        "type": "Тип",
-        "typeSseOption": "SSE",
-        "typeHttpOption": "HTTP",
         "url": "URL",
-        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlPlaceholder": "http://localhost:3000/mcp",
         "needUrl": "Введите URL",
         "headersName": "Заголовки",
         "authHeading": "Аутентификация",

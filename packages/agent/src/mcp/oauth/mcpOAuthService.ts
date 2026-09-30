@@ -1,4 +1,5 @@
-import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
+import type { AuthProvider } from "@earendil-works/pi-mcp";
+import { adaptOAuthProvider } from "@earendil-works/pi-mcp/oauth";
 
 import type { ExternalOpener, SyncSecretStore } from "../../ports";
 import type { AppMcpOAuth, McpTransportFetch } from "../ports";
@@ -12,6 +13,7 @@ import {
   getAuthStatusForServer,
   McpAuthFlow,
 } from "./mcpAuthFlow";
+import { createClientCredentialsAuthProvider } from "./mcpClientCredentials";
 import { McpOAuthProvider } from "./mcpOAuthProvider";
 import { McpSecretAuthStore } from "./mcpSecretAuthStore";
 import type { McpAuthEntryStore } from "./mcpVaultAuthStore";
@@ -56,7 +58,20 @@ export class McpOAuthService implements AppMcpOAuth {
     await this.authFlow.shutdown();
   }
 
-  createAuthProvider(server: ManagedMcpServer): OAuthClientProvider | null {
+  /** Transport auth: refresh on 401, or re-run the client-credentials grant. */
+  createAuthProvider(server: ManagedMcpServer): AuthProvider | null {
+    const provider = this.createOAuthClientProvider(server);
+    if (!provider) {
+      return null;
+    }
+    const config = server.oauth && typeof server.oauth === "object" ? server.oauth : {};
+    return config.grantType === "client_credentials"
+      ? createClientCredentialsAuthProvider(provider, config.scope)
+      : adaptOAuthProvider(provider);
+  }
+
+  /** Stored OAuth client state for one server URL. */
+  createOAuthClientProvider(server: ManagedMcpServer): McpOAuthProvider | null {
     if (!supportsMcpOAuth(server)) {
       return null;
     }
