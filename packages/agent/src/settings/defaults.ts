@@ -8,7 +8,7 @@ import {
 export const PI_DEFAULT_ENVIRONMENT_VARIABLES = "PI_ENABLE_EXA=1";
 
 /** Primary model key for new vaults (`PiviSettings.model` and `agentSettings.visibleModels`). */
-export const DEFAULT_MODEL_KEY = "deepseek/deepseek-chat";
+export const DEFAULT_MODEL_KEY = "deepseek/deepseek-flash";
 
 /** Providers Pivi exposes by default on fresh installs. */
 export const DEFAULT_PI_PROVIDER_IDS = [

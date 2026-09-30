@@ -253,12 +253,12 @@ describe('PiModelRegistry (core)', () => {
       );
       const deepseekModel = modelFixture({
         provider: 'deepseek',
-        id: 'deepseek-chat',
-        name: 'DeepSeek Chat',
+        id: 'deepseek-flash',
+        name: 'DeepSeek V4.1 Flash',
         reasoning: false,
         contextWindow: 64_000,
       });
-      PI_AI_MODELS_CACHE.set('deepseek/deepseek-chat', deepseekModel);
+      PI_AI_MODELS_CACHE.set('deepseek/deepseek-flash', deepseekModel);
 
       const options = buildPiModelOptions({
         visibleModels: ['anthropic/blocked-only'],
@@ -268,8 +268,8 @@ describe('PiModelRegistry (core)', () => {
 
       expect(options).toEqual([
         {
-          value: 'deepseek/deepseek-chat',
-          label: 'DeepSeek Chat',
+          value: 'deepseek/deepseek-flash',
+          label: 'DeepSeek V4.1 Flash',
           description: 'Standard model (context: 64K)',
           group: 'DeepSeek',
           providerLogoSlug: 'deepseek',
@@ -307,8 +307,8 @@ describe('PiModelRegistry (core)', () => {
 
       expect(options).toEqual([
         {
-          value: 'deepseek/deepseek-chat',
-          label: 'DeepSeek Chat',
+          value: 'deepseek/deepseek-flash',
+          label: 'DeepSeek V4.1 Flash',
           description: 'Default model (no models in pool)',
           group: 'DeepSeek',
           providerLogoSlug: 'deepseek',
@@ -325,8 +325,21 @@ describe('PiModelRegistry (core)', () => {
 
       expect(options).toHaveLength(1);
       expect(options[0]?.value).toBe('custom/provider-model');
-      expect(options[0]?.label).toBe('DeepSeek Chat');
+      expect(options[0]?.label).toBe('DeepSeek V4.1 Flash');
       expect(options[0]?.description).toBe('Default model (no models in pool)');
+    });
+
+    it('omits visible keys that a loaded provider catalog no longer lists', () => {
+      PI_AI_MODELS_CACHE.set(
+        'deepseek/deepseek-flash',
+        modelFixture({ provider: 'deepseek', id: 'deepseek-flash', name: 'DeepSeek V4.1 Flash' }),
+      );
+
+      const options = buildPiModelOptions({
+        visibleModels: ['deepseek/deepseek-flash', 'deepseek/deepseek-v4-flash-vision-exp', 'custom/uncached'],
+      });
+
+      expect(options.map((o) => o.value)).toEqual(['custom/uncached', 'deepseek/deepseek-flash']);
     });
 
     it('titleizes uncached visible model keys and uses the generic description', () => {

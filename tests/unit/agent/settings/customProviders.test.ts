@@ -325,9 +325,9 @@ describe('reconcileVisibleModelsForCustomProviders', () => {
 
   it('leaves an intentionally empty provider slice empty', () => {
     expect(reconcileVisibleModelsForCustomProviders(
-      ['deepseek/deepseek-chat'],
+      ['deepseek/deepseek-flash'],
       [provider],
-    )).toEqual(['deepseek/deepseek-chat']);
+    )).toEqual(['deepseek/deepseek-flash']);
   });
 });
 

@@ -1238,7 +1238,7 @@
       "errorNoteNotFound": "ノートが見つかりません。file= または path= の値を確認してください。",
       "errorSelectionRequired": "このコマンドには選択テキストが必要です。selection=\"...\" を指定してください。",
       "errorEmptyPrompt": "このコマンドのプロンプトは空で、実行する内容がありません。",
-      "errorInvalidModel": "model= の値が無効です。provider/model 形式で指定してください（例: deepseek/deepseek-chat）。"
+      "errorInvalidModel": "model= の値が無効です。provider/model 形式で指定してください（例: deepseek/deepseek-flash）。"
     }
   },
   "tools": {

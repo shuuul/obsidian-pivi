@@ -172,9 +172,9 @@ describe("PiviSettingsStorage", () => {
 
     const settings = await storage.load();
 
-    expect(settings.model).toBe("deepseek/deepseek-chat");
+    expect(settings.model).toBe("deepseek/deepseek-flash");
     expect(settings.agentSettings.visibleModels).toEqual([
-      "deepseek/deepseek-chat",
+      "deepseek/deepseek-flash",
     ]);
     expect(adapter.write).toHaveBeenCalledWith(
       PIVI_SETTINGS_PATH,
@@ -518,8 +518,8 @@ describe("PiviSettingsStorage", () => {
       initialized: true,
       providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
         customContextLimits: {},
       },
@@ -546,7 +546,7 @@ describe("PiviSettingsStorage", () => {
 
     const settings = await storage.load();
 
-    expect(settings.model).toBe('deepseek/deepseek-chat');
+    expect(settings.model).toBe('deepseek/deepseek-flash');
     expect(settings.agentSettings.addedProviders).toEqual(['deepseek']);
     const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
       model?: string;
@@ -577,8 +577,8 @@ describe("PiviSettingsStorage", () => {
       initialized: true,
       providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
         customContextLimits: {},
       },

@@ -11,7 +11,7 @@ describe('add ollama then redisplay normalize', () => {
         disabledProviders: [],
         environmentVariables: '',
         selectedMode: 'default',
-        visibleModels: ['deepseek/deepseek-chat'],
+        visibleModels: ['deepseek/deepseek-flash'],
       },
     };
     const config = createDefaultCustomProviderConfig('ollama', []);

@@ -36,7 +36,10 @@ export function getProviders(): string[] {
 }
 
 export function getModels(provider: string): any[] {
-  return [getModel(provider, 'mock-model')];
+  // DeepSeek also lists Pivi's fresh-vault default so it stays a valid composer option.
+  return provider === 'deepseek'
+    ? [getModel(provider, 'mock-model'), getModel(provider, 'deepseek-flash')]
+    : [getModel(provider, 'mock-model')];
 }
 
 const mockAssistantMessage = {

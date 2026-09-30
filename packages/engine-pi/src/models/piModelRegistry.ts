@@ -53,7 +53,7 @@ export interface BuildPiModelOptionsInput {
 }
 
 const DEFAULT_PI_MODEL_KEY = DEFAULT_MODEL_KEY;
-const DEFAULT_PI_MODEL_LABEL = 'DeepSeek Chat';
+const DEFAULT_PI_MODEL_LABEL = 'DeepSeek V4.1 Flash';
 const DEFAULT_PI_MODEL_PROVIDER = 'deepseek';
 
 function formatPiModelDescription(model: PiCachedModel, contextWindow = model.contextWindow): string {
@@ -203,12 +203,26 @@ export function buildPiModelOptions(input: BuildPiModelOptionsInput): ChatUIOpti
     (input.addedProviders ?? []).map((providerId, index) => [providerId, index]),
   );
 
+  const catalogProviderIds = new Set<string>();
+  for (const modelKey of PI_AI_MODELS_CACHE.keys()) {
+    const providerId = getProviderIdFromModelValue(modelKey);
+    if (providerId) catalogProviderIds.add(providerId);
+  }
+
   for (const modelKey of input.visibleModels) {
     const providerId = getProviderIdFromModelValue(modelKey);
     if (providerId && isProviderDisabled(input.disabledProviders, providerId)) {
       continue;
     }
-    options.push(optionFromModelKey(modelKey, PI_AI_MODELS_CACHE.get(modelKey), input));
+    const cached = PI_AI_MODELS_CACHE.get(modelKey);
+    // A persisted visible key whose provider catalog is loaded but no longer
+    // lists it was retired upstream; offering it would only fail at send time.
+    // Providers absent from the cache (cold cache, uncached custom endpoints)
+    // keep their keys so a slow catalog load never blanks the picker.
+    if (!cached && providerId && catalogProviderIds.has(providerId)) {
+      continue;
+    }
+    options.push(optionFromModelKey(modelKey, cached, input));
   }
 
   if (options.length === 0) {

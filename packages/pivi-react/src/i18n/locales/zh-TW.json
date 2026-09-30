@@ -1238,7 +1238,7 @@
       "errorNoteNotFound": "找不到筆記。請檢查 file= 或 path= 的值。",
       "errorSelectionRequired": "此命令需要選取文字。請傳入 selection=\"...\"。",
       "errorEmptyPrompt": "此命令的提示內容為空，沒有可執行的任務。",
-      "errorInvalidModel": "model= 值無效。請使用 provider/model 形式，例如 deepseek/deepseek-chat。"
+      "errorInvalidModel": "model= 值無效。請使用 provider/model 形式，例如 deepseek/deepseek-flash。"
     }
   },
   "tools": {

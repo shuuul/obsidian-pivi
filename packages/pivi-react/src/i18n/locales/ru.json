@@ -1238,7 +1238,7 @@
       "errorNoteNotFound": "Заметка не найдена. Проверьте значение file= или path=.",
       "errorSelectionRequired": "Эта команда требует выделенный текст. Укажите selection=\"...\".",
       "errorEmptyPrompt": "У этой команды пустой промпт — выполнять нечего.",
-      "errorInvalidModel": "Недопустимое значение model=. Используйте формат provider/model, например deepseek/deepseek-chat."
+      "errorInvalidModel": "Недопустимое значение model=. Используйте формат provider/model, например deepseek/deepseek-flash."
     }
   },
   "tools": {

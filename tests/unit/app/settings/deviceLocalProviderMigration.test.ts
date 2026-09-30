@@ -46,7 +46,7 @@ describe('device local provider migration coordinator', () => {
 
     expect(result.cutoverPerformed).toBe(true);
     expect(store.isInitialized()).toBe(true);
-    expect(result.settings.model).toBe('deepseek/deepseek-chat');
+    expect(result.settings.model).toBe('deepseek/deepseek-flash');
     expect(result.settings.agentSettings.addedProviders).toEqual(['deepseek']);
     const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as Record<string, unknown>;
     const agentSettings = persisted.agentSettings as Record<string, unknown>;
@@ -115,8 +115,8 @@ describe('device local provider migration coordinator', () => {
       initialized: true,
       providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
         customContextLimits: {},
       },
@@ -165,8 +165,8 @@ describe('device local provider migration coordinator', () => {
       initialized: true,
       providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
       modelPreferences: {
-        visibleModels: ['deepseek/deepseek-chat'],
-        activeModel: 'deepseek/deepseek-chat',
+        visibleModels: ['deepseek/deepseek-flash'],
+        activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: '',
         customContextLimits: {},
       },
@@ -211,7 +211,7 @@ describe('device local provider migration coordinator', () => {
     expect(result.cutoverPerformed).toBe(true);
     expect(result.syncedSaveFailed).toBe(true);
     expect(store.isInitialized()).toBe(true);
-    expect(result.settings.model).toBe('deepseek/deepseek-chat');
+    expect(result.settings.model).toBe('deepseek/deepseek-flash');
     expect(adapter.writes).toHaveLength(0);
     expect(warning).toHaveBeenCalledWith(
       '[Pivi:DeviceLocalProviderMigration] Device-local provider state committed, but synced settings save failed',

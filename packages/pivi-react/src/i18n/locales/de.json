@@ -1238,7 +1238,7 @@
       "errorNoteNotFound": "Notiz nicht gefunden. Überprüfen Sie den Wert von file= oder path=.",
       "errorSelectionRequired": "Dieser Befehl erfordert ausgewählten Text. Geben Sie selection=\"...\" an.",
       "errorEmptyPrompt": "Dieser Befehl hat einen leeren Prompt und nichts auszuführen.",
-      "errorInvalidModel": "Ungültiger model=-Wert. Verwenden Sie das Format provider/model, z. B. deepseek/deepseek-chat."
+      "errorInvalidModel": "Ungültiger model=-Wert. Verwenden Sie das Format provider/model, z. B. deepseek/deepseek-flash."
     }
   },
   "tools": {

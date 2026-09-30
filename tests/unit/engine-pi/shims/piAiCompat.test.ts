@@ -80,6 +80,7 @@ describe('piAiCompat shim', () => {
     ]);
     expect(getModels('deepseek')).toEqual([
       expect.objectContaining({ provider: 'deepseek', id: 'mock-model' }),
+      expect.objectContaining({ provider: 'deepseek', id: 'deepseek-flash' }),
     ]);
   });
 
