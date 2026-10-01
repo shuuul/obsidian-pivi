@@ -1,9 +1,5 @@
-import {
-  composePromptSections,
-  computePromptCompositionKey,
-  type CustomPromptModule,
-  type PromptModuleOverride,
-} from './modules';
+import { composePromptSections, computePromptCompositionKey } from './modules/compose';
+import type { CustomPromptModule, PromptModuleOverride } from './modules/types';
 
 export interface SystemPromptSettings {
   vaultPath?: string;

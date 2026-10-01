@@ -1,8 +1,8 @@
-import type { BrowserSelectionContext } from '../context';
-import type { CanvasSelectionContext } from '../context';
-import type { EditorSelectionContext } from '../context';
-import type { InlineContextReference } from '../context';
-import type { ImageAttachment, } from '../runtime';
+import type { BrowserSelectionContext } from '../context/browser';
+import type { CanvasSelectionContext } from '../context/canvas';
+import type { EditorSelectionContext } from '../context/editor';
+import type { InlineContextReference } from '../context/inlineContext';
+import type { ImageAttachment } from './chatTypes';
 
 export interface ChatTurnRequest {
   text: string;

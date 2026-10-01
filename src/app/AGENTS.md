@@ -58,7 +58,7 @@ flowchart LR
 | File | Role |
 |------|------|
 | `PiviApplication.ts` | Product state, application assembly, and lifecycle implementation delegated to by `main.ts` |
-| `applicationFacades.ts` | Builds the responsibility-scoped `chat` / `workspace` / `integrations` / `settings` facades (and the development-only real-host smoke runner) over the application; `sessions` is `ApplicationSessions` itself |
+| `developmentSmokeRunner.ts` | Development-only real-host smoke runner; returns `undefined` in production builds. `PiviApplication` itself satisfies the `chat` / `workspace` / `integrations` / `settings` facade types structurally, and `sessions` is `ApplicationSessions` |
 | `applicationSessions.ts` | `ApplicationSessions`: session CRUD, transcript recovery, and maintenance over `pluginSessionApi.ts`; every trash/restore/purge runs through one FIFO operation tail |
 | `applicationNoteToolbar.ts` | `ApplicationNoteToolbar`: selection-command and per-workspace-command Note Toolbar setup sharing one keyed setup queue and CLI/dependency assembly |
 | `hostContracts.ts` | Semantic `PiviChatViewHandle`, structural view, runtime/composition Chat hosts, Settings/Plugin host surfaces |

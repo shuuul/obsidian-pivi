@@ -1,9 +1,6 @@
 import { isSecretLikeKey } from '../config/valueSource';
 import type { SyncSecretStore } from '../ports';
-import type {
-  AgentMcpSecretProjection,
-  AgentMcpServerSummary,
-} from '../tools/piviManagement';
+import type { AgentMcpSecretProjection, AgentMcpServerSummary } from '../tools/piviManagement/types';
 import { listMcpServerSecretIds } from './mcpStorage';
 import { normalizeMcpStoredValueMap } from './mcpValueSources';
 import type { AppMcpToolProvider } from './ports';

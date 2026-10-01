@@ -1,6 +1,6 @@
 import { PluginLogger } from '../logging/pluginLogger';
 import type { SyncSecretStore } from '../ports';
-import type { ToolSpec } from '../tools';
+import type { ToolSpec } from '../tools/toolSpec';
 import { createMcpProxyToolSpec } from './createMcpProxyToolSpec';
 import { McpConnectionPool } from './mcpConnectionPool';
 import type { McpServerManager } from './mcpServerManager';

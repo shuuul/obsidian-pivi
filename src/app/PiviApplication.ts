@@ -23,15 +23,15 @@ import type {
 } from "obsidian";
 import { apiVersion, Notice } from "obsidian";
 
-import { createApplicationFacades } from "@/app/applicationFacades";
 import { ApplicationNoteToolbar } from "@/app/applicationNoteToolbar";
 import { ApplicationSessions } from "@/app/applicationSessions";
 import { type ChatPerfController, NOOP_CHAT_PERF_CONTROLLER } from "@/app/chatPerformanceController";
+import { createDevelopmentSmokeRunner } from "@/app/developmentSmokeRunner";
 import { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalCapabilityPermissionStore";
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
-import type { PiviApplicationFacades, PiviChatView } from "@/app/hostContracts";
+import type { ChatFacade, PiviApplicationFacades, PiviChatView, SettingsFacade } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import { openStyleSettingsOrMarketplace } from "@/app/openStyleSettings";
@@ -76,6 +76,7 @@ const DELETED_SESSION_PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 export class PiviApplication {
   readonly plugin: Plugin;
   readonly facades: PiviApplicationFacades;
+  readonly runDevelopmentRealHostSmoke: ChatFacade['runDevelopmentRealHostSmoke'];
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
@@ -111,10 +112,19 @@ export class PiviApplication {
       processRunner: this.processRunner,
       getSettings: () => this.settings,
     });
-    this.facades = createApplicationFacades(this, {
+    this.runDevelopmentRealHostSmoke = createDevelopmentSmokeRunner(this, {
       sessionManager: this.sessionManager,
       requireSessionStore: () => this.requireSessionStore(),
     });
+    // The application satisfies each facade structurally; registrations see only
+    // the members their facade type declares.
+    this.facades = {
+      chat: this,
+      sessions: this.sessionOperations,
+      workspace: this,
+      integrations: this,
+      settings: this,
+    };
   }
 
   get app() { return this.plugin.app; }
@@ -172,6 +182,19 @@ export class PiviApplication {
   notify(message: string | DocumentFragment, timeout?: number): Notice {
     return new Notice(message, timeout);
   }
+
+  // Settings-facade members whose behavior lives in a collaborator.
+  isNoteToolbarInstalled: SettingsFacade['isNoteToolbarInstalled'] = () => this.noteToolbar.isInstalled();
+  setupNoteToolbarIntegration: SettingsFacade['setupNoteToolbarIntegration'] = style =>
+    this.noteToolbar.setupSelectionCommand(style);
+  purgeDeletedSessionFiles: SettingsFacade['purgeDeletedSessionFiles'] = () =>
+    this.sessionOperations.purgeDeletedSessionFiles();
+  purgeExpiredDeletedSessionFiles: SettingsFacade['purgeExpiredDeletedSessionFiles'] = () =>
+    this.sessionOperations.purgeExpiredDeletedSessionFiles();
+  loadSessionMaintenance: SettingsFacade['loadSessionMaintenance'] = () =>
+    this.sessionOperations.loadSessionMaintenance();
+  deleteAllArchivedChats: SettingsFacade['deleteAllArchivedChats'] = () =>
+    this.sessionOperations.deleteAllArchivedChats();
 
   showDefaultVaultSkillsInstallPrompt = showDefaultVaultSkillsInstallPrompt;
 

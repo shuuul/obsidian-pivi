@@ -3,7 +3,7 @@ import { appendCanvasContext } from '../context/canvas';
 import { appendContextFiles, appendCurrentNote } from '../context/context';
 import { appendEditorContext } from '../context/editor';
 import { appendInlineContexts } from '../context/inlineContext';
-import type { McpServerManager } from '../mcp';
+import type { McpServerManager } from '../mcp/mcpServerManager';
 import { GENERATE_IMAGE_TOOL_ID } from '../skills/commands/slashCommandIds';
 import { TOOL_OBSIDIAN_GENERATE_IMAGE } from '../tools/obsidianToolNames';
 import type { BuiltTurnPrompt, ChatTurnRequest, ExternalContextAvailability } from './types';

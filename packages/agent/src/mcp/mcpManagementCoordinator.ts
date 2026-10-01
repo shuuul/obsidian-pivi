@@ -1,11 +1,6 @@
 import type { SyncSecretStore } from '../ports';
-import type {
-  AgentMcpServerSummary,
-  PiviMcpInput,
-  PiviMcpListResult,
-  PiviMcpTestResult,
-} from '../tools/piviManagement';
-import { PiviManagementError } from '../tools/piviManagement';
+import { PiviManagementError } from '../tools/piviManagement/approval';
+import type { AgentMcpServerSummary, PiviMcpInput, PiviMcpListResult, PiviMcpTestResult } from '../tools/piviManagement/types';
 import { McpManagementPersistence } from './mcpManagementPersistence';
 import {
   hydrateMcpDirectSecrets,

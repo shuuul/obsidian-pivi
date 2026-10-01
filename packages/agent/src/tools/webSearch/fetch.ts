@@ -1,4 +1,6 @@
-import { classifyHostnameOrAddress, isDeniedIpClass, redactUrl } from '../../network';
+import { classifyHostnameOrAddress } from '../../network/egressPolicy';
+import { isDeniedIpClass } from '../../network/ipClassification';
+import { redactUrl } from '../../network/urlPolicy';
 import { WEB_PROVIDER_CAPABILITIES } from '../../settings/types';
 import { TOOL_WEB_FETCH } from '../toolNames';
 import type { ToolSpec } from '../toolSpec';

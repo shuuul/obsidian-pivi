@@ -1,5 +1,5 @@
-import type { ToolSpec } from '../tools';
 import { capToolResultText, textResult } from '../tools/toolResult';
+import type { ToolSpec } from '../tools/toolSpec';
 import type { McpToolBridge } from './mcpToolBridge';
 
 const MCP_PROXY_PARAMETERS = {

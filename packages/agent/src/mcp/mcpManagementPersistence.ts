@@ -1,11 +1,7 @@
 import { clearSyncSecret } from '../auth/providerSecretStorage';
 import type { SyncSecretStore } from '../ports';
-import type {
-  AgentMcpBearerInput,
-  AgentMcpOAuthInput,
-  AgentMcpServerInput,
-} from '../tools/piviManagement';
-import { PiviManagementError } from '../tools/piviManagement';
+import { PiviManagementError } from '../tools/piviManagement/approval';
+import type { AgentMcpBearerInput, AgentMcpOAuthInput, AgentMcpServerInput } from '../tools/piviManagement/types';
 import type { McpManagementMutation, McpManagementPlan } from './mcpManagementCoordinator';
 import { hydrateMcpDirectSecrets } from './mcpManagementProjection';
 import {

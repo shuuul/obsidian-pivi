@@ -1,4 +1,4 @@
-import type { SlashCommand } from '../settings';
+import type { SlashCommand } from '../settings/types';
 import {
   extractBoolean,
   extractString,

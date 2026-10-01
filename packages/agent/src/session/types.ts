@@ -1,5 +1,5 @@
 import type { WorkspaceFileStore } from '../ports';
-import type { ChatMessage, ChatTurnRequestSnapshot, SessionTitleSource, UsageInfo } from '../runtime';
+import type { ChatMessage, ChatTurnRequestSnapshot, SessionTitleSource, UsageInfo } from '../runtime/chatTypes';
 
 export type { SessionTitleSource };
 

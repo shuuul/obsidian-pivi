@@ -1,18 +1,18 @@
 import type { ManagedMcpServer } from '../mcp/types';
 import type { CapabilityApprovalPort } from '../ports/capabilityApproval';
-import type { OpenSessionState, SessionSummary } from '../runtime';
 import type {
   ChatModeSelectorConfig,
   ChatReasoningOption,
   ChatUIOption,
 } from '../runtime/chatUi';
-import type { SessionMessagePage } from '../session';
+import type { SessionMessagePage } from '../session/types';
 import type { CustomProviderConfig } from '../settings/customProviders';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
 import type { PersistentBashPermission } from '../tools/capabilityPermissions';
 import type { PiviManagementApprovalPort } from '../tools/piviManagement/approval';
 import type { AuxQueryRunner } from './auxQueryRunner';
+import type { OpenSessionState, SessionSummary } from './chatTypes';
 import type { PiChatService } from './piChatService';
 
 export interface ChatRuntimePort {
