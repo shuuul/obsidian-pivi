@@ -92,6 +92,25 @@ function mergeValueMap(
   return Object.keys(next).length ? next : undefined;
 }
 
+function mergeUpsertCredentials(
+  auth: ManagedMcpServer['auth'],
+  input: AgentMcpServerInput,
+  previous: ManagedMcpServer | undefined,
+) {
+  const canKeepBearer = auth === 'bearer' && previous?.auth === 'bearer';
+  const bearer = mergeMcpSecretPatch(
+    canKeepBearer
+      ? { bearerToken: previous?.bearerToken, bearerTokenEnv: previous?.bearerTokenEnv }
+      : { bearerToken: undefined, bearerTokenEnv: undefined },
+    input.bearerToken,
+  );
+  const canKeepOAuth = auth === 'oauth' && previous?.auth === 'oauth';
+  const oauth = auth === 'oauth'
+    ? mergeMcpSecretPatch(canKeepOAuth ? previous?.oauth : undefined, input.oauth)
+    : undefined;
+  return { bearer, oauth };
+}
+
 function materializeUpsert(
   name: string,
   input: AgentMcpServerInput,
@@ -111,17 +130,7 @@ function materializeUpsert(
     : undefined;
   const headers = mergeValueMap(oldHeaders, input.headers);
   const auth = input.auth ?? previous?.auth;
-  const canKeepBearer = auth === 'bearer' && previous?.auth === 'bearer';
-  const bearer = mergeMcpSecretPatch(
-    canKeepBearer
-      ? { bearerToken: previous?.bearerToken, bearerTokenEnv: previous?.bearerTokenEnv }
-      : { bearerToken: undefined, bearerTokenEnv: undefined },
-    input.bearerToken,
-  );
-  const canKeepOAuth = auth === 'oauth' && previous?.auth === 'oauth';
-  const oauth = auth === 'oauth'
-    ? mergeMcpSecretPatch(canKeepOAuth ? previous?.oauth : undefined, input.oauth)
-    : undefined;
+  const { bearer, oauth } = mergeUpsertCredentials(auth, input, previous);
   return {
     ...common,
     config: { type: input.type, url: input.url, ...(headers ? { headers } : {}) },

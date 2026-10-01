@@ -1,11 +1,6 @@
 {
   "packages/agent/src/mcp/mcpManagementPersistence.ts": {
     "complexity": {
-      "count": 2
-    }
-  },
-  "packages/agent/src/mcp/mcpServerTester.ts": {
-    "complexity": {
       "count": 1
     }
   },
@@ -23,19 +18,11 @@
     }
   },
   "packages/agent/src/settings/customProviders.ts": {
-    "complexity": {
-      "count": 1
-    },
     "max-lines": {
       "count": 1
     }
   },
   "packages/agent/src/settings/types.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
-  "packages/agent/src/skills/vault/env.ts": {
     "complexity": {
       "count": 1
     }
@@ -50,22 +37,9 @@
       "count": 1
     }
   },
-  "packages/engine-pi/src/models/installPiCustomProviders.ts": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    }
-  },
   "packages/engine-pi/src/models/remoteCatalog.ts": {
     "complexity": {
       "count": 2
-    }
-  },
-  "packages/engine-pi/src/runtime/piAgentEventAdapter.ts": {
-    "complexity": {
-      "count": 1
     }
   },
   "packages/engine-pi/src/runtime/piChatRuntime.ts": {
@@ -145,11 +119,6 @@
       "count": 1
     }
   },
-  "packages/obsidian-tools/src/obsidian/tasks.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "packages/pivi-react/src/chat/messages/AssistantContentView.tsx": {
     "complexity": {
       "count": 2
@@ -181,11 +150,6 @@
     }
   },
   "packages/pivi-react/src/settings/models/ProviderCard.tsx": {
-    "complexity": {
-      "count": 1
-    }
-  },
-  "packages/pivi-react/src/settings/primitives/DisclosureCard.tsx": {
     "complexity": {
       "count": 1
     }

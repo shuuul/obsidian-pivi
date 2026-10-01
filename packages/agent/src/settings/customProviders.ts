@@ -357,26 +357,26 @@ export function parseCustomProviderReasoningMeta(raw: unknown): CustomProviderRe
   };
 }
 
+function positiveInteger(value: unknown): number | undefined {
+  return typeof value === 'number' && value > 0 ? Math.floor(value) : undefined;
+}
+
+function trimmedNonEmptyString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
 export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderModelDef | null {
-  if (!isRecord(raw) || typeof raw.id !== 'string' || !raw.id.trim()) {
+  const id = isRecord(raw) ? trimmedNonEmptyString(raw.id) : undefined;
+  if (!isRecord(raw) || !id) {
     return null;
   }
-  const id = raw.id.trim();
-  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : id;
-  const contextWindow = typeof raw.contextWindow === 'number' && raw.contextWindow > 0
-    ? Math.floor(raw.contextWindow)
-    : undefined;
-  const maxTokens = typeof raw.maxTokens === 'number' && raw.maxTokens > 0
-    ? Math.floor(raw.maxTokens)
-    : undefined;
+  const name = trimmedNonEmptyString(raw.name) ?? id;
+  const contextWindow = positiveInteger(raw.contextWindow);
+  const maxTokens = positiveInteger(raw.maxTokens);
   const reasoning = typeof raw.reasoning === 'boolean' ? raw.reasoning : undefined;
   const reasoningMeta = parseCustomProviderReasoningMeta(raw.reasoningMeta);
-  const catalogModelId = typeof raw.catalogModelId === 'string' && raw.catalogModelId.trim()
-    ? raw.catalogModelId.trim()
-    : undefined;
-  const maxTokensOverride = typeof raw.maxTokensOverride === 'number' && raw.maxTokensOverride > 0
-    ? Math.floor(raw.maxTokensOverride)
-    : undefined;
+  const catalogModelId = trimmedNonEmptyString(raw.catalogModelId);
+  const maxTokensOverride = positiveInteger(raw.maxTokensOverride);
   const reasoningOverride = typeof raw.reasoningOverride === 'boolean'
     ? raw.reasoningOverride
     : undefined;

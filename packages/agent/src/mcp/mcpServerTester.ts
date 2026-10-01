@@ -17,6 +17,31 @@ import type { ManagedMcpServer } from "./types";
 
 const logger = new PluginLogger('McpServerTester');
 
+function buildTesterConnectionOptions(
+  server: ManagedMcpServer,
+  fetch: McpTransportFetch,
+  processEnv: McpProcessEnv,
+  secretStorage?: SyncSecretStore,
+): McpHttpConnectionOptions {
+  const config = server.config;
+  const url = new URL(config.url);
+  const resolvedHeaders = isLegacyPlainStringMap(config.headers)
+    ? config.headers
+    : resolveMcpHeaders(
+      server.name,
+      normalizeMcpStoredValueMap(config.headers),
+      createMcpResolveHost(processEnv, secretStorage),
+      secretStorage,
+    );
+  return {
+    url: url.href,
+    fetch,
+    ...(resolvedHeaders && Object.keys(resolvedHeaders).length > 0
+      ? { headers: resolvedHeaders }
+      : {}),
+  };
+}
+
 export async function testMcpServer(
   server: ManagedMcpServer,
   fetch: McpTransportFetch,
@@ -24,26 +49,9 @@ export async function testMcpServer(
   secretStorage?: SyncSecretStore,
   signal?: AbortSignal,
 ): Promise<McpTestResult> {
-  const resolveHost = createMcpResolveHost(processEnv, secretStorage);
   let options: McpHttpConnectionOptions;
   try {
-    const config = server.config;
-    const url = new URL(config.url);
-    const resolvedHeaders = isLegacyPlainStringMap(config.headers)
-      ? config.headers
-      : resolveMcpHeaders(
-        server.name,
-        normalizeMcpStoredValueMap(config.headers),
-        resolveHost,
-        secretStorage,
-      );
-    options = {
-      url: url.href,
-      fetch,
-      ...(resolvedHeaders && Object.keys(resolvedHeaders).length > 0
-        ? { headers: resolvedHeaders }
-        : {}),
-    };
+    options = buildTesterConnectionOptions(server, fetch, processEnv, secretStorage);
   } catch (error) {
     return {
       success: false,
