@@ -108,7 +108,6 @@ export function createMentionEditorPort(
         { suggestSelectedTextTemplate: true },
       );
       mentionDropdown.setMcpManager(mcpMentionProvider);
-      mentionDropdown.setAgentService(null);
 
       const slashConfig = workspace.slashCommandCatalog.getDropdownConfig();
       const slashDropdown = new SlashCommandDropdown(

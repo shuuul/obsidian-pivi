@@ -1,16 +1,5 @@
 import type { TFile } from 'obsidian';
 
-export type AgentMentionSource = 'builtin' | 'vault' | 'user' | 'runtime' | 'plugin';
-
-export interface AgentMentionProvider {
-  searchAgents(query: string): Array<{
-    id: string;
-    name: string;
-    description?: string;
-    source: AgentMentionSource;
-  }>;
-}
-
 export interface FileMentionItem {
   type: 'file';
   name: string;
@@ -33,23 +22,6 @@ export interface ContextFolderMentionItem {
   folderName: string;
 }
 
-export interface AgentMentionItem {
-  type: 'agent';
-  /** Display name */
-  name: string;
-  /** Full ID (namespaced for plugins) */
-  id: string;
-  /** Brief description */
-  description?: string;
-  /** Source of the agent */
-  source: AgentMentionSource;
-}
-
-export interface AgentFolderMentionItem {
-  type: 'agent-folder';
-  name: string;
-}
-
 export interface SelectedTextTemplateMentionItem {
   type: 'selected-text-template';
   name: string;
@@ -67,7 +39,5 @@ export type MentionItem =
   | FileMentionItem
   | FolderMentionItem
   | ContextFolderMentionItem
-  | AgentMentionItem
-  | AgentFolderMentionItem
   | SessionMentionItem
   | SelectedTextTemplateMentionItem;

@@ -15,7 +15,6 @@ import {
   mergeContextFilePaths,
 } from '@/ui/shared/mention/expandFolderMentions';
 import type {
-  AgentMentionProvider,
   McpMentionProvider,
 } from '@/ui/shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownController';
@@ -35,8 +34,6 @@ export interface FileContextCallbacks {
   getExternalContexts?: () => string[];
   getSkillNames?: () => Set<string>;
   getSessions?: SessionMentionProvider['listSessions'];
-  /** Called when an agent is selected from the @ mention dropdown. */
-  onAgentMentionSelect?: (agentId: string) => void;
 }
 
 /** Narrow MCP surface used by FileContext badges + mention dropdown. */
@@ -113,7 +110,6 @@ export class FileContextManager {
       this.inputEl,
       {
         onAttachFile: (filePath) => this.state.attachFile(filePath),
-        onAgentMentionSelect: (agentId) => this.callbacks.onAgentMentionSelect?.(agentId),
         getMentionedMcpServers: () => this.state.getMentionedMcpServers(),
         setMentionedMcpServers: (mentions) => this.state.setMentionedMcpServers(mentions),
         addMentionedMcpServer: (name) => this.state.addMentionedMcpServer(name),
@@ -403,10 +399,6 @@ export class FileContextManager {
       return [{ sessionId: part.sessionId, sessionFile: part.sessionFile, title: part.title }];
     });
     return sessions.length > 0 ? sessions : undefined;
-  }
-
-  setAgentService(agentService: AgentMentionProvider | null): void {
-    this.mentionDropdown.setAgentService(agentService);
   }
 
   getMentionedMcpServers(): Set<string> {

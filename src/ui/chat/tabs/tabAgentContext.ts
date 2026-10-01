@@ -47,7 +47,6 @@ export async function updateTabAgentSettings(
 
 export function applyCapabilityUIGating(tab: TabData, ports: ChatPorts): void {
   tab.ui.fileContextManager?.setMcpManager(createFileContextMcpProvider(ports.catalog));
-  tab.ui.fileContextManager?.setAgentService(null);
 
   tab.ui.imageContextManager?.setEnabled(true);
 }

@@ -488,7 +488,6 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       { fixed: true },
     );
     this.mentionDropdown.setMcpManager(mcpMentionProvider);
-    this.mentionDropdown.setAgentService(null);
     this.mentionDropdown.handleInputChange();
 
     this.slashDropdown = new SlashCommandDropdown(

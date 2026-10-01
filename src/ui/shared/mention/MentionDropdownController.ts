@@ -27,12 +27,9 @@ import {
   MIN_MENTION_DROPDOWN_WIDTH,
 } from './mentionTokenHelpers';
 import {
-  type AgentMentionProvider,
   type FolderMentionItem,
   type MentionItem,
 } from './types';
-
-/* eslint-disable max-lines -- The shared controller intentionally owns one keyboard/overlay lifecycle. */
 
 type MentionInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
 const MENTION_FILTER_DEBOUNCE_MS = 40;
@@ -42,7 +39,6 @@ function getTextOffsetClientRect(inputEl: MentionInputElement, offset: number): 
   }
   return null;
 }
-export type { AgentMentionProvider };
 
 export interface MentionDropdownOptions {
   fixed?: boolean;
@@ -51,7 +47,6 @@ export interface MentionDropdownOptions {
 }
 export interface MentionDropdownCallbacks {
   onAttachFile: (path: string) => void;
-  onAgentMentionSelect?: (agentId: string) => void;
   getMentionedMcpServers: () => Set<string>;
   setMentionedMcpServers: (mentions: Set<string>) => boolean;
   addMentionedMcpServer: (name: string) => void;
@@ -74,9 +69,7 @@ export class MentionDropdownController {
   private mentionStartIndex = -1;
   private selectedMentionIndex = 0;
   private filteredMentionItems: MentionItem[] = [];
-  private activeAgentFilter = false;
   private mcpManager: McpMentionProvider | null = null;
-  private agentService: AgentMentionProvider | null = null;
   private sessionProvider: SessionMentionProvider | null = null;
   private sessionMode = false;
   private fixed: boolean;
@@ -109,12 +102,6 @@ export class MentionDropdownController {
   }
   setMcpManager(manager: McpMentionProvider | null): void {
     this.mcpManager = manager;
-  }
-  setAgentService(service: AgentMentionProvider | null): void {
-    if (this.agentService !== service && this.dropdown.isVisible()) {
-      this.hide();
-    }
-    this.agentService = service;
   }
   setSessionProvider(provider: SessionMentionProvider | null): void {
     this.sessionProvider = provider;
@@ -240,11 +227,6 @@ export class MentionDropdownController {
     }
     if (e.key === 'Escape' && !e.isComposing) {
       e.preventDefault();
-      // If in secondary menu, return to first level instead of closing
-      if (this.activeAgentFilter) {
-        this.returnToFirstLevel();
-        return true;
-      }
       this.hide();
       return true;
     }
@@ -265,30 +247,6 @@ export class MentionDropdownController {
     const externalContexts = this.callbacks.getExternalContexts() || [];
     const contextEntries = buildExternalContextDisplayEntries(externalContexts);
 
-    const isFilterSearch = searchText.includes('/');
-    if (isFilterSearch && searchLower.startsWith('agents/')) {
-      this.activeAgentFilter = true;
-      const agentSearchText = searchText.substring('agents/'.length).toLowerCase();
-
-      if (this.agentService) {
-        const matchingAgents = this.agentService.searchAgents(agentSearchText);
-        for (const agent of matchingAgents) {
-          this.filteredMentionItems.push({
-            type: 'agent',
-            id: agent.id,
-            name: agent.name,
-            description: agent.description,
-            source: agent.source,
-          });
-        }
-      }
-
-      this.selectedMentionIndex = 0;
-      this.renderMentionDropdown();
-      return;
-    }
-    this.activeAgentFilter = false;
-
     const selectedTextLabel = t('chat.contextBadges.selectedText');
     if (
       this.suggestSelectedTextTemplate
@@ -299,16 +257,6 @@ export class MentionDropdownController {
         type: 'selected-text-template',
         name: selectedTextLabel,
       });
-    }
-
-    if (this.agentService) {
-      const hasAgents = this.agentService.searchAgents('').length > 0;
-      if (hasAgents && 'agents'.includes(searchLower)) {
-        this.filteredMentionItems.push({
-          type: 'agent-folder',
-          name: t('chat.mention.agents'),
-        });
-      }
     }
 
     // External contexts: list checked roots only (no recursive file drill-down).
@@ -359,8 +307,6 @@ export class MentionDropdownController {
         switch (item.type) {
           case 'file': return 'pivi-mention-item--workspace-file';
           case 'folder': return 'pivi-mention-item--workspace-folder';
-          case 'agent': return 'pivi-mention-item--agent';
-          case 'agent-folder': return 'pivi-mention-item--agent-folder';
           case 'context-folder': return 'pivi-mention-item--context-folder';
           case 'selected-text-template': return 'pivi-mention-item--selected-text-template';
           case 'session': return 'pivi-mention-item--session';
@@ -369,10 +315,6 @@ export class MentionDropdownController {
       renderItem: (item, itemEl) => {
         const iconEl = itemEl.createSpan({ cls: 'pivi-mention-icon' });
         switch (item.type) {
-          case 'agent':
-          case 'agent-folder':
-            setIcon(iconEl, 'bot');
-            break;
           case 'folder':
             setIcon(iconEl, 'folder');
             break;
@@ -393,21 +335,6 @@ export class MentionDropdownController {
         const textEl = itemEl.createSpan({ cls: 'pivi-mention-text' });
 
         switch (item.type) {
-          case 'agent-folder':
-            textEl.createSpan({
-              cls: 'pivi-mention-name pivi-mention-name-agent-folder',
-            }).setText(`@${item.name}/`);
-            break;
-          case 'agent': {
-            // Show ID (which is namespaced for plugin agents) for consistency with inserted text
-            textEl.createSpan({
-              cls: 'pivi-mention-name pivi-mention-name-agent',
-            }).setText(`@${item.id}`);
-            if (item.description) {
-              textEl.createSpan({ cls: 'pivi-mention-agent-desc' }).setText(item.description);
-            }
-            break;
-          }
           case 'context-folder':
             textEl.createSpan({
               cls: 'pivi-mention-name pivi-mention-name-folder',
@@ -447,7 +374,7 @@ export class MentionDropdownController {
         if (this.flushPendingFilter()) return;
         // Stop propagation for folder items to prevent document click handler
         // from hiding dropdown (since dropdown is re-rendered with new DOM)
-        if (item.type === 'context-folder' || item.type === 'agent-folder') {
+        if (item.type === 'context-folder') {
           e.stopPropagation();
         }
         this.selectedMentionIndex = index;
@@ -598,20 +525,6 @@ export class MentionDropdownController {
     this.inputEl.dispatchEvent(new OwnerEvent('input', { bubbles: true }));
   }
 
-  private returnToFirstLevel(): void {
-    const text = this.inputEl.value;
-    const beforeAt = text.substring(0, this.mentionStartIndex);
-    const cursorPos = this.inputEl.selectionStart || 0;
-    const afterCursor = text.substring(cursorPos);
-
-    this.inputEl.value = beforeAt + '@' + afterCursor;
-    this.inputEl.selectionStart = this.inputEl.selectionEnd = beforeAt.length + 1;
-
-    this.activeAgentFilter = false;
-
-    this.showMentionDropdown('');
-  }
-
   private selectMentionItem(): void {
     if (this.filteredMentionItems.length === 0) return;
 
@@ -626,18 +539,6 @@ export class MentionDropdownController {
     const afterCursor = text.substring(cursorPos);
 
     switch (selectedItem.type) {
-      case 'agent-folder':
-        // Don't modify input text - just show agents submenu
-        this.activeAgentFilter = true;
-        this.inputEl.focus();
-        this.showMentionDropdown('Agents/');
-        return;
-      case 'agent': {
-        const replacement = `@${selectedItem.id} (agent) `;
-        this.insertReplacement(beforeAt, replacement, afterCursor);
-        this.callbacks.onAgentMentionSelect?.(selectedItem.id);
-        break;
-      }
       case 'context-folder': {
         // Root external folder badge only; absolute path is resolved at send time.
         const replacement = `@${selectedItem.name}/ `;
@@ -675,5 +576,3 @@ export class MentionDropdownController {
     this.inputEl.focus();
   }
 }
-
-/* eslint-enable max-lines -- End of the intentionally unified controller lifecycle. */
