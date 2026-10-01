@@ -403,7 +403,6 @@
       "absolutelyRight": "완전히 맞습니다!"
     },
     "mention": {
-      "agents": "에이전트",
       "noMatches": "일치 항목 없음"
     },
     "file": {
@@ -570,7 +569,6 @@
       "setupLabelAndIcon": "Pivi + 아이콘",
       "setupIconOnly": "아이콘만",
       "itemTooltip": "선택 영역을 Pivi 입력에 추가",
-      "commandTooltip": "새 Pivi 세션에서 /{name} 실행",
       "installed": "Pivi를 선택 텍스트 도구 모음에 추가했습니다.",
       "alreadyInstalled": "Pivi가 이미 선택 텍스트 도구 모음에 있습니다.",
       "styleSettingsOpened": "Pivi가 이미 다른 스타일을 사용하고 있습니다. 레이블을 수동으로 변경할 수 있도록 Note Toolbar 항목 설정을 열었습니다.",

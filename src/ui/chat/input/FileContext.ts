@@ -15,7 +15,6 @@ import {
   mergeContextFilePaths,
 } from '@/ui/shared/mention/expandFolderMentions';
 import type {
-  AgentMentionProvider,
   McpMentionProvider,
 } from '@/ui/shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownController';
@@ -35,8 +34,6 @@ export interface FileContextCallbacks {
   getExternalContexts?: () => string[];
   getSkillNames?: () => Set<string>;
   getSessions?: SessionMentionProvider['listSessions'];
-  /** Called when an agent is selected from the @ mention dropdown. */
-  onAgentMentionSelect?: (agentId: string) => void;
 }
 
 /** Narrow MCP surface used by FileContext badges + mention dropdown. */
@@ -62,7 +59,6 @@ export class FileContextManager {
 
   // MCP server support
   private mcpManager: FileContextMcpProvider | null = null;
-  private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
 
   constructor(
     app: App,
@@ -114,8 +110,6 @@ export class FileContextManager {
       this.inputEl,
       {
         onAttachFile: (filePath) => this.state.attachFile(filePath),
-        onMcpMentionChange: (servers) => this.onMcpMentionChange?.(servers),
-        onAgentMentionSelect: (agentId) => this.callbacks.onAgentMentionSelect?.(agentId),
         getMentionedMcpServers: () => this.state.getMentionedMcpServers(),
         setMentionedMcpServers: (mentions) => this.state.setMentionedMcpServers(mentions),
         addMentionedMcpServer: (name) => this.state.addMentionedMcpServer(name),
@@ -146,10 +140,6 @@ export class FileContextManager {
     return this.currentNotePath;
   }
 
-  getAttachedFiles(): Set<string> {
-    return this.state.getAttachedFiles();
-  }
-
   /**
    * Paths for `<context_files>`: explicit chip attachments plus all files under @folder mentions.
    * Folder expansion is path-only; file contents are not read here.
@@ -171,10 +161,6 @@ export class FileContextManager {
     this.state.clearAttachments();
     this.currentNotePath = null;
     this.refreshCurrentNoteChip();
-  }
-
-  isSessionStarted(): boolean {
-    return this.state.isSessionStarted();
   }
 
   startSession() {
@@ -405,26 +391,6 @@ export class FileContextManager {
       return [{ sessionId: part.sessionId, sessionFile: part.sessionFile, title: part.title }];
     });
     return sessions.length > 0 ? sessions : undefined;
-  }
-
-  setAgentService(agentService: AgentMentionProvider | null): void {
-    this.mentionDropdown.setAgentService(agentService);
-  }
-
-  setOnMcpMentionChange(callback: (servers: Set<string>) => void): void {
-    this.onMcpMentionChange = callback;
-  }
-
-  getMentionedMcpServers(): Set<string> {
-    return this.state.getMentionedMcpServers();
-  }
-
-  clearMcpMentions(): void {
-    this.state.clearMcpMentions();
-  }
-
-  updateMcpMentionsFromText(text: string): void {
-    this.mentionDropdown.updateMcpMentionsFromText(text);
   }
 
   private hasExcludedTag(file: TFile): boolean {

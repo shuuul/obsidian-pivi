@@ -33,16 +33,6 @@ describe('subagent profiles', () => {
     expect(new Set(SUBAGENT_WRITER_NAMES).size).toBe(SUBAGENT_PROFILES.length);
   });
 
-  it('provides reusable identity metadata for every writer', () => {
-    for (const profile of SUBAGENT_PROFILES) {
-      expect(profile.fullName).not.toBe('');
-    }
-
-    expect(SUBAGENT_PROFILES.find(profile => profile.name === 'Rand')?.fullName).toBe('Ayn Rand');
-    expect(SUBAGENT_PROFILES.find(profile => profile.name === 'Mishima')?.fullName).toBe('Mishima Yukio');
-    expect(SUBAGENT_PROFILES.find(profile => profile.name === 'Pamuk')?.fullName).toBe('Ferit Orhan Pamuk');
-  });
-
   it('resolves stable fallback names from task ids', () => {
     const taskId = 'task-history-fallback';
 

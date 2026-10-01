@@ -10,7 +10,6 @@ describe('add ollama then redisplay normalize', () => {
         addedProviders: ['deepseek'],
         disabledProviders: [],
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: ['deepseek/deepseek-flash'],
       },
     };

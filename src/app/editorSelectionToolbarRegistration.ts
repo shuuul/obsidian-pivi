@@ -112,10 +112,6 @@ export class SelectionToolbarHost {
     this.notifyDismissed();
   }
 
-  hideOverlayPreservingSnapshot(): void {
-    this.overlay.hide();
-  }
-
   destroy(): void {
     this.removeScrollListener();
     this.showCallbacks.clear();

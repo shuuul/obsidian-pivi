@@ -32,7 +32,6 @@ function createFakeChatUiConfig(adaptiveModels = new Set([ADAPTIVE_MODEL])): Cha
       adaptiveModels.has(model) ? adaptiveReasoningOptions : standardBudgetOptions,
     getDefaultReasoningValue: (model) => (adaptiveModels.has(model) ? 'medium' : 'off'),
     getContextWindowSize: () => 128_000,
-    isDefaultModel: (model) => model === STANDARD_MODEL,
     applyModelDefaults,
   };
 }
@@ -68,16 +67,16 @@ describe('commitSettingsSnapshot', () => {
   it('copies snapshot fields onto the live settings bag', () => {
     const settings: Record<string, unknown> = {
       model: ADAPTIVE_MODEL,
-      thinkingBudget: 'off',
+      thinkingLevel: 'off',
     };
     const snapshot = {
       model: STANDARD_MODEL,
-      thinkingBudget: 'low',
+      thinkingLevel: 'low',
     };
     commitSettingsSnapshot(settings, snapshot);
 
     expect(settings.model).toBe(STANDARD_MODEL);
-    expect(settings.thinkingBudget).toBe('low');
+    expect(settings.thinkingLevel).toBe('low');
   });
 });
 

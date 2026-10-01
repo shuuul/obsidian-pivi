@@ -207,14 +207,6 @@ export function getCustomProviderKindDisplayName(kind: CustomProviderKind): stri
   return KIND_DISPLAY_NAMES[kind];
 }
 
-export function getDefaultBaseUrlForKind(kind: CustomProviderKind): string {
-  return DEFAULT_BASE_URLS[kind];
-}
-
-export function getApiForCustomProviderKind(kind: CustomProviderKind): CustomProviderApi {
-  return KIND_TO_API[kind];
-}
-
 export function normalizeProviderBaseUrl(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, '');
 }
@@ -564,13 +556,6 @@ export function mergeFetchedCustomProviderModelUserFields(
       ...(thinkingFormatOverride ? { thinkingFormatOverride } : {}),
     };
   });
-}
-
-export function isCustomProviderId(
-  settings: Record<string, unknown>,
-  providerId: string,
-): boolean {
-  return getCustomProviderById(settings, providerId) !== null;
 }
 
 export function defaultModelMeta(

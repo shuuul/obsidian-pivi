@@ -202,7 +202,6 @@ function getManualSinglePassPlan(
     prefixEntries: entries,
     prefixFingerprint: fingerprintCompactionEntries(entries),
     prefixMessages: messages,
-    tailEntries: [],
     tailMessages: [],
     tokensBefore: estimateActiveContextTokens(entries),
   };

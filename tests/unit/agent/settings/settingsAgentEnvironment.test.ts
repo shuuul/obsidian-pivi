@@ -114,7 +114,6 @@ describe('legacy environmentVariables migration via getters', () => {
     const settings = settingsBag({
       agentSettings: {
         environmentVariables: 'PI_EXPLICIT=1',
-        selectedMode: 'default',
         visibleModels: [],
       },
       environmentVariables: 'PATH=/legacy',
@@ -145,7 +144,6 @@ describe('environment variable setters', () => {
 
     expect(settings.agentSettings).toEqual({
       environmentVariables: 'PI_NEW=2',
-      selectedMode: 'default',
       visibleModels: [],
     });
     expect(settings.environmentVariables).toBeUndefined();
@@ -164,7 +162,6 @@ describe('joinEnvironmentTexts and runtime text', () => {
       sharedEnvironmentVariables: 'PATH=/bin',
       agentSettings: {
         environmentVariables: 'PI_RUN=1',
-        selectedMode: 'default',
         visibleModels: [],
       },
     });

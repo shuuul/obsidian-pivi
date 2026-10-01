@@ -1,6 +1,6 @@
 /** MCP server name, URL, and map-key validation shared by storage, import, and UI. */
 
-import { classifyHostnameOrAddress } from '../network';
+import { classifyHostnameOrAddress } from '../network/egressPolicy';
 
 export const RESERVED_MCP_SERVER_NAMES = new Set(['__proto__', 'prototype', 'constructor']);
 

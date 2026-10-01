@@ -1,7 +1,6 @@
 /** Handle returned by the mention prompt editor port after mounting. */
 export interface SettingsMentionEditorHandle {
   getValue(): string;
-  setValue(text: string): void;
   focus(): void;
   setDisabled(disabled: boolean): void;
   destroy(): void;

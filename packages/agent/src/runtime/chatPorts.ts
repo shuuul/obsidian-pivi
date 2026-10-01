@@ -1,19 +1,17 @@
 import type { ManagedMcpServer } from '../mcp/types';
 import type { CapabilityApprovalPort } from '../ports/capabilityApproval';
-import type { OpenSessionState, SessionSummary } from '../runtime';
 import type {
-  ChatModeSelectorConfig,
   ChatReasoningOption,
   ChatUIOption,
 } from '../runtime/chatUi';
-import type { SessionMessagePage } from '../session';
-import type { AppModelReadinessProvider } from '../settings';
+import type { SessionMessagePage } from '../session/types';
 import type { CustomProviderConfig } from '../settings/customProviders';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
 import type { PersistentBashPermission } from '../tools/capabilityPermissions';
 import type { PiviManagementApprovalPort } from '../tools/piviManagement/approval';
 import type { AuxQueryRunner } from './auxQueryRunner';
+import type { OpenSessionState, SessionSummary } from './chatTypes';
 import type { PiChatService } from './piChatService';
 
 export interface ChatRuntimePort {
@@ -70,15 +68,9 @@ export interface ChatCatalogPort {
    */
   listMcpInventoryTools?(serverName: string): Promise<Array<{ name: string; description?: string }>>;
   listSkills(): Array<{ name: string; description?: string }>;
-  listSlashEntries(includeBuiltIns: boolean): Promise<SlashCatalogEntry[]>;
+  listSlashEntries(): Promise<SlashCatalogEntry[]>;
   getSlashDropdownConfig(): SlashCommandDropdownConfig;
-  refreshSlashCatalog(): Promise<void>;
 }
-
-export type ChatModelReadinessPort = Pick<
-  AppModelReadinessProvider,
-  'getStatus' | 'testModel'
->;
 
 export interface ChatModelCatalogSnapshot {
   addedProviders: string[];
@@ -89,10 +81,10 @@ export interface ChatModelCatalogSnapshot {
 
 export interface ChatSettingsSnapshot {
   model: string;
-  thinkingBudget: string;
   thinkingLevel: string;
   customContextLimits: Record<string, number>;
   enableAutoScroll: boolean;
+  deferMathRenderingDuringStreaming: boolean;
   showCacheHitRate: boolean;
   showTokensPerSecond: boolean;
   enableAutoTitleGeneration: boolean;
@@ -120,9 +112,6 @@ export interface ChatModelsPort {
     value: string,
     settings: ChatSettingsSnapshot,
   ): void;
-  getModeSelector?(settings: ChatSettingsSnapshot): ChatModeSelectorConfig | null;
-  applyModeSelection?(value: string, settings: ChatSettingsSnapshot): void;
-  getReadinessProvider(): ChatModelReadinessPort | null;
   prepareModelMetadata(model: string): Promise<void>;
 }
 

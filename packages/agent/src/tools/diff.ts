@@ -1,6 +1,7 @@
-import type { DiffLine, DiffStats, StructuredPatchHunk, ToolCallInfo, ToolDiffData } from '../tools';
+import type { DiffLine, DiffStats, StructuredPatchHunk } from './diffTypes';
 import { TOOL_OBSIDIAN_EDIT } from './obsidianToolNames';
 import { TOOL_EDIT } from './toolNames';
+import type { ToolCallInfo, ToolDiffData } from './types';
 
 export interface ApplyPatchFileDiff extends ToolDiffData {
   operation: 'add' | 'update' | 'delete';

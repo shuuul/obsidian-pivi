@@ -32,10 +32,6 @@ export function getMentionItemWidthText(item: MentionItem): string {
       return item.path;
     case 'context-folder':
       return item.name;
-    case 'agent':
-      return `${item.id} ${item.description ?? ''}`;
-    case 'agent-folder':
-      return item.name;
     case 'selected-text-template':
       return item.name;
     case 'session':

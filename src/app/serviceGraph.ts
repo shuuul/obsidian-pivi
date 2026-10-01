@@ -1,4 +1,3 @@
-import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
 import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import type { FileStore } from "@pivi/agent/ports";
 import type {
@@ -9,7 +8,6 @@ import {
   type SessionJournalStore,
   SessionJournalVersionError,
 } from "@pivi/agent/session/sessionJournal";
-import { createSecretStoreResolveHost } from "@pivi/agent/settings/deviceLocalEnvironmentState";
 import {
   bindSessionJournal,
   configureSessionJsonlIndexRoot,
@@ -30,9 +28,7 @@ import { Notice } from "obsidian";
 import { homedir } from 'os';
 import { join } from 'path';
 
-import { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalCapabilityPermissionStore";
-import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
-import type { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
+import type { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalCapabilityPermissionStore";
 import { ObsidianDeviceLocalProviderStore } from "@/app/deviceLocalProviderStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
 import { t } from "@/app/i18n";
@@ -48,28 +44,10 @@ export interface PiviServiceGraph {
 
 export function createSharedStorage(
   plugin: Plugin,
-  externalContexts: ObsidianDeviceLocalExternalContextStore,
-  capabilityPermissions = new ObsidianDeviceLocalCapabilityPermissionStore(plugin.app),
+  capabilityPermissions: ObsidianDeviceLocalCapabilityPermissionStore,
 ): SharedStorageService {
-  const environmentStore = new ObsidianDeviceLocalEnvironmentStore(plugin.app);
   return new SharedStorageService(plugin, createPiviSettingsCodec(
-    externalContexts,
     new ObsidianDeviceLocalProviderStore(plugin.app),
-    {
-      loadInitialized: () => environmentStore.loadInitialized(),
-      createResolveHost: () => createSecretStoreResolveHost(
-        isSecretStorageAvailable(plugin.app.secretStorage)
-          ? plugin.app.secretStorage
-          : undefined,
-        (name) => {
-          try {
-            return process.env[name];
-          } catch {
-            return undefined;
-          }
-        },
-      ),
-    },
     capabilityPermissions,
   ), {
     failedSaveTabLayout: t("host.failedSaveTabLayout"),

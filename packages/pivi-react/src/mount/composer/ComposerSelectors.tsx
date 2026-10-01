@@ -443,34 +443,6 @@ export function ThinkingSelector({
   );
 }
 
-export function ModeSelector({
-  activeValue,
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  activeValue: string | null;
-  label: string | null;
-  options: readonly DeepReadonly<ComposerOptionSnapshot>[];
-  value: string | null;
-  onChange: (value: string) => void;
-}) {
-  if (options.length !== 2) return null;
-  const active = options.find(option => option.value === activeValue) ?? options[1];
-  const inactive = active?.value === options[0]?.value ? options[1] : options[0];
-  const selected = options.find(option => option.value === value) ?? options[0];
-  if (!active || !inactive || !selected) return null;
-  const isActive = selected.value === active.value;
-  const title = [`${inactive.label} <-> ${active.label}`, selected.description].filter(Boolean).join('\n');
-  return (
-    <button className="pivi-mode-selector" onClick={() => onChange(isActive ? inactive.value : active.value)} title={title} type="button">
-      <span className={`pivi-mode-label${isActive ? ' active' : ''}`}>{selected.label || label}</span>
-      <span aria-hidden="true" className={`pivi-toggle-switch${isActive ? ' active' : ''}`} />
-    </button>
-  );
-}
-
 export function ExternalContextControl({
   snapshot,
   actions,

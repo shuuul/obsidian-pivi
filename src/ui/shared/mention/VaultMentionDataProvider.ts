@@ -2,26 +2,12 @@ import type { App, TFile } from 'obsidian';
 
 import { VaultFileCache, VaultFolderCache } from './VaultMentionCache';
 
-export interface VaultMentionDataProviderOptions {
-  onFileLoadError?: () => void;
-}
-
 export class VaultMentionDataProvider {
   private fileCache: VaultFileCache;
   private folderCache: VaultFolderCache;
-  private hasReportedFileLoadError = false;
 
-  constructor(
-    app: App,
-    options: VaultMentionDataProviderOptions = {}
-  ) {
-    this.fileCache = new VaultFileCache(app, {
-      onLoadError: () => {
-        if (this.hasReportedFileLoadError) return;
-        this.hasReportedFileLoadError = true;
-        options.onFileLoadError?.();
-      },
-    });
+  constructor(app: App) {
+    this.fileCache = new VaultFileCache(app);
     this.folderCache = new VaultFolderCache(app);
   }
 

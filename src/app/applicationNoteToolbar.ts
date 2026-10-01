@@ -1,12 +1,11 @@
 import type { ProcessRunner } from "@pivi/agent/ports";
 import type { PiviSettings } from "@pivi/agent/settings";
 import { getObsidianToolsSettingsFromBag } from "@pivi/agent/settings/types";
-import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import { ObsidianCliTransport } from "@pivi/obsidian-host/cli/obsidianCliTransport";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import { openExternalUrl } from "@pivi/obsidian-host/openExternalUrl";
 import type { App } from "obsidian";
-import { apiVersion, getIcon } from "obsidian";
+import { apiVersion, } from "obsidian";
 
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
 import { getVaultPath } from "@/app/hostPlatform";
@@ -19,24 +18,20 @@ import {
   type NoteToolbarItemStyle,
   type NoteToolbarSetupQueue,
   type NoteToolbarSetupResult,
-  runQueuedNoteToolbarRequest,
   runQueuedNoteToolbarSetup,
   setupNoteToolbarIntegration as setupNoteToolbar,
 } from "@/app/noteToolbarIntegration";
-import { getWorkspaceCommandFullId } from "@/app/workspaceCommandRegistry";
 
 export interface ApplicationNoteToolbarDeps {
   app: App;
   pluginId: string;
   processRunner: ProcessRunner;
   getSettings(): PiviSettings;
-  /** Registers workspace commands so a new toolbar item targets a live command id. */
-  reconcileWorkspaceCommands(): Promise<void>;
 }
 
 type NoteToolbarItemOptions = Pick<
   Parameters<typeof setupNoteToolbar>[0],
-  'commandId' | 'itemStyle' | 'itemIcon' | 'itemTooltip'
+  'commandId' | 'itemStyle' | 'itemTooltip'
 >;
 
 function getNoteToolbarItemApi(itemId: string): NoteToolbarItemApi | null {
@@ -87,19 +82,4 @@ export class ApplicationNoteToolbar {
     }));
   }
 
-  async setupWorkspaceCommand(entry: SlashCatalogEntry): Promise<NoteToolbarSetupResult> {
-    const integrationKey = entry.integrationKey;
-    if (!integrationKey) {
-      throw new Error(`Workspace command /${entry.name} has no integration key`);
-    }
-    await this.deps.reconcileWorkspaceCommands();
-    const icon = entry.icon && getIcon(entry.icon) ? entry.icon : 'message-square';
-    const key = `${integrationKey}:${icon}`;
-    return runQueuedNoteToolbarRequest(this.setupQueue, key, () => this.runSetup({
-      commandId: getWorkspaceCommandFullId(this.deps.pluginId, integrationKey),
-      itemStyle: 'icon-only',
-      itemIcon: icon,
-      itemTooltip: t('settings.noteToolbar.commandTooltip', { name: entry.name }),
-    }));
-  }
 }

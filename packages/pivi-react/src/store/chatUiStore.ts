@@ -15,9 +15,6 @@ export interface QueuedTurnSnapshot {
   readonly id: string;
   readonly content: string;
   readonly imageCount: number;
-  readonly hasEditorContext: boolean;
-  readonly hasBrowserContext: boolean;
-  readonly hasCanvasContext: boolean;
 }
 
 export interface ThinkingIndicatorSnapshot {
@@ -79,12 +76,7 @@ export interface ComposerChromeSnapshot {
   readonly canSend: boolean;
   readonly model: string;
   readonly modelOptions: readonly ComposerOptionSnapshot[];
-  readonly mode: string | null;
-  readonly modeLabel: string | null;
-  readonly modeOptions: readonly ComposerOptionSnapshot[];
-  readonly modeActiveValue: string | null;
   readonly adaptiveReasoning: boolean;
-  readonly thinkingBudget: string;
   readonly thinkingLevel: string;
   readonly thinkingOptions: readonly ComposerOptionSnapshot[];
   readonly defaultReasoningValue: string;
@@ -170,12 +162,7 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
       canSend: false,
       model: '',
       modelOptions: [],
-      mode: null,
-      modeLabel: null,
-      modeOptions: [],
-      modeActiveValue: null,
       adaptiveReasoning: false,
-      thinkingBudget: '',
       thinkingLevel: '',
       thinkingOptions: [],
       defaultReasoningValue: '',

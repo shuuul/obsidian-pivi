@@ -38,7 +38,6 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
   const ensureServiceForSession = jest.fn(async () => undefined);
   const callbacks = {
     onNewSession: jest.fn(),
-    onSessionLoaded: jest.fn(),
     onSessionSwitched: jest.fn(),
   };
 
@@ -169,41 +168,7 @@ describe('SessionController.createNew', () => {
   });
 });
 
-describe('SessionController.loadActive', () => {
-  it('enters welcome state when there is no open session', async () => {
-    const {
-      controller, state, agentService, callbacks, fileCtx, inlineCtx, externalContextSelector,
-    } = createFixture();
-    state.currentOpenSessionId = null;
-
-    await controller.loadActive();
-
-    expect(agentService.syncSession).toHaveBeenCalledWith(null, ['/settings/pin']);
-    expect(state.welcomeGreeting).toEqual(expect.any(String));
-    expect(fileCtx.resetForNewSession).toHaveBeenCalled();
-    expect(inlineCtx.resetForNewSession).toHaveBeenCalled();
-    expect(externalContextSelector.resetForSession).toHaveBeenCalledWith(['/settings/pin']);
-    expect(callbacks.onSessionLoaded).toHaveBeenCalled();
-  });
-
-  it('restores an open session via ensureServiceForSession', async () => {
-    const {
-      controller, state, sessions, conv, ensureServiceForSession, callbacks, externalContextSelector,
-      resetStreamingState,
-    } = createFixture();
-    state.currentOpenSessionId = 'conv-1';
-
-    await controller.loadActive();
-
-    expect(ensureServiceForSession).toHaveBeenCalledWith(conv);
-    expect(sessions.openRecent).toHaveBeenCalledWith('conv-1', 100);
-    expect(resetStreamingState).toHaveBeenCalled();
-    expect(state.messages).toEqual([MSG]);
-    expect(state.currentOpenSessionId).toBe('conv-1');
-    expect(externalContextSelector.resetForSession).toHaveBeenCalledWith(['/settings/pin']);
-    expect(callbacks.onSessionLoaded).toHaveBeenCalled();
-  });
-
+describe('SessionController partial hydration and older-message paging', () => {
   it('round-trips partial hydration metadata through save', async () => {
     const { controller, state, sessions } = createFixture({
       hasOlderMessages: true,
@@ -212,9 +177,7 @@ describe('SessionController.loadActive', () => {
       olderUserMessageCount: 2_450,
       messagePreview: 'durable first request',
     });
-    state.currentOpenSessionId = 'conv-1';
-
-    await controller.loadActive();
+    await controller.switchTo('conv-1');
 
     expect(state.hasOlderMessages).toBe(true);
     expect(state.totalMessageCount).toBe(5_000);
@@ -242,8 +205,7 @@ describe('SessionController.loadActive', () => {
       olderMessageCount: 100,
       olderUserMessageCount: 50,
     });
-    state.currentOpenSessionId = 'conv-1';
-    await controller.loadActive();
+    await controller.switchTo('conv-1');
     let resolvePage!: (page: Awaited<ReturnType<typeof sessions.readOlder>>) => void;
     jest.mocked(sessions.readOlder).mockReturnValue(new Promise(resolve => {
       resolvePage = resolve;
@@ -274,8 +236,7 @@ describe('SessionController.loadActive', () => {
       hasOlderMessages: true,
       olderMessageCount: 100,
     });
-    state.currentOpenSessionId = 'conv-1';
-    await controller.loadActive();
+    await controller.switchTo('conv-1');
     let resolvePage!: (page: Awaited<ReturnType<typeof sessions.readOlder>>) => void;
     jest.mocked(sessions.readOlder).mockReturnValue(new Promise(resolve => {
       resolvePage = resolve;
@@ -301,8 +262,7 @@ describe('SessionController.loadActive', () => {
       hasOlderMessages: true,
       olderMessageCount: 100,
     });
-    state.currentOpenSessionId = 'conv-1';
-    await controller.loadActive();
+    await controller.switchTo('conv-1');
     let resolvePage!: (page: Awaited<ReturnType<typeof sessions.readOlder>>) => void;
     jest.mocked(sessions.readOlder).mockReturnValue(new Promise(resolve => {
       resolvePage = resolve;

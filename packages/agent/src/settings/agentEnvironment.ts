@@ -214,7 +214,6 @@ function ensureAgentSettings(
 
   const next: AgentRuntimeSettings = {
     environmentVariables: '',
-    selectedMode: 'default',
     visibleModels: [],
   };
   settings.agentSettings = next;

@@ -17,14 +17,6 @@ export interface AppModelTestResult {
 }
 
 export interface AppModelReadinessProvider {
-  getStatus(
-    model: string,
-    settings: Record<string, unknown>,
-  ): AppModelReadinessStatus;
-  testModel(
-    model: string,
-    settings: Record<string, unknown>,
-  ): Promise<AppModelTestResult>;
   testProvider?(
     providerId: string,
     settings: Record<string, unknown>,

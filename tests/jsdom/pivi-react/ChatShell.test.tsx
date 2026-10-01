@@ -808,8 +808,6 @@ describe('React ChatShell tabs', () => {
       send: jest.fn(),
       stop: jest.fn(),
       setModel: jest.fn(),
-      setMode: jest.fn(),
-      setThinkingBudget: jest.fn(),
       setThinkingLevel: jest.fn(),
       toggleExternalPath: jest.fn(),
       toggleExternalPinned: jest.fn(),
@@ -846,9 +844,6 @@ describe('React ChatShell tabs', () => {
       queuedTurns: [{
         id: 'queued-1',
         content: 'A queued request that is intentionally much longer than forty characters',
-        hasBrowserContext: false,
-        hasCanvasContext: false,
-        hasEditorContext: false,
         imageCount: 2,
       }],
     }));
@@ -869,17 +864,11 @@ describe('React ChatShell tabs', () => {
         {
           id: 'queued-1',
           content: 'First independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
         {
           id: 'queued-2',
           content: 'Second independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
       ],
@@ -901,17 +890,11 @@ describe('React ChatShell tabs', () => {
         {
           id: 'queued-1',
           content: 'First independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
         {
           id: 'queued-2',
           content: 'Second independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
       ],
@@ -1093,7 +1076,7 @@ describe('React ChatShell tabs', () => {
           { content: 'Completed task', id: 'completed', status: 'completed' },
           { activeForm: 'Writing the focused test', content: 'Write test', id: 'in-progress', status: 'in_progress' },
         ],
-        progress: { completed: 1, inProgress: 1, pending: 0, total: 2 },
+        progress: { completed: 1,pending: 0, total: 2 },
         source: 'manual',
       },
     }));
@@ -1142,9 +1125,6 @@ describe('React ChatShell tabs', () => {
       queuedTurns: [{
         id: 'queued-first',
         content: 'First queued turn',
-        hasBrowserContext: false,
-        hasCanvasContext: false,
-        hasEditorContext: false,
         imageCount: 0,
       }],
     }));
@@ -1159,9 +1139,6 @@ describe('React ChatShell tabs', () => {
       queuedTurns: [{
         id: 'queued-second',
         content: 'Second queued turn',
-        hasBrowserContext: false,
-        hasCanvasContext: false,
-        hasEditorContext: false,
         imageCount: 0,
       }],
       welcomeGreeting: 'Second tab',
@@ -1186,8 +1163,6 @@ describe('React ChatShell tabs', () => {
       send: jest.fn(),
       stop: jest.fn(),
       setModel: jest.fn(),
-      setMode: jest.fn(),
-      setThinkingBudget: jest.fn(),
       setThinkingLevel: jest.fn(),
       toggleExternalPath: jest.fn(),
       toggleExternalPinned: jest.fn(),
@@ -1203,12 +1178,7 @@ describe('React ChatShell tabs', () => {
             { label: 'Model A', providerLogoSlug: 'anthropic', value: 'model-a' },
             { fallbackIcon: 'cpu', label: 'Longer Model B Name', value: 'model-b' },
           ],
-          mode: 'ask',
-          modeLabel: 'Ask',
-          modeOptions: [{ label: 'Ask', value: 'ask' }, { label: 'Code', value: 'code' }],
-          modeActiveValue: 'code',
           adaptiveReasoning: false,
-          thinkingBudget: 'low',
           thinkingLevel: 'low',
           thinkingOptions: [
             { label: 'Off', tokens: 0, value: 'off' },
@@ -1240,7 +1210,6 @@ describe('React ChatShell tabs', () => {
       'pivi-model-selector',
       'pivi-thinking-selector',
       'pivi-external-context-selector',
-      'pivi-mode-selector',
       'pivi-input-action-group',
     ]);
     expect(targets.composer.querySelector('.pivi-model-btn .pivi-provider-logo-mask')).not.toBeNull();
@@ -1266,7 +1235,6 @@ describe('React ChatShell tabs', () => {
     expect(modelTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(composerActions.setModel).toHaveBeenCalledWith('model-a');
 
-    fireEvent.click(within(targets.composer).getByRole('button', { name: 'Ask' }));
 
     const thinkingGears = targets.composer.querySelector('.pivi-thinking-gears')!;
     const thinkingTrigger = within(targets.composer).getByRole('button', { name: 'Reasoning' });
@@ -1280,19 +1248,18 @@ describe('React ChatShell tabs', () => {
     fireEvent.mouseEnter(thinkingGears);
     fireEvent.click(within(targets.composer).getByRole('option', { name: 'Low' }));
     expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'false');
-    expect(composerActions.setThinkingBudget).toHaveBeenCalledWith('low');
+    expect(composerActions.setThinkingLevel).toHaveBeenCalledWith('low');
 
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Send message' }));
     expect(composerActions.setModel).toHaveBeenCalledWith('model-b');
-    expect(composerActions.setMode).toHaveBeenCalledWith('code');
-    expect(composerActions.setThinkingBudget).toHaveBeenCalledWith('high');
+    expect(composerActions.setThinkingLevel).toHaveBeenCalledWith('high');
     expect(composerActions.send).toHaveBeenCalledTimes(1);
     act(() => uiStore.update({
       composer: {
         ...uiStore.getSnapshot().composer,
         canSend: false,
         model: 'model-b',
-        thinkingBudget: 'high',
+        thinkingLevel: 'high',
       },
     }));
     expect(targets.composer.querySelector('.pivi-model-btn .pivi-model-label')?.textContent).toBe('Longer Model B Name');

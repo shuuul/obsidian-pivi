@@ -31,6 +31,8 @@ export interface NoteToolbarSetupResult {
   version?: string;
 }
 
+const TOOLBAR_ITEM_ICON = 'message-square-plus';
+
 export interface NoteToolbarIntegrationDependencies {
   adapter: Pick<DataAdapter, "exists" | "read">;
   apiVersion: string;
@@ -38,7 +40,6 @@ export interface NoteToolbarIntegrationDependencies {
   commandId: string;
   configDir: string;
   itemStyle: NoteToolbarItemStyle;
-  itemIcon?: string;
   itemTooltip: string;
   getItemApi?: (itemId: string) => NoteToolbarItemApi | null;
   /** In-memory plugin registry lookup: installed version, or null when absent. */
@@ -160,7 +161,7 @@ export async function setupNoteToolbarIntegration(
       itemArgs.push("label=Pivi");
     }
     itemArgs.push(
-      `icon=${deps.itemIcon ?? "message-square-plus"}`,
+      `icon=${TOOLBAR_ITEM_ICON}`,
       `tooltip=${deps.itemTooltip}`,
       "focus",
     );
@@ -173,7 +174,7 @@ export async function setupNoteToolbarIntegration(
     if (!verifiedItem || !itemMatchesStyle(
       verifiedItem,
       deps.itemStyle,
-      deps.itemIcon ?? 'message-square-plus',
+      TOOLBAR_ITEM_ICON,
     )) {
       return { status: "verification-failed" };
     }
@@ -195,7 +196,7 @@ async function synchronizeExistingToolbarItem(
   const api = itemId ? deps.getItemApi?.(itemId) : null;
   if (!api) return null;
 
-  const icon = deps.itemIcon ?? 'message-square-plus';
+  const icon = TOOLBAR_ITEM_ICON;
   const label = deps.itemStyle === 'label-and-icon' ? 'Pivi' : '';
   if (api.getIcon() !== icon) await api.setIcon(icon);
   if (api.getLabel() !== label) await api.setLabel(label);
@@ -211,7 +212,7 @@ async function handleExistingToolbarItem(
   if (itemMatchesStyle(
     item,
     deps.itemStyle,
-    deps.itemIcon ?? 'message-square-plus',
+    TOOLBAR_ITEM_ICON,
   )) {
     return { status: "already-installed" };
   }

@@ -374,7 +374,6 @@ describe('createSettingsModelsPort provider rename', () => {
     }];
     harness.settings.model = modelKey;
     harness.settings.titleGenerationModel = modelKey;
-    harness.settings.agentSettings.lastModel = modelKey;
     harness.settings.agentSettings.visibleModels = [modelKey];
     harness.settings.customContextLimits = { [modelKey]: 262_144 };
     return harness;
@@ -390,7 +389,6 @@ describe('createSettingsModelsPort provider rename', () => {
     expect(harness.settings.agentSettings.addedProviders).toEqual(['dgx-spark', 'deepseek']);
     expect(harness.settings.model).toBe('dgx-spark/qwen3.8-27b');
     expect(harness.settings.titleGenerationModel).toBe('dgx-spark/qwen3.8-27b');
-    expect(harness.settings.agentSettings.lastModel).toBe('dgx-spark/qwen3.8-27b');
     expect(harness.settings.agentSettings.visibleModels).toEqual(['dgx-spark/qwen3.8-27b']);
     expect(harness.settings.customContextLimits).toEqual({ 'dgx-spark/qwen3.8-27b': 262_144 });
     expect(harness.modifyCredential).toHaveBeenCalledWith('dgx-spark', expect.any(Function));

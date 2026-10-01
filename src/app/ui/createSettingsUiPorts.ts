@@ -43,6 +43,8 @@ import {
   PIVI_RELEASED_AT,
   PIVI_VERSION,
 } from '@/app/pluginIdentity';
+import { validateDirectoryPath } from '@/ui/shared/utils/externalContext';
+import { pickDirectoryPath } from '@/ui/shared/utils/folderPicker';
 
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
@@ -53,10 +55,6 @@ import {
   normalizeMaxConcurrentSubagents,
   requireWorkspace,
 } from './createUiPortHelpers';
-import {
-  pickDirectoryPath,
-  validateDirectoryPath,
-} from './externalDirectory';
 import { listObsidianCommands } from './listObsidianCommands';
 import { createMentionEditorPort } from './mentionEditor/createMentionEditorPort';
 import {
@@ -368,17 +366,12 @@ export function createSettingsUiPorts(
       },
       runtime: {
         refreshPrompt,
-        refreshModelSelectors: () => {
-          for (const view of host.getAllViews()) {
-            view.getChatHandle()?.maintenance.refreshModelPresentation();
-          }
-        },
       },
       commands: {
         refresh: () => ws.slashCommandCatalog.refresh(),
         listIconNames: () => getIconIds(),
         loadWorkspaceCatalog: () => ws.slashCommandCatalog.getWorkspaceSnapshot(),
-        listDropdownEntries: () => ws.slashCommandCatalog.listDropdownEntries({ includeBuiltIns: true }),
+        listDropdownEntries: () => ws.slashCommandCatalog.listDropdownEntries(),
         async saveWorkspaceEntry(entry, catalogRevision) {
           await ws.slashCommandCatalog.saveWorkspaceEntry(entry, catalogRevision);
           const saved = (await ws.slashCommandCatalog.listWorkspaceEntries())
@@ -449,7 +442,6 @@ export function createSettingsUiPorts(
     },
     environment: {
       getActiveEnvironmentVariables: () => host.getActiveEnvironmentVariables(),
-      getEnvironmentVariables: (scope) => host.getEnvironmentVariablesForScope(scope),
       listEntries: (scope) => host.listEnvironmentEntries(scope),
       applyEnvironmentVariables: (scope, envText) => host.applyEnvironmentVariables(scope, envText),
       applyEnvironmentVariablesBatch: (updates) => host.applyEnvironmentVariablesBatch(updates),

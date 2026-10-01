@@ -240,7 +240,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **Vault index** | File mentions, search, graph, tags, and properties enumerate vault metadata and file paths locally; Pivi does not send an index to its author. |
 | **System environment** | Read only at desktop integration boundaries for configured provider credentials, MCP authentication variables, the official CLI, and Skills tooling. Pivi does not transmit machine identity to its author. |
 | **Clipboard** | Writes occur only after explicit copy actions. MCP settings do not read the clipboard. |
-| **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
+| **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens are kept in Obsidian's secret storage (system keychain), not in vault files. |
 | **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |
 | **File recovery** | Before Pivi edits, overwrites, moves, deletes, or restores existing `.md` / `.canvas` files, it must snapshot their current content into Obsidian File Recovery. A missing/disabled recovery plugin or failed private `forceAdd` call blocks the operation. Folder move/delete snapshots every supported descendant before mutation; new files need no prior snapshot. Deletes also go to trash, and `obsidian_history` can list/read/restore retained snapshots. |
 | **Telemetry** | Pivi sends none to the plugin author or this project. |

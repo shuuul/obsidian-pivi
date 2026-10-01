@@ -73,7 +73,6 @@ export class ExternalContextSelector {
   }
 
   getExternalContexts(): string[] { return this.getCatalogPaths().filter(pathValue => this.isChecked(pathValue)); }
-  getPinnedPaths(): string[] { return [...this.pinnedPaths]; }
 
   setPinnedPaths(paths: string[]): void {
     const previous = new Set(this.pinnedPaths.map(normalizePathForComparison));

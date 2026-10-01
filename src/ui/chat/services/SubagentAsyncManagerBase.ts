@@ -221,10 +221,6 @@ export abstract class SubagentAsyncManagerBase {
     this.onStateChange(subagent);
   }
 
-  public hasRunningSubagents(): boolean {
-    return this.pendingAsyncSubagents.size > 0 || this.activeAsyncSubagents.size > 0;
-  }
-
   public orphanAllActive(): SubagentInfo[] {
     const orphaned: SubagentInfo[] = [];
     for (const subagent of this.pendingAsyncSubagents.values()) {

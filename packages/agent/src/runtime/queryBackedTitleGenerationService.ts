@@ -1,8 +1,4 @@
-import {
-  buildTitleGenerationPrompt,
-  parseTitleGenerationResponse,
-  TITLE_GENERATION_SYSTEM_PROMPT,
-} from '../prompt';
+import { buildTitleGenerationPrompt, parseTitleGenerationResponse, TITLE_GENERATION_SYSTEM_PROMPT } from '../prompt/titleGeneration';
 import type { AuxQueryRunner } from './auxQueryRunner';
 import type {
   TitleGenerationResult,

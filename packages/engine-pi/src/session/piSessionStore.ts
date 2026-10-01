@@ -24,14 +24,12 @@ import type {
   DeviceLocalExternalContextStore,
   FileStore,
   MessageUiPatch,
-  PersistedAgentMessage,
   SessionMessagePage,
   SessionMetaPatch,
   SessionRef,
   SessionStore,
   SessionUiContext,
   StoreSessionInfo,
-  UserTurnUi,
 } from '@pivi/agent/session/types';
 import {
   PIVI_SESSION_META,
@@ -387,52 +385,6 @@ export class PiSessionStore implements SessionStore {
       }
     }
     return Promise.resolve(null);
-  }
-
-  appendUserTurn(
-    ref: SessionRef,
-    prompt: string,
-    ui?: UserTurnUi,
-  ): Promise<SessionRef> {
-    const store = SessionTreeStore.open(
-      this.vaultPath,
-      ref.sessionFile,
-    );
-    const entryId = store.appendUserMessage(prompt, ui?.images);
-    const sanitizedUi = ui ? sanitizeMessageUiForJsonl(ui) : undefined;
-    if (sanitizedUi?.externalContextPaths) {
-      this.externalContexts.setTurnPaths(ref.sessionFile, entryId, sanitizedUi.externalContextPaths);
-    }
-    if (sanitizedUi?.sanitized.displayContent || sanitizedUi?.sanitized.turnRequest) {
-      store.appendMessageUi({
-        targetEntryId: entryId,
-        displayContent: sanitizedUi.sanitized.displayContent,
-        turnRequest: sanitizedUi.sanitized.turnRequest,
-      });
-    }
-    return Promise.resolve(this.refFromStore(store));
-  }
-
-  appendAgentTurn(
-    ref: SessionRef,
-    messages: PersistedAgentMessage[],
-    ui?: MessageUiPatch[],
-  ): Promise<SessionRef> {
-    const store = SessionTreeStore.open(
-      this.vaultPath,
-      ref.sessionFile,
-    );
-    store.syncAgentMessages(messages as unknown as AgentMessage[]);
-    if (ui) {
-      for (const patch of ui) {
-        const result = sanitizeMessageUiForJsonl(patch);
-        if (result.externalContextPaths) {
-          this.externalContexts.setTurnPaths(ref.sessionFile, patch.targetEntryId, result.externalContextPaths);
-        }
-        store.appendMessageUi(result.sanitized);
-      }
-    }
-    return Promise.resolve(this.refFromStore(store));
   }
 
   appendMessageUiPatches(ref: SessionRef, patches: MessageUiPatch[]): Promise<SessionRef> {

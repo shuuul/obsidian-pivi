@@ -40,12 +40,6 @@ export function createPrefixBashGrant(command: string, shellPath: string): BashA
   }
 }
 
-export function encodeBashGrant(grant: BashAuthorizationGrant): string {
-  return grant.kind === 'exact-shell'
-    ? `${BASH_EXACT_ENTRY_PREFIX}${grant.command}`
-    : `${BASH_PREFIX_ENTRY_PREFIX}${JSON.stringify(grant.argv)}`;
-}
-
 export function decodeBashGrant(entry: string, shellPath: string): BashAuthorizationGrant | null {
   const normalized = entry.trim();
   if (normalized.startsWith(BASH_EXACT_ENTRY_PREFIX)) {
@@ -73,23 +67,4 @@ export function decodeBashGrant(entry: string, shellPath: string): BashAuthoriza
   // Legacy untagged entries retain prefix behavior only when the resolved shell
   // is known POSIX-compatible and both entry and candidate pass the safe parser.
   return createPrefixBashGrant(normalized, shellPath);
-}
-
-export function matchBashAuthorization(
-  command: string,
-  shellPath: string,
-  grants: readonly BashAuthorizationGrant[],
-): boolean {
-  const normalized = normalizeBashCommand(command);
-  if (grants.some(grant => grant.kind === 'exact-shell' && grant.command === normalized)) return true;
-  if (!isPosixCompatibleShell(shellPath) && !isWindowsCmdShell(shellPath)) return false;
-  const candidate = createPrefixBashGrant(normalized, shellPath);
-  if (!candidate || candidate.kind !== 'argv-prefix') return false;
-  return grants.some(grant => grant.kind === 'argv-prefix'
-    && grant.argv.length <= candidate.argv.length
-    && grant.argv.every((token, index) => token === candidate.argv[index]));
-}
-
-export function matchEncodedBashAllowlist(command: string, shellPath: string, entries: readonly string[]): boolean {
-  return matchBashAuthorization(command, shellPath, entries.map(entry => decodeBashGrant(entry, shellPath)).filter((grant): grant is BashAuthorizationGrant => grant != null));
 }

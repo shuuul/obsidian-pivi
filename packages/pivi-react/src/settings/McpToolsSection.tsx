@@ -111,7 +111,6 @@ export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; rea
                     ref={draftEditorRef}
                     initial={editor.initial}
                     type={editor.type}
-                    onCancel={() => dispatch({ type: 'set_editor', editor: null })}
                     onSave={(server) => save(server)}
                   />
                 </DisclosureCard>

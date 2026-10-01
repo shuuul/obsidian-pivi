@@ -4,7 +4,7 @@ import {
   type SystemPromptBuildOptions,
   type SystemPromptSettings,
 } from './mainAgent';
-import type { PromptModuleSettings } from './modules';
+import type { PromptModuleSettings } from './modules/types';
 
 export interface PiSystemPromptToolRegistry {
   registeredToolNames: string[];

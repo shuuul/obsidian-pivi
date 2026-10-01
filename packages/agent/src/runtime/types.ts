@@ -1,9 +1,8 @@
-import type { BrowserSelectionContext } from '../context';
-import type { CanvasSelectionContext } from '../context';
-import type { EditorSelectionContext } from '../context';
-import type { InlineContextReference } from '../context';
-import type { ImageAttachment, OpenSessionState } from '../runtime';
-
+import type { BrowserSelectionContext } from '../context/browser';
+import type { CanvasSelectionContext } from '../context/canvas';
+import type { EditorSelectionContext } from '../context/editor';
+import type { InlineContextReference } from '../context/inlineContext';
+import type { ImageAttachment } from './chatTypes';
 
 export interface ChatTurnRequest {
   text: string;
@@ -40,7 +39,6 @@ export interface PiTurnOptions {
   model?: string;
   mcpMentions?: Set<string>;
   enabledMcpServers?: Set<string>;
-  forceColdStart?: boolean;
   externalContextPaths?: string[];
 }
 
@@ -60,18 +58,8 @@ export interface ChatRewindResult {
   error?: string;
 }
 
-export type PiSessionBinding = Pick<
-  OpenSessionState,
-  'sessionId' | 'sessionFile' | 'leafId' | 'agentState'
->;
-
-export interface SessionUpdateResult {
-  updates: Partial<OpenSessionState>;
-}
-
 export interface ChatTurnMetadata {
   userMessageId?: string;
   userParentEntryId?: string | null;
   assistantMessageId?: string;
-  wasSent?: boolean;
 }

@@ -59,11 +59,4 @@ export class NavigationController {
     this.deps.getMessagesEl().focus();
   }
 
-  focusMessages(): void {
-    this.deps.getMessagesEl().focus();
-  }
-
-  focusInput(): void {
-    this.deps.getInputEl().focus();
-  }
 }

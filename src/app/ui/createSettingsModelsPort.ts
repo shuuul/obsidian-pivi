@@ -358,9 +358,6 @@ export function createSettingsModelsPort(
       if (typeof host.settings.titleGenerationModel === 'string') {
         host.settings.titleGenerationModel = renameModelKey(host.settings.titleGenerationModel);
       }
-      if (typeof host.settings.agentSettings.lastModel === 'string') {
-        host.settings.agentSettings.lastModel = renameModelKey(host.settings.agentSettings.lastModel);
-      }
 
       // Credentials and custom headers live under provider-derived secret ids;
       // move them before the settings save so the renamed provider stays usable.
@@ -496,16 +493,9 @@ export function createSettingsModelsPort(
       );
       const prefix = `${providerId}/`;
       const allowedKeys = new Set(models.map(model => `${providerId}/${model.id}`));
-      const lastModel = host.settings.agentSettings.lastModel;
-      const lastModelUpdate = typeof lastModel === 'string'
-        && lastModel.startsWith(prefix)
-        && !allowedKeys.has(lastModel)
-        ? { lastModel: '' }
-        : {};
       updatePiAgentSettings(host.settings, {
         customProviders,
         visibleModels,
-        ...lastModelUpdate,
       });
       const firstProviderKey = visibleModels.find(key => key.startsWith(prefix));
       if (typeof host.settings.model === 'string' && host.settings.model.startsWith(prefix) && !allowedKeys.has(host.settings.model)) {

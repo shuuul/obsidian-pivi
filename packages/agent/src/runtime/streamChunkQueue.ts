@@ -1,4 +1,4 @@
-import type { StreamChunk } from '../runtime';
+import type { StreamChunk } from './chatTypes';
 
 export class StreamChunkQueue {
   private closed = false;

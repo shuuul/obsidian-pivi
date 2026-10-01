@@ -7,9 +7,6 @@
       "@test/*": [
         "./tests/*"
       ],
-      "@pivi/agent": [
-        "./packages/agent/src/index.ts"
-      ],
       "@pivi/engine-pi": [
         "./packages/engine-pi/src/index.ts"
       ],
@@ -36,6 +33,8 @@
     "jsx": "react-jsx",
     "strict": true,
     "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,

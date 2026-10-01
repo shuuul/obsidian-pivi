@@ -1,19 +1,12 @@
 import type { App, TFile } from 'obsidian';
 import { TFolder } from 'obsidian';
 
-export interface VaultFileCacheOptions {
-  onLoadError?: (error: unknown) => void;
-}
-
 export class VaultFileCache {
   private cachedFiles: TFile[] = [];
   private dirty = true;
   private isInitialized = false;
 
-  constructor(
-    private app: App,
-    private options: VaultFileCacheOptions = {}
-  ) {}
+  constructor(private app: App) {}
 
   initializeInBackground(): void {
     if (this.isInitialized) return;
@@ -38,8 +31,7 @@ export class VaultFileCache {
     try {
       this.cachedFiles = this.app.vault.getFiles();
       this.dirty = false;
-    } catch (error) {
-      this.options.onLoadError?.(error);
+    } catch {
       // Keep stale cache on failure. If data exists, avoid retrying each call.
       if (this.cachedFiles.length > 0) {
         this.dirty = false;

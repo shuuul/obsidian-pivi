@@ -3,7 +3,6 @@ import type { SyncSecretStore } from '@pivi/agent/ports';
 import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { PiviSettings } from '@pivi/agent/settings';
 import {
-  getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
 } from '@pivi/agent/settings/agentEnvironment';
 import type {
@@ -86,13 +85,6 @@ function createHostResolve(host: EnvironmentApplyHost) {
 
 export function getActiveEnvironmentVariables(settings: PiviSettings): string {
   return getRuntimeEnvironmentText(settings);
-}
-
-export function getEnvironmentVariablesForScope(
-  settings: PiviSettings,
-  scope: EnvironmentScope,
-): string {
-  return getScopedEnvironmentVariables(settings, scope);
 }
 
 export function listEnvironmentUiEntries(

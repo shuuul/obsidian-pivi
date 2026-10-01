@@ -65,8 +65,7 @@ function requireSecretStorage(app: App): SyncSecretStore {
 }
 
 function buildPortableRuntimeSettings(raw: Record<string, unknown>): PiviSettings {
-  const { settings } = normalizeStoredPiviSettings(raw);
-  return settings;
+  return normalizeStoredPiviSettings(raw);
 }
 
 async function listMcpServerNames(adapter: FileStore): Promise<string[]> {

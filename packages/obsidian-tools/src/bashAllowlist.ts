@@ -2,13 +2,9 @@ import {
   canonicalizeBashPermissions,
   defaultCaseInsensitiveExecutables,
   defaultSafeBashPermissions,
-  isWindowsCmdShell,
   matchBashPermissions,
   type PersistentBashPermission,
 } from '@pivi/agent/tools';
-
-export const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'pwd'] as const;
-export const DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST = ['where', 'cd'] as const;
 
 export function buildEffectiveBashPermissions(
   userPermissions?: readonly PersistentBashPermission[],
@@ -33,10 +29,4 @@ export function matchBashCommandAllowlist(
     buildEffectiveBashPermissions(permissions, shellPath),
     { shellPath },
   );
-}
-
-export function defaultSafeBashAllowlistNames(shellPath: string): readonly string[] {
-  return isWindowsCmdShell(shellPath)
-    ? DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST
-    : DEFAULT_SAFE_BASH_ALLOWLIST;
 }

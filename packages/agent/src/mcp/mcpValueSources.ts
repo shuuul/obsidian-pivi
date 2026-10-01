@@ -4,7 +4,6 @@
  */
 
 import {
-  clearSecretAcrossIds,
   type ConfigValueDraft,
   type ConfigValueRef,
   getMcpValueSecretId,
@@ -196,20 +195,6 @@ export function resolveMcpValueMap(
     }
   }
   return resolved;
-}
-
-export function clearMcpValueSecrets(
-  secretStorage: SyncSecretStore,
-  serverName: string,
-  channel: McpValueChannel,
-  map: McpStoredValueMap | undefined,
-): void {
-  for (const [key, ref] of Object.entries(map ?? {})) {
-    if (ref.kind !== 'secret') {
-      continue;
-    }
-    clearSecretAcrossIds(secretStorage, listMcpValueSecretIds(serverName, channel, key));
-  }
 }
 
 export function storedMapToDrafts(

@@ -7,16 +7,14 @@ import { McpStorage } from "@pivi/agent/mcp/mcpStorage";
 import { McpOAuthService } from "@pivi/agent/mcp/oauth/mcpOAuthService";
 import type {
   AppMcpDiagnostics,
-  AppMcpServerProbeProvider,
   AppMcpServerTester,
-  AppMcpStorage,
   AppMcpToolProvider,
 } from "@pivi/agent/mcp/ports";
 import { getMcpServerUrl } from "@pivi/agent/mcp/types";
 import {
   grantPrivateOrigins,
 } from "@pivi/agent/network";
-import { type AppModelReadinessProvider, getCustomProvidersFromBag, getSubagentRuntimeSettingsFromBag, getWebSearchToolsSettingsFromBag, parseEnvironmentVariables, WEB_PROVIDER_IDS } from "@pivi/agent/settings";
+import { type AppModelReadinessProvider, getCustomProvidersFromBag, getObsidianToolsSettingsFromBag, getSubagentRuntimeSettingsFromBag, getWebSearchToolsSettingsFromBag, parseEnvironmentVariables, WEB_PROVIDER_IDS } from "@pivi/agent/settings";
 import { ensureDefaultWorkspaceCommands } from "@pivi/agent/skills/commands/defaultWorkspaceCommands";
 import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
@@ -57,7 +55,6 @@ import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
   buildEffectiveBashPermissions,
   createObsidianTools,
-  getObsidianToolsSettingsFromBag,
   resolveLoginShellPath,
 } from "@pivi/obsidian-tools";
 import { Notice } from "obsidian";
@@ -80,7 +77,6 @@ import type { PiviWorkspaceHost, WorkspaceInitContext } from "./serviceContracts
 import { createVaultSkillsMetadataPort } from "./vaultSkillsMetadataPort";
 import {
   McpDiagnostics,
-  McpServerProbeProvider,
   McpServerTester,
   McpToolProvider,
   PiModelReadinessProvider,
@@ -88,12 +84,10 @@ import {
 } from "./workspaceServiceProviders";
 
 export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
-  mcpStorage: AppMcpStorage;
   mcpManagement: McpManagementCoordinator;
   mcpServerManager: McpServerManager;
   mcpToolProvider: AppMcpToolProvider;
   mcpDiagnostics: AppMcpDiagnostics;
-  mcpServerProbeProvider: AppMcpServerProbeProvider;
   mcpServerTester: AppMcpServerTester;
   modelReadinessProvider: AppModelReadinessProvider;
   skillProvider: AppSkillProvider;
@@ -211,7 +205,6 @@ export async function createPiWorkspaceServices(
     network.mcpFetch,
     host.app.secretStorage,
   );
-  const mcpServerProbeProvider = new McpServerProbeProvider(mcpToolProvider);
   const mcpServerTester = new McpServerTester(
     network.mcpFetch,
     host.app.secretStorage,
@@ -235,10 +228,7 @@ export async function createPiWorkspaceServices(
       );
     },
   });
-  const modelReadinessProvider = new PiModelReadinessProvider(
-    credentialStore,
-    providerOAuth,
-  );
+  const modelReadinessProvider = new PiModelReadinessProvider();
   const skillProvider = new PiSkillProvider(vaultPath, systemProcessRunner);
   const vaultSkillsService = new VaultSkillsService(vaultPath ?? "", {
     processRunner: systemProcessRunner,
@@ -310,12 +300,10 @@ export async function createPiWorkspaceServices(
   });
 
   return {
-    mcpStorage,
     mcpManagement,
     mcpServerManager,
     mcpToolProvider,
     mcpDiagnostics,
-    mcpServerProbeProvider,
     mcpServerTester,
     modelReadinessProvider,
     skillProvider,

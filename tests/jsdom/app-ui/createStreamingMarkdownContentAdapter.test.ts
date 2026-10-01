@@ -45,6 +45,52 @@ describe('createStreamingMarkdownContentAdapter', () => {
     expect(container.childElementCount).toBe(0);
   });
 
+  it('defers math for streaming segments only while the setting is enabled, never at terminal', async () => {
+    const renderContent = jest.fn(async () => undefined);
+    let deferMath = true;
+    const adapter = createStreamingMarkdownContentAdapter(
+      new Component(),
+      renderContent,
+      undefined,
+      () => deferMath,
+    );
+    const container = document.createElement('div');
+    const context = { generation: 'block-1', ownerDocument: document, ownerWindow: window };
+    adapter.mount(container, { blockId: 'block-1', content: '$a$ one.\n\n', phase: 'streaming' }, context);
+    await flushRenderQueue();
+    expect(renderContent).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '$a$ one.\n\n',
+      expect.objectContaining({ deferMath: true }),
+    );
+
+    deferMath = false;
+    adapter.update?.(container, {
+      blockId: 'block-1',
+      content: '$a$ one.\n\n$b$ two.\n\n',
+      phase: 'streaming',
+    }, context);
+    await flushRenderQueue();
+    expect(renderContent).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '$b$ two.\n\n',
+      expect.objectContaining({ deferMath: false }),
+    );
+
+    deferMath = true;
+    adapter.update?.(container, {
+      blockId: 'block-1',
+      content: '$a$ one.\n\n$b$ two.\n\n',
+      phase: 'terminal',
+    }, context);
+    await flushRenderQueue();
+    expect(renderContent).toHaveBeenLastCalledWith(
+      expect.anything(),
+      '$a$ one.\n\n$b$ two.\n\n',
+      expect.objectContaining({ deferMath: false }),
+    );
+  });
+
   it('does not seal an unclosed fence or display-math block', () => {
     expect(findStreamingMarkdownSealOffset('```ts\nconst x = 1;\n\n')).toBe(0);
     expect(findStreamingMarkdownSealOffset('$$\nx + y\n\n')).toBe(0);

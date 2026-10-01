@@ -46,7 +46,6 @@ function createHandle(): PiviChatViewHandle {
   return {
     commands: {
       getState: jest.fn(() => ({
-        mounted: true,
         canCreateTab: true,
         canStartNewSession: true,
         canCloseActiveTab: true,
@@ -59,7 +58,6 @@ function createHandle(): PiviChatViewHandle {
     addEditorSelection: jest.fn(() => true),
     sendWorkspaceCommandInNewSession: jest.fn(async () => true),
     submitInlineEditTurn: jest.fn(async () => null),
-      getActiveExternalContexts: jest.fn(() => []),
     },
     maintenance: {
       persistState: jest.fn(async () => undefined),

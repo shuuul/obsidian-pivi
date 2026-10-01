@@ -183,14 +183,15 @@ const boundaryRules = [
     forbidden: [/^@earendil-works\/(?!pi-mcp(?:\/|$))/, enginePiPackagePattern],
   },
   {
-    name: '@pivi/agent plugins has no raw Pi SDK imports',
-    root: 'packages/agent/src/plugins',
-    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
-  },
-  {
     name: '@pivi/agent prompt has no raw Pi SDK imports',
     root: 'packages/agent/src/prompt',
     forbidden: [/^@earendil-works\//, enginePiPackagePattern],
+  },
+  {
+    // runtime builds on prompt; the reverse edge would recreate a module cycle.
+    name: '@pivi/agent prompt does not depend on runtime',
+    root: 'packages/agent/src/prompt',
+    forbidden: [/^(?:\.\.\/)+runtime(?:\/|$)/, /^@pivi\/agent\/runtime(?:\/|$)/],
   },
   {
     name: '@pivi/agent runtime has no raw Pi SDK imports',

@@ -33,6 +33,11 @@ import { relocateQueuedDeletedSessions } from "@/app/pluginSessionApi";
 import { reconcileSessionCloudRecovery } from "@/app/serviceGraph";
 import { runDeviceLocalEnvironmentMigration } from "@/app/settings/deviceLocalEnvironmentMigration";
 import { runDeviceLocalProviderMigration } from "@/app/settings/deviceLocalProviderMigration";
+import {
+  type DeviceLocalCapabilityPermissions,
+  type DeviceLocalExternalReadDirectories,
+  overlayDeviceLocalCapabilityPermissions,
+} from "@/app/settings/piviSettingsCodec";
 
 import { getVaultPath } from "./hostPlatform";
 
@@ -60,6 +65,10 @@ export interface PluginSettingsLoadContext {
     getTabManagerState(): Promise<unknown>;
     setTabManagerState?(state: unknown): Promise<void>;
   };
+  /** Device-local Bash, command, and external-directory grants. */
+  capabilityPermissions: DeviceLocalCapabilityPermissions;
+  /** Pre-capability-store external directories; read once for migration. */
+  legacyExternalContexts: DeviceLocalExternalReadDirectories;
   /** Host used for default vault skills install prompt and notification. */
   skillsHost: DefaultVaultSkillsContext;
 }
@@ -94,6 +103,12 @@ export async function loadPluginSettings(
       environmentVariables: environmentMigration.settings.agentSettings.environmentVariables,
     },
   };
+  const didOverlayCapabilityPermissions = overlayDeviceLocalCapabilityPermissions(
+    settings,
+    rawSettings ?? {},
+    ctx.capabilityPermissions,
+    ctx.legacyExternalContexts,
+  );
   const didReconcileModelSelections =
     PiSettingsCoordinator.reconcileTitleGenerationModelSelection(settings);
   ctx.setSettings(settings);
@@ -155,6 +170,7 @@ export async function loadPluginSettings(
 
   if (
     changed
+    || didOverlayCapabilityPermissions
     || didReconcileModelSelections
     || didMigrateProviderSecrets
     || didRepairActiveModel
@@ -191,9 +207,6 @@ export function migrateProviderSecretsToKeychain(
       visibleModels: piSettings.visibleModels,
       model: settings.model,
       titleGenerationModel: settings.titleGenerationModel,
-      ...(typeof settings.agentSettings.lastModel === 'string'
-        ? { lastModel: settings.agentSettings.lastModel }
-        : {}),
       customProviders: piSettings.customProviders,
     },
   );
@@ -206,8 +219,5 @@ export function migrateProviderSecretsToKeychain(
   });
   settings.model = migrated.membership.model;
   settings.titleGenerationModel = migrated.membership.titleGenerationModel;
-  if (migrated.membership.lastModel) {
-    settings.agentSettings.lastModel = migrated.membership.lastModel;
-  }
   return migrated.changed;
 }

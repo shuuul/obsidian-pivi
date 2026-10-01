@@ -480,13 +480,6 @@ export class VaultSkillsService {
       .map((entry) => entry.name);
   }
 
-  private ensurePiviWorkDir(): string {
-    const dir = path.join(this.vaultPath, '.pivi');
-    fs.mkdirSync(dir, { recursive: true });
-    this.migrateRootSkillsCliMetadata(dir);
-    return dir;
-  }
-
   private migrateRootSkillsCliMetadata(piviDir: string): void {
     for (const fileName of SKILLS_CLI_METADATA_FILES) {
       const source = path.join(this.vaultPath, fileName);

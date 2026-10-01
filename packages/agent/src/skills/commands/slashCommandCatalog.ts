@@ -1,15 +1,11 @@
-import type { SlashCommand } from '../../settings';
 import type { SlashCatalogEntry } from './slashCommandEntry';
 
 export interface SlashCommandDropdownConfig {
   triggerChars: string[];
-  builtInPrefix: string;
-  skillPrefix: string;
-  commandPrefix: string;
 }
 
 export interface SlashCommandCatalog {
-  listDropdownEntries(context: { includeBuiltIns: boolean }): Promise<SlashCatalogEntry[]>;
+  listDropdownEntries(): Promise<SlashCatalogEntry[]>;
   listWorkspaceEntries(): Promise<SlashCatalogEntry[]>;
   getWorkspaceSnapshot(): Promise<{
     readonly entries: readonly SlashCatalogEntry[];
@@ -23,7 +19,6 @@ export interface SlashCommandCatalog {
     refreshed: boolean;
     warnings?: string[];
   }>;
-  setRuntimeCommands(commands: SlashCommand[]): void;
   getDropdownConfig(): SlashCommandDropdownConfig;
   refresh(): Promise<void>;
 }

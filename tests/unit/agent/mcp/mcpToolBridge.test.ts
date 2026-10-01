@@ -2,7 +2,6 @@ import { McpServerManager } from '@pivi/agent/mcp/mcpServerManager';
 import { McpConnectionPool } from '@pivi/agent/mcp/mcpConnectionPool';
 import { McpToolBridge } from '@pivi/agent/mcp/mcpToolBridge';
 import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
-import type { McpTransportFetch } from '@pivi/agent/mcp/ports';
 
 
 function createStorage(servers: ManagedMcpServer[]) {
@@ -24,38 +23,6 @@ describe('McpToolBridge', () => {
 
     expect(dispose).toHaveBeenCalledTimes(1);
     dispose.mockRestore();
-  });
-
-  it('summarizes MCP availability without connecting to servers', async () => {
-    const servers: ManagedMcpServer[] = [
-      {
-        name: 'ctx',
-        enabled: true,
-        contextSaving: true,
-        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
-      },
-      {
-        name: 'always',
-        enabled: true,
-        contextSaving: false,
-        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
-      },
-      {
-        name: 'disabled',
-        enabled: false,
-        contextSaving: false,
-        config: { type: 'http', url: 'https://ctx.example.com/mcp' },
-      },
-    ];
-    const manager = new McpServerManager(createStorage(servers));
-    await manager.loadServers();
-
-    expect(manager.getAvailabilitySummary()).toEqual({
-      totalCount: 3,
-      enabledCount: 2,
-      alwaysActiveCount: 1,
-      contextSavingCount: 1,
-    });
   });
 
   it('prefetches enabled remote servers', async () => {

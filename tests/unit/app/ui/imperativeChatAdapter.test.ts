@@ -1275,7 +1275,7 @@ describe('imperative chat semantic view handle', () => {
     expect(shell.activeChat.getPortalTargets()).toBeNull();
     expect(shell.activeChat.getComposerActions()).toBeNull();
     expect(shell.activeChat.getMessagePresentation()).toBeNull();
-    expect(harness.handle.commands.getState().mounted).toBe(false);
+    expect(harness.handle.commands.getState().canCreateTab).toBe(false);
 
     uiStore.update({ isStreaming: true });
     expect(activeChanges).not.toHaveBeenCalled();
@@ -1288,7 +1288,6 @@ describe('imperative chat semantic view handle', () => {
     const { handle, manager, mount } = createHarness();
 
     expect(handle.commands.getState()).toEqual({
-      mounted: false,
       canCreateTab: false,
       canStartNewSession: false,
       canCloseActiveTab: false,
@@ -1300,7 +1299,6 @@ describe('imperative chat semantic view handle', () => {
     manager.getActiveTabId.mockReturnValue(activeTab.id);
 
     expect(handle.commands.getState()).toEqual({
-      mounted: true,
       canCreateTab: true,
       canStartNewSession: true,
       canCloseActiveTab: true,
@@ -1309,7 +1307,6 @@ describe('imperative chat semantic view handle', () => {
     activeTab.state.isStreaming = true;
     manager.canCreateTab.mockReturnValue(false);
     expect(handle.commands.getState()).toEqual({
-      mounted: true,
       canCreateTab: false,
       canStartNewSession: false,
       canCloseActiveTab: true,
@@ -1362,19 +1359,16 @@ describe('imperative chat semantic view handle', () => {
     await expect(handle.commands.submitInlineEditTurn({ content: 'Rewrite' })).resolves.toBeNull();
   });
 
-  it('projects editor selection and copied external contexts', async () => {
+  it('projects editor selection', async () => {
     const { handle, manager, mount } = createHarness();
     await mount();
 
     const addSelectionFromEditor = jest.fn(
       (_editor: Editor, _markdownView: MarkdownView) => true,
     );
-    const externalContexts = ['/outside/one', '/outside/two'];
-    const getExternalContexts = jest.fn(() => externalContexts);
     const activeTab = createTab({
       ui: {
         inlineContextManager: { addSelectionFromEditor },
-        externalContextSelector: { getExternalContexts },
       },
     });
     manager.getActiveTab.mockReturnValue(activeTab);
@@ -1383,12 +1377,6 @@ describe('imperative chat semantic view handle', () => {
     const markdownView = {} as MarkdownView;
     expect(handle.commands.addEditorSelection(editor, markdownView)).toBe(true);
     expect(addSelectionFromEditor).toHaveBeenCalledWith(editor, markdownView);
-
-    const projectedContexts = handle.commands.getActiveExternalContexts();
-    expect(projectedContexts).toEqual(externalContexts);
-    expect(projectedContexts).not.toBe(externalContexts);
-    projectedContexts.push('/mutated-copy');
-    expect(externalContexts).toEqual(['/outside/one', '/outside/two']);
   });
 
   it('force-resets every matching session tab and cancels matching streams first', async () => {
@@ -1604,7 +1592,7 @@ describe('imperative chat semantic view handle', () => {
   });
 
   it('persists the current manager state immediately', async () => {
-    const { handle, manager, mount, persistTabStateImmediate } = createHarness();
+    const { handle, mount, persistTabStateImmediate } = createHarness();
 
     await expect(handle.maintenance.persistState()).resolves.toBeUndefined();
     expect(persistTabStateImmediate).not.toHaveBeenCalled();

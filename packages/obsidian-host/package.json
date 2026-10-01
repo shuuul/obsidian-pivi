@@ -18,7 +18,7 @@
     "./scopedHttpClient": "./src/scopedHttpClient.ts",
     "./obsidianHttpClient": "./src/obsidianHttpClient.ts",
     "./openExternalUrl": "./src/openExternalUrl.ts",
-    "./path": "./src/path.ts",
+    "./path": "./src/path/index.ts",
     "./providerLegacyAuthStore": "./src/providerLegacyAuthStore.ts",
     "./settings/piviSettingsStorage": "./src/settings/piviSettingsStorage.ts",
     "./storage/sharedStorageService": "./src/storage/sharedStorageService.ts",

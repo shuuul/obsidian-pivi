@@ -38,17 +38,6 @@ function regrantProviderPrivateOrigins(
   }
 }
 
-function readLastModelFromBag(settings: Record<string, unknown>): string | undefined {
-  const agentSettings = settings.agentSettings;
-  if (agentSettings && typeof agentSettings === "object" && !Array.isArray(agentSettings)) {
-    const lastModel = (agentSettings as Record<string, unknown>).lastModel;
-    if (typeof lastModel === "string") {
-      return lastModel;
-    }
-  }
-  return undefined;
-}
-
 /**
  * App-owned facades that hide Pi engine details from product UI.
  * Constructed once at composition; UI must call these instead of `@pivi/engine-pi` imports.
@@ -115,14 +104,9 @@ export function createPiUiFacades(
       const prefix = `${providerId}/`;
       const allowedKeys = new Set(result.models.map((model) => `${providerId}/${model.id}`));
       const firstProviderKey = visibleModels.find((key) => key.startsWith(prefix));
-      const lastModel = readLastModelFromBag(settings);
-      const lastModelUpdate = lastModel && lastModel.startsWith(prefix) && !allowedKeys.has(lastModel)
-        ? { lastModel: "" }
-        : {};
       updatePiAgentSettings(settings, {
         customProviders,
         visibleModels,
-        ...lastModelUpdate,
       });
       if (typeof settings.model === "string" && settings.model.startsWith(prefix) && !allowedKeys.has(settings.model)) {
         settings.model = firstProviderKey ?? "";

@@ -12,7 +12,6 @@ import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiv
 
 jest.mock('@/ui/shared/modals/ConfirmModal', () => ({
   confirm: jest.fn(async () => true),
-  confirmDelete: jest.fn(async () => true),
 }));
 
 const mockConfirm = confirm as jest.MockedFunction<typeof confirm>;
@@ -82,7 +81,6 @@ describe('tab fork guards', () => {
       messages: messages.slice(0, 2),
       sourceSessionId: 'source-session',
       forkAtEntryId: 'uuid-u1',
-      resumeAt: 'uuid-a0',
       sourceTitle: 'Source',
       forkAtUserMessage: 1,
       currentNote: 'note.md',
@@ -101,7 +99,6 @@ describe('tab fork guards', () => {
       messages,
       sourceSessionId: 'source-session',
       forkAtEntryId: 'uuid-u1',
-      resumeAt: 'uuid-u1',
       sourceTitle: 'Source',
       forkAtUserMessage: 1,
       currentNote: 'note.md',
@@ -122,7 +119,6 @@ describe('tab fork guards', () => {
       messages: messages.slice(0, 2),
       sourceSessionId: 'source-session',
       forkAtEntryId: 'uuid-a1',
-      resumeAt: 'uuid-a1',
       sourceTitle: 'Source',
       forkAtUserMessage: 1,
       currentNote: 'note.md',

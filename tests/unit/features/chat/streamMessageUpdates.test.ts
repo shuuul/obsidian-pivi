@@ -31,7 +31,6 @@ describe('StreamEventReducer', () => {
     });
 
     expect(result.merged).toBe(true);
-    expect(result.hadNewInputKeys).toBe(true);
     const mergedToolCall = msg.toolCalls?.[0];
     expect(mergedToolCall).toBeDefined();
     if (!mergedToolCall) throw new Error('Expected the merged tool call');

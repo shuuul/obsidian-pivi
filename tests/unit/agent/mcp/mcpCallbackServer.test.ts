@@ -1,4 +1,4 @@
-import { get, request as httpRequest, type IncomingHttpHeaders } from 'http';
+import { request as httpRequest, type IncomingHttpHeaders } from 'http';
 
 import {
   McpCallbackServer,

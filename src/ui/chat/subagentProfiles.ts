@@ -1,103 +1,83 @@
 export interface SubagentProfile {
   name: string;
-  fullName: string;
   runningIcon: string;
 }
 
 export const SUBAGENT_PROFILES = [
   {
     name: 'Austen',
-    fullName: 'Jane Austen',
     runningIcon: 'rocking-chair',
   },
   {
     name: 'Baldwin',
-    fullName: 'James Baldwin',
     runningIcon: 'flame',
   },
   {
     name: 'Borges',
-    fullName: 'Jorge Luis Borges',
     runningIcon: 'compass',
   },
   {
     name: 'Brontë',
-    fullName: 'Emily Brontë',
     runningIcon: 'wind',
   },
   {
     name: 'Calvino',
-    fullName: 'Italo Calvino',
     runningIcon: 'tree',
   },
   {
     name: 'Dostoevsky',
-    fullName: 'Fyodor Dostoevsky',
     runningIcon: 'key',
   },
   {
     name: 'Eliot',
-    fullName: 'T.S. Eliot',
     runningIcon: 'cat',
   },
   {
     name: 'Homer',
-    fullName: 'Homer',
     runningIcon: 'anchor',
   },
   {
     name: 'Kafka',
-    fullName: 'Franz Kafka',
     runningIcon: 'stamp',
   },
   {
     name: 'Le Guin',
-    fullName: 'Ursula K. Le Guin',
     runningIcon: 'satellite-dish',
   },
   {
     name: 'Morrison',
-    fullName: 'Toni Morrison',
     runningIcon: 'feather',
   },
   {
     name: 'Murakami',
-    fullName: 'Haruki Murakami',
     runningIcon: 'tornado',
   },
   {
     name: 'Neruda',
-    fullName: 'Pablo Neruda',
     runningIcon: 'heart-pulse',
   },
   {
     name: 'Sappho',
-    fullName: 'Sappho',
     runningIcon: 'music',
   },
   {
     name: 'Tolstoy',
-    fullName: 'Leo Tolstoy',
     runningIcon: 'swords',
   },
   {
     name: 'Woolf',
-    fullName: 'Virginia Woolf',
     runningIcon: 'waves',
   },
   {
     name: 'Rand',
-    fullName: 'Ayn Rand',
     runningIcon: 'scale',
   },
   {
     name: 'Mishima',
-    fullName: 'Mishima Yukio',
     runningIcon: 'flower-2',
   },
   {
     name: 'Pamuk',
-    fullName: 'Ferit Orhan Pamuk',
     runningIcon: 'snowflake',
   },
 ] as const satisfies readonly SubagentProfile[];

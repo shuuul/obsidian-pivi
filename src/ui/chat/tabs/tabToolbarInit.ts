@@ -3,7 +3,6 @@ import type { ChatPorts } from "@pivi/agent/runtime/chatPorts";
 import { recalculateUsageForModel } from "@pivi/agent/runtime/usage";
 import { Notice } from "obsidian";
 
-import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 
 import { pickDirectoryPath } from '../../shared/utils/folderPicker';
@@ -33,7 +32,6 @@ const logger = new PluginLogger('tabToolbarInit');
  */
 export function wireComposerChrome(
   tab: TabData,
-  plugin: PiviChatHost,
   ports: ChatPorts,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
 ): void {
@@ -108,21 +106,6 @@ export function wireComposerChrome(
       tab.service?.syncThinkingLevel?.();
       if (!tab.state.isStreaming) tab.controllers.inputController?.processQueuedMessage();
     },
-    onModeChange: async (mode: string) => {
-      await updateTabAgentSettings(ports, (settings) => {
-        ports.models.applyModeSelection?.(mode, settings);
-      });
-    },
-    onThinkingBudgetChange: async (budget: string) => {
-      await updateTabAgentSettings(ports, (settings) => {
-        settings.thinkingBudget = budget;
-        ports.models.applyReasoningSelection?.(
-          settings.model,
-          budget,
-          settings,
-        );
-      });
-    },
     onThinkingLevelChange: async (thinkingLevel: string) => {
       await updateTabAgentSettings(ports, (settings) => {
         settings.thinkingLevel = thinkingLevel;
@@ -148,8 +131,6 @@ export function wireComposerChrome(
     send: () => runComposerAction(async () => tab.controllers.inputController?.sendMessage()),
     stop: () => tab.controllers.inputController?.cancelStreaming(),
     setModel: model => runComposerAction(() => toolbarCallbacks.onModelChange(model)),
-    setMode: mode => runComposerAction(() => toolbarCallbacks.onModeChange(mode)),
-    setThinkingBudget: budget => runComposerAction(() => toolbarCallbacks.onThinkingBudgetChange(budget)),
     setThinkingLevel: level => runComposerAction(() => toolbarCallbacks.onThinkingLevelChange(level)),
     toggleExternalPath: pathValue => tab.ui.externalContextSelector?.togglePath(pathValue),
     toggleExternalPinned: pathValue => tab.ui.externalContextSelector?.togglePinned(pathValue),
@@ -176,7 +157,6 @@ export function wireComposerChrome(
     if (!isTabOpen()) return;
     const settings = toolbarCallbacks.getSettings();
     const uiConfig = toolbarCallbacks.getUIConfig();
-    const mode = uiConfig.getModeSelector?.(settings) ?? null;
     const reasoningOptions = uiConfig.getReasoningOptions(settings.model, settings);
     const inputText = dom.richInput.value.trim();
     tab.state.uiStore.update({
@@ -185,12 +165,7 @@ export function wireComposerChrome(
           && !isSubmissionBlockedByContextLimit(tab.state.usage, inputText),
         model: settings.model,
         modelOptions: uiConfig.getModelOptions(settings).map(option => ({ ...option })),
-        mode: mode?.value ?? null,
-        modeLabel: mode?.label ?? null,
-        modeOptions: (mode?.options ?? []).map(option => ({ ...option })),
-        modeActiveValue: mode?.activeValue ?? null,
         adaptiveReasoning: uiConfig.isAdaptiveReasoningModel(settings.model, settings),
-        thinkingBudget: settings.thinkingBudget,
         thinkingLevel: settings.thinkingLevel,
         thinkingOptions: reasoningOptions.map(option => ({ ...option })),
         defaultReasoningValue: uiConfig.getDefaultReasoningValue(settings.model, settings),

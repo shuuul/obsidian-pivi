@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`src/ui/shared/` owns reusable imperative presentation and composer infrastructure used by chat adapters. Keep this layer UI-focused: coordinate mention/slash dropdowns, render context badges, and bridge small Obsidian DOM/editor interactions. Pure mention parsing lives in `@pivi/agent/context/mentions`, slash matching lives under `@pivi/agent/skills`, and context-badge view models remain in the React `context-badges` presentation subpath; product workflow and runtime semantics belong in their owning feature, app, or `@pivi/*` package.
+`src/ui/shared/` owns reusable imperative presentation and composer infrastructure used by chat adapters. Keep this layer UI-focused: coordinate mention/slash dropdowns, render context badges, and bridge small Obsidian DOM/editor interactions. Pure mention parsing lives in `@pivi/agent/context/mentions`, slash matching lives under `@pivi/agent/skills/commands/*`, and context-badge view models remain in the React `context-badges` presentation subpath; product workflow and runtime semantics belong in their owning feature, app, or `@pivi/*` package.
 
 ## Architecture
 

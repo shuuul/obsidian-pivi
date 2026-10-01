@@ -42,7 +42,6 @@ export interface PiContextCompactionPlan {
   prefixEntries: PiContextCompactionEntry[];
   prefixFingerprint: string;
   prefixMessages: AgentMessage[];
-  tailEntries: PiContextCompactionEntry[];
   tailMessages: AgentMessage[];
   tokensBefore: number;
 }
@@ -280,10 +279,6 @@ export class PiContextTokenIndex {
 
   indexOfEntry(entryId: string): number {
     return this.entryIndexById.get(entryId) ?? -1;
-  }
-
-  tokensAt(index: number): number {
-    return this.entryTokens[index] ?? 0;
   }
 
   tokensBetween(start: number, end = this.entries.length): number {
@@ -548,7 +543,6 @@ export function buildCompactionPlan(
     prefixEntries,
     prefixFingerprint: fingerprintCompactionEntries(prefixEntries),
     prefixMessages: prefix.map((item) => item.message),
-    tailEntries: tail.map((item) => item.entry),
     tailMessages: tail.map((item) => item.message),
     tokensBefore,
   };

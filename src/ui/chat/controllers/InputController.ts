@@ -64,7 +64,6 @@ export interface InputControllerDeps {
   /** Returns true if ready. */
   ensureServiceInitialized?: () => Promise<boolean>;
   openSession?: (openSessionId: string) => Promise<void>;
-  onForkAll?: () => Promise<void>;
   onTitleChanged?: (title: string) => void;
   getDraftCustomTitle?: () => string | null;
   clearDraftCustomTitle?: () => void;

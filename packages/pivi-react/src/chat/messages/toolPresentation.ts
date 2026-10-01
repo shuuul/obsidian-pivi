@@ -1,6 +1,5 @@
 import { type ActivityStatus, resolveToolActivityStatus, type ToolCallInfo } from '@pivi/agent/tools';
 import {
-  getToolStepPhraseModel,
   isToolPresentationGroupable,
   type ResolvedToolPresentation,
   resolveToolPresentation,
@@ -22,10 +21,6 @@ function translateTitle(title: ToolPresentationTitle, t: TFunction): string {
   return title.params ? t(title.key, title.params) : t(title.key);
 }
 
-function truncate(value: string, limit: number): string {
-  return value.length > limit ? `${value.slice(0, limit)}...` : value;
-}
-
 /** Visible tool header title. Translation stays in the React presentation package. */
 export function getToolDisplayName(toolCall: ToolCallInfo, t: TFunction): string {
   return translateTitle(resolveToolPresentation(
@@ -42,13 +37,6 @@ export function getToolSummary(toolCall: ToolCallInfo): ToolSummary {
     toolCall.result,
   );
   return { summary, todoProgress };
-}
-
-/** Short verb phrase for group header / aria (does not replace display name). */
-export function getToolStepPhrase(toolCall: ToolCallInfo, t: TFunction): string {
-  const model = getToolStepPhraseModel(toolCall.name, toolCall.input, toolCall.result);
-  const base = translateTitle(model.base, t);
-  return model.summary ? truncate(`${base}: ${model.summary}`, 72) : base;
 }
 
 export function aggregateToolStatus(toolCalls: readonly ToolCallInfo[]): ToolPresentationStatus {

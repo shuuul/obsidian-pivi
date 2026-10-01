@@ -9,7 +9,6 @@ import type { EnvironmentScope } from "@pivi/agent/settings/types";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
 import { PiSettingsCoordinator, warmPiAiModelsCache } from "@pivi/engine-pi/application/models";
-import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
@@ -24,15 +23,15 @@ import type {
 } from "obsidian";
 import { apiVersion, Notice } from "obsidian";
 
-import { createApplicationFacades } from "@/app/applicationFacades";
 import { ApplicationNoteToolbar } from "@/app/applicationNoteToolbar";
 import { ApplicationSessions } from "@/app/applicationSessions";
 import { type ChatPerfController, NOOP_CHAT_PERF_CONTROLLER } from "@/app/chatPerformanceController";
+import { createDevelopmentSmokeRunner } from "@/app/developmentSmokeRunner";
 import { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalCapabilityPermissionStore";
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
-import type { PiviApplicationFacades, PiviChatView } from "@/app/hostContracts";
+import type { ChatFacade, PiviApplicationFacades, PiviChatView, SettingsFacade } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import { openStyleSettingsOrMarketplace } from "@/app/openStyleSettings";
@@ -54,7 +53,6 @@ import {
 import {
   applyEnvironmentVariablesBatch as applyEnvironmentVariablesBatchForPlugin,
   getActiveEnvironmentVariables as getActiveEnvironmentVariablesFromSettings,
-  getEnvironmentVariablesForScope as getEnvironmentVariablesForSettingsScope,
   importEnvironmentText as importEnvironmentTextForPlugin,
   listEnvironmentUiEntries as listEnvironmentUiEntriesForPlugin,
 } from "@/app/settings/environmentVariables";
@@ -77,6 +75,7 @@ const DELETED_SESSION_PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
 export class PiviApplication {
   readonly plugin: Plugin;
   readonly facades: PiviApplicationFacades;
+  readonly runDevelopmentRealHostSmoke: ChatFacade['runDevelopmentRealHostSmoke'];
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
@@ -111,12 +110,20 @@ export class PiviApplication {
       pluginId: plugin.manifest.id,
       processRunner: this.processRunner,
       getSettings: () => this.settings,
-      reconcileWorkspaceCommands: () => this.reconcileWorkspaceCommands(),
     });
-    this.facades = createApplicationFacades(this, {
+    this.runDevelopmentRealHostSmoke = createDevelopmentSmokeRunner(this, {
       sessionManager: this.sessionManager,
       requireSessionStore: () => this.requireSessionStore(),
     });
+    // The application satisfies each facade structurally; registrations see only
+    // the members their facade type declares.
+    this.facades = {
+      chat: this,
+      sessions: this.sessionOperations,
+      workspace: this,
+      integrations: this,
+      settings: this,
+    };
   }
 
   get app() { return this.plugin.app; }
@@ -163,11 +170,6 @@ export class PiviApplication {
     return getVaultPath(this.app);
   }
 
-  /** Host-neutral vault adapter used by Obsidian tools and automation hooks. */
-  createVaultApi(): ObsidianVaultApi {
-    return new ObsidianVaultApi(this.app);
-  }
-
   getChatPerfController(): ChatPerfController {
     return this.chatPerfController;
   }
@@ -179,6 +181,19 @@ export class PiviApplication {
   notify(message: string | DocumentFragment, timeout?: number): Notice {
     return new Notice(message, timeout);
   }
+
+  // Settings-facade members whose behavior lives in a collaborator.
+  isNoteToolbarInstalled: SettingsFacade['isNoteToolbarInstalled'] = () => this.noteToolbar.isInstalled();
+  setupNoteToolbarIntegration: SettingsFacade['setupNoteToolbarIntegration'] = style =>
+    this.noteToolbar.setupSelectionCommand(style);
+  purgeDeletedSessionFiles: SettingsFacade['purgeDeletedSessionFiles'] = () =>
+    this.sessionOperations.purgeDeletedSessionFiles();
+  purgeExpiredDeletedSessionFiles: SettingsFacade['purgeExpiredDeletedSessionFiles'] = () =>
+    this.sessionOperations.purgeExpiredDeletedSessionFiles();
+  loadSessionMaintenance: SettingsFacade['loadSessionMaintenance'] = () =>
+    this.sessionOperations.loadSessionMaintenance();
+  deleteAllArchivedChats: SettingsFacade['deleteAllArchivedChats'] = () =>
+    this.sessionOperations.deleteAllArchivedChats();
 
   showDefaultVaultSkillsInstallPrompt = showDefaultVaultSkillsInstallPrompt;
 
@@ -338,7 +353,6 @@ export class PiviApplication {
   async loadSettings() {
     this.storage = createSharedStorage(
       this.plugin,
-      this.deviceLocalExternalContexts,
       this.deviceLocalCapabilityPermissions,
     );
     await loadPluginSettings({
@@ -371,6 +385,8 @@ export class PiviApplication {
         this.lastKnownTabManagerState = state as AppTabManagerState | null;
       },
       getStorage: () => this.storage,
+      capabilityPermissions: this.deviceLocalCapabilityPermissions,
+      legacyExternalContexts: this.deviceLocalExternalContexts,
       skillsHost: this,
     });
     this.network.setProviderDeadlines(this.settings.providerRequestDeadlines);
@@ -419,10 +435,6 @@ export class PiviApplication {
 
   getActiveEnvironmentVariables(): string {
     return getActiveEnvironmentVariablesFromSettings(this.settings);
-  }
-
-  getEnvironmentVariablesForScope(scope: EnvironmentScope): string {
-    return getEnvironmentVariablesForSettingsScope(this.settings, scope);
   }
 
   private reconcileModelWithEnvironment(): {
@@ -494,17 +506,6 @@ export class PiviApplication {
       }
     });
     return initialization;
-  }
-
-  async reconcileWorkspaceCommands(): Promise<void> {
-    if (this.isUnloading) return;
-    // Generation-checked around the awaits: shutdown bumps the generation and
-    // clears the registry, so a stale reconcile must not re-register commands.
-    const generation = this.workspaceGeneration;
-    const workspace = await this.ensureWorkspaceServices();
-    const entries = await workspace.slashCommandCatalog.listWorkspaceEntries();
-    if (this.isUnloading || generation !== this.workspaceGeneration) return;
-    this.workspaceCommandRegistry.reconcile(entries);
   }
 
   reconcileWorkspaceCommandEntries(entries: readonly SlashCatalogEntry[]): void {

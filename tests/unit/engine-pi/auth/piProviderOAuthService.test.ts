@@ -253,7 +253,6 @@ describe('ProviderOAuthService', () => {
     const service = new ProviderOAuthService(store, oauthHost, createFileProviderLegacyAuthStore(null));
 
     expect(service.hasCodexAuth()).toBe(false);
-    expect(service.getCodexAccessTokenSync()).toBeUndefined();
   });
 
   it('preserves pi-ai browser OAuth URL parameters', () => {

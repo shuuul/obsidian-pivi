@@ -2,13 +2,6 @@ import type { ParseDiagnostic } from '../config/publication';
 import { extractMcpMentions, transformMcpMentions } from './mcpUtils';
 import type { ManagedMcpServer, McpServerConfig } from './types';
 
-export interface McpAvailabilitySummary {
-  totalCount: number;
-  enabledCount: number;
-  alwaysActiveCount: number;
-  contextSavingCount: number;
-}
-
 /** Storage interface for loading MCP servers. */
 export interface McpStorageAdapter {
   load(): Promise<ManagedMcpServer[]>;
@@ -67,29 +60,6 @@ export class McpServerManager {
 
   getEnabledCount(): number {
     return this.servers.filter((s) => s.enabled).length;
-  }
-
-  getAvailabilitySummary(): McpAvailabilitySummary {
-    let enabledCount = 0;
-    let alwaysActiveCount = 0;
-    let contextSavingCount = 0;
-
-    for (const server of this.servers) {
-      if (!server.enabled) continue;
-      enabledCount += 1;
-      if (server.contextSaving) {
-        contextSavingCount += 1;
-      } else {
-        alwaysActiveCount += 1;
-      }
-    }
-
-    return {
-      totalCount: this.servers.length,
-      enabledCount,
-      alwaysActiveCount,
-      contextSavingCount,
-    };
   }
 
   /**

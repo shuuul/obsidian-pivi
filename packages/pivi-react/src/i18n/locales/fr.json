@@ -403,7 +403,6 @@
       "absolutelyRight": "Vous avez tout à fait raison !"
     },
     "mention": {
-      "agents": "Agents",
       "noMatches": "Aucune correspondance"
     },
     "file": {
@@ -570,7 +569,6 @@
       "setupLabelAndIcon": "Pivi + icône",
       "setupIconOnly": "Icône uniquement",
       "itemTooltip": "Ajouter la sélection à la saisie Pivi",
-      "commandTooltip": "Exécuter /{name} dans une nouvelle session Pivi",
       "installed": "Pivi a été ajouté à la barre de texte sélectionné.",
       "alreadyInstalled": "Pivi est déjà présent dans la barre de texte sélectionné.",
       "styleSettingsOpened": "Pivi utilise déjà l’autre style. Les réglages de son élément Note Toolbar ont été ouverts pour modifier manuellement le libellé.",

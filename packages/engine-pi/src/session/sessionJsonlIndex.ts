@@ -38,7 +38,6 @@ import {
 
 export {
   configureSessionJsonlIndexRoot,
-  getConfiguredSessionJsonlIndexRoot,
   getLegacySessionJsonlIndexPath,
   getSessionJsonlIndexPath,
   migrateLegacySessionJsonlIndex,

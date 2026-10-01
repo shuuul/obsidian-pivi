@@ -139,6 +139,7 @@ async function copyConversationAsMarkdown(
 export function createMessagePresentation(
   tab: TabData,
   sessions: ChatPorts['sessions'],
+  settings: ChatPorts['settings'],
   publishViewportHandle: (handle: MessageViewportHandle | null) => void,
 ): MessagePresentationRuntime {
   const renderer = tab.renderer;
@@ -148,6 +149,7 @@ export function createMessagePresentation(
     renderer.component,
     (target, markdown, options) => renderer.renderContent(target, markdown, options),
     tab.state.projectionStore.perfRecorder,
+    () => settings.getSettingsSnapshot().deferMathRenderingDuringStreaming,
   );
   const userContentAdapter = createReplacingContentAdapter<ChatMessage>(
     (target, message) => {

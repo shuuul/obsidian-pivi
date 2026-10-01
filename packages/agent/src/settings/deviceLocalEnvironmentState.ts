@@ -35,8 +35,6 @@ function webProviderApiKeyEnvVar(providerId: WebProviderId): string {
   return 'ANYSEARCH_API_KEY';
 }
 
-export const DEVICE_LOCAL_ENVIRONMENT_STATE_VERSION = 1 as const;
-
 export interface DeviceLocalEnvironmentEntryV1 {
   key: string;
   scope: EnvironmentScope;
@@ -154,27 +152,6 @@ export function createEmptyDeviceLocalEnvironmentState(): DeviceLocalEnvironment
     version: 1,
     initialized: true,
     entries: [],
-  };
-}
-
-export function copyDeviceLocalEnvironmentState(
-  state: DeviceLocalEnvironmentStateV1,
-): DeviceLocalEnvironmentStateV1 {
-  return {
-    version: 1,
-    initialized: true,
-    entries: state.entries.map((entry) => ({
-      key: entry.key,
-      scope: entry.scope,
-      source: entry.source.kind === 'plain'
-        ? { kind: 'plain', value: entry.source.value }
-        : entry.source.kind === 'systemEnvironment'
-          ? {
-              kind: 'systemEnvironment',
-              ...(entry.source.name ? { name: entry.source.name } : {}),
-            }
-          : { kind: 'secret' },
-    })),
   };
 }
 

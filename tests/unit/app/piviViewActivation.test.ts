@@ -1,5 +1,5 @@
 import { VIEW_TYPE_PIVI } from "@pivi/agent/runtime";
-import type { App, WorkspaceLeaf } from "obsidian";
+import type { WorkspaceLeaf } from "obsidian";
 
 import {
   activatePiviView,

@@ -22,7 +22,6 @@ export interface SkillsCliInvocation {
   /** Absolute path to skills/bin/cli.mjs */
   cliPath: string;
   version: string;
-  packageName: string;
   /** Removes a temporary materialized bundled CLI, when present. */
   cleanup?: () => void;
 }
@@ -138,7 +137,6 @@ export function resolvePinnedSkillsCli(options: {
       executable: nodeExecutable,
       cliPath,
       version,
-      packageName: PINNED_SKILLS_CLI_PACKAGE,
     };
   }
 
@@ -151,7 +149,6 @@ export function resolvePinnedSkillsCli(options: {
       executable: nodeExecutable,
       ...materializeEmbeddedCli(embeddedCliGzipBase64),
       version: PINNED_SKILLS_CLI_VERSION,
-      packageName: PINNED_SKILLS_CLI_PACKAGE,
     };
   }
 

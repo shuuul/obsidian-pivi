@@ -403,7 +403,6 @@
       "absolutelyRight": "その通りです！"
     },
     "mention": {
-      "agents": "エージェント",
       "noMatches": "一致する項目がありません"
     },
     "file": {
@@ -570,7 +569,6 @@
       "setupLabelAndIcon": "Pivi + アイコン",
       "setupIconOnly": "アイコンのみ",
       "itemTooltip": "選択範囲を Pivi の入力に追加",
-      "commandTooltip": "新しい Pivi セッションで /{name} を実行",
       "installed": "Pivi を選択テキストツールバーに追加しました。",
       "alreadyInstalled": "Pivi はすでに選択テキストツールバーにあります。",
       "styleSettingsOpened": "Pivi はすでに別のスタイルを使用しています。ラベルを手動で変更できるよう、Note Toolbar の項目設定を開きました。",

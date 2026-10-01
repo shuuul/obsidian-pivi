@@ -33,7 +33,6 @@ import { UsagePresenter } from '@/ui/chat/stream/UsagePresenter';
 
 import type { FileContextManager } from '../input/FileContext';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
-import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatProjectionRunScope, ChatState } from '../state/ChatState';
 
@@ -181,7 +180,7 @@ export class StreamController {
     const projectionRunScope = this.projectionRunScopeForChunk(chunk);
     if (
       chunk.type !== 'tool_use'
-      || shouldProjectToolUseChunk(chunk.name, resolveSubagentLifecycleAdapter(chunk.name))
+      || shouldProjectToolUseChunk(chunk.name)
     ) {
       msg = this.deps.state.projectStreamChunk(msg, chunk);
     }
@@ -208,9 +207,7 @@ export class StreamController {
         break;
 
       case 'async_subagent_result':
-        await this.subagentCoordinator.handleAsyncSubagentResult(chunk, {
-          showThinkingIndicator: !options.backgroundSubagent,
-        });
+        await this.subagentCoordinator.handleAsyncSubagentResult(chunk);
         break;
 
       case 'tool_output':
@@ -279,21 +276,12 @@ export class StreamController {
     chunk: Extract<StreamChunk, { type: 'tool_use' }>,
     msg: ChatMessage,
   ): void {
-    const subagentLifecycleAdapter = resolveSubagentLifecycleAdapter(chunk.name);
-    switch (routeToolUseStreamChunk(chunk.name, subagentLifecycleAdapter)) {
+    switch (routeToolUseStreamChunk(chunk.name)) {
       case 'subagent_task':
         this.subagentCoordinator.handleTaskToolUseViaManager(chunk, msg);
         break;
       case 'agent_output':
         this.subagentCoordinator.handleAgentOutputToolUse(chunk, msg);
-        break;
-      case 'subagent_spawn':
-        if (subagentLifecycleAdapter) {
-          this.subagentCoordinator.handleSubagentSpawn(chunk, msg, subagentLifecycleAdapter);
-        }
-        break;
-      case 'subagent_hidden':
-        this.subagentCoordinator.handleHiddenSubagentTool(chunk, msg);
         break;
       case 'regular':
         break;
@@ -377,10 +365,6 @@ export class StreamController {
       return;
     }
 
-    if (this.subagentCoordinator.handleSubagentResult(chunk, msg)) {
-      return;
-    }
-
     const { plugin } = this.deps;
     handleRegularToolResult({
       state,
@@ -401,12 +385,12 @@ export class StreamController {
     this.subagentCoordinator.onAsyncSubagentStateChange(subagent);
   }
 
-  showThinkingIndicator(overrideText?: string, overrideCls?: string): void {
+  showThinkingIndicator(overrideText?: string): void {
     showStreamThinkingIndicator({
       state: this.deps.state,
       updateQueueIndicator: this.deps.updateQueueIndicator,
       getMessagesEl: this.deps.getMessagesEl,
-    }, overrideText, overrideCls);
+    }, overrideText);
   }
 
   hideThinkingIndicator(): void {

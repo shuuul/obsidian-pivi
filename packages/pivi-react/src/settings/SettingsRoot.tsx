@@ -74,7 +74,6 @@ export function SettingsRoot({ ports, store: suppliedStore, page }: SettingsRoot
           actions={ports.actions}
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
-          integrations={ports.hostIntegrations}
         />
       );
     default: {

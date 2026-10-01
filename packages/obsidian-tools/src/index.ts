@@ -2,8 +2,6 @@ import { createObsidianTools } from './createObsidianTools';
 
 export {
   buildEffectiveBashPermissions,
-  DEFAULT_SAFE_BASH_ALLOWLIST,
-  DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST,
   matchBashCommandAllowlist,
 } from './bashAllowlist';
 export {
@@ -48,6 +46,5 @@ export { createTagsTool } from './obsidian/tags';
 export { createTasksTool } from './obsidian/tasks';
 export { createTemplatesTool } from './obsidian/templates';
 export { createWriteNoteTool } from './obsidian/writeNote';
-export * from './settings';
 
 export default createObsidianTools;

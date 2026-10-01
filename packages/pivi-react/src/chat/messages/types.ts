@@ -37,11 +37,6 @@ export interface MessagePresentationActions {
 export interface MessageViewportHandle {
   scrollToStart: (behavior?: 'auto' | 'smooth' | 'instant') => void;
   scrollToEnd: (behavior?: 'auto' | 'smooth' | 'instant') => void;
-  scrollToMessage: (
-    messageId: string,
-    align?: 'start' | 'center' | 'end' | 'auto',
-    behavior?: 'auto' | 'smooth' | 'instant',
-  ) => void;
   scrollToRecentUser: (messageId: string) => void;
   scrollToUser: (direction: 'prev' | 'next') => void;
   isAtEnd: (threshold?: number) => boolean;

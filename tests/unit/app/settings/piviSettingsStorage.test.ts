@@ -1,10 +1,15 @@
-import {
-  PIVI_SETTINGS_PATH,
-  PiviSettingsStorage,
-} from '@pivi/obsidian-host/settings/piviSettingsStorage';
 import type { FileStore } from "@pivi/agent/ports";
 import type { DeviceLocalProviderStateV1 } from "@pivi/agent/settings/deviceLocalProviderState";
-import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
+import type { PiviSettings } from "@pivi/agent/settings/types";
+import type { DeviceLocalCapabilityPermissions as CapabilitySnapshot } from "@pivi/agent/tools";
+import { PiviSettingsStorage } from '@pivi/obsidian-host/settings/piviSettingsStorage';
+
+import {
+  createPiviSettingsCodec,
+  type DeviceLocalCapabilityPermissions,
+  normalizeStoredPiviSettings,
+  overlayDeviceLocalCapabilityPermissions,
+} from "@/app/settings/piviSettingsCodec";
 
 function createDeviceLocalProviderStore(initialState?: DeviceLocalProviderStateV1 | null) {
   let state: DeviceLocalProviderStateV1 | null = initialState ?? null;
@@ -13,21 +18,43 @@ function createDeviceLocalProviderStore(initialState?: DeviceLocalProviderStateV
     save: (next: DeviceLocalProviderStateV1) => {
       state = { ...next, version: 1, initialized: true };
     },
-    isInitialized: () => state?.initialized === true,
     getState: () => state,
   };
 }
 
-function createMemoryAdapter(initialContent?: string): Pick<
-  FileStore,
-  "exists" | "read" | "write"
-> & {
+const EMPTY_CAPABILITIES: CapabilitySnapshot = {
+  version: 2,
+  bash: [],
+  externalDirectories: [],
+  obsidianCommands: [],
+};
+
+/** In-memory device store; `sourceVersion` 1 models a record written before command grants. */
+function createCapabilityStore(
+  initial: CapabilitySnapshot | null = null,
+  sourceVersion: 1 | 2 = 2,
+): DeviceLocalCapabilityPermissions & { current(): CapabilitySnapshot; sourceVersion(): 1 | 2 } {
+  let snapshot = initial;
+  let version = sourceVersion;
+  return {
+    hasRecord: () => snapshot !== null,
+    needsLegacyCommandGrantMigration: () => snapshot !== null && version === 1,
+    getSnapshot: () => snapshot ?? EMPTY_CAPABILITIES,
+    save: (next) => {
+      snapshot = next;
+      version = 2;
+      return next;
+    },
+    current: () => snapshot ?? EMPTY_CAPABILITIES,
+    sourceVersion: () => version,
+  };
+}
+
+function createMemoryAdapter(): Pick<FileStore, "exists" | "read" | "write"> & {
   writes: string[];
 } {
-  let content = initialContent;
-  const adapter: Pick<FileStore, "exists" | "read" | "write"> & {
-    writes: string[];
-  } = {
+  let content: string | undefined;
+  const adapter: Pick<FileStore, "exists" | "read" | "write"> & { writes: string[] } = {
     writes: [],
     exists: jest.fn(async () => content !== undefined),
     read: jest.fn(async () => content ?? ""),
@@ -39,188 +66,147 @@ function createMemoryAdapter(initialContent?: string): Pick<
   return adapter;
 }
 
+type PersistedBag = Record<string, unknown> & {
+  agentSettings: Record<string, unknown> & {
+    obsidianTools?: Record<string, unknown>;
+    webSearchTools?: Record<string, unknown>;
+    subagents?: unknown;
+  };
+  promptModules: Record<string, unknown>;
+};
+
+/** Saves through the production storage and codec; returns the synced file content. */
+async function persist(
+  settings: PiviSettings,
+  providers = createDeviceLocalProviderStore(),
+  capabilities = createCapabilityStore(),
+): Promise<PersistedBag> {
+  const adapter = createMemoryAdapter();
+  const storage = new PiviSettingsStorage(
+    adapter as unknown as FileStore,
+    createPiviSettingsCodec(providers, capabilities),
+  );
+  await storage.save(settings);
+  return JSON.parse(adapter.writes.at(-1) ?? "{}") as PersistedBag;
+}
+
 function externalFixturePath(unixPath: string): string {
   return process.platform === 'win32'
     ? `C:${unixPath.replaceAll('/', '\\')}`
     : unixPath;
 }
 
-describe("PiviSettingsStorage", () => {
-
+describe("Pivi settings normalization and save projection", () => {
   it("backfills a 30-day deleted-session retention window", async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({}));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    const settings = normalizeStoredPiviSettings({});
 
     expect(settings.deletedSessionRetentionDays).toBe(30);
-    expect(JSON.parse(adapter.writes.at(-1) ?? "{}").deletedSessionRetentionDays).toBe(30);
+    expect((await persist(settings)).deletedSessionRetentionDays).toBe(30);
   });
 
-  it("repairs invalid deleted-session retention values", async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({ deletedSessionRetentionDays: 0 }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    await expect(storage.load()).resolves.toMatchObject({ deletedSessionRetentionDays: 30 });
+  it("repairs invalid deleted-session retention values", () => {
+    expect(normalizeStoredPiviSettings({ deletedSessionRetentionDays: 0 }))
+      .toMatchObject({ deletedSessionRetentionDays: 30 });
   });
 
   it("persists default subagent settings when an existing settings record omits them", async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({
+    const settings = normalizeStoredPiviSettings({
       agentSettings: { visibleModels: ["opencode-go/deepseek-v4-flash"] },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.agentSettings.subagents).toEqual({
       allowBackground: true,
       enabled: true,
       maxConcurrentSubagents: 3,
     });
-    expect(JSON.parse(adapter.writes.at(-1) ?? "{}").agentSettings.subagents).toEqual(
+    expect((await persist(settings)).agentSettings.subagents).toEqual(
       settings.agentSettings.subagents,
     );
   });
 
   it("preserves an explicit subagent concurrency limit across save and load", async () => {
-    const adapter = createMemoryAdapter();
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-    const settings = await storage.load();
+    const settings = normalizeStoredPiviSettings({});
     settings.agentSettings.subagents = {
       allowBackground: true,
       enabled: true,
       maxConcurrentSubagents: 8,
     };
 
-    await storage.save(settings);
-    const reloaded = await storage.load();
+    const reloaded = normalizeStoredPiviSettings(await persist(settings));
 
     expect(reloaded.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
   });
 
-  it('migrates legacy web provider preferences to the ordered provider queue', async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({
+  it('migrates legacy web provider preferences to the ordered provider queue', () => {
+    const settings = normalizeStoredPiviSettings({
       agentSettings: {
-        webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily',
-    },
+        webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily' },
       },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.agentSettings.webSearchTools).toEqual({
       providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
       disabledProviders: [],
     });
-    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}');
-    expect(persisted.agentSettings.webSearchTools).not.toHaveProperty('searchProvider');
-    expect(persisted.agentSettings.webSearchTools).not.toHaveProperty('fetchProvider');
   });
 
   it("removes legacy settings-backed custom system prompt on load", async () => {
-    const stored = {
+    const settings = normalizeStoredPiviSettings({
       userName: "Alice",
       model: "opencode-go/deepseek-v4-flash",
       systemPrompt: "Legacy custom instructions",
-    };
-    const adapter = createMemoryAdapter(JSON.stringify(stored));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings).not.toHaveProperty("systemPrompt");
-    expect(adapter.write).toHaveBeenCalledWith(
-      PIVI_SETTINGS_PATH,
-      expect.not.stringContaining("Legacy custom instructions"),
-    );
-    expect(JSON.parse(adapter.writes[0] ?? "{}")).not.toHaveProperty(
-      "systemPrompt",
-    );
+    expect(await persist(settings)).not.toHaveProperty("systemPrompt");
   });
 
-  it("normalizes agent settings through the active runtime registration", async () => {
-    const stored = {
+  it("normalizes agent settings through the active runtime registration", () => {
+    const settings = normalizeStoredPiviSettings({
       agentSettings: {
         visibleModels: ["unknown-provider/model"],
       },
       model: "unknown-provider/model",
-    };
-    const adapter = createMemoryAdapter(JSON.stringify(stored));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.model).toBe("deepseek/deepseek-flash");
     expect(settings.agentSettings.visibleModels).toEqual([
       "deepseek/deepseek-flash",
     ]);
-    expect(adapter.write).toHaveBeenCalledWith(
-      PIVI_SETTINGS_PATH,
-      expect.any(String),
-    );
   });
 
   it("removes legacy compaction settings on load", async () => {
-    const stored = {
+    const settings = normalizeStoredPiviSettings({
       enableAutoCompact: "yes",
       autoCompactThresholdRatio: 2,
       autoCompactKeepRecentTokens: 250,
-    };
-    const adapter = createMemoryAdapter(JSON.stringify(stored));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings).not.toHaveProperty("enableAutoCompact");
     expect(settings).not.toHaveProperty("autoCompactThresholdRatio");
     expect(settings).not.toHaveProperty("autoCompactKeepRecentTokens");
-    expect(adapter.write).toHaveBeenCalledWith(
-      PIVI_SETTINGS_PATH,
-      expect.not.stringContaining("autoCompactThresholdRatio"),
-    );
+    expect(JSON.stringify(await persist(settings))).not.toContain("autoCompact");
   });
 
-  it("migrates legacy external pins into Obsidian tool settings", async () => {
-    const stored = {
+  it("removes retired agent settings fields on load", async () => {
+    const settings = normalizeStoredPiviSettings({
+      agentSettings: { selectedMode: "default", environmentHash: "abc", visibleModels: [] },
+    });
+
+    expect(settings.agentSettings).not.toHaveProperty("selectedMode");
+    expect(settings.agentSettings).not.toHaveProperty("environmentHash");
+    expect(JSON.stringify(await persist(settings))).not.toContain("selectedMode");
+  });
+
+  it("migrates legacy external pins into Obsidian tool settings", () => {
+    const settings = normalizeStoredPiviSettings({
       persistentExternalContextPaths: [` ${externalFixturePath('/tmp/legacy')}/ `, externalFixturePath('/tmp/shared')],
       agentSettings: {
         obsidianTools: {
           externalReadDirectories: [externalFixturePath('/tmp/current'), `${externalFixturePath('/tmp/shared')}/`],
         },
       },
-    };
-    const adapter = createMemoryAdapter(JSON.stringify(stored));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
       externalFixturePath('/tmp/current'),
@@ -228,72 +214,35 @@ describe("PiviSettingsStorage", () => {
       externalFixturePath('/tmp/legacy'),
     ]);
     expect(settings).not.toHaveProperty("persistentExternalContextPaths");
-    expect(JSON.parse(adapter.writes[0] ?? "{}")).not.toHaveProperty(
-      "persistentExternalContextPaths",
-    );
   });
 
-  it("migrates legacy external pins when Obsidian tool settings are absent", async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({
+  it("migrates legacy external pins when Obsidian tool settings are absent", () => {
+    const settings = normalizeStoredPiviSettings({
       persistentExternalContextPaths: [externalFixturePath('/tmp/legacy')],
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
       externalFixturePath('/tmp/legacy'),
     ]);
   });
 
-  it("normalizes and deduplicates current external read directories", async () => {
-    const stored = {
+  it("normalizes and deduplicates current external read directories", () => {
+    const settings = normalizeStoredPiviSettings({
       agentSettings: {
         obsidianTools: {
           externalReadDirectories: [` ${externalFixturePath('/tmp/current')}/ `, externalFixturePath('/tmp/current')],
         },
       },
-    };
-    const adapter = createMemoryAdapter(JSON.stringify(stored));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
       externalFixturePath('/tmp/current'),
     ]);
-    expect(adapter.write).toHaveBeenCalledWith(PIVI_SETTINGS_PATH, expect.any(String));
   });
 
   it('migrates legacy bashAllowlist into device-local permissions and strips synced fields', async () => {
-    let snapshot = {
-      version: 2 as const,
-      bash: [] as Array<{
-        kind: 'executable';
-        executable: { kind: 'name'; value: string };
-        enabled: boolean;
-      }>,
-      externalDirectories: [] as Array<{ realpath: string; enabled: boolean }>,
-      obsidianCommands: [] as string[],
-    };
-    const capabilities = {
-      hasRecord: () => snapshot.bash.length > 0
-        || snapshot.externalDirectories.length > 0
-        || snapshot.obsidianCommands.length > 0,
-      needsLegacyCommandGrantMigration: () => false,
-      getSnapshot: () => snapshot,
-      save: (next: typeof snapshot) => {
-        snapshot = next;
-        return next;
-      },
-    };
-    const adapter = createMemoryAdapter(JSON.stringify({
+    const capabilities = createCapabilityStore();
+    const stored = {
       agentSettings: {
         obsidianTools: {
           bashAllowlist: ['git', 'ls'],
@@ -301,13 +250,12 @@ describe("PiviSettingsStorage", () => {
           externalReadDirectories: [externalFixturePath('/synced/legacy')],
         },
       },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
-    );
+    };
+    const settings = normalizeStoredPiviSettings(stored);
 
-    const settings = await storage.load();
+    // The synced file still carries grants, so the caller must save to strip them.
+    expect(overlayDeviceLocalCapabilityPermissions(settings, stored, capabilities)).toBe(true);
+
     expect(settings.agentSettings.obsidianTools?.bashPermissions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -326,281 +274,169 @@ describe("PiviSettingsStorage", () => {
       externalFixturePath('/synced/legacy'),
     ]);
     expect(settings.agentSettings.obsidianTools?.commandAllowlist).toEqual(['workspace:split']);
-    expect(snapshot.obsidianCommands).toEqual(['workspace:split']);
-    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
-      agentSettings?: { obsidianTools?: Record<string, unknown> };
-    };
-    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('bashAllowlist');
-    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('bashPermissions');
-    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('externalReadDirectories');
-    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('commandAllowlist');
+    expect(capabilities.current().obsidianCommands).toEqual(['workspace:split']);
+    const persisted = await persist(settings, undefined, capabilities);
+    expect(persisted.agentSettings.obsidianTools).not.toHaveProperty('bashAllowlist');
+    expect(persisted.agentSettings.obsidianTools).not.toHaveProperty('bashPermissions');
+    expect(persisted.agentSettings.obsidianTools).not.toHaveProperty('externalReadDirectories');
+    expect(persisted.agentSettings.obsidianTools).not.toHaveProperty('commandAllowlist');
   });
 
+  const gitGrant = {
+    kind: 'executable' as const,
+    executable: { kind: 'name' as const, value: 'git' },
+    enabled: true,
+  };
+
   it('migrates synced command grants exactly once from a v1 capability record', async () => {
-    let sourceVersion: 1 | 2 = 1;
-    let snapshot = {
-      version: 2 as const,
-      bash: [{
-        kind: 'executable' as const,
-        executable: { kind: 'name' as const, value: 'git' },
-        enabled: true,
-      }],
-      externalDirectories: [] as Array<{ realpath: string; enabled: boolean }>,
+    const capabilities = createCapabilityStore({
+      version: 2,
+      bash: [gitGrant],
+      externalDirectories: [],
       obsidianCommands: ['editor:toggle-bold'],
-    };
-    const capabilities = {
-      hasRecord: () => true,
-      needsLegacyCommandGrantMigration: () => sourceVersion === 1,
-      getSnapshot: () => snapshot,
-      save: (next: typeof snapshot) => {
-        snapshot = next;
-        sourceVersion = 2;
-        return next;
-      },
-    };
-    const adapter = createMemoryAdapter(JSON.stringify({
+    }, 1);
+    const stored = {
       agentSettings: {
         obsidianTools: { commandAllowlist: ['workspace:split'] },
       },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
-    );
+    };
+    const settings = normalizeStoredPiviSettings(stored);
 
-    const settings = await storage.load();
+    overlayDeviceLocalCapabilityPermissions(settings, stored, capabilities);
 
-    expect(snapshot.obsidianCommands).toEqual(['editor:toggle-bold', 'workspace:split']);
+    expect(capabilities.current().obsidianCommands).toEqual(['editor:toggle-bold', 'workspace:split']);
     expect(settings.agentSettings.obsidianTools?.commandAllowlist).toEqual([
       'editor:toggle-bold',
       'workspace:split',
     ]);
-    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
-      agentSettings?: { obsidianTools?: Record<string, unknown> };
-    };
-    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('commandAllowlist');
+    const persisted = await persist(settings, undefined, capabilities);
+    expect(persisted.agentSettings.obsidianTools).not.toHaveProperty('commandAllowlist');
   });
 
-  it('does not elevate a synced command allowlist when a v2 local record exists', async () => {
-    let snapshot = {
-      version: 2 as const,
-      bash: [{
-        kind: 'executable' as const,
-        executable: { kind: 'name' as const, value: 'git' },
-        enabled: true,
-      }],
-      externalDirectories: [] as Array<{ realpath: string; enabled: boolean }>,
+  it('does not elevate a synced command allowlist when a v2 local record exists', () => {
+    const capabilities = createCapabilityStore({
+      version: 2,
+      bash: [gitGrant],
+      externalDirectories: [],
       obsidianCommands: ['editor:toggle-bold'],
-    };
-    const capabilities = {
-      hasRecord: () => true,
-      needsLegacyCommandGrantMigration: () => false,
-      getSnapshot: () => snapshot,
-      save: (next: typeof snapshot) => {
-        snapshot = next;
-        return next;
-      },
-    };
-    const adapter = createMemoryAdapter(JSON.stringify({
+    });
+    const stored = {
       agentSettings: {
         obsidianTools: { commandAllowlist: ['workspace:split'] },
       },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
-    );
+    };
+    const settings = normalizeStoredPiviSettings(stored);
 
-    const settings = await storage.load();
+    expect(overlayDeviceLocalCapabilityPermissions(settings, stored, capabilities)).toBe(true);
 
-    expect(snapshot.obsidianCommands).toEqual(['editor:toggle-bold']);
+    expect(capabilities.current().obsidianCommands).toEqual(['editor:toggle-bold']);
     expect(settings.agentSettings.obsidianTools?.commandAllowlist).toEqual([
       'editor:toggle-bold',
     ]);
-    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
-      agentSettings?: { obsidianTools?: Record<string, unknown> };
-    };
-    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('commandAllowlist');
   });
 
-  it('consumes the v1 command migration even when the synced field is absent', async () => {
-    let sourceVersion: 1 | 2 = 1;
-    let snapshot = {
-      version: 2 as const,
-      bash: [{
-        kind: 'executable' as const,
-        executable: { kind: 'name' as const, value: 'git' },
-        enabled: true,
-      }],
+  it('consumes the v1 command migration even when the synced field is absent', () => {
+    const capabilities = createCapabilityStore({
+      version: 2,
+      bash: [gitGrant],
       externalDirectories: [{ realpath: externalFixturePath('/device/root'), enabled: true }],
-      obsidianCommands: [] as string[],
-    };
-    const capabilities = {
-      hasRecord: () => true,
-      needsLegacyCommandGrantMigration: () => sourceVersion === 1,
-      getSnapshot: () => snapshot,
-      save: (next: typeof snapshot) => {
-        snapshot = next;
-        sourceVersion = 2;
-        return next;
-      },
-    };
-    const firstStorage = new PiviSettingsStorage(
-      createMemoryAdapter(JSON.stringify({})) as unknown as FileStore,
-      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
-    );
+      obsidianCommands: [],
+    }, 1);
 
-    await firstStorage.load();
-    expect(sourceVersion).toBe(2);
-    expect(snapshot.bash).toHaveLength(1);
-    expect(snapshot.externalDirectories).toEqual([
+    overlayDeviceLocalCapabilityPermissions(normalizeStoredPiviSettings({}), {}, capabilities);
+
+    expect(capabilities.sourceVersion()).toBe(2);
+    expect(capabilities.current().bash).toHaveLength(1);
+    expect(capabilities.current().externalDirectories).toEqual([
       { realpath: externalFixturePath('/device/root'), enabled: true },
     ]);
 
-    const conflictedStorage = new PiviSettingsStorage(
-      createMemoryAdapter(JSON.stringify({
-        agentSettings: {
-          obsidianTools: { commandAllowlist: ['workspace:split'] },
-        },
-      })) as unknown as FileStore,
-      createPiviSettingsCodec(undefined, undefined, undefined, capabilities),
-    );
-    const reloaded = await conflictedStorage.load();
+    const conflicted = {
+      agentSettings: {
+        obsidianTools: { commandAllowlist: ['workspace:split'] },
+      },
+    };
+    const reloaded = normalizeStoredPiviSettings(conflicted);
+    overlayDeviceLocalCapabilityPermissions(reloaded, conflicted, capabilities);
 
-    expect(snapshot.obsidianCommands).toEqual([]);
+    expect(capabilities.current().obsidianCommands).toEqual([]);
     expect(reloaded.agentSettings.obsidianTools?.commandAllowlist).toEqual([]);
   });
 
-  it('moves external roots into device-local storage and strips them from synced settings', async () => {
-    const localDirectories = [externalFixturePath('/device/root')];
-    const localStore = {
-      getExternalReadDirectories: jest.fn(() => [...localDirectories]),
-      setExternalReadDirectories: jest.fn((paths: readonly string[]) => {
-        localDirectories.splice(0, localDirectories.length, ...paths);
-      }),
+  it('moves legacy device and synced external roots into the capability store', async () => {
+    const legacyDirectories = [externalFixturePath('/device/root')];
+    const legacyStore = {
+      getExternalReadDirectories: () => [...legacyDirectories],
+      setExternalReadDirectories: (paths: readonly string[]) => {
+        legacyDirectories.splice(0, legacyDirectories.length, ...paths);
+      },
     };
-    const adapter = createMemoryAdapter(JSON.stringify({
+    const capabilities = createCapabilityStore();
+    const stored = {
       agentSettings: {
         obsidianTools: { externalReadDirectories: [externalFixturePath('/synced/legacy')] },
       },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(localStore),
-    );
-
-    const settings = await storage.load();
-
-    expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
-      externalFixturePath('/device/root'),
-      externalFixturePath('/synced/legacy'),
-    ]);
-    expect(localDirectories).toEqual([
-      externalFixturePath('/device/root'),
-      externalFixturePath('/synced/legacy'),
-    ]);
-    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
-      agentSettings?: { obsidianTools?: Record<string, unknown> };
     };
-    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('externalReadDirectories');
+    const settings = normalizeStoredPiviSettings(stored);
 
-    settings.userName = 'updated';
-    await storage.save(settings);
-    expect(localDirectories).toEqual([
-      externalFixturePath('/device/root'),
-      externalFixturePath('/synced/legacy'),
-    ]);
+    overlayDeviceLocalCapabilityPermissions(settings, stored, capabilities, legacyStore);
+
+    const roots = [externalFixturePath('/device/root'), externalFixturePath('/synced/legacy')];
+    expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual(roots);
+    expect(legacyDirectories).toEqual([]);
+    const persisted = await persist(settings, undefined, capabilities);
+    expect(persisted.agentSettings.obsidianTools).not.toHaveProperty('externalReadDirectories');
+    expect(capabilities.current().externalDirectories).toEqual(
+      roots.map((realpath) => ({ realpath, enabled: true })),
+    );
   });
 
-  it('moves provider state into device-local storage and strips it from synced settings', async () => {
-    const localStore = createDeviceLocalProviderStore({
-      version: 1,
-      initialized: true,
-      providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
-      modelPreferences: {
-        visibleModels: ['deepseek/deepseek-flash'],
-        activeModel: 'deepseek/deepseek-flash',
-        titleGenerationModel: '',
-        customContextLimits: {},
-      },
-      webSearchTools: {
-        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
-        disabledProviders: [],
-      },
-    });
-    const adapter = createMemoryAdapter(JSON.stringify({
-      model: 'openai/gpt-4.1',
-      agentSettings: {
-        addedProviders: ['openai'],
-        visibleModels: ['openai/gpt-4.1'],
-        webSearchTools: {
-          providerOrder: ['exa'],
-          disabledProviders: [],
-        },
-      },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(undefined, localStore),
-    );
+  const deepseekProviderState: DeviceLocalProviderStateV1 = {
+    version: 1,
+    initialized: true,
+    providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
+    modelPreferences: {
+      visibleModels: ['deepseek/deepseek-flash'],
+      activeModel: 'deepseek/deepseek-flash',
+      titleGenerationModel: '',
+      customContextLimits: {},
+    },
+    webSearchTools: {
+      providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+      disabledProviders: [],
+    },
+  };
 
-    const settings = await storage.load();
-
-    expect(settings.model).toBe('deepseek/deepseek-flash');
-    expect(settings.agentSettings.addedProviders).toEqual(['deepseek']);
-    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
-      model?: string;
-      agentSettings?: Record<string, unknown>;
-    };
-    expect(persisted).not.toHaveProperty('model');
-    expect(persisted.agentSettings).not.toHaveProperty('addedProviders');
-    expect(persisted.agentSettings).not.toHaveProperty('webSearchTools');
-
+  it('saves provider state to device-local storage and strips it from synced settings', async () => {
+    const localStore = createDeviceLocalProviderStore(deepseekProviderState);
+    const settings = normalizeStoredPiviSettings({});
     settings.agentSettings.webSearchTools = {
       providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
       disabledProviders: ['brave'],
     };
-    await storage.save(settings);
+
+    const saved = await persist(settings, localStore);
+
     expect(localStore.getState()?.webSearchTools).toEqual({
       providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
       disabledProviders: ['brave'],
     });
-    const saved = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
-      agentSettings?: Record<string, unknown>;
-    };
+    expect(saved).not.toHaveProperty('model');
+    expect(saved.agentSettings).not.toHaveProperty('addedProviders');
     expect(saved.agentSettings).not.toHaveProperty('webSearchTools');
   });
 
   it('keeps committed device-local provider state when synced save fails', async () => {
-    const localStore = createDeviceLocalProviderStore({
-      version: 1,
-      initialized: true,
-      providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
-      modelPreferences: {
-        visibleModels: ['deepseek/deepseek-flash'],
-        activeModel: 'deepseek/deepseek-flash',
-        titleGenerationModel: '',
-        customContextLimits: {},
-      },
-      webSearchTools: {
-        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
-        disabledProviders: [],
-      },
-    });
-    const adapter = createMemoryAdapter(JSON.stringify({ userName: 'Alice' }));
-    let writeCount = 0;
-    adapter.write = jest.fn(async (_path: string, nextContent: string) => {
-      writeCount += 1;
-      if (writeCount > 1) {
-        throw new Error('synced write failed');
-      }
-      adapter.writes.push(nextContent);
+    const localStore = createDeviceLocalProviderStore(deepseekProviderState);
+    const adapter = createMemoryAdapter();
+    adapter.write = jest.fn(async () => {
+      throw new Error('synced write failed');
     });
     const storage = new PiviSettingsStorage(
       adapter as unknown as FileStore,
-      createPiviSettingsCodec(undefined, localStore),
+      createPiviSettingsCodec(localStore, createCapabilityStore()),
     );
-    const settings = await storage.load();
+    const settings = normalizeStoredPiviSettings({});
     settings.agentSettings.addedProviders = ['deepseek', 'openai'];
 
     await expect(storage.save(settings)).rejects.toThrow('synced write failed');
@@ -609,7 +445,7 @@ describe("PiviSettingsStorage", () => {
   });
 
   it('persists normalized editor selection toolbar shortcuts', async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({
+    const settings = normalizeStoredPiviSettings({
       editorSelectionToolbar: {
         shortcuts: [
           {
@@ -634,13 +470,7 @@ describe("PiviSettingsStorage", () => {
           },
         ],
       },
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.editorSelectionToolbar).toEqual({
       enabled: true,
@@ -667,13 +497,13 @@ describe("PiviSettingsStorage", () => {
         },
       ],
     });
-    expect(JSON.parse(adapter.writes.at(-1) ?? '{}').editorSelectionToolbar).toEqual(
+    expect((await persist(settings)).editorSelectionToolbar).toEqual(
       settings.editorSelectionToolbar,
     );
   });
 
   it("preserves unknown prompt-module ids and drops invalid custom entries", async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({
+    const settings = normalizeStoredPiviSettings({
       promptModules: {
         "future-shipped-module": { enabled: false, customBody: "keep me" },
         "transcript-cleanup": { customBody: "edited" },
@@ -684,13 +514,7 @@ describe("PiviSettingsStorage", () => {
         { id: "custom:ok", title: "Ok", body: "yes", enabled: true },
         { id: "bad" },
       ],
-    }));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+    });
 
     expect(settings.promptModules["future-shipped-module"]).toEqual({
       enabled: false,
@@ -703,7 +527,7 @@ describe("PiviSettingsStorage", () => {
     expect(settings.customPromptModules).toEqual([
       { id: "custom:ok", title: "Ok", body: "yes", enabled: true },
     ]);
-    const persisted = JSON.parse(adapter.writes.at(-1) ?? "{}");
+    const persisted = await persist(settings);
     expect(persisted.promptModules["future-shipped-module"]).toEqual({
       enabled: false,
       customBody: "keep me",
@@ -713,14 +537,8 @@ describe("PiviSettingsStorage", () => {
     ]);
   });
 
-  it("treats absent prompt-module keys as shipped defaults", async () => {
-    const adapter = createMemoryAdapter(JSON.stringify({}));
-    const storage = new PiviSettingsStorage(
-      adapter as unknown as FileStore,
-      createPiviSettingsCodec(),
-    );
-
-    const settings = await storage.load();
+  it("treats absent prompt-module keys as shipped defaults", () => {
+    const settings = normalizeStoredPiviSettings({});
 
     expect(settings.promptModules).toEqual({});
     expect(settings.customPromptModules).toEqual([]);

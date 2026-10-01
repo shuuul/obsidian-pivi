@@ -115,26 +115,6 @@ describe('ChatState', () => {
       expect(state.projectionStore.getOrderSnapshot()).toEqual([]);
     });
 
-    it('truncateAt removes messages from id onward', () => {
-      const state = new ChatState();
-      state.addMessage(userMessage('a'));
-      state.addMessage(userMessage('b'));
-      state.addMessage(userMessage('c'));
-
-      const removed = state.truncateAt('b');
-
-      expect(removed).toBe(2);
-      expect(state.messages.map((m) => m.id)).toEqual(['a']);
-    });
-
-    it('truncateAt returns 0 when id is missing', () => {
-      const state = new ChatState();
-      state.addMessage(userMessage('a'));
-
-      expect(state.truncateAt('missing')).toBe(0);
-      expect(state.messages).toHaveLength(1);
-    });
-
     it('messages getter returns a shallow copy', () => {
       const state = new ChatState();
       state.addMessage(userMessage('1'));
@@ -263,15 +243,12 @@ describe('ChatState', () => {
         timestamp: 1,
       };
       state.messages = [message];
-      const listener = jest.fn();
-      state.projectionStore.subscribeMessage(message.id, listener);
 
       state.projectStreamChunk(message, { type: 'text', content: 'hello' });
-      expect(listener).not.toHaveBeenCalled();
+      expect(state.projectionStore.getMessageSnapshot(message.id)?.content).toBe('');
       state.notifyMessageChanged(message);
       state.flushProjection();
 
-      expect(listener).toHaveBeenCalledTimes(1);
       expect(state.projectionStore.getMessageSnapshot(message.id)?.content).toBe('hello');
     });
 

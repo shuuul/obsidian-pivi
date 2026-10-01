@@ -99,25 +99,6 @@ export class SubagentResultParser {
     return typeof nested === 'string' && nested.length > 0 ? nested : null;
   }
 
-  public extractAgentIdFromString(value: string): string | null {
-    const regexPatterns = [
-      /"agent_id"\s*:\s*"([^"]+)"/,
-      /"agentId"\s*:\s*"([^"]+)"/,
-      /agent_id[=:]\s*"?([a-zA-Z0-9_-]+)"?/i,
-      /agentId[=:]\s*"?([a-zA-Z0-9_-]+)"?/i,
-    ];
-
-    for (const pattern of regexPatterns) {
-      const match = value.match(pattern);
-      const agentId = match?.[1];
-      if (agentId) {
-        return agentId;
-      }
-    }
-
-    return null;
-  }
-
   public isStillRunningResult(result: string, isError: boolean): boolean {
     const trimmed = result?.trim() || '';
     const payload = this.unwrapTextPayload(trimmed);

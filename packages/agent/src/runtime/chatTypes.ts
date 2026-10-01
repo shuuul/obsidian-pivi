@@ -1,30 +1,12 @@
+import type { ImageAttachment } from '../context/imageAttachment';
 import type { ToolUseResult } from '../tools/diffTypes';
 import type { SubagentMode, ToolCallInfo } from '../tools/types';
-
-/** Fork origin reference: identifies the source session and checkpoint. */
-export interface ForkSource {
-  sessionId: string;
-  resumeAt: string;
-}
 
 /** View type identifier for Obsidian. */
 export const VIEW_TYPE_PIVI = 'pivi-view';
 
-/** Supported image media types for attachments. */
-export type ImageMediaType = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
-
-/** Image attachment metadata. */
-export interface ImageAttachment {
-  id: string;
-  name: string;
-  mediaType: ImageMediaType;
-  /** Base64 encoded image data - single source of truth. */
-  data: string;
-  width?: number;
-  height?: number;
-  size: number;
-  source: 'file' | 'paste' | 'drop';
-}
+// Declared in context/ so prompt types can use it without depending on runtime.
+export type { ImageAttachment, ImageMediaType } from '../context/imageAttachment';
 
 /**
  * Serializable copy of the structured user request used to reproduce a turn.

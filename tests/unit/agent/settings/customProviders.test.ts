@@ -357,7 +357,6 @@ describe('custom providers in agent settings', () => {
     const settings: Record<string, unknown> = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: ['ollama/llama3'],
         addedProviders: ['ollama'],
         customProviders: [
@@ -387,7 +386,6 @@ describe('custom providers in agent settings', () => {
     const settings: Record<string, unknown> = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: ['custom-openai-compatible/gpt'],
         addedProviders: ['custom-openai-compatible'],
         customProviders: [],

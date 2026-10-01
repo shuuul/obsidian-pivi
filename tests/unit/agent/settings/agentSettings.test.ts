@@ -67,7 +67,6 @@ describe('Obsidian tool settings', () => {
     expect(resolved).not.toHaveProperty('allowEval');
     expect(isAgentRuntimeSettings({
       environmentVariables: '',
-      selectedMode: 'default',
       visibleModels: [],
       obsidianTools: { ...resolved, allowEval: true },
     })).toBe(true);
@@ -82,10 +81,7 @@ describe('getPiAgentSettings', () => {
     expect(view.addedProviders).toEqual([...DEFAULT_PI_PROVIDER_IDS]);
     expect(view.disabledProviders).toEqual([]);
     expect(view.environmentVariables).toBe(PI_DEFAULT_ENVIRONMENT_VARIABLES);
-    expect(view.selectedMode).toBe('default');
     expect(view.visibleModels).toEqual([DEFAULT_MODEL_KEY]);
-    expect(view.availableModes).toEqual(['default']);
-    expect(view.discoveredModels).toEqual([DEFAULT_MODEL_KEY]);
 
     const persisted = readPersistedAgentSettings(settings);
     expect(persisted).not.toBeNull();
@@ -96,7 +92,6 @@ describe('getPiAgentSettings', () => {
     const settings = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: [DEFAULT_MODEL_KEY],
         addedProviders: ['anthropic', 'not-a-provider'],
         disabledProviders: ['openrouter', 'bogus'],
@@ -114,7 +109,6 @@ describe('getPiAgentSettings', () => {
     const settings = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         addedProviders: [providerId],
         visibleModels: [`${providerId}/deepseek-v4-flash-0731`],
         customProviders: [{
@@ -140,7 +134,6 @@ describe('getPiAgentSettings', () => {
     const settings = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: ['no-slash', 'unknown-provider/model'],
       },
     };
@@ -152,7 +145,6 @@ describe('getPiAgentSettings', () => {
     const settings = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: [
           'anthropic/claude-3',
           'fake-vendor/model',
@@ -171,7 +163,6 @@ describe('getPiAgentSettings', () => {
     const settings = {
       environmentVariables: 'PI_TOKEN=from-legacy',
       agentSettings: {
-        selectedMode: 'default',
         visibleModels: [DEFAULT_MODEL_KEY],
       },
     };
@@ -197,27 +188,9 @@ describe('updatePiAgentSettings', () => {
     expect(persisted?.visibleModels).toEqual(['openrouter/openai/gpt-4.1']);
   });
 
-  it('writes lastModel and environmentHash onto the persisted record', () => {
-    const settings: Record<string, unknown> = {};
-    updatePiAgentSettings(settings, {
-      lastModel: 'anthropic/claude-3',
-      environmentHash: 'hash-abc',
-      visibleModels: [DEFAULT_MODEL_KEY],
-      environmentVariables: '',
-      selectedMode: 'default',
-      addedProviders: [],
-      disabledProviders: [],
-    });
-
-    const persisted = readPersistedAgentSettings(settings);
-    expect(persisted?.lastModel).toBe('anthropic/claude-3');
-    expect(persisted?.environmentHash).toBe('hash-abc');
-  });
-
   it('returns the merged view without requiring a second get call', () => {
     const settings: Record<string, unknown> = {};
     const returned = updatePiAgentSettings(settings, {
-      selectedMode: 'default',
       environmentVariables: 'FOO=bar',
       visibleModels: ['deepseek/chat'],
       addedProviders: ['deepseek'],
@@ -235,7 +208,6 @@ describe('updatePiAgentSettings', () => {
       addedProviders: ['xai', 'grok-build'],
       disabledProviders: [],
       environmentVariables: '',
-      selectedMode: 'default',
       visibleModels: [DEFAULT_MODEL_KEY],
     });
 
@@ -259,7 +231,6 @@ describe('normalizePiAgentSettingsRecord', () => {
     const settings = {
       agentSettings: {
         environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
-        selectedMode: 'default',
         visibleModels: [DEFAULT_MODEL_KEY],
         addedProviders: [...DEFAULT_PI_PROVIDER_IDS],
         disabledProviders: [],
@@ -274,7 +245,6 @@ describe('normalizePiAgentSettingsRecord', () => {
     const settings = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: [DEFAULT_MODEL_KEY],
       },
       model: 'unsupported-vendor/some-model',
@@ -288,7 +258,6 @@ describe('normalizePiAgentSettingsRecord', () => {
     const settings = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: [DEFAULT_MODEL_KEY],
       },
       model: 'anthropic/claude-3',
@@ -302,7 +271,6 @@ describe('normalizePiAgentSettingsRecord', () => {
     const settings = {
       agentSettings: {
         environmentVariables: '',
-        selectedMode: 'default',
         visibleModels: ['bad', 'anthropic/ok'],
       },
     };

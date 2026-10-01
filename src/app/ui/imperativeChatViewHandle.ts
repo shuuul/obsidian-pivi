@@ -99,7 +99,6 @@ export function createImperativeChatViewHandle(
         const tabManager = getTabManager();
         const activeTab = tabManager?.getActiveTab() ?? null;
         return {
-          mounted: tabManager !== null,
           canCreateTab: tabManager?.canCreateTab() ?? false,
           canStartNewSession: !!activeTab && !activeTab.state.isStreaming,
           canCloseActiveTab: activeTab !== null,
@@ -161,12 +160,6 @@ export function createImperativeChatViewHandle(
       addEditorSelection(editor: Editor, markdownView: MarkdownView) {
         return getTabManager()?.getActiveTab()?.ui.inlineContextManager
           ?.addSelectionFromEditor(editor, markdownView) ?? false;
-      },
-      getActiveExternalContexts() {
-        return [
-          ...(getTabManager()?.getActiveTab()?.ui.externalContextSelector
-            ?.getExternalContexts() ?? []),
-        ];
       },
     },
     maintenance: {

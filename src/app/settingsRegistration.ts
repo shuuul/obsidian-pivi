@@ -21,7 +21,7 @@ export function registerPiviSettings(
   plugin.register(registerSlashBadgeNavigation(plugin.app, async (name) => {
     try {
       const services = await workspace.ensureWorkspaceServices();
-      const entries = await services.slashCommandCatalog.listDropdownEntries({ includeBuiltIns: true });
+      const entries = await services.slashCommandCatalog.listDropdownEntries();
       if (disposed) return;
       const entry = entries.find((item) => item.name.toLowerCase() === name.toLowerCase());
       const page = entry?.kind === 'skill' ? 'skills' : 'commands';

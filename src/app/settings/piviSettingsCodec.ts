@@ -5,19 +5,11 @@ import {
 } from "@pivi/agent/settings/agentEnvironment";
 import {
   normalizePiAgentSettingsRecord,
-  updatePiAgentSettings,
 } from "@pivi/agent/settings/agentSettings";
 import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
-import type { DeviceLocalEnvironmentStateV1 } from "@pivi/agent/settings/deviceLocalEnvironmentState";
-import {
-  createSecretStoreResolveHost,
-  projectEnvironmentOntoSettings,
-  stripEnvironmentFieldsFromPersistedSettings,
-} from "@pivi/agent/settings/deviceLocalEnvironmentState";
 import type { DeviceLocalProviderStateV1 } from "@pivi/agent/settings/deviceLocalProviderState";
 import {
   extractDeviceLocalProviderState,
-  overlayDeviceLocalProviderState,
   stripLocalizedFieldsFromRuntimeSettings,
 } from "@pivi/agent/settings/deviceLocalProviderState";
 import {
@@ -46,7 +38,6 @@ import {
 } from "@pivi/obsidian-host/path";
 import type {
   PiviSettingsCodec,
-  PiviSettingsNormalizationResult,
 } from "@pivi/obsidian-host/settings/piviSettingsStorage";
 import * as path from "path";
 
@@ -65,6 +56,9 @@ function normalizeChatViewPlacement(value: unknown): ChatViewPlacement {
   return DEFAULT_PIVI_SETTINGS.chatViewPlacement;
 }
 
+/** Agent-settings fields earlier versions persisted; dropped on load. */
+const REMOVED_AGENT_SETTINGS_FIELDS = ['selectedMode', 'environmentHash', 'lastModel'] as const;
+
 function isAgentRuntimeSettings(value: unknown): value is AgentRuntimeSettings {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
@@ -73,7 +67,9 @@ function normalizeAgentSettings(
   stored: Record<string, unknown>,
 ): AgentRuntimeSettings {
   if (isAgentRuntimeSettings(stored.agentSettings)) {
-    return { ...stored.agentSettings };
+    const agentSettings: Record<string, unknown> = { ...stored.agentSettings };
+    for (const field of REMOVED_AGENT_SETTINGS_FIELDS) delete agentSettings[field];
+    return agentSettings as unknown as AgentRuntimeSettings;
   }
 
   return {
@@ -111,7 +107,7 @@ function normalizeExternalReadDirectories(values: readonly unknown[]): string[] 
 function migrateExternalReadDirectories(
   stored: Record<string, unknown>,
   agentSettings: AgentRuntimeSettings,
-): boolean {
+): void {
   const obsidianTools = agentSettings.obsidianTools;
   const currentDirectories = Array.isArray(obsidianTools?.externalReadDirectories)
     ? obsidianTools.externalReadDirectories
@@ -132,21 +128,25 @@ function migrateExternalReadDirectories(
     };
   }
 
-  return (
-    Object.hasOwn(stored, "persistentExternalContextPaths") ||
-    JSON.stringify(obsidianTools ?? null) !== JSON.stringify(agentSettings.obsidianTools ?? null)
-  );
 }
 
+/** Top-level fields earlier versions persisted; dropped on load. */
+const REMOVED_SETTINGS_FIELDS = [
+  'systemPrompt',
+  'mediaFolder',
+  'envSnippets',
+  'maxTabs',
+  'enableAutoCompact',
+  'autoCompactThresholdRatio',
+  'autoCompactKeepRecentTokens',
+  'thinkingBudget',
+  'permissionMode',
+  'lastCustomModel',
+] as const;
+
 function stripRemovedSettingsFields(settings: Record<string, unknown>): void {
-  delete settings.systemPrompt;
-  delete settings.mediaFolder;
-  delete settings.envSnippets;
-  delete settings.maxTabs;
+  for (const field of REMOVED_SETTINGS_FIELDS) delete settings[field];
   delete settings.persistentExternalContextPaths;
-  delete settings.enableAutoCompact;
-  delete settings.autoCompactThresholdRatio;
-  delete settings.autoCompactKeepRecentTokens;
   delete settings.keyboardNavigation;
 }
 
@@ -173,69 +173,21 @@ function normalizeProviderRequestDeadlines(raw: unknown): PiviSettings['provider
   };
 }
 
-function hasGeneralNormalizationChanges(
-  stored: Record<string, unknown>,
-  chatViewPlacement: PiviSettings['chatViewPlacement'],
-  deletedSessionRetentionDays: number,
-  providerRequestDeadlines: PiviSettings['providerRequestDeadlines'],
-  promptModulesChanged: boolean,
-): boolean {
-  return stored.chatViewPlacement !== chatViewPlacement
-    || stored.deletedSessionRetentionDays !== deletedSessionRetentionDays
-    || JSON.stringify(stored.providerRequestDeadlines ?? null)
-      !== JSON.stringify(providerRequestDeadlines)
-    || promptModulesChanged;
-}
-
-function promptModuleSettingsChanged(
-  stored: Record<string, unknown>,
-  normalized: ReturnType<typeof normalizePromptModuleSettings>,
-): boolean {
-  return JSON.stringify(stored.promptModules ?? null)
-    !== JSON.stringify(normalized.promptModules)
-    || JSON.stringify(stored.customPromptModules ?? null)
-      !== JSON.stringify(normalized.customPromptModules);
-}
-
+/** Builds runtime settings from the synced vault file, repairing and dropping stale fields. */
 export function normalizeStoredPiviSettings(
   stored: Record<string, unknown>,
-): PiviSettingsNormalizationResult {
+): PiviSettings {
   const hiddenSlashCommands = normalizeHiddenCommandList(
     stored.hiddenSlashCommands,
   );
-  const storedWorkspaceCommandOrder = stored.workspaceCommandOrder;
-  const workspaceCommandOrder = normalizeWorkspaceCommandOrder(
-    storedWorkspaceCommandOrder,
-  );
-  const workspaceCommandOrderChanged = JSON.stringify(storedWorkspaceCommandOrder ?? null)
-    !== JSON.stringify(workspaceCommandOrder);
-  const storedEditorSelectionToolbar = stored.editorSelectionToolbar;
-  const editorSelectionToolbar = normalizeEditorSelectionToolbarSettings(
-    storedEditorSelectionToolbar,
-  );
-  const editorSelectionToolbarChanged = JSON.stringify(storedEditorSelectionToolbar ?? null)
-    !== JSON.stringify(editorSelectionToolbar);
   const promptNormalized = normalizePromptModuleSettings(
     stored.promptModules,
     stored.customPromptModules,
   );
-  const promptModulesChanged = promptModuleSettingsChanged(stored, promptNormalized);
   const agentSettings = normalizeAgentSettings(stored);
-  const storedSubagents = agentSettings.subagents;
-  const normalizedSubagents = resolveSubagentRuntimeSettings(storedSubagents);
-  const subagentsChanged = JSON.stringify(storedSubagents ?? null)
-    !== JSON.stringify(normalizedSubagents);
-  agentSettings.subagents = normalizedSubagents;
-  const storedWebSearchTools = agentSettings.webSearchTools;
-  const normalizedWebSearchTools = resolveWebSearchToolsSettings(storedWebSearchTools);
-  const webSearchToolsChanged = JSON.stringify(storedWebSearchTools ?? null)
-    !== JSON.stringify(normalizedWebSearchTools);
-  agentSettings.webSearchTools = normalizedWebSearchTools;
-  const externalReadDirectoriesMigrated = migrateExternalReadDirectories(
-    stored,
-    agentSettings,
-  );
-  const chatViewPlacement = normalizeChatViewPlacement(stored.chatViewPlacement);
+  agentSettings.subagents = resolveSubagentRuntimeSettings(agentSettings.subagents);
+  agentSettings.webSearchTools = resolveWebSearchToolsSettings(agentSettings.webSearchTools);
+  migrateExternalReadDirectories(stored, agentSettings);
   const retention = stored.deletedSessionRetentionDays;
   const deletedSessionRetentionDays = typeof retention === 'number'
     && Number.isInteger(retention)
@@ -243,9 +195,6 @@ export function normalizeStoredPiviSettings(
     && retention <= 3650
     ? retention
     : DEFAULT_PIVI_SETTINGS.deletedSessionRetentionDays;
-  const providerRequestDeadlines = normalizeProviderRequestDeadlines(
-    stored.providerRequestDeadlines,
-  );
   const providerSettings = {
     ...stored,
     hiddenSlashCommands,
@@ -259,46 +208,23 @@ export function normalizeStoredPiviSettings(
     sharedEnvironmentVariables:
       getSharedEnvironmentVariables(providerSettings),
     hiddenSlashCommands,
-    workspaceCommandOrder,
-    editorSelectionToolbar,
+    workspaceCommandOrder: normalizeWorkspaceCommandOrder(stored.workspaceCommandOrder),
+    editorSelectionToolbar: normalizeEditorSelectionToolbarSettings(
+      stored.editorSelectionToolbar,
+    ),
     agentSettings,
-    chatViewPlacement,
+    chatViewPlacement: normalizeChatViewPlacement(stored.chatViewPlacement),
     deletedSessionRetentionDays,
-    providerRequestDeadlines,
+    providerRequestDeadlines: normalizeProviderRequestDeadlines(
+      stored.providerRequestDeadlines,
+    ),
     promptModules: promptNormalized.promptModules,
     customPromptModules: promptNormalized.customPromptModules,
   };
   stripRemovedSettingsFields(settings);
-
-  const agentSettingsChanged = normalizePiAgentSettingsRecord(
-    settings,
-    providerSettings,
-  );
-  const modelReconciled = reconcileActiveModelFields(settings);
-  const changed =
-    agentSettingsChanged ||
-    modelReconciled ||
-    hasGeneralNormalizationChanges(
-      stored,
-      chatViewPlacement,
-      deletedSessionRetentionDays,
-      providerRequestDeadlines,
-      promptModulesChanged,
-    ) ||
-    externalReadDirectoriesMigrated ||
-    subagentsChanged ||
-    webSearchToolsChanged ||
-    editorSelectionToolbarChanged ||
-    workspaceCommandOrderChanged ||
-    Object.hasOwn(stored, "systemPrompt") ||
-    Object.hasOwn(stored, "mediaFolder") ||
-    Object.hasOwn(stored, "envSnippets") ||
-    Object.hasOwn(stored, "maxTabs") ||
-    Object.hasOwn(stored, "enableAutoCompact") ||
-    Object.hasOwn(stored, "autoCompactThresholdRatio") ||
-    Object.hasOwn(stored, "autoCompactKeepRecentTokens");
-
-  return { settings, changed };
+  normalizePiAgentSettingsRecord(settings, providerSettings);
+  reconcileActiveModelFields(settings);
+  return settings;
 }
 
 export interface DeviceLocalExternalReadDirectories {
@@ -307,68 +233,7 @@ export interface DeviceLocalExternalReadDirectories {
 }
 
 export interface DeviceLocalProviderSettings {
-  loadInitialized(): DeviceLocalProviderStateV1 | null;
   save(state: DeviceLocalProviderStateV1): void;
-}
-
-export interface DeviceLocalEnvironmentSettings {
-  loadInitialized(): DeviceLocalEnvironmentStateV1 | null;
-  /** Optional secret/system hosts for runtime projection. */
-  createResolveHost?(): ReturnType<typeof createSecretStoreResolveHost>;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function hasSyncedEnvironmentFields(stored: Record<string, unknown>): boolean {
-  if (Object.hasOwn(stored, 'sharedEnvironmentVariables')
-    || Object.hasOwn(stored, 'environmentVariables')) {
-    return true;
-  }
-  const agentSettings = stored.agentSettings;
-  return isRecord(agentSettings) && Object.hasOwn(agentSettings, 'environmentVariables');
-}
-
-function hasSyncedLocalizedProviderFields(stored: Record<string, unknown>): boolean {
-  if (
-    Object.hasOwn(stored, 'model')
-    || Object.hasOwn(stored, 'titleGenerationModel')
-  ) {
-    return true;
-  }
-  if (Object.hasOwn(stored, 'customContextLimits')) {
-    const limits = stored.customContextLimits;
-    if (isRecord(limits) && Object.keys(limits).length > 0) {
-      return true;
-    }
-  }
-  const agentSettings = stored.agentSettings;
-  if (!isRecord(agentSettings)) {
-    return false;
-  }
-  const localizedKeys = [
-    'addedProviders',
-    'disabledProviders',
-    'customProviders',
-    'visibleModels',
-    'lastModel',
-    'webSearchTools',
-  ] as const;
-  return localizedKeys.some((key) => Object.hasOwn(agentSettings, key));
-}
-
-function setExternalReadDirectories(
-  settings: PiviSettings,
-  directories: readonly string[],
-): void {
-  settings.agentSettings = {
-    ...settings.agentSettings,
-    obsidianTools: {
-      ...resolveObsidianToolsSettings(settings.agentSettings.obsidianTools),
-      externalReadDirectories: [...directories],
-    },
-  };
 }
 
 function setCapabilityOverlay(
@@ -388,7 +253,7 @@ function setCapabilityOverlay(
   };
 }
 
-function mergeExternalDirectoriesForSave(
+export function mergeExternalDirectoryPermissions(
   stored: DeviceLocalCapabilityPermissionState['externalDirectories'],
   enabledPaths: readonly string[],
 ): DeviceLocalCapabilityPermissionState['externalDirectories'] {
@@ -464,143 +329,70 @@ export interface DeviceLocalCapabilityPermissions {
   save(next: DeviceLocalCapabilityPermissionState): DeviceLocalCapabilityPermissionState;
 }
 
+/**
+ * Installs this device's persistent Bash, command, and external-directory grants
+ * on freshly loaded settings, migrating legacy synced grants the first time.
+ * Saving writes the in-memory grants back to the device store, so a load that
+ * skips this overlay erases them on the next save.
+ *
+ * @returns whether the synced file still carries grants that a save must strip.
+ */
+export function overlayDeviceLocalCapabilityPermissions(
+  settings: PiviSettings,
+  stored: Record<string, unknown>,
+  capabilities: DeviceLocalCapabilityPermissions,
+  legacyExternalContexts?: DeviceLocalExternalReadDirectories,
+): boolean {
+  const tools = getObsidianToolsSettingsFromBag(settings);
+  if (!capabilities.hasRecord()) {
+    const legacyDirectories = normalizeExternalReadDirectories([
+      ...(legacyExternalContexts?.getExternalReadDirectories() ?? []),
+      ...tools.externalReadDirectories,
+    ]);
+    const legacy = migrateLegacyCapabilityPermissions({
+      bashAllowlist: tools.bashAllowlist,
+      externalReadDirectories: legacyDirectories,
+    });
+    capabilities.save({
+      ...legacy.permissions,
+      obsidianCommands: [...tools.commandAllowlist],
+    });
+    legacyExternalContexts?.setExternalReadDirectories([]);
+  } else if (capabilities.needsLegacyCommandGrantMigration()) {
+    const current = capabilities.getSnapshot();
+    capabilities.save({
+      ...current,
+      obsidianCommands: [...current.obsidianCommands, ...tools.commandAllowlist],
+    });
+  }
+  setCapabilityOverlay(settings, capabilities.getSnapshot());
+  return hasSyncedExternalReadDirectories(stored)
+    || hasSyncedBashAllowlist(stored)
+    || hasSyncedCommandAllowlist(stored);
+}
+
+/**
+ * Projects runtime settings onto the synced vault file: device-local provider
+ * and capability state is written to its own store and stripped from the result.
+ */
 export function createPiviSettingsCodec(
-  deviceLocalExternalContexts?: DeviceLocalExternalReadDirectories,
-  deviceLocalProviders?: DeviceLocalProviderSettings,
-  deviceLocalEnvironment?: DeviceLocalEnvironmentSettings,
-  deviceLocalCapabilities?: DeviceLocalCapabilityPermissions,
+  deviceLocalProviders: DeviceLocalProviderSettings,
+  deviceLocalCapabilities: DeviceLocalCapabilityPermissions,
 ): PiviSettingsCodec {
   return {
-    getDefaults() {
-      const settings = {
-        ...DEFAULT_PIVI_SETTINGS,
-        agentSettings: { ...DEFAULT_PIVI_SETTINGS.agentSettings },
-      };
-      if (deviceLocalCapabilities?.hasRecord()) {
-        setCapabilityOverlay(settings, deviceLocalCapabilities.getSnapshot());
-      } else if (deviceLocalExternalContexts) {
-        setExternalReadDirectories(
-          settings,
-          deviceLocalExternalContexts.getExternalReadDirectories(),
-        );
-      }
-      const initializedProviders = deviceLocalProviders?.loadInitialized();
-      if (initializedProviders) {
-        overlayDeviceLocalProviderState(settings, initializedProviders);
-      }
-      const initializedEnvironment = deviceLocalEnvironment?.loadInitialized();
-      if (initializedEnvironment) {
-        const host = deviceLocalEnvironment?.createResolveHost?.()
-          ?? createSecretStoreResolveHost(undefined, () => undefined);
-        projectEnvironmentOntoSettings(settings, initializedEnvironment, host);
-      }
-      return settings;
-    },
-    normalize(stored) {
-      const result = normalizeStoredPiviSettings(stored);
-      let changed = result.changed;
-      if (deviceLocalCapabilities) {
-        const tools = getObsidianToolsSettingsFromBag(result.settings);
-        if (!deviceLocalCapabilities.hasRecord()) {
-          const legacyDirectories = normalizeExternalReadDirectories([
-            ...(deviceLocalExternalContexts?.getExternalReadDirectories() ?? []),
-            ...tools.externalReadDirectories,
-          ]);
-          const migrated = migrateLegacyCapabilityPermissions({
-            bashAllowlist: tools.bashAllowlist,
-            externalReadDirectories: legacyDirectories,
-          });
-          deviceLocalCapabilities.save({
-            ...migrated.permissions,
-            obsidianCommands: [...tools.commandAllowlist],
-          });
-          deviceLocalExternalContexts?.setExternalReadDirectories([]);
-          changed = true;
-        } else if (deviceLocalCapabilities.needsLegacyCommandGrantMigration()) {
-          const current = deviceLocalCapabilities.getSnapshot();
-          deviceLocalCapabilities.save({
-            ...current,
-            obsidianCommands: [...current.obsidianCommands, ...tools.commandAllowlist],
-          });
-        }
-        setCapabilityOverlay(result.settings, deviceLocalCapabilities.getSnapshot());
-        changed = changed
-          || hasSyncedExternalReadDirectories(stored)
-          || hasSyncedBashAllowlist(stored)
-          || hasSyncedCommandAllowlist(stored);
-      } else if (deviceLocalExternalContexts) {
-        const syncedDirectories = getObsidianToolsSettingsFromBag(result.settings)
-          .externalReadDirectories;
-        const deviceDirectories = deviceLocalExternalContexts.getExternalReadDirectories();
-        const mergedDirectories = normalizeExternalReadDirectories([
-          ...deviceDirectories,
-          ...syncedDirectories,
-        ]);
-        if (JSON.stringify(deviceDirectories) !== JSON.stringify(mergedDirectories)) {
-          deviceLocalExternalContexts.setExternalReadDirectories(mergedDirectories);
-        }
-        setExternalReadDirectories(result.settings, mergedDirectories);
-        changed = changed || hasSyncedExternalReadDirectories(stored);
-      }
-      const initializedProviders = deviceLocalProviders?.loadInitialized();
-      if (initializedProviders) {
-        overlayDeviceLocalProviderState(result.settings, initializedProviders);
-        changed = changed || hasSyncedLocalizedProviderFields(stored);
-      }
-      const initializedEnvironment = deviceLocalEnvironment?.loadInitialized();
-      if (initializedEnvironment) {
-        const host = deviceLocalEnvironment?.createResolveHost?.()
-          ?? createSecretStoreResolveHost(undefined, () => undefined);
-        projectEnvironmentOntoSettings(result.settings, initializedEnvironment, host);
-        changed = changed || hasSyncedEnvironmentFields(stored);
-      } else if (hasSyncedEnvironmentFields(stored)) {
-        // Legacy synced env remains readable until migration runs; mark dirty so
-        // prepareForSave strips after cutover.
-        changed = true;
-      }
-      return {
-        settings: result.settings,
-        changed,
-      };
-    },
-    updateAgentSettings(settings, updates) {
-      updatePiAgentSettings(settings, updates);
-    },
     prepareForSave(settings) {
-      let nextSettings: PiviSettings | ReturnType<typeof stripLocalizedFieldsFromRuntimeSettings> =
-        settings;
-      if (deviceLocalProviders) {
-        const localState = extractDeviceLocalProviderState(settings);
-        deviceLocalProviders.save(localState);
-        nextSettings = stripLocalizedFieldsFromRuntimeSettings(settings);
-      } else {
-        // Still strip environment fields from synced JSON even without provider store.
-        const persisted = { ...(nextSettings as unknown as Record<string, unknown>) };
-        stripEnvironmentFieldsFromPersistedSettings(persisted);
-        nextSettings = persisted as typeof nextSettings;
-      }
-      const withTools = nextSettings as PiviSettings;
-      const tools = getObsidianToolsSettingsFromBag(withTools);
-      if (deviceLocalCapabilities) {
-        const current = deviceLocalCapabilities.getSnapshot();
-        deviceLocalCapabilities.save(canonicalizeCapabilityPermissions({
-          version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
-          bash: tools.bashPermissions,
-          obsidianCommands: tools.commandAllowlist,
-          externalDirectories: tools.externalDirectoryPermissions.length > 0
-            ? tools.externalDirectoryPermissions
-            : mergeExternalDirectoriesForSave(
-              current.externalDirectories,
-              tools.externalReadDirectories,
-            ),
-        }));
-      } else if (deviceLocalExternalContexts) {
-        deviceLocalExternalContexts.setExternalReadDirectories(tools.externalReadDirectories);
-      }
-      if (!deviceLocalExternalContexts && !deviceLocalCapabilities) {
-        return nextSettings;
-      }
-      return stripDeviceLocalSettings(withTools);
+      deviceLocalProviders.save(extractDeviceLocalProviderState(settings));
+      const tools = getObsidianToolsSettingsFromBag(settings);
+      deviceLocalCapabilities.save(canonicalizeCapabilityPermissions({
+        version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
+        bash: tools.bashPermissions,
+        obsidianCommands: tools.commandAllowlist,
+        // The loaded records are authoritative: an empty list means the user removed them all.
+        externalDirectories: tools.externalDirectoryPermissions,
+      }));
+      return stripDeviceLocalSettings(
+        stripLocalizedFieldsFromRuntimeSettings(settings) as PiviSettings,
+      );
     },
   };
 }

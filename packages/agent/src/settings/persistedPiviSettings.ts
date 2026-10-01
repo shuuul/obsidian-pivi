@@ -7,7 +7,6 @@ export type PersistedAgentRuntimeSettings = Omit<
   | 'disabledProviders'
   | 'customProviders'
   | 'visibleModels'
-  | 'lastModel'
   | 'webSearchTools'
   | 'environmentVariables'
 >;

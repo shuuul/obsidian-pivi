@@ -13,7 +13,6 @@ export interface LegacyProviderMembershipSnapshot {
   visibleModels: readonly string[];
   model: string;
   titleGenerationModel: string;
-  lastModel?: string;
   customProviders: readonly CustomProviderConfig[];
 }
 
@@ -128,7 +127,6 @@ export function migrateMembershipAwareProviderSecrets(
   const titleGenerationModel = typeof legacy.titleGenerationModel === 'string'
     ? legacy.titleGenerationModel
     : '';
-  const lastModel = typeof legacy.lastModel === 'string' ? legacy.lastModel : undefined;
 
   const membership: LegacyProviderMembershipSnapshot = {
     ...legacy,
@@ -142,15 +140,6 @@ export function migrateMembershipAwareProviderSecrets(
       providerRewrites,
       ambiguousProviderSplits,
     ),
-    ...(lastModel
-      ? {
-          lastModel: rewriteModelKey(
-            lastModel,
-            providerRewrites,
-            ambiguousProviderSplits,
-          ),
-        }
-      : {}),
   };
 
   return {

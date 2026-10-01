@@ -89,7 +89,6 @@ export function createMockPiUiFacades(
       getReasoningOptions: () => [],
       getDefaultReasoningValue: () => "low",
       getContextWindowSize: () => 200_000,
-      isDefaultModel: () => false,
       applyModelDefaults: () => {},
       applyReasoningSelection: () => {},
       ...chatUIConfigOverride,

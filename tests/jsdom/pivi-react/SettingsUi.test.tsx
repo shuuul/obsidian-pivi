@@ -25,7 +25,7 @@ function createModelsPort() {
     codexProviderId: 'openai-codex',
     interactiveOAuthProviderIds: ['openai-codex', 'grok-build', 'claude'],
     bootstrap: () => ({ minimumHostVersion: '1.11.4', secureStorageAvailable: true }),
-    getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+    getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [], visibleModels: [], environmentVariables: '', }),
     saveSettings: async () => undefined,
     getProviderDisplayName: (id: string) => id,
     getProviderLogoSlug: () => null,
@@ -148,7 +148,6 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
     environment: {
       getActiveEnvironmentVariables: () => '',
-      getEnvironmentVariables: () => '',
       applyEnvironmentVariables: async () => undefined,
       applyEnvironmentVariablesBatch: async () => undefined,
       importEnvironmentText: async () => undefined,
@@ -554,7 +553,7 @@ describe('React settings foundation', () => {
   it('orders Local, OAuth, API, and Custom API groups and keeps added OAuth providers visible', async () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
-      getSettings: () => ({ addedProviders: ['openai-codex', 'grok-build'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+      getSettings: () => ({ addedProviders: ['openai-codex', 'grok-build'], disabledProviders: [], customProviders: [], visibleModels: [], environmentVariables: '', }),
       listAddableBuiltinProviders: () => [
         { id: 'anthropic', name: 'Anthropic', logoSlug: null },
         { id: 'claude', name: 'Claude', logoSlug: null },
@@ -587,10 +586,7 @@ describe('React settings foundation', () => {
       disabledProviders: [] as string[],
       customProviders: [] as never[],
       visibleModels: [] as never[],
-      availableModes: [] as never[],
-      discoveredModels: [] as never[],
       environmentVariables: '',
-      selectedMode: '',
     };
     const addBuiltinProvider = jest.fn(async (providerId: string) => {
       modelSettings.addedProviders = [...modelSettings.addedProviders, providerId];
@@ -635,10 +631,7 @@ describe('React settings foundation', () => {
       disabledProviders: [],
       customProviders: [],
       visibleModels: [],
-      availableModes: [],
-      discoveredModels: [],
       environmentVariables: '',
-      selectedMode: '',
     };
     const saveSettings = jest.fn(async (patch: Partial<typeof modelSettings>) => {
       Object.assign(modelSettings, patch);
@@ -664,7 +657,7 @@ describe('React settings foundation', () => {
   it('rolls model provider order back when persistence fails', async () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
-      getSettings: () => ({ addedProviders: ['openai', 'anthropic'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+      getSettings: () => ({ addedProviders: ['openai', 'anthropic'], disabledProviders: [], customProviders: [], visibleModels: [], environmentVariables: '', }),
       saveSettings: async () => { throw new Error('Unable to save provider order'); },
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
@@ -697,7 +690,7 @@ describe('React settings foundation', () => {
       setApiKey,
       clearCredential,
       loginProviderOAuth,
-      getSettings: () => ({ addedProviders: ['openai', 'openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+      getSettings: () => ({ addedProviders: ['openai', 'openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], environmentVariables: '', }),
       getCredentialKind: (id: string) => (id === 'openai' ? 'api_key' : null),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
@@ -721,7 +714,7 @@ describe('React settings foundation', () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {
       hasProviderOAuth: () => true,
-      getSettings: () => ({ addedProviders: ['openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+      getSettings: () => ({ addedProviders: ['openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], environmentVariables: '', }),
     });
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
     await act(async () => undefined);
@@ -740,10 +733,7 @@ describe('React settings foundation', () => {
       disabledProviders: [] as string[],
       customProviders: [],
       visibleModels: [],
-      availableModes: [],
-      discoveredModels: [],
       environmentVariables: '',
-      selectedMode: '',
     };
     const ports = createPorts();
     Object.assign(ports.complex.models, {
@@ -779,10 +769,7 @@ describe('React settings foundation', () => {
         disabledProviders: ['openai'],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
     });
 
@@ -802,10 +789,7 @@ describe('React settings foundation', () => {
       disabledProviders: [] as string[],
       customProviders: [],
       visibleModels: [],
-      availableModes: [],
-      discoveredModels: [],
       environmentVariables: '',
-      selectedMode: '',
     };
     const saveSettings = jest.fn(async (patch: { disabledProviders?: string[] }) => {
       if (patch.disabledProviders) settings.disabledProviders = [...patch.disabledProviders];
@@ -837,10 +821,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
@@ -864,10 +845,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
@@ -887,10 +865,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getProviderDisplayName: (id: string) => (id === 'anthropic' ? 'Anthropic' : id),
       getProviderEnvInfo: () => ({ apiKeyVar: 'ANTHROPIC_API_KEY', oauthVar: 'ANTHROPIC_OAUTH_TOKEN' }),
@@ -912,10 +887,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getProviderDisplayName: (id: string) => (id === 'claude' ? 'Claude' : id),
     });
@@ -939,10 +911,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getProviderDisplayName: (id: string) => (id === 'claude' ? 'Claude' : id),
     });
@@ -969,10 +938,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getProviderDisplayName: (id: string) => (id === 'grok-build' ? 'Grok Build' : id),
     });
@@ -998,7 +964,7 @@ describe('React settings foundation', () => {
     const ports = createPorts();
     Object.assign(ports.catalog, { listModelsForProvider: () => [{ value: 'openai/gpt', label: 'GPT' }] });
     Object.assign(ports.complex.models, {
-      getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [{ id: 'openai', kind: 'openai-compatible', name: 'OpenAI', baseUrl: 'https://example.test', api: 'openai-completions', models: [] }], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+      getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [{ id: 'openai', kind: 'openai-compatible', name: 'OpenAI', baseUrl: 'https://example.test', api: 'openai-completions', models: [] }], visibleModels: [], environmentVariables: '', }),
       fetchCustomProviderModels,
       saveSettings,
     });
@@ -1031,10 +997,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [customProvider],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       setCustomProviderModelIds,
       fetchCustomProviderModels,
@@ -1084,10 +1047,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [customProvider],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       patchCustomProviderModel,
     });
@@ -1145,10 +1105,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [customProvider],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       patchCustomProviderModel,
     });
@@ -1193,10 +1150,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [customProvider],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getContextWindowOverride: () => null,
       patchContextWindowOverride,
@@ -1255,10 +1209,7 @@ describe('React settings foundation', () => {
           models: [],
         }],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
     });
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page="models" ports={ports} /></I18nProvider>));
@@ -1288,10 +1239,7 @@ describe('React settings foundation', () => {
           apiKeyRequired: false,
         }],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       renameCustomProvider,
     });
@@ -1328,10 +1276,7 @@ describe('React settings foundation', () => {
             apiKeyRequired: false,
           }],
           visibleModels: [`${providerId}/${modelId}`, 'deepseek/deepseek-flash'],
-          availableModes: [],
-          discoveredModels: [],
           environmentVariables: '',
-          selectedMode: '',
         };
       },
       renameCustomProvider: async () => {
@@ -1385,10 +1330,7 @@ describe('React settings foundation', () => {
           apiKeyRequired: false,
         }],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       renameCustomProvider,
     });
@@ -1561,10 +1503,7 @@ describe('React settings foundation', () => {
           models: [],
         }],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
       getProviderDisplayName: (id: string) => (id === 'openai' ? 'OpenAI' : id),
     });
@@ -1599,10 +1538,7 @@ describe('React settings foundation', () => {
         disabledProviders: [],
         customProviders: [],
         visibleModels: [],
-        availableModes: [],
-        discoveredModels: [],
         environmentVariables: '',
-        selectedMode: '',
       }),
     });
     const view = render(withTestPresentationPlatform(

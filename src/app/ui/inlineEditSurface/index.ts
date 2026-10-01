@@ -18,7 +18,6 @@ export {
 export { InlineEditSurfaceSession, type InlineEditSurfaceSessionDeps } from './InlineEditSurfaceSession';
 export type {
   InlineEditDiffReviewKind,
-  InlineEditSurfaceComposerState,
   InlineEditSurfaceSendPayload,
   InlineEditSurfaceSessionContract,
   InlineEditSurfaceSessionOptions,

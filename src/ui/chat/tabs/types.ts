@@ -62,8 +62,6 @@ export interface ComposerChromeActions {
   send: () => void;
   stop: () => void;
   setModel: (value: string) => void;
-  setMode: (value: string) => void;
-  setThinkingBudget: (value: string) => void;
   setThinkingLevel: (value: string) => void;
   refresh: () => void;
   toggleExternalPath: (path: string) => void;
@@ -189,8 +187,6 @@ export interface TabData {
   /** One-shot confirmation for Pivi-owned management plans. */
   piviManagementApproval?: TabPiviManagementApprovalBridge;
 }
-
-export type TabAgentContext = Pick<TabData, 'openSessionId' | 'service' | 'lifecycleState' | 'draftModel'>;
 
 /**
  * Persisted tab state for restoration on plugin reload.

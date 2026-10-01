@@ -53,7 +53,6 @@ import { resolveEditorFromEditorView } from './resolveInlineEditEditor';
 import type {
   InlineEditComposerDefaults,
   InlineEditDiffReviewKind,
-  InlineEditSurfaceComposerState,
   InlineEditSurfaceSendPayload,
   InlineEditSurfaceSessionContract,
   InlineEditSurfaceSessionId,
@@ -299,13 +298,6 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     });
   }
 
-  getComposerState(): InlineEditSurfaceComposerState {
-    return {
-      model: this.model,
-      thinkingLevel: this.thinkingLevel,
-    };
-  }
-
   setPrompt(text: string): void {
     if (!this.mentionInput) {
       return;
@@ -496,7 +488,6 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       { fixed: true },
     );
     this.mentionDropdown.setMcpManager(mcpMentionProvider);
-    this.mentionDropdown.setAgentService(null);
     this.mentionDropdown.handleInputChange();
 
     this.slashDropdown = new SlashCommandDropdown(
@@ -506,9 +497,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       {
         hiddenCommands: new Set(),
         catalogConfig: workspace.slashCommandCatalog.getDropdownConfig(),
-        getCatalogEntries: () => workspace.slashCommandCatalog.listDropdownEntries({
-          includeBuiltIns: true,
-        }),
+        getCatalogEntries: () => workspace.slashCommandCatalog.listDropdownEntries(),
         getMcpManager: () => mcpServerProvider,
         getMcpToolProvider: () => mcpToolProvider,
         getSkills: () => workspace.skillProvider.listSkills(),

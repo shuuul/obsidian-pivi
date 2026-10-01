@@ -1,5 +1,6 @@
 import type { PiviSettings } from '@pivi/agent/settings';
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
+import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 import * as defaultSkillsRemote from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
 import { SkillsManagementCoordinator } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 import { VaultSkillsService } from '@pivi/agent/skills/vault/vaultSkillsService';
@@ -22,7 +23,6 @@ function createWorkspaceWithSkills(host: PiviSettingsHost, vaultPath: string) {
   return {
     credentialStore: null,
     webSearchCredentialStore: null,
-    mcpStorage: {},
     mcpToolProvider: {},
     slashCommandCatalog: {},
     skillsManagement: new SkillsManagementCoordinator({
@@ -41,7 +41,6 @@ function createUiFacades(): PiviUiFacades {
       getReasoningOptions: () => [],
       getDefaultReasoningValue: () => 'medium',
       getContextWindowSize: () => 128_000,
-      isDefaultModel: () => false,
       applyModelDefaults: (_model, settings) => {
         Object.assign(settings as object, { thinkingLevel: 'medium' });
       },
@@ -122,9 +121,6 @@ describe('UI port adapters', () => {
     const listInventoryTools = jest.fn(async () => [{ name: 'inventory' }]);
     const getDropdownConfig = jest.fn(() => ({
       triggerChars: ['/'],
-      builtInPrefix: '',
-      skillPrefix: '',
-      commandPrefix: '',
     }));
     const workspace = {
       mcpServerManager: {
@@ -138,10 +134,7 @@ describe('UI port adapters', () => {
         getDropdownConfig,
         refresh: async () => {},
       },
-      modelReadinessProvider: {
-        getStatus: () => ({ kind: 'ready', label: 'Ready', description: '' }),
-        testModel: async () => ({ ok: true, detail: 'ok' }),
-      },
+      modelReadinessProvider: {},
     };
     const saveSettings = jest.fn(async () => {});
     const openRecentSessionMessages = jest.fn(async () => ({
@@ -165,7 +158,6 @@ describe('UI port adapters', () => {
       settings: {
         ...DEFAULT_PIVI_SETTINGS,
         model: 'model-a',
-        thinkingBudget: 'medium',
         thinkingLevel: 'medium',
       } as PiviSettings,
       saveSettings,
@@ -205,19 +197,12 @@ describe('UI port adapters', () => {
     expect(listTools).toHaveBeenCalledWith('server');
     expect(ports.catalog.getSlashDropdownConfig()).toEqual({
       triggerChars: ['/'],
-      builtInPrefix: '',
-      skillPrefix: '',
-      commandPrefix: '',
-    });
-    expect(ports.models.getReadinessProvider()?.getStatus('model', {})).toEqual({
-      kind: 'ready',
-      label: 'Ready',
-      description: '',
     });
     expect(ports.models.getModelOptions(ports.settings.getSettingsSnapshot())).toEqual([
       { value: 'model-a', label: 'Model A' },
     ]);
     const snapshot = ports.settings.getSettingsSnapshot();
+    expect(snapshot.deferMathRenderingDuringStreaming).toBe(true);
     expect(snapshot).toEqual(expect.objectContaining({
       enableAutoScroll: true,
       showCacheHitRate: true,
@@ -243,13 +228,44 @@ describe('UI port adapters', () => {
       }),
     }));
     snapshot.model = 'model-b';
+    snapshot.thinkingLevel = 'high';
     await ports.settings.commitSettingsSnapshot(snapshot);
     expect(host.settings.model).toBe('model-b');
+    expect(host.settings.thinkingLevel).toBe('high');
     expect(saveSettings).toHaveBeenCalledTimes(1);
     expect(getDropdownConfig).toHaveBeenCalled();
     expect(ports).not.toHaveProperty('plugin');
     expect(ports).not.toHaveProperty('workspace');
     expect(ports).not.toHaveProperty('getPiWorkspace');
+  });
+
+  it('keeps external directory grant records aligned when pinned directories change', async () => {
+    const settings = structuredClone(DEFAULT_PIVI_SETTINGS) as PiviSettings;
+    settings.agentSettings.obsidianTools = {
+      ...getObsidianToolsSettingsFromBag(settings),
+      externalReadDirectories: ['/external/kept', '/external/unpinned'],
+      externalDirectoryPermissions: [
+        { realpath: '/external/kept', enabled: true },
+        { realpath: '/external/unpinned', enabled: true },
+      ],
+    };
+    const host = {
+      settings,
+      saveSettings: jest.fn(async () => {}),
+      getUiFacades: () => createUiFacades(),
+      getAllViews: () => [],
+    } as unknown as ChatUiCompositionHost;
+    const ports = createChatUiPorts(host, host as never, null);
+
+    await ports.settings.setPinnedExternalReadDirectories(['/external/kept', '/external/added']);
+
+    // Saving persists the grant records, so a stale list would drop the change on restart.
+    expect(getObsidianToolsSettingsFromBag(settings).externalDirectoryPermissions).toEqual([
+      { realpath: '/external/kept', enabled: true },
+      { realpath: '/external/unpinned', enabled: false },
+      { realpath: '/external/added', enabled: true },
+    ]);
+    expect(host.saveSettings).toHaveBeenCalledTimes(1);
   });
 
   it('projects settings persistence and environment actions', async () => {
@@ -272,7 +288,6 @@ describe('UI port adapters', () => {
       getUiFacades: () => uiFacades,
       getPiWorkspace,
       getActiveEnvironmentVariables: () => 'ACTIVE=1',
-      getEnvironmentVariablesForScope: () => 'SCOPE=1',
       applyEnvironmentVariables,
       applyEnvironmentVariablesBatch: async () => {},
       importEnvironmentText: async () => {},
@@ -305,7 +320,6 @@ describe('UI port adapters', () => {
       'custom/glm': 1_000_000,
     });
     expect(ports.environment.getActiveEnvironmentVariables()).toBe('ACTIVE=1');
-    expect(ports.environment.getEnvironmentVariables('agent')).toBe('SCOPE=1');
     await ports.environment.applyEnvironmentVariables('agent', 'NEXT=1');
     expect(applyEnvironmentVariables).toHaveBeenCalledWith('agent', 'NEXT=1');
     expect(ports.complex.models.getCredentialKind('provider')).toBe('api_key');
@@ -373,7 +387,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {
         saveWorkspaceEntry,
@@ -415,7 +428,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -449,7 +461,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: { getCachedTools: () => [] },
       mcpServerManager: { getServers: () => [] },
       slashCommandCatalog: {},
@@ -507,7 +518,6 @@ describe('UI port adapters', () => {
     const ports = createSettingsUiPorts(host, {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: { getCachedTools: () => [] },
       mcpServerManager: { getServers: () => [] },
       slashCommandCatalog: {},
@@ -551,7 +561,6 @@ describe('UI port adapters', () => {
     const ports = createSettingsUiPorts(host, {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     } as never);
@@ -581,7 +590,6 @@ describe('UI port adapters', () => {
     const ports = createSettingsUiPorts(host, {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: { getCachedTools: () => [] },
       mcpServerManager: { getServers: () => [] },
       slashCommandCatalog: {},
@@ -616,7 +624,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -646,7 +653,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -679,7 +685,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -707,7 +712,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -737,7 +741,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };

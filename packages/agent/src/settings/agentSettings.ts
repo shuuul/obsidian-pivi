@@ -10,7 +10,6 @@ import {
 } from './customProviders';
 import {
   DEFAULT_AGENT_SETTINGS as DEFAULT_PI_AGENT_SETTINGS,
-  DEFAULT_MODEL_KEY,
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
 } from './defaults';
 import {
@@ -77,21 +76,17 @@ export function getPiAgentSettings(
     addedProviders,
     disabledProviders,
     customProviders,
-    availableModes: ['default'],
-    discoveredModels: [DEFAULT_MODEL_KEY],
     environmentVariables:
       config.environmentVariables ??
       getAgentEnvironmentVariables(settings) ??
       DEFAULT_PI_AGENT_SETTINGS.environmentVariables,
-    selectedMode: config.selectedMode ?? DEFAULT_PI_AGENT_SETTINGS.selectedMode,
     visibleModels: sanitizeVisibleModels(rawVisibleModels, customProviders),
   };
 }
 
 export function updatePiAgentSettings(
   settings: Record<string, unknown>,
-  updates: Partial<PiAgentSettingsView> &
-    Pick<Partial<AgentRuntimeSettings>, 'lastModel' | 'environmentHash'>,
+  updates: Partial<PiAgentSettingsView>,
 ): PiAgentSettingsView {
   const current = getPiAgentSettings(settings);
   const config = ensurePiSettingsRecord(settings);
@@ -118,16 +113,9 @@ export function updatePiAgentSettings(
   config.addedProviders = next.addedProviders;
   config.disabledProviders = next.disabledProviders;
   config.environmentVariables = next.environmentVariables;
-  config.selectedMode = next.selectedMode;
   config.visibleModels = next.visibleModels;
   config.customProviders = next.customProviders;
 
-  if (updates.lastModel !== undefined) {
-    config.lastModel = updates.lastModel;
-  }
-  if (updates.environmentHash !== undefined) {
-    config.environmentHash = updates.environmentHash;
-  }
 
   return getPiAgentSettings(settings);
 }
@@ -146,7 +134,6 @@ export function normalizePiAgentSettingsRecord(
   config.addedProviders = view.addedProviders;
   config.disabledProviders = view.disabledProviders;
   config.environmentVariables = view.environmentVariables;
-  config.selectedMode = view.selectedMode;
   config.visibleModels = view.visibleModels;
   if (view.customProviders.length > 0 || Array.isArray(config.customProviders)) {
     config.customProviders = view.customProviders;

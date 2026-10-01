@@ -83,7 +83,6 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
       for (const chunk of this.eventAdapter.adapt(event)) {
         if (chunk.type === 'text') {
           accumulatedText += chunk.content;
-          config.onTextChunk?.(accumulatedText);
         } else if (chunk.type === 'error') {
           errorMessage = chunk.content;
         }

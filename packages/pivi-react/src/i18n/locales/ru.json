@@ -403,7 +403,6 @@
       "absolutelyRight": "Вы абсолютно правы!"
     },
     "mention": {
-      "agents": "Агенты",
       "noMatches": "Совпадений не найдено"
     },
     "file": {
@@ -570,7 +569,6 @@
       "setupLabelAndIcon": "Pivi + значок",
       "setupIconOnly": "Только значок",
       "itemTooltip": "Добавить выделение во ввод Pivi",
-      "commandTooltip": "Выполнить /{name} в новом сеансе Pivi",
       "installed": "Pivi добавлен на панель выделенного текста.",
       "alreadyInstalled": "Pivi уже есть на панели выделенного текста.",
       "styleSettingsOpened": "Pivi уже использует другой стиль. Открыты настройки элемента Note Toolbar, где можно вручную изменить подпись.",

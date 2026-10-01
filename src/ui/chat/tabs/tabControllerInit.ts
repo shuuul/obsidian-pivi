@@ -25,7 +25,7 @@ import {
 } from './tabAgentContext';
 import { generateTabMessageId } from './tabAutoTurn';
 import { syncTabSessionExternalContext } from './tabExternalContext';
-import { type ForkContext,handleForkAll, handleForkRequest } from './tabFork';
+import { type ForkContext,handleForkRequest } from './tabFork';
 import { handleRedoRequest } from './tabRedo';
 import { initializeTabService } from './tabRuntime';
 import { type SlashCatalogInfo,syncSlashCommandDropdown } from './tabSlashCatalog';
@@ -171,7 +171,6 @@ export function initializeTabControllers(
           tab,
           ports.settings,
           getSlashCatalogConfig,
-          openSession,
         );
 
         if (tab.service && openSession) {
@@ -201,7 +200,6 @@ export function initializeTabControllers(
         applyCapabilityUIGating(tab, ports);
         syncSlashCommandDropdown(tab, ports.settings, getSlashCatalogConfig);
       },
-      onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
       onSessionSwitched: () => {
         tab.piviManagementApproval?.cancelPending();
         ui.slashCommandDropdown?.resetRuntimeSkillsCache();
@@ -249,9 +247,6 @@ export function initializeTabControllers(
       }
     },
     openSession,
-    onForkAll: forkRequestCallback
-      ? () => handleForkAll(tab, ports.sessions, forkRequestCallback)
-      : undefined,
     onTitleChanged,
     getDraftCustomTitle: () => tab.draftTitle,
     clearDraftCustomTitle: () => {

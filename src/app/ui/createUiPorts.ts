@@ -7,6 +7,7 @@ import { getPiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 
 import type { PiviPluginWorkspace } from '@/app/hostContracts';
+import { mergeExternalDirectoryPermissions } from '@/app/settings/piviSettingsCodec';
 
 import { type ChatUiCompositionHost, type ChatUiSessionHost } from './chatUiCompositionHost';
 import {
@@ -29,7 +30,6 @@ export function createChatUiPorts(
     settings: ChatSettingsSnapshot,
   ): Record<string, unknown> => ({
     model: settings.model,
-    thinkingBudget: settings.thinkingBudget,
     thinkingLevel: settings.thinkingLevel,
     customContextLimits: { ...settings.customContextLimits },
     agentSettings: {
@@ -49,9 +49,6 @@ export function createChatUiPorts(
     if (typeof configSettings.model === 'string') {
       settings.model = configSettings.model;
     }
-    if (typeof configSettings.thinkingBudget === 'string') {
-      settings.thinkingBudget = configSettings.thinkingBudget;
-    }
     if (typeof configSettings.thinkingLevel === 'string') {
       settings.thinkingLevel = configSettings.thinkingLevel;
     }
@@ -62,10 +59,10 @@ export function createChatUiPorts(
     const tools = getObsidianToolsSettingsFromBag(projected);
     return {
       model: projected.model,
-      thinkingBudget: projected.thinkingBudget,
       thinkingLevel: projected.thinkingLevel,
       customContextLimits: { ...projected.customContextLimits },
       enableAutoScroll: projected.enableAutoScroll ?? true,
+      deferMathRenderingDuringStreaming: projected.deferMathRenderingDuringStreaming ?? true,
       showCacheHitRate: projected.showCacheHitRate !== false,
       showTokensPerSecond: projected.showTokensPerSecond !== false,
       enableAutoTitleGeneration: projected.enableAutoTitleGeneration,
@@ -119,14 +116,10 @@ export function createChatUiPorts(
         return provider.listInventoryTools?.(serverName) ?? provider.listTools(serverName);
       },
       listSkills: () => ws().skillProvider.listSkills(),
-      listSlashEntries: (includeBuiltIns) => (
-        ws().slashCommandCatalog.listDropdownEntries({ includeBuiltIns })
-      ),
+      listSlashEntries: () => ws().slashCommandCatalog.listDropdownEntries(),
       getSlashDropdownConfig: () => ws().slashCommandCatalog.getDropdownConfig(),
-      refreshSlashCatalog: () => ws().slashCommandCatalog.refresh(),
     },
     models: {
-      getReadinessProvider: () => ws().modelReadinessProvider ?? null,
       getModelOptions: (settings) => chatConfig.getModelOptions(toChatConfigSettings(settings)),
       isAdaptiveReasoningModel: (model, settings) => (
         chatConfig.isAdaptiveReasoningModel(model, toChatConfigSettings(settings))
@@ -155,14 +148,6 @@ export function createChatUiPorts(
           chatConfig.applyReasoningSelection?.(model, value, configSettings);
         });
       },
-      getModeSelector: (settings) => (
-        chatConfig.getModeSelector?.(toChatConfigSettings(settings)) ?? null
-      ),
-      applyModeSelection: (value, settings) => {
-        applyChatConfigMutation(settings, (configSettings) => {
-          chatConfig.applyModeSelection?.(value, configSettings);
-        });
-      },
     },
     settings: {
       getSettingsSnapshot: getChatSettingsSnapshot,
@@ -171,7 +156,6 @@ export function createChatUiPorts(
         uiFacades.commitSettingsSnapshot(host.settings, {
           ...current,
           model: snapshot.model,
-          thinkingBudget: snapshot.thinkingBudget,
           thinkingLevel: snapshot.thinkingLevel,
           customContextLimits: { ...snapshot.customContextLimits },
         });
@@ -182,6 +166,11 @@ export function createChatUiPorts(
         host.settings.agentSettings.obsidianTools = {
           ...current,
           externalReadDirectories: [...paths],
+          // Keep the grant records aligned; saving persists these, not the path list.
+          externalDirectoryPermissions: mergeExternalDirectoryPermissions(
+            current.externalDirectoryPermissions,
+            paths,
+          ),
         };
         await host.saveSettings();
         for (const view of host.getAllViews()) {

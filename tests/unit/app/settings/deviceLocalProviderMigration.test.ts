@@ -8,6 +8,8 @@ import {
 } from '@/app/deviceLocalProviderStore';
 import { runDeviceLocalProviderMigration } from '@/app/settings/deviceLocalProviderMigration';
 import { createMockApp } from '../../../helpers/mockApp';
+import { ObsidianDeviceLocalCapabilityPermissionStore } from '@/app/deviceLocalCapabilityPermissionStore';
+import { ObsidianDeviceLocalExternalContextStore } from '@/app/deviceLocalExternalContextStore';
 
 jest.mock('@pivi/agent/skills/vault/ensureDefaultVaultSkills', () => ({
   ensureDefaultVaultSkills: jest.fn(async () => undefined),
@@ -293,6 +295,8 @@ describe('plugin settings load ordering', () => {
       getSessions: () => [],
       setLastKnownTabManagerState: () => undefined,
       getStorage: () => ({ getTabManagerState: async () => null }),
+      capabilityPermissions: new ObsidianDeviceLocalCapabilityPermissionStore(app),
+      legacyExternalContexts: new ObsidianDeviceLocalExternalContextStore(app),
       skillsHost: {} as never,
     });
 

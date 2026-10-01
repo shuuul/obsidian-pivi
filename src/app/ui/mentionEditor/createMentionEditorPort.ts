@@ -108,7 +108,6 @@ export function createMentionEditorPort(
         { suggestSelectedTextTemplate: true },
       );
       mentionDropdown.setMcpManager(mcpMentionProvider);
-      mentionDropdown.setAgentService(null);
 
       const slashConfig = workspace.slashCommandCatalog.getDropdownConfig();
       const slashDropdown = new SlashCommandDropdown(
@@ -119,9 +118,7 @@ export function createMentionEditorPort(
           hiddenCommands: new Set(),
           catalogConfig: slashConfig,
           getCatalogEntries: () =>
-            workspace.slashCommandCatalog.listDropdownEntries({
-              includeBuiltIns: true,
-            }),
+            workspace.slashCommandCatalog.listDropdownEntries(),
           getMcpManager: () => mcpServerProvider,
           getMcpToolProvider: () => mcpToolProvider,
           getSkills: () => workspace.skillProvider.listSkills(),
@@ -156,10 +153,6 @@ export function createMentionEditorPort(
 
       return {
         getValue: () => mentionInput.value,
-        setValue: (text: string) => {
-          mentionInput.value = text;
-          callbacks.onChange?.(text);
-        },
         focus: () => mentionInput.focus(),
         setDisabled: (disabled: boolean) => {
           mentionInput.el.setAttribute(

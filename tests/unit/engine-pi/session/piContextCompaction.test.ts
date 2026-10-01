@@ -124,7 +124,7 @@ describe('piContextCompaction', () => {
     const firstTotal = index.tokensBetween(0);
     index.sync([first, second]);
     const appendedTotal = index.tokensBetween(0);
-    expect(appendedTotal).toBe(firstTotal + index.tokensAt(1));
+    expect(appendedTotal).toBe(firstTotal + index.tokensBetween(1));
 
     const replacement = messageEntry('m2', 'assistant', '知识'.repeat(100), 'm1');
     index.sync([first, replacement]);
@@ -283,7 +283,6 @@ describe('piContextCompaction', () => {
 
     expect(plan).not.toBeNull();
     expect(plan!.prefixEntries.length).toBeGreaterThan(0);
-    expect(plan!.tailEntries.length).toBeGreaterThan(0);
     expect((plan!.tailMessages[0] as { role?: string }).role).not.toBe('toolResult');
     expect(plan!.prefixFingerprint).toMatch(/^\d+:[0-9a-f]+$/);
   });

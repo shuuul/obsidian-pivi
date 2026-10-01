@@ -14,7 +14,6 @@ export { ToolCallView, ToolStepGroupView } from './ToolCallView';
 export {
   aggregateToolStatus,
   getToolDisplayName,
-  getToolStepPhrase,
   getToolSummary,
   groupToolCallRuns,
   isGroupableToolCall,

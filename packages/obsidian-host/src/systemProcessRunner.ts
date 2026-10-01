@@ -14,7 +14,6 @@ import type {
 import { isPathWithinDirectory, normalizePathForFilesystem } from './path';
 
 export const DEFAULT_PROCESS_OUTPUT_BYTE_LIMIT = 256 * 1024;
-export const DEFAULT_PROCESS_TIMEOUT_MS = 30_000;
 
 const FORCE_KILL_GRACE_MS = 2_000;
 

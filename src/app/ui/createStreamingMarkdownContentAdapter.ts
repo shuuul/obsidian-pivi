@@ -97,6 +97,7 @@ function appendSealedSegment(
   parent: Component,
   renderContent: RenderContentFn,
   recorder: ChatPerfRecorder,
+  shouldDeferMath: () => boolean,
   state: MountedStreamingMarkdown,
   markdown: string,
   blockId: string,
@@ -115,7 +116,11 @@ function appendSealedSegment(
     const ownerWindow = segment.ownerDocument.defaultView;
     const startedAt = recorder.enabled ? recorder.now(ownerWindow) : 0;
     try {
-      await renderContent(segment, markdown, { component: scope });
+      // The terminal phase re-renders the whole block, so math typesets once there.
+      await renderContent(segment, markdown, {
+        component: scope,
+        deferMath: phase === 'streaming' && shouldDeferMath(),
+      });
     } finally {
       if (recorder.enabled && ownerWindow) {
         recorder.onMarkdownRender(
@@ -134,6 +139,7 @@ function updateStreamingState(
   parent: Component,
   renderContent: RenderContentFn,
   recorder: ChatPerfRecorder,
+  shouldDeferMath: () => boolean,
   state: MountedStreamingMarkdown,
   value: StreamingMarkdownValue,
 ): void {
@@ -150,6 +156,7 @@ function updateStreamingState(
       parent,
       renderContent,
       recorder,
+      shouldDeferMath,
       state,
       value.content,
       value.blockId,
@@ -166,6 +173,7 @@ function updateStreamingState(
       parent,
       renderContent,
       recorder,
+      shouldDeferMath,
       state,
       value.content.slice(state.sealedOffset, sealOffset),
       value.blockId,
@@ -185,6 +193,7 @@ export function createStreamingMarkdownContentAdapter(
   parent: Component,
   renderContent: RenderContentFn,
   recorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
+  shouldDeferMath: () => boolean = () => false,
 ): MessageContentAdapter<StreamingMarkdownValue> {
   const mounted = new WeakMap<HTMLElement, MountedStreamingMarkdown>();
   return {
@@ -210,7 +219,7 @@ export function createStreamingMarkdownContentAdapter(
         scan: createScanState(),
       };
       mounted.set(container, state);
-      updateStreamingState(parent, renderContent, recorder, state, value);
+      updateStreamingState(parent, renderContent, recorder, shouldDeferMath, state, value);
       return () => {
         state.disposed = true;
         clearMountedState(parent, state);
@@ -221,7 +230,7 @@ export function createStreamingMarkdownContentAdapter(
     update(container, value) {
       const state = mounted.get(container);
       if (!state) throw new Error(`Streaming Markdown block ${value.blockId} is not mounted`);
-      updateStreamingState(parent, renderContent, recorder, state, value);
+      updateStreamingState(parent, renderContent, recorder, shouldDeferMath, state, value);
     },
   };
 }

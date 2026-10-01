@@ -22,15 +22,11 @@ export interface LegacyCapabilityPermissionInput {
   bashAllowlist?: readonly string[];
   externalReadDirectories?: readonly string[];
   shellPath?: string;
-  resolveExternalRealpath?: (path: string) => string | null;
-  resolveExecutable?: BashClassificationOptions['resolver'];
   caseInsensitive?: boolean;
 }
 
 export interface LegacyCapabilityPermissionMigration {
   permissions: DeviceLocalCapabilityPermissions;
-  migratedBashCount: number;
-  migratedExternalCount: number;
 }
 
 /**
@@ -42,7 +38,7 @@ export function migrateLegacyCapabilityPermissions(
 ): LegacyCapabilityPermissionMigration {
   const shellPath = input.shellPath ?? '/bin/sh';
   const caseInsensitive = input.caseInsensitive ?? defaultCaseInsensitiveExecutables(shellPath);
-  const resolver = input.resolveExecutable ?? createBareNameResolver(caseInsensitive);
+  const resolver = createBareNameResolver(caseInsensitive);
   const bash: PersistentBashPermission[] = [];
 
   for (const entry of input.bashAllowlist ?? []) {
@@ -53,9 +49,7 @@ export function migrateLegacyCapabilityPermissions(
   for (const directory of input.externalReadDirectories ?? []) {
     const trimmed = directory.trim();
     if (!trimmed) continue;
-    const realpath = input.resolveExternalRealpath?.(trimmed) ?? trimmed;
-    if (!realpath) continue;
-    externalDirectories.push({ realpath, enabled: true });
+    externalDirectories.push({ realpath: trimmed, enabled: true });
   }
 
   return {
@@ -65,8 +59,6 @@ export function migrateLegacyCapabilityPermissions(
       externalDirectories: canonicalizeExternalDirectories(externalDirectories),
       obsidianCommands: [],
     }, caseInsensitive),
-    migratedBashCount: (input.bashAllowlist ?? []).length,
-    migratedExternalCount: (input.externalReadDirectories ?? []).length,
   };
 }
 

@@ -97,7 +97,7 @@ describe('cleanupEmptySessionsAtStartup', () => {
 
     expect(deleteSession).toHaveBeenCalledTimes(1);
     expect(deleteSession).toHaveBeenCalledWith('.pivi/sessions/stale.jsonl');
-    expect(result).toEqual({ removedFiles: 1, removedArchivedBindings: 1 });
+    expect(result).toEqual({ removedArchivedBindings: 1 });
     expect(setTabManagerState).toHaveBeenCalledWith({
       openTabs: [{ tabId: 'open', sessionFile: '.pivi/sessions/live.jsonl', isArchived: false }],
       activeTabId: 'open',

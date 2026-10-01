@@ -501,18 +501,3 @@ export function messageTextHasMentionBadges(
   if (/@/.test(text)) return true;
   return /(?:^|\s)\//m.test(text);
 }
-
-export function collectUniqueMentionParts(parts: MentionBadgePart[]): MentionBadgePart[] {
-  const seen = new Set<string>();
-  const unique: MentionBadgePart[] = [];
-
-  for (const part of parts) {
-    if (part.kind === 'plain') continue;
-    const key = `${part.kind}:${part.raw}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    unique.push(part);
-  }
-
-  return unique;
-}

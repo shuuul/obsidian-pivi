@@ -27,13 +27,6 @@ export interface PersistentExternalDirectoryPermission {
   enabled: boolean;
 }
 
-export interface DeviceLocalCapabilityPermissionsV1 {
-  version: typeof LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
-  bash: PersistentBashPermission[];
-  externalDirectories: PersistentExternalDirectoryPermission[];
-  obsidianCommands?: string[];
-}
-
 export interface DeviceLocalCapabilityPermissionsV2 {
   version: typeof DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
   bash: PersistentBashPermission[];
@@ -275,12 +268,6 @@ export function canonicalizeCapabilityPermissions(
     externalDirectories: canonicalizeExternalDirectories(stored.externalDirectories),
     obsidianCommands: [...new Set((stored.obsidianCommands ?? []).map(id => id.trim()).filter(Boolean))],
   };
-}
-
-export function enabledBashPermissions(
-  stored: readonly PersistentBashPermission[],
-): PersistentBashPermission[] {
-  return stored.filter(permission => permission.enabled);
 }
 
 export function enabledExternalDirectories(

@@ -45,7 +45,6 @@ export interface DeviceLocalProviderStateV1 {
     visibleModels: string[];
     activeModel: string;
     titleGenerationModel: string;
-    lastModel?: string;
     customContextLimits: Record<string, number>;
   };
   webSearchTools: {
@@ -259,23 +258,6 @@ function normalizeVisibleModels(
   return reconcileVisibleModelsForCustomProviders(ordered, customProviders);
 }
 
-function normalizeOptionalModelReference(
-  raw: unknown,
-  enabledProviderIds: ReadonlySet<string>,
-  customProviders: readonly DeviceLocalCustomProviderConfig[],
-): string | undefined {
-  if (typeof raw !== 'string') {
-    return undefined;
-  }
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-  return isModelAllowed(trimmed, enabledProviderIds, customProviders)
-    ? trimmed
-    : undefined;
-}
-
 function normalizeCustomContextLimits(
   raw: unknown,
   providers: readonly DeviceLocalProviderRegistration[],
@@ -341,19 +323,12 @@ function normalizeModelPreferences(
     ? titleCandidate
     : '';
 
-  const lastModel = normalizeOptionalModelReference(
-    record.lastModel,
-    enabledProviderIds,
-    customProviders,
-  );
-
   return {
     visibleModels: activeModel
       ? [activeModel, ...visibleModels.filter((model) => model !== activeModel)]
       : visibleModels,
     activeModel,
     titleGenerationModel,
-    ...(lastModel ? { lastModel } : {}),
     customContextLimits: normalizeCustomContextLimits(record.customContextLimits, providers),
   };
 }
@@ -467,7 +442,6 @@ export function extractDeviceLocalProviderState(
   const titleGenerationModel = typeof settings.titleGenerationModel === 'string'
     ? settings.titleGenerationModel
     : '';
-  const lastModel = settings.agentSettings.lastModel;
 
   return normalizeDeviceLocalProviderState({
     version: DEVICE_LOCAL_PROVIDER_STATE_VERSION,
@@ -477,7 +451,6 @@ export function extractDeviceLocalProviderState(
       visibleModels: view.visibleModels,
       activeModel,
       titleGenerationModel,
-      ...(typeof lastModel === 'string' ? { lastModel } : {}),
       customContextLimits,
     },
     webSearchTools,
@@ -506,7 +479,6 @@ export function stripLocalizedFieldsFromRuntimeSettings(
     disabledProviders: _disabledProviders,
     customProviders: _customProviders,
     visibleModels: _visibleModels,
-    lastModel: _lastModel,
     webSearchTools: _webSearchTools,
     environmentVariables: _environmentVariables,
     ...syncedAgentSettings
@@ -551,12 +523,7 @@ export function overlayDeviceLocalProviderState(
 ): void {
   const normalized = normalizeDeviceLocalProviderState(state);
   const projected = projectProviderState(normalized);
-  updatePiAgentSettings(settings, {
-    ...projected,
-    ...(normalized.modelPreferences.lastModel
-      ? { lastModel: normalized.modelPreferences.lastModel }
-      : {}),
-  });
+  updatePiAgentSettings(settings, projected);
   settings.agentSettings.webSearchTools = normalized.webSearchTools;
   settings.model = normalized.modelPreferences.activeModel;
   settings.titleGenerationModel = normalized.modelPreferences.titleGenerationModel;

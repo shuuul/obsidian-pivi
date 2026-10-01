@@ -41,14 +41,6 @@ export class SelectableDropdown<T> {
     return this.selectedIndex;
   }
 
-  getSelectedItem(): T | null {
-    return this.items[this.selectedIndex] ?? null;
-  }
-
-  getItems(): T[] {
-    return this.items;
-  }
-
   hide(): void {
     if (this.dropdownEl) {
       this.dropdownEl.removeClass('visible');

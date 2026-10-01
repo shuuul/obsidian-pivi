@@ -3,27 +3,14 @@ import type { ManagedMcpServer, McpAuthStatus, McpTestResult } from './types';
 
 export type FileStore = WorkspaceFileStore;
 
-
 export type McpTransportFetch = typeof fetch;
 
 export type McpProcessEnv = Record<string, string | undefined>;
-
-export interface PreparedMcpTurn {
-  mcpMentions: Set<string>;
-  request: Record<string, unknown> & {
-    enabledMcpServers?: Set<string>;
-  };
-}
 
 export interface AppMcpOAuth {
   getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus>;
   authenticate(server: ManagedMcpServer): Promise<McpAuthStatus>;
   logout(serverName: string): Promise<void>;
-}
-
-export interface AppMcpStorage {
-  load(): Promise<ManagedMcpServer[]>;
-  save(servers: ManagedMcpServer[]): Promise<void>;
 }
 
 export interface AppMcpToolSummary {
@@ -51,14 +38,6 @@ export interface AppMcpToolProvider {
 export interface AppMcpDiagnostics {
   testConnection(server: ManagedMcpServer, signal?: AbortSignal): Promise<McpTestResult>;
   dispose(): Promise<void>;
-}
-
-export interface AppMcpServerProbeResult {
-  toolCount: number;
-}
-
-export interface AppMcpServerProbeProvider {
-  testServer(serverName: string): Promise<AppMcpServerProbeResult>;
 }
 
 export interface AppMcpServerTester {

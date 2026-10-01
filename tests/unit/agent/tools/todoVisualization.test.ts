@@ -45,7 +45,7 @@ describe('todo visualization model', () => {
     ], 'tool');
 
     expect(model.activeItemId).toBe('b');
-    expect(model.progress).toEqual({ total: 3, completed: 1, inProgress: 1, pending: 1 });
+    expect(model.progress).toEqual({ total: 3, completed: 1, pending: 1 });
   });
 
   it('restores latest TodoWrite from messages', () => {

@@ -1,10 +1,15 @@
 import { buildTurnPrompt, finalizeTurnPrompt } from '../prompt/buildTurnPrompt';
-import type { AgentCoreMcpServices } from './agentCoreHost';
 import type { ChatTurnRequest, PreparedChatTurn } from './types';
 
-type McpMentionOps = Required<Pick<AgentCoreMcpServices, 'extractMentions' | 'transformMentions'>>;
+/** MCP mention hooks; a manager lacking either one leaves the prompt untransformed. */
+export interface McpMentionServices {
+  extractMentions?(content: string): Set<string>;
+  transformMentions?(content: string): string;
+}
 
-function getMcpMentionOps(mcp: AgentCoreMcpServices | null | undefined): McpMentionOps | null {
+type McpMentionOps = Required<McpMentionServices>;
+
+function getMcpMentionOps(mcp: McpMentionServices | null | undefined): McpMentionOps | null {
   if (!mcp?.extractMentions || !mcp.transformMentions) {
     return null;
   }
@@ -26,7 +31,7 @@ function mergeMcpMentions(
 
 export function prepareChatTurn(
   request: ChatTurnRequest,
-  mcp?: AgentCoreMcpServices | null,
+  mcp?: McpMentionServices | null,
 ): PreparedChatTurn {
   const built = buildTurnPrompt(request);
   const finalized = finalizeTurnPrompt(built, request, getMcpMentionOps(mcp));

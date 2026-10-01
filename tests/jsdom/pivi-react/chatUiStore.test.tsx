@@ -158,9 +158,6 @@ describe('ChatUiStore', () => {
         id: 'queued-1',
         content: 'next',
         imageCount: 1,
-        hasEditorContext: true,
-        hasBrowserContext: false,
-        hasCanvasContext: false,
       }],
     });
 
@@ -285,8 +282,6 @@ describe('ChatProjectionStore', () => {
     const store = new ChatProjectionStore();
     store.setOwnerWindow(ownerWindow);
     store.replaceAll([{ id: 'assistant-1', role: 'assistant', content: '', timestamp: 1 }]);
-    const listener = jest.fn();
-    store.subscribeMessage('assistant-1', listener);
 
     for (let index = 1; index <= 500; index += 1) {
       store.dispatch(queuedMessageEvent({
@@ -298,9 +293,8 @@ describe('ChatProjectionStore', () => {
     }
 
     expect(ownerWindow.requestAnimationFrame).toHaveBeenCalledTimes(1);
-    expect(listener).not.toHaveBeenCalled();
+    expect(store.getMessageSnapshot('assistant-1')?.content).toBe('');
     (frame as unknown as FrameRequestCallback)(0);
-    expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getMessageSnapshot('assistant-1')?.content).toBe('chunk-500');
   });
 
@@ -420,9 +414,8 @@ describe('ChatProjectionStore', () => {
         }],
       },
     ]);
-    const userListener = jest.fn();
+    const userBefore = store.getMessageSnapshot('user-1');
     const blockListener = jest.fn();
-    store.subscribeMessage('user-1', userListener);
     store.subscribeBlock('assistant-1:block:0', blockListener);
 
     store.upsertNow({
@@ -434,7 +427,7 @@ describe('ChatProjectionStore', () => {
       toolCalls: [],
     });
 
-    expect(userListener).not.toHaveBeenCalled();
+    expect(store.getMessageSnapshot('user-1')).toBe(userBefore);
     expect(blockListener).toHaveBeenCalledTimes(1);
     expect(store.getBlockSnapshot('assistant-1:block:0')?.block).toEqual({
       type: 'text',
@@ -605,10 +598,8 @@ describe('ChatProjectionStore', () => {
     const before = store.getMessageSnapshot(message.id);
     const structure = store.getMessageStructureSnapshot(message.id);
     const block = store.getBlockSnapshot('assistant-1:block:0');
-    const messageListener = jest.fn();
     const structureListener = jest.fn();
     const blockListener = jest.fn();
-    store.subscribeMessage(message.id, messageListener);
     store.subscribeMessageStructure(message.id, structureListener);
     store.subscribeBlock('assistant-1:block:0', blockListener);
 
@@ -618,7 +609,6 @@ describe('ChatProjectionStore', () => {
     expect(store.getMessageSnapshot(message.id)).toBe(before);
     expect(store.getMessageStructureSnapshot(message.id)).toBe(structure);
     expect(store.getBlockSnapshot('assistant-1:block:0')).toBe(block);
-    expect(messageListener).not.toHaveBeenCalled();
     expect(structureListener).not.toHaveBeenCalled();
     expect(blockListener).not.toHaveBeenCalled();
   });
@@ -634,9 +624,7 @@ describe('ChatProjectionStore', () => {
     };
     store.replaceAll([initial]);
     const structure = store.getMessageStructureSnapshot(initial.id);
-    const messageListener = jest.fn();
     const structureListener = jest.fn();
-    store.subscribeMessage(initial.id, messageListener);
     store.subscribeMessageStructure(initial.id, structureListener);
 
     store.upsertNow({
@@ -645,7 +633,7 @@ describe('ChatProjectionStore', () => {
       contentBlocks: [{ type: 'text', content: 'one updated' }],
     });
 
-    expect(messageListener).toHaveBeenCalledTimes(1);
+    expect(store.getMessageSnapshot(initial.id)?.content).toBe('one updated');
     expect(structureListener).not.toHaveBeenCalled();
     expect(store.getMessageStructureSnapshot(initial.id)).toBe(structure);
 

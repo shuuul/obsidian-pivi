@@ -1,10 +1,9 @@
-import type { ChatMessage, OpenSessionState, StreamChunk } from '../runtime';
-import type { ToolCallInfo } from '../tools';
+import type { ToolCallInfo } from '../tools/types';
+import type { ChatMessage, OpenSessionState, StreamChunk } from './chatTypes';
 import type {
   ChatRewindResult,
   ChatTurnMetadata,
   ChatTurnRequest,
-  ConnectivityTestResult,
   PiEnsureReadyOptions,
   PiTurnOptions,
   PreparedChatTurn,
@@ -45,5 +44,4 @@ export interface PiChatService {
   loadSubagentToolCalls?(agentId: string): Promise<ToolCallInfo[]>;
   loadSubagentFinalResult?(agentId: string): Promise<string | null>;
 
-  testConnectivity?(): Promise<ConnectivityTestResult>;
 }

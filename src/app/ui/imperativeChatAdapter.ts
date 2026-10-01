@@ -206,7 +206,7 @@ export function createImperativeChatAdapter(
           }
         : null,
       tab?.ui.composerActions ?? null,
-      tab && mountedPorts ? createMessagePresentation(tab, mountedPorts.sessions, (handle) => {
+      tab && mountedPorts ? createMessagePresentation(tab, mountedPorts.sessions, mountedPorts.settings, (handle) => {
         if (handle) {
           messageViewports.set(tab.id, handle);
         } else {

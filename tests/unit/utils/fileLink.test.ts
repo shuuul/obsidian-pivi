@@ -227,7 +227,6 @@ describe('fileLink utils', () => {
       className = '';
       children: MockNode[] = [];
       attributes: Map<string, string> = new Map();
-      private _textContent = '';
 
       constructor(ownerDocument: MockDocument, tagName: string) {
         super(ownerDocument);
@@ -239,7 +238,6 @@ describe('fileLink utils', () => {
       }
 
       override set textContent(value: string) {
-        this._textContent = value;
         this.children = value ? [this.ownerDocument.createTextNode(value)] : [];
       }
 
@@ -351,7 +349,6 @@ describe('fileLink utils', () => {
       private root: MockElement;
       private filter: { acceptNode: (node: Node) => number } | null;
       private stack: MockNode[];
-      private current: MockNode | null = null;
 
       constructor(
         root: MockElement,
@@ -369,7 +366,6 @@ describe('fileLink utils', () => {
           if (node !== this.root && node instanceof MockTextNode) {
             const result = this.filter ? this.filter.acceptNode(node as unknown as Node) : 1;
             if (result === 1) {
-              this.current = node;
               return node;
             }
           }

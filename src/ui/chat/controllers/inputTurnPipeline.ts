@@ -454,7 +454,7 @@ export class InputTurnPipeline {
 
     this.clearCompletedTodos();
     this.host.syncScrollToBottomAfterRenderUpdates();
-    await this.saveAndDispatchTurnFollowUp(options);
+    await this.saveAndDispatchTurnFollowUp();
   }
 
   private clearCompletedTodos(): void {
@@ -464,9 +464,7 @@ export class InputTurnPipeline {
     }
   }
 
-  private async saveAndDispatchTurnFollowUp(
-    options: FinalizeOutgoingTurnOptions & { finalAssistantMsg: ChatMessage },
-  ): Promise<void> {
+  private async saveAndDispatchTurnFollowUp(): Promise<void> {
     const { openSessionController } = this.host.deps;
 
     await openSessionController.save(true);

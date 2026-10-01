@@ -14,7 +14,6 @@ export function findMessageToolCall(
 export interface MergeStreamingToolUseResult {
   merged: boolean;
   toolCall?: ToolCallInfo;
-  hadNewInputKeys: boolean;
 }
 
 /** Merge streaming tool_use input into an existing tool call on the message. */
@@ -24,16 +23,16 @@ export function mergeStreamingToolUseInput(
 ): MergeStreamingToolUseResult {
   const existingToolCall = findMessageToolCall(msg, chunk.id);
   if (!existingToolCall) {
-    return { merged: false, hadNewInputKeys: false };
+    return { merged: false };
   }
 
   const newInput = chunk.input || {};
   if (Object.keys(newInput).length === 0) {
-    return { merged: true, toolCall: existingToolCall, hadNewInputKeys: false };
+    return { merged: true, toolCall: existingToolCall };
   }
 
   existingToolCall.input = { ...existingToolCall.input, ...newInput };
-  return { merged: true, toolCall: existingToolCall, hadNewInputKeys: true };
+  return { merged: true, toolCall: existingToolCall };
 }
 
 /** Register a new tool call on the message; optionally append a content block for ordering. */

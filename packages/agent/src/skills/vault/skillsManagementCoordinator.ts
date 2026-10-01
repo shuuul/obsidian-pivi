@@ -4,13 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { PluginLogger } from '../../logging/pluginLogger';
-import type {
-  AgentSkillSummary,
-  PiviSkillsInput,
-  PiviSkillsListRemoteResult,
-  PiviSkillsListResult,
-} from '../../tools/piviManagement';
-import { PiviManagementError } from '../../tools/piviManagement';
+import { PiviManagementError } from '../../tools/piviManagement/approval';
+import type { AgentSkillSummary, PiviSkillsInput, PiviSkillsListRemoteResult, PiviSkillsListResult } from '../../tools/piviManagement/types';
 import type { SkillsPublicationMetadata } from './skillPublicationTransaction';
 import { normalizeSkillSlug, type VaultSkillEntry, type VaultSkillsService } from './vaultSkillsService';
 

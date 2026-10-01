@@ -41,15 +41,10 @@ export function createFakeChatPorts(
       listSlashEntries: async () => [],
       getSlashDropdownConfig: () => ({
         triggerChars: ['/'],
-        builtInPrefix: '',
-        skillPrefix: '',
-        commandPrefix: '',
       }),
-      refreshSlashCatalog: async () => undefined,
       ...overrides.catalog,
     },
     models: {
-      getReadinessProvider: () => null,
       getModelOptions: () => [],
       isAdaptiveReasoningModel: () => false,
       getReasoningOptions: () => [],
@@ -62,10 +57,10 @@ export function createFakeChatPorts(
     settings: {
       getSettingsSnapshot: () => ({
         model: 'openrouter/openai/gpt-4.1',
-        thinkingBudget: 'medium',
         thinkingLevel: 'medium',
         customContextLimits: {},
         enableAutoScroll: true,
+        deferMathRenderingDuringStreaming: true,
         showCacheHitRate: true,
         showTokensPerSecond: true,
         enableAutoTitleGeneration: true,

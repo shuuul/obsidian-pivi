@@ -39,10 +39,6 @@ function createSkillsEnvironmentContext(
   };
 }
 
-export function isWindowsSkillsEnvironment(options?: SkillsEnvironmentOptions): boolean {
-  return createSkillsEnvironmentContext(undefined, options).isWindows;
-}
-
 function getEnvValue(key: string, context: SkillsEnvironmentContext): string | undefined {
   const { processEnv } = context;
   const directValue = processEnv[key];

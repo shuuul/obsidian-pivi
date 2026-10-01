@@ -4,7 +4,6 @@ import { testMcpServer } from "@pivi/agent/mcp/mcpServerTester";
 import type { McpOAuthService } from "@pivi/agent/mcp/oauth/mcpOAuthService";
 import type {
   AppMcpDiagnostics,
-  AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpToolProvider,
   AppMcpToolSummary,
@@ -15,12 +14,8 @@ import { getPiAgentSettings } from "@pivi/agent/settings/agentSettings";
 import type { AppModelReadinessProvider } from "@pivi/agent/settings/modelReadiness";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
 import { VaultSkillsService } from "@pivi/agent/skills/vault/vaultSkillsService";
-import type { ObsidianCredentialStore } from "@pivi/engine-pi/application/auth";
-import type { ProviderOAuthService } from "@pivi/engine-pi/application/oauth";
 
 import {
-  derivePiModelReadinessStatus,
-  runPiModelReadinessTest,
   runPiProviderReadinessTest,
 } from "./modelReadiness";
 import { ensureAddedProviderAuths } from "./providerReadiness";
@@ -232,32 +227,7 @@ export class McpServerTester implements AppMcpServerTester {
   }
 }
 
-export class McpServerProbeProvider implements AppMcpServerProbeProvider {
-  constructor(private readonly mcpToolProvider: AppMcpToolProvider) {}
-
-  async testServer(serverName: string) {
-    const tools = await this.mcpToolProvider.listTools(serverName);
-    return { toolCount: tools.length };
-  }
-}
-
 export class PiModelReadinessProvider implements AppModelReadinessProvider {
-  constructor(
-    private readonly credentialStore: ObsidianCredentialStore | null,
-    private readonly providerOAuth: ProviderOAuthService,
-  ) {}
-
-  getStatus(model: string, settings: Record<string, unknown>) {
-    return derivePiModelReadinessStatus(model, settings, {
-      credentialStore: this.credentialStore,
-      providerOAuth: this.providerOAuth,
-    });
-  }
-
-  testModel(model: string, settings: Record<string, unknown>) {
-    return runPiModelReadinessTest(model, settings);
-  }
-
   testProvider(providerId: string, settings: Record<string, unknown>) {
     return runPiProviderReadinessTest(providerId, settings);
   }
