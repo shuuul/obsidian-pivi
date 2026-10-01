@@ -1,8 +1,8 @@
 import type { FileStore, SyncSecretStore } from '../../ports';
 import { PIVI_MCP_OAUTH_DIR } from '../paths';
+import { readLegacyVaultAuthEntry } from './legacyVaultAuthEntry';
+import type { AuthEntry } from './mcpAuthEntryStore';
 import { McpSecretAuthStore } from './mcpSecretAuthStore';
-import type { AuthEntry } from './mcpVaultAuthStore';
-import { McpVaultAuthStore } from './mcpVaultAuthStore';
 
 export class McpAuthEntryMigrationError extends Error {
   constructor(message: string) {
@@ -33,12 +33,11 @@ export async function migrateMcpAuthEntriesToSecretStorage(
   secretStorage: SyncSecretStore,
   serverNames: readonly string[],
 ): Promise<{ migratedServerNames: string[] }> {
-  const vaultStore = new McpVaultAuthStore(vaultAdapter);
   const secretStore = new McpSecretAuthStore(secretStorage);
   const migratedServerNames: string[] = [];
 
   for (const serverName of serverNames) {
-    const entry = await vaultStore.getEntry(serverName);
+    const entry = await readLegacyVaultAuthEntry(vaultAdapter, serverName);
     if (!entryHasPayload(entry)) {
       continue;
     }

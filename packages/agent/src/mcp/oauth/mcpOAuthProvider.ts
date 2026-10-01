@@ -8,7 +8,7 @@ import {
 } from '@earendil-works/pi-mcp/oauth';
 
 import type { McpOAuthConfig } from '../types';
-import type { McpAuthEntryStore, StoredClientInfo, StoredTokens } from './mcpVaultAuthStore';
+import type { McpAuthEntryStore, StoredClientInfo, StoredTokens } from './mcpAuthEntryStore';
 
 export const DEFAULT_OAUTH_CALLBACK_PORT = 19876;
 export const OAUTH_CALLBACK_PATH = '/callback';

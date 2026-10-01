@@ -9,6 +9,7 @@ import type {
   McpOAuthConfig,
 } from "../types";
 import { getMcpServerUrl, supportsMcpOAuth } from "../types";
+import type { McpAuthEntryStore } from "./mcpAuthEntryStore";
 import {
   getAuthStatusForServer,
   McpAuthFlow,
@@ -16,7 +17,6 @@ import {
 import { createClientCredentialsAuthProvider } from "./mcpClientCredentials";
 import { McpOAuthProvider } from "./mcpOAuthProvider";
 import { McpSecretAuthStore } from "./mcpSecretAuthStore";
-import type { McpAuthEntryStore } from "./mcpVaultAuthStore";
 
 export interface McpOAuthServiceOptions {
   callbackPort?: number;

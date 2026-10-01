@@ -7,7 +7,6 @@ import {
 } from '@pivi/agent/auth/customProviderHeaderSecrets';
 import { PIVI_MCP_OAUTH_DIR } from '@pivi/agent/mcp/paths';
 import { getMcpAuthEntrySecretId } from '@pivi/agent/mcp/oauth/mcpSecretAuthStore';
-import { McpVaultAuthStore } from '@pivi/agent/mcp/oauth/mcpVaultAuthStore';
 
 function entryPath(serverName: string): string {
   const storageKey = createHash('sha256').update(serverName, 'utf8').digest('hex');
@@ -73,14 +72,16 @@ describe('mcpAuthEntryMigration', () => {
       '@pivi/agent/mcp/oauth/mcpAuthEntryMigration'
     );
     const adapter = new MemoryVaultAdapter();
-    const vaultStore = new McpVaultAuthStore(adapter as never);
-    await vaultStore.saveEntry('github', {
+    const entryDir = entryPath('github').replace(/\/tokens\.json$/, '');
+    await adapter.ensureFolder(PIVI_MCP_OAUTH_DIR);
+    await adapter.ensureFolder(entryDir);
+    await adapter.write(entryPath('github'), JSON.stringify({
       tokens: { accessToken: 'token-a', refreshToken: 'refresh-a' },
       clientInfo: { clientId: 'client-id' },
       codeVerifier: 'verifier',
       oauthState: 'state',
       serverUrl: 'https://mcp.example.com',
-    }, 'https://mcp.example.com');
+    }));
 
     const secretStorage = {
       secrets: new Map<string, string>(),

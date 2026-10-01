@@ -11,7 +11,7 @@ import type {
   McpAuthEntryStore,
   StoredClientInfo,
   StoredTokens,
-} from './mcpVaultAuthStore';
+} from './mcpAuthEntryStore';
 
 export const MCP_AUTH_ENTRY_SECRET_VERSION = 1 as const;
 

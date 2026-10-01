@@ -1,4 +1,5 @@
 import { get } from 'http';
+import { SecretStorage } from 'obsidian';
 
 import type { ExternalOpener } from '@pivi/agent/ports';
 import type { McpTransportFetch } from '@pivi/agent/mcp/ports';
@@ -9,7 +10,7 @@ import {
 import {
   OAUTH_CALLBACK_PATH,
 } from '@pivi/agent/mcp/oauth/mcpOAuthProvider';
-import { McpVaultAuthStore } from '@pivi/agent/mcp/oauth/mcpVaultAuthStore';
+import { McpSecretAuthStore } from '@pivi/agent/mcp/oauth/mcpSecretAuthStore';
 
 const mockAuthorizeMcp = jest.fn();
 const mockOpenExternalUrl = jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined);
@@ -46,38 +47,6 @@ function codeExchanges(): unknown[] {
     .filter((code) => code !== undefined);
 }
 
-class MemoryVaultAdapter {
-  private readonly files = new Map<string, string>();
-
-  async exists(path: string): Promise<boolean> {
-    return this.files.has(path);
-  }
-
-  async read(path: string): Promise<string> {
-    const value = this.files.get(path);
-    if (value === undefined) {
-      throw new Error(`missing: ${path}`);
-    }
-    return value;
-  }
-
-  async write(path: string, content: string): Promise<void> {
-    this.files.set(path, content);
-  }
-
-  async delete(path: string): Promise<void> {
-    this.files.delete(path);
-  }
-
-  async deleteFolder(): Promise<void> {
-    // no-op for memory adapter
-  }
-
-  async ensureFolder(): Promise<void> {
-    // no-op for memory adapter
-  }
-}
-
 function server(url = 'https://mcp.example.com'): ManagedMcpServer {
   return {
     name: 'github',
@@ -102,13 +71,13 @@ function requestCallback(port: number, state: string, code: string): Promise<voi
 }
 
 describe('McpAuthFlow', () => {
-  let store: McpVaultAuthStore;
+  let store: McpSecretAuthStore;
   let mockFetch: McpTransportFetch;
   let authFlow: McpAuthFlow;
 
   beforeEach(() => {
     jest.restoreAllMocks();
-    store = new McpVaultAuthStore(new MemoryVaultAdapter() as never);
+    store = new McpSecretAuthStore(new SecretStorage());
     mockFetch = jest.fn();
     mockAuthorizeMcp.mockReset();
     mockAuthorizeMcp.mockImplementation(redirectThenAuthorize);
@@ -211,7 +180,7 @@ describe('McpAuthFlow', () => {
 
   it('keeps callback servers and pending authorizations isolated between flow instances', async () => {
     const otherFlow = new McpAuthFlow();
-    const otherStore = new McpVaultAuthStore(new MemoryVaultAdapter() as never);
+    const otherStore = new McpSecretAuthStore(new SecretStorage());
 
     try {
       const first = await authFlow.startAuth(server(), store, mockFetch);

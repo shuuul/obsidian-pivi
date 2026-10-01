@@ -4,10 +4,10 @@ import type { ExternalOpener } from '../../ports';
 import type { McpTransportFetch } from '../ports';
 import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../types';
 import { getMcpServerUrl } from '../types';
+import type { McpAuthEntryStore } from './mcpAuthEntryStore';
 import { McpCallbackServer } from './mcpCallbackServer';
 import { authorizeMcpClientCredentials } from './mcpClientCredentials';
 import { McpOAuthProvider } from './mcpOAuthProvider';
-import type { McpAuthEntryStore } from './mcpVaultAuthStore';
 import { openAuthUrl } from './openAuthUrl';
 
 type OperationId = symbol;

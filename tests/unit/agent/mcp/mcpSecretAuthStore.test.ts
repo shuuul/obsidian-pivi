@@ -63,3 +63,83 @@ describe('McpSecretAuthStore', () => {
     });
   });
 });
+
+describe('McpSecretAuthStore server URL scoping', () => {
+  let store: McpSecretAuthStore;
+
+  beforeEach(() => {
+    store = new McpSecretAuthStore(new SecretStorage());
+  });
+
+  it('stores and reads tokens scoped to server URL', async () => {
+    await store.updateTokens('github', {
+      accessToken: 'token-a',
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+    }, 'https://mcp.example.com');
+
+    const entry = await store.getAuthForUrl('github', 'https://mcp.example.com');
+    expect(entry?.tokens?.accessToken).toBe('token-a');
+
+    const wrongUrl = await store.getAuthForUrl('github', 'https://other.example.com');
+    expect(wrongUrl).toBeUndefined();
+
+    const persisted = await store.getEntry('github');
+    expect(persisted?.serverUrl).toBe('https://mcp.example.com');
+  });
+
+  it('getAuthForUrl returns undefined when entry has no serverUrl', async () => {
+    await store.saveEntry('github', {
+      tokens: { accessToken: 'token-a' },
+    });
+
+    await expect(
+      store.getAuthForUrl('github', 'https://mcp.example.com'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('getAuthForUrl returns undefined when stored serverUrl does not match', async () => {
+    await store.saveEntry('github', {
+      tokens: { accessToken: 'token-a' },
+      serverUrl: 'https://stored.example.com',
+    });
+
+    await expect(
+      store.getAuthForUrl('github', 'https://requested.example.com'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('removeEntry deletes stored tokens', async () => {
+    await store.updateTokens('github', {
+      accessToken: 'token-a',
+    }, 'https://mcp.example.com');
+
+    await store.removeEntry('github');
+
+    await expect(store.getEntry('github')).resolves.toBeUndefined();
+  });
+
+  it('updateTokens replaces tokens and clears OAuth flow fields when serverUrl changes', async () => {
+    await store.saveEntry('github', {
+      tokens: { accessToken: 'old-token' },
+      clientInfo: { clientId: 'client-id' },
+      codeVerifier: 'pkce-verifier',
+      oauthState: 'oauth-state',
+      serverUrl: 'https://old.example.com',
+    });
+
+    await store.updateTokens('github', {
+      accessToken: 'new-token',
+      refreshToken: 'refresh-token',
+    }, 'https://new.example.com');
+
+    const entry = await store.getEntry('github');
+    expect(entry?.tokens).toEqual({
+      accessToken: 'new-token',
+      refreshToken: 'refresh-token',
+    });
+    expect(entry?.clientInfo).toBeUndefined();
+    expect(entry?.codeVerifier).toBeUndefined();
+    expect(entry?.oauthState).toBeUndefined();
+    expect(entry?.serverUrl).toBe('https://new.example.com');
+  });
+});
