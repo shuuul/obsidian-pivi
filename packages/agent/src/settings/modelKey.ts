@@ -15,8 +15,6 @@ export interface PiAgentSettingsView extends PersistedPiAgentSettings {
   addedProviders: string[];
   disabledProviders: string[];
   customProviders: CustomProviderConfig[];
-  availableModes: string[];
-  discoveredModels: string[];
 }
 
 export function isValidModelKey(key: string): boolean {

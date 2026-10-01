@@ -81,7 +81,6 @@ describe('chat command registration', () => {
     const startNewSession = jest.fn(async () => true);
     const closeActiveTab = jest.fn(async () => true);
     const getState = jest.fn(() => ({
-      mounted: true,
       canCreateTab: true,
       canStartNewSession: true,
       canCloseActiveTab: true,

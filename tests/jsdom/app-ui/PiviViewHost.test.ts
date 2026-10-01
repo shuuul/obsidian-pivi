@@ -46,7 +46,6 @@ function createHandle(): PiviChatViewHandle {
   return {
     commands: {
       getState: jest.fn(() => ({
-        mounted: true,
         canCreateTab: true,
         canStartNewSession: true,
         canCloseActiveTab: true,

@@ -10,7 +10,6 @@ import {
 } from './customProviders';
 import {
   DEFAULT_AGENT_SETTINGS as DEFAULT_PI_AGENT_SETTINGS,
-  DEFAULT_MODEL_KEY,
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
 } from './defaults';
 import {
@@ -77,8 +76,6 @@ export function getPiAgentSettings(
     addedProviders,
     disabledProviders,
     customProviders,
-    availableModes: ['default'],
-    discoveredModels: [DEFAULT_MODEL_KEY],
     environmentVariables:
       config.environmentVariables ??
       getAgentEnvironmentVariables(settings) ??

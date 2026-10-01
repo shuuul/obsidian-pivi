@@ -22,7 +22,6 @@ function createWorkspaceWithSkills(host: PiviSettingsHost, vaultPath: string) {
   return {
     credentialStore: null,
     webSearchCredentialStore: null,
-    mcpStorage: {},
     mcpToolProvider: {},
     slashCommandCatalog: {},
     skillsManagement: new SkillsManagementCoordinator({
@@ -263,7 +262,6 @@ describe('UI port adapters', () => {
       getUiFacades: () => uiFacades,
       getPiWorkspace,
       getActiveEnvironmentVariables: () => 'ACTIVE=1',
-      getEnvironmentVariablesForScope: () => 'SCOPE=1',
       applyEnvironmentVariables,
       applyEnvironmentVariablesBatch: async () => {},
       importEnvironmentText: async () => {},
@@ -363,7 +361,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {
         saveWorkspaceEntry,
@@ -405,7 +402,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -439,7 +435,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: { getCachedTools: () => [] },
       mcpServerManager: { getServers: () => [] },
       slashCommandCatalog: {},
@@ -497,7 +492,6 @@ describe('UI port adapters', () => {
     const ports = createSettingsUiPorts(host, {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: { getCachedTools: () => [] },
       mcpServerManager: { getServers: () => [] },
       slashCommandCatalog: {},
@@ -541,7 +535,6 @@ describe('UI port adapters', () => {
     const ports = createSettingsUiPorts(host, {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     } as never);
@@ -571,7 +564,6 @@ describe('UI port adapters', () => {
     const ports = createSettingsUiPorts(host, {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: { getCachedTools: () => [] },
       mcpServerManager: { getServers: () => [] },
       slashCommandCatalog: {},
@@ -606,7 +598,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -636,7 +627,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -669,7 +659,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -697,7 +686,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };
@@ -727,7 +715,6 @@ describe('UI port adapters', () => {
     const workspace = {
       credentialStore: null,
       webSearchCredentialStore: null,
-      mcpStorage: {},
       mcpToolProvider: {},
       slashCommandCatalog: {},
     };

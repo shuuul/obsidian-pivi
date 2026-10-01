@@ -26,9 +26,7 @@ export {
 
 export type {
   AppMcpOAuth,
-  AppMcpServerProbeProvider,
   AppMcpServerTester,
-  AppMcpStorage,
   AppMcpToolProvider,
   AppMcpToolSummary,
 } from "@pivi/agent/mcp/ports";

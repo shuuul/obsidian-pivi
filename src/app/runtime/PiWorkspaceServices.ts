@@ -7,9 +7,7 @@ import { McpStorage } from "@pivi/agent/mcp/mcpStorage";
 import { McpOAuthService } from "@pivi/agent/mcp/oauth/mcpOAuthService";
 import type {
   AppMcpDiagnostics,
-  AppMcpServerProbeProvider,
   AppMcpServerTester,
-  AppMcpStorage,
   AppMcpToolProvider,
 } from "@pivi/agent/mcp/ports";
 import { getMcpServerUrl } from "@pivi/agent/mcp/types";
@@ -79,7 +77,6 @@ import type { PiviWorkspaceHost, WorkspaceInitContext } from "./serviceContracts
 import { createVaultSkillsMetadataPort } from "./vaultSkillsMetadataPort";
 import {
   McpDiagnostics,
-  McpServerProbeProvider,
   McpServerTester,
   McpToolProvider,
   PiModelReadinessProvider,
@@ -87,12 +84,10 @@ import {
 } from "./workspaceServiceProviders";
 
 export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
-  mcpStorage: AppMcpStorage;
   mcpManagement: McpManagementCoordinator;
   mcpServerManager: McpServerManager;
   mcpToolProvider: AppMcpToolProvider;
   mcpDiagnostics: AppMcpDiagnostics;
-  mcpServerProbeProvider: AppMcpServerProbeProvider;
   mcpServerTester: AppMcpServerTester;
   modelReadinessProvider: AppModelReadinessProvider;
   skillProvider: AppSkillProvider;
@@ -210,7 +205,6 @@ export async function createPiWorkspaceServices(
     network.mcpFetch,
     host.app.secretStorage,
   );
-  const mcpServerProbeProvider = new McpServerProbeProvider(mcpToolProvider);
   const mcpServerTester = new McpServerTester(
     network.mcpFetch,
     host.app.secretStorage,
@@ -306,12 +300,10 @@ export async function createPiWorkspaceServices(
   });
 
   return {
-    mcpStorage,
     mcpManagement,
     mcpServerManager,
     mcpToolProvider,
     mcpDiagnostics,
-    mcpServerProbeProvider,
     mcpServerTester,
     modelReadinessProvider,
     skillProvider,

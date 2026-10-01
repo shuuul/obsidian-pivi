@@ -99,7 +99,6 @@ export function createImperativeChatViewHandle(
         const tabManager = getTabManager();
         const activeTab = tabManager?.getActiveTab() ?? null;
         return {
-          mounted: tabManager !== null,
           canCreateTab: tabManager?.canCreateTab() ?? false,
           canStartNewSession: !!activeTab && !activeTab.state.isStreaming,
           canCloseActiveTab: activeTab !== null,

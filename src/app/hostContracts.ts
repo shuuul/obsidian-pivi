@@ -8,9 +8,7 @@ import type { McpManagementCoordinator } from "@pivi/agent/mcp/mcpManagementCoor
 import type {
   AppMcpDiagnostics,
   AppMcpOAuth,
-  AppMcpServerProbeProvider,
   AppMcpServerTester,
-  AppMcpStorage,
   AppMcpToolProvider,
 } from "@pivi/agent/mcp/ports";
 import type { ManagedMcpServer } from "@pivi/agent/mcp/types";
@@ -55,7 +53,6 @@ import type {
 
 
 export interface PiviChatViewCommandState {
-  mounted: boolean;
   canCreateTab: boolean;
   canStartNewSession: boolean;
   canCloseActiveTab: boolean;
@@ -290,12 +287,10 @@ export interface PiviUiFacades {
 
 /** Workspace services exposed to chat/settings UI by the Obsidian plugin shell. */
 export interface PiviPluginWorkspace {
-  mcpStorage: AppMcpStorage;
   mcpManagement: McpManagementCoordinator;
   mcpServerManager: PiviMcpServerManager;
   mcpToolProvider: AppMcpToolProvider;
   mcpDiagnostics: AppMcpDiagnostics;
-  mcpServerProbeProvider: AppMcpServerProbeProvider;
   mcpServerTester: AppMcpServerTester;
   modelReadinessProvider: AppModelReadinessProvider;
   skillProvider: AppSkillProvider;
@@ -361,7 +356,6 @@ export interface PiviSettingsHost extends PiviHostCore {
   loadSessionMaintenance(): Promise<{ archivedCount: number; deletedCount: number }>;
   deleteAllArchivedChats(): Promise<{ moved: number; skippedActive: number; failed: number }>;
   getActiveEnvironmentVariables(): string;
-  getEnvironmentVariablesForScope(scope: EnvironmentScope): string;
   applyEnvironmentVariables(
     scope: EnvironmentScope,
     envText: string,

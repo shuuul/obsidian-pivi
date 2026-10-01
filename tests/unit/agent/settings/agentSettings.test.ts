@@ -84,8 +84,6 @@ describe('getPiAgentSettings', () => {
     expect(view.environmentVariables).toBe(PI_DEFAULT_ENVIRONMENT_VARIABLES);
     expect(view.selectedMode).toBe('default');
     expect(view.visibleModels).toEqual([DEFAULT_MODEL_KEY]);
-    expect(view.availableModes).toEqual(['default']);
-    expect(view.discoveredModels).toEqual([DEFAULT_MODEL_KEY]);
 
     const persisted = readPersistedAgentSettings(settings);
     expect(persisted).not.toBeNull();

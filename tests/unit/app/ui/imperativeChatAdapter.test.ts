@@ -1275,7 +1275,7 @@ describe('imperative chat semantic view handle', () => {
     expect(shell.activeChat.getPortalTargets()).toBeNull();
     expect(shell.activeChat.getComposerActions()).toBeNull();
     expect(shell.activeChat.getMessagePresentation()).toBeNull();
-    expect(harness.handle.commands.getState().mounted).toBe(false);
+    expect(harness.handle.commands.getState().canCreateTab).toBe(false);
 
     uiStore.update({ isStreaming: true });
     expect(activeChanges).not.toHaveBeenCalled();
@@ -1288,7 +1288,6 @@ describe('imperative chat semantic view handle', () => {
     const { handle, manager, mount } = createHarness();
 
     expect(handle.commands.getState()).toEqual({
-      mounted: false,
       canCreateTab: false,
       canStartNewSession: false,
       canCloseActiveTab: false,
@@ -1300,7 +1299,6 @@ describe('imperative chat semantic view handle', () => {
     manager.getActiveTabId.mockReturnValue(activeTab.id);
 
     expect(handle.commands.getState()).toEqual({
-      mounted: true,
       canCreateTab: true,
       canStartNewSession: true,
       canCloseActiveTab: true,
@@ -1309,7 +1307,6 @@ describe('imperative chat semantic view handle', () => {
     activeTab.state.isStreaming = true;
     manager.canCreateTab.mockReturnValue(false);
     expect(handle.commands.getState()).toEqual({
-      mounted: true,
       canCreateTab: false,
       canStartNewSession: false,
       canCloseActiveTab: true,

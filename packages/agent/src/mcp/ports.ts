@@ -13,11 +13,6 @@ export interface AppMcpOAuth {
   logout(serverName: string): Promise<void>;
 }
 
-export interface AppMcpStorage {
-  load(): Promise<ManagedMcpServer[]>;
-  save(servers: ManagedMcpServer[]): Promise<void>;
-}
-
 export interface AppMcpToolSummary {
   name: string;
   description?: string;
@@ -43,14 +38,6 @@ export interface AppMcpToolProvider {
 export interface AppMcpDiagnostics {
   testConnection(server: ManagedMcpServer, signal?: AbortSignal): Promise<McpTestResult>;
   dispose(): Promise<void>;
-}
-
-export interface AppMcpServerProbeResult {
-  toolCount: number;
-}
-
-export interface AppMcpServerProbeProvider {
-  testServer(serverName: string): Promise<AppMcpServerProbeResult>;
 }
 
 export interface AppMcpServerTester {

@@ -4,7 +4,6 @@ import { testMcpServer } from "@pivi/agent/mcp/mcpServerTester";
 import type { McpOAuthService } from "@pivi/agent/mcp/oauth/mcpOAuthService";
 import type {
   AppMcpDiagnostics,
-  AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpToolProvider,
   AppMcpToolSummary,
@@ -225,15 +224,6 @@ export class McpServerTester implements AppMcpServerTester {
 
   async testServer(server: Parameters<AppMcpServerTester["testServer"]>[0], signal?: AbortSignal) {
     return testMcpServer(server, this.mcpFetch, process.env, this.secretStorage, signal);
-  }
-}
-
-export class McpServerProbeProvider implements AppMcpServerProbeProvider {
-  constructor(private readonly mcpToolProvider: AppMcpToolProvider) {}
-
-  async testServer(serverName: string) {
-    const tools = await this.mcpToolProvider.listTools(serverName);
-    return { toolCount: tools.length };
   }
 }
 

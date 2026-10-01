@@ -53,7 +53,6 @@ import {
 import {
   applyEnvironmentVariablesBatch as applyEnvironmentVariablesBatchForPlugin,
   getActiveEnvironmentVariables as getActiveEnvironmentVariablesFromSettings,
-  getEnvironmentVariablesForScope as getEnvironmentVariablesForSettingsScope,
   importEnvironmentText as importEnvironmentTextForPlugin,
   listEnvironmentUiEntries as listEnvironmentUiEntriesForPlugin,
 } from "@/app/settings/environmentVariables";
@@ -435,10 +434,6 @@ export class PiviApplication {
 
   getActiveEnvironmentVariables(): string {
     return getActiveEnvironmentVariablesFromSettings(this.settings);
-  }
-
-  getEnvironmentVariablesForScope(scope: EnvironmentScope): string {
-    return getEnvironmentVariablesForSettingsScope(this.settings, scope);
   }
 
   private reconcileModelWithEnvironment(): {
