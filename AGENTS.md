@@ -259,6 +259,7 @@ Use `npm ci` for a clean install. `.npmrc` enables `legacy-peer-deps=true`; do n
 
 - `typescript` is the TS6 compatibility compiler (`npm:@typescript/typescript6`), used by ESLint and ts-jest. Editors should use this project compiler.
 - `typescript-native` is TS7 and is the authoritative root CLI checker: `npm run typecheck` runs source and test projects through `node_modules/typescript-native/bin/tsc`.
+- `noUnusedLocals` and `noUnusedParameters` are enabled for source and tests. Delete an unread local, private member, import, or parameter instead of leaving it; prefix a parameter with `_` only when a signature you do not own requires it.
 - Do not add workspace `typecheck` forwarding scripts: the root command owns all `src/` and `packages/` source, while `tests/tsconfig.json` owns Jest types.
 - Every workspace package must declare the third-party and `@pivi/*` packages imported by its source. Runtime imports and re-exports require `dependencies`, `optionalDependencies`, or `peerDependencies`; type-only imports may use `devDependencies`. Obsidian and React runtimes are explicit peers. `check:architecture` also verifies every declared export resolves through the active npm workspace link.
 - Keep `legacy-peer-deps=true` until `npm install --dry-run --ignore-scripts --legacy-peer-deps=false` succeeds. As of 2026-07-11, `obsidian@1.13.1` requires exact `@codemirror/state@6.5.0` while Pivi uses `^6.7.1`; `eslint-plugin-obsidianmd` also brings ESLint-9-only peers under an ESLint 10 root.

@@ -2,7 +2,6 @@ import { McpServerManager } from '@pivi/agent/mcp/mcpServerManager';
 import { McpConnectionPool } from '@pivi/agent/mcp/mcpConnectionPool';
 import { McpToolBridge } from '@pivi/agent/mcp/mcpToolBridge';
 import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
-import type { McpTransportFetch } from '@pivi/agent/mcp/ports';
 
 
 function createStorage(servers: ManagedMcpServer[]) {

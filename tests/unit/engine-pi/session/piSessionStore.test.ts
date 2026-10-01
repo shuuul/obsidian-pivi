@@ -1,4 +1,3 @@
-import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -675,4 +674,3 @@ describe('PiSessionStore session trash', () => {
     }
   });
 });
-

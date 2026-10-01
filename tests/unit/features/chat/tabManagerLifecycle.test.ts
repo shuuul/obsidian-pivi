@@ -606,7 +606,7 @@ describe('TabManager lifecycle guards', () => {
       onTabClosed: observeActive,
     });
     const first = await manager.createTab('session-1', 'first');
-    const second = await manager.createTab('session-2', 'second');
+    await manager.createTab('session-2', 'second');
     const third = await manager.createTab('session-3', 'third');
 
     await manager.switchToTab('second');
@@ -636,7 +636,7 @@ describe('TabManager lifecycle guards', () => {
       onTabSwitched: observeActive,
       onTabClosed: observeActive,
     });
-    const only = await manager.createTab('session-1', 'only');
+    await manager.createTab('session-1', 'only');
 
     await manager.closeTab('only', true);
 

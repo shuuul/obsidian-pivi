@@ -3,7 +3,6 @@ import { RESERVED_COMMAND_IDS } from '@pivi/agent/skills/commands/slashCommandId
 import { PiSlashCommandCatalog } from '@/app/runtime/PiSlashCommandCatalog';
 import type { PiviWorkspaceHost } from '@/app/runtime/serviceContracts';
 import type { FileStore } from "@pivi/agent/ports";
-import { TAbstractFile } from "obsidian";
 
 describe("parseSlashCommandContent", () => {
   it("correctly parses templates with valid frontmatter", () => {
@@ -228,17 +227,13 @@ Explain this: {{selected_text}}`,
   });
 
   it("does not include the create-command slash entry", async () => {
-    const dropdownEntries = await catalog.listDropdownEntries({
-      includeBuiltIns: true,
-    });
+    const dropdownEntries = await catalog.listDropdownEntries();
 
     expect(dropdownEntries.map((entry) => entry.id)).not.toContain("create-command");
   });
 
   it("includes compact as a non-editable built-in command", async () => {
-    const dropdownEntries = await catalog.listDropdownEntries({
-      includeBuiltIns: true,
-    });
+    const dropdownEntries = await catalog.listDropdownEntries();
 
     expect(dropdownEntries).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -253,9 +248,7 @@ Explain this: {{selected_text}}`,
   });
 
   it("includes new as a non-editable built-in command", async () => {
-    const dropdownEntries = await catalog.listDropdownEntries({
-      includeBuiltIns: true,
-    });
+    const dropdownEntries = await catalog.listDropdownEntries();
 
     expect(dropdownEntries).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -284,7 +277,7 @@ Explain this: {{selected_text}}`,
 
     await memoryCatalog.prepareWorkspace();
     expect(await memoryCatalog.listWorkspaceEntries()).toEqual([]);
-    const dropdown = await memoryCatalog.listDropdownEntries({ includeBuiltIns: true });
+    const dropdown = await memoryCatalog.listDropdownEntries();
     for (const [path, bytes] of reservedBytes) {
       expect(store.files.get(path)).toBe(bytes);
       expect(dropdown.filter(entry => entry.id === commandId(path))).toHaveLength(1);
@@ -316,12 +309,8 @@ Explain this: {{selected_text}}`,
       createIntegrationKey: () => 'generated-key',
     });
 
-    const hiddenEntries = await catalog.listDropdownEntries({
-      includeBuiltIns: true,
-    });
-    const imageEntries = await imageCatalog.listDropdownEntries({
-      includeBuiltIns: true,
-    });
+    const hiddenEntries = await catalog.listDropdownEntries();
+    const imageEntries = await imageCatalog.listDropdownEntries();
 
     expect(hiddenEntries.map((entry) => entry.id)).not.toContain("generate-image");
     expect(imageEntries).toEqual(expect.arrayContaining([

@@ -163,7 +163,7 @@ export class TabManager {
 
     const getSlashCatalogConfig = () => ({
       config: this.ports.catalog.getSlashDropdownConfig(),
-      getEntries: () => this.ports.catalog.listSlashEntries(true),
+      getEntries: () => this.ports.catalog.listSlashEntries(),
     });
 
     // Initialize UI components with provider catalog

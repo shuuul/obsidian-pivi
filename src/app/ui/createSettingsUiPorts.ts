@@ -371,7 +371,7 @@ export function createSettingsUiPorts(
         refresh: () => ws.slashCommandCatalog.refresh(),
         listIconNames: () => getIconIds(),
         loadWorkspaceCatalog: () => ws.slashCommandCatalog.getWorkspaceSnapshot(),
-        listDropdownEntries: () => ws.slashCommandCatalog.listDropdownEntries({ includeBuiltIns: true }),
+        listDropdownEntries: () => ws.slashCommandCatalog.listDropdownEntries(),
         async saveWorkspaceEntry(entry, catalogRevision) {
           await ws.slashCommandCatalog.saveWorkspaceEntry(entry, catalogRevision);
           const saved = (await ws.slashCommandCatalog.listWorkspaceEntries())

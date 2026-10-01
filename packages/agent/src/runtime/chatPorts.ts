@@ -69,7 +69,7 @@ export interface ChatCatalogPort {
    */
   listMcpInventoryTools?(serverName: string): Promise<Array<{ name: string; description?: string }>>;
   listSkills(): Array<{ name: string; description?: string }>;
-  listSlashEntries(includeBuiltIns: boolean): Promise<SlashCatalogEntry[]>;
+  listSlashEntries(): Promise<SlashCatalogEntry[]>;
   getSlashDropdownConfig(): SlashCommandDropdownConfig;
 }
 

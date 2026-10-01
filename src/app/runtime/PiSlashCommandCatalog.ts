@@ -114,9 +114,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     );
   }
 
-  async listDropdownEntries(_context: {
-    includeBuiltIns: boolean;
-  }): Promise<SlashCatalogEntry[]> {
+  async listDropdownEntries(): Promise<SlashCatalogEntry[]> {
     if (!this.loaded) {
       await this.refresh();
     }

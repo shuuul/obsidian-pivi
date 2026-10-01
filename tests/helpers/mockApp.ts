@@ -1,4 +1,4 @@
-import { App, SecretStorage } from 'obsidian';
+import { App, } from 'obsidian';
 
 export interface MockAppOptions {
   vaultBasePath?: string;

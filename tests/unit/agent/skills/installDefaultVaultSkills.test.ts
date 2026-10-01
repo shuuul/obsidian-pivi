@@ -1,4 +1,4 @@
-import type { HttpClient, HttpRequest, HttpResponse, ProcessRunner } from '@pivi/agent/ports';
+import type { HttpClient, HttpResponse, } from '@pivi/agent/ports';
 import * as fetchRemoteSha from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
 import {
   installDefaultVaultSkills,

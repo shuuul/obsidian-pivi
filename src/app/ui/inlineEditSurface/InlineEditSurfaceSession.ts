@@ -498,9 +498,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       {
         hiddenCommands: new Set(),
         catalogConfig: workspace.slashCommandCatalog.getDropdownConfig(),
-        getCatalogEntries: () => workspace.slashCommandCatalog.listDropdownEntries({
-          includeBuiltIns: true,
-        }),
+        getCatalogEntries: () => workspace.slashCommandCatalog.listDropdownEntries(),
         getMcpManager: () => mcpServerProvider,
         getMcpToolProvider: () => mcpToolProvider,
         getSkills: () => workspace.skillProvider.listSkills(),

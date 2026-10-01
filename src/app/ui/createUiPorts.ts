@@ -119,9 +119,7 @@ export function createChatUiPorts(
         return provider.listInventoryTools?.(serverName) ?? provider.listTools(serverName);
       },
       listSkills: () => ws().skillProvider.listSkills(),
-      listSlashEntries: (includeBuiltIns) => (
-        ws().slashCommandCatalog.listDropdownEntries({ includeBuiltIns })
-      ),
+      listSlashEntries: () => ws().slashCommandCatalog.listDropdownEntries(),
       getSlashDropdownConfig: () => ws().slashCommandCatalog.getDropdownConfig(),
     },
     models: {

@@ -1595,7 +1595,7 @@ describe('imperative chat semantic view handle', () => {
   });
 
   it('persists the current manager state immediately', async () => {
-    const { handle, manager, mount, persistTabStateImmediate } = createHarness();
+    const { handle, mount, persistTabStateImmediate } = createHarness();
 
     await expect(handle.maintenance.persistState()).resolves.toBeUndefined();
     expect(persistTabStateImmediate).not.toHaveBeenCalled();

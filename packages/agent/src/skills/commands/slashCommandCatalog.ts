@@ -8,7 +8,7 @@ export interface SlashCommandDropdownConfig {
 }
 
 export interface SlashCommandCatalog {
-  listDropdownEntries(context: { includeBuiltIns: boolean }): Promise<SlashCatalogEntry[]>;
+  listDropdownEntries(): Promise<SlashCatalogEntry[]>;
   listWorkspaceEntries(): Promise<SlashCatalogEntry[]>;
   getWorkspaceSnapshot(): Promise<{
     readonly entries: readonly SlashCatalogEntry[];

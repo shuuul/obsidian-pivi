@@ -3,7 +3,6 @@ import { ChatState } from '@/ui/chat/state/ChatState';
 import { wireComposerChrome } from '@/ui/chat/tabs/tabToolbarInit';
 import type { TabData } from '@/ui/chat/tabs/types';
 import { createFakeChatPorts } from '../../helpers/createFakeChatPorts';
-import { asPiviPlugin, createMockPiviPluginStub } from '../../helpers/mockPiviPlugin';
 
 function settingsSnapshot(model: string): ChatSettingsSnapshot {
   return {

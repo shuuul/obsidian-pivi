@@ -10,7 +10,6 @@ import {
   invalidateSessionJsonlIndex,
 } from '@pivi/engine-pi/session/sessionJsonlIndex';
 import {
-  SessionIndexStaleError,
   SessionRangeCursorError,
 } from '@pivi/agent/session';
 

@@ -119,9 +119,7 @@ export function createMentionEditorPort(
           hiddenCommands: new Set(),
           catalogConfig: slashConfig,
           getCatalogEntries: () =>
-            workspace.slashCommandCatalog.listDropdownEntries({
-              includeBuiltIns: true,
-            }),
+            workspace.slashCommandCatalog.listDropdownEntries(),
           getMcpManager: () => mcpServerProvider,
           getMcpToolProvider: () => mcpToolProvider,
           getSkills: () => workspace.skillProvider.listSkills(),
