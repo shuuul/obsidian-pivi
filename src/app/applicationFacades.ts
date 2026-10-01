@@ -117,7 +117,6 @@ export function createApplicationFacades(
     openStyleSettings: () => application.openStyleSettings(),
     isNoteToolbarInstalled: () => application.noteToolbar.isInstalled(),
     setupNoteToolbarIntegration: style => application.noteToolbar.setupSelectionCommand(style),
-    reconcileWorkspaceCommands: () => application.reconcileWorkspaceCommands(),
     purgeDeletedSessionFiles: () => sessions.purgeDeletedSessionFiles(),
     purgeExpiredDeletedSessionFiles: () => sessions.purgeExpiredDeletedSessionFiles(),
     loadSessionMaintenance: () => sessions.loadSessionMaintenance(),

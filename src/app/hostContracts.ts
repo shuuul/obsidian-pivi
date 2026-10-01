@@ -355,7 +355,6 @@ export interface PiviSettingsHost extends PiviHostCore {
   setupNoteToolbarIntegration(
     itemStyle: NoteToolbarItemStyle,
   ): Promise<NoteToolbarSetupResult>;
-  reconcileWorkspaceCommands(): Promise<void>;
   /** Session-file cleanup action exposed from the session-files settings section. */
   purgeDeletedSessionFiles(): Promise<number>;
   purgeExpiredDeletedSessionFiles(): Promise<number>;

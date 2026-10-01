@@ -110,7 +110,6 @@ export class PiviApplication {
       pluginId: plugin.manifest.id,
       processRunner: this.processRunner,
       getSettings: () => this.settings,
-      reconcileWorkspaceCommands: () => this.reconcileWorkspaceCommands(),
     });
     this.facades = createApplicationFacades(this, {
       sessionManager: this.sessionManager,
@@ -488,17 +487,6 @@ export class PiviApplication {
       }
     });
     return initialization;
-  }
-
-  async reconcileWorkspaceCommands(): Promise<void> {
-    if (this.isUnloading) return;
-    // Generation-checked around the awaits: shutdown bumps the generation and
-    // clears the registry, so a stale reconcile must not re-register commands.
-    const generation = this.workspaceGeneration;
-    const workspace = await this.ensureWorkspaceServices();
-    const entries = await workspace.slashCommandCatalog.listWorkspaceEntries();
-    if (this.isUnloading || generation !== this.workspaceGeneration) return;
-    this.workspaceCommandRegistry.reconcile(entries);
   }
 
   reconcileWorkspaceCommandEntries(entries: readonly SlashCatalogEntry[]): void {

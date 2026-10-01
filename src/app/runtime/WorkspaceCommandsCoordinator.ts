@@ -51,7 +51,6 @@ export class WorkspaceCommandsCoordinator {
   private entries: SlashCatalogEntry[] = [];
   private fingerprint: string | undefined;
   private revision = 0;
-  private runtimeIds = new Set<string>();
 
   constructor(
     private readonly host: PiviWorkspaceHost,
@@ -60,8 +59,6 @@ export class WorkspaceCommandsCoordinator {
     private readonly scanCatalog: WorkspaceCommandScanner,
     private readonly onEntriesChanged?: (entries: readonly SlashCatalogEntry[]) => void,
   ) {}
-
-  setRuntimeIds(ids: readonly string[]): void { this.runtimeIds = new Set(ids); }
 
   private acceptCatalogScan(entries: readonly SlashCatalogEntry[], fingerprint: string): boolean {
     const changed = fingerprint !== this.fingerprint;
@@ -271,7 +268,7 @@ export class WorkspaceCommandsCoordinator {
     if (expected !== this.revision) throw new PiviCommandsManagementError('state_changed', 'Command catalog changed; list commands and retry.');
   }
   private assertAvailable(id: string): void {
-    if (isReservedCommandId(id) || this.runtimeIds.has(id)) throw new PiviCommandsManagementError('not_eligible', `Command /${id} is not eligible for workspace management.`);
+    if (isReservedCommandId(id)) throw new PiviCommandsManagementError('not_eligible', `Command /${id} is not eligible for workspace management.`);
   }
 }
 

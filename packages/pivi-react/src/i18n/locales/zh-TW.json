@@ -570,7 +570,6 @@
       "setupLabelAndIcon": "Pivi + 圖示",
       "setupIconOnly": "僅圖示",
       "itemTooltip": "將選取內容加入 Pivi 輸入框",
-      "commandTooltip": "在新的 Pivi 工作階段中執行 /{name}",
       "installed": "已將 Pivi 加入選取文字工具列。",
       "alreadyInstalled": "Pivi 已存在於選取文字工具列中。",
       "styleSettingsOpened": "Pivi 已使用另一種樣式。已開啟對應的 Note Toolbar 項目設定，你可以在其中手動修改標籤。",

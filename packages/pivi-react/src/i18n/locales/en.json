@@ -570,7 +570,6 @@
       "setupLabelAndIcon": "Pivi + icon",
       "setupIconOnly": "Icon only",
       "itemTooltip": "Add selection to Pivi input",
-      "commandTooltip": "Run /{name} in a new Pivi session",
       "installed": "Added Pivi to the selected-text toolbar.",
       "alreadyInstalled": "Pivi is already in the selected-text toolbar.",
       "styleSettingsOpened": "Pivi already uses the other style. Its Note Toolbar item settings were opened so you can update the label manually.",

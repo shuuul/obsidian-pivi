@@ -846,9 +846,6 @@ describe('React ChatShell tabs', () => {
       queuedTurns: [{
         id: 'queued-1',
         content: 'A queued request that is intentionally much longer than forty characters',
-        hasBrowserContext: false,
-        hasCanvasContext: false,
-        hasEditorContext: false,
         imageCount: 2,
       }],
     }));
@@ -869,17 +866,11 @@ describe('React ChatShell tabs', () => {
         {
           id: 'queued-1',
           content: 'First independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
         {
           id: 'queued-2',
           content: 'Second independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
       ],
@@ -901,17 +892,11 @@ describe('React ChatShell tabs', () => {
         {
           id: 'queued-1',
           content: 'First independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
         {
           id: 'queued-2',
           content: 'Second independent turn',
-          hasBrowserContext: false,
-          hasCanvasContext: false,
-          hasEditorContext: false,
           imageCount: 0,
         },
       ],
@@ -1142,9 +1127,6 @@ describe('React ChatShell tabs', () => {
       queuedTurns: [{
         id: 'queued-first',
         content: 'First queued turn',
-        hasBrowserContext: false,
-        hasCanvasContext: false,
-        hasEditorContext: false,
         imageCount: 0,
       }],
     }));
@@ -1159,9 +1141,6 @@ describe('React ChatShell tabs', () => {
       queuedTurns: [{
         id: 'queued-second',
         content: 'Second queued turn',
-        hasBrowserContext: false,
-        hasCanvasContext: false,
-        hasEditorContext: false,
         imageCount: 0,
       }],
       welcomeGreeting: 'Second tab',

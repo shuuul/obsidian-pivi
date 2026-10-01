@@ -180,10 +180,8 @@ describe('MentionDropdownController folder labels', () => {
     const input = document.createElement('textarea');
     document.body.appendChild(input);
     const mentioned = new Set<string>();
-    const onMcpMentionChange = jest.fn();
     const controller = new MentionDropdownController(container, input, {
       onAttachFile: jest.fn(),
-      onMcpMentionChange,
       getMentionedMcpServers: () => mentioned,
       setMentionedMcpServers: (next) => {
         mentioned.clear();
@@ -203,7 +201,6 @@ describe('MentionDropdownController folder labels', () => {
     controller.updateMcpMentionsFromText('please use /remote for this');
 
     expect(mentioned).toEqual(new Set(['remote']));
-    expect(onMcpMentionChange).toHaveBeenCalledWith(new Set(['remote']));
     controller.destroy();
   });
 

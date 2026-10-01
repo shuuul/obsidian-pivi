@@ -158,9 +158,6 @@ describe('ChatUiStore', () => {
         id: 'queued-1',
         content: 'next',
         imageCount: 1,
-        hasEditorContext: true,
-        hasBrowserContext: false,
-        hasCanvasContext: false,
       }],
     });
 

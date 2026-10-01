@@ -499,9 +499,6 @@ export class ChatState {
         id: message.id,
         content: message.content,
         imageCount: message.images?.length ?? 0,
-        hasEditorContext: message.editorContext !== null,
-        hasBrowserContext: message.browserContext != null,
-        hasCanvasContext: message.canvasContext !== null,
       })),
     });
   }

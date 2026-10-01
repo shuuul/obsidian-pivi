@@ -570,7 +570,6 @@
       "setupLabelAndIcon": "Pivi + ícone",
       "setupIconOnly": "Somente ícone",
       "itemTooltip": "Adicionar seleção à entrada do Pivi",
-      "commandTooltip": "Executar /{name} em uma nova sessão do Pivi",
       "installed": "O Pivi foi adicionado à barra de texto selecionado.",
       "alreadyInstalled": "O Pivi já está na barra de texto selecionado.",
       "styleSettingsOpened": "O Pivi já usa o outro estilo. As configurações do item no Note Toolbar foram abertas para você alterar o rótulo manualmente.",

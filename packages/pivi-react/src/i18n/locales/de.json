@@ -570,7 +570,6 @@
       "setupLabelAndIcon": "Pivi + Symbol",
       "setupIconOnly": "Nur Symbol",
       "itemTooltip": "Auswahl zur Pivi-Eingabe hinzufügen",
-      "commandTooltip": "/{name} in einer neuen Pivi-Sitzung ausführen",
       "installed": "Pivi wurde zur Textauswahl-Werkzeugleiste hinzugefügt.",
       "alreadyInstalled": "Pivi ist bereits in der Textauswahl-Werkzeugleiste vorhanden.",
       "styleSettingsOpened": "Pivi verwendet bereits den anderen Stil. Die Note-Toolbar-Elementeinstellungen wurden geöffnet, damit du die Beschriftung manuell ändern kannst.",

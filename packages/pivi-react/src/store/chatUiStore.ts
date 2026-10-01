@@ -15,9 +15,6 @@ export interface QueuedTurnSnapshot {
   readonly id: string;
   readonly content: string;
   readonly imageCount: number;
-  readonly hasEditorContext: boolean;
-  readonly hasBrowserContext: boolean;
-  readonly hasCanvasContext: boolean;
 }
 
 export interface ThinkingIndicatorSnapshot {

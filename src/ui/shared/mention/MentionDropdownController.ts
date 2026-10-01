@@ -51,7 +51,6 @@ export interface MentionDropdownOptions {
 }
 export interface MentionDropdownCallbacks {
   onAttachFile: (path: string) => void;
-  onMcpMentionChange?: (servers: Set<string>) => void;
   onAgentMentionSelect?: (agentId: string) => void;
   getMentionedMcpServers: () => Set<string>;
   setMentionedMcpServers: (mentions: Set<string>) => boolean;
@@ -156,11 +155,7 @@ export class MentionDropdownController {
     );
 
     const newMentions = extractMcpMentions(text, validNames);
-    const changed = this.callbacks.setMentionedMcpServers(newMentions);
-
-    if (changed) {
-      this.callbacks.onMcpMentionChange?.(newMentions);
-    }
+    this.callbacks.setMentionedMcpServers(newMentions);
   }
 
   handleInputChange(): void {
