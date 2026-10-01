@@ -43,6 +43,8 @@ import {
   PIVI_RELEASED_AT,
   PIVI_VERSION,
 } from '@/app/pluginIdentity';
+import { validateDirectoryPath } from '@/ui/shared/utils/externalContext';
+import { pickDirectoryPath } from '@/ui/shared/utils/folderPicker';
 
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
@@ -53,10 +55,6 @@ import {
   normalizeMaxConcurrentSubagents,
   requireWorkspace,
 } from './createUiPortHelpers';
-import {
-  pickDirectoryPath,
-  validateDirectoryPath,
-} from './externalDirectory';
 import { listObsidianCommands } from './listObsidianCommands';
 import { createMentionEditorPort } from './mentionEditor/createMentionEditorPort';
 import {

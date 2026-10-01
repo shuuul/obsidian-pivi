@@ -16,7 +16,7 @@ import { getMcpServerUrl } from "@pivi/agent/mcp/types";
 import {
   grantPrivateOrigins,
 } from "@pivi/agent/network";
-import { type AppModelReadinessProvider, getCustomProvidersFromBag, getSubagentRuntimeSettingsFromBag, getWebSearchToolsSettingsFromBag, parseEnvironmentVariables, WEB_PROVIDER_IDS } from "@pivi/agent/settings";
+import { type AppModelReadinessProvider, getCustomProvidersFromBag, getObsidianToolsSettingsFromBag, getSubagentRuntimeSettingsFromBag, getWebSearchToolsSettingsFromBag, parseEnvironmentVariables, WEB_PROVIDER_IDS } from "@pivi/agent/settings";
 import { ensureDefaultWorkspaceCommands } from "@pivi/agent/skills/commands/defaultWorkspaceCommands";
 import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
@@ -57,7 +57,6 @@ import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
   buildEffectiveBashPermissions,
   createObsidianTools,
-  getObsidianToolsSettingsFromBag,
   resolveLoginShellPath,
 } from "@pivi/obsidian-tools";
 import { Notice } from "obsidian";

@@ -15,8 +15,7 @@ import type {
   PiviSettingsHost,
 } from '@/app/hostContracts';
 import { isPathWithinVault } from '@/app/hostPlatform';
-
-import { validateDirectoryPath } from './externalDirectory';
+import { validateDirectoryPath } from '@/ui/shared/utils/externalContext';
 
 /** Chat/settings ports take an explicit workspace; throw when composition has not wired one. */
 export function requireWorkspace(workspace: PiviPluginWorkspace | null): PiviPluginWorkspace {

@@ -7,9 +7,6 @@
       "@test/*": [
         "./tests/*"
       ],
-      "@pivi/agent": [
-        "./packages/agent/src/index.ts"
-      ],
       "@pivi/engine-pi": [
         "./packages/engine-pi/src/index.ts"
       ],

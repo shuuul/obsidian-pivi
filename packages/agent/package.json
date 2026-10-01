@@ -3,7 +3,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
     "./auth/customProviderHeaderSecrets": "./src/auth/customProviderHeaderSecrets.ts",
     "./auth/piProviderCredentials": "./src/auth/piProviderCredentials.ts",
     "./auth/piProviderValidation": "./src/auth/piProviderValidation.ts",

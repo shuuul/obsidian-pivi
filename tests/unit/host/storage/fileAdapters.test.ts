@@ -1,8 +1,6 @@
-import * as fs from "fs";
-
 import { App } from "obsidian";
 
-import { HomeFileAdapter, ObsidianVaultFileAdapter } from "@pivi/obsidian-host";
+import { ObsidianVaultFileAdapter } from "@pivi/obsidian-host";
 
 describe("VaultFileAdapter", () => {
   function createAdapter(initialFiles: Record<string, string> = {}) {
@@ -54,20 +52,5 @@ describe("VaultFileAdapter", () => {
 
     expect(files.get("log.jsonl")).toBe("before\nafter\n");
     expect(warning).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("HomeFileAdapter", () => {
-  it("rethrows unexpected deleteFolder errors", async () => {
-    const adapter = new HomeFileAdapter("/root-that-should-not-be-used");
-    const failure = Object.assign(new Error("permission denied"), {
-      code: "EACCES",
-    });
-    jest
-      .spyOn(adapter as unknown as { resolve(path: string): string }, "resolve")
-      .mockReturnValue("/root-that-should-not-be-used/folder");
-    jest.spyOn(fs.promises, "rmdir").mockRejectedValueOnce(failure);
-
-    await expect(adapter.deleteFolder("folder")).rejects.toBe(failure);
   });
 });

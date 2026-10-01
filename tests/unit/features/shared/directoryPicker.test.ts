@@ -1,7 +1,5 @@
-import {
-  pickDirectoryPath,
-  validateDirectoryPath,
-} from "@/app/ui/externalDirectory";
+import { validateDirectoryPath } from "@/ui/shared/utils/externalContext";
+import { pickDirectoryPath } from "@/ui/shared/utils/folderPicker";
 
 function createHostWindow(result: { canceled: boolean; filePaths: string[] }) {
   const showOpenDialog = jest.fn(async () => result);

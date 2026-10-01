@@ -22,11 +22,6 @@ export interface WorkspaceFileStore {
 
 export type FileStore = WorkspaceFileStore;
 
-export type HomeFileStore = Pick<
-  WorkspaceFileStore,
-  'exists' | 'read' | 'write' | 'delete' | 'deleteFolder' | 'listFolders' | 'ensureFolder'
->;
-
 /** Synchronous secret persistence used by MCP auth stores. */
 export interface SyncSecretStore {
   getSecret(key: string): string | null;

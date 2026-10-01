@@ -98,7 +98,6 @@ flowchart LR
 | `ui/inlineEditHelpers.ts` / `ui/inlineEditProtocol.ts` | Inline-edit selected-text escaping/context assembly and the `<replacement>`/`<insertion>`/reply turn-protocol parser |
 | `ui/inlineEditSurface/` | Editor-embedded inline-edit surface: `InlineEditSurfaceSession.ts` owns the session lifecycle, plus the diff-review field, keyboard controller, and DOM helpers mounted by `SelectionToolbarSurfaceController` |
 | `ui/defaultVaultSkillsPrompt.ts` | Localized owner-realm Obsidian Notice shown only after host-neutral Skills orchestration requests confirmation |
-| `ui/externalDirectory.ts` | Desktop directory pick/validate for settings ports (no `@/ui` import) |
 | `ui/PiviSettingTabHost.ts` | Obsidian 1.13 native settings root: `SETTINGS_ROOT_LAYOUT` → declarative pages/groups; each page has one indexed `render` item that mounts `mountSettingsPage`; live-surface unload disposal |
 | `ui/selectionToolbar/SelectionToolbarSurfaceController.ts` | Mounts React selection-toolbar/inline-edit chrome into `SelectionToolbarHost`; wires Ask AI, Add to chat, Sidebar/Inline edit Pivi Command dispatch, and `submitInlineEditTurn` |
 | `editorSelectionToolbarRegistration.ts` | CM6 selection trigger + floating overlay host (`getSelectionToolbarHost`) |
