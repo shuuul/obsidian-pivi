@@ -25,7 +25,3 @@ export function createMockApp(options: MockAppOptions = {}): App {
 
   return app;
 }
-
-export function createMockSecretStorage(): SecretStorage {
-  return new SecretStorage();
-}

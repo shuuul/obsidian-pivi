@@ -62,7 +62,6 @@ export class FileContextManager {
 
   // MCP server support
   private mcpManager: FileContextMcpProvider | null = null;
-  private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
 
   constructor(
     app: App,
@@ -114,7 +113,6 @@ export class FileContextManager {
       this.inputEl,
       {
         onAttachFile: (filePath) => this.state.attachFile(filePath),
-        onMcpMentionChange: (servers) => this.onMcpMentionChange?.(servers),
         onAgentMentionSelect: (agentId) => this.callbacks.onAgentMentionSelect?.(agentId),
         getMentionedMcpServers: () => this.state.getMentionedMcpServers(),
         setMentionedMcpServers: (mentions) => this.state.setMentionedMcpServers(mentions),
@@ -409,10 +407,6 @@ export class FileContextManager {
 
   setAgentService(agentService: AgentMentionProvider | null): void {
     this.mentionDropdown.setAgentService(agentService);
-  }
-
-  setOnMcpMentionChange(callback: (servers: Set<string>) => void): void {
-    this.onMcpMentionChange = callback;
   }
 
   getMentionedMcpServers(): Set<string> {

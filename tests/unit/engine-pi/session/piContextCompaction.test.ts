@@ -124,7 +124,7 @@ describe('piContextCompaction', () => {
     const firstTotal = index.tokensBetween(0);
     index.sync([first, second]);
     const appendedTotal = index.tokensBetween(0);
-    expect(appendedTotal).toBe(firstTotal + index.tokensAt(1));
+    expect(appendedTotal).toBe(firstTotal + index.tokensBetween(1));
 
     const replacement = messageEntry('m2', 'assistant', '知识'.repeat(100), 'm1');
     index.sync([first, replacement]);

@@ -223,17 +223,9 @@ export interface PiviChatView {
   getChatHandle(): PiviChatViewHandle | null;
 }
 
-export interface PiviMcpAvailabilitySummary {
-  totalCount: number;
-  enabledCount: number;
-  alwaysActiveCount: number;
-  contextSavingCount: number;
-}
-
 export interface PiviMcpServerManager {
   getServers(): ManagedMcpServer[];
   getContextSavingServers(): ManagedMcpServer[];
-  getAvailabilitySummary(): PiviMcpAvailabilitySummary;
 }
 
 export interface PiviProviderCredentialStore {

@@ -270,12 +270,6 @@ export function canonicalizeCapabilityPermissions(
   };
 }
 
-export function enabledBashPermissions(
-  stored: readonly PersistentBashPermission[],
-): PersistentBashPermission[] {
-  return stored.filter(permission => permission.enabled);
-}
-
 export function enabledExternalDirectories(
   stored: readonly PersistentExternalDirectoryPermission[],
 ): string[] {

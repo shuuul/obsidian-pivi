@@ -73,7 +73,6 @@ export class ChatProjectionStore {
   private readonly pendingMessages = new Map<string, ProjectionMessage>();
   private readonly eventGate: ChatProjectionEventGate;
   private readonly orderListeners = new Set<ProjectionListener>();
-  private readonly messageListeners = new Map<string, Set<ProjectionListener>>();
   private readonly messageStructureListeners = new Map<string, Set<ProjectionListener>>();
   private readonly blockListeners = new Map<string, Set<ProjectionListener>>();
   private readonly toolListeners = new Map<string, Set<ProjectionListener>>();
@@ -110,19 +109,6 @@ export class ChatProjectionStore {
     this.orderListeners.add(listener);
     return () => this.orderListeners.delete(listener);
   };
-
-  subscribeMessage(messageId: string, listener: ProjectionListener): () => void {
-    let listeners = this.messageListeners.get(messageId);
-    if (!listeners) {
-      listeners = new Set();
-      this.messageListeners.set(messageId, listeners);
-    }
-    listeners.add(listener);
-    return () => {
-      listeners?.delete(listener);
-      if (listeners?.size === 0) this.messageListeners.delete(messageId);
-    };
-  }
 
   subscribeMessageStructure(messageId: string, listener: ProjectionListener): () => void {
     return this.subscribeEntity(this.messageStructureListeners, messageId, listener);
@@ -246,7 +232,6 @@ export class ChatProjectionStore {
     }
     this.order = Object.freeze(projected.map(message => message.id));
     this.notifyOrder();
-    for (const id of changedIds) this.notifyMessage(id);
     if (recorderEnabled) {
       this.recordCommit('replace', this.order, startedAt);
     }
@@ -271,7 +256,6 @@ export class ChatProjectionStore {
       this.messages.set(message.id, snapshot);
       this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
-      this.notifyMessage(message.id);
       if (this.perfRecorder.enabled) {
         this.recordEntityCommit(message.id, entityStartedAt);
       }
@@ -310,7 +294,6 @@ export class ChatProjectionStore {
       this.messages.set(message.id, snapshot);
       this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
-      this.notifyMessage(message.id);
       if (this.perfRecorder.enabled) {
         this.recordEntityCommit(message.id, entityStartedAt);
       }
@@ -351,7 +334,6 @@ export class ChatProjectionStore {
     this.messages.set(snapshot.id, snapshot);
     this.reconcileMessageStructure(snapshot);
     this.indexMessageEntities(snapshot);
-    this.notifyMessage(snapshot.id);
     if (isNew) {
       this.order = Object.freeze([...this.order, snapshot.id]);
       this.notifyOrder();
@@ -392,7 +374,6 @@ export class ChatProjectionStore {
         this.messages.delete(id);
         this.clearMessageStructure(id);
         this.clearMessageEntities(id);
-        this.notifyMessage(id);
       }
     }
     this.order = Object.freeze(messageIds.filter(id => this.messages.has(id)));
@@ -406,7 +387,6 @@ export class ChatProjectionStore {
     this.ownerWindow?.document?.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.pendingMessages.clear();
     this.orderListeners.clear();
-    this.messageListeners.clear();
     this.messageStructureListeners.clear();
     this.blockListeners.clear();
     this.toolListeners.clear();
@@ -514,10 +494,6 @@ export class ChatProjectionStore {
 
   private notifyOrder(): void {
     for (const listener of this.orderListeners) listener();
-  }
-
-  private notifyMessage(messageId: string): void {
-    for (const listener of this.messageListeners.get(messageId) ?? []) listener();
   }
 
   private subscribeEntity(

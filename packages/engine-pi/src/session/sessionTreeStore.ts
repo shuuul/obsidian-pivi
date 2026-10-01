@@ -399,18 +399,6 @@ export class SessionTreeStore {
     return this.manager.getBranch(id);
   }
 
-  getVisiblePrefix(leafId?: string | null): SessionEntry[] {
-    const branch = leafId === null ? [] : this.getBranch(leafId ?? undefined);
-    const visibleLeafId = findLastVisibleConversationEntryId(branch);
-    if (!visibleLeafId) {
-      return branch;
-    }
-
-    const entries = this.getEntries();
-    const visibleIndex = entries.findIndex((entry) => entry.id === visibleLeafId);
-    return visibleIndex >= 0 ? entries.slice(0, visibleIndex + 1) : branch;
-  }
-
   /**
    * Linear restore view: ignore tree leaves and expose file-order entries up to
    * the latest visible user/assistant message plus any trailing compactions.
@@ -646,9 +634,4 @@ export class SessionTreeStore {
     return toVaultRelativePath(this.vaultPath, newPath);
   }
 
-  static async listSessionFiles(vaultPath: string): Promise<string[]> {
-    const sessionDir = getPiviSessionDir(vaultPath);
-    const sessions = await SessionManager.list(vaultPath, sessionDir);
-    return sessions.map((info) => toVaultRelativePath(vaultPath, info.path));
-  }
 }

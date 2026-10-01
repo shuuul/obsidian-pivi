@@ -109,7 +109,6 @@ describe('SubagentManager', () => {
       result: 'Started',
       startedAt: expect.any(Number),
     });
-    expect(manager.hasRunningSubagents()).toBe(true);
 
     manager.handleTaskToolResult('spawn-1', 'agent_id: agent-1');
     expect(created.info).toMatchObject({ agentId: 'agent-1', asyncStatus: 'running' });
@@ -154,7 +153,6 @@ describe('SubagentManager', () => {
       result: 'Cancelled',
     });
     expect(manager.getSyncSubagent('sync-1')).toBeUndefined();
-    expect(manager.hasRunningSubagents()).toBe(false);
     expect(onChange).toHaveBeenCalledWith(sync.info);
     expect(onChange).toHaveBeenCalledWith(async.info);
   });

@@ -191,21 +191,6 @@ export class ChatState {
     this.state.olderUserMessageCount = value;
   }
 
-  truncateAt(messageId: string): number {
-    const idx = this.state.messages.findIndex(m => m.id === messageId);
-    if (idx === -1) return 0;
-    const removed = this.state.messages.length - idx;
-    this.state.messages = this.state.messages.slice(0, idx);
-    this.state.totalMessageCount = this.state.olderMessageCount + this.state.messages.length;
-    this.rebuildMessageIndexes(this.state.messages);
-    this.projectionStore.dispatch({
-      ...this.nextProjectionMetadata(),
-      type: 'messages.truncate',
-      messageIds: this.state.messages.map(message => message.id),
-    });
-    return removed;
-  }
-
   /** Queue one mutated durable message for frame-coalesced React publication. */
   notifyMessageChanged(
     message: ChatMessage,
@@ -713,11 +698,6 @@ export class ChatState {
     this.usage = null;
     this.currentTodos = null;
     this.autoScrollEnabled = true;
-  }
-
-  getPersistedMessages(): ChatMessage[] {
-    // Return messages as-is - image data is single source of truth
-    return this.state.messages;
   }
 
 }

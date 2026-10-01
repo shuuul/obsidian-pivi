@@ -282,10 +282,6 @@ export class PiContextTokenIndex {
     return this.entryIndexById.get(entryId) ?? -1;
   }
 
-  tokensAt(index: number): number {
-    return this.entryTokens[index] ?? 0;
-  }
-
   tokensBetween(start: number, end = this.entries.length): number {
     const boundedStart = Math.max(0, Math.min(start, this.entries.length));
     const boundedEnd = Math.max(boundedStart, Math.min(end, this.entries.length));

@@ -80,25 +80,6 @@ export class ProviderOAuthService {
     return credentialToApiKey(this.credentialStore?.readSync(CODEX_OAUTH_PROVIDER_ID));
   }
 
-  /** Synchronous read for settings/status UI only; runtime requests resolve auth through pi-ai. */
-  getCodexAccessTokenSync(): string | undefined {
-    const stored = this.credentialStore?.readSync(CODEX_OAUTH_PROVIDER_ID);
-    const apiKey = credentialToApiKey(stored);
-    if (apiKey) {
-      return apiKey;
-    }
-    const legacy = this.readLegacyCodexCredential();
-    if (legacy) {
-      if (this.credentialStore) {
-        this.credentialStore.writeSync(CODEX_OAUTH_PROVIDER_ID, legacy);
-        this.clearLegacyCodexCredential();
-      }
-      const migratedKey = credentialToApiKey(legacy);
-      return migratedKey;
-    }
-    return undefined;
-  }
-
   async loginProviderOAuth(
     providerId: string,
     onProgress?: (progress: ProviderOAuthProgress) => void,

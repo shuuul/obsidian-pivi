@@ -366,11 +366,6 @@ export function createSettingsUiPorts(
       },
       runtime: {
         refreshPrompt,
-        refreshModelSelectors: () => {
-          for (const view of host.getAllViews()) {
-            view.getChatHandle()?.maintenance.refreshModelPresentation();
-          }
-        },
       },
       commands: {
         refresh: () => ws.slashCommandCatalog.refresh(),

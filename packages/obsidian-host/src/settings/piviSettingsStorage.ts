@@ -68,14 +68,6 @@ export class PiviSettingsStorage {
     private codec: PiviSettingsCodec = DEFAULT_PIVI_SETTINGS_CODEC,
   ) {}
 
-  getDiagnostics(): readonly ParseDiagnostic[] {
-    return this.lastDiagnostics;
-  }
-
-  getCorruptPath(): string | null {
-    return this.corruptPath;
-  }
-
   async load(): Promise<StoredPiviSettings> {
     if (!(await this.adapter.exists(PIVI_SETTINGS_PATH))) {
       this.lastDiagnostics = [];
@@ -151,22 +143,6 @@ export class PiviSettingsStorage {
   async update(updates: Partial<StoredPiviSettings>): Promise<void> {
     const current = await this.load();
     await this.save({ ...current, ...updates });
-  }
-
-  async setLastModel(model: string): Promise<void> {
-    const current = await this.load();
-    this.codec.updateAgentSettings(current, {
-      lastModel: model,
-    });
-    await this.save(current);
-  }
-
-  async setLastEnvHash(hash: string): Promise<void> {
-    const current = await this.load();
-    this.codec.updateAgentSettings(current, {
-      environmentHash: hash,
-    });
-    await this.save(current);
   }
 
   private getDefaults(): StoredPiviSettings {

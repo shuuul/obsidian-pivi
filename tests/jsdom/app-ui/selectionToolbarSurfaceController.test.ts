@@ -31,7 +31,6 @@ jest.mock('@/app/editorSelectionToolbarRegistration', () => ({
     getOverlayElement: () => document.body,
     repositionOverlay: jest.fn(),
     dismissOverlay: mockDismissOverlay,
-    hideOverlayPreservingSnapshot: jest.fn(),
     getCurrentSnapshot: () => mockGetCurrentSnapshot(),
   }),
 }));

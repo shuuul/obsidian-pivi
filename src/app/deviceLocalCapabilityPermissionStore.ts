@@ -4,11 +4,6 @@ import {
   decodeCapabilityPermissions,
   defaultCaseInsensitiveExecutables,
   type DeviceLocalCapabilityPermissions,
-  emptyCapabilityPermissions,
-  enabledBashPermissions,
-  enabledExternalDirectories,
-  type PersistentBashPermission,
-  type PersistentExternalDirectoryPermission,
 } from '@pivi/agent/tools';
 import type { App } from 'obsidian';
 
@@ -39,14 +34,6 @@ export class ObsidianDeviceLocalCapabilityPermissionStore {
     return this.revision;
   }
 
-  getEnabledBashPermissions(): PersistentBashPermission[] {
-    return enabledBashPermissions(this.getSnapshot().bash);
-  }
-
-  getEnabledExternalDirectories(): string[] {
-    return enabledExternalDirectories(this.getSnapshot().externalDirectories);
-  }
-
   save(next: DeviceLocalCapabilityPermissions): DeviceLocalCapabilityPermissions {
     const normalized = canonicalizeCapabilityPermissions(
       next,
@@ -57,25 +44,4 @@ export class ObsidianDeviceLocalCapabilityPermissionStore {
     return normalized;
   }
 
-  replaceBash(bash: readonly PersistentBashPermission[]): DeviceLocalCapabilityPermissions {
-    return this.save({ ...this.getSnapshot(), bash: [...bash] });
-  }
-
-  upsertBash(permission: PersistentBashPermission): DeviceLocalCapabilityPermissions {
-    const snapshot = this.getSnapshot();
-    return this.save({ ...snapshot, bash: [...snapshot.bash, permission] });
-  }
-
-  upsertExternalDirectory(directory: PersistentExternalDirectoryPermission): DeviceLocalCapabilityPermissions {
-    const snapshot = this.getSnapshot();
-    return this.save({
-      ...snapshot,
-      externalDirectories: [...snapshot.externalDirectories, directory],
-    });
-  }
-
-  initializeEmpty(): DeviceLocalCapabilityPermissions {
-    if (this.hasRecord()) return this.getSnapshot();
-    return this.save(emptyCapabilityPermissions());
-  }
 }

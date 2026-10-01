@@ -9,7 +9,6 @@ import type { EnvironmentScope } from "@pivi/agent/settings/types";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
 import { PiSettingsCoordinator, warmPiAiModelsCache } from "@pivi/engine-pi/application/models";
-import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
@@ -161,11 +160,6 @@ export class PiviApplication {
   readonly noteToolbar: ApplicationNoteToolbar;
   getVaultPath(): string | null {
     return getVaultPath(this.app);
-  }
-
-  /** Host-neutral vault adapter used by Obsidian tools and automation hooks. */
-  createVaultApi(): ObsidianVaultApi {
-    return new ObsidianVaultApi(this.app);
   }
 
   getChatPerfController(): ChatPerfController {

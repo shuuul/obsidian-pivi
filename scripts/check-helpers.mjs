@@ -286,13 +286,3 @@ export function loadJsonConfig(relativePath) {
   }
   return JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
 }
-
-export function isExportOnlySource(sourceText, fileLabel) {
-  const sourceFile = ts.createSourceFile(fileLabel, sourceText, ts.ScriptTarget.Latest, true);
-  return sourceFile.statements.every(
-    (statement) =>
-      ts.isExportDeclaration(statement) ||
-      ts.isEmptyStatement(statement) ||
-      ts.isExpressionStatement(statement) && ts.isStringLiteral(statement.expression),
-  );
-}

@@ -38,13 +38,6 @@ export class FileContextState {
     this.clearMcpMentions();
   }
 
-  setAttachedFiles(files: string[]): void {
-    this.attachedFiles.clear();
-    for (const file of files) {
-      this.attachedFiles.add(file);
-    }
-  }
-
   attachFile(path: string): void {
     this.attachedFiles.add(path);
   }
