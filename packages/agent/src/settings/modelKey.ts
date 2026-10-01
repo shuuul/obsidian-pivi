@@ -5,7 +5,6 @@ export interface PersistedPiAgentSettings {
   addedProviders?: string[];
   disabledProviders?: string[];
   environmentVariables: string;
-  selectedMode: string;
   visibleModels: string[];
   customProviders?: CustomProviderConfig[];
 }

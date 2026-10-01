@@ -9,7 +9,6 @@ describe('ObsidianAuthContext.env', () => {
           sharedEnvironmentVariables: 'MY_VAR=shared',
           agentSettings: {
             environmentVariables: 'MY_VAR=pi-agent',
-            selectedMode: 'default',
             visibleModels: [],
           },
         },
@@ -29,7 +28,6 @@ describe('ObsidianAuthContext.env', () => {
           sharedEnvironmentVariables: 'SHARED_ONLY=from-shared',
           agentSettings: {
             environmentVariables: 'OTHER=1',
-            selectedMode: 'default',
             visibleModels: [],
           },
         },

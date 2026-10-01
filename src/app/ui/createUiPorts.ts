@@ -152,14 +152,6 @@ export function createChatUiPorts(
           chatConfig.applyReasoningSelection?.(model, value, configSettings);
         });
       },
-      getModeSelector: (settings) => (
-        chatConfig.getModeSelector?.(toChatConfigSettings(settings)) ?? null
-      ),
-      applyModeSelection: (value, settings) => {
-        applyChatConfigMutation(settings, (configSettings) => {
-          chatConfig.applyModeSelection?.(value, configSettings);
-        });
-      },
     },
     settings: {
       getSettingsSnapshot: getChatSettingsSnapshot,

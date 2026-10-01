@@ -151,10 +151,8 @@ export interface AgentRuntimeSettings {
   /** Providers kept in settings but excluded from model picker and API resolution. */
   disabledProviders?: string[];
   environmentVariables: string;
-  selectedMode: string;
   visibleModels: string[];
   lastModel?: string;
-  environmentHash?: string;
   /** User-defined local / OpenAI-compatible / Anthropic-compatible providers. */
   customProviders?: CustomProviderConfig[];
   obsidianTools?: ObsidianToolsSettings;
@@ -454,12 +452,10 @@ export function isAgentRuntimeSettings(
 
   return (
     typeof value.environmentVariables === 'string' &&
-    typeof value.selectedMode === 'string' &&
     isStringArray(value.visibleModels) &&
     isOptionalStringArray(value.addedProviders) &&
     isOptionalStringArray(value.disabledProviders) &&
     isOptionalString(value.lastModel) &&
-    isOptionalString(value.environmentHash) &&
     (value.customProviders === undefined || Array.isArray(value.customProviders)) &&
     isOptionalObsidianToolsSettings(value.obsidianTools) &&
     isOptionalWebSearchToolsSettings(value.webSearchTools) &&

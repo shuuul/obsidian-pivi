@@ -808,7 +808,6 @@ describe('React ChatShell tabs', () => {
       send: jest.fn(),
       stop: jest.fn(),
       setModel: jest.fn(),
-      setMode: jest.fn(),
       setThinkingBudget: jest.fn(),
       setThinkingLevel: jest.fn(),
       toggleExternalPath: jest.fn(),
@@ -1165,7 +1164,6 @@ describe('React ChatShell tabs', () => {
       send: jest.fn(),
       stop: jest.fn(),
       setModel: jest.fn(),
-      setMode: jest.fn(),
       setThinkingBudget: jest.fn(),
       setThinkingLevel: jest.fn(),
       toggleExternalPath: jest.fn(),
@@ -1182,10 +1180,6 @@ describe('React ChatShell tabs', () => {
             { label: 'Model A', providerLogoSlug: 'anthropic', value: 'model-a' },
             { fallbackIcon: 'cpu', label: 'Longer Model B Name', value: 'model-b' },
           ],
-          mode: 'ask',
-          modeLabel: 'Ask',
-          modeOptions: [{ label: 'Ask', value: 'ask' }, { label: 'Code', value: 'code' }],
-          modeActiveValue: 'code',
           adaptiveReasoning: false,
           thinkingBudget: 'low',
           thinkingLevel: 'low',
@@ -1219,7 +1213,6 @@ describe('React ChatShell tabs', () => {
       'pivi-model-selector',
       'pivi-thinking-selector',
       'pivi-external-context-selector',
-      'pivi-mode-selector',
       'pivi-input-action-group',
     ]);
     expect(targets.composer.querySelector('.pivi-model-btn .pivi-provider-logo-mask')).not.toBeNull();
@@ -1245,7 +1238,6 @@ describe('React ChatShell tabs', () => {
     expect(modelTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(composerActions.setModel).toHaveBeenCalledWith('model-a');
 
-    fireEvent.click(within(targets.composer).getByRole('button', { name: 'Ask' }));
 
     const thinkingGears = targets.composer.querySelector('.pivi-thinking-gears')!;
     const thinkingTrigger = within(targets.composer).getByRole('button', { name: 'Reasoning' });
@@ -1263,7 +1255,6 @@ describe('React ChatShell tabs', () => {
 
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Send message' }));
     expect(composerActions.setModel).toHaveBeenCalledWith('model-b');
-    expect(composerActions.setMode).toHaveBeenCalledWith('code');
     expect(composerActions.setThinkingBudget).toHaveBeenCalledWith('high');
     expect(composerActions.send).toHaveBeenCalledTimes(1);
     act(() => uiStore.update({

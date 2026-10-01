@@ -52,13 +52,6 @@ export interface ChatReasoningOption extends ChatUIOption {
   tokens?: number;
 }
 
-export interface ChatModeSelectorConfig {
-  activeValue?: string;
-  label: string;
-  options: ChatUIOption[];
-  value: string;
-}
-
 /** Static Pi chat UI configuration (models, reasoning, context window). */
 export interface ChatUIConfig {
   /** Model options for the selector dropdown. */
@@ -88,11 +81,6 @@ export interface ChatUIConfig {
 
   /** Optional hook when the toolbar changes a reasoning selection. */
   applyReasoningSelection?(model: string, value: string, settings: unknown): void;
-  /** Optional mode selector descriptor. */
-  getModeSelector?(settings: Record<string, unknown>): ChatModeSelectorConfig | null;
-
-  /** Optional hook when the toolbar changes a Pi-owned mode selection. */
-  applyModeSelection?(value: string, settings: unknown): void;
 
   /** SVG icon for the chat UI (shown next to model names in selectors). */
   getChatIcon?(): ChatIconSvg | null;

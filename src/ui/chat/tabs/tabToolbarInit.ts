@@ -106,11 +106,6 @@ export function wireComposerChrome(
       tab.service?.syncThinkingLevel?.();
       if (!tab.state.isStreaming) tab.controllers.inputController?.processQueuedMessage();
     },
-    onModeChange: async (mode: string) => {
-      await updateTabAgentSettings(ports, (settings) => {
-        ports.models.applyModeSelection?.(mode, settings);
-      });
-    },
     onThinkingBudgetChange: async (budget: string) => {
       await updateTabAgentSettings(ports, (settings) => {
         settings.thinkingBudget = budget;
@@ -146,7 +141,6 @@ export function wireComposerChrome(
     send: () => runComposerAction(async () => tab.controllers.inputController?.sendMessage()),
     stop: () => tab.controllers.inputController?.cancelStreaming(),
     setModel: model => runComposerAction(() => toolbarCallbacks.onModelChange(model)),
-    setMode: mode => runComposerAction(() => toolbarCallbacks.onModeChange(mode)),
     setThinkingBudget: budget => runComposerAction(() => toolbarCallbacks.onThinkingBudgetChange(budget)),
     setThinkingLevel: level => runComposerAction(() => toolbarCallbacks.onThinkingLevelChange(level)),
     toggleExternalPath: pathValue => tab.ui.externalContextSelector?.togglePath(pathValue),
@@ -174,7 +168,6 @@ export function wireComposerChrome(
     if (!isTabOpen()) return;
     const settings = toolbarCallbacks.getSettings();
     const uiConfig = toolbarCallbacks.getUIConfig();
-    const mode = uiConfig.getModeSelector?.(settings) ?? null;
     const reasoningOptions = uiConfig.getReasoningOptions(settings.model, settings);
     const inputText = dom.richInput.value.trim();
     tab.state.uiStore.update({
@@ -183,10 +176,6 @@ export function wireComposerChrome(
           && !isSubmissionBlockedByContextLimit(tab.state.usage, inputText),
         model: settings.model,
         modelOptions: uiConfig.getModelOptions(settings).map(option => ({ ...option })),
-        mode: mode?.value ?? null,
-        modeLabel: mode?.label ?? null,
-        modeOptions: (mode?.options ?? []).map(option => ({ ...option })),
-        modeActiveValue: mode?.activeValue ?? null,
         adaptiveReasoning: uiConfig.isAdaptiveReasoningModel(settings.model, settings),
         thinkingBudget: settings.thinkingBudget,
         thinkingLevel: settings.thinkingLevel,

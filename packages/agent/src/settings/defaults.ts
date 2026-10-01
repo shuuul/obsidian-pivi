@@ -19,7 +19,6 @@ export const DEFAULT_PI_PROVIDER_IDS = [
 export const DEFAULT_AGENT_SETTINGS = Object.freeze({
   addedProviders: [...DEFAULT_PI_PROVIDER_IDS],
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
-  selectedMode: "default",
   visibleModels: [DEFAULT_MODEL_KEY],
   webSearchTools: {
     providerOrder: [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],

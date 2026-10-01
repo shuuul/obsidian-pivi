@@ -62,7 +62,6 @@ describe('deviceLocalEnvironmentMigration', () => {
       agentSettings: {
         environmentVariables: 'PI_FLAG=1',
         addedProviders: ['anthropic'],
-        selectedMode: 'default',
         visibleModels: [],
       },
     };
@@ -101,7 +100,6 @@ describe('deviceLocalEnvironmentMigration', () => {
       agentSettings: {
         environmentVariables: '',
         addedProviders: [],
-        selectedMode: 'default',
         visibleModels: [],
       },
     };
@@ -139,7 +137,6 @@ describe('deviceLocalEnvironmentMigration', () => {
       agentSettings: {
         environmentVariables: '',
         addedProviders: [],
-        selectedMode: 'default',
         visibleModels: [],
       },
     };
@@ -156,7 +153,7 @@ describe('deviceLocalEnvironmentMigration', () => {
 
     const second = await runDeviceLocalEnvironmentMigration({
       app: { secretStorage: secrets } as never,
-      rawSettings: { agentSettings: { environmentVariables: '', addedProviders: [], selectedMode: 'default', visibleModels: [] } },
+      rawSettings: { agentSettings: { environmentVariables: '', addedProviders: [], visibleModels: [] } },
       environmentStore,
       savePersistedSettings: async () => {
         saveCount += 1;
@@ -182,7 +179,6 @@ describe('deviceLocalEnvironmentMigration', () => {
       agentSettings: {
         environmentVariables: '',
         addedProviders: [],
-        selectedMode: 'default',
         visibleModels: [],
       },
     };

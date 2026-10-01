@@ -9,7 +9,6 @@ import { CacheHitMeter } from './CacheHitMeter';
 import {
   ExternalContextControl,
   ModelSelector,
-  ModeSelector,
   ThinkingSelector,
 } from './ComposerSelectors';
 import { UsageMeter } from './UsageMeter';
@@ -52,13 +51,6 @@ export function ComposerChrome({
         value={composer.adaptiveReasoning ? composer.thinkingLevel : composer.thinkingBudget}
       />
       <ExternalContextControl actions={actions} snapshot={snapshot} />
-      <ModeSelector
-        activeValue={composer.modeActiveValue}
-        label={composer.modeLabel}
-        onChange={actions.setMode}
-        options={composer.modeOptions}
-        value={composer.mode}
-      />
       <div className="pivi-input-action-group">
         {snapshot.showCacheHitRate ? <CacheHitMeter usage={snapshot.usage} /> : null}
         <UsageMeter usage={snapshot.usage} />

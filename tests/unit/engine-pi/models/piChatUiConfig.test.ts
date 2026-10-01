@@ -77,7 +77,6 @@ describe('piChatUIConfig context windows', () => {
           models: [{ id: 'qwen38-nvfp4', name: 'qwen38-nvfp4' }],
         }],
         environmentVariables: '',
-        selectedMode: 'default',
       },
     });
 

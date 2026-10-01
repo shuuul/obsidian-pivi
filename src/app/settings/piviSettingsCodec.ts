@@ -64,6 +64,15 @@ function normalizeChatViewPlacement(value: unknown): ChatViewPlacement {
   return DEFAULT_PIVI_SETTINGS.chatViewPlacement;
 }
 
+/** Agent-settings fields earlier versions persisted; dropped on load. */
+const REMOVED_AGENT_SETTINGS_FIELDS = ['selectedMode', 'environmentHash'] as const;
+
+function hasRemovedAgentSettingsField(stored: Record<string, unknown>): boolean {
+  const agentSettings = stored.agentSettings;
+  return isAgentRuntimeSettings(agentSettings)
+    && REMOVED_AGENT_SETTINGS_FIELDS.some(field => Object.hasOwn(agentSettings, field));
+}
+
 function isAgentRuntimeSettings(value: unknown): value is AgentRuntimeSettings {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
@@ -72,7 +81,9 @@ function normalizeAgentSettings(
   stored: Record<string, unknown>,
 ): AgentRuntimeSettings {
   if (isAgentRuntimeSettings(stored.agentSettings)) {
-    return { ...stored.agentSettings };
+    const agentSettings: Record<string, unknown> = { ...stored.agentSettings };
+    for (const field of REMOVED_AGENT_SETTINGS_FIELDS) delete agentSettings[field];
+    return agentSettings as unknown as AgentRuntimeSettings;
   }
 
   return {
@@ -295,7 +306,8 @@ export function normalizeStoredPiviSettings(
     Object.hasOwn(stored, "maxTabs") ||
     Object.hasOwn(stored, "enableAutoCompact") ||
     Object.hasOwn(stored, "autoCompactThresholdRatio") ||
-    Object.hasOwn(stored, "autoCompactKeepRecentTokens");
+    Object.hasOwn(stored, "autoCompactKeepRecentTokens") ||
+    hasRemovedAgentSettingsField(stored);
 
   return { settings, changed };
 }

@@ -22,7 +22,6 @@ describe('piModelEnv provider auth resolution', () => {
         sharedEnvironmentVariables: 'ANTHROPIC_API_KEY=shared-env-key',
         agentSettings: {
           environmentVariables: 'ANTHROPIC_API_KEY=pi-env-key',
-          selectedMode: 'default',
           visibleModels: ['anthropic/mock-model'],
         },
       },
@@ -53,7 +52,6 @@ describe('piModelEnv provider auth resolution', () => {
         agentSettings: {
           disabledProviders: ['anthropic'],
           environmentVariables: 'ANTHROPIC_API_KEY=pi-env-key',
-          selectedMode: 'default',
           visibleModels: ['anthropic/mock-model'],
         },
       },
@@ -76,7 +74,6 @@ describe('piModelEnv provider auth resolution', () => {
         model: 'anthropic/mock-model',
         agentSettings: {
           environmentVariables: 'ANTHROPIC_AUTH_TOKEN=bearer-token',
-          selectedMode: 'default',
           visibleModels: ['anthropic/mock-model'],
         },
       },
@@ -102,7 +99,6 @@ describe('piModelEnv provider auth resolution', () => {
         customContextLimits: { [modelKey]: 4_096 },
         agentSettings: {
           environmentVariables: '',
-          selectedMode: 'default',
           visibleModels: [modelKey],
         },
       },

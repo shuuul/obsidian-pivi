@@ -205,6 +205,26 @@ describe("PiviSettingsStorage", () => {
     );
   });
 
+  it("removes retired agent settings fields on load", async () => {
+    const stored = {
+      agentSettings: { selectedMode: "default", environmentHash: "abc", visibleModels: [] },
+    };
+    const adapter = createMemoryAdapter(JSON.stringify(stored));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.agentSettings).not.toHaveProperty("selectedMode");
+    expect(settings.agentSettings).not.toHaveProperty("environmentHash");
+    expect(adapter.write).toHaveBeenCalledWith(
+      PIVI_SETTINGS_PATH,
+      expect.not.stringContaining("selectedMode"),
+    );
+  });
+
   it("migrates legacy external pins into Obsidian tool settings", async () => {
     const stored = {
       persistentExternalContextPaths: [` ${externalFixturePath('/tmp/legacy')}/ `, externalFixturePath('/tmp/shared')],

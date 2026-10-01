@@ -1,7 +1,6 @@
 import type { ManagedMcpServer } from '../mcp/types';
 import type { CapabilityApprovalPort } from '../ports/capabilityApproval';
 import type {
-  ChatModeSelectorConfig,
   ChatReasoningOption,
   ChatUIOption,
 } from '../runtime/chatUi';
@@ -114,8 +113,6 @@ export interface ChatModelsPort {
     value: string,
     settings: ChatSettingsSnapshot,
   ): void;
-  getModeSelector?(settings: ChatSettingsSnapshot): ChatModeSelectorConfig | null;
-  applyModeSelection?(value: string, settings: ChatSettingsSnapshot): void;
   prepareModelMetadata(model: string): Promise<void>;
 }
 
