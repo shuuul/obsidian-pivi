@@ -1,6 +1,6 @@
 import type { AgentEngine } from '@pivi/agent/engine';
 import type { ChatMessage } from '@pivi/agent/runtime';
-import type { ToolProvider } from '@pivi/agent/plugins';
+import type { ToolProvider } from '@pivi/agent/runtime/agentCoreHost';
 import type {
   HttpClient,
   HttpRequest,

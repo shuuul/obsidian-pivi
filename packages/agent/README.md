@@ -25,15 +25,14 @@
 
 ## Public API
 
-- Provider credential helpers under `@pivi/agent/auth`.
+- Provider credential helpers under `@pivi/agent/auth/*` leaf subpaths.
 - Canonical host capability contracts under `@pivi/agent/ports`.
 - Workspace context and client terminology under `@pivi/agent/workspace`.
-- Declarative plugin/resource registry contracts under `@pivi/agent/plugins`.
 - Settings contracts/defaults under `@pivi/agent/settings` and runtime contracts/helpers under `@pivi/agent/runtime`.
-- Configuration publication/value-source helpers under `@pivi/agent/config` and logging under `@pivi/agent/logging`.
+- Configuration publication/value-source helpers under `@pivi/agent/config/*` and logging under `@pivi/agent/logging/pluginLogger`.
 - Namespaced tool protocol, the host-neutral `createSessionsTool` factory, and canonical presentation/summary helpers under `@pivi/agent/tools`.
 - Session contracts, recovery port, paths, metadata, and linear open-session management under `@pivi/agent/session`; application ports open complete sessions by `sessionFile`, while concrete Pi JSONL tree compatibility stays under `@pivi/engine-pi/session/*`.
-- Skill helpers, slash-command catalog contracts, and built-in slash-command IDs under `@pivi/agent/skills`.
+- Skill helpers, slash-command catalog contracts, and built-in slash-command IDs under `@pivi/agent/skills/*` leaf subpaths.
 - MCP config, OAuth, server management, and proxy tools under `@pivi/agent/mcp`. Automatic prefetch warms enabled Streamable HTTP servers. Stdio MCP is not supported.
 - Prompt context formatting, host-neutral mention parsing, and prompt builders under `@pivi/agent/context`, `@pivi/agent/context/mentions`, and `@pivi/agent/prompt`. MCP prompt inventory reflects settings-enabled servers and cached tool names.
 - Runtime/application contracts, including `ChatPorts`, `PiChatService`, and `AuxQueryRunner`, under `@pivi/agent/runtime`.

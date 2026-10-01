@@ -183,11 +183,6 @@ const boundaryRules = [
     forbidden: [/^@earendil-works\/(?!pi-mcp(?:\/|$))/, enginePiPackagePattern],
   },
   {
-    name: '@pivi/agent plugins has no raw Pi SDK imports',
-    root: 'packages/agent/src/plugins',
-    forbidden: [/^@earendil-works\//, enginePiPackagePattern],
-  },
-  {
     name: '@pivi/agent prompt has no raw Pi SDK imports',
     root: 'packages/agent/src/prompt',
     forbidden: [/^@earendil-works\//, enginePiPackagePattern],

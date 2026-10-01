@@ -5,7 +5,6 @@ export * as engine from './engine';
 export * as logging from './logging';
 export * as mcp from './mcp';
 export * as network from './network';
-export * as plugins from './plugins';
 export * as ports from './ports';
 export * as prompt from './prompt';
 export * as runtime from './runtime/index';

@@ -1,5 +1,4 @@
 import type { AgentEngine } from '../engine';
-import type { PluginContribution, ToolProvider } from '../plugins';
 import type {
   AuthService,
   Clock,
@@ -13,7 +12,13 @@ import type {
 } from '../ports';
 import type { PromptContributor } from '../prompt';
 import type { SessionStore } from '../session';
+import type { ToolSpec } from '../tools';
 import type { WorkspaceContext } from '../workspace';
+
+export interface ToolProvider {
+  id: string;
+  listTools(context: Record<string, unknown>): Promise<ToolSpec[]>;
+}
 
 export interface AgentCoreContextProvider<TContext = unknown, TRequest = unknown> {
   id: string;
@@ -52,7 +57,6 @@ export interface AgentCoreHost {
   process?: ProcessRunner;
   opener?: ExternalOpener;
   prompts?: PromptContributor[];
-  plugins?: PluginContribution[];
   ui?: RuntimeUiCallbacks;
   logger?: Logger;
   clock?: Clock;
