@@ -127,21 +127,6 @@ describe("Note Toolbar integration", () => {
     ]);
   });
 
-  it('adds and verifies a workspace command with its own command id and icon', async () => {
-    const { deps, files } = createHarness({ itemStyle: 'icon-only' });
-    deps.commandId = 'pivi:workspace-command-polish-key';
-    deps.itemIcon = 'sparkles';
-    deps.itemTooltip = 'Run /polish in a new Pivi session';
-
-    await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({ status: 'installed' });
-    const config = JSON.parse(files.get(DATA_PATH) ?? '{}') as ReturnType<typeof createToolbarConfig>;
-    expect(config.toolbars[0]?.items).toContainEqual(expect.objectContaining({
-      icon: 'sparkles',
-      label: '',
-      linkAttr: { type: 'command', commandId: 'pivi:workspace-command-polish-key' },
-    }));
-  });
-
   it("does not duplicate an existing command item", async () => {
     const config = createToolbarConfig([
       {
@@ -171,10 +156,9 @@ describe("Note Toolbar integration", () => {
     const setIcon = jest.fn(async () => undefined);
     const setLabel = jest.fn(async () => undefined);
     const setTooltip = jest.fn(async () => undefined);
-    deps.itemIcon = 'sparkles';
     deps.itemTooltip = 'Run /polish in a new Pivi session';
     deps.getItemApi = id => id === itemId ? {
-      getIcon: () => 'message-square-plus',
+      getIcon: () => 'sparkles',
       getLabel: () => 'Old label',
       getTooltip: () => 'Old tooltip',
       setIcon,
@@ -185,7 +169,7 @@ describe("Note Toolbar integration", () => {
     await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
       status: 'already-installed',
     });
-    expect(setIcon).toHaveBeenCalledWith('sparkles');
+    expect(setIcon).toHaveBeenCalledWith('message-square-plus');
     expect(setLabel).toHaveBeenCalledWith('');
     expect(setTooltip).toHaveBeenCalledWith('Run /polish in a new Pivi session');
     expect(runCli).not.toHaveBeenCalled();

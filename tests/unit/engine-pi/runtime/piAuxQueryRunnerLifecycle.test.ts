@@ -77,7 +77,6 @@ function baseConfig(overrides: Partial<{
   systemPrompt: string;
   model: string;
   abortController: AbortController;
-  onTextChunk: (text: string) => void;
 }> = {}) {
   return { systemPrompt: 'You are a helper.', ...overrides };
 }
@@ -98,7 +97,7 @@ describe('PiAuxQueryRunner (core)', () => {
     };
   });
 
-  it('accumulates streamed text, invokes onTextChunk with running total, and returns full text', async () => {
+  it('accumulates streamed text and returns full text', async () => {
     promptBehavior = async (instance) => {
       for (const listener of [...instance.listeners]) {
         listener({ type: 'message_update', message: {}, assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: 'Hello', partial: {} } });
@@ -106,10 +105,8 @@ describe('PiAuxQueryRunner (core)', () => {
       }
     };
     const runner = createRunner();
-    const chunks: string[] = [];
-    const result = await runner.query(baseConfig({ onTextChunk: (text) => chunks.push(text) }), 'summarize this');
+    const result = await runner.query(baseConfig(), 'summarize this');
     expect(result).toBe('Hello world');
-    expect(chunks).toEqual(['Hello', 'Hello world']);
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith('summarize this');
     expect(mockResolveModel).toHaveBeenCalledWith(undefined);

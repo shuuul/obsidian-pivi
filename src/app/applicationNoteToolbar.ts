@@ -31,7 +31,7 @@ export interface ApplicationNoteToolbarDeps {
 
 type NoteToolbarItemOptions = Pick<
   Parameters<typeof setupNoteToolbar>[0],
-  'commandId' | 'itemStyle' | 'itemIcon' | 'itemTooltip'
+  'commandId' | 'itemStyle' | 'itemTooltip'
 >;
 
 function getNoteToolbarItemApi(itemId: string): NoteToolbarItemApi | null {

@@ -42,7 +42,6 @@ describe("ApplicationNoteToolbar", () => {
       commandId: "pivi:add-selection-to-chat-input",
       itemStyle: "icon-only",
     }));
-    expect(mockSetupNoteToolbarIntegration.mock.calls[0]?.[0]).not.toHaveProperty("itemIcon");
   });
 
 });
