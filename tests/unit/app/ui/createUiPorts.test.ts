@@ -1,5 +1,6 @@
 import type { PiviSettings } from '@pivi/agent/settings';
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/agent/settings/defaults';
+import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 import * as defaultSkillsRemote from '@pivi/agent/skills/vault/fetchDefaultVaultSkillsRemoteSha';
 import { SkillsManagementCoordinator } from '@pivi/agent/skills/vault/skillsManagementCoordinator';
 import { VaultSkillsService } from '@pivi/agent/skills/vault/vaultSkillsService';
@@ -236,6 +237,35 @@ describe('UI port adapters', () => {
     expect(ports).not.toHaveProperty('plugin');
     expect(ports).not.toHaveProperty('workspace');
     expect(ports).not.toHaveProperty('getPiWorkspace');
+  });
+
+  it('keeps external directory grant records aligned when pinned directories change', async () => {
+    const settings = structuredClone(DEFAULT_PIVI_SETTINGS) as PiviSettings;
+    settings.agentSettings.obsidianTools = {
+      ...getObsidianToolsSettingsFromBag(settings),
+      externalReadDirectories: ['/external/kept', '/external/unpinned'],
+      externalDirectoryPermissions: [
+        { realpath: '/external/kept', enabled: true },
+        { realpath: '/external/unpinned', enabled: true },
+      ],
+    };
+    const host = {
+      settings,
+      saveSettings: jest.fn(async () => {}),
+      getUiFacades: () => createUiFacades(),
+      getAllViews: () => [],
+    } as unknown as ChatUiCompositionHost;
+    const ports = createChatUiPorts(host, host as never, null);
+
+    await ports.settings.setPinnedExternalReadDirectories(['/external/kept', '/external/added']);
+
+    // Saving persists the grant records, so a stale list would drop the change on restart.
+    expect(getObsidianToolsSettingsFromBag(settings).externalDirectoryPermissions).toEqual([
+      { realpath: '/external/kept', enabled: true },
+      { realpath: '/external/unpinned', enabled: false },
+      { realpath: '/external/added', enabled: true },
+    ]);
+    expect(host.saveSettings).toHaveBeenCalledTimes(1);
   });
 
   it('projects settings persistence and environment actions', async () => {

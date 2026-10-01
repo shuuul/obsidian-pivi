@@ -7,6 +7,7 @@ import { getPiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 
 import type { PiviPluginWorkspace } from '@/app/hostContracts';
+import { mergeExternalDirectoryPermissions } from '@/app/settings/piviSettingsCodec';
 
 import { type ChatUiCompositionHost, type ChatUiSessionHost } from './chatUiCompositionHost';
 import {
@@ -165,6 +166,11 @@ export function createChatUiPorts(
         host.settings.agentSettings.obsidianTools = {
           ...current,
           externalReadDirectories: [...paths],
+          // Keep the grant records aligned; saving persists these, not the path list.
+          externalDirectoryPermissions: mergeExternalDirectoryPermissions(
+            current.externalDirectoryPermissions,
+            paths,
+          ),
         };
         await host.saveSettings();
         for (const view of host.getAllViews()) {

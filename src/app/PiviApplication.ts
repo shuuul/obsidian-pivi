@@ -386,6 +386,8 @@ export class PiviApplication {
         this.lastKnownTabManagerState = state as AppTabManagerState | null;
       },
       getStorage: () => this.storage,
+      capabilityPermissions: this.deviceLocalCapabilityPermissions,
+      legacyExternalContexts: this.deviceLocalExternalContexts,
       skillsHost: this,
     });
     this.network.setProviderDeadlines(this.settings.providerRequestDeadlines);
