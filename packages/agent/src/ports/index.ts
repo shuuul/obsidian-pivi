@@ -27,29 +27,12 @@ export type HomeFileStore = Pick<
   'exists' | 'read' | 'write' | 'delete' | 'deleteFolder' | 'listFolders' | 'ensureFolder'
 >;
 
-export interface SecretStore {
-  getSecret(key: string): Promise<string | null>;
-  setSecret(key: string, value: string): Promise<void>;
-  deleteSecret(key: string): Promise<void>;
-  listSecrets(prefix?: string): Promise<string[]>;
-}
-
-/**
- * Compatibility surface for existing synchronous MCP secret persistence.
- * New core modules should prefer SecretStore once callers can await secret I/O.
- */
+/** Synchronous secret persistence used by MCP auth stores. */
 export interface SyncSecretStore {
   getSecret(key: string): string | null;
   setSecret(key: string, value: string): void;
   listSecrets(prefix?: string): string[];
   deleteSecret?(key: string): void;
-}
-
-export interface AuthService {
-  readProviderCredential(providerId: string): Promise<ProviderCredential | undefined>;
-  writeProviderCredential(providerId: string, credential: ProviderCredential): Promise<void>;
-  deleteProviderCredential(providerId: string): Promise<void>;
-  listProviderCredentialIds?(): Promise<string[]>;
 }
 
 export type ProviderLegacyAuthData = Record<string, ProviderCredential>;
@@ -85,17 +68,6 @@ export interface ProviderAuthModel {
 
 export interface ModelAuthHost<TModel extends ProviderAuthModel = ProviderAuthModel, TAuthResult = unknown> {
   getAuth(model: TModel): Promise<TAuthResult | undefined>;
-}
-
-export interface Logger {
-  debug?(message: string, metadata?: Record<string, unknown>): void;
-  info?(message: string, metadata?: Record<string, unknown>): void;
-  warn?(message: string, metadata?: Record<string, unknown>): void;
-  error?(message: string, metadata?: Record<string, unknown>): void;
-}
-
-export interface Clock {
-  now(): number;
 }
 
 export interface HttpRequest {
@@ -184,11 +156,6 @@ export interface ProcessRunner {
 
 export interface ExternalOpener {
   openExternalUrl(url: string): Promise<void>;
-}
-
-export interface RuntimeUiCallbacks {
-  notify?(message: string): void;
-  requestConfirmation?(request: { title: string; message: string }): Promise<boolean>;
 }
 
 export type {

@@ -29,7 +29,3 @@ export interface ExternalContextAvailability {
   available: boolean;
   reason?: string;
 }
-
-export interface PromptContributor {
-  contributePrompt(): string | null | undefined;
-}

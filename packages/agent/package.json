@@ -15,7 +15,6 @@
     "./auth/resolveProviderAuth": "./src/auth/resolveProviderAuth.ts",
     "./config/publication": "./src/config/publication.ts",
     "./config/valueSource": "./src/config/valueSource.ts",
-    "./engine": "./src/engine/index.ts",
     "./logging/pluginLogger": "./src/logging/pluginLogger.ts",
     "./context": "./src/context/index.ts",
     "./context/browser": "./src/context/browser.ts",
@@ -58,8 +57,6 @@
     "./prompt/obsidianAgentTools": "./src/prompt/obsidianAgentTools.ts",
     "./prompt/types": "./src/prompt/types.ts",
     "./runtime": "./src/runtime/index.ts",
-    "./runtime/agentCoreHost": "./src/runtime/agentCoreHost.ts",
-    "./runtime/agentCoreRuntime": "./src/runtime/agentCoreRuntime.ts",
     "./runtime/auxQueryRunner": "./src/runtime/auxQueryRunner.ts",
     "./runtime/auxTypes": "./src/runtime/auxTypes.ts",
     "./runtime/capabilitySessionGrants": "./src/runtime/capabilitySessionGrants.ts",
@@ -139,8 +136,7 @@
     "./tools/toolResult": "./src/tools/toolResult.ts",
     "./tools/toolResultContent": "./src/tools/toolResultContent.ts",
     "./tools/types": "./src/tools/types.ts",
-    "./tools/webSearch/credentialStore": "./src/tools/webSearch/credentialStore.ts",
-    "./workspace": "./src/workspace/index.ts"
+    "./tools/webSearch/credentialStore": "./src/tools/webSearch/credentialStore.ts"
   },
   "dependencies": {
     "@earendil-works/pi-mcp": "0.99.2"

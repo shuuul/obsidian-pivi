@@ -1,7 +1,6 @@
 export * as auth from './auth';
 export * as config from './config';
 export * as context from './context';
-export * as engine from './engine';
 export * as logging from './logging';
 export * as mcp from './mcp';
 export * as network from './network';
@@ -12,4 +11,3 @@ export * as session from './session';
 export * as settings from './settings';
 export * as skills from './skills';
 export * as tools from './tools';
-export * as workspace from './workspace';

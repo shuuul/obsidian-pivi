@@ -375,8 +375,6 @@ export default defineConfig([
           group: [
             "@pivi/engine-pi",
             "@pivi/engine-pi/*",
-            "@pivi/agent/engine",
-            "@pivi/agent/engine/*",
           ],
           message:
             "@pivi/obsidian-tools must not import Pi engine implementations. Consume host-neutral core contracts instead.",
