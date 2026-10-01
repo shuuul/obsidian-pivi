@@ -230,136 +230,167 @@ export function messageHasVisibleAssistantContent(message: ChatMessage): boolean
   return false;
 }
 
+interface AssistantVisibility {
+  ordinaryTool: boolean;
+  text: boolean;
+  thinking: boolean;
+  subagent: boolean;
+  compactBoundary: boolean;
+}
+
+function noteVisibleToolCall(visibility: AssistantVisibility, toolCall: ToolCallInfo | undefined): void {
+  if (!toolCall || !shouldRenderToolCall(toolCall)) return;
+  if (toolCall.subagent) visibility.subagent = true;
+  else visibility.ordinaryTool = true;
+}
+
+function noteVisibleBlock(visibility: AssistantVisibility, message: ChatMessage, block: ContentBlock): void {
+  switch (block.type) {
+    case 'text':
+      if (block.content.trim().length > 0) visibility.text = true;
+      break;
+    case 'thinking':
+      if (block.content.trim().length > 0) visibility.thinking = true;
+      break;
+    case 'context_compacted':
+      visibility.compactBoundary = true;
+      break;
+    case 'subagent':
+      visibility.subagent = true;
+      break;
+    case 'tool_use':
+      noteVisibleToolCall(visibility, toolForBlock(message, block.toolId));
+      break;
+  }
+}
+
 /** Data-plane equivalent of pre-React updateAssistantToolOnlyClass. */
 export function isAssistantToolOnlyMessage(message: ChatMessage, showTokensPerSecond = true): boolean {
-  const blocks = message.contentBlocks;
-  let hasOrdinaryVisibleTool = false;
-  let hasNonEmptyText = Boolean(message.content?.trim());
-  let hasThinking = false;
-  let hasSubagent = false;
-  let hasCompactBoundary = false;
-
-  if (blocks?.length) {
-    for (const block of blocks) {
-      if (block.type === 'text' && block.content.trim().length > 0) hasNonEmptyText = true;
-      if (block.type === 'thinking' && block.content.trim().length > 0) hasThinking = true;
-      if (block.type === 'context_compacted') hasCompactBoundary = true;
-      if (block.type === 'subagent') hasSubagent = true;
-      if (block.type === 'tool_use') {
-        const toolCall = message.toolCalls?.find(tc => tc.id === block.toolId);
-        if (!toolCall || !shouldRenderToolCall(toolCall)) continue;
-        if (toolCall.subagent) {
-          hasSubagent = true;
-          continue;
-        }
-        hasOrdinaryVisibleTool = true;
-      }
-    }
+  const visibility: AssistantVisibility = {
+    ordinaryTool: false,
+    text: Boolean(message.content?.trim()),
+    thinking: false,
+    subagent: false,
+    compactBoundary: false,
+  };
+  for (const block of message.contentBlocks ?? []) {
+    noteVisibleBlock(visibility, message, block);
   }
-
   for (const toolCall of message.toolCalls ?? []) {
-    if (!shouldRenderToolCall(toolCall)) continue;
-    if (toolCall.subagent) {
-      hasSubagent = true;
-      continue;
-    }
-    hasOrdinaryVisibleTool = true;
+    noteVisibleToolCall(visibility, toolCall);
   }
 
   const hasResponseFooter = Boolean(
-    !hasCompactBoundary
+    !visibility.compactBoundary
     && (
       (message.durationSeconds && message.durationSeconds > 0)
       // A hidden tokens/s footer must not suppress the tool-only class.
       || (showTokensPerSecond && message.tokensPerSecond !== undefined && message.tokensPerSecond > 0)
     ),
   );
-  return hasOrdinaryVisibleTool
-    && !hasNonEmptyText
-    && !hasThinking
-    && !hasSubagent
+  return visibility.ordinaryTool
+    && !visibility.text
+    && !visibility.thinking
+    && !visibility.subagent
     && !hasResponseFooter
-    && !hasCompactBoundary;
+    && !visibility.compactBoundary;
 }
 
-/** Ordered assistant block presentation. contentBlocks are authoritative; toolCalls are resolved by id only. */
-export function AssistantContentView({ message, contentAdapters, isStreaming = false, projectionStore, showTokensPerSecond = true }: AssistantContentViewProps) {
-  const t = useT();
-  const blocks = message.contentBlocks;
-  const renderedToolIds = new Set<string>();
-  const content: ReactElement[] = [];
+interface BlockRenderContext {
+  readonly message: ChatMessage;
+  readonly contentAdapters?: MessageContentAdapters;
+  readonly isStreaming: boolean;
+  readonly projectionStore?: ChatProjectionStore;
+  /** Tool calls already placed by a block, so the orphan pass does not repeat them. */
+  readonly renderedToolIds: Set<string>;
+}
 
-  if (blocks?.length) {
-    for (let index = 0; index < blocks.length; index++) {
-      const block = blocks[index];
-      if (!block) continue;
-      const key = `${message.id}:${index}:${block.type}`;
-      const blockId = getChatProjectionBlockId(message.id, index);
-      switch (block.type) {
-        case 'text':
-          content.push(projectionStore
-            ? <SubscribedTextBlockView blockId={blockId} contentAdapters={contentAdapters} isStreaming={isStreaming} key={key} store={projectionStore} />
-            : <TextBlockView key={key} messageId={message.id} block={block} index={index} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
-          break;
-        case 'thinking':
-          content.push(projectionStore
-            ? <SubscribedThinkingBlockView blockId={blockId} contentAdapters={contentAdapters} isStreaming={isStreaming} key={key} store={projectionStore} />
-            : <ThinkingBlockView key={key} block={block} contentAdapters={contentAdapters} generation={`${message.id}:thinking:${index}`} isStreaming={isStreaming} />);
-          break;
-        case 'tool_use': {
-          const toolCall = toolForBlock(message, block.toolId);
-          if (!toolCall || !shouldRenderToolCall(toolCall)) break;
-          const grouped = [toolCall];
-          let cursor = index + 1;
-          if (isGroupableToolCall(toolCall)) {
-            while (cursor < blocks.length) {
-              const candidate = blocks[cursor];
-              if (!candidate || candidate.type !== 'tool_use') break;
-              const candidateTool = toolForBlock(message, candidate.toolId);
-              if (!candidateTool || !shouldRenderToolCall(candidateTool) || !isGroupableToolCall(candidateTool)) break;
-              grouped.push(candidateTool);
-              cursor++;
-            }
-          }
-          grouped.forEach(item => renderedToolIds.add(item.id));
-          if (grouped.length > 1) {
-            content.push(projectionStore
-              ? <ToolStepGroupView contentAdapters={contentAdapters} key={key} projectionStore={projectionStore} toolIds={grouped.map(item => item.id)} />
-              : <ToolStepGroupView contentAdapters={contentAdapters} key={key} toolCalls={grouped} />);
-            index = cursor - 1;
-          } else {
-            content.push(projectionStore
-              ? <ToolCallView key={key} toolId={toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
-              : <ToolCallView key={key} toolCall={toolCall} contentAdapters={contentAdapters} />);
-          }
-          break;
-        }
-        case 'subagent': {
-          const resolved = subagentForBlock(message, block.subagentId);
-          if (!resolved) break;
-          renderedToolIds.add(resolved.toolCall.id);
-          content.push(projectionStore
-            ? <ToolCallView key={key} toolId={resolved.toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
-            : <ToolCallView key={key} toolCall={resolved.toolCall} contentAdapters={contentAdapters} />);
-          break;
-        }
-        case 'context_compacted':
-          content.push(<ContextCompactedView block={block} key={key} />);
-          break;
-      }
+function renderToolCall(context: BlockRenderContext, toolCall: ToolCallInfo, key: string): ReactElement {
+  const { contentAdapters, projectionStore } = context;
+  return projectionStore
+    ? <ToolCallView key={key} toolId={toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
+    : <ToolCallView key={key} toolCall={toolCall} contentAdapters={contentAdapters} />;
+}
+
+/** Collects the run of consecutive groupable tool blocks starting at `index`. */
+function collectToolGroup(
+  message: ChatMessage,
+  blocks: readonly ContentBlock[],
+  index: number,
+  toolCall: ToolCallInfo,
+): { grouped: ToolCallInfo[]; cursor: number } {
+  const grouped = [toolCall];
+  let cursor = index + 1;
+  if (isGroupableToolCall(toolCall)) {
+    while (cursor < blocks.length) {
+      const candidate = blocks[cursor];
+      if (!candidate || candidate.type !== 'tool_use') break;
+      const candidateTool = toolForBlock(message, candidate.toolId);
+      if (!candidateTool || !shouldRenderToolCall(candidateTool) || !isGroupableToolCall(candidateTool)) break;
+      grouped.push(candidateTool);
+      cursor++;
     }
-  } else if (message.content) {
-    content.push(<TextBlockView key={`${message.id}:legacy-text`} messageId={message.id} block={{ type: 'text', content: message.content }} index={0} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
   }
+  return { grouped, cursor };
+}
 
-  for (const toolCall of message.toolCalls ?? []) {
-    if (renderedToolIds.has(toolCall.id) || !shouldRenderToolCall(toolCall)) continue;
-    content.push(projectionStore
-      ? <ToolCallView key={`${message.id}:orphan:${toolCall.id}`} toolId={toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
-      : <ToolCallView key={`${message.id}:orphan:${toolCall.id}`} toolCall={toolCall} contentAdapters={contentAdapters} />);
+/** Renders the block at `index` and returns the index of the last block it consumed. */
+function renderBlock(
+  context: BlockRenderContext,
+  blocks: readonly ContentBlock[],
+  index: number,
+  content: ReactElement[],
+): number {
+  const { message, contentAdapters, isStreaming, projectionStore, renderedToolIds } = context;
+  const block = blocks[index];
+  if (!block) return index;
+  const key = `${message.id}:${index}:${block.type}`;
+  const blockId = getChatProjectionBlockId(message.id, index);
+  switch (block.type) {
+    case 'text':
+      content.push(projectionStore
+        ? <SubscribedTextBlockView blockId={blockId} contentAdapters={contentAdapters} isStreaming={isStreaming} key={key} store={projectionStore} />
+        : <TextBlockView key={key} messageId={message.id} block={block} index={index} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
+      return index;
+    case 'thinking':
+      content.push(projectionStore
+        ? <SubscribedThinkingBlockView blockId={blockId} contentAdapters={contentAdapters} isStreaming={isStreaming} key={key} store={projectionStore} />
+        : <ThinkingBlockView key={key} block={block} contentAdapters={contentAdapters} generation={`${message.id}:thinking:${index}`} isStreaming={isStreaming} />);
+      return index;
+    case 'tool_use': {
+      const toolCall = toolForBlock(message, block.toolId);
+      if (!toolCall || !shouldRenderToolCall(toolCall)) return index;
+      const { grouped, cursor } = collectToolGroup(message, blocks, index, toolCall);
+      grouped.forEach(item => renderedToolIds.add(item.id));
+      if (grouped.length > 1) {
+        content.push(projectionStore
+          ? <ToolStepGroupView contentAdapters={contentAdapters} key={key} projectionStore={projectionStore} toolIds={grouped.map(item => item.id)} />
+          : <ToolStepGroupView contentAdapters={contentAdapters} key={key} toolCalls={grouped} />);
+        return cursor - 1;
+      }
+      content.push(renderToolCall(context, toolCall, key));
+      return index;
+    }
+    case 'subagent': {
+      const resolved = subagentForBlock(message, block.subagentId);
+      if (!resolved) return index;
+      renderedToolIds.add(resolved.toolCall.id);
+      content.push(renderToolCall(context, resolved.toolCall, key));
+      return index;
+    }
+    case 'context_compacted':
+      content.push(<ContextCompactedView block={block} key={key} />);
+      return index;
+    default:
+      return index;
   }
+}
 
-  const hasCompactBoundary = blocks?.some(block => block.type === 'context_compacted') ?? false;
+function renderResponseFooter(
+  message: ChatMessage,
+  showTokensPerSecond: boolean,
+  t: ReturnType<typeof useT>,
+): ReactElement | null {
   const durationLabel = message.durationSeconds && message.durationSeconds > 0
     ? t('chat.stream.responseDuration', {
         flavor: message.durationFlavorWord ?? t('chat.stream.defaultDurationFlavor'),
@@ -369,14 +400,46 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
   const speedLabel = showTokensPerSecond && message.tokensPerSecond !== undefined && message.tokensPerSecond > 0
     ? t('chat.stream.tokensPerSecond', { rate: formatTokensPerSecond(message.tokensPerSecond) })
     : null;
-  if ((durationLabel || speedLabel) && !hasCompactBoundary) {
-    content.push(
-      <div className="pivi-response-footer" key={`${message.id}:duration`}>
-        <span className="pivi-baked-duration pivi-response-meta">
-          {durationLabel && speedLabel ? `${durationLabel} · ${speedLabel}` : durationLabel ?? speedLabel}
-        </span>
-      </div>,
-    );
+  if (!durationLabel && !speedLabel) return null;
+  return (
+    <div className="pivi-response-footer" key={`${message.id}:duration`}>
+      <span className="pivi-baked-duration pivi-response-meta">
+        {durationLabel && speedLabel ? `${durationLabel} · ${speedLabel}` : durationLabel ?? speedLabel}
+      </span>
+    </div>
+  );
+}
+
+/** Ordered assistant block presentation. contentBlocks are authoritative; toolCalls are resolved by id only. */
+export function AssistantContentView({ message, contentAdapters, isStreaming = false, projectionStore, showTokensPerSecond = true }: AssistantContentViewProps) {
+  const t = useT();
+  const blocks = message.contentBlocks;
+  const context: BlockRenderContext = {
+    message,
+    contentAdapters,
+    isStreaming,
+    projectionStore,
+    renderedToolIds: new Set<string>(),
+  };
+  const content: ReactElement[] = [];
+
+  if (blocks?.length) {
+    for (let index = 0; index < blocks.length; index++) {
+      index = renderBlock(context, blocks, index, content);
+    }
+  } else if (message.content) {
+    content.push(<TextBlockView key={`${message.id}:legacy-text`} messageId={message.id} block={{ type: 'text', content: message.content }} index={0} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
+  }
+
+  for (const toolCall of message.toolCalls ?? []) {
+    if (context.renderedToolIds.has(toolCall.id) || !shouldRenderToolCall(toolCall)) continue;
+    content.push(renderToolCall(context, toolCall, `${message.id}:orphan:${toolCall.id}`));
+  }
+
+  const hasCompactBoundary = blocks?.some(block => block.type === 'context_compacted') ?? false;
+  const footer = hasCompactBoundary ? null : renderResponseFooter(message, showTokensPerSecond, t);
+  if (footer) {
+    content.push(footer);
   }
 
   return <>{content}</>;

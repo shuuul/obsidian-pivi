@@ -144,6 +144,107 @@ export interface MessageViewProps {
   readonly projectionStore?: ChatProjectionStore;
 }
 
+interface MessageActionVisibility {
+  readonly canCopy: boolean;
+  readonly showScroll: boolean;
+  readonly showRedo: boolean;
+  readonly showFork: boolean;
+  readonly showMarkdownCopy: boolean;
+  readonly showActions: boolean;
+}
+
+function resolveActionVisibility(
+  message: ChatMessage,
+  actions: MessageViewProps['actions'],
+  hideActions: boolean,
+): MessageActionVisibility {
+  const canCopy = !hideActions && actions.canCopy(message);
+  const showScroll = !hideActions && message.role === 'assistant';
+  const showRedo = !hideActions && message.role === 'assistant' && actions.canRedo(message.id);
+  const showFork = !hideActions && message.role === 'assistant' && actions.canFork(message);
+  const showMarkdownCopy = !hideActions
+    && message.role === 'assistant'
+    && actions.copyConversationAsMarkdown !== undefined;
+  const showActions = canCopy || showMarkdownCopy || showScroll || showRedo || showFork;
+  return { canCopy, showScroll, showRedo, showFork, showMarkdownCopy, showActions };
+}
+
+// A plain render helper rather than a component, so the toolbar stays in MessageView's own tree.
+function renderMessageActions(
+  message: ChatMessage,
+  actions: MessageViewProps['actions'],
+  { canCopy, showScroll, showRedo, showFork, showMarkdownCopy }: MessageActionVisibility,
+  getLatestMessage: () => ChatMessage,
+  t: ReturnType<typeof useT>,
+) {
+  const roleActionsClass = message.role === 'user'
+    ? 'pivi-user-msg-actions'
+    : 'pivi-assistant-msg-actions';
+  return (
+    <div className={`pivi-message-actions ${roleActionsClass}`}>
+      {canCopy
+        ? (
+          <MessageCopyButton
+            ariaLabel={message.role === 'assistant'
+              ? t('chat.messageActions.copyAgentResponseAriaLabel')
+              : t('chat.messageActions.copyAriaLabel')}
+            onCopy={() => actions.copy(getLatestMessage())}
+            roleClass={message.role === 'user'
+              ? 'pivi-user-msg-copy-btn'
+              : 'pivi-assistant-msg-copy-btn'}
+          />
+        )
+        : null}
+      {showMarkdownCopy
+        ? (
+          <MessageCopyButton
+            ariaLabel={t('chat.messageActions.copyConversationAsMarkdownAriaLabel')}
+            icon="file-text"
+            onCopy={() => actions.copyConversationAsMarkdown?.(message.id)}
+            roleClass="pivi-conversation-markdown-copy-btn"
+          />
+        )
+        : null}
+      {showScroll
+        ? (
+          <button
+            aria-label={t('chat.messageActions.scrollToRecentUserAriaLabel')}
+            className="pivi-message-action-btn pivi-message-scroll-user-btn"
+            onClick={() => actions.scrollToRecentUser(message.id)}
+            type="button"
+          >
+            <PlatformIcon name="user" />
+          </button>
+        )
+        : null}
+      {showRedo
+        ? (
+          <button
+            aria-label={t('chat.redo.ariaLabel')}
+            className="pivi-message-action-btn pivi-message-redo-btn"
+            onClick={() => void actions.redo(message.id)}
+            type="button"
+          >
+            <PlatformIcon name="refresh-cw" />
+          </button>
+        )
+        : null}
+      {showFork
+        ? (
+          <button
+            aria-label={t('chat.fork.ariaLabel')}
+            className="pivi-message-action-btn pivi-message-fork-btn"
+            onClick={() => void actions.fork(message.id)}
+            type="button"
+          >
+            <PlatformIcon name="git-fork" />
+          </button>
+        )
+        : null}
+    </div>
+  );
+}
+
 /** The sole React owner of a visible message shell and its action toolbar. */
 export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, isStreaming = false, message, projectionStore, showTokensPerSecond = true }: MessageViewProps) {
   const t = useT();
@@ -167,17 +268,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
 
   if (message.role === 'assistant' && !hasVisibleAssistant) return null;
 
-  const canCopy = !hideActions && actions.canCopy(message);
-  const showScroll = !hideActions && message.role === 'assistant';
-  const showRedo = !hideActions && message.role === 'assistant' && actions.canRedo(message.id);
-  const showFork = !hideActions && message.role === 'assistant' && actions.canFork(message);
-  const showMarkdownCopy = !hideActions
-    && message.role === 'assistant'
-    && actions.copyConversationAsMarkdown !== undefined;
-  const showActions = canCopy || showMarkdownCopy || showScroll || showRedo || showFork;
-  const roleActionsClass = message.role === 'user'
-    ? 'pivi-user-msg-actions'
-    : 'pivi-assistant-msg-actions';
+  const visibility = resolveActionVisibility(message, actions, hideActions);
   const toolOnlyClass = message.role === 'assistant' && isAssistantToolOnlyMessage(message, showTokensPerSecond)
     ? ' pivi-message-assistant-tool-only'
     : '';
@@ -198,69 +289,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
             </>
           )}
       </div>
-      {showActions ? (
-        <div className={`pivi-message-actions ${roleActionsClass}`}>
-          {canCopy
-            ? (
-              <MessageCopyButton
-                ariaLabel={message.role === 'assistant'
-                  ? t('chat.messageActions.copyAgentResponseAriaLabel')
-                  : t('chat.messageActions.copyAriaLabel')}
-                onCopy={() => actions.copy(getLatestMessage())}
-                roleClass={message.role === 'user'
-                  ? 'pivi-user-msg-copy-btn'
-                  : 'pivi-assistant-msg-copy-btn'}
-              />
-            )
-            : null}
-          {showMarkdownCopy
-            ? (
-              <MessageCopyButton
-                ariaLabel={t('chat.messageActions.copyConversationAsMarkdownAriaLabel')}
-                icon="file-text"
-                onCopy={() => actions.copyConversationAsMarkdown?.(message.id)}
-                roleClass="pivi-conversation-markdown-copy-btn"
-              />
-            )
-            : null}
-          {showScroll
-            ? (
-              <button
-                aria-label={t('chat.messageActions.scrollToRecentUserAriaLabel')}
-                className="pivi-message-action-btn pivi-message-scroll-user-btn"
-                onClick={() => actions.scrollToRecentUser(message.id)}
-                type="button"
-              >
-                <PlatformIcon name="user" />
-              </button>
-            )
-            : null}
-          {showRedo
-            ? (
-              <button
-                aria-label={t('chat.redo.ariaLabel')}
-                className="pivi-message-action-btn pivi-message-redo-btn"
-                onClick={() => void actions.redo(message.id)}
-                type="button"
-              >
-                <PlatformIcon name="refresh-cw" />
-              </button>
-            )
-            : null}
-          {showFork
-            ? (
-              <button
-                aria-label={t('chat.fork.ariaLabel')}
-                className="pivi-message-action-btn pivi-message-fork-btn"
-                onClick={() => void actions.fork(message.id)}
-                type="button"
-              >
-                <PlatformIcon name="git-fork" />
-              </button>
-            )
-            : null}
-        </div>
-      ) : null}
+      {visibility.showActions ? renderMessageActions(message, actions, visibility, getLatestMessage, t) : null}
     </article>
   );
 });

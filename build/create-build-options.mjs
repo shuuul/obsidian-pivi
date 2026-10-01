@@ -13,6 +13,7 @@ import {
 import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
+import { preferBrowserBuilds } from './plugins/prefer-browser-builds.mjs';
 import {
   releaseArtifactBanner,
   releaseArtifactVersion,
@@ -70,6 +71,7 @@ export function createBuildOptions({ production, metafile = false, write = true 
       shimPiAiEnvApiKeys,
       shimSignalExit,
       shimDebug,
+      preferBrowserBuilds,
       stripReactHoistableScripts,
       ...(production ? [assertCommunityAudit] : []),
     ],

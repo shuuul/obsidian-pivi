@@ -92,6 +92,25 @@ function mergeValueMap(
   return Object.keys(next).length ? next : undefined;
 }
 
+function mergeUpsertCredentials(
+  auth: ManagedMcpServer['auth'],
+  input: AgentMcpServerInput,
+  previous: ManagedMcpServer | undefined,
+) {
+  const canKeepBearer = auth === 'bearer' && previous?.auth === 'bearer';
+  const bearer = mergeMcpSecretPatch(
+    canKeepBearer
+      ? { bearerToken: previous?.bearerToken, bearerTokenEnv: previous?.bearerTokenEnv }
+      : { bearerToken: undefined, bearerTokenEnv: undefined },
+    input.bearerToken,
+  );
+  const canKeepOAuth = auth === 'oauth' && previous?.auth === 'oauth';
+  const oauth = auth === 'oauth'
+    ? mergeMcpSecretPatch(canKeepOAuth ? previous?.oauth : undefined, input.oauth)
+    : undefined;
+  return { bearer, oauth };
+}
+
 function materializeUpsert(
   name: string,
   input: AgentMcpServerInput,
@@ -111,17 +130,7 @@ function materializeUpsert(
     : undefined;
   const headers = mergeValueMap(oldHeaders, input.headers);
   const auth = input.auth ?? previous?.auth;
-  const canKeepBearer = auth === 'bearer' && previous?.auth === 'bearer';
-  const bearer = mergeMcpSecretPatch(
-    canKeepBearer
-      ? { bearerToken: previous?.bearerToken, bearerTokenEnv: previous?.bearerTokenEnv }
-      : { bearerToken: undefined, bearerTokenEnv: undefined },
-    input.bearerToken,
-  );
-  const canKeepOAuth = auth === 'oauth' && previous?.auth === 'oauth';
-  const oauth = auth === 'oauth'
-    ? mergeMcpSecretPatch(canKeepOAuth ? previous?.oauth : undefined, input.oauth)
-    : undefined;
+  const { bearer, oauth } = mergeUpsertCredentials(auth, input, previous);
   return {
     ...common,
     config: { type: input.type, url: input.url, ...(headers ? { headers } : {}) },
@@ -129,6 +138,48 @@ function materializeUpsert(
     ...(oauth !== undefined ? { oauth } : {}),
     ...(auth === 'bearer' ? bearer : {}),
   };
+}
+
+/** Direct (non-OAuth-artifact) secret IDs a committed mutation leaves without an owner. */
+function collectObsoleteDirectSecretIds(
+  mutation: McpManagementMutation,
+  previous: ManagedMcpServer | undefined,
+  effective: ManagedMcpServer | undefined,
+): Set<string> {
+  const directSecretIds = new Set<string>();
+  if (mutation.action === 'remove') {
+    for (const kind of ['bearer-token', 'client-secret'] as const) {
+      listMcpServerSecretIds(mutation.name, kind).forEach(id => directSecretIds.add(id));
+    }
+  } else if (effective && previous && mutation.action === 'upsert') {
+    if (previous.auth === 'bearer' && effective.auth !== 'bearer') {
+      listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
+    }
+    if (previous.auth === 'oauth' && effective.auth !== 'oauth') {
+      listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
+    }
+    if (effective.auth === 'bearer' && effective.bearerTokenEnv) {
+      listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
+    }
+    if (effective.auth === 'oauth' && effective.oauth && typeof effective.oauth === 'object' && !effective.oauth.clientSecret) {
+      listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
+    }
+  }
+  if (mutation.action === 'upsert' && 'url' in mutation.server) {
+    if (
+      mutation.server.bearerToken?.source === 'clear'
+      || mutation.server.bearerToken?.source === 'systemEnvironment'
+    ) {
+      listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
+    }
+    if (
+      mutation.server.oauth === false
+      || mutation.server.oauth?.clearClientSecret
+    ) {
+      listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
+    }
+  }
+  return directSecretIds;
 }
 
 function errorMessage(cause: unknown): string {
@@ -272,39 +323,7 @@ export class McpManagementPersistence {
       }
     }
 
-    const directSecretIds = new Set<string>();
-    if (mutation.action === 'remove') {
-      for (const kind of ['bearer-token', 'client-secret'] as const) {
-        listMcpServerSecretIds(mutation.name, kind).forEach(id => directSecretIds.add(id));
-      }
-    } else if (effective && previous && mutation.action === 'upsert') {
-      if (previous.auth === 'bearer' && effective.auth !== 'bearer') {
-        listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
-      }
-      if (previous.auth === 'oauth' && effective.auth !== 'oauth') {
-        listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
-      }
-      if (effective.auth === 'bearer' && effective.bearerTokenEnv) {
-        listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
-      }
-      if (effective.auth === 'oauth' && effective.oauth && typeof effective.oauth === 'object' && !effective.oauth.clientSecret) {
-        listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
-      }
-    }
-    if (mutation.action === 'upsert' && 'url' in mutation.server) {
-      if (
-        mutation.server.bearerToken?.source === 'clear'
-        || mutation.server.bearerToken?.source === 'systemEnvironment'
-      ) {
-        listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
-      }
-      if (
-        mutation.server.oauth === false
-        || mutation.server.oauth?.clearClientSecret
-      ) {
-        listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
-      }
-    }
+    const directSecretIds = collectObsoleteDirectSecretIds(mutation, previous, effective);
     directSecretIds.forEach(id => this.clearSecret(id, failures));
   }
 

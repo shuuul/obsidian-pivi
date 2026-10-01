@@ -91,18 +91,7 @@ function recoverSubagent(toolCall: ToolCallInfo): SubagentInfo {
   };
 }
 
-/**
- * Prefer the richer persisted overlay, but let a terminal Pi tool result upgrade
- * an incomplete/running card that never received its final message_ui patch.
- */
-function mergeRecoveredSubagent(
-  existing: SubagentInfo | undefined,
-  recovered: SubagentInfo,
-): SubagentInfo {
-  if (!existing) {
-    return recovered;
-  }
-
+function mergeSubagentStatuses(existing: SubagentInfo, recovered: SubagentInfo) {
   const existingTerminal = isTerminalStatus(existing.asyncStatus)
     || isTerminalStatus(existing.status);
   const recoveredTerminal = isTerminalStatus(recovered.asyncStatus)
@@ -125,6 +114,22 @@ function mergeRecoveredSubagent(
         : (existing.asyncStatus ?? recovered.asyncStatus ?? status)
     )
     : existing.asyncStatus;
+  return { mode, status, activityStatus, asyncStatus, shouldUpgradeFromTerminal };
+}
+
+/**
+ * Prefer the richer persisted overlay, but let a terminal Pi tool result upgrade
+ * an incomplete/running card that never received its final message_ui patch.
+ */
+function mergeRecoveredSubagent(
+  existing: SubagentInfo | undefined,
+  recovered: SubagentInfo,
+): SubagentInfo {
+  if (!existing) {
+    return recovered;
+  }
+
+  const { mode, status, activityStatus, asyncStatus, shouldUpgradeFromTerminal } = mergeSubagentStatuses(existing, recovered);
 
   return {
     ...existing,

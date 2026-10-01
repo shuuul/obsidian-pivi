@@ -49,11 +49,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   const obsidianCliAvailable = summary.obsidianCliAvailable;
   const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
   const hasList = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST);
-  const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
-  const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
-  const hasNoteInfo = registeredObsidianTools.has(TOOL_OBSIDIAN_NOTE_INFO);
   const hasHistory = registeredObsidianTools.has(TOOL_OBSIDIAN_HISTORY);
-  const hasEdit = registeredObsidianTools.has(TOOL_OBSIDIAN_EDIT);
 
   lines.push(
     '',
@@ -91,46 +87,40 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeSkill) {
-    const supporting = hasRead && hasList
-      ? ' Supporting files are not vault notes; read them with `read` using the absolute paths returned by the skill tool. List the skill directory with `ls`. Do not join relative names onto the skill directory.'
-      : hasRead
-        ? ' Supporting files are not vault notes; read them with `read` using the absolute paths returned by the skill tool. Do not join relative names onto the skill directory.'
-        : ' Supporting files are not vault notes; the skill tool returns absolute paths for files that exist in the installed skill.';
-    lines.push('', '### Skills', `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/.${supporting}`);
+    lines.push(...buildSkillSectionLines(hasRead, hasList));
   }
 
   if (summary.includeSubagent) {
-    const maxConcurrentSubagents = summary.maxConcurrentSubagents ?? 3;
-    lines.push(
-      '',
-      '### Subagents',
-      `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Required parameters: \`label\` is the short stable sub-agent/card name; \`message\` is the complete task instructions; \`run_in_background\` selects async (\`true\`) or deliberately blocking (\`false\`) execution and must always be passed. Put task instructions in \`message\`, never in a \`description\` field. Example: \`{ "label": "scan-links", "message": "Search the assigned notes for broken links and report them.", "run_in_background": true }\`. Use \`run_in_background: true\` for independent async work.`,
-      `- At most ${maxConcurrentSubagents} background sub-agents may run at once across this Pivi plugin, shared across all tabs. When two or more independent tasks are ready, emit up to ${maxConcurrentSubagents} \`spawn_agent\` calls together in the same assistant response, each with \`run_in_background: true\`; the runtime starts that batch concurrently. Do not wait for one result before emitting the next independent spawn. Excess calls wait in FIFO order and their tool result reports the capacity overflow.`,
-      `- Sub-agents are an active execution strategy, not a last resort. If the user asks for, allows, or says you can/may use sub-agents, treat that permission as an instruction to use them whenever the work can be split safely. For a large folder or attached-file list, create ${maxConcurrentSubagents} balanced non-overlapping batches (or fewer only when fewer useful batches exist) and emit all of those \`spawn_agent\` calls together before inspecting delegated files yourself. Do not spawn only one worker and wait when multiple independent batches are available.`,
-      '- Do not spawn a sub-agent just to check, poll, wait for, or summarize other sub-agents. Background sub-agents stream their progress and final results back into their existing cells automatically; wait for those updates and synthesize only from actual reports.',
-      '- Automatically use multiple sub-agents when the same nontrivial task applies to multiple distinct context groups (for example several files, folders, notes, or source batches). Use no more than the configured maximum above; prefer one stable sub-agent per balanced group so each worker reads its own batch while the main agent coordinates and synthesizes.',
-      '- When a very long file must be read end-to-end, prefer assigning that file to a sub-agent as its own isolated context batch with `run_in_background: true`, so the worker can keep reading, searching, and using tools in the background while streaming progress/results back without importing the whole file into the main session. Only full-read it in the main session when delegation is unavailable, explicitly disallowed, or exact full text must be present in the main context.',
-      '- When delegating attached context or vault files, assign a stable, non-overlapping context batch to each sub-agent and use clear labels so the resulting cards remain easy to audit. Do not have the main agent pre-read, summarize, or mix delegated files unless the sub-agent reports back first; this prevents context cross-contamination and keeps delegated context out of the main session.',
-      '- Do not split one context batch across multiple sub-agents, and do not send unrelated context batches to the same sub-agent. Each spawn_agent call gets an isolated worker; labels are for coordination, not a safe memory boundary.',
-      '- For multi-file vault changes, partition the exact concrete paths from `<context_files>` into non-overlapping batches; never delegate a glob or folder prefix as though it proved complete coverage. Each worker must report concrete modified, unchanged, and failed paths. Reconcile those reports against the original path list, ensure every path appears exactly once, and assign any omissions before claiming completion.',
-      '- Before changing structural Markdown markers such as YAML `---`, code fences, or table separators across multiple files, perform a read-only sample and distinguish structural syntax from the intended matches. If the same marker has both structural and target meanings, ask the user to clarify before mutating files.',
-    );
+    lines.push(...buildSubagentSectionLines(summary.maxConcurrentSubagents ?? 3));
   }
 
   if (summary.includeWebSearch) {
-    lines.push(
-      '',
-      '### Web',
-      '',
-      '**`WebSearch`** — Search the web for up-to-date information beyond your training cutoff. Use it for recent events, current versions, library docs, or anything time-sensitive. Parameters: `query`, optional `recency` (`day`|`week`|`month`|`year`), optional `limit`. Enabled providers run in the user-configured priority order with automatic fallback.',
-      '**`WebFetch`** — Fetch readable content from a specific HTTP(S) URL. Parameters: `url`, optional `query`, optional `maxChars`. Enabled fetch providers run in the user-configured priority order, with direct HTTP fallback.',
-      '- Use `WebSearch` when you need discovery, current facts, or sources.',
-      '- Use `WebFetch` when you already have a URL and need page content.',
-      '- Cite URLs when relying on web results or fetched content.',
-    );
+    lines.push(...buildWebSectionLines());
   }
 
-  lines.push(
+  lines.push(...buildAttachedPathsAndRoutingLines(summary, registeredObsidianTools));
+
+  const availableNames = [
+    ...summary.obsidianTools,
+    ...(summary.includeMcp ? ['mcp'] : []),
+    ...(summary.includeSkill ? [TOOL_SKILL] : []),
+    ...(summary.includeSubagent ? [TOOL_SPAWN_AGENT] : []),
+  ];
+  return filterUnavailableToolGuidance(lines.join('\n'), availableNames);
+}
+
+function buildAttachedPathsAndRoutingLines(
+  summary: RegisteredToolSummary,
+  registeredObsidianTools: Set<string>,
+): string[] {
+  const obsidianCliAvailable = summary.obsidianCliAvailable;
+  const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
+  const hasList = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST);
+  const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
+  const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
+  const hasNoteInfo = registeredObsidianTools.has(TOOL_OBSIDIAN_NOTE_INFO);
+  const hasEdit = registeredObsidianTools.has(TOOL_OBSIDIAN_EDIT);
+  return [
     '',
     '### Reading attached paths',
     '',
@@ -157,31 +147,68 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     buildEditPriorityGuidance(hasRead),
     buildExactMatchGuidance(hasRead),
     ...(hasEdit ? [buildMarkdownBlockBoundaryGuidance()] : []),
-    ...(hasSearch ? [
-      hasList
-        ? '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. `path` is required and must be one Markdown note or a non-root folder; vault-wide scans are rejected. It is not regex and not Obsidian in-app search. Do not use `*`, `**`, empty, or `path:`-only queries for listing—use `ls`. Do not repeat the same search with different casing.'
-        : '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. `path` is required and must be one Markdown note or a non-root folder; vault-wide scans are rejected. It is not regex and not Obsidian in-app search. Do not repeat the same search with different casing.',
-    ] : []),
+    ...(hasSearch ? [buildSearchGuidance(hasList)] : []),
     ...(hasList ? [
       '**Listing:** Prefer `ls` for folders, including non-Markdown files. `offset` is a 0-based entry index, not a line number. Unindexed vault folders such as `.pivi/` and allowed absolute paths work on the same tool.',
     ] : []),
-    hasRead && hasList
-      ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `read` and `ls` accept unindexed vault-relative paths and allowed absolute paths.'
-      : hasRead
-        ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `read` accepts unindexed vault-relative paths and allowed absolute paths.'
-        : hasList
-          ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `ls` accepts unindexed vault-relative paths and allowed absolute paths.'
-          : '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths.',
+    buildPathsGuidance(hasRead, hasList),
     '**Compact UI:** Vault tool cards show paths and match counts in the tool header. Do not repeat the same file list in the next message—add interpretation or the next action only.',
-  );
-
-  const availableNames = [
-    ...summary.obsidianTools,
-    ...(summary.includeMcp ? ['mcp'] : []),
-    ...(summary.includeSkill ? [TOOL_SKILL] : []),
-    ...(summary.includeSubagent ? [TOOL_SPAWN_AGENT] : []),
   ];
-  return filterUnavailableToolGuidance(lines.join('\n'), availableNames);
+}
+
+function buildSkillSectionLines(hasRead: boolean, hasList: boolean): string[] {
+  const supporting = hasRead && hasList
+    ? ' Supporting files are not vault notes; read them with `read` using the absolute paths returned by the skill tool. List the skill directory with `ls`. Do not join relative names onto the skill directory.'
+    : hasRead
+      ? ' Supporting files are not vault notes; read them with `read` using the absolute paths returned by the skill tool. Do not join relative names onto the skill directory.'
+      : ' Supporting files are not vault notes; the skill tool returns absolute paths for files that exist in the installed skill.';
+  return ['', '### Skills', `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/.${supporting}`];
+}
+
+function buildSubagentSectionLines(maxConcurrentSubagents: number): string[] {
+  return [
+    '',
+    '### Subagents',
+    `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Required parameters: \`label\` is the short stable sub-agent/card name; \`message\` is the complete task instructions; \`run_in_background\` selects async (\`true\`) or deliberately blocking (\`false\`) execution and must always be passed. Put task instructions in \`message\`, never in a \`description\` field. Example: \`{ "label": "scan-links", "message": "Search the assigned notes for broken links and report them.", "run_in_background": true }\`. Use \`run_in_background: true\` for independent async work.`,
+    `- At most ${maxConcurrentSubagents} background sub-agents may run at once across this Pivi plugin, shared across all tabs. When two or more independent tasks are ready, emit up to ${maxConcurrentSubagents} \`spawn_agent\` calls together in the same assistant response, each with \`run_in_background: true\`; the runtime starts that batch concurrently. Do not wait for one result before emitting the next independent spawn. Excess calls wait in FIFO order and their tool result reports the capacity overflow.`,
+    `- Sub-agents are an active execution strategy, not a last resort. If the user asks for, allows, or says you can/may use sub-agents, treat that permission as an instruction to use them whenever the work can be split safely. For a large folder or attached-file list, create ${maxConcurrentSubagents} balanced non-overlapping batches (or fewer only when fewer useful batches exist) and emit all of those \`spawn_agent\` calls together before inspecting delegated files yourself. Do not spawn only one worker and wait when multiple independent batches are available.`,
+    '- Do not spawn a sub-agent just to check, poll, wait for, or summarize other sub-agents. Background sub-agents stream their progress and final results back into their existing cells automatically; wait for those updates and synthesize only from actual reports.',
+    '- Automatically use multiple sub-agents when the same nontrivial task applies to multiple distinct context groups (for example several files, folders, notes, or source batches). Use no more than the configured maximum above; prefer one stable sub-agent per balanced group so each worker reads its own batch while the main agent coordinates and synthesizes.',
+    '- When a very long file must be read end-to-end, prefer assigning that file to a sub-agent as its own isolated context batch with `run_in_background: true`, so the worker can keep reading, searching, and using tools in the background while streaming progress/results back without importing the whole file into the main session. Only full-read it in the main session when delegation is unavailable, explicitly disallowed, or exact full text must be present in the main context.',
+    '- When delegating attached context or vault files, assign a stable, non-overlapping context batch to each sub-agent and use clear labels so the resulting cards remain easy to audit. Do not have the main agent pre-read, summarize, or mix delegated files unless the sub-agent reports back first; this prevents context cross-contamination and keeps delegated context out of the main session.',
+    '- Do not split one context batch across multiple sub-agents, and do not send unrelated context batches to the same sub-agent. Each spawn_agent call gets an isolated worker; labels are for coordination, not a safe memory boundary.',
+    '- For multi-file vault changes, partition the exact concrete paths from `<context_files>` into non-overlapping batches; never delegate a glob or folder prefix as though it proved complete coverage. Each worker must report concrete modified, unchanged, and failed paths. Reconcile those reports against the original path list, ensure every path appears exactly once, and assign any omissions before claiming completion.',
+    '- Before changing structural Markdown markers such as YAML `---`, code fences, or table separators across multiple files, perform a read-only sample and distinguish structural syntax from the intended matches. If the same marker has both structural and target meanings, ask the user to clarify before mutating files.',
+  ];
+}
+
+function buildWebSectionLines(): string[] {
+  return [
+    '',
+    '### Web',
+    '',
+    '**`WebSearch`** — Search the web for up-to-date information beyond your training cutoff. Use it for recent events, current versions, library docs, or anything time-sensitive. Parameters: `query`, optional `recency` (`day`|`week`|`month`|`year`), optional `limit`. Enabled providers run in the user-configured priority order with automatic fallback.',
+    '**`WebFetch`** — Fetch readable content from a specific HTTP(S) URL. Parameters: `url`, optional `query`, optional `maxChars`. Enabled fetch providers run in the user-configured priority order, with direct HTTP fallback.',
+    '- Use `WebSearch` when you need discovery, current facts, or sources.',
+    '- Use `WebFetch` when you already have a URL and need page content.',
+    '- Cite URLs when relying on web results or fetched content.',
+  ];
+}
+
+function buildSearchGuidance(hasList: boolean): string {
+  return hasList
+    ? '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. `path` is required and must be one Markdown note or a non-root folder; vault-wide scans are rejected. It is not regex and not Obsidian in-app search. Do not use `*`, `**`, empty, or `path:`-only queries for listing—use `ls`. Do not repeat the same search with different casing.'
+    : '**Search:** `search` is a case-insensitive literal substring plus optional `tag:name`. `path` is required and must be one Markdown note or a non-root folder; vault-wide scans are rejected. It is not regex and not Obsidian in-app search. Do not repeat the same search with different casing.';
+}
+
+function buildPathsGuidance(hasRead: boolean, hasList: boolean): string {
+  return hasRead && hasList
+    ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `read` and `ls` accept unindexed vault-relative paths and allowed absolute paths.'
+    : hasRead
+      ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `read` accepts unindexed vault-relative paths and allowed absolute paths.'
+      : hasList
+        ? '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths. `ls` accepts unindexed vault-relative paths and allowed absolute paths.'
+        : '**Paths:** Vault tools use vault-relative `path` unless the tool documents absolute paths.';
 }
 
 function buildReadMaxCharsGuidance(): string[] {

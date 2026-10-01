@@ -38,6 +38,35 @@ function messageModelLabel(msg: Record<string, unknown>): string {
   return model || provider;
 }
 
+function adaptToolExecutionUpdate(event: AgentEvent): StreamChunk[] {
+  const updateEvent = event as unknown as { partialResult?: { content?: Array<{ type: string; text?: string }> }; toolCallId: string };
+  if (updateEvent.partialResult?.content) {
+    const textContent = extractTextContent(updateEvent.partialResult.content);
+    if (textContent) {
+      return [{ type: 'tool_output', id: updateEvent.toolCallId, content: textContent }];
+    }
+  }
+  return [];
+}
+
+function adaptToolExecutionEnd(event: AgentEvent): StreamChunk[] {
+  const endEvent = event as unknown as { result?: { content?: Array<{ type: string; text?: string }>; details?: unknown }; toolCallId: string; isError?: boolean };
+  const resultText = extractTextContent(endEvent.result?.content);
+  const rawDetails = endEvent.result?.details;
+  const toolUseResult = rawDetails && typeof rawDetails === 'object'
+    ? rawDetails as ToolUseResult
+    : undefined;
+  const blocked = toolUseResult?.blocked === true;
+  return [{
+    type: 'tool_result',
+    id: endEvent.toolCallId,
+    content: resultText || (endEvent.isError ? 'Tool failed' : 'Tool completed'),
+    isError: endEvent.isError,
+    ...(blocked ? { blocked: true } : {}),
+    ...(toolUseResult ? { toolUseResult } : {}),
+  }];
+}
+
 /**
  * Adapts AgentEvent from pi-agent-core into StreamChunk[] consumed by the chat UI.
  *
@@ -75,34 +104,11 @@ export class PiAgentEventAdapter {
           input: event.args as Record<string, unknown>,
         }];
 
-      case 'tool_execution_update': {
-        const updateEvent = event as unknown as { partialResult?: { content?: Array<{ type: string; text?: string }> }; toolCallId: string };
-        if (updateEvent.partialResult?.content) {
-          const textContent = extractTextContent(updateEvent.partialResult.content);
-          if (textContent) {
-            return [{ type: 'tool_output', id: updateEvent.toolCallId, content: textContent }];
-          }
-        }
-        return [];
-      }
+      case 'tool_execution_update':
+        return adaptToolExecutionUpdate(event);
 
-      case 'tool_execution_end': {
-        const endEvent = event as unknown as { result?: { content?: Array<{ type: string; text?: string }>; details?: unknown }; toolCallId: string; isError?: boolean };
-        const resultText = extractTextContent(endEvent.result?.content);
-        const rawDetails = endEvent.result?.details;
-        const toolUseResult = rawDetails && typeof rawDetails === 'object'
-          ? rawDetails as ToolUseResult
-          : undefined;
-        const blocked = toolUseResult?.blocked === true;
-        return [{
-          type: 'tool_result',
-          id: endEvent.toolCallId,
-          content: resultText || (endEvent.isError ? 'Tool failed' : 'Tool completed'),
-          isError: endEvent.isError,
-          ...(blocked ? { blocked: true } : {}),
-          ...(toolUseResult ? { toolUseResult } : {}),
-        }];
-      }
+      case 'tool_execution_end':
+        return adaptToolExecutionEnd(event);
 
       case 'agent_end':
         return [{ type: 'done' }];

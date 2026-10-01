@@ -1,5 +1,4 @@
 import { execFileSync } from 'child_process';
-import { buildSync } from 'esbuild';
 import { mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -224,16 +223,32 @@ describe('shared build compatibility', () => {
     expect(JSON.parse(output)).toEqual({ callable: true, unregister: true, signals: [] });
   });
 
-  it('routes the real Google SDK through the bundled scoped fetch', () => {
+  it('resolves yaml to its tree-shakeable ESM build', () => {
+    const inputs = JSON.parse(runBuildContract(`
+      import { build } from 'esbuild';
+      import { preferBrowserBuilds } from './build/plugins/prefer-browser-builds.mjs';
+      const result = await build({
+        stdin: { resolveDir: process.cwd(), contents: "import { parse } from 'yaml'; console.log(parse('a: 1'));" },
+        bundle: true,
+        platform: 'node',
+        format: 'cjs',
+        plugins: [preferBrowserBuilds],
+        write: false,
+        metafile: true,
+        logLevel: 'silent',
+      });
+      process.stdout.write(JSON.stringify(Object.keys(result.metafile.inputs)));
+    `)) as string[];
+
+    expect(inputs).toContain('node_modules/yaml/browser/index.js');
+    expect(inputs.filter((input) => input.startsWith('node_modules/yaml/dist/'))).toEqual([]);
+  });
+
+  it('routes the web build of the real Google SDK through the bundled scoped fetch', () => {
     const tempDir = mkdtempSync(join(tmpdir(), 'pivi-google-fetch-'));
     const outfile = join(tempDir, 'google-fetch.cjs');
     try {
-      buildSync({
-        stdin: {
-          resolveDir: rootDir,
-          sourcefile: 'google-fetch-contract.ts',
-          loader: 'ts',
-          contents: `
+      const contents = `
             import { googleProvider } from '@earendil-works/pi-ai/providers/google';
             import { installBundledFetch } from './packages/obsidian-host/src/bundledFetch';
             import { withScopedGoogleTransport } from './packages/engine-pi/src/models/scopedGoogleProvider';
@@ -273,15 +288,33 @@ describe('shared build compatibility', () => {
               console.error(error);
               process.exitCode = 1;
             });
-          `,
-        },
-        bundle: true,
-        platform: 'node',
-        format: 'cjs',
-        target: 'es2022',
-        inject: [join(rootDir, 'packages/obsidian-host/src/bundledFetch.ts')],
-        outfile,
-      });
+          `;
+      // esbuild plugins need the async API, so the production resolver runs in a child process.
+      const bundledInputs = JSON.parse(runBuildContract(`
+        import { build } from 'esbuild';
+        import { preferBrowserBuilds } from './build/plugins/prefer-browser-builds.mjs';
+        const result = await build({
+          stdin: {
+            resolveDir: ${JSON.stringify(rootDir)},
+            sourcefile: 'google-fetch-contract.ts',
+            loader: 'ts',
+            contents: ${JSON.stringify(contents)},
+          },
+          bundle: true,
+          platform: 'node',
+          format: 'cjs',
+          target: 'es2022',
+          plugins: [preferBrowserBuilds],
+          inject: ['./packages/obsidian-host/src/bundledFetch.ts'],
+          outfile: ${JSON.stringify(outfile)},
+          metafile: true,
+          logLevel: 'silent',
+        });
+        process.stdout.write(JSON.stringify(Object.keys(result.metafile.inputs)));
+      `)) as string[];
+      // The Node build of the SDK would pull its Vertex/ADC auth and socket stack.
+      expect(bundledInputs.filter((input) => /node_modules\/(google-auth-library|ws|gaxios|node-fetch)\//.test(input))).toEqual([]);
+      expect(bundledInputs).toContain('node_modules/@google/genai/dist/web/index.mjs');
 
       const output = execFileSync(process.execPath, [outfile], { encoding: 'utf8' });
       expect(JSON.parse(output)).toEqual({

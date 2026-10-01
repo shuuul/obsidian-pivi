@@ -1,4 +1,8 @@
-import { remindCanonicalToolForm, toPiAgentTool } from '@pivi/engine-pi/tools/piToolAdapter';
+import {
+  remindCanonicalToolForm,
+  toPiAgentTool,
+  wrapStreamFnToHideAliasTools,
+} from '@pivi/engine-pi/tools/piToolAdapter';
 import type { ToolSpec } from '@pivi/agent/tools';
 
 describe('remindCanonicalToolForm', () => {
@@ -39,5 +43,41 @@ describe('toPiAgentTool prepareArguments', () => {
       offset: 2,
       limit: 3,
     });
+  });
+});
+
+describe('wrapStreamFnToHideAliasTools', () => {
+  const live = { name: 'read', description: 'Read', parameters: {} };
+  const alias = { name: 'obsidian_read', description: 'Read', parameters: {} };
+  const user = { role: 'user', content: 'hi', timestamp: 1 };
+
+  it('rebuilds the leading system message without silent alias declarations', () => {
+    const streamFn = jest.fn();
+    const context = {
+      messages: [
+        { role: 'system', content: 'prompt', toolsAdded: [live, alias], timestamp: 0 },
+        user,
+      ],
+    };
+
+    void wrapStreamFnToHideAliasTools(streamFn as never)({} as never, context as never, undefined);
+
+    expect(streamFn.mock.calls[0][1]).toEqual({
+      messages: [
+        { role: 'system', content: 'prompt', toolsAdded: [live], timestamp: 0 },
+        user,
+      ],
+    });
+  });
+
+  it('passes the transcript through untouched when no alias is declared', () => {
+    const streamFn = jest.fn();
+    const context = {
+      messages: [{ role: 'system', content: 'prompt', toolsAdded: [live], timestamp: 0 }, user],
+    };
+
+    void wrapStreamFnToHideAliasTools(streamFn as never)({} as never, context as never, undefined);
+
+    expect(streamFn.mock.calls[0][1]).toBe(context);
   });
 });

@@ -42,6 +42,67 @@ export interface ProviderCardProps {
   readonly credentialCheckPending?: boolean;
 }
 
+/** Provider facts derived from the port and settings; kept out of the component body. */
+function describeProvider(models: SettingsModelsPort, settings: PiAgentSettingsView, providerId: string) {
+  const custom = settings.customProviders.find(entry => entry.id === providerId);
+  const displayName = custom?.name ?? models.getProviderDisplayName(providerId);
+  const disabled = settings.disabledProviders.includes(providerId);
+  const logoSlug = models.getProviderLogoSlug(providerId);
+  const readiness = models.getReadiness(providerId);
+  const enableBlocked = disabled && readiness !== 'ready';
+  const allowKeyless = !!custom && custom.apiKeyRequired === false;
+  const isLocalProvider = !!custom && isLocalCustomProviderKind(custom.kind);
+  const isInteractiveOAuth = models.interactiveOAuthProviderIds.includes(providerId);
+  const isCodex = providerId === models.codexProviderId;
+  const isDualAuthOAuth = isDualAuthOAuthProviderId(providerId);
+  const isAccountOAuth = isInteractiveOAuth && !isCodex && !isDualAuthOAuth;
+  const hasLegacyApiKey = models.getCredentialKind(providerId) === 'api_key';
+  return {
+    custom,
+    displayName,
+    disabled,
+    logoSlug,
+    readiness,
+    enableBlocked,
+    allowKeyless,
+    isLocalProvider,
+    isInteractiveOAuth,
+    isCodex,
+    isDualAuthOAuth,
+    isAccountOAuth,
+    hasLegacyApiKey,
+  };
+}
+
+type ProviderReadiness = ReturnType<SettingsModelsPort['getReadiness']>;
+
+function renderStatusBadge(readiness: ProviderReadiness, checking: boolean, t: ReturnType<typeof useT>) {
+  return (
+    <span
+      className={`pivi-provider-status${checking ? ' checking' : ` ${readiness}`}`}
+      title={checking
+        ? t('settings.modelsTab.statusDesc.checking')
+        : t(STATUS_DESC_KEYS[readiness])}
+    >
+      {checking
+        ? t('settings.modelsTab.status.checking')
+        : t(STATUS_LABEL_KEYS[readiness])}
+    </span>
+  );
+}
+
+function renderTestProviderButton(testing: boolean, onTest: () => void, t: ReturnType<typeof useT>) {
+  return (
+    <button
+      type="button"
+      disabled={testing}
+      onClick={onTest}
+    >
+      {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
+    </button>
+  );
+}
+
 /** One collapsible provider card in the models settings list. */
 export function ProviderCard({
   models,
@@ -77,19 +138,21 @@ export function ProviderCard({
   const [providerIdDraft, setProviderIdDraft] = useState(providerId);
   const [providerIdFeedback, setProviderIdFeedback] = useState<SettingsFeedbackMessage | null>(null);
 
-  const custom = settings.customProviders.find(entry => entry.id === providerId);
-  const displayName = custom?.name ?? models.getProviderDisplayName(providerId);
-  const disabled = settings.disabledProviders.includes(providerId);
-  const logoSlug = models.getProviderLogoSlug(providerId);
-  const readiness = models.getReadiness(providerId);
-  const enableBlocked = disabled && readiness !== 'ready';
-  const allowKeyless = !!custom && custom.apiKeyRequired === false;
-  const isLocalProvider = !!custom && isLocalCustomProviderKind(custom.kind);
-  const isInteractiveOAuth = models.interactiveOAuthProviderIds.includes(providerId);
-  const isCodex = providerId === models.codexProviderId;
-  const isDualAuthOAuth = isDualAuthOAuthProviderId(providerId);
-  const isAccountOAuth = isInteractiveOAuth && !isCodex && !isDualAuthOAuth;
-  const hasLegacyApiKey = models.getCredentialKind(providerId) === 'api_key';
+  const {
+    custom,
+    displayName,
+    disabled,
+    logoSlug,
+    readiness,
+    enableBlocked,
+    allowKeyless,
+    isLocalProvider,
+    isInteractiveOAuth,
+    isCodex,
+    isDualAuthOAuth,
+    isAccountOAuth,
+    hasLegacyApiKey,
+  } = describeProvider(models, settings, providerId);
 
   const stop = (event: MouseEvent): void => {
     event.preventDefault();
@@ -237,18 +300,7 @@ export function ProviderCard({
     <DisclosureCard
       name={displayName}
       icon={logoSlug ? <ProviderLogo slug={logoSlug} size={18} /> : null}
-      badges={(
-        <span
-          className={`pivi-provider-status${showCredentialCheck ? ' checking' : ` ${readiness}`}`}
-          title={showCredentialCheck
-            ? t('settings.modelsTab.statusDesc.checking')
-            : t(STATUS_DESC_KEYS[readiness])}
-        >
-          {showCredentialCheck
-            ? t('settings.modelsTab.status.checking')
-            : t(STATUS_LABEL_KEYS[readiness])}
-        </span>
-      )}
+      badges={renderStatusBadge(readiness, showCredentialCheck, t)}
       actions={(
         <>
           <Toggle
@@ -300,15 +352,7 @@ export function ProviderCard({
                 {t('common.cancel')}
               </button>
             )
-            : (
-              <button
-                type="button"
-                disabled={testing}
-                onClick={() => { void testProvider(); }}
-              >
-                {testing ? t('settings.modelsTab.testing') : t('settings.modelsTab.testProvider')}
-              </button>
-            )}
+            : renderTestProviderButton(testing, () => { void testProvider(); }, t)}
         </>
       )}
     >

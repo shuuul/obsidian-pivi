@@ -6,6 +6,15 @@ import type { SortableReorderHandleProps } from '../../reorder/useSortableReorde
 import { SettingsInlineActions } from './SettingsInlineActions';
 import { SettingsNestingContext } from './SettingsSection';
 
+function disclosureCardClassName(
+  open: boolean,
+  dragging: boolean,
+  dropIndicatorEdge: 'before' | 'after' | undefined,
+  className: string | undefined,
+): string {
+  return `pivi-settings-card${open ? ' is-open' : ''}${dragging ? ' is-dragging' : ''}${dropIndicatorEdge ? ` is-drop-${dropIndicatorEdge}` : ''}${className ? ` ${className}` : ''}`;
+}
+
 export function DisclosureCard({
   name,
   summary,
@@ -64,7 +73,7 @@ export function DisclosureCard({
 
   return (
     <div
-      className={`pivi-settings-card${open ? ' is-open' : ''}${dragging ? ' is-dragging' : ''}${dropIndicatorEdge ? ` is-drop-${dropIndicatorEdge}` : ''}${className ? ` ${className}` : ''}`}
+      className={disclosureCardClassName(open, dragging, dropIndicatorEdge, className)}
       data-settings-sort-id={sortId}
       style={style}
       aria-label={ariaLabel}

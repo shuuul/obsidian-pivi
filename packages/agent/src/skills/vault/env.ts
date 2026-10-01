@@ -244,78 +244,83 @@ function getAppProvidedBinaryPaths(context: SkillsEnvironmentContext): string[] 
   return [];
 }
 
-function getExtraBinaryPaths(context: SkillsEnvironmentContext): string[] {
+function getWindowsExtraBinaryPaths(context: SkillsEnvironmentContext): string[] {
   const { processEnv } = context;
   const home = getHomeDir(context);
+  const paths: string[] = [];
+  const localAppData = processEnv.LOCALAPPDATA;
+  const appData = processEnv.APPDATA;
+  const programFiles = processEnv.ProgramFiles || 'C:\\Program Files';
+  const programFilesX86 = processEnv['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
+  const programData = processEnv.ProgramData || 'C:\\ProgramData';
 
-  if (context.isWindows) {
-    const paths: string[] = [];
-    const localAppData = processEnv.LOCALAPPDATA;
-    const appData = processEnv.APPDATA;
-    const programFiles = processEnv.ProgramFiles || 'C:\\Program Files';
-    const programFilesX86 = processEnv['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
-    const programData = processEnv.ProgramData || 'C:\\ProgramData';
-
-    if (appData) paths.push(path.join(appData, 'npm'));
-    if (localAppData) {
-      paths.push(path.join(localAppData, 'Programs', 'nodejs'));
-      paths.push(path.join(localAppData, 'Programs', 'node'));
-    }
-
-    paths.push(path.join(programFiles, 'nodejs'));
-    paths.push(path.join(programFilesX86, 'nodejs'));
-
-    const nvmSymlink = processEnv.NVM_SYMLINK;
-    if (nvmSymlink) paths.push(nvmSymlink);
-
-    const nvmHome = processEnv.NVM_HOME;
-    if (nvmHome) {
-      paths.push(nvmHome);
-    } else if (appData) {
-      paths.push(path.join(appData, 'nvm'));
-    }
-
-    const voltaHome = processEnv.VOLTA_HOME;
-    if (voltaHome) {
-      paths.push(path.join(voltaHome, 'bin'));
-    } else if (home) {
-      paths.push(path.join(home, '.volta', 'bin'));
-    }
-
-    const fnmMultishell = processEnv.FNM_MULTISHELL_PATH;
-    if (fnmMultishell) paths.push(fnmMultishell);
-
-    const fnmDir = processEnv.FNM_DIR;
-    if (fnmDir) {
-      paths.push(fnmDir);
-    } else if (localAppData) {
-      paths.push(path.join(localAppData, 'fnm'));
-    }
-
-    const chocolateyInstall = processEnv.ChocolateyInstall;
-    paths.push(chocolateyInstall ? path.join(chocolateyInstall, 'bin') : path.join(programData, 'chocolatey', 'bin'));
-
-    const scoopDir = processEnv.SCOOP;
-    if (scoopDir) {
-      paths.push(path.join(scoopDir, 'shims'));
-      paths.push(path.join(scoopDir, 'apps', 'nodejs', 'current', 'bin'));
-      paths.push(path.join(scoopDir, 'apps', 'nodejs', 'current'));
-    } else if (home) {
-      paths.push(path.join(home, 'scoop', 'shims'));
-      paths.push(path.join(home, 'scoop', 'apps', 'nodejs', 'current', 'bin'));
-      paths.push(path.join(home, 'scoop', 'apps', 'nodejs', 'current'));
-    }
-
-    paths.push(path.join(programFiles, 'Docker', 'Docker', 'resources', 'bin'));
-
-    if (home) {
-      paths.push(path.join(home, '.local', 'bin'));
-      paths.push(path.join(home, '.bun', 'bin'));
-    }
-
-    paths.push(...getAppProvidedBinaryPaths(context));
-    return paths;
+  if (appData) paths.push(path.join(appData, 'npm'));
+  if (localAppData) {
+    paths.push(path.join(localAppData, 'Programs', 'nodejs'));
+    paths.push(path.join(localAppData, 'Programs', 'node'));
   }
+
+  paths.push(path.join(programFiles, 'nodejs'));
+  paths.push(path.join(programFilesX86, 'nodejs'));
+
+  const nvmSymlink = processEnv.NVM_SYMLINK;
+  if (nvmSymlink) paths.push(nvmSymlink);
+
+  const nvmHome = processEnv.NVM_HOME;
+  if (nvmHome) {
+    paths.push(nvmHome);
+  } else if (appData) {
+    paths.push(path.join(appData, 'nvm'));
+  }
+
+  const voltaHome = processEnv.VOLTA_HOME;
+  if (voltaHome) {
+    paths.push(path.join(voltaHome, 'bin'));
+  } else if (home) {
+    paths.push(path.join(home, '.volta', 'bin'));
+  }
+
+  const fnmMultishell = processEnv.FNM_MULTISHELL_PATH;
+  if (fnmMultishell) paths.push(fnmMultishell);
+
+  const fnmDir = processEnv.FNM_DIR;
+  if (fnmDir) {
+    paths.push(fnmDir);
+  } else if (localAppData) {
+    paths.push(path.join(localAppData, 'fnm'));
+  }
+
+  const chocolateyInstall = processEnv.ChocolateyInstall;
+  paths.push(chocolateyInstall ? path.join(chocolateyInstall, 'bin') : path.join(programData, 'chocolatey', 'bin'));
+
+  const scoopDir = processEnv.SCOOP;
+  if (scoopDir) {
+    paths.push(path.join(scoopDir, 'shims'));
+    paths.push(path.join(scoopDir, 'apps', 'nodejs', 'current', 'bin'));
+    paths.push(path.join(scoopDir, 'apps', 'nodejs', 'current'));
+  } else if (home) {
+    paths.push(path.join(home, 'scoop', 'shims'));
+    paths.push(path.join(home, 'scoop', 'apps', 'nodejs', 'current', 'bin'));
+    paths.push(path.join(home, 'scoop', 'apps', 'nodejs', 'current'));
+  }
+
+  paths.push(path.join(programFiles, 'Docker', 'Docker', 'resources', 'bin'));
+
+  if (home) {
+    paths.push(path.join(home, '.local', 'bin'));
+    paths.push(path.join(home, '.bun', 'bin'));
+  }
+
+  paths.push(...getAppProvidedBinaryPaths(context));
+  return paths;
+}
+
+function getExtraBinaryPaths(context: SkillsEnvironmentContext): string[] {
+  if (context.isWindows) {
+    return getWindowsExtraBinaryPaths(context);
+  }
+  const { processEnv } = context;
+  const home = getHomeDir(context);
 
   const paths = [
     '/usr/local/bin',

@@ -1264,6 +1264,26 @@ describe('agentMessageHistory', () => {
     ]);
   });
 
+  it('keeps transcript system messages, including a tool delta between a paired call and result', () => {
+    const initial = { role: 'system', content: 'prompt', toolsAdded: [{ name: 'read' }], timestamp: 0 };
+    const delta = { role: 'system', content: '', toolsAdded: [{ name: 'search' }], timestamp: 3 };
+    const sanitized = sanitizeAgentMessagesForLlm([
+      initial,
+      { role: 'user', content: 'first', timestamp: 1 },
+      assistantToolCall,
+      delta,
+      toolResult,
+    ] as never[]);
+
+    expect(sanitized).toEqual([
+      initial,
+      expect.objectContaining({ role: 'user' }),
+      expect.objectContaining({ role: 'assistant' }),
+      delta,
+      expect.objectContaining({ role: 'toolResult' }),
+    ]);
+  });
+
   it('drops persisted failed assistant attempts before replaying history to the model', () => {
     const sanitized = sanitizeAgentMessagesForLlm([
       { role: 'user', content: 'question', timestamp: 1 },

@@ -84,6 +84,9 @@ module.exports = {
     './packages/obsidian-host/src/scopedHttpClient.ts': {
       branches: 50,
     },
+    './packages/obsidian-host/src/scopedHttpResponseBody.ts': {
+      branches: 50,
+    },
     './packages/agent/src/network/egressPolicy.ts': {
       branches: 70,
     },

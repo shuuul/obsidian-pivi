@@ -26,6 +26,32 @@ function getTasksAction(value: unknown): TasksAction | undefined {
     : undefined;
 }
 
+const TASK_LIST_FLAGS = ['todo', 'done', 'daily', 'verbose', 'total', 'active'] as const;
+
+function buildTaskListArgs(
+  input: Record<string, unknown>,
+  file: string | undefined,
+  notePath: string | undefined,
+): string[] {
+  const args = ['tasks', 'format=json'];
+  if (file) {
+    args.push(`file=${file}`);
+  }
+  if (notePath) {
+    args.push(`path=${JSON.stringify(notePath)}`);
+  }
+  for (const flag of TASK_LIST_FLAGS) {
+    if (input[flag] === true) {
+      args.push(flag);
+    }
+  }
+  const statusFilter = getStringField(input, 'status')?.trim();
+  if (statusFilter) {
+    args.push(`status=${JSON.stringify(statusFilter)}`);
+  }
+  return args;
+}
+
 export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
   const { cli, vault, vaultName, vaultPath } = deps;
   return {
@@ -62,35 +88,7 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
       const ref = getStringField(input, 'ref');
       const line = getNumberField(input, 'line');
       if (action === 'list') {
-        const args = ['tasks', 'format=json'];
-        if (file) {
-          args.push(`file=${file}`);
-        }
-        if (notePath) {
-          args.push(`path=${JSON.stringify(notePath)}`);
-        }
-        if (input.todo === true) {
-          args.push('todo');
-        }
-        if (input.done === true) {
-          args.push('done');
-        }
-        if (input.daily === true) {
-          args.push('daily');
-        }
-        if (input.verbose === true) {
-          args.push('verbose');
-        }
-        if (input.total === true) {
-          args.push('total');
-        }
-        if (input.active === true) {
-          args.push('active');
-        }
-        const statusFilter = getStringField(input, 'status')?.trim();
-        if (statusFilter) {
-          args.push(`status=${JSON.stringify(statusFilter)}`);
-        }
+        const args = buildTaskListArgs(input, file, notePath);
         return textResult(capCliToolOutput(await cli.run({ vaultName, args })));
       }
 

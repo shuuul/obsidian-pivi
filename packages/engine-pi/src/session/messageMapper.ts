@@ -15,7 +15,6 @@ import {
   type PiviSessionMetaData,
 } from '@pivi/agent/session/types';
 import { extractUserQuery } from '@pivi/agent/session/userQuery';
-import type { Skill } from '@pivi/agent/skills/vault/loadVaultSkills';
 import type { ToolCallInfo, ToolUseResult } from '@pivi/agent/tools';
 import {
   extractDiffData,
@@ -24,7 +23,6 @@ import {
   isWriteEditTool,
   resolveLiveToolName,
   TOOL_ASK_USER_QUESTION,
-  TOOL_SKILL,
 } from '@pivi/agent/tools';
 
 import {
@@ -36,6 +34,8 @@ import {
   normalizeVisibleUserText,
 } from './sessionMessageProjection';
 import { recoverPiSubagentPresentation } from './subagentMessageRecovery';
+
+export { applySkillDescriptions } from './skillDescriptionOverlay';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {
   return entry.type === 'message';
@@ -421,6 +421,90 @@ function messageUiFromCustom(data: unknown): PiviMessageUiData | null {
   return candidate;
 }
 
+type CompactionSessionEntry = Extract<SessionEntry, { type: 'compaction' }>;
+
+function compactionEntryToChatMessage(
+  entry: CompactionSessionEntry,
+  entriesThroughCompaction: SessionEntry[],
+): ChatMessage {
+  const timestamp = Date.parse(entry.timestamp) || Date.now();
+  const details = parsePiviCompactionDetails(
+    (entry as unknown as { details?: unknown }).details,
+  );
+  return {
+    id: entry.id,
+    role: 'assistant',
+    content: '',
+    timestamp,
+    contentBlocks: [{
+      type: 'context_compacted',
+      ...(details ? { checkpoint: toCheckpointPresentation(details.piviCheckpoint) } : {}),
+      summary: entry.summary,
+      tokensAfter: estimateActiveContextTokens(entriesThroughCompaction),
+      tokensBefore: entry.tokensBefore,
+    }],
+    assistantMessageId: entry.id,
+  };
+}
+
+interface EntryMessageBase {
+  id: string;
+  content: string;
+  timestamp: number;
+  parentEntryId: string | null;
+  ui: PiviMessageUiData | undefined;
+}
+
+// Both builders emit every field in one fixed order so user and assistant
+// messages keep the same serialized shape.
+function userEntryToChatMessage(base: EntryMessageBase, agentContent: unknown): ChatMessage {
+  const { ui } = base;
+  return {
+    id: base.id,
+    role: 'user',
+    content: base.content,
+    displayContent: extractUserQuery(ui?.displayContent ?? base.content),
+    timestamp: base.timestamp,
+    toolCalls: undefined,
+    contentBlocks: undefined,
+    images: extractImagesFromAgentContent(agentContent),
+    turnRequest: ui?.turnRequest,
+    durationSeconds: ui?.durationSeconds,
+    durationFlavorWord: ui?.durationFlavorWord,
+    tokensPerSecond: ui?.tokensPerSecond,
+    parentEntryId: base.parentEntryId,
+    userMessageId: ui?.userMessageId ?? base.id,
+    assistantMessageId: undefined,
+  };
+}
+
+function assistantEntryToChatMessage(
+  base: EntryMessageBase,
+  reconstructedToolCalls: ReturnType<typeof toolCallsFromAssistantContent> | undefined,
+  reconstructedContentBlocks: ReturnType<typeof contentBlocksFromAssistantContent> | undefined,
+): ChatMessage {
+  const { ui } = base;
+  return {
+    id: base.id,
+    role: 'assistant',
+    content: base.content,
+    displayContent: ui?.displayContent,
+    timestamp: base.timestamp,
+    toolCalls: mergeToolCallOverlay(reconstructedToolCalls, ui?.toolCalls),
+    contentBlocks: (ui?.contentBlocks
+      ? mergePostTextThinkingRuns(ui.contentBlocks as ContentBlock[])
+      : undefined) ?? reconstructedContentBlocks,
+    images: undefined,
+    turnRequest: undefined,
+    durationSeconds: ui?.durationSeconds,
+    durationFlavorWord: ui?.durationFlavorWord,
+    tokensPerSecond: ui?.tokensPerSecond,
+    parentEntryId: base.parentEntryId,
+    userMessageId: undefined,
+    assistantMessageId: ui?.assistantMessageId ?? base.id,
+  };
+}
+
 /** Map JSONL branch entries to UI chat messages (user/assistant only). */
 export function entriesToChatMessages(
   branch: SessionEntry[],
@@ -435,24 +519,7 @@ export function entriesToChatMessages(
     const entry = branch[entryIndex];
     if (!entry) continue;
     if (entry.type === 'compaction') {
-      const timestamp = Date.parse(entry.timestamp) || Date.now();
-      const details = parsePiviCompactionDetails(
-        (entry as unknown as { details?: unknown }).details,
-      );
-      const message: ChatMessage = {
-        id: entry.id,
-        role: 'assistant',
-        content: '',
-        timestamp,
-        contentBlocks: [{
-          type: 'context_compacted',
-          ...(details ? { checkpoint: toCheckpointPresentation(details.piviCheckpoint) } : {}),
-          summary: entry.summary,
-          tokensAfter: estimateActiveContextTokens(branch.slice(0, entryIndex + 1)),
-          tokensBefore: entry.tokensBefore,
-        }],
-        assistantMessageId: entry.id,
-      };
+      const message = compactionEntryToChatMessage(entry, branch.slice(0, entryIndex + 1));
       messages.push(message);
       lastAssistantMessage = null;
       continue;
@@ -471,13 +538,6 @@ export function entriesToChatMessages(
 
     const ui = messageUiByEntryId.get(entry.id);
     const content = extractAgentTextContent(agentMsg.content);
-    const timestamp = typeof agentMsg.timestamp === 'number'
-      ? agentMsg.timestamp
-      : Date.parse(entry.timestamp) || Date.now();
-    const displayContent = agentMsg.role === 'user'
-      ? extractUserQuery(ui?.displayContent ?? content)
-      : ui?.displayContent;
-
     const reconstructedContentBlocks = agentMsg.role === 'assistant'
       ? contentBlocksFromAssistantContent(agentMsg.content)
       : undefined;
@@ -502,31 +562,13 @@ export function entriesToChatMessages(
       continue;
     }
 
-    const message: ChatMessage = {
-      id: entry.id,
-      role: agentMsg.role,
-      content,
-      displayContent,
-      timestamp,
-      toolCalls: agentMsg.role === 'assistant'
-        ? mergeToolCallOverlay(reconstructedToolCalls, ui?.toolCalls)
-        : undefined,
-      contentBlocks: agentMsg.role === 'assistant'
-        ? ((ui?.contentBlocks
-          ? mergePostTextThinkingRuns(ui.contentBlocks as ContentBlock[])
-          : undefined) ?? reconstructedContentBlocks)
-        : undefined,
-      images: agentMsg.role === 'user'
-        ? extractImagesFromAgentContent(agentMsg.content)
-        : undefined,
-      turnRequest: agentMsg.role === 'user' ? ui?.turnRequest : undefined,
-      durationSeconds: ui?.durationSeconds,
-      durationFlavorWord: ui?.durationFlavorWord,
-      tokensPerSecond: ui?.tokensPerSecond,
-      parentEntryId: entry.parentId ?? null,
-      userMessageId: agentMsg.role === 'user' ? (ui?.userMessageId ?? entry.id) : undefined,
-      assistantMessageId: agentMsg.role === 'assistant' ? (ui?.assistantMessageId ?? entry.id) : undefined,
-    };
+    const timestamp = typeof agentMsg.timestamp === 'number'
+      ? agentMsg.timestamp
+      : Date.parse(entry.timestamp) || Date.now();
+    const base = { id: entry.id, content, timestamp, parentEntryId: entry.parentId ?? null, ui };
+    const message = agentMsg.role === 'user'
+      ? userEntryToChatMessage(base, agentMsg.content)
+      : assistantEntryToChatMessage(base, reconstructedToolCalls, reconstructedContentBlocks);
 
     const previousMessage = messages.at(-1);
     if (isDuplicatePendingUserMessage(previousMessage, message)) {
@@ -541,54 +583,6 @@ export function entriesToChatMessages(
   }
 
   recoverPiSubagentPresentation(messages);
-  return messages;
-}
-
-function getStringField(record: Record<string, unknown> | undefined, key: string): string {
-  const value = record?.[key];
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function findSkillForToolCall(toolCall: ToolCallInfo, skills: Skill[]): Skill | undefined {
-  const details = toolCall.toolUseResult;
-  const name = getStringField(toolCall.input, 'name');
-  const filePath = getStringField(details, 'filePath');
-  const baseDir = getStringField(details, 'baseDir');
-
-  return skills.find((skill) => (
-    (name && skill.name === name) ||
-    (filePath && skill.filePath === filePath) ||
-    (baseDir && skill.baseDir === baseDir)
-  ));
-}
-
-export function applySkillDescriptions(
-  messages: ChatMessage[],
-  skills: Skill[],
-): ChatMessage[] {
-  if (skills.length === 0) {
-    return messages;
-  }
-
-  for (const message of messages) {
-    if (!message.toolCalls) {
-      continue;
-    }
-
-    for (const toolCall of message.toolCalls) {
-      if (toolCall.name !== TOOL_SKILL || getStringField(toolCall.toolUseResult, 'description')) {
-        continue;
-      }
-      const skill = findSkillForToolCall(toolCall, skills);
-      if (skill?.description.trim()) {
-        toolCall.toolUseResult = {
-          ...toolCall.toolUseResult,
-          description: skill.description,
-        };
-      }
-    }
-  }
-
   return messages;
 }
 

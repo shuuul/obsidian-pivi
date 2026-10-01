@@ -73,6 +73,61 @@ export function streamSimple(): any {
   return createMockStream();
 }
 
+// Mirror upstream pi-ai dist/utils/event-stream.js. The compat shim re-exports it.
+export class EventStream<T = any, R = any> {
+  private queue: T[] = [];
+  private waiting: Array<(result: IteratorResult<T>) => void> = [];
+  private done = false;
+  private resolveFinalResult!: (result: R) => void;
+  private readonly finalResultPromise = new Promise<R>((resolve) => {
+    this.resolveFinalResult = resolve;
+  });
+
+  constructor(
+    private readonly isComplete: (event: T) => boolean,
+    private readonly extractResult: (event: T) => R,
+  ) {}
+
+  push(event: T): void {
+    if (this.done) return;
+    if (this.isComplete(event)) {
+      this.done = true;
+      this.resolveFinalResult(this.extractResult(event));
+    }
+    const waiter = this.waiting.shift();
+    if (waiter) waiter({ value: event, done: false });
+    else this.queue.push(event);
+  }
+
+  end(result?: R): void {
+    this.done = true;
+    if (result !== undefined) this.resolveFinalResult(result);
+    for (const waiter of this.waiting.splice(0)) waiter({ value: undefined, done: true });
+  }
+
+  async *[Symbol.asyncIterator](): AsyncIterator<T> {
+    while (true) {
+      if (this.queue.length > 0) yield this.queue.shift() as T;
+      else if (this.done) return;
+      else {
+        const result = await new Promise<IteratorResult<T>>((resolve) => this.waiting.push(resolve));
+        if (result.done) return;
+        yield result.value;
+      }
+    }
+  }
+
+  result(): Promise<R> {
+    return this.finalResultPromise;
+  }
+}
+
+// Upstream validates and coerces against the tool's TypeBox schema; the mock keeps
+// the copy-on-validate contract without loading a schema validator.
+export function validateToolArguments(_tool: any, toolCall: any): any {
+  return structuredClone(toolCall.arguments);
+}
+
 // Mirror upstream pi-ai transcript helpers (dist/utils/transcript.js): Pi 0.86
 // carries the prompt and tool declarations as transcript system messages.
 export function createInitialSystemMessage(systemPrompt?: string, tools?: any[]): any {

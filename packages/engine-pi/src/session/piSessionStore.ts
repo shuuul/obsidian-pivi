@@ -1,14 +1,19 @@
-import { existsSync, readdirSync, statSync, utimesSync } from 'node:fs';
-import { join } from 'node:path';
+import {
+  existsSync,
+  statSync,
+  utimesSync,
+} from 'node:fs';
 
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { SessionEntry } from '@earendil-works/pi-coding-agent';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
-import type { ChatMessage, UsageInfo } from '@pivi/agent/runtime';
+import type {
+  ChatMessage,
+  UsageInfo,
+} from '@pivi/agent/runtime';
 import { calculateContextEnvelope } from '@pivi/agent/runtime/usage';
 import { sanitizeMessageUiForJsonl } from '@pivi/agent/session/messageUi';
 import {
-  getPiviSessionRoot,
   getPiviSessionTrashRoot,
   toAbsoluteSessionPath,
   toLiveSessionFile,
@@ -29,7 +34,6 @@ import type {
   UserTurnUi,
 } from '@pivi/agent/session/types';
 import {
-  PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
   PIVI_UI_CONTEXT,
   type PiviSessionMetaData,
@@ -39,11 +43,6 @@ import {
 } from '@pivi/agent/session/types';
 import { loadRuntimeVaultSkills } from '@pivi/agent/skills/vault/loadVaultSkills';
 
-import { piAiModels } from '../models/piAiModels';
-import {
-  isPiModelContextWindowAuthoritative,
-  resolvePiModelFromKeyWithLookup,
-} from '../models/piModelRegistry';
 import {
   applySkillDescriptions,
   collectMessageUiMap,
@@ -52,6 +51,18 @@ import {
   readSessionMetaFromBranch,
 } from './messageMapper';
 import { estimateActiveContextCategories } from './piContextCompaction';
+import {
+  arraysEqual,
+  ExternalContextJsonlMigrationError,
+  listJsonlFilesUnder,
+  listVaultSessionJsonlFiles,
+  MemoryExternalContextStore,
+  mergeMessageUiPatch,
+  parentVaultRelativePath,
+  patchAlreadyPersisted,
+  sessionMetaEqual,
+  stripExternalContextsFromSessionJsonl,
+} from './piSessionStoreSupport';
 import {
   assertSessionJsonlSourceUnchanged,
   captureSessionJsonlSource,
@@ -67,212 +78,12 @@ import {
   readOlderSessionJsonlMessages,
 } from './sessionJsonlRangeReader';
 import { SessionTreeStore } from './sessionTreeStore';
+import { usageInfoFromAssistantMessage } from './sessionUsageInfo';
+export {
+  stripExternalContextsFromSessionJsonl,
+} from './piSessionStoreSupport';
 
 const logger = new PluginLogger('PiSessionStore');
-
-function stableJson(value: unknown): string {
-  if (value === undefined) {
-    return 'undefined';
-  }
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map(stableJson).join(',')}]`;
-  }
-  const record = value as Record<string, unknown>;
-  return `{${Object.keys(record).sort().map((key) => (
-    `${JSON.stringify(key)}:${stableJson(record[key])}`
-  )).join(',')}}`;
-}
-
-function patchAlreadyPersisted(
-  current: MessageUiPatch | undefined,
-  patch: MessageUiPatch,
-): boolean {
-  const patchKeys = Object.keys(patch)
-    .filter((key) => key !== 'targetEntryId') as Array<keyof MessageUiPatch>;
-  if (patchKeys.length === 0) {
-    return true;
-  }
-  if (!current) {
-    return false;
-  }
-  return patchKeys.every((key) => stableJson(current[key]) === stableJson(patch[key]));
-}
-
-function mergeMessageUiPatch(
-  current: MessageUiPatch | undefined,
-  patch: MessageUiPatch,
-): MessageUiPatch {
-  return {
-    ...current,
-    ...patch,
-  };
-}
-
-function arraysEqual(a: readonly string[] | undefined, b: readonly string[] | undefined): boolean {
-  if (a === b) {
-    return true;
-  }
-  if (!a || !b || a.length !== b.length) {
-    return false;
-  }
-  for (const [index, value] of a.entries()) {
-    const other = b[index];
-    if (other === undefined || value !== other) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function listJsonlFilesUnder(root: string): string[] {
-  const files: string[] = [];
-  let entries;
-  try {
-    entries = readdirSync(root, { withFileTypes: true });
-  } catch {
-    return files;
-  }
-
-  for (const entry of entries) {
-    if (entry.isFile() && entry.name.endsWith('.jsonl')) {
-      files.push(join(root, entry.name));
-      continue;
-    }
-    if (!entry.isDirectory()) {
-      continue;
-    }
-    const directory = join(root, entry.name);
-    try {
-      files.push(...readdirSync(directory)
-        .filter(file => file.endsWith('.jsonl'))
-        .map(file => join(directory, file)));
-    } catch {
-      // An iCloud File Provider directory can disappear while being enumerated.
-    }
-  }
-  return files;
-}
-
-function listVaultSessionJsonlFiles(vaultPath: string): string[] {
-  return listJsonlFilesUnder(getPiviSessionRoot(vaultPath));
-}
-
-function parentVaultRelativePath(file: string): string {
-  const index = file.lastIndexOf('/');
-  return index <= 0 ? '' : file.slice(0, index);
-}
-
-interface ExternalContextJsonlMigration {
-  content: string;
-  changed: boolean;
-  sessionPaths?: string[];
-  turnPaths: Map<string, string[]>;
-}
-
-function externalPaths(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((path): path is string => typeof path === 'string')
-    : [];
-}
-
-class ExternalContextJsonlMigrationError extends Error {}
-
-/** Pure, line-preserving migration used by startup and lazy session opens. */
-export function stripExternalContextsFromSessionJsonl(
-  content: string,
-  sessionFile: string,
-): ExternalContextJsonlMigration {
-  const hasFinalNewline = content.endsWith('\n');
-  const lines = content.split('\n');
-  if (hasFinalNewline) {
-    lines.pop();
-  }
-  let changed = false;
-  let sessionPaths: string[] | undefined;
-  const turnPaths = new Map<string, string[]>();
-  const migratedLines = lines.map((line, index) => {
-    if (!line.trim()) {
-      return line;
-    }
-    let parsed: Record<string, unknown>;
-    try {
-      const value: unknown = JSON.parse(line);
-      if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return line;
-      }
-      parsed = value as Record<string, unknown>;
-    } catch (error) {
-      throw new ExternalContextJsonlMigrationError(
-        `Failed to migrate external contexts in ${sessionFile} at line ${index + 1}`,
-        { cause: error },
-      );
-    }
-    if (parsed.type !== 'custom' || !parsed.data || typeof parsed.data !== 'object' || Array.isArray(parsed.data)) {
-      return line;
-    }
-    const data = parsed.data as Record<string, unknown>;
-    if (parsed.customType === PIVI_UI_CONTEXT && Object.hasOwn(data, 'externalContextPaths')) {
-      sessionPaths = externalPaths(data.externalContextPaths);
-      const nextData = { ...data };
-      Reflect.deleteProperty(nextData, 'externalContextPaths');
-      changed = true;
-      return JSON.stringify({ ...parsed, data: nextData });
-    }
-    if (parsed.customType === PIVI_MESSAGE_UI && typeof data.targetEntryId === 'string') {
-      const result = sanitizeMessageUiForJsonl(data);
-      if (result.externalContextPaths) {
-        turnPaths.set(data.targetEntryId, result.externalContextPaths);
-        changed = true;
-        return JSON.stringify({ ...parsed, data: result.sanitized });
-      }
-    }
-    return line;
-  });
-  return {
-    content: migratedLines.join('\n') + (hasFinalNewline ? '\n' : ''),
-    changed,
-    sessionPaths,
-    turnPaths,
-  };
-}
-
-class MemoryExternalContextStore implements DeviceLocalExternalContextStore {
-  private readonly sessions = new Map<string, { selected: string[]; turns: Map<string, string[]> }>();
-  private session(file: string) {
-    let value = this.sessions.get(file);
-    if (!value) {
-      value = { selected: [], turns: new Map() };
-      this.sessions.set(file, value);
-    }
-    return value;
-  }
-  getSessionPaths(file: string): string[] { return [...this.session(file).selected]; }
-  setSessionPaths(file: string, paths: readonly string[]): void { this.session(file).selected = [...paths]; }
-  getTurnPaths(file: string, entryId: string): string[] { return [...(this.session(file).turns.get(entryId) ?? [])]; }
-  setTurnPaths(file: string, entryId: string, paths: readonly string[]): void { this.session(file).turns.set(entryId, [...paths]); }
-  copySession(source: string, target: string): void {
-    const current = this.session(source);
-    this.sessions.set(target, {
-      selected: [...current.selected],
-      turns: new Map([...current.turns].map(([id, paths]) => [id, [...paths]])),
-    });
-  }
-  deleteSession(file: string): void { this.sessions.delete(file); }
-}
-
-function sessionMetaEqual(
-  a: PiviSessionMetaData | null | undefined,
-  b: PiviSessionMetaData,
-): boolean {
-  return !!a
-    && a.title === b.title
-    && a.titleSource === b.titleSource
-    && a.createdAt === b.createdAt
-    && a.lastResponseAt === b.lastResponseAt;
-}
 
 export class PiSessionStore implements SessionStore {
   private readonly externalContexts: DeviceLocalExternalContextStore;
@@ -555,7 +366,7 @@ export class PiSessionStore implements SessionStore {
       const line = index.entries[i];
       if (line?.entryType !== 'message' || line.role !== 'assistant') continue;
       const entry = readSessionJsonlIndexedLine(index, line);
-      const usage = this.buildUsageInfo(entry.message as AgentMessage | undefined);
+      const usage = usageInfoFromAssistantMessage(entry.message as AgentMessage | undefined);
       if (usage) {
         const estimates = estimateActiveContextCategories(index.entries.map(indexEntry =>
           readSessionJsonlIndexedLine(index, indexEntry) as unknown as SessionEntry));
@@ -576,56 +387,6 @@ export class PiSessionStore implements SessionStore {
       }
     }
     return Promise.resolve(null);
-  }
-
-  private buildUsageInfo(message: AgentMessage | undefined): UsageInfo | null {
-    const msg = message as unknown as Record<string, unknown> | undefined;
-    if (!msg || msg.role !== "assistant") {
-      return null;
-    }
-    const usage = this.getRecord(msg.usage);
-    const inputTokens = this.getNumber(usage.input);
-    const outputTokens = this.getNumber(usage.output);
-    const cacheReadInputTokens = this.getNumber(usage.cacheRead) ?? 0;
-    const cacheCreationInputTokens = this.getNumber(usage.cacheWrite) ?? 0;
-    const contextTokens = inputTokens === null
-      ? this.getNumber(usage.totalTokens)
-      : inputTokens + cacheReadInputTokens + cacheCreationInputTokens;
-    if (contextTokens === null || contextTokens <= 0) {
-      return null;
-    }
-
-    const modelKey = typeof msg.provider === "string" && typeof msg.model === "string"
-      ? `${msg.provider}/${msg.model}`
-      : null;
-    const model = modelKey ? resolvePiModelFromKeyWithLookup(modelKey, piAiModels) : null;
-    const contextWindow = model?.contextWindow ?? 0;
-    const outputTokenLimit = model?.maxTokens;
-    return {
-      cacheCreationInputTokens,
-      cacheReadInputTokens,
-      contextTokens,
-      contextTokensIsAuthoritative: true,
-      contextWindow,
-      contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(model),
-      inputTokens: inputTokens ?? contextTokens,
-      ...(modelKey ? { model: modelKey } : {}),
-      ...(outputTokenLimit ? { outputTokenLimit } : {}),
-      ...(outputTokens !== null ? { outputTokens } : {}),
-      percentage: contextWindow > 0
-        ? Math.min(100, Math.max(0, Math.round((contextTokens / contextWindow) * 100)))
-        : 0,
-    };
-  }
-
-  private getRecord(value: unknown): Record<string, unknown> {
-    return value !== null && typeof value === "object" && !Array.isArray(value)
-      ? value as Record<string, unknown>
-      : {};
-  }
-
-  private getNumber(value: unknown): number | null {
-    return typeof value === "number" && Number.isFinite(value) ? value : null;
   }
 
   appendUserTurn(

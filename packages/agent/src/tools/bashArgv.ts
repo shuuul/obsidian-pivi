@@ -9,18 +9,12 @@ export function tokenizeBashArgv(command: string): string[] {
 
   for (let i = 0; i < command.length; i += 1) {
     const char = command[i]!;
-    const code = char.charCodeAt(0);
-    if ((code < 0x20 && char !== '\t') || code === 0x7f) {
-      throw new Error('Bash command must not contain control syntax');
-    }
+    assertNoControlCharacter(char);
     if (inQuote) {
       if (char === inQuote) {
         inQuote = null;
       } else if (char === '\\' && inQuote === '"' && i + 1 < command.length) {
-        const escaped = command[i + 1]!;
-        if (escaped === '\n' || escaped === '\r') {
-          throw new Error('Bash command must not contain control syntax');
-        }
+        const escaped = readEscapedCharacter(command, i);
         if (/[\\"$`]/.test(escaped)) {
           current += escaped;
           i += 1;
@@ -37,18 +31,12 @@ export function tokenizeBashArgv(command: string): string[] {
     if (char === '"' || char === "'") {
       inQuote = char;
     } else if (char === '\\' && i + 1 < command.length) {
-      const escaped = command[i + 1]!;
-      if (escaped === '\n' || escaped === '\r') {
-        throw new Error('Bash command must not contain control syntax');
-      }
-      current += escaped;
+      current += readEscapedCharacter(command, i);
       i += 1;
     } else if (/[;&|<>`$(){}]/.test(char)) {
       throw new Error('Bash command must not contain shell control or substitution syntax');
     } else if (/\s/.test(char)) {
-      if (char !== ' ' && char !== '\t') {
-        throw new Error('Bash command must not contain control syntax');
-      }
+      assertPlainWhitespace(char);
       if (current) {
         tokens.push(current);
         current = '';
@@ -62,6 +50,28 @@ export function tokenizeBashArgv(command: string): string[] {
   }
   if (current) tokens.push(current);
   return tokens;
+}
+
+function assertNoControlCharacter(char: string): void {
+  const code = char.charCodeAt(0);
+  if ((code < 0x20 && char !== '\t') || code === 0x7f) {
+    throw new Error('Bash command must not contain control syntax');
+  }
+}
+
+function assertPlainWhitespace(char: string): void {
+  if (char !== ' ' && char !== '\t') {
+    throw new Error('Bash command must not contain control syntax');
+  }
+}
+
+/** Returns the character after the backslash at `index`; a line continuation is rejected. */
+function readEscapedCharacter(command: string, index: number): string {
+  const escaped = command[index + 1]!;
+  if (escaped === '\n' || escaped === '\r') {
+    throw new Error('Bash command must not contain control syntax');
+  }
+  return escaped;
 }
 
 /**

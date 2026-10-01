@@ -107,6 +107,23 @@ export function mcpDraftFromLines(value: string): Record<string, string> {
   return result;
 }
 
+function draftAuthFor(server: ManagedMcpServer | undefined, hasOAuthConfig: boolean): McpDraft['auth'] {
+  if (server?.auth === 'none' || server?.oauth === false) return 'none';
+  if (server?.auth === 'bearer') return 'bearer';
+  return server?.auth === 'oauth' || hasOAuthConfig ? 'oauth' : 'auto';
+}
+
+function draftOAuthFields(
+  oauth: Exclude<ManagedMcpServer['oauth'], false | undefined> | undefined,
+): Pick<McpDraft, 'grantType' | 'clientId' | 'clientSecret' | 'scope'> {
+  return {
+    grantType: oauth?.grantType ?? 'authorization_code',
+    clientId: oauth?.clientId ?? '',
+    clientSecret: oauth?.clientSecret ?? '',
+    scope: oauth?.scope ?? '',
+  };
+}
+
 export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 'http'): McpDraft {
   const config = server?.config;
   const serverType = config ? getMcpServerType(config) : type;
@@ -117,17 +134,8 @@ export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 'h
     type: serverType,
     url: remote?.url ?? '',
     headers: mcpDraftToLines(remote?.headers),
-    auth: server?.auth === 'none' || server?.oauth === false
-      ? 'none'
-      : server?.auth === 'bearer'
-        ? 'bearer'
-        : server?.auth === 'oauth' || oauth
-          ? 'oauth'
-          : 'auto',
-    grantType: oauth?.grantType ?? 'authorization_code',
-    clientId: oauth?.clientId ?? '',
-    clientSecret: oauth?.clientSecret ?? '',
-    scope: oauth?.scope ?? '',
+    auth: draftAuthFor(server, oauth !== undefined),
+    ...draftOAuthFields(oauth),
     bearerToken: server?.bearerToken ?? '',
     bearerTokenEnv: server?.bearerTokenEnv ?? '',
   };

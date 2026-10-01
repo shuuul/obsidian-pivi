@@ -121,6 +121,90 @@ function updateSubagent(
   return changed ? { ...message, toolCalls } : message;
 }
 
+function appendVisibleText(state: ChatStreamSnapshot, content: string): ChatStreamSnapshot {
+  return {
+    ...state,
+    message: {
+      ...appendContentBlock(state.message, 'text', content),
+      content: state.message.content + content,
+    },
+    currentTextContent: state.currentTextContent + content,
+  };
+}
+
+function reduceContextCompacted(
+  state: ChatStreamSnapshot,
+  chunk: Extract<StreamChunk, { type: 'context_compacted' }>,
+): ChatStreamSnapshot {
+  const lastBlock = state.message.contentBlocks?.at(-1);
+  if (lastBlock?.type === 'context_compacted') return state;
+  const block = {
+    type: 'context_compacted' as const,
+    ...(chunk.checkpoint ? { checkpoint: chunk.checkpoint } : {}),
+    ...(chunk.summary ? { summary: chunk.summary } : {}),
+    ...(typeof chunk.tokensBefore === 'number' ? { tokensBefore: chunk.tokensBefore } : {}),
+    ...(typeof chunk.tokensAfter === 'number' ? { tokensAfter: chunk.tokensAfter } : {}),
+  };
+  return {
+    ...state,
+    message: {
+      ...state.message,
+      contentBlocks: [...(state.message.contentBlocks ?? []), block],
+    },
+    currentTextContent: '',
+    currentThinkingContent: '',
+  };
+}
+
+type SubagentStreamChunk = Extract<StreamChunk, {
+  type: 'subagent_text' | 'subagent_tool_use' | 'subagent_tool_result' | 'async_subagent_result';
+}>;
+
+function reduceSubagentChunk(message: ChatMessage, chunk: SubagentStreamChunk): ChatMessage {
+  switch (chunk.type) {
+    case 'subagent_text':
+      return updateSubagent(message, chunk.subagentId, subagent => ({
+        ...subagent,
+        result: (subagent.result ?? '') + chunk.content,
+      }));
+    case 'subagent_tool_use':
+      return updateSubagent(message, chunk.subagentId, subagent => ({
+        ...subagent,
+        toolCalls: [...subagent.toolCalls, {
+          id: chunk.id,
+          name: chunk.name,
+          input: { ...chunk.input },
+          status: 'running',
+          startedAt: Date.now(),
+        }],
+      }));
+    case 'subagent_tool_result':
+      return updateSubagent(message, chunk.subagentId, subagent => ({
+        ...subagent,
+        toolCalls: subagent.toolCalls.map(toolCall => toolCall.id === chunk.id
+          ? {
+              ...toolCall,
+              result: chunk.content,
+              status: resolveToolResultStatus(chunk.blocked, chunk.isError),
+              completedAt: toolCall.completedAt ?? Date.now(),
+              ...(chunk.toolUseResult ? { toolUseResult: chunk.toolUseResult } : {}),
+            }
+          : toolCall),
+      }));
+    case 'async_subagent_result': {
+      const subagentId = chunk.subagentId ?? chunk.agentId;
+      return updateSubagent(message, subagentId, subagent => ({
+        ...subagent,
+        ...(chunk.result !== undefined ? { result: chunk.result } : {}),
+        status: chunk.status,
+        asyncStatus: chunk.status,
+        ...(chunk.activityStatus ? { activityStatus: chunk.activityStatus } : {}),
+        completedAt: subagent.completedAt,
+      }));
+    }
+  }
+}
+
 /**
  * Pure, exhaustive stream projector. Runtime sequencing and rendering side effects
  * remain in the app orchestrator; this reducer owns serializable message merges.
@@ -169,100 +253,20 @@ export function reduceChatStreamSnapshot(
       };
     case 'usage':
       return { ...state, usage: { ...chunk.usage } };
-    case 'notice': {
-      const content = `\n\n⚠️ **${chunk.level === 'warning' ? 'Blocked' : 'Notice'}:** ${chunk.content}`;
-      return {
-        ...state,
-        message: {
-          ...appendContentBlock(state.message, 'text', content),
-          content: state.message.content + content,
-        },
-        currentTextContent: state.currentTextContent + content,
-      };
-    }
-    case 'error': {
-      const content = `\n\n❌ **Error:** ${chunk.content}`;
-      return {
-        ...state,
-        message: {
-          ...appendContentBlock(state.message, 'text', content),
-          content: state.message.content + content,
-        },
-        currentTextContent: state.currentTextContent + content,
-      };
-    }
-    case 'context_compacted': {
-      const lastBlock = state.message.contentBlocks?.at(-1);
-      if (lastBlock?.type === 'context_compacted') return state;
-      const block = {
-        type: 'context_compacted' as const,
-        ...(chunk.checkpoint ? { checkpoint: chunk.checkpoint } : {}),
-        ...(chunk.summary ? { summary: chunk.summary } : {}),
-        ...(typeof chunk.tokensBefore === 'number' ? { tokensBefore: chunk.tokensBefore } : {}),
-        ...(typeof chunk.tokensAfter === 'number' ? { tokensAfter: chunk.tokensAfter } : {}),
-      };
-      return {
-        ...state,
-        message: {
-          ...state.message,
-          contentBlocks: [...(state.message.contentBlocks ?? []), block],
-        },
-        currentTextContent: '',
-        currentThinkingContent: '',
-      };
-    }
+    case 'notice':
+      return appendVisibleText(
+        state,
+        `\n\n⚠️ **${chunk.level === 'warning' ? 'Blocked' : 'Notice'}:** ${chunk.content}`,
+      );
+    case 'error':
+      return appendVisibleText(state, `\n\n❌ **Error:** ${chunk.content}`);
+    case 'context_compacted':
+      return reduceContextCompacted(state, chunk);
     case 'subagent_text':
-      return {
-        ...state,
-        message: updateSubagent(state.message, chunk.subagentId, subagent => ({
-          ...subagent,
-          result: (subagent.result ?? '') + chunk.content,
-        })),
-      };
     case 'subagent_tool_use':
-      return {
-        ...state,
-        message: updateSubagent(state.message, chunk.subagentId, subagent => ({
-          ...subagent,
-          toolCalls: [...subagent.toolCalls, {
-            id: chunk.id,
-            name: chunk.name,
-            input: { ...chunk.input },
-            status: 'running',
-            startedAt: Date.now(),
-          }],
-        })),
-      };
     case 'subagent_tool_result':
-      return {
-        ...state,
-        message: updateSubagent(state.message, chunk.subagentId, subagent => ({
-          ...subagent,
-          toolCalls: subagent.toolCalls.map(toolCall => toolCall.id === chunk.id
-            ? {
-                ...toolCall,
-                result: chunk.content,
-                status: resolveToolResultStatus(chunk.blocked, chunk.isError),
-                completedAt: toolCall.completedAt ?? Date.now(),
-                ...(chunk.toolUseResult ? { toolUseResult: chunk.toolUseResult } : {}),
-              }
-            : toolCall),
-        })),
-      };
-    case 'async_subagent_result': {
-      const subagentId = chunk.subagentId ?? chunk.agentId;
-      return {
-        ...state,
-        message: updateSubagent(state.message, subagentId, subagent => ({
-          ...subagent,
-          ...(chunk.result !== undefined ? { result: chunk.result } : {}),
-          status: chunk.status,
-          asyncStatus: chunk.status,
-          ...(chunk.activityStatus ? { activityStatus: chunk.activityStatus } : {}),
-          completedAt: subagent.completedAt,
-        })),
-      };
-    }
+    case 'async_subagent_result':
+      return { ...state, message: reduceSubagentChunk(state.message, chunk) };
     case 'user_message_start':
     case 'assistant_message_start':
     case 'done':

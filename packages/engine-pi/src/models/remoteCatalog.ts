@@ -117,6 +117,22 @@ function sanitizeInput(value: unknown): Model<Api>['input'] {
   return filtered.length > 0 ? filtered : ['text'];
 }
 
+function isNonBlankString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isPositiveFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function sanitizeHeaders(value: unknown): Record<string, string> | undefined {
+  if (!isRecord(value)) return undefined;
+  const entries = Object.entries(value).filter((pair): pair is [string, string] => (
+    typeof pair[1] === 'string' && pair[0].length > 0
+  ));
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
 /**
  * Structural validation for one remote catalog entry. Entries are rejected
  * when required fields are missing or malformed, and — the compatibility
@@ -133,31 +149,22 @@ function sanitizeRemoteModel(
 ): Model<Api> | null {
   if (!isRecord(entry)) return null;
   const id = entry.id;
-  if (typeof id !== 'string' || !id.trim()) return null;
+  if (!isNonBlankString(id)) return null;
   const api = entry.api;
-  if (typeof api !== 'string' || !api.trim()) return null;
+  if (!isNonBlankString(api)) return null;
   if (supportedApis.size > 0 && !supportedApis.has(api)) return null;
   const contextWindow = entry.contextWindow;
-  if (typeof contextWindow !== 'number' || !Number.isFinite(contextWindow) || contextWindow <= 0) return null;
+  if (!isPositiveFiniteNumber(contextWindow)) return null;
   const maxTokens = entry.maxTokens;
-  if (typeof maxTokens !== 'number' || !Number.isFinite(maxTokens) || maxTokens <= 0) return null;
+  if (!isPositiveFiniteNumber(maxTokens)) return null;
   const cost = sanitizeCost(entry.cost);
   if (!cost) return null;
-  const baseUrl = typeof entry.baseUrl === 'string' && entry.baseUrl.trim()
-    ? entry.baseUrl
-    : fallbackBaseUrl;
+  const baseUrl = isNonBlankString(entry.baseUrl) ? entry.baseUrl : fallbackBaseUrl;
   if (!baseUrl) return null;
-  const name = typeof entry.name === 'string' && entry.name.trim() ? entry.name : id;
+  const name = isNonBlankString(entry.name) ? entry.name : id;
   const thinkingLevelMap = isRecord(entry.thinkingLevelMap) ? entry.thinkingLevelMap : undefined;
   const compat = isRecord(entry.compat) ? entry.compat : undefined;
-  const headerEntries = isRecord(entry.headers)
-    ? Object.entries(entry.headers).filter((pair): pair is [string, string] => (
-      typeof pair[1] === 'string' && pair[0].length > 0
-    ))
-    : undefined;
-  const headers = headerEntries && headerEntries.length > 0
-    ? Object.fromEntries(headerEntries)
-    : undefined;
+  const headers = sanitizeHeaders(entry.headers);
   const samplingParams = isRecord(entry.samplingParams) ? entry.samplingParams : undefined;
   // Built explicitly rather than spread: unknown payload fields must not leak
   // into the registry, and every `Model` field is covered below.
@@ -208,6 +215,30 @@ function parseCatalogPayload(
     else dropped += 1;
   }
   return { models, dropped };
+}
+
+function catalogRequestHeaders(usableCache: RemoteCatalogEntry | undefined): Record<string, string> {
+  const headers: Record<string, string> = { accept: 'application/json' };
+  if (usableCache && usableCache.models.length > 0 && usableCache.etag) {
+    headers['if-none-match'] = usableCache.etag;
+  }
+  return headers;
+}
+
+function catalogEntryFromResponse(
+  response: { headers?: { get?: (name: string) => string | null } },
+  models: Model<Api>[],
+  checkedAt: number,
+): RemoteCatalogEntry {
+  const lastModified = Date.parse(response.headers?.get?.('last-modified') ?? '');
+  const etag = response.headers?.get?.('etag') ?? undefined;
+  return {
+    models,
+    checkedAt,
+    lastModified: Number.isNaN(lastModified) ? 0 : lastModified,
+    ...(etag ? { etag } : {}),
+    piVersion: PIVI_PI_VERSION,
+  };
 }
 
 /** Add a persisted device-local remote-catalog overlay to a builtin provider. */
@@ -267,10 +298,7 @@ export function withPiviRemoteCatalog<T extends Provider>(
     // Only revalidate when a version-matched cached body backs the validator,
     // so a 304 can never leave the overlay empty nor resurrect a stale-pin
     // body that init just discarded.
-    const headers: Record<string, string> = { accept: 'application/json' };
-    if (cacheUsable && current.models.length > 0 && current.etag) {
-      headers['if-none-match'] = current.etag;
-    }
+    const headers = catalogRequestHeaders(cacheUsable ? current : undefined);
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), attemptTimeoutMs);
     const signal = options?.signal
@@ -310,16 +338,7 @@ export function withPiviRemoteCatalog<T extends Provider>(
         supportedApis,
         provider.baseUrl,
       );
-      const lastModifiedHeader = response.headers?.get?.('last-modified') ?? '';
-      const lastModified = Date.parse(lastModifiedHeader);
-      const etag = response.headers?.get?.('etag') ?? undefined;
-      const entry: RemoteCatalogEntry = {
-        models: parsed,
-        checkedAt,
-        lastModified: Number.isNaN(lastModified) ? 0 : lastModified,
-        ...(etag ? { etag } : {}),
-        piVersion: PIVI_PI_VERSION,
-      };
+      const entry = catalogEntryFromResponse(response, parsed, checkedAt);
       dynamicModels = parsed;
       deps.store?.write(providerId, entry);
       const addedModels = parsed.filter((model) => !baselineIds.has(model.id)).length;

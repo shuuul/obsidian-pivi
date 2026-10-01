@@ -1,5 +1,8 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
+import type {
+  ImageContent,
+  TextContent,
+} from '@earendil-works/pi-ai';
 import {
   buildContextEntries,
   buildSessionContext,
@@ -9,28 +12,20 @@ import {
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { ImageAttachment } from '@pivi/agent/runtime';
 import {
-  type AgentReport,
   type Checkpoint,
-  formatAgentReportForParent,
-  parseAgentReport,
   parsePiviCompactionDetails,
   type PiviCompactionDetails,
 } from '@pivi/agent/session/continuationSchemas';
 import { sanitizeMessageUiForJsonl } from '@pivi/agent/session/messageUi';
 import {
-  acknowledgeJournalEntry,
   createJournalEntryId,
-  sealJournalEntryWithAppend,
   SessionJournalBoundsError,
   type SessionJournalEntryV1,
   type SessionJournalIntent,
-  type SessionJournalStore,
   upsertJournalEntry,
 } from '@pivi/agent/session/sessionJournal';
 import {
   getPiviSessionDir,
-  InvalidSessionFileError,
-  isCanonicalVaultRelativeJsonl,
   toAbsoluteSessionPath,
   toVaultRelativePath,
 } from '@pivi/agent/session/sessionPaths';
@@ -44,8 +39,6 @@ import {
   type PiviUiContextData,
   SessionIndexStaleError,
 } from '@pivi/agent/session/types';
-import { closeSync, openSync, readSync, rmSync, statSync } from 'fs';
-import { basename, dirname, resolve } from 'path';
 
 import { toPiImageContent } from '../runtime/piImageContent';
 import {
@@ -64,202 +57,23 @@ import {
   refreshSessionJsonlIndexAfterAppend,
   type SessionJsonlSourceFingerprint,
 } from './sessionJsonlIndex';
+import {
+  applyPersistedAsyncSubagentResults,
+  cacheKey,
+  createBranchedSessionWithCompensation,
+  getBoundJournalBinding,
+  isLlmContextEntry,
+  requireVaultSessionFile,
+  sealAppendedContinuation,
+} from './sessionTreeStoreSupport';
 import { findLastVisibleConversationEntryId } from './visibleSessionEntries';
+export {
+  bindSessionJournal,
+  getBoundSessionJournal,
+  type SessionJournalBinding,
+} from './sessionTreeStoreSupport';
 
 const logger = new PluginLogger('SessionTreeStore');
-
-interface BoundSessionJournal {
-  store: SessionJournalStore;
-  now: () => number;
-  owner: symbol;
-}
-
-let boundJournal: BoundSessionJournal | null = null;
-
-export interface SessionJournalBinding {
-  /** Releases only this binding; returns false after replacement or prior release. */
-  release(): boolean;
-}
-
-/** Bind the vault-scoped device-local session journal used by live appends. */
-export function bindSessionJournal(
-  store: SessionJournalStore | null,
-  now: () => number = () => Date.now(),
-): SessionJournalBinding {
-  const owner = Symbol('session-journal-owner');
-  boundJournal = store ? { store, now, owner } : null;
-  return {
-    release() {
-      if (boundJournal?.owner !== owner) return false;
-      boundJournal = null;
-      return true;
-    },
-  };
-}
-
-export function getBoundSessionJournal(): SessionJournalStore | null {
-  return boundJournal?.store ?? null;
-}
-
-function cacheKey(vaultPath: string, sessionFile: string): string {
-  return `${vaultPath}::${sessionFile}`;
-}
-
-/**
- * Restored tab/session identity must be a canonical vault-relative `.jsonl`
- * path. The trash mirror is still relative, so the prefix is not required here;
- * absolute, traversal, and non-JSONL shapes are rejected before any open.
- */
-function requireVaultSessionFile(sessionFile: string): void {
-  if (!isCanonicalVaultRelativeJsonl(sessionFile)) {
-    throw new InvalidSessionFileError(sessionFile);
-  }
-}
-
-/**
- * Read `[offset, offset+length)` by byte offset. Journal seals are UTF-8 JSONL
- * continuations, so this must return the exact bytes rather than a string slice.
- */
-function readFileRangeSync(file: string, offset: number, length: number): Buffer {
-  if (length === 0) {
-    return Buffer.alloc(0);
-  }
-  const buffer = Buffer.allocUnsafe(length);
-  let descriptor: number | undefined;
-  try {
-    descriptor = openSync(file, 'r');
-    const read = readSync(descriptor, buffer, 0, length, offset);
-    if (read !== length) {
-      throw new Error(`Session continuation ended early at byte ${offset + read}`);
-    }
-    return buffer;
-  } finally {
-    if (descriptor !== undefined) {
-      closeSync(descriptor);
-    }
-  }
-}
-
-function removePartialFork(vaultPath: string, candidate: string): void {
-  const absoluteCandidate = resolve(candidate);
-  const sessionDirectory = resolve(getPiviSessionDir(vaultPath));
-  if (
-    dirname(absoluteCandidate) !== sessionDirectory
-    || !basename(absoluteCandidate).endsWith('.jsonl')
-  ) {
-    throw new Error(`Refusing to remove unexpected partial fork path: ${candidate}`);
-  }
-  rmSync(absoluteCandidate, { force: true });
-}
-
-function createBranchedSessionWithCompensation(
-  vaultPath: string,
-  manager: SessionManager,
-  atEntryId: string,
-): string | null {
-  const source = manager.getSessionFile();
-  try {
-    return manager.createBranchedSession(atEntryId) ?? null;
-  } catch (primaryError) {
-    const candidate = manager.getSessionFile();
-    if (!candidate || (source && resolve(candidate) === resolve(source))) throw primaryError;
-    try {
-      removePartialFork(vaultPath, candidate);
-    } catch (cleanupError) {
-      throw new AggregateError(
-        [primaryError, cleanupError],
-        `Session fork failed and left a partial file at ${candidate}`,
-      );
-    }
-    throw primaryError;
-  }
-}
-
-function isLlmContextEntry(entry: SessionEntry): boolean {
-  return entry.type === 'message' || entry.type === 'compaction';
-}
-
-interface AsyncSubagentPersistedResult {
-  agentId?: string;
-  status: 'completed' | 'error';
-  result: string;
-  report?: AgentReport;
-}
-
-function collectPersistedAsyncSubagentResults(
-  entries: SessionEntry[],
-): Map<string, AsyncSubagentPersistedResult> {
-  const results = new Map<string, AsyncSubagentPersistedResult>();
-  for (const entry of entries) {
-    if (entry.type !== 'custom' || entry.customType !== PIVI_MESSAGE_UI) {
-      continue;
-    }
-    const data = entry.data as PiviMessageUiData | undefined;
-    for (const toolCall of data?.toolCalls ?? []) {
-      const subagent = toolCall.subagent;
-      if (!subagent || subagent.mode !== 'async') {
-        continue;
-      }
-      const status = subagent.asyncStatus ?? subagent.status;
-      if (status !== 'completed' && status !== 'error') {
-        continue;
-      }
-      const result = subagent.result?.trim() || toolCall.result?.trim();
-      if (!result) {
-        continue;
-      }
-      const report = parseAgentReport(toolCall.toolUseResult?.agent_report);
-      results.set(toolCall.id, {
-        agentId: subagent.agentId,
-        status,
-        result,
-        ...(report ? { report } : {}),
-      });
-    }
-  }
-  return results;
-}
-
-function formatPersistedAsyncSubagentResult(result: AsyncSubagentPersistedResult): string {
-  const statusText = result.status === 'error' ? 'failed' : 'completed';
-  const header = result.agentId
-    ? `Background sub-agent ${result.agentId} ${statusText}.`
-    : `Background sub-agent ${statusText}.`;
-  return `${header}\n\n${result.report
-    ? formatAgentReportForParent(result.report)
-    : result.result}`;
-}
-
-function applyPersistedAsyncSubagentResults(
-  messages: AgentMessage[],
-  entries: SessionEntry[],
-): AgentMessage[] {
-  const results = collectPersistedAsyncSubagentResults(entries);
-  if (results.size === 0) {
-    return messages;
-  }
-
-  let changed = false;
-  const next = messages.map((message) => {
-    const record = message as unknown as Record<string, unknown>;
-    if (record.role !== 'toolResult' || record.toolName !== 'spawn_agent') {
-      return message;
-    }
-    const toolCallId = typeof record.toolCallId === 'string' ? record.toolCallId : null;
-    const result = toolCallId ? results.get(toolCallId) : undefined;
-    if (!result) {
-      return message;
-    }
-    changed = true;
-    return {
-      ...record,
-      content: [{ type: 'text', text: formatPersistedAsyncSubagentResult(result) }],
-      isError: result.status === 'error',
-    } as unknown as AgentMessage;
-  });
-
-  return changed ? next : messages;
-}
 
 export class SessionTreeStore {
   private static readonly liveByKey = new Map<string, SessionTreeStore>();
@@ -353,53 +167,19 @@ export class SessionTreeStore {
     entryIds: readonly string[],
     journalEntry?: SessionJournalEntryV1,
   ): void {
-    if (!boundJournal || !relativeSessionFile || !this.sourceFingerprint) {
+    const journal = getBoundJournalBinding();
+    if (!journal || !relativeSessionFile || !this.sourceFingerprint) {
       return;
     }
     try {
-      const baseSize = baseFingerprint.size;
-      const currentSize = statSync(absoluteSessionFile).size;
-      if (currentSize < baseSize) {
-        return;
-      }
-      // Read only the continuation. Re-reading the whole JSONL on every append
-      // copies megabytes that the journal never stores.
-      const appended = readFileRangeSync(
+      sealAppendedContinuation(journal, {
         absoluteSessionFile,
-        baseSize,
-        currentSize - baseSize,
-      ).toString('utf8');
-      if (!appended) {
-        return;
-      }
-      const lines = appended.endsWith('\n')
-        ? appended.slice(0, -1).split('\n')
-        : appended.split('\n');
-      const createdAt = journalEntry?.createdAt ?? boundJournal.now();
-      const intent = journalEntry?.intent ?? { kind: 'jsonl-lines' as const, lines };
-      const id = journalEntry?.id ?? createJournalEntryId(
-        relativeSessionFile, baseFingerprint, intent, createdAt,
-      );
-      const sealed = sealJournalEntryWithAppend(
-        journalEntry ?? {
-          version: 1,
-          id,
-          sessionFile: relativeSessionFile,
-          createdAt,
-          status: 'intent',
-          baseFingerprint,
-          intent,
-        },
+        relativeSessionFile,
+        baseFingerprint,
+        resultFingerprint: this.sourceFingerprint,
         entryIds,
-        lines,
-        this.sourceFingerprint,
-      );
-      let state = boundJournal.store.load();
-      state = upsertJournalEntry(state, sealed);
-      // Persist pending before confirmation so a crash mid-ack remains recoverable.
-      boundJournal.store.save(state);
-      state = acknowledgeJournalEntry(state, id);
-      boundJournal.store.save(state);
+        journalEntry,
+      });
     } catch (error) {
       logger.warn('Failed to confirm session journal after append', {
         sessionFile: relativeSessionFile,
@@ -410,10 +190,11 @@ export class SessionTreeStore {
 
   private persistJournalIntent(intent: SessionJournalIntent): SessionJournalEntryV1 | undefined {
     const relative = this.getVaultRelativeSessionFile();
-    if (!boundJournal || !relative || !this.sourceFingerprint) {
+    const journal = getBoundJournalBinding();
+    if (!journal || !relative || !this.sourceFingerprint) {
       return undefined;
     }
-    const createdAt = boundJournal.now();
+    const createdAt = journal.now();
     const entry: SessionJournalEntryV1 = {
       version: 1,
       id: createJournalEntryId(relative, this.sourceFingerprint, intent, createdAt),
@@ -424,7 +205,7 @@ export class SessionTreeStore {
       intent,
     };
     try {
-      boundJournal.store.save(upsertJournalEntry(boundJournal.store.load(), entry));
+      journal.store.save(upsertJournalEntry(journal.store.load(), entry));
     } catch (error) {
       // The journal is a recovery aid, not the authoritative write path. A
       // journal codec/storage failure must never prevent the Pi JSONL append.

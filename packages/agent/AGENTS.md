@@ -61,6 +61,7 @@ Arrows are compile-time dependencies. Concrete engines and host adapters point i
 - Prefer explicit subpath exports when a source package contains both core and host-specific helpers.
 - Inside this package, import with relative paths only. `@pivi/agent/...` subpaths are for cross-package consumers; ESLint `no-restricted-imports` forbids self-referencing package imports under `src/**`.
 - Engine custom-provider *installation* lives in `@pivi/engine-pi/models/installPiCustomProviders`. Settings `customProviders.ts` owns config types/normalization only — do not conflate the two modules.
+- Oversized modules are split along stateless seams and keep their original export surface through re-exports: `settings/editorSelectionToolbarSettings.ts` (re-exported from `settings/types.ts`), `settings/customProviderVisibleModels.ts` (from `settings/customProviders.ts`), and `mcp/mcpStorageRecords.ts` (secret IDs, Pivi server metadata, the secret transaction wrapper; from `mcp/mcpStorage.ts`).
 
 ## Package map
 

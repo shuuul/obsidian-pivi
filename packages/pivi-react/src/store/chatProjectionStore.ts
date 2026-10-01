@@ -1,10 +1,5 @@
-import type { ChatMessage, ContentBlock } from '@pivi/agent/runtime/chatTypes';
-import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
-import {
-  isToolPresentationGroupable,
-  shouldPresentToolCall,
-} from '@pivi/agent/tools/toolPresentation';
-import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
+import type { ChatMessage } from '@pivi/agent/runtime/chatTypes';
+import type { ToolCallInfo } from '@pivi/agent/tools';
 
 import {
   type ChatPerfProjectionCommitReason,
@@ -12,260 +7,47 @@ import {
   type ChatPerfRecorder,
   NOOP_CHAT_PERF_RECORDER,
 } from './chatPerfRecorder';
+import {
+  type ChatBlockEntity,
+  type ChatProjectionDiagnosticListener,
+  type ChatProjectionEvent,
+  type ChatToolEntity,
+  getChatProjectionBlockId,
+  type MessageEntityKeys,
+  NOOP_PROJECTION_DIAGNOSTIC_LISTENER,
+  type ProjectionListener,
+  type ProjectionMessage,
+} from './chatProjectionEvents';
 import type { DeepReadonly } from './chatUiStore';
+export {
+  type ChatBlockEntity,
+  type ChatProjectionDiagnostic,
+  type ChatProjectionDiagnosticCode,
+  type ChatProjectionDiagnosticListener,
+  type ChatProjectionEvent,
+  type ChatProjectionEventMetadata,
+  type ChatProjectionMessageChange,
+  type ChatToolEntity,
+  getChatProjectionBlockId,
+} from './chatProjectionEvents';
+export {
+  useChatProjectionBlock,
+  useChatProjectionMessageStructure,
+  useChatProjectionOrder,
+  useChatProjectionTool,
+  useChatProjectionTools,
+} from './chatProjectionHooks';
+import { ChatProjectionEventGate } from './chatProjectionEventGate';
+import {
+  deepFreeze,
+  messageStructuresEqual,
+  snapshotMessage,
+  structurallyEqual,
+  toolEntitiesEqual,
+} from './chatProjectionSnapshots';
 
 export const CHAT_PROJECTION_PAGE_SIZE = 100;
 export const CHAT_PROJECTION_HIDDEN_CADENCE_MS = 250;
-
-export interface ChatProjectionEventMetadata {
-  readonly projectionScopeId: string;
-  readonly sessionFile: string | null;
-  readonly openSessionId: string | null;
-  readonly runId: string;
-  readonly parentRunId: string | null;
-  readonly sequence: number;
-  readonly timestamp: number;
-}
-
-interface ChatProjectionEventIds {
-  readonly messageId: string | null;
-  readonly blockId: string | null;
-  readonly toolId: string | null;
-  readonly agentId: string | null;
-}
-
-type ChatProjectionEventBase = ChatProjectionEventMetadata & ChatProjectionEventIds;
-
-export type ChatProjectionMessageChange =
-  | { readonly type: 'message.upsert' }
-  | { readonly type: 'text.append'; readonly blockId: string; readonly delta: string }
-  | { readonly type: 'tool.upsert'; readonly tool: ToolCallInfo }
-  | { readonly type: 'agent.upsert'; readonly agent: SubagentInfo };
-
-export type ChatProjectionEvent =
-  | ChatProjectionEventBase & {
-      readonly type: 'messages.replace';
-      readonly messages: readonly ChatMessage[];
-    }
-  | ChatProjectionEventBase & {
-      readonly type: 'message.upsert';
-      readonly messageId: string;
-      readonly message: ChatMessage;
-      readonly delivery: 'immediate' | 'queued';
-    }
-  | ChatProjectionEventBase & {
-      readonly type: 'text.append';
-      readonly messageId: string;
-      readonly blockId: string;
-      readonly message: ChatMessage;
-      readonly delta: string;
-    }
-  | ChatProjectionEventBase & {
-      readonly type: 'tool.upsert';
-      readonly messageId: string;
-      readonly toolId: string;
-      readonly message: ChatMessage;
-      readonly tool: ToolCallInfo;
-    }
-  | ChatProjectionEventBase & {
-      readonly type: 'agent.upsert';
-      readonly messageId: string;
-      readonly agentId: string;
-      readonly message: ChatMessage;
-      readonly agent: SubagentInfo;
-    }
-  | ChatProjectionEventBase & {
-      readonly type: 'messages.truncate';
-      readonly messageIds: readonly string[];
-    }
-  | ChatProjectionEventBase & { readonly type: 'messages.reveal-previous-page' }
-  | ChatProjectionEventBase & {
-      readonly type: 'messages.prepend-page';
-      readonly messages: readonly ChatMessage[];
-    }
-  | ChatProjectionEventBase & { readonly type: 'projection.flush' }
-  | ChatProjectionEventBase & { readonly type: 'run.terminal' };
-
-export type ChatProjectionDiagnosticCode =
-  | 'duplicate-sequence'
-  | 'late-after-terminal'
-  | 'missing-owner'
-  | 'out-of-order-sequence';
-
-export interface ChatProjectionDiagnostic {
-  readonly code: ChatProjectionDiagnosticCode;
-  readonly eventType: ChatProjectionEvent['type'];
-  readonly projectionScopeId: string;
-  readonly runId: string;
-  readonly sequence: number;
-  readonly messageId: string | null;
-  readonly blockId: string | null;
-  readonly toolId: string | null;
-  readonly agentId: string | null;
-}
-
-export type ChatProjectionDiagnosticListener = (diagnostic: ChatProjectionDiagnostic) => void;
-
-const NOOP_PROJECTION_DIAGNOSTIC_LISTENER: ChatProjectionDiagnosticListener = () => {};
-
-type ProjectionMessage = DeepReadonly<ChatMessage>;
-type ProjectionListener = () => void;
-
-export interface ChatBlockEntity {
-  readonly id: string;
-  readonly messageId: string;
-  readonly index: number;
-  readonly block: ContentBlock;
-}
-
-export interface ChatToolEntity {
-  readonly id: string;
-  readonly messageId: string;
-  readonly tool: ToolCallInfo;
-}
-
-export function getChatProjectionBlockId(messageId: string, index: number): string {
-  return `${messageId}:block:${index}`;
-}
-
-interface MessageEntityKeys {
-  blockIds: string[];
-  toolIds: string[];
-}
-
-interface SnapshotAllocationProxies {
-  clonedEntities: number;
-  visitedEntities: number;
-}
-
-function cloneSerializableValue(
-  value: unknown,
-  allocationProxies?: SnapshotAllocationProxies,
-): unknown {
-  if (allocationProxies) allocationProxies.visitedEntities += 1;
-  if (value === null || value === undefined) return value;
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    if (allocationProxies) allocationProxies.clonedEntities += 1;
-    return value.map(child => cloneSerializableValue(child, allocationProxies));
-  }
-  if (typeof value !== 'object') {
-    throw new TypeError(`Chat projection snapshots cannot contain ${typeof value} values`);
-  }
-  const prototype: unknown = Object.getPrototypeOf(value);
-  const constructorName = (prototype as { constructor?: { name?: string } } | null)?.constructor?.name;
-  if (prototype !== null && prototype !== Object.prototype && constructorName !== 'Object') {
-    throw new TypeError(`Chat projection snapshots can contain only plain objects and arrays, received ${constructorName ?? 'unknown object'}`);
-  }
-  if (allocationProxies) allocationProxies.clonedEntities += 1;
-  return Object.fromEntries(
-    Object.entries(value).map(([key, child]) => [
-      key,
-      cloneSerializableValue(child, allocationProxies),
-    ]),
-  );
-}
-
-function deepFreeze<T>(value: T): DeepReadonly<T> {
-  if (value === null || typeof value !== 'object' || Object.isFrozen(value)) {
-    return value as DeepReadonly<T>;
-  }
-  Object.freeze(value);
-  for (const child of Object.values(value)) deepFreeze(child);
-  return value as DeepReadonly<T>;
-}
-
-function snapshotMessage(
-  message: ChatMessage,
-  recorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
-  eventType: ChatPerfProjectionEventType = 'message.upsert',
-  ownerWindow: Window | null = null,
-): ProjectionMessage {
-  if (!recorder.enabled) {
-    return deepFreeze(cloneSerializableValue(message) as ChatMessage);
-  }
-  const startedAt = recorder.now(ownerWindow);
-  const allocationProxies: SnapshotAllocationProxies = {
-    clonedEntities: 0,
-    visitedEntities: 0,
-  };
-  const snapshot = deepFreeze(
-    cloneSerializableValue(message, allocationProxies) as ChatMessage,
-  );
-  recorder.onProjectionSnapshot(
-    eventType,
-    message.id,
-    Math.max(0, recorder.now(ownerWindow) - startedAt),
-    allocationProxies.visitedEntities,
-    allocationProxies.clonedEntities,
-    ownerWindow,
-  );
-  return snapshot;
-}
-
-function structurallyEqual(left: unknown, right: unknown): boolean {
-  if (Object.is(left, right)) return true;
-  if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
-    return false;
-  }
-  if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
-    return left.every((value, index) => structurallyEqual(value, right[index]));
-  }
-  const leftEntries = Object.entries(left);
-  const rightRecord = right as Record<string, unknown>;
-  if (leftEntries.length !== Object.keys(rightRecord).length) return false;
-  return leftEntries.every(([key, value]) => (
-    Object.hasOwn(rightRecord, key) && structurallyEqual(value, rightRecord[key])
-  ));
-}
-
-function toolEntitiesEqual(left: ToolCallInfo, right: ToolCallInfo): boolean {
-  return structurallyEqual(left, right);
-}
-
-function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessage): boolean {
-  if (left.role !== right.role) return false;
-  if (left.role === 'user' || right.role === 'user') return structurallyEqual(left, right);
-  const structure = (message: ProjectionMessage) => ({
-    content: message.contentBlocks?.length ? Boolean(message.content.trim()) : message.content,
-    contentBlocks: (message.contentBlocks ?? []).map(block => {
-      switch (block.type) {
-        case 'text':
-        case 'thinking':
-          return { type: block.type, visible: Boolean(block.content.trim()) };
-        case 'tool_use':
-          return { type: block.type, toolId: block.toolId };
-        case 'subagent':
-          return { type: block.type, subagentId: block.subagentId, mode: block.mode };
-        case 'context_compacted':
-          return {
-            type: block.type,
-            checkpoint: block.checkpoint,
-            summary: block.summary,
-            tokensAfter: block.tokensAfter,
-            tokensBefore: block.tokensBefore,
-          };
-      }
-    }),
-    durationFlavorWord: message.durationFlavorWord,
-    durationSeconds: message.durationSeconds,
-    tokensPerSecond: message.tokensPerSecond,
-    id: message.id,
-    isInterrupt: message.isInterrupt,
-    isRebuiltContext: message.isRebuiltContext,
-    toolCalls: (message.toolCalls ?? []).map(tool => ({
-      groupable: isToolPresentationGroupable(tool.name, tool.input, Boolean(tool.subagent)),
-      id: tool.id,
-      subagentId: tool.subagent?.id,
-      subagentAgentId: tool.subagent?.agentId,
-      visible: shouldPresentToolCall(tool.name, tool.input),
-    })),
-  });
-  return structurallyEqual(structure(left), structure(right));
-}
 
 /**
  * Entity-addressable React read model for chat messages.
@@ -289,9 +71,7 @@ export class ChatProjectionStore {
   private pendingTimer: number | null = null;
   private pendingPaintFrame: number | null = null;
   private readonly pendingMessages = new Map<string, ProjectionMessage>();
-  private readonly activeOwnerByScope = new Map<string, string>();
-  private readonly lastSequenceByOwner = new Map<string, number>();
-  private readonly terminalRuns = new Set<string>();
+  private readonly eventGate: ChatProjectionEventGate;
   private readonly orderListeners = new Set<ProjectionListener>();
   private readonly messageListeners = new Map<string, Set<ProjectionListener>>();
   private readonly messageStructureListeners = new Map<string, Set<ProjectionListener>>();
@@ -300,8 +80,13 @@ export class ChatProjectionStore {
 
   constructor(
     readonly perfRecorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
-    private readonly onDiagnostic: ChatProjectionDiagnosticListener = NOOP_PROJECTION_DIAGNOSTIC_LISTENER,
-  ) {}
+    onDiagnostic: ChatProjectionDiagnosticListener = NOOP_PROJECTION_DIAGNOSTIC_LISTENER,
+  ) {
+    this.eventGate = new ChatProjectionEventGate(
+      onDiagnostic,
+      messageId => this.pendingMessages.has(messageId) || this.messages.has(messageId),
+    );
+  }
 
   readonly getOrderSnapshot = (): readonly string[] => this.order;
 
@@ -372,7 +157,7 @@ export class ChatProjectionStore {
   dispatch(event: ChatProjectionEvent): boolean {
     const recorderEnabled = this.perfRecorder.enabled;
     const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
-    const accepted = this.acceptEvent(event);
+    const accepted = this.eventGate.accept(event);
     const validatedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
     try {
       if (!accepted) return false;
@@ -401,7 +186,7 @@ export class ChatProjectionStore {
           break;
         case 'run.terminal':
           this.flush();
-          this.terminalRuns.add(this.runKey(this.ownerKey(event), event.runId));
+          this.eventGate.markRunTerminal(event);
           break;
       }
       return true;
@@ -416,121 +201,6 @@ export class ChatProjectionStore {
         );
       }
     }
-  }
-
-  private acceptEvent(event: ChatProjectionEvent): boolean {
-    const ownerKey = this.ownerKey(event);
-    const activeOwner = this.activeOwnerByScope.get(event.projectionScopeId);
-    if (activeOwner !== ownerKey) {
-      if (event.sequence !== 1) {
-        this.reportDiagnostic('missing-owner', event);
-        return false;
-      }
-      if (activeOwner) this.clearOwnerState(activeOwner);
-      this.activeOwnerByScope.set(event.projectionScopeId, ownerKey);
-    }
-
-    const lastSequence = this.lastSequenceByOwner.get(ownerKey) ?? 0;
-    if (event.sequence === lastSequence) {
-      this.reportDiagnostic('duplicate-sequence', event);
-      return false;
-    }
-    if (event.sequence !== lastSequence + 1) {
-      this.reportDiagnostic('out-of-order-sequence', event);
-      return false;
-    }
-    this.lastSequenceByOwner.set(ownerKey, event.sequence);
-
-    if (this.isMessageMutation(event)
-      && this.terminalRuns.has(this.runKey(ownerKey, event.runId))) {
-      this.reportDiagnostic('late-after-terminal', event);
-      return false;
-    }
-    if (!this.hasEventOwner(event)) {
-      this.reportDiagnostic('missing-owner', event);
-      return false;
-    }
-    return true;
-  }
-
-  private isMessageMutation(event: ChatProjectionEvent): boolean {
-    return event.type === 'message.upsert'
-      || event.type === 'text.append'
-      || event.type === 'tool.upsert'
-      || event.type === 'agent.upsert';
-  }
-
-  private hasEventOwner(event: ChatProjectionEvent): boolean {
-    if ((event.type === 'message.upsert'
-      || event.type === 'text.append'
-      || event.type === 'tool.upsert'
-      || event.type === 'agent.upsert')
-      && event.message.id !== event.messageId) {
-      return false;
-    }
-    if (event.type === 'text.append') {
-      if (!this.hasMessageOwner(event.messageId)) return false;
-      const prefix = `${event.messageId}:block:`;
-      const index = event.blockId.startsWith(prefix)
-        ? Number(event.blockId.slice(prefix.length))
-        : Number.NaN;
-      const block = event.message.contentBlocks?.[index];
-      return Number.isInteger(index) && (block?.type === 'text' || block?.type === 'thinking');
-    }
-    if (event.type === 'tool.upsert') {
-      return event.tool.id === event.toolId
-        && this.hasMessageOwner(event.messageId)
-        && event.message.toolCalls?.some(tool => tool.id === event.toolId) === true;
-    }
-    if (event.type === 'agent.upsert') {
-      const payloadAgentId = event.agent.agentId ?? event.agent.id;
-      if (payloadAgentId !== event.agentId || !this.hasMessageOwner(event.messageId)) {
-        return false;
-      }
-      return event.message.toolCalls?.some(tool => {
-        const subagent = tool.subagent;
-        return subagent?.id === event.agent.id
-          && (subagent.agentId ?? subagent.id) === event.agentId;
-      }) === true;
-    }
-    return true;
-  }
-
-  private hasMessageOwner(messageId: string): boolean {
-    return this.pendingMessages.has(messageId) || this.messages.has(messageId);
-  }
-
-  private ownerKey(event: ChatProjectionEvent): string {
-    return `${event.projectionScopeId}\u0000${event.sessionFile ?? ''}\u0000${event.openSessionId ?? ''}`;
-  }
-
-  private runKey(ownerKey: string, runId: string): string {
-    return `${ownerKey}\u0000${runId}`;
-  }
-
-  private clearOwnerState(ownerKey: string): void {
-    this.lastSequenceByOwner.delete(ownerKey);
-    const prefix = `${ownerKey}\u0000`;
-    for (const runKey of this.terminalRuns) {
-      if (runKey.startsWith(prefix)) this.terminalRuns.delete(runKey);
-    }
-  }
-
-  private reportDiagnostic(
-    code: ChatProjectionDiagnosticCode,
-    event: ChatProjectionEvent,
-  ): void {
-    this.onDiagnostic({
-      code,
-      eventType: event.type,
-      projectionScopeId: event.projectionScopeId,
-      runId: event.runId,
-      sequence: event.sequence,
-      messageId: event.messageId,
-      blockId: event.blockId,
-      toolId: event.toolId,
-      agentId: event.agentId,
-    });
   }
 
   replaceAll(
@@ -745,9 +415,7 @@ export class ChatProjectionStore {
     this.blocks.clear();
     this.tools.clear();
     this.entityKeysByMessageId.clear();
-    this.activeOwnerByScope.clear();
-    this.lastSequenceByOwner.clear();
-    this.terminalRuns.clear();
+    this.eventGate.clear();
     this.sourceMessages = [];
   }
 
@@ -937,85 +605,4 @@ export class ChatProjectionStore {
     removeMissing(previous.toolIds, keys.toolIds, this.tools, this.toolListeners);
     this.entityKeysByMessageId.set(message.id, keys);
   }
-}
-
-export function useChatProjectionOrder(store: ChatProjectionStore): readonly string[] {
-  return useSyncExternalStore(store.subscribeOrder, store.getOrderSnapshot, store.getOrderSnapshot);
-}
-
-export function useChatProjectionMessageStructure(
-  store: ChatProjectionStore,
-  messageId: string,
-): ProjectionMessage | null {
-  const subscribe = useCallback(
-    (listener: ProjectionListener) => store.subscribeMessageStructure(messageId, listener),
-    [messageId, store],
-  );
-  const getSnapshot = useCallback(
-    () => store.getMessageStructureSnapshot(messageId),
-    [messageId, store],
-  );
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-export function useChatProjectionBlock(store: ChatProjectionStore, blockId: string) {
-  const subscribe = useCallback(
-    (listener: ProjectionListener) => store.subscribeBlock(blockId, listener),
-    [blockId, store],
-  );
-  const getSnapshot = useCallback(
-    () => store.getBlockSnapshot(blockId),
-    [blockId, store],
-  );
-  return useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot,
-  );
-}
-
-export function useChatProjectionTool(store: ChatProjectionStore, toolId: string) {
-  const subscribe = useCallback(
-    (listener: ProjectionListener) => store.subscribeTool(toolId, listener),
-    [store, toolId],
-  );
-  const getSnapshot = useCallback(
-    () => store.getToolSnapshot(toolId),
-    [store, toolId],
-  );
-  return useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot,
-  );
-}
-
-export function useChatProjectionTools(
-  store: ChatProjectionStore,
-  toolIds: readonly string[],
-) {
-  const toolIdsKey = JSON.stringify(toolIds);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- the serialized key intentionally stabilizes equal ID lists from rebuilt message snapshots
-  const stableToolIds = useMemo(() => [...toolIds], [toolIdsKey]);
-  const snapshotRef = useRef<readonly ReturnType<ChatProjectionStore['getToolSnapshot']>[]>([]);
-  const subscribe = useCallback((listener: ProjectionListener) => {
-    const unsubscribers = stableToolIds.map(toolId => store.subscribeTool(toolId, listener));
-    return () => {
-      for (const unsubscribe of unsubscribers) unsubscribe();
-    };
-  }, [stableToolIds, store]);
-  const getSnapshot = useCallback(() => {
-    const next = stableToolIds.map(toolId => store.getToolSnapshot(toolId));
-    const previous = snapshotRef.current;
-    if (
-      previous.length === next.length
-      && previous.every((entity, index) => entity === next[index])
-    ) {
-      return previous;
-    }
-    const snapshot = Object.freeze(next);
-    snapshotRef.current = snapshot;
-    return snapshot;
-  }, [stableToolIds, store]);
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
