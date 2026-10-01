@@ -176,6 +176,25 @@
       ],
       "removalCondition": "pi-ai exports the bundled OAuth flow modules and loader registry (or an injectable registration API) through its package export map.",
       "trackingIssue": 113
+    },
+    {
+      "id": "transcript-system-message-contract",
+      "upstreamVersion": "0.99.1",
+      "reason": "Since 0.86 upstream carries the system prompt and tool declarations as transcript system messages (toolsAdded/toolsRemoved) and derives the read-only AgentState.systemPrompt by replaying them, so Pivi rewrites the leading system message for prompt changes, keeps system messages through LLM replay sanitization, and rebuilds the leading message to hide silent alias tools.",
+      "implementationPaths": [
+        "packages/engine-pi/src/runtime/piChatRuntime.ts",
+        "packages/engine-pi/src/session/agentMessageHistory.ts",
+        "packages/engine-pi/src/tools/piToolAdapter.ts",
+        "packages/engine-pi/src/models/piAiModels.ts"
+      ],
+      "verificationTests": [
+        "tests/integration/piTranscriptCompatibility.test.ts",
+        "tests/unit/engine-pi/runtime/piChatRuntime.systemPrompt.test.ts",
+        "tests/unit/engine-pi/session/sessionTreeStore.test.ts",
+        "tests/unit/engine-pi/tools/piToolAdapter.test.ts"
+      ],
+      "removalCondition": "Upstream exposes public APIs to replace the active system prompt and to filter declared tools per request, and its message conversion preserves transcript system messages without Pivi handling the system-message shape directly.",
+      "trackingIssue": 113
     }
   ]
 }
