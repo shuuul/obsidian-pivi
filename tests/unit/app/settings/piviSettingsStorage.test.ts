@@ -209,8 +209,10 @@ describe("PiviSettingsStorage", () => {
     expect(providerStore.getState()?.modelPreferences.activeModel).toBe("deepseek/deepseek-reasoner");
   });
 
-  it("drops the retired thinkingBudget and lastModel fields on load", async () => {
+  it("drops retired top-level and agent settings fields on load", async () => {
     const adapter = createMemoryAdapter(JSON.stringify({
+      permissionMode: "default",
+      lastCustomModel: "custom/model",
       thinkingBudget: "high",
       thinkingLevel: "low",
       agentSettings: { lastModel: "deepseek/deepseek-flash" },
@@ -223,6 +225,10 @@ describe("PiviSettingsStorage", () => {
     const settings = await storage.load();
 
     expect(settings).not.toHaveProperty("thinkingBudget");
+    expect(settings).not.toHaveProperty("permissionMode");
+    expect(settings).not.toHaveProperty("lastCustomModel");
+    expect(adapter.writes.at(-1)).not.toContain("permissionMode");
+    expect(adapter.writes.at(-1)).not.toContain("lastCustomModel");
     expect(settings.agentSettings).not.toHaveProperty("lastModel");
     expect(settings.thinkingLevel).toBe("low");
   });

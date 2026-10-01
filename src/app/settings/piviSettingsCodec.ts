@@ -148,17 +148,30 @@ function migrateExternalReadDirectories(
   );
 }
 
+/** Top-level fields earlier versions persisted; their presence triggers a rewrite on load. */
+const REMOVED_SETTINGS_FIELDS = [
+  'systemPrompt',
+  'mediaFolder',
+  'envSnippets',
+  'maxTabs',
+  'enableAutoCompact',
+  'autoCompactThresholdRatio',
+  'autoCompactKeepRecentTokens',
+  'thinkingBudget',
+  'permissionMode',
+  'lastCustomModel',
+] as const;
+
+function hasRemovedSettingsField(stored: Record<string, unknown>): boolean {
+  return REMOVED_SETTINGS_FIELDS.some(field => Object.hasOwn(stored, field))
+    || hasRemovedAgentSettingsField(stored);
+}
+
 function stripRemovedSettingsFields(settings: Record<string, unknown>): void {
-  delete settings.systemPrompt;
-  delete settings.mediaFolder;
-  delete settings.envSnippets;
-  delete settings.maxTabs;
+  for (const field of REMOVED_SETTINGS_FIELDS) delete settings[field];
+  // Dropped silently: these are migrated or ignored without forcing a rewrite.
   delete settings.persistentExternalContextPaths;
-  delete settings.enableAutoCompact;
-  delete settings.autoCompactThresholdRatio;
-  delete settings.autoCompactKeepRecentTokens;
   delete settings.keyboardNavigation;
-  delete settings.thinkingBudget;
 }
 
 function normalizeDeadlineMs(value: unknown, fallback: number): number {
@@ -301,15 +314,7 @@ export function normalizeStoredPiviSettings(
     webSearchToolsChanged ||
     editorSelectionToolbarChanged ||
     workspaceCommandOrderChanged ||
-    Object.hasOwn(stored, "systemPrompt") ||
-    Object.hasOwn(stored, "mediaFolder") ||
-    Object.hasOwn(stored, "envSnippets") ||
-    Object.hasOwn(stored, "maxTabs") ||
-    Object.hasOwn(stored, "enableAutoCompact") ||
-    Object.hasOwn(stored, "autoCompactThresholdRatio") ||
-    Object.hasOwn(stored, "autoCompactKeepRecentTokens") ||
-    Object.hasOwn(stored, "thinkingBudget") ||
-    hasRemovedAgentSettingsField(stored);
+    hasRemovedSettingsField(stored);
 
   return { settings, changed };
 }
