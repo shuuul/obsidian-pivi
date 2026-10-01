@@ -149,6 +149,6 @@
     "./workspace": "./src/workspace/index.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-mcp": "0.99.1"
+    "@earendil-works/pi-mcp": "0.99.2"
   }
 }

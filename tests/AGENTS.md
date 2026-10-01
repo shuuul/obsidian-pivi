@@ -54,7 +54,7 @@ npm run test -- -t "prefetches enabled remote servers"
 - `jsdom/app-ui/` — app-owned UI hosts, adapters, and surfaces.
 - `jsdom/ui/` — `src/ui` imperative input, rendering, tab, mention, and navigation behavior.
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.
-- `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
+- `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs. `integration/piMockExportCompatibility.test.ts` requires every runtime value product source imports from a mocked Pi root to exist in both the installed package and the mock, and `integration/piTranscriptCompatibility.test.ts` checks the mocked transcript helpers against the installed ones; extend the mock when either fails rather than loosening the test.
 - `helpers/` — fake `PiChatService`, mock `App`, plugin, and settings builders.
 - `integration/` — integration tests included in the Node `unit` Jest project and using the shared mocks/setup. Session append/fingerprint coverage that must exercise the real Pi writer runs a `NODE_ENV=production` subprocess so Jest's in-memory `SessionManager` mock cannot hide filesystem regressions.
 - `fixtures/sessions/` — immutable Pi JSONL compatibility inputs. Hand-authored legacy/checkpoint shapes remain explicitly synthetic; `tag-generated-pivi-0.7.0-v3.jsonl` is reproducible output from the immutable 0.7.0 `PiSessionStore` writer over synthetic non-sensitive content, not a captured user vault. Copy every fixture to a temporary directory before open/migration tests and never mutate it in place or relabel the synthetic legacy-v1 shape as 0.7.0 data.

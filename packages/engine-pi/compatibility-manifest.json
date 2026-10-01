@@ -9,7 +9,7 @@
   "entries": [
     {
       "id": "pi-ai-compat-shim",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "The upstream compat entrypoint bundles every provider, while Pivi needs the same API over its supported-provider registry and injected environment keys.",
       "implementationPaths": [
         "build/plugins/shim-pi-ai.mjs",
@@ -24,7 +24,7 @@
     },
     {
       "id": "pi-ai-env-api-keys-shim",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "The upstream environment-key module dynamically imports node:fs in a form Electron's renderer resolves as a URL fetch during plugin load.",
       "implementationPaths": [
         "build/plugins/shim-pi-ai.mjs",
@@ -39,7 +39,7 @@
     },
     {
       "id": "pi-coding-agent-public-facade",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "The upstream root entrypoint statically exports CLI and TUI modules that Pivi neither uses nor can safely load in Obsidian, so the build exposes only consumed public session, compaction, and message exports.",
       "implementationPaths": [
         "build/plugins/shim-pi-coding-agent-config.mjs"
@@ -53,7 +53,7 @@
     },
     {
       "id": "pi-coding-agent-config-shim",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "The upstream config module uses import.meta.url at module scope, which cannot execute in Pivi's bundled CommonJS main.js.",
       "implementationPaths": [
         "build/plugins/shim-pi-coding-agent-config.mjs",
@@ -68,7 +68,7 @@
     },
     {
       "id": "pi-coding-agent-nested-dependency-dedupe",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "The upstream npm shrinkwrap installs duplicate nested Pi and provider dependencies that esbuild would otherwise include beside equivalent root copies.",
       "implementationPaths": [
         "build/plugins/dedupe-pi-dependencies.mjs"
@@ -81,7 +81,7 @@
     },
     {
       "id": "signal-exit-commonjs-shim",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "proper-lockfile in the Pi dependency graph calls signal-exit as a CommonJS function, while the bundled module is otherwise wrapped as an incompatible ESM namespace object.",
       "implementationPaths": [
         "build/plugins/shim-signal-exit.mjs",
@@ -95,7 +95,7 @@
     },
     {
       "id": "dynamic-node-import-rewrite",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "Some Pi/provider paths leave dynamic node: imports in the CommonJS bundle, which Electron's renderer attempts to fetch as URLs.",
       "implementationPaths": [
         "build/postprocess/rewrite-node-imports.mjs"
@@ -108,7 +108,7 @@
     },
     {
       "id": "session-manager-private-surface",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "Upstream SessionManager has no public eager-header-flush or truncate/rewind API, so Pivi isolates and validates the four private capabilities needed for those operations.",
       "implementationPaths": [
         "packages/engine-pi/src/session/piSessionManagerPrivateAdapter.ts"
@@ -123,7 +123,7 @@
     },
     {
       "id": "scoped-provider-fetch-fallback",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "Upstream provider SDK paths can use free or global fetch identifiers, so Pivi injects and explicitly forwards its purpose-scoped provider transport instead of allowing ambient network access.",
       "implementationPaths": [
         "packages/obsidian-host/src/bundledFetch.ts",
@@ -138,7 +138,7 @@
     },
     {
       "id": "openai-codex-sse-transport",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "The upstream Codex WebSocket path passes a Node ws-style headers object that browser WebSocket rejects and cannot represent in Obsidian's renderer.",
       "implementationPaths": [
         "packages/engine-pi/src/models/piAiModels.ts"
@@ -151,7 +151,7 @@
     },
     {
       "id": "pi-ai-bundled-oauth-deep-imports",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "pi-ai does not export its individual OAuth flow modules or the bundled-loader registry, while Pivi must register every bundled flow and substitute renderer-safe OpenRouter and xAI device flows; the specifiers resolve through the TypeScript path and Jest mapper aliases for pi-ai/dist.",
       "implementationPaths": [
         "packages/engine-pi/src/auth/registerPiviBundledOAuthFlowLoaders.ts",
@@ -179,7 +179,7 @@
     },
     {
       "id": "transcript-system-message-contract",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "Since 0.86 upstream carries the system prompt and tool declarations as transcript system messages (toolsAdded/toolsRemoved) and derives the read-only AgentState.systemPrompt by replaying them, so Pivi rewrites the leading system message for prompt changes, keeps system messages through LLM replay sanitization, and rebuilds the leading message to hide silent alias tools.",
       "implementationPaths": [
         "packages/engine-pi/src/runtime/piChatRuntime.ts",
@@ -198,7 +198,7 @@
     },
     {
       "id": "browser-build-resolution",
-      "upstreamVersion": "0.99.1",
+      "upstreamVersion": "0.99.2",
       "reason": "The bundle targets platform node, so pi-ai's Google adapter would resolve the @google/genai Node build with its Vertex/ADC auth and socket stack, and pi-agent-core's harness would resolve the CommonJS yaml entry that cannot tree-shake; Pivi runs only the API-key Google provider and none of the harness YAML paths.",
       "implementationPaths": [
         "build/plugins/prefer-browser-builds.mjs"

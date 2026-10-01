@@ -3,21 +3,21 @@
     "advisory": "GHSA-q2hr-2g5m-vwhr",
     "package": "brace-expansion",
     "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/brace-expansion",
-    "reason": "Pinned by @earendil-works/pi-coding-agent 0.99.1 npm-shrinkwrap.json, which npm overrides cannot reach; its minimatch is not bundled into main.js.",
+    "reason": "Pinned by @earendil-works/pi-coding-agent 0.99.2 npm-shrinkwrap.json, which npm overrides cannot reach; its minimatch is not bundled into main.js.",
     "expires": "2026-12-31"
   },
   {
     "advisory": "GHSA-qhr7-859c-m2p7",
     "package": "brace-expansion",
     "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/brace-expansion",
-    "reason": "Pinned by @earendil-works/pi-coding-agent 0.99.1 npm-shrinkwrap.json, which npm overrides cannot reach; its minimatch is not bundled into main.js.",
+    "reason": "Pinned by @earendil-works/pi-coding-agent 0.99.2 npm-shrinkwrap.json, which npm overrides cannot reach; its minimatch is not bundled into main.js.",
     "expires": "2026-12-31"
   },
   {
     "advisory": "GHSA-6j4f-fj2g-mc7p",
     "package": "brace-expansion",
     "path": "node_modules/@earendil-works/pi-coding-agent/node_modules/brace-expansion",
-    "reason": "Pinned by @earendil-works/pi-coding-agent 0.99.1 npm-shrinkwrap.json, which npm overrides cannot reach; its minimatch is not bundled into main.js.",
+    "reason": "Pinned by @earendil-works/pi-coding-agent 0.99.2 npm-shrinkwrap.json, which npm overrides cannot reach; its minimatch is not bundled into main.js.",
     "expires": "2026-12-31"
   }
 ]
