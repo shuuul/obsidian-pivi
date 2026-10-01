@@ -2,9 +2,6 @@ import type { SlashCatalogEntry } from './slashCommandEntry';
 
 export interface SlashCommandDropdownConfig {
   triggerChars: string[];
-  builtInPrefix: string;
-  skillPrefix: string;
-  commandPrefix: string;
 }
 
 export interface SlashCommandCatalog {

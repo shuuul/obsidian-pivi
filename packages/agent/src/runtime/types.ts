@@ -39,7 +39,6 @@ export interface PiTurnOptions {
   model?: string;
   mcpMentions?: Set<string>;
   enabledMcpServers?: Set<string>;
-  forceColdStart?: boolean;
   externalContextPaths?: string[];
 }
 
@@ -63,5 +62,4 @@ export interface ChatTurnMetadata {
   userMessageId?: string;
   userParentEntryId?: string | null;
   assistantMessageId?: string;
-  wasSent?: boolean;
 }

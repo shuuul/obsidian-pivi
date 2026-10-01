@@ -18,7 +18,6 @@ export interface TaskResultInterpreter {
 
 export interface SubagentLaunchResult {
   agentId?: string;
-  nickname?: string;
 }
 
 export interface SubagentLifecycleAdapter {

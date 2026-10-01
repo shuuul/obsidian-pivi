@@ -42,7 +42,6 @@ export interface PiContextCompactionPlan {
   prefixEntries: PiContextCompactionEntry[];
   prefixFingerprint: string;
   prefixMessages: AgentMessage[];
-  tailEntries: PiContextCompactionEntry[];
   tailMessages: AgentMessage[];
   tokensBefore: number;
 }
@@ -544,7 +543,6 @@ export function buildCompactionPlan(
     prefixEntries,
     prefixFingerprint: fingerprintCompactionEntries(prefixEntries),
     prefixMessages: prefix.map((item) => item.message),
-    tailEntries: tail.map((item) => item.entry),
     tailMessages: tail.map((item) => item.message),
     tokensBefore,
   };

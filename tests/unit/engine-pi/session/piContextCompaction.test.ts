@@ -283,7 +283,6 @@ describe('piContextCompaction', () => {
 
     expect(plan).not.toBeNull();
     expect(plan!.prefixEntries.length).toBeGreaterThan(0);
-    expect(plan!.tailEntries.length).toBeGreaterThan(0);
     expect((plan!.tailMessages[0] as { role?: string }).role).not.toBe('toolResult');
     expect(plan!.prefixFingerprint).toMatch(/^\d+:[0-9a-f]+$/);
   });

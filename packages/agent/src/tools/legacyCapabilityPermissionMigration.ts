@@ -29,8 +29,6 @@ export interface LegacyCapabilityPermissionInput {
 
 export interface LegacyCapabilityPermissionMigration {
   permissions: DeviceLocalCapabilityPermissions;
-  migratedBashCount: number;
-  migratedExternalCount: number;
 }
 
 /**
@@ -65,8 +63,6 @@ export function migrateLegacyCapabilityPermissions(
       externalDirectories: canonicalizeExternalDirectories(externalDirectories),
       obsidianCommands: [],
     }, caseInsensitive),
-    migratedBashCount: (input.bashAllowlist ?? []).length,
-    migratedExternalCount: (input.externalReadDirectories ?? []).length,
   };
 }
 

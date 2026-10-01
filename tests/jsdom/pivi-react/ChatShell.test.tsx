@@ -1078,7 +1078,7 @@ describe('React ChatShell tabs', () => {
           { content: 'Completed task', id: 'completed', status: 'completed' },
           { activeForm: 'Writing the focused test', content: 'Write test', id: 'in-progress', status: 'in_progress' },
         ],
-        progress: { completed: 1, inProgress: 1, pending: 0, total: 2 },
+        progress: { completed: 1,pending: 0, total: 2 },
         source: 'manual',
       },
     }));

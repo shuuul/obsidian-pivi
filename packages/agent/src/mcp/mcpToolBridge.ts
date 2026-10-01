@@ -13,7 +13,6 @@ const logger = new PluginLogger('McpToolBridge');
 
 interface CachedTools {
   tools: McpTool[];
-  fetchedAt: number;
 }
 
 /** Turn shape for resolving which MCP servers are active (neutral; no Pi runtime import). */
@@ -149,7 +148,7 @@ export class McpToolBridge {
 
     try {
       const tools = await this.pool.listTools(server);
-      this.toolCache.set(serverName, { tools, fetchedAt: Date.now() });
+      this.toolCache.set(serverName, { tools });
       return tools;
     } catch (error) {
       logger.warn(`Failed to list tools for MCP server "${serverName}"`, error);

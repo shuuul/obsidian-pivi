@@ -12,7 +12,6 @@ export interface ForkContext {
   sourceSessionId: string;
   /** JSONL entry id to fork from (user message). */
   forkAtEntryId: string;
-  resumeAt: string;
   sourceTitle?: string;
   /** 1-based index used for fork title suffix (counts only non-interrupt user messages). */
   forkAtUserMessage?: number;
@@ -32,23 +31,6 @@ function countUserMessagesForForkTitle(messages: ChatMessage[]): number {
 
 function getForkEntryId(message: ChatMessage): string | undefined {
   return message.role === 'user' ? getUserEntryId(message) : getAssistantEntryId(message);
-}
-
-function getResumeEntryId(messages: ChatMessage[], index: number, forkEntryId: string): string {
-  const message = messages[index];
-  if (!message || message.role === 'assistant') {
-    return forkEntryId;
-  }
-
-  for (let i = index - 1; i >= 0; i--) {
-    const message = messages[i];
-    if (!message) continue;
-    const assistantEntryId = getAssistantEntryId(message);
-    if (assistantEntryId) {
-      return assistantEntryId;
-    }
-  }
-  return forkEntryId;
 }
 
 function getMessagesBeforeForkTarget(messages: ChatMessage[], index: number): ChatMessage[] {
@@ -119,7 +101,6 @@ export async function handleForkRequest(
     messages: getMessagesBeforeForkTarget(msgs, messageIdx),
     sourceSessionId: source.sourceSessionId,
     forkAtEntryId: forkEntryId,
-    resumeAt: getResumeEntryId(msgs, messageIdx, forkEntryId),
     sourceTitle: source.sourceTitle,
     forkAtUserMessage: (state.olderUserMessageCount ?? 0)
       + countUserMessagesForForkTitle(msgs.slice(0, messageIdx + 1)),
@@ -173,7 +154,6 @@ export async function handleForkAll(
     messages: deepCloneMessages(msgs),
     sourceSessionId: source.sourceSessionId,
     forkAtEntryId: lastUserEntryId,
-    resumeAt: lastAssistantUuid,
     sourceTitle: source.sourceTitle,
     forkAtUserMessage: (state.olderUserMessageCount ?? 0)
       + countUserMessagesForForkTitle(msgs)

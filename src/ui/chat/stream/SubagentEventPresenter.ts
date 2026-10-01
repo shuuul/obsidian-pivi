@@ -13,7 +13,6 @@ export interface SubagentSpawnResultUpdate {
 
 export interface SubagentWaitResultUpdate {
   kind: 'wait';
-  waitToolId: string;
   spawnToolIds: string[];
   normalizedContent: string;
   isError: boolean;
@@ -21,7 +20,6 @@ export interface SubagentWaitResultUpdate {
 
 export interface SubagentCloseResultUpdate {
   kind: 'close';
-  closeToolId: string;
   normalizedContent: string;
   isError: boolean;
 }
@@ -80,7 +78,6 @@ export function applySubagentLifecycleToolResult(
   if (kind === 'wait') {
     return {
       kind: 'wait',
-      waitToolId: chunk.id,
       spawnToolIds: adapter.resolveSpawnToolIds(existingToolCall, agentIdToSpawnId),
       normalizedContent,
       isError: !!chunk.isError,
@@ -89,7 +86,6 @@ export function applySubagentLifecycleToolResult(
 
   return {
     kind: 'close',
-    closeToolId: chunk.id,
     normalizedContent,
     isError: !!chunk.isError,
   };

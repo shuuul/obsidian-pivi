@@ -224,9 +224,6 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   getDropdownConfig(): SlashCommandDropdownConfig {
     return {
       triggerChars: ["/"],
-      builtInPrefix: "/",
-      skillPrefix: "/",
-      commandPrefix: "/",
     };
   }
 

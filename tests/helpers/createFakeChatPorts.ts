@@ -41,9 +41,6 @@ export function createFakeChatPorts(
       listSlashEntries: async () => [],
       getSlashDropdownConfig: () => ({
         triggerChars: ['/'],
-        builtInPrefix: '',
-        skillPrefix: '',
-        commandPrefix: '',
       }),
       ...overrides.catalog,
     },

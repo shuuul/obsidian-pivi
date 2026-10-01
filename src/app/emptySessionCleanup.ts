@@ -11,7 +11,6 @@ const logger = new PluginLogger('EmptySessionCleanup');
 export const EMPTY_SESSION_STARTUP_MIN_AGE_MS = 60 * 60 * 1000;
 
 export interface EmptySessionCleanupResult {
-  removedFiles: number;
   removedArchivedBindings: number;
 }
 
@@ -84,7 +83,6 @@ export async function cleanupEmptySessionsAtStartup(options: {
   }
 
   return {
-    removedFiles: removed.size,
     removedArchivedBindings,
   };
 }

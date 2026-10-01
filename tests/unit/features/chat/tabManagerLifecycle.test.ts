@@ -440,7 +440,6 @@ describe('TabManager lifecycle guards', () => {
       messages: forkMessages,
       sourceSessionId: 'source-session',
       forkAtEntryId: 'user-1',
-      resumeAt: 'assistant-1',
       sourceTitle: 'Source title',
       forkAtUserMessage: 1,
     };
@@ -472,7 +471,6 @@ describe('TabManager lifecycle guards', () => {
       messages: [],
       sourceSessionId: 'source-session',
       forkAtEntryId: 'user-1',
-      resumeAt: 'assistant-1',
     })).rejects.toBe(primary);
 
     expect(ports.sessions.discardSessionFile).toHaveBeenCalledWith(
@@ -509,7 +507,6 @@ describe('TabManager lifecycle guards', () => {
     messages: [],
     sourceSessionId: 'source-session',
     forkAtEntryId: 'user-1',
-    resumeAt: 'assistant-1',
   };
 
   it('discards the fork when tab creation returns null', async () => {
@@ -546,7 +543,6 @@ describe('TabManager lifecycle guards', () => {
       messages: [],
       sourceSessionId: 'source-session',
       forkAtEntryId: 'user-1',
-      resumeAt: 'assistant-1',
     })).rejects.toBe(primary);
 
     expect(warn).toHaveBeenCalledWith(

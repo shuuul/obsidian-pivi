@@ -64,7 +64,6 @@ describe('applySubagentLifecycleToolResult', () => {
 
     expect(update).toMatchObject({
       kind: 'wait',
-      waitToolId: 'wait-1',
       spawnToolIds: ['spawn-1'],
     });
   });

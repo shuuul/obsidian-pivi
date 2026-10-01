@@ -120,9 +120,6 @@ describe('UI port adapters', () => {
     const listInventoryTools = jest.fn(async () => [{ name: 'inventory' }]);
     const getDropdownConfig = jest.fn(() => ({
       triggerChars: ['/'],
-      builtInPrefix: '',
-      skillPrefix: '',
-      commandPrefix: '',
     }));
     const workspace = {
       mcpServerManager: {
@@ -200,9 +197,6 @@ describe('UI port adapters', () => {
     expect(listTools).toHaveBeenCalledWith('server');
     expect(ports.catalog.getSlashDropdownConfig()).toEqual({
       triggerChars: ['/'],
-      builtInPrefix: '',
-      skillPrefix: '',
-      commandPrefix: '',
     });
     expect(ports.models.getModelOptions(ports.settings.getSettingsSnapshot())).toEqual([
       { value: 'model-a', label: 'Model A' },

@@ -43,7 +43,6 @@ const PATH_FIELD_ALIASES = ['file_path', 'target_file'] as const;
 
 export interface NormalizedToolArguments {
   args: Record<string, unknown>;
-  nameAlias?: string;
   fieldAlias?: string;
 }
 

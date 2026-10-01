@@ -23,7 +23,6 @@ export interface TodoItem {
 export interface TodoVisualizationProgress {
   total: number;
   completed: number;
-  inProgress: number;
   pending: number;
 }
 
@@ -94,7 +93,6 @@ export function deriveTodoVisualizationModel(
   const progress: TodoVisualizationProgress = {
     total: items.length,
     completed: items.filter(todo => todo.status === 'completed').length,
-    inProgress: items.filter(todo => todo.status === 'in_progress').length,
     pending: items.filter(todo => todo.status === 'pending').length,
   };
   const activeItem = items.find(todo => todo.status === 'in_progress');
