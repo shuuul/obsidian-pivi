@@ -97,9 +97,6 @@ export function snapshotLegacyProviderMembership(
     titleGenerationModel: typeof raw.titleGenerationModel === 'string'
       ? raw.titleGenerationModel
       : '',
-    ...(typeof agentSettings.lastModel === 'string'
-      ? { lastModel: agentSettings.lastModel }
-      : {}),
     customProviders,
   };
 }
@@ -175,7 +172,6 @@ export function buildDeviceLocalStateInputFromLegacy(
       visibleModels: [...membership.visibleModels],
       activeModel: membership.model,
       titleGenerationModel: membership.titleGenerationModel,
-      ...(membership.lastModel ? { lastModel: membership.lastModel } : {}),
       customContextLimits: readCustomContextLimitsForCustomProviders(
         raw,
         customProvidersWithoutHeaders,

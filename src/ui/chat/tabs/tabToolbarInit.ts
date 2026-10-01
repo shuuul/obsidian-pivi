@@ -106,16 +106,6 @@ export function wireComposerChrome(
       tab.service?.syncThinkingLevel?.();
       if (!tab.state.isStreaming) tab.controllers.inputController?.processQueuedMessage();
     },
-    onThinkingBudgetChange: async (budget: string) => {
-      await updateTabAgentSettings(ports, (settings) => {
-        settings.thinkingBudget = budget;
-        ports.models.applyReasoningSelection?.(
-          settings.model,
-          budget,
-          settings,
-        );
-      });
-    },
     onThinkingLevelChange: async (thinkingLevel: string) => {
       await updateTabAgentSettings(ports, (settings) => {
         settings.thinkingLevel = thinkingLevel;
@@ -141,7 +131,6 @@ export function wireComposerChrome(
     send: () => runComposerAction(async () => tab.controllers.inputController?.sendMessage()),
     stop: () => tab.controllers.inputController?.cancelStreaming(),
     setModel: model => runComposerAction(() => toolbarCallbacks.onModelChange(model)),
-    setThinkingBudget: budget => runComposerAction(() => toolbarCallbacks.onThinkingBudgetChange(budget)),
     setThinkingLevel: level => runComposerAction(() => toolbarCallbacks.onThinkingLevelChange(level)),
     toggleExternalPath: pathValue => tab.ui.externalContextSelector?.togglePath(pathValue),
     toggleExternalPinned: pathValue => tab.ui.externalContextSelector?.togglePinned(pathValue),
@@ -177,7 +166,6 @@ export function wireComposerChrome(
         model: settings.model,
         modelOptions: uiConfig.getModelOptions(settings).map(option => ({ ...option })),
         adaptiveReasoning: uiConfig.isAdaptiveReasoningModel(settings.model, settings),
-        thinkingBudget: settings.thinkingBudget,
         thinkingLevel: settings.thinkingLevel,
         thinkingOptions: reasoningOptions.map(option => ({ ...option })),
         defaultReasoningValue: uiConfig.getDefaultReasoningValue(settings.model, settings),

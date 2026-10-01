@@ -57,7 +57,6 @@ export function createFakeChatPorts(
     settings: {
       getSettingsSnapshot: () => ({
         model: 'openrouter/openai/gpt-4.1',
-        thinkingBudget: 'medium',
         thinkingLevel: 'medium',
         customContextLimits: {},
         enableAutoScroll: true,

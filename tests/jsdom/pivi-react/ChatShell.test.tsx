@@ -808,7 +808,6 @@ describe('React ChatShell tabs', () => {
       send: jest.fn(),
       stop: jest.fn(),
       setModel: jest.fn(),
-      setThinkingBudget: jest.fn(),
       setThinkingLevel: jest.fn(),
       toggleExternalPath: jest.fn(),
       toggleExternalPinned: jest.fn(),
@@ -1164,7 +1163,6 @@ describe('React ChatShell tabs', () => {
       send: jest.fn(),
       stop: jest.fn(),
       setModel: jest.fn(),
-      setThinkingBudget: jest.fn(),
       setThinkingLevel: jest.fn(),
       toggleExternalPath: jest.fn(),
       toggleExternalPinned: jest.fn(),
@@ -1181,7 +1179,6 @@ describe('React ChatShell tabs', () => {
             { fallbackIcon: 'cpu', label: 'Longer Model B Name', value: 'model-b' },
           ],
           adaptiveReasoning: false,
-          thinkingBudget: 'low',
           thinkingLevel: 'low',
           thinkingOptions: [
             { label: 'Off', tokens: 0, value: 'off' },
@@ -1251,18 +1248,18 @@ describe('React ChatShell tabs', () => {
     fireEvent.mouseEnter(thinkingGears);
     fireEvent.click(within(targets.composer).getByRole('option', { name: 'Low' }));
     expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'false');
-    expect(composerActions.setThinkingBudget).toHaveBeenCalledWith('low');
+    expect(composerActions.setThinkingLevel).toHaveBeenCalledWith('low');
 
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Send message' }));
     expect(composerActions.setModel).toHaveBeenCalledWith('model-b');
-    expect(composerActions.setThinkingBudget).toHaveBeenCalledWith('high');
+    expect(composerActions.setThinkingLevel).toHaveBeenCalledWith('high');
     expect(composerActions.send).toHaveBeenCalledTimes(1);
     act(() => uiStore.update({
       composer: {
         ...uiStore.getSnapshot().composer,
         canSend: false,
         model: 'model-b',
-        thinkingBudget: 'high',
+        thinkingLevel: 'high',
       },
     }));
     expect(targets.composer.querySelector('.pivi-model-btn .pivi-model-label')?.textContent).toBe('Longer Model B Name');

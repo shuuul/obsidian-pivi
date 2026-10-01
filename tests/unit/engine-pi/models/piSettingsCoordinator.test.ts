@@ -37,7 +37,7 @@ function baseSettings(overrides: Record<string, unknown> = {}): Record<string, u
     environmentVariables: '',
     visibleModels: [REASONING_MODEL, STANDARD_MODEL],
   });
-  return { ...settings, model: REASONING_MODEL, thinkingBudget: 'off', ...overrides };
+  return { ...settings, model: REASONING_MODEL, ...overrides };
 }
 
 

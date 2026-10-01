@@ -188,20 +188,6 @@ describe('updatePiAgentSettings', () => {
     expect(persisted?.visibleModels).toEqual(['openrouter/openai/gpt-4.1']);
   });
 
-  it('writes lastModel onto the persisted record', () => {
-    const settings: Record<string, unknown> = {};
-    updatePiAgentSettings(settings, {
-      lastModel: 'anthropic/claude-3',
-      visibleModels: [DEFAULT_MODEL_KEY],
-      environmentVariables: '',
-      addedProviders: [],
-      disabledProviders: [],
-    });
-
-    const persisted = readPersistedAgentSettings(settings);
-    expect(persisted?.lastModel).toBe('anthropic/claude-3');
-  });
-
   it('returns the merged view without requiring a second get call', () => {
     const settings: Record<string, unknown> = {};
     const returned = updatePiAgentSettings(settings, {

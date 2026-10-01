@@ -29,8 +29,7 @@ React owns model, thinking, mode, external-context, send/queue/stop, and usage p
 | Capability | State source | Update path | Persistence and privacy |
 |---|---|---|---|
 | Model | `ChatModelsPort` plus projected settings | React action → `wireComposerChrome` → settings commit | Blank tabs persist `draftModel` in tab layout; bound changes use settings/runtime synchronization |
-| Thinking | Model capabilities and projected `thinkingLevel` or `thinkingBudget` | Selector action → settings commit → runtime sync | Stored through settings projection, not as a separate tab binding |
-| Mode/reasoning | Model catalog and projected settings | Selector action → settings commit | Settings-owned; capability-gated by the active model |
+| Thinking | Model capabilities and projected `thinkingLevel` | Selector action → settings commit → runtime sync | Stored through settings projection, not as a separate tab binding |
 | Usage | Active message/runtime usage plus model context metadata | Stream/model refresh → `ChatUiStore` | Rebuildable UI projection |
 | Cache hit rate | Latest-turn `cacheRead / contextTokens` beside the usage ring | Settings `showCacheHitRate` plus usage snapshot | 0% when the provider reports no cache activity; hidden only with no usage or the setting off |
 | Current note/files | `FileContextState` and host workspace events | File chips, mentions, or first-turn current-note capture | Vault-relative context enters that turn; current note is auto-sent on the first turn only, while later file cards must be added explicitly per turn |

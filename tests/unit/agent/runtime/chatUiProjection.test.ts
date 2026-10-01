@@ -100,31 +100,17 @@ describe('projectActiveChatState', () => {
     expect(settings.thinkingLevel).toBe('medium');
   });
 
-  it('normalizes thinkingBudget for non-adaptive models', () => {
+  it('keeps the stored thinkingLevel while a non-adaptive model is active', () => {
     const uiConfig = createFakeChatUiConfig();
     const settings: Record<string, unknown> = {
       model: STANDARD_MODEL,
-      thinkingBudget: 'high',
+      thinkingLevel: 'high',
     };
 
     projectActiveChatState(settings, uiConfig);
 
-    expect(settings.thinkingBudget).toBe('off');
-  });
-
-  it('defaults thinkingBudget to off when no model is selected', () => {
-    const uiConfig = createFakeChatUiConfig({
-      adaptiveModels: new Set(),
-    });
-    const uiConfigNoModels: ChatUIConfig = {
-      ...uiConfig,
-      getModelOptions: () => [],
-    };
-    const settings: Record<string, unknown> = { model: 'provider/orphan' };
-
-    projectActiveChatState(settings, uiConfigNoModels);
-
-    expect(settings.thinkingBudget).toBe('off');
+    // The last reasoning choice must survive a detour through a model without reasoning.
+    expect(settings.thinkingLevel).toBe('high');
   });
 
   it('reconciles model with agentSettings.visibleModels primary entry', () => {

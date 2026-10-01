@@ -46,9 +46,9 @@ export function ComposerChrome({
       <ThinkingSelector
         adaptive={composer.adaptiveReasoning}
         defaultValue={composer.defaultReasoningValue}
-        onChange={composer.adaptiveReasoning ? actions.setThinkingLevel : actions.setThinkingBudget}
+        onChange={actions.setThinkingLevel}
         options={composer.thinkingOptions}
-        value={composer.adaptiveReasoning ? composer.thinkingLevel : composer.thinkingBudget}
+        value={composer.thinkingLevel}
       />
       <ExternalContextControl actions={actions} snapshot={snapshot} />
       <div className="pivi-input-action-group">

@@ -81,7 +81,6 @@ export interface ChatModelCatalogSnapshot {
 
 export interface ChatSettingsSnapshot {
   model: string;
-  thinkingBudget: string;
   thinkingLevel: string;
   customContextLimits: Record<string, number>;
   enableAutoScroll: boolean;

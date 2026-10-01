@@ -86,8 +86,7 @@ export function getPiAgentSettings(
 
 export function updatePiAgentSettings(
   settings: Record<string, unknown>,
-  updates: Partial<PiAgentSettingsView> &
-    Pick<Partial<AgentRuntimeSettings>, 'lastModel'>,
+  updates: Partial<PiAgentSettingsView>,
 ): PiAgentSettingsView {
   const current = getPiAgentSettings(settings);
   const config = ensurePiSettingsRecord(settings);
@@ -117,9 +116,6 @@ export function updatePiAgentSettings(
   config.visibleModels = next.visibleModels;
   config.customProviders = next.customProviders;
 
-  if (updates.lastModel !== undefined) {
-    config.lastModel = updates.lastModel;
-  }
 
   return getPiAgentSettings(settings);
 }

@@ -182,6 +182,51 @@ describe("PiviSettingsStorage", () => {
     );
   });
 
+  it("restores the last selected model and reasoning level after a save and reload", async () => {
+    const adapter = createMemoryAdapter();
+    const providerStore = createDeviceLocalProviderStore();
+    const open = () => new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(undefined, providerStore),
+    );
+
+    // What the composer commits when the user picks a model and a reasoning level.
+    const firstSession = open();
+    const settings = await firstSession.load();
+    settings.model = "deepseek/deepseek-reasoner";
+    settings.agentSettings.visibleModels = ["deepseek/deepseek-reasoner", "deepseek/deepseek-flash"];
+    settings.thinkingLevel = "high";
+    await firstSession.save(settings);
+
+    const reopened = await open().load();
+
+    expect(reopened.model).toBe("deepseek/deepseek-reasoner");
+    expect(reopened.thinkingLevel).toBe("high");
+    // The model is remembered per device; the reasoning level travels with the synced file.
+    const synced = JSON.parse(adapter.writes.at(-1) ?? "{}") as Record<string, unknown>;
+    expect(synced).not.toHaveProperty("model");
+    expect(synced.thinkingLevel).toBe("high");
+    expect(providerStore.getState()?.modelPreferences.activeModel).toBe("deepseek/deepseek-reasoner");
+  });
+
+  it("drops the retired thinkingBudget and lastModel fields on load", async () => {
+    const adapter = createMemoryAdapter(JSON.stringify({
+      thinkingBudget: "high",
+      thinkingLevel: "low",
+      agentSettings: { lastModel: "deepseek/deepseek-flash" },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings).not.toHaveProperty("thinkingBudget");
+    expect(settings.agentSettings).not.toHaveProperty("lastModel");
+    expect(settings.thinkingLevel).toBe("low");
+  });
+
   it("removes legacy compaction settings on load", async () => {
     const stored = {
       enableAutoCompact: "yes",

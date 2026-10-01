@@ -70,16 +70,5 @@ export function projectActiveChatState(
     delete settings.effortLevel;
   }
 
-  if (!isAdaptive && model) {
-    settings.thinkingBudget = normalizeReasoningValue(
-      uiConfig,
-      settings,
-      model,
-      settings.thinkingBudget,
-    );
-  } else if (!model) {
-    settings.thinkingBudget = settings.thinkingBudget ?? 'off';
-  }
-
   reconcileActiveModelFields(settings);
 }

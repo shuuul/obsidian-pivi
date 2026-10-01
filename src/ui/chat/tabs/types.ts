@@ -62,7 +62,6 @@ export interface ComposerChromeActions {
   send: () => void;
   stop: () => void;
   setModel: (value: string) => void;
-  setThinkingBudget: (value: string) => void;
   setThinkingLevel: (value: string) => void;
   refresh: () => void;
   toggleExternalPath: (path: string) => void;

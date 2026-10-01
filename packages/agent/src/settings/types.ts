@@ -152,7 +152,6 @@ export interface AgentRuntimeSettings {
   disabledProviders?: string[];
   environmentVariables: string;
   visibleModels: string[];
-  lastModel?: string;
   /** User-defined local / OpenAI-compatible / Anthropic-compatible providers. */
   customProviders?: CustomProviderConfig[];
   obsidianTools?: ObsidianToolsSettings;
@@ -256,10 +255,6 @@ function isStringArray(value: unknown): value is string[] {
 
 function isOptionalStringArray(value: unknown): value is string[] | undefined {
   return value === undefined || isStringArray(value);
-}
-
-function isOptionalString(value: unknown): value is string | undefined {
-  return value === undefined || typeof value === "string";
 }
 
 function isOptionalObsidianToolsSettings(
@@ -455,7 +450,6 @@ export function isAgentRuntimeSettings(
     isStringArray(value.visibleModels) &&
     isOptionalStringArray(value.addedProviders) &&
     isOptionalStringArray(value.disabledProviders) &&
-    isOptionalString(value.lastModel) &&
     (value.customProviders === undefined || Array.isArray(value.customProviders)) &&
     isOptionalObsidianToolsSettings(value.obsidianTools) &&
     isOptionalWebSearchToolsSettings(value.webSearchTools) &&
@@ -466,7 +460,7 @@ export function isAgentRuntimeSettings(
 /**
  * Application settings stored in .pivi/settings.json.
  *
- * Pi-specific fields (model, thinkingBudget, thinkingLevel, etc.) use
+ * Pi-specific fields (model, thinkingLevel, etc.) use
  * `string` here.  The active provider casts internally when it needs
  * narrower types.
  */
@@ -476,7 +470,6 @@ export interface PiviSettings {
 
   // Model & thinking (provider interprets values)
   model: string;
-  thinkingBudget: string;
   thinkingLevel: string;
   enableAutoTitleGeneration: boolean;
   titleGenerationModel: string;

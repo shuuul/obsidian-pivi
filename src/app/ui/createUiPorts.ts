@@ -29,7 +29,6 @@ export function createChatUiPorts(
     settings: ChatSettingsSnapshot,
   ): Record<string, unknown> => ({
     model: settings.model,
-    thinkingBudget: settings.thinkingBudget,
     thinkingLevel: settings.thinkingLevel,
     customContextLimits: { ...settings.customContextLimits },
     agentSettings: {
@@ -49,9 +48,6 @@ export function createChatUiPorts(
     if (typeof configSettings.model === 'string') {
       settings.model = configSettings.model;
     }
-    if (typeof configSettings.thinkingBudget === 'string') {
-      settings.thinkingBudget = configSettings.thinkingBudget;
-    }
     if (typeof configSettings.thinkingLevel === 'string') {
       settings.thinkingLevel = configSettings.thinkingLevel;
     }
@@ -62,7 +58,6 @@ export function createChatUiPorts(
     const tools = getObsidianToolsSettingsFromBag(projected);
     return {
       model: projected.model,
-      thinkingBudget: projected.thinkingBudget,
       thinkingLevel: projected.thinkingLevel,
       customContextLimits: { ...projected.customContextLimits },
       enableAutoScroll: projected.enableAutoScroll ?? true,
@@ -160,7 +155,6 @@ export function createChatUiPorts(
         uiFacades.commitSettingsSnapshot(host.settings, {
           ...current,
           model: snapshot.model,
-          thinkingBudget: snapshot.thinkingBudget,
           thinkingLevel: snapshot.thinkingLevel,
           customContextLimits: { ...snapshot.customContextLimits },
         });

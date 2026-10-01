@@ -191,9 +191,6 @@ export function migrateProviderSecretsToKeychain(
       visibleModels: piSettings.visibleModels,
       model: settings.model,
       titleGenerationModel: settings.titleGenerationModel,
-      ...(typeof settings.agentSettings.lastModel === 'string'
-        ? { lastModel: settings.agentSettings.lastModel }
-        : {}),
       customProviders: piSettings.customProviders,
     },
   );
@@ -206,8 +203,5 @@ export function migrateProviderSecretsToKeychain(
   });
   settings.model = migrated.membership.model;
   settings.titleGenerationModel = migrated.membership.titleGenerationModel;
-  if (migrated.membership.lastModel) {
-    settings.agentSettings.lastModel = migrated.membership.lastModel;
-  }
   return migrated.changed;
 }

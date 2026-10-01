@@ -7,7 +7,6 @@ import { createFakeChatPorts } from '../../helpers/createFakeChatPorts';
 function settingsSnapshot(model: string): ChatSettingsSnapshot {
   return {
     model,
-    thinkingBudget: 'medium',
     thinkingLevel: 'medium',
     customContextLimits: {},
     enableAutoScroll: true,
@@ -215,5 +214,42 @@ describe('composer model usage limits', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(state.usage).toMatchObject({ contextWindow: 400_000, model: 'provider/b' });
+  });
+});
+
+describe('composer selection persistence', () => {
+  it('commits the picked model and reasoning level so they are saved as the last selection', async () => {
+    let settings = settingsSnapshot('provider/small');
+    const commits: Array<{ model: string; thinkingLevel: string }> = [];
+    const ports = createFakeChatPorts({
+      models: {
+        getModelOptions: () => [
+          { label: 'Small', value: 'provider/small' },
+          { label: 'Large', value: 'provider/large' },
+        ],
+      },
+      settings: {
+        getSettingsSnapshot: () => ({ ...settings }),
+        commitSettingsSnapshot: async (next) => {
+          settings = { ...next };
+          commits.push({ model: next.model, thinkingLevel: next.thinkingLevel });
+        },
+      },
+    });
+    const tab = createToolbarTab(new ChatState());
+    wireComposerChrome(tab, ports);
+
+    tab.ui.composerActions?.setModel('provider/large');
+    await Promise.resolve();
+    await Promise.resolve();
+    tab.ui.composerActions?.setThinkingLevel('high');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(commits.at(-1)).toEqual({ model: 'provider/large', thinkingLevel: 'high' });
+    expect(tab.state.uiStore.getSnapshot().composer).toMatchObject({
+      model: 'provider/large',
+      thinkingLevel: 'high',
+    });
   });
 });

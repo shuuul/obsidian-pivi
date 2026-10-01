@@ -65,7 +65,7 @@ function normalizeChatViewPlacement(value: unknown): ChatViewPlacement {
 }
 
 /** Agent-settings fields earlier versions persisted; dropped on load. */
-const REMOVED_AGENT_SETTINGS_FIELDS = ['selectedMode', 'environmentHash'] as const;
+const REMOVED_AGENT_SETTINGS_FIELDS = ['selectedMode', 'environmentHash', 'lastModel'] as const;
 
 function hasRemovedAgentSettingsField(stored: Record<string, unknown>): boolean {
   const agentSettings = stored.agentSettings;
@@ -158,6 +158,7 @@ function stripRemovedSettingsFields(settings: Record<string, unknown>): void {
   delete settings.autoCompactThresholdRatio;
   delete settings.autoCompactKeepRecentTokens;
   delete settings.keyboardNavigation;
+  delete settings.thinkingBudget;
 }
 
 function normalizeDeadlineMs(value: unknown, fallback: number): number {
@@ -307,6 +308,7 @@ export function normalizeStoredPiviSettings(
     Object.hasOwn(stored, "enableAutoCompact") ||
     Object.hasOwn(stored, "autoCompactThresholdRatio") ||
     Object.hasOwn(stored, "autoCompactKeepRecentTokens") ||
+    Object.hasOwn(stored, "thinkingBudget") ||
     hasRemovedAgentSettingsField(stored);
 
   return { settings, changed };

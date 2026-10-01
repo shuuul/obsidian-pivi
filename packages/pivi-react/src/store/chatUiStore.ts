@@ -77,7 +77,6 @@ export interface ComposerChromeSnapshot {
   readonly model: string;
   readonly modelOptions: readonly ComposerOptionSnapshot[];
   readonly adaptiveReasoning: boolean;
-  readonly thinkingBudget: string;
   readonly thinkingLevel: string;
   readonly thinkingOptions: readonly ComposerOptionSnapshot[];
   readonly defaultReasoningValue: string;
@@ -164,7 +163,6 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
       model: '',
       modelOptions: [],
       adaptiveReasoning: false,
-      thinkingBudget: '',
       thinkingLevel: '',
       thinkingOptions: [],
       defaultReasoningValue: '',

@@ -157,7 +157,6 @@ describe('UI port adapters', () => {
       settings: {
         ...DEFAULT_PIVI_SETTINGS,
         model: 'model-a',
-        thinkingBudget: 'medium',
         thinkingLevel: 'medium',
       } as PiviSettings,
       saveSettings,
@@ -228,8 +227,10 @@ describe('UI port adapters', () => {
       }),
     }));
     snapshot.model = 'model-b';
+    snapshot.thinkingLevel = 'high';
     await ports.settings.commitSettingsSnapshot(snapshot);
     expect(host.settings.model).toBe('model-b');
+    expect(host.settings.thinkingLevel).toBe('high');
     expect(saveSettings).toHaveBeenCalledTimes(1);
     expect(getDropdownConfig).toHaveBeenCalled();
     expect(ports).not.toHaveProperty('plugin');

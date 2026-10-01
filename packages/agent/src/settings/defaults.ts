@@ -30,7 +30,6 @@ export const DEFAULT_AGENT_SETTINGS = Object.freeze({
 export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   userName: "",
   model: DEFAULT_MODEL_KEY,
-  thinkingBudget: "off",
   thinkingLevel: "medium",
   enableAutoTitleGeneration: true,
   titleGenerationModel: "",

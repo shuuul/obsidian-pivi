@@ -56,7 +56,6 @@ function createSettings(overrides?: {
   model?: string;
   visibleModels?: string[];
   titleGenerationModel?: string;
-  lastModel?: string;
 }): Record<string, unknown> {
   return {
     ...DEFAULT_PIVI_SETTINGS,
@@ -72,7 +71,6 @@ function createSettings(overrides?: {
         'openai-codex/gpt-5.6-luna',
       ],
       customProviders: [createDgxProvider()],
-      ...(overrides?.lastModel !== undefined ? { lastModel: overrides.lastModel } : {}),
     },
   };
 }
@@ -109,11 +107,10 @@ describe('createPiUiFacades fetchCustomProviderModels', () => {
     expect(provider?.models.map((model) => model.id)).toEqual(['qwen3.8-27b']);
   });
 
-  it('reassigns a pruned active model and clears pruned title/last models', async () => {
+  it('reassigns a pruned active model and clears a pruned title model', async () => {
     const settings = createSettings({
       model: `${DGX_PROVIDER_ID}/deepseek-v4-flash-0731`,
       titleGenerationModel: `${DGX_PROVIDER_ID}/deepseek-v4-flash-0731`,
-      lastModel: `${DGX_PROVIDER_ID}/deepseek-v4-flash-0731`,
     });
     const facades = createPiUiFacades();
 
@@ -121,7 +118,6 @@ describe('createPiUiFacades fetchCustomProviderModels', () => {
 
     expect(settings.model).toBe(`${DGX_PROVIDER_ID}/qwen3.8-27b`);
     expect(settings.titleGenerationModel).toBe('');
-    expect(settings.agentSettings).toMatchObject({ lastModel: '' });
   });
 
   it('keeps the active model when it survives the fetch', async () => {

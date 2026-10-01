@@ -133,7 +133,6 @@ describe('normalizeDeviceLocalProviderState', () => {
         visibleModels: [stale],
         activeModel: stale,
         titleGenerationModel: stale,
-        lastModel: stale,
         customContextLimits: {},
       },
       webSearchTools: {
@@ -145,7 +144,6 @@ describe('normalizeDeviceLocalProviderState', () => {
     expect(state.modelPreferences.visibleModels).toEqual([next]);
     expect(state.modelPreferences.activeModel).toBe(next);
     expect(state.modelPreferences.titleGenerationModel).toBe('');
-    expect(state.modelPreferences.lastModel).toBeUndefined();
   });
 
   it('clears invalid title, last, and active model references', () => {
@@ -159,7 +157,6 @@ describe('normalizeDeviceLocalProviderState', () => {
         visibleModels: ['deepseek/deepseek-flash'],
         activeModel: 'deepseek/deepseek-flash',
         titleGenerationModel: 'deepseek/deepseek-flash',
-        lastModel: 'deepseek/deepseek-flash',
       },
       webSearchTools: {
         providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
@@ -170,7 +167,6 @@ describe('normalizeDeviceLocalProviderState', () => {
     expect(state.modelPreferences.visibleModels).toEqual([]);
     expect(state.modelPreferences.activeModel).toBe('');
     expect(state.modelPreferences.titleGenerationModel).toBe('');
-    expect(state.modelPreferences.lastModel).toBeUndefined();
   });
 
   it('drops unknown model preference fields during normalization', () => {
@@ -282,7 +278,6 @@ describe('extractDeviceLocalProviderState', () => {
         addedProviders: ['deepseek', 'custom-openai-compatible'],
         disabledProviders: ['custom-openai-compatible'],
         visibleModels: ['deepseek/deepseek-flash'],
-        lastModel: 'deepseek/deepseek-flash',
         customProviders: [{
           id: 'custom-openai-compatible',
           kind: 'openai-compatible',
@@ -337,7 +332,6 @@ describe('stripLocalizedFieldsFromRuntimeSettings', () => {
         addedProviders: ['deepseek', 'custom-openai-compatible'],
         disabledProviders: ['custom-openai-compatible'],
         visibleModels: ['deepseek/deepseek-flash'],
-        lastModel: 'deepseek/deepseek-flash',
         customProviders: [{
           id: 'custom-openai-compatible',
           kind: 'openai-compatible',
