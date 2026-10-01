@@ -94,7 +94,7 @@ flowchart LR
 | `ui/imperativeChatDevelopment.ts` | Development-only debug/perf trace commands behind the semantic view handle; drives the disposable-tab stream/switch/subagent/cold-open workloads |
 | `ui/imperativeChatInlineEdit.ts` | `submitInlineEditTurn`: routes inline-edit instructions through the archived-session turn path and diff review |
 | `ui/imperativeChatTabAction.ts` | Shared `imperativeChatLogger` and the Notice-wrapped tab-action runner used by the adapter family |
-| `ui/createStreamingMarkdownContentAdapter.ts` | App-owned streaming Markdown `MessageContentAdapter` bridging `MessageRenderer` into React slots with perf recording |
+| `ui/createStreamingMarkdownContentAdapter.ts` | App-owned streaming Markdown `MessageContentAdapter` bridging `MessageRenderer` into React slots with perf recording. Streaming-phase segments pass `deferMath` from `ChatSettingsSnapshot.deferMathRenderingDuringStreaming`; the terminal render always typesets math |
 | `ui/inlineEditHelpers.ts` / `ui/inlineEditProtocol.ts` | Inline-edit selected-text escaping/context assembly and the `<replacement>`/`<insertion>`/reply turn-protocol parser |
 | `ui/inlineEditSurface/` | Editor-embedded inline-edit surface: `InlineEditSurfaceSession.ts` owns the session lifecycle, plus the diff-review field, keyboard controller, and DOM helpers mounted by `SelectionToolbarSurfaceController` |
 | `ui/defaultVaultSkillsPrompt.ts` | Localized owner-realm Obsidian Notice shown only after host-neutral Skills orchestration requests confirmation |

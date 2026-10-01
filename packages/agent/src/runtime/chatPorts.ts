@@ -86,6 +86,7 @@ export interface ChatSettingsSnapshot {
   thinkingLevel: string;
   customContextLimits: Record<string, number>;
   enableAutoScroll: boolean;
+  deferMathRenderingDuringStreaming: boolean;
   showCacheHitRate: boolean;
   showTokensPerSecond: boolean;
   enableAutoTitleGeneration: boolean;

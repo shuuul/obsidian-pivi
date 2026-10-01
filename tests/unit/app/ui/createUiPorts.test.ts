@@ -202,6 +202,7 @@ describe('UI port adapters', () => {
       { value: 'model-a', label: 'Model A' },
     ]);
     const snapshot = ports.settings.getSettingsSnapshot();
+    expect(snapshot.deferMathRenderingDuringStreaming).toBe(true);
     expect(snapshot).toEqual(expect.objectContaining({
       enableAutoScroll: true,
       showCacheHitRate: true,

@@ -66,6 +66,7 @@ export function createChatUiPorts(
       thinkingLevel: projected.thinkingLevel,
       customContextLimits: { ...projected.customContextLimits },
       enableAutoScroll: projected.enableAutoScroll ?? true,
+      deferMathRenderingDuringStreaming: projected.deferMathRenderingDuringStreaming ?? true,
       showCacheHitRate: projected.showCacheHitRate !== false,
       showTokensPerSecond: projected.showTokensPerSecond !== false,
       enableAutoTitleGeneration: projected.enableAutoTitleGeneration,
