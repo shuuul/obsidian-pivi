@@ -135,6 +135,19 @@ function makeManager(
   };
 }
 
+/** Runs the production fork helper with the same wiring TabManager gives it. */
+function forkThroughManager(
+  manager: TabManager,
+  ports: { sessions: unknown },
+  context: ForkContext,
+) {
+  return forkToNewTab({
+    sessions: ports.sessions as Parameters<typeof forkToNewTab>[0]['sessions'],
+    getActiveTab: () => manager.getActiveTab(),
+    createTab: (openSessionId) => manager.createTab(openSessionId),
+  }, context);
+}
+
 describe('TabManager lifecycle guards', () => {
   beforeEach(() => jest.clearAllMocks());
 
@@ -444,7 +457,7 @@ describe('TabManager lifecycle guards', () => {
       forkAtUserMessage: 1,
     };
 
-    const tab = await manager.forkToNewTab(context);
+    const tab = await forkThroughManager(manager, ports, context);
 
     expect(tab).not.toBeNull();
     expect(ports.sessions.createSession).toHaveBeenCalledWith({
@@ -467,7 +480,7 @@ describe('TabManager lifecycle guards', () => {
     await manager.createTab('source', 'source-tab');
     (ports.sessions[failingStep] as jest.Mock).mockRejectedValueOnce(primary);
 
-    await expect(manager.forkToNewTab({
+    await expect(forkThroughManager(manager, ports, {
       messages: [],
       sourceSessionId: 'source-session',
       forkAtEntryId: 'user-1',
@@ -539,7 +552,7 @@ describe('TabManager lifecycle guards', () => {
     (ports.sessions.updateSession as jest.Mock).mockRejectedValueOnce(primary);
     (ports.sessions.discardSessionFile as jest.Mock).mockRejectedValueOnce(cleanup);
 
-    await expect(manager.forkToNewTab({
+    await expect(forkThroughManager(manager, ports, {
       messages: [],
       sourceSessionId: 'source-session',
       forkAtEntryId: 'user-1',

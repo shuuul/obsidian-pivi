@@ -353,7 +353,6 @@ export class PiviApplication {
   async loadSettings() {
     this.storage = createSharedStorage(
       this.plugin,
-      this.deviceLocalExternalContexts,
       this.deviceLocalCapabilityPermissions,
     );
     await loadPluginSettings({

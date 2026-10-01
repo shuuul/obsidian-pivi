@@ -163,7 +163,7 @@ export async function runDeviceLocalEnvironmentMigration(
   ctx: DeviceLocalEnvironmentMigrationContext,
 ): Promise<DeviceLocalEnvironmentMigrationResult> {
   const raw = ctx.rawSettings;
-  const baseSettings = normalizeStoredPiviSettings(raw ?? {}).settings;
+  const baseSettings = normalizeStoredPiviSettings(raw ?? {});
   const getSystem = (name: string): string | undefined => {
     if (ctx.getSystemEnvironmentVariable) {
       return ctx.getSystemEnvironmentVariable(name);

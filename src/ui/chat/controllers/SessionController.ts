@@ -142,56 +142,6 @@ export class SessionController {
   }
 
   /**
-   * Loads the current tab openSession, or starts at entry point if none.
-   *
-   * Entry point (no openSession) shows welcome screen without
-   * creating a openSession. Open session state is created lazily on first message.
-   */
-  async loadActive(): Promise<void> {
-    const { settings, state } = this.deps;
-    const settingsSnapshot = settings.getSettingsSnapshot();
-    this.deps.resetStreamingState();
-    state.flushProjection();
-
-    const openSessionId = state.currentOpenSessionId;
-    const recent = openSessionId ? await this.openRecentSession(openSessionId) : null;
-    const openSession = recent?.openSession ?? null;
-
-    // No active openSession - start at entry point
-    if (!openSession) {
-      state.currentOpenSessionId = null;
-      state.clearMessages();
-      state.usage = null;
-      state.currentTodos = null;
-      state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
-      state.applyChatDisplaySettings(settingsSnapshot);
-      state.hasPendingSessionSave = false;
-
-      // Pass persistent paths to prevent stale external contexts
-      this.getAgentService()?.syncSession(null, settingsSnapshot.externalReadDirectories);
-
-      const fileCtx = this.deps.getFileContextManager();
-      fileCtx?.resetForNewSession();
-      fileCtx?.autoAttachActiveFile();
-      this.deps.getInlineContextManager()?.resetForNewSession();
-
-      this.deps.getExternalContextSelector()?.resetForSession(
-        settingsSnapshot.externalReadDirectories,
-      );
-
-      state.welcomeGreeting = this.getGreeting();
-
-      this.callbacks.onSessionLoaded?.();
-      return;
-    }
-
-    await this.deps.ensureServiceForSession?.(openSession);
-    this.restoreOpenSession(openSession, { autoAttachFile: true, page: recent?.page });
-
-    this.callbacks.onSessionLoaded?.();
-  }
-
-  /**
    * Skip switch when the tab already shows this openSession with messages.
    * Re-load when messages are empty (failed/partial hydrate).
    */
@@ -234,7 +184,7 @@ export class SessionController {
       this.deps.getInputEl().value = '';
       this.deps.clearQueuedMessages();
 
-      this.restoreOpenSession(openSession, { page });
+      this.restoreOpenSession(openSession, page);
 
 
       this.callbacks.onSessionSwitched?.();
@@ -302,19 +252,16 @@ export class SessionController {
     state.hasPendingSessionSave = false;
   }
 
-  /**
-   * Shared logic for restoring a openSession into the current tab.
-   * Used by both loadActive() and switchTo() to avoid duplication.
-   */
+  /** Restores an open session into the current tab. */
   private restoreOpenSession(
     openSession: OpenSessionState,
-    options?: { autoAttachFile?: boolean; page?: SessionMessagePage | null }
+    page?: SessionMessagePage | null,
   ): void {
     const { settings, state } = this.deps;
     const settingsSnapshot = settings.getSettingsSnapshot();
 
     state.currentOpenSessionId = openSession.id;
-    this.restoreMessages(openSession, options?.page);
+    this.restoreMessages(openSession, page);
     state.usage = openSession.usage
       ? recalculateUsageForModel(
           openSession.usage,
@@ -350,8 +297,6 @@ export class SessionController {
 
     if (openSession.currentNote) {
       fileCtx?.setCurrentNote(openSession.currentNote);
-    } else if (!hasMessages && options?.autoAttachFile) {
-      fileCtx?.autoAttachActiveFile();
     }
 
     // Legacy open-session enabledMcpServers fields are ignored; settings enable/disable owns MCP.

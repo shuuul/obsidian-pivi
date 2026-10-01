@@ -150,16 +150,14 @@ async function loadThroughStartupPath(
   const legacyExternalContexts = new ObsidianDeviceLocalExternalContextStore(app);
   const capabilityPermissions = new ObsidianDeviceLocalCapabilityPermissionStore(app);
   const codec = createPiviSettingsCodec(
-    legacyExternalContexts,
     new ObsidianDeviceLocalProviderStore(app),
-    undefined,
     capabilityPermissions,
   );
   let raw = rawSettings;
   // Mirrors the production save: the codec persists device-local state and
   // strips it from the synced file.
   const saveSettings = jest.fn(async () => {
-    raw = JSON.parse(JSON.stringify(codec.prepareForSave?.(settings))) as Record<string, unknown>;
+    raw = JSON.parse(JSON.stringify(codec.prepareForSave(settings))) as Record<string, unknown>;
   });
 
   await loadPluginSettings({

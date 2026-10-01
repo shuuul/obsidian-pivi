@@ -133,10 +133,6 @@ export class CanvasSelectionController {
     };
   }
 
-  hasSelection(): boolean {
-    return this.storedSelection !== null;
-  }
-
   clear(): void {
     this.storedSelection = null;
     this.updateIndicator();

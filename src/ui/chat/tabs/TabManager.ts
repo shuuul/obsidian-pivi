@@ -21,7 +21,6 @@ import type { ForkContext } from './tabFork';
 import { wireTabInputEvents } from './tabInputWiring';
 import { broadcastToTabs } from './tabManagerBroadcast';
 import {
-  forkToNewTab as forkToNewTabHelper,
   handleForkRequest,
 } from './tabManagerFork';
 import { openSessionInTabManager } from './tabManagerOpenSession';
@@ -638,17 +637,6 @@ export class TabManager {
 
   private async handleForkRequest(context: ForkContext): Promise<void> {
     await handleForkRequest(
-      {
-        sessions: this.ports.sessions,
-        getActiveTab: () => this.getActiveTab(),
-        createTab: (openSessionId) => this.createTab(openSessionId),
-      },
-      context,
-    );
-  }
-
-  async forkToNewTab(context: ForkContext): Promise<TabData | null> {
-    return forkToNewTabHelper(
       {
         sessions: this.ports.sessions,
         getActiveTab: () => this.getActiveTab(),

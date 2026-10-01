@@ -423,10 +423,6 @@ export class SelectionController {
     };
   }
 
-  hasSelection(): boolean {
-    return this.storedSelection !== null;
-  }
-
   // ============================================
   // Clear
   // ============================================

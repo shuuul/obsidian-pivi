@@ -6,7 +6,6 @@ import {
 } from '@pivi/agent/config/publication';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { FileStore } from "@pivi/agent/ports";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
 import type { PersistedPiviSettings } from '@pivi/agent/settings/persistedPiviSettings';
 import type { PiviSettings } from "@pivi/agent/settings/types";
 
@@ -16,7 +15,7 @@ const logger = new PluginLogger('PiviSettingsStorage');
 
 export { PIVI_SETTINGS_PATH };
 
-/** In-memory runtime settings bag used by load/normalize and product code. */
+/** In-memory runtime settings bag used by product code. */
 export type StoredPiviSettings = PiviSettings;
 
 /**
@@ -25,60 +24,16 @@ export type StoredPiviSettings = PiviSettings;
  */
 export type VaultPersistedPiviSettings = PersistedPiviSettings | StoredPiviSettings;
 
-export interface PiviSettingsNormalizationResult {
-  settings: StoredPiviSettings;
-  changed: boolean;
-}
-
+/** Projects runtime settings onto the synced vault file before each save. */
 export interface PiviSettingsCodec {
-  getDefaults(): StoredPiviSettings;
-  normalize(stored: Record<string, unknown>): PiviSettingsNormalizationResult;
-  prepareForSave?(settings: StoredPiviSettings): VaultPersistedPiviSettings;
+  prepareForSave(settings: StoredPiviSettings): VaultPersistedPiviSettings;
 }
-
-export const DEFAULT_PIVI_SETTINGS_CODEC: PiviSettingsCodec = {
-  getDefaults() {
-    return { ...DEFAULT_PIVI_SETTINGS };
-  },
-  normalize(stored) {
-    return {
-      settings: { ...DEFAULT_PIVI_SETTINGS, ...stored },
-      changed: false,
-    };
-  },
-};
 
 export class PiviSettingsStorage {
   constructor(
     private adapter: FileStore,
-    private codec: PiviSettingsCodec = DEFAULT_PIVI_SETTINGS_CODEC,
+    private codec?: PiviSettingsCodec,
   ) {}
-
-  async load(): Promise<StoredPiviSettings> {
-    if (!(await this.adapter.exists(PIVI_SETTINGS_PATH))) {
-      return this.getDefaults();
-    }
-
-    const content = await this.adapter.read(PIVI_SETTINGS_PATH);
-    const parsed = parseJsonObjectWithDiagnostics(PIVI_SETTINGS_PATH, content);
-    if (!parsed.ok) {
-      await preserveCorruptArtifact(
-        this.adapter,
-        PIVI_SETTINGS_PATH,
-        parsed.rawContent,
-      );
-      logger.warn('settings JSON is invalid; preserved corrupt artifact and using defaults');
-      // Do not auto-save defaults over the corrupt source.
-      return this.getDefaults();
-    }
-
-    const { settings, changed } = this.codec.normalize(parsed.value);
-    if (changed) {
-      await this.save(settings);
-    }
-
-    return settings;
-  }
 
   async loadRaw(): Promise<Record<string, unknown> | null> {
     if (!(await this.adapter.exists(PIVI_SETTINGS_PATH))) {
@@ -107,23 +62,10 @@ export class PiviSettingsStorage {
   }
 
   async save(settings: StoredPiviSettings): Promise<void> {
-    const stored: VaultPersistedPiviSettings = this.codec.prepareForSave?.(settings) ?? settings;
+    const stored: VaultPersistedPiviSettings = this.codec?.prepareForSave(settings) ?? settings;
     const content = JSON.stringify(stored, null, 2);
     await runSerializedSave(PIVI_SETTINGS_PATH, async () => {
       await writeFileAtomically(this.adapter, PIVI_SETTINGS_PATH, content);
     });
-  }
-
-  async exists(): Promise<boolean> {
-    return this.adapter.exists(PIVI_SETTINGS_PATH);
-  }
-
-  async update(updates: Partial<StoredPiviSettings>): Promise<void> {
-    const current = await this.load();
-    await this.save({ ...current, ...updates });
-  }
-
-  private getDefaults(): StoredPiviSettings {
-    return this.codec.getDefaults();
   }
 }

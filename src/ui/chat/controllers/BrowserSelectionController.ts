@@ -291,10 +291,6 @@ export class BrowserSelectionController {
     return this.storedSelection;
   }
 
-  hasSelection(): boolean {
-    return this.storedSelection !== null;
-  }
-
   clear(): void {
     this.storedSelection = null;
     this.updateIndicator();
