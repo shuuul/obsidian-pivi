@@ -2,8 +2,6 @@ import { createObsidianTools } from './createObsidianTools';
 
 export {
   buildEffectiveBashPermissions,
-  DEFAULT_SAFE_BASH_ALLOWLIST,
-  DEFAULT_WINDOWS_SAFE_BASH_ALLOWLIST,
   matchBashCommandAllowlist,
 } from './bashAllowlist';
 export {

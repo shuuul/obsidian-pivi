@@ -95,17 +95,6 @@ export interface SessionMessagePage {
   olderUserMessageCount: number;
 }
 
-export interface LeafSummary {
-  leafId: string;
-  label?: string;
-  updatedAt: number;
-  messagePreview: string;
-  /** Number of user/assistant messages visible up to this session state. */
-  messageCount?: number;
-  /** Number of human turns visible up to this session state. */
-  turnCount?: number;
-}
-
 export interface StoreSessionInfo {
   sessionFile: string;
   sessionId: string;

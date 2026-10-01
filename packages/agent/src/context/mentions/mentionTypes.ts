@@ -6,18 +6,6 @@ export interface ExternalContextDisplayEntry {
   displayNameLower: string;
 }
 
-export type MentionBadgeKind =
-  | 'plain'
-  | 'file'
-  | 'folder'
-  | 'mcp'
-  | 'skill'
-  | 'tool'
-  | 'agent'
-  | 'session'
-  | 'inline-context'
-  | 'selected-text-template';
-
 export interface PlainMentionPart {
   kind: 'plain';
   text: string;

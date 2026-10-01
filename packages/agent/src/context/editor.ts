@@ -21,49 +21,6 @@ export interface EditorSelectionContext {
   startLine?: number; // 1-indexed starting line number
 }
 
-export function findNearestNonEmptyLine(
-  getLine: (line: number) => string,
-  lineCount: number,
-  startLine: number,
-  direction: 'before' | 'after'
-): string {
-  const step = direction === 'before' ? -1 : 1;
-  for (let i = startLine + step; i >= 0 && i < lineCount; i += step) {
-    const content = getLine(i);
-    if (content.trim().length > 0) {
-      return content;
-    }
-  }
-  return '';
-}
-
-/** All line/column params are 0-indexed. */
-export function buildCursorContext(
-  getLine: (line: number) => string,
-  lineCount: number,
-  line: number,
-  column: number
-): CursorContext {
-  const lineContent = getLine(line);
-  const beforeCursor = lineContent.substring(0, column);
-  const afterCursor = lineContent.substring(column);
-
-  const lineIsEmpty = lineContent.trim().length === 0;
-  const nothingBefore = beforeCursor.trim().length === 0;
-  const nothingAfter = afterCursor.trim().length === 0;
-  const isInbetween = lineIsEmpty || (nothingBefore && nothingAfter);
-
-  let contextBefore = beforeCursor;
-  let contextAfter = afterCursor;
-
-  if (isInbetween) {
-    contextBefore = findNearestNonEmptyLine(getLine, lineCount, line, 'before');
-    contextAfter = findNearestNonEmptyLine(getLine, lineCount, line, 'after');
-  }
-
-  return { beforeCursor: contextBefore, afterCursor: contextAfter, isInbetween, line, column };
-}
-
 export function formatEditorContext(context: EditorSelectionContext): string {
   if (context.mode === 'selection' && context.selectedText) {
     const lineAttr = context.startLine && context.lineCount

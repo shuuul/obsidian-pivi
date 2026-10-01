@@ -14,8 +14,6 @@ export const LIVE_GENERIC_TOOLS = [
 
 export type LiveGenericToolName = (typeof LIVE_GENERIC_TOOLS)[number];
 
-const LIVE_GENERIC_TOOL_SET = new Set<string>(LIVE_GENERIC_TOOLS);
-
 /** PascalCase, legacy `obsidian_*`, and extra name aliases → live name. */
 export const TOOL_NAME_ALIASES: Readonly<Record<string, LiveGenericToolName>> = {
   Read: 'read',
@@ -47,10 +45,6 @@ export interface NormalizedToolArguments {
   args: Record<string, unknown>;
   nameAlias?: string;
   fieldAlias?: string;
-}
-
-export function isLiveGenericToolName(name: string): name is LiveGenericToolName {
-  return LIVE_GENERIC_TOOL_SET.has(name);
 }
 
 export function isSilentToolNameAlias(name: string): boolean {

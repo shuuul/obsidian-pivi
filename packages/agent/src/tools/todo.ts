@@ -86,10 +86,6 @@ export function parseTodoToolInput(input: unknown, toolCallId?: string): TodoIte
   return validTodos.length > 0 ? validTodos : null;
 }
 
-export function parseTodoInput(input: Record<string, unknown>): TodoItem[] | null {
-  return parseTodoToolInput(input);
-}
-
 export function deriveTodoVisualizationModel(
   todos: TodoItem[],
   source: TodoVisualizationSource

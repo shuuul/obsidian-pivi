@@ -68,17 +68,3 @@ export function resolveUnmanagedAbsolutePath(
   }
   return existingAbsolutePath(deps, requested, kind);
 }
-
-/**
- * Vault tools resolve through Obsidian's index. Hidden or excluded trees such as
- * `.pivi/skills` exist on disk but are not TFile/TFolder entries; callers should
- * route those hits through ExternalFileApi instead of asking the model to retry.
- */
-export function rethrowIfUnmanagedVaultPath(
-  deps: ObsidianToolDeps,
-  params: { file?: string; path?: string },
-  error: unknown,
-  kind: UnmanagedVaultKind,
-): never {
-  throw error;
-}

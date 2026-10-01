@@ -1,5 +1,3 @@
-export * from './agentDefinition';
-export * from './agentUtils';
 export * from './commands/defaultWorkspaceCommands';
 export * from './commands/fuzzyScore';
 export * from './commands/resolveWorkspaceCommandPrompt';

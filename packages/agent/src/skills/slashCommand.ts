@@ -5,7 +5,6 @@ import {
   extractStringArray,
   isRecord,
   parseFrontmatter,
-  validateSlugName,
 } from './frontmatter';
 
 export interface ParsedSlashCommandContent {
@@ -22,42 +21,6 @@ export interface ParsedSlashCommandContent {
   context?: 'fork';
   agent?: string;
   hooks?: Record<string, unknown>;
-}
-
-export function extractFirstParagraph(content: string): string | undefined {
-  const paragraph = content.split(/\n\s*\n/).find(p => p.trim());
-  if (!paragraph) return undefined;
-  return paragraph.trim().replace(/\n/g, ' ');
-}
-
-export function validateCommandName(name: string): string | null {
-  return validateSlugName(name, 'Command');
-}
-
-export function isSkill(cmd: SlashCommand): boolean {
-  if (cmd.kind) return cmd.kind === 'skill';
-  return cmd.id.startsWith('skill-');
-}
-
-export function parsedToSlashCommand(
-  parsed: ParsedSlashCommandContent,
-  identity: Pick<SlashCommand, 'id' | 'name'> & { source?: SlashCommand['source'] },
-): SlashCommand {
-  return {
-    ...identity,
-    description: parsed.description,
-    argumentHint: parsed.argumentHint,
-    icon: parsed.icon,
-    integrationKey: parsed.integrationKey,
-    allowedTools: parsed.allowedTools,
-    model: parsed.model,
-    content: parsed.promptContent,
-    disableModelInvocation: parsed.disableModelInvocation,
-    userInvocable: parsed.userInvocable,
-    context: parsed.context,
-    agent: parsed.agent,
-    hooks: parsed.hooks,
-  };
 }
 
 export function parseSlashCommandContent(content: string): ParsedSlashCommandContent {
@@ -102,11 +65,6 @@ export function yamlString(value: string): string {
     return `"${value.replace(/"/g, '\\"')}"`;
   }
   return value;
-}
-
-export function serializeCommand(cmd: SlashCommand): string {
-  const parsed = parseSlashCommandContent(cmd.content);
-  return serializeSlashCommandMarkdown(cmd, parsed.promptContent);
 }
 
 export function serializeSlashCommandMarkdown(cmd: Partial<SlashCommand>, body: string): string {

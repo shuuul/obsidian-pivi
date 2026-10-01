@@ -59,17 +59,6 @@ export const DEFAULT_PIVI_SETTINGS_CODEC: PiviSettingsCodec = {
   },
 };
 
-export class PiviSettingsCorruptError extends Error {
-  constructor(
-    message: string,
-    readonly diagnostics: readonly ParseDiagnostic[],
-    readonly corruptPath: string,
-  ) {
-    super(message);
-    this.name = 'PiviSettingsCorruptError';
-  }
-}
-
 export class PiviSettingsStorage {
   private lastDiagnostics: ParseDiagnostic[] = [];
   private corruptPath: string | null = null;

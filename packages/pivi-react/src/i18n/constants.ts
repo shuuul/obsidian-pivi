@@ -44,15 +44,3 @@ export function getLocaleInfo(code: Locale): LocaleInfo | undefined {
   return SUPPORTED_LOCALES.find(locale => locale.code === code);
 }
 
-/**
- * Get display string for locale (with optional flag)
- */
-export function getLocaleDisplayString(code: Locale, includeFlag = true): string {
-  const info = getLocaleInfo(code);
-  if (!info) return code;
-
-  return includeFlag && info.flag
-    ? `${info.flag} ${info.name} (${info.englishName})`
-    : `${info.name} (${info.englishName})`;
-}
-

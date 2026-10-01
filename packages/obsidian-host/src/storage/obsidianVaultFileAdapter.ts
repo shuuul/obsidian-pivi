@@ -136,5 +136,3 @@ export class ObsidianVaultFileAdapter implements FileStore {
     }
   }
 }
-
-export { ObsidianVaultFileAdapter as VaultFileAdapter };

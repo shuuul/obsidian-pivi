@@ -27,13 +27,6 @@ export interface PersistentExternalDirectoryPermission {
   enabled: boolean;
 }
 
-export interface DeviceLocalCapabilityPermissionsV1 {
-  version: typeof LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
-  bash: PersistentBashPermission[];
-  externalDirectories: PersistentExternalDirectoryPermission[];
-  obsidianCommands?: string[];
-}
-
 export interface DeviceLocalCapabilityPermissionsV2 {
   version: typeof DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
   bash: PersistentBashPermission[];

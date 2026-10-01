@@ -2,12 +2,6 @@ import { type App,Modal, Setting } from 'obsidian';
 
 import { t } from '@/app/i18n';
 
-export function confirmDelete(app: App, message: string): Promise<boolean> {
-  return new Promise(resolve => {
-    new ConfirmModal(app, message, resolve).open();
-  });
-}
-
 export function confirm(app: App, message: string, confirmText: string): Promise<boolean> {
   return new Promise(resolve => {
     new ConfirmModal(app, message, resolve, confirmText).open();

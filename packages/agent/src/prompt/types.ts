@@ -33,7 +33,3 @@ export interface ExternalContextAvailability {
 export interface PromptContributor {
   contributePrompt(): string | null | undefined;
 }
-
-export interface ContextProvider<TContext> {
-  getContext(): TContext | null | undefined;
-}

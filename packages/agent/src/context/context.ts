@@ -4,11 +4,6 @@
  * Current note and context file formatting for prompts.
  */
 
-// Matches <current_note> at the START of prompt (legacy format)
-const CURRENT_NOTE_PREFIX_REGEX = /^<current_note>\n[\s\S]*?<\/current_note>\n\n/;
-// Matches <current_note> at the END of prompt (current format)
-const CURRENT_NOTE_SUFFIX_REGEX = /\n\n<current_note>\n[\s\S]*?<\/current_note>$/;
-
 /**
  * Pattern to match XML context tags appended to prompts.
  * These tags are always preceded by \n\n separator.
@@ -23,20 +18,6 @@ export function formatCurrentNote(notePath: string): string {
 
 export function appendCurrentNote(prompt: string, notePath: string): string {
   return `${prompt}\n\n${formatCurrentNote(notePath)}`;
-}
-
-/**
- * Strips current note context from a prompt (both prefix and suffix formats).
- * Handles legacy (prefix) and current (suffix) formats.
- */
-export function stripCurrentNoteContext(prompt: string): string {
-  // Try prefix format first (legacy)
-  const strippedPrefix = prompt.replace(CURRENT_NOTE_PREFIX_REGEX, '');
-  if (strippedPrefix !== prompt) {
-    return strippedPrefix;
-  }
-  // Try suffix format (current)
-  return prompt.replace(CURRENT_NOTE_SUFFIX_REGEX, '');
 }
 
 /**

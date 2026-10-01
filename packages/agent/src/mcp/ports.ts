@@ -3,17 +3,9 @@ import type { ManagedMcpServer, McpAuthStatus, McpTestResult } from './types';
 
 export type FileStore = WorkspaceFileStore;
 
-
 export type McpTransportFetch = typeof fetch;
 
 export type McpProcessEnv = Record<string, string | undefined>;
-
-export interface PreparedMcpTurn {
-  mcpMentions: Set<string>;
-  request: Record<string, unknown> & {
-    enabledMcpServers?: Set<string>;
-  };
-}
 
 export interface AppMcpOAuth {
   getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus>;

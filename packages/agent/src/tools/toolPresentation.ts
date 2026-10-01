@@ -97,7 +97,6 @@ import {
   summarizeWriteStdin,
   toolFileName,
   type ToolSummaryResolver,
-  truncateToolText,
 } from './toolPresentationSummary';
 
 export {
@@ -425,19 +424,6 @@ export function resolveToolPresentation(
 
 export function getToolIcon(name: string): string {
   return getToolPresentationDescriptor(name).icon;
-}
-
-export function getToolStepPhraseModel(
-  name: string,
-  input: Record<string, unknown>,
-  result?: string,
-): { readonly base: ToolPresentationTitle; readonly summary: string } {
-  const resolved = resolveToolPresentation(name, input, result);
-  const key = resolved.descriptor.stepPhraseKey;
-  return {
-    base: key ? { fallback: resolved.title.fallback, key } : resolved.title,
-    summary: truncateToolText(resolved.summary, 72),
-  };
 }
 
 export function shouldPresentToolCall(name: string, input: Record<string, unknown>): boolean {

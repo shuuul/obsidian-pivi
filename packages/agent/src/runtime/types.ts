@@ -2,8 +2,7 @@ import type { BrowserSelectionContext } from '../context';
 import type { CanvasSelectionContext } from '../context';
 import type { EditorSelectionContext } from '../context';
 import type { InlineContextReference } from '../context';
-import type { ImageAttachment, OpenSessionState } from '../runtime';
-
+import type { ImageAttachment, } from '../runtime';
 
 export interface ChatTurnRequest {
   text: string;
@@ -58,15 +57,6 @@ export interface ChatRewindResult {
   canRewind: boolean;
   leafId?: string | null;
   error?: string;
-}
-
-export type PiSessionBinding = Pick<
-  OpenSessionState,
-  'sessionId' | 'sessionFile' | 'leafId' | 'agentState'
->;
-
-export interface SessionUpdateResult {
-  updates: Partial<OpenSessionState>;
 }
 
 export interface ChatTurnMetadata {

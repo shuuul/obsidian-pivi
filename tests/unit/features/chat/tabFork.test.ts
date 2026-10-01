@@ -12,7 +12,6 @@ import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiv
 
 jest.mock('@/ui/shared/modals/ConfirmModal', () => ({
   confirm: jest.fn(async () => true),
-  confirmDelete: jest.fn(async () => true),
 }));
 
 const mockConfirm = confirm as jest.MockedFunction<typeof confirm>;

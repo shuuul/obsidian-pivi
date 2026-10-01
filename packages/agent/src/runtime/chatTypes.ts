@@ -1,12 +1,6 @@
 import type { ToolUseResult } from '../tools/diffTypes';
 import type { SubagentMode, ToolCallInfo } from '../tools/types';
 
-/** Fork origin reference: identifies the source session and checkpoint. */
-export interface ForkSource {
-  sessionId: string;
-  resumeAt: string;
-}
-
 /** View type identifier for Obsidian. */
 export const VIEW_TYPE_PIVI = 'pivi-view';
 
