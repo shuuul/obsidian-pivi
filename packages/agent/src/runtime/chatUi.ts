@@ -76,9 +76,6 @@ export interface ChatUIConfig {
   /** Context window size in tokens, or null when the selected model has no known limit. */
   getContextWindowSize(model: string, customLimits?: Record<string, number>): number | null;
 
-  /** Whether this is the built-in default model. */
-  isDefaultModel(model: string): boolean;
-
   /** Apply model change side effects to settings. */
   applyModelDefaults(model: string, settings: unknown): void;
 

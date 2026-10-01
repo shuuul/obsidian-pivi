@@ -208,9 +208,7 @@ export class StreamController {
         break;
 
       case 'async_subagent_result':
-        await this.subagentCoordinator.handleAsyncSubagentResult(chunk, {
-          showThinkingIndicator: !options.backgroundSubagent,
-        });
+        await this.subagentCoordinator.handleAsyncSubagentResult(chunk);
         break;
 
       case 'tool_output':

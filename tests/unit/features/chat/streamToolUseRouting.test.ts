@@ -20,7 +20,6 @@ function mockLifecycleAdapter(overrides: Partial<SubagentLifecycleAdapter> = {})
       toolCalls: [],
     }),
     extractSpawnResult: () => ({}),
-    extractWaitResult: () => ({ statuses: {}, timedOut: false }),
     ...overrides,
   };
 }

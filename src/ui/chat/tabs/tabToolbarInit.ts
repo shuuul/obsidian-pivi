@@ -3,7 +3,6 @@ import type { ChatPorts } from "@pivi/agent/runtime/chatPorts";
 import { recalculateUsageForModel } from "@pivi/agent/runtime/usage";
 import { Notice } from "obsidian";
 
-import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 
 import { pickDirectoryPath } from '../../shared/utils/folderPicker';
@@ -33,7 +32,6 @@ const logger = new PluginLogger('tabToolbarInit');
  */
 export function wireComposerChrome(
   tab: TabData,
-  plugin: PiviChatHost,
   ports: ChatPorts,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
 ): void {

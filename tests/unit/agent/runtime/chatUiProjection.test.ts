@@ -48,7 +48,6 @@ function createFakeChatUiConfig(options: FakeChatUiConfigOptions = {}): ChatUICo
     getDefaultReasoningValue: (model) =>
       adaptiveModels.has(model) ? 'medium' : 'off',
     getContextWindowSize: () => 128_000,
-    isDefaultModel: (model) => model === STANDARD_MODEL,
     applyModelDefaults,
   };
 }

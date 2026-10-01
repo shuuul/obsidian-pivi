@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto';
 import { writeFileAtomically } from '@pivi/agent/config/publication';
 import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import type { FileStore } from "@pivi/agent/ports";
-import type { SlashCommand } from "@pivi/agent/settings";
 import type {
   SlashCommandCatalog,
   SlashCommandDropdownConfig,
@@ -54,7 +53,6 @@ export interface WorkspaceCommandCatalogSnapshot {
 }
 
 export class PiSlashCommandCatalog implements SlashCommandCatalog {
-  private runtimeCommands: SlashCatalogEntry[] = [];
   private isWatching = false;
   private loaded = false;
   private readonly generatedIntegrationKeys = new Map<string, string>();
@@ -116,7 +114,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     );
   }
 
-  async listDropdownEntries(context: {
+  async listDropdownEntries(_context: {
     includeBuiltIns: boolean;
   }): Promise<SlashCatalogEntry[]> {
     if (!this.loaded) {
@@ -169,9 +167,6 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
       insertPrefix: "/",
     });
 
-    if (context.includeBuiltIns) {
-      combined.push(...this.runtimeCommands);
-    }
     return combined;
   }
 
@@ -226,33 +221,6 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     if (input.action === 'get') return this.agentGet(input.id);
     const plan = await this.planCommands(input, signal);
     return this.commitCommands(plan, plan.revision, signal);
-  }
-
-  setRuntimeCommands(commands: SlashCommand[]): void {
-    this.runtimeCommands = commands.filter(cmd => !isReservedCommandId(cmd.id)).map((cmd) => ({
-      id: cmd.id,
-      kind: cmd.kind ?? "command",
-      name: cmd.name,
-      description: cmd.description,
-      content: cmd.content,
-      argumentHint: cmd.argumentHint,
-      icon: cmd.icon,
-      integrationKey: cmd.integrationKey,
-      allowedTools: cmd.allowedTools,
-      model: cmd.model,
-      disableModelInvocation: cmd.disableModelInvocation,
-      userInvocable: cmd.userInvocable,
-      context: cmd.context,
-      agent: cmd.agent,
-      hooks: cmd.hooks,
-      scope: "runtime",
-      source: cmd.source ?? "sdk",
-      isEditable: false,
-      isDeletable: false,
-      displayPrefix: "/",
-      insertPrefix: "/",
-    }));
-    this.commandsCoordinator.setRuntimeIds(this.runtimeCommands.map(command => command.id));
   }
 
   getDropdownConfig(): SlashCommandDropdownConfig {

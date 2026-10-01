@@ -148,7 +148,6 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
     environment: {
       getActiveEnvironmentVariables: () => '',
-      getEnvironmentVariables: () => '',
       applyEnvironmentVariables: async () => undefined,
       applyEnvironmentVariablesBatch: async () => undefined,
       importEnvironmentText: async () => undefined,

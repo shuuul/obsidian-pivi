@@ -1,5 +1,5 @@
 import type { WorkspaceFileStore } from '../ports';
-import type { ChatMessage, ChatTurnRequestSnapshot, ImageAttachment, SessionTitleSource, UsageInfo } from '../runtime';
+import type { ChatMessage, ChatTurnRequestSnapshot, SessionTitleSource, UsageInfo } from '../runtime';
 
 export type { SessionTitleSource };
 
@@ -72,9 +72,6 @@ export interface PiviMessageUiData {
   assistantMessageId?: string;
 }
 
-/** Opaque agent message blob passed from the Pi adaptor at turn end. */
-export type PersistedAgentMessage = Record<string, unknown>;
-
 /** Active position in a session JSONL tree. */
 export interface SessionRef {
   /** Vault-relative path to `.jsonl` file. */
@@ -123,12 +120,6 @@ export interface SessionMetaPatch {
   createdAt?: number;
 }
 
-export interface UserTurnUi {
-  displayContent?: string;
-  images?: ImageAttachment[];
-  turnRequest?: ChatTurnRequestSnapshot;
-}
-
 export interface MessageUiPatch {
   targetEntryId: string;
   displayContent?: string;
@@ -156,8 +147,6 @@ export interface SessionStore {
     limit: number,
   ): Promise<SessionMessagePage>;
   getUsage?(ref: SessionRef): Promise<UsageInfo | null>;
-  appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef>;
-  appendAgentTurn(ref: SessionRef, messages: PersistedAgentMessage[], ui?: MessageUiPatch[]): Promise<SessionRef>;
   appendMessageUiPatches?(ref: SessionRef, patches: MessageUiPatch[]): Promise<SessionRef>;
   fork(ref: SessionRef, atEntryId: string): Promise<SessionRef>;
   deleteSession(sessionFile: string): Promise<void>;

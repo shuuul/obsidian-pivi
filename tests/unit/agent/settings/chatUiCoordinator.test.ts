@@ -32,7 +32,6 @@ function createFakeChatUiConfig(adaptiveModels = new Set([ADAPTIVE_MODEL])): Cha
       adaptiveModels.has(model) ? adaptiveReasoningOptions : standardBudgetOptions,
     getDefaultReasoningValue: (model) => (adaptiveModels.has(model) ? 'medium' : 'off'),
     getContextWindowSize: () => 128_000,
-    isDefaultModel: (model) => model === STANDARD_MODEL,
     applyModelDefaults,
   };
 }

@@ -302,13 +302,11 @@ export function ToolbarSettingsTab({
   actions,
   editorToolbar,
   feedback,
-  integrations,
 }: {
   readonly store: SettingsUiStore;
   readonly actions: SettingsActionsPort;
   readonly editorToolbar: SettingsEditorToolbarPort;
   readonly feedback: SettingsFeedbackPort;
-  readonly integrations: SettingsHostIntegrationsPort;
 }) {
   return (
     <>

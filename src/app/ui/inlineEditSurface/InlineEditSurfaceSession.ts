@@ -53,7 +53,6 @@ import { resolveEditorFromEditorView } from './resolveInlineEditEditor';
 import type {
   InlineEditComposerDefaults,
   InlineEditDiffReviewKind,
-  InlineEditSurfaceComposerState,
   InlineEditSurfaceSendPayload,
   InlineEditSurfaceSessionContract,
   InlineEditSurfaceSessionId,
@@ -297,13 +296,6 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       kind,
       widget: this.diffWidget,
     });
-  }
-
-  getComposerState(): InlineEditSurfaceComposerState {
-    return {
-      model: this.model,
-      thinkingLevel: this.thinkingLevel,
-    };
   }
 
   setPrompt(text: string): void {

@@ -227,28 +227,6 @@ Explain this: {{selected_text}}`,
     });
   });
 
-  it("correctly maps and sets runtime commands", async () => {
-    catalog.setRuntimeCommands([
-      {
-        id: "sdk:review",
-        name: "review",
-        description: "Review code",
-        content: "Review: {{selected_text}}",
-        source: "sdk",
-      },
-    ]);
-
-    const dropdownEntries = await catalog.listDropdownEntries({
-      includeBuiltIns: true,
-    });
-    const runtimeEntry = dropdownEntries.find((e) => e.scope === "runtime");
-
-    expect(runtimeEntry).toBeDefined();
-    expect(runtimeEntry?.name).toBe("review");
-    expect(runtimeEntry?.description).toBe("Review code");
-    expect(runtimeEntry?.content).toBe("Review: {{selected_text}}");
-  });
-
   it("does not include the create-command slash entry", async () => {
     const dropdownEntries = await catalog.listDropdownEntries({
       includeBuiltIns: true,

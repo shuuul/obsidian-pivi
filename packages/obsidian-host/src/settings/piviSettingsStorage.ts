@@ -1,5 +1,4 @@
 import {
-  type ParseDiagnostic,
   parseJsonObjectWithDiagnostics,
   preserveCorruptArtifact,
   runSerializedSave,
@@ -9,7 +8,7 @@ import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { FileStore } from "@pivi/agent/ports";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
 import type { PersistedPiviSettings } from '@pivi/agent/settings/persistedPiviSettings';
-import type { AgentRuntimeSettings, PiviSettings } from "@pivi/agent/settings/types";
+import type { PiviSettings } from "@pivi/agent/settings/types";
 
 import { PIVI_SETTINGS_PATH } from "./storagePaths";
 
@@ -34,10 +33,6 @@ export interface PiviSettingsNormalizationResult {
 export interface PiviSettingsCodec {
   getDefaults(): StoredPiviSettings;
   normalize(stored: Record<string, unknown>): PiviSettingsNormalizationResult;
-  updateAgentSettings(
-    settings: StoredPiviSettings,
-    updates: Partial<AgentRuntimeSettings>,
-  ): void;
   prepareForSave?(settings: StoredPiviSettings): VaultPersistedPiviSettings;
 }
 
@@ -51,18 +46,9 @@ export const DEFAULT_PIVI_SETTINGS_CODEC: PiviSettingsCodec = {
       changed: false,
     };
   },
-  updateAgentSettings(settings, updates) {
-    settings.agentSettings = {
-      ...settings.agentSettings,
-      ...updates,
-    };
-  },
 };
 
 export class PiviSettingsStorage {
-  private lastDiagnostics: ParseDiagnostic[] = [];
-  private corruptPath: string | null = null;
-
   constructor(
     private adapter: FileStore,
     private codec: PiviSettingsCodec = DEFAULT_PIVI_SETTINGS_CODEC,
@@ -70,16 +56,13 @@ export class PiviSettingsStorage {
 
   async load(): Promise<StoredPiviSettings> {
     if (!(await this.adapter.exists(PIVI_SETTINGS_PATH))) {
-      this.lastDiagnostics = [];
-      this.corruptPath = null;
       return this.getDefaults();
     }
 
     const content = await this.adapter.read(PIVI_SETTINGS_PATH);
     const parsed = parseJsonObjectWithDiagnostics(PIVI_SETTINGS_PATH, content);
     if (!parsed.ok) {
-      this.lastDiagnostics = parsed.diagnostics;
-      this.corruptPath = await preserveCorruptArtifact(
+      await preserveCorruptArtifact(
         this.adapter,
         PIVI_SETTINGS_PATH,
         parsed.rawContent,
@@ -89,8 +72,6 @@ export class PiviSettingsStorage {
       return this.getDefaults();
     }
 
-    this.lastDiagnostics = parsed.diagnostics;
-    this.corruptPath = null;
     const { settings, changed } = this.codec.normalize(parsed.value);
     if (changed) {
       await this.save(settings);
@@ -107,8 +88,7 @@ export class PiviSettingsStorage {
     const content = await this.adapter.read(PIVI_SETTINGS_PATH);
     const parsed = parseJsonObjectWithDiagnostics(PIVI_SETTINGS_PATH, content);
     if (!parsed.ok) {
-      this.lastDiagnostics = parsed.diagnostics;
-      this.corruptPath = await preserveCorruptArtifact(
+      await preserveCorruptArtifact(
         this.adapter,
         PIVI_SETTINGS_PATH,
         parsed.rawContent,
@@ -116,8 +96,6 @@ export class PiviSettingsStorage {
       logger.warn('settings JSON is invalid during raw load; preserved corrupt artifact');
       return null;
     }
-    this.lastDiagnostics = [];
-    this.corruptPath = null;
     return parsed.value;
   }
 

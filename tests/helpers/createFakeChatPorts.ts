@@ -45,11 +45,9 @@ export function createFakeChatPorts(
         skillPrefix: '',
         commandPrefix: '',
       }),
-      refreshSlashCatalog: async () => undefined,
       ...overrides.catalog,
     },
     models: {
-      getReadinessProvider: () => null,
       getModelOptions: () => [],
       isAdaptiveReasoningModel: () => false,
       getReasoningOptions: () => [],

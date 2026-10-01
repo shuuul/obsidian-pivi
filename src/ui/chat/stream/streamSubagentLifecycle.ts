@@ -368,7 +368,6 @@ export class StreamSubagentCoordinator {
 
   async handleAsyncSubagentResult(
     chunk: Extract<StreamChunk, { type: 'async_subagent_result' }>,
-    options: SubagentStreamUpdateOptions = {},
   ): Promise<void> {
     const handled = this.deps.subagentManager.handleAsyncSubagentResult(
       chunk.agentId,

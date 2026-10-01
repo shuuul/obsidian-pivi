@@ -124,7 +124,7 @@ describe('StreamSubagentCoordinator', () => {
       status: 'completed',
       result: 'Done',
       subagentId: 'spawn-1',
-    }, { showThinkingIndicator: false });
+    });
 
     expect(showThinkingIndicator).not.toHaveBeenCalled();
   });

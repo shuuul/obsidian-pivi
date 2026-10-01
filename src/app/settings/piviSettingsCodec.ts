@@ -5,7 +5,6 @@ import {
 } from "@pivi/agent/settings/agentEnvironment";
 import {
   normalizePiAgentSettingsRecord,
-  updatePiAgentSettings,
 } from "@pivi/agent/settings/agentSettings";
 import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
 import type { DeviceLocalEnvironmentStateV1 } from "@pivi/agent/settings/deviceLocalEnvironmentState";
@@ -562,9 +561,6 @@ export function createPiviSettingsCodec(
         settings: result.settings,
         changed,
       };
-    },
-    updateAgentSettings(settings, updates) {
-      updatePiAgentSettings(settings, updates);
     },
     prepareForSave(settings) {
       let nextSettings: PiviSettings | ReturnType<typeof stripLocalizedFieldsFromRuntimeSettings> =

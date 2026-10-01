@@ -575,9 +575,11 @@ describe('PiSessionStore device-local external contexts', () => {
     } as unknown as FileStore;
     const store = new PiSessionStore(adapter, vaultPath);
     const ref = await store.create(vaultPath);
-    const updated = await store.appendUserTurn(ref, 'hello', {
+    const entryId = SessionTreeStore.open(vaultPath, ref.sessionFile).appendUserMessage('hello');
+    const updated = await store.appendMessageUiPatches(ref, [{
+      targetEntryId: entryId,
       turnRequest: { text: 'hello', externalContextPaths: ['/device/root'] },
-    });
+    }]);
 
     const entries = SessionTreeStore.openSnapshot(vaultPath, updated.sessionFile).getEntries();
     const uiEntry = entries.find((entry) => (
@@ -596,9 +598,11 @@ describe('PiSessionStore device-local external contexts', () => {
     } as unknown as FileStore;
     const store = new PiSessionStore(adapter, vaultPath);
     const ref = await store.create(vaultPath);
-    const updated = await store.appendUserTurn(ref, 'hello', {
+    const entryId = SessionTreeStore.open(vaultPath, ref.sessionFile).appendUserMessage('hello');
+    const updated = await store.appendMessageUiPatches(ref, [{
+      targetEntryId: entryId,
       turnRequest: { text: 'hello', externalContextPaths: ['/device/root'] },
-    });
+    }]);
     const sourceMessages = await store.getMessages(updated);
     const userEntryId = sourceMessages[0]?.userMessageId;
     if (!userEntryId) throw new Error('Expected a persisted user entry');

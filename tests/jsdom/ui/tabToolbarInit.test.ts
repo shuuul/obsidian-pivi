@@ -83,7 +83,6 @@ describe('composer model usage limits', () => {
 
     wireComposerChrome(
       tab,
-      asPiviPlugin(createMockPiviPluginStub()),
       createFakeChatPorts(),
     );
 
@@ -108,7 +107,6 @@ describe('composer model usage limits', () => {
 
     wireComposerChrome(
       tab,
-      asPiviPlugin(createMockPiviPluginStub()),
       createFakeChatPorts(),
     );
 
@@ -145,7 +143,7 @@ describe('composer model usage limits', () => {
       percentage: 50,
     };
     const tab = createToolbarTab(state);
-    wireComposerChrome(tab, asPiviPlugin(createMockPiviPluginStub()), ports);
+    wireComposerChrome(tab, ports);
 
     tab.ui.composerActions?.setModel('provider/large');
     await Promise.resolve();
@@ -198,7 +196,7 @@ describe('composer model usage limits', () => {
       percentage: 50,
     };
     const tab = createToolbarTab(state);
-    wireComposerChrome(tab, asPiviPlugin(createMockPiviPluginStub()), ports);
+    wireComposerChrome(tab, ports);
 
     tab.ui.composerActions?.setModel('provider/a');
     await Promise.resolve();

@@ -12,7 +12,6 @@ export interface SettingsEnvironmentEntryView {
 
 export interface SettingsEnvironmentPort {
   getActiveEnvironmentVariables(): string;
-  getEnvironmentVariables(scope: EnvironmentScope): string;
   listEntries(scope?: EnvironmentScope): readonly SettingsEnvironmentEntryView[];
   applyEnvironmentVariables(scope: EnvironmentScope, envText: string): Promise<void>;
   applyEnvironmentVariablesBatch(

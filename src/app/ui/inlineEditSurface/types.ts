@@ -33,11 +33,6 @@ export interface InlineEditSurfaceSessionOptions {
   onStop?: () => void;
 }
 
-export interface InlineEditSurfaceComposerState {
-  model: string;
-  thinkingLevel: string;
-}
-
 /** Active inline edit surface bound to one editor selection. */
 export interface InlineEditSurfaceSessionContract {
   readonly id: InlineEditSurfaceSessionId;
@@ -54,6 +49,5 @@ export interface InlineEditSurfaceSessionContract {
   setReplyText(text: string): void;
   showError(message: string): void;
   showDiffReview(oldText: string, newText: string, kind: InlineEditDiffReviewKind): void;
-  getComposerState(): InlineEditSurfaceComposerState;
   setPrompt(text: string): void;
 }

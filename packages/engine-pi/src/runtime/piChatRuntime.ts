@@ -34,7 +34,6 @@ import type {
   ChatRewindResult,
   ChatTurnMetadata,
   ChatTurnRequest,
-  ConnectivityTestResult,
   PiEnsureReadyOptions,
   PiTurnOptions,
   PreparedChatTurn,
@@ -69,7 +68,6 @@ import {
   type PiChatCompactionState,
   syncSessionMessagesAfterTurn,
 } from './piChatRuntimeCompaction';
-import { testPiChatConnectivity } from './piChatRuntimeConnectivity';
 import { PiChatModelResolver } from './piChatRuntimeModels';
 import {
   authorizeModelSelection,
@@ -110,7 +108,6 @@ export class PiChatRuntime implements PiChatService {
   private currentTurnMetadata: ChatTurnMetadata = {};
   private readonly mcpManager: McpServerManager | null;
   private readonly mcpBridge: McpToolBridge | null;
-  private toolRegistryKey: string | null = null;
   private sessionTree: SessionTreeStore | null = null;
   private sessionFile: string | null = null;
   private leafId: string | null = null;
@@ -136,7 +133,7 @@ export class PiChatRuntime implements PiChatService {
 
   constructor(
     private readonly plugin: PiRuntimeHost,
-    private readonly network: PiChatRuntimeNetwork,
+    network: PiChatRuntimeNetwork,
     mcpManager: McpServerManager | null = null,
     mcpOAuth: McpOAuthService | null = null,
     private readonly baseToolProvider: PiBaseToolProvider | null = null,
@@ -286,7 +283,6 @@ export class PiChatRuntime implements PiChatService {
       registry,
       composition,
     );
-    this.toolRegistryKey = registry.registeredToolsSection;
     this.setReady(true);
     return true;
   }
@@ -465,19 +461,12 @@ export class PiChatRuntime implements PiChatService {
     });
   }
 
-  async testConnectivity(): Promise<ConnectivityTestResult> {
-    const model = this.models.resolveModel();
-    const auth = model ? await this.models.resolveAuth(model) : undefined;
-    return testPiChatConnectivity(this.network.httpClient, model, auth);
-  }
-
   private syncAgentTools(): void {
     if (!this.agent) {
       return;
     }
     const registry = this.buildToolRegistry();
     this.agent.state.tools = registry.tools;
-    this.toolRegistryKey = registry.registeredToolsSection;
     this.applySystemPrompt(registry);
   }
 
@@ -540,7 +529,6 @@ export class PiChatRuntime implements PiChatService {
     this.agent?.reset();
     this.agent = null;
     this.systemPromptKey = null;
-    this.toolRegistryKey = null;
     this.setReady(false);
   }
 
@@ -599,7 +587,6 @@ export class PiChatRuntime implements PiChatService {
       return;
     }
     this.externalContextPaths = next;
-    this.toolRegistryKey = null;
     this.syncAgentTools();
   }
 

@@ -41,7 +41,6 @@ function createUiFacades(): PiviUiFacades {
       getReasoningOptions: () => [],
       getDefaultReasoningValue: () => 'medium',
       getContextWindowSize: () => 128_000,
-      isDefaultModel: () => false,
       applyModelDefaults: (_model, settings) => {
         Object.assign(settings as object, { thinkingLevel: 'medium' });
       },
@@ -138,10 +137,7 @@ describe('UI port adapters', () => {
         getDropdownConfig,
         refresh: async () => {},
       },
-      modelReadinessProvider: {
-        getStatus: () => ({ kind: 'ready', label: 'Ready', description: '' }),
-        testModel: async () => ({ ok: true, detail: 'ok' }),
-      },
+      modelReadinessProvider: {},
     };
     const saveSettings = jest.fn(async () => {});
     const openRecentSessionMessages = jest.fn(async () => ({
@@ -208,11 +204,6 @@ describe('UI port adapters', () => {
       builtInPrefix: '',
       skillPrefix: '',
       commandPrefix: '',
-    });
-    expect(ports.models.getReadinessProvider()?.getStatus('model', {})).toEqual({
-      kind: 'ready',
-      label: 'Ready',
-      description: '',
     });
     expect(ports.models.getModelOptions(ports.settings.getSettingsSnapshot())).toEqual([
       { value: 'model-a', label: 'Model A' },
@@ -305,7 +296,6 @@ describe('UI port adapters', () => {
       'custom/glm': 1_000_000,
     });
     expect(ports.environment.getActiveEnvironmentVariables()).toBe('ACTIVE=1');
-    expect(ports.environment.getEnvironmentVariables('agent')).toBe('SCOPE=1');
     await ports.environment.applyEnvironmentVariables('agent', 'NEXT=1');
     expect(applyEnvironmentVariables).toHaveBeenCalledWith('agent', 'NEXT=1');
     expect(ports.complex.models.getCredentialKind('provider')).toBe('api_key');

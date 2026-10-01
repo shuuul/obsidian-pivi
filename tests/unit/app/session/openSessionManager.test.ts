@@ -92,8 +92,6 @@ function createStore(): SessionStore & {
       olderUserMessageCount: 0,
     })),
     getUsage: jest.fn(async () => null),
-    appendUserTurn: jest.fn(),
-    appendAgentTurn: jest.fn(),
     appendMessageUiPatches: jest.fn(async (ref: SessionRef) => ref),
     fork: jest.fn(),
     deleteSession: jest.fn(),
@@ -605,8 +603,6 @@ describe('OpenSessionManager linear hydration', () => {
       })],
     );
     expect(store.getMessages).not.toHaveBeenCalled();
-    expect(store.appendUserTurn).not.toHaveBeenCalled();
-    expect(store.appendAgentTurn).not.toHaveBeenCalled();
     expect(manager.getSync('conv-1')).toEqual(expect.objectContaining({
       hasOlderMessages: true,
       totalMessageCount: 101,

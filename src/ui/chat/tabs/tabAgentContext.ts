@@ -7,7 +7,7 @@ import { QueryBackedTitleGenerationService } from '@pivi/agent/runtime/queryBack
 import { getHiddenSlashCommandSet } from "@pivi/agent/settings/types";
 
 import { createFileContextMcpProvider } from "./tabCatalogAdapters";
-import type { TabAgentContext, TabData } from "./types";
+import type { TabData } from "./types";
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
 export function resolveBlankTabModel(ports: ChatPorts): string {
@@ -16,11 +16,7 @@ export function resolveBlankTabModel(ports: ChatPorts): string {
 
 export type TabAgentSettings = ChatSettingsSnapshot;
 
-export function getTabHiddenCommands(
-  tab: TabAgentContext,
-  settings: ChatSettingsPort,
-  openSession?: unknown,
-): Set<string> {
+export function getTabHiddenCommands(settings: ChatSettingsPort): Set<string> {
   return getHiddenSlashCommandSet(settings.getSettingsSnapshot());
 }
 

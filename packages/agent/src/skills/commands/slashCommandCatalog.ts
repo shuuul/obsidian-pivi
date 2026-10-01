@@ -1,4 +1,3 @@
-import type { SlashCommand } from '../../settings';
 import type { SlashCatalogEntry } from './slashCommandEntry';
 
 export interface SlashCommandDropdownConfig {
@@ -23,7 +22,6 @@ export interface SlashCommandCatalog {
     refreshed: boolean;
     warnings?: string[];
   }>;
-  setRuntimeCommands(commands: SlashCommand[]): void;
   getDropdownConfig(): SlashCommandDropdownConfig;
   refresh(): Promise<void>;
 }

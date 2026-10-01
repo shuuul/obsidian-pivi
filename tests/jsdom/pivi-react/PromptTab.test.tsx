@@ -96,7 +96,6 @@ function createPorts(prompt: SettingsPromptPort): SettingsPorts {
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
     environment: {
       getActiveEnvironmentVariables: () => '',
-      getEnvironmentVariables: () => '',
       applyEnvironmentVariables: async () => undefined,
       applyEnvironmentVariablesBatch: async () => undefined,
       importEnvironmentText: async () => undefined,

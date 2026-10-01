@@ -21,7 +21,6 @@ export const McpServerEditor = forwardRef<McpServerEditorHandle, {
   readonly type?: McpServerType;
   readonly connecting?: boolean;
   readonly feedback?: SettingsFeedbackMessage;
-  readonly onCancel?: () => void;
   readonly onSave: (server: ManagedMcpServer) => Promise<unknown>;
 }>(function McpServerEditor({
   server,
@@ -29,7 +28,6 @@ export const McpServerEditor = forwardRef<McpServerEditorHandle, {
   type,
   connecting = false,
   feedback,
-  onCancel,
   onSave,
 }, ref) {
   const t = useT();

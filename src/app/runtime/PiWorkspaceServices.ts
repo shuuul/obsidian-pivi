@@ -234,10 +234,7 @@ export async function createPiWorkspaceServices(
       );
     },
   });
-  const modelReadinessProvider = new PiModelReadinessProvider(
-    credentialStore,
-    providerOAuth,
-  );
+  const modelReadinessProvider = new PiModelReadinessProvider();
   const skillProvider = new PiSkillProvider(vaultPath, systemProcessRunner);
   const vaultSkillsService = new VaultSkillsService(vaultPath ?? "", {
     processRunner: systemProcessRunner,

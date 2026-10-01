@@ -123,10 +123,8 @@ export function createChatUiPorts(
         ws().slashCommandCatalog.listDropdownEntries({ includeBuiltIns })
       ),
       getSlashDropdownConfig: () => ws().slashCommandCatalog.getDropdownConfig(),
-      refreshSlashCatalog: () => ws().slashCommandCatalog.refresh(),
     },
     models: {
-      getReadinessProvider: () => ws().modelReadinessProvider ?? null,
       getModelOptions: (settings) => chatConfig.getModelOptions(toChatConfigSettings(settings)),
       isAdaptiveReasoningModel: (model, settings) => (
         chatConfig.isAdaptiveReasoningModel(model, toChatConfigSettings(settings))

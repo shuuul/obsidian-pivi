@@ -285,10 +285,6 @@ export function MessageList({
     const handle: MessageViewportHandle = {
       isAtEnd: threshold => virtualizer.isAtEnd(threshold),
       scrollToEnd: behavior => virtualizer.scrollToEnd({ behavior }),
-      scrollToMessage: (messageId, align = 'start', behavior = 'smooth') => {
-        const index = findMessageIndex(messageId);
-        if (index >= 0) virtualizer.scrollToIndex(index + boundaryCount, { align, behavior });
-      },
       scrollToRecentUser: (messageId) => {
         const index = findMessageIndex(messageId);
         const target = findUserIndex(index - 1, 'prev');

@@ -159,7 +159,6 @@ describe('React surface mounts', () => {
           actions: {},
           environment: {
             getActiveEnvironmentVariables: () => '',
-            getEnvironmentVariables: () => '',
             applyEnvironmentVariables: async () => undefined,
             applyEnvironmentVariablesBatch: async () => undefined,
             importEnvironmentText: async () => undefined,

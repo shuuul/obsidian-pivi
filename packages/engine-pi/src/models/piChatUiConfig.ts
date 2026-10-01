@@ -1,7 +1,6 @@
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { ChatReasoningOption, ChatUIConfig, ChatUIOption } from '@pivi/agent/runtime';
 import { getPiAgentSettings } from '@pivi/agent/settings/agentSettings';
-import { DEFAULT_MODEL_KEY } from '@pivi/agent/settings/defaults';
 import { getLogoSlugForCustomProviderKind } from '@pivi/agent/settings/modelDisplay';
 
 import { piAiModels } from './piAiModels';
@@ -71,10 +70,6 @@ export const piChatUIConfig: ChatUIConfig = {
     return customLimits?.[model]
       ?? resolvePiModelFromKeyWithLookup(model, piAiModels)?.contextWindow
       ?? null;
-  },
-
-  isDefaultModel(model: string): boolean {
-    return model === DEFAULT_MODEL_KEY;
   },
 
   applyModelDefaults(model: string, settings: unknown): void {

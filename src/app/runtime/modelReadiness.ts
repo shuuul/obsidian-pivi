@@ -10,7 +10,7 @@ import type { ObsidianCredentialStore } from '@pivi/engine-pi/application/auth';
 import { PI_AI_MODELS_CACHE } from '@pivi/engine-pi/application/models';
 import type { ProviderOAuthService } from '@pivi/engine-pi/application/oauth';
 
-import { testModelReadiness, testProviderReadiness } from './providerReadiness';
+import { testProviderReadiness } from './providerReadiness';
 
 export interface PiModelReadinessContext {
   credentialStore: ObsidianCredentialStore | null;
@@ -51,13 +51,6 @@ export function derivePiModelReadinessStatus(
     modelCount: PI_AI_MODELS_CACHE.has(model) ? 1 : 0,
     allowKeyless,
   });
-}
-
-export async function runPiModelReadinessTest(
-  model: string,
-  settings: Record<string, unknown>,
-): Promise<AppModelTestResult> {
-  return testModelReadiness(model, getPiAgentSettings(settings));
 }
 
 export async function runPiProviderReadinessTest(

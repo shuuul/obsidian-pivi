@@ -1,4 +1,3 @@
-import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { ChatSettingsPort } from '@pivi/agent/runtime/chatPorts';
 import type { SlashCommandDropdownConfig } from '@pivi/agent/skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
@@ -15,7 +14,6 @@ export function syncSlashCommandDropdown(
   tab: TabData,
   settings: ChatSettingsPort,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
-  openSession?: OpenSessionState | null,
 ): void {
   const dropdown = tab.ui.slashCommandDropdown;
   if (!dropdown) {
@@ -30,5 +28,5 @@ export function syncSlashCommandDropdown(
     dropdown.resetRuntimeSkillsCache();
   }
 
-  dropdown.setHiddenCommands(getTabHiddenCommands(tab, settings, openSession));
+  dropdown.setHiddenCommands(getTabHiddenCommands(settings));
 }

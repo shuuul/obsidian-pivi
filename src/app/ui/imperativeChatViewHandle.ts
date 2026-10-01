@@ -162,12 +162,6 @@ export function createImperativeChatViewHandle(
         return getTabManager()?.getActiveTab()?.ui.inlineContextManager
           ?.addSelectionFromEditor(editor, markdownView) ?? false;
       },
-      getActiveExternalContexts() {
-        return [
-          ...(getTabManager()?.getActiveTab()?.ui.externalContextSelector
-            ?.getExternalContexts() ?? []),
-        ];
-      },
     },
     maintenance: {
       async persistState() {

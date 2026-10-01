@@ -7,7 +7,6 @@ import type {
   ChatUIOption,
 } from '../runtime/chatUi';
 import type { SessionMessagePage } from '../session';
-import type { AppModelReadinessProvider } from '../settings';
 import type { CustomProviderConfig } from '../settings/customProviders';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
@@ -72,13 +71,7 @@ export interface ChatCatalogPort {
   listSkills(): Array<{ name: string; description?: string }>;
   listSlashEntries(includeBuiltIns: boolean): Promise<SlashCatalogEntry[]>;
   getSlashDropdownConfig(): SlashCommandDropdownConfig;
-  refreshSlashCatalog(): Promise<void>;
 }
-
-export type ChatModelReadinessPort = Pick<
-  AppModelReadinessProvider,
-  'getStatus' | 'testModel'
->;
 
 export interface ChatModelCatalogSnapshot {
   addedProviders: string[];
@@ -122,7 +115,6 @@ export interface ChatModelsPort {
   ): void;
   getModeSelector?(settings: ChatSettingsSnapshot): ChatModeSelectorConfig | null;
   applyModeSelection?(value: string, settings: ChatSettingsSnapshot): void;
-  getReadinessProvider(): ChatModelReadinessPort | null;
   prepareModelMetadata(model: string): Promise<void>;
 }
 

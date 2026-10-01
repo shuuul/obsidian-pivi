@@ -190,8 +190,6 @@ export interface TabData {
   piviManagementApproval?: TabPiviManagementApprovalBridge;
 }
 
-export type TabAgentContext = Pick<TabData, 'openSessionId' | 'service' | 'lifecycleState' | 'draftModel'>;
-
 /**
  * Persisted tab state for restoration on plugin reload.
  */

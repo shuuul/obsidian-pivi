@@ -32,7 +32,6 @@ import type {
 } from "@pivi/agent/settings/modelReadiness";
 import type { EnvironmentScope, WebProviderId } from "@pivi/agent/settings/types";
 import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
 import type { SkillsManagementCoordinator } from "@pivi/agent/skills/vault/skillsManagementCoordinator";
 import type { PiviManagementApprovalPort } from "@pivi/agent/tools/piviManagement";
@@ -116,7 +115,6 @@ export interface PiviChatViewCommands {
     onAssistantText?: (accumulatedText: string) => void;
     registerCancel?: (cancel: () => void) => void;
   }): Promise<{ assistantText: string; tabId: string } | null>;
-  getActiveExternalContexts(): string[];
 }
 
 /** Bounded, sanitized per-target failure from a management refresh pass. */
@@ -357,7 +355,6 @@ export interface PiviSettingsHost extends PiviHostCore {
   setupNoteToolbarIntegration(
     itemStyle: NoteToolbarItemStyle,
   ): Promise<NoteToolbarSetupResult>;
-  setupWorkspaceCommandNoteToolbar(entry: SlashCatalogEntry): Promise<NoteToolbarSetupResult>;
   reconcileWorkspaceCommands(): Promise<void>;
   /** Session-file cleanup action exposed from the session-files settings section. */
   purgeDeletedSessionFiles(): Promise<number>;

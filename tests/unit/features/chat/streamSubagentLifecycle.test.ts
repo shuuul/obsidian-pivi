@@ -18,7 +18,6 @@ describe('applySubagentLifecycleToolResult', () => {
       result: 'done',
     }),
     extractSpawnResult: () => ({ agentId: 'agent-42' }),
-    extractWaitResult: () => ({ statuses: {}, timedOut: false }),
   };
 
   it('updates spawn tool and returns agent id mapping', () => {

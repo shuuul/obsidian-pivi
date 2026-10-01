@@ -4,7 +4,6 @@ import type {
   ChatRewindResult,
   ChatTurnMetadata,
   ChatTurnRequest,
-  ConnectivityTestResult,
   PiEnsureReadyOptions,
   PiTurnOptions,
   PreparedChatTurn,
@@ -45,5 +44,4 @@ export interface PiChatService {
   loadSubagentToolCalls?(agentId: string): Promise<ToolCallInfo[]>;
   loadSubagentFinalResult?(agentId: string): Promise<string | null>;
 
-  testConnectivity?(): Promise<ConnectivityTestResult>;
 }

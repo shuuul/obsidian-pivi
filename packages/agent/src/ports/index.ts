@@ -44,17 +44,10 @@ export interface AuthContextHost {
   getHomeDirectory(): string;
 }
 
-export interface OAuthDeviceCodePrompt {
-  verificationUri: string;
-  userCode: string;
-  message?: string;
-}
-
 export interface OAuthFlowHost {
   openAuthUrl(url: string): Promise<void>;
   requestManualCode(message: string, signal: AbortSignal): Promise<string | null>;
   notify?(message: string): void;
-  requestDeviceCodeConfirmation?(prompt: OAuthDeviceCodePrompt): Promise<void>;
 }
 
 export interface ProviderAuthModel {

@@ -156,10 +156,6 @@ export function createMentionEditorPort(
 
       return {
         getValue: () => mentionInput.value,
-        setValue: (text: string) => {
-          mentionInput.value = text;
-          callbacks.onChange?.(text);
-        },
         focus: () => mentionInput.focus(),
         setDisabled: (disabled: boolean) => {
           mentionInput.el.setAttribute(

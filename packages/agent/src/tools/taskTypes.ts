@@ -21,17 +21,6 @@ export interface SubagentLaunchResult {
   nickname?: string;
 }
 
-export interface SubagentWaitStatus {
-  completed?: string;
-  error?: string;
-  failed?: string;
-}
-
-export interface SubagentWaitResult {
-  statuses: Record<string, SubagentWaitStatus>;
-  timedOut: boolean;
-}
-
 export interface SubagentLifecycleAdapter {
   isHiddenTool(name: string): boolean;
   isSpawnTool(name: string): boolean;
@@ -46,5 +35,4 @@ export interface SubagentLifecycleAdapter {
     siblingToolCalls?: ToolCallInfo[],
   ): SubagentInfo;
   extractSpawnResult(raw: string | undefined): SubagentLaunchResult;
-  extractWaitResult(raw: string | undefined): SubagentWaitResult;
 }

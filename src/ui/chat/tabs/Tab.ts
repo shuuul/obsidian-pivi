@@ -61,7 +61,7 @@ export function refreshBlankTabModelState(
   }
 
   tab.ui.slashCommandDropdown?.setHiddenCommands(
-    getTabHiddenCommands(tab, ports.settings),
+    getTabHiddenCommands(ports.settings),
   );
   tab.ui.slashCommandDropdown?.resetRuntimeSkillsCache();
   tab.ui.composerActions?.refresh();
@@ -198,7 +198,7 @@ export function initializeTabUI(
   initializeSlashCommands(
     tab,
     ports,
-    () => getTabHiddenCommands(tab, ports.settings),
+    () => getTabHiddenCommands(ports.settings),
     catalogInfo,
     options.onSlashCommandSelect,
   );
@@ -210,7 +210,7 @@ export function initializeTabUI(
   }));
 
   initializeTitleGeneration(tab, ports);
-  wireComposerChrome(tab, plugin, ports, options.getSlashCatalogConfig);
+  wireComposerChrome(tab, ports, options.getSlashCatalogConfig);
 }
 
 /**
