@@ -195,6 +195,19 @@
       ],
       "removalCondition": "Upstream exposes public APIs to replace the active system prompt and to filter declared tools per request, and its message conversion preserves transcript system messages without Pivi handling the system-message shape directly.",
       "trackingIssue": 113
+    },
+    {
+      "id": "browser-build-resolution",
+      "upstreamVersion": "0.99.1",
+      "reason": "The bundle targets platform node, so pi-ai's Google adapter would resolve the @google/genai Node build with its Vertex/ADC auth and socket stack, and pi-agent-core's harness would resolve the CommonJS yaml entry that cannot tree-shake; Pivi runs only the API-key Google provider and none of the harness YAML paths.",
+      "implementationPaths": [
+        "build/plugins/prefer-browser-builds.mjs"
+      ],
+      "verificationTests": [
+        "tests/unit/scripts/buildCompatibility.test.ts"
+      ],
+      "removalCondition": "Upstream no longer statically imports the Node-only Google auth stack or yaml from modules on Pivi's import graph, or Pivi adopts a provider that needs Vertex project authentication.",
+      "trackingIssue": 113
     }
   ]
 }

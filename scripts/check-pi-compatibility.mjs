@@ -17,6 +17,7 @@ const knownCompatibilityPaths = [
   'build/plugins/shim-pi-coding-agent-config.mjs',
   'build/plugins/dedupe-pi-dependencies.mjs',
   'build/plugins/shim-signal-exit.mjs',
+  'build/plugins/prefer-browser-builds.mjs',
   'build/postprocess/rewrite-node-imports.mjs',
   'packages/engine-pi/src/shims/piAiCompat.ts',
   'packages/engine-pi/src/shims/piAiEnvApiKeys.ts',
