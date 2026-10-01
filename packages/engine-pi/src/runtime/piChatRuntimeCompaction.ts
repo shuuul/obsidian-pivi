@@ -1,18 +1,16 @@
-import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
-import { calculateContextEnvelope, calculateUsagePercentage, type CheckpointPresentation, type UsageInfo } from '@pivi/agent/runtime';
+import type {
+  Agent,
+  AgentMessage,
+} from '@earendil-works/pi-agent-core';
 import {
-  calibrateTokenEstimate,
-  observeProviderUsage,
-} from '@pivi/agent/runtime/contextAccounting';
+  type CheckpointPresentation,
+  type UsageInfo,
+} from '@pivi/agent/runtime';
 import type { StreamChunkQueue } from '@pivi/agent/runtime/streamChunkQueue';
 import type { PreparedChatTurn } from '@pivi/agent/runtime/types';
 
 import type { PiResolvedModel } from '../models/piModelRegistry';
 import { isPiModelContextWindowAuthoritative } from '../models/piModelRegistry';
-import {
-  missingAgentMessages,
-  type MissingAgentMessagesOptions,
-} from '../session/agentMessageHistory';
 import {
   buildCheckpoint,
   buildCompactionPlan,
@@ -25,27 +23,42 @@ import {
   type CompactionDraft,
   compactionMessagesFromEntries,
   DEFAULT_COMPACTION_CONTEXT_WINDOW,
-  estimateActiveContextCategories,
   estimateActiveContextTokens,
-  estimateAgentMessageCategories,
-  estimateAgentMessagesTokens,
-  estimateTextTokens,
   findLatestCheckpoint,
   fingerprintCompactionEntries,
   getCompactionPrefireTokens,
-  getCompactionThresholdTokens as computeCompactionThresholdTokens,
   parseCompactionDraftResult,
   type PiContextCompactionEntry,
   type PiContextCompactionPlan,
-  PiContextTokenIndex,
   renderCheckpoint,
   renderCompactionDraft,
   shouldAutoCompact,
   toCheckpointPresentation,
 } from '../session/piContextCompaction';
 import type { SessionTreeStore } from '../session/sessionTreeStore';
-import { PiCompactionTimeoutError, sampleCompactionNote } from './piCompactionSampler';
+import {
+  buildUsageAfterCompaction,
+  estimateProjectedTurnTokens,
+  estimateSessionEntriesTokens,
+  estimateStoredConversationTokens,
+  getCompactionThresholdTokens,
+} from './piChatRuntimeContextEstimate';
+import {
+  PiCompactionTimeoutError,
+  sampleCompactionNote,
+} from './piCompactionSampler';
 import type { PiRuntimeHost } from './piRuntimeHost';
+export {
+  attachContextEnvelope,
+  buildUsageAfterCompaction,
+  estimateProjectedTurnTokens,
+  estimateStoredConversationTokens,
+  getCompactionThresholdTokens,
+} from './piChatRuntimeContextEstimate';
+export {
+  buildTurnSyncOptions,
+  syncSessionMessagesAfterTurn,
+} from './piChatRuntimeTurnSync';
 
 interface PiCompactionPrefire {
   controller: AbortController;
@@ -84,150 +97,17 @@ export interface PiChatCompactionDeps {
 
 const FALLBACK_ATTEMPTS = 3;
 const FALLBACK_RETRY_DELAY_MS = 3_000;
-const contextTokenIndexes = new WeakMap<SessionTreeStore, PiContextTokenIndex>();
 const compactionLocks = new WeakMap<
   SessionTreeStore,
   Promise<PiChatCompactionResult | null>
 >();
-const systemTokenEstimateCache = new WeakMap<Agent, {
-  systemPrompt: string;
-  tokens: number;
-  tools: unknown;
-}>();
-
-function getContextTokenIndex(sessionTree: SessionTreeStore): PiContextTokenIndex {
-  let index = contextTokenIndexes.get(sessionTree);
-  if (!index) {
-    index = new PiContextTokenIndex();
-    contextTokenIndexes.set(sessionTree, index);
-  }
-  return index;
-}
-
 function activeEntries(sessionTree: SessionTreeStore): PiContextCompactionEntry[] {
   return sessionTree.getActiveLlmContextEntries();
-}
-
-function estimateSessionEntriesTokens(sessionTree: SessionTreeStore): number {
-  return estimateActiveContextTokens(
-    sessionTree.getLinearLlmContextEntries(),
-    getContextTokenIndex(sessionTree),
-  );
-}
-
-function estimateSystemTokens(agent: Agent | null): number {
-  if (!agent) {
-    return estimateTextTokens('') + estimateTextTokens(JSON.stringify([]));
-  }
-  const systemPrompt = agent.state.systemPrompt ?? '';
-  const tools = agent.state.tools ?? [];
-  const cached = systemTokenEstimateCache.get(agent);
-  if (cached && cached.tools === tools && cached.systemPrompt === systemPrompt) {
-    return cached.tokens;
-  }
-  const tokens = estimateTextTokens(systemPrompt) + estimateTextTokens(JSON.stringify(
-    tools.map((tool) => ({
-      description: tool.description,
-      name: tool.name,
-      parameters: (tool as { parameters?: unknown }).parameters,
-    })),
-  ));
-  systemTokenEstimateCache.set(agent, { systemPrompt, tokens, tools });
-  return tokens;
 }
 
 function modelKey(deps: PiChatCompactionDeps): string {
   const model = deps.resolveModel();
   return model ? `${model.provider}/${model.id}` : '';
-}
-
-function assistantProviderTokens(message: AgentMessage): number | null {
-  const record = message as unknown as Record<string, unknown>;
-  if (
-    record.role !== 'assistant'
-    || record.stopReason === 'aborted'
-    || record.stopReason === 'error'
-  ) {
-    return null;
-  }
-  const usage = record.usage;
-  if (!usage || typeof usage !== 'object' || Array.isArray(usage)) {
-    return null;
-  }
-  const values = usage as Record<string, unknown>;
-  const total = typeof values.totalTokens === 'number' ? values.totalTokens : 0;
-  const input = typeof values.input === 'number' ? values.input : 0;
-  const output = typeof values.output === 'number' ? values.output : 0;
-  const cacheRead = typeof values.cacheRead === 'number' ? values.cacheRead : 0;
-  const cacheWrite = typeof values.cacheWrite === 'number' ? values.cacheWrite : 0;
-  const tokens = total > 0 ? total : input + output + cacheRead + cacheWrite;
-  return tokens > 0 ? tokens : null;
-}
-
-function assistantMatchesModel(message: AgentMessage, model: PiResolvedModel): boolean {
-  const record = message as unknown as Record<string, unknown>;
-  return record.provider === model.provider && record.model === model.id;
-}
-
-interface ProviderAnchorProjection {
-  calibration: number;
-  tokens: number;
-  trailingTokens: number;
-}
-
-function findProviderAnchor(
-  deps: PiChatCompactionDeps,
-  pendingMessages: AgentMessage[] = [],
-): ProviderAnchorProjection | null {
-  const entries = deps.sessionTree?.getLinearLlmContextEntries() ?? [];
-  const index = deps.sessionTree ? getContextTokenIndex(deps.sessionTree) : new PiContextTokenIndex();
-  index.sync(entries);
-  const pendingOnly = deps.sessionTree && pendingMessages.length > 0
-    ? missingAgentMessages(deps.sessionTree.loadAgentMessages(), pendingMessages)
-    : pendingMessages;
-  const model = deps.resolveModel();
-  if (!model) return null;
-  const key = `${model.provider}/${model.id}`;
-  for (let pendingIndex = pendingOnly.length - 1; pendingIndex >= 0; pendingIndex--) {
-    const message = pendingOnly[pendingIndex];
-    if (!message || !assistantMatchesModel(message, model)) continue;
-    const tokens = assistantProviderTokens(message);
-    if (!tokens) continue;
-    const localAtAnchor = estimateSystemTokens(deps.agent)
-      + index.tokensBetween(0)
-      + estimateAgentMessagesTokens(pendingOnly.slice(0, pendingIndex + 1));
-    const calibration = observeProviderUsage(key, tokens, localAtAnchor);
-    return {
-      calibration,
-      tokens,
-      trailingTokens: calibrateTokenEstimate(
-        estimateAgentMessagesTokens(pendingOnly.slice(pendingIndex + 1)),
-        calibration,
-      ),
-    };
-  }
-  for (let entryIndex = entries.length - 1; entryIndex >= 0; entryIndex--) {
-    const entry = entries[entryIndex];
-    if (!entry || entry.type !== 'message' || !('message' in entry)) continue;
-    if (!assistantMatchesModel(entry.message, model)) continue;
-    const tokens = assistantProviderTokens(entry.message);
-    if (!tokens) continue;
-    const localAtAnchor = estimateSystemTokens(deps.agent) + index.tokensBetween(0, entryIndex + 1);
-    const calibration = observeProviderUsage(key, tokens, localAtAnchor);
-    return {
-      calibration,
-      tokens,
-      trailingTokens: calibrateTokenEstimate(
-        index.tokensBetween(entryIndex + 1) + estimateAgentMessagesTokens(pendingOnly),
-        calibration,
-      ),
-    };
-  }
-  return null;
-}
-
-function authoritativeReservedOutputTokens(model: PiResolvedModel | null): number | undefined {
-  return model?.outputTokenLimitIsAuthoritative ? model.maxTokens : undefined;
 }
 
 function sessionKey(deps: PiChatCompactionDeps): string {
@@ -251,104 +131,6 @@ export function invalidateCompactionState(state: PiChatCompactionState): void {
   state.foregroundController = null;
   state.failedAutoAttempts.clear();
   state.autoCompactionInFlight = false;
-}
-
-export function attachContextEnvelope(
-  deps: PiChatCompactionDeps,
-  usage: UsageInfo,
-  turn?: PreparedChatTurn,
-  pendingMessages: AgentMessage[] = [],
-  options: { currentTurnAlreadyCounted?: boolean } = {},
-): UsageInfo {
-  const categories = deps.sessionTree
-    ? estimateActiveContextCategories(deps.sessionTree.getLinearLlmContextEntries())
-    : estimateAgentMessageCategories(
-        pendingMessages.length > 0 ? pendingMessages : deps.agent?.state.messages ?? [],
-      );
-  if (deps.sessionTree && pendingMessages.length > 0) {
-    const pendingOnly = missingAgentMessages(
-      deps.sessionTree.loadAgentMessages(),
-      pendingMessages,
-    );
-    const pending = estimateAgentMessageCategories(pendingOnly.filter((message) => (
-      (message as unknown as { role?: unknown }).role !== 'user'
-    )));
-    categories.recentConversation += pending.recentConversation;
-    categories.toolAndAgentResults += pending.toolAndAgentResults;
-  }
-  const selectedContext = deps.sessionTree && turn && !options.currentTurnAlreadyCounted
-    ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
-    : 0;
-  const resolvedModel = deps.resolveModel();
-  const anchor = findProviderAnchor(deps, pendingMessages);
-  const providerAnchorTokens = anchor?.tokens
-    ?? (usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined);
-  const calibratedSelectedContext = anchor
-    ? calibrateTokenEstimate(selectedContext, anchor.calibration)
-    : selectedContext;
-  const contextEnvelope = calculateContextEnvelope({
-    checkpoints: categories.checkpoints,
-    contextWindow: usage.contextWindow || DEFAULT_COMPACTION_CONTEXT_WINDOW,
-    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
-    outputTokenLimit: usage.outputTokenLimit,
-    providerContextTokens: providerAnchorTokens,
-    recentConversation: categories.recentConversation,
-    reservedOutputTokens: authoritativeReservedOutputTokens(resolvedModel),
-    selectedContext: calibratedSelectedContext,
-    system: estimateSystemTokens(deps.agent),
-    toolAndAgentResults: categories.toolAndAgentResults,
-    trailingEstimateTokens: anchor?.trailingTokens,
-  });
-  if (usage.contextTokensIsAuthoritative) {
-    return { ...usage, contextEnvelope };
-  }
-  const contextTokens = contextEnvelope.pressureInputTokens;
-  return {
-    ...usage,
-    contextEnvelope,
-    contextTokens,
-    inputTokens: contextTokens,
-    percentage: calculateUsagePercentage(contextTokens, usage.contextWindow),
-  };
-}
-
-/** Rebuild composer usage from the compacted active session instead of stale provider totals. */
-export function buildUsageAfterCompaction(
-  deps: PiChatCompactionDeps,
-  turn?: PreparedChatTurn,
-  tokensAfter?: number,
-): UsageInfo | null {
-  const conversationTokens = tokensAfter ?? estimateStoredConversationTokens(deps);
-  if (conversationTokens <= 0) {
-    return null;
-  }
-  const resolvedModel = deps.resolveModel();
-  const contextWindow = resolvedModel?.contextWindow ?? 0;
-  const selectedContext = deps.sessionTree && turn
-    ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
-    : 0;
-  const contextEnvelope = calculateContextEnvelope({
-    contextWindow,
-    contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
-    outputTokenLimit: resolvedModel?.maxTokens,
-    recentConversation: conversationTokens,
-    reservedOutputTokens: authoritativeReservedOutputTokens(resolvedModel),
-    selectedContext,
-    system: estimateSystemTokens(deps.agent),
-    toolAndAgentResults: 0,
-  });
-  const contextTokens = contextEnvelope.total.tokens;
-  return {
-    contextTokens,
-    contextTokensIsAuthoritative: false,
-    contextWindow,
-    contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
-    contextEnvelope,
-    inputTokens: contextTokens,
-    ...(resolvedModel?.maxTokens ? { outputTokenLimit: resolvedModel.maxTokens } : {}),
-    ...(typeof resolvedModel?.id === 'string' ? { model: resolvedModel.id } : {}),
-    percentage: calculateUsagePercentage(contextTokens, contextWindow),
-  };
 }
 
 export function pushCompactionChunks(
@@ -383,23 +165,6 @@ export function shouldAutoCompactSession(
   });
 }
 
-export function getCompactionThresholdTokens(
-  deps: PiChatCompactionDeps,
-  contextWindow = deps.resolveModel()?.contextWindow ?? DEFAULT_COMPACTION_CONTEXT_WINDOW,
-): number {
-  const model = deps.resolveModel();
-  return computeCompactionThresholdTokens(
-    contextWindow,
-    isPiModelContextWindowAuthoritative(model),
-    model?.maxTokens,
-    authoritativeReservedOutputTokens(model),
-  );
-}
-
-export function estimateStoredConversationTokens(deps: PiChatCompactionDeps): number {
-  return deps.sessionTree ? estimateSessionEntriesTokens(deps.sessionTree) : 0;
-}
-
 export function getAutoCompactionRecoveryWarning(
   deps: PiChatCompactionDeps,
 ): string | null {
@@ -414,22 +179,6 @@ const DEFAULT_CONTINUATION_BLOCKED_WARNING = 'This tool result is too large to s
 /** Localized notice when in-turn compaction cannot make the next request safe. */
 export function getContinuationBlockedWarning(deps: PiChatCompactionDeps): string {
   return deps.plugin.getContinuationBlockedWarning?.() ?? DEFAULT_CONTINUATION_BLOCKED_WARNING;
-}
-
-export function estimateProjectedTurnTokens(
-  deps: PiChatCompactionDeps,
-  turn: PreparedChatTurn,
-): number {
-  const anchor = findProviderAnchor(deps);
-  if (anchor) {
-    return anchor.tokens
-      + anchor.trailingTokens
-      + calibrateTokenEstimate(estimateTextTokens(turn.prompt), anchor.calibration);
-  }
-  const sessionTokens = deps.sessionTree
-    ? estimateSessionEntriesTokens(deps.sessionTree)
-    : estimateAgentMessagesTokens(deps.agent?.state.messages ?? []);
-  return sessionTokens + estimateSystemTokens(deps.agent) + estimateTextTokens(turn.prompt);
 }
 
 function getPlan(deps: PiChatCompactionDeps): PiContextCompactionPlan | null {
@@ -748,18 +497,18 @@ async function compactUnlocked(
   deps.compactionState.autoCompactionInFlight = true;
   const controller = new AbortController();
   deps.compactionState.foregroundController = controller;
+  // A concurrent turn, session switch, or model change invalidates the sampled NOTE.
+  const isRunStillCurrent = (): boolean => !controller.signal.aborted
+    && deps.compactionState.generation === generation
+    && deps.sessionTree === tree
+    && sessionKey(deps) === initialSessionKey
+    && modelKey(deps) === initialModelKey
+    && currentFingerprint(deps) === fingerprint;
   try {
     const draft = singlePass
       ? await sampleFallback(deps, plan, instructions, controller.signal)
       : await sampleFinalNote(deps, plan, instructions, controller.signal);
-    if (
-      controller.signal.aborted
-      || deps.compactionState.generation !== generation
-      || deps.sessionTree !== tree
-      || sessionKey(deps) !== initialSessionKey
-      || modelKey(deps) !== initialModelKey
-      || currentFingerprint(deps) !== fingerprint
-    ) {
+    if (!isRunStillCurrent()) {
       throw new Error('Session or model changed while context compaction was running.');
     }
     const previousCheckpoint = findLatestCheckpoint(plan.activeEntries);
@@ -793,15 +542,7 @@ async function compactUnlocked(
       tokensBefore: plan.tokensBefore,
     };
   } catch (error) {
-    if (
-      reason === 'threshold'
-      && !controller.signal.aborted
-      && deps.compactionState.generation === generation
-      && deps.sessionTree === tree
-      && sessionKey(deps) === initialSessionKey
-      && modelKey(deps) === initialModelKey
-      && currentFingerprint(deps) === fingerprint
-    ) {
+    if (reason === 'threshold' && isRunStillCurrent()) {
       const attempts = (deps.compactionState.failedAutoAttempts.get(fingerprint) ?? 0) + 1;
       deps.compactionState.failedAutoAttempts.clear();
       deps.compactionState.failedAutoAttempts.set(
@@ -879,41 +620,4 @@ export async function compactCurrentSession(
       compactionLocks.delete(tree);
     }
   }
-}
-
-export function buildTurnSyncOptions(
-  turns?: PreparedChatTurn | readonly PreparedChatTurn[],
-): MissingAgentMessagesOptions | undefined {
-  const normalizedTurns: readonly PreparedChatTurn[] = turns
-    ? Array.isArray(turns) ? turns as readonly PreparedChatTurn[] : [turns as PreparedChatTurn]
-    : [];
-  const userMessageEquivalences = normalizedTurns
-    .filter(turn => turn.persistedContent !== turn.prompt)
-    .map(turn => ({
-      existingText: turn.persistedContent,
-      incomingText: turn.prompt,
-    }));
-  if (userMessageEquivalences.length === 0) {
-    return undefined;
-  }
-  return {
-    userMessageEquivalences,
-  };
-}
-
-export function syncSessionMessagesAfterTurn(
-  sessionTree: SessionTreeStore | null,
-  messages: AgentMessage[],
-  turns: PreparedChatTurn | readonly PreparedChatTurn[] | undefined,
-  onLeafIdChanged: (leafId: string | null) => void,
-  onAssistantMessageId: (entryId: string | undefined) => void,
-): void {
-  if (!sessionTree || messages.length === 0) {
-    return;
-  }
-  sessionTree.syncAgentMessages(messages, buildTurnSyncOptions(turns));
-  onLeafIdChanged(sessionTree.getLeafId());
-  onAssistantMessageId(
-    sessionTree.findLastVisibleMessageEntryId('assistant') ?? undefined,
-  );
 }

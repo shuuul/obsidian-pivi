@@ -140,6 +140,48 @@ function materializeUpsert(
   };
 }
 
+/** Direct (non-OAuth-artifact) secret IDs a committed mutation leaves without an owner. */
+function collectObsoleteDirectSecretIds(
+  mutation: McpManagementMutation,
+  previous: ManagedMcpServer | undefined,
+  effective: ManagedMcpServer | undefined,
+): Set<string> {
+  const directSecretIds = new Set<string>();
+  if (mutation.action === 'remove') {
+    for (const kind of ['bearer-token', 'client-secret'] as const) {
+      listMcpServerSecretIds(mutation.name, kind).forEach(id => directSecretIds.add(id));
+    }
+  } else if (effective && previous && mutation.action === 'upsert') {
+    if (previous.auth === 'bearer' && effective.auth !== 'bearer') {
+      listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
+    }
+    if (previous.auth === 'oauth' && effective.auth !== 'oauth') {
+      listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
+    }
+    if (effective.auth === 'bearer' && effective.bearerTokenEnv) {
+      listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
+    }
+    if (effective.auth === 'oauth' && effective.oauth && typeof effective.oauth === 'object' && !effective.oauth.clientSecret) {
+      listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
+    }
+  }
+  if (mutation.action === 'upsert' && 'url' in mutation.server) {
+    if (
+      mutation.server.bearerToken?.source === 'clear'
+      || mutation.server.bearerToken?.source === 'systemEnvironment'
+    ) {
+      listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
+    }
+    if (
+      mutation.server.oauth === false
+      || mutation.server.oauth?.clearClientSecret
+    ) {
+      listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
+    }
+  }
+  return directSecretIds;
+}
+
 function errorMessage(cause: unknown): string {
   return cause instanceof Error ? cause.message : 'Unknown failure';
 }
@@ -281,39 +323,7 @@ export class McpManagementPersistence {
       }
     }
 
-    const directSecretIds = new Set<string>();
-    if (mutation.action === 'remove') {
-      for (const kind of ['bearer-token', 'client-secret'] as const) {
-        listMcpServerSecretIds(mutation.name, kind).forEach(id => directSecretIds.add(id));
-      }
-    } else if (effective && previous && mutation.action === 'upsert') {
-      if (previous.auth === 'bearer' && effective.auth !== 'bearer') {
-        listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
-      }
-      if (previous.auth === 'oauth' && effective.auth !== 'oauth') {
-        listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
-      }
-      if (effective.auth === 'bearer' && effective.bearerTokenEnv) {
-        listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
-      }
-      if (effective.auth === 'oauth' && effective.oauth && typeof effective.oauth === 'object' && !effective.oauth.clientSecret) {
-        listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
-      }
-    }
-    if (mutation.action === 'upsert' && 'url' in mutation.server) {
-      if (
-        mutation.server.bearerToken?.source === 'clear'
-        || mutation.server.bearerToken?.source === 'systemEnvironment'
-      ) {
-        listMcpServerSecretIds(mutation.name, 'bearer-token').forEach(id => directSecretIds.add(id));
-      }
-      if (
-        mutation.server.oauth === false
-        || mutation.server.oauth?.clearClientSecret
-      ) {
-        listMcpServerSecretIds(mutation.name, 'client-secret').forEach(id => directSecretIds.add(id));
-      }
-    }
+    const directSecretIds = collectObsoleteDirectSecretIds(mutation, previous, effective);
     directSecretIds.forEach(id => this.clearSecret(id, failures));
   }
 

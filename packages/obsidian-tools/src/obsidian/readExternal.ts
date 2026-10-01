@@ -37,6 +37,128 @@ function buildExternalByteStatsText(params: {
   ].join('\n');
 }
 
+interface ExternalReadRequest {
+  mode: ReturnType<typeof getReadMode>;
+  startLine: number | undefined;
+  endLine: number | undefined;
+}
+
+type ReadBudget = ReturnType<typeof resolveEffectiveReadBudget>;
+
+/** Rejects files past the hard byte limit and answers with byte stats when a whole-file read cannot fit. */
+function buildOversizedFileResult(
+  fileStat: { path: string; size: number },
+  { startLine, endLine }: ExternalReadRequest,
+  readBudget: ReadBudget,
+) {
+  const maxChars = readBudget.maxChars;
+  const isRangeRead = startLine !== undefined || endLine !== undefined;
+  if (
+    fileStat.size > MAX_EXTERNAL_READ_BYTES
+    && (isRangeRead || (readBudget.requestedMaxChars ?? maxChars) >= fileStat.size)
+  ) {
+    throw new Error(
+      `External file is ${fileStat.size} bytes, which exceeds the hard safety limit of ${MAX_EXTERNAL_READ_BYTES} bytes. Narrow the file outside Pivi before reading it.`,
+    );
+  }
+  if (!isRangeRead && fileStat.size > maxChars) {
+    const text = buildExternalByteStatsText({
+      path: fileStat.path,
+      bytes: fileStat.size,
+      maxChars,
+      hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
+    });
+    readBudget.settle(text.length);
+    return textResult(text, {
+      path: fileStat.path,
+      bytes: fileStat.size,
+      truncated: true,
+      hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
+    });
+  }
+  return undefined;
+}
+
+function buildExternalReadResult(
+  result: { path: string; content: string },
+  { mode, startLine, endLine }: ExternalReadRequest,
+  readBudget: ReadBudget,
+) {
+  const maxChars = readBudget.maxChars;
+  const isRangeRead = startLine !== undefined || endLine !== undefined;
+  const characters = result.content.length;
+  const lineSpans = getLineSpans(result.content);
+  const lines = lineSpans.length;
+  const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
+  const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
+  const large = !isRangeRead && characters > maxChars;
+  const requestedRange = isRangeRead
+    ? { startLine: startLine ?? 1, endLine: endLine ?? lines }
+    : undefined;
+
+  const details = {
+    path: result.path,
+    characters,
+    lines,
+    wholeFile: { characters, lines },
+    ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
+    ...(startLine !== undefined ? { startLine } : {}),
+    ...(endLine !== undefined ? { endLine } : {}),
+    ...(requestedRange ? { requestedRange } : {}),
+    truncated: large,
+  };
+
+  if (mode === 'stats' || large) {
+    const text = buildStatsText({
+      path: result.path,
+      wholeFile: { characters, lines },
+      selectedRange: selectedStats ? { ...selectedStats, startLine, endLine } : undefined,
+      large,
+      maxChars,
+      requestedMaxChars: readBudget.requestedMaxChars,
+      availableChars: readBudget.availableChars,
+      readExternal: true,
+    });
+    readBudget.settle(text.length);
+    return textResult(text, {
+      ...details,
+      ...(selectedStats && selectedStats.lines > 0 && requestedRange ? {
+        returnedRange: {
+          ...selectedStats,
+          startLine: requestedRange.startLine,
+          endLine: Math.min(requestedRange.endLine, lines),
+        },
+      } : {}),
+    });
+  }
+
+  if (isRangeRead) {
+    const page = paginateLineRange(
+      result.content,
+      lineSpans,
+      maxChars,
+      startLine,
+      endLine,
+    );
+    const returnedStats = getStats(page.rawContent);
+    readBudget.settle(page.content.length);
+    return textResult(page.content, {
+      ...details,
+      ...(page.returnedStartLine !== undefined && page.returnedEndLine !== undefined ? {
+        returnedRange: {
+          ...returnedStats,
+          startLine: page.returnedStartLine,
+          endLine: page.returnedEndLine,
+        },
+      } : {}),
+      truncated: page.truncated,
+      ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
+    });
+  }
+  readBudget.settle(selectedContent.length);
+  return textResult(selectedContent, details);
+}
+
 export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_READ_EXTERNAL,
@@ -62,15 +184,16 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('Invalid read external input: path must be an absolute string.');
       }
       const absolutePath = resolveExternalToolPath(deps, requestedPath);
-      const mode = getReadMode(input);
-      const startLine = getPositiveIntegerField(input, 'startLine');
-      const endLine = getPositiveIntegerField(input, 'endLine');
+      const request: ExternalReadRequest = {
+        mode: getReadMode(input),
+        startLine: getPositiveIntegerField(input, 'startLine'),
+        endLine: getPositiveIntegerField(input, 'endLine'),
+      };
       const readBudget = resolveEffectiveReadBudget(
         input,
         deps.settings.defaultReadMaxChars,
-        mode === 'stats' ? undefined : deps.resolveReadMaxChars,
+        request.mode === 'stats' ? undefined : deps.resolveReadMaxChars,
       );
-      const maxChars = readBudget.maxChars;
       try {
         const externalFiles = await ensureExternalDirectoryAccess(
           deps,
@@ -78,103 +201,12 @@ export function createReadExternalTool(deps: ObsidianToolDeps): ToolSpec {
           false,
           CAPABILITY_TOOL_NAMES.readExternal,
         );
-        const fileStat = externalFiles.stat(absolutePath);
-        const isRangeRead = startLine !== undefined || endLine !== undefined;
-        if (
-          fileStat.size > MAX_EXTERNAL_READ_BYTES
-          && (isRangeRead || (readBudget.requestedMaxChars ?? maxChars) >= fileStat.size)
-        ) {
-          throw new Error(
-            `External file is ${fileStat.size} bytes, which exceeds the hard safety limit of ${MAX_EXTERNAL_READ_BYTES} bytes. Narrow the file outside Pivi before reading it.`,
-          );
-        }
-        if (!isRangeRead && fileStat.size > maxChars) {
-          const text = buildExternalByteStatsText({
-            path: fileStat.path,
-            bytes: fileStat.size,
-            maxChars,
-            hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
-          });
-          readBudget.settle(text.length);
-          return textResult(text, {
-            path: fileStat.path,
-            bytes: fileStat.size,
-            truncated: true,
-            hardLimitBytes: MAX_EXTERNAL_READ_BYTES,
-          });
+        const oversized = buildOversizedFileResult(externalFiles.stat(absolutePath), request, readBudget);
+        if (oversized) {
+          return oversized;
         }
         const result = await externalFiles.readFile(absolutePath);
-        const characters = result.content.length;
-        const lineSpans = getLineSpans(result.content);
-        const lines = lineSpans.length;
-        const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
-        const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
-        const large = !isRangeRead && characters > maxChars;
-        const requestedRange = isRangeRead
-          ? { startLine: startLine ?? 1, endLine: endLine ?? lines }
-          : undefined;
-
-        const details = {
-          path: result.path,
-          characters,
-          lines,
-          wholeFile: { characters, lines },
-          ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
-          ...(startLine !== undefined ? { startLine } : {}),
-          ...(endLine !== undefined ? { endLine } : {}),
-          ...(requestedRange ? { requestedRange } : {}),
-          truncated: large,
-        };
-
-        if (mode === 'stats' || large) {
-          const text = buildStatsText({
-            path: result.path,
-            wholeFile: { characters, lines },
-            selectedRange: selectedStats ? { ...selectedStats, startLine, endLine } : undefined,
-            large,
-            maxChars,
-            requestedMaxChars: readBudget.requestedMaxChars,
-            availableChars: readBudget.availableChars,
-            readExternal: true,
-          });
-          readBudget.settle(text.length);
-          return textResult(text, {
-            ...details,
-            ...(selectedStats && selectedStats.lines > 0 && requestedRange ? {
-              returnedRange: {
-                ...selectedStats,
-                startLine: requestedRange.startLine,
-                endLine: Math.min(requestedRange.endLine, lines),
-              },
-            } : {}),
-          });
-        }
-
-        if (isRangeRead) {
-          const page = paginateLineRange(
-            result.content,
-            lineSpans,
-            maxChars,
-            startLine,
-            endLine,
-          );
-          const returnedStats = getStats(page.rawContent);
-          readBudget.settle(page.content.length);
-          return textResult(page.content, {
-            ...details,
-            ...(page.returnedStartLine !== undefined && page.returnedEndLine !== undefined ? {
-              returnedRange: {
-                ...returnedStats,
-                startLine: page.returnedStartLine,
-                endLine: page.returnedEndLine,
-              },
-            } : {}),
-            truncated: page.truncated,
-            ...(page.nextStartLine !== undefined ? { nextStartLine: page.nextStartLine } : {}),
-          });
-        }
-        readBudget.settle(selectedContent.length);
-        return textResult(selectedContent, details);
+        return buildExternalReadResult(result, request, readBudget);
       } catch (error) {
         readBudget.settle(0);
         throw error;

@@ -1,8 +1,5 @@
 import {
   clearSyncSecret,
-  encodeUtf8Hex,
-  isObsidianSecretId,
-  resolveObsidianSecretId,
   stableProviderIdDigest,
 } from '../auth/providerSecretStorage';
 import {
@@ -24,7 +21,6 @@ import {
 } from './mcpValidation';
 import {
   inputMapToDrafts,
-  isLegacyPlainStringMap,
   type McpStoredValueMap,
   normalizeMcpStoredValueMap,
   stageMcpValueSecrets,
@@ -35,19 +31,34 @@ import type {
   ManagedMcpConfigFile,
   ManagedMcpServer,
   McpServerConfig,
-  StoredMcpOAuthConfig,
 } from './types';
 import {
   DEFAULT_MCP_SERVER,
   getMcpServerType,
-  isMcpLegacySseServerConfig,
-  isValidMcpServerConfig,
-  upgradeLegacySseServerConfig,
 } from './types';
 
 export { PIVI_MCP_CONFIG_PATH } from './paths';
-
-type McpSecretKind = 'bearer-token' | 'client-secret';
+import {
+  buildPiviServerMeta,
+  createMcpSecretTransaction,
+  getExistingServerNames,
+  getMcpSecretId,
+  getPreviousStoredMap,
+  isSecretStorageAvailable,
+  listMcpSecretIds,
+  McpConfigLoadError,
+  type McpSecretKind,
+  McpStorageStateChangedError,
+  needsStructuredMigration,
+  normalizeManagedServerConfig,
+  type PiviServerMeta,
+  readPersistedServerConfig,
+} from './mcpStorageRecords';
+export {
+  listMcpServerSecretIds,
+  McpConfigLoadError,
+  McpStorageStateChangedError,
+} from './mcpStorageRecords';
 
 export interface McpLoadResult {
   servers: ManagedMcpServer[];
@@ -57,132 +68,12 @@ export interface McpLoadResult {
   legacySseServers?: string[];
 }
 
-/** Accept a persisted config, upgrading legacy SSE entries to Streamable HTTP. */
-function readPersistedServerConfig(
-  config: unknown,
-): { config: McpServerConfig; legacySse: boolean } | null {
-  if (isMcpLegacySseServerConfig(config)) {
-    return { config: upgradeLegacySseServerConfig(config), legacySse: true };
-  }
-  return isValidMcpServerConfig(config) ? { config, legacySse: false } : null;
-}
-
 export interface McpSaveResult {
   revision: string;
   cleanupFailures: Array<{ target: string; message: string }>;
 }
 
-export class McpStorageStateChangedError extends Error {
-  constructor() {
-    super('MCP configuration changed before publication.');
-    this.name = 'McpStorageStateChangedError';
-  }
-}
-
-export class McpConfigLoadError extends Error {
-  constructor(
-    message: string,
-    readonly diagnostics: readonly ParseDiagnostic[],
-    readonly corruptPath?: string,
-  ) {
-    super(message);
-    this.name = 'McpConfigLoadError';
-  }
-}
-
 const logger = new PluginLogger('McpStorage');
-
-function isSecretStorageAvailable(
-  secretStorage: SyncSecretStore | undefined,
-): secretStorage is SyncSecretStore {
-  return (
-    !!secretStorage
-    && typeof secretStorage.getSecret === 'function'
-    && typeof secretStorage.setSecret === 'function'
-    && typeof secretStorage.listSecrets === 'function'
-  );
-}
-
-function encodeSecretName(name: string): string {
-  return encodeUtf8Hex(name);
-}
-
-function directMcpSecretId(serverName: string, kind: McpSecretKind): string {
-  return `pivi-mcp-name-${serverName}-${kind}`;
-}
-
-function legacyEncodedMcpSecretId(serverName: string, kind: McpSecretKind): string {
-  return `pivi-mcp-${encodeSecretName(serverName)}-${kind}`;
-}
-
-function digestMcpSecretId(serverName: string, kind: McpSecretKind): string {
-  return `pivi-mcp-d-${stableProviderIdDigest(serverName)}-${kind}`;
-}
-
-/**
- * Canonical first, then the legacy hex-encoded name, then the digest fallback.
- * The explicit `name` segment prevents a plain server name from colliding with
- * another server's legacy hex encoding.
- */
-function listMcpSecretIds(serverName: string, kind: McpSecretKind): readonly string[] {
-  const plain = directMcpSecretId(serverName, kind);
-  const digest = digestMcpSecretId(serverName, kind);
-  const canonical = resolveObsidianSecretId(plain, digest);
-  return [...new Set([
-    canonical,
-    ...(isObsidianSecretId(plain) ? [plain] : []),
-    legacyEncodedMcpSecretId(serverName, kind),
-    digest,
-  ])];
-}
-
-/** Canonical direct/digested SecretStorage IDs owned by one MCP server field. */
-export function listMcpServerSecretIds(
-  serverName: string,
-  kind: McpSecretKind,
-): readonly string[] {
-  return listMcpSecretIds(serverName, kind);
-}
-
-function getMcpSecretId(serverName: string, kind: McpSecretKind): string {
-  return listMcpSecretIds(serverName, kind)[0]!;
-}
-
-function stripOAuthClientSecret(
-  oauth: ManagedMcpServer['oauth'],
-): StoredMcpOAuthConfig | false | undefined {
-  if (oauth === false || oauth === undefined) {
-    return oauth;
-  }
-  const stored = { ...oauth } as StoredMcpOAuthConfig;
-  // @ts-expect-error clientSecret is deleted to avoid saving in plain text
-  delete stored.clientSecret;
-  return stored;
-}
-
-function getExistingServerNames(
-  existing: Record<string, unknown> | null,
-): string[] {
-  const raw = existing?.mcpServers;
-  if (!raw || typeof raw !== 'object') {
-    return [];
-  }
-  return Object.keys(raw);
-}
-
-function getPreviousStoredMap(
-  previous: McpServerConfig | undefined,
-): McpStoredValueMap | undefined {
-  if (!previous) {
-    return undefined;
-  }
-  return normalizeMcpStoredValueMap((previous as { headers?: unknown }).headers);
-}
-
-function needsStructuredMigration(config: McpServerConfig): boolean {
-  const headers = (config as { headers?: unknown }).headers;
-  return headers !== undefined && isLegacyPlainStringMap(headers);
-}
 
 export class McpStorage {
   private transactionSecretStorage: SyncSecretStore | undefined;
@@ -273,7 +164,7 @@ export class McpStorage {
   }
 
   private async saveTransaction(servers: ManagedMcpServer[]): Promise<McpSaveResult> {
-    const transaction = this.createSecretTransaction();
+    const transaction = createMcpSecretTransaction(this.secretStorage);
     this.transactionSecretStorage = transaction?.storage;
     // Rollback staged secrets only before mcp.json publication. After publish the
     // durable config references those secrets, so undoing them would desync storage.
@@ -319,59 +210,23 @@ export class McpStorage {
     ]));
   }
 
-  private createSecretTransaction(): {
-    storage: SyncSecretStore;
-    rollback(): Array<{ target: string; message: string }>;
-  } | null {
-    const underlying = this.secretStorage;
-    if (!isSecretStorageAvailable(underlying)) return null;
-    const undo = new Map<string, { previous: string | null | undefined; staged: string }>();
-    const storage: SyncSecretStore = {
-      getSecret: id => underlying.getSecret(id),
-      listSecrets: prefix => underlying.listSecrets(prefix),
-      setSecret: (id, value) => {
-        if (!undo.has(id)) undo.set(id, { previous: underlying.getSecret(id), staged: value });
-        else undo.get(id)!.staged = value;
-        underlying.setSecret(id, value);
-      },
-      ...(underlying.deleteSecret ? { deleteSecret: id => underlying.deleteSecret!(id) } : {}),
-    };
-    return {
-      storage,
-      rollback: () => {
-        const failures: Array<{ target: string; message: string }> = [];
-        for (const [id, entry] of undo) {
-          try {
-            // A concurrent OAuth writer wins over this transaction's undo.
-            if (underlying.getSecret(id) !== entry.staged) continue;
-            if (entry.previous == null && underlying.deleteSecret) underlying.deleteSecret(id);
-            else underlying.setSecret(id, entry.previous ?? '');
-          } catch (cause) {
-            failures.push({
-              target: id,
-              message: cause instanceof Error ? cause.message : 'Secret rollback failed',
-            });
-          }
-        }
-        return failures;
-      },
-    };
+  private async readExistingConfigObject(): Promise<Record<string, unknown> | null> {
+    if (!await this.adapter.exists(PIVI_MCP_CONFIG_PATH)) {
+      return null;
+    }
+    const content = await this.readConfigContent();
+    if (content === null) {
+      return null;
+    }
+    const parsed = parseJsonObjectWithDiagnostics(PIVI_MCP_CONFIG_PATH, content);
+    return parsed.ok ? parsed.value : null;
   }
 
   private async saveInternal(
     servers: ManagedMcpServer[],
     onPublished?: () => void,
   ): Promise<McpSaveResult> {
-    let existing: Record<string, unknown> | null = null;
-    if (await this.adapter.exists(PIVI_MCP_CONFIG_PATH)) {
-      const content = await this.readConfigContent();
-      if (content !== null) {
-        const parsed = parseJsonObjectWithDiagnostics(PIVI_MCP_CONFIG_PATH, content);
-        if (parsed.ok) {
-          existing = parsed.value;
-        }
-      }
-    }
+    const existing = await this.readExistingConfigObject();
 
     const existingServers = this.parseExistingConfigs(existing);
     const nextServerNames = new Set(servers.map((server) => server.name));
@@ -386,15 +241,7 @@ export class McpStorage {
     }
 
     const mcpServers = createMcpServerMap<McpServerConfig>();
-    const piviServers = createMcpServerMap<{
-      enabled?: boolean;
-      contextSaving?: boolean;
-      disabledTools?: string[];
-      description?: string;
-      auth?: ManagedMcpServer['auth'];
-      oauth?: StoredMcpOAuthConfig | false;
-      bearerTokenEnv?: string;
-    }>();
+    const piviServers = createMcpServerMap<PiviServerMeta>();
 
     for (const server of servers) {
       const normalizedName = assertValidMcpServerName(server.name);
@@ -416,41 +263,7 @@ export class McpStorage {
       setMcpServerMapEntry(mcpServers, normalizedName, prepared.config);
       obsoleteSecretIds.push(...this.stageBearerAndOAuthSecrets({ ...server, name: normalizedName }));
 
-      const meta: {
-        enabled?: boolean;
-        contextSaving?: boolean;
-        disabledTools?: string[];
-        description?: string;
-        auth?: ManagedMcpServer['auth'];
-        oauth?: StoredMcpOAuthConfig | false;
-        bearerTokenEnv?: string;
-      } = {};
-
-      if (server.enabled !== DEFAULT_MCP_SERVER.enabled) {
-        meta.enabled = server.enabled;
-      }
-      if (server.contextSaving !== DEFAULT_MCP_SERVER.contextSaving) {
-        meta.contextSaving = server.contextSaving;
-      }
-      const normalizedDisabledTools = server.disabledTools
-        ?.map((tool) => tool.trim())
-        .filter((tool) => tool.length > 0);
-      if (normalizedDisabledTools && normalizedDisabledTools.length > 0) {
-        meta.disabledTools = normalizedDisabledTools;
-      }
-      if (server.description) {
-        meta.description = server.description;
-      }
-      if (server.auth && server.auth !== 'none') {
-        meta.auth = server.auth;
-      }
-      if (server.oauth !== undefined) {
-        meta.oauth = stripOAuthClientSecret(server.oauth);
-      }
-      if (server.bearerTokenEnv) {
-        meta.bearerTokenEnv = server.bearerTokenEnv;
-      }
-
+      const meta = buildPiviServerMeta(server);
       if (Object.keys(meta).length > 0) {
         setMcpServerMapEntry(piviServers, normalizedName, meta);
       }
@@ -832,11 +645,4 @@ export class McpStorage {
 
     return servers;
   }
-}
-
-function normalizeManagedServerConfig(config: McpServerConfig): McpServerConfig {
-  const remote = config as { url: string; headers?: unknown };
-  const url = validateMcpRemoteUrl(remote.url);
-  const headers = normalizeMcpStoredValueMap(remote.headers);
-  return { type: 'http', url, ...(headers ? { headers } : {}) };
 }

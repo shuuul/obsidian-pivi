@@ -27,6 +27,35 @@ export function splitPersistableShellComponents(
   }
 }
 
+function assertNoControlCharacter(char: string): void {
+  const code = char.charCodeAt(0);
+  if ((code < 0x20 && char !== '\t') || code === 0x7f) {
+    throw new Error('control');
+  }
+}
+
+/** Rejects unquoted POSIX syntax that is never persistable; `&` and `|` are split by the caller. */
+function assertPersistablePosixCharacter(char: string, next: string | undefined): void {
+  if (char === '`' || char === '(' || char === ')' || char === '{' || char === '}' || char === ';') {
+    throw new Error('control');
+  }
+  if (char === '<' || char === '>') throw new Error('redirect');
+  if (char === '$' && (next === '(' || next === '{')) {
+    throw new Error('substitution');
+  }
+}
+
+/** Returns how many characters after `index` belong to the same quoted unit. */
+function consumedAfterQuotedCharacter(command: string, index: number, inQuote: '"' | "'"): number {
+  const char = command[index]!;
+  if (inQuote !== '"' || char === inQuote) return 0;
+  if (char === '\\' && index + 1 < command.length) return 1;
+  if (char === '`' || (char === '$' && command[index + 1] === '(')) {
+    throw new Error('substitution');
+  }
+  return 0;
+}
+
 function splitPosixComponents(command: string): string[] {
   const components: string[] = [];
   let current = '';
@@ -34,22 +63,12 @@ function splitPosixComponents(command: string): string[] {
 
   for (let i = 0; i < command.length; i += 1) {
     const char = command[i]!;
-    const code = char.charCodeAt(0);
-    if ((code < 0x20 && char !== '\t') || code === 0x7f) {
-      throw new Error('control');
-    }
+    assertNoControlCharacter(char);
     if (inQuote) {
-      if (char === inQuote) {
-        inQuote = null;
-        current += char;
-      } else if (char === '\\' && inQuote === '"' && i + 1 < command.length) {
-        current += char + command[i + 1]!;
-        i += 1;
-      } else if (inQuote === '"' && (char === '`' || (char === '$' && command[i + 1] === '('))) {
-        throw new Error('substitution');
-      } else {
-        current += char;
-      }
+      const extra = consumedAfterQuotedCharacter(command, i, inQuote);
+      if (char === inQuote) inQuote = null;
+      current += command.slice(i, i + 1 + extra);
+      i += extra;
       continue;
     }
     if (char === '"' || char === "'") {
@@ -64,19 +83,13 @@ function splitPosixComponents(command: string): string[] {
       i += 1;
       continue;
     }
-    if (char === '`' || char === '(' || char === ')' || char === '{' || char === '}') {
-      throw new Error('control');
-    }
-    if (char === ';') throw new Error('control');
-    if (char === '<' || char === '>') throw new Error('redirect');
+    assertPersistablePosixCharacter(char, command[i + 1]);
     if (char === '&') {
-      if (command[i + 1] === '&') {
-        components.push(current);
-        current = '';
-        i += 1;
-        continue;
-      }
-      throw new Error('background');
+      if (command[i + 1] !== '&') throw new Error('background');
+      components.push(current);
+      current = '';
+      i += 1;
+      continue;
     }
     if (char === '|') {
       if (command[i + 1] === '|' || command[i + 1] === '&') {
@@ -85,9 +98,6 @@ function splitPosixComponents(command: string): string[] {
       components.push(current);
       current = '';
       continue;
-    }
-    if (char === '$' && (command[i + 1] === '(' || command[i + 1] === '{')) {
-      throw new Error('substitution');
     }
     current += char;
   }

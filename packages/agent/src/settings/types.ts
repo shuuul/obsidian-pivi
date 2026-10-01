@@ -2,6 +2,7 @@
 import type { PersistentBashPermission, PersistentExternalDirectoryPermission } from '../tools/capabilityPermissions';
 import { migrateDisabledToolNames } from '../tools/toolAliases';
 import type { CustomProviderConfig } from "./customProviders";
+import type { EditorSelectionToolbarSettings } from './editorSelectionToolbarSettings';
 
 /** Source of a slash command. */
 export type SlashCommandSource = "builtin" | "user" | "plugin" | "sdk";
@@ -169,101 +170,6 @@ export interface SubagentRuntimeSettings {
   allowBackground: boolean;
 }
 
-export type EditorToolbarPiviActionId = 'inline-edit' | 'add-to-chat';
-export type EditorToolbarExecutionTarget = 'inline-edit' | 'sidebar';
-
-interface EditorToolbarItemBase {
-  id: string;
-  enabled: boolean;
-}
-
-export interface EditorToolbarPiviAction extends EditorToolbarItemBase {
-  kind: 'pivi-action';
-  actionId: EditorToolbarPiviActionId;
-}
-
-export interface EditorToolbarEditorCommand extends EditorToolbarItemBase {
-  kind: 'editor-command';
-  commandId: EditorCommandId;
-}
-
-/** Compatibility record retained for commands outside Pivi's curated editor catalog. */
-export interface EditorToolbarLegacyCommand extends EditorToolbarItemBase {
-  kind: 'obsidian-command';
-  label: string;
-  commandId: string;
-  icon?: string;
-}
-
-export interface EditorToolbarPiviCommand extends EditorToolbarItemBase {
-  kind: 'pivi-command';
-  label: string;
-  piviCommandKey: string;
-  executionTarget: EditorToolbarExecutionTarget;
-  icon?: string;
-}
-
-export type EditorToolbarShortcut =
-  | EditorToolbarPiviAction
-  | EditorToolbarEditorCommand
-  | EditorToolbarLegacyCommand
-  | EditorToolbarPiviCommand;
-
-export interface EditorSelectionToolbarSettings {
-  /**
-   * Whether Pivi's selected-text toolbar owns the editor UI. When false, Pivi
-   * stays out of the editor selection surface (e.g., disabled by the user or
-   * yielding to Note Toolbar via runtime detection).
-   */
-  enabled: boolean;
-  shortcuts: EditorToolbarShortcut[];
-}
-
-export const EDITOR_COMMAND_CATALOG = [
-  ['editor:clear-formatting', 'eraser', 'formatting'], ['editor:toggle-blockquote', 'text-quote', 'formatting'], ['editor:toggle-bold', 'bold', 'formatting'], ['editor:toggle-code', 'code', 'formatting'], ['editor:toggle-comments', 'percent', 'formatting'], ['editor:toggle-highlight', 'highlighter', 'formatting'], ['editor:toggle-inline-math', 'sigma', 'formatting'], ['editor:toggle-italics', 'italic', 'formatting'], ['editor:toggle-strikethrough', 'strikethrough', 'formatting'],
-  ['editor:set-heading', 'heading', 'headings'], ['editor:set-heading-0', 'heading', 'headings'], ['editor:set-heading-1', 'heading-1', 'headings'], ['editor:set-heading-2', 'heading-2', 'headings'], ['editor:set-heading-3', 'heading-3', 'headings'], ['editor:set-heading-4', 'heading-4', 'headings'], ['editor:set-heading-5', 'heading-5', 'headings'], ['editor:set-heading-6', 'heading-6', 'headings'],
-  ['editor:cycle-list-checklist', 'check-square', 'lists'], ['editor:indent-list', 'indent-increase', 'lists'], ['editor:toggle-bullet-list', 'list', 'lists'], ['editor:toggle-checklist-status', 'list-checks', 'lists'], ['editor:toggle-numbered-list', 'list-ordered', 'lists'], ['editor:unindent-list', 'indent-decrease', 'lists'],
-  ['editor:attach-file', 'paperclip', 'insert'], ['editor:insert-callout', 'quote', 'insert'], ['editor:insert-codeblock', 'code-square', 'insert'], ['editor:insert-footnote', 'file-signature', 'insert'], ['editor:insert-embed', 'sticky-note', 'insert'], ['editor:insert-horizontal-rule', 'line-horizontal', 'insert'], ['editor:insert-link', 'link', 'insert'], ['editor:insert-mathblock', 'sigma-square', 'insert'], ['editor:insert-table', 'table', 'insert'], ['editor:insert-tag', 'tag', 'insert'], ['editor:insert-wikilink', 'brackets', 'insert'],
-  ['editor:add-cursor-above', 'mouse-pointer-click', 'lines'], ['editor:add-cursor-below', 'mouse-pointer-click', 'lines'], ['editor:delete-paragraph', 'pilcrow', 'lines'], ['editor:move-caret-up', 'chevron-up', 'lines'], ['editor:move-caret-down', 'chevron-down', 'lines'], ['editor:move-caret-left', 'chevron-left', 'lines'], ['editor:move-caret-right', 'chevron-right', 'lines'], ['editor:swap-line-down', 'corner-right-down', 'lines'], ['editor:swap-line-up', 'corner-right-up', 'lines'],
-  ['editor:toggle-fold', 'fold-vertical', 'folding'], ['editor:fold-all', 'chevrons-up', 'folding'], ['editor:fold-less', 'minus', 'folding'], ['editor:fold-more', 'plus', 'folding'], ['editor:unfold-all', 'chevrons-down', 'folding'],
-  ['editor:open-search-replace', 'file-search', 'controls'], ['editor:toggle-source', 'code-2', 'controls'], ['editor:toggle-keyboard', 'keyboard-toggle', 'controls'],
-] as const;
-
-export type EditorCommandId = (typeof EDITOR_COMMAND_CATALOG)[number][0];
-export type EditorCommandCatalogEntry = {
-  id: EditorCommandId;
-  icon: string;
-  category: (typeof EDITOR_COMMAND_CATALOG)[number][2];
-};
-export const EDITOR_COMMANDS: readonly EditorCommandCatalogEntry[] = EDITOR_COMMAND_CATALOG.map(
-  ([id, icon, category]) => ({ id, icon, category }),
-);
-const EDITOR_COMMAND_IDS = new Set<string>(EDITOR_COMMANDS.map(command => command.id));
-const REQUIRED_PIVI_ACTIONS: readonly EditorToolbarPiviActionId[] = ['inline-edit', 'add-to-chat'];
-
-/**
- * Resolve the `enabled` flag from a raw settings value. Accepts the new
- * `enabled: boolean` field directly, and falls back to the legacy
- * `provider` field for backward compatibility:
- *   - 'pivi' / 'note-toolbar' → enabled true (runtime detection yields to Note Toolbar)
- *   - 'off' → enabled false
- *   - missing/invalid → default true
- */
-function resolveToolbarEnabled(value: unknown): boolean {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-  if (typeof value === 'string') {
-    if (value === 'off') {
-      return false;
-    }
-    if (value === 'pivi' || value === 'note-toolbar') {
-      return true;
-    }
-  }
-  return true;
-}
-
 function normalizeHiddenCommandName(value: string): string {
   return value.trim().replace(/^[/$]+/, "");
 }
@@ -342,112 +248,6 @@ export function normalizeWorkspaceCommandOrder(value: unknown): string[] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
-}
-
-export function normalizeEditorSelectionToolbarSettings(
-  value: unknown,
-): EditorSelectionToolbarSettings {
-  const defaults = (): EditorToolbarShortcut[] => REQUIRED_PIVI_ACTIONS.map(actionId => ({
-    id: actionId,
-    kind: 'pivi-action',
-    actionId,
-    enabled: true,
-  }));
-  const empty: EditorSelectionToolbarSettings = { enabled: true, shortcuts: defaults() };
-  if (!isRecord(value)) {
-    return empty;
-  }
-
-  // Prefer the new `enabled` boolean; fall back to the legacy `provider` string
-  // so existing persisted settings migrate cleanly.
-  const toolbarEnabled = Object.hasOwn(value, 'enabled')
-    ? resolveToolbarEnabled(value.enabled)
-    : resolveToolbarEnabled(value.provider);
-  if (!Array.isArray(value.shortcuts)) {
-    return { enabled: toolbarEnabled, shortcuts: defaults() };
-  }
-
-  const seenIds = new Set<string>();
-  const seenActions = new Set<EditorToolbarPiviActionId>();
-  const seenEditorCommands = new Set<string>();
-  const shortcuts: EditorToolbarShortcut[] = [];
-  const reservedIds = new Set<string>([...REQUIRED_PIVI_ACTIONS, ...EDITOR_COMMAND_IDS]);
-  const uniqueLegacyId = (persistedId: string, kind: 'obsidian-command' | 'pivi-command'): string => {
-    if (!reservedIds.has(persistedId) && !seenIds.has(persistedId)) return persistedId;
-    const base = `legacy:${kind}:${persistedId}`;
-    let candidate = base;
-    let suffix = 2;
-    while (reservedIds.has(candidate) || seenIds.has(candidate)) candidate = `${base}:${suffix++}`;
-    return candidate;
-  };
-
-  for (const item of value.shortcuts) {
-    if (!isRecord(item)) {
-      continue;
-    }
-
-    const id = typeof item.id === 'string' ? item.id.trim() : '';
-    const kind = typeof item.kind === 'string' ? item.kind : '';
-    if (!id) {
-      continue;
-    }
-    const enabled = item.enabled !== false;
-
-    if (kind === 'pivi-action') {
-      const actionId = item.actionId;
-      if ((actionId !== 'inline-edit' && actionId !== 'add-to-chat') || seenActions.has(actionId)) continue;
-      seenIds.add(actionId);
-      seenActions.add(actionId);
-      shortcuts.push({ id: actionId, kind, actionId, enabled });
-      continue;
-    }
-
-    if (kind === 'editor-command' || kind === 'obsidian-command') {
-      const commandId = typeof item.commandId === 'string' ? item.commandId.trim() : '';
-      if (!commandId) {
-        continue;
-      }
-      if (EDITOR_COMMAND_IDS.has(commandId)) {
-        if (seenEditorCommands.has(commandId)) continue;
-        seenIds.add(commandId);
-        seenEditorCommands.add(commandId);
-        shortcuts.push({ id: commandId, kind: 'editor-command', enabled, commandId: commandId as EditorCommandId });
-        continue;
-      }
-      if (kind === 'editor-command') continue;
-      const label = typeof item.label === 'string' ? item.label.trim() : '';
-      if (!label) continue;
-      const emittedId = uniqueLegacyId(id, 'obsidian-command');
-      seenIds.add(emittedId);
-      const icon = typeof item.icon === 'string' && item.icon.trim() ? item.icon.trim() : undefined;
-      shortcuts.push(icon ? { id: emittedId, kind, label, enabled, commandId, icon } : { id: emittedId, kind, label, enabled, commandId });
-      continue;
-    }
-
-    if (kind !== 'pivi-command') continue;
-    const label = typeof item.label === 'string' ? item.label.trim() : '';
-    const piviCommandKey = typeof item.piviCommandKey === 'string'
-      ? item.piviCommandKey.trim()
-      : '';
-    if (!label || !piviCommandKey) {
-      continue;
-    }
-    const emittedId = uniqueLegacyId(id, 'pivi-command');
-    seenIds.add(emittedId);
-    const piviIcon = typeof item.icon === 'string' && item.icon.trim() ? item.icon.trim() : undefined;
-    const executionTarget: EditorToolbarExecutionTarget = item.executionTarget === 'inline-edit'
-      ? 'inline-edit'
-      : 'sidebar';
-    shortcuts.push(piviIcon
-      ? { id: emittedId, kind, label, enabled, piviCommandKey, executionTarget, icon: piviIcon }
-      : { id: emittedId, kind, label, enabled, piviCommandKey, executionTarget });
-  }
-
-  const missingActions = REQUIRED_PIVI_ACTIONS
-    .filter(actionId => !seenActions.has(actionId))
-    .map(actionId => ({ id: actionId, kind: 'pivi-action' as const, actionId, enabled: true }));
-
-  return { enabled: toolbarEnabled, shortcuts: [...missingActions, ...shortcuts] };
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -741,3 +541,5 @@ export interface PiviSettings {
   // Allow provider-specific extension fields
   [key: string]: unknown;
 }
+
+export * from './editorSelectionToolbarSettings';

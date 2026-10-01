@@ -4,13 +4,10 @@ import {
 } from '@earendil-works/pi-coding-agent';
 import type { SessionJsonlSourceFingerprint } from '@pivi/agent/session/sessionJournal';
 import {
-  PIVI_MESSAGE_UI,
-  PIVI_UI_CONTEXT,
   SessionIndexCorruptError,
   SessionIndexError,
   SessionIndexStaleError,
 } from '@pivi/agent/session/types';
-import { createHash } from 'crypto';
 import {
   appendFileSync,
   closeSync,
@@ -33,9 +30,11 @@ import {
   migrateLegacySessionJsonlIndex,
 } from './sessionJsonlIndexLocation';
 import {
-  hashDurableUserContent,
-  hashVisibleUserText,
-} from './sessionMessageProjection';
+  parseJsonObject,
+  scanJsonlLines,
+  type SessionJsonlIndexLine,
+  sha256,
+} from './sessionJsonlLineScan';
 
 export {
   configureSessionJsonlIndexRoot,
@@ -44,6 +43,7 @@ export {
   getSessionJsonlIndexPath,
   migrateLegacySessionJsonlIndex,
 } from './sessionJsonlIndexLocation';
+export type { SessionJsonlIndexLine } from './sessionJsonlLineScan';
 export type { SessionJsonlSourceFingerprint } from '@pivi/agent/session/sessionJournal';
 
 const INDEX_VERSION = 2;
@@ -52,22 +52,6 @@ const FINGERPRINT_BYTES = 4096;
 interface IndexFormatRecord {
   kind: 'index';
   version: typeof INDEX_VERSION;
-}
-
-export interface SessionJsonlIndexLine {
-  kind: 'line';
-  lineKind: 'header' | 'entry';
-  id: string;
-  entryType: string;
-  customType?: string;
-  role?: string;
-  targetEntryId?: string;
-  userTextSha256?: string;
-  targetDisplayTextSha256?: string;
-  hasLegacyExternalContext?: true;
-  offset: number;
-  length: number;
-  sha256: string;
 }
 
 interface IndexCheckpointRecord {
@@ -110,10 +94,6 @@ interface BigIntStats {
 }
 
 const indexCache = new Map<string, MutableSessionJsonlIndex>();
-
-function sha256(value: Uint8Array): string {
-  return createHash('sha256').update(value).digest('hex');
-}
 
 function extendLineChain(
   previous: string,
@@ -224,97 +204,6 @@ function fingerprintsEqual(
     && a.modifiedNs === b.modifiedNs
     && a.headSha256 === b.headSha256
     && a.tailSha256 === b.tailSha256;
-}
-
-function parseJsonObject(raw: Buffer, sessionFile: string, offset: number): Record<string, unknown> {
-  try {
-    const value: unknown = JSON.parse(raw.toString('utf8'));
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      throw new Error('line is not an object');
-    }
-    return value as Record<string, unknown>;
-  } catch (error) {
-    throw new SessionIndexCorruptError(
-      `Invalid session JSONL at byte ${offset}`,
-      sessionFile,
-      { cause: error },
-    );
-  }
-}
-
-function scanJsonlLines(
-  content: Buffer,
-  sessionFile: string,
-  baseOffset: number,
-  includeHeader: boolean,
-): SessionJsonlIndexLine[] {
-  const lines: SessionJsonlIndexLine[] = [];
-  let lineStart = 0;
-  while (lineStart < content.length) {
-    const newline = content.indexOf(0x0a, lineStart);
-    const lineEnd = newline >= 0 ? newline : content.length;
-    const raw = content.subarray(lineStart, lineEnd);
-    if (raw.length === 0) {
-      throw new SessionIndexCorruptError(
-        `Empty session JSONL line at byte ${baseOffset + lineStart}`,
-        sessionFile,
-      );
-    }
-    const parsed = parseJsonObject(raw, sessionFile, baseOffset + lineStart);
-    const isHeader = includeHeader && lines.length === 0;
-    if (isHeader) {
-      if (parsed.type !== 'session' || typeof parsed.id !== 'string') {
-        throw new SessionIndexCorruptError('Session JSONL does not start with a valid header', sessionFile);
-      }
-    } else if (typeof parsed.id !== 'string' || typeof parsed.type !== 'string') {
-      throw new SessionIndexCorruptError(
-        `Session entry at byte ${baseOffset + lineStart} is missing type or id`,
-        sessionFile,
-      );
-    }
-    const message = parsed.message && typeof parsed.message === 'object' && !Array.isArray(parsed.message)
-      ? parsed.message as Record<string, unknown>
-      : undefined;
-    const data = parsed.data && typeof parsed.data === 'object' && !Array.isArray(parsed.data)
-      ? parsed.data as Record<string, unknown>
-      : undefined;
-    const turnRequest = data?.turnRequest
-      && typeof data.turnRequest === 'object'
-      && !Array.isArray(data.turnRequest)
-      ? data.turnRequest as Record<string, unknown>
-      : undefined;
-    const hasLegacyExternalContext = (
-      parsed.customType === PIVI_UI_CONTEXT
-      && Object.hasOwn(data ?? {}, 'externalContextPaths')
-    ) || (
-      parsed.customType === PIVI_MESSAGE_UI
-      && Object.hasOwn(turnRequest ?? {}, 'externalContextPaths')
-    );
-    lines.push({
-      kind: 'line',
-      lineKind: isHeader ? 'header' : 'entry',
-      id: parsed.id,
-      entryType: parsed.type,
-      ...(typeof parsed.customType === 'string' ? { customType: parsed.customType } : {}),
-      ...(typeof message?.role === 'string' ? { role: message.role } : {}),
-      ...(typeof data?.targetEntryId === 'string' ? { targetEntryId: data.targetEntryId } : {}),
-      ...(message?.role === 'user'
-        ? { userTextSha256: hashDurableUserContent(message.content) }
-        : {}),
-      ...(parsed.customType === PIVI_MESSAGE_UI && typeof data?.displayContent === 'string'
-        ? { targetDisplayTextSha256: hashVisibleUserText(data.displayContent) }
-        : {}),
-      ...(hasLegacyExternalContext ? { hasLegacyExternalContext: true as const } : {}),
-      offset: baseOffset + lineStart,
-      length: raw.length,
-      sha256: sha256(raw),
-    });
-    if (newline < 0) {
-      break;
-    }
-    lineStart = newline + 1;
-  }
-  return lines;
 }
 
 function serializeRecords(records: readonly IndexRecord[]): string {
