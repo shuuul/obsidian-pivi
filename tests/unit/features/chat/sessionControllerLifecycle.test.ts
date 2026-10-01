@@ -38,7 +38,6 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
   const ensureServiceForSession = jest.fn(async () => undefined);
   const callbacks = {
     onNewSession: jest.fn(),
-    onSessionLoaded: jest.fn(),
     onSessionSwitched: jest.fn(),
   };
 

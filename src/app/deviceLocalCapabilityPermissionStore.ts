@@ -10,8 +10,6 @@ import type { App } from 'obsidian';
 export const DEVICE_LOCAL_CAPABILITY_PERMISSIONS_STORAGE_KEY = 'pivi.capability-permissions.v1';
 
 export class ObsidianDeviceLocalCapabilityPermissionStore {
-  private revision = 0;
-
   constructor(private readonly app: App) {}
 
   hasRecord(): boolean {
@@ -30,17 +28,12 @@ export class ObsidianDeviceLocalCapabilityPermissionStore {
     );
   }
 
-  getRevision(): number {
-    return this.revision;
-  }
-
   save(next: DeviceLocalCapabilityPermissions): DeviceLocalCapabilityPermissions {
     const normalized = canonicalizeCapabilityPermissions(
       next,
       defaultCaseInsensitiveExecutables(),
     );
     this.app.saveLocalStorage(DEVICE_LOCAL_CAPABILITY_PERMISSIONS_STORAGE_KEY, normalized);
-    this.revision += 1;
     return normalized;
   }
 

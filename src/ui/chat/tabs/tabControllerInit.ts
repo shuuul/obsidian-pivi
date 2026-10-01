@@ -200,7 +200,6 @@ export function initializeTabControllers(
         applyCapabilityUIGating(tab, ports);
         syncSlashCommandDropdown(tab, ports.settings, getSlashCatalogConfig);
       },
-      onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
       onSessionSwitched: () => {
         tab.piviManagementApproval?.cancelPending();
         ui.slashCommandDropdown?.resetRuntimeSkillsCache();

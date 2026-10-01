@@ -257,6 +257,27 @@ describe('plugin settings startup restores device-local state', () => {
     expect(synced).not.toContain('editor:toggle-bold');
   });
 
+  it('deletes the last external directory instead of leaving it disabled', async () => {
+    const app = createMockApp();
+    new ObsidianDeviceLocalCapabilityPermissionStore(app).save({
+      ...grants,
+      externalDirectories: [{ realpath: '/external/only', enabled: true }],
+    });
+    const loaded = await loadThroughStartupPath(app);
+
+    // What the Settings page commits when the user removes the only directory.
+    loaded.mutate((settings) => {
+      settings.agentSettings.obsidianTools = {
+        ...getObsidianToolsSettingsFromBag(settings),
+        externalDirectoryPermissions: [],
+        externalReadDirectories: [],
+      };
+    });
+    await loaded.save();
+
+    expect(loaded.capabilityPermissions.getSnapshot().externalDirectories).toEqual([]);
+  });
+
   it('migrates legacy synced grants into the device store and strips them from the synced file', async () => {
     const app = createMockApp();
 

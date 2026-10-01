@@ -140,10 +140,6 @@ export class FileContextManager {
     return this.currentNotePath;
   }
 
-  getAttachedFiles(): Set<string> {
-    return this.state.getAttachedFiles();
-  }
-
   /**
    * Paths for `<context_files>`: explicit chip attachments plus all files under @folder mentions.
    * Folder expansion is path-only; file contents are not read here.
@@ -165,10 +161,6 @@ export class FileContextManager {
     this.state.clearAttachments();
     this.currentNotePath = null;
     this.refreshCurrentNoteChip();
-  }
-
-  isSessionStarted(): boolean {
-    return this.state.isSessionStarted();
   }
 
   startSession() {
@@ -399,18 +391,6 @@ export class FileContextManager {
       return [{ sessionId: part.sessionId, sessionFile: part.sessionFile, title: part.title }];
     });
     return sessions.length > 0 ? sessions : undefined;
-  }
-
-  getMentionedMcpServers(): Set<string> {
-    return this.state.getMentionedMcpServers();
-  }
-
-  clearMcpMentions(): void {
-    this.state.clearMcpMentions();
-  }
-
-  updateMcpMentionsFromText(text: string): void {
-    this.mentionDropdown.updateMcpMentionsFromText(text);
   }
 
   private hasExcludedTag(file: TFile): boolean {

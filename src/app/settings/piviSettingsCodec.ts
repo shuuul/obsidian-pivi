@@ -233,7 +233,6 @@ export interface DeviceLocalExternalReadDirectories {
 }
 
 export interface DeviceLocalProviderSettings {
-  loadInitialized(): DeviceLocalProviderStateV1 | null;
   save(state: DeviceLocalProviderStateV1): void;
 }
 
@@ -384,17 +383,12 @@ export function createPiviSettingsCodec(
     prepareForSave(settings) {
       deviceLocalProviders.save(extractDeviceLocalProviderState(settings));
       const tools = getObsidianToolsSettingsFromBag(settings);
-      const current = deviceLocalCapabilities.getSnapshot();
       deviceLocalCapabilities.save(canonicalizeCapabilityPermissions({
         version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
         bash: tools.bashPermissions,
         obsidianCommands: tools.commandAllowlist,
-        externalDirectories: tools.externalDirectoryPermissions.length > 0
-          ? tools.externalDirectoryPermissions
-          : mergeExternalDirectoryPermissions(
-            current.externalDirectories,
-            tools.externalReadDirectories,
-          ),
+        // The loaded records are authoritative: an empty list means the user removed them all.
+        externalDirectories: tools.externalDirectoryPermissions,
       }));
       return stripDeviceLocalSettings(
         stripLocalizedFieldsFromRuntimeSettings(settings) as PiviSettings,

@@ -21,7 +21,6 @@ import { createSessionGreeting } from './sessionWelcome';
 
 export interface SessionControllerCallbacks {
   onNewSession?: () => void;
-  onSessionLoaded?: () => void;
   onSessionSwitched?: () => void;
 }
 
