@@ -1,17 +1,15 @@
-import { Agent, type AgentMessage, type AgentTool, type StreamFn, type ThinkingLevel } from '@earendil-works/pi-agent-core';
+import type {
+  Agent} from '@earendil-works/pi-agent-core';
 import {
-  type AuthResult,
-  createInitialSystemMessage,
-  getInitialSystemMessage,
-  type SystemMessage,
-} from '@earendil-works/pi-ai';
-import { getProviderAuthFailureHint } from '@pivi/agent/auth/providerAuthFailureHint';
-import { getProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
+  type AgentMessage,
+  type AgentTool,
+} from '@earendil-works/pi-agent-core';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
-import type { McpOAuthService, McpServerManager } from '@pivi/agent/mcp';
-import { McpToolBridge } from '@pivi/agent/mcp';
-import type { McpProcessEnv, McpTransportFetch } from '@pivi/agent/mcp/ports';
-import type { HttpClient, SyncSecretStore } from '@pivi/agent/ports';
+import type {
+  McpOAuthService,
+  McpServerManager,
+} from '@pivi/agent/mcp';
+import type { McpToolBridge } from '@pivi/agent/mcp';
 import type { CapabilityApprovalPort } from '@pivi/agent/ports/capabilityApproval';
 import {
   appendExternalContextAvailability,
@@ -20,12 +18,13 @@ import {
   normalizePromptModuleSettings,
   type PromptModuleSettings,
 } from '@pivi/agent/prompt';
-import type { ChatMessage, OpenSessionState, StreamChunk } from '@pivi/agent/runtime';
-import { getContextCalibration } from '@pivi/agent/runtime/contextAccounting';
-import { extractTextContent } from '@pivi/agent/runtime/messageContent';
+import type {
+  ChatMessage,
+  OpenSessionState,
+  StreamChunk,
+} from '@pivi/agent/runtime';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 import { prepareChatTurn } from '@pivi/agent/runtime/prepareTurn';
-import { toChatTurnRequestSnapshot } from '@pivi/agent/runtime/queuedTurn';
 import { RuntimeReadyState } from '@pivi/agent/runtime/runtimeReadyState';
 import {
   buildSessionStateUpdates,
@@ -40,17 +39,11 @@ import type {
   PiTurnOptions,
   PreparedChatTurn,
 } from '@pivi/agent/runtime/types';
-import { calculateReadToolMaxChars, type ReadAllowanceReservation } from '@pivi/agent/runtime/usage';
-import { TOOL_SPAWN_AGENT } from '@pivi/agent/tools';
-
 import {
-  refreshCustomPiProviderModels,
-  streamPiAiModelsSimple,
-} from '../models/piAiModels';
-import { resolvePiModel, resolvePiModelByKey, resolvePiProviderAuth } from '../models/piModelEnv';
+  type ReadAllowanceReservation,
+} from '@pivi/agent/runtime/usage';
+
 import type { PiResolvedModel } from '../models/piModelRegistry';
-import { resolvePiThinkingLevelForModel } from '../models/piThinkingLevels';
-import { sanitizeAgentMessagesForLlm } from '../session/agentMessageHistory';
 import { stripCompactCommand } from '../session/piContextCompaction';
 import { SessionTreeStore } from '../session/sessionTreeStore';
 import {
@@ -58,54 +51,52 @@ import {
   type PiBaseToolProvider,
   type PiMainOnlyToolProvider,
 } from '../tools/buildPiToolRegistryCore';
-import { remindCanonicalToolForm, toPiAgentTool, wrapStreamFnToHideAliasTools } from '../tools/piToolAdapter';
-import { PiAgentEventAdapter, type PiChatErrorContext } from './piAgentEventAdapter';
-import { createPiAuxQueryRunner, type PiAuxQueryRunner } from './piAuxQueryRunner';
+import {
+  PiAgentEventAdapter,
+  type PiChatErrorContext,
+} from './piAgentEventAdapter';
+import {
+  createPiAuxQueryRunner,
+  type PiAuxQueryRunner,
+} from './piAuxQueryRunner';
 import {
   type ActiveTurn,
   closeActiveTurnQueue,
   createActiveTurn,
-  getSubagentOwnerToolId,
 } from './piChatRuntimeActiveTurn';
 import {
-  attachContextEnvelope,
-  buildUsageAfterCompaction,
-  compactCurrentSession,
   invalidateCompactionState,
   type PiChatCompactionState,
   syncSessionMessagesAfterTurn,
 } from './piChatRuntimeCompaction';
 import { testPiChatConnectivity } from './piChatRuntimeConnectivity';
+import { PiChatModelResolver } from './piChatRuntimeModels';
+import {
+  authorizeModelSelection,
+  describeAgentInitFailure,
+  describeMissingProviderAuth,
+  replaceLeadingSystemPrompt,
+  resolveChatErrorContext,
+  streamManualCompaction,
+} from './piChatRuntimeSupport';
+import { buildSubagentAgentTools, createChatAgent, createMcpToolBridge, steerActiveTurn } from './piChatRuntimeTools';
 import { streamPiChatTurn } from './piChatRuntimeTurn';
 import {
-  buildEstimatedUsageInfo,
-  latestUsageFromMessages,
-} from './piChatRuntimeUsage';
-import { toPiImageContent } from './piImageContent';
+  persistSteeredTurnBeforeSync,
+  routeSubagentChunk,
+} from './piChatRuntimeTurnSync';
+import {
+  type PiChatRuntimeNetwork,
+  type PiChatRuntimeProviderOverride,
+} from './piChatRuntimeTypes';
 import { createPiReadBudget } from './piReadBudget';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import type { SubagentConcurrencyLimiter } from './subagentConcurrencyLimiter';
+export {
+  type PiChatRuntimeNetwork,
+  type PiChatRuntimeProviderOverride,
+} from './piChatRuntimeTypes';
 
-
-export interface PiChatRuntimeNetwork {
-  httpClient: HttpClient;
-  mcpFetch: McpTransportFetch;
-  mcpProcessEnv: McpProcessEnv;
-  mcpSecretStorage?: SyncSecretStore;
-}
-
-/** Engine-local provider seam used by development harnesses and focused tests. */
-export interface PiChatRuntimeProviderOverride {
-  model: PiResolvedModel;
-  streamFn: StreamFn;
-  auth: AuthResult;
-}
-
-const POST_LOAD_MODEL_METADATA_PROVIDER_IDS = new Set([
-  'ollama',
-  'lmstudio',
-  'llama-cpp',
-]);
 const logger = new PluginLogger('PiChatRuntime');
 
 export class PiChatRuntime implements PiChatService {
@@ -132,7 +123,7 @@ export class PiChatRuntime implements PiChatService {
   };
   private readonly subagentRunner: PiAuxQueryRunner;
   private readonly readBudget = createPiReadBudget(
-    () => this.calculateReadMaxCharsForTools(),
+    () => this.models.readMaxCharsForTools(),
   );
   private readonly subagentChunkListeners = new Set<(chunk: StreamChunk) => void | Promise<void>>();
   private readonly readyState = new RuntimeReadyState((error) => {
@@ -140,7 +131,7 @@ export class PiChatRuntime implements PiChatService {
   });
   private openSessionAgentState: Record<string, unknown> | undefined;
   private externalContextPaths: string[] = [];
-  private readonly postLoadModelRefreshSuccesses = new Set<string>();
+  private readonly models: PiChatModelResolver;
   private capabilityApproval: CapabilityApprovalPort | null = null;
 
   constructor(
@@ -158,17 +149,10 @@ export class PiChatRuntime implements PiChatService {
     private readonly mainOnlyToolProvider: PiMainOnlyToolProvider | null = null,
     private readonly providerOverride: PiChatRuntimeProviderOverride | null = null,
   ) {
+    this.models = new PiChatModelResolver(plugin, providerOverride, (message) => { logger.warn(message); });
     this.capabilityApproval = capabilityApproval;
     this.mcpManager = mcpManager;
-    this.mcpBridge = mcpManager
-      ? new McpToolBridge(
-        mcpManager,
-        mcpOAuth,
-        network.mcpFetch,
-        network.mcpProcessEnv,
-        network.mcpSecretStorage,
-      )
-      : null;
+    this.mcpBridge = createMcpToolBridge(mcpManager, mcpOAuth, network);
     this.subagentRunner = createPiAuxQueryRunner(plugin, {
       getTools: (resolveReadMaxChars) => this.buildSubagentTools(resolveReadMaxChars),
       onSubagentChunk: (chunk) => {
@@ -228,12 +212,11 @@ export class PiChatRuntime implements PiChatService {
     }
   }
 
-
   async reloadMcpServers(): Promise<void> {
     await this.mcpBridge?.reload();
     // Warm bridge tool cache so slash/runtime and system-prompt inventory are ready.
     await this.mcpBridge?.prefetchEnabledTools();
-    this.syncMcpTools();
+    this.syncAgentTools();
   }
 
   async syncSystemPrompt(): Promise<void> {
@@ -251,21 +234,16 @@ export class PiChatRuntime implements PiChatService {
   }
 
   async ensureReady(options?: PiEnsureReadyOptions): Promise<boolean> {
-    const model = this.resolveModel();
+    const model = this.models.resolveModel();
     if (!model) {
       logger.error('Could not resolve Pi model from settings');
       this.setReady(false);
       return false;
     }
 
-    const auth = await this.resolveAuth(model);
+    const auth = await this.models.resolveAuth(model);
     if (!auth) {
-      if (model.provider === 'openai-codex') {
-        logger.error('OpenAI Codex OAuth credentials are missing or unavailable. Reconnect OpenAI Codex in provider settings.');
-      } else {
-        const expectedVar = getProviderEnvVarNames(model.provider).apiKeyVar;
-        logger.error(`API key not found for provider: ${model.provider}. Set the environment variable ${expectedVar} in plugin settings.`);
-      }
+      logger.error(describeMissingProviderAuth(model.provider));
       this.setReady(false);
       return false;
     }
@@ -292,22 +270,14 @@ export class PiChatRuntime implements PiChatService {
     );
     const sessionMessages = this.sessionTree?.loadAgentMessages() ?? [];
 
-    this.agent = new Agent({
-      initialState: {
-        model,
-        systemPrompt,
-        tools: registry.tools,
-        messages: sessionMessages,
-        thinkingLevel: this.resolveThinkingLevelForModel(model),
-      },
-      convertToLlm: (messages) => sanitizeAgentMessagesForLlm(messages),
-      streamFn: wrapStreamFnToHideAliasTools(
-        this.providerOverride?.streamFn
-          ?? ((streamModel, context, options) => streamPiAiModelsSimple(streamModel, context, options)),
-      ),
-      afterToolCall: remindCanonicalToolForm,
+    this.agent = createChatAgent({
+      model,
+      systemPrompt,
+      tools: registry.tools,
+      messages: sessionMessages,
+      thinkingLevel: this.models.resolveThinkingLevel(model),
+      streamFn: this.providerOverride?.streamFn,
       sessionId: this.sessionId ?? undefined,
-      steeringMode: 'one-at-a-time',
     });
 
     this.systemPromptKey = computePiSystemPromptKey(
@@ -331,11 +301,7 @@ export class PiChatRuntime implements PiChatService {
     this.setExternalContextPaths(turn.request.externalContextPaths ?? []);
 
     if (!(await this.ensureReady())) {
-      const model = this.resolveModel();
-      const providerHint = model
-        ? getProviderAuthFailureHint(model.provider)
-        : 'Check your model selection in settings.';
-      yield { type: 'error', content: `Failed to initialize Pi Agent. ${providerHint}` };
+      yield { type: 'error', content: describeAgentInitFailure(this.models.resolveModel()) };
       yield { type: 'done' };
       return;
     }
@@ -347,25 +313,7 @@ export class PiChatRuntime implements PiChatService {
     }
 
     if (turn.isCompact) {
-      try {
-        const compacted = await compactCurrentSession(this.compactionDeps(), 'manual', stripCompactCommand(turn.request.text));
-        if (compacted) {
-          yield { type: 'context_compacted', ...compacted };
-          const usage = buildUsageAfterCompaction(
-            this.compactionDeps(),
-            undefined,
-            compacted.tokensAfter,
-          );
-          if (usage) {
-            yield { type: 'usage', usage };
-          }
-        } else {
-          yield { type: 'notice', level: 'info', content: 'There is not enough session history to compact yet.' };
-        }
-      } catch (error) {
-        yield { type: 'error', content: error instanceof Error ? error.message : String(error) };
-      }
-      yield { type: 'done' };
+      yield* streamManualCompaction(() => this.compactionDeps(), stripCompactCommand(turn.request.text));
       return;
     }
 
@@ -401,35 +349,17 @@ export class PiChatRuntime implements PiChatService {
         compaction: this.compactionDeps(),
         eventAdapter: this.eventAdapter,
         sessionTree: this.sessionTree,
-        resolveModel: () => this.resolveModel(),
-        resolveThinkingLevel: (model) => this.resolveThinkingLevelForModel(model),
-        authorizeAndSyncAgentModelSelection: async (model) => {
-          let selectedModel = model;
-          while (true) {
-            const auth = await this.resolveAuth(selectedModel);
-            if (
-              activeTurn.abortController.signal.aborted
-              || this.activeTurn !== activeTurn
-              || this.agent !== agent
-            ) return null;
-            if (!auth) {
-              throw new Error(`Provider authentication is unavailable for ${selectedModel.provider}.`);
-            }
-
-            const latestModel = this.resolveModel();
-            if (!latestModel) return null;
-            if (
-              latestModel.provider !== selectedModel.provider
-              || latestModel.id !== selectedModel.id
-            ) {
-              selectedModel = latestModel;
-              continue;
-            }
-            this.syncAgentModelSelection(selectedModel, agent);
-            return selectedModel;
-          }
-        },
-        refreshModelMetadata: () => this.refreshLocalModelMetadataAfterPrompt(agent),
+        resolveModel: () => this.models.resolveModel(),
+        resolveThinkingLevel: (model) => this.models.resolveThinkingLevel(model),
+        authorizeAndSyncAgentModelSelection: (model) => authorizeModelSelection(model, {
+          resolveAuth: (candidate) => this.models.resolveAuth(candidate),
+          resolveModel: () => this.models.resolveModel(),
+          isStale: () => activeTurn.abortController.signal.aborted
+            || this.activeTurn !== activeTurn
+            || this.agent !== agent,
+          sync: (selected) => { this.syncAgentModelSelection(selected, agent); },
+        }),
+        refreshModelMetadata: () => this.models.refreshLocalMetadataAfterPrompt(agent),
         syncSessionMessages: (messages) => {
           this.persistSteeredTurnBeforeSync(activeTurn, messages);
           this.syncSessionMessagesAfterTurn(
@@ -451,27 +381,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   steer(turn: PreparedChatTurn): boolean {
-    const activeTurn = this.activeTurn;
-    const agent = this.agent;
-    if (
-      !activeTurn
-      || activeTurn.abortController.signal.aborted
-      || !agent?.signal
-      || agent.signal.aborted
-    ) {
-      return false;
-    }
-    activeTurn.steeredTurns.push(turn);
-    const images = toPiImageContent(turn.request.images);
-    agent.steer({
-      role: 'user',
-      // Mirror agent.prompt(text, images): text-only stays a string; attachments use content blocks.
-      content: images.length > 0
-        ? [{ type: 'text', text: turn.prompt }, ...images]
-        : turn.prompt,
-      timestamp: Date.now(),
-    });
-    return true;
+    return steerActiveTurn(this.activeTurn, this.agent, turn);
   }
 
   cancel(): void {
@@ -489,7 +399,6 @@ export class PiChatRuntime implements PiChatService {
   getSessionId(): string | null {
     return this.sessionId ?? this.agent?.sessionId ?? null;
   }
-
 
   isReady(): boolean {
     return this.readyState.isReady();
@@ -557,15 +466,9 @@ export class PiChatRuntime implements PiChatService {
   }
 
   async testConnectivity(): Promise<ConnectivityTestResult> {
-    const model = this.resolveModel();
-    const auth = model ? await this.resolveAuth(model) : undefined;
+    const model = this.models.resolveModel();
+    const auth = model ? await this.models.resolveAuth(model) : undefined;
     return testPiChatConnectivity(this.network.httpClient, model, auth);
-  }
-
-
-
-  private syncMcpTools(): void {
-    this.syncAgentTools();
   }
 
   private syncAgentTools(): void {
@@ -579,32 +482,15 @@ export class PiChatRuntime implements PiChatService {
   }
 
   private buildToolRegistry() {
-    const vaultPath = this.getVaultPath();
-    const resolveReadMaxChars = (requestedMaxChars?: number) => (
-      this.readBudget.reserve(requestedMaxChars)
-    );
-    if (!vaultPath) {
-      return buildPiToolRegistry({
-        host: this.plugin,
-        vaultPath: '',
-        mcpBridge: this.mcpBridge,
-        baseToolProvider: this.baseToolProvider,
-        mainOnlyToolProvider: this.mainOnlyToolProvider,
-        externalContextPaths: this.externalContextPaths,
-        subagentQueryRunner: this.subagentRunner,
-        resolveReadMaxChars,
-        capabilityApproval: this.capabilityApproval,
-      });
-    }
     return buildPiToolRegistry({
       host: this.plugin,
-      vaultPath,
+      vaultPath: this.getVaultPath() || '',
       mcpBridge: this.mcpBridge,
       baseToolProvider: this.baseToolProvider,
       mainOnlyToolProvider: this.mainOnlyToolProvider,
       externalContextPaths: this.externalContextPaths,
       subagentQueryRunner: this.subagentRunner,
-      resolveReadMaxChars,
+      resolveReadMaxChars: (requestedMaxChars?: number) => this.readBudget.reserve(requestedMaxChars),
       capabilityApproval: this.capabilityApproval,
     });
   }
@@ -612,25 +498,14 @@ export class PiChatRuntime implements PiChatService {
   private buildSubagentTools(
     resolveReadMaxChars: (requestedMaxChars?: number) => ReadAllowanceReservation,
   ): AgentTool[] {
-    const vaultPath = this.getVaultPath();
-    // Intentionally uses only baseToolProvider (+ MCP). mainOnlyToolProvider is
-    // never requested here so management tools cannot appear in subagent inventory.
-    if (!vaultPath || !this.baseToolProvider) {
-      return [];
-    }
-    const providedBaseTools = this.baseToolProvider({
-      vaultPath,
+    return buildSubagentAgentTools({
+      vaultPath: this.getVaultPath(),
+      baseToolProvider: this.baseToolProvider,
+      mcpBridge: this.mcpBridge,
       externalContextPaths: this.externalContextPaths,
-      resolveReadMaxChars,
       capabilityApproval: this.capabilityApproval,
+      resolveReadMaxChars,
     });
-    const baseTools = providedBaseTools.toolSpecs
-      .map(toPiAgentTool)
-      .filter((tool) => tool.name !== TOOL_SPAWN_AGENT);
-    const mcpTools = this.mcpBridge?.getToolSpecs()
-      .map(toPiAgentTool)
-      .filter((tool) => tool.name !== TOOL_SPAWN_AGENT) ?? [];
-    return [...baseTools, ...mcpTools];
   }
 
   private ensureSessionTree(options?: PiEnsureReadyOptions): void {
@@ -644,19 +519,20 @@ export class PiChatRuntime implements PiChatService {
     const existingFile = this.sessionFile
       ?? getLegacySessionFileFromAgentState(this.openSessionAgentState);
     if (existingFile) {
-      this.sessionTree = SessionTreeStore.open(vaultPath, existingFile);
-      this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
-      this.leafId = this.sessionTree.getLeafId();
-      this.sessionId = this.sessionTree.getSessionId();
+      this.adoptSessionTree(SessionTreeStore.open(vaultPath, existingFile));
       return;
     }
     if (options?.allowSessionCreation === false) {
       return;
     }
-    this.sessionTree = SessionTreeStore.create(vaultPath);
-    this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
-    this.leafId = this.sessionTree.getLeafId();
-    this.sessionId = this.sessionTree.getSessionId();
+    this.adoptSessionTree(SessionTreeStore.create(vaultPath));
+  }
+
+  private adoptSessionTree(tree: SessionTreeStore): void {
+    this.sessionTree = tree;
+    this.sessionFile = tree.getVaultRelativeSessionFile();
+    this.leafId = tree.getLeafId();
+    this.sessionId = tree.getSessionId();
   }
 
   private invalidateAgentSession(): void {
@@ -674,7 +550,7 @@ export class PiChatRuntime implements PiChatService {
       sessionTree: this.sessionTree,
       agent: this.agent,
       compactionState: this.compactionState,
-      resolveModel: () => this.resolveModel(),
+      resolveModel: () => this.models.resolveModel(),
       onLeafIdChanged: (leafId: string | null) => {
         this.leafId = leafId;
       },
@@ -682,12 +558,6 @@ export class PiChatRuntime implements PiChatService {
         this.currentTurnMetadata.assistantMessageId = entryId;
       },
     };
-  }
-
-  private calculateReadMaxCharsForTools(): number {
-    const model = this.resolveModel();
-    const key = model ? `${model.provider}/${model.id}` : '';
-    return calculateReadToolMaxChars(getContextCalibration(key));
   }
 
   private syncSessionMessagesAfterTurn(
@@ -710,51 +580,13 @@ export class PiChatRuntime implements PiChatService {
   }
 
   private persistSteeredTurnBeforeSync(activeTurn: ActiveTurn, messages: AgentMessage[]): void {
-    const turn = activeTurn.steeredTurns[activeTurn.persistedSteeredTurnCount];
-    if (!turn || !this.sessionTree) {
-      return;
-    }
-    const containsSteeredUserMessage = messages.some((message) => {
-      if (message.role !== 'user') return false;
-      const content = typeof message.content === 'string'
-        ? message.content
-        : extractTextContent(message.content);
-      // Pi queues the exact AgentMessage passed to steer(); context transforms apply only
-      // to the provider request. Keep this strict so an earlier similar turn cannot match.
-      return content === turn.prompt;
-    });
-    if (!containsSteeredUserMessage) {
-      return;
-    }
-    const targetEntryId = this.sessionTree.appendUserMessage(
-      turn.persistedContent,
-      turn.request.images,
-    );
-    this.sessionTree.appendMessageUi({
-      targetEntryId,
-      displayContent: turn.displayContent,
-      turnRequest: toChatTurnRequestSnapshot(turn.request),
-    });
-    activeTurn.persistedSteeredTurnCount += 1;
+    persistSteeredTurnBeforeSync(this.sessionTree, activeTurn, messages);
   }
 
   private dispatchSubagentChunk(chunk: StreamChunk): void {
-    const activeTurn = this.activeTurn;
-    const subagentToolId = getSubagentOwnerToolId(chunk);
-    if (
-      activeTurn?.acceptingSubagentChunks
-      && subagentToolId
-      && activeTurn.subagentToolIds.has(subagentToolId)
-    ) {
-      activeTurn.queue.push(chunk);
-      return;
-    }
-
-    for (const listener of this.subagentChunkListeners) {
-      Promise.resolve(listener(chunk)).catch((error: unknown) => {
-        logger.warn('subagent chunk listener threw', error);
-      });
-    }
+    routeSubagentChunk(this.activeTurn, this.subagentChunkListeners, chunk, (error) => {
+      logger.warn('subagent chunk listener threw', error);
+    });
   }
 
   private getVaultPath(): string | null {
@@ -798,19 +630,7 @@ export class PiChatRuntime implements PiChatService {
         resolvedRegistry,
         composition,
       );
-      // Pi 0.86 derives AgentState.systemPrompt by replaying the transcript's
-      // system messages, so a prompt change replaces the leading system message
-      // in place (keeping its tool declarations) instead of assigning the
-      // now-read-only state field.
-      const messages = [...this.agent.state.messages];
-      const initial = getInitialSystemMessage(messages);
-      if (initial) {
-        const replacement: SystemMessage = { ...initial, content: nextPrompt };
-        this.agent.state.messages = [replacement, ...messages.slice(1)];
-      } else {
-        const seeded = createInitialSystemMessage(nextPrompt, undefined);
-        this.agent.state.messages = seeded ? [seeded, ...messages] : messages;
-      }
+      replaceLeadingSystemPrompt(this.agent, nextPrompt);
     }
     this.systemPromptKey = nextKey;
   }
@@ -819,61 +639,15 @@ export class PiChatRuntime implements PiChatService {
     this.readyState.setReady(ready);
   }
 
-  private resolveThinkingLevelForModel(
-    model: NonNullable<ReturnType<typeof resolvePiModel>>,
-  ): ThinkingLevel {
-    return resolvePiThinkingLevelForModel(
-      model,
-      typeof this.plugin.settings.thinkingLevel === 'string' ? this.plugin.settings.thinkingLevel : undefined,
-    );
-  }
-
   private applyThinkingLevelFromSettings(): void {
     if (!this.agent) {
       return;
     }
-    const model = this.resolveModel();
+    const model = this.models.resolveModel();
     if (!model) {
       return;
     }
-    this.agent.state.thinkingLevel = this.resolveThinkingLevelForModel(model);
-  }
-
-  private async refreshLocalModelMetadataAfterPrompt(agent: Agent): Promise<boolean> {
-    const model = agent.state.model;
-    if (!model || !POST_LOAD_MODEL_METADATA_PROVIDER_IDS.has(model.provider)) {
-      return false;
-    }
-    const modelKey = `${model.provider}/${model.id}`;
-    if (this.postLoadModelRefreshSuccesses.has(modelKey)) {
-      return false;
-    }
-    try {
-      if (await refreshCustomPiProviderModels(model.provider)) {
-        this.postLoadModelRefreshSuccesses.add(modelKey);
-        const refreshedModel = this.resolveModel();
-        if (
-          refreshedModel?.provider === model.provider
-          && refreshedModel.id === model.id
-        ) {
-          agent.state.model = refreshedModel;
-          return true;
-        }
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      logger.warn(`Failed to refresh ${model.provider} model metadata after first prompt: ${message}`);
-    }
-    return false;
-  }
-
-  /**
-   * Resolve a pi-ai Model object from plugin settings.
-   *
-   * Settings store models as "<provider>/<modelId>".
-   */
-  private resolveModel(): PiResolvedModel | null {
-    return this.providerOverride?.model ?? resolvePiModel(this.plugin);
+    this.agent.state.thinkingLevel = this.models.resolveThinkingLevel(model);
   }
 
   /**
@@ -891,7 +665,7 @@ export class PiChatRuntime implements PiChatService {
       // Compaction thresholds derive from the model's context window.
       invalidateCompactionState(this.compactionState);
     }
-    agent.state.thinkingLevel = this.resolveThinkingLevelForModel(model);
+    agent.state.thinkingLevel = this.models.resolveThinkingLevel(model);
   }
 
   /**
@@ -900,40 +674,11 @@ export class PiChatRuntime implements PiChatService {
    * message first and fall back to the current selection.
    */
   private resolveErrorContext(message: Record<string, unknown>): PiChatErrorContext | null {
-    const provider = typeof message.provider === 'string' ? message.provider : '';
-    const modelId = typeof message.model === 'string' ? message.model : '';
-    const servingModel = provider && modelId
-      ? resolvePiModelByKey(`${provider}/${modelId}`, this.plugin.settings.customContextLimits)
-      : null;
-    const model = servingModel ?? this.resolveModel();
-    if (!model) {
-      return null;
-    }
-    const messages = this.agent?.state.messages ?? [];
-    const usage = latestUsageFromMessages(messages, model)
-      ?? buildEstimatedUsageInfo(messages, model);
-    const projected = usage
-      ? attachContextEnvelope(this.compactionDeps(), usage, undefined, messages)
-      : null;
-    const contextTokens = projected?.contextTokens ?? usage?.contextTokens ?? 0;
-    return {
-      model: `${model.provider}/${model.id}`,
-      contextWindow: model.contextWindow ?? 0,
-      ...(contextTokens > 0 ? { contextTokens } : {}),
-    };
+    return resolveChatErrorContext(message, {
+      customContextLimits: this.plugin.settings.customContextLimits,
+      resolveModel: () => this.models.resolveModel(),
+      messages: this.agent?.state.messages ?? [],
+      compactionDeps: this.compactionDeps(),
+    });
   }
-
-  private async resolveAuth(model: NonNullable<ReturnType<typeof resolvePiModel>>) {
-    if (this.providerOverride) {
-      return this.providerOverride.auth;
-    }
-    try {
-      return await resolvePiProviderAuth(this.plugin, model);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      logger.warn(`Failed to resolve provider auth for ${model.provider}: ${message}`);
-      return undefined;
-    }
-  }
-
 }

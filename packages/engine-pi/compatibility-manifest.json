@@ -182,7 +182,7 @@
       "upstreamVersion": "0.99.2",
       "reason": "Since 0.86 upstream carries the system prompt and tool declarations as transcript system messages (toolsAdded/toolsRemoved) and derives the read-only AgentState.systemPrompt by replaying them, so Pivi rewrites the leading system message for prompt changes, keeps system messages through LLM replay sanitization, and rebuilds the leading message to hide silent alias tools.",
       "implementationPaths": [
-        "packages/engine-pi/src/runtime/piChatRuntime.ts",
+        "packages/engine-pi/src/runtime/piChatRuntimeSupport.ts",
         "packages/engine-pi/src/session/agentMessageHistory.ts",
         "packages/engine-pi/src/tools/piToolAdapter.ts",
         "packages/engine-pi/src/models/piAiModels.ts"
