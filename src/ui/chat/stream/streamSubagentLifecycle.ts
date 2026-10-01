@@ -2,7 +2,6 @@ import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime';
 import type { PiChatService } from '@pivi/agent/runtime/piChatService';
 import type { SubagentInfo, ToolCallInfo } from '@pivi/agent/tools';
-import type { SubagentLifecycleAdapter } from '@pivi/agent/tools';
 import {
   isSubagentToolName,
   TOOL_SPAWN_AGENT,
@@ -10,10 +9,6 @@ import {
 } from '@pivi/agent/tools/toolNames';
 import { extractToolResultContent } from '@pivi/agent/tools/toolResultContent';
 
-import { registerMessageToolCall } from '@/ui/chat/stream/StreamEventReducer';
-import { applySubagentLifecycleToolResult } from '@/ui/chat/stream/SubagentEventPresenter';
-
-import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import { isBlockedToolResult } from '../rendering/ToolCallRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
@@ -33,7 +28,6 @@ export interface StreamSubagentCoordinatorDeps {
 }
 
 export class StreamSubagentCoordinator {
-  private lifecycleAgentIdToSpawnId = new Map<string, string>();
   private hydrationGeneration = 0;
   private hydrationRetryTimers = new Set<number>();
   private disposed = false;
@@ -43,69 +37,6 @@ export class StreamSubagentCoordinator {
 
   private normalizeToolResultContent(content: unknown): string {
     return extractToolResultContent(content, { fallbackIndent: 2 });
-  }
-
-  private getSubagentLifecycleAdapter(toolName?: string): SubagentLifecycleAdapter | null {
-    return resolveSubagentLifecycleAdapter(toolName);
-  }
-
-  handleSubagentSpawn(
-    chunk: { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> },
-    msg: ChatMessage,
-    adapter: SubagentLifecycleAdapter,
-  ): void {
-    const toolCall = registerMessageToolCall(msg, chunk, { contentBlock: true });
-    toolCall.subagent = adapter.buildSubagentInfo(toolCall, msg.toolCalls);
-  }
-
-  handleHiddenSubagentTool(
-    chunk: { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> },
-    msg: ChatMessage,
-  ): void {
-    registerMessageToolCall(msg, chunk, { contentBlock: false });
-  }
-
-  handleSubagentResult(
-    chunk: { type: 'tool_result'; id: string; content: string; isError?: boolean },
-    msg: ChatMessage,
-  ): boolean {
-    const existingToolCall = msg.toolCalls?.find(tc => tc.id === chunk.id);
-    if (!existingToolCall) return false;
-    const normalizedContent = this.normalizeToolResultContent(chunk.content);
-
-    const adapter = this.getSubagentLifecycleAdapter(existingToolCall.name);
-    if (!adapter) return false;
-
-    const lifecycleUpdate = applySubagentLifecycleToolResult(
-      existingToolCall,
-      chunk,
-      normalizedContent,
-      adapter,
-      this.lifecycleAgentIdToSpawnId,
-    );
-    if (!lifecycleUpdate) {
-      return false;
-    }
-
-    if (lifecycleUpdate.kind === 'spawn') {
-      if (lifecycleUpdate.agentId) {
-        this.lifecycleAgentIdToSpawnId.set(lifecycleUpdate.agentId, lifecycleUpdate.spawnToolId);
-      }
-
-      existingToolCall.subagent = adapter.buildSubagentInfo(existingToolCall, msg.toolCalls ?? []);
-      return true;
-    }
-
-    if (lifecycleUpdate.kind === 'wait') {
-      for (const spawnId of lifecycleUpdate.spawnToolIds) {
-        const spawnToolCall = msg.toolCalls?.find(tc => tc.id === spawnId);
-        if (!spawnToolCall) continue;
-        spawnToolCall.subagent = adapter.buildSubagentInfo(spawnToolCall, msg.toolCalls ?? []);
-      }
-      return true;
-    }
-
-    return true;
   }
 
   handleTaskToolUseViaManager(
@@ -388,7 +319,6 @@ export class StreamSubagentCoordinator {
   }
 
   resetStreamingState(): void {
-    this.lifecycleAgentIdToSpawnId.clear();
     this.invalidateHydrationRetries();
   }
 

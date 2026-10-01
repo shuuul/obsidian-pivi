@@ -26,11 +26,6 @@ export interface SubagentSection {
   bodyEl: HTMLElement;
 }
 
-export interface CreateSectionOptions {
-  initiallyExpanded?: boolean;
-  onToggle?: (isExpanded: boolean) => void;
-}
-
 export interface CreateSubagentBlockOptions {
   initiallyExpanded?: boolean;
   renderContent?: SubagentRenderContentFn;
@@ -246,7 +241,6 @@ export function createSection(
   parentEl: HTMLElement,
   title: string,
   bodyClass?: string,
-  options: CreateSectionOptions = {},
 ): SubagentSection {
   const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-section' });
 
@@ -258,10 +252,9 @@ export function createSection(
   const bodyEl = wrapperEl.createDiv({ cls: 'pivi-subagent-section-body' });
   if (bodyClass) bodyEl.addClass(bodyClass);
 
-  const state = { isExpanded: options.initiallyExpanded ?? true };
+  const state = { isExpanded: true };
   setupCollapsible(wrapperEl, headerEl, bodyEl, state, {
-    initiallyExpanded: state.isExpanded,
-    onToggle: options.onToggle,
+    initiallyExpanded: true,
     baseAriaLabel: title,
   });
 

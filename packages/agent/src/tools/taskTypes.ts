@@ -1,4 +1,4 @@
-import type { SubagentInfo, ToolCallInfo } from './types';
+import type { ToolCallInfo } from './types';
 
 export type TaskTerminalStatus = Extract<
   ToolCallInfo['status'],
@@ -14,24 +14,4 @@ export interface TaskResultInterpreter {
     fallbackStatus: TaskTerminalStatus,
   ): TaskTerminalStatus;
   extractTagValue(payload: string, tagName: string): string | null;
-}
-
-export interface SubagentLaunchResult {
-  agentId?: string;
-}
-
-export interface SubagentLifecycleAdapter {
-  isHiddenTool(name: string): boolean;
-  isSpawnTool(name: string): boolean;
-  isWaitTool(name: string): boolean;
-  isCloseTool(name: string): boolean;
-  resolveSpawnToolIds(
-    waitToolCall: ToolCallInfo,
-    agentIdToSpawnId: ReadonlyMap<string, string>,
-  ): string[];
-  buildSubagentInfo(
-    spawnToolCall: ToolCallInfo,
-    siblingToolCalls?: ToolCallInfo[],
-  ): SubagentInfo;
-  extractSpawnResult(raw: string | undefined): SubagentLaunchResult;
 }

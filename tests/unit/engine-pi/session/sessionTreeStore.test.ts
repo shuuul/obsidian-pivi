@@ -556,14 +556,6 @@ describe('SessionTreeStore', () => {
     }
   });
 
-  it('ignores invalid leafId when opening a session', () => {
-    const store = SessionTreeStore.inMemory('/test/vault');
-    const defaultLeaf = store.getLeafId();
-
-    const reopened = SessionTreeStore.open('/test/vault', '.pivi/sessions/mock.jsonl', 'deadbeef');
-    expect(reopened.getLeafId()).toBe(defaultLeaf);
-  });
-
   it('applies valid leafId when opening a session', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
     store.applyLeafId('entry-1');
@@ -576,7 +568,7 @@ describe('SessionTreeStore', () => {
     const sessionFile = store.getVaultRelativeSessionFile();
     expect(sessionFile).toBeTruthy();
 
-    const reopened = SessionTreeStore.open('/test/vault', sessionFile!, 'missing-leaf');
+    const reopened = SessionTreeStore.open('/test/vault', sessionFile!);
     expect(reopened).toBe(store);
     expect(reopened.getLeafId()).toBe(store.getLeafId());
   });

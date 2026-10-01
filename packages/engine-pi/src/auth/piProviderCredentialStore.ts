@@ -17,7 +17,7 @@ import {
   XAI_PROVIDER_ID,
 } from '@pivi/agent/auth/piProviderCredentials';
 import { isSupportedPiProviderId } from '@pivi/agent/auth/piProviderValidation';
-import { getProviderEnvVarNames, type ProviderEnvVarNames } from '@pivi/agent/auth/providerEnvVars';
+import { getProviderEnvVarNames, } from '@pivi/agent/auth/providerEnvVars';
 import {
   clearSyncSecret,
   getProviderCredentialSecret,
@@ -86,8 +86,8 @@ function readLegacyPiAiCredential(secretStorage: SyncSecretStore, providerId: st
 function credentialFromEnvironment(
   env: Record<string, string>,
   providerId: string,
-  envVars: ProviderEnvVarNames = getProviderEnvVarNames(providerId),
 ): Credential | undefined {
+  const envVars = getProviderEnvVarNames(providerId);
   const oauth = envVars.oauthVar ? env[envVars.oauthVar]?.trim() : undefined;
   if (oauth) {
     return { type: 'oauth', access: oauth, refresh: '', expires: OAUTH_NO_EXPIRY };
@@ -104,8 +104,8 @@ function credentialFromEnvironment(
 function removeCredentialEnvironmentValues(
   env: Record<string, string>,
   providerId: string,
-  envVars: ProviderEnvVarNames = getProviderEnvVarNames(providerId),
 ): boolean {
+  const envVars = getProviderEnvVarNames(providerId);
   let changed = false;
   if (env[envVars.apiKeyVar] !== undefined) {
     delete env[envVars.apiKeyVar];

@@ -105,7 +105,6 @@ function ensureElapsedInterval(deps: StreamThinkingIndicatorDeps, ownerWindow: W
 export function showThinkingIndicator(
   deps: StreamThinkingIndicatorDeps,
   overrideText?: string,
-  overrideCls?: string,
 ): void {
   const { state, getMessagesEl } = deps;
   const ownerWindow = getMessagesEl().ownerDocument.defaultView ?? window;
@@ -124,8 +123,7 @@ export function showThinkingIndicator(
   }
 
   const text = overrideText || FLAVOR_TEXTS[Math.floor(Math.random() * FLAVOR_TEXTS.length)] || 'Thinking...';
-  const className = overrideCls ? `pivi-thinking ${overrideCls}` : 'pivi-thinking';
-  writeIndicator(deps, text, className);
+  writeIndicator(deps, text, 'pivi-thinking');
   ensureElapsedInterval(deps, ownerWindow);
 }
 

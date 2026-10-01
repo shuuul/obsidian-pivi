@@ -6,7 +6,6 @@ import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/agent/tools/obsidianToolNames';
-import type { SubagentLifecycleAdapter } from '@pivi/agent/tools/taskTypes';
 import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '@pivi/agent/tools/toolInput';
 import {
   isEditTool,
@@ -24,26 +23,15 @@ import { resolveRegularToolResultStatus } from './StreamEventReducer';
 export type ToolUseStreamRoute =
   | 'subagent_task'
   | 'agent_output'
-  | 'subagent_spawn'
-  | 'subagent_hidden'
   | 'regular';
 
 /** Classify how StreamController should handle a tool_use chunk. */
-export function routeToolUseStreamChunk(
-  toolName: string,
-  lifecycleAdapter: SubagentLifecycleAdapter | null,
-): ToolUseStreamRoute {
+export function routeToolUseStreamChunk(toolName: string): ToolUseStreamRoute {
   if (isSubagentToolName(toolName)) {
     return 'subagent_task';
   }
   if (toolName === TOOL_AGENT_OUTPUT) {
     return 'agent_output';
-  }
-  if (lifecycleAdapter?.isSpawnTool(toolName)) {
-    return 'subagent_spawn';
-  }
-  if (lifecycleAdapter?.isHiddenTool(toolName)) {
-    return 'subagent_hidden';
   }
   return 'regular';
 }
@@ -58,11 +46,8 @@ export interface RegularToolResultChunk {
 }
 
 /** Only ordinary tools have a generic ChatUiSnapshot projection. */
-export function shouldProjectToolUseChunk(
-  toolName: string,
-  lifecycleAdapter: SubagentLifecycleAdapter | null,
-): boolean {
-  return routeToolUseStreamChunk(toolName, lifecycleAdapter) === 'regular';
+export function shouldProjectToolUseChunk(toolName: string): boolean {
+  return routeToolUseStreamChunk(toolName) === 'regular';
 }
 
 export interface RegularToolResultDeps {

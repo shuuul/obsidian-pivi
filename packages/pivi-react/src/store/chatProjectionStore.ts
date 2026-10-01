@@ -513,7 +513,7 @@ export class ChatProjectionStore {
     };
   }
 
-  private clearMessageEntities(messageId: string, notify = true): void {
+  private clearMessageEntities(messageId: string): void {
     const keys = this.entityKeysByMessageId.get(messageId);
     if (!keys) return;
     const remove = (
@@ -523,7 +523,7 @@ export class ChatProjectionStore {
     ) => {
       for (const id of ids) {
         entities.delete(id);
-        if (notify) for (const listener of listeners.get(id) ?? []) listener();
+        for (const listener of listeners.get(id) ?? []) listener();
       }
     };
     remove(keys.blockIds, this.blocks, this.blockListeners);

@@ -256,18 +256,15 @@ export class SessionTreeStore {
     return store;
   }
 
-  static open(vaultPath: string, sessionFile: string, leafId?: string | null): SessionTreeStore {
+  static open(vaultPath: string, sessionFile: string): SessionTreeStore {
     const cached = SessionTreeStore.liveByKey.get(cacheKey(vaultPath, sessionFile));
     if (cached) {
       cached.assertWritableSource();
-      cached.applyLeafId(leafId);
       return cached;
     }
 
     if (vaultPath.startsWith('/test/') || process.env.NODE_ENV === 'test') {
-      const store = SessionTreeStore.inMemory(vaultPath);
-      store.applyLeafId(leafId);
-      return store;
+      return SessionTreeStore.inMemory(vaultPath);
     }
 
     requireVaultSessionFile(sessionFile);
@@ -276,7 +273,6 @@ export class SessionTreeStore {
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
     const store = new SessionTreeStore(vaultPath, manager);
     store.captureSourceFingerprint();
-    store.applyLeafId(leafId);
     store.registerLive();
     return store;
   }

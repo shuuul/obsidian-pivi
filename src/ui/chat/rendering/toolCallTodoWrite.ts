@@ -94,10 +94,8 @@ export function createCurrentTaskPreview(
 export function createTodoToggleHandler(
   currentTaskEl: HTMLElement | null,
   statusEl: HTMLElement | null,
-  onExpandChange?: (expanded: boolean) => void
 ): (expanded: boolean) => void {
   return (expanded: boolean) => {
-    if (onExpandChange) onExpandChange(expanded);
     if (currentTaskEl) {
       currentTaskEl.toggleClass('pivi-hidden', expanded);
     }

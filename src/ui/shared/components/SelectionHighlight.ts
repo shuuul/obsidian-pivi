@@ -80,11 +80,12 @@ export function hideSelectionHighlight(editorView: EditorView): void {
   defaultHighlighter.hide(editorView);
 }
 
+const FLASH_DURATION_MS = 900;
+
 export function flashSelectionHighlight(
   editorView: EditorView,
   from: number,
   to: number,
-  durationMs = 900,
 ): void {
   const win = editorView.dom.ownerDocument.defaultView;
   if (!win) return;
@@ -98,5 +99,5 @@ export function flashSelectionHighlight(
   flashTimers.set(editorView, win.setTimeout(() => {
     flashTimers.delete(editorView);
     flashHighlighter.hide(editorView);
-  }, durationMs));
+  }, FLASH_DURATION_MS));
 }

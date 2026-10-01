@@ -64,11 +64,14 @@ export function resolvePiModelByKey(
 export function resolvePiProviderAuth(
   plugin: PiRuntimeHost,
   model: Model<Api>,
-  modelAuthHost: ModelAuthHost<Model<Api>, AuthResult> = piAiModelAuthHost,
 ): Promise<AuthResult | undefined> {
   const piSettings = getPiAgentSettings(plugin.settings);
 
-  return resolveProviderAuth({ disabledProviders: piSettings.disabledProviders, model, modelAuthHost });
+  return resolveProviderAuth({
+    disabledProviders: piSettings.disabledProviders,
+    model,
+    modelAuthHost: piAiModelAuthHost,
+  });
 }
 
 const piAiModelAuthHost: ModelAuthHost<Model<Api>, AuthResult> = {

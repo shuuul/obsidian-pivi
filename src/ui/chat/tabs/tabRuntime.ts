@@ -28,13 +28,12 @@ export function isClosingLifecycleState(
 export async function initializeTabService(
   tab: TabData,
   ports: ChatPorts,
-  openSessionOverride?: OpenSessionState | null,
 ): Promise<void> {
   if (tab.lifecycleState === "closing") {
     return;
   }
 
-  const openSession = await resolveOpenSession(tab, ports, openSessionOverride);
+  const openSession = await resolveOpenSession(tab, ports);
   if (tab.serviceInitialized && tab.service) {
     return;
   }
@@ -89,11 +88,7 @@ export async function initializeTabService(
 async function resolveOpenSession(
   tab: TabData,
   ports: ChatPorts,
-  openSessionOverride?: OpenSessionState | null,
 ): Promise<OpenSessionState | null> {
-  if (openSessionOverride !== undefined) {
-    return openSessionOverride;
-  }
   return tab.openSessionId
     ? ports.sessions.getOpenSession(tab.openSessionId)
     : null;
