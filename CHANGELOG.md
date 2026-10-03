@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.31.1](https://github.com/shuuul/obsidian-pivi/compare/0.31.0...0.31.1) (2026-10-04)
+
+### Bug Fixes
+
+* restore persistent Bash, Obsidian command, and external-directory grants after a restart; grants the old startup path already erased need to be granted once more
+* delete the last external directory when it is removed instead of leaving it disabled, and keep grant records in sync when a directory is pinned or unpinned
+* make the "defer math rendering during streaming" setting take effect again
+* forward the OAuth issuer from the sign-in callback, so MCP servers that advertise it can still be signed in to with the updated Pi MCP client
+* request the wider scope an MCP server asks for on the next sign-in from Settings, instead of refreshing the old grant and being rejected again
+
+### Maintenance
+
+* update the pinned Pi runtime to 1.0.1 with its latest model catalogs
+* reduce the plugin bundle from 4.53 MiB to about 4.03 MiB
+* remove dead code and unused exports, and add a check that rejects unused files and exports
+* drop the dependency-audit exceptions now that upstream ships the patched `brace-expansion`
+
 ## [0.31.0](https://github.com/shuuul/obsidian-pivi/compare/0.30.5...0.31.0) (2026-09-30)
 
 ### Features
