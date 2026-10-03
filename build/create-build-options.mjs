@@ -5,7 +5,6 @@ import { gzipSync } from 'zlib';
 import { external } from './externals.mjs';
 import { assertCommunityAudit } from './plugins/assert-community-audit.mjs';
 import { stripReactHoistableScripts } from './plugins/strip-react-hoistable-scripts.mjs';
-import { dedupePiCodingAgentNested } from './plugins/dedupe-pi-dependencies.mjs';
 import {
   shimPiCodingAgentConfig,
   shimPiCodingAgentSessionEntrypoint,
@@ -64,7 +63,6 @@ export function createBuildOptions({ production, metafile = false, write = true 
     // without assigning `window.fetch`.
     inject: [path.join(projectRoot, 'packages/obsidian-host/src/bundledFetch.ts')],
     plugins: [
-      dedupePiCodingAgentNested,
       shimPiCodingAgentSessionEntrypoint,
       shimPiCodingAgentConfig,
       shimPiAiCompat,

@@ -74,8 +74,15 @@ function writeResponse(
   res.end(body);
 }
 
+/** Authorization response delivered to the loopback callback. */
+export interface McpOAuthCallback {
+  code: string;
+  /** RFC 9207 `iss` parameter; pi-mcp rejects a code whose issuer differs from the discovered server. */
+  iss?: string;
+}
+
 interface PendingAuth {
-  resolve: (code: string) => void;
+  resolve: (callback: McpOAuthCallback) => void;
   reject: (error: Error) => void;
   timeout: number;
 }
@@ -106,6 +113,7 @@ function handleRequest(
 
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
+  const iss = url.searchParams.get('iss');
   const error = url.searchParams.get('error');
   const errorDescription = url.searchParams.get('error_description');
 
@@ -139,7 +147,11 @@ function handleRequest(
   const pending = pendingAuths.get(state)!;
   window.clearTimeout(pending.timeout);
   pendingAuths.delete(state);
-  pending.resolve(code);
+  const callback: McpOAuthCallback = { code };
+  if (iss) {
+    callback.iss = iss;
+  }
+  pending.resolve(callback);
 
   writeResponse(res, 200, 'text/html; charset=utf-8', HTML_SUCCESS);
 }
@@ -216,8 +228,8 @@ export class McpCallbackServer {
     );
   }
 
-  waitForCallback(oauthState: string): Promise<string> {
-    const { promise, resolve, reject } = createPromiseResolvers<string>();
+  waitForCallback(oauthState: string): Promise<McpOAuthCallback> {
+    const { promise, resolve, reject } = createPromiseResolvers<McpOAuthCallback>();
     const timeout = window.setTimeout(() => {
       if (this.pendingAuths.has(oauthState)) {
         this.pendingAuths.delete(oauthState);
