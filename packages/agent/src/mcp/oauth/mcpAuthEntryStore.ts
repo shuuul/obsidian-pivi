@@ -18,6 +18,11 @@ export interface AuthEntry {
   codeVerifier?: string;
   oauthState?: string;
   serverUrl?: string;
+  /**
+   * Scope a server demanded through an `insufficient_scope` challenge. The transport cannot open a
+   * browser, so the next interactive sign-in requests it instead of refreshing the narrower grant.
+   */
+  stepUpScope?: string;
 }
 
 export interface McpAuthEntryStore {
@@ -32,6 +37,8 @@ export interface McpAuthEntryStore {
   updateOAuthState(serverName: string, state: string, serverUrl?: string): Promise<void>;
   getOAuthState(serverName: string): Promise<string | undefined>;
   clearOAuthState(serverName: string): Promise<void>;
+  updateStepUpScope(serverName: string, scope: string, serverUrl: string): Promise<void>;
+  clearStepUpScope(serverName: string): Promise<void>;
   isTokenExpired(serverName: string): Promise<boolean | null>;
   hasStoredTokens(serverName: string): Promise<boolean>;
   clearClientInfo(serverName: string): Promise<void>;

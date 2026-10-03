@@ -142,4 +142,41 @@ describe('McpSecretAuthStore server URL scoping', () => {
     expect(entry?.oauthState).toBeUndefined();
     expect(entry?.serverUrl).toBe('https://new.example.com');
   });
+
+  it('records a step-up scope only against the entry for the same server URL', async () => {
+    const store = new McpSecretAuthStore(new SecretStorage());
+    await store.updateTokens('github', { accessToken: 'token', scope: 'read' }, 'https://mcp.example.com');
+
+    await store.updateStepUpScope('github', 'read write', 'https://other.example.com');
+    expect((await store.getEntry('github'))?.stepUpScope).toBeUndefined();
+
+    await store.updateStepUpScope('github', 'read write', 'https://mcp.example.com');
+    expect(await store.getAuthForUrl('github', 'https://mcp.example.com')).toMatchObject({
+      tokens: { accessToken: 'token' },
+      stepUpScope: 'read write',
+    });
+
+    await store.clearStepUpScope('github');
+    expect((await store.getEntry('github'))?.stepUpScope).toBeUndefined();
+    expect((await store.getEntry('github'))?.tokens).toMatchObject({ accessToken: 'token' });
+  });
+
+  it('never creates an entry from a step-up challenge', async () => {
+    const secretStorage = new SecretStorage();
+    const store = new McpSecretAuthStore(secretStorage);
+
+    await store.updateStepUpScope('github', 'write', 'https://mcp.example.com');
+
+    expect(await store.getEntry('github')).toBeUndefined();
+  });
+
+  it('drops a pending step-up scope when the server URL changes', async () => {
+    const store = new McpSecretAuthStore(new SecretStorage());
+    await store.updateTokens('github', { accessToken: 'token' }, 'https://mcp.example.com');
+    await store.updateStepUpScope('github', 'write', 'https://mcp.example.com');
+
+    await store.updateOAuthState('github', 'state', 'https://moved.example.com');
+
+    expect((await store.getEntry('github'))?.stepUpScope).toBeUndefined();
+  });
 });

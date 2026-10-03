@@ -169,6 +169,7 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
       delete entry.clientInfo;
       delete entry.codeVerifier;
       delete entry.oauthState;
+      delete entry.stepUpScope;
     }
     entry.tokens = tokens;
     await this.saveEntry(serverName, entry, serverUrl);
@@ -184,6 +185,7 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
       delete entry.tokens;
       delete entry.codeVerifier;
       delete entry.oauthState;
+      delete entry.stepUpScope;
     }
     entry.clientInfo = clientInfo;
     await this.saveEntry(serverName, entry, serverUrl);
@@ -199,6 +201,7 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
       delete entry.tokens;
       delete entry.clientInfo;
       delete entry.oauthState;
+      delete entry.stepUpScope;
     }
     entry.codeVerifier = codeVerifier;
     await this.saveEntry(serverName, entry, serverUrl);
@@ -223,6 +226,7 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
       delete entry.tokens;
       delete entry.clientInfo;
       delete entry.codeVerifier;
+      delete entry.stepUpScope;
     }
     entry.oauthState = state;
     await this.saveEntry(serverName, entry, serverUrl);
@@ -238,6 +242,25 @@ export class McpSecretAuthStore implements McpAuthEntryStore {
       return;
     }
     delete entry.oauthState;
+    await this.saveEntry(serverName, entry);
+  }
+
+  async updateStepUpScope(serverName: string, scope: string, serverUrl: string): Promise<void> {
+    // Recorded from an unauthenticated challenge, so it never creates or re-keys an entry.
+    const entry = await this.getAuthForUrl(serverName, serverUrl);
+    if (!entry) {
+      return;
+    }
+    entry.stepUpScope = scope;
+    await this.saveEntry(serverName, entry);
+  }
+
+  async clearStepUpScope(serverName: string): Promise<void> {
+    const entry = await this.getEntry(serverName);
+    if (!entry?.stepUpScope) {
+      return;
+    }
+    delete entry.stepUpScope;
     await this.saveEntry(serverName, entry);
   }
 
