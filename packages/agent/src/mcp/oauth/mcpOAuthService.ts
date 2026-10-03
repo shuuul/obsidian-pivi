@@ -1,5 +1,5 @@
 import type { AuthProvider } from "@earendil-works/pi-mcp";
-import { adaptOAuthProvider } from "@earendil-works/pi-mcp/oauth";
+import { adaptOAuthProvider, parseWwwAuthenticate } from "@earendil-works/pi-mcp/oauth";
 
 import type { ExternalOpener, SyncSecretStore } from "../../ports";
 import type { AppMcpOAuth, McpTransportFetch } from "../ports";
@@ -17,6 +17,24 @@ import {
 import { createClientCredentialsAuthProvider } from "./mcpClientCredentials";
 import { McpOAuthProvider } from "./mcpOAuthProvider";
 import { McpSecretAuthStore } from "./mcpSecretAuthStore";
+
+/**
+ * pi-mcp answers an `insufficient_scope` challenge by redirecting to the authorization server, but
+ * the transport provider cannot open a browser and fails before the widened scope is requested.
+ * Persist that scope so the sign-in the user starts from settings asks for it.
+ */
+function recordStepUpChallenges(provider: McpOAuthProvider, adapted: AuthProvider): AuthProvider {
+  return {
+    token: () => adapted.token(),
+    onUnauthorized: async (context) => {
+      const challenge = parseWwwAuthenticate(context.response.headers.get("www-authenticate"));
+      if (challenge.error === "insufficient_scope") {
+        await provider.recordStepUpScope(challenge.scope);
+      }
+      await adapted.onUnauthorized?.(context);
+    },
+  };
+}
 
 export interface McpOAuthServiceOptions {
   callbackPort?: number;
@@ -65,9 +83,10 @@ export class McpOAuthService implements AppMcpOAuth {
       return null;
     }
     const config = server.oauth && typeof server.oauth === "object" ? server.oauth : {};
-    return config.grantType === "client_credentials"
-      ? createClientCredentialsAuthProvider(provider, config.scope)
-      : adaptOAuthProvider(provider);
+    if (config.grantType === "client_credentials") {
+      return createClientCredentialsAuthProvider(provider, config.scope);
+    }
+    return recordStepUpChallenges(provider, adaptOAuthProvider(provider));
   }
 
   /** Stored OAuth client state for one server URL. */
