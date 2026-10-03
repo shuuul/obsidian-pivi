@@ -10,7 +10,6 @@ import {
   type MentionInputOptions,
 } from '@/ui/shared/mention/MentionInput';
 
-export type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';
 
 export type RichChatInputOptions = MentionInputOptions;
 

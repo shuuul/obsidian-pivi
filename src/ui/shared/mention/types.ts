@@ -15,14 +15,14 @@ export interface FolderMentionItem {
   path: string;
 }
 
-export interface ContextFolderMentionItem {
+interface ContextFolderMentionItem {
   type: 'context-folder';
   name: string;
   contextRoot: string;
   folderName: string;
 }
 
-export interface SelectedTextTemplateMentionItem {
+interface SelectedTextTemplateMentionItem {
   type: 'selected-text-template';
   name: string;
 }

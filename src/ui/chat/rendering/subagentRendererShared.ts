@@ -75,7 +75,7 @@ export function extractTaskPrompt(input: Record<string, unknown>): string {
   return (input.message as string) || (input.prompt as string) || '';
 }
 
-export function truncateDescription(description: string, maxLength = 40): string {
+function truncateDescription(description: string, maxLength = 40): string {
   if (description.length <= maxLength) return description;
   return description.substring(0, maxLength) + '...';
 }
@@ -167,7 +167,7 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
   appendSubagentCompletedIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
 }
 
-export function renderSubagentStatus(
+function renderSubagentStatus(
   statusEl: HTMLElement,
   info: SubagentInfo,
 ): ActivityStatusPresentation {
@@ -290,6 +290,6 @@ export function setPromptText(
 }
 
 
-export function updateSummaryText(summaryEl: HTMLElement, info: SubagentInfo): void {
+function updateSummaryText(summaryEl: HTMLElement, info: SubagentInfo): void {
   summaryEl.setText(truncateDescription(info.description, 80));
 }

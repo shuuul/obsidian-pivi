@@ -4,7 +4,7 @@ import type { ToolCallInfo } from '@pivi/agent/tools/types';
 
 import { isBlockedToolResult } from '../rendering/ToolCallRenderer';
 
-export function findMessageToolCall(
+function findMessageToolCall(
   msg: ChatMessage,
   toolId: string,
 ): ToolCallInfo | undefined {

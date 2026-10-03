@@ -24,7 +24,7 @@ function exitInputFocus(host: InlineAskUserQuestionHost): void {
   blurActiveElement(host);
 }
 
-export function handleInputFocusedKeyDown(host: InlineAskUserQuestionHost, e: KeyboardEvent): boolean {
+function handleInputFocusedKeyDown(host: InlineAskUserQuestionHost, e: KeyboardEvent): boolean {
   if (!host.isInputFocused) return false;
 
   if (e.key === 'Escape') {
@@ -65,7 +65,7 @@ export function handleInputFocusedKeyDown(host: InlineAskUserQuestionHost, e: Ke
   return true;
 }
 
-export function handleNavigationKey(
+function handleNavigationKey(
   host: InlineAskUserQuestionHost,
   e: KeyboardEvent,
   maxFocusIndex: number,

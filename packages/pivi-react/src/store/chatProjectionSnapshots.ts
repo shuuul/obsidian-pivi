@@ -15,12 +15,12 @@ import {
 import { type ProjectionMessage } from './chatProjectionEvents';
 import type { DeepReadonly } from './chatUiStore';
 
-export interface SnapshotAllocationProxies {
+interface SnapshotAllocationProxies {
   clonedEntities: number;
   visitedEntities: number;
 }
 
-export function cloneSerializableValue(
+function cloneSerializableValue(
   value: unknown,
   allocationProxies?: SnapshotAllocationProxies,
 ): unknown {

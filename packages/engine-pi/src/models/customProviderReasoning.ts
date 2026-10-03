@@ -72,7 +72,7 @@ function pickKnownModelReasoningSource(
   return preferred.find((model) => model.reasoning) ?? preferred[0];
 }
 
-export function findKnownModelReasoningSource(
+function findKnownModelReasoningSource(
   modelId: string,
   knownModels: readonly KnownModelReasoningSource[],
 ): KnownModelReasoningSource | undefined {

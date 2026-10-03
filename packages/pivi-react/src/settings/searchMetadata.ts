@@ -2,7 +2,6 @@ import type { I18n } from '../i18n';
 import { SETTINGS_PAGES, type SettingsPageId } from './navigation';
 
 export type { SettingsPageId } from './navigation';
-export { SETTINGS_PAGES } from './navigation';
 
 /** Former flat search-key inventory; each key is owned by exactly one page in `SETTINGS_PAGES`. */
 export const FORMER_SETTINGS_SEARCH_KEYS = [

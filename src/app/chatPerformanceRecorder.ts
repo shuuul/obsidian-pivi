@@ -47,7 +47,7 @@ interface PendingPaint {
  * - Markdown duration measures one app-owned render/update invocation.
  * All durations are milliseconds from the owning window's monotonic performance clock.
  */
-export type ChatPerfTraceEvent =
+type ChatPerfTraceEvent =
   | {
       type: 'projection.dispatch';
       atMs: number;

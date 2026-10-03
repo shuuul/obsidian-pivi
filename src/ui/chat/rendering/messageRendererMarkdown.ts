@@ -63,7 +63,7 @@ export function buildMentionBadgeContext(
   };
 }
 
-export function getMarkdownRenderSourcePath(host: MarkdownContentRenderHost): string {
+function getMarkdownRenderSourcePath(host: MarkdownContentRenderHost): string {
   return host.app.workspace.getActiveFile()?.path ?? '';
 }
 
@@ -131,7 +131,7 @@ function getMermaidRenderConfig(el: HTMLElement): Record<string, unknown> {
   };
 }
 
-export function cropMermaidSvg(svg: SVGSVGElement): void {
+function cropMermaidSvg(svg: SVGSVGElement): void {
   if (typeof svg.getBBox !== 'function') return;
 
   try {
@@ -369,7 +369,7 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
   });
 }
 
-export function enhanceMermaidDiagrams(el: HTMLElement): () => void {
+function enhanceMermaidDiagrams(el: HTMLElement): () => void {
   const enhanceAll = () => {
     el.querySelectorAll<HTMLElement>('.pivi-mermaid, .mermaid, .block-language-mermaid')
       .forEach(enhanceMermaidDiagram);

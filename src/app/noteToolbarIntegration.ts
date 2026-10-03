@@ -1,8 +1,8 @@
 import type { App, DataAdapter } from "obsidian";
 
-export const NOTE_TOOLBAR_PLUGIN_ID = "note-toolbar";
-export const MIN_NOTE_TOOLBAR_VERSION = "1.31.06";
-export const MIN_NOTE_TOOLBAR_CLI_API_VERSION = "1.12.2";
+const NOTE_TOOLBAR_PLUGIN_ID = "note-toolbar";
+const MIN_NOTE_TOOLBAR_VERSION = "1.31.06";
+const MIN_NOTE_TOOLBAR_CLI_API_VERSION = "1.12.2";
 
 export type NoteToolbarItemStyle = "label-and-icon" | "icon-only";
 
@@ -12,7 +12,7 @@ const NOTE_TOOLBAR_SETTINGS_URI = "obsidian://note-toolbar?settings=true";
 
 type JsonRecord = Record<string, unknown>;
 
-export type NoteToolbarSetupStatus =
+type NoteToolbarSetupStatus =
   | "installed"
   | "already-installed"
   | "style-settings-opened"
@@ -330,7 +330,7 @@ function parseVersion(version: string): [number, number, number] {
 }
 
 /** In-flight setup slot used to coalesce duplicate Note Toolbar requests. */
-export type NoteToolbarSetupSlot = {
+type NoteToolbarSetupSlot = {
   key: string;
   promise: Promise<NoteToolbarSetupResult>;
 };
@@ -352,7 +352,7 @@ export async function runQueuedNoteToolbarSetup(
   return runQueuedNoteToolbarRequest(queue, itemStyle, () => run(itemStyle));
 }
 
-export async function runQueuedNoteToolbarRequest(
+async function runQueuedNoteToolbarRequest(
   queue: NoteToolbarSetupQueue,
   key: string,
   run: () => Promise<NoteToolbarSetupResult>,

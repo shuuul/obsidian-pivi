@@ -31,8 +31,6 @@ import { getToolLabel, getToolName, getToolSummary } from './toolPresentationI18
 import { findToolStepGroupState } from './toolStepGroupState';
 import { renderWriteEditContent } from './WriteEditRenderer';
 
-export { renderExpandedContent } from './toolCallExpandedDispatcher';
-export { getToolLabel, getToolName, getToolSummary } from './toolPresentationI18n';
 
 interface ToolElementStructure {
   toolEl: HTMLElement;

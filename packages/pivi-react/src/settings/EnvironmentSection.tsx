@@ -15,7 +15,7 @@ import {
   SettingsSection,
 } from './primitives';
 
-export function environmentEntriesToSafeText(entries: readonly SettingsEnvironmentEntryView[]): string {
+function environmentEntriesToSafeText(entries: readonly SettingsEnvironmentEntryView[]): string {
   return entries.map((entry) => {
     if (entry.sourceKind === 'secret') {
       return `${entry.key}=`;

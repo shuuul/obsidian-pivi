@@ -40,7 +40,7 @@ export interface AgentMcpOAuthInput {
   clearClientSecret?: boolean;
 }
 
-export interface AgentMcpRemoteServerInput {
+interface AgentMcpRemoteServerInput {
   type: 'http';
   url: string;
   headers?: Record<string, AgentMcpValueInput>;

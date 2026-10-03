@@ -33,15 +33,15 @@ import type {
   PiChatCompactionDeps,
 } from './piChatRuntimeCompaction';
 
-export const contextTokenIndexes = new WeakMap<SessionTreeStore, PiContextTokenIndex>();
+const contextTokenIndexes = new WeakMap<SessionTreeStore, PiContextTokenIndex>();
 
-export const systemTokenEstimateCache = new WeakMap<Agent, {
+const systemTokenEstimateCache = new WeakMap<Agent, {
   systemPrompt: string;
   tokens: number;
   tools: unknown;
 }>();
 
-export function getContextTokenIndex(sessionTree: SessionTreeStore): PiContextTokenIndex {
+function getContextTokenIndex(sessionTree: SessionTreeStore): PiContextTokenIndex {
   let index = contextTokenIndexes.get(sessionTree);
   if (!index) {
     index = new PiContextTokenIndex();
@@ -57,7 +57,7 @@ export function estimateSessionEntriesTokens(sessionTree: SessionTreeStore): num
   );
 }
 
-export function estimateSystemTokens(agent: Agent | null): number {
+function estimateSystemTokens(agent: Agent | null): number {
   if (!agent) {
     return estimateTextTokens('') + estimateTextTokens(JSON.stringify([]));
   }
@@ -78,7 +78,7 @@ export function estimateSystemTokens(agent: Agent | null): number {
   return tokens;
 }
 
-export function assistantProviderTokens(message: AgentMessage): number | null {
+function assistantProviderTokens(message: AgentMessage): number | null {
   const record = message as unknown as Record<string, unknown>;
   if (
     record.role !== 'assistant'
@@ -101,18 +101,18 @@ export function assistantProviderTokens(message: AgentMessage): number | null {
   return tokens > 0 ? tokens : null;
 }
 
-export function assistantMatchesModel(message: AgentMessage, model: PiResolvedModel): boolean {
+function assistantMatchesModel(message: AgentMessage, model: PiResolvedModel): boolean {
   const record = message as unknown as Record<string, unknown>;
   return record.provider === model.provider && record.model === model.id;
 }
 
-export interface ProviderAnchorProjection {
+interface ProviderAnchorProjection {
   calibration: number;
   tokens: number;
   trailingTokens: number;
 }
 
-export function findProviderAnchor(
+function findProviderAnchor(
   deps: PiChatCompactionDeps,
   pendingMessages: AgentMessage[] = [],
 ): ProviderAnchorProjection | null {
@@ -163,7 +163,7 @@ export function findProviderAnchor(
   return null;
 }
 
-export function authoritativeReservedOutputTokens(model: PiResolvedModel | null): number | undefined {
+function authoritativeReservedOutputTokens(model: PiResolvedModel | null): number | undefined {
   return model?.outputTokenLimitIsAuthoritative ? model.maxTokens : undefined;
 }
 

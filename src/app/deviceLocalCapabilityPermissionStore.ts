@@ -7,7 +7,7 @@ import {
 } from '@pivi/agent/tools';
 import type { App } from 'obsidian';
 
-export const DEVICE_LOCAL_CAPABILITY_PERMISSIONS_STORAGE_KEY = 'pivi.capability-permissions.v1';
+const DEVICE_LOCAL_CAPABILITY_PERMISSIONS_STORAGE_KEY = 'pivi.capability-permissions.v1';
 
 export class ObsidianDeviceLocalCapabilityPermissionStore {
   constructor(private readonly app: App) {}

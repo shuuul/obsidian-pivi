@@ -4,7 +4,7 @@ import { t } from '@/app/i18n';
 
 import { appendToolLink, renderLinesExpanded } from './toolCallExpandedShared';
 
-export interface WebSearchLink {
+interface WebSearchLink {
   title: string;
   url: string;
 }
@@ -18,13 +18,13 @@ export function renderFileSearchExpanded(container: HTMLElement, result: string)
   renderLinesExpanded(container, result, true);
 }
 
-export function isPlaceholderWebSearchResult(result: string | undefined): boolean {
+function isPlaceholderWebSearchResult(result: string | undefined): boolean {
   if (!result) return true;
   const normalized = result.trim().toLowerCase();
   return normalized === '' || normalized === 'search complete';
 }
 
-export function parseWebSearchResult(result: string): { links: WebSearchLink[]; summary: string } | null {
+function parseWebSearchResult(result: string): { links: WebSearchLink[]; summary: string } | null {
   const linksMatch = result.match(/Links:\s*(\[[\s\S]*?\])(?:\n|$)/);
   if (!linksMatch) return null;
 
@@ -44,7 +44,7 @@ export function parseWebSearchResult(result: string): { links: WebSearchLink[]; 
   }
 }
 
-export function renderWebSearchActionExpanded(container: HTMLElement, input: Record<string, unknown>): boolean {
+function renderWebSearchActionExpanded(container: HTMLElement, input: Record<string, unknown>): boolean {
   const data = normalizeWebSearchDisplayData(input);
   const hasStructuredData = Boolean(data.actionType || data.query || data.queries.length || data.url || data.pattern);
   if (!hasStructuredData) {

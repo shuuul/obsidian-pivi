@@ -26,7 +26,7 @@ function extractValue(obj: Record<string, unknown>, fallback: string): string {
   return fallback;
 }
 
-export function coerceOption(opt: unknown): AskUserQuestionOption {
+function coerceOption(opt: unknown): AskUserQuestionOption {
   if (typeof opt === 'object' && opt !== null) {
     const obj = opt as Record<string, unknown>;
     const label = extractLabel(obj);

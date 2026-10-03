@@ -7,7 +7,7 @@ export interface InlineAskQuestionConfig {
   immediateSelect?: boolean;
 }
 
-export type InlineAskQuestionResolvedConfig = Required<Omit<InlineAskQuestionConfig, 'headerEl'>> & {
+type InlineAskQuestionResolvedConfig = Required<Omit<InlineAskQuestionConfig, 'headerEl'>> & {
   headerEl?: HTMLElement;
 };
 

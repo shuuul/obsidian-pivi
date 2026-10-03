@@ -1,17 +1,12 @@
 import {
-  getBoundaryMatchIndex,
   getFuzzyMatchIndexes,
   getTextMatchScore,
-  isSearchBoundary,
 } from '@pivi/agent/skills/commands/fuzzyScore';
 
 import type { DropdownItem } from './slashCommandDropdownData';
 
 export {
-  getBoundaryMatchIndex,
-  getFuzzyMatchIndexes,
   getTextMatchScore,
-  isSearchBoundary,
 };
 
 const MIN_SLASH_DROPDOWN_WIDTH = 220;
@@ -88,7 +83,7 @@ export function appendHighlightedText(parent: HTMLElement, text: string, query: 
   }
 }
 
-export function appendFuzzyHighlightedText(parent: HTMLElement, text: string, queryLower: string): boolean {
+function appendFuzzyHighlightedText(parent: HTMLElement, text: string, queryLower: string): boolean {
   const indexes = getFuzzyMatchIndexes(text.toLowerCase(), queryLower);
   if (!indexes) return false;
 

@@ -28,7 +28,7 @@ export interface WorkspaceCommandSnapshot {
   readonly catalogRevision: number;
 }
 
-export interface WorkspaceCommandScan {
+interface WorkspaceCommandScan {
   readonly entries: readonly SlashCatalogEntry[];
   readonly fingerprint: string;
 }
@@ -42,7 +42,7 @@ export interface WorkspaceCommandsPlan {
 }
 
 /** Workspace-command ids are path-safe slugs, with dots retained for round-trip fidelity. */
-export function isValidWorkspaceCommandId(id: string): boolean {
+function isValidWorkspaceCommandId(id: string): boolean {
   return /^[a-z0-9][a-z0-9._-]{0,127}$/i.test(id);
 }
 

@@ -14,7 +14,8 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Typecheck source and tests | `npm run typecheck` |
 | Lint with zero warnings | `npm run lint` |
 | Documentation capability and local-link contracts | `npm run check:docs-contracts` |
-| Architecture/docs/package/i18n/spec/Pi-pin guards | `npm run check:boundaries` |
+| Architecture/docs/package/i18n/dead-code/spec/Pi-pin guards | `npm run check:boundaries` |
+| Unused files and unused exports (knip, `knip.json`) | `npm run check:dead-code` |
 | Exact synchronized Pi pins | `npm run check:pi-pins` |
 | Pi compatibility manifest lifecycle | `npm run check:pi-compatibility` |
 | All Jest projects | `npm run test` |

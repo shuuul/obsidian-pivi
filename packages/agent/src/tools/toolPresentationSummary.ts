@@ -9,7 +9,7 @@ function stringValue(value: unknown): string {
   return '';
 }
 
-export function truncateToolText(value: string, limit: number): string {
+function truncateToolText(value: string, limit: number): string {
   return value.length > limit ? `${value.slice(0, limit)}...` : value;
 }
 

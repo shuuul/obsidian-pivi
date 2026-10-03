@@ -10,7 +10,7 @@ import { renderTodoItems } from './todoUtils';
 import { getApplyPatchDiffStats, getDiffStatsAriaLabel } from './toolCallApplyPatchExpanded';
 
 
-export function getTodos(input: Record<string, unknown>): TodoItem[] | undefined {
+function getTodos(input: Record<string, unknown>): TodoItem[] | undefined {
   const todos = input.todos;
   if (!todos || !Array.isArray(todos)) return undefined;
   return todos as TodoItem[];
@@ -22,13 +22,13 @@ export function getCurrentTask(input: Record<string, unknown>): TodoItem | undef
   return todos.find(t => t.status === 'in_progress');
 }
 
-export function areAllTodosCompleted(input: Record<string, unknown>): boolean {
+function areAllTodosCompleted(input: Record<string, unknown>): boolean {
   const todos = getTodos(input);
   if (!todos || todos.length === 0) return false;
   return todos.every(t => t.status === 'completed');
 }
 
-export function resetStatusElement(statusEl: HTMLElement, status: ActivityStatus): void {
+function resetStatusElement(statusEl: HTMLElement, status: ActivityStatus): void {
   statusEl.className = 'pivi-tool-status';
   statusEl.addClass(`status-${status}`);
   renderActivityStatusContents(statusEl, status);
@@ -39,7 +39,7 @@ export function setTodoWriteStatus(statusEl: HTMLElement, input: Record<string, 
   resetStatusElement(statusEl, isComplete ? 'completed' : 'running');
 }
 
-export function setApplyPatchHeaderRight(statusEl: HTMLElement, toolCall: ToolCallInfo): void {
+function setApplyPatchHeaderRight(statusEl: HTMLElement, toolCall: ToolCallInfo): void {
   const isError = toolCall.status === 'error' || toolCall.status === 'blocked';
   const stats = isError ? undefined : getApplyPatchDiffStats(toolCall.input);
   if (!stats) {

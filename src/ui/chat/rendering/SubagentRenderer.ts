@@ -152,7 +152,7 @@ function renderSyncContentFromState(state: SubagentState): void {
   state.contentDirty = false;
 }
 
-export function setSubagentResultText(state: SubagentState, text: string): void {
+function setSubagentResultText(state: SubagentState, text: string): void {
   const section = ensureResultSection(state);
   section.bodyEl.empty();
   const resultEl = section.bodyEl.createDiv({ cls: 'pivi-subagent-result-output' });
@@ -355,7 +355,7 @@ function mountSubagentToolCall(state: SubagentState, toolCall: ToolCallInfo): vo
   state.toolStepGroup = null;
 }
 
-export function updateSubagentToolResult(
+function updateSubagentToolResult(
   state: SubagentState,
   toolId: string,
   toolCall: ToolCallInfo

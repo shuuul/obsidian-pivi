@@ -15,7 +15,7 @@ import {
  * App-layer factories that construct concrete Pi engine services.
  * Product UI must receive only PiChatService / AuxQueryRunner contracts.
  */
-export interface CreateChatServiceOptions {
+interface CreateChatServiceOptions {
   capabilityApproval?: CapabilityApprovalPort | null;
   /** Invoking tab's one-shot approval seam for management tools. */
   piviManagementApproval?: PiviManagementApprovalPort | null;

@@ -1,4 +1,4 @@
-export type ProviderSetupKind = 'api-key' | 'download' | 'docs';
+type ProviderSetupKind = 'api-key' | 'download' | 'docs';
 
 export interface ProviderSetupLink {
   readonly href: string;
@@ -6,7 +6,7 @@ export interface ProviderSetupLink {
 }
 
 /** Console or download page for a built-in model provider id or local kind. */
-export const MODEL_PROVIDER_SETUP_LINKS: Readonly<Record<string, ProviderSetupLink>> = {
+const MODEL_PROVIDER_SETUP_LINKS: Readonly<Record<string, ProviderSetupLink>> = {
   openai: { href: 'https://platform.openai.com/api-keys', kind: 'api-key' },
   anthropic: { href: 'https://console.anthropic.com/settings/keys', kind: 'api-key' },
   google: { href: 'https://aistudio.google.com/apikey', kind: 'api-key' },
@@ -29,7 +29,7 @@ export const MODEL_PROVIDER_SETUP_LINKS: Readonly<Record<string, ProviderSetupLi
 };
 
 /** Console or product page for a web-search provider id. */
-export const WEB_PROVIDER_SETUP_LINKS: Readonly<Record<string, ProviderSetupLink>> = {
+const WEB_PROVIDER_SETUP_LINKS: Readonly<Record<string, ProviderSetupLink>> = {
   brave: { href: 'https://brave.com/search/api/', kind: 'api-key' },
   tavily: { href: 'https://app.tavily.com/home', kind: 'api-key' },
   exa: { href: 'https://dashboard.exa.ai/api-keys', kind: 'api-key' },

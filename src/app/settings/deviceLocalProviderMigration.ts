@@ -29,7 +29,7 @@ import { normalizeStoredPiviSettings } from '@/app/settings/piviSettingsCodec';
 
 const logger = new PluginLogger('DeviceLocalProviderMigration');
 
-export class DeviceLocalProviderMigrationError extends Error {
+class DeviceLocalProviderMigrationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'DeviceLocalProviderMigrationError';

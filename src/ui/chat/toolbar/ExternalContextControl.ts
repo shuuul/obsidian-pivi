@@ -14,7 +14,7 @@ export type AddExternalContextResult =
   | { success: true; normalizedPath: string }
   | { success: false; error: string };
 
-export interface ExternalContextItemSnapshot {
+interface ExternalContextItemSnapshot {
   readonly path: string;
   readonly displayPath: string;
   readonly checked: boolean;

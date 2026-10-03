@@ -9,7 +9,7 @@ interface RuntimeSubscriptions {
   cleanup: () => void;
 }
 
-export function isClosingLifecycleState(
+function isClosingLifecycleState(
   state: TabData["lifecycleState"],
 ): boolean {
   return state === "closing";

@@ -6,7 +6,7 @@ import type {
 } from '@pivi/agent/runtime/types';
 import type { StreamChunk } from '@pivi/agent/runtime';
 
-export interface FakePiChatServiceSpies {
+interface FakePiChatServiceSpies {
   syncSession: jest.Mock<void, [{ sessionFile: string | null; leafId?: string | null } | null, string[]?]>;
   cleanup: jest.Mock<void, []>;
   onReadyStateChange: jest.Mock<() => void, [(ready: boolean) => void]>;

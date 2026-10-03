@@ -20,8 +20,6 @@ import {
 } from './toolStepGroupState';
 
 export {
-  TOOL_STEP_GROUP_CLASS,
-  TOOL_STEP_GROUP_HEADER_CLASS,
   type ToolStepGroupState,
 } from './toolStepGroupState';
 

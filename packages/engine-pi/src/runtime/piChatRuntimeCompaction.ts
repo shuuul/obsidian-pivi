@@ -52,11 +52,8 @@ export {
   attachContextEnvelope,
   buildUsageAfterCompaction,
   estimateProjectedTurnTokens,
-  estimateStoredConversationTokens,
-  getCompactionThresholdTokens,
 } from './piChatRuntimeContextEstimate';
 export {
-  buildTurnSyncOptions,
   syncSessionMessagesAfterTurn,
 } from './piChatRuntimeTurnSync';
 
@@ -207,7 +204,7 @@ function getManualSinglePassPlan(
   };
 }
 
-export function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {
+function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {
   return getPlan(deps) !== null;
 }
 

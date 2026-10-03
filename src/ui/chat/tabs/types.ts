@@ -39,7 +39,7 @@ export function generateTabId(): TabId {
  * Controllers managed per-tab.
  * Each tab has its own set of controllers for independent operation.
  */
-export interface TabControllers {
+interface TabControllers {
   selectionController: SelectionController | null;
   browserSelectionController: BrowserSelectionController | null;
   canvasSelectionController: CanvasSelectionController | null;
@@ -52,13 +52,13 @@ export interface TabControllers {
 /**
  * Services managed per-tab.
  */
-export interface TabServices {
+interface TabServices {
   subagentManager: SubagentManager;
 
   titleGenerationService: TitleGenerationService | null;
 }
 
-export interface ComposerChromeActions {
+interface ComposerChromeActions {
   send: () => void;
   stop: () => void;
   setModel: (value: string) => void;
@@ -73,7 +73,7 @@ export interface ComposerChromeActions {
 /**
  * UI components managed per-tab.
  */
-export interface TabUIComponents {
+interface TabUIComponents {
   fileContextManager: FileContextManager | null;
   inlineContextManager: InlineContextManager | null;
   imageContextManager: ImageContextManager | null;
@@ -121,7 +121,7 @@ export interface TabDOMElements {
  * - `bound_active`: Bound to a openSession with a running runtime.
  * - `closing`: Tab is being torn down.
  */
-export type TabLifecycleState = 'blank' | 'bound_cold' | 'bound_active' | 'closing';
+type TabLifecycleState = 'blank' | 'bound_cold' | 'bound_active' | 'closing';
 
 /**
  * Represents a single tab in the multi-tab system.

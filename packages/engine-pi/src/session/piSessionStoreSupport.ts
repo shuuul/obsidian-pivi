@@ -15,7 +15,7 @@ import {
   type PiviSessionMetaData,
 } from '@pivi/agent/session/types';
 
-export function stableJson(value: unknown): string {
+function stableJson(value: unknown): string {
   if (value === undefined) {
     return 'undefined';
   }
@@ -117,7 +117,7 @@ export interface ExternalContextJsonlMigration {
   turnPaths: Map<string, string[]>;
 }
 
-export function externalPaths(value: unknown): string[] {
+function externalPaths(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((path): path is string => typeof path === 'string')
     : [];

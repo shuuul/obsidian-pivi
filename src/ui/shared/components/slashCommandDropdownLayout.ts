@@ -6,7 +6,7 @@ import { estimateSlashDropdownWidth } from './slashCommandDropdownMatch';
 
 type SlashInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
 
-export function getTextOffsetClientRect(inputEl: SlashInputElement, offset: number): DOMRect | null {
+function getTextOffsetClientRect(inputEl: SlashInputElement, offset: number): DOMRect | null {
   if ('getTextOffsetClientRect' in inputEl && typeof inputEl.getTextOffsetClientRect === 'function') {
     return inputEl.getTextOffsetClientRect(offset);
   }

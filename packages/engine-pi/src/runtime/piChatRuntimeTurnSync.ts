@@ -10,7 +10,7 @@ import { type MissingAgentMessagesOptions } from '../session/agentMessageHistory
 import type { SessionTreeStore } from '../session/sessionTreeStore';
 import { type ActiveTurn, getSubagentOwnerToolId } from './piChatRuntimeActiveTurn';
 
-export function buildTurnSyncOptions(
+function buildTurnSyncOptions(
   turns?: PreparedChatTurn | readonly PreparedChatTurn[],
 ): MissingAgentMessagesOptions | undefined {
   const normalizedTurns: readonly PreparedChatTurn[] = turns

@@ -33,7 +33,6 @@ import {
 export type {
   DropdownMcpServerProvider,
   DropdownMcpToolProvider,
-  DropdownMcpToolSummary,
   DropdownSkillSummary,
 } from './slashCommandDropdownData';
 
