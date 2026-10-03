@@ -9,7 +9,7 @@ import {
 } from '@pivi/agent/session/sessionJournal';
 import type { App } from 'obsidian';
 
-export const DEVICE_LOCAL_SESSION_JOURNAL_STORAGE_KEY = 'pivi.session-journal.v1';
+const DEVICE_LOCAL_SESSION_JOURNAL_STORAGE_KEY = 'pivi.session-journal.v1';
 
 const logger = new PluginLogger('SessionJournalStore');
 

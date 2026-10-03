@@ -9,7 +9,7 @@ import { RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
 import type { DecorationSet } from '@codemirror/view';
 import { Decoration, EditorView } from '@codemirror/view';
 
-export interface SelectionHighlighter {
+interface SelectionHighlighter {
   show: (editorView: EditorView, from: number, to: number) => void;
   hide: (editorView: EditorView) => void;
 }

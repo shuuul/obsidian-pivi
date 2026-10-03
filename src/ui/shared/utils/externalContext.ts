@@ -50,7 +50,7 @@ export function findConflictingPath(
   return null;
 }
 
-export function getFolderName(p: string): string {
+function getFolderName(p: string): string {
   const normalized = normalizePathForDisplay(p);
   const segments = normalized.split('/');
   return segments[segments.length - 1] || normalized;

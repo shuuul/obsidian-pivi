@@ -1,17 +1,17 @@
-export const TEXTAREA_BASE_MIN_HEIGHT = 60;
-export const TEXTAREA_MIN_MAX_HEIGHT = 150;
-export const TEXTAREA_MAX_HEIGHT_PERCENT = 0.55;
+const TEXTAREA_BASE_MIN_HEIGHT = 60;
+const TEXTAREA_MIN_MAX_HEIGHT = 150;
+const TEXTAREA_MAX_HEIGHT_PERCENT = 0.55;
 
 interface TextareaMinHeightInput {
   contentHeight: number;
   flexAllocatedHeight: number;
 }
 
-export function calculateTextareaMaxHeight(viewHeight: number): number {
+function calculateTextareaMaxHeight(viewHeight: number): number {
   return Math.max(TEXTAREA_MIN_MAX_HEIGHT, viewHeight * TEXTAREA_MAX_HEIGHT_PERCENT);
 }
 
-export function calculateTextareaMinHeight({
+function calculateTextareaMinHeight({
   contentHeight,
   flexAllocatedHeight,
 }: TextareaMinHeightInput): number {

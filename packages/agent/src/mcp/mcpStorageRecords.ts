@@ -107,19 +107,19 @@ export function isSecretStorageAvailable(
   );
 }
 
-export function encodeSecretName(name: string): string {
+function encodeSecretName(name: string): string {
   return encodeUtf8Hex(name);
 }
 
-export function directMcpSecretId(serverName: string, kind: McpSecretKind): string {
+function directMcpSecretId(serverName: string, kind: McpSecretKind): string {
   return `pivi-mcp-name-${serverName}-${kind}`;
 }
 
-export function legacyEncodedMcpSecretId(serverName: string, kind: McpSecretKind): string {
+function legacyEncodedMcpSecretId(serverName: string, kind: McpSecretKind): string {
   return `pivi-mcp-${encodeSecretName(serverName)}-${kind}`;
 }
 
-export function digestMcpSecretId(serverName: string, kind: McpSecretKind): string {
+function digestMcpSecretId(serverName: string, kind: McpSecretKind): string {
   return `pivi-mcp-d-${stableProviderIdDigest(serverName)}-${kind}`;
 }
 
@@ -152,7 +152,7 @@ export function getMcpSecretId(serverName: string, kind: McpSecretKind): string 
   return listMcpSecretIds(serverName, kind)[0]!;
 }
 
-export function stripOAuthClientSecret(
+function stripOAuthClientSecret(
   oauth: ManagedMcpServer['oauth'],
 ): StoredMcpOAuthConfig | false | undefined {
   if (oauth === false || oauth === undefined) {

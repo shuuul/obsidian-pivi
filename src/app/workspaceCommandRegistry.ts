@@ -45,7 +45,7 @@ function captureWorkspaceCommandSelection(markdownView: MarkdownView | null): {
   };
 }
 
-export function getWorkspaceCommandLocalId(integrationKey: string): string {
+function getWorkspaceCommandLocalId(integrationKey: string): string {
   return `workspace-command-${integrationKey}`;
 }
 

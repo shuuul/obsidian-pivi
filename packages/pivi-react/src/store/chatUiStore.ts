@@ -72,7 +72,7 @@ export interface ComposerOptionSnapshot {
   readonly tokens?: number;
 }
 
-export interface ComposerChromeSnapshot {
+interface ComposerChromeSnapshot {
   readonly canSend: boolean;
   readonly model: string;
   readonly modelOptions: readonly ComposerOptionSnapshot[];

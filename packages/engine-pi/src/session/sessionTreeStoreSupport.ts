@@ -99,7 +99,7 @@ export function requireVaultSessionFile(sessionFile: string): void {
  * Read `[offset, offset+length)` by byte offset. Journal seals are UTF-8 JSONL
  * continuations, so this must return the exact bytes rather than a string slice.
  */
-export function readFileRangeSync(file: string, offset: number, length: number): Buffer {
+function readFileRangeSync(file: string, offset: number, length: number): Buffer {
   if (length === 0) {
     return Buffer.alloc(0);
   }
@@ -119,7 +119,7 @@ export function readFileRangeSync(file: string, offset: number, length: number):
   }
 }
 
-export function removePartialFork(vaultPath: string, candidate: string): void {
+function removePartialFork(vaultPath: string, candidate: string): void {
   const absoluteCandidate = resolve(candidate);
   const sessionDirectory = resolve(getPiviSessionDir(vaultPath));
   if (
@@ -158,14 +158,14 @@ export function isLlmContextEntry(entry: SessionEntry): boolean {
   return entry.type === 'message' || entry.type === 'compaction';
 }
 
-export interface AsyncSubagentPersistedResult {
+interface AsyncSubagentPersistedResult {
   agentId?: string;
   status: 'completed' | 'error';
   result: string;
   report?: AgentReport;
 }
 
-export function collectPersistedAsyncSubagentResults(
+function collectPersistedAsyncSubagentResults(
   entries: SessionEntry[],
 ): Map<string, AsyncSubagentPersistedResult> {
   const results = new Map<string, AsyncSubagentPersistedResult>();
@@ -199,7 +199,7 @@ export function collectPersistedAsyncSubagentResults(
   return results;
 }
 
-export function formatPersistedAsyncSubagentResult(result: AsyncSubagentPersistedResult): string {
+function formatPersistedAsyncSubagentResult(result: AsyncSubagentPersistedResult): string {
   const statusText = result.status === 'error' ? 'failed' : 'completed';
   const header = result.agentId
     ? `Background sub-agent ${result.agentId} ${statusText}.`

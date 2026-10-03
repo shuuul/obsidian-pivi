@@ -7,7 +7,7 @@ import {
 import type { StreamChunk } from '@pivi/agent/runtime';
 
 export const PI_CHAT_MAX_RETRIES = 3;
-export const PI_CHAT_RETRY_BASE_DELAY_MS = 2_000;
+const PI_CHAT_RETRY_BASE_DELAY_MS = 2_000;
 
 /**
  * Node/Electron transport failures that pi-ai's retry classifier currently misses.

@@ -28,7 +28,7 @@ function StatusIcon({ icon }: { readonly icon: ActivityStatusIcon }) {
   return <PlatformIcon name={icon.name} />;
 }
 
-export function ActivityStatusBadge({ status }: { readonly status: ActivityStatus }) {
+function ActivityStatusBadge({ status }: { readonly status: ActivityStatus }) {
   const t = useT();
   const presentation = getActivityStatusPresentation(status, t);
   return (

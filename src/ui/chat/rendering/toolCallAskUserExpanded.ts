@@ -89,7 +89,7 @@ export function renderAskUserQuestionFallback(container: HTMLElement, toolCall: 
   }
 }
 
-export function renderAskUserQuestionOption(
+function renderAskUserQuestionOption(
   parentEl: HTMLElement,
   option: AskUserQuestionOption,
   optionIndex: number,

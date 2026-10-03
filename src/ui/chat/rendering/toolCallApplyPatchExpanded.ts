@@ -63,7 +63,7 @@ export function renderApplyPatchExpanded(
   container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noResult') });
 }
 
-export function renderApplyPatchDiffSections(
+function renderApplyPatchDiffSections(
   container: HTMLElement,
   fileDiffs: ReturnType<typeof parseApplyPatchDiffs>,
 ): void {
@@ -86,7 +86,7 @@ export function renderApplyPatchDiffSections(
   }
 }
 
-export function readMoveTarget(kind: unknown): string | undefined {
+function readMoveTarget(kind: unknown): string | undefined {
   if (!kind || typeof kind !== 'object' || Array.isArray(kind)) {
     return undefined;
   }
@@ -94,7 +94,7 @@ export function readMoveTarget(kind: unknown): string | undefined {
   return typeof record.move_path === 'string' ? record.move_path : undefined;
 }
 
-export function getApplyPatchFileDiffs(input: Record<string, unknown>): ReturnType<typeof parseApplyPatchDiffs> {
+function getApplyPatchFileDiffs(input: Record<string, unknown>): ReturnType<typeof parseApplyPatchDiffs> {
   const patchText = typeof input.patch === 'string' ? input.patch : '';
   const parsedDiffs = patchText ? parseApplyPatchDiffs(patchText) : [];
   return parsedDiffs.length > 0 ? parsedDiffs : parseFileUpdateChangeDiffs(input.changes);

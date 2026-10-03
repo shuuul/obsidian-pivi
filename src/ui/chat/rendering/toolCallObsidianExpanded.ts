@@ -39,7 +39,7 @@ import {
 } from './toolCallExpandedShared';
 import { getToolName, getToolSummary } from './toolPresentationI18n';
 
-export function renderObsidianSearchExpanded(container: HTMLElement, result: string): void {
+function renderObsidianSearchExpanded(container: HTMLElement, result: string): void {
   const hits = parseObsidianSearchHits(result);
   if (hits.length === 0) {
     renderLinesExpanded(container, result);
@@ -55,7 +55,7 @@ export function renderObsidianSearchExpanded(container: HTMLElement, result: str
   );
 }
 
-export interface ObsidianListEntry {
+interface ObsidianListEntry {
   path: string;
   kind: 'file' | 'folder';
   name?: string;
@@ -63,7 +63,7 @@ export interface ObsidianListEntry {
   size?: number;
 }
 
-export function parseObsidianListResult(result: string): ObsidianListEntry[] | null {
+function parseObsidianListResult(result: string): ObsidianListEntry[] | null {
   try {
     const parsed = JSON.parse(result) as unknown;
     if (!Array.isArray(parsed)) {
@@ -92,7 +92,7 @@ export function parseObsidianListResult(result: string): ObsidianListEntry[] | n
   }
 }
 
-export function renderObsidianListExpanded(
+function renderObsidianListExpanded(
   container: HTMLElement,
   result: string,
   input: Record<string, unknown>,
@@ -121,7 +121,7 @@ export function renderObsidianListExpanded(
     })),
   );
 }
-export function renderObsidianReadExpanded(
+function renderObsidianReadExpanded(
   container: HTMLElement,
   result: string,
   input: Record<string, unknown>,
@@ -160,7 +160,7 @@ function isNonNegativeInteger(value: unknown): value is number {
   return isFiniteNumber(value) && Number.isInteger(value) && value >= 0;
 }
 
-export function parseMarkdownStructureResult(result: string): MarkdownStructureResult | null {
+function parseMarkdownStructureResult(result: string): MarkdownStructureResult | null {
   try {
     const parsed = JSON.parse(result) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
@@ -254,7 +254,7 @@ export function renderObsidianMarkdownStructureExpanded(
   }
 }
 
-export function renderObsidianWriteExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+function renderObsidianWriteExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const mode = inputString(input, 'mode') || 'write';
   const target = inputString(input, 'path') || inputString(input, 'file');
   const content = inputString(input, 'content');
@@ -268,7 +268,7 @@ export function renderObsidianWriteExpanded(container: HTMLElement, result: stri
   }
 }
 
-export function renderObsidianNoteInfoExpanded(container: HTMLElement, result: string): void {
+function renderObsidianNoteInfoExpanded(container: HTMLElement, result: string): void {
   const info = parseJsonRecord(result);
   if (!info) {
     renderLinesExpanded(container, result);
@@ -289,18 +289,18 @@ export function renderObsidianNoteInfoExpanded(container: HTMLElement, result: s
   ]);
 }
 
-export function getPathFromUnknown(value: unknown): string {
+function getPathFromUnknown(value: unknown): string {
   if (typeof value === 'string') return value;
   if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
   const record = value as Record<string, unknown>;
   return stringField(record, 'path') || stringField(record, 'link') || stringField(record, 'file');
 }
 
-export function toUnknownList(value: unknown): unknown[] {
+function toUnknownList(value: unknown): unknown[] {
   return Array.isArray(value) ? Array.from(value as readonly unknown[]) : [value];
 }
 
-export function renderObsidianLinksExpanded(container: HTMLElement, result: string): void {
+function renderObsidianLinksExpanded(container: HTMLElement, result: string): void {
   const parsed = parseJsonArray(result) ?? parseJsonRecord(result);
   if (Array.isArray(parsed)) {
     const paths = parsed.map(getPathFromUnknown).filter(Boolean);
@@ -321,7 +321,7 @@ export function renderObsidianLinksExpanded(container: HTMLElement, result: stri
   renderLinesExpanded(container, result);
 }
 
-export function renderObsidianPropertiesExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+function renderObsidianPropertiesExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const parsed = parseJsonRecord(result);
   if (parsed) {
     renderKeyValueLines(container, Object.entries(parsed));
@@ -336,7 +336,7 @@ export function renderObsidianPropertiesExpanded(container: HTMLElement, result:
   ]);
 }
 
-export function renderObsidianTasksExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+function renderObsidianTasksExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const action = inputString(input, 'action');
   const tasks = parseJsonArray(result);
   if (tasks && tasks.length > 0) {
@@ -359,7 +359,7 @@ export function renderObsidianTasksExpanded(container: HTMLElement, result: stri
   ]);
 }
 
-export function renderObsidianPathActionExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+function renderObsidianPathActionExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const target = inputString(input, 'path') || inputString(input, 'file');
   const newPath = inputString(input, 'newPath');
   renderKeyValueLines(container, [
@@ -369,7 +369,7 @@ export function renderObsidianPathActionExpanded(container: HTMLElement, result:
   ]);
 }
 
-export function renderObsidianAttachmentExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+function renderObsidianAttachmentExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const parsed = parseJsonRecord(result);
   if (parsed) {
     renderKeyValueLines(container, Object.entries(parsed));
@@ -383,7 +383,7 @@ export function renderObsidianAttachmentExpanded(container: HTMLElement, result:
   ]);
 }
 
-export function renderObsidianGenerateImageExpanded(
+function renderObsidianGenerateImageExpanded(
   container: HTMLElement,
   result: string,
   details: Record<string, unknown> | undefined,

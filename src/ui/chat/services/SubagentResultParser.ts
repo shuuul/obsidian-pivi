@@ -17,7 +17,7 @@ export function parseJsonRecord(value: string): Record<string, unknown> | null {
   }
 }
 
-export function parseJsonValue(value: string): unknown {
+function parseJsonValue(value: string): unknown {
   try {
     return JSON.parse(value);
   } catch {

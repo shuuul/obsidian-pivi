@@ -22,7 +22,7 @@ const CLI_RUN_SYSTEM_PROMPT = [
   'Do not ask follow-up questions; if the request cannot be completed, state why briefly.',
 ].join(' ');
 
-export interface PiviCliNote {
+interface PiviCliNote {
   readonly basename: string;
   readonly content: string;
 }

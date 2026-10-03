@@ -1,4 +1,4 @@
-export type FloatingOverlayDismissReason = 'escape' | 'pointer-outside' | 'manual';
+type FloatingOverlayDismissReason = 'escape' | 'pointer-outside' | 'manual';
 
 export interface FloatingOverlayHandle {
   readonly element: HTMLElement;

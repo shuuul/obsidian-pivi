@@ -1,6 +1,6 @@
 import type { TranslationKey } from '../../i18n';
 
-export const CODEX_OAUTH_SETTINGS_KEYS = {
+const CODEX_OAUTH_SETTINGS_KEYS = {
   name: 'settings.modelsTab.codex.name',
   desc: 'settings.modelsTab.codex.desc',
   connect: 'settings.modelsTab.codex.connect',
@@ -11,7 +11,7 @@ export const CODEX_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.codex.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
-export const GROK_BUILD_OAUTH_SETTINGS_KEYS = {
+const GROK_BUILD_OAUTH_SETTINGS_KEYS = {
   name: 'settings.modelsTab.grokBuild.name',
   desc: 'settings.modelsTab.grokBuild.desc',
   connect: 'settings.modelsTab.grokBuild.connect',
@@ -22,7 +22,7 @@ export const GROK_BUILD_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.grokBuild.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
-export const CLAUDE_OAUTH_SETTINGS_KEYS = {
+const CLAUDE_OAUTH_SETTINGS_KEYS = {
   name: 'settings.modelsTab.claude.name',
   desc: 'settings.modelsTab.claude.desc',
   connect: 'settings.modelsTab.claude.connect',
@@ -33,7 +33,7 @@ export const CLAUDE_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.claude.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
-export const CHATGPT_OAUTH_SETTINGS_KEYS = {
+const CHATGPT_OAUTH_SETTINGS_KEYS = {
   name: 'settings.modelsTab.chatgpt.name',
   desc: 'settings.modelsTab.chatgpt.desc',
   connect: 'settings.modelsTab.chatgpt.connect',
@@ -44,7 +44,7 @@ export const CHATGPT_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.chatgpt.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
-export const OPENROUTER_OAUTH_SETTINGS_KEYS = {
+const OPENROUTER_OAUTH_SETTINGS_KEYS = {
   name: 'settings.modelsTab.openrouter.name',
   desc: 'settings.modelsTab.openrouter.desc',
   connect: 'settings.modelsTab.openrouter.connect',
@@ -55,7 +55,7 @@ export const OPENROUTER_OAUTH_SETTINGS_KEYS = {
   loginFailed: 'settings.modelsTab.openrouter.loginFailed',
 } as const satisfies Record<string, TranslationKey>;
 
-export const KIMI_CODING_OAUTH_SETTINGS_KEYS = {
+const KIMI_CODING_OAUTH_SETTINGS_KEYS = {
   name: 'settings.modelsTab.kimiCoding.name',
   desc: 'settings.modelsTab.kimiCoding.desc',
   connect: 'settings.modelsTab.kimiCoding.connect',

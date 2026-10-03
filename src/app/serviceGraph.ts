@@ -56,7 +56,7 @@ export function createSharedStorage(
 }
 
 /** Device-local index root outside synced `.pivi/` (home cache keyed by vault path). */
-export function resolveDeviceLocalSessionIndexRoot(vaultPath: string): string {
+function resolveDeviceLocalSessionIndexRoot(vaultPath: string): string {
   const vaultKey = createHash('sha256').update(vaultPath, 'utf8').digest('hex').slice(0, 16);
   return join(homedir(), '.pivi', 'session-indexes', vaultKey);
 }

@@ -110,7 +110,7 @@ export function renderInlineEditPlatformIcon(
 }
 
 /** Creates a diff-review action button with icon, label, and shortcut hint. */
-export function createInlineEditDiffReviewButton(
+function createInlineEditDiffReviewButton(
   platform: PresentationPlatform,
   parent: HTMLElement,
   className: string,

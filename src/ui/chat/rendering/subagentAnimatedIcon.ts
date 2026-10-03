@@ -4,8 +4,8 @@ import {
 } from '../subagentProfiles';
 import { WORKING_ICON_CLASS } from './workingIcon';
 
-export const SUBAGENT_RUNNING_ICON_CLASS = 'pivi-subagent-running-icon';
-export const SUBAGENT_COMPLETED_ICON_CLASS = 'pivi-subagent-completed-icon';
+const SUBAGENT_RUNNING_ICON_CLASS = 'pivi-subagent-running-icon';
+const SUBAGENT_COMPLETED_ICON_CLASS = 'pivi-subagent-completed-icon';
 const SUBAGENT_PROFILE_ICON_CLASS_PREFIX = 'pivi-subagent-profile-icon--';
 
 interface SubagentProfileIconDefinition {
@@ -224,7 +224,7 @@ function resolveSubagentProfileIcon(id: string, writerName?: string): SubagentPr
     ?? DEFAULT_SUBAGENT_PROFILE_ICON;
 }
 
-export function clearSubagentAnimatedIcon(el: HTMLElement): void {
+function clearSubagentAnimatedIcon(el: HTMLElement): void {
   el.removeClass(WORKING_ICON_CLASS);
   el.removeClass(SUBAGENT_RUNNING_ICON_CLASS);
   el.removeClass(SUBAGENT_COMPLETED_ICON_CLASS);

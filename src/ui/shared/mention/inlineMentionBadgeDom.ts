@@ -311,11 +311,11 @@ export function setComposerCursor(editor: HTMLElement, cursorPos: number): void 
   sel.addRange(range);
 }
 
-export function countInlineMentionBadges(editor: HTMLElement): number {
+function countInlineMentionBadges(editor: HTMLElement): number {
   return editor.querySelectorAll('[data-mention-token]').length;
 }
 
-export function countParsableMentionParts(
+function countParsableMentionParts(
   text: string,
   ctx: MentionBadgeParseContext,
 ): number {

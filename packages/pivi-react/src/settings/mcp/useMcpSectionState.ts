@@ -69,10 +69,10 @@ export function mcpValidationMessage(
   return mcpErrorText(error, fallback);
 }
 
-export const mcpErrorText = (error: unknown, fallback: string) =>
+const mcpErrorText = (error: unknown, fallback: string) =>
   (error instanceof Error && error.message ? error.message : fallback);
 
-export const mcpDraftToLines = (record?: McpConfigValueMap) => {
+const mcpDraftToLines = (record?: McpConfigValueMap) => {
   if (!record) {
     return '';
   }
@@ -96,7 +96,7 @@ export const mcpDraftToLines = (record?: McpConfigValueMap) => {
     .join('\n');
 };
 
-export function mcpDraftFromLines(value: string): Record<string, string> {
+function mcpDraftFromLines(value: string): Record<string, string> {
   const result: Record<string, string> = {};
   for (const rawLine of value.split('\n')) {
     const line = rawLine.trim();

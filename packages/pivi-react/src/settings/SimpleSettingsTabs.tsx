@@ -320,7 +320,7 @@ export function ToolbarSettingsTab({
   );
 }
 
-export function SessionFilesSettingsSection({ actions, feedback, general, saveGeneral }: {
+function SessionFilesSettingsSection({ actions, feedback, general, saveGeneral }: {
   readonly actions: SettingsActionsPort;
   readonly feedback: SettingsFeedbackPort;
   readonly general: SettingsGeneralSnapshot;
@@ -461,7 +461,7 @@ export function SessionFilesSettingsSection({ actions, feedback, general, saveGe
   );
 }
 
-export function IntegrationsSettingsSection({
+function IntegrationsSettingsSection({
   integrations,
   feedback,
   sectionIds,

@@ -8,7 +8,7 @@ import {
 } from '@pivi/agent/settings/deviceLocalEnvironmentState';
 import type { App } from 'obsidian';
 
-export const DEVICE_LOCAL_ENVIRONMENT_STORAGE_KEY = 'pivi.environment.v1';
+const DEVICE_LOCAL_ENVIRONMENT_STORAGE_KEY = 'pivi.environment.v1';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);

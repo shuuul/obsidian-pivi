@@ -204,8 +204,4 @@ export function getInlineEditDiffReviewAcceptRange(
     : { from: entry.to, to: entry.to };
 }
 
-export {
-  hideInlineEditDiffReview,
-  inlineEditDiffReviewField,
-  showInlineEditDiffReview,
-};
+export { inlineEditDiffReviewField };

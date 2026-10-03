@@ -12,7 +12,7 @@ import type {
 import type { App } from 'obsidian';
 
 
-export interface ObsidianImageGenerator {
+interface ObsidianImageGenerator {
   generateImage(request: {
     prompt: string;
     model?: string;

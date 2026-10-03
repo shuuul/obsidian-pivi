@@ -78,7 +78,7 @@ export function asPiviPlugin(stub: MockPiviPluginStub): PiviPlugin {
 }
 
 /** Minimal Pi UI facades for features-layer unit tests. */
-export function createMockPiUiFacades(
+function createMockPiUiFacades(
   overrides: Partial<PiviUiFacades> = {},
 ): PiviUiFacades {
   const { chatUIConfig: chatUIConfigOverride, ...rest } = overrides;

@@ -1,6 +1,6 @@
 import { setIcon } from 'obsidian';
 
-export const COLLAPSIBLE_CHEVRON_CLASS = 'pivi-collapsible-chevron';
+const COLLAPSIBLE_CHEVRON_CLASS = 'pivi-collapsible-chevron';
 
 export interface CollapsibleState {
   isExpanded: boolean;

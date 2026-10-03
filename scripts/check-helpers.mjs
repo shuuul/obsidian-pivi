@@ -3,7 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 
 export const rootDir = process.cwd();
-export const srcDir = path.join(rootDir, 'src');
+const srcDir = path.join(rootDir, 'src');
 
 export function listSourceFiles(dir, options = {}) {
   const { extensions = /\.[cm]?[tj]sx?$/ } = options;

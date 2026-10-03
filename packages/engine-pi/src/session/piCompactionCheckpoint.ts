@@ -28,11 +28,11 @@ export function isCompactionEntry(
 
 // Windows drive letters need a non-letter boundary so URL schemes like
 // `https://` (`s:/`) and `http://` (`p:/`) are not treated as device paths.
-export const DEVICE_PATH_IN_TEXT = /(?:file:\/\/\/|(?<![A-Za-z])[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|\/(?:Users|home|private|tmp|var|Volumes|etc|opt|usr|bin|sbin|root|dev|mnt|Library|Applications|System|Windows)\/)\S*/gi;
+const DEVICE_PATH_IN_TEXT = /(?:file:\/\/\/|(?<![A-Za-z])[A-Za-z]:[\\/]|\\\\[^\\\s]+\\|\/(?:Users|home|private|tmp|var|Volumes|etc|opt|usr|bin|sbin|root|dev|mnt|Library|Applications|System|Windows)\/)\S*/gi;
 
 // Extension-bearing absolute paths only. Slash-separated prose such as
 // `已完成/无需更新` or `/hover/focus/disabled` must not fail compaction.
-export const GENERIC_ABSOLUTE_PATH_IN_TEXT = /(?<![A-Za-z0-9_.:/-])\/(?:(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+)\.[A-Za-z0-9]+/g;
+const GENERIC_ABSOLUTE_PATH_IN_TEXT = /(?<![A-Za-z0-9_.:/-])\/(?:(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+)\.[A-Za-z0-9]+/g;
 
 export function redactDevicePaths(text: string): string {
   return text
@@ -40,7 +40,7 @@ export function redactDevicePaths(text: string): string {
     .replace(GENERIC_ABSOLUTE_PATH_IN_TEXT, '[external path omitted]');
 }
 
-export function containsDevicePath(value: unknown): boolean {
+function containsDevicePath(value: unknown): boolean {
   if (typeof value === 'string') {
     DEVICE_PATH_IN_TEXT.lastIndex = 0;
     GENERIC_ABSOLUTE_PATH_IN_TEXT.lastIndex = 0;
@@ -53,7 +53,7 @@ export function containsDevicePath(value: unknown): boolean {
   return isRecord(value) && Object.values(value).some(containsDevicePath);
 }
 
-export function extractCheckpointJson(text: string): {
+function extractCheckpointJson(text: string): {
   ok: true;
   value: unknown;
 } | {
@@ -88,7 +88,7 @@ export function extractCheckpointJson(text: string): {
   }
 }
 
-export function invalidCompactionDraftFields(value: Record<string, unknown>): string[] {
+function invalidCompactionDraftFields(value: Record<string, unknown>): string[] {
   const invalidFields: string[] = [];
   if (
     typeof value.continuationSummary !== 'string'

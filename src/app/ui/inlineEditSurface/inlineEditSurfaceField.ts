@@ -195,8 +195,4 @@ export function createInlineEditSurfaceRoot(ownerDocument: Document): HTMLElemen
   });
 }
 
-export {
-  hideInlineEditSurface,
-  inlineEditSurfaceField,
-  showInlineEditSurface,
-};
+export { inlineEditSurfaceField };

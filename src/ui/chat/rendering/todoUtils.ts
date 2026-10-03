@@ -1,11 +1,11 @@
 import type { TodoItem } from '@pivi/agent/tools/todo';
 import { setIcon } from 'obsidian';
 
-export function getTodoStatusIcon(status: TodoItem['status']): string {
+function getTodoStatusIcon(status: TodoItem['status']): string {
   return status === 'completed' ? 'check' : 'dot';
 }
 
-export function getTodoDisplayText(todo: TodoItem): string {
+function getTodoDisplayText(todo: TodoItem): string {
   return todo.status === 'in_progress' ? (todo.activeForm ?? todo.content) : todo.content;
 }
 

@@ -4,7 +4,7 @@ import {
 import type { SyncSecretStore } from '@pivi/agent/ports';
 import type { CustomProviderConfig } from '@pivi/agent/settings/customProviders';
 
-export class CustomProviderHeaderMigrationError extends Error {
+class CustomProviderHeaderMigrationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'CustomProviderHeaderMigrationError';

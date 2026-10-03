@@ -21,14 +21,14 @@ export interface ChatProjectionEventMetadata {
   readonly timestamp: number;
 }
 
-export interface ChatProjectionEventIds {
+interface ChatProjectionEventIds {
   readonly messageId: string | null;
   readonly blockId: string | null;
   readonly toolId: string | null;
   readonly agentId: string | null;
 }
 
-export type ChatProjectionEventBase = ChatProjectionEventMetadata & ChatProjectionEventIds;
+type ChatProjectionEventBase = ChatProjectionEventMetadata & ChatProjectionEventIds;
 
 export type ChatProjectionMessageChange =
   | { readonly type: 'message.upsert' }

@@ -52,7 +52,7 @@ import type {
 } from "@/app/noteToolbarIntegration";
 
 
-export interface PiviChatViewCommandState {
+interface PiviChatViewCommandState {
   canCreateTab: boolean;
   canStartNewSession: boolean;
   canCloseActiveTab: boolean;
@@ -218,12 +218,12 @@ export interface PiviChatView {
   getChatHandle(): PiviChatViewHandle | null;
 }
 
-export interface PiviMcpServerManager {
+interface PiviMcpServerManager {
   getServers(): ManagedMcpServer[];
   getContextSavingServers(): ManagedMcpServer[];
 }
 
-export interface PiviProviderCredentialStore {
+interface PiviProviderCredentialStore {
   readSync(providerId: string): ProviderCredential | undefined;
   modify(
     providerId: string,
@@ -232,7 +232,7 @@ export interface PiviProviderCredentialStore {
   delete(providerId: string): Promise<void>;
 }
 
-export interface PiviProviderOAuth {
+interface PiviProviderOAuth {
   hasCodexAuth(): boolean;
   hasProviderOAuth(providerId: string): boolean;
   loginProviderOAuth(
@@ -243,7 +243,7 @@ export interface PiviProviderOAuth {
   logoutProviderOAuth(providerId: string): Promise<void>;
 }
 
-export interface PiviWebSearchCredentialStore {
+interface PiviWebSearchCredentialStore {
   readSync(providerId: WebProviderId): string | undefined;
   writeSync(providerId: WebProviderId, apiKey: string): void;
   clearSync(providerId: WebProviderId): void;
@@ -307,7 +307,7 @@ export interface PiviPluginWorkspace {
  * Wide composition fields (workspace, storage, HTTP, process) stay off this
  * surface so chat UI cannot depend on them — use ChatPorts / SettingsPorts.
  */
-export interface PiviHostCore {
+interface PiviHostCore {
   app: App;
   settings: PiviSettings;
 

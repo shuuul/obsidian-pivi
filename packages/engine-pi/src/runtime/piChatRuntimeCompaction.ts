@@ -207,7 +207,7 @@ function getManualSinglePassPlan(
   };
 }
 
-export function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {
+function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {
   return getPlan(deps) !== null;
 }
 

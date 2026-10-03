@@ -15,7 +15,7 @@ import {
   type PiviSessionMetaData,
 } from '@pivi/agent/session/types';
 
-export function stableJson(value: unknown): string {
+function stableJson(value: unknown): string {
   if (value === undefined) {
     return 'undefined';
   }

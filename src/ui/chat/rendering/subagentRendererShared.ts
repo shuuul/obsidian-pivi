@@ -167,7 +167,7 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
   appendSubagentCompletedIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
 }
 
-export function renderSubagentStatus(
+function renderSubagentStatus(
   statusEl: HTMLElement,
   info: SubagentInfo,
 ): ActivityStatusPresentation {
@@ -290,6 +290,6 @@ export function setPromptText(
 }
 
 
-export function updateSummaryText(summaryEl: HTMLElement, info: SubagentInfo): void {
+function updateSummaryText(summaryEl: HTMLElement, info: SubagentInfo): void {
   summaryEl.setText(truncateDescription(info.description, 80));
 }

@@ -34,7 +34,7 @@ import { normalizeStoredPiviSettings } from '@/app/settings/piviSettingsCodec';
 
 const logger = new PluginLogger('DeviceLocalEnvironmentMigration');
 
-export class DeviceLocalEnvironmentMigrationError extends Error {
+class DeviceLocalEnvironmentMigrationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'DeviceLocalEnvironmentMigrationError';

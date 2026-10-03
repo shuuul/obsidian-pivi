@@ -191,7 +191,7 @@ export function listObsidianIntegrationSections(
   ];
 }
 
-export function describeNoteToolbarResult(result: NoteToolbarSetupResult): SettingsFeedbackMessage {
+function describeNoteToolbarResult(result: NoteToolbarSetupResult): SettingsFeedbackMessage {
   const kind = result.status === 'installed' || result.status === 'already-installed'
     ? 'success'
     : 'error';

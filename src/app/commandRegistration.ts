@@ -11,7 +11,7 @@ import { findPiviView } from "./viewAccess";
 
 export const ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID =
   "add-selection-to-chat-input";
-export const INLINE_EDIT_SELECTION_COMMAND_ID = "inline-edit-selection";
+const INLINE_EDIT_SELECTION_COMMAND_ID = "inline-edit-selection";
 const CHAT_PERF_SCENARIO_PATH = '.pivi/perf-scenario.txt';
 
 export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {

@@ -19,7 +19,7 @@ export function configureSessionJsonlIndexRoot(root: string | null): void {
   }
 }
 
-export function encodeSessionJsonlIndexKey(absoluteSessionFile: string): string {
+function encodeSessionJsonlIndexKey(absoluteSessionFile: string): string {
   return createHash('sha256').update(absoluteSessionFile, 'utf8').digest('hex');
 }
 

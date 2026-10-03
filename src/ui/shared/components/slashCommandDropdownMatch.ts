@@ -88,7 +88,7 @@ export function appendHighlightedText(parent: HTMLElement, text: string, query: 
   }
 }
 
-export function appendFuzzyHighlightedText(parent: HTMLElement, text: string, queryLower: string): boolean {
+function appendFuzzyHighlightedText(parent: HTMLElement, text: string, queryLower: string): boolean {
   const indexes = getFuzzyMatchIndexes(text.toLowerCase(), queryLower);
   if (!indexes) return false;
 
