@@ -1,4 +1,4 @@
-import { authorizeMcp } from '@earendil-works/pi-mcp/oauth';
+import { authorizeMcp, stepUpScope } from '@earendil-works/pi-mcp/oauth';
 
 import type { ExternalOpener } from '../../ports';
 import type { McpTransportFetch } from '../ports';
@@ -18,6 +18,9 @@ interface PendingAuthorization {
   provider: McpOAuthProvider;
   serverUrl: string;
   fetch: McpTransportFetch;
+  store: McpAuthEntryStore;
+  /** Scope of the authorization request, so the stored grant records what was asked for. */
+  scope?: string;
 }
 
 interface PendingAuthentication {
@@ -134,11 +137,17 @@ export class McpAuthFlow {
       this.callbackServer.port,
     );
 
+    // A server that rejected the current grant with `insufficient_scope` left the scope it needs.
+    // Refreshing would return the same narrow grant, so go straight to the authorization redirect.
+    const pendingStepUpScope = (await store.getAuthForUrl(serverName, serverUrl))?.stepUpScope;
+    const scope = pendingStepUpScope ? stepUpScope(config.scope, pendingStepUpScope) : config.scope;
+
     try {
       const result = await authorizeMcp(authProvider, {
         serverUrl,
         fetch,
-        ...(config.scope ? { scope: config.scope } : {}),
+        ...(scope ? { scope } : {}),
+        ...(pendingStepUpScope ? { skipRefresh: true } : {}),
       });
       this.assertActive(lifecycleGeneration);
       if (result === 'AUTHORIZED') {
@@ -148,7 +157,14 @@ export class McpAuthFlow {
       if (!capturedUrl) {
         throw new Error('OAuth authorization URL was not provided');
       }
-      this.pendingAuthorizations.set(serverName, { operationId, provider: authProvider, serverUrl, fetch });
+      this.pendingAuthorizations.set(serverName, {
+        operationId,
+        provider: authProvider,
+        serverUrl,
+        fetch,
+        store,
+        ...(scope ? { scope } : {}),
+      });
       return { authorizationUrl: capturedUrl.toString(), operationId };
     } catch (error) {
       await this.clearMatchingOAuthState(serverName, oauthState, store);
@@ -171,8 +187,10 @@ export class McpAuthFlow {
         serverUrl: pending.serverUrl,
         authorizationCode: callback.code,
         ...(callback.iss === undefined ? {} : { iss: callback.iss }),
+        ...(pending.scope ? { scope: pending.scope } : {}),
         fetch: pending.fetch,
       });
+      await pending.store.clearStepUpScope(serverName);
       return 'authenticated';
     } finally {
       if (this.pendingAuthorizations.get(serverName) === pending) {

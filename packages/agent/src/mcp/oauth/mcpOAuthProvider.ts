@@ -5,6 +5,7 @@ import {
   type OAuthClientMetadata,
   type OAuthClientProvider,
   type OAuthTokens,
+  stepUpScope,
 } from '@earendil-works/pi-mcp/oauth';
 
 import type { McpOAuthConfig } from '../types';
@@ -129,6 +130,14 @@ export class McpOAuthProvider implements OAuthClientProvider {
       scope: tokens.scope,
     };
     await this.store.updateTokens(this.serverName, storedTokens, this.serverUrl);
+  }
+
+  /** Keep the scope an `insufficient_scope` challenge asked for, merged with the current grant. */
+  async recordStepUpScope(challengedScope: string | undefined): Promise<void> {
+    const scope = stepUpScope((await this.tokens())?.scope, challengedScope);
+    if (scope) {
+      await this.store.updateStepUpScope(this.serverName, scope, this.serverUrl);
+    }
   }
 
   async redirectToAuthorization(authorizationUrl: URL): Promise<void> {

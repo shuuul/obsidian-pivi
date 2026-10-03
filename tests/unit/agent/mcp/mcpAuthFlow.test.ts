@@ -256,4 +256,100 @@ describe('McpAuthFlow', () => {
       authFlow.completeAuth('github', { code: 'replacement-code' }, replacement.operationId),
     ).resolves.toBe('authenticated');
   });
+
+  it('requests a recorded step-up scope without refreshing and clears it once authorized', async () => {
+    await store.updateTokens(
+      'github',
+      { accessToken: 'narrow-token', refreshToken: 'refresh-token', scope: 'repo:read' },
+      'https://mcp.example.com',
+    );
+    await store.updateStepUpScope('github', 'repo:read repo:write', 'https://mcp.example.com');
+
+    const started = await authFlow.startAuth(server(), store, mockFetch);
+    expect(mockAuthorizeMcp.mock.calls[0]?.[1]).toMatchObject({
+      scope: 'repo:read repo:write',
+      skipRefresh: true,
+    });
+
+    await expect(
+      authFlow.completeAuth('github', { code: 'step-up-code' }, started.operationId),
+    ).resolves.toBe('authenticated');
+    expect(mockAuthorizeMcp.mock.calls[1]?.[1]).toMatchObject({
+      authorizationCode: 'step-up-code',
+      scope: 'repo:read repo:write',
+    });
+    expect((await store.getEntry('github'))?.stepUpScope).toBeUndefined();
+  });
+
+  it('merges a configured scope with the recorded step-up scope', async () => {
+    await store.updateTokens('github', { accessToken: 'narrow-token' }, 'https://mcp.example.com');
+    await store.updateStepUpScope('github', 'repo:write', 'https://mcp.example.com');
+    const configured: ManagedMcpServer = { ...server(), oauth: { scope: 'profile' } };
+
+    await authFlow.startAuth(configured, store, mockFetch);
+
+    expect(mockAuthorizeMcp.mock.calls[0]?.[1]).toMatchObject({ scope: 'profile repo:write', skipRefresh: true });
+  });
+
+  it('keeps refreshing an existing grant when no step-up is pending', async () => {
+    await authFlow.startAuth(server(), store, mockFetch);
+
+    expect(mockAuthorizeMcp.mock.calls[0]?.[1]).not.toHaveProperty('skipRefresh');
+    expect(mockAuthorizeMcp.mock.calls[0]?.[1]).not.toHaveProperty('scope');
+  });
+
+  it('steps up through the real pi-mcp flow: widened scope in the redirect, refresh skipped, grant recorded', async () => {
+    const actual = jest.requireActual<typeof import('@earendil-works/pi-mcp/oauth')>('@earendil-works/pi-mcp/oauth');
+    mockAuthorizeMcp.mockImplementation(actual.authorizeMcp);
+    const requests: Array<{ url: string; body: string }> = [];
+    const json = (body: unknown): Response => new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+    const fakeFetch: McpTransportFetch = async (input, init) => {
+      const url = String(input);
+      requests.push({ url, body: typeof init?.body === 'string' ? init.body : String(init?.body ?? '') });
+      if (url.includes('oauth-protected-resource')) {
+        return json({ resource: 'https://mcp.example.com', authorization_servers: ['https://issuer.example.com'] });
+      }
+      if (url.includes('oauth-authorization-server')) {
+        return json({
+          issuer: 'https://issuer.example.com',
+          authorization_endpoint: 'https://issuer.example.com/authorize',
+          token_endpoint: 'https://issuer.example.com/token',
+          response_types_supported: ['code'],
+          code_challenge_methods_supported: ['S256'],
+        });
+      }
+      if (url === 'https://issuer.example.com/token') {
+        return json({ access_token: 'wide-token', token_type: 'Bearer', refresh_token: 'new-refresh' });
+      }
+      return new Response('not found', { status: 404 });
+    };
+    await store.updateClientInfo('github', { clientId: 'client-1' }, 'https://mcp.example.com');
+    await store.updateTokens(
+      'github',
+      { accessToken: 'narrow-token', refreshToken: 'old-refresh', scope: 'repo:read' },
+      'https://mcp.example.com',
+    );
+    await store.updateStepUpScope('github', 'repo:read repo:write', 'https://mcp.example.com');
+
+    const started = await authFlow.startAuth(server(), store, fakeFetch);
+
+    const authorizationUrl = new URL(started.authorizationUrl);
+    expect(authorizationUrl.origin + authorizationUrl.pathname).toBe('https://issuer.example.com/authorize');
+    expect(authorizationUrl.searchParams.get('scope')).toBe('repo:read repo:write');
+    expect(requests.some((request) => request.url === 'https://issuer.example.com/token')).toBe(false);
+
+    await expect(
+      authFlow.completeAuth('github', { code: 'step-up-code' }, started.operationId),
+    ).resolves.toBe('authenticated');
+
+    const tokenRequest = requests.find((request) => request.url === 'https://issuer.example.com/token');
+    expect(tokenRequest?.body).toContain('grant_type=authorization_code');
+    expect(await store.getAuthForUrl('github', 'https://mcp.example.com')).toMatchObject({
+      tokens: { accessToken: 'wide-token', refreshToken: 'new-refresh', scope: 'repo:read repo:write' },
+    });
+    expect((await store.getEntry('github'))?.stepUpScope).toBeUndefined();
+  });
 });

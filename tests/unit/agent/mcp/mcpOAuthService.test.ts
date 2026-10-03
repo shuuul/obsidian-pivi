@@ -121,4 +121,54 @@ describe("McpOAuthService", () => {
 
     expect(provider?.redirectUrl).toBe("http://localhost:34567/callback");
   });
+
+  it("records the scope of an insufficient_scope challenge before requiring re-authentication", async () => {
+    const mockFetch = jest.fn() as unknown as McpTransportFetch;
+    const app = createMockApp();
+    const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
+    const server = oauthServer("github", "https://mcp.example.com");
+    await service.createOAuthClientProvider(server)!.saveTokens({
+      access_token: "mcp-token",
+      token_type: "Bearer",
+      refresh_token: "refresh-token",
+      scope: "repo:read",
+    });
+    const store = new McpSecretAuthStore(app.secretStorage);
+
+    const authProvider = service.createAuthProvider(server)!;
+    // pi-mcp's own handling needs the network; only the recording that precedes it is under test.
+    await authProvider.onUnauthorized!({
+      response: new Response(null, {
+        status: 403,
+        headers: { "www-authenticate": 'Bearer error="insufficient_scope", scope="repo:write"' },
+      }),
+      serverUrl: new URL("https://mcp.example.com"),
+      fetch: jest.fn().mockRejectedValue(new Error("offline")),
+      token: "mcp-token",
+    }).catch(() => undefined);
+
+    expect((await store.getEntry("github"))?.stepUpScope).toBe("repo:read repo:write");
+  });
+
+  it("does not record a step-up scope for an ordinary 401", async () => {
+    const mockFetch = jest.fn() as unknown as McpTransportFetch;
+    const app = createMockApp();
+    const service = new McpOAuthService(app.secretStorage, mockFetch, mockExternalOpener);
+    const server = oauthServer("github", "https://mcp.example.com");
+    await service.createOAuthClientProvider(server)!.saveTokens({
+      access_token: "mcp-token",
+      token_type: "Bearer",
+      scope: "repo:read",
+    });
+
+    await service.createAuthProvider(server)!.onUnauthorized!({
+      response: new Response(null, { status: 401, headers: { "www-authenticate": 'Bearer scope="repo:write"' } }),
+      serverUrl: new URL("https://mcp.example.com"),
+      fetch: jest.fn().mockRejectedValue(new Error("offline")),
+      token: "mcp-token",
+    }).catch(() => undefined);
+
+    const store = new McpSecretAuthStore(app.secretStorage);
+    expect((await store.getEntry("github"))?.stepUpScope).toBeUndefined();
+  });
 });
