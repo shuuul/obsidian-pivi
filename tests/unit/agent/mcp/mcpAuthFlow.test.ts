@@ -7,6 +7,7 @@ import type { ManagedMcpServer } from '@pivi/agent/mcp/types';
 import {
   McpAuthFlow,
 } from '@pivi/agent/mcp/oauth/mcpAuthFlow';
+import type { McpOAuthCallback } from '@pivi/agent/mcp/oauth/mcpCallbackServer';
 import {
   OAUTH_CALLBACK_PATH,
 } from '@pivi/agent/mcp/oauth/mcpOAuthProvider';
@@ -57,10 +58,11 @@ function server(url = 'https://mcp.example.com'): ManagedMcpServer {
   };
 }
 
-function requestCallback(port: number, state: string, code: string): Promise<void> {
+function requestCallback(port: number, state: string, code: string, iss?: string): Promise<void> {
   const { promise, resolve, reject } = promiseWithResolvers<void>();
+  const issQuery = iss ? `&iss=${encodeURIComponent(iss)}` : '';
   const req = get(
-    `http://localhost:${port}${OAUTH_CALLBACK_PATH}?state=${state}&code=${code}`,
+    `http://localhost:${port}${OAUTH_CALLBACK_PATH}?state=${state}&code=${code}${issQuery}`,
     (res) => {
       res.resume();
       res.on('end', resolve);
@@ -103,7 +105,7 @@ describe('McpAuthFlow', () => {
     });
 
     await expect(
-      authFlow.completeAuth('github', 'callback-code', started.operationId),
+      authFlow.completeAuth('github', { code: 'callback-code' }, started.operationId),
     ).resolves.toBe('authenticated');
     expect(mockAuthorizeMcp.mock.calls[1]?.[1]).toMatchObject({
       serverUrl: 'https://mcp.example.com',
@@ -111,7 +113,7 @@ describe('McpAuthFlow', () => {
       fetch: mockFetch,
     });
     await expect(
-      authFlow.completeAuth('github', 'callback-code', started.operationId),
+      authFlow.completeAuth('github', { code: 'callback-code' }, started.operationId),
     ).rejects.toThrow('No pending OAuth flow');
   });
 
@@ -151,12 +153,41 @@ describe('McpAuthFlow', () => {
     await expect(store.getOAuthState('github')).resolves.toBeUndefined();
   });
 
+  it('forwards the RFC 9207 iss parameter from the callback to the code exchange', async () => {
+    const { promise: openerCalled, resolve: resolveOpenerCalled } = promiseWithResolvers<void>();
+    const opener: ExternalOpener = {
+      openExternalUrl: jest.fn(async () => {
+        resolveOpenerCalled();
+      }),
+    };
+
+    const authPromise = authFlow.authenticate(server(), store, mockFetch, opener);
+    await openerCalled;
+    const oauthState = await store.getOAuthState('github');
+    await requestCallback(authFlow.callbackServer.port, oauthState!, 'callback-code', 'https://issuer.example.com');
+
+    await expect(authPromise).resolves.toBe('authenticated');
+    expect(mockAuthorizeMcp.mock.calls[1]?.[1]).toMatchObject({
+      authorizationCode: 'callback-code',
+      iss: 'https://issuer.example.com',
+    });
+  });
+
+  it('omits iss from the code exchange when the authorization response has none', async () => {
+    const started = await authFlow.startAuth(server(), store, mockFetch);
+
+    await expect(
+      authFlow.completeAuth('github', { code: 'plain-code' }, started.operationId),
+    ).resolves.toBe('authenticated');
+    expect(mockAuthorizeMcp.mock.calls[1]?.[1]).not.toHaveProperty('iss');
+  });
+
   it('cleans up OAuth state when the injected opener rejects', async () => {
     const opener: ExternalOpener = {
       openExternalUrl: jest.fn().mockRejectedValue(new Error('browser blocked')),
     };
 
-    const { promise: neverCallback } = promiseWithResolvers<string>();
+    const { promise: neverCallback } = promiseWithResolvers<McpOAuthCallback>();
     neverCallback.catch(() => {});
     jest.spyOn(authFlow.callbackServer, 'waitForCallback').mockReturnValue(neverCallback);
 
@@ -173,7 +204,7 @@ describe('McpAuthFlow', () => {
 
     await authFlow.shutdown();
 
-    await expect(authFlow.completeAuth('github', 'late-code', started.operationId)).rejects.toThrow(
+    await expect(authFlow.completeAuth('github', { code: 'late-code' }, started.operationId)).rejects.toThrow(
       'No pending OAuth flow for server: github',
     );
   });
@@ -190,11 +221,11 @@ describe('McpAuthFlow', () => {
       await authFlow.shutdown();
 
       await expect(
-        otherFlow.completeAuth('github', 'second-code', second.operationId),
+        otherFlow.completeAuth('github', { code: 'second-code' }, second.operationId),
       ).resolves.toBe('authenticated');
       expect(codeExchanges()).toEqual(['second-code']);
       await expect(
-        authFlow.completeAuth('github', 'first-code', first.operationId),
+        authFlow.completeAuth('github', { code: 'first-code' }, first.operationId),
       ).rejects.toThrow('No pending OAuth flow');
     } finally {
       await otherFlow.shutdown();
@@ -222,7 +253,7 @@ describe('McpAuthFlow', () => {
     await expect(staleAuthentication).rejects.toThrow('stale opener failed');
 
     await expect(
-      authFlow.completeAuth('github', 'replacement-code', replacement.operationId),
+      authFlow.completeAuth('github', { code: 'replacement-code' }, replacement.operationId),
     ).resolves.toBe('authenticated');
   });
 });

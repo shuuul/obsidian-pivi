@@ -136,7 +136,7 @@ MCP settings save/reload invalidates slash caches, authenticates or diagnoses as
 
 Remote MCP transports and OAuth run on `@earendil-works/pi-mcp` (Streamable HTTP, authorization-code OAuth with PKCE and dynamic registration) with injected scoped `fetch` clients from composition, not a global renderer fetch patch. pi-mcp has no client-credentials grant, so `mcpClientCredentials.ts` implements it and re-runs it after a 401. Configured private MCP origins receive session-scoped origin grants re-issued on settings save and cleared on unload; WebFetch rejects local/private targets before any extractor or direct attempt.
 
-`KEY=$NAME` bulk import stores a `systemEnvironment` reference and never copies the host value into Pivi stores. Remote MCP URLs accept only `http:`/`https:`, with plaintext `http:` limited to loopback hosts; server names reject reserved prototype keys. The OAuth callback server accepts only `GET`, returns explicit UTF-8 responses with browser hardening headers, and never interpolates authorization-server error text into HTML.
+`KEY=$NAME` bulk import stores a `systemEnvironment` reference and never copies the host value into Pivi stores. Remote MCP URLs accept only `http:`/`https:`, with plaintext `http:` limited to loopback hosts; server names reject reserved prototype keys. The OAuth callback server accepts only `GET`, returns explicit UTF-8 responses with browser hardening headers, and never interpolates authorization-server error text into HTML, and forwards the RFC 9207 `iss` parameter with the authorization code so pi-mcp can reject a code issued by another authorization server.
 
 ## Subagents
 

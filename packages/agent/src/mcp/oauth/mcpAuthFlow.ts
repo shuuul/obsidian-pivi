@@ -5,7 +5,7 @@ import type { McpTransportFetch } from '../ports';
 import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../types';
 import { getMcpServerUrl } from '../types';
 import type { McpAuthEntryStore } from './mcpAuthEntryStore';
-import { McpCallbackServer } from './mcpCallbackServer';
+import { McpCallbackServer, type McpOAuthCallback } from './mcpCallbackServer';
 import { authorizeMcpClientCredentials } from './mcpClientCredentials';
 import { McpOAuthProvider } from './mcpOAuthProvider';
 import { openAuthUrl } from './openAuthUrl';
@@ -158,7 +158,7 @@ export class McpAuthFlow {
 
   async completeAuth(
     serverName: string,
-    authorizationCode: string,
+    callback: McpOAuthCallback,
     operationId: OperationId,
   ): Promise<McpAuthStatus> {
     const pending = this.pendingAuthorizations.get(serverName);
@@ -169,7 +169,8 @@ export class McpAuthFlow {
     try {
       await authorizeMcp(pending.provider, {
         serverUrl: pending.serverUrl,
-        authorizationCode,
+        authorizationCode: callback.code,
+        ...(callback.iss === undefined ? {} : { iss: callback.iss }),
         fetch: pending.fetch,
       });
       return 'authenticated';
@@ -211,7 +212,7 @@ export class McpAuthFlow {
 
       try {
         await openAuthUrl(authorizationUrl, externalOpener);
-        const code = await callbackPromise;
+        const callback = await callbackPromise;
 
         const storedState = await store.getOAuthState(server.name);
         if (storedState !== oauthState) {
@@ -220,7 +221,7 @@ export class McpAuthFlow {
         }
         await store.clearOAuthState(server.name);
 
-        return await this.completeAuth(server.name, code, operationId);
+        return await this.completeAuth(server.name, callback, operationId);
       } catch (error) {
         this.callbackServer.cancelPendingCallback(oauthState);
         await this.clearMatchingOAuthState(server.name, oauthState, store);

@@ -61,9 +61,22 @@ describe('McpCallbackServer', () => {
     const callbackPromise = callbackServer.waitForCallback('state-ok');
     const response = await requestCallback(callbackServer.port, '?state=state-ok&code=auth-code');
 
-    await expect(callbackPromise).resolves.toBe('auth-code');
+    await expect(callbackPromise).resolves.toEqual({ code: 'auth-code' });
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('Authorization Successful');
+  });
+
+  it('passes the issuer identifier through with the authorization code', async () => {
+    await callbackServer.ensure();
+
+    const callbackPromise = callbackServer.waitForCallback('state-iss');
+    const response = await requestCallback(
+      callbackServer.port,
+      '?state=state-iss&code=auth-code&iss=' + encodeURIComponent('https://issuer.example.com'),
+    );
+
+    await expect(callbackPromise).resolves.toEqual({ code: 'auth-code', iss: 'https://issuer.example.com' });
+    expect(response.statusCode).toBe(200);
   });
 
   it('rejects the pending callback when the provider returns an OAuth error', async () => {

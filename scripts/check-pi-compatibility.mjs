@@ -15,7 +15,6 @@ const expectedPackages = [
 const knownCompatibilityPaths = [
   'build/plugins/shim-pi-ai.mjs',
   'build/plugins/shim-pi-coding-agent-config.mjs',
-  'build/plugins/dedupe-pi-dependencies.mjs',
   'build/plugins/shim-signal-exit.mjs',
   'build/plugins/prefer-browser-builds.mjs',
   'build/postprocess/rewrite-node-imports.mjs',
