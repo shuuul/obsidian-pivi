@@ -20,7 +20,7 @@ interface SnapshotAllocationProxies {
   visitedEntities: number;
 }
 
-export function cloneSerializableValue(
+function cloneSerializableValue(
   value: unknown,
   allocationProxies?: SnapshotAllocationProxies,
 ): unknown {

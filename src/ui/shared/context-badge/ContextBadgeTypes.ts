@@ -1,17 +1,7 @@
-import type {
-  ContextBadgeIcon,
-  ContextBadgeKind,
-  ContextBadgeToken,
-  ContextBadgeTone,
-  ContextBadgeViewModel,
-} from '@pivi/pivi-react/context-badges';
+import type { ContextBadgeToken } from '@pivi/pivi-react/context-badges';
 
 export type {
-  ContextBadgeIcon,
-  ContextBadgeKind,
   ContextBadgeToken,
-  ContextBadgeTone,
-  ContextBadgeViewModel,
 };
 
 export interface ContextBadgeRenderOptions {

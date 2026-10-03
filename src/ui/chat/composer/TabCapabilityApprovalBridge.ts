@@ -1,4 +1,4 @@
-import type { CapabilityApprovalPort, CapabilityApprovalRequest } from '@pivi/agent/ports';
+import type { CapabilityApprovalPort } from '@pivi/agent/ports';
 import {
   type CapabilityApprovalPersistence,
   CapabilityPersistentGrantCache,
@@ -52,4 +52,3 @@ export class TabCapabilityApprovalBridge {
   }
 }
 
-export type { CapabilityApprovalRequest };

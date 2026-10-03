@@ -7,15 +7,7 @@ export const setLocale = appI18n.setLocale;
 export const getLocale = appI18n.getLocale;
 
 export type {
-  I18n,
   Locale,
-  LocaleInfo,
   TFunction,
   TranslationKey,
-  TranslationParams,
-} from '@pivi/pivi-react';
-export {
-  DEFAULT_LOCALE,
-  getLocaleInfo,
-  SUPPORTED_LOCALES,
 } from '@pivi/pivi-react';

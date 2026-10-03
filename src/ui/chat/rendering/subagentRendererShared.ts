@@ -75,7 +75,7 @@ export function extractTaskPrompt(input: Record<string, unknown>): string {
   return (input.message as string) || (input.prompt as string) || '';
 }
 
-export function truncateDescription(description: string, maxLength = 40): string {
+function truncateDescription(description: string, maxLength = 40): string {
   if (description.length <= maxLength) return description;
   return description.substring(0, maxLength) + '...';
 }

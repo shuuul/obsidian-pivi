@@ -272,7 +272,7 @@ export function buildCheckpoint(
   };
 }
 
-export function renderList(values: readonly string[]): string {
+function renderList(values: readonly string[]): string {
   return values.length > 0 ? values.map((value) => `- ${value}`).join('\n') : 'None';
 }
 

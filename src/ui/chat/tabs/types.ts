@@ -58,7 +58,7 @@ interface TabServices {
   titleGenerationService: TitleGenerationService | null;
 }
 
-export interface ComposerChromeActions {
+interface ComposerChromeActions {
   send: () => void;
   stop: () => void;
   setModel: (value: string) => void;

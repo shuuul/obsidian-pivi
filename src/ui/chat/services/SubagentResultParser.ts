@@ -4,11 +4,11 @@ import type { TaskResultInterpreter } from '@pivi/agent/tools';
 
 import { extractFullOutputPath, readTrustedFullOutputFile } from './subagentOutput';
 
-export function isRecord(value: unknown): value is Record<string, unknown> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-export function parseJsonRecord(value: string): Record<string, unknown> | null {
+function parseJsonRecord(value: string): Record<string, unknown> | null {
   try {
     const parsed: unknown = JSON.parse(value);
     return isRecord(parsed) ? parsed : null;

@@ -4,7 +4,7 @@ import type {
   CustomProviderConfig,
 } from './customProviders';
 
-export function providerIdFromModelKey(modelKey: string): string | null {
+function providerIdFromModelKey(modelKey: string): string | null {
   const slashIndex = modelKey.indexOf('/');
   if (slashIndex <= 0) {
     return null;

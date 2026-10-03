@@ -48,7 +48,7 @@ export interface ChatUiSnapshotData {
   composer: ComposerChromeSnapshot;
   externalContext: ExternalContextSnapshot;
 }
-export interface ExternalContextItemSnapshot {
+interface ExternalContextItemSnapshot {
   readonly path: string;
   readonly displayPath: string;
   readonly checked: boolean;
@@ -56,7 +56,7 @@ export interface ExternalContextItemSnapshot {
   readonly available: boolean;
   readonly unavailableReason: string | null;
 }
-export interface ExternalContextSnapshot {
+interface ExternalContextSnapshot {
   readonly items: readonly ExternalContextItemSnapshot[];
   readonly selectedCount: number;
   readonly availableSelectedCount: number;

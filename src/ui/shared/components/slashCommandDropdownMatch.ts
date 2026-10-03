@@ -1,17 +1,12 @@
 import {
-  getBoundaryMatchIndex,
   getFuzzyMatchIndexes,
   getTextMatchScore,
-  isSearchBoundary,
 } from '@pivi/agent/skills/commands/fuzzyScore';
 
 import type { DropdownItem } from './slashCommandDropdownData';
 
 export {
-  getBoundaryMatchIndex,
-  getFuzzyMatchIndexes,
   getTextMatchScore,
-  isSearchBoundary,
 };
 
 const MIN_SLASH_DROPDOWN_WIDTH = 220;

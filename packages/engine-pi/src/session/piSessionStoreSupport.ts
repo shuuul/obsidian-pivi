@@ -117,7 +117,7 @@ export interface ExternalContextJsonlMigration {
   turnPaths: Map<string, string[]>;
 }
 
-export function externalPaths(value: unknown): string[] {
+function externalPaths(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((path): path is string => typeof path === 'string')
     : [];

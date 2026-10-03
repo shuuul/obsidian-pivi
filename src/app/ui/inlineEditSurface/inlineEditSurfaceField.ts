@@ -4,7 +4,7 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 
 import type { InlineEditSurfaceSessionId } from './types';
 
-export const INLINE_EDIT_SURFACE_ROOT_CLASS = 'pivi-inline-edit-surface';
+const INLINE_EDIT_SURFACE_ROOT_CLASS = 'pivi-inline-edit-surface';
 
 export class InlineEditSurfaceWidget extends WidgetType {
   constructor(private readonly root: HTMLElement) {

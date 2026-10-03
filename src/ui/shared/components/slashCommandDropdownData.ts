@@ -1,7 +1,7 @@
 import type { SlashCommand } from '@pivi/agent/settings';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
-export interface DropdownMcpToolSummary {
+interface DropdownMcpToolSummary {
   name: string;
   description?: string;
 }

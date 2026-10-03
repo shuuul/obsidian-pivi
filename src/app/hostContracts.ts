@@ -115,7 +115,7 @@ export interface PiviChatViewCommands {
 }
 
 /** Bounded, sanitized per-target failure from a management refresh pass. */
-export interface PiviManagementRefreshFailure {
+interface PiviManagementRefreshFailure {
   readonly target: string;
   readonly message: string;
 }

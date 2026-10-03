@@ -1,5 +1,4 @@
 import type { MentionBadgePart } from '@pivi/agent/context/mentions';
-import { messageTextHasMentionBadges } from '@pivi/agent/context/mentions';
 
 import type { ContextBadgeToken } from './ContextBadgeTypes';
 
@@ -38,4 +37,3 @@ export function mentionPartToContextBadgeToken(part: Exclude<MentionBadgePart, {
   }
 }
 
-export { messageTextHasMentionBadges };

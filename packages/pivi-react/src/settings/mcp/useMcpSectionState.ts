@@ -1,6 +1,5 @@
 import {
   assertValidMcpServerName,
-  MCP_SERVER_NAME_PATTERN,
   McpValidationError,
   validateMcpRemoteUrl,
 } from '@pivi/agent/mcp/mcpValidation';
@@ -39,7 +38,6 @@ export type McpDraft = {
   bearerTokenEnv: string;
 };
 
-export { MCP_SERVER_NAME_PATTERN };
 
 export function mcpValidationMessage(
   error: unknown,

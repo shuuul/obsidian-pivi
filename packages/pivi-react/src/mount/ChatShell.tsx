@@ -6,7 +6,7 @@ import { ActiveTabSurfaces } from './surfaces';
 import { ChatTabBar } from './tab-bar';
 import type { ChatShellOptions } from './types';
 
-export type { ChatShellOptions, ChatSurfaceActions, WelcomeQuoteAdapter } from './types';
+export type { ChatShellOptions } from './types';
 
 export function ChatShell({
   ownerWindow,

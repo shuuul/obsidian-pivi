@@ -13,7 +13,6 @@ import {
   shouldSyncMentionBadgesOnInput,
 } from '@/ui/shared/mention/inlineMentionBadgeDom';
 
-export type { ComposerInput };
 
 export interface MentionInputOptions {
   placeholder?: string;

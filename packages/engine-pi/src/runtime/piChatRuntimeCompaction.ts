@@ -52,11 +52,8 @@ export {
   attachContextEnvelope,
   buildUsageAfterCompaction,
   estimateProjectedTurnTokens,
-  estimateStoredConversationTokens,
-  getCompactionThresholdTokens,
 } from './piChatRuntimeContextEstimate';
 export {
-  buildTurnSyncOptions,
   syncSessionMessagesAfterTurn,
 } from './piChatRuntimeTurnSync';
 

@@ -35,10 +35,9 @@ import {
 } from "./PiSlashCommandCatalog";
 import type { PromptCompositionCoordinator } from "./PromptCompositionCoordinator";
 
-export type { PiviManagementDomain } from "@pivi/agent/tools/piviManagement";
 
 /** Bounded sanitized failure returned from a management refresh pass. */
-export interface PiviManagementRefreshFailure {
+interface PiviManagementRefreshFailure {
   readonly target: string;
   readonly message: string;
 }
