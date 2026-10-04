@@ -15,7 +15,11 @@ export {
   type PiResolvedModel,
   resolvePiModelFromKeyWithLookup,
 } from '../models/piModelRegistry';
-export { PiSettingsCoordinator } from '../models/piSettingsCoordinator';
+export {
+  getPiSettingsSnapshot,
+  projectActivePiState,
+  reconcilePiTitleGenerationModel,
+} from '../models/piSettingsCoordinator';
 export {
   type RemoteCatalogEntry,
   type RemoteCatalogStore,

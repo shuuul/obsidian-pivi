@@ -1,14 +1,13 @@
 import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import { OriginGrantRegistry } from "@pivi/agent/network";
 import type { CapabilityApprovalPort } from "@pivi/agent/ports";
-import type { OpenSessionState } from "@pivi/agent/runtime";
 import type { SessionStore } from "@pivi/agent/session";
 import { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import type { PiviSettings } from "@pivi/agent/settings";
 import type { EnvironmentScope } from "@pivi/agent/settings/types";
 import type { SlashCatalogEntry } from "@pivi/agent/skills/commands/slashCommandEntry";
 import type { PiviManagementApprovalPort } from '@pivi/agent/tools/piviManagement';
-import { PiSettingsCoordinator, warmPiAiModelsCache } from "@pivi/engine-pi/application/models";
+import { reconcilePiTitleGenerationModel, warmPiAiModelsCache } from "@pivi/engine-pi/application/models";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
@@ -32,7 +31,7 @@ import { ObsidianDeviceLocalCapabilityPermissionStore } from "@/app/deviceLocalC
 import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmentStore";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
-import type { ChatFacade, PiviApplicationFacades, PiviChatView, SettingsFacade } from "@/app/hostContracts";
+import type { PiviChatCompositionHost, PiviChatView, PiviSettingsHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 import { openStyleSettingsOrMarketplace } from "@/app/openStyleSettings";
 import {
@@ -74,8 +73,7 @@ const DELETED_SESSION_PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
  */
 export class PiviApplication {
   readonly plugin: Plugin;
-  readonly facades: PiviApplicationFacades;
-  readonly runDevelopmentRealHostSmoke: ChatFacade['runDevelopmentRealHostSmoke'];
+  readonly runDevelopmentRealHostSmoke: PiviChatCompositionHost['runDevelopmentRealHostSmoke'];
 
   constructor(plugin: Plugin) {
     this.plugin = plugin;
@@ -115,15 +113,6 @@ export class PiviApplication {
       sessionManager: this.sessionManager,
       requireSessionStore: () => this.requireSessionStore(),
     });
-    // The application satisfies each facade structurally; registrations see only
-    // the members their facade type declares.
-    this.facades = {
-      chat: this,
-      sessions: this.sessionOperations,
-      workspace: this,
-      integrations: this,
-      settings: this,
-    };
   }
 
   get app() { return this.plugin.app; }
@@ -183,16 +172,16 @@ export class PiviApplication {
   }
 
   // Settings-facade members whose behavior lives in a collaborator.
-  isNoteToolbarInstalled: SettingsFacade['isNoteToolbarInstalled'] = () => this.noteToolbar.isInstalled();
-  setupNoteToolbarIntegration: SettingsFacade['setupNoteToolbarIntegration'] = style =>
+  isNoteToolbarInstalled: PiviSettingsHost['isNoteToolbarInstalled'] = () => this.noteToolbar.isInstalled();
+  setupNoteToolbarIntegration: PiviSettingsHost['setupNoteToolbarIntegration'] = style =>
     this.noteToolbar.setupSelectionCommand(style);
-  purgeDeletedSessionFiles: SettingsFacade['purgeDeletedSessionFiles'] = () =>
+  purgeDeletedSessionFiles: PiviSettingsHost['purgeDeletedSessionFiles'] = () =>
     this.sessionOperations.purgeDeletedSessionFiles();
-  purgeExpiredDeletedSessionFiles: SettingsFacade['purgeExpiredDeletedSessionFiles'] = () =>
+  purgeExpiredDeletedSessionFiles: PiviSettingsHost['purgeExpiredDeletedSessionFiles'] = () =>
     this.sessionOperations.purgeExpiredDeletedSessionFiles();
-  loadSessionMaintenance: SettingsFacade['loadSessionMaintenance'] = () =>
+  loadSessionMaintenance: PiviSettingsHost['loadSessionMaintenance'] = () =>
     this.sessionOperations.loadSessionMaintenance();
-  deleteAllArchivedChats: SettingsFacade['deleteAllArchivedChats'] = () =>
+  deleteAllArchivedChats: PiviSettingsHost['deleteAllArchivedChats'] = () =>
     this.sessionOperations.deleteAllArchivedChats();
 
   showDefaultVaultSkillsInstallPrompt = showDefaultVaultSkillsInstallPrompt;
@@ -211,7 +200,7 @@ export class PiviApplication {
         window,
       );
     }
-    await initializePiviPlugin(this.plugin, this.facades, () => this.loadSettings());
+    await initializePiviPlugin(this.plugin, this, this.sessionOperations, () => this.loadSettings());
     await this.sessionOperations.purgeExpiredDeletedSessionFiles().catch((error: unknown) => {
       logger.warn('Failed to purge expired deleted sessions during startup', error);
     });
@@ -408,9 +397,7 @@ export class PiviApplication {
     updates: Array<{ scope: EnvironmentScope; envText: string }>,
   ): Promise<void> {
     await applyEnvironmentVariablesBatchForPlugin(this, updates, {
-      persistSessionSummary: (openSession) =>
-        this.sessionManager.persistSessionSummary(openSession),
-      reconcileModelWithEnvironment: () => this.reconcileModelWithEnvironment(),
+      reconcileModelWithEnvironment: () => reconcilePiTitleGenerationModel(this.settings),
     });
   }
 
@@ -419,9 +406,7 @@ export class PiviApplication {
     envText: string,
   ): Promise<void> {
     await importEnvironmentTextForPlugin(this, scope, envText, {
-      persistSessionSummary: (openSession) =>
-        this.sessionManager.persistSessionSummary(openSession),
-      reconcileModelWithEnvironment: () => this.reconcileModelWithEnvironment(),
+      reconcileModelWithEnvironment: () => reconcilePiTitleGenerationModel(this.settings),
     });
   }
 
@@ -435,13 +420,6 @@ export class PiviApplication {
 
   getActiveEnvironmentVariables(): string {
     return getActiveEnvironmentVariablesFromSettings(this.settings);
-  }
-
-  private reconcileModelWithEnvironment(): {
-    changed: boolean;
-    invalidatedSessions: OpenSessionState[];
-  } {
-    return PiSettingsCoordinator.reconcileSettings(this.settings, this.sessionManager.getAll());
   }
 
   async loadTabManagerState(): Promise<AppTabManagerState | null> {

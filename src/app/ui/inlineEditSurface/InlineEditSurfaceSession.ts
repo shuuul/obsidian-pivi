@@ -9,7 +9,7 @@ import {
 import type { ComposerOptionSnapshot } from '@pivi/pivi-react/store';
 import { Component, type Editor } from 'obsidian';
 
-import type { IntegrationsFacade, PiviPluginWorkspace } from '@/app/hostContracts';
+import type { PiviChatCompositionHost, PiviPluginWorkspace } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 import { applyInlineEditAcceptance } from '@/app/ui/inlineEditHelpers';
 import { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';
@@ -62,7 +62,7 @@ import type {
 let nextInlineEditSurfaceSessionId = 1;
 
 export interface InlineEditSurfaceSessionDeps {
-  plugin: IntegrationsFacade;
+  plugin: PiviChatCompositionHost;
   i18n: MountInlineEditSurfaceChromeOptions['i18n'];
   composerDefaults: InlineEditComposerDefaults;
   getWorkspace: () => Promise<PiviPluginWorkspace>;

@@ -261,7 +261,7 @@ describe("PiviApplication lifecycle", () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
 
-      const list = plugin.sessionOperations.getSessionList();
+      const list = plugin.sessionOperations.listSessions();
       expect(list).toHaveLength(1);
       const [session] = list;
       expect(session).toBeDefined();
@@ -447,7 +447,7 @@ describe("PiviApplication lifecycle", () => {
   });
 
   describe("openSession helpers", () => {
-    it("getSessionList maps previews from first user message", async () => {
+    it("listSessions maps previews from first user message", async () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
       seedOpenSessions(plugin, [
@@ -458,7 +458,7 @@ describe("PiviApplication lifecycle", () => {
         }),
       ]);
 
-      const list = plugin.sessionOperations.getSessionList();
+      const list = plugin.sessionOperations.listSessions();
       const [session] = list;
       expect(session).toBeDefined();
       if (!session) throw new Error('Expected the open session preview');
@@ -480,15 +480,15 @@ describe("PiviApplication lifecycle", () => {
       expect(plugin.sessionOperations.findEmptySession()?.id).toBe("empty");
     });
 
-    it("getOpenSessionSync returns in-memory openSession by id", async () => {
+    it("findOpenSession returns in-memory openSession by id", async () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
       seedOpenSessions(plugin, [
         openSession({ id: "find-me" }),
       ]);
 
-      expect(plugin.sessionOperations.getOpenSessionSync("find-me")?.id).toBe("find-me");
-      expect(plugin.sessionOperations.getOpenSessionSync("missing")).toBeNull();
+      expect(plugin.sessionOperations.findOpenSession("find-me")?.id).toBe("find-me");
+      expect(plugin.sessionOperations.findOpenSession("missing")).toBeNull();
     });
   });
 

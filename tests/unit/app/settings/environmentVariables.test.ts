@@ -1,5 +1,4 @@
 import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
-import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { PiviSettings } from '@pivi/agent/settings';
 import { getEnvironmentSecretId } from '@pivi/agent/config/valueSource';
 import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/settings/deviceLocalEnvironmentState';
@@ -90,8 +89,7 @@ describe('environment variable runtime propagation', () => {
       'shared',
       'ANTHROPIC_API_KEY=sk-next\nBRAVE_API_KEY=brave-next\nPATH=/bin',
       {
-        persistSessionSummary: jest.fn(async () => undefined),
-        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+        reconcileModelWithEnvironment: () => false,
       },
     );
 
@@ -117,8 +115,7 @@ describe('environment variable runtime propagation', () => {
         { scope: 'agent', envText: 'OPENAI_API_KEY=unconfigured' },
       ],
       {
-        persistSessionSummary: jest.fn(async () => undefined),
-        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+        reconcileModelWithEnvironment: () => false,
       },
     )).rejects.toThrow('provider is not configured');
 
@@ -147,8 +144,7 @@ describe('environment variable runtime propagation', () => {
       'shared',
       'BRAVE_API_KEY=brave-next\nPATH=/bin',
       {
-        persistSessionSummary: jest.fn(async () => undefined),
-        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+        reconcileModelWithEnvironment: () => false,
       },
     )).rejects.toThrow('save failed');
 
@@ -166,8 +162,7 @@ describe('environment variable runtime propagation', () => {
       environmentStore,
     });
     const hooks = {
-      persistSessionSummary: jest.fn(async () => undefined),
-      reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+      reconcileModelWithEnvironment: () => false,
     };
 
     const rejected = importEnvironmentText(host, 'shared', 'OPENAI_API_KEY=nope', hooks);
@@ -200,8 +195,7 @@ describe('environment variable runtime propagation', () => {
       createHost({ settings, views: [], secretStorage, environmentStore }),
       [{ scope: 'shared', envText: 'PATH=/new' }],
       {
-        persistSessionSummary: jest.fn(async () => undefined),
-        reconcileModelWithEnvironment: () => ({ changed: false, invalidatedSessions: [] }),
+        reconcileModelWithEnvironment: () => false,
       },
     );
 
@@ -227,26 +221,16 @@ describe('environment variable runtime propagation', () => {
       sharedEnvironmentVariables: '',
       agentSettings: { environmentVariables: '' },
     } as unknown as PiviSettings;
-    const invalidatedSession = {
-      id: 'session-1',
-      sessionFile: '.pivi/sessions/one.jsonl',
-    } as OpenSessionState;
-    const persistSessionSummary = jest.fn(async () => undefined);
 
     await applyEnvironmentVariablesBatch(
       createHost({ settings, views: [view], notify, saveSettings }),
       [{ scope: 'shared', envText: 'PATH=/next' }],
       {
-        persistSessionSummary,
-        reconcileModelWithEnvironment: () => ({
-          changed: true,
-          invalidatedSessions: [invalidatedSession],
-        }),
+        reconcileModelWithEnvironment: () => true,
       },
     );
 
     expect(saveSettings).toHaveBeenCalledTimes(1);
-    expect(persistSessionSummary).toHaveBeenCalledWith(invalidatedSession);
     expect(applyEnvironmentRuntimeChange).toHaveBeenCalledWith(true);
     expect(invalidateSlashCatalog).toHaveBeenCalledTimes(1);
     expect(refreshModelPresentation).toHaveBeenCalledTimes(1);
@@ -289,11 +273,7 @@ describe('environment variable runtime propagation', () => {
       createHost({ settings, views, notify }),
       [{ scope: 'agent', envText: 'PI_FLAG=next' }],
       {
-        persistSessionSummary: jest.fn(async () => undefined),
-        reconcileModelWithEnvironment: () => ({
-          changed: true,
-          invalidatedSessions: [],
-        }),
+        reconcileModelWithEnvironment: () => true,
       },
     );
 
@@ -334,11 +314,7 @@ describe('environment variable runtime propagation', () => {
       createHost({ settings, views: [view], environmentStore }),
       [{ scope: 'shared', envText: 'PATH=/same' }],
       {
-        persistSessionSummary: jest.fn(async () => undefined),
-        reconcileModelWithEnvironment: () => ({
-          changed: false,
-          invalidatedSessions: [],
-        }),
+        reconcileModelWithEnvironment: () => false,
       },
     );
 

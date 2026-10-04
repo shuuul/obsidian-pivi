@@ -13,8 +13,8 @@ import {
   fetchCustomProviderModels,
   getPiAiCatalogModels,
   getPiAiModelsForProvider,
+  getPiSettingsSnapshot,
   piChatUIConfig,
-  PiSettingsCoordinator,
   refreshPiCatalogModels,
   syncCustomPiProviders,
 } from "@pivi/engine-pi/application/models";
@@ -57,10 +57,10 @@ export function createPiUiFacades(
   return {
     chatUIConfig: piChatUIConfig,
     getSettingsSnapshot(settings) {
-      return PiSettingsCoordinator.getSettingsSnapshot(settings);
+      return getPiSettingsSnapshot(settings);
     },
     commitSettingsSnapshot(settings, snapshot) {
-      PiSettingsCoordinator.commitSettingsSnapshot(settings, snapshot);
+      Object.assign(settings, snapshot);
     },
     listModelsForProvider(providerId, customContextLimits) {
       return getPiAiModelsForProvider(providerId, customContextLimits);

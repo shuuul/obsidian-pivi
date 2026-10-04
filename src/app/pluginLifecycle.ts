@@ -1,8 +1,9 @@
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { ChatSessionPort } from '@pivi/agent/runtime/chatPorts';
 import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { App, Plugin } from "obsidian";
 
-import type { PiviApplicationFacades } from "@/app/hostContracts";
+import type { PiviChatCompositionHost, PiviSettingsHost } from "@/app/hostContracts";
 import { registerSelectionToolbarUi } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
 
 import { registerPiviCli } from "./cliRegistration";
@@ -21,16 +22,17 @@ const vaultApi = (app: App): ObsidianVaultApi => new ObsidianVaultApi(app);
 
 export async function initializePiviPlugin(
   plugin: Plugin,
-  facades: PiviApplicationFacades,
+  application: PiviChatCompositionHost & PiviSettingsHost,
+  sessions: ChatSessionPort,
   loadSettings: () => Promise<void>,
 ): Promise<void> {
   await measureStartupPhase('settings', loadSettings);
-  registerPiviViews(plugin, facades.chat, facades.sessions, facades.workspace);
-  registerPiviCommands(plugin, facades.chat);
+  registerPiviViews(plugin, application, sessions);
+  registerPiviCommands(plugin, application);
   registerPiviCli(plugin, {
     readNote: async (file, path) => {
       try {
-        const result = await vaultApi(facades.chat.app).readNote(file, path);
+        const result = await vaultApi(application.app).readNote(file, path);
         return {
           basename: result.path.split('/').pop()?.replace(/\.md$/i, '') ?? result.path,
           content: result.content,
@@ -40,23 +42,23 @@ export async function initializePiviPlugin(
       }
     },
     listWorkspaceEntries: async () => (
-      await facades.workspace.ensureWorkspaceServices()).slashCommandCatalog.listWorkspaceEntries(),
-    createAuxQueryRunner: () => facades.chat.createAuxQueryRunner(),
-    getDefaultModel: () => facades.chat.settings.model,
+      await application.ensureWorkspaceServices()).slashCommandCatalog.listWorkspaceEntries(),
+    createAuxQueryRunner: () => application.createAuxQueryRunner(),
+    getDefaultModel: () => application.settings.model,
     today: () => new Date().toLocaleDateString(),
   });
-  registerPiviSettings(plugin, facades.settings, facades.workspace);
+  registerPiviSettings(plugin, application, application);
   registerEditorSelectionToolbar(plugin, {
     isToolbarEnabled: () => (
-      facades.integrations.settings.editorSelectionToolbar?.enabled !== false
-      && facades.integrations.settings.editorSelectionToolbar.shortcuts.some(item => item.enabled)
+      application.settings.editorSelectionToolbar?.enabled !== false
+      && application.settings.editorSelectionToolbar.shortcuts.some(item => item.enabled)
     ),
     shouldYieldToNoteToolbar: () => isNoteToolbarTextToolbarActive(plugin.app),
   });
-  registerSelectionToolbarUi(facades.integrations, cleanup => plugin.register(cleanup));
+  registerSelectionToolbarUi(application, cleanup => plugin.register(cleanup));
 
   plugin.app.workspace.onLayoutReady(() => {
-    void facades.workspace.ensureWorkspaceServices().catch((error: unknown) => {
+    void application.ensureWorkspaceServices().catch((error: unknown) => {
       logger.error('Failed to initialize workspace services', error);
     });
   });

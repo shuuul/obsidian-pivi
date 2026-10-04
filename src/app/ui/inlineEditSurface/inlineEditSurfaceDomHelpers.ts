@@ -3,7 +3,7 @@ import { getVaultPath, normalizePathForVault } from '@pivi/obsidian-host/path';
 import type { App } from 'obsidian';
 import { type Component, Platform, setIcon } from 'obsidian';
 
-import type { IntegrationsFacade } from '@/app/hostContracts';
+import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 import { createStreamingMarkdownContentAdapter } from '@/app/ui/createStreamingMarkdownContentAdapter';
 import { renderMarkdownContent } from '@/ui/chat/rendering/messageRendererMarkdown';
@@ -222,6 +222,6 @@ export function getInlineEditActiveVaultFilePath(app: App): string | null {
   return normalizePathForVault(activePath, getVaultPath(app));
 }
 
-export function getInlineEditExternalContexts(host: IntegrationsFacade): string[] {
+export function getInlineEditExternalContexts(host: PiviChatCompositionHost): string[] {
   return getObsidianToolsSettingsFromBag(host.settings).externalReadDirectories;
 }

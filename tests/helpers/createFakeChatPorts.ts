@@ -51,7 +51,6 @@ export function createFakeChatPorts(
       getDefaultReasoningValue: () => 'medium',
       getContextWindowSize: () => 128_000,
       applyModelDefaults: () => undefined,
-      prepareModelMetadata: async () => undefined,
       ...overrides.models,
     },
     settings: {

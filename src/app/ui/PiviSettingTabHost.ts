@@ -19,7 +19,7 @@ import { Notice, PluginSettingTab } from "obsidian";
 
 import type {
   PiviPluginWorkspace,
-  SettingsFacade,
+  PiviSettingsHost,
 } from "@/app/hostContracts";
 import { appI18n, type Locale, setLocale, t } from "@/app/i18n";
 import { createSettingsUiPorts } from "@/app/ui/createSettingsUiPorts";
@@ -57,7 +57,7 @@ function decorateNativePageHeader(settingEl: HTMLElement): void {
 }
 
 export class PiviSettingTabHost extends PluginSettingTab {
-  plugin: SettingsFacade;
+  plugin: PiviSettingsHost;
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
   private readonly liveSurfaces = new Set<MountedSurface>();
   private readonly mountGenerations = new Map<SettingsPageId, number>();
@@ -66,7 +66,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
   constructor(
     app: ConstructorParameters<typeof PluginSettingTab>[0],
     plugin: ConstructorParameters<typeof PluginSettingTab>[1],
-    host: SettingsFacade,
+    host: PiviSettingsHost,
     getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
     super(app, plugin);

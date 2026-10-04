@@ -1,11 +1,12 @@
 import type { OpenSessionState, SessionSummary } from "@pivi/agent/runtime";
-import type { SessionMessagePage, SessionStore } from "@pivi/agent/session";
+import type { ChatSessionPort } from "@pivi/agent/runtime/chatPorts";
+import type { SessionMessagePage, SessionRecoveryPort, SessionStore } from "@pivi/agent/session";
 import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import type { PiviSettings } from "@pivi/agent/settings";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { App } from "obsidian";
 
-import type { PiviChatView, SessionsFacade } from "@/app/hostContracts";
+import type { PiviChatView } from "@/app/hostContracts";
 import { ensurePiviViewOpen } from "@/app/piviViewActivation";
 import * as sessionApi from "@/app/pluginSessionApi";
 import { readSessionTranscript } from "@/app/sessionTranscript";
@@ -24,12 +25,12 @@ export interface ApplicationSessionsDeps {
  * operation that moves, restores, or purges session files runs through one
  * FIFO tail so trash moves and purges never interleave.
  */
-export class ApplicationSessions implements SessionsFacade {
+export class ApplicationSessions implements ChatSessionPort {
   private deletedSessionOperationTail: Promise<void> = Promise.resolve();
 
   constructor(private readonly deps: ApplicationSessionsDeps) {}
 
-  readonly sessionRecovery: SessionsFacade['sessionRecovery'] = {
+  readonly sessionRecovery: SessionRecoveryPort = {
     read: async (sessionFile: string) => {
       const summary = this.deps.sessionManager.getAll()
         .find((session) => session.sessionFile === sessionFile);
@@ -72,27 +73,27 @@ export class ApplicationSessions implements SessionsFacade {
       sessionManager: this.deps.sessionManager,
       requireSessionStore: () => this.deps.requireSessionStore(),
       storage: this.deps.getStorage(),
-      getSessionList: () => this.getSessionList(),
+      getSessionList: () => this.listSessions(),
       getAllViews: () => this.deps.getAllViews(),
       getSessions: () => this.deps.sessionManager.getAll(),
     };
   }
 
-  forkSessionAt(
+  forkSession(
     openSession: OpenSessionState,
     atEntryId: string,
   ): Promise<{ sessionFile: string; sessionId: string } | null> {
     return sessionApi.forkSessionAt(this.context(), openSession, atEntryId);
   }
 
-  createOpenSession(options?: {
+  createSession(options?: {
     sessionId?: string;
     sessionFile?: string;
   }): Promise<OpenSessionState> {
     return sessionApi.createOpenSession(this.context(), options);
   }
 
-  openSessionByFile(sessionFile: string): Promise<OpenSessionState> {
+  openSessionFile(sessionFile: string): Promise<OpenSessionState> {
     return sessionApi.openSessionByFile(this.context(), sessionFile);
   }
 
@@ -160,18 +161,18 @@ export class ApplicationSessions implements SessionsFacade {
     await sessionApi.updateSession(this.context(), id, updates);
   }
 
-  getOpenSessionById(id: string): Promise<OpenSessionState | null> {
+  getOpenSession(id: string): Promise<OpenSessionState | null> {
     return sessionApi.getOpenSessionById(this.context(), id);
   }
 
-  openRecentSessionMessages(
+  openRecent(
     id: string,
     limit: number,
   ): Promise<SessionMessagePage | null> {
     return sessionApi.openRecentSessionMessages(this.context(), id, limit);
   }
 
-  readOlderSessionMessages(
+  readOlder(
     id: string,
     beforeEntryId: string,
     limit: number,
@@ -184,7 +185,7 @@ export class ApplicationSessions implements SessionsFacade {
     );
   }
 
-  getOpenSessionSync(id: string): OpenSessionState | null {
+  findOpenSession(id: string): OpenSessionState | null {
     return sessionApi.getOpenSessionSync(this.context(), id);
   }
 
@@ -192,7 +193,7 @@ export class ApplicationSessions implements SessionsFacade {
     return sessionApi.findEmptySession(this.context());
   }
 
-  getSessionList(): SessionSummary[] {
+  listSessions(): SessionSummary[] {
     return sessionApi.getSessionList(this.context());
   }
 }

@@ -23,10 +23,7 @@ jest.mock('@pivi/engine-pi/models/piModelRegistry', () => ({
   getPiAiModelsForProvider: () => [],
 }));
 jest.mock('@pivi/engine-pi/models/piSettingsCoordinator', () => ({
-  PiSettingsCoordinator: {
-    getSettingsSnapshot: (value: unknown) => value,
-    commitSettingsSnapshot: () => {},
-  },
+  getPiSettingsSnapshot: (value: unknown) => value,
 }));
 jest.mock('@pivi/obsidian-host/createPiviNetworkClients', () => ({
   getActivePiviNetworkClients: () => ({

@@ -26,7 +26,7 @@ sequenceDiagram
   V->>V: mount ports and presentation
 ```
 
-`src/main.ts` contains only the Obsidian `Plugin` subclass and holds the lifecycle interface returned by `createPiviApplication`. `PiviApplication` owns concrete delegating `ChatFacade`, `SessionsFacade`, `WorkspaceFacade`, `IntegrationsFacade`, and `SettingsFacade` objects. Registrations receive the real Plugin for Obsidian APIs plus only their scoped facades: views get chat/session/workspace, commands get chat, settings get settings/workspace, and editor integrations get integrations. `initializePiviPlugin()` preserves settings-first registration and retryable lazy workspace initialization.
+`src/main.ts` contains only the Obsidian `Plugin` subclass and holds the lifecycle interface returned by `createPiviApplication`. `PiviApplication` structurally satisfies two host contracts: `PiviChatCompositionHost` for views, commands, and editor integrations, and `PiviSettingsHost` for settings. `ApplicationSessions` implements the chat session port directly. Registrations receive the real Plugin for Obsidian APIs plus the application typed as the contract they need. `initializePiviPlugin()` preserves settings-first registration and retryable lazy workspace initialization.
 
 `PiviApplication` constructs purpose-scoped network clients at composition (`createPiviNetworkClients`) and passes them through `WorkspaceInitContext.network` into MCP/OAuth, web tools, image generation, custom providers, and connectivity. Pivi does not patch `window.fetch`; the production bundle injects a scoped `fetch` shim for upstream SDK identifiers only.
 

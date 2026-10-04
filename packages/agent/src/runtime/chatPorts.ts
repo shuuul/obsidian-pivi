@@ -22,7 +22,7 @@ interface ChatRuntimePort {
   createAuxQueryRunner(): AuxQueryRunner;
 }
 
-interface ChatSessionPort {
+export interface ChatSessionPort {
   listSessions(): SessionSummary[];
   /** Returns only an already-open in-memory session; never hydrates from disk. */
   findOpenSession(id: string): OpenSessionState | null;
@@ -112,7 +112,6 @@ export interface ChatModelsPort {
     value: string,
     settings: ChatSettingsSnapshot,
   ): void;
-  prepareModelMetadata(model: string): Promise<void>;
 }
 
 export interface ChatSettingsPort {

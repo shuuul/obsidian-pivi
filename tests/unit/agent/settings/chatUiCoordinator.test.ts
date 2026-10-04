@@ -1,10 +1,7 @@
 import type { ChatUIConfig } from '@pivi/agent/runtime/chatUi';
 import {
-  commitSettingsSnapshot,
   getProjectedSettingsSnapshot,
-  reconcileSettingsWithChatUi,
 } from '@pivi/agent/settings/chatUiCoordinator';
-import type { OpenSessionState } from '@pivi/agent/runtime/chatTypes';
 
 const ADAPTIVE_MODEL = 'provider/adaptive-model';
 const STANDARD_MODEL = 'provider/standard-model';
@@ -60,48 +57,5 @@ describe('getProjectedSettingsSnapshot', () => {
 
     expect(settings.model).toBe('provider/removed-from-pool');
     expect(snapshot.model).toBe(ADAPTIVE_MODEL);
-  });
-});
-
-describe('commitSettingsSnapshot', () => {
-  it('copies snapshot fields onto the live settings bag', () => {
-    const settings: Record<string, unknown> = {
-      model: ADAPTIVE_MODEL,
-      thinkingLevel: 'off',
-    };
-    const snapshot = {
-      model: STANDARD_MODEL,
-      thinkingLevel: 'low',
-    };
-    commitSettingsSnapshot(settings, snapshot);
-
-    expect(settings.model).toBe(STANDARD_MODEL);
-    expect(settings.thinkingLevel).toBe('low');
-  });
-});
-
-describe('reconcileSettingsWithChatUi', () => {
-  const sessions = [{ id: 'tab-1' } as OpenSessionState];
-
-  it('reports changed when title model is cleared and does not invalidate sessions', () => {
-    const uiConfig = createFakeChatUiConfig();
-    const settings: Record<string, unknown> = { titleGenerationModel: 'provider/stale-title' };
-
-    const result = reconcileSettingsWithChatUi(settings, sessions, uiConfig);
-
-    expect(result.changed).toBe(true);
-    expect(result.invalidatedSessions).toEqual([]);
-    expect(settings.titleGenerationModel).toBe('');
-  });
-
-  it('reports unchanged when title model reconciliation is a no-op', () => {
-    const uiConfig = createFakeChatUiConfig();
-    const settings: Record<string, unknown> = { titleGenerationModel: STANDARD_MODEL };
-
-    const result = reconcileSettingsWithChatUi(settings, [], uiConfig);
-
-    expect(result.changed).toBe(false);
-    expect(result.invalidatedSessions).toEqual([]);
-    expect(settings.titleGenerationModel).toBe(STANDARD_MODEL);
   });
 });

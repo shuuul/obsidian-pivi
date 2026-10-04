@@ -112,21 +112,15 @@ describe('composer model usage limits', () => {
     expect(state.uiStore.getSnapshot().composer.canSend).toBe(false);
   });
 
-  it('updates the context limit before metadata preparation completes and refreshes it afterward', async () => {
+  it('recalculates usage against the new model context limit when the model changes', async () => {
     let settings = settingsSnapshot('provider/small');
-    let largeContextWindow = 200_000;
-    let finishMetadata: (() => void) | undefined;
-    const prepareModelMetadata = jest.fn(() => new Promise<void>((resolve) => {
-      finishMetadata = resolve;
-    }));
     const ports = createFakeChatPorts({
       models: {
         getModelOptions: current => [
           { label: 'Small', value: current.model },
           { label: 'Large', value: 'provider/large' },
         ],
-        getContextWindowSize: model => model === 'provider/large' ? largeContextWindow : 100_000,
-        prepareModelMetadata,
+        getContextWindowSize: model => model === 'provider/large' ? 200_000 : 100_000,
       },
       settings: {
         getSettingsSnapshot: () => ({ ...settings }),
@@ -148,72 +142,11 @@ describe('composer model usage limits', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(prepareModelMetadata).toHaveBeenCalledWith('provider/large');
     expect(state.usage).toMatchObject({
       contextWindow: 200_000,
       model: 'provider/large',
       percentage: 25,
     });
-
-    largeContextWindow = 256_000;
-    finishMetadata?.();
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(state.usage).toMatchObject({
-      contextWindow: 256_000,
-      model: 'provider/large',
-      percentage: 20,
-    });
-  });
-
-  it('does not let a slower previous model selection overwrite the current limit', async () => {
-    let settings = settingsSnapshot('provider/small');
-    const metadataResolvers = new Map<string, () => void>();
-    const ports = createFakeChatPorts({
-      models: {
-        getModelOptions: () => [],
-        getContextWindowSize: model => ({
-          'provider/a': 200_000,
-          'provider/b': 400_000,
-        })[model] ?? 100_000,
-        prepareModelMetadata: model => new Promise<void>((resolve) => {
-          metadataResolvers.set(model, resolve);
-        }),
-      },
-      settings: {
-        getSettingsSnapshot: () => ({ ...settings }),
-        commitSettingsSnapshot: async next => { settings = { ...next }; },
-      },
-    });
-    const state = new ChatState();
-    state.usage = {
-      contextTokens: 50_000,
-      contextWindow: 100_000,
-      inputTokens: 50_000,
-      model: 'provider/small',
-      percentage: 50,
-    };
-    const tab = createToolbarTab(state);
-    wireComposerChrome(tab, ports);
-
-    tab.ui.composerActions?.setModel('provider/a');
-    await Promise.resolve();
-    await Promise.resolve();
-    tab.ui.composerActions?.setModel('provider/b');
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(state.usage).toMatchObject({ contextWindow: 400_000, model: 'provider/b' });
-
-    metadataResolvers.get('provider/a')?.();
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(state.usage).toMatchObject({ contextWindow: 400_000, model: 'provider/b' });
-
-    metadataResolvers.get('provider/b')?.();
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(state.usage).toMatchObject({ contextWindow: 400_000, model: 'provider/b' });
   });
 });
 

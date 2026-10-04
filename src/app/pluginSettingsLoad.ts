@@ -17,7 +17,8 @@ import {
   migrateMembershipAwareProviderSecrets,
 } from "@pivi/engine-pi/application/auth";
 import {
-  PiSettingsCoordinator,
+  projectActivePiState,
+  reconcilePiTitleGenerationModel,
 } from "@pivi/engine-pi/application/models";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import { getVaultPath } from "@pivi/obsidian-host/path";
@@ -109,7 +110,7 @@ export async function loadPluginSettings(
     ctx.legacyExternalContexts,
   );
   const didReconcileModelSelections =
-    PiSettingsCoordinator.reconcileTitleGenerationModelSelection(settings);
+    reconcilePiTitleGenerationModel(settings);
   ctx.setSettings(settings);
   if (migration.syncedSaveFailed || environmentMigration.syncedSaveFailed) {
     logger.warn(
@@ -158,13 +159,10 @@ export async function loadPluginSettings(
 
   const installed = ctx.getSettings();
   const backfilledSessions = ctx.sessionManager.backfillSessionResponseTimestamps();
-  const { changed, invalidatedSessions } = PiSettingsCoordinator.reconcileSettings(
-    installed,
-    ctx.getSessions(),
-  );
+  const changed = reconcilePiTitleGenerationModel(installed);
 
   const modelBeforeProject = installed.model;
-  PiSettingsCoordinator.projectActivePiState(installed);
+  projectActivePiState(installed);
   const didRepairActiveModel = installed.model !== modelBeforeProject;
 
   if (
@@ -177,7 +175,7 @@ export async function loadPluginSettings(
     await ctx.saveSettings();
   }
 
-  for (const conv of [...backfilledSessions, ...invalidatedSessions]) {
+  for (const conv of backfilledSessions) {
     await ctx.persistSessionSummary(conv);
   }
 

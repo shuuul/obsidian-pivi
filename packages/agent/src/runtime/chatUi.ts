@@ -72,13 +72,6 @@ export interface ChatUIConfig {
   /** Apply model change side effects to settings. */
   applyModelDefaults(model: string, settings: unknown): void;
 
-  /** Optional hook to discover model-scoped metadata after a model is selected. */
-  prepareModelMetadata?(
-    model: string,
-    settings: Record<string, unknown>,
-    context: { host: unknown },
-  ): Promise<void>;
-
   /** Optional hook when the toolbar changes a reasoning selection. */
   applyReasoningSelection?(model: string, value: string, settings: unknown): void;
 
