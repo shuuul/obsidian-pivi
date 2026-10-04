@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.32.0](https://github.com/shuuul/obsidian-pivi/compare/0.31.1...0.32.0) (2026-10-04)
+
+### Upgrade notes
+
+* **upgrade from 0.15.0 or later.** This release no longer migrates data written by versions older than 0.15.0. If you are on an older version, install any release from 0.15.0 to 0.31.1 first and open each vault once on every device, then update. Skipping that step resets your model providers and environment variables to defaults, and saved credentials (provider API keys, subscription sign-ins, MCP sign-ins, custom provider headers) must be entered again
+* commands still stored in the old `.pivi/templates/` folder are moved to `.pivi/commands/` the first time a vault opens; a template that shares a name with an existing command stays where it is and, as before, the command takes precedence
+* a Claude or Grok Build sign-in saved by an earlier version no longer re-adds that provider to your list automatically; add it under Settings → Models if it is missing
+
+### Maintenance
+
+* update the pinned Pi runtime to 1.0.2; model catalogs can now set sampling parameters per thinking level
+* remove startup migrations for data formats older than 0.15.0, along with code that only supported running Pivi outside Obsidian
+* enforce package import boundaries in one place and remove more unused code
+* reorganize the developer guidance and correct out-of-date documentation
+
 ## [0.31.1](https://github.com/shuuul/obsidian-pivi/compare/0.31.0...0.31.1) (2026-10-04)
 
 ### Bug Fixes
