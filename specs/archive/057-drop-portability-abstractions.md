@@ -1,7 +1,7 @@
 ---
 id: "057"
 title: "Drop portability abstractions"
-status: Active
+status: Completed
 created: 2026-10-04
 updated: 2026-10-04
 coordinator: "Claude Code"
@@ -144,4 +144,21 @@ Append entries rather than rewriting another agent's record.
 
 ## Completion summary
 
-Pending.
+All five workstreams are done. Pivi no longer carries abstractions whose only purpose was running on another host or agent runtime.
+
+Delivered:
+
+- React presentation calls the `obsidian` API directly; `PresentationPlatform`, host-terminology placeholders, and `src/app/hostPlatform.ts` are gone, with rendered copy unchanged in all ten locales.
+- `@pivi/agent`, `@pivi/engine-pi`, and `@pivi/obsidian-host` expose source leaves through one `./*` wildcard export. Checking entry-file exports with knip exposed and removed 222 unused exports.
+- App host contracts are reduced to `PiviChatCompositionHost` and `PiviSettingsHost`; `ApplicationSessions` implements `ChatSessionPort` directly.
+- The generic provider-auth helper and its two ports, the `FileStore` aliases, and the unused chat icon variants are removed.
+
+Deviations from the original scope:
+
+- `PiviUiFacades` and `ChatUIConfig` were kept. About ten test files inject fake model and reasoning behavior through them, so only members with no production behavior were removed.
+- The `@pivi/agent/ports` contracts and the rules that keep Obsidian and the Pi SDK out of `@pivi/agent` were kept. They serve testability and Pi-upgrade containment; the guidance now says so instead of citing portability.
+- `ChatUIConfig` still takes untyped settings bags.
+
+Verification: the local CI-equivalent quality gate was green after every workstream, and the maintainer visually confirmed icons, tooltips, the chat header brand icon, and model-selector provider icons in the reloaded UI.
+
+Durable documentation: the design premise in root `AGENTS.md`, `docs/02-architecture-and-technology.md`, `docs/08-presentation-and-settings.md`, `docs/12-architecture-status.md`, and the package and local `AGENTS.md` files.

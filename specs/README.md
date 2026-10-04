@@ -14,8 +14,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [053 — Composer mention badge clamp and copy-paste round trip](053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | Active | Composer mention badge clamp and copy-paste round trip |
 | [054 — Tool-result context overflow and in-turn pressure](054-tool-result-context-overflow-and-in-turn-pressure.md) | Active | Stop over-window continuations after giant tool results; require scoped `search` path plus payload caps. |
 | [055 — Pi AgentHarness migration spike](055-pi-agent-harness-migration-spike.md) | Active | Evidence-backed go/wait/no-go on moving sessions from the pi-coding-agent v3 SessionManager to the pi-agent-core AgentHarness over a vault FileSystem. |
-| [057 — Drop portability abstractions](057-drop-portability-abstractions.md) | Active | Remove host- and runtime-portability seams now that Pivi targets Pi and Obsidian only. |
-| [058 — Simplification follow-up](058-simplification-follow-up.md) | Active | Remove test-only code, duplicated import-ban enforcement, pre-0.15.0 one-time migrations, and guidance duplication. |
 
 ## Archived specs
 
@@ -73,6 +71,8 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [050 — Architecture review stability and trustworthy task execution](archive/050-architecture-review-stability-and-trustworthy-task-execution.md) | 2026-09-05 | Hardened real-host verification, lifecycle rollback, measured projections, strict File Recovery, and package/documentation contracts with full local acceptance. |
 | [052 — Hide remaining agent tool routing](archive/052-hide-remaining-agent-tool-routing.md) | 2026-09-06 | Pi-family live names with silent aliases, unified read/ls routing, and search scoped to a note or folder. |
 | [056-pi-099-upgrade-and-pi-mcp-client.md](archive/056-pi-099-upgrade-and-pi-mcp-client.md) | 2026-10-04 | Pi 0.99.1 pins with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` without legacy SSE. |
+| [057-drop-portability-abstractions.md](archive/057-drop-portability-abstractions.md) | 2026-10-04 | Removed host- and runtime-portability seams: direct Obsidian presentation calls, wildcard leaf exports, two app host contracts, and no single-purpose agent ports. |
+| [058-simplification-follow-up.md](archive/058-simplification-follow-up.md) | 2026-10-04 | Removed test-only code, duplicated import-ban enforcement, and pre-0.15.0 startup migrations; reorganized and audited guidance. |
 
 ## Numbering and files
 

@@ -1,7 +1,7 @@
 ---
 id: "058"
 title: "Simplification follow-up"
-status: Active
+status: Completed
 created: 2026-10-04
 updated: 2026-10-04
 coordinator: "Claude Code"
@@ -26,7 +26,7 @@ Reduce code, checks, and guidance that no longer earn their maintenance cost, wi
 - [x] Each import ban has one enforcement mechanism.
 - [x] One-time migrations for formats that shipped in 0.15.0 or earlier are removed; steady-state load paths and old-session read compatibility are unchanged.
 - [x] Root `AGENTS.md` holds operational rules only; architecture narrative lives in `docs/`.
-- [ ] The local CI-equivalent quality gate is green after each workstream.
+- [x] The local CI-equivalent quality gate is green after each workstream.
 
 ## Scope and non-goals
 
@@ -153,4 +153,24 @@ Append entries rather than rewriting another agent's record.
 
 ## Completion summary
 
-Pending.
+All five workstreams are done.
+
+Delivered:
+
+- Thirty exports that only tests exercised are removed with their tests.
+- Import boundaries are enforced only by `scripts/check-architecture-boundaries.mjs`. A probe of 147 ESLint ban samples found the script's gaps, which were closed before the ESLint blocks were deleted.
+- Startup runs no settings, credential, provider-registry, environment, or MCP OAuth migration for formats older than 0.15.0. On a device with no local state the loaders seed defaults and strip synced fields. The loaders were renamed from `…Migration` to `…Load`.
+- Root `AGENTS.md` shrank from 62.5 KB to about 41 KB and three per-directory files were trimmed; their narrative moved to `docs/12-architecture-status.md`. Every `AGENTS.md`, handbook page, and package README was audited and about sixty stale statements were corrected.
+
+Deviations from the original scope:
+
+- The MCP load-time rewrites of plaintext secrets and plain header maps were kept as input hygiene for a user-editable synced file.
+- `.pivi/templates/` gained a one-time eager move instead of a plain deletion, and command removal still deletes a same-id template.
+- The colocated session-index path remains as the default when no index root is configured, for unit tests.
+- About thirty barrel re-exports that only tests import were left in place.
+
+Not verified: documentation prose about runtime behavior that does not reduce to a symbol, constant, or file. The removed startup migrations were verified against their introducing commits but not against real pre-0.15.0 user data.
+
+Release note required: the next minor supports upgrades from 0.15.0 or later. Users on older versions must upgrade to an intermediate release first, or provider configuration and environment variables reset and credentials must be re-entered.
+
+Verification: the local CI-equivalent quality gate was green after every workstream.
