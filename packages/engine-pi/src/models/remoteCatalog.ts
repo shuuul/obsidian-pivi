@@ -166,6 +166,9 @@ function sanitizeRemoteModel(
   const compat = isRecord(entry.compat) ? entry.compat : undefined;
   const headers = sanitizeHeaders(entry.headers);
   const samplingParams = isRecord(entry.samplingParams) ? entry.samplingParams : undefined;
+  const samplingParamsByThinkingLevel = isRecord(entry.samplingParamsByThinkingLevel)
+    ? entry.samplingParamsByThinkingLevel
+    : undefined;
   // Built explicitly rather than spread: unknown payload fields must not leak
   // into the registry, and every `Model` field is covered below.
   return {
@@ -183,6 +186,7 @@ function sanitizeRemoteModel(
     ...(compat ? { compat } : {}),
     ...(headers ? { headers } : {}),
     ...(samplingParams ? { samplingParams } : {}),
+    ...(samplingParamsByThinkingLevel ? { samplingParamsByThinkingLevel } : {}),
   };
 }
 
