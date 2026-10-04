@@ -24,11 +24,7 @@ import {
 } from 'fs';
 import { dirname } from 'path';
 
-import {
-  getLegacySessionJsonlIndexPath,
-  getSessionJsonlIndexPath,
-  migrateLegacySessionJsonlIndex,
-} from './sessionJsonlIndexLocation';
+import { getSessionJsonlIndexPath } from './sessionJsonlIndexLocation';
 import {
   parseJsonObject,
   scanJsonlLines,
@@ -38,7 +34,6 @@ import {
 
 export {
   configureSessionJsonlIndexRoot,
-  getLegacySessionJsonlIndexPath,
   getSessionJsonlIndexPath,
 } from './sessionJsonlIndexLocation';
 export type { SessionJsonlIndexLine } from './sessionJsonlLineScan';
@@ -253,7 +248,6 @@ function isMigrations(value: unknown): value is SessionJsonlIndexMigrations {
 }
 
 function parseIndexFile(sessionFile: string): MutableSessionJsonlIndex | null {
-  migrateLegacySessionJsonlIndex(sessionFile);
   const indexFile = getSessionJsonlIndexPath(sessionFile);
   if (!existsSync(indexFile)) {
     return null;
@@ -434,7 +428,6 @@ export function rebuildSessionJsonlIndex(sessionFile: string): SessionJsonlIndex
   const migrations: SessionJsonlIndexMigrations = {
     externalContexts: lines.some((line) => line.hasLegacyExternalContext) ? 0 : 1,
   };
-  migrateLegacySessionJsonlIndex(sessionFile);
   const indexFile = getSessionJsonlIndexPath(sessionFile);
   mkdirSync(dirname(indexFile), { recursive: true });
   const temporary = `${indexFile}.tmp-${process.pid}-${Date.now()}`;
@@ -445,10 +438,6 @@ export function rebuildSessionJsonlIndex(sessionFile: string): SessionJsonlIndex
       { kind: 'checkpoint', source, lineChainSha256, migrations },
     ]));
     renameSync(temporary, indexFile);
-    const legacy = getLegacySessionJsonlIndexPath(sessionFile);
-    if (legacy !== indexFile && existsSync(legacy)) {
-      unlinkSync(legacy);
-    }
   } finally {
     rmSync(temporary, { force: true });
   }
@@ -566,10 +555,6 @@ export function invalidateSessionJsonlIndex(sessionFile: string): void {
   const indexFile = getSessionJsonlIndexPath(sessionFile);
   if (existsSync(indexFile)) {
     unlinkSync(indexFile);
-  }
-  const legacy = getLegacySessionJsonlIndexPath(sessionFile);
-  if (legacy !== indexFile && existsSync(legacy)) {
-    unlinkSync(legacy);
   }
 }
 

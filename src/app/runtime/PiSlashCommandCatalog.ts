@@ -235,8 +235,8 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   async prepareWorkspace(): Promise<void> {
     await this.commandsCoordinator.withMutationLock(async () => {
       await this.adapter.ensureFolder(COMMANDS_DIR);
-      const files = (await Promise.all([COMMANDS_DIR, LEGACY_TEMPLATES_DIR]
-        .map(dir => this.adapter.listFiles(dir)))).flat().filter(path => isCatalogCommandPath(path));
+      await this.moveLegacyTemplateCommands();
+      const files = (await this.adapter.listFiles(COMMANDS_DIR)).filter(isCatalogCommandPath);
       for (const file of files) {
         const id = commandIdFromPath(file);
         if (isReservedCommandId(id)) {
@@ -260,6 +260,21 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     });
   }
 
+  /**
+   * Relocates commands that releases before 0.3.1 wrote to `.pivi/templates/`.
+   * Those files were only moved when edited, so current vaults can still hold them.
+   */
+  private async moveLegacyTemplateCommands(): Promise<void> {
+    if (!await this.adapter.exists(LEGACY_TEMPLATES_DIR)) return;
+    for (const file of await this.adapter.listFiles(LEGACY_TEMPLATES_DIR)) {
+      if (!isCommandFilePath(file)) continue;
+      const target = `${COMMANDS_DIR}/${file.split('/').at(-1)}`;
+      // A command of the same id in `.pivi/commands/` already shadowed the template.
+      if (await this.adapter.exists(target)) continue;
+      await this.adapter.rename(file, target);
+    }
+  }
+
   private async scanWorkspaceCommands(): Promise<{
     readonly entries: readonly SlashCatalogEntry[];
     readonly fingerprint: string;
@@ -267,8 +282,8 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     const byId = new Map<string, SlashCatalogEntry>();
     const authoritativeBytes: Array<[string, string, string]> = [];
 
-    for (const dir of [LEGACY_TEMPLATES_DIR, COMMANDS_DIR]) {
-      const files = await this.adapter.listFiles(dir);
+    {
+      const files = await this.adapter.listFiles(COMMANDS_DIR);
       for (const file of files.filter(isCatalogCommandPath)) {
         try {
           const id = commandIdFromPath(file);
@@ -278,7 +293,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
           }
           const content = await this.adapter.read(file);
           const parsed = parseSlashCommandContent(content);
-          authoritativeBytes.push([dir, file, content]);
+          authoritativeBytes.push([COMMANDS_DIR, file, content]);
 
           const filename = file.split("/").at(-1);
           if (!filename) {
@@ -306,9 +321,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
             isDeletable: true,
             displayPrefix: "/",
             insertPrefix: "/",
-            persistenceKey: dir === LEGACY_TEMPLATES_DIR
-              ? `legacy-template:${id}`
-              : `vault:${id}`,
+            persistenceKey: `vault:${id}`,
           });
         } catch (error) {
           logger.error(`Failed to parse custom command ${file}`, error);
@@ -370,17 +383,16 @@ function toAgentSummary(entry: SlashCatalogEntry): AgentCommandSummary {
     source: entry.source, isEditable: entry.isEditable, isDeletable: entry.isDeletable };
 }
 
-/** Catalog command markdown only — never removal artifacts or non-md siblings. */
-function isCatalogCommandPath(path: string): boolean {
+/** Command markdown only: exactly one trailing `.md`, so removal and temporary artifacts are excluded. */
+function isCommandFilePath(path: string): boolean {
   if (!path.endsWith('.md')) return false;
   const slash = path.lastIndexOf('/');
   const filename = slash >= 0 ? path.slice(slash + 1) : path;
-  if (filename.includes('.')) {
-    // Preserve the legacy discovery contract: exactly one trailing `.md`
-    // extension, excluding removal and temporary artifacts.
-    if (filename.slice(0, -3).includes('.')) return false;
-  }
-  return path.startsWith(`${COMMANDS_DIR}/`) || path.startsWith(`${LEGACY_TEMPLATES_DIR}/`);
+  return !filename.slice(0, -3).includes('.');
+}
+
+function isCatalogCommandPath(path: string): boolean {
+  return isCommandFilePath(path) && path.startsWith(`${COMMANDS_DIR}/`);
 }
 
 function commandIdFromPath(path: string): string {

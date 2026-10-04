@@ -107,7 +107,6 @@ Explain this: {{selected_text}}`,
     const entries = await catalog.listWorkspaceEntries();
 
     expect(mockAdapter.ensureFolder).not.toHaveBeenCalled();
-    expect(mockAdapter.listFiles).toHaveBeenCalledWith(".pivi/templates");
     expect(mockAdapter.listFiles).toHaveBeenCalledWith(".pivi/commands");
     expect(mockAdapter.read).toHaveBeenCalledWith(".pivi/commands/explain.md");
 
@@ -208,7 +207,27 @@ Explain this: {{selected_text}}`,
     expect(store.files.has(".pivi/commands/renamed.md")).toBe(false);
   });
 
-  it("loads legacy templates when no command file exists", async () => {
+  it("moves legacy templates into .pivi/commands when the workspace is prepared", async () => {
+    mockAdapter.listFiles.mockImplementation(async (folder: string) => {
+      if (folder === ".pivi/templates") {
+        return [".pivi/templates/legacy.md", ".pivi/templates/shadowed.md", ".pivi/templates/note.txt"];
+      }
+      return [];
+    });
+    mockAdapter.exists.mockImplementation(async (path: string) => (
+      path === ".pivi/templates" || path === ".pivi/commands/shadowed.md"
+    ));
+
+    await catalog.prepareWorkspace();
+
+    expect(mockAdapter.rename).toHaveBeenCalledTimes(1);
+    expect(mockAdapter.rename).toHaveBeenCalledWith(
+      ".pivi/templates/legacy.md",
+      ".pivi/commands/legacy.md",
+    );
+  });
+
+  it("does not read commands from the legacy templates folder", async () => {
     mockAdapter.listFiles.mockImplementation(async (folder: string) => {
       if (folder === ".pivi/templates") {
         return [".pivi/templates/legacy.md"];
@@ -217,13 +236,8 @@ Explain this: {{selected_text}}`,
     });
 
     await catalog.refresh();
-    const entries = await catalog.listWorkspaceEntries();
 
-    expect(entries).toHaveLength(1);
-    expect(entries[0]).toMatchObject({
-      id: "legacy",
-      persistenceKey: "legacy-template:legacy",
-    });
+    expect(await catalog.listWorkspaceEntries()).toHaveLength(0);
   });
 
   it("does not include the create-command slash entry", async () => {

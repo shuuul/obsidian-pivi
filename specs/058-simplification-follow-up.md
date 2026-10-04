@@ -24,7 +24,7 @@ Reduce code, checks, and guidance that no longer earn their maintenance cost, wi
 
 - [x] No exported symbol is kept alive only by tests, apart from documented test seams.
 - [x] Each import ban has one enforcement mechanism.
-- [ ] One-time migrations for formats that shipped in 0.15.0 or earlier are removed; steady-state load paths and old-session read compatibility are unchanged.
+- [x] One-time migrations for formats that shipped in 0.15.0 or earlier are removed; steady-state load paths and old-session read compatibility are unchanged.
 - [ ] Root `AGENTS.md` holds operational rules only; architecture narrative lives in `docs/`.
 - [ ] The local CI-equivalent quality gate is green after each workstream.
 
@@ -47,6 +47,8 @@ Not in scope:
 | 2026-10-04 | Keep the architecture script for import bans and delete the ESLint duplicates. | The script covers dynamic imports, `require`, re-exports, and relative paths; ESLint matches static specifier strings only. Cost: violations surface at pre-commit and CI rather than in the editor. | WS-03 |
 | 2026-10-04 | The next minor release supports upgrades from 0.15.0 or later only. | Maintainer decision. Users on older versions must first upgrade to an intermediate release; otherwise provider configuration and environment variables reset silently and credentials must be re-entered. Release notes must say so. | WS-04 |
 | 2026-10-04 | Keep the steady-state branches of `runDeviceLocalProviderMigration`, `runDeviceLocalEnvironmentMigration`, and `overlayDeviceLocalCapabilityPermissions`. | They seed fresh installs and overlay device-local state on every startup; only their legacy branches are migrations. | WS-04 |
+| 2026-10-04 | Keep the MCP load-time rewrites of plaintext `bearerToken` / `oauth.clientSecret` and plain header maps. | `.pivi/mcp.json` is user-editable and synced. These rewrites run on every load and move any plaintext secret that appears in the file into `SecretStorage`, so they are input hygiene for hand-edited or pasted configs, not only a version migration. | WS-04 |
+| 2026-10-04 | Keep the command-removal transaction deleting a same-id file in `.pivi/templates/`. | The eager move leaves a template in place when a command of the same id already exists; removing only the canonical file would let the next startup move the shadowed template in and resurrect the command. | WS-04 |
 | 2026-10-04 | Move `.pivi/templates/` commands eagerly before removing the dual read. | That path migrates only when a command is edited, so unedited old commands still depend on it. | WS-04 |
 
 ## Workstreams
@@ -58,7 +60,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | Remove test-only exports and their tests | Claude Code | Done | None | Full quality gate |
 | WS-02 | Archive spec 056, remove `nodeFetch.ts` and retired-name guards | Claude Code | Done | None | Full quality gate |
 | WS-03 | Remove ESLint import-ban blocks duplicated by the architecture script | Claude Code | Done | None | Full quality gate; every removed ESLint ban maps to a script rule |
-| WS-04 | Remove one-time migrations for formats shipped in 0.15.0 or earlier | Claude Code | In progress | WS-03 | Full quality gate; per-migration evidence of the shipping release |
+| WS-04 | Remove one-time migrations for formats shipped in 0.15.0 or earlier | Claude Code | Done | WS-03 | Full quality gate; per-migration evidence of the shipping release |
 | WS-05 | Reorganize `AGENTS.md` guidance and move architecture narrative to `docs/` | Unassigned | Pending | WS-03, WS-04 | `npm run check:boundaries` (docs contracts, README coverage) |
 
 ## Verification
@@ -115,6 +117,17 @@ Append entries rather than rewriting another agent's record.
 - Remaining within the 0.15.0 cutoff: `.pivi/templates/` commands (add an eager move first); session index sidecar relocation (the legacy path is also the unit-test fallback); MCP plaintext bearer/client-secret and plain header-map rewrites (partly live code). The functions and files still named `…Migration` are now startup loaders; renaming is deferred to keep this change reviewable.
 - Blockers: None.
 - Next action: maintainer review of the removed startup behavior, then the three remaining items.
+
+### 2026-10-04 — Claude Code — WS-04 (final)
+
+- Changed:
+  - `.pivi/templates/`: `PiSlashCommandCatalog.prepareWorkspace` now moves template commands into `.pivi/commands/` once, under the mutation lock, skipping ids that already exist there. The catalog scan, upsert, and rename paths no longer read the templates folder, and the `legacy-template:` persistence key is gone. The dual read dated from `00b89a72` (0.3.1).
+  - Session index sidecar: removed `migrateLegacySessionJsonlIndex` and the legacy-sidecar cleanup on rebuild and invalidate (`2ce349fb`, 0.15.0). The colocated path remains only as the default when no index root is configured, which unit tests rely on. Stale `.pivi-index` files beside old sessions are no longer deleted; indexes are rebuildable, so nothing is lost.
+  - MCP plaintext and plain-header rewrites: evaluated and kept; see Decisions.
+- Evidence: full quality gate green.
+- Remaining: None for WS-04. Functions and files named `…Migration` that are now startup loaders have not been renamed.
+- Blockers: None.
+- Next action: WS-05.
 
 ## Completion summary
 
