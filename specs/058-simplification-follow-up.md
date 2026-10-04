@@ -103,6 +103,19 @@ Append entries rather than rewriting another agent's record.
 - Blockers: None.
 - Next action: continue row by row, smallest and most isolated first; the provider and environment cutover branches last.
 
+### 2026-10-04 — Claude Code — WS-04 (continued)
+
+- Changed, each verified against its introducing commit before removal:
+  - Small paths: tab-manager `data.json` fallback (`46d30e67`, 0.6.0; `b4e20765`, 0.7.0); web-search settings shape (`443bdd96`, 0.10.0); web-search keys in the provider credential store (`031aa6a7`, 0.3.11); vault-root skills CLI metadata (`6e02bf8f`, ≤0.3.0); `agentState.piSessionFile` (`57085632`, ≤0.3.0); `effortLevel` fallback.
+  - Credentials: legacy per-kind and `credential-v2` secret readers; the split-plan Grok/Claude OAuth namespace migration and `membershipAwareCredentialMigration.ts`; the every-startup `migrateProviderSecretsToKeychain` call. `migratePiProviderCredentialsToKeychain` now only hands environment-text credentials to the keychain, for bulk import.
+  - Provider cutover: the legacy branch of `runDeviceLocalProviderMigration`, `customProviderHeaderMigration.ts`, the plaintext `.pivi/mcp-oauth/` migration (`mcpAuthEntryMigration.ts`, `legacyVaultAuthEntry.ts`), and all of `legacyProviderSnapshot.ts` except `hasLegacyProviderFields`.
+  - Environment cutover: the legacy branch of `runDeviceLocalEnvironmentMigration` (`d274b8e0`, 0.15.0).
+- Behavior for a device with no local state: provider and environment fields found in synced settings are stripped, not migrated; defaults are seeded.
+- Evidence: full quality gate green (376 suites, 3356 tests); `main.js` 4,205,349 bytes.
+- Remaining within the 0.15.0 cutoff: `.pivi/templates/` commands (add an eager move first); session index sidecar relocation (the legacy path is also the unit-test fallback); MCP plaintext bearer/client-secret and plain header-map rewrites (partly live code). The functions and files still named `…Migration` are now startup loaders; renaming is deferred to keep this change reviewable.
+- Blockers: None.
+- Next action: maintainer review of the removed startup behavior, then the three remaining items.
+
 ## Completion summary
 
 Pending.

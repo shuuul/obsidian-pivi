@@ -1,5 +1,4 @@
 export * from './auth/deviceVerificationUri';
-export * from './auth/membershipAwareCredentialMigration';
 export * from './auth/piProviderCredentialStore';
 export * from './auth/piProviderOAuthService';
 export * from './models/grokBuildProvider';

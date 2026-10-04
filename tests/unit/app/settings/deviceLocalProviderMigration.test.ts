@@ -2,10 +2,7 @@ import { PIVI_SETTINGS_PATH } from '@pivi/obsidian-host/settings/piviSettingsSto
 import type { FileStore } from '@pivi/agent/ports';
 import { App } from 'obsidian';
 
-import {
-  DEVICE_LOCAL_PROVIDER_STORAGE_KEY,
-  ObsidianDeviceLocalProviderStore,
-} from '@/app/deviceLocalProviderStore';
+import { ObsidianDeviceLocalProviderStore } from '@/app/deviceLocalProviderStore';
 import { runDeviceLocalProviderMigration } from '@/app/settings/deviceLocalProviderMigration';
 import { createMockApp } from '../../../helpers/mockApp';
 import { ObsidianDeviceLocalCapabilityPermissionStore } from '@/app/deviceLocalCapabilityPermissionStore';
@@ -57,53 +54,32 @@ describe('device local provider migration coordinator', () => {
     expect(persisted).not.toHaveProperty('model');
   });
 
-  it('migrates legacy provider membership, headers, and webSearchTools on cutover', async () => {
+  it('does not migrate provider fields synced by a release older than 0.15.0', async () => {
     const app = createMockApp();
     const adapter = createMemoryAdapter();
     const store = new ObsidianDeviceLocalProviderStore(app);
-    const raw = {
-      model: 'openai/gpt-4.1',
-      titleGenerationModel: '',
-      agentSettings: {
-        addedProviders: ['openai', 'my-openai'],
-        visibleModels: ['openai/gpt-4.1'],
-        webSearchTools: {
-          providerOrder: ['brave', 'tavily'],
-          disabledProviders: ['tavily'],
-        },
-        customProviders: [{
-          id: 'my-openai',
-          kind: 'openai-compatible',
-          name: 'Proxy',
-          baseUrl: 'https://api.example.com/v1',
-          api: 'openai-completions',
-          headers: { Authorization: 'Bearer header-secret' },
-          models: [{ id: 'gpt-4.1', name: 'GPT 4.1' }],
-        }],
-      },
-    };
 
     const result = await runDeviceLocalProviderMigration({
       app,
-      rawSettings: raw,
+      rawSettings: {
+        model: 'openai/gpt-4.1',
+        titleGenerationModel: '',
+        agentSettings: {
+          addedProviders: ['openai'],
+          visibleModels: ['openai/gpt-4.1'],
+        },
+      },
       deviceLocalStore: store,
       vaultAdapter: adapter,
       savePersistedSettings: (stored) => adapter.write(PIVI_SETTINGS_PATH, JSON.stringify(stored)),
     });
 
     expect(result.cutoverPerformed).toBe(true);
-    expect(result.settings.agentSettings.addedProviders).toEqual(['openai', 'my-openai']);
-    expect(result.settings.agentSettings.customProviders?.[0]?.headers).toBeUndefined();
-    expect(result.settings.agentSettings.webSearchTools).toEqual({
-      providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
-      disabledProviders: ['tavily'],
-    });
-    const local = app.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
-      webSearchTools: {
-        providerOrder: string[];
-      };
-    };
-    expect(local.webSearchTools.providerOrder).toEqual(['brave', 'tavily', 'exa', 'anysearch']);
+    expect(result.settings.agentSettings.addedProviders).toEqual(['deepseek']);
+    expect(result.settings.model).toBe('deepseek/deepseek-flash');
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as Record<string, unknown>;
+    expect(persisted).not.toHaveProperty('model');
+    expect(persisted.agentSettings).not.toHaveProperty('addedProviders');
   });
 
   it('strips reintroduced synced provider fields on already-initialized devices', async () => {

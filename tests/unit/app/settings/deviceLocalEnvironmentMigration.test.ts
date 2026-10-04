@@ -6,12 +6,11 @@ import { createWebSearchCredentialStore } from '@pivi/agent/tools/webSearch/cred
 import type { SyncSecretStore } from '@pivi/agent/ports';
 import type { DeviceLocalEnvironmentStateV1 } from '@pivi/agent/settings/deviceLocalEnvironmentState';
 import {
+  buildEntriesFromLegacyText,
   createEmptyDeviceLocalEnvironmentState,
   hasPersistedEnvironmentFields,
-  stripEnvironmentFieldsFromPersistedSettings,
+  stageEnvironmentSecrets,
 } from '@pivi/agent/settings/deviceLocalEnvironmentState';
-import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
-import { getWebSearchCredentialSecretId } from '@pivi/agent/tools/webSearch/credentialStore';
 
 import { runDeviceLocalEnvironmentMigration } from '@/app/settings/deviceLocalEnvironmentMigration';
 
@@ -53,22 +52,21 @@ function createEnvironmentStore(initial: DeviceLocalEnvironmentStateV1 | null = 
 }
 
 describe('deviceLocalEnvironmentMigration', () => {
-  it('migrates plaintext env to device-local registry and strips synced fields', async () => {
+  it('does not migrate environment text synced by a release older than 0.15.0', async () => {
     const secrets = createMemorySecretStore();
     const environmentStore = createEnvironmentStore();
     let saved: Record<string, unknown> | null = null;
-    const rawSettings = {
-      sharedEnvironmentVariables: 'PATH=/bin\nCUSTOM_TOKEN=sekrit\nANTHROPIC_API_KEY=sk-a\nBRAVE_API_KEY=brave-key',
-      agentSettings: {
-        environmentVariables: 'PI_FLAG=1',
-        addedProviders: ['anthropic'],
-        visibleModels: [],
-      },
-    };
 
     const result = await runDeviceLocalEnvironmentMigration({
       app: { secretStorage: secrets } as never,
-      rawSettings,
+      rawSettings: {
+        sharedEnvironmentVariables: 'PATH=/bin\nANTHROPIC_API_KEY=sk-a',
+        agentSettings: {
+          environmentVariables: 'PI_FLAG=1',
+          addedProviders: ['anthropic'],
+          visibleModels: [],
+        },
+      },
       environmentStore,
       savePersistedSettings: async (stored) => {
         saved = stored;
@@ -76,56 +74,40 @@ describe('deviceLocalEnvironmentMigration', () => {
     });
 
     expect(result.cutoverPerformed).toBe(true);
-    expect(result.credentialsMigrated).toBe(true);
-    expect(environmentStore.getState()?.entries.some((e) => e.key === 'PATH')).toBe(true);
-    expect(environmentStore.getState()?.entries.some((e) => e.key === 'CUSTOM_TOKEN' && e.source.kind === 'secret')).toBe(true);
-    expect(environmentStore.getState()?.entries.some((e) => e.key === 'ANTHROPIC_API_KEY')).toBe(false);
-    expect(secrets.getSecret(getPiAiCredentialSecretId('anthropic'))).toContain('sk-a');
-    expect(secrets.getSecret(getWebSearchCredentialSecretId('brave'))).toBe('brave-key');
+    expect(environmentStore.getState()).toEqual(createEmptyDeviceLocalEnvironmentState());
+    expect(secrets.snapshot()).toEqual({});
     expect(saved).not.toBeNull();
     expect(hasPersistedEnvironmentFields(saved!)).toBe(false);
-    expect(result.settings.sharedEnvironmentVariables).toContain('PATH=/bin');
-    // Runtime projection may resolve secrets for consumers; local registry never stores the plaintext.
-    const tokenEntry = environmentStore.getState()?.entries.find((e) => e.key === 'CUSTOM_TOKEN');
-    expect(tokenEntry?.source).toEqual({ kind: 'secret' });
   });
 
   it('keeps independent registries for two simulated devices', async () => {
     const secretsA = createMemorySecretStore();
-    const secretsB = createMemorySecretStore();
-    const storeA = createEnvironmentStore();
+    const stateA = stageEnvironmentSecrets(
+      secretsA,
+      buildEntriesFromLegacyText('PATH=/device-a', ''),
+      null,
+    ).nextState;
+    const storeA = createEnvironmentStore(stateA);
     const storeB = createEnvironmentStore();
-    const sharedRaw = {
-      sharedEnvironmentVariables: 'PATH=/shared',
-      agentSettings: {
-        environmentVariables: '',
-        addedProviders: [],
-        visibleModels: [],
-      },
-    };
+    const synced = { agentSettings: { addedProviders: [], visibleModels: [] } };
 
-    await runDeviceLocalEnvironmentMigration({
+    const resultA = await runDeviceLocalEnvironmentMigration({
       app: { secretStorage: secretsA } as never,
-      rawSettings: sharedRaw,
+      rawSettings: synced,
       environmentStore: storeA,
       savePersistedSettings: async () => undefined,
       getSystemEnvironmentVariable: () => undefined,
     });
-    // Device B starts fresh after A stripped synced env — simulate stripped portable settings.
-    const portable: Record<string, unknown> = { ...sharedRaw };
-    stripEnvironmentFieldsFromPersistedSettings(portable);
-
-    await runDeviceLocalEnvironmentMigration({
-      app: { secretStorage: secretsB } as never,
-      rawSettings: portable,
+    const resultB = await runDeviceLocalEnvironmentMigration({
+      app: { secretStorage: createMemorySecretStore() } as never,
+      rawSettings: synced,
       environmentStore: storeB,
       savePersistedSettings: async () => undefined,
     });
 
-    expect(storeA.getState()?.entries.map((e) => e.key)).toContain('PATH');
+    expect(resultA.settings.sharedEnvironmentVariables).toContain('PATH=/device-a');
+    expect(resultB.settings.sharedEnvironmentVariables ?? '').not.toContain('PATH=/device-a');
     expect(storeB.getState()).toEqual(createEmptyDeviceLocalEnvironmentState());
-    // Device A retained local PATH; device B has an independent empty registry after strip.
-    expect(storeA.getState()).not.toEqual(storeB.getState());
   });
 
   it('is idempotent on a second load', async () => {
@@ -163,34 +145,6 @@ describe('deviceLocalEnvironmentMigration', () => {
     expect(JSON.stringify(environmentStore.getState())).toBe(firstState);
     expect(second.cutoverPerformed).toBe(false);
     expect(saveCount).toBe(1);
-  });
-
-  it('leaves source authoritative when secret write fails', async () => {
-    const failingSecrets: SyncSecretStore = {
-      getSecret: () => null,
-      setSecret: () => {
-        throw new Error('secret write failed');
-      },
-      listSecrets: () => [],
-    };
-    const environmentStore = createEnvironmentStore();
-    const rawSettings = {
-      sharedEnvironmentVariables: 'MY_TOKEN=sekrit',
-      agentSettings: {
-        environmentVariables: '',
-        addedProviders: [],
-        visibleModels: [],
-      },
-    };
-
-    await expect(runDeviceLocalEnvironmentMigration({
-      app: { secretStorage: failingSecrets } as never,
-      rawSettings,
-      environmentStore,
-      savePersistedSettings: async () => undefined,
-    })).rejects.toThrow(/secret write failed/);
-    expect(environmentStore.getState()).toBeNull();
-    expect(hasPersistedEnvironmentFields(rawSettings)).toBe(true);
   });
 });
 

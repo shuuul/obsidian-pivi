@@ -432,34 +432,6 @@ describe('VaultSkillsService sync', () => {
       name => name.startsWith('.skills-transaction-'))).toBe(false);
   });
 
-  it('migrates root skills CLI metadata into .pivi work dir', async () => {
-    const rootLock = path.join(vaultPath, 'skills-lock.json');
-    fs.writeFileSync(rootLock, '{"version":1}', 'utf-8');
-
-    const service = new VaultSkillsService(vaultPath);
-
-    expect(fs.existsSync(rootLock)).toBe(true);
-    await service.prepareWorkspace();
-
-    expect(fs.existsSync(rootLock)).toBe(false);
-    expect(fs.existsSync(path.join(vaultPath, '.pivi', 'skills-lock.json'))).toBe(true);
-  });
-
-  it('removes duplicate root skills CLI metadata when .pivi copy already exists', async () => {
-    const rootLock = path.join(vaultPath, 'skills-lock.json');
-    const piviLock = path.join(vaultPath, '.pivi', 'skills-lock.json');
-    fs.writeFileSync(rootLock, '{"version":1}', 'utf-8');
-    fs.writeFileSync(piviLock, '{"version":1}', 'utf-8');
-
-    const service = new VaultSkillsService(vaultPath);
-
-    expect(fs.existsSync(rootLock)).toBe(true);
-    await service.prepareWorkspace();
-
-    expect(fs.existsSync(rootLock)).toBe(false);
-    expect(fs.readFileSync(piviLock, 'utf-8')).toBe('{"version":1}');
-  });
-
   it('runs skills list through the injected process runner', async () => {
     const calls: ProcessRunRequest[] = [];
     const processRunner: ProcessRunner = {

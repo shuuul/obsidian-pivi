@@ -49,7 +49,7 @@ stateDiagram-v2
 | `sessionFile` | Vault-relative JSONL path | Yes; source of truth for a tab binding |
 | `leafId` | Legacy tree-shaped JSONL compatibility field | No; not used by current product restore |
 
-Tab layout is stored in `.pivi/tab-manager-state.json`. `data.json.tabManagerState` is read only for legacy migration and removed after successful migration.
+Tab layout is stored in `.pivi/tab-manager-state.json`.
 
 The layout stores `tabId`, optional `sessionFile`, blank-tab `draftModel` and `draftTitle`, `isArchived`, `needsAttention`, and `activeTabId`. It does not store messages, runtime state, `openSessionId`, bound-session titles, DOM/controllers, or absolute external paths. Current writes omit `leafId`; readers accept it only for legacy compatibility, and restore ignores it.
 

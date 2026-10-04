@@ -38,21 +38,6 @@ describe('resolveWebSearchToolsSettings', () => {
     });
   });
 
-  it('migrates explicit legacy search then fetch preferences into one order', () => {
-    expect(resolveWebSearchToolsSettings({ searchProvider: 'exa', fetchProvider: 'tavily' })).toEqual({
-      providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
-      disabledProviders: [],
-    });
-  });
-
-  it('ignores legacy auto and invalid provider values', () => {
-    expect(resolveWebSearchToolsSettings({
-      provider: 'auto',
-      searchProvider: 'invalid',
-      fetchProvider: 42,
-    })).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
-  });
-
   it('drops legacy fetchMode fields from persisted settings', () => {
     expect(resolveWebSearchToolsSettings({
       providerOrder: ['brave'],

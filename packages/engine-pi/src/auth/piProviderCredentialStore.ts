@@ -5,25 +5,17 @@ import type {
   CredentialStore,
 } from '@earendil-works/pi-ai';
 import {
-  ANTHROPIC_PROVIDER_ID,
-  CLAUDE_PROVIDER_ID,
   getPiAiCredentialSecretId,
-  GROK_BUILD_PROVIDER_ID,
-  isOAuthCredential,
   listPiAiCredentialSecretIds,
   parseProviderCredential,
   serializeProviderCredential,
-  XAI_PROVIDER_ID,
 } from '@pivi/agent/auth/piProviderCredentials';
 import { isSupportedPiProviderId } from '@pivi/agent/auth/piProviderValidation';
 import { getProviderEnvVarNames, } from '@pivi/agent/auth/providerEnvVars';
 import {
   clearSyncSecret,
-  getProviderCredentialSecret,
-  getProviderCredentialSecretId,
   isSecretStorageAvailable,
   PIVI_PROVIDER_SECRET_PREFIX,
-  type ProviderCredentialKind,
 } from '@pivi/agent/auth/providerSecretStorage';
 import type { AuthContextHost, SyncSecretStore } from '@pivi/agent/ports';
 import { getPiAgentSettings } from '@pivi/agent/settings/agentSettings';
@@ -31,14 +23,9 @@ import { parseEnvironmentVariables } from '@pivi/agent/settings/environmentText'
 
 import type { PiRuntimeHost } from '../runtime/piRuntimeHost';
 
-const LEGACY_PI_AI_CREDENTIAL_KIND = 'credential-v2';
 const OAUTH_NO_EXPIRY = Number.MAX_SAFE_INTEGER;
 
 ;
-
-function getLegacyPiAiCredentialSecretId(providerId: string): string {
-  return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${LEGACY_PI_AI_CREDENTIAL_KIND}`;
-}
 
 function readStoredProviderCredential(
   secretStorage: SyncSecretStore,
@@ -51,35 +38,6 @@ function readStoredProviderCredential(
     }
   }
   return undefined;
-}
-
-function legacyCredentialForKind(
-  secretStorage: SyncSecretStore,
-  providerId: string,
-  kind: ProviderCredentialKind,
-): Credential | undefined {
-  const secret = getProviderCredentialSecret(secretStorage, providerId, kind);
-  if (!secret) {
-    return undefined;
-  }
-  return kind === 'api-key'
-    ? { type: 'api_key', key: secret }
-    : { type: 'oauth', access: secret, refresh: '', expires: Number.MAX_SAFE_INTEGER };
-}
-
-function readLegacyCredential(secretStorage: SyncSecretStore, providerId: string): Credential | undefined {
-  const envVars = getProviderEnvVarNames(providerId);
-  if (envVars.oauthVar) {
-    const oauth = legacyCredentialForKind(secretStorage, providerId, 'oauth-token');
-    if (oauth) {
-      return oauth;
-    }
-  }
-  return legacyCredentialForKind(secretStorage, providerId, 'api-key');
-}
-
-function readLegacyPiAiCredential(secretStorage: SyncSecretStore, providerId: string): Credential | undefined {
-  return parseProviderCredential(secretStorage.getSecret(getLegacyPiAiCredentialSecretId(providerId))) as Credential | undefined;
 }
 
 function credentialFromEnvironment(
@@ -121,53 +79,20 @@ function serializeEnvironmentVariables(env: Record<string, string>): string {
   return Object.entries(env).map(([key, value]) => `${key}=${value}`).join('\n');
 }
 
-function clearSecretIfPresent(secretStorage: SyncSecretStore, secretId: string): boolean {
-  if (!secretStorage.getSecret(secretId)) {
-    return false;
-  }
-  clearSyncSecret(secretStorage, secretId);
-  return true;
-}
-
-function clearMigratedProviderSecrets(secretStorage: SyncSecretStore, providerId: string): boolean {
-  let changed = clearSecretIfPresent(secretStorage, getLegacyPiAiCredentialSecretId(providerId));
-  changed = clearSecretIfPresent(secretStorage, getProviderCredentialSecretId(providerId, 'api-key')) || changed;
-  changed = clearSecretIfPresent(secretStorage, getProviderCredentialSecretId(providerId, 'oauth-token')) || changed;
-  return changed;
-}
-
+/** Moves a provider API key or OAuth token found in environment text into the keychain. */
 function migrateProviderCredential(
   secretStorage: SyncSecretStore,
   providerId: string,
   env: Record<string, string>,
 ): { credentialsChanged: boolean; environmentChanged: boolean } {
   const envCredential = credentialFromEnvironment(env, providerId);
-  if (envCredential) {
-    secretStorage.setSecret(getPiAiCredentialSecretId(providerId), serializeProviderCredential(envCredential));
-    const environmentChanged = removeCredentialEnvironmentValues(env, providerId);
-    clearMigratedProviderSecrets(secretStorage, providerId);
-    return { credentialsChanged: true, environmentChanged };
+  if (!envCredential) {
+    return { credentialsChanged: false, environmentChanged: false };
   }
-
-  const current = readStoredProviderCredential(secretStorage, providerId);
-  if (current) {
-    return {
-      credentialsChanged: clearMigratedProviderSecrets(secretStorage, providerId),
-      environmentChanged: false,
-    };
-  }
-
-  const legacy = readLegacyPiAiCredential(secretStorage, providerId)
-    ?? readLegacyCredential(secretStorage, providerId);
-  if (legacy) {
-    secretStorage.setSecret(getPiAiCredentialSecretId(providerId), serializeProviderCredential(legacy));
-    clearMigratedProviderSecrets(secretStorage, providerId);
-    return { credentialsChanged: true, environmentChanged: false };
-  }
-
+  secretStorage.setSecret(getPiAiCredentialSecretId(providerId), serializeProviderCredential(envCredential));
   return {
-    credentialsChanged: clearMigratedProviderSecrets(secretStorage, providerId),
-    environmentChanged: false,
+    credentialsChanged: true,
+    environmentChanged: removeCredentialEnvironmentValues(env, providerId),
   };
 }
 
@@ -203,54 +128,6 @@ export function migratePiProviderCredentialsToKeychain(
       : environmentVariables,
     changed: credentialsChanged || environmentChanged,
   };
-}
-
-const SUBSCRIPTION_OAUTH_MIGRATION_PAIRS = [
-  { piProviderId: XAI_PROVIDER_ID, subscriptionProviderId: GROK_BUILD_PROVIDER_ID },
-  { piProviderId: ANTHROPIC_PROVIDER_ID, subscriptionProviderId: CLAUDE_PROVIDER_ID },
-] as const;
-
-/** Move legacy OAuth credentials off API-provider slots into plan-provider slots. */
-export function migrateSplitSubscriptionOAuthCredentials(
-  secretStorage: SyncSecretStore,
-  addedProviders: readonly string[],
-): { addedProviders: string[]; migratedPiProviderIds: string[]; changed: boolean } {
-  let changed = false;
-  let nextAdded = [...addedProviders];
-  const migratedPiProviderIds: string[] = [];
-
-  for (const { piProviderId, subscriptionProviderId } of SUBSCRIPTION_OAUTH_MIGRATION_PAIRS) {
-    const mainCredential = readStoredProviderCredential(secretStorage, piProviderId);
-    const existingSubscriptionCredential = readStoredProviderCredential(secretStorage, subscriptionProviderId);
-    const hadLegacyOAuth = isOAuthCredential(mainCredential);
-    if (hadLegacyOAuth) {
-      if (!existingSubscriptionCredential) {
-        secretStorage.setSecret(
-          getPiAiCredentialSecretId(subscriptionProviderId),
-          serializeProviderCredential(mainCredential),
-        );
-      }
-      clearSyncSecret(secretStorage, getPiAiCredentialSecretId(piProviderId));
-      changed = true;
-    }
-
-    const subscriptionCredential = readStoredProviderCredential(secretStorage, subscriptionProviderId);
-    if (hadLegacyOAuth && isOAuthCredential(subscriptionCredential)) {
-      migratedPiProviderIds.push(piProviderId);
-    }
-    // Expand membership only when the API-provider slot is still registered.
-    // Orphan subscription OAuth must never resurrect a removed provider.
-    if (
-      isOAuthCredential(subscriptionCredential)
-      && !nextAdded.includes(subscriptionProviderId)
-      && nextAdded.includes(piProviderId)
-    ) {
-      nextAdded = [...nextAdded, subscriptionProviderId];
-      changed = true;
-    }
-  }
-
-  return { addedProviders: nextAdded, migratedPiProviderIds, changed };
 }
 
 export class ObsidianCredentialStore implements CredentialStore {

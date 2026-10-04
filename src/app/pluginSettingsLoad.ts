@@ -1,21 +1,16 @@
 /**
  * Plugin settings load/reconcile path extracted from the Obsidian Plugin shell.
  */
-import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
 import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import type { FileStore } from "@pivi/agent/ports";
 import type { OpenSessionState } from "@pivi/agent/runtime";
 import type { SessionStore } from "@pivi/agent/session";
 import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import type { PiviSettings } from "@pivi/agent/settings";
-import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/agent/settings/agentSettings";
 import {
   type DefaultVaultSkillsContext,
   ensureDefaultVaultSkills,
 } from "@pivi/agent/skills/vault/ensureDefaultVaultSkills";
-import {
-  migrateMembershipAwareProviderSecrets,
-} from "@pivi/engine-pi/application/auth";
 import {
   projectActivePiState,
   reconcilePiTitleGenerationModel,
@@ -120,10 +115,6 @@ export async function loadPluginSettings(
   }
   ctx.setLastKnownTabManagerState(await ctx.getStorage().getTabManagerState());
 
-  const didMigrateProviderSecrets = migration.credentialsMigrated
-    || environmentMigration.credentialsMigrated
-    || migrateProviderSecretsToKeychain(ctx);
-
   const vaultPath = getVaultPath(ctx.app);
   if (vaultPath) {
     const journalStore = new ObsidianDeviceLocalSessionJournalStore(ctx.app);
@@ -169,7 +160,6 @@ export async function loadPluginSettings(
     changed
     || didOverlayCapabilityPermissions
     || didReconcileModelSelections
-    || didMigrateProviderSecrets
     || didRepairActiveModel
   ) {
     await ctx.saveSettings();
@@ -183,38 +173,4 @@ export async function loadPluginSettings(
     const message = error instanceof Error ? error.message : String(error);
     logger.error("Default vault skills install failed", message);
   });
-}
-
-export function migrateProviderSecretsToKeychain(
-  ctx: PluginSettingsLoadContext,
-): boolean {
-  if (!isSecretStorageAvailable(ctx.app.secretStorage)) {
-    return false;
-  }
-
-  const settings = ctx.getSettings();
-  const settingsBag = settings as unknown as Record<string, unknown>;
-  const piSettings = getPiAgentSettings(settingsBag);
-  const migrated = migrateMembershipAwareProviderSecrets(
-    ctx.app.secretStorage,
-    {
-      addedProviders: piSettings.addedProviders,
-      disabledProviders: piSettings.disabledProviders,
-      environmentVariables: piSettings.environmentVariables,
-      visibleModels: piSettings.visibleModels,
-      model: settings.model,
-      titleGenerationModel: settings.titleGenerationModel,
-      customProviders: piSettings.customProviders,
-    },
-  );
-
-  updatePiAgentSettings(settingsBag, {
-    addedProviders: [...migrated.membership.addedProviders],
-    disabledProviders: [...migrated.membership.disabledProviders],
-    environmentVariables: migrated.membership.environmentVariables,
-    visibleModels: [...migrated.membership.visibleModels],
-  });
-  settings.model = migrated.membership.model;
-  settings.titleGenerationModel = migrated.membership.titleGenerationModel;
-  return migrated.changed;
 }

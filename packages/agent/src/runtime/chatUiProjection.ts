@@ -65,9 +65,8 @@ export function projectActiveChatState(
       uiConfig,
       settings,
       model,
-      settings.thinkingLevel ?? settings.effortLevel,
+      settings.thinkingLevel,
     );
-    delete settings.effortLevel;
   }
 
   reconcileActiveModelFields(settings);

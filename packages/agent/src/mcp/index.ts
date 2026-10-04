@@ -11,7 +11,6 @@ export * from './mcpToolBridge';
 export * from './mcpUtils';
 export * from './mcpValidation';
 export * from './mcpValueSources';
-export * from './oauth/mcpAuthEntryMigration';
 export * from './oauth/mcpAuthEntryStore';
 export * from './oauth/mcpAuthFlow';
 export * from './oauth/mcpCallbackServer';

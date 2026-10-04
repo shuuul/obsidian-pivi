@@ -87,7 +87,7 @@ function serializeCustomProviderHeaderSecret(
   return JSON.stringify(payload);
 }
 
-export function parseCustomProviderHeaderSecret(
+function parseCustomProviderHeaderSecret(
   raw: string | null | undefined,
 ): Record<string, string> | null {
   if (!raw?.trim()) {

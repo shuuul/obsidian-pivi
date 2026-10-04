@@ -57,12 +57,7 @@ export const piChatUIConfig: ChatUIConfig = {
   },
 
   getDefaultReasoningValue(model: string, settings: Record<string, unknown>): string {
-    const current =
-      typeof settings.thinkingLevel === 'string'
-        ? settings.thinkingLevel
-        : typeof settings.effortLevel === 'string'
-          ? settings.effortLevel
-          : undefined;
+    const current = typeof settings.thinkingLevel === 'string' ? settings.thinkingLevel : undefined;
     return getPiDefaultThinkingLevelForModel(resolvePiModelFromKeyWithLookup(model, piAiModels), current);
   },
 
@@ -86,7 +81,6 @@ export const piChatUIConfig: ChatUIConfig = {
     }
     const bag = settings as Record<string, unknown>;
     bag.thinkingLevel = value;
-    delete bag.effortLevel;
   },
 
   getChatIcon() {

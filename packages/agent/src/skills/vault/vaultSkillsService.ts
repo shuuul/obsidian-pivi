@@ -224,7 +224,6 @@ export class VaultSkillsService {
   private async prepareWorkspaceWithoutLock(): Promise<void> {
     const dir = path.join(this.vaultPath, '.pivi');
     fs.mkdirSync(dir, { recursive: true });
-    this.migrateRootSkillsCliMetadata(dir);
     await new SkillPublicationTransaction({
       vaultPath: this.vaultPath,
       publicationRenameSync: this.options.publicationRenameSync,
@@ -411,23 +410,6 @@ export class VaultSkillsService {
       .readdirSync(skillsDir, { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name);
-  }
-
-  private migrateRootSkillsCliMetadata(piviDir: string): void {
-    for (const fileName of SKILLS_CLI_METADATA_FILES) {
-      const source = path.join(this.vaultPath, fileName);
-      const dest = path.join(piviDir, fileName);
-      if (!fs.existsSync(source)) {
-        continue;
-      }
-      if (fs.existsSync(dest)) {
-        if (fs.readFileSync(source, 'utf-8') === fs.readFileSync(dest, 'utf-8')) {
-          fs.rmSync(source, { force: true });
-        }
-        continue;
-      }
-      fs.renameSync(source, dest);
-    }
   }
 
   private runSkillsAdd(source: string, skillNames: string[] = [], cwd?: string, signal?: AbortSignal): Promise<void> {

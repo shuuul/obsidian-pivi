@@ -6,13 +6,8 @@
 import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type { SyncSecretStore } from '@pivi/agent/ports';
-import {
-  getAgentEnvironmentVariables,
-  getSharedEnvironmentVariables,
-} from '@pivi/agent/settings/agentEnvironment';
 import type { DeviceLocalEnvironmentStore } from '@pivi/agent/settings/deviceLocalEnvironmentState';
 import {
-  buildEntriesFromLegacyText,
   clearObsoleteEnvironmentSecrets,
   createEmptyDeviceLocalEnvironmentState,
   createSecretStoreResolveHost,
@@ -53,29 +48,7 @@ export interface DeviceLocalEnvironmentMigrationContext {
 export interface DeviceLocalEnvironmentMigrationResult {
   settings: PiviSettings;
   cutoverPerformed: boolean;
-  credentialsMigrated: boolean;
   syncedSaveFailed?: boolean;
-}
-
-function requireSecretStorage(app: App): SyncSecretStore {
-  if (!isSecretStorageAvailable(app.secretStorage)) {
-    throw new DeviceLocalEnvironmentMigrationError(
-      'SecretStorage is unavailable; environment migration cannot continue.',
-    );
-  }
-  return app.secretStorage;
-}
-
-function readLegacyEnvironmentTexts(
-  raw: Record<string, unknown> | null,
-): { shared: string; agent: string } {
-  if (!raw) {
-    return { shared: '', agent: '' };
-  }
-  return {
-    shared: getSharedEnvironmentVariables(raw),
-    agent: getAgentEnvironmentVariables(raw),
-  };
 }
 
 export function migrateCanonicalCredentialsFromText(
@@ -156,8 +129,8 @@ async function stripSyncedEnvironmentFields(
 }
 
 /**
- * Startup cutover: legacy synced env text → local structured registry + secrets.
- * Source plaintext is removed from synced settings only after local publication succeeds.
+ * Startup load: project the device-local environment registry onto settings and
+ * strip any environment text an older device synced back.
  */
 export async function runDeviceLocalEnvironmentMigration(
   ctx: DeviceLocalEnvironmentMigrationContext,
@@ -194,73 +167,25 @@ export async function runDeviceLocalEnvironmentMigration(
     return {
       settings: baseSettings,
       cutoverPerformed,
-      credentialsMigrated: false,
       syncedSaveFailed,
     };
   }
 
-  const legacy = readLegacyEnvironmentTexts(raw);
-  const hasLegacy = legacy.shared.length > 0 || legacy.agent.length > 0;
-
-  if (!hasLegacy) {
-    const empty = createEmptyDeviceLocalEnvironmentState();
-    ctx.environmentStore.save(empty);
-    const host = createSecretStoreResolveHost(undefined, getSystem);
-    projectEnvironmentOntoSettings(baseSettings, empty, host);
-    let syncedSaveFailed = false;
-    if (raw && (
-      Object.hasOwn(raw, 'sharedEnvironmentVariables')
-      || Object.hasOwn(raw, 'environmentVariables')
-      || (
-        raw.agentSettings
-        && typeof raw.agentSettings === 'object'
-        && !Array.isArray(raw.agentSettings)
-        && Object.hasOwn(raw.agentSettings, 'environmentVariables')
-      )
-    )) {
-      syncedSaveFailed = await stripSyncedEnvironmentFields(ctx, baseSettings);
-    }
-    return {
-      settings: baseSettings,
-      cutoverPerformed: true,
-      credentialsMigrated: false,
-      syncedSaveFailed,
-    };
-  }
-
-  const secretStorage = requireSecretStorage(ctx.app);
-  const addedProviders = baseSettings.agentSettings.addedProviders ?? [];
-
-  const sharedCreds = migrateCanonicalCredentialsFromText(
-    secretStorage,
-    legacy.shared,
-    addedProviders,
+  // First run on this device. Environment text left in synced settings by a
+  // release older than 0.15.0 is not migrated; it is stripped on save.
+  const empty = createEmptyDeviceLocalEnvironmentState();
+  ctx.environmentStore.save(empty);
+  projectEnvironmentOntoSettings(
+    baseSettings,
+    empty,
+    createSecretStoreResolveHost(undefined, getSystem),
   );
-  const agentCreds = migrateCanonicalCredentialsFromText(
-    secretStorage,
-    legacy.agent,
-    addedProviders,
-  );
-  const credentialsMigrated = sharedCreds.changed || agentCreds.changed;
-
-  const drafts = buildEntriesFromLegacyText(
-    sharedCreds.remainingText,
-    agentCreds.remainingText,
-  );
-
-  const staged = stageEnvironmentSecrets(secretStorage, drafts, null);
-  // Publish local registry only after secrets for new entries are staged.
-  ctx.environmentStore.save(staged.nextState);
-
-  const host = createSecretStoreResolveHost(secretStorage, getSystem);
-  projectEnvironmentOntoSettings(baseSettings, staged.nextState, host);
-
-  const syncedSaveFailed = await stripSyncedEnvironmentFields(ctx, baseSettings);
-
+  const syncedSaveFailed = raw && hasPersistedEnvironmentFields(raw)
+    ? await stripSyncedEnvironmentFields(ctx, baseSettings)
+    : false;
   return {
     settings: baseSettings,
     cutoverPerformed: true,
-    credentialsMigrated,
     syncedSaveFailed,
   };
 }

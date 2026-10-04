@@ -73,40 +73,6 @@ describe('ProviderSecretStorage', () => {
     });
   });
 
-  it('hard-migrates legacy keychain entries for providers recorded in settings', () => {
-    setLegacyProviderSecret('deepseek', 'api-key', 'ds-key');
-
-    const synced = migratePiProviderCredentialsToKeychain(
-      secretStorage,
-      ['anthropic', 'deepseek'],
-      'DEEPSEEK_API_KEY=legacy\nPI_ENABLE_EXA=1',
-    );
-
-    expect(synced.changed).toBe(true);
-    expect(synced.addedProviders).toContain('deepseek');
-    expect(synced.environmentVariables).not.toContain('legacy');
-    expect(secretStorage.getSecret(getProviderCredentialSecretId('deepseek', 'api-key'))).toBeNull();
-    expect(secretStorage.getSecret(getPiAiCredentialSecretId('deepseek'))).toBe(
-      JSON.stringify({ type: 'api_key', key: 'legacy' }),
-    );
-  });
-
-  it('hard-migrates credential-v2 entries into unversioned credential entries', () => {
-    secretStorage.setSecret(
-      'pivi-anthropic-credential-v2',
-      JSON.stringify({ type: 'api_key', key: 'sk-v2' }),
-    );
-
-    const synced = migratePiProviderCredentialsToKeychain(secretStorage, ['anthropic'], '');
-
-    expect(synced.changed).toBe(true);
-    expect(synced.addedProviders).toEqual(['anthropic']);
-    expect(secretStorage.getSecret('pivi-anthropic-credential-v2')).toBeNull();
-    expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
-      JSON.stringify({ type: 'api_key', key: 'sk-v2' }),
-    );
-  });
-
   it('ignores WebSearch credentials when migrating Pi provider credentials', () => {
     const exaEnvLine = `${'EXA'}_API_KEY=web-env`;
     createWebSearchCredentialStore(secretStorage)!.writeSync('tavily', 'tavily-key');

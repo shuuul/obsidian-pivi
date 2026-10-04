@@ -1,30 +1,17 @@
-import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
-import { migrateMcpAuthEntriesToSecretStorage } from '@pivi/agent/mcp/oauth/mcpAuthEntryMigration';
-import { PIVI_MCP_CONFIG_PATH } from '@pivi/agent/mcp/paths';
-import type { FileStore, SyncSecretStore } from '@pivi/agent/ports';
-import type { DeviceLocalProviderStore } from '@pivi/agent/settings/deviceLocalProviderState';
+import type { FileStore } from '@pivi/agent/ports';
+import type { DeviceLocalProviderStore ,
+  normalizeDeviceLocalProviderState} from '@pivi/agent/settings/deviceLocalProviderState';
 import {
   DeviceLocalProviderStateVersionError,
-  normalizeDeviceLocalProviderState,
   overlayDeviceLocalProviderState,
   seedDefaultDeviceLocalProviderState,
   stripLocalizedFieldsFromRuntimeSettings,
 } from '@pivi/agent/settings/deviceLocalProviderState';
 import type { PiviSettings } from '@pivi/agent/settings/types';
-import {
-  migrateMembershipAwareProviderSecrets,
-} from '@pivi/engine-pi/application/auth';
 import type { App } from 'obsidian';
 
-import {
-  migrateCustomProviderHeadersToSecretStorage,
-} from '@/app/settings/customProviderHeaderMigration';
-import {
-  buildDeviceLocalStateInputFromLegacy,
-  hasLegacyProviderFields,
-  snapshotLegacyProviderMembership,
-} from '@/app/settings/legacyProviderSnapshot';
+import { hasLegacyProviderFields } from '@/app/settings/legacyProviderSnapshot';
 import { normalizeStoredPiviSettings } from '@/app/settings/piviSettingsCodec';
 
 const logger = new PluginLogger('DeviceLocalProviderMigration');
@@ -47,59 +34,11 @@ export interface DeviceLocalProviderMigrationContext {
 export interface DeviceLocalProviderMigrationResult {
   settings: PiviSettings;
   cutoverPerformed: boolean;
-  credentialsMigrated: boolean;
   syncedSaveFailed?: boolean;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function requireSecretStorage(app: App): SyncSecretStore {
-  if (!isSecretStorageAvailable(app.secretStorage)) {
-    throw new DeviceLocalProviderMigrationError(
-      'SecretStorage is unavailable; provider migration cannot continue.',
-    );
-  }
-  return app.secretStorage;
 }
 
 function buildPortableRuntimeSettings(raw: Record<string, unknown>): PiviSettings {
   return normalizeStoredPiviSettings(raw);
-}
-
-async function listMcpServerNames(adapter: FileStore): Promise<string[]> {
-  if (!(await adapter.exists(PIVI_MCP_CONFIG_PATH))) {
-    return [];
-  }
-  try {
-    const content = await adapter.read(PIVI_MCP_CONFIG_PATH);
-    const parsed: unknown = JSON.parse(content);
-    if (!isRecord(parsed)) {
-      return [];
-    }
-    const servers = parsed.mcpServers;
-    if (!isRecord(servers)) {
-      return [];
-    }
-    return Object.keys(servers);
-  } catch {
-    return [];
-  }
-}
-
-async function migrateMcpAuthEntriesIfPossible(
-  ctx: DeviceLocalProviderMigrationContext,
-): Promise<void> {
-  if (!isSecretStorageAvailable(ctx.app.secretStorage)) {
-    return;
-  }
-  const mcpServerNames = await listMcpServerNames(ctx.vaultAdapter);
-  await migrateMcpAuthEntriesToSecretStorage(
-    ctx.vaultAdapter,
-    ctx.app.secretStorage,
-    mcpServerNames,
-  );
 }
 
 async function stripSyncedLocalizedFields(
@@ -166,58 +105,26 @@ export async function runDeviceLocalProviderMigration(
 
   if (initializedState) {
     const settings = buildRuntimeSettingsFromLocalState(raw, initializedState);
-    await migrateMcpAuthEntriesIfPossible(ctx);
     let syncedSaveFailed = false;
+    // An older device can sync provider fields back into the vault; drop them.
     if (hasLegacyProviderFields(raw)) {
       syncedSaveFailed = await stripSyncedLocalizedFields(ctx, settings);
     }
     return {
       settings,
       cutoverPerformed: false,
-      credentialsMigrated: false,
       ...(syncedSaveFailed ? { syncedSaveFailed: true } : {}),
     };
   }
 
-  if (!hasLegacyProviderFields(raw)) {
-    const localState = seedDefaultDeviceLocalProviderState();
-    const settings = buildRuntimeSettingsFromLocalState(raw, localState);
-    await migrateMcpAuthEntriesIfPossible(ctx);
-    const cutover = await commitCutover(ctx, localState, settings);
-    return {
-      settings,
-      cutoverPerformed: true,
-      credentialsMigrated: false,
-      ...(cutover.syncedSaveFailed ? { syncedSaveFailed: true } : {}),
-    };
-  }
-
-  const secretStorage = requireSecretStorage(ctx.app);
-  const legacySnapshot = snapshotLegacyProviderMembership(raw);
-  const credentialMigration = migrateMembershipAwareProviderSecrets(
-    secretStorage,
-    legacySnapshot,
-  );
-  const customProvidersWithoutHeaders = migrateCustomProviderHeadersToSecretStorage(
-    secretStorage,
-    credentialMigration.membership.customProviders,
-  );
-  await migrateMcpAuthEntriesIfPossible(ctx);
-
-  const localState = normalizeDeviceLocalProviderState(
-    buildDeviceLocalStateInputFromLegacy(
-      credentialMigration.membership,
-      raw,
-      customProvidersWithoutHeaders,
-    ),
-  );
+  // First run on this device. Provider fields left in synced settings by a
+  // release older than 0.15.0 are not migrated; they are stripped on save.
+  const localState = seedDefaultDeviceLocalProviderState();
   const settings = buildRuntimeSettingsFromLocalState(raw, localState);
   const cutover = await commitCutover(ctx, localState, settings);
-
   return {
     settings,
     cutoverPerformed: true,
-    credentialsMigrated: credentialMigration.changed,
     ...(cutover.syncedSaveFailed ? { syncedSaveFailed: true } : {}),
   };
 }
