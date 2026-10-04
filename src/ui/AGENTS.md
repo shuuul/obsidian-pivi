@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`src/ui/` owns chat runtime orchestration and reusable imperative UI primitives. The product-owned `@pivi/pivi-react` package owns product chrome; React host/presentation capabilities are injected by `src/app/ui`, while this layer keeps runtime coordination and the Obsidian Markdown, DOM, and editor adapters that require host context.
+`src/ui/` owns chat runtime orchestration and reusable imperative UI primitives. The product-owned `@pivi/pivi-react` package owns product chrome; `src/app/ui` mounts the React surfaces and injects their ports, while this layer keeps runtime coordination and the Obsidian Markdown, DOM, and editor adapters that require host context.
 
 ## Architecture
 
@@ -50,7 +50,7 @@ Read the applicable child `AGENTS.md` before changing a subdirectory.
 - `src/ui/chat/tabs/tabRuntime.ts` is the sole UI creation point for chat services. Keep creation lazy and call `ports.runtime.createChatService()`; never instantiate a runtime or obtain its factory from the host in UI.
 - Use `PiChatService` for durable chat turn/session operations. Use a fresh injected `AuxQueryRunner` for short title or refine queries that do not own a chat session lifecycle.
 - Treat session files as durable identity and tab/controller/render state as rebuildable. Clean up services, subscriptions, event refs, managers, and CodeMirror decorations on close, replacement, hide, or failed initialization.
-- Consume model options/readiness/configuration through `ChatPorts.models` and projected settings through `ChatPorts.settings`. Facades, custom-provider synchronization, credential migration, and engine policy adaptation remain in app composition.
+- Consume model options/readiness/configuration through `ChatPorts.models` and projected settings through `ChatPorts.settings`. Facades, custom-provider synchronization, credential storage, and engine policy adaptation remain in app composition.
 - Put cross-feature primitives in `src/ui/shared/`; keep product behavior in the owning feature. Do not make shared helpers depend on chat or settings implementations.
 - Use `PascalCase.ts` for primary UI classes/controllers/renderers/modals and `lowerCamelCase.ts` for helpers. Preserve existing import aliases and import sorting.
 - Resolve document/window from the owning element (`getActiveDocument` / `getActiveWindow`) so pop-out windows work; create elements and fragments with owner-realm Obsidian helpers and avoid raw `document.createElement*`, `document.createDocumentFragment`, or global `window`/`document` assumptions.

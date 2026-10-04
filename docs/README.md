@@ -53,6 +53,7 @@ flowchart TD
   Presentation --> ProductUI["Product orchestration<br/>src/ui/"]
   Presentation --> React["React surfaces<br/>@pivi/pivi-react"]
   ProductUI --> Agent["Agent contracts and models<br/>@pivi/agent"]
+  ProductUI -- "path and vault helpers" --> Host
   React --> Agent
   Composition --> Engine["Concrete Pi engine<br/>@pivi/engine-pi"]
   Engine --> Agent

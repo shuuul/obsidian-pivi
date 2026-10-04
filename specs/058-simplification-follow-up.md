@@ -61,7 +61,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Archive spec 056, remove `nodeFetch.ts` and retired-name guards | Claude Code | Done | None | Full quality gate |
 | WS-03 | Remove ESLint import-ban blocks duplicated by the architecture script | Claude Code | Done | None | Full quality gate; every removed ESLint ban maps to a script rule |
 | WS-04 | Remove one-time migrations for formats shipped in 0.15.0 or earlier | Claude Code | Done | WS-03 | Full quality gate; per-migration evidence of the shipping release |
-| WS-05 | Reorganize `AGENTS.md` guidance and move architecture narrative to `docs/` | Claude Code | In progress | WS-03, WS-04 | `npm run check:boundaries` (docs contracts, README coverage) |
+| WS-05 | Reorganize `AGENTS.md` guidance and move architecture narrative to `docs/` | Claude Code | Done | WS-03, WS-04 | `npm run check:boundaries` (docs contracts, README coverage) |
 
 ## Verification
 
@@ -138,6 +138,18 @@ Append entries rather than rewriting another agent's record.
 - Remaining: `src/app/AGENTS.md` (about 31 KB), `packages/agent/AGENTS.md` (about 24 KB), and `scripts/AGENTS.md` (about 15 KB) are untouched. They hold local invariants mixed with narrative; trimming them needs a rule-by-rule pass rather than a move.
 - Blockers: None.
 - Next action: maintainer decision on whether to trim the per-directory files.
+
+### 2026-10-04 — Claude Code — WS-05 (per-directory guidance and staleness audit)
+
+- Changed:
+  - Trimmed `scripts/AGENTS.md` (15 KB → 9 KB), `packages/agent/AGENTS.md` (24 KB → 9 KB), and `src/app/AGENTS.md` (31 KB → 18 KB). Each now holds grouped rules, a directory or file map, and gotchas. The long behavior paragraphs of the agent and app files were moved verbatim, with stale details corrected, into `docs/12-architecture-status.md` ("Agent package subsystem notes", "App composition notes").
+  - Audited every `AGENTS.md`, every `docs/` page, and the package READMEs against the code. A script checked that each backticked path, `@pivi/*` subpath, symbol, and npm script exists; three read-only subagent audits checked behavior and enforcement claims. Their findings were spot-checked and about sixty statements were corrected.
+  - Corrections that predate this work: stdio MCP entries are skipped on load, not rejected; there is no selected-text toolbar provider selector; destructive settings actions use the inline two-press button, not `ModalLayer`; `check:package-readmes` checks section headings only; `check-pi-pins` and the canary cover four Pi packages; the build has no nested-shrinkwrap or `#` alias handling; several test paths and a CSS manifest count were wrong.
+  - Removed a dead architecture-rule pattern for the nonexistent `@pivi/agent/engine` subpath.
+- Evidence: full quality gate green; docs-contract and README-coverage checks pass.
+- Not verified: prose describing runtime behavior that does not reduce to a symbol, constant, or file (for example IME ordering, compaction pass details, unload internals, CSS layout claims). The audits confirmed the named symbols exist but did not trace those behaviors.
+- Blockers: None.
+- Next action: maintainer review, then close out this spec.
 
 ## Completion summary
 

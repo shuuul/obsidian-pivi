@@ -13,7 +13,7 @@ flowchart LR
   App["src/app composition"] --> Host["@pivi/obsidian-host"]
   Tools["@pivi/obsidian-tools"] --> Host
   Host --> Ports["@pivi/agent/ports"]
-  Host --> Policy["@pivi/agent/network + foundation"]
+  Host --> Policy["@pivi/agent network, ports, config, settings"]
   Host --> Obsidian["Obsidian public API"]
   Host --> Platform["Node / Electron adapters"]
   Host --> Theme["pivi-theme.css<br/>--pivi-host-* tokens"]

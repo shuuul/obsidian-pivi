@@ -87,7 +87,7 @@ Nested `AGENTS.md` files under `src/`, `tests/`, and `packages/` are directory/p
 - **Dependency direction**: only `src/app` and `src/main.ts` import `@pivi/engine-pi`. Host and tools never import UI or the engine. `src/ui` reaches React only through the `store` and `context-badges` subpaths and reaches runtime behavior only through injected `ChatPorts`. `npm run check:architecture` is the single enforcement point.
 - **Storage**: sessions are JSONL under `.pivi/sessions/`; synced settings live in `.pivi/settings.json`; provider registry, environment entries, capability grants, external paths, and the session journal are device-local; credentials and other secrets live in `SecretStorage`. Absolute paths and secrets never enter synced files.
 - **Safety boundaries**: all HTTP goes through purpose-scoped clients, local processes are bounded and shell-forbidden by default, vault mutations are contained and snapshot File Recovery first, and Bash, external reads, and Obsidian commands need grants. See `SECURITY.md`.
-- **Upgrade floor**: startup migrates nothing older than 0.15.0.
+- **Upgrade floor**: startup runs no settings, credential, provider, or environment migration for formats older than 0.15.0. Still present: read compatibility for old session JSONL, the capability-permission record migration (0.26.0 / 0.28.0), MCP secret-ID and plaintext rewrites on load, and the one-time `.pivi/templates/` move.
 
 The per-subsystem detail and the module maps live in [docs/12-architecture-status.md](docs/12-architecture-status.md). Read the paragraph for the subsystem you are changing before you edit it, and update it in the same change.
 
@@ -154,7 +154,7 @@ Use `npm ci` for a clean install. `.npmrc` enables `legacy-peer-deps=true`; do n
 - `npm run check:dead-code` (knip, configured in `knip.json`, part of `check:boundaries`) rejects unused files and exports that no other module imports. Export a symbol only when another module or test imports it. `@pivi/agent`, `@pivi/engine-pi`, and `@pivi/obsidian-host` expose source leaves through a `./*` wildcard export, so `knip.json` sets `includeEntryExports` for them and every export is checked against real importers. A file whose exports are consumed only through a build-plugin path string must be listed under that workspace's `ignore`; a file reached only through a child-process `import` in a test must be listed as an `entry`. Dependency findings are deliberately excluded because workspace `@pivi/*` aliases report as unlisted.
 - Do not add workspace `typecheck` forwarding scripts: the root command owns all `src/` and `packages/` source, while `tests/tsconfig.json` owns Jest types.
 - Every workspace package must declare the third-party and `@pivi/*` packages imported by its source. Runtime imports and re-exports require `dependencies`, `optionalDependencies`, or `peerDependencies`; type-only imports may use `devDependencies`. Obsidian and React runtimes are explicit peers. `check:architecture` also verifies every declared export resolves through the active npm workspace link.
-- Keep `legacy-peer-deps=true` until `npm install --dry-run --ignore-scripts --legacy-peer-deps=false` succeeds. As of 2026-07-11, `obsidian@1.13.1` requires exact `@codemirror/state@6.5.0` while Pivi uses `^6.7.1`; `eslint-plugin-obsidianmd` also brings ESLint-9-only peers under an ESLint 10 root.
+- Keep `legacy-peer-deps=true` until `npm install --dry-run --ignore-scripts --legacy-peer-deps=false` succeeds. As of 2026-07-11, `obsidian@1.13.1` requires exact `@codemirror/state@6.5.0` while Pivi uses a newer `^6.7.x` range; `eslint-plugin-obsidianmd` also brings ESLint-9-only peers under an ESLint 10 root.
 - Consolidate onto TS7 only after ts-jest, typescript-eslint, and dependent plugins explicitly support its compiler API. If TS7 CLI checking regresses, temporarily point root `typecheck` at `node_modules/typescript/bin/tsc6 --noEmit`; retain both aliases for rollback.
 
 All development flows should be managed using the following standard `npm` scripts (the lint script covers `src/`, `tests/`, and `packages/`):
@@ -245,7 +245,7 @@ To run all tests:
 npm run test
 ```
 
-The test runner automatically mounts `tests/setupWindow.ts` to mock renderer globals (`window`, `requestAnimationFrame`, `cancelAnimationFrame`) and fail the owning test on unexpected `console.warn` / `console.error`; intentional log paths must mock and assert their call in the specific test. Jest maps `obsidian` plus Pi package imports to unified mocks under `tests/__mocks__/`.
+The test runner automatically mounts `tests/setupWindow.ts` to mock renderer globals (`window`, `requestAnimationFrame`, `cancelAnimationFrame`) and fail the owning test on unexpected `console.warn` / `console.error`; intentional log paths must mock and assert their call in the specific test. Jest maps `obsidian` and the Pi engine packages to mocks under `tests/__mocks__/`; `@earendil-works/pi-mcp` and `pi-ai/dist/*` resolve to the real packages.
 
 CI runs the stronger coverage command across all Jest projects:
 

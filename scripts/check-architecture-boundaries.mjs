@@ -281,7 +281,6 @@ const boundaryRules = [
     forbidden: [
       /^@earendil-works\//,
       enginePiPackagePattern,
-      /^@pivi\/agent\/engine(?:\/|$)/,
       obsidianReactPackagePattern,
     ],
   },

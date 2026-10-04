@@ -17,7 +17,7 @@ flowchart LR
   DeadKeys["check:i18n-dead-keys"] --> English
 ```
 
-Catalog keys and placeholder names are the stable boundary. Host names enter as injected interpolation values, never as React-facing identifiers.
+Catalog keys and placeholder names are the stable boundary. Host terms such as Obsidian, vault, and keychain are written directly in each locale.
 
 ## Entrypoints
 

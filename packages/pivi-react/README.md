@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@pivi/pivi-react` owns Pivi's reusable product presentation for chat and settings. It follows the Pivi/AI product rather than a specific note-taking host. React and ReactDOM are supplied by the embedding application.
+`@pivi/pivi-react` owns Pivi's reusable product presentation for chat and settings. It is built for the Obsidian plugin and uses the public `obsidian` API for icons and tooltips. React, ReactDOM, and Obsidian are supplied by the embedding application.
 
 ## Allowed dependencies
 
@@ -31,7 +31,7 @@
 - MCP servers are added through the Streamable HTTP editor; presentation code does not import JSON or read the system clipboard.
 - `ChatUiStore`, `useChatUiSnapshot()`, and the pure exhaustive stream reducer are exported from `@pivi/pivi-react/store`. Store snapshots are deeply immutable, structurally cloneable data and exclude DOM nodes, controllers, renderers, runtime services, subscriptions, and timer handles.
 - `ChatTabsStore` drives the React-owned chat header, logo, and tab switcher. Input-position rendering uses one stable app-owned portal container so active-tab switches do not remount the React subtree or cancel pending interactions.
-- The package root exports general presentation components and i18n. Public subpaths are `/context-badges`, `/mount`, `/ports`, `/settings`, and `/store`; `src/ui` is limited to the store and context-badges presentation seams.
+- The package root exports general presentation components and i18n. Public subpaths are `/context-badges`, `/mount`, `/ports`, `/selectionToolbar`, `/settings`, and `/store`; `src/ui` is limited to the store and context-badges presentation seams.
 - `styles/manifest.mjs` is the ordered source manifest used to build the root `styles.css` release artifact.
 - Chat messages and settings are React-owned. `@pivi/agent` owns runtime/application ports; each host app owns concrete wiring and host-specific Markdown adapters.
 

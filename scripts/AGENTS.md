@@ -2,7 +2,7 @@
 
 *This file extends the root [AGENTS.md](../AGENTS.md). Follow root guidance first, then these local rules.*
 
-Small Node scripts backing `package.json` commands. Keep them single-purpose and runnable with `node scripts/<name>`.
+Small Node scripts backing `package.json` commands. Keep them single-purpose and runnable with `node scripts/<name>`. Each script's header comment is the source of truth for its behavior; this file says what each one is for and which rules are easy to break.
 
 ## Build/test flow
 
@@ -26,44 +26,63 @@ flowchart LR
 
 ## Files
 
-- `build-css.mjs` — Prepends the release-version banner and Obsidian host theme-token mapping, concatenates the ordered `packages/pivi-react/styles/manifest.mjs` modules into root `styles.css`, validates missing/unlisted CSS modules, and rejects `!important` in every host/React CSS input. Production mode minifies while preserving the Style Settings metadata block and selector-significant whitespace before pseudo classes.
-- `build.mjs` — Production build orchestrator: CSS first, then esbuild bundle.
-- `analyze-bundle.mjs` — Uses the selected checkout's shared `build/create-build-options.mjs` configuration and generates pre-postprocess esbuild metadata without writing a separate bundle. `--project` selects another checkout and `--output` selects the metadata path; PR CI uses both to compare base and head under identical conditions.
-- `bundle-report.mjs` — Compares base/head metafiles and emits the PR Markdown summary: total bytes and delta, 20 largest current inputs with per-input deltas, and the exact embedded Skills CLI gzip bytes. Growth above 100 KiB or 2% is a visible review warning, not a failing gate.
-- `check-bundle-size.mjs` — Checks a built root `main.js` against the 5 MB hard ceiling. Run after `npm run build` via `npm run check:bundle-size`; relative-growth review belongs to `bundle-report.mjs`, not a stale recorded baseline.
-- `run-jest.js` — Required Jest wrapper; supplies the Node `--localstorage-file` backing file expected by tests.
-- `sync-version.js` — Syncs **stable** `package.json` versions into `manifest.json`, `versions.json`, and the root README version badge. Skips those files for semver prerelease versions so the community-plugin channel stays on the last stable release.
-- `versionMetadata.js` — Shared stable/prerelease version helpers used by the sync and release scripts.
-- `prepare-beta-release.js` — Bumps `package.json` on `next` or `beta`, prints commit/tag commands, and never mutates root `manifest.json`. Entry point for `npm run version:beta`.
-- `generate-beta-release-notes.js` — Generates categorized beta GitHub release notes from conventional commits between the previous reachable tag and the current prerelease tag. It excludes release-preparation commits and always appends the exact compare link. Stable changelog sections are written by the maintainer in the release commit.
-- `write-release-manifest.js` — Writes a release asset `manifest.json` from the stable root template plus `package.json.version`. Used by `release.yaml` for prerelease tags.
-- `postinstall.mjs` — Creates `.env.local` from example outside CI when missing.
-- `generate-perf-sessions.mjs` — Writes four deterministic, Pi-compatible JSONL sessions (1K messages, 5K messages, one 100KB Markdown response, and 20 completed subagents) under a supplied vault's `.pivi/sessions/`. It only overwrites its fixed `perf-00*-*.jsonl` fixture names. Run with `node scripts/generate-perf-sessions.mjs <vault>`.
-- `generate-pivi-070-session-fixture.mjs` — Reproduces the frozen Pivi 0.7.0 session fixture from immutable tag commit `f27ca3be149ecf4497f8d2e6ab8a236d14308c59`. It verifies the tag and exact Pi 0.80.6 lock and installed versions, runs the tag's real `PiSessionStore` writer in a disposable worktree with fixed time/random inputs, rejects machine paths, verifies SHA-256, and writes only the requested output file. Run with `node scripts/generate-pivi-070-session-fixture.mjs <output-jsonl>` from a disposable checkout whose installed Pi dependencies match the tag lock; the normal current install may intentionally fail this provenance guard.
-- `benchmark-session-append.mjs` — Compares the former rewrite-after-every-append path with the indexed true-append path on temporary copies of the fixed 5K fixture. It runs five trials of twenty appends per mode and reports per-append medians without modifying the source fixture. Run with `node --import tsx scripts/benchmark-session-append.mjs <vault>`.
-- `summarize-projection-traces.mjs` — Validates development `pivi-chat-perf-v2` traces and reports per-trace plus cross-run median/p95/range values for dispatch validation, inclusive dispatch, snapshot construction, entity commit, projection commit, paint, Markdown render, and snapshot allocation proxies. Run with `node scripts/summarize-projection-traces.mjs <trace.json> [...]`.
-- `audit-sessions.mjs` — Streams real and `perf-*` session JSONL separately and reports aggregate tool/error counts, Bash policy retries, malformed lines, oversized results/sessions, and message-UI overlay amplification. It never prints user text, tool arguments, or JSONL content and never rewrites sessions. Run with `npm run audit:sessions -- <vault-or-sessions-dir>`; add `--json` for structured output.
-- `check-i18n-dead-keys.mjs` — Scans product source (not tests) against `packages/pivi-react/src/i18n/locales/en.json` using literal translation-key references plus known dynamic-prefix families (`settings.tabs.*`, tool-presentation keys, model-readiness labels, settings hotkeys). Fails when unused keys remain; pass `--write` to delete them from every locale catalog. Wired into `npm run check:boundaries`.
-- `check-docs-contracts.mjs` — Reads `docs/capabilities.json`, requires its canonical remote-only MCP statement in README, SECURITY, and the MCP handbook, and rejects precise current-feature claims for removed capabilities across active Markdown. It also validates inline/reference/image relative links, URL-encoded paths, and Markdown fragments in root/community docs, handbook/recipes, package docs/guidance, and active specs while ignoring code examples. `CHANGELOG.md` and archived specs are excluded as source history, but active links into archives remain validated. It is wired into `npm run check:boundaries`.
-- `check-architecture-boundaries.mjs` — The single enforcement point for import boundaries (ESLint carries no package import bans); it resolves static imports, re-exports, dynamic `import()`, `require`, and relative paths. Fails on forbidden imports and capability calls across package seams. Notable rules: `@pivi/agent` must not import `@earendil-works/*`, `@pivi/engine-pi`, `@pivi/obsidian-host`, `@pivi/obsidian-tools`, `@pivi/pivi-react`, or product `@/app` / `@/ui`; `@pivi/engine-pi` must not import `obsidian`, host/tools/react packages, React, or product `@/app` / `@/ui`; `@pivi/pivi-react` must not import product `src/**`, concrete host/tools, `@pivi/engine-pi`, raw Pi SDKs, the aggregate `@pivi/agent` root, the agent runtime barrel, or agent-owned `runtime/chatPorts` (narrow presentation-safe leaves such as `runtime/auxQueryRunner` remain allowed). The React package also owns its DOM/CSS vocabulary: JSX, DOM class operations, and CSS selectors cannot use Obsidian classes such as `setting-item*`, `modal*`, `checkbox-container`, `theme-*`, or `svg-icon`. `src/ui/**` must not import raw `@earendil-works/*`, any `@pivi/engine-pi/**`, `src/app/runtime/**`, `src/app/ui/**` (alias or relative), or React-owned presentation ports, and its AST must contain no `getUiFacades()` / `getPiWorkspace()` / `saveSettings()` / `getAllViews()` capability bypass or named re-export of those symbols. Only `src/app` and `src/main.ts` may import `@pivi/engine-pi`; production composition uses responsibility-scoped `application/{auth,models,oauth,oauth-flows,runtime,session}`, while `src/app` alone may dynamically import `application/development`. Only `src/app/ui` may mount `@pivi/pivi-react` surfaces or import its Settings presentation ports. Only `imperativeChatAdapter.ts` may import or inspect the chat `TabManager` / `TabData` aggregate; other app callers use semantic view handles. `@pivi/obsidian-tools` must not import raw Pi SDKs, `@pivi/engine-pi`, or `@pivi/agent/engine`; `@pivi/obsidian-host` stays host-only (no `@pivi/engine-pi`, agent skills/tools, or concrete tool packages). Chat runtime/application ports are owned by `@pivi/agent/runtime/chatPorts`; `src/app/hostContracts.ts` must not import `@pivi/engine-pi` or app runtime implementation modules; `src/app/runtime/**` must not import `@/ui/**`; `packages/**` must not import `src/**`; `src/main.ts` is the only Obsidian `Plugin` composition root. Every package-source import must be declared by its owning workspace manifest; runtime imports/re-exports cannot rely on `devDependencies`, host runtimes are peers, and built-ins remain declaration-free. Every `@pivi/*` import is validated against the target package's `exports` (explicit keys or the `./*` leaf wildcard), each export resolves through its active local npm workspace link, and root TypeScript paths may not expose wildcard internals. Run via `npm run check:architecture` or the combined `npm run check:boundaries`.
-- `check-architecture-boundaries.mjs` also rejects `@pivi/agent`-owned `pivi_sessions` factory/recovery-port identifiers under `@pivi/obsidian-tools`.
-- `check-package-readmes.mjs` — Fails when any `packages/*/README.md` is missing Purpose / Allowed dependencies / Forbidden dependencies / Public API sections.
-- `check-specs.mjs` — Validates tracked spec filenames, continuous permanent IDs, flat frontmatter and real dates, required sections, active/archive lifecycle placement, and exact ascending README index coverage. Wired into `npm run check:boundaries` through `npm run check:specs`.
-- `check-pi-pins.mjs` — Fails when `@earendil-works/pi-*` versions are ranged or desynchronized across root/`engine-pi` manifests, the lockfile workspace key `packages/engine-pi`, and `packages/engine-pi/src/shims/piCodingAgentConfig.VERSION`. The agent package is not required to pin Pi packages. Wired into `npm run check:boundaries` through `npm run check:pi-pins`.
-- `check-pi-compatibility.mjs` — Validates `packages/engine-pi/compatibility-manifest.json`: required lifecycle fields, exact-pin alignment, unique IDs, existing implementation/test paths, coverage of the known upstream-shape-dependent compatibility files, and that every Pi SDK import outside the installed package export map is manifested under `deepImports`, still resolves, and still declares its named imports. Wired into `npm run check:boundaries`.
-- `prepare-pi-canary.mjs` — Resolves the newest stable version shared by all three Pi packages and, only in the scheduled workflow's ephemeral checkout, applies that target to both manifests, the config shim, and compatibility inventory before lockfile installation and compatibility tests.
-- `smoke-obsidian.mjs` — Development-artifact real-host runner (`npm run smoke:obsidian`). Every renderer operation validates canonical `OBSIDIAN_VAULT`; CLI calls use explicit targeting and a finite timeout. Through a versioned semantic view command it runs a deterministic Pi turn whose registered `write` tool creates one UUID note, reloads, reopens the durable session, compares semantic messages/tool result/note bytes, and retains the original fetch object across both reloads. App-owned cleanup verifies run markers and removes only the session/note through their owners. Safety regressions use `tests/unit/app/realHostSmoke.test.ts`, `tests/unit/scripts/smokeObsidian.test.ts`, and the CLI double; they do not replace designated-vault live evidence.
-- `check-dependency-audit.mjs` — Backs `npm run check:dependencies`. Runs `npm audit --json` and fails on every advisory except those matched by advisory ID, package, and exact install path in `dependency-audit-allowlist.json`. Entries require a reason and an expiry date; expired or stale entries fail the gate. Reserve entries for pins npm overrides cannot reach (a dependency's own `npm-shrinkwrap.json`) whose code is not bundled into `main.js`, and remove them once upstream moves the pin.
-- `check-helpers.mjs` — Utility functions used by boundary/readme check scripts (e.g. walk directories, parse TS imports).
-- `architecture-import-allowlist.json` — Allowlist configuration containing structured import bypass rules for packages/tests.
+### Build and bundle
+
+- `build.mjs` — Production build: CSS first, then the esbuild bundle.
+- `build-css.mjs` — Concatenates the modules listed in `packages/pivi-react/styles/manifest.mjs` into root `styles.css` behind the release-version banner and the Obsidian theme-token mapping. Fails on a missing or unlisted CSS module and on any `!important`.
+- `analyze-bundle.mjs` — Writes esbuild metadata from the shared `build/create-build-options.mjs` without emitting a bundle. `--project` and `--output` let PR CI compare base and head.
+- `bundle-report.mjs` — Turns base/head metafiles into the PR summary: total delta, the 20 largest inputs, and the embedded Skills CLI size. Growth above 100 KiB or 2% is a warning, not a failure.
+- `check-bundle-size.mjs` — Fails when the built `main.js` exceeds 5 MB (`npm run check:bundle-size`).
+- `postinstall.mjs` — Creates `.env.local` from the example outside CI when it is missing.
+
+### Tests
+
+- `run-jest.js` — Required Jest wrapper; supplies the Node `--localstorage-file` that tests expect.
+
+### Checks (all part of `npm run check:boundaries` unless noted)
+
+- `check-architecture-boundaries.mjs` — The single enforcement point for import boundaries; ESLint carries no package import bans. It resolves static imports, re-exports, dynamic `import()`, `require`, and relative paths. The `boundaryRules` table in the script lists the import bans by directory. Beyond imports it also checks:
+  - capability bypasses in `src/ui` (`getUiFacades()`, `getPiWorkspace()`, `saveSettings()`, `getAllViews()`), including named re-exports;
+  - that only the `imperativeChat*.ts` adapter family inspects the chat `TabManager` / `TabData` aggregate;
+  - that every package-source import is declared in its workspace manifest, with runtime imports outside `devDependencies` and host runtimes as peers;
+  - that every `@pivi/*` import matches the target package's `exports` and resolves through the local workspace link;
+  - that `@pivi/pivi-react` JSX, DOM class operations, and CSS selectors use `pivi-*` classes rather than Obsidian classes;
+  - circular value imports, and that `src/main.ts` is the only `Plugin` composition root.
+- `check-docs-contracts.mjs` — Requires the canonical statements from `docs/capabilities.json` in README, SECURITY, and the MCP handbook, rejects current-feature claims for removed capabilities, and validates relative links and fragments in active Markdown. `CHANGELOG.md` and archived specs are excluded.
+- `check-package-readmes.mjs` — Requires Purpose, Allowed dependencies, Forbidden dependencies, and Public API sections in every `packages/*/README.md`.
+- `check-i18n-dead-keys.mjs` — Fails when `en.json` holds keys no product source references; `--write` deletes them from every locale.
+- `check-specs.mjs` — Validates spec filenames, continuous IDs, frontmatter, required sections, lifecycle placement, and the README index.
+- `check-pi-pins.mjs` — Fails when the four `@earendil-works/pi-*` versions are ranged or out of sync across the root manifest, `packages/engine-pi` (`pi-agent-core`, `pi-ai`, `pi-coding-agent`), `packages/agent` (`pi-mcp`), the lockfile, and the `VERSION` constant in `packages/engine-pi/src/shims/piCodingAgentConfig.ts`.
+- `check-pi-compatibility.mjs` — Validates `packages/engine-pi/compatibility-manifest.json`: lifecycle fields, exact-pin alignment, existing implementation and test paths, and that every Pi SDK deep import is listed and still resolves.
+- `check-dependency-audit.mjs` — Backs `npm run check:dependencies` (not part of `check:boundaries`). Fails on every npm advisory not matched by ID, package, and exact install path in `dependency-audit-allowlist.json`; entries need a reason and an expiry date, and expired or unused entries fail.
+- `check-helpers.mjs` — Shared helpers for the check scripts (directory walk, TypeScript import collection).
+- `architecture-import-allowlist.json` — Structured exceptions for the architecture check. It is empty; keep it that way.
+
+### Version and release
+
+- `sync-version.js` — Copies a **stable** `package.json` version into `manifest.json`, `versions.json`, and the README badge. Skips prerelease versions.
+- `versionMetadata.js` — Stable/prerelease helpers shared by the version scripts.
+- `prepare-beta-release.js` — `npm run version:beta`: bumps `package.json` on `next` or `beta` and prints the commit and tag commands. Never touches root `manifest.json`.
+- `generate-beta-release-notes.js` — Builds beta release notes from conventional commits between the previous tag and the current prerelease tag.
+- `write-release-manifest.js` — Writes the release-asset `manifest.json` for prerelease tags; used by `release.yaml`.
+- `prepare-pi-canary.mjs` — For the scheduled canary workflow only: resolves the newest stable version shared by the four Pi packages and applies it to the manifests, the config shim, and the compatibility manifest in an ephemeral checkout.
+
+### Fixtures, benchmarks, and diagnostics
+
+- `generate-perf-sessions.mjs` — Writes four deterministic perf sessions under a vault's `.pivi/sessions/`; only overwrites its own `perf-00*-*.jsonl` files.
+- `generate-pivi-070-session-fixture.mjs` — Reproduces the frozen Pivi 0.7.0 session fixture from tag commit `f27ca3be149ecf4497f8d2e6ab8a236d14308c59` in a disposable worktree and verifies its SHA-256. It needs the tag's Pi dependency versions installed, so it fails by design on a normal current install.
+- `benchmark-session-append.mjs` — Compares rewrite-per-append with indexed append on copies of the 5K fixture. Run with `node --import tsx`.
+- `summarize-projection-traces.mjs` — Validates development `pivi-chat-perf-v2` traces and reports median, p95, and range per metric.
+- `audit-sessions.mjs` — `npm run audit:sessions -- <vault-or-sessions-dir>`: aggregate diagnostics over session JSONL. Never prints user text, tool arguments, or file content, and never rewrites sessions.
+- `smoke-obsidian.mjs` — `npm run smoke:obsidian`: development-only real-host run against the vault named by `OBSIDIAN_VAULT`. It runs one deterministic Pi turn that writes a UUID note, reloads, reopens the session, and compares the result. Its unit tests do not replace live evidence from a designated vault.
 
 ## Gotchas
 
-- Do not bypass `run-jest.js` for normal test runs; direct Jest may use different localStorage behavior.
-- `build-css.mjs` intentionally fails if a CSS file under `packages/pivi-react/styles/` is not listed in its manifest.
-- Release workflows upload only `main.js`, `manifest.json`, and `styles.css`. Prerelease tags may keep a stable root `manifest.json` in git while the uploaded manifest matches the tag.
-- Production and analysis share the build plugins under `build/`. Pi source imports public session exports from the package root, while the build narrows that entrypoint away from the upstream CLI/TUI graph; nested shrinkwrap packages resolve from the project root only when a root copy exists, and package-import aliases (`#...`) stay with their owning package. Keep `buildCompatibility.test.ts` and a production build green when changing this boundary.
-- `build/release-artifact-version.mjs` supplies the package-version banner for both `main.js` and `styles.css`. Keep both release assets version-distinct so a digest cannot inherit ambiguous attestations from an earlier tag.
-- Keep architecture/readme/spec checks single-purpose and dependency-light; they are run both directly and from Jest smoke or fixture tests.
-- Repository check diagnostics use forward-slash relative paths on every host, and `check-specs.mjs` normalizes CRLF input before parsing so Windows checkout line endings do not change repository validity.
-- The 0.7.0 provenance generator must keep its tag commit, exact Pi dependency versions, frozen SHA, fixed synthetic paths, and fixture README record synchronized. Do not replace its tag writer with a hand-authored JSONL serializer or describe its synthetic content as captured user data.
+- Do not bypass `run-jest.js`; direct Jest uses different localStorage behavior.
+- `build-css.mjs` fails if a CSS file under `packages/pivi-react/styles/` is not listed in the manifest.
+- Release workflows upload only `main.js`, `manifest.json`, and `styles.css`. A prerelease tag may keep a stable root `manifest.json` in git while the uploaded manifest matches the tag.
+- Production and analysis builds share the plugins under `build/`. The build narrows the `pi-coding-agent` root entrypoint away from its CLI/TUI graph; keep `tests/unit/scripts/buildCompatibility.test.ts` and a production build green when changing that.
+- `build/release-artifact-version.mjs` puts the package version in both `main.js` and `styles.css` so each release asset has a version-specific digest.
+- Keep the check scripts dependency-light; Jest runs them directly against fixture directories.
+- Check diagnostics use forward-slash relative paths on every host, and `check-specs.mjs` normalizes CRLF before parsing.
+- The 0.7.0 fixture generator's tag commit, Pi versions, frozen SHA, and the fixture README record must stay in sync. Do not replace its tag writer with a hand-authored serializer.

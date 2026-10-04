@@ -8,13 +8,13 @@ This package is Pivi's React presentation boundary for chat and settings. It own
 
 It also owns UI internationalization under `src/i18n/` and ordered CSS sources under `styles/`. App composition creates the shared translator; package React consumers access it only through `I18nProvider` / `useT()`.
 
-Source layout: `mount/` (mount APIs, `ChatShell`, `ActiveChatUiBridge`), `chat/` (message list/tool/subagent views), `settings/` (React-owned settings pages), `store/` (immutable UI/projection stores), `context-badges/` (badge view models), `ports/` (Settings presentation ports), `selectionToolbar/` (selection-toolbar surface), `i18n/` (translator + locale catalogs), `icons/` (bundled static icon/provider-logo data), `reorder/` (shared sortable-list interaction), `runtime/` (mount runtime helpers), `usage/` (usage-meter presentation), and `shared/` (modal layer and shared controls).
+Source layout: `mount/` (mount APIs, `ChatShell`, `ActiveChatUiBridge`), `chat/` (message list/tool/subagent views), `settings/` (React-owned settings pages), `store/` (immutable UI/projection stores), `context-badges/` (badge view models), `ports/` (Settings presentation ports), `selectionToolbar/` (selection-toolbar surface), `i18n/` (translator + locale catalogs), `icons/` (bundled static icon/provider-logo data), `reorder/` (shared sortable-list interaction), `runtime/` (mount runtime helpers), `usage/` (usage-meter presentation), and `shared/` (the modal layer).
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  AppUI["src/app/ui"] -- "mount + SettingsPorts + platform" --> ReactUI["@pivi/pivi-react"]
+  AppUI["src/app/ui"] -- "mount + SettingsPorts" --> ReactUI["@pivi/pivi-react"]
   ProductUI["src/ui"] -- "store + context-badges only" --> ReactUI
   Agent["presentation-safe @pivi/agent subpaths"] --> ReactUI
   ReactUI --> Stores["immutable UI / projection stores"]
@@ -33,18 +33,18 @@ React owns each mounted root and shell order; imperative adapters own only the c
 - Depend only on React, ReactDOM, browser APIs, bundled static icon data, the public `obsidian` API, and non-engine host-neutral `@pivi/agent` APIs/contracts/models.
 - Import `setIcon` / `setTooltip` from `obsidian` directly; there is no injected presentation platform. Locale copy names Obsidian, the vault, and the Obsidian keychain directly.
 - Never import `@/**`, `src/**`, app implementations, `@pivi/engine-pi`, raw Pi SDKs, `@pivi/obsidian-host`, or `@pivi/obsidian-tools`.
-- Define narrow Settings presentation ports. Runtime/application `ChatPorts` remain in `@pivi/agent`; never accept a raw plugin object or recreate the broad `PiviPluginHost` contract.
+- Define narrow Settings presentation ports. Runtime/application `ChatPorts` remain in `@pivi/agent`; never accept a raw plugin object or an app host contract such as `PiviSettingsHost`.
 - App adapters under `src/app/ui` are the only concrete port implementations and the only product layer that may call `mountChatView` / `mountSettingsPage` / `mountSelectionToolbarSurface`.
 
 ## Package exports
 
 | Subpath | Consumers | Contents |
 |---------|-----------|----------|
-| `.` | app composition | i18n, platform, settings, store re-exports, chat message views |
+| `.` | app composition | i18n, settings, store re-exports, chat message views, context-badge view model |
 | `./mount` | `src/app/ui` only | `mountChatView`, `mountSettingsPage`, `mountSelectionToolbarSurface`, `ActiveChatUiBridge`, `getSettingsPageSearchAliases` |
 | `./ports` | `src/app/ui` only | `SettingsPorts` and focused settings-port contracts |
-| `./settings` | package-internal / tests | `SettingsRoot`, `SettingsUiStore`, snapshot types |
-| `./selectionToolbar` | app selection-toolbar wiring | selection toolbar surface |
+| `./settings` | `src/app/ui` and tests | `SettingsRoot`, `SettingsUiStore`, snapshot types |
+| `./selectionToolbar` | tests only; the app mounts it through `./mount` | selection toolbar surface |
 | `./store` | `src/ui` + app | `ChatUiStore`, `ChatProjectionStore`, activity presentation, perf recorder |
 | `./context-badges` | `src/ui` | context-badge view model, labels, icon helpers |
 

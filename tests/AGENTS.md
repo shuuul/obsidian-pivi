@@ -67,7 +67,7 @@ npm run test -- -t "prefetches enabled remote servers"
 - `unit/main/` — plugin lifecycle tests.
 - `unit/network/` — host-neutral egress, IP classification, and URL policy tests.
 - `unit/obsidian-tools/` — concrete tool helper tests: bash permission matching, capability approval gate, and login shell.
-- `unit/agent/` — `@pivi/agent` auth, config, context, logging, MCP, plugin, prompt, runtime, session, settings, skills, and tool tests.
+- `unit/agent/` — `@pivi/agent` auth, config, context, logging, MCP, prompt, runtime, session, settings, skills, and tool tests.
 - `unit/scripts/` — build compatibility, CSS manifest, Jest project-discovery, and repository spec-validation tests.
 - `unit/ui/` — Node-safe response/tool/subagent CSS contract tests; DOM behavior belongs under `jsdom/`.
 - `unit/utils/` — pure utility tests.
@@ -80,4 +80,4 @@ npm run test -- -t "prefetches enabled remote servers"
 - Existing unit and integration tests run together in the Node `unit` project. Every `tests/jsdom/**` test runs only in the `jsdom` project; classify it by source owner rather than environment.
 - Do not globally allow console patterns. Mock `console.warn` or `console.error` only in the test that expects the signal and assert the call; await React effects inside `act` instead of suppressing React warnings.
 - Chat performance tests assert deterministic invariants rather than speculative speedups: one projection commit per fake animation frame, at most 20 mounted rows in the fixed 5K jsdom viewport, 100-message projection pages, at most 67 projection commits for the exact 102,400-byte / 64-chunk development stream, persistence-free 10-tab / 20-switch cleanup, isolated 20-subagent fixture restoration/cleanup, stable entity identity, safe Markdown sealing, and synchronous lifecycle flushes. Record timing/heap claims only from the three-run real-Obsidian protocol and budgets in `docs/11-chat-ui-evolution.md`.
-- Architecture fixtures lock the four ownership seams: `@pivi/agent` owns runtime/application ports, app owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. React portability fixtures additionally reject host DOM classes, host-specific public port identifiers, host-specific locale keys, and unparameterized credential/workspace copy while proving that `pivi-*` classes and app-owned host adapters remain valid.
+- Architecture fixtures lock the four ownership seams: `@pivi/agent` owns runtime/application ports, app owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. React fixtures additionally reject Obsidian DOM classes in JSX, DOM class operations, and CSS selectors while proving that `pivi-*` classes and app-owned host adapters remain valid.

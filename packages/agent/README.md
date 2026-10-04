@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@pivi/agent` holds Pivi's agent logic that imports neither Obsidian nor the Pi SDK, consumed through subpath exports (there is no root entrypoint). It owns runtime/application contracts such as `ChatPorts`, tool protocol helpers, session storage, MCP services, and skill metadata without importing concrete host adapter or UI code. App composition owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. Package surfaces are exported as namespaces so similarly named contracts from different layers do not collide.
+`@pivi/agent` holds Pivi's agent logic that imports neither Obsidian nor the Pi SDK, consumed through subpath exports (there is no root entrypoint). It owns runtime/application contracts such as `ChatPorts`, tool protocol helpers, session storage, MCP services, and skill metadata without importing concrete host adapter or UI code. App composition owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. Consumers import by subpath, so similarly named contracts from different directories do not collide.
 
 ## Allowed dependencies
 
