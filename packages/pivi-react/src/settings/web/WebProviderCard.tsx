@@ -28,7 +28,6 @@ export interface WebProviderCardProps {
   readonly dragging: boolean;
   readonly dragOffset: number;
   readonly dropIndicatorEdge?: 'before' | 'after';
-  readonly secureStorageName: string;
   readonly ports: SettingsPorts;
   readonly onToggleExpanded: () => void;
   readonly onToggleDisabled: () => void;
@@ -46,7 +45,6 @@ export function WebProviderCard(props: WebProviderCardProps) {
     pending,
     dragging,
     dragOffset,
-    secureStorageName,
     ports,
   } = props;
   const t = useT();
@@ -174,7 +172,7 @@ export function WebProviderCard(props: WebProviderCardProps) {
           type="password"
           value={key}
           placeholder={key === MASKED_KEY
-            ? t('settings.webSearch.apiKeySavedPlaceholder', { secureStorageName })
+            ? t('settings.webSearch.apiKeySavedPlaceholder')
             : t('settings.webSearch.apiKeyPlaceholder')}
           disabled={savingKey}
           aria-label={t('settings.webSearch.apiKeyName', { provider: label })}

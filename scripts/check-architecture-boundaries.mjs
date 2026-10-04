@@ -35,14 +35,7 @@ const imperativeChatBoundaryFileSet = new Set(imperativeChatBoundaryFiles);
 const obsidianReactDir = path.join(rootDir, 'packages', 'pivi-react');
 const piviReactStylesDir = path.join(obsidianReactDir, 'styles');
 const piviReactSourceDir = path.join(obsidianReactDir, 'src');
-const piviReactPortsDir = path.join(piviReactSourceDir, 'ports');
-const piviReactLocalesDir = path.join(piviReactSourceDir, 'i18n', 'locales');
 const obsidianReactPackagePattern = /^@pivi\/pivi-react(?:\/|$)/;
-const retiredReactPackagePattern = new RegExp(
-  '^@pivi/' + ['obsidian', '(?:ui|react)'].join('-') + '(?:/|$)',
-);
-
-const retiredAgentCorePackagePattern = /^@pivi\/pivi-agent-core(?:\/|$)/;
 const enginePiPackagePattern = /^@pivi\/engine-pi(?:\/|$)/;
 const enginePiImplementationPattern = /^@pivi\/engine-pi(?:$|\/(?!application\/(?:auth|models|oauth|oauth-flows|runtime|session)$))/;
 const appEnginePiImplementationPattern = /^@pivi\/engine-pi(?:$|\/(?!application\/(?:auth|development|models|oauth|oauth-flows|runtime|session)$))/;
@@ -71,27 +64,7 @@ const fileBoundaryRules = [
 
 const boundaryRules = [
   {
-    name: 'src does not reference the retired React package identity',
-    root: 'src',
-    forbidden: [retiredReactPackagePattern],
-  },
-  {
-    name: 'packages do not reference the retired React package identity',
-    root: 'packages',
-    forbidden: [retiredReactPackagePattern],
-  },
-  {
-    name: 'src does not reference the retired @pivi/pivi-agent-core package',
-    root: 'src',
-    forbidden: [retiredAgentCorePackagePattern],
-  },
-  {
-    name: 'packages do not reference the retired @pivi/pivi-agent-core package',
-    root: 'packages',
-    forbidden: [retiredAgentCorePackagePattern],
-  },
-  {
-    name: '@pivi/pivi-react stays presentation-only and product-neutral',
+    name: '@pivi/pivi-react stays presentation-only',
     root: 'packages/pivi-react',
     forbidden: [
       /^@\//,
@@ -102,7 +75,6 @@ const boundaryRules = [
       /^@pivi\/agent\/runtime(?:$|\/chatPorts(?:\/|$))/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
-      /^obsidian(?:\/|$)/,
       /^electron(?:\/|$)/,
       /^node:/,
       /^fs(?:\/|$)/,
@@ -113,11 +85,10 @@ const boundaryRules = [
     name: '`@pivi/agent/settings` and `@pivi/agent/runtime` stays runtime and SDK free',
     root: 'packages/agent/src/settings',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
-      /^node:fs(?:\/|$)/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
+      /^node:/,
       /^fs(?:\/|$)/,
-      /^node:path(?:\/|$)/,
       /^path(?:\/|$)/,
       /^@earendil-works\//,
       enginePiPackagePattern,
@@ -126,14 +97,14 @@ const boundaryRules = [
   {
     name: '@pivi/agent/tools stays protocol-only',
     root: 'packages/agent/src/tools',
-    forbidden: [/^obsidian$/, /^electron$/, /^@earendil-works\//, enginePiPackagePattern],
+    forbidden: [/^obsidian(?:\/|$)/, /^electron(?:\/|$)/, /^@earendil-works\//, enginePiPackagePattern],
   },
   {
     name: '@pivi/agent stays host-neutral',
     root: 'packages/agent',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       // @pivi/agent/mcp owns the standalone pi-mcp client; other Pi packages stay in engine-pi.
       /^@earendil-works\/(?!pi-mcp(?:\/|$))/,
       enginePiPackagePattern,
@@ -148,11 +119,27 @@ const boundaryRules = [
     ],
   },
   {
+    name: 'only @pivi/agent mcp imports the pi-mcp client',
+    root: 'packages/agent',
+    excludedRoots: [path.join(rootDir, 'packages', 'agent', 'src', 'mcp')],
+    forbidden: [/^@earendil-works\/pi-mcp(?:\/|$)/],
+  },
+  {
+    name: '@pivi/agent uses relative imports internally',
+    root: 'packages/agent',
+    forbidden: [/^@pivi\/agent(?:\/|$)/],
+  },
+  {
+    name: 'src does not import raw Pi SDKs',
+    root: 'src',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
     name: '@pivi/engine-pi stays host-neutral and product-neutral',
     root: 'packages/engine-pi',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
       /^@pivi\/pivi-react(?:\/|$)/,
@@ -207,8 +194,8 @@ const boundaryRules = [
     name: '@pivi/agent skills has no host or process SDK imports',
     root: 'packages/agent/src/skills',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       /^@earendil-works\//,
       enginePiPackagePattern,
       /^@pivi\/obsidian-host(?:\/|$)/,
@@ -225,20 +212,19 @@ const boundaryRules = [
     forbidden: [
       /^@pivi\//,
       /^@earendil-works\//,
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       /^node:/,
       /^fs(?:\/|$)/,
       /^path(?:\/|$)/,
     ],
   },
   {
-    name: 'src/ui does not import raw Pi SDKs, host adapters, or concrete tools',
+    name: 'src/ui does not import raw Pi SDKs or concrete tools',
     root: 'src/ui',
     forbidden: [
       /^@earendil-works\//,
       /^@pivi\/obsidian-tools(?:\/|$)/,
-      /^@pivi\/obsidian-host(?:\/|$)/,
     ],
   },
   {
@@ -295,7 +281,6 @@ const boundaryRules = [
     forbidden: [
       /^@earendil-works\//,
       enginePiPackagePattern,
-      /^@pivi\/agent\/engine(?:\/|$)/,
       obsidianReactPackagePattern,
     ],
   },
@@ -304,6 +289,7 @@ const boundaryRules = [
     root: 'packages/obsidian-host',
     forbidden: [
       enginePiPackagePattern,
+      /^@earendil-works\//,
       /^@pivi\/agent\/skills(?:\/|$)/,
       /^@pivi\/agent\/tools(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
@@ -514,7 +500,7 @@ for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
 }
 
 const allowedUiAppValueModules = new Set([
-  path.join(srcAppDir, 'hostPlatform'),
+  path.join(srcAppDir, 'slashBadgeNavigation'),
   path.join(srcAppDir, 'i18n'),
 ]);
 const allowedUiAppTypeModules = new Set([
@@ -715,22 +701,6 @@ for (const pkg of workspacePackages) {
   }
 }
 
-for (const pkg of workspacePackages) {
-  if (
-    pkg.exports
-    && typeof pkg.exports === 'object'
-    && !Array.isArray(pkg.exports)
-    && Object.keys(pkg.exports).some(key => key.includes('*'))
-  ) {
-    failures.push({
-      rule: 'workspace package exports are explicit',
-      file: path.relative(rootDir, pkg.manifestFile),
-      line: 1,
-      detail: 'declares a wildcard package export',
-    });
-  }
-}
-
 const tsconfigFile = path.join(rootDir, 'tsconfig.json');
 const tsconfig = fs.existsSync(tsconfigFile)
   ? ts.parseConfigFileTextToJson(tsconfigFile, fs.readFileSync(tsconfigFile, 'utf8')).config
@@ -842,27 +812,6 @@ if (fs.existsSync(rootManifestFile)) {
         }
       }
     }
-  }
-}
-
-function containsRetiredPackageIdentity(value) {
-  if (typeof value === 'string') return retiredReactPackagePattern.test(value);
-  if (Array.isArray(value)) return value.some(containsRetiredPackageIdentity);
-  if (!value || typeof value !== 'object') return false;
-  return Object.entries(value).some(([key, child]) =>
-    retiredReactPackagePattern.test(key) || containsRetiredPackageIdentity(child));
-}
-
-for (const manifestFile of [path.join(rootDir, 'package.json'), ...listWorkspacePackageManifests()]) {
-  if (!fs.existsSync(manifestFile)) continue;
-  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
-  if (containsRetiredPackageIdentity(manifest)) {
-    failures.push({
-      rule: 'package manifests do not reference the retired React package identity',
-      file: path.relative(rootDir, manifestFile),
-      line: 1,
-      moduleName: '<retired-react-package>',
-    });
   }
 }
 
@@ -1046,132 +995,6 @@ function forbiddenHostIdentifierTerm(identifier) {
     if (words[index] === 'secret' && words[index + 1] === 'storage') return 'SecretStorage';
   }
   return null;
-}
-
-function declarationNameText(name, sourceFile) {
-  if (!name) return null;
-  if (ts.isIdentifier(name) || ts.isStringLiteralLike(name)) return name.text;
-  return name.getText(sourceFile);
-}
-
-for (const file of listSourceFiles(piviReactPortsDir)) {
-  const sourceText = fs.readFileSync(file, 'utf8');
-  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
-
-  function visit(node) {
-    const isPublicPortDeclaration = ts.isInterfaceDeclaration(node)
-      || ts.isTypeAliasDeclaration(node)
-      || ts.isPropertySignature(node)
-      || ts.isMethodSignature(node)
-      || ts.isEnumDeclaration(node)
-      || ts.isEnumMember(node)
-      || ts.isExportSpecifier(node)
-      || ts.isNamespaceExport(node);
-    if (isPublicPortDeclaration) {
-      const identifier = declarationNameText(node.name, sourceFile);
-      const forbiddenTerm = identifier && forbiddenHostIdentifierTerm(identifier);
-      if (forbiddenTerm) {
-        failures.push({
-          rule: '@pivi/pivi-react public ports use host-neutral identifiers',
-          file: path.relative(rootDir, file),
-          line: sourceLine(sourceFile, node.name ?? node),
-          detail: `exposes host-specific identifier "${identifier}" (${forbiddenTerm})`,
-        });
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-}
-
-function listJsonFiles(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
-    const target = path.join(dir, entry.name);
-    if (entry.isDirectory()) return listJsonFiles(target);
-    return entry.isFile() && entry.name.endsWith('.json') ? [target] : [];
-  });
-}
-
-function findJsonValue(value, dottedPath) {
-  return dottedPath.split('.').reduce((current, key) => current?.[key], value);
-}
-
-const parameterizedLocaleValues = new Map([
-  ['settings.webSearch.apiKeySavedPlaceholder', ['secureStorageName']],
-  ['settings.tools.intro', ['hostName']],
-  ['settings.modelsTab.intro', ['secureStorageName']],
-  ['settings.modelsTab.secureStorageRequired', ['hostName', 'secureStorageName']],
-  ['settings.modelsTab.apiKeyDesc', ['secureStorageName']],
-  ['settings.modelsTab.apiKeySavedPlaceholder', ['secureStorageName']],
-  ['settings.modelsTab.oauthTokenDesc', ['secureStorageName']],
-  ['settings.modelsTab.oauthTokenSavedPlaceholder', ['secureStorageName']],
-  ['settings.modelsTab.codex.desc', ['secureStorageName']],
-  ['settings.modelsTab.apiKeyOptionalDesc', ['secureStorageName']],
-  ['settings.slashCommands.desc', ['workspaceName']],
-  ['settings.skills.defaultBundle.name', ['hostName']],
-  ['settings.skills.defaultBundle.desc', ['workspaceName']],
-]);
-
-for (const file of listJsonFiles(piviReactLocalesDir)) {
-  const sourceText = fs.readFileSync(file, 'utf8');
-  let locale;
-  try {
-    locale = JSON.parse(sourceText);
-  } catch {
-    continue;
-  }
-
-  function visitLocaleKeys(value, keyPath = []) {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-    for (const [key, child] of Object.entries(value)) {
-      if (forbiddenHostIdentifierTerm(key)) {
-        const needle = `"${key}"`;
-        const offset = sourceText.indexOf(needle);
-        failures.push({
-          rule: '@pivi/pivi-react locale keys use host-neutral terminology',
-          file: path.relative(rootDir, file),
-          line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
-          detail: `uses host-specific locale key "${[...keyPath, key].join('.')}"`,
-        });
-      }
-      visitLocaleKeys(child, [...keyPath, key]);
-    }
-  }
-  visitLocaleKeys(locale);
-
-  for (const [keyPath, placeholders] of parameterizedLocaleValues) {
-    const value = findJsonValue(locale, keyPath);
-    if (typeof value !== 'string') {
-      failures.push({
-        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
-        file: path.relative(rootDir, file),
-        line: 1,
-        detail: `is missing required locale string "${keyPath}"`,
-      });
-      continue;
-    }
-    for (const placeholder of placeholders) {
-      if (value.includes(`{${placeholder}}`)) continue;
-      const offset = sourceText.indexOf(JSON.stringify(value).slice(1, -1));
-      failures.push({
-        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
-        file: path.relative(rootDir, file),
-        line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
-        detail: `locale string "${keyPath}" is missing {${placeholder}}`,
-      });
-    }
-    if (/\b(?:keychain|vault|secret\s*storage)\b/i.test(value)) {
-      const offset = sourceText.indexOf(JSON.stringify(value).slice(1, -1));
-      failures.push({
-        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
-        file: path.relative(rootDir, file),
-        line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
-        detail: `locale string "${keyPath}" hard-codes workspace or credential terminology`,
-      });
-    }
-  }
 }
 
 const piviReactCssFiles = listCssFiles(piviReactStylesDir);

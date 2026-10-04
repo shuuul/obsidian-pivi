@@ -8,7 +8,7 @@ import {
 import { getProviderEnvVarNames } from './providerEnvVars';
 import { isProviderDisabled } from './providerSecretStorage';
 
-export type ProviderReadinessStatusKind =
+type ProviderReadinessStatusKind =
   | 'ready'
   | 'missing-credential'
   | 'oauth-expired'

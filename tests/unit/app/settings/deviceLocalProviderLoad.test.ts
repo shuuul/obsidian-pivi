@@ -2,11 +2,8 @@ import { PIVI_SETTINGS_PATH } from '@pivi/obsidian-host/settings/piviSettingsSto
 import type { FileStore } from '@pivi/agent/ports';
 import { App } from 'obsidian';
 
-import {
-  DEVICE_LOCAL_PROVIDER_STORAGE_KEY,
-  ObsidianDeviceLocalProviderStore,
-} from '@/app/deviceLocalProviderStore';
-import { runDeviceLocalProviderMigration } from '@/app/settings/deviceLocalProviderMigration';
+import { ObsidianDeviceLocalProviderStore } from '@/app/deviceLocalProviderStore';
+import { loadDeviceLocalProviderState } from '@/app/settings/deviceLocalProviderLoad';
 import { createMockApp } from '../../../helpers/mockApp';
 import { ObsidianDeviceLocalCapabilityPermissionStore } from '@/app/deviceLocalCapabilityPermissionStore';
 import { ObsidianDeviceLocalExternalContextStore } from '@/app/deviceLocalExternalContextStore';
@@ -33,12 +30,12 @@ function createMemoryAdapter(initialContent?: string): FileStore & { writes: str
   return adapter as unknown as FileStore & { writes: string[] };
 }
 
-describe('device local provider migration coordinator', () => {
+describe('device-local provider startup load', () => {
   it('seeds defaults on fresh install and strips synced provider fields', async () => {
     const app = createMockApp();
     const adapter = createMemoryAdapter();
     const store = new ObsidianDeviceLocalProviderStore(app);
-    const result = await runDeviceLocalProviderMigration({
+    const result = await loadDeviceLocalProviderState({
       app,
       rawSettings: null,
       deviceLocalStore: store,
@@ -46,7 +43,7 @@ describe('device local provider migration coordinator', () => {
       savePersistedSettings: (stored) => adapter.write(PIVI_SETTINGS_PATH, JSON.stringify(stored)),
     });
 
-    expect(result.cutoverPerformed).toBe(true);
+    expect(result.seededDefaults).toBe(true);
     expect(store.isInitialized()).toBe(true);
     expect(result.settings.model).toBe('deepseek/deepseek-flash');
     expect(result.settings.agentSettings.addedProviders).toEqual(['deepseek']);
@@ -57,53 +54,32 @@ describe('device local provider migration coordinator', () => {
     expect(persisted).not.toHaveProperty('model');
   });
 
-  it('migrates legacy provider membership, headers, and webSearchTools on cutover', async () => {
+  it('does not migrate provider fields synced by a release older than 0.15.0', async () => {
     const app = createMockApp();
     const adapter = createMemoryAdapter();
     const store = new ObsidianDeviceLocalProviderStore(app);
-    const raw = {
-      model: 'openai/gpt-4.1',
-      titleGenerationModel: '',
-      agentSettings: {
-        addedProviders: ['openai', 'my-openai'],
-        visibleModels: ['openai/gpt-4.1'],
-        webSearchTools: {
-          providerOrder: ['brave', 'tavily'],
-          disabledProviders: ['tavily'],
-        },
-        customProviders: [{
-          id: 'my-openai',
-          kind: 'openai-compatible',
-          name: 'Proxy',
-          baseUrl: 'https://api.example.com/v1',
-          api: 'openai-completions',
-          headers: { Authorization: 'Bearer header-secret' },
-          models: [{ id: 'gpt-4.1', name: 'GPT 4.1' }],
-        }],
-      },
-    };
 
-    const result = await runDeviceLocalProviderMigration({
+    const result = await loadDeviceLocalProviderState({
       app,
-      rawSettings: raw,
+      rawSettings: {
+        model: 'openai/gpt-4.1',
+        titleGenerationModel: '',
+        agentSettings: {
+          addedProviders: ['openai'],
+          visibleModels: ['openai/gpt-4.1'],
+        },
+      },
       deviceLocalStore: store,
       vaultAdapter: adapter,
       savePersistedSettings: (stored) => adapter.write(PIVI_SETTINGS_PATH, JSON.stringify(stored)),
     });
 
-    expect(result.cutoverPerformed).toBe(true);
-    expect(result.settings.agentSettings.addedProviders).toEqual(['openai', 'my-openai']);
-    expect(result.settings.agentSettings.customProviders?.[0]?.headers).toBeUndefined();
-    expect(result.settings.agentSettings.webSearchTools).toEqual({
-      providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
-      disabledProviders: ['tavily'],
-    });
-    const local = app.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
-      webSearchTools: {
-        providerOrder: string[];
-      };
-    };
-    expect(local.webSearchTools.providerOrder).toEqual(['brave', 'tavily', 'exa', 'anysearch']);
+    expect(result.seededDefaults).toBe(true);
+    expect(result.settings.agentSettings.addedProviders).toEqual(['deepseek']);
+    expect(result.settings.model).toBe('deepseek/deepseek-flash');
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as Record<string, unknown>;
+    expect(persisted).not.toHaveProperty('model');
+    expect(persisted.agentSettings).not.toHaveProperty('addedProviders');
   });
 
   it('strips reintroduced synced provider fields on already-initialized devices', async () => {
@@ -128,7 +104,7 @@ describe('device local provider migration coordinator', () => {
       },
     });
 
-    const result = await runDeviceLocalProviderMigration({
+    const result = await loadDeviceLocalProviderState({
       app,
       rawSettings: {
         agentSettings: {
@@ -143,7 +119,7 @@ describe('device local provider migration coordinator', () => {
       savePersistedSettings: (stored) => adapter.write(PIVI_SETTINGS_PATH, JSON.stringify(stored)),
     });
 
-    expect(result.cutoverPerformed).toBe(false);
+    expect(result.seededDefaults).toBe(false);
     expect(result.settings.agentSettings.addedProviders).toEqual(['deepseek']);
     expect(adapter.writes.length).toBeGreaterThan(0);
     const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as Record<string, unknown>;
@@ -179,7 +155,7 @@ describe('device local provider migration coordinator', () => {
     });
 
     const writesBefore = adapter.writes.length;
-    const result = await runDeviceLocalProviderMigration({
+    const result = await loadDeviceLocalProviderState({
       app,
       rawSettings: {
         agentSettings: { environmentVariables: 'PI_ENABLE_EXA=1' },
@@ -189,7 +165,7 @@ describe('device local provider migration coordinator', () => {
       savePersistedSettings: (stored) => adapter.write(PIVI_SETTINGS_PATH, JSON.stringify(stored)),
     });
 
-    expect(result.cutoverPerformed).toBe(false);
+    expect(result.seededDefaults).toBe(false);
     expect(result.settings.agentSettings.addedProviders).toEqual(['deepseek']);
     expect(adapter.writes.length).toBe(writesBefore);
   });
@@ -200,7 +176,7 @@ describe('device local provider migration coordinator', () => {
     const adapter = createMemoryAdapter();
     const store = new ObsidianDeviceLocalProviderStore(app);
 
-    const result = await runDeviceLocalProviderMigration({
+    const result = await loadDeviceLocalProviderState({
       app,
       rawSettings: null,
       deviceLocalStore: store,
@@ -210,13 +186,13 @@ describe('device local provider migration coordinator', () => {
       },
     });
 
-    expect(result.cutoverPerformed).toBe(true);
+    expect(result.seededDefaults).toBe(true);
     expect(result.syncedSaveFailed).toBe(true);
     expect(store.isInitialized()).toBe(true);
     expect(result.settings.model).toBe('deepseek/deepseek-flash');
     expect(adapter.writes).toHaveLength(0);
     expect(warning).toHaveBeenCalledWith(
-      '[Pivi:DeviceLocalProviderMigration] Device-local provider state committed, but synced settings save failed',
+      '[Pivi:DeviceLocalProviderLoad] Device-local provider state committed, but synced settings save failed',
       'synced save failed',
     );
   });
@@ -232,7 +208,7 @@ describe('device local provider migration coordinator', () => {
       },
     };
 
-    await expect(runDeviceLocalProviderMigration({
+    await expect(loadDeviceLocalProviderState({
       app,
       rawSettings: {
         agentSettings: { addedProviders: ['openai'], visibleModels: ['openai/gpt-4.1'] },

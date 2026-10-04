@@ -21,9 +21,7 @@
       "unavailableStreaming": "Não é possível bifurcar durante a transmissão",
       "unavailableNoUuid": "Não é possível bifurcar: identificadores de mensagem ausentes",
       "errorMessageNotFound": "Mensagem não encontrada",
-      "errorNoSession": "Nenhum ID de sessão disponível",
-      "commandNoMessages": "Não é possível bifurcar: não há mensagens na conversa",
-      "commandNoAssistantUuid": "Não é possível bifurcar: não há resposta do assistente com identificadores"
+      "errorNoSession": "Nenhum ID de sessão disponível"
     },
     "redo": {
       "ariaLabel": "Refazer resposta do agente",
@@ -631,7 +629,7 @@
       "commandsTruncated": "Mostrando as primeiras {count} correspondências. Refine a pesquisa para ver mais."
     },
     "slashCommands": {
-      "desc": "Gerencie comandos personalizados a nível de {workspaceName} armazenados em .pivi/commands/. Acionados por /nome."
+      "desc": "Gerencie comandos personalizados a nível de cofre armazenados em .pivi/commands/. Acionados por /nome."
     },
     "subagents": {
       "heading": "Subagentes",
@@ -734,12 +732,12 @@
       },
       "heading": "Alternâncias de ferramentas",
       "groups": {
-        "workspace": "Ferramentas de {workspaceNameTitle}",
-        "hostCli": "CLI do {hostName}",
+        "workspace": "Ferramentas de Cofre",
+        "hostCli": "CLI do Obsidian",
         "pivi": "Pivi",
         "additional": "Acesso adicional"
       },
-      "intro": "Ative ou desative ferramentas {hostName} expostas ao agente. As alterações valem em novos turnos após o prompt atualizar.",
+      "intro": "Ative ou desative ferramentas Obsidian expostas ao agente. As alterações valem em novos turnos após o prompt atualizar.",
       "reading": {
         "defaultSize": {
           "name": "Tamanho padrão de leitura",
@@ -751,16 +749,36 @@
       "unavailableCorePlugin": "Requer que o plugin principal correspondente esteja ativado.",
       "unavailableCodex": "Requer conexão com OpenAI Codex.",
       "cli": {
-        "heading": "CLI oficial do {hostName}",
-        "enabled": { "name": "Ativar ferramentas da CLI oficial", "desc": "Permitir que o Pivi registre ferramentas apoiadas pela CLI oficial do {hostName}." },
-        "unavailable": "A CLI oficial do {hostName} não está registrada. As ferramentas de CLI não podem ser ativadas.",
-        "path": { "name": "Caminho do executável CLI", "desc": "Executável alternativo opcional. Deixe em branco para detectar automaticamente.", "placeholder": "Detectar automaticamente" },
-        "timeout": { "name": "Tempo limite da CLI", "desc": "Tempo máximo para cada solicitação da CLI oficial.", "option": "{seconds} segundos" },
+        "heading": "CLI oficial do Obsidian",
+        "enabled": {
+          "name": "Ativar ferramentas da CLI oficial",
+          "desc": "Permitir que o Pivi registre ferramentas apoiadas pela CLI oficial do Obsidian."
+        },
+        "unavailable": "A CLI oficial do Obsidian não está registrada. As ferramentas de CLI não podem ser ativadas.",
+        "path": {
+          "name": "Caminho do executável CLI",
+          "desc": "Executável alternativo opcional. Deixe em branco para detectar automaticamente.",
+          "placeholder": "Detectar automaticamente"
+        },
+        "timeout": {
+          "name": "Tempo limite da CLI",
+          "desc": "Tempo máximo para cada solicitação da CLI oficial.",
+          "option": "{seconds} segundos"
+        },
         "actionsUnavailable": "As ações de consulta e criação via CLI estão indisponíveis no momento."
       },
       "command": {
-        "execution": { "name": "Permitir execução de comandos", "desc": "Permitir a execução após uma permissão existente ou uma solicitação interativa. A descoberta permanece somente leitura." },
-        "allowlist": { "name": "IDs de comando permitidos", "desc": "Os comandos que não estão nesta lista pedem permissão antes da execução.", "add": "Adicionar um ID de comando permitido", "placeholder": "ID do comando", "remove": "Remover {id}" }
+        "execution": {
+          "name": "Permitir execução de comandos",
+          "desc": "Permitir a execução após uma permissão existente ou uma solicitação interativa. A descoberta permanece somente leitura."
+        },
+        "allowlist": {
+          "name": "IDs de comando permitidos",
+          "desc": "Os comandos que não estão nesta lista pedem permissão antes da execução.",
+          "add": "Adicionar um ID de comando permitido",
+          "placeholder": "ID do comando",
+          "remove": "Remover {id}"
+        }
       }
     },
     "bash": {
@@ -812,14 +830,14 @@
       },
       "apiKeyName": "Chave API de {provider}",
       "apiKeyPlaceholder": "Introduce la chave API…",
-      "apiKeySavedPlaceholder": "Guardada en o {secureStorageName}",
+      "apiKeySavedPlaceholder": "Guardada en o chaveiro do Obsidian",
       "removeKey": "Quitar",
       "enableAria": "Ativar {provider}",
       "disableAria": "Desativar {provider}"
     },
     "modelsTab": {
-      "intro": "Las claves API e tokens OAuth se guardan en o {secureStorageName}. Los proveedores desactivados permanecen guardados pero ocultos en o selector de modelos.",
-      "secureStorageRequired": "As chaves de API dos provedores exigem {hostName} {version} ou superior com {secureStorageName}. Atualize {hostName} para armazenar credenciais com segurança.",
+      "intro": "Las claves API e tokens OAuth se guardan en o chaveiro do Obsidian. Los proveedores desactivados permanecen guardados pero ocultos en o selector de modelos.",
+      "secureStorageRequired": "As chaves de API dos provedores exigem Obsidian {version} ou superior com chaveiro do Obsidian. Atualize Obsidian para armazenar credenciais com segurança.",
       "defaultModelSectionTitle": "Modelo padrão",
       "defaultModel": "Modelo padrão",
       "defaultModelDesc": "Usado em novas conversas e execuções CLI do pivi:run. Selecionar um modelo no compositor o atualiza.",
@@ -831,13 +849,13 @@
       "authHeading": "Autenticación e credenciales",
       "apiKey": "Chave API",
       "apiKeyOptional": "Chave API (opcional)",
-      "apiKeyDesc": "Guardada en o {secureStorageName} como {secretId}.",
+      "apiKeyDesc": "Guardada en o chaveiro do Obsidian como {secretId}.",
       "apiKeyPlaceholder": "Introduce la chave API…",
-      "apiKeySavedPlaceholder": "Guardada en o {secureStorageName}",
+      "apiKeySavedPlaceholder": "Guardada en o chaveiro do Obsidian",
       "oauthToken": "Token OAuth",
-      "oauthTokenDesc": "Guardado en o {secureStorageName} como {secretId}.",
+      "oauthTokenDesc": "Guardado en o chaveiro do Obsidian como {secretId}.",
       "oauthTokenPlaceholder": "Introduce o token OAuth…",
-      "oauthTokenSavedPlaceholder": "Guardado en o {secureStorageName}",
+      "oauthTokenSavedPlaceholder": "Guardado en o chaveiro do Obsidian",
       "clear": "Borrar",
       "candidateModels": "Grupo de modelos candidatos",
       "catalogRefreshTitle": "Catálogo de modelos",
@@ -871,7 +889,7 @@
       "addProvider": "+ Adicionar provedor",
       "addProviderAdded": "Adicionado",
       "removedProvider": "Provedor {name} eliminado.",
-      "removeCredential": "Também excluir a credencial deste provedor de {secureStorageName}",
+      "removeCredential": "Também excluir a credencial deste provedor de chaveiro do Obsidian",
       "enableAria": "Ativar provedor {name}",
       "disableAria": "Desativar provedor {name}",
       "removeAria": "Remover provedor {name}",
@@ -899,7 +917,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "Inicia sessão com tu suscripción de ChatGPT/Codex. Las credenciales se guardan en o {secureStorageName}.",
+        "desc": "Inicia sessão com tu suscripción de ChatGPT/Codex. Las credenciales se guardan en o chaveiro do Obsidian.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
@@ -927,12 +945,12 @@
       "fetchModelsSuccess": "{name}: {count} modelos carregados.",
       "fetchModelsFailed": "{name}: falha ao buscar modelos: {message}",
       "authHeadingOptional": "Autenticação (opcional)",
-      "apiKeyOptionalDesc": "Opcional. Deixe vazio para servidores locais sem autenticação. Se definido, é guardado no {secureStorageName} como {secretId}.",
+      "apiKeyOptionalDesc": "Opcional. Deixe vazio para servidores locais sem autenticação. Se definido, é guardado no chaveiro do Obsidian como {secretId}.",
       "apiKeyOptionalPlaceholder": "Chave API opcional…",
       "dualAuthApiKeyBlocked": "Este provedor agora exige login OAuth. Chaves API existentes ainda podem ser atualizadas ou removidas.",
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "Inicia sessão no Grok Build com a tua conta xAI. As credenciais são guardadas no {secureStorageName}.",
+        "desc": "Inicia sessão no Grok Build com a tua conta xAI. As credenciais são guardadas no chaveiro do Obsidian.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
@@ -942,7 +960,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "Entre com sua assinatura Claude Pro ou Max no navegador. As credenciais ficam em {secureStorageName}.",
+        "desc": "Entre com sua assinatura Claude Pro ou Max no navegador. As credenciais ficam em chaveiro do Obsidian.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
@@ -952,7 +970,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "Entre com sua assinatura ChatGPT no navegador. As credenciais ficam em {secureStorageName}.",
+        "desc": "Entre com sua assinatura ChatGPT no navegador. As credenciais ficam em chaveiro do Obsidian.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
@@ -962,7 +980,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "Entre no OpenRouter no navegador. As credenciais ficam em {secureStorageName}.",
+        "desc": "Entre no OpenRouter no navegador. As credenciais ficam em chaveiro do Obsidian.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
@@ -972,7 +990,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "Entre com sua assinatura Kimi Code. As credenciais ficam em {secureStorageName}.",
+        "desc": "Entre com sua assinatura Kimi Code. As credenciais ficam em chaveiro do Obsidian.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
@@ -989,8 +1007,8 @@
     "skills": {
       "intro": "Las habilidades do agente están en .pivi/skills/ e se cargan en o siguiente turno (herramienta skill + prompt do sistema). Pivi solo instala o actualiza tras uma acción de abajo.",
       "defaultBundle": {
-        "name": "Habilidades oficiais do {hostName}",
-        "desc": "Instala ou atualiza o pacote oficial kepano/obsidian-skills para este {workspaceName}. Acessa GitHub/skills.sh, executa o skills CLI fixado e grava em .pivi/skills/.",
+        "name": "Habilidades oficiais do Obsidian",
+        "desc": "Instala ou atualiza o pacote oficial kepano/obsidian-skills para este cofre. Acessa GitHub/skills.sh, executa o skills CLI fixado e grava em .pivi/skills/.",
         "button": "Instalar habilidades oficiais",
         "updateButton": "Atualizar habilidades oficiais",
         "label": "Pacote oficial:",

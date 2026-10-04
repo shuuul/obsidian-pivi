@@ -30,7 +30,7 @@ function escapeXmlAttribute(value: string): string {
 }
 
 /** Expand built-in slash tool tokens for the model without changing durable UI text. */
-export function transformBuiltInToolMentions(prompt: string): string {
+function transformBuiltInToolMentions(prompt: string): string {
   const token = new RegExp(`(^|\\s)/${GENERATE_IMAGE_TOOL_ID}(?=\\s|$)`, 'g');
   return prompt.replace(
     token,

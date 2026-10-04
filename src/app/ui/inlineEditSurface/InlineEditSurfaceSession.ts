@@ -1,5 +1,6 @@
 import type { EditorView } from '@codemirror/view';
 import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
+import { getVaultPath, normalizePathForVault } from '@pivi/obsidian-host/path';
 import {
   type InlineEditSurfaceChromeHandle,
   mountInlineEditSurfaceChrome,
@@ -8,8 +9,7 @@ import {
 import type { ComposerOptionSnapshot } from '@pivi/pivi-react/store';
 import { Component, type Editor } from 'obsidian';
 
-import type { IntegrationsFacade, PiviPluginWorkspace } from '@/app/hostContracts';
-import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
+import type { PiviChatCompositionHost, PiviPluginWorkspace } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 import { applyInlineEditAcceptance } from '@/app/ui/inlineEditHelpers';
 import { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';
@@ -62,9 +62,8 @@ import type {
 let nextInlineEditSurfaceSessionId = 1;
 
 export interface InlineEditSurfaceSessionDeps {
-  plugin: IntegrationsFacade;
+  plugin: PiviChatCompositionHost;
   i18n: MountInlineEditSurfaceChromeOptions['i18n'];
-  platform: MountInlineEditSurfaceChromeOptions['platform'];
   composerDefaults: InlineEditComposerDefaults;
   getWorkspace: () => Promise<PiviPluginWorkspace>;
 }
@@ -279,7 +278,6 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       ownerDocument,
       app: this.deps.plugin.app,
       markdownComponent: this.markdownComponent,
-      platform: this.deps.platform,
       oldText,
       newText,
       kind,
@@ -314,7 +312,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       type: 'button',
       attr: { 'aria-label': t('editor.inlineEdit.closeAria') },
     });
-    renderInlineEditPlatformIcon(this.deps.platform, closeButton, 'x');
+    renderInlineEditPlatformIcon(closeButton, 'x');
     closeButton.addEventListener('click', () => this.handleReject());
 
     const body = band.createDiv({ cls: 'pivi-inline-edit-surface-body' });
@@ -330,7 +328,7 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       attr: { 'aria-label': t('editor.inlineEdit.send') },
     });
     this.sendIconEl = this.sendButton.createSpan({ cls: 'pivi-inline-edit-surface-send-icon' });
-    renderInlineEditPlatformIcon(this.deps.platform, this.sendIconEl, 'send');
+    renderInlineEditPlatformIcon(this.sendIconEl, 'send');
     this.sendButton.addEventListener('click', () => this.handleSendButtonClick());
 
     this.replyEl = root.createEl('article', {
@@ -360,13 +358,12 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
       attr: { 'aria-label': t('chat.messageActions.copyAgentResponseAriaLabel') },
     });
     this.replyCopyIconEl = copyButton.createSpan({ cls: 'pivi-inline-edit-surface-copy-icon' });
-    renderInlineEditPlatformIcon(this.deps.platform, this.replyCopyIconEl, 'copy');
+    renderInlineEditPlatformIcon(this.replyCopyIconEl, 'copy');
     copyButton.addEventListener('click', () => void this.copyReplyMarkdown(copyButton));
 
     this.chrome = mountInlineEditSurfaceChrome({
       container: chromeEl,
       i18n: this.deps.i18n,
-      platform: this.deps.platform,
       props: this.buildChromeProps(),
     });
 
@@ -572,11 +569,11 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     );
     if (this.streaming) {
       this.sendButton.disabled = false;
-      renderInlineEditPlatformIcon(this.deps.platform, this.sendIconEl, 'square');
+      renderInlineEditPlatformIcon(this.sendIconEl, 'square');
       return;
     }
     this.sendButton.disabled = !this.canSend();
-    renderInlineEditPlatformIcon(this.deps.platform, this.sendIconEl, 'send');
+    renderInlineEditPlatformIcon(this.sendIconEl, 'send');
   }
 
   private updateInputDisabled(): void {
@@ -595,11 +592,11 @@ export class InlineEditSurfaceSession implements InlineEditSurfaceSessionContrac
     if (!this.replyCopyIconEl) return;
     this.clearCopyFeedback();
     button.addClass('copied');
-    renderInlineEditPlatformIcon(this.deps.platform, this.replyCopyIconEl, 'check');
+    renderInlineEditPlatformIcon(this.replyCopyIconEl, 'check');
     this.copyFeedbackTimeout = ownerWindow.setTimeout(() => {
       button.removeClass('copied');
       if (this.replyCopyIconEl) {
-        renderInlineEditPlatformIcon(this.deps.platform, this.replyCopyIconEl, 'copy');
+        renderInlineEditPlatformIcon(this.replyCopyIconEl, 'copy');
       }
       this.copyFeedbackTimeout = null;
     }, 1_500);

@@ -3,8 +3,6 @@ import { createRoot, type Root } from 'react-dom/client';
 
 import type { I18n } from '../i18n';
 import { I18nProvider } from '../i18n';
-import type { PresentationPlatform } from '../platform';
-import { PresentationPlatformProvider } from '../platform';
 import type { ComposerOptionSnapshot } from '../store';
 import { ModelSelector, ThinkingSelector } from './composer/ComposerSelectors';
 
@@ -23,7 +21,6 @@ export interface InlineEditSurfaceChromeProps {
 export interface MountInlineEditSurfaceChromeOptions {
   container: HTMLElement;
   i18n: I18n;
-  platform: PresentationPlatform;
   props: InlineEditSurfaceChromeProps;
 }
 
@@ -65,11 +62,9 @@ export function mountInlineEditSurfaceChrome(
     }
     flushSync(() => {
       root.render(
-        <PresentationPlatformProvider platform={options.platform}>
-          <I18nProvider i18n={options.i18n}>
-            {renderInlineEditSurfaceChrome(props, options.container.ownerDocument.body)}
-          </I18nProvider>
-        </PresentationPlatformProvider>,
+        <I18nProvider i18n={options.i18n}>
+          {renderInlineEditSurfaceChrome(props, options.container.ownerDocument.body)}
+        </I18nProvider>,
       );
     });
   };

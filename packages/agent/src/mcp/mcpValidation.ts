@@ -2,9 +2,9 @@
 
 import { classifyHostnameOrAddress } from '../network/egressPolicy';
 
-export const RESERVED_MCP_SERVER_NAMES = new Set(['__proto__', 'prototype', 'constructor']);
+const RESERVED_MCP_SERVER_NAMES = new Set(['__proto__', 'prototype', 'constructor']);
 
-export const MCP_SERVER_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
+const MCP_SERVER_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
 export type McpValidationErrorCode =
   | 'serverNameRequired'
@@ -25,7 +25,7 @@ export class McpValidationError extends Error {
   }
 }
 
-export function isReservedMcpServerName(name: string): boolean {
+function isReservedMcpServerName(name: string): boolean {
   return RESERVED_MCP_SERVER_NAMES.has(name);
 }
 

@@ -6,7 +6,7 @@ import {
 } from '@pivi/agent/auth/piProviderCredentials';
 import type { ProviderOAuthProgress } from '@pivi/agent/auth/providerOAuthProgress';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
-import type { OAuthFlowHost, ProviderLegacyAuthStore } from '@pivi/agent/ports';
+import type { OAuthFlowHost } from '@pivi/agent/ports';
 
 import { piAiModels } from '../models/piAiModels';
 import { createPiAuthInteraction } from './piAuthInteraction';
@@ -14,7 +14,7 @@ import type { ObsidianCredentialStore } from './piProviderCredentialStore';
 
 const logger = new PluginLogger('ProviderOAuthService');
 
-export { CODEX_OAUTH_PROVIDER_ID };
+;
 
 
 export function normalizeCodexBrowserAuthUrl(url: string): string {
@@ -32,7 +32,6 @@ export class ProviderOAuthService {
   constructor(
     private readonly credentialStore: ObsidianCredentialStore | null,
     private readonly oauthHost: OAuthFlowHost,
-    private readonly legacyAuthStore: ProviderLegacyAuthStore | null = null,
     /** Stable per-installation id; Sign in with ChatGPT registers it as the OpenAI agent host. */
     private readonly getDeviceId?: () => string,
   ) {}
@@ -47,21 +46,9 @@ export class ProviderOAuthService {
     return isOAuthCredential(this.credentialStore?.readSync(providerId));
   }
 
-  /** Whether Codex OAuth credentials exist in SecretStorage or legacy vault auth.json. */
+  /** Whether Codex OAuth credentials exist in SecretStorage. */
   hasCodexAuth(): boolean {
-    const stored = this.credentialStore?.readSync(CODEX_OAUTH_PROVIDER_ID);
-    if (isOAuthCredential(stored)) {
-      return true;
-    }
-    const legacy = this.readLegacyCodexCredential();
-    if (legacy) {
-      if (this.credentialStore) {
-        this.credentialStore.writeSync(CODEX_OAUTH_PROVIDER_ID, legacy);
-        this.clearLegacyCodexCredential();
-      }
-      return true;
-    }
-    return false;
+    return isOAuthCredential(this.credentialStore?.readSync(CODEX_OAUTH_PROVIDER_ID));
   }
 
   /** Codex API key / access token (refreshes via pi-ai credential lifecycle where possible). */
@@ -110,9 +97,6 @@ export class ProviderOAuthService {
         }),
         this.getDeviceId ? { getDeviceId: this.getDeviceId } : undefined,
       );
-      if (providerId === CODEX_OAUTH_PROVIDER_ID) {
-        this.clearLegacyCodexCredential();
-      }
     } finally {
       if (this.activeLogins.get(providerId) === controller) {
         this.activeLogins.delete(providerId);
@@ -149,37 +133,6 @@ export class ProviderOAuthService {
       logger.warn(`failed to logout ${providerId} OAuth through pi-ai`, error);
       throw error;
     }
-    if (providerId === CODEX_OAUTH_PROVIDER_ID) {
-      this.clearLegacyCodexCredential();
-    }
   }
 
-  private readLegacyCodexCredential() {
-    const data = this.legacyAuthStore?.read();
-    if (!data) {
-      return undefined;
-    }
-    const cred = data[CODEX_OAUTH_PROVIDER_ID];
-    if (
-      !isOAuthCredential(cred)
-      || typeof cred.refresh !== 'string'
-      || typeof cred.expires !== 'number'
-    ) {
-      return undefined;
-    }
-    return { type: 'oauth' as const, access: cred.access, refresh: cred.refresh, expires: cred.expires };
-  }
-
-  private clearLegacyCodexCredential(): void {
-    const data = this.legacyAuthStore?.read();
-    if (!data || !(CODEX_OAUTH_PROVIDER_ID in data)) {
-      return;
-    }
-    try {
-      delete data[CODEX_OAUTH_PROVIDER_ID];
-      this.legacyAuthStore?.write(data);
-    } catch {
-      // Best-effort cleanup only; SecretStorage remains authoritative.
-    }
-  }
 }

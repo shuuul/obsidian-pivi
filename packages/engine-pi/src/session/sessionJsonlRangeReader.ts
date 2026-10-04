@@ -27,7 +27,7 @@ interface ProjectionGroup {
   userTextSha256?: string;
 }
 
-export interface SessionJsonlRangeReadStats {
+interface SessionJsonlRangeReadStats {
   entryCount: number;
   byteCount: number;
 }

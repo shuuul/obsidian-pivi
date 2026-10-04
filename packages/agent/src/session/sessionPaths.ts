@@ -1,7 +1,7 @@
 import * as path from 'path';
 
-export const PIVI_SESSIONS_PREFIX = '.pivi/sessions/';
-export const PIVI_SESSION_TRASH_PREFIX = '.pivi/trash/sessions/';
+const PIVI_SESSIONS_PREFIX = '.pivi/sessions/';
+const PIVI_SESSION_TRASH_PREFIX = '.pivi/trash/sessions/';
 
 /** Encode vault cwd for pi-compatible session directory names. */
 export function encodeSessionCwd(cwd: string): string {

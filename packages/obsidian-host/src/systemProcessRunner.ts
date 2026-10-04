@@ -13,8 +13,6 @@ import type {
 
 import { isPathWithinDirectory, normalizePathForFilesystem } from './path';
 
-export const DEFAULT_PROCESS_OUTPUT_BYTE_LIMIT = 256 * 1024;
-
 const FORCE_KILL_GRACE_MS = 2_000;
 
 type SettledTermination = {

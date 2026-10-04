@@ -19,6 +19,7 @@ import {
   TOOL_SPAWN_AGENT,
   type ToolSpec,
 } from '@pivi/agent/tools';
+import { isOfficialObsidianCliEnabled } from '@pivi/obsidian-host';
 import {
   buildEffectiveBashPermissions,
   createObsidianTools,
@@ -32,7 +33,6 @@ import type {
 } from '@pivi/pivi-react/ports';
 
 import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
-import { isOfficialObsidianCliEnabled } from '@/app/hostPlatform';
 import { createPromptCompositionCoordinator } from '@/app/runtime/PromptCompositionCoordinator';
 
 const logger = new PluginLogger('SettingsPromptPort');

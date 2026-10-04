@@ -30,7 +30,6 @@ import {
 import {
   captureSessionJsonlSource,
   configureSessionJsonlIndexRoot,
-  getLegacySessionJsonlIndexPath,
   getSessionJsonlIndexPath,
   invalidateSessionJsonlIndex,
   readSessionJsonlIndex,
@@ -529,13 +528,11 @@ describe('session cloud recovery fault matrix', () => {
     expect(index.entries.length).toBeGreaterThan(0);
   });
 
-  it('moves rebuildable indexes to device-local storage', () => {
+  it('writes rebuildable indexes to device-local storage, not beside the session', () => {
     writeSession(sessionAbsolute, [makeSessionHeader('sess-3'), makeMessageLine('u1', 'idx')]);
-    const legacy = getLegacySessionJsonlIndexPath(sessionAbsolute);
-    writeFileSync(legacy, 'stale');
     const index = rebuildSessionJsonlIndex(sessionAbsolute);
     expect(index.indexFile.startsWith(indexRoot)).toBe(true);
-    expect(existsSync(legacy)).toBe(false);
+    expect(existsSync(`${sessionAbsolute}.pivi-index`)).toBe(false);
     expect(existsSync(getSessionJsonlIndexPath(sessionAbsolute))).toBe(true);
     invalidateSessionJsonlIndex(sessionAbsolute);
     expect(existsSync(getSessionJsonlIndexPath(sessionAbsolute))).toBe(false);

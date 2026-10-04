@@ -11,13 +11,8 @@ import { buildSearchChain, runProvider } from './providers/chain';
 import {
   isRecency,
   providerApiKeyEnvVar,
-  type WebFetchProviderId,
-  type WebFetchResponse,
   type WebFetchToolDeps,
-  type WebSearchCredentialLookup,
   type WebSearchFetch,
-  type WebSearchResponse,
-  type WebSearchSource,
   type WebSearchToolDeps,
 } from './types';
 
@@ -29,13 +24,8 @@ export {
   WebSearchCredentialStore,
 };
 export type {
-  WebFetchProviderId,
-  WebFetchResponse,
   WebFetchToolDeps,
-  WebSearchCredentialLookup,
   WebSearchFetch,
-  WebSearchResponse,
-  WebSearchSource,
   WebSearchToolDeps,
 };
 

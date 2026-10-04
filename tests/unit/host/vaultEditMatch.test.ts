@@ -1,8 +1,22 @@
 import {
   applyVaultEdits,
   buildOldStringNotFoundMessage,
-  replaceVaultEditMatch,
 } from '@pivi/obsidian-host';
+
+/** Single-edit form of `applyVaultEdits`, the policy `ObsidianVaultApi.editNote` applies. */
+function replaceVaultEditMatch(params: {
+  filePath: string;
+  content: string;
+  oldString: string;
+  newString: string;
+  replaceAll?: boolean;
+}) {
+  return applyVaultEdits({
+    filePath: params.filePath,
+    content: params.content,
+    edits: [{ oldText: params.oldString, newText: params.newString, replaceAll: params.replaceAll }],
+  });
+}
 
 describe('vaultEditMatch', () => {
   it('replaces the single occurrence by default', () => {

@@ -54,7 +54,7 @@ function textFromContent(content: unknown): string {
     .join('');
 }
 
-export interface UserMessageEquivalence {
+interface UserMessageEquivalence {
   existingText: string;
   incomingText: string;
 }

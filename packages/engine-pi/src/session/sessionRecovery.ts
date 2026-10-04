@@ -48,8 +48,6 @@ import {
 
 export {
   classifyJournalDivergence,
-  type SessionDivergenceClassification,
-  type SessionDivergenceKind,
 } from './sessionDivergence';
 
 const logger = new PluginLogger('SessionRecovery');

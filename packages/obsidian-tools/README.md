@@ -18,7 +18,7 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 
 ## Public API
 
-- `createObsidianTools` and Obsidian tool settings/types.
+- `createObsidianTools`, the individual tool creators, and `ObsidianToolDeps`.
 - `pivi_sessions` is intentionally not exported or composed here; app composition adds the `@pivi/agent`-owned factory to the shared base provider.
 - `read` supports stats-only, line-range, and bounded character-pagination reads. A standalone `startChar` is a 1-based file-global UTF-16 coordinate; with `offset`, it is relative to that physical line, optional `limit` bounds the range, and truncated reads return the exact `nextStartLine` + `nextStartChar` pair to reuse. `obsidian_markdown_structure` exposes heading line numbers and character counts so large notes can be inspected before selective reads.
 - `edit` replaces an exact local substring, so Agents can insert `\n` or `\n\n` inside a very long physical line using the shortest unique surrounding span; `replaceAll` remains explicit for intentionally identical multi-occurrence replacement.

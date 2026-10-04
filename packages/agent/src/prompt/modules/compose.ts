@@ -16,7 +16,7 @@ const PREFIXED_TOOL_PATTERN = /\b(?:obsidian_[a-z0-9_]+|pivi_[a-z0-9_]+|spawn_ag
 const LIVE_GENERIC_TOOL_PATTERN = /`(?:read|write|edit|ls|search|bash|mkdir|move|delete)`/g;
 
 /** Prefixed tool ids plus backtick-wrapped live generic names. */
-export function mentionedToolNames(line: string): string[] {
+function mentionedToolNames(line: string): string[] {
   const names: string[] = [];
   for (const match of line.matchAll(PREFIXED_TOOL_PATTERN)) {
     names.push(match[0]);

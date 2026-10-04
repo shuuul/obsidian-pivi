@@ -35,10 +35,9 @@ export const XAI_PROVIDER_ID = 'xai';
 export const ANTHROPIC_PROVIDER_ID = 'anthropic';
 export const GROK_BUILD_PROVIDER_ID = 'grok-build';
 export const CLAUDE_PROVIDER_ID = 'claude';
-export const OPENAI_PROVIDER_ID = 'openai';
 export const CHATGPT_PROVIDER_ID = 'chatgpt';
-export const OPENROUTER_PROVIDER_ID = 'openrouter';
-export const KIMI_CODING_PROVIDER_ID = 'kimi-coding';
+const OPENROUTER_PROVIDER_ID = 'openrouter';
+const KIMI_CODING_PROVIDER_ID = 'kimi-coding';
 
 export const SUBSCRIPTION_OAUTH_PROVIDER_IDS = [
   // ChatGPT follows OpenAI Codex in the OAuth picker so both OpenAI sign-ins sit together.
@@ -50,7 +49,7 @@ export const SUBSCRIPTION_OAUTH_PROVIDER_IDS = [
 export type SubscriptionOAuthProviderId = (typeof SUBSCRIPTION_OAUTH_PROVIDER_IDS)[number];
 
 /** Built-in providers that accept legacy API keys but expose OAuth for new sign-in. */
-export const DUAL_AUTH_OAUTH_PROVIDER_IDS = [
+const DUAL_AUTH_OAUTH_PROVIDER_IDS = [
   OPENROUTER_PROVIDER_ID,
   KIMI_CODING_PROVIDER_ID,
 ] as const;

@@ -1,25 +1,22 @@
 /**
  * Plugin settings load/reconcile path extracted from the Obsidian Plugin shell.
  */
-import { isSecretStorageAvailable } from "@pivi/agent/auth/providerSecretStorage";
 import { PluginLogger } from "@pivi/agent/logging/pluginLogger";
 import type { FileStore } from "@pivi/agent/ports";
 import type { OpenSessionState } from "@pivi/agent/runtime";
 import type { SessionStore } from "@pivi/agent/session";
 import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 import type { PiviSettings } from "@pivi/agent/settings";
-import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/agent/settings/agentSettings";
 import {
   type DefaultVaultSkillsContext,
   ensureDefaultVaultSkills,
 } from "@pivi/agent/skills/vault/ensureDefaultVaultSkills";
 import {
-  migrateMembershipAwareProviderSecrets,
-} from "@pivi/engine-pi/application/auth";
-import {
-  PiSettingsCoordinator,
+  projectActivePiState,
+  reconcilePiTitleGenerationModel,
 } from "@pivi/engine-pi/application/models";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
+import { getVaultPath } from "@pivi/obsidian-host/path";
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
 
@@ -31,15 +28,13 @@ import type { Locale } from "@/app/i18n";
 import { setLocale, t } from "@/app/i18n";
 import { relocateQueuedDeletedSessions } from "@/app/pluginSessionApi";
 import { reconcileSessionCloudRecovery } from "@/app/serviceGraph";
-import { runDeviceLocalEnvironmentMigration } from "@/app/settings/deviceLocalEnvironmentMigration";
-import { runDeviceLocalProviderMigration } from "@/app/settings/deviceLocalProviderMigration";
+import { loadDeviceLocalEnvironmentState } from "@/app/settings/deviceLocalEnvironmentLoad";
+import { loadDeviceLocalProviderState } from "@/app/settings/deviceLocalProviderLoad";
 import {
   type DeviceLocalCapabilityPermissions,
   type DeviceLocalExternalReadDirectories,
   overlayDeviceLocalCapabilityPermissions,
 } from "@/app/settings/piviSettingsCodec";
-
-import { getVaultPath } from "./hostPlatform";
 
 const logger = new PluginLogger('PluginSettingsLoad');
 
@@ -79,14 +74,14 @@ export async function loadPluginSettings(
   await ctx.storage.initialize();
   const rawSettings = await ctx.storage.loadRawPiviSettings();
   const environmentStore = new ObsidianDeviceLocalEnvironmentStore(ctx.app);
-  const environmentMigration = await runDeviceLocalEnvironmentMigration({
+  const environmentLoad = await loadDeviceLocalEnvironmentState({
     app: ctx.app,
     rawSettings,
     environmentStore,
     savePersistedSettings: (stored) => ctx.storage.saveRawPiviSettings(stored),
   });
   const deviceLocalStore = new ObsidianDeviceLocalProviderStore(ctx.app);
-  const migration = await runDeviceLocalProviderMigration({
+  const providerLoad = await loadDeviceLocalProviderState({
     app: ctx.app,
     rawSettings: await ctx.storage.loadRawPiviSettings(),
     deviceLocalStore,
@@ -96,11 +91,11 @@ export async function loadPluginSettings(
   // Reconcile on the same object that is installed and later saved. Spreading
   // into setSettings first left title/active-model repairs on a discarded copy.
   const settings: PiviSettings = {
-    ...migration.settings,
-    sharedEnvironmentVariables: environmentMigration.settings.sharedEnvironmentVariables,
+    ...providerLoad.settings,
+    sharedEnvironmentVariables: environmentLoad.settings.sharedEnvironmentVariables,
     agentSettings: {
-      ...migration.settings.agentSettings,
-      environmentVariables: environmentMigration.settings.agentSettings.environmentVariables,
+      ...providerLoad.settings.agentSettings,
+      environmentVariables: environmentLoad.settings.agentSettings.environmentVariables,
     },
   };
   const didOverlayCapabilityPermissions = overlayDeviceLocalCapabilityPermissions(
@@ -110,19 +105,15 @@ export async function loadPluginSettings(
     ctx.legacyExternalContexts,
   );
   const didReconcileModelSelections =
-    PiSettingsCoordinator.reconcileTitleGenerationModelSelection(settings);
+    reconcilePiTitleGenerationModel(settings);
   ctx.setSettings(settings);
-  if (migration.syncedSaveFailed || environmentMigration.syncedSaveFailed) {
+  if (providerLoad.syncedSaveFailed || environmentLoad.syncedSaveFailed) {
     logger.warn(
-      'Device-local state committed, but synced settings save failed during migration',
+      'Device-local state committed, but synced settings save failed during startup load',
     );
     new Notice(t('host.failedSaveSyncedSettings'));
   }
   ctx.setLastKnownTabManagerState(await ctx.getStorage().getTabManagerState());
-
-  const didMigrateProviderSecrets = migration.credentialsMigrated
-    || environmentMigration.credentialsMigrated
-    || migrateProviderSecretsToKeychain(ctx);
 
   const vaultPath = getVaultPath(ctx.app);
   if (vaultPath) {
@@ -159,26 +150,22 @@ export async function loadPluginSettings(
 
   const installed = ctx.getSettings();
   const backfilledSessions = ctx.sessionManager.backfillSessionResponseTimestamps();
-  const { changed, invalidatedSessions } = PiSettingsCoordinator.reconcileSettings(
-    installed,
-    ctx.getSessions(),
-  );
+  const changed = reconcilePiTitleGenerationModel(installed);
 
   const modelBeforeProject = installed.model;
-  PiSettingsCoordinator.projectActivePiState(installed);
+  projectActivePiState(installed);
   const didRepairActiveModel = installed.model !== modelBeforeProject;
 
   if (
     changed
     || didOverlayCapabilityPermissions
     || didReconcileModelSelections
-    || didMigrateProviderSecrets
     || didRepairActiveModel
   ) {
     await ctx.saveSettings();
   }
 
-  for (const conv of [...backfilledSessions, ...invalidatedSessions]) {
+  for (const conv of backfilledSessions) {
     await ctx.persistSessionSummary(conv);
   }
 
@@ -186,38 +173,4 @@ export async function loadPluginSettings(
     const message = error instanceof Error ? error.message : String(error);
     logger.error("Default vault skills install failed", message);
   });
-}
-
-export function migrateProviderSecretsToKeychain(
-  ctx: PluginSettingsLoadContext,
-): boolean {
-  if (!isSecretStorageAvailable(ctx.app.secretStorage)) {
-    return false;
-  }
-
-  const settings = ctx.getSettings();
-  const settingsBag = settings as unknown as Record<string, unknown>;
-  const piSettings = getPiAgentSettings(settingsBag);
-  const migrated = migrateMembershipAwareProviderSecrets(
-    ctx.app.secretStorage,
-    {
-      addedProviders: piSettings.addedProviders,
-      disabledProviders: piSettings.disabledProviders,
-      environmentVariables: piSettings.environmentVariables,
-      visibleModels: piSettings.visibleModels,
-      model: settings.model,
-      titleGenerationModel: settings.titleGenerationModel,
-      customProviders: piSettings.customProviders,
-    },
-  );
-
-  updatePiAgentSettings(settingsBag, {
-    addedProviders: [...migrated.membership.addedProviders],
-    disabledProviders: [...migrated.membership.disabledProviders],
-    environmentVariables: migrated.membership.environmentVariables,
-    visibleModels: [...migrated.membership.visibleModels],
-  });
-  settings.model = migrated.membership.model;
-  settings.titleGenerationModel = migrated.membership.titleGenerationModel;
-  return migrated.changed;
 }

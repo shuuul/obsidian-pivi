@@ -1,7 +1,7 @@
 import type { App, WorkspaceLeaf } from 'obsidian';
 import { Notice, TFile, TFolder } from 'obsidian';
 
-import { registerSlashBadgeNavigation } from '@/app/hostPlatform';
+import { registerSlashBadgeNavigation } from '@/app/slashBadgeNavigation';
 import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
 import { createInlineMentionBadge } from '@/ui/shared/mention/inlineMentionBadgeDom';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';

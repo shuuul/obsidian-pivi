@@ -40,7 +40,7 @@ React owns model, thinking, mode, external-context, send/queue/stop, and usage p
 | External directories | Per-tab `ExternalContextSelector` | Add/select/pin actions and cross-view synchronization | Absolute paths live only in vault-scoped device-local storage and per-turn overlays |
 | MCP/tool/skill slash tokens | Slash catalog and rich-input badges | Resolved at send time | Visible token stays in history; provider-only transforms are not persisted |
 
-Model changes apply provider defaults, persist the projected settings, refresh context-window metadata before and after asynchronous model preparation, and synchronize thinking capability. A blank tab keeps only its draft model and does not create a runtime merely because the selector changed.
+Model changes apply provider defaults, persist the projected settings, refresh the usage meter against the new model's context window, and synchronize thinking capability. A blank tab keeps only its draft model and does not create a runtime merely because the selector changed.
 
 ## Context indicators
 
@@ -130,13 +130,13 @@ Note Toolbar setup and CLI requirements are covered in [Tools, skills, MCP, and 
 
 ## Editor selection toolbar and inline edit
 
-Edit-mode Markdown selections (Live Preview and Source) open a body-appended floating toolbar registered through `registerEditorExtension` in app composition when Settings → Toolbar uses the **Pivi** selected-text provider. The same registration also installs the inline-edit surface and diff-review `StateField`s into every markdown editor so same-leaf file switches and mode toggles cannot wipe a lazy `appendConfig` install. Choosing **Note Toolbar** or **Disabled** suppresses this overlay so selected-text chrome never doubles up. Selection ownership is scoped to the active editor view and owner document, including pop-out windows; pointer tracking runs in the capture phase so CodeMirror or third-party event handling cannot leave toolbar triggering suppressed. The CM6 `ViewPlugin` and geometry helpers live under `src/ui/shared/selectionToolbar/`; React chrome mounts only through `src/app/ui` via `mountSelectionToolbarSurface`.
+Edit-mode Markdown selections (Live Preview and Source) open a body-appended floating toolbar registered through `registerEditorExtension` in app composition when the selection toolbar is enabled in Settings → Toolbar and at least one shortcut is enabled. The same registration also installs the inline-edit surface and diff-review `StateField`s into every markdown editor so same-leaf file switches and mode toggles cannot wipe a lazy `appendConfig` install. The overlay yields at runtime when Note Toolbar's own text toolbar is active, so selected-text chrome never doubles up. Selection ownership is scoped to the active editor view and owner document, including pop-out windows; pointer tracking runs in the capture phase so CodeMirror or third-party event handling cannot leave toolbar triggering suppressed. The CM6 `ViewPlugin` and geometry helpers live under `src/ui/shared/selectionToolbar/`; React chrome mounts only through `src/app/ui` via `mountSelectionToolbarSurface`.
 
 The editor-only `pivi:inline-edit-selection` command opens the same inline-edit surface for the current non-empty selection even when the floating toolbar is disabled. It is listed in the shortcut links under Settings → General; users can assign `Mod+K` (`Command+K` on macOS and `Ctrl+K` on Windows/Linux) or another shortcut in Obsidian Hotkeys. Pivi does not claim a default plugin hotkey that could override an existing user or host binding.
 
 The floating overlay passes Escape through to the host when invisible and consumes it only while visible. Scroll listeners recompute live selection geometry when possible and dismiss when the selection is invalid or outside the editor. Ordinary toolbar actions restore editor focus after dispatch unless the action intentionally opens another durable surface. Source-mode pointer drag is suppressed like Live Preview. Inline edit handles Escape during prompt input as well as diff review.
 
-The Pivi toolbar always offers **Ask AI** and **Add to chat**, plus enabled shortcuts from synced `editorSelectionToolbar` settings:
+The Pivi toolbar shows the enabled shortcuts from synced `editorSelectionToolbar` settings. **Ask AI** and **Add to chat** are always present in that list but can be reordered or disabled:
 
 - Obsidian command shortcuts call `app.commands.executeCommandById`.
 - Pivi command shortcuts run the matching Settings → Commands workspace command (selection-aware via `WorkspaceCommandRegistry`).

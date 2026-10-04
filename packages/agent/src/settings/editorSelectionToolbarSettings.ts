@@ -1,25 +1,25 @@
 /** Editor selection toolbar settings: shortcut shapes, the editor-command catalog, and persisted-value normalization. */
 
-export type EditorToolbarPiviActionId = 'inline-edit' | 'add-to-chat';
-export type EditorToolbarExecutionTarget = 'inline-edit' | 'sidebar';
+type EditorToolbarPiviActionId = 'inline-edit' | 'add-to-chat';
+type EditorToolbarExecutionTarget = 'inline-edit' | 'sidebar';
 
 interface EditorToolbarItemBase {
   id: string;
   enabled: boolean;
 }
 
-export interface EditorToolbarPiviAction extends EditorToolbarItemBase {
+interface EditorToolbarPiviAction extends EditorToolbarItemBase {
   kind: 'pivi-action';
   actionId: EditorToolbarPiviActionId;
 }
 
-export interface EditorToolbarEditorCommand extends EditorToolbarItemBase {
+interface EditorToolbarEditorCommand extends EditorToolbarItemBase {
   kind: 'editor-command';
   commandId: EditorCommandId;
 }
 
 /** Compatibility record retained for commands outside Pivi's curated editor catalog. */
-export interface EditorToolbarLegacyCommand extends EditorToolbarItemBase {
+interface EditorToolbarLegacyCommand extends EditorToolbarItemBase {
   kind: 'obsidian-command';
   label: string;
   commandId: string;
@@ -50,7 +50,7 @@ export interface EditorSelectionToolbarSettings {
   shortcuts: EditorToolbarShortcut[];
 }
 
-export const EDITOR_COMMAND_CATALOG = [
+const EDITOR_COMMAND_CATALOG = [
   ['editor:clear-formatting', 'eraser', 'formatting'], ['editor:toggle-blockquote', 'text-quote', 'formatting'], ['editor:toggle-bold', 'bold', 'formatting'], ['editor:toggle-code', 'code', 'formatting'], ['editor:toggle-comments', 'percent', 'formatting'], ['editor:toggle-highlight', 'highlighter', 'formatting'], ['editor:toggle-inline-math', 'sigma', 'formatting'], ['editor:toggle-italics', 'italic', 'formatting'], ['editor:toggle-strikethrough', 'strikethrough', 'formatting'],
   ['editor:set-heading', 'heading', 'headings'], ['editor:set-heading-0', 'heading', 'headings'], ['editor:set-heading-1', 'heading-1', 'headings'], ['editor:set-heading-2', 'heading-2', 'headings'], ['editor:set-heading-3', 'heading-3', 'headings'], ['editor:set-heading-4', 'heading-4', 'headings'], ['editor:set-heading-5', 'heading-5', 'headings'], ['editor:set-heading-6', 'heading-6', 'headings'],
   ['editor:cycle-list-checklist', 'check-square', 'lists'], ['editor:indent-list', 'indent-increase', 'lists'], ['editor:toggle-bullet-list', 'list', 'lists'], ['editor:toggle-checklist-status', 'list-checks', 'lists'], ['editor:toggle-numbered-list', 'list-ordered', 'lists'], ['editor:unindent-list', 'indent-decrease', 'lists'],

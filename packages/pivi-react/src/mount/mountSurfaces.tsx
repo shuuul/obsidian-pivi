@@ -3,8 +3,6 @@ import { createRoot, type Root } from 'react-dom/client';
 
 import type { I18n } from '../i18n';
 import { I18nProvider } from '../i18n';
-import type { PresentationPlatform } from '../platform';
-import { PresentationPlatformProvider } from '../platform';
 import type { SettingsPorts } from '../ports';
 import { SettingsRoot } from '../settings';
 import type { SettingsPageId } from '../settings/navigation';
@@ -31,7 +29,6 @@ export interface MountedSurface {
 interface MountSurfaceOptions extends SurfaceEnvironment {
   container: HTMLElement;
   i18n: I18n;
-  platform: PresentationPlatform;
 }
 
 export type MountChatViewOptions = MountSurfaceOptions & {
@@ -71,17 +68,15 @@ async function mountChatSurface(options: MountChatViewOptions): Promise<MountedS
   const root: Root = createRoot(options.container);
   flushSync(() => {
     root.render(
-      <PresentationPlatformProvider platform={options.platform}>
-        <I18nProvider i18n={options.i18n}>
-          <ChatShell
-            ownerWindow={options.ownerWindow}
-            setImperativeContainer={(element) => {
-              imperativeContainer = element;
-            }}
-            shell={options.chatShell}
-          />
-        </I18nProvider>
-      </PresentationPlatformProvider>,
+      <I18nProvider i18n={options.i18n}>
+        <ChatShell
+          ownerWindow={options.ownerWindow}
+          setImperativeContainer={(element) => {
+            imperativeContainer = element;
+          }}
+          shell={options.chatShell}
+        />
+      </I18nProvider>,
     );
   });
   if (!imperativeContainer) {
@@ -116,17 +111,15 @@ export async function mountSettingsPage(options: MountSettingsPageOptions): Prom
   const root: Root = createRoot(options.container);
   flushSync(() => {
     root.render(
-      <PresentationPlatformProvider platform={options.platform}>
-        <I18nProvider i18n={options.i18n}>
-          <div
-            className="pivi-react-settings-root pivi-settings"
-            data-pivi-react-surface="settings"
-            data-pivi-settings-page={options.page}
-          >
-            <SettingsRoot page={options.page} ports={options.ports} />
-          </div>
-        </I18nProvider>
-      </PresentationPlatformProvider>,
+      <I18nProvider i18n={options.i18n}>
+        <div
+          className="pivi-react-settings-root pivi-settings"
+          data-pivi-react-surface="settings"
+          data-pivi-settings-page={options.page}
+        >
+          <SettingsRoot page={options.page} ports={options.ports} />
+        </div>
+      </I18nProvider>,
     );
   });
   let disposed = false;

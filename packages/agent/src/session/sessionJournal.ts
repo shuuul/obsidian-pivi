@@ -16,10 +16,10 @@ export interface SessionJsonlSourceFingerprint {
   tailSha256: string;
 }
 
-export const SESSION_JOURNAL_VERSION = 1 as const;
+const SESSION_JOURNAL_VERSION = 1 as const;
 
 /** Maximum retained pending/intent entries across all sessions. */
-export const SESSION_JOURNAL_MAX_ENTRIES = 64;
+const SESSION_JOURNAL_MAX_ENTRIES = 64;
 
 /** Maximum UTF-8 bytes for a single entry's appendLines + intent payload. */
 export const SESSION_JOURNAL_MAX_ENTRY_BYTES = 1_500_000;
@@ -33,7 +33,7 @@ export const SESSION_JOURNAL_MAX_RECOVERED_IDENTITIES = 64;
  * `confirmed` — JSONL append succeeded on this device; retained as one link in
  *   the bounded fingerprint chain so post-ack cloud rollback remains recoverable.
  */
-export type SessionJournalEntryStatus = 'intent' | 'pending' | 'confirmed';
+type SessionJournalEntryStatus = 'intent' | 'pending' | 'confirmed';
 
 /**
  * Opaque continuation payload already permitted in session JSONL.

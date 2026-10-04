@@ -10,9 +10,9 @@
  * Matches: current_note, editor_selection (with attributes), editor_cursor (with attributes),
  * context_files, canvas_selection, browser_selection, and API-only external_contexts.
  */
-export const XML_CONTEXT_PATTERN = /\n\n<(?:current_note|editor_selection|editor_cursor|inline_contexts|context_files|context_sessions|canvas_selection|browser_selection|external_contexts)[\s>]/;
+const XML_CONTEXT_PATTERN = /\n\n<(?:current_note|editor_selection|editor_cursor|inline_contexts|context_files|context_sessions|canvas_selection|browser_selection|external_contexts)[\s>]/;
 
-export function formatCurrentNote(notePath: string): string {
+function formatCurrentNote(notePath: string): string {
   return `<current_note>\n${notePath}\n</current_note>`;
 }
 
@@ -27,7 +27,7 @@ export function appendCurrentNote(prompt: string, notePath: string): string {
  * 2. Current: user content first, context XML appended after
  */
 /** Remove Pivi turn XML context blocks from a string. */
-export function stripXmlContextTags(text: string): string {
+function stripXmlContextTags(text: string): string {
   return text
     .replace(/<current_note>[\s\S]*?<\/current_note>\s*/g, '')
     .replace(/<editor_selection[\s\S]*?<\/editor_selection>\s*/g, '')
@@ -41,7 +41,7 @@ export function stripXmlContextTags(text: string): string {
     .trim();
 }
 
-export function extractContentBeforeXmlContext(text: string): string | undefined {
+function extractContentBeforeXmlContext(text: string): string | undefined {
   if (!text) return undefined;
 
   // Legacy format: content inside <query> tags

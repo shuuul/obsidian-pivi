@@ -4,7 +4,9 @@ import { EditorToolbarSection } from '@pivi/pivi-react/settings';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 const snapshot: SettingsUiSnapshotData = {
   general: {
@@ -90,7 +92,7 @@ describe('EditorToolbarSection', () => {
     );
     ports.editorToolbar.listPiviCommands = jest.fn(() => pendingCommands);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -98,7 +100,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     await act(async () => {
       resolveCommands(await listPiviCommands());
@@ -138,7 +140,7 @@ describe('EditorToolbarSection', () => {
     });
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -146,7 +148,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     await screen.findByText('Summarize selection');
 
@@ -179,7 +181,7 @@ describe('EditorToolbarSection', () => {
     const store = new SettingsUiStore(snapshot);
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -187,7 +189,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add Pivi command' }));
@@ -248,7 +250,7 @@ describe('EditorToolbarSection', () => {
     const store = new SettingsUiStore(snapshot);
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -256,7 +258,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add editor command' }));
@@ -307,7 +309,7 @@ describe('EditorToolbarSection', () => {
     });
     const ports = createPorts(async () => undefined);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -315,7 +317,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     await act(async () => undefined);
 
@@ -338,7 +340,7 @@ describe('EditorToolbarSection', () => {
     const ports = createPorts(async () => undefined);
     ports.editorToolbar.listHostCommands = () => hostCommands;
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -346,7 +348,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     await act(async () => undefined);
 
@@ -364,7 +366,7 @@ describe('EditorToolbarSection', () => {
     const store = new SettingsUiStore(snapshot);
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -372,7 +374,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add editor command' }));
@@ -430,7 +432,7 @@ describe('EditorToolbarSection', () => {
     });
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -438,7 +440,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     await screen.findByText('Summarize selection');
 
@@ -521,7 +523,7 @@ describe('EditorToolbarSection', () => {
     });
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -529,7 +531,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(screen.getByText('Inline edit').closest('.pivi-settings-row')?.tagName).toBe('DIV');
@@ -567,7 +569,7 @@ describe('EditorToolbarSection', () => {
     });
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -575,7 +577,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     const handle = screen.getByRole('button', { name: 'Reorder Toggle fold, currently position 1' });
@@ -614,7 +616,7 @@ describe('EditorToolbarSection', () => {
     });
     const ports = createPorts(saveEditorSelectionToolbar);
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <EditorToolbarSection
           store={store}
@@ -622,7 +624,7 @@ describe('EditorToolbarSection', () => {
           editorToolbar={ports.editorToolbar}
           feedback={ports.feedback}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     await act(async () => undefined);
 

@@ -74,9 +74,9 @@ export type CompactionDraftParseResult =
     reason: 'device-path' | 'invalid-fields' | 'invalid-json' | 'missing-json';
   };
 
-export const COMPACTION_PREFIRE_LEAD_RATIO = 0.1;
+const COMPACTION_PREFIRE_LEAD_RATIO = 0.1;
 export const COMPACTION_PREFIX_RATIO = 0.95;
-export const MIN_COMPACTION_MESSAGE_ENTRIES = 4;
+const MIN_COMPACTION_MESSAGE_ENTRIES = 4;
 export const COMPACTION_PROMPT_VERSION = 'pivi-vault-two-pass-v1';
 
 export const COMPACTION_SYSTEM_PROMPT = `You create continuation notes for a durable Obsidian vault conversation.
@@ -86,7 +86,7 @@ Return exactly one fenced pivi-checkpoint JSON object with these fields:
 continuationSummary (string), goal (string or null), constraints (string[]), decisions (string[]), artifacts ({label:string,vaultPath?:string}[]), openWork (string[]), unresolvedQuestions (string[]), nextSteps (string[]).
 Use empty arrays when no supported items exist. Do not include prose outside the fence.`;
 
-export const COMPACTION_SUMMARY_PREFIX = 'The earlier session history was compacted. Use this summary as authoritative context for the omitted earlier turns:';
+const COMPACTION_SUMMARY_PREFIX = 'The earlier session history was compacted. Use this summary as authoritative context for the omitted earlier turns:';
 export const DEFAULT_COMPACTION_CONTEXT_WINDOW = 200_000;
 
 function estimateStructuredValueTokens(value: unknown): number {

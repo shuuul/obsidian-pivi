@@ -7,6 +7,7 @@ import {
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { SessionEntry } from '@earendil-works/pi-coding-agent';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
+import type { FileStore } from '@pivi/agent/ports';
 import type {
   ChatMessage,
   UsageInfo,
@@ -22,7 +23,6 @@ import {
 } from '@pivi/agent/session/sessionPaths';
 import type {
   DeviceLocalExternalContextStore,
-  FileStore,
   MessageUiPatch,
   SessionMessagePage,
   SessionMetaPatch,

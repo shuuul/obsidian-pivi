@@ -35,25 +35,19 @@ describe('initializePiviPlugin', () => {
       register: jest.fn(),
     };
     const loadSettings = jest.fn(async () => undefined);
-    const facades = {
-      chat: { boundary: 'chat' },
-      sessions: { boundary: 'sessions' },
-      workspace: { boundary: 'workspace', ensureWorkspaceServices: jest.fn(() => neverReady) },
-      integrations: {
-        boundary: 'integrations',
-        settings: {
-          editorSelectionToolbar: { enabled: true, shortcuts: [{ enabled: true }] },
-        },
+    const application = {
+      boundary: 'application',
+      ensureWorkspaceServices: jest.fn(() => neverReady),
+      settings: {
+        editorSelectionToolbar: { enabled: true, shortcuts: [{ enabled: true }] },
       },
-      settings: { boundary: 'settings' },
     };
+    const sessions = { boundary: 'sessions' };
 
-    await initializePiviPlugin(plugin as never, facades as never, loadSettings);
+    await initializePiviPlugin(plugin as never, application as never, sessions as never, loadSettings);
 
-    expect(registerPiviViews).toHaveBeenCalledWith(
-      plugin, facades.chat, facades.sessions, facades.workspace,
-    );
-    expect(registerPiviCommands).toHaveBeenCalledWith(plugin, facades.chat);
+    expect(registerPiviViews).toHaveBeenCalledWith(plugin, application, sessions);
+    expect(registerPiviCommands).toHaveBeenCalledWith(plugin, application);
     expect(registerPiviCli).toHaveBeenCalledWith(plugin, {
       readNote: expect.any(Function),
       listWorkspaceEntries: expect.any(Function),
@@ -61,29 +55,27 @@ describe('initializePiviPlugin', () => {
       getDefaultModel: expect.any(Function),
       today: expect.any(Function),
     });
-    expect(registerPiviSettings).toHaveBeenCalledWith(
-      plugin, facades.settings, facades.workspace,
-    );
+    expect(registerPiviSettings).toHaveBeenCalledWith(plugin, application, application);
     expect(registerEditorSelectionToolbar).toHaveBeenCalledWith(plugin, {
       isToolbarEnabled: expect.any(Function),
       shouldYieldToNoteToolbar: expect.any(Function),
     });
     expect(registerSelectionToolbarUi).toHaveBeenCalledWith(
-      facades.integrations,
+      application,
       expect.any(Function),
     );
-    expect(facades.workspace.ensureWorkspaceServices).not.toHaveBeenCalled();
+    expect(application.ensureWorkspaceServices).not.toHaveBeenCalled();
 
     const toolbarOptions = (registerEditorSelectionToolbar as jest.Mock).mock.calls[0]?.[1] as {
       isToolbarEnabled: () => boolean;
     };
-    facades.integrations.settings = {
+    application.settings = {
       editorSelectionToolbar: { enabled: true, shortcuts: [{ enabled: false }, { enabled: false }] },
     };
     expect(toolbarOptions.isToolbarEnabled()).toBe(false);
 
     expect(onLayoutReady).not.toBeNull();
     (onLayoutReady as unknown as () => void)();
-    expect(facades.workspace.ensureWorkspaceServices).toHaveBeenCalledTimes(1);
+    expect(application.ensureWorkspaceServices).toHaveBeenCalledTimes(1);
   });
 });

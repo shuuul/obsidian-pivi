@@ -89,26 +89,6 @@ export function getProviderCredentialSecretId(
   return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${kind}`;
 }
 
-export function parseProviderCredentialSecretId(
-  secretId: string,
-): { providerId: string; kind: ProviderCredentialKind } | null {
-  const match = new RegExp(
-    `^${PIVI_PROVIDER_SECRET_PREFIX}-(.+)-(api-key|oauth-token)$`,
-  ).exec(secretId);
-  if (!match) {
-    return null;
-  }
-  const providerId = match[1];
-  const kind = match[2];
-  if (!providerId || (kind !== 'api-key' && kind !== 'oauth-token')) {
-    return null;
-  }
-  return {
-    providerId,
-    kind,
-  };
-}
-
 export function getProviderCredentialSecret(
   secretStorage: SyncSecretStore,
   providerId: string,

@@ -6,7 +6,6 @@ import {
 } from './bashAuthorization';
 import { splitPersistableShellComponents } from './bashCompoundSplit';
 import {
-  BASH_CLASSIFIER_VERSION,
   type BashClassification,
   type BashClassificationOptions,
   type BashExecutableResolver,
@@ -22,7 +21,7 @@ import {
   type PersistentBashPermission,
 } from './capabilityPermissions';
 
-export { BASH_CLASSIFIER_VERSION };
+;
 
 /**
  * Persistent Bash scope standard.

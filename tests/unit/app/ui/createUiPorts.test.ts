@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import type {
+  PiviChatCompositionHost,
   PiviSettingsHost,
   PiviUiFacades,
 } from '@/app/hostContracts';
@@ -16,7 +17,6 @@ import { createPromptCompositionCoordinator } from '@/app/runtime/PromptComposit
 import { createVaultSkillsMetadataPort } from '@/app/runtime/vaultSkillsMetadataPort';
 import { createSettingsUiPorts } from '@/app/ui/createSettingsUiPorts';
 import { createChatUiPorts } from '@/app/ui/createUiPorts';
-import type { ChatUiCompositionHost } from '@/app/ui/createUiPorts';
 import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
 
 function createWorkspaceWithSkills(host: PiviSettingsHost, vaultPath: string) {
@@ -75,7 +75,7 @@ describe('UI port adapters', () => {
     const host = {
       settings: { ...DEFAULT_PIVI_SETTINGS } as PiviSettings,
       getUiFacades: () => createUiFacades(),
-    } as unknown as ChatUiCompositionHost;
+    } as unknown as PiviChatCompositionHost;
 
     const ports = createChatUiPorts(host, host as never, null);
 
@@ -137,14 +137,14 @@ describe('UI port adapters', () => {
       modelReadinessProvider: {},
     };
     const saveSettings = jest.fn(async () => {});
-    const openRecentSessionMessages = jest.fn(async () => ({
+    const openRecent = jest.fn(async () => ({
       messages: [],
       hasOlder: true,
       totalMessageCount: 150,
       olderMessageCount: 50,
       olderUserMessageCount: 25,
     }));
-    const readOlderSessionMessages = jest.fn(async () => ({
+    const readOlder = jest.fn(async () => ({
       messages: [],
       hasOlder: false,
       totalMessageCount: 150,
@@ -165,18 +165,18 @@ describe('UI port adapters', () => {
       getUiFacades: () => uiFacades,
       createChatService: () => chatService,
       createAuxQueryRunner: () => auxRunner,
-      getSessionList: () => [],
-      getOpenSessionSync: () => null,
-      getOpenSessionById: async () => null,
-      openRecentSessionMessages,
-      readOlderSessionMessages,
-      createOpenSession: async () => ({ id: 'open-session' }),
-      openSessionByFile: async () => ({ id: 'open-session' }),
+      listSessions: () => [],
+      findOpenSession: () => null,
+      getOpenSession: async () => null,
+      openRecent,
+      readOlder,
+      createSession: async () => ({ id: 'open-session' }),
+      openSessionFile: async () => ({ id: 'open-session' }),
       deleteSession: async () => {},
       renameSession: async () => {},
       updateSession: async () => {},
-      forkSessionAt: async () => null,
-    } as unknown as ChatUiCompositionHost;
+      forkSession: async () => null,
+    } as unknown as PiviChatCompositionHost;
 
     const ports = createChatUiPorts(host, host as never, workspace as never);
 
@@ -189,8 +189,8 @@ describe('UI port adapters', () => {
       hasOlder: false,
       totalMessageCount: 150,
     });
-    expect(openRecentSessionMessages).toHaveBeenCalledWith('open-session', 100);
-    expect(readOlderSessionMessages).toHaveBeenCalledWith('open-session', 'message-50', 100);
+    expect(openRecent).toHaveBeenCalledWith('open-session', 100);
+    expect(readOlder).toHaveBeenCalledWith('open-session', 'message-50', 100);
     await expect(ports.catalog.listMcpTools('server')).resolves.toEqual([{ name: 'search' }]);
     await expect(ports.catalog.listMcpInventoryTools?.('server')).resolves.toEqual([{ name: 'inventory' }]);
     expect(listInventoryTools).toHaveBeenCalledWith('server');
@@ -254,7 +254,7 @@ describe('UI port adapters', () => {
       saveSettings: jest.fn(async () => {}),
       getUiFacades: () => createUiFacades(),
       getAllViews: () => [],
-    } as unknown as ChatUiCompositionHost;
+    } as unknown as PiviChatCompositionHost;
     const ports = createChatUiPorts(host, host as never, null);
 
     await ports.settings.setPinnedExternalReadDirectories(['/external/kept', '/external/added']);

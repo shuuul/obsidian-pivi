@@ -5,7 +5,6 @@ import {
 import { useCallback, useState } from 'react';
 
 import { useT } from '../../i18n';
-import { useHostTerminology } from '../../platform';
 import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import { SettingRow } from '../primitives';
 import { getProviderOAuthSettingsKeys, OAUTH_COMMON_SETTINGS_KEYS } from './providerOAuthI18n';
@@ -27,7 +26,6 @@ export function ProviderOAuthSection({
   onChanged,
 }: ProviderOAuthSectionProps) {
   const t = useT();
-  const { secureStorageName } = useHostTerminology();
   const [pending, setPending] = useState(false);
   const [deviceCode, setDeviceCode] = useState<string | null>(null);
   const keys = getProviderOAuthSettingsKeys(providerId);
@@ -87,7 +85,7 @@ export function ProviderOAuthSection({
 
   return (
     <div className="pivi-provider-oauth-setting pivi-setting-stack">
-      <SettingRow name={t(keys.name)} description={t(keys.desc, { secureStorageName })}>
+      <SettingRow name={t(keys.name)} description={t(keys.desc)}>
         <div className="pivi-provider-oauth-toolbar">
           <div className="pivi-provider-oauth-actions">
             <button type="button" disabled={pending} onClick={() => { void connect(); }}>

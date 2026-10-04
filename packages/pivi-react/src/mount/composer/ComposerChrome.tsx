@@ -1,8 +1,8 @@
+import { setTooltip } from 'obsidian';
 import { useEffect, useRef } from 'react';
 
 import { useT } from '../../i18n';
 import { PlatformIcon, QueueMessageIcon } from '../../icons';
-import { usePresentationPlatform } from '../../platform';
 import type { ChatUiSnapshot } from '../../store';
 import type { ComposerChromeActions } from '../activeChatUiBridge';
 import { CacheHitMeter } from './CacheHitMeter';
@@ -21,7 +21,6 @@ export function ComposerChrome({
   actions: ComposerChromeActions | null;
 }) {
   const t = useT();
-  const platform = usePresentationPlatform();
   const sendWrapRef = useRef<HTMLDivElement>(null);
   const { composer } = snapshot;
   const queuesMessage = snapshot.isStreaming && composer.canSend;
@@ -37,8 +36,8 @@ export function ComposerChrome({
   useEffect(() => {
     const wrap = sendWrapRef.current;
     if (!wrap || !actions) return;
-    platform.attachTooltip(wrap, sendTooltip);
-  }, [actions, platform, sendTooltip]);
+    setTooltip(wrap, sendTooltip);
+  }, [actions, sendTooltip]);
   if (!actions) return null;
   return (
     <div className="pivi-input-toolbar">

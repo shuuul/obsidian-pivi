@@ -14,7 +14,7 @@ import type { AuxQueryRunner } from './auxQueryRunner';
 import type { OpenSessionState, SessionSummary } from './chatTypes';
 import type { PiChatService } from './piChatService';
 
-export interface ChatRuntimePort {
+interface ChatRuntimePort {
   createChatService(options?: {
     capabilityApproval?: CapabilityApprovalPort | null;
     piviManagementApproval?: PiviManagementApprovalPort | null;
@@ -72,7 +72,7 @@ export interface ChatCatalogPort {
   getSlashDropdownConfig(): SlashCommandDropdownConfig;
 }
 
-export interface ChatModelCatalogSnapshot {
+interface ChatModelCatalogSnapshot {
   addedProviders: string[];
   disabledProviders: string[];
   visibleModels: string[];
@@ -112,7 +112,6 @@ export interface ChatModelsPort {
     value: string,
     settings: ChatSettingsSnapshot,
   ): void;
-  prepareModelMetadata(model: string): Promise<void>;
 }
 
 export interface ChatSettingsPort {

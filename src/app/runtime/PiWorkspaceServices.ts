@@ -14,7 +14,7 @@ import { getMcpServerUrl } from "@pivi/agent/mcp/types";
 import {
   grantPrivateOrigins,
 } from "@pivi/agent/network";
-import { type AppModelReadinessProvider, getCustomProvidersFromBag, getObsidianToolsSettingsFromBag, getSubagentRuntimeSettingsFromBag, getWebSearchToolsSettingsFromBag, parseEnvironmentVariables, WEB_PROVIDER_IDS } from "@pivi/agent/settings";
+import { type AppModelReadinessProvider, getCustomProvidersFromBag, getObsidianToolsSettingsFromBag, getSubagentRuntimeSettingsFromBag, getWebSearchToolsSettingsFromBag, parseEnvironmentVariables } from "@pivi/agent/settings";
 import { ensureDefaultWorkspaceCommands } from "@pivi/agent/skills/commands/defaultWorkspaceCommands";
 import type { SlashCommandCatalog } from "@pivi/agent/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/agent/skills/skillProvider";
@@ -50,7 +50,6 @@ import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkCl
 import { inspectExternalDirectory } from "@pivi/obsidian-host/externalFileApi";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
-import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
   buildEffectiveBashPermissions,
@@ -149,7 +148,6 @@ export async function createPiWorkspaceServices(
   const webSearchCredentialStore = createWebSearchCredentialStore(
     host.app.secretStorage,
   );
-  migrateLegacyWebSearchCredentials(webSearchCredentialStore, credentialStore);
   registerBundledPiOAuthFlows(network.providerFetch);
   const customProviders = isSecretStorageAvailable(host.app.secretStorage)
     ? mergeCustomProviderHeaderSecrets(
@@ -191,7 +189,6 @@ export async function createPiWorkspaceServices(
       openAuthUrl: (url) => systemExternalOpener.openExternalUrl(url),
       requestManualCode: (message, signal) => requestOAuthManualCode(host.app, message, signal),
     },
-    createFileProviderLegacyAuthStore(vaultPath ? `${vaultPath}/.pivi/auth.json` : null),
     () => getOrCreateDeviceInstallationId(host.app),
   );
   const mcpToolProvider = new McpToolProvider(
@@ -433,24 +430,4 @@ function createObsidianBaseToolProvider(
       },
     };
   };
-}
-
-function migrateLegacyWebSearchCredentials(
-  webSearchCredentialStore: WebSearchCredentialStore | null,
-  credentialStore: ObsidianCredentialStore | null,
-): void {
-  if (!webSearchCredentialStore || !credentialStore) {
-    return;
-  }
-
-  for (const providerId of WEB_PROVIDER_IDS) {
-    const legacyApiKey = credentialToApiKey(credentialStore.readSync(providerId));
-    if (!legacyApiKey) {
-      continue;
-    }
-    if (!webSearchCredentialStore.readSync(providerId)) {
-      webSearchCredentialStore.writeSync(providerId, legacyApiKey);
-    }
-    credentialStore.clearSync(providerId);
-  }
 }

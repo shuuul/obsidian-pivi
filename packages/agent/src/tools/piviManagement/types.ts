@@ -69,7 +69,7 @@ export type AgentMcpSecretProjection =
   | { source: 'plain'; value: string }
   | { source: 'none' };
 
-export interface AgentMcpToolInventoryEntry {
+interface AgentMcpToolInventoryEntry {
   name: string;
   description?: string;
 }
@@ -131,7 +131,7 @@ export interface AgentSkillSummary {
   packageSource?: string;
 }
 
-export interface AgentRemoteSkillEntry {
+interface AgentRemoteSkillEntry {
   name: string;
   description?: string;
 }

@@ -2,16 +2,12 @@ import {
   getPiAiCredentialSecretId,
   serializeProviderCredential,
 } from '@pivi/agent/auth/piProviderCredentials';
-import { migrateMembershipAwareProviderSecrets } from '@pivi/engine-pi';
 import { PIVI_SETTINGS_PATH } from '@pivi/obsidian-host/settings/piviSettingsStorage';
 import type { FileStore } from '@pivi/agent/ports';
 import { App, Notice } from 'obsidian';
 
-import {
-  DEVICE_LOCAL_PROVIDER_STORAGE_KEY,
-  ObsidianDeviceLocalProviderStore,
-} from '@/app/deviceLocalProviderStore';
-import { runDeviceLocalProviderMigration } from '@/app/settings/deviceLocalProviderMigration';
+import { ObsidianDeviceLocalProviderStore } from '@/app/deviceLocalProviderStore';
+import { loadDeviceLocalProviderState } from '@/app/settings/deviceLocalProviderLoad';
 import { createMockApp } from '../../../helpers/mockApp';
 import { ObsidianDeviceLocalCapabilityPermissionStore } from '@/app/deviceLocalCapabilityPermissionStore';
 import { ObsidianDeviceLocalExternalContextStore } from '@/app/deviceLocalExternalContextStore';
@@ -49,9 +45,9 @@ async function migrateOnDevice(
   app: App,
   adapter: FileStore,
   rawSettings: Record<string, unknown> | null,
-): Promise<ReturnType<typeof runDeviceLocalProviderMigration>> {
+): Promise<ReturnType<typeof loadDeviceLocalProviderState>> {
   const store = new ObsidianDeviceLocalProviderStore(app);
-  return runDeviceLocalProviderMigration({
+  return loadDeviceLocalProviderState({
     app,
     rawSettings,
     deviceLocalStore: store,
@@ -70,26 +66,24 @@ describe('device-local provider acceptance matrix', () => {
     const appA = createMockApp();
     const appB = createMockApp();
 
-    const resultA = await migrateOnDevice(appA, adapter, {
-      locale: 'en',
-      userName: 'Alice',
-      agentSettings: {
-        addedProviders: ['openai', 'my-openai'],
-        visibleModels: ['openai/gpt-4.1', 'my-openai/gpt-4.1'],
-        customProviders: [{
-          id: 'my-openai',
-          kind: 'openai-compatible',
-          name: 'Proxy',
-          baseUrl: 'https://api.example.com/v1',
-          api: 'openai-completions',
-          models: [{ id: 'gpt-4.1', name: 'GPT 4.1' }],
-        }],
-        webSearchTools: {
-          providerOrder: ['brave'],
-          disabledProviders: [],
-        },
+    await migrateOnDevice(appA, adapter, { locale: 'en', userName: 'Alice' });
+    new ObsidianDeviceLocalProviderStore(appA).save({
+      version: 1,
+      initialized: true,
+      providers: [
+        { id: 'openai', type: 'builtin', disabled: false },
+        { id: 'anthropic', type: 'builtin', disabled: false },
+      ],
+      modelPreferences: {
+        visibleModels: ['openai/gpt-4.1'],
+        activeModel: 'openai/gpt-4.1',
+        titleGenerationModel: '',
+        customContextLimits: {},
       },
-      model: 'openai/gpt-4.1',
+      webSearchTools: {
+        providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+        disabledProviders: [],
+      },
     });
     appA.secretStorage.setSecret(
       getPiAiCredentialSecretId('openai'),
@@ -97,14 +91,11 @@ describe('device-local provider acceptance matrix', () => {
     );
 
     const initialB = await migrateOnDevice(appB, adapter, parseSyncedSettings(adapter));
-    const storeB = new ObsidianDeviceLocalProviderStore(appB);
-    storeB.save({
+    expect(initialB.settings.agentSettings.addedProviders).toEqual(['deepseek']);
+    new ObsidianDeviceLocalProviderStore(appB).save({
       version: 1,
       initialized: true,
-      providers: [
-        { id: 'deepseek', type: 'builtin', disabled: false },
-        { id: 'anthropic', type: 'builtin', disabled: false },
-      ],
+      providers: [{ id: 'deepseek', type: 'builtin', disabled: false }],
       modelPreferences: {
         visibleModels: ['deepseek/deepseek-flash'],
         activeModel: 'deepseek/deepseek-flash',
@@ -113,34 +104,22 @@ describe('device-local provider acceptance matrix', () => {
       },
       webSearchTools: {
         providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
-        disabledProviders: ['exa'],
+        disabledProviders: [],
       },
     });
     appB.secretStorage.setSecret(
       getPiAiCredentialSecretId('deepseek'),
       serializeProviderCredential({ type: 'api_key', key: 'device-b-deepseek' }),
     );
-    expect(initialB.settings.agentSettings.addedProviders).toEqual(['deepseek']);
-    const resultB = await migrateOnDevice(appB, adapter, parseSyncedSettings(adapter));
 
-    const localA = appA.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
-      providers: Array<{ id: string }>;
-      webSearchTools: { providerOrder: string[],
-    };
-    };
-    const localB = appB.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
-      providers: Array<{ id: string }>;
-      webSearchTools: { providerOrder: string[],
-    };
-    };
+    const resultA = await migrateOnDevice(appA, adapter, parseSyncedSettings(adapter));
+    const resultB = await migrateOnDevice(appB, adapter, parseSyncedSettings(adapter));
     const synced = parseSyncedSettings(adapter);
 
-    expect(resultA.settings.agentSettings.addedProviders).toEqual(['openai', 'my-openai']);
-    expect(resultB.settings.agentSettings.addedProviders).toEqual(['deepseek', 'anthropic']);
-    expect(localA.providers.map((provider) => provider.id)).toEqual(['openai', 'my-openai']);
-    expect(localB.providers.map((provider) => provider.id)).toEqual(['deepseek', 'anthropic']);
-    expect(localA.webSearchTools.providerOrder).toEqual(['brave', 'tavily', 'exa', 'anysearch']);
-    expect(localB.webSearchTools.providerOrder[0]).toBe('tavily');
+    expect(resultA.settings.agentSettings.addedProviders).toEqual(['openai', 'anthropic']);
+    expect(resultB.settings.agentSettings.addedProviders).toEqual(['deepseek']);
+    expect(resultA.settings.agentSettings.webSearchTools?.providerOrder[0]).toBe('brave');
+    expect(resultB.settings.agentSettings.webSearchTools?.providerOrder[0]).toBe('tavily');
     expect(synced.userName).toBe('Alice');
     expect(synced).not.toHaveProperty('model');
     expect(synced.agentSettings).not.toHaveProperty('addedProviders');
@@ -163,110 +142,10 @@ describe('device-local provider acceptance matrix', () => {
     const appB = createMockApp();
     const resultB = await migrateOnDevice(appB, adapter, parseSyncedSettings(adapter));
 
-    expect(resultB.cutoverPerformed).toBe(true);
+    expect(resultB.seededDefaults).toBe(true);
     expect(resultB.settings.agentSettings.addedProviders).toEqual(['deepseek']);
     expect(resultB.settings.model).toBe('deepseek/deepseek-flash');
     expect(parseSyncedSettings(adapter).agentSettings).not.toHaveProperty('addedProviders');
-  });
-
-  it('registers credential-required legacy providers without a credential as not-ready members', async () => {
-    const app = createMockApp();
-    const adapter = createSharedSyncedAdapter();
-    const result = await migrateOnDevice(app, adapter, {
-      agentSettings: {
-        addedProviders: ['openai'],
-        visibleModels: ['openai/gpt-4.1'],
-      },
-      model: 'openai/gpt-4.1',
-    });
-
-    expect(result.settings.agentSettings.addedProviders).toEqual(['openai']);
-    expect(app.secretStorage.getSecret(getPiAiCredentialSecretId('openai'))).toBeNull();
-  });
-
-  it('registers keyless legacy local providers immediately without probing', async () => {
-    const app = createMockApp();
-    const adapter = createSharedSyncedAdapter();
-    const result = await migrateOnDevice(app, adapter, {
-      agentSettings: {
-        addedProviders: ['ollama'],
-        visibleModels: ['ollama/llama3'],
-        customProviders: [{
-          id: 'ollama',
-          kind: 'ollama',
-          name: 'Ollama',
-          baseUrl: 'http://127.0.0.1:11434',
-          api: 'openai-completions',
-          models: [{ id: 'llama3', name: 'Llama 3' }],
-        }],
-      },
-      model: 'ollama/llama3',
-    });
-
-    expect(result.settings.agentSettings.addedProviders).toEqual(['ollama']);
-    expect(result.settings.agentSettings.disabledProviders).toEqual([]);
-    expect(app.secretStorage.getSecret(getPiAiCredentialSecretId('ollama'))).toBeNull();
-  });
-
-  it('migrates member credentials from legacy membership without registering orphan secrets', () => {
-    const app = createMockApp();
-    app.secretStorage.setSecret(
-      getPiAiCredentialSecretId('openai'),
-      serializeProviderCredential({ type: 'api_key', key: 'member-key' }),
-    );
-    app.secretStorage.setSecret(
-      getPiAiCredentialSecretId('anthropic'),
-      serializeProviderCredential({ type: 'api_key', key: 'orphan-key' }),
-    );
-
-    const migrated = migrateMembershipAwareProviderSecrets(app.secretStorage, {
-      addedProviders: ['openai'],
-      disabledProviders: [],
-      environmentVariables: '',
-      visibleModels: ['openai/gpt-4.1'],
-      model: 'openai/gpt-4.1',
-      titleGenerationModel: '',
-      customProviders: [],
-    });
-
-    expect(migrated.membership.addedProviders).toEqual(['openai']);
-    expect(migrated.changed).toBe(false);
-    expect(app.secretStorage.getSecret(getPiAiCredentialSecretId('openai'))).toContain('member-key');
-    expect(app.secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toContain('orphan-key');
-  });
-
-  it('keeps built-in context limits synced while custom-provider limits stay device-local', async () => {
-    const app = createMockApp();
-    const adapter = createSharedSyncedAdapter();
-    await migrateOnDevice(app, adapter, {
-      customContextLimits: {
-        'deepseek/deepseek-flash': 64000,
-        'my-openai/gpt-4.1': 32000,
-      },
-      agentSettings: {
-        addedProviders: ['deepseek', 'my-openai'],
-        visibleModels: ['deepseek/deepseek-flash', 'my-openai/gpt-4.1'],
-        customProviders: [{
-          id: 'my-openai',
-          kind: 'openai-compatible',
-          name: 'Proxy',
-          baseUrl: 'https://api.example.com/v1',
-          api: 'openai-completions',
-          models: [{ id: 'gpt-4.1', name: 'GPT 4.1' }],
-        }],
-      },
-      model: 'deepseek/deepseek-flash',
-    });
-
-    const synced = parseSyncedSettings(adapter);
-    const local = app.loadLocalStorage(DEVICE_LOCAL_PROVIDER_STORAGE_KEY) as {
-      modelPreferences: { customContextLimits: Record<string, number> };
-    };
-
-    expect(synced.customContextLimits).toEqual({ 'deepseek/deepseek-flash': 64000 });
-    expect(local.modelPreferences.customContextLimits).toEqual({
-      'my-openai/gpt-4.1': 32000,
-    });
   });
 
   it('surfaces a localized notice when synced settings save fails after local commit', async () => {

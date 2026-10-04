@@ -1,7 +1,7 @@
 import { credentialToApiKey, getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import {
   createObsidianCredentialStore,
-  migratePiProviderCredentialsToKeychain,
+  movePiProviderCredentialsFromEnvironment,
   ObsidianCredentialStore,
 } from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import {
@@ -11,7 +11,6 @@ import {
   isProviderDisabled,
   isSecretStorageAvailable,
   MAX_OBSIDIAN_SECRET_ID_LENGTH,
-  parseProviderCredentialSecretId,
 } from '@pivi/agent/auth/providerSecretStorage';
 import type { SyncSecretStore } from '@pivi/agent/ports';
 import { createWebSearchCredentialStore, getWebSearchCredentialSecretId } from '@pivi/agent/tools';
@@ -31,10 +30,6 @@ describe('ProviderSecretStorage', () => {
   it('builds stable secret ids per provider', () => {
     expect(getPiAiCredentialSecretId('anthropic')).toBe('pivi-anthropic-credential');
     expect(getProviderCredentialSecretId('anthropic', 'api-key')).toBe('pivi-anthropic-api-key');
-    expect(parseProviderCredentialSecretId('pivi-openai-api-key')).toEqual({
-      providerId: 'openai',
-      kind: 'api-key',
-    });
     expect(isObsidianSecretId(getPiAiCredentialSecretId('anthropic'))).toBe(true);
     expect(isObsidianSecretId('pivi-custom-openai-compatible-369e807a-7e24-4204-a86d-3abbaaa3d1e2-credential')).toBe(false);
     expect(MAX_OBSIDIAN_SECRET_ID_LENGTH).toBe(64);
@@ -61,7 +56,7 @@ describe('ProviderSecretStorage', () => {
 
   it('hard-migrates plaintext env values into the canonical key', () => {
     const env = 'ANTHROPIC_API_KEY=sk-plain\nPI_ENABLE_EXA=1';
-    const result = migratePiProviderCredentialsToKeychain(
+    const result = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       ['anthropic'],
       env,
@@ -78,40 +73,6 @@ describe('ProviderSecretStorage', () => {
     });
   });
 
-  it('hard-migrates legacy keychain entries for providers recorded in settings', () => {
-    setLegacyProviderSecret('deepseek', 'api-key', 'ds-key');
-
-    const synced = migratePiProviderCredentialsToKeychain(
-      secretStorage,
-      ['anthropic', 'deepseek'],
-      'DEEPSEEK_API_KEY=legacy\nPI_ENABLE_EXA=1',
-    );
-
-    expect(synced.changed).toBe(true);
-    expect(synced.addedProviders).toContain('deepseek');
-    expect(synced.environmentVariables).not.toContain('legacy');
-    expect(secretStorage.getSecret(getProviderCredentialSecretId('deepseek', 'api-key'))).toBeNull();
-    expect(secretStorage.getSecret(getPiAiCredentialSecretId('deepseek'))).toBe(
-      JSON.stringify({ type: 'api_key', key: 'legacy' }),
-    );
-  });
-
-  it('hard-migrates credential-v2 entries into unversioned credential entries', () => {
-    secretStorage.setSecret(
-      'pivi-anthropic-credential-v2',
-      JSON.stringify({ type: 'api_key', key: 'sk-v2' }),
-    );
-
-    const synced = migratePiProviderCredentialsToKeychain(secretStorage, ['anthropic'], '');
-
-    expect(synced.changed).toBe(true);
-    expect(synced.addedProviders).toEqual(['anthropic']);
-    expect(secretStorage.getSecret('pivi-anthropic-credential-v2')).toBeNull();
-    expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
-      JSON.stringify({ type: 'api_key', key: 'sk-v2' }),
-    );
-  });
-
   it('ignores WebSearch credentials when migrating Pi provider credentials', () => {
     const exaEnvLine = `${'EXA'}_API_KEY=web-env`;
     createWebSearchCredentialStore(secretStorage)!.writeSync('tavily', 'tavily-key');
@@ -120,7 +81,7 @@ describe('ProviderSecretStorage', () => {
       JSON.stringify({ type: 'api_key', key: 'legacy-web-exa' }),
     );
 
-    const synced = migratePiProviderCredentialsToKeychain(
+    const synced = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       ['anthropic', 'exa'],
       `ANTHROPIC_API_KEY=sk-plain\n${exaEnvLine}`,
@@ -183,7 +144,7 @@ describe('ProviderSecretStorage', () => {
       JSON.stringify({ type: 'api_key', key: 'sk-test' }),
     );
 
-    const synced = migratePiProviderCredentialsToKeychain(secretStorage, ['exa'], '');
+    const synced = movePiProviderCredentialsFromEnvironment(secretStorage, ['exa'], '');
 
     expect(synced.changed).toBe(false);
     expect(synced.addedProviders).toEqual(['exa']);
@@ -191,7 +152,7 @@ describe('ProviderSecretStorage', () => {
   });
 
   it('preserves settings-owned provider membership and order', () => {
-    const synced = migratePiProviderCredentialsToKeychain(
+    const synced = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       ['ollama', 'anthropic'],
       '',
@@ -218,7 +179,7 @@ describe('ProviderSecretStorage', () => {
       listSecrets: () => [...secrets.keys()],
     };
 
-    const synced = migratePiProviderCredentialsToKeychain(store, ['anthropic'], '');
+    const synced = movePiProviderCredentialsFromEnvironment(store, ['anthropic'], '');
 
     expect(synced.changed).toBe(false);
     expect(writes).toEqual([]);

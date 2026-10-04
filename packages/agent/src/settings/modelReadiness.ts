@@ -5,12 +5,6 @@ export type AppModelReadinessStatusKind =
   | 'disabled'
   | 'unavailable';
 
-export interface AppModelReadinessStatus {
-  kind: AppModelReadinessStatusKind;
-  label: string;
-  description: string;
-}
-
 export interface AppModelTestResult {
   ok: boolean;
   detail: string;

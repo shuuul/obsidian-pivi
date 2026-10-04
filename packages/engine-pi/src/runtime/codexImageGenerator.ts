@@ -2,9 +2,9 @@ const CODEX_RESPONSES_URL = 'https://chatgpt.com/backend-api/codex/responses';
 const DEFAULT_CODEX_IMAGE_MODEL = 'gpt-5.6-sol';
 const DEFAULT_OUTPUT_FORMAT: CodexImageOutputFormat = 'png';
 
-export type CodexImageOutputFormat = 'png' | 'jpeg' | 'webp';
+type CodexImageOutputFormat = 'png' | 'jpeg' | 'webp';
 
-export interface CodexImageGenerationRequest {
+interface CodexImageGenerationRequest {
   prompt: string;
   model?: string;
   outputFormat?: CodexImageOutputFormat;
@@ -12,7 +12,7 @@ export interface CodexImageGenerationRequest {
   signal?: AbortSignal;
 }
 
-export interface GeneratedCodexImage {
+interface GeneratedCodexImage {
   data: string;
   mimeType: string;
   outputFormat: CodexImageOutputFormat;

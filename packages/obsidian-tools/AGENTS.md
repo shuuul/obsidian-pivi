@@ -26,7 +26,7 @@ Tool execution depends on host adapters and host-neutral contracts only. Engine-
 
 ## Public entrypoints
 
-- `src/index.ts` re-exports all tool creators, settings, and types. Default export is `createObsidianTools`.
+- `src/index.ts` re-exports the tool creators and `ObsidianToolDeps`. Tool settings live in `@pivi/agent/settings`.
 - `src/createObsidianTools.ts` constructs the full `ToolSpec[]` from an Obsidian `App`, settings, and optional image generator. Live generic names are `read` / `write` / `edit` / `ls` / `search` / `bash` / `mkdir` / `move` / `delete`. When the vault path is known, it injects the vault root as an implicit ExternalFileApi allowed directory so unindexed vault files (including `.pivi/skills`) can be read and listed through `read` / `ls` without a Settings grant; that root is not listed in Persistent permissions. `allowExternalRead` only gates paths outside the vault. Top-level `*_external` tools are not registered. CLI-backed Daily note, Templates, and Bookmarks tools are omitted when their owning core plugin is known to be disabled.
 - `src/obsidian/` contains per-tool factories plus their shared dependency, read-range, and result helpers. Tool factories accept `ObsidianToolDeps` and return `ToolSpec` values.
 - `src/obsidian/deps.ts` defines shared tool dependencies: vault API, external-file API, CLI transport, settings, vault name, and optional image generator.
@@ -43,7 +43,7 @@ Tool execution depends on host adapters and host-neutral contracts only. Engine-
 - `src/obsidian/markdownStructure.ts` defines `obsidian_markdown_structure`; it extracts Markdown headings with line numbers and character counts so agents can inspect large notes before range-reading sections.
 - `src/obsidian/generateImage.ts` defines `obsidian_generate_image`; it consumes an injected image-generator port, saves binary output through `ObsidianVaultApi`, and optionally inserts standard Markdown `![](...)` embeds into notes. It intentionally ignores Obsidian's wiki-link attachment preference because wiki-style image embeds are not reliably recognized in every context.
 - `src/obsidian/bash.ts` defines `bash`; it is registered only when `allowBash` is enabled, matches structured persistent Bash permissions after shell-safe argv classification, prompts through `CapabilityApprovalPort` on miss, runs single-line commands through the user login shell (`$SHELL -lc`, fish `-c`, or `cmd.exe /d /s /c` on Windows), constrains cwd to the vault, and invokes the injected process runner with shell forbidden at the Node spawn layer. Authorization rejects control operators, substitution, redirects, and unsupported syntax for persistable Always grants on both POSIX shells and cmd.exe. Its schema describes it as a lowest-priority host diagnostic, never a vault file tool.
-- `src/bashAllowlist.ts` owns platform-specific safe defaults (`which`/`type`/`pwd` on POSIX and `where`/`cd` on cmd.exe) and matches structured persistent Bash permissions from `@pivi/agent/tools`.
+- `src/bashAllowlist.ts` merges the platform-specific safe defaults (`which`/`type`/`pwd` on POSIX and `where`/`cd` on cmd.exe, defined by `defaultSafeBashPermissions` in `@pivi/agent/tools`) with structured persistent Bash permissions and matches commands against them.
 - `src/capabilityApprovalGate.ts` owns bash/external miss handling against `CapabilityApprovalPort` and persistent grant checks.
 - `src/loginShell.ts` resolves the user's login shell and builds argv for `bash` single-line commands (`$SHELL -lc`, fish `-c`, or Windows `cmd.exe /d /s /c`).
 - `src/obsidian/readExternal.ts` and `src/obsidian/listExternal.ts` remain helper factories for ExternalFileApi reads/lists. They are not registered as top-level tools; `read` / `ls` call them internally for unindexed vault and absolute paths. Vault-contained paths are always allowed. Outside the vault access is gated by `allowExternalRead`; paths outside allowed roots prompt through `CapabilityApprovalPort`.
@@ -54,7 +54,7 @@ Tool execution depends on host adapters and host-neutral contracts only. Engine-
 ## Boundaries
 
 - Tool implementations use `@pivi/obsidian-host` APIs and the Obsidian CLI transport where public API coverage is unavailable.
-- Do not import `@pivi/engine-pi` or raw `@earendil-works/*` SDKs; consume host-neutral `@pivi/agent` contracts only (enforced by ESLint and `check:architecture`).
+- Do not import `@pivi/engine-pi` or raw `@earendil-works/*` SDKs; consume host-neutral `@pivi/agent` contracts only (enforced by `check:architecture`).
 - Image generation tools depend only on an injected generator port; Pi/Codex provider wiring stays in app/Pi composition.
 - Do not import UI renderers. Return structured/text tool results and let UI packages render them.
 - Mutating vault operations execute directly; optional capabilities are setting-gated: command execution uses `allowCommand` plus exact command-ID approval, Bash uses `allowBash` plus structured persistent permissions, and filesystem tools outside the vault use `allowExternalRead` plus allowed external directory roots. Vault-contained absolute paths skip that grant.

@@ -23,15 +23,15 @@ flowchart TD
   Engine -- "implements" --> Runtime
 ```
 
-`src/app` may compose all layers. Other dependencies flow toward host-neutral contracts:
+`src/app` may compose all layers. Other dependencies flow toward `@pivi/agent` contracts, which import neither Obsidian nor the Pi SDK. This keeps package logic testable against injected fakes and contains Pi SDK churn; portability to another host or runtime is not a goal:
 
-- `src/ui/**` uses injected `ChatPorts`, `PiChatService`, and `AuxQueryRunner`; it does not import `@pivi/engine-pi`, app runtime implementations, or concrete host/tool packages.
-- `@pivi/pivi-react` consumes presentation-safe `@pivi/agent` models and its own ports. It does not receive `ChatPorts`, runtime objects, Obsidian APIs, or application implementations.
+- `src/ui/**` uses injected `ChatPorts`, `PiChatService`, and `AuxQueryRunner`; it does not import `@pivi/engine-pi`, app runtime implementations, or `@pivi/obsidian-tools`. It may import path and vault helpers from `@pivi/obsidian-host`.
+- `@pivi/pivi-react` consumes presentation-safe `@pivi/agent` models and its own ports. It does not receive `ChatPorts`, runtime objects, or application implementations. It calls the public `obsidian` API directly only for icons and tooltips.
 - `@pivi/obsidian-host` implements host ports and owns the canonical vault-edit occurrence matcher used by `ObsidianVaultApi`. It does not import UI, tools, or `@pivi/engine-pi`.
 - `@pivi/obsidian-tools` implements Obsidian-native and CLI-backed `ToolSpec` values using host contracts. Host-neutral `pivi_sessions` and its recovery port live in `@pivi/agent`; app composition adds that tool to the shared base provider so main Agents and subagents receive the same inventory.
-- `src/app/runtime/WorkspaceCommandsCoordinator.ts` owns workspace-command validation, revisions, persistence, and ordering. `PiSlashCommandCatalog` owns watching and catalog composition only.
+- `src/app/runtime/WorkspaceCommandsCoordinator.ts` owns workspace-command validation, revisions, persistence, and ordering. `PiSlashCommandCatalog` owns watching and catalog composition; at workspace preparation it also backfills missing `integrationKey` values and moves commands from the retired `.pivi/templates/` folder into `.pivi/commands/`.
 - `@pivi/agent` Skills owns skill/command frontmatter parsing; there is no parallel parser in the concrete tools package.
-- Raw `@earendil-works/*` use belongs only in `packages/engine-pi/` (`@pivi/engine-pi`).
+- Raw `@earendil-works/*` use belongs only in `packages/engine-pi/` (`@pivi/engine-pi`), except the standalone `@earendil-works/pi-mcp` client, which only `packages/agent/src/mcp` imports.
 
 The build enforces important edges through `scripts/check-architecture-boundaries.mjs`. Treat `npm run check:boundaries` as an architecture test, not a style check.
 
@@ -77,13 +77,13 @@ External directory roots are capabilities tied to one device. Obsidian vault-sco
 
 Provider membership, custom endpoints, model preferences, and web-search provider order/disabled state are device facts. Each vault/device stores them under Obsidian vault-scoped local storage (`pivi.providers.v1`). Credentials, custom header secrets, web API keys, and MCP OAuth tokens remain in `SecretStorage`; MCP server definitions stay in synced `.pivi/mcp.json`.
 
-Startup migration in `pluginSettingsLoad.ts` runs before workspace construction: read legacy synced fields once, canonicalize secrets, write initialized local state, then strip localized fields from `.pivi/settings.json`. Steady-state saves commit local provider authority first through `createPiviSettingsCodec`, then project portable `PersistedPiviSettings`. A synced write failure after a successful local commit retains local authority and surfaces a localized Notice.
+The startup load called from `pluginSettingsLoad.ts` runs before workspace construction: it overlays the local registry onto runtime settings, seeds defaults on a device that has none, and strips provider fields from `.pivi/settings.json`. Steady-state saves commit local provider authority first through `createPiviSettingsCodec`, then project portable `PersistedPiviSettings`. A synced write failure after a successful local commit retains local authority and surfaces a localized Notice.
 
-Built-in model `customContextLimits` entries remain synced; custom-provider context limits live in the local registry. A device that was offline during cutover and opens an already-stripped synced file seeds `DEFAULT_PI_PROVIDER_IDS` (`deepseek` only) and must re-add other providers locally; there is no automatic cross-device provider recovery.
+Built-in model `customContextLimits` entries remain synced; custom-provider context limits live in the local registry. A device with no local provider state seeds `DEFAULT_PI_PROVIDER_IDS` (`deepseek` only) and must add other providers locally; there is no cross-device provider recovery.
 
 ### TypeScript and module resolution
 
-The repository is strict TypeScript targeting ES2022 with bundler resolution, isolated modules, no implicit returns, and unchecked-index protection. npm workspaces expose explicit package subpaths rather than relying on internal relative imports. Workspace package manifests and TypeScript package resolution share that contract: root path aliases cover package roots only, while subpaths must resolve through a declared package export. Architecture checks reject wildcard workspace exports, wildcard workspace path aliases, undeclared runtime/type-only dependencies (including literal dynamic imports and re-exports), host runtimes not declared as peers, and cross-package relative imports. The same gate verifies every public export through the installed local workspace links, so root hoisting cannot stand in for package ownership. TypeScript 6 compatibility supports current lint/test tooling; TypeScript 7's native CLI is the authoritative source and test checker.
+The repository is strict TypeScript targeting ES2022 with bundler resolution, isolated modules, no implicit returns, and unchecked-index protection. npm workspaces expose package subpaths rather than relying on internal relative imports. Workspace package manifests and TypeScript package resolution share that contract: root path aliases cover package roots only, while subpaths must resolve through a package export. `@pivi/agent`, `@pivi/engine-pi`, and `@pivi/obsidian-host` list directory barrels explicitly and expose other source files through one `./*` wildcard; `@pivi/pivi-react` keeps a short explicit list. Architecture checks reject wildcard workspace path aliases, undeclared runtime/type-only dependencies (including literal dynamic imports and re-exports), host runtimes not declared as peers, and cross-package relative imports. The same gate verifies every public export through the installed local workspace links, so root hoisting cannot stand in for package ownership. TypeScript 6 compatibility supports current lint/test tooling; TypeScript 7's native CLI is the authoritative source and test checker.
 
 ### esbuild and runtime compatibility
 
@@ -91,7 +91,7 @@ Shared build options under `build/` produce the Obsidian-compatible bundle, appl
 
 ### Jest and architecture tests
 
-Jest has two projects: Node-oriented unit/integration tests and a jsdom `pivi-react` project. Tests use repository mocks for Obsidian and Pi dependencies. Coverage includes `src/**` and package source. Structural boundary scripts complement behavior tests by rejecting forbidden dependency edges, invalid package README state, and dead i18n keys.
+Jest has two projects: Node-oriented unit/integration tests and a jsdom `pivi-react` project. Tests use repository mocks for Obsidian and for the Pi engine packages; `@earendil-works/pi-mcp` and `pi-ai/dist/*` resolve to the real packages. Coverage includes `src/**` and package source. Structural boundary scripts complement behavior tests by rejecting forbidden dependency edges, invalid package README state, and dead i18n keys.
 
 ### Localization and CSS
 

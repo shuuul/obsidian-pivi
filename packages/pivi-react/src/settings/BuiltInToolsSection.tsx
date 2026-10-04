@@ -1,7 +1,6 @@
 import { Fragment, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
-import { useHostTerminology } from '../platform';
 import type { SettingsPorts, SettingsToolRow } from '../ports';
 import { PersistentPermissionsSection } from './PersistentPermissionsSection';
 import { BadgeListInput, Select, SettingRow, SettingsPage, SettingsSection, Toggle } from './primitives';
@@ -26,7 +25,6 @@ export function BuiltInToolsSection({
   readonly store: SettingsUiStore;
 }) {
   const t = useT();
-  const { hostName, workspaceNameTitle } = useHostTerminology();
   const { subagents } = useSettingsUiSnapshot(store);
   const settings = ports.complex.tools.getSettings();
   const [cliEnabled, setCliEnabled] = useState(settings.cliEnabled);
@@ -169,13 +167,13 @@ export function BuiltInToolsSection({
   };
 
   return (
-    <SettingsPage description={<p>{t('settings.tools.intro', { hostName })}</p>}>
-      <SettingsSection title={t('settings.tools.cli.heading', { hostName })}>
+    <SettingsPage description={<p>{t('settings.tools.intro')}</p>}>
+      <SettingsSection title={t('settings.tools.cli.heading')}>
         <SettingRow
           name={t('settings.tools.cli.enabled.name')}
           description={settings.cliAvailable
-            ? t('settings.tools.cli.enabled.desc', { hostName })
-            : t('settings.tools.cli.unavailable', { hostName })}
+            ? t('settings.tools.cli.enabled.desc')
+            : t('settings.tools.cli.unavailable')}
         >
           <Toggle
             checked={cliEnabled}
@@ -234,7 +232,7 @@ export function BuiltInToolsSection({
         const rows = toolRows.filter(row => row.group === group);
         if (rows.length === 0) return null;
         return (
-          <SettingsSection key={group} title={t(titleKey, { hostName, workspaceNameTitle })}>
+          <SettingsSection key={group} title={t(titleKey)}>
             {rows.map((row) => (
               <Fragment key={row.name}>
                 <SettingRow name={`${row.label} (${row.name})`} description={row.description}>

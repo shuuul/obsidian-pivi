@@ -83,45 +83,7 @@ export class SharedStorageService implements SharedAppStorage {
   }
 
   async getTabManagerState(): Promise<AppTabManagerState | null> {
-    const vaultState = await this.readTabManagerStateFile();
-    if (vaultState) {
-      return vaultState;
-    }
-
-    try {
-      const data: unknown = await this.plugin.loadData();
-      if (!isRecord(data) || !data.tabManagerState) {
-        return null;
-      }
-
-      const legacyState = this.validateTabManagerState(data.tabManagerState);
-      if (legacyState) {
-        try {
-          await this.writeTabManagerStateFile(legacyState);
-          // Strip legacy key after successful vault write to avoid RMW races
-          // with other plugin-data keys on data.json.
-          await this.clearLegacyTabManagerState();
-        } catch (error) {
-          // Legacy state still restores locally even if migration fails.
-          logger.warn('failed to migrate legacy tab manager state', error);
-        }
-      }
-      return legacyState;
-    } catch (error) {
-      logger.warn('failed to load tab manager state', error);
-      return null;
-    }
-  }
-
-  private async clearLegacyTabManagerState(): Promise<void> {
-    try {
-      await this.updatePluginData((data) => {
-        delete data.tabManagerState;
-      });
-    } catch (error) {
-      // Best-effort cleanup of legacy plugin data after vault migration.
-      logger.warn('failed to clear legacy tab manager state', error);
-    }
+    return this.readTabManagerStateFile();
   }
 
   async takeDeletedSessionFileQueue(): Promise<string[]> {
@@ -152,15 +114,6 @@ export class SharedStorageService implements SharedAppStorage {
     return result;
   }
 
-  private updatePluginData(update: (data: Record<string, unknown>) => void): Promise<void> {
-    return this.runPluginDataOperation(async () => {
-      const loaded: unknown = await this.plugin.loadData();
-      const data = isRecord(loaded) ? loaded : {};
-      update(data);
-      await this.plugin.saveData(data);
-    });
-  }
-
   getAdapter(): ObsidianVaultFileAdapter {
     return this.adapter;
   }
@@ -184,7 +137,6 @@ export class SharedStorageService implements SharedAppStorage {
         JSON.parse(await this.adapter.read(TAB_MANAGER_STATE_PATH)),
       );
     } catch (error) {
-      // Missing file and parse/IO failures both fall back to legacy plugin data.
       if (error instanceof Error && /ENOENT|not found|no such file/i.test(error.message)) {
         return null;
       }

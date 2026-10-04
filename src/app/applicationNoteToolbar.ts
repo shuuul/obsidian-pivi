@@ -4,11 +4,11 @@ import { getObsidianToolsSettingsFromBag } from "@pivi/agent/settings/types";
 import { ObsidianCliTransport } from "@pivi/obsidian-host/cli/obsidianCliTransport";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import { openExternalUrl } from "@pivi/obsidian-host/openExternalUrl";
+import { getVaultPath } from "@pivi/obsidian-host/path";
 import type { App } from "obsidian";
 import { apiVersion, } from "obsidian";
 
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
-import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import {
   getInstalledPluginVersion,

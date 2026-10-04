@@ -1,4 +1,4 @@
-export interface AppSkillSummary {
+interface AppSkillSummary {
   name: string;
   description?: string;
 }

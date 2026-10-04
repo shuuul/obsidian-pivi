@@ -31,14 +31,14 @@ export type NetworkPurpose =
   | 'connectivity'
   | 'generic';
 
-export interface EgressDeadlines {
+interface EgressDeadlines {
   connectMs: number;
   firstByteMs: number;
   idleMs: number;
   totalMs: number;
 }
 
-export interface EgressByteLimits {
+interface EgressByteLimits {
   maxRequestBytes: number;
   maxEncodedResponseBytes: number;
   maxDecodedResponseBytes: number;
@@ -70,14 +70,14 @@ export interface ResolvedEgressPolicy {
   signal?: AbortSignal;
 }
 
-export const DEFAULT_EGRESS_DEADLINES: Readonly<EgressDeadlines> = Object.freeze({
+const DEFAULT_EGRESS_DEADLINES: Readonly<EgressDeadlines> = Object.freeze({
   connectMs: 10_000,
   firstByteMs: 20_000,
   idleMs: 30_000,
   totalMs: 120_000,
 });
 
-export const DEFAULT_EGRESS_BYTE_LIMITS: Readonly<EgressByteLimits> = Object.freeze({
+const DEFAULT_EGRESS_BYTE_LIMITS: Readonly<EgressByteLimits> = Object.freeze({
   maxRequestBytes: 2 * 1024 * 1024,
   maxEncodedResponseBytes: 8 * 1024 * 1024,
   maxDecodedResponseBytes: 8 * 1024 * 1024,
@@ -218,7 +218,7 @@ export function classifyHostnameOrAddress(hostname: string): IpDestinationClass 
  * local providers (Ollama, LM Studio, LAN endpoints) keep working across long
  * uptimes without per-request re-grants. Grants are cleared on workspace dispose.
  */
-export const PRIVATE_ORIGIN_GRANT_TTL_MS = 365 * 24 * 60 * 60 * 1000;
+const PRIVATE_ORIGIN_GRANT_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
 /**
  * Grant only the private/loopback origins among `urls` for `purpose`. Public
@@ -336,15 +336,6 @@ export function selectAllowedResolvedAddresses(
   throw new EgressDeniedError(firstAlwaysDenied ?? firstSoftDenied ?? 'invalid', url);
 }
 
-export function assertDestinationAllowed(
-  url: URL,
-  resolvedAddresses: readonly string[],
-  policy: ResolvedEgressPolicy,
-  grants?: OriginGrantRegistry,
-): void {
-  selectAllowedResolvedAddresses(url, resolvedAddresses, policy, grants);
-}
-
 export function assertPinnedAddress(
   approvedAddresses: readonly string[],
   connectedAddress: string,
@@ -456,11 +447,9 @@ export {
   isLiteralIpHostname,
 } from './ipClassification';
 export {
-  isCrossOrigin,
   isSchemeDowngrade,
   NetworkUrlError,
   normalizeHttpUrl,
   redactUrl,
   resolveRedirectUrl,
-  urlOriginKey,
 } from './urlPolicy';

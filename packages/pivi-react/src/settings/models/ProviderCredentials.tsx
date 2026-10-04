@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
-import { useHostTerminology } from '../../platform';
 import type { SettingsModelsPort } from '../../ports';
 import { ExternalSetupLink } from '../ExternalSetupLink';
 import { SettingRow, SettingsSection } from '../primitives';
@@ -29,7 +28,6 @@ export function ProviderApiKeyField({
   onError,
 }: ProviderApiKeyFieldProps) {
   const t = useT();
-  const { secureStorageName } = useHostTerminology();
   const secretId = models.getSecretId(providerId);
   const apiKeyStored = models.getCredentialKind(providerId) === 'api_key';
   const setupLink = getModelProviderSetupLink(providerId);
@@ -54,7 +52,7 @@ export function ProviderApiKeyField({
         name={t(showOptionalLabel ? 'settings.modelsTab.apiKeyOptional' : 'settings.modelsTab.apiKey')}
         description={(
           <>
-            {t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId, secureStorageName })}
+            {t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId })}
             {setupLink && setupLink.kind !== 'download' ? (
               <>
                 {' '}
@@ -70,7 +68,7 @@ export function ProviderApiKeyField({
           value={apiKeyInput}
           placeholder={
             apiKeyStored
-              ? t('settings.modelsTab.apiKeySavedPlaceholder', { secureStorageName })
+              ? t('settings.modelsTab.apiKeySavedPlaceholder')
               : allowKeyless
                 ? t('settings.modelsTab.apiKeyOptionalPlaceholder')
                 : t('settings.modelsTab.apiKeyPlaceholder')
@@ -99,7 +97,6 @@ export function ProviderApiKeyField({
 /** API-key / OAuth-token credential inputs for one provider card body. */
 export function ProviderCredentials({ models, providerId, allowKeyless, onChanged, onError }: ProviderCredentialsProps) {
   const t = useT();
-  const { secureStorageName } = useHostTerminology();
   const env = models.getProviderEnvInfo(providerId);
   const showOauthToggle = !!env.oauthVar && providerId !== 'anthropic';
   const credentialKind = models.getCredentialKind(providerId);
@@ -155,13 +152,13 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
         <div className="pivi-cred-row pivi-setting-stack">
           <SettingRow
             name={t('settings.modelsTab.oauthToken')}
-            description={t('settings.modelsTab.oauthTokenDesc', { secretId, secureStorageName })}
+            description={t('settings.modelsTab.oauthTokenDesc', { secretId })}
           >
             <input
               className="pivi-settings-control"
               type="text"
               value={oauthInput}
-              placeholder={oauthStored ? t('settings.modelsTab.oauthTokenSavedPlaceholder', { secureStorageName }) : t('settings.modelsTab.oauthTokenPlaceholder')}
+              placeholder={oauthStored ? t('settings.modelsTab.oauthTokenSavedPlaceholder') : t('settings.modelsTab.oauthTokenPlaceholder')}
               onChange={event => setOauthInput(event.target.value)}
             />
             <button

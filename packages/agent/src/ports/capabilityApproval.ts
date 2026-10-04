@@ -2,9 +2,9 @@ import type { BashClassification } from '../tools/capabilityPermissions';
 import type { PersistentBashPermission } from '../tools/capabilityPermissions';
 
 /** Capability kinds that may show sidebar inline approval in Pivi. */
-export type CapabilityApprovalKind = 'bash' | 'external-directory' | 'obsidian-command';
+type CapabilityApprovalKind = 'bash' | 'external-directory' | 'obsidian-command';
 
-export type CapabilityApprovalDecision =
+type CapabilityApprovalDecision =
   | 'deny'
   | 'allow-once'
   | 'allow-always'

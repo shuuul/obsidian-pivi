@@ -3,7 +3,9 @@ import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 const snapshot: SettingsUiSnapshotData = {
   general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, showCacheHitRate: true, showTokensPerSecond: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 }, requireCommandOrControlEnterToSend: false, editorSelectionToolbar: { enabled: true, shortcuts: [] } },
@@ -83,7 +85,7 @@ function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {})
 }
 
 function renderPage(ports: SettingsPorts, page: 'builtInTools' | 'webTools' | 'mcpServers' = 'builtInTools') {
-  return render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot page={page} ports={ports} /></I18nProvider>));
+  return render((<I18nProvider i18n={createI18n()}><SettingsRoot page={page} ports={ports} /></I18nProvider>));
 }
 
 function renderTools(ports: SettingsPorts) {
@@ -152,9 +154,9 @@ describe('React tools settings', () => {
     }));
 
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
-      'Official Test host CLI',
-      'Workspace tools',
-      'Test host CLI',
+      'Official Obsidian CLI',
+      'Vault tools',
+      'Obsidian CLI',
       'Pivi',
       'Additional access',
       'Persistent permissions',
@@ -199,7 +201,7 @@ describe('React tools settings', () => {
     ports.complex.tools.getSettings = () => ({ ...current, cliAvailable: false });
     renderTools(ports);
     expect(screen.getByRole('checkbox', { name: 'Enable official CLI tools' })).toBeDisabled();
-    expect(screen.getByText(/official Test host CLI is not registered/)).toBeInTheDocument();
+    expect(screen.getByText(/official Obsidian CLI is not registered/)).toBeInTheDocument();
   });
 
   it('keeps CLI state unchanged when persistence fails', async () => {

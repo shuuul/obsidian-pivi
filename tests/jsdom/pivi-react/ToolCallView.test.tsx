@@ -28,15 +28,17 @@ import {
 } from '@pivi/pivi-react';
 
 import { DisclosureAnchorProvider } from '../../../packages/pivi-react/src/chat/messages/disclosureAnchorContext';
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 function toolCall(id: string, name: string, status: ToolCallInfo['status'], input: Record<string, unknown> = {}, result?: string): ToolCallInfo {
   return { id, name, input, status, result };
 }
 
 function renderTool(ui: ReactElement) {
-  return render(withTestPresentationPlatform(
-    <I18nProvider i18n={createI18n()}>{ui}</I18nProvider>,
+  return render((
+    <I18nProvider i18n={createI18n()}>{ui}</I18nProvider>
   ));
 }
 
@@ -165,13 +167,13 @@ describe('ToolCallView', () => {
   });
 
   it('updates the polite status region at phase and terminal transitions', () => {
-    const wrap = (activityStatus: ActivityStatus) => withTestPresentationPlatform(
+    const wrap = (activityStatus: ActivityStatus) => (
       <I18nProvider i18n={createI18n()}>
         <ToolCallView toolCall={{
           ...toolCall('phase', TOOL_BASH, activityStatus === 'completed' ? 'completed' : 'running'),
           activityStatus,
         }} />
-      </I18nProvider>,
+      </I18nProvider>
     );
     const view = render(wrap('queued'));
     const liveRegion = () => view.container.querySelector('.pivi-activity-status[aria-live="polite"]');
@@ -201,13 +203,13 @@ describe('ToolCallView', () => {
     const clearIntervalSpy = jest.spyOn(ownerWindow, 'clearInterval').mockImplementation(() => {});
     const container = ownerDocument.createElement('div');
     ownerDocument.body.appendChild(container);
-    const view = render(withTestPresentationPlatform(
+    const view = render((
       <I18nProvider i18n={createI18n()}>
         <ToolCallView toolCall={{
           ...toolCall('timed', TOOL_BASH, 'running'),
           startedAt: 8_000,
         }} />
-      </I18nProvider>,
+      </I18nProvider>
     ), { container });
 
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
@@ -216,14 +218,14 @@ describe('ToolCallView', () => {
     act(() => tick?.());
     expect(ownerDocument.querySelector('.pivi-activity-elapsed')).toHaveTextContent('3s');
 
-    view.rerender(withTestPresentationPlatform(
+    view.rerender((
       <I18nProvider i18n={createI18n()}>
         <ToolCallView toolCall={{
           ...toolCall('timed', TOOL_BASH, 'completed'),
           completedAt: 11_000,
           startedAt: 8_000,
         }} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     jest.setSystemTime(16_000);
     act(() => tick?.());

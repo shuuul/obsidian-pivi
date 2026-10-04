@@ -1,5 +1,5 @@
 /** Alternate ASCII `"` with typographic “ and ” (odd open, even close). */
-export function asciiDoubleQuotesToCurly(text: string): string {
+function asciiDoubleQuotesToCurly(text: string): string {
   let useOpen = true;
   return text.replace(/"/g, () => {
     const ch = useOpen ? '\u201c' : '\u201d';
@@ -9,7 +9,7 @@ export function asciiDoubleQuotesToCurly(text: string): string {
 }
 
 /** Map typographic double quotes to ASCII `"`. */
-export function curlyDoubleQuotesToAscii(text: string): string {
+function curlyDoubleQuotesToAscii(text: string): string {
   return text.replace(/[\u201c\u201d]/g, '"');
 }
 
@@ -45,25 +45,6 @@ export function buildOldStringNotFoundMessage(
   }
 
   return base;
-}
-
-/** Applies the exact-match policy used by `ObsidianVaultApi.editNote`. */
-export function replaceVaultEditMatch(params: {
-  filePath: string;
-  content: string;
-  oldString: string;
-  newString: string;
-  replaceAll?: boolean;
-}): VaultEditMatchResult {
-  return applyVaultEdits({
-    filePath: params.filePath,
-    content: params.content,
-    edits: [{
-      oldText: params.oldString,
-      newText: params.newString,
-      replaceAll: params.replaceAll,
-    }],
-  });
 }
 
 /**

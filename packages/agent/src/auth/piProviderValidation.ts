@@ -21,7 +21,7 @@ export const SUPPORTED_PI_PROVIDER_IDS = [
   'zai-coding-cn',
 ] as const;
 
-export type SupportedPiProviderId = (typeof SUPPORTED_PI_PROVIDER_IDS)[number];
+type SupportedPiProviderId = (typeof SUPPORTED_PI_PROVIDER_IDS)[number];
 
 export function isBuiltinPiProviderId(providerId: string): boolean {
   return SUPPORTED_PI_PROVIDER_IDS.includes(providerId as SupportedPiProviderId);

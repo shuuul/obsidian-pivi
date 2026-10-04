@@ -5,7 +5,6 @@ import {
   isRecord,
   normalizeStringArray,
   parseFrontmatter,
-  validateSlugName,
 } from '@pivi/agent/skills/frontmatter';
 
 describe('Skills frontmatter', () => {
@@ -41,13 +40,9 @@ Body text`);
     expect(extractBoolean({ flag: 'true' }, 'flag')).toBeUndefined();
   });
 
-  it('recognizes records and validates skill slugs', () => {
+  it('recognizes records', () => {
     expect(isRecord({ a: 1 })).toBe(true);
     expect(isRecord(null)).toBe(false);
     expect(isRecord([])).toBe(false);
-    expect(validateSlugName('my-skill', 'Skill')).toBeNull();
-    expect(validateSlugName('', 'Skill')).toMatch(/required/);
-    expect(validateSlugName('Bad_Name', 'Skill')).toMatch(/lowercase/);
-    expect(validateSlugName('true', 'Skill')).toMatch(/reserved/);
   });
 });

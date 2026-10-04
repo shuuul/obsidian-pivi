@@ -356,7 +356,7 @@ export function requireVaultRelativeMutationPath(
 }
 
 /** Management tools that own Pivi-managed vault namespaces (spec 040). */
-export type PiviManagedPathTool = 'pivi_mcp' | 'pivi_skills' | 'pivi_commands';
+type PiviManagedPathTool = 'pivi_mcp' | 'pivi_skills' | 'pivi_commands';
 
 export type AgentManagedPathMutationMode = 'direct' | 'recursive';
 

@@ -10,7 +10,9 @@ import {
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import { ChatTabsStore, type ChatTabActions } from '@pivi/pivi-react/store';
 
-import { testPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 function createChatShell(position: 'input' | 'header' = 'header') {
   const actions: ChatTabActions = {
@@ -49,7 +51,6 @@ describe('React surface mounts', () => {
         ownerWindow: window,
         portalContainer: document.body,
         i18n: createI18n(),
-        platform: testPresentationPlatform,
         chatShell: createChatShell(),
         imperativeAdapter: {
           mount(container, environment) {
@@ -96,7 +97,6 @@ describe('React surface mounts', () => {
         ownerWindow: window,
         portalContainer: document.body,
         i18n: createI18n(),
-        platform: testPresentationPlatform,
         chatShell: createChatShell(),
         imperativeAdapter: {
           mount(container) {
@@ -133,7 +133,6 @@ describe('React surface mounts', () => {
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: createI18n(),
-        platform: testPresentationPlatform,
         ports: {
           snapshot: {
             getSnapshot: () => ({
@@ -232,7 +231,6 @@ describe('React surface mounts', () => {
       mounted = mountInlineEditSurfaceChrome({
         container,
         i18n: createI18n(),
-        platform: testPresentationPlatform,
         props: {
           adaptiveReasoning: true,
           defaultReasoningValue: 'off',

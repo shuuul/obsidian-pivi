@@ -29,13 +29,13 @@ export interface SlashCommand {
 }
 
 /** Provider request deadlines in milliseconds. A value of 0 disables that deadline. */
-export interface ProviderRequestDeadlines {
+interface ProviderRequestDeadlines {
   totalMs: number;
   idleMs: number;
 }
 
 /** Tab bar position setting. */
-export type TabBarPosition = "input" | "header";
+type TabBarPosition = "input" | "header";
 
 export const CHAT_VIEW_PLACEMENTS = [
   "right-sidebar",
@@ -74,7 +74,7 @@ export interface ObsidianToolsSettings {
   externalDirectoryPermissions: PersistentExternalDirectoryPermission[];
 }
 
-export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
+const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
   cliEnabled: false,
   cliPath: null,
   cliTimeoutMs: 30_000,
@@ -201,7 +201,7 @@ export function normalizeHiddenCommandList(value: unknown): string[] {
   return normalized;
 }
 
-export function getHiddenSlashCommands(
+function getHiddenSlashCommands(
   settings: Pick<PiviSettings, "hiddenSlashCommands">,
 ): string[] {
   return settings.hiddenSlashCommands ?? [];
@@ -312,12 +312,6 @@ export interface WebSearchToolsSettings {
   disabledProviders: WebProviderId[];
 }
 
-interface LegacyWebSearchToolsSettings {
-  provider?: unknown;
-  searchProvider?: unknown;
-  fetchProvider?: unknown;
-}
-
 export const DEFAULT_WEB_SEARCH_TOOLS_SETTINGS: Readonly<WebSearchToolsSettings> = Object.freeze({
   providerOrder: [...WEB_PROVIDER_IDS],
   disabledProviders: [],
@@ -329,12 +323,12 @@ export const DEFAULT_SUBAGENT_RUNTIME_SETTINGS: Readonly<SubagentRuntimeSettings
   allowBackground: true,
 });
 
-export function isWebProviderId(value: unknown): value is WebProviderId {
+function isWebProviderId(value: unknown): value is WebProviderId {
   return typeof value === 'string' && (WEB_PROVIDER_IDS as readonly string[]).includes(value);
 }
 
 export function resolveWebSearchToolsSettings(
-  raw: WebSearchToolsSettings | LegacyWebSearchToolsSettings | undefined,
+  raw: { providerOrder?: unknown; disabledProviders?: unknown } | undefined,
 ): WebSearchToolsSettings {
   if (!raw) {
     return {
@@ -348,15 +342,11 @@ export function resolveWebSearchToolsSettings(
       providerOrder.push(value);
     }
   };
-  if ('providerOrder' in raw && Array.isArray(raw.providerOrder)) {
+  if (Array.isArray(raw.providerOrder)) {
     raw.providerOrder.forEach(addProvider);
-  } else {
-    const legacyProvider = 'provider' in raw ? raw.provider : undefined;
-    addProvider('searchProvider' in raw ? raw.searchProvider : legacyProvider);
-    addProvider('fetchProvider' in raw ? raw.fetchProvider : undefined);
   }
   WEB_PROVIDER_IDS.forEach(addProvider);
-  const disabledProviders = 'disabledProviders' in raw && Array.isArray(raw.disabledProviders)
+  const disabledProviders = Array.isArray(raw.disabledProviders)
     ? raw.disabledProviders.filter(isWebProviderId).filter((id, index, ids) => ids.indexOf(id) === index)
     : [];
   return {
@@ -375,12 +365,12 @@ export function getWebSearchToolsSettingsFromBag(
   if (!('webSearchTools' in agentSettings)) {
     return resolveWebSearchToolsSettings(undefined);
   }
-  return resolveWebSearchToolsSettings(agentSettings.webSearchTools as WebSearchToolsSettings | LegacyWebSearchToolsSettings | undefined);
+  return resolveWebSearchToolsSettings(agentSettings.webSearchTools as WebSearchToolsSettings | undefined);
 }
 
 function isOptionalWebSearchToolsSettings(
   value: unknown,
-): value is WebSearchToolsSettings | LegacyWebSearchToolsSettings | undefined {
+): value is WebSearchToolsSettings | undefined {
   if (value === undefined) {
     return true;
   }
@@ -389,10 +379,7 @@ function isOptionalWebSearchToolsSettings(
   }
   return (
     (value.providerOrder === undefined || Array.isArray(value.providerOrder)) &&
-    (value.disabledProviders === undefined || Array.isArray(value.disabledProviders)) &&
-    (value.searchProvider === undefined || typeof value.searchProvider === 'string') &&
-    (value.fetchProvider === undefined || typeof value.fetchProvider === 'string') &&
-    (value.provider === undefined || typeof value.provider === 'string')
+    (value.disabledProviders === undefined || Array.isArray(value.disabledProviders))
   );
 }
 

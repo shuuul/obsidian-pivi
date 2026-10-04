@@ -14,7 +14,7 @@ export interface WebSearchResponse {
 }
 
 export type WebSearchFetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
-export type WebSearchCredentialLookup = (providerId: WebProviderId) => string | undefined;
+type WebSearchCredentialLookup = (providerId: WebProviderId) => string | undefined;
 export type WebFetchProviderId = Exclude<WebProviderId, 'brave'>;
 
 interface OrderedWebProviderDeps {

@@ -6,7 +6,7 @@
 
 import { TOOL_TODO_WRITE } from './toolNames';
 
-export type TodoStatus = 'pending' | 'in_progress' | 'completed';
+type TodoStatus = 'pending' | 'in_progress' | 'completed';
 
 export type TodoVisualizationSource = 'tool' | 'session-history' | 'manual';
 
@@ -20,7 +20,7 @@ export interface TodoItem {
   sourceToolCallId?: string;
 }
 
-export interface TodoVisualizationProgress {
+interface TodoVisualizationProgress {
   total: number;
   completed: number;
   pending: number;
@@ -103,16 +103,6 @@ export function deriveTodoVisualizationModel(
     progress,
     source,
   };
-}
-
-/**
- * Extract the last TodoWrite todos from a list of messages.
- * Used to restore the todo panel when loading a saved session.
- */
-export function extractLastTodosFromMessages(
-  messages: Array<{ role: string; toolCalls?: Array<{ name: string; input: Record<string, unknown> }> }>
-): TodoItem[] | null {
-  return extractLastTodoVisualizationFromMessages(messages)?.items ?? null;
 }
 
 export function extractLastTodoVisualizationFromMessages(

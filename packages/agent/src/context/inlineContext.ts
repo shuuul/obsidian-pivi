@@ -111,7 +111,7 @@ export function formatSelectionRangeAttribute(
   return `${selFrom.line + 1}:${selFrom.ch + 1}-${selTo.line + 1}:${selTo.ch + 1}`;
 }
 
-export function formatInlineContextBlock(context: InlineContextReference): string {
+function formatInlineContextBlock(context: InlineContextReference): string {
   const range = formatSelectionRangeAttribute(context.selection.from, context.selection.to);
   const included = `${context.includedLines.from}-${context.includedLines.to}`;
   const path = escapeXmlAttribute(context.notePath);
@@ -124,7 +124,7 @@ export function formatInlineContextBlock(context: InlineContextReference): strin
   ].join('\n');
 }
 
-export function formatInlineContexts(contexts: InlineContextReference[]): string {
+function formatInlineContexts(contexts: InlineContextReference[]): string {
   if (contexts.length === 0) {
     return '';
   }
@@ -137,7 +137,7 @@ export function appendInlineContexts(prompt: string, contexts: InlineContextRefe
   return formatted ? `${prompt}\n\n${formatted}` : prompt;
 }
 
-export function inlineContextsAreEqual(
+function inlineContextsAreEqual(
   left: InlineContextReference,
   right: InlineContextReference,
 ): boolean {

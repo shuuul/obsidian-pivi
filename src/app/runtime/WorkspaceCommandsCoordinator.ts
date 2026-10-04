@@ -13,7 +13,6 @@ import { recoverCommandRemovalTransactions, removeCommandFiles } from './command
 import type { PiviWorkspaceHost } from './serviceContracts';
 
 const COMMANDS_DIR = '.pivi/commands';
-const LEGACY_TEMPLATES_DIR = '.pivi/templates';
 const COMMANDS_MUTATION_KEY = '.pivi/commands/*';
 
 export class PiviCommandsManagementError extends Error {
@@ -175,7 +174,7 @@ export class WorkspaceCommandsCoordinator {
       if (!existing || this.entries.some(candidate => candidate.id === entry.id && candidate.id !== previous.id)) {
         throw new PiviCommandsManagementError('state_changed', 'Command catalog changed; list commands and retry.');
       }
-      const oldPath = existing.persistenceKey?.startsWith('legacy-template:') ? `${LEGACY_TEMPLATES_DIR}/${previous.id}.md` : `${COMMANDS_DIR}/${previous.id}.md`;
+      const oldPath = `${COMMANDS_DIR}/${previous.id}.md`;
       const newPath = `${COMMANDS_DIR}/${entry.id}.md`;
       const backup = `${oldPath}.rename-${Date.now().toString(36)}`;
       const previousOrder = this.host.settings.workspaceCommandOrder;
@@ -209,10 +208,6 @@ export class WorkspaceCommandsCoordinator {
       argumentHint: input.argumentHint || input.id, icon: input.icon, content: input.content,
       integrationKey: existing?.integrationKey ?? this.createKey() };
     await writeFileAtomically(this.store, `${COMMANDS_DIR}/${input.id}.md`, serializeSlashCommandMarkdown(command, input.content));
-    if (existing?.persistenceKey?.startsWith('legacy-template:')) {
-      const legacy = `${LEGACY_TEMPLATES_DIR}/${input.id}.md`;
-      if (await this.store.exists(legacy)) await this.store.delete(legacy);
-    }
     return this.refreshResult(input.id);
   }
 

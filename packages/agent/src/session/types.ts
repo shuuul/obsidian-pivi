@@ -1,7 +1,6 @@
-import type { WorkspaceFileStore } from '../ports';
 import type { ChatMessage, ChatTurnRequestSnapshot, SessionTitleSource, UsageInfo } from '../runtime/chatTypes';
 
-export type { SessionTitleSource };
+;
 
 export class SessionIndexError extends Error {
   constructor(
@@ -164,5 +163,3 @@ export interface SessionStore {
     id: string;
   }): SessionRef | null;
 }
-
-export type FileStore = WorkspaceFileStore;

@@ -1,7 +1,7 @@
 import type { SlashCommandSource } from '../../settings/types';
 
-export type SlashCommandKind = 'command' | 'skill' | 'tool';
-export type SlashCommandScope = 'builtin' | 'workspace' | 'user' | 'system' | 'runtime';
+type SlashCommandKind = 'command' | 'skill' | 'tool';
+type SlashCommandScope = 'builtin' | 'workspace' | 'user' | 'system' | 'runtime';
 
 export interface SlashCatalogEntry {
   id: string;

@@ -3,11 +3,6 @@
  * (e.g. empty <p> from leading newlines after tool_use blocks).
  */
 
-/** Strip leading whitespace when opening a new streaming text block. */
-export function stripLeadingWhitespaceForNewTextBlock(text: string): string {
-  return text.replace(/^\s+/, '');
-}
-
 function isEmptyParagraph(p: HTMLParagraphElement): boolean {
   if (p.textContent?.trim()) {
     return false;

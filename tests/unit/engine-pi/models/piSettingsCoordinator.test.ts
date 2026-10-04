@@ -1,5 +1,9 @@
 import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/engine-pi/models/piModelRegistry'
-import { PiSettingsCoordinator } from '@pivi/engine-pi/models/piSettingsCoordinator';
+import {
+  getPiSettingsSnapshot,
+  projectActivePiState,
+  reconcilePiTitleGenerationModel,
+} from '@pivi/engine-pi/models/piSettingsCoordinator';
 import { updatePiAgentSettings } from '@pivi/agent/settings/agentSettings';
 
 const REASONING_MODEL = 'anthropic/claude-reasoning';
@@ -41,15 +45,15 @@ function baseSettings(overrides: Record<string, unknown> = {}): Record<string, u
 }
 
 
-describe('PiSettingsCoordinator (piChatUIConfig wiring)', () => {
+describe('Pi settings projection (piChatUIConfig wiring)', () => {
   beforeAll(() => seedModelCache());
   afterAll(() => clearModelCache());
 
-  it('getSettingsSnapshot projects through piChatUIConfig without mutating source settings', () => {
+  it('getPiSettingsSnapshot projects through piChatUIConfig without mutating source settings', () => {
     const settings = baseSettings({ model: 'anthropic/not-in-pool' });
     const before = { ...settings };
 
-    const snapshot = PiSettingsCoordinator.getSettingsSnapshot(settings);
+    const snapshot = getPiSettingsSnapshot(settings);
 
     expect(settings).toEqual(before);
     expect(snapshot.model).toBe(REASONING_MODEL);
@@ -66,18 +70,15 @@ describe('PiSettingsCoordinator (piChatUIConfig wiring)', () => {
       },
     });
 
-    PiSettingsCoordinator.projectActivePiState(settings);
+    projectActivePiState(settings);
 
     expect(settings.model).toBe(STANDARD_MODEL);
   });
 
-  it('reconcileSettings delegates title reconciliation through piChatUIConfig', () => {
+  it('reconcilePiTitleGenerationModel clears a stale title model through piChatUIConfig', () => {
     const settings = baseSettings({ titleGenerationModel: 'anthropic/stale-title-model' });
 
-    const result = PiSettingsCoordinator.reconcileSettings(settings, [{ id: 'tab-1' } as never]);
-
-    expect(result.changed).toBe(true);
-    expect(result.invalidatedSessions).toEqual([]);
+    expect(reconcilePiTitleGenerationModel(settings)).toBe(true);
     expect(settings.titleGenerationModel).toBe('');
   });
 });

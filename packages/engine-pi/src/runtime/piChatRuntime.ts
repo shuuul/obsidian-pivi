@@ -28,7 +28,6 @@ import { prepareChatTurn } from '@pivi/agent/runtime/prepareTurn';
 import { RuntimeReadyState } from '@pivi/agent/runtime/runtimeReadyState';
 import {
   buildSessionStateUpdates,
-  getLegacySessionFileFromAgentState,
 } from '@pivi/agent/runtime/sessionStateProjection';
 import type {
   ChatRewindResult,
@@ -505,8 +504,7 @@ export class PiChatRuntime implements PiChatService {
     if (!vaultPath) {
       return;
     }
-    const existingFile = this.sessionFile
-      ?? getLegacySessionFileFromAgentState(this.openSessionAgentState);
+    const existingFile = this.sessionFile;
     if (existingFile) {
       this.adoptSessionTree(SessionTreeStore.open(vaultPath, existingFile));
       return;

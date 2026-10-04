@@ -17,7 +17,7 @@ export const PI_SESSION_MANAGER_PRIVATE_CAPABILITIES = [
   '_buildIndex',
 ] as const;
 
-export type PiSessionManagerPrivateCapability =
+type PiSessionManagerPrivateCapability =
   (typeof PI_SESSION_MANAGER_PRIVATE_CAPABILITIES)[number];
 
 export interface PiSessionManagerPrivateSurface {

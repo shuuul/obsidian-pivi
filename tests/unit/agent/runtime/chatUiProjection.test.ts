@@ -75,19 +75,6 @@ describe('projectActiveChatState', () => {
     expect(applyModelDefaults).toHaveBeenCalledWith(STANDARD_MODEL, settings);
   });
 
-  it('projects adaptive thinkingLevel from effortLevel and removes effortLevel', () => {
-    const uiConfig = createFakeChatUiConfig();
-    const settings: Record<string, unknown> = {
-      model: ADAPTIVE_MODEL,
-      effortLevel: 'high',
-    };
-
-    projectActiveChatState(settings, uiConfig);
-
-    expect(settings.thinkingLevel).toBe('high');
-    expect(settings).not.toHaveProperty('effortLevel');
-  });
-
   it('clamps invalid adaptive thinkingLevel to the configured default', () => {
     const uiConfig = createFakeChatUiConfig();
     const settings: Record<string, unknown> = {

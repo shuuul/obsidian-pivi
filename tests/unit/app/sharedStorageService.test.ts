@@ -105,28 +105,4 @@ describe('SharedStorageService tab manager state', () => {
     await expect(storage.getTabManagerState()).resolves.toEqual(vaultState);
   });
 
-  it('migrates legacy plugin tab manager state into .pivi and clears data.json key', async () => {
-    const { plugin, files } = createPlugin();
-    const storage = new SharedStorageService(plugin as never);
-    const legacyState = {
-      activeTabId: 'legacy-tab',
-      openTabs: [{ tabId: 'legacy-tab', isArchived: true }],
-    };
-    const pluginData: Record<string, unknown> = {
-      tabManagerState: legacyState,
-      deletedSessionFiles: ['.pivi/sessions/old.jsonl'],
-    };
-    plugin.loadData.mockImplementation(async () => ({ ...pluginData }));
-    plugin.saveData.mockImplementation(async (data: Record<string, unknown>) => {
-      Object.keys(pluginData).forEach((key) => delete pluginData[key]);
-      Object.assign(pluginData, data);
-    });
-
-    await expect(storage.getTabManagerState()).resolves.toEqual(legacyState);
-    expect(JSON.parse(files.get('.pivi/tab-manager-state.json') ?? '')).toEqual(legacyState);
-    expect(plugin.saveData).toHaveBeenCalled();
-    const saved = plugin.saveData.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(saved).not.toHaveProperty('tabManagerState');
-    expect(saved.deletedSessionFiles).toEqual(['.pivi/sessions/old.jsonl']);
-  });
 });

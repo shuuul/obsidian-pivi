@@ -1,6 +1,6 @@
 import type { ContextEnvelope, ContextEnvelopeValue, UsageInfo } from '../runtime/chatTypes';
 
-export const DEFAULT_CONTEXT_WINDOW_TOKENS = 200_000;
+const DEFAULT_CONTEXT_WINDOW_TOKENS = 200_000;
 export const DEFAULT_RESERVED_OUTPUT_TOKENS = 16_000;
 export const DEFAULT_COMPACTION_RESERVE_TOKENS = 12_000;
 export const DEFAULT_CONTEXT_SAFETY_MARGIN_TOKENS = 8_000;
@@ -136,17 +136,6 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
       : estimate(estimatedTotal),
     usableInputTokens,
   };
-}
-
-/** Remaining input tokens before automatic compaction should trigger. */
-export function calculateCompactionRemainingTokens(usage: UsageInfo): number {
-  const envelope = usage.contextEnvelope ?? calculateContextEnvelope({
-    contextWindow: usage.contextWindow || DEFAULT_CONTEXT_WINDOW_TOKENS,
-    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
-    outputTokenLimit: usage.outputTokenLimit,
-    providerContextTokens: usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined,
-  });
-  return Math.max(0, envelope.compactionTriggerTokens - envelope.pressureInputTokens);
 }
 
 /**

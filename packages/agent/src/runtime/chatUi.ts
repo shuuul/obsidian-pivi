@@ -9,43 +9,13 @@ export interface ChatUIOption {
   providerLogoSlug?: string;
   /** Lucide icon when no brand slug is available. */
   fallbackIcon?: string;
-  /** Per-option icon override for grouped selector entries. */
-  chatIcon?: ChatIconSvg;
 }
 
-export interface ChatPathIconSvg {
-  kind?: 'path';
-  viewBox: string;
-  path: string;
-}
-
-export interface ChatSvgPathChild {
-  tag: 'path';
-  attributes: Record<string, string>;
-}
-
-export interface ChatSvgGroupChild {
-  tag: 'g';
-  attributes: Record<string, string>;
-  children: ChatSvgPathChild[];
-}
-
-export type ChatSvgChild = ChatSvgGroupChild | ChatSvgPathChild;
-
-export interface ChatCompositeIconSvg {
-  kind: 'composite';
-  viewBox: string;
-  children: ChatSvgChild[];
-}
-
-/** Pivi brand icon rendered from the product's bundled SVG asset. */
-export interface ChatPiviBrandIconSvg {
+/** Icon descriptor for the chat header: the Pivi brand mark from the bundled SVG asset. */
+export interface ChatIconSvg {
   kind: 'pivi-brand';
   viewBox: string;
 }
-
-/** SVG icon descriptor for chat toolbar and model selectors. */
-export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg | ChatPiviBrandIconSvg;
 
 /** Extended option with token count for budget-based reasoning controls. */
 export interface ChatReasoningOption extends ChatUIOption {
@@ -71,13 +41,6 @@ export interface ChatUIConfig {
 
   /** Apply model change side effects to settings. */
   applyModelDefaults(model: string, settings: unknown): void;
-
-  /** Optional hook to discover model-scoped metadata after a model is selected. */
-  prepareModelMetadata?(
-    model: string,
-    settings: Record<string, unknown>,
-    context: { host: unknown },
-  ): Promise<void>;
 
   /** Optional hook when the toolbar changes a reasoning selection. */
   applyReasoningSelection?(model: string, value: string, settings: unknown): void;

@@ -10,9 +10,8 @@ import type { SkillsManagementCoordinator } from '@pivi/agent/skills/vault/skill
 import type { SettingsComplexPorts } from '@pivi/pivi-react/ports';
 
 import type { PiviSettingsHost } from '@/app/hostContracts';
-import { getLocale, t } from '@/app/i18n';
+import { t } from '@/app/i18n';
 
-import { obsidianPresentationPlatform } from './obsidianPresentationPlatform';
 
 export function createSettingsSkillsPort(
   host: PiviSettingsHost,
@@ -26,17 +25,12 @@ export function createSettingsSkillsPort(
   };
   return {
     featuredBundle: {
-      getDescriptor: () => {
-        const terminology = obsidianPresentationPlatform.getTerminology(getLocale());
-        return {
-          name: t('settings.skills.defaultBundle.name', { hostName: terminology.hostName }),
-          description: t('settings.skills.defaultBundle.desc', {
-            workspaceName: terminology.workspaceName,
-          }),
-          source: DEFAULT_VAULT_SKILLS_SLUG,
-          sourceUrl: DEFAULT_VAULT_SKILLS_REPO_URL,
-        };
-      },
+      getDescriptor: () => ({
+        name: t('settings.skills.defaultBundle.name'),
+        description: t('settings.skills.defaultBundle.desc'),
+        source: DEFAULT_VAULT_SKILLS_SLUG,
+        sourceUrl: DEFAULT_VAULT_SKILLS_REPO_URL,
+      }),
       isInstalled: () => {
         const vaultPath = host.getVaultPath();
         return vaultPath

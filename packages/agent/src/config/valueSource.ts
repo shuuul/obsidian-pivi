@@ -64,7 +64,7 @@ export function isSecretLikeHeaderName(name: string): boolean {
   return isSecretLikeKey(name);
 }
 
-export function isConfigValueRef(value: unknown): value is ConfigValueRef {
+function isConfigValueRef(value: unknown): value is ConfigValueRef {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return false;
   }

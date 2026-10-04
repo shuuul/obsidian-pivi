@@ -1,6 +1,5 @@
 import {
   estimateTextTokens,
-  looksStructured,
 } from '@pivi/agent/prompt';
 
 describe('estimateTextTokens', () => {
@@ -10,12 +9,6 @@ describe('estimateTextTokens', () => {
 
   it('estimates ASCII prose at four characters per token', () => {
     expect(estimateTextTokens('a'.repeat(120))).toBeGreaterThanOrEqual(30);
-  });
-
-  it('recognizes fenced and JSON text', () => {
-    expect(looksStructured('```\ncode\n```')).toBe(true);
-    expect(looksStructured('{"ok":true}')).toBe(true);
-    expect(looksStructured('plain prose')).toBe(false);
   });
 
   // Recorded once with js-tiktoken's o200k_base encoding; the tokenizer is

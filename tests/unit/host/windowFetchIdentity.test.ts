@@ -7,13 +7,6 @@ describe('window.fetch identity', () => {
     expect(mainSource).not.toContain('patchRendererFetchForElectron');
     expect(mainSource).not.toMatch(/window\.fetch\s*=/);
 
-    const nodeFetchSource = readFileSync(
-      path.resolve(__dirname, '../../../packages/obsidian-host/src/nodeFetch.ts'),
-      'utf8',
-    );
-    expect(nodeFetchSource).not.toContain('patchRendererFetchForElectron');
-    expect(nodeFetchSource).not.toMatch(/window\.fetch\s*=/);
-
     const original = window.fetch;
     expect(window.fetch).toBe(original);
   });

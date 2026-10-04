@@ -4,9 +4,6 @@ export { fetchCustomProviderModels } from '../models/installPiCustomProviders';
 export {
   configurePiAiModels,
   piAiModels,
-  type PiCatalogRefreshFailure,
-  type PiCatalogRefreshResult,
-  type PiCatalogRefreshSummary,
   refreshPiCatalogModels,
   syncCustomPiProviders,
 } from '../models/piAiModels';
@@ -14,11 +11,13 @@ export { piChatUIConfig, warmPiAiModelsCache } from '../models/piChatUiConfig';
 export {
   getPiAiCatalogModels,
   getPiAiModelsForProvider,
-  PI_AI_MODELS_CACHE,
   type PiResolvedModel,
-  resolvePiModelFromKeyWithLookup,
 } from '../models/piModelRegistry';
-export { PiSettingsCoordinator } from '../models/piSettingsCoordinator';
+export {
+  getPiSettingsSnapshot,
+  projectActivePiState,
+  reconcilePiTitleGenerationModel,
+} from '../models/piSettingsCoordinator';
 export {
   type RemoteCatalogEntry,
   type RemoteCatalogStore,

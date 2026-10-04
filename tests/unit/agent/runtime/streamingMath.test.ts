@@ -1,6 +1,5 @@
 import {
   escapeMathDelimitersForStreaming,
-  hasStreamingMathDelimiters,
 } from '@pivi/agent/runtime/streamingMath';
 
 describe('streaming math escaping', () => {
@@ -28,9 +27,4 @@ describe('streaming math escaping', () => {
     );
   });
 
-  it('reports only delimiters that would be escaped', () => {
-    expect(hasStreamingMathDelimiters('plain text')).toBe(false);
-    expect(hasStreamingMathDelimiters('`$code$`')).toBe(false);
-    expect(hasStreamingMathDelimiters('$math$')).toBe(true);
-  });
 });

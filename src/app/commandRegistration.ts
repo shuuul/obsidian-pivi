@@ -1,7 +1,7 @@
 import type { Editor, Plugin } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
-import type { ChatFacade } from "@/app/hostContracts";
+import type { PiviChatCompositionHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 import { runAppAction } from "@/app/runAppAction";
 import { openInlineEditForEditorSelection } from "@/app/ui/selectionToolbar/SelectionToolbarSurfaceController";
@@ -14,7 +14,7 @@ export const ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID =
 const INLINE_EDIT_SELECTION_COMMAND_ID = "inline-edit-selection";
 const CHAT_PERF_SCENARIO_PATH = '.pivi/perf-scenario.txt';
 
-export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
+export function registerPiviCommands(plugin: Plugin, chat: PiviChatCompositionHost): void {
   if (process.env.NODE_ENV !== 'production') registerChatPerfCommands(plugin, chat);
   plugin.addCommand({
     id: "open-view",
@@ -157,7 +157,7 @@ export function registerPiviCommands(plugin: Plugin, chat: ChatFacade): void {
   });
 }
 
-function registerChatPerfCommands(plugin: Plugin, chat: ChatFacade): void {
+function registerChatPerfCommands(plugin: Plugin, chat: PiviChatCompositionHost): void {
   plugin.addCommand({
     id: 'debug-start-chat-performance-trace',
     name: 'Debug: start chat performance trace',
@@ -353,7 +353,7 @@ function registerChatPerfCommands(plugin: Plugin, chat: ChatFacade): void {
   });
 }
 
-async function resolveChatPerfScenario(chat: ChatFacade): Promise<string> {
+async function resolveChatPerfScenario(chat: PiviChatCompositionHost): Promise<string> {
   const adapter = chat.app.vault.adapter;
   if (!(await adapter.exists(CHAT_PERF_SCENARIO_PATH))) return 'manual';
   const scenario = (await adapter.read(CHAT_PERF_SCENARIO_PATH)).trim();

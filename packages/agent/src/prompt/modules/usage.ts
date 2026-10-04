@@ -1,6 +1,6 @@
 import { estimateTextTokens } from '../estimateTextTokens';
 
-export const PROMPT_USAGE_SECTION_IDS = ['core', 'workflow', 'custom', 'tools', 'mcp'] as const;
+const PROMPT_USAGE_SECTION_IDS = ['core', 'workflow', 'custom', 'tools', 'mcp'] as const;
 
 export interface PromptUsageSectionEstimate {
   readonly id: typeof PROMPT_USAGE_SECTION_IDS[number];

@@ -1,21 +1,18 @@
 /** Live names, silent aliases, and argument shims for the generic file-tool family. */
 
-export const LIVE_GENERIC_TOOLS = [
-  'read',
-  'write',
-  'edit',
-  'ls',
-  'search',
-  'bash',
-  'mkdir',
-  'move',
-  'delete',
-] as const;
-
-export type LiveGenericToolName = (typeof LIVE_GENERIC_TOOLS)[number];
+type LiveGenericToolName =
+  | 'read'
+  | 'write'
+  | 'edit'
+  | 'ls'
+  | 'search'
+  | 'bash'
+  | 'mkdir'
+  | 'move'
+  | 'delete';
 
 /** PascalCase, legacy `obsidian_*`, and extra name aliases → live name. */
-export const TOOL_NAME_ALIASES: Readonly<Record<string, LiveGenericToolName>> = {
+const TOOL_NAME_ALIASES: Readonly<Record<string, LiveGenericToolName>> = {
   Read: 'read',
   obsidian_read: 'read',
   obsidian_read_external: 'read',
@@ -324,14 +321,6 @@ export function buildAliasReminder(toolName: string, rawArguments: unknown): str
     default:
       return `Use the canonical field \`${normalized.fieldAlias}\` next time.`;
   }
-}
-
-export function canonicalizeToolCallName<T extends { name: string }>(toolCall: T): T {
-  const live = resolveLiveToolName(toolCall.name);
-  if (live !== toolCall.name) {
-    toolCall.name = live;
-  }
-  return toolCall;
 }
 
 export function appendToolResultReminder(result: unknown, reminder: string): unknown {

@@ -32,6 +32,7 @@ import {
   TOOL_PIVI_SESSIONS,
   TOOL_PIVI_SKILLS,
 } from '@pivi/agent/tools';
+import { isOfficialObsidianCliEnabled } from '@pivi/obsidian-host';
 import type {
   SettingsFeedbackMessage,
   SettingsHostIntegrationSection,
@@ -39,7 +40,6 @@ import type {
 } from '@pivi/pivi-react/ports';
 
 import type { PiviSettingsHost } from '@/app/hostContracts';
-import { isOfficialObsidianCliEnabled } from '@/app/hostPlatform';
 import { t, type TranslationKey } from '@/app/i18n';
 import type { NoteToolbarSetupResult } from '@/app/noteToolbarIntegration';
 

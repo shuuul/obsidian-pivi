@@ -1,15 +1,5 @@
 import type { ChatMessage, StreamChunk } from '@pivi/agent/runtime';
 
-export type ProviderBoundaryChunkType = 'user_message_start' | 'assistant_message_start';
-
-export function getProviderBoundaryChunkType(
-  chunk: StreamChunk,
-): ProviderBoundaryChunkType | null {
-  if (chunk.type === 'user_message_start' || chunk.type === 'assistant_message_start') {
-    return chunk.type;
-  }
-  return null;
-}
 
 export function isUserMessageStartChunk(
   chunk: StreamChunk,

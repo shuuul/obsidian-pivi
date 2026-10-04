@@ -1,4 +1,4 @@
-export const DEFAULT_TOOL_RESULT_CHARS = 50_000;
+const DEFAULT_TOOL_RESULT_CHARS = 50_000;
 
 /** Truncate model-visible tool text with an explicit continuation marker. */
 export function capToolResultText(

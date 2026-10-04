@@ -120,11 +120,3 @@ export function escapeMathDelimitersForStreaming(markdown: string): string {
 
   return result;
 }
-
-export function hasStreamingMathDelimiters(markdown: string): boolean {
-  if (!markdown.includes('$')) {
-    return false;
-  }
-
-  return escapeMathDelimitersForStreaming(markdown) !== markdown;
-}

@@ -7,9 +7,9 @@ import {
   stableProviderIdDigest,
 } from './providerSecretStorage';
 
-export const CUSTOM_PROVIDER_HEADER_SECRET_VERSION = 1 as const;
+const CUSTOM_PROVIDER_HEADER_SECRET_VERSION = 1 as const;
 
-export interface CustomProviderHeaderSecretPayloadV1 {
+interface CustomProviderHeaderSecretPayloadV1 {
   version: typeof CUSTOM_PROVIDER_HEADER_SECRET_VERSION;
   headers: Record<string, string>;
 }
@@ -77,7 +77,7 @@ function normalizeHeaderMap(raw: unknown): Record<string, string> {
   return headers;
 }
 
-export function serializeCustomProviderHeaderSecret(
+function serializeCustomProviderHeaderSecret(
   headers: Record<string, string>,
 ): string {
   const payload: CustomProviderHeaderSecretPayloadV1 = {
@@ -87,7 +87,7 @@ export function serializeCustomProviderHeaderSecret(
   return JSON.stringify(payload);
 }
 
-export function parseCustomProviderHeaderSecret(
+function parseCustomProviderHeaderSecret(
   raw: string | null | undefined,
 ): Record<string, string> | null {
   if (!raw?.trim()) {

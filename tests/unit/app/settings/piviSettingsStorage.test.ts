@@ -137,19 +137,6 @@ describe("Pivi settings normalization and save projection", () => {
     expect(reloaded.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
   });
 
-  it('migrates legacy web provider preferences to the ordered provider queue', () => {
-    const settings = normalizeStoredPiviSettings({
-      agentSettings: {
-        webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily' },
-      },
-    });
-
-    expect(settings.agentSettings.webSearchTools).toEqual({
-      providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
-      disabledProviders: [],
-    });
-  });
-
   it("removes legacy settings-backed custom system prompt on load", async () => {
     const settings = normalizeStoredPiviSettings({
       userName: "Alice",

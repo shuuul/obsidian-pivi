@@ -4,8 +4,8 @@ export type BashAuthorizationGrant =
   | { kind: 'exact-shell'; command: string }
   | { kind: 'argv-prefix'; argv: readonly string[] };
 
-export const BASH_EXACT_ENTRY_PREFIX = 'exact: ';
-export const BASH_PREFIX_ENTRY_PREFIX = 'prefix: ';
+const BASH_EXACT_ENTRY_PREFIX = 'exact: ';
+const BASH_PREFIX_ENTRY_PREFIX = 'prefix: ';
 
 const POSIX_SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'ksh93']);
 const CMD_SHELLS = new Set(['cmd', 'cmd.exe']);
@@ -24,11 +24,11 @@ export function isWindowsCmdShell(shellPath: string): boolean {
   return CMD_SHELLS.has(base);
 }
 
-export function createExactBashGrant(command: string): BashAuthorizationGrant {
+function createExactBashGrant(command: string): BashAuthorizationGrant {
   return { kind: 'exact-shell', command: normalizeBashCommand(command) };
 }
 
-export function createPrefixBashGrant(command: string, shellPath: string): BashAuthorizationGrant | null {
+function createPrefixBashGrant(command: string, shellPath: string): BashAuthorizationGrant | null {
   if (!isPosixCompatibleShell(shellPath) && !isWindowsCmdShell(shellPath)) return null;
   try {
     const argv = isWindowsCmdShell(shellPath)

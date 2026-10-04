@@ -7,7 +7,7 @@ jest.mock('@/ui/shared/utils/obsidianPrivateApi', () => ({
 
 import type { App } from 'obsidian';
 
-import { navigateSlashBadge } from '@/app/hostPlatform';
+import { navigateSlashBadge } from '@/app/slashBadgeNavigation';
 import { registerPiviSettings } from '@/app/settingsRegistration';
 import { PiviSettingTabHost } from '@/app/ui/PiviSettingTabHost';
 import { openNativeSettingsPage } from '@/ui/shared/utils/obsidianPrivateApi';

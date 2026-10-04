@@ -12,7 +12,7 @@ export interface PiSystemPromptToolRegistry {
   contextAppendices: string[];
 }
 
-export function buildPiSystemPromptSettings(
+function buildPiSystemPromptSettings(
   vaultPath: string | undefined,
   userName: string | undefined,
 ): SystemPromptSettings {

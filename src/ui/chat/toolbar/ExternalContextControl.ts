@@ -1,7 +1,6 @@
+import { expandHomePath, normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 import * as os from 'os';
 import * as path from 'path';
-
-import { expandHomePath, normalizePathForFilesystem } from '@/app/hostPlatform';
 
 import {
   findConflictingPath,

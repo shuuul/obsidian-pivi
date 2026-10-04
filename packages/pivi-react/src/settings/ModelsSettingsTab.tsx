@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { ModelSelector } from '../mount/composer/ComposerSelectors';
-import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort, SettingsPersistencePort } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
 import { AddProviderPicker } from './models/AddProviderPicker';
@@ -32,7 +31,6 @@ export interface ModelsSettingsTabProps {
 /** Provider-card model settings: credentials, custom endpoints, and visible models. */
 export function ModelsSettingsTab({ models, catalog, feedback, persistence }: ModelsSettingsTabProps) {
   const t = useT();
-  const terminology = useHostTerminology();
   const [bootstrapInfo] = useState(() => models.bootstrap());
   const [settings, setSettings] = useState(() => models.getSettings());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
@@ -231,14 +229,10 @@ export function ModelsSettingsTab({ models, catalog, feedback, persistence }: Mo
     <>
       {bootstrapInfo.secureStorageAvailable ? null : (
         <p>{t('settings.modelsTab.secureStorageRequired', {
-          hostName: terminology.hostName,
-          secureStorageName: terminology.secureStorageName,
           version: bootstrapInfo.minimumHostVersion,
         })}</p>
       )}
-      <p>{t('settings.modelsTab.intro', {
-        secureStorageName: terminology.secureStorageName,
-      })}</p>
+      <p>{t('settings.modelsTab.intro')}</p>
     </>
   );
 

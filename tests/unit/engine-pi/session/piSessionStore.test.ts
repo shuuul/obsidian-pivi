@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import type { FileStore } from '@pivi/agent/session';
+import type { FileStore } from '@pivi/agent/ports';
 import type { DeviceLocalExternalContextStore } from '@pivi/agent/session';
 import {
   getPiviSessionDir,

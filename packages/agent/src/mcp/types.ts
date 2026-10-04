@@ -39,7 +39,7 @@ export interface McpOAuthConfig {
 /** OAuth settings persisted in `.pivi/mcp.json` metadata. */
 export type StoredMcpOAuthConfig = Omit<McpOAuthConfig, 'clientSecret'>;
 
-export type McpRemoteAuthMode = 'none' | 'bearer' | 'oauth';
+type McpRemoteAuthMode = 'none' | 'bearer' | 'oauth';
 
 /** Union type for all MCP server configurations. */
 export type McpServerConfig = McpHttpServerConfig;
@@ -75,7 +75,7 @@ export type McpAuthStatus =
   | 'not_applicable';
 
 /** MCP configuration file format used by the current CLI integrations. */
-export interface McpConfigFile {
+interface McpConfigFile {
   mcpServers: Record<string, McpServerConfig>;
 }
 
@@ -143,7 +143,7 @@ export function isMcpLegacySseServerConfig(obj: unknown): obj is McpLegacySseSer
     && hasOptionalMcpConfigValueMap(obj, 'headers');
 }
 
-export function isMcpHttpServerConfig(obj: unknown): obj is McpHttpServerConfig {
+function isMcpHttpServerConfig(obj: unknown): obj is McpHttpServerConfig {
   if (!isRecord(obj)) {
     return false;
   }

@@ -18,7 +18,7 @@ export interface ChatTurnRequest {
   referencedSessions?: ReferencedSession[];
 }
 
-export interface ReferencedSession {
+interface ReferencedSession {
   sessionId: string;
   sessionFile: string;
   title: string;

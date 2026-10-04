@@ -21,9 +21,7 @@
       "unavailableStreaming": "Verzweigung während des Streamings nicht möglich",
       "unavailableNoUuid": "Verzweigung nicht möglich: Nachrichtenkennungen fehlen",
       "errorMessageNotFound": "Nachricht nicht gefunden",
-      "errorNoSession": "Keine Sitzungs-ID verfügbar",
-      "commandNoMessages": "Verzweigung nicht möglich: keine Nachrichten in der Konversation",
-      "commandNoAssistantUuid": "Verzweigung nicht möglich: keine Assistentenantwort mit Kennungen"
+      "errorNoSession": "Keine Sitzungs-ID verfügbar"
     },
     "redo": {
       "ariaLabel": "Agentenantwort erneut erstellen",
@@ -631,7 +629,7 @@
       }
     },
     "slashCommands": {
-      "desc": "{workspaceName}-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."
+      "desc": "Vault-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."
     },
     "subagents": {
       "heading": "Subagenten",
@@ -734,12 +732,12 @@
       },
       "heading": "Tool-Schalter",
       "groups": {
-        "workspace": "{workspaceNameTitle}-Werkzeuge",
-        "hostCli": "{hostName}-CLI",
+        "workspace": "Vault-Werkzeuge",
+        "hostCli": "Obsidian-CLI",
         "pivi": "Pivi",
         "additional": "Zusätzlicher Zugriff"
       },
-      "intro": "{hostName}-Tools für den Agenten ein- oder ausschalten. Änderungen gelten für neue Turns nach Prompt-Aktualisierung.",
+      "intro": "Obsidian-Tools für den Agenten ein- oder ausschalten. Änderungen gelten für neue Turns nach Prompt-Aktualisierung.",
       "reading": {
         "defaultSize": {
           "name": "Standard-Lesegröße",
@@ -751,16 +749,36 @@
       "unavailableCorePlugin": "Das zugehörige Kern-Plugin muss aktiviert sein.",
       "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung.",
       "cli": {
-        "heading": "Offizielle {hostName}-CLI",
-        "enabled": { "name": "Offizielle CLI-Werkzeuge aktivieren", "desc": "Pivi darf Werkzeuge registrieren, die auf der offiziellen {hostName}-CLI basieren." },
-        "unavailable": "Die offizielle {hostName}-CLI ist nicht registriert. CLI-Werkzeuge können nicht aktiviert werden.",
-        "path": { "name": "Pfad zur CLI-Datei", "desc": "Optionaler Pfad zur ausführbaren Datei. Leer lassen für automatische Erkennung.", "placeholder": "Automatisch erkennen" },
-        "timeout": { "name": "CLI-Zeitlimit", "desc": "Maximale Zeit für jede offizielle CLI-Anfrage.", "option": "{seconds} Sekunden" },
+        "heading": "Offizielle Obsidian-CLI",
+        "enabled": {
+          "name": "Offizielle CLI-Werkzeuge aktivieren",
+          "desc": "Pivi darf Werkzeuge registrieren, die auf der offiziellen Obsidian-CLI basieren."
+        },
+        "unavailable": "Die offizielle Obsidian-CLI ist nicht registriert. CLI-Werkzeuge können nicht aktiviert werden.",
+        "path": {
+          "name": "Pfad zur CLI-Datei",
+          "desc": "Optionaler Pfad zur ausführbaren Datei. Leer lassen für automatische Erkennung.",
+          "placeholder": "Automatisch erkennen"
+        },
+        "timeout": {
+          "name": "CLI-Zeitlimit",
+          "desc": "Maximale Zeit für jede offizielle CLI-Anfrage.",
+          "option": "{seconds} Sekunden"
+        },
         "actionsUnavailable": "CLI-basierte Abfrage- und Erstellaktionen sind derzeit nicht verfügbar."
       },
       "command": {
-        "execution": { "name": "Befehlsausführung erlauben", "desc": "Befehle nach einer bestehenden Freigabe oder einer interaktiven Berechtigungsanfrage ausführen. Die Suche bleibt schreibgeschützt." },
-        "allowlist": { "name": "Erlaubte Befehls-IDs", "desc": "Nicht aufgeführte Befehle fragen vor der Ausführung nach Erlaubnis.", "add": "Erlaubte Befehls-ID hinzufügen", "placeholder": "Befehls-ID", "remove": "{id} entfernen" }
+        "execution": {
+          "name": "Befehlsausführung erlauben",
+          "desc": "Befehle nach einer bestehenden Freigabe oder einer interaktiven Berechtigungsanfrage ausführen. Die Suche bleibt schreibgeschützt."
+        },
+        "allowlist": {
+          "name": "Erlaubte Befehls-IDs",
+          "desc": "Nicht aufgeführte Befehle fragen vor der Ausführung nach Erlaubnis.",
+          "add": "Erlaubte Befehls-ID hinzufügen",
+          "placeholder": "Befehls-ID",
+          "remove": "{id} entfernen"
+        }
       }
     },
     "bash": {
@@ -812,14 +830,14 @@
       },
       "apiKeyName": "{provider}-API-Schlüssel",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
-      "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
+      "apiKeySavedPlaceholder": "Im Obsidian-Schlüsselbund gespeichert",
       "removeKey": "Entfernen",
       "enableAria": "{provider} aktivieren",
       "disableAria": "{provider} deaktivieren"
     },
     "modelsTab": {
-      "intro": "API-Schlüssel und OAuth-Token liegen im {secureStorageName}. Deaktivierte Anbieter bleiben gespeichert, sind aber im Modellwähler ausgeblendet.",
-      "secureStorageRequired": "Anbieter-API-Schlüssel erfordern {hostName} {version} oder neuer mit {secureStorageName}. Aktualisieren Sie {hostName}, um Anmeldedaten sicher zu speichern.",
+      "intro": "API-Schlüssel und OAuth-Token liegen im Obsidian-Schlüsselbund. Deaktivierte Anbieter bleiben gespeichert, sind aber im Modellwähler ausgeblendet.",
+      "secureStorageRequired": "Anbieter-API-Schlüssel erfordern Obsidian {version} oder neuer mit Obsidian-Schlüsselbund. Aktualisieren Sie Obsidian, um Anmeldedaten sicher zu speichern.",
       "defaultModelSectionTitle": "Standardmodell",
       "defaultModel": "Standardmodell",
       "defaultModelDesc": "Wird für neue Unterhaltungen und pivi:run-CLI-Läufe verwendet. Die Modellauswahl im Composer aktualisiert es.",
@@ -831,13 +849,13 @@
       "authHeading": "Authentifizierung & Anmeldedaten",
       "apiKey": "API-Schlüssel",
       "apiKeyOptional": "API-Schlüssel (optional)",
-      "apiKeyDesc": "Im {secureStorageName} als {secretId} gespeichert.",
+      "apiKeyDesc": "Im Obsidian-Schlüsselbund als {secretId} gespeichert.",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
-      "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
+      "apiKeySavedPlaceholder": "Im Obsidian-Schlüsselbund gespeichert",
       "oauthToken": "OAuth-Token",
-      "oauthTokenDesc": "Im {secureStorageName} als {secretId} gespeichert.",
+      "oauthTokenDesc": "Im Obsidian-Schlüsselbund als {secretId} gespeichert.",
       "oauthTokenPlaceholder": "OAuth-Token eingeben…",
-      "oauthTokenSavedPlaceholder": "Im {secureStorageName} gespeichert",
+      "oauthTokenSavedPlaceholder": "Im Obsidian-Schlüsselbund gespeichert",
       "clear": "Leeren",
       "candidateModels": "Kandidatenmodell-Pool",
       "catalogRefreshTitle": "Modellkatalog",
@@ -871,7 +889,7 @@
       "addProvider": "+ Anbieter hinzufügen",
       "addProviderAdded": "Hinzugefügt",
       "removedProvider": "Anbieter {name} entfernt.",
-      "removeCredential": "Zugangsdaten dieses Anbieters ebenfalls aus {secureStorageName} löschen",
+      "removeCredential": "Zugangsdaten dieses Anbieters ebenfalls aus Obsidian-Schlüsselbund löschen",
       "enableAria": "{name}-Anbieter aktivieren",
       "disableAria": "{name}-Anbieter deaktivieren",
       "removeAria": "{name}-Anbieter entfernen",
@@ -899,7 +917,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "Mit ChatGPT/Codex-Abo anmelden. Anmeldedaten im {secureStorageName}.",
+        "desc": "Mit ChatGPT/Codex-Abo anmelden. Anmeldedaten im Obsidian-Schlüsselbund.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
@@ -927,12 +945,12 @@
       "fetchModelsSuccess": "{name}: {count} Modelle geladen.",
       "fetchModelsFailed": "{name}: Modelle konnten nicht geladen werden: {message}",
       "authHeadingOptional": "Authentifizierung (optional)",
-      "apiKeyOptionalDesc": "Optional. Leer lassen für lokale Server ohne Auth. Bei Angabe im {secureStorageName} als {secretId} gespeichert.",
+      "apiKeyOptionalDesc": "Optional. Leer lassen für lokale Server ohne Auth. Bei Angabe im Obsidian-Schlüsselbund als {secretId} gespeichert.",
       "apiKeyOptionalPlaceholder": "Optionaler API-Schlüssel…",
       "dualAuthApiKeyBlocked": "Dieser Anbieter erfordert jetzt OAuth-Anmeldung. Bestehende API-Schlüssel können weiterhin aktualisiert oder gelöscht werden.",
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "Mit dem xAI-Konto bei Grok Build anmelden. Anmeldedaten im {secureStorageName}.",
+        "desc": "Mit dem xAI-Konto bei Grok Build anmelden. Anmeldedaten im Obsidian-Schlüsselbund.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
@@ -942,7 +960,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "Mit Claude Pro oder Max im Browser anmelden. Anmeldedaten im {secureStorageName}.",
+        "desc": "Mit Claude Pro oder Max im Browser anmelden. Anmeldedaten im Obsidian-Schlüsselbund.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
@@ -952,7 +970,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "Mit ChatGPT im Browser anmelden. Anmeldedaten im {secureStorageName}.",
+        "desc": "Mit ChatGPT im Browser anmelden. Anmeldedaten im Obsidian-Schlüsselbund.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
@@ -962,7 +980,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "Im Browser bei OpenRouter anmelden. Anmeldedaten im {secureStorageName}.",
+        "desc": "Im Browser bei OpenRouter anmelden. Anmeldedaten im Obsidian-Schlüsselbund.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
@@ -972,7 +990,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "Mit Kimi Code-Abonnement anmelden. Anmeldedaten im {secureStorageName}.",
+        "desc": "Mit Kimi Code-Abonnement anmelden. Anmeldedaten im Obsidian-Schlüsselbund.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
@@ -989,8 +1007,8 @@
     "skills": {
       "intro": "Agenten-Skills liegen in .pivi/skills/ und werden im nächsten Turn geladen (Skill-Tool + Systemprompt). Pivi installiert oder aktualisiert Skills nur nach Aktion unten.",
       "defaultBundle": {
-        "name": "Offizielle {hostName}-Skills",
-        "desc": "Installiert oder aktualisiert das offizielle Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt die festgelegte skills-CLI aus und schreibt nach .pivi/skills/.",
+        "name": "Offizielle Obsidian-Skills",
+        "desc": "Installiert oder aktualisiert das offizielle Bundle kepano/obsidian-skills für diesen Vault. Greift auf GitHub/skills.sh zu, führt die festgelegte skills-CLI aus und schreibt nach .pivi/skills/.",
         "button": "Offizielle Skills installieren",
         "updateButton": "Offizielle Skills aktualisieren",
         "label": "Offizielles Bundle:",

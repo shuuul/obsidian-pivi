@@ -21,9 +21,7 @@
       "unavailableStreaming": "Нельзя разветвить во время потока",
       "unavailableNoUuid": "Нельзя разветвить: нет идентификаторов сообщения",
       "errorMessageNotFound": "Сообщение не найдено",
-      "errorNoSession": "Нет доступного ID сеанса",
-      "commandNoMessages": "Нельзя разветвить: в беседе нет сообщений",
-      "commandNoAssistantUuid": "Нельзя разветвить: нет ответа ассистента с идентификаторами"
+      "errorNoSession": "Нет доступного ID сеанса"
     },
     "redo": {
       "ariaLabel": "Повторить ответ агента",
@@ -631,7 +629,7 @@
       "commandsTruncated": "Показаны первые {count} совпадений. Уточните поиск, чтобы увидеть больше."
     },
     "slashCommands": {
-      "desc": "Управление пользовательскими командами {workspaceName} в .pivi/commands/. Запуск через /имя."
+      "desc": "Управление пользовательскими командами хранилище в .pivi/commands/. Запуск через /имя."
     },
     "subagents": {
       "heading": "Субагенты",
@@ -734,12 +732,12 @@
       },
       "heading": "Переключатели инструментов",
       "groups": {
-        "workspace": "Инструменты {workspaceNameTitle}",
-        "hostCli": "CLI {hostName}",
+        "workspace": "Инструменты Хранилище",
+        "hostCli": "CLI Obsidian",
         "pivi": "Pivi",
         "additional": "Дополнительный доступ"
       },
-      "intro": "Включайте или отключайте инструменты {hostName} для агента. Изменения действуют в новых ходах после обновления промпта.",
+      "intro": "Включайте или отключайте инструменты Obsidian для агента. Изменения действуют в новых ходах после обновления промпта.",
       "reading": {
         "defaultSize": {
           "name": "Размер чтения по умолчанию",
@@ -751,16 +749,36 @@
       "unavailableCorePlugin": "Необходимо включить соответствующий встроенный плагин.",
       "unavailableCodex": "Требуется подключение OpenAI Codex.",
       "cli": {
-        "heading": "Официальный CLI {hostName}",
-        "enabled": { "name": "Включить инструменты официального CLI", "desc": "Разрешить Pivi регистрировать инструменты на основе официального CLI {hostName}." },
-        "unavailable": "Официальный CLI {hostName} не зарегистрирован. Инструменты CLI нельзя включить.",
-        "path": { "name": "Путь к исполняемому файлу CLI", "desc": "Необязательная замена исполняемого файла. Оставьте пустым для автоматического обнаружения.", "placeholder": "Определять автоматически" },
-        "timeout": { "name": "Тайм-аут CLI", "desc": "Максимальное время каждого запроса официального CLI.", "option": "{seconds} с" },
+        "heading": "Официальный CLI Obsidian",
+        "enabled": {
+          "name": "Включить инструменты официального CLI",
+          "desc": "Разрешить Pivi регистрировать инструменты на основе официального CLI Obsidian."
+        },
+        "unavailable": "Официальный CLI Obsidian не зарегистрирован. Инструменты CLI нельзя включить.",
+        "path": {
+          "name": "Путь к исполняемому файлу CLI",
+          "desc": "Необязательная замена исполняемого файла. Оставьте пустым для автоматического обнаружения.",
+          "placeholder": "Определять автоматически"
+        },
+        "timeout": {
+          "name": "Тайм-аут CLI",
+          "desc": "Максимальное время каждого запроса официального CLI.",
+          "option": "{seconds} с"
+        },
         "actionsUnavailable": "Действия запроса и создания через CLI сейчас недоступны."
       },
       "command": {
-        "execution": { "name": "Разрешить выполнение команд", "desc": "Выполнять команды после существующего разрешения или интерактивного запроса. Обнаружение остаётся только для чтения." },
-        "allowlist": { "name": "Разрешённые идентификаторы команд", "desc": "Для команд вне этого списка разрешение запрашивается перед выполнением.", "add": "Добавить разрешённый идентификатор команды", "placeholder": "Идентификатор команды", "remove": "Удалить {id}" }
+        "execution": {
+          "name": "Разрешить выполнение команд",
+          "desc": "Выполнять команды после существующего разрешения или интерактивного запроса. Обнаружение остаётся только для чтения."
+        },
+        "allowlist": {
+          "name": "Разрешённые идентификаторы команд",
+          "desc": "Для команд вне этого списка разрешение запрашивается перед выполнением.",
+          "add": "Добавить разрешённый идентификатор команды",
+          "placeholder": "Идентификатор команды",
+          "remove": "Удалить {id}"
+        }
       }
     },
     "bash": {
@@ -812,14 +830,14 @@
       },
       "apiKeyName": "API-ключ {provider}",
       "apiKeyPlaceholder": "Введите API-ключ…",
-      "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
+      "apiKeySavedPlaceholder": "Сохранено в связка ключей Obsidian",
       "removeKey": "Убрать",
       "enableAria": "Включить {provider}",
       "disableAria": "Отключить {provider}"
     },
     "modelsTab": {
-      "intro": "API-ключи и OAuth-токены хранятся в {secureStorageName}. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
-      "secureStorageRequired": "API-ключи провайдеров требуют {hostName} {version} или новее с {secureStorageName}. Обновите {hostName} для безопасного хранения учётных данных.",
+      "intro": "API-ключи и OAuth-токены хранятся в связка ключей Obsidian. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
+      "secureStorageRequired": "API-ключи провайдеров требуют Obsidian {version} или новее с связка ключей Obsidian. Обновите Obsidian для безопасного хранения учётных данных.",
       "defaultModelSectionTitle": "Модель по умолчанию",
       "defaultModel": "Модель по умолчанию",
       "defaultModelDesc": "Используется для новых бесед и запусков pivi:run через CLI. Выбор модели в композере обновляет её.",
@@ -831,13 +849,13 @@
       "authHeading": "Аутентификация и учётные данные",
       "apiKey": "API-ключ",
       "apiKeyOptional": "API-ключ (необязательно)",
-      "apiKeyDesc": "Сохранён в {secureStorageName} как {secretId}.",
+      "apiKeyDesc": "Сохранён в связка ключей Obsidian как {secretId}.",
       "apiKeyPlaceholder": "Введите API-ключ…",
-      "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
+      "apiKeySavedPlaceholder": "Сохранено в связка ключей Obsidian",
       "oauthToken": "OAuth-токен",
-      "oauthTokenDesc": "Сохранён в {secureStorageName} как {secretId}.",
+      "oauthTokenDesc": "Сохранён в связка ключей Obsidian как {secretId}.",
       "oauthTokenPlaceholder": "Введите OAuth-токен…",
-      "oauthTokenSavedPlaceholder": "Сохранено в {secureStorageName}",
+      "oauthTokenSavedPlaceholder": "Сохранено в связка ключей Obsidian",
       "clear": "Очистить",
       "candidateModels": "Пул кандидатных моделей",
       "catalogRefreshTitle": "Каталог моделей",
@@ -871,7 +889,7 @@
       "addProvider": "+ Добавить провайдера",
       "addProviderAdded": "Добавлено",
       "removedProvider": "Провайдер {name} удалён.",
-      "removeCredential": "Также удалить учётные данные этого провайдера из {secureStorageName}",
+      "removeCredential": "Также удалить учётные данные этого провайдера из связка ключей Obsidian",
       "enableAria": "Включить провайдера {name}",
       "disableAria": "Отключить провайдера {name}",
       "removeAria": "Удалить провайдера {name}",
@@ -899,7 +917,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "Войдите с подпиской ChatGPT/Codex. Учётные данные в {secureStorageName}.",
+        "desc": "Войдите с подпиской ChatGPT/Codex. Учётные данные в связка ключей Obsidian.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
         "disconnect": "Отключить",
@@ -927,12 +945,12 @@
       "fetchModelsSuccess": "{name}: загружено моделей: {count}.",
       "fetchModelsFailed": "{name}: не удалось загрузить модели: {message}",
       "authHeadingOptional": "Аутентификация (необязательно)",
-      "apiKeyOptionalDesc": "Необязательно. Оставьте пустым для локальных серверов без авторизации. При указании сохраняется в {secureStorageName} как {secretId}.",
+      "apiKeyOptionalDesc": "Необязательно. Оставьте пустым для локальных серверов без авторизации. При указании сохраняется в связка ключей Obsidian как {secretId}.",
       "apiKeyOptionalPlaceholder": "Необязательный API-ключ…",
       "dualAuthApiKeyBlocked": "Для этого провайдера теперь требуется вход через OAuth. Существующие API-ключи по-прежнему можно обновлять или удалять.",
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "Войдите в Grok Build с учётной записью xAI. Учётные данные сохраняются в {secureStorageName}.",
+        "desc": "Войдите в Grok Build с учётной записью xAI. Учётные данные сохраняются в связка ключей Obsidian.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
         "disconnect": "Отключить",
@@ -942,7 +960,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "Войдите через подписку Claude Pro или Max в браузере. Учётные данные сохраняются в {secureStorageName}.",
+        "desc": "Войдите через подписку Claude Pro или Max в браузере. Учётные данные сохраняются в связка ключей Obsidian.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
         "disconnect": "Отключить",
@@ -952,7 +970,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "Войдите через подписку ChatGPT в браузере. Учётные данные сохраняются в {secureStorageName}.",
+        "desc": "Войдите через подписку ChatGPT в браузере. Учётные данные сохраняются в связка ключей Obsidian.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
         "disconnect": "Отключить",
@@ -962,7 +980,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "Войдите в OpenRouter в браузере. Учётные данные сохраняются в {secureStorageName}.",
+        "desc": "Войдите в OpenRouter в браузере. Учётные данные сохраняются в связка ключей Obsidian.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
         "disconnect": "Отключить",
@@ -972,7 +990,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "Войдите с подпиской Kimi Code. Учётные данные сохраняются в {secureStorageName}.",
+        "desc": "Войдите с подпиской Kimi Code. Учётные данные сохраняются в связка ключей Obsidian.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
         "disconnect": "Отключить",
@@ -989,8 +1007,8 @@
     "skills": {
       "intro": "Навыки агента в .pivi/skills/ загружаются в следующем ходе (инструмент skill + системный промпт). Установка/обновление только после действия ниже.",
       "defaultBundle": {
-        "name": "Официальные навыки {hostName}",
-        "desc": "Устанавливает или обновляет официальный пакет kepano/obsidian-skills для этого {workspaceName}. Обращается к GitHub/skills.sh, запускает закреплённый skills CLI и пишет в .pivi/skills/.",
+        "name": "Официальные навыки Obsidian",
+        "desc": "Устанавливает или обновляет официальный пакет kepano/obsidian-skills для этого хранилище. Обращается к GitHub/skills.sh, запускает закреплённый skills CLI и пишет в .pivi/skills/.",
         "button": "Установить официальные навыки",
         "updateButton": "Обновить официальные навыки",
         "label": "Официальный пакет:",

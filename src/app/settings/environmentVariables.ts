@@ -1,6 +1,5 @@
 import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
 import type { SyncSecretStore } from '@pivi/agent/ports';
-import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { PiviSettings } from '@pivi/agent/settings';
 import {
   getRuntimeEnvironmentText,
@@ -24,16 +23,13 @@ import type { EnvironmentScope } from '@pivi/agent/settings/types';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import {
-  migrateCanonicalCredentialsFromText,
+  handOffCanonicalCredentialsFromText,
   publishEnvironmentEntries,
-} from '@/app/settings/deviceLocalEnvironmentMigration';
+} from '@/app/settings/deviceLocalEnvironmentLoad';
 
 export interface EnvironmentApplyHooks {
-  persistSessionSummary(openSession: OpenSessionState): Promise<void>;
-  reconcileModelWithEnvironment(): {
-    changed: boolean;
-    invalidatedSessions: OpenSessionState[];
-  };
+  /** Returns whether the model selection changed. */
+  reconcileModelWithEnvironment(): boolean;
 }
 
 type EnvironmentApplyHost = Pick<
@@ -106,14 +102,8 @@ async function afterEnvironmentPublished(
   plugin: EnvironmentApplyHost,
   hooks: EnvironmentApplyHooks,
 ): Promise<void> {
-  const { changed, invalidatedSessions } = hooks.reconcileModelWithEnvironment();
+  const changed = hooks.reconcileModelWithEnvironment();
   await plugin.saveSettings();
-
-  if (invalidatedSessions.length > 0) {
-    for (const conv of invalidatedSessions) {
-      await hooks.persistSessionSummary(conv);
-    }
-  }
 
   let failedTabs = 0;
   for (const view of plugin.getAllViews()) {
@@ -214,7 +204,7 @@ function prepareImports(
   const recorder = createSecretMutationRecorder(secretStorage);
   const drafts: EnvironmentEntryDraft[] = [];
   for (const [scope, envText] of imports) {
-    const migrated = migrateCanonicalCredentialsFromText(
+    const migrated = handOffCanonicalCredentialsFromText(
       recorder.store,
       envText,
       plugin.settings.agentSettings.addedProviders ?? [],

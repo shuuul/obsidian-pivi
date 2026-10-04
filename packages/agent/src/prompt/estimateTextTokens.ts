@@ -1,28 +1,9 @@
-export const ASCII_PROSE_CHARS_PER_TOKEN = 4;
-export const ASCII_STRUCTURED_CHARS_PER_TOKEN = 3;
+const ASCII_PROSE_CHARS_PER_TOKEN = 4;
+const ASCII_STRUCTURED_CHARS_PER_TOKEN = 3;
 
 const FENCED_BLOCK = /^(?: {0,3})(`{3,}|~{3,})([^\n]*)(?:\n|$)([\s\S]*?)^(?: {0,3})\1[ \t]*(?:\n|$)/gm;
 const LETTER = /\p{L}/u;
 const NUMBER = /\p{N}/u;
-
-export function looksStructured(text: string): boolean {
-  const trimmed = text.trim();
-  if (trimmed.includes('```') || trimmed.includes('~~~')) {
-    return true;
-  }
-  if (!(
-    (trimmed.startsWith('{') && trimmed.endsWith('}'))
-    || (trimmed.startsWith('[') && trimmed.endsWith(']'))
-  )) {
-    return false;
-  }
-  try {
-    JSON.parse(trimmed);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 function isJson(text: string): boolean {
   const trimmed = text.trim();

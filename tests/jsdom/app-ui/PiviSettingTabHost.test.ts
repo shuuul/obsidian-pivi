@@ -2,7 +2,7 @@ import { createI18n } from '@pivi/pivi-react';
 import { getSettingsPageSearchAliases, mountSettingsPage } from '@pivi/pivi-react/mount';
 import { SETTINGS_ROOT_LAYOUT } from '@pivi/pivi-react/settings';
 
-import type { PiviPluginWorkspace, SettingsFacade } from '@/app/hostContracts';
+import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
 import { PiviSettingTabHost } from '@/app/ui/PiviSettingTabHost';
 import { createSettingsUiPorts } from '@/app/ui/createSettingsUiPorts';
@@ -36,7 +36,7 @@ function createHost(locale = 'en') {
       registeredCleanups.push(cleanup);
     },
     settings: { locale },
-  } as unknown as SettingsFacade;
+  } as unknown as PiviSettingsHost;
   const workspace = {} as PiviPluginWorkspace;
   const getWorkspace = jest.fn(async () => workspace);
   const host = new PiviSettingTabHost({} as never, plugin as never, plugin, getWorkspace);

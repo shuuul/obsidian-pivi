@@ -1,11 +1,9 @@
-import type { ProviderCredential } from '../auth/piProviderCredentials';
-
-export interface WorkspaceFileStat {
+interface FileStat {
   mtime: number;
   size: number;
 }
 
-export interface WorkspaceFileStore {
+export interface FileStore {
   exists(path: string): Promise<boolean>;
   read(path: string): Promise<string>;
   write(path: string, content: string): Promise<void>;
@@ -17,10 +15,8 @@ export interface WorkspaceFileStore {
   listFilesRecursive(path: string): Promise<string[]>;
   ensureFolder(path: string): Promise<void>;
   rename(oldPath: string, newPath: string): Promise<void>;
-  stat(path: string): Promise<WorkspaceFileStat | null>;
+  stat(path: string): Promise<FileStat | null>;
 }
-
-export type FileStore = WorkspaceFileStore;
 
 /** Synchronous secret persistence used by MCP auth stores. */
 export interface SyncSecretStore {
@@ -28,14 +24,6 @@ export interface SyncSecretStore {
   setSecret(key: string, value: string): void;
   listSecrets(prefix?: string): string[];
   deleteSecret?(key: string): void;
-}
-
-export type ProviderLegacyAuthData = Record<string, ProviderCredential>;
-
-export interface ProviderLegacyAuthStore {
-  path: string;
-  read(): ProviderLegacyAuthData | null;
-  write(data: ProviderLegacyAuthData): void;
 }
 
 export interface AuthContextHost {
@@ -48,14 +36,6 @@ export interface OAuthFlowHost {
   openAuthUrl(url: string): Promise<void>;
   requestManualCode(message: string, signal: AbortSignal): Promise<string | null>;
   notify?(message: string): void;
-}
-
-export interface ProviderAuthModel {
-  provider: string;
-}
-
-export interface ModelAuthHost<TModel extends ProviderAuthModel = ProviderAuthModel, TAuthResult = unknown> {
-  getAuth(model: TModel): Promise<TAuthResult | undefined>;
 }
 
 export interface HttpRequest {
@@ -147,8 +127,6 @@ export interface ExternalOpener {
 }
 
 export type {
-  CapabilityApprovalDecision,
-  CapabilityApprovalKind,
   CapabilityApprovalPort,
   CapabilityApprovalRequest,
   CapabilityApprovalResult,

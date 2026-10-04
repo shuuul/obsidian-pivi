@@ -65,19 +65,6 @@ export function shouldSeedDefaultVaultSkills(
   return installedSkillCount === 0;
 }
 
-export function shouldUpgradeDefaultVaultSkills(
-  settings: {
-    defaultVaultSkillsSeeded?: boolean;
-    defaultVaultSkillsCommitSha?: string;
-  },
-  remoteSha: string,
-): boolean {
-  if (settings.defaultVaultSkillsSeeded !== true) {
-    return false;
-  }
-  return settings.defaultVaultSkillsCommitSha !== remoteSha;
-}
-
 let defaultSkillsPromptVisible = false;
 
 async function rememberDefaultSkillsPromptDismissed(plugin: DefaultVaultSkillsContext): Promise<void> {

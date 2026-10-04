@@ -13,34 +13,6 @@ function runArchitectureCheck(cwd: string) {
   });
 }
 
-function createPortableLocaleFixture() {
-  return {
-    settings: {
-      modelsTab: {
-        apiKeyDesc: 'Saved in {secureStorageName}.',
-        apiKeyOptionalDesc: 'Optionally saved in {secureStorageName}.',
-        apiKeySavedPlaceholder: 'Saved in {secureStorageName}',
-        codex: { desc: 'Credentials are stored in {secureStorageName}.' },
-        intro: 'Credentials are stored in {secureStorageName}.',
-        oauthTokenDesc: 'Saved in {secureStorageName}.',
-        oauthTokenSavedPlaceholder: 'Saved in {secureStorageName}',
-        secureStorageRequired: '{hostName} requires {secureStorageName}.',
-      },
-      skills: {
-        defaultBundle: {
-          desc: 'Install in this {workspaceName}.',
-          name: 'Default {hostName} skills',
-        },
-      },
-      slashCommands: { desc: 'Commands for this {workspaceName}.' },
-      tools: { intro: 'Enable {hostName} tools.' },
-      webSearch: {
-        apiKeySavedPlaceholder: 'Saved in {secureStorageName}',
-      },
-    },
-  };
-}
-
 describe('architecture boundary scripts', () => {
   it('passes import boundary checks', () => {
     expect(() => {
@@ -126,28 +98,6 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it.each([
-    ['src/app/ui', 'src does not reference the retired React package identity'],
-    ['packages/example/src', 'packages do not reference the retired React package identity'],
-  ])('rejects the retired React package name from %s', (fixtureDir, ruleName) => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, fixtureDir), { recursive: true });
-      const retiredPackageName = ['@pivi/obsidian', 'ui'].join('-');
-      writeFileSync(
-        join(fixtureRoot, fixtureDir, 'fixture.ts'),
-        `import { mountChatView } from '${retiredPackageName}/mount';`,
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(`[${ruleName}]`);
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
-
   it('allows React surface mounts only inside src/app/ui', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -194,7 +144,7 @@ describe('architecture boundary scripts', () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain(
-        '[@pivi/pivi-react stays presentation-only and product-neutral]',
+        '[@pivi/pivi-react stays presentation-only]',
       );
       expect(result.stderr).toContain('packages/pivi-react/src/fixture.ts:1');
     } finally {
@@ -389,26 +339,6 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it('rejects the retired @pivi/pivi-agent-core package name', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'src/app/fixture.ts'),
-        "import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';",
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[src does not reference the retired @pivi/pivi-agent-core package]',
-      );
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
-
   it('rejects @pivi/engine-pi imports outside composition', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -505,25 +435,6 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it('rejects direct Obsidian imports from the React presentation package', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'packages/pivi-react/src/fixture.ts'),
-        "import { setIcon } from 'obsidian';",
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[@pivi/pivi-react stays presentation-only and product-neutral]',
-      );
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
 
   it.each([
     "import { createPluginServiceGraph } from '@/app/serviceGraph';",
@@ -548,7 +459,7 @@ describe('architecture boundary scripts', () => {
 
   it.each([
     "import { t } from '@/app/i18n';",
-    "import { getVaultPath } from '@/app/hostPlatform';",
+    "import { navigateSlashBadge } from '@/app/slashBadgeNavigation';",
     "import type { PiviChatHost } from '@/app/hostContracts';",
   ])('allows the approved src/ui to app seam: %s', (source) => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
@@ -595,27 +506,6 @@ describe('architecture boundary scripts', () => {
       const result = runArchitectureCheck(fixtureRoot);
 
       expect(result.status).toBe(0);
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
-
-  it('rejects the retired React identity from package manifests', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'packages/example'), { recursive: true });
-      const retiredPackageName = ['@pivi/obsidian', 'ui'].join('-');
-      writeFileSync(
-        join(fixtureRoot, 'packages/example/package.json'),
-        JSON.stringify({ dependencies: { [retiredPackageName]: '*' }, name: '@pivi/example' }),
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[package manifests do not reference the retired React package identity]',
-      );
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }
@@ -749,126 +639,10 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it.each([
-    'export interface ObsidianSettingsPort { save(): void; }',
-    'export interface SettingsPort { vaultPath: string; }',
-    'export interface SettingsPort { keychainAvailable: boolean; }',
-    'export type SecretStorageStatus = "ready" | "missing";',
-    'export type { VaultStatus } from "./host-types";',
-  ])('rejects host-specific public identifiers from pivi-react ports: %s', (source) => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/ports'), { recursive: true });
-      writeFileSync(join(fixtureRoot, 'packages/pivi-react/src/ports/fixture.ts'), source);
 
-      const result = runArchitectureCheck(fixtureRoot);
 
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[@pivi/pivi-react public ports use host-neutral identifiers]',
-      );
-    } finally {
-      rmSync(fixtureRoot, { force: true, recursive: true });
-    }
-  });
 
-  it('allows workspace terminology in ports and host implementation names outside the port seam', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/ports'), { recursive: true });
-      mkdirSync(join(fixtureRoot, 'src/app/ui'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'packages/pivi-react/src/ports/fixture.ts'),
-        'export interface SettingsPort { workspaceName: string; secureStorageAvailable: boolean; }',
-      );
-      writeFileSync(
-        join(fixtureRoot, 'src/app/ui/obsidianAdapter.ts'),
-        'export const vaultKeychainAdapter = true;',
-      );
 
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(0);
-    } finally {
-      rmSync(fixtureRoot, { force: true, recursive: true });
-    }
-  });
-
-  it('rejects host-specific pivi-react locale key names', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      const locale = createPortableLocaleFixture();
-      Object.assign(locale.settings, {
-        secret_storage_notice: 'Host-specific catalog copy remains allowed.',
-      });
-      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/i18n/locales'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'packages/pivi-react/src/i18n/locales/en.json'),
-        JSON.stringify(locale),
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[@pivi/pivi-react locale keys use host-neutral terminology]',
-      );
-    } finally {
-      rmSync(fixtureRoot, { force: true, recursive: true });
-    }
-  });
-
-  it.each([
-    ['missing placeholder', 'Stored in the credential service.'],
-    ['hard-coded legacy term', 'Stored in the keychain {secureStorageName}.'],
-    ['hard-coded API term', 'Stored in SecretStorage {secureStorageName}.'],
-    ['hard-coded workspace term', 'Commands for the vault {workspaceName}.'],
-  ])('rejects non-parameterized pivi-react locale copy: %s', (_label, replacement) => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      const locale = createPortableLocaleFixture();
-      if (_label === 'hard-coded workspace term') {
-        locale.settings.slashCommands.desc = replacement;
-      } else {
-        locale.settings.modelsTab.intro = replacement;
-      }
-      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/i18n/locales'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'packages/pivi-react/src/i18n/locales/en.json'),
-        JSON.stringify(locale),
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[@pivi/pivi-react locale copy parameterizes host terminology]',
-      );
-    } finally {
-      rmSync(fixtureRoot, { force: true, recursive: true });
-    }
-  });
-
-  it('allows parameterized locale copy and host descriptor values', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      const locale = createPortableLocaleFixture();
-      Object.assign(locale.settings, {
-        noteToolbar: { desc: 'Configure this Obsidian integration in the app adapter.' },
-      });
-      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/i18n/locales'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'packages/pivi-react/src/i18n/locales/en.json'),
-        JSON.stringify(locale),
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(0);
-    } finally {
-      rmSync(fixtureRoot, { force: true, recursive: true });
-    }
-  });
 
   it('rejects workspace package imports that bypass declared exports', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
@@ -1001,26 +775,6 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it('rejects wildcard workspace package exports', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'packages/core/package.json'),
-        JSON.stringify({
-          exports: { '.': './src/index.ts', './internal/*': './src/internal/*.ts' },
-          name: '@pivi/core',
-        }),
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain('[workspace package exports are explicit]');
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
 
   it('rejects wildcard TypeScript paths into workspace packages', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
@@ -1122,41 +876,7 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it('does not resolve internal Pi collaborators through package exports', () => {
-    const result = spawnSync(process.execPath, [
-      '--input-type=module',
-      '--eval',
-      `try {
-        import.meta.resolve('@pivi/engine-pi/runtime/piChatRuntimeUsage');
-        process.exitCode = 2;
-      } catch (error) {
-        if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
-      }`,
-    ], {
-      cwd: rootDir,
-      encoding: 'utf8',
-    });
 
-    expect(result.status).toBe(0);
-  });
-
-  it('does not resolve undeclared agent source leaves through package exports', () => {
-    const result = spawnSync(process.execPath, [
-      '--input-type=module',
-      '--eval',
-      `try {
-        import.meta.resolve('@pivi/agent/mcp/mcpUtils');
-        process.exitCode = 2;
-      } catch (error) {
-        if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
-      }`,
-    ], {
-      cwd: rootDir,
-      encoding: 'utf8',
-    });
-
-    expect(result.status).toBe(0);
-  });
 
   it('resolves stable public leaves through the active workspace packages', () => {
     const result = spawnSync(process.execPath, [

@@ -1,4 +1,4 @@
-export interface McpInventoryTool {
+interface McpInventoryTool {
   name: string;
   description?: string;
 }

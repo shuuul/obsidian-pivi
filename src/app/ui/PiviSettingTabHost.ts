@@ -19,11 +19,10 @@ import { Notice, PluginSettingTab } from "obsidian";
 
 import type {
   PiviPluginWorkspace,
-  SettingsFacade,
+  PiviSettingsHost,
 } from "@/app/hostContracts";
 import { appI18n, type Locale, setLocale, t } from "@/app/i18n";
 import { createSettingsUiPorts } from "@/app/ui/createSettingsUiPorts";
-import { obsidianPresentationPlatform } from "@/app/ui/obsidianPresentationPlatform";
 import { getActiveWindow } from "@/ui/shared/dom";
 
 const logger = new PluginLogger("PiviSettingTabHost");
@@ -58,7 +57,7 @@ function decorateNativePageHeader(settingEl: HTMLElement): void {
 }
 
 export class PiviSettingTabHost extends PluginSettingTab {
-  plugin: SettingsFacade;
+  plugin: PiviSettingsHost;
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
   private readonly liveSurfaces = new Set<MountedSurface>();
   private readonly mountGenerations = new Map<SettingsPageId, number>();
@@ -67,7 +66,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
   constructor(
     app: ConstructorParameters<typeof PluginSettingTab>[0],
     plugin: ConstructorParameters<typeof PluginSettingTab>[1],
-    host: SettingsFacade,
+    host: PiviSettingsHost,
     getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
     super(app, plugin);
@@ -181,7 +180,6 @@ export class PiviSettingTabHost extends PluginSettingTab {
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: appI18n,
-        platform: obsidianPresentationPlatform,
         ports: createSettingsUiPorts(this.plugin, workspace),
       });
       if (generation !== this.mountGenerations.get(page)) {

@@ -58,7 +58,7 @@ export function normalizeArgumentHint(hint: string): string {
   return `[${hint}]`;
 }
 
-export function yamlString(value: string): string {
+function yamlString(value: string): string {
   if (value.includes(':') || value.includes('#') || value.includes('\n') ||
       value.startsWith(' ') || value.endsWith(' ') ||
       value.startsWith('[') || value.startsWith('{')) {

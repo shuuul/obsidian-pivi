@@ -21,9 +21,7 @@
       "unavailableStreaming": "流式响应中无法分叉",
       "unavailableNoUuid": "无法分叉：缺少消息标识符",
       "errorMessageNotFound": "未找到消息",
-      "errorNoSession": "没有可用的会话 ID",
-      "commandNoMessages": "无法分叉：对话中没有消息",
-      "commandNoAssistantUuid": "无法分叉：没有带标识符的助手回复"
+      "errorNoSession": "没有可用的会话 ID"
     },
     "redo": {
       "ariaLabel": "重做助手回复",
@@ -631,7 +629,7 @@
       "commandsTruncated": "仅显示前 {count} 个匹配项。请缩小搜索范围以查看更多。"
     },
     "slashCommands": {
-      "desc": "管理存储在 .pivi/commands/ 中的{workspaceName}级自定义命令。由 /名称 触发。"
+      "desc": "管理存储在 .pivi/commands/ 中的库级自定义命令。由 /名称 触发。"
     },
     "subagents": {
       "heading": "子智能体",
@@ -734,12 +732,12 @@
       },
       "heading": "工具开关",
       "groups": {
-        "workspace": "{workspaceNameTitle}工具",
-        "hostCli": "{hostName} CLI",
+        "workspace": "库工具",
+        "hostCli": "Obsidian CLI",
         "pivi": "Pivi",
         "additional": "附加访问"
       },
-      "intro": "启用或禁用向智能体暴露的 {hostName} 工具。更改在提示刷新后的新回合生效。",
+      "intro": "启用或禁用向智能体暴露的 Obsidian 工具。更改在提示刷新后的新回合生效。",
       "reading": {
         "defaultSize": {
           "name": "默认读取大小",
@@ -751,16 +749,36 @@
       "unavailableCorePlugin": "需要启用对应的核心插件。",
       "unavailableCodex": "需要连接 OpenAI Codex。",
       "cli": {
-        "heading": "官方 {hostName} CLI",
-        "enabled": { "name": "启用官方 CLI 工具", "desc": "允许 Pivi 注册由官方 {hostName} CLI 支持的工具。" },
-        "unavailable": "官方 {hostName} CLI 未注册，无法启用 CLI 工具。",
-        "path": { "name": "CLI 可执行文件路径", "desc": "可选的可执行文件替代路径。留空表示自动检测。", "placeholder": "自动检测" },
-        "timeout": { "name": "CLI 超时", "desc": "每个官方 CLI 请求的最长时间。", "option": "{seconds} 秒" },
+        "heading": "官方 Obsidian CLI",
+        "enabled": {
+          "name": "启用官方 CLI 工具",
+          "desc": "允许 Pivi 注册由官方 Obsidian CLI 支持的工具。"
+        },
+        "unavailable": "官方 Obsidian CLI 未注册，无法启用 CLI 工具。",
+        "path": {
+          "name": "CLI 可执行文件路径",
+          "desc": "可选的可执行文件替代路径。留空表示自动检测。",
+          "placeholder": "自动检测"
+        },
+        "timeout": {
+          "name": "CLI 超时",
+          "desc": "每个官方 CLI 请求的最长时间。",
+          "option": "{seconds} 秒"
+        },
         "actionsUnavailable": "CLI 支持的查询和创建操作当前不可用。"
       },
       "command": {
-        "execution": { "name": "允许执行命令", "desc": "已有授权时直接执行，否则交互式请求权限。发现功能仍为只读。" },
-        "allowlist": { "name": "允许的命令 ID", "desc": "未列出的命令会在执行前请求权限。", "add": "添加允许的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
+        "execution": {
+          "name": "允许执行命令",
+          "desc": "已有授权时直接执行，否则交互式请求权限。发现功能仍为只读。"
+        },
+        "allowlist": {
+          "name": "允许的命令 ID",
+          "desc": "未列出的命令会在执行前请求权限。",
+          "add": "添加允许的命令 ID",
+          "placeholder": "命令 ID",
+          "remove": "移除 {id}"
+        }
       }
     },
     "bash": {
@@ -812,14 +830,14 @@
       },
       "apiKeyName": "{provider} API 密钥",
       "apiKeyPlaceholder": "输入 API 密钥…",
-      "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
+      "apiKeySavedPlaceholder": "已保存在Obsidian 钥匙串",
       "removeKey": "移除",
       "enableAria": "启用 {provider}",
       "disableAria": "禁用 {provider}"
     },
     "modelsTab": {
-      "intro": "API 密钥和 OAuth 令牌保存在{secureStorageName}中。已禁用的提供商仍会保存，但会在模型选择器中隐藏。",
-      "secureStorageRequired": "提供商 API 密钥需要支持{secureStorageName}的 {hostName} {version} 或更高版本。请升级 {hostName}。",
+      "intro": "API 密钥和 OAuth 令牌保存在Obsidian 钥匙串中。已禁用的提供商仍会保存，但会在模型选择器中隐藏。",
+      "secureStorageRequired": "提供商 API 密钥需要支持Obsidian 钥匙串的 Obsidian {version} 或更高版本。请升级 Obsidian。",
       "defaultModelSectionTitle": "默认模型",
       "defaultModel": "默认模型",
       "defaultModelDesc": "用于新对话和 pivi:run 命令行执行。在输入框中选择模型时会同步更新。",
@@ -831,13 +849,13 @@
       "authHeading": "认证与凭据",
       "apiKey": "API 密钥",
       "apiKeyOptional": "API 密钥（可选）",
-      "apiKeyDesc": "以 {secretId} 保存在{secureStorageName}中。",
+      "apiKeyDesc": "以 {secretId} 保存在Obsidian 钥匙串中。",
       "apiKeyPlaceholder": "输入 API 密钥…",
-      "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
+      "apiKeySavedPlaceholder": "已保存在Obsidian 钥匙串",
       "oauthToken": "OAuth 令牌",
-      "oauthTokenDesc": "以 {secretId} 保存在{secureStorageName}中。",
+      "oauthTokenDesc": "以 {secretId} 保存在Obsidian 钥匙串中。",
       "oauthTokenPlaceholder": "输入 OAuth 令牌…",
-      "oauthTokenSavedPlaceholder": "已保存在{secureStorageName}",
+      "oauthTokenSavedPlaceholder": "已保存在Obsidian 钥匙串",
       "clear": "清除",
       "candidateModels": "候选模型池",
       "catalogRefreshTitle": "模型目录",
@@ -871,7 +889,7 @@
       "addProvider": "+ 添加提供商",
       "addProviderAdded": "已添加",
       "removedProvider": "已移除 {name} 提供商。",
-      "removeCredential": "同时从{secureStorageName}中删除此提供商的凭据",
+      "removeCredential": "同时从Obsidian 钥匙串中删除此提供商的凭据",
       "enableAria": "启用提供商 {name}",
       "disableAria": "禁用提供商 {name}",
       "removeAria": "移除提供商 {name}",
@@ -899,7 +917,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "使用你的 ChatGPT/Codex 订阅登录。凭据保存在{secureStorageName}中。",
+        "desc": "使用你的 ChatGPT/Codex 订阅登录。凭据保存在Obsidian 钥匙串中。",
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
@@ -927,12 +945,12 @@
       "fetchModelsSuccess": "{name}：已加载 {count} 个模型。",
       "fetchModelsFailed": "{name}：获取模型失败：{message}",
       "authHeadingOptional": "认证（可选）",
-      "apiKeyOptionalDesc": "可选。本地服务器无需鉴权时可留空。若填写，将以 {secretId} 保存在{secureStorageName}中。",
+      "apiKeyOptionalDesc": "可选。本地服务器无需鉴权时可留空。若填写，将以 {secretId} 保存在Obsidian 钥匙串中。",
       "apiKeyOptionalPlaceholder": "可选 API 密钥…",
       "dualAuthApiKeyBlocked": "此提供商现在需要 OAuth 登录。已有 API 密钥仍可更新或清除。",
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "使用你的 xAI 账户登录 Grok Build。凭据保存在{secureStorageName}中。",
+        "desc": "使用你的 xAI 账户登录 Grok Build。凭据保存在Obsidian 钥匙串中。",
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
@@ -942,7 +960,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "在浏览器中使用 Claude Pro 或 Max 订阅登录。凭据保存在 {secureStorageName}。",
+        "desc": "在浏览器中使用 Claude Pro 或 Max 订阅登录。凭据保存在 Obsidian 钥匙串。",
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
@@ -952,7 +970,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "在浏览器中使用 ChatGPT 订阅登录。凭据保存在 {secureStorageName}。",
+        "desc": "在浏览器中使用 ChatGPT 订阅登录。凭据保存在 Obsidian 钥匙串。",
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
@@ -962,7 +980,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "在浏览器中登录 OpenRouter。凭据保存在 {secureStorageName}。",
+        "desc": "在浏览器中登录 OpenRouter。凭据保存在 Obsidian 钥匙串。",
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
@@ -972,7 +990,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "使用 Kimi Code 订阅登录。凭据保存在 {secureStorageName}。",
+        "desc": "使用 Kimi Code 订阅登录。凭据保存在 Obsidian 钥匙串。",
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
@@ -989,8 +1007,8 @@
     "skills": {
       "intro": "智能体技能位于 .pivi/skills/，并在下一回合加载（skill 工具 + 系统提示）。仅在你选择下方操作后，Pivi 才会安装或更新技能。",
       "defaultBundle": {
-        "name": "官方 {hostName} 技能",
-        "desc": "为此{workspaceName}安装或更新官方 kepano/obsidian-skills 技能包。会访问 GitHub/skills.sh、运行固定版本的 skills CLI，并将文件写入 .pivi/skills/。",
+        "name": "官方 Obsidian 技能",
+        "desc": "为此库安装或更新官方 kepano/obsidian-skills 技能包。会访问 GitHub/skills.sh、运行固定版本的 skills CLI，并将文件写入 .pivi/skills/。",
         "button": "安装官方技能",
         "updateButton": "更新官方技能",
         "label": "官方技能包：",

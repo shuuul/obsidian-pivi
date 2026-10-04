@@ -1,7 +1,7 @@
 import type { SessionStore } from "@pivi/agent/session";
 import type { OpenSessionManager } from "@pivi/agent/session/openSessionManager";
 
-import type { ChatFacade } from "@/app/hostContracts";
+import type { PiviChatCompositionHost } from "@/app/hostContracts";
 import type { PiviApplication } from "@/app/PiviApplication";
 
 /** Application internals reachable only by the development real-host smoke harness. */
@@ -14,7 +14,7 @@ export interface DevelopmentSmokeInternals {
 export function createDevelopmentSmokeRunner(
   application: PiviApplication,
   internals: DevelopmentSmokeInternals,
-): ChatFacade['runDevelopmentRealHostSmoke'] {
+): PiviChatCompositionHost['runDevelopmentRealHostSmoke'] {
   if (process.env.NODE_ENV === 'production') return undefined;
   const { sessionOperations: sessions } = application;
   return async (request) => {
@@ -31,8 +31,8 @@ export function createDevelopmentSmokeRunner(
           turn,
         );
       },
-      createOpenSession: options => sessions.createOpenSession(options),
-      openSessionByFile: sessionFile => sessions.openSessionByFile(sessionFile),
+      createOpenSession: options => sessions.createSession(options),
+      openSessionByFile: sessionFile => sessions.openSessionFile(sessionFile),
       hydrateOpenSession: session => internals.sessionManager.hydrate(session),
       updateSession: (id, updates) => sessions.updateSession(id, updates),
       removeOpenSession: id => internals.sessionManager.delete(id),

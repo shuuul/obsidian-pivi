@@ -1,18 +1,11 @@
 import type { ChatMessage } from '@pivi/agent/runtime';
 import { InputProviderBoundaryHandler } from '@/ui/chat/controllers/inputProviderBoundaries';
 import {
-  getProviderBoundaryChunkType,
   shouldDiscardPendingAssistantPlaceholder,
   shouldIgnoreAssistantContinuationBoundary,
 } from '@/ui/chat/controllers/inputProviderBoundary';
 
 describe('inputProviderBoundary', () => {
-  it('detects provider boundary chunks', () => {
-    expect(getProviderBoundaryChunkType({ type: 'user_message_start', content: 'hi' }))
-      .toBe('user_message_start');
-    expect(getProviderBoundaryChunkType({ type: 'text', content: 'x' })).toBeNull();
-  });
-
   it('discards empty assistant placeholder while awaiting provider start', () => {
     const message: ChatMessage = {
       id: 'a1',

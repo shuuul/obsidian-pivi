@@ -79,11 +79,6 @@ export function wireComposerChrome(
         });
         if (!isTabOpen()) return;
         refreshUsageContextWindow(model, providerSettings.customContextLimits);
-        await uiConfig.prepareModelMetadata(
-          tab.draftModel ?? model,
-        );
-        if (!isTabOpen()) return;
-        refreshUsageContextWindow(model, providerSettings.customContextLimits);
         applyCapabilityUIGating(tab, ports);
         tab.service?.syncThinkingLevel?.();
         return;
@@ -97,9 +92,6 @@ export function wireComposerChrome(
           uiConfig.applyModelDefaults(model, settings);
         },
       );
-      if (!isTabOpen()) return;
-      refreshUsageContextWindow(model, providerSettings.customContextLimits);
-      await uiConfig.prepareModelMetadata(model);
       if (!isTabOpen()) return;
       refreshUsageContextWindow(model, providerSettings.customContextLimits);
       notifyIfContextOverLimit(tab.state.usage, dom.richInput.value);

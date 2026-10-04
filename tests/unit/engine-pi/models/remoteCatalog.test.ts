@@ -113,6 +113,31 @@ describe('withPiviRemoteCatalog', () => {
     expect(stored?.piVersion).toBe(PIVI_PI_VERSION);
   });
 
+  it('keeps catalog sampling parameters and drops unknown payload fields', async () => {
+    const { fetch } = createFakeFetch([
+      jsonResponse([
+        {
+          ...fakeModel('tuned', {
+            samplingParams: { top_p: 0.9 },
+            samplingParamsByThinkingLevel: { high: { temperature: 0.2 } },
+          }),
+          unknownField: 'dropped',
+        },
+      ]),
+    ]);
+    const wrapped = withPiviRemoteCatalog(createFakeProvider([]), {
+      fetch,
+      store: new FakeStore(),
+    });
+
+    await wrapped.refresh({ force: true });
+
+    const [tuned] = wrapped.provider.getModels();
+    expect(tuned?.samplingParams).toEqual({ top_p: 0.9 });
+    expect(tuned?.samplingParamsByThinkingLevel).toEqual({ high: { temperature: 0.2 } });
+    expect(tuned).not.toHaveProperty('unknownField');
+  });
+
   it('drops malformed and engine-incompatible entries instead of failing', async () => {
     const baseline = [fakeModel('m1')];
     const { fetch } = createFakeFetch([

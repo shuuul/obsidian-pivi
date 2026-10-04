@@ -20,7 +20,7 @@ export interface SkillStageLimits {
   maxSkillMdBytes: number;
 }
 
-export const DEFAULT_SKILL_STAGE_LIMITS: Readonly<SkillStageLimits> = Object.freeze({
+const DEFAULT_SKILL_STAGE_LIMITS: Readonly<SkillStageLimits> = Object.freeze({
   maxFiles: SKILLS_STAGE_MAX_FILES,
   maxFileBytes: SKILLS_STAGE_MAX_FILE_BYTES,
   maxTotalBytes: SKILLS_STAGE_MAX_TOTAL_BYTES,

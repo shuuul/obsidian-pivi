@@ -17,7 +17,7 @@ export function getTextMatchScore(textLower: string, searchLower: string): numbe
   return 120 + firstIndex + lastIndex - firstIndex;
 }
 
-export function getBoundaryMatchIndex(textLower: string, searchLower: string): number {
+function getBoundaryMatchIndex(textLower: string, searchLower: string): number {
   for (let i = 1; i < textLower.length; i++) {
     if (isSearchBoundary(textLower.charAt(i - 1)) && textLower.startsWith(searchLower, i)) {
       return i;
@@ -26,7 +26,7 @@ export function getBoundaryMatchIndex(textLower: string, searchLower: string): n
   return -1;
 }
 
-export function isSearchBoundary(ch: string): boolean {
+function isSearchBoundary(ch: string): boolean {
   return ch === '-' || ch === '_' || ch === '/' || ch === ' ' || ch === '.';
 }
 

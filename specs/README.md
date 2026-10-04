@@ -14,7 +14,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [053 — Composer mention badge clamp and copy-paste round trip](053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | Active | Composer mention badge clamp and copy-paste round trip |
 | [054 — Tool-result context overflow and in-turn pressure](054-tool-result-context-overflow-and-in-turn-pressure.md) | Active | Stop over-window continuations after giant tool results; require scoped `search` path plus payload caps. |
 | [055 — Pi AgentHarness migration spike](055-pi-agent-harness-migration-spike.md) | Active | Evidence-backed go/wait/no-go on moving sessions from the pi-coding-agent v3 SessionManager to the pi-agent-core AgentHarness over a vault FileSystem. |
-| [056 — Pi 0.99 upgrade and pi-mcp client migration](056-pi-099-upgrade-and-pi-mcp-client.md) | Active | Pi 0.99.1 pins with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` without legacy SSE. |
 
 ## Archived specs
 
@@ -71,6 +70,9 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [049 — Post-review contracts architecture and community execution](archive/049-post-review-contracts-architecture-and-community-execution.md) | 2026-09-04 | Aligned active MCP docs, protected repository boundaries, reduced composition/API friction, added compatibility and quality signals, and launched community and funding routes. |
 | [050 — Architecture review stability and trustworthy task execution](archive/050-architecture-review-stability-and-trustworthy-task-execution.md) | 2026-09-05 | Hardened real-host verification, lifecycle rollback, measured projections, strict File Recovery, and package/documentation contracts with full local acceptance. |
 | [052 — Hide remaining agent tool routing](archive/052-hide-remaining-agent-tool-routing.md) | 2026-09-06 | Pi-family live names with silent aliases, unified read/ls routing, and search scoped to a note or folder. |
+| [056-pi-099-upgrade-and-pi-mcp-client.md](archive/056-pi-099-upgrade-and-pi-mcp-client.md) | 2026-10-04 | Pi 0.99.1 pins with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` without legacy SSE. |
+| [057-drop-portability-abstractions.md](archive/057-drop-portability-abstractions.md) | 2026-10-04 | Removed host- and runtime-portability seams: direct Obsidian presentation calls, wildcard leaf exports, two app host contracts, and no single-purpose agent ports. |
+| [058-simplification-follow-up.md](archive/058-simplification-follow-up.md) | 2026-10-04 | Removed test-only code, duplicated import-ban enforcement, and pre-0.15.0 startup migrations; reorganized and audited guidance. |
 
 ## Numbering and files
 
@@ -109,5 +111,3 @@ Before moving a spec to `archive/`:
 5. Set `status: Completed`, update the date, move the file without renaming it, and move its README entry to Archived specs.
 
 Run `npm run check:specs` before committing. The check validates filenames, numbering, flat frontmatter, required sections, lifecycle placement, and index coverage; it cannot prove that prose matches the implementation.
-
-

@@ -28,14 +28,14 @@ export interface PiToolRegistry {
   externalContexts: ExternalContextAvailability[];
 }
 
-export interface PiBaseToolProviderOptions {
+interface PiBaseToolProviderOptions {
   vaultPath: string;
   externalContextPaths?: readonly string[];
   resolveReadMaxChars?: (requestedMaxChars?: number) => ReadAllowanceReservation;
   capabilityApproval?: CapabilityApprovalPort | null;
 }
 
-export interface PiBaseToolProviderResult {
+interface PiBaseToolProviderResult {
   toolSpecs: ToolSpec[];
   registeredToolSummary: RegisteredToolSummary;
   externalContexts?: ExternalContextAvailability[];

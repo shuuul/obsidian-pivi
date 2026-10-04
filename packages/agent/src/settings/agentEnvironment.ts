@@ -1,11 +1,6 @@
 import type { AgentRuntimeSettings, EnvironmentScope } from './types';
 import { isAgentRuntimeSettings } from './types';
 
-export interface EnvironmentScopeUpdate {
-  scope: EnvironmentScope;
-  envText: string;
-}
-
 export interface ClassifiedEnvironmentVariables {
   shared: string;
   agent: string;
@@ -40,19 +35,6 @@ const SHARED_ENVIRONMENT_KEYS = new Set([
 ]);
 
 const PI_ENVIRONMENT_KEY_PATTERNS: RegExp[] = [/^PI_/i];
-
-/** Maps persisted snippet scopes from the old multi-provider layout. */
-export function normalizeEnvironmentScope(
-  value: unknown,
-): EnvironmentScope | undefined {
-  if (value === 'shared' || value === 'agent') {
-    return value;
-  }
-  if (value === 'pi' || value === 'provider:pi') {
-    return 'agent';
-  }
-  return undefined;
-}
 
 function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
   const normalized = key.trim().toUpperCase();
@@ -270,30 +252,6 @@ export function getRuntimeEnvironmentText(
   );
 }
 
-export function getEnvironmentVariablesForScope(
-  settings: Record<string, unknown>,
-  scope: EnvironmentScope,
-): string {
-  if (scope === 'shared') {
-    return getSharedEnvironmentVariables(settings);
-  }
-
-  return getAgentEnvironmentVariables(settings);
-}
-
-export function setEnvironmentVariablesForScope(
-  settings: Record<string, unknown>,
-  scope: EnvironmentScope,
-  envText: string,
-): void {
-  if (scope === 'shared') {
-    setSharedEnvironmentVariables(settings, envText);
-    return;
-  }
-
-  setAgentEnvironmentVariables(settings, envText);
-}
-
 export function getEnvironmentReviewKeysForScope(
   envText: string,
   scope: EnvironmentScope,
@@ -337,42 +295,4 @@ export function inferEnvironmentSnippetScope(
   }
 
   return nonEmptyScopes.length === 1 ? nonEmptyScopes[0] : undefined;
-}
-
-export function resolveEnvironmentSnippetScope(
-  envText: string,
-  fallbackScope?: EnvironmentScope,
-): EnvironmentScope | undefined {
-  const inferredScope = inferEnvironmentSnippetScope(envText);
-  if (inferredScope) {
-    return inferredScope;
-  }
-
-  return hasMeaningfulEnvironmentContent(envText) ? undefined : fallbackScope;
-}
-
-export function getEnvironmentScopeUpdates(
-  envText: string,
-  fallbackScope?: EnvironmentScope,
-): EnvironmentScopeUpdate[] {
-  const classified = classifyEnvironmentVariablesByOwnership(envText);
-  const updates: EnvironmentScopeUpdate[] = [];
-
-  if (classified.shared.trim()) {
-    updates.push({ scope: 'shared', envText: classified.shared });
-  }
-
-  if (classified.agent.trim()) {
-    updates.push({ scope: 'agent', envText: classified.agent });
-  }
-
-  if (updates.length > 0) {
-    return updates;
-  }
-
-  if (fallbackScope) {
-    return [{ scope: fallbackScope, envText }];
-  }
-
-  return [];
 }

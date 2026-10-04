@@ -1,15 +1,15 @@
 import type {
   ChatPorts,
+  ChatSessionPort,
   ChatSettingsSnapshot,
 } from '@pivi/agent/runtime/chatPorts';
 import { getRuntimeEnvironmentText } from '@pivi/agent/settings/agentEnvironment';
 import { getPiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
 
-import type { PiviPluginWorkspace } from '@/app/hostContracts';
+import type { PiviChatCompositionHost, PiviPluginWorkspace } from '@/app/hostContracts';
 import { mergeExternalDirectoryPermissions } from '@/app/settings/piviSettingsCodec';
 
-import { type ChatUiCompositionHost, type ChatUiSessionHost } from './chatUiCompositionHost';
 import {
   appendBashPermissions as persistBashPermissions,
   appendExternalReadDirectory as persistExternalReadDirectory,
@@ -17,10 +17,9 @@ import {
   cloneChatCustomProviders,
   requireWorkspace,
 } from './createUiPortHelpers';
-export type { ChatUiCompositionHost, ChatUiSessionHost } from './chatUiCompositionHost';
 export function createChatUiPorts(
-  host: ChatUiCompositionHost,
-  sessions: ChatUiSessionHost,
+  host: PiviChatCompositionHost,
+  sessions: ChatSessionPort,
   workspace: PiviPluginWorkspace | null,
 ): ChatPorts {
   const ws = () => requireWorkspace(workspace);
@@ -89,24 +88,7 @@ export function createChatUiPorts(
       createChatService: (options) => host.createChatService(options),
       createAuxQueryRunner: () => host.createAuxQueryRunner(),
     },
-    sessions: {
-      listSessions: () => sessions.getSessionList(),
-      findOpenSession: (id) => sessions.getOpenSessionSync(id),
-      getOpenSession: (id) => sessions.getOpenSessionById(id),
-      openRecent: (id, limit) => sessions.openRecentSessionMessages(id, limit),
-      readOlder: (id, beforeEntryId, limit) => (
-        sessions.readOlderSessionMessages(id, beforeEntryId, limit)
-      ),
-      createSession: (options) => sessions.createOpenSession(options),
-      openSessionFile: (sessionFile) => sessions.openSessionByFile(sessionFile),
-      deleteSession: (id) => sessions.deleteSession(id),
-      deleteSessionFile: (file, id) => sessions.deleteSessionFile(file, id),
-      discardSessionFile: (file, id) => sessions.discardSessionFile(file, id),
-      abandonEmptyOwnedSession: (file, id) => sessions.abandonEmptyOwnedSession(file, id),
-      renameSession: (id, title, titleSource) => sessions.renameSession(id, title, titleSource),
-      updateSession: (id, updates) => sessions.updateSession(id, updates),
-      forkSession: (openSession, atEntryId) => sessions.forkSessionAt(openSession, atEntryId),
-    },
+    sessions,
     catalog: {
       listMcpServers: () => ws().mcpServerManager.getServers(),
       listContextSavingMcpServers: () => ws().mcpServerManager.getContextSavingServers(),
@@ -138,11 +120,6 @@ export function createChatUiPorts(
           chatConfig.applyModelDefaults(model, configSettings);
         });
       },
-      prepareModelMetadata: (model) => (
-        chatConfig.prepareModelMetadata?.(model, host.settings, {
-          host: host.getAgentHostContext(),
-        }) ?? Promise.resolve()
-      ),
       applyReasoningSelection: (model, value, settings) => {
         applyChatConfigMutation(settings, (configSettings) => {
           chatConfig.applyReasoningSelection?.(model, value, configSettings);

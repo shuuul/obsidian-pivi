@@ -5,7 +5,6 @@ import { Fragment, type MouseEvent, useEffect, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
-import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsFeedbackMessage, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { SortableReorderHandleProps } from '../../reorder/useSortableReorder';
 import { DisclosureCard, SettingRow, SettingsRemoveButton, Toggle } from '../primitives';
@@ -130,7 +129,6 @@ export function ProviderCard({
   credentialCheckPending = false,
 }: ProviderCardProps) {
   const t = useT();
-  const terminology = useHostTerminology();
   const [testing, setTesting] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [deleteCredential, setDeleteCredential] = useState(false);
@@ -358,9 +356,7 @@ export function ProviderCard({
     >
       {confirmingRemove ? (
         <SettingRow
-          name={t('settings.modelsTab.removeCredential', {
-            secureStorageName: terminology.secureStorageName,
-          })}
+          name={t('settings.modelsTab.removeCredential')}
         >
           <input
             type="checkbox"

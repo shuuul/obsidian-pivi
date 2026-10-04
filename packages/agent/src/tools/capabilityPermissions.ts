@@ -5,11 +5,10 @@
 
 import { isPosixCompatibleShell, isWindowsCmdShell } from './bashAuthorization';
 
-export const BASH_CLASSIFIER_VERSION = 1;
-export const LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION = 1 as const;
+const LEGACY_DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION = 1 as const;
 export const DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION = 2 as const;
 
-export type ExecutableIdentity =
+type ExecutableIdentity =
   | { kind: 'name'; value: string }
   | { kind: 'realpath'; value: string };
 
@@ -27,7 +26,7 @@ export interface PersistentExternalDirectoryPermission {
   enabled: boolean;
 }
 
-export interface DeviceLocalCapabilityPermissionsV2 {
+interface DeviceLocalCapabilityPermissionsV2 {
   version: typeof DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION;
   bash: PersistentBashPermission[];
   externalDirectories: PersistentExternalDirectoryPermission[];
@@ -67,7 +66,7 @@ export interface BashClassificationOptions {
   caseInsensitive?: boolean;
 }
 
-export function emptyCapabilityPermissions(): DeviceLocalCapabilityPermissions {
+function emptyCapabilityPermissions(): DeviceLocalCapabilityPermissions {
   return {
     version: DEVICE_LOCAL_CAPABILITY_PERMISSIONS_VERSION,
     bash: [],
@@ -76,7 +75,7 @@ export function emptyCapabilityPermissions(): DeviceLocalCapabilityPermissions {
   };
 }
 
-export function isAbsoluteExecutablePath(token: string): boolean {
+function isAbsoluteExecutablePath(token: string): boolean {
   return token.startsWith('/')
     || /^[A-Za-z]:[\\/]/.test(token)
     || token.startsWith('\\\\');
@@ -89,7 +88,7 @@ export function isPathExecutableToken(token: string): boolean {
     || token.includes('\\');
 }
 
-export function executableBasename(token: string): string {
+function executableBasename(token: string): string {
   const normalized = token.replaceAll('\\', '/');
   const base = normalized.split('/').pop() ?? token;
   return base;
@@ -112,7 +111,7 @@ export function normalizeSubcommand(token: string, caseInsensitive: boolean): st
   return caseInsensitive ? token.toLowerCase() : token;
 }
 
-export function identitiesEqual(
+function identitiesEqual(
   left: ExecutableIdentity,
   right: ExecutableIdentity,
   caseInsensitive: boolean,
@@ -124,7 +123,7 @@ export function identitiesEqual(
   return left.value === right.value;
 }
 
-export function bashPermissionIdentityKey(
+function bashPermissionIdentityKey(
   permission: PersistentBashPermission,
   caseInsensitive = false,
 ): string {
@@ -213,7 +212,7 @@ export function canonicalizeBashPermissions(
   });
 }
 
-export function normalizeBashPermission(
+function normalizeBashPermission(
   permission: PersistentBashPermission,
   caseInsensitive: boolean,
 ): PersistentBashPermission | null {

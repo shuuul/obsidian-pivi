@@ -1,5 +1,6 @@
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import { VIEW_TYPE_PIVI } from '@pivi/agent/runtime';
+import type { ChatSessionPort } from '@pivi/agent/runtime/chatPorts';
 import {
   type ImperativeChatAdapter,
   mountChatView,
@@ -9,21 +10,17 @@ import type { WorkspaceLeaf } from 'obsidian';
 import { ItemView, Scope } from 'obsidian';
 
 import type {
+  PiviChatCompositionHost,
   PiviChatViewHandle,
   PiviPluginWorkspace,
 } from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
 import { activateOpenSessionElsewhere } from '@/app/ui/activateOpenSessionElsewhere';
-import {
-  type ChatUiCompositionHost,
-  type ChatUiSessionHost,
-  createChatUiPorts,
-} from '@/app/ui/createUiPorts';
+import { createChatUiPorts } from '@/app/ui/createUiPorts';
 import {
   type CreatedImperativeChatAdapter,
   createImperativeChatAdapter,
 } from '@/app/ui/imperativeChatAdapter';
-import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getActiveWindow } from '@/ui/shared/dom';
 import { revealWorkspaceLeaf } from '@/ui/shared/utils/obsidianCompat';
 
@@ -35,8 +32,8 @@ type LoadableView = {
 };
 
 export class PiviViewHost extends ItemView {
-  private plugin: ChatUiCompositionHost;
-  private readonly sessions: ChatUiSessionHost;
+  private plugin: PiviChatCompositionHost;
+  private readonly sessions: ChatSessionPort;
   private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
@@ -51,8 +48,8 @@ export class PiviViewHost extends ItemView {
 
   constructor(
     leaf: WorkspaceLeaf,
-    plugin: ChatUiCompositionHost,
-    sessions: ChatUiSessionHost,
+    plugin: PiviChatCompositionHost,
+    sessions: ChatSessionPort,
     getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
     super(leaf);
@@ -161,7 +158,6 @@ export class PiviViewHost extends ItemView {
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: appI18n,
-        platform: obsidianPresentationPlatform,
         chatShell: {
           store: shell.store,
           actions: chatAdapter.getShellActions(),
@@ -289,7 +285,7 @@ export class PiviViewHost extends ItemView {
   // ============================================
 
   private persistTabState(
-    state: Parameters<ChatUiCompositionHost['persistTabManagerState']>[0],
+    state: Parameters<PiviChatCompositionHost['persistTabManagerState']>[0],
   ): void {
     // Debounce persistence to avoid rapid writes (300ms delay)
     const win = getActiveWindow(this.containerEl);
