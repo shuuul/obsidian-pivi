@@ -35,7 +35,6 @@ export const XAI_PROVIDER_ID = 'xai';
 export const ANTHROPIC_PROVIDER_ID = 'anthropic';
 export const GROK_BUILD_PROVIDER_ID = 'grok-build';
 export const CLAUDE_PROVIDER_ID = 'claude';
-export const OPENAI_PROVIDER_ID = 'openai';
 export const CHATGPT_PROVIDER_ID = 'chatgpt';
 const OPENROUTER_PROVIDER_ID = 'openrouter';
 const KIMI_CODING_PROVIDER_ID = 'kimi-coding';

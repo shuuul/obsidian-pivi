@@ -336,15 +336,6 @@ export function selectAllowedResolvedAddresses(
   throw new EgressDeniedError(firstAlwaysDenied ?? firstSoftDenied ?? 'invalid', url);
 }
 
-export function assertDestinationAllowed(
-  url: URL,
-  resolvedAddresses: readonly string[],
-  policy: ResolvedEgressPolicy,
-  grants?: OriginGrantRegistry,
-): void {
-  selectAllowedResolvedAddresses(url, resolvedAddresses, policy, grants);
-}
-
 export function assertPinnedAddress(
   approvedAddresses: readonly string[],
   connectedAddress: string,

@@ -1,8 +1,3 @@
-import {
-  type AgentReport,
-  extractAgentReportFromText,
-} from './continuationSchemas';
-
 /**
  * Extracts the final textual result from subagent JSONL output.
  * Prefers the latest assistant text block and falls back to top-level result.
@@ -54,10 +49,4 @@ export function extractFinalResultFromSubagentJsonl(content: string): string | n
   }
 
   return lastAssistantText ?? lastResultText;
-}
-
-/** Extract a report from the final compatible text result without changing text recovery. */
-export function extractAgentReportFromSubagentJsonl(content: string): AgentReport | null {
-  const finalResult = extractFinalResultFromSubagentJsonl(content);
-  return finalResult ? extractAgentReportFromText(finalResult) : null;
 }

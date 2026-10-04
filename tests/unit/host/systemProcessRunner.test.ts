@@ -4,7 +4,6 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import {
-  DEFAULT_PROCESS_OUTPUT_BYTE_LIMIT,
   systemProcessRunner,
 } from '@pivi/obsidian-host/systemProcessRunner';
 
@@ -66,7 +65,6 @@ describe('systemProcessRunner', () => {
     expect(Buffer.byteLength(result.stderr, 'utf8')).toBeLessThanOrEqual(limit);
     expect(result.stdoutTruncated).toBe(true);
     expect(result.stderrTruncated).toBe(true);
-    expect(DEFAULT_PROCESS_OUTPUT_BYTE_LIMIT).toBeGreaterThan(limit);
   });
 
   it('truncates cleanly at a multibyte UTF-8 boundary', async () => {

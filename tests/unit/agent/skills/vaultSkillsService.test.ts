@@ -8,7 +8,6 @@ import * as vaultSkillLoader from '@pivi/agent/skills/vault/loadVaultSkills';
 import {
   normalizeSkillSlug,
   parseRemoteSkillsListOutput,
-  syncCliSkillsIntoPivi,
   VaultSkillsService,
 } from '@pivi/agent/skills/vault/vaultSkillsService';
 
@@ -459,114 +458,6 @@ describe('VaultSkillsService sync', () => {
 
     expect(fs.existsSync(rootLock)).toBe(false);
     expect(fs.readFileSync(piviLock, 'utf-8')).toBe('{"version":1}');
-  });
-
-  it('syncs flat skills from .agents/skills into .pivi/skills', () => {
-    const flatDir = path.join(vaultPath, '.agents', 'skills', 'flat-skill');
-    fs.mkdirSync(flatDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(flatDir, 'SKILL.md'),
-      '---\nname: flat\ndescription: flat skill\n---\n',
-      'utf-8',
-    );
-
-    const synced = syncCliSkillsIntoPivi(vaultPath, new Set());
-    expect(synced).toEqual(['flat-skill']);
-    expect(fs.existsSync(path.join(vaultPath, '.pivi', 'skills', 'flat-skill', 'SKILL.md'))).toBe(
-      true,
-    );
-  });
-
-  it('syncs skills written under .pivi by the skills CLI working directory', () => {
-    const flatDir = path.join(vaultPath, '.pivi', '.agents', 'skills', 'flat-skill');
-    fs.mkdirSync(flatDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(flatDir, 'SKILL.md'),
-      '---\nname: flat\ndescription: flat skill\n---\n',
-      'utf-8',
-    );
-
-    const synced = syncCliSkillsIntoPivi(vaultPath, new Set());
-    expect(synced).toEqual(['flat-skill']);
-    expect(fs.existsSync(path.join(vaultPath, '.pivi', 'skills', 'flat-skill', 'SKILL.md'))).toBe(
-      true,
-    );
-  });
-
-  it('treats skills already written to .pivi/skills as synced', () => {
-    const flatDir = path.join(vaultPath, '.pivi', 'skills', 'direct-skill');
-    fs.mkdirSync(flatDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(flatDir, 'SKILL.md'),
-      '---\nname: direct\ndescription: direct skill\n---\n',
-      'utf-8',
-    );
-
-    const synced = syncCliSkillsIntoPivi(vaultPath, new Set(), {
-      overwriteFolders: new Set(['direct-skill']),
-    });
-    expect(synced).toEqual(['direct-skill']);
-    expect(fs.existsSync(path.join(flatDir, 'SKILL.md'))).toBe(true);
-  });
-
-  it('syncs nested monorepo skills from .agents/skills/<repo>/skills/', () => {
-    const nestedSkill = path.join(
-      vaultPath,
-      '.agents',
-      'skills',
-      'obsidian-skills',
-      'skills',
-      'nested-skill',
-    );
-    fs.mkdirSync(nestedSkill, { recursive: true });
-    fs.writeFileSync(
-      path.join(nestedSkill, 'SKILL.md'),
-      '---\nname: nested\ndescription: nested skill\n---\n',
-      'utf-8',
-    );
-
-    const synced = syncCliSkillsIntoPivi(vaultPath, new Set());
-    expect(synced).toEqual(['nested-skill']);
-    expect(
-      fs.existsSync(path.join(vaultPath, '.pivi', 'skills', 'nested-skill', 'SKILL.md')),
-    ).toBe(true);
-  });
-
-  it('overwrites existing folders when overwriteFolders is set', () => {
-    const existing = path.join(vaultPath, '.pivi', 'skills', 'flat-skill');
-    fs.mkdirSync(existing, { recursive: true });
-    fs.writeFileSync(
-      path.join(existing, 'SKILL.md'),
-      '---\nname: old\ndescription: old\n---\n',
-      'utf-8',
-    );
-
-    const flatDir = path.join(vaultPath, '.agents', 'skills', 'flat-skill');
-    fs.mkdirSync(flatDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(flatDir, 'SKILL.md'),
-      '---\nname: new\ndescription: new\n---\n',
-      'utf-8',
-    );
-
-    syncCliSkillsIntoPivi(vaultPath, new Set(['flat-skill']), {
-      overwriteFolders: new Set(['flat-skill']),
-    });
-    const content = fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8');
-    expect(content).toContain('name: new');
-  });
-
-  it('skips skill folders that already exist in .pivi/skills', () => {
-    const existing = path.join(vaultPath, '.pivi', 'skills', 'existing');
-    fs.mkdirSync(existing, { recursive: true });
-    fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: e\ndescription: e\n---\n', 'utf-8');
-
-    const flatDir = path.join(vaultPath, '.agents', 'skills', 'existing');
-    fs.mkdirSync(flatDir, { recursive: true });
-    fs.writeFileSync(path.join(flatDir, 'SKILL.md'), '---\nname: e2\ndescription: e2\n---\n', 'utf-8');
-
-    const synced = syncCliSkillsIntoPivi(vaultPath, new Set(['existing']));
-    expect(synced).toEqual([]);
   });
 
   it('runs skills list through the injected process runner', async () => {

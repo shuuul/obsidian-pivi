@@ -21,9 +21,7 @@
       "unavailableStreaming": "Impossible de bifurquer pendant le streaming",
       "unavailableNoUuid": "Impossible de bifurquer : identifiants de message manquants",
       "errorMessageNotFound": "Message introuvable",
-      "errorNoSession": "Aucun ID de session disponible",
-      "commandNoMessages": "Impossible de bifurquer : aucun message dans la conversation",
-      "commandNoAssistantUuid": "Impossible de bifurquer : aucune réponse d’assistant avec identifiants"
+      "errorNoSession": "Aucun ID de session disponible"
     },
     "redo": {
       "ariaLabel": "Refaire la réponse de l’agent",
@@ -752,15 +750,35 @@
       "unavailableCodex": "Nécessite une connexion OpenAI Codex.",
       "cli": {
         "heading": "CLI officielle de Obsidian",
-        "enabled": { "name": "Activer les outils CLI officiels", "desc": "Autoriser Pivi à enregistrer les outils reposant sur la CLI officielle de Obsidian." },
+        "enabled": {
+          "name": "Activer les outils CLI officiels",
+          "desc": "Autoriser Pivi à enregistrer les outils reposant sur la CLI officielle de Obsidian."
+        },
         "unavailable": "La CLI officielle de Obsidian n’est pas enregistrée. Les outils CLI ne peuvent pas être activés.",
-        "path": { "name": "Chemin de l’exécutable CLI", "desc": "Exécutable facultatif. Laisser vide pour le détecter automatiquement.", "placeholder": "Détection automatique" },
-        "timeout": { "name": "Délai de la CLI", "desc": "Durée maximale de chaque requête à la CLI officielle.", "option": "{seconds} secondes" },
+        "path": {
+          "name": "Chemin de l’exécutable CLI",
+          "desc": "Exécutable facultatif. Laisser vide pour le détecter automatiquement.",
+          "placeholder": "Détection automatique"
+        },
+        "timeout": {
+          "name": "Délai de la CLI",
+          "desc": "Durée maximale de chaque requête à la CLI officielle.",
+          "option": "{seconds} secondes"
+        },
         "actionsUnavailable": "Les actions de requête et de création par CLI sont actuellement indisponibles."
       },
       "command": {
-        "execution": { "name": "Autoriser l’exécution des commandes", "desc": "Autoriser l’exécution après une permission existante ou une demande interactive. La découverte reste en lecture seule." },
-        "allowlist": { "name": "Identifiants de commande autorisés", "desc": "Les commandes absentes de cette liste demandent une autorisation avant leur exécution.", "add": "Ajouter un identifiant autorisé", "placeholder": "Identifiant de commande", "remove": "Retirer {id}" }
+        "execution": {
+          "name": "Autoriser l’exécution des commandes",
+          "desc": "Autoriser l’exécution après une permission existante ou une demande interactive. La découverte reste en lecture seule."
+        },
+        "allowlist": {
+          "name": "Identifiants de commande autorisés",
+          "desc": "Les commandes absentes de cette liste demandent une autorisation avant leur exécution.",
+          "add": "Ajouter un identifiant autorisé",
+          "placeholder": "Identifiant de commande",
+          "remove": "Retirer {id}"
+        }
       }
     },
     "bash": {

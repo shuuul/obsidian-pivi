@@ -370,25 +370,6 @@ function collectBinarySearchPaths(
   return [...additionalDirs, ...pathDirs, ...searchPaths];
 }
 
-function findExecutableInSearchPaths(
-  executableName: string,
-  additionalPaths: string | undefined,
-  context: SkillsEnvironmentContext,
-): string | null {
-  for (const dir of collectBinarySearchPaths(additionalPaths, context)) {
-    if (!dir) continue;
-    try {
-      const candidate = path.join(dir, executableName);
-      if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
-        return candidate;
-      }
-    } catch {
-      // Inaccessible directory
-    }
-  }
-  return null;
-}
-
 function findNodeDirectory(additionalPaths: string | undefined, context: SkillsEnvironmentContext): string | null {
   for (const dir of collectBinarySearchPaths(additionalPaths, context)) {
     if (!dir) continue;
@@ -417,27 +398,6 @@ export function findNodeExecutable(
 ): string {
   const context = createSkillsEnvironmentContext(processEnv, options);
   return findNodeExecutableInSearchPaths(additionalPaths, context) ?? context.nodeExecutable;
-}
-
-export function findNpxExecutable(
-  additionalPaths?: string,
-  processEnv: SkillsProcessEnv = process.env,
-  options?: SkillsEnvironmentOptions,
-): string | null {
-  const context = createSkillsEnvironmentContext(processEnv, options);
-  const nodeExecutable = findNodeExecutableInSearchPaths(additionalPaths, context);
-  if (nodeExecutable) {
-    const sibling = path.join(path.dirname(nodeExecutable), context.npxExecutable);
-    try {
-      if (fs.existsSync(sibling) && fs.statSync(sibling).isFile()) {
-        return sibling;
-      }
-    } catch {
-      // fall through to PATH search
-    }
-  }
-
-  return findExecutableInSearchPaths(context.npxExecutable, additionalPaths, context);
 }
 
 function getEnhancedPath(additionalPaths: string | undefined, context: SkillsEnvironmentContext): string {
@@ -480,18 +440,3 @@ export function getSpawnEnvWithEnhancedPath(
   return { ...processEnv, PATH: pathValue };
 }
 
-const NPX_NOT_FOUND_MESSAGE =
-  'Could not find npx. Install Node.js (https://nodejs.org) or add npx to PATH. '
-  + 'Obsidian runs with a minimal PATH; Pivi searches Homebrew, nvm, and other common locations.';
-
-export function formatNpxNotFoundError(
-  processEnv: SkillsProcessEnv = process.env,
-  options?: SkillsEnvironmentOptions,
-): string {
-  const context = createSkillsEnvironmentContext(processEnv, options);
-  const nodeDir = findNodeDirectory(undefined, context);
-  if (nodeDir) {
-    return `${NPX_NOT_FOUND_MESSAGE} Found node in ${nodeDir} but not npx alongside it.`;
-  }
-  return NPX_NOT_FOUND_MESSAGE;
-}

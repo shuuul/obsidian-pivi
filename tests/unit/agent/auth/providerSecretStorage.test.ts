@@ -11,7 +11,6 @@ import {
   isProviderDisabled,
   isSecretStorageAvailable,
   MAX_OBSIDIAN_SECRET_ID_LENGTH,
-  parseProviderCredentialSecretId,
 } from '@pivi/agent/auth/providerSecretStorage';
 import type { SyncSecretStore } from '@pivi/agent/ports';
 import { createWebSearchCredentialStore, getWebSearchCredentialSecretId } from '@pivi/agent/tools';
@@ -31,10 +30,6 @@ describe('ProviderSecretStorage', () => {
   it('builds stable secret ids per provider', () => {
     expect(getPiAiCredentialSecretId('anthropic')).toBe('pivi-anthropic-credential');
     expect(getProviderCredentialSecretId('anthropic', 'api-key')).toBe('pivi-anthropic-api-key');
-    expect(parseProviderCredentialSecretId('pivi-openai-api-key')).toEqual({
-      providerId: 'openai',
-      kind: 'api-key',
-    });
     expect(isObsidianSecretId(getPiAiCredentialSecretId('anthropic'))).toBe(true);
     expect(isObsidianSecretId('pivi-custom-openai-compatible-369e807a-7e24-4204-a86d-3abbaaa3d1e2-credential')).toBe(false);
     expect(MAX_OBSIDIAN_SECRET_ID_LENGTH).toBe(64);

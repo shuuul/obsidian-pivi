@@ -21,9 +21,7 @@
       "unavailableStreaming": "스트리밍 중에는 분기할 수 없습니다",
       "unavailableNoUuid": "분기할 수 없음: 메시지 식별자가 없습니다",
       "errorMessageNotFound": "메시지를 찾을 수 없습니다",
-      "errorNoSession": "사용 가능한 세션 ID가 없습니다",
-      "commandNoMessages": "분기할 수 없음: 대화에 메시지가 없습니다",
-      "commandNoAssistantUuid": "분기할 수 없음: 식별자가 있는 어시스턴트 응답이 없습니다"
+      "errorNoSession": "사용 가능한 세션 ID가 없습니다"
     },
     "redo": {
       "ariaLabel": "에이전트 응답 다시 실행",
@@ -752,15 +750,35 @@
       "unavailableCodex": "OpenAI Codex 연결이 필요합니다.",
       "cli": {
         "heading": "공식 Obsidian CLI",
-        "enabled": { "name": "공식 CLI 도구 활성화", "desc": "Pivi가 공식 Obsidian CLI 기반 도구를 등록하도록 허용합니다." },
+        "enabled": {
+          "name": "공식 CLI 도구 활성화",
+          "desc": "Pivi가 공식 Obsidian CLI 기반 도구를 등록하도록 허용합니다."
+        },
         "unavailable": "공식 Obsidian CLI가 등록되지 않았습니다. CLI 도구를 활성화할 수 없습니다.",
-        "path": { "name": "CLI 실행 파일 경로", "desc": "선택적 실행 파일 재정의입니다. 자동 감지하려면 비워 두세요.", "placeholder": "자동 감지" },
-        "timeout": { "name": "CLI 시간 제한", "desc": "각 공식 CLI 요청의 최대 시간입니다.", "option": "{seconds}초" },
+        "path": {
+          "name": "CLI 실행 파일 경로",
+          "desc": "선택적 실행 파일 재정의입니다. 자동 감지하려면 비워 두세요.",
+          "placeholder": "자동 감지"
+        },
+        "timeout": {
+          "name": "CLI 시간 제한",
+          "desc": "각 공식 CLI 요청의 최대 시간입니다.",
+          "option": "{seconds}초"
+        },
         "actionsUnavailable": "CLI 기반 쿼리 및 생성 작업은 현재 사용할 수 없습니다."
       },
       "command": {
-        "execution": { "name": "명령 실행 허용", "desc": "기존 권한 또는 대화형 권한 요청 후 명령을 실행합니다. 검색은 읽기 전용입니다." },
-        "allowlist": { "name": "허용된 명령 ID", "desc": "여기에 없는 명령은 실행 전에 권한을 요청합니다.", "add": "허용된 명령 ID 추가", "placeholder": "명령 ID", "remove": "{id} 제거" }
+        "execution": {
+          "name": "명령 실행 허용",
+          "desc": "기존 권한 또는 대화형 권한 요청 후 명령을 실행합니다. 검색은 읽기 전용입니다."
+        },
+        "allowlist": {
+          "name": "허용된 명령 ID",
+          "desc": "여기에 없는 명령은 실행 전에 권한을 요청합니다.",
+          "add": "허용된 명령 ID 추가",
+          "placeholder": "명령 ID",
+          "remove": "{id} 제거"
+        }
       }
     },
     "bash": {

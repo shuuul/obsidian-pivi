@@ -34,11 +34,6 @@ export interface VaultSkillsServiceOptions {
   publicationRenameSync?: typeof fs.renameSync;
 }
 
-export interface SyncCliSkillsOptions {
-  /** Replace these folders under `.pivi/skills/` even when they already exist. */
-  overwriteFolders?: ReadonlySet<string>;
-}
-
 export interface InstallSkillsOptions {
   /** Skill names to request from multi-skill repositories (`skills add --skill`). */
   skillNames?: string[];
@@ -65,16 +60,6 @@ export interface RemoteSkillEntry {
 
 
 const SKILLS_INSTALL_TIMEOUT_MS = 120_000;
-
-/** Candidate dirs where `skills add --copy` may place skills before Pivi sync. */
-const SKILLS_CLI_SOURCE_ROOTS = [
-  '.pivi/.agents/skills',
-  '.pivi/.cursor/skills',
-  '.pivi/skills',
-  '.agents/skills',
-  '.cursor/skills',
-  'skills',
-] as const;
 
 const SKILLS_STAGING_ROOT = path.join('.pivi', 'skills-staging');
 
@@ -211,58 +196,6 @@ function copySkillTree(
       fs.rmSync(stagingRoot, { recursive: true, force: true });
     }
   }
-}
-
-/** Copy skill trees from CLI default locations into `.pivi/skills/`. */
-export function syncCliSkillsIntoPivi(
-  vaultPath: string,
-  existingBefore: Set<string>,
-  options?: SyncCliSkillsOptions,
-): string[] {
-  const dest = ensurePiviSkillsDir(vaultPath);
-  const installed: string[] = [];
-  const overwriteFolders = options?.overwriteFolders;
-
-  for (const relativeRoot of SKILLS_CLI_SOURCE_ROOTS) {
-    const sourceRoot = path.join(vaultPath, relativeRoot);
-    if (!fs.existsSync(sourceRoot)) {
-      continue;
-    }
-
-    for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
-      if (!entry.isDirectory()) {
-        continue;
-      }
-
-      const flatSkillDir = path.join(sourceRoot, entry.name);
-      const skillMd = path.join(flatSkillDir, 'SKILL.md');
-      if (fs.existsSync(skillMd)) {
-        if (copySkillTree(flatSkillDir, entry.name, dest, existingBefore, installed, vaultPath, overwriteFolders)) {
-          continue;
-        }
-      }
-
-      const nestedSkillsRoot = path.join(flatSkillDir, 'skills');
-      if (!fs.existsSync(nestedSkillsRoot)) {
-        continue;
-      }
-
-      for (const nested of fs.readdirSync(nestedSkillsRoot, { withFileTypes: true })) {
-        if (!nested.isDirectory()) {
-          continue;
-        }
-
-        const nestedSkillDir = path.join(nestedSkillsRoot, nested.name);
-        if (!fs.existsSync(path.join(nestedSkillDir, 'SKILL.md'))) {
-          continue;
-        }
-
-        copySkillTree(nestedSkillDir, nested.name, dest, existingBefore, installed, vaultPath, overwriteFolders);
-      }
-    }
-  }
-
-  return installed;
 }
 
 export class VaultSkillsService {

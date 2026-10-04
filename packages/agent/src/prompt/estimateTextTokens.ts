@@ -5,25 +5,6 @@ const FENCED_BLOCK = /^(?: {0,3})(`{3,}|~{3,})([^\n]*)(?:\n|$)([\s\S]*?)^(?: {0,
 const LETTER = /\p{L}/u;
 const NUMBER = /\p{N}/u;
 
-export function looksStructured(text: string): boolean {
-  const trimmed = text.trim();
-  if (trimmed.includes('```') || trimmed.includes('~~~')) {
-    return true;
-  }
-  if (!(
-    (trimmed.startsWith('{') && trimmed.endsWith('}'))
-    || (trimmed.startsWith('[') && trimmed.endsWith(']'))
-  )) {
-    return false;
-  }
-  try {
-    JSON.parse(trimmed);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function isJson(text: string): boolean {
   const trimmed = text.trim();
   if (!(

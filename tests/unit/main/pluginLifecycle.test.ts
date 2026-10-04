@@ -81,7 +81,7 @@ import type { OpenSessionState } from "@pivi/agent/runtime";
 import { VIEW_TYPE_PIVI } from "@pivi/agent/runtime";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/agent/settings/defaults";
 import { PiviApplication } from "@/app/PiviApplication";
-import { persistOpenTabStates } from "@/app/pluginLifecycle";
+import { } from "@/app/pluginLifecycle";
 import { Plugin } from "obsidian";
 import { createMockApp } from "../../helpers/mockApp";
 
@@ -272,44 +272,6 @@ describe("PiviApplication lifecycle", () => {
   });
 
   describe("onunload", () => {
-    it("starts all view persistence before reporting a failure", async () => {
-      let finishSecond!: () => void;
-      const firstPersist = jest.fn(async () => {
-        throw new Error("first failed");
-      });
-      const secondPersist = jest.fn(() => new Promise<void>((resolve) => {
-        finishSecond = resolve;
-      }));
-      const plugin = createPlugin();
-      plugin.app.workspace.getLeavesOfType = jest.fn().mockReturnValue([
-        {
-          view: {
-            leaf: {},
-            getChatHandle: () => ({
-              commands: {},
-              maintenance: { persistState: firstPersist },
-            }),
-          },
-        },
-        {
-          view: {
-            leaf: {},
-            getChatHandle: () => ({
-              commands: {},
-              maintenance: { persistState: secondPersist },
-            }),
-          },
-        },
-      ]);
-
-      const persistence = persistOpenTabStates(plugin.app);
-
-      expect(firstPersist).toHaveBeenCalledTimes(1);
-      expect(secondPersist).toHaveBeenCalledTimes(1);
-      finishSecond();
-      await expect(persistence).rejects.toThrow("first failed");
-    });
-
     it("asks each open Pivi view handle to persist its state", async () => {
       const tabState = { openTabs: [{ id: "tab-1", openSessionId: null }] };
       const persistState = jest.fn(async () => {

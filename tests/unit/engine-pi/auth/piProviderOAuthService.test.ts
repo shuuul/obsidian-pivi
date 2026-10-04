@@ -13,7 +13,6 @@ import {
   CLAUDE_PROVIDER_ID,
   CODEX_OAUTH_PROVIDER_ID,
   GROK_BUILD_PROVIDER_ID,
-  OPENAI_PROVIDER_ID,
   XAI_PROVIDER_ID,
 } from '@pivi/agent/auth/piProviderCredentials';
 import { configurePiAiModels } from '@pivi/engine-pi/models/piAiModels';
@@ -168,7 +167,7 @@ describe('ProviderOAuthService', () => {
   it('signs in with ChatGPT using the device id and stores credentials in the subscription slot', async () => {
     const app = createMockApp({ vaultBasePath: tempDir });
     const store = new ObsidianCredentialStore(app.secretStorage);
-    store.writeSync(OPENAI_PROVIDER_ID, { type: 'api_key', key: 'openai-api-key' });
+    store.writeSync('openai', { type: 'api_key', key: 'openai-api-key' });
     configurePiAiModels({ credentials: store });
     const oauthHost = createMockOAuthFlowHost();
     const getDeviceId = jest.fn(() => '0f8fad5b-d9cb-469f-a165-70867728950e');
@@ -178,7 +177,7 @@ describe('ProviderOAuthService', () => {
 
     expect(getDeviceId).toHaveBeenCalled();
     expect(store.readSync(CHATGPT_PROVIDER_ID)).toMatchObject({ type: 'oauth', access: 'mock-access' });
-    expect(store.readSync(OPENAI_PROVIDER_ID)).toEqual({ type: 'api_key', key: 'openai-api-key' });
+    expect(store.readSync('openai')).toEqual({ type: 'api_key', key: 'openai-api-key' });
     expect(oauthHost.openAuthUrl).toHaveBeenCalledWith('https://auth.openai.com/api/accounts/authorize');
   });
 

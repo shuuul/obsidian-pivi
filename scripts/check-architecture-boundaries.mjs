@@ -36,11 +36,6 @@ const obsidianReactDir = path.join(rootDir, 'packages', 'pivi-react');
 const piviReactStylesDir = path.join(obsidianReactDir, 'styles');
 const piviReactSourceDir = path.join(obsidianReactDir, 'src');
 const obsidianReactPackagePattern = /^@pivi\/pivi-react(?:\/|$)/;
-const retiredReactPackagePattern = new RegExp(
-  '^@pivi/' + ['obsidian', '(?:ui|react)'].join('-') + '(?:/|$)',
-);
-
-const retiredAgentCorePackagePattern = /^@pivi\/pivi-agent-core(?:\/|$)/;
 const enginePiPackagePattern = /^@pivi\/engine-pi(?:\/|$)/;
 const enginePiImplementationPattern = /^@pivi\/engine-pi(?:$|\/(?!application\/(?:auth|models|oauth|oauth-flows|runtime|session)$))/;
 const appEnginePiImplementationPattern = /^@pivi\/engine-pi(?:$|\/(?!application\/(?:auth|development|models|oauth|oauth-flows|runtime|session)$))/;
@@ -68,26 +63,6 @@ const fileBoundaryRules = [
 ];
 
 const boundaryRules = [
-  {
-    name: 'src does not reference the retired React package identity',
-    root: 'src',
-    forbidden: [retiredReactPackagePattern],
-  },
-  {
-    name: 'packages do not reference the retired React package identity',
-    root: 'packages',
-    forbidden: [retiredReactPackagePattern],
-  },
-  {
-    name: 'src does not reference the retired @pivi/pivi-agent-core package',
-    root: 'src',
-    forbidden: [retiredAgentCorePackagePattern],
-  },
-  {
-    name: 'packages do not reference the retired @pivi/pivi-agent-core package',
-    root: 'packages',
-    forbidden: [retiredAgentCorePackagePattern],
-  },
   {
     name: '@pivi/pivi-react stays presentation-only',
     root: 'packages/pivi-react',
@@ -822,27 +797,6 @@ if (fs.existsSync(rootManifestFile)) {
         }
       }
     }
-  }
-}
-
-function containsRetiredPackageIdentity(value) {
-  if (typeof value === 'string') return retiredReactPackagePattern.test(value);
-  if (Array.isArray(value)) return value.some(containsRetiredPackageIdentity);
-  if (!value || typeof value !== 'object') return false;
-  return Object.entries(value).some(([key, child]) =>
-    retiredReactPackagePattern.test(key) || containsRetiredPackageIdentity(child));
-}
-
-for (const manifestFile of [path.join(rootDir, 'package.json'), ...listWorkspacePackageManifests()]) {
-  if (!fs.existsSync(manifestFile)) continue;
-  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
-  if (containsRetiredPackageIdentity(manifest)) {
-    failures.push({
-      rule: 'package manifests do not reference the retired React package identity',
-      file: path.relative(rootDir, manifestFile),
-      line: 1,
-      moduleName: '<retired-react-package>',
-    });
   }
 }
 

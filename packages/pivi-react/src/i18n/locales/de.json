@@ -21,9 +21,7 @@
       "unavailableStreaming": "Verzweigung während des Streamings nicht möglich",
       "unavailableNoUuid": "Verzweigung nicht möglich: Nachrichtenkennungen fehlen",
       "errorMessageNotFound": "Nachricht nicht gefunden",
-      "errorNoSession": "Keine Sitzungs-ID verfügbar",
-      "commandNoMessages": "Verzweigung nicht möglich: keine Nachrichten in der Konversation",
-      "commandNoAssistantUuid": "Verzweigung nicht möglich: keine Assistentenantwort mit Kennungen"
+      "errorNoSession": "Keine Sitzungs-ID verfügbar"
     },
     "redo": {
       "ariaLabel": "Agentenantwort erneut erstellen",
@@ -752,15 +750,35 @@
       "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung.",
       "cli": {
         "heading": "Offizielle Obsidian-CLI",
-        "enabled": { "name": "Offizielle CLI-Werkzeuge aktivieren", "desc": "Pivi darf Werkzeuge registrieren, die auf der offiziellen Obsidian-CLI basieren." },
+        "enabled": {
+          "name": "Offizielle CLI-Werkzeuge aktivieren",
+          "desc": "Pivi darf Werkzeuge registrieren, die auf der offiziellen Obsidian-CLI basieren."
+        },
         "unavailable": "Die offizielle Obsidian-CLI ist nicht registriert. CLI-Werkzeuge können nicht aktiviert werden.",
-        "path": { "name": "Pfad zur CLI-Datei", "desc": "Optionaler Pfad zur ausführbaren Datei. Leer lassen für automatische Erkennung.", "placeholder": "Automatisch erkennen" },
-        "timeout": { "name": "CLI-Zeitlimit", "desc": "Maximale Zeit für jede offizielle CLI-Anfrage.", "option": "{seconds} Sekunden" },
+        "path": {
+          "name": "Pfad zur CLI-Datei",
+          "desc": "Optionaler Pfad zur ausführbaren Datei. Leer lassen für automatische Erkennung.",
+          "placeholder": "Automatisch erkennen"
+        },
+        "timeout": {
+          "name": "CLI-Zeitlimit",
+          "desc": "Maximale Zeit für jede offizielle CLI-Anfrage.",
+          "option": "{seconds} Sekunden"
+        },
         "actionsUnavailable": "CLI-basierte Abfrage- und Erstellaktionen sind derzeit nicht verfügbar."
       },
       "command": {
-        "execution": { "name": "Befehlsausführung erlauben", "desc": "Befehle nach einer bestehenden Freigabe oder einer interaktiven Berechtigungsanfrage ausführen. Die Suche bleibt schreibgeschützt." },
-        "allowlist": { "name": "Erlaubte Befehls-IDs", "desc": "Nicht aufgeführte Befehle fragen vor der Ausführung nach Erlaubnis.", "add": "Erlaubte Befehls-ID hinzufügen", "placeholder": "Befehls-ID", "remove": "{id} entfernen" }
+        "execution": {
+          "name": "Befehlsausführung erlauben",
+          "desc": "Befehle nach einer bestehenden Freigabe oder einer interaktiven Berechtigungsanfrage ausführen. Die Suche bleibt schreibgeschützt."
+        },
+        "allowlist": {
+          "name": "Erlaubte Befehls-IDs",
+          "desc": "Nicht aufgeführte Befehle fragen vor der Ausführung nach Erlaubnis.",
+          "add": "Erlaubte Befehls-ID hinzufügen",
+          "placeholder": "Befehls-ID",
+          "remove": "{id} entfernen"
+        }
       }
     },
     "bash": {

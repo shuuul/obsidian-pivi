@@ -3,12 +3,10 @@ import { isProviderDisabled } from '@pivi/agent/auth/providerSecretStorage';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import { testEndpointConnectivity } from '@pivi/agent/runtime/connectivity';
 import { modelsListUrl } from '@pivi/agent/settings/customProviders';
-import { getProviderIdFromModelValue } from '@pivi/agent/settings/modelDisplay';
 import type { PiAgentSettingsView } from '@pivi/agent/settings/modelKey';
 import {
   piAiModels,
   type PiResolvedModel,
-  resolvePiModelFromKeyWithLookup,
 } from '@pivi/engine-pi/application/models';
 import { getActivePiviNetworkClients } from '@pivi/obsidian-host/createPiviNetworkClients';
 
@@ -59,26 +57,6 @@ function getProviderProbeClient() {
   // Provider tests must use the provider-purpose client so configured private
   // origins (LAN vLLM, Ollama) receive the same grants as model discovery.
   return clients.localProviderHttpClient ?? clients.httpClient;
-}
-
-export async function testModelReadiness(
-  modelKey: string,
-  piSettings: Pick<PiAgentSettingsView, 'disabledProviders'>,
-): Promise<ProviderTestResult> {
-  const providerId = getProviderIdFromModelValue(modelKey);
-  if (!providerId) {
-    return { ok: false, detail: `${modelKey} is not a provider/model id.` };
-  }
-  if (isProviderDisabled(piSettings.disabledProviders, providerId)) {
-    return { ok: false, detail: `${providerId} is disabled.` };
-  }
-
-  const model = resolvePiModelFromKeyWithLookup(modelKey, piAiModels);
-  if (!model) {
-    return { ok: false, detail: `No local model metadata is available for ${modelKey}.` };
-  }
-
-  return testResolvedModel(modelKey, model);
 }
 
 export async function testProviderReadiness(

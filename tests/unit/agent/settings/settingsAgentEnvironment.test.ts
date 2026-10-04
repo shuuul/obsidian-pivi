@@ -2,16 +2,11 @@ import {
   classifyEnvironmentVariablesByOwnership,
   getAgentEnvironmentVariables,
   getEnvironmentReviewKeysForScope,
-  getEnvironmentScopeUpdates,
-  getEnvironmentVariablesForScope,
   getRuntimeEnvironmentText,
   getSharedEnvironmentVariables,
   inferEnvironmentSnippetScope,
   joinEnvironmentTexts,
-  normalizeEnvironmentScope,
-  resolveEnvironmentSnippetScope,
   setAgentEnvironmentVariables,
-  setEnvironmentVariablesForScope,
   setSharedEnvironmentVariables,
 } from '@pivi/agent/settings/agentEnvironment';
 
@@ -170,18 +165,6 @@ describe('joinEnvironmentTexts and runtime text', () => {
   });
 });
 
-describe('scope routing getters and setters', () => {
-  it('reads and writes through shared and agent scopes', () => {
-    const settings = settingsBag();
-
-    setEnvironmentVariablesForScope(settings, 'shared', 'TMP=/tmp');
-    setEnvironmentVariablesForScope(settings, 'agent', 'PI_SCOPE=1');
-
-    expect(getEnvironmentVariablesForScope(settings, 'shared')).toBe('TMP=/tmp');
-    expect(getEnvironmentVariablesForScope(settings, 'agent')).toBe('PI_SCOPE=1');
-  });
-});
-
 describe('getEnvironmentReviewKeysForScope', () => {
   const snippet = 'PATH=/bin\nMYSTERY=x\nPI_AGENT=y';
 
@@ -197,19 +180,6 @@ describe('getEnvironmentReviewKeysForScope', () => {
       'PATH',
       'MYSTERY',
     ]);
-  });
-});
-
-describe('normalizeEnvironmentScope', () => {
-  it.each([
-    ['shared', 'shared'],
-    ['agent', 'agent'],
-    ['pi', 'agent'],
-    ['provider:pi', 'agent'],
-    ['provider:openai', undefined],
-    [null, undefined],
-  ] as const)('maps %s to %s', (value, expected) => {
-    expect(normalizeEnvironmentScope(value)).toBe(expected);
   });
 });
 
@@ -230,62 +200,5 @@ describe('inferEnvironmentSnippetScope', () => {
 
   it('returns undefined for comments-only snippets', () => {
     expect(inferEnvironmentSnippetScope('# just a comment\n')).toBeUndefined();
-  });
-});
-
-describe('resolveEnvironmentSnippetScope', () => {
-  it('prefers inferred scope over fallback when inference is unambiguous', () => {
-    expect(resolveEnvironmentSnippetScope('PI_ONLY=1', 'shared')).toBe('agent');
-  });
-
-  it('uses fallback for comments-only snippets', () => {
-    expect(
-      resolveEnvironmentSnippetScope('# header only', 'agent'),
-    ).toBe('agent');
-  });
-
-  it('returns undefined for ambiguous meaningful content even with fallback', () => {
-    expect(
-      resolveEnvironmentSnippetScope('PATH=/bin\nPI_X=1', 'shared'),
-    ).toBeUndefined();
-  });
-});
-
-describe('getEnvironmentScopeUpdates', () => {
-  it('emits separate shared and agent updates for mixed snippets', () => {
-    expect(
-      getEnvironmentScopeUpdates('PATH=/bin\nPI_KEY=1'),
-    ).toEqual([
-      { scope: 'shared', envText: 'PATH=/bin' },
-      { scope: 'agent', envText: 'PI_KEY=1' },
-    ]);
-  });
-
-  it('emits a single shared update for shared-only snippets', () => {
-    expect(getEnvironmentScopeUpdates('HTTP_PROXY=http://p')).toEqual([
-      { scope: 'shared', envText: 'HTTP_PROXY=http://p' },
-    ]);
-  });
-
-  it('emits a single agent update for agent-only snippets', () => {
-    expect(getEnvironmentScopeUpdates('PI_SOLO=1')).toEqual([
-      { scope: 'agent', envText: 'PI_SOLO=1' },
-    ]);
-  });
-
-  it('uses fallback scope when snippet has no meaningful assignments', () => {
-    expect(getEnvironmentScopeUpdates('# notes only', 'shared')).toEqual([
-      { scope: 'shared', envText: '# notes only' },
-    ]);
-  });
-
-  it('classifies comment-only snippets as a shared-scope update', () => {
-    expect(getEnvironmentScopeUpdates('# only comments')).toEqual([
-      { scope: 'shared', envText: '# only comments' },
-    ]);
-  });
-
-  it('returns no updates for whitespace-only snippets without fallback', () => {
-    expect(getEnvironmentScopeUpdates('   \n  ')).toEqual([]);
   });
 });

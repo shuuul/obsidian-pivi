@@ -3,8 +3,6 @@ import * as os from 'os';
 import * as path from 'path';
 
 import {
-  findNpxExecutable,
-  formatNpxNotFoundError,
   getSpawnEnvWithEnhancedPath,
 } from '@pivi/agent/skills/vault/env';
 
@@ -58,32 +56,4 @@ describe('vault skills environment helpers', () => {
     expect(spawnEnv.Path).toBe(spawnEnv.PATH);
   });
 
-  it('uses platform-specific npx executable names', () => {
-    const binDir = path.join(tempDir, 'bin');
-    fs.mkdirSync(binDir, { recursive: true });
-    fs.writeFileSync(path.join(binDir, 'node.exe'), '');
-    const npxPath = path.join(binDir, 'npx.cmd');
-    fs.writeFileSync(npxPath, '');
-
-    expect(
-      findNpxExecutable(
-        undefined,
-        { HOME: tempDir, PATH: binDir },
-        { execPath: path.join(tempDir, 'Obsidian.exe'), homeDir: tempDir, platform: 'win32' },
-      ),
-    ).toBe(npxPath);
-  });
-
-  it('uses injected home directory when expanding PATH entries', () => {
-    const binDir = path.join(tempDir, 'node-bin');
-    fs.mkdirSync(binDir, { recursive: true });
-    fs.writeFileSync(path.join(binDir, 'node'), '');
-
-    expect(
-      formatNpxNotFoundError(
-        { PATH: '~/node-bin' },
-        { homeDir: tempDir, platform: 'linux' },
-      ),
-    ).toContain(`Found node in ${binDir} but not npx alongside it.`);
-  });
 });

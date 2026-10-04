@@ -1,6 +1,5 @@
 import {
   deriveTodoVisualizationModel,
-  extractLastTodosFromMessages,
   extractLastTodoVisualizationFromMessages,
   parseTodoToolInput,
   TOOL_TODO_WRITE,
@@ -65,6 +64,5 @@ describe('todo visualization model', () => {
     expect(model?.items).toEqual([
       { id: 'todo-1-new', content: 'New', status: 'pending', sourceToolCallId: 'new' },
     ]);
-    expect(extractLastTodosFromMessages(messages)).toEqual(model?.items);
   });
 });

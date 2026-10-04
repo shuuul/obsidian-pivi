@@ -21,9 +21,7 @@
       "unavailableStreaming": "ストリーミング中は分岐できません",
       "unavailableNoUuid": "分岐できません：メッセージ識別子がありません",
       "errorMessageNotFound": "メッセージが見つかりません",
-      "errorNoSession": "セッション ID がありません",
-      "commandNoMessages": "分岐できません：会話にメッセージがありません",
-      "commandNoAssistantUuid": "分岐できません：識別子付きのアシスタント応答がありません"
+      "errorNoSession": "セッション ID がありません"
     },
     "redo": {
       "ariaLabel": "エージェント応答をやり直す",
@@ -752,15 +750,35 @@
       "unavailableCodex": "OpenAI Codex の接続が必要です。",
       "cli": {
         "heading": "公式 Obsidian CLI",
-        "enabled": { "name": "公式 CLI ツールを有効化", "desc": "公式 Obsidian CLI を使うツールを Pivi が登録できるようにします。" },
+        "enabled": {
+          "name": "公式 CLI ツールを有効化",
+          "desc": "公式 Obsidian CLI を使うツールを Pivi が登録できるようにします。"
+        },
         "unavailable": "公式 Obsidian CLI が登録されていません。CLI ツールは有効化できません。",
-        "path": { "name": "CLI 実行ファイルのパス", "desc": "任意の実行ファイル指定です。空欄の場合は自動検出します。", "placeholder": "自動検出" },
-        "timeout": { "name": "CLI タイムアウト", "desc": "公式 CLI リクエストごとの最大待機時間です。", "option": "{seconds} 秒" },
+        "path": {
+          "name": "CLI 実行ファイルのパス",
+          "desc": "任意の実行ファイル指定です。空欄の場合は自動検出します。",
+          "placeholder": "自動検出"
+        },
+        "timeout": {
+          "name": "CLI タイムアウト",
+          "desc": "公式 CLI リクエストごとの最大待機時間です。",
+          "option": "{seconds} 秒"
+        },
         "actionsUnavailable": "CLI を使うクエリと作成アクションは現在利用できません。"
       },
       "command": {
-        "execution": { "name": "コマンド実行を許可", "desc": "既存の許可または対話式の権限リクエスト後にコマンドを実行します。検出は読み取り専用のままです。" },
-        "allowlist": { "name": "許可するコマンド ID", "desc": "ここにないコマンドは実行前に許可を求めます。", "add": "許可するコマンド ID を追加", "placeholder": "コマンド ID", "remove": "{id} を削除" }
+        "execution": {
+          "name": "コマンド実行を許可",
+          "desc": "既存の許可または対話式の権限リクエスト後にコマンドを実行します。検出は読み取り専用のままです。"
+        },
+        "allowlist": {
+          "name": "許可するコマンド ID",
+          "desc": "ここにないコマンドは実行前に許可を求めます。",
+          "add": "許可するコマンド ID を追加",
+          "placeholder": "コマンド ID",
+          "remove": "{id} を削除"
+        }
       }
     },
     "bash": {

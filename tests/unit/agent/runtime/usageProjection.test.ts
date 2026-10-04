@@ -2,7 +2,6 @@ import type { UsageInfo } from '@pivi/agent/runtime';
 import {
   calculateCacheHitPercentage,
   calculateContextEnvelope,
-  calculateCompactionRemainingTokens,
   calculateContextUsagePercentage,
   calculateReadToolMaxChars,
   calculateTokensPerSecond,
@@ -136,23 +135,7 @@ describe('usage projection', () => {
     });
   });
 
-  it('keeps the fixed read ceiling near the compaction trigger', () => {
-    const envelope = calculateContextEnvelope({
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      providerContextTokens: 175_000,
-    });
-    const usage: UsageInfo = {
-      contextEnvelope: envelope,
-      contextTokens: 175_000,
-      contextTokensIsAuthoritative: true,
-      contextWindow: 200_000,
-      contextWindowIsAuthoritative: true,
-      inputTokens: 175_000,
-      percentage: 88,
-    };
-
-    expect(calculateCompactionRemainingTokens(usage)).toBe(0);
+  it('keeps a fixed read ceiling', () => {
     expect(calculateReadToolMaxChars()).toBe(500_000);
   });
 

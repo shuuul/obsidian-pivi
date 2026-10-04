@@ -38,7 +38,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Later
 
-- Evaluate pi's codemode (`@earendil-works/pi-codemode`): model-written JavaScript in a QuickJS sandbox that calls tools, including MCP tools, in parallel and returns only the needed result. Prerequisites are confirmed QuickJS WASM loading in Obsidian, measured bundle headroom, and a permission/review design for model-written scripts; Pivi's proxy `mcp` tool already covers large server inventories meanwhile. Deferred from [spec 056](../specs/056-pi-099-upgrade-and-pi-mcp-client.md).
+- Evaluate pi's codemode (`@earendil-works/pi-codemode`): model-written JavaScript in a QuickJS sandbox that calls tools, including MCP tools, in parallel and returns only the needed result. Prerequisites are confirmed QuickJS WASM loading in Obsidian, measured bundle headroom, and a permission/review design for model-written scripts; Pivi's proxy `mcp` tool already covers large server inventories meanwhile. Deferred from [spec 056](../specs/archive/056-pi-099-upgrade-and-pi-mcp-client.md).
 - Evolve long-session paging, context checkpoints, and the Narrative / Activity / Memory visual language according to [Chat UI evolution](11-chat-ui-evolution.md), promoting only measured and accepted slices into Now or Next.
 - Re-measure bundle composition before changing provider dependencies; keep Google provider/auth code bundled unless a tested replacement shim exists.
 - Split large modules only when the affected behavior is next changed and the extracted boundary has domain meaning.

@@ -1,5 +1,4 @@
 import {
-  extractAgentReportFromSubagentJsonl,
   extractFinalResultFromSubagentJsonl,
 } from '@pivi/agent/session/subagentJsonl';
 import { createAgentReportBlock } from '../../helpers/agentReport';
@@ -20,12 +19,10 @@ describe('subagent JSONL compatibility', () => {
     ].join('\n');
 
     expect(extractFinalResultFromSubagentJsonl(content)).toBe(text);
-    expect(extractAgentReportFromSubagentJsonl(content)).toEqual(report);
   });
 
   it('keeps plain and malformed terminal output on the text-only path', () => {
     const content = JSON.stringify({ result: 'plain result' });
     expect(extractFinalResultFromSubagentJsonl(content)).toBe('plain result');
-    expect(extractAgentReportFromSubagentJsonl(content)).toBeNull();
   });
 });

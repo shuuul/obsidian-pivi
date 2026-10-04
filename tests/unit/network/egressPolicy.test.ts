@@ -1,5 +1,4 @@
 import {
-  assertDestinationAllowed,
   assertPinnedAddress,
   EgressDeniedError,
   EgressPolicyError,
@@ -16,7 +15,7 @@ describe('egressPolicy', () => {
   const providerPolicy = resolveEgressPolicy({ purpose: 'provider' });
 
   it('denies public-looking hosts that resolve to private addresses', () => {
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('https://evil.example/'),
       ['10.0.0.5'],
       policy,
@@ -49,12 +48,12 @@ describe('egressPolicy', () => {
   });
 
   it('keeps literal private IPs grant-gated for provider purposes', () => {
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('http://10.0.0.1/'),
       ['10.0.0.1'],
       providerPolicy,
     )).toThrow(EgressDeniedError);
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('http://127.0.0.1:11434/'),
       ['127.0.0.1'],
       providerPolicy,
@@ -64,9 +63,9 @@ describe('egressPolicy', () => {
   it('allows short-lived origin grants without a permanent private bypass', () => {
     const grants = new OriginGrantRegistry();
     const url = new URL('http://127.0.0.1:11434/');
-    expect(() => assertDestinationAllowed(url, ['127.0.0.1'], policy, grants)).toThrow(EgressDeniedError);
+    expect(() => selectAllowedResolvedAddresses(url, ['127.0.0.1'], policy, grants)).toThrow(EgressDeniedError);
     grants.grant(url, 60_000, 'provider');
-    expect(() => assertDestinationAllowed(url, ['127.0.0.1'], {
+    expect(() => selectAllowedResolvedAddresses(url, ['127.0.0.1'], {
       ...policy,
       purpose: 'provider',
     }, grants)).not.toThrow();
@@ -80,10 +79,10 @@ describe('egressPolicy', () => {
       'provider',
     );
     // Private/loopback configured origins are granted for the provider purpose.
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('http://127.0.0.1:11434/'), ['127.0.0.1'], providerPolicy, grants,
     )).not.toThrow();
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('http://localhost:3000/'), ['127.0.0.1'], providerPolicy, grants,
     )).not.toThrow();
 
@@ -93,22 +92,22 @@ describe('egressPolicy', () => {
     expect(selectAllowedResolvedAddresses(
       new URL('https://api.example.com/'), ['10.0.0.1'], providerPolicy, grants,
     )).toEqual(['10.0.0.1']);
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('https://api.example.com/'), ['10.0.0.1'], policy, grants,
     )).toThrow(EgressDeniedError);
 
     // The grant is purpose-scoped: MCP egress to the same origin is still denied.
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('http://127.0.0.1:11434/'), ['127.0.0.1'], { ...policy, purpose: 'mcp' }, grants,
     )).toThrow(EgressDeniedError);
 
     // Revoking the provider purpose removes its grants without affecting others.
     grants.grant(new URL('http://192.168.0.5/'), 60_000, 'mcp');
     grants.revokeByPurpose('provider');
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('http://127.0.0.1:11434/'), ['127.0.0.1'], providerPolicy, grants,
     )).toThrow(EgressDeniedError);
-    expect(() => assertDestinationAllowed(
+    expect(() => selectAllowedResolvedAddresses(
       new URL('http://192.168.0.5/'), ['192.168.0.5'], { ...policy, purpose: 'mcp' }, grants,
     )).not.toThrow();
   });

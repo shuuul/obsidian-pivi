@@ -1,7 +1,6 @@
 import {
   appendToolResultReminder,
   buildAliasReminder,
-  canonicalizeToolCallName,
   isDisabledToolName,
   migrateDisabledToolNames,
   normalizeToolCallArguments,
@@ -59,9 +58,7 @@ describe('toolAliases', () => {
     expect(buildAliasReminder('read', { path: 'a.md', offset: 1, limit: 10 })).toBeUndefined();
   });
 
-  it('persists the live name and appends one reminder to a successful result', () => {
-    const toolCall = canonicalizeToolCallName({ name: 'obsidian_read', id: '1' });
-    expect(toolCall.name).toBe('read');
+  it('appends one reminder to a successful result', () => {
     const reminded = appendToolResultReminder(
       { content: [{ type: 'text', text: 'ok' }] },
       'Use the live tool name `read` next time.',

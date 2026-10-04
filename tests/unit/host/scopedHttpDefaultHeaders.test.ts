@@ -1,17 +1,17 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { applyNodeFetchDefaultHeaders } from '@pivi/obsidian-host/nodeFetch';
+import { applyScopedHttpDefaultHeaders } from '@pivi/obsidian-host/scopedHttpClient';
 
 const packageVersion = JSON.parse(
   readFileSync(path.resolve(__dirname, '../../../package.json'), 'utf8'),
 ).version as string;
 
-describe('nodeFetch', () => {
+describe('scoped HTTP default headers', () => {
   it('adds default headers for Node HTTP requests', () => {
     const headers = new Headers();
 
-    applyNodeFetchDefaultHeaders(headers);
+    applyScopedHttpDefaultHeaders(headers);
 
     expect(headers.get('user-agent')).toBe(`Mozilla/5.0 Pivi/${packageVersion}`);
     expect(headers.get('accept')).toBe('*/*');
@@ -23,7 +23,7 @@ describe('nodeFetch', () => {
       'user-agent': 'CustomAgent/1.0',
     });
 
-    applyNodeFetchDefaultHeaders(headers);
+    applyScopedHttpDefaultHeaders(headers);
 
     expect(headers.get('user-agent')).toBe('CustomAgent/1.0');
     expect(headers.get('accept')).toBe('application/json');

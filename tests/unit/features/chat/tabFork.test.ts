@@ -3,7 +3,7 @@ import { Notice } from 'obsidian';
 import type { ChatMessage } from '@pivi/agent/runtime';
 import { findRedoContext, findRewindContext } from '@/ui/chat/branchContext';
 import { ChatState } from '@/ui/chat/state/ChatState';
-import { handleForkAll, handleForkRequest } from '@/ui/chat/tabs/tabFork';
+import { handleForkRequest } from '@/ui/chat/tabs/tabFork';
 import { handleRedoRequest, resolveRedoTurnContext } from '@/ui/chat/tabs/tabRedo';
 import type { TabData } from '@/ui/chat/tabs/types';
 import { confirm } from '@/ui/shared/modals/ConfirmModal';
@@ -155,21 +155,6 @@ describe('tab fork guards', () => {
     expect(Notice).toHaveBeenCalledWith('Cannot fork: missing message identifiers');
   });
 
-  it('does not fork all when no assistant message has a persisted uuid', async () => {
-    const callback = jest.fn(async () => {});
-
-    await handleForkAll(
-      makeTab([
-        { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' },
-        { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2 },
-      ]),
-      makePorts().sessions,
-      callback,
-    );
-
-    expect(callback).not.toHaveBeenCalled();
-    expect(Notice).toHaveBeenCalledWith(expect.stringContaining('assistant'));
-  });
 });
 
 describe('rewind checkpoint detection', () => {

@@ -47,25 +47,6 @@ export function buildOldStringNotFoundMessage(
   return base;
 }
 
-/** Applies the exact-match policy used by `ObsidianVaultApi.editNote`. */
-export function replaceVaultEditMatch(params: {
-  filePath: string;
-  content: string;
-  oldString: string;
-  newString: string;
-  replaceAll?: boolean;
-}): VaultEditMatchResult {
-  return applyVaultEdits({
-    filePath: params.filePath,
-    content: params.content,
-    edits: [{
-      oldText: params.oldString,
-      newText: params.newString,
-      replaceAll: params.replaceAll,
-    }],
-  });
-}
-
 /**
  * Apply every edit against the original file. Matches are not incremental.
  * Overlapping or nested spans fail; `replaceAll` still targets the original text.

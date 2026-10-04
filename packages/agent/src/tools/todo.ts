@@ -105,16 +105,6 @@ export function deriveTodoVisualizationModel(
   };
 }
 
-/**
- * Extract the last TodoWrite todos from a list of messages.
- * Used to restore the todo panel when loading a saved session.
- */
-export function extractLastTodosFromMessages(
-  messages: Array<{ role: string; toolCalls?: Array<{ name: string; input: Record<string, unknown> }> }>
-): TodoItem[] | null {
-  return extractLastTodoVisualizationFromMessages(messages)?.items ?? null;
-}
-
 export function extractLastTodoVisualizationFromMessages(
   messages: Array<{ role: string; toolCalls?: Array<{ id?: string; name: string; input: Record<string, unknown> }> }>
 ): TodoVisualizationModel | null {

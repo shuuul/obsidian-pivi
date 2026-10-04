@@ -323,14 +323,6 @@ export function buildAliasReminder(toolName: string, rawArguments: unknown): str
   }
 }
 
-export function canonicalizeToolCallName<T extends { name: string }>(toolCall: T): T {
-  const live = resolveLiveToolName(toolCall.name);
-  if (live !== toolCall.name) {
-    toolCall.name = live;
-  }
-  return toolCall;
-}
-
 export function appendToolResultReminder(result: unknown, reminder: string): unknown {
   if (!isPlainObject(result)) {
     return result;

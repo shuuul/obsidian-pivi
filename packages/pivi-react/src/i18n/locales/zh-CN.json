@@ -21,9 +21,7 @@
       "unavailableStreaming": "流式响应中无法分叉",
       "unavailableNoUuid": "无法分叉：缺少消息标识符",
       "errorMessageNotFound": "未找到消息",
-      "errorNoSession": "没有可用的会话 ID",
-      "commandNoMessages": "无法分叉：对话中没有消息",
-      "commandNoAssistantUuid": "无法分叉：没有带标识符的助手回复"
+      "errorNoSession": "没有可用的会话 ID"
     },
     "redo": {
       "ariaLabel": "重做助手回复",
@@ -752,15 +750,35 @@
       "unavailableCodex": "需要连接 OpenAI Codex。",
       "cli": {
         "heading": "官方 Obsidian CLI",
-        "enabled": { "name": "启用官方 CLI 工具", "desc": "允许 Pivi 注册由官方 Obsidian CLI 支持的工具。" },
+        "enabled": {
+          "name": "启用官方 CLI 工具",
+          "desc": "允许 Pivi 注册由官方 Obsidian CLI 支持的工具。"
+        },
         "unavailable": "官方 Obsidian CLI 未注册，无法启用 CLI 工具。",
-        "path": { "name": "CLI 可执行文件路径", "desc": "可选的可执行文件替代路径。留空表示自动检测。", "placeholder": "自动检测" },
-        "timeout": { "name": "CLI 超时", "desc": "每个官方 CLI 请求的最长时间。", "option": "{seconds} 秒" },
+        "path": {
+          "name": "CLI 可执行文件路径",
+          "desc": "可选的可执行文件替代路径。留空表示自动检测。",
+          "placeholder": "自动检测"
+        },
+        "timeout": {
+          "name": "CLI 超时",
+          "desc": "每个官方 CLI 请求的最长时间。",
+          "option": "{seconds} 秒"
+        },
         "actionsUnavailable": "CLI 支持的查询和创建操作当前不可用。"
       },
       "command": {
-        "execution": { "name": "允许执行命令", "desc": "已有授权时直接执行，否则交互式请求权限。发现功能仍为只读。" },
-        "allowlist": { "name": "允许的命令 ID", "desc": "未列出的命令会在执行前请求权限。", "add": "添加允许的命令 ID", "placeholder": "命令 ID", "remove": "移除 {id}" }
+        "execution": {
+          "name": "允许执行命令",
+          "desc": "已有授权时直接执行，否则交互式请求权限。发现功能仍为只读。"
+        },
+        "allowlist": {
+          "name": "允许的命令 ID",
+          "desc": "未列出的命令会在执行前请求权限。",
+          "add": "添加允许的命令 ID",
+          "placeholder": "命令 ID",
+          "remove": "移除 {id}"
+        }
       }
     },
     "bash": {

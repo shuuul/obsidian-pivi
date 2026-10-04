@@ -1,65 +1,7 @@
-import type { ChatMessage } from '@pivi/agent/runtime';
 import { skipsBlockedDetection } from '@pivi/agent/tools/toolNames';
 import type { ToolCallInfo } from '@pivi/agent/tools/types';
 
 import { isBlockedToolResult } from '../rendering/ToolCallRenderer';
-
-function findMessageToolCall(
-  msg: ChatMessage,
-  toolId: string,
-): ToolCallInfo | undefined {
-  return msg.toolCalls?.find(tc => tc.id === toolId);
-}
-
-export interface MergeStreamingToolUseResult {
-  merged: boolean;
-  toolCall?: ToolCallInfo;
-}
-
-/** Merge streaming tool_use input into an existing tool call on the message. */
-export function mergeStreamingToolUseInput(
-  msg: ChatMessage,
-  chunk: { id: string; name: string; input: Record<string, unknown> },
-): MergeStreamingToolUseResult {
-  const existingToolCall = findMessageToolCall(msg, chunk.id);
-  if (!existingToolCall) {
-    return { merged: false };
-  }
-
-  const newInput = chunk.input || {};
-  if (Object.keys(newInput).length === 0) {
-    return { merged: true, toolCall: existingToolCall };
-  }
-
-  existingToolCall.input = { ...existingToolCall.input, ...newInput };
-  return { merged: true, toolCall: existingToolCall };
-}
-
-/** Register a new tool call on the message; optionally append a content block for ordering. */
-export function registerMessageToolCall(
-  msg: ChatMessage,
-  chunk: { id: string; name: string; input: Record<string, unknown> },
-  options: { contentBlock: boolean },
-): ToolCallInfo {
-  const toolCall: ToolCallInfo = {
-    id: chunk.id,
-    name: chunk.name,
-    input: chunk.input,
-    status: 'running',
-    startedAt: Date.now(),
-    isExpanded: false,
-  };
-
-  msg.toolCalls = msg.toolCalls || [];
-  msg.toolCalls.push(toolCall);
-
-  if (options.contentBlock) {
-    msg.contentBlocks = msg.contentBlocks || [];
-    msg.contentBlocks.push({ type: 'tool_use', toolId: chunk.id });
-  }
-
-  return toolCall;
-}
 
 /** Resolve terminal status for a regular (non-lifecycle) tool_result. */
 export function resolveRegularToolResultStatus(

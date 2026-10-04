@@ -98,28 +98,6 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it.each([
-    ['src/app/ui', 'src does not reference the retired React package identity'],
-    ['packages/example/src', 'packages do not reference the retired React package identity'],
-  ])('rejects the retired React package name from %s', (fixtureDir, ruleName) => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, fixtureDir), { recursive: true });
-      const retiredPackageName = ['@pivi/obsidian', 'ui'].join('-');
-      writeFileSync(
-        join(fixtureRoot, fixtureDir, 'fixture.ts'),
-        `import { mountChatView } from '${retiredPackageName}/mount';`,
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(`[${ruleName}]`);
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
-
   it('allows React surface mounts only inside src/app/ui', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -361,26 +339,6 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it('rejects the retired @pivi/pivi-agent-core package name', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'src/app/fixture.ts'),
-        "import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';",
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[src does not reference the retired @pivi/pivi-agent-core package]',
-      );
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
-
   it('rejects @pivi/engine-pi imports outside composition', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -548,27 +506,6 @@ describe('architecture boundary scripts', () => {
       const result = runArchitectureCheck(fixtureRoot);
 
       expect(result.status).toBe(0);
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
-
-  it('rejects the retired React identity from package manifests', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'packages/example'), { recursive: true });
-      const retiredPackageName = ['@pivi/obsidian', 'ui'].join('-');
-      writeFileSync(
-        join(fixtureRoot, 'packages/example/package.json'),
-        JSON.stringify({ dependencies: { [retiredPackageName]: '*' }, name: '@pivi/example' }),
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain(
-        '[package manifests do not reference the retired React package identity]',
-      );
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }

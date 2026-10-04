@@ -1,9 +1,9 @@
 ---
 id: "056"
 title: "Pi 0.99 upgrade and pi-mcp client migration"
-status: Active
+status: Completed
 created: 2026-09-30
-updated: 2026-09-30
+updated: 2026-10-04
 coordinator: "Claude Code"
 ---
 
@@ -24,7 +24,7 @@ Pivi pinned `@earendil-works/pi-*` at `0.87.1`. Upstream `0.99.0` added MCP supp
 - [x] ChatGPT sign-in is available as its own OAuth provider (`chatgpt/*`) with the OpenAI icon; OpenAI Codex stays unchanged.
 - [x] `@pivi/agent/mcp` uses `@earendil-works/pi-mcp`; `@modelcontextprotocol/sdk` and `build/plugins/shim-mcp-validation.mjs` are removed.
 - [x] Legacy `type: "sse"` MCP entries are rewritten on load to disabled Streamable HTTP entries (URL, headers, and secrets kept) with a one-time localized notice pointing at the Streamable HTTP endpoint.
-- [ ] Local CI-equivalent suite green, including `check:bundle-size`.
+- [x] Local CI-equivalent suite green, including `check:bundle-size`.
 
 ## Scope and non-goals
 
@@ -90,4 +90,4 @@ Not in scope:
 
 ## Completion summary
 
-Pending.
+Both workstreams shipped in 0.31.0: the four Pi pins moved to 0.99.1 with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` over Streamable HTTP, with legacy SSE entries rewritten to disabled HTTP entries. The pins have since advanced to 1.0.1 (0.31.1) and 1.0.2 without reopening this work. The local CI-equivalent suite, including `check:bundle-size`, was green on 2026-10-04. Durable guidance lives in root `AGENTS.md`, `packages/agent/AGENTS.md`, and `docs/07-tools-skills-mcp-and-integrations.md`.

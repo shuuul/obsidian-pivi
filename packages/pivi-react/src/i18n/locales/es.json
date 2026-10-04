@@ -21,9 +21,7 @@
       "unavailableStreaming": "No se puede bifurcar durante el streaming",
       "unavailableNoUuid": "No se puede bifurcar: faltan identificadores del mensaje",
       "errorMessageNotFound": "Mensaje no encontrado",
-      "errorNoSession": "No hay ID de sesión disponible",
-      "commandNoMessages": "No se puede bifurcar: no hay mensajes en la conversación",
-      "commandNoAssistantUuid": "No se puede bifurcar: no hay respuesta del asistente con identificadores"
+      "errorNoSession": "No hay ID de sesión disponible"
     },
     "redo": {
       "ariaLabel": "Rehacer respuesta del agente",
@@ -752,15 +750,35 @@
       "unavailableCodex": "Requiere conexión con OpenAI Codex.",
       "cli": {
         "heading": "CLI oficial de Obsidian",
-        "enabled": { "name": "Activar herramientas de la CLI oficial", "desc": "Permite que Pivi registre herramientas basadas en la CLI oficial de Obsidian." },
+        "enabled": {
+          "name": "Activar herramientas de la CLI oficial",
+          "desc": "Permite que Pivi registre herramientas basadas en la CLI oficial de Obsidian."
+        },
         "unavailable": "La CLI oficial de Obsidian no está registrada. No se pueden activar las herramientas de CLI.",
-        "path": { "name": "Ruta del ejecutable CLI", "desc": "Ejecutable alternativo opcional. Déjalo vacío para detectarlo automáticamente.", "placeholder": "Detectar automáticamente" },
-        "timeout": { "name": "Tiempo límite de CLI", "desc": "Tiempo máximo para cada solicitud de la CLI oficial.", "option": "{seconds} segundos" },
+        "path": {
+          "name": "Ruta del ejecutable CLI",
+          "desc": "Ejecutable alternativo opcional. Déjalo vacío para detectarlo automáticamente.",
+          "placeholder": "Detectar automáticamente"
+        },
+        "timeout": {
+          "name": "Tiempo límite de CLI",
+          "desc": "Tiempo máximo para cada solicitud de la CLI oficial.",
+          "option": "{seconds} segundos"
+        },
         "actionsUnavailable": "Las acciones de consulta y creación mediante CLI no están disponibles actualmente."
       },
       "command": {
-        "execution": { "name": "Permitir ejecución de comandos", "desc": "Permite ejecutar comandos con una autorización existente o una solicitud interactiva. La detección sigue siendo de solo lectura." },
-        "allowlist": { "name": "ID de comando permitidos", "desc": "Los comandos que no aparecen aquí solicitan permiso antes de ejecutarse.", "add": "Añadir un ID de comando permitido", "placeholder": "ID de comando", "remove": "Quitar {id}" }
+        "execution": {
+          "name": "Permitir ejecución de comandos",
+          "desc": "Permite ejecutar comandos con una autorización existente o una solicitud interactiva. La detección sigue siendo de solo lectura."
+        },
+        "allowlist": {
+          "name": "ID de comando permitidos",
+          "desc": "Los comandos que no aparecen aquí solicitan permiso antes de ejecutarse.",
+          "add": "Añadir un ID de comando permitido",
+          "placeholder": "ID de comando",
+          "remove": "Quitar {id}"
+        }
       }
     },
     "bash": {

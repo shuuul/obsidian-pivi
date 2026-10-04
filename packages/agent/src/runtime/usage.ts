@@ -138,17 +138,6 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
   };
 }
 
-/** Remaining input tokens before automatic compaction should trigger. */
-export function calculateCompactionRemainingTokens(usage: UsageInfo): number {
-  const envelope = usage.contextEnvelope ?? calculateContextEnvelope({
-    contextWindow: usage.contextWindow || DEFAULT_CONTEXT_WINDOW_TOKENS,
-    contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
-    outputTokenLimit: usage.outputTokenLimit,
-    providerContextTokens: usage.contextTokensIsAuthoritative ? usage.contextTokens : undefined,
-  });
-  return Math.max(0, envelope.compactionTriggerTokens - envelope.pressureInputTokens);
-}
-
 /**
  * Fixed read ceiling. Context overflow is handled by the normal compaction
  * preflight instead of silently shrinking pages near the trigger.

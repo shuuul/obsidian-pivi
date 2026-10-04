@@ -64,37 +64,6 @@ export async function initializePiviPlugin(
   });
 }
 
-export async function persistOpenTabStates(
-  app: App,
-): Promise<void> {
-  // Ensures state is saved even if Obsidian quits without calling onClose().
-  const persistOperations: Promise<void>[] = [];
-  const errors: unknown[] = [];
-  for (const view of findAllPiviViews(app)) {
-    try {
-      const operation = view.getChatHandle()?.maintenance.persistState();
-      if (operation) {
-        persistOperations.push(operation);
-      }
-    } catch (error) {
-      errors.push(error);
-    }
-  }
-  const results = await Promise.allSettled(persistOperations);
-  for (const result of results) {
-    if (result.status === 'rejected') {
-      errors.push(result.reason);
-    }
-  }
-
-  if (errors.length === 1) {
-    throw errors[0];
-  }
-  if (errors.length > 1) {
-    throw new AggregateError(errors, 'Failed to persist open Pivi tab states.');
-  }
-}
-
 export async function shutdownOpenChatViews(app: App): Promise<void> {
   const operations: Promise<void>[] = [];
   const errors: unknown[] = [];
