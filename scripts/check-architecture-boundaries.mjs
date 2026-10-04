@@ -85,11 +85,10 @@ const boundaryRules = [
     name: '`@pivi/agent/settings` and `@pivi/agent/runtime` stays runtime and SDK free',
     root: 'packages/agent/src/settings',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
-      /^node:fs(?:\/|$)/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
+      /^node:/,
       /^fs(?:\/|$)/,
-      /^node:path(?:\/|$)/,
       /^path(?:\/|$)/,
       /^@earendil-works\//,
       enginePiPackagePattern,
@@ -98,14 +97,14 @@ const boundaryRules = [
   {
     name: '@pivi/agent/tools stays protocol-only',
     root: 'packages/agent/src/tools',
-    forbidden: [/^obsidian$/, /^electron$/, /^@earendil-works\//, enginePiPackagePattern],
+    forbidden: [/^obsidian(?:\/|$)/, /^electron(?:\/|$)/, /^@earendil-works\//, enginePiPackagePattern],
   },
   {
     name: '@pivi/agent stays host-neutral',
     root: 'packages/agent',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       // @pivi/agent/mcp owns the standalone pi-mcp client; other Pi packages stay in engine-pi.
       /^@earendil-works\/(?!pi-mcp(?:\/|$))/,
       enginePiPackagePattern,
@@ -120,11 +119,27 @@ const boundaryRules = [
     ],
   },
   {
+    name: 'only @pivi/agent mcp imports the pi-mcp client',
+    root: 'packages/agent',
+    excludedRoots: [path.join(rootDir, 'packages', 'agent', 'src', 'mcp')],
+    forbidden: [/^@earendil-works\/pi-mcp(?:\/|$)/],
+  },
+  {
+    name: '@pivi/agent uses relative imports internally',
+    root: 'packages/agent',
+    forbidden: [/^@pivi\/agent(?:\/|$)/],
+  },
+  {
+    name: 'src does not import raw Pi SDKs',
+    root: 'src',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
     name: '@pivi/engine-pi stays host-neutral and product-neutral',
     root: 'packages/engine-pi',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
       /^@pivi\/pivi-react(?:\/|$)/,
@@ -179,8 +194,8 @@ const boundaryRules = [
     name: '@pivi/agent skills has no host or process SDK imports',
     root: 'packages/agent/src/skills',
     forbidden: [
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       /^@earendil-works\//,
       enginePiPackagePattern,
       /^@pivi\/obsidian-host(?:\/|$)/,
@@ -197,8 +212,8 @@ const boundaryRules = [
     forbidden: [
       /^@pivi\//,
       /^@earendil-works\//,
-      /^obsidian$/,
-      /^electron$/,
+      /^obsidian(?:\/|$)/,
+      /^electron(?:\/|$)/,
       /^node:/,
       /^fs(?:\/|$)/,
       /^path(?:\/|$)/,
@@ -275,6 +290,7 @@ const boundaryRules = [
     root: 'packages/obsidian-host',
     forbidden: [
       enginePiPackagePattern,
+      /^@earendil-works\//,
       /^@pivi\/agent\/skills(?:\/|$)/,
       /^@pivi\/agent\/tools(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,

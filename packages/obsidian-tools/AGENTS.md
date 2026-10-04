@@ -54,7 +54,7 @@ Tool execution depends on host adapters and host-neutral contracts only. Engine-
 ## Boundaries
 
 - Tool implementations use `@pivi/obsidian-host` APIs and the Obsidian CLI transport where public API coverage is unavailable.
-- Do not import `@pivi/engine-pi` or raw `@earendil-works/*` SDKs; consume host-neutral `@pivi/agent` contracts only (enforced by ESLint and `check:architecture`).
+- Do not import `@pivi/engine-pi` or raw `@earendil-works/*` SDKs; consume host-neutral `@pivi/agent` contracts only (enforced by `check:architecture`).
 - Image generation tools depend only on an injected generator port; Pi/Codex provider wiring stays in app/Pi composition.
 - Do not import UI renderers. Return structured/text tool results and let UI packages render them.
 - Mutating vault operations execute directly; optional capabilities are setting-gated: command execution uses `allowCommand` plus exact command-ID approval, Bash uses `allowBash` plus structured persistent permissions, and filesystem tools outside the vault use `allowExternalRead` plus allowed external directory roots. Vault-contained absolute paths skip that grant.

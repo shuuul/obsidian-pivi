@@ -15,6 +15,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [054 — Tool-result context overflow and in-turn pressure](054-tool-result-context-overflow-and-in-turn-pressure.md) | Active | Stop over-window continuations after giant tool results; require scoped `search` path plus payload caps. |
 | [055 — Pi AgentHarness migration spike](055-pi-agent-harness-migration-spike.md) | Active | Evidence-backed go/wait/no-go on moving sessions from the pi-coding-agent v3 SessionManager to the pi-agent-core AgentHarness over a vault FileSystem. |
 | [057 — Drop portability abstractions](057-drop-portability-abstractions.md) | Active | Remove host- and runtime-portability seams now that Pivi targets Pi and Obsidian only. |
+| [058 — Simplification follow-up](058-simplification-follow-up.md) | Active | Remove test-only code, duplicated import-ban enforcement, pre-0.15.0 one-time migrations, and guidance duplication. |
 
 ## Archived specs
 
