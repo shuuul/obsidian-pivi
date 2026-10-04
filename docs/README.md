@@ -21,6 +21,7 @@ For long-running or multi-agent work, use the tracked [specs system](../specs/RE
 | [09 — Development, debugging, and validation](09-development-debugging-and-validation.md) | Testing, debugging, building, and validating a contribution |
 | [10 — Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md) | Reviewing current technical priorities, publishing, or maintaining docs |
 | [11 — Chat UI evolution](11-chat-ui-evolution.md) | Planning long-session architecture, Agent activity, context memory, and the future visual language |
+| [12 — Architecture status reference](12-architecture-status.md) | Looking up the current behavior, storage, or boundary of one subsystem, or the module maps |
 
 User-facing references: [recipes](recipes/README.md), [platform support](platform-support.md), [support routes](../SUPPORT.md), and [contribution guide](../CONTRIBUTING.md).
 

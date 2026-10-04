@@ -25,7 +25,7 @@ Reduce code, checks, and guidance that no longer earn their maintenance cost, wi
 - [x] No exported symbol is kept alive only by tests, apart from documented test seams.
 - [x] Each import ban has one enforcement mechanism.
 - [x] One-time migrations for formats that shipped in 0.15.0 or earlier are removed; steady-state load paths and old-session read compatibility are unchanged.
-- [ ] Root `AGENTS.md` holds operational rules only; architecture narrative lives in `docs/`.
+- [x] Root `AGENTS.md` holds operational rules only; architecture narrative lives in `docs/`.
 - [ ] The local CI-equivalent quality gate is green after each workstream.
 
 ## Scope and non-goals
@@ -61,7 +61,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Archive spec 056, remove `nodeFetch.ts` and retired-name guards | Claude Code | Done | None | Full quality gate |
 | WS-03 | Remove ESLint import-ban blocks duplicated by the architecture script | Claude Code | Done | None | Full quality gate; every removed ESLint ban maps to a script rule |
 | WS-04 | Remove one-time migrations for formats shipped in 0.15.0 or earlier | Claude Code | Done | WS-03 | Full quality gate; per-migration evidence of the shipping release |
-| WS-05 | Reorganize `AGENTS.md` guidance and move architecture narrative to `docs/` | Unassigned | Pending | WS-03, WS-04 | `npm run check:boundaries` (docs contracts, README coverage) |
+| WS-05 | Reorganize `AGENTS.md` guidance and move architecture narrative to `docs/` | Claude Code | In progress | WS-03, WS-04 | `npm run check:boundaries` (docs contracts, README coverage) |
 
 ## Verification
 
@@ -128,6 +128,16 @@ Append entries rather than rewriting another agent's record.
 - Remaining: None for WS-04. Functions and files named `…Migration` that are now startup loaders have not been renamed.
 - Blockers: None.
 - Next action: WS-05.
+
+### 2026-10-04 — Claude Code — WS-05 (root guidance and loader renames)
+
+- Changed:
+  - Root `AGENTS.md`: moved the Architecture Status paragraphs and the four module maps verbatim into the new `docs/12-architecture-status.md`, left a six-bullet architecture summary with a link, and collapsed rules that were repeated inside the file (the PR-gate command, the rendered-CSS sign-off, the Pi dependency boundary). Size 62.5 KB → 40.6 KB. The glossary, commands, quality gates, coding standards, and release procedure are unchanged.
+  - Renamed the startup loaders that were still called migrations: `deviceLocalProviderMigration.ts` → `deviceLocalProviderLoad.ts` (`loadDeviceLocalProviderState`), `deviceLocalEnvironmentMigration.ts` → `deviceLocalEnvironmentLoad.ts` (`loadDeviceLocalEnvironmentState`, `handOffCanonicalCredentialsFromText`), `legacyProviderSnapshot.ts` → `syncedProviderFields.ts` (`hasSyncedProviderFields`), and `migratePiProviderCredentialsToKeychain` → `movePiProviderCredentialsFromEnvironment`. The unused `cutoverPerformed` result flag became `seededDefaults` / `seededEmpty`.
+- Evidence: full quality gate green; docs-contract and README-coverage checks pass with the new page indexed in `docs/README.md`.
+- Remaining: `src/app/AGENTS.md` (about 31 KB), `packages/agent/AGENTS.md` (about 24 KB), and `scripts/AGENTS.md` (about 15 KB) are untouched. They hold local invariants mixed with narrative; trimming them needs a rule-by-rule pass rather than a move.
+- Blockers: None.
+- Next action: maintainer decision on whether to trim the per-directory files.
 
 ## Completion summary
 
