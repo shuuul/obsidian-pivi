@@ -1,7 +1,7 @@
 import type { AgentRuntimeSettings, PiviSettings } from './types';
 
 /** Synced agent settings omit device-local provider, model, and environment fields. */
-export type PersistedAgentRuntimeSettings = Omit<
+type PersistedAgentRuntimeSettings = Omit<
   AgentRuntimeSettings,
   | 'addedProviders'
   | 'disabledProviders'

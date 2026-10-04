@@ -14,7 +14,7 @@ import type { AuxQueryRunner } from './auxQueryRunner';
 import type { OpenSessionState, SessionSummary } from './chatTypes';
 import type { PiChatService } from './piChatService';
 
-export interface ChatRuntimePort {
+interface ChatRuntimePort {
   createChatService(options?: {
     capabilityApproval?: CapabilityApprovalPort | null;
     piviManagementApproval?: PiviManagementApprovalPort | null;
@@ -22,7 +22,7 @@ export interface ChatRuntimePort {
   createAuxQueryRunner(): AuxQueryRunner;
 }
 
-export interface ChatSessionPort {
+interface ChatSessionPort {
   listSessions(): SessionSummary[];
   /** Returns only an already-open in-memory session; never hydrates from disk. */
   findOpenSession(id: string): OpenSessionState | null;
@@ -72,7 +72,7 @@ export interface ChatCatalogPort {
   getSlashDropdownConfig(): SlashCommandDropdownConfig;
 }
 
-export interface ChatModelCatalogSnapshot {
+interface ChatModelCatalogSnapshot {
   addedProviders: string[];
   disabledProviders: string[];
   visibleModels: string[];

@@ -40,7 +40,6 @@ export {
   configureSessionJsonlIndexRoot,
   getLegacySessionJsonlIndexPath,
   getSessionJsonlIndexPath,
-  migrateLegacySessionJsonlIndex,
 } from './sessionJsonlIndexLocation';
 export type { SessionJsonlIndexLine } from './sessionJsonlLineScan';
 export type { SessionJsonlSourceFingerprint } from '@pivi/agent/session/sessionJournal';
@@ -71,7 +70,7 @@ export interface SessionJsonlIndex {
   readonly migrations: Readonly<SessionJsonlIndexMigrations>;
 }
 
-export interface SessionJsonlIndexMigrations {
+interface SessionJsonlIndexMigrations {
   externalContexts: 0 | 1;
 }
 

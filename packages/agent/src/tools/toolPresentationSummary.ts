@@ -13,7 +13,7 @@ function truncateToolText(value: string, limit: number): string {
   return value.length > limit ? `${value.slice(0, limit)}...` : value;
 }
 
-export function toolFileName(path: string): string {
+function toolFileName(path: string): string {
   if (!path) return '';
   const normalized = path.replace(/\\/g, '/');
   return normalized.split('/').pop() ?? normalized;

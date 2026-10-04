@@ -22,7 +22,7 @@ export function validateOAuthCallbackPort(port: number | undefined = DEFAULT_OAU
 }
 
 /** No interactive sign-in is in progress, so the user must authenticate from Settings. */
-export class McpServerReauthenticationRequiredError extends McpOAuthAuthorizationRequiredError {
+class McpServerReauthenticationRequiredError extends McpOAuthAuthorizationRequiredError {
   constructor(serverName: string) {
     super();
     this.message = `Re-authentication required for MCP server: ${serverName}`;

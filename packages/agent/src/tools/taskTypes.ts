@@ -1,6 +1,6 @@
 import type { ToolCallInfo } from './types';
 
-export type TaskTerminalStatus = Extract<
+type TaskTerminalStatus = Extract<
   ToolCallInfo['status'],
   'completed' | 'error'
 >;

@@ -29,13 +29,13 @@ export interface SlashCommand {
 }
 
 /** Provider request deadlines in milliseconds. A value of 0 disables that deadline. */
-export interface ProviderRequestDeadlines {
+interface ProviderRequestDeadlines {
   totalMs: number;
   idleMs: number;
 }
 
 /** Tab bar position setting. */
-export type TabBarPosition = "input" | "header";
+type TabBarPosition = "input" | "header";
 
 export const CHAT_VIEW_PLACEMENTS = [
   "right-sidebar",
@@ -74,7 +74,7 @@ export interface ObsidianToolsSettings {
   externalDirectoryPermissions: PersistentExternalDirectoryPermission[];
 }
 
-export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
+const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
   cliEnabled: false,
   cliPath: null,
   cliTimeoutMs: 30_000,
@@ -201,7 +201,7 @@ export function normalizeHiddenCommandList(value: unknown): string[] {
   return normalized;
 }
 
-export function getHiddenSlashCommands(
+function getHiddenSlashCommands(
   settings: Pick<PiviSettings, "hiddenSlashCommands">,
 ): string[] {
   return settings.hiddenSlashCommands ?? [];

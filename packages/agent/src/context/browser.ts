@@ -33,7 +33,7 @@ function escapeXmlBody(text: string): string {
   return text.replace(/<\/browser_selection>/gi, '&lt;/browser_selection&gt;');
 }
 
-export function formatBrowserContext(context: BrowserSelectionContext): string {
+function formatBrowserContext(context: BrowserSelectionContext): string {
   const selectedText = context.selectedText.trim();
   if (!selectedText) return '';
   const attrs = buildAttributeList(context);

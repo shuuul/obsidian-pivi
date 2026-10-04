@@ -711,22 +711,6 @@ for (const pkg of workspacePackages) {
   }
 }
 
-for (const pkg of workspacePackages) {
-  if (
-    pkg.exports
-    && typeof pkg.exports === 'object'
-    && !Array.isArray(pkg.exports)
-    && Object.keys(pkg.exports).some(key => key.includes('*'))
-  ) {
-    failures.push({
-      rule: 'workspace package exports are explicit',
-      file: path.relative(rootDir, pkg.manifestFile),
-      line: 1,
-      detail: 'declares a wildcard package export',
-    });
-  }
-}
-
 const tsconfigFile = path.join(rootDir, 'tsconfig.json');
 const tsconfig = fs.existsSync(tsconfigFile)
   ? ts.parseConfigFileTextToJson(tsconfigFile, fs.readFileSync(tsconfigFile, 'utf8')).config

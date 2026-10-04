@@ -63,7 +63,7 @@ Arrows are compile-time dependencies. Concrete engines and host adapters point i
 
 ## Package map
 
-- `package.json` exports the barrel plus explicit curated namespace/leaf subpaths used by app/tests; wildcard exports are forbidden so a new source file cannot become public accidentally. Pi engine leaf exports live on `@pivi/engine-pi`. Check the manifest before documenting a new public leaf.
+- `package.json` lists directory barrels explicitly and exposes every other source file through the `./*` wildcard (`@pivi/agent/tools/toolSpec` → `src/tools/toolSpec.ts`). A new directory barrel needs its own export entry. `check:dead-code` reports any export nothing imports, including in files reachable through the wildcard.
 - `skills/commands/` owns workspace-command defaults, Prompt-variable resolution, catalog entry contracts, and stable host-neutral integration metadata. Host command registration and Note Toolbar behavior remain in app adapters.
 - `settings/`, `runtime/`, `config/`, `logging/`, `skills/`, and `tools/` own the moved source from the deleted `@pivi/core` and `@pivi/tools` packages. Product, package, and test imports should use `@pivi/agent` subpaths.
 - `auth/`, `context/`, `prompt/`, and `runtime/` own host-neutral source. Concrete Pi SDK orchestration and provider OAuth/model adapters live in `@pivi/engine-pi` while every host capability arrives through injected ports or narrow host seams.

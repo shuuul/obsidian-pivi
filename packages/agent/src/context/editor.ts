@@ -12,7 +12,7 @@ export interface EditorSelectionContext {
   startLine?: number; // 1-indexed starting line number
 }
 
-export function formatEditorContext(context: EditorSelectionContext): string {
+function formatEditorContext(context: EditorSelectionContext): string {
   if (context.mode === 'selection' && context.selectedText) {
     const lineAttr = context.startLine && context.lineCount
       ? ` lines="${context.startLine}-${context.startLine + context.lineCount - 1}"`

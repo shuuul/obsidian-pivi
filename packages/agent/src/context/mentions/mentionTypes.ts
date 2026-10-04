@@ -6,7 +6,7 @@ export interface ExternalContextDisplayEntry {
   displayNameLower: string;
 }
 
-export interface PlainMentionPart {
+interface PlainMentionPart {
   kind: 'plain';
   text: string;
 }
@@ -84,18 +84,18 @@ export type MentionBadgePart =
   | SelectedTextTemplateMentionPart;
 
 /** Vault file entry used by mention parsing (no Obsidian App). */
-export interface MentionVaultFile {
+interface MentionVaultFile {
   path: string;
   basename: string;
 }
 
 /** Vault folder entry used by mention parsing (no Obsidian App). */
-export interface MentionVaultFolder {
+interface MentionVaultFolder {
   path: string;
   name: string;
 }
 
-export type MentionVaultEntry =
+type MentionVaultEntry =
   | ({ kind: 'file' } & MentionVaultFile)
   | ({ kind: 'folder' } & MentionVaultFolder);
 

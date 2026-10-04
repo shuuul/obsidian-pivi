@@ -64,7 +64,7 @@ export function normalizeMcpStoredValueMap(raw: unknown): McpStoredValueMap | un
 }
 
 /** Classify a legacy plaintext MCP value into a draft source. */
-export function draftFromLegacyMcpPlaintext(
+function draftFromLegacyMcpPlaintext(
   key: string,
   value: string,
   channel: McpValueChannel,
@@ -76,7 +76,7 @@ export function draftFromLegacyMcpPlaintext(
   return { kind: 'plain', value };
 }
 
-export function migrateLegacyPlainMapToDrafts(
+function migrateLegacyPlainMapToDrafts(
   map: Record<string, string> | undefined,
   channel: McpValueChannel,
 ): Record<string, ConfigValueDraft> {
@@ -90,7 +90,7 @@ export function migrateLegacyPlainMapToDrafts(
   return drafts;
 }
 
-export function toStoredMcpValueMap(
+function toStoredMcpValueMap(
   drafts: Record<string, ConfigValueDraft>,
 ): McpStoredValueMap {
   const stored: McpStoredValueMap = {};
@@ -197,7 +197,7 @@ export function resolveMcpValueMap(
   return resolved;
 }
 
-export function storedMapToDrafts(
+function storedMapToDrafts(
   map: McpStoredValueMap | undefined,
 ): Record<string, ConfigValueDraft> {
   const drafts: Record<string, ConfigValueDraft> = {};

@@ -26,7 +26,7 @@ export type CustomProviderKind =
 /** Native reasoning levels advertised by a `/v1/models` card. */
 export type CustomProviderReasoningEffort = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
-export const CUSTOM_PROVIDER_THINKING_FORMATS = [
+const CUSTOM_PROVIDER_THINKING_FORMATS = [
   'openai',
   'zai',
   'deepseek',
@@ -156,7 +156,7 @@ function randomHexSuffix(hexLength: number): string {
 }
 
 /** Provider ids embed into Obsidian keychain secret ids: lowercase letters, digits, and dashes. */
-export const CUSTOM_PROVIDER_ID_PATTERN = /^[a-z0-9-]+$/;
+const CUSTOM_PROVIDER_ID_PATTERN = /^[a-z0-9-]+$/;
 
 /** Maximum provider id length so `pivi-{id}-credential` stays a valid Obsidian secret id. */
 export function getMaxCustomProviderIdLength(): number {
@@ -194,7 +194,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-export function isCustomProviderKind(value: unknown): value is CustomProviderKind {
+function isCustomProviderKind(value: unknown): value is CustomProviderKind {
   return typeof value === 'string'
     && (ALL_CUSTOM_PROVIDER_KINDS as readonly string[]).includes(value);
 }
@@ -223,7 +223,7 @@ export function modelsListUrl(baseUrl: string): string {
  * Local presets and LAN/loopback custom endpoints do not require an API key.
  * Public custom URLs still do; a stored key remains optional to send.
  */
-export function inferCustomProviderApiKeyRequired(
+function inferCustomProviderApiKeyRequired(
   kind: CustomProviderKind,
   baseUrl: string,
 ): boolean {
@@ -360,7 +360,7 @@ function trimmedNonEmptyString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
-export function normalizeCustomProviderModelDef(raw: unknown): CustomProviderModelDef | null {
+function normalizeCustomProviderModelDef(raw: unknown): CustomProviderModelDef | null {
   const id = isRecord(raw) ? trimmedNonEmptyString(raw.id) : undefined;
   if (!isRecord(raw) || !id) {
     return null;

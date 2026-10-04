@@ -17,7 +17,7 @@ import { captureSessionJsonlSource } from './sessionJsonlIndex';
 
 const FINGERPRINT_BYTES = 4096;
 
-export type SessionDivergenceKind =
+type SessionDivergenceKind =
   | 'identical'
   | 'inode_only'
   | 'append_compatible'

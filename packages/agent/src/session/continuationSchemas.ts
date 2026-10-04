@@ -1,5 +1,5 @@
 export const CHECKPOINT_SCHEMA_VERSION = 1 as const;
-export const AGENT_REPORT_SCHEMA_VERSION = 1 as const;
+const AGENT_REPORT_SCHEMA_VERSION = 1 as const;
 
 export interface ArtifactReference {
   label: string;
@@ -7,13 +7,13 @@ export interface ArtifactReference {
   vaultPath?: string;
 }
 
-export interface CheckpointSourceBounds {
+interface CheckpointSourceBounds {
   firstEntryId: string;
   lastEntryId: string;
   firstKeptEntryId: string;
 }
 
-export interface CheckpointTokenEstimates {
+interface CheckpointTokenEstimates {
   contextBefore: number;
   checkpoint: number;
 }
@@ -85,7 +85,7 @@ function uniqueStrings(value: unknown): string[] | null {
 }
 
 /** Cross-platform absolute-path check for synced structured session data. */
-export function isAbsoluteDevicePath(value: string): boolean {
+function isAbsoluteDevicePath(value: string): boolean {
   const path = value.trim();
   return path.startsWith('/')
     || path.startsWith('\\\\')

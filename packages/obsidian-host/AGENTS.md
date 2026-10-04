@@ -59,7 +59,7 @@ This package translates platform capabilities into host-neutral ports. App compo
 
 ## Package map
 
-- `package.json` exports the barrel and explicit leaf subpaths (`authContextHost`, `bootstrap/hostContext`, `bootstrap/storage`, `bootstrap/types`, `bundledFetch`, `cli/obsidianCliTransport`, `cli/officialObsidianCli`, `createPiviNetworkClients`, `electronCompat`, `externalFileApi`, `nodeFetch`, `obsidianHttpClient`, `openExternalUrl`, `path`, `providerLegacyAuthStore`, `scopedHttpClient`, `settings/piviSettingsStorage`, `storage/sharedStorageService`, `systemProcessRunner`). The canonical vault edit matcher is intentionally available through the root barrel beside `ObsidianVaultApi`. Add new intentional leaf APIs to both `src/index.ts` and the matching export entry.
+- `package.json` exports the barrel, the `./path` barrel, and every other source file through the `./*` wildcard. The canonical vault edit matcher is intentionally available through the root barrel beside `ObsidianVaultApi`. Add new intentional host APIs to `src/index.ts`.
 - There is no package-local build step; source is consumed by the root build.
 - There is no package-local typecheck script. Verify host changes with the root typecheck and targeted tests for affected tools/runtime/UI.
 

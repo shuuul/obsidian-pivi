@@ -2,19 +2,50 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["src/main.ts", "scripts/*.{js,mjs}", "build/**/*.mjs"],
-      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.{js,mjs}", "build/**/*.mjs", "tests/**/*.{ts,tsx}"]
+      "entry": [
+        "src/main.ts",
+        "scripts/*.{js,mjs}",
+        "build/**/*.mjs"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.{js,mjs}",
+        "build/**/*.mjs",
+        "tests/**/*.{ts,tsx}"
+      ]
+    },
+    "packages/agent": {
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "includeEntryExports": true
     },
     "packages/engine-pi": {
-      "entry": ["src/shims/signalExit.cjs"],
-      "project": ["src/**/*.{ts,tsx,cjs}"]
+      "entry": [
+        "src/shims/signalExit.cjs"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx,cjs}"
+      ],
+      "ignore": [
+        "src/shims/**"
+      ],
+      "includeEntryExports": true
     },
     "packages/obsidian-host": {
-      "entry": ["src/shims/debug.ts"],
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignore": [
+        "src/shims/**",
+        "src/bundledFetch.ts"
+      ],
+      "includeEntryExports": true
     },
     "packages/*": {
-      "project": ["src/**/*.{ts,tsx}"]
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ]
     }
   }
 }

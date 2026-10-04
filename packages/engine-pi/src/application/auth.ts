@@ -5,7 +5,6 @@ export {
 } from '../auth/membershipAwareCredentialMigration';
 export {
   createObsidianCredentialStore,
-  getPiAiCredentialSecretId,
   migratePiProviderCredentialsToKeychain,
   ObsidianAuthContext,
   type ObsidianCredentialStore,

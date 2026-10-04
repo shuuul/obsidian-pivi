@@ -5,7 +5,7 @@ const FILE_NAME_PATTERN =
   /^[A-Za-z0-9._-]+\.(md|markdown|py|ts|tsx|js|jsx|cjs|mjs|json|css|txt|yaml|yml|html|htm|sh|toml|xml|svg|png|jpg|jpeg|gif|webp)$/i;
 const MISSING_NOTE = ' (not in this skill; do not read)';
 
-export interface SkillRootEntry {
+interface SkillRootEntry {
   name: string;
   kind: 'file' | 'folder';
   path: string;

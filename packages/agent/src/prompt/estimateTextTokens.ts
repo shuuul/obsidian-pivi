@@ -1,5 +1,5 @@
-export const ASCII_PROSE_CHARS_PER_TOKEN = 4;
-export const ASCII_STRUCTURED_CHARS_PER_TOKEN = 3;
+const ASCII_PROSE_CHARS_PER_TOKEN = 4;
+const ASCII_STRUCTURED_CHARS_PER_TOKEN = 3;
 
 const FENCED_BLOCK = /^(?: {0,3})(`{3,}|~{3,})([^\n]*)(?:\n|$)([\s\S]*?)^(?: {0,3})\1[ \t]*(?:\n|$)/gm;
 const LETTER = /\p{L}/u;

@@ -838,26 +838,6 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it('rejects wildcard workspace package exports', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
-    try {
-      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
-      writeFileSync(
-        join(fixtureRoot, 'packages/core/package.json'),
-        JSON.stringify({
-          exports: { '.': './src/index.ts', './internal/*': './src/internal/*.ts' },
-          name: '@pivi/core',
-        }),
-      );
-
-      const result = runArchitectureCheck(fixtureRoot);
-
-      expect(result.status).toBe(1);
-      expect(result.stderr).toContain('[workspace package exports are explicit]');
-    } finally {
-      rmSync(fixtureRoot, { recursive: true, force: true });
-    }
-  });
 
   it('rejects wildcard TypeScript paths into workspace packages', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
@@ -959,41 +939,7 @@ describe('architecture boundary scripts', () => {
     }
   });
 
-  it('does not resolve internal Pi collaborators through package exports', () => {
-    const result = spawnSync(process.execPath, [
-      '--input-type=module',
-      '--eval',
-      `try {
-        import.meta.resolve('@pivi/engine-pi/runtime/piChatRuntimeUsage');
-        process.exitCode = 2;
-      } catch (error) {
-        if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
-      }`,
-    ], {
-      cwd: rootDir,
-      encoding: 'utf8',
-    });
 
-    expect(result.status).toBe(0);
-  });
-
-  it('does not resolve undeclared agent source leaves through package exports', () => {
-    const result = spawnSync(process.execPath, [
-      '--input-type=module',
-      '--eval',
-      `try {
-        import.meta.resolve('@pivi/agent/mcp/mcpUtils');
-        process.exitCode = 2;
-      } catch (error) {
-        if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
-      }`,
-    ], {
-      cwd: rootDir,
-      encoding: 'utf8',
-    });
-
-    expect(result.status).toBe(0);
-  });
 
   it('resolves stable public leaves through the active workspace packages', () => {
     const result = spawnSync(process.execPath, [

@@ -1,4 +1,4 @@
-export type PromptModuleKind = 'core' | 'workflow' | 'custom';
+type PromptModuleKind = 'core' | 'workflow' | 'custom';
 
 export interface PromptModuleOverride {
   readonly enabled?: boolean;

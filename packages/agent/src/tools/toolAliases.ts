@@ -1,21 +1,18 @@
 /** Live names, silent aliases, and argument shims for the generic file-tool family. */
 
-export const LIVE_GENERIC_TOOLS = [
-  'read',
-  'write',
-  'edit',
-  'ls',
-  'search',
-  'bash',
-  'mkdir',
-  'move',
-  'delete',
-] as const;
-
-export type LiveGenericToolName = (typeof LIVE_GENERIC_TOOLS)[number];
+type LiveGenericToolName =
+  | 'read'
+  | 'write'
+  | 'edit'
+  | 'ls'
+  | 'search'
+  | 'bash'
+  | 'mkdir'
+  | 'move'
+  | 'delete';
 
 /** PascalCase, legacy `obsidian_*`, and extra name aliases → live name. */
-export const TOOL_NAME_ALIASES: Readonly<Record<string, LiveGenericToolName>> = {
+const TOOL_NAME_ALIASES: Readonly<Record<string, LiveGenericToolName>> = {
   Read: 'read',
   obsidian_read: 'read',
   obsidian_read_external: 'read',

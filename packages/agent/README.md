@@ -36,7 +36,7 @@
 - Prompt context formatting, host-neutral mention parsing, and prompt builders under `@pivi/agent/context`, `@pivi/agent/context/mentions`, and `@pivi/agent/prompt`. MCP prompt inventory reflects settings-enabled servers and cached tool names.
 - Runtime/application contracts, including `ChatPorts`, `PiChatService`, and `AuxQueryRunner`, under `@pivi/agent/runtime`.
 
-Every public namespace and focused leaf is listed explicitly in `package.json`; wildcard subpath exports are not part of the contract. Concrete Pi SDK adapters and JSONL compatibility live in `@pivi/engine-pi`, not this package.
+Directory barrels are listed explicitly in `package.json`; every other source file is reachable through the `./*` wildcard export. Concrete Pi SDK adapters and JSONL compatibility live in `@pivi/engine-pi`, not this package.
 
 ## See also
 

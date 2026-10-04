@@ -36,15 +36,15 @@ export interface McpManagementPersistenceResult {
  * Bearer and OAuth fields are separate patch shapes, but share the same
  * omit=keep/provided=replace/explicit-clear rules.
  */
-export function mergeMcpSecretPatch(
+function mergeMcpSecretPatch(
   previous: Pick<ManagedMcpServer, 'bearerToken' | 'bearerTokenEnv'>,
   patch: AgentMcpBearerInput | undefined,
 ): Pick<ManagedMcpServer, 'bearerToken' | 'bearerTokenEnv'>;
-export function mergeMcpSecretPatch(
+function mergeMcpSecretPatch(
   previous: ManagedMcpServer['oauth'],
   patch: AgentMcpOAuthInput | false | undefined,
 ): ManagedMcpServer['oauth'];
-export function mergeMcpSecretPatch(
+function mergeMcpSecretPatch(
   previous: Pick<ManagedMcpServer, 'bearerToken' | 'bearerTokenEnv'> | ManagedMcpServer['oauth'],
   patch: AgentMcpBearerInput | AgentMcpOAuthInput | false | undefined,
 ): Pick<ManagedMcpServer, 'bearerToken' | 'bearerTokenEnv'> | ManagedMcpServer['oauth'] {

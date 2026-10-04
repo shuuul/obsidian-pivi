@@ -14,7 +14,7 @@ import type { ObsidianCredentialStore } from './piProviderCredentialStore';
 
 const logger = new PluginLogger('ProviderOAuthService');
 
-export { CODEX_OAUTH_PROVIDER_ID };
+;
 
 
 export function normalizeCodexBrowserAuthUrl(url: string): string {

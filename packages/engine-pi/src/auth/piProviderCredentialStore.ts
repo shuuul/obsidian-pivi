@@ -7,7 +7,6 @@ import type {
 import {
   ANTHROPIC_PROVIDER_ID,
   CLAUDE_PROVIDER_ID,
-  credentialToApiKey,
   getPiAiCredentialSecretId,
   GROK_BUILD_PROVIDER_ID,
   isOAuthCredential,
@@ -35,7 +34,7 @@ import type { PiRuntimeHost } from '../runtime/piRuntimeHost';
 const LEGACY_PI_AI_CREDENTIAL_KIND = 'credential-v2';
 const OAUTH_NO_EXPIRY = Number.MAX_SAFE_INTEGER;
 
-export { credentialToApiKey, getPiAiCredentialSecretId, isOAuthCredential };
+;
 
 function getLegacyPiAiCredentialSecretId(providerId: string): string {
   return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${LEGACY_PI_AI_CREDENTIAL_KIND}`;

@@ -1,5 +1,5 @@
 /** Alternate ASCII `"` with typographic “ and ” (odd open, even close). */
-export function asciiDoubleQuotesToCurly(text: string): string {
+function asciiDoubleQuotesToCurly(text: string): string {
   let useOpen = true;
   return text.replace(/"/g, () => {
     const ch = useOpen ? '\u201c' : '\u201d';
@@ -9,7 +9,7 @@ export function asciiDoubleQuotesToCurly(text: string): string {
 }
 
 /** Map typographic double quotes to ASCII `"`. */
-export function curlyDoubleQuotesToAscii(text: string): string {
+function curlyDoubleQuotesToAscii(text: string): string {
   return text.replace(/[\u201c\u201d]/g, '"');
 }
 

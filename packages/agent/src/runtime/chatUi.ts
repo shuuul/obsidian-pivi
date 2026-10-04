@@ -13,18 +13,18 @@ export interface ChatUIOption {
   chatIcon?: ChatIconSvg;
 }
 
-export interface ChatPathIconSvg {
+interface ChatPathIconSvg {
   kind?: 'path';
   viewBox: string;
   path: string;
 }
 
-export interface ChatSvgPathChild {
+interface ChatSvgPathChild {
   tag: 'path';
   attributes: Record<string, string>;
 }
 
-export interface ChatSvgGroupChild {
+interface ChatSvgGroupChild {
   tag: 'g';
   attributes: Record<string, string>;
   children: ChatSvgPathChild[];
@@ -32,14 +32,14 @@ export interface ChatSvgGroupChild {
 
 export type ChatSvgChild = ChatSvgGroupChild | ChatSvgPathChild;
 
-export interface ChatCompositeIconSvg {
+interface ChatCompositeIconSvg {
   kind: 'composite';
   viewBox: string;
   children: ChatSvgChild[];
 }
 
 /** Pivi brand icon rendered from the product's bundled SVG asset. */
-export interface ChatPiviBrandIconSvg {
+interface ChatPiviBrandIconSvg {
   kind: 'pivi-brand';
   viewBox: string;
 }

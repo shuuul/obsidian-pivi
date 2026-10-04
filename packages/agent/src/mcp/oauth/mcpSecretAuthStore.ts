@@ -13,7 +13,7 @@ import type {
   StoredTokens,
 } from './mcpAuthEntryStore';
 
-export const MCP_AUTH_ENTRY_SECRET_VERSION = 1 as const;
+const MCP_AUTH_ENTRY_SECRET_VERSION = 1 as const;
 
 interface StoredMcpAuthEntryPayloadV1 {
   version: typeof MCP_AUTH_ENTRY_SECRET_VERSION;

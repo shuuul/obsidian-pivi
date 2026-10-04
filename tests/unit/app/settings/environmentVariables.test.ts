@@ -1,4 +1,4 @@
-import { getPiAiCredentialSecretId } from '@pivi/engine-pi';
+import { getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import type { OpenSessionState } from '@pivi/agent/runtime';
 import type { PiviSettings } from '@pivi/agent/settings';
 import { getEnvironmentSecretId } from '@pivi/agent/config/valueSource';

@@ -4,9 +4,6 @@ export { fetchCustomProviderModels } from '../models/installPiCustomProviders';
 export {
   configurePiAiModels,
   piAiModels,
-  type PiCatalogRefreshFailure,
-  type PiCatalogRefreshResult,
-  type PiCatalogRefreshSummary,
   refreshPiCatalogModels,
   syncCustomPiProviders,
 } from '../models/piAiModels';

@@ -95,7 +95,6 @@ import {
   summarizeWait,
   summarizeWebSearch,
   summarizeWriteStdin,
-  toolFileName,
   type ToolSummaryResolver,
 } from './toolPresentationSummary';
 
@@ -103,10 +102,9 @@ export {
   normalizeWebSearchDisplayData,
   parseObsidianSearchHits,
   summarizeObsidianSearchHits,
-  toolFileName,
 };
 
-export type ToolPresentationTranslationKey =
+type ToolPresentationTranslationKey =
   | 'tools.display.attachment'
   | 'tools.display.base'
   | 'tools.display.bookmarks'
@@ -159,7 +157,7 @@ export type ToolPresentationTranslationKey =
   | 'tools.steps.tasksProgress'
   | 'tools.steps.writeFile';
 
-export type ToolPresentationKind =
+type ToolPresentationKind =
   | 'agent'
   | 'ask-user'
   | 'default'
@@ -172,8 +170,8 @@ export type ToolPresentationKind =
   | 'todo'
   | 'web';
 
-export type ToolPresentationVisibility = 'hidden' | 'hidden-when-empty-chars' | 'visible';
-export type ToolPresentationGrouping = 'groupable' | 'solo';
+type ToolPresentationVisibility = 'hidden' | 'hidden-when-empty-chars' | 'visible';
+type ToolPresentationGrouping = 'groupable' | 'solo';
 
 export interface ToolPresentationDescriptor {
   readonly kind: ToolPresentationKind;

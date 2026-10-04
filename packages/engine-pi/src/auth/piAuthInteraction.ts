@@ -8,7 +8,7 @@ import type { OAuthFlowHost } from '@pivi/agent/ports';
 
 const logger = new PluginLogger('PiAuthInteraction');
 
-export const OPENAI_CODEX_BROWSER_LOGIN_METHOD = 'browser';
+const OPENAI_CODEX_BROWSER_LOGIN_METHOD = 'browser';
 
 export interface CreatePiAuthInteractionOptions {
   oauthHost: OAuthFlowHost;

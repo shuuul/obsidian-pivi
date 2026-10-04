@@ -7,7 +7,7 @@ import type { FetchCompatible, HttpClient } from '@pivi/agent/ports';
 
 import { createScopedFetch, createScopedHttpClient } from './scopedHttpClient';
 
-export interface ProviderDeadlineUpdate {
+interface ProviderDeadlineUpdate {
   totalMs: number;
   idleMs: number;
 }

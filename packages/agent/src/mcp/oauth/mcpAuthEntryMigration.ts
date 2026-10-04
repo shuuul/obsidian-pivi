@@ -4,7 +4,7 @@ import { readLegacyVaultAuthEntry } from './legacyVaultAuthEntry';
 import type { AuthEntry } from './mcpAuthEntryStore';
 import { McpSecretAuthStore } from './mcpSecretAuthStore';
 
-export class McpAuthEntryMigrationError extends Error {
+class McpAuthEntryMigrationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'McpAuthEntryMigrationError';

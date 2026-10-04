@@ -94,7 +94,7 @@ export function expandPiToolsWithSilentAliases(liveTools: AgentTool[]): AgentToo
   return [...liveTools, ...extras];
 }
 
-export function filterPromptFacingPiTools<T extends { name: string }>(tools: T[]): T[] {
+function filterPromptFacingPiTools<T extends { name: string }>(tools: T[]): T[] {
   return tools.filter((tool) => !isSilentToolNameAlias(tool.name));
 }
 

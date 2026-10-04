@@ -22,7 +22,7 @@ export type StoredPiviSettings = PiviSettings;
  * Vault JSON projection after device-local fields are stripped.
  * prepareForSave may return this narrower shape; JSON write accepts either.
  */
-export type VaultPersistedPiviSettings = PersistedPiviSettings | StoredPiviSettings;
+type VaultPersistedPiviSettings = PersistedPiviSettings | StoredPiviSettings;
 
 /** Projects runtime settings onto the synced vault file before each save. */
 export interface PiviSettingsCodec {

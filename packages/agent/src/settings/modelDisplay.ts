@@ -5,7 +5,7 @@
  */
 
 /** Human-readable provider names (pi-ai provider ids). */
-export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   anthropic: 'Anthropic',
   deepseek: 'DeepSeek',
   google: 'Google',

@@ -47,7 +47,7 @@ export interface DeviceLocalEnvironmentStateV1 {
   entries: DeviceLocalEnvironmentEntryV1[];
 }
 
-export class DeviceLocalEnvironmentStateVersionError extends Error {
+class DeviceLocalEnvironmentStateVersionError extends Error {
   constructor(readonly unsupportedVersion: unknown) {
     super(`Unsupported device-local environment state version: ${String(unsupportedVersion)}`);
     this.name = 'DeviceLocalEnvironmentStateVersionError';
@@ -176,7 +176,7 @@ export function environmentStatesEqual(
 }
 
 /** Known provider API/OAuth env var names that belong in canonical credential stores. */
-export function getCanonicalProviderEnvironmentKeys(): ReadonlySet<string> {
+function getCanonicalProviderEnvironmentKeys(): ReadonlySet<string> {
   const keys = new Set<string>();
   const candidateIds = [
     'anthropic',
@@ -225,7 +225,7 @@ export function getCanonicalProviderEnvironmentKeys(): ReadonlySet<string> {
   return keys;
 }
 
-export function getCanonicalWebEnvironmentKeys(): ReadonlyMap<string, WebProviderId> {
+function getCanonicalWebEnvironmentKeys(): ReadonlyMap<string, WebProviderId> {
   const map = new Map<string, WebProviderId>();
   for (const providerId of WEB_PROVIDER_IDS) {
     map.set(webProviderApiKeyEnvVar(providerId), providerId);

@@ -1,6 +1,6 @@
 import type { ProviderCredential } from '../auth/piProviderCredentials';
 
-export interface WorkspaceFileStat {
+interface WorkspaceFileStat {
   mtime: number;
   size: number;
 }
@@ -147,8 +147,6 @@ export interface ExternalOpener {
 }
 
 export type {
-  CapabilityApprovalDecision,
-  CapabilityApprovalKind,
   CapabilityApprovalPort,
   CapabilityApprovalRequest,
   CapabilityApprovalResult,

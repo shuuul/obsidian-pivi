@@ -22,9 +22,9 @@ import {
 
 export const DEVICE_LOCAL_PROVIDER_STATE_VERSION = 1 as const;
 
-export type DeviceLocalCustomProviderConfig = Omit<CustomProviderConfig, 'headers'>;
+type DeviceLocalCustomProviderConfig = Omit<CustomProviderConfig, 'headers'>;
 
-export type DeviceLocalProviderRegistration =
+type DeviceLocalProviderRegistration =
   | {
       id: string;
       type: 'builtin';

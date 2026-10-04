@@ -6,7 +6,7 @@
 
 import { TOOL_TODO_WRITE } from './toolNames';
 
-export type TodoStatus = 'pending' | 'in_progress' | 'completed';
+type TodoStatus = 'pending' | 'in_progress' | 'completed';
 
 export type TodoVisualizationSource = 'tool' | 'session-history' | 'manual';
 
@@ -20,7 +20,7 @@ export interface TodoItem {
   sourceToolCallId?: string;
 }
 
-export interface TodoVisualizationProgress {
+interface TodoVisualizationProgress {
   total: number;
   completed: number;
   pending: number;

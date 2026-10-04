@@ -1,6 +1,6 @@
 import type { ContextEnvelope, ContextEnvelopeValue, UsageInfo } from '../runtime/chatTypes';
 
-export const DEFAULT_CONTEXT_WINDOW_TOKENS = 200_000;
+const DEFAULT_CONTEXT_WINDOW_TOKENS = 200_000;
 export const DEFAULT_RESERVED_OUTPUT_TOKENS = 16_000;
 export const DEFAULT_COMPACTION_RESERVE_TOKENS = 12_000;
 export const DEFAULT_CONTEXT_SAFETY_MARGIN_TOKENS = 8_000;

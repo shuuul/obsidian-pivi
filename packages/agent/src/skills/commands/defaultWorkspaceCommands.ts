@@ -2,7 +2,7 @@ import type { FileStore } from '../../ports';
 import type { SlashCommand } from '../../settings/types';
 import { serializeSlashCommandMarkdown } from '../slashCommand';
 
-export const WORKSPACE_COMMANDS_DIR = '.pivi/commands';
+const WORKSPACE_COMMANDS_DIR = '.pivi/commands';
 
 export const DEFAULT_WORKSPACE_COMMANDS: readonly SlashCommand[] = [
   {

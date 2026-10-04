@@ -55,9 +55,9 @@ export interface RemoteCatalogDeps {
   readonly now?: () => number;
 }
 
-export type RemoteCatalogRefreshStatus = 'updated' | 'current' | 'unavailable' | 'skipped';
+type RemoteCatalogRefreshStatus = 'updated' | 'current' | 'unavailable' | 'skipped';
 
-export interface RemoteCatalogRefreshResult {
+interface RemoteCatalogRefreshResult {
   readonly status: RemoteCatalogRefreshStatus;
   /** Overlay models absent from the bundled baseline. */
   readonly addedModels: number;
