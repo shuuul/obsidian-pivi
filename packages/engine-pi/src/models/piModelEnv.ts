@@ -1,6 +1,5 @@
 import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
-import { resolveProviderAuth } from '@pivi/agent/auth/resolveProviderAuth';
-import type { ModelAuthHost } from '@pivi/agent/ports';
+import { isProviderDisabled } from '@pivi/agent/auth/providerSecretStorage';
 import { getPiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import { DEFAULT_MODEL_KEY } from '@pivi/agent/settings/defaults';
 import { isValidModelKey } from '@pivi/agent/settings/modelKey';
@@ -67,16 +66,11 @@ export function resolvePiProviderAuth(
 ): Promise<AuthResult | undefined> {
   const piSettings = getPiAgentSettings(plugin.settings);
 
-  return resolveProviderAuth({
-    disabledProviders: piSettings.disabledProviders,
-    model,
-    modelAuthHost: piAiModelAuthHost,
-  });
+  if (isProviderDisabled(piSettings.disabledProviders, model.provider)) {
+    return Promise.resolve(undefined);
+  }
+  return piAiModels.getAuth(model);
 }
-
-const piAiModelAuthHost: ModelAuthHost<Model<Api>, AuthResult> = {
-  getAuth: (model) => piAiModels.getAuth(model),
-};
 
 function getModelByKey(key: string): PiResolvedModel | null {
   try {

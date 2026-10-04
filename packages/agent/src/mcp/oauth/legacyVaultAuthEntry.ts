@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 
+import type { FileStore } from "../../ports";
 import { PIVI_MCP_OAUTH_DIR } from "../paths";
-import type { FileStore } from "../ports";
 import type { AuthEntry } from "./mcpAuthEntryStore";
 
 /** Where earlier versions kept a server's OAuth entry in plaintext inside the vault. */

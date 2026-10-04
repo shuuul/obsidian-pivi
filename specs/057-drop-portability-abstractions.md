@@ -31,8 +31,8 @@ Remove abstractions whose only purpose is host or runtime portability, without c
 - [x] `src/ui` imports host helpers from `@pivi/obsidian-host` directly and `src/app/hostPlatform.ts` no longer exists.
 - [x] Workspace packages whose exports map one file to one subpath use a wildcard export, and the architecture check no longer requires explicit per-file exports.
 - [x] UI port layering is reduced to the seams that carry test or snapshot-isolation value.
-- [ ] `@pivi/agent` guidance and checks no longer state host neutrality as a goal; ports that only serve it are removed.
-- [ ] The local CI-equivalent quality gate is green after each workstream.
+- [x] `@pivi/agent` guidance no longer states host neutrality as a goal; ports that only serve it are removed.
+- [x] The local CI-equivalent quality gate is green after each workstream.
 
 ## Scope and non-goals
 
@@ -61,6 +61,7 @@ Not in scope:
 | 2026-10-04 | Use a wildcard leaf export for `@pivi/agent`, `@pivi/engine-pi`, and `@pivi/obsidian-host`; keep directory barrels explicit. | Nearly every file is already exported one-to-one, so the list records nothing. `check:dead-code` still rejects unused exports. | WS-03 |
 | 2026-10-04 | Set knip `includeEntryExports` for the three wildcard packages and `ignore` build-consumed shims. | A wildcard export makes every file a knip entry, which hid unused exports. Checking entry exports is stricter than the previous explicit list, which hid 222 unused exports. | WS-03 |
 | 2026-10-04 | Keep `PiviUiFacades` and `ChatUIConfig` as the injected model/settings seam. | About ten test files inject fake model and reasoning behavior through `getUiFacades()`; calling the engine directly would replace object injection with module mocks. Only members with no production behavior are removed. | WS-04 |
+| 2026-10-04 | Keep the `@pivi/agent/ports` contracts and the import rules that keep Obsidian and the Pi SDK out of `@pivi/agent`. | Every remaining port has test fakes or several consumers; the rules cost nothing and keep the logic unit-testable. Guidance now gives testability and Pi-upgrade containment as the reason, not portability. | WS-05 |
 | 2026-10-04 | Keep `@pivi/pivi-react` exports explicit. | Its seven barrels are a curated surface that other rules depend on. | WS-03 |
 
 ## Workstreams
@@ -73,7 +74,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Remove `src/app/hostPlatform.ts` and the `src/ui` host-package ban | Claude Code | Done | None | Full quality gate |
 | WS-03 | Wildcard leaf exports and removal of explicit-export rules | Claude Code | Done | None | Full quality gate; production build resolves every subpath |
 | WS-04 | Reduce UI port and facade layering | Claude Code | Done | WS-03 | Full quality gate |
-| WS-05 | Remove host-neutral framing and single-purpose ports from `@pivi/agent` | Unassigned | Pending | WS-03 | Full quality gate |
+| WS-05 | Remove host-neutral framing and single-purpose ports from `@pivi/agent` | Claude Code | Done | WS-03 | Full quality gate |
 
 ## Verification
 
@@ -124,6 +125,22 @@ Append entries rather than rewriting another agent's record.
 - Remaining: `ChatIconSvg` still carries `path` and `composite` kinds although the only producer returns the Pivi brand icon; `ChatUIConfig` still takes untyped settings bags. Both are candidates for WS-05.
 - Blockers: None.
 - Next action: WS-05.
+
+### 2026-10-04 — Claude Code — WS-05
+
+- Changed: inlined the generic `resolveProviderAuth` helper into `resolvePiProviderAuth` and removed the `ModelAuthHost` / `ProviderAuthModel` ports; collapsed three `FileStore` aliases of `WorkspaceFileStore` into one `FileStore` interface; narrowed `ChatIconSvg` to the Pivi brand mark and removed the unused `path` / `composite` renderers, `ChatUIOption.chatIcon`, and `createChatIconSvg`; added a design-premise statement to root `AGENTS.md` and reworded the `@pivi/agent` goal statements.
+- Evidence: full quality gate green; plugin reloaded with no captured errors.
+- Remaining: `ChatUIConfig` still takes untyped settings bags; typing them touches about ten test fakes and was left out. "Host-neutral" remains as a descriptive adjective in package guidance and rule names.
+- Blockers: None.
+- Next action: maintainer review, then close out and archive this spec.
+
+### 2026-10-04 — Maintainer — WS-05
+
+- Changed: None.
+- Evidence: maintainer inspected the chat header brand icon and model-selector provider icons in the reloaded UI and found no problems.
+- Remaining: None for WS-05.
+- Blockers: None.
+- Next action: close out and archive after branch review.
 
 ## Completion summary
 

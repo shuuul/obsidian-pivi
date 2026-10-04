@@ -1,4 +1,3 @@
-import type { WorkspaceFileStore } from '../ports';
 import type { ChatMessage, ChatTurnRequestSnapshot, SessionTitleSource, UsageInfo } from '../runtime/chatTypes';
 
 ;
@@ -164,5 +163,3 @@ export interface SessionStore {
     id: string;
   }): SessionRef | null;
 }
-
-export type FileStore = WorkspaceFileStore;

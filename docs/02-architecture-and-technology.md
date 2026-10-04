@@ -23,7 +23,7 @@ flowchart TD
   Engine -- "implements" --> Runtime
 ```
 
-`src/app` may compose all layers. Other dependencies flow toward host-neutral contracts:
+`src/app` may compose all layers. Other dependencies flow toward `@pivi/agent` contracts, which import neither Obsidian nor the Pi SDK. This keeps package logic testable against injected fakes and contains Pi SDK churn; portability to another host or runtime is not a goal:
 
 - `src/ui/**` uses injected `ChatPorts`, `PiChatService`, and `AuxQueryRunner`; it does not import `@pivi/engine-pi`, app runtime implementations, or concrete host/tool packages.
 - `@pivi/pivi-react` consumes presentation-safe `@pivi/agent` models and its own ports. It does not receive `ChatPorts`, runtime objects, Obsidian APIs, or application implementations.

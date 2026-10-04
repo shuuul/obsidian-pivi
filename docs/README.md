@@ -37,14 +37,14 @@ flowchart TD
   App -- "constructs" --> Engine["Pi engine<br/>@pivi/engine-pi"]
   App -- "uses" --> Host["Obsidian host<br/>@pivi/obsidian-host"]
   App -- "registers" --> Tools["Obsidian tools<br/>@pivi/obsidian-tools"]
-  React -- "uses domain models" --> Agent["Host-neutral agent<br/>@pivi/agent"]
+  React -- "uses domain models" --> Agent["Agent logic<br/>@pivi/agent"]
   Chat -- "uses contracts" --> Agent
   Engine -- "implements runtime" --> Agent
   Tools -- "uses host adapters" --> Host
   Tools -- "implements ToolSpec" --> Agent
 ```
 
-Imports and capabilities flow through explicit seams. Presentation does not construct engines, product UI does not reach into app workspace services, and host-neutral packages do not import Obsidian implementations. Only `src/app/**` and `src/main.ts` import `@pivi/engine-pi`.
+Imports and capabilities flow through explicit seams. Presentation does not construct engines, product UI does not reach into app workspace services, and `@pivi/agent` and `@pivi/engine-pi` do not import Obsidian implementations. Only `src/app/**` and `src/main.ts` import `@pivi/engine-pi`.
 
 ```mermaid
 flowchart TD

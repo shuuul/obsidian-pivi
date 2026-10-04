@@ -12,6 +12,7 @@ import {
 import { listMcpValueSecretIds as listConfigMcpValueSecretIds } from '../config/valueSource';
 import { PluginLogger } from '../logging/pluginLogger';
 import type { SyncSecretStore } from '../ports';
+import type { FileStore } from '../ports';
 import {
   assertValidMcpServerName,
   createMcpServerMap,
@@ -26,7 +27,6 @@ import {
   stageMcpValueSecrets,
 } from './mcpValueSources';
 import { PIVI_MCP_CONFIG_PATH } from './paths';
-import type { FileStore } from './ports';
 import type {
   ManagedMcpConfigFile,
   ManagedMcpServer,

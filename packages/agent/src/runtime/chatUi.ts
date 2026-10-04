@@ -9,43 +9,13 @@ export interface ChatUIOption {
   providerLogoSlug?: string;
   /** Lucide icon when no brand slug is available. */
   fallbackIcon?: string;
-  /** Per-option icon override for grouped selector entries. */
-  chatIcon?: ChatIconSvg;
 }
 
-interface ChatPathIconSvg {
-  kind?: 'path';
-  viewBox: string;
-  path: string;
-}
-
-interface ChatSvgPathChild {
-  tag: 'path';
-  attributes: Record<string, string>;
-}
-
-interface ChatSvgGroupChild {
-  tag: 'g';
-  attributes: Record<string, string>;
-  children: ChatSvgPathChild[];
-}
-
-export type ChatSvgChild = ChatSvgGroupChild | ChatSvgPathChild;
-
-interface ChatCompositeIconSvg {
-  kind: 'composite';
-  viewBox: string;
-  children: ChatSvgChild[];
-}
-
-/** Pivi brand icon rendered from the product's bundled SVG asset. */
-interface ChatPiviBrandIconSvg {
+/** Icon descriptor for the chat header: the Pivi brand mark from the bundled SVG asset. */
+export interface ChatIconSvg {
   kind: 'pivi-brand';
   viewBox: string;
 }
-
-/** SVG icon descriptor for chat toolbar and model selectors. */
-export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg | ChatPiviBrandIconSvg;
 
 /** Extended option with token count for budget-based reasoning controls. */
 export interface ChatReasoningOption extends ChatUIOption {

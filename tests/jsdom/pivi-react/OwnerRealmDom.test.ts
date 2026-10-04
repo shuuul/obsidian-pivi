@@ -2,7 +2,6 @@ import { Component, MarkdownRenderer } from 'obsidian';
 
 import { renderMarkdownContent } from '@/ui/chat/rendering/messageRendererMarkdown';
 import { createContextBadgeElement } from '@/ui/shared/context-badge/ContextBadgeRenderer';
-import { createChatIconSvg } from '@/ui/shared/utils/icons';
 
 import { installObsidianDomHelpers } from '../../setupObsidianUi';
 
@@ -45,7 +44,7 @@ describe('owner-realm DOM creation', () => {
     expect(container.querySelector('.pivi-code-lang-label')?.ownerDocument).toBe(ownerDocument);
   });
 
-  it('creates context badges and SVG icons in the popout document', () => {
+  it('creates context badges in the popout document', () => {
     const root = ownerWindow.createDiv();
     ownerDocument.body.appendChild(root);
     const badge = createContextBadgeElement({
@@ -53,24 +52,8 @@ describe('owner-realm DOM creation', () => {
       token: '/notes',
       serverName: 'notes',
     }, { root });
-    const icon = createChatIconSvg({
-      kind: 'path',
-      path: 'M0 0h1v1z',
-      viewBox: '0 0 1 1',
-    }, { ownerDocument });
-    const brandIcon = createChatIconSvg({
-      kind: 'pivi-brand',
-      viewBox: '0 0 512 512',
-    }, { ownerDocument });
 
     expect(badge.ownerDocument).toBe(ownerDocument);
     expect(badge.querySelector('svg')?.ownerDocument).toBe(ownerDocument);
-    expect(icon.ownerDocument).toBe(ownerDocument);
-    expect(icon.namespaceURI).toBe('http://www.w3.org/2000/svg');
-    expect(brandIcon.ownerDocument).toBe(ownerDocument);
-    expect(brandIcon.namespaceURI).toBe('http://www.w3.org/2000/svg');
-    expect(brandIcon.matches('[fill="currentColor"], [stroke="currentColor"]')
-      || brandIcon.querySelector('[fill="currentColor"], [stroke="currentColor"]') !== null).toBe(true);
-    expect(brandIcon.querySelector('linearGradient')).toBeNull();
   });
 });
