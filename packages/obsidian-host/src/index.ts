@@ -14,7 +14,6 @@ export * from './obsidianHttpClient';
 export * from './obsidianVaultApi';
 export * from './openExternalUrl';
 export * from './path';
-export * from './providerLegacyAuthStore';
 export * from './scopedHttpClient';
 export * from './settings/piviSettingsStorage';
 export * from './settings/storagePaths';

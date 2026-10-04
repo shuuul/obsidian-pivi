@@ -50,7 +50,6 @@ import type { PiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkCl
 import { inspectExternalDirectory } from "@pivi/obsidian-host/externalFileApi";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
-import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
   buildEffectiveBashPermissions,
@@ -191,7 +190,6 @@ export async function createPiWorkspaceServices(
       openAuthUrl: (url) => systemExternalOpener.openExternalUrl(url),
       requestManualCode: (message, signal) => requestOAuthManualCode(host.app, message, signal),
     },
-    createFileProviderLegacyAuthStore(vaultPath ? `${vaultPath}/.pivi/auth.json` : null),
     () => getOrCreateDeviceInstallationId(host.app),
   );
   const mcpToolProvider = new McpToolProvider(

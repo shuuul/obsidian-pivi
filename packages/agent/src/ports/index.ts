@@ -1,5 +1,3 @@
-import type { ProviderCredential } from '../auth/piProviderCredentials';
-
 interface FileStat {
   mtime: number;
   size: number;
@@ -26,14 +24,6 @@ export interface SyncSecretStore {
   setSecret(key: string, value: string): void;
   listSecrets(prefix?: string): string[];
   deleteSecret?(key: string): void;
-}
-
-export type ProviderLegacyAuthData = Record<string, ProviderCredential>;
-
-export interface ProviderLegacyAuthStore {
-  path: string;
-  read(): ProviderLegacyAuthData | null;
-  write(data: ProviderLegacyAuthData): void;
 }
 
 export interface AuthContextHost {
