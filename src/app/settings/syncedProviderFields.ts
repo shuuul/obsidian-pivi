@@ -26,7 +26,7 @@ function hasCustomProviderContextLimits(
   });
 }
 
-export function hasLegacyProviderFields(raw: Record<string, unknown>): boolean {
+export function hasSyncedProviderFields(raw: Record<string, unknown>): boolean {
   const agentSettings = raw.agentSettings;
   if (isRecord(agentSettings)) {
     if (Object.hasOwn(agentSettings, 'addedProviders')) {

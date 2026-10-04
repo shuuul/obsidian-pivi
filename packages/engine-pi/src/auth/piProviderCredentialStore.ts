@@ -96,7 +96,7 @@ function migrateProviderCredential(
   };
 }
 
-export function migratePiProviderCredentialsToKeychain(
+export function movePiProviderCredentialsFromEnvironment(
   secretStorage: SyncSecretStore,
   addedProviders: readonly string[],
   environmentVariables: string,

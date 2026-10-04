@@ -28,8 +28,8 @@ import type { Locale } from "@/app/i18n";
 import { setLocale, t } from "@/app/i18n";
 import { relocateQueuedDeletedSessions } from "@/app/pluginSessionApi";
 import { reconcileSessionCloudRecovery } from "@/app/serviceGraph";
-import { runDeviceLocalEnvironmentMigration } from "@/app/settings/deviceLocalEnvironmentMigration";
-import { runDeviceLocalProviderMigration } from "@/app/settings/deviceLocalProviderMigration";
+import { loadDeviceLocalEnvironmentState } from "@/app/settings/deviceLocalEnvironmentLoad";
+import { loadDeviceLocalProviderState } from "@/app/settings/deviceLocalProviderLoad";
 import {
   type DeviceLocalCapabilityPermissions,
   type DeviceLocalExternalReadDirectories,
@@ -74,14 +74,14 @@ export async function loadPluginSettings(
   await ctx.storage.initialize();
   const rawSettings = await ctx.storage.loadRawPiviSettings();
   const environmentStore = new ObsidianDeviceLocalEnvironmentStore(ctx.app);
-  const environmentMigration = await runDeviceLocalEnvironmentMigration({
+  const environmentLoad = await loadDeviceLocalEnvironmentState({
     app: ctx.app,
     rawSettings,
     environmentStore,
     savePersistedSettings: (stored) => ctx.storage.saveRawPiviSettings(stored),
   });
   const deviceLocalStore = new ObsidianDeviceLocalProviderStore(ctx.app);
-  const migration = await runDeviceLocalProviderMigration({
+  const providerLoad = await loadDeviceLocalProviderState({
     app: ctx.app,
     rawSettings: await ctx.storage.loadRawPiviSettings(),
     deviceLocalStore,
@@ -91,11 +91,11 @@ export async function loadPluginSettings(
   // Reconcile on the same object that is installed and later saved. Spreading
   // into setSettings first left title/active-model repairs on a discarded copy.
   const settings: PiviSettings = {
-    ...migration.settings,
-    sharedEnvironmentVariables: environmentMigration.settings.sharedEnvironmentVariables,
+    ...providerLoad.settings,
+    sharedEnvironmentVariables: environmentLoad.settings.sharedEnvironmentVariables,
     agentSettings: {
-      ...migration.settings.agentSettings,
-      environmentVariables: environmentMigration.settings.agentSettings.environmentVariables,
+      ...providerLoad.settings.agentSettings,
+      environmentVariables: environmentLoad.settings.agentSettings.environmentVariables,
     },
   };
   const didOverlayCapabilityPermissions = overlayDeviceLocalCapabilityPermissions(
@@ -107,9 +107,9 @@ export async function loadPluginSettings(
   const didReconcileModelSelections =
     reconcilePiTitleGenerationModel(settings);
   ctx.setSettings(settings);
-  if (migration.syncedSaveFailed || environmentMigration.syncedSaveFailed) {
+  if (providerLoad.syncedSaveFailed || environmentLoad.syncedSaveFailed) {
     logger.warn(
-      'Device-local state committed, but synced settings save failed during migration',
+      'Device-local state committed, but synced settings save failed during startup load',
     );
     new Notice(t('host.failedSaveSyncedSettings'));
   }

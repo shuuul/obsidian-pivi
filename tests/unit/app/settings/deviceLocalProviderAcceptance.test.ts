@@ -7,7 +7,7 @@ import type { FileStore } from '@pivi/agent/ports';
 import { App, Notice } from 'obsidian';
 
 import { ObsidianDeviceLocalProviderStore } from '@/app/deviceLocalProviderStore';
-import { runDeviceLocalProviderMigration } from '@/app/settings/deviceLocalProviderMigration';
+import { loadDeviceLocalProviderState } from '@/app/settings/deviceLocalProviderLoad';
 import { createMockApp } from '../../../helpers/mockApp';
 import { ObsidianDeviceLocalCapabilityPermissionStore } from '@/app/deviceLocalCapabilityPermissionStore';
 import { ObsidianDeviceLocalExternalContextStore } from '@/app/deviceLocalExternalContextStore';
@@ -45,9 +45,9 @@ async function migrateOnDevice(
   app: App,
   adapter: FileStore,
   rawSettings: Record<string, unknown> | null,
-): Promise<ReturnType<typeof runDeviceLocalProviderMigration>> {
+): Promise<ReturnType<typeof loadDeviceLocalProviderState>> {
   const store = new ObsidianDeviceLocalProviderStore(app);
-  return runDeviceLocalProviderMigration({
+  return loadDeviceLocalProviderState({
     app,
     rawSettings,
     deviceLocalStore: store,
@@ -142,7 +142,7 @@ describe('device-local provider acceptance matrix', () => {
     const appB = createMockApp();
     const resultB = await migrateOnDevice(appB, adapter, parseSyncedSettings(adapter));
 
-    expect(resultB.cutoverPerformed).toBe(true);
+    expect(resultB.seededDefaults).toBe(true);
     expect(resultB.settings.agentSettings.addedProviders).toEqual(['deepseek']);
     expect(resultB.settings.model).toBe('deepseek/deepseek-flash');
     expect(parseSyncedSettings(adapter).agentSettings).not.toHaveProperty('addedProviders');

@@ -11,19 +11,19 @@ import {
 import type { PiviSettings } from '@pivi/agent/settings/types';
 import type { App } from 'obsidian';
 
-import { hasLegacyProviderFields } from '@/app/settings/legacyProviderSnapshot';
 import { normalizeStoredPiviSettings } from '@/app/settings/piviSettingsCodec';
+import { hasSyncedProviderFields } from '@/app/settings/syncedProviderFields';
 
-const logger = new PluginLogger('DeviceLocalProviderMigration');
+const logger = new PluginLogger('DeviceLocalProviderLoad');
 
-class DeviceLocalProviderMigrationError extends Error {
+class DeviceLocalProviderLoadError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'DeviceLocalProviderMigrationError';
+    this.name = 'DeviceLocalProviderLoadError';
   }
 }
 
-export interface DeviceLocalProviderMigrationContext {
+export interface DeviceLocalProviderLoadContext {
   app: App;
   rawSettings: Record<string, unknown> | null;
   deviceLocalStore: DeviceLocalProviderStore;
@@ -31,9 +31,10 @@ export interface DeviceLocalProviderMigrationContext {
   savePersistedSettings(settings: Record<string, unknown>): Promise<void>;
 }
 
-export interface DeviceLocalProviderMigrationResult {
+export interface DeviceLocalProviderLoadResult {
   settings: PiviSettings;
-  cutoverPerformed: boolean;
+  /** True when this device had no local provider state and defaults were seeded. */
+  seededDefaults: boolean;
   syncedSaveFailed?: boolean;
 }
 
@@ -42,7 +43,7 @@ function buildPortableRuntimeSettings(raw: Record<string, unknown>): PiviSetting
 }
 
 async function stripSyncedLocalizedFields(
-  ctx: DeviceLocalProviderMigrationContext,
+  ctx: DeviceLocalProviderLoadContext,
   runtimeSettings: PiviSettings,
 ): Promise<boolean> {
   const persisted = stripLocalizedFieldsFromRuntimeSettings(runtimeSettings);
@@ -59,8 +60,8 @@ async function stripSyncedLocalizedFields(
   }
 }
 
-async function commitCutover(
-  ctx: DeviceLocalProviderMigrationContext,
+async function commitSeededState(
+  ctx: DeviceLocalProviderLoadContext,
   localState: ReturnType<typeof normalizeDeviceLocalProviderState>,
   runtimeSettings: PiviSettings,
 ): Promise<{ syncedSaveFailed: boolean }> {
@@ -68,7 +69,7 @@ async function commitCutover(
     ctx.deviceLocalStore.save(localState);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new DeviceLocalProviderMigrationError(
+    throw new DeviceLocalProviderLoadError(
       `Failed to save device-local provider state: ${message}`,
     );
   }
@@ -86,15 +87,15 @@ function buildRuntimeSettingsFromLocalState(
   return settings;
 }
 
-export async function runDeviceLocalProviderMigration(
-  ctx: DeviceLocalProviderMigrationContext,
-): Promise<DeviceLocalProviderMigrationResult> {
+export async function loadDeviceLocalProviderState(
+  ctx: DeviceLocalProviderLoadContext,
+): Promise<DeviceLocalProviderLoadResult> {
   let initializedState;
   try {
     initializedState = ctx.deviceLocalStore.loadInitialized();
   } catch (error) {
     if (error instanceof DeviceLocalProviderStateVersionError) {
-      throw new DeviceLocalProviderMigrationError(
+      throw new DeviceLocalProviderLoadError(
         'Unsupported device-local provider state version. Update Pivi or restore the local provider cache before retrying.',
       );
     }
@@ -107,12 +108,12 @@ export async function runDeviceLocalProviderMigration(
     const settings = buildRuntimeSettingsFromLocalState(raw, initializedState);
     let syncedSaveFailed = false;
     // An older device can sync provider fields back into the vault; drop them.
-    if (hasLegacyProviderFields(raw)) {
+    if (hasSyncedProviderFields(raw)) {
       syncedSaveFailed = await stripSyncedLocalizedFields(ctx, settings);
     }
     return {
       settings,
-      cutoverPerformed: false,
+      seededDefaults: false,
       ...(syncedSaveFailed ? { syncedSaveFailed: true } : {}),
     };
   }
@@ -121,10 +122,10 @@ export async function runDeviceLocalProviderMigration(
   // release older than 0.15.0 are not migrated; they are stripped on save.
   const localState = seedDefaultDeviceLocalProviderState();
   const settings = buildRuntimeSettingsFromLocalState(raw, localState);
-  const cutover = await commitCutover(ctx, localState, settings);
+  const committed = await commitSeededState(ctx, localState, settings);
   return {
     settings,
-    cutoverPerformed: true,
-    ...(cutover.syncedSaveFailed ? { syncedSaveFailed: true } : {}),
+    seededDefaults: true,
+    ...(committed.syncedSaveFailed ? { syncedSaveFailed: true } : {}),
   };
 }

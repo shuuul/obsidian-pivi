@@ -1,7 +1,7 @@
 import { credentialToApiKey, getPiAiCredentialSecretId } from '@pivi/agent/auth/piProviderCredentials';
 import {
   createObsidianCredentialStore,
-  migratePiProviderCredentialsToKeychain,
+  movePiProviderCredentialsFromEnvironment,
   ObsidianCredentialStore,
 } from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import {
@@ -56,7 +56,7 @@ describe('ProviderSecretStorage', () => {
 
   it('hard-migrates plaintext env values into the canonical key', () => {
     const env = 'ANTHROPIC_API_KEY=sk-plain\nPI_ENABLE_EXA=1';
-    const result = migratePiProviderCredentialsToKeychain(
+    const result = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       ['anthropic'],
       env,
@@ -81,7 +81,7 @@ describe('ProviderSecretStorage', () => {
       JSON.stringify({ type: 'api_key', key: 'legacy-web-exa' }),
     );
 
-    const synced = migratePiProviderCredentialsToKeychain(
+    const synced = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       ['anthropic', 'exa'],
       `ANTHROPIC_API_KEY=sk-plain\n${exaEnvLine}`,
@@ -144,7 +144,7 @@ describe('ProviderSecretStorage', () => {
       JSON.stringify({ type: 'api_key', key: 'sk-test' }),
     );
 
-    const synced = migratePiProviderCredentialsToKeychain(secretStorage, ['exa'], '');
+    const synced = movePiProviderCredentialsFromEnvironment(secretStorage, ['exa'], '');
 
     expect(synced.changed).toBe(false);
     expect(synced.addedProviders).toEqual(['exa']);
@@ -152,7 +152,7 @@ describe('ProviderSecretStorage', () => {
   });
 
   it('preserves settings-owned provider membership and order', () => {
-    const synced = migratePiProviderCredentialsToKeychain(
+    const synced = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       ['ollama', 'anthropic'],
       '',
@@ -179,7 +179,7 @@ describe('ProviderSecretStorage', () => {
       listSecrets: () => [...secrets.keys()],
     };
 
-    const synced = migratePiProviderCredentialsToKeychain(store, ['anthropic'], '');
+    const synced = movePiProviderCredentialsFromEnvironment(store, ['anthropic'], '');
 
     expect(synced.changed).toBe(false);
     expect(writes).toEqual([]);

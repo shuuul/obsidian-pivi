@@ -1,5 +1,5 @@
 import { isKnownPiProviderId } from '@pivi/agent/auth/piProviderValidation';
-import { migratePiProviderCredentialsToKeychain } from '@pivi/engine-pi/auth/piProviderCredentialStore';
+import { movePiProviderCredentialsFromEnvironment } from '@pivi/engine-pi/auth/piProviderCredentialStore';
 import { updatePiAgentSettings } from '@pivi/agent/settings/agentSettings';
 import { createDefaultCustomProviderConfig } from '@pivi/agent/settings/customProviders';
 
@@ -42,7 +42,7 @@ describe('add ollama then redisplay normalize', () => {
       listSecrets: () => [] as string[],
     };
 
-    const result = migratePiProviderCredentialsToKeychain(
+    const result = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       ['deepseek', 'ollama', 'lmstudio'],
       '',

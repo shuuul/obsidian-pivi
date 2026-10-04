@@ -23,9 +23,9 @@ import type { EnvironmentScope } from '@pivi/agent/settings/types';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import {
-  migrateCanonicalCredentialsFromText,
+  handOffCanonicalCredentialsFromText,
   publishEnvironmentEntries,
-} from '@/app/settings/deviceLocalEnvironmentMigration';
+} from '@/app/settings/deviceLocalEnvironmentLoad';
 
 export interface EnvironmentApplyHooks {
   /** Returns whether the model selection changed. */
@@ -204,7 +204,7 @@ function prepareImports(
   const recorder = createSecretMutationRecorder(secretStorage);
   const drafts: EnvironmentEntryDraft[] = [];
   for (const [scope, envText] of imports) {
-    const migrated = migrateCanonicalCredentialsFromText(
+    const migrated = handOffCanonicalCredentialsFromText(
       recorder.store,
       envText,
       plugin.settings.agentSettings.addedProviders ?? [],

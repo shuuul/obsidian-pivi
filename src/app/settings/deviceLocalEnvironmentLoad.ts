@@ -1,6 +1,6 @@
 /**
- * Idempotent migration of free-form synced environment text into the
- * device-local structured registry + SecretStorage / canonical credential stores.
+ * Startup load of the device-local environment registry, plus the publish and
+ * credential hand-off helpers used when environment text is imported.
  */
 
 import { isSecretStorageAvailable } from '@pivi/agent/auth/providerSecretStorage';
@@ -21,22 +21,22 @@ import {
 import type { PiviSettings } from '@pivi/agent/settings/types';
 import { createWebSearchCredentialStore } from '@pivi/agent/tools/webSearch/credentialStore';
 import {
-  migratePiProviderCredentialsToKeychain,
+  movePiProviderCredentialsFromEnvironment,
 } from '@pivi/engine-pi/application/auth';
 import type { App } from 'obsidian';
 
 import { normalizeStoredPiviSettings } from '@/app/settings/piviSettingsCodec';
 
-const logger = new PluginLogger('DeviceLocalEnvironmentMigration');
+const logger = new PluginLogger('DeviceLocalEnvironmentLoad');
 
-class DeviceLocalEnvironmentMigrationError extends Error {
+class DeviceLocalEnvironmentError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'DeviceLocalEnvironmentMigrationError';
+    this.name = 'DeviceLocalEnvironmentError';
   }
 }
 
-export interface DeviceLocalEnvironmentMigrationContext {
+export interface DeviceLocalEnvironmentLoadContext {
   app: App;
   rawSettings: Record<string, unknown> | null;
   environmentStore: DeviceLocalEnvironmentStore;
@@ -45,13 +45,14 @@ export interface DeviceLocalEnvironmentMigrationContext {
   getSystemEnvironmentVariable?(name: string): string | undefined;
 }
 
-export interface DeviceLocalEnvironmentMigrationResult {
+export interface DeviceLocalEnvironmentLoadResult {
   settings: PiviSettings;
-  cutoverPerformed: boolean;
+  /** True when this device had no local environment registry and an empty one was created. */
+  seededEmpty: boolean;
   syncedSaveFailed?: boolean;
 }
 
-export function migrateCanonicalCredentialsFromText(
+export function handOffCanonicalCredentialsFromText(
   secretStorage: SyncSecretStore,
   envText: string,
   addedProviders: readonly string[],
@@ -64,13 +65,13 @@ export function migrateCanonicalCredentialsFromText(
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
   if (providerText) {
-    const synced = migratePiProviderCredentialsToKeychain(
+    const synced = movePiProviderCredentialsFromEnvironment(
       secretStorage,
       addedProviders,
       providerText,
     );
     if (synced.environmentVariables.trim()) {
-      throw new DeviceLocalEnvironmentMigrationError(
+      throw new DeviceLocalEnvironmentError(
         'Provider credentials could not be handed off because their provider is not configured.',
       );
     }
@@ -92,8 +93,8 @@ export function migrateCanonicalCredentialsFromText(
       }
     }
   } else if (webCredentials.length > 0) {
-    throw new DeviceLocalEnvironmentMigrationError(
-      'Web credentials require SecretStorage during environment migration.',
+    throw new DeviceLocalEnvironmentError(
+      'Web credentials require SecretStorage during environment import.',
     );
   }
 
@@ -101,7 +102,7 @@ export function migrateCanonicalCredentialsFromText(
 }
 
 async function stripSyncedEnvironmentFields(
-  ctx: DeviceLocalEnvironmentMigrationContext,
+  ctx: DeviceLocalEnvironmentLoadContext,
   runtimeSettings: PiviSettings,
 ): Promise<boolean> {
   const persisted = { ...runtimeSettings } as unknown as Record<string, unknown>;
@@ -132,9 +133,9 @@ async function stripSyncedEnvironmentFields(
  * Startup load: project the device-local environment registry onto settings and
  * strip any environment text an older device synced back.
  */
-export async function runDeviceLocalEnvironmentMigration(
-  ctx: DeviceLocalEnvironmentMigrationContext,
-): Promise<DeviceLocalEnvironmentMigrationResult> {
+export async function loadDeviceLocalEnvironmentState(
+  ctx: DeviceLocalEnvironmentLoadContext,
+): Promise<DeviceLocalEnvironmentLoadResult> {
   const raw = ctx.rawSettings;
   const baseSettings = normalizeStoredPiviSettings(raw ?? {});
   const getSystem = (name: string): string | undefined => {
@@ -157,16 +158,14 @@ export async function runDeviceLocalEnvironmentMigration(
     projectEnvironmentOntoSettings(baseSettings, existing, host);
 
     let syncedSaveFailed = false;
-    let cutoverPerformed = false;
     if (raw && hasPersistedEnvironmentFields(raw)) {
       // Local already initialized: strip residual synced plaintext idempotently.
       syncedSaveFailed = await stripSyncedEnvironmentFields(ctx, baseSettings);
-      cutoverPerformed = true;
     }
 
     return {
       settings: baseSettings,
-      cutoverPerformed,
+      seededEmpty: false,
       syncedSaveFailed,
     };
   }
@@ -185,7 +184,7 @@ export async function runDeviceLocalEnvironmentMigration(
     : false;
   return {
     settings: baseSettings,
-    cutoverPerformed: true,
+    seededEmpty: true,
     syncedSaveFailed,
   };
 }
@@ -200,8 +199,8 @@ export function publishEnvironmentEntries(
   drafts: Parameters<typeof stageEnvironmentSecrets>[1],
 ): void {
   if (!isSecretStorageAvailable(secretStorageHost.secretStorage)) {
-    throw new DeviceLocalEnvironmentMigrationError(
-      'SecretStorage is unavailable; environment migration cannot continue.',
+    throw new DeviceLocalEnvironmentError(
+      'SecretStorage is unavailable; environment entries cannot be saved.',
     );
   }
   const secretStorage = secretStorageHost.secretStorage;

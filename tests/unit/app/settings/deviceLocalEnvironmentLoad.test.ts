@@ -12,7 +12,7 @@ import {
   stageEnvironmentSecrets,
 } from '@pivi/agent/settings/deviceLocalEnvironmentState';
 
-import { runDeviceLocalEnvironmentMigration } from '@/app/settings/deviceLocalEnvironmentMigration';
+import { loadDeviceLocalEnvironmentState } from '@/app/settings/deviceLocalEnvironmentLoad';
 
 function createMemorySecretStore(): SyncSecretStore & { snapshot(): Record<string, string> } {
   const secrets = new Map<string, string>();
@@ -51,13 +51,13 @@ function createEnvironmentStore(initial: DeviceLocalEnvironmentStateV1 | null = 
   };
 }
 
-describe('deviceLocalEnvironmentMigration', () => {
+describe('device-local environment startup load', () => {
   it('does not migrate environment text synced by a release older than 0.15.0', async () => {
     const secrets = createMemorySecretStore();
     const environmentStore = createEnvironmentStore();
     let saved: Record<string, unknown> | null = null;
 
-    const result = await runDeviceLocalEnvironmentMigration({
+    const result = await loadDeviceLocalEnvironmentState({
       app: { secretStorage: secrets } as never,
       rawSettings: {
         sharedEnvironmentVariables: 'PATH=/bin\nANTHROPIC_API_KEY=sk-a',
@@ -73,7 +73,7 @@ describe('deviceLocalEnvironmentMigration', () => {
       },
     });
 
-    expect(result.cutoverPerformed).toBe(true);
+    expect(result.seededEmpty).toBe(true);
     expect(environmentStore.getState()).toEqual(createEmptyDeviceLocalEnvironmentState());
     expect(secrets.snapshot()).toEqual({});
     expect(saved).not.toBeNull();
@@ -91,14 +91,14 @@ describe('deviceLocalEnvironmentMigration', () => {
     const storeB = createEnvironmentStore();
     const synced = { agentSettings: { addedProviders: [], visibleModels: [] } };
 
-    const resultA = await runDeviceLocalEnvironmentMigration({
+    const resultA = await loadDeviceLocalEnvironmentState({
       app: { secretStorage: secretsA } as never,
       rawSettings: synced,
       environmentStore: storeA,
       savePersistedSettings: async () => undefined,
       getSystemEnvironmentVariable: () => undefined,
     });
-    const resultB = await runDeviceLocalEnvironmentMigration({
+    const resultB = await loadDeviceLocalEnvironmentState({
       app: { secretStorage: createMemorySecretStore() } as never,
       rawSettings: synced,
       environmentStore: storeB,
@@ -123,7 +123,7 @@ describe('deviceLocalEnvironmentMigration', () => {
       },
     };
 
-    await runDeviceLocalEnvironmentMigration({
+    await loadDeviceLocalEnvironmentState({
       app: { secretStorage: secrets } as never,
       rawSettings,
       environmentStore,
@@ -133,7 +133,7 @@ describe('deviceLocalEnvironmentMigration', () => {
     });
     const firstState = JSON.stringify(environmentStore.getState());
 
-    const second = await runDeviceLocalEnvironmentMigration({
+    const second = await loadDeviceLocalEnvironmentState({
       app: { secretStorage: secrets } as never,
       rawSettings: { agentSettings: { environmentVariables: '', addedProviders: [], visibleModels: [] } },
       environmentStore,
@@ -143,7 +143,7 @@ describe('deviceLocalEnvironmentMigration', () => {
     });
 
     expect(JSON.stringify(environmentStore.getState())).toBe(firstState);
-    expect(second.cutoverPerformed).toBe(false);
+    expect(second.seededEmpty).toBe(false);
     expect(saveCount).toBe(1);
   });
 });
