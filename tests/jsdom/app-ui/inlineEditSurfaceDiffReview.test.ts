@@ -4,7 +4,7 @@ installObsidianDomHelpers(window);
 
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { type Editor, Platform } from 'obsidian';
+import { type Editor, Platform, setIcon } from 'obsidian';
 
 import { InlineEditSurfaceSession } from '@/app/ui/inlineEditSurface/InlineEditSurfaceSession';
 import {
@@ -14,7 +14,7 @@ import {
 import { applyInlineEditAcceptance } from '@/app/ui/inlineEditHelpers';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
 
-const renderIcon = jest.fn();
+const renderIcon = jest.mocked(setIcon);
 const pushScope = jest.fn();
 const popScope = jest.fn();
 
@@ -26,6 +26,7 @@ jest.mock('@pivi/pivi-react/mount', () => ({
 }));
 
 jest.mock('obsidian', () => ({
+  setIcon: jest.fn(),
   Component: class Component {
     loaded = false;
     children = new Set<object>();
@@ -106,7 +107,6 @@ function createSession(options: {
         }),
       } as never,
       i18n: { t: (key: string) => key } as never,
-      platform: { renderIcon, attachTooltip: jest.fn() } as never,
       composerDefaults: {
         model: 'model-a',
         thinkingLevel: 'medium',

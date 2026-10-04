@@ -3,7 +3,6 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
-import { useHostTerminology } from '../platform';
 import type {
   SettingsMentionEditorHandle,
   SettingsMentionEditorPort,
@@ -260,7 +259,6 @@ function CommandCard({
 
 export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
-  const { workspaceName } = useHostTerminology();
   const mounted = useMountedRef();
   const [entries, setEntries] = useState<readonly SlashCatalogEntry[] | null>(null);
   const [catalogRevision, setCatalogRevision] = useState<number | null>(null);
@@ -426,7 +424,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   });
 
   return (
-    <SettingsPage description={<p>{t('settings.slashCommands.desc', { workspaceName })}</p>}>
+    <SettingsPage description={<p>{t('settings.slashCommands.desc')}</p>}>
       {error ? <p className="pivi-setting-description" role="alert">{error}</p> : null}
       <SettingsSection title={t('settings.slashCommandsUi.heading')}>
         {entries === null

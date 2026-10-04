@@ -13,10 +13,12 @@ import {
   SettingsRemoveButton,
   Toggle,
 } from '../../../packages/pivi-react/src/settings/primitives/controls';
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 function renderPrimitives(ui: ReactElement) {
-  return render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}>{ui}</I18nProvider>));
+  return render((<I18nProvider i18n={createI18n()}>{ui}</I18nProvider>));
 }
 
 function ControlledCard({
@@ -363,7 +365,7 @@ describe('Settings primitives', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Add item' }));
     expect(onAdd).toHaveBeenCalledTimes(1);
 
-    rerender(withTestPresentationPlatform(
+    rerender((
       <I18nProvider i18n={createI18n()}>
         <SettingsCollection addLabel="+ Add item" onAdd={onAdd}>
           <SettingRow
@@ -376,7 +378,7 @@ describe('Settings primitives', () => {
             )}
           />
         </SettingsCollection>
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(screen.queryByText('Nothing here')).not.toBeInTheDocument();

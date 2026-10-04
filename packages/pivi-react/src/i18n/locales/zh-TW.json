@@ -631,7 +631,7 @@
       "commandsTruncated": "僅顯示前 {count} 個相符項目。請縮小搜尋範圍以查看更多。"
     },
     "slashCommands": {
-      "desc": "管理儲存在 .pivi/commands/ 中的{workspaceName}級自訂指令。由 /名稱 觸發。"
+      "desc": "管理儲存在 .pivi/commands/ 中的庫級自訂指令。由 /名稱 觸發。"
     },
     "subagents": {
       "heading": "子代理",
@@ -734,12 +734,12 @@
       },
       "heading": "工具開關",
       "groups": {
-        "workspace": "{workspaceNameTitle}工具",
-        "hostCli": "{hostName} CLI",
+        "workspace": "庫工具",
+        "hostCli": "Obsidian CLI",
         "pivi": "Pivi",
         "additional": "附加存取"
       },
-      "intro": "啟用或停用向代理開放的 {hostName} 工具。變更會在提示重新整理後的新回合生效。",
+      "intro": "啟用或停用向代理開放的 Obsidian 工具。變更會在提示重新整理後的新回合生效。",
       "reading": {
         "defaultSize": {
           "name": "預設讀取大小",
@@ -751,9 +751,9 @@
       "unavailableCorePlugin": "需要啟用對應的核心外掛。",
       "unavailableCodex": "需要連線 OpenAI Codex。",
       "cli": {
-        "heading": "官方 {hostName} CLI",
-        "enabled": { "name": "啟用官方 CLI 工具", "desc": "允許 Pivi 註冊由官方 {hostName} CLI 支援的工具。" },
-        "unavailable": "官方 {hostName} CLI 尚未註冊，無法啟用 CLI 工具。",
+        "heading": "官方 Obsidian CLI",
+        "enabled": { "name": "啟用官方 CLI 工具", "desc": "允許 Pivi 註冊由官方 Obsidian CLI 支援的工具。" },
+        "unavailable": "官方 Obsidian CLI 尚未註冊，無法啟用 CLI 工具。",
         "path": { "name": "CLI 執行檔路徑", "desc": "選用的執行檔替代路徑。留白表示自動偵測。", "placeholder": "自動偵測" },
         "timeout": { "name": "CLI 逾時", "desc": "每個官方 CLI 請求的最長時間。", "option": "{seconds} 秒" },
         "actionsUnavailable": "CLI 支援的查詢與建立動作目前無法使用。"
@@ -812,14 +812,14 @@
       },
       "apiKeyName": "{provider} API 金鑰",
       "apiKeyPlaceholder": "輸入 API 金鑰…",
-      "apiKeySavedPlaceholder": "已儲存在{secureStorageName}",
+      "apiKeySavedPlaceholder": "已儲存在Obsidian 鑰匙圈",
       "removeKey": "移除",
       "enableAria": "啟用 {provider}",
       "disableAria": "停用 {provider}"
     },
     "modelsTab": {
-      "intro": "API 金鑰和 OAuth 權杖儲存在{secureStorageName}中。已停用的提供者仍會儲存，但會在模型選擇器中隱藏。",
-      "secureStorageRequired": "提供者 API 金鑰需要支援{secureStorageName}的 {hostName} {version} 或更高版本。請升級 {hostName}。",
+      "intro": "API 金鑰和 OAuth 權杖儲存在Obsidian 鑰匙圈中。已停用的提供者仍會儲存，但會在模型選擇器中隱藏。",
+      "secureStorageRequired": "提供者 API 金鑰需要支援Obsidian 鑰匙圈的 Obsidian {version} 或更高版本。請升級 Obsidian。",
       "defaultModelSectionTitle": "預設模型",
       "defaultModel": "預設模型",
       "defaultModelDesc": "用於新對話與 pivi:run 命令列執行。在輸入框中選擇模型時會同步更新。",
@@ -831,13 +831,13 @@
       "authHeading": "驗證與憑證",
       "apiKey": "API 金鑰",
       "apiKeyOptional": "API 金鑰（選填）",
-      "apiKeyDesc": "以 {secretId} 儲存在{secureStorageName}中。",
+      "apiKeyDesc": "以 {secretId} 儲存在Obsidian 鑰匙圈中。",
       "apiKeyPlaceholder": "輸入 API 金鑰…",
-      "apiKeySavedPlaceholder": "已儲存在{secureStorageName}",
+      "apiKeySavedPlaceholder": "已儲存在Obsidian 鑰匙圈",
       "oauthToken": "OAuth 權杖",
-      "oauthTokenDesc": "以 {secretId} 儲存在{secureStorageName}中。",
+      "oauthTokenDesc": "以 {secretId} 儲存在Obsidian 鑰匙圈中。",
       "oauthTokenPlaceholder": "輸入 OAuth 權杖…",
-      "oauthTokenSavedPlaceholder": "已儲存在{secureStorageName}",
+      "oauthTokenSavedPlaceholder": "已儲存在Obsidian 鑰匙圈",
       "clear": "清除",
       "candidateModels": "候選模型池",
       "catalogRefreshTitle": "模型目錄",
@@ -871,7 +871,7 @@
       "addProvider": "+ 新增提供者",
       "addProviderAdded": "已新增",
       "removedProvider": "已移除 {name} 提供者。",
-      "removeCredential": "同時從{secureStorageName}中刪除此提供者的憑證",
+      "removeCredential": "同時從Obsidian 鑰匙圈中刪除此提供者的憑證",
       "enableAria": "啟用提供者 {name}",
       "disableAria": "停用提供者 {name}",
       "removeAria": "移除提供者 {name}",
@@ -899,7 +899,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "使用你的 ChatGPT/Codex 訂閱登入。憑證儲存在{secureStorageName}中。",
+        "desc": "使用你的 ChatGPT/Codex 訂閱登入。憑證儲存在Obsidian 鑰匙圈中。",
         "connect": "連線",
         "reconnect": "重新連線",
         "disconnect": "中斷連線",
@@ -927,12 +927,12 @@
       "fetchModelsSuccess": "{name}：已載入 {count} 個模型。",
       "fetchModelsFailed": "{name}：取得模型失敗：{message}",
       "authHeadingOptional": "驗證（選用）",
-      "apiKeyOptionalDesc": "選用。本地伺服器不需驗證時可留空。若填寫，會以 {secretId} 儲存在{secureStorageName}中。",
+      "apiKeyOptionalDesc": "選用。本地伺服器不需驗證時可留空。若填寫，會以 {secretId} 儲存在Obsidian 鑰匙圈中。",
       "apiKeyOptionalPlaceholder": "選用 API 金鑰…",
       "dualAuthApiKeyBlocked": "此提供商現在需要 OAuth 登入。既有 API 金鑰仍可更新或清除。",
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "使用你的 xAI 帳戶登入 Grok Build。憑證儲存在{secureStorageName}中。",
+        "desc": "使用你的 xAI 帳戶登入 Grok Build。憑證儲存在Obsidian 鑰匙圈中。",
         "connect": "連線",
         "reconnect": "重新連線",
         "disconnect": "中斷連線",
@@ -942,7 +942,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "在瀏覽器中使用 Claude Pro 或 Max 訂閱登入。憑證儲存在 {secureStorageName}。",
+        "desc": "在瀏覽器中使用 Claude Pro 或 Max 訂閱登入。憑證儲存在 Obsidian 鑰匙圈。",
         "connect": "連線",
         "reconnect": "重新連線",
         "disconnect": "中斷連線",
@@ -952,7 +952,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "在瀏覽器中使用 ChatGPT 訂閱登入。憑證儲存在 {secureStorageName}。",
+        "desc": "在瀏覽器中使用 ChatGPT 訂閱登入。憑證儲存在 Obsidian 鑰匙圈。",
         "connect": "連線",
         "reconnect": "重新連線",
         "disconnect": "中斷連線",
@@ -962,7 +962,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "在瀏覽器中登入 OpenRouter。憑證儲存在 {secureStorageName}。",
+        "desc": "在瀏覽器中登入 OpenRouter。憑證儲存在 Obsidian 鑰匙圈。",
         "connect": "連線",
         "reconnect": "重新連線",
         "disconnect": "中斷連線",
@@ -972,7 +972,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "使用 Kimi Code 訂閱登入。憑證儲存在 {secureStorageName}。",
+        "desc": "使用 Kimi Code 訂閱登入。憑證儲存在 Obsidian 鑰匙圈。",
         "connect": "連線",
         "reconnect": "重新連線",
         "disconnect": "中斷連線",
@@ -989,8 +989,8 @@
     "skills": {
       "intro": "代理技能位於 .pivi/skills/，並在下一回合載入（skill 工具 + 系統提示）。僅在你選擇下方操作後，Pivi 才會安裝或更新技能。",
       "defaultBundle": {
-        "name": "官方 {hostName} 技能",
-        "desc": "為此{workspaceName}安裝或更新官方 kepano/obsidian-skills 技能套件。會存取 GitHub/skills.sh、執行固定版本的 skills CLI，並將檔案寫入 .pivi/skills/。",
+        "name": "官方 Obsidian 技能",
+        "desc": "為此庫安裝或更新官方 kepano/obsidian-skills 技能套件。會存取 GitHub/skills.sh、執行固定版本的 skills CLI，並將檔案寫入 .pivi/skills/。",
         "button": "安裝官方技能",
         "updateButton": "更新官方技能",
         "label": "官方技能套件：",

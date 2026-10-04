@@ -35,8 +35,6 @@ const imperativeChatBoundaryFileSet = new Set(imperativeChatBoundaryFiles);
 const obsidianReactDir = path.join(rootDir, 'packages', 'pivi-react');
 const piviReactStylesDir = path.join(obsidianReactDir, 'styles');
 const piviReactSourceDir = path.join(obsidianReactDir, 'src');
-const piviReactPortsDir = path.join(piviReactSourceDir, 'ports');
-const piviReactLocalesDir = path.join(piviReactSourceDir, 'i18n', 'locales');
 const obsidianReactPackagePattern = /^@pivi\/pivi-react(?:\/|$)/;
 const retiredReactPackagePattern = new RegExp(
   '^@pivi/' + ['obsidian', '(?:ui|react)'].join('-') + '(?:/|$)',
@@ -91,7 +89,7 @@ const boundaryRules = [
     forbidden: [retiredAgentCorePackagePattern],
   },
   {
-    name: '@pivi/pivi-react stays presentation-only and product-neutral',
+    name: '@pivi/pivi-react stays presentation-only',
     root: 'packages/pivi-react',
     forbidden: [
       /^@\//,
@@ -102,7 +100,6 @@ const boundaryRules = [
       /^@pivi\/agent\/runtime(?:$|\/chatPorts(?:\/|$))/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
-      /^obsidian(?:\/|$)/,
       /^electron(?:\/|$)/,
       /^node:/,
       /^fs(?:\/|$)/,
@@ -233,12 +230,11 @@ const boundaryRules = [
     ],
   },
   {
-    name: 'src/ui does not import raw Pi SDKs, host adapters, or concrete tools',
+    name: 'src/ui does not import raw Pi SDKs or concrete tools',
     root: 'src/ui',
     forbidden: [
       /^@earendil-works\//,
       /^@pivi\/obsidian-tools(?:\/|$)/,
-      /^@pivi\/obsidian-host(?:\/|$)/,
     ],
   },
   {
@@ -514,7 +510,7 @@ for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
 }
 
 const allowedUiAppValueModules = new Set([
-  path.join(srcAppDir, 'hostPlatform'),
+  path.join(srcAppDir, 'slashBadgeNavigation'),
   path.join(srcAppDir, 'i18n'),
 ]);
 const allowedUiAppTypeModules = new Set([
@@ -1046,132 +1042,6 @@ function forbiddenHostIdentifierTerm(identifier) {
     if (words[index] === 'secret' && words[index + 1] === 'storage') return 'SecretStorage';
   }
   return null;
-}
-
-function declarationNameText(name, sourceFile) {
-  if (!name) return null;
-  if (ts.isIdentifier(name) || ts.isStringLiteralLike(name)) return name.text;
-  return name.getText(sourceFile);
-}
-
-for (const file of listSourceFiles(piviReactPortsDir)) {
-  const sourceText = fs.readFileSync(file, 'utf8');
-  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
-
-  function visit(node) {
-    const isPublicPortDeclaration = ts.isInterfaceDeclaration(node)
-      || ts.isTypeAliasDeclaration(node)
-      || ts.isPropertySignature(node)
-      || ts.isMethodSignature(node)
-      || ts.isEnumDeclaration(node)
-      || ts.isEnumMember(node)
-      || ts.isExportSpecifier(node)
-      || ts.isNamespaceExport(node);
-    if (isPublicPortDeclaration) {
-      const identifier = declarationNameText(node.name, sourceFile);
-      const forbiddenTerm = identifier && forbiddenHostIdentifierTerm(identifier);
-      if (forbiddenTerm) {
-        failures.push({
-          rule: '@pivi/pivi-react public ports use host-neutral identifiers',
-          file: path.relative(rootDir, file),
-          line: sourceLine(sourceFile, node.name ?? node),
-          detail: `exposes host-specific identifier "${identifier}" (${forbiddenTerm})`,
-        });
-      }
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-}
-
-function listJsonFiles(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
-    const target = path.join(dir, entry.name);
-    if (entry.isDirectory()) return listJsonFiles(target);
-    return entry.isFile() && entry.name.endsWith('.json') ? [target] : [];
-  });
-}
-
-function findJsonValue(value, dottedPath) {
-  return dottedPath.split('.').reduce((current, key) => current?.[key], value);
-}
-
-const parameterizedLocaleValues = new Map([
-  ['settings.webSearch.apiKeySavedPlaceholder', ['secureStorageName']],
-  ['settings.tools.intro', ['hostName']],
-  ['settings.modelsTab.intro', ['secureStorageName']],
-  ['settings.modelsTab.secureStorageRequired', ['hostName', 'secureStorageName']],
-  ['settings.modelsTab.apiKeyDesc', ['secureStorageName']],
-  ['settings.modelsTab.apiKeySavedPlaceholder', ['secureStorageName']],
-  ['settings.modelsTab.oauthTokenDesc', ['secureStorageName']],
-  ['settings.modelsTab.oauthTokenSavedPlaceholder', ['secureStorageName']],
-  ['settings.modelsTab.codex.desc', ['secureStorageName']],
-  ['settings.modelsTab.apiKeyOptionalDesc', ['secureStorageName']],
-  ['settings.slashCommands.desc', ['workspaceName']],
-  ['settings.skills.defaultBundle.name', ['hostName']],
-  ['settings.skills.defaultBundle.desc', ['workspaceName']],
-]);
-
-for (const file of listJsonFiles(piviReactLocalesDir)) {
-  const sourceText = fs.readFileSync(file, 'utf8');
-  let locale;
-  try {
-    locale = JSON.parse(sourceText);
-  } catch {
-    continue;
-  }
-
-  function visitLocaleKeys(value, keyPath = []) {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-    for (const [key, child] of Object.entries(value)) {
-      if (forbiddenHostIdentifierTerm(key)) {
-        const needle = `"${key}"`;
-        const offset = sourceText.indexOf(needle);
-        failures.push({
-          rule: '@pivi/pivi-react locale keys use host-neutral terminology',
-          file: path.relative(rootDir, file),
-          line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
-          detail: `uses host-specific locale key "${[...keyPath, key].join('.')}"`,
-        });
-      }
-      visitLocaleKeys(child, [...keyPath, key]);
-    }
-  }
-  visitLocaleKeys(locale);
-
-  for (const [keyPath, placeholders] of parameterizedLocaleValues) {
-    const value = findJsonValue(locale, keyPath);
-    if (typeof value !== 'string') {
-      failures.push({
-        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
-        file: path.relative(rootDir, file),
-        line: 1,
-        detail: `is missing required locale string "${keyPath}"`,
-      });
-      continue;
-    }
-    for (const placeholder of placeholders) {
-      if (value.includes(`{${placeholder}}`)) continue;
-      const offset = sourceText.indexOf(JSON.stringify(value).slice(1, -1));
-      failures.push({
-        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
-        file: path.relative(rootDir, file),
-        line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
-        detail: `locale string "${keyPath}" is missing {${placeholder}}`,
-      });
-    }
-    if (/\b(?:keychain|vault|secret\s*storage)\b/i.test(value)) {
-      const offset = sourceText.indexOf(JSON.stringify(value).slice(1, -1));
-      failures.push({
-        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
-        file: path.relative(rootDir, file),
-        line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
-        detail: `locale string "${keyPath}" hard-codes workspace or credential terminology`,
-      });
-    }
-  }
 }
 
 const piviReactCssFiles = listCssFiles(piviReactStylesDir);

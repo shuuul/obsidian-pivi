@@ -4,7 +4,9 @@ import { createI18n, I18nProvider, MessageList } from '@pivi/pivi-react';
 import { type ChatPerfRecorder, ChatProjectionStore } from '@pivi/pivi-react/store';
 import type { ChatMessage } from '@pivi/agent/runtime';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 const messages: ChatMessage[] = [
   {
@@ -100,10 +102,10 @@ function renderList(overrides: Partial<Parameters<typeof MessageList>[0]['action
     scrollToRecentUser: jest.fn(),
     ...overrides,
   };
-  render(withTestPresentationPlatform(
+  render((
     <I18nProvider i18n={createI18n()}>
       <TestMessageList actions={actions} isStreaming={false} messages={messages} />
-    </I18nProvider>,
+    </I18nProvider>
   ));
   return actions;
 }
@@ -119,10 +121,10 @@ describe('MessageList', () => {
       redo: jest.fn(),
       scrollToRecentUser: jest.fn(),
     };
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList actions={actions} hasOlderMessages isStreaming={false} messages={messages} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(screen.getByRole('separator', { name: 'Earlier history' })).toHaveClass(
@@ -160,7 +162,7 @@ describe('MessageList', () => {
       redo: jest.fn(),
       scrollToRecentUser: jest.fn(),
     };
-    const rendered = render(withTestPresentationPlatform(
+    const rendered = render((
       <I18nProvider i18n={createI18n()}>
         <MessageList
           actions={actions}
@@ -171,7 +173,7 @@ describe('MessageList', () => {
           store={store}
           thinkingIndicator={null}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     localScrollElement.scrollTop = 500;
@@ -215,10 +217,10 @@ describe('MessageList', () => {
         redo: jest.fn(),
         scrollToRecentUser: jest.fn(),
       };
-      const rendered = render(withTestPresentationPlatform(
+      const rendered = render((
         <I18nProvider i18n={createI18n()}>
           <TestMessageList actions={actions} isStreaming={false} messages={longTranscript} />
-        </I18nProvider>,
+        </I18nProvider>
       ));
 
       const mountedRows = rendered.container.querySelectorAll('.pivi-message-virtual-row').length;
@@ -257,7 +259,7 @@ describe('MessageList', () => {
       scrollToRecentUser: jest.fn(),
     };
 
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList
           actions={actions}
@@ -265,7 +267,7 @@ describe('MessageList', () => {
           messages={messages}
           recorder={recorder}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(recorder.onVirtualRows).toHaveBeenCalledWith(
@@ -332,7 +334,7 @@ describe('MessageList', () => {
       redo: jest.fn(),
       scrollToRecentUser: jest.fn(),
     };
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <MessageList
           actions={actions}
@@ -343,7 +345,7 @@ describe('MessageList', () => {
           store={store}
           thinkingIndicator={null}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     expect(actions.canCopy).toHaveBeenCalledTimes(1);
 
@@ -424,7 +426,7 @@ describe('MessageList', () => {
     };
 
     try {
-      const rendered = render(withTestPresentationPlatform(
+      const rendered = render((
         <I18nProvider i18n={createI18n()}>
           <MessageList
             actions={actions}
@@ -434,7 +436,7 @@ describe('MessageList', () => {
             store={store}
             thinkingIndicator={null}
           />
-        </I18nProvider>,
+        </I18nProvider>
       ));
       const rows = [...rendered.container.querySelectorAll('.pivi-message-virtual-row')];
       const firstRow = rows[0];
@@ -553,11 +555,11 @@ describe('MessageList', () => {
     );
 
     try {
-      const rendered = render(withTestPresentationPlatform(renderMessageList(false, false)));
+      const rendered = render((renderMessageList(false, false)));
       act(flushFrames);
       scrollTo.mockClear();
 
-      rendered.rerender(withTestPresentationPlatform(renderMessageList(true, true)));
+      rendered.rerender((renderMessageList(true, true)));
       act(flushFrames);
       expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
 
@@ -576,7 +578,7 @@ describe('MessageList', () => {
       });
       expect(scrollTo.mock.calls.filter(([options]) => options.behavior === 'auto')).toHaveLength(1);
 
-      rendered.rerender(withTestPresentationPlatform(renderMessageList(false, true)));
+      rendered.rerender((renderMessageList(false, true)));
       scrollTo.mockClear();
       act(() => {
         rowObserver.trigger(row, 360);
@@ -584,7 +586,7 @@ describe('MessageList', () => {
       });
       expect(scrollTo).not.toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
 
-      rendered.rerender(withTestPresentationPlatform(renderMessageList(true, true)));
+      rendered.rerender((renderMessageList(true, true)));
       act(flushFrames);
       expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
     } finally {
@@ -625,10 +627,10 @@ describe('MessageList', () => {
       redo: jest.fn(),
       scrollToRecentUser: jest.fn(),
     };
-    const rendered = render(withTestPresentationPlatform(
+    const rendered = render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList actions={actions} isStreaming messages={currentMessages} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(rendered.container.querySelector('[data-message-id="user-1"] .pivi-message-actions')).not.toBeNull();
@@ -636,10 +638,10 @@ describe('MessageList', () => {
     expect(rendered.container.querySelector('[data-message-id="user-current"] .pivi-message-actions')).toBeNull();
     expect(rendered.container.querySelector('[data-message-id="assistant-current"] .pivi-message-actions')).toBeNull();
 
-    rendered.rerender(withTestPresentationPlatform(
+    rendered.rerender((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList actions={actions} isStreaming={false} messages={currentMessages} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(rendered.container.querySelector('[data-message-id="user-current"] .pivi-message-actions')).not.toBeNull();
@@ -663,10 +665,10 @@ describe('MessageList', () => {
       redo: jest.fn(),
       scrollToRecentUser: jest.fn(),
     };
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList actions={actions} isStreaming={false} messages={[rebuilt]} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(screen.queryByText('hidden context')).toBeNull();
@@ -691,10 +693,10 @@ describe('MessageList', () => {
       timestamp: 1,
       images: [{ id: 'img-1', name: 'shot.png', mediaType: 'image/png', data: 'aaa', size: 3, source: 'paste' }],
     };
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList actions={actions} isStreaming={false} messages={[message]} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     const wrapper = document.querySelector('.pivi-message-images .pivi-message-image');
@@ -761,14 +763,14 @@ describe('MessageList', () => {
       contentBlocks: [{ type: 'text', content: 'Working — interrupted inline' }],
     };
 
-    const { container } = render(withTestPresentationPlatform(
+    const { container } = render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList
           actions={actions}
           isStreaming={false}
           messages={[emptyAssistant, interruptOnly, interruptWithContent, toolOnly, liveCancelAlreadyInContent]}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(container.querySelector('[data-message-id="empty"]')).toBeNull();
@@ -801,17 +803,17 @@ describe('MessageList', () => {
       tokensPerSecond: 30,
     };
 
-    const { container: visibleFooter } = render(withTestPresentationPlatform(
+    const { container: visibleFooter } = render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList actions={actions} isStreaming={false} messages={[toolOnlyWithSpeed]} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     expect(visibleFooter.querySelector('[data-message-id="tool-only-speed"]')).not.toHaveClass('pivi-message-assistant-tool-only');
 
-    const { container: hiddenFooter } = render(withTestPresentationPlatform(
+    const { container: hiddenFooter } = render((
       <I18nProvider i18n={createI18n()}>
         <TestMessageList actions={actions} isStreaming={false} messages={[toolOnlyWithSpeed]} showTokensPerSecond={false} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     expect(hiddenFooter.querySelector('[data-message-id="tool-only-speed"]')).toHaveClass('pivi-message-assistant-tool-only');
   });

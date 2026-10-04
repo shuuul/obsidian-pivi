@@ -631,7 +631,7 @@
       "commandsTruncated": "最初の {count} 件を表示しています。検索を絞り込むとさらに表示されます。"
     },
     "slashCommands": {
-      "desc": ".pivi/commands/ に保存された {workspaceName} レベルのカスタムコマンドを管理します。/name で起動します。"
+      "desc": ".pivi/commands/ に保存された Vault レベルのカスタムコマンドを管理します。/name で起動します。"
     },
     "subagents": {
       "heading": "サブエージェント",
@@ -734,12 +734,12 @@
       },
       "heading": "ツールの切り替え",
       "groups": {
-        "workspace": "{workspaceNameTitle}ツール",
-        "hostCli": "{hostName} CLI",
+        "workspace": "Vaultツール",
+        "hostCli": "Obsidian CLI",
         "pivi": "Pivi",
         "additional": "追加アクセス"
       },
-      "intro": "エージェントに公開する {hostName} ツールの有効/無効。変更はプロンプト更新後の新しいターンで反映されます。",
+      "intro": "エージェントに公開する Obsidian ツールの有効/無効。変更はプロンプト更新後の新しいターンで反映されます。",
       "reading": {
         "defaultSize": {
           "name": "既定の読み取りサイズ",
@@ -751,9 +751,9 @@
       "unavailableCorePlugin": "対応するコアプラグインを有効にする必要があります。",
       "unavailableCodex": "OpenAI Codex の接続が必要です。",
       "cli": {
-        "heading": "公式 {hostName} CLI",
-        "enabled": { "name": "公式 CLI ツールを有効化", "desc": "公式 {hostName} CLI を使うツールを Pivi が登録できるようにします。" },
-        "unavailable": "公式 {hostName} CLI が登録されていません。CLI ツールは有効化できません。",
+        "heading": "公式 Obsidian CLI",
+        "enabled": { "name": "公式 CLI ツールを有効化", "desc": "公式 Obsidian CLI を使うツールを Pivi が登録できるようにします。" },
+        "unavailable": "公式 Obsidian CLI が登録されていません。CLI ツールは有効化できません。",
         "path": { "name": "CLI 実行ファイルのパス", "desc": "任意の実行ファイル指定です。空欄の場合は自動検出します。", "placeholder": "自動検出" },
         "timeout": { "name": "CLI タイムアウト", "desc": "公式 CLI リクエストごとの最大待機時間です。", "option": "{seconds} 秒" },
         "actionsUnavailable": "CLI を使うクエリと作成アクションは現在利用できません。"
@@ -812,14 +812,14 @@
       },
       "apiKeyName": "{provider} API キー",
       "apiKeyPlaceholder": "API キーを入力…",
-      "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
+      "apiKeySavedPlaceholder": "Obsidian キーチェーン に保存済み",
       "removeKey": "削除",
       "enableAria": "{provider} を有効化",
       "disableAria": "{provider} を無効化"
     },
     "modelsTab": {
-      "intro": "API キーと OAuth トークンは {secureStorageName} に保存されます。無効なプロバイダーは保存されたままモデル選択から非表示になります。",
-      "secureStorageRequired": "プロバイダー API キーには {secureStorageName} を備えた {hostName} {version} 以上が必要です。{hostName} をアップグレードしてください。",
+      "intro": "API キーと OAuth トークンは Obsidian キーチェーン に保存されます。無効なプロバイダーは保存されたままモデル選択から非表示になります。",
+      "secureStorageRequired": "プロバイダー API キーには Obsidian キーチェーン を備えた Obsidian {version} 以上が必要です。Obsidian をアップグレードしてください。",
       "defaultModelSectionTitle": "デフォルトモデル",
       "defaultModel": "デフォルトモデル",
       "defaultModelDesc": "新しい会話と pivi:run コマンドで使用されます。コンポーザーでモデルを選択すると更新されます。",
@@ -831,13 +831,13 @@
       "authHeading": "認証と資格情報",
       "apiKey": "API キー",
       "apiKeyOptional": "API キー（任意）",
-      "apiKeyDesc": "{secureStorageName} に {secretId} として保存。",
+      "apiKeyDesc": "Obsidian キーチェーン に {secretId} として保存。",
       "apiKeyPlaceholder": "API キーを入力…",
-      "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
+      "apiKeySavedPlaceholder": "Obsidian キーチェーン に保存済み",
       "oauthToken": "OAuth トークン",
-      "oauthTokenDesc": "{secureStorageName} に {secretId} として保存。",
+      "oauthTokenDesc": "Obsidian キーチェーン に {secretId} として保存。",
       "oauthTokenPlaceholder": "OAuth トークンを入力…",
-      "oauthTokenSavedPlaceholder": "{secureStorageName} に保存済み",
+      "oauthTokenSavedPlaceholder": "Obsidian キーチェーン に保存済み",
       "clear": "クリア",
       "candidateModels": "候補モデルプール",
       "catalogRefreshTitle": "モデルカタログ",
@@ -871,7 +871,7 @@
       "addProvider": "+ プロバイダーを追加",
       "addProviderAdded": "追加済み",
       "removedProvider": "{name} プロバイダーを削除しました。",
-      "removeCredential": "このプロバイダーの認証情報も{secureStorageName}から削除する",
+      "removeCredential": "このプロバイダーの認証情報もObsidian キーチェーンから削除する",
       "enableAria": "プロバイダー {name} を有効化",
       "disableAria": "プロバイダー {name} を無効化",
       "removeAria": "プロバイダー {name} を削除",
@@ -899,7 +899,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "ChatGPT/Codex サブスクリプションでサインインします。資格情報は {secureStorageName} に保存されます。",
+        "desc": "ChatGPT/Codex サブスクリプションでサインインします。資格情報は Obsidian キーチェーン に保存されます。",
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
@@ -927,12 +927,12 @@
       "fetchModelsSuccess": "{name}: {count} 件のモデルを読み込みました。",
       "fetchModelsFailed": "{name}: モデルの取得に失敗しました: {message}",
       "authHeadingOptional": "認証（任意）",
-      "apiKeyOptionalDesc": "任意。認証不要なローカルサーバーでは空のままにできます。設定した場合は {secureStorageName} に {secretId} として保存されます。",
+      "apiKeyOptionalDesc": "任意。認証不要なローカルサーバーでは空のままにできます。設定した場合は Obsidian キーチェーン に {secretId} として保存されます。",
       "apiKeyOptionalPlaceholder": "任意の API キー…",
       "dualAuthApiKeyBlocked": "このプロバイダーは OAuth サインインが必要になりました。既存の API キーは引き続き更新または削除できます。",
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "xAI アカウントで Grok Build にサインインします。資格情報は {secureStorageName} に保存されます。",
+        "desc": "xAI アカウントで Grok Build にサインインします。資格情報は Obsidian キーチェーン に保存されます。",
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
@@ -942,7 +942,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "ブラウザで Claude Pro または Max サブスクリプションにサインインします。認証情報は {secureStorageName} に保存されます。",
+        "desc": "ブラウザで Claude Pro または Max サブスクリプションにサインインします。認証情報は Obsidian キーチェーン に保存されます。",
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
@@ -952,7 +952,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "ブラウザで ChatGPT サブスクリプションにサインインします。認証情報は {secureStorageName} に保存されます。",
+        "desc": "ブラウザで ChatGPT サブスクリプションにサインインします。認証情報は Obsidian キーチェーン に保存されます。",
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
@@ -962,7 +962,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "ブラウザで OpenRouter にサインインします。認証情報は {secureStorageName} に保存されます。",
+        "desc": "ブラウザで OpenRouter にサインインします。認証情報は Obsidian キーチェーン に保存されます。",
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
@@ -972,7 +972,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "Kimi Code サブスクリプションでサインインします。認証情報は {secureStorageName} に保存されます。",
+        "desc": "Kimi Code サブスクリプションでサインインします。認証情報は Obsidian キーチェーン に保存されます。",
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
@@ -989,8 +989,8 @@
     "skills": {
       "intro": "エージェントスキルは .pivi/skills/ にあり、次のターンで読み込まれます（skill ツール + システムプロンプト）。下の操作を選んだ後のみインストール/更新します。",
       "defaultBundle": {
-        "name": "公式 {hostName} スキル",
-        "desc": "この {workspaceName} に公式 kepano/obsidian-skills バンドルをインストールまたは更新します。GitHub/skills.sh にアクセスし、固定版 skills CLI を実行して .pivi/skills/ に書き込みます。",
+        "name": "公式 Obsidian スキル",
+        "desc": "この Vault に公式 kepano/obsidian-skills バンドルをインストールまたは更新します。GitHub/skills.sh にアクセスし、固定版 skills CLI を実行して .pivi/skills/ に書き込みます。",
         "button": "公式スキルをインストール",
         "updateButton": "公式スキルを更新",
         "label": "公式バンドル：",

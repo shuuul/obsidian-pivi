@@ -4,7 +4,9 @@ import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
 import type { SlashCatalogEntry } from '@pivi/agent/skills/commands/slashCommandEntry';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 const snapshot: SettingsUiSnapshotData = {
   general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, showCacheHitRate: true, showTokensPerSecond: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], deletedSessionRetentionDays: 30, providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 }, requireCommandOrControlEnterToSend: false, editorSelectionToolbar: { enabled: true, shortcuts: [] } },
@@ -82,7 +84,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
 }
 
 function renderCommands(ports: SettingsPorts) {
-  render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="commands" /></I18nProvider>));
+  render((<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="commands" /></I18nProvider>));
 }
 
 function getCommandCard(label: 'Create custom slash command' | 'Edit custom slash command'): HTMLElement {
@@ -341,7 +343,7 @@ describe('React commands settings', () => {
     const loadWorkspaceCatalog = jest.fn(() => new Promise<{ entries: readonly SlashCatalogEntry[]; catalogRevision: number }>((done) => {
       resolve = entries => done({ entries, catalogRevision: 1 });
     }));
-    const { unmount } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts([], { loadWorkspaceCatalog })} page="commands" /></I18nProvider>));
+    const { unmount } = render((<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts([], { loadWorkspaceCatalog })} page="commands" /></I18nProvider>));
     await waitFor(() => expect(loadWorkspaceCatalog).toHaveBeenCalledTimes(1));
     unmount();
     await act(async () => resolve([command]));

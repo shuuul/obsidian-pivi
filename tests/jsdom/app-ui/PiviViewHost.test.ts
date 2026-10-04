@@ -12,7 +12,6 @@ import type {
 } from '@/app/hostContracts';
 import { createChatUiPorts } from '@/app/ui/createUiPorts';
 import { createImperativeChatAdapter } from '@/app/ui/imperativeChatAdapter';
-import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { PiviViewHost } from '@/app/ui/PiviViewHost';
 
 jest.mock('@pivi/pivi-react/mount', () => ({
@@ -236,7 +235,6 @@ describe('PiviViewHost shell lifecycle', () => {
       container: harness.contentEl,
       ownerDocument: document,
       ownerWindow: window,
-      platform: obsidianPresentationPlatform,
       portalContainer: document.body,
       chatShell: expect.objectContaining({
         store: { id: 'store' },

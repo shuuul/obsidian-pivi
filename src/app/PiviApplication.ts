@@ -14,6 +14,7 @@ import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import { installBundledFetch } from "@pivi/obsidian-host/bundledFetch";
 import { createPiviNetworkClients } from "@pivi/obsidian-host/createPiviNetworkClients";
+import { getVaultPath } from "@pivi/obsidian-host/path";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import type { ChatPerfRecorder } from "@pivi/pivi-react/store";
 import type {
@@ -32,7 +33,6 @@ import { ObsidianDeviceLocalEnvironmentStore } from "@/app/deviceLocalEnvironmen
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import { ObsidianDeviceLocalSessionJournalStore } from "@/app/deviceLocalSessionJournalStore";
 import type { ChatFacade, PiviApplicationFacades, PiviChatView, SettingsFacade } from "@/app/hostContracts";
-import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import { openStyleSettingsOrMarketplace } from "@/app/openStyleSettings";
 import {

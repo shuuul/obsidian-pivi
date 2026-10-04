@@ -295,12 +295,7 @@ export default defineConfig([
         {
           group: ["@/app/runtime", "@/app/runtime/*"],
           message:
-            "Product UI must not import app runtime modules. Use injected ChatPorts or an approved hostPlatform adapter.",
-        },
-        {
-          group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
-          message:
-            "Product UI must not import @pivi/obsidian-host directly. Use @/app/hostPlatform and host contracts instead.",
+            "Product UI must not import app runtime modules. Use injected ChatPorts.",
         },
         {
           group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
@@ -314,9 +309,9 @@ export default defineConfig([
             "Product UI may import React presentation only through the exact store or context-badges subpath.",
         },
         {
-          regex: "^@/app/(?!(?:i18n|hostPlatform|hostContracts)$)",
+          regex: "^@/app/(?!(?:i18n|slashBadgeNavigation|hostContracts)$)",
           message:
-            "Product UI may import app code only through i18n, hostPlatform, or type-only hostContracts.",
+            "Product UI may import app code only through i18n, slashBadgeNavigation, or type-only hostContracts.",
         },
         {
           group: ["@/app/hostContracts"],
@@ -419,7 +414,6 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
-        obsidianHostRestriction,
         electronRestriction,
         {
           group: [

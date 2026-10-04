@@ -26,11 +26,11 @@ import xaiSvg from '@lobehub/icons-static-svg/icons/xai.svg';
 import xiaomiMiMoSvg from '@lobehub/icons-static-svg/icons/xiaomimimo.svg';
 import yiSvg from '@lobehub/icons-static-svg/icons/yi.svg';
 import zaiSvg from '@lobehub/icons-static-svg/icons/zai.svg';
+import { setIcon } from 'obsidian';
 import { type CSSProperties, useEffect, useRef } from 'react';
 
 import anysearchSvg from '../../../../assets/icons/anysearch.svg';
 import llamaCppSvg from '../../../../assets/icons/llama-cpp.svg';
-import { usePresentationPlatform } from '../platform';
 
 function svgToDataUri(svg: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -80,13 +80,12 @@ export function providerFallbackIcon(slug: string): string {
   return 'cpu';
 }
 
-/** Host-provided Lucide icon fallback. */
+/** Obsidian Lucide icon fallback. */
 export function LucideIcon({ className, name }: { readonly className: string; readonly name: string }) {
-  const platform = usePresentationPlatform();
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    if (ref.current) platform.renderIcon(ref.current, name);
-  }, [name, platform]);
+    if (ref.current) setIcon(ref.current, name);
+  }, [name]);
   return <span aria-hidden="true" className={className} ref={ref} />;
 }
 

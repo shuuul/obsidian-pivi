@@ -23,7 +23,6 @@ import type {
 } from "@/app/hostContracts";
 import { appI18n, type Locale, setLocale, t } from "@/app/i18n";
 import { createSettingsUiPorts } from "@/app/ui/createSettingsUiPorts";
-import { obsidianPresentationPlatform } from "@/app/ui/obsidianPresentationPlatform";
 import { getActiveWindow } from "@/ui/shared/dom";
 
 const logger = new PluginLogger("PiviSettingTabHost");
@@ -181,7 +180,6 @@ export class PiviSettingTabHost extends PluginSettingTab {
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: appI18n,
-        platform: obsidianPresentationPlatform,
         ports: createSettingsUiPorts(this.plugin, workspace),
       });
       if (generation !== this.mountGenerations.get(page)) {

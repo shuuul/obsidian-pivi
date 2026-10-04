@@ -3,7 +3,9 @@ import type { ComponentProps } from 'react';
 import { createI18n, I18nProvider } from '@pivi/pivi-react';
 import { SelectionToolbar } from '@pivi/pivi-react/selectionToolbar';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 function renderToolbar(overrides: Partial<ComponentProps<typeof SelectionToolbar>> = {}) {
   const onItem = jest.fn();
@@ -24,10 +26,10 @@ function renderToolbar(overrides: Partial<ComponentProps<typeof SelectionToolbar
 
   return {
     props,
-    ...render(withTestPresentationPlatform(
+    ...render((
       <I18nProvider i18n={createI18n()}>
         <SelectionToolbar {...props} />
-      </I18nProvider>,
+      </I18nProvider>
     )),
   };
 }

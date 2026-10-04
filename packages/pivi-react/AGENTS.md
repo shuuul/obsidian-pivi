@@ -8,7 +8,7 @@ This package is Pivi's React presentation boundary for chat and settings. It own
 
 It also owns UI internationalization under `src/i18n/` and ordered CSS sources under `styles/`. App composition creates the shared translator; package React consumers access it only through `I18nProvider` / `useT()`.
 
-Source layout: `mount/` (mount APIs, `ChatShell`, `ActiveChatUiBridge`), `chat/` (message list/tool/subagent views), `settings/` (React-owned settings pages), `store/` (immutable UI/projection stores), `context-badges/` (badge view models), `ports/` (Settings presentation ports), `selectionToolbar/` (selection-toolbar surface), `i18n/` (translator + locale catalogs), `icons/` (bundled static icon/provider-logo data), `platform/` (`PresentationPlatform` contract), `reorder/` (shared sortable-list interaction), `runtime/` (mount runtime helpers), `usage/` (usage-meter presentation), and `shared/` (modal layer and shared controls).
+Source layout: `mount/` (mount APIs, `ChatShell`, `ActiveChatUiBridge`), `chat/` (message list/tool/subagent views), `settings/` (React-owned settings pages), `store/` (immutable UI/projection stores), `context-badges/` (badge view models), `ports/` (Settings presentation ports), `selectionToolbar/` (selection-toolbar surface), `i18n/` (translator + locale catalogs), `icons/` (bundled static icon/provider-logo data), `reorder/` (shared sortable-list interaction), `runtime/` (mount runtime helpers), `usage/` (usage-meter presentation), and `shared/` (modal layer and shared controls).
 
 ## Architecture
 
@@ -21,8 +21,8 @@ flowchart LR
   ReactUI --> Shells["chat + settings React roots"]
   ReactUI --> Slots["empty imperative content slots"]
   ProductUI -- "owns slot children" --> Slots
-  Platform["PresentationPlatform"] -- "terminology · icons · tooltips" --> Shells
-  ReactUI -. "forbidden" .-> Host["Obsidian / Electron / Node"]
+  Obsidian["obsidian public API"] -- "icons · tooltips" --> Shells
+  ReactUI -. "forbidden" .-> Host["Electron / Node"]
   ReactUI -. "forbidden" .-> Engine["@pivi/engine-pi / ChatPorts"]
 ```
 
@@ -30,9 +30,8 @@ React owns each mounted root and shell order; imperative adapters own only the c
 
 ## Dependency direction
 
-- Depend only on React, ReactDOM, browser APIs, bundled static icon data, injected presentation-platform capabilities, and non-engine host-neutral `@pivi/agent` APIs/contracts/models.
-- Never import `obsidian` or another note-host SDK. Host apps implement `PresentationPlatform` and pass it to package mount APIs.
-- Host-visible terminology is injected through `PresentationPlatform.getTerminology(locale)`. Product contracts and locale keys use `workspace` / `secureStorage`; never expose `vault`, `keychain`, `SecretStorage`, or a host brand as a React-port identifier.
+- Depend only on React, ReactDOM, browser APIs, bundled static icon data, the public `obsidian` API, and non-engine host-neutral `@pivi/agent` APIs/contracts/models.
+- Import `setIcon` / `setTooltip` from `obsidian` directly; there is no injected presentation platform. Locale copy names Obsidian, the vault, and the Obsidian keychain directly.
 - Never import `@/**`, `src/**`, app implementations, `@pivi/engine-pi`, raw Pi SDKs, `@pivi/obsidian-host`, or `@pivi/obsidian-tools`.
 - Define narrow Settings presentation ports. Runtime/application `ChatPorts` remain in `@pivi/agent`; never accept a raw plugin object or recreate the broad `PiviPluginHost` contract.
 - App adapters under `src/app/ui` are the only concrete port implementations and the only product layer that may call `mountChatView` / `mountSettingsPage` / `mountSelectionToolbarSurface`.

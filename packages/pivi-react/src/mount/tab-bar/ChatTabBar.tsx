@@ -1,3 +1,4 @@
+import { setTooltip } from 'obsidian';
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
 import {
   useCallback,
@@ -10,7 +11,6 @@ import {
 
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
-import { usePresentationPlatform } from '../../platform';
 import {
   type SortableReorderHandleProps,
   useSortableReorder,
@@ -54,7 +54,6 @@ function splitTabOrder(order: readonly string[]): {
 }
 
 export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ownerWindow: Window }) {
-  const platform = usePresentationPlatform();
   const snapshot = useSyncExternalStore(
     shell.store.subscribe,
     shell.store.getSnapshot,
@@ -363,7 +362,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
         role="menuitem"
         ref={(element) => {
           if (element) {
-            platform.attachTooltip(element, item.title, { delay: TOOLTIP_DELAY_MS });
+            setTooltip(element, item.title, { delay: TOOLTIP_DELAY_MS });
           }
         }}
         style={style}
@@ -518,7 +517,7 @@ export function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ow
           ref={(element) => {
             triggerRef.current = element;
             if (element) {
-              platform.attachTooltip(element, t('chat.tabs.switchTab', { title: activeItem.title }), {
+              setTooltip(element, t('chat.tabs.switchTab', { title: activeItem.title }), {
                 delay: TOOLTIP_DELAY_MS,
               });
             }

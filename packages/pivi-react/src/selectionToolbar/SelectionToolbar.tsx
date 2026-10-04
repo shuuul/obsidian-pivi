@@ -1,8 +1,8 @@
+import { setTooltip } from 'obsidian';
 import { type ReactNode, useEffect, useRef } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
-import { usePresentationPlatform } from '../platform';
 
 export interface SelectionToolbarItem {
   id: string;
@@ -27,11 +27,10 @@ function IconButton({
   readonly onClick: () => void;
   readonly children: ReactNode;
 }) {
-  const platform = usePresentationPlatform();
   const ref = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (ref.current) platform.attachTooltip(ref.current, label);
-  }, [label, platform]);
+    if (ref.current) setTooltip(ref.current, label);
+  }, [label]);
   return (
     <button
       aria-label={label}

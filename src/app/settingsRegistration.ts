@@ -3,8 +3,8 @@ import type { Plugin } from "obsidian";
 import { Notice } from "obsidian";
 
 import type { SettingsFacade, WorkspaceFacade } from "@/app/hostContracts";
-import { registerSlashBadgeNavigation } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
+import { registerSlashBadgeNavigation } from "@/app/slashBadgeNavigation";
 import { PiviSettingTabHost } from "@/app/ui/PiviSettingTabHost";
 import { openNativeSettingsPage } from "@/ui/shared/utils/obsidianPrivateApi";
 

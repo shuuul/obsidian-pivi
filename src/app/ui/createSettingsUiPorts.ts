@@ -20,6 +20,8 @@ import {
   providerApiKeyEnvVar,
   TOOL_OBSIDIAN_BASH,
 } from '@pivi/agent/tools';
+import { isOfficialObsidianCliEnabled } from '@pivi/obsidian-host';
+import { isPathWithinVault } from '@pivi/obsidian-host/path';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {
   SettingsGeneralSnapshot,
@@ -34,7 +36,6 @@ import type {
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
-import { isOfficialObsidianCliEnabled, isPathWithinVault } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
 import { isNoteToolbarTextToolbarActive } from '@/app/noteToolbarIntegration';
 import {

@@ -1,5 +1,6 @@
 import type { MentionBadgeParseContext } from '@pivi/agent/context/mentions';
 import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
+import { getVaultPath, normalizePathForVault } from '@pivi/obsidian-host/path';
 import type {
   SettingsMentionEditorCallbacks,
   SettingsMentionEditorHandle,
@@ -8,7 +9,6 @@ import type {
 import type { App } from 'obsidian';
 
 import type { PiviPluginWorkspace,PiviSettingsHost } from '@/app/hostContracts';
-import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
 import { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';
 import type {
   DropdownMcpServerProvider,

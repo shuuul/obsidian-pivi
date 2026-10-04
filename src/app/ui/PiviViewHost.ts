@@ -23,7 +23,6 @@ import {
   type CreatedImperativeChatAdapter,
   createImperativeChatAdapter,
 } from '@/app/ui/imperativeChatAdapter';
-import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getActiveWindow } from '@/ui/shared/dom';
 import { revealWorkspaceLeaf } from '@/ui/shared/utils/obsidianCompat';
 
@@ -161,7 +160,6 @@ export class PiviViewHost extends ItemView {
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: appI18n,
-        platform: obsidianPresentationPlatform,
         chatShell: {
           store: shell.store,
           actions: chatAdapter.getShellActions(),

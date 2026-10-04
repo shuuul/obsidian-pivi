@@ -19,7 +19,8 @@ import {
   runObsidianIntegrationAction,
 } from '@/app/ui/obsidianSettingsIntegration';
 
-jest.mock('@/app/hostPlatform', () => ({
+jest.mock('@pivi/obsidian-host', () => ({
+  ...jest.requireActual('@pivi/obsidian-host'),
   isOfficialObsidianCliEnabled: () => false,
 }));
 

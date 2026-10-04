@@ -631,7 +631,7 @@
       }
     },
     "slashCommands": {
-      "desc": "Manage {workspaceName}-level custom commands stored in .pivi/commands/. Triggered by /name."
+      "desc": "Manage vault-level custom commands stored in .pivi/commands/. Triggered by /name."
     },
     "subagents": {
       "heading": "Subagents",
@@ -752,12 +752,12 @@
       },
       "heading": "Tool toggles",
       "groups": {
-        "workspace": "{workspaceNameTitle} tools",
-        "hostCli": "{hostName} CLI",
+        "workspace": "Vault tools",
+        "hostCli": "Obsidian CLI",
         "pivi": "Pivi",
         "additional": "Additional access"
       },
-      "intro": "Enable or disable {hostName} tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
+      "intro": "Enable or disable Obsidian tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
       "reading": {
         "defaultSize": {
           "name": "Default read size",
@@ -769,9 +769,9 @@
       "unavailableCorePlugin": "Requires its owning core plugin to be enabled.",
       "unavailableCodex": "Requires OpenAI Codex connection.",
       "cli": {
-        "heading": "Official {hostName} CLI",
-        "enabled": { "name": "Enable official CLI tools", "desc": "Allow Pivi to register tools backed by the official {hostName} CLI." },
-        "unavailable": "The official {hostName} CLI is not registered. CLI-backed tools cannot be enabled.",
+        "heading": "Official Obsidian CLI",
+        "enabled": { "name": "Enable official CLI tools", "desc": "Allow Pivi to register tools backed by the official Obsidian CLI." },
+        "unavailable": "The official Obsidian CLI is not registered. CLI-backed tools cannot be enabled.",
         "path": { "name": "CLI executable path", "desc": "Optional executable override. Leave blank to detect it automatically.", "placeholder": "Auto-detect" },
         "timeout": { "name": "CLI timeout", "desc": "Maximum time for each official CLI request.", "option": "{seconds} seconds" },
         "actionsUnavailable": "CLI-backed query and create actions are currently unavailable."
@@ -830,14 +830,14 @@
       },
       "apiKeyName": "{provider} API key",
       "apiKeyPlaceholder": "Enter API key...",
-      "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
+      "apiKeySavedPlaceholder": "Saved in Obsidian keychain",
       "removeKey": "Remove",
       "enableAria": "Enable {provider}",
       "disableAria": "Disable {provider}"
     },
     "modelsTab": {
-      "intro": "API keys and OAuth tokens are stored in {secureStorageName}. Disabled providers stay saved but are hidden from the model picker.",
-      "secureStorageRequired": "Provider API keys require {hostName} {version} or newer with {secureStorageName}. Upgrade {hostName} to store credentials securely.",
+      "intro": "API keys and OAuth tokens are stored in Obsidian keychain. Disabled providers stay saved but are hidden from the model picker.",
+      "secureStorageRequired": "Provider API keys require Obsidian {version} or newer with Obsidian keychain. Upgrade Obsidian to store credentials securely.",
       "defaultModelSectionTitle": "Default model",
       "defaultModel": "Default model",
       "defaultModelDesc": "Used for new conversations and pivi:run CLI runs. Selecting a model in the composer updates it.",
@@ -849,13 +849,13 @@
       "authHeading": "Authentication & credentials",
       "apiKey": "API key",
       "apiKeyOptional": "API key (optional)",
-      "apiKeyDesc": "Saved in {secureStorageName} as {secretId}.",
+      "apiKeyDesc": "Saved in Obsidian keychain as {secretId}.",
       "apiKeyPlaceholder": "Enter API key...",
-      "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
+      "apiKeySavedPlaceholder": "Saved in Obsidian keychain",
       "oauthToken": "OAuth token",
-      "oauthTokenDesc": "Saved in {secureStorageName} as {secretId}.",
+      "oauthTokenDesc": "Saved in Obsidian keychain as {secretId}.",
       "oauthTokenPlaceholder": "Enter OAuth token...",
-      "oauthTokenSavedPlaceholder": "Saved in {secureStorageName}",
+      "oauthTokenSavedPlaceholder": "Saved in Obsidian keychain",
       "clear": "Clear",
       "candidateModels": "Candidate models pool",
       "catalogRefreshTitle": "Model catalog",
@@ -908,7 +908,7 @@
       "fetchModelsSuccess": "{name}: loaded {count} models.",
       "fetchModelsFailed": "{name}: failed to fetch models: {message}",
       "removedProvider": "Removed {name} provider.",
-      "removeCredential": "Also delete this provider's credential from {secureStorageName}",
+      "removeCredential": "Also delete this provider's credential from Obsidian keychain",
       "enableAria": "Enable {name} provider",
       "disableAria": "Disable {name} provider",
       "removeAria": "Remove {name} provider",
@@ -936,7 +936,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "Sign in with your ChatGPT/Codex subscription. Credentials are stored in {secureStorageName}.",
+        "desc": "Sign in with your ChatGPT/Codex subscription. Credentials are stored in Obsidian keychain.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
@@ -946,7 +946,7 @@
       },
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "Sign in to Grok Build with your xAI account. Credentials are stored in {secureStorageName}.",
+        "desc": "Sign in to Grok Build with your xAI account. Credentials are stored in Obsidian keychain.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
@@ -956,7 +956,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "Sign in with your Claude Pro or Max subscription in the browser. Credentials are stored in {secureStorageName}.",
+        "desc": "Sign in with your Claude Pro or Max subscription in the browser. Credentials are stored in Obsidian keychain.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
@@ -966,7 +966,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "Sign in with your ChatGPT subscription in the browser. Credentials are stored in {secureStorageName}.",
+        "desc": "Sign in with your ChatGPT subscription in the browser. Credentials are stored in Obsidian keychain.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
@@ -976,7 +976,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "Sign in with OpenRouter in your browser. Credentials are stored in {secureStorageName}.",
+        "desc": "Sign in with OpenRouter in your browser. Credentials are stored in Obsidian keychain.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
@@ -986,7 +986,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "Sign in with your Kimi Code subscription. Credentials are stored in {secureStorageName}.",
+        "desc": "Sign in with your Kimi Code subscription. Credentials are stored in Obsidian keychain.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
@@ -1000,15 +1000,15 @@
         "cancelled": "Sign-in cancelled."
       },
       "authHeadingOptional": "Authentication (optional)",
-      "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in {secureStorageName} as {secretId} when set.",
+      "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in Obsidian keychain as {secretId} when set.",
       "apiKeyOptionalPlaceholder": "Optional API key...",
       "dualAuthApiKeyBlocked": "This provider now requires OAuth sign-in. Existing API keys can still be updated or cleared."
     },
     "skills": {
       "intro": "Agent skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs or updates skills only after you choose an action below.",
       "defaultBundle": {
-        "name": "Official {hostName} skills",
-        "desc": "Install or update the official kepano/obsidian-skills bundle for this {workspaceName}. This accesses GitHub/skills.sh, runs the pinned skills CLI, and writes files under .pivi/skills/.",
+        "name": "Official Obsidian skills",
+        "desc": "Install or update the official kepano/obsidian-skills bundle for this vault. This accesses GitHub/skills.sh, runs the pinned skills CLI, and writes files under .pivi/skills/.",
         "button": "Install official skills",
         "updateButton": "Update official skills",
         "label": "Official bundle:",

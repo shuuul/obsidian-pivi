@@ -7,6 +7,7 @@ import {
   defaultCaseInsensitiveExecutables,
   type PersistentBashPermission,
 } from '@pivi/agent/tools';
+import { isPathWithinVault } from '@pivi/obsidian-host/path';
 import type { SettingsSubagentsSnapshot } from '@pivi/pivi-react/settings';
 
 import type {
@@ -14,7 +15,6 @@ import type {
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
-import { isPathWithinVault } from '@/app/hostPlatform';
 import { validateDirectoryPath } from '@/ui/shared/utils/externalContext';
 
 /** Chat/settings ports take an explicit workspace; throw when composition has not wired one. */

@@ -1,17 +1,14 @@
 import { getObsidianToolsSettingsFromBag } from '@pivi/agent/settings/types';
-import type { MountInlineEditSurfaceChromeOptions } from '@pivi/pivi-react/mount';
+import { getVaultPath, normalizePathForVault } from '@pivi/obsidian-host/path';
 import type { App } from 'obsidian';
-import { type Component, Platform } from 'obsidian';
+import { type Component, Platform, setIcon } from 'obsidian';
 
 import type { IntegrationsFacade } from '@/app/hostContracts';
-import { getVaultPath, normalizePathForVault } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
 import { createStreamingMarkdownContentAdapter } from '@/app/ui/createStreamingMarkdownContentAdapter';
 import { renderMarkdownContent } from '@/ui/chat/rendering/messageRendererMarkdown';
 
 import type { InlineEditDiffReviewKind } from './types';
-
-type PresentationPlatform = MountInlineEditSurfaceChromeOptions['platform'];
 
 function createInlineEditWaitingTimer(progressEl: HTMLElement): {
   start: () => void;
@@ -98,20 +95,18 @@ export function mountInlineEditReplyMarkdown(
   };
 }
 
-/** Mounts a host icon into an inline-edit control surface. */
+/** Mounts an Obsidian icon into an inline-edit control surface. */
 export function renderInlineEditPlatformIcon(
-  platform: PresentationPlatform,
   container: HTMLElement,
   name: string,
 ): void {
   container.empty();
   const iconHost = container.createSpan({ cls: 'pivi-inline-edit-surface-icon' });
-  platform.renderIcon(iconHost, name);
+  setIcon(iconHost, name);
 }
 
 /** Creates a diff-review action button with icon, label, and shortcut hint. */
 function createInlineEditDiffReviewButton(
-  platform: PresentationPlatform,
   parent: HTMLElement,
   className: string,
   label: string,
@@ -125,7 +120,7 @@ function createInlineEditDiffReviewButton(
     attr: { 'aria-label': label },
   });
   const iconEl = button.createSpan({ cls: 'pivi-inline-edit-diff-review-btn-icon' });
-  renderInlineEditPlatformIcon(platform, iconEl, iconName);
+  renderInlineEditPlatformIcon(iconEl, iconName);
   button.createSpan({ cls: 'pivi-inline-edit-diff-review-btn-label', text: label });
   button.createSpan({ cls: 'pivi-inline-edit-diff-review-shortcut', text: shortcut });
   button.addEventListener('click', onClick);
@@ -136,7 +131,6 @@ interface BuildInlineEditDiffReviewDomParams {
   ownerDocument: Document;
   app: App;
   markdownComponent: Component;
-  platform: PresentationPlatform;
   oldText: string;
   newText: string;
   kind: InlineEditDiffReviewKind;
@@ -204,7 +198,6 @@ export function buildInlineEditDiffReviewDom(
 
   const actions = root.createDiv({ cls: 'pivi-inline-edit-diff-review-actions' });
   createInlineEditDiffReviewButton(
-    params.platform,
     actions,
     'pivi-inline-edit-diff-review-accept',
     t('editor.inlineEdit.accept'),
@@ -213,7 +206,6 @@ export function buildInlineEditDiffReviewDom(
     params.onAccept,
   );
   createInlineEditDiffReviewButton(
-    params.platform,
     actions,
     'pivi-inline-edit-diff-review-reject',
     t('editor.inlineEdit.reject'),

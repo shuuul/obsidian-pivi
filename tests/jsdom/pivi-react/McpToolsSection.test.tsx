@@ -4,7 +4,9 @@ import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 const snapshot: SettingsUiSnapshotData = { general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, showCacheHitRate: true, showTokensPerSecond: true, enableAutoTitleGeneration: false, userName: '', excludedTags: [], providerRequestDeadlines: { totalMs: 600_000, idleMs: 120_000 }, requireCommandOrControlEnterToSend: false, editorSelectionToolbar: { enabled: true, shortcuts: [] } }, subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 } };
 
@@ -21,7 +23,7 @@ function makePorts(initial: ManagedMcpServer[] = []) {
   return { ports, mcp, getServers: () => servers };
 }
 
-async function openMcp(ports: SettingsPorts) { render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="mcpServers" /></I18nProvider>)); await act(async () => undefined); }
+async function openMcp(ports: SettingsPorts) { render((<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="mcpServers" /></I18nProvider>)); await act(async () => undefined); }
 
 describe('React MCP settings', () => {
   it('uses a slash marker and reveals tools after opening the provider-style card', async () => {
@@ -214,6 +216,6 @@ describe('React MCP settings', () => {
 
   it('does not update after an unmounted asynchronous load resolves', async () => {
     // @ts-expect-error Promise.withResolvers needs ES2024 lib; runtime is Node 24+
-    const { promise, resolve } = Promise.withResolvers<readonly ManagedMcpServer[]>(); const { ports } = makePorts(); ports.complex.mcp.load = jest.fn(() => promise); const rendered = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="mcpServers" /></I18nProvider>)); rendered.unmount(); await act(async () => resolve([{ name: 'late', config: { type: 'http', url: 'https://late.example.test/mcp' }, enabled: true, contextSaving: false }])); expect(screen.queryByText('late')).not.toBeInTheDocument();
+    const { promise, resolve } = Promise.withResolvers<readonly ManagedMcpServer[]>(); const { ports } = makePorts(); ports.complex.mcp.load = jest.fn(() => promise); const rendered = render((<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} page="mcpServers" /></I18nProvider>)); rendered.unmount(); await act(async () => resolve([{ name: 'late', config: { type: 'http', url: 'https://late.example.test/mcp' }, enabled: true, contextSaving: false }])); expect(screen.queryByText('late')).not.toBeInTheDocument();
   });
 });

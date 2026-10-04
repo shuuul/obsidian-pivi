@@ -29,7 +29,6 @@ import {
 } from '@/app/ui/inlineEditSurface';
 import type { InlineEditSurfaceSendPayload } from '@/app/ui/inlineEditSurface/types';
 import { listObsidianCommands } from '@/app/ui/listObsidianCommands';
-import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getWorkspaceCommandFullId } from '@/app/workspaceCommandRegistry';
 import { captureEditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/selectionToolbarPlugin';
 import type { EditorSelectionSnapshot } from '@/ui/shared/selectionToolbar/types';
@@ -209,7 +208,6 @@ export class SelectionToolbarSurfaceController {
       this.mountedSurface = mountSelectionToolbarSurface({
         container,
         i18n: appI18n,
-        platform: obsidianPresentationPlatform,
         props: this.buildProps(),
       });
       this.mountedSurfaceContainer = container;
@@ -290,7 +288,6 @@ export class SelectionToolbarSurfaceController {
       {
         plugin: this.plugin,
         i18n: appI18n,
-        platform: obsidianPresentationPlatform,
         composerDefaults: defaults,
         getWorkspace: async () => this.plugin.ensureWorkspaceServices(),
       },

@@ -16,7 +16,7 @@ import { registerPiviViews } from "./viewRegistration";
 
 const logger = new PluginLogger('PluginLifecycle');
 
-/** One-shot vault adapter per operation, matching the hostPlatform pattern. */
+/** One-shot vault adapter per operation. */
 const vaultApi = (app: App): ObsidianVaultApi => new ObsidianVaultApi(app);
 
 export async function initializePiviPlugin(

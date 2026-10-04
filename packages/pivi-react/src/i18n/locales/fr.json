@@ -631,7 +631,7 @@
       "commandsTruncated": "Affichage des {count} premiers résultats. Affinez la recherche pour en voir plus."
     },
     "slashCommands": {
-      "desc": "Gérez les commandes personnalisées du {workspaceName} dans .pivi/commands/. Déclenchées par /nom."
+      "desc": "Gérez les commandes personnalisées du coffre dans .pivi/commands/. Déclenchées par /nom."
     },
     "subagents": {
       "heading": "Sous-agents",
@@ -734,12 +734,12 @@
       },
       "heading": "Bascules d’outils",
       "groups": {
-        "workspace": "Outils {workspaceNameTitle}",
-        "hostCli": "CLI {hostName}",
+        "workspace": "Outils Coffre",
+        "hostCli": "CLI Obsidian",
         "pivi": "Pivi",
         "additional": "Accès supplémentaire"
       },
-      "intro": "Activez ou désactivez les outils {hostName} exposés à l’agent. Les changements s’appliquent aux nouveaux tours après rafraîchissement du prompt.",
+      "intro": "Activez ou désactivez les outils Obsidian exposés à l’agent. Les changements s’appliquent aux nouveaux tours après rafraîchissement du prompt.",
       "reading": {
         "defaultSize": {
           "name": "Taille de lecture par défaut",
@@ -751,9 +751,9 @@
       "unavailableCorePlugin": "Nécessite l’activation de son module principal associé.",
       "unavailableCodex": "Nécessite une connexion OpenAI Codex.",
       "cli": {
-        "heading": "CLI officielle de {hostName}",
-        "enabled": { "name": "Activer les outils CLI officiels", "desc": "Autoriser Pivi à enregistrer les outils reposant sur la CLI officielle de {hostName}." },
-        "unavailable": "La CLI officielle de {hostName} n’est pas enregistrée. Les outils CLI ne peuvent pas être activés.",
+        "heading": "CLI officielle de Obsidian",
+        "enabled": { "name": "Activer les outils CLI officiels", "desc": "Autoriser Pivi à enregistrer les outils reposant sur la CLI officielle de Obsidian." },
+        "unavailable": "La CLI officielle de Obsidian n’est pas enregistrée. Les outils CLI ne peuvent pas être activés.",
         "path": { "name": "Chemin de l’exécutable CLI", "desc": "Exécutable facultatif. Laisser vide pour le détecter automatiquement.", "placeholder": "Détection automatique" },
         "timeout": { "name": "Délai de la CLI", "desc": "Durée maximale de chaque requête à la CLI officielle.", "option": "{seconds} secondes" },
         "actionsUnavailable": "Les actions de requête et de création par CLI sont actuellement indisponibles."
@@ -812,14 +812,14 @@
       },
       "apiKeyName": "Clé API {provider}",
       "apiKeyPlaceholder": "Saisir la clé API…",
-      "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
+      "apiKeySavedPlaceholder": "Enregistrée dans le trousseau Obsidian",
       "removeKey": "Retirer",
       "enableAria": "Activer {provider}",
       "disableAria": "Désactiver {provider}"
     },
     "modelsTab": {
-      "intro": "Les clés API et jetons OAuth sont stockés dans le {secureStorageName}. Les fournisseurs désactivés restent enregistrés mais sont masqués dans le sélecteur de modèles.",
-      "secureStorageRequired": "Les clés API des fournisseurs nécessitent {hostName} {version} ou plus récent avec {secureStorageName}. Mettez à jour {hostName} pour stocker les identifiants en toute sécurité.",
+      "intro": "Les clés API et jetons OAuth sont stockés dans le trousseau Obsidian. Les fournisseurs désactivés restent enregistrés mais sont masqués dans le sélecteur de modèles.",
+      "secureStorageRequired": "Les clés API des fournisseurs nécessitent Obsidian {version} ou plus récent avec trousseau Obsidian. Mettez à jour Obsidian pour stocker les identifiants en toute sécurité.",
       "defaultModelSectionTitle": "Modèle par défaut",
       "defaultModel": "Modèle par défaut",
       "defaultModelDesc": "Utilisé pour les nouvelles conversations et les exécutions CLI de pivi:run. Sélectionner un modèle dans le composeur le met à jour.",
@@ -831,13 +831,13 @@
       "authHeading": "Authentification et identifiants",
       "apiKey": "Clé API",
       "apiKeyOptional": "Clé API (facultative)",
-      "apiKeyDesc": "Enregistrée dans le {secureStorageName} sous {secretId}.",
+      "apiKeyDesc": "Enregistrée dans le trousseau Obsidian sous {secretId}.",
       "apiKeyPlaceholder": "Saisir la clé API…",
-      "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
+      "apiKeySavedPlaceholder": "Enregistrée dans le trousseau Obsidian",
       "oauthToken": "Jeton OAuth",
-      "oauthTokenDesc": "Enregistré dans le {secureStorageName} sous {secretId}.",
+      "oauthTokenDesc": "Enregistré dans le trousseau Obsidian sous {secretId}.",
       "oauthTokenPlaceholder": "Saisir le jeton OAuth…",
-      "oauthTokenSavedPlaceholder": "Enregistré dans le {secureStorageName}",
+      "oauthTokenSavedPlaceholder": "Enregistré dans le trousseau Obsidian",
       "clear": "Effacer",
       "candidateModels": "Pool de modèles candidats",
       "catalogRefreshTitle": "Catalogue de modèles",
@@ -871,7 +871,7 @@
       "addProvider": "+ Ajouter un fournisseur",
       "addProviderAdded": "Ajouté",
       "removedProvider": "Fournisseur {name} retiré.",
-      "removeCredential": "Supprimer également les identifiants de ce fournisseur de {secureStorageName}",
+      "removeCredential": "Supprimer également les identifiants de ce fournisseur de trousseau Obsidian",
       "enableAria": "Activer le fournisseur {name}",
       "disableAria": "Désactiver le fournisseur {name}",
       "removeAria": "Supprimer le fournisseur {name}",
@@ -899,7 +899,7 @@
       },
       "codex": {
         "name": "OpenAI Codex",
-        "desc": "Connectez-vous avec votre abonnement ChatGPT/Codex. Identifiants dans le {secureStorageName}.",
+        "desc": "Connectez-vous avec votre abonnement ChatGPT/Codex. Identifiants dans le trousseau Obsidian.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
         "disconnect": "Déconnecter",
@@ -927,12 +927,12 @@
       "fetchModelsSuccess": "{name} : {count} modèles chargés.",
       "fetchModelsFailed": "{name} : échec de la récupération des modèles : {message}",
       "authHeadingOptional": "Authentification (facultative)",
-      "apiKeyOptionalDesc": "Facultatif. Laissez vide pour les serveurs locaux sans authentification. Si renseignée, enregistrée dans le {secureStorageName} sous {secretId}.",
+      "apiKeyOptionalDesc": "Facultatif. Laissez vide pour les serveurs locaux sans authentification. Si renseignée, enregistrée dans le trousseau Obsidian sous {secretId}.",
       "apiKeyOptionalPlaceholder": "Clé API facultative…",
       "dualAuthApiKeyBlocked": "Ce fournisseur nécessite désormais une connexion OAuth. Les clés API existantes peuvent encore être mises à jour ou supprimées.",
       "grokBuild": {
         "name": "Grok Build",
-        "desc": "Connectez-vous à Grok Build avec votre compte xAI. Les identifiants sont stockés dans {secureStorageName}.",
+        "desc": "Connectez-vous à Grok Build avec votre compte xAI. Les identifiants sont stockés dans trousseau Obsidian.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
         "disconnect": "Déconnecter",
@@ -942,7 +942,7 @@
       },
       "claude": {
         "name": "Claude",
-        "desc": "Connectez-vous avec votre abonnement Claude Pro ou Max dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
+        "desc": "Connectez-vous avec votre abonnement Claude Pro ou Max dans le navigateur. Les identifiants sont stockés dans trousseau Obsidian.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
         "disconnect": "Déconnecter",
@@ -952,7 +952,7 @@
       },
       "chatgpt": {
         "name": "ChatGPT",
-        "desc": "Connectez-vous avec votre abonnement ChatGPT dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
+        "desc": "Connectez-vous avec votre abonnement ChatGPT dans le navigateur. Les identifiants sont stockés dans trousseau Obsidian.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
         "disconnect": "Déconnecter",
@@ -962,7 +962,7 @@
       },
       "openrouter": {
         "name": "OpenRouter",
-        "desc": "Connectez-vous à OpenRouter dans le navigateur. Les identifiants sont stockés dans {secureStorageName}.",
+        "desc": "Connectez-vous à OpenRouter dans le navigateur. Les identifiants sont stockés dans trousseau Obsidian.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
         "disconnect": "Déconnecter",
@@ -972,7 +972,7 @@
       },
       "kimiCoding": {
         "name": "Kimi For Coding",
-        "desc": "Connectez-vous avec votre abonnement Kimi Code. Les identifiants sont stockés dans {secureStorageName}.",
+        "desc": "Connectez-vous avec votre abonnement Kimi Code. Les identifiants sont stockés dans trousseau Obsidian.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
         "disconnect": "Déconnecter",
@@ -989,8 +989,8 @@
     "skills": {
       "intro": "Les compétences d’agent sont dans .pivi/skills/ et se chargent au tour suivant (outil skill + prompt système). Pivi n’installe ou ne met à jour qu’après une action ci-dessous.",
       "defaultBundle": {
-        "name": "Compétences {hostName} officielles",
-        "desc": "Installe ou met à jour le bundle officiel kepano/obsidian-skills pour ce {workspaceName}. Accède à GitHub/skills.sh, exécute le CLI skills épinglé et écrit sous .pivi/skills/.",
+        "name": "Compétences Obsidian officielles",
+        "desc": "Installe ou met à jour le bundle officiel kepano/obsidian-skills pour ce coffre. Accède à GitHub/skills.sh, exécute le CLI skills épinglé et écrit sous .pivi/skills/.",
         "button": "Installer les compétences officielles",
         "updateButton": "Mettre à jour les compétences officielles",
         "label": "Bundle officiel :",

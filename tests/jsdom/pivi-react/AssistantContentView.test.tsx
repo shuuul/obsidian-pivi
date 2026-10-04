@@ -17,13 +17,15 @@ import type {
   StreamingMarkdownValue,
 } from '../../../packages/pivi-react/src/chat/messages/types';
 import { ChatProjectionStore } from '../../../packages/pivi-react/src/store';
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 function renderAssistant(message: ChatMessage, contentAdapters?: MessageContentAdapters) {
-  return render(withTestPresentationPlatform(
+  return render((
     <I18nProvider i18n={createI18n()}>
       <AssistantContentView contentAdapters={contentAdapters} message={message} />
-    </I18nProvider>,
+    </I18nProvider>
   ));
 }
 
@@ -60,10 +62,10 @@ describe('AssistantContentView', () => {
 
     expect(container.querySelector('.pivi-response-footer')).toHaveTextContent('Distilled for 3:22 · 42 tok/s');
 
-    rerender(withTestPresentationPlatform(
+    rerender((
       <I18nProvider i18n={createI18n()}>
         <AssistantContentView message={message} showTokensPerSecond={false} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     expect(container.querySelector('.pivi-response-footer')).toHaveTextContent('Distilled for 3:22');
     expect(container.querySelector('.pivi-response-footer')?.textContent).not.toContain('tok/s');
@@ -230,10 +232,10 @@ describe('AssistantContentView', () => {
 
     expect(rendered.container.textContent).toContain('rendered:one');
     expect(rendered.container.textContent).toContain('rendered:two');
-    rendered.rerender(withTestPresentationPlatform(
+    rendered.rerender((
       <I18nProvider i18n={createI18n()}>
         <AssistantContentView contentAdapters={{ markdown }} message={assistantMessage({ contentBlocks: [{ type: 'text', content: 'three' }] })} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(cleanups).toContain('assistant-1:text:1');
@@ -262,14 +264,14 @@ describe('AssistantContentView', () => {
     store.replaceAll([initial]);
     const message = store.getMessageSnapshot(initial.id);
     if (!message) throw new Error('Expected projected assistant message');
-    render(withTestPresentationPlatform(
+    render((
       <I18nProvider i18n={createI18n()}>
         <AssistantContentView
           contentAdapters={{ markdown }}
           message={message as ChatMessage}
           projectionStore={store}
         />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     act(() => store.upsertNow({
@@ -298,13 +300,13 @@ describe('AssistantContentView', () => {
     fireEvent.click(getByRole('button'));
     expect(container.textContent).toContain('Interactive question');
 
-    rerender(withTestPresentationPlatform(
+    rerender((
       <I18nProvider i18n={createI18n()}>
         <AssistantContentView message={assistantMessage({
           contentBlocks: [{ type: 'tool_use', toolId: 'ask' }],
           toolCalls: [{ id: 'ask', name: TOOL_ASK_USER_QUESTION, input: {}, status: 'completed', result: 'chosen answer' }],
         })} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
     expect(container.textContent).toContain('chosen answer');
   });
@@ -467,10 +469,10 @@ describe('AssistantContentView', () => {
     store.replaceAll([initial]);
     const projected = store.getMessageSnapshot(initial.id);
     if (!projected) throw new Error('Expected projected assistant message');
-    const view = render(withTestPresentationPlatform(
+    const view = render((
       <I18nProvider i18n={createI18n()}>
         <AssistantContentView contentAdapters={{ subagent }} message={projected as ChatMessage} projectionStore={store} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(mounts).toEqual(['spawn-1', 'spawn-2']);
@@ -556,10 +558,10 @@ describe('AssistantContentView', () => {
     });
     const view = renderAssistant(createMessage('first'), { subagent: adapter });
 
-    view.rerender(withTestPresentationPlatform(
+    view.rerender((
       <I18nProvider i18n={createI18n()}>
         <AssistantContentView contentAdapters={{ subagent: adapter }} message={createMessage('firstsecond')} />
-      </I18nProvider>,
+      </I18nProvider>
     ));
 
     expect(mount).toHaveBeenCalledTimes(1);
@@ -597,14 +599,14 @@ describe('MessageView imperative user content', () => {
       content,
       timestamp: 1,
     });
-    const wrap = (content: string) => withTestPresentationPlatform(
+    const wrap = (content: string) => (
       <I18nProvider i18n={createI18n()}>
         <MessageView
           actions={actions}
           contentAdapters={{ userContent }}
           message={message(content)}
         />
-      </I18nProvider>,
+      </I18nProvider>
     );
     const view = render(wrap('first'));
 

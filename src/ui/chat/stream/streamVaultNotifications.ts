@@ -1,6 +1,5 @@
+import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import type { App } from "obsidian";
-
-import { triggerVaultModify } from "@/app/hostPlatform";
 
 export function notifyVaultFileChange(
   plugin: { app: App },
@@ -11,7 +10,7 @@ export function notifyVaultFileChange(
   if (!rawPath) return;
 
   window.setTimeout(() => {
-    triggerVaultModify(plugin.app, rawPath);
+    new ObsidianVaultApi(plugin.app).triggerVaultModify(rawPath);
   }, 200);
 }
 

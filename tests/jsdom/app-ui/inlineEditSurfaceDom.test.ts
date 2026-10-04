@@ -25,6 +25,7 @@ jest.mock('@pivi/pivi-react/mount', () => ({
 }));
 
 jest.mock('obsidian', () => ({
+  setIcon: jest.fn(),
   Component: class Component {
     children = new Set<object>();
     load(): void {}
@@ -92,7 +93,6 @@ function createSession(): InlineEditSurfaceSession {
         }),
       } as never,
       i18n: { t: (key: string) => key } as never,
-      platform: { renderIcon: jest.fn(), attachTooltip: jest.fn() } as never,
       composerDefaults: {
         model: 'model-a',
         thinkingLevel: 'medium',

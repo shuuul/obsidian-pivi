@@ -4,7 +4,9 @@ import { createI18n, I18nProvider } from '@pivi/pivi-react';
 import { ModelSelector, ThinkingSelector } from '../../../packages/pivi-react/src/mount/composer/ComposerSelectors';
 import type { ComposerOptionSnapshot } from '@pivi/pivi-react/store';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 const modelOptions: ComposerOptionSnapshot[] = [
   { value: 'model-a', label: 'Model A' },
@@ -26,10 +28,10 @@ function renderModelSelector({
   value?: string;
 } = {}) {
   const onChange = jest.fn();
-  render(withTestPresentationPlatform(
+  render((
     <I18nProvider i18n={createI18n()}>
       <ModelSelector onChange={onChange} options={modelOptions} portalRoot={portalRoot} value={value} />
-    </I18nProvider>,
+    </I18nProvider>
   ));
   return { onChange };
 }
@@ -42,7 +44,7 @@ function renderThinkingSelector({
   value?: string;
 } = {}) {
   const onChange = jest.fn();
-  render(withTestPresentationPlatform(
+  render((
     <I18nProvider i18n={createI18n()}>
       <ThinkingSelector
         adaptive
@@ -52,7 +54,7 @@ function renderThinkingSelector({
         portalRoot={portalRoot}
         value={value}
       />
-    </I18nProvider>,
+    </I18nProvider>
   ));
   return { onChange };
 }

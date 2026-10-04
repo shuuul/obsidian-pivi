@@ -11,7 +11,9 @@ import {
 } from '@pivi/pivi-react/store';
 import { calculateContextEnvelope } from '@pivi/agent/runtime/usage';
 
-import { testPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 function snapshot(position: 'input' | 'header' = 'header'): ChatTabsSnapshot {
   return {
@@ -104,7 +106,6 @@ async function mountShell(options: {
       container: host,
       i18n: createI18n(),
       imperativeAdapter: { dispose: () => {}, mount: () => {} },
-      platform: testPresentationPlatform,
       ownerDocument,
       ownerWindow,
       portalContainer: ownerDocument.body,

@@ -14,7 +14,6 @@ flowchart LR
   App["src/app/i18n<br/>shared translator instance"] --> Imperative["src/ui imperative t() calls"]
   App --> Provider["I18nProvider"]
   Provider --> React["React useT() consumers"]
-  Platform["PresentationPlatform terminology"] --> React
   DeadKeys["check:i18n-dead-keys"] --> English
 ```
 
@@ -43,7 +42,7 @@ Applies to: settings, chat chrome, Notices, commands/ribbon, modals, aria-labels
 3. `TranslationKey` is **inferred** from `en.json` (`types.ts`); do not hand-maintain a key union.
 4. Prefer sentence case for settings/UI copy (ESLint `obsidianmd/ui/sentence-case`).
 5. Keep technical ids (tool names, model ids, brand names) in English when they are identifiers, not labels.
-6. React-used copy must remain host-neutral. Interpolate `hostName`, `workspaceName`, and `secureStorageName` from `PresentationPlatform`; do not hard-code Obsidian, vault, keychain, or `SecretStorage` in keys or values consumed by React.
+6. Write host terms directly in each locale (Obsidian, vault, Obsidian keychain, and their translations); there are no host-terminology placeholders.
 
 ## Adding a string
 

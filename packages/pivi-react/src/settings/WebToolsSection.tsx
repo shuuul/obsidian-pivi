@@ -2,7 +2,6 @@ import type { WebProviderId, WebSearchToolsSettings } from '@pivi/agent/settings
 import { useState } from 'react';
 
 import { useT } from '../i18n';
-import { useHostTerminology } from '../platform';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../ports';
 import { useSortableReorder } from '../reorder/useSortableReorder';
 import { SettingsCollection, SettingsPage, SettingsSection } from './primitives';
@@ -10,7 +9,6 @@ import { WebProviderCard } from './web/WebProviderCard';
 
 export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
-  const { secureStorageName } = useHostTerminology();
   const webSearch = ports.complex.webSearch;
   const providers = webSearch.listProviders();
   const [settings, setSettings] = useState<WebSearchToolsSettings>(() => webSearch.getSettings());
@@ -110,7 +108,6 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
               dropIndicatorEdge={reorder.dropIndicator?.id === provider.id
                 ? reorder.dropIndicator.edge
                 : undefined}
-              secureStorageName={secureStorageName}
               ports={ports}
               onToggleExpanded={() => { toggleExpanded(provider.id); }}
               onToggleDisabled={() => { toggleDisabled(provider.id); }}

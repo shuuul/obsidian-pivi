@@ -1,8 +1,8 @@
 import type { App } from 'obsidian';
 import { Notice, TFolder } from 'obsidian';
 
-import { navigateSlashBadge } from '@/app/hostPlatform';
 import { t } from '@/app/i18n';
+import { navigateSlashBadge } from '@/app/slashBadgeNavigation';
 
 import type { ContextBadgeToken } from '../context-badge/ContextBadgeTypes';
 import { openLinkTarget } from '../utils/fileLink';

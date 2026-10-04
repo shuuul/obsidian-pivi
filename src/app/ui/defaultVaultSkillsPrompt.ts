@@ -6,21 +6,15 @@ import type { DefaultVaultSkillsPromptActions } from '@pivi/agent/skills/vault/e
 import { Notice } from 'obsidian';
 
 import { appI18n } from '@/app/i18n';
-import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 
 export function showDefaultVaultSkillsInstallPrompt(
   actions: DefaultVaultSkillsPromptActions,
 ): Notice {
   const fragment = activeDocument.win.createFragment();
   const container = fragment.createDiv({ cls: 'pivi-default-skills-notice' });
-  const terminology = obsidianPresentationPlatform.getTerminology(appI18n.getLocale());
 
   container.createEl('p', {
-    text: appI18n.t('settings.skills.defaultBundle.desc', {
-      hostName: terminology.hostName,
-      secureStorageName: terminology.secureStorageName,
-      workspaceName: terminology.workspaceName,
-    }),
+    text: appI18n.t('settings.skills.defaultBundle.desc'),
   });
   container.createEl('a', {
     href: DEFAULT_VAULT_SKILLS_REPO_URL,

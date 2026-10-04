@@ -43,7 +43,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 
 ## Patterns and constraints
 
-- Keep dependencies pointing toward host-neutral Pivi contracts (`foundation`, `context`, `skills`, etc.). Never import `@pivi/engine-pi`, raw Pi SDKs, `@pivi/obsidian-host`, or `src/app/runtime/**` here. Use injected structural providers/callbacks; use `src/app/hostPlatform.ts` only for the approved host-platform facade.
+- Keep dependencies pointing toward host-neutral Pivi contracts (`foundation`, `context`, `skills`, etc.). Never import `@pivi/engine-pi`, raw Pi SDKs, or `src/app/runtime/**` here. Use injected structural providers/callbacks; import host path helpers from `@pivi/obsidian-host`.
 - Direct public `obsidian` imports are appropriate for UI primitives (`App`, `Modal`, `Setting`, `TFile`, `TFolder`, `setIcon`) and workspace rendering. Do not move product/runtime composition into these helpers.
 - Keep parsers, scoring, normalization, and view-model creation as pure as practical. DOM renderers consume typed tokens/view models and callbacks rather than feature state.
 - Preserve the separation between `@pivi/agent` mention token parsing, React context-badge display modeling, and imperative rendering. Add a new mention kind across `@pivi/agent` `mentionTypes.ts`, parser conversion, React `context-badges` contracts/model, and the imperative renderer together.

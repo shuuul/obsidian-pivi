@@ -20,6 +20,7 @@ import {
   PiSettingsCoordinator,
 } from "@pivi/engine-pi/application/models";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
+import { getVaultPath } from "@pivi/obsidian-host/path";
 import type { App } from "obsidian";
 import { Notice } from "obsidian";
 
@@ -38,8 +39,6 @@ import {
   type DeviceLocalExternalReadDirectories,
   overlayDeviceLocalCapabilityPermissions,
 } from "@/app/settings/piviSettingsCodec";
-
-import { getVaultPath } from "./hostPlatform";
 
 const logger = new PluginLogger('PluginSettingsLoad');
 

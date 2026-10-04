@@ -2,7 +2,7 @@
 
 [Back to the developer handbook](README.md)
 
-`@pivi/pivi-react` owns Pivi's product presentation independently of Obsidian. App composition injects platform terminology, icons, tooltips, feature ports, and imperative content adapters.
+`@pivi/pivi-react` owns Pivi's product presentation. It uses the public `obsidian` API directly for icons and tooltips; app composition injects feature ports and imperative content adapters.
 
 ## Presentation boundary
 

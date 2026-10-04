@@ -4,10 +4,10 @@ import {
   parseMessageMentions,
   resolveExternalRootMentionAtIndex,
 } from '@pivi/agent/context/mentions';
+import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from "@pivi/obsidian-host/path";
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
-import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from "@/app/hostPlatform";
 import { t } from '@/app/i18n';
 import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
 import {

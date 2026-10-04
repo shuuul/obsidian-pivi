@@ -8,7 +8,9 @@ import type {
 } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
 
-import { withTestPresentationPlatform } from '../../helpers/presentationPlatform';
+import { installObsidianPresentationProbes } from '../../helpers/obsidianPresentationProbes';
+
+installObsidianPresentationProbes();
 
 const snapshot: SettingsUiSnapshotData = {
   general: {
@@ -212,10 +214,10 @@ function createMutablePromptPort(
 }
 
 function renderPrompt(ports: SettingsPorts) {
-  return render(withTestPresentationPlatform(
+  return render((
     <I18nProvider i18n={createI18n()}>
       <SettingsRoot ports={ports} page="prompt" />
-    </I18nProvider>,
+    </I18nProvider>
   ));
 }
 

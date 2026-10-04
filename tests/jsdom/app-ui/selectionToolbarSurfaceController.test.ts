@@ -86,10 +86,6 @@ jest.mock('@/app/ui/inlineEditSurface', () => ({
   })),
 }));
 
-jest.mock('@/app/ui/obsidianPresentationPlatform', () => ({
-  obsidianPresentationPlatform: {},
-}));
-
 jest.mock('@/app/i18n', () => ({
   appI18n: {},
   t: (key: string) => key,
