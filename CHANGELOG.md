@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.32.1](https://github.com/shuuul/obsidian-pivi/compare/0.32.0...0.32.1) (2026-10-09)
+
+### Maintenance
+
+* update the pinned Pi runtime to 1.1.0 with its latest model catalogs; MCP sign-ins can now be cancelled at every step and time out per authorization-server request, servers using OpenID Connect client registration no longer fail with `invalid_redirect_uri`, and busy provider errors retry instead of ending the turn
+* update the bundled Skills CLI to 1.7.1
+* update development dependencies, including the Obsidian type definitions, and clear three critical handlebars advisories from the test toolchain
+* accept one unfixable test-toolchain advisory through an expiring dependency-audit allowlist entry
+
 ## [0.32.0](https://github.com/shuuul/obsidian-pivi/compare/0.31.1...0.32.0) (2026-10-04)
 
 ### Upgrade notes
