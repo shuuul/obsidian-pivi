@@ -87,7 +87,7 @@
     "@earendil-works/pi-coding-agent": "1.1.0",
     "@earendil-works/pi-mcp": "1.1.0",
     "@lobehub/icons-static-svg": "^1.95.0",
-    "@tanstack/react-virtual": "^3.14.13",
+    "@tanstack/react-virtual": "^3.14.21",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "skills": "^1.7.1",
