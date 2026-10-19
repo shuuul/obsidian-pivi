@@ -89,7 +89,7 @@
     "@lobehub/icons-static-svg": "^1.95.0",
     "@tanstack/react-virtual": "^3.14.13",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "react-dom": "^19.3.1",
     "skills": "^1.7.1",
     "tslib": "^2.8.1"
   },
