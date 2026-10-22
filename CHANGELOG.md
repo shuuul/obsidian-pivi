@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.32.2](https://github.com/shuuul/obsidian-pivi/compare/0.32.1...0.32.2) (2026-10-22)
+
+### Maintenance
+
+* update the pinned Pi runtime to 1.4.0 with its latest model catalogs
+* update the bundled Skills CLI to 1.7.4
+* update development and UI dependencies, including React 19.3.1
+* pin newer GitHub Actions SHAs for setup-node, upload-artifact, and download-artifact
+
 ## [0.32.1](https://github.com/shuuul/obsidian-pivi/compare/0.32.0...0.32.1) (2026-10-09)
 
 ### Maintenance
