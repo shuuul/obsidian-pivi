@@ -1,9 +1,9 @@
 ---
 id: "054"
 title: "Tool-result context overflow and in-turn pressure"
-status: Active
+status: Completed
 created: 2026-09-07
-updated: 2026-09-07
+updated: 2026-11-22
 coordinator: "Amp (T-01a079c6)"
 ---
 
@@ -184,4 +184,4 @@ None.
 
 ## Completion summary
 
-Complete this section before archiving.
+The continuation barrier includes trailing tool results in context pressure and compacts or aborts before sending an over-window request. Search requires a note or folder path and caps serialized output at 50,000 characters. Additional tool results have the ceilings described in the tool and engine package guides. Current regression suites for turn continuation, context estimates, and Search passed within a six-suite focused run. The complete coverage suite and production build also passed. Developer guidance is in `docs/07-tools-skills-mcp-and-integrations.md`, `docs/11-chat-ui-evolution.md`, and the owning package guides.
