@@ -86,7 +86,7 @@ Enforced by `npm run check:architecture`.
 - **Slash catalog `tool` entries are presentation tokens.** Never convert them into `SlashCommand` prompt templates.
 - **MCP is remote Streamable HTTP only.** Stdio entries are skipped on load. Legacy SSE entries are rewritten to disabled HTTP entries and reported once through `McpServerManager.takeLegacySseServers()`. `mcpValidation.ts` enforces reserved server names and the remote URL policy at every import, storage, and UI boundary.
 - **Session artifacts reference vault-relative paths only.** Rebuildable indexes and the session journal stay outside synced `.pivi/`.
-- **Custom-provider installation is not here.** `settings/customProviders.ts` owns config types and normalization; installation lives in `@pivi/engine-pi/models/installPiCustomProviders`.
+- **Custom-provider installation is not here.** `settings/customProviders.ts` owns config types and normalization, including Magpie’s fixed local preset and persisted model capabilities. Installation and Magpie catalog decoding live in `@pivi/engine-pi/models/installPiCustomProviders`.
 
 ## Split modules
 

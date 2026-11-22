@@ -107,43 +107,33 @@ export function buildCustomProviderModels(
   config: CustomProviderConfig,
   options?: BuildCustomProviderModelsOptions,
 ): Model<Api>[] {
-  const baseUrl = customProviderRuntimeBaseUrl(config);
   const headers = config.headers;
   const knownModels = options?.knownModels ?? [];
 
   return config.models.map((modelDef) => {
+    const api = config.kind === 'magpie' ? modelDef.nativeApi ?? config.api : config.api;
     const meta = defaultModelMeta(modelDef, config.kind);
     const { reasoning, thinkingLevelMap, defaultThinkingLevel } = resolveCustomModelReasoning(modelDef, meta, knownModels);
     const base = {
       id: modelDef.id,
       name: modelDef.name,
       provider: config.id,
-      baseUrl,
+      baseUrl: customProviderRuntimeBaseUrl(config.baseUrl, api),
       reasoning,
       ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
       ...(defaultThinkingLevel ? { defaultThinkingLevel } : {}),
       contextWindowIsAuthoritative: modelDef.contextWindow !== undefined,
       outputTokenLimitIsAuthoritative:
         modelDef.maxTokensOverride !== undefined || modelDef.maxTokens !== undefined,
-      input: ['text'] as ('text' | 'image')[],
+      input: modelDef.input ?? ['text'] as ('text' | 'image')[],
       cost: zeroCost(),
       contextWindow: meta.contextWindow,
       maxTokens: meta.maxTokens,
       ...(headers ? { headers } : {}),
     };
 
-    if (config.api === 'anthropic-messages') {
-      return {
-        ...base,
-        api: 'anthropic-messages' as const,
-      };
-    }
-
-    if (config.api === 'openai-responses') {
-      return {
-        ...base,
-        api: 'openai-responses' as const,
-      };
+    if (api !== 'openai-completions') {
+      return { ...base, api };
     }
 
     return {
@@ -157,9 +147,9 @@ export function buildCustomProviderModels(
   });
 }
 
-function customProviderRuntimeBaseUrl(config: CustomProviderConfig): string {
-  const baseUrl = normalizeProviderBaseUrl(config.baseUrl);
-  if (config.api !== 'anthropic-messages') {
+function customProviderRuntimeBaseUrl(url: string, api: CustomProviderApi): string {
+  const baseUrl = normalizeProviderBaseUrl(url);
+  if (api !== 'anthropic-messages') {
     return baseUrl;
   }
 
@@ -408,6 +398,43 @@ async function fetchLlamaCppModels(
   return models;
 }
 
+function magpieNativeApi(endpoints: unknown): CustomProviderApi | undefined {
+  if (!Array.isArray(endpoints)) return undefined;
+  if (endpoints.includes('/v1/chat/completions')) return 'openai-completions';
+  if (endpoints.includes('/v1/responses')) return 'openai-responses';
+  if (endpoints.includes('/v1/messages')) return 'anthropic-messages';
+  return undefined;
+}
+
+function parseMagpieModels(payload: unknown): CustomProviderModelDef[] {
+  if (!isRecord(payload) || !Array.isArray(payload.data)) return [];
+  const rows = payload.data.filter(isRecord).map((row): Record<string, unknown> => ({
+    ...row,
+    name: row.magpie_label ?? row.display_name ?? row.name,
+    context_window: row.context_window ?? row.context_length ?? row.max_input_tokens,
+    supported_reasoning_efforts: row.reasoning_levels,
+  }));
+  const byId = new Map(rows.flatMap((row) => (
+    typeof row.id === 'string' ? [[row.id.trim(), row] as const] : []
+  )));
+  return parseOpenAiStyleModelsList(rows).map((model) => {
+    const row = byId.get(model.id);
+    const nativeApi = magpieNativeApi(row?.native_endpoints);
+    const modalities = row?.modalities;
+    const levels = row?.reasoning_levels;
+    const reasoningMeta = model.reasoningMeta && Array.isArray(levels)
+      ? { ...model.reasoningMeta, mandatory: !levels.includes('none') }
+      : model.reasoningMeta;
+    const acceptsImages = isRecord(modalities) && Array.isArray(modalities.input) && modalities.input.includes('image');
+    return {
+      ...model,
+      ...(reasoningMeta ? { reasoningMeta } : {}),
+      ...(nativeApi ? { nativeApi } : {}),
+      ...(acceptsImages ? { input: ['text', 'image'] } : {}),
+    };
+  });
+}
+
 export async function fetchCustomProviderModels(
   config: CustomProviderConfig,
   httpGet: CustomProviderHttpGet,
@@ -439,7 +466,8 @@ export async function fetchCustomProviderModels(
     models = await fetchLlamaCppModels(baseUrl, headers, httpGet);
   } else {
     const response = await httpGet(modelsListUrl(baseUrl), { headers });
-    models = parseOpenAiStyleModelsList(parseJsonResponse(response, 'Model list'));
+    const payload = parseJsonResponse(response, 'Model list');
+    models = config.kind === 'magpie' ? parseMagpieModels(payload) : parseOpenAiStyleModelsList(payload);
   }
 
   if (models.length === 0) {
@@ -457,10 +485,16 @@ export function buildCustomPiProvider(
     knownModels?: readonly KnownModelReasoningSource[];
   },
 ): Provider {
-  const baseUrl = customProviderRuntimeBaseUrl(config);
+  const baseUrl = customProviderRuntimeBaseUrl(config.baseUrl, config.api);
   const knownModels = options?.knownModels;
   const models = buildCustomProviderModels(config, { knownModels });
-  const api = resolveApiStreams(config.api);
+  const api = config.kind === 'magpie'
+    ? {
+        'openai-completions': openAICompletionsApi(),
+        'openai-responses': openAIResponsesApi(),
+        'anthropic-messages': anthropicMessagesApi(),
+      }
+    : resolveApiStreams(config.api);
   const httpGet = options?.httpGet;
 
   return createProvider({

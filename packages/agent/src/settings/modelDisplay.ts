@@ -30,6 +30,7 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   ollama: 'Ollama',
   lmstudio: 'LM Studio',
   'llama-cpp': 'llama.cpp',
+  magpie: 'Magpie',
 };
 
 /** pi-ai provider id → lobe-icons static SVG id. */
@@ -58,6 +59,7 @@ const PROVIDER_ID_TO_SLUG: Record<string, string> = {
   ollama: 'ollama',
   lmstudio: 'lmstudio',
   'llama-cpp': 'llama-cpp',
+  magpie: 'magpie',
 };
 
 /** Custom provider kind → logo slug (null → Lucide fallback). */
