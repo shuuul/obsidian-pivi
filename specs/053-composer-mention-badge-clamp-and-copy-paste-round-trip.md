@@ -3,7 +3,7 @@ id: "053"
 title: "Composer mention badge clamp and copy-paste round trip"
 status: Active
 created: 2026-09-07
-updated: 2026-09-07
+updated: 2026-11-22
 coordinator: "Amp thread T-01a079d5-2a79-716b-b12b-4d9db7eadf8c"
 ---
 
@@ -105,6 +105,11 @@ Not in scope:
 - Blockers: None
 - Next action: User re-inspects the same composer line.
 
+### 2026-11-22 — Closeout review
+
+- Implementation is on `main` in `a3a9d0aa`. The CSS contract, clipboard and IME suites passed in a six-suite focused run. The complete coverage suite and production build also passed.
+- Human visual sign-off remains pending after the baseline fix. Inspect long badges in the composer, a sent message, and the Commands Prompt editor in light and dark themes, including baseline alignment and the full hover title.
+
 ## Completion summary
 
-Incomplete until implementation, tests, docs, and human visual sign-off land.
+Implementation, tests, and documentation are complete. Human visual sign-off remains open.
