@@ -16,6 +16,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 ### Recently completed
 
 - **Permission scopes and chat lifecycle cleanup** (spec [051](../specs/archive/051-permission-scopes-and-chat-lifecycle-cleanup.md)). Completed persistent permission and Archive/Delete acceptance in Sandbox.
+- **Composer mention badges** (spec [053](../specs/archive/053-composer-mention-badge-clamp-and-copy-paste-round-trip.md)). Completed acceptance of badge truncation and canonical clipboard round trips.
 
 - **Session runtime migration decision** (spec [055](../specs/archive/055-pi-agent-harness-migration-spike.md)). Keep the current Agent and v3 SessionManager. Pi 1.6 retired the core harness targeted by the spike. The separate experimental `pi-durable` package would need its own evaluation if Pivi takes on cross-restart task recovery.
 

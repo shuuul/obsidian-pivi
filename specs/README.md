@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [053 — Composer mention badge clamp and copy-paste round trip](053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | Active | Composer mention badge clamp and copy-paste round trip |
 
 ## Archived specs
 
@@ -68,6 +67,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [050 — Architecture review stability and trustworthy task execution](archive/050-architecture-review-stability-and-trustworthy-task-execution.md) | 2026-09-05 | Hardened real-host verification, lifecycle rollback, measured projections, strict File Recovery, and package/documentation contracts with full local acceptance. |
 | [051 — Permission scopes and chat lifecycle cleanup](archive/051-permission-scopes-and-chat-lifecycle-cleanup.md) | 2026-11-22 | Stable device-local permission scopes plus safe empty-session and Archive/Delete lifecycle cleanup. |
 | [052 — Hide remaining agent tool routing](archive/052-hide-remaining-agent-tool-routing.md) | 2026-09-06 | Pi-family live names with silent aliases, unified read/ls routing, and search scoped to a note or folder. |
+| [053 — Composer mention badge clamp and copy-paste round trip](archive/053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | 2026-11-22 | Capped inline mention badges and preserved canonical tokens through clipboard round trips. |
 | [054 — Tool-result context overflow and in-turn pressure](archive/054-tool-result-context-overflow-and-in-turn-pressure.md) | 2026-11-22 | Continuation-barrier context pressure, scoped search, and bounded tool results. |
 | [055 — Pi AgentHarness migration spike](archive/055-pi-agent-harness-migration-spike.md) | 2026-11-22 | Retained Agent and SessionManager v3 after upstream retired the core harness. |
 | [056-pi-099-upgrade-and-pi-mcp-client.md](archive/056-pi-099-upgrade-and-pi-mcp-client.md) | 2026-10-04 | Pi 0.99.1 pins with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` without legacy SSE. |

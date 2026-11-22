@@ -1,7 +1,7 @@
 ---
 id: "053"
 title: "Composer mention badge clamp and copy-paste round trip"
-status: Active
+status: Completed
 created: 2026-09-07
 updated: 2026-11-22
 coordinator: "Amp thread T-01a079d5-2a79-716b-b12b-4d9db7eadf8c"
@@ -16,9 +16,9 @@ Input-panel `@` and `/` tokens render as non-editable inline mention badges (`sp
 Two user-visible gaps:
 
 - Long labels have ellipsis CSS, but the badge itself is only capped at `max-width: 100%`, so a long path still occupies the full composer line.
-- There is no copy/cut handler. Browser copy serializes visible label text. Paste in [`MentionInput.handlePaste`](../src/ui/shared/mention/MentionInput.ts) inserts `text/plain` and re-parses, so a copied badge pastes as ordinary words and does not rebuild.
+- There is no copy/cut handler. Browser copy serializes visible label text. Paste in [`MentionInput.handlePaste`](../../src/ui/shared/mention/MentionInput.ts) inserts `text/plain` and re-parses, so a copied badge pastes as ordinary words and does not rebuild.
 
-Verified owners: [`MentionInput`](../src/ui/shared/mention/MentionInput.ts) (composer + Settings command Prompt editor), [`inlineMentionBadgeDom.ts`](../src/ui/shared/mention/inlineMentionBadgeDom.ts), [`mention-badges.css`](../packages/pivi-react/styles/components/mention-badges.css). Parser stays in `@pivi/agent/context/mentions`.
+Verified owners: [`MentionInput`](../../src/ui/shared/mention/MentionInput.ts) (composer + Settings command Prompt editor), [`inlineMentionBadgeDom.ts`](../../src/ui/shared/mention/inlineMentionBadgeDom.ts), [`mention-badges.css`](../../packages/pivi-react/styles/components/mention-badges.css). Parser stays in `@pivi/agent/context/mentions`.
 
 ## Goal and success criteria
 
@@ -29,7 +29,7 @@ Inline mention badges stay compact, and copy/paste of those badges inside a ment
 - [x] Paste of that canonical text into the same mention input rebuilds matching inline badges; `ComposerInput.value` is unchanged from the copied string.
 - [x] Unknown or label-only pasted text stays plain text (no invented badges).
 - [x] Focused jsdom tests cover copy serialization and paste rebuild; CSS contract test locks the 24ch cap.
-- [ ] Human visual sign-off: long file/folder/skill badges in the composer, a sent user message, and Settings → Commands Prompt editor, light and dark.
+- [x] Human visual sign-off: long file/folder/skill badges in the composer, a sent user message, and Settings → Commands Prompt editor, light and dark.
 
 ## Scope and non-goals
 
@@ -110,6 +110,16 @@ Not in scope:
 - Implementation is on `main` in `a3a9d0aa`. The CSS contract, clipboard and IME suites passed in a six-suite focused run. The complete coverage suite and production build also passed.
 - Human visual sign-off remains pending after the baseline fix. Inspect long badges in the composer, a sent message, and the Commands Prompt editor in light and dark themes, including baseline alignment and the full hover title.
 
+### 2026-11-22 — Sandbox acceptance
+
+- In Obsidian 1.15.1 with Pivi 0.32.2, long CJK file/folder badges and a long Skill badge rendered with ellipsis in the composer, a sent user message, and the Commands Prompt editor. The Prompt editor was inspected in light and dark. The composer copy/cut payload exactly matched the canonical file and folder input and rebuilt both badges on paste. Native cut/paste in Commands Prompt rebuilt the file, folder, Skill, and selected-text badges. File, folder and Skill titles were verified in the sent message DOM.
+- Six focused suites across specs 051 and 053 passed, 57 tests total. Independent human visual sign-off remains pending.
+
+### 2026-11-22 — Human visual sign-off
+
+- The user explicitly approved the light- and dark-theme visual review of the composer, sent user messages, and Commands Prompt. The review included long file, folder and Skill badges, baseline alignment, and full hover text.
+- The final focused cross-spec run passed 120 tests in 11 suites, including the style contract and mention clipboard and IME tests. Native Obsidian paste and the canonical token round trip were verified in Sandbox.
+
 ## Completion summary
 
-Implementation, tests, and documentation are complete. Human visual sign-off remains open.
+The inline badge width cap, ellipsis and hover text are shipped. Composer and Commands Prompt copy/cut write canonical tokens and paste rebuilds recognized badges. History clipboard behavior remains outside this spec. Durable documentation is in the input-panel handbook and the UI and CSS guidance. Human visual sign-off completed on 2026-11-22.
